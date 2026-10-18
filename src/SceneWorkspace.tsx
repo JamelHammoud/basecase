@@ -57,6 +57,7 @@ import {
   Play,
 } from 'lucide-react';
 import { AcpStudioPanel } from './components/AcpStudioPanel';
+import { ChatHistory } from './components/ChatHistory';
 import { AlignControls } from './components/AlignControls';
 import { AnnotationDraft, AnnotationLayer } from './components/Annotations';
 import { CommandPalette, Command } from './components/CommandPalette';
@@ -3639,7 +3640,27 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
                 { value: 'inspector', label: 'Inspect' },
                 ...(onRobot ? [{ value: 'pose' as const, label: 'Pose' }] : []),
                 { value: 'build', label: 'Build' },
-                { value: 'acp', label: 'Agent', indicator: isAcpBusy ? <AgentSpinner /> : undefined },
+                {
+                  value: 'acp',
+                  label: 'Agent',
+                  indicator: isAcpBusy ? <AgentSpinner /> : undefined,
+                  menu: {
+                    title: 'History',
+                    className: '!p-0 overflow-hidden',
+                    content: (close) => (
+                      <ChatHistory
+                        chats={chatList}
+                        currentChatId={chatId}
+                        busy={isAcpBusy}
+                        onOpenChat={handleOpenAgentChat}
+                        onDeleteChat={handleDeleteAgentChat}
+                        onClose={close}
+                        // From the pill to the Export button: the card less its 8px header padding
+                        width={panelWidths.right - 16}
+                      />
+                    ),
+                  },
+                },
               ]}
             />
             {isRightOpen && exportActions}
@@ -3729,10 +3750,6 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
                 onSend={handleSendToAgent}
                 onStop={handleStopAgent}
                 onNewChat={handleNewAgentChat}
-                chats={chatList}
-                currentChatId={chatId}
-                onOpenChat={handleOpenAgentChat}
-                onDeleteChat={handleDeleteAgentChat}
                 onRevert={handleRevertAgentRun}
               />
             )}

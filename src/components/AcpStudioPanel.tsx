@@ -6,11 +6,9 @@ import {
   Check,
   ChevronRight,
   Circle,
-  Clock,
   Folder,
   FolderPlus,
   ImagePlus,
-  Trash2,
   ImageIcon,
   Loader2,
   Plus,
@@ -24,10 +22,8 @@ import {
   AcpPlanEntry,
   AcpStatusInfo,
   AcpToolCallEvent,
-  AgentConversationSummary,
   ReferenceImageRecord,
 } from '../types/robotics';
-import { timeAgo } from '../utils/timeAgo';
 import { AnalyzedImageFeatures } from '../utils/imageTo3DAnalyzer';
 import {
   collectDrop,
@@ -73,10 +69,6 @@ interface AcpStudioPanelProps {
   onStop: () => void;
   onNewChat: () => void;
   onRevert: () => void;
-  chats: AgentConversationSummary[];
-  currentChatId: string | null;
-  onOpenChat: (id: string) => void;
-  onDeleteChat: (id: string) => void;
 }
 
 /** Images sent inline with one message; more (and other files) go in as evidence */
@@ -115,13 +107,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   onStop,
   onNewChat,
   onRevert,
-  chats,
-  currentChatId,
-  onOpenChat,
-  onDeleteChat,
 }) => {
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const historyRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
   const feedRef = useRef<HTMLDivElement | null>(null);
@@ -310,59 +296,9 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
 
       {/* Feed */}
       <div className="relative flex-1 min-h-0">
-          <div className="absolute top-2.5 right-3 z-10" ref={historyRef}>
-            <IconButton
-              icon={<Clock className="w-4 h-4" />}
-              title="History"
-              size="sm"
-              className="rounded-full bg-[#1d1d21] ring-1 ring-inset ring-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
-              isToggled={historyOpen}
-              onClick={() => setHistoryOpen((v) => !v)}
-            />
-            <PopoverMenu
-              isOpen={historyOpen}
-              onClose={() => setHistoryOpen(false)}
-              ignoreRef={historyRef}
-              position="bottom"
-              align="end"
-              className="w-[300px] max-h-[420px] overflow-y-auto overflow-x-hidden"
-            >
-              {chats.length === 0 ? (
-                <div className="px-3 py-6 text-center text-[13px] text-white/45">No chats</div>
-              ) : (
-                chats.map((c) => (
-                  <div
-                    key={c.id}
-                    className={`group flex items-center gap-1 min-w-0 rounded-lg ${c.id === currentChatId ? 'bg-white/[0.08]' : 'hover:bg-white/[0.06]'}`}
-                  >
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() => {
-                        setHistoryOpen(false);
-                        onOpenChat(c.id);
-                      }}
-                      className="flex-1 min-w-0 text-left px-2.5 py-2 cursor-default disabled:opacity-40"
-                    >
-                      <div className="text-[13px] text-white/90 truncate">{c.title}</div>
-                      <div className="text-[12px] text-white/40">{timeAgo(c.updatedAt)}</div>
-                    </button>
-                    <IconButton
-                      icon={<Trash2 className="w-3.5 h-3.5" />}
-                      title="Delete chat"
-                      size="xs"
-                      variant="danger"
-                      className="opacity-0 group-hover:opacity-100 mr-1 shrink-0"
-                      onClick={() => onDeleteChat(c.id)}
-                    />
-                  </div>
-                ))
-              )}
-            </PopoverMenu>
-          </div>
         <div
           ref={feedRef}
-          className="h-full overflow-y-auto overflow-x-hidden px-4 pt-14 pb-4"
+          className="h-full overflow-y-auto overflow-x-hidden px-4 pt-4 pb-4"
           style={{
             maskImage: feedMask(edgeFade),
             WebkitMaskImage: feedMask(edgeFade),

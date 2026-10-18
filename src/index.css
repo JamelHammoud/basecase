@@ -167,6 +167,11 @@ html.is-electron #root {
 html.is-electron .window-chrome {
   background: rgba(18, 18, 18, 0.9);
 }
+/* Full screen has no desktop to show through: solid grey */
+html.is-electron.is-fullscreen,
+html.is-electron.is-fullscreen .window-chrome {
+  background: #121212;
+}
 
 }
 

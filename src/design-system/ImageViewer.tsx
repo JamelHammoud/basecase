@@ -194,15 +194,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ images, index, onIndex
       </div>
 
       {/* Top bar */}
-      <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-3 pointer-events-none">
-        <div className="glass rounded-[16px] h-10 px-3.5 flex items-center gap-2 min-w-0 max-w-[50%] pointer-events-auto">
-          <span className="text-[13px] text-white/90 truncate">{current.name || 'Image'}</span>
-          {images.length > 1 && (
-            <span className="text-[12.5px] text-white/45 tabular shrink-0">
-              {index! + 1} of {images.length}
-            </span>
-          )}
-        </div>
+      <div className="absolute top-3 left-3 right-3 flex items-start justify-end gap-3 pointer-events-none">
         <div className="glass rounded-[16px] h-10 px-1 flex items-center gap-0.5 pointer-events-auto">
           <IconButton
             icon={<Minus className="w-4 h-4" />}

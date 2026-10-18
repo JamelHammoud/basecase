@@ -449,6 +449,29 @@ read the part shapes from them but straighten the joints: forearms hang in line 
 arms, knees are straight, and the head faces −Y. Keep every link's real length and width. Only
 pose it if the user asks.
 
+## Degrees of freedom, poses and motion
+- Posing never edits parts: the modeled pose stays the design, and pose / animate only change
+  what the canvas shows. So build in the home pose first, then pose.
+- A robot is posable once its joints are declared. Give every joint of every limb to
+  define_joints with ALL the parts of its link in child (shells, brackets, screws, the servo
+  that rides on it). A part left out stays behind when the limb moves. When two joints share a
+  link (a 2-DOF wrist or hip), set parent_joint on the second. Set real ranges: poses and
+  animations are held inside them.
+- get_rig first: joint ids, axes, ranges, the feet and the mocap landmarks.
+- A pose the user names ("wave", "squat", "point at the box"): pose with values for the joints
+  you know, ik for reaching (a hand to a point, feet flat with where: bottom and
+  keep_orientation), and root to lower or turn the whole body. Look at it (views) and fix
+  anything it reports: a value held at a limit, a link passing into another, a foot below the
+  floor. save_as when the user may want it again.
+- Walk cycles: animate with gait. Defaults come from the leg length; if a foot misses its path,
+  shorten the stride or lift, or add crouch (straight knees can't reach). Add oscillators for
+  arm swing opposite the legs. Check it with preview (side view).
+- Gestures: animate with 3–8 keyframes (the first and last the same for a loop).
+- Motion capture: retarget_motion with the attached .bvh. If a landmark misses badly, check
+  the matched bones and joints in its report and pass bones / joints to fix the match.
+- import_robot inserts a published robot (Unitree G1, H1, Go2…) with its real joints, ready to
+  pose and animate.
+
 ## Robot priors
 - Proportion defaults when photos are unclear (fractions of standing height H, adult human;
   robots stay close to these unless the photo says otherwise): head 0.13 tall, shoulder joint

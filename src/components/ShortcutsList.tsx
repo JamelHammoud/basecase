@@ -21,6 +21,7 @@ const GROUPS: Array<{ title: string; rows: Array<[string, string | string[]]> }>
       ['Rotate', ['E']],
       ['Scale', ['R']],
       ['Sculpt', ['C']],
+      ['Pose', ['P']],
       ['Drop to floor', ['F']],
       ['Stack on part below', ['S']],
       ['Move or rotate without snapping', ['⇧', 'drag']],

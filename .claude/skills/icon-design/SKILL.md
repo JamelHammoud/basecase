@@ -91,4 +91,5 @@ Judge it by asking:
 | `PartsIcon` | Parts view (real components and hardware) | Isometric hex nut, rounded 1.2, 19 tall; filled: face edges and hole knocked out. `nut(NUT_PARAMS)` in `geometry.mjs` regenerates it |
 | `LibraryIcon` | Library view (saved scenes and models) | Bookmark, 12 × 18, top corners r 2.5, notch 4 deep; filled: solid |
 | `LayersIcon` | Layers view | lucide `layers`; filled: top sheet solid |
+| `DriveIcon` | Screw drive choices (Hex, Torx, Phillips, Pozidriv, Slotted) in the hardware configurator; no filled state (the cell's thumb shows the choice) | Head circle r 9.5; recess solid inside, about 60% of the head (hex r 5.4, Torx A 12.6 / B 7.8, cross 11.8 × 2.9, slot 14 × 2.6); Pozidriv adds four 1.5-stroke diagonal ribs clear of the cross corners. First drawn at 45% of the head, which read as dots at 20px |
 | lucide `Settings` | Settings (opens a sheet, so no filled state) | lucide gear |

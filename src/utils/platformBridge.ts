@@ -55,6 +55,9 @@ declare global {
   interface Window {
     electronAPI?: {
       isElectron: boolean;
+      platform: string;
+      isFullScreen: () => Promise<boolean>;
+      onFullScreenChange: (callback: (fullScreen: boolean) => void) => () => void;
       getAcpStatus: (workspaceId?: string) => Promise<AcpStatusInfo>;
       connectAcp: (agentCommand?: string) => Promise<AcpStatusInfo>;
       cancelAcp: (workspaceId?: string) => Promise<{ ok: boolean }>;

@@ -11,7 +11,8 @@
     "electron:dev": "concurrently -k \"vite --port 5173\" \"wait-on http://localhost:5173 && node tools/electron-dev.mjs .\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "icon": "xcrun actool \"$PWD/build/icon/Basecase.icon\" --compile \"$PWD/build/icon/compiled\" --platform macosx --minimum-deployment-target 26.0 --app-icon Basecase --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled/partial.plist\" --output-format human-readable-text"
   },
   "dependencies": {
     "@agentclientprotocol/claude-agent-acp": "^0.90.0",

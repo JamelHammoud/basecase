@@ -96,7 +96,7 @@ export interface Bom {
 }
 
 const BLOCKOUT_KINDS = new Set(BLOCKOUT_ONLY.map((b) => b.kind));
-const NOT_PRINTED = new Set(['component', 'hardware', 'image_plane', 'hole_cylinder', 'hole_box', 'pivot_axis']);
+const NOT_PRINTED = new Set(['component', 'hardware', 'mesh', 'image_plane', 'hole_cylinder', 'hole_box', 'pivot_axis']);
 
 /** Normalized key for an exact hardware spec (default finish and drive spelled out) */
 export function hardwareKey(spec: HardwareSpec): string {

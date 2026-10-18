@@ -19,6 +19,7 @@ import type { PrintMaterial, ProjectSettings, PurchaseRecord, ScenePart } from '
 import { Bom, BomCategory, BomLine, buildBom, bomToCsv, bomToMarkdown, localDate, parseAsin, STALE_DAYS } from '../utils/bom';
 import { platformBridge } from '../utils/platformBridge';
 import { PrintReport, buildPrintReport, fmtSize } from '../utils/printReport';
+import { ENGINEERING_CHECKS } from '../utils/engineering';
 import type { CheckRow, EngineeringReport } from '../utils/engineering';
 
 interface BuildPanelProps {
@@ -32,8 +33,6 @@ interface BuildPanelProps {
   getTriangles: (id: string) => Float32Array | null;
   onSelectParts: (ids: string[]) => void;
   onToast: (message: string) => void;
-  /** Opens the sidebar on Parts (the empty buy list's action) */
-  onBrowseParts: () => void;
   /** Runs the engineering checks, joint sweeps included */
   onRunChecks: () => EngineeringReport;
 }
@@ -80,7 +79,7 @@ function usePurchases(): [Record<string, PurchaseRecord>, (key: string, r: Purch
   return [purchases, save];
 }
 
-export const BuildPanel: React.FC<BuildPanelProps> = ({ parts, sceneName, project, onChangeProject, measure, getTriangles, onSelectParts, onToast, onBrowseParts, onRunChecks }) => {
+export const BuildPanel: React.FC<BuildPanelProps> = ({ parts, sceneName, project, onChangeProject, measure, getTriangles, onSelectParts, onToast, onRunChecks }) => {
   const [purchases, savePurchase] = usePurchases();
   const [measures, setMeasures] = useState<Record<string, MeshMeasure>>({});
   const [print, setPrint] = useState<PrintReport | null>(null);
@@ -119,7 +118,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({ parts, sceneName, projec
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <BudgetSection bom={bom} project={project} onChangeProject={onChangeProject} />
         <ChecksSection parts={parts} project={project} onRun={onRunChecks} onSelectParts={onSelectParts} />
-        <BuyList bom={bom} onCheck={setChecking} onSelectParts={onSelectParts} onBrowseParts={onBrowseParts} onExportCsv={exportCsv} onExportMarkdown={exportMarkdown} />
+        <BuyList bom={bom} onCheck={setChecking} onSelectParts={onSelectParts} onExportCsv={exportCsv} onExportMarkdown={exportMarkdown} />
         <ExtrasSection project={project} onChangeProject={onChangeProject} />
         <PrintedSection report={print} project={project} onChangeProject={onChangeProject} onSelectParts={onSelectParts} />
       </div>
@@ -239,7 +238,7 @@ const ChecksSection: React.FC<{
       }
     }, 30);
   };
-  const joints = project.joints?.length ?? 0;
+  const rows: CheckRow[] = report ? report.r.rows : ENGINEERING_CHECKS.map((check) => ({ check, status: 'not run', detail: '' }));
   return (
     <Section
       title="Checks"
@@ -249,30 +248,24 @@ const ChecksSection: React.FC<{
         </Button>
       }
     >
-      {!report ? (
-        <p className="text-[13px] text-white/45">{joints ? `${joints} joints declared` : 'Mass, torque, range of motion, power and stability'}</p>
-      ) : (
-        <>
-          {stale && <p className="text-[12.5px] text-white/45">The model changed since this run</p>}
-          <ul className="-mx-[7px]">
-            {report.r.rows.map((row) => (
-              <li key={row.check}>
-                <button
-                  type="button"
-                  onClick={() => row.ids?.length && onSelectParts(row.ids)}
-                  className="w-full flex items-start gap-2 py-1.5 px-[7px] rounded-lg hover:bg-white/[0.04] text-left cursor-default"
-                >
-                  <span className="mt-[1px] shrink-0">{STATUS_ICON[row.status]}</span>
-                  <span className="min-w-0">
-                    <span className="block text-[13px] text-white/90">{row.check}</span>
-                    <span className="block text-[12px] text-white/45">{row.detail}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      {stale && <p className="text-[12.5px] text-white/45">The model changed since this run</p>}
+      <ul className="-mx-[7px]">
+        {rows.map((row) => (
+          <li key={row.check}>
+            <button
+              type="button"
+              onClick={() => row.ids?.length && onSelectParts(row.ids)}
+              className={`w-full flex items-start gap-2 py-1.5 px-[7px] rounded-lg text-left cursor-default ${report ? 'hover:bg-white/[0.04]' : ''}`}
+            >
+              <span className="h-[18px] flex items-center shrink-0">{STATUS_ICON[row.status]}</span>
+              <span className="min-w-0">
+                <span className={`block text-[13px] leading-[18px] ${report ? 'text-white/90' : 'text-white/60'}`}>{row.check}</span>
+                {row.detail && <span className="block text-[12px] text-white/45">{row.detail}</span>}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </Section>
   );
 };
@@ -290,10 +283,9 @@ const BuyList: React.FC<{
   bom: Bom;
   onCheck: (line: BomLine) => void;
   onSelectParts: (ids: string[]) => void;
-  onBrowseParts: () => void;
   onExportCsv: () => void;
   onExportMarkdown: () => void;
-}> = ({ bom, onCheck, onSelectParts, onBrowseParts, onExportCsv, onExportMarkdown }) => {
+}> = ({ bom, onCheck, onSelectParts, onExportCsv, onExportMarkdown }) => {
   const [menu, setMenu] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const groups = (['Components', 'Hardware', 'Supplies', 'Filament'] as BomCategory[])
@@ -303,29 +295,23 @@ const BuyList: React.FC<{
     <Section
       title="Parts to buy"
       actions={
-        <div className="relative" ref={ref}>
-          <IconButton
-            icon={<FileSpreadsheet className="w-4 h-4" />}
-            title="Export BOM"
-            size="xs"
-            disabled={!bom.lines.length}
-            onClick={() => setMenu((v) => !v)}
-          />
-          <PopoverMenu isOpen={menu} onClose={() => setMenu(false)} ignoreRef={ref} position="bottom" align="end" className="w-48">
-            <MenuItem label="CSV Spreadsheet" onSelect={() => (setMenu(false), onExportCsv())} />
-            <MenuItem label="Markdown" onSelect={() => (setMenu(false), onExportMarkdown())} />
-          </PopoverMenu>
-        </div>
+        bom.lines.length > 0 && (
+          <div className="relative" ref={ref}>
+            <IconButton
+              icon={<FileSpreadsheet className="w-4 h-4" />}
+              title="Export BOM"
+              size="xs"
+              onClick={() => setMenu((v) => !v)}
+            />
+            <PopoverMenu isOpen={menu} onClose={() => setMenu(false)} ignoreRef={ref} position="bottom" align="end" className="w-48">
+              <MenuItem label="CSV Spreadsheet" onSelect={() => (setMenu(false), onExportCsv())} />
+              <MenuItem label="Markdown" onSelect={() => (setMenu(false), onExportMarkdown())} />
+            </PopoverMenu>
+          </div>
+        )
       }
     >
-      {!groups.length && (
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[13px] text-white/45">No parts</span>
-          <Button variant="secondary" size="xs" onClick={onBrowseParts}>
-            Browse Parts
-          </Button>
-        </div>
-      )}
+      {!groups.length && <span className="text-[13px] text-white/45">No parts</span>}
       {groups.map(([cat, ls]) => (
         <div key={cat}>
           <div className="text-[12px] font-medium text-white/40 mb-1">{CATEGORY_TITLES[cat]}</div>

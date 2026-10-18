@@ -93,11 +93,13 @@ interface FolderChip extends Partial<EvidenceFolder> {
 
 type ViewerState = { images: ImageViewerItem[]; index: number } | null;
 
-const SUGGESTIONS = [
-  'Model this robot with every servo and bracket as its own part',
-  'Pan–tilt camera mount for two SG90 servos',
-  'Two-finger gripper for an STS3215 servo',
-];
+// Composer placeholders: short examples that cycle while the composer is empty
+const EXAMPLES = {
+  idle: ['Desk lamp arm', 'Pan–tilt camera mount', 'Gripper for an STS3215', 'Four-wheel rover', 'Hexapod leg'],
+  attached: ['Open Duck Mini, 40 cm tall', 'Match the photos', 'Just the head', 'Half scale'],
+  busy: ['Longer legs', 'Thicker brackets', 'Round the edges', 'Use M3 screws'],
+};
+const EXAMPLE_INTERVAL_MS = 3600;
 
 export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   acpStatus,
@@ -151,7 +153,6 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
 
   // Follows the bottom until the user scrolls up; scrolling back to the bottom resumes it
   const stickRef = useRef(true);
-  const scrollbarDragRef = useRef(false);
   const [showJump, setShowJump] = useState(false);
 
   const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight;
@@ -183,6 +184,8 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
     if (stickRef.current) el.scrollTop = el.scrollHeight;
     updateEdgeFade(el);
   }, [messages, status]);
+
+  const exampleSet = isBusy ? 'busy' : attachedImages.length || attachedFolders.length ? 'attached' : 'idle';
 
   // Content also grows on its own (thoughts expanding, images loading)
   const isEmpty = messages.length === 0;
@@ -374,47 +377,18 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
           onKeyDown={(e) => {
             if (['ArrowUp', 'PageUp', 'Home'].includes(e.key) || (e.key === ' ' && e.shiftKey)) unstick();
           }}
-          onPointerDown={(e) => {
-            // The scrollbar belongs to the scroller itself
-            if (e.target === e.currentTarget) scrollbarDragRef.current = true;
-          }}
-          onPointerUp={() => {
-            scrollbarDragRef.current = false;
-          }}
           onScroll={(e) => {
             const el = e.currentTarget;
             // Back at the very bottom: follow again
             if (distanceFromBottom(el) < 4) stickRef.current = true;
-            else if (scrollbarDragRef.current) unstick();
+            // Dragging the overlay scrollbar (OverlayScrollbars) stops the follow
+            else if ('scrollbarDrag' in el.dataset) unstick();
             setShowJump(!stickRef.current && distanceFromBottom(el) > 80);
             updateEdgeFade(el);
           }}
         >
           {messages.length === 0 ? (
-            <div ref={feedContentRef} className="h-full flex flex-col justify-end pb-2">
-              <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-white/95 leading-tight">
-                What should {isClaude ? 'Claude' : 'the agent'} build?
-              </h2>
-              <p className="text-[14px] text-white/50 mt-1.5 leading-relaxed">
-                Describe it, and attach photos, references or a sketch. {isClaude ? 'Claude' : 'The agent'} builds it part by part on the canvas.
-              </p>
-              <div className="mt-5 space-y-1.5">
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => {
-                      setPromptText(s);
-                      textareaRef.current?.focus();
-                    }}
-                    className="w-full text-left min-h-10 py-2 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-[13.5px] text-white/75 hover:text-white cursor-default transition-colors flex items-center justify-between gap-2 group"
-                  >
-                    <span className="min-w-0">{s}</span>
-                    <ArrowUp className="w-3.5 h-3.5 rotate-45 shrink-0 text-white/0 group-hover:text-white/50 transition-colors" />
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div ref={feedContentRef} />
           ) : (
             <div ref={feedContentRef} className="space-y-5 min-w-0">
               {messages.map((msg) =>
@@ -503,36 +477,39 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
             </div>
           )}
 
-          <textarea
-            ref={textareaRef}
-            rows={1}
-            value={promptText}
-            onChange={(e) => setPromptText(e.target.value)}
-            onPaste={(e) => {
-              const files = Array.from(e.clipboardData.files).filter((f) => evidenceKind(f));
-              if (files.length) {
-                e.preventDefault();
-                attachFiles(files);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                submit();
-              } else if (e.key === 'Escape' && isBusy && !hasDraft) {
-                e.preventDefault();
-                onStop();
-              }
-            }}
-            placeholder={
-              isBusy
-                ? 'e.g. The legs are longer, about 40% of the height'
-                : attachedImages.length || attachedFolders.length
-                  ? 'e.g. Open Duck Mini, about 40 cm tall'
-                  : 'e.g. Desk lamp arm with three servo joints'
-            }
-            className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/95 outline-none"
-          />
+          <div className="relative">
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
+              onPaste={(e) => {
+                const files = Array.from(e.clipboardData.files).filter((f) => evidenceKind(f));
+                if (files.length) {
+                  e.preventDefault();
+                  attachFiles(files);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  submit();
+                } else if (e.key === 'Escape' && isBusy && !hasDraft) {
+                  e.preventDefault();
+                  onStop();
+                }
+              }}
+              aria-label={`Message ${isClaude ? 'Claude' : 'the agent'}`}
+              className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/95 outline-none"
+            />
+            {!promptText && (
+              <CyclingPlaceholder
+                // A new set of examples starts from its first
+                key={exampleSet}
+                examples={EXAMPLES[exampleSet]}
+              />
+            )}
+          </div>
 
           <div className="flex items-center gap-1 px-2 pb-2">
             <div className="relative" ref={attachMenuRef}>
@@ -1061,3 +1038,26 @@ function toolLabel(tc: AcpToolCallEvent): { title: string; detail?: string } | n
   }
   return { title: tc.title || 'Tool' };
 }
+
+/** A placeholder whose example changes every few seconds: each wipes in from left to right, holds, then fades out */
+const CyclingPlaceholder: React.FC<{ examples: string[] }> = ({ examples }) => {
+  const [index, setIndex] = useState(0);
+
+  const example = examples[index];
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-x-0 top-0 px-4 pt-3 text-[14px] leading-relaxed text-white/[0.32] pointer-events-none whitespace-nowrap overflow-hidden"
+    >
+      <span
+        key={example}
+        className="inline-block [animation:placeholder-cycle_var(--cycle)_linear_both] motion-reduce:[animation:none] [mask-image:linear-gradient(to_right,black_35%,transparent_65%)] [mask-size:300%_100%]"
+        style={{ '--cycle': `${EXAMPLE_INTERVAL_MS}ms` } as React.CSSProperties}
+        // Each turn ends by fading out, then the next example takes over (no animation, no cycling, under reduced motion)
+        onAnimationEnd={() => setIndex((i) => (i + 1) % examples.length)}
+      >
+        {example}
+      </span>
+    </div>
+  );
+};

@@ -2,6 +2,7 @@ import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createInfiniteGrid } from '../three/infiniteGrid';
 import { Coplanar, findInterferences, Interference } from '../three/interference';
 import { MeshMeasure, measureTriangles, worldTriangles } from '../three/meshMeasure';
@@ -64,6 +65,14 @@ export interface Viewport3DHandle {
   frameAll: () => void;
   /** Pops the given parts in with a short scale animation */
   animateSpawn: (ids: string[]) => void;
+  /** Shows parts moved by their joints (rest → posed motion per part); null returns the modeled pose */
+  setPose: (deltas: Map<string, THREE.Matrix4> | null) => void;
+  /** Bounds of parts in the modeled pose (scene mm) */
+  restBounds: (ids: string[]) => { min: [number, number, number]; max: [number, number, number] } | null;
+  /** Parts that pass through each other in the pose on the canvas */
+  posedInterference: (onlyIds?: string[]) => Interference[];
+  /** Lowest point of the posed parts (scene y, mm) */
+  posedFloor: () => number | null;
   /** Projects world points (mm) to pixel positions inside the viewport */
   projectPoints: (
     points: Array<[number, number, number]>
@@ -106,10 +115,17 @@ interface Viewport3DProps {
   onPlaceAnnotation?: (point: [number, number, number], partId: string | null) => void;
   /** A background scene tab: skip the render loop (captures still render on demand) */
   paused?: boolean;
+  /** Rest → posed motion per part (posing); edits made while posed are mapped back to the modeled pose */
+  pose?: Map<string, THREE.Matrix4> | null;
+  /** Pose tool: the joint to turn (posed pivot and axis) */
+  poseJoint?: { id: string; type: 'revolute' | 'prismatic'; origin: THREE.Vector3; axis: THREE.Vector3 } | null;
+  /** Pose tool drag: change of the joint's value since the drag began (degrees or mm) */
+  onPoseJoint?: (id: string, delta: number, phase: 'start' | 'move' | 'end') => void;
 }
 
+
 /** Hardware and real components are exact parts: the scale gizmo never resizes them */
-const hasFixedSize = (p: ScenePart) => p.kind === 'hardware' || p.kind === 'component';
+const hasFixedSize = (p: ScenePart) => p.kind === 'hardware' || p.kind === 'component' || p.kind === 'mesh';
 
 export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
   (
@@ -131,6 +147,9 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       annotateMode = false,
       onPlaceAnnotation,
       paused = false,
+      pose = null,
+      poseJoint = null,
+      onPoseJoint,
     },
     ref
   ) => {
@@ -168,8 +187,10 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       if (!tc) return;
       const free = shiftHeldRef.current;
       const { step, angle } = snapRef.current;
-      tc.setTranslationSnap(!free && step > 0 ? step : null);
-      tc.setRotationSnap(!free && angle > 0 ? THREE.MathUtils.degToRad(angle) : null);
+      // Posing turns in 1° (or 1 mm) steps
+      const posing = transformModeRef.current === 'pose';
+      tc.setTranslationSnap(!free && step > 0 ? (posing ? 1 : step) : null);
+      tc.setRotationSnap(!free && angle > 0 ? THREE.MathUtils.degToRad(posing ? 1 : angle) : null);
       tc.setScaleSnap(free ? null : 0.05);
       setSnapBypassed(free && isDraggingGizmoRef.current);
     };
@@ -192,8 +213,57 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
     const selectedIdsRef = useRef<string[]>(selectedPartIds);
     selectedIdsRef.current = selectedPartIds;
     // Latest callbacks (the scene setup effect runs once)
-    const callbacksRef = useRef({ onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect });
-    callbacksRef.current = { onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect };
+    const callbacksRef = useRef({ onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect, onPoseJoint });
+    callbacksRef.current = { onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect, onPoseJoint };
+    // Posing: each part's rest → posed motion, applied on top of its modeled placement
+    const poseRef = useRef<Map<string, THREE.Matrix4>>(new Map());
+    const poseJointRef = useRef(poseJoint);
+    poseJointRef.current = poseJoint;
+    const jointPivotRef = useRef<THREE.Object3D | null>(null);
+    const poseDragRef = useRef<{ quaternion: THREE.Quaternion; position: THREE.Vector3 } | null>(null);
+
+    /** Places every part group at its modeled pose moved by its joints */
+    const applyPose = () => {
+      const m = new THREE.Matrix4();
+      for (const [id, group] of partMapRef.current) {
+        const rp = group.userData.restPosition as THREE.Vector3 | undefined;
+        const rq = group.userData.restQuaternion as THREE.Quaternion | undefined;
+        if (!rp || !rq) continue;
+        if (transformRef.current?.dragging && transformRef.current.object === group) continue;
+        const delta = poseRef.current.get(id);
+        if (!delta) {
+          group.position.copy(rp);
+          group.quaternion.copy(rq);
+        } else {
+          m.compose(rp, rq, new THREE.Vector3(1, 1, 1)).premultiply(delta);
+          const sc = new THREE.Vector3();
+          m.decompose(group.position, group.quaternion, sc);
+        }
+        group.updateMatrixWorld(true);
+      }
+    };
+    /** Runs fn with every part in the modeled pose */
+    const withRest = <T,>(fn: () => T): T => {
+      if (!poseRef.current.size) return fn();
+      const saved = poseRef.current;
+      poseRef.current = new Map();
+      applyPose();
+      try {
+        return fn();
+      } finally {
+        poseRef.current = saved;
+        applyPose();
+      }
+    };
+    /** A posed placement mapped back to the modeled pose */
+    const toRest = (id: string, position: THREE.Vector3, quaternion: THREE.Quaternion) => {
+      const delta = poseRef.current.get(id);
+      if (!delta) return { position: position.clone(), quaternion: quaternion.clone() };
+      const m = new THREE.Matrix4().compose(position, quaternion, new THREE.Vector3(1, 1, 1)).premultiply(delta.clone().invert());
+      const p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+      m.decompose(p, q, sc);
+      return { position: p, quaternion: q };
+    };
     const marqueeElRef = useRef<HTMLDivElement | null>(null);
     // Multi-selection pivot the gizmo attaches to
     const pivotRef = useRef<THREE.Object3D | null>(null);
@@ -386,9 +456,43 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
           if (!part || !part.visible || part.role !== 'solid' || part.kind === 'image_plane') return [];
           return [{ id: part.id, object: child }];
         });
-        return findInterferences(objects, 0.3, 400, onlyIds);
+        return withRest(() => findInterferences(objects, 0.3, 400, onlyIds));
       },
-      measureParts: (ids) => {
+      posedInterference: (onlyIds) => {
+        const root = partsRootRef.current;
+        if (!root) return [];
+        const objects = root.children.flatMap((child) => {
+          const part = partsDataRef.current.find((p) => p.id === child.userData.partId);
+          if (!part || !part.visible || part.role !== 'solid' || part.kind === 'image_plane') return [];
+          return [{ id: part.id, object: child }];
+        });
+        return findInterferences(objects, 0.3, 400, onlyIds).interferences;
+      },
+      posedFloor: () => {
+        const root = partsRootRef.current;
+        if (!root) return null;
+        const box = new THREE.Box3();
+        for (const child of root.children) {
+          const part = partsDataRef.current.find((p) => p.id === child.userData.partId);
+          if (part && part.role === 'solid' && part.kind !== 'image_plane') box.expandByObject(child);
+        }
+        return box.isEmpty() ? null : box.min.y;
+      },
+      setPose: (deltas) => {
+        poseRef.current = deltas ?? new Map();
+        applyPose();
+      },
+      restBounds: (ids) =>
+        withRest(() => {
+          const box = new THREE.Box3();
+          for (const id of ids) {
+            const obj = partMapRef.current.get(id);
+            if (obj) box.expandByObject(obj);
+          }
+          if (box.isEmpty()) return null;
+          return { min: box.min.toArray() as [number, number, number], max: box.max.toArray() as [number, number, number] };
+        }),
+      measureParts: (ids) => withRest(() => {
         const root = partsRootRef.current;
         const out: Record<string, MeshMeasure> = {};
         if (!root) return out;
@@ -400,7 +504,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
           if (tris.length) out[id] = measureTriangles(tris);
         }
         return out;
-      },
+      }),
       partTriangles: (id) => {
         const child = partsRootRef.current?.children.find((c) => c.userData.partId === id);
         if (!child) return null;
@@ -418,7 +522,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         }
         return tris;
       },
-      servoOutput: (id) => {
+      servoOutput: (id) => withRest(() => {
         const child = partsRootRef.current?.children.find((c) => c.userData.partId === id);
         if (!child) return null;
         child.updateWorldMatrix(true, true);
@@ -446,8 +550,8 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         c.set(c.x / n, top, c.z / n).applyQuaternion(q).add(t);
         const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(q).normalize();
         return { point: c.toArray() as [number, number, number], axis: axis.toArray() as [number, number, number] };
-      },
-      sweepClashes: (moving, origin, axis, anglesDeg) => {
+      }),
+      sweepClashes: (moving, origin, axis, anglesDeg) => withRest(() => {
         const root = partsRootRef.current;
         if (!root) return [];
         const movingSet = new Set(moving);
@@ -492,7 +596,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
           }
         }
         return out;
-      },
+      }),
       frameAll: () => {
         const cam = cameraRef.current;
         const orbit = orbitRef.current;
@@ -612,9 +716,22 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       rendererRef.current = renderer;
 
       // Studio Lighting
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x18181b, 1.25);
+      // A soft studio room to reflect, like the Parts thumbnails: dark plastic shows its
+      // shape through highlights, and metal horns and screws stop rendering black
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      pmrem.dispose();
+      scene.environment = envMap;
+      scene.environmentIntensity = 0.5;
+
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x18181b, 1.0);
       hemiLight.position.set(0, 300, 0);
       scene.add(hemiLight);
+
+      // A soft fill from just above the camera, so faces turned away from the key light
+      // (the far side of a servo) never go flat black
+      const fillLight = new THREE.DirectionalLight(0xffffff, 0.55);
+      scene.add(fillLight, fillLight.target);
 
       const dirLight = new THREE.DirectionalLight(0xffffff, 1.35);
       dirLight.position.set(140, 260, 160);
@@ -714,6 +831,37 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       scene.add(pivot);
       pivotRef.current = pivot;
 
+      // Pose tool: a single ring (or arrow) on the joint's axis
+      const jointPivot = new THREE.Object3D();
+      jointPivot.name = 'joint-pivot';
+      scene.add(jointPivot);
+      jointPivotRef.current = jointPivot;
+      const poseDelta = () => {
+        const start = poseDragRef.current;
+        const j = poseJointRef.current;
+        if (!start || !j) return 0;
+        if (j.type === 'prismatic') return jointPivot.position.clone().sub(start.position).dot(j.axis.clone().normalize());
+        const rel = start.quaternion.clone().invert().multiply(jointPivot.quaternion);
+        return THREE.MathUtils.radToDeg(2 * Math.atan2(rel.x, rel.w));
+      };
+      transformControls.addEventListener('mouseDown', () => {
+        const j = poseJointRef.current;
+        if (transformControls.object !== jointPivot || !j) return;
+        poseDragRef.current = { quaternion: jointPivot.quaternion.clone(), position: jointPivot.position.clone() };
+        callbacksRef.current.onPoseJoint?.(j.id, 0, 'start');
+      });
+      transformControls.addEventListener('objectChange', () => {
+        const j = poseJointRef.current;
+        if (transformControls.object !== jointPivot || !j || !poseDragRef.current) return;
+        callbacksRef.current.onPoseJoint?.(j.id, poseDelta(), 'move');
+      });
+      transformControls.addEventListener('mouseUp', () => {
+        const j = poseJointRef.current;
+        if (transformControls.object !== jointPivot || !j || !poseDragRef.current) return;
+        callbacksRef.current.onPoseJoint?.(j.id, poseDelta(), 'end');
+        poseDragRef.current = null;
+      });
+
       // Multi-selection: remember where everything started, then move parts with the pivot
       transformControls.addEventListener('mouseDown', () => {
         if (transformControls.object !== pivot) return;
@@ -761,11 +909,12 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         const dim = (v: number) => Math.max(free ? 0.5 : 2, free ? Math.round(v * 10) / 10 : Math.round(v));
         const updates = start.items.map((it) => {
           const part = partsDataRef.current.find((p) => p.id === it.id)!;
-          const e = new THREE.Euler().setFromQuaternion(it.obj.quaternion, 'XYZ');
+          const rest = toRest(it.id, it.obj.position, it.obj.quaternion);
+          const e = new THREE.Euler().setFromQuaternion(rest.quaternion, 'XYZ');
           const scaled = transformControls.getMode() === 'scale';
           return {
             id: it.id,
-            position: [r(it.obj.position.x), r(it.obj.position.y), r(it.obj.position.z)] as [number, number, number],
+            position: [r(rest.position.x), r(rest.position.y), r(rest.position.z)] as [number, number, number],
             rotation: [
               deg(e.x),
               deg(e.y),
@@ -790,7 +939,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         orbit.enabled = !dragging;
         setSnapBypassed(dragging && shiftHeldRef.current);
 
-        if (!dragging && transformControls.object) {
+        if (!dragging && transformControls.object && transformControls.object !== jointPivotRef.current) {
           const obj = transformControls.object;
           const partId = obj.userData.partId;
           const currentPart = partsDataRef.current.find((p) => p.id === partId);
@@ -803,8 +952,10 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
               return free ? Math.round(d * 10) / 10 : Math.round(d);
             };
             const qDim = (v: number) => Math.max(free ? 0.5 : 2, free ? Math.round(v * 10) / 10 : Math.round(v));
-            const newPos: [number, number, number] = [qPos(obj.position.x), qPos(obj.position.y), qPos(obj.position.z)];
-            const newRot: [number, number, number] = [qDeg(obj.rotation.x), qDeg(obj.rotation.y), qDeg(obj.rotation.z)];
+            const rest = toRest(partId, obj.position, obj.quaternion);
+            const restRot = new THREE.Euler().setFromQuaternion(rest.quaternion, 'XYZ');
+            const newPos: [number, number, number] = [qPos(rest.position.x), qPos(rest.position.y), qPos(rest.position.z)];
+            const newRot: [number, number, number] = [qDeg(restRot.x), qDeg(restRot.y), qDeg(restRot.z)];
             if (transformControls.getMode() === 'scale' && !hasFixedSize(currentPart)) {
               const newDims = {
                 ...currentPart.dimensions,
@@ -1282,6 +1433,9 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
           dirLight.position.set(orbit.target.x + half * 0.78, half * 1.45, orbit.target.z + half * 0.9);
           dirLight.target.position.set(orbit.target.x, 0, orbit.target.z);
           dirLight.target.updateMatrixWorld();
+          fillLight.position.copy(camera.position).add(camera.up.clone().multiplyScalar(dist * 0.35));
+          fillLight.target.position.copy(orbit.target);
+          fillLight.target.updateMatrixWorld();
         }
         const fa = frameAnimRef.current;
         if (fa) {
@@ -1327,6 +1481,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         window.removeEventListener('blur', handleBlur);
         transformControls.dispose();
         orbit.dispose();
+        envMap.dispose();
         renderer.dispose();
         // Free the WebGL context now: each open scene tab holds one, and browsers cap them
         renderer.forceContextLoss();
@@ -1375,11 +1530,39 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       });
     }, [blueprintDataUrl]);
 
+    /** Pose tool: one ring about the joint's axis (an arrow for a slider), 1° / 1 mm steps; Shift is free */
+    const attachJointGizmo = () => {
+      const tc = transformRef.current;
+      const pivot = jointPivotRef.current;
+      if (!tc || !pivot) return;
+      const j = poseJoint;
+      if (!j) {
+        tc.detach();
+        return;
+      }
+      if (poseDragRef.current) return;
+      pivot.position.copy(j.origin);
+      pivot.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), j.axis.clone().normalize());
+      pivot.updateMatrixWorld(true);
+      tc.setMode(j.type === 'prismatic' ? 'translate' : 'rotate');
+      tc.setSpace('local');
+      tc.showX = true;
+      tc.showY = false;
+      tc.showZ = false;
+      const free = shiftHeldRef.current;
+      tc.setRotationSnap(free ? null : THREE.MathUtils.degToRad(1));
+      tc.setTranslationSnap(free ? null : 1);
+      if (tc.object !== pivot) tc.attach(pivot);
+    };
+
     /** One part → gizmo on the part; several → gizmo on a pivot at their center */
     const attachGizmo = () => {
       const tc = transformRef.current;
       const pivot = pivotRef.current;
       if (!tc || !pivot) return;
+      // Undo the pose gizmo's single-axis, local-space setup
+      tc.showX = tc.showY = tc.showZ = true;
+      tc.setSpace('world');
       const movable = selectedPartIds
         .map((id) => ({ obj: partMapRef.current.get(id), part: parts.find((p) => p.id === id) }))
         .filter((x): x is { obj: THREE.Group; part: ScenePart } => !!x.obj && !!x.part && !x.part.locked);
@@ -1397,6 +1580,13 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       }
     };
 
+    // Pose: place parts (before the gizmo effect below measures them) whenever the pose or the parts change
+    useEffect(() => {
+      poseRef.current = pose ?? new Map();
+      applyPose();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pose]);
+
     // Sync TransformMode & Snapping
     useEffect(() => {
       const tc = transformRef.current;
@@ -1405,6 +1595,9 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
 
       if (transformMode === 'sculpt') {
         tc.detach();
+      } else if (transformMode === 'pose') {
+        if (cursor) cursor.visible = false;
+        attachJointGizmo();
       } else {
         if (cursor) cursor.visible = false;
         tc.setMode(transformMode);
@@ -1413,7 +1606,8 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         attachGizmo();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [transformMode, snapStepMm, snapAngleDeg, selectedPartIds, parts]);
+    }, [transformMode, snapStepMm, snapAngleDeg, selectedPartIds, parts, poseJoint, pose]);
+
 
     // Rebuild 3D parts when `parts` or `selectedPartId` changes
     useEffect(() => {
@@ -1429,10 +1623,14 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         if (!part.visible) continue;
         const isSelected = selectedPartIds.includes(part.id);
         const group = buildPartGroup(part, isSelected);
+        group.userData.restPosition = group.position.clone();
+        group.userData.restQuaternion = group.quaternion.clone();
         partsRoot.add(group);
         partMapRef.current.set(part.id, group);
       }
-      if (transformMode !== 'sculpt') attachGizmo();
+      applyPose();
+      if (transformMode === 'pose') attachJointGizmo();
+      else if (transformMode !== 'sculpt') attachGizmo();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [parts, selectedPartIds, transformMode, componentMeshVersion]);
 

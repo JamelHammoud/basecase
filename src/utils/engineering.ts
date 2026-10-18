@@ -141,6 +141,19 @@ export interface CheckRow {
   ids?: string[];
 }
 
+/** Every check `runEngineering` can report, in report order (listed before a run) */
+export const ENGINEERING_CHECKS = [
+  'Weight',
+  'Servo torque',
+  'Servo alignment',
+  'Joint support',
+  'Range of motion',
+  'Servo voltage',
+  'Current and runtime',
+  'Standing stability',
+  'Heat near servos',
+];
+
 export interface JointLoad {
   joint: RobotJoint;
   massG: number;
@@ -193,7 +206,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   // Mass
   const est = masses.filter((m) => m.source === 'estimate');
   rows.push({
-    check: 'Mass',
+    check: 'Weight',
     status: est.length ? 'warn' : 'pass',
     detail: `${fmtG(all.grams)}, centre of mass ${Math.round(all.com[1])} mm up${est.length ? `. ${est.length} parts estimated from volume (${fmtG(est.reduce((s, m) => s + m.grams, 0))})` : ''}`,
     ids: est.map((m) => m.id),
@@ -205,7 +218,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   // Joints: torque
   const loads: JointLoad[] = [];
   const unknownIds = joints.flatMap((j) => [...j.parent, ...j.child, ...(j.actuators ?? [])].filter((id) => !byPart.has(id)));
-  if (!joints.length) rows.push({ check: 'Joint torque', status: 'not run', detail: 'No joints' });
+  if (!joints.length) rows.push({ check: 'Servo torque', status: 'not run', detail: 'No joints' });
   for (const j of joints) {
     if (j.type !== 'revolute') continue;
     const a = norm(j.axis);
@@ -251,7 +264,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     const warns = loads.filter((l) => l.status === 'warn');
     const unknown = loads.filter((l) => l.status === 'not run');
     rows.push({
-      check: 'Joint torque',
+      check: 'Servo torque',
       status: fails.length ? 'fail' : unknown.length || warns.length ? 'warn' : 'pass',
       detail:
         `${loads.length} joints; worst ${worst[0].joint.name} needs ${nm(worst[0].staticNm)} N·m static` +
@@ -306,12 +319,12 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   }
   if (joints.length) {
     rows.push({
-      check: 'Servo on axis',
+      check: 'Servo alignment',
       status: misaligned.length ? 'fail' : 'pass',
       detail: misaligned.length ? `Servo output not on the joint axis: ${misaligned.join(', ')}` : 'Every servo output lies on its joint axis',
     });
     rows.push({
-      check: 'Support bearings',
+      check: 'Joint support',
       status: unsupported.length ? 'warn' : 'pass',
       detail: unsupported.length
         ? `Link held on one side only (the output shaft takes the bending load). Clamp both horns of a dual-shaft servo, or add a bearing on the axis: ${unsupported.join(', ')}`

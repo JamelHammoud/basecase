@@ -38,12 +38,14 @@ export interface HardwareSpec {
   drive?: ScrewDrive;
 }
 
-export type ScrewDrive = 'hex' | 'torx' | 'phillips' | 'slotted';
+export type ScrewDrive = 'hex' | 'torx' | 'phillips' | 'pozidriv' | 'slotted';
 
+/** Every drive, in the one order the Drive chips use for every head */
 export const DRIVES: Record<ScrewDrive, { label: string }> = {
   hex: { label: 'Hex' },
   torx: { label: 'Torx' },
   phillips: { label: 'Phillips' },
+  pozidriv: { label: 'Pozidriv' },
   slotted: { label: 'Slotted' },
 };
 
@@ -129,10 +131,28 @@ export const COUNTERSUNK: Table<{ dk: number; k: number; s: number }> = {
 };
 
 /** Head + recess for drives other than hex (bd_warehouse fastener tables, from the ISO standards).
- *  Torx recess sizes follow ISO 10664; Phillips sizes ISO 4757. */
+ *  Torx recess sizes follow ISO 10664; Phillips (H) and Pozidriv (Z) sizes ISO 4757. */
 type DriveHead = { dk: number; k: number; recess: string };
-/** ISO 14581 countersunk Torx, ISO 7046 countersunk Phillips, ISO 2009 countersunk slotted */
-export const COUNTERSUNK_BY_DRIVE: Record<'torx' | 'phillips' | 'slotted', Table<DriveHead>> = {
+type CrossDrive = 'torx' | 'phillips' | 'pozidriv' | 'slotted';
+
+/** ISO 7045 / 7046-1 give the H (Phillips) and Z (Pozidriv) heads the same size and recess number */
+const pozidrivOf = (t: Table<DriveHead>): Table<DriveHead> =>
+  Object.fromEntries(Object.entries(t).map(([s, h]) => [s, { ...h, recess: h.recess.replace('PH', 'PZ') }]));
+
+/** ISO 7046-1 countersunk cross recess (H); the Z (Pozidriv) table is the same */
+const COUNTERSUNK_CROSS: Table<DriveHead> = {
+  M2: { dk: 3.8, k: 1.2, recess: 'PH0' },
+  'M2.5': { dk: 4.7, k: 1.5, recess: 'PH1' },
+  M3: { dk: 5.6, k: 1.65, recess: 'PH1' },
+  M4: { dk: 7.5, k: 2.2, recess: 'PH2' },
+  M5: { dk: 9.2, k: 2.5, recess: 'PH2' },
+  M6: { dk: 11, k: 3, recess: 'PH3' },
+  M8: { dk: 14.5, k: 4, recess: 'PH4' },
+  M10: { dk: 18, k: 5, recess: 'PH4' },
+};
+
+/** ISO 14581 countersunk Torx, ISO 7046-1 countersunk Phillips (H) and Pozidriv (Z), ISO 2009 countersunk slotted */
+export const COUNTERSUNK_BY_DRIVE: Record<CrossDrive, Table<DriveHead>> = {
   torx: {
     M2: { dk: 4.4, k: 1.2, recess: 'T6' },
     'M2.5': { dk: 5.5, k: 1.5, recess: 'T8' },
@@ -143,16 +163,8 @@ export const COUNTERSUNK_BY_DRIVE: Record<'torx' | 'phillips' | 'slotted', Table
     M8: { dk: 17.3, k: 4.65, recess: 'T45' },
     M10: { dk: 20, k: 5, recess: 'T50' },
   },
-  phillips: {
-    M2: { dk: 3.8, k: 1.2, recess: 'PH0' },
-    'M2.5': { dk: 4.7, k: 1.5, recess: 'PH1' },
-    M3: { dk: 5.6, k: 1.65, recess: 'PH1' },
-    M4: { dk: 7.5, k: 2.2, recess: 'PH2' },
-    M5: { dk: 9.2, k: 2.5, recess: 'PH2' },
-    M6: { dk: 11, k: 3, recess: 'PH3' },
-    M8: { dk: 14.5, k: 4, recess: 'PH4' },
-    M10: { dk: 18, k: 5, recess: 'PH4' },
-  },
+  phillips: COUNTERSUNK_CROSS,
+  pozidriv: pozidrivOf(COUNTERSUNK_CROSS),
   slotted: {
     M2: { dk: 3.8, k: 1.2, recess: '0.56' },
     'M2.5': { dk: 4.7, k: 1.5, recess: '0.66' },
@@ -166,18 +178,22 @@ export const COUNTERSUNK_BY_DRIVE: Record<'torx' | 'phillips' | 'slotted', Table
   },
 };
 
-/** ISO 7045 pan head Phillips, ISO 14583 pan head Torx, ISO 1580 pan head slotted (slot width as recess) */
-export const PAN_HEAD: Record<'phillips' | 'torx' | 'slotted', Table<DriveHead>> = {
-  phillips: {
-    M2: { dk: 4, k: 1.6, recess: 'PH0' },
-    'M2.5': { dk: 5, k: 2.1, recess: 'PH1' },
-    M3: { dk: 5.6, k: 2.4, recess: 'PH1' },
-    M4: { dk: 8, k: 3.1, recess: 'PH2' },
-    M5: { dk: 9.5, k: 3.7, recess: 'PH2' },
-    M6: { dk: 12, k: 4.6, recess: 'PH3' },
-    M8: { dk: 16, k: 6, recess: 'PH4' },
-    M10: { dk: 20, k: 7.5, recess: 'PH4' },
-  },
+/** ISO 7045 pan head cross recess (H); the Z (Pozidriv) table is the same */
+const PAN_CROSS: Table<DriveHead> = {
+  M2: { dk: 4, k: 1.6, recess: 'PH0' },
+  'M2.5': { dk: 5, k: 2.1, recess: 'PH1' },
+  M3: { dk: 5.6, k: 2.4, recess: 'PH1' },
+  M4: { dk: 8, k: 3.1, recess: 'PH2' },
+  M5: { dk: 9.5, k: 3.7, recess: 'PH2' },
+  M6: { dk: 12, k: 4.6, recess: 'PH3' },
+  M8: { dk: 16, k: 6, recess: 'PH4' },
+  M10: { dk: 20, k: 7.5, recess: 'PH4' },
+};
+
+/** ISO 7045 pan head Phillips (H) and Pozidriv (Z), ISO 14583 pan head Torx, ISO 1580 pan head slotted (slot width as recess) */
+export const PAN_HEAD: Record<CrossDrive, Table<DriveHead>> = {
+  phillips: PAN_CROSS,
+  pozidriv: pozidrivOf(PAN_CROSS),
   torx: {
     M2: { dk: 4, k: 1.6, recess: 'T6' },
     'M2.5': { dk: 5, k: 2.1, recess: 'T8' },
@@ -205,8 +221,15 @@ export const SOCKET_HEAD_TORX: Table<string> = {
   M2: 'T6', 'M2.5': 'T8', M3: 'T10', M4: 'T20', M5: 'T25', M6: 'T30', M8: 'T45', M10: 'T50', M12: 'T55',
 };
 
+/** ISO 7380-1 TX: the ISO 7380-1 button head with a hexalobular recess (commercial; M3 T10 per
+ *  McMaster / Lemu listings, larger sizes follow the ISO 14579 progression) */
+export const BUTTON_HEAD_TORX: Table<string> = {
+  M2: 'T6', 'M2.5': 'T8', M3: 'T10', M4: 'T20', M5: 'T25', M6: 'T30', M8: 'T40', M10: 'T50', M12: 'T55',
+};
+
 /** ISO 10664 hexalobular (Torx) recess: point-to-point A and across-lobes B, mm */
 export const TORX_RECESS: Record<string, { A: number; B: number }> = {
+  T5: { A: 1.42, B: 1.03 },
   T6: { A: 1.75, B: 1.27 },
   T8: { A: 2.4, B: 1.75 },
   T10: { A: 2.8, B: 2.05 },
@@ -220,13 +243,18 @@ export const TORX_RECESS: Record<string, { A: number; B: number }> = {
   T55: { A: 11.35, B: 8.05 },
 };
 
-/** ISO 4757 cross (Phillips) recess: overall width m and depth, simplified per size */
-export const PHILLIPS_RECESS: Record<string, { m: number; depth: number }> = {
+/** ISO 4757 cross recess, type H (Phillips) and type Z (Pozidriv): overall width m and depth, simplified per size */
+export const CROSS_RECESS: Record<string, { m: number; depth: number }> = {
   PH0: { m: 1.9, depth: 1.1 },
   PH1: { m: 3.1, depth: 2 },
   PH2: { m: 5.3, depth: 3.27 },
   PH3: { m: 6.8, depth: 3.53 },
   PH4: { m: 10, depth: 5.88 },
+  PZ0: { m: 1.95, depth: 1.1 },
+  PZ1: { m: 3.0, depth: 1.9 },
+  PZ2: { m: 5.2, depth: 3.1 },
+  PZ3: { m: 6.6, depth: 3.4 },
+  PZ4: { m: 9.8, depth: 5.7 },
 };
 
 /** ISO 4017 hex head: across flats s, head height k */
@@ -240,6 +268,19 @@ export const HEX_BOLT: Table<{ s: number; k: number }> = {
   M8: { s: 13, k: 5.3 },
   M10: { s: 16, k: 6.4 },
   M12: { s: 18, k: 7.5 },
+};
+
+/** ISO 4766 slotted set screw, flat point: slot width n and minimum slot depth t (2011 edition) */
+export const SET_SCREW_SLOT: Table<{ n: number; t: number }> = {
+  M2: { n: 0.25, t: 0.64 },
+  'M2.5': { n: 0.4, t: 0.72 },
+  M3: { n: 0.4, t: 0.8 },
+  M4: { n: 0.6, t: 1.12 },
+  M5: { n: 0.8, t: 1.28 },
+  M6: { n: 1, t: 1.6 },
+  M8: { n: 1.2, t: 2 },
+  M10: { n: 1.6, t: 2.4 },
+  M12: { n: 2, t: 2.8 },
 };
 
 /** ISO 4026 set screw hex key */
@@ -447,7 +488,7 @@ export const HARDWARE_TYPES: HardwareTypeInfo[] = [
   {
     type: 'button_head',
     name: 'Button Head Screw',
-    description: 'ISO 7380 low dome head',
+    description: 'Low dome head',
     group: 'Screws',
     color: '#c7c9cf',
     finishes: ['stainless', 'black', 'zinc'],
@@ -495,7 +536,7 @@ export const HARDWARE_TYPES: HardwareTypeInfo[] = [
   {
     type: 'set_screw',
     name: 'Set Screw',
-    description: 'ISO 4026 grub screw, flat point',
+    description: 'Grub screw, flat point',
     group: 'Screws',
     color: '#2b2b30',
     finishes: ['black', 'stainless'],
@@ -652,11 +693,9 @@ export function makeSpec(
 ): HardwareSpec {
   const info = HARDWARE_BY_TYPE[type];
   const drives = driveOptions(type);
-  // A drive is only kept where that head + drive pair exists at this size
-  const sizes = drive && drives.includes(drive) ? sizesFor(type, drive) : info.sizes;
-  const s = nearestSize(type, size ?? info.defaultSize, sizes);
+  const s = nearestSize(type, size ?? info.defaultSize);
   const f = finish && info.finishes.includes(finish) ? finish : info.finishes[0];
-  const d = drives.length ? (drive && drives.includes(drive) && sizesFor(type, drive).includes(s) ? drive : drives[0]) : undefined;
+  const d = drives.length ? (drive && drives.includes(drive) ? drive : defaultDrive(type)) : undefined;
   const range = lengthRange(type, s);
   if (!range) return { type, size: s, finish: f, ...(d ? { drive: d } : {}) };
   const wanted = length !== undefined && Number.isFinite(length) ? length : info.defaultLength?.(s) ?? range.min;
@@ -664,50 +703,174 @@ export function makeSpec(
   return { type, size: s, length: l, finish: f, ...(d ? { drive: d } : {}) };
 }
 
-/** Drives a screw head comes in; the first is the default. Empty for non-screws. */
+/**
+ * Drives a screw comes in, in `DRIVES` order. Every headed screw takes every drive; set screws
+ * take hex, Torx and slotted (cross recesses aren't made in grub screws). Empty for non-screws.
+ */
 export function driveOptions(type: HardwareType): ScrewDrive[] {
   switch (type) {
     case 'socket_head':
-      return ['hex', 'torx'];
-    case 'countersunk':
-      return ['hex', 'torx', 'phillips', 'slotted'];
-    case 'pan_head':
-      return ['phillips', 'torx', 'slotted'];
     case 'button_head':
+    case 'countersunk':
+    case 'pan_head':
+      return ['hex', 'torx', 'phillips', 'pozidriv', 'slotted'];
     case 'set_screw':
-      return ['hex'];
+      return ['hex', 'torx', 'slotted'];
     default:
       return [];
   }
 }
 
-/** Sizes a head + drive pair is made in */
-export function sizesFor(type: HardwareType, drive: ScrewDrive): string[] {
-  if (type === 'countersunk' && drive !== 'hex') return sizesOf(COUNTERSUNK_BY_DRIVE[drive]);
-  if (type === 'pan_head' && drive !== 'hex') return sizesOf(PAN_HEAD[drive]);
-  if (type === 'socket_head' && drive === 'torx') return sizesOf(SOCKET_HEAD_TORX);
-  return HARDWARE_BY_TYPE[type].sizes;
+/** The drive a head comes with unless you pick another (the most common one sold) */
+export function defaultDrive(type: HardwareType): ScrewDrive | undefined {
+  return type === 'pan_head' ? 'phillips' : driveOptions(type)[0];
 }
 
-export const hardwareDrive = (spec: HardwareSpec): ScrewDrive | undefined => spec.drive ?? driveOptions(spec.type)[0];
+export const hardwareDrive = (spec: HardwareSpec): ScrewDrive | undefined =>
+  spec.drive && driveOptions(spec.type).includes(spec.drive) ? spec.drive : defaultDrive(spec.type);
 
-/** The ISO standard for a screw's head + drive */
-export function screwStandard(spec: HardwareSpec): string {
-  const d = hardwareDrive(spec);
-  switch (spec.type) {
-    case 'socket_head':
-      return d === 'torx' ? 'ISO 14579' : 'ISO 4762';
-    case 'button_head':
-      return 'ISO 7380-1';
-    case 'countersunk':
-      return { hex: 'ISO 10642', torx: 'ISO 14581', phillips: 'ISO 7046', slotted: 'ISO 2009' }[d ?? 'hex'];
+/**
+ * Head size and recess for a screw at its drive: dk head Ø, k head height, and the recess
+ * ('hex' with across-flats s, a Torx T size, a Phillips PH or Pozidriv PZ size, or a slot width).
+ */
+export type ScrewRecess =
+  | { kind: 'hex'; s: number }
+  | { kind: 'torx'; size: string }
+  | { kind: 'phillips'; size: string }
+  | { kind: 'pozidriv'; size: string }
+  | { kind: 'slot'; width: number };
+
+type ScrewHead = { dk: number; k: number; recess: ScrewRecess };
+
+/** The standard each head's shape comes from (its usual drive) */
+const HEAD_STANDARD: Partial<Record<HardwareType, string>> = {
+  socket_head: 'ISO 4762',
+  button_head: 'ISO 7380-1',
+  countersunk: 'ISO 10642',
+  pan_head: 'ISO 7045',
+  set_screw: 'ISO 4026',
+};
+
+/** Standards that cover a head + drive pair exactly; anything else is a commercial screw */
+const DRIVE_STANDARD: Partial<Record<HardwareType, Partial<Record<ScrewDrive, string>>>> = {
+  socket_head: { hex: 'ISO 4762', torx: 'ISO 14579' },
+  button_head: { hex: 'ISO 7380-1', torx: 'ISO 7380-1 TX' },
+  countersunk: { hex: 'ISO 10642', torx: 'ISO 14581', phillips: 'ISO 7046-1 H', pozidriv: 'ISO 7046-1 Z', slotted: 'ISO 2009' },
+  pan_head: { torx: 'ISO 14583', phillips: 'ISO 7045 H', pozidriv: 'ISO 7045 Z', slotted: 'ISO 1580' },
+  set_screw: { hex: 'ISO 4026', slotted: 'ISO 4766' },
+};
+
+/** Head + recess straight from the standard's table, when one covers this drive at this size */
+function standardHead(type: HardwareType, drive: ScrewDrive, size: MetricSize): ScrewHead | null {
+  const fromTable = (h: DriveHead | undefined): ScrewHead | null =>
+    !h
+      ? null
+      : drive === 'torx' || drive === 'phillips' || drive === 'pozidriv'
+        ? { dk: h.dk, k: h.k, recess: { kind: drive, size: h.recess } }
+        : { dk: h.dk, k: h.k, recess: { kind: 'slot', width: Number(h.recess) } };
+  const withRecess = (h: { dk: number; k: number } | undefined, recess: ScrewRecess | null) =>
+    h && recess ? { dk: h.dk, k: h.k, recess } : null;
+  switch (type) {
+    case 'socket_head': {
+      const h = SOCKET_HEAD[size];
+      if (drive === 'hex') return withRecess(h, h ? { kind: 'hex', s: h.s } : null);
+      return drive === 'torx' ? withRecess(h, SOCKET_HEAD_TORX[size] ? { kind: 'torx', size: SOCKET_HEAD_TORX[size]! } : null) : null;
+    }
+    case 'button_head': {
+      const h = BUTTON_HEAD[size];
+      if (drive === 'hex') return withRecess(h, h ? { kind: 'hex', s: h.s } : null);
+      return drive === 'torx' ? withRecess(h, BUTTON_HEAD_TORX[size] ? { kind: 'torx', size: BUTTON_HEAD_TORX[size]! } : null) : null;
+    }
+    case 'countersunk': {
+      if (drive !== 'hex') return fromTable(COUNTERSUNK_BY_DRIVE[drive][size]);
+      const h = COUNTERSUNK[size];
+      return withRecess(h, h ? { kind: 'hex', s: h.s } : null);
+    }
     case 'pan_head':
-      return { hex: 'ISO 7045', torx: 'ISO 14583', phillips: 'ISO 7045', slotted: 'ISO 1580' }[d ?? 'phillips'];
-    case 'set_screw':
-      return 'ISO 4026';
+      return drive === 'hex' ? null : fromTable(PAN_HEAD[drive][size]);
     default:
-      return '';
+      return null;
   }
+}
+
+/** Cross recess number per thread size (ISO 7045 / 7046-1), for heads whose standard has none */
+const CROSS_NUMBER: Record<MetricSize, number> = { M2: 0, 'M2.5': 1, M3: 1, M4: 2, M5: 2, M6: 3, M8: 4, M10: 4, M12: 4 };
+/** Slot width per thread size (ISO 1580 / 2009), for heads whose standard has none */
+const SLOT_WIDTH: Record<MetricSize, number> = { M2: 0.7, 'M2.5': 0.8, M3: 1, M4: 1.51, M5: 1.51, M6: 1.91, M8: 2.31, M10: 2.81, M12: 3.06 };
+/** Torx for set screws (commercial): the size whose point-to-point A matches the ISO 4026 hex key's corners */
+const SET_SCREW_TORX: Record<MetricSize, string> = {
+  M2: 'T5', 'M2.5': 'T5', M3: 'T6', M4: 'T8', M5: 'T10', M6: 'T15', M8: 'T25', M10: 'T30', M12: 'T40',
+};
+
+/** A recess sized for the thread, for a head + drive pair no standard covers */
+function commercialRecess(type: HardwareType, drive: ScrewDrive, size: MetricSize): ScrewRecess {
+  switch (drive) {
+    case 'hex':
+      // Hex socket pan heads use the button head's key
+      return { kind: 'hex', s: (type === 'set_screw' ? SET_SCREW : BUTTON_HEAD)[size]!.s };
+    case 'torx':
+      return { kind: 'torx', size: type === 'set_screw' ? SET_SCREW_TORX[size] : SOCKET_HEAD_TORX[size]! };
+    case 'phillips':
+      return { kind: 'phillips', size: `PH${CROSS_NUMBER[size]}` };
+    case 'pozidriv':
+      return { kind: 'pozidriv', size: `PZ${CROSS_NUMBER[size]}` };
+    case 'slotted':
+      return { kind: 'slot', width: type === 'set_screw' ? SET_SCREW_SLOT[size]!.n : SLOT_WIDTH[size] };
+  }
+}
+
+/** The head's shape when no standard covers the drive: the head of its usual drive */
+function plainHead(type: HardwareType, size: MetricSize): { dk: number; k: number } | undefined {
+  switch (type) {
+    case 'socket_head':
+      return SOCKET_HEAD[size];
+    case 'button_head':
+      return BUTTON_HEAD[size];
+    case 'countersunk':
+      return COUNTERSUNK[size];
+    case 'pan_head':
+      return PAN_HEAD.phillips[size];
+    default:
+      return undefined;
+  }
+}
+
+export function screwHead(spec: HardwareSpec): ScrewHead | null {
+  const d = hardwareDrive(spec);
+  if (!d || !isMetric(spec.size)) return null;
+  const exact = standardHead(spec.type, d, spec.size);
+  if (exact) return exact;
+  const h = plainHead(spec.type, spec.size);
+  return h ? { dk: h.dk, k: h.k, recess: commercialRecess(spec.type, d, spec.size) } : null;
+}
+
+/** A set screw's recess (no head) and how deep it's cut: ISO 4026 hex socket, ISO 4766 slot, or Torx */
+export function setScrewRecess(spec: HardwareSpec): { recess: ScrewRecess; depth: number } | null {
+  if (spec.type !== 'set_screw' || !isMetric(spec.size)) return null;
+  const d = hardwareDrive(spec) ?? 'hex';
+  const recess = commercialRecess('set_screw', d, spec.size);
+  const L = spec.length ?? 0;
+  if (recess.kind === 'slot') return { recess, depth: Math.min(L * 0.6, SET_SCREW_SLOT[spec.size]!.t) };
+  // ISO 4026: socket about 0.8 s deep (minimum key engagement); Torx to the same depth
+  return { recess, depth: Math.min(L * 0.6, SET_SCREW[spec.size]!.s * 0.8) };
+}
+
+/** True when an ISO standard covers this screw's head + drive exactly */
+function isStandardDrive(spec: HardwareSpec): boolean {
+  const d = hardwareDrive(spec);
+  if (!d || !isMetric(spec.size) || !DRIVE_STANDARD[spec.type]?.[d]) return false;
+  return spec.type === 'set_screw' ? d === 'hex' || !!SET_SCREW_SLOT[spec.size] : !!standardHead(spec.type, d, spec.size);
+}
+
+/**
+ * The ISO standard for a screw's head + drive. Pairs no standard covers name the standard
+ * their head shape comes from: "ISO 7380-1 head" for a slotted button head.
+ */
+export function screwStandard(spec: HardwareSpec): string {
+  const base = HEAD_STANDARD[spec.type];
+  if (!base) return '';
+  if (isStandardDrive(spec)) return DRIVE_STANDARD[spec.type]![hardwareDrive(spec)!]!;
+  return spec.type === 'set_screw' ? `${base} form` : `${base} head`;
 }
 
 /** One line for cards and pages: the exact standard for this drive, then the type's description */
@@ -717,52 +880,9 @@ export function hardwareSubtitle(spec: HardwareSpec): string {
   return standard && !description.startsWith(standard) ? `${standard} · ${description}` : description;
 }
 
-/**
- * Head size and recess for a screw at its drive: dk head Ø, k head height, and the recess
- * ('hex' with across-flats s, a Torx T size, a Phillips PH size, or a slot width).
- */
-export function screwHead(spec: HardwareSpec): {
-  dk: number;
-  k: number;
-  recess: { kind: 'hex'; s: number } | { kind: 'torx'; size: string } | { kind: 'phillips'; size: string } | { kind: 'slot'; width: number };
-} | null {
-  const size = spec.size as MetricSize;
-  const d = hardwareDrive(spec);
-  const fromTable = (h: DriveHead | undefined, drive: ScrewDrive) =>
-    h
-      ? {
-          dk: h.dk,
-          k: h.k,
-          recess:
-            drive === 'torx'
-              ? ({ kind: 'torx', size: h.recess } as const)
-              : drive === 'phillips'
-                ? ({ kind: 'phillips', size: h.recess } as const)
-                : ({ kind: 'slot', width: Number(h.recess) } as const),
-        }
-      : null;
-  switch (spec.type) {
-    case 'socket_head': {
-      const h = SOCKET_HEAD[size]!;
-      return d === 'torx' && SOCKET_HEAD_TORX[size]
-        ? { dk: h.dk, k: h.k, recess: { kind: 'torx', size: SOCKET_HEAD_TORX[size]! } }
-        : { dk: h.dk, k: h.k, recess: { kind: 'hex', s: h.s } };
-    }
-    case 'button_head': {
-      const h = BUTTON_HEAD[size]!;
-      return { dk: h.dk, k: h.k, recess: { kind: 'hex', s: h.s } };
-    }
-    case 'countersunk': {
-      if (d && d !== 'hex') return fromTable(COUNTERSUNK_BY_DRIVE[d][size], d);
-      const h = COUNTERSUNK[size]!;
-      return { dk: h.dk, k: h.k, recess: { kind: 'hex', s: h.s } };
-    }
-    case 'pan_head':
-      return fromTable(PAN_HEAD[d === 'hex' || !d ? 'phillips' : d][size], d ?? 'phillips');
-    default:
-      return null;
-  }
-}
+/** What drives the recess, for spec rows: "2.5 mm hex key", "T10", "PZ1", "0.8 mm slot" */
+export const recessLabel = (r: ScrewRecess): string =>
+  r.kind === 'hex' ? `${r.s} mm hex key` : r.kind === 'slot' ? `${r.width} mm slot` : r.size;
 
 export const hardwareFinish = (spec: HardwareSpec): HardwareFinish => spec.finish ?? HARDWARE_BY_TYPE[spec.type].finishes[0];
 
@@ -859,7 +979,9 @@ export function hardwareName(spec: HardwareSpec): string {
   if (spec.type === 'bearing') return `${spec.size} Bearing`;
   if (spec.type === 'dowel_pin') return `Ø${spec.size} × ${spec.length} Dowel Pin${finish}`;
   // Non-default drives are part of the name too ("M3 × 10 Torx Socket Head Screw")
-  const drive = spec.drive && spec.drive !== driveOptions(spec.type)[0] ? `${DRIVES[spec.drive].label} ` : '';
+  const d = hardwareDrive(spec);
+  // "Hex Socket", so a hex socket pan head doesn't read as a hex head
+  const drive = d && d !== defaultDrive(spec.type) ? `${d === 'hex' ? 'Hex Socket' : DRIVES[d].label} ` : '';
   if (spec.length !== undefined) return `${spec.size} × ${spec.length} ${drive}${info.name}${finish}`;
   return `${spec.size} ${info.name}${finish}`;
 }
@@ -975,6 +1097,64 @@ export function hardwareNote(spec: HardwareSpec): string {
   }
 }
 
+/** One hole to model around a part: what it is, its size, and the unit shown muted after it */
+export interface HoleRow {
+  label: string;
+  value: string;
+  unit: string;
+}
+
+/** The holes to print or drill around this part (the same numbers as `hardwareNote`), as spec rows */
+export function hardwareHoleRows(spec: HardwareSpec): HoleRow[] {
+  const r = (v: number) => `${Math.round(v * 100) / 100}`;
+  const row = (label: string, value: string, unit = 'mm'): HoleRow => ({ label, value, unit });
+  if (spec.type === 'bearing') {
+    const b = BEARINGS[spec.size];
+    return [row('Housing, press fit', `Ø${r(b.D + 0.1)}`), row('Shaft', `Ø${b.d}`)];
+  }
+  if (spec.type === 'dowel_pin') {
+    const d = Number(spec.size);
+    return [row('Press fit', `Ø${(d - 0.05).toFixed(2)}`), row('Slip fit', `Ø${(d + 0.15).toFixed(2)}`)];
+  }
+  if (!isMetric(spec.size)) return [];
+  const hole = HOLES[spec.size];
+  const clearance = row('Clearance', `Ø${hole.clearance}`);
+  const tap = row('Tap drill', `Ø${hole.tap}`);
+  switch (spec.type) {
+    case 'socket_head':
+    case 'button_head':
+    case 'pan_head': {
+      const h = screwHead(spec)!;
+      return [clearance, row('Counterbore', `Ø${r(h.dk + 0.6)} × ${r(h.k + 0.3)}`), tap];
+    }
+    case 'countersunk':
+      return [clearance, row('Countersink', `90° to Ø${r(screwHead(spec)!.dk + 0.4)}`), tap];
+    case 'hex_bolt':
+      return [clearance, tap];
+    case 'set_screw':
+      return [tap];
+    case 'hex_nut':
+    case 'lock_nut': {
+      const s = (spec.type === 'hex_nut' ? HEX_NUT : LOCK_NUT)[spec.size]!.s;
+      return [row('Nut trap', (s + 0.3).toFixed(1), 'mm across flats'), clearance];
+    }
+    case 'square_nut': {
+      const n = SQUARE_NUT[spec.size]!;
+      return [row('Slot', `${(n.s + 0.3).toFixed(1)} × ${(n.m + 0.3).toFixed(1)}`), clearance];
+    }
+    case 'washer':
+    case 'large_washer':
+      return [clearance];
+    case 'heat_insert': {
+      const ins = HEAT_INSERT[spec.size]!;
+      return [row('Printed hole', `Ø${ins.hole} × ${(ins.l + 1).toFixed(1)}`)];
+    }
+    case 'standoff_mf':
+    case 'standoff_ff':
+      return [row('Clearance in plates', `Ø${hole.clearance}`)];
+  }
+}
+
 /**
  * Parses search text like "m3", "m3x10", "M2.5 × 8", "608" into a size and length.
  */
@@ -991,13 +1171,16 @@ export function parseHardwareQuery(q: string): { size?: string; length?: number 
 /** Amazon US search for this exact spec (fasteners are sold by many sellers, so it's a search, not one listing) */
 export function hardwareShopUrl(spec: HardwareSpec): string {
   const L = spec.length;
+  const d = hardwareDrive(spec);
+  const drive = d === 'hex' ? 'hex socket' : d ? DRIVES[d].label.toLowerCase() : '';
+  const std = isStandardDrive(spec) ? ` ${screwStandard(spec)}` : '';
   const q: Record<HardwareType, string> = {
-    socket_head: `${spec.size} x ${L}mm ${hardwareDrive(spec) === 'torx' ? 'torx' : 'hex'} socket head cap screw ${screwStandard(spec)}`,
-    button_head: `${spec.size} x ${L}mm button head socket screw ISO 7380`,
-    countersunk: `${spec.size} x ${L}mm ${DRIVES[hardwareDrive(spec) ?? 'hex'].label.toLowerCase()} countersunk flat head screw ${screwStandard(spec)}`,
-    pan_head: `${spec.size} x ${L}mm ${DRIVES[hardwareDrive(spec) ?? 'phillips'].label.toLowerCase()} pan head screw ${screwStandard(spec)}`,
+    socket_head: `${spec.size} x ${L}mm ${drive} socket head cap screw${std}`,
+    button_head: `${spec.size} x ${L}mm ${drive} button head screw${std}`,
+    countersunk: `${spec.size} x ${L}mm ${drive} countersunk flat head screw${std}`,
+    pan_head: `${spec.size} x ${L}mm ${drive} pan head screw${std}`,
     hex_bolt: `${spec.size} x ${L}mm hex head bolt`,
-    set_screw: `${spec.size} x ${L}mm flat point set screw`,
+    set_screw: `${spec.size} x ${L}mm ${drive} flat point set screw${std}`,
     hex_nut: `${spec.size} hex nut ISO 4032`,
     lock_nut: `${spec.size} nylon insert lock nut`,
     square_nut: `${spec.size} square nut DIN 562`,

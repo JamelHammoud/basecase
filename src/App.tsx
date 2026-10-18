@@ -20,6 +20,7 @@ import {
   TrackpadGestureMode,
 } from './types/robotics';
 import { platformBridge } from './utils/platformBridge';
+import { useStoplights } from './utils/useStoplights';
 import { IconButton, LAYOUT, NO_DRAG_REGION, ToastData } from './design-system';
 
 /**
@@ -54,8 +55,8 @@ function blankSeed(metas: Record<string, WorkspaceMeta>, closing: string[] = [])
 
 /** Sidebar toggle: 28px, 8px after the stoplights' bounding box (x 19–79) */
 const TOGGLE_LEFT = LAYOUT.lightsX + LAYOUT.lightsWidth + 8;
-/** Tabs never start before 8px past the toggle */
-const TABS_MIN_LEFT = TOGGLE_LEFT + 28 + 8;
+/** Without stoplights (browser, full screen) the toggle centers on the rail column, x = 26 */
+const TOGGLE_LEFT_BARE = 26 - 14;
 
 const newTabId = () => `tab-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
@@ -122,6 +123,7 @@ export function App() {
     return { left: LAYOUT.leftPanelWidth, right: LAYOUT.rightPanelWidth };
   });
   const [resizingPanel, setResizingPanel] = useState<'left' | 'right' | null>(null);
+  const hasStoplights = useStoplights();
   useEffect(() => {
     try {
       localStorage.setItem('panel-widths', JSON.stringify(panelWidths));
@@ -545,7 +547,9 @@ export function App() {
 
   // Tabs run along the title bar from 8px after the sidebar toggle to 8px before the scene's
   // actions, which end at x = width − 20 (sheet inset + card padding)
-  const rowLeft = TABS_MIN_LEFT;
+  const toggleLeft = hasStoplights ? TOGGLE_LEFT : TOGGLE_LEFT_BARE;
+  const rowLeft = toggleLeft + 28 + 8;
+  const slide = resizingPanel ? '' : 'transition-[left,right] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]';
   const rowRight = LAYOUT.sheetInset + LAYOUT.cardPadding + rightIslandWidth + 8;
 
   return (
@@ -565,7 +569,7 @@ export function App() {
       })}
 
       {/* Title bar: stoplights, then the sidebar toggle; everything centers on y = 22 */}
-      <div className="absolute top-[8px] z-30 h-[28px] flex items-center" style={{ ...NO_DRAG_REGION, left: TOGGLE_LEFT }}>
+      <div className={`absolute top-[8px] z-30 h-[28px] flex items-center ${slide}`} style={{ ...NO_DRAG_REGION, left: toggleLeft }}>
         <IconButton
           icon={<PanelLeft className="w-4 h-4" />}
           title={isLeftOpen ? 'Hide sidebar' : 'Show sidebar'}
@@ -575,9 +579,7 @@ export function App() {
       </div>
 
       <div
-        className={`absolute z-30 flex items-stretch pointer-events-none [&>*]:pointer-events-auto ${
-          resizingPanel ? '' : 'transition-[left,right] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]'
-        }`}
+        className={`absolute z-30 flex items-stretch pointer-events-none [&>*]:pointer-events-auto ${slide}`}
         style={{ top: TAB_TOP, left: rowLeft, right: rowRight, height: TAB_HEIGHT }}
       >
         <SceneTabs

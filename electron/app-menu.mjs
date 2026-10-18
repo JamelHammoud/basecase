@@ -92,6 +92,8 @@ function rebuild() {
         separator,
         item('Add Reference Image…', 'add-reference-image'),
         item('Import SVG…', 'import-svg'),
+        item('Import Robot…', 'import-robot'),
+        item('Import BVH…', 'import-bvh'),
         separator,
         // ⌘W closes the scene tab, like a browser; the window keeps ⇧⌘W
         item('Close Scene', 'close-tab', 'CmdOrCtrl+W'),

@@ -66,6 +66,11 @@ function createWindow() {
     }
   });
 
+  // Stoplights hide in full screen; the renderer moves the sidebar toggle into their space
+  for (const [event, value] of [['enter-full-screen', true], ['leave-full-screen', false]]) {
+    mainWindow.on(event, () => mainWindow?.webContents.send('window:fullscreen', value));
+  }
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -91,6 +96,7 @@ ipcMain.handle('chat:get', (_e, id) => backend.getConversation(id));
 ipcMain.handle('chat:save', (_e, conv) => backend.saveConversation(conv));
 ipcMain.handle('chat:delete', (_e, id) => backend.deleteConversation(id));
 ipcMain.handle('acp:new-conversation', (_e, workspaceId) => backend.newAcpConversation(workspaceId));
+ipcMain.handle('window:is-fullscreen', (e) => BrowserWindow.fromWebContents(e.sender)?.isFullScreen() ?? false);
 ipcMain.on('menu:state', (_e, state) => updateAppMenuState(state));
 ipcMain.handle('agent:respond', (_e, payload) => backend.resolveAgentRequest(payload));
 

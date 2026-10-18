@@ -78,6 +78,19 @@
   to { opacity: 1; transform: none; }
 }
 
+/* One turn of a cycling placeholder: wipes in from left to right behind a soft mask edge, holds, then fades out */
+@keyframes placeholder-cycle {
+  0% {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  32% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 1; }
+  86% { opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+  100% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 0; }
+}
+
 @keyframes shimmer {
   from { background-position: -200% 0; }
   to { background-position: 200% 0; }
@@ -157,30 +170,12 @@ html.is-electron .window-chrome {
 
 }
 
-/* Thin overlay-style scrollbars */
+/* Native scrollbars never take width from content: they're hidden everywhere and
+   OverlayScrollbars draws a floating thumb while something scrolls (macOS overlay style) */
+* {
+  scrollbar-width: none;
+}
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
-  border: 3px solid transparent;
-  background-clip: content-box;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border: 3px solid transparent;
-  background-clip: content-box;
-}
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
@@ -276,6 +271,23 @@ input[type="range"].slider:focus-visible::-webkit-slider-thumb {
     transparent 55%,
     rgba(0, 0, 0, 0.28) 100%
   );
+}
+
+/* A part or scene preview: no outline, 12px corners, a soft spotlight that brightens on hover
+   (Parts and Library tiles, list thumbnails with .preview-sm, the part page hero) */
+.preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.035);
+  background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.07), transparent 72%);
+  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.preview-sm {
+  border-radius: 8px;
+}
+.group:hover .preview {
+  background-color: rgba(255, 255, 255, 0.065);
 }
 
 }

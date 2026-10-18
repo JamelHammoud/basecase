@@ -20,6 +20,17 @@
         "--strictPort"
       ],
       "port": 5174
+    },
+    {
+      "name": "web-5176",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "5176",
+        "--strictPort"
+      ],
+      "port": 5176
     }
   ]
 }

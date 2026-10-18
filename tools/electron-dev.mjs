@@ -8,8 +8,9 @@
  * Force Quit all said "Electron". Editing Electron.app's Info.plist isn't enough, because every
  * Electron app on the Mac shares its bundle id (com.github.Electron) and its executable name.
  * So on macOS this keeps an APFS clone of the dev Electron.app as Basecase.app (no extra disk
- * space) with its own bundle id and executable, rebuilt when Electron's version changes, and
- * launches that. Elsewhere it runs the stock Electron binary.
+ * space) with its own bundle id, executable and app icon (build/icon/compiled, from
+ * `npm run icon`), rebuilt when Electron's version or the icon changes, and launches that.
+ * Elsewhere it runs the stock Electron binary.
  */
 import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -26,13 +27,27 @@ const require = createRequire(import.meta.url);
 const electronBinary = require('electron');
 const electronVersion = require('electron/package.json').version;
 
+// The compiled app icon: Assets.car is the layered Liquid Glass icon (macOS 26+), the .icns its
+// flat fallback. Both come from build/icon/Basecase.icon via `npm run icon`.
+const ICON_DIR = path.resolve('build', 'icon', 'compiled');
+const ICON_FILES = ['Assets.car', `${APP_NAME}.icns`];
+
+/** Changes whenever Electron or the compiled icon does, so the bundle is rebuilt */
+function bundleStamp() {
+  const icon = ICON_FILES.map((f) => {
+    const p = path.join(ICON_DIR, f);
+    return fs.existsSync(p) ? `${f}:${fs.statSync(p).size}:${fs.statSync(p).mtimeMs}` : `${f}:none`;
+  });
+  return [electronVersion, ...icon].join('\n');
+}
+
 function ensureDevBundle() {
   const source = path.resolve(electronBinary, '..', '..', '..'); // …/Electron.app
   const root = path.resolve('node_modules', '.cache', 'basecase-electron');
   const bundle = path.join(root, `${APP_NAME}.app`);
   const executable = path.join(bundle, 'Contents', 'MacOS', APP_NAME);
   const stamp = path.join(root, 'electron-version');
-  const stampOk = fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8') === electronVersion;
+  const stampOk = fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8') === bundleStamp();
   if (stampOk && fs.existsSync(executable)) return executable;
 
   fs.rmSync(root, { recursive: true, force: true });
@@ -50,12 +65,17 @@ function ensureDevBundle() {
   set('CFBundleName', APP_NAME);
   set('CFBundleDisplayName', APP_NAME);
   set('CFBundleIdentifier', BUNDLE_ID);
+  if (ICON_FILES.every((f) => fs.existsSync(path.join(ICON_DIR, f)))) {
+    for (const f of ICON_FILES) fs.copyFileSync(path.join(ICON_DIR, f), path.join(bundle, 'Contents', 'Resources', f));
+    set('CFBundleIconFile', APP_NAME);
+    set('CFBundleIconName', APP_NAME);
+  }
   try {
     execFileSync(LSREGISTER, ['-f', bundle]);
   } catch {
     // Launch Services picks the bundle up on first launch anyway
   }
-  fs.writeFileSync(stamp, electronVersion);
+  fs.writeFileSync(stamp, bundleStamp());
   console.log(`[electron-dev] Built ${path.relative(process.cwd(), bundle)} from Electron ${electronVersion}`);
   return executable;
 }

@@ -154,7 +154,7 @@ export class BasecaseBackendService {
               res.end(JSON.stringify({ ok: true }));
               return;
             }
-            const timeout = kind === 'apply' ? 180000 : 60000;
+            const timeout = kind === 'apply' || kind === 'animate' ? 180000 : kind === 'import_robot' || kind === 'retarget' ? 300000 : 60000;
             const result = await this.requestRenderer(kind, payload, timeout, workspaceId);
             res.end(JSON.stringify(result ?? { ok: true }));
           } catch (err) {

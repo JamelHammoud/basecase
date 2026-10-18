@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
 import {
   BEARINGS,
-  PHILLIPS_RECESS,
+  CROSS_RECESS,
   HEAT_INSERT,
   HEX_BOLT,
   HEX_NUT,
@@ -10,14 +10,15 @@ import {
   LARGE_WASHER,
   LOCK_NUT,
   MetricSize,
-  SET_SCREW,
   TORX_RECESS,
   SQUARE_NUT,
   STANDOFF,
+  ScrewRecess,
   THREAD,
   WASHER,
   hardwareDimensions,
   screwHead,
+  setScrewRecess,
 } from '../data/hardware';
 
 export interface HardwareMaterials {
@@ -105,7 +106,7 @@ function prism(shape: THREE.Shape, height: number, y0: number, bevel = 0): THREE
 
 const hexRadius = (s: number) => s / Math.sqrt(3);
 
-type Recess = NonNullable<ReturnType<typeof screwHead>>['recess'];
+type Recess = ScrewRecess;
 
 /** Outline of a drive recess in the XY plane, centered on the screw axis */
 function recessShape(recess: Recess, headDia: number): THREE.Shape {
@@ -124,14 +125,25 @@ function recessShape(recess: Recess, headDia: number): THREE.Shape {
     return shape;
   }
   const shape = new THREE.Shape();
-  if (recess.kind === 'phillips') {
+  if (recess.kind === 'phillips' || recess.kind === 'pozidriv') {
     // ISO 4757 cross: two wings of width m/6 across the recess width m
-    const m = PHILLIPS_RECESS[recess.size]?.m ?? headDia * 0.5;
+    const m = CROSS_RECESS[recess.size]?.m ?? headDia * 0.5;
     const h = m / 2;
     const q = m / 12;
-    const pts: Array<[number, number]> = [
-      [q, q], [h, q], [h, -q], [q, -q], [q, -h], [-q, -h], [-q, -q], [-h, -q], [-h, q], [-q, q], [-q, h], [q, h],
-    ];
+    // Pozidriv (type Z) adds a short rib on each diagonal, between the wings
+    const tick = recess.kind === 'pozidriv' ? { T: m * 0.26, d: m * 0.025 } : null;
+    const pts: Array<[number, number]> = [];
+    for (let i = 0; i < 4; i++) {
+      // One wing and the corner after it, rotated a quarter turn each time
+      const quarter: Array<[number, number]> = [[h, -q], [h, q]];
+      if (tick) {
+        const { T, d } = tick;
+        quarter.push([q + 2 * d, q], [T + d, T - d], [T - d, T + d], [q, q + 2 * d]);
+      } else quarter.push([q, q]);
+      const c = Math.cos((i * Math.PI) / 2);
+      const sn = Math.sin((i * Math.PI) / 2);
+      for (const [x, z] of quarter) pts.push([x * c - z * sn, x * sn + z * c]);
+    }
     pts.forEach(([x, z], i) => (i === 0 ? shape.moveTo(x, z) : shape.lineTo(x, z)));
   } else {
     // Slot runs past both sides of the head
@@ -148,15 +160,17 @@ function recessShape(recess: Recess, headDia: number): THREE.Shape {
 
 /**
  * Tool body for a recess: from `depth` below the head top `y` to 1 mm above it (so it clears
- * domed heads). A Phillips cross tapers toward its tip like the real cone.
+ * domed heads). A Phillips or Pozidriv cross tapers toward its tip like the real cone.
  */
 function recessCutter(recess: Recess, y: number, depth: number, headDia: number): THREE.BufferGeometry {
   const g = prism(recessShape(recess, headDia), depth + 1, y - depth);
-  if (recess.kind === 'phillips') {
+  if (recess.kind === 'phillips' || recess.kind === 'pozidriv') {
+    // Pozidriv wings are straighter-sided than Phillips, so its cone tapers less
+    const taper = recess.kind === 'pozidriv' ? 0.6 : 0.75;
     const pos = g.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const below = Math.max(0, y - pos.getY(i)) / depth; // 0 at the top face, 1 at the tip
-      const f = 1 - 0.75 * below;
+      const f = 1 - taper * below;
       pos.setXYZ(i, pos.getX(i) * f, pos.getY(i), pos.getZ(i) * f);
     }
     g.computeVertexNormals();
@@ -166,11 +180,15 @@ function recessCutter(recess: Recess, y: number, depth: number, headDia: number)
 
 /**
  * Recess depth below the head top, from the minimum key engagement t in each head standard
- * (ISO 4762 / 7380 / 10642 / 14579 / 14581 / 14583 / 1580 / 2009). Phillips uses the ISO 4757
- * gauge depth, which runs into the shank like the real cone.
+ * (ISO 4762 / 7380 / 10642 / 14579 / 14581 / 14583 / 1580 / 2009). Phillips and Pozidriv use the
+ * ISO 4757 gauge depth, which runs into the shank like the real cone.
  */
 function recessDepth(type: HardwareSpec['type'], recess: Recess, k: number): number {
-  if (recess.kind === 'phillips') return PHILLIPS_RECESS[recess.size]?.depth ?? k * 0.6;
+  if (recess.kind === 'phillips' || recess.kind === 'pozidriv') {
+    const depth = CROSS_RECESS[recess.size]?.depth ?? k * 0.6;
+    // Only a countersunk head lets the cone run on into the shank; in other heads it stops inside
+    return type === 'countersunk' ? depth : Math.min(depth, k * 0.8);
+  }
   if (recess.kind === 'slot') return k * 0.4;
   if (type === 'socket_head') return k * (recess.kind === 'hex' ? 0.5 : 0.45);
   if (type === 'pan_head') return k * 0.42;
@@ -326,10 +344,8 @@ export function buildHardwarePieces(spec: HardwareSpec, m: HardwareMaterials): H
     }
     case 'set_screw': {
       const t = THREAD[size];
-      // ISO 4026: hex socket about 0.8 s deep (minimum key engagement)
-      const s = SET_SCREW[size]!.s;
-      const depth = Math.min(L * 0.6, s * 0.8);
-      cutRecess(add, m, thread(t.d, t.pitch, L, 0), recessCutter({ kind: 'hex', s }, L, depth, t.d), false);
+      const { recess, depth } = setScrewRecess(spec)!;
+      cutRecess(add, m, thread(t.d, t.pitch, L, 0), recessCutter(recess, L, depth, t.d), false);
       break;
     }
     case 'hex_nut':

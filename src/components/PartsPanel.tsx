@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, ChevronLeft, ChevronRight, Plus, Ruler, ShoppingCart, Trash2, X } from 'lucide-react';
+import { ArrowUpRight, Bot, ChevronRight, FileText, FolderInput, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
+import { ROBOT_PRESETS, type RobotPreset } from '../utils/robotImport';
 import { CATEGORY_LABELS, PART_CATALOG, catalogItemFromKey, catalogRef, hardwareVariant } from '../data/catalog';
-import { COMPONENT_BY_ID, ComponentGroup } from '../data/components';
+import { COMPONENT_BY_ID, ComponentGroup, ComponentInfo } from '../data/components';
 import {
   BEARINGS,
   HARDWARE_BY_TYPE,
@@ -18,9 +19,10 @@ import {
 import { PART_DRAG_TYPE } from '../data/dnd';
 import { CatalogItem, ScenePart } from '../types/robotics';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { Button, ContextMenu, EmptyState, HoverCard, IconButton, SearchField, SectionHeader, Tooltip, useScrollFade } from '../design-system';
-import { BuyLinks, CardSection, CatalogDetails, Header, Hero, LinkButton, SizeLine, Stat } from './PartDetails';
-import { HardwareConfigurator } from './HardwareConfigurator';
+import { Button, ContextMenu, EmptyState, HoverCard, SearchField, Section, SectionHeader, Tooltip, useScrollFade } from '../design-system';
+import { CatalogDetails, Hero, LinkButton, SizeLine, SpecRow } from './PartDetails';
+import { HardwareConfigurator, HardwareSpecs } from './HardwareConfigurator';
+import { keySpecs } from '../utils/keySpecs';
 
 /**
  * Parts: search first, then browse. Home has In this scene (opens what the scene uses and what
@@ -287,7 +289,9 @@ export const PartsPanel: React.FC<{
   goal: string;
   /** Lets the scene focus the search field (⌘F) */
   searchInputRef?: React.MutableRefObject<HTMLInputElement | null>;
-}> = ({ onAdd, parts, goal, searchInputRef }) => {
+  /** A published robot (preset), or null for Import Robot… (a URL or a folder) */
+  onImportRobot?: (preset: RobotPreset | null) => void;
+}> = ({ onAdd, parts, goal, searchInputRef, onImportRobot }) => {
   const [stack, setStack] = useState<View[]>([{ kind: 'home' }]);
   const view = stack[stack.length - 1];
   const [query, setQuery] = useState('');
@@ -316,6 +320,7 @@ export const PartsPanel: React.FC<{
     setStack((s) => [...s, next]);
   };
   const back = () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
+  const searchAll = () => setStack([{ kind: 'home' }]);
   const openItem = (item: CatalogItem) =>
     item.hardware ? open({ kind: 'hardware', spec: item.hardware }) : open({ kind: 'item', ref: catalogRef(item) });
 
@@ -343,7 +348,12 @@ export const PartsPanel: React.FC<{
     bodyRef.current?.scrollTo({ top: 0 });
   }, [stack.length, searching]);
 
-  const results = useMemo(() => searchCatalog(query), [query]);
+  // Inside a view, search stays in it ("Search servos"); Home searches every part
+  const scope = useMemo(() => searchScope(view, scene), [view, scene]);
+  const results = useMemo(() => {
+    const all = searchCatalog(query);
+    return scope ? all.filter(scope.has) : all;
+  }, [query, scope]);
   const search = (q: string) => {
     setQuery(q);
     setActive(0);
@@ -352,6 +362,7 @@ export const PartsPanel: React.FC<{
   const onSearchKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       if (query) search('');
+      else if (stack.length > 1) back();
       else (e.target as HTMLInputElement).blur();
     } else if (results.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
       e.preventDefault();
@@ -373,22 +384,24 @@ export const PartsPanel: React.FC<{
           value={query}
           onChange={search}
           onKeyDown={onSearchKey}
-          placeholder="Search parts"
-          aria-label="Search parts"
+          placeholder={scope ? `Search ${scope.label}` : 'Search parts'}
+          aria-label={scope ? `Search ${scope.label}` : 'Search parts'}
           shortcut="⌘F"
+          onBack={stack.length > 1 ? back : undefined}
         />
       </div>
 
-      {!searching && view.kind !== 'home' && (
-        <div className="px-2 pb-1 shrink-0 flex items-center gap-1 min-h-9">
-          <IconButton icon={<ChevronLeft className="w-4 h-4" />} title="Back" size="sm" onClick={back} />
-          <div className="min-w-0 flex-1 text-[15px] font-semibold text-white/90 truncate">{viewTitle(view)}</div>
-        </div>
-      )}
-
       <div ref={setBody} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fade.style}>
         {searching ? (
-          <SearchResults results={results} active={active} onHover={setActive} onOpen={openItem} onAdd={add} query={query} />
+          <SearchResults
+            results={results}
+            active={active}
+            onHover={setActive}
+            onOpen={openItem}
+            onAdd={add}
+            query={query}
+            onSearchAll={scope ? searchAll : undefined}
+          />
         ) : view.kind === 'home' ? (
           <Home
             scene={scene}
@@ -405,6 +418,7 @@ export const PartsPanel: React.FC<{
             }
             onOpen={openItem}
             onAdd={add}
+            onImportRobot={onImportRobot}
           />
         ) : view.kind === 'scene' ? (
           <ScenePage scene={scene} onOpen={openItem} onAdd={add} />
@@ -451,6 +465,29 @@ function viewTitle(view: View): string {
   return '';
 }
 
+/** "Depth Cameras" → "depth cameras", keeping names like LiDAR */
+const lowerTitle = (title: string) => title.replace(/\b[A-Z][a-z]+\b/g, (w) => w.toLowerCase());
+
+/** What a search inside this view covers: the category, the part's group, the hardware family or the scene */
+function searchScope(view: View, scene: SceneParts): { label: string; has: (item: CatalogItem) => boolean } | null {
+  if (view.kind === 'home') return null;
+  const groupOf = (item: CatalogItem) =>
+    item.componentId ? COMPONENT_BY_ID[item.componentId]?.group : item.hardware ? `hw-${familyOf(item.hardware.type).id}` : undefined;
+  let has: (item: CatalogItem) => boolean;
+  if (view.kind === 'scene') {
+    // Hardware matches by type, since a size in the query makes a new variant
+    const keys = new Set([...scene.used.map((u) => u.item), ...scene.related].map((i) => i.componentId ?? i.hardware?.type));
+    has = (item) => keys.has(item.componentId ?? item.hardware?.type);
+  } else {
+    const item = view.kind === 'item' ? catalogItemFromKey(view.ref) : undefined;
+    const group =
+      view.kind === 'category' ? view.id : view.kind === 'hardware' ? `hw-${familyOf(view.spec.type).id}` : item && groupOf(item);
+    if (!group) return null;
+    has = (i) => groupOf(i) === group;
+  }
+  return { label: lowerTitle(viewTitle(view)), has };
+}
+
 /* ------------------------------------------------------------------ */
 /* Home                                                                */
 /* ------------------------------------------------------------------ */
@@ -463,7 +500,8 @@ const Home: React.FC<{
   onOpenCategory: (c: Category) => void;
   onOpen: (item: CatalogItem) => void;
   onAdd: (item: CatalogItem) => void;
-}> = ({ scene, onOpenScene, recent, onRecentMenu, onOpenCategory, onOpen, onAdd }) => (
+  onImportRobot?: (preset: RobotPreset | null) => void;
+}> = ({ scene, onOpenScene, recent, onRecentMenu, onOpenCategory, onOpen, onAdd, onImportRobot }) => (
   <div className="px-[8px] pb-4">
     {(scene.used.length > 0 || scene.related.length > 0) && (
       <div className="mb-3">
@@ -492,7 +530,31 @@ const Home: React.FC<{
         ))}
       </div>
     ))}
+    {onImportRobot && (
+      <div className="mb-3">
+        <SectionHeader title="Robots" />
+        {ROBOT_PRESETS.map((r) => (
+          <RobotRow key={r.id} title={r.title} meta={r.description} icon={<Bot className="w-5 h-5" />} onOpen={() => onImportRobot(r)} />
+        ))}
+        <RobotRow title="Import Robot…" meta="URDF or MJCF, from a link or a folder" icon={<FolderInput className="w-5 h-5" />} onOpen={() => onImportRobot(null)} />
+      </div>
+    )}
   </div>
+);
+
+/** A published robot: inserted with its joints, ready to pose */
+const RobotRow: React.FC<{ title: string; meta: string; icon: React.ReactNode; onOpen: () => void }> = ({ title, meta, icon, onOpen }) => (
+  <button
+    type="button"
+    onClick={onOpen}
+    className="group w-full flex items-center gap-3 h-[52px] px-1.5 rounded-xl text-left cursor-default hover:bg-white/[0.05] active:scale-[0.99] transition-[background-color,transform] duration-150"
+  >
+    <div className="preview preview-sm w-12 h-9 shrink-0 flex items-center justify-center text-white/45">{icon}</div>
+    <div className="min-w-0 flex-1">
+      <div className="text-[13.5px] font-medium text-white/90 truncate">{title}</div>
+      <div className="text-[12px] text-white/40 truncate">{meta}</div>
+    </div>
+  </button>
 );
 
 /** "In this scene": the real parts you've used, and what goes with them */
@@ -565,9 +627,9 @@ const CategoryRow: React.FC<{ category: Category; onOpen: () => void }> = ({ cat
 /* ------------------------------------------------------------------ */
 
 const Thumb: React.FC<{ url?: string; className?: string }> = ({ url, className = '' }) => (
-  <div className={`rounded-lg bg-white/[0.035] ring-1 ring-inset ring-white/[0.05] overflow-hidden ${className}`}>
+  <div className={`preview preview-sm ${className}`}>
     {url ? (
-      <img src={url} alt="" draggable={false} className="w-full h-full object-contain" />
+      <img src={url} alt="" draggable={false} className="w-full h-full object-contain p-0.5" />
     ) : (
       <div className="w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
     )}
@@ -616,7 +678,7 @@ const TileGrid: React.FC<{ items: CatalogItem[]; onOpen: (i: CatalogItem) => voi
   onAdd,
   flush,
 }) => (
-  <div className={`grid grid-cols-2 gap-1 ${flush ? '' : 'px-[8px] pb-4'}`}>
+  <div className={`grid grid-cols-2 gap-x-[8px] gap-y-[12px] ${flush ? '' : 'px-[12px] pt-1 pb-4'}`}>
     {items.map((item) => (
       <Tile key={catalogRef(item)} item={item} onOpen={() => onOpen(item)} onAdd={() => onAdd(item)} />
     ))}
@@ -631,26 +693,26 @@ const Tile: React.FC<{ item: CatalogItem; onOpen: () => void; onAdd: () => void 
         <button
           type="button"
           onClick={onOpen}
-          className="w-full text-left rounded-xl p-1 cursor-default hover:bg-white/[0.04] active:scale-[0.98] transition-[background-color,transform] duration-150"
+          className="w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"
         >
-          <div className="aspect-[4/3] rounded-lg bg-white/[0.035] ring-1 ring-inset ring-white/[0.04] group-hover:bg-white/[0.06] group-hover:ring-white/[0.08] overflow-hidden transition-colors">
+          <div className="preview aspect-[4/3]">
             {thumb ? (
               <img
                 src={thumb}
                 alt=""
                 draggable={false}
-                className="w-full h-full object-contain transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
+                className="w-full h-full object-contain p-1.5 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
               />
             ) : (
               <div className="w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
             )}
           </div>
-          <div className="px-0.5 pt-1.5 pb-0.5">
+          <div className="px-0.5 pt-2">
             <div className="text-[13px] font-medium text-white/90 truncate">{item.name}</div>
             <div className="text-[12px] text-white/40 truncate">{metaLine(item)}</div>
           </div>
         </button>
-        <AddButton onAdd={onAdd} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity" />
+        <AddButton onAdd={onAdd} className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity" />
       </div>
     </HoverCard>
   );
@@ -699,9 +761,20 @@ const SearchResults: React.FC<{
   onHover: (i: number) => void;
   onOpen: (item: CatalogItem) => void;
   onAdd: (item: CatalogItem) => void;
-}> = ({ results, active, query, onHover, onOpen, onAdd }) =>
+  /** Inside a view: leave it and search every part */
+  onSearchAll?: () => void;
+}> = ({ results, active, query, onHover, onOpen, onAdd, onSearchAll }) =>
   results.length === 0 ? (
-    <EmptyState title={`No matches for “${query.trim()}”`} />
+    <EmptyState
+      title={`No matches for “${query.trim()}”`}
+      action={
+        onSearchAll && (
+          <Button variant="secondary" size="sm" onClick={onSearchAll}>
+            Search All Parts
+          </Button>
+        )
+      }
+    />
   ) : (
     <div className="px-[8px] pb-4">
       <SectionHeader title={`${results.length} ${results.length === 1 ? 'result' : 'results'}`} />
@@ -735,8 +808,29 @@ const AddBar: React.FC<{ label: string; onAdd: () => void; children?: React.Reac
 );
 
 /** Hero for a page: rounded, inset, draggable onto the canvas */
-const PAGE_HERO = 'mx-3 h-[184px] rounded-2xl ring-1 ring-inset ring-white/[0.06] overflow-hidden';
+const PAGE_HERO = 'preview !rounded-[14px] mx-[12px] h-[184px]';
 
+
+/** The page's title block: name, then one muted line */
+const PageTitle: React.FC<{ title: string; subtitle: string; description?: string }> = ({ title, subtitle, description }) => (
+  <div className="px-[12px] pt-4 pb-4">
+    <h2 className="text-[17px] font-semibold text-white/95 leading-tight">{title}</h2>
+    <div className="mt-1 text-[13px] text-white/50 truncate">{subtitle}</div>
+    {description && <p className="mt-2.5 text-[13px] text-white/70 leading-relaxed">{description}</p>}
+  </div>
+);
+
+const modelSourceText = (c: ComponentInfo) =>
+  (c.model.source === 'manufacturer'
+    ? `From ${c.model.by}'s CAD files`
+    : c.model.source === 'checked'
+      ? `By ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`
+      : `Modeled from the ${c.model.by} drawing`) + (c.model.license ? ` · ${c.model.license}` : '');
+
+/**
+ * A part's page: preview, name and what it is first; specs as plain rows; part number,
+ * mounting, model source and documents wait in Details. Add and Amazon sit in the footer.
+ */
 const ItemPage: React.FC<{ ref_: string; onAdd: (i: CatalogItem) => void; onOpen: (i: CatalogItem) => void }> = ({ ref_, onAdd, onOpen }) => {
   const item = catalogItemFromKey(ref_);
   if (!item) return null;
@@ -744,62 +838,97 @@ const ItemPage: React.FC<{ ref_: string; onAdd: (i: CatalogItem) => void; onOpen
   const d = item.defaultDimensions;
   const pairs = (c?.pairsWith ?? []).map((r) => catalogItemFromKey(r)).filter((i): i is CatalogItem => !!i);
   return (
-    <div className="pb-4">
-      <Hero item={item} source={c} className={PAGE_HERO} {...dragProps(item)} />
-      <Header
-        title={item.name}
-        subtitle={c ? `${c.manufacturer} · ${c.mpn}` : CATEGORY_LABELS[item.category].label}
-        description={item.description}
-        clamp={false}
-      />
-      <div className="px-[12px] mt-3 grid grid-cols-2 gap-1.5">
-        <Stat label="Size" wide>
-          <SizeLine w={d.width} h={d.height} d={d.depth} />
-        </Stat>
-        {(c?.specs ?? []).map(([label, value]) => (
-          <Stat key={label} label={label} clamp={false}>
-            {value}
-          </Stat>
-        ))}
+    <div className="pb-2">
+      <Hero item={item} className={PAGE_HERO} {...dragProps(item)} />
+      <PageTitle title={item.name} subtitle={c ? c.manufacturer : CATEGORY_LABELS[item.category].label} description={item.description} />
+      <div className="border-t border-white/[0.06]">
+        {c ? (
+          <>
+            <Section title="Key specs">
+              <dl className="-my-[5px]">
+                {keySpecs(c, d).map((k) => (
+                  <SpecRow key={k.label} label={k.label}>
+                    {k.value}
+                  </SpecRow>
+                ))}
+              </dl>
+            </Section>
+            <Section title="All specs" collapsible defaultOpen={false}>
+              <dl className="-my-[5px]">
+                <SpecRow label="Size">
+                  <SizeLine w={d.width} h={d.height} d={d.depth} />
+                </SpecRow>
+                {c.specs.map(([label, value]) => (
+                  <SpecRow key={label} label={label}>
+                    {value}
+                  </SpecRow>
+                ))}
+              </dl>
+            </Section>
+          </>
+        ) : (
+          <Section title="Specs">
+            <dl className="-my-[5px]">
+              <SpecRow label="Size">
+                <SizeLine w={d.width} h={d.height} d={d.depth} />
+              </SpecRow>
+            </dl>
+          </Section>
+        )}
+        {c && (
+          <Section title="Details" collapsible defaultOpen={false}>
+            <dl className="-my-[5px]">
+              <SpecRow label="Part number">{c.mpn}</SpecRow>
+            </dl>
+            <DetailBlock label="Mounting">{c.mounting}</DetailBlock>
+            <DetailBlock label="3D model">{modelSourceText(c)}</DetailBlock>
+            {(c.links.datasheet || c.links.product) && (
+              <div className="flex gap-1.5 pt-0.5">
+                {c.links.datasheet && (
+                  <LinkButton href={c.links.datasheet} icon={<FileText className="w-3.5 h-3.5" />}>
+                    Datasheet
+                  </LinkButton>
+                )}
+                {c.links.product && (
+                  <LinkButton href={c.links.product} icon={<ArrowUpRight className="w-3.5 h-3.5" />}>
+                    Product Page
+                  </LinkButton>
+                )}
+              </div>
+            )}
+          </Section>
+        )}
+        {pairs.length > 0 && (
+          <Section title="Goes with">
+            <div className="-mx-[6px] !mt-0">
+              {pairs.map((p) => (
+                <ResultRow key={catalogRef(p)} item={p} onOpen={() => onOpen(p)} onAdd={() => onAdd(p)} />
+              ))}
+            </div>
+          </Section>
+        )}
       </div>
-      {c && (
-        <>
-          <CardSection icon={<Ruler className="w-3.5 h-3.5" />} label="Mounting" clamp={false}>
-            {c.mounting}
-          </CardSection>
-          <CardSection icon={<Box className="w-3.5 h-3.5" />} label="3D model" clamp={false}>
-            {c.model.source === 'manufacturer'
-              ? `From ${c.model.by}'s CAD files`
-              : c.model.source === 'checked'
-                ? `By ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`
-                : `Modeled from the ${c.model.by} drawing`}
-            {c.model.license ? ` · ${c.model.license}` : ''}
-          </CardSection>
-          <div className="mt-3 px-[12px] flex items-center gap-1.5">
-            <BuyLinks c={c} primary={false} />
-          </div>
-        </>
-      )}
-      {pairs.length > 0 && (
-        <div className="mt-4 border-t border-white/[0.07] pt-2 px-[8px]">
-          <SectionHeader title="Goes with" />
-          {pairs.map((p) => (
-            <ResultRow key={catalogRef(p)} item={p} onOpen={() => onOpen(p)} onAdd={() => onAdd(p)} />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
+
+/** A short paragraph with a muted label above it */
+const DetailBlock: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="text-[13px] leading-relaxed">
+    <div className="text-white/50">{label}</div>
+    <div className="mt-0.5 text-white/80">{children}</div>
+  </div>
+);
 
 const HardwarePage: React.FC<{ spec: HardwareSpec; onChange: (s: HardwareSpec) => void }> = ({ spec, onChange }) => {
   const item = hardwareVariant(PART_CATALOG.find((c) => c.hardware?.type === spec.type)!, spec);
   return (
     <div className="pb-4">
-      <Hero item={item} source="iso" className={PAGE_HERO} {...dragProps(item)} />
-      <Header title={hardwareName(spec)} subtitle={hardwareSubtitle(spec)} clamp={false} />
-      <div className="mt-3 border-t border-white/[0.07] px-[12px] pt-3">
+      <Hero item={item} className={PAGE_HERO} {...dragProps(item)} />
+      <PageTitle title={hardwareName(spec)} subtitle={hardwareSubtitle(spec)} />
+      <div className="border-t border-white/[0.06]">
         <HardwareConfigurator spec={spec} onChange={(s) => onChange(s)} />
+        <HardwareSpecs spec={spec} />
       </div>
     </div>
   );
@@ -809,7 +938,18 @@ const HardwarePage: React.FC<{ spec: HardwareSpec; onChange: (s: HardwareSpec) =
 const PageFooter: React.FC<{ view: View; onAdd: (i: CatalogItem) => void }> = ({ view, onAdd }) => {
   if (view.kind === 'item') {
     const item = catalogItemFromKey(view.ref);
-    return item ? <AddBar label={item.name} onAdd={() => onAdd(item)} /> : null;
+    if (!item) return null;
+    const amazon = item.componentId ? COMPONENT_BY_ID[item.componentId]?.links.amazon : undefined;
+    const label = amazon?.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon';
+    return (
+      <AddBar label={item.name} onAdd={() => onAdd(item)}>
+        {amazon && (
+          <Tooltip label={label}>
+            <LinkButton href={amazon.url} icon={<ShoppingCart className="w-3.5 h-3.5" />} label={label} />
+          </Tooltip>
+        )}
+      </AddBar>
+    );
   }
   if (view.kind !== 'hardware') return null;
   const { spec } = view;

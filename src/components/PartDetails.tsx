@@ -73,6 +73,14 @@ export const ComponentLinks: React.FC<{ c: ComponentInfo }> = ({ c }) => (
   </div>
 );
 
+/** Label on the left, value on the right; long values wrap under their own column (part page rows) */
+export const SpecRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="flex items-baseline justify-between gap-4 py-[5px] text-[13px] leading-snug">
+    <dt className="shrink-0 text-white/50">{label}</dt>
+    <dd className="min-w-0 text-right text-white/90 tabular [overflow-wrap:anywhere]">{children}</dd>
+  </div>
+);
+
 export const SpecList: React.FC<{ rows: Array<[string, React.ReactNode]> }> = ({ rows }) => (
   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
     {rows.map(([label, value]) => (

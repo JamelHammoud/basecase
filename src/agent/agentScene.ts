@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { BLOCKOUT_ONLY, PART_CATALOG, catalogItemFromKey, catalogNote } from '../data/catalog';
 import { ActuatorSpec, COMPONENTS, COMPONENT_BY_ID, componentSize, hasComponentMesh } from '../data/components';
-import { HARDWARE_TYPES, driveOptions, hardwareName, hardwareNote } from '../data/hardware';
+import { HARDWARE_TYPES, defaultDrive, driveOptions, hardwareName, hardwareNote } from '../data/hardware';
 import { SUPPLIES, SUPPLY_BY_ID } from '../data/supplies';
 import { PartKind, PartRole, PrintMaterial, ScenePart } from '../types/robotics';
 
@@ -510,7 +510,7 @@ export function agentCatalog(query = ''): string {
       const drives = driveOptions(t.type);
       lines.push(
         `- hardware:${t.type} — ${t.name} (${t.description}); sizes ${t.sizes.join(', ')}${t.lengths ? '; lengths per size' : ''}${
-          drives.length > 1 ? `; drives ${drives.join(', ')}` : ''
+          drives.length > 1 ? `; drives ${drives.join(', ')} (default ${defaultDrive(t.type)})` : ''
         }`
       );
     }

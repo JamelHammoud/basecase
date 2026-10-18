@@ -49,6 +49,12 @@ import {
   PenTool,
   ImageDown,
   ClipboardCopy,
+  ClipboardPaste,
+  Scissors,
+  Bot,
+  Footprints,
+  PersonStanding,
+  Play,
 } from 'lucide-react';
 import { AcpStudioPanel } from './components/AcpStudioPanel';
 import { AlignControls } from './components/AlignControls';
@@ -58,6 +64,24 @@ import { Inspector } from './components/Inspector';
 import { BuildPanel } from './components/BuildPanel';
 import { LeftSidebar, LeftTab } from './components/LeftSidebar';
 import { SculptAndDrawStudio, StudioSubTab } from './components/SculptAndDrawStudio';
+import { PosePanel } from './components/PosePanel';
+import { detectFeet, usePosing } from './utils/usePosing';
+import { anchorJoint, resolveJoints } from './utils/kinematics';
+import { buildGait } from './utils/animation';
+import { ImportRobotSheet } from './components/ImportRobotSheet';
+import { RetargetSheet } from './components/RetargetSheet';
+import {
+  animateRequest,
+  getRig,
+  retargetRequest,
+  setPoseRequest,
+  type AnimatePayload,
+  type PoseContext,
+  type PosePayload,
+  type PoseReply,
+  type RetargetPayload,
+} from './agent/agentPose';
+import { ROBOT_PRESETS, importRobot, type RobotPreset } from './utils/robotImport';
 import { ExportMenu } from './components/ExportMenu';
 import type { SettingsPane } from './components/SettingsWindow';
 import { Viewport3D, Viewport3DHandle } from './components/Viewport3D';
@@ -156,7 +180,7 @@ import {
   PartsIcon,
 } from './design-system';
 
-type RightTab = 'inspector' | 'build' | 'acp';
+type RightTab = 'inspector' | 'pose' | 'build' | 'acp';
 
 /** The sidebar's views, shown as the rail's icons */
 const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphProps> }> = [
@@ -301,6 +325,13 @@ const EMPTY_DOC: DocState = { parts: [], past: [], future: [], base: null };
 const newId = (prefix = 'part') =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
 
+/**
+ * Copied parts, shared by every scene tab. The system clipboard holds only a marker
+ * (PARTS_CLIPBOARD_TYPE), so ⌘V pastes parts only while nothing newer was copied.
+ */
+const PARTS_CLIPBOARD_TYPE = 'application/x-basecase-parts';
+let partsClipboard: { parts: ScenePart[]; inPlace: Set<string>; pastes: Map<string, number> } | null = null;
+
 const fileSafe = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'robotics-mechanism';
 
@@ -396,8 +427,16 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         setDoc(EMPTY_DOC);
         setSelectedIds([]);
       },
+      // Robots and posing (see devRef below)
+      importRobot: (url: string, name?: string) => devRef.current.importRobot?.({ kind: 'url', url, name }),
+      setPose: (values: Record<string, number>, root?: { position?: [number, number, number]; rotation?: [number, number, number] }) => devRef.current.posing?.setPose({ values, root }),
+      posing: () => devRef.current.posing,
+      poseTool: (kind: string, payload: Record<string, unknown>) => devRef.current.poseTool?.(kind, payload),
     };
   }, [active]);
+
+  // Latest handlers for the dev hook above
+  const devRef = useRef<{ importRobot?: (src: { kind: 'url'; url: string; name?: string }) => Promise<unknown>; posing?: ReturnType<typeof usePosing>; poseTool?: (kind: string, payload: Record<string, unknown>) => Promise<PoseReply> }>({});
 
   // Selection & tools
   // Ordered selection — the first id is the primary (boolean base)
@@ -677,15 +716,23 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     [selectedIds, parts]
   );
 
+  // Joints, the pose on the canvas, saved poses and animations
+  const posing = usePosing({ parts, project, projectRef, setProject, viewportRef, selectedIds, transformMode });
+
   /**
    * Canvas / Layers click. Plain click selects the part's whole group; double-click
    * (`drill`) selects just that part. Once inside a group, a plain click on another
-   * member selects that member. Shift/⌘ toggles.
+   * member selects that member. Shift/⌘ toggles. The Pose tool selects just the part
+   * (its link's joint gets the ring).
    */
   const handleSelect = useCallback(
     (id: string | null, additive = false, drill = false) => {
       if (!id) {
         if (!additive) setSelectedIds([]);
+        return;
+      }
+      if (transformMode === 'pose' && !additive) {
+        setSelectedIds([id]);
         return;
       }
       const part = parts.find((p) => p.id === id);
@@ -700,7 +747,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         return insideGroup ? [id] : unit;
       });
     },
-    [parts]
+    [parts, transformMode]
   );
 
   /* ---------------------------------------------------------------- */
@@ -815,22 +862,6 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     },
     [commitParts, showToast]
   );
-
-  // Paste an image anywhere (outside text fields) → reference plane
-  useEffect(() => {
-    if (!active) return;
-    const onPaste = (e: ClipboardEvent) => {
-      const el = document.activeElement;
-      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return;
-      const item = Array.from(e.clipboardData?.items ?? []).find((i) => i.type.startsWith('image/'));
-      const file = item?.getAsFile();
-      if (!file) return;
-      e.preventDefault();
-      handleAddImagePlane(file, 'Pasted Image');
-    };
-    window.addEventListener('paste', onPaste);
-    return () => window.removeEventListener('paste', onPaste);
-  }, [active, handleAddImagePlane]);
 
   const pickReferenceImage = useCallback((at?: [number, number, number] | null) => {
     imagePlaceRef.current = at ?? null;
@@ -1014,7 +1045,8 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     }
     return runEngineering({
       parts: ps,
-      project: projectRef.current,
+      // Joints anchored to a part follow it when the robot moves
+      project: { ...projectRef.current, joints: resolveJoints(projectRef.current.joints ?? [], ps) },
       measures: vp?.measureParts() ?? {},
       servoOutputs,
       sweep: withSweep && vp ? (moving, origin, axis, angles) => vp.sweepClashes(moving, origin, axis, angles) : undefined,
@@ -1251,6 +1283,57 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
   // Camera follows the agent's work until the user moves the view themselves
   const agentFollowRef = useRef(true);
 
+  /** The agent's posing tools (get_rig, pose, animate, retarget, import_robot) */
+  const runPoseTool = async (kind: string, payload: Record<string, unknown>): Promise<PoseReply> => {
+    const live = devRef.current.posing!;
+    const ctx: PoseContext = {
+      parts: partsRef.current,
+      project: projectRef.current,
+      viewport: viewportRef.current,
+      setPose: live.setPose,
+      savePose: (name, state) => {
+        const list = (projectRef.current.poses ?? []).filter((p) => p.name !== name);
+        const next = { ...projectRef.current, poses: [...list, { id: newId('pose'), name, values: { ...state.values }, root: state.root }] };
+        projectRef.current = next;
+        setProject(next);
+      },
+      addAnimation: live.addAnimation,
+      play: live.play,
+    };
+    let reply: PoseReply;
+    if (kind === 'get_rig') reply = getRig(ctx);
+    else if (kind === 'pose') {
+      setAgentAction('Posing');
+      reply = setPoseRequest(ctx, payload as PosePayload);
+    } else if (kind === 'animate') {
+      setAgentAction(`Animating ${String(payload.name ?? '')}`);
+      reply = animateRequest(ctx, payload as unknown as AnimatePayload);
+    } else if (kind === 'retarget') {
+      setAgentAction('Retargeting motion');
+      reply = await retargetRequest(ctx, payload as RetargetPayload);
+    } else {
+      const pl = payload as { url?: string; preset?: string; name?: string };
+      const preset = pl.preset ? ROBOT_PRESETS.find((r) => r.id === pl.preset) : undefined;
+      const url = preset?.url ?? pl.url;
+      if (!url) return { text: `Give a URL or one of the presets: ${ROBOT_PRESETS.map((r) => r.id).join(', ')}` };
+      setAgentAction(`Importing ${preset?.title ?? 'robot'}`);
+      const got = await handleImportRobot({ kind: 'url', url, name: pl.name ?? preset?.title });
+      if (typeof got === 'string') reply = { text: got };
+      else {
+        const ys = got.parts.flatMap((p) => [p.position[1] - p.dimensions.height / 2, p.position[1] + p.dimensions.height / 2]);
+        reply = {
+          text:
+            `Inserted ${got.name}: ${got.parts.length} parts (group "${got.name}"), ${got.joints.length} joints, ${Math.round(Math.max(...ys) - Math.min(...ys))} mm tall.` +
+            (got.notes.length ? `\nMissing files: ${got.notes.slice(0, 8).join('; ')}` : '') +
+            `\nCall get_rig for the joints.`,
+        };
+      }
+    }
+    return reply;
+  };
+
+  const runPoseToolRef = useRef(runPoseTool);
+  runPoseToolRef.current = runPoseTool;
   const handleAgentRequest = async (event: { requestId: string; kind: string; payload: Record<string, unknown> }) => {
     const respond = (result?: unknown, error?: string) =>
       platformBridge.respondToAgent({ requestId: event.requestId, result, error });
@@ -1276,6 +1359,16 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
 
       if (event.kind === 'part_code') {
         await respond(partCode(partsRef.current, String(event.payload.id)));
+        return;
+      }
+
+      // Posing: joints, poses, animations, motion capture, published robots
+      if (['get_rig', 'pose', 'animate', 'retarget', 'import_robot'].includes(event.kind)) {
+        const reply = await runPoseTool(event.kind, event.payload);
+        const images = reply.images
+          ? await Promise.all(reply.images.map(async (s) => ({ view: s.view, dataUrl: await downscaleDataUrl(s.dataUrl, 768) })))
+          : undefined;
+        await respond({ text: reply.text, images });
         return;
       }
 
@@ -1330,9 +1423,10 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           joints: Array<{
             id: string;
             name?: string;
-            type?: 'revolute' | 'fixed';
+            type?: RobotJoint['type'];
             parent: string[];
             child: string[];
+            parent_joint?: string;
             actuators?: string[];
             origin?: [number, number, number];
             axis?: [number, number, number];
@@ -1363,7 +1457,12 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
             problems.push(`${j.id}: give origin and axis, or an actuator to take them from`);
             continue;
           }
-          made.push({ id: j.id, name: j.name ?? j.id, type: j.type ?? 'revolute', parent: j.parent, child: j.child, origin, axis, range: j.range, actuators: j.actuators, limb: j.limb });
+          made.push(
+            anchorJoint(
+              { id: j.id, name: j.name ?? j.id, type: j.type ?? 'revolute', parent: j.parent, child: j.child, parentJoint: j.parent_joint, origin, axis, range: j.range, actuators: j.actuators, limb: j.limb },
+              partsRef.current
+            )
+          );
         }
         const keep = pl.replace ? [] : (projectRef.current.joints ?? []).filter((j) => !made.some((m) => m.id === j.id));
         const next = { ...projectRef.current, joints: [...keep, ...made] };
@@ -1565,6 +1664,11 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       setTransformMode(mode);
       setCommentMode(false);
       setAnnotationDraft(null);
+      // Posing lives in the Pose tab; any other tool leaves it
+      if (mode === 'pose') {
+        setIsRightOpen(true);
+        setRightTab('pose');
+      } else setRightTab((t) => (t === 'pose' ? 'inspector' : t));
       // Sculpt settings replace the Inspector while the tool is on
       if (mode === 'sculpt') {
         setIsRightOpen(true);
@@ -1575,10 +1679,102 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     [setIsRightOpen]
   );
 
+  // The Pose tab turns the joint ring on; leaving it (or closing the panel) goes back to Move
+  const posingActive = rightTab === 'pose' && isRightOpen;
+  useEffect(() => {
+    setTransformMode((m) => (posingActive ? 'pose' : m === 'pose' ? 'translate' : m));
+    if (posingActive) setCommentMode(false);
+  }, [posingActive]);
+
   // Turning the Sculpt setting off leaves the tool
   useEffect(() => {
     if (!sculptEnabled && transformMode === 'sculpt') handleSetTransformMode('translate');
   }, [sculptEnabled, transformMode, handleSetTransformMode]);
+
+  // A scene without joints has nothing to pose
+  useEffect(() => {
+    if (!posing.hasRig && rightTab === 'pose') setRightTab('inspector');
+  }, [posing.hasRig, rightTab]);
+
+  const canWalk = useMemo(() => !!posing.hasRig && posing.rig.joints.some((j) => j.limb === 'leg' || /hip|knee|ankle|leg|haa|kfe/i.test(j.name)), [posing.hasRig, posing.rig]);
+
+  /** A walk cycle for the legs the rig has (two feet: a biped walk; four: a trot) */
+  const handleWalkCycle = useCallback(() => {
+    const found = detectFeet(posing.rig, posing.pointOf);
+    if (!found) {
+      showToast('Add leg joints to make a walk cycle');
+      return;
+    }
+    const n = (projectRef.current.animations ?? []).filter((a) => a.name.startsWith('Walk')).length;
+    const built = buildGait(posing.rig, { feet: found.feet, phases: found.phases }, { values: {} }, posing.pointOf, n ? `Walk ${n + 1}` : 'Walk');
+    if (typeof built === 'string') {
+      showToast(built);
+      return;
+    }
+    const made = posing.addAnimation(built.animation);
+    posing.play(made.id, 0);
+    showToast(`Added ${made.name}`);
+  }, [posing, showToast]);
+
+  // Frames the model once the parts just added are on the canvas
+  const frameNextRef = useRef(false);
+  useEffect(() => {
+    if (!frameNextRef.current) return;
+    frameNextRef.current = false;
+    viewportRef.current?.frameAll();
+  }, [parts]);
+
+  /** Inserts a published robot (URDF / MJCF): its links as parts, its joints ready to pose */
+  const [importRobotOpen, setImportRobotOpen] = useState(false);
+  const handleImportRobot = useCallback(
+    async (source: { kind: 'url'; url: string; name?: string } | { kind: 'files'; files: File[] }) => {
+      try {
+        showToast(`Importing ${source.kind === 'url' && source.name ? source.name : 'robot'}…`, { tone: 'progress' });
+        const robot = await importRobot(source, {
+          name: source.kind === 'url' ? source.name : undefined,
+          onProgress: (m) => showToast(m, { tone: 'progress' }),
+        });
+        // Beside anything already in the scene
+        const others = partsRef.current.filter((p) => p.visible && p.kind !== 'image_plane');
+        let dx = 0;
+        if (others.length) {
+          const maxX = Math.max(...others.map((p) => p.position[0] + halfExtents(p)[0]));
+          const minX = Math.min(...robot.parts.map((p) => p.position[0] - p.dimensions.width / 2));
+          dx = Math.ceil(maxX - minX + 100);
+        }
+        const parts = robot.parts.map((p) => ({ ...p, position: [p.position[0] + dx, p.position[1], p.position[2]] as [number, number, number] }));
+        const joints = robot.joints.map((j) => anchorJoint({ ...j, origin: [j.origin[0] + dx, j.origin[1], j.origin[2]] }, parts));
+        commitParts((prev) => [...prev, ...parts]);
+        const next = { ...projectRef.current, joints: [...(projectRef.current.joints ?? []), ...joints] };
+        projectRef.current = next;
+        setProject(next);
+        setSelectedIds(parts.map((p) => p.id));
+        frameNextRef.current = true;
+        showToast(
+          `Inserted ${robot.name} · ${joints.length} ${joints.length === 1 ? 'joint' : 'joints'}${robot.notes.length ? ` · ${robot.notes.length} ${robot.notes.length === 1 ? 'file' : 'files'} missing` : ''}`,
+          { action: joints.length ? { label: 'Pose', onClick: () => handleSetTransformMode('pose') } : undefined }
+        );
+        return { ...robot, parts, joints };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        showToast(message, { tone: 'error' });
+        return message;
+      }
+    },
+    [commitParts, showToast, handleSetTransformMode]
+  );
+  devRef.current.importRobot = handleImportRobot;
+  devRef.current.posing = posing;
+  devRef.current.poseTool = (kind, payload) => runPoseToolRef.current(kind, payload);
+  const handlePickRobot = useCallback(
+    (preset: RobotPreset | null) => (preset ? void handleImportRobot({ kind: 'url', url: preset.url, name: preset.title }) : setImportRobotOpen(true)),
+    [handleImportRobot]
+  );
+
+  // Motion capture: a BVH file opens the retarget sheet
+  const motionInputRef = useRef<HTMLInputElement | null>(null);
+  const [motionSource, setMotionSource] = useState<{ name: string; text: string } | null>(null);
+  const handleImportMotion = useCallback(() => motionInputRef.current?.click(), []);
 
   const handleAddClayPreset = useCallback(
     (preset: 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule') => {
@@ -2018,6 +2214,103 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     });
   }, [selectedParts, commitParts, showToast, handleUndo]);
 
+  /* Clipboard: ⌘C / ⌘X / ⌘V copy parts between scenes; a pasted image becomes a reference plane */
+
+  const handleCopySelected = useCallback(
+    (cut = false) => {
+      if (selectedParts.length === 0) return false;
+      // A cut, or a paste into another scene, lands in place first; repeats step off by 15 mm
+      partsClipboard = { parts: selectedParts, inPlace: new Set(cut ? [] : [workspaceId]), pastes: new Map() };
+      if (!cut) return true;
+      const ids = selectedParts.map((p) => p.id);
+      const label = selectedParts.length === 1 ? selectedParts[0].name : `${selectedParts.length} parts`;
+      commitParts((prev) => prev.filter((p) => !ids.includes(p.id)));
+      setSelectedIds([]);
+      showToast(`Cut ${label}`, { tone: 'neutral', action: { label: 'Undo', onClick: () => { handleUndo(); setSelectedIds(ids); } } });
+      return true;
+    },
+    [selectedParts, workspaceId, commitParts, showToast, handleUndo]
+  );
+
+  const forceCopyRef = useRef(false);
+  /** For ⌘K: a real copy event, so the system clipboard gets the marker */
+  const copyViaCommand = useCallback((cut: boolean) => {
+    forceCopyRef.current = true;
+    try {
+      if (!document.execCommand(cut ? 'cut' : 'copy')) handleCopySelected(cut);
+    } finally {
+      forceCopyRef.current = false;
+    }
+  }, [handleCopySelected]);
+
+  const handlePasteParts = useCallback(() => {
+    const clip = partsClipboard;
+    if (!clip) return;
+    const n = clip.pastes.get(workspaceId) ?? 0;
+    clip.pastes.set(workspaceId, n + 1);
+    const step = 15 * (n + (clip.inPlace.has(workspaceId) ? 1 : 0));
+    const groupMap = new Map<string, { id: string; name: string }>();
+    const copies = clip.parts.map(({ jointId: _joint, ...p }) => {
+      let group = p.group;
+      if (group) {
+        if (!groupMap.has(group.id)) groupMap.set(group.id, { id: newId('group'), name: group.name });
+        group = groupMap.get(group.id);
+      }
+      return {
+        ...p,
+        id: newId(),
+        group,
+        position: [p.position[0] + step, p.position[1], p.position[2] + step] as [number, number, number],
+      };
+    });
+    commitParts((prev) => [...prev, ...copies]);
+    setSelectedIds(copies.map((c) => c.id));
+  }, [workspaceId, commitParts]);
+
+  useEffect(() => {
+    if (!active) return;
+    // Text fields keep native editing; so do open sheets
+    const skip = () => {
+      const el = document.activeElement;
+      return (
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement ||
+        (el instanceof HTMLElement && el.isContentEditable) ||
+        paletteOpen ||
+        settingsOpen
+      );
+    };
+    const onCopy = (e: ClipboardEvent) => {
+      // ⌘K's Copy and Cut run execCommand while the palette still has focus
+      const forced = forceCopyRef.current;
+      if (!forced && (skip() || (window.getSelection()?.toString() ?? '') !== '')) return;
+      if (!handleCopySelected(e.type === 'cut')) return;
+      e.preventDefault();
+      e.clipboardData?.setData(PARTS_CLIPBOARD_TYPE, '1');
+    };
+    const onPaste = (e: ClipboardEvent) => {
+      if (skip()) return;
+      const data = e.clipboardData;
+      if (data?.types.includes(PARTS_CLIPBOARD_TYPE)) {
+        e.preventDefault();
+        handlePasteParts();
+        return;
+      }
+      const file = Array.from(data?.items ?? []).find((i) => i.type.startsWith('image/'))?.getAsFile();
+      if (!file) return;
+      e.preventDefault();
+      handleAddImagePlane(file, 'Pasted Image');
+    };
+    window.addEventListener('copy', onCopy);
+    window.addEventListener('cut', onCopy);
+    window.addEventListener('paste', onPaste);
+    return () => {
+      window.removeEventListener('copy', onCopy);
+      window.removeEventListener('cut', onCopy);
+      window.removeEventListener('paste', onPaste);
+    };
+  }, [active, paletteOpen, settingsOpen, handleCopySelected, handlePasteParts, handleAddImagePlane]);
+
   const handleTogglePartFlag = useCallback(
     (id: string, flag: 'visible' | 'locked') =>
       commitParts((prev) => prev.map((p) => (p.id === id ? { ...p, [flag]: !p[flag] } : p))),
@@ -2291,6 +2584,9 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         case 'c':
           if (sculptEnabled) handleSetTransformMode('sculpt');
           break;
+        case 'p':
+          if (posing.hasRig) handleSetTransformMode('pose');
+          break;
         case 'f':
           handleDropToGround();
           break;
@@ -2354,6 +2650,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     setIsLeftOpen,
     setIsRightOpen,
     setShowReferenceImages,
+    posing.hasRig,
   ]);
 
   /* ---------------------------------------------------------------- */
@@ -2407,8 +2704,23 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       ...(sculptEnabled
         ? [{ id: 'tool-sculpt', group: 'Tools', label: 'Sculpt', shortcut: 'C', icon: <Brush className={ic} />, run: () => handleSetTransformMode('sculpt') }]
         : []),
+      ...(posing.hasRig
+        ? [
+            { id: 'tool-pose', group: 'Panels', label: 'Show Pose', shortcut: 'P', icon: <PersonStanding className={ic} />, keywords: 'joints posing animate dof tab', run: () => handleSetTransformMode('pose') },
+            { id: 'rest-pose', group: 'Pose', label: 'Rest Pose', icon: <RotateCcw className={ic} />, keywords: 'reset zero home', run: () => posing.setPose(null) },
+            ...(canWalk ? [{ id: 'walk-cycle', group: 'Pose', label: 'New Walk Cycle', icon: <Footprints className={ic} />, keywords: 'gait animation legs', run: handleWalkCycle }] : []),
+            { id: 'import-bvh', group: 'Pose', label: 'Import BVH…', icon: <FileUp className={ic} />, keywords: 'mocap motion capture retarget animation', run: handleImportMotion },
+            ...posing.animations.map((a) => ({ id: `play-${a.id}`, group: 'Pose', label: `Play ${a.name}`, icon: <Play className={ic} />, keywords: 'animation', run: () => { handleSetTransformMode('pose'); posing.play(a.id); } })),
+            ...posing.poses.map((p) => ({ id: `pose-${p.id}`, group: 'Pose', label: `Apply ${p.name}`, icon: <PersonStanding className={ic} />, keywords: 'pose', run: () => posing.applySavedPose(p.id) })),
+          ]
+        : []),
+      { id: 'import-robot', group: 'Scene', label: 'Import Robot…', icon: <Bot className={ic} />, keywords: 'urdf mjcf mujoco ros unitree g1 humanoid description', run: () => setImportRobotOpen(true) },
+      ...ROBOT_PRESETS.map((r) => ({ id: `robot-${r.id}`, group: 'Robots', label: `Insert ${r.title}`, icon: <Bot className={ic} />, keywords: `${r.maker} urdf robot ${r.description}`, run: () => handlePickRobot(r) })),
       { id: 'tool-comment', group: 'Tools', label: 'Comment', shortcut: 'M', icon: <MessageCircle className={ic} />, keywords: 'annotation note pin', run: () => toggleCommentMode(true) },
       { id: 'select-all', group: 'Selection', label: 'Select All', shortcut: '⌘A', icon: <Layers className={ic} />, run: () => setSelectedIds(parts.filter((p) => p.visible && (showReferenceImages || p.kind !== 'image_plane')).map((p) => p.id)) },
+      { id: 'copy', group: 'Selection', label: 'Copy', shortcut: '⌘C', icon: <Copy className={ic} />, run: () => copyViaCommand(false) },
+      { id: 'cut', group: 'Selection', label: 'Cut', shortcut: '⌘X', icon: <Scissors className={ic} />, run: () => copyViaCommand(true) },
+      { id: 'paste', group: 'Selection', label: 'Paste', shortcut: '⌘V', icon: <ClipboardPaste className={ic} />, run: handlePasteParts },
       { id: 'group', group: 'Selection', label: 'Group', shortcut: '⌘G', icon: <Group className={ic} />, run: handleGroup },
       { id: 'ungroup', group: 'Selection', label: 'Ungroup', shortcut: '⇧⌘G', icon: <Ungroup className={ic} />, run: handleUngroup },
       { id: 'union', group: 'Selection', label: 'Union', icon: <SquaresUnite className={ic} />, keywords: 'boolean merge combine', run: () => handleRunBooleanCSG('union') },
@@ -2477,7 +2789,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     ];
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customModels, studio.tabs, studio.canReopenTab, workspaceId, isLeftOpen, isRightOpen, handleSync, handleExportSTL, handleExportImage, handleCopyBrief, handleDropToGround, handleStackOnBelow, handleAddCatalogItem, handlePlaceCustomModel, handleSetTransformMode, setCameraView, openCreator, toggleCommentMode, pickReferenceImage, showReferenceImages, showGrid, trackpadMode, sculptEnabled, openSettings, parts, handleGroup, handleUngroup, handleRunBooleanCSG, handleAlign, handleDistribute]);
+  }, [posing, canWalk, handleWalkCycle, handleImportMotion, handlePickRobot, customModels, studio.tabs, studio.canReopenTab, workspaceId, isLeftOpen, isRightOpen, handleSync, handleExportSTL, handleExportImage, handleCopyBrief, handleDropToGround, handleStackOnBelow, handleAddCatalogItem, handlePlaceCustomModel, handleSetTransformMode, setCameraView, openCreator, toggleCommentMode, pickReferenceImage, showReferenceImages, showGrid, trackpadMode, sculptEnabled, openSettings, parts, handleGroup, handleUngroup, handleRunBooleanCSG, handleAlign, handleDistribute, copyViaCommand, handlePasteParts]);
 
   /* ---------------------------------------------------------------- */
   /* Context menu                                                     */
@@ -2565,6 +2877,8 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       case 'export-stl': return handleExportSTL();
       case 'add-reference-image': return pickReferenceImage();
       case 'import-svg': return openCreator('svg');
+      case 'import-robot': return setImportRobotOpen(true);
+      case 'import-bvh': return posing.hasRig ? handleImportMotion() : showToast('Add joints to retarget motion onto');
       case 'undo': return handleUndo();
       case 'redo': return handleRedo();
       case 'select-all': return handleSelectAll();
@@ -2887,6 +3201,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         open={isLeftOpen}
         sceneGoal={globalGoal}
         partsSearchRef={partsSearchRef}
+        onImportRobot={handlePickRobot}
         width={panelWidths.left}
         resizing={resizingPanel === 'left'}
         edge={
@@ -3055,6 +3370,9 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           annotateMode={commentMode}
           onPlaceAnnotation={handlePlaceAnnotation}
           paused={!active}
+          pose={posing.deltas}
+          poseJoint={transformMode === 'pose' ? posing.poseJoint : null}
+          onPoseJoint={posing.onPoseJoint}
         />
         <AnnotationLayer
           annotations={annotations}
@@ -3083,7 +3401,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
 
 
         <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-2 pointer-events-none">
-          {selectedParts.length > 1 && (
+          {selectedParts.length > 1 && transformMode !== 'pose' && (
             <FloatingIsland key="selection-bar" className="pointer-events-auto h-10 pl-3.5 pr-1 gap-1 rounded-full animate-pop-up">
               <span className="text-[13px] font-medium text-white/85 tabular pr-1.5 whitespace-nowrap">{selectedParts.length} selected</span>
               <IslandDivider />
@@ -3121,7 +3439,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         </div>
 
         {toast && (
-          <div className={`absolute ${selectedParts.length > 1 ? 'bottom-[144px]' : 'bottom-[92px]'} inset-x-0 z-30 flex justify-center pointer-events-none transition-[bottom] duration-200`}>
+          <div className={`absolute ${selectedParts.length > 1 && transformMode !== 'pose' ? 'bottom-[144px]' : 'bottom-[92px]'} inset-x-0 z-30 flex justify-center pointer-events-none transition-[bottom] duration-200`}>
             <div className="pointer-events-auto" key={toast.id}>
               <Toast toast={toast} onDismiss={() => setToast(null)} />
             </div>
@@ -3166,6 +3484,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
               onChange={setRightTab}
               tabs={[
                 { value: 'inspector', label: 'Inspect' },
+                ...(posing.hasRig ? [{ value: 'pose' as const, label: 'Pose' }] : []),
                 { value: 'build', label: 'Build' },
                 { value: 'acp', label: 'Agent', indicator: isAcpBusy ? <AgentSpinner /> : undefined },
               ]}
@@ -3174,6 +3493,15 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           </div>
 
           <div className="flex-1 min-h-0 flex flex-col">
+            {rightTab === 'pose' && (
+              <PosePanel
+                posing={posing}
+                onSelectParts={setSelectedIds}
+                onImportMotion={handleImportMotion}
+                onWalkCycle={handleWalkCycle}
+                canWalk={canWalk}
+              />
+            )}
             {rightTab === 'inspector' && studioMode && (
               <SculptAndDrawStudio
                 selectedPart={selectedParts[0] ?? null}
@@ -3232,10 +3560,6 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
                 onRunChecks={() => runEngineeringNow(true)}
                 onSelectParts={(ids) => setSelectedIds(ids)}
                 onToast={(m) => showToast(m)}
-                onBrowseParts={() => {
-                  setLeftTab('parts');
-                  setIsLeftOpen(true);
-                }}
               />
             )}
             {rightTab === 'acp' && (
@@ -3275,6 +3599,32 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       </div>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
+      <ImportRobotSheet open={importRobotOpen} onClose={() => setImportRobotOpen(false)} onImport={(src) => void handleImportRobot(src)} />
+      <RetargetSheet
+        key={motionSource?.name}
+        source={motionSource}
+        rig={posing.rig}
+        pointOf={posing.pointOf}
+        onClose={() => setMotionSource(null)}
+        onCreate={(anim, summary) => {
+          setMotionSource(null);
+          const made = posing.addAnimation(anim);
+          handleSetTransformMode('pose');
+          posing.play(made.id, 0);
+          showToast(`Added ${made.name}${summary}`);
+        }}
+      />
+      <input
+        ref={motionInputRef}
+        type="file"
+        accept=".bvh"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) setMotionSource({ name: file.name, text: await file.text() });
+        }}
+      />
     </div>
   );
 }

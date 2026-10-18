@@ -24,7 +24,7 @@ export interface EvidenceFolder {
 
 const IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
 const TEXT_RE =
-  /\.(md|markdown|txt|text|json|jsonc|xml|urdf|xacro|sdf|mjcf|srdf|yaml|yml|csv|tsv|scad|py|js|mjs|ts|tsx|c|cc|cpp|h|hpp|ino|rs|go|toml|ini|cfg|conf|html?|svg|log|rst|tex)$/i;
+  /\.(md|markdown|txt|text|json|jsonc|xml|urdf|xacro|sdf|mjcf|srdf|bvh|yaml|yml|csv|tsv|scad|py|js|mjs|ts|tsx|c|cc|cpp|h|hpp|ino|rs|go|toml|ini|cfg|conf|html?|svg|log|rst|tex)$/i;
 const MESH_RE = /\.stl$/i;
 const SKIP_DIRS = /^(\.|node_modules$|__pycache__$|venv$|\.venv$)/;
 
@@ -168,8 +168,10 @@ async function uploadOne(folderId: string, folderName: string, { file, relPath }
     return 'image';
   }
   if (kind === 'text') {
-    const body = await file.slice(0, MAX_TEXT_BYTES).text();
-    const cut = file.size > MAX_TEXT_BYTES ? `\n[Cut at ${MAX_TEXT_BYTES / 1e6} MB of ${(file.size / 1e6).toFixed(1)} MB]` : '';
+    // Motion capture is read whole (retargeting needs every frame)
+    const max = /\.bvh$/i.test(relPath) ? 40_000_000 : MAX_TEXT_BYTES;
+    const body = await file.slice(0, max).text();
+    const cut = file.size > max ? `\n[Cut at ${max / 1e6} MB of ${(file.size / 1e6).toFixed(1)} MB]` : '';
     await platformBridge.saveEvidenceFile({ folderId, folderName, relPath, text: body + cut });
     return 'file';
   }

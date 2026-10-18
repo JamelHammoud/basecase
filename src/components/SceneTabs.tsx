@@ -89,13 +89,14 @@ export const SceneTabs: React.FC<SceneTabsProps> = ({
 
   const dropIndex = (from: number, dx: number) => {
     const l = layout();
-    const center = l[from].left + l[from].width / 2 + dx;
+    // Like a browser: a neighbour makes room once the dragged tab's leading edge crosses its middle
+    const leftEdge = l[from].left + dx;
+    const rightEdge = leftEdge + l[from].width;
     let to = from;
     l.forEach((r, i) => {
       const mid = r.left + r.width / 2;
-      // At the strip's ends the drag is clamped exactly onto the last tab's centre, so ties count
-      if (i < from && center <= mid) to = Math.min(to, i);
-      if (i > from && center >= mid) to = Math.max(to, i);
+      if (i < from && leftEdge <= mid) to = Math.min(to, i);
+      if (i > from && rightEdge >= mid) to = Math.max(to, i);
     });
     return to;
   };

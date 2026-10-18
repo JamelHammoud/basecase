@@ -1,3 +1,4 @@
+import type { RobotPreset } from '../utils/robotImport';
 import React, { useMemo, useState } from 'react';
 import {
   ChevronRight,
@@ -53,6 +54,7 @@ interface LeftSidebarProps {
   sceneGoal?: string;
   /** The Parts search field, so the scene can focus it (⌘F) */
   partsSearchRef?: React.MutableRefObject<HTMLInputElement | null>;
+  onImportRobot?: (preset: RobotPreset | null) => void;
   // Library
   library: Omit<LibraryPanelProps, 'parts' | 'selectedIds'>;
 }
@@ -85,6 +87,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
               parts={props.parts}
               goal={props.sceneGoal ?? ''}
               searchInputRef={props.partsSearchRef}
+              onImportRobot={props.onImportRobot}
             />
           )}
           {tab === 'library' && <LibraryPanel {...props.library} parts={props.parts} selectedIds={props.selectedIds} />}

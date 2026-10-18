@@ -860,7 +860,7 @@ server.registerTool(
       } catch (err) {
         issues.push(`(interference check unavailable: ${String(err?.message ?? err)})`);
       }
-      const finished = new Set(['cad_part', 'component', 'hardware', 'image_plane']);
+      const finished = new Set(['cad_part', 'component', 'hardware', 'image_plane', 'mesh']);
       const primitives = solids.filter((p) => p.role === 'solid' && p.kind && !finished.has(p.kind) && !String(p.kind).startsWith('cad'));
       if (primitives.length) {
         issues.push(`${primitives.length} solid parts are still block-out primitives (replace each with model_part or a catalog part): ${primitives.slice(0, 20).map((p) => p.id).join(', ')}${primitives.length > 20 ? '…' : ''}`);
@@ -895,13 +895,14 @@ server.registerTool(
           z.object({
             id: z.string().regex(/^[a-z0-9_-]+$/),
             name: z.string().max(60).optional().describe('e.g. "Left Knee Pitch"'),
-            type: z.enum(['revolute', 'fixed']).optional(),
+            type: z.enum(['revolute', 'prismatic', 'fixed']).optional().describe('revolute (default) turns about the axis; prismatic slides along it (a lift, a linear actuator)'),
             parent: z.array(z.string()).min(1).max(40),
             child: z.array(z.string()).min(1).max(80),
+            parent_joint: z.string().optional().describe('The joint this one is mounted on, when several joints share one link (a 2-DOF wrist: the second joint sits on the first)'),
             actuators: z.array(z.string()).max(2).optional().describe('Servo part ids; two opposed servos share the load'),
             origin: vec3.optional().describe('A point on the axis, mm, z up (omit to use the servo output)'),
             axis: vec3.optional().describe('Axis direction (omit to use the servo output axis)'),
-            range: z.tuple([z.number().min(-360).max(0), z.number().min(0).max(360)]).optional().describe('Degrees from the modeled pose, e.g. [-30, 120]'),
+            range: z.tuple([z.number().min(-2000).max(0), z.number().min(0).max(2000)]).optional().describe('From the modeled pose: degrees, e.g. [-30, 120] (mm for prismatic). Posing and animations are held inside it.'),
             limb: z.enum(['leg', 'arm', 'neck', 'torso', 'other']).optional(),
           })
         )
@@ -914,6 +915,199 @@ server.registerTool(
     try {
       const res = await bridge('define_joints', { joints, replace });
       return text(res?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
+const ROOT = z
+  .object({
+    position: vec3.optional().describe('Whole-robot offset from the modeled pose, mm (e.g. [0, 0, -40] crouches the body 40 mm)'),
+    rotation: vec3.optional().describe('Whole-robot turn, XYZ degrees about the hips'),
+  })
+  .optional();
+const IK_GOAL = z.object({
+  part: z.string().describe('Part id, or a joint id (its link): e.g. the ankle joint for a foot, the wrist joint for a hand'),
+  target: vec3.optional().describe('Where that point goes, mm (agent frame)'),
+  move: vec3.optional().describe('Or how far to move it from where it is now, mm'),
+  where: z.enum(['bottom', 'center']).optional().describe('The point on the part: bottom = the sole of a foot; center (default) for hands and heads'),
+  keep_orientation: z.boolean().optional().describe('Also keep the part turned as in the modeled pose (feet flat on the floor)'),
+});
+const PREVIEW = z
+  .object({ frames: z.number().int().min(2).max(8).optional(), view: VIEW.optional() })
+  .optional()
+  .describe('Render evenly spaced frames to check the motion (side view shows gaits best)');
+
+/** Text plus any images from a posing reply */
+function withImages(res) {
+  const content = [{ type: 'text', text: res?.text || 'ok' }];
+  for (const shot of res?.images || []) {
+    content.push({ type: 'text', text: shot.view });
+    const m = /^data:(image\/\w+);base64,(.+)$/.exec(shot.dataUrl || '');
+    if (m) content.push({ type: 'image', mimeType: m[1], data: m[2] });
+  }
+  return { content };
+}
+
+server.registerTool(
+  'get_rig',
+  {
+    title: 'Joints and poses',
+    description:
+      'Lists the robot\'s joints (id, type, axis, pivot, range, the joint it is mounted on, the parts it moves), the pose on the canvas, saved poses, animations, the feet a gait would use and the mocap landmarks. ' +
+      'Call it before posing or animating, and after import_robot.',
+    inputSchema: {},
+  },
+  async () => {
+    try {
+      return text((await bridge('get_rig', {}))?.text || 'No joints.');
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
+server.registerTool(
+  'pose',
+  {
+    title: 'Pose',
+    description:
+      'Poses the robot on the canvas: set joint values (degrees, or mm for prismatic joints, from the modeled pose; held inside each joint\'s range), and/or reach with IK (a hand to a point, a foot onto a step), and/or move the whole body. ' +
+      'Starts from the current pose unless from_rest. Never edits the parts: the modeled pose stays the design. Reports values held at a limit, IK misses, new collisions between links and the floor. ' +
+      'save_as keeps it as a named pose; apply restores a saved one. Pass views to see the result. Use it when the user asks for a pose ("wave", "crouch", "T-pose"), and to check a design can reach what it needs to.',
+    inputSchema: {
+      values: z.record(z.string(), z.number()).optional().describe('Joint id → value'),
+      relative: z.boolean().optional().describe('Add values to the current ones'),
+      from_rest: z.boolean().optional().describe('Start from the modeled pose'),
+      root: ROOT,
+      ik: z.array(IK_GOAL).max(6).optional().describe('Reach goals solved together; joints given in values stay fixed'),
+      apply: z.string().optional().describe('Name of a saved pose to start from'),
+      save_as: z.string().max(40).optional(),
+      views: z.array(VIEW).max(3).optional(),
+    },
+  },
+  async (args) => {
+    try {
+      return withImages(await bridge('pose', args, 120000));
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
+server.registerTool(
+  'animate',
+  {
+    title: 'Animate',
+    description:
+      'Makes a named animation and plays it. Either keyframes (t in seconds; joint values, a body offset, and/or IK goals per keyframe; joints not given hold their previous value) for gestures like a wave or a nod, ' +
+      'or a gait: a walk cycle solved with IK so the feet stay planted while on the ground and lift while swinging, for any number of legs (2: walk; 4: trot, feet front-left, front-right, rear-left, rear-right). ' +
+      'Gait defaults come from the leg length; tune stride, lift, period, crouch (bend the knees so they can reach), bob and sway, and add oscillators for arm swing or a head bob. ' +
+      'Same name replaces. Reports IK misses, joints at their limits, collisions and floor contact at 8 sampled times; preview renders frames.',
+    inputSchema: {
+      name: z.string().min(1).max(40),
+      duration: z.number().min(0.1).max(600).optional().describe('Seconds (a gait: one cycle)'),
+      loop: z.boolean().optional(),
+      interpolation: z.enum(['smooth', 'linear']).optional(),
+      keyframes: z
+        .array(
+          z.object({
+            t: z.number().min(0),
+            values: z.record(z.string(), z.number()).optional(),
+            root: ROOT,
+            ik: z.array(IK_GOAL.extend({ target: vec3 })).max(6).optional(),
+          })
+        )
+        .max(120)
+        .optional(),
+      gait: z
+        .object({
+          feet: z.array(z.string()).max(8).optional().describe('Ankle joints or foot parts; found automatically when left out'),
+          phases: z.array(z.number().min(0).max(1)).max(8).optional().describe('When each foot lifts, as a fraction of the cycle'),
+          stride: z.number().min(0).max(2000).optional().describe('Step length, mm'),
+          lift: z.number().min(0).max(500).optional().describe('Foot lift, mm'),
+          period: z.number().min(0.2).max(10).optional().describe('Seconds per cycle'),
+          duty: z.number().min(0.3).max(0.9).optional().describe('Share of the cycle each foot is down (walk ~0.6, trot ~0.5)'),
+          crouch: z.number().min(0).max(500).optional().describe('Lower the body, mm'),
+          bob: z.number().min(0).max(200).optional(),
+          sway: z.number().min(0).max(200).optional(),
+          heading: z.number().min(-180).max(180).optional().describe('Degrees from straight ahead'),
+          oscillators: z
+            .array(z.object({ joint: z.string(), amplitude: z.number(), phase: z.number().optional().describe('Degrees of the cycle'), offset: z.number().optional() }))
+            .max(20)
+            .optional(),
+        })
+        .optional(),
+      play: z.boolean().optional(),
+      preview: PREVIEW,
+    },
+  },
+  async (args) => {
+    try {
+      return withImages(await bridge('animate', args, 180000));
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
+server.registerTool(
+  'retarget_motion',
+  {
+    title: 'Retarget motion capture',
+    description:
+      'Turns a BVH motion-capture file (an attached evidence file, or a URL) into an animation on the robot. Each robot limb is pointed the way the performer\'s limb points (so different proportions and rest poses work), the body follows the hips scaled by leg length, and feet are kept on the floor. ' +
+      'Bones and joints are matched by name automatically; override with bones / joints (landmark → BVH bone or robot joint id; landmarks: hips, chest, head, leftShoulder, leftElbow, leftWrist, leftHip, leftKnee, leftAnkle, leftToe and the right ones). ' +
+      'Reports the match and the mean miss per landmark; preview renders frames.',
+    inputSchema: {
+      file: z.string().optional().describe('Evidence path of a .bvh file'),
+      url: z.string().url().optional().describe('Or a link to one'),
+      name: z.string().max(40).optional(),
+      start: z.number().min(0).optional().describe('Seconds into the clip'),
+      end: z.number().min(0).optional(),
+      fps: z.number().min(5).max(60).optional(),
+      in_place: z.boolean().optional().describe('Keep the robot over its spot (no travel)'),
+      loop: z.boolean().optional(),
+      bones: z.record(z.string(), z.string()).optional(),
+      joints: z.record(z.string(), z.string()).optional(),
+      play: z.boolean().optional(),
+      preview: PREVIEW,
+    },
+  },
+  async ({ file, ...rest }) => {
+    try {
+      let textBody;
+      if (file) {
+        const full = evidencePath(file);
+        if (!fs.existsSync(full)) return text(`${file}: not found. Call list_evidence for the exact paths.`);
+        textBody = fs.readFileSync(full, 'utf-8');
+      }
+      if (!textBody && !rest.url) return text('Give file (an attached .bvh) or url.');
+      return withImages(await bridge('retarget', { ...rest, file, text: textBody }, 300000));
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
+server.registerTool(
+  'import_robot',
+  {
+    title: 'Import a published robot',
+    description:
+      'Inserts a published robot from its URDF or MuJoCo MJCF with its meshes: every link becomes a part, every joint becomes a posable joint with its real axis and limits. ' +
+      'Presets: unitree-g1 (29 joints), unitree-h1, unitree-go2 (quadruped), berkeley-humanoid, open-duck-mini, so101 (arm). Or a raw/GitHub URL to a .urdf or .xml. ' +
+      'Use it when the user wants an existing robot to pose or animate, or as a reference beside a design.',
+    inputSchema: {
+      preset: z.enum(['unitree-g1', 'unitree-h1', 'unitree-go2', 'berkeley-humanoid', 'open-duck-mini', 'so101']).optional(),
+      url: z.string().url().optional(),
+      name: z.string().max(40).optional(),
+    },
+  },
+  async (args) => {
+    try {
+      return text((await bridge('import_robot', args, 300000))?.text || 'ok');
     } catch (err) {
       return fail(err);
     }

@@ -36,7 +36,9 @@ References studied for this system: Figma UI3, the OpenAI Codex / ChatGPT deskto
 - **Window dragging:** the title bar uses `DRAG_REGION`. Every interactive child uses `NO_DRAG_REGION` (both exported from `src/design-system/theme.ts`).
 - **Vibrancy:** the Electron window uses `vibrancy: 'sidebar'` with a transparent background. `main.tsx` adds `html.is-electron`, and `.window-chrome` turns translucent only in Electron, so the title bar and gaps show the desktop like a macOS sidebar. The cards stay opaque.
 - **Window size:** minimum 1240 × 720.
-- **App name: Basecase.** `app.setName('Basecase')` in `electron/main.mjs`, which also moves the old `Application Support/Robotics 3D Studio` folder (localStorage) to `Basecase` once. In dev, macOS names the app after its bundle (menu bar, Dock, ⌘Tab, Force Quit), so `npm run electron[:dev]` launches through `tools/electron-dev.mjs`: it keeps an APFS clone of Electron.app as `node_modules/.cache/basecase-electron/Basecase.app` with its own executable and bundle id (`app.basecase.dev`), rebuilt when Electron's version changes. Because the executable isn't named Electron, `app.isPackaged` is true in dev; check `process.defaultApp` for dev-only behavior.
+- **App name: Basecase.** `app.setName('Basecase')` in `electron/main.mjs`, which also moves the old `Application Support/Robotics 3D Studio` folder (localStorage) to `Basecase` once. In dev, macOS names the app after its bundle (menu bar, Dock, ⌘Tab, Force Quit), so `npm run electron[:dev]` launches through `tools/electron-dev.mjs`: it keeps an APFS clone of Electron.app as `node_modules/.cache/basecase-electron/Basecase.app` with its own executable, bundle id (`app.basecase.dev`) and app icon, rebuilt when Electron's version or the compiled icon changes. Because the executable isn't named Electron, `app.isPackaged` is true in dev; check `process.defaultApp` for dev-only behavior.
+- **App icon:** a white squircle ring (superellipse n = 4, 600 of 1024, opening 0.446 of the ring) on a dark grey glass background made from the app's own surfaces (`#121212` chrome up to a lifted `#3c3c3d` highlight). The source is the Icon Composer file `build/icon/Basecase.icon`: the ring (`Assets/ring.svg`) is a glass layer, so macOS adds the specular edge, frosting and shadow; the mesh (`Assets/background.png`) is a flat layer under it. The mesh comes from `build/icon/mesh.html` (solid colour fields + a conic fan + directional veils, blurred as a share of the tile, with grain), rendered by `node tools/icon-mesh.mjs [seed] [out] [palette]` (grey seed 7 ships; a blue palette is kept as an alternative). `npm run icon` compiles `build/icon/compiled/Assets.car` (Liquid Glass) and `Basecase.icns` (fallback) with Xcode's actool; `tools/electron-dev.mjs` installs both in the dev bundle. `build/icon/basecase-1024.png` is macOS's own rendering, for docs. Restart the app to see a new icon.
+- **Favicon** (`public/favicon.svg`): the ring alone, no background, black in light mode and white in dark (`prefers-color-scheme` inside the SVG).
 - **Native menu bar** (`electron/app-menu.mjs`): App (Settings… ⌘,), File (New Scene ⌘T, Reopen Closed Scene ⇧⌘T, …, Close Scene ⌘W, Close Window ⇧⌘W), Edit (…, Find Parts… ⌘F), View (Camera ▸, Two-Finger Scroll ▸, grid, reference images, panels), Window (Show Previous / Next Scene ⇧⌘[ / ⇧⌘], then every open scene with ⌘1–⌘9), Help (Keyboard Shortcuts ?).
   - Items send `menu:command` ids to the renderer: tab commands (`new-scene`, `close-tab`, `reopen-tab`, `next-tab`, `prev-tab`, `tab:<id>`) run in `App.tsx`, the rest in the scene in front (`runMenuCommand` in `SceneWorkspace.tsx`). Both report checkmarks and enabled state back with `menu:state` (partial updates merge).
   - Shortcuts the renderer already handles are display-only (`registerAccelerator: false`), so keys never run twice or fire while typing. Undo, Redo and Select All stay registered so text fields keep native editing; the renderer ignores a menu repeat of a key it just handled.
@@ -188,7 +190,9 @@ Sources: [Apple HIG: Writing](https://developer.apple.com/design/human-interface
   - 180ms for popovers (`animate-pop-in` / `animate-pop-up`).
   - 240ms for panel collapse (width transition).
   - Easing `cubic-bezier(0.2, 0, 0, 1)`. Respect `prefers-reduced-motion`.
+- **Previews** (`.preview` in `index.css`; `.preview-sm` for list thumbnails): part and scene thumbnails sit on a soft spotlight fill with 12px corners (8px small) and no outline or outer hover plate; hover brightens the fill and zooms the image. Parts and Library grids: 2 columns, 8px apart, 12px between rows, 12px from the card edge. The part page hero uses it at 14px. Only a state (the current scene's blue ring) draws an edge.
 - **Focus:** a 2px blue `:focus-visible` ring only.
+- **Scrollbars never take space.** Native scrollbars are hidden everywhere (`index.css`); `OverlayScrollbars` (mounted once in `main.tsx`) floats a 6px thumb over whatever is scrolling, fades it 900ms after scrolling stops, and lets you drag it. Never give a scroller a gutter or style `::-webkit-scrollbar` with a width. `.no-scrollbar` opts an element out of the thumb. While a thumb is dragged its scroller has `data-scrollbar-drag` (the agent feed uses it to stop following).
 - **CSS layers:** custom classes live in `@layer base` / `@layer components` so Tailwind utilities can override them.
 
 ---
@@ -198,16 +202,24 @@ Sources: [Apple HIG: Writing](https://developer.apple.com/design/human-interface
 - **Docked side panels** (Figma reverted floating panels because they cramped the canvas).
   - Each panel is a rounded card (§2) with a 44px header row; window-level controls live in the title bar.
   - **Left (288px):** shows one view at a time, picked in the view rail (§2): **Parts · Layers · Library**, opening on Parts. Its header names the view.
-    - **Parts** (`PartsPanel`): search first, then browse. Views stack with a Back button.
+    - **Parts** (`PartsPanel`): search first, then browse. Views stack with no header row of their own: inside a view the search field's glass icon becomes Back (Esc in an empty field also goes back), and the field names the view and searches only it (“Search servos”, “Search screws”, “Search in this scene”; a part page searches its group). No scoped matches shows [Search All Parts].
       - **Search** (always on top, a `SearchField`; ⌘F opens Parts and focuses it from anywhere): matches name, maker, part number, aliases and group words, ranking a word that names the group first (“servo” → servos). A size makes hardware exact: “m3x12”, “M2.5 standoff 12”, “608”. ↑/↓ move, Enter adds, ⌘Enter opens.
       - **Home:** an **In this scene** row (opens a view: Used, with counts, then Goes with these: `pairsWith` of the scene's components and components named in the brief), Recent (`localStorage` `parts-recent`; right-click for Remove from Recent / Clear Recent), then Browse rows in two sections: Components (one row per non-empty `ComponentGroup`) and Hardware (one row per `HARDWARE_FAMILIES` family). Parts lists and searches only real components and hardware: basic shapes live in the toolbar's Shapes menu (A), and holes, slots and pivot axes in ⌘K.
       - **Category:** 2-column grid of real 3D thumbnails (`usePartThumbnail`, cached per exact variant). Hover opens a `HoverCard` beside the sidebar. Click opens the page; + adds; drag places it.
-      - **Part page:** the hover card's layout at full length: a draggable spotlight hero with the model-source badge, name, maker · part number and description, a Size headline and every spec as tiles, Mounting, 3D model, Buy on Amazon (secondary) with Datasheet and Product Page icons, then Goes with.
-      - **Footer:** part and hardware pages end in a bar below the scroll area (name + Add), so the scroll fade never dims it.
+      - **Part page:** calm first, details on request. A draggable spotlight hero (no badge), the name (17px semibold), the maker on one muted line and the description; then **Key specs**: at most 3 plain-language rows for newcomers (`keySpecs` in `utils/keySpecs.ts`: Size rounded, Weight, and one headline per group, e.g. a servo's Strength as “Up to 2 kg at 10 cm”, a gripper's Can hold, a LiDAR's Range); **All specs**, collapsed: the exact datasheet values as label/value rows; **Details**, collapsed: part number, Mounting, 3D model source, Datasheet and Product Page; then Goes with. Amazon is a cart icon in the footer beside Add. The hardware page shares the hero and title.
+      - **Footer:** part and hardware pages end in a bar below the scroll area (name, Amazon cart icon, Add), so the scroll fade never dims it.
       - **Scroll fade:** the list fades 28px at an edge only while there's more to scroll past it (`useScrollFade`, same look as the agent feed).
-      - **Hardware page:** the family's `HardwareConfigurator` (type chips such as Head: Socket · Button · Flat · Pan · Hex · Set, Drive, size, length, finish), a live preview of the exact spec, and a footer with Find on Amazon + Add. Each family remembers its last spec.
-      - **Drive** shows only when a head comes in more than one: Socket Hex / Torx (ISO 4762 / 14579), Flat Hex / Torx / Phillips / Slotted (ISO 10642 / 14581 / 7046 / 2009), Pan Phillips / Torx / Slotted (ISO 7045 / 14583 / 1580). Each drive has its own head table (`screwHead`), sizes (`sizesFor`) and standard (`screwStandard`), shown in the Standard row. The drive is part of the spec (`spec.drive`) and of catalog keys (`hardware:type|size|length|finish|drive`).
-      - Recesses are cut into the head with a real boolean (`cutRecess` in `three/hardwareMesh.ts`, three-bvh-csg), at the standard's key-engagement depth; the Phillips cross tapers like the ISO 4757 cone. The recess walls render dark.
+      - **Hardware page:** a live preview of the exact spec, the title, then the family's `HardwareConfigurator` and `HardwareSpecs` as hairline sections, and a footer with Find on Amazon + Add. Each family remembers its last spec.
+        - **Head / Style / Ends:** the family's types as real 3D thumbnail tiles (3 across, `.preview-sm`, label under), drawn at the current size, finish and drive but the default length, so scrubbing the length doesn't re-render them. The chosen one has the Library's blue ring.
+        - **Drive:** a `ChoiceGrid` of tall cells, each a `DriveIcon` over its name; the header's right side names the recess (“PZ2”, “2.5 mm hex key”, “1 mm slot”).
+        - **Size** and **Finish** (swatch dot + name): `ChoiceGrid`s. Never solid blue chips: blue is for tools, tiles and focus.
+        - **Length:** − / field / + (steps between stock lengths), then the stock lengths in one sideways-scrolling strip centred on the current length, its edges fading only while lengths are hidden past them. A custom length's hint makes the nearest stock lengths clickable.
+        - **Specs** (Size, Thread with pitch, Standard, Head Ø × height) and **Holes** (`hardwareHoleRows`: clearance, counterbore or countersink, tap drill, nut trap, printed hole…) use the part page's `SpecRow`s, units muted.
+      - **Drive:** every headed screw (Socket, Button, Flat, Pan) takes Hex · Torx · Phillips · Pozidriv · Slotted; Set takes Hex · Torx · Slotted (cross recesses aren't made in grub screws). Chips keep the `DRIVES` order on every head; `defaultDrive` picks the one a head starts with (Pan: Phillips, others: Hex). Every drive comes in every size of its head.
+        - Where an ISO standard covers the pair, its table sets the head and recess and the Standard row names it: Socket Hex / Torx (ISO 4762 / 14579), Button Hex / Torx (ISO 7380-1 / 7380-1 TX), Flat Hex / Torx / Phillips / Pozidriv / Slotted (ISO 10642 / 14581 / 7046-1 H / 7046-1 Z / 2009), Pan Torx / Phillips / Pozidriv / Slotted (ISO 14583 / 7045 H / 7045 Z / 1580), Set Hex / Slotted (ISO 4026 / 4766).
+        - Other pairs are commercial screws: the head keeps its usual standard's shape and the recess is sized for the thread (`commercialRecess`: Torx per ISO 14579, cross number per ISO 7045, slot per ISO 1580, set screw Torx matched to the ISO 4026 key). The Standard row says where the shape comes from (“ISO 7380-1 head”), and the shopping search leaves the standard out.
+        - Code: `screwHead` (set screws `setScrewRecess`) and `screwStandard`. The drive is part of the spec (`spec.drive`), of the name when it isn't the default (“M3 × 8 Slotted Button Head Screw”, “Hex Socket Pan Head”) and of catalog keys (`hardware:type|size|length|finish|drive`).
+      - Recesses are cut into the head with a real boolean (`cutRecess` in `three/hardwareMesh.ts`, three-bvh-csg), at the standard's key-engagement depth; Phillips and Pozidriv crosses taper like the ISO 4757 cone (stopping inside any head but a countersunk one), and Pozidriv adds its diagonal ribs. The recess walls render dark.
       - **Lengths are free:** any length from the shortest stock length up to 300 mm in 0.5 mm steps. Stock lengths (ISO 888 preferred + common retail) are one-tap chips, and − / + step between them. A custom length says “Not a stock length. Nearest: 13 or 14 mm.”; past the stock range it suggests threaded rod.
       - **Finish** (`FINISHES`: Black, Stainless, Zinc, Brass, Nylon, Steel) sets the part color and the shopping search. Non-default finishes are part of the name (“M3 × 12 Button Head Screw, Black”). Chips keep one order across types.
     - **Layers:** header with the part and cutout counts, a footer with the overall size (visible, non-reference parts), and rows with color/role glyph. Double-click renames. Eye and lock appear on hover. Right-click opens the part menu. An empty scene leaves Layers empty: just its header, no empty state.
@@ -269,7 +281,7 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
 ## 6. Bottom Toolbar
 
 - **Toolbar (`ViewportToolbar`):**
-  - Tools: Move V · Rotate E · Scale R · Comment M. Sculpt C appears between Scale and Comment only when Settings → Canvas → Experimental → Sculpt tool is on (off by default).
+  - Tools: Move V · Rotate E · Scale R · Comment M. Sculpt C appears between Scale and Comment only when Settings → Canvas → Experimental → Sculpt tool is on (off by default). Pose P appears before Comment only when the scene has joints (§8c).
   - Then a divider, then **Shapes ▾** (A): a 4-column grid of basic-shape thumbnails (Plate, Cube, Shaft, Tube, Wedge, Sphere, Cone, Pyramid, Hex Prism, Capsule, Dome, Ring), then Sketch… and Import SVG….
   - Active tool: solid blue fill.
   - Keep it to tools and creation only. Placement actions (Drop to Floor, Stack) live in the right-click menu, the Inspector and shortcuts (F, S).
@@ -296,7 +308,7 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
 - **No selection:** Project description (collapsed by default; saved with the scene to `ai-reference/`; no placeholder, like Notes) and Comments (just the title and + when there are none). Scene stats live in Layers: the header shows parts and cutouts, and a footer shows the overall size.
 - **Part selected:**
   - Inline-renamable name, then Duplicate / Save to Library / Delete.
-  - Hardware shows the same `HardwareConfigurator` as Parts (type within its family, size, length, finish) plus Add Clearance Hole. Length typing and scrubbing are live; release commits one undo step. The color follows the finish unless it was set by hand.
+  - Hardware shows the same `HardwareConfigurator` sections as Parts (type tiles, drive, size, length, finish) in place of Size and Shape. Specs and Holes come before Notes, collapsed; Holes carries + (Add clearance hole) in its header. Length typing and scrubbing are live; release commits one undo step. The color follows the finish unless it was set by hand.
   - No Solid · Cutout · Guide control: the part type is set from the right-click menu (one part or several).
   - Size W/H/D (+ wall T), Position X/Y/Z (Floor, Stack and Center actions), Rotation X/Y/Z with 90° steps.
   - **Shape** (Round, Taper, Bend, Twist): collapsible, open only when non-zero.
@@ -457,7 +469,9 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
   - **Thoughts:** a Brain icon row aligned with tool steps, with no rule or border. While streaming it reads “Thinking” and shows a short window of the newest lines under a top fade. Once done it folds to “Thought ›”, which expands to the full text inline. Thoughts never scroll on their own, so the wheel always scrolls the conversation.
   - **Tool steps:** plain-language labels ("Designing Left Coxa Bracket", "Inspected …", "Studied 4 attached files", "Looked at 2 photos"). `model_part` steps expand to show the code; `view_image` steps expand to show the photos.
   - **Plan card:** shows the agent's TodoWrite list with live status.
+- **Empty chat:** the feed is just empty; no title, intro or suggestions.
 - **Composer:**
+  - The placeholder is a short example, with no “e.g.”, cycling every 3.6s (`CyclingPlaceholder`, `placeholder-cycle` in `index.css`): each wipes in from left to right behind a soft mask edge (1.15s), holds, then fades out (0.5s) before the next. It stays on the first under reduced motion. The examples fit the state: idle (“Desk lamp arm”), with attachments (“Match the photos”), or while the agent works (“Longer legs”).
   - The + menu has Attach Images… and Attach Folder…. Paste or drop images, files or whole folders.
   - Up to 20 images go inline with the message (downscaled to 1568px); click a thumbnail to open it in `ImageViewer`.
   - **Evidence folders** (`src/utils/evidenceFiles.ts`): readable files are copied to `library/evidence/<id>/` (up to 400 per folder): images downscaled to 1568px, text files (notes, URDF/MJCF, BOMs, code) as is, and STLs as `.mesh.txt` summaries with exact bounding box, volume and triangle count. Other files (PDF, HEIC…) are counted as skipped. Loose non-image files and images beyond the inline limit become an “Attached files” folder. The prompt lists every file and tells the agent to read them all with `read_evidence`.
@@ -491,6 +505,20 @@ Servos, motors, boards and sensors are real products with exact geometry, never 
 
 ---
 
+## 8c. Joints, Poses and Motion
+
+A robot is posable once its degrees of freedom are declared. Posing never edits parts: the modeled pose is the design, and a pose only changes what the canvas shows.
+
+- **Data** (`types/robotics.ts`, saved with the scene in `ProjectSettings`): `joints` (`RobotJoint`: revolute in degrees or prismatic in mm, parent and child parts, `parentJoint` when links between joints have no geometry, origin and axis, range, limb), `pose` (the pose on the canvas: values by joint id plus an optional whole-body `root` offset), `poses` (saved) and `animations` (`RobotAnimation`: keyframes with every animated joint, smooth or linear, loop).
+- **Joints follow their mount:** `frame` stores the pivot in its first parent part's own frame (`anchorJoint`); `resolveJoints` reads it back, so moving or undoing the robot keeps joints in place.
+- **Kinematics** (`utils/kinematics.ts`): `buildRig` turns joints into a tree; each part moves with the deepest joint that lists it as a child, a joint's mount moves with the joint above it, and an unlisted part follows its group only when the whole group moves with one joint (a group spanning a whole robot says nothing). `forwardKinematics` composes rest-frame rotations from the base out. `solveIK` is damped least squares (Levenberg–Marquardt) with joint limits; torso joints are stiffer so limbs reach first; `preBend` starts knees and elbows bent the way their range opens (straight joints are singular).
+- **Canvas:** `Viewport3D` takes per-part rest → posed motion (`pose`). Measurements, interference (check_scene), servo outputs and sweeps run in the modeled pose (`withRest`); renders show the pose. Moving a part while posed maps the edit back to the modeled pose.
+- **Pose tool (P):** clicking a part picks the joint that turns it; a single ring on its axis (an arrow for a slider) turns it in 1° / 1 mm steps (Shift is free). The Pose panel replaces the Inspector (title + Done): Animations (play, scrub, + → Walk Cycle, Import BVH…; right-click for Loop, Rename, Delete), Poses (Rest pose and Save pose in the header; click applies), then one collapsible section per limb (Head, Torso, Left arm…) with label · slider · value rows. The selection bar hides while posing.
+- **Animation** (`utils/animation.ts`): `sampleAnimation` (Catmull-Rom or linear; whole-body turns slerp), `buildKeyframes` (values and IK goals per keyframe), `buildGait` (any number of feet; stance feet stay planted, swing feet lift; stride, lift, period, duty, crouch, bob, sway, heading and oscillators default from the leg length). Playback runs in `usePosing` and drives the canvas directly; pausing commits the frame as the pose.
+- **Published robots** (`utils/robotImport.ts`): URDF and MJCF (defaults classes, includes, hinge chains on one body, visual geoms) with STL / OBJ / DAE / GLB meshes from a URL (GitHub links and Git LFS work; `package://` is resolved against the repository) or a folder. Each link with geometry becomes a `mesh` part (simplified with meshoptimizer to a ~220k-triangle budget; not printed, not resized); every revolute / prismatic joint keeps its axis and limits. Robot frame (REP-103) → scene: `(y, z, x) × 1000`. Collada keeps the file's own axes. Presets: Unitree G1, H1, Go2, Berkeley Humanoid, Open Duck Mini v2, SO-101 (Parts → Robots, ⌘K, File → Import Robot…).
+- **Motion capture** (`utils/mocap.ts`): BVH through three's `BVHLoader`, bones matched to landmarks by name (Mixamo, CMU, Daz `lShldr`, UE `upperarm_l`…), robot joints matched by name (`left_knee`, `LL_KFE`, `FL_calf`…). Retargeting points each robot segment the way the performer's segment points (so proportions and rest poses can differ), moves the body by the hips scaled by leg length, and keeps feet on the floor while the performer stands. The Retarget sheet shows the match (changeable), In place, Loop and frame rate.
+- **Agent tools:** `get_rig`, `pose` (values, IK goals, body offset, save / apply), `animate` (keyframes or a gait; reports IK misses, limits, collisions and the floor at 8 times; preview frames), `retarget_motion` (an attached .bvh or a URL), `import_robot` (preset or URL); `define_joints` takes prismatic joints and `parent_joint`.
+
 ## 8b. Build: BOM, Budget, Printability and Engineering Checks
 
 The Build tab (right panel) and the agent's build tools turn a model into something you can print and buy. Everything here is computed from the scene; nothing comes from agent text. The rules come from docs/research/Printable humanoid engineering (cited there), never from other projects on this machine.
@@ -503,20 +531,20 @@ The Build tab (right panel) and the agent's build tools turn a model into someth
 - **Supplies** (`data/supplies.ts`): generic bought goods (batteries with voltage, capacity and C rating, buck converter, wiring, filament, the round face LCD) with an Amazon search for the spec.
 - **Printability** (`three/printability.ts`, `utils/printReport.ts`): each printed part in its own frame tries 6 flat orientations; P1S plate 256 × 256 × 250 mm with the 18 × 28 mm front-left keep-out (Bambu's printer profile), long parts across the diagonal; overhangs past 45°, support volume under faces within 30° of horizontal (the stock profile's threshold, Morgan 2016 drop method); walls under 0.84 mm by inward rays; time from extruded volume; shelf-packed plates. Labelled estimates.
 - **Engineering checks** (`utils/engineering.ts`), each Pass / Warn / Fail / Not run with the measured number:
-  - Mass and centre of mass: printed mass, catalog weights, fastener volume × finish density, supply weights; estimates flagged.
-  - Static joint torque: the worst of holding the distal side across the range and, for legs, standing on that leg (ground reaction under the stance foot). Pass ≤ 1/5 of stall (Robotis), Warn ≤ rated, Fail above. Actuator numbers per version in `ComponentInfo.actuator` / `variants`, with sources.
-  - Servo on the axis: the output read from the servo mesh's top cap.
-  - Both-side support: a bearing on the axis, a second servo, or a link that reaches past both ends of a dual-shaft servo.
+  - Weight: total mass and centre of mass from printed mass, catalog weights, fastener volume × finish density, supply weights; estimates flagged.
+  - Servo torque: the static load at each joint, the worst of holding the distal side across the range and, for legs, standing on that leg (ground reaction under the stance foot). Pass ≤ 1/5 of stall (Robotis), Warn ≤ rated, Fail above. Actuator numbers per version in `ComponentInfo.actuator` / `variants`, with sources.
+  - Servo alignment: each servo's output on its joint axis, the output read from the servo mesh's top cap.
+  - Joint support: each joint held on both sides by a bearing on the axis, a second servo, or a link that reaches past both ends of a dual-shaft servo.
   - Range of motion: the distal parts swept through the range against the rest and the floor, with mesh interference.
-  - Power: battery full-charge voltage against each servo's listed maximum (an STS3215 C001 shuts down above 7.4 V); current, fuse and runtime estimates.
+  - Servo voltage: battery full-charge voltage against each servo's listed maximum (an STS3215 C001 shuts down above 7.4 V). Current and runtime: peak current against the battery's C rating, plus fuse and runtime estimates.
   - Standing stability: centre of mass over the support polygon, with tipping angle.
-  - Heat: PLA touching a servo (PLA softens at 54 °C; servos run at 60–70 °C).
+  - Heat near servos: PLA touching a servo (PLA softens at 54 °C; servos run at 60–70 °C).
 - **Joints** (`RobotJoint`): parent and child parts, actuators, range, limb. With an actuator, the pivot and axis come from the servo's real output. Downstream parts follow from the joint tree.
 - **Library joint modules** (`vendor/robotics/robotics.scad`): `STS3215` follows the Feetech drawing: axis 12.5 mm from the case center, Ø19.95 aluminium horns with 4 × M3 on Ø14 on both faces, 1.4 mm beyond the case. `servo_u_bracket` bolts to both horns. `heatset_hole` sizes include the ~0.25 mm printed-hole shrinkage and 1 mm extra depth.
 - **UI:**
   - **Budget:** checked total, estimate, a budget field and bar.
-  - **Checks:** Run Checks, with rows you click to select the parts involved.
-  - **Parts to buy:** quantity and packs, ≈ estimate or price, open listing, Add Price… sheet with ASIN validation; Export BOM as CSV or Markdown.
+  - **Checks:** Run Checks. Before a run, every check (`ENGINEERING_CHECKS`) is listed by name as Not run; after, rows show the result and you click them to select the parts involved.
+  - **Parts to buy:** quantity and packs, ≈ estimate or price, open listing, Add Price… sheet with ASIN validation; Export BOM as CSV or Markdown (shown only when there are lines). Empty, it reads just “No parts”.
   - **Supplies.**
   - **Printed parts:** material, infill, per-part size, time, plate and issues.
 
@@ -630,11 +658,12 @@ The Build tab (right panel) and the agent's build tools turn a model into someth
   - Right-drag and two-finger press-drag pans never open the menu. macOS fires `contextmenu` on press, so the canvas menu opens on release, and only if the pointer moved 5px or less (`menuPressRef`). Windows' release-then-`contextmenu` order is handled the same way. A two-finger tap within 400ms of a wheel event (scroll, pinch or momentum) is ignored too (`TRACKPAD_TAP_GRACE_MS`). Scrolling closes an open menu.
 - **⌘K command palette:** every part, model, tool, view and scene action.
 - **Shortcuts:**
-  - Tools: V/E/R/C/M, A shapes.
+  - Tools: V/E/R/C/P/M, A shapes.
   - Placement and view: F floor, S stack, Z zoom, 1–4 views.
-  - Edit: ⌘Z / ⇧⌘Z, ⌘D, ⌫, ⌘A select all, ⌘G / ⇧⌘G group, Esc (closes draft → thread → comment mode → selection).
+  - Edit: ⌘Z / ⇧⌘Z, ⌘C / ⌘X / ⌘V, ⌘D, ⌫, ⌘A select all, ⌘G / ⇧⌘G group, Esc (closes draft → thread → comment mode → selection).
   - App: ⌘S Save Scene, ⌘F Find Parts, ⌘, Settings, ⌘B / ⌘I panels, ? Settings → Shortcuts.
   - Scenes: ⌘T new, ⌘W close, ⇧⌘T reopen, ⌃Tab / ⇧⌘] next, ⌃⇧Tab / ⇧⌘[ previous, ⌘1–⌘9 (§5a).
+  - **Copy, cut and paste** work on the clipboard events (the Edit menu's native roles, so text fields keep native editing). Copied parts live in memory, shared by every tab; the system clipboard holds only a marker type (`application/x-basecase-parts`), so ⌘V pastes parts only while nothing newer was copied, and a pasted image still becomes a reference plane. Pastes keep names, get new ids and groups, and drop `jointId`. In the same scene each paste steps 15 mm (like Duplicate); after a cut or in another scene the first paste lands in place. Cut reads “Cut ⟨name⟩ · Undo”.
   - Every new command gets a palette entry, and a tooltip shortcut when it has one.
 
 ---
@@ -642,6 +671,8 @@ The Build tab (right panel) and the agent's build tools turn a model into someth
 ## 12. 3D Canvas
 
 - Background `#1b1b1b` (the canvas card) with a soft CSS vignette.
+- **Lighting:** a `RoomEnvironment` environment map (intensity 0.5, like the Parts thumbnails), a hemisphere light, the shadow-casting key light, a cool rim light, and a soft fill that follows the camera. Dark plastic reads through its reflections, so don't remove the environment map.
+  - Near-black part colors render no darker than HSL lightness 0.13 (about `#212121`; `displayColor` in `three/buildPartMesh.ts`). Maker CAD often paints black plastic `#020202` (the STS3215), which no light can show.
 - **Infinite grid** (`three/infiniteGrid.ts`): a camera-following shader plane on y = 0, not a fixed `GridHelper`.
   - 1 / 10 / 100 / 1000 mm lines fade in and out by on-screen density, so there's no moiré when zoomed out or at grazing angles.
   - The red X and blue Z axes run forever, and the grid fades into the distance (the fade distance scales with zoom).
@@ -678,12 +709,13 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 - `IconButton` (required `title`, `shortcut`, `isActive` solid accent, `isToggled` soft fill; xs/sm/md/lg)
 - `Tooltip` (portal, 500ms delay, instant while “warm”), `Kbd`
 - `NumberInput` (scrub, math, live/commit), `Slider` (double-click resets), `Switch`, `TextInput` (`bare` for inline rename), `TextArea`, `Select`
-- `SearchField`: the search at the top of a sidebar view. 40px tall, 10px corners, 14px text, a 16px glass icon; the whole field is the click target. Idle it shows its shortcut as key caps on the right (hidden on focus); with a query, a round clear button takes that spot. Focus is a 1px blue ring with a soft 3px blue halo. Use it for any list-filtering search; keep `TextInput` for form fields.
+- `SearchField`: the search at the top of a sidebar view. 40px tall, 10px corners, 14px text, a 16px glass icon; the whole field is the click target. `onBack` swaps the glass icon for a Back button in the same spot (the text doesn't move), for drilled-in views. Idle it shows its shortcut as key caps on the right (hidden on focus); with a query, a round clear button takes that spot. Focus is a 1px blue ring with a soft 3px blue halo. Use it for any list-filtering search; keep `TextInput` for form fields.
 - `ColorField`: swatch + hex field. The picker opens beside the inspector with a saturation/brightness square, hue strip, hex input, eyedropper (`EyeDropper` API) and “In this scene” colors. Never list fixed swatch rows.
-- `SegmentedControl` (sliding thumb, `tone: 'danger'`) for choices inside content, `PanelTabs` for a card's views (quiet labels, the current one on a soft pill; content-sized), `AgentSpinner` (Claude's coral ring), `Section` (hairline; collapsible with a chevron at the right, styled like the header actions: down when collapsed, up when open), `SectionHeader`
+- `SegmentedControl` (sliding thumb, `tone: 'danger'`) for choices inside content, `ChoiceGrid` for a choice from a list that wraps (sizes, finishes, drives; `stacked` puts an icon over the label) on the same soft track and thumb (`CHOICE_TRACK`, `choiceCellClass` in `choiceStyles.ts` for hand-built strips), `PanelTabs` for a card's views (quiet labels, the current one on a soft pill; content-sized), `AgentSpinner` (Claude's coral ring), `Section` (hairline; collapsible with a chevron at the right, styled like the header actions: down when collapsed, up when open), `SectionHeader`
 - `Divider`: full-width hairline that cancels the container's `--pad-x` (§4)
 - `FloatingIsland` + `IslandDivider`, `PopoverMenu` + `MenuItem` / `MenuLabel` / `MenuDivider`, `ContextMenu` (at least 210px, grows to fit its longest label + shortcut, up to 280px)
-- Custom icons (`icons.tsx`): `PartsIcon`, `LibraryIcon`, `LayersIcon`, each `{ filled?, className? }` (outline idle, filled active). New ones follow the `icon-design` skill.
+- Custom icons (`icons.tsx`): `PartsIcon`, `LibraryIcon`, `LayersIcon`, each `{ filled?, className? }` (outline idle, filled active); `DriveIcon` (`{ drive }`: a screw head with its solid Hex, Torx, Phillips, Pozidriv or slot recess; one state). New ones follow the `icon-design` skill.
+- `SpecRow` (`components/PartDetails.tsx`): the part page's label-left, value-right row (13px); used by part pages and `HardwareSpecs`.
 - `SceneTabs` (`src/components`): the scene tab strip (§5a)
 - `ExportMenu` (`src/components`): the top-right Export button and its format menu. Each instance owns its open state.
   - `PopoverMenu` anchors to its parent (the trigger's `relative` wrapper) but renders in a portal with fixed positioning, so docked panels with `overflow-hidden` never clip it. It flips to the other side when its preferred side has no room, stays 8px inside the window, and follows the trigger on resize and scroll.

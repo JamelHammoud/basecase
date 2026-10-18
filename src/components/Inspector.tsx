@@ -18,15 +18,14 @@ import {
 } from 'lucide-react';
 import { SceneAnnotation, ScenePart } from '../types/robotics';
 import { timeAgo } from '../utils/timeAgo';
-import { HardwareSpec, familyOf } from '../data/hardware';
-import { HardwareConfigurator } from './HardwareConfigurator';
+import { HardwareSpec } from '../data/hardware';
+import { HardwareConfigurator, HardwareSpecs } from './HardwareConfigurator';
 import { COMPONENT_BY_ID } from '../data/components';
 import { ComponentLinks, ModelSource, SizeLine, SpecList } from './PartDetails';
 import { AlignBar, StripButton, StripGroup } from './AlignControls';
 import { selectionBounds } from '../utils/selection';
 import type { AlignMode, Axis } from '../utils/selection';
 import {
-  Button,
   ColorField,
   IconButton,
   NumberInput,
@@ -465,13 +464,7 @@ const PartInspectorBody: React.FC<InspectorProps & { part: ScenePart; partCommen
         </Section>
       )}
 
-      {hw && (
-        <HardwareSection
-          spec={hw}
-          onChange={props.onChangeHardware}
-          onAddClearanceHole={props.onAddClearanceHole}
-        />
-      )}
+      {hw && <HardwareConfigurator spec={hw} onChange={props.onChangeHardware} />}
 
       {!hw && !comp && (
       <Section title="Size">
@@ -601,6 +594,23 @@ const PartInspectorBody: React.FC<InspectorProps & { part: ScenePart; partCommen
       </>
       )}
 
+      {hw && (
+        <HardwareSpecs
+          spec={hw}
+          collapsible
+          holeAction={
+            hw.type !== 'standoff_ff' && (
+              <IconButton
+                icon={<Plus className="w-3.5 h-3.5" />}
+                title="Add clearance hole"
+                size="xs"
+                onClick={props.onAddClearanceHole}
+              />
+            )
+          }
+        />
+      )}
+
       {partComments.length > 0 && <CommentsSection {...props} list={partComments} />}
 
       <Section title="Notes" collapsible defaultOpen={false}>
@@ -634,18 +644,3 @@ const PartInspectorBody: React.FC<InspectorProps & { part: ScenePart; partCommen
 
 /* ------------------------------------------------------------------ */
 
-/** Size / length pickers for a screw, nut, insert, standoff, pin or bearing */
-const HardwareSection: React.FC<{
-  spec: HardwareSpec;
-  onChange: (spec: HardwareSpec, live?: Phase) => void;
-  onAddClearanceHole: () => void;
-}> = ({ spec, onChange, onAddClearanceHole }) => (
-  <Section title={familyOf(spec.type).name}>
-    <HardwareConfigurator spec={spec} onChange={onChange} />
-    {spec.type !== 'standoff_ff' && (
-      <Button size="sm" fullWidth onClick={onAddClearanceHole} title="Cutouts sized for this part, ready to subtract">
-        Add Clearance Hole
-      </Button>
-    )}
-  </Section>
-);

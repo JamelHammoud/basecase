@@ -10,6 +10,20 @@ import {
 import { buildHardwarePieces } from './hardwareMesh';
 import { getComponentMesh } from './componentMeshes';
 
+/**
+ * CAD files often paint black plastic pure black (the STS3215 case is #020202). Nothing
+ * real is that dark, and at zero albedo no light shows its shape, so near-black colors
+ * render as dark grey (black plastic is about #222). Hue and saturation are kept.
+ */
+const MIN_LIGHTNESS = 0.13;
+function displayColor(hex: string): THREE.Color {
+  const color = new THREE.Color(hex);
+  const hsl = { h: 0, s: 0, l: 0 };
+  color.getHSL(hsl, THREE.SRGBColorSpace);
+  if (hsl.l < MIN_LIGHTNESS) color.setHSL(hsl.h, hsl.s, MIN_LIGHTNESS, THREE.SRGBColorSpace);
+  return color;
+}
+
 function createMaterial(
   colorHex: string,
   role: ScenePart['role'],
@@ -39,7 +53,7 @@ function createMaterial(
     });
   }
   const mat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(colorHex || '#e4e4e7'),
+    color: displayColor(colorHex || '#e4e4e7'),
     roughness: customRoughness,
     metalness: customMetalness,
     // Faces sit a hair behind their edge lines, so outlines draw cleanly instead of
@@ -426,6 +440,31 @@ export function buildPartGroup(part: ScenePart, isSelected: boolean): THREE.Grou
         lines.name = 'cad-edges';
         lines.raycast = () => {};
         mesh.add(lines);
+        group.add(mesh);
+        break;
+      }
+
+      case 'mesh': {
+        // A link of an imported robot: its published mesh, edges only when selected (dense meshes speckle)
+        const src = part.mesh;
+        if (!src || src.positions.length < 9) break;
+        let geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(src.positions, 3));
+        geo.setIndex(src.indices);
+        geo = toCreasedNormals(geo, THREE.MathUtils.degToRad(30));
+        const s = [w / src.baseSize[0], h / src.baseSize[1], d / src.baseSize[2]].map((v) => (Number.isFinite(v) && v > 0 ? v : 1));
+        geo.scale(s[0], s[1], s[2]);
+        const mesh = new THREE.Mesh(geo, primaryMat);
+        mesh.castShadow = part.role === 'solid';
+        mesh.receiveShadow = part.role === 'solid';
+        if (isSelected || part.role === 'cutout') {
+          const lines = new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo, 35),
+            new THREE.LineBasicMaterial({ color: isSelected ? 0x0d99ff : 0xef4444, transparent: true, opacity: 0.9 })
+          );
+          lines.raycast = () => {};
+          mesh.add(lines);
+        }
         group.add(mesh);
         break;
       }

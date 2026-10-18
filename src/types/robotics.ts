@@ -36,6 +36,8 @@ export type PartKind =
   | 'cad_part'
   // Real purchasable component (servo, board, sensor) with its exact CAD model (see data/components.ts)
   | 'component'
+  // A link of an imported robot description (URDF / MJCF): its published mesh
+  | 'mesh'
   // Actuators & Joints
   | 'servo'
   | 'stepper_motor'
@@ -191,6 +193,15 @@ export interface ScenePart {
     baseSize: [number, number, number];
     volume?: number;
   };
+  /** Geometry of a `mesh` part (scene frame, centered on its bounding box) */
+  mesh?: {
+    positions: number[];
+    indices: number[];
+    /** Size when imported; dimensions / baseSize gives the user's scale */
+    baseSize: [number, number, number];
+    /** Where it came from, e.g. "Unitree G1 · left_knee_link" */
+    source?: string;
+  };
   /** Fastener / bearing spec for `hardware` parts; geometry is generated from it */
   hardware?: HardwareSpec;
   /** Catalog id of a `component` part; its exact mesh is loaded from public/parts */
@@ -214,18 +225,29 @@ export interface ScenePart {
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 
-/** A revolute or fixed joint declared at design time (agent frame, mm / degrees) */
+/** A degree of freedom declared at design time (scene frame, mm / degrees) */
 export interface RobotJoint {
   id: string;
   name: string;
-  type: 'revolute' | 'fixed';
+  /** revolute turns about the axis (degrees); prismatic slides along it (mm) */
+  type: 'revolute' | 'prismatic' | 'fixed';
   /** Parent and child part ids: the child side moves with the joint */
   parent: string[];
   child: string[];
+  /**
+   * The joint this one is mounted on, when it can't be read from the parts
+   * (imported robots, whose links between joints may have no geometry)
+   */
+  parentJoint?: string;
   /** Pivot point and axis, scene frame (mm), axis unit length */
   origin: [number, number, number];
   axis: [number, number, number];
-  /** Range in degrees from the modeled pose */
+  /**
+   * The same pivot and axis in a parent part's own frame, so the joint follows that part when
+   * the robot is moved (origin and axis above are then refreshed from it)
+   */
+  frame?: { part: string; origin: [number, number, number]; axis: [number, number, number] };
+  /** Range from the modeled pose: degrees (revolute) or mm (prismatic) */
   range?: [number, number];
   /** Scene part ids of the servo(s) that drive it; two opposed servos share the load */
   actuators?: string[];
@@ -242,8 +264,51 @@ export interface ProjectSettings {
   budgetUsd?: number;
   /** Things to buy that aren't modeled parts (battery, charger, cables, filament), by catalog key */
   extras?: Array<{ key: string; qty: number; note?: string }>;
-  /** Joints declared for engineering checks */
+  /** Joints declared for engineering checks and posing */
   joints?: RobotJoint[];
+  /** The pose shown on the canvas (the modeled pose when absent) */
+  pose?: RobotPoseState;
+  /** Saved poses */
+  poses?: RobotPose[];
+  /** Keyframed motion: walk cycles, gestures, retargeted mocap */
+  animations?: RobotAnimation[];
+}
+
+/** Joint values by joint id: degrees (revolute) or mm (prismatic), from the modeled pose */
+export type JointValues = Record<string, number>;
+
+/** Whole-robot offset from the modeled pose (scene frame): mm and XYZ degrees about the base */
+export interface RootOffset {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+}
+
+export interface RobotPoseState {
+  values: JointValues;
+  root?: RootOffset;
+}
+
+export interface RobotPose extends RobotPoseState {
+  id: string;
+  name: string;
+}
+
+export interface AnimationKeyframe extends RobotPoseState {
+  /** Seconds from the start */
+  t: number;
+}
+
+export interface RobotAnimation {
+  id: string;
+  name: string;
+  /** Seconds */
+  duration: number;
+  loop: boolean;
+  /** Sorted by t; every keyframe lists every animated joint */
+  keyframes: AnimationKeyframe[];
+  /** smooth = Catmull-Rom through the keyframes; linear for dense mocap */
+  interpolation: 'smooth' | 'linear';
+  source?: 'agent' | 'gait' | 'mocap' | 'user';
 }
 
 export const DEFAULT_PROJECT: ProjectSettings = { printer: 'bambu-p1s', material: 'PLA', infillPct: 15 };
@@ -324,7 +389,7 @@ export interface CatalogItem {
   keywords?: string;
 }
 
-export type TransformMode = 'translate' | 'rotate' | 'scale' | 'sculpt';
+export type TransformMode = 'translate' | 'rotate' | 'scale' | 'sculpt' | 'pose';
 
 export type TrackpadGestureMode = 'orbit-scroll' | 'pan-scroll';
 

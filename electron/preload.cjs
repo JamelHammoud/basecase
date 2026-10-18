@@ -2,6 +2,13 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   isElectron: true,
+  platform: process.platform,
+  isFullScreen: () => ipcRenderer.invoke('window:is-fullscreen'),
+  onFullScreenChange: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('window:fullscreen', handler);
+    return () => ipcRenderer.removeListener('window:fullscreen', handler);
+  },
   getAcpStatus: (workspaceId) => ipcRenderer.invoke('acp:status', workspaceId),
   connectAcp: (agentCommand) => ipcRenderer.invoke('acp:connect', agentCommand),
   sendAcpPrompt: (payload) => ipcRenderer.invoke('acp:prompt', payload),

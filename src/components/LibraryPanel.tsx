@@ -139,7 +139,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
                 {scenes.length === 0 ? (
                   <InlineEmpty title="No saved scenes" action={<Button size="sm" onClick={props.onSaveScene}>Save This Scene</Button>} />
                 ) : (
-                  <div className="grid grid-cols-2 gap-1">
+                  <div className="grid grid-cols-2 gap-x-[8px] gap-y-[12px] px-[4px]">
                     {scenes.map((s) => (
                       <SceneTile
                         key={s.id}
@@ -177,7 +177,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
                 />
                 {models.length === 0 ? (
                   <InlineEmpty
-                    title="No models yet"
+                    title="No models"
                     action={
                       selectedIds.length > 0 ? (
                         <Button size="sm" onClick={() => props.onSaveModel('selected')}>Save Selection</Button>
@@ -187,7 +187,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
                     }
                   />
                 ) : (
-                  <div className="grid grid-cols-2 gap-1">
+                  <div className="grid grid-cols-2 gap-x-[8px] gap-y-[12px] px-[4px]">
                     {models.map((m) => (
                       <ModelTile
                         key={m.id}
@@ -331,7 +331,7 @@ const Tile: React.FC<{
   const body = (
     <div
       data-library-tile
-      className="group relative w-full rounded-xl p-1 hover:bg-white/[0.04] transition-colors duration-150"
+      className="group relative w-full"
       onContextMenu={onMenu}
       draggable={!!dragModelId && !renaming}
       onDragStart={(e) => {
@@ -346,8 +346,8 @@ const Tile: React.FC<{
         type="button"
         onClick={onOpen}
         aria-label={`${openLabel}: ${name}`}
-        className={`relative block w-full aspect-[4/3] rounded-lg bg-white/[0.035] ring-inset overflow-hidden cursor-default active:scale-[0.98] transition-[background-color,transform] duration-150 group-hover:bg-white/[0.06] ${
-          current ? 'ring-[1.5px] ring-[#0d99ff]/70' : 'ring-1 ring-white/[0.04] group-hover:ring-white/[0.08]'
+        className={`preview block w-full aspect-[4/3] cursor-default active:scale-[0.98] transition-[background-color,transform] duration-150 ${
+          current ? 'ring-[1.5px] ring-inset ring-[#0d99ff]/70' : ''
         }`}
       >
         {thumb ? (
@@ -355,7 +355,7 @@ const Tile: React.FC<{
             src={thumb}
             alt=""
             draggable={false}
-            className="w-full h-full object-contain p-1 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
+            className="w-full h-full object-contain p-1.5 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
           />
         ) : thumb === '' || fallback ? (
           <span className="w-full h-full flex items-center justify-center text-[12px] text-white/30">{fallback ?? 'No preview'}</span>
@@ -363,14 +363,14 @@ const Tile: React.FC<{
           <span className="block w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
         )}
         {badge && (
-          <span className="absolute top-1.5 left-1.5 h-5 px-1.5 rounded-full bg-black/50 ring-1 ring-white/10 backdrop-blur-md text-[12px] leading-5 font-medium text-white/80">
+          <span className="absolute top-[8px] left-[8px] h-5 px-1.5 rounded-full bg-black/50 ring-1 ring-white/10 backdrop-blur-md text-[12px] leading-5 font-medium text-white/80">
             {badge}
           </span>
         )}
       </button>
 
       {/* Name and meta; clicking them opens too (the thumbnail is the keyboard target) */}
-      <div className="relative pl-0.5 pt-1.5 pb-0.5 cursor-default" onClick={renaming ? undefined : onOpen}>
+      <div className="relative pl-0.5 pt-2 cursor-default" onClick={renaming ? undefined : onOpen}>
         {renaming ? (
           <RenameField name={name} onDone={onRename} />
         ) : (
@@ -396,7 +396,7 @@ const Tile: React.FC<{
       </div>
 
       {onAdd && !renaming && (
-        <Tooltip label="Insert" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+        <Tooltip label="Insert" className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <button
             type="button"
             aria-label={`Insert ${name}`}

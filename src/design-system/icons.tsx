@@ -93,3 +93,31 @@ export const LibraryIcon: React.FC<GlyphProps> = ({ filled, className }) => (
     <path d={BOOKMARK} fill={filled ? 'currentColor' : 'none'} />
   </Glyph>
 );
+
+// Screw drives, seen head-on: the head as a 9.5 circle, the recess solid inside it so it reads
+// as a hole at 20px. The hex is flat-sided top and bottom (r 5.4), the Torx has six rounded lobes
+// (A 12.6, B 7.8), Pozidriv is the Phillips cross plus its four diagonal ribs (1.5 strokes, kept
+// clear of the cross's corners so translucent idle colour doesn't double up), and the slot is a
+// solid bar that stops short of the rim. Recesses fill about 60% of the head, or they read as dots.
+const DRIVE_HEAD = 'M2.5 12a9.5 9.5 0 1 0 19 0a9.5 9.5 0 1 0 -19 0';
+const CROSS = 'M10.55 6.1L13.45 6.1L13.45 10.55L17.9 10.55L17.9 13.45L13.45 13.45L13.45 17.9L10.55 17.9L10.55 13.45L6.1 13.45L6.1 10.55L10.55 10.55z';
+const DRIVE_RECESS = {
+  hex: 'M17.4 12L14.7 16.68L9.3 16.68L6.6 12L9.3 7.32L14.7 7.32z',
+  torx:
+    'M12 5.7L12.78 6.1L13.32 7.07L13.63 8.07L13.95 8.62L14.59 8.63L15.61 8.39L16.72 8.38L17.46 8.85L17.5 9.72L16.93 10.68L16.22 11.45L15.9 12L16.22 12.55L16.93 13.32L17.5 14.28L17.46 15.15L16.72 15.62L15.61 15.61L14.59 15.37L13.95 15.38L13.63 15.93L13.32 16.93L12.78 17.9L12 18.3L11.22 17.9L10.68 16.93L10.37 15.93L10.05 15.38L9.41 15.37L8.39 15.61L7.28 15.62L6.54 15.15L6.5 14.28L7.07 13.32L7.78 12.55L8.1 12L7.78 11.45L7.07 10.68L6.5 9.72L6.54 8.85L7.28 8.38L8.39 8.39L9.41 8.63L10.05 8.62L10.37 8.07L10.68 7.07L11.22 6.1z',
+  phillips: CROSS,
+  pozidriv: CROSS,
+  slotted: 'M5 10.7L19 10.7L19 13.3L5 13.3z',
+};
+const POZIDRIV_RIBS = 'M14.26 14.26L15.96 15.96M9.74 14.26L8.04 15.96M9.74 9.74L8.04 8.04M14.26 9.74L15.96 8.04';
+
+export type DriveGlyph = keyof typeof DRIVE_RECESS;
+
+/** A screw drive's recess in its head (Hex, Torx, Phillips, Pozidriv, Slotted); one state */
+export const DriveIcon: React.FC<{ drive: DriveGlyph; className?: string }> = ({ drive, className }) => (
+  <Glyph className={className}>
+    <path d={DRIVE_HEAD} />
+    <path d={DRIVE_RECESS[drive]} fill="currentColor" stroke="none" />
+    {drive === 'pozidriv' && <path d={POZIDRIV_RIBS} strokeWidth={1.5} />}
+  </Glyph>
+);

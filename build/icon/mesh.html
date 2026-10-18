@@ -1,0 +1,87 @@
+<!doctype html>
+<meta charset="utf-8">
+<!--
+  The app icon's background: a blue mesh gradient, rendered by tools/icon-mesh.mjs to
+  Basecase.icon/Assets/background.png (1024 × 1024, full-bleed and opaque, as Icon Composer
+  wants a background image). `?seed=N` picks the layout.
+
+  A mesh here is solid fields of colour laid over each other and blurred, not soft washes:
+  each field is its own colour across its middle and only fades at its edge, so what the blur
+  mixes is the boundary between two colours. Washes at half strength everywhere blur into one
+  flat tint. The layer is painted half again as big as the tile so the blur has room to spill,
+  and the blur is a share of the tile, not a pixel count.
+-->
+<style>
+  html, body { margin: 0; width: 1024px; height: 1024px; overflow: hidden; background: #04144d; }
+  #tile { position: absolute; inset: 0; overflow: hidden; }
+  #mesh { position: absolute; left: -256px; top: -256px; width: 1536px; height: 1536px; }
+  #grain { position: absolute; inset: 0; opacity: 0.07; mix-blend-mode: overlay; }
+</style>
+<div id="tile"><div id="mesh"></div><svg id="grain" width="1024" height="1024">
+  <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/></filter>
+  <rect width="1024" height="1024" filter="url(#g)"/>
+</svg></div>
+<script>
+  const seed = Number(new URLSearchParams(location.search).get('seed') ?? 1);
+  // xorshift: the same seed is always the same picture
+  let s = seed * 2654435761 >>> 0 || 1;
+  const roll = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+
+  // `?palette=grey` (the shipped one) is the app's own surfaces: chrome #121212, canvas #1b1b1b,
+  // cards #1f1f1f, floating glass #262626 / #282828, with a lifted grey as the highlight
+  const PALETTES = {
+    grey: { BLUE: '#262626', ROYAL: '#1f1f1f', CYAN: '#2b2b2b', INDIGO: '#1b1b1b', LIGHT: '#3c3c3d', NAVY: '#121212' },
+    blue: { BLUE: '#0d99ff', ROYAL: '#2350ff', CYAN: '#3dd2ff', INDIGO: '#2a2fc8', LIGHT: '#c4e9ff', NAVY: '#061a6b' },
+  };
+  const { BLUE, ROYAL, CYAN, INDIGO, LIGHT, NAVY } = PALETTES[new URLSearchParams(location.search).get('palette') ?? 'grey'];
+  document.documentElement.style.background = NAVY;
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const rgba = (h, a) => { const [r, g, b] = rgb(h); return `rgb(${r} ${g} ${b} / ${a})`; };
+
+  // Tile coordinates (0–1) to the oversized layer's percentages
+  const OVER = 0.25, SCALE = 100 / (1 + OVER * 2);
+  const at = (v) => ((OVER + v) * SCALE).toFixed(1) + '%';
+  const span = (v) => (v * SCALE).toFixed(1) + '%';
+
+  // One colour, solid to `core`% of its radius, gone by its edge (to its own colour at zero
+  // alpha, never `transparent`, which would drag the edge through grey)
+  const field = (c, x, y, w, h, core) =>
+    `radial-gradient(${span(w)} ${span(h)} at ${at(x)} ${at(y)}, ${rgba(c, 1)} 0%, ${rgba(c, 1)} ${core}%, ${rgba(c, 0)} 100%)`;
+  // Spokes that the blur bows into lobes
+  const fan = (cs, x, y, from) =>
+    `conic-gradient(from ${from.toFixed(0)}deg at ${at(x)} ${at(y)}, ${cs.map((c, i) => `${rgba(c, 1)} ${(i / cs.length * 360).toFixed(0)}deg`).join(', ')}, ${rgba(cs[0], 1)} 360deg)`;
+  // Ribbons lying one way: soft flank, firm spine, uneven widths, so the blur leaves directional smears
+  const veil = (c, angle, weight) => {
+    const stops = []; let head = 0;
+    while (head < 100) {
+      const w = 10 + roll() * 24, peak = (0.3 + roll() * 0.5) * weight;
+      stops.push(`${rgba(c, 0)} ${head.toFixed(1)}%`, `${rgba(c, peak * 0.55)} ${(head + w * 0.45).toFixed(1)}%`, `${rgba(c, peak)} ${(head + w * 0.82).toFixed(1)}%`);
+      head += w; stops.push(`${rgba(c, 0)} ${head.toFixed(1)}%`);
+    }
+    return `linear-gradient(${angle.toFixed(0)}deg, ${stops.join(', ')})`;
+  };
+
+  // In CSS the first background layer is on top. From the top down: two veils, the highlight
+  // and the deep end as lobes of their own, then the colour fields, then a fan of spokes under it
+  // all. Fields are kept to about half the tile, so the deep end and the fan show between them.
+  const turn = roll();
+  const layers = [];
+  const lie = 20 + roll() * 50;
+  layers.push(veil(LIGHT, lie, 0.5), veil(CYAN, lie + 16 + roll() * 18, 0.35));
+  const la = (turn + 0.6 + roll() * 0.3) * Math.PI * 2;
+  layers.push(field(LIGHT, 0.5 + Math.cos(la) * 0.34, 0.5 + Math.sin(la) * 0.34, 0.42 + roll() * 0.18, 0.34 + roll() * 0.14, 24));
+  const na = la + Math.PI * (0.85 + roll() * 0.3);
+  layers.push(field(NAVY, 0.5 + Math.cos(na) * 0.48, 0.5 + Math.sin(na) * 0.48, 0.95 + roll() * 0.3, 0.8 + roll() * 0.25, 40));
+  const fields = [BLUE, ROYAL, CYAN, INDIGO, BLUE];
+  fields.forEach((c, i) => {
+    const a = (i / fields.length + turn) * Math.PI * 2, reach = 0.2 + roll() * 0.24, size = 0.42 + roll() * 0.34;
+    layers.push(field(c, 0.5 + Math.cos(a) * reach, 0.5 + Math.sin(a) * reach, size, size * (0.8 + roll() * 0.4), 34 + roll() * 22));
+  });
+  layers.push(fan([BLUE, CYAN, ROYAL, INDIGO, NAVY, ROYAL, BLUE], 0.2 + roll() * 0.6, 0.2 + roll() * 0.6, roll() * 360));
+
+  const mesh = document.getElementById('mesh');
+  mesh.style.backgroundColor = NAVY;
+  mesh.style.backgroundImage = layers.join(', ');
+  mesh.style.filter = `blur(${(1024 * 1.5 * 0.06).toFixed(0)}px) saturate(1.2)`;
+  document.title = 'ready';
+</script>

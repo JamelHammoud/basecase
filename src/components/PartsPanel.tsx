@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, Bot, ChevronRight, FileText, FolderInput, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
-import { ROBOT_PRESETS, type RobotPreset } from '../utils/robotImport';
+import { ArrowUpRight, ChevronRight, FileText, Plus, ShoppingCart } from 'lucide-react';
 import { CATEGORY_LABELS, PART_CATALOG, catalogItemFromKey, catalogRef, hardwareVariant } from '../data/catalog';
 import { COMPONENT_BY_ID, ComponentGroup, ComponentInfo } from '../data/components';
 import {
@@ -19,15 +18,14 @@ import {
 import { PART_DRAG_TYPE } from '../data/dnd';
 import { CatalogItem, ScenePart } from '../types/robotics';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { Button, ContextMenu, EmptyState, HoverCard, SearchField, Section, SectionHeader, Tooltip, useScrollFade } from '../design-system';
+import { Button, EmptyState, HoverCard, SearchField, Section, SectionHeader, Tooltip, useScrollFade } from '../design-system';
 import { CatalogDetails, Hero, LinkButton, SizeLine, SpecRow } from './PartDetails';
 import { HardwareConfigurator, HardwareSpecs } from './HardwareConfigurator';
 import { keySpecs } from '../utils/keySpecs';
 
 /**
  * Parts: search first, then browse. Home has In this scene (opens what the scene uses and what
- * goes with it), recent parts (right-click to remove) and every
- * category; a category opens a grid; a part opens its page (specs, links, Add); hardware
+ * goes with it) and every category; a category opens a grid; a part opens its page (specs, links, Add); hardware
  * opens a configurator for its family (type, size, any length, finish).
  */
 
@@ -201,7 +199,7 @@ function searchCatalog(query: string): CatalogItem[] {
 }
 
 /* ------------------------------------------------------------------ */
-/* Scene suggestions and recents                                       */
+/* Scene suggestions                                                   */
 /* ------------------------------------------------------------------ */
 
 /** Ref of the catalog entry a scene part came from, at its exact spec */
@@ -258,24 +256,6 @@ function sceneParts(parts: ScenePart[], goal: string): SceneParts {
   return { used, related: itemsFor(refs).filter((i) => !usedRefs.has(catalogRef(i))) };
 }
 
-const RECENT_KEY = 'parts-recent';
-const loadRecent = (): string[] => {
-  try {
-    const list = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]');
-    return Array.isArray(list) ? list.filter((r) => typeof r === 'string') : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveRecent = (list: string[]) => {
-  try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
-  } catch {
-    /* storage unavailable */
-  }
-};
-
 /** Last spec picked in each hardware family, so coming back keeps your choices */
 const lastSpecByFamily = new Map<string, HardwareSpec>();
 
@@ -289,14 +269,11 @@ export const PartsPanel: React.FC<{
   goal: string;
   /** Lets the scene focus the search field (⌘F) */
   searchInputRef?: React.MutableRefObject<HTMLInputElement | null>;
-  /** A published robot (preset), or null for Import Robot… (a URL or a folder) */
-  onImportRobot?: (preset: RobotPreset | null) => void;
-}> = ({ onAdd, parts, goal, searchInputRef, onImportRobot }) => {
+}> = ({ onAdd, parts, goal, searchInputRef }) => {
   const [stack, setStack] = useState<View[]>([{ kind: 'home' }]);
   const view = stack[stack.length - 1];
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
-  const [recent, setRecent] = useState<string[]>(loadRecent);
   const setSearchRef = useCallback(
     (node: HTMLInputElement | null) => {
       if (searchInputRef) searchInputRef.current = node;
@@ -324,22 +301,6 @@ export const PartsPanel: React.FC<{
   const openItem = (item: CatalogItem) =>
     item.hardware ? open({ kind: 'hardware', spec: item.hardware }) : open({ kind: 'item', ref: catalogRef(item) });
 
-  const add = (item: CatalogItem) => {
-    onAdd(item);
-    const ref = catalogRef(item);
-    setRecent((prev) => {
-      const next = [ref, ...prev.filter((r) => r !== ref)].slice(0, 6);
-      saveRecent(next);
-      return next;
-    });
-  };
-  const removeRecent = (ref: string | null) =>
-    setRecent((prev) => {
-      const next = ref ? prev.filter((r) => r !== ref) : [];
-      saveRecent(next);
-      return next;
-    });
-  const [recentMenu, setRecentMenu] = useState<{ x: number; y: number; ref: string } | null>(null);
   const scene = useMemo(() => sceneParts(parts, goal), [parts, goal]);
 
   const searching = query.trim().length > 0;
@@ -372,7 +333,7 @@ export const PartsPanel: React.FC<{
     } else if (e.key === 'Enter' && results[active]) {
       e.preventDefault();
       if (e.metaKey) openItem(results[active]);
-      else add(results[active]);
+      else onAdd(results[active]);
     }
   };
 
@@ -398,7 +359,7 @@ export const PartsPanel: React.FC<{
             active={active}
             onHover={setActive}
             onOpen={openItem}
-            onAdd={add}
+            onAdd={onAdd}
             query={query}
             onSearchAll={scope ? searchAll : undefined}
           />
@@ -406,26 +367,18 @@ export const PartsPanel: React.FC<{
           <Home
             scene={scene}
             onOpenScene={() => open({ kind: 'scene' })}
-            recent={recent.map((r) => catalogItemFromKey(r)).filter((i): i is CatalogItem => !!i && inParts(i)).slice(0, 5)}
-            onRecentMenu={(item, e) => {
-              e.preventDefault();
-              setRecentMenu({ x: e.clientX, y: e.clientY, ref: catalogRef(item) });
-            }}
             onOpenCategory={(c) =>
               c.family
                 ? open({ kind: 'hardware', spec: lastSpecByFamily.get(c.family.id) ?? makeSpec(c.family.types[0].type) })
                 : open({ kind: 'category', id: c.id })
             }
-            onOpen={openItem}
-            onAdd={add}
-            onImportRobot={onImportRobot}
           />
         ) : view.kind === 'scene' ? (
-          <ScenePage scene={scene} onOpen={openItem} onAdd={add} />
+          <ScenePage scene={scene} onOpen={openItem} onAdd={onAdd} />
         ) : view.kind === 'category' ? (
-          <TileGrid items={CATEGORIES.find((c) => c.id === view.id)?.items ?? []} onOpen={openItem} onAdd={add} />
+          <TileGrid items={CATEGORIES.find((c) => c.id === view.id)?.items ?? []} onOpen={openItem} onAdd={onAdd} />
         ) : view.kind === 'item' ? (
-          <ItemPage ref_={view.ref} onAdd={add} onOpen={openItem} />
+          <ItemPage ref_={view.ref} onAdd={onAdd} onOpen={openItem} />
         ) : (
           <HardwarePage
             spec={view.spec}
@@ -436,18 +389,7 @@ export const PartsPanel: React.FC<{
           />
         )}
       </div>
-      {!searching && <PageFooter view={view} onAdd={add} />}
-      {recentMenu && (
-        <ContextMenu
-          x={recentMenu.x}
-          y={recentMenu.y}
-          onClose={() => setRecentMenu(null)}
-          items={[
-            { label: 'Remove from Recent', icon: <X className="w-3.5 h-3.5" />, onSelect: () => removeRecent(recentMenu.ref) },
-            { label: 'Clear Recent', icon: <Trash2 className="w-3.5 h-3.5" />, tone: 'danger', onSelect: () => removeRecent(null) },
-          ]}
-        />
-      )}
+      {!searching && <PageFooter view={view} onAdd={onAdd} />}
     </div>
   );
 };
@@ -495,31 +437,12 @@ function searchScope(view: View, scene: SceneParts): { label: string; has: (item
 const Home: React.FC<{
   scene: SceneParts;
   onOpenScene: () => void;
-  recent: CatalogItem[];
-  onRecentMenu: (item: CatalogItem, e: React.MouseEvent) => void;
   onOpenCategory: (c: Category) => void;
-  onOpen: (item: CatalogItem) => void;
-  onAdd: (item: CatalogItem) => void;
-  onImportRobot?: (preset: RobotPreset | null) => void;
-}> = ({ scene, onOpenScene, recent, onRecentMenu, onOpenCategory, onOpen, onAdd, onImportRobot }) => (
+}> = ({ scene, onOpenScene, onOpenCategory }) => (
   <div className="px-[8px] pb-4">
     {(scene.used.length > 0 || scene.related.length > 0) && (
       <div className="mb-3">
         <SceneRow scene={scene} onOpen={onOpenScene} />
-      </div>
-    )}
-    {recent.length > 0 && (
-      <div className="mb-3">
-        <SectionHeader title="Recent" />
-        {recent.map((item) => (
-          <ResultRow
-            key={catalogRef(item)}
-            item={item}
-            onOpen={() => onOpen(item)}
-            onAdd={() => onAdd(item)}
-            onContextMenu={(e) => onRecentMenu(item, e)}
-          />
-        ))}
       </div>
     )}
     {(['Components', 'Hardware'] as const).map((section) => (
@@ -530,31 +453,7 @@ const Home: React.FC<{
         ))}
       </div>
     ))}
-    {onImportRobot && (
-      <div className="mb-3">
-        <SectionHeader title="Robots" />
-        {ROBOT_PRESETS.map((r) => (
-          <RobotRow key={r.id} title={r.title} meta={r.description} icon={<Bot className="w-5 h-5" />} onOpen={() => onImportRobot(r)} />
-        ))}
-        <RobotRow title="Import Robot…" meta="URDF or MJCF, from a link or a folder" icon={<FolderInput className="w-5 h-5" />} onOpen={() => onImportRobot(null)} />
-      </div>
-    )}
   </div>
-);
-
-/** A published robot: inserted with its joints, ready to pose */
-const RobotRow: React.FC<{ title: string; meta: string; icon: React.ReactNode; onOpen: () => void }> = ({ title, meta, icon, onOpen }) => (
-  <button
-    type="button"
-    onClick={onOpen}
-    className="group w-full flex items-center gap-3 h-[52px] px-1.5 rounded-xl text-left cursor-default hover:bg-white/[0.05] active:scale-[0.99] transition-[background-color,transform] duration-150"
-  >
-    <div className="preview preview-sm w-12 h-9 shrink-0 flex items-center justify-center text-white/45">{icon}</div>
-    <div className="min-w-0 flex-1">
-      <div className="text-[13.5px] font-medium text-white/90 truncate">{title}</div>
-      <div className="text-[12px] text-white/40 truncate">{meta}</div>
-    </div>
-  </button>
 );
 
 /** "In this scene": the real parts you've used, and what goes with them */
@@ -725,16 +624,14 @@ const ResultRow: React.FC<{
   active?: boolean;
   onHover?: () => void;
   index?: number;
-  onContextMenu?: (e: React.MouseEvent) => void;
   /** How many the scene has */
   count?: number;
-}> = ({ item, onOpen, onAdd, active, onHover, index, onContextMenu, count }) => {
+}> = ({ item, onOpen, onAdd, active, onHover, index, count }) => {
   const thumb = usePartThumbnail(item);
   return (
     <div
       data-result={index}
       onPointerEnter={onHover}
-      onContextMenu={onContextMenu}
       className={`group relative rounded-xl transition-colors ${active ? 'bg-white/[0.07]' : 'hover:bg-white/[0.05]'}`}
       {...dragProps(item)}
     >

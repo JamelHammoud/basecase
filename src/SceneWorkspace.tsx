@@ -66,7 +66,7 @@ import { LeftSidebar, LeftTab } from './components/LeftSidebar';
 import { SculptAndDrawStudio, StudioSubTab } from './components/SculptAndDrawStudio';
 import { PosePanel } from './components/PosePanel';
 import { detectFeet, usePosing } from './utils/usePosing';
-import { anchorJoint, resolveJoints } from './utils/kinematics';
+import { anchorJoint, resolveJoints, robotOfParts, uniqueJointIds } from './utils/kinematics';
 import { buildGait } from './utils/animation';
 import { ImportRobotSheet } from './components/ImportRobotSheet';
 import { RetargetSheet } from './components/RetargetSheet';
@@ -81,7 +81,9 @@ import {
   type PoseReply,
   type RetargetPayload,
 } from './agent/agentPose';
+import { ARTICULATED_PARTS } from './data/articulatedParts';
 import { ROBOT_PRESETS, importRobot, type RobotPreset } from './utils/robotImport';
+import { rememberImportedRobot, robotPreviewImage } from './utils/robotPreview';
 import { ExportMenu } from './components/ExportMenu';
 import type { SettingsPane } from './components/SettingsWindow';
 import { Viewport3D, Viewport3DHandle } from './components/Viewport3D';
@@ -121,6 +123,7 @@ import {
   DEFAULT_PROJECT,
   ProjectSettings,
   RobotJoint,
+  RobotPoseState,
 } from './types/robotics';
 import { buildAIHandoffPayload, exportSceneToSTL, sceneToStl } from './utils/aiHandoff';
 import { bomText, buildBom, describeKey } from './utils/bom';
@@ -148,7 +151,7 @@ import { COMPONENT_BY_ID } from './data/components';
 import { AgentCursor } from './components/AgentCursor';
 import { newSceneId } from './utils/sceneIds';
 import { modelToParts } from './utils/libraryParts';
-import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, isSceneDrag } from './data/dnd';
+import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, isSceneDrag } from './data/dnd';
 import {
   AlignMode,
   Axis,
@@ -178,13 +181,21 @@ import {
   LayersIcon,
   LibraryIcon,
   PartsIcon,
+  RobotsIcon,
 } from './design-system';
+
+/** Scenes saved before robots got their own joint ids: number the repeats */
+const normalizeProject = (p: ProjectSettings): ProjectSettings => {
+  const joints = p.joints ? uniqueJointIds(p.joints) : p.joints;
+  return joints === p.joints ? p : { ...p, joints };
+};
 
 type RightTab = 'inspector' | 'pose' | 'build' | 'acp';
 
 /** The sidebar's views, shown as the rail's icons */
 const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphProps> }> = [
   { value: 'parts', label: 'Parts', Icon: PartsIcon },
+  { value: 'robots', label: 'Robots', Icon: RobotsIcon },
   { value: 'layers', label: 'Layers', Icon: LayersIcon },
   { value: 'library', label: 'Library', Icon: LibraryIcon },
 ];
@@ -310,10 +321,16 @@ export interface StudioShared {
 const TRACKPAD_TAP_GRACE_MS = 400;
 
 /** Parts + undo history in one state object so every update stays pure. */
+/** One undo step: the parts, and the robots' pose (pose changes are undoable too) */
+interface Snapshot {
+  parts: ScenePart[];
+  pose: RobotPoseState | undefined;
+}
+
 interface DocState {
   parts: ScenePart[];
-  past: ScenePart[][];
-  future: ScenePart[][];
+  past: Snapshot[];
+  future: Snapshot[];
   /** Snapshot taken when a live (scrub/drag/typing) edit begins */
   base: ScenePart[] | null;
 }
@@ -366,7 +383,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? (workspaceId === 'main' ? 'my-robotics-design' : newSceneId()));
   const [sceneName, setSceneName] = useState<string>(seed?.sceneName ?? 'Untitled');
   const [globalGoal, setGlobalGoal] = useState<string>(seed?.globalGoal ?? '');
-  const [project, setProject] = useState<ProjectSettings>(() => ({ ...DEFAULT_PROJECT, ...seed?.project }));
+  const [project, setProject] = useState<ProjectSettings>(() => normalizeProject({ ...DEFAULT_PROJECT, ...seed?.project }));
   const projectRef = useRef(project);
   useEffect(() => {
     projectRef.current = project;
@@ -426,9 +443,14 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         partsRef.current = [];
         setDoc(EMPTY_DOC);
         setSelectedIds([]);
+        projectRef.current = { ...DEFAULT_PROJECT };
+        setProject(projectRef.current);
       },
+      select: (ids: string[]) => setSelectedIds(ids),
       // Robots and posing (see devRef below)
       importRobot: (url: string, name?: string) => devRef.current.importRobot?.({ kind: 'url', url, name }),
+      // tools/robots/previews.mjs: the import's preview of a robot, without adding it to the scene
+      robotPreview: async (url: string, width = 480) => robotPreviewImage((await importRobot({ kind: 'url', url })).parts, url, width),
       setPose: (values: Record<string, number>, root?: { position?: [number, number, number]; rotation?: [number, number, number] }) => devRef.current.posing?.setPose({ values, root }),
       posing: () => devRef.current.posing,
       poseTool: (kind: string, payload: Record<string, unknown>) => devRef.current.poseTool?.(kind, payload),
@@ -666,46 +688,65 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
    */
   const commitParts = useCallback(
     (updater: (prev: ScenePart[]) => ScenePart[], live = false) => {
+      const pose = projectRef.current.pose;
       setDoc((d) =>
         live
           ? { ...d, base: d.base ?? d.parts, parts: updater(d.parts) }
           : {
               parts: updater(d.parts),
-              past: [...d.past.slice(-(HISTORY_LIMIT - 1)), d.base ?? d.parts],
+              past: [...d.past.slice(-(HISTORY_LIMIT - 1)), { parts: d.base ?? d.parts, pose }],
               future: [],
               base: null,
             }
       );
+      lastPoseEditRef.current = 0;
     },
     []
   );
+
+  /**
+   * A pose change is one undo step. Changes in quick succession (a slider or ring drag, typing)
+   * fold into the step that started them.
+   */
+  const lastPoseEditRef = useRef(0);
+  const recordPoseEdit = useCallback((before: RobotPoseState | undefined) => {
+    const now = performance.now();
+    const folds = now - lastPoseEditRef.current < 700;
+    lastPoseEditRef.current = now;
+    if (folds) return;
+    setDoc((d) => ({ ...d, past: [...d.past.slice(-(HISTORY_LIMIT - 1)), { parts: d.base ?? d.parts, pose: before }], future: [], base: null }));
+  }, []);
+  // Set once posing exists (below): puts a pose back without recording it
+  const restorePoseRef = useRef<(pose: RobotPoseState | undefined) => void>(() => {});
+  const docRef = useRef(doc);
+  docRef.current = doc;
 
   const resetDoc = useCallback((next: ScenePart[]) => {
     setDoc({ parts: next, past: [], future: [], base: null });
   }, []);
 
   const handleUndo = useCallback(() => {
-    setDoc((d) => {
-      if (d.past.length === 0) return d;
-      return {
-        parts: d.past[d.past.length - 1],
-        past: d.past.slice(0, -1),
-        future: [...d.future, d.parts],
-        base: null,
-      };
-    });
+    const d = docRef.current;
+    if (d.past.length === 0) return;
+    const to = d.past[d.past.length - 1];
+    const here: Snapshot = { parts: d.parts, pose: projectRef.current.pose };
+    const next: DocState = { parts: to.parts, past: d.past.slice(0, -1), future: [...d.future, here], base: null };
+    docRef.current = next;
+    setDoc(next);
+    lastPoseEditRef.current = 0;
+    if (to.pose !== here.pose) restorePoseRef.current(to.pose);
   }, []);
 
   const handleRedo = useCallback(() => {
-    setDoc((d) => {
-      if (d.future.length === 0) return d;
-      return {
-        parts: d.future[d.future.length - 1],
-        past: [...d.past, d.parts],
-        future: d.future.slice(0, -1),
-        base: null,
-      };
-    });
+    const d = docRef.current;
+    if (d.future.length === 0) return;
+    const to = d.future[d.future.length - 1];
+    const here: Snapshot = { parts: d.parts, pose: projectRef.current.pose };
+    const next: DocState = { parts: to.parts, past: [...d.past, here], future: d.future.slice(0, -1), base: null };
+    docRef.current = next;
+    setDoc(next);
+    lastPoseEditRef.current = 0;
+    if (to.pose !== here.pose) restorePoseRef.current(to.pose);
   }, []);
 
   const selectedPart = parts.find((p) => p.id === selectedPartId) || null;
@@ -717,7 +758,8 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
   );
 
   // Joints, the pose on the canvas, saved poses and animations
-  const posing = usePosing({ parts, project, projectRef, setProject, viewportRef, selectedIds, transformMode });
+  const posing = usePosing({ parts, project, projectRef, setProject, viewportRef, selectedIds, transformMode, onPoseEdit: recordPoseEdit });
+  restorePoseRef.current = posing.restorePose;
 
   /**
    * Canvas / Layers click. Plain click selects the part's whole group; double-click
@@ -732,6 +774,14 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         return;
       }
       if (transformMode === 'pose' && !additive) {
+        // Another robot: select all of it first; a click on the selected robot picks a joint
+        const rig = posing.rig;
+        const key = rig.robotOf.get(id);
+        if (key && key !== robotOfParts(rig, selectedIds)?.key) {
+          const robot = rig.robots.find((r) => r.key === key)!;
+          setSelectedIds(parts.filter((p) => robot.parts.has(p.id)).map((p) => p.id));
+          return;
+        }
         setSelectedIds([id]);
         return;
       }
@@ -747,16 +797,68 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         return insideGroup ? [id] : unit;
       });
     },
-    [parts, transformMode]
+    [parts, transformMode, posing.rig, selectedIds]
   );
 
   /* ---------------------------------------------------------------- */
   /* Parts                                                            */
   /* ---------------------------------------------------------------- */
 
+  /**
+   * A catalog part its maker publishes with joints (a hand): the articulated model, so its fingers
+   * pose. The palm carries the catalog id (Product section, one line in the BOM). If the model
+   * can't be downloaded, the fixed catalog mesh goes in instead.
+   */
+  const handleAddArticulated = useCallback(
+    async (item: CatalogItem, at: [number, number, number] | undefined, addFixed: () => void) => {
+      const src = ARTICULATED_PARTS[item.componentId!];
+      showToast(`Adding ${item.name}…`, { tone: 'progress' });
+      let robot: Awaited<ReturnType<typeof importRobot>>;
+      try {
+        robot = await importRobot({ kind: 'url', url: src.url }, { name: item.name, rotate: src.rotate, color: src.color });
+      } catch {
+        addFixed();
+        showToast(`Added ${item.name} without its joints. Its model couldn’t be downloaded.`);
+        return;
+      }
+      // At the drop point, else beside what's in the scene
+      const lo = [0, 1, 2].map((i) => Math.min(...robot.parts.map((p) => p.position[i] - [p.dimensions.width, p.dimensions.height, p.dimensions.depth][i] / 2)));
+      const hi = [0, 1, 2].map((i) => Math.max(...robot.parts.map((p) => p.position[i] + [p.dimensions.width, p.dimensions.height, p.dimensions.depth][i] / 2)));
+      let shift: [number, number, number] = [0, 0, 0];
+      if (at) shift = [at[0] - (lo[0] + hi[0]) / 2, at[1] - lo[1], at[2] - (lo[2] + hi[2]) / 2];
+      else {
+        const others = partsRef.current.filter((p) => p.visible && p.kind !== 'image_plane');
+        if (others.length) shift = [Math.ceil(Math.max(...others.map((p) => p.position[0] + halfExtents(p)[0])) - lo[0] + 40), 0, 0];
+      }
+      const owned = new Set(robot.joints.flatMap((j) => j.child));
+      const palm = robot.parts.find((p) => !owned.has(p.id)) ?? robot.parts[0];
+      const parts = robot.parts.map((p) => ({
+        ...p,
+        position: [p.position[0] + shift[0], p.position[1] + shift[1], p.position[2] + shift[2]] as [number, number, number],
+        ...(p.id === palm.id ? { componentId: item.componentId } : {}),
+      }));
+      const unique = uniqueJointIds(robot.joints, (projectRef.current.joints ?? []).map((j) => j.id));
+      const joints = unique.map((j) => anchorJoint({ ...j, origin: [j.origin[0] + shift[0], j.origin[1] + shift[1], j.origin[2] + shift[2]] }, parts));
+      commitParts((prev) => [...prev, ...parts]);
+      const next = { ...projectRef.current, joints: [...(projectRef.current.joints ?? []), ...joints] };
+      projectRef.current = next;
+      setProject(next);
+      setSelectedIds(parts.map((p) => p.id));
+      frameNextRef.current = true;
+      showToast(`Added ${item.name} · ${joints.length} ${joints.length === 1 ? 'joint' : 'joints'}`, {
+        action: joints.length ? { label: 'Pose', onClick: () => openPoseRef.current() } : undefined,
+      });
+    },
+    [commitParts, showToast]
+  );
+
   /** `at` is a drop point: x/z of where it lands and the surface height (y) under it */
   const handleAddCatalogItem = useCallback(
-    (item: CatalogItem, at?: [number, number, number]) => {
+    (item: CatalogItem, at?: [number, number, number], fixed = false) => {
+      if (!fixed && item.componentId && ARTICULATED_PARTS[item.componentId]) {
+        void handleAddArticulated(item, at, () => handleAddCatalogItemRef.current(item, at, true));
+        return;
+      }
       const id = newId();
       commitParts((prev) => {
         const atOrigin = prev.filter(
@@ -796,8 +898,10 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       setSelectedIds([id]);
       showToast(`Added ${item.hardware ? hardwareName(item.hardware) : item.name}`);
     },
-    [commitParts, showToast]
+    [commitParts, showToast, handleAddArticulated]
   );
+  const handleAddCatalogItemRef = useRef(handleAddCatalogItem);
+  handleAddCatalogItemRef.current = handleAddCatalogItem;
 
   const handlePlaceCustomModel = useCallback(
     (model: CustomModelDefinition, at?: [number, number, number]) => {
@@ -1068,7 +1172,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     setSceneId(next.sceneId);
     setSceneName(next.sceneName);
     setGlobalGoal(next.globalGoal || '');
-    setProject({ ...DEFAULT_PROJECT, ...next.project });
+    setProject(normalizeProject({ ...DEFAULT_PROJECT, ...next.project }));
     resetDoc(next.parts || []);
     setAnnotations(next.annotations || []);
     setActiveAnnotationId(null);
@@ -1292,16 +1396,19 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       viewport: viewportRef.current,
       setPose: live.setPose,
       savePose: (name, state) => {
-        const list = (projectRef.current.poses ?? []).filter((p) => p.name !== name);
-        const next = { ...projectRef.current, poses: [...list, { id: newId('pose'), name, values: { ...state.values }, root: state.root }] };
+        const robot = (state as { robot?: string }).robot;
+        // Same name on the same robot replaces
+        const list = (projectRef.current.poses ?? []).filter((p) => !(p.name === name && p.robot === robot));
+        const next = { ...projectRef.current, poses: [...list, { id: newId('pose'), name, values: { ...state.values }, root: state.root, robot }] };
         projectRef.current = next;
         setProject(next);
       },
       addAnimation: live.addAnimation,
       play: live.play,
+      selectedIds,
     };
     let reply: PoseReply;
-    if (kind === 'get_rig') reply = getRig(ctx);
+    if (kind === 'get_rig') reply = getRig(ctx, typeof payload.robot === 'string' ? payload.robot : undefined);
     else if (kind === 'pose') {
       setAgentAction('Posing');
       reply = setPoseRequest(ctx, payload as PosePayload);
@@ -1691,27 +1798,40 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     if (!sculptEnabled && transformMode === 'sculpt') handleSetTransformMode('translate');
   }, [sculptEnabled, transformMode, handleSetTransformMode]);
 
-  // A scene without joints has nothing to pose
+  // The Pose tab shows while the selection is on a robot: a part a joint moves or is mounted on
+  const onRobot = posing.hasRig && !!posing.robot;
   useEffect(() => {
-    if (!posing.hasRig && rightTab === 'pose') setRightTab('inspector');
-  }, [posing.hasRig, rightTab]);
+    if (!onRobot && rightTab === 'pose') setRightTab('inspector');
+  }, [onRobot, rightTab]);
+  /** Opens the Pose tab, selecting a robot first (the first one) when the selection isn't on one */
+  const openPose = useCallback(() => {
+    if (!posing.hasRig) return;
+    const first = posing.rig.robots[0];
+    if (!posing.robot && first) setSelectedIds(parts.filter((p) => first.parts.has(p.id)).map((p) => p.id));
+    handleSetTransformMode('pose');
+  }, [posing.hasRig, posing.robot, posing.rig, parts, handleSetTransformMode]);
+  const openPoseRef = useRef(openPose);
+  openPoseRef.current = openPose;
 
-  const canWalk = useMemo(() => !!posing.hasRig && posing.rig.joints.some((j) => j.limb === 'leg' || /hip|knee|ankle|leg|haa|kfe/i.test(j.name)), [posing.hasRig, posing.rig]);
+  const robotRigNow = posing.robot?.rig ?? null;
+  const canWalk = useMemo(() => !!robotRigNow && robotRigNow.joints.some((j) => j.limb === 'leg' || /hip|knee|ankle|leg|haa|kfe/i.test(j.name)), [robotRigNow]);
 
-  /** A walk cycle for the legs the rig has (two feet: a biped walk; four: a trot) */
+  /** A walk cycle for the selected robot's legs (two feet: a biped walk; four: a trot) */
   const handleWalkCycle = useCallback(() => {
-    const found = detectFeet(posing.rig, posing.pointOf);
+    const robot = posing.robot;
+    if (!robot) return;
+    const found = detectFeet(robot.rig, posing.pointOf);
     if (!found) {
       showToast('Add leg joints to make a walk cycle');
       return;
     }
-    const n = (projectRef.current.animations ?? []).filter((a) => a.name.startsWith('Walk')).length;
-    const built = buildGait(posing.rig, { feet: found.feet, phases: found.phases }, { values: {} }, posing.pointOf, n ? `Walk ${n + 1}` : 'Walk');
+    const n = posing.animations.filter((a) => a.name.startsWith('Walk')).length;
+    const built = buildGait(robot.rig, { feet: found.feet, phases: found.phases }, { values: {} }, posing.pointOf, n ? `Walk ${n + 1}` : 'Walk');
     if (typeof built === 'string') {
       showToast(built);
       return;
     }
-    const made = posing.addAnimation(built.animation);
+    const made = posing.addAnimation({ ...built.animation, robot: robot.group.key });
     posing.play(made.id, 0);
     showToast(`Added ${made.name}`);
   }, [posing, showToast]);
@@ -1727,32 +1847,55 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
   /** Inserts a published robot (URDF / MJCF): its links as parts, its joints ready to pose */
   const [importRobotOpen, setImportRobotOpen] = useState(false);
   const handleImportRobot = useCallback(
-    async (source: { kind: 'url'; url: string; name?: string } | { kind: 'files'; files: File[] }) => {
+    /** `at`: a drop point (x/z of where it stands and the surface height under it) */
+    async (source: { kind: 'url'; url: string; name?: string } | { kind: 'files'; files: File[] }, at?: [number, number, number]) => {
       try {
         showToast(`Importing ${source.kind === 'url' && source.name ? source.name : 'robot'}…`, { tone: 'progress' });
         const robot = await importRobot(source, {
           name: source.kind === 'url' ? source.name : undefined,
           onProgress: (m) => showToast(m, { tone: 'progress' }),
         });
-        // Beside anything already in the scene
-        const others = partsRef.current.filter((p) => p.visible && p.kind !== 'image_plane');
-        let dx = 0;
-        if (others.length) {
-          const maxX = Math.max(...others.map((p) => p.position[0] + halfExtents(p)[0]));
-          const minX = Math.min(...robot.parts.map((p) => p.position[0] - p.dimensions.width / 2));
-          dx = Math.ceil(maxX - minX + 100);
+        // Every import from a link makes a preview and is remembered: other robots are listed under
+        // Robots → Imported, presets use it when their shipped preview (public/robots) is missing.
+        // It renders after the robot is in, so a window in the background never holds the import up.
+        if (source.kind === 'url') {
+          const { url } = source;
+          void robotPreviewImage(robot.parts, url, 320)
+            .then((thumbnail) => thumbnail && rememberImportedRobot({ url, name: robot.name, joints: robot.joints.length, thumbnail, importedAt: new Date().toISOString() }))
+            .catch(() => {});
         }
-        const parts = robot.parts.map((p) => ({ ...p, position: [p.position[0] + dx, p.position[1], p.position[2]] as [number, number, number] }));
-        const joints = robot.joints.map((j) => anchorJoint({ ...j, origin: [j.origin[0] + dx, j.origin[1], j.origin[2]] }, parts));
+        // Dropped: standing where it landed. Otherwise beside anything already in the scene.
+        // (The import stands the robot on the floor, centered on the origin.)
+        const offset: [number, number, number] = [0, 0, 0];
+        if (at) {
+          const xs = robot.parts.flatMap((p) => [p.position[0] - p.dimensions.width / 2, p.position[0] + p.dimensions.width / 2]);
+          const zs = robot.parts.flatMap((p) => [p.position[2] - p.dimensions.depth / 2, p.position[2] + p.dimensions.depth / 2]);
+          offset[0] = at[0] - (Math.min(...xs) + Math.max(...xs)) / 2;
+          offset[1] = at[1];
+          offset[2] = at[2] - (Math.min(...zs) + Math.max(...zs)) / 2;
+        } else {
+          const others = partsRef.current.filter((p) => p.visible && p.kind !== 'image_plane');
+          if (others.length) {
+            const maxX = Math.max(...others.map((p) => p.position[0] + halfExtents(p)[0]));
+            const minX = Math.min(...robot.parts.map((p) => p.position[0] - p.dimensions.width / 2));
+            offset[0] = Math.ceil(maxX - minX + 100);
+          }
+        }
+        const move = (v: [number, number, number]): [number, number, number] => [v[0] + offset[0], v[1] + offset[1], v[2] + offset[2]];
+        const parts = robot.parts.map((p) => ({ ...p, position: move(p.position) }));
+        // Another robot from the same maker already uses these joint names: number this one's
+        const unique = uniqueJointIds(robot.joints, (projectRef.current.joints ?? []).map((j) => j.id));
+        const joints = unique.map((j) => anchorJoint({ ...j, origin: move(j.origin) }, parts));
         commitParts((prev) => [...prev, ...parts]);
         const next = { ...projectRef.current, joints: [...(projectRef.current.joints ?? []), ...joints] };
         projectRef.current = next;
         setProject(next);
         setSelectedIds(parts.map((p) => p.id));
-        frameNextRef.current = true;
+        // A drop already put it where the user is looking
+        if (!at) frameNextRef.current = true;
         showToast(
           `Inserted ${robot.name} · ${joints.length} ${joints.length === 1 ? 'joint' : 'joints'}${robot.notes.length ? ` · ${robot.notes.length} ${robot.notes.length === 1 ? 'file' : 'files'} missing` : ''}`,
-          { action: joints.length ? { label: 'Pose', onClick: () => handleSetTransformMode('pose') } : undefined }
+          { action: joints.length ? { label: 'Pose', onClick: () => openPoseRef.current() } : undefined }
         );
         return { ...robot, parts, joints };
       } catch (err) {
@@ -1761,13 +1904,13 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         return message;
       }
     },
-    [commitParts, showToast, handleSetTransformMode]
+    [commitParts, showToast]
   );
   devRef.current.importRobot = handleImportRobot;
   devRef.current.posing = posing;
   devRef.current.poseTool = (kind, payload) => runPoseToolRef.current(kind, payload);
   const handlePickRobot = useCallback(
-    (preset: RobotPreset | null) => (preset ? void handleImportRobot({ kind: 'url', url: preset.url, name: preset.title }) : setImportRobotOpen(true)),
+    (preset: RobotPreset | null) => (preset ? handleImportRobot({ kind: 'url', url: preset.url, name: preset.title }) : setImportRobotOpen(true)),
     [handleImportRobot]
   );
 
@@ -2585,7 +2728,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           if (sculptEnabled) handleSetTransformMode('sculpt');
           break;
         case 'p':
-          if (posing.hasRig) handleSetTransformMode('pose');
+          openPose();
           break;
         case 'f':
           handleDropToGround();
@@ -2651,6 +2794,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     setIsRightOpen,
     setShowReferenceImages,
     posing.hasRig,
+    openPose,
   ]);
 
   /* ---------------------------------------------------------------- */
@@ -2706,11 +2850,11 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
         : []),
       ...(posing.hasRig
         ? [
-            { id: 'tool-pose', group: 'Panels', label: 'Show Pose', shortcut: 'P', icon: <PersonStanding className={ic} />, keywords: 'joints posing animate dof tab', run: () => handleSetTransformMode('pose') },
-            { id: 'rest-pose', group: 'Pose', label: 'Rest Pose', icon: <RotateCcw className={ic} />, keywords: 'reset zero home', run: () => posing.setPose(null) },
+            { id: 'tool-pose', group: 'Panels', label: 'Show Pose', shortcut: 'P', icon: <PersonStanding className={ic} />, keywords: 'joints posing animate dof tab', run: openPose },
+            { id: 'rest-pose', group: 'Pose', label: 'Rest Pose', icon: <RotateCcw className={ic} />, keywords: 'reset zero home', run: () => posing.setRobotPose({ values: {} }) },
             ...(canWalk ? [{ id: 'walk-cycle', group: 'Pose', label: 'New Walk Cycle', icon: <Footprints className={ic} />, keywords: 'gait animation legs', run: handleWalkCycle }] : []),
             { id: 'import-bvh', group: 'Pose', label: 'Import BVH…', icon: <FileUp className={ic} />, keywords: 'mocap motion capture retarget animation', run: handleImportMotion },
-            ...posing.animations.map((a) => ({ id: `play-${a.id}`, group: 'Pose', label: `Play ${a.name}`, icon: <Play className={ic} />, keywords: 'animation', run: () => { handleSetTransformMode('pose'); posing.play(a.id); } })),
+            ...posing.animations.map((a) => ({ id: `play-${a.id}`, group: 'Pose', label: `Play ${a.name}`, icon: <Play className={ic} />, keywords: 'animation', run: () => { openPose(); posing.play(a.id); } })),
             ...posing.poses.map((p) => ({ id: `pose-${p.id}`, group: 'Pose', label: `Apply ${p.name}`, icon: <PersonStanding className={ic} />, keywords: 'pose', run: () => posing.applySavedPose(p.id) })),
           ]
         : []),
@@ -2789,7 +2933,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     ];
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [posing, canWalk, handleWalkCycle, handleImportMotion, handlePickRobot, customModels, studio.tabs, studio.canReopenTab, workspaceId, isLeftOpen, isRightOpen, handleSync, handleExportSTL, handleExportImage, handleCopyBrief, handleDropToGround, handleStackOnBelow, handleAddCatalogItem, handlePlaceCustomModel, handleSetTransformMode, setCameraView, openCreator, toggleCommentMode, pickReferenceImage, showReferenceImages, showGrid, trackpadMode, sculptEnabled, openSettings, parts, handleGroup, handleUngroup, handleRunBooleanCSG, handleAlign, handleDistribute, copyViaCommand, handlePasteParts]);
+  }, [posing, openPose, canWalk, handleWalkCycle, handleImportMotion, handlePickRobot, customModels, studio.tabs, studio.canReopenTab, workspaceId, isLeftOpen, isRightOpen, handleSync, handleExportSTL, handleExportImage, handleCopyBrief, handleDropToGround, handleStackOnBelow, handleAddCatalogItem, handlePlaceCustomModel, handleSetTransformMode, setCameraView, openCreator, toggleCommentMode, pickReferenceImage, showReferenceImages, showGrid, trackpadMode, sculptEnabled, openSettings, parts, handleGroup, handleUngroup, handleRunBooleanCSG, handleAlign, handleDistribute, copyViaCommand, handlePasteParts]);
 
   /* ---------------------------------------------------------------- */
   /* Context menu                                                     */
@@ -3302,7 +3446,8 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           setIsDraggingFile(false);
           const partKind = e.dataTransfer.getData(PART_DRAG_TYPE);
           const modelId = e.dataTransfer.getData(MODEL_DRAG_TYPE);
-          if (partKind || modelId) {
+          const robot = e.dataTransfer.getData(ROBOT_DRAG_TYPE);
+          if (partKind || modelId || robot) {
             const hit = viewportRef.current?.pickAt(e.clientX, e.clientY);
             const snap = (v: number) => (snapStepMm > 0 ? Math.round(v / snapStepMm) * snapStepMm : Math.round(v));
             // Dropping on a part stacks on its surface; otherwise it sits on the floor
@@ -3314,6 +3459,14 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
             const model = customModels.find((m) => m.id === modelId);
             if (item) handleAddCatalogItem(item, at);
             else if (model) handlePlaceCustomModel(model, at);
+            else if (robot) {
+              try {
+                const { url, name } = JSON.parse(robot) as { url: string; name?: string };
+                void handleImportRobot({ kind: 'url', url, name }, at ?? [0, 0, 0]);
+              } catch {
+                /* not ours */
+              }
+            }
             return;
           }
           const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
@@ -3484,7 +3637,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
               onChange={setRightTab}
               tabs={[
                 { value: 'inspector', label: 'Inspect' },
-                ...(posing.hasRig ? [{ value: 'pose' as const, label: 'Pose' }] : []),
+                ...(onRobot ? [{ value: 'pose' as const, label: 'Pose' }] : []),
                 { value: 'build', label: 'Build' },
                 { value: 'acp', label: 'Agent', indicator: isAcpBusy ? <AgentSpinner /> : undefined },
               ]}
@@ -3603,13 +3756,13 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       <RetargetSheet
         key={motionSource?.name}
         source={motionSource}
-        rig={posing.rig}
+        rig={posing.robot?.rig ?? posing.rig}
         pointOf={posing.pointOf}
         onClose={() => setMotionSource(null)}
         onCreate={(anim, summary) => {
           setMotionSource(null);
-          const made = posing.addAnimation(anim);
-          handleSetTransformMode('pose');
+          const made = posing.addAnimation({ ...anim, robot: posing.robot?.group.key });
+          openPose();
           posing.play(made.id, 0);
           showToast(`Added ${made.name}${summary}`);
         }}

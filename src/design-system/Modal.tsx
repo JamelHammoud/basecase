@@ -49,25 +49,25 @@ export const Modal: React.FC<ModalProps> = ({
         aria-label={title}
         className={`w-full ${maxWidth} max-h-[82vh] flex flex-col rounded-2xl bg-[#222222] ring-1 ring-white/[0.1] shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden animate-sheet-in`}
       >
-        <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 shrink-0">
-          <div className="flex items-start gap-3 min-w-0">
+        <div className="flex items-center justify-between gap-[12px] min-h-[60px] px-[20px] py-[16px] shrink-0">
+          <div className="flex items-center gap-[12px] min-w-0">
             {icon && (
-              <span className="mt-0.5 w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/80 shrink-0">
+              <span className="w-[28px] h-[28px] rounded-[8px] bg-white/[0.06] flex items-center justify-center text-white/80 shrink-0">
                 {icon}
               </span>
             )}
             <div className="min-w-0">
               <h2 className="text-[15px] font-semibold text-white truncate">{title}</h2>
-              {subtitle && <p className="text-[13px] text-white/50 mt-0.5">{subtitle}</p>}
+              {subtitle && <p className="text-[13px] text-white/50 mt-[2px]">{subtitle}</p>}
             </div>
           </div>
           <IconButton icon={<X className="w-4 h-4" />} title="Close" shortcut="Esc" onClick={onClose} size="sm" />
         </div>
 
-        <div className="px-5 pb-4 overflow-y-auto flex-1">{children}</div>
+        <div className="px-[20px] pb-[20px] overflow-y-auto flex-1">{children}</div>
 
         {footer && (
-          <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-end gap-2 shrink-0">
+          <div className="px-[20px] py-[12px] border-t border-white/[0.06] flex items-center justify-end gap-[8px] shrink-0">
             {footer}
           </div>
         )}

@@ -8,9 +8,11 @@ import {
   Eye,
   EyeOff,
   Lock,
+  Plus,
   Unlock,
 } from 'lucide-react';
 import { PartsPanel } from './PartsPanel';
+import { RobotsPanel } from './RobotsPanel';
 import { LibraryPanel, LibraryPanelProps } from './LibraryPanel';
 import { selectionBounds } from '../utils/selection';
 import {
@@ -23,9 +25,9 @@ import {
   SectionHeader,
 } from '../design-system';
 
-export type LeftTab = 'layers' | 'parts' | 'library';
+export type LeftTab = 'layers' | 'parts' | 'robots' | 'library';
 
-const VIEW_TITLES: Record<LeftTab, string> = { layers: 'Layers', parts: 'Parts', library: 'Library' };
+const VIEW_TITLES: Record<LeftTab, string> = { layers: 'Layers', parts: 'Parts', robots: 'Robots', library: 'Library' };
 
 interface LeftSidebarProps {
   open: boolean;
@@ -54,7 +56,8 @@ interface LeftSidebarProps {
   sceneGoal?: string;
   /** The Parts search field, so the scene can focus it (⌘F) */
   partsSearchRef?: React.MutableRefObject<HTMLInputElement | null>;
-  onImportRobot?: (preset: RobotPreset | null) => void;
+  // Robots: a published robot (preset), or null for Import Robot… (a link or a folder)
+  onImportRobot: (preset: RobotPreset | null) => Promise<unknown> | void;
   // Library
   library: Omit<LibraryPanelProps, 'parts' | 'selectedIds'>;
 }
@@ -75,8 +78,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
       <div className="sidebar-surface h-full flex flex-col overflow-hidden rounded-[12px]" style={{ width }}>
         {/* Card header: the current view's name (the view rail switches views; scenes live in the tabs) */}
         {/* The title centers on y = 66, with the first rail icon */}
-        <div className="h-[44px] shrink-0 flex items-center px-[12px]">
+        <div className="h-[44px] shrink-0 flex items-center justify-between pl-[12px] pr-[8px]">
           <h2 className="text-[15px] font-semibold text-white/90 tracking-[-0.01em]">{VIEW_TITLES[tab]}</h2>
+          {tab === 'robots' && (
+            <IconButton icon={<Plus className="w-4 h-4" />} title="Import robot…" size="xs" onClick={() => props.onImportRobot(null)} />
+          )}
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col pt-[4px]">
@@ -87,9 +93,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
               parts={props.parts}
               goal={props.sceneGoal ?? ''}
               searchInputRef={props.partsSearchRef}
-              onImportRobot={props.onImportRobot}
             />
           )}
+          {tab === 'robots' && <RobotsPanel onInsert={(r) => props.onImportRobot(r)} />}
           {tab === 'library' && <LibraryPanel {...props.library} parts={props.parts} selectedIds={props.selectedIds} />}
         </div>
       </div>

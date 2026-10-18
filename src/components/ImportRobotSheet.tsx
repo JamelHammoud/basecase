@@ -24,7 +24,7 @@ export const ImportRobotSheet: React.FC<{
           <Button variant="secondary" size="sm" onClick={() => folderRef.current?.click()}>
             Choose Folder…
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-[8px]">
             <Button variant="ghost" size="sm" onClick={onClose}>
               Cancel
             </Button>
@@ -43,9 +43,12 @@ export const ImportRobotSheet: React.FC<{
         </div>
       }
     >
-      <div className="px-5 pb-4 space-y-2">
-        <label className="block text-[12.5px] font-medium text-white/60">Link to a URDF or MJCF file</label>
+      <div className="flex flex-col gap-[8px]">
+        <label htmlFor="import-robot-url" className="text-[12.5px] leading-[16px] font-medium text-white/60">
+          Link to a URDF or MJCF file
+        </label>
         <TextInput
+          id="import-robot-url"
           autoFocus
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -57,7 +60,6 @@ export const ImportRobotSheet: React.FC<{
           }}
           placeholder="e.g. github.com/…/g1_description/g1_29dof.urdf"
         />
-        <p className="text-[12.5px] text-white/45">Meshes load from the same repository. For files on this Mac, choose the folder with the description and its meshes.</p>
       </div>
       <input
         ref={folderRef}

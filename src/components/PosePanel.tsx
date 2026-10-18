@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Footprints, FileUp, Pause, Play, Plus, RotateCcw, BookmarkPlus } from 'lucide-react';
 import {
   ContextMenu,
@@ -10,7 +10,7 @@ import {
   useScrollFade,
 } from '../design-system';
 import type { RobotJoint } from '../types/robotics';
-import { jointGroups, jointUnit, nameWords, prettyJointName, sideOf } from '../utils/kinematics';
+import { isRestPose, jointGroups, jointUnit, nameWords, prettyJointName, sideOf } from '../utils/kinematics';
 import type { Posing } from '../utils/usePosing';
 
 interface PosePanelProps {
@@ -35,9 +35,31 @@ const fmtTime = (t: number) => `${t.toFixed(t < 10 ? 1 : 0)} s`;
 
 /** The Pose tab: animations, saved poses and every joint by limb. While it's open, clicking a part picks its joint. */
 export const PosePanel: React.FC<PosePanelProps> = ({ posing, onSelectParts, onImportMotion, onWalkCycle, canWalk }) => {
-  const { rig, pose, activeJointId, playback } = posing;
+  // Only the selected robot: other robots in the scene keep their poses
+  const { activeJointId, playback } = posing;
+  const rig = posing.robot?.rig ?? null;
+  const pose = posing.robot?.pose;
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
-  const groups = useMemo(() => jointGroups(rig), [rig]);
+  const groups = useMemo(() => (rig ? jointGroups(rig) : []), [rig]);
+  // Picking a joint (the ring on the canvas or its row) opens its limb and brings the row into view
+  // A toggle by hand wins until another joint in that limb is picked; limbs a pick opened stay open
+  const [toggled, setToggled] = useState<Record<string, { open: boolean; joint: string | null }>>({});
+  const [revealed, setRevealed] = useState<string[]>([]);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const activeGroup = groups.find((g) => g.joints.some((j) => j.id === activeJointId))?.label;
+  if (activeGroup && !revealed.includes(activeGroup)) setRevealed([...revealed, activeGroup]);
+  const isOpen = (label: string) => {
+    const t = toggled[label];
+    if (label === activeGroup && t?.joint !== activeJointId) return true;
+    return t ? t.open : revealed.includes(label) || groups.length <= 4;
+  };
+  useEffect(() => {
+    if (!activeJointId || !activeGroup) return;
+    const raf = requestAnimationFrame(() =>
+      listRef.current?.querySelector(`[data-joint="${CSS.escape(activeJointId)}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    );
+    return () => cancelAnimationFrame(raf);
+  }, [activeJointId, activeGroup]);
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -45,13 +67,20 @@ export const PosePanel: React.FC<PosePanelProps> = ({ posing, onSelectParts, onI
 
   const select = (j: RobotJoint) => {
     posing.selectJoint(j.id);
-    const ids = [...rig.ownerOf].filter(([, owner]) => owner === j.id).map(([p]) => p);
+    const ids = rig ? [...rig.ownerOf].filter(([, owner]) => owner === j.id).map(([p]) => p) : [];
     if (ids.length) onSelectParts(ids);
   };
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+      <div
+        ref={(el) => {
+          listRef.current = el;
+          setFadeEl(el);
+        }}
+        style={fadeStyle}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+      >
         <Section
           title="Animations"
           actions={
@@ -154,7 +183,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({ posing, onSelectParts, onI
           title="Poses"
           actions={
             <>
-              <IconButton icon={<RotateCcw className="w-4 h-4" />} title="Rest pose" size="xs" disabled={!pose} onClick={() => posing.setPose(null)} />
+              <IconButton icon={<RotateCcw className="w-4 h-4" />} title="Rest pose" size="xs" disabled={!pose || isRestPose(pose)} onClick={() => posing.setRobotPose({ values: {} })} />
               <IconButton
                 icon={<BookmarkPlus className="w-4 h-4" />}
                 title="Save pose"
@@ -208,7 +237,13 @@ export const PosePanel: React.FC<PosePanelProps> = ({ posing, onSelectParts, onI
         </Section>
 
         {groups.map((g) => (
-          <Section key={g.label} title={g.label} collapsible defaultOpen={groups.length <= 4 || g.joints.some((j) => j.id === activeJointId)}>
+          <Section
+            key={g.label}
+            title={g.label}
+            collapsible
+            open={isOpen(g.label)}
+            onOpenChange={(open) => setToggled((t) => ({ ...t, [g.label]: { open, joint: activeJointId } }))}
+          >
             {g.joints.map((j) => (
               <JointRow
                 key={j.id}
@@ -249,7 +284,10 @@ const JointRow: React.FC<{
     setDraft(null);
   };
   return (
-    <div className={`-mx-[6px] px-[6px] rounded-lg grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_52px] items-center gap-2.5 h-8 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}>
+    <div
+      data-joint={joint.id}
+      className={`-mx-[6px] px-[6px] rounded-lg grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_52px] items-center gap-2.5 h-8 scroll-my-3 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}
+    >
       <button type="button" onClick={onSelect} className={`text-left text-[13px] truncate cursor-default ${active ? 'text-white' : 'text-white/60 hover:text-white/85'}`}>
         {label}
       </button>

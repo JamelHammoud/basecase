@@ -12,6 +12,11 @@ import {
   poseDeltas,
   posedAxis,
   resolveJoints,
+  robotOfParts,
+  robotPose,
+  robotRig,
+  withRobotPose,
+  type RobotGroup,
   type Rig,
   type V3,
 } from './kinematics';
@@ -24,18 +29,27 @@ export interface Playback {
 }
 
 export interface Posing {
+  /** Every robot in the scene (the canvas poses them all) */
   rig: Rig;
   /** The scene has joints to pose */
   hasRig: boolean;
+  /** The pose on the canvas, every robot */
   pose: RobotPoseState | undefined;
+  /** The robot the selection is on, alone: the Pose tab, walk cycles and mocap work on it */
+  robot: { group: RobotGroup; rig: Rig; pose: RobotPoseState } | null;
+  /** The selected robot's saved poses and animations */
   poses: RobotPose[];
   animations: RobotAnimation[];
+  /** Replaces the selected robot's pose (joint values and body offset); other robots keep theirs */
+  setRobotPose: (local: RobotPoseState) => void;
   deltas: Map<string, THREE.Matrix4>;
   poseJoint: { id: string; type: 'revolute' | 'prismatic'; origin: THREE.Vector3; axis: THREE.Vector3 } | null;
   activeJointId: string | null;
   selectJoint: (id: string | null) => void;
   setJointValue: (id: string, value: number) => void;
   setPose: (next: RobotPoseState | null) => void;
+  /** Puts a pose back (undo / redo) without recording an undo step */
+  restorePose: (next: RobotPoseState | undefined) => void;
   onPoseJoint: (id: string, delta: number, phase: 'start' | 'move' | 'end') => void;
   savePose: (name: string) => RobotPose;
   applySavedPose: (id: string) => void;
@@ -64,6 +78,7 @@ export function usePosing({
   viewportRef,
   selectedIds,
   transformMode,
+  onPoseEdit,
 }: {
   parts: ScenePart[];
   project: ProjectSettings;
@@ -72,6 +87,8 @@ export function usePosing({
   viewportRef: React.RefObject<Viewport3DHandle | null>;
   selectedIds: string[];
   transformMode: TransformMode;
+  /** A pose edit is about to happen (record an undo step with the pose before it) */
+  onPoseEdit?: (before: RobotPoseState | undefined) => void;
 }): Posing {
   const joints = project.joints;
   const rig = useMemo(() => buildRig(resolveJoints(joints ?? [], parts), parts), [joints, parts]);
@@ -101,17 +118,34 @@ export function usePosing({
     viewportRef.current?.setPose(poseDeltas(rigRef.current, state, partIdsRef.current));
   }, [viewportRef]);
 
-  const setPose = useCallback(
-    (next: RobotPoseState | null) => {
+  const onPoseEditRef = useRef(onPoseEdit);
+  onPoseEditRef.current = onPoseEdit;
+  const applyPoseState = useCallback(
+    (next: RobotPoseState | null | undefined, record: boolean) => {
       if (playbackRef.current?.playing) setPlayback((p) => (p ? { ...p, playing: false } : p));
+      if (record) onPoseEditRef.current?.(projectRef.current.pose);
       update({ pose: next && !isRestPose(next) ? next : undefined });
       // The canvas may still show a playback frame the state already equals
       viewportRef.current?.setPose(poseDeltas(rigRef.current, next, partIdsRef.current));
     },
-    [update, viewportRef]
+    [projectRef, update, viewportRef]
   );
+  const setPose = useCallback((next: RobotPoseState | null) => applyPoseState(next, true), [applyPoseState]);
+  const restorePose = useCallback((next: RobotPoseState | undefined) => applyPoseState(next, false), [applyPoseState]);
 
   const animationOf = (id: string) => projectRef.current.animations?.find((a) => a.id === id);
+  /** The robot an animation or saved pose moves: its own, or the robot of its joints */
+  const robotFor = (item: { robot?: string; values?: Record<string, number>; keyframes?: RobotAnimation['keyframes'] }) => {
+    const r = rigRef.current;
+    if (item.robot && r.robots.some((x) => x.key === item.robot)) return item.robot;
+    const ids = Object.keys(item.values ?? item.keyframes?.[0]?.values ?? {});
+    return ids.map((id) => r.robotOf.get(id)).find(Boolean) ?? r.robots[0]?.key ?? '';
+  };
+  /** An animation frame as a scene pose: the base pose with that robot moved */
+  const frameOf = (anim: RobotAnimation, t: number, base: RobotPoseState | undefined) =>
+    withRobotPose(rigRef.current, base, robotFor(anim), sampleAnimation(anim, t));
+  // The scene pose when playback started: other robots hold it while one plays
+  const playBase = useRef<RobotPoseState | undefined>(undefined);
 
   useEffect(() => {
     if (!playback?.playing) return;
@@ -124,7 +158,7 @@ export function usePosing({
       let t = (now - start) / 1000;
       const done = !anim.loop && t >= anim.duration;
       if (done) t = anim.duration;
-      const state = sampleAnimation(anim, t);
+      const state = frameOf(anim, t, playBase.current);
       preview(state);
       if (done) {
         update({ pose: isRestPose(state) ? undefined : state });
@@ -149,6 +183,7 @@ export function usePosing({
     const cur = playbackRef.current;
     let t = from ?? (cur?.id === id ? cur.t : 0);
     if (!anim.loop && t >= anim.duration - 1e-3) t = 0;
+    playBase.current = projectRef.current.pose;
     setPlayback({ id, t, playing: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -159,7 +194,7 @@ export function usePosing({
     const anim = animationOf(cur.id);
     setPlayback({ ...cur, playing: false });
     if (anim) {
-      const state = sampleAnimation(anim, cur.t);
+      const state = frameOf(anim, cur.t, playBase.current ?? projectRef.current.pose);
       update({ pose: isRestPose(state) ? undefined : state });
       preview(state);
     }
@@ -170,8 +205,9 @@ export function usePosing({
     (id: string, t: number) => {
       const anim = animationOf(id);
       if (!anim) return;
+      if (!playbackRef.current?.playing && playbackRef.current?.id !== id) playBase.current = projectRef.current.pose;
       setPlayback({ id, t, playing: false });
-      const state = sampleAnimation(anim, t);
+      const state = frameOf(anim, t, playBase.current ?? projectRef.current.pose);
       update({ pose: isRestPose(state) ? undefined : state });
       preview(state);
     },
@@ -182,8 +218,14 @@ export function usePosing({
   /* Joints --------------------------------------------------------- */
   const [activeJointId, setActiveJointId] = useState<string | null>(null);
   // In the Pose tool, clicking a part picks the joint that turns it
+  // (a whole robot selected picks none: the next click on one of its parts does)
   useEffect(() => {
     if (transformMode !== 'pose' || !selectedIds.length) return;
+    if (selectedIds.length > 1) {
+      const whole = robotOfParts(rig, selectedIds);
+      if (whole && selectedIds.length >= whole.parts.size) setActiveJointId(null);
+      return;
+    }
     let at = rig.ownerOf.get(selectedIds[0]) ?? null;
     while (at && !isMovable(rig.byId.get(at)!)) at = rig.parentOf.get(at) ?? null;
     setActiveJointId(at);
@@ -202,7 +244,7 @@ export function usePosing({
       const j = rigRef.current.byId.get(id);
       if (!j) return;
       const cur = projectRef.current.pose;
-      setPose({ values: { ...cur?.values, [id]: clampJoint(j, value) }, root: cur?.root });
+      setPose({ ...cur, values: { ...cur?.values, [id]: clampJoint(j, value) } });
     },
     [projectRef, setPose]
   );
@@ -216,10 +258,30 @@ export function usePosing({
     [projectRef, setJointValue]
   );
 
+  /* The selected robot -------------------------------------------- */
+  const group = useMemo(() => robotOfParts(rig, selectedIds), [rig, selectedIds]);
+  const groupKey = group?.key ?? null;
+  const groupKeyRef = useRef(groupKey);
+  groupKeyRef.current = groupKey;
+  const oneRig = useMemo(() => (groupKey ? robotRig(rig, groupKey) : null), [rig, groupKey]);
+  const robot = useMemo(
+    () => (group && oneRig ? { group, rig: oneRig, pose: robotPose(rig, pose, group.key) } : null),
+    [group, oneRig, rig, pose]
+  );
+  const setRobotPose = useCallback(
+    (local: RobotPoseState) => {
+      const key = groupKeyRef.current;
+      if (key) setPose(withRobotPose(rigRef.current, projectRef.current.pose, key, local));
+    },
+    [projectRef, setPose]
+  );
+
   /* Saved poses and animations -------------------------------------- */
   const savePose = useCallback(
     (name: string) => {
-      const p: RobotPose = { id: newId('pose'), name, values: { ...projectRef.current.pose?.values }, root: projectRef.current.pose?.root };
+      const key = groupKeyRef.current ?? rigRef.current.robots[0]?.key;
+      const local = key ? robotPose(rigRef.current, projectRef.current.pose, key) : { values: {} };
+      const p: RobotPose = { id: newId('pose'), name, ...local, robot: key };
       update({ poses: [...(projectRef.current.poses ?? []), p] });
       return p;
     },
@@ -228,8 +290,10 @@ export function usePosing({
   const applySavedPose = useCallback(
     (id: string) => {
       const p = projectRef.current.poses?.find((x) => x.id === id);
-      if (p) setPose({ values: { ...p.values }, root: p.root });
+      if (!p) return;
+      setPose(withRobotPose(rigRef.current, projectRef.current.pose, robotFor(p), { values: { ...p.values }, root: p.root }));
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [projectRef, setPose]
   );
   const renamePose = useCallback(
@@ -243,12 +307,14 @@ export function usePosing({
   const addAnimation = useCallback(
     (anim: RobotAnimation) => {
       const list = projectRef.current.animations ?? [];
-      // Same name replaces (the agent revising its walk cycle)
-      const existing = list.find((a) => a.name === anim.name);
-      const made = { ...anim, id: anim.id || existing?.id || newId('anim') };
+      const robotKey = anim.robot ?? robotFor(anim);
+      // Same name on the same robot replaces (the agent revising its walk cycle)
+      const existing = list.find((a) => a.name === anim.name && robotFor(a) === robotKey);
+      const made = { ...anim, robot: robotKey, id: anim.id || existing?.id || newId('anim') };
       update({ animations: existing ? list.map((a) => (a.id === existing.id ? made : a)) : [...list, made] });
       return made;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [projectRef, update]
   );
   const renameAnimation = useCallback(
@@ -284,14 +350,17 @@ export function usePosing({
     rig,
     hasRig,
     pose,
-    poses: project.poses ?? [],
-    animations: project.animations ?? [],
+    robot,
+    setRobotPose,
+    poses: groupKey ? (project.poses ?? []).filter((p) => robotFor(p) === groupKey) : [],
+    animations: groupKey ? (project.animations ?? []).filter((a) => robotFor(a) === groupKey) : [],
     deltas,
     poseJoint,
     activeJointId,
     selectJoint,
     setJointValue,
     setPose,
+    restorePose,
     onPoseJoint,
     savePose,
     applySavedPose,

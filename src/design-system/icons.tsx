@@ -94,6 +94,37 @@ export const LibraryIcon: React.FC<GlyphProps> = ({ filled, className }) => (
   </Glyph>
 );
 
+// A robot as one round body with a face looking straight ahead: two solid pill eyes, 3 wide and
+// 3.75 long, a little above center. The ball is r 10.25, overshooting the 2–22 live area like the
+// nut does, since circles read smaller than polygons of the same box. Filled, the eyes are holes,
+// and dark holes in a bright shape read smaller than bright strokes: they're cut 3.8 wide and
+// 4.55 long so they look the same size as the outline's 3 × 3.75 eyes.
+const ROBOT_BALL = 'M1.75 12a10.25 10.25 0 1 0 20.5 0a10.25 10.25 0 1 0 -20.5 0';
+const ROBOT_EYES = 'M9.25 9.25v3.75M14.75 9.25v3.75';
+const ROBOT_EYE_HOLES = 'M9.25 8.85v4.55M14.75 8.85v4.55';
+
+/** Robots: a round robot face, for the published robots you can insert and pose */
+export const RobotsIcon: React.FC<GlyphProps> = ({ filled, className }) => {
+  const mask = useId();
+  return (
+    <Glyph className={className}>
+      {filled ? (
+        <>
+          <Knockout id={mask}>
+            <path d={ROBOT_EYE_HOLES} strokeWidth={3.8} />
+          </Knockout>
+          <path d={ROBOT_BALL} fill="currentColor" mask={`url(#${mask})`} />
+        </>
+      ) : (
+        <>
+          <path d={ROBOT_BALL} />
+          <path d={ROBOT_EYES} strokeWidth={3} />
+        </>
+      )}
+    </Glyph>
+  );
+};
+
 // Screw drives, seen head-on: the head as a 9.5 circle, the recess solid inside it so it reads
 // as a hole at 20px. The hex is flat-sided top and bottom (r 5.4), the Torx has six rounded lobes
 // (A 12.6, B 7.8), Pozidriv is the Phillips cross plus its four diagonal ribs (1.5 strokes, kept

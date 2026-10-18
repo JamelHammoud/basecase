@@ -11,7 +11,11 @@ import {
   partMotion,
   poseDeltas,
   resolveJoints,
+  robotOfParts,
+  robotPose,
+  robotRig,
   solveIK,
+  withRobotPose,
   type IkTarget,
   type Rig,
   type V3,
@@ -35,6 +39,42 @@ export interface PoseContext {
   savePose: (name: string, state: RobotPoseState) => void;
   addAnimation: (anim: RobotAnimation) => RobotAnimation;
   play: (id: string) => void;
+  /** The canvas selection: the robot it's on is the default */
+  selectedIds: string[];
+}
+
+/** The robot a tool call works on, alone, and how its pose fits back into the scene's */
+interface Scope {
+  full: Rig;
+  rig: Rig;
+  key: string;
+  name: string;
+  /** Its current pose: joint values and body offset */
+  local: RobotPoseState;
+  /** The scene pose with this robot set to `local` */
+  merge: (local: RobotPoseState) => RobotPoseState;
+}
+
+/** By name or key, else the selected robot, else the only one */
+function scopeOf(ctx: PoseContext, wanted?: string): Scope | string {
+  const full = rigOf(ctx);
+  if (!full.robots.length) return 'No joints yet. Declare them with define_joints (or import_robot a published robot).';
+  const w = wanted?.trim().toLowerCase();
+  const group = w
+    ? full.robots.find((r) => r.key.toLowerCase() === w || r.name.toLowerCase() === w) ?? full.robots.find((r) => r.name.toLowerCase().includes(w))
+    : robotOfParts(full, ctx.selectedIds) ?? (full.robots.length === 1 ? full.robots[0] : null);
+  if (!group) {
+    const list = full.robots.map((r) => `"${r.name}" (${r.joints.length} joints)`).join(', ');
+    return w ? `No robot "${wanted}". Robots: ${list}.` : `${full.robots.length} robots in the scene: ${list}. Pass robot to say which.`;
+  }
+  return {
+    full,
+    rig: robotRig(full, group.key),
+    key: group.key,
+    name: group.name,
+    local: robotPose(full, ctx.project.pose, group.key),
+    merge: (local) => withRobotPose(full, ctx.project.pose, group.key, local),
+  };
 }
 
 export interface PoseReply {
@@ -69,18 +109,20 @@ const rootToScene = (root?: { position?: number[]; rotation?: number[] }): RootO
 const rootToCad = (root?: RootOffset) =>
   root && !isRestPose({ values: {}, root }) ? `body offset ${fmtV(toCad(root.position ?? [0, 0, 0]))} mm, turned ${fmtV(rotToCad(root.rotation ?? [0, 0, 0]))}°` : '';
 
-/** What changes when the robot takes a pose: new clashes between links, and the floor */
-function poseCheck(ctx: PoseContext, rig: Rig, state: RobotPoseState, restPairs: Set<string>): string[] {
+/** What changes when the robot takes a pose (its own): new clashes between links, and the floor */
+function poseCheck(ctx: PoseContext, scope: Scope, local: RobotPoseState, restPairs: Set<string>): string[] {
   const vp = ctx.viewport;
   if (!vp) return [];
-  vp.setPose(poseDeltas(rig, state, ctx.parts.map((p) => p.id)));
+  const rig = scope.rig;
+  vp.setPose(poseDeltas(scope.full, scope.merge(local), ctx.parts.map((p) => p.id)));
   const lines: string[] = [];
   const owner = (id: string) => rig.ownerOf.get(id) ?? 'base';
+  const robotParts = [...(scope.full.robots.find((r) => r.key === scope.key)?.parts ?? [])];
   const clashes = vp
-    .posedInterference()
+    .posedInterference(robotParts)
     .filter((f) => f.depthMm > 1 && owner(f.a) !== owner(f.b) && !restPairs.has([f.a, f.b].sort().join('|')));
   for (const c of clashes.slice(0, 6)) lines.push(`${c.a} passes ${r1(c.depthMm)} mm into ${c.b}`);
-  const floor = vp.posedFloor();
+  const floor = vp.posedFloor(robotParts);
   if (floor !== null && floor < -1) lines.push(`${r1(-floor)} mm below the floor`);
   else if (floor !== null && floor > 5 && rig.joints.some((j) => /knee|ankle|leg|foot/i.test(j.name))) lines.push(`Lowest point ${r1(floor)} mm above the floor`);
   return lines;
@@ -91,32 +133,37 @@ function restPairs(ctx: PoseContext): Set<string> {
   return new Set(found.map((f) => [f.a, f.b].sort().join('|')));
 }
 
-/** Renders the pose (or animation frames) and puts the canvas back */
-function render(ctx: PoseContext, rig: Rig, states: Array<{ label: string; state: RobotPoseState }>, views: string[]): Array<{ view: string; dataUrl: string }> {
+/** Renders the robot's pose (or animation frames) with the rest of the scene as it is */
+function render(ctx: PoseContext, scope: Scope, states: Array<{ label: string; state: RobotPoseState }>, views: string[]): Array<{ view: string; dataUrl: string }> {
   const vp = ctx.viewport;
   if (!vp) return [];
   const ids = ctx.parts.map((p) => p.id);
   const out: Array<{ view: string; dataUrl: string }> = [];
   for (const s of states) {
-    vp.setPose(poseDeltas(rig, s.state, ids));
+    vp.setPose(poseDeltas(scope.full, scope.merge(s.state), ids));
     for (const shot of vp.captureViews(views)) out.push({ view: `${s.label}${s.label ? ' · ' : ''}${shot.view}`, dataUrl: shot.dataUrl });
   }
   return out;
 }
 
-function restore(ctx: PoseContext, rig: Rig) {
-  ctx.viewport?.setPose(poseDeltas(rig, ctx.project.pose, ctx.parts.map((p) => p.id)));
+function restore(ctx: PoseContext, scope: Scope) {
+  ctx.viewport?.setPose(poseDeltas(scope.full, ctx.project.pose, ctx.parts.map((p) => p.id)));
 }
 
 /* ------------------------------------------------------------------ */
 
-export function getRig(ctx: PoseContext): PoseReply {
-  const rig = rigOf(ctx);
+export function getRig(ctx: PoseContext, wanted?: string): PoseReply {
+  const full = rigOf(ctx);
+  const scope = scopeOf(ctx, wanted);
+  if (typeof scope === 'string') return { text: scope };
+  const rig = scope.rig;
   const movable = rig.joints.filter(isMovable);
-  if (!movable.length) return { text: 'No joints yet. Declare them with define_joints (or import_robot a published robot).' };
-  const pointOf = pointOfFor(rig, ctx.viewport);
+  const pointOf = pointOfFor(full, ctx.viewport);
   const names = new Map(ctx.parts.map((p) => [p.id, p.name]));
-  const lines = [`${movable.length} joints (values from the modeled pose; agent frame, mm):`];
+  const lines = [
+    ...(full.robots.length > 1 ? [`Robots: ${full.robots.map((r) => `"${r.name}"${r.key === scope.key ? ' (this one)' : ''}`).join(', ')}. Pass robot to work on another; each keeps its own pose.`, ''] : []),
+    `${scope.name}: ${movable.length} joints (values from the modeled pose; agent frame, mm):`,
+  ];
   for (const j of movable) {
     const parent = rig.parentOf.get(j.id);
     const link = linkParts(rig, j.id);
@@ -128,11 +175,12 @@ export function getRig(ctx: PoseContext): PoseReply {
         `${link.length ? `, moves ${link.slice(0, 4).map((id) => names.get(id) ?? id).join(', ')}${link.length > 4 ? ` +${link.length - 4}` : ''}` : ''}`
     );
   }
-  const pose = ctx.project.pose;
-  const set = Object.entries(pose?.values ?? {}).filter(([, v]) => Math.abs(v) > 0.05);
-  lines.push('', set.length || pose?.root ? `Pose on the canvas: ${set.map(([k, v]) => `${k} ${r1(v)}`).join(', ')}${pose?.root ? `; ${rootToCad(pose.root)}` : ''}` : 'Pose on the canvas: the modeled pose');
-  if (ctx.project.poses?.length) lines.push(`Saved poses: ${ctx.project.poses.map((p) => p.name).join(', ')}`);
-  if (ctx.project.animations?.length) lines.push(`Animations: ${ctx.project.animations.map((a) => `${a.name} (${a.duration}s${a.loop ? ', loops' : ''})`).join(', ')}`);
+  const pose = scope.local;
+  const set = Object.entries(pose.values).filter(([, v]) => Math.abs(v) > 0.05);
+  lines.push('', set.length || pose.root ? `Pose on the canvas: ${set.map(([k, v]) => `${k} ${r1(v)}`).join(', ')}${pose.root ? `; ${rootToCad(pose.root)}` : ''}` : 'Pose on the canvas: the modeled pose');
+  const mine = <T extends { robot?: string }>(list: T[] | undefined) => (list ?? []).filter((x) => !x.robot || x.robot === scope.key);
+  if (mine(ctx.project.poses).length) lines.push(`Saved poses: ${mine(ctx.project.poses).map((p) => p.name).join(', ')}`);
+  if (mine(ctx.project.animations).length) lines.push(`Animations: ${mine(ctx.project.animations).map((a) => `${a.name} (${a.duration}s${a.loop ? ', loops' : ''})`).join(', ')}`);
   const feet = detectFeet(rig, pointOf);
   if (feet) lines.push(`Feet (for gaits): ${feet.feet.join(', ')}`);
   const lm = autoMapRobot(rig);
@@ -142,6 +190,7 @@ export function getRig(ctx: PoseContext): PoseReply {
 }
 
 export interface PosePayload {
+  robot?: string;
   values?: Record<string, number>;
   relative?: boolean;
   from_rest?: boolean;
@@ -153,12 +202,13 @@ export interface PosePayload {
 }
 
 export function setPoseRequest(ctx: PoseContext, p: PosePayload): PoseReply {
-  const rig = rigOf(ctx);
-  if (!rig.joints.some(isMovable)) return { text: 'No joints to pose. Declare them with define_joints first.' };
+  const scope = scopeOf(ctx, p.robot);
+  if (typeof scope === 'string') return { text: scope };
+  const rig = scope.rig;
   const notes: string[] = [];
-  let state: RobotPoseState = p.from_rest ? { values: {} } : { values: { ...ctx.project.pose?.values }, root: ctx.project.pose?.root };
+  let state: RobotPoseState = p.from_rest ? { values: {} } : { values: { ...scope.local.values }, root: scope.local.root };
   if (p.apply) {
-    const saved = ctx.project.poses?.find((x) => x.name.toLowerCase() === p.apply!.toLowerCase());
+    const saved = ctx.project.poses?.find((x) => x.name.toLowerCase() === p.apply!.toLowerCase() && (!x.robot || x.robot === scope.key));
     if (!saved) return { text: `No saved pose "${p.apply}". Saved: ${(ctx.project.poses ?? []).map((x) => x.name).join(', ') || 'none'}` };
     state = { values: { ...saved.values }, root: saved.root };
   }
@@ -219,10 +269,11 @@ export function setPoseRequest(ctx: PoseContext, p: PosePayload): PoseReply {
     }
   }
   for (const k of Object.keys(state.values)) if (Math.abs(state.values[k]) < 1e-3) delete state.values[k];
-  const check = poseCheck(ctx, rig, state, restPairs(ctx));
-  const images = p.views?.length ? render(ctx, rig, [{ label: '', state }], p.views) : undefined;
-  ctx.setPose(isRestPose(state) ? null : state);
-  if (p.save_as) ctx.savePose(p.save_as, state);
+  const check = poseCheck(ctx, scope, state, restPairs(ctx));
+  const images = p.views?.length ? render(ctx, scope, [{ label: '', state }], p.views) : undefined;
+  const merged = scope.merge(state);
+  ctx.setPose(isRestPose(merged) ? null : merged);
+  if (p.save_as) ctx.savePose(p.save_as, { ...state, robot: scope.key } as RobotPoseState);
   const set = Object.entries(state.values).filter(([, v]) => Math.abs(v) > 0.05);
   return {
     text:
@@ -235,6 +286,7 @@ export function setPoseRequest(ctx: PoseContext, p: PosePayload): PoseReply {
 }
 
 export interface AnimatePayload {
+  robot?: string;
   name: string;
   duration?: number;
   loop?: boolean;
@@ -246,8 +298,9 @@ export interface AnimatePayload {
 }
 
 export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
-  const rig = rigOf(ctx);
-  if (!rig.joints.some(isMovable)) return { text: 'No joints to animate. Declare them with define_joints first.' };
+  const scope = scopeOf(ctx, p.robot);
+  if (typeof scope === 'string') return { text: scope };
+  const rig = scope.rig;
   const pointOf = pointOfFor(rig, ctx.viewport);
   let anim: RobotAnimation;
   let notes: string[] = [];
@@ -273,7 +326,7 @@ export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
       root: rootToScene(k.root),
       ik: k.ik?.map((g) => ({ part: g.part, target: toScene(g.target as V3), where: g.where, keepOrientation: g.keep_orientation })),
     }));
-    const built = buildKeyframes(rig, specs, { values: { ...ctx.project.pose?.values }, root: ctx.project.pose?.root }, pointOf);
+    const built = buildKeyframes(rig, specs, { values: { ...scope.local.values }, root: scope.local.root }, pointOf);
     notes = built.notes;
     ikError = built.ikError;
     const last = built.keyframes[built.keyframes.length - 1]?.t ?? 1;
@@ -295,7 +348,7 @@ export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
   const problems = new Map<string, string>();
   for (let i = 0; i < samples; i++) {
     const t = (i / samples) * anim.duration;
-    for (const line of poseCheck(ctx, rig, sampleAnimation(anim, t), rest)) {
+    for (const line of poseCheck(ctx, scope, sampleAnimation(anim, t), rest)) {
       const key = line.replace(/[\d.]+ mm/g, '');
       if (!problems.has(key)) problems.set(key, `${line} at ${r1(t)} s`);
     }
@@ -305,7 +358,7 @@ export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
     const n = Math.min(Math.max(p.preview.frames ?? 4, 2), 8);
     images = render(
       ctx,
-      rig,
+      scope,
       Array.from({ length: n }, (_, i) => {
         const t = (i / (anim.loop ? n : n - 1)) * anim.duration;
         return { label: `${r1(t)} s`, state: sampleAnimation(anim, t) };
@@ -313,8 +366,8 @@ export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
       [p.preview.view ?? 'side']
     );
   }
-  restore(ctx, rig);
-  const made = ctx.addAnimation(anim);
+  restore(ctx, scope);
+  const made = ctx.addAnimation({ ...anim, robot: scope.key });
   if (p.play !== false) ctx.play(made.id);
   const joints = new Set(made.keyframes.flatMap((k) => Object.keys(k.values)));
   const ik = Object.entries(ikError).map(([k, v]) => `${k} within ${r1(v)} mm`);
@@ -329,6 +382,7 @@ export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
 }
 
 export interface RetargetPayload {
+  robot?: string;
   text?: string;
   url?: string;
   file?: string;
@@ -345,8 +399,9 @@ export interface RetargetPayload {
 }
 
 export async function retargetRequest(ctx: PoseContext, p: RetargetPayload): Promise<PoseReply> {
-  const rig = rigOf(ctx);
-  if (!rig.joints.some(isMovable)) return { text: 'No joints to retarget onto. Declare them with define_joints, or import_robot.' };
+  const scope = scopeOf(ctx, p.robot);
+  if (typeof scope === 'string') return { text: scope };
+  const rig = scope.rig;
   let text = p.text;
   if (!text && p.url) {
     const res = await fetch(p.url);
@@ -372,16 +427,16 @@ export async function retargetRequest(ctx: PoseContext, p: RetargetPayload): Pro
     const n = Math.min(Math.max(p.preview.frames ?? 4, 2), 8);
     images = render(
       ctx,
-      rig,
+      scope,
       Array.from({ length: n }, (_, i) => {
         const t = (i / (n - 1)) * res.animation.duration;
         return { label: `${r1(t)} s`, state: sampleAnimation(res.animation, t) };
       }),
       [p.preview.view ?? 'iso']
     );
-    restore(ctx, rig);
+    restore(ctx, scope);
   }
-  const made = ctx.addAnimation(res.animation);
+  const made = ctx.addAnimation({ ...res.animation, robot: scope.key });
   if (p.play !== false) ctx.play(made.id);
   return {
     text:

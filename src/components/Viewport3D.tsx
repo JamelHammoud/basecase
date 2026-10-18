@@ -71,8 +71,8 @@ export interface Viewport3DHandle {
   restBounds: (ids: string[]) => { min: [number, number, number]; max: [number, number, number] } | null;
   /** Parts that pass through each other in the pose on the canvas */
   posedInterference: (onlyIds?: string[]) => Interference[];
-  /** Lowest point of the posed parts (scene y, mm) */
-  posedFloor: () => number | null;
+  /** Lowest point of the posed parts, or of `ids` (scene y, mm) */
+  posedFloor: (ids?: string[]) => number | null;
   /** Projects world points (mm) to pixel positions inside the viewport */
   projectPoints: (
     points: Array<[number, number, number]>
@@ -468,11 +468,13 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         });
         return findInterferences(objects, 0.3, 400, onlyIds).interferences;
       },
-      posedFloor: () => {
+      posedFloor: (ids) => {
         const root = partsRootRef.current;
         if (!root) return null;
         const box = new THREE.Box3();
+        const only = ids ? new Set(ids) : null;
         for (const child of root.children) {
+          if (only && !only.has(child.userData.partId)) continue;
           const part = partsDataRef.current.find((p) => p.id === child.userData.partId);
           if (part && part.role === 'solid' && part.kind !== 'image_plane') box.expandByObject(child);
         }

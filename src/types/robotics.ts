@@ -285,12 +285,17 @@ export interface RootOffset {
 
 export interface RobotPoseState {
   values: JointValues;
+  /** Whole-body offset of a single robot (one robot's own pose, or a scene with one robot) */
   root?: RootOffset;
+  /** Whole-body offsets by robot (`Rig.robots[].key`), for scenes with several robots */
+  roots?: Record<string, RootOffset>;
 }
 
 export interface RobotPose extends RobotPoseState {
   id: string;
   name: string;
+  /** The robot it belongs to (`Rig.robots[].key`) */
+  robot?: string;
 }
 
 export interface AnimationKeyframe extends RobotPoseState {
@@ -309,6 +314,8 @@ export interface RobotAnimation {
   /** smooth = Catmull-Rom through the keyframes; linear for dense mocap */
   interpolation: 'smooth' | 'linear';
   source?: 'agent' | 'gait' | 'mocap' | 'user';
+  /** The robot it moves (`Rig.robots[].key`); keyframe roots are that robot's */
+  robot?: string;
 }
 
 export const DEFAULT_PROJECT: ProjectSettings = { printer: 'bambu-p1s', material: 'PLA', infillPct: 15 };

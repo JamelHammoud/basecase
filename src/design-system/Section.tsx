@@ -10,6 +10,9 @@ export interface SectionProps {
   /** Makes the header a disclosure toggle */
   collapsible?: boolean;
   defaultOpen?: boolean;
+  /** Controlled open state (collapsible sections), with onOpenChange */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   className?: string;
 }
 
@@ -23,9 +26,17 @@ export const Section: React.FC<SectionProps> = ({
   children,
   collapsible = false,
   defaultOpen = true,
+  open: openProp,
+  onOpenChange,
   className = '',
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
+  const [openState, setOpenState] = useState(defaultOpen);
+  const open = openProp ?? openState;
+  const setOpen = (next: (v: boolean) => boolean) => {
+    const v = next(open);
+    if (openProp === undefined) setOpenState(v);
+    onOpenChange?.(v);
+  };
   const isOpen = !collapsible || open;
   // An empty or collapsed section is just its header, centered between equal paddings
   const showBody = isOpen && React.Children.toArray(children).length > 0;

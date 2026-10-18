@@ -15,60 +15,44 @@ import { prettyJointName } from './kinematics';
  * Y left, Z up); the studio is mm, Y up, front +Z, left +X.
  */
 
+// Hands live in Parts → Hands (catalog components, posable through their makers' descriptions)
+export type RobotCategory = 'Humanoids' | 'Small bipeds' | 'Quadrupeds' | 'Arms';
+export const ROBOT_CATEGORIES: RobotCategory[] = ['Humanoids', 'Small bipeds', 'Quadrupeds', 'Arms'];
+
 export interface RobotPreset {
   id: string;
   title: string;
   maker: string;
-  /** What it is, one line */
+  category: RobotCategory;
+  /** Moving joints, as imported */
+  joints: number;
+  /** What it is, one line (search words and the agent's list) */
   description: string;
   url: string;
 }
 
 const RAW = 'https://raw.githubusercontent.com';
+const UNITREE = `${RAW}/unitreerobotics/unitree_ros/master/robots`;
+const MENAGERIE = `${RAW}/google-deepmind/mujoco_menagerie/main`;
 
+/** Published descriptions, each checked to import whole (every mesh found, joints with limits) */
 export const ROBOT_PRESETS: RobotPreset[] = [
-  {
-    id: 'unitree-g1',
-    title: 'Unitree G1',
-    maker: 'Unitree',
-    description: '1.3 m humanoid, 29 joints',
-    url: `${RAW}/unitreerobotics/unitree_ros/master/robots/g1_description/g1_29dof_rev_1_0.urdf`,
-  },
-  {
-    id: 'unitree-h1',
-    title: 'Unitree H1',
-    maker: 'Unitree',
-    description: '1.8 m humanoid, 19 joints',
-    url: `${RAW}/unitreerobotics/unitree_ros/master/robots/h1_description/urdf/h1.urdf`,
-  },
-  {
-    id: 'unitree-go2',
-    title: 'Unitree Go2',
-    maker: 'Unitree',
-    description: 'Quadruped, 12 joints',
-    url: `${RAW}/unitreerobotics/unitree_ros/master/robots/go2_description/urdf/go2_description.urdf`,
-  },
-  {
-    id: 'berkeley-humanoid',
-    title: 'Berkeley Humanoid',
-    maker: 'UC Berkeley HybridRobotics',
-    description: 'Research biped, 12 leg joints',
-    url: `${RAW}/HybridRobotics/berkeley_humanoid_description/main/urdf/robot.urdf`,
-  },
-  {
-    id: 'open-duck-mini',
-    title: 'Open Duck Mini v2',
-    maker: 'Antoine Pirrone',
-    description: 'Open-source printed biped',
-    url: `${RAW}/apirrone/Open_Duck_Mini/v2/mini_bdx/robots/open_duck_mini_v2/robot.urdf`,
-  },
-  {
-    id: 'so101',
-    title: 'SO-101 Arm',
-    maker: 'TheRobotStudio',
-    description: 'Open-source 6-axis arm',
-    url: `${RAW}/TheRobotStudio/SO-ARM100/main/Simulation/SO101/so101_new_calib.urdf`,
-  },
+  { id: 'unitree-g1', title: 'Unitree G1', maker: 'Unitree', category: 'Humanoids', joints: 29, description: '1.3 m humanoid', url: `${UNITREE}/g1_description/g1_29dof_rev_1_0.urdf` },
+  { id: 'unitree-h1', title: 'Unitree H1', maker: 'Unitree', category: 'Humanoids', joints: 19, description: '1.8 m humanoid', url: `${UNITREE}/h1_description/urdf/h1.urdf` },
+  { id: 'unitree-h1-2', title: 'Unitree H1-2', maker: 'Unitree', category: 'Humanoids', joints: 51, description: '1.8 m humanoid with dexterous hands', url: `${UNITREE}/h1_2_description/h1_2.urdf` },
+  { id: 'apptronik-apollo', title: 'Apptronik Apollo', maker: 'Apptronik', category: 'Humanoids', joints: 32, description: '1.7 m humanoid with hands', url: `${MENAGERIE}/apptronik_apollo/apptronik_apollo.xml` },
+  { id: 'booster-t1', title: 'Booster T1', maker: 'Booster Robotics', category: 'Humanoids', joints: 23, description: '1.2 m humanoid', url: `${MENAGERIE}/booster_t1/t1.xml` },
+  { id: 'berkeley-humanoid', title: 'Berkeley Humanoid', maker: 'UC Berkeley', category: 'Humanoids', joints: 12, description: 'Research humanoid, legs only', url: `${RAW}/HybridRobotics/berkeley_humanoid_description/main/urdf/robot.urdf` },
+  { id: 'robotis-op3', title: 'ROBOTIS OP3', maker: 'ROBOTIS', category: 'Small bipeds', joints: 20, description: '51 cm humanoid on Dynamixel servos', url: `${MENAGERIE}/robotis_op3/op3.xml` },
+  { id: 'open-duck-mini', title: 'Open Duck Mini v2', maker: 'Antoine Pirrone', category: 'Small bipeds', joints: 16, description: 'Open-source printed biped', url: `${RAW}/apirrone/Open_Duck_Mini/v2/mini_bdx/robots/open_duck_mini_v2/robot.urdf` },
+  { id: 'unitree-go2', title: 'Unitree Go2', maker: 'Unitree', category: 'Quadrupeds', joints: 12, description: 'Consumer quadruped', url: `${UNITREE}/go2_description/urdf/go2_description.urdf` },
+  { id: 'unitree-go1', title: 'Unitree Go1', maker: 'Unitree', category: 'Quadrupeds', joints: 12, description: 'Consumer quadruped', url: `${UNITREE}/go1_description/urdf/go1.urdf` },
+  { id: 'unitree-b2', title: 'Unitree B2', maker: 'Unitree', category: 'Quadrupeds', joints: 12, description: 'Industrial quadruped', url: `${UNITREE}/b2_description/urdf/b2_description.urdf` },
+  { id: 'anymal-c', title: 'ANYmal C', maker: 'ANYbotics', category: 'Quadrupeds', joints: 12, description: 'Industrial inspection quadruped', url: `${MENAGERIE}/anybotics_anymal_c/anymal_c.xml` },
+  { id: 'spot', title: 'Spot', maker: 'Boston Dynamics', category: 'Quadrupeds', joints: 12, description: 'Quadruped', url: `${MENAGERIE}/boston_dynamics_spot/spot.xml` },
+  { id: 'so101', title: 'SO-101 Arm', maker: 'TheRobotStudio', category: 'Arms', joints: 6, description: 'Open-source 6-axis printed arm', url: `${RAW}/TheRobotStudio/SO-ARM100/main/Simulation/SO101/so101_new_calib.urdf` },
+  { id: 'franka-panda', title: 'Franka Panda', maker: 'Franka Robotics', category: 'Arms', joints: 9, description: '7-axis arm with gripper', url: `${MENAGERIE}/franka_emika_panda/panda.xml` },
+  { id: 'ur5e', title: 'UR5e', maker: 'Universal Robots', category: 'Arms', joints: 6, description: '6-axis collaborative arm', url: `${MENAGERIE}/universal_robots_ur5e/ur5e.xml` },
 ];
 
 export interface ImportOptions {
@@ -77,6 +61,14 @@ export interface ImportOptions {
   maxTriangles?: number;
   /** Name shown on the parts (defaults to the description's own) */
   name?: string;
+  /**
+   * Turns in the file's own Z-up frame (axis, degrees, applied in order) before Z-up → Y-up, the
+   * way tools/parts orients catalog parts (`rotate` in sources.json). Without it the robot faces
+   * front by REP-103 (X forward).
+   */
+  rotate?: Array<[string, number]>;
+  /** One color for every link (descriptions that carry simulation debug colors) */
+  color?: string;
 }
 
 export interface ImportedRobot {
@@ -145,6 +137,9 @@ function candidates(ref: string, entryPath: string): string[] {
   const pkg = /^package:\/\/([^/]*)\/(.*)$/.exec(r);
   if (pkg) {
     const [, name, rest] = pkg;
+    // A raw GitHub path is /owner/repo/branch/…: the package is often the repository itself
+    const gh = /^\/([^/]+)\/([^/]+)\/([^/]+)\//.exec(entryPath);
+    if (gh && (!name || name === gh[2])) out.push(`/${gh[1]}/${gh[2]}/${gh[3]}/${rest}`);
     // The package folder appears in the description's own path
     if (name) {
       const i = entryPath.lastIndexOf(`/${name}/`);
@@ -165,8 +160,8 @@ function candidates(ref: string, entryPath: string): string[] {
 
 async function urlResolver(url: string): Promise<Resolver> {
   const entryUrl = rawUrl(url);
-  const text = new TextDecoder().decode(await fetchBytes(entryUrl).catch((e) => {
-    throw new Error(`Couldn't download the description (${e.message}). Check the link.`);
+  const text = new TextDecoder().decode(await fetchBytes(entryUrl).catch(() => {
+    throw new Error('Couldn’t download that file. Link to a .urdf or .xml file on GitHub or another public site.');
   }));
   const u = new URL(entryUrl);
   const origin = u.origin;
@@ -200,7 +195,7 @@ function filesResolver(files: File[]): Resolver & { pickEntry: () => Promise<voi
     [...byPath].find(([p]) => /\.urdf$/i.test(p)) ??
     [...byPath].find(([p]) => /\.(xml|mjcf)$/i.test(p) && !/scene/i.test(p.split('/').pop()!)) ??
     [...byPath].find(([p]) => /\.(xml|mjcf)$/i.test(p));
-  if (!entryFile) throw new Error('No URDF or MJCF file in that folder.');
+  if (!entryFile) throw new Error('Choose a folder with a .urdf or MJCF .xml file.');
   const resolver = {
     entry: { name: entryFile[0], text: '' },
     pickEntry: async () => {
@@ -263,6 +258,12 @@ interface Model {
   root: string;
 }
 
+/**
+ * URDF and MJCF colors are display values (what RViz and MuJoCo show): 0.2 0.2 0.2 is a dark
+ * grey. Read as linear light they brighten to mid grey when shown, washing every robot out.
+ */
+const displayRgb = (r: number, g: number, b: number) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
+
 const nums = (s: string | null | undefined, def: number[]) => (s ? s.trim().split(/\s+/).map(Number) : def);
 const elems = (el: Element, tag: string) => [...el.children].filter((c) => c.tagName === tag);
 const elem = (el: Element | null | undefined, tag: string) => (el ? [...el.children].find((c) => c.tagName === tag) ?? null : null);
@@ -283,7 +284,7 @@ function parseUrdf(doc: Document): Model {
     const c = elem(m, 'color')?.getAttribute('rgba');
     if (c) {
       const [r, g, b] = nums(c, [0.7, 0.7, 0.7]);
-      return new THREE.Color(r, g, b);
+      return displayRgb(r, g, b);
     }
     return materials.get(m.getAttribute('name') ?? '');
   };
@@ -400,7 +401,7 @@ function parseMjcf(doc: Document): Model {
     }
     for (const m of elems(asset, 'material')) {
       const [r, g, b] = nums(m.getAttribute('rgba'), [0.7, 0.7, 0.7, 1]);
-      materials.set(m.getAttribute('name') ?? '', new THREE.Color(r, g, b));
+      materials.set(m.getAttribute('name') ?? '', displayRgb(r, g, b));
     }
   }
 
@@ -445,15 +446,23 @@ function parseMjcf(doc: Document): Model {
 
   const links = new Map<string, { world: THREE.Matrix4; visuals: Visual[] }>();
   const joints: ModelJoint[] = [];
-  const geomAll: Array<{ link: string; attrs: (k: string) => string | undefined; cls: string }> = [];
+  const geomAll: Array<{ link: string; attrs: (k: string) => string | undefined; cls: string; frame?: THREE.Matrix4 }> = [];
+  /** A <frame>'s transform, for the elements inside it */
+  const frameOf = (f: Element) =>
+    new THREE.Matrix4().compose(new THREE.Vector3(...nums(f.getAttribute('pos'), [0, 0, 0])), orient((k) => f.getAttribute(k) ?? undefined), new THREE.Vector3(1, 1, 1));
+  /** Children of a body, looking through <frame> elements (with the frame transform they add) */
+  const childrenOf = (el: Element, tag: string, at = new THREE.Matrix4()): Array<{ el: Element; frame: THREE.Matrix4 }> =>
+    [...el.children].flatMap((c) =>
+      c.tagName === tag ? [{ el: c, frame: at }] : c.tagName === 'frame' ? childrenOf(c, tag, at.clone().multiply(frameOf(c))) : []
+    );
   let anon = 0;
 
-  const visitBody = (body: Element, parentWorld: THREE.Matrix4, parentLink: string | null, childclass: string) => {
+  const visitBody = (body: Element, parentWorld: THREE.Matrix4, parentLink: string | null, childclass: string, frame = new THREE.Matrix4()) => {
     const cc = body.getAttribute('childclass') ?? childclass;
     const name = body.getAttribute('name') ?? `body_${anon++}`;
     const own = (k: string) => body.getAttribute(k) ?? undefined;
     const [x, y, z] = nums(own('pos'), [0, 0, 0]);
-    const world = parentWorld.clone().multiply(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), orient(own), new THREE.Vector3(1, 1, 1)));
+    const world = parentWorld.clone().multiply(frame).multiply(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), orient(own), new THREE.Vector3(1, 1, 1)));
     links.set(name, { world, visuals: [] });
     if (parentLink) {
       const js = [...elems(body, 'joint')];
@@ -484,12 +493,12 @@ function parseMjcf(doc: Document): Model {
         prev = made;
       }
     }
-    for (const g of elems(body, 'geom')) {
+    for (const { el: g, frame: f } of childrenOf(body, 'geom')) {
       const cls = g.getAttribute('class') ?? cc;
       const def = defaults.classes.get(cls)?.get('geom') ?? defaults.classes.get('main')?.get('geom') ?? {};
-      geomAll.push({ link: name, attrs: (k) => g.getAttribute(k) ?? def[k], cls });
+      geomAll.push({ link: name, attrs: (k) => g.getAttribute(k) ?? def[k], cls, frame: f });
     }
-    for (const b of elems(body, 'body')) visitBody(b, world, name, cc);
+    for (const { el: b, frame: f } of childrenOf(body, 'body')) visitBody(b, world, name, cc, f);
   };
   const worldbody = elem(mj, 'worldbody');
   if (worldbody) {
@@ -498,15 +507,14 @@ function parseMjcf(doc: Document): Model {
       const def = defaults.classes.get(g.getAttribute('class') ?? 'main')?.get('geom') ?? {};
       geomAll.push({ link: 'world', attrs: (k) => g.getAttribute(k) ?? def[k], cls: g.getAttribute('class') ?? 'main' });
     }
-    for (const b of elems(worldbody, 'body')) visitBody(b, new THREE.Matrix4(), null, 'main');
+    for (const { el: b, frame: f } of childrenOf(worldbody, 'body')) visitBody(b, new THREE.Matrix4(), null, 'main', f);
   }
 
-  // Visual geoms: those that never collide, or in a "visual" class; otherwise everything but collision
-  const visualOnly = (g: (typeof geomAll)[number]) => (g.attrs('contype') === '0' && g.attrs('conaffinity') === '0') || /visual/i.test(g.cls);
-  const any = geomAll.some(visualOnly);
-  const chosen = geomAll.filter((g) =>
-    any ? visualOnly(g) : !/collision/i.test(g.cls) && g.attrs('group') !== '3' && (g.attrs('type') ?? 'sphere') !== 'plane'
-  );
+  // Visual geoms: never collision-class or collision-group ones; of the rest, those in a "visual"
+  // class or that never collide, when the file marks them that way
+  const candidates = geomAll.filter((g) => !/collision/i.test(g.cls) && g.attrs('group') !== '3' && !/collision/i.test(g.attrs('name') ?? ''));
+  const visualOnly = (g: (typeof geomAll)[number]) => /visual/i.test(g.cls) || (g.attrs('contype') === '0' && g.attrs('conaffinity') === '0');
+  const chosen = candidates.some(visualOnly) ? candidates.filter(visualOnly) : candidates;
   for (const g of chosen) {
     const a = g.attrs;
     const type = a('type') ?? (a('mesh') ? 'mesh' : 'sphere');
@@ -532,8 +540,9 @@ function parseMjcf(doc: Document): Model {
       geometry = { type, radius: size[0], length };
     }
     if (!geometry) continue;
+    if (g.frame) origin = g.frame.clone().multiply(origin);
     const rgba = a('rgba');
-    const color = rgba ? new THREE.Color(...(nums(rgba, [0.5, 0.5, 0.5]).slice(0, 3) as [number, number, number])) : materials.get(a('material') ?? '');
+    const color = rgba ? displayRgb(...(nums(rgba, [0.5, 0.5, 0.5]).slice(0, 3) as [number, number, number])) : materials.get(a('material') ?? '');
     links.get(g.link)?.visuals.push({ geometry, origin, color });
   }
   const isChild = new Set(joints.map((j) => j.child));
@@ -632,7 +641,11 @@ function primitive(g: Geometry): THREE.BufferGeometry | null {
   return geo.index ? geo.toNonIndexed() : geo;
 }
 
-/** Welds and simplifies a triangle soup to about `target` triangles */
+/**
+ * Welds and simplifies a triangle soup to about `target` triangles, never past 0.2% of the
+ * mesh's size. Published meshes are often already decimated, cracked shells (Apollo's torso:
+ * 50k open edges); forcing them to the target tore them apart, so those keep more triangles.
+ */
 function simplify(geo: THREE.BufferGeometry, target: number): { positions: Float32Array; indices: Uint32Array } {
   const soup = new THREE.BufferGeometry();
   soup.setAttribute('position', geo.getAttribute('position'));
@@ -640,7 +653,7 @@ function simplify(geo: THREE.BufferGeometry, target: number): { positions: Float
   const positions = (welded.getAttribute('position').array as Float32Array).slice();
   let indices: Uint32Array = new Uint32Array(welded.index!.array as ArrayLike<number>);
   if (indices.length / 3 > target && MeshoptSimplifier.supported) {
-    const [out] = MeshoptSimplifier.simplify(indices, positions, 3, Math.max(target * 3, 36), 0.02, ['Prune']);
+    const [out] = MeshoptSimplifier.simplify(indices, positions, 3, Math.max(target * 3, 36), 0.002, ['Prune']);
     if (out.length >= 36) indices = out as Uint32Array;
   }
   return { positions, indices };
@@ -652,7 +665,15 @@ function simplify(geo: THREE.BufferGeometry, target: number): { positions: Float
 
 /** Robot frame (m, X forward, Y left, Z up) → scene (mm, front +Z, left +X, Y up) */
 const S = new THREE.Matrix4().set(0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1);
-const toScenePoint = (v: THREE.Vector3) => v.clone().applyMatrix4(S).multiplyScalar(1000);
+/** Z-up file frame → scene, as tools/parts converts catalog parts: (x, z, −y) after `rotate` */
+function catalogFrame(rotate: Array<[string, number]>): THREE.Matrix4 {
+  const r = new THREE.Matrix4();
+  for (const [axis, deg] of rotate) {
+    const a = axis.toLowerCase();
+    r.premultiply(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(a === 'x' ? 1 : 0, a === 'y' ? 1 : 0, a === 'z' ? 1 : 0), THREE.MathUtils.degToRad(deg)));
+  }
+  return new THREE.Matrix4().set(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1).multiply(r);
+}
 
 const linkLabel = (name: string) => prettyJointName(name.replace(/_link$|_link_/i, ' ').replace(/^link_?/i, ''));
 
@@ -676,9 +697,9 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   let text = resolver.entry.text;
   if (/<mujoco\b/.test(text)) text = await inlineIncludes(text, resolver.read, source.kind === 'url' ? new URL(rawUrl(source.url)).pathname : resolver.entry.name);
   const doc = new DOMParser().parseFromString(text.replace(/<!--[\s\S]*?-->/g, ''), 'application/xml');
-  if (doc.querySelector('parsererror')) throw new Error('That file isn’t valid XML.');
+  if (doc.querySelector('parsererror')) throw new Error('Choose a URDF or MJCF file. That one isn’t valid XML.');
   const rootTag = doc.documentElement.tagName;
-  if (rootTag !== 'robot' && rootTag !== 'mujoco') throw new Error('Choose a URDF (<robot>) or MJCF (<mujoco>) file.');
+  if (rootTag !== 'robot' && rootTag !== 'mujoco') throw new Error('Choose a URDF or MJCF file.');
   const model = rootTag === 'robot' ? parseUrdf(doc) : parseMjcf(doc);
   const name = opts.name ?? prettyJointName(model.name);
 
@@ -705,6 +726,8 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
 
   // Each link's geometry in the scene frame
   say('Building parts');
+  const frame = opts.rotate ? catalogFrame(opts.rotate) : S;
+  const toScenePoint = (v: THREE.Vector3) => v.clone().applyMatrix4(frame).multiplyScalar(1000);
   const linkGeo = new Map<string, { geo: THREE.BufferGeometry; color: THREE.Color }>();
   for (const [link, l] of model.links) {
     const pieces: THREE.BufferGeometry[] = [];
@@ -720,7 +743,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
       if (!g) continue;
       g.applyMatrix4(v.origin);
       g.applyMatrix4(l.world);
-      g.applyMatrix4(S);
+      g.applyMatrix4(frame);
       g.scale(1000, 1000, 1000);
       pieces.push(g);
       if (v.color) colors.push(v.color);
@@ -729,12 +752,12 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
     const merged = pieces.length === 1 ? pieces[0] : mergeGeometries(pieces, false);
     if (!merged) continue;
     // Simulation models often leave links uncolored or in debug colors; default to a light grey
-    const color = colors[0] ?? new THREE.Color('#c8c8c8');
+    const color = opts.color ? new THREE.Color(opts.color) : colors[0] ?? new THREE.Color('#b3b3b3');
     linkGeo.set(link, { geo: merged, color });
   }
-  if (!linkGeo.size) throw new Error(notes.length ? `None of the meshes could be read (${notes.length} files).` : 'The description has no visual geometry.');
+  if (!linkGeo.size) throw new Error(notes.length ? `Couldn’t load any of its ${notes.length} meshes. Choose the folder that has them.` : 'Nothing to show: the description has no meshes or shapes.');
 
-  // Simplify to the triangle budget, in proportion to each link's share
+  // Simplify to the triangle budget, in proportion to each link's share (a soft limit, see simplify)
   const budget = opts.maxTriangles ?? 220_000;
   const total = [...linkGeo.values()].reduce((s, { geo }) => s + geo.getAttribute('position').count / 3, 0);
   const box = new THREE.Box3();
@@ -827,7 +850,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
     if (j.type === 'fixed') continue;
     const parentJoint = jointAbove(j);
     const origin = toScenePoint(new THREE.Vector3().setFromMatrixPosition(j.world)).add(shift);
-    const axis = j.axis.clone().transformDirection(j.world).applyMatrix4(new THREE.Matrix4().extractRotation(S)).normalize();
+    const axis = j.axis.clone().transformDirection(j.world).applyMatrix4(new THREE.Matrix4().extractRotation(frame)).normalize();
     const range = j.limit
       ? j.type === 'prismatic'
         ? ([round(j.limit[0] * 1000), round(j.limit[1] * 1000)] as [number, number])

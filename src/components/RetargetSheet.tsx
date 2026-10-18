@@ -82,9 +82,9 @@ export const RetargetSheet: React.FC<{
       }
     >
       {typeof mocap === 'string' ? (
-        <p className="px-5 pb-4 text-[13px] text-red-400">Couldn’t read that BVH file: {mocap}</p>
+        <p className="text-[13px] text-red-400">Couldn’t read that BVH file: {mocap}</p>
       ) : (
-        <div className="px-5 pb-4 space-y-4">
+        <div className="space-y-4">
           <div>
             <div className="grid grid-cols-[110px_1fr_1fr] gap-x-3 gap-y-1.5 items-center">
               <span />

@@ -19,10 +19,25 @@ export interface Rig {
   ownerOf: Map<string, string>;
   /** Joint and every joint above it, by joint id */
   chain: Map<string, Set<string>>;
-  /** Parts the whole-robot offset moves (everything but reference photos) */
+  /** Parts that belong to some robot (they move with its whole-body offset) */
   bodyParts: Set<string>;
-  /** Where whole-robot rotations turn about: the base joints' centroid */
+  /** Where whole-robot rotations turn about: the base joints' centroid (of the first robot) */
   rootPivot: V3;
+  /** Separate robots: joints linked through the parts they share */
+  robots: RobotGroup[];
+  /** Robot key of each joint and each robot part */
+  robotOf: Map<string, string>;
+  /** The parts the rig was built from */
+  parts: ScenePart[];
+}
+
+export interface RobotGroup {
+  /** Stable id: the first of its base joints' ids */
+  key: string;
+  name: string;
+  joints: string[];
+  parts: Set<string>;
+  pivot: V3;
 }
 
 export const isMovable = (j: RobotJoint) => j.type === 'revolute' || j.type === 'prismatic';
@@ -134,10 +149,69 @@ export function buildRig(joints: RobotJoint[], parts: ScenePart[]): Rig {
   }
 
   const ordered = [...joints].sort((a, b) => (depth.get(a.id) ?? 0) - (depth.get(b.id) ?? 0));
-  const roots = ordered.filter((j) => !parentOf.get(j.id));
-  const rootPivot: V3 = roots.length
-    ? [0, 1, 2].map((i) => roots.reduce((s, j) => s + j.origin[i], 0) / roots.length) as V3
-    : [0, 0, 0];
+
+  // Robots: joints are one robot when a joint sits on another or they share a part
+  const up = new Map<string, string>();
+  const find = (x: string): string => {
+    let r = x;
+    while (up.has(r) && up.get(r) !== r) r = up.get(r)!;
+    up.set(x, r);
+    return r;
+  };
+  const join = (a: string, b: string) => {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) up.set(ra, rb);
+  };
+  for (const j of joints) {
+    find(`j:${j.id}`);
+    const above = parentOf.get(j.id);
+    if (above) join(`j:${j.id}`, `j:${above}`);
+    for (const id of [...j.parent, ...j.child]) join(`j:${j.id}`, `p:${id}`);
+  }
+  for (const [partId, jointId] of ownerOf) join(`p:${partId}`, `j:${jointId}`);
+  const robotParts = new Set([...up.keys()].filter((k) => k.startsWith('p:')).map((k) => k.slice(2)));
+  // Unlisted parts grouped with one robot's parts (screws on the base) belong to it
+  for (const p of parts) {
+    if (robotParts.has(p.id) || !p.group || p.role === 'reference') continue;
+    const comps = new Set(parts.filter((q) => q.group?.id === p.group!.id && robotParts.has(q.id)).map((q) => find(`p:${q.id}`)));
+    if (comps.size === 1) up.set(`p:${p.id}`, [...comps][0]);
+  }
+  const members = new Map<string, { joints: string[]; parts: Set<string> }>();
+  for (const k of up.keys()) {
+    const r = find(k);
+    if (!members.has(r)) members.set(r, { joints: [], parts: new Set() });
+    if (k.startsWith('j:')) members.get(r)!.joints.push(k.slice(2));
+    else members.get(r)!.parts.add(k.slice(2));
+  }
+  const byPart = new Map(parts.map((p) => [p.id, p]));
+  const robotOf = new Map<string, string>();
+  const robots: RobotGroup[] = [];
+  for (const m of members.values()) {
+    if (!m.joints.length) continue;
+    const ids = ordered.filter((j) => m.joints.includes(j.id));
+    const base = ids.filter((j) => !parentOf.get(j.id));
+    const pivotOf = base.length ? base : ids;
+    const key = [...pivotOf.map((j) => j.id)].sort()[0];
+    // Named after its parts' group when they share one (an imported robot), else "Robot"
+    const groups = new Set([...m.parts].map((id) => byPart.get(id)?.group?.name).filter(Boolean));
+    robots.push({
+      key,
+      name: groups.size === 1 ? [...groups][0]! : 'Robot',
+      joints: ids.map((j) => j.id),
+      parts: m.parts,
+      pivot: [0, 1, 2].map((i) => pivotOf.reduce((s, j) => s + j.origin[i], 0) / pivotOf.length) as V3,
+    });
+    ids.forEach((j) => robotOf.set(j.id, key));
+    m.parts.forEach((id) => robotOf.set(id, key));
+  }
+  robots.sort((a, b) => a.key.localeCompare(b.key));
+  // Two robots named alike: "Unitree G1", "Unitree G1 2"
+  const seen = new Map<string, number>();
+  for (const r of robots) {
+    const n = (seen.get(r.name) ?? 0) + 1;
+    seen.set(r.name, n);
+    if (n > 1) r.name = `${r.name} ${n}`;
+  }
 
   return {
     joints: ordered,
@@ -146,9 +220,82 @@ export function buildRig(joints: RobotJoint[], parts: ScenePart[]): Rig {
     depth,
     ownerOf,
     chain,
-    bodyParts: new Set(parts.filter((p) => p.role !== 'reference').map((p) => p.id)),
-    rootPivot,
+    bodyParts: new Set(robots.flatMap((r) => [...r.parts])),
+    rootPivot: robots[0]?.pivot ?? [0, 0, 0],
+    robots,
+    robotOf,
+    parts,
   };
+}
+
+/** One robot alone, for solving and authoring on it (its pose state's `root` is its body offset) */
+export function robotRig(rig: Rig, key: string): Rig {
+  const r = rig.robots.find((x) => x.key === key);
+  if (!r) return buildRig([], []);
+  return buildRig(rig.joints.filter((j) => rig.robotOf.get(j.id) === key), rig.parts.filter((p) => r.parts.has(p.id)));
+}
+
+/** The robot a set of parts belongs to (the first that does) */
+export function robotOfParts(rig: Rig, ids: string[]): RobotGroup | null {
+  for (const id of ids) {
+    const key = rig.robotOf.get(id);
+    if (key) return rig.robots.find((r) => r.key === key) ?? null;
+  }
+  return null;
+}
+
+/** One robot's part of a scene pose: its joint values and its body offset */
+export function robotPose(rig: Rig, pose: RobotPoseState | null | undefined, key: string): RobotPoseState {
+  const r = rig.robots.find((x) => x.key === key);
+  const ids = new Set(r?.joints ?? []);
+  const values = Object.fromEntries(Object.entries(pose?.values ?? {}).filter(([id]) => ids.has(id)));
+  return { values, root: pose?.roots?.[key] ?? (rig.robots.length === 1 ? pose?.root : undefined) };
+}
+
+/** A scene pose with one robot's pose replaced; other robots keep theirs */
+export function withRobotPose(rig: Rig, pose: RobotPoseState | null | undefined, key: string, local: RobotPoseState): RobotPoseState {
+  const r = rig.robots.find((x) => x.key === key);
+  const ids = new Set(r?.joints ?? []);
+  const values = Object.fromEntries(Object.entries(pose?.values ?? {}).filter(([id]) => !ids.has(id)));
+  for (const [id, v] of Object.entries(local.values)) if (ids.has(id)) values[id] = v;
+  const roots: Record<string, RootOffset> = { ...pose?.roots };
+  // A single-robot scene's legacy offset belongs to that robot
+  if (pose?.root && rig.robots.length === 1 && !roots[rig.robots[0].key]) roots[rig.robots[0].key] = pose.root;
+  if (local.root && !isZeroRoot(local.root)) roots[key] = local.root;
+  else delete roots[key];
+  return { values, ...(Object.keys(roots).length ? { roots } : {}) };
+}
+
+const isZeroRoot = (r?: RootOffset) => !r || [...(r.position ?? []), ...(r.rotation ?? [])].every((v) => Math.abs(v) < 1e-6);
+
+/**
+ * Joint ids made unique: robots imported from the same maker share names (left_knee_joint), so
+ * a later robot's repeats get a suffix ("_2"), with its parent_joint links renamed to match
+ */
+export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = []): RobotJoint[] {
+  const used = new Set(taken);
+  if (!joints.some((j) => used.has(j.id)) && new Set(joints.map((j) => j.id)).size === joints.length) return joints;
+  const out: RobotJoint[] = [];
+  // Batches: runs of joints that don't repeat an id inside themselves (one import each)
+  let batch: RobotJoint[] = [];
+  const flush = () => {
+    if (!batch.length) return;
+    let suffix = '';
+    for (let n = 2; batch.some((j) => used.has(j.id + suffix)); n++) suffix = `_${n}`;
+    const rename = new Map(batch.map((j) => [j.id, j.id + suffix]));
+    for (const j of batch) {
+      const id = rename.get(j.id)!;
+      used.add(id);
+      out.push(suffix ? { ...j, id, parentJoint: j.parentJoint && rename.has(j.parentJoint) ? rename.get(j.parentJoint) : j.parentJoint } : j);
+    }
+    batch = [];
+  };
+  for (const j of joints) {
+    if (batch.some((b) => b.id === j.id)) flush();
+    batch.push(j);
+  }
+  flush();
+  return out;
 }
 
 export function clampJoint(j: RobotJoint, v: number): number {
@@ -178,10 +325,10 @@ export function jointMotion(j: RobotJoint, value: number, out = new THREE.Matrix
   return out;
 }
 
-export function rootMatrix(rig: Rig, root?: RootOffset): THREE.Matrix4 {
+export function rootMatrix(pivot: V3, root?: RootOffset): THREE.Matrix4 {
   const m = new THREE.Matrix4();
   if (!root) return m;
-  const [px, py, pz] = rig.rootPivot;
+  const [px, py, pz] = pivot;
   const r = root.rotation ?? [0, 0, 0];
   if (r[0] || r[1] || r[2]) {
     const rot = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...r.map(THREE.MathUtils.degToRad) as V3, 'XYZ'));
@@ -195,27 +342,33 @@ export function rootMatrix(rig: Rig, root?: RootOffset): THREE.Matrix4 {
 export interface PosedRig {
   /** World motion of each joint's moving side (rest → posed) */
   joint: Map<string, THREE.Matrix4>;
+  /** The first robot's body motion (the only one in a single-robot rig) */
   root: THREE.Matrix4;
+  /** Each robot's body motion, by key */
+  roots: Map<string, THREE.Matrix4>;
 }
 
 export function forwardKinematics(rig: Rig, pose: RobotPoseState | null | undefined): PosedRig {
-  const root = rootMatrix(rig, pose?.root);
+  const roots = new Map<string, THREE.Matrix4>();
+  for (const r of rig.robots) roots.set(r.key, rootMatrix(r.pivot, pose?.roots?.[r.key] ?? (rig.robots.length === 1 ? pose?.root : undefined)));
+  const root = (rig.robots[0] && roots.get(rig.robots[0].key)) || new THREE.Matrix4();
   const joint = new Map<string, THREE.Matrix4>();
   const tmp = new THREE.Matrix4();
   for (const j of rig.joints) {
     const parent = rig.parentOf.get(j.id);
-    const base = (parent && joint.get(parent)) || root;
+    const base = (parent && joint.get(parent)) || roots.get(rig.robotOf.get(j.id) ?? '') || root;
     const v = clampJoint(j, pose?.values[j.id] ?? 0);
     joint.set(j.id, base.clone().multiply(jointMotion(j, v, tmp)));
   }
-  return { joint, root };
+  return { joint, root, roots };
 }
 
 /** Rest → posed motion of a part, or null when it doesn't move */
 export function partMotion(rig: Rig, posed: PosedRig, partId: string): THREE.Matrix4 | null {
   const owner = rig.ownerOf.get(partId);
   if (owner) return posed.joint.get(owner) ?? null;
-  return rig.bodyParts.has(partId) ? posed.root : null;
+  const key = rig.robotOf.get(partId);
+  return key ? posed.roots.get(key) ?? null : null;
 }
 
 /** Every moved part's motion; parts that stay put are left out */
@@ -232,8 +385,7 @@ export function poseDeltas(rig: Rig, pose: RobotPoseState | null | undefined, pa
 
 export function isRestPose(pose: RobotPoseState | null | undefined): boolean {
   if (!pose) return true;
-  const r = pose.root;
-  if (r && [...(r.position ?? []), ...(r.rotation ?? [])].some((v) => Math.abs(v) > 1e-6)) return false;
+  if (!isZeroRoot(pose.root) || Object.values(pose.roots ?? {}).some((r) => !isZeroRoot(r))) return false;
   return Object.values(pose.values).every((v) => Math.abs(v) < 1e-6);
 }
 
@@ -246,7 +398,7 @@ function isIdentity(m: THREE.Matrix4) {
 /** A joint's pivot and axis in the posed frame */
 export function posedAxis(rig: Rig, posed: PosedRig, j: RobotJoint): { origin: THREE.Vector3; axis: THREE.Vector3 } {
   const parent = rig.parentOf.get(j.id);
-  const base = (parent && posed.joint.get(parent)) || posed.root;
+  const base = (parent && posed.joint.get(parent)) || posed.roots.get(rig.robotOf.get(j.id) ?? '') || posed.root;
   const origin = new THREE.Vector3(...j.origin).applyMatrix4(base);
   const axis = new THREE.Vector3(...j.axis).transformDirection(base);
   return { origin, axis };

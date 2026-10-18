@@ -89,6 +89,7 @@ Judge it by asking:
 | Icon | Meaning | Drawing |
 |---|---|---|
 | `PartsIcon` | Parts view (real components and hardware) | Isometric hex nut, rounded 1.2, 19 tall; filled: face edges and hole knocked out. `nut(NUT_PARAMS)` in `geometry.mjs` regenerates it |
+| `RobotsIcon` | Robots view (published robots to insert and pose) | A ball, r 10.25 (overshoots like the nut; circles read smaller), with two solid pill eyes looking straight ahead (3 wide, 3.75 long, 5.5 apart); filled, the holes are cut 3.8 × 4.55 because dark holes in a bright shape read smaller than bright strokes of the same size. The user picked it over a flat robot head and an isometric cube head; first the outline's 2-wide stroked eyes looked smaller than the holes, then equal-size holes looked smaller than the outline's solid eyes |
 | `LibraryIcon` | Library view (saved scenes and models) | Bookmark, 12 × 18, top corners r 2.5, notch 4 deep; filled: solid |
 | `LayersIcon` | Layers view | lucide `layers`; filled: top sheet solid |
 | `DriveIcon` | Screw drive choices (Hex, Torx, Phillips, Pozidriv, Slotted) in the hardware configurator; no filled state (the cell's thumb shows the choice) | Head circle r 9.5; recess solid inside, about 60% of the head (hex r 5.4, Torx A 12.6 / B 7.8, cross 11.8 × 2.9, slot 14 × 2.6); Pozidriv adds four 1.5-stroke diagonal ribs clear of the cross corners. First drawn at 45% of the head, which read as dots at 20px |

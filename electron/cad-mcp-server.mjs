@@ -934,6 +934,11 @@ const IK_GOAL = z.object({
   where: z.enum(['bottom', 'center']).optional().describe('The point on the part: bottom = the sole of a foot; center (default) for hands and heads'),
   keep_orientation: z.boolean().optional().describe('Also keep the part turned as in the modeled pose (feet flat on the floor)'),
 });
+const ROBOT = z
+  .string()
+  .max(80)
+  .optional()
+  .describe('Which robot, by name (from get_rig), when the scene has several; defaults to the selected one. Each robot keeps its own pose and animations.');
 const PREVIEW = z
   .object({ frames: z.number().int().min(2).max(8).optional(), view: VIEW.optional() })
   .optional()
@@ -956,12 +961,12 @@ server.registerTool(
     title: 'Joints and poses',
     description:
       'Lists the robot\'s joints (id, type, axis, pivot, range, the joint it is mounted on, the parts it moves), the pose on the canvas, saved poses, animations, the feet a gait would use and the mocap landmarks. ' +
-      'Call it before posing or animating, and after import_robot.',
-    inputSchema: {},
+      'Call it before posing or animating, and after import_robot. With several robots it names them all and details one.',
+    inputSchema: { robot: ROBOT },
   },
-  async () => {
+  async ({ robot }) => {
     try {
-      return text((await bridge('get_rig', {}))?.text || 'No joints.');
+      return text((await bridge('get_rig', { robot }))?.text || 'No joints.');
     } catch (err) {
       return fail(err);
     }
@@ -977,6 +982,7 @@ server.registerTool(
       'Starts from the current pose unless from_rest. Never edits the parts: the modeled pose stays the design. Reports values held at a limit, IK misses, new collisions between links and the floor. ' +
       'save_as keeps it as a named pose; apply restores a saved one. Pass views to see the result. Use it when the user asks for a pose ("wave", "crouch", "T-pose"), and to check a design can reach what it needs to.',
     inputSchema: {
+      robot: ROBOT,
       values: z.record(z.string(), z.number()).optional().describe('Joint id → value'),
       relative: z.boolean().optional().describe('Add values to the current ones'),
       from_rest: z.boolean().optional().describe('Start from the modeled pose'),
@@ -1007,6 +1013,7 @@ server.registerTool(
       'Same name replaces. Reports IK misses, joints at their limits, collisions and floor contact at 8 sampled times; preview renders frames.',
     inputSchema: {
       name: z.string().min(1).max(40),
+      robot: ROBOT,
       duration: z.number().min(0.1).max(600).optional().describe('Seconds (a gait: one cycle)'),
       loop: z.boolean().optional(),
       interpolation: z.enum(['smooth', 'linear']).optional(),
@@ -1062,6 +1069,7 @@ server.registerTool(
       'Reports the match and the mean miss per landmark; preview renders frames.',
     inputSchema: {
       file: z.string().optional().describe('Evidence path of a .bvh file'),
+      robot: ROBOT,
       url: z.string().url().optional().describe('Or a link to one'),
       name: z.string().max(40).optional(),
       start: z.number().min(0).optional().describe('Seconds into the clip'),
@@ -1097,10 +1105,12 @@ server.registerTool(
     title: 'Import a published robot',
     description:
       'Inserts a published robot from its URDF or MuJoCo MJCF with its meshes: every link becomes a part, every joint becomes a posable joint with its real axis and limits. ' +
-      'Presets: unitree-g1 (29 joints), unitree-h1, unitree-go2 (quadruped), berkeley-humanoid, open-duck-mini, so101 (arm). Or a raw/GitHub URL to a .urdf or .xml. ' +
+      'Presets: humanoids unitree-g1 (29 joints), unitree-h1, unitree-h1-2, apptronik-apollo, booster-t1, berkeley-humanoid; small bipeds robotis-op3, open-duck-mini; quadrupeds unitree-go2, unitree-go1, unitree-b2, anymal-c, spot; arms so101, franka-panda, ur5e. Or a raw/GitHub URL to a .urdf or .xml. ' +
       'Use it when the user wants an existing robot to pose or animate, or as a reference beside a design.',
     inputSchema: {
-      preset: z.enum(['unitree-g1', 'unitree-h1', 'unitree-go2', 'berkeley-humanoid', 'open-duck-mini', 'so101']).optional(),
+      preset: z
+        .enum(['unitree-g1', 'unitree-h1', 'unitree-h1-2', 'apptronik-apollo', 'booster-t1', 'berkeley-humanoid', 'robotis-op3', 'open-duck-mini', 'unitree-go2', 'unitree-go1', 'unitree-b2', 'anymal-c', 'spot', 'so101', 'franka-panda', 'ur5e'])
+        .optional(),
       url: z.string().url().optional(),
       name: z.string().max(40).optional(),
     },

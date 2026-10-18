@@ -236,7 +236,8 @@ export function buildBom(
 
   for (const p of parts) {
     if (p.role !== 'solid') continue;
-    if (p.kind === 'component' && p.componentId) add(`component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}`, 1, p.id);
+    // A posable catalog part (a hand) is its links as meshes; its palm carries the catalog id
+    if ((p.kind === 'component' || p.kind === 'mesh') && p.componentId) add(`component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}`, 1, p.id);
     else if (p.supplyId && SUPPLY_BY_ID[p.supplyId]) add(`supply:${p.supplyId}`, 1, p.id);
     else if (p.kind === 'hardware' && p.hardware) add(hardwareKey(p.hardware), 1, p.id);
     else if (isStandIn(p)) standIns.push({ id: p.id, name: p.name });

@@ -458,6 +458,8 @@ pose it if the user asks.
   link (a 2-DOF wrist or hip), set parent_joint on the second. Set real ranges: poses and
   animations are held inside them.
 - get_rig first: joint ids, axes, ranges, the feet and the mocap landmarks.
+- A scene can hold several robots; each keeps its own pose and animations. get_rig names them,
+  and pose / animate / retarget_motion take robot (the selected one by default).
 - A pose the user names ("wave", "squat", "point at the box"): pose with values for the joints
   you know, ik for reaching (a hand to a point, feet flat with where: bottom and
   keep_orientation), and root to lower or turn the whole body. Look at it (views) and fix

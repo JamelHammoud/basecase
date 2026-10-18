@@ -25,6 +25,23 @@ export interface AcpPromptPayload {
   evidenceFolders?: Array<{ id: string; name: string }>;
 }
 
+/** Policy training (electron/trainer.mjs) */
+export interface TrainerStatus {
+  /** uv is installed (it sets up Python, MuJoCo and PyTorch) */
+  uv: boolean;
+  /** The training environment is already installed */
+  ready: boolean;
+  running: string[];
+}
+
+export interface TrainStartPayload {
+  workspaceId: string;
+  /** The scene's MJCF */
+  xml: string;
+  /** Task, joints and budget for electron/trainer/train.py */
+  job: Record<string, unknown>;
+}
+
 export interface EvidenceFilePayload {
   folderId: string;
   folderName: string;
@@ -67,6 +84,11 @@ declare global {
       resumeAcp: (sessionId: string, workspaceId?: string) => Promise<AcpStatusInfo>;
       listChats: () => Promise<AgentConversationSummary[]>;
       listPurchases: () => Promise<Record<string, PurchaseRecord>>;
+      trainStatus: () => Promise<TrainerStatus>;
+      trainStart: (payload: TrainStartPayload) => Promise<{ jobId: string }>;
+      trainStop: (workspaceId: string) => Promise<{ stopping: boolean }>;
+      getPolicy: (id: string) => Promise<unknown>;
+      deletePolicy: (id: string) => Promise<boolean>;
       savePurchase: (payload: { key: string; record: PurchaseRecord | null }) => Promise<Record<string, PurchaseRecord>>;
       getChat: (id: string) => Promise<AgentConversation | null>;
       saveChat: (conv: AgentConversation) => Promise<AgentConversationSummary[]>;
@@ -209,6 +231,37 @@ export const platformBridge = {
     } catch {
       return {};
     }
+  },
+
+  async trainStatus(): Promise<TrainerStatus> {
+    if (window.electronAPI) return window.electronAPI.trainStatus();
+    return (await fetch('/api/bridge/train-status')).json();
+  },
+
+  async trainStart(payload: TrainStartPayload): Promise<{ jobId: string }> {
+    if (window.electronAPI) return window.electronAPI.trainStart(payload);
+    const res = await fetch('/api/bridge/train-start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const body = await res.json();
+    if (!res.ok) throw new Error(String(body.error ?? 'Training didn’t start.').replace(/^Error:\s*/, ''));
+    return body;
+  },
+
+  async trainStop(workspaceId: string): Promise<{ stopping: boolean }> {
+    if (window.electronAPI) return window.electronAPI.trainStop(workspaceId);
+    const res = await fetch('/api/bridge/train-stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaceId }) });
+    return res.json();
+  },
+
+  /** A trained policy's spec (library/policies/<id>/policy.json) */
+  async getPolicy(id: string): Promise<unknown> {
+    if (window.electronAPI) return window.electronAPI.getPolicy(id);
+    return (await fetch(`/api/bridge/policy?id=${encodeURIComponent(id)}`)).json();
+  },
+
+  async deletePolicy(id: string): Promise<boolean> {
+    if (window.electronAPI) return window.electronAPI.deletePolicy(id);
+    const res = await fetch('/api/bridge/policy-delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    return res.json();
   },
 
   /** Records what the user saw on a listing; null removes the check */

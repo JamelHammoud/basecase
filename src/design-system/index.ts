@@ -33,4 +33,5 @@ export * from './ImageViewer';
 export * from './HoverCard';
 export * from './useScrollFade';
 export * from './icons';
+export * from './cursors';
 export * from './OverlayScrollbars';

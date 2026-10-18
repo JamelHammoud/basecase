@@ -7,6 +7,7 @@ import { createInfiniteGrid } from '../three/infiniteGrid';
 import { Coplanar, findInterferences, Interference } from '../three/interference';
 import { MeshMeasure, measureTriangles, worldTriangles } from '../three/meshMeasure';
 import { useComponentMeshVersion } from '../three/componentMeshes';
+import { CURSORS } from '../design-system/cursors';
 import {
   buildPartGroup,
   convertScenePartToSculptMesh,
@@ -121,6 +122,12 @@ interface Viewport3DProps {
   poseJoint?: { id: string; type: 'revolute' | 'prismatic'; origin: THREE.Vector3; axis: THREE.Vector3 } | null;
   /** Pose tool drag: change of the joint's value since the drag began (degrees or mm) */
   onPoseJoint?: (id: string, delta: number, phase: 'start' | 'move' | 'end') => void;
+  /**
+   * While a simulation runs the gizmo is a hand: it grabs the selection at the hand's position,
+   * then reports where the hand is (and its turn since the grab, in rotate mode); parts are never
+   * changed
+   */
+  onGrab?: ((partIds: string[], hand: { position: THREE.Vector3; turn: THREE.Quaternion | null } | null, phase: 'start' | 'move' | 'end') => void) | null;
 }
 
 
@@ -148,6 +155,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       onPlaceAnnotation,
       paused = false,
       pose = null,
+      onGrab = null,
       poseJoint = null,
       onPoseJoint,
     },
@@ -213,8 +221,8 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
     const selectedIdsRef = useRef<string[]>(selectedPartIds);
     selectedIdsRef.current = selectedPartIds;
     // Latest callbacks (the scene setup effect runs once)
-    const callbacksRef = useRef({ onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect, onPoseJoint });
-    callbacksRef.current = { onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect, onPoseJoint };
+    const callbacksRef = useRef({ onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect, onPoseJoint, onGrab });
+    callbacksRef.current = { onSelectPart, onUpdatePartTransform, onUpdatePartsTransform, onCommitSculptMesh, onMarqueeSelect, onPoseJoint, onGrab };
     // Posing: each part's rest → posed motion, applied on top of its modeled placement
     const poseRef = useRef<Map<string, THREE.Matrix4>>(new Map());
     const poseJointRef = useRef(poseJoint);
@@ -267,6 +275,20 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
     const marqueeElRef = useRef<HTMLDivElement | null>(null);
     // Multi-selection pivot the gizmo attaches to
     const pivotRef = useRef<THREE.Object3D | null>(null);
+    /** Simulating: the gizmo's hand (see onGrab) */
+    const handRef = useRef<THREE.Object3D | null>(null);
+    /** Puts the hand on the selection's center, where a grab takes hold */
+    const placeHand = () => {
+      const hand = handRef.current;
+      if (!hand) return;
+      const box = new THREE.Box3();
+      for (const id of selectedIdsRef.current) {
+        const obj = partMapRef.current.get(id);
+        if (obj) box.expandByObject(obj);
+      }
+      if (!box.isEmpty()) box.getCenter(hand.position);
+      hand.updateMatrixWorld(true);
+    };
     // id → start time for agent "pop in" animations
     const spawnAnimRef = useRef(new Map<string, number>());
     const frameAnimRef = useRef<{
@@ -483,6 +505,10 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       setPose: (deltas) => {
         poseRef.current = deltas ?? new Map();
         applyPose();
+        // Simulating: the hand waits on the selection until it grabs
+        const tc = transformRef.current;
+        const hand = handRef.current;
+        if (callbacksRef.current.onGrab && tc && hand && tc.object === hand && !tc.dragging) placeHand();
       },
       restBounds: (ids) =>
         withRest(() => {
@@ -862,6 +888,34 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         if (transformControls.object !== jointPivot || !j || !poseDragRef.current) return;
         callbacksRef.current.onPoseJoint?.(j.id, poseDelta(), 'end');
         poseDragRef.current = null;
+      });
+
+      // Simulating: the gizmo is a hand that grabs the selection and pulls it on a spring
+      const hand = new THREE.Object3D();
+      hand.name = 'sim-hand';
+      scene.add(hand);
+      handRef.current = hand;
+      let handStart: { quaternion: THREE.Quaternion; ids: string[] } | null = null;
+      transformControls.addEventListener('mouseDown', () => {
+        const grab = callbacksRef.current.onGrab;
+        if (transformControls.object !== hand || !grab) return;
+        handStart = { quaternion: hand.quaternion.clone(), ids: [...selectedIdsRef.current] };
+        grab(handStart.ids, { position: hand.position.clone(), turn: null }, 'start');
+      });
+      transformControls.addEventListener('objectChange', () => {
+        const grab = callbacksRef.current.onGrab;
+        if (transformControls.object !== hand || !grab || !handStart) return;
+        hand.scale.set(1, 1, 1);
+        const turn = transformControls.getMode() === 'rotate' ? hand.quaternion.clone().multiply(handStart.quaternion.clone().invert()) : null;
+        grab(handStart.ids, { position: hand.position.clone(), turn }, 'move');
+      });
+      transformControls.addEventListener('mouseUp', () => {
+        if (transformControls.object !== hand || !handStart) return;
+        callbacksRef.current.onGrab?.(handStart.ids, null, 'end');
+        handStart = null;
+        hand.quaternion.identity();
+        hand.scale.set(1, 1, 1);
+        placeHand();
       });
 
       // Multi-selection: remember where everything started, then move parts with the pivot
@@ -1568,6 +1622,20 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       const movable = selectedPartIds
         .map((id) => ({ obj: partMapRef.current.get(id), part: parts.find((p) => p.id === id) }))
         .filter((x): x is { obj: THREE.Group; part: ScenePart } => !!x.obj && !!x.part && !x.part.locked);
+      const hand = handRef.current;
+      if (onGrab) {
+        // Simulating: move and rotate grab with the hand; scaling has nothing to grab
+        if (!hand || !movable.length || tc.getMode() === 'scale') {
+          tc.detach();
+          return;
+        }
+        if (!tc.dragging) {
+          hand.quaternion.identity();
+          placeHand();
+        }
+        if (tc.object !== hand) tc.attach(hand);
+        return;
+      }
       if (movable.length === 0) {
         tc.detach();
       } else if (movable.length === 1 && selectedPartIds.length === 1) {
@@ -1608,7 +1676,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
         attachGizmo();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [transformMode, snapStepMm, snapAngleDeg, selectedPartIds, parts, poseJoint, pose]);
+    }, [transformMode, snapStepMm, snapAngleDeg, selectedPartIds, parts, poseJoint, pose, !!onGrab]);
 
 
     // Rebuild 3D parts when `parts` or `selectedPartId` changes
@@ -1640,15 +1708,16 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(
       <div className="relative w-full h-full select-none overflow-hidden bg-[#1b1b1b]">
         <div
           ref={mountRef}
-          className={`w-full h-full ${
-            isSpacePressed
-              ? 'cursor-grab active:cursor-grabbing'
+          className={`canvas-cursor w-full h-full ${isSpacePressed ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          style={{
+            cursor: isSpacePressed
+              ? undefined
               : annotateMode
-                ? 'cursor-comment'
+                ? CURSORS.comment
                 : transformMode === 'sculpt'
-                ? 'cursor-crosshair'
-                : 'cursor-default'
-          }`}
+                  ? CURSORS.crosshair
+                  : CURSORS.arrow,
+          }}
         />
         {snapBypassed && (
           <div className="absolute top-14 left-1/2 -translate-x-1/2 glass-menu rounded-full h-8 px-3.5 flex items-center text-[12.5px] text-white/85 pointer-events-none animate-fade-in">

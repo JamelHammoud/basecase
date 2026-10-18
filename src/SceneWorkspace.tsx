@@ -66,8 +66,12 @@ import { BuildPanel } from './components/BuildPanel';
 import { LeftSidebar, LeftTab } from './components/LeftSidebar';
 import { SculptAndDrawStudio, StudioSubTab } from './components/SculptAndDrawStudio';
 import { PosePanel } from './components/PosePanel';
+import { SimulatePanel } from './components/SimulatePanel';
+import { useSimulation } from './sim/useSimulation';
+import { useTraining } from './sim/useTraining';
+import { simulateRequest, trainingStatusText, trainRequest, type SimContext, type SimulatePayload } from './agent/agentSim';
 import { detectFeet, usePosing } from './utils/usePosing';
-import { anchorJoint, resolveJoints, robotOfParts, uniqueJointIds } from './utils/kinematics';
+import { anchorJoint, jointsWithoutParts, resolveJoints, robotOfParts, uniqueJointIds } from './utils/kinematics';
 import { buildGait } from './utils/animation';
 import { ImportRobotSheet } from './components/ImportRobotSheet';
 import { RetargetSheet } from './components/RetargetSheet';
@@ -83,8 +87,9 @@ import {
   type RetargetPayload,
 } from './agent/agentPose';
 import { ARTICULATED_PARTS } from './data/articulatedParts';
-import { ROBOT_PRESETS, importRobot, type RobotPreset } from './utils/robotImport';
+import { ROBOT_PRESETS, importRobot, needsRobotUpgrade, upgradeRobots, type RobotPreset } from './utils/robotImport';
 import { rememberImportedRobot, robotPreviewImage } from './utils/robotPreview';
+import { patchParts, resolveRobotSource } from './utils/robotUpgrade';
 import { ExportMenu } from './components/ExportMenu';
 import type { SettingsPane } from './components/SettingsWindow';
 import { Viewport3D, Viewport3DHandle } from './components/Viewport3D';
@@ -191,7 +196,7 @@ const normalizeProject = (p: ProjectSettings): ProjectSettings => {
   return joints === p.joints ? p : { ...p, joints };
 };
 
-type RightTab = 'inspector' | 'pose' | 'build' | 'acp';
+type RightTab = 'inspector' | 'pose' | 'sim' | 'build' | 'acp';
 
 /** The sidebar's views, shown as the rail's icons */
 const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphProps> }> = [
@@ -326,6 +331,8 @@ const TRACKPAD_TAP_GRACE_MS = 400;
 interface Snapshot {
   parts: ScenePart[];
   pose: RobotPoseState | undefined;
+  /** Joints belong to their parts: deleting the parts deletes them, and undo brings both back */
+  joints: RobotJoint[] | undefined;
 }
 
 interface DocState {
@@ -349,6 +356,9 @@ const newId = (prefix = 'part') =>
  */
 const PARTS_CLIPBOARD_TYPE = 'application/x-basecase-parts';
 let partsClipboard: { parts: ScenePart[]; inPlace: Set<string>; pastes: Map<string, number> } | null = null;
+
+/** "G1", "G1 and T1", "G1, H1 and T1" */
+const listNames = (names: string[]) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
 
 const fileSafe = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'robotics-mechanism';
@@ -454,12 +464,16 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
       robotPreview: async (url: string, width = 480) => robotPreviewImage((await importRobot({ kind: 'url', url })).parts, url, width),
       setPose: (values: Record<string, number>, root?: { position?: [number, number, number]; rotation?: [number, number, number] }) => devRef.current.posing?.setPose({ values, root }),
       posing: () => devRef.current.posing,
+      // Opens a scene record in this tab (as the Library would), e.g. sceneRecord() after edits
+      load: (record: { parts: ScenePart[]; project?: ProjectSettings; annotations?: SceneAnnotation[] }) =>
+        devRef.current.load?.({ sceneId: newSceneId(), sceneName: 'Untitled', globalGoal: '', parts: record.parts, annotations: record.annotations ?? [], project: record.project }),
       poseTool: (kind: string, payload: Record<string, unknown>) => devRef.current.poseTool?.(kind, payload),
+      simTool: (kind: string, payload: Record<string, unknown>) => devRef.current.simTool?.(kind, payload),
     };
   }, [active]);
 
   // Latest handlers for the dev hook above
-  const devRef = useRef<{ importRobot?: (src: { kind: 'url'; url: string; name?: string }) => Promise<unknown>; posing?: ReturnType<typeof usePosing>; poseTool?: (kind: string, payload: Record<string, unknown>) => Promise<PoseReply> }>({});
+  const devRef = useRef<{ importRobot?: (src: { kind: 'url'; url: string; name?: string }) => Promise<unknown>; posing?: ReturnType<typeof usePosing>; load?: (seed: WorkspaceSeed) => void; poseTool?: (kind: string, payload: Record<string, unknown>) => Promise<PoseReply>; simTool?: (kind: string, payload: Record<string, unknown>) => Promise<PoseReply> }>({});
 
   // Selection & tools
   // Ordered selection — the first id is the primary (boolean base)
@@ -687,23 +701,42 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
    * without touching history; the next committed edit records one undo step
    * back to where the live edit started.
    */
+  const docRef = useRef(doc);
+  docRef.current = doc;
+
   const commitParts = useCallback(
     (updater: (prev: ScenePart[]) => ScenePart[], live = false) => {
-      const pose = projectRef.current.pose;
-      setDoc((d) =>
-        live
-          ? { ...d, base: d.base ?? d.parts, parts: updater(d.parts) }
-          : {
-              parts: updater(d.parts),
-              past: [...d.past.slice(-(HISTORY_LIMIT - 1)), { parts: d.base ?? d.parts, pose }],
-              future: [],
-              base: null,
-            }
-      );
+      const { pose, joints } = projectRef.current;
+      const d = docRef.current;
+      if (live) {
+        const next = { ...d, base: d.base ?? d.parts, parts: updater(d.parts) };
+        docRef.current = next;
+        setDoc(next);
+        return;
+      }
+      const parts = updater(d.parts);
+      // Joints of deleted parts go with them
+      const kept = new Set(parts.map((p) => p.id));
+      const nextJoints = jointsWithoutParts(joints, new Set(d.parts.filter((p) => !kept.has(p.id)).map((p) => p.id)));
+      const next: DocState = {
+        parts,
+        past: [...d.past.slice(-(HISTORY_LIMIT - 1)), { parts: d.base ?? d.parts, pose, joints }],
+        future: [],
+        base: null,
+      };
+      docRef.current = next;
+      setDoc(next);
+      if (nextJoints !== joints) restoreJointsRef.current(nextJoints);
       lastPoseEditRef.current = 0;
     },
     []
   );
+  /** Puts joints back without recording an undo step */
+  const restoreJointsRef = useRef((joints: RobotJoint[] | undefined) => {
+    const next = { ...projectRef.current, joints };
+    projectRef.current = next;
+    setProject(next);
+  });
 
   /**
    * A pose change is one undo step. Changes in quick succession (a slider or ring drag, typing)
@@ -715,12 +748,13 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     const folds = now - lastPoseEditRef.current < 700;
     lastPoseEditRef.current = now;
     if (folds) return;
-    setDoc((d) => ({ ...d, past: [...d.past.slice(-(HISTORY_LIMIT - 1)), { parts: d.base ?? d.parts, pose: before }], future: [], base: null }));
+    const d = docRef.current;
+    const next = { ...d, past: [...d.past.slice(-(HISTORY_LIMIT - 1)), { parts: d.base ?? d.parts, pose: before, joints: projectRef.current.joints }], future: [], base: null };
+    docRef.current = next;
+    setDoc(next);
   }, []);
   // Set once posing exists (below): puts a pose back without recording it
   const restorePoseRef = useRef<(pose: RobotPoseState | undefined) => void>(() => {});
-  const docRef = useRef(doc);
-  docRef.current = doc;
 
   const resetDoc = useCallback((next: ScenePart[]) => {
     setDoc({ parts: next, past: [], future: [], base: null });
@@ -730,11 +764,12 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     const d = docRef.current;
     if (d.past.length === 0) return;
     const to = d.past[d.past.length - 1];
-    const here: Snapshot = { parts: d.parts, pose: projectRef.current.pose };
+    const here: Snapshot = { parts: d.parts, pose: projectRef.current.pose, joints: projectRef.current.joints };
     const next: DocState = { parts: to.parts, past: d.past.slice(0, -1), future: [...d.future, here], base: null };
     docRef.current = next;
     setDoc(next);
     lastPoseEditRef.current = 0;
+    if (to.joints !== here.joints) restoreJointsRef.current(to.joints);
     if (to.pose !== here.pose) restorePoseRef.current(to.pose);
   }, []);
 
@@ -742,11 +777,12 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     const d = docRef.current;
     if (d.future.length === 0) return;
     const to = d.future[d.future.length - 1];
-    const here: Snapshot = { parts: d.parts, pose: projectRef.current.pose };
+    const here: Snapshot = { parts: d.parts, pose: projectRef.current.pose, joints: projectRef.current.joints };
     const next: DocState = { parts: to.parts, past: [...d.past, here], future: d.future.slice(0, -1), base: null };
     docRef.current = next;
     setDoc(next);
     lastPoseEditRef.current = 0;
+    if (to.joints !== here.joints) restoreJointsRef.current(to.joints);
     if (to.pose !== here.pose) restorePoseRef.current(to.pose);
   }, []);
 
@@ -758,9 +794,58 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     [selectedIds, parts]
   );
 
+  // Robots imported before imports captured all of the maker's data (masses, centres of mass,
+  // joint limits) are brought up to date from their descriptions when the scene opens
+  const upgradingRef = useRef(false);
+  // Robots whose source couldn't be found: not retried until the app restarts
+  const upgradeMissingRef = useRef(new Set<string>());
+  useEffect(() => {
+    if (upgradingRef.current || !needsRobotUpgrade(parts, upgradeMissingRef.current)) return;
+    upgradingRef.current = true;
+    void upgradeRobots(partsRef.current, projectRef.current.joints ?? [], resolveRobotSource, upgradeMissingRef.current)
+      .then((up) => {
+        up?.missingIds.forEach((id) => upgradeMissingRef.current.add(id));
+        if (up?.missing.length) showToast(`Insert ${listNames(up.missing)} again from Robots to get the maker’s masses and joint limits`);
+        if (!up || (!up.parts.size && !up.joints.size)) return;
+        const patch = (ps: ScenePart[]) => patchParts(ps, up);
+        const patchJoints = (js: RobotJoint[] | undefined) => (up.joints.size && js ? js.map((j) => (up.joints.has(j.id) ? { ...j, ...up.joints.get(j.id) } : j)) : js);
+        // The undo history too, so undoing never brings back a robot without its data
+        const d = docRef.current;
+        const snap = (sn: Snapshot) => ({ ...sn, parts: patch(sn.parts), joints: patchJoints(sn.joints) });
+        const nextDoc = { ...d, parts: patch(d.parts), past: d.past.map(snap), future: d.future.map(snap), base: d.base ? patch(d.base) : d.base };
+        docRef.current = nextDoc;
+        setDoc(nextDoc);
+        if (up.joints.size) {
+          const next = { ...projectRef.current, joints: patchJoints(projectRef.current.joints) };
+          projectRef.current = next;
+          setProject(next);
+        }
+        if (up.upgraded.length) showToast(`Updated ${listNames(up.upgraded)} with the maker’s masses and joint limits`);
+      })
+      .finally(() => (upgradingRef.current = false));
+  }, [parts, showToast]);
+
   // Joints, the pose on the canvas, saved poses and animations
   const posing = usePosing({ parts, project, projectRef, setProject, viewportRef, selectedIds, transformMode, onPoseEdit: recordPoseEdit });
   restorePoseRef.current = posing.restorePose;
+
+  /* Simulate & train: MuJoCo physics on the scene's robots, and policies trained on them */
+  const sim = useSimulation({ parts, project, rig: posing.rig, pose: posing.pose, viewportRef, restDeltas: posing.deltas });
+  const policies = useMemo(() => project.policies ?? [], [project.policies]);
+  const training = useTraining({
+    workspaceId,
+    buildModel: sim.buildModel,
+    robotKey: posing.robot?.group.key ?? posing.rig.robots[0]?.key ?? null,
+    policies,
+    onPolicy: (record) => setProject((p) => ({ ...p, policies: [...(p.policies ?? []).filter((x) => x.id !== record.id), record] })),
+  });
+  const handleDeletePolicy = useCallback(
+    (id: string) => {
+      setProject((p) => ({ ...p, policies: (p.policies ?? []).filter((x) => x.id !== id) }));
+      void platformBridge.deletePolicy(id);
+    },
+    [setProject]
+  );
 
   /**
    * Canvas / Layers click. Plain click selects the part's whole group; double-click
@@ -1169,6 +1254,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
   }, [handleSaveScene, showToast, sceneName]);
 
   /** Opens a scene in this tab (only an untouched tab is reused; see App.openScene) */
+  const loadSeedRef = useRef<(next: WorkspaceSeed) => void>(() => {});
   const loadSeed = (next: WorkspaceSeed, toast?: string) => {
     setSceneId(next.sceneId);
     setSceneName(next.sceneName);
@@ -1181,6 +1267,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     setSelectedIds([]);
     if (toast) showToast(toast);
   };
+  loadSeedRef.current = loadSeed;
 
   /* ---------------------------------------------------------------- */
   /* Agent                                                            */
@@ -1440,8 +1527,31 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
     return reply;
   };
 
+  const runSimTool = async (kind: string, payload: Record<string, unknown>): Promise<PoseReply> => {
+    const ctx: SimContext = {
+      sim,
+      training,
+      rig: posing.rig,
+      animations: projectRef.current.animations ?? [],
+      policies: projectRef.current.policies ?? [],
+      viewport: viewportRef.current,
+      restoreCanvas: () => viewportRef.current?.setPose(posing.deltas),
+    };
+    if (kind === 'simulate') {
+      setAgentAction('Simulating');
+      return simulateRequest(ctx, payload as SimulatePayload);
+    }
+    if (kind === 'train') {
+      setAgentAction('Starting training');
+      return trainRequest(ctx, payload as { task?: 'stand' | 'walk'; minutes?: number; speed_mps?: number });
+    }
+    return { text: trainingStatusText(ctx) };
+  };
+
   const runPoseToolRef = useRef(runPoseTool);
   runPoseToolRef.current = runPoseTool;
+  const runSimToolRef = useRef(runSimTool);
+  runSimToolRef.current = runSimTool;
   const handleAgentRequest = async (event: { requestId: string; kind: string; payload: Record<string, unknown> }) => {
     const respond = (result?: unknown, error?: string) =>
       platformBridge.respondToAgent({ requestId: event.requestId, result, error });
@@ -1582,6 +1692,16 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
             (made.length ? `\n${made.map((j) => `- ${j.id}: axis [${toCad(j.axis).map((v) => v.toFixed(2)).join(', ')}] through [${toCad(j.origin).map((v) => Math.round(v)).join(', ')}]${j.origin && !pl.joints.find((x) => x.id === j.id)?.origin ? ' (from the servo output)' : ''}`).join('\n')}` : '') +
             (problems.length ? `\nNot declared:\n- ${problems.join('\n- ')}` : ''),
         });
+        return;
+      }
+
+      // Simulate & train (MuJoCo): run the robot under physics, train policies, follow training
+      if (event.kind === 'simulate' || event.kind === 'train' || event.kind === 'training_status') {
+        const reply = await runSimTool(event.kind, event.payload);
+        const images = reply.images
+          ? await Promise.all(reply.images.map(async (s) => ({ view: s.view, dataUrl: await downscaleDataUrl(s.dataUrl, 768) })))
+          : undefined;
+        await respond({ text: reply.text, images });
         return;
       }
 
@@ -1803,7 +1923,9 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
   const onRobot = posing.hasRig && !!posing.robot;
   useEffect(() => {
     if (!onRobot && rightTab === 'pose') setRightTab('inspector');
-  }, [onRobot, rightTab]);
+    // Simulate shows while the scene has joints
+    if (!posing.hasRig && rightTab === 'sim') setRightTab('inspector');
+  }, [onRobot, rightTab, posing.hasRig]);
   /** Opens the Pose tab, selecting a robot first (the first one) when the selection isn't on one */
   const openPose = useCallback(() => {
     if (!posing.hasRig) return;
@@ -1909,7 +2031,9 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
   );
   devRef.current.importRobot = handleImportRobot;
   devRef.current.posing = posing;
+  devRef.current.load = (seed) => loadSeedRef.current(seed);
   devRef.current.poseTool = (kind, payload) => runPoseToolRef.current(kind, payload);
+  devRef.current.simTool = (kind, payload) => runSimToolRef.current(kind, payload);
   const handlePickRobot = useCallback(
     (preset: RobotPreset | null) => (preset ? handleImportRobot({ kind: 'url', url: preset.url, name: preset.title }) : setImportRobotOpen(true)),
     [handleImportRobot]
@@ -3293,8 +3417,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           style={NO_DRAG_REGION}
         >
           <div className="flex items-center gap-1">{docActions}</div>
-          {/* Export lives in the inspector's header; it comes up here only while the inspector is hidden */}
-          {!isRightOpen && exportActions}
+          {exportActions}
           <IconButton
             icon={<PanelRight className="w-4 h-4" />}
             title={isRightOpen ? 'Hide inspector' : 'Show inspector'}
@@ -3526,6 +3649,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           paused={!active}
           pose={posing.deltas}
           poseJoint={transformMode === 'pose' ? posing.poseJoint : null}
+          onGrab={sim.status === 'ready' ? sim.grab : null}
           onPoseJoint={posing.onPoseJoint}
         />
         <AnnotationLayer
@@ -3629,9 +3753,9 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
           className="h-full flex flex-col overflow-hidden bg-[#1f1f1f] rounded-[12px]"
           style={{ width: panelWidths.right, marginLeft: LAYOUT.panelGap }}
         >
-          {/* Card header: its views as tabs (Agent shows Claude's spinner while it works), Export on the right.
-              28px controls in a 44px row with 8px padding: an even 8px on every side; content centers on y = 66 */}
-          <div className="h-[44px] shrink-0 flex items-center justify-between gap-2 px-[8px]">
+          {/* Card header: its views as tabs (Agent shows Claude's spinner while it works), scrolling sideways when
+              they don't fit. 28px controls in a 44px row with 8px padding: an even 8px on every side; content centers on y = 66 */}
+          <div className="h-[44px] shrink-0 flex items-center px-[8px]">
             <PanelTabs<RightTab>
               label="Inspector"
               value={rightTab}
@@ -3639,6 +3763,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
               tabs={[
                 { value: 'inspector', label: 'Inspect' },
                 ...(onRobot ? [{ value: 'pose' as const, label: 'Pose' }] : []),
+                ...(posing.hasRig ? [{ value: 'sim' as const, label: 'Simulate' }] : []),
                 { value: 'build', label: 'Build' },
                 {
                   value: 'acp',
@@ -3655,7 +3780,7 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
                         onOpenChat={handleOpenAgentChat}
                         onDeleteChat={handleDeleteAgentChat}
                         onClose={close}
-                        // From the pill to the Export button: the card less its 8px header padding
+                        // The header's width: the card less its 8px padding
                         width={panelWidths.right - 16}
                       />
                     ),
@@ -3663,7 +3788,6 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
                 },
               ]}
             />
-            {isRightOpen && exportActions}
           </div>
 
           <div className="flex-1 min-h-0 flex flex-col">
@@ -3674,6 +3798,17 @@ function SceneWorkspaceImpl({ workspaceId, active, seed, studio }: SceneWorkspac
                 onImportMotion={handleImportMotion}
                 onWalkCycle={handleWalkCycle}
                 canWalk={canWalk}
+              />
+            )}
+            {rightTab === 'sim' && (
+              <SimulatePanel
+                sim={sim}
+                training={training}
+                rig={posing.rig}
+                animations={project.animations ?? []}
+                policies={policies}
+                onSelectParts={setSelectedIds}
+                onDeletePolicy={handleDeletePolicy}
               />
             )}
             {rightTab === 'inspector' && studioMode && (

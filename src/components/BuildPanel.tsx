@@ -263,6 +263,22 @@ const ChecksSection: React.FC<{
                 {row.detail && <span className="block text-[12px] text-white/45">{row.detail}</span>}
               </span>
             </button>
+            {/* One line per problem, each selecting its own parts */}
+            {!!row.items?.length && (
+              <ul className="pl-[24px] pb-1">
+                {row.items.map((item, i) => (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => item.ids?.length && onSelectParts(item.ids)}
+                      className="w-full py-1 px-[7px] rounded-md text-left text-[12px] leading-[16px] text-white/60 hover:bg-white/[0.04] hover:text-white/85 cursor-default"
+                    >
+                      {item.text}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>

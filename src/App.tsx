@@ -20,6 +20,7 @@ import {
   TrackpadGestureMode,
 } from './types/robotics';
 import { platformBridge } from './utils/platformBridge';
+import { upgradeSceneRecord } from './utils/robotUpgrade';
 import { useStoplights } from './utils/useStoplights';
 import { IconButton, LAYOUT, NO_DRAG_REGION, ToastData } from './design-system';
 
@@ -167,7 +168,23 @@ export function App() {
   useEffect(() => {
     platformBridge.getAcpStatus().then(setAcpStatus).catch(() => {});
     platformBridge.listModels().then(setCustomModels).catch(() => {});
-    platformBridge.listScenes().then(setSavedScenes).catch(() => {});
+    platformBridge
+      .listScenes()
+      .then(async (scenes) => {
+        setSavedScenes(scenes);
+        // Saved scenes with robots imported before imports captured all of the maker's data:
+        // upgrade them from their descriptions and save them back in place (one at a time)
+        let changed = false;
+        for (const record of scenes) {
+          const next = await upgradeSceneRecord(record).catch(() => null);
+          if (!next) continue;
+          // No thumbnail: the backend would copy it over ai-reference/preview.png
+          await platformBridge.saveScene({ ...next, thumbnailDataUrl: undefined, keepUpdatedAt: true }).catch(() => {});
+          changed = true;
+        }
+        if (changed) setSavedScenes(await platformBridge.listScenes());
+      })
+      .catch(() => {});
     platformBridge.listImages().then(setUploadedImages).catch(() => {});
     platformBridge.listChats().then(setChatList).catch(() => {});
 

@@ -92,6 +92,9 @@ function write(list: ImportedRobot[]) {
   listeners.forEach((l) => l());
 }
 
+/** Robots inserted from a link, newest first */
+export const listImportedRobots = (): ImportedRobot[] => read();
+
 export function rememberImportedRobot(robot: ImportedRobot) {
   write([robot, ...read().filter((r) => r.url !== robot.url)].slice(0, LIMIT));
 }

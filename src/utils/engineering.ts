@@ -14,6 +14,7 @@ import { MATERIAL_SOFTENS_C, SUPPLY_BY_ID, SupplyInfo } from '../data/supplies';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { filamentGrams, isPrinted, isStandIn, printMaterialOf } from './bom';
+import { prettyJointName } from './kinematics';
 
 type V3 = [number, number, number];
 const G = 9.81;
@@ -56,7 +57,7 @@ export interface PartMass {
   grams: number;
   centroid: V3;
   /** How the mass is known */
-  source: 'catalog' | 'printed' | 'hardware' | 'supply' | 'estimate';
+  source: 'catalog' | 'published' | 'printed' | 'hardware' | 'supply' | 'estimate';
 }
 
 const FINISH_DENSITY: Record<string, number> = { black: 7.85, zinc: 7.85, steel: 7.85, stainless: 8.0, brass: 8.5, nylon: 1.15 };
@@ -70,7 +71,11 @@ export function partMasses(parts: ScenePart[], project: ProjectSettings, measure
     if (!m) continue;
     const cm3 = m.volumeMm3 / 1000;
     const at = m.centroid;
-    if (p.kind === 'component' && p.componentId) {
+    if (p.massG) {
+      // A published robot's link: the maker's own mass and centre of mass (else the mesh's centroid)
+      const com = p.com ? (rotateEuler(p.com, p.rotation).map((v, i) => v + p.position[i]) as V3) : at;
+      out.push({ id: p.id, grams: p.massG, centroid: com, source: 'published' });
+    } else if (p.kind === 'component' && p.componentId) {
       const g = componentWeightG(p.componentId);
       // Unlisted weights: enclosed volume at the density of a populated board or housing (estimate)
       out.push(g !== undefined ? { id: p.id, grams: g, centroid: at, source: 'catalog' } : { id: p.id, grams: cm3 * 1.2, centroid: at, source: 'estimate' });
@@ -135,10 +140,12 @@ export interface ServoOutput {
 export interface CheckRow {
   check: string;
   status: 'pass' | 'warn' | 'fail' | 'not run';
-  /** Measured value and limit, or why it couldn't run */
+  /** Measured value and limit, or why it couldn't run: one short line */
   detail: string;
   /** Parts to show */
   ids?: string[];
+  /** One line per problem, each selecting its own parts */
+  items?: Array<{ text: string; ids?: string[] }>;
 }
 
 /** Every check `runEngineering` can report, in report order (listed before a run) */
@@ -198,6 +205,11 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   const { parts, project, measures } = input;
   const joints = project.joints ?? [];
   const byPart = new Map(parts.map((p) => [p.id, p]));
+  /** Readable names: "Left shoulder roll", "the left hand" */
+  const jointLabel = (j: RobotJoint) => prettyJointName(j.name);
+  const partLabel = (id: string) => `the ${(byPart.get(id)?.name ?? id).replace(/^\w/, (c) => c.toLowerCase())}`;
+  const deg = (v: number) => `${Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`;
+  const count = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const masses = partMasses(parts, project, measures);
   const byId = new Map(masses.map((m) => [m.id, m]));
   const all = massOf(byId.keys(), byId);
@@ -245,6 +257,12 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     }
     const staticNm = Math.max(swing, stance);
     let stall = 0, rated = 0, known = !!j.actuators?.length;
+    // A published robot's joint: the maker's torque limit is a peak figure; half of it is a fair continuous load
+    if (!known && j.effortNm) {
+      known = true;
+      stall = j.effortNm;
+      rated = j.effortNm;
+    }
     for (const id of j.actuators ?? []) {
       const p = byPart.get(id);
       const act: ActuatorSpec | undefined = p?.componentId ? actuatorOf(p.componentId, p.componentVariant) : undefined;
@@ -255,24 +273,38 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
       stall += act.stallNm;
       rated += act.ratedNm ?? act.stallNm / 3;
     }
-    const status: CheckRow['status'] = !known ? 'not run' : staticNm <= 0.2 * stall ? 'pass' : staticNm <= rated ? 'warn' : 'fail';
+    const passAt = j.actuators?.length ? 0.2 * stall : 0.5 * stall;
+    const status: CheckRow['status'] = !known ? 'not run' : staticNm <= passAt ? 'pass' : staticNm <= rated ? 'warn' : 'fail';
     loads.push({ joint: j, massG: distal.grams, swingNm: swing, stanceNm: stance, staticNm, stallNm: known ? stall : undefined, ratedNm: known ? rated : undefined, status });
   }
   if (loads.length) {
-    const worst = [...loads].sort((x, y) => (y.ratedNm ? y.staticNm / y.ratedNm : 9) - (x.ratedNm ? x.staticNm / x.ratedNm : 9));
+    const ratio = (l: JointLoad) => (l.ratedNm ? l.staticNm / l.ratedNm : -1);
+    const worst = [...loads].sort((x, y) => ratio(y) - ratio(x))[0];
     const fails = loads.filter((l) => l.status === 'fail');
     const warns = loads.filter((l) => l.status === 'warn');
     const unknown = loads.filter((l) => l.status === 'not run');
+    const published = loads.some((l) => !l.joint.actuators?.length && l.joint.effortNm);
+    const limitWord = published ? 'limit' : 'rated';
+    const line = (l: JointLoad) => ({
+      text: `${jointLabel(l.joint)}: needs ${nm(l.staticNm)} N·m of its ${nm(l.ratedNm!)} N·m ${limitWord}`,
+      ids: l.joint.actuators?.length ? l.joint.actuators : l.joint.child,
+    });
     rows.push({
       check: 'Servo torque',
       status: fails.length ? 'fail' : unknown.length || warns.length ? 'warn' : 'pass',
-      detail:
-        `${loads.length} joints; worst ${worst[0].joint.name} needs ${nm(worst[0].staticNm)} N·m static` +
-        (worst[0].ratedNm ? ` of ${nm(worst[0].ratedNm)} rated / ${nm(worst[0].stallNm!)} stall` : '') +
-        (fails.length ? `. Over rated torque: ${fails.map((l) => `${l.joint.name} ${nm(l.staticNm)} > ${nm(l.ratedNm!)}`).join(', ')}` : '') +
-        (warns.length ? `. Above 1/5 of stall: ${warns.map((l) => l.joint.name).join(', ')}` : '') +
-        (unknown.length ? `. No actuator data: ${unknown.map((l) => l.joint.name).join(', ')}` : ''),
-      ids: [...fails, ...warns].map((l) => l.joint.actuators?.[0] ?? l.joint.child[0]),
+      detail: fails.length
+        ? `${count(fails.length, 'joint')} over ${published ? 'the maker’s limit' : 'rated torque'}`
+        : warns.length
+          ? `${count(warns.length, 'joint')} above ${published ? 'half the maker’s limit' : '1/5 of stall'}`
+          : worst.ratedNm
+            ? `Worst: ${jointLabel(worst.joint)}, ${nm(worst.staticNm)} N·m of its ${nm(worst.ratedNm)} N·m ${limitWord}`
+            : `No torque data for ${count(unknown.length, 'joint')}`,
+      items: [
+        ...fails.map(line),
+        ...warns.map(line),
+        ...(unknown.length && unknown.length < loads.length ? [{ text: `No torque data for ${count(unknown.length, 'joint')}: give them servos`, ids: unknown.flatMap((l) => l.joint.child) }] : []),
+      ],
+      ids: [...fails, ...warns].flatMap((l) => (l.joint.actuators?.length ? l.joint.actuators : l.joint.child)),
     });
   }
   if (unknownIds.length) rows.push({ check: 'Joint parts', status: 'fail', detail: `Joints name parts that don't exist: ${[...new Set(unknownIds)].join(', ')}` });
@@ -317,7 +349,8 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     const supported = bearing || straddles;
     if (j.actuators?.length && !supported && j.actuators.length < 2) unsupported.push(j.name);
   }
-  if (joints.length) {
+  // Only joints a servo drives have an output to align and a horn to support
+  if (joints.some((j) => j.actuators?.length)) {
     rows.push({
       check: 'Servo alignment',
       status: misaligned.length ? 'fail' : 'pass',
@@ -332,28 +365,48 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     });
   }
 
-  // Joint sweep
+  // Joint sweep: each joint alone through its range, the rest in the modeled pose
   if (input.sweep && joints.length) {
-    const hits: string[] = [];
-    const ids: string[] = [];
+    const designed: NonNullable<CheckRow['items']> = [];
+    const published: NonNullable<CheckRow['items']> = [];
     for (const j of joints) {
       if (j.type !== 'revolute') continue;
       const down = [...downstreamOf(j, joints)];
       const range = j.range ?? [-90, 90];
-      const samples = [range[0], range[0] / 2, range[1] / 2, range[1]].filter((v, i, arr) => arr.indexOf(v) === i && v !== 0);
+      // Published limits are the motor's: links meet at their hard stops, and simplified meshes
+      // overlap a few mm there, so only deeper contact counts
+      const minDepth = j.published ? 5 : 0.3;
+      const fractions = j.published ? [0.25, 0.5, 0.75, 1] : [0.5, 1];
+      const samples = [...new Set([range[0], range[1]].flatMap((end) => fractions.map((f) => Math.round(end * f * 10) / 10)).filter((v) => v !== 0))];
       // Legs push into the floor by design when they turn; everything else must clear it
-      const clashes = input.sweep(down, j.origin, norm(j.axis), samples).filter((c) => c.depthMm > 0.3 && !(c.b === 'floor' && j.limb === 'leg'));
-      if (clashes.length) {
-        const deepest = clashes.sort((x, y) => y.depthMm - x.depthMm)[0];
-        hits.push(`${j.name} at ${deepest.angle}°: ${deepest.a} hits ${deepest.b === 'floor' ? 'the floor' : deepest.b} (${deepest.depthMm.toFixed(1)} mm)`);
-        ids.push(deepest.a, ...(deepest.b === 'floor' ? [] : [deepest.b]));
+      const clashes = input.sweep(down, j.origin, norm(j.axis), samples).filter((c) => c.depthMm > minDepth && !(c.b === 'floor' && (j.limb === 'leg' || j.published)));
+      if (!clashes.length) continue;
+      // The first contact in each direction, and how far the joint is clear before it
+      for (const sign of [-1, 1]) {
+        const end = sign < 0 ? Math.min(...range) : Math.max(...range);
+        const side = clashes.filter((c) => Math.sign(c.angle) === sign).sort((x, y) => Math.abs(x.angle) - Math.abs(y.angle));
+        if (!side.length) continue;
+        const first = side[0];
+        const clear = samples.filter((a) => Math.sign(a) === sign && Math.abs(a) < Math.abs(first.angle)).sort((x, y) => Math.abs(y) - Math.abs(x))[0] ?? 0;
+        const what = first.b === 'floor' ? 'touches the floor' : `meets ${partLabel(first.b)}`;
+        const item = {
+          text: `${jointLabel(j)}: clear to ${deg(clear)} of ${deg(end)}; at ${deg(first.angle)} ${partLabel(first.a)} ${what}`,
+          ids: first.b === 'floor' ? [first.a] : [first.a, first.b],
+        };
+        (j.published ? published : designed).push(item);
       }
     }
+    const items = [...designed, ...published];
     rows.push({
       check: 'Range of motion',
-      status: hits.length ? 'fail' : 'pass',
-      detail: hits.length ? hits.join('; ') : 'Every joint clears its full range',
-      ids,
+      status: designed.length ? 'fail' : published.length ? 'warn' : 'pass',
+      detail: designed.length
+        ? `${count(designed.length, 'joint end')} hit another part before the end of the range`
+        : published.length
+          ? `The maker’s limits are motor limits: ${count(published.length, 'joint end')} meet another part first, with the rest of the robot in its home pose`
+          : 'Every joint clears its full range',
+      items,
+      ids: items.flatMap((i) => i.ids ?? []),
     });
   }
 
@@ -502,7 +555,7 @@ function polygonMargin(poly: Array<[number, number]>, p: [number, number]): numb
 const MARK: Record<CheckRow['status'], string> = { pass: 'PASS', warn: 'WARN', fail: 'FAIL', 'not run': 'NOT RUN' };
 
 export function engineeringText(r: EngineeringReport, toAgent: (v: V3) => V3): string {
-  const lines = r.rows.map((row) => `${MARK[row.status]} · ${row.check}: ${row.detail}`);
+  const lines = r.rows.flatMap((row) => [`${MARK[row.status]} · ${row.check}: ${row.detail}`, ...(row.items ?? []).map((i) => `    - ${i.text} [${(i.ids ?? []).join(', ')}]`)]);
   if (r.joints.length) {
     lines.push('', 'Joints (static N·m: worst of holding the distal side across the range and, for legs, standing on that leg; limits are 1/5 of stall for PASS and rated torque for WARN):');
     for (const l of r.joints) {

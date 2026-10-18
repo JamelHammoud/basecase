@@ -4,7 +4,7 @@ import { SceneAnnotation, ScenePart } from '../types/robotics';
 import { annotationWorldPosition } from '../utils/aiHandoff';
 import { timeAgo } from '../utils/timeAgo';
 import type { Viewport3DHandle } from './Viewport3D';
-import { Button, IconButton } from '../design-system';
+import { Button, CURSORS, IconButton } from '../design-system';
 
 export interface AnnotationDraft {
   position: [number, number, number];
@@ -136,7 +136,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = (props) => {
               type="button"
               aria-label={`Comment ${numberOf(a.id)}`}
               onClick={() => onOpen(isActive ? null : a.id)}
-              className={`group pointer-events-auto absolute bottom-0 left-0 flex items-center h-8 min-w-8 rounded-[16px_16px_16px_4px] shadow-[0_4px_14px_rgba(0,0,0,0.45),0_0_0_1.5px_rgba(255,255,255,0.9)] cursor-default transition-[background-color,transform] duration-150 hover:scale-[1.04] origin-bottom-left animate-pop-up ${
+              style={{ cursor: CURSORS.arrow }}
+              className={`group pointer-events-auto absolute bottom-0 left-0 flex items-center h-8 min-w-8 rounded-[16px_16px_16px_4px] shadow-[0_4px_14px_rgba(0,0,0,0.45),0_0_0_1.5px_rgba(255,255,255,0.9)] transition-[background-color,transform] duration-150 hover:scale-[1.04] origin-bottom-left animate-pop-up ${
                 isActive ? 'bg-[#0d99ff] text-white' : a.resolved ? 'bg-neutral-500 text-white' : 'bg-white text-black'
               }`}
             >

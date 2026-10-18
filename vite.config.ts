@@ -58,6 +58,14 @@ export default defineConfig({
               res.end(JSON.stringify(backend.listModels()));
               return;
             }
+            if (url.startsWith('/train-status')) {
+              res.end(JSON.stringify(backend.trainStatus()));
+              return;
+            }
+            if (url.startsWith('/policy?')) {
+              res.end(JSON.stringify(backend.getPolicy(new URL(url, 'http://x').searchParams.get('id'))));
+              return;
+            }
             if (url.startsWith('/purchases')) {
               res.end(JSON.stringify(backend.listPurchases()));
               return;
@@ -104,6 +112,18 @@ export default defineConfig({
                 }
                 if (url.startsWith('/acp-resume')) {
                   res.end(JSON.stringify(await backend.resumeAcpConversation(payload.sessionId, payload.workspaceId)));
+                  return;
+                }
+                if (url.startsWith('/train-start')) {
+                  res.end(JSON.stringify(backend.trainStart(payload)));
+                  return;
+                }
+                if (url.startsWith('/train-stop')) {
+                  res.end(JSON.stringify(backend.trainStop(payload.workspaceId)));
+                  return;
+                }
+                if (url.startsWith('/policy-delete')) {
+                  res.end(JSON.stringify(backend.deletePolicy(payload.id)));
                   return;
                 }
                 if (url.startsWith('/purchase-save')) {

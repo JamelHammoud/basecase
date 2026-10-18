@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import { Readable, Writable } from 'node:stream';
 import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk';
 import { CAD_AGENT_INSTRUCTIONS } from './cad-agent-prompt.mjs';
+import { Trainer } from './trainer.mjs';
 
 /** Claude Code over ACP (uses the local Claude login). The legacy offline agent stays available. */
 export const CLAUDE_AGENT_COMMAND = 'node node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js';
@@ -83,6 +84,31 @@ export class BasecaseBackendService {
     this.bridgeReady = this.startAgentBridge();
 
     this.setupFileWatchers();
+
+    // Policy training (MuJoCo + PyTorch through uv), one job per scene tab
+    this.trainer = new Trainer(this.libraryDir, (event) => this.emitEvent(event));
+  }
+
+  // ==================== Training ====================
+
+  trainStatus() {
+    return this.trainer.status();
+  }
+
+  trainStart(payload) {
+    return this.trainer.start(payload);
+  }
+
+  trainStop(workspaceId) {
+    return this.trainer.stop(workspaceId);
+  }
+
+  getPolicy(id) {
+    return this.trainer.getPolicy(id);
+  }
+
+  deletePolicy(id) {
+    return this.trainer.deletePolicy(id);
   }
 
   ensureDirectories() {
@@ -154,7 +180,7 @@ export class BasecaseBackendService {
               res.end(JSON.stringify({ ok: true }));
               return;
             }
-            const timeout = kind === 'apply' || kind === 'animate' ? 180000 : kind === 'import_robot' || kind === 'retarget' ? 300000 : 60000;
+            const timeout = kind === 'apply' || kind === 'animate' || kind === 'simulate' ? 180000 : kind === 'import_robot' || kind === 'retarget' ? 300000 : 60000;
             const result = await this.requestRenderer(kind, payload, timeout, workspaceId);
             res.end(JSON.stringify(result ?? { ok: true }));
           } catch (err) {
@@ -821,7 +847,8 @@ export class BasecaseBackendService {
       id,
       name: scenePayload.name || 'Untitled Robotics Scene',
       globalGoal: scenePayload.globalGoal || '',
-      updatedAt: new Date().toISOString(),
+      // Background rewrites (data upgrades) keep the scene's place in the Library
+      updatedAt: scenePayload.keepUpdatedAt && scenePayload.updatedAt ? scenePayload.updatedAt : new Date().toISOString(),
       partCount: Array.isArray(scenePayload.parts) ? scenePayload.parts.length : 0,
       thumbnailDataUrl: scenePayload.thumbnailDataUrl,
       parts: scenePayload.parts || [],

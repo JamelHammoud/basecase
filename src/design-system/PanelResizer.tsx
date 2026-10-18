@@ -78,7 +78,7 @@ export const PanelResizer: React.FC<PanelResizerProps> = ({
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       <span
-        className={`absolute top-0 bottom-0 left-[3px] w-[2px] transition-colors duration-150 ${
+        className={`absolute top-0 bottom-0 left-[3px] w-[2px] rounded-full transition-colors duration-150 ${
           dragging ? 'bg-[#0d99ff]' : 'bg-transparent group-hover:bg-[#0d99ff]/70'
         }`}
       />

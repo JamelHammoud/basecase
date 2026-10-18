@@ -10,7 +10,7 @@ interface ExportMenuProps {
   onCopyMarkdown: () => void;
 }
 
-/** Top-right Export button. Each instance keeps its own menu, so the docked and floating copies never both open. */
+/** The title bar's Export button and its format menu */
 export const ExportMenu: React.FC<ExportMenuProps> = ({
   canExportStl,
   onExportImage,

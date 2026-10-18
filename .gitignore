@@ -37,3 +37,6 @@ tools/parts/generated/*.log
 # Local app data: saved scenes, chats, uploads, prices, and the agent's workspace sync
 library/
 ai-reference/
+
+# Policy trainer virtualenv (uv creates it in library/trainer-env; this is a dev fallback)
+electron/trainer/.venv/

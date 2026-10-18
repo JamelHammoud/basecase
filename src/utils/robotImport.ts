@@ -246,6 +246,10 @@ interface ModelJoint {
   axis: THREE.Vector3;
   /** rad or m */
   limit?: [number, number];
+  /** The maker's torque (N·m) or force (N) limit */
+  effort?: number;
+  /** The maker's speed limit: rad/s (m/s for prismatic) */
+  velocity?: number;
   /** MJCF: the joint before this one on the same body (several hinges in one body chain) */
   after?: ModelJoint;
 }
@@ -253,7 +257,7 @@ interface ModelJoint {
 interface Model {
   name: string;
   /** World frame of each link at zero (robot frame, m) */
-  links: Map<string, { world: THREE.Matrix4; visuals: Visual[] }>;
+  links: Map<string, { world: THREE.Matrix4; visuals: Visual[]; mass?: number; com?: THREE.Vector3 }>;
   joints: ModelJoint[];
   root: string;
 }
@@ -292,7 +296,7 @@ function parseUrdf(doc: Document): Model {
     const c = colorOf(m);
     if (c) materials.set(m.getAttribute('name') ?? '', c);
   }
-  const links = new Map<string, { world: THREE.Matrix4; visuals: Visual[] }>();
+  const links = new Map<string, { world: THREE.Matrix4; visuals: Visual[]; mass?: number; com?: THREE.Vector3 }>();
   for (const l of elems(robot, 'link')) {
     const visuals: Visual[] = [];
     for (const v of elems(l, 'visual')) {
@@ -315,7 +319,10 @@ function parseUrdf(doc: Document): Model {
       }
       if (geometry) visuals.push({ geometry, origin: urdfOrigin(elem(v, 'origin')), color: colorOf(elem(v, 'material')) });
     }
-    links.set(l.getAttribute('name') ?? '', { world: new THREE.Matrix4(), visuals });
+    const inertial = elem(l, 'inertial');
+    const mass = Number(elem(inertial, 'mass')?.getAttribute('value'));
+    const com = new THREE.Vector3(...nums(elem(inertial, 'origin')?.getAttribute('xyz'), [0, 0, 0]));
+    links.set(l.getAttribute('name') ?? '', { world: new THREE.Matrix4(), visuals, mass: mass > 0 ? mass : undefined, com: mass > 0 ? com : undefined });
   }
   const raw = elems(robot, 'joint')
     .map((j) => {
@@ -335,6 +342,8 @@ function parseUrdf(doc: Document): Model {
         origin: urdfOrigin(elem(j, 'origin')),
         axis: new THREE.Vector3(ax, ay, az).normalize(),
         limit: t !== 'continuous' && lo != null && hi != null && Number(hi) > Number(lo) ? ([Number(lo), Number(hi)] as [number, number]) : undefined,
+        effort: Number(lim?.getAttribute('effort')) > 0 ? Number(lim!.getAttribute('effort')) : undefined,
+        velocity: Number(lim?.getAttribute('velocity')) > 0 ? Number(lim!.getAttribute('velocity')) : undefined,
       };
     })
     .filter((j): j is NonNullable<typeof j> => !!j);
@@ -347,7 +356,7 @@ function parseUrdf(doc: Document): Model {
     if (depth > 200) return;
     for (const j of raw.filter((x) => x.parent === link)) {
       const jw = world.clone().multiply(j.origin);
-      joints.push({ name: j.name, type: j.type, parent: j.parent, child: j.child, world: jw, axis: j.axis, limit: j.limit });
+      joints.push({ name: j.name, type: j.type, parent: j.parent, child: j.child, world: jw, axis: j.axis, limit: j.limit, effort: j.effort, velocity: j.velocity });
       walk(j.child, jw, depth + 1);
     }
   };
@@ -444,7 +453,7 @@ function parseMjcf(doc: Document): Model {
     return q;
   };
 
-  const links = new Map<string, { world: THREE.Matrix4; visuals: Visual[] }>();
+  const links = new Map<string, { world: THREE.Matrix4; visuals: Visual[]; mass?: number; com?: THREE.Vector3 }>();
   const joints: ModelJoint[] = [];
   const geomAll: Array<{ link: string; attrs: (k: string) => string | undefined; cls: string; frame?: THREE.Matrix4 }> = [];
   /** A <frame>'s transform, for the elements inside it */
@@ -463,7 +472,9 @@ function parseMjcf(doc: Document): Model {
     const own = (k: string) => body.getAttribute(k) ?? undefined;
     const [x, y, z] = nums(own('pos'), [0, 0, 0]);
     const world = parentWorld.clone().multiply(frame).multiply(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), orient(own), new THREE.Vector3(1, 1, 1)));
-    links.set(name, { world, visuals: [] });
+    const inertial = elems(body, 'inertial')[0];
+    const mass = Number(inertial?.getAttribute('mass'));
+    links.set(name, { world, visuals: [], mass: mass > 0 ? mass : undefined, com: mass > 0 ? new THREE.Vector3(...nums(inertial?.getAttribute('pos'), [0, 0, 0])) : undefined });
     if (parentLink) {
       const js = [...elems(body, 'joint')];
       if (!js.length) joints.push({ name: `${name}_fixed`, type: 'fixed', parent: parentLink, child: name, world, axis: new THREE.Vector3(1, 0, 0) });
@@ -479,7 +490,9 @@ function parseMjcf(doc: Document): Model {
         const range = a('range') ? nums(a('range'), [0, 0]) : null;
         const limited = a('limited') !== 'false' && range && range[1] > range[0];
         const lim: [number, number] | undefined = limited ? (type === 'slide' ? [range![0], range![1]] : [toRad(range![0]), toRad(range![1])]) : undefined;
+        const frc = a('actuatorfrcrange') ? Math.max(...nums(a('actuatorfrcrange'), [0, 0]).map(Math.abs)) : 0;
         const made: ModelJoint = {
+          effort: frc > 0 ? frc : undefined,
           name: j.getAttribute('name') ?? `${name}_joint`,
           type: type === 'slide' ? 'prismatic' : 'revolute',
           parent: parentLink,
@@ -544,6 +557,17 @@ function parseMjcf(doc: Document): Model {
     const rgba = a('rgba');
     const color = rgba ? displayRgb(...(nums(rgba, [0.5, 0.5, 0.5]).slice(0, 3) as [number, number, number])) : materials.get(a('material') ?? '');
     links.get(g.link)?.visuals.push({ geometry, origin, color });
+  }
+  // Torque limits from the actuators when the joints don't carry them: forcerange, or a motor's
+  // control range times its gear
+  for (const act of elems(mj, 'actuator').flatMap((x) => [...x.children])) {
+    const j = joints.find((k) => k.name === act.getAttribute('joint'));
+    if (!j || j.effort) continue;
+    const def = defaults.classes.get(act.getAttribute('class') ?? 'main')?.get(act.tagName) ?? {};
+    const a = (k: string) => act.getAttribute(k) ?? def[k];
+    const force = a('forcerange') ? Math.max(...nums(a('forcerange'), [0, 0]).map(Math.abs)) : 0;
+    const motor = act.tagName === 'motor' && a('ctrlrange') ? Math.max(...nums(a('ctrlrange'), [0, 0]).map(Math.abs)) * (nums(a('gear'), [1])[0] || 1) : 0;
+    if (force || motor) j.effort = force || motor;
   }
   const isChild = new Set(joints.map((j) => j.child));
   const root = [...links.keys()].find((l) => l !== 'world' && !isChild.has(l)) ?? 'world';
@@ -688,10 +712,8 @@ const limbOf = (name: string): RobotJoint['limb'] => {
 
 const hex = (c: THREE.Color) => '#' + c.getHexString(THREE.SRGBColorSpace);
 
-export async function importRobot(source: Source, opts: ImportOptions = {}): Promise<ImportedRobot> {
-  const say = opts.onProgress ?? (() => {});
-  const notes: string[] = [];
-  say('Reading the description');
+/** The description alone (no meshes): links, joints and the maker's data */
+async function readModel(source: Source): Promise<{ model: Model; resolver: Resolver }> {
   const resolver = source.kind === 'url' ? await urlResolver(source.url) : filesResolver(source.files);
   if ('pickEntry' in resolver) await (resolver as ReturnType<typeof filesResolver>).pickEntry();
   let text = resolver.entry.text;
@@ -700,7 +722,59 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   if (doc.querySelector('parsererror')) throw new Error('Choose a URDF or MJCF file. That one isn’t valid XML.');
   const rootTag = doc.documentElement.tagName;
   if (rootTag !== 'robot' && rootTag !== 'mujoco') throw new Error('Choose a URDF or MJCF file.');
-  const model = rootTag === 'robot' ? parseUrdf(doc) : parseMjcf(doc);
+  return { model: rootTag === 'robot' ? parseUrdf(doc) : parseMjcf(doc), resolver };
+}
+
+/**
+ * Bump when imports start capturing more of the maker's data; robots imported at an older
+ * version are upgraded from their description when a scene opens (upgradeRobots)
+ */
+export const ROBOT_DATA_VERSION = 2;
+
+interface PublishedData {
+  /** Per link that has a part: its mass with the links folded into it, and their centre of mass (scene axes, mm, before the import's shift) */
+  links: Map<string, { massKg: number; com: THREE.Vector3 }>;
+  /** Per joint name: torque / speed limits (scene units: deg/s, mm/s) and its origin (scene axes, mm, before the shift) */
+  joints: Map<string, { effort?: number; velocity?: number; origin: THREE.Vector3; type: ModelJoint['type'] }>;
+}
+
+/** The maker's masses, centres of mass and joint limits, gathered onto the links that have parts */
+function publishedData(model: Model, frame: THREE.Matrix4, partLinks: Set<string>): PublishedData {
+  const toScene = (v: THREE.Vector3) => v.clone().applyMatrix4(frame).multiplyScalar(1000);
+  const parentOf = new Map(model.joints.map((j) => [j.child, j.parent]));
+  const acc = new Map<string, { kg: number; m: THREE.Vector3 }>();
+  for (const [link, l] of model.links) {
+    if (!l.mass) continue;
+    // A link with no part folds into the nearest link above it that has one
+    let at: string | undefined = link;
+    for (let n = 0; at && !partLinks.has(at) && n < 200; n++) at = parentOf.get(at);
+    if (!at) continue;
+    const com = toScene((l.com ?? new THREE.Vector3()).clone().applyMatrix4(l.world));
+    const a = acc.get(at) ?? { kg: 0, m: new THREE.Vector3() };
+    a.kg += l.mass;
+    a.m.addScaledVector(com, l.mass);
+    acc.set(at, a);
+  }
+  const links = new Map([...acc].map(([k, a]) => [k, { massKg: a.kg, com: a.m.divideScalar(a.kg) }]));
+  const joints = new Map(
+    model.joints.map((j) => [
+      j.name,
+      {
+        type: j.type,
+        effort: j.effort,
+        velocity: j.velocity === undefined ? undefined : j.type === 'prismatic' ? j.velocity * 1000 : (j.velocity * 180) / Math.PI,
+        origin: toScene(new THREE.Vector3().setFromMatrixPosition(j.world)),
+      },
+    ])
+  );
+  return { links, joints };
+}
+
+export async function importRobot(source: Source, opts: ImportOptions = {}): Promise<ImportedRobot> {
+  const say = opts.onProgress ?? (() => {});
+  const notes: string[] = [];
+  say('Reading the description');
+  const { model, resolver } = await readModel(source);
   const name = opts.name ?? prettyJointName(model.name);
 
   // Meshes, each file once
@@ -784,6 +858,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
 
   const groupId = `robot-${Date.now().toString(36)}`;
   const partOfLink = new Map<string, string>();
+  const centerOfLink = new Map<string, THREE.Vector3>();
   const parts: ScenePart[] = [];
   let triangles = 0;
   for (const [link, { geo, color }] of linkGeo) {
@@ -813,6 +888,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
     triangles += idx.length / 3;
     const id = `${groupId}-${link.replace(/[^a-zA-Z0-9_-]+/g, '_')}`;
     partOfLink.set(link, id);
+    centerOfLink.set(link, center.clone());
     const baseSize: [number, number, number] = [Math.max(size.x, 0.01), Math.max(size.y, 0.01), Math.max(size.z, 0.01)];
     parts.push({
       id,
@@ -830,7 +906,18 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
       locked: false,
       mesh: { positions: pos, indices: idx, baseSize, source: `${name} · ${link}` },
       group: { id: groupId, name },
+      robotLink: { robot: groupId, link, url: source.kind === 'url' ? source.url : undefined, rotate: opts.rotate, version: ROBOT_DATA_VERSION },
     });
+  }
+  // The maker's masses and centres of mass (in each part's own frame)
+  const data = publishedData(model, frame, new Set(partOfLink.keys()));
+  for (const p of parts) {
+    const link = p.robotLink!.link;
+    const d = data.links.get(link);
+    if (!d) continue;
+    p.massG = Math.round(d.massKg * 10000) / 10;
+    const c = d.com.clone().sub(centerOfLink.get(link)!);
+    p.com = [round(c.x), round(c.y), round(c.z)];
   }
 
   // Joints in the scene frame
@@ -873,9 +960,125 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
       axis: [axis.x, axis.y, axis.z].map((v) => Math.round(v * 1e6) / 1e6) as [number, number, number],
       range,
       limb: limbOf(j.name),
+      effortNm: j.effort,
+      velocity: data.joints.get(j.name)?.velocity === undefined ? undefined : round(data.joints.get(j.name)!.velocity!),
+      published: name,
     });
   }
   return { name, parts, joints, triangles, notes };
 }
 
 const round = (v: number) => Math.round(v * 100) / 100;
+
+/* ------------------------------------------------------------------ */
+/* Upgrades: robots imported before the current data version           */
+/* ------------------------------------------------------------------ */
+
+export interface RobotSourceRef {
+  url: string;
+  rotate?: Array<[string, number]>;
+}
+
+export interface RobotUpgrade {
+  /** Patches by part id and by joint id */
+  parts: Map<string, Partial<ScenePart>>;
+  joints: Map<string, Partial<RobotJoint>>;
+  /** Robot names brought up to date, and those whose source couldn't be found or read */
+  upgraded: string[];
+  missing: string[];
+  /** Robot ids whose source couldn't be found or read (not retried this session) */
+  missingIds: string[];
+}
+
+/** Which robot an imported part belongs to, and its link (older parts only carry "Name · link") */
+function linkOf(p: ScenePart): { robot: string; name: string; link: string } | null {
+  if (p.kind !== 'mesh') return null;
+  if (p.robotLink) return { robot: p.robotLink.robot, name: p.group?.name ?? p.robotLink.robot, link: p.robotLink.link };
+  const src = p.mesh?.source;
+  const at = src?.indexOf(' · ') ?? -1;
+  if (!src || at < 0 || !p.group) return null;
+  return { robot: p.group.id, name: p.group.name, link: src.slice(at + 3) };
+}
+
+/** Does this scene hold robots imported at an older data version (other than `skip`)? */
+export function needsRobotUpgrade(parts: ScenePart[], skip: Set<string> = new Set()): boolean {
+  return parts.some((p) => {
+    const l = linkOf(p);
+    return l && !skip.has(l.robot) && (p.robotLink?.version ?? 0) < ROBOT_DATA_VERSION;
+  });
+}
+
+/**
+ * Re-reads the description of every robot imported at an older data version (the file only, no
+ * meshes) and fills in what newer imports capture: link masses and centres of mass, joint torque
+ * and speed limits. Matched by link and joint name, so poses and edits are kept. `resolve` finds
+ * the source of robots imported before parts recorded it.
+ */
+export async function upgradeRobots(
+  parts: ScenePart[],
+  joints: RobotJoint[],
+  resolve: (name: string, robotParts: ScenePart[]) => RobotSourceRef | null,
+  skip: Set<string> = new Set()
+): Promise<RobotUpgrade | null> {
+  const robots = new Map<string, { name: string; parts: Array<{ part: ScenePart; link: string }> }>();
+  for (const p of parts) {
+    const l = linkOf(p);
+    if (!l || skip.has(l.robot) || (p.robotLink?.version ?? 0) >= ROBOT_DATA_VERSION) continue;
+    const r = robots.get(l.robot) ?? { name: l.name, parts: [] };
+    r.parts.push({ part: p, link: l.link });
+    robots.set(l.robot, r);
+  }
+  if (!robots.size) return null;
+  const out: RobotUpgrade = { parts: new Map(), joints: new Map(), upgraded: [], missing: [], missingIds: [] };
+  for (const [robotId, r] of robots) {
+    const first = r.parts.find((x) => x.part.robotLink?.url)?.part.robotLink;
+    const ref = first?.url ? { url: first.url, rotate: first.rotate } : resolve(r.name, r.parts.map((x) => x.part));
+    if (!ref) {
+      out.missing.push(r.name);
+      out.missingIds.push(robotId);
+      continue;
+    }
+    let model: Model;
+    try {
+      model = (await readModel({ kind: 'url', url: ref.url })).model;
+    } catch {
+      out.missing.push(r.name);
+      out.missingIds.push(robotId);
+      continue;
+    }
+    const frame = ref.rotate ? catalogFrame(ref.rotate) : S;
+    const data = publishedData(model, frame, new Set(r.parts.map((x) => x.link)));
+    const ids = new Set(r.parts.map((x) => x.part.id));
+    const mine = joints.filter((j) => [...j.parent, ...j.child].some((id) => ids.has(id)) || (j.frame && ids.has(j.frame.part)));
+    for (const j of mine) {
+      const d = data.joints.get(j.name);
+      if (!d) continue;
+      out.joints.set(j.id, { effortNm: d.effort, velocity: d.velocity === undefined ? undefined : round(d.velocity), published: r.name });
+    }
+    // Where each part's center was at import, from a joint anchored to one of them: the joint's
+    // file origin minus its offset in that part, then the other parts by their offsets from it
+    // (in the robot's current orientation)
+    const anchor = mine.find((j) => j.frame && ids.has(j.frame.part) && data.joints.has(j.name));
+    let centerOf: ((p: ScenePart) => THREE.Vector3) | null = null;
+    if (anchor) {
+      const a = parts.find((p) => p.id === anchor.frame!.part)!;
+      const aCenter = data.joints.get(anchor.name)!.origin.clone().sub(new THREE.Vector3(...anchor.frame!.origin));
+      const inv = new THREE.Quaternion().setFromEuler(new THREE.Euler(...(a.rotation.map(THREE.MathUtils.degToRad) as [number, number, number]), 'XYZ')).invert();
+      centerOf = (p) => new THREE.Vector3(...p.position).sub(new THREE.Vector3(...a.position)).applyQuaternion(inv).add(aCenter);
+    }
+    for (const { part, link } of r.parts) {
+      const d = data.links.get(link);
+      const patch: Partial<ScenePart> = { robotLink: { robot: robotId, link, url: ref.url, rotate: ref.rotate, version: ROBOT_DATA_VERSION } };
+      if (d) {
+        patch.massG = Math.round(d.massKg * 10000) / 10;
+        if (centerOf) {
+          const c = d.com.clone().sub(centerOf(part));
+          patch.com = [round(c.x), round(c.y), round(c.z)];
+        }
+      }
+      out.parts.set(part.id, patch);
+    }
+    out.upgraded.push(r.name);
+  }
+  return out;
+}

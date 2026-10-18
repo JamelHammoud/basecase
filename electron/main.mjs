@@ -91,6 +91,11 @@ ipcMain.handle('acp:resume', (_e, sessionId, workspaceId) => backend.resumeAcpCo
 ipcMain.handle('acp:close-workspace', (_e, workspaceId) => backend.closeWorkspace(workspaceId));
 ipcMain.handle('chat:list', () => backend.listConversations());
 ipcMain.handle('purchases:list', () => backend.listPurchases());
+ipcMain.handle('train:status', () => backend.trainStatus());
+ipcMain.handle('train:start', (_e, payload) => backend.trainStart(payload));
+ipcMain.handle('train:stop', (_e, workspaceId) => backend.trainStop(workspaceId));
+ipcMain.handle('policy:get', (_e, id) => backend.getPolicy(id));
+ipcMain.handle('policy:delete', (_e, id) => backend.deletePolicy(id));
 ipcMain.handle('purchases:save', (_e, payload) => backend.savePurchase(payload));
 ipcMain.handle('chat:get', (_e, id) => backend.getConversation(id));
 ipcMain.handle('chat:save', (_e, conv) => backend.saveConversation(conv));
@@ -124,6 +129,8 @@ app.whenReady().then(async () => {
     }
   });
 });
+
+app.on('before-quit', () => backend.trainer.dispose());
 
 app.on('window-all-closed', () => {
   backend.disconnectAcpAgent();

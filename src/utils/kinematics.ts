@@ -298,6 +298,37 @@ export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = [
   return out;
 }
 
+/**
+ * Joints after parts were deleted: a joint whose moving side is gone goes with it, and the
+ * deleted ids leave the rest. Returns the same array when nothing changed.
+ */
+export function jointsWithoutParts(joints: RobotJoint[] | undefined, deleted: Set<string>): RobotJoint[] | undefined {
+  if (!joints?.length || !deleted.size || !joints.some((j) => [...j.parent, ...j.child, ...(j.actuators ?? [])].some((id) => deleted.has(id)))) return joints;
+  const gone = new Set<string>();
+  const kept: RobotJoint[] = [];
+  for (const j of joints) {
+    const child = j.child.filter((id) => !deleted.has(id));
+    if (j.child.length && !child.length) {
+      gone.add(j.id);
+      continue;
+    }
+    const parent = j.parent.filter((id) => !deleted.has(id));
+    const actuators = j.actuators?.filter((id) => !deleted.has(id));
+    const frame = j.frame && deleted.has(j.frame.part) ? undefined : j.frame;
+    kept.push({ ...j, parent, child, ...(actuators ? { actuators } : {}), frame });
+  }
+  // Joints mounted on a removed joint are now at their robot's base; then joints with no parts at
+  // all (links imported without geometry) that nothing hangs from any more go too
+  let out = kept.map((j) => (j.parentJoint && gone.has(j.parentJoint) ? { ...j, parentJoint: undefined } : j));
+  for (let changed = true; changed; ) {
+    const used = new Set(out.map((j) => j.parentJoint).filter(Boolean));
+    const next = out.filter((j) => j.parent.length || j.child.length || used.has(j.id));
+    changed = next.length !== out.length;
+    out = next;
+  }
+  return out;
+}
+
 export function clampJoint(j: RobotJoint, v: number): number {
   if (!Number.isFinite(v)) return 0;
   if (!j.range) return v;

@@ -1124,6 +1124,86 @@ server.registerTool(
   }
 );
 
+const imageReply = (res, fallback) => {
+  const content = [{ type: 'text', text: res?.text || fallback }];
+  for (const shot of res?.images || []) {
+    const m = /^data:(image\/\w+);base64,(.+)$/.exec(shot.dataUrl || '');
+    if (!m) continue;
+    content.push({ type: 'text', text: shot.view });
+    content.push({ type: 'image', mimeType: m[1], data: m[2] });
+  }
+  return { content };
+};
+
+server.registerTool(
+  'simulate',
+  {
+    title: 'Simulate (MuJoCo physics)',
+    description:
+      'Runs the scene in MuJoCo, the physics engine robots are trained in, and reports what happened: whether each legged robot stayed up or fell (and when), tilt, how far it moved, and every joint\'s peak actuator effort as a share of its torque limit (its servos\' stall torque, the maker\'s published limit, or an estimate from weight when no servo is assigned). ' +
+      'Built from the scene itself: parts collide as convex hulls and weigh what verify_design weighs them; every joint is a position servo. The robot starts in the pose on the canvas, just above the floor. Robots with leg joints are free to fall; others are bolted down. ' +
+      'Controllers: "hold" holds the pose (does it stand on its own?), "animation:<name>" plays an animation\'s keyframes as servo targets (does the walk cycle really walk, or fall?), "policy:<name>" runs a trained policy, "limp" turns the servos off. ' +
+      'Shove it with pushes (direction in the robot\'s frame, strength as a share of its weight for 0.15 s; 0.5 is a firm shove). Ask for frames to see renders of the simulated robot. ' +
+      'Use it after define_joints and verify_design on anything with legs, and fix what it finds (servos at 100% for long, falls while holding a pose) before you finish.',
+    inputSchema: {
+      seconds: z.number().min(0.5).max(30).optional().describe('Simulated time, default 5'),
+      controller: z.string().optional().describe('"hold" (default), "limp", "animation:<name>" or "policy:<name>"'),
+      pushes: z
+        .array(z.object({ at: z.number().min(0), direction: z.enum(['forward', 'backward', 'left', 'right']), strength: z.number().min(0.05).max(3).optional() }))
+        .max(10)
+        .optional(),
+      frames: z.array(z.number().min(0)).max(4).optional().describe('Times (s) to render, e.g. [0.5, 2, 5]'),
+      views: z.array(VIEW).max(2).optional(),
+    },
+  },
+  async (args) => {
+    try {
+      return imageReply(await bridge('simulate', args, 180000), 'Nothing to simulate.');
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
+server.registerTool(
+  'train_policy',
+  {
+    title: 'Train a policy',
+    description:
+      'Trains a neural-network controller for the scene\'s legged robot with reinforcement learning (PPO) in MuJoCo, on the user\'s machine. Tasks: "stand" (stay up and recover from shoves) or "walk" (walk forward at speed_mps). ' +
+      'Sim-to-real is on: 64 copies train at once, each with its own friction, link masses and servo strength, shoved every few seconds. Runs in the background for `minutes` (5–20 is typical; walking needs more than standing); the first run installs Python, MuJoCo and PyTorch. ' +
+      'Returns at once: follow it with training_status, then test the result with simulate controller "policy:<name>". Only train when the user asks for it or the design is final: it occupies the CPU.',
+    inputSchema: {
+      task: z.enum(['stand', 'walk']),
+      minutes: z.number().int().min(1).max(60).optional(),
+      speed_mps: z.number().min(0.05).max(2).optional().describe('Walking speed, default 0.3'),
+    },
+  },
+  async (args) => {
+    try {
+      return text((await bridge('train', args, 120000))?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
+server.registerTool(
+  'training_status',
+  {
+    title: 'Training status',
+    description: 'Progress of the running training (time, steps, reward, how long episodes last before a fall) and the scene\'s trained policies with how each did in a clean test run.',
+    inputSchema: {},
+  },
+  async () => {
+    try {
+      return text((await bridge('training_status', {}, 20000))?.text || 'No training.');
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+
 server.registerTool(
   'verify_design',
   {

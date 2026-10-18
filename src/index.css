@@ -306,7 +306,8 @@ input[type="range"].slider:focus-visible::-webkit-slider-thumb {
   }
 }
 
-/* Comment tool cursor: a small speech bubble with its tip at the hotspot */
-.cursor-comment {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M2 24V12C2 6.5 6.5 2 12 2s10 4.5 10 10-4.5 10-10 10H2z' fill='%230d99ff' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E") 2 24, crosshair;
+/* The canvas takes its cursor from its wrapper (CURSORS in design-system/cursors.ts).
+   three.js controls write cursor: auto onto the canvas element, which would hide it. */
+.canvas-cursor > canvas {
+  cursor: inherit !important;
 }

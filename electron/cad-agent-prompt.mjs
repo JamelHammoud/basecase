@@ -437,8 +437,11 @@ make every check pass, not to argue with it.
    Put replaceable covers and bumpers where it lands (shoulders, hips, head), screwed, not glued.
 9. Close the loop: define_joints once the structure exists (give the actuators; axes come from
    the servos), then verify_design, check_printability, check_scene and get_bom. Fix every FAIL
-   and printability issue and run them again. The build is done when nothing FAILs, every part
-   prints, and the BOM is inside the budget. Report the verification table, print plan and BOM
+   and printability issue and run them again. A robot with legs also goes through simulate
+   (MuJoCo): holding its pose for 5 s, then with a 0.3 shove from each side. If it falls, or a
+   servo sits at 100% for long, fix the design (feet, centre of mass, servo, lever length), not
+   the test. Walk cycles: simulate controller "animation:<name>" shows whether it really walks.
+   The build is done when nothing FAILs, every part prints, and the BOM is inside the budget. Report the verification table, print plan and BOM
    totals at the end. Never state a price that get_bom didn't give you.
 
 ## Pose

@@ -353,6 +353,26 @@ export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
       if (!problems.has(key)) problems.set(key, `${line} at ${r1(t)} s`);
     }
   }
+  // Speed: no joint may move faster than its maker allows (published robots carry the limit)
+  const steps = 120;
+  const fastest = new Map<string, number>();
+  let prev = sampleAnimation(anim, 0);
+  for (let i = 1; i <= steps; i++) {
+    const t = (i / steps) * anim.duration;
+    const cur = sampleAnimation(anim, t);
+    const dt = anim.duration / steps;
+    for (const [id, v] of Object.entries(cur.values)) {
+      const speed = Math.abs(v - (prev.values[id] ?? 0)) / dt;
+      if (speed > (fastest.get(id) ?? 0)) fastest.set(id, speed);
+    }
+    prev = cur;
+  }
+  for (const [id, speed] of fastest) {
+    const j = scope.rig.byId.get(id);
+    if (j?.velocity && speed > j.velocity) {
+      problems.set(`speed ${id}`, `${id} moves at ${Math.round(speed)}${j.type === 'prismatic' ? ' mm' : '°'}/s, past the maker’s ${Math.round(j.velocity)}${j.type === 'prismatic' ? ' mm' : '°'}/s: lengthen the animation or soften the motion`);
+    }
+  }
   let images: PoseReply['images'];
   if (p.preview) {
     const n = Math.min(Math.max(p.preview.frames ?? 4, 2), 8);

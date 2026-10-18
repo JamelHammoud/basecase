@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import type { Viewport3DHandle } from './Viewport3D';
-import { AGENT_COLOR } from '../design-system';
+import { AGENT_COLOR, ARROW_PATH } from '../design-system';
 
 interface AgentCursorProps {
   viewportRef: React.RefObject<Viewport3DHandle | null>;
@@ -56,7 +56,7 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({ viewportRef, target, v
     >
       <svg width="22" height="22" viewBox="0 0 22 22" className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]">
         <path
-          d="M3 2.5 L18.5 9.6 L11.4 11.4 L8.2 18.5 Z"
+          d={ARROW_PATH}
           fill={AGENT_COLOR}
           stroke="white"
           strokeWidth="1.5"

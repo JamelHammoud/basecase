@@ -215,6 +215,15 @@ export interface ScenePart {
   supplyId?: string;
   /** Photo shown on an `image_plane` part */
   imageDataUrl?: string;
+  /** Mass the maker publishes (imported robot links), grams */
+  massG?: number;
+  /** Centre of mass the maker publishes, in the part's own frame (mm from its bounding-box center) */
+  com?: [number, number, number];
+  /**
+   * A link of an imported robot: where it came from, so its published data can be read again
+   * (`version` below ROBOT_DATA_VERSION is upgraded from the description when a scene opens)
+   */
+  robotLink?: { robot: string; link: string; url?: string; rotate?: Array<[string, number]>; version: number };
   /** Parts sharing a group select and move together */
   group?: { id: string; name: string };
   /** Printed parts only: filament for this part (defaults to the project's material) */
@@ -251,6 +260,12 @@ export interface RobotJoint {
   range?: [number, number];
   /** Scene part ids of the servo(s) that drive it; two opposed servos share the load */
   actuators?: string[];
+  /** The maker's torque limit (N·m; N for prismatic), from a published robot description */
+  effortNm?: number;
+  /** The maker's speed limit: degrees per second (mm/s for prismatic) */
+  velocity?: number;
+  /** The robot whose published description this joint comes from (its range is the motor's, not a clearance) */
+  published?: string;
   /** Arm, leg, neck…: sets the torque margin (legs 3×, others 2×) */
   limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
 }
@@ -272,6 +287,24 @@ export interface ProjectSettings {
   poses?: RobotPose[];
   /** Keyframed motion: walk cycles, gestures, retargeted mocap */
   animations?: RobotAnimation[];
+  /** Policies trained in simulation (weights in library/policies/<id>) */
+  policies?: PolicyRecord[];
+}
+
+/** A policy trained on this scene's robot (src/sim/policy.ts has the spec) */
+export interface PolicyRecord {
+  id: string;
+  name: string;
+  task: 'stand' | 'walk';
+  /** The robot it drives (`Rig.robots[].key`) and its name when trained */
+  robot: string;
+  robotName: string;
+  /** Forward m/s, left m/s, turn rad/s */
+  command: [number, number, number];
+  trainedSteps: number;
+  createdAt: string;
+  /** A clean run after training: when it fell (null = never) and how far it went */
+  eval?: { fellAt: number | null; seconds: number; forward: number; travelled: number };
 }
 
 /** Joint values by joint id: degrees (revolute) or mm (prismatic), from the modeled pose */

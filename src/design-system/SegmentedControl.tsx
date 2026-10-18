@@ -8,7 +8,6 @@ export interface SegmentedControlOption<T extends string> {
   badge?: React.ReactNode;
   title?: string;
   shortcut?: string;
-  /** Tints the selected pill red (e.g. Cutout) */
   tone?: 'default' | 'danger';
 }
 
@@ -18,7 +17,6 @@ export interface SegmentedControlProps<T extends string> {
   onChange: (val: T) => void;
   className?: string;
   size?: 'sm' | 'md';
-  /** Text tabs without a track (panel headers) */
   variant?: 'pill' | 'tabs';
 }
 
@@ -38,12 +36,9 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role="tablist"
-      className={`relative grid select-none ${
-        isTabs ? 'gap-1' : 'p-0.5 rounded-lg bg-white/[0.05]'
-      } ${className}`}
+      className={`relative grid select-none ${isTabs ? 'gap-1' : 'p-0.5 rounded-lg bg-white/[0.05]'} ${className}`}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
-      {/* Sliding thumb */}
       {!isTabs && selected && (
         <span
           aria-hidden
@@ -83,6 +78,7 @@ export function SegmentedControl<T extends string>({
             {opt.badge && <span className="shrink-0">{opt.badge}</span>}
           </button>
         );
+
         return opt.title ? (
           <Tooltip key={opt.value} label={opt.title} shortcut={opt.shortcut} className="w-full">
             {btn}

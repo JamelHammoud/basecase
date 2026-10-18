@@ -1,19 +1,13 @@
 import { CustomModelDefinition, ScenePart } from '../types/robotics';
 
-/** Models saved from a scene keep every part whole (or, in older saves, at least its box) */
 export const isSceneModel = (model: CustomModelDefinition) =>
   model.nodes.length > 0 &&
   model.nodes.every((n) => n.part || (model.sourceType === 'scene-selection' && n.nodeType === 'primitive'));
 
-/**
- * The scene parts a library model becomes, centered on `base`. Models saved from a scene come
- * back as their real parts (grouped under the model's name when there are several); anything
- * else is one `custom_model` part. `missingShapes` counts older CAD parts saved only as boxes.
- */
 export function modelToParts(
   model: CustomModelDefinition,
   base: [number, number, number],
-  makeId: (prefix?: string) => string
+  makeId: (prefix?: string) => string,
 ): { parts: ScenePart[]; missingShapes: number } {
   if (!isSceneModel(model)) {
     return {
@@ -49,10 +43,13 @@ export function modelToParts(
       Math.round((base[1] + n.position[1]) * 10) / 10,
       Math.round((base[2] + n.position[2]) * 10) / 10,
     ];
+
     if (n.part) return { ...n.part, id: makeId(), position, ...group };
-    // Older saves kept only the box of each part; CAD parts lost their shape
+
     const kind = n.primitiveKind && n.primitiveKind !== 'cad_part' ? n.primitiveKind : 'box';
+
     if (n.primitiveKind === 'cad_part') missingShapes++;
+
     return {
       id: makeId(),
       name: n.name,
@@ -71,5 +68,6 @@ export function modelToParts(
       ...group,
     };
   });
+
   return { parts, missingShapes };
 }

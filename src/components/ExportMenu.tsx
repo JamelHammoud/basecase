@@ -6,17 +6,10 @@ interface ExportMenuProps {
   canExportStl: boolean;
   onExportImage: () => void;
   onExportStl: () => void;
-  /** Copies the scene's parts, sizes and comments as Markdown */
   onCopyMarkdown: () => void;
 }
 
-/** The title bar's Export button and its format menu */
-export const ExportMenu: React.FC<ExportMenuProps> = ({
-  canExportStl,
-  onExportImage,
-  onExportStl,
-  onCopyMarkdown,
-}) => {
+export const ExportMenu: React.FC<ExportMenuProps> = ({ canExportStl, onExportImage, onExportStl, onCopyMarkdown }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const run = (action: () => void) => () => {
@@ -37,11 +30,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         align="end"
         className="w-56"
       >
-        <MenuItem
-          icon={<ImageDown className="w-4 h-4" />}
-          label="PNG Image"
-          onSelect={run(onExportImage)}
-        />
+        <MenuItem icon={<ImageDown className="w-4 h-4" />} label="PNG Image" onSelect={run(onExportImage)} />
         <MenuItem
           icon={<Download className="w-4 h-4" />}
           label="STL Mesh"

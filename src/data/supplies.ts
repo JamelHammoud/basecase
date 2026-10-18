@@ -1,10 +1,3 @@
-/**
- * Things a build needs that aren't modeled parts: batteries, power, wiring, filament.
- *
- * Unlike components (data/components.ts) these are generic goods sold by many brands, so each
- * entry is a spec plus an Amazon search for it, never a guessed listing. A purchase record
- * (library/purchases.json) pins the exact listing the user checked, with its price and date.
- */
 import type { PrintMaterial } from '../types/robotics';
 
 export type SupplyGroup = 'Power' | 'Wiring' | 'Electronics' | 'Filament' | 'Tools';
@@ -13,22 +6,16 @@ export interface SupplyInfo {
   id: string;
   name: string;
   group: SupplyGroup;
-  /** What to look for on the listing, in one line */
   spec: string;
-  /** Amazon US search for the spec */
   search: string;
-  /** Typical weight of one piece, for mass checks (g); omitted when it varies too much */
   weightG?: number;
-  /** What a typical listing contains (pieces, grams, meters) */
   typicalPack?: string;
-  /** Batteries: nominal and full-charge voltage, capacity and continuous discharge rating */
   battery?: { nominalV: number; fullV: number; capacityAh: number; cRating: number };
 }
 
 const amazon = (q: string) => `https://www.amazon.com/s?k=${encodeURIComponent(q)}`;
 
 export const SUPPLIES: SupplyInfo[] = [
-  /* ---------------------------------------------------------------- Power */
   {
     id: 'lipo-2s-2200',
     name: '2S LiPo 2200 mAh',
@@ -44,7 +31,6 @@ export const SUPPLIES: SupplyInfo[] = [
     group: 'Power',
     spec: '11.1 V nominal (12.6 V full), 2200 mAh, 25C+, XT60, about 105 × 34 × 25 mm',
     search: amazon('3S 11.1V 2200mAh LiPo battery XT60'),
-    // 168–174 g across Gens Ace, Tattu and Ovonic listings
     weightG: 172,
     battery: { nominalV: 11.1, fullV: 12.6, capacityAh: 2.2, cRating: 25 },
   },
@@ -110,7 +96,6 @@ export const SUPPLIES: SupplyInfo[] = [
     weightG: 9,
   },
 
-  /* ---------------------------------------------------------------- Wiring */
   {
     id: 'wire-18awg-silicone',
     name: '18 AWG Silicone Wire',
@@ -171,7 +156,6 @@ export const SUPPLIES: SupplyInfo[] = [
     search: amazon('heat shrink tubing assortment kit 2:1'),
   },
 
-  /* ---------------------------------------------------------------- Electronics */
   {
     id: 'microsd-64gb',
     name: 'microSD Card 64 GB',
@@ -195,7 +179,6 @@ export const SUPPLIES: SupplyInfo[] = [
     weightG: 22,
   },
 
-  /* ---------------------------------------------------------------- Filament */
   {
     id: 'filament-pla',
     name: 'PLA Filament 1 kg',
@@ -237,7 +220,6 @@ export const SUPPLIES: SupplyInfo[] = [
     typicalPack: '1000 g',
   },
 
-  /* ---------------------------------------------------------------- Tools */
   {
     id: 'heat-insert-tips',
     name: 'Heat-Set Insert Tips',
@@ -256,7 +238,6 @@ export const SUPPLIES: SupplyInfo[] = [
 
 export const SUPPLY_BY_ID: Record<string, SupplyInfo> = Object.fromEntries(SUPPLIES.map((s) => [s.id, s]));
 
-/** The filament supply for a print material */
 export const FILAMENT_SUPPLY: Record<PrintMaterial, string> = {
   PLA: 'filament-pla',
   PETG: 'filament-petg',
@@ -265,11 +246,12 @@ export const FILAMENT_SUPPLY: Record<PrintMaterial, string> = {
   TPU: 'filament-tpu',
 };
 
-/** g/cm³; PLA, PETG and TPU from Bambu Lab's filament profiles (PLA Basic, PETG HF, TPU 95A HF) */
-export const MATERIAL_DENSITY: Record<PrintMaterial, number> = { PLA: 1.26, PETG: 1.28, ABS: 1.04, ASA: 1.07, TPU: 1.22 };
+export const MATERIAL_DENSITY: Record<PrintMaterial, number> = {
+  PLA: 1.26,
+  PETG: 1.28,
+  ABS: 1.04,
+  ASA: 1.07,
+  TPU: 1.22,
+};
 
-/**
- * Heat deflection under load, °C. Bus servos run at 60–70 °C (STS3215 cuts torque at 70 °C), so
- * parts that hold a servo need a material that stays stiff above that.
- */
 export const MATERIAL_SOFTENS_C: Record<PrintMaterial, number> = { PLA: 54, PETG: 69, ABS: 87, ASA: 95, TPU: 60 };

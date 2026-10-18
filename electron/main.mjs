@@ -14,11 +14,10 @@ let mainWindow = null;
 
 app.setName('Basecase');
 
-// localStorage (preferences, panel widths, recent parts) lives in userData, which follows the
-// app name. Carry it over from before the rename instead of starting fresh.
 {
   const userData = path.join(app.getPath('appData'), 'Basecase');
   const legacy = path.join(app.getPath('appData'), 'Robotics 3D Studio');
+
   if (!fs.existsSync(userData) && fs.existsSync(legacy)) {
     try {
       fs.renameSync(legacy, userData);
@@ -26,6 +25,7 @@ app.setName('Basecase');
       console.warn('[main] Could not move settings from Robotics 3D Studio:', err);
     }
   }
+
   app.setPath('userData', userData);
 }
 
@@ -35,13 +35,10 @@ function createWindow() {
     height: 920,
     minWidth: 1240,
     minHeight: 720,
-    // Transparent so the sidebar can show native vibrancy behind it
     backgroundColor: '#00000000',
     vibrancy: 'sidebar',
     visualEffectState: 'active',
     titleBarStyle: 'hiddenInset',
-    // Stoplights (14px) on the title bar's centerline y = 22; the close button centers on x = 26,
-    // over the view rail's icons (LAYOUT in src/design-system/theme.ts, AGENTS.md §2)
     trafficLightPosition: { x: 19, y: 15 },
     title: 'Basecase',
     webPreferences: {
@@ -52,22 +49,26 @@ function createWindow() {
   });
 
   const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+
   mainWindow.loadURL(devUrl);
 
-  // Links (e.g. sources in agent replies) open in the system browser, never inside the app
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
+
     return { action: 'deny' };
   });
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith(devUrl)) {
-      event.preventDefault();
-      if (/^https?:/.test(url)) shell.openExternal(url);
-    }
+    if (url.startsWith(devUrl)) return;
+
+    event.preventDefault();
+
+    if (/^https?:/.test(url)) shell.openExternal(url);
   });
 
-  // Stoplights hide in full screen; the renderer moves the sidebar toggle into their space
-  for (const [event, value] of [['enter-full-screen', true], ['leave-full-screen', false]]) {
+  for (const [event, value] of [
+    ['enter-full-screen', true],
+    ['leave-full-screen', false],
+  ]) {
     mainWindow.on(event, () => mainWindow?.webContents.send('window:fullscreen', value));
   }
 
@@ -114,6 +115,8 @@ ipcMain.handle('library:save-model', (_e, modelDef) => backend.saveModel(modelDe
 ipcMain.handle('library:delete-model', (_e, modelId) => backend.deleteModel(modelId));
 
 ipcMain.handle('library:list-scenes', () => backend.listScenes());
+ipcMain.handle('library:get-scene', (_e, sceneId) => backend.getScene(sceneId));
+ipcMain.handle('library:save-scene-preview', (_e, payload) => backend.saveScenePreview(payload));
 ipcMain.handle('library:save-scene', (_e, scenePayload) => backend.saveScene(scenePayload));
 ipcMain.handle('library:delete-scene', (_e, sceneId) => backend.deleteScene(sceneId));
 
@@ -134,6 +137,7 @@ app.on('before-quit', () => backend.trainer.dispose());
 
 app.on('window-all-closed', () => {
   backend.disconnectAcpAgent();
+
   if (process.platform !== 'darwin') {
     app.quit();
   }

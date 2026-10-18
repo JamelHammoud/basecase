@@ -6,13 +6,24 @@
   "type": "module",
   "main": "electron/main.mjs",
   "scripts": {
+    "start": "vite build && concurrently -k -n web,app \"vite preview --port 5173 --strictPort\" \"wait-on http://localhost:5173 && node tools/electron-dev.mjs .\"",
     "dev": "vite --port 5173",
     "electron": "node tools/electron-dev.mjs .",
     "electron:dev": "concurrently -k \"vite --port 5173\" \"wait-on http://localhost:5173 && node tools/electron-dev.mjs .\"",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
     "preview": "vite preview",
-    "icon": "xcrun actool \"$PWD/build/icon/Basecase.icon\" --compile \"$PWD/build/icon/compiled\" --platform macosx --minimum-deployment-target 26.0 --app-icon Basecase --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled/partial.plist\" --output-format human-readable-text"
+    "check": "npm run format:check && npm run lint && npm run lint:py && npm run typecheck && npm test",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "icon": "xcrun actool \"$PWD/build/icon/Basecase.icon\" --compile \"$PWD/build/icon/compiled\" --platform macosx --minimum-deployment-target 26.0 --app-icon Basecase --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled/partial.plist\" --output-format human-readable-text",
+    "prepare": "simple-git-hooks",
+    "lint:py": "uvx ruff check . && uvx ruff format --check ."
   },
   "dependencies": {
     "@agentclientprotocol/claude-agent-acp": "^0.90.0",
@@ -37,18 +48,49 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@eslint/js": "^10.0.1",
+    "@rolldown/plugin-babel": "^0.2.4",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/babel__core": "^7.20.5",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "babel-plugin-react-compiler": "^1.0.0",
     "concurrently": "^9.2.1",
     "electron": "^41.2.0",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "eslint-plugin-sonarjs": "^4.2.2",
+    "globals": "^17.13.0",
+    "jscpd": "^5.4.1",
+    "lint-staged": "^17.6.0",
     "meshoptimizer": "^1.3.0",
     "occt-import-js": "^0.0.23",
-    "oxlint": "^1.81.0",
     "playwright-core": "^1.64.1",
+    "prettier": "^3.9.10",
+    "simple-git-hooks": "^2.14.0",
     "typescript": "~6.0.2",
+    "typescript-eslint": "^8.71.2",
     "vite": "^8.3.0",
+    "vitest": "^5.0.5",
     "wait-on": "^9.0.4"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mjs,js,cjs}": [
+      "prettier --write",
+      "eslint --fix --max-warnings 0"
+    ],
+    "*.{json,css,html}": "prettier --write",
+    "*.py": [
+      "uvx ruff format",
+      "uvx ruff check --fix"
+    ]
   }
 }

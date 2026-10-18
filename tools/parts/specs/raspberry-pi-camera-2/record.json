@@ -1,99 +1,99 @@
 {
- "id": "raspberry-pi-camera-2",
- "name": "Raspberry Pi Camera Module 2",
- "manufacturer": "Raspberry Pi Ltd",
- "mpn": "RPI-CAM-V2 (board RPI-CAM-V2_1); NoIR variant: Camera Module 2 NoIR (same PCB, no IR-cut filter)",
- "category": "cameras",
- "description": "8 MP Sony IMX219 CSI-2 camera board with fixed-focus lens; the NoIR variant uses the same board without the IR-cut filter.",
- "specs": [
-  {
-   "label": "Sensor",
-   "value": "Sony IMX219, 8 MP (3280 × 2464), 1/4\", 1.12 µm pixels"
-  },
-  {
-   "label": "Lens",
-   "value": "3.04 mm focal length, f/2.0, adjustable focus ~10 cm to ∞"
-  },
-  {
-   "label": "FOV",
-   "value": "62.2° H × 48.8° V"
-  },
-  {
-   "label": "Video",
-   "value": "1080p47, 1640 × 1232p41, 640 × 480p206"
-  },
-  {
-   "label": "Interface",
-   "value": "MIPI CSI-2 via 15-pin 1 mm FPC (15 cm ribbon)"
-  },
-  {
-   "label": "Weight",
-   "value": "3 g"
-  },
-  {
-   "label": "Variants",
-   "value": "Standard (IR-cut) and NoIR (no IR filter); identical board"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 25.0,
-   "y": 23.862,
-   "z": 9.0,
-   "axes": "x = along the connector edge (25 mm), y = away from the connector edge (23.862 mm, connector flush with that edge), z = depth; z is the 'around 25 × 24 × 9 mm' figure from the documentation table, the drawing gives no depth"
-  },
-  "features": [
-   {
-    "label": "PCB outline",
-    "value": "25 × 23.862 mm, 4× R2.0 corners",
-    "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf (RPI-CAM-V2_1 drawing, 12/11/2015)"
-   },
-   {
-    "label": "Mounting holes",
-    "value": "4× Ø2.2 mm (M2). Centers 2 mm in from the two 23.862 mm edges (21 mm pitch along x) and at 2 mm and 14.5 mm from the edge opposite the connector (12.5 mm pitch along y; i.e. 9.362 mm from the connector edge)",
-    "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
-   },
-   {
-    "label": "Lens position",
-    "value": "Lens center 12.5 mm from either 23.862 mm side (centered on x) and 9.462 mm from the connector edge",
-    "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
-   },
-   {
-    "label": "Lens housing",
-    "value": "8.5 × 8.5 mm square",
-    "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
-   },
-   {
-    "label": "FPC connector",
-    "value": "20.8 mm long along the connector edge, 5.5 mm deep, outer face flush with the board edge",
-    "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
-   },
-   {
-    "label": "Depth",
-    "value": "≈9 mm overall ('around 25 × 24 × 9 mm'); not dimensioned on the drawing",
-    "source": "https://www.raspberrypi.com/documentation/accessories/camera.html (hardware specification table)"
-   }
+  "id": "raspberry-pi-camera-2",
+  "name": "Raspberry Pi Camera Module 2",
+  "manufacturer": "Raspberry Pi Ltd",
+  "mpn": "RPI-CAM-V2 (board RPI-CAM-V2_1); NoIR variant: Camera Module 2 NoIR (same PCB, no IR-cut filter)",
+  "category": "cameras",
+  "description": "8 MP Sony IMX219 CSI-2 camera board with fixed-focus lens; the NoIR variant uses the same board without the IR-cut filter.",
+  "specs": [
+    {
+      "label": "Sensor",
+      "value": "Sony IMX219, 8 MP (3280 × 2464), 1/4\", 1.12 µm pixels"
+    },
+    {
+      "label": "Lens",
+      "value": "3.04 mm focal length, f/2.0, adjustable focus ~10 cm to ∞"
+    },
+    {
+      "label": "FOV",
+      "value": "62.2° H × 48.8° V"
+    },
+    {
+      "label": "Video",
+      "value": "1080p47, 1640 × 1232p41, 640 × 480p206"
+    },
+    {
+      "label": "Interface",
+      "value": "MIPI CSI-2 via 15-pin 1 mm FPC (15 cm ribbon)"
+    },
+    {
+      "label": "Weight",
+      "value": "3 g"
+    },
+    {
+      "label": "Variants",
+      "value": "Standard (IR-cut) and NoIR (no IR filter); identical board"
+    }
   ],
-  "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B01ER2SKFS",
-   "asin": "B01ER2SKFS",
-   "title": "Raspberry Pi Camera Module V2-8 Megapixel,1080p (RPI-CAM-V2)",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 25.0,
+      "y": 23.862,
+      "z": 9.0,
+      "axes": "x = along the connector edge (25 mm), y = away from the connector edge (23.862 mm, connector flush with that edge), z = depth; z is the 'around 25 × 24 × 9 mm' figure from the documentation table, the drawing gives no depth"
+    },
+    "features": [
+      {
+        "label": "PCB outline",
+        "value": "25 × 23.862 mm, 4× R2.0 corners",
+        "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf (RPI-CAM-V2_1 drawing, 12/11/2015)"
+      },
+      {
+        "label": "Mounting holes",
+        "value": "4× Ø2.2 mm (M2). Centers 2 mm in from the two 23.862 mm edges (21 mm pitch along x) and at 2 mm and 14.5 mm from the edge opposite the connector (12.5 mm pitch along y; i.e. 9.362 mm from the connector edge)",
+        "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
+      },
+      {
+        "label": "Lens position",
+        "value": "Lens center 12.5 mm from either 23.862 mm side (centered on x) and 9.462 mm from the connector edge",
+        "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
+      },
+      {
+        "label": "Lens housing",
+        "value": "8.5 × 8.5 mm square",
+        "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
+      },
+      {
+        "label": "FPC connector",
+        "value": "20.8 mm long along the connector edge, 5.5 mm deep, outer face flush with the board edge",
+        "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
+      },
+      {
+        "label": "Depth",
+        "value": "≈9 mm overall ('around 25 × 24 × 9 mm'); not dimensioned on the drawing",
+        "source": "https://www.raspberrypi.com/documentation/accessories/camera.html (hardware specification table)"
+      }
+    ],
+    "source": "https://pip-assets.raspberrypi.com/categories/1205-design-files/documents/RP-008149-DS-1-camera-module-2-mechanical-drawing.pdf"
   },
-  "amazon_noir": {
-   "url": "https://www.amazon.com/dp/B01ER2SMHY",
-   "asin": "B01ER2SMHY",
-   "title": "Raspberry Pi NoIR Camera Module V2 - 8MP 1080P30",
-   "kind": "product",
-   "verified": true
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B01ER2SKFS",
+      "asin": "B01ER2SKFS",
+      "title": "Raspberry Pi Camera Module V2-8 Megapixel,1080p (RPI-CAM-V2)",
+      "kind": "product",
+      "verified": true
+    },
+    "amazon_noir": {
+      "url": "https://www.amazon.com/dp/B01ER2SMHY",
+      "asin": "B01ER2SMHY",
+      "title": "Raspberry Pi NoIR Camera Module V2 - 8MP 1080P30",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.raspberrypi.com/products/camera-module-v2/",
+    "datasheet": "https://www.raspberrypi.com/documentation/accessories/camera.html"
   },
-  "product": "https://www.raspberrypi.com/products/camera-module-v2/",
-  "datasheet": "https://www.raspberrypi.com/documentation/accessories/camera.html"
- },
- "notes": "Raspberry Pi publishes only a 2D mechanical drawing and schematics for Camera Module 2 (PIP 'Design Files' category 1205); no STEP. The 25 × 23.862 mm outline and 21 × 12.5 mm hole pattern are the same as Camera Module 3 and the AI Camera, so the official Camera Module 3 STEP (pip-assets .../1207-design-files/documents/RP-008154-DS-1-camera-module-3-step.zip) gives an exact PCB/hole reference but not the CM2 optics. No trustworthy community STEP was found quickly; none recorded. The drawing does not dimension PCB thickness. Product page fetch via curl hits a Cloudflare check; WebFetch worked. Amazon ASINs verified by title only (seller not confirmed).",
- "pose": "board"
+  "notes": "Raspberry Pi publishes only a 2D mechanical drawing and schematics for Camera Module 2 (PIP 'Design Files' category 1205); no STEP. The 25 × 23.862 mm outline and 21 × 12.5 mm hole pattern are the same as Camera Module 3 and the AI Camera, so the official Camera Module 3 STEP (pip-assets .../1207-design-files/documents/RP-008154-DS-1-camera-module-3-step.zip) gives an exact PCB/hole reference but not the CM2 optics. No trustworthy community STEP was found quickly; none recorded. The drawing does not dimension PCB thickness. Product page fetch via curl hits a Cloudflare check; WebFetch worked. Amazon ASINs verified by title only (seller not confirmed).",
+  "pose": "board"
 }

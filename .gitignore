@@ -40,3 +40,6 @@ ai-reference/
 
 # Policy trainer virtualenv (uv creates it in library/trainer-env; this is a dev fallback)
 electron/trainer/.venv/
+
+# Python bytecode
+__pycache__/

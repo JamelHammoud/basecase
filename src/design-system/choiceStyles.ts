@@ -1,4 +1,3 @@
-/** A choice cell's look, for strips built by hand (the stock-length strip): soft fill when chosen, like SegmentedControl's thumb */
 export const choiceCellClass = (selected: boolean) =>
   `rounded-[8px] font-medium tabular cursor-default transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97] ${
     selected
@@ -6,5 +5,4 @@ export const choiceCellClass = (selected: boolean) =>
       : 'text-white/55 hover:text-white/85 hover:bg-white/[0.04]'
   }`;
 
-/** The track every choice grid and strip sits on */
 export const CHOICE_TRACK = 'rounded-[10px] bg-white/[0.05] p-[2px] gap-[2px]';

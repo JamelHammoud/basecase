@@ -1,0 +1,13 @@
+dist
+build
+vendor
+public
+library
+ai-reference
+bench/data
+bench/runs
+tools/parts/cad
+tools/parts/generated
+electron/trainer/.venv
+package-lock.json
+*.md

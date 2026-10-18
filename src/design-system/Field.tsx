@@ -8,16 +8,13 @@ const fieldBase =
 
 export interface TextInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
-  /** Renders as plain text until hovered/focused (inline rename) */
   bare?: boolean;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
   ({ icon, bare = false, className = '', ...props }, ref) => (
     <div className="relative flex items-center w-full">
-      {icon && (
-        <span className="absolute left-2.5 text-white/40 pointer-events-none flex">{icon}</span>
-      )}
+      {icon && <span className="absolute left-2.5 text-white/40 pointer-events-none flex">{icon}</span>}
       <input
         ref={ref}
         type="text"
@@ -30,39 +27,36 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
         {...props}
       />
     </div>
-  )
+  ),
 );
+
 TextInput.displayName = 'TextInput';
 
-export interface SearchFieldProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'size'> {
+export interface SearchFieldProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'onChange' | 'size'
+> {
   value: string;
   onChange: (value: string) => void;
-  /** Shortcut hint shown on the right while the field is empty and unfocused */
   shortcut?: string;
-  /** Inside a drilled-in view: a back button takes the glass icon's place */
   onBack?: () => void;
   className?: string;
 }
 
-/**
- * The search field at the top of a sidebar view: 40px, 14px text, a 16px glass icon,
- * a key-cap hint while idle and a round clear button once there's a query. With `onBack`
- * the icon becomes Back, so a drilled-in view needs no header row of its own.
- */
 export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
   ({ value, onChange, shortcut, onBack, className = '', ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement | null>(null);
     const setRef = (node: HTMLInputElement | null) => {
       inputRef.current = node;
+
       if (typeof ref === 'function') ref(node);
       else if (ref) ref.current = node;
     };
+
     return (
       <div
         className={`group relative flex items-center h-[40px] rounded-[10px] bg-white/[0.06] hover:bg-white/[0.08] has-[input:focus]:bg-black/25 has-[input:focus]:hover:bg-black/25 ring-1 ring-inset ring-transparent has-[input:focus]:ring-[#0d99ff] has-[input:focus]:shadow-[0_0_0_3px_rgba(13,153,255,0.16)] transition-[background-color,box-shadow] duration-150 ${className}`}
         onMouseDown={(e) => {
-          // Clicking the padding or icon focuses the input (Back doesn't)
           if (e.target !== inputRef.current && !(e.target as HTMLElement).closest('[data-search-back]')) {
             e.preventDefault();
             inputRef.current?.focus();
@@ -75,7 +69,6 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
               type="button"
               data-search-back
               aria-label="Back"
-              // Keep focus where it was, so a click doesn't flash the field's focus ring
               onMouseDown={(e) => e.preventDefault()}
               onClick={onBack}
               className="ml-[6px] w-[28px] h-[28px] shrink-0 rounded-[8px] flex items-center justify-center text-white/60 hover:text-white/90 hover:bg-white/[0.08] active:scale-95 cursor-default transition-[background-color,color,transform] duration-150 animate-pop-in"
@@ -122,22 +115,22 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
         )}
       </div>
     );
-  }
+  },
 );
+
 SearchField.displayName = 'SearchField';
 
 export type TextAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
-export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ className = '', ...props }, ref) => (
-    <textarea
-      ref={ref}
-      spellCheck={false}
-      className={`${fieldBase} px-2.5 py-2 leading-relaxed resize-none ${className}`}
-      {...props}
-    />
-  )
-);
+export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(({ className = '', ...props }, ref) => (
+  <textarea
+    ref={ref}
+    spellCheck={false}
+    className={`${fieldBase} px-2.5 py-2 leading-relaxed resize-none ${className}`}
+    {...props}
+  />
+));
+
 TextArea.displayName = 'TextArea';
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
@@ -146,10 +139,7 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 
 export const Select: React.FC<SelectProps> = ({ options, className = '', ...props }) => (
   <div className="relative w-full">
-    <select
-      className={`${fieldBase} h-8 pl-2.5 pr-8 appearance-none cursor-default ${className}`}
-      {...props}
-    >
+    <select className={`${fieldBase} h-8 pl-2.5 pr-8 appearance-none cursor-default ${className}`} {...props}>
       {options.map((o) => (
         <option key={o.value} value={o.value} className="bg-[#1e1e22] text-white">
           {o.label}

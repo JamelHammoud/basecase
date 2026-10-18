@@ -1,0 +1,96 @@
+import React from 'react';
+import { NumberInput, Section, Tooltip } from '../../design-system';
+import type { ProjectSettings } from '../../types/robotics';
+import { type Bom, STALE_DAYS } from '../../utils/bom';
+import { money, plural } from './format';
+
+type Totals = Bom['totals'];
+
+interface BudgetSectionProps {
+  bom: Bom;
+  project: ProjectSettings;
+  onChangeProject: (patch: Partial<ProjectSettings>) => void;
+}
+
+const hasEstimate = (t: Totals) => t.estimatedUsd > t.pricedUsd + 0.005;
+
+const share = (usd: number, budget: number) => (budget ? Math.min(1, usd / budget) : 0);
+
+const BudgetSummary: React.FC<{ t: Totals }> = ({ t }) => {
+  const lines = t.checked + t.stale + t.unchecked;
+
+  return (
+    <div className="min-w-0">
+      <div className="text-[20px] font-semibold tabular-nums text-white/90 leading-tight">{money(t.pricedUsd)}</div>
+      {lines > 0 && (
+        <div className="text-[12.5px] text-white/45 mt-0.5 tabular-nums">
+          {t.unchecked ? `${t.checked + t.stale} of ${lines} prices checked` : 'All prices checked'}
+        </div>
+      )}
+      {hasEstimate(t) && (
+        <Tooltip label="Unchecked lines at maker and distributor list prices">
+          <div className="text-[12.5px] text-white/60 mt-0.5 tabular-nums w-fit">
+            ≈ {money(t.estimatedUsd)} estimated{t.unpriced ? ` · ${t.unpriced} unpriced` : ''}
+          </div>
+        </Tooltip>
+      )}
+    </div>
+  );
+};
+
+const BudgetBar: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => (
+  <div className="relative h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Spent of budget">
+    {hasEstimate(t) && (
+      <div
+        className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${t.estimatedUsd > budget ? 'bg-red-500/40' : 'bg-[#0d99ff]/35'}`}
+        style={{ width: `${share(t.estimatedUsd, budget) * 100}%` }}
+      />
+    )}
+    <div
+      className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${t.overBudget ? 'bg-red-500' : 'bg-[#0d99ff]'}`}
+      style={{ width: `${share(t.pricedUsd, budget) * 100}%` }}
+    />
+  </div>
+);
+
+const BudgetLeft: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => (
+  <div className={`text-[12.5px] tabular-nums ${t.overBudget ? 'text-red-400' : 'text-white/45'}`}>
+    {t.overBudget ? `${money(t.pricedUsd - budget)} over budget` : `${money(budget - t.pricedUsd)} left`}
+    {t.unchecked > 0 && ` · ${t.unchecked} to price`}
+  </div>
+);
+
+const StaleNotice: React.FC<{ stale: number }> = ({ stale }) => (
+  <div className="text-[12.5px] text-amber-400">
+    Recheck {stale} {plural(stale, 'price', 'prices')} before ordering. {plural(stale, 'It’s', 'They’re')} over{' '}
+    {STALE_DAYS} days old.
+  </div>
+);
+
+export const BudgetSection: React.FC<BudgetSectionProps> = ({ bom, project, onChangeProject }) => {
+  const t = bom.totals;
+  const budget = project.budgetUsd;
+
+  return (
+    <Section title="Budget">
+      <div className="flex items-baseline justify-between gap-3">
+        <BudgetSummary t={t} />
+        <div className="w-[112px] shrink-0">
+          <NumberInput
+            label="$"
+            value={budget ?? 0}
+            min={0}
+            step={10}
+            precision={0}
+            unit=""
+            title="Budget in US dollars"
+            onChange={(v, live) => !live && onChangeProject({ budgetUsd: v > 0 ? v : undefined })}
+          />
+        </div>
+      </div>
+      {budget !== undefined && <BudgetBar t={t} budget={budget} />}
+      {budget !== undefined && <BudgetLeft t={t} budget={budget} />}
+      {t.stale > 0 && <StaleNotice stale={t.stale} />}
+    </Section>
+  );
+};

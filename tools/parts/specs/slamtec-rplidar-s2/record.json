@@ -1,82 +1,82 @@
 {
- "id": "slamtec-rplidar-s2",
- "name": "Slamtec RPLIDAR S2",
- "manufacturer": "Slamtec (Shanghai Slamtec Co., Ltd.)",
- "mpn": "S2M1-R2 (UART version; S2L = 18 m, S2P = 50 m, S2E = Ethernet are separate SKUs)",
- "category": "lidar",
- "description": "IP65 360° 2D DTOF laser scanner with 30 m range and 32 kHz sampling over 1 Mbps UART.",
- "specs": [
-  {
-   "label": "Range",
-   "value": "0.05–30 m (white, 90%); 0.05–10 m (black, 10%)"
-  },
-  {
-   "label": "Scan rate",
-   "value": "10 Hz"
-  },
-  {
-   "label": "Sample rate",
-   "value": "32 kHz; 0.1125° angular resolution; scan-plane flatness 0–1.5°"
-  },
-  {
-   "label": "Accuracy",
-   "value": "±30 mm typ, 13 mm resolution"
-  },
-  {
-   "label": "Laser",
-   "value": "905 nm (895–915), 25 W peak, 5 ns pulse, IEC-60825 Class 1"
-  },
-  {
-   "label": "Interface / power",
-   "value": "3.3 V TTL UART 1 Mbps 8N1 (XH2.54-5P); 5 V (4.9–5.2 V), 500 mA typ / 600 mA max, 1500 mA start"
-  },
-  {
-   "label": "Weight / protection",
-   "value": "185 g (datasheet) / 190 g (spec page); IP65; -10–50 °C"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 77.0,
-   "y": 77.0,
-   "z": 39.8,
-   "axes": "x = base width, y = base depth (81 incl. cable strain relief), z = height from mounting face to top (datasheet v2.4; 2D drawing and spec page say 38.85)"
-  },
-  "features": [
-   {
-    "label": "Mounting holes",
-    "value": "4× M3 threaded, 4 mm deep, in the bottom face on a 41.7 × 41.7 square centred on the base. Screw engagement must not exceed 4 mm.",
-    "source": "https://download-en.slamtec.com/api/download/rplidar-s2m1-Rx-datasheet/2.4?lang=en Figure 4-1 (p.17)"
-   },
-   {
-    "label": "Body split",
-    "value": "Base 20.8 mm tall, optical enclosure (19) on top = 39.8 total (datasheet v2.4). The older 2D drawing (S2机械尺寸图) shows total 38.85 with an 18 mm optical window, and 80.6 depth incl. cable exit.",
-    "source": "datasheet Figure 4-1; https://download-en.slamtec.com/api/download/rplidar-s2-model-2d-pdf/1.0?lang=netural"
-   },
-   {
-    "label": "Optical centre height",
-    "value": "null — not dimensioned in either official drawing. The window occupies the enclosure above the 20.8 mm base.",
-    "source": "datasheet Figure 4-1"
-   },
-   {
-    "label": "Cable",
-    "value": "Fixed cable from rear centre to XH2.54-5P (VCC, TX, RX, NC/MOTOCTL, GND).",
-    "source": "datasheet Figure 2-5/2-6; 2D drawing"
-   }
+  "id": "slamtec-rplidar-s2",
+  "name": "Slamtec RPLIDAR S2",
+  "manufacturer": "Slamtec (Shanghai Slamtec Co., Ltd.)",
+  "mpn": "S2M1-R2 (UART version; S2L = 18 m, S2P = 50 m, S2E = Ethernet are separate SKUs)",
+  "category": "lidar",
+  "description": "IP65 360° 2D DTOF laser scanner with 30 m range and 32 kHz sampling over 1 Mbps UART.",
+  "specs": [
+    {
+      "label": "Range",
+      "value": "0.05–30 m (white, 90%); 0.05–10 m (black, 10%)"
+    },
+    {
+      "label": "Scan rate",
+      "value": "10 Hz"
+    },
+    {
+      "label": "Sample rate",
+      "value": "32 kHz; 0.1125° angular resolution; scan-plane flatness 0–1.5°"
+    },
+    {
+      "label": "Accuracy",
+      "value": "±30 mm typ, 13 mm resolution"
+    },
+    {
+      "label": "Laser",
+      "value": "905 nm (895–915), 25 W peak, 5 ns pulse, IEC-60825 Class 1"
+    },
+    {
+      "label": "Interface / power",
+      "value": "3.3 V TTL UART 1 Mbps 8N1 (XH2.54-5P); 5 V (4.9–5.2 V), 500 mA typ / 600 mA max, 1500 mA start"
+    },
+    {
+      "label": "Weight / protection",
+      "value": "185 g (datasheet) / 190 g (spec page); IP65; -10–50 °C"
+    }
   ],
-  "source": "https://download-en.slamtec.com/api/download/rplidar-s2m1-Rx-datasheet/2.4?lang=en"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B0CQ4Q6WLB",
-   "asin": "B0CQ4Q6WLB",
-   "title": "RPLiDAR S2M1 SLAMTEC 360 Degree 30m Scanning Radius lidar Sensor Scanner for Obstacle Avoidance and Navigation of AGV",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 77.0,
+      "y": 77.0,
+      "z": 39.8,
+      "axes": "x = base width, y = base depth (81 incl. cable strain relief), z = height from mounting face to top (datasheet v2.4; 2D drawing and spec page say 38.85)"
+    },
+    "features": [
+      {
+        "label": "Mounting holes",
+        "value": "4× M3 threaded, 4 mm deep, in the bottom face on a 41.7 × 41.7 square centred on the base. Screw engagement must not exceed 4 mm.",
+        "source": "https://download-en.slamtec.com/api/download/rplidar-s2m1-Rx-datasheet/2.4?lang=en Figure 4-1 (p.17)"
+      },
+      {
+        "label": "Body split",
+        "value": "Base 20.8 mm tall, optical enclosure (19) on top = 39.8 total (datasheet v2.4). The older 2D drawing (S2机械尺寸图) shows total 38.85 with an 18 mm optical window, and 80.6 depth incl. cable exit.",
+        "source": "datasheet Figure 4-1; https://download-en.slamtec.com/api/download/rplidar-s2-model-2d-pdf/1.0?lang=netural"
+      },
+      {
+        "label": "Optical centre height",
+        "value": "null — not dimensioned in either official drawing. The window occupies the enclosure above the 20.8 mm base.",
+        "source": "datasheet Figure 4-1"
+      },
+      {
+        "label": "Cable",
+        "value": "Fixed cable from rear centre to XH2.54-5P (VCC, TX, RX, NC/MOTOCTL, GND).",
+        "source": "datasheet Figure 2-5/2-6; 2D drawing"
+      }
+    ],
+    "source": "https://download-en.slamtec.com/api/download/rplidar-s2m1-Rx-datasheet/2.4?lang=en"
   },
-  "product": "https://www.slamtec.com/en/s2",
-  "datasheet": "https://download-en.slamtec.com/api/download/rplidar-s2m1-Rx-datasheet/2.4?lang=en"
- },
- "notes": "No STEP published; IGES is the best official format. Download needs the slamtec.com Referer (see A1 record) — no login. First download over HTTP/2 was truncated; re-downloaded over HTTP/1.1 and the file ends with a valid IGES terminate line. Height conflict: datasheet v2.4 (2026) 39.8 mm vs 2D drawing / spec page 38.85 mm (spec page also says 'Height 38.5mm'). The IGES (2021-07) predates 'S2 version 2.0' (datasheet rev 2023-05), so check it against the 39.8 mm drawing. Weight 185 g (datasheet) vs 190 g (spec page).",
- "pose": "lidar"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B0CQ4Q6WLB",
+      "asin": "B0CQ4Q6WLB",
+      "title": "RPLiDAR S2M1 SLAMTEC 360 Degree 30m Scanning Radius lidar Sensor Scanner for Obstacle Avoidance and Navigation of AGV",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.slamtec.com/en/s2",
+    "datasheet": "https://download-en.slamtec.com/api/download/rplidar-s2m1-Rx-datasheet/2.4?lang=en"
+  },
+  "notes": "No STEP published; IGES is the best official format. Download needs the slamtec.com Referer (see A1 record) — no login. First download over HTTP/2 was truncated; re-downloaded over HTTP/1.1 and the file ends with a valid IGES terminate line. Height conflict: datasheet v2.4 (2026) 39.8 mm vs 2D drawing / spec page 38.85 mm (spec page also says 'Height 38.5mm'). The IGES (2021-07) predates 'S2 version 2.0' (datasheet rev 2023-05), so check it against the 39.8 mm drawing. Weight 185 g (datasheet) vs 190 g (spec page).",
+  "pose": "lidar"
 }

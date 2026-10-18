@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { FolderInput } from 'lucide-react';
 import { Button, Modal, TextInput } from '../design-system';
 
-/** Import Robot…: a URDF / MJCF link (GitHub file pages work) or a folder with the file and its meshes */
 export const ImportRobotSheet: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -12,6 +11,7 @@ export const ImportRobotSheet: React.FC<{
   const folderRef = useRef<HTMLInputElement | null>(null);
   const link = /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
   const valid = /^https?:\/\/[^\s/]+\.[^\s/]+\/\S+\.(urdf|xml|mjcf)(\?\S*)?$/i.test(link);
+
   return (
     <Modal
       isOpen={open}
@@ -65,13 +65,15 @@ export const ImportRobotSheet: React.FC<{
         ref={folderRef}
         type="file"
         className="hidden"
-        // @ts-expect-error webkitdirectory is a non-standard folder picker
         webkitdirectory=""
         multiple
         onChange={(e) => {
           const files = [...(e.target.files ?? [])];
+
           e.target.value = '';
+
           if (!files.length) return;
+
           onImport({ kind: 'files', files });
           onClose();
         }}

@@ -1,87 +1,87 @@
 {
- "id": "stereolabs-zed-mini",
- "name": "Stereolabs ZED Mini",
- "manufacturer": "Stereolabs",
- "mpn": "ZED-121210",
- "category": "depth-cameras",
- "description": "Small USB-C stereo camera with dual 4 MP rolling-shutter sensors, 63 mm baseline and a built-in IMU; depth is computed on the host GPU by the ZED SDK.",
- "specs": [
-  {
-   "label": "Sensors",
-   "value": "Dual 1/3\" 4 MP CMOS, 2688 × 1520, synchronized rolling shutter"
-  },
-  {
-   "label": "Baseline",
-   "value": "63 mm"
-  },
-  {
-   "label": "Output (side by side)",
-   "value": "2× 2208 × 1242 @ 15 fps, 2× 1920 × 1080 @ 30, 2× 1280 × 720 @ 60, 2× 672 × 376 @ 100"
-  },
-  {
-   "label": "FOV / lens",
-   "value": "Max 102° H × 57° V × 118° D; 3.06 mm, f/2.0"
-  },
-  {
-   "label": "Depth range",
-   "value": "0.1–15 m (ideal 0.1–9 m)"
-  },
-  {
-   "label": "Interface / power",
-   "value": "USB 3.0 Type-C; 5 V, 1.9 W typical (0.38 A)"
-  },
-  {
-   "label": "IMU / weight",
-   "value": "Gyroscope + accelerometer, 800 Hz; 62.9 g"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 124.5,
-   "y": 26.5,
-   "z": 30.5,
-   "axes": "datasheet summary 124.5 × 30.5 × 26.5 mm; drawing: body 125.2 wide × 26.6 tall, 13 mm body depth, 30.25 mm deep including the lens bosses"
-  },
-  "features": [
-   {
-    "label": "Lens positions",
-    "value": "Lens centers 63 mm apart. Top view: lens bosses 18.78 mm and 20.53 mm wide (dimension lines), the left boss 1.72 mm from the end; body 14.44 mm vs 13 mm deep at the two ends of the top view; the bosses bring total depth to 30.25 mm",
-    "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
-   },
-   {
-    "label": "Top mounting",
-    "value": "2× M2×0.4 (Ø2), max screw engagement 2.3 mm, 56 mm apart on the top face (used by the VR headset mount)",
-    "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
-   },
-   {
-    "label": "Rear mounting",
-    "value": "Holes at 116.7 × 18.1 mm on the back face, M2×0.4, max 2.3 mm (callout reads 'Ø2 02x' although four holes are drawn)",
-    "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
-   },
-   {
-    "label": "Connector",
-    "value": "USB-C on the left end face, 9.5 mm opening; end view 23.17 mm",
-    "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
-   },
-   {
-    "label": "Tripod",
-    "value": "No 1/4-20 thread shown on the drawing",
-    "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
-   }
+  "id": "stereolabs-zed-mini",
+  "name": "Stereolabs ZED Mini",
+  "manufacturer": "Stereolabs",
+  "mpn": "ZED-121210",
+  "category": "depth-cameras",
+  "description": "Small USB-C stereo camera with dual 4 MP rolling-shutter sensors, 63 mm baseline and a built-in IMU; depth is computed on the host GPU by the ZED SDK.",
+  "specs": [
+    {
+      "label": "Sensors",
+      "value": "Dual 1/3\" 4 MP CMOS, 2688 × 1520, synchronized rolling shutter"
+    },
+    {
+      "label": "Baseline",
+      "value": "63 mm"
+    },
+    {
+      "label": "Output (side by side)",
+      "value": "2× 2208 × 1242 @ 15 fps, 2× 1920 × 1080 @ 30, 2× 1280 × 720 @ 60, 2× 672 × 376 @ 100"
+    },
+    {
+      "label": "FOV / lens",
+      "value": "Max 102° H × 57° V × 118° D; 3.06 mm, f/2.0"
+    },
+    {
+      "label": "Depth range",
+      "value": "0.1–15 m (ideal 0.1–9 m)"
+    },
+    {
+      "label": "Interface / power",
+      "value": "USB 3.0 Type-C; 5 V, 1.9 W typical (0.38 A)"
+    },
+    {
+      "label": "IMU / weight",
+      "value": "Gyroscope + accelerometer, 800 Hz; 62.9 g"
+    }
   ],
-  "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/s?k=Stereolabs+ZED+Mini",
-   "asin": null,
-   "title": null,
-   "kind": "search",
-   "verified": false
+  "dimensions": {
+    "envelope": {
+      "x": 124.5,
+      "y": 26.5,
+      "z": 30.5,
+      "axes": "datasheet summary 124.5 × 30.5 × 26.5 mm; drawing: body 125.2 wide × 26.6 tall, 13 mm body depth, 30.25 mm deep including the lens bosses"
+    },
+    "features": [
+      {
+        "label": "Lens positions",
+        "value": "Lens centers 63 mm apart. Top view: lens bosses 18.78 mm and 20.53 mm wide (dimension lines), the left boss 1.72 mm from the end; body 14.44 mm vs 13 mm deep at the two ends of the top view; the bosses bring total depth to 30.25 mm",
+        "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
+      },
+      {
+        "label": "Top mounting",
+        "value": "2× M2×0.4 (Ø2), max screw engagement 2.3 mm, 56 mm apart on the top face (used by the VR headset mount)",
+        "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
+      },
+      {
+        "label": "Rear mounting",
+        "value": "Holes at 116.7 × 18.1 mm on the back face, M2×0.4, max 2.3 mm (callout reads 'Ø2 02x' although four holes are drawn)",
+        "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
+      },
+      {
+        "label": "Connector",
+        "value": "USB-C on the left end face, 9.5 mm opening; end view 23.17 mm",
+        "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
+      },
+      {
+        "label": "Tripod",
+        "value": "No 1/4-20 thread shown on the drawing",
+        "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf p.4"
+      }
+    ],
+    "source": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf"
   },
-  "product": "https://www.stereolabs.com/store/products/zed-mini",
-  "datasheet": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf"
- },
- "notes": "Amazon search for 'Stereolabs ZED Mini' returned 'No results'; sold direct by Stereolabs and Mouser. Weight: datasheet 62.9 g, 3dmodels page 60 g. The drawing's hole callouts ('Ø2 02x … Use M2X0.4') conflict with four holes drawn on the rear view; check against the STEP once downloaded.",
- "pose": "camera"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/s?k=Stereolabs+ZED+Mini",
+      "asin": null,
+      "title": null,
+      "kind": "search",
+      "verified": false
+    },
+    "product": "https://www.stereolabs.com/store/products/zed-mini",
+    "datasheet": "https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf"
+  },
+  "notes": "Amazon search for 'Stereolabs ZED Mini' returned 'No results'; sold direct by Stereolabs and Mouser. Weight: datasheet 62.9 g, 3dmodels page 60 g. The drawing's hole callouts ('Ø2 02x … Use M2X0.4') conflict with four holes drawn on the rear view; check against the STEP once downloaded.",
+  "pose": "camera"
 }

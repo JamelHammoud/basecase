@@ -1,0 +1,630 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`agentCatalog > lists matching components, hardware and supplies 1`] = `
+"Components (exact manufacturer geometry; size is x × y × z in mm as placed with rotation [0, 0, 0]):
+Servos:
+- component:feetech-sts3215 — Feetech STS3215 · 45.22 × 24.72 × 37.8 mm · Stall torque 19.5 kg·cm @ 7.4 V (C001) · 30 kg·cm @ 12 V (C018); Speed 0.192 s/60° @ 7.4 V; Voltage 4–7.4 V (C001) · 4–14 V (C018) · Mounting: Case 45.2 × 24.7 × 35 mm. Output spline 25T, Ø5.9 mm, 3.4 mm proud, axis 12.5 mm from the case center; horn screw M3 × 6. Rear idler boss Ø6 mm, 4.1 mm proud. Aluminium horns on both faces: Ø19.95, 4 × M3 threaded on a Ø14 circle, faces 1.4 mm beyond the case, so a U-bracket bolts to both. 4× M2 on the top and bottom faces, 20.5 mm apart across the width (Feetech STS3215 drawing).
+  Versions (buy one; put it in the key): component:feetech-sts3215|c001 = 7.4 V (C001), stall 1.91 N·m, rated 0.49 N·m at 7.4 V (input 4–7.4 V), stall 2.5 A; component:feetech-sts3215|c018 = 12 V (C018), stall 2.94 N·m, rated 0.98 N·m at 12 V (input 4–14 V), stall 2.7 A; component:feetech-sts3215|c044 = 7.4 V, 1:191 (C044), stall 2.69 N·m, rated 0.88 N·m at 7.4 V (input 4–7.4 V); component:feetech-sts3215|c046 = 7.4 V, 1:147 (C046), stall 1.41 N·m, rated 0.47 N·m at 7.4 V (input 4–7.4 V)
+- component:feetech-sts3250 — Feetech STS3250 · 45.22 × 24.72 × 37.8 mm · Stall torque 50 kg·cm (4.9 N·m) at 12 V; Speed 0.133 s/60° (75 rpm) at 12 V; Voltage 6–12 V · Mounting: Case 45.2 × 24.7 × 35 mm, same as the STS3215. 4× M2 on the top and bottom faces, 20.5 mm apart across the width. Output spline 25T, Ø5.9 mm, horn screw M3 × 6; rear idler boss Ø6 mm.
+  Actuator: stall 4.90 N·m, rated 1.57 N·m at 12 V (input 6–12 V), stall 4.2 A
+- component:waveshare-st3215-hs — Waveshare ST3215-HS · 45.22 × 24.72 × 37.8 mm · Stall torque 20 kg·cm (2.0 N·m) at 12 V; Speed 0.094 s/60° (106 rpm) at 12 V; Voltage 6–12.6 V · Mounting: Case 45.2 × 24.7 × 35 mm. Output axis 10.1 mm from the output end. Output face: 4 holes in two columns 20.7 mm apart, rows 20.5 mm apart (M2 on Feetech’s drawing). Ø19.2 aluminium horns on both faces, 4 holes on a 14 mm circle.
+Grippers:
+- component:so101-gripper — SO-101 Gripper · 65.6 × 52 × 106.4 mm · Actuator 1× Feetech STS3215; DOF 1 (revolute jaw); Travel −10° to +100° · Mounting: Static jaw and servo as published in the SO-101 model; the moving jaw is shown at 0°. Mounts to the wrist-roll servo horn with 4× M3 × 6."
+`;
+
+exports[`agentCatalog > lists matching components, hardware and supplies 2`] = `
+"
+Hardware (generated to ISO/DIN dimensions): hardware:<type>|<size>|<length mm>[|<finish>|<drive>], e.g. hardware:socket_head|M3|10, hardware:pan_head|M3|8|zinc|phillips, hardware:heat_insert|M3, hardware:bearing|608
+- hardware:socket_head — Socket Head Screw (Cap screw with a tall round head); sizes M2, M2.5, M3, M4, M5, M6, M8, M10, M12; lengths per size; drives hex, torx, phillips, pozidriv, slotted (default hex)
+
+Supplies (bought, not modeled: batteries, power, wiring, filament). Add them to the BOM with set_build({ extras }), not add_parts; model the battery or converter bay around the spec size:
+- supply:hex-key-set — Hex Key Set · 1.5–5 mm metric hex drivers (M2–M5 socket heads)"
+`;
+
+exports[`agentCatalog > lists matching components, hardware and supplies 3`] = `
+"Components (exact manufacturer geometry; size is x × y × z in mm as placed with rotation [0, 0, 0]):
+Microcontrollers:
+- component:seeed-xiao-esp32s3 — Seeed XIAO ESP32S3 · 22.48 × 17.78 × 4.46 mm · SoC ESP32-S3R8, 240 MHz dual-core; Memory 8 MB PSRAM · 8 MB flash; Wireless Wi-Fi 2.4 GHz · Bluetooth LE 5 · Mounting: PCB 21.135 × 17.78 mm, R1.905 corners, no mounting holes. Pin rows 15.24 mm apart; solder or socket it.
+
+Supplies (bought, not modeled: batteries, power, wiring, filament). Add them to the BOM with set_build({ extras }), not add_parts; model the battery or converter bay around the spec size:
+- supply:lipo-2s-2200 — 2S LiPo 2200 mAh · 7.4 V nominal (8.4 V full), 2200 mAh, 25C+, XT60, about 105 × 34 × 18 mm · about 120 g
+- supply:lipo-3s-2200 — 3S LiPo 2200 mAh · 11.1 V nominal (12.6 V full), 2200 mAh, 25C+, XT60, about 105 × 34 × 25 mm · about 172 g
+- supply:lipo-balance-charger — LiPo Balance Charger · 2S–4S balance charger, XT60 output, USB-C or AC input
+- supply:lipo-safe-bag — LiPo Safe Bag · Fire-resistant charging bag, fits a 2200 mAh pack
+- supply:lipo-voltage-alarm — LiPo Voltage Alarm · 1S–8S cell checker with low-voltage buzzer, plugs into the balance lead · about 9 g"
+`;
+
+exports[`scene ops > finds where each op lands 1`] = `
+[
+  [
+    1,
+    5,
+    -2,
+  ],
+  [
+    1,
+    33,
+    -2,
+  ],
+  null,
+  [
+    1,
+    3,
+    -2,
+  ],
+  [
+    1,
+    18,
+    -2,
+  ],
+  [
+    40,
+    30,
+    -0,
+  ],
+  [
+    -40,
+    30,
+    -0,
+  ],
+  [
+    40,
+    30,
+    0,
+  ],
+  [
+    40,
+    -30,
+    -0,
+  ],
+]
+`;
+
+exports[`scene ops > mirrors parts and swaps side words 1`] = `
+[
+  {
+    "category": "primitives",
+    "color": "#e4e4e7",
+    "dimensions": {
+      "depth": 20,
+      "height": 30,
+      "width": 10,
+    },
+    "group": {
+      "id": "agent-right",
+      "name": "Right",
+    },
+    "id": "right-arm",
+    "kind": "box",
+    "locked": false,
+    "mechanicalTag": "3D Printed PLA/PETG",
+    "name": "Right Arm",
+    "note": "",
+    "position": [
+      -40,
+      15,
+      -0,
+    ],
+    "role": "solid",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "visible": true,
+  },
+  {
+    "cad": {
+      "baseSize": [
+        10,
+        30,
+        20,
+      ],
+      "code": "cube([10, 20, 30]);",
+      "edges": [
+        5,
+        -15,
+        10,
+        -5,
+        15,
+        -10,
+      ],
+      "indices": [
+        0,
+        2,
+        1,
+        0,
+        3,
+        2,
+      ],
+      "language": "openscad",
+      "originOffset": [
+        -5,
+        15,
+        -10,
+      ],
+      "positions": [
+        5,
+        -15,
+        10,
+        -5,
+        -15,
+        10,
+        -5,
+        -15,
+        -10,
+        5,
+        15,
+        -10,
+      ],
+      "volume": 6000,
+    },
+    "category": "custom_models",
+    "color": "#e4e4e7",
+    "dimensions": {
+      "depth": 20,
+      "height": 30,
+      "width": 10,
+    },
+    "group": undefined,
+    "id": "shell-mirror",
+    "kind": "cad_part",
+    "locked": false,
+    "mechanicalTag": "3D Printed PLA/PETG",
+    "name": "Top Shell (Mirror)",
+    "note": "",
+    "position": [
+      -5,
+      15,
+      -20,
+    ],
+    "printMaterial": undefined,
+    "role": "solid",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "visible": true,
+  },
+]
+`;
+
+exports[`scene ops > snapshots the scene in the agent frame 1`] = `
+{
+  "bounds": {
+    "max": [
+      45,
+      30,
+      30,
+    ],
+    "min": [
+      0,
+      -10,
+      0,
+    ],
+    "size": [
+      45,
+      40,
+      30,
+    ],
+  },
+  "frame": "mm, Z up, floor z = 0, front faces −Y, left is +X",
+  "parts": [
+    {
+      "bounds": {
+        "max": [
+          45,
+          10,
+          30,
+        ],
+        "min": [
+          35,
+          -10,
+          0,
+        ],
+      },
+      "color": "#e4e4e7",
+      "group": "Left",
+      "id": "left-arm",
+      "kind": "box",
+      "material": "printed",
+      "name": "Left Arm",
+      "position": [
+        40,
+        0,
+        15,
+      ],
+      "role": "solid",
+      "rotation": [
+        0,
+        0,
+        0,
+      ],
+      "size": [
+        10,
+        20,
+        30,
+      ],
+    },
+    {
+      "bounds": {
+        "max": [
+          10,
+          30,
+          30,
+        ],
+        "min": [
+          0,
+          10,
+          0,
+        ],
+      },
+      "color": "#e4e4e7",
+      "group": undefined,
+      "id": "shell",
+      "kind": "cad (openscad)",
+      "material": "printed",
+      "name": "Top Shell",
+      "position": [
+        0,
+        10,
+        0,
+      ],
+      "role": "solid",
+      "rotation": [
+        0,
+        0,
+        0,
+      ],
+      "volume": 6000,
+    },
+  ],
+}
+`;
+
+exports[`specToPart and applySpec > builds catalog, CAD and primitive parts 1`] = `
+[
+  {
+    "category": "actuators",
+    "color": "#1d1d1f",
+    "componentId": "feetech-sts3215",
+    "componentVariant": "c001",
+    "dimensions": {
+      "depth": 24.72,
+      "height": 37.8,
+      "width": 45.22,
+    },
+    "group": undefined,
+    "hardware": undefined,
+    "id": "servo",
+    "kind": "component",
+    "locked": false,
+    "mechanicalTag": "Off-the-shelf COTS",
+    "name": "Feetech STS3215",
+    "note": "Feetech ST-3215-C001 (7.4 V) / C018 (12 V). Case 45.2 × 24.7 × 35 mm. Output spline 25T, Ø5.9 mm, 3.4 mm proud, axis 12.5 mm from the case center; horn screw M3 × 6. Rear idler boss Ø6 mm, 4.1 mm proud. Aluminium horns on both faces: Ø19.95, 4 × M3 threaded on a Ø14 circle, faces 1.4 mm beyond the case, so a U-bracket bolts to both. 4× M2 on the top and bottom faces, 20.5 mm apart across the width (Feetech STS3215 drawing).",
+    "position": [
+      10,
+      5,
+      -0,
+    ],
+    "role": "solid",
+    "rotation": [
+      0,
+      90,
+      0,
+    ],
+    "visible": true,
+  },
+  {
+    "category": "hardware",
+    "color": "#2b2b30",
+    "componentId": undefined,
+    "dimensions": {
+      "depth": 5.5,
+      "height": 13,
+      "width": 5.5,
+    },
+    "group": {
+      "id": "agent-left-arm",
+      "name": "Left Arm",
+    },
+    "hardware": {
+      "drive": "hex",
+      "finish": "black",
+      "length": 10,
+      "size": "M3",
+      "type": "socket_head",
+    },
+    "id": "screw",
+    "kind": "hardware",
+    "locked": false,
+    "mechanicalTag": "Off-the-shelf COTS",
+    "name": "M3 × 10 Socket Head Screw",
+    "note": "Clearance Ø3.4, counterbore Ø6.1 × 3.3 deep, tap Ø2.5 mm.",
+    "position": [
+      0,
+      6.5,
+      -0,
+    ],
+    "role": "solid",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "visible": true,
+  },
+  {
+    "cad": {
+      "baseSize": [
+        10,
+        30,
+        20,
+      ],
+      "code": "cube([10, 20, 30]);",
+      "edges": [
+        -5,
+        -15,
+        10,
+        5,
+        15,
+        -10,
+      ],
+      "indices": [
+        0,
+        1,
+        2,
+        0,
+        2,
+        3,
+      ],
+      "language": "openscad",
+      "originOffset": [
+        5,
+        15,
+        -10,
+      ],
+      "positions": [
+        -5,
+        -15,
+        10,
+        5,
+        -15,
+        10,
+        5,
+        -15,
+        -10,
+        -5,
+        15,
+        -10,
+      ],
+      "volume": 6000,
+    },
+    "category": "custom_models",
+    "color": "#ef4444",
+    "dimensions": {
+      "depth": 20,
+      "height": 30,
+      "width": 10,
+    },
+    "group": undefined,
+    "id": "shell",
+    "kind": "cad_part",
+    "locked": false,
+    "mechanicalTag": "3D Printed PLA/PETG",
+    "name": "shell",
+    "note": "",
+    "position": [
+      10,
+      15,
+      -15,
+    ],
+    "printMaterial": "PETG",
+    "role": "cutout",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "visible": true,
+  },
+  {
+    "category": "primitives",
+    "color": "#ef4444",
+    "dimensions": {
+      "depth": 5,
+      "height": 12,
+      "width": 5,
+    },
+    "group": undefined,
+    "id": "hole",
+    "kind": "hole_round",
+    "locked": false,
+    "mechanicalTag": "3D Printed PLA/PETG",
+    "name": "hole",
+    "note": "",
+    "position": [
+      0,
+      6,
+      -0,
+    ],
+    "role": "cutout",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "visible": true,
+  },
+  {
+    "category": "ai_markers",
+    "color": "#06b6d4",
+    "dimensions": {
+      "depth": 20,
+      "height": 20,
+      "width": 20,
+    },
+    "group": undefined,
+    "id": "axis",
+    "kind": "pivot_axis",
+    "locked": false,
+    "mechanicalTag": "Reference Axis",
+    "name": "axis",
+    "note": "",
+    "position": [
+      0,
+      10,
+      -0,
+    ],
+    "role": "reference",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "visible": true,
+  },
+  {
+    "category": "primitives",
+    "color": "#e4e4e7",
+    "dimensions": {
+      "depth": 30,
+      "height": 20,
+      "thickness": 2,
+      "width": 40,
+    },
+    "group": undefined,
+    "id": "pack",
+    "kind": "box",
+    "locked": false,
+    "mechanicalTag": "Off-the-shelf COTS",
+    "name": "pack",
+    "note": "",
+    "position": [
+      0,
+      10,
+      -0,
+    ],
+    "role": "solid",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "supplyId": "lipo-2s-2200",
+    "visible": true,
+  },
+]
+`;
+
+exports[`specToPart and applySpec > updates parts in place, keeping CAD placement 1`] = `
+[
+  {
+    "cad": {
+      "baseSize": [
+        10,
+        30,
+        20,
+      ],
+      "code": "cube([10, 20, 30]);",
+      "edges": [
+        -5,
+        -15,
+        10,
+        5,
+        15,
+        -10,
+      ],
+      "indices": [
+        0,
+        1,
+        2,
+        0,
+        2,
+        3,
+      ],
+      "language": "openscad",
+      "originOffset": [
+        5,
+        15,
+        -10,
+      ],
+      "positions": [
+        -5,
+        -15,
+        10,
+        5,
+        -15,
+        10,
+        5,
+        -15,
+        -10,
+        -5,
+        15,
+        -10,
+      ],
+      "volume": 6000,
+    },
+    "category": "custom_models",
+    "color": "#e4e4e7",
+    "dimensions": {
+      "depth": 20,
+      "height": 30,
+      "width": 10,
+    },
+    "group": undefined,
+    "id": "shell",
+    "kind": "cad_part",
+    "locked": false,
+    "mechanicalTag": "TPU Flexible",
+    "name": "Shell",
+    "note": "",
+    "position": [
+      1.464,
+      15,
+      -15.607,
+    ],
+    "printMaterial": "TPU",
+    "role": "solid",
+    "rotation": [
+      0,
+      45,
+      0,
+    ],
+    "supplyId": undefined,
+    "visible": true,
+  },
+  {
+    "category": "primitives",
+    "color": "#fff",
+    "dimensions": {
+      "depth": 30,
+      "height": 40,
+      "width": 20,
+    },
+    "group": {
+      "id": "agent-body",
+      "name": "Body",
+    },
+    "id": "block",
+    "kind": "box",
+    "locked": false,
+    "mechanicalTag": "3D Printed PLA/PETG",
+    "name": "block",
+    "note": "n",
+    "position": [
+      1,
+      3,
+      -2,
+    ],
+    "role": "solid",
+    "rotation": [
+      0,
+      0,
+      0,
+    ],
+    "visible": true,
+  },
+]
+`;

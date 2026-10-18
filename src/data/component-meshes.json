@@ -1,1822 +1,782 @@
 {
- "adafruit-bno085": {
-  "size": [
-   25.4,
-   4.53,
-   22.86
-  ],
-  "originOffset": [
-   -12.7,
-   -2.265,
-   11.43
-  ],
-  "triangles": 17248,
-  "bytes": 205320
- },
- "adafruit-pca9685": {
-  "size": [
-   62.23,
-   12.1,
-   25.4
-  ],
-  "originOffset": [
-   -29.21,
-   -4.04,
-   6.223
-  ],
-  "triangles": 34252,
-  "bytes": 413500
- },
- "agilex-piper-gripper": {
-  "size": [
-   70.5,
-   135.8,
-   145
-  ],
-  "originOffset": [
-   4.75,
-   -67.9,
-   0
-  ],
-  "triangles": 17160,
-  "bytes": 205808
- },
- "allegro-hand-v4": {
-  "size": [
-   251.813,
-   252.221,
-   58.2
-  ],
-  "originOffset": [
-   56.167,
-   -26.59,
-   -15.1
-  ],
-  "triangles": 119894,
-  "bytes": 1412200
- },
- "arducam-ov9281-global-shutter-usb": {
-  "size": [
-   38,
-   23.742,
-   38
-  ],
-  "originOffset": [
-   0,
-   -5.629,
-   0
-  ],
-  "triangles": 119994,
-  "bytes": 1446044
- },
- "arduino-nano-esp32": {
-  "size": [
-   44.292,
-   11.7,
-   17.78
-  ],
-  "originOffset": [
-   -21.034,
-   -2.65,
-   8.89
-  ],
-  "triangles": 85448,
-  "bytes": 1043788
- },
- "arduino-uno-r4-minima": {
-  "size": [
-   70.54,
-   14.5,
-   53.34
-  ],
-  "originOffset": [
-   -33.31,
-   -2.564,
-   26.67
-  ],
-  "triangles": 90344,
-  "bytes": 1096744
- },
- "basicmicro-roboclaw-2x15a": {
-  "size": [
-   52.263,
-   18,
-   73.861
-  ],
-  "originOffset": [
-   -20.989,
-   -43.546,
-   -60.134
-  ],
-  "triangles": 48240,
-  "bytes": 715964
- },
- "benewake-tf-luna": {
-  "size": [
-   35,
-   21.25,
-   13.5
-  ],
-  "originOffset": [
-   0,
-   -10.625,
-   0
-  ],
-  "triangles": 2310,
-  "bytes": 30276
- },
- "benewake-tfmini-s": {
-  "size": [
-   42,
-   15,
-   16
-  ],
-  "originOffset": [
-   0,
-   -7.5,
-   0
-  ],
-  "triangles": 4908,
-  "bytes": 60468
- },
- "cubemars-ak60-6": {
-  "size": [
-   79,
-   39.5,
-   78.97
-  ],
-  "originOffset": [
-   0,
-   19.75,
-   0
-  ],
-  "triangles": 11098,
-  "bytes": 134256
- },
- "cubemars-ak70-10": {
-  "size": [
-   89,
-   50.25,
-   89
-  ],
-  "originOffset": [
-   0,
-   24.625,
-   0
-  ],
-  "triangles": 27659,
-  "bytes": 389440
- },
- "cubemars-ak80-9": {
-  "size": [
-   98,
-   38.5,
-   98
-  ],
-  "originOffset": [
-   -0.36,
-   12.907,
-   0.293
-  ],
-  "triangles": 116592,
-  "bytes": 1405388
- },
- "dh-robotics-ag-95": {
-  "size": [
-   67,
-   187.639,
-   163.353
-  ],
-  "originOffset": [
-   850,
-   -140.318,
-   -0.013
-  ],
-  "triangles": 42216,
-  "bytes": 507136
- },
- "dsservo-ds3218": {
-  "size": [
-   65.178,
-   48.1,
-   20.039
-  ],
-  "originOffset": [
-   -5.397,
-   -4.05,
-   0
-  ],
-  "triangles": 40372,
-  "bytes": 485260
- },
- "dynamixel-2xl430-w250": {
-  "size": [
-   40.9,
-   40.9,
-   46.5
-  ],
-  "originOffset": [
-   -0.45,
-   -0.45,
-   0
-  ],
-  "triangles": 71290,
-  "bytes": 841168
- },
- "dynamixel-xc330-m288": {
-  "size": [
-   20,
-   29,
-   34
-  ],
-  "originOffset": [
-   0,
-   8,
-   -7.5
-  ],
-  "triangles": 25072,
-  "bytes": 297224
- },
- "dynamixel-xl330-m288": {
-  "size": [
-   20,
-   29,
-   34
-  ],
-  "originOffset": [
-   0,
-   8,
-   -7.5
-  ],
-  "triangles": 25072,
-  "bytes": 297224
- },
- "dynamixel-xl430-w250": {
-  "size": [
-   28.5,
-   40.9,
-   46.5
-  ],
-  "originOffset": [
-   0,
-   -0.45,
-   -12
-  ],
-  "triangles": 28745,
-  "bytes": 341236
- },
- "dynamixel-xm430-w350": {
-  "size": [
-   28.5,
-   42.7,
-   46.5
-  ],
-  "originOffset": [
-   0,
-   -2.35,
-   -12
-  ],
-  "triangles": 24646,
-  "bytes": 296948
- },
- "dynamixel-xm540-w270": {
-  "size": [
-   33.5,
-   54.3,
-   58.5
-  ],
-  "originOffset": [
-   0,
-   -2.65,
-   -15.5
-  ],
-  "triangles": 15068,
-  "bytes": 181892
- },
- "esp32-s3-devkitc-1": {
-  "size": [
-   70.02,
-   13.2,
-   25.4
-  ],
-  "originOffset": [
-   -2.77,
-   1.9,
-   0
-  ],
-  "triangles": 6008,
-  "bytes": 73996
- },
- "espressif-esp32-s3-eye": {
-  "size": [
-   61,
-   12.3,
-   30
-  ],
-  "originOffset": [
-   0.5,
-   -3.05,
-   0
-  ],
-  "triangles": 420,
-  "bytes": 9316
- },
- "feetech-scs0009": {
-  "size": [
-   32.5,
-   28.45,
-   12.1
-  ],
-  "originOffset": [
-   0,
-   -14.225,
-   0
-  ],
-  "triangles": 1128,
-  "bytes": 15148
- },
- "feetech-sts3215": {
-  "size": [
-   45.223,
-   37.8,
-   24.723
-  ],
-  "originOffset": [
-   13,
-   -9.3,
-   0
-  ],
-  "triangles": 55030,
-  "bytes": 662124
- },
- "feetech-sts3250": {
-  "size": [
-   45.223,
-   37.8,
-   24.723
-  ],
-  "originOffset": [
-   13,
-   -9.3,
-   0
-  ],
-  "triangles": 55030,
-  "bytes": 662124
- },
- "garmin-lidar-lite-v3hp": {
-  "size": [
-   54.99,
-   40.18,
-   35
-  ],
-  "originOffset": [
-   0,
-   -20.09,
-   0
-  ],
-  "triangles": 2412,
-  "bytes": 30524
- },
- "hc-sr04": {
-  "size": [
-   45,
-   15,
-   26
-  ],
-  "originOffset": [
-   0,
-   -7.5,
-   -3
-  ],
-  "triangles": 2116,
-  "bytes": 27356
- },
- "hesai-jt128": {
-  "size": [
-   62.5,
-   73.052,
-   70.049
-  ],
-  "originOffset": [
-   0,
-   -36.526,
-   3.776
-  ],
-  "triangles": 119964,
-  "bytes": 1515812
- },
- "hiwonder-lx-16a": {
-  "size": [
-   45.223,
-   37.3,
-   24.723
-  ],
-  "originOffset": [
-   13,
-   -9.55,
-   0
-  ],
-  "triangles": 106963,
-  "bytes": 1283100
- },
- "hokuyo-ust-10lx": {
-  "size": [
-   50,
-   70,
-   52.8
-  ],
-  "originOffset": [
-   0,
-   -35,
-   1.4
-  ],
-  "triangles": 2816,
-  "bytes": 36544
- },
- "hopejr-hand": {
-  "size": [
-   196.588,
-   212.83,
-   119.353
-  ],
-  "originOffset": [
-   -194.257,
-   -452.775,
-   180.804
-  ],
-  "triangles": 119998,
-  "bytes": 1437184
- },
- "inspire-rh56dfx": {
-  "size": [
-   142.568,
-   217.8,
-   102.949
-  ],
-  "originOffset": [
-   -30.934,
-   -108.9,
-   -25.474
-  ],
-  "triangles": 13838,
-  "bytes": 166904
- },
- "jetson-orin-nano-devkit": {
-  "size": [
-   103,
-   34.766,
-   90.877
-  ],
-  "originOffset": [
-   -46,
-   -12.483,
-   26.562
-  ],
-  "triangles": 193975,
-  "bytes": 3070544
- },
- "koch-v1-1-gripper": {
-  "size": [
-   37.75,
-   68.868,
-   35.5
-  ],
-  "originOffset": [
-   -4.147,
-   -15.542,
-   -221.065
-  ],
-  "triangles": 8548,
-  "bytes": 103304
- },
- "ldrobot-ld06": {
-  "size": [
-   38.59,
-   33.5,
-   38.59
-  ],
-  "originOffset": [
-   0,
-   -16.75,
-   0
-  ],
-  "triangles": 7028,
-  "bytes": 87208
- },
- "ldrobot-ld19": {
-  "size": [
-   53.972,
-   35.002,
-   46.28
-  ],
-  "originOffset": [
-   0,
-   -7.299,
-   -3.846
-  ],
-  "triangles": 116066,
-  "bytes": 1392976
- },
- "ldrobot-stl-27l": {
-  "size": [
-   53.972,
-   35.002,
-   46.28
-  ],
-  "originOffset": [
-   0,
-   -7.299,
-   -3.846
-  ],
-  "triangles": 116066,
-  "bytes": 1392984
- },
- "leap-hand": {
-  "size": [
-   239.6,
-   232.5,
-   63.2
-  ],
-  "originOffset": [
-   18.958,
-   -15.355,
-   7.322
-  ],
-  "triangles": 119950,
-  "bytes": 1420224
- },
- "linker-hand-l10": {
-  "size": [
-   171.834,
-   240.311,
-   85.215
-  ],
-  "originOffset": [
-   38.858,
-   -120.149,
-   10.236
-  ],
-  "triangles": 119972,
-  "bytes": 1433308
- },
- "linker-hand-o6": {
-  "size": [
-   150.457,
-   176.897,
-   85.162
-  ],
-  "originOffset": [
-   35.13,
-   -88.449,
-   22.581
-  ],
-  "triangles": 119794,
-  "bytes": 1435060
- },
- "livox-avia": {
-  "size": [
-   91,
-   64.8,
-   75.55
-  ],
-  "originOffset": [
-   65.3,
-   -48.3,
-   -31.325
-  ],
-  "triangles": 74366,
-  "bytes": 893764
- },
- "livox-mid-360": {
-  "size": [
-   72.737,
-   60.097,
-   64.874
-  ],
-  "originOffset": [
-   -3.932,
-   -4.131,
-   0
-  ],
-  "triangles": 120011,
-  "bytes": 1447008
- },
- "luxonis-oak-1": {
-  "size": [
-   36,
-   54.5,
-   27.8
-  ],
-  "originOffset": [
-   0,
-   2.75,
-   -1.6
-  ],
-  "triangles": 119999,
-  "bytes": 1441388
- },
- "luxonis-oak-d-lite": {
-  "size": [
-   91,
-   28,
-   17.45
-  ],
-  "originOffset": [
-   -41,
-   11,
-   -0.225
-  ],
-  "triangles": 121516,
-  "bytes": 1502796
- },
- "luxonis-oak-d-pro": {
-  "size": [
-   97,
-   29.5,
-   23.101
-  ],
-  "originOffset": [
-   -44.5,
-   -11.75,
-   -1.45
-  ],
-  "triangles": 120000,
-  "bytes": 1440868
- },
- "luxonis-oak-d-s2": {
-  "size": [
-   97,
-   29.5,
-   23.101
-  ],
-  "originOffset": [
-   -44.5,
-   11.75,
-   1.45
-  ],
-  "triangles": 120000,
-  "bytes": 1440880
- },
- "luxonis-oak-d-w": {
-  "size": [
-   97,
-   29.5,
-   23.101
-  ],
-  "originOffset": [
-   -44.5,
-   11.75,
-   1.45
-  ],
-  "triangles": 120000,
-  "bytes": 1440876
- },
- "mjbots-moteus-c1": {
-  "size": [
-   38,
-   9.5,
-   38
-  ],
-  "originOffset": [
-   0,
-   2.45,
-   0
-  ],
-  "triangles": 7188,
-  "bytes": 86200
- },
- "mjbots-moteus-r4": {
-  "size": [
-   46,
-   13.35,
-   53
-  ],
-  "originOffset": [
-   0,
-   0.475,
-   16.5
-  ],
-  "triangles": 2576,
-  "bytes": 31784
- },
- "mjbots-qdd100": {
-  "size": [
-   99.989,
-   43.95,
-   99.996
-  ],
-  "originOffset": [
-   0.006,
-   -6.725,
-   -0.002
-  ],
-  "triangles": 4698,
-  "bytes": 57396
- },
- "myactuator-rmd-x8-pro": {
-  "size": [
-   98,
-   51,
-   98
-  ],
-  "originOffset": [
-   0,
-   20.5,
-   0
-  ],
-  "triangles": 68480,
-  "bytes": 847772
- },
- "nema17-17hs4401": {
-  "size": [
-   42.3,
-   64,
-   42.3
-  ],
-  "originOffset": [
-   0,
-   -32,
-   0
-  ],
-  "triangles": 1736,
-  "bytes": 22392
- },
- "odrive-d6374": {
-  "size": [
-   62.97,
-   120,
-   63
-  ],
-  "originOffset": [
-   0,
-   30,
-   0
-  ],
-  "triangles": 6017,
-  "bytes": 87512
- },
- "onrobot-2fg7": {
-  "size": [
-   75.493,
-   156.25,
-   90
-  ],
-  "originOffset": [
-   -2.247,
-   20.575,
-   0
-  ],
-  "triangles": 122284,
-  "bytes": 1478740
- },
- "onrobot-rg2": {
-  "size": [
-   104.412,
-   224.537,
-   75.493
-  ],
-  "originOffset": [
-   0,
-   -93.969,
-   2.247
-  ],
-  "triangles": 159446,
-  "bytes": 1990772
- },
- "onrobot-rg6": {
-  "size": [
-   175.874,
-   259.337,
-   75.493
-  ],
-  "originOffset": [
-   12.986,
-   -90.16,
-   57.169
-  ],
-  "triangles": 162312,
-  "bytes": 1965264
- },
- "onrobot-vgc10": {
-  "size": [
-   100.035,
-   98.5,
-   100.035
-  ],
-  "originOffset": [
-   0,
-   -51.85,
-   0
-  ],
-  "triangles": 124783,
-  "bytes": 1505588
- },
- "openmanipulator-x-gripper": {
-  "size": [
-   68.75,
-   166.689,
-   128.6
-  ],
-  "originOffset": [
-   5.375,
-   -63.355,
-   0
-  ],
-  "triangles": 18352,
-  "bytes": 219356
- },
- "orbbec-femto-bolt": {
-  "size": [
-   115.264,
-   40.265,
-   71.767
-  ],
-  "originOffset": [
-   -57,
-   19.499,
-   29.467
-  ],
-  "triangles": 97018,
-  "bytes": 1168440
- },
- "orbbec-gemini-2": {
-  "size": [
-   89.46,
-   25.025,
-   33.43
-  ],
-  "originOffset": [
-   0,
-   0,
-   1.935
-  ],
-  "triangles": 119999,
-  "bytes": 1445160
- },
- "orbbec-gemini-336": {
-  "size": [
-   89.46,
-   25.025,
-   34.404
-  ],
-  "originOffset": [
-   0,
-   0,
-   1.448
-  ],
-  "triangles": 120008,
-  "bytes": 1439712
- },
- "orca-hand": {
-  "size": [
-   122.614,
-   327.562,
-   108.322
-  ],
-  "originOffset": [
-   -45.487,
-   -118.152,
-   6.161
-  ],
-  "triangles": 165741,
-  "bytes": 1977376
- },
- "ouster-os0": {
-  "size": [
-   87,
-   58.35,
-   85.322
-  ],
-  "originOffset": [
-   0,
-   -29.175,
-   3.661
-  ],
-  "triangles": 22642,
-  "bytes": 272380
- },
- "ouster-os1": {
-  "size": [
-   87,
-   58.35,
-   85.322
-  ],
-  "originOffset": [
-   0,
-   -29.175,
-   3.661
-  ],
-  "triangles": 22642,
-  "bytes": 272380
- },
- "pollen-amazing-hand": {
-  "size": [
-   124.936,
-   169.79,
-   120.596
-  ],
-  "originOffset": [
-   -29.668,
-   -84.895,
-   -4.872
-  ],
-  "triangles": 119978,
-  "bytes": 1443140
- },
- "pololu-25d-gearmotor": {
-  "size": [
-   25,
-   80.95,
-   30.754
-  ],
-  "originOffset": [
-   0,
-   27.975,
-   2.877
-  ],
-  "triangles": 13344,
-  "bytes": 187744
- },
- "pololu-37d-gearmotor": {
-  "size": [
-   36.879,
-   92.1,
-   41.215
-  ],
-  "originOffset": [
-   -19.964,
-   4.125,
-   -2.222
-  ],
-  "triangles": 15576,
-  "bytes": 220864
- },
- "pololu-a4988": {
-  "size": [
-   15.24,
-   3.37,
-   20.32
-  ],
-  "originOffset": [
-   -7.62,
-   -1.685,
-   10.16
-  ],
-  "triangles": 12700,
-  "bytes": 199376
- },
- "pololu-drv8825": {
-  "size": [
-   15.24,
-   11.87,
-   20.32
-  ],
-  "originOffset": [
-   -7.62,
-   2.565,
-   10.16
-  ],
-  "triangles": 16216,
-  "bytes": 246864
- },
- "pololu-micro-metal-gearmotor-encoder": {
-  "size": [
-   13.6,
-   42,
-   13.1
-  ],
-  "originOffset": [
-   0,
-   2,
-   1.45
-  ],
-  "triangles": 42564,
-  "bytes": 540364
- },
- "pololu-micro-metal-gearmotor": {
-  "size": [
-   12,
-   40.3,
-   10
-  ],
-  "originOffset": [
-   0,
-   1.15,
-   0
-  ],
-  "triangles": 36254,
-  "bytes": 451864
- },
- "pololu-tb6612fng": {
-  "size": [
-   15.24,
-   2.816,
-   20.32
-  ],
-  "originOffset": [
-   -7.62,
-   -1.408,
-   10.16
-  ],
-  "triangles": 13346,
-  "bytes": 202112
- },
- "psyonic-ability-hand": {
-  "size": [
-   137.076,
-   174.978,
-   80.221
-  ],
-  "originOffset": [
-   6.492,
-   -56.722,
-   -6.725
-  ],
-  "triangles": 17300,
-  "bytes": 208728
- },
- "raspberry-pi-4b": {
-  "size": [
-   88.99,
-   19.9,
-   58.4
-  ],
-  "originOffset": [
-   -1.995,
-   -7.05,
-   -1.2
-  ],
-  "triangles": 119988,
-  "bytes": 1524076
- },
- "raspberry-pi-5": {
-  "size": [
-   88.5,
-   18.976,
-   57.63
-  ],
-  "originOffset": [
-   -43.8,
-   -8.038,
-   27.185
-  ],
-  "triangles": 154554,
-  "bytes": 2112692
- },
- "raspberry-pi-ai-camera": {
-  "size": [
-   25,
-   11.9,
-   23.862
-  ],
-  "originOffset": [
-   0,
-   -3.4,
-   0
-  ],
-  "triangles": 1084,
-  "bytes": 15860
- },
- "raspberry-pi-camera-2": {
-  "size": [
-   25,
-   9,
-   23.862
-  ],
-  "originOffset": [
-   0,
-   -2,
-   0
-  ],
-  "triangles": 884,
-  "bytes": 12692
- },
- "raspberry-pi-camera-3-wide": {
-  "size": [
-   23.862,
-   11.4,
-   25
-  ],
-  "originOffset": [
-   -11.931,
-   3.105,
-   12.5
-  ],
-  "triangles": 119802,
-  "bytes": 1295328
- },
- "raspberry-pi-camera-3": {
-  "size": [
-   23.862,
-   10.245,
-   25
-  ],
-  "originOffset": [
-   -11.931,
-   2.528,
-   12.5
-  ],
-  "triangles": 119682,
-  "bytes": 1306736
- },
- "raspberry-pi-global-shutter-camera": {
-  "size": [
-   39.5,
-   25.07,
-   51.86
-  ],
-  "originOffset": [
-   0,
-   -6.215,
-   -4.43
-  ],
-  "triangles": 4064,
-  "bytes": 51412
- },
- "raspberry-pi-hq-camera": {
-  "size": [
-   38,
-   21.5,
-   51.86
-  ],
-  "originOffset": [
-   0,
-   -8,
-   -4.43
-  ],
-  "triangles": 3198,
-  "bytes": 40088
- },
- "raspberry-pi-pico-2": {
-  "size": [
-   52.3,
-   3.765,
-   21
-  ],
-  "originOffset": [
-   0.65,
-   -1.807,
-   0
-  ],
-  "triangles": 120055,
-  "bytes": 1535668
- },
- "raspberry-pi-zero-2w": {
-  "size": [
-   65,
-   4.3,
-   31.44
-  ],
-  "originOffset": [
-   0,
-   -2.15,
-   -0.72
-  ],
-  "triangles": 3180,
-  "bytes": 39424
- },
- "realsense-d405": {
-  "size": [
-   42.09,
-   42,
-   23
-  ],
-  "originOffset": [
-   0.045,
-   0,
-   11.5
-  ],
-  "triangles": 3892,
-  "bytes": 47740
- },
- "realsense-d415": {
-  "size": [
-   98.871,
-   20.05,
-   23
-  ],
-  "originOffset": [
-   0.059,
-   10.025,
-   0
-  ],
-  "triangles": 119994,
-  "bytes": 1432216
- },
- "realsense-d435": {
-  "size": [
-   90,
-   25,
-   25.05
-  ],
-  "originOffset": [
-   0,
-   -12.5,
-   0
-  ],
-  "triangles": 10304,
-  "bytes": 127556
- },
- "realsense-d435i": {
-  "size": [
-   90,
-   25,
-   25.05
-  ],
-  "originOffset": [
-   0,
-   -12.5,
-   0
-  ],
-  "triangles": 10304,
-  "bytes": 127556
- },
- "realsense-d455": {
-  "size": [
-   123.994,
-   26,
-   29
-  ],
-  "originOffset": [
-   0,
-   13,
-   0
-  ],
-  "triangles": 51161,
-  "bytes": 614968
- },
- "realsense-d457": {
-  "size": [
-   124,
-   29,
-   36
-  ],
-  "originOffset": [
-   0,
-   -14.5,
-   0
-  ],
-  "triangles": 6360,
-  "bytes": 79032
- },
- "robotiq-2f-140": {
-  "size": [
-   206.969,
-   213.337,
-   75
-  ],
-  "originOffset": [
-   -0.003,
-   -103.296,
-   -211.334
-  ],
-  "triangles": 115020,
-  "bytes": 1381624
- },
- "robotiq-2f-85": {
-  "size": [
-   152.481,
-   152.731,
-   75
-  ],
-  "originOffset": [
-   0,
-   -72.845,
-   -93.426
-  ],
-  "triangles": 117628,
-  "bytes": 1413576
- },
- "robotiq-hand-e": {
-  "size": [
-   75,
-   151.1,
-   75
-  ],
-  "originOffset": [
-   0,
-   15.45,
-   0
-  ],
-  "triangles": 79500,
-  "bytes": 958360
- },
- "robotis-rh-p12-rn": {
-  "size": [
-   151,
-   116.3,
-   57
-  ],
-  "originOffset": [
-   0,
-   -58.15,
-   1.5
-  ],
-  "triangles": 7114,
-  "bytes": 89312
- },
- "robotis-u2d2": {
-  "size": [
-   48,
-   18,
-   14.9
-  ],
-  "originOffset": [
-   0,
-   0,
-   0.55
-  ],
-  "triangles": 14818,
-  "bytes": 178384
- },
- "robstride-02": {
-  "size": [
-   78.499,
-   45.4,
-   78.499
-  ],
-  "originOffset": [
-   0,
-   18.7,
-   0.001
-  ],
-  "triangles": 24548,
-  "bytes": 295556
- },
- "seeed-xiao-esp32s3-sense": {
-  "size": [
-   24.363,
-   13.96,
-   17.78
-  ],
-  "originOffset": [
-   -3.208,
-   -6.73,
-   6.111
-  ],
-  "triangles": 47604,
-  "bytes": 575728
- },
- "seeed-xiao-esp32s3": {
-  "size": [
-   22.482,
-   4.46,
-   17.78
-  ],
-  "originOffset": [
-   -2.568,
-   -1.98,
-   6.111
-  ],
-  "triangles": 18404,
-  "bytes": 225348
- },
- "slamtec-rplidar-a1m8": {
-  "size": [
-   110.274,
-   51,
-   71.438
-  ],
-  "originOffset": [
-   50.062,
-   -22.196,
-   13.066
-  ],
-  "triangles": 119996,
-  "bytes": 1436296
- },
- "slamtec-rplidar-a2m12": {
-  "size": [
-   136.171,
-   40.8,
-   75
-  ],
-  "originOffset": [
-   -24.559,
-   -28.614,
-   -75
-  ],
-  "triangles": 71998,
-  "bytes": 895880
- },
- "slamtec-rplidar-a3m1": {
-  "size": [
-   136.171,
-   40.8,
-   75
-  ],
-  "originOffset": [
-   -24.559,
-   -28.614,
-   -75
-  ],
-  "triangles": 71998,
-  "bytes": 895876
- },
- "slamtec-rplidar-c1": {
-  "size": [
-   159.455,
-   43.136,
-   75.894
-  ],
-  "originOffset": [
-   51.927,
-   -19.732,
-   10.147
-  ],
-  "triangles": 120132,
-  "bytes": 1449056
- },
- "slamtec-rplidar-s2": {
-  "size": [
-   77,
-   39.8,
-   80.6
-  ],
-  "originOffset": [
-   0,
-   -19.9,
-   1.8
-  ],
-  "triangles": 5992,
-  "bytes": 74160
- },
- "slamtec-rplidar-s3": {
-  "size": [
-   55.6,
-   41.3,
-   116.373
-  ],
-  "originOffset": [
-   0,
-   -7.15,
-   -30.387
-  ],
-  "triangles": 97538,
-  "bytes": 1175020
- },
- "so101-gripper": {
-  "size": [
-   65.6,
-   106.4,
-   52
-  ],
-  "originOffset": [
-   2.4,
-   -52.2,
-   2
-  ],
-  "triangles": 76092,
-  "bytes": 913744
- },
- "stepperonline-14hs13-0804s": {
-  "size": [
-   35.211,
-   58,
-   53.21
-  ],
-  "originOffset": [
-   0,
-   5,
-   8.995
-  ],
-  "triangles": 17652,
-  "bytes": 218284
- },
- "stepperonline-17he08-1004s": {
-  "size": [
-   42.32,
-   43,
-   60.21
-  ],
-  "originOffset": [
-   0,
-   1.5,
-   8.945
-  ],
-  "triangles": 18428,
-  "bytes": 234776
- },
- "stepperonline-17hs19-2004s1": {
-  "size": [
-   42.32,
-   72,
-   60.31
-  ],
-  "originOffset": [
-   0,
-   12,
-   8.995
-  ],
-  "triangles": 19282,
-  "bytes": 244048
- },
- "stepperonline-23hs22-2804s": {
-  "size": [
-   72.5,
-   77,
-   57
-  ],
-  "originOffset": [
-   7.75,
-   -38.5,
-   0
-  ],
-  "triangles": 28050,
-  "bytes": 349808
- },
- "stereolabs-zed-2i": {
-  "size": [
-   175.243,
-   30.25,
-   55.719
-  ],
-  "originOffset": [
-   36.651,
-   -6.39,
-   -17.651
-  ],
-  "triangles": 54729,
-  "bytes": 661668
- },
- "stereolabs-zed-mini": {
-  "size": [
-   125.2,
-   26.624,
-   30.25
-  ],
-  "originOffset": [
-   -2.25,
-   -0.012,
-   -15.125
-  ],
-  "triangles": 3332,
-  "bytes": 41140
- },
- "stereolabs-zed-x-mini": {
-  "size": [
-   93.53,
-   31.818,
-   47.4
-  ],
-  "originOffset": [
-   3.072,
-   -14.161,
-   14.089
-  ],
-  "triangles": 103830,
-  "bytes": 1250164
- },
- "stereolabs-zed-x": {
-  "size": [
-   163.53,
-   31.818,
-   47.4
-  ],
-  "originOffset": [
-   18.206,
-   -66.224,
-   43.81
-  ],
-  "triangles": 88478,
-  "bytes": 1062292
- },
- "teensy-41": {
-  "size": [
-   61.66,
-   4.07,
-   17.78
-  ],
-  "originOffset": [
-   0.35,
-   -2.035,
-   0
-  ],
-  "triangles": 6570,
-  "bytes": 79580
- },
- "tetheria-aero-hand-open": {
-  "size": [
-   163.311,
-   197.776,
-   124.809
-  ],
-  "originOffset": [
-   -20.934,
-   7.112,
-   -36.412
-  ],
-  "triangles": 143069,
-  "bytes": 1774116
- },
- "towerpro-mg996r": {
-  "size": [
-   54,
-   42.7,
-   20
-  ],
-  "originOffset": [
-   0,
-   -21.35,
-   0
-  ],
-  "triangles": 476,
-  "bytes": 7264
- },
- "towerpro-sg90": {
-  "size": [
-   32.3,
-   30.3,
-   12.2
-  ],
-  "originOffset": [
-   0,
-   -15.15,
-   0
-  ],
-  "triangles": 432,
-  "bytes": 6856
- },
- "trossen-widowx-250-gripper": {
-  "size": [
-   103.486,
-   109.154,
-   55.236
-  ],
-  "originOffset": [
-   0,
-   -459.807,
-   367.882
-  ],
-  "triangles": 2704,
-  "bytes": 34248
- },
- "ufactory-bio-gripper": {
-  "size": [
-   177,
-   195,
-   65.5
-  ],
-  "originOffset": [
-   9.186,
-   195,
-   -13.013
-  ],
-  "triangles": 73100,
-  "bytes": 874020
- },
- "ufactory-xarm-gripper": {
-  "size": [
-   130.901,
-   181.322,
-   75
-  ],
-  "originOffset": [
-   0,
-   -44.163,
-   0
-  ],
-  "triangles": 122832,
-  "bytes": 1546408
- },
- "unitree-4d-lidar-l2": {
-  "size": [
-   74.927,
-   63.524,
-   74.989
-  ],
-  "originOffset": [
-   -7.731,
-   -25.092,
-   14.665
-  ],
-  "triangles": 68822,
-  "bytes": 830172
- },
- "unitree-dex1-1": {
-  "size": [
-   81.1,
-   147.3,
-   124.049
-  ],
-  "originOffset": [
-   0,
-   -73.65,
-   -27.024
-  ],
-  "triangles": 65176,
-  "bytes": 780408
- },
- "unitree-dex3-1": {
-  "size": [
-   138.833,
-   175.812,
-   88.444
-  ],
-  "originOffset": [
-   -47.995,
-   -87.906,
-   0.187
-  ],
-  "triangles": 80286,
-  "bytes": 960332
- },
- "unitree-dex5-1": {
-  "size": [
-   198.993,
-   211.076,
-   80.921
-  ],
-  "originOffset": [
-   -29.489,
-   -65.766,
-   9.611
-  ],
-  "triangles": 119992,
-  "bytes": 1396396
- },
- "unitree-go-m8010-6": {
-  "size": [
-   96.5,
-   42.3,
-   96.5
-  ],
-  "originOffset": [
-   0.365,
-   -92.595,
-   -188
-  ],
-  "triangles": 120212,
-  "bytes": 1523196
- },
- "unitree-z1-gripper": {
-  "size": [
-   68.85,
-   156,
-   82
-  ],
-  "originOffset": [
-   -1.925,
-   -71,
-   0
-  ],
-  "triangles": 66456,
-  "bytes": 798856
- },
- "velodyne-vlp-16": {
-  "size": [
-   103.3,
-   71.7,
-   116
-  ],
-  "originOffset": [
-   0,
-   -35.85,
-   6.35
-  ],
-  "triangles": 11562,
-  "bytes": 141036
- },
- "waveshare-bus-servo-adapter-a": {
-  "size": [
-   42.024,
-   14.6,
-   33.816
-  ],
-  "originOffset": [
-   -21,
-   -3.7,
-   16.104
-  ],
-  "triangles": 119994,
-  "bytes": 1446868
- },
- "waveshare-st3215-hs": {
-  "size": [
-   45.223,
-   37.8,
-   24.723
-  ],
-  "originOffset": [
-   13,
-   -9.3,
-   0
-  ],
-  "triangles": 55030,
-  "bytes": 662136
- },
- "ydlidar-x4-pro": {
-  "size": [
-   110.6,
-   59.4,
-   71.5
-  ],
-  "originOffset": [
-   -10.8,
-   -29.7,
-   0
-  ],
-  "triangles": 4714,
-  "bytes": 59468
- }
+  "adafruit-bno085": {
+    "size": [25.4, 4.53, 22.86],
+    "originOffset": [-12.7, -2.265, 11.43],
+    "triangles": 17248,
+    "bytes": 205320
+  },
+  "adafruit-pca9685": {
+    "size": [62.23, 12.1, 25.4],
+    "originOffset": [-29.21, -4.04, 6.223],
+    "triangles": 34252,
+    "bytes": 413500
+  },
+  "agilex-piper-gripper": {
+    "size": [70.5, 135.8, 145],
+    "originOffset": [4.75, -67.9, 0],
+    "triangles": 17160,
+    "bytes": 205808
+  },
+  "allegro-hand-v4": {
+    "size": [251.813, 252.221, 58.2],
+    "originOffset": [56.167, -26.59, -15.1],
+    "triangles": 119894,
+    "bytes": 1412200
+  },
+  "arducam-ov9281-global-shutter-usb": {
+    "size": [38, 23.742, 38],
+    "originOffset": [0, -5.629, 0],
+    "triangles": 119994,
+    "bytes": 1446044
+  },
+  "arduino-nano-esp32": {
+    "size": [44.292, 11.7, 17.78],
+    "originOffset": [-21.034, -2.65, 8.89],
+    "triangles": 85448,
+    "bytes": 1043788
+  },
+  "arduino-uno-r4-minima": {
+    "size": [70.54, 14.5, 53.34],
+    "originOffset": [-33.31, -2.564, 26.67],
+    "triangles": 90344,
+    "bytes": 1096744
+  },
+  "basicmicro-roboclaw-2x15a": {
+    "size": [52.263, 18, 73.861],
+    "originOffset": [-20.989, -43.546, -60.134],
+    "triangles": 48240,
+    "bytes": 715964
+  },
+  "benewake-tf-luna": {
+    "size": [35, 21.25, 13.5],
+    "originOffset": [0, -10.625, 0],
+    "triangles": 2310,
+    "bytes": 30276
+  },
+  "benewake-tfmini-s": {
+    "size": [42, 15, 16],
+    "originOffset": [0, -7.5, 0],
+    "triangles": 4908,
+    "bytes": 60468
+  },
+  "cubemars-ak60-6": {
+    "size": [79, 39.5, 78.97],
+    "originOffset": [0, 19.75, 0],
+    "triangles": 11098,
+    "bytes": 134256
+  },
+  "cubemars-ak70-10": {
+    "size": [89, 50.25, 89],
+    "originOffset": [0, 24.625, 0],
+    "triangles": 27659,
+    "bytes": 389440
+  },
+  "cubemars-ak80-9": {
+    "size": [98, 38.5, 98],
+    "originOffset": [-0.36, 12.907, 0.293],
+    "triangles": 116592,
+    "bytes": 1405388
+  },
+  "dh-robotics-ag-95": {
+    "size": [67, 187.639, 163.353],
+    "originOffset": [850, -140.318, -0.013],
+    "triangles": 42216,
+    "bytes": 507136
+  },
+  "dsservo-ds3218": {
+    "size": [65.178, 48.1, 20.039],
+    "originOffset": [-5.397, -4.05, 0],
+    "triangles": 40372,
+    "bytes": 485260
+  },
+  "dynamixel-2xl430-w250": {
+    "size": [40.9, 40.9, 46.5],
+    "originOffset": [-0.45, -0.45, 0],
+    "triangles": 71290,
+    "bytes": 841168
+  },
+  "dynamixel-xc330-m288": {
+    "size": [20, 29, 34],
+    "originOffset": [0, 8, -7.5],
+    "triangles": 25072,
+    "bytes": 297224
+  },
+  "dynamixel-xl330-m288": {
+    "size": [20, 29, 34],
+    "originOffset": [0, 8, -7.5],
+    "triangles": 25072,
+    "bytes": 297224
+  },
+  "dynamixel-xl430-w250": {
+    "size": [28.5, 40.9, 46.5],
+    "originOffset": [0, -0.45, -12],
+    "triangles": 28745,
+    "bytes": 341236
+  },
+  "dynamixel-xm430-w350": {
+    "size": [28.5, 42.7, 46.5],
+    "originOffset": [0, -2.35, -12],
+    "triangles": 24646,
+    "bytes": 296948
+  },
+  "dynamixel-xm540-w270": {
+    "size": [33.5, 54.3, 58.5],
+    "originOffset": [0, -2.65, -15.5],
+    "triangles": 15068,
+    "bytes": 181892
+  },
+  "esp32-s3-devkitc-1": {
+    "size": [70.02, 13.2, 25.4],
+    "originOffset": [-2.77, 1.9, 0],
+    "triangles": 6008,
+    "bytes": 73996
+  },
+  "espressif-esp32-s3-eye": {
+    "size": [61, 12.3, 30],
+    "originOffset": [0.5, -3.05, 0],
+    "triangles": 420,
+    "bytes": 9316
+  },
+  "feetech-scs0009": {
+    "size": [32.5, 28.45, 12.1],
+    "originOffset": [0, -14.225, 0],
+    "triangles": 1128,
+    "bytes": 15148
+  },
+  "feetech-sts3215": {
+    "size": [45.223, 37.8, 24.723],
+    "originOffset": [13, -9.3, 0],
+    "triangles": 55030,
+    "bytes": 662124
+  },
+  "feetech-sts3250": {
+    "size": [45.223, 37.8, 24.723],
+    "originOffset": [13, -9.3, 0],
+    "triangles": 55030,
+    "bytes": 662124
+  },
+  "garmin-lidar-lite-v3hp": {
+    "size": [54.99, 40.18, 35],
+    "originOffset": [0, -20.09, 0],
+    "triangles": 2412,
+    "bytes": 30524
+  },
+  "hc-sr04": {
+    "size": [45, 15, 26],
+    "originOffset": [0, -7.5, -3],
+    "triangles": 2116,
+    "bytes": 27356
+  },
+  "hesai-jt128": {
+    "size": [62.5, 73.052, 70.049],
+    "originOffset": [0, -36.526, 3.776],
+    "triangles": 119964,
+    "bytes": 1515812
+  },
+  "hiwonder-lx-16a": {
+    "size": [45.223, 37.3, 24.723],
+    "originOffset": [13, -9.55, 0],
+    "triangles": 106963,
+    "bytes": 1283100
+  },
+  "hokuyo-ust-10lx": {
+    "size": [50, 70, 52.8],
+    "originOffset": [0, -35, 1.4],
+    "triangles": 2816,
+    "bytes": 36544
+  },
+  "hopejr-hand": {
+    "size": [196.588, 212.83, 119.353],
+    "originOffset": [-194.257, -452.775, 180.804],
+    "triangles": 119998,
+    "bytes": 1437184
+  },
+  "inspire-rh56dfx": {
+    "size": [142.568, 217.8, 102.949],
+    "originOffset": [-30.934, -108.9, -25.474],
+    "triangles": 13838,
+    "bytes": 166904
+  },
+  "jetson-orin-nano-devkit": {
+    "size": [103, 34.766, 90.877],
+    "originOffset": [-46, -12.483, 26.562],
+    "triangles": 193975,
+    "bytes": 3070544
+  },
+  "koch-v1-1-gripper": {
+    "size": [37.75, 68.868, 35.5],
+    "originOffset": [-4.147, -15.542, -221.065],
+    "triangles": 8548,
+    "bytes": 103304
+  },
+  "ldrobot-ld06": {
+    "size": [38.59, 33.5, 38.59],
+    "originOffset": [0, -16.75, 0],
+    "triangles": 7028,
+    "bytes": 87208
+  },
+  "ldrobot-ld19": {
+    "size": [53.972, 35.002, 46.28],
+    "originOffset": [0, -7.299, -3.846],
+    "triangles": 116066,
+    "bytes": 1392976
+  },
+  "ldrobot-stl-27l": {
+    "size": [53.972, 35.002, 46.28],
+    "originOffset": [0, -7.299, -3.846],
+    "triangles": 116066,
+    "bytes": 1392984
+  },
+  "leap-hand": {
+    "size": [239.6, 232.5, 63.2],
+    "originOffset": [18.958, -15.355, 7.322],
+    "triangles": 119950,
+    "bytes": 1420224
+  },
+  "linker-hand-l10": {
+    "size": [171.834, 240.311, 85.215],
+    "originOffset": [38.858, -120.149, 10.236],
+    "triangles": 119972,
+    "bytes": 1433308
+  },
+  "linker-hand-o6": {
+    "size": [150.457, 176.897, 85.162],
+    "originOffset": [35.13, -88.449, 22.581],
+    "triangles": 119794,
+    "bytes": 1435060
+  },
+  "livox-avia": {
+    "size": [91, 64.8, 75.55],
+    "originOffset": [65.3, -48.3, -31.325],
+    "triangles": 74366,
+    "bytes": 893764
+  },
+  "livox-mid-360": {
+    "size": [72.737, 60.097, 64.874],
+    "originOffset": [-3.932, -4.131, 0],
+    "triangles": 120011,
+    "bytes": 1447008
+  },
+  "luxonis-oak-1": {
+    "size": [36, 54.5, 27.8],
+    "originOffset": [0, 2.75, -1.6],
+    "triangles": 119999,
+    "bytes": 1441388
+  },
+  "luxonis-oak-d-lite": {
+    "size": [91, 28, 17.45],
+    "originOffset": [-41, 11, -0.225],
+    "triangles": 121516,
+    "bytes": 1502796
+  },
+  "luxonis-oak-d-pro": {
+    "size": [97, 29.5, 23.101],
+    "originOffset": [-44.5, -11.75, -1.45],
+    "triangles": 120000,
+    "bytes": 1440868
+  },
+  "luxonis-oak-d-s2": {
+    "size": [97, 29.5, 23.101],
+    "originOffset": [-44.5, 11.75, 1.45],
+    "triangles": 120000,
+    "bytes": 1440880
+  },
+  "luxonis-oak-d-w": {
+    "size": [97, 29.5, 23.101],
+    "originOffset": [-44.5, 11.75, 1.45],
+    "triangles": 120000,
+    "bytes": 1440876
+  },
+  "mjbots-moteus-c1": {
+    "size": [38, 9.5, 38],
+    "originOffset": [0, 2.45, 0],
+    "triangles": 7188,
+    "bytes": 86200
+  },
+  "mjbots-moteus-r4": {
+    "size": [46, 13.35, 53],
+    "originOffset": [0, 0.475, 16.5],
+    "triangles": 2576,
+    "bytes": 31784
+  },
+  "mjbots-qdd100": {
+    "size": [99.989, 43.95, 99.996],
+    "originOffset": [0.006, -6.725, -0.002],
+    "triangles": 4698,
+    "bytes": 57396
+  },
+  "myactuator-rmd-x8-pro": {
+    "size": [98, 51, 98],
+    "originOffset": [0, 20.5, 0],
+    "triangles": 68480,
+    "bytes": 847772
+  },
+  "nema17-17hs4401": {
+    "size": [42.3, 64, 42.3],
+    "originOffset": [0, -32, 0],
+    "triangles": 1736,
+    "bytes": 22392
+  },
+  "odrive-d6374": {
+    "size": [62.97, 120, 63],
+    "originOffset": [0, 30, 0],
+    "triangles": 6017,
+    "bytes": 87512
+  },
+  "onrobot-2fg7": {
+    "size": [75.493, 156.25, 90],
+    "originOffset": [-2.247, 20.575, 0],
+    "triangles": 122284,
+    "bytes": 1478740
+  },
+  "onrobot-rg2": {
+    "size": [104.412, 224.537, 75.493],
+    "originOffset": [0, -93.969, 2.247],
+    "triangles": 159446,
+    "bytes": 1990772
+  },
+  "onrobot-rg6": {
+    "size": [175.874, 259.337, 75.493],
+    "originOffset": [12.986, -90.16, 57.169],
+    "triangles": 162312,
+    "bytes": 1965264
+  },
+  "onrobot-vgc10": {
+    "size": [100.035, 98.5, 100.035],
+    "originOffset": [0, -51.85, 0],
+    "triangles": 124783,
+    "bytes": 1505588
+  },
+  "openmanipulator-x-gripper": {
+    "size": [68.75, 166.689, 128.6],
+    "originOffset": [5.375, -63.355, 0],
+    "triangles": 18352,
+    "bytes": 219356
+  },
+  "orbbec-femto-bolt": {
+    "size": [115.264, 40.265, 71.767],
+    "originOffset": [-57, 19.499, 29.467],
+    "triangles": 97018,
+    "bytes": 1168440
+  },
+  "orbbec-gemini-2": {
+    "size": [89.46, 25.025, 33.43],
+    "originOffset": [0, 0, 1.935],
+    "triangles": 119999,
+    "bytes": 1445160
+  },
+  "orbbec-gemini-336": {
+    "size": [89.46, 25.025, 34.404],
+    "originOffset": [0, 0, 1.448],
+    "triangles": 120008,
+    "bytes": 1439712
+  },
+  "orca-hand": {
+    "size": [122.614, 327.562, 108.322],
+    "originOffset": [-45.487, -118.152, 6.161],
+    "triangles": 165741,
+    "bytes": 1977376
+  },
+  "ouster-os0": {
+    "size": [87, 58.35, 85.322],
+    "originOffset": [0, -29.175, 3.661],
+    "triangles": 22642,
+    "bytes": 272380
+  },
+  "ouster-os1": {
+    "size": [87, 58.35, 85.322],
+    "originOffset": [0, -29.175, 3.661],
+    "triangles": 22642,
+    "bytes": 272380
+  },
+  "pollen-amazing-hand": {
+    "size": [124.936, 169.79, 120.596],
+    "originOffset": [-29.668, -84.895, -4.872],
+    "triangles": 119978,
+    "bytes": 1443140
+  },
+  "pololu-25d-gearmotor": {
+    "size": [25, 80.95, 30.754],
+    "originOffset": [0, 27.975, 2.877],
+    "triangles": 13344,
+    "bytes": 187744
+  },
+  "pololu-37d-gearmotor": {
+    "size": [36.879, 92.1, 41.215],
+    "originOffset": [-19.964, 4.125, -2.222],
+    "triangles": 15576,
+    "bytes": 220864
+  },
+  "pololu-a4988": {
+    "size": [15.24, 3.37, 20.32],
+    "originOffset": [-7.62, -1.685, 10.16],
+    "triangles": 12700,
+    "bytes": 199376
+  },
+  "pololu-drv8825": {
+    "size": [15.24, 11.87, 20.32],
+    "originOffset": [-7.62, 2.565, 10.16],
+    "triangles": 16216,
+    "bytes": 246864
+  },
+  "pololu-micro-metal-gearmotor-encoder": {
+    "size": [13.6, 42, 13.1],
+    "originOffset": [0, 2, 1.45],
+    "triangles": 42564,
+    "bytes": 540364
+  },
+  "pololu-micro-metal-gearmotor": {
+    "size": [12, 40.3, 10],
+    "originOffset": [0, 1.15, 0],
+    "triangles": 36254,
+    "bytes": 451864
+  },
+  "pololu-tb6612fng": {
+    "size": [15.24, 2.816, 20.32],
+    "originOffset": [-7.62, -1.408, 10.16],
+    "triangles": 13346,
+    "bytes": 202112
+  },
+  "psyonic-ability-hand": {
+    "size": [137.076, 174.978, 80.221],
+    "originOffset": [6.492, -56.722, -6.725],
+    "triangles": 17300,
+    "bytes": 208728
+  },
+  "raspberry-pi-4b": {
+    "size": [88.99, 19.9, 58.4],
+    "originOffset": [-1.995, -7.05, -1.2],
+    "triangles": 119988,
+    "bytes": 1524076
+  },
+  "raspberry-pi-5": {
+    "size": [88.5, 18.976, 57.63],
+    "originOffset": [-43.8, -8.038, 27.185],
+    "triangles": 154554,
+    "bytes": 2112692
+  },
+  "raspberry-pi-ai-camera": {
+    "size": [25, 11.9, 23.862],
+    "originOffset": [0, -3.4, 0],
+    "triangles": 1084,
+    "bytes": 15860
+  },
+  "raspberry-pi-camera-2": {
+    "size": [25, 9, 23.862],
+    "originOffset": [0, -2, 0],
+    "triangles": 884,
+    "bytes": 12692
+  },
+  "raspberry-pi-camera-3-wide": {
+    "size": [23.862, 11.4, 25],
+    "originOffset": [-11.931, 3.105, 12.5],
+    "triangles": 119802,
+    "bytes": 1295328
+  },
+  "raspberry-pi-camera-3": {
+    "size": [23.862, 10.245, 25],
+    "originOffset": [-11.931, 2.528, 12.5],
+    "triangles": 119682,
+    "bytes": 1306736
+  },
+  "raspberry-pi-global-shutter-camera": {
+    "size": [39.5, 25.07, 51.86],
+    "originOffset": [0, -6.215, -4.43],
+    "triangles": 4064,
+    "bytes": 51412
+  },
+  "raspberry-pi-hq-camera": {
+    "size": [38, 21.5, 51.86],
+    "originOffset": [0, -8, -4.43],
+    "triangles": 3198,
+    "bytes": 40088
+  },
+  "raspberry-pi-pico-2": {
+    "size": [52.3, 3.765, 21],
+    "originOffset": [0.65, -1.807, 0],
+    "triangles": 120055,
+    "bytes": 1535668
+  },
+  "raspberry-pi-zero-2w": {
+    "size": [65, 4.3, 31.44],
+    "originOffset": [0, -2.15, -0.72],
+    "triangles": 3180,
+    "bytes": 39424
+  },
+  "realsense-d405": {
+    "size": [42.09, 42, 23],
+    "originOffset": [0.045, 0, 11.5],
+    "triangles": 3892,
+    "bytes": 47740
+  },
+  "realsense-d415": {
+    "size": [98.871, 20.05, 23],
+    "originOffset": [0.059, 10.025, 0],
+    "triangles": 119994,
+    "bytes": 1432216
+  },
+  "realsense-d435": {
+    "size": [90, 25, 25.05],
+    "originOffset": [0, -12.5, 0],
+    "triangles": 10304,
+    "bytes": 127556
+  },
+  "realsense-d435i": {
+    "size": [90, 25, 25.05],
+    "originOffset": [0, -12.5, 0],
+    "triangles": 10304,
+    "bytes": 127556
+  },
+  "realsense-d455": {
+    "size": [123.994, 26, 29],
+    "originOffset": [0, 13, 0],
+    "triangles": 51161,
+    "bytes": 614968
+  },
+  "realsense-d457": {
+    "size": [124, 29, 36],
+    "originOffset": [0, -14.5, 0],
+    "triangles": 6360,
+    "bytes": 79032
+  },
+  "robotiq-2f-140": {
+    "size": [206.969, 213.337, 75],
+    "originOffset": [-0.003, -103.296, -211.334],
+    "triangles": 115020,
+    "bytes": 1381624
+  },
+  "robotiq-2f-85": {
+    "size": [152.481, 152.731, 75],
+    "originOffset": [0, -72.845, -93.426],
+    "triangles": 117628,
+    "bytes": 1413576
+  },
+  "robotiq-hand-e": {
+    "size": [75, 151.1, 75],
+    "originOffset": [0, 15.45, 0],
+    "triangles": 79500,
+    "bytes": 958360
+  },
+  "robotis-rh-p12-rn": {
+    "size": [151, 116.3, 57],
+    "originOffset": [0, -58.15, 1.5],
+    "triangles": 7114,
+    "bytes": 89312
+  },
+  "robotis-u2d2": {
+    "size": [48, 18, 14.9],
+    "originOffset": [0, 0, 0.55],
+    "triangles": 14818,
+    "bytes": 178384
+  },
+  "robstride-02": {
+    "size": [78.499, 45.4, 78.499],
+    "originOffset": [0, 18.7, 0.001],
+    "triangles": 24548,
+    "bytes": 295556
+  },
+  "seeed-xiao-esp32s3-sense": {
+    "size": [24.363, 13.96, 17.78],
+    "originOffset": [-3.208, -6.73, 6.111],
+    "triangles": 47604,
+    "bytes": 575728
+  },
+  "seeed-xiao-esp32s3": {
+    "size": [22.482, 4.46, 17.78],
+    "originOffset": [-2.568, -1.98, 6.111],
+    "triangles": 18404,
+    "bytes": 225348
+  },
+  "slamtec-rplidar-a1m8": {
+    "size": [110.274, 51, 71.438],
+    "originOffset": [50.062, -22.196, 13.066],
+    "triangles": 119996,
+    "bytes": 1436296
+  },
+  "slamtec-rplidar-a2m12": {
+    "size": [136.171, 40.8, 75],
+    "originOffset": [-24.559, -28.614, -75],
+    "triangles": 71998,
+    "bytes": 895880
+  },
+  "slamtec-rplidar-a3m1": {
+    "size": [136.171, 40.8, 75],
+    "originOffset": [-24.559, -28.614, -75],
+    "triangles": 71998,
+    "bytes": 895876
+  },
+  "slamtec-rplidar-c1": {
+    "size": [159.455, 43.136, 75.894],
+    "originOffset": [51.927, -19.732, 10.147],
+    "triangles": 120132,
+    "bytes": 1449056
+  },
+  "slamtec-rplidar-s2": {
+    "size": [77, 39.8, 80.6],
+    "originOffset": [0, -19.9, 1.8],
+    "triangles": 5992,
+    "bytes": 74160
+  },
+  "slamtec-rplidar-s3": {
+    "size": [55.6, 41.3, 116.373],
+    "originOffset": [0, -7.15, -30.387],
+    "triangles": 97538,
+    "bytes": 1175020
+  },
+  "so101-gripper": {
+    "size": [65.6, 106.4, 52],
+    "originOffset": [2.4, -52.2, 2],
+    "triangles": 76092,
+    "bytes": 913744
+  },
+  "stepperonline-14hs13-0804s": {
+    "size": [35.211, 58, 53.21],
+    "originOffset": [0, 5, 8.995],
+    "triangles": 17652,
+    "bytes": 218284
+  },
+  "stepperonline-17he08-1004s": {
+    "size": [42.32, 43, 60.21],
+    "originOffset": [0, 1.5, 8.945],
+    "triangles": 18428,
+    "bytes": 234776
+  },
+  "stepperonline-17hs19-2004s1": {
+    "size": [42.32, 72, 60.31],
+    "originOffset": [0, 12, 8.995],
+    "triangles": 19282,
+    "bytes": 244048
+  },
+  "stepperonline-23hs22-2804s": {
+    "size": [72.5, 77, 57],
+    "originOffset": [7.75, -38.5, 0],
+    "triangles": 28050,
+    "bytes": 349808
+  },
+  "stereolabs-zed-2i": {
+    "size": [175.243, 30.25, 55.719],
+    "originOffset": [36.651, -6.39, -17.651],
+    "triangles": 54729,
+    "bytes": 661668
+  },
+  "stereolabs-zed-mini": {
+    "size": [125.2, 26.624, 30.25],
+    "originOffset": [-2.25, -0.012, -15.125],
+    "triangles": 3332,
+    "bytes": 41140
+  },
+  "stereolabs-zed-x-mini": {
+    "size": [93.53, 31.818, 47.4],
+    "originOffset": [3.072, -14.161, 14.089],
+    "triangles": 103830,
+    "bytes": 1250164
+  },
+  "stereolabs-zed-x": {
+    "size": [163.53, 31.818, 47.4],
+    "originOffset": [18.206, -66.224, 43.81],
+    "triangles": 88478,
+    "bytes": 1062292
+  },
+  "teensy-41": {
+    "size": [61.66, 4.07, 17.78],
+    "originOffset": [0.35, -2.035, 0],
+    "triangles": 6570,
+    "bytes": 79580
+  },
+  "tetheria-aero-hand-open": {
+    "size": [163.311, 197.776, 124.809],
+    "originOffset": [-20.934, 7.112, -36.412],
+    "triangles": 143069,
+    "bytes": 1774116
+  },
+  "towerpro-mg996r": {
+    "size": [54, 42.7, 20],
+    "originOffset": [0, -21.35, 0],
+    "triangles": 476,
+    "bytes": 7264
+  },
+  "towerpro-sg90": {
+    "size": [32.3, 30.3, 12.2],
+    "originOffset": [0, -15.15, 0],
+    "triangles": 432,
+    "bytes": 6856
+  },
+  "trossen-widowx-250-gripper": {
+    "size": [103.486, 109.154, 55.236],
+    "originOffset": [0, -459.807, 367.882],
+    "triangles": 2704,
+    "bytes": 34248
+  },
+  "ufactory-bio-gripper": {
+    "size": [177, 195, 65.5],
+    "originOffset": [9.186, 195, -13.013],
+    "triangles": 73100,
+    "bytes": 874020
+  },
+  "ufactory-xarm-gripper": {
+    "size": [130.901, 181.322, 75],
+    "originOffset": [0, -44.163, 0],
+    "triangles": 122832,
+    "bytes": 1546408
+  },
+  "unitree-4d-lidar-l2": {
+    "size": [74.927, 63.524, 74.989],
+    "originOffset": [-7.731, -25.092, 14.665],
+    "triangles": 68822,
+    "bytes": 830172
+  },
+  "unitree-dex1-1": {
+    "size": [81.1, 147.3, 124.049],
+    "originOffset": [0, -73.65, -27.024],
+    "triangles": 65176,
+    "bytes": 780408
+  },
+  "unitree-dex3-1": {
+    "size": [138.833, 175.812, 88.444],
+    "originOffset": [-47.995, -87.906, 0.187],
+    "triangles": 80286,
+    "bytes": 960332
+  },
+  "unitree-dex5-1": {
+    "size": [198.993, 211.076, 80.921],
+    "originOffset": [-29.489, -65.766, 9.611],
+    "triangles": 119992,
+    "bytes": 1396396
+  },
+  "unitree-go-m8010-6": {
+    "size": [96.5, 42.3, 96.5],
+    "originOffset": [0.365, -92.595, -188],
+    "triangles": 120212,
+    "bytes": 1523196
+  },
+  "unitree-z1-gripper": {
+    "size": [68.85, 156, 82],
+    "originOffset": [-1.925, -71, 0],
+    "triangles": 66456,
+    "bytes": 798856
+  },
+  "velodyne-vlp-16": {
+    "size": [103.3, 71.7, 116],
+    "originOffset": [0, -35.85, 6.35],
+    "triangles": 11562,
+    "bytes": 141036
+  },
+  "waveshare-bus-servo-adapter-a": {
+    "size": [42.024, 14.6, 33.816],
+    "originOffset": [-21, -3.7, 16.104],
+    "triangles": 119994,
+    "bytes": 1446868
+  },
+  "waveshare-st3215-hs": {
+    "size": [45.223, 37.8, 24.723],
+    "originOffset": [13, -9.3, 0],
+    "triangles": 55030,
+    "bytes": 662136
+  },
+  "ydlidar-x4-pro": {
+    "size": [110.6, 59.4, 71.5],
+    "originOffset": [-10.8, -29.7, 0],
+    "triangles": 4714,
+    "bytes": 59468
+  }
 }

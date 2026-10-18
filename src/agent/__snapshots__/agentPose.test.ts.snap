@@ -1,0 +1,137 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`animateRequest > builds keyframed animations and flags fast joints 1`] = `
+{
+  "images": undefined,
+  "text": "Kick: 1 s, 3 keyframes, 2 joints, loops.
+During the motion:
+- hip moves at 111°/s, past the maker’s 30°/s: lengthen the animation or soften the motion",
+}
+`;
+
+exports[`animateRequest > builds keyframed animations and flags fast joints 2`] = `
+[
+  [
+    "addAnimation",
+    {
+      "duration": 1,
+      "id": "",
+      "interpolation": "smooth",
+      "keyframes": [
+        {
+          "root": undefined,
+          "t": 0,
+          "values": {
+            "hip": 0,
+            "knee": 0,
+          },
+        },
+        {
+          "root": {
+            "position": [
+              0,
+              5,
+              -0,
+            ],
+            "rotation": undefined,
+          },
+          "t": 0.5,
+          "values": {
+            "hip": 40,
+            "knee": 90,
+          },
+        },
+        {
+          "root": undefined,
+          "t": 1,
+          "values": {
+            "hip": 0,
+            "knee": 90,
+          },
+        },
+      ],
+      "loop": true,
+      "name": "Kick",
+      "robot": "hip",
+      "source": "agent",
+    },
+  ],
+]
+`;
+
+exports[`getRig > describes joints, pose, saved poses and animations 1`] = `
+"Robot: 3 joints (values from the modeled pose; agent frame, mm):
+- hip: revolute about +X through [0, 0, 80], range -90…45°, on the base, moves Thigh
+- knee: revolute about −Y through [0, 0, 40], range 0…120°, on hip, moves Shin
+- slide: prismatic about +Z through [0, 0, 10], no limits, on knee
+
+Pose on the canvas: hip 10
+Saved poses: Crouch
+Animations: Wave (2s, loops)"
+`;
+
+exports[`setPoseRequest > clamps values, applies saved poses and saves 1`] = `
+{
+  "images": undefined,
+  "text": "Pose: knee 70, hip 45; body offset [0, 0, 20] mm, turned [0, 0, 15]°
+Saved as "High".
+Notes:
+- hip: 100 is past its range -90…45, held at 45
+- No joint nope
+- shin: not a moving part
+- thigh: give target or move
+- shin: not on the canvas
+No new collisions; the robot clears the floor.",
+}
+`;
+
+exports[`setPoseRequest > clamps values, applies saved poses and saves 2`] = `
+[
+  [
+    "setPose",
+    {
+      "roots": {
+        "hip": {
+          "position": [
+            0,
+            20,
+            -0,
+          ],
+          "rotation": [
+            0,
+            15,
+            0,
+          ],
+        },
+      },
+      "values": {
+        "hip": 45,
+        "knee": 70,
+      },
+    },
+  ],
+  [
+    "savePose",
+    "High",
+    {
+      "robot": "hip",
+      "root": {
+        "position": [
+          0,
+          20,
+          -0,
+        ],
+        "rotation": [
+          0,
+          15,
+          0,
+        ],
+      },
+      "values": {
+        "hip": 45,
+        "knee": 70,
+      },
+    },
+  ],
+]
+`;

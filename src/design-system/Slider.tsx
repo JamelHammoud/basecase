@@ -3,19 +3,15 @@ import React, { useRef } from 'react';
 export interface SliderProps {
   label: string;
   value: number;
-  /** `live` is true while dragging so callers can skip undo history until release */
   onChange: (val: number, live?: boolean) => void;
   min: number;
   max: number;
   step?: number;
-  /** Formats the trailing value readout */
   format?: (v: number) => string;
-  /** Value the slider resets to on double-click */
   defaultValue?: number;
   className?: string;
 }
 
-/** Inspector slider: label · thin track · tabular value. Double-click resets. */
 export const Slider: React.FC<SliderProps> = ({
   label,
   value,
@@ -49,19 +45,19 @@ export const Slider: React.FC<SliderProps> = ({
         }}
         onPointerUp={() => {
           if (!draggingRef.current) return;
+
           draggingRef.current = false;
           onChange(lastRef.current, false);
         }}
         onDoubleClick={() => defaultValue !== undefined && onChange(defaultValue, false)}
         onChange={(e) => {
           const v = Number(e.target.value);
+
           lastRef.current = v;
           onChange(v, draggingRef.current);
         }}
       />
-      <span className="text-[13px] text-white/90 tabular text-right select-none">
-        {format(value)}
-      </span>
+      <span className="text-[13px] text-white/90 tabular text-right select-none">{format(value)}</span>
     </div>
   );
 };

@@ -4,34 +4,25 @@ import { Tooltip, TooltipSide } from './Tooltip';
 export type IconButtonVariant = 'default' | 'active' | 'ghost' | 'danger' | 'primary' | 'toggled';
 export type IconButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
-export interface IconButtonProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'title'> {
+export interface IconButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'title'> {
   icon: React.ReactNode;
   variant?: IconButtonVariant;
   size?: IconButtonSize;
-  /** Required: accessible label + hover tooltip */
   title: string;
-  /** Keyboard shortcut shown in the tooltip */
   shortcut?: string;
   tooltipSide?: TooltipSide;
-  /** Solid accent fill — use for the active tool */
   isActive?: boolean;
-  /** Soft fill — use for toggles and open menus */
   isToggled?: boolean;
 }
 
 const variantStyles: Record<IconButtonVariant, string> = {
   default:
     'text-white/60 hover:text-white/95 hover:bg-white/[0.07] active:bg-white/[0.1] disabled:opacity-30 disabled:hover:bg-transparent',
-  ghost:
-    'text-white/45 hover:text-white/90 hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent',
-  active:
-    'bg-[#0d99ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]',
+  ghost: 'text-white/45 hover:text-white/90 hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent',
+  active: 'bg-[#0d99ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]',
   toggled: 'bg-white/[0.1] text-white',
-  danger:
-    'text-white/50 hover:text-red-400 hover:bg-red-500/[0.12] disabled:opacity-30',
-  primary:
-    'bg-[#0d99ff] hover:bg-[#2ba5ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]',
+  danger: 'text-white/50 hover:text-red-400 hover:bg-red-500/[0.12] disabled:opacity-30',
+  primary: 'bg-[#0d99ff] hover:bg-[#2ba5ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]',
 };
 
 const sizeStyles: Record<IconButtonSize, string> = {
@@ -40,6 +31,22 @@ const sizeStyles: Record<IconButtonSize, string> = {
   md: 'w-9 h-9 rounded-[10px]',
   lg: 'w-11 h-11 rounded-[14px]',
 };
+
+function chosenVariantFor({
+  isActive,
+  isToggled,
+  variant,
+}: {
+  isActive: boolean;
+  isToggled: boolean;
+  variant: IconButtonVariant;
+}): IconButtonVariant {
+  if (isActive) return 'active';
+
+  if (isToggled) return 'toggled';
+
+  return variant;
+}
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon,
@@ -55,7 +62,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
   type = 'button',
   ...props
 }) => {
-  const chosenVariant = isActive ? 'active' : isToggled ? 'toggled' : variant;
+  const chosenVariant = chosenVariantFor({ isActive, isToggled, variant });
+
   return (
     <Tooltip label={title} shortcut={shortcut} side={tooltipSide}>
       <button

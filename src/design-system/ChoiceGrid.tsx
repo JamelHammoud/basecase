@@ -5,16 +5,10 @@ import { CHOICE_TRACK, choiceCellClass } from './choiceStyles';
 export interface ChoiceOption<T extends string> {
   value: T;
   label: React.ReactNode;
-  /** Drawn above the label in `stacked` cells, before it otherwise */
   icon?: React.ReactNode;
-  /** Tooltip */
   title?: string;
 }
 
-/**
- * One choice from many, as a grid of cells on one soft track: SegmentedControl's look for lists
- * that wrap (sizes, finishes, drives). `stacked` puts the icon above the label in taller cells.
- */
 export function ChoiceGrid<T extends string>({
   options,
   value,
@@ -29,7 +23,6 @@ export function ChoiceGrid<T extends string>({
   onChange: (value: T) => void;
   columns: number;
   stacked?: boolean;
-  /** Accessible name for the group */
   label: string;
   className?: string;
 }) {
@@ -57,6 +50,7 @@ export function ChoiceGrid<T extends string>({
             <span className="truncate max-w-full">{o.label}</span>
           </button>
         );
+
         return o.title ? (
           <Tooltip key={o.value} label={o.title} className="w-full min-w-0">
             {cell}

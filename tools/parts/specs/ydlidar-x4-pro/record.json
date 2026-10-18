@@ -1,82 +1,82 @@
 {
- "id": "ydlidar-x4-pro",
- "name": "YDLIDAR X4 Pro",
- "manufacturer": "YDLIDAR (Shenzhen EAI Technology Co., Ltd.)",
- "mpn": "X4PRO",
- "category": "lidar",
- "description": "Low-cost 360° 2D triangulation lidar with 10 m range and 5 kHz ranging on an open belt-driven chassis.",
- "specs": [
-  {
-   "label": "Range",
-   "value": "0.12–10 m (80% reflectivity, indoor)"
-  },
-  {
-   "label": "Scan rate",
-   "value": "6–12 Hz (PWM or voltage on M_CTR)"
-  },
-  {
-   "label": "Sample rate",
-   "value": "5000 Hz; 0.43–0.86° resolution (6–12 Hz); FOV 360°; tilt 0.25–1.75°"
-  },
-  {
-   "label": "Accuracy",
-   "value": "2 cm absolute (≤1 m), 3.5% relative (1–6 m)"
-  },
-  {
-   "label": "Laser",
-   "value": "793 nm (775–800), 3 mW avg (5 max), FDA Class I / IEC 60825-1"
-  },
-  {
-   "label": "Interface / power",
-   "value": "UART 128000 8N1, 3.3 V, Tx only (PH2.0-8P); 5 V (4.8–5.2 V), 330 mA working, 800–1000 mA start"
-  },
-  {
-   "label": "Weight / life",
-   "value": "178 g; 1500 h (brushed motor); 0–40 °C"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 110.6,
-   "y": 71.5,
-   "z": 59.4,
-   "axes": "x = length (lidar head to motor end), y = width, z = 41.4 from datum A (underside of the base plate) to top + 18.0 standoffs below it"
-  },
-  "features": [
-   {
-    "label": "Mounting holes",
-    "value": "3× M3 (threaded, in the standoff ends, View G). Top view: left hole 39.9 left of the rotation centre and 5.4 below the centre line; upper-right hole 76.5 right of the left hole and 28.1 above the centre line; lower-right hole 79.6 right of the left hole and 27.7 below the centre line.",
-    "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf Fig 1 (§1.3, p.1)"
-   },
-   {
-    "label": "Optical centre height",
-    "value": "31.7 ±0.6 above datum A (underside of the base plate) = 49.7 above the standoff ends; optical window 10.5 tall.",
-    "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf Fig 1"
-   },
-   {
-    "label": "Heights",
-    "value": "Top 41.4 ±0.6 above datum A; standoffs 18.0 ±0.6 below datum A; head/motor section above the PCB 22.7 ±0.6. Head Ø68.7 ±0.3. Runout 0.8 (head) and 0.5 (top) to A.",
-    "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf Fig 1"
-   },
-   {
-    "label": "Connector",
-    "value": "PH2.0-8P receptacle (VCC, Tx, NC, GND, M_CTR, NC, NC, NC).",
-    "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf §2.3"
-   }
+  "id": "ydlidar-x4-pro",
+  "name": "YDLIDAR X4 Pro",
+  "manufacturer": "YDLIDAR (Shenzhen EAI Technology Co., Ltd.)",
+  "mpn": "X4PRO",
+  "category": "lidar",
+  "description": "Low-cost 360° 2D triangulation lidar with 10 m range and 5 kHz ranging on an open belt-driven chassis.",
+  "specs": [
+    {
+      "label": "Range",
+      "value": "0.12–10 m (80% reflectivity, indoor)"
+    },
+    {
+      "label": "Scan rate",
+      "value": "6–12 Hz (PWM or voltage on M_CTR)"
+    },
+    {
+      "label": "Sample rate",
+      "value": "5000 Hz; 0.43–0.86° resolution (6–12 Hz); FOV 360°; tilt 0.25–1.75°"
+    },
+    {
+      "label": "Accuracy",
+      "value": "2 cm absolute (≤1 m), 3.5% relative (1–6 m)"
+    },
+    {
+      "label": "Laser",
+      "value": "793 nm (775–800), 3 mW avg (5 max), FDA Class I / IEC 60825-1"
+    },
+    {
+      "label": "Interface / power",
+      "value": "UART 128000 8N1, 3.3 V, Tx only (PH2.0-8P); 5 V (4.8–5.2 V), 330 mA working, 800–1000 mA start"
+    },
+    {
+      "label": "Weight / life",
+      "value": "178 g; 1500 h (brushed motor); 0–40 °C"
+    }
   ],
-  "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B0B77F4S9H",
-   "asin": "B0B77F4S9H",
-   "title": "youyeetoo YDLIDAR X4 Pro 360 Degree, 2D Laser Range Lidar Scanner, Triangular Ranging 10 Meters Scanning Radius, for Arduino Raspberry pi Obstacle Avoidance and Navigation of Robots",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 110.6,
+      "y": 71.5,
+      "z": 59.4,
+      "axes": "x = length (lidar head to motor end), y = width, z = 41.4 from datum A (underside of the base plate) to top + 18.0 standoffs below it"
+    },
+    "features": [
+      {
+        "label": "Mounting holes",
+        "value": "3× M3 (threaded, in the standoff ends, View G). Top view: left hole 39.9 left of the rotation centre and 5.4 below the centre line; upper-right hole 76.5 right of the left hole and 28.1 above the centre line; lower-right hole 79.6 right of the left hole and 27.7 below the centre line.",
+        "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf Fig 1 (§1.3, p.1)"
+      },
+      {
+        "label": "Optical centre height",
+        "value": "31.7 ±0.6 above datum A (underside of the base plate) = 49.7 above the standoff ends; optical window 10.5 tall.",
+        "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf Fig 1"
+      },
+      {
+        "label": "Heights",
+        "value": "Top 41.4 ±0.6 above datum A; standoffs 18.0 ±0.6 below datum A; head/motor section above the PCB 22.7 ±0.6. Head Ø68.7 ±0.3. Runout 0.8 (head) and 0.5 (top) to A.",
+        "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf Fig 1"
+      },
+      {
+        "label": "Connector",
+        "value": "PH2.0-8P receptacle (VCC, Tx, NC, GND, M_CTR, NC, NC, NC).",
+        "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf §2.3"
+      }
+    ],
+    "source": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf"
   },
-  "product": "https://www.ydlidar.com/product/category/triangulation/ydlidar-x4-pro.html",
-  "datasheet": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf"
- },
- "notes": "No official 3D CAD found: the current ydlidar.com product page and Doc&Tool download center list only datasheets/manuals/SDKs, and YDLIDAR's GitHub repos contain no meshes. No community model was verified either. Height conflict: ydlidar.com product page says 110.6 × 71.1 × 52.3 mm, while the datasheet drawing (V1.1, 2024-01-24) gives 71.5 width and 41.4 + 18.0 = 59.4 total height including standoffs; the drawing is used here. Datasheet title is 'X4PRO' (doc# 01.13.001700). Development manual also downloaded. Amazon seller youyeetoo is a reseller, not a YDLIDAR-owned store.",
- "pose": "lidar"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B0B77F4S9H",
+      "asin": "B0B77F4S9H",
+      "title": "youyeetoo YDLIDAR X4 Pro 360 Degree, 2D Laser Range Lidar Scanner, Triangular Ranging 10 Meters Scanning Radius, for Arduino Raspberry pi Obstacle Avoidance and Navigation of Robots",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.ydlidar.com/product/category/triangulation/ydlidar-x4-pro.html",
+    "datasheet": "https://www.ydlidar.com/static/upload/file/20260615/1781510224793974.pdf"
+  },
+  "notes": "No official 3D CAD found: the current ydlidar.com product page and Doc&Tool download center list only datasheets/manuals/SDKs, and YDLIDAR's GitHub repos contain no meshes. No community model was verified either. Height conflict: ydlidar.com product page says 110.6 × 71.1 × 52.3 mm, while the datasheet drawing (V1.1, 2024-01-24) gives 71.5 width and 41.4 + 18.0 = 59.4 total height including standoffs; the drawing is used here. Datasheet title is 'X4PRO' (doc# 01.13.001700). Development manual also downloaded. Amazon seller youyeetoo is a reseller, not a YDLIDAR-owned store.",
+  "pose": "lidar"
 }

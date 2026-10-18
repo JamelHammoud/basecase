@@ -4,22 +4,15 @@ import { IconButton } from './IconButton';
 
 export interface SectionProps {
   title: string;
-  /** Icon buttons on the right of the header */
   actions?: React.ReactNode;
   children: React.ReactNode;
-  /** Makes the header a disclosure toggle */
   collapsible?: boolean;
   defaultOpen?: boolean;
-  /** Controlled open state (collapsible sections), with onOpenChange */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
 }
 
-/**
- * Figma UI3-style inspector section: sentence-case title, hairline divider, no card.
- * Collapsible sections keep the title where a plain one sits and put the chevron at the right.
- */
 export const Section: React.FC<SectionProps> = ({
   title,
   actions,
@@ -34,11 +27,12 @@ export const Section: React.FC<SectionProps> = ({
   const open = openProp ?? openState;
   const setOpen = (next: (v: boolean) => boolean) => {
     const v = next(open);
+
     if (openProp === undefined) setOpenState(v);
+
     onOpenChange?.(v);
   };
   const isOpen = !collapsible || open;
-  // An empty or collapsed section is just its header, centered between equal paddings
   const showBody = isOpen && React.Children.toArray(children).length > 0;
 
   return (
@@ -59,7 +53,6 @@ export const Section: React.FC<SectionProps> = ({
         {(actions || collapsible) && (
           <div className="flex items-center gap-0.5 -mr-1">
             {actions}
-            {/* The title is the toggle for keyboard and screen readers; this mirrors it for the pointer */}
             {collapsible && (
               <IconButton
                 icon={

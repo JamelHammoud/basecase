@@ -66,13 +66,15 @@ const GROUPS: Array<{ title: string; rows: Array<[string, string | string[]]> }>
   },
 ];
 
-/** Every shortcut, grouped. Shown in Settings → Shortcuts. */
 export const ShortcutsList: React.FC<{ sculptEnabled: boolean }> = ({ sculptEnabled }) => (
   <>
     {GROUPS.map((g) => ({ ...g, rows: g.rows.filter(([label]) => sculptEnabled || label !== 'Sculpt') })).map((g) => (
       <SettingsGroup key={g.title} title={g.title}>
         {g.rows.map(([label, keys]) => (
-          <div key={label} className="flex items-center justify-between gap-[24px] h-[40px] px-[16px] text-[13.5px] text-white/90">
+          <div
+            key={label}
+            className="flex items-center justify-between gap-[24px] h-[40px] px-[16px] text-[13.5px] text-white/90"
+          >
             <span className="min-w-0 truncate">{label}</span>
             <span className="shrink-0 flex items-center gap-[4px]">
               {typeof keys === 'string' ? (
@@ -80,10 +82,12 @@ export const ShortcutsList: React.FC<{ sculptEnabled: boolean }> = ({ sculptEnab
               ) : (
                 keys.map((k, i) =>
                   /^[a-z]+$/.test(k) ? (
-                    <span key={i} className="text-[12.5px] text-white/45">{k}</span>
+                    <span key={i} className="text-[12.5px] text-white/45">
+                      {k}
+                    </span>
                   ) : (
                     <Kbd key={i}>{k}</Kbd>
-                  )
+                  ),
                 )
               )}
             </span>

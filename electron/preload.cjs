@@ -6,7 +6,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isFullScreen: () => ipcRenderer.invoke('window:is-fullscreen'),
   onFullScreenChange: (callback) => {
     const handler = (_event, value) => callback(value);
+
     ipcRenderer.on('window:fullscreen', handler);
+
     return () => ipcRenderer.removeListener('window:fullscreen', handler);
   },
   getAcpStatus: (workspaceId) => ipcRenderer.invoke('acp:status', workspaceId),
@@ -36,17 +38,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveModel: (modelDef) => ipcRenderer.invoke('library:save-model', modelDef),
   deleteModel: (modelId) => ipcRenderer.invoke('library:delete-model', modelId),
   listScenes: () => ipcRenderer.invoke('library:list-scenes'),
+  getScene: (sceneId) => ipcRenderer.invoke('library:get-scene', sceneId),
+  saveScenePreview: (payload) => ipcRenderer.invoke('library:save-scene-preview', payload),
   saveScene: (scenePayload) => ipcRenderer.invoke('library:save-scene', scenePayload),
   deleteScene: (sceneId) => ipcRenderer.invoke('library:delete-scene', sceneId),
   setMenuState: (state) => ipcRenderer.send('menu:state', state),
   onMenuCommand: (callback) => {
     const handler = (_event, id) => callback(id);
+
     ipcRenderer.on('menu:command', handler);
+
     return () => ipcRenderer.removeListener('menu:command', handler);
   },
   onBackendEvent: (callback) => {
     const handler = (_event, data) => callback(data);
+
     ipcRenderer.on('backend:event', handler);
+
     return () => ipcRenderer.removeListener('backend:event', handler);
   },
 });

@@ -1,4 +1,4 @@
-import {
+import type {
   AcpStatusInfo,
   AgentConversation,
   AgentConversationSummary,
@@ -6,413 +6,161 @@ import {
   PurchaseRecord,
   ReferenceImageRecord,
   SavedSceneRecord,
+  SavedSceneSummary,
 } from '../types/robotics';
+import { electron, get, post, postOrThrow, query, quietly } from './platform/transport';
+import type {
+  AcpPromptPayload,
+  AppMenuState,
+  EvidenceFilePayload,
+  ScenePreviewPayload,
+  SteerOutcome,
+  TrainerStatus,
+  TrainStartPayload,
+} from './platform/types';
 
-export interface AcpPromptPayload {
-  action: 'image-to-3d' | 'generate-part' | 'build';
-  /** Scene tab the message belongs to; each tab has its own agent session */
-  workspaceId?: string;
-  targetHeightMm?: number;
-  /** Several reference images (front, side, detail…) */
-  imageDataUrls?: string[];
-  modelName?: string;
-  promptText?: string;
-  imageName?: string;
-  imageFilePath?: string;
-  imageDataUrl?: string;
-  analyzedFeatures?: unknown;
-  /** Attached folders, stored under library/evidence and read by the agent on demand */
-  evidenceFolders?: Array<{ id: string; name: string }>;
+export type * from './platform/types';
+
+interface PromptResult {
+  stopReason: string;
+  sessionId?: string;
+  models: CustomModelDefinition[];
+  scenes: SavedSceneSummary[];
 }
 
-/** Policy training (electron/trainer.mjs) */
-export interface TrainerStatus {
-  /** uv is installed (it sets up Python, MuJoCo and PyTorch) */
-  uv: boolean;
-  /** The training environment is already installed */
-  ready: boolean;
-  running: string[];
+interface ImageUpload {
+  name: string;
+  dataUrl: string;
+  width?: number;
+  height?: number;
 }
 
-export interface TrainStartPayload {
-  workspaceId: string;
-  /** The scene's MJCF */
-  xml: string;
-  /** Task, joints and budget for electron/trainer/train.py */
-  job: Record<string, unknown>;
-}
+const acpBridge = {
+  isElectron: (): boolean => Boolean(electron()?.isElectron),
 
-export interface EvidenceFilePayload {
-  folderId: string;
-  folderName: string;
-  /** Path inside the folder, e.g. "photos/front.jpg" */
-  relPath: string;
-  dataUrl?: string;
-  text?: string;
-}
+  getAcpStatus: (workspaceId?: string): Promise<AcpStatusInfo> =>
+    electron()?.getAcpStatus(workspaceId) ?? get(`/acp-status${workspaceId ? query('workspace', workspaceId) : ''}`),
 
-/** Checkmarks and enabled state for the native menu bar (electron/app-menu.mjs) */
-export interface AppMenuState {
-  sidebar: boolean;
-  inspector: boolean;
-  grid: boolean;
-  referenceImages: boolean;
-  trackpadMode: string;
-  hasSelection: boolean;
-  hasParts: boolean;
-  /** Open scene tabs, for the Window menu */
-  tabs: Array<{ id: string; name: string }>;
-  activeTab: string;
-  canReopenTab: boolean;
-}
+  connectAcp: (agentCommand?: string): Promise<AcpStatusInfo> =>
+    electron()?.connectAcp(agentCommand) ?? post('/acp-connect', { agentCommand }),
 
-export type SteerOutcome = 'injected' | 'promptRequired' | 'unsupported';
+  sendAcpPrompt: (payload: AcpPromptPayload): Promise<PromptResult> =>
+    electron()?.sendAcpPrompt(payload) ??
+    postOrThrow('/acp-prompt', payload, (body, res) =>
+      !res.ok || body.error ? String(body.error || `Agent error ${res.status}`) : null,
+    ),
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      isElectron: boolean;
-      platform: string;
-      isFullScreen: () => Promise<boolean>;
-      onFullScreenChange: (callback: (fullScreen: boolean) => void) => () => void;
-      getAcpStatus: (workspaceId?: string) => Promise<AcpStatusInfo>;
-      connectAcp: (agentCommand?: string) => Promise<AcpStatusInfo>;
-      cancelAcp: (workspaceId?: string) => Promise<{ ok: boolean }>;
-      closeAcpWorkspace: (workspaceId: string) => Promise<{ ok: boolean }>;
-      steerAcp: (payload: AcpPromptPayload) => Promise<{ outcome: SteerOutcome }>;
-      saveEvidenceFile: (payload: EvidenceFilePayload) => Promise<{ ok: boolean; path: string }>;
-      resumeAcp: (sessionId: string, workspaceId?: string) => Promise<AcpStatusInfo>;
-      listChats: () => Promise<AgentConversationSummary[]>;
-      listPurchases: () => Promise<Record<string, PurchaseRecord>>;
-      trainStatus: () => Promise<TrainerStatus>;
-      trainStart: (payload: TrainStartPayload) => Promise<{ jobId: string }>;
-      trainStop: (workspaceId: string) => Promise<{ stopping: boolean }>;
-      getPolicy: (id: string) => Promise<unknown>;
-      deletePolicy: (id: string) => Promise<boolean>;
-      savePurchase: (payload: { key: string; record: PurchaseRecord | null }) => Promise<Record<string, PurchaseRecord>>;
-      getChat: (id: string) => Promise<AgentConversation | null>;
-      saveChat: (conv: AgentConversation) => Promise<AgentConversationSummary[]>;
-      deleteChat: (id: string) => Promise<AgentConversationSummary[]>;
-      newAcpConversation: (workspaceId?: string) => Promise<AcpStatusInfo>;
-      respondToAgent: (payload: { requestId: string; result?: unknown; error?: string }) => Promise<{ ok: boolean }>;
-      sendAcpPrompt: (payload: AcpPromptPayload) => Promise<{
-        stopReason: string;
-        sessionId?: string;
-        models: CustomModelDefinition[];
-        scenes: SavedSceneRecord[];
-      }>;
-      uploadImage: (payload: {
-        name: string;
-        dataUrl: string;
-        width?: number;
-        height?: number;
-      }) => Promise<ReferenceImageRecord>;
-      listImages: () => Promise<ReferenceImageRecord[]>;
-      listModels: () => Promise<CustomModelDefinition[]>;
-      saveModel: (modelDef: CustomModelDefinition) => Promise<CustomModelDefinition>;
-      deleteModel: (modelId: string) => Promise<CustomModelDefinition[]>;
-      listScenes: () => Promise<SavedSceneRecord[]>;
-      saveScene: (scenePayload: Record<string, unknown>) => Promise<SavedSceneRecord>;
-      deleteScene: (sceneId: string) => Promise<SavedSceneRecord[]>;
-      onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
-      setMenuState: (state: Partial<AppMenuState>) => void;
-      onMenuCommand: (callback: (id: string) => void) => () => void;
-    };
-  }
-}
+  steerAcp: (payload: AcpPromptPayload): Promise<SteerOutcome> =>
+    quietly(async () => {
+      const api = electron();
 
-export const platformBridge = {
-  isElectron(): boolean {
-    return Boolean(window.electronAPI?.isElectron);
-  },
+      if (api) return (await api.steerAcp(payload)).outcome;
 
-  async getAcpStatus(workspaceId?: string): Promise<AcpStatusInfo> {
-    if (window.electronAPI) return window.electronAPI.getAcpStatus(workspaceId);
-    const res = await fetch(`/api/bridge/acp-status${workspaceId ? `?workspace=${encodeURIComponent(workspaceId)}` : ''}`);
-    return res.json();
-  },
-
-  async connectAcp(agentCommand?: string): Promise<AcpStatusInfo> {
-    if (window.electronAPI) return window.electronAPI.connectAcp(agentCommand);
-    const res = await fetch('/api/bridge/acp-connect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agentCommand }),
-    });
-    return res.json();
-  },
-
-  async sendAcpPrompt(payload: AcpPromptPayload): Promise<{
-    stopReason: string;
-    sessionId?: string;
-    models: CustomModelDefinition[];
-    scenes: SavedSceneRecord[];
-  }> {
-    if (window.electronAPI) return window.electronAPI.sendAcpPrompt(payload);
-    const res = await fetch('/api/bridge/acp-prompt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const body = await res.json();
-    if (!res.ok || body.error) throw new Error(body.error || `Agent error ${res.status}`);
-    return body;
-  },
-
-  /** Add a message to the run in progress (Claude reads it between steps) */
-  async steerAcp(payload: AcpPromptPayload): Promise<SteerOutcome> {
-    try {
-      if (window.electronAPI) return (await window.electronAPI.steerAcp(payload)).outcome;
-      const res = await fetch('/api/bridge/acp-steer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      return (await res.json()).outcome ?? 'unsupported';
-    } catch {
-      return 'unsupported';
-    }
-  },
-
-  async saveEvidenceFile(payload: EvidenceFilePayload): Promise<void> {
-    if (window.electronAPI) {
-      await window.electronAPI.saveEvidenceFile(payload);
-      return;
-    }
-    const res = await fetch('/api/bridge/save-evidence-file', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error((await res.json()).error || `Couldn’t save ${payload.relPath}`);
-  },
+      return (await post<{ outcome?: SteerOutcome }>('/acp-steer', payload)).outcome ?? 'unsupported';
+    }, 'unsupported'),
 
   async cancelAcp(workspaceId: string): Promise<void> {
-    if (window.electronAPI) {
-      await window.electronAPI.cancelAcp(workspaceId);
-      return;
-    }
-    await fetch('/api/bridge/acp-cancel', { method: 'POST', body: JSON.stringify({ workspaceId }) });
+    await (electron()?.cancelAcp(workspaceId) ?? post('/acp-cancel', { workspaceId }, { json: false }));
   },
 
-  async resumeAcp(sessionId: string, workspaceId: string): Promise<AcpStatusInfo> {
-    if (window.electronAPI) return window.electronAPI.resumeAcp(sessionId, workspaceId);
-    const res = await fetch('/api/bridge/acp-resume', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, workspaceId }),
-    });
-    return res.json();
-  },
+  resumeAcp: (sessionId: string, workspaceId: string): Promise<AcpStatusInfo> =>
+    electron()?.resumeAcp(sessionId, workspaceId) ?? post('/acp-resume', { sessionId, workspaceId }),
 
-  /** A scene tab closed: stop its agent run and end its session */
-  async closeAcpWorkspace(workspaceId: string): Promise<void> {
-    try {
-      if (window.electronAPI) {
-        await window.electronAPI.closeAcpWorkspace(workspaceId);
-        return;
-      }
-      await fetch('/api/bridge/acp-close-workspace', { method: 'POST', body: JSON.stringify({ workspaceId }) });
-    } catch {
-      // the session ends with the agent process anyway
-    }
-  },
+  closeAcpWorkspace: (workspaceId: string): Promise<void> =>
+    quietly(async () => {
+      await (electron()?.closeAcpWorkspace(workspaceId) ??
+        post('/acp-close-workspace', { workspaceId }, { json: false }));
+    }, undefined),
 
-  async listChats(): Promise<AgentConversationSummary[]> {
-    if (window.electronAPI) return window.electronAPI.listChats();
-    return (await fetch('/api/bridge/chats')).json();
-  },
+  newAcpConversation: (workspaceId: string): Promise<AcpStatusInfo> =>
+    electron()?.newAcpConversation(workspaceId) ?? post('/acp-new-conversation', { workspaceId }, { json: false }),
 
-  /** Dated price checks for purchasable parts, keyed by catalog key (library/purchases.json) */
-  async listPurchases(): Promise<Record<string, PurchaseRecord>> {
-    try {
-      if (window.electronAPI) return await window.electronAPI.listPurchases();
-      return await (await fetch('/api/bridge/purchases')).json();
-    } catch {
-      return {};
-    }
-  },
-
-  async trainStatus(): Promise<TrainerStatus> {
-    if (window.electronAPI) return window.electronAPI.trainStatus();
-    return (await fetch('/api/bridge/train-status')).json();
-  },
-
-  async trainStart(payload: TrainStartPayload): Promise<{ jobId: string }> {
-    if (window.electronAPI) return window.electronAPI.trainStart(payload);
-    const res = await fetch('/api/bridge/train-start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    const body = await res.json();
-    if (!res.ok) throw new Error(String(body.error ?? 'Training didn’t start.').replace(/^Error:\s*/, ''));
-    return body;
-  },
-
-  async trainStop(workspaceId: string): Promise<{ stopping: boolean }> {
-    if (window.electronAPI) return window.electronAPI.trainStop(workspaceId);
-    const res = await fetch('/api/bridge/train-stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaceId }) });
-    return res.json();
-  },
-
-  /** A trained policy's spec (library/policies/<id>/policy.json) */
-  async getPolicy(id: string): Promise<unknown> {
-    if (window.electronAPI) return window.electronAPI.getPolicy(id);
-    return (await fetch(`/api/bridge/policy?id=${encodeURIComponent(id)}`)).json();
-  },
-
-  async deletePolicy(id: string): Promise<boolean> {
-    if (window.electronAPI) return window.electronAPI.deletePolicy(id);
-    const res = await fetch('/api/bridge/policy-delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-    return res.json();
-  },
-
-  /** Records what the user saw on a listing; null removes the check */
-  async savePurchase(key: string, record: PurchaseRecord | null): Promise<Record<string, PurchaseRecord>> {
-    if (window.electronAPI) return window.electronAPI.savePurchase({ key, record });
-    const res = await fetch('/api/bridge/purchase-save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, record }),
-    });
-    return res.json();
-  },
-
-  async getChat(id: string): Promise<AgentConversation | null> {
-    if (window.electronAPI) return window.electronAPI.getChat(id);
-    return (await fetch(`/api/bridge/chat?id=${encodeURIComponent(id)}`)).json();
-  },
-
-  async saveChat(conv: AgentConversation): Promise<AgentConversationSummary[]> {
-    if (window.electronAPI) return window.electronAPI.saveChat(conv);
-    const res = await fetch('/api/bridge/chat-save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(conv),
-    });
-    return res.json();
-  },
-
-  async deleteChat(id: string): Promise<AgentConversationSummary[]> {
-    if (window.electronAPI) return window.electronAPI.deleteChat(id);
-    const res = await fetch('/api/bridge/chat-delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    return res.json();
-  },
-
-  async newAcpConversation(workspaceId: string): Promise<AcpStatusInfo> {
-    if (window.electronAPI) return window.electronAPI.newAcpConversation(workspaceId);
-    const res = await fetch('/api/bridge/acp-new-conversation', { method: 'POST', body: JSON.stringify({ workspaceId }) });
-    return res.json();
-  },
-
-  /** Answer a request the agent's CAD tools made (scene ops, snapshot, screenshots) */
   async respondToAgent(payload: { requestId: string; result?: unknown; error?: string }): Promise<void> {
-    if (window.electronAPI) {
-      await window.electronAPI.respondToAgent(payload);
-      return;
-    }
-    await fetch('/api/bridge/agent-respond', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  },
-
-  async uploadImage(payload: {
-    name: string;
-    dataUrl: string;
-    width?: number;
-    height?: number;
-  }): Promise<ReferenceImageRecord> {
-    if (window.electronAPI) return window.electronAPI.uploadImage(payload);
-    const res = await fetch('/api/bridge/upload-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    return res.json();
-  },
-
-  async listImages(): Promise<ReferenceImageRecord[]> {
-    if (window.electronAPI) return window.electronAPI.listImages();
-    const res = await fetch('/api/bridge/images');
-    return res.json();
-  },
-
-  async listModels(): Promise<CustomModelDefinition[]> {
-    if (window.electronAPI) return window.electronAPI.listModels();
-    const res = await fetch('/api/bridge/models');
-    return res.json();
-  },
-
-  async saveModel(modelDef: CustomModelDefinition): Promise<CustomModelDefinition> {
-    if (window.electronAPI) return window.electronAPI.saveModel(modelDef);
-    const res = await fetch('/api/bridge/save-model', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(modelDef),
-    });
-    return res.json();
-  },
-
-  async deleteModel(modelId: string): Promise<CustomModelDefinition[]> {
-    if (window.electronAPI) return window.electronAPI.deleteModel(modelId);
-    const res = await fetch('/api/bridge/delete-model', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ modelId }),
-    });
-    return res.json();
-  },
-
-  async listScenes(): Promise<SavedSceneRecord[]> {
-    if (window.electronAPI) return window.electronAPI.listScenes();
-    const res = await fetch('/api/bridge/scenes');
-    return res.json();
-  },
-
-  async saveScene(scenePayload: Record<string, unknown>): Promise<SavedSceneRecord> {
-    if (window.electronAPI) return window.electronAPI.saveScene(scenePayload);
-    const res = await fetch('/api/bridge/save-scene', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(scenePayload),
-    });
-    return res.json();
-  },
-
-  async deleteScene(sceneId: string): Promise<SavedSceneRecord[]> {
-    if (window.electronAPI) return window.electronAPI.deleteScene(sceneId);
-    const res = await fetch('/api/bridge/delete-scene', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sceneId }),
-    });
-    return res.json();
-  },
-
-  /** Native menu bar (Electron only); the scene in front and the tab host each send their part */
-  setMenuState(state: Partial<AppMenuState>): void {
-    window.electronAPI?.setMenuState(state);
-  },
-
-  onMenuCommand(callback: (id: string) => void): () => void {
-    return window.electronAPI?.onMenuCommand(callback) ?? (() => {});
-  },
-
-  subscribeEvents(callback: (event: Record<string, unknown>) => void): () => void {
-    if (window.electronAPI) {
-      return window.electronAPI.onBackendEvent(callback);
-    }
-    const es = new EventSource('/api/events');
-    es.onmessage = (e) => {
-      try {
-        callback(JSON.parse(e.data));
-      } catch {
-        // ignore parse errors
-      }
-    };
-    return () => es.close();
+    await (electron()?.respondToAgent(payload) ?? post('/agent-respond', payload));
   },
 };
+
+const libraryBridge = {
+  async saveEvidenceFile(payload: EvidenceFilePayload): Promise<void> {
+    const api = electron();
+
+    if (api) {
+      await api.saveEvidenceFile(payload);
+
+      return;
+    }
+
+    await postOrThrow('/save-evidence-file', payload, (body, res) =>
+      res.ok ? null : String(body.error || `Couldn’t save ${payload.relPath}`),
+    );
+  },
+
+  listChats: (): Promise<AgentConversationSummary[]> => electron()?.listChats() ?? get('/chats'),
+  getChat: (id: string): Promise<AgentConversation | null> => electron()?.getChat(id) ?? get(`/chat${query('id', id)}`),
+  saveChat: (conv: AgentConversation): Promise<AgentConversationSummary[]> =>
+    electron()?.saveChat(conv) ?? post('/chat-save', conv),
+  deleteChat: (id: string): Promise<AgentConversationSummary[]> =>
+    electron()?.deleteChat(id) ?? post('/chat-delete', { id }),
+
+  listPurchases: (): Promise<Record<string, PurchaseRecord>> =>
+    quietly(async () => (await electron()?.listPurchases()) ?? get('/purchases'), {}),
+  savePurchase: (key: string, record: PurchaseRecord | null): Promise<Record<string, PurchaseRecord>> =>
+    electron()?.savePurchase({ key, record }) ?? post('/purchase-save', { key, record }),
+
+  uploadImage: (payload: ImageUpload): Promise<ReferenceImageRecord> =>
+    electron()?.uploadImage(payload) ?? post('/upload-image', payload),
+  listImages: (): Promise<ReferenceImageRecord[]> => electron()?.listImages() ?? get('/images'),
+
+  listModels: (): Promise<CustomModelDefinition[]> => electron()?.listModels() ?? get('/models'),
+  saveModel: (model: CustomModelDefinition): Promise<CustomModelDefinition> =>
+    electron()?.saveModel(model) ?? post('/save-model', model),
+  deleteModel: (modelId: string): Promise<CustomModelDefinition[]> =>
+    electron()?.deleteModel(modelId) ?? post('/delete-model', { modelId }),
+
+  listScenes: (): Promise<SavedSceneSummary[]> => electron()?.listScenes() ?? get('/scenes'),
+  getScene: (sceneId: string): Promise<SavedSceneRecord | null> =>
+    electron()?.getScene(sceneId) ?? get(`/scene${query('id', sceneId)}`),
+  saveScenePreview: (payload: ScenePreviewPayload): Promise<SavedSceneSummary | null> =>
+    electron()?.saveScenePreview(payload) ?? post('/save-scene-preview', payload),
+  saveScene: (scenePayload: Record<string, unknown>): Promise<SavedSceneSummary> =>
+    electron()?.saveScene(scenePayload) ?? post('/save-scene', scenePayload),
+  deleteScene: (sceneId: string): Promise<SavedSceneSummary[]> =>
+    electron()?.deleteScene(sceneId) ?? post('/delete-scene', { sceneId }),
+};
+
+const trainingBridge = {
+  trainStatus: (): Promise<TrainerStatus> => electron()?.trainStatus() ?? get('/train-status'),
+  trainStart: (payload: TrainStartPayload): Promise<{ jobId: string }> =>
+    electron()?.trainStart(payload) ??
+    postOrThrow('/train-start', payload, (body, res) =>
+      res.ok ? null : String(body.error ?? 'Training didn’t start.').replace(/^Error:\s*/, ''),
+    ),
+  trainStop: (workspaceId: string): Promise<{ stopping: boolean }> =>
+    electron()?.trainStop(workspaceId) ?? post('/train-stop', { workspaceId }),
+  getPolicy: (id: string): Promise<unknown> => electron()?.getPolicy(id) ?? get(`/policy${query('id', id)}`),
+  deletePolicy: (id: string): Promise<boolean> => electron()?.deletePolicy(id) ?? post('/policy-delete', { id }),
+};
+
+const shellBridge = {
+  setMenuState(state: Partial<AppMenuState>): void {
+    electron()?.setMenuState(state);
+  },
+
+  onMenuCommand: (callback: (id: string) => void): (() => void) => electron()?.onMenuCommand(callback) ?? (() => {}),
+
+  subscribeEvents(callback: (event: Record<string, unknown>) => void): () => void {
+    const api = electron();
+
+    if (api) {
+      return api.onBackendEvent(callback);
+    }
+
+    const events = new EventSource('/api/events');
+
+    events.onmessage = (e) => quietly(async () => callback(JSON.parse(e.data)), undefined);
+
+    return () => events.close();
+  },
+};
+
+export const platformBridge = { ...acpBridge, ...libraryBridge, ...trainingBridge, ...shellBridge };

@@ -1,0 +1,134 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 1`] = `
+"<mujoco model="basecase">
+  <compiler angle="radian" inertiafromgeom="true" boundmass="0.0005" boundinertia="1e-8"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+  <default>
+    <geom friction="0.9 0.02 0.002" solref="0.004 1" condim="3"/>
+  </default>
+  <asset>
+    <mesh name="m0_thigh" vertex="0.015 -0.015 -0.035 0.015 -0.015 -0.005 -0.015 -0.015 -0.035 0.015 0.015 -0.035 0.015 0.015 -0.005 -0.015 0.015 -0.005 -0.015 0.015 -0.035 -0.015 -0.015 -0.005" maxhullvert="96" inertia="convex"/>
+  </asset>
+  <worldbody>
+    <light pos="0 0 3" dir="0 0 -1" directional="true"/>
+    <geom name="floor" type="plane" size="0 0 0.05" contype="0" conaffinity="1"/>
+    <body name="root_0" pos="0 0 0.08">
+      <freejoint name="root_0"/>
+      <geom name="g_pelvis" type="box" size="0.02 0.02 0.02" pos="0 0 0.02" quat="1 0 0 0" contype="1" conaffinity="0" mass="0.021349"/>
+      <body name="b_j0_hip" pos="0 0 0">
+        <joint name="j0_hip" type="hinge" axis="1 0 0" range="-1.570796 0.785398" damping="0.006" armature="0.002" frictionloss="0.003"/>
+        <geom name="g_thigh" type="mesh" mesh="m0_thigh" contype="1" conaffinity="0" mass="0.010308"/>
+        <body name="b_j1_knee" pos="0 0 -0.04">
+          <joint name="j1_knee" type="hinge" axis="1 0 0" range="0 2.094395" damping="0.03" armature="0.006" frictionloss="0.015"/>
+          <geom name="g_shin" type="box" size="0.012 0.012 0.012" pos="0 0 -0.015" quat="1 0 0 0" contype="1" conaffinity="0" mass="0.005944"/>
+        </body>
+      </body>
+    </body>
+    <geom name="g_crate" type="box" size="0.01 0.01 0.01" pos="0.2 0 0.01" quat="1 0 0 0" contype="0" conaffinity="1"/>
+  </worldbody>
+  <actuator>
+    <position name="j0_hip" joint="j0_hip" kp="1.764706" dampratio="1" forcerange="-0.3 0.3" ctrlrange="-1.570796 0.785398"/>
+    <position name="j1_knee" joint="j1_knee" kp="8.823529" dampratio="1" forcerange="-1.5 1.5" ctrlrange="0 2.094395"/>
+  </actuator>
+</mujoco>
+"
+`;
+
+exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2`] = `
+{
+  "bodies": [
+    {
+      "name": "root_0",
+      "origin": [
+        0,
+        80,
+        0,
+      ],
+      "parts": [
+        "pelvis",
+      ],
+    },
+    {
+      "name": "b_j0_hip",
+      "origin": [
+        0,
+        80,
+        0,
+      ],
+      "parts": [
+        "thigh",
+      ],
+    },
+    {
+      "name": "b_j1_knee",
+      "origin": [
+        0,
+        40,
+        0,
+      ],
+      "parts": [
+        "shin",
+      ],
+    },
+  ],
+  "initial": {
+    "roots": {
+      "hip": {
+        "position": [
+          5,
+          17,
+          -3,
+        ],
+      },
+    },
+    "values": {
+      "hip": 20,
+      "knee": 120,
+    },
+  },
+  "joints": [
+    {
+      "effort": 0.3,
+      "effortSource": "estimate",
+      "id": "hip",
+      "name": "j0_hip",
+      "range": [
+        -90,
+        45,
+      ],
+      "robot": "hip",
+      "type": "revolute",
+    },
+    {
+      "effort": 1.5,
+      "effortSource": "published",
+      "id": "knee",
+      "name": "j1_knee",
+      "range": [
+        0,
+        120,
+      ],
+      "robot": "hip",
+      "type": "revolute",
+    },
+  ],
+  "massKg": {
+    "hip": 0.0376014744,
+  },
+  "robots": [
+    {
+      "floating": true,
+      "joints": [
+        "hip",
+        "knee",
+      ],
+      "key": "hip",
+      "name": "Robot",
+      "root": "root_0",
+    },
+  ],
+  "warnings": [],
+  "xml": undefined,
+}
+`;

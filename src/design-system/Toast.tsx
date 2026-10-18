@@ -8,9 +8,9 @@ export interface ToastData {
   action?: { label: string; onClick: () => void };
 }
 
-/** Glass toast pill. One line, optional action (e.g. Undo). */
 export const Toast: React.FC<{ toast: ToastData; onDismiss: () => void }> = ({ toast, onDismiss }) => {
   const tone = toast.tone ?? 'success';
+
   return (
     <div
       role="status"

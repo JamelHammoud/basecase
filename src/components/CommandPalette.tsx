@@ -19,9 +19,17 @@ interface CommandPaletteProps {
   commands: Command[];
 }
 
-/** ⌘K — reach every part, tool, view and action by typing. */
+function matchScore(label: string, q: string) {
+  const l = label.toLowerCase();
+
+  if (l.startsWith(q)) return 0;
+
+  return l.includes(q) ? 1 : 2;
+}
+
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, commands }) => {
   if (!open) return null;
+
   return createPortal(<PaletteBody onClose={onClose} commands={commands} />, document.body);
 };
 
@@ -32,14 +40,18 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     if (!q) return commands;
+
     const terms = q.split(/\s+/);
+
     return commands
       .map((c) => {
         const hay = `${c.label} ${c.group} ${c.keywords || ''}`.toLowerCase();
+
         if (!terms.every((t) => hay.includes(t))) return null;
-        const score = c.label.toLowerCase().startsWith(q) ? 0 : c.label.toLowerCase().includes(q) ? 1 : 2;
-        return { c, score };
+
+        return { c, score: matchScore(c.label, q) };
       })
       .filter((x): x is { c: Command; score: number } => !!x)
       .sort((a, b) => a.score - b.score)
@@ -47,13 +59,12 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
   }, [query, commands]);
 
   useEffect(() => {
-    listRef.current
-      ?.querySelector<HTMLElement>(`[data-idx="${active}"]`)
-      ?.scrollIntoView({ block: 'nearest' });
+    listRef.current?.querySelector<HTMLElement>(`[data-idx="${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
   const run = (c?: Command) => {
     if (!c) return;
+
     onClose();
     c.run();
   };
@@ -96,17 +107,14 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
         </div>
 
         <div ref={listRef} className="overflow-y-auto p-2">
-          {results.length === 0 && (
-            <div className="py-10 text-center text-[14px] text-white/45">No results</div>
-          )}
+          {results.length === 0 && <div className="py-10 text-center text-[14px] text-white/45">No results</div>}
           {results.map((c, idx) => {
             const header = idx === 0 || results[idx - 1].group !== c.group ? c.group : null;
             const isActive = idx === active;
+
             return (
               <React.Fragment key={c.id}>
-                {header && (
-                  <div className="px-3 pt-3 pb-1.5 text-[12px] font-medium text-white/40">{header}</div>
-                )}
+                {header && <div className="px-3 pt-3 pb-1.5 text-[12px] font-medium text-white/40">{header}</div>}
                 <button
                   type="button"
                   data-idx={idx}

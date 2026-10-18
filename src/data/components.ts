@@ -1,14 +1,3 @@
-/**
- * Real, purchasable components (servos, motors, boards, sensors) with exact geometry.
- *
- * - Meshes come from the manufacturer's own CAD file (STEP), converted by
- *   tools/parts/convert-step.mjs. When a manufacturer publishes no CAD, the studio's agent
- *   models the part from the official drawing (tools/parts/generate.mjs) and `model.source`
- *   says so.
- * - Every number here is from the datasheet or drawing linked on the entry. Sizes come from
- *   the converted mesh itself (component-meshes.json), so they always match what you see.
- * - Studio frame: Y up, millimeters. size = [width X, height Y, depth Z].
- */
 import MESHES from './component-meshes.json';
 
 export type ComponentGroup =
@@ -28,82 +17,57 @@ export interface ComponentInfo {
   id: string;
   name: string;
   manufacturer: string;
-  /** Manufacturer part number(s) */
   mpn: string;
   group: ComponentGroup;
-  /** One plain sentence */
   description: string;
-  /** What builders compare: torque, speed, voltage, CPU… */
   specs: Array<[label: string, value: string]>;
-  /** Exact mounting features, for the Inspector and the AI brief */
   mounting: string;
   links: {
-    /** Product page, or a search when Amazon has no listing for the exact part */
     amazon?: { url: string; kind: 'product' | 'search' };
     product?: string;
     datasheet?: string;
   };
   model: {
-    /**
-     * 'manufacturer' = the maker's CAD file; 'checked' = third-party CAD measured against the
-     * maker's drawing (`checkedAgainst`); 'agent' = modeled by the studio's agent from the drawing
-     */
     source: 'manufacturer' | 'checked' | 'agent';
-    /** Who published the file, e.g. 'Raspberry Pi Ltd' */
     by: string;
-    /** Maker whose official drawing a 'checked' model was measured against */
     checkedAgainst?: string;
     url?: string;
     license?: string;
   };
-  /** Fallback color while the mesh loads */
   color: string;
-  /** Parts used with this one: catalog keys like 'hardware:socket_head|M2.5|6' or 'component:<id>' */
   pairsWith?: string[];
-  /** Extra search words (robots it's used in, aliases) */
   keywords?: string;
-  /** Torque, voltage and current for actuators (engineering checks) */
   actuator?: ActuatorSpec;
-  /** Versions sold under one body (voltage, gearing); each is a different part to buy */
   variants?: ComponentVariant[];
 }
 
-/** N·m from kg·cm */
 export const kgcm = (v: number) => Math.round(v * 0.0980665 * 1000) / 1000;
 
 export interface ActuatorSpec {
-  /** Stall torque at `atVolts`, N·m */
   stallNm: number;
-  /** Rated (continuous) torque, N·m; Feetech rates it at about a third of stall */
   ratedNm?: number;
-  /** Specified input range, V */
   volts: [number, number];
   atVolts: number;
   stallA?: number;
   ratedA?: number;
   idleA?: number;
-  /** Output on both faces (a rear idler boss that takes a horn): a U-bracket on both is supported on both sides */
   dualShaft?: boolean;
-  /** Where the numbers come from */
   source: string;
 }
 
 export interface ComponentVariant {
-  /** Short id used in catalog keys: component:<id>|<variant> */
   id: string;
-  /** e.g. "12 V (C018)" */
   label: string;
   mpn: string;
   actuator?: ActuatorSpec;
-  /** A search for this exact variant when the listing on the component covers another one */
   amazon?: { url: string; kind: 'product' | 'search' };
 }
 
 type MeshStats = { size: [number, number, number]; triangles: number };
+
 const meshStats = MESHES as unknown as Record<string, MeshStats>;
 
 export const COMPONENTS: ComponentInfo[] = [
-  /* ---------------------------------------------------------------- Servos */
   {
     id: 'feetech-sts3215',
     name: 'Feetech STS3215',
@@ -123,10 +87,16 @@ export const COMPONENTS: ComponentInfo[] = [
       'Case 45.2 × 24.7 × 35 mm. Output spline 25T, Ø5.9 mm, 3.4 mm proud, axis 12.5 mm from the case center; horn screw M3 × 6. Rear idler boss Ø6 mm, 4.1 mm proud. Aluminium horns on both faces: Ø19.95, 4 × M3 threaded on a Ø14 circle, faces 1.4 mm beyond the case, so a U-bracket bolts to both. 4× M2 on the top and bottom faces, 20.5 mm apart across the width (Feetech STS3215 drawing).',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0G39SM9HZ', kind: 'product' },
-      product: 'https://www.feetechrc.com/74v-19-kgcm-plastic-case-metal-tooth-magnetic-code-double-axis-ttl-series-steering-gear',
+      product:
+        'https://www.feetechrc.com/74v-19-kgcm-plastic-case-metal-tooth-magnetic-code-double-axis-ttl-series-steering-gear',
       datasheet: 'https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391772523943436695270694.pdf',
     },
-    model: { source: 'checked', by: 'Waveshare', checkedAgainst: 'Feetech', url: 'https://files.waveshare.com/upload/5/59/ST3215-3D.zip' },
+    model: {
+      source: 'checked',
+      by: 'Waveshare',
+      checkedAgainst: 'Feetech',
+      url: 'https://files.waveshare.com/upload/5/59/ST3215-3D.zip',
+    },
     color: '#1d1d1f',
     pairsWith: ['component:waveshare-bus-servo-adapter-a', 'hardware:socket_head|M3|6'],
     keywords: 'st3215, sts-3215, so-100, so-101, so-arm100, lerobot, lekiwi, serial bus servo',
@@ -135,28 +105,63 @@ export const COMPONENTS: ComponentInfo[] = [
         id: 'c001',
         label: '7.4 V (C001)',
         mpn: 'ST-3215-C001',
-        actuator: { stallNm: kgcm(19.5), ratedNm: kgcm(5), volts: [4, 7.4], atVolts: 7.4, stallA: 2.5, ratedA: 0.65, idleA: 0.15, dualShaft: true, source: 'https://openelab.io/products/feetech-sts3215-c001-servo' },
+        actuator: {
+          stallNm: kgcm(19.5),
+          ratedNm: kgcm(5),
+          volts: [4, 7.4],
+          atVolts: 7.4,
+          stallA: 2.5,
+          ratedA: 0.65,
+          idleA: 0.15,
+          dualShaft: true,
+          source: 'https://openelab.io/products/feetech-sts3215-c001-servo',
+        },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C001+7.4V+servo', kind: 'search' },
       },
       {
         id: 'c018',
         label: '12 V (C018)',
         mpn: 'ST-3215-C018',
-        actuator: { stallNm: kgcm(30), ratedNm: kgcm(10), volts: [4, 14], atVolts: 12, stallA: 2.7, ratedA: 0.9, idleA: 0.18, dualShaft: true, source: 'https://openelab.io/products/feetech-sts3215-c018-servo-12v' },
+        actuator: {
+          stallNm: kgcm(30),
+          ratedNm: kgcm(10),
+          volts: [4, 14],
+          atVolts: 12,
+          stallA: 2.7,
+          ratedA: 0.9,
+          idleA: 0.18,
+          dualShaft: true,
+          source: 'https://openelab.io/products/feetech-sts3215-c018-servo-12v',
+        },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C018+12V+servo', kind: 'search' },
       },
       {
         id: 'c044',
         label: '7.4 V, 1:191 (C044)',
         mpn: 'ST-3215-C044',
-        actuator: { stallNm: kgcm(27.4), ratedNm: kgcm(9), volts: [4, 7.4], atVolts: 7.4, dualShaft: true, source: 'https://www.seeedstudio.com/Feetech-ST-3215-C044-Heavy-Duty-Servo-7-4V-1-191-Gear-Reduction-p-6460.html' },
+        actuator: {
+          stallNm: kgcm(27.4),
+          ratedNm: kgcm(9),
+          volts: [4, 7.4],
+          atVolts: 7.4,
+          dualShaft: true,
+          source:
+            'https://www.seeedstudio.com/Feetech-ST-3215-C044-Heavy-Duty-Servo-7-4V-1-191-Gear-Reduction-p-6460.html',
+        },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C044+servo', kind: 'search' },
       },
       {
         id: 'c046',
         label: '7.4 V, 1:147 (C046)',
         mpn: 'ST-3215-C046',
-        actuator: { stallNm: kgcm(14.4), ratedNm: kgcm(4.8), volts: [4, 7.4], atVolts: 7.4, dualShaft: true, source: 'https://openelab.io/products/feetech-sts3215-c001-servo' },
+        actuator: {
+          stallNm: kgcm(14.4),
+          ratedNm: kgcm(4.8),
+          volts: [4, 7.4],
+          atVolts: 7.4,
+          dualShaft: true,
+          source: 'https://openelab.io/products/feetech-sts3215-c001-servo',
+        },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C046+servo', kind: 'search' },
       },
     ],
@@ -186,7 +191,13 @@ export const COMPONENTS: ComponentInfo[] = [
     model: { source: 'agent', by: 'Feetech' },
     color: '#1d1d1f',
     keywords: 'scs0009, amazing hand, micro servo, serial bus servo',
-    actuator: { stallNm: kgcm(2.3), volts: [4, 7.4], atVolts: 6, stallA: 1, source: 'https://www.makerstore.com.au/?p=144908' },
+    actuator: {
+      stallNm: kgcm(2.3),
+      volts: [4, 7.4],
+      atVolts: 6,
+      stallA: 1,
+      source: 'https://www.makerstore.com.au/?p=144908',
+    },
   },
   {
     id: 'dynamixel-xl330-m288',
@@ -194,7 +205,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'ROBOTIS',
     mpn: 'XL330-M288-T',
     group: 'Servos',
-    description: 'Low-voltage smart servo with a 12-bit contactless encoder and current control, used in Koch and GELLO arms.',
+    description:
+      'Low-voltage smart servo with a 12-bit contactless encoder and current control, used in Koch and GELLO arms.',
     specs: [
       ['Stall torque', '0.52 N·m @ 5 V'],
       ['Speed', '103 rpm @ 5 V'],
@@ -220,7 +232,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'ROBOTIS',
     mpn: 'XL430-W250-T',
     group: 'Servos',
-    description: '11.1 V smart servo with a 12-bit contactless encoder in the 430 body, used in TurtleBot3 and OpenManipulator-X.',
+    description:
+      '11.1 V smart servo with a 12-bit contactless encoder in the 430 body, used in TurtleBot3 and OpenManipulator-X.',
     specs: [
       ['Stall torque', '1.4 N·m @ 11.1 V'],
       ['Speed', '57 rpm @ 11.1 V'],
@@ -295,7 +308,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Feetech',
     mpn: 'ST-3250-C001',
     group: 'Servos',
-    description: '12 V, 50 kg·cm serial bus servo with a magnetic encoder, aluminium case and steel gears, in the STS3215 outline.',
+    description:
+      '12 V, 50 kg·cm serial bus servo with a magnetic encoder, aluminium case and steel gears, in the STS3215 outline.',
     specs: [
       ['Stall torque', '50 kg·cm (4.9 N·m) at 12 V'],
       ['Speed', '0.133 s/60° (75 rpm) at 12 V'],
@@ -311,11 +325,26 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.feetechrc.com/en/562636.html',
       datasheet: 'https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391772424007467984928587.pdf',
     },
-    model: { source: 'checked', by: 'Waveshare', checkedAgainst: 'Feetech', url: 'https://files.waveshare.com/upload/5/59/ST3215-3D.zip' },
+    model: {
+      source: 'checked',
+      by: 'Waveshare',
+      checkedAgainst: 'Feetech',
+      url: 'https://files.waveshare.com/upload/5/59/ST3215-3D.zip',
+    },
     color: '#1d1d1f',
     pairsWith: ['component:waveshare-bus-servo-adapter-a', 'hardware:socket_head|M3|6'],
     keywords: 'sts3250, st3250, feetech, 50kg servo, serial bus servo, so-101, lerobot',
-    actuator: { stallNm: kgcm(50), ratedNm: kgcm(16), volts: [6, 12], atVolts: 12, stallA: 4.2, ratedA: 1.4, idleA: 0.28, dualShaft: true, source: 'https://evelta.com/sts3250-12v-50kg-360deg-magnetic-encoder-double-shaft-ttl-servo/' },
+    actuator: {
+      stallNm: kgcm(50),
+      ratedNm: kgcm(16),
+      volts: [6, 12],
+      atVolts: 12,
+      stallA: 4.2,
+      ratedA: 1.4,
+      idleA: 0.28,
+      dualShaft: true,
+      source: 'https://evelta.com/sts3250-12v-50kg-360deg-magnetic-encoder-double-shaft-ttl-servo/',
+    },
   },
   {
     id: 'waveshare-st3215-hs',
@@ -323,7 +352,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Waveshare',
     mpn: 'ST3215-HS',
     group: 'Servos',
-    description: 'High-speed 12 V serial bus servo (106 rpm) with a magnetic encoder, in the STS3215 outline. Made by Feetech.',
+    description:
+      'High-speed 12 V serial bus servo (106 rpm) with a magnetic encoder, in the STS3215 outline. Made by Feetech.',
     specs: [
       ['Stall torque', '20 kg·cm (2.0 N·m) at 12 V'],
       ['Speed', '0.094 s/60° (106 rpm) at 12 V'],
@@ -473,10 +503,22 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.hiwonder.com/products/lx-16a',
       datasheet: 'https://drive.google.com/drive/folders/146gPiuL129ZPVBaabyf4Z3WBTp3b3MQ4',
     },
-    model: { source: 'manufacturer', by: 'Hiwonder', url: 'https://drive.google.com/file/d/1d1t_0h7B9DSCI-F0zA5wF3QTpglYqgzQ' },
+    model: {
+      source: 'manufacturer',
+      by: 'Hiwonder',
+      url: 'https://drive.google.com/file/d/1d1t_0h7B9DSCI-F0zA5wF3QTpglYqgzQ',
+    },
     color: '#1d1d1f',
     keywords: 'hiwonder, lewansoul, lobot, lx-16a, lx16a, serial bus servo',
-    actuator: { stallNm: kgcm(19.5), volts: [6, 8.4], atVolts: 7.4, stallA: 3, idleA: 0.1, source: 'https://cdn.robotshop.com/rbm/a5e9ab51-86bc-497b-adac-003de3088fb7/9/92896585-5e83-4c7c-a663-650b81e5978b/67e9729b_lx-16a-serial-bus-servo-user-manual.pdf' },
+    actuator: {
+      stallNm: kgcm(19.5),
+      volts: [6, 8.4],
+      atVolts: 7.4,
+      stallA: 3,
+      idleA: 0.1,
+      source:
+        'https://cdn.robotshop.com/rbm/a5e9ab51-86bc-497b-adac-003de3088fb7/9/92896585-5e83-4c7c-a663-650b81e5978b/67e9729b_lx-16a-serial-bus-servo-user-manual.pdf',
+    },
   },
   {
     id: 'dsservo-ds3218',
@@ -484,7 +526,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'DSServo',
     mpn: 'DS3218',
     group: 'Servos',
-    description: 'Standard-size 20 kg·cm PWM servo with metal gears, a 25T spline and IP66 sealing. Shown with its arm.',
+    description:
+      'Standard-size 20 kg·cm PWM servo with metal gears, a 25T spline and IP66 sealing. Shown with its arm.',
     specs: [
       ['Stall torque', '18 kg·cm at 5 V · 21.5 kg·cm at 6.8 V'],
       ['Speed', '0.14 s/60° at 6.8 V'],
@@ -506,7 +549,6 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'ds3218, dsservo, 20kg servo, pwm servo, standard servo, mg996r alternative',
   },
 
-  /* ---------------------------------------------------------------- Motors */
   {
     id: 'nema17-17hs4401',
     name: 'NEMA 17 Stepper 17HS4401',
@@ -549,7 +591,10 @@ export const COMPONENTS: ComponentInfo[] = [
     mounting:
       'Body 12 × 10 mm, 25.6 mm long. Output D-shaft Ø3 mm (2.5 mm across the flat), 10 mm long. 2× M1.6 tapped holes 9 mm apart on the gearbox face. Rear shaft Ø1 mm.',
     links: {
-      amazon: { url: 'https://www.amazon.com/s?k=Pololu+100%3A1+Micro+Metal+Gearmotor+HP+6V+Extended+Motor+Shaft', kind: 'search' },
+      amazon: {
+        url: 'https://www.amazon.com/s?k=Pololu+100%3A1+Micro+Metal+Gearmotor+HP+6V+Extended+Motor+Shaft',
+        kind: 'search',
+      },
       product: 'https://www.pololu.com/product/2214',
       datasheet: 'https://www.pololu.com/file/0J1487/pololu-micro-metal-gearmotors-rev-6-2.pdf',
     },
@@ -577,10 +622,15 @@ export const COMPONENTS: ComponentInfo[] = [
       '35.2 mm square flange. 4× M3, 4 mm deep, on a 26 mm square. Ø22 × 2 mm pilot boss. Ø5 D-shaft, 24 mm long (4.5 mm across the flat).',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B00PQ4Y9B6', kind: 'product' },
-      product: 'https://www.stepperonline.co.uk/nema-14-bipolar-1-8deg-18ncm-25-5oz-in-0-8a-35x35x34mm-4-wires-14hs13-0804s.html',
+      product:
+        'https://www.stepperonline.co.uk/nema-14-bipolar-1-8deg-18ncm-25-5oz-in-0-8a-35x35x34mm-4-wires-14hs13-0804s.html',
       datasheet: 'https://files.omc-stepperonline.com/14HS13-0804S_Full_Datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'StepperOnline', url: 'https://files.omc-stepperonline.com/14HS13-0804S.STEP' },
+    model: {
+      source: 'manufacturer',
+      by: 'StepperOnline',
+      url: 'https://files.omc-stepperonline.com/14HS13-0804S.STEP',
+    },
     color: '#1f1f22',
     pairsWith: ['component:pololu-a4988', 'hardware:socket_head|M3|8'],
     keywords: 'nema 14, nema14, stepper, stepper motor, 14hs13, stepperonline',
@@ -604,10 +654,15 @@ export const COMPONENTS: ComponentInfo[] = [
       '42.3 mm square flange. 4× M3, 4.5 mm deep, on a 31 mm square. Ø22 × 2 mm pilot boss. Ø5 D-shaft, 24 mm long (4.5 mm across the flat).',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B00PNEQKC0', kind: 'product' },
-      product: 'https://www.stepperonline.co.uk/nema-17-bipolar-59ncm-83-55oz-in-2a-42x42x48mm-4-wires-w-1m-cable-connector-17hs19-2004s1.html',
+      product:
+        'https://www.stepperonline.co.uk/nema-17-bipolar-59ncm-83-55oz-in-2a-42x42x48mm-4-wires-w-1m-cable-connector-17hs19-2004s1.html',
       datasheet: 'https://files.omc-stepperonline.com/17HS19-2004S1_Full_Datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'StepperOnline', url: 'https://files.omc-stepperonline.com/17HS19-2004S1.STEP' },
+    model: {
+      source: 'manufacturer',
+      by: 'StepperOnline',
+      url: 'https://files.omc-stepperonline.com/17HS19-2004S1.STEP',
+    },
     color: '#1f1f22',
     pairsWith: ['component:pololu-drv8825', 'hardware:socket_head|M3|8'],
     keywords: 'nema 17, nema17, stepper, stepper motor, 17hs19, 3d printer, stepperonline',
@@ -630,10 +685,15 @@ export const COMPONENTS: ComponentInfo[] = [
       '42.3 mm square flange. 4× M3, 3 mm deep, on a 31 mm square. Ø22 × 2 mm pilot boss. Ø5 D-shaft, 20 mm long (4.5 mm across the flat).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=STEPPERONLINE+17HE08-1004S', kind: 'search' },
-      product: 'https://www.stepperonline.co.uk/e-series-nema-17-bipolar-1-8deg-17ncm-24-07oz-in-1a-42x42x23mm-4-wires-17he08-1004s.html',
+      product:
+        'https://www.stepperonline.co.uk/e-series-nema-17-bipolar-1-8deg-17ncm-24-07oz-in-1a-42x42x23mm-4-wires-17he08-1004s.html',
       datasheet: 'https://files.omc-stepperonline.com/17HE08-1004S_Full_Datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'StepperOnline', url: 'https://files.omc-stepperonline.com/17HE08-1004S.STEP' },
+    model: {
+      source: 'manufacturer',
+      by: 'StepperOnline',
+      url: 'https://files.omc-stepperonline.com/17HE08-1004S.STEP',
+    },
     color: '#1f1f22',
     pairsWith: ['component:pololu-a4988', 'hardware:socket_head|M3|6'],
     keywords: 'nema 17, pancake stepper, short stepper, extruder motor, 17he08, stepperonline',
@@ -657,10 +717,15 @@ export const COMPONENTS: ComponentInfo[] = [
       '57.3 mm square flange. 4× Ø5.2 through holes on a 47.14 mm square. Ø38.1 × 1.6 mm pilot boss. Ø6.35 D-shaft, 21 mm long (5.85 mm across the flat).',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B00PNEPF5I', kind: 'product' },
-      product: 'https://www.stepperonline.co.uk/nema-23-bipolar-1-8deg-1-2nm-169-93oz-in-2-8a-57x57x56mm-4-wires-23hs22-2804s.html',
+      product:
+        'https://www.stepperonline.co.uk/nema-23-bipolar-1-8deg-1-2nm-169-93oz-in-2-8a-57x57x56mm-4-wires-23hs22-2804s.html',
       datasheet: 'https://files.omc-stepperonline.com/23HS22-2804S_Full_Datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'StepperOnline', url: 'https://files.omc-stepperonline.com/23HS22-2804S.STEP' },
+    model: {
+      source: 'manufacturer',
+      by: 'StepperOnline',
+      url: 'https://files.omc-stepperonline.com/23HS22-2804S.STEP',
+    },
     color: '#1f1f22',
     pairsWith: ['component:pololu-drv8825', 'hardware:socket_head|M5|16', 'hardware:hex_nut|M5'],
     keywords: 'nema 23, nema23, stepper, stepper motor, cnc, 23hs22, stepperonline',
@@ -671,7 +736,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Pololu',
     mpn: '#4753',
     group: 'Motors',
-    description: '12 V brushed gearmotor, 200 rpm, with a 64 CPR quadrature encoder. A strong drive motor for small rovers.',
+    description:
+      '12 V brushed gearmotor, 200 rpm, with a 64 CPR quadrature encoder. A strong drive motor for small rovers.',
     specs: [
       ['Speed', '200 rpm no-load at 12 V'],
       ['Stall torque', '2.06 N·m (21 kg·cm) at 5.5 A'],
@@ -683,7 +749,10 @@ export const COMPONENTS: ComponentInfo[] = [
     mounting:
       'Gearbox face Ø36.8 with 6× M3 on a Ø31 circle; screws no deeper than 3 mm. The output shaft is 7 mm off the motor axis: Ø6 D-shaft, 16 mm usable past a Ø12 × 6 mm bushing.',
     links: {
-      amazon: { url: 'https://www.amazon.com/s?k=Pololu+4753+50%3A1+Metal+Gearmotor+37Dx70L+12V+64+CPR+Encoder', kind: 'search' },
+      amazon: {
+        url: 'https://www.amazon.com/s?k=Pololu+4753+50%3A1+Metal+Gearmotor+37Dx70L+12V+64+CPR+Encoder',
+        kind: 'search',
+      },
       product: 'https://www.pololu.com/product/4753',
       datasheet: 'https://www.pololu.com/file/0J1736/pololu-37d-metal-gearmotors-rev-1-2.pdf',
     },
@@ -710,7 +779,10 @@ export const COMPONENTS: ComponentInfo[] = [
     mounting:
       'Gearbox face: 2× M3, 6 mm deep, 17 mm apart through the shaft line. Centered Ø4 D-shaft, 10 mm usable past a Ø7 × 2.5 mm bushing.',
     links: {
-      amazon: { url: 'https://www.amazon.com/s?k=Pololu+4846+75%3A1+Metal+Gearmotor+25Dx69L+HP+12V+48+CPR+Encoder', kind: 'search' },
+      amazon: {
+        url: 'https://www.amazon.com/s?k=Pololu+4846+75%3A1+Metal+Gearmotor+25Dx69L+HP+12V+48+CPR+Encoder',
+        kind: 'search',
+      },
       product: 'https://www.pololu.com/product/4846',
       datasheet: 'https://www.pololu.com/file/0J1829/pololu-25d-metal-gearmotors-rev-2-0.pdf',
     },
@@ -725,7 +797,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Pololu',
     mpn: '#5216',
     group: 'Motors',
-    description: 'Tiny 12 V gearmotor with a factory-fitted magnetic encoder and a JST SH connector. For small wheeled robots.',
+    description:
+      'Tiny 12 V gearmotor with a factory-fitted magnetic encoder and a JST SH connector. For small wheeled robots.',
     specs: [
       ['Speed', '330 rpm no-load at 12 V'],
       ['Stall torque', '0.13 N·m (1.3 kg·cm) at 0.75 A'],
@@ -737,7 +810,10 @@ export const COMPONENTS: ComponentInfo[] = [
     mounting:
       'Gearbox face 12 × 10 mm with 2× M1.6, 9 mm apart. Ø3 D-shaft, 10 mm long. Or clamp it in Pololu micro metal gearmotor brackets.',
     links: {
-      amazon: { url: 'https://www.amazon.com/s?k=Pololu+5216+100%3A1+Micro+Metal+Gearmotor+HPCB+12V+12+CPR+Encoder', kind: 'search' },
+      amazon: {
+        url: 'https://www.amazon.com/s?k=Pololu+5216+100%3A1+Micro+Metal+Gearmotor+HPCB+12V+12+CPR+Encoder',
+        kind: 'search',
+      },
       product: 'https://www.pololu.com/product/5216',
       datasheet: 'https://www.pololu.com/file/0J1487/pololu-micro-metal-gearmotors-rev-6-2.pdf',
     },
@@ -768,7 +844,11 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.cubemars.com/product/ak60-6-v1-1-kv80-robotic-actuator.html',
       datasheet: 'https://www.cubemars.com/data/cms/202602/ak60-6-v1-1-robotic-actuator-2d-drawing.pdf',
     },
-    model: { source: 'manufacturer', by: 'CubeMars', url: 'https://www.cubemars.com/product/ak60-6-v1-1-kv80-robotic-actuator.html' },
+    model: {
+      source: 'manufacturer',
+      by: 'CubeMars',
+      url: 'https://www.cubemars.com/product/ak60-6-v1-1-kv80-robotic-actuator.html',
+    },
     color: '#6b6d72',
     pairsWith: ['hardware:socket_head|M3|8'],
     keywords: 'cubemars, ak60, ak60-6, t-motor, bldc actuator, qdd, quadruped',
@@ -795,7 +875,11 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.cubemars.com/product/ak70-10-kv100-robotic-actuator.html',
       datasheet: 'https://www.cubemars.com/data/cms/202602/ak70-10-robotic-actuator-2d-drawing.pdf',
     },
-    model: { source: 'manufacturer', by: 'CubeMars', url: 'https://www.cubemars.com/product/ak70-10-kv100-robotic-actuator.html' },
+    model: {
+      source: 'manufacturer',
+      by: 'CubeMars',
+      url: 'https://www.cubemars.com/product/ak70-10-kv100-robotic-actuator.html',
+    },
     color: '#6b6d72',
     pairsWith: ['hardware:socket_head|M3|10'],
     keywords: 'cubemars, ak70, ak70-10, t-motor, bldc actuator, qdd',
@@ -806,7 +890,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'CubeMars',
     mpn: 'AK80-9 V3.0 KV100',
     group: 'Motors',
-    description: 'Flat BLDC joint actuator with a 9:1 planetary gearbox, 16-bit encoder and one XT30 for power and CAN.',
+    description:
+      'Flat BLDC joint actuator with a 9:1 planetary gearbox, 16-bit encoder and one XT30 for power and CAN.',
     specs: [
       ['Torque', '9 N·m rated · 22 N·m peak'],
       ['Speed', '390 rpm rated at 48 V'],
@@ -822,7 +907,11 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.cubemars.com/product/ak80-9-v3-0-robotic-actuator.html',
       datasheet: 'https://www.cubemars.com/data/cms/202602/ak80-9-v3-0-robotic-actuator-2d-drawing.pdf',
     },
-    model: { source: 'manufacturer', by: 'CubeMars', url: 'https://www.cubemars.com/product/ak80-9-v3-0-robotic-actuator.html' },
+    model: {
+      source: 'manufacturer',
+      by: 'CubeMars',
+      url: 'https://www.cubemars.com/product/ak80-9-v3-0-robotic-actuator.html',
+    },
     color: '#9a9ca0',
     pairsWith: ['hardware:socket_head|M4|10', 'hardware:socket_head|M3|8'],
     keywords: 'cubemars, ak80, ak80-9, t-motor, bldc actuator, qdd, humanoid',
@@ -849,7 +938,11 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://shop.odriverobotics.com/products/odrive-custom-motor-d6374-150kv',
       datasheet: 'https://docs.odriverobotics.com/v/latest/hardware/odrive-motors.html',
     },
-    model: { source: 'manufacturer', by: 'ODrive Robotics', url: 'https://shop.odriverobotics.com/products/odrive-custom-motor-d6374-150kv' },
+    model: {
+      source: 'manufacturer',
+      by: 'ODrive Robotics',
+      url: 'https://shop.odriverobotics.com/products/odrive-custom-motor-d6374-150kv',
+    },
     color: '#2a2a2d',
     keywords: 'odrive, d6374, bldc, outrunner, brushless motor, direct drive',
   },
@@ -885,7 +978,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'MyActuator',
     mpn: 'RMD-X8-P9-25 (X8-25)',
     group: 'Motors',
-    description: 'Planetary servo actuator with a 9:1 reducer, built-in FOC driver and 16-bit encoder, on CAN or RS-485.',
+    description:
+      'Planetary servo actuator with a 9:1 reducer, built-in FOC driver and 16-bit encoder, on CAN or RS-485.',
     specs: [
       ['Torque', '10 N·m rated · 25 N·m peak'],
       ['Speed', '110 rpm rated at 48 V'],
@@ -925,7 +1019,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0H2HMVHK3', kind: 'product' },
       product: 'https://robstride.com/products/robStride02',
-      datasheet: 'https://raw.githubusercontent.com/RobStride/Product_Information/HEAD/Product%20Literature/RS02/RS02User%20Manual260713.pdf',
+      datasheet:
+        'https://raw.githubusercontent.com/RobStride/Product_Information/HEAD/Product%20Literature/RS02/RS02User%20Manual260713.pdf',
     },
     model: { source: 'manufacturer', by: 'RobStride', url: 'https://github.com/RobStride/Product_Information' },
     color: '#2a2a2d',
@@ -959,7 +1054,6 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'mjbots, qdd100, moteus, qdd, quasi direct drive',
   },
 
-  /* ---------------------------------------------------------------- Hands */
   {
     id: 'pollen-amazing-hand',
     name: 'Pollen AmazingHand',
@@ -976,12 +1070,17 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '400 g'],
     ],
     mounting:
-      '195 × 105 × 120 mm with fingers extended. Wrist interface made for Reachy2; the repo also has an SO-ARM interface. Pollen\'s simulation model has no palm or top shell, so those aren\'t shown.',
+      "195 × 105 × 120 mm with fingers extended. Wrist interface made for Reachy2; the repo also has an SO-ARM interface. Pollen's simulation model has no palm or top shell, so those aren't shown.",
     links: {
       product: 'https://github.com/pollen-robotics/AmazingHand',
       datasheet: 'https://github.com/pollen-robotics/AmazingHand/blob/main/docs/AmazingHand_Overview.pdf',
     },
-    model: { source: 'manufacturer', by: 'Pollen Robotics', url: 'https://github.com/pollen-robotics/AmazingHand', license: 'CC BY 4.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'Pollen Robotics',
+      url: 'https://github.com/pollen-robotics/AmazingHand',
+      license: 'CC BY 4.0',
+    },
     color: '#c8c8cc',
     pairsWith: ['component:feetech-scs0009', 'component:waveshare-bus-servo-adapter-a'],
     keywords: 'amazing hand, amazinghand, pollen, reachy, dexterous hand, robot hand',
@@ -1006,7 +1105,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://v1.leaphand.com/',
       datasheet: 'https://arxiv.org/pdf/2309.06440',
     },
-    model: { source: 'manufacturer', by: 'LEAP Hand', url: 'https://github.com/leap-hand/LEAP_Hand_Sim', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'LEAP Hand',
+      url: 'https://github.com/leap-hand/LEAP_Hand_Sim',
+      license: 'MIT',
+    },
     color: '#202022',
     pairsWith: ['component:dynamixel-xl330-m288'],
     keywords: 'leap hand, cmu, dexterous hand, robot hand, dynamixel hand',
@@ -1017,7 +1121,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'ORCA Dexterity',
     mpn: 'ORCA v1',
     group: 'Hands',
-    description: 'Open-source 5-finger, 17-DOF tendon-driven hand with an actuated wrist and its servos in a forearm tower.',
+    description:
+      'Open-source 5-finger, 17-DOF tendon-driven hand with an actuated wrist and its servos in a forearm tower.',
     specs: [
       ['DOF', '17 (16 finger joints + wrist)'],
       ['Actuators', '16× Dynamixel XC330 + 1× XC430'],
@@ -1031,7 +1136,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.orcahand.com/models',
       datasheet: 'https://arxiv.org/pdf/2504.04259',
     },
-    model: { source: 'manufacturer', by: 'ORCA Dexterity', url: 'https://github.com/orcahand/orcahand_hardware', license: 'CC BY 4.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'ORCA Dexterity',
+      url: 'https://github.com/orcahand/orcahand_hardware',
+      license: 'CC BY 4.0',
+    },
     color: '#e8e8ea',
     keywords: 'orca hand, orcahand, eth, tendon hand, dexterous hand, robot hand',
   },
@@ -1041,7 +1151,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Inspire Robots',
     mpn: 'RH56DFX-2L / -2R',
     group: 'Hands',
-    description: 'Five-finger dexterous hand with 6 DOF from 6 internal linear servo actuators and per-finger force sensors.',
+    description:
+      'Five-finger dexterous hand with 6 DOF from 6 internal linear servo actuators and per-finger force sensors.',
     specs: [
       ['DOF', '6 DOF, 12 joints'],
       ['Force', 'Thumb 15 N · fingers 10 N'],
@@ -1054,7 +1165,8 @@ export const COMPONENTS: ComponentInfo[] = [
       '217.8 mm from base flange to fingertip, palm 80.7 mm wide. Round wrist base Ø52 mm with 4 holes at 90° on a Ø38 circle (hole size not published). From the RH56 series drawing.',
     links: {
       product: 'https://en.inspire-robots.com/product/rh56dfx/',
-      datasheet: 'https://en.inspire-robots.com/wp-content/uploads/2026/09/INSPIRE-ROBOTS-THE-DEXTEROUS-HAND-RH56-SERIES-USER-MANUAL.pdf',
+      datasheet:
+        'https://en.inspire-robots.com/wp-content/uploads/2026/09/INSPIRE-ROBOTS-THE-DEXTEROUS-HAND-RH56-SERIES-USER-MANUAL.pdf',
     },
     model: { source: 'agent', by: 'Inspire Robots' },
     color: '#2a2a2d',
@@ -1081,7 +1193,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.psyonic.io/robots',
       datasheet: 'https://www.psyonic.io/s/Robotics-Spec-Sheet_06-000006.pdf',
     },
-    model: { source: 'manufacturer', by: 'PSYONIC', url: 'https://github.com/psyonicinc/ability-hand-api', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'PSYONIC',
+      url: 'https://github.com/psyonicinc/ability-hand-api',
+      license: 'MIT',
+    },
     color: '#2a2a2d',
     keywords: 'ability hand, psyonic, prosthetic hand, dexterous hand, robot hand',
   },
@@ -1117,7 +1234,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Unitree',
     mpn: 'Dex5-1 (right)',
     group: 'Hands',
-    description: 'Five-finger back-drivable hand with 20 DOF (16 active) and optional tactile arrays, used on Unitree H1-2 and H2.',
+    description:
+      'Five-finger back-drivable hand with 20 DOF (16 active) and optional tactile arrays, used on Unitree H1-2 and H2.',
     specs: [
       ['DOF', '20 (16 active)'],
       ['Actuators', '16 micro force-control joints'],
@@ -1132,7 +1250,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.unitree.com/Dex5-1/',
       datasheet: 'https://support.unitree.com/home/en/Dex5-1%20SDK%20Development%20Guide/About%20Dex5-1%20Hand',
     },
-    model: { source: 'manufacturer', by: 'Unitree', url: 'https://github.com/unitreerobotics/unitree_ros', license: 'BSD-3-Clause' },
+    model: {
+      source: 'manufacturer',
+      by: 'Unitree',
+      url: 'https://github.com/unitreerobotics/unitree_ros',
+      license: 'BSD-3-Clause',
+    },
     color: '#8a8a90',
     keywords: 'unitree, dex5, dex5-1, h1 hand, h2 hand, dexterous hand, robot hand',
   },
@@ -1143,7 +1266,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'TheRobotStudio',
     mpn: 'HopeJR hand',
     group: 'Hands',
-    description: 'Open-source tendon-driven hand with 16 Feetech SCS0009 servos, part of the HopeJR humanoid and run with LeRobot.',
+    description:
+      'Open-source tendon-driven hand with 16 Feetech SCS0009 servos, part of the HopeJR humanoid and run with LeRobot.',
     specs: [
       ['DOF', '16 actuated'],
       ['Actuators', '16× Feetech SCS0009'],
@@ -1157,7 +1281,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://github.com/TheRobotStudio/HOPEJr',
       datasheet: 'https://github.com/TheRobotStudio/HOPEJr/blob/main/Arm/BOM.md',
     },
-    model: { source: 'manufacturer', by: 'TheRobotStudio', url: 'https://github.com/TheRobotStudio/HOPEJr', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'TheRobotStudio',
+      url: 'https://github.com/TheRobotStudio/HOPEJr',
+      license: 'Apache-2.0',
+    },
     color: '#ededeb',
     pairsWith: ['component:feetech-scs0009', 'component:waveshare-bus-servo-adapter-a'],
     keywords: 'hopejr, hope jr, lerobot, open source hand, tendon hand',
@@ -1181,9 +1310,15 @@ export const COMPONENTS: ComponentInfo[] = [
       '252.2 × 253.2 mm, palm 40.8 mm thick. Mount block 56 × 34.8 mm: M18 × 1.5 tapped center hole and 6× Ø3.4 on a Ø30 circle; attaches to the hand with 6× M3 flat-head screws.',
     links: {
       product: 'https://www.allegrohand.com/sub/product/p.php?idx=1',
-      datasheet: 'https://github.com/Wonikrobotics-git/Allegro-Materials/blob/main/User%20Manual/Allegro%20Hand%20V4_Users%20Manual_1.1.pdf',
+      datasheet:
+        'https://github.com/Wonikrobotics-git/Allegro-Materials/blob/main/User%20Manual/Allegro%20Hand%20V4_Users%20Manual_1.1.pdf',
     },
-    model: { source: 'manufacturer', by: 'Wonik Robotics', url: 'https://github.com/Wonikrobotics-git', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'Wonik Robotics',
+      url: 'https://github.com/Wonikrobotics-git',
+      license: 'MIT',
+    },
     color: '#3a3a3e',
     keywords: 'allegro, allegro hand, wonik, dexterous hand, research hand',
   },
@@ -1206,7 +1341,8 @@ export const COMPONENTS: ComponentInfo[] = [
       'LinkerBot publishes no envelope or wrist hole pattern; the model is their L20 Lite description, which their README maps to the L10.',
     links: {
       product: 'https://www.linkerbot.cn/details/LinkerHandL20Lite',
-      datasheet: 'https://cdn.robotshop.com/rbm/790bbab7-d10c-4803-a563-eb90579ac7e8/d/d357702e-8a19-43d3-933f-8c36739eda03/db365cbe_l10-product-manual.pdf',
+      datasheet:
+        'https://cdn.robotshop.com/rbm/790bbab7-d10c-4803-a563-eb90579ac7e8/d/d357702e-8a19-43d3-933f-8c36739eda03/db365cbe_l10-product-manual.pdf',
     },
     model: { source: 'manufacturer', by: 'LinkerBot', url: 'https://github.com/linker-bot', license: 'Apache-2.0' },
     color: '#c8c8cc',
@@ -1227,8 +1363,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'CAN / CAN FD / RS-485 / EtherCAT'],
       ['Weight', '360 g'],
     ],
-    mounting:
-      'LinkerBot publishes no wrist hole pattern; resellers list 177 × 76.5 × 40 mm.',
+    mounting: 'LinkerBot publishes no wrist hole pattern; resellers list 177 × 76.5 × 40 mm.',
     links: {
       product: 'https://www.linkerbot.cn/details/LinkerHandO6',
     },
@@ -1242,7 +1377,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'TetherIA (Chestnut Robotics)',
     mpn: 'Aero Hand Open (right)',
     group: 'Hands',
-    description: 'Open-source tendon-driven hand with 7 Feetech servos for 16 joints, controlled by an ESP32-S3 over USB.',
+    description:
+      'Open-source tendon-driven hand with 7 Feetech servos for 16 joints, controlled by an ESP32-S3 over USB.',
     specs: [
       ['DOF', '7 active, 16 joints'],
       ['Actuators', '7× Feetech HLS3606M'],
@@ -1257,12 +1393,16 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://shop.tetheria.ai/',
       datasheet: 'https://docs.tetheria.ai/docs/mechanical_overview',
     },
-    model: { source: 'manufacturer', by: 'TetherIA', url: 'https://docs.tetheria.ai/docs/mechanical_overview', license: 'CC BY-NC-SA 4.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'TetherIA',
+      url: 'https://docs.tetheria.ai/docs/mechanical_overview',
+      license: 'CC BY-NC-SA 4.0',
+    },
     color: '#ededeb',
     keywords: 'aero hand, tetheria, chestnut robotics, open source hand, tendon hand',
   },
 
-  /* ---------------------------------------------------------------- Grippers */
   {
     id: 'robotiq-2f-85',
     name: 'Robotiq 2F-85',
@@ -1305,7 +1445,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '800 g'],
     ],
     mounting:
-      'Ø75 mm flange. Bolts straight to the xArm tool flange with 2× M6 through Ø6.6 holes 63 mm apart, plus a Ø6 locating hole (from UFACTORY\'s 3D model; no dimensioned drawing is published).',
+      "Ø75 mm flange. Bolts straight to the xArm tool flange with 2× M6 through Ø6.6 holes 63 mm apart, plus a Ø6 locating hole (from UFACTORY's 3D model; no dimensioned drawing is published).",
     links: {
       product: 'https://www.ufactory.cc/product-page/ufactory-xarm-gripper/',
       datasheet: 'https://www.ufactory.cc/wp-content/uploads/2025/07/Gripper-G2-User-Manual_V2.7.0.pdf',
@@ -1320,7 +1460,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'UFACTORY',
     mpn: 'AB1100',
     group: 'Grippers',
-    description: 'Low-force two-finger gripper for lab automation (tubes, plates) on xArm arms, with reversible fingers.',
+    description:
+      'Low-force two-finger gripper for lab automation (tubes, plates) on xArm arms, with reversible fingers.',
     specs: [
       ['Stroke', '80 mm'],
       ['Range', '71–150 mm (4–83 mm fingers reversed)'],
@@ -1445,7 +1586,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Trossen Robotics',
     mpn: 'WidowX 250 gripper',
     group: 'Grippers',
-    description: 'Servo-driven parallel gripper of the WidowX 250 arm: an XL430 crank slides two finger carriages on a rail.',
+    description:
+      'Servo-driven parallel gripper of the WidowX 250 arm: an XL430 crank slides two finger carriages on a rail.',
     specs: [
       ['Actuator', '1× Dynamixel XL430-W250'],
       ['Range', '30–74 mm (Trossen gripper limits)'],
@@ -1453,12 +1595,16 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'Dynamixel Protocol 2.0, ROS'],
     ],
     mounting:
-      'Taken from Trossen\'s whole-arm STEP (gripper bodies only). Bolts to the wrist servo; no separate hole pattern is published.',
+      "Taken from Trossen's whole-arm STEP (gripper bodies only). Bolts to the wrist servo; no separate hole pattern is published.",
     links: {
       product: 'https://www.trossenrobotics.com/widowx-250',
       datasheet: 'https://docs.trossenrobotics.com/interbotix_xsarms_docs/specifications/wx250.html',
     },
-    model: { source: 'manufacturer', by: 'Trossen Robotics', url: 'https://docs.trossenrobotics.com/interbotix_xsarms_docs/specifications/wx250.html' },
+    model: {
+      source: 'manufacturer',
+      by: 'Trossen Robotics',
+      url: 'https://docs.trossenrobotics.com/interbotix_xsarms_docs/specifications/wx250.html',
+    },
     color: '#1f1f22',
     keywords: 'trossen, widowx, wx250, interbotix, aloha, parallel gripper',
   },
@@ -1468,7 +1614,7 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'AgileX Robotics',
     mpn: 'PiPER gripper (0–70 mm)',
     group: 'Grippers',
-    description: 'Electric two-finger parallel gripper with an integrated controller on the PiPER arm\'s CAN bus.',
+    description: "Electric two-finger parallel gripper with an integrated controller on the PiPER arm's CAN bus.",
     specs: [
       ['Stroke', '0–70 mm (this model) · 0–100 mm current version'],
       ['Accuracy', '±0.5 mm'],
@@ -1477,12 +1623,18 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '500 g'],
     ],
     mounting:
-      'Model is AgileX\'s published 0–70 mm gripper. A flange fixes to J6 with 6× M3 × 8 countersunk screws; the gripper fixes to the flange with M3 × 14.',
+      "Model is AgileX's published 0–70 mm gripper. A flange fixes to J6 with 6× M3 × 8 countersunk screws; the gripper fixes to the flange with M3 × 14.",
     links: {
       product: 'https://global.agilex.ai/products/piper',
-      datasheet: 'https://cdn.shopify.com/s/files/1/0673/6848/5000/files/AgileX_PIPER_Product_User_Manual.pdf?v=1782228874',
+      datasheet:
+        'https://cdn.shopify.com/s/files/1/0673/6848/5000/files/AgileX_PIPER_Product_User_Manual.pdf?v=1782228874',
     },
-    model: { source: 'manufacturer', by: 'AgileX Robotics', url: 'https://github.com/agilexrobotics/piper_ros', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'AgileX Robotics',
+      url: 'https://github.com/agilexrobotics/piper_ros',
+      license: 'MIT',
+    },
     color: '#2a2a2d',
     keywords: 'agilex, piper, piper gripper, parallel gripper',
   },
@@ -1507,7 +1659,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://github.com/TheRobotStudio/SO-ARM100',
       datasheet: 'https://huggingface.co/docs/lerobot/so101',
     },
-    model: { source: 'manufacturer', by: 'TheRobotStudio', url: 'https://github.com/TheRobotStudio/SO-ARM100', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'TheRobotStudio',
+      url: 'https://github.com/TheRobotStudio/SO-ARM100',
+      license: 'Apache-2.0',
+    },
     color: '#ededeb',
     pairsWith: ['component:feetech-sts3215', 'component:waveshare-bus-servo-adapter-a', 'hardware:socket_head|M3|6'],
     keywords: 'so-101, so101, so-arm101, so-100, lerobot, open source gripper, printed gripper',
@@ -1526,13 +1683,18 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'Dynamixel TTL, LeRobot'],
     ],
     mounting:
-      'Mounts to the XL330 horn with 4× M2 (Ø2.4 holes, Ø5 counterbore) on a Ø12 circle. Stroke and grip force aren\'t published.',
+      "Mounts to the XL330 horn with 4× M2 (Ø2.4 holes, Ø5 counterbore) on a Ø12 circle. Stroke and grip force aren't published.",
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Koch+v1.1+robot+arm+kit', kind: 'search' },
       product: 'https://github.com/jess-moss/koch-v1-1',
       datasheet: 'https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/',
     },
-    model: { source: 'manufacturer', by: 'Koch v1.1 project', url: 'https://github.com/jess-moss/koch-v1-1', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'Koch v1.1 project',
+      url: 'https://github.com/jess-moss/koch-v1-1',
+      license: 'Apache-2.0',
+    },
     color: '#ededeb',
     pairsWith: ['component:dynamixel-xl330-m288'],
     keywords: 'koch, koch v1.1, lerobot, open source gripper, printed gripper, dynamixel gripper',
@@ -1543,7 +1705,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'ROBOTIS',
     mpn: 'RM-X52-TNM gripper',
     group: 'Grippers',
-    description: 'Parallel gripper of the OpenMANIPULATOR-X: an XM430 turns a crank that drives two fingers along rails.',
+    description:
+      'Parallel gripper of the OpenMANIPULATOR-X: an XM430 turns a crank that drives two fingers along rails.',
     specs: [
       ['Actuator', '1× Dynamixel XM430-W350-T'],
       ['Stroke', '20–75 mm'],
@@ -1557,7 +1720,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.robotis.us/openmanipulator-x-rm-x52-tnm/',
       datasheet: 'https://emanual.robotis.com/docs/en/platform/openmanipulator_x/specification/',
     },
-    model: { source: 'manufacturer', by: 'ROBOTIS', url: 'https://github.com/ROBOTIS-GIT/open_manipulator', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'ROBOTIS',
+      url: 'https://github.com/ROBOTIS-GIT/open_manipulator',
+      license: 'Apache-2.0',
+    },
     color: '#2a2a2d',
     keywords: 'openmanipulator, open manipulator x, robotis, open source gripper, parallel gripper',
   },
@@ -1578,11 +1746,16 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '550 g'],
     ],
     mounting:
-      '143 × 78 × 67 mm half-open; 120 mm wide fully open, 124.5 mm fully closed (side rails extended). Jaw length 80 mm. Unitree doesn\'t publish the wrist hole pattern. The model includes the cable outlet.',
+      "143 × 78 × 67 mm half-open; 120 mm wide fully open, 124.5 mm fully closed (side rails extended). Jaw length 80 mm. Unitree doesn't publish the wrist hole pattern. The model includes the cable outlet.",
     links: {
       product: 'https://www.unitree.com/Dex1-1',
     },
-    model: { source: 'manufacturer', by: 'Unitree', url: 'https://github.com/unitreerobotics/unitree_ros/tree/master/robots/dexterous_hand_description/dex1_1', license: 'BSD-3-Clause' },
+    model: {
+      source: 'manufacturer',
+      by: 'Unitree',
+      url: 'https://github.com/unitreerobotics/unitree_ros/tree/master/robots/dexterous_hand_description/dex1_1',
+      license: 'BSD-3-Clause',
+    },
     color: '#38383c',
     keywords: 'unitree, dex1, dex1-1, dex 1-1, g1 gripper, humanoid gripper, parallel gripper',
   },
@@ -1606,7 +1779,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.unitree.com/z1/',
       datasheet: 'https://support.unitree.com/home/en/Z1_developer/param',
     },
-    model: { source: 'manufacturer', by: 'Unitree', url: 'https://github.com/unitreerobotics/unitree_ros', license: 'BSD-3-Clause' },
+    model: {
+      source: 'manufacturer',
+      by: 'Unitree',
+      url: 'https://github.com/unitreerobotics/unitree_ros',
+      license: 'BSD-3-Clause',
+    },
     color: '#2a2a2d',
     keywords: 'unitree, z1, z1 gripper, arm gripper',
   },
@@ -1677,7 +1855,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '1 kg'],
     ],
     mounting:
-      'Published 184.6 × 162.3 × 67 mm. The fingers swing in an arc, so height changes with opening; the maker\'s model measures 187.6 mm at its zero pose. Flange pattern isn\'t published.',
+      "Published 184.6 × 162.3 × 67 mm. The fingers swing in an arc, so height changes with opening; the maker's model measures 187.6 mm at its zero pose. Flange pattern isn't published.",
     links: {
       product: 'https://en.dh-robotics.com/product/ag',
     },
@@ -1711,14 +1889,14 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'robotis, rh-p12-rn, rhp12rn, dynamixel gripper, adaptive gripper',
   },
 
-  /* ---------------------------------------------------------------- Computers */
   {
     id: 'raspberry-pi-5',
     name: 'Raspberry Pi 5',
     manufacturer: 'Raspberry Pi',
     mpn: 'SC1112 (8 GB) · 1/2/4/16 GB variants',
     group: 'Computers',
-    description: 'Quad-core 2.4 GHz Cortex-A76 single-board computer with PCIe, two 4-lane camera/display ports, dual micro-HDMI and Gigabit Ethernet.',
+    description:
+      'Quad-core 2.4 GHz Cortex-A76 single-board computer with PCIe, two 4-lane camera/display ports, dual micro-HDMI and Gigabit Ethernet.',
     specs: [
       ['CPU', 'BCM2712, 4× Cortex-A76 @ 2.4 GHz'],
       ['RAM', '1–16 GB LPDDR4X'],
@@ -1731,9 +1909,15 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0CK2FCG1K', kind: 'product' },
       product: 'https://www.raspberrypi.com/products/raspberry-pi-5/',
-      datasheet: 'https://pip-assets.raspberrypi.com/categories/892-raspberry-pi-5/documents/RP-008348-DS-8-raspberry-pi-5-product-brief.pdf',
+      datasheet:
+        'https://pip-assets.raspberrypi.com/categories/892-raspberry-pi-5/documents/RP-008348-DS-8-raspberry-pi-5-product-brief.pdf',
     },
-    model: { source: 'manufacturer', by: 'Raspberry Pi', url: 'https://www.raspberrypi.com/products/raspberry-pi-5/', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'Raspberry Pi',
+      url: 'https://www.raspberrypi.com/products/raspberry-pi-5/',
+      license: 'MIT',
+    },
     color: '#1f6b3a',
     pairsWith: ['hardware:standoff_mf|M2.5|10', 'hardware:socket_head|M2.5|6', 'component:raspberry-pi-camera-3'],
     keywords: 'raspberry pi 5, rpi5, pi 5, bcm2712, sbc',
@@ -1744,7 +1928,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Raspberry Pi',
     mpn: 'RPI4-MODBP (1/2/4/8 GB)',
     group: 'Computers',
-    description: 'Quad-core Cortex-A72 single-board computer with dual micro-HDMI, USB 3.0, Gigabit Ethernet and the 40-pin GPIO header.',
+    description:
+      'Quad-core Cortex-A72 single-board computer with dual micro-HDMI, USB 3.0, Gigabit Ethernet and the 40-pin GPIO header.',
     specs: [
       ['CPU', 'BCM2711, 4× Cortex-A72 @ 1.8 GHz'],
       ['RAM', '1, 2, 4 or 8 GB LPDDR4'],
@@ -1757,7 +1942,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B09TTNF8BT', kind: 'product' },
       product: 'https://www.raspberrypi.com/products/raspberry-pi-4-model-b/',
-      datasheet: 'https://pip-assets.raspberrypi.com/categories/545-raspberry-pi-4-model-b/documents/RP-008341-DS-1-raspberry-pi-4-datasheet.pdf',
+      datasheet:
+        'https://pip-assets.raspberrypi.com/categories/545-raspberry-pi-4-model-b/documents/RP-008341-DS-1-raspberry-pi-4-datasheet.pdf',
     },
     model: {
       source: 'checked',
@@ -1784,11 +1970,12 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Power', '5 V, 2.5 A via micro-USB'],
     ],
     mounting:
-      'PCB 65 × 30 mm. 4 holes on a 58 × 23 mm pattern, 3.5 mm in from each edge (Raspberry Pi doesn\'t state the hole diameter on the drawing). Ports on one long edge.',
+      "PCB 65 × 30 mm. 4 holes on a 58 × 23 mm pattern, 3.5 mm in from each edge (Raspberry Pi doesn't state the hole diameter on the drawing). Ports on one long edge.",
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B09LH5SBPS', kind: 'product' },
       product: 'https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/',
-      datasheet: 'https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008359-DS-1-raspberry-pi-zero-2-w-product-brief.pdf',
+      datasheet:
+        'https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008359-DS-1-raspberry-pi-zero-2-w-product-brief.pdf',
     },
     model: { source: 'agent', by: 'Raspberry Pi' },
     color: '#1f6b3a',
@@ -1812,10 +1999,11 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Power', '7–25 W, DC barrel jack'],
     ],
     mounting:
-      'Kit 103 × 90.5 × 34.77 mm; carrier PCB 100 × 79 × 1.57 mm. 4× Ø2.75 mm holes on an 86 × 58 mm pattern at (4, 17) from the carrier corner at the port edge (from NVIDIA\'s 3D model; the spec gives no hole positions).',
+      "Kit 103 × 90.5 × 34.77 mm; carrier PCB 100 × 79 × 1.57 mm. 4× Ø2.75 mm holes on an 86 × 58 mm pattern at (4, 17) from the carrier corner at the port edge (from NVIDIA's 3D model; the spec gives no hole positions).",
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0BZJTQ5YP', kind: 'product' },
-      product: 'https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/',
+      product:
+        'https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/',
       datasheet: 'https://dam-cdn.nvd.orangelogic.com/AssetLink/2ug686w80406gxf6q8uv7r3l7265m2n8.pdf',
     },
     model: { source: 'manufacturer', by: 'NVIDIA', url: 'https://developer.nvidia.com/embedded/downloads' },
@@ -1824,7 +2012,6 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'jetson, orin nano, nvidia, edge ai, sbc',
   },
 
-  /* ---------------------------------------------------------------- Microcontrollers */
   {
     id: 'arduino-uno-r4-minima',
     name: 'Arduino UNO R4 Minima',
@@ -1846,7 +2033,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://docs.arduino.cc/hardware/uno-r4-minima/',
       datasheet: 'https://docs.arduino.cc/resources/datasheets/ABX00080-datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'Arduino', url: 'https://docs.arduino.cc/hardware/uno-r4-minima/', license: 'CC BY-SA 4.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'Arduino',
+      url: 'https://docs.arduino.cc/hardware/uno-r4-minima/',
+      license: 'CC BY-SA 4.0',
+    },
     color: '#00878f',
     pairsWith: ['hardware:standoff_mf|M3|10', 'hardware:socket_head|M3|6'],
     keywords: 'arduino uno, uno r4, ra4m1',
@@ -1865,13 +2057,19 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Power', 'USB-C 5 V · VIN 6–21 V'],
       ['I/O', '14 digital · 8 analog, 3.3 V'],
     ],
-    mounting: 'PCB 43.18 × 17.78 mm. 4× Ø1.66 mm corner holes on a 40.64 × 15.24 mm rectangle. 2× 15-pin headers, 15.24 mm apart.',
+    mounting:
+      'PCB 43.18 × 17.78 mm. 4× Ø1.66 mm corner holes on a 40.64 × 15.24 mm rectangle. 2× 15-pin headers, 15.24 mm apart.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0C947BHK5', kind: 'product' },
       product: 'https://docs.arduino.cc/hardware/nano-esp32/',
       datasheet: 'https://docs.arduino.cc/resources/datasheets/ABX00083-datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'Arduino', url: 'https://docs.arduino.cc/hardware/nano-esp32/', license: 'CC BY-SA 4.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'Arduino',
+      url: 'https://docs.arduino.cc/hardware/nano-esp32/',
+      license: 'CC BY-SA 4.0',
+    },
     color: '#00878f',
     keywords: 'arduino nano, nano esp32, esp32-s3',
   },
@@ -1893,8 +2091,10 @@ export const COMPONENTS: ComponentInfo[] = [
       'PCB 25.4 × 62.74 mm, no mounting holes. Header rows 22.86 mm apart, 1.27 mm in from the long edges. The module antenna overhangs the far end by about 6.4 mm.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B09MHP42LY', kind: 'product' },
-      product: 'https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html',
-      datasheet: 'https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf',
+      product:
+        'https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html',
+      datasheet:
+        'https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf',
     },
     model: { source: 'agent', by: 'Espressif' },
     color: '#1a1a1c',
@@ -1920,7 +2120,11 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html',
       datasheet: 'https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/',
     },
-    model: { source: 'manufacturer', by: 'Seeed Studio', url: 'https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/' },
+    model: {
+      source: 'manufacturer',
+      by: 'Seeed Studio',
+      url: 'https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/',
+    },
     color: '#1a1a1c',
     keywords: 'xiao, esp32s3, esp32-s3, seeed',
   },
@@ -1938,7 +2142,8 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interfaces', '8 serial · 3 SPI · 3 I2C · 3 CAN · Ethernet'],
       ['Current', '100 mA @ 600 MHz'],
     ],
-    mounting: 'PCB 60.96 × 17.78 × 1.57 mm, no mounting holes. 2× 24-pin rows, 15.24 mm apart. Micro-USB overhangs the end by 0.7 mm.',
+    mounting:
+      'PCB 60.96 × 17.78 × 1.57 mm, no mounting holes. 2× 24-pin rows, 15.24 mm apart. Micro-USB overhangs the end by 0.7 mm.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B088JY7P2H', kind: 'product' },
       product: 'https://www.pjrc.com/store/teensy41.html',
@@ -1968,22 +2173,28 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0DCKH85WR', kind: 'product' },
       product: 'https://www.raspberrypi.com/products/raspberry-pi-pico-2/',
-      datasheet: 'https://pip-assets.raspberrypi.com/categories/1005-raspberry-pi-pico-2/documents/RP-008299-DS-3-pico-2-datasheet.pdf',
+      datasheet:
+        'https://pip-assets.raspberrypi.com/categories/1005-raspberry-pi-pico-2/documents/RP-008299-DS-3-pico-2-datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'Raspberry Pi', url: 'https://www.raspberrypi.com/products/raspberry-pi-pico-2/', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'Raspberry Pi',
+      url: 'https://www.raspberrypi.com/products/raspberry-pi-pico-2/',
+      license: 'MIT',
+    },
     color: '#1f6b3a',
     pairsWith: ['hardware:socket_head|M2|6'],
     keywords: 'pico 2, pico, rp2350, raspberry pi pico',
   },
 
-  /* ---------------------------------------------------------------- Drivers */
   {
     id: 'adafruit-pca9685',
     name: 'Adafruit PCA9685 Servo Driver',
     manufacturer: 'Adafruit',
     mpn: '815',
     group: 'Drivers',
-    description: 'I2C board that drives 16 servos or PWM outputs at 12-bit resolution, with a terminal block for servo power.',
+    description:
+      'I2C board that drives 16 servos or PWM outputs at 12-bit resolution, with a terminal block for servo power.',
     specs: [
       ['Chip', 'NXP PCA9685, 16 channels, 12-bit'],
       ['Interface', 'I2C, address 0x40–0x7F'],
@@ -1991,13 +2202,19 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Outputs', '16× 3-pin servo headers'],
       ['Weight', '9 g with headers'],
     ],
-    mounting: 'PCB 62.23 × 25.40 mm. 4× Ø2.5 mm holes (M2.5), 3.175 mm in from each edge, on a 55.88 × 19.05 mm pattern.',
+    mounting:
+      'PCB 62.23 × 25.40 mm. 4× Ø2.5 mm holes (M2.5), 3.175 mm in from each edge, on a 55.88 × 19.05 mm pattern.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B01G61MZF4', kind: 'product' },
       product: 'https://www.adafruit.com/product/815',
       datasheet: 'https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf',
     },
-    model: { source: 'manufacturer', by: 'Adafruit', url: 'https://github.com/adafruit/Adafruit_CAD_Parts', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'Adafruit',
+      url: 'https://github.com/adafruit/Adafruit_CAD_Parts',
+      license: 'MIT',
+    },
     color: '#1d3f8f',
     pairsWith: ['hardware:standoff_mf|M2.5|6', 'hardware:socket_head|M2.5|6'],
     keywords: 'pca9685, servo driver, pwm driver, 16 channel',
@@ -2034,7 +2251,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'mjbots',
     mpn: 'moteus r4.11',
     group: 'Drivers',
-    description: 'Open-source brushless FOC servo controller with an absolute magnetic encoder and CAN-FD, for one actuator.',
+    description:
+      'Open-source brushless FOC servo controller with an absolute magnetic encoder and CAN-FD, for one actuator.',
     specs: [
       ['Voltage', '10–44 V'],
       ['Current', '100 A peak · 32 A continuous with cooling'],
@@ -2050,7 +2268,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://mjbots.com/products/moteus-r4-11',
       datasheet: 'https://mjbots.github.io/moteus/',
     },
-    model: { source: 'manufacturer', by: 'mjbots', url: 'https://github.com/mjbots/moteus/tree/main/hw/controller/r4.5', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'mjbots',
+      url: 'https://github.com/mjbots/moteus/tree/main/hw/controller/r4.5',
+      license: 'Apache-2.0',
+    },
     color: '#1f1f22',
     pairsWith: ['component:mjbots-qdd100', 'hardware:socket_head|M2.5|6'],
     keywords: 'mjbots, moteus, foc controller, bldc driver, brushless controller, qdd',
@@ -2077,7 +2300,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://mjbots.com/products/moteus-c1',
       datasheet: 'https://mjbots.github.io/moteus/',
     },
-    model: { source: 'manufacturer', by: 'mjbots', url: 'https://github.com/mjbots/moteus/tree/main/hw/c1/r1.2', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'mjbots',
+      url: 'https://github.com/mjbots/moteus/tree/main/hw/c1/r1.2',
+      license: 'Apache-2.0',
+    },
     color: '#1f1f22',
     pairsWith: ['hardware:socket_head|M2.5|6', 'hardware:standoff_mf|M2.5|6'],
     keywords: 'mjbots, moteus c1, foc controller, bldc driver, brushless controller',
@@ -2148,8 +2376,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'PWM up to 100 kHz + direction, 2.7–5.5 V logic'],
       ['Weight', '1.5 g'],
     ],
-    mounting:
-      '15.24 × 20.32 mm, 1 mm PCB, no mounting holes: plugs in by 2× 8-pin 0.1" headers, rows 12.7 mm apart.',
+    mounting: '15.24 × 20.32 mm, 1 mm PCB, no mounting holes: plugs in by 2× 8-pin 0.1" headers, rows 12.7 mm apart.',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Pololu+TB6612FNG+Dual+Motor+Driver+Carrier+713', kind: 'search' },
       product: 'https://www.pololu.com/product/713',
@@ -2184,7 +2411,12 @@ export const COMPONENTS: ComponentInfo[] = [
     },
     model: { source: 'manufacturer', by: 'Basicmicro', url: 'https://downloads.basicmicro.com/cad/MC15A_V5.zip' },
     color: '#3a3a3e',
-    pairsWith: ['component:pololu-37d-gearmotor', 'component:pololu-25d-gearmotor', 'hardware:socket_head|M3|8', 'hardware:standoff_mf|M3|6'],
+    pairsWith: [
+      'component:pololu-37d-gearmotor',
+      'component:pololu-25d-gearmotor',
+      'hardware:socket_head|M3|8',
+      'hardware:standoff_mf|M3|6',
+    ],
     keywords: 'roboclaw, basicmicro, ion motion control, dc motor controller, encoder, rover',
   },
   {
@@ -2214,7 +2446,6 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'robotis, u2d2, dynamixel adapter, usb to ttl, rs485, lerobot',
   },
 
-  /* ---------------------------------------------------------------- Sensors */
   {
     id: 'adafruit-bno085',
     name: 'Adafruit BNO085 IMU',
@@ -2229,13 +2460,19 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Connectors', '2× STEMMA QT · 2× 6-pin headers'],
       ['Weight', '2.5 g'],
     ],
-    mounting: 'PCB 25.40 × 22.86 mm. 4× Ø2.5 mm holes (M2.5), 2.54 mm in from each edge, on a 20.32 × 17.78 mm pattern.',
+    mounting:
+      'PCB 25.40 × 22.86 mm. 4× Ø2.5 mm holes (M2.5), 2.54 mm in from each edge, on a 20.32 × 17.78 mm pattern.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0DXKNF7LW', kind: 'product' },
       product: 'https://www.adafruit.com/product/4754',
       datasheet: 'https://www.ceva-dsp.com/wp-content/uploads/2019/10/BNO080_085-Datasheet.pdf',
     },
-    model: { source: 'manufacturer', by: 'Adafruit', url: 'https://github.com/adafruit/Adafruit_CAD_Parts', license: 'MIT' },
+    model: {
+      source: 'manufacturer',
+      by: 'Adafruit',
+      url: 'https://github.com/adafruit/Adafruit_CAD_Parts',
+      license: 'MIT',
+    },
     color: '#1d3f8f',
     pairsWith: ['hardware:standoff_mf|M2.5|6', 'hardware:socket_head|M2.5|6'],
     keywords: 'imu, bno085, bno080, orientation, stemma qt',
@@ -2265,7 +2502,6 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'ultrasonic, sonar, distance sensor, hcsr04',
   },
 
-  /* ---------------------------------------------------------------- LiDAR */
   {
     id: 'slamtec-rplidar-a1m8',
     name: 'Slamtec RPLIDAR A1M8',
@@ -2334,7 +2570,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '185 g, IP65'],
     ],
     mounting:
-      '77 × 77 mm, 39.8 mm tall (datasheet v2.4; the older drawing says 38.85). 4× M3 threaded, 4 mm deep, on a 41.7 × 41.7 mm square in the bottom face. Optical center height isn\'t published.',
+      "77 × 77 mm, 39.8 mm tall (datasheet v2.4; the older drawing says 38.85). 4× M3 threaded, 4 mm deep, on a 41.7 × 41.7 mm square in the bottom face. Optical center height isn't published.",
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0CQ4Q6WLB', kind: 'product' },
       product: 'https://www.slamtec.com/en/s2',
@@ -2364,7 +2600,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0B1QCV4XR', kind: 'product' },
       product: 'https://github.com/ldrobotSensorTeam/DeveloperKit/blob/main/D300Kit.md',
-      datasheet: 'https://github.com/ldrobotSensorTeam/DeveloperKit/releases/download/v1.0/LDROBOT_LD19_Datasheet_EN_v2.5.pdf',
+      datasheet:
+        'https://github.com/ldrobotSensorTeam/DeveloperKit/releases/download/v1.0/LDROBOT_LD19_Datasheet_EN_v2.5.pdf',
     },
     model: { source: 'manufacturer', by: 'LDROBOT', url: 'https://github.com/ldrobotSensorTeam/DeveloperKit' },
     color: '#1a1a1c',
@@ -2465,7 +2702,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '190 g'],
     ],
     mounting:
-      'Ø76 × 41 mm, same housing and drawing as the A2M12: 4× M3, 4 mm deep, on a Ø59 circle; optical center 31 mm above the mounting face. Model from Slamtec\'s A2-family file, with cable.',
+      "Ø76 × 41 mm, same housing and drawing as the A2M12: 4× M3, 4 mm deep, on a Ø59 circle; optical center 31 mm above the mounting face. Model from Slamtec's A2-family file, with cable.",
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B08ZDKQM9K', kind: 'product' },
       product: 'https://www.slamtec.com/en/lidar/a3',
@@ -2491,7 +2728,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '115 g'],
     ],
     mounting:
-      '55.6 × 55.6 × 41.3 mm. 4× M2.5, 4 mm deep, on a 43 × 43 mm square. Optical center height isn\'t published. Model includes the cable.',
+      "55.6 × 55.6 × 41.3 mm. 4× M2.5, 4 mm deep, on a 43 × 43 mm square. Optical center height isn't published. Model includes the cable.",
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0CD82ZS31', kind: 'product' },
       product: 'https://www.slamtec.com/en/s3',
@@ -2542,7 +2779,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'UART 921600, transmit only'],
     ],
     mounting:
-      '3 ears with Ø2.5 mm holes: side holes 46.8 mm apart, rear hole 31.92 mm behind. Optical center 27 mm above the mounting face. Model is LDROBOT\'s LD19 file; the STL-27L drawing matches it dimension for dimension.',
+      "3 ears with Ø2.5 mm holes: side holes 46.8 mm apart, rear hole 31.92 mm behind. Optical center 27 mm above the mounting face. Model is LDROBOT's LD19 file; the STL-27L drawing matches it dimension for dimension.",
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0C74CRWYS', kind: 'product' },
       product: 'https://www.ldrobot.com/sensors',
@@ -2571,7 +2808,8 @@ export const COMPONENTS: ComponentInfo[] = [
       '38.59 mm square body, 33.5 mm tall. 2× Ø2.45 holes (Ø4.8 counterbores) on a 28.2 mm square plus a Ø2.5 hole. Optical center 25.7 mm above the mounting face.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0DCW3S4L8', kind: 'product' },
-      datasheet: 'https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf',
+      datasheet:
+        'https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf',
     },
     model: { source: 'agent', by: 'LDROBOT' },
     color: '#1a1a1c',
@@ -2632,7 +2870,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Ouster',
     mpn: 'OS0 Rev 7',
     group: 'LiDAR',
-    description: 'Short-range, ultra-wide (90.8° vertical) 360° digital lidar with 32–128 channels and gigabit Ethernet.',
+    description:
+      'Short-range, ultra-wide (90.8° vertical) 360° digital lidar with 32–128 channels and gigabit Ethernet.',
     specs: [
       ['Range', '35 m @ 10% · 75 m @ 80%'],
       ['FOV', '360° × 90.8°'],
@@ -2696,7 +2935,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0D6YPRF66', kind: 'product' },
       product: 'https://www.livoxtech.com/avia',
-      datasheet: 'https://terra-1-g.djicdn.com/65c028cd298f4669a7f0e40e50ba1131/Download/Avia/Livox%20Avia%20User%20Manual%20202204.pdf',
+      datasheet:
+        'https://terra-1-g.djicdn.com/65c028cd298f4669a7f0e40e50ba1131/Download/Avia/Livox%20Avia%20User%20Manual%20202204.pdf',
     },
     model: { source: 'manufacturer', by: 'Livox', url: 'https://www.livoxtech.com/avia/downloads' },
     color: '#3a3a3e',
@@ -2743,8 +2983,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'UART / I²C, 3.3 V logic'],
       ['Weight', '< 5 g'],
     ],
-    mounting:
-      '35 × 21.25 × 13.5 mm. 2× Ø2.2 mm holes in side ears, 30.5 mm apart. Two Ø10.5 lenses 10.5 mm apart.',
+    mounting: '35 × 21.25 × 13.5 mm. 2× Ø2.2 mm holes in side ears, 30.5 mm apart. Two Ø10.5 lenses 10.5 mm apart.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B086MJQSLR', kind: 'product' },
       product: 'https://en.benewake.com/TFLuna/index.html',
@@ -2769,8 +3008,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'UART / I²C, 3.3 V logic'],
       ['Weight', '5 g'],
     ],
-    mounting:
-      '42 × 15 × 16 mm. 2× Ø2.35 mm holes in end ears, 36 mm apart. Lenses 10 mm apart on the center line.',
+    mounting: '42 × 15 × 16 mm. 2× Ø2.35 mm holes in end ears, 36 mm apart. Lenses 10 mm apart on the center line.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B07B631YRF', kind: 'product' },
       product: 'https://en.benewake.com/TFminiS/index.html',
@@ -2796,7 +3034,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '38 g, IPX7'],
     ],
     mounting:
-      '55 × 40.2 × 35 mm. 4 ear holes on a 36 × 32 mm rectangle (Garmin\'s legend suggests Ø4; confirm on a part). Optics 27.69 mm apart.',
+      "55 × 40.2 × 35 mm. 4 ear holes on a 36 × 32 mm rectangle (Garmin's legend suggests Ø4; confirm on a part). Optics 27.69 mm apart.",
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Garmin+LIDAR-Lite+v3HP', kind: 'search' },
       product: 'https://www.garmin.com/en-US/p/578152',
@@ -2807,7 +3045,6 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'garmin, lidar lite, lidar-lite v3hp, 1d lidar, laser rangefinder',
   },
 
-  /* ---------------------------------------------------------------- Depth cameras */
   {
     id: 'luxonis-oak-d-lite',
     name: 'Luxonis OAK-D Lite',
@@ -2828,7 +3065,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B09T5FY68V', kind: 'product' },
       product: 'https://shop.luxonis.com/products/oak-d-lite-1',
-      datasheet: 'https://github.com/luxonis/depthai-hardware/blob/master/DM9095_OAK-D-LITE_DepthAI_USB3C/Datasheet/OAK-D-Lite_Datasheet.pdf',
+      datasheet:
+        'https://github.com/luxonis/depthai-hardware/blob/master/DM9095_OAK-D-LITE_DepthAI_USB3C/Datasheet/OAK-D-Lite_Datasheet.pdf',
     },
     model: { source: 'manufacturer', by: 'Luxonis', url: 'https://github.com/luxonis/depthai-hardware' },
     color: '#3a3a3e',
@@ -2840,7 +3078,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Luxonis',
     mpn: 'OAK-D Pro (DM9098)',
     group: 'Depth Cameras',
-    description: 'Active stereo depth camera with IR dot projector, IR flood LED, 12 MP color camera and on-board Myriad X.',
+    description:
+      'Active stereo depth camera with IR dot projector, IR flood LED, 12 MP color camera and on-board Myriad X.',
     specs: [
       ['Stereo', '2× OV9282, 1280 × 800, global shutter'],
       ['Baseline', '75 mm'],
@@ -2854,7 +3093,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0BJKKWZNT', kind: 'product' },
       product: 'https://shop.luxonis.com/products/oak-d-pro',
-      datasheet: 'https://github.com/luxonis/depthai-hardware/blob/master/DM9098_OAK-D-Pro/Datasheet/OAK-D-Pro_Datasheet.pdf',
+      datasheet:
+        'https://github.com/luxonis/depthai-hardware/blob/master/DM9098_OAK-D-Pro/Datasheet/OAK-D-Pro_Datasheet.pdf',
     },
     model: { source: 'manufacturer', by: 'Luxonis', url: 'https://github.com/luxonis/depthai-hardware' },
     color: '#2a2a2d',
@@ -2866,7 +3106,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Stereolabs',
     mpn: 'ZED 2i',
     group: 'Depth Cameras',
-    description: 'IP66 aluminum stereo camera with dual 4 MP sensors, 120 mm baseline and built-in IMU; depth runs on the host GPU.',
+    description:
+      'IP66 aluminum stereo camera with dual 4 MP sensors, 120 mm baseline and built-in IMU; depth runs on the host GPU.',
     specs: [
       ['Sensors', '2× 4 MP, rolling shutter'],
       ['Baseline', '120 mm'],
@@ -2880,7 +3121,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Stereolabs+ZED+2i', kind: 'search' },
       product: 'https://www.stereolabs.com/products/zed-2',
-      datasheet: 'https://cdn.sanity.io/files/s18ewfw4/staging/17e28531d47c0c5feab2be4ca304abf06ffa889a.pdf/ZED%202i%20-%20Datasheet%20-%20V1.5%20-%202026-09-22.pdf',
+      datasheet:
+        'https://cdn.sanity.io/files/s18ewfw4/staging/17e28531d47c0c5feab2be4ca304abf06ffa889a.pdf/ZED%202i%20-%20Datasheet%20-%20V1.5%20-%202026-09-22.pdf',
     },
     model: { source: 'manufacturer', by: 'Stereolabs', url: 'https://www.stereolabs.com/3dmodels' },
     color: '#1a1a1c',
@@ -2906,7 +3148,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Stereolabs+ZED+Mini', kind: 'search' },
       product: 'https://www.stereolabs.com/store/products/zed-mini',
-      datasheet: 'https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf',
+      datasheet:
+        'https://cdn.sanity.io/files/s18ewfw4/staging/14fab5dad2a9f36ce7f1e8024c3959a9611b990a.pdf/ZED-Mini-Datasheet.pdf',
     },
     model: { source: 'manufacturer', by: 'Stereolabs', url: 'https://www.stereolabs.com/3dmodels' },
     color: '#1a1a1c',
@@ -2960,7 +3203,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.realsenseai.com/product-family/d405-series/',
       datasheet: 'https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf',
     },
-    model: { source: 'manufacturer', by: 'Intel RealSense', url: 'https://github.com/IntelRealSense/realsense-ros', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'Intel RealSense',
+      url: 'https://github.com/IntelRealSense/realsense-ros',
+      license: 'Apache-2.0',
+    },
     color: '#2a2a2d',
     pairsWith: ['hardware:socket_head|M3|6'],
     keywords: 'realsense, d405, depth camera, wrist camera, stereo',
@@ -2971,7 +3219,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Intel RealSense',
     mpn: '82635DSD455',
     group: 'Depth Cameras',
-    description: 'Long-baseline active stereo depth camera with global-shutter RGB, IR projector and IMU, for navigation and mapping.',
+    description:
+      'Long-baseline active stereo depth camera with global-shutter RGB, IR projector and IMU, for navigation and mapping.',
     specs: [
       ['Depth', '1280 × 720 @ 90 fps, 87° × 58°'],
       ['Baseline', '95 mm'],
@@ -2987,7 +3236,12 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.realsenseai.com/product-family/450-series/',
       datasheet: 'https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf',
     },
-    model: { source: 'manufacturer', by: 'Intel RealSense', url: 'https://github.com/IntelRealSense/realsense-ros', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'Intel RealSense',
+      url: 'https://github.com/IntelRealSense/realsense-ros',
+      license: 'Apache-2.0',
+    },
     color: '#2a2a2d',
     keywords: 'realsense, d455, depth camera, stereo, navigation',
   },
@@ -2998,7 +3252,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Intel RealSense',
     mpn: '82635AWGDVKPRQ',
     group: 'Depth Cameras',
-    description: 'Active stereo depth camera with a 50 mm baseline, global-shutter wide-FOV imagers and 1080p RGB; no IMU.',
+    description:
+      'Active stereo depth camera with a 50 mm baseline, global-shutter wide-FOV imagers and 1080p RGB; no IMU.',
     specs: [
       ['Depth', '1280 × 720 @ 90 fps, 87° × 58°'],
       ['Baseline', '50 mm'],
@@ -3024,7 +3279,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Intel RealSense',
     mpn: '82635ASRCDVKHV',
     group: 'Depth Cameras',
-    description: 'Active stereo depth camera with a 55 mm baseline and narrow-FOV imagers for more depth detail at short to mid range.',
+    description:
+      'Active stereo depth camera with a 55 mm baseline and narrow-FOV imagers for more depth detail at short to mid range.',
     specs: [
       ['Depth', '1280 × 720 @ 90 fps, 65° × 40°'],
       ['Baseline', '55 mm'],
@@ -3032,14 +3288,18 @@ export const COMPONENTS: ComponentInfo[] = [
       ['RGB', 'OV2740, 1920 × 1080'],
       ['Interface', 'USB 3.1 Type-C'],
     ],
-    mounting:
-      '99 × 23 × 20 mm. Back: 2× M3, 3 mm max, 45 mm apart. Bottom: 1/4"-20.',
+    mounting: '99 × 23 × 20 mm. Back: 2× M3, 3 mm max, 45 mm apart. Bottom: 1/4"-20.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B07JVGRQZT', kind: 'product' },
       product: 'https://store.realsenseai.com/buy-realsense-depth-camera-d415.html',
       datasheet: 'https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf',
     },
-    model: { source: 'manufacturer', by: 'Intel RealSense', url: 'https://github.com/IntelRealSense/realsense-ros', license: 'Apache-2.0' },
+    model: {
+      source: 'manufacturer',
+      by: 'Intel RealSense',
+      url: 'https://github.com/IntelRealSense/realsense-ros',
+      license: 'Apache-2.0',
+    },
     color: '#2a2a2d',
     pairsWith: ['hardware:socket_head|M3|6'],
     keywords: 'realsense, d415, depth camera, stereo',
@@ -3050,7 +3310,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Intel RealSense',
     mpn: '82635DSD457',
     group: 'Depth Cameras',
-    description: 'IP65 GMSL2 version of the D455: 95 mm baseline active stereo, global-shutter RGB and IMU over a FAKRA connector.',
+    description:
+      'IP65 GMSL2 version of the D455: 95 mm baseline active stereo, global-shutter RGB and IMU over a FAKRA connector.',
     specs: [
       ['Depth', '1280 × 720, 87° × 58°'],
       ['Baseline', '95 mm'],
@@ -3059,8 +3320,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'GMSL2 over FAKRA; USB-C debug'],
       ['Power', '12 V over FAKRA'],
     ],
-    mounting:
-      '124 × 29 × 36 mm. Back: 2× M4 inserts, 6 mm max, 61.5 mm apart. Bottom: 1/4"-20, 9 mm max.',
+    mounting: '124 × 29 × 36 mm. Back: 2× M4 inserts, 6 mm max, 61.5 mm apart. Bottom: 1/4"-20, 9 mm max.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0DSM2L2H4', kind: 'product' },
       product: 'https://store.realsenseai.com/buy-realsense-depth-camera-d457.html',
@@ -3100,7 +3360,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Luxonis',
     mpn: 'OAK-D S2 (DM9098)',
     group: 'Depth Cameras',
-    description: 'Passive stereo depth camera with two global-shutter mono cameras, a 12 MP color camera and an on-board Myriad X.',
+    description:
+      'Passive stereo depth camera with two global-shutter mono cameras, a 12 MP color camera and an on-board Myriad X.',
     specs: [
       ['Stereo', '2× OV9282, 1280 × 800, global shutter'],
       ['Baseline', '75 mm'],
@@ -3114,7 +3375,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0B5TV1G9R', kind: 'product' },
       product: 'https://shop.luxonis.com/products/oak-d-s2',
-      datasheet: 'https://github.com/luxonis/depthai-hardware/blob/master/DM9098_OAK-D-S2/Datasheet/OAK-D-S2_Datasheet.pdf',
+      datasheet:
+        'https://github.com/luxonis/depthai-hardware/blob/master/DM9098_OAK-D-S2/Datasheet/OAK-D-S2_Datasheet.pdf',
     },
     model: { source: 'manufacturer', by: 'Luxonis', url: 'https://github.com/luxonis/depthai-hardware' },
     color: '#3a3a3e',
@@ -3134,12 +3396,12 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Depth range', 'About 0.7–12 m'],
       ['Interface', 'USB-C, up to 5 W'],
     ],
-    mounting:
-      'Same housing as the OAK-D S2: 97 × 29.5 × 23.1 mm; back 2× M4, 75 mm apart; bottom 1/4"-20.',
+    mounting: 'Same housing as the OAK-D S2: 97 × 29.5 × 23.1 mm; back 2× M4, 75 mm apart; bottom 1/4"-20.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0B5TXMSTP', kind: 'product' },
       product: 'https://shop.luxonis.com/products/oak-d-w',
-      datasheet: 'https://github.com/luxonis/depthai-hardware/blob/master/DM9098_OAK-D-S2/Datasheet/OAK-D-S2_Datasheet.pdf',
+      datasheet:
+        'https://github.com/luxonis/depthai-hardware/blob/master/DM9098_OAK-D-S2/Datasheet/OAK-D-S2_Datasheet.pdf',
     },
     model: { source: 'manufacturer', by: 'Luxonis', url: 'https://github.com/luxonis/depthai-hardware' },
     color: '#3a3a3e',
@@ -3151,7 +3413,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Stereolabs',
     mpn: 'ZED X (2.2 mm)',
     group: 'Depth Cameras',
-    description: 'IP67 GMSL2 stereo camera with dual 2.3 MP global-shutter sensors, 120 mm baseline and IMU, for Jetson.',
+    description:
+      'IP67 GMSL2 stereo camera with dual 2.3 MP global-shutter sensors, 120 mm baseline and IMU, for Jetson.',
     specs: [
       ['Sensors', '2× AR0234, 1920 × 1200, global shutter'],
       ['Baseline', '120 mm'],
@@ -3248,7 +3511,6 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'orbbec, gemini 2, gemini 335, stereo camera, depth camera',
   },
 
-  /* ---------------------------------------------------------------- Cameras */
   {
     id: 'raspberry-pi-camera-2',
     name: 'Raspberry Pi Camera Module 2',
@@ -3294,7 +3556,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0DJ8VFWKM', kind: 'product' },
       product: 'https://www.raspberrypi.com/products/ai-camera/',
-      datasheet: 'https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf',
+      datasheet:
+        'https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf',
     },
     model: { source: 'agent', by: 'Raspberry Pi' },
     color: '#1f6b3a',
@@ -3307,7 +3570,8 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'Arducam',
     mpn: 'B0332',
     group: 'Cameras',
-    description: '1 MP monochrome global-shutter UVC USB camera board with a low-distortion M12 lens and trigger input.',
+    description:
+      '1 MP monochrome global-shutter UVC USB camera board with a low-distortion M12 lens and trigger input.',
     specs: [
       ['Sensor', 'OV9281, 1280 × 800, global shutter, mono'],
       ['Lens', 'M12, 2.8 mm, 70° H'],
@@ -3315,11 +3579,11 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'USB 2.0 UVC'],
       ['Power', '5 V, 200 mA'],
     ],
-    mounting:
-      'PCB 38 × 38 mm, lens centered. Two centered hole patterns: 4 holes on 34 × 34 mm and 4 on 28 × 28 mm.',
+    mounting: 'PCB 38 × 38 mm, lens centered. Two centered hole patterns: 4 holes on 34 × 34 mm and 4 on 28 × 28 mm.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B096M5DKY6', kind: 'product' },
-      product: 'https://www.uctronics.com/arducam-120fps-global-shutter-usb-camera-board-1mp-720p-ov9281-uvc-webcam-module-with-low-distortion-m12-lens.html',
+      product:
+        'https://www.uctronics.com/arducam-120fps-global-shutter-usb-camera-board-1mp-720p-ov9281-uvc-webcam-module-with-low-distortion-m12-lens.html',
     },
     model: { source: 'manufacturer', by: 'Arducam' },
     color: '#1a1a1c',
@@ -3338,14 +3602,17 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Camera', 'DVP module (OV2640 in this model; OV5640 in current units)'],
       ['Power', 'USB-C 5 V or 3.7 V LiPo'],
     ],
-    mounting:
-      '21 × 17.8 × 15 mm with the expansion board. No mounting holes; castellated pads.',
+    mounting: '21 × 17.8 × 15 mm with the expansion board. No mounting holes; castellated pads.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0C69FFVHH', kind: 'product' },
       product: 'https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html',
       datasheet: 'https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/',
     },
-    model: { source: 'manufacturer', by: 'Seeed Studio', url: 'https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/' },
+    model: {
+      source: 'manufacturer',
+      by: 'Seeed Studio',
+      url: 'https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/',
+    },
     color: '#1a1a1c',
     keywords: 'xiao, esp32s3 sense, esp32 camera, seeed, tinyml',
   },
@@ -3363,7 +3630,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'Micro-USB, microSD, Wi-Fi + BLE 5'],
     ],
     mounting:
-      'Main board 30 × 60 mm with an 18 × 6.4 mm notch at the camera end; LCD sub-board 30 × 31.9 mm stacked on headers. Camera position isn\'t dimensioned.',
+      "Main board 30 × 60 mm with an 18 × 6.4 mm notch at the camera end; LCD sub-board 30 × 31.9 mm stacked on headers. Camera position isn't dimensioned.",
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B09MS6PH7L', kind: 'product' },
       product: 'https://www.espressif.com/en/products/devkits/esp32-s3-eye',
@@ -3393,7 +3660,11 @@ export const COMPONENTS: ComponentInfo[] = [
       product: 'https://www.raspberrypi.com/products/camera-module-3/',
       datasheet: 'https://datasheets.raspberrypi.com/camera/camera-module-3-product-brief.pdf',
     },
-    model: { source: 'manufacturer', by: 'Raspberry Pi', url: 'https://datasheets.raspberrypi.com/camera/camera-module-3-step.zip' },
+    model: {
+      source: 'manufacturer',
+      by: 'Raspberry Pi',
+      url: 'https://datasheets.raspberrypi.com/camera/camera-module-3-step.zip',
+    },
     color: '#1f6b3a',
     pairsWith: ['hardware:socket_head|M2|6'],
     keywords: 'pi camera, camera module 3 wide, imx708, csi camera, wide angle',
@@ -3470,7 +3741,8 @@ export const COMPONENTS: ComponentInfo[] = [
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0BRY6MVXL', kind: 'product' },
       product: 'https://www.raspberrypi.com/products/camera-module-3/',
-      datasheet: 'https://pip-assets.raspberrypi.com/categories/786-raspberry-pi-camera-module-3/documents/RP-008151-DS-1-camera-module-3-product-brief.pdf',
+      datasheet:
+        'https://pip-assets.raspberrypi.com/categories/786-raspberry-pi-camera-module-3/documents/RP-008151-DS-1-camera-module-3-product-brief.pdf',
     },
     model: { source: 'manufacturer', by: 'Raspberry Pi', url: 'https://www.raspberrypi.com/products/camera-module-3/' },
     color: '#1f6b3a',
@@ -3508,35 +3780,35 @@ export const COMPONENTS: ComponentInfo[] = [
 
 export const COMPONENT_BY_ID: Record<string, ComponentInfo> = Object.fromEntries(COMPONENTS.map((c) => [c.id, c]));
 
-/** Exact envelope from the converted mesh (studio frame, mm) */
 export function componentSize(id: string): { width: number; height: number; depth: number } {
   const s = meshStats[id]?.size ?? [10, 10, 10];
   const r = (v: number) => Math.round(v * 100) / 100;
+
   return { width: r(s[0]), height: r(s[1]), depth: r(s[2]) };
 }
 
 export const hasComponentMesh = (id: string) => !!meshStats[id];
 
-/** Notes for the AI brief: what it is and how to mount it */
 export function componentNote(c: ComponentInfo): string {
   return `${c.manufacturer} ${c.mpn}. ${c.mounting}`;
 }
 
-/** A component's variant by id (undefined when it has none or the id is unknown) */
 export const componentVariant = (c: ComponentInfo, variant?: string): ComponentVariant | undefined =>
   variant ? c.variants?.find((v) => v.id === variant) : undefined;
 
-/** Actuator numbers for a component as built (its variant's, else its own) */
 export function actuatorOf(componentId: string, variant?: string): ActuatorSpec | undefined {
   const c = COMPONENT_BY_ID[componentId];
+
   if (!c) return undefined;
+
   return componentVariant(c, variant)?.actuator ?? (c.variants?.length ? undefined : c.actuator);
 }
 
-/** Mass in grams from the Weight spec ("55 g", "9 g with headers"); undefined when not listed */
 export function componentWeightG(componentId: string): number | undefined {
   const w = COMPONENT_BY_ID[componentId]?.specs.find(([k]) => k === 'Weight')?.[1];
   const m = w?.match(/([\d.]+)\s*(k?g)\b/);
+
   if (!m) return undefined;
+
   return Number(m[1]) * (m[2] === 'kg' ? 1000 : 1);
 }

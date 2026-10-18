@@ -23,25 +23,31 @@ const components: Components = {
   hr: () => <hr className="my-3 border-white/10" />,
   code: ({ className, children }) => {
     const isBlock = /language-/.test(className || '') || String(children).includes('\n');
+
     return isBlock ? (
       <code className="block font-mono text-[12.5px] leading-relaxed">{children}</code>
     ) : (
-      <code className="px-1 py-0.5 rounded-[5px] bg-white/[0.08] font-mono text-[12.5px] text-white/90">{children}</code>
+      <code className="px-1 py-0.5 rounded-[5px] bg-white/[0.08] font-mono text-[12.5px] text-white/90">
+        {children}
+      </code>
     );
   },
   pre: ({ children }) => (
-    <pre className="my-2 p-3 rounded-xl bg-black/30 ring-1 ring-inset ring-white/[0.06] overflow-x-auto">{children}</pre>
+    <pre className="my-2 p-3 rounded-xl bg-black/30 ring-1 ring-inset ring-white/[0.06] overflow-x-auto">
+      {children}
+    </pre>
   ),
   table: ({ children }) => (
     <div className="my-2 overflow-x-auto rounded-lg ring-1 ring-inset ring-white/[0.08]">
       <table className="w-full text-[12.5px] tabular">{children}</table>
     </div>
   ),
-  th: ({ children }) => <th className="text-left font-medium text-white/60 px-2.5 py-1.5 border-b border-white/[0.08]">{children}</th>,
+  th: ({ children }) => (
+    <th className="text-left font-medium text-white/60 px-2.5 py-1.5 border-b border-white/[0.08]">{children}</th>
+  ),
   td: ({ children }) => <td className="px-2.5 py-1.5 border-b border-white/[0.04] text-white/85">{children}</td>,
 };
 
-/** GitHub-flavored markdown styled for chat (links open in the system browser) */
 export const Markdown: React.FC<{ children: string; className?: string }> = ({ children, className = '' }) => (
   <div className={`text-[14px] leading-relaxed text-white/90 select-text break-words ${className}`}>
     <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>

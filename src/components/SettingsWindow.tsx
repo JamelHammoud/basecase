@@ -57,31 +57,32 @@ export interface SettingsWindowProps {
   onResetPanelWidths: () => void;
   acpStatus: AcpStatusInfo;
   onReconnectAcp: (command?: string) => Promise<void>;
-  /** Overall model height sent with each agent message; 0 lets the agent estimate it */
   targetHeightMm: number;
   onTargetHeight: (mm: number) => void;
 }
 
-/** App settings sheet (⌘, or the app menu → Settings…). Sidebar of panes, grouped rows on the right. */
 export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPaneChange, onClose, ...props }) => {
   const fade = useScrollFade();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+
     window.addEventListener('keydown', onKeyDown);
+
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, onClose]);
 
-  // Each pane opens at its top
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
   }, [pane]);
 
   if (!open) return null;
+
   const current = PANES.find((p) => p.id === pane) ?? PANES[0];
 
   return createPortal(
@@ -99,10 +100,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
         className="w-full max-w-[860px] h-[620px] max-h-[86vh] flex rounded-[18px] bg-[#222222] shadow-[0_0_0_0.5px_rgba(0,0,0,0.6),0_32px_80px_-12px_rgba(0,0,0,0.6),0_8px_24px_rgba(0,0,0,0.3)] overflow-hidden animate-sheet-in"
       >
         <nav aria-label="Settings panes" className="w-[224px] shrink-0 bg-[#1c1c1c] p-[12px] flex flex-col gap-[2px]">
-          {/* 40px + 12px padding centers the title on y = 32, in line with the pane title */}
-          <h2 className="px-[10px] h-[40px] flex items-center text-[15px] font-semibold text-white/90 mb-[4px]">Settings</h2>
+          <h2 className="px-[10px] h-[40px] flex items-center text-[15px] font-semibold text-white/90 mb-[4px]">
+            Settings
+          </h2>
           {PANES.map((p) => {
             const isCurrent = p.id === pane;
+
             return (
               <button
                 key={p.id}
@@ -110,7 +113,9 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
                 onClick={() => onPaneChange(p.id)}
                 aria-current={isCurrent ? 'page' : undefined}
                 className={`group h-[34px] px-[10px] rounded-[8px] flex items-center gap-[10px] text-[13.5px] cursor-default transition-colors duration-150 ${
-                  isCurrent ? 'bg-white/[0.07] text-white/90' : 'text-white/60 hover:text-white/90 hover:bg-white/[0.04]'
+                  isCurrent
+                    ? 'bg-white/[0.07] text-white/90'
+                    : 'text-white/60 hover:text-white/90 hover:bg-white/[0.04]'
                 }`}
               >
                 <span
@@ -148,7 +153,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 
@@ -169,7 +174,14 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
       </Row>
     </Group>
     <Group title="Snapping">
-      <Row label={<>Move <Unit>mm</Unit></>} hint="Hold ⇧ while dragging to move freely">
+      <Row
+        label={
+          <>
+            Move <Unit>mm</Unit>
+          </>
+        }
+        hint="Hold ⇧ while dragging to move freely"
+      >
         <SegmentedControl
           className="w-[240px]"
           value={String(p.snapStepMm)}
@@ -253,21 +265,31 @@ const LayoutPane: React.FC<PaneProps> = (p) => (
   </Group>
 );
 
+function agentChoice(command: string): 'claude' | 'offline' | '' {
+  if (command === CLAUDE_COMMAND) return 'claude';
+
+  return command === OFFLINE_COMMAND ? 'offline' : '';
+}
+
 const AgentPane: React.FC<PaneProps> = (p) => {
   const [command, setCommand] = useState(p.acpStatus.agentCommand);
-  const choice = command === CLAUDE_COMMAND ? 'claude' : command === OFFLINE_COMMAND ? 'offline' : '';
+  const choice = agentChoice(command);
+
   return (
     <>
       <Group title="Agent">
         <Row
           label="Run with"
-          hint={choice === 'offline' ? 'Built-in outline tracer, no AI' : 'Claude Code on this Mac, with your Claude login'}
+          hint={
+            choice === 'offline' ? 'Built-in outline tracer, no AI' : 'Claude Code on this Mac, with your Claude login'
+          }
         >
           <SegmentedControl<'claude' | 'offline' | ''>
             className="w-[220px]"
             value={choice}
             onChange={(v) => {
               const cmd = v === 'claude' ? CLAUDE_COMMAND : OFFLINE_COMMAND;
+
               setCommand(cmd);
               p.onReconnectAcp(cmd);
             }}
@@ -307,7 +329,16 @@ const AgentPane: React.FC<PaneProps> = (p) => {
       <Group title="Models">
         <Row label="Target height" hint="Overall height of what the agent builds. 0 lets it estimate.">
           <div className="w-[120px]">
-            <NumberInput label="H" title="Target height" value={p.targetHeightMm} onChange={p.onTargetHeight} min={0} max={3000} precision={0} unit="mm" />
+            <NumberInput
+              label="H"
+              title="Target height"
+              value={p.targetHeightMm}
+              onChange={p.onTargetHeight}
+              min={0}
+              max={3000}
+              precision={0}
+              unit="mm"
+            />
           </div>
         </Row>
       </Group>

@@ -16,11 +16,7 @@ const badgeVariants: Record<BadgeVariant, string> = {
   amber: 'bg-amber-500/15 text-amber-400',
 };
 
-export const Badge: React.FC<BadgeProps> = ({
-  children,
-  variant = 'default',
-  className = '',
-}) => (
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', className = '' }) => (
   <span
     className={`inline-flex items-center h-4 px-1.5 rounded-[5px] text-[11px] font-medium tabular leading-none ${badgeVariants[variant]} ${className}`}
   >

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* Surfaces: step lightness, not shadows */
@@ -25,8 +25,8 @@
   --color-ink-2: rgba(255, 255, 255, 0.6);
   --color-ink-3: rgba(255, 255, 255, 0.4);
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
 
   --ease-out-expo: cubic-bezier(0.2, 0, 0, 1);
   --ease-in-quick: cubic-bezier(0.4, 0, 1, 1);
@@ -43,39 +43,79 @@
 
 /* A new scene tab grows into the strip */
 @keyframes tab-in {
-  from { opacity: 0; transform: translateY(-2px) scale(0.92); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes pop-in {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Hover cards beside the sidebar slide in from it */
 @keyframes card-in {
-  from { opacity: 0; transform: translateX(-6px) scale(0.985); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateX(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes pop-up {
-  from { opacity: 0; transform: translateY(4px) scale(0.98); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.96); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes sheet-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* One turn of a cycling placeholder: wipes in from left to right behind a soft mask edge, holds, then fades out */
@@ -86,93 +126,106 @@
     opacity: 1;
     animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
-  32% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 1; }
-  86% { opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-  100% { -webkit-mask-position: 0 0; mask-position: 0 0; opacity: 0; }
+  32% {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    opacity: 1;
+  }
+  86% {
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  }
+  100% {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    opacity: 0;
+  }
 }
 
 @keyframes shimmer {
-  from { background-position: -200% 0; }
-  to { background-position: 200% 0; }
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
 }
 
 @layer base {
-* {
-  box-sizing: border-box;
-}
+  * {
+    box-sizing: border-box;
+  }
 
-html,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: #121212;
-  color: rgba(255, 255, 255, 0.92);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.4;
-  letter-spacing: -0.003em;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
+  html,
+  body,
+  #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #121212;
+    color: rgba(255, 255, 255, 0.92);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.4;
+    letter-spacing: -0.003em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
 
-/* Native window vibrancy (Electron): let the sidebar show the desktop through */
-html.is-electron,
-html.is-electron body,
-html.is-electron #root {
-  background-color: transparent;
-}
-
+  /* Native window vibrancy (Electron): let the sidebar show the desktop through */
+  html.is-electron,
+  html.is-electron body,
+  html.is-electron #root {
+    background-color: transparent;
+  }
 }
 
 @layer components {
-/*
+  /*
  * Floating surfaces over the canvas (toolbar, selection bar, toasts, comment cards) and
  * menus/popovers/tooltips. Matte, like the rest of the app: a solid neutral fill and a soft
  * shadow; no translucency, specular highlight or outline.
  */
-.glass {
-  background: #262626;
-  box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.5),
-    0 8px 24px -6px rgba(0, 0, 0, 0.45),
-    0 2px 6px rgba(0, 0, 0, 0.2);
-}
+  .glass {
+    background: #262626;
+    box-shadow:
+      0 0 0 0.5px rgba(0, 0, 0, 0.5),
+      0 8px 24px -6px rgba(0, 0, 0, 0.45),
+      0 2px 6px rgba(0, 0, 0, 0.2);
+  }
 
-.glass-menu {
-  /* Horizontal padding, which full-width dividers cancel */
-  --pad-x: 6px;
-  background: #282828;
-  box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.6),
-    0 16px 40px -8px rgba(0, 0, 0, 0.55),
-    0 4px 12px rgba(0, 0, 0, 0.25);
-}
+  .glass-menu {
+    /* Horizontal padding, which full-width dividers cancel */
+    --pad-x: 6px;
+    background: #282828;
+    box-shadow:
+      0 0 0 0.5px rgba(0, 0, 0, 0.6),
+      0 16px 40px -8px rgba(0, 0, 0, 0.55),
+      0 4px 12px rgba(0, 0, 0, 0.25);
+  }
 
-/* Window-level vibrancy surface for the sidebar (solid fallback in the browser) */
-.sidebar-surface {
-  background: #1f1f1f;
-}
+  /* Window-level vibrancy surface for the sidebar (solid fallback in the browser) */
+  .sidebar-surface {
+    background: #1f1f1f;
+  }
 
-/* Outer window chrome (title bar and the frame around the cards): darker than every card, so
+  /* Outer window chrome (title bar and the frame around the cards): darker than every card, so
    the cards and the active scene tab rise out of it. In Electron a little of the native
    vibrancy shows through; the cards stay opaque. */
-.window-chrome {
-  background: #121212;
-}
-html.is-electron .window-chrome {
-  background: rgba(18, 18, 18, 0.9);
-}
-/* Full screen has no desktop to show through: solid grey */
-html.is-electron.is-fullscreen,
-html.is-electron.is-fullscreen .window-chrome {
-  background: #121212;
-}
-
+  .window-chrome {
+    background: #121212;
+  }
+  html.is-electron .window-chrome {
+    background: rgba(18, 18, 18, 0.9);
+  }
+  /* Full screen has no desktop to show through: solid grey */
+  html.is-electron.is-fullscreen,
+  html.is-electron.is-fullscreen .window-chrome {
+    background: #121212;
+  }
 }
 
 /* Native scrollbars never take width from content: they're hidden everywhere and
@@ -185,48 +238,47 @@ html.is-electron.is-fullscreen .window-chrome {
 }
 
 @layer base {
-input,
-textarea,
-select,
-button {
-  font: inherit;
-  color: inherit;
-  letter-spacing: inherit;
-}
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+  }
 
-button {
-  -webkit-tap-highlight-color: transparent;
-}
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-input[type="number"],
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
+  input[type='number'],
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
-::placeholder {
-  color: rgba(255, 255, 255, 0.32);
-}
+  ::placeholder {
+    color: rgba(255, 255, 255, 0.32);
+  }
 
-::selection {
-  background: rgba(13, 153, 255, 0.35);
-  color: #ffffff;
-}
+  ::selection {
+    background: rgba(13, 153, 255, 0.35);
+    color: #ffffff;
+  }
 
-:focus-visible {
-  outline: 2px solid rgba(13, 153, 255, 0.7);
-  outline-offset: 1px;
-}
-
+  :focus-visible {
+    outline: 2px solid rgba(13, 153, 255, 0.7);
+    outline-offset: 1px;
+  }
 }
 
 /* Thin Figma-style range slider */
-input[type="range"].slider {
+input[type='range'].slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -234,10 +286,10 @@ input[type="range"].slider {
   background: transparent;
   cursor: pointer;
 }
-input[type="range"].slider:focus-visible {
+input[type='range'].slider:focus-visible {
   outline: none;
 }
-input[type="range"].slider::-webkit-slider-runnable-track {
+input[type='range'].slider::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 9999px;
   background: linear-gradient(
@@ -248,53 +300,50 @@ input[type="range"].slider::-webkit-slider-runnable-track {
     rgba(255, 255, 255, 0.1) 100%
   );
 }
-input[type="range"].slider::-webkit-slider-thumb {
+input[type='range'].slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
   margin-top: -4.5px;
   border-radius: 9999px;
   background: #fff;
-  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.5);
   transition: transform 120ms var(--ease-out-expo);
 }
-input[type="range"].slider:hover::-webkit-slider-thumb {
+input[type='range'].slider:hover::-webkit-slider-thumb {
   transform: scale(1.15);
 }
-input[type="range"].slider:active::-webkit-slider-thumb {
+input[type='range'].slider:active::-webkit-slider-thumb {
   transform: scale(0.92);
 }
-input[type="range"].slider:focus-visible::-webkit-slider-thumb {
+input[type='range'].slider:focus-visible::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px rgba(13, 153, 255, 0.6);
 }
 
 @layer components {
-/* Subtle vignette that gives the canvas depth */
-.canvas-vignette {
-  background: radial-gradient(
-    ellipse 80% 70% at 50% 45%,
-    transparent 55%,
-    rgba(0, 0, 0, 0.28) 100%
-  );
-}
+  /* Subtle vignette that gives the canvas depth */
+  .canvas-vignette {
+    background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.28) 100%);
+  }
 
-/* A part or scene preview: no outline, 12px corners, a soft spotlight that brightens on hover
+  /* A part or scene preview: no outline, 12px corners, a soft spotlight that brightens on hover
    (Parts and Library tiles, list thumbnails with .preview-sm, the part page hero) */
-.preview {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.035);
-  background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.07), transparent 72%);
-  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
-}
-.preview-sm {
-  border-radius: 8px;
-}
-.group:hover .preview {
-  background-color: rgba(255, 255, 255, 0.065);
-}
-
+  .preview {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.035);
+    background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.07), transparent 72%);
+    transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .preview-sm {
+    border-radius: 8px;
+  }
+  .group:hover .preview {
+    background-color: rgba(255, 255, 255, 0.065);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

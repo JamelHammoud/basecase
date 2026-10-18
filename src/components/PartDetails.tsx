@@ -15,10 +15,6 @@ import {
 import { usePartThumbnail } from '../three/partThumbnails';
 import { Tooltip } from '../design-system';
 
-/**
- * What a part is and where to get it: shared by the Parts hover card and the Inspector.
- */
-
 const fmt = (v: number) => String(Math.round(v * 100) / 100);
 
 export const SizeLine: React.FC<{ w: number; h: number; d: number }> = ({ w, h, d }) => (
@@ -28,13 +24,11 @@ export const SizeLine: React.FC<{ w: number; h: number; d: number }> = ({ w, h, 
   </span>
 );
 
-/** A link styled like a small button; opens in the system browser */
 export const LinkButton: React.FC<{
   href: string;
   icon: React.ReactNode;
   children?: React.ReactNode;
   primary?: boolean;
-  /** Accessible name for an icon-only link */
   label?: string;
 }> = ({ href, icon, children, primary, label }) => (
   <a
@@ -73,7 +67,6 @@ export const ComponentLinks: React.FC<{ c: ComponentInfo }> = ({ c }) => (
   </div>
 );
 
-/** Label on the left, value on the right; long values wrap under their own column (part page rows) */
 export const SpecRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="flex items-baseline justify-between gap-4 py-[5px] text-[13px] leading-snug">
     <dt className="shrink-0 text-white/50">{label}</dt>
@@ -92,25 +85,28 @@ export const SpecList: React.FC<{ rows: Array<[string, React.ReactNode]> }> = ({
   </dl>
 );
 
+const modelSourceText = (c: ComponentInfo): string => {
+  if (c.model.source === 'manufacturer') {
+    return `3D model from ${c.model.by}`;
+  }
+
+  if (c.model.source === 'checked') {
+    return `3D model by ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`;
+  }
+
+  return `Modeled from the ${c.model.by} drawing`;
+};
+
 export const ModelSource: React.FC<{ c: ComponentInfo }> = ({ c }) => (
   <div className="flex items-start gap-1.5 text-[12px] text-white/45 leading-snug">
     <Box className="w-3.5 h-3.5 mt-px shrink-0" />
     <span>
-      {c.model.source === 'manufacturer'
-        ? `3D model from ${c.model.by}`
-        : c.model.source === 'checked'
-          ? `3D model by ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`
-          : `Modeled from the ${c.model.by} drawing`}
+      {modelSourceText(c)}
       {c.model.license ? ` · ${c.model.license}` : ''}
     </span>
   </div>
 );
 
-/* ------------------------------------------------------------------ */
-/* Hover card                                                          */
-/* ------------------------------------------------------------------ */
-
-/** One key number: label above, value below. `clamp` keeps hover cards short; pages show it all */
 export const Stat: React.FC<{ label: string; children: React.ReactNode; wide?: boolean; clamp?: boolean }> = ({
   label,
   children,
@@ -134,37 +130,50 @@ interface HeroBadge {
   label: string;
 }
 
-/** Where a component's 3D model came from */
-const sourceBadge = (c: ComponentInfo): HeroBadge =>
-  c.model.source === 'manufacturer'
-    ? { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: `${c.model.by} CAD` }
-    : c.model.source === 'checked'
-      ? { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'Checked against drawing' }
-      : { icon: <PencilRuler className="w-3.5 h-3.5 text-white/60" />, label: 'From the drawing' };
+const sourceBadge = (c: ComponentInfo): HeroBadge => {
+  if (c.model.source === 'manufacturer') {
+    return { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: `${c.model.by} CAD` };
+  }
+
+  if (c.model.source === 'checked') {
+    return { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'Checked against drawing' };
+  }
+
+  return { icon: <PencilRuler className="w-3.5 h-3.5 text-white/60" />, label: 'From the drawing' };
+};
+
+const heroBadge = (source: ComponentInfo | 'iso' | undefined): HeroBadge | undefined => {
+  if (source === 'iso') {
+    return ISO_BADGE;
+  }
+
+  return source ? sourceBadge(source) : undefined;
+};
 
 const ISO_BADGE: HeroBadge = { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'ISO dimensions' };
 
-/**
- * Large preview with a soft spotlight and a badge saying where the model came from.
- * Extra props (drag handlers) go on the wrapper; `className` sets its height and shape.
- */
 export const Hero: React.FC<
   {
     item: CatalogItem;
-    /** A component's model source, or 'iso' for standard hardware */
     source?: ComponentInfo | 'iso';
     className?: string;
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 > = ({ item, source, className = 'h-[136px]', ...rest }) => {
   const thumb = usePartThumbnail(item);
-  const badge = source === 'iso' ? ISO_BADGE : source ? sourceBadge(source) : undefined;
+  const badge = heroBadge(source);
+
   return (
     <div
       {...rest}
       className={`relative bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)] ${className}`}
     >
       {thumb ? (
-        <img src={thumb} alt="" draggable={false} className="absolute inset-0 w-full h-full object-contain p-2.5 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]" />
+        <img
+          src={thumb}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-contain p-2.5 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
+        />
       ) : (
         <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
       )}
@@ -193,13 +202,12 @@ export const Header: React.FC<{ title: string; subtitle: string; description?: s
   </div>
 );
 
-/** Labeled block under a full-width hairline */
-export const CardSection: React.FC<{ icon: React.ReactNode; label: string; children: React.ReactNode; clamp?: boolean }> = ({
-  icon,
-  label,
-  children,
-  clamp = true,
-}) => (
+export const CardSection: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+  clamp?: boolean;
+}> = ({ icon, label, children, clamp = true }) => (
   <div className="mt-3 border-t border-white/[0.07] px-4 pt-3">
     <div className="flex items-center gap-1.5 text-[12px] font-medium text-white/45">
       {icon}
@@ -209,7 +217,6 @@ export const CardSection: React.FC<{ icon: React.ReactNode; label: string; child
   </div>
 );
 
-/** Buy (wide) + datasheet and product page (icons) */
 export const BuyLinks: React.FC<{ c: ComponentInfo; primary?: boolean }> = ({ c, primary = true }) => (
   <>
     {c.links.amazon && (
@@ -219,12 +226,15 @@ export const BuyLinks: React.FC<{ c: ComponentInfo; primary?: boolean }> = ({ c,
         </LinkButton>
       </div>
     )}
-    {c.links.datasheet && <IconLink href={c.links.datasheet} icon={<FileText className="w-3.5 h-3.5" />} label="Datasheet" />}
-    {c.links.product && <IconLink href={c.links.product} icon={<ArrowUpRight className="w-3.5 h-3.5" />} label="Product page" />}
+    {c.links.datasheet && (
+      <IconLink href={c.links.datasheet} icon={<FileText className="w-3.5 h-3.5" />} label="Datasheet" />
+    )}
+    {c.links.product && (
+      <IconLink href={c.links.product} icon={<ArrowUpRight className="w-3.5 h-3.5" />} label="Product page" />
+    )}
   </>
 );
 
-/** Icon-only link with a tooltip */
 const IconLink: React.FC<{ href: string; icon: React.ReactNode; label: string }> = ({ href, icon, label }) => (
   <Tooltip label={label} side="bottom">
     <LinkButton href={href} icon={icon} label={label} />
@@ -235,7 +245,6 @@ const Footer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="mt-3 border-t border-white/[0.07] p-3 flex items-center gap-1.5">{children}</div>
 );
 
-/** Hover card for a Parts tile. `item` is the entry at the size it will be added. */
 export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
   const c = item.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
   const d = item.defaultDimensions;
@@ -264,8 +273,10 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
   }
 
   const hw = item.hardware;
+
   if (hw) {
     const finish = FINISHES[hardwareFinish(hw)];
+
     return (
       <div>
         <Hero item={item} source="iso" />
@@ -275,10 +286,15 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
             {size}
           </Stat>
           {isMetric(hw.size) && <Stat label="Thread">{`${hw.size} × ${THREAD[hw.size].pitch}`}</Stat>}
-          {hw.type === 'bearing' && <Stat label="Bore · OD">{`${BEARINGS[hw.size].d} · ${BEARINGS[hw.size].D} mm`}</Stat>}
+          {hw.type === 'bearing' && (
+            <Stat label="Bore · OD">{`${BEARINGS[hw.size].d} · ${BEARINGS[hw.size].D} mm`}</Stat>
+          )}
           <Stat label="Finish">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full ring-1 ring-white/20 shrink-0" style={{ background: finish.color }} />
+              <span
+                className="w-2.5 h-2.5 rounded-full ring-1 ring-white/20 shrink-0"
+                style={{ background: finish.color }}
+              />
               {finish.label}
             </span>
           </Stat>

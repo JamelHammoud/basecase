@@ -5,9 +5,9 @@ export interface KbdProps {
   className?: string;
 }
 
-/** Keyboard shortcut hint. Each character renders in its own key cap for multi-key combos like "⇧⌘Z". */
 export const Kbd: React.FC<KbdProps> = ({ children, className = '' }) => {
   const keys = typeof children === 'string' ? splitKeys(children) : [children];
+
   return (
     <span className={`inline-flex items-center gap-0.5 ${className}`}>
       {keys.map((k, i) => (
@@ -23,13 +23,15 @@ export const Kbd: React.FC<KbdProps> = ({ children, className = '' }) => {
 };
 
 function splitKeys(s: string): string[] {
-  // Keep words like "Space", "Esc", "Tab", "Enter" intact; split modifier glyph combos
   if (/^[A-Za-z]{2,}$/.test(s)) return [s];
+
   const out: string[] = [];
   const re = /(Space|Esc|Tab|Enter|Shift|Drag|↩︎|[⌘⇧⌥⌃⌫]|.)/g;
   let m: RegExpExecArray | null;
+
   while ((m = re.exec(s))) {
     if (m[0].trim()) out.push(m[0]);
   }
+
   return out;
 }

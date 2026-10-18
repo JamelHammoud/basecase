@@ -1,22 +1,9 @@
 import React, { useRef, useState } from 'react';
-import {
-  Brush,
-  ChevronUp,
-  FileUp,
-  MessageCircle,
-  Move3d,
-  PenTool,
-  Rotate3d,
-  Scale3d,
-  Shapes,
-} from 'lucide-react';
+import { Brush, ChevronUp, FileUp, MessageCircle, Move3d, PenTool, Rotate3d, Scale3d, Shapes } from 'lucide-react';
 import { PART_CATALOG } from '../data/catalog';
 import { useCatalogThumbnails } from '../three/useCatalogThumbnails';
 import { PART_DRAG_TYPE } from '../data/dnd';
-import {
-  CatalogItem,
-  TransformMode,
-} from '../types/robotics';
+import { CatalogItem, TransformMode } from '../types/robotics';
 import {
   FloatingIsland,
   IconButton,
@@ -30,14 +17,9 @@ import {
 const BASIC_SHAPES = PART_CATALOG.filter((c) => c.category === 'primitives');
 const ICON = 'w-[22px] h-[22px]';
 
-/* ------------------------------------------------------------------ */
-/* Bottom toolbar: tools + shapes                                      */
-/* ------------------------------------------------------------------ */
-
 interface ViewportToolbarProps {
   transformMode: TransformMode;
   onTransformMode: (mode: TransformMode) => void;
-  /** Experimental Sculpt tool, off unless enabled in Settings */
   showSculpt: boolean;
   commentMode: boolean;
   onToggleComment: () => void;
@@ -61,7 +43,6 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   onImportSvg,
 }) => {
   const shapesRef = useRef<HTMLDivElement | null>(null);
-  // While dragging a shape out, fade the menu but keep it mounted (removing the source cancels the drag)
   const [draggingShape, setDraggingShape] = useState(false);
 
   const tools: Array<{ mode: TransformMode; icon: React.ReactNode; label: string; key: string }> = [
@@ -152,6 +133,7 @@ const ShapeGrid: React.FC<{
   onDragEnd: () => void;
 }> = ({ onPick, onDragStart, onDragEnd }) => {
   const thumbs = useCatalogThumbnails(BASIC_SHAPES);
+
   return (
     <div className="grid grid-cols-4 gap-1">
       {BASIC_SHAPES.map((item) => (
@@ -163,9 +145,11 @@ const ShapeGrid: React.FC<{
           onDragStart={(e) => {
             e.dataTransfer.setData(PART_DRAG_TYPE, item.kind);
             e.dataTransfer.effectAllowed = 'copy';
+
             const img = e.currentTarget.querySelector('img');
+
             if (img) e.dataTransfer.setDragImage(img, img.width / 2, img.height / 2);
-            // Defer so the browser captures the drag image first
+
             requestAnimationFrame(onDragStart);
           }}
           onDragEnd={onDragEnd}
@@ -181,9 +165,7 @@ const ShapeGrid: React.FC<{
               />
             )}
           </span>
-          <span className="text-[12px] text-white/75 group-hover:text-white truncate max-w-full">
-            {item.name}
-          </span>
+          <span className="text-[12px] text-white/75 group-hover:text-white truncate max-w-full">{item.name}</span>
         </button>
       ))}
     </div>
@@ -212,9 +194,7 @@ const MenuTrigger: React.FC<{
     >
       {icon}
       {size === 'lg' && (
-        <ChevronUp
-          className={`w-3.5 h-3.5 opacity-50 transition-transform duration-200 ${open ? '' : 'rotate-180'}`}
-        />
+        <ChevronUp className={`w-3.5 h-3.5 opacity-50 transition-transform duration-200 ${open ? '' : 'rotate-180'}`} />
       )}
     </button>
   </Tooltip>

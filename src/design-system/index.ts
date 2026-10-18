@@ -1,8 +1,3 @@
-/**
- * Design System Barrel Export
- * Centralized theme constants and UI primitives.
- */
-
 export * from './theme';
 export * from './Button';
 export * from './IconButton';

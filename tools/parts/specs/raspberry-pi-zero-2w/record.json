@@ -1,73 +1,73 @@
 {
- "id": "raspberry-pi-zero-2w",
- "name": "Raspberry Pi Zero 2 W",
- "manufacturer": "Raspberry Pi Ltd",
- "mpn": "SC0510",
- "category": "boards",
- "description": "65 × 30 mm single-board computer with the RP3A0 quad-core Cortex-A53 SiP, 512 MB RAM, 2.4 GHz Wi-Fi and Bluetooth 4.2.",
- "specs": [
-  {
-   "label": "CPU",
-   "value": "Broadcom BCM2710A1 (RP3A0 SiP), quad-core Cortex-A53 @ 1 GHz"
-  },
-  {
-   "label": "RAM",
-   "value": "512 MB LPDDR2"
-  },
-  {
-   "label": "Wireless",
-   "value": "2.4 GHz 802.11b/g/n, Bluetooth 4.2, BLE"
-  },
-  {
-   "label": "I/O",
-   "value": "Unpopulated 40-pin GPIO footprint, 1× micro-USB OTG, mini-HDMI, CSI-2 camera, microSD"
-  },
-  {
-   "label": "Power",
-   "value": "5 V DC 2.5 A via micro-USB"
-  },
-  {
-   "label": "Operating temp",
-   "value": "−20 to +70 °C"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 65.0,
-   "y": 30.0,
-   "z": null,
-   "axes": "x = long edge (65), y = short edge (30); origin = bottom-left corner, ports on the bottom edge, GPIO footprint along the top. z not given on the official drawing."
-  },
-  "features": [
-   {
-    "label": "Mounting holes",
-    "value": "4 holes at (3.5, 3.5), (61.5, 3.5), (3.5, 26.5), (61.5, 26.5); pattern 58 × 23 mm. Hole diameter not stated on the official drawing (Zero family is commonly M2.5 / ø2.75; unverified)",
-    "source": "https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008358-DS-1-raspberry-pi-zero-2-w-mechanical-drawing.pdf"
-   },
-   {
-    "label": "GPIO footprint",
-    "value": "2×20, centre at x = 32.5 (29 mm right of the top-left hole), on the top hole line",
-    "source": "same drawing"
-   },
-   {
-    "label": "Bottom-edge ports (centre x)",
-    "value": "mini-HDMI 12.4; micro-USB (data/OTG) 41.4; micro-USB (power) 54.0",
-    "source": "same drawing"
-   }
+  "id": "raspberry-pi-zero-2w",
+  "name": "Raspberry Pi Zero 2 W",
+  "manufacturer": "Raspberry Pi Ltd",
+  "mpn": "SC0510",
+  "category": "boards",
+  "description": "65 × 30 mm single-board computer with the RP3A0 quad-core Cortex-A53 SiP, 512 MB RAM, 2.4 GHz Wi-Fi and Bluetooth 4.2.",
+  "specs": [
+    {
+      "label": "CPU",
+      "value": "Broadcom BCM2710A1 (RP3A0 SiP), quad-core Cortex-A53 @ 1 GHz"
+    },
+    {
+      "label": "RAM",
+      "value": "512 MB LPDDR2"
+    },
+    {
+      "label": "Wireless",
+      "value": "2.4 GHz 802.11b/g/n, Bluetooth 4.2, BLE"
+    },
+    {
+      "label": "I/O",
+      "value": "Unpopulated 40-pin GPIO footprint, 1× micro-USB OTG, mini-HDMI, CSI-2 camera, microSD"
+    },
+    {
+      "label": "Power",
+      "value": "5 V DC 2.5 A via micro-USB"
+    },
+    {
+      "label": "Operating temp",
+      "value": "−20 to +70 °C"
+    }
   ],
-  "source": "https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008358-DS-1-raspberry-pi-zero-2-w-mechanical-drawing.pdf"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B09LH5SBPS",
-   "asin": "B09LH5SBPS",
-   "title": "Raspberry Pi Zero 2 W (Wireless / Bluetooth) 2021 (RPi Zero 2W)",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 65.0,
+      "y": 30.0,
+      "z": null,
+      "axes": "x = long edge (65), y = short edge (30); origin = bottom-left corner, ports on the bottom edge, GPIO footprint along the top. z not given on the official drawing."
+    },
+    "features": [
+      {
+        "label": "Mounting holes",
+        "value": "4 holes at (3.5, 3.5), (61.5, 3.5), (3.5, 26.5), (61.5, 26.5); pattern 58 × 23 mm. Hole diameter not stated on the official drawing (Zero family is commonly M2.5 / ø2.75; unverified)",
+        "source": "https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008358-DS-1-raspberry-pi-zero-2-w-mechanical-drawing.pdf"
+      },
+      {
+        "label": "GPIO footprint",
+        "value": "2×20, centre at x = 32.5 (29 mm right of the top-left hole), on the top hole line",
+        "source": "same drawing"
+      },
+      {
+        "label": "Bottom-edge ports (centre x)",
+        "value": "mini-HDMI 12.4; micro-USB (data/OTG) 41.4; micro-USB (power) 54.0",
+        "source": "same drawing"
+      }
+    ],
+    "source": "https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008358-DS-1-raspberry-pi-zero-2-w-mechanical-drawing.pdf"
   },
-  "product": "https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/",
-  "datasheet": "https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008359-DS-1-raspberry-pi-zero-2-w-product-brief.pdf"
- },
- "notes": "No official STEP from Raspberry Pi (the Zero 2 W portal category lists only PDFs: drawing, brief, schematics, test pads, case drawings). Mounting-hole diameter and component heights are not on the official drawing; need a measurement or a vetted model. Amazon B09LH5SBPS has brand Raspberry Pi but was sold by a third-party seller (MemoryWhiz) at fetch time.",
- "pose": "board"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B09LH5SBPS",
+      "asin": "B09LH5SBPS",
+      "title": "Raspberry Pi Zero 2 W (Wireless / Bluetooth) 2021 (RPi Zero 2W)",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/",
+    "datasheet": "https://pip-assets.raspberrypi.com/categories/584-raspberry-pi-zero-2-w/documents/RP-008359-DS-1-raspberry-pi-zero-2-w-product-brief.pdf"
+  },
+  "notes": "No official STEP from Raspberry Pi (the Zero 2 W portal category lists only PDFs: drawing, brief, schematics, test pads, case drawings). Mounting-hole diameter and component heights are not on the official drawing; need a measurement or a vetted model. Amazon B09LH5SBPS has brand Raspberry Pi but was sold by a third-party seller (MemoryWhiz) at fetch time.",
+  "pose": "board"
 }

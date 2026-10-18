@@ -10,13 +10,22 @@ export interface TooltipProps {
   side?: TooltipSide;
   children: React.ReactElement;
   disabled?: boolean;
-  /** Classes for the anchor wrapper, e.g. "flex-1" when wrapping a stretching control */
   className?: string;
 }
 
-// macOS behaviour: first tooltip waits, neighbours appear instantly while "warm".
 const OPEN_DELAY_MS = 500;
 const WARM_WINDOW_MS = 600;
+const TIP_GAP = 8;
+
+type Rect = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom' | 'width' | 'height'>;
+
+const TIP_POSITION: Record<TooltipSide, (a: Rect, t: Rect) => { x: number; y: number }> = {
+  top: (a, t) => ({ x: a.left + a.width / 2 - t.width / 2, y: a.top - t.height - TIP_GAP }),
+  bottom: (a, t) => ({ x: a.left + a.width / 2 - t.width / 2, y: a.bottom + TIP_GAP }),
+  left: (a, t) => ({ x: a.left - t.width - TIP_GAP, y: a.top + a.height / 2 - t.height / 2 }),
+  right: (a, t) => ({ x: a.right + TIP_GAP, y: a.top + a.height / 2 - t.height / 2 }),
+};
+
 let lastHiddenAt = 0;
 let anyOpen = false;
 
@@ -43,14 +52,17 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   const show = useCallback(() => {
     if (disabled) return;
+
     clearTimer();
+
     const warm = anyOpen || Date.now() - lastHiddenAt < WARM_WINDOW_MS;
+
     timerRef.current = window.setTimeout(
       () => {
         anyOpen = true;
         setOpen(true);
       },
-      warm ? 0 : OPEN_DELAY_MS
+      warm ? 0 : OPEN_DELAY_MS,
     );
   }, [disabled]);
 
@@ -61,6 +73,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         anyOpen = false;
         lastHiddenAt = Date.now();
       }
+
       return false;
     });
     setCoords(null);
@@ -70,27 +83,14 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   useLayoutEffect(() => {
     if (!open || !anchorRef.current || !tipRef.current) return;
+
     const a = anchorRef.current.getBoundingClientRect();
     const t = tipRef.current.getBoundingClientRect();
-    const gap = 8;
-    let x = 0;
-    let y = 0;
-    if (side === 'top') {
-      x = a.left + a.width / 2 - t.width / 2;
-      y = a.top - t.height - gap;
-    } else if (side === 'bottom') {
-      x = a.left + a.width / 2 - t.width / 2;
-      y = a.bottom + gap;
-    } else if (side === 'left') {
-      x = a.left - t.width - gap;
-      y = a.top + a.height / 2 - t.height / 2;
-    } else {
-      x = a.right + gap;
-      y = a.top + a.height / 2 - t.height / 2;
-    }
+    const { x: rawX, y: rawY } = TIP_POSITION[side](a, t);
     const pad = 6;
-    x = Math.max(pad, Math.min(window.innerWidth - t.width - pad, x));
-    y = Math.max(pad, Math.min(window.innerHeight - t.height - pad, y));
+    const x = Math.max(pad, Math.min(window.innerWidth - t.width - pad, rawX));
+    const y = Math.max(pad, Math.min(window.innerHeight - t.height - pad, rawY));
+
     setCoords({ x, y });
   }, [open, side, label, shortcut]);
 
@@ -121,7 +121,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
             <span>{label}</span>
             {shortcut && <Kbd>{shortcut}</Kbd>}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

@@ -1,88 +1,88 @@
 {
- "id": "realsense-d435i",
- "name": "Intel RealSense D435i",
- "manufacturer": "RealSense (formerly Intel)",
- "mpn": "82635D435IDK5P (MM# 999AFR; K38179-100 with BMI055 IMU, K38179-110 with BMI085 IMU)",
- "category": "sensors",
- "description": "Active-IR stereo depth camera with global-shutter imagers, 50 mm baseline, RGB camera and a 6-axis IMU over USB-C.",
- "specs": [
-  {
-   "label": "Depth",
-   "value": "Active IR stereo, global shutter, up to 1280 × 720, 50 mm baseline"
-  },
-  {
-   "label": "Depth FOV",
-   "value": "H 87° × V 58° (D 95°)"
-  },
-  {
-   "label": "RGB",
-   "value": "Rolling shutter, up to 1920 × 1080; FOV H 69° × V 42° (D 77°)"
-  },
-  {
-   "label": "IMU",
-   "value": "6-axis: Bosch BMI055 (K38179-100) or BMI085 (K38179-110)"
-  },
-  {
-   "label": "Interface",
-   "value": "USB Type-C, USB 3.1 Gen 1 (USB 2.0 supported)"
-  },
-  {
-   "label": "Weight",
-   "value": "75 g nominal (±10%)"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 90.0,
-   "y": 25.0,
-   "z": 25.0,
-   "axes": "x = width (left–right), y = depth (front glass to back), z = height. Tolerance ±0.15 mm; drawing shows depth 25.05 mm."
-  },
-  "features": [
-   {
-    "label": "Rear mounting",
-    "value": "2× M3 threaded holes on the back face, 45 mm apart, centered horizontally, on the vertical center line of the 25 mm height; max screw insertion depth 3 mm; recommended torque 0.4 N·m",
-    "source": "https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf Figure 10-9 (p.139)"
-   },
-   {
-    "label": "Tripod mount",
-    "value": "1× 1/4-20 UNC on the bottom face; its centerline is 17.5 mm from the left imager center. Scaled from the drawing it sits at the body's horizontal center (45 mm from either end) — the drawing does not dimension this directly.",
-    "source": "Datasheet Figure 10-9 and Table 4-20 (p.91)"
-   },
-   {
-    "label": "Front apertures (lens centers)",
-    "value": "Left and right IR imagers 50 mm apart (baseline); IR projector 29 mm from the left imager toward the right imager; RGB camera 15 mm beyond the left imager (outboard). Viewed from the front: right imager, projector, left imager, RGB. Depth origin = left imager center. With the tripod hole at body center: left imager 17.5 mm right of center (viewed from front), right imager 32.5 mm left of center, projector 11.5 mm left of center, RGB 32.5 mm right of center (derived, not drawn as such).",
-    "source": "Datasheet Figure 10-9 (reference dims (50), (29), (15)) and Section 4.8.1"
-   },
-   {
-    "label": "Depth start point",
-    "value": "Depth origin is 4.2 mm behind the front cover glass (Z' = −4.2 mm)",
-    "source": "Datasheet Table 4-17"
-   },
-   {
-    "label": "USB-C",
-    "value": "USB Type-C receptacle on one short end; side location shown in Figure 10-9 views but not dimensioned",
-    "source": "Datasheet Figure 10-9"
-   },
-   {
-    "label": "Flatness",
-    "value": "0.15 mm max",
-    "source": "Datasheet Table 3-52"
-   }
+  "id": "realsense-d435i",
+  "name": "Intel RealSense D435i",
+  "manufacturer": "RealSense (formerly Intel)",
+  "mpn": "82635D435IDK5P (MM# 999AFR; K38179-100 with BMI055 IMU, K38179-110 with BMI085 IMU)",
+  "category": "sensors",
+  "description": "Active-IR stereo depth camera with global-shutter imagers, 50 mm baseline, RGB camera and a 6-axis IMU over USB-C.",
+  "specs": [
+    {
+      "label": "Depth",
+      "value": "Active IR stereo, global shutter, up to 1280 × 720, 50 mm baseline"
+    },
+    {
+      "label": "Depth FOV",
+      "value": "H 87° × V 58° (D 95°)"
+    },
+    {
+      "label": "RGB",
+      "value": "Rolling shutter, up to 1920 × 1080; FOV H 69° × V 42° (D 77°)"
+    },
+    {
+      "label": "IMU",
+      "value": "6-axis: Bosch BMI055 (K38179-100) or BMI085 (K38179-110)"
+    },
+    {
+      "label": "Interface",
+      "value": "USB Type-C, USB 3.1 Gen 1 (USB 2.0 supported)"
+    },
+    {
+      "label": "Weight",
+      "value": "75 g nominal (±10%)"
+    }
   ],
-  "source": "https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf (Table 3-52 p.67, Figure 10-9 p.139)"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B07TWYWY18",
-   "asin": "B07TWYWY18",
-   "title": "Realsense Depth Camera D435i",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 90.0,
+      "y": 25.0,
+      "z": 25.0,
+      "axes": "x = width (left–right), y = depth (front glass to back), z = height. Tolerance ±0.15 mm; drawing shows depth 25.05 mm."
+    },
+    "features": [
+      {
+        "label": "Rear mounting",
+        "value": "2× M3 threaded holes on the back face, 45 mm apart, centered horizontally, on the vertical center line of the 25 mm height; max screw insertion depth 3 mm; recommended torque 0.4 N·m",
+        "source": "https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf Figure 10-9 (p.139)"
+      },
+      {
+        "label": "Tripod mount",
+        "value": "1× 1/4-20 UNC on the bottom face; its centerline is 17.5 mm from the left imager center. Scaled from the drawing it sits at the body's horizontal center (45 mm from either end) — the drawing does not dimension this directly.",
+        "source": "Datasheet Figure 10-9 and Table 4-20 (p.91)"
+      },
+      {
+        "label": "Front apertures (lens centers)",
+        "value": "Left and right IR imagers 50 mm apart (baseline); IR projector 29 mm from the left imager toward the right imager; RGB camera 15 mm beyond the left imager (outboard). Viewed from the front: right imager, projector, left imager, RGB. Depth origin = left imager center. With the tripod hole at body center: left imager 17.5 mm right of center (viewed from front), right imager 32.5 mm left of center, projector 11.5 mm left of center, RGB 32.5 mm right of center (derived, not drawn as such).",
+        "source": "Datasheet Figure 10-9 (reference dims (50), (29), (15)) and Section 4.8.1"
+      },
+      {
+        "label": "Depth start point",
+        "value": "Depth origin is 4.2 mm behind the front cover glass (Z' = −4.2 mm)",
+        "source": "Datasheet Table 4-17"
+      },
+      {
+        "label": "USB-C",
+        "value": "USB Type-C receptacle on one short end; side location shown in Figure 10-9 views but not dimensioned",
+        "source": "Datasheet Figure 10-9"
+      },
+      {
+        "label": "Flatness",
+        "value": "0.15 mm max",
+        "source": "Datasheet Table 3-52"
+      }
+    ],
+    "source": "https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf (Table 3-52 p.67, Figure 10-9 p.139)"
   },
-  "product": "https://www.realsenseai.com/product-family/430-series/",
-  "datasheet": "https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf"
- },
- "notes": "Intel spun RealSense out; old dev.intelrealsense.com no longer resolves. The official CAD page (dev.realsenseai.com/docs/cad-files, 'D400 Depth Cameras') serves a ZIP (D400-Depth-Cameras-CAD.zip, 15,041,868 bytes, files dated Oct 2023) that contains only SolidWorks .SLDPRT solids for D405/D415/D435/D435f/D435i/D455/D455f/D456/D457 — no STEP/IGES. The app cannot read SLDPRT directly: a human needs SolidWorks, eDrawings, Onshape or Fusion import to export STEP (FreeCAD cannot read SLDPRT). The datasheet weight (75 g) applies to the D43x family table; bulk cameras ship without the ~2.3 g USB cap. Amazon listing B07TWYWY18 title verified; seller/brand field not parsed, and part number 82635D435IDK5P appeared in search snippets. Older D435i units use BMI055; newer K38179-110 uses BMI085.",
- "pose": "camera"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B07TWYWY18",
+      "asin": "B07TWYWY18",
+      "title": "Realsense Depth Camera D435i",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.realsenseai.com/product-family/430-series/",
+    "datasheet": "https://www.realsenseai.com/wp-content/uploads/2026/03/RealSense-D400-Series-Datasheet-Mar-2026.pdf"
+  },
+  "notes": "Intel spun RealSense out; old dev.intelrealsense.com no longer resolves. The official CAD page (dev.realsenseai.com/docs/cad-files, 'D400 Depth Cameras') serves a ZIP (D400-Depth-Cameras-CAD.zip, 15,041,868 bytes, files dated Oct 2023) that contains only SolidWorks .SLDPRT solids for D405/D415/D435/D435f/D435i/D455/D455f/D456/D457 — no STEP/IGES. The app cannot read SLDPRT directly: a human needs SolidWorks, eDrawings, Onshape or Fusion import to export STEP (FreeCAD cannot read SLDPRT). The datasheet weight (75 g) applies to the D43x family table; bulk cameras ship without the ~2.3 g USB cap. Amazon listing B07TWYWY18 title verified; seller/brand field not parsed, and part number 82635D435IDK5P appeared in search snippets. Older D435i units use BMI055; newer K38179-110 uses BMI085.",
+  "pose": "camera"
 }

@@ -7,18 +7,19 @@ Native OpenCascade STEP/IGES reader for files too large (or IGES trims too hard)
 Needs the cadquery-ocp package (OCP). Writes colored triangles in the CAD frame (mm):
     uint32 group count, then per group: float32 r, g, b (sRGB 0-1), uint32 float count, float32 xyz…
 """
+
 import struct
 import sys
 
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.IFSelect import IFSelect_RetDone
+from OCP.IGESCAFControl import IGESCAFControl_Reader
+from OCP.Quantity import Quantity_TOC_sRGB
 from OCP.RWMesh import RWMesh_FaceIterator
 from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.IGESCAFControl import IGESCAFControl_Reader
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.TDocStd import TDocStd_Document
 from OCP.XCAFPrs import XCAFPrs_DocumentExplorer, XCAFPrs_DocumentExplorerFlags_OnlyLeafNodes
-from OCP.Quantity import Quantity_TOC_sRGB
 
 src, out, lin, ang = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4])
 
@@ -60,5 +61,5 @@ with open(out, "wb") as f:
     f.write(struct.pack("<I", len(groups)))
     for rgb, soup in groups.values():
         f.write(struct.pack("<3fI", *rgb, len(soup)))
-        f.write(struct.pack("<%df" % len(soup), *soup))
+        f.write(struct.pack(f"<{len(soup)}f", *soup))
 print(len(groups), "colors", sum(len(s) for _, s in groups.values()) // 9, "triangles")

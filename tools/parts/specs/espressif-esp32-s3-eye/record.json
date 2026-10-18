@@ -1,84 +1,84 @@
 {
- "id": "espressif-esp32-s3-eye",
- "name": "Espressif ESP32-S3-EYE",
- "manufacturer": "Espressif Systems",
- "mpn": "ESP32-S3-EYE (main board ESP32-S3-EYE-MB v2.2 + ESP32-S3-EYE-SUB v1.1)",
- "category": "cameras",
- "description": "ESP32-S3 AI dev board with a 2 MP OV2640 camera, 1.3-inch LCD on a stacked sub-board, microphone and accelerometer.",
- "specs": [
-  {
-   "label": "Module",
-   "value": "ESP32-S3-WROOM-1 (ESP32-S3R8), 8 MB octal PSRAM, 8 MB flash"
-  },
-  {
-   "label": "Camera",
-   "value": "OV2640, 2 MP, max 1600 × 1200, 66.5° FOV"
-  },
-  {
-   "label": "Display",
-   "value": "1.3-inch LCD on the sub board"
-  },
-  {
-   "label": "Audio / sensors",
-   "value": "I2S MEMS microphone (61 dB SNR), QMA7981 3-axis accelerometer"
-  },
-  {
-   "label": "Interface",
-   "value": "Micro-USB (power + USB on GPIO19/20), microSD slot, Wi-Fi + BLE 5"
-  },
-  {
-   "label": "Power",
-   "value": "5 V USB or 3.7 V Li-ion via solder points (1 A charger)"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 30.0,
-   "y": 60.0,
-   "z": null,
-   "axes": "x = main board width, y = main board length (camera end at the top); z = stack height not published"
-  },
-  "features": [
-   {
-    "label": "Main board",
-    "value": "30.00 × 60.00 mm; camera-end notch 18.00 mm wide × 6.40 mm deep, leaving 6.00 mm tabs each side",
-    "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.pdf"
-   },
-   {
-    "label": "Sub board (LCD)",
-    "value": "30.00 × 31.90 mm, stacks on the main board via J8/J9 headers and FPC J5",
-    "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_SUB_V1.1_20211111.pdf"
-   },
-   {
-    "label": "Camera position",
-    "value": "Not dimensioned; scaled from the drawing the lens is on the board centerline about 10.8 mm below the notched end (approximate, verify with the DXF)",
-    "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.pdf"
-   },
-   {
-    "label": "Mounting holes",
-    "value": "None dimensioned on the official drawings (two round features in the top tabs are not called out)",
-    "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.pdf"
-   },
-   {
-    "label": "Official outline files",
-    "value": "DXF sources: DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.dxf, DXF_ESP32-S3-EYE_SUB_V1.1_20211111.dxf",
-    "source": "https://github.com/espressif/esp-who/blob/master/docs/en/get-started/ESP32-S3-EYE_Getting_Started_Guide.md §5.4"
-   }
+  "id": "espressif-esp32-s3-eye",
+  "name": "Espressif ESP32-S3-EYE",
+  "manufacturer": "Espressif Systems",
+  "mpn": "ESP32-S3-EYE (main board ESP32-S3-EYE-MB v2.2 + ESP32-S3-EYE-SUB v1.1)",
+  "category": "cameras",
+  "description": "ESP32-S3 AI dev board with a 2 MP OV2640 camera, 1.3-inch LCD on a stacked sub-board, microphone and accelerometer.",
+  "specs": [
+    {
+      "label": "Module",
+      "value": "ESP32-S3-WROOM-1 (ESP32-S3R8), 8 MB octal PSRAM, 8 MB flash"
+    },
+    {
+      "label": "Camera",
+      "value": "OV2640, 2 MP, max 1600 × 1200, 66.5° FOV"
+    },
+    {
+      "label": "Display",
+      "value": "1.3-inch LCD on the sub board"
+    },
+    {
+      "label": "Audio / sensors",
+      "value": "I2S MEMS microphone (61 dB SNR), QMA7981 3-axis accelerometer"
+    },
+    {
+      "label": "Interface",
+      "value": "Micro-USB (power + USB on GPIO19/20), microSD slot, Wi-Fi + BLE 5"
+    },
+    {
+      "label": "Power",
+      "value": "5 V USB or 3.7 V Li-ion via solder points (1 A charger)"
+    }
   ],
-  "source": "https://github.com/espressif/esp-who/blob/master/docs/en/get-started/ESP32-S3-EYE_Getting_Started_Guide.md"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B09MS6PH7L",
-   "asin": "B09MS6PH7L",
-   "title": "ESP32-S3-EYE Development Board (URL slug Espressif-ESP32-S3-EYE-Development-Board)",
-   "kind": "product",
-   "verified": true,
-   "note": "Search snippet says currently unavailable."
+  "dimensions": {
+    "envelope": {
+      "x": 30.0,
+      "y": 60.0,
+      "z": null,
+      "axes": "x = main board width, y = main board length (camera end at the top); z = stack height not published"
+    },
+    "features": [
+      {
+        "label": "Main board",
+        "value": "30.00 × 60.00 mm; camera-end notch 18.00 mm wide × 6.40 mm deep, leaving 6.00 mm tabs each side",
+        "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.pdf"
+      },
+      {
+        "label": "Sub board (LCD)",
+        "value": "30.00 × 31.90 mm, stacks on the main board via J8/J9 headers and FPC J5",
+        "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_SUB_V1.1_20211111.pdf"
+      },
+      {
+        "label": "Camera position",
+        "value": "Not dimensioned; scaled from the drawing the lens is on the board centerline about 10.8 mm below the notched end (approximate, verify with the DXF)",
+        "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.pdf"
+      },
+      {
+        "label": "Mounting holes",
+        "value": "None dimensioned on the official drawings (two round features in the top tabs are not called out)",
+        "source": "https://dl.espressif.com/dl/schematics/DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.pdf"
+      },
+      {
+        "label": "Official outline files",
+        "value": "DXF sources: DXF_ESP32-S3-EYE_MB_top_V2.2_20211207.dxf, DXF_ESP32-S3-EYE_SUB_V1.1_20211111.dxf",
+        "source": "https://github.com/espressif/esp-who/blob/master/docs/en/get-started/ESP32-S3-EYE_Getting_Started_Guide.md §5.4"
+      }
+    ],
+    "source": "https://github.com/espressif/esp-who/blob/master/docs/en/get-started/ESP32-S3-EYE_Getting_Started_Guide.md"
   },
-  "product": "https://www.espressif.com/en/products/devkits/esp32-s3-eye",
-  "datasheet": "https://github.com/espressif/esp-who/blob/master/docs/en/get-started/ESP32-S3-EYE_Getting_Started_Guide.md"
- },
- "notes": "Espressif publishes 2D outlines (PDF + DXF) but no board STEP. Stack thickness and the camera's exact position are not dimensioned. Amazon listing title verified; it appears out of stock.",
- "pose": "board"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B09MS6PH7L",
+      "asin": "B09MS6PH7L",
+      "title": "ESP32-S3-EYE Development Board (URL slug Espressif-ESP32-S3-EYE-Development-Board)",
+      "kind": "product",
+      "verified": true,
+      "note": "Search snippet says currently unavailable."
+    },
+    "product": "https://www.espressif.com/en/products/devkits/esp32-s3-eye",
+    "datasheet": "https://github.com/espressif/esp-who/blob/master/docs/en/get-started/ESP32-S3-EYE_Getting_Started_Guide.md"
+  },
+  "notes": "Espressif publishes 2D outlines (PDF + DXF) but no board STEP. Stack thickness and the camera's exact position are not dimensioned. Amazon listing title verified; it appears out of stock.",
+  "pose": "board"
 }

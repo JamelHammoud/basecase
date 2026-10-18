@@ -1,83 +1,83 @@
 {
- "id": "hc-sr04",
- "name": "HC-SR04 Ultrasonic Sensor",
- "manufacturer": "Generic (original design commonly attributed to Elecfreaks; sold by SparkFun as SEN-15569)",
- "mpn": "HC-SR04 (SparkFun SEN-15569)",
- "category": "sensors",
- "description": "40 kHz ultrasonic rangefinder module with separate transmit and receive transducers and a trigger/echo pulse interface.",
- "specs": [
-  {
-   "label": "Supply",
-   "value": "5 V DC (SEN-15569); 3.3–5 V for the HC-SR04-33 variant (SEN-24049)"
-  },
-  {
-   "label": "Current",
-   "value": "15 mA"
-  },
-  {
-   "label": "Range",
-   "value": "2 cm – 4 m, accuracy up to 3 mm"
-  },
-  {
-   "label": "Beam angle",
-   "value": "15°"
-  },
-  {
-   "label": "Interface",
-   "value": "Trig: 10 µs TTL pulse in; Echo: TTL pulse width ∝ distance (µs / 58 = cm); 4-pin 0.1\" header VCC, Trig, Echo, GND"
-  },
-  {
-   "label": "Ultrasonic frequency",
-   "value": "40 kHz burst (8 cycles); datasheet's 'Working Frequency 40 Hz' is the max measurement rate"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 45.0,
-   "y": 20.0,
-   "z": 15.0,
-   "axes": "x = board length, y = board height, z = depth from PCB back to transducer front (datasheet '45*20*15mm')"
-  },
-  "features": [
-   {
-    "label": "Overall",
-    "value": "45 × 20 × 15 mm",
-    "source": "https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf p.1 (Elecfreaks datasheet linked by SparkFun SEN-15569)"
-   },
-   {
-    "label": "Mounting holes",
-    "value": "4 corner holes; 40 mm center-to-center along the length (Cytron drawing). Hole diameter and vertical pitch are not given in any manufacturer-grade source.",
-    "source": "Cytron 'Product User's Manual – HC-SR04' v1.0 (May 2013), Section 3.0 Product Layout drawing, p.5: https://embedded.fel.cvut.cz/sites/default/files/kurzy/lpe/ultrasonic_hc-sr04/HCSR04_DS_Cytron.pdf"
-   },
-   {
-    "label": "Board length (conflict)",
-    "value": "Cytron side view shows 43 mm; Elecfreaks/SparkFun text says 45 mm",
-    "source": "Cytron manual p.5 vs SparkFun-hosted datasheet p.1"
-   },
-   {
-    "label": "Transducers",
-    "value": null,
-    "source": "No official diameter/pitch found. Unofficial: ~16 mm diameter cans ~26 mm apart (bracket makers), ~25.4 mm in a Thingiverse mount — not authoritative"
-   },
-   {
-    "label": "Header",
-    "value": "4-pin 0.1\" (2.54 mm) right-angle or straight header centered on the bottom edge, between the transducers",
-    "source": "Cytron manual p.5 photo/drawing (positions not dimensioned)"
-   }
+  "id": "hc-sr04",
+  "name": "HC-SR04 Ultrasonic Sensor",
+  "manufacturer": "Generic (original design commonly attributed to Elecfreaks; sold by SparkFun as SEN-15569)",
+  "mpn": "HC-SR04 (SparkFun SEN-15569)",
+  "category": "sensors",
+  "description": "40 kHz ultrasonic rangefinder module with separate transmit and receive transducers and a trigger/echo pulse interface.",
+  "specs": [
+    {
+      "label": "Supply",
+      "value": "5 V DC (SEN-15569); 3.3–5 V for the HC-SR04-33 variant (SEN-24049)"
+    },
+    {
+      "label": "Current",
+      "value": "15 mA"
+    },
+    {
+      "label": "Range",
+      "value": "2 cm – 4 m, accuracy up to 3 mm"
+    },
+    {
+      "label": "Beam angle",
+      "value": "15°"
+    },
+    {
+      "label": "Interface",
+      "value": "Trig: 10 µs TTL pulse in; Echo: TTL pulse width ∝ distance (µs / 58 = cm); 4-pin 0.1\" header VCC, Trig, Echo, GND"
+    },
+    {
+      "label": "Ultrasonic frequency",
+      "value": "40 kHz burst (8 cycles); datasheet's 'Working Frequency 40 Hz' is the max measurement rate"
+    }
   ],
-  "source": "https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B00F167T2A",
-   "asin": "B00F167T2A",
-   "title": "HC-SR04 Ultrasonic Distance Measuring Sensor Module",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 45.0,
+      "y": 20.0,
+      "z": 15.0,
+      "axes": "x = board length, y = board height, z = depth from PCB back to transducer front (datasheet '45*20*15mm')"
+    },
+    "features": [
+      {
+        "label": "Overall",
+        "value": "45 × 20 × 15 mm",
+        "source": "https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf p.1 (Elecfreaks datasheet linked by SparkFun SEN-15569)"
+      },
+      {
+        "label": "Mounting holes",
+        "value": "4 corner holes; 40 mm center-to-center along the length (Cytron drawing). Hole diameter and vertical pitch are not given in any manufacturer-grade source.",
+        "source": "Cytron 'Product User's Manual – HC-SR04' v1.0 (May 2013), Section 3.0 Product Layout drawing, p.5: https://embedded.fel.cvut.cz/sites/default/files/kurzy/lpe/ultrasonic_hc-sr04/HCSR04_DS_Cytron.pdf"
+      },
+      {
+        "label": "Board length (conflict)",
+        "value": "Cytron side view shows 43 mm; Elecfreaks/SparkFun text says 45 mm",
+        "source": "Cytron manual p.5 vs SparkFun-hosted datasheet p.1"
+      },
+      {
+        "label": "Transducers",
+        "value": null,
+        "source": "No official diameter/pitch found. Unofficial: ~16 mm diameter cans ~26 mm apart (bracket makers), ~25.4 mm in a Thingiverse mount — not authoritative"
+      },
+      {
+        "label": "Header",
+        "value": "4-pin 0.1\" (2.54 mm) right-angle or straight header centered on the bottom edge, between the transducers",
+        "source": "Cytron manual p.5 photo/drawing (positions not dimensioned)"
+      }
+    ],
+    "source": "https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf"
   },
-  "product": "https://www.sparkfun.com/ultrasonic-distance-sensor-hc-sr04.html",
-  "datasheet": "https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf"
- },
- "notes": "There is no single manufacturer and no official 3D model or fully dimensioned drawing. SparkFun's SEN-15569 page publishes only the Elecfreaks datasheet (45 × 20 × 15 mm, no hole positions) and an example-code GitHub repo (no CAD). The best drawing found is Cytron's user manual (43 mm length in side view, 40 mm hole spacing, 20 mm height, 15 mm depth). Hole diameter (forum measurements ~2.2 mm, others say 1 mm/M1 or 3 mm), vertical hole pitch and transducer pitch are unverified — a human should caliper a real board before designing a tight mount. Clones vary. Amazon: no SparkFun-branded SEN-15569 listing found; B00F167T2A is a generic niceEshop HC-SR04 module (title verified). Downloaded: HCSR04-sparkfun-datasheet.pdf, HC-SR04-33_Datasheet.pdf, cytron.pdf.",
- "pose": "board"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B00F167T2A",
+      "asin": "B00F167T2A",
+      "title": "HC-SR04 Ultrasonic Distance Measuring Sensor Module",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.sparkfun.com/ultrasonic-distance-sensor-hc-sr04.html",
+    "datasheet": "https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf"
+  },
+  "notes": "There is no single manufacturer and no official 3D model or fully dimensioned drawing. SparkFun's SEN-15569 page publishes only the Elecfreaks datasheet (45 × 20 × 15 mm, no hole positions) and an example-code GitHub repo (no CAD). The best drawing found is Cytron's user manual (43 mm length in side view, 40 mm hole spacing, 20 mm height, 15 mm depth). Hole diameter (forum measurements ~2.2 mm, others say 1 mm/M1 or 3 mm), vertical hole pitch and transducer pitch are unverified — a human should caliper a real board before designing a tight mount. Clones vary. Amazon: no SparkFun-branded SEN-15569 listing found; B00F167T2A is a generic niceEshop HC-SR04 module (title verified). Downloaded: HCSR04-sparkfun-datasheet.pdf, HC-SR04-33_Datasheet.pdf, cytron.pdf.",
+  "pose": "board"
 }

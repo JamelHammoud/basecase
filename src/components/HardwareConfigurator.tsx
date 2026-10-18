@@ -28,19 +28,21 @@ import {
 } from '../data/hardware';
 import { PART_CATALOG, hardwareVariant } from '../data/catalog';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { CHOICE_TRACK, ChoiceGrid, DriveIcon, IconButton, NumberInput, Section, choiceCellClass } from '../design-system';
+import {
+  CHOICE_TRACK,
+  ChoiceGrid,
+  DriveIcon,
+  IconButton,
+  NumberInput,
+  Section,
+  choiceCellClass,
+} from '../design-system';
 import { SizeLine, SpecRow } from './PartDetails';
 
 type OnChange = (spec: HardwareSpec, live?: boolean) => void;
 
-/**
- * Pick a fastener exactly, one hairline section per choice: type within its family (screw head,
- * nut style… as real thumbnails), drive, size, any length (stock lengths one tap away) and
- * finish. Controlled; the Parts page and the Inspector both use it, with `HardwareSpecs` after.
- */
 export const HardwareConfigurator: React.FC<{
   spec: HardwareSpec;
-  /** `live` while typing or scrubbing the length (skip undo history until commit) */
   onChange: OnChange;
 }> = ({ spec, onChange }) => {
   const info = HARDWARE_BY_TYPE[spec.type];
@@ -50,7 +52,8 @@ export const HardwareConfigurator: React.FC<{
   const range = lengthRange(spec.type, spec.size);
   const set = (next: Partial<HardwareSpec>, live?: boolean) => {
     const s = { ...spec, ...next };
-    onChange(makeSpec(s.type, s.size, s.length, s.finish, s.drive), live);
+
+    onChange(makeSpec(s.type, { size: s.size, length: s.length, finish: s.finish, drive: s.drive }), live);
   };
   const recess = screwHead(spec)?.recess ?? setScrewRecess(spec)?.recess;
 
@@ -64,21 +67,35 @@ export const HardwareConfigurator: React.FC<{
             className={`grid gap-x-[8px] gap-y-[10px] ${family.types.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}
           >
             {family.types.map((t) => (
-              <TypeTile key={t.type} type={t.type} label={t.label} spec={spec} selected={t.type === spec.type} onSelect={() => set({ type: t.type })} />
+              <TypeTile
+                key={t.type}
+                type={t.type}
+                label={t.label}
+                spec={spec}
+                selected={t.type === spec.type}
+                onSelect={() => set({ type: t.type })}
+              />
             ))}
           </div>
         </Section>
       )}
 
       {drives.length > 1 && (
-        <Section title="Drive" actions={recess && <span className="mr-1 text-[12.5px] text-white/45 tabular">{recessLabel(recess)}</span>}>
+        <Section
+          title="Drive"
+          actions={recess && <span className="mr-1 text-[12.5px] text-white/45 tabular">{recessLabel(recess)}</span>}
+        >
           <ChoiceGrid
             label="Drive"
             stacked
             columns={drives.length}
             value={drive}
             onChange={(d) => set({ drive: d })}
-            options={drives.map((d) => ({ value: d, label: DRIVES[d].label, icon: <DriveIcon drive={d} className="w-5 h-5" /> }))}
+            options={drives.map((d) => ({
+              value: d,
+              label: DRIVES[d].label,
+              icon: <DriveIcon drive={d} className="w-5 h-5" />,
+            }))}
           />
         </Section>
       )}
@@ -105,7 +122,12 @@ export const HardwareConfigurator: React.FC<{
             options={FINISH_ORDER.filter((f) => info.finishes.includes(f)).map((f) => ({
               value: f,
               label: FINISHES[f].label,
-              icon: <span className="w-3 h-3 rounded-full ring-1 ring-inset ring-white/25" style={{ background: FINISHES[f].color }} />,
+              icon: (
+                <span
+                  className="w-3 h-3 rounded-full ring-1 ring-inset ring-white/25"
+                  style={{ background: FINISHES[f].color }}
+                />
+              ),
             }))}
           />
         </Section>
@@ -114,10 +136,6 @@ export const HardwareConfigurator: React.FC<{
   );
 };
 
-/**
- * The exact numbers for a spec: Specs (size, thread, standard, head) and Holes (what to model
- * around it). Open on the part page; collapsible in the Inspector, where Holes carries an action.
- */
 export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean; holeAction?: React.ReactNode }> = ({
   spec,
   collapsible = false,
@@ -128,6 +146,7 @@ export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean
   const standard = screwStandard(spec);
   const holes = hardwareHoleRows(spec);
   const bearing = spec.type === 'bearing' ? BEARINGS[spec.size] : undefined;
+
   return (
     <>
       <Section title="Specs" collapsible={collapsible} defaultOpen={!collapsible}>
@@ -172,25 +191,32 @@ export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean
   );
 };
 
-const Unit: React.FC<{ children: React.ReactNode }> = ({ children }) => <span className="text-white/40"> {children}</span>;
+const Unit: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span className="text-white/40"> {children}</span>
+);
 
-/** Same order for every type, so switching the head never moves the chips */
 const FINISH_ORDER = Object.keys(FINISHES) as Array<keyof typeof FINISHES>;
 
-/** A type in its family as a real thumbnail at the current size, finish and drive; the chosen one has the blue ring */
-const TypeTile: React.FC<{ type: HardwareType; label: string; spec: HardwareSpec; selected: boolean; onSelect: () => void }> = ({
-  type,
-  label,
-  spec,
-  selected,
-  onSelect,
-}) => {
+const TypeTile: React.FC<{
+  type: HardwareType;
+  label: string;
+  spec: HardwareSpec;
+  selected: boolean;
+  onSelect: () => void;
+}> = ({ type, label, spec, selected, onSelect }) => {
   const base = PART_CATALOG.find((c) => c.hardware?.type === type);
-  // Default length, so scrubbing the length doesn't re-render every tile
-  const item = base && hardwareVariant(base, makeSpec(type, spec.size, undefined, spec.finish, spec.drive));
+  const item =
+    base && hardwareVariant(base, makeSpec(type, { size: spec.size, finish: spec.finish, drive: spec.drive }));
   const thumb = usePartThumbnail(item);
+
   return (
-    <button type="button" role="radio" aria-checked={selected} onClick={onSelect} className="group min-w-0 cursor-default">
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className="group min-w-0 cursor-default"
+    >
       <span
         className={`preview preview-sm block aspect-[4/3] group-active:scale-[0.97] transition-[background-color,transform] duration-150 ${
           selected ? 'ring-[1.5px] ring-inset ring-[#0d99ff]/70' : ''
@@ -218,7 +244,6 @@ const TypeTile: React.FC<{ type: HardwareType; label: string; spec: HardwareSpec
   );
 };
 
-/** Length: type or scrub any length, step between stock lengths, or pick one from the strip */
 const LengthSection: React.FC<{
   spec: HardwareSpec;
   min: number;
@@ -230,6 +255,7 @@ const LengthSection: React.FC<{
   const shorter = [...stock].reverse().find((l) => l < length);
   const longer = stock.find((l) => l > length);
   const near = nearestStockLengths(spec);
+
   return (
     <Section title="Length">
       <div className="flex items-center gap-1">
@@ -289,41 +315,57 @@ const LengthSection: React.FC<{
   );
 };
 
-/**
- * Stock lengths in one row that scrolls sideways (trackpad, or Shift-scroll), centred on the
- * current length. An edge fades only while lengths are hidden past it, like the scene tabs.
- */
-const StockStrip: React.FC<{ lengths: number[]; value: number; onPick: (l: number) => void }> = ({ lengths, value, onPick }) => {
+const StockStrip: React.FC<{ lengths: number[]; value: number; onPick: (l: number) => void }> = ({
+  lengths,
+  value,
+  onPick,
+}) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [fade, setFade] = useState({ left: false, right: false });
   const placed = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
+
     if (!el) return;
+
     const update = () => {
       const left = el.scrollLeft > 1;
       const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+
       setFade((f) => (f.left === left && f.right === right ? f : { left, right }));
     };
+
     update();
     el.addEventListener('scroll', update, { passive: true });
+
     const resize = new ResizeObserver(update);
+
     resize.observe(el);
+
     return () => {
       el.removeEventListener('scroll', update);
       resize.disconnect();
     };
   }, []);
 
-  // Keep the chosen length (or where it would sit) in the middle: jump on first show, glide after
   useLayoutEffect(() => {
     const el = ref.current;
+
     if (!el) return;
-    const i = Math.max(0, lengths.findIndex((l) => l >= value));
+
+    const i = Math.max(
+      0,
+      lengths.findIndex((l) => l >= value),
+    );
     const cell = el.children[i] as HTMLElement | undefined;
+
     if (!cell) return;
-    el.scrollTo({ left: cell.offsetLeft - (el.clientWidth - cell.offsetWidth) / 2, behavior: placed.current ? 'smooth' : 'auto' });
+
+    el.scrollTo({
+      left: cell.offsetLeft - (el.clientWidth - cell.offsetWidth) / 2,
+      behavior: placed.current ? 'smooth' : 'auto',
+    });
     placed.current = true;
   }, [value, lengths]);
 
@@ -331,6 +373,7 @@ const StockStrip: React.FC<{ lengths: number[]; value: number; onPick: (l: numbe
     fade.left || fade.right
       ? `linear-gradient(to right, ${fade.left ? 'transparent, #000 28px' : '#000'}, ${fade.right ? '#000 calc(100% - 28px), transparent' : '#000'})`
       : undefined;
+
   return (
     <div
       ref={ref}

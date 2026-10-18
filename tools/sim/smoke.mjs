@@ -1,9 +1,3 @@
-/**
- * MuJoCo smoke test: the WASM engine (the app's simulator) and the Python engine (the trainer)
- * are the same version, both load a small robot, and both agree on where it ends up.
- *
- *   node tools/sim/smoke.mjs [--no-python]
- */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,11 +5,11 @@ import loadMujoco from '@mujoco/mujoco';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 const trainerDir = path.join(root, 'electron', 'trainer');
-const npmVersion = JSON.parse(fs.readFileSync(path.join(root, 'node_modules', '@mujoco', 'mujoco', 'package.json'), 'utf8')).version;
+const npmVersion = JSON.parse(
+  fs.readFileSync(path.join(root, 'node_modules', '@mujoco', 'mujoco', 'package.json'), 'utf8'),
+).version;
 const pyPin = /"mujoco==([^"]+)"/.exec(fs.readFileSync(path.join(trainerDir, 'pyproject.toml'), 'utf8'))?.[1];
 
-// A free-floating body with a hinged arm, a position servo and a convex mesh, like the models
-// src/sim/mjcf.ts writes
 const XML = `<mujoco>
   <compiler angle="radian" inertiafromgeom="true" boundmass="0.0005" boundinertia="1e-8"/>
   <option timestep="0.002" integrator="implicitfast"/>
@@ -42,16 +36,27 @@ const mj = await loadMujoco();
 const wasmVersion = mj.mj_versionString();
 const m = mj.MjModel.from_xml_string(XML);
 const d = new mj.MjData(m);
+
 d.ctrl[0] = 0.5;
+
 for (let i = 0; i < 1000; i++) mj.mj_step(m, d);
+
 const js = [d.qpos[2], d.qpos[7]];
+
 d.delete();
 m.delete();
-console.log(`✓ WASM MuJoCo ${wasmVersion} (npm @mujoco/mujoco ${npmVersion}): z ${js[0].toFixed(4)}, hinge ${js[1].toFixed(4)}`);
-if (wasmVersion !== npmVersion) fail(`The WASM engine reports ${wasmVersion} but the package is ${npmVersion}.`);
-if (pyPin !== npmVersion) fail(`The trainer pins mujoco==${pyPin} but the app uses ${npmVersion}. Run node tools/sim/update-mujoco.mjs ${npmVersion}.`);
+console.log(
+  `✓ WASM MuJoCo ${wasmVersion} (npm @mujoco/mujoco ${npmVersion}): z ${js[0].toFixed(4)}, hinge ${js[1].toFixed(4)}`,
+);
 
-if (!process.argv.includes('--no-python')) {
+if (wasmVersion !== npmVersion) fail(`The WASM engine reports ${wasmVersion} but the package is ${npmVersion}.`);
+
+if (pyPin !== npmVersion)
+  fail(
+    `The trainer pins mujoco==${pyPin} but the app uses ${npmVersion}. Run node tools/sim/update-mujoco.mjs ${npmVersion}.`,
+  );
+
+function checkPython() {
   const py = `
 import json, mujoco, sys
 m = mujoco.MjModel.from_xml_string(sys.stdin.read())
@@ -65,9 +70,16 @@ print(json.dumps({"version": mujoco.__version__, "z": float(d.qpos[2]), "hinge":
     env: { ...process.env, UV_PROJECT_ENVIRONMENT: path.join(root, 'library', 'trainer-env') },
   });
   const res = JSON.parse(out.trim().split('\n').at(-1));
+
   console.log(`✓ Python MuJoCo ${res.version}: z ${res.z.toFixed(4)}, hinge ${res.hinge.toFixed(4)}`);
+
   if (res.version !== npmVersion) fail(`The trainer runs MuJoCo ${res.version}; the app runs ${npmVersion}.`);
+
   const drift = Math.max(Math.abs(res.z - js[0]), Math.abs(res.hinge - js[1]));
+
   if (drift > 1e-6) fail(`The app and the trainer disagree by ${drift}: policies may not transfer.`);
+
   console.log('✓ The app and the trainer simulate identically');
 }
+
+if (!process.argv.includes('--no-python')) checkPython();

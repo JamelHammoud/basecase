@@ -2,9 +2,92 @@
 
 This document defines the design principles, UI/UX conventions, copy rules, and architectural standards for **Basecase**, a 3D robotics CAD studio with an AI agent. Any agent modifying or extending this codebase must consult, follow, and maintain these guidelines.
 
+**Writing any code?** Follow §0. It's mandatory, and the tooling enforces it: `npm run check` must pass before you finish.
+
 **Writing any user-facing text** (labels, buttons, headers, captions, empty states, toasts, errors, tooltips, agent-facing UI)? Follow §3, and run its checklist (§3d) on every string you add or change.
 
 References studied for this system: Figma UI3, the OpenAI Codex / ChatGPT desktop apps, mobbin.com, Linear, Raycast, macOS Tahoe Liquid Glass (WWDC25 “Meet Liquid Glass”), Vercel Geist, Things 3; copy guides from Apple HIG, Mailchimp, Material, Shopify Polaris, Atlassian, Microsoft, GOV.UK, Stripe, Linear and 37signals.
+
+---
+
+## 0. Code Conventions (mandatory)
+
+These rules hold for every human and agent, on every machine. They're enforced by tools, not memory: don't rely on yourself to follow them, run the tools.
+
+### 0a. Tooling
+
+- **Prettier** formats (`.prettierrc.json`: single quotes, 120 columns). **ESLint** (`eslint.config.mjs`) enforces everything else. Custom rules live in `tools/eslint/`.
+- `npm run check` = `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`. It must pass before you finish any change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes.
+- **Hooks run automatically:**
+  - Git pre-commit (`simple-git-hooks` + `lint-staged`, installed by `npm install`): formats and lints staged files; a commit with lint errors fails.
+  - Claude Code (`.claude/settings.json` → `tools/hooks/claude-post-edit.mjs`): after every Edit/Write, the file is formatted and lint-fixed, and remaining errors come back to the agent. Fix them before moving on.
+- **No escape hatches.** Inline `eslint-disable` comments are ignored (`noInlineConfig`), and `@ts-ignore` / `@ts-expect-error` are comments, which are banned. Fix the code. Never loosen `eslint.config.mjs`, `tsconfig*.json` or the Prettier config to make something pass; changing a rule needs the user's OK, and the change is recorded here.
+
+### 0b. Rules (all errors)
+
+| Rule | Limit | How to comply |
+|---|---|---|
+| No comments (`basecase/no-comments`) | none, except `@vite-ignore` / `#__PURE__` pragmas | Name things so the code reads on its own. Lasting context (why a value is what it is, platform quirks, bugs avoided) goes in this file or `docs/notes/` (`ui.md`, `core.md`, `node.md`) |
+| No nested `if` in one function (`basecase/no-nested-if`) | 0 | Guard clauses and early returns, combined conditions, lookup tables, or extract a named predicate / function |
+| Blank line between statements of different kinds (`@stylistic/padding-line-between-statements`) | — | Auto-fixed. Consecutive declarations or expression statements may group; every `if`, loop, block and `return` is set off by blank lines |
+| `max-lines` per file | 400 (blank lines not counted) | Split by responsibility into sibling modules. Data catalogs (`src/data/`) and the agent prompt are exempt |
+| `max-lines-per-function` | 120 | Extract subcomponents, hooks or helpers |
+| `complexity` / `sonarjs/cognitive-complexity` | 15 / 15 | Same |
+| `max-depth` | 3 | Same |
+| `max-params` | 4 | Pass an options object. Tuple rest parameters (`...[a, b]: Args`) are banned too (`basecase/no-rest-tuple-params`) |
+| `no-nested-ternary`, `no-else-return`, `no-lonely-if`, `prefer-const`, `eqeqeq` | — | — |
+| React hooks + React Compiler rules (`react-hooks/*` recommended-latest) | — | See §0c |
+| `sonarjs` recommended (duplication, dead code, identical branches…) | — | Some security rules that don't fit a local desktop app are off; see the config |
+| Python (`ruff.toml`) | 120 columns; 4 args, 15 branches, 60 statements, complexity 15 | Same approach: helpers and small dataclasses |
+
+### 0c. Design
+
+- **SOLID and DRY.** One responsibility per module, component and hook. Before writing a helper, search for an existing one (`src/utils`, `src/design-system`, `src/three`); extend it rather than copy it.
+- **Small primitives that compose.** UI comes from `src/design-system` (§14); a pattern used twice becomes a component there. Pure logic (geometry, BOM, kinematics, engineering checks, parsing) lives in framework-free modules that take plain data and return plain data, so it can be tested without React or WebGL.
+- **React:**
+  - The React Compiler (`babel-plugin-react-compiler` via `@rolldown/plugin-babel` in `vite.config.ts`) memoizes components and hooks. Don't add `useMemo`, `useCallback` or `memo` by hand unless profiling shows the compiler can't cover a case.
+  - A hook that calls no other hooks isn't compiled by default; put `'use memo'` at the top of its body when its returned callbacks must keep their identity (e.g. they feed a memoized object or a child's props).
+  - Follow the Rules of React so the compiler can optimize: derive values during render instead of syncing them with effects, don't read or write `ref.current` during render, don't mutate props or state.
+  - An effect that needs the latest value of something it shouldn't re-run on uses `useEffectEvent`, never a trimmed dependency list.
+  - A component file exports one component; private subcomponents and hooks go in sibling files when they'd push it past the limits.
+- **Formatting of statements** (enforced): blank lines separate different kinds of statements, e.g.
+
+  ```ts
+  const foo = 'foo';
+  const bar = 'bar';
+
+  if (foo === 'bar') {
+    return false;
+  }
+
+  return foo === 'foo';
+  ```
+
+### 0d. Running the app
+
+- `npm start` builds once and runs Electron against the production bundle (`vite preview` on :5173). Use it to use the app or judge how it feels: dev-mode React is several times slower.
+- `npm run electron:dev` runs Electron against the Vite dev server with hot reload, for development.
+
+### 0e. Tests
+
+- **Vitest** (`npm test`; `*.test.ts` next to the code, `vitest.config.ts`). The whole suite stays fast (seconds), so run it freely.
+- Prefer integration tests that drive a real pipeline with real data (a saved scene through BOM and engineering checks, a URDF through import and kinematics) over unit tests of internals. Add a test when you fix a bug or change a pipeline; don't test trivia or styling.
+- Every test must earn its keep: if it's slow, flaky or breaks on harmless refactors, fix or delete it.
+- `npm run test:e2e` (`e2e/`, `vitest.e2e.config.ts`): starts Vite, opens the app in headless Chrome (playwright-core) with the backend routes stubbed (no agent is started and `library/` isn't touched), and checks adding, selecting, duplicate/undo/redo, every panel switch and panel toggle with no console errors. About 20 s.
+
+### 0f. Performance (mandatory)
+
+The app must feel instant. These rules came out of profiling real scenes (60+ CAD parts, 50+ MB saved files); don't regress them.
+
+- **The viewport never rebuilds everything.** `src/three/viewport/` is a plain TypeScript engine behind the thin `Viewport3D` component. `PartLayer.sync` diffs parts by object identity: unchanged parts are kept, a transform-only change moves the group, and only changed or re-selected parts are rebuilt. Parts are immutable; always replace a part object to change it, never mutate one. Builds are time-sliced (about 10 ms per frame), so opening a big scene never freezes; queries that need the whole scene (captures, measurements, picking, framing) finish pending builds first (`NEEDS_WHOLE_SCENE` in `engine.ts`).
+- **Derived geometry is shared and released.** `buildPartGroup(part, selected, { shareGeometry: true })` takes creased normals, edge lines and hardware booleans from a reference-counted cache keyed by the source data (`partMesh/sharedGeometry.ts`). Every group built that way is freed with `releasePartGroup`, which also disposes the materials and owned geometry. Anything you remove from a scene must be disposed.
+- **Render on demand.** `RenderLoop` draws only when something changed (`invalidate()`), the camera moved, an animation runs, or a texture finished loading, plus a 1 s idle refresh. Code that changes the scene outside the engine's own paths calls `invalidate()`. Never add an always-on `requestAnimationFrame` render.
+- **No canvas reallocation during panel animations.** `CanvasSizer` keeps the canvas centred in its card, grows the drawing buffer once and shrinks it only after the size settles, and redraws synchronously after a resize so there's never a blank frame.
+- **Heavy work never blocks a click.** Cache by input identity (a `WeakMap` on immutable parts, or shape keys) and spread uncached work across frames with `await` between small chunks (`components/build/useBuildReport.ts`). Profile anything over 16 ms.
+- **Keep views alive.** Panels that switch (sidebar views, inspector tabs) mount on first use and then stay in React's `<Activity>`, so switching back is instant and hidden views run no effects.
+- **Small payloads across IPC and HTTP.** Lists are summaries (`SavedSceneSummary`: counts, size, a small WebP preview); full records load on demand (`platformBridge.getScene`). Library JSON is written compact. Never send a whole library over IPC.
+- **React Compiler friendliness** (§0c) is a performance rule: one rule break makes the compiler skip the whole component, and everything under it re-renders on every change.
+- **Measure in production:** `npm run build && npm run preview`, then time interactions with a `PerformanceObserver` for `longtask` entries. Dev mode adds 30–130 ms per interaction and misleads.
 
 ---
 
@@ -231,11 +314,12 @@ Sources: [Apple HIG: Writing](https://developer.apple.com/design/human-interface
     - **Library** (`LibraryPanel`), in the same voice as Parts:
       - **Search** first (“Search library”, matches names and descriptions; Esc clears), then **Scenes** (newest first) and **Models**, each a 2-column grid with + in its header: Save this scene (⌘S), and the New Model menu (Save Selection, Save Whole Scene, Import SVG…, From Image…).
       - **Tiles** match Parts tiles: a 4:3 thumbnail that zooms on hover, name, one meta line (`59 parts · 2h`, or `347 × 213 × 347 mm`). Scenes open in a tab carry an “Open” badge; this tab's scene has a blue ring. Models show + (Insert) on hover and drag onto the canvas.
-      - **Thumbnails** render from the saved parts with the Parts thumbnail renderer (`usePartsThumbnail`: solid, visible parts only; cached per id + save time), never a viewport screenshot with grid and axes.
+      - **Thumbnails** come from the scene's saved `previewDataUrl`: a WebP rendered from the saved parts with the Parts thumbnail renderer when the scene is saved (`three/scenePreview.ts`: solid, visible parts only), never a viewport screenshot with grid and axes. Scenes saved before previews existed get one generated once, in the background, and written back (`library/useScenePreview.ts`). The hover card reads the summary's counts and `sizeMm`.
       - **Hover** opens details beside the panel (`HoverCard`): large preview, saved when, the description, Size, Parts, From catalog and Comments (each only when non-zero), then Open / Show Tab or Insert.
       - **Right-click or ⋯:** Open (Show Tab when it's open elsewhere), Rename, Duplicate (“Sprout copy”, “Sprout copy 2”…), Delete. Double-click a name to rename it in place; renaming a scene that's open renames its tab too.
       - **Delete** takes effect at once with “Deleted ⟨name⟩ · Undo”, which saves it back.
-      - Rewrites (rename, duplicate, Undo) never resend the stored thumbnail, since the backend copies it to `ai-reference/preview.png`.
+      - Rewrites (rename, duplicate, Undo) load the full record (`platformBridge.getScene`) and never resend the stored thumbnail, since the backend copies it to `ai-reference/preview.png`.
+      - The backend lists scenes from cached summaries (`electron/library/sceneLibrary.mjs`, cache in `library/.scene-summaries.json`, refreshed by file mtime and size); a saved robot that needs upgrading is upgraded when it's opened (`utils/sceneRecords.ts`), not at startup.
       - Empty sections show one line and one action (“No saved scenes” + Save This Scene).
       - Save to Library keeps every part whole in `node.part` (CAD code and geometry, sculpt meshes, hardware). Inserting a model saved from a scene recreates those parts as one group named after the model, so they stay editable. Older saves without `part` come back as blocks, with a toast saying their CAD shapes weren't saved.
   - **Right (328px):** header tabs **Inspect · Pose · Simulate · Build · Agent** (`PanelTabs`; Pose only while the selection is on a robot, §8c; Simulate while the scene has joints, §8d). Undo/Redo, Export ▾ and its toggle sit in the title bar above it. Build is described in §8b.
@@ -727,7 +811,7 @@ Stages 3 and 4 of the robotics loop (§1); milestones in [docs/Robotics loop.md]
 - **Cursors** (`CURSORS` in `src/design-system/cursors.ts`, Figma-style): the canvas has its own arrow (near-black, white 1.5px stroke, every corner rounded, soft shadow), the same shape as Claude's coral `AgentCursor`, so the two read as a pair. Comment mode shows a bubble in the pin's shape and the arrow's colors; its tip corner is where the pin's corner lands. Sculpt shows an outlined crosshair. Space-pan keeps the system grab hands.
   - They're CSS cursors drawn by the OS (never a DOM element following the pointer), so they never lag. Each is a 32 × 32 px SVG shipped at 2x in `image-set()` for Retina, with its hotspot on the exact pixel the tip shows (the arrow's stroke tip at (3, 3)).
   - The canvas element inherits its wrapper's cursor (`.canvas-cursor > canvas` in `index.css`), because three.js controls write `cursor: auto` onto the canvas. Comment pins use the arrow too.
-- **Zoom range** 25 mm – 12 m camera distance (`MIN_DIST` / `MAX_DIST` in `Viewport3D.tsx`), enough for humanoids.
+- **Zoom range** 25 mm – 12 m camera distance (`MIN_DIST` / `MAX_DIST` in `three/viewport/types.ts`), enough for humanoids.
   - The far plane is 80 m, and the near plane scales with distance.
   - Grid fade, shadow plane and the directional light's shadow frustum all follow the camera distance.
 - **Shift while using the gizmo** turns off grid, angle and scale snapping for smooth motion. A “Snapping off” glass chip shows while dragging. Commits keep 0.1 mm / 0.1° precision instead of rounding to 0.5 mm / 1°. Shift-dragging a gizmo handle never starts a box select (`transformControls.axis` check).
@@ -776,8 +860,9 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 
 ## 15. Verification Checklist
 
-- [ ] `npm run build` passes with 0 errors.
-- [ ] `npm run lint` reports 0 errors and no new warnings.
+- [ ] `npm run check` passes (format, ESLint, Ruff, types, tests) and `npm run build` succeeds.
+- [ ] `npm run test:e2e` passes after UI or viewport changes.
+- [ ] Nothing in §0f regressed (no full-scene rebuilds, no always-on render loop, no large IPC payloads).
 - [ ] Stoplights, title bar controls and tabs all center on y = 22, 8px from the top and from the cards; cards keep 8px gaps, 12px corners and 12px content insets (§2).
 - [ ] No fake stoplights or slogans. Every new or changed string passes the copy checklist (§3d): nothing repeats what the UI already shows, nothing is named by its absence, no “yet”.
 - [ ] Text and controls meet the §4 minimums (nothing smaller than 12px except key caps).

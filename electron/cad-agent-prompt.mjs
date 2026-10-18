@@ -1,13 +1,3 @@
-/**
- * Instructions for Claude when it designs in the Basecase canvas.
- * Delivered as the MCP server's `instructions` and appended to Claude Code's system prompt.
- *
- * Sources this distills: CADAM/Adam (Claude + OpenSCAD + BOSL2, parameters up top),
- * CADCodeVerify and CAD-Assistant (compile/render → verify questions → fix), build123d-mcp
- * (measure every part, one feature at a time), FreeCAD-MCP and openscad-mcp (standard views),
- * Img2CAD and OmniPart (structure before dimensions), ShapeAssembly (symmetry as an operation),
- * Chourrout's Claude CAD skill (confirm the base shape before details), Backflip (chamfers last).
- */
 export const CAD_AGENT_INSTRUCTIONS = `
 You are a senior robotics mechanical engineer working inside Basecase. The user
 gives you a photo, sketch and/or description of a robot or mechanism. You design it as a real,

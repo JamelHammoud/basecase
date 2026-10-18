@@ -1,102 +1,102 @@
 {
- "id": "towerpro-mg996r",
- "name": "TowerPro MG996R",
- "manufacturer": "TowerPro (Tower Pro / Torq Pro, Taiwan)",
- "mpn": "MG996R",
- "category": "motors",
- "description": "Standard-size metal-gear PWM hobby servo, an upgraded MG995 commonly used for robot-arm and hexapod joints.",
- "specs": [
-  {
-   "label": "Stall torque",
-   "value": "9.4 kg·cm @ 4.8 V; 11 kg·cm @ 6.0 V"
-  },
-  {
-   "label": "Speed",
-   "value": "0.19 s/60° @ 4.8 V; 0.15 s/60° @ 6.0 V (configure table: 0.17 s/60°)"
-  },
-  {
-   "label": "Operating voltage",
-   "value": "4.8–6.6 V"
-  },
-  {
-   "label": "Weight",
-   "value": "55 g"
-  },
-  {
-   "label": "Current",
-   "value": "10 mA idle, 170 mA no-load, 1400 mA stall"
-  },
-  {
-   "label": "Interface",
-   "value": "PWM, JR plug (fits JR and Futaba), 1 µs dead band, 32 cm lead"
-  },
-  {
-   "label": "Gears",
-   "value": "Metal (TowerPro says gear set and shaft upgraded to 6061-T6 aluminium)"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 40.9,
-   "y": 20.0,
-   "z": 37.0,
-   "axes": "x = case length (B), y = width (D), z = case height excl. output spline (C), from TowerPro's 'Product configure table'"
-  },
-  "features": [
-   {
-    "label": "Overall height incl. output spline (A)",
-    "value": "42.7 mm",
-    "source": "https://towerpro.com.tw/product/mg996r/ (Product configure table, letters per key image http://torqpro.com/wp-content/uploads/2014/07/小馬達尺寸標示圖B.jpg)"
-   },
-   {
-    "label": "Length across mounting tabs (E)",
-    "value": "54 mm",
-    "source": "https://towerpro.com.tw/product/mg996r/ (configure table)"
-   },
-   {
-    "label": "Tab height from bottom (F)",
-    "value": "26.8 mm (bottom of case to the tab, per the key image)",
-    "source": "https://towerpro.com.tw/product/mg996r/ (configure table)"
-   },
-   {
-    "label": "Headline dimension",
-    "value": "40.7 × 19.7 × 42.9 mm (spec list on the same page; differs from the configure table's 40.9 × 20 × 42.7)",
-    "source": "https://towerpro.com.tw/product/mg996r/ (Specification)"
-   },
-   {
-    "label": "Mounting holes / tab hole pitch",
-    "value": null,
-    "source": "Not published by TowerPro"
-   },
-   {
-    "label": "Output shaft offset",
-    "value": null,
-    "source": "Not published by TowerPro"
-   },
-   {
-    "label": "Output spline",
-    "value": null,
-    "source": "Tooth count not published; TowerPro only says the included arms 'fit with Futaba servo arm' (Futaba standard is 25T)"
-   },
-   {
-    "label": "Horn / mounting screw sizes",
-    "value": null,
-    "source": "Not published by TowerPro"
-   }
+  "id": "towerpro-mg996r",
+  "name": "TowerPro MG996R",
+  "manufacturer": "TowerPro (Tower Pro / Torq Pro, Taiwan)",
+  "mpn": "MG996R",
+  "category": "motors",
+  "description": "Standard-size metal-gear PWM hobby servo, an upgraded MG995 commonly used for robot-arm and hexapod joints.",
+  "specs": [
+    {
+      "label": "Stall torque",
+      "value": "9.4 kg·cm @ 4.8 V; 11 kg·cm @ 6.0 V"
+    },
+    {
+      "label": "Speed",
+      "value": "0.19 s/60° @ 4.8 V; 0.15 s/60° @ 6.0 V (configure table: 0.17 s/60°)"
+    },
+    {
+      "label": "Operating voltage",
+      "value": "4.8–6.6 V"
+    },
+    {
+      "label": "Weight",
+      "value": "55 g"
+    },
+    {
+      "label": "Current",
+      "value": "10 mA idle, 170 mA no-load, 1400 mA stall"
+    },
+    {
+      "label": "Interface",
+      "value": "PWM, JR plug (fits JR and Futaba), 1 µs dead band, 32 cm lead"
+    },
+    {
+      "label": "Gears",
+      "value": "Metal (TowerPro says gear set and shaft upgraded to 6061-T6 aluminium)"
+    }
   ],
-  "source": "https://towerpro.com.tw/product/mg996r/"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B07VQ2HLRD",
-   "asin": "B07VQ2HLRD",
-   "title": "American Robotic Supply MG996R 180° Robotic Servo",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 40.9,
+      "y": 20.0,
+      "z": 37.0,
+      "axes": "x = case length (B), y = width (D), z = case height excl. output spline (C), from TowerPro's 'Product configure table'"
+    },
+    "features": [
+      {
+        "label": "Overall height incl. output spline (A)",
+        "value": "42.7 mm",
+        "source": "https://towerpro.com.tw/product/mg996r/ (Product configure table, letters per key image http://torqpro.com/wp-content/uploads/2014/07/小馬達尺寸標示圖B.jpg)"
+      },
+      {
+        "label": "Length across mounting tabs (E)",
+        "value": "54 mm",
+        "source": "https://towerpro.com.tw/product/mg996r/ (configure table)"
+      },
+      {
+        "label": "Tab height from bottom (F)",
+        "value": "26.8 mm (bottom of case to the tab, per the key image)",
+        "source": "https://towerpro.com.tw/product/mg996r/ (configure table)"
+      },
+      {
+        "label": "Headline dimension",
+        "value": "40.7 × 19.7 × 42.9 mm (spec list on the same page; differs from the configure table's 40.9 × 20 × 42.7)",
+        "source": "https://towerpro.com.tw/product/mg996r/ (Specification)"
+      },
+      {
+        "label": "Mounting holes / tab hole pitch",
+        "value": null,
+        "source": "Not published by TowerPro"
+      },
+      {
+        "label": "Output shaft offset",
+        "value": null,
+        "source": "Not published by TowerPro"
+      },
+      {
+        "label": "Output spline",
+        "value": null,
+        "source": "Tooth count not published; TowerPro only says the included arms 'fit with Futaba servo arm' (Futaba standard is 25T)"
+      },
+      {
+        "label": "Horn / mounting screw sizes",
+        "value": null,
+        "source": "Not published by TowerPro"
+      }
+    ],
+    "source": "https://towerpro.com.tw/product/mg996r/"
   },
-  "product": "https://towerpro.com.tw/product/mg996r/",
-  "datasheet": null
- },
- "notes": "TowerPro publishes no CAD, no mechanical drawing and no datasheet PDF. Its /download/ page is empty, and the product page gives only a spec list plus a lettered 'configure table' (A–F) keyed to a generic image (saved as docs/dim_key.jpg). Mapping the letters to features is my reading of that key image: A = overall height incl. spline, B = case length, C = height excl. spline, D = width, E = tab-to-tab length, F = bottom to tab. Mount-critical values (tab hole pitch and diameter, shaft offset, spline teeth, screw sizes) are not published by TowerPro, so they are null; measure a genuine unit or use a community model. The widely shared 'MG996R Tower-Pro' PDF (e.g. people.ece.cornell.edu/.../MG996RTowerPro.pdf) was printed by a reseller with Bullzip in 2014. It is not a TowerPro file and gives different values (0.17/0.14 s, 4.8–7.2 V, 2.5 A stall), so it was not used. TowerPro warns that many MG996Rs sold on Amazon/eBay/Alibaba are counterfeits. The Amazon pick is sold by American Robotic Supply, which describes itself as a Tower Pro dealer; its title verified, but the page showed no buy box, so it may be unavailable. A 360° continuous version from the same seller: https://www.amazon.com/dp/B081XC2BM4 ('Tower Pro MG996R 360° Rotation Robotic Servo', verified).",
- "pose": "servo"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B07VQ2HLRD",
+      "asin": "B07VQ2HLRD",
+      "title": "American Robotic Supply MG996R 180° Robotic Servo",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://towerpro.com.tw/product/mg996r/",
+    "datasheet": null
+  },
+  "notes": "TowerPro publishes no CAD, no mechanical drawing and no datasheet PDF. Its /download/ page is empty, and the product page gives only a spec list plus a lettered 'configure table' (A–F) keyed to a generic image (saved as docs/dim_key.jpg). Mapping the letters to features is my reading of that key image: A = overall height incl. spline, B = case length, C = height excl. spline, D = width, E = tab-to-tab length, F = bottom to tab. Mount-critical values (tab hole pitch and diameter, shaft offset, spline teeth, screw sizes) are not published by TowerPro, so they are null; measure a genuine unit or use a community model. The widely shared 'MG996R Tower-Pro' PDF (e.g. people.ece.cornell.edu/.../MG996RTowerPro.pdf) was printed by a reseller with Bullzip in 2014. It is not a TowerPro file and gives different values (0.17/0.14 s, 4.8–7.2 V, 2.5 A stall), so it was not used. TowerPro warns that many MG996Rs sold on Amazon/eBay/Alibaba are counterfeits. The Amazon pick is sold by American Robotic Supply, which describes itself as a Tower Pro dealer; its title verified, but the page showed no buy box, so it may be unavailable. A 360° continuous version from the same seller: https://www.amazon.com/dp/B081XC2BM4 ('Tower Pro MG996R 360° Rotation Robotic Servo', verified).",
+  "pose": "servo"
 }

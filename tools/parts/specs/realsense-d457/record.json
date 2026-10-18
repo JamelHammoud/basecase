@@ -1,82 +1,82 @@
 {
- "id": "realsense-d457",
- "name": "Intel RealSense D457",
- "manufacturer": "RealSense (Intel RealSense)",
- "mpn": "82635DSD457",
- "category": "depth-cameras",
- "description": "IP65 version of the D455 (95 mm baseline active stereo, global-shutter RGB, IMU) that streams over GMSL2 through a FAKRA connector instead of USB.",
- "specs": [
-  {
-   "label": "Depth",
-   "value": "Active IR stereo (D450 module), up to 1280 × 720; FOV 87° H × 58° V × 95° D (HD)"
-  },
-  {
-   "label": "Baseline",
-   "value": "95 mm"
-  },
-  {
-   "label": "Range",
-   "value": "0.4 m to over 10 m (varies with lighting); min-Z 520 mm @ 1280 × 720"
-  },
-  {
-   "label": "RGB",
-   "value": "OmniVision OV9782, up to 1280 × 800, global shutter"
-  },
-  {
-   "label": "Interface",
-   "value": "GMSL2 over FAKRA (Amphenol 095-820-109-05C, C-coding, blue); USB-C for debug/production only"
-  },
-  {
-   "label": "Power",
-   "value": "12 V (10.8–13.2 V) over FAKRA, 300 mA nominal"
-  },
-  {
-   "label": "IMU / rating / weight",
-   "value": "6-DoF IMU (BMI085); IP65; ~145 g"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 124,
-   "y": 36,
-   "z": 29,
-   "axes": "x = width, y = depth (front-back), z = height; table 3-20: 124 × 29 × 36 mm (W × H × D, ±0.5); drawing 124.00 +0.30/−0, 29.00 +0.50/−0, 36.00 ±0.20"
-  },
-  "features": [
-   {
-    "label": "Imagers / emitters (camera masking view)",
-    "value": "Stereo imagers (95.00) mm apart; the other openings are (59.00) and (37.50) mm from the right-hand imager; 47.50 ±0.10 mm from the 1/4-20 centerline to the left imager. Imagers sit (14.50) mm above the bottom in the side view.",
-    "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3 (sheet 2 of 5)"
-   },
-   {
-    "label": "Rear mounting",
-    "value": "2× M4, 61.50 mm apart, with screw thread inserts, max insertion depth 6 mm, max torque 3.0 N·m (tested with M4 class 8.8 SHCS); rear mounting surface flatness 0.1 mm",
-    "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3 and table 3-20"
-   },
-   {
-    "label": "Bottom mounting",
-    "value": "1× 1/4\"-20, max insertion depth 9 mm, screw torque 6 ft-lb (8.1 N·m)",
-    "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3"
-   },
-   {
-    "label": "Connectors",
-    "value": "FAKRA (GMSL) plug on the rear; reference dims (43) and (57.6) mm from the 1/4-20 centerline to the FAKRA boss; (9.50) mm side-view offset. USB-C (debug) with 2× M2 cable screw-lock points; external sync connector and GMSL/USB boot switch on the top",
-    "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3"
-   }
+  "id": "realsense-d457",
+  "name": "Intel RealSense D457",
+  "manufacturer": "RealSense (Intel RealSense)",
+  "mpn": "82635DSD457",
+  "category": "depth-cameras",
+  "description": "IP65 version of the D455 (95 mm baseline active stereo, global-shutter RGB, IMU) that streams over GMSL2 through a FAKRA connector instead of USB.",
+  "specs": [
+    {
+      "label": "Depth",
+      "value": "Active IR stereo (D450 module), up to 1280 × 720; FOV 87° H × 58° V × 95° D (HD)"
+    },
+    {
+      "label": "Baseline",
+      "value": "95 mm"
+    },
+    {
+      "label": "Range",
+      "value": "0.4 m to over 10 m (varies with lighting); min-Z 520 mm @ 1280 × 720"
+    },
+    {
+      "label": "RGB",
+      "value": "OmniVision OV9782, up to 1280 × 800, global shutter"
+    },
+    {
+      "label": "Interface",
+      "value": "GMSL2 over FAKRA (Amphenol 095-820-109-05C, C-coding, blue); USB-C for debug/production only"
+    },
+    {
+      "label": "Power",
+      "value": "12 V (10.8–13.2 V) over FAKRA, 300 mA nominal"
+    },
+    {
+      "label": "IMU / rating / weight",
+      "value": "6-DoF IMU (BMI085); IP65; ~145 g"
+    }
   ],
-  "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B0DSM2L2H4",
-   "asin": "B0DSM2L2H4",
-   "title": "Intel - 82635DSD457 - Intel RealSense Depth Camera D457 - Box",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 124,
+      "y": 36,
+      "z": 29,
+      "axes": "x = width, y = depth (front-back), z = height; table 3-20: 124 × 29 × 36 mm (W × H × D, ±0.5); drawing 124.00 +0.30/−0, 29.00 +0.50/−0, 36.00 ±0.20"
+    },
+    "features": [
+      {
+        "label": "Imagers / emitters (camera masking view)",
+        "value": "Stereo imagers (95.00) mm apart; the other openings are (59.00) and (37.50) mm from the right-hand imager; 47.50 ±0.10 mm from the 1/4-20 centerline to the left imager. Imagers sit (14.50) mm above the bottom in the side view.",
+        "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3 (sheet 2 of 5)"
+      },
+      {
+        "label": "Rear mounting",
+        "value": "2× M4, 61.50 mm apart, with screw thread inserts, max insertion depth 6 mm, max torque 3.0 N·m (tested with M4 class 8.8 SHCS); rear mounting surface flatness 0.1 mm",
+        "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3 and table 3-20"
+      },
+      {
+        "label": "Bottom mounting",
+        "value": "1× 1/4\"-20, max insertion depth 9 mm, screw torque 6 ft-lb (8.1 N·m)",
+        "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3"
+      },
+      {
+        "label": "Connectors",
+        "value": "FAKRA (GMSL) plug on the rear; reference dims (43) and (57.6) mm from the 1/4-20 centerline to the FAKRA boss; (9.50) mm side-view offset. USB-C (debug) with 2× M2 cable screw-lock points; external sync connector and GMSL/USB boot switch on the top",
+        "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf p.67 fig.9-3"
+      }
+    ],
+    "source": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf"
   },
-  "product": "https://store.realsenseai.com/buy-realsense-depth-camera-d457.html",
-  "datasheet": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf"
- },
- "notes": "Do not reuse the D455 mesh: the D457 housing is 36 mm deep (D455 is 26 mm) and its rear M4 holes are 61.5 mm apart (D455: 95 mm). Datasheet D457 Aug 2025 (337029-011). Range text says 0.4 m to over 10 m, while the D400 datasheet gives 0.4–6 m for the D455 with the same module. Amazon B0DSM2L2H4 has no store byline; another listing B0CNRPQ4WN is sold by 'MiiElAOD Store' (unverified seller). Official store page: https://store.realsenseai.com/buy-realsense-depth-camera-d457.html; product page https://realsenseai.com/products/d457-gmsl-fakra/ now redirects to /products/industrial-3d-vision/.",
- "pose": "camera"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B0DSM2L2H4",
+      "asin": "B0DSM2L2H4",
+      "title": "Intel - 82635DSD457 - Intel RealSense Depth Camera D457 - Box",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://store.realsenseai.com/buy-realsense-depth-camera-d457.html",
+    "datasheet": "https://realsenseai.com/wp-content/uploads/2025/08/RealSense-D457-Datasheet-Aug_2025.pdf"
+  },
+  "notes": "Do not reuse the D455 mesh: the D457 housing is 36 mm deep (D455 is 26 mm) and its rear M4 holes are 61.5 mm apart (D455: 95 mm). Datasheet D457 Aug 2025 (337029-011). Range text says 0.4 m to over 10 m, while the D400 datasheet gives 0.4–6 m for the D455 with the same module. Amazon B0DSM2L2H4 has no store byline; another listing B0CNRPQ4WN is sold by 'MiiElAOD Store' (unverified seller). Official store page: https://store.realsenseai.com/buy-realsense-depth-camera-d457.html; product page https://realsenseai.com/products/d457-gmsl-fakra/ now redirects to /products/industrial-3d-vision/.",
+  "pose": "camera"
 }

@@ -1,78 +1,78 @@
 {
- "id": "teensy-41",
- "name": "PJRC Teensy 4.1",
- "manufacturer": "PJRC",
- "mpn": "TEENSY41 (with Ethernet PHY) / TEENSY41_NE (no Ethernet) / _PINS variants",
- "category": "boards",
- "description": "600 MHz NXP i.MX RT1062 Cortex-M7 board with 8 MB flash, microSD socket, Ethernet PHY and 55 I/O, 3.3 V logic.",
- "specs": [
-  {
-   "label": "MCU",
-   "value": "NXP i.MX RT1062, Arm Cortex-M7 @ 600 MHz, FPU (32/64-bit)"
-  },
-  {
-   "label": "Memory",
-   "value": "1024 kB RAM (512 kB tightly coupled), 8 MB flash, 2 pads for optional QSPI PSRAM/flash"
-  },
-  {
-   "label": "I/O",
-   "value": "55 digital (42 breadboard-accessible), 35 PWM, 18 analog in"
-  },
-  {
-   "label": "Interfaces",
-   "value": "8 serial, 3 SPI, 3 I2C, 3 CAN (1 CAN FD), 2 I2S, USB device + host (480 Mbit/s), 10/100 Ethernet PHY, SDIO microSD"
-  },
-  {
-   "label": "Voltage",
-   "value": "VIN/VUSB 5 V; I/O 3.3 V, not 5 V tolerant"
-  },
-  {
-   "label": "Current",
-   "value": "about 100 mA at 600 MHz"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 60.96,
-   "y": 17.78,
-   "z": null,
-   "axes": "x = length (PCB, USB end to SD end), y = width, PCB 1.57 mm thick; USB adds 0.7 mm in x; total height not given"
-  },
-  "features": [
-   {
-    "label": "PCB",
-    "value": "60.96 × 17.78 mm (drawing: '17.78 ±0.6'), 1.57 mm thick",
-    "source": "https://www.pjrc.com/teensy/dimensions_teensy41.png"
-   },
-   {
-    "label": "Mounting holes",
-    "value": "None. Mount by the pin rows: two 24-pin rows at 2.54 mm pitch, 15.24 mm apart, 1.27 mm in from the long edges; first pin 1.27 mm in from the USB end. Finished holes Ø0.965 mm (59) and Ø0.762 mm (6).",
-    "source": "dimension drawing + https://www.pjrc.com/store/teensy41.html"
-   },
-   {
-    "label": "USB connector",
-    "value": "Micro-USB, 8.06 mm wide, overhangs the PCB edge by 0.7 mm, 5.0 mm deep, top 2.5 mm above the PCB (3.07 mm overall connector height)",
-    "source": "dimension drawing (side view)"
-   },
-   {
-    "label": "Other features",
-    "value": "Program button 41.66 mm from the USB end; Ethernet pads 6-pin (2.0 mm pitch) and USB-host 5-pin header on the board",
-    "source": "dimension drawing"
-   }
+  "id": "teensy-41",
+  "name": "PJRC Teensy 4.1",
+  "manufacturer": "PJRC",
+  "mpn": "TEENSY41 (with Ethernet PHY) / TEENSY41_NE (no Ethernet) / _PINS variants",
+  "category": "boards",
+  "description": "600 MHz NXP i.MX RT1062 Cortex-M7 board with 8 MB flash, microSD socket, Ethernet PHY and 55 I/O, 3.3 V logic.",
+  "specs": [
+    {
+      "label": "MCU",
+      "value": "NXP i.MX RT1062, Arm Cortex-M7 @ 600 MHz, FPU (32/64-bit)"
+    },
+    {
+      "label": "Memory",
+      "value": "1024 kB RAM (512 kB tightly coupled), 8 MB flash, 2 pads for optional QSPI PSRAM/flash"
+    },
+    {
+      "label": "I/O",
+      "value": "55 digital (42 breadboard-accessible), 35 PWM, 18 analog in"
+    },
+    {
+      "label": "Interfaces",
+      "value": "8 serial, 3 SPI, 3 I2C, 3 CAN (1 CAN FD), 2 I2S, USB device + host (480 Mbit/s), 10/100 Ethernet PHY, SDIO microSD"
+    },
+    {
+      "label": "Voltage",
+      "value": "VIN/VUSB 5 V; I/O 3.3 V, not 5 V tolerant"
+    },
+    {
+      "label": "Current",
+      "value": "about 100 mA at 600 MHz"
+    }
   ],
-  "source": "https://www.pjrc.com/teensy/dimensions_teensy41.png"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B088JY7P2H",
-   "asin": "B088JY7P2H",
-   "title": "PJRC Teensy 4.1 ARM Cortex-M7 Processor at 600MHz with a NXP iMXRT1062 (Without pins)",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 60.96,
+      "y": 17.78,
+      "z": null,
+      "axes": "x = length (PCB, USB end to SD end), y = width, PCB 1.57 mm thick; USB adds 0.7 mm in x; total height not given"
+    },
+    "features": [
+      {
+        "label": "PCB",
+        "value": "60.96 × 17.78 mm (drawing: '17.78 ±0.6'), 1.57 mm thick",
+        "source": "https://www.pjrc.com/teensy/dimensions_teensy41.png"
+      },
+      {
+        "label": "Mounting holes",
+        "value": "None. Mount by the pin rows: two 24-pin rows at 2.54 mm pitch, 15.24 mm apart, 1.27 mm in from the long edges; first pin 1.27 mm in from the USB end. Finished holes Ø0.965 mm (59) and Ø0.762 mm (6).",
+        "source": "dimension drawing + https://www.pjrc.com/store/teensy41.html"
+      },
+      {
+        "label": "USB connector",
+        "value": "Micro-USB, 8.06 mm wide, overhangs the PCB edge by 0.7 mm, 5.0 mm deep, top 2.5 mm above the PCB (3.07 mm overall connector height)",
+        "source": "dimension drawing (side view)"
+      },
+      {
+        "label": "Other features",
+        "value": "Program button 41.66 mm from the USB end; Ethernet pads 6-pin (2.0 mm pitch) and USB-host 5-pin header on the board",
+        "source": "dimension drawing"
+      }
+    ],
+    "source": "https://www.pjrc.com/teensy/dimensions_teensy41.png"
   },
-  "product": "https://www.pjrc.com/store/teensy41.html",
-  "datasheet": "https://www.pjrc.com/teensy/card11a_rev4_web.pdf"
- },
- "notes": "The drawing's '17.78 ±0.6' tolerance is as published. Total height including the SD socket and bottom parts is not given. Several Amazon ASINs exist on the PJRC brand store: B088JY7P2H (no pins), B088D3FWR7 (no pins), B0BP5BNC9K (Ethernet + pins), B0CV221MF3 (no Ethernet). The pinout card PDFs are the closest thing to a datasheet; the processor reference manual is NXP's.",
- "pose": "board"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B088JY7P2H",
+      "asin": "B088JY7P2H",
+      "title": "PJRC Teensy 4.1 ARM Cortex-M7 Processor at 600MHz with a NXP iMXRT1062 (Without pins)",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.pjrc.com/store/teensy41.html",
+    "datasheet": "https://www.pjrc.com/teensy/card11a_rev4_web.pdf"
+  },
+  "notes": "The drawing's '17.78 ±0.6' tolerance is as published. Total height including the SD socket and bottom parts is not given. Several Amazon ASINs exist on the PJRC brand store: B088JY7P2H (no pins), B088D3FWR7 (no pins), B0BP5BNC9K (Ethernet + pins), B0CV221MF3 (no Ethernet). The pinout card PDFs are the closest thing to a datasheet; the processor reference manual is NXP's.",
+  "pose": "board"
 }

@@ -14,23 +14,60 @@ import { Divider, IconButton, Tooltip } from '../design-system';
 import type { AlignMode, Axis } from '../utils/selection';
 
 const ROWS: Array<{ axis: Axis; label: string; options: Array<[AlignMode, string]> }> = [
-  { axis: 0, label: 'X', options: [['min', 'Left'], ['center', 'Center'], ['max', 'Right']] },
-  { axis: 1, label: 'Y', options: [['min', 'Bottom'], ['center', 'Middle'], ['max', 'Top']] },
-  { axis: 2, label: 'Z', options: [['min', 'Back'], ['center', 'Center'], ['max', 'Front']] },
+  {
+    axis: 0,
+    label: 'X',
+    options: [
+      ['min', 'Left'],
+      ['center', 'Center'],
+      ['max', 'Right'],
+    ],
+  },
+  {
+    axis: 1,
+    label: 'Y',
+    options: [
+      ['min', 'Bottom'],
+      ['center', 'Middle'],
+      ['max', 'Top'],
+    ],
+  },
+  {
+    axis: 2,
+    label: 'Z',
+    options: [
+      ['min', 'Back'],
+      ['center', 'Center'],
+      ['max', 'Front'],
+    ],
+  },
 ];
+
+const alignTooltip = ({
+  single,
+  axis,
+  mode,
+  label,
+}: {
+  single: boolean;
+  axis: Axis;
+  mode: AlignMode;
+  label: string;
+}): string => {
+  if (!single) {
+    return `Align ${label.toLowerCase()}`;
+  }
+
+  return axis === 1 && mode === 'min' ? 'Bottom to floor' : `${label} to origin`;
+};
 
 interface AlignControlsProps {
   count: number;
   onAlign: (axis: Axis, mode: AlignMode) => void;
   onDistribute: (axis: Axis) => void;
-  /** Called after any action (e.g. to close a menu) */
   onDone?: () => void;
 }
 
-/**
- * X/Y/Z × min/center/max grid. Several parts align to their shared bounds;
- * one part aligns to the origin (Bottom = floor).
- */
 export const AlignControls: React.FC<AlignControlsProps> = ({ count, onAlign, onDistribute, onDone }) => {
   const single = count === 1;
   const btn =
@@ -42,11 +79,7 @@ export const AlignControls: React.FC<AlignControlsProps> = ({ count, onAlign, on
         <div key={row.axis} className="grid grid-cols-[20px_1fr_1fr_1fr] items-center gap-0.5">
           <span className="text-[12px] font-medium text-white/40 text-center">{row.label}</span>
           {row.options.map(([mode, label]) => (
-            <Tooltip
-              key={mode}
-              className="w-full"
-              label={single ? (row.axis === 1 && mode === 'min' ? 'Bottom to floor' : `${label} to origin`) : `Align ${label.toLowerCase()}`}
-            >
+            <Tooltip key={mode} className="w-full" label={alignTooltip({ single, axis: row.axis, mode, label })}>
               <button
                 type="button"
                 onClick={() => {
@@ -88,18 +121,44 @@ export const AlignControls: React.FC<AlignControlsProps> = ({ count, onAlign, on
   );
 };
 
-/* ------------------------------------------------------------------ */
-
-const BAR_ROWS: Array<{ axis: Axis; label: string; spread: LucideIcon; options: Array<[AlignMode, string, LucideIcon]> }> = [
-  { axis: 0, label: 'X', spread: AlignHorizontalSpaceAround, options: [['min', 'Align left', AlignStartVertical], ['center', 'Align center', AlignCenterVertical], ['max', 'Align right', AlignEndVertical]] },
-  { axis: 1, label: 'Y', spread: AlignVerticalSpaceAround, options: [['min', 'Align bottom', AlignEndHorizontal], ['center', 'Align middle', AlignCenterHorizontal], ['max', 'Align top', AlignStartHorizontal]] },
-  { axis: 2, label: 'Z', spread: AlignHorizontalSpaceAround, options: [['min', 'Align back', AlignStartVertical], ['center', 'Align center', AlignCenterVertical], ['max', 'Align front', AlignEndVertical]] },
+const BAR_ROWS: Array<{
+  axis: Axis;
+  label: string;
+  spread: LucideIcon;
+  options: Array<[AlignMode, string, LucideIcon]>;
+}> = [
+  {
+    axis: 0,
+    label: 'X',
+    spread: AlignHorizontalSpaceAround,
+    options: [
+      ['min', 'Align left', AlignStartVertical],
+      ['center', 'Align center', AlignCenterVertical],
+      ['max', 'Align right', AlignEndVertical],
+    ],
+  },
+  {
+    axis: 1,
+    label: 'Y',
+    spread: AlignVerticalSpaceAround,
+    options: [
+      ['min', 'Align bottom', AlignEndHorizontal],
+      ['center', 'Align middle', AlignCenterHorizontal],
+      ['max', 'Align top', AlignStartHorizontal],
+    ],
+  },
+  {
+    axis: 2,
+    label: 'Z',
+    spread: AlignHorizontalSpaceAround,
+    options: [
+      ['min', 'Align back', AlignStartVertical],
+      ['center', 'Align center', AlignCenterVertical],
+      ['max', 'Align front', AlignEndVertical],
+    ],
+  },
 ];
 
-/**
- * The inspector's align controls: one icon strip per axis (min · center · max) and Spread.
- * Same actions as AlignControls, which stays the right-click submenu.
- */
 export const AlignBar: React.FC<Omit<AlignControlsProps, 'onDone'>> = ({ count, onAlign, onDistribute }) => (
   <div className="space-y-1.5">
     {BAR_ROWS.map((row) => (
@@ -123,7 +182,6 @@ export const AlignBar: React.FC<Omit<AlignControlsProps, 'onDone'>> = ({ count, 
   </div>
 );
 
-/** A row of equal buttons on one soft track (align, combine) */
 export const StripGroup: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex h-8 rounded-lg bg-white/[0.05] p-[2px] gap-[2px]">{children}</div>
 );

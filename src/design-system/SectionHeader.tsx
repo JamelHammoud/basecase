@@ -8,14 +8,7 @@ export interface SectionHeaderProps {
   className?: string;
 }
 
-/** Small list header used inside sidebars (sentence case, muted). */
-export const SectionHeader: React.FC<SectionHeaderProps> = ({
-  title,
-  icon,
-  action,
-  badge,
-  className = '',
-}) => (
+export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, icon, action, badge, className = '' }) => (
   <div
     className={`flex items-center justify-between h-8 px-1 text-[12.5px] font-medium text-white/45 select-none ${className}`}
   >

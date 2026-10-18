@@ -8,14 +8,7 @@ export interface SwitchProps {
   disabled?: boolean;
 }
 
-/** macOS-style toggle. Label sits on the left, switch on the right. */
-export const Switch: React.FC<SwitchProps> = ({
-  checked,
-  onChange,
-  label,
-  className = '',
-  disabled = false,
-}) => (
+export const Switch: React.FC<SwitchProps> = ({ checked, onChange, label, className = '', disabled = false }) => (
   <label
     className={`flex items-center justify-between gap-3 h-8 select-none ${
       disabled ? 'opacity-40 pointer-events-none' : 'cursor-default'

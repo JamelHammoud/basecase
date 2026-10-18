@@ -16,7 +16,6 @@ export type ContextMenuEntry =
   | {
       label: string;
       icon?: React.ReactNode;
-      /** Custom panel shown beside the row on hover; receives a close callback */
       submenu: (close: () => void) => React.ReactNode;
       submenuWidth?: number;
     }
@@ -30,7 +29,6 @@ export interface ContextMenuProps {
   onClose: () => void;
 }
 
-/** Right-click menu at the cursor. Flips to stay on screen; closes on outside click, Esc, scroll or blur. */
 export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = useState<{ left: number; top: number; origin: string; subLeft: boolean } | null>(null);
@@ -38,11 +36,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
 
   useLayoutEffect(() => {
     const el = ref.current;
+
     if (!el) return;
+
     const { width, height } = el.getBoundingClientRect();
     const pad = 8;
     const flipX = x + width > window.innerWidth - pad;
     const flipY = y + height > window.innerHeight - pad;
+
     setPos({
       left: Math.max(pad, flipX ? x - width : x),
       top: Math.max(pad, flipY ? y - height : y),
@@ -61,10 +62,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
         onClose();
       }
     };
+
     window.addEventListener('pointerdown', onDown, true);
     window.addEventListener('keydown', onKey, true);
     window.addEventListener('wheel', onClose, { passive: true });
     window.addEventListener('blur', onClose);
+
     return () => {
       window.removeEventListener('pointerdown', onDown, true);
       window.removeEventListener('keydown', onKey, true);
@@ -91,9 +94,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
     >
       {items.map((item, i) => {
         if ('divider' in item) return <MenuDivider key={i} />;
+
         if ('heading' in item) return <MenuLabel key={i}>{item.heading}</MenuLabel>;
+
         if ('submenu' in item) {
           const open = openSub === i;
+
           return (
             <div key={i} className="relative" onPointerEnter={() => setOpenSub(i)}>
               <button
@@ -124,24 +130,25 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
             </div>
           );
         }
+
         return (
           <div key={i} onPointerEnter={() => setOpenSub(null)}>
-          <MenuItem
-            icon={item.icon}
-            label={item.label}
-            shortcut={item.shortcut}
-            checked={item.checked}
-            disabled={item.disabled}
-            tone={item.tone}
-            onSelect={() => {
-              onClose();
-              item.onSelect();
-            }}
-          />
+            <MenuItem
+              icon={item.icon}
+              label={item.label}
+              shortcut={item.shortcut}
+              checked={item.checked}
+              disabled={item.disabled}
+              tone={item.tone}
+              onSelect={() => {
+                onClose();
+                item.onSelect();
+              }}
+            />
           </div>
         );
       })}
     </div>,
-    document.body
+    document.body,
   );
 };

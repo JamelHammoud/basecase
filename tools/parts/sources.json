@@ -1,1264 +1,727 @@
 {
- "raspberry-pi-5": {
-  "url": "https://pip-assets.raspberrypi.com/categories/892-raspberry-pi-5/documents/RP-010083-CA-1-rpi-5%203D%20STEP%20-%20No%20Graphics%20small%20file.zip",
-  "file": "cad/raspberry-pi-5/rpi-5b_no_graphics.step",
-  "license": "MIT",
-  "reader": "native"
- },
- "adafruit-pca9685": {
-  "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/0815%20PCA9685%2016-Channel%20Servo%20Driver/815-servo-driver-16-channel.step",
-  "file": "cad/adafruit-pca9685/815-servo-driver-16-channel.step",
-  "license": "MIT"
- },
- "adafruit-bno085": {
-  "url": "https://github.com/adafruit/Adafruit_CAD_Parts/tree/main/4754%20BNO085%20STEMMA%20QT",
-  "file": "cad/adafruit-bno085/4754_BNO085_STEMMA_QT.step",
-  "license": "MIT"
- },
- "arduino-nano-esp32": {
-  "url": "https://docs.arduino.cc/resources/models/ABX00083-step.zip",
-  "file": "cad/arduino-nano-esp32/NANO_ESP32.step",
-  "license": "CC BY-SA 4.0"
- },
- "arduino-uno-r4-minima": {
-  "url": "https://docs.arduino.cc/static/ae97aad5c05de6a565c7f93a28c04717/ABX00080-cad-files.zip",
-  "file": "cad/arduino-uno-r4-minima/PCBABX00080.step",
-  "license": "CC BY-SA 4.0"
- },
- "dynamixel-xl330-m288": {
-  "url": "https://www.robotis.com/service/download.php?no=1987",
-  "file": "cad/dynamixel-xl330-m288/XL330.stp",
-  "license": "not stated",
-  "defaultColor": [
-   0.11,
-   0.11,
-   0.12
-  ]
- },
- "dynamixel-xl430-w250": {
-  "url": "https://www.robotis.com/service/download.php?no=773",
-  "file": "cad/dynamixel-xl430-w250/XL430_new.stp",
-  "license": "not stated",
-  "defaultColor": [
-   0.11,
-   0.11,
-   0.12
-  ]
- },
- "seeed-xiao-esp32s3": {
-  "url": "https://files.seeedstudio.com/wiki/SeeedStudio-XIAO-ESP32S3/res/seeed-studio-xiao-esp32s3-3d_model.zip",
-  "file": "cad/seeed-xiao-esp32s3/XIAO-ESP32S3_v2.step",
-  "license": "not stated",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "waveshare-bus-servo-adapter-a": {
-  "url": "https://files.waveshare.com/wiki/Bus-Servo-Adapter-(A)/Bus%20Servo%20Adapter%20(A)_3D.zip",
-  "file": "cad/waveshare-bus-servo-adapter-a/Bus_Servo_Adapter_A.step",
-  "license": "not stated"
- },
- "pololu-micro-metal-gearmotor": {
-  "url": "https://www.pololu.com/file/0J2042/Pololu%20Micro%20Metal%20Gearmotor%203D%20(STEP)%20Models.zip",
-  "file": "cad/pololu-micro-metal-gearmotor/mmgm-pm-ext-shaft.step",
-  "license": "not stated"
- },
- "raspberry-pi-pico-2": {
-  "url": "https://pip-assets.raspberrypi.com/categories/1005-raspberry-pi-pico-2/documents/RP-009061-CA-2-Pico%202%20-%203D%20STEP.zip",
-  "file": "cad/raspberry-pi-pico-2/rpi_pico2.step",
-  "license": "MIT (LICENSE.txt in the zip, Copyright (c) 2025 Raspberry Pi Ltd; provided for guidance only, no accuracy guarantee)",
-  "rotate": [
-   [
-    "z",
-    90
-   ]
-  ]
- },
- "raspberry-pi-camera-3": {
-  "url": "https://pip-assets.raspberrypi.com/categories/1207-design-files/documents/RP-008154-DS-1-camera-module-3-step.zip",
-  "file": "cad/raspberry-pi-camera-3/Camera_module_3_std_model_simple.stp",
-  "license": "not stated (no license file in the zip)"
- },
- "jetson-orin-nano-devkit": {
-  "url": "https://developer.nvidia.com/downloads/assets/embedded/secure/jetson/orin_nano/docs/jetson_orin_nano_devkit_3d_step_model.zip/",
-  "file": "cad/jetson-orin-nano-devkit/P3766-P3768SKU4-P3767ENVELOPE.stp",
-  "license": "NVIDIA Jetson Download Center terms",
-  "reader": "native"
- },
- "robotiq-2f-85": {
-  "url": "https://blog.robotiq.com/hubfs/support-files/2F85_Opened_20190924-Sep-06-2024-02-25-46-4707-PM.step",
-  "file": "cad/robotiq-2f-85/2F85_Opened_20190924.step",
-  "license": "not stated",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "robotiq-hand-e": {
-  "url": "https://blog.robotiq.com/hubfs/support-files/ROBOTIQ_HAND-E_DEFEATURE_20181026-Sep-06-2024-02-31-01-9043-PM.step",
-  "file": "cad/robotiq-hand-e/ROBOTIQ_HAND-E_DEFEATURE_20181026.step",
-  "license": "not stated",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "onrobot-rg2": {
-  "url": "https://onrobot.com/storage/303_rg2_tool.step",
-  "file": "cad/onrobot-rg2/303_rg2_tool.step",
-  "license": "not stated",
-  "reader": "native",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "dh-robotics-ag-95": {
-  "url": "https://github.com/DH-Robotics/dh_gripper_ros/tree/master/dh_robotics_ag95_gripper/dh_robotics_ag95_description/meshes/visual",
-  "urdf": "cad/dh-robotics-ag-95/dh_robotics_ag95.urdf",
-  "meshDir": "cad/dh-robotics-ag-95",
-  "license": "not stated (repo has no LICENSE)",
-  "defaultColor": [
-   0.78,
-   0.78,
-   0.8
-  ],
-  "colors": {
-   "base_link.STL": [
-    0.16,
-    0.16,
-    0.18
-   ]
+  "raspberry-pi-5": {
+    "url": "https://pip-assets.raspberrypi.com/categories/892-raspberry-pi-5/documents/RP-010083-CA-1-rpi-5%203D%20STEP%20-%20No%20Graphics%20small%20file.zip",
+    "file": "cad/raspberry-pi-5/rpi-5b_no_graphics.step",
+    "license": "MIT",
+    "reader": "native"
   },
-  "rotate": [
-   [
-    "y",
-    -90
-   ]
-  ]
- },
- "pollen-amazing-hand": {
-  "mjcf": "cad/pollen-amazing-hand/mjcf_right/robot.xml",
-  "meshDir": "cad/pollen-amazing-hand/mjcf_right/assets",
-  "url": "https://github.com/pollen-robotics/AmazingHand/tree/main/Demo/AHSimulation/AHSimulation/AH_Right/mjcf",
-  "license": "Mechanical design CC BY 4.0; software Apache-2.0 (README)"
- },
- "leap-hand": {
-  "urdf": "cad/leap-hand/urdf/robot.urdf",
-  "meshDir": "cad/leap-hand/urdf",
-  "url": "https://github.com/leap-hand/LEAP_Hand_Sim/tree/master/assets/leap_hand",
-  "license": "MIT (LEAP_Hand_Sim repo LICENSE.txt). The printable CAD from the website is CC BY-NC-SA.",
-  "rotate": [
-   [
-    "y",
-    -90
-   ],
-   [
-    "z",
-    90
-   ]
-  ],
-  "modelColors": false,
-  "defaultColor": [
-   0.13,
-   0.13,
-   0.14
-  ]
- },
- "psyonic-ability-hand": {
-  "mesh": "cad/psyonic-ability-hand/urdf/models/full_model_fused_no_wrist.stl",
-  "meshScale": 1,
-  "defaultColor": [
-   0.16,
-   0.16,
-   0.18
-  ],
-  "url": "https://github.com/psyonicinc/ability-hand-api/tree/master/URDF",
-  "license": "MIT (ability-hand-api repo, Copyright (c) 2024 PSYONIC, Inc.)",
-  "rotate": [
-   [
-    "x",
-    180
-   ]
-  ]
- },
- "orca-hand": {
-  "file": "cad/orca-hand/ORCA_v1.step",
-  "reader": "native",
-  "url": "https://github.com/orcahand/orcahand_hardware/blob/main/orca_v1/ORCA_Assembly/ORCA_v1.step",
-  "license": "CC BY 4.0 (orcahand_hardware LICENSE: 'ORCA Hand by ORCA Dexterity, Inc. \u2014 CC BY 4.0'); orcahand_description repo MIT"
- },
- "slamtec-rplidar-a1m8": {
-  "url": "https://download-en.slamtec.com/api/download/rplidar-core-a1m8-r1-model-3d-igs/2.0?lang=netural",
-  "file": "cad/slamtec-rplidar-a1m8/RPLIDAR_A1M8_core.igs",
-  "license": "not stated",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "slamtec-rplidar-c1": {
-  "url": "https://download-en.slamtec.com/api/download/rplidar-c1-model-3d-stp/1?lang=netural",
-  "file": "cad/slamtec-rplidar-c1/C1M1_appearance_V2_20230926.3d_model.stp",
-  "license": "not stated"
- },
- "slamtec-rplidar-s2": {
-  "url": "https://download-en.slamtec.com/api/download/rplidar-s2-model-3d-igs/1.0?lang=netural",
-  "license": "not stated",
-  "cadFile": "cad/slamtec-rplidar-s2/rplidar-s2-model-3d-igs.igs",
-  "note": "Official IGES has no housing surfaces (only internals); modeled by the agent from the 2D drawing instead"
- },
- "ldrobot-ld19": {
-  "url": "https://github.com/ldrobotSensorTeam/Product_3D_model/releases/download/v1.0/LDROBOT_LiDAR_LD19_3D_STP_V1.0.zip",
-  "file": "cad/ldrobot-ld19/00_ld19-tof_20220315.stp",
-  "license": "not stated (LDROBOT's official GitHub org; repo has no license file)",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "livox-mid-360": {
-  "url": "https://terra-1-g.djicdn.com/65c028cd298f4669a7f0e40e50ba1131/Mid360/mid-360-asm.stp",
-  "file": "cad/livox-mid-360/mid-360-asm.stp",
-  "license": "not stated",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "unitree-4d-lidar-l2": {
-  "url": "https://oss-global-cdn.unitree.com/static/L2%203D%20Model.STEP",
-  "file": "cad/unitree-4d-lidar-l2/L2_3D_Model.STEP",
-  "license": "not stated",
-  "defaultColor": [
-   0.9,
-   0.9,
-   0.91
-  ]
- },
- "luxonis-oak-d-lite": {
-  "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-Lite/DM9095_enclosure.stp",
-  "files": [
-   "cad/luxonis-oak-d-lite/DM9095_enclosure.stp",
-   "cad/luxonis-oak-d-lite/DM9095_PCBA.STEP"
-  ],
-  "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9095_OAK-D-LITE_DepthAI_USB3C/3D_Models/README.md; repo is MIT-licensed but the CDN file has no license of its own)",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "luxonis-oak-d-pro": {
-  "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-Pro/DM9098Pro_enclosure.stp",
-  "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9098_OAK-D-Pro/3D_Models/README.md)",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ],
-  "file": "cad/luxonis-oak-d-pro/DM9098Pro_enclosure.stp",
-  "defaultColor": [
-   0.2,
-   0.2,
-   0.22
-  ],
-  "note": "PCBA file is in a different origin; enclosure only"
- },
- "stereolabs-zed-2i": {
-  "url": "https://cdn.sanity.io/files/s18ewfw4/staging/1eae249387d9bde53972abbe470483024c31c6fb.step/ZED2i.step",
-  "file": "cad/stereolabs-zed-2i/ZED2i.step",
-  "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels; this file is a direct download with no form)"
- },
- "raspberry-pi-camera-3-wide": {
-  "url": "https://datasheets.raspberrypi.com/camera/camera-module-3-step.zip",
-  "file": "cad/raspberry-pi-camera-3-wide/Camera_module_3_wide_model_simple.stp",
-  "license": "not stated (Raspberry Pi datasheets site)"
- },
- "orbbec-gemini-336": {
-  "url": "https://orbbec-debian-repos-aws.s3.amazonaws.com/product/Gemini336_CAD_Files_V2.0.zip",
-  "file": "cad/orbbec-gemini-336/Gemini336_V2.0.stp",
-  "license": "not stated (Orbbec doc portal 'Download CAD Files (Gemini 330 Series)')",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "realsense-d405": {
-  "url": "https://dev.realsenseai.com/download/41950/",
-  "mesh": "cad/realsense-d405/d405_realsense-ros.stl",
-  "meshScale": 0.001,
-  "license": "not stated (RealSense 'CAD Files' page, https://dev.realsenseai.com/docs/cad-files/)",
-  "defaultColor": [
-   0.17,
-   0.17,
-   0.19
-  ],
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "realsense-d455": {
-  "url": "https://dev.realsenseai.com/download/41950/",
-  "mesh": "cad/realsense-d455/d455_realsense-ros.stl",
-  "meshScale": 0.001,
-  "license": "not stated (RealSense 'CAD Files' page, https://dev.realsenseai.com/docs/cad-files/)",
-  "defaultColor": [
-   0.17,
-   0.17,
-   0.19
-  ]
- },
- "unitree-dex3-1": {
-  "url": "https://oss-global-cdn.unitree.com/static/4934ca571aef4d08bf7081ae63531e91.zip",
-  "file": "cad/unitree-dex3-1/Dex3-1.STEP",
-  "license": "not stated (linked as '3D model: Dext3-1.step' from Unitree's official Dex3-1 developer doc)",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "unitree-dex5-1": {
-  "url": "https://github.com/unitreerobotics/unitree_ros/tree/master/robots/dexterous_hand_description/dex5_1",
-  "urdf": "cad/unitree-dex5-1/Dex5-URDF-R/Dex5-URDF-R.urdf",
-  "meshDir": "cad/unitree-dex5-1/Dex5-URDF-R/meshes",
-  "license": "BSD-3-Clause (unitree_ros repo)",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "unitree-z1-gripper": {
-  "url": "https://github.com/unitreerobotics/unitree_ros/tree/master/robots/z1_description",
-  "urdf": "cad/unitree-z1-gripper/z1_gripper.urdf",
-  "meshDir": "cad/unitree-z1-gripper",
-  "license": "BSD-3-Clause (unitree_ros repo)",
-  "defaultColor": [
-   0.16,
-   0.16,
-   0.18
-  ],
-  "rotate": [
-   [
-    "y",
-    -90
-   ]
-  ]
- },
- "so101-gripper": {
-  "url": "https://github.com/TheRobotStudio/SO-ARM100/tree/main/Simulation/SO101",
-  "urdf": "cad/so101-gripper/so101.urdf",
-  "meshDir": "cad/so101-gripper",
-  "rootLink": "gripper_link",
-  "license": "Apache-2.0",
-  "colors": {
-   "sts3215_03a_v1.stl": [
-    0.11,
-    0.11,
-    0.12
-   ]
+  "adafruit-pca9685": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/0815%20PCA9685%2016-Channel%20Servo%20Driver/815-servo-driver-16-channel.step",
+    "file": "cad/adafruit-pca9685/815-servo-driver-16-channel.step",
+    "license": "MIT"
   },
-  "defaultColor": [
-   0.93,
-   0.93,
-   0.91
-  ],
-  "modelColors": false,
-  "rotate": [
-   [
-    "x",
-    180
-   ]
-  ]
- },
- "koch-v1-1-gripper": {
-  "url": "https://raw.githubusercontent.com/jess-moss/koch-v1-1/main/hardware/follower/STEP/Follower_Gripper_Static_Part.STEP",
-  "files": [
-   "cad/koch-v1-1-gripper/Follower_Gripper_Moving_Part.STEP",
-   "cad/koch-v1-1-gripper/Follower_Gripper_Static_Part.STEP"
-  ],
-  "license": "Apache-2.0 (repo LICENSE)",
-  "rotate": [
-   [
-    "x",
-    180
-   ]
-  ],
-  "defaultColor": [
-   0.93,
-   0.93,
-   0.91
-  ]
- },
- "openmanipulator-x-gripper": {
-  "url": "https://github.com/ROBOTIS-GIT/open_manipulator/tree/main/open_manipulator_description",
-  "urdf": "cad/openmanipulator-x-gripper/omx.urdf",
-  "meshDir": "cad/openmanipulator-x-gripper",
-  "rootLink": "link5",
-  "license": "Apache-2.0",
-  "defaultColor": [
-   0.2,
-   0.2,
-   0.22
-  ],
-  "modelColors": false,
-  "rotate": [
-   [
-    "y",
-    -90
-   ]
-  ]
- },
- "unitree-dex1-1": {
-  "url": "https://github.com/unitreerobotics/unitree_ros/tree/master/robots/dexterous_hand_description/dex1_1",
-  "urdf": "cad/unitree-dex1-1/dex1_1.urdf",
-  "meshDir": "cad/unitree-dex1-1/meshes",
-  "license": "BSD-3-Clause (unitree_ros repo)",
-  "modelColors": false,
-  "defaultColor": [
-   0.22,
-   0.22,
-   0.24
-  ],
-  "colors": {
-   "Link1_3.STL": [
-    0.08,
-    0.08,
-    0.09
-   ],
-   "Link2_3.STL": [
-    0.08,
-    0.08,
-    0.09
-   ]
+  "adafruit-bno085": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/tree/main/4754%20BNO085%20STEMMA%20QT",
+    "file": "cad/adafruit-bno085/4754_BNO085_STEMMA_QT.step",
+    "license": "MIT"
   },
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "ufactory-xarm-gripper": {
-  "url": "https://www.ufactory.cc/wp-content/uploads/2025/07/Gripper-G2-AG1200-20250710.STEP_.zip",
-  "license": "not stated",
-  "file": "cad/ufactory-xarm-gripper/Gripper-G2-AG1200-20250710.step",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "ufactory-bio-gripper": {
-  "url": "https://www.ufactory.cc/wp-content/uploads/2026/05/BIO-Gripper-G2%EF%BC%88AB1100-%EF%BC%8920260512.STEP_.zip",
-  "license": "not stated",
-  "file": "cad/ufactory-bio-gripper/BIO-Gripper-G2-AB1100-20260512.step",
-  "rotate": [
-   [
-    "x",
-    180
-   ]
-  ]
- },
- "robotiq-2f-140": {
-  "url": "https://blog.robotiq.com/hubfs/support-files/2F-140_Assy_Open_20191022-Sep-06-2024-02-26-54-8127-PM.step",
-  "license": "not stated",
-  "file": "cad/robotiq-2f-140/2F-140_Assy_Open_20191022.step",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "onrobot-2fg7": {
-  "url": "https://onrobot.com/storage/2fg7-104979_0_0_20200804.step",
-  "license": "not stated",
-  "file": "cad/onrobot-2fg7/2fg7-104979_0_0_20200804.step",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "onrobot-rg6": {
-  "url": "https://onrobot.com/storage/301_rg6_tool.step",
-  "license": "not stated",
-  "file": "cad/onrobot-rg6/301_rg6_tool.step",
-  "reader": "native",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "onrobot-vgc10": {
-  "url": "https://onrobot.com/storage/307_vgc10_tool.step",
-  "license": "not stated",
-  "file": "cad/onrobot-vgc10/307_vgc10_tool.step",
-  "keepBox": [
-   [
-    -60,
-    -102,
-    -60
-   ],
-   [
-    60,
-    1,
-    60
-   ]
-  ],
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ],
-  "note": "The STEP also lays out spare suction cups and an extension pipe; keepBox drops them"
- },
- "hopejr-hand": {
-  "url": "https://github.com/TheRobotStudio/HOPEJr/blob/main/Arm/STEP/hand.step",
-  "license": "Apache-2.0 (Humanoid/LICENSE, Copyright 2024 The Robot Studio; the repo root and Arm/ folder have no separate license file)",
-  "file": "cad/hopejr-hand/hand.step"
- },
- "tetheria-aero-hand-open": {
-  "url": "https://github.com/TetherIA/aero-hand-open/blob/main/hardware/CAD/Aero_Hand_Open_Right.stp",
-  "license": "CC BY-NC-SA 4.0 for design files; firmware/SDK Apache-2.0",
-  "file": "cad/tetheria-aero-hand-open/Aero_Hand_Open_Right.stp",
-  "reader": "native"
- },
- "slamtec-rplidar-a2m12": {
-  "url": "https://download-en.slamtec.com/api/download/rplidar-a2m4-r1-model-3d-igs/1.0?lang=netural",
-  "license": "not stated",
-  "file": "cad/slamtec-rplidar-a2m12/rplidar-a2m4-r1.igs",
-  "reader": "native",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ],
-  "note": "Slamtec publishes the A2M4 model for the A2/A3 family; the A2M12 and A3M1 drawings match it"
- },
- "slamtec-rplidar-a3m1": {
-  "url": "https://download-en.slamtec.com/api/download/rplidar-a2m4-r1-model-3d-igs/1.0?lang=netural",
-  "license": "not stated",
-  "file": "cad/slamtec-rplidar-a3m1/rplidar-a2m4-r1.igs",
-  "reader": "native",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ],
-  "note": "Slamtec publishes the A2M4 model for the A2/A3 family; the A2M12 and A3M1 drawings match it"
- },
- "slamtec-rplidar-s3": {
-  "url": "https://download-en.slamtec.com/api/download/rplidar-s3-model-3d-stp/1?lang=netural",
-  "license": "not stated",
-  "file": "cad/slamtec-rplidar-s3/s3_continue_20230605.stp",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "ldrobot-stl-27l": {
-  "url": "https://github.com/ldrobotSensorTeam/Product_3D_model/releases/download/v1.0/LDROBOT_LiDAR_LD19_3D_STP_V1.0.zip",
-  "license": "not stated (LDROBOT's official GitHub org; repo has no license file)",
-  "file": "cad/ldrobot-stl-27l/00_ld19-tof_20220315.stp",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ],
-  "note": "LDROBOT's LD19 model; the STL-27L drawing matches it dimension for dimension"
- },
- "ouster-os1": {
-  "url": "https://data.ouster.io/downloads/sensor-cad-models/sensor-cad-rev7-os1.zip",
-  "license": "not stated on the download page; the bundled drawing is marked 'Proprietary and confidential \u2026 any reproduction \u2026 without the written permission of Ouster Inc is prohibited'",
-  "file": "cad/ouster-os1/700-105333-04-OS1ExteriorSpec_XX.STEP",
-  "hideMeshes": [
-   "_FOV"
-  ],
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ],
-  "note": "The STEP includes a field-of-view keep-out body; hideMeshes drops it"
- },
- "ouster-os0": {
-  "url": "https://data.ouster.io/downloads/sensor-cad-models/sensor-cad-rev7-os0.zip",
-  "license": "not stated on the download page; the bundled drawing is marked 'Proprietary and confidential \u2026 any reproduction \u2026 without the written permission of Ouster Inc is prohibited'",
-  "file": "cad/ouster-os0/700-105332-04-OS0ExteriorSpec_XX.STEP",
-  "hideMeshes": [
-   "_FOV"
-  ],
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ],
-  "note": "The STEP includes a field-of-view keep-out body; hideMeshes drops it"
- },
- "livox-avia": {
-  "url": "https://terra-1-g.djicdn.com/65c028cd298f4669a7f0e40e50ba1131/Download/Avia/Livox_Avia_shell_FOV.stp",
-  "license": "not stated",
-  "file": "cad/livox-avia/Livox_Avia_shell_FOV.stp",
-  "hideMeshes": [
-   "FOV"
-  ],
-  "note": "The STEP includes the FOV shape; hideMeshes drops it",
-  "rotate": [
-   [
-    "x",
-    90
-   ],
-   [
-    "z",
-    180
-   ]
-  ]
- },
- "hesai-jt128": {
-  "url": "https://www.hesaitech.com/wp-content/uploads/2025/09/JT128-3D-Model.zip",
-  "license": "not stated",
-  "file": "cad/hesai-jt128/JT128-3D-Model.stp",
-  "keepBox": [
-   [
-    -45,
-    -45,
-    -1
-   ],
-   [
-    45,
-    45,
-    80
-   ]
-  ],
-  "note": "The STEP includes field-of-view surfaces; keepBox drops them"
- },
- "arducam-ov9281-global-shutter-usb": {
-  "url": "https://www.uctronics.com/download/Mechanical_Drawing/B0332.STEP",
-  "license": "not stated",
-  "file": "cad/arducam-ov9281-global-shutter-usb/B0332.STEP"
- },
- "seeed-xiao-esp32s3-sense": {
-  "url": "https://files.seeedstudio.com/wiki/SeeedStudio-XIAO-ESP32S3/res/seeed-studio-xiao-esp32s3-sense-3d_model.zip",
-  "license": "not stated",
-  "file": "cad/seeed-xiao-esp32s3-sense/Seeed_Studio_XIAO-ESP32-S3-Sense.step",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "trossen-widowx-250-gripper": {
-  "url": "https://docs.trossenrobotics.com/interbotix_xsarms_docs/_downloads/28c2ca01d80a2cb4e6af594adf2c9471/6_WXA-250-M.zip",
-  "license": "not stated (Trossen docs download)",
-  "file": "cad/trossen-widowx-250-gripper/6_-_WXA-250-M.step",
-  "keepBox": [
-   [
-    -60,
-    -520,
-    330
-   ],
-   [
-    60,
-    -405,
-    400
-   ]
-  ],
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ],
-  "note": "Trossen publishes the whole-arm STEP; keepBox keeps the gripper bodies (SRG v3 + finger carriages)",
-  "colorMap": {
-   "025d92 a60931 ": [
-    0.12,
-    0.12,
-    0.13
-   ]
-  }
- },
- "allegro-hand-v4": {
-  "urdf": "cad/allegro-hand-v4/allegro_hand_model/urdf/allegro_hand_r.urdf",
-  "meshDir": "cad/allegro-hand-v4/allegro_hand_model/meshes",
-  "url": "https://github.com/Wonikrobotics-git/allegro_hand_model_v4",
-  "license": "MIT (allegro_hand_model_v4 repo)",
-  "rotate": [
-   [
-    "z",
-    90
-   ]
-  ]
- },
- "linker-hand-l10": {
-  "urdf": "cad/linker-hand-l10/L20lite/right/linkerhand_l20lite_right.urdf",
-  "meshDir": "cad/linker-hand-l10/L20lite/right/meshes",
-  "url": "https://github.com/linker-bot/linkerhand-urdf/tree/main/L20lite/right",
-  "license": "Apache-2.0 (linkerhand-urdf repo)",
-  "rotate": [
-   [
-    "z",
-    90
-   ]
-  ]
- },
- "linker-hand-o6": {
-  "urdf": "cad/linker-hand-o6/O6/right/linkerhand_o6_right.urdf",
-  "meshDir": "cad/linker-hand-o6/O6/right/meshes",
-  "url": "https://github.com/linker-bot/linkerhand-urdf/tree/main/O6/right",
-  "license": "Apache-2.0 (linkerhand-urdf repo)",
-  "rotate": [
-   [
-    "z",
-    90
-   ]
-  ]
- },
- "agilex-piper-gripper": {
-  "urdf": "cad/agilex-piper-gripper/piper_description/urdf/piper_description.urdf",
-  "meshDir": "cad/agilex-piper-gripper/piper_description/meshes",
-  "rootLink": "gripper_base",
-  "url": "https://cdn.shopify.com/s/files/1/0673/6848/5000/files/AgileX_Gripper-1-STP.STEP?v=1782224095 (linked from AIFIT Lab's PiPER product page https://aifitlab.com/products/agilex-piper-robotic-arm)",
-  "license": "not stated"
- },
- "luxonis-oak-1": {
-  "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-1/OAK-1_ENCLOSURE.step",
-  "license": "not stated (linked from Luxonis's official depthai-hardware repo, BW1093_USB3C/3D_Models/README.md)",
-  "file": "cad/luxonis-oak-1/OAK-1_ENCLOSURE.step",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "luxonis-oak-d-s2": {
-  "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-S2/DM9098S2_enclosure.stp",
-  "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9098_OAK-D-S2/3D_Models/README.md)",
-  "file": "cad/luxonis-oak-d-s2/DM9098S2_enclosure.stp",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "luxonis-oak-d-w": {
-  "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-S2/DM9098W_enclosure.stp",
-  "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9098_OAK-D-S2/3D_Models/README.md)",
-  "file": "cad/luxonis-oak-d-w/DM9098W_enclosure.stp",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "stereolabs-zed-x": {
-  "url": "https://cdn.sanity.io/files/s18ewfw4/staging/0ddd9d208a26fcfc08cd91e402a4493e06a805ec.step/ZED%20X%20Wide.step",
-  "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels; direct download, no form)",
-  "file": "cad/stereolabs-zed-x/ZED_X_Wide.step",
-  "hideMeshes": [
-   "FOV",
-   "Image plane"
-  ]
- },
- "stereolabs-zed-x-mini": {
-  "url": "https://cdn.sanity.io/files/s18ewfw4/staging/05083ccd74e4dc296a9cf87ac94c51fbfca8c03a.step/ZED%20X%20Mini%20Wide.step",
-  "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels; direct download, no form)",
-  "file": "cad/stereolabs-zed-x-mini/ZED_X_Mini_Wide.step",
-  "hideMeshes": [
-   "FOV",
-   "Image plane"
-  ]
- },
- "orbbec-femto-bolt": {
-  "url": "https://orbbec-debian-repos-aws.s3.amazonaws.com/product/Femto_Bolt_CAD_files.zip",
-  "license": "not stated (Orbbec's own download bucket used by its documentation portal)",
-  "file": "cad/orbbec-femto-bolt/Femto_bolt.stp"
- },
- "orbbec-gemini-2": {
-  "url": "https://orbbec-debian-repos-aws.s3.amazonaws.com/product/Gemini2%26Gemini335_CAD_Files_V2.0.zip",
-  "license": "not stated (Orbbec's own download bucket used by its documentation portal 'Download CAD Files (Gemini 330 Series)')",
-  "file": "cad/orbbec-gemini-2/[3D][STP]Gemini_2_Gemini_335_Asm_with_FOV_V2.0_20241107.stp",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "stereolabs-zed-mini": {
-  "url": "https://cdn.sanity.io/files/s18ewfw4/staging/608b5b0dae4a90d239f30fc24bce6fbc8f24479f.step/ZEDM.step",
-  "file": "cad/stereolabs-zed-mini/ZEDM.step",
-  "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels)",
-  "rotate": [
-   [
-    "z",
-    180
-   ]
-  ]
- },
- "realsense-d415": {
-  "url": "https://github.com/IntelRealSense/realsense-ros",
-  "mesh": "cad/realsense-d415/d415_realsense-ros.stl",
-  "meshScale": 1,
-  "license": "Apache-2.0 (realsense-ros)",
-  "defaultColor": [
-   0.17,
-   0.17,
-   0.19
-  ],
-  "rotate": [
-   [
-    "z",
-    180
-   ]
-  ]
- },
- "raspberry-pi-4b": {
-  "url": "https://grabcad.com/library/raspberry-pi-4-model-b-1",
-  "file": "cad/raspberry-pi-4b/raspberry-pi-4-model-b.step",
-  "license": "not stated (GrabCAD model by Hasanain Shuja, SolidWorks 2018 STEP AP214; mirrored at code.c-base.org/wercc/monorail-pcb). Checked against Raspberry Pi RP-008342 drawing: board, holes and connector centres within 0.01 mm",
-  "reader": "native",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ],
-  "colorMap": {
-   "00c000": [
-    0.1,
-    0.5,
-    0.26
-   ]
-  }
- },
- "stepperonline-14hs13-0804s": {
-  "url": "https://files.omc-stepperonline.com/14HS13-0804S.STEP",
-  "license": "not stated",
-  "file": "cad/stepperonline-14hs13-0804s/14HS13-0804S.STEP",
-  "rotate": [
-   [
-    "x",
-    180
-   ]
-  ]
- },
- "stepperonline-17hs19-2004s1": {
-  "url": "https://files.omc-stepperonline.com/17HS19-2004S1.STEP",
-  "license": "not stated",
-  "file": "cad/stepperonline-17hs19-2004s1/17HS19-2004S1.STEP",
-  "rotate": [
-   [
-    "x",
-    180
-   ]
-  ]
- },
- "stepperonline-17he08-1004s": {
-  "url": "https://files.omc-stepperonline.com/17HE08-1004S.STEP",
-  "license": "not stated",
-  "file": "cad/stepperonline-17he08-1004s/17HE08-1004S.STEP",
-  "rotate": [
-   [
-    "x",
-    180
-   ]
-  ]
- },
- "stepperonline-23hs22-2804s": {
-  "url": "https://files.omc-stepperonline.com/23HS22-2804S.STEP",
-  "license": "not stated",
-  "file": "cad/stepperonline-23hs22-2804s/23HS22-2804S.STEP"
- },
- "pololu-37d-gearmotor": {
-  "url": "https://www.pololu.com/file/0J1868/37d-gearmotor-3d-models.zip",
-  "license": "not stated",
-  "file": "cad/pololu-37d-gearmotor/37d-gearmotor-50-70-encoder.step"
- },
- "pololu-25d-gearmotor": {
-  "url": "https://www.pololu.com/file/0J1647/25d-gearmotor-3d-models.zip",
-  "license": "not stated",
-  "file": "cad/pololu-25d-gearmotor/25d-metal-gearmotor-75-99-encoder.step"
- },
- "pololu-micro-metal-gearmotor-encoder": {
-  "url": "https://www.pololu.com/file/0J2042/Pololu%20Micro%20Metal%20Gearmotor%203D%20(STEP)%20Models.zip",
-  "license": "not stated",
-  "file": "cad/pololu-micro-metal-gearmotor-encoder/mmgm-cb-enc-back-con.step",
-  "rotate": [
-   [
-    "y",
-    -90
-   ]
-  ]
- },
- "cubemars-ak60-6": {
-  "url": "https://www.cubemars.com/data/cms/202602/ak60-6-v1-1-robotic-actuator-3d-drawing.zip",
-  "license": "not stated",
-  "file": "cad/cubemars-ak60-6/ak60-6v1-1.stp",
-  "rotate": [
-   [
-    "y",
-    -90
-   ]
-  ]
- },
- "cubemars-ak70-10": {
-  "url": "https://www.cubemars.com/data/cms/202607/ak70-10-robotic-actuator-3d-drawing.zip",
-  "license": "not stated",
-  "file": "cad/cubemars-ak70-10/AK70-10_V2.0.STEP",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "cubemars-ak80-9": {
-  "url": "https://www.cubemars.com/data/cms/202602/ak80-9-v3-0-robotic-actuator-3d-drawing.zip",
-  "license": "not stated",
-  "file": "cad/cubemars-ak80-9/AK80-9_V3.0.STEP",
-  "colorMap": {
-   "e5ff2f": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "18ffff": [
-    0.62,
-    0.63,
-    0.66
-   ],
-   "ff701d": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "ff4fc6": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "6dc6ff": [
-    0.62,
-    0.63,
-    0.66
-   ],
-   "fdba8a": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "ff79e7": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "da85ff": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "4fbeff": [
-    0.62,
-    0.63,
-    0.66
-   ],
-   "ff3e67": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "6036ff": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "ff4605": [
-    0.16,
-    0.16,
-    0.18
-   ],
-   "99999e": [
-    0.62,
-    0.63,
-    0.66
-   ],
-   "ffff37": [
-    0.16,
-    0.16,
-    0.18
-   ]
-  }
- },
- "odrive-d6374": {
-  "url": "https://drive.google.com/open?id=1LjfDNQpxAVkRACwujK5fplHAqYl4Gxj-",
-  "license": "not stated",
-  "file": "cad/odrive-d6374/odrive-d6374-150kv.step",
-  "colorMap": {
-   "569fd8": [
-    0.2,
-    0.2,
-    0.22
-   ]
+  "arduino-nano-esp32": {
+    "url": "https://docs.arduino.cc/resources/models/ABX00083-step.zip",
+    "file": "cad/arduino-nano-esp32/NANO_ESP32.step",
+    "license": "CC BY-SA 4.0"
   },
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "unitree-go-m8010-6": {
-  "url": "https://cdn.shopify.com/s/files/1/0673/6848/5000/files/Unitree_GO_M8010_6_Motor.stp",
-  "license": "not stated",
-  "file": "cad/unitree-go-m8010-6/Unitree_GO_M8010_6_Motor.stp",
-  "rotate": [
-   [
-    "y",
-    -90
-   ]
-  ]
- },
- "myactuator-rmd-x8-pro": {
-  "url": "https://www.myactuator.com/_files/archives/cab28a_85824a1893de4b058080c363664a1c9f.zip?dn=X8-25%20%20240814.zip",
-  "license": "not stated",
-  "file": "cad/myactuator-rmd-x8-pro/X8-25_RMD-X8-PRO-1-9-V2.step",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "robstride-02": {
-  "url": "https://github.com/RobStride/Product_Information/blob/HEAD/Product%20Literature/RS02/rs02.stp",
-  "license": "not stated (repo has no license)",
-  "file": "cad/robstride-02/rs02.stp"
- },
- "mjbots-qdd100": {
-  "url": "https://drive.google.com/file/d/1tFlEveIIp6fHuRU71R3Fa23M5Sey8nuo/view?usp=sharing",
-  "license": "not stated",
-  "file": "cad/mjbots-qdd100/qdd100-beta3-mechanical.step"
- },
- "mjbots-moteus-r4": {
-  "url": "https://raw.githubusercontent.com/mjbots/moteus/main/hw/controller/r4.5/20210124-moteus-controller-r45-mechanical.step",
-  "license": "Apache-2.0 (mjbots/moteus repository license)",
-  "file": "cad/mjbots-moteus-r4/20210124-moteus-controller-r45-mechanical.step",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ],
-  "colorMap": {
-   "ce6b04": [
-    0.12,
-    0.12,
-    0.13
-   ]
+  "arduino-uno-r4-minima": {
+    "url": "https://docs.arduino.cc/static/ae97aad5c05de6a565c7f93a28c04717/ABX00080-cad-files.zip",
+    "file": "cad/arduino-uno-r4-minima/PCBABX00080.step",
+    "license": "CC BY-SA 4.0"
+  },
+  "dynamixel-xl330-m288": {
+    "url": "https://www.robotis.com/service/download.php?no=1987",
+    "file": "cad/dynamixel-xl330-m288/XL330.stp",
+    "license": "not stated",
+    "defaultColor": [0.11, 0.11, 0.12]
+  },
+  "dynamixel-xl430-w250": {
+    "url": "https://www.robotis.com/service/download.php?no=773",
+    "file": "cad/dynamixel-xl430-w250/XL430_new.stp",
+    "license": "not stated",
+    "defaultColor": [0.11, 0.11, 0.12]
+  },
+  "seeed-xiao-esp32s3": {
+    "url": "https://files.seeedstudio.com/wiki/SeeedStudio-XIAO-ESP32S3/res/seeed-studio-xiao-esp32s3-3d_model.zip",
+    "file": "cad/seeed-xiao-esp32s3/XIAO-ESP32S3_v2.step",
+    "license": "not stated",
+    "rotate": [["x", 90]]
+  },
+  "waveshare-bus-servo-adapter-a": {
+    "url": "https://files.waveshare.com/wiki/Bus-Servo-Adapter-(A)/Bus%20Servo%20Adapter%20(A)_3D.zip",
+    "file": "cad/waveshare-bus-servo-adapter-a/Bus_Servo_Adapter_A.step",
+    "license": "not stated"
+  },
+  "pololu-micro-metal-gearmotor": {
+    "url": "https://www.pololu.com/file/0J2042/Pololu%20Micro%20Metal%20Gearmotor%203D%20(STEP)%20Models.zip",
+    "file": "cad/pololu-micro-metal-gearmotor/mmgm-pm-ext-shaft.step",
+    "license": "not stated"
+  },
+  "raspberry-pi-pico-2": {
+    "url": "https://pip-assets.raspberrypi.com/categories/1005-raspberry-pi-pico-2/documents/RP-009061-CA-2-Pico%202%20-%203D%20STEP.zip",
+    "file": "cad/raspberry-pi-pico-2/rpi_pico2.step",
+    "license": "MIT (LICENSE.txt in the zip, Copyright (c) 2025 Raspberry Pi Ltd; provided for guidance only, no accuracy guarantee)",
+    "rotate": [["z", 90]]
+  },
+  "raspberry-pi-camera-3": {
+    "url": "https://pip-assets.raspberrypi.com/categories/1207-design-files/documents/RP-008154-DS-1-camera-module-3-step.zip",
+    "file": "cad/raspberry-pi-camera-3/Camera_module_3_std_model_simple.stp",
+    "license": "not stated (no license file in the zip)"
+  },
+  "jetson-orin-nano-devkit": {
+    "url": "https://developer.nvidia.com/downloads/assets/embedded/secure/jetson/orin_nano/docs/jetson_orin_nano_devkit_3d_step_model.zip/",
+    "file": "cad/jetson-orin-nano-devkit/P3766-P3768SKU4-P3767ENVELOPE.stp",
+    "license": "NVIDIA Jetson Download Center terms",
+    "reader": "native"
+  },
+  "robotiq-2f-85": {
+    "url": "https://blog.robotiq.com/hubfs/support-files/2F85_Opened_20190924-Sep-06-2024-02-25-46-4707-PM.step",
+    "file": "cad/robotiq-2f-85/2F85_Opened_20190924.step",
+    "license": "not stated",
+    "rotate": [["x", 90]]
+  },
+  "robotiq-hand-e": {
+    "url": "https://blog.robotiq.com/hubfs/support-files/ROBOTIQ_HAND-E_DEFEATURE_20181026-Sep-06-2024-02-31-01-9043-PM.step",
+    "file": "cad/robotiq-hand-e/ROBOTIQ_HAND-E_DEFEATURE_20181026.step",
+    "license": "not stated",
+    "rotate": [["x", 90]]
+  },
+  "onrobot-rg2": {
+    "url": "https://onrobot.com/storage/303_rg2_tool.step",
+    "file": "cad/onrobot-rg2/303_rg2_tool.step",
+    "license": "not stated",
+    "reader": "native",
+    "rotate": [["x", 90]]
+  },
+  "dh-robotics-ag-95": {
+    "url": "https://github.com/DH-Robotics/dh_gripper_ros/tree/master/dh_robotics_ag95_gripper/dh_robotics_ag95_description/meshes/visual",
+    "urdf": "cad/dh-robotics-ag-95/dh_robotics_ag95.urdf",
+    "meshDir": "cad/dh-robotics-ag-95",
+    "license": "not stated (repo has no LICENSE)",
+    "defaultColor": [0.78, 0.78, 0.8],
+    "colors": {
+      "base_link.STL": [0.16, 0.16, 0.18]
+    },
+    "rotate": [["y", -90]]
+  },
+  "pollen-amazing-hand": {
+    "mjcf": "cad/pollen-amazing-hand/mjcf_right/robot.xml",
+    "meshDir": "cad/pollen-amazing-hand/mjcf_right/assets",
+    "url": "https://github.com/pollen-robotics/AmazingHand/tree/main/Demo/AHSimulation/AHSimulation/AH_Right/mjcf",
+    "license": "Mechanical design CC BY 4.0; software Apache-2.0 (README)"
+  },
+  "leap-hand": {
+    "urdf": "cad/leap-hand/urdf/robot.urdf",
+    "meshDir": "cad/leap-hand/urdf",
+    "url": "https://github.com/leap-hand/LEAP_Hand_Sim/tree/master/assets/leap_hand",
+    "license": "MIT (LEAP_Hand_Sim repo LICENSE.txt). The printable CAD from the website is CC BY-NC-SA.",
+    "rotate": [
+      ["y", -90],
+      ["z", 90]
+    ],
+    "modelColors": false,
+    "defaultColor": [0.13, 0.13, 0.14]
+  },
+  "psyonic-ability-hand": {
+    "mesh": "cad/psyonic-ability-hand/urdf/models/full_model_fused_no_wrist.stl",
+    "meshScale": 1,
+    "defaultColor": [0.16, 0.16, 0.18],
+    "url": "https://github.com/psyonicinc/ability-hand-api/tree/master/URDF",
+    "license": "MIT (ability-hand-api repo, Copyright (c) 2024 PSYONIC, Inc.)",
+    "rotate": [["x", 180]]
+  },
+  "orca-hand": {
+    "file": "cad/orca-hand/ORCA_v1.step",
+    "reader": "native",
+    "url": "https://github.com/orcahand/orcahand_hardware/blob/main/orca_v1/ORCA_Assembly/ORCA_v1.step",
+    "license": "CC BY 4.0 (orcahand_hardware LICENSE: 'ORCA Hand by ORCA Dexterity, Inc. \u2014 CC BY 4.0'); orcahand_description repo MIT"
+  },
+  "slamtec-rplidar-a1m8": {
+    "url": "https://download-en.slamtec.com/api/download/rplidar-core-a1m8-r1-model-3d-igs/2.0?lang=netural",
+    "file": "cad/slamtec-rplidar-a1m8/RPLIDAR_A1M8_core.igs",
+    "license": "not stated",
+    "rotate": [["x", 90]]
+  },
+  "slamtec-rplidar-c1": {
+    "url": "https://download-en.slamtec.com/api/download/rplidar-c1-model-3d-stp/1?lang=netural",
+    "file": "cad/slamtec-rplidar-c1/C1M1_appearance_V2_20230926.3d_model.stp",
+    "license": "not stated"
+  },
+  "slamtec-rplidar-s2": {
+    "url": "https://download-en.slamtec.com/api/download/rplidar-s2-model-3d-igs/1.0?lang=netural",
+    "license": "not stated",
+    "cadFile": "cad/slamtec-rplidar-s2/rplidar-s2-model-3d-igs.igs",
+    "note": "Official IGES has no housing surfaces (only internals); modeled by the agent from the 2D drawing instead"
+  },
+  "ldrobot-ld19": {
+    "url": "https://github.com/ldrobotSensorTeam/Product_3D_model/releases/download/v1.0/LDROBOT_LiDAR_LD19_3D_STP_V1.0.zip",
+    "file": "cad/ldrobot-ld19/00_ld19-tof_20220315.stp",
+    "license": "not stated (LDROBOT's official GitHub org; repo has no license file)",
+    "rotate": [["x", 90]]
+  },
+  "livox-mid-360": {
+    "url": "https://terra-1-g.djicdn.com/65c028cd298f4669a7f0e40e50ba1131/Mid360/mid-360-asm.stp",
+    "file": "cad/livox-mid-360/mid-360-asm.stp",
+    "license": "not stated",
+    "rotate": [["x", 90]]
+  },
+  "unitree-4d-lidar-l2": {
+    "url": "https://oss-global-cdn.unitree.com/static/L2%203D%20Model.STEP",
+    "file": "cad/unitree-4d-lidar-l2/L2_3D_Model.STEP",
+    "license": "not stated",
+    "defaultColor": [0.9, 0.9, 0.91]
+  },
+  "luxonis-oak-d-lite": {
+    "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-Lite/DM9095_enclosure.stp",
+    "files": ["cad/luxonis-oak-d-lite/DM9095_enclosure.stp", "cad/luxonis-oak-d-lite/DM9095_PCBA.STEP"],
+    "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9095_OAK-D-LITE_DepthAI_USB3C/3D_Models/README.md; repo is MIT-licensed but the CDN file has no license of its own)",
+    "rotate": [["x", -90]]
+  },
+  "luxonis-oak-d-pro": {
+    "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-Pro/DM9098Pro_enclosure.stp",
+    "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9098_OAK-D-Pro/3D_Models/README.md)",
+    "rotate": [["x", -90]],
+    "file": "cad/luxonis-oak-d-pro/DM9098Pro_enclosure.stp",
+    "defaultColor": [0.2, 0.2, 0.22],
+    "note": "PCBA file is in a different origin; enclosure only"
+  },
+  "stereolabs-zed-2i": {
+    "url": "https://cdn.sanity.io/files/s18ewfw4/staging/1eae249387d9bde53972abbe470483024c31c6fb.step/ZED2i.step",
+    "file": "cad/stereolabs-zed-2i/ZED2i.step",
+    "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels; this file is a direct download with no form)"
+  },
+  "raspberry-pi-camera-3-wide": {
+    "url": "https://datasheets.raspberrypi.com/camera/camera-module-3-step.zip",
+    "file": "cad/raspberry-pi-camera-3-wide/Camera_module_3_wide_model_simple.stp",
+    "license": "not stated (Raspberry Pi datasheets site)"
+  },
+  "orbbec-gemini-336": {
+    "url": "https://orbbec-debian-repos-aws.s3.amazonaws.com/product/Gemini336_CAD_Files_V2.0.zip",
+    "file": "cad/orbbec-gemini-336/Gemini336_V2.0.stp",
+    "license": "not stated (Orbbec doc portal 'Download CAD Files (Gemini 330 Series)')",
+    "rotate": [["x", 90]]
+  },
+  "realsense-d405": {
+    "url": "https://dev.realsenseai.com/download/41950/",
+    "mesh": "cad/realsense-d405/d405_realsense-ros.stl",
+    "meshScale": 0.001,
+    "license": "not stated (RealSense 'CAD Files' page, https://dev.realsenseai.com/docs/cad-files/)",
+    "defaultColor": [0.17, 0.17, 0.19],
+    "rotate": [["x", 90]]
+  },
+  "realsense-d455": {
+    "url": "https://dev.realsenseai.com/download/41950/",
+    "mesh": "cad/realsense-d455/d455_realsense-ros.stl",
+    "meshScale": 0.001,
+    "license": "not stated (RealSense 'CAD Files' page, https://dev.realsenseai.com/docs/cad-files/)",
+    "defaultColor": [0.17, 0.17, 0.19]
+  },
+  "unitree-dex3-1": {
+    "url": "https://oss-global-cdn.unitree.com/static/4934ca571aef4d08bf7081ae63531e91.zip",
+    "file": "cad/unitree-dex3-1/Dex3-1.STEP",
+    "license": "not stated (linked as '3D model: Dext3-1.step' from Unitree's official Dex3-1 developer doc)",
+    "rotate": [["x", 90]]
+  },
+  "unitree-dex5-1": {
+    "url": "https://github.com/unitreerobotics/unitree_ros/tree/master/robots/dexterous_hand_description/dex5_1",
+    "urdf": "cad/unitree-dex5-1/Dex5-URDF-R/Dex5-URDF-R.urdf",
+    "meshDir": "cad/unitree-dex5-1/Dex5-URDF-R/meshes",
+    "license": "BSD-3-Clause (unitree_ros repo)",
+    "rotate": [["x", 90]]
+  },
+  "unitree-z1-gripper": {
+    "url": "https://github.com/unitreerobotics/unitree_ros/tree/master/robots/z1_description",
+    "urdf": "cad/unitree-z1-gripper/z1_gripper.urdf",
+    "meshDir": "cad/unitree-z1-gripper",
+    "license": "BSD-3-Clause (unitree_ros repo)",
+    "defaultColor": [0.16, 0.16, 0.18],
+    "rotate": [["y", -90]]
+  },
+  "so101-gripper": {
+    "url": "https://github.com/TheRobotStudio/SO-ARM100/tree/main/Simulation/SO101",
+    "urdf": "cad/so101-gripper/so101.urdf",
+    "meshDir": "cad/so101-gripper",
+    "rootLink": "gripper_link",
+    "license": "Apache-2.0",
+    "colors": {
+      "sts3215_03a_v1.stl": [0.11, 0.11, 0.12]
+    },
+    "defaultColor": [0.93, 0.93, 0.91],
+    "modelColors": false,
+    "rotate": [["x", 180]]
+  },
+  "koch-v1-1-gripper": {
+    "url": "https://raw.githubusercontent.com/jess-moss/koch-v1-1/main/hardware/follower/STEP/Follower_Gripper_Static_Part.STEP",
+    "files": [
+      "cad/koch-v1-1-gripper/Follower_Gripper_Moving_Part.STEP",
+      "cad/koch-v1-1-gripper/Follower_Gripper_Static_Part.STEP"
+    ],
+    "license": "Apache-2.0 (repo LICENSE)",
+    "rotate": [["x", 180]],
+    "defaultColor": [0.93, 0.93, 0.91]
+  },
+  "openmanipulator-x-gripper": {
+    "url": "https://github.com/ROBOTIS-GIT/open_manipulator/tree/main/open_manipulator_description",
+    "urdf": "cad/openmanipulator-x-gripper/omx.urdf",
+    "meshDir": "cad/openmanipulator-x-gripper",
+    "rootLink": "link5",
+    "license": "Apache-2.0",
+    "defaultColor": [0.2, 0.2, 0.22],
+    "modelColors": false,
+    "rotate": [["y", -90]]
+  },
+  "unitree-dex1-1": {
+    "url": "https://github.com/unitreerobotics/unitree_ros/tree/master/robots/dexterous_hand_description/dex1_1",
+    "urdf": "cad/unitree-dex1-1/dex1_1.urdf",
+    "meshDir": "cad/unitree-dex1-1/meshes",
+    "license": "BSD-3-Clause (unitree_ros repo)",
+    "modelColors": false,
+    "defaultColor": [0.22, 0.22, 0.24],
+    "colors": {
+      "Link1_3.STL": [0.08, 0.08, 0.09],
+      "Link2_3.STL": [0.08, 0.08, 0.09]
+    },
+    "rotate": [["x", 90]]
+  },
+  "ufactory-xarm-gripper": {
+    "url": "https://www.ufactory.cc/wp-content/uploads/2025/07/Gripper-G2-AG1200-20250710.STEP_.zip",
+    "license": "not stated",
+    "file": "cad/ufactory-xarm-gripper/Gripper-G2-AG1200-20250710.step",
+    "rotate": [["x", 90]]
+  },
+  "ufactory-bio-gripper": {
+    "url": "https://www.ufactory.cc/wp-content/uploads/2026/05/BIO-Gripper-G2%EF%BC%88AB1100-%EF%BC%8920260512.STEP_.zip",
+    "license": "not stated",
+    "file": "cad/ufactory-bio-gripper/BIO-Gripper-G2-AB1100-20260512.step",
+    "rotate": [["x", 180]]
+  },
+  "robotiq-2f-140": {
+    "url": "https://blog.robotiq.com/hubfs/support-files/2F-140_Assy_Open_20191022-Sep-06-2024-02-26-54-8127-PM.step",
+    "license": "not stated",
+    "file": "cad/robotiq-2f-140/2F-140_Assy_Open_20191022.step",
+    "rotate": [["x", 90]]
+  },
+  "onrobot-2fg7": {
+    "url": "https://onrobot.com/storage/2fg7-104979_0_0_20200804.step",
+    "license": "not stated",
+    "file": "cad/onrobot-2fg7/2fg7-104979_0_0_20200804.step",
+    "rotate": [["x", -90]]
+  },
+  "onrobot-rg6": {
+    "url": "https://onrobot.com/storage/301_rg6_tool.step",
+    "license": "not stated",
+    "file": "cad/onrobot-rg6/301_rg6_tool.step",
+    "reader": "native",
+    "rotate": [["x", 90]]
+  },
+  "onrobot-vgc10": {
+    "url": "https://onrobot.com/storage/307_vgc10_tool.step",
+    "license": "not stated",
+    "file": "cad/onrobot-vgc10/307_vgc10_tool.step",
+    "keepBox": [
+      [-60, -102, -60],
+      [60, 1, 60]
+    ],
+    "rotate": [["x", -90]],
+    "note": "The STEP also lays out spare suction cups and an extension pipe; keepBox drops them"
+  },
+  "hopejr-hand": {
+    "url": "https://github.com/TheRobotStudio/HOPEJr/blob/main/Arm/STEP/hand.step",
+    "license": "Apache-2.0 (Humanoid/LICENSE, Copyright 2024 The Robot Studio; the repo root and Arm/ folder have no separate license file)",
+    "file": "cad/hopejr-hand/hand.step"
+  },
+  "tetheria-aero-hand-open": {
+    "url": "https://github.com/TetherIA/aero-hand-open/blob/main/hardware/CAD/Aero_Hand_Open_Right.stp",
+    "license": "CC BY-NC-SA 4.0 for design files; firmware/SDK Apache-2.0",
+    "file": "cad/tetheria-aero-hand-open/Aero_Hand_Open_Right.stp",
+    "reader": "native"
+  },
+  "slamtec-rplidar-a2m12": {
+    "url": "https://download-en.slamtec.com/api/download/rplidar-a2m4-r1-model-3d-igs/1.0?lang=netural",
+    "license": "not stated",
+    "file": "cad/slamtec-rplidar-a2m12/rplidar-a2m4-r1.igs",
+    "reader": "native",
+    "rotate": [["x", 90]],
+    "note": "Slamtec publishes the A2M4 model for the A2/A3 family; the A2M12 and A3M1 drawings match it"
+  },
+  "slamtec-rplidar-a3m1": {
+    "url": "https://download-en.slamtec.com/api/download/rplidar-a2m4-r1-model-3d-igs/1.0?lang=netural",
+    "license": "not stated",
+    "file": "cad/slamtec-rplidar-a3m1/rplidar-a2m4-r1.igs",
+    "reader": "native",
+    "rotate": [["x", 90]],
+    "note": "Slamtec publishes the A2M4 model for the A2/A3 family; the A2M12 and A3M1 drawings match it"
+  },
+  "slamtec-rplidar-s3": {
+    "url": "https://download-en.slamtec.com/api/download/rplidar-s3-model-3d-stp/1?lang=netural",
+    "license": "not stated",
+    "file": "cad/slamtec-rplidar-s3/s3_continue_20230605.stp",
+    "rotate": [["x", 90]]
+  },
+  "ldrobot-stl-27l": {
+    "url": "https://github.com/ldrobotSensorTeam/Product_3D_model/releases/download/v1.0/LDROBOT_LiDAR_LD19_3D_STP_V1.0.zip",
+    "license": "not stated (LDROBOT's official GitHub org; repo has no license file)",
+    "file": "cad/ldrobot-stl-27l/00_ld19-tof_20220315.stp",
+    "rotate": [["x", 90]],
+    "note": "LDROBOT's LD19 model; the STL-27L drawing matches it dimension for dimension"
+  },
+  "ouster-os1": {
+    "url": "https://data.ouster.io/downloads/sensor-cad-models/sensor-cad-rev7-os1.zip",
+    "license": "not stated on the download page; the bundled drawing is marked 'Proprietary and confidential \u2026 any reproduction \u2026 without the written permission of Ouster Inc is prohibited'",
+    "file": "cad/ouster-os1/700-105333-04-OS1ExteriorSpec_XX.STEP",
+    "hideMeshes": ["_FOV"],
+    "rotate": [["x", 90]],
+    "note": "The STEP includes a field-of-view keep-out body; hideMeshes drops it"
+  },
+  "ouster-os0": {
+    "url": "https://data.ouster.io/downloads/sensor-cad-models/sensor-cad-rev7-os0.zip",
+    "license": "not stated on the download page; the bundled drawing is marked 'Proprietary and confidential \u2026 any reproduction \u2026 without the written permission of Ouster Inc is prohibited'",
+    "file": "cad/ouster-os0/700-105332-04-OS0ExteriorSpec_XX.STEP",
+    "hideMeshes": ["_FOV"],
+    "rotate": [["x", 90]],
+    "note": "The STEP includes a field-of-view keep-out body; hideMeshes drops it"
+  },
+  "livox-avia": {
+    "url": "https://terra-1-g.djicdn.com/65c028cd298f4669a7f0e40e50ba1131/Download/Avia/Livox_Avia_shell_FOV.stp",
+    "license": "not stated",
+    "file": "cad/livox-avia/Livox_Avia_shell_FOV.stp",
+    "hideMeshes": ["FOV"],
+    "note": "The STEP includes the FOV shape; hideMeshes drops it",
+    "rotate": [
+      ["x", 90],
+      ["z", 180]
+    ]
+  },
+  "hesai-jt128": {
+    "url": "https://www.hesaitech.com/wp-content/uploads/2025/09/JT128-3D-Model.zip",
+    "license": "not stated",
+    "file": "cad/hesai-jt128/JT128-3D-Model.stp",
+    "keepBox": [
+      [-45, -45, -1],
+      [45, 45, 80]
+    ],
+    "note": "The STEP includes field-of-view surfaces; keepBox drops them"
+  },
+  "arducam-ov9281-global-shutter-usb": {
+    "url": "https://www.uctronics.com/download/Mechanical_Drawing/B0332.STEP",
+    "license": "not stated",
+    "file": "cad/arducam-ov9281-global-shutter-usb/B0332.STEP"
+  },
+  "seeed-xiao-esp32s3-sense": {
+    "url": "https://files.seeedstudio.com/wiki/SeeedStudio-XIAO-ESP32S3/res/seeed-studio-xiao-esp32s3-sense-3d_model.zip",
+    "license": "not stated",
+    "file": "cad/seeed-xiao-esp32s3-sense/Seeed_Studio_XIAO-ESP32-S3-Sense.step",
+    "rotate": [["x", 90]]
+  },
+  "trossen-widowx-250-gripper": {
+    "url": "https://docs.trossenrobotics.com/interbotix_xsarms_docs/_downloads/28c2ca01d80a2cb4e6af594adf2c9471/6_WXA-250-M.zip",
+    "license": "not stated (Trossen docs download)",
+    "file": "cad/trossen-widowx-250-gripper/6_-_WXA-250-M.step",
+    "keepBox": [
+      [-60, -520, 330],
+      [60, -405, 400]
+    ],
+    "rotate": [["x", -90]],
+    "note": "Trossen publishes the whole-arm STEP; keepBox keeps the gripper bodies (SRG v3 + finger carriages)",
+    "colorMap": {
+      "025d92 a60931 ": [0.12, 0.12, 0.13]
+    }
+  },
+  "allegro-hand-v4": {
+    "urdf": "cad/allegro-hand-v4/allegro_hand_model/urdf/allegro_hand_r.urdf",
+    "meshDir": "cad/allegro-hand-v4/allegro_hand_model/meshes",
+    "url": "https://github.com/Wonikrobotics-git/allegro_hand_model_v4",
+    "license": "MIT (allegro_hand_model_v4 repo)",
+    "rotate": [["z", 90]]
+  },
+  "linker-hand-l10": {
+    "urdf": "cad/linker-hand-l10/L20lite/right/linkerhand_l20lite_right.urdf",
+    "meshDir": "cad/linker-hand-l10/L20lite/right/meshes",
+    "url": "https://github.com/linker-bot/linkerhand-urdf/tree/main/L20lite/right",
+    "license": "Apache-2.0 (linkerhand-urdf repo)",
+    "rotate": [["z", 90]]
+  },
+  "linker-hand-o6": {
+    "urdf": "cad/linker-hand-o6/O6/right/linkerhand_o6_right.urdf",
+    "meshDir": "cad/linker-hand-o6/O6/right/meshes",
+    "url": "https://github.com/linker-bot/linkerhand-urdf/tree/main/O6/right",
+    "license": "Apache-2.0 (linkerhand-urdf repo)",
+    "rotate": [["z", 90]]
+  },
+  "agilex-piper-gripper": {
+    "urdf": "cad/agilex-piper-gripper/piper_description/urdf/piper_description.urdf",
+    "meshDir": "cad/agilex-piper-gripper/piper_description/meshes",
+    "rootLink": "gripper_base",
+    "url": "https://cdn.shopify.com/s/files/1/0673/6848/5000/files/AgileX_Gripper-1-STP.STEP?v=1782224095 (linked from AIFIT Lab's PiPER product page https://aifitlab.com/products/agilex-piper-robotic-arm)",
+    "license": "not stated"
+  },
+  "luxonis-oak-1": {
+    "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-1/OAK-1_ENCLOSURE.step",
+    "license": "not stated (linked from Luxonis's official depthai-hardware repo, BW1093_USB3C/3D_Models/README.md)",
+    "file": "cad/luxonis-oak-1/OAK-1_ENCLOSURE.step",
+    "rotate": [["x", -90]]
+  },
+  "luxonis-oak-d-s2": {
+    "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-S2/DM9098S2_enclosure.stp",
+    "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9098_OAK-D-S2/3D_Models/README.md)",
+    "file": "cad/luxonis-oak-d-s2/DM9098S2_enclosure.stp",
+    "rotate": [["x", 90]]
+  },
+  "luxonis-oak-d-w": {
+    "url": "https://oak-files.fra1.cdn.digitaloceanspaces.com/OAK-D-S2/DM9098W_enclosure.stp",
+    "license": "not stated (linked from Luxonis's official depthai-hardware repo, DM9098_OAK-D-S2/3D_Models/README.md)",
+    "file": "cad/luxonis-oak-d-w/DM9098W_enclosure.stp",
+    "rotate": [["x", 90]]
+  },
+  "stereolabs-zed-x": {
+    "url": "https://cdn.sanity.io/files/s18ewfw4/staging/0ddd9d208a26fcfc08cd91e402a4493e06a805ec.step/ZED%20X%20Wide.step",
+    "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels; direct download, no form)",
+    "file": "cad/stereolabs-zed-x/ZED_X_Wide.step",
+    "hideMeshes": ["FOV", "Image plane"]
+  },
+  "stereolabs-zed-x-mini": {
+    "url": "https://cdn.sanity.io/files/s18ewfw4/staging/05083ccd74e4dc296a9cf87ac94c51fbfca8c03a.step/ZED%20X%20Mini%20Wide.step",
+    "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels; direct download, no form)",
+    "file": "cad/stereolabs-zed-x-mini/ZED_X_Mini_Wide.step",
+    "hideMeshes": ["FOV", "Image plane"]
+  },
+  "orbbec-femto-bolt": {
+    "url": "https://orbbec-debian-repos-aws.s3.amazonaws.com/product/Femto_Bolt_CAD_files.zip",
+    "license": "not stated (Orbbec's own download bucket used by its documentation portal)",
+    "file": "cad/orbbec-femto-bolt/Femto_bolt.stp"
+  },
+  "orbbec-gemini-2": {
+    "url": "https://orbbec-debian-repos-aws.s3.amazonaws.com/product/Gemini2%26Gemini335_CAD_Files_V2.0.zip",
+    "license": "not stated (Orbbec's own download bucket used by its documentation portal 'Download CAD Files (Gemini 330 Series)')",
+    "file": "cad/orbbec-gemini-2/[3D][STP]Gemini_2_Gemini_335_Asm_with_FOV_V2.0_20241107.stp",
+    "rotate": [["x", 90]]
+  },
+  "stereolabs-zed-mini": {
+    "url": "https://cdn.sanity.io/files/s18ewfw4/staging/608b5b0dae4a90d239f30fc24bce6fbc8f24479f.step/ZEDM.step",
+    "file": "cad/stereolabs-zed-mini/ZEDM.step",
+    "license": "not stated (Stereolabs 3D models page, https://www.stereolabs.com/3dmodels)",
+    "rotate": [["z", 180]]
+  },
+  "realsense-d415": {
+    "url": "https://github.com/IntelRealSense/realsense-ros",
+    "mesh": "cad/realsense-d415/d415_realsense-ros.stl",
+    "meshScale": 1,
+    "license": "Apache-2.0 (realsense-ros)",
+    "defaultColor": [0.17, 0.17, 0.19],
+    "rotate": [["z", 180]]
+  },
+  "raspberry-pi-4b": {
+    "url": "https://grabcad.com/library/raspberry-pi-4-model-b-1",
+    "file": "cad/raspberry-pi-4b/raspberry-pi-4-model-b.step",
+    "license": "not stated (GrabCAD model by Hasanain Shuja, SolidWorks 2018 STEP AP214; mirrored at code.c-base.org/wercc/monorail-pcb). Checked against Raspberry Pi RP-008342 drawing: board, holes and connector centres within 0.01 mm",
+    "reader": "native",
+    "rotate": [["x", 90]],
+    "colorMap": {
+      "00c000": [0.1, 0.5, 0.26]
+    }
+  },
+  "stepperonline-14hs13-0804s": {
+    "url": "https://files.omc-stepperonline.com/14HS13-0804S.STEP",
+    "license": "not stated",
+    "file": "cad/stepperonline-14hs13-0804s/14HS13-0804S.STEP",
+    "rotate": [["x", 180]]
+  },
+  "stepperonline-17hs19-2004s1": {
+    "url": "https://files.omc-stepperonline.com/17HS19-2004S1.STEP",
+    "license": "not stated",
+    "file": "cad/stepperonline-17hs19-2004s1/17HS19-2004S1.STEP",
+    "rotate": [["x", 180]]
+  },
+  "stepperonline-17he08-1004s": {
+    "url": "https://files.omc-stepperonline.com/17HE08-1004S.STEP",
+    "license": "not stated",
+    "file": "cad/stepperonline-17he08-1004s/17HE08-1004S.STEP",
+    "rotate": [["x", 180]]
+  },
+  "stepperonline-23hs22-2804s": {
+    "url": "https://files.omc-stepperonline.com/23HS22-2804S.STEP",
+    "license": "not stated",
+    "file": "cad/stepperonline-23hs22-2804s/23HS22-2804S.STEP"
+  },
+  "pololu-37d-gearmotor": {
+    "url": "https://www.pololu.com/file/0J1868/37d-gearmotor-3d-models.zip",
+    "license": "not stated",
+    "file": "cad/pololu-37d-gearmotor/37d-gearmotor-50-70-encoder.step"
+  },
+  "pololu-25d-gearmotor": {
+    "url": "https://www.pololu.com/file/0J1647/25d-gearmotor-3d-models.zip",
+    "license": "not stated",
+    "file": "cad/pololu-25d-gearmotor/25d-metal-gearmotor-75-99-encoder.step"
+  },
+  "pololu-micro-metal-gearmotor-encoder": {
+    "url": "https://www.pololu.com/file/0J2042/Pololu%20Micro%20Metal%20Gearmotor%203D%20(STEP)%20Models.zip",
+    "license": "not stated",
+    "file": "cad/pololu-micro-metal-gearmotor-encoder/mmgm-cb-enc-back-con.step",
+    "rotate": [["y", -90]]
+  },
+  "cubemars-ak60-6": {
+    "url": "https://www.cubemars.com/data/cms/202602/ak60-6-v1-1-robotic-actuator-3d-drawing.zip",
+    "license": "not stated",
+    "file": "cad/cubemars-ak60-6/ak60-6v1-1.stp",
+    "rotate": [["y", -90]]
+  },
+  "cubemars-ak70-10": {
+    "url": "https://www.cubemars.com/data/cms/202607/ak70-10-robotic-actuator-3d-drawing.zip",
+    "license": "not stated",
+    "file": "cad/cubemars-ak70-10/AK70-10_V2.0.STEP",
+    "rotate": [["x", -90]]
+  },
+  "cubemars-ak80-9": {
+    "url": "https://www.cubemars.com/data/cms/202602/ak80-9-v3-0-robotic-actuator-3d-drawing.zip",
+    "license": "not stated",
+    "file": "cad/cubemars-ak80-9/AK80-9_V3.0.STEP",
+    "colorMap": {
+      "e5ff2f": [0.16, 0.16, 0.18],
+      "18ffff": [0.62, 0.63, 0.66],
+      "ff701d": [0.16, 0.16, 0.18],
+      "ff4fc6": [0.16, 0.16, 0.18],
+      "6dc6ff": [0.62, 0.63, 0.66],
+      "fdba8a": [0.16, 0.16, 0.18],
+      "ff79e7": [0.16, 0.16, 0.18],
+      "da85ff": [0.16, 0.16, 0.18],
+      "4fbeff": [0.62, 0.63, 0.66],
+      "ff3e67": [0.16, 0.16, 0.18],
+      "6036ff": [0.16, 0.16, 0.18],
+      "ff4605": [0.16, 0.16, 0.18],
+      "99999e": [0.62, 0.63, 0.66],
+      "ffff37": [0.16, 0.16, 0.18]
+    }
+  },
+  "odrive-d6374": {
+    "url": "https://drive.google.com/open?id=1LjfDNQpxAVkRACwujK5fplHAqYl4Gxj-",
+    "license": "not stated",
+    "file": "cad/odrive-d6374/odrive-d6374-150kv.step",
+    "colorMap": {
+      "569fd8": [0.2, 0.2, 0.22]
+    },
+    "rotate": [["x", -90]]
+  },
+  "unitree-go-m8010-6": {
+    "url": "https://cdn.shopify.com/s/files/1/0673/6848/5000/files/Unitree_GO_M8010_6_Motor.stp",
+    "license": "not stated",
+    "file": "cad/unitree-go-m8010-6/Unitree_GO_M8010_6_Motor.stp",
+    "rotate": [["y", -90]]
+  },
+  "myactuator-rmd-x8-pro": {
+    "url": "https://www.myactuator.com/_files/archives/cab28a_85824a1893de4b058080c363664a1c9f.zip?dn=X8-25%20%20240814.zip",
+    "license": "not stated",
+    "file": "cad/myactuator-rmd-x8-pro/X8-25_RMD-X8-PRO-1-9-V2.step",
+    "rotate": [["x", -90]]
+  },
+  "robstride-02": {
+    "url": "https://github.com/RobStride/Product_Information/blob/HEAD/Product%20Literature/RS02/rs02.stp",
+    "license": "not stated (repo has no license)",
+    "file": "cad/robstride-02/rs02.stp"
+  },
+  "mjbots-qdd100": {
+    "url": "https://drive.google.com/file/d/1tFlEveIIp6fHuRU71R3Fa23M5Sey8nuo/view?usp=sharing",
+    "license": "not stated",
+    "file": "cad/mjbots-qdd100/qdd100-beta3-mechanical.step"
+  },
+  "mjbots-moteus-r4": {
+    "url": "https://raw.githubusercontent.com/mjbots/moteus/main/hw/controller/r4.5/20210124-moteus-controller-r45-mechanical.step",
+    "license": "Apache-2.0 (mjbots/moteus repository license)",
+    "file": "cad/mjbots-moteus-r4/20210124-moteus-controller-r45-mechanical.step",
+    "rotate": [["x", -90]],
+    "colorMap": {
+      "ce6b04": [0.12, 0.12, 0.13]
+    }
+  },
+  "mjbots-moteus-c1": {
+    "url": "https://raw.githubusercontent.com/mjbots/moteus/main/hw/c1/r1.2/20240305-moteus-c1-r1_2.step",
+    "license": "Apache-2.0 (mjbots/moteus repository license)",
+    "file": "cad/mjbots-moteus-c1/20240305-moteus-c1-r1_2.step",
+    "rotate": [["x", -90]],
+    "colorMap": {
+      "5a5a5a": [0.12, 0.12, 0.13]
+    }
+  },
+  "pololu-a4988": {
+    "url": "https://www.pololu.com/file/0J1223/a4988-stepper-motor-driver-carrier.step",
+    "license": "not stated",
+    "file": "cad/pololu-a4988/a4988-stepper-motor-driver-carrier.step"
+  },
+  "pololu-drv8825": {
+    "url": "https://www.pololu.com/file/0J1226/drv8825-stepper-motor-driver-carrier-high-current.step",
+    "license": "not stated",
+    "file": "cad/pololu-drv8825/drv8825-stepper-motor-driver-carrier-high-current.step"
+  },
+  "pololu-tb6612fng": {
+    "url": "https://www.pololu.com/file/0J1725/tb6612fng-dual-motor-driver-carrier.step",
+    "license": "not stated",
+    "file": "cad/pololu-tb6612fng/tb6612fng-dual-motor-driver-carrier.step"
+  },
+  "basicmicro-roboclaw-2x15a": {
+    "url": "https://downloads.basicmicro.com/cad/MC15A_V5.zip",
+    "license": "not stated (drawing title block: property of Dale Kubin, not to be reproduced without permission)",
+    "file": "cad/basicmicro-roboclaw-2x15a/MC15A_V5.IGS",
+    "reader": "native",
+    "rotate": [["x", 90]]
+  },
+  "robotis-u2d2": {
+    "url": "https://www.dropbox.com/scl/fi/bixqw1njt1mjppul0uhhv/U2D2.stp?rlkey=w700rk1ymotxuirw3styu6f5d&dl=1",
+    "license": "not stated",
+    "file": "cad/robotis-u2d2/U2D2.stp",
+    "colorMap": {
+      "99999e": [0.08, 0.08, 0.09]
+    }
+  },
+  "dynamixel-xm430-w350": {
+    "url": "https://www.robotis.com/service/download.php?no=158",
+    "license": "not stated",
+    "file": "cad/dynamixel-xm430-w350/x-430_idle.stp",
+    "defaultColor": [0.11, 0.11, 0.12]
+  },
+  "dynamixel-xm540-w270": {
+    "url": "https://www.robotis.com/service/download.php?no=2084",
+    "license": "not stated",
+    "file": "cad/dynamixel-xm540-w270/XM540_N101_I101.stp",
+    "defaultColor": [0.11, 0.11, 0.12]
+  },
+  "dynamixel-xc330-m288": {
+    "url": "https://www.robotis.com/service/download.php?no=1987",
+    "license": "not stated",
+    "file": "cad/dynamixel-xc330-m288/XC330.stp",
+    "defaultColor": [0.11, 0.11, 0.12]
+  },
+  "dynamixel-2xl430-w250": {
+    "url": "https://www.robotis.com/service/download.php?no=1744",
+    "license": "not stated",
+    "file": "cad/dynamixel-2xl430-w250/2XL430.stp",
+    "defaultColor": [0.11, 0.11, 0.12]
+  },
+  "hiwonder-lx-16a": {
+    "url": "https://drive.google.com/file/d/1d1t_0h7B9DSCI-F0zA5wF3QTpglYqgzQ",
+    "license": "not stated",
+    "file": "cad/hiwonder-lx-16a/LX16A.STEP",
+    "rotate": [["x", -90]]
+  },
+  "dsservo-ds3218": {
+    "url": "https://www.dsservo.com/d_file/DS3218.rar",
+    "license": "not stated",
+    "file": "cad/dsservo-ds3218/DS3218.stp",
+    "rotate": [["x", 90]],
+    "colorMap": {
+      "99999e": [0.1, 0.1, 0.11]
+    }
+  },
+  "waveshare-st3215-hs": {
+    "url": "https://files.waveshare.com/upload/5/59/ST3215-3D.zip",
+    "license": "not stated",
+    "file": "cad/waveshare-st3215-hs/ST3215.step",
+    "rotate": [["x", -90]]
+  },
+  "feetech-sts3215": {
+    "url": "https://files.waveshare.com/upload/5/59/ST3215-3D.zip",
+    "file": "cad/waveshare-st3215-hs/ST3215.step",
+    "license": "not stated (Waveshare ST3215 model: the same Feetech servo sold under Waveshare's name; outline matches Feetech's STS3215/STS3250 drawing, 45.22 \u00d7 24.72 mm)",
+    "rotate": [["x", -90]]
+  },
+  "feetech-sts3250": {
+    "url": "https://files.waveshare.com/upload/5/59/ST3215-3D.zip",
+    "file": "cad/waveshare-st3215-hs/ST3215.step",
+    "license": "not stated (Waveshare ST3215 model: the same Feetech servo sold under Waveshare's name; outline matches Feetech's STS3215/STS3250 drawing, 45.22 \u00d7 24.72 mm)",
+    "rotate": [["x", -90]]
   }
- },
- "mjbots-moteus-c1": {
-  "url": "https://raw.githubusercontent.com/mjbots/moteus/main/hw/c1/r1.2/20240305-moteus-c1-r1_2.step",
-  "license": "Apache-2.0 (mjbots/moteus repository license)",
-  "file": "cad/mjbots-moteus-c1/20240305-moteus-c1-r1_2.step",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ],
-  "colorMap": {
-   "5a5a5a": [
-    0.12,
-    0.12,
-    0.13
-   ]
-  }
- },
- "pololu-a4988": {
-  "url": "https://www.pololu.com/file/0J1223/a4988-stepper-motor-driver-carrier.step",
-  "license": "not stated",
-  "file": "cad/pololu-a4988/a4988-stepper-motor-driver-carrier.step"
- },
- "pololu-drv8825": {
-  "url": "https://www.pololu.com/file/0J1226/drv8825-stepper-motor-driver-carrier-high-current.step",
-  "license": "not stated",
-  "file": "cad/pololu-drv8825/drv8825-stepper-motor-driver-carrier-high-current.step"
- },
- "pololu-tb6612fng": {
-  "url": "https://www.pololu.com/file/0J1725/tb6612fng-dual-motor-driver-carrier.step",
-  "license": "not stated",
-  "file": "cad/pololu-tb6612fng/tb6612fng-dual-motor-driver-carrier.step"
- },
- "basicmicro-roboclaw-2x15a": {
-  "url": "https://downloads.basicmicro.com/cad/MC15A_V5.zip",
-  "license": "not stated (drawing title block: property of Dale Kubin, not to be reproduced without permission)",
-  "file": "cad/basicmicro-roboclaw-2x15a/MC15A_V5.IGS",
-  "reader": "native",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ]
- },
- "robotis-u2d2": {
-  "url": "https://www.dropbox.com/scl/fi/bixqw1njt1mjppul0uhhv/U2D2.stp?rlkey=w700rk1ymotxuirw3styu6f5d&dl=1",
-  "license": "not stated",
-  "file": "cad/robotis-u2d2/U2D2.stp",
-  "colorMap": {
-   "99999e": [
-    0.08,
-    0.08,
-    0.09
-   ]
-  }
- },
- "dynamixel-xm430-w350": {
-  "url": "https://www.robotis.com/service/download.php?no=158",
-  "license": "not stated",
-  "file": "cad/dynamixel-xm430-w350/x-430_idle.stp",
-  "defaultColor": [
-   0.11,
-   0.11,
-   0.12
-  ]
- },
- "dynamixel-xm540-w270": {
-  "url": "https://www.robotis.com/service/download.php?no=2084",
-  "license": "not stated",
-  "file": "cad/dynamixel-xm540-w270/XM540_N101_I101.stp",
-  "defaultColor": [
-   0.11,
-   0.11,
-   0.12
-  ]
- },
- "dynamixel-xc330-m288": {
-  "url": "https://www.robotis.com/service/download.php?no=1987",
-  "license": "not stated",
-  "file": "cad/dynamixel-xc330-m288/XC330.stp",
-  "defaultColor": [
-   0.11,
-   0.11,
-   0.12
-  ]
- },
- "dynamixel-2xl430-w250": {
-  "url": "https://www.robotis.com/service/download.php?no=1744",
-  "license": "not stated",
-  "file": "cad/dynamixel-2xl430-w250/2XL430.stp",
-  "defaultColor": [
-   0.11,
-   0.11,
-   0.12
-  ]
- },
- "hiwonder-lx-16a": {
-  "url": "https://drive.google.com/file/d/1d1t_0h7B9DSCI-F0zA5wF3QTpglYqgzQ",
-  "license": "not stated",
-  "file": "cad/hiwonder-lx-16a/LX16A.STEP",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "dsservo-ds3218": {
-  "url": "https://www.dsservo.com/d_file/DS3218.rar",
-  "license": "not stated",
-  "file": "cad/dsservo-ds3218/DS3218.stp",
-  "rotate": [
-   [
-    "x",
-    90
-   ]
-  ],
-  "colorMap": {
-   "99999e": [
-    0.1,
-    0.1,
-    0.11
-   ]
-  }
- },
- "waveshare-st3215-hs": {
-  "url": "https://files.waveshare.com/upload/5/59/ST3215-3D.zip",
-  "license": "not stated",
-  "file": "cad/waveshare-st3215-hs/ST3215.step",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "feetech-sts3215": {
-  "url": "https://files.waveshare.com/upload/5/59/ST3215-3D.zip",
-  "file": "cad/waveshare-st3215-hs/ST3215.step",
-  "license": "not stated (Waveshare ST3215 model: the same Feetech servo sold under Waveshare's name; outline matches Feetech's STS3215/STS3250 drawing, 45.22 \u00d7 24.72 mm)",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- },
- "feetech-sts3250": {
-  "url": "https://files.waveshare.com/upload/5/59/ST3215-3D.zip",
-  "file": "cad/waveshare-st3215-hs/ST3215.step",
-  "license": "not stated (Waveshare ST3215 model: the same Feetech servo sold under Waveshare's name; outline matches Feetech's STS3215/STS3250 drawing, 45.22 \u00d7 24.72 mm)",
-  "rotate": [
-   [
-    "x",
-    -90
-   ]
-  ]
- }
 }

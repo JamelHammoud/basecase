@@ -1,15 +1,27 @@
 import React, { useMemo, useState } from 'react';
-import { ContextMenu, ContextMenuEntry, EmptyState, RobotsIcon, SearchField, SectionHeader, useScrollFade } from '../design-system';
+import {
+  ContextMenu,
+  ContextMenuEntry,
+  EmptyState,
+  RobotsIcon,
+  SearchField,
+  SectionHeader,
+  useScrollFade,
+} from '../design-system';
 import { ROBOT_CATEGORIES, ROBOT_PRESETS, rawUrl, type RobotPreset } from '../utils/robotImport';
 import { ROBOT_DRAG_TYPE } from '../data/dnd';
 import { forgetImportedRobot, presetPreviewUrl, useImportedRobots, type ImportedRobot } from '../utils/robotPreview';
 
-/**
- * Robots: published robots to insert with their real joints, ready to pose. Search first, then
- * Imported (robots you inserted from a link) and one section per kind (Humanoids, Small bipeds,
- * Quadrupeds, Arms, Hands), as tiles with a preview of each robot. Import Robot… (a URDF or MJCF
- * link or folder) is the + in the view's header.
- */
+const asPreset = (r: ImportedRobot): RobotPreset => ({
+  id: r.url,
+  title: r.name,
+  maker: '',
+  category: 'Humanoids',
+  joints: r.joints,
+  description: '',
+  url: r.url,
+});
+
 export const RobotsPanel: React.FC<{
   onInsert: (preset: RobotPreset) => Promise<unknown> | void;
 }> = ({ onInsert }) => {
@@ -20,30 +32,53 @@ export const RobotsPanel: React.FC<{
   const remembered = useImportedRobots();
   const q = query.trim().toLowerCase();
   const presetUrls = useMemo(() => new Set(ROBOT_PRESETS.map((p) => rawUrl(p.url))), []);
-  const imported = remembered.filter((r) => !presetUrls.has(rawUrl(r.url)) && (!q || [r.name, r.url].some((s) => s.toLowerCase().includes(q))));
-  const shown = ROBOT_PRESETS.filter((r) => !q || [r.title, r.maker, r.category, r.description].some((s) => s.toLowerCase().includes(q)));
-  // A preset's own import preview, if its shipped one is missing
+  const imported = remembered.filter(
+    (r) => !presetUrls.has(rawUrl(r.url)) && (!q || [r.name, r.url].some((s) => s.toLowerCase().includes(q))),
+  );
+  const shown = ROBOT_PRESETS.filter(
+    (r) => !q || [r.title, r.maker, r.category, r.description].some((s) => s.toLowerCase().includes(q)),
+  );
   const fallback = (p: RobotPreset) => remembered.find((r) => rawUrl(r.url) === rawUrl(p.url))?.thumbnail;
 
   const insert = async (key: string, preset: RobotPreset) => {
     if (busy) return;
+
     setBusy(key);
+
     try {
       await onInsert(preset);
     } finally {
       setBusy(null);
     }
   };
-  /** An imported robot inserts again from its link */
-  const asPreset = (r: ImportedRobot): RobotPreset => ({
-    id: r.url,
-    title: r.name,
-    maker: '',
-    category: 'Humanoids',
-    joints: r.joints,
-    description: '',
-    url: r.url,
-  });
+
+  const insertFirst = () => {
+    if (imported.length) {
+      void insert(imported[0].url, asPreset(imported[0]));
+
+      return;
+    }
+
+    if (shown.length) void insert(shown[0].id, shown[0]);
+  };
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape' && query) setQuery('');
+    else if (e.key === 'Escape') (e.target as HTMLInputElement).blur();
+
+    if (e.key === 'Enter') insertFirst();
+  };
+  const openImportedMenu = (e: React.MouseEvent, r: ImportedRobot) => {
+    e.preventDefault();
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      entries: [
+        { label: 'Insert', onSelect: () => void insert(r.url, asPreset(r)) },
+        { divider: true },
+        { label: 'Remove from Imported', tone: 'danger', onSelect: () => forgetImportedRobot(r.url) },
+      ],
+    });
+  };
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
@@ -51,16 +86,7 @@ export const RobotsPanel: React.FC<{
         <SearchField
           value={query}
           onChange={setQuery}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              if (query) setQuery('');
-              else (e.target as HTMLInputElement).blur();
-            }
-            if (e.key === 'Enter') {
-              if (imported.length) void insert(imported[0].url, asPreset(imported[0]));
-              else if (shown.length) void insert(shown[0].id, shown[0]);
-            }
-          }}
+          onKeyDown={handleKeyDown}
           placeholder="Search robots"
           aria-label="Search robots"
         />
@@ -83,18 +109,7 @@ export const RobotsPanel: React.FC<{
                       disabled={!!busy}
                       drag={{ url: r.url, name: r.name }}
                       onInsert={() => void insert(r.url, asPreset(r))}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setMenu({
-                          x: e.clientX,
-                          y: e.clientY,
-                          entries: [
-                            { label: 'Insert', onSelect: () => void insert(r.url, asPreset(r)) },
-                            { divider: true },
-                            { label: 'Remove from Imported', tone: 'danger', onSelect: () => forgetImportedRobot(r.url) },
-                          ],
-                        });
-                      }}
+                      onContextMenu={(e) => openImportedMenu(e, r)}
                     />
                   ))}
                 </TileGrid>
@@ -102,7 +117,9 @@ export const RobotsPanel: React.FC<{
             )}
             {ROBOT_CATEGORIES.map((c) => {
               const list = shown.filter((r) => r.category === c);
+
               if (!list.length) return null;
+
               return (
                 <section key={c} className="mb-3">
                   <SectionHeader title={c} />
@@ -130,10 +147,11 @@ export const RobotsPanel: React.FC<{
   );
 };
 
-/** "unitreerobotics/unitree_ros" for a GitHub link, else the host */
 function sourceOf(url: string): string {
   const m = /^https?:\/\/(?:raw\.githubusercontent\.com|github\.com)\/([^/]+)\/([^/]+)/.exec(url);
+
   if (m) return `${m[1]}/${m[2]}`;
+
   try {
     return new URL(url).host;
   } catch {
@@ -145,21 +163,19 @@ const TileGrid: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="grid grid-cols-2 gap-x-[8px] gap-y-[12px] px-[4px] pt-1">{children}</div>
 );
 
-/** A Parts-style tile: 4:3 preview that zooms on hover, name, one meta line; click inserts */
 const RobotTile: React.FC<{
   name: string;
   meta: string;
-  /** Preview sources in order of preference (the next is tried when one fails to load) */
   images: Array<string | undefined>;
   disabled: boolean;
   onInsert: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
-  /** Dragged onto the canvas, the robot is imported where it's dropped */
   drag: { url: string; name: string };
 }> = ({ name, meta, images, disabled, onInsert, onContextMenu, drag }) => {
   const sources = images.filter((s): s is string => !!s);
   const [failed, setFailed] = useState(0);
   const src = sources[failed];
+
   return (
     <button
       type="button"
@@ -170,7 +186,9 @@ const RobotTile: React.FC<{
       onDragStart={(e) => {
         e.dataTransfer.setData(ROBOT_DRAG_TYPE, JSON.stringify(drag));
         e.dataTransfer.effectAllowed = 'copy';
+
         const img = e.currentTarget.querySelector('img');
+
         if (img) e.dataTransfer.setDragImage(img, img.width / 2, img.height / 2);
       }}
       className="group w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"

@@ -1,78 +1,78 @@
 {
- "id": "esp32-s3-devkitc-1",
- "name": "Espressif ESP32-S3-DevKitC-1",
- "manufacturer": "Espressif Systems",
- "mpn": "ESP32-S3-DevKitC-1-N8R8 (also -N32R16V; 1U-N8R8 with U.FL; N8/N8R2 EOL)",
- "category": "boards",
- "description": "Breadboard dev board for the ESP32-S3-WROOM-1/1U/2 module with two USB ports (USB-UART and native USB) and 2×22 headers.",
- "specs": [
-  {
-   "label": "SoC",
-   "value": "ESP32-S3, dual-core Xtensa LX7 up to 240 MHz, 512 kB SRAM"
-  },
-  {
-   "label": "Module / memory",
-   "value": "N8R8: ESP32-S3-WROOM-1-N8R8, 8 MB flash + 8 MB PSRAM"
-  },
-  {
-   "label": "Wireless",
-   "value": "Wi-Fi 802.11 b/g/n 2.4 GHz, Bluetooth LE 5"
-  },
-  {
-   "label": "USB",
-   "value": "2× USB: USB-to-UART bridge port and ESP32-S3 native USB OTG port"
-  },
-  {
-   "label": "Headers",
-   "value": "2× 22-pin 2.54 mm (44 pins)"
-  },
-  {
-   "label": "Power",
-   "value": "5 V via either USB port or 5V pin; 3.3 V I/O"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 25.4,
-   "y": 62.74,
-   "z": null,
-   "axes": "x = width, y = length from USB edge (y=0) to antenna end of the PCB; PCB outline only. Module antenna overhang and USB overhang see features. Height not published."
-  },
-  "features": [
-   {
-    "label": "PCB outline",
-    "value": "25.40 × 62.74 mm, no mounting holes",
-    "source": "https://dl.espressif.com/dl/schematics/esp_idf/DXF_ESP32-S3-DevKitC-1_V1.1_20220429.pdf"
-   },
-   {
-    "label": "Header pins",
-    "value": "Two rows of 22 pins, 2.54 mm pitch, centres at x = 1.27 and x = 24.13 mm (row spacing 22.86 mm). Pin centres run from y = 7.96 mm (USB end) to y = 61.30 mm. Drawing labels '1.27 mm' edge inset and '8.00 mm' to the USB edge.",
-    "source": "DXF_ESP32-S3-DevKitC-1_V1.1_20220429.dxf (PADLAYER_TOP / TOOL_BOT coordinates)"
-   },
-   {
-    "label": "Module antenna overhang",
-    "value": "WROOM-1 module (18.0 mm wide, x 3.75-21.75) extends past the PCB end: its outline reaches y = 69.15 mm, about 6.4 mm beyond the 62.74 mm edge (from DXF geometry, not a labelled dimension).",
-    "source": "DXF layer TOP"
-   },
-   {
-    "label": "USB connectors",
-    "value": "Two USB receptacles, J2 (UART bridge) and J4 (native USB), on the y=0 edge; connector type is not stated on the drawing. Their outline extends about 0.87 mm past the PCB edge (from DXF geometry, not a labelled dimension).",
-    "source": "DXF layer 2DLINES_1"
-   }
+  "id": "esp32-s3-devkitc-1",
+  "name": "Espressif ESP32-S3-DevKitC-1",
+  "manufacturer": "Espressif Systems",
+  "mpn": "ESP32-S3-DevKitC-1-N8R8 (also -N32R16V; 1U-N8R8 with U.FL; N8/N8R2 EOL)",
+  "category": "boards",
+  "description": "Breadboard dev board for the ESP32-S3-WROOM-1/1U/2 module with two USB ports (USB-UART and native USB) and 2×22 headers.",
+  "specs": [
+    {
+      "label": "SoC",
+      "value": "ESP32-S3, dual-core Xtensa LX7 up to 240 MHz, 512 kB SRAM"
+    },
+    {
+      "label": "Module / memory",
+      "value": "N8R8: ESP32-S3-WROOM-1-N8R8, 8 MB flash + 8 MB PSRAM"
+    },
+    {
+      "label": "Wireless",
+      "value": "Wi-Fi 802.11 b/g/n 2.4 GHz, Bluetooth LE 5"
+    },
+    {
+      "label": "USB",
+      "value": "2× USB: USB-to-UART bridge port and ESP32-S3 native USB OTG port"
+    },
+    {
+      "label": "Headers",
+      "value": "2× 22-pin 2.54 mm (44 pins)"
+    },
+    {
+      "label": "Power",
+      "value": "5 V via either USB port or 5V pin; 3.3 V I/O"
+    }
   ],
-  "source": "https://dl.espressif.com/dl/schematics/esp_idf/DXF_ESP32-S3-DevKitC-1_V1.1_20220429.pdf (v1.1 dimension drawing; DXF source alongside)"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B09MHP42LY",
-   "asin": "B09MHP42LY",
-   "title": "ESP32-S3-DevKitC-1-N8R8 Development Board",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 25.4,
+      "y": 62.74,
+      "z": null,
+      "axes": "x = width, y = length from USB edge (y=0) to antenna end of the PCB; PCB outline only. Module antenna overhang and USB overhang see features. Height not published."
+    },
+    "features": [
+      {
+        "label": "PCB outline",
+        "value": "25.40 × 62.74 mm, no mounting holes",
+        "source": "https://dl.espressif.com/dl/schematics/esp_idf/DXF_ESP32-S3-DevKitC-1_V1.1_20220429.pdf"
+      },
+      {
+        "label": "Header pins",
+        "value": "Two rows of 22 pins, 2.54 mm pitch, centres at x = 1.27 and x = 24.13 mm (row spacing 22.86 mm). Pin centres run from y = 7.96 mm (USB end) to y = 61.30 mm. Drawing labels '1.27 mm' edge inset and '8.00 mm' to the USB edge.",
+        "source": "DXF_ESP32-S3-DevKitC-1_V1.1_20220429.dxf (PADLAYER_TOP / TOOL_BOT coordinates)"
+      },
+      {
+        "label": "Module antenna overhang",
+        "value": "WROOM-1 module (18.0 mm wide, x 3.75-21.75) extends past the PCB end: its outline reaches y = 69.15 mm, about 6.4 mm beyond the 62.74 mm edge (from DXF geometry, not a labelled dimension).",
+        "source": "DXF layer TOP"
+      },
+      {
+        "label": "USB connectors",
+        "value": "Two USB receptacles, J2 (UART bridge) and J4 (native USB), on the y=0 edge; connector type is not stated on the drawing. Their outline extends about 0.87 mm past the PCB edge (from DXF geometry, not a labelled dimension).",
+        "source": "DXF layer 2DLINES_1"
+      }
+    ],
+    "source": "https://dl.espressif.com/dl/schematics/esp_idf/DXF_ESP32-S3-DevKitC-1_V1.1_20220429.pdf (v1.1 dimension drawing; DXF source alongside)"
   },
-  "product": "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html",
-  "datasheet": "https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf"
- },
- "notes": "The connector rows above were read from the official DXF; the USB-receptacle and antenna overhangs are geometry measurements from the same DXF, not labelled dimensions - verify against the board. Espressif's v1.1 board uses the WROOM-1 (PCB antenna); the 1U variant has a U.FL connector and no overhanging antenna. Amazon listing is on the Espressif brand store.",
- "pose": "board"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B09MHP42LY",
+      "asin": "B09MHP42LY",
+      "title": "ESP32-S3-DevKitC-1-N8R8 Development Board",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html",
+    "datasheet": "https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf"
+  },
+  "notes": "The connector rows above were read from the official DXF; the USB-receptacle and antenna overhangs are geometry measurements from the same DXF, not labelled dimensions - verify against the board. Espressif's v1.1 board uses the WROOM-1 (PCB antenna); the 1U variant has a U.FL connector and no overhanging antenna. Amazon listing is on the Espressif brand store.",
+  "pose": "board"
 }

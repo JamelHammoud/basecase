@@ -1,19 +1,11 @@
 import * as THREE from 'three';
 
-/**
- * Infinite millimeter grid on the floor (y = 0).
- *
- * A camera-following plane with a screen-space shader: 1 / 10 / 100 / 1000 mm lines fade in
- * and out by on-screen density (no moiré when zoomed out or at grazing angles), the X and Z
- * axes run forever, and everything fades into the distance.
- */
 export interface InfiniteGrid {
   mesh: THREE.Mesh;
-  /** Call each frame: scales the fade distance with how far the camera is from its target */
   update: (camera: THREE.Camera, target: THREE.Vector3) => void;
 }
 
-const vertexShader = /* glsl */ `
+const vertexShader = `
   uniform float uExtent;
   varying vec3 vWorld;
   void main() {
@@ -25,7 +17,7 @@ const vertexShader = /* glsl */ `
   }
 `;
 
-const fragmentShader = /* glsl */ `
+const fragmentShader = `
   uniform vec3 uColor;
   uniform vec3 uAxisX;
   uniform vec3 uAxisZ;
@@ -89,13 +81,14 @@ export function createInfiniteGrid(): InfiniteGrid {
     fragmentShader,
     transparent: true,
     depthWrite: false,
-    toneMapped: false, // keep line contrast exact (the scene uses ACES)
+    toneMapped: false,
     side: THREE.DoubleSide,
   });
 
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 1, 1), material);
+
   mesh.name = 'infinite-grid';
-  mesh.frustumCulled = false; // the shader moves it with the camera
+  mesh.frustumCulled = false;
   mesh.renderOrder = -1;
   mesh.raycast = () => {};
 
@@ -103,8 +96,8 @@ export function createInfiniteGrid(): InfiniteGrid {
     mesh,
     update: (camera, target) => {
       const d = camera.position.distanceTo(target);
-      // Far camera → see more floor; stays inside the camera's far plane
       const fade = Math.min(70000, Math.max(1200, d * 7));
+
       material.uniforms.uFade.value = fade;
       material.uniforms.uExtent.value = fade;
     },

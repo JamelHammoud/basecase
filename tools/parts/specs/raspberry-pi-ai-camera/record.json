@@ -1,92 +1,92 @@
 {
- "id": "raspberry-pi-ai-camera",
- "name": "Raspberry Pi AI Camera",
- "manufacturer": "Raspberry Pi Ltd",
- "mpn": "SC1174",
- "category": "cameras",
- "description": "12.3 MP Sony IMX500 CSI-2 camera that runs neural-network inference on the sensor and outputs tensor metadata with each frame.",
- "specs": [
-  {
-   "label": "Sensor",
-   "value": "Sony IMX500, 12.3 MP (4056 × 3040), type 1/2.3, 1.55 µm pixels"
-  },
-  {
-   "label": "Lens",
-   "value": "4.74 mm focal length, f/1.79, manual focus 20 cm – ∞, IR-cut integrated"
-  },
-  {
-   "label": "FOV",
-   "value": "66.3° ±3 H × 52.3° ±3 V"
-  },
-  {
-   "label": "Frame rate",
-   "value": "2028 × 1520 @ 30 fps (2×2 binned); 4056 × 3040 @ 10 fps"
-  },
-  {
-   "label": "On-sensor AI",
-   "value": "Input tensor up to 640 × 640, int8/uint8, 8,388,480 bytes for firmware + weights + working memory"
-  },
-  {
-   "label": "Interface",
-   "value": "MIPI CSI-2; 15 × 1 mm or 22 × 0.5 mm FPC, 200 mm cable"
-  },
-  {
-   "label": "Price",
-   "value": "$70 list"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 25.0,
-   "y": 23.862,
-   "z": 11.9,
-   "axes": "x = PCB width (25 mm), y = PCB height incl. connector edge (23.862 mm), z = overall depth (11.9 mm, product brief spec table)"
-  },
-  "features": [
-   {
-    "label": "PCB outline",
-    "value": "25 × 23.862 mm; identical outline and hole positions to Camera Module 3",
-    "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.2 and p.4 (Physical specification)"
-   },
-   {
-    "label": "Mounting holes",
-    "value": "4× Ø2.2 mm. Centers 2.0 mm from the left/right edges (21 mm pitch along x) and 2.0 mm and 14.5 mm from the edge opposite the connector (12.5 mm pitch along y)",
-    "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
-   },
-   {
-    "label": "Lens position",
-    "value": "Lens center on the x centerline (12.5 mm) and 14.4 mm from the edge opposite the connector (= 9.462 mm from the connector edge); lens front Ø5.75 mm",
-    "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
-   },
-   {
-    "label": "Optics housing",
-    "value": "12.8 mm wide (front view)",
-    "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
-   },
-   {
-    "label": "Side-view dimensions",
-    "value": "Drawing labels 1 and 1.12 (PCB/flex stack), 2.75, 3.875 and 6.98 (lens stack steps), 5.71 and 2.55 (rear connector); FOV cones 66.3° and 52.3°. Read from the drawing; the brief says dimensions are approximate",
-    "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
-   },
-   {
-    "label": "Other callouts",
-    "value": "Ø4.75 (ring near the lower-right hole, likely pad/keep-out), 19.5 and 12.5 (vertical callouts on the left of the front view), 19.61 (rear connector width in the bottom view)",
-    "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
-   }
+  "id": "raspberry-pi-ai-camera",
+  "name": "Raspberry Pi AI Camera",
+  "manufacturer": "Raspberry Pi Ltd",
+  "mpn": "SC1174",
+  "category": "cameras",
+  "description": "12.3 MP Sony IMX500 CSI-2 camera that runs neural-network inference on the sensor and outputs tensor metadata with each frame.",
+  "specs": [
+    {
+      "label": "Sensor",
+      "value": "Sony IMX500, 12.3 MP (4056 × 3040), type 1/2.3, 1.55 µm pixels"
+    },
+    {
+      "label": "Lens",
+      "value": "4.74 mm focal length, f/1.79, manual focus 20 cm – ∞, IR-cut integrated"
+    },
+    {
+      "label": "FOV",
+      "value": "66.3° ±3 H × 52.3° ±3 V"
+    },
+    {
+      "label": "Frame rate",
+      "value": "2028 × 1520 @ 30 fps (2×2 binned); 4056 × 3040 @ 10 fps"
+    },
+    {
+      "label": "On-sensor AI",
+      "value": "Input tensor up to 640 × 640, int8/uint8, 8,388,480 bytes for firmware + weights + working memory"
+    },
+    {
+      "label": "Interface",
+      "value": "MIPI CSI-2; 15 × 1 mm or 22 × 0.5 mm FPC, 200 mm cable"
+    },
+    {
+      "label": "Price",
+      "value": "$70 list"
+    }
   ],
-  "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/dp/B0DJ8VFWKM",
-   "asin": "B0DJ8VFWKM",
-   "title": "Raspberry Pi AI Camera (URL slug Raspberry-Pi-SC1174-AI-Camera)",
-   "kind": "product",
-   "verified": true
+  "dimensions": {
+    "envelope": {
+      "x": 25.0,
+      "y": 23.862,
+      "z": 11.9,
+      "axes": "x = PCB width (25 mm), y = PCB height incl. connector edge (23.862 mm), z = overall depth (11.9 mm, product brief spec table)"
+    },
+    "features": [
+      {
+        "label": "PCB outline",
+        "value": "25 × 23.862 mm; identical outline and hole positions to Camera Module 3",
+        "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.2 and p.4 (Physical specification)"
+      },
+      {
+        "label": "Mounting holes",
+        "value": "4× Ø2.2 mm. Centers 2.0 mm from the left/right edges (21 mm pitch along x) and 2.0 mm and 14.5 mm from the edge opposite the connector (12.5 mm pitch along y)",
+        "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
+      },
+      {
+        "label": "Lens position",
+        "value": "Lens center on the x centerline (12.5 mm) and 14.4 mm from the edge opposite the connector (= 9.462 mm from the connector edge); lens front Ø5.75 mm",
+        "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
+      },
+      {
+        "label": "Optics housing",
+        "value": "12.8 mm wide (front view)",
+        "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
+      },
+      {
+        "label": "Side-view dimensions",
+        "value": "Drawing labels 1 and 1.12 (PCB/flex stack), 2.75, 3.875 and 6.98 (lens stack steps), 5.71 and 2.55 (rear connector); FOV cones 66.3° and 52.3°. Read from the drawing; the brief says dimensions are approximate",
+        "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
+      },
+      {
+        "label": "Other callouts",
+        "value": "Ø4.75 (ring near the lower-right hole, likely pad/keep-out), 19.5 and 12.5 (vertical callouts on the left of the front view), 19.61 (rear connector width in the bottom view)",
+        "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf p.4"
+      }
+    ],
+    "source": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf"
   },
-  "product": "https://www.raspberrypi.com/products/ai-camera/",
-  "datasheet": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf"
- },
- "notes": "The AI Camera's PIP category (1044) lists only the product brief, cable drawing, Picamera2 manual and compliance docs; no Design Files category and no STEP. The product brief's drawing is marked approximate/reference only. The brief states the PCB outline and holes match Camera Module 3 while the depth is greater, so the CM3 STEP was downloaded as a PCB reference only (wide-FOV variant discarded). Amazon ASIN verified by title.",
- "pose": "board"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/dp/B0DJ8VFWKM",
+      "asin": "B0DJ8VFWKM",
+      "title": "Raspberry Pi AI Camera (URL slug Raspberry-Pi-SC1174-AI-Camera)",
+      "kind": "product",
+      "verified": true
+    },
+    "product": "https://www.raspberrypi.com/products/ai-camera/",
+    "datasheet": "https://pip-assets.raspberrypi.com/categories/1044-raspberry-pi-ai-camera/documents/RP-008147-DS-1-ai-camera-product-brief.pdf"
+  },
+  "notes": "The AI Camera's PIP category (1044) lists only the product brief, cable drawing, Picamera2 manual and compliance docs; no Design Files category and no STEP. The product brief's drawing is marked approximate/reference only. The brief states the PCB outline and holes match Camera Module 3 while the depth is greater, so the CM3 STEP was downloaded as a PCB reference only (wide-FOV variant discarded). Amazon ASIN verified by title.",
+  "pose": "board"
 }

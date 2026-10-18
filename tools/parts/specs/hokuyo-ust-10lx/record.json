@@ -1,78 +1,78 @@
 {
- "id": "hokuyo-ust-10lx",
- "name": "Hokuyo UST-10LX",
- "manufacturer": "Hokuyo Automatic Co., Ltd.",
- "mpn": "UST-10LX",
- "category": "lidar",
- "description": "Industrial 270° 2D scanning laser rangefinder with 10 m range, 40 Hz scans and Ethernet output, IP65.",
- "specs": [
-  {
-   "label": "Range",
-   "value": "0.06–10 m (white Kent sheet), 0.06–4 m (10% reflectance); max detection 30 m"
-  },
-  {
-   "label": "Scan rate",
-   "value": "25 ms per scan (40 Hz), motor 2400 rpm"
-  },
-  {
-   "label": "Resolution / FOV",
-   "value": "0.25° angular resolution over 270°; accuracy ±40 mm"
-  },
-  {
-   "label": "Laser",
-   "value": "905 nm semiconductor laser, Class 1 (IEC 60825-1:2007)"
-  },
-  {
-   "label": "Interface / power",
-   "value": "Ethernet 100BASE-TX; 12/24 V DC (10–30 V), ≤150 mA (450 mA at start-up); sync output + IP-reset input"
-  },
-  {
-   "label": "Weight / protection",
-   "value": "130 g (excl. cable); IP65; -10–50 °C; <80 klux ambient"
-  }
- ],
- "dimensions": {
-  "envelope": {
-   "x": 50.0,
-   "y": 50.0,
-   "z": 70.0,
-   "axes": "x = width, y = depth (cables exit the rear), z = height from the bottom face to top"
-  },
-  "features": [
-   {
-    "label": "Bottom mounting",
-    "value": "2× M3 depth 6 and 2× Ø3 depth 2.8 (locating) on a 40 × 40 square centred on the 50 × 50 base (M3 at one diagonal pair, Ø3 pins at the other, per the drawing).",
-    "source": "https://www.hokuyo-aut.jp/p/plan/ust-20lx_dw.png (External dimension tab, https://www.hokuyo-aut.jp/search/single.php?serial=167)"
-   },
-   {
-    "label": "Rear mounting",
-    "value": "2× M4 depth 6 in the rear face, 42 apart, 17.5 above the bottom face.",
-    "source": "same drawing, rear view"
-   },
-   {
-    "label": "Optical centre height",
-    "value": "47.4 mm above the bottom face ('Reception part'); optical window 28.7 tall above the 35 mm base.",
-    "source": "same drawing, front/side views"
-   },
-   {
-    "label": "Cables",
-    "value": "Rear cable plate: Ethernet (300 mm) and power/IO flying leads (1000 mm, AWG28) on glands 11.5 apart; plate 24 wide; cable exit 2.8 behind the body.",
-    "source": "same drawing; I/O table on https://www.hokuyo-aut.jp/search/single.php?serial=167"
-   }
+  "id": "hokuyo-ust-10lx",
+  "name": "Hokuyo UST-10LX",
+  "manufacturer": "Hokuyo Automatic Co., Ltd.",
+  "mpn": "UST-10LX",
+  "category": "lidar",
+  "description": "Industrial 270° 2D scanning laser rangefinder with 10 m range, 40 Hz scans and Ethernet output, IP65.",
+  "specs": [
+    {
+      "label": "Range",
+      "value": "0.06–10 m (white Kent sheet), 0.06–4 m (10% reflectance); max detection 30 m"
+    },
+    {
+      "label": "Scan rate",
+      "value": "25 ms per scan (40 Hz), motor 2400 rpm"
+    },
+    {
+      "label": "Resolution / FOV",
+      "value": "0.25° angular resolution over 270°; accuracy ±40 mm"
+    },
+    {
+      "label": "Laser",
+      "value": "905 nm semiconductor laser, Class 1 (IEC 60825-1:2007)"
+    },
+    {
+      "label": "Interface / power",
+      "value": "Ethernet 100BASE-TX; 12/24 V DC (10–30 V), ≤150 mA (450 mA at start-up); sync output + IP-reset input"
+    },
+    {
+      "label": "Weight / protection",
+      "value": "130 g (excl. cable); IP65; -10–50 °C; <80 klux ambient"
+    }
   ],
-  "source": "https://www.hokuyo-aut.jp/search/single.php?serial=167"
- },
- "links": {
-  "amazon": {
-   "url": "https://www.amazon.com/s?k=Hokuyo+UST-10LX",
-   "asin": null,
-   "title": null,
-   "kind": "search",
-   "verified": false
+  "dimensions": {
+    "envelope": {
+      "x": 50.0,
+      "y": 50.0,
+      "z": 70.0,
+      "axes": "x = width, y = depth (cables exit the rear), z = height from the bottom face to top"
+    },
+    "features": [
+      {
+        "label": "Bottom mounting",
+        "value": "2× M3 depth 6 and 2× Ø3 depth 2.8 (locating) on a 40 × 40 square centred on the 50 × 50 base (M3 at one diagonal pair, Ø3 pins at the other, per the drawing).",
+        "source": "https://www.hokuyo-aut.jp/p/plan/ust-20lx_dw.png (External dimension tab, https://www.hokuyo-aut.jp/search/single.php?serial=167)"
+      },
+      {
+        "label": "Rear mounting",
+        "value": "2× M4 depth 6 in the rear face, 42 apart, 17.5 above the bottom face.",
+        "source": "same drawing, rear view"
+      },
+      {
+        "label": "Optical centre height",
+        "value": "47.4 mm above the bottom face ('Reception part'); optical window 28.7 tall above the 35 mm base.",
+        "source": "same drawing, front/side views"
+      },
+      {
+        "label": "Cables",
+        "value": "Rear cable plate: Ethernet (300 mm) and power/IO flying leads (1000 mm, AWG28) on glands 11.5 apart; plate 24 wide; cable exit 2.8 behind the body.",
+        "source": "same drawing; I/O table on https://www.hokuyo-aut.jp/search/single.php?serial=167"
+      }
+    ],
+    "source": "https://www.hokuyo-aut.jp/search/single.php?serial=167"
   },
-  "product": "https://www.hokuyo-aut.jp/search/single.php?serial=167",
-  "datasheet": "https://www.hokuyo-aut.jp/search/single.php?serial=167"
- },
- "notes": "Official CAD exists but is behind Hokuyo's member registration — a human with an account should download 3DCAD(STEP)_UST-10LX/20LX(-H01) from the product page's Downloads tab. Specification PDF and instruction manual are also member-only, so specs and dimensions come from the public product page and its External dimension image (saved as ust-20lx_dw.png; the drawing covers UST-10LX/20LX). The drawing's M3 vs Ø3 assignment to the two diagonal pairs is read from the image; confirm against the STEP. Amazon search for 'Hokuyo UST-10LX' returned no matching listing (only unrelated items), so a search URL is given.",
- "pose": "lidar"
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/s?k=Hokuyo+UST-10LX",
+      "asin": null,
+      "title": null,
+      "kind": "search",
+      "verified": false
+    },
+    "product": "https://www.hokuyo-aut.jp/search/single.php?serial=167",
+    "datasheet": "https://www.hokuyo-aut.jp/search/single.php?serial=167"
+  },
+  "notes": "Official CAD exists but is behind Hokuyo's member registration — a human with an account should download 3DCAD(STEP)_UST-10LX/20LX(-H01) from the product page's Downloads tab. Specification PDF and instruction manual are also member-only, so specs and dimensions come from the public product page and its External dimension image (saved as ust-20lx_dw.png; the drawing covers UST-10LX/20LX). The drawing's M3 vs Ø3 assignment to the two diagonal pairs is read from the image; confirm against the STEP. Amazon search for 'Hokuyo UST-10LX' returned no matching listing (only unrelated items), so a search URL is given.",
+  "pose": "lidar"
 }

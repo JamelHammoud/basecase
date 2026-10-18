@@ -38,9 +38,6 @@ const COMPONENT_CATEGORY: Record<ComponentGroup, PartCategory> = {
 };
 
 export const PART_CATALOG: CatalogItem[] = [
-
-
-  // Basic Primitives
   {
     kind: 'box',
     name: 'Plate',
@@ -162,10 +159,6 @@ export const PART_CATALOG: CatalogItem[] = [
     description: 'O-ring, bumper or collar',
   },
 
-
-  // Sensors & Electronics
-
-  // AI Intent Markers
   {
     kind: 'hole_cylinder',
     name: 'Hole',
@@ -197,25 +190,22 @@ export const PART_CATALOG: CatalogItem[] = [
     description: 'Marks a rotation or alignment axis',
   },
 
-  // Real components with their exact CAD models (data/components.ts)
-  ...COMPONENTS.filter((c) => hasComponentMesh(c.id)).map(
-    (c): CatalogItem => ({
-      kind: 'component',
-      name: c.name,
-      category: COMPONENT_CATEGORY[c.group],
-      defaultRole: 'solid',
-      defaultDimensions: componentSize(c.id),
-      defaultColor: c.color,
-      defaultTag: 'Off-the-shelf COTS',
-      description: c.description,
-      componentId: c.id,
-      keywords: `${c.manufacturer} ${c.mpn} ${c.group} ${c.keywords ?? ''}`,
-    })
-  ),
+  ...COMPONENTS.filter((c) => hasComponentMesh(c.id)).map((c): CatalogItem => ({
+    kind: 'component',
+    name: c.name,
+    category: COMPONENT_CATEGORY[c.group],
+    defaultRole: 'solid',
+    defaultDimensions: componentSize(c.id),
+    defaultColor: c.color,
+    defaultTag: 'Off-the-shelf COTS',
+    description: c.description,
+    componentId: c.id,
+    keywords: `${c.manufacturer} ${c.mpn} ${c.group} ${c.keywords ?? ''}`,
+  })),
 
-  // Hardware: one entry per type at its default size; size/length are chosen in Parts or Inspect
   ...HARDWARE_TYPES.map((t): CatalogItem => {
     const spec = makeSpec(t.type);
+
     return {
       kind: 'hardware',
       name: t.name,
@@ -230,50 +220,59 @@ export const PART_CATALOG: CatalogItem[] = [
   }),
 ];
 
-/** Stable id for a catalog entry (hardware and component entries share a kind) */
-export const catalogKey = (item: CatalogItem): string =>
-  item.hardware ? `hardware:${item.hardware.type}` : item.componentId ? `component:${item.componentId}` : item.kind;
+export function catalogKey(item: CatalogItem): string {
+  if (item.hardware) return `hardware:${item.hardware.type}`;
 
-/**
- * Resolves a key like "component:raspberry-pi-5", "hardware:socket_head|M2.5|6" or "box"
- * (also drag payloads) to a catalog entry at that size.
- */
+  return item.componentId ? `component:${item.componentId}` : item.kind;
+}
+
 export function catalogItemFromKey(ref: string): CatalogItem | undefined {
   const [key, size, length, finish, drive] = ref.split('|');
   const base = PART_CATALOG.find((c) => catalogKey(c) === key);
+
   return base?.hardware
-    ? hardwareVariant(base, makeSpec(
-        base.hardware.type,
-        size || undefined,
-        length ? Number(length) : undefined,
-        (finish || undefined) as HardwareFinish,
-        (drive || undefined) as ScrewDrive,
-      ))
+    ? hardwareVariant(
+        base,
+        makeSpec(base.hardware.type, {
+          size: size || undefined,
+          length: length ? Number(length) : undefined,
+          finish: (finish || undefined) as HardwareFinish,
+          drive: (drive || undefined) as ScrewDrive,
+        }),
+      )
     : base;
 }
 
-/** Key for an entry at its exact size (drag payloads, recents, thumbnails): "hardware:type|size|length|finish|drive" */
 export function catalogRef(item: CatalogItem): string {
   const h = item.hardware;
-  return h ? `${catalogKey(item)}|${h.size}|${h.length ?? ''}|${h.finish ?? ''}${h.drive ? `|${h.drive}` : ''}` : catalogKey(item);
+
+  return h
+    ? `${catalogKey(item)}|${h.size}|${h.length ?? ''}|${h.finish ?? ''}${h.drive ? `|${h.drive}` : ''}`
+    : catalogKey(item);
 }
 
-/** Notes that start a new part from this entry */
 export function catalogNote(item: CatalogItem): string {
   const c = item.componentId ? COMPONENTS.find((x) => x.id === item.componentId) : undefined;
+
   return c ? componentNote(c) : '';
 }
 
-/** The hardware entry for an exact spec (type, size, length, finish, drive) */
 export function hardwareVariant(item: CatalogItem, spec: HardwareSpec): CatalogItem;
 export function hardwareVariant(item: CatalogItem, size?: string, length?: number): CatalogItem;
 export function hardwareVariant(item: CatalogItem, a?: string | HardwareSpec, length?: number): CatalogItem {
   if (!item.hardware) return item;
+
   const spec: HardwareSpec =
     typeof a === 'object'
-      ? makeSpec(a.type, a.size, a.length, a.finish, a.drive)
-      : makeSpec(item.hardware.type, a ?? item.hardware.size, length, item.hardware.finish, item.hardware.drive);
+      ? makeSpec(a.type, { size: a.size, length: a.length, finish: a.finish, drive: a.drive })
+      : makeSpec(item.hardware.type, {
+          size: a ?? item.hardware.size,
+          length,
+          finish: item.hardware.finish,
+          drive: item.hardware.drive,
+        });
   const base = PART_CATALOG.find((c) => c.hardware?.type === spec.type) ?? item;
+
   return {
     ...base,
     hardware: spec,
@@ -283,11 +282,6 @@ export function hardwareVariant(item: CatalogItem, a?: string | HardwareSpec, le
   };
 }
 
-/**
- * Generic, estimated stand-ins. Not listed in Parts (it only offers exact parts: real
- * components, ISO hardware, and shapes you size yourself), but the agent can still use them as
- * block-out shapes and old scenes that contain them still render.
- */
 export const BLOCKOUT_ONLY: CatalogItem[] = [
   {
     kind: 'hinge_joint',

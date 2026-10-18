@@ -1,0 +1,72 @@
+[
+ {
+  "id": "sg90-case",
+  "name": "SG90 Case With Mounting Tabs",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   13.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 32.3,
+   "height": 27,
+   "depth": 12.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// TowerPro SG90 case envelope. Origin = case bottom centre. Long side along X, output on +X.\n// OFFICIAL (TowerPro configure table)\nB = 22.7;   // case length\nD = 12.2;   // case width\nC = 27.0;   // case height excl. spline (top of gear tower)\nE = 32.3;   // length across mounting tabs\nF = 17.0;   // case bottom to underside of tabs\n// NOT PUBLISHED - plain conservative placeholders\ntab_t   = 2.5;   // tab thickness\nbody_h  = 22.0;  // main body top (step under gear tower)\ntower_l = 15.0;  // gear tower length, flush with +X end\nr = 0.4;         // small edge break only, no effect on envelope\n\nunion() {\n  // main body\n  cuboid([B, D, body_h], rounding = r, edges = \"Z\", anchor = BOT);\n  // raised gear tower on the +X end, full width\n  translate([B/2 - tower_l/2, 0, 0])\n    cuboid([tower_l, D, C], rounding = r, edges = \"Z\", anchor = BOT);\n  // mounting tabs, full width, plain (hole pitch/diameter not published)\n  translate([0, 0, F]) cuboid([E, D, tab_t], anchor = BOT);\n}",
+   "originOffset": [
+    0,
+    13.5,
+    0
+   ],
+   "baseSize": [
+    32.3,
+    27,
+    12.2
+   ]
+  }
+ },
+ {
+  "id": "sg90-output-spline",
+  "name": "SG90 Output Spline",
+  "color": "#f2f2f2",
+  "role": "solid",
+  "position": [
+   5.25,
+   28.65,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 4.8,
+   "height": 3.3,
+   "depth": 4.8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Output spline as a plain cylinder. Origin = axis on top face of gear tower (z = C).\nA = 30.3; C = 27.0;     // official\nd = 4.8;                // NOT published, placeholder\ncyl(d = d, h = A - C, chamfer2 = 0.3, anchor = BOT, $fn = 48);",
+   "originOffset": [
+    0,
+    1.65,
+    0
+   ],
+   "baseSize": [
+    4.8,
+    3.3,
+    4.8
+   ]
+  }
+ }
+]

@@ -1,0 +1,107 @@
+[
+ {
+  "id": "pcb",
+  "name": "Teensy 4.1 PCB",
+  "color": "#1f5f3a",
+  "role": "solid",
+  "position": [
+   0,
+   0.785,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 60.96,
+   "height": 1.57,
+   "depth": 17.78
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Teensy 4.1 PCB, origin at board centre on the bottom face. USB end = -X.\nL = 60.96; W = 17.78; T = 1.57;\np = 2.54;                 // header pitch\nd_pin = 0.965;            // finished hole, 59 holes\nd_eth = 0.762;            // finished hole, 6 Ethernet holes\nx0 = -L/2;                // USB edge\nx1 = x0 + 1.27;           // pin-1 centre (datum for drawing X dims)\nyT = W/2;                 // top edge (drawing top = +Y)\n\nmodule hole(x, y, d) translate([x, y, -1]) cylinder(d = d, h = T + 2, $fn = 24);\n\ndifference() {\n  translate([0, 0, T/2]) cube([L, W, T], center = true);\n  // two 24-pin edge rows, 15.24 apart\n  for (i = [0:23], s = [-1, 1]) hole(x1 + i*p, s*7.62, d_pin);\n  // extra pin: pin-2 column, 2.54 inside the top row\n  hole(x1 + p, 7.62 - p, d_pin);\n  // USB host 5-pin: centre 11.43 from pin 1, 3.05 above bottom row\n  for (k = [-2:2]) hole(x1 + 11.43 + k*p, -7.62 + 3.05, d_pin);\n  // inner 5-pin column: 45.72 from pin 1, centred\n  for (k = [-2:2]) hole(x1 + 45.72, k*p, d_pin);\n  // Ethernet 6-pin, 2.0 pitch: centre 13.97 from pin 1, middle row 4.45 below top row\n  for (cx = [-1, 1], ry = [-1, 0, 1]) hole(x1 + 13.97 + cx*1.0, 7.62 - 4.45 + ry*2.0, d_eth);\n}",
+   "originOffset": [
+    0,
+    0.785,
+    0
+   ],
+   "baseSize": [
+    60.96,
+    1.57,
+    17.78
+   ]
+  }
+ },
+ {
+  "id": "usb-micro",
+  "name": "Micro-USB Connector",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -28.38,
+   2.535,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.6,
+   "height": 3.07,
+   "depth": 8.06
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: PCB USB edge (x=0), board centreline, PCB top face. Board extends +X.\ntip = 0.7;  plate_t = 0.6;  plate_w = 8.06;  plate_h = 3.07;\nbody_l = 5.0;  body_w = 7.5;  body_h = 2.5;\nunion() {\n  // front plate / flange: from tip to 0.6 behind it, top flush with body top\n  translate([-tip, -plate_w/2, body_h - plate_h]) cube([plate_t, plate_w, plate_h]);\n  // shell body sitting on the PCB\n  translate([-tip + plate_t, -body_w/2, 0]) cube([body_l, body_w, body_h]);\n}",
+   "originOffset": [
+    2.1,
+    0.9650000000000001,
+    0
+   ],
+   "baseSize": [
+    5.6,
+    3.07,
+    8.06
+   ]
+  }
+ },
+ {
+  "id": "program-button",
+  "name": "Program Pushbutton",
+  "color": "#e6e6e6",
+  "role": "solid",
+  "position": [
+   12.45,
+   2.82,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 4.7,
+   "height": 2.5,
+   "depth": 3.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: button centre on PCB top face.\nbase = [4.7, 3.2, 1.8];   // footprint scaled from drawing; height dimensioned\ncap  = [3.0, 2.0];        // width dimensioned; depth scaled\ntop_h = 2.5;              // dimensioned overall height above PCB\ntranslate([-base.x/2, -base.y/2, 0]) cube(base);\ntranslate([-cap.x/2, -cap.y/2, base.z - 0.01]) cube([cap.x, cap.y, top_h - base.z + 0.01]);",
+   "originOffset": [
+    0,
+    1.25,
+    0
+   ],
+   "baseSize": [
+    4.7,
+    2.5,
+    3.2
+   ]
+  }
+ }
+]

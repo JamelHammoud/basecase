@@ -1,0 +1,72 @@
+[
+ {
+  "id": "mg996r-case",
+  "name": "MG996R Case With Mounting Tabs",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   18.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 54,
+   "height": 37,
+   "depth": 20
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// TowerPro MG996R case, origin = case bottom center. Official numbers only.\nB = 40.9;   // case length (X)\nD = 20;     // case width (Y)\nC = 37;     // case height excl. spline (Z)\nE = 54;     // length across mounting tabs\nF = 26.8;   // case bottom to tab underside\ntab_t = 2.5; // NOT published - conservative estimate\nunion() {\n  cuboid([B, D, C], rounding = 0.5, anchor = BOT);\n  // mounting tabs, full case width, plain (hole pattern not published)\n  up(F) cuboid([E, D, tab_t], rounding = 0.5, edges = \"Z\", anchor = BOT);\n}",
+   "originOffset": [
+    0,
+    18.5,
+    0
+   ],
+   "baseSize": [
+    54,
+    37,
+    20
+   ]
+  }
+ },
+ {
+  "id": "mg996r-output-spline",
+  "name": "MG996R Output Spline",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   10,
+   39.85,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6,
+   "height": 5.7,
+   "depth": 6
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Output spline, origin = shaft axis at case top face (z = C).\nh = 42.7 - 37;  // 5.7 mm, published A - C\nd = 6;          // NOT published - plain conservative cylinder\ncyl(d = d, h = h, chamfer2 = 0.3, anchor = BOT, $fn = 48);",
+   "originOffset": [
+    0,
+    2.85,
+    0
+   ],
+   "baseSize": [
+    6,
+    5.7,
+    6
+   ]
+  }
+ }
+]

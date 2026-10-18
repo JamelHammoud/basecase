@@ -1,0 +1,142 @@
+[
+ {
+  "id": "base-housing",
+  "name": "Base Housing",
+  "color": "#2a2a2d",
+  "role": "solid",
+  "position": [
+   0,
+   17.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 50,
+   "height": 35,
+   "depth": 50
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Hokuyo UST-10LX base housing. Origin: bottom face centre. Front = -Y, rear (cables) = +Y.\nB = [50, 50, 35];     // official\nhp = 40;              // bottom hole square, official\nm3_tap = 2.5; m3_d = 6;     // 2-M3 depth 6\npin_d = 3;  pin_dp = 2.8;   // 2-Ø3 depth 2.8\nm4_tap = 3.3; m4_dp = 6; m4_dx = 42; m4_z = 17.5; // 2-M4 depth 6 rear\n$fn = 40;\ndiff() {\n  cuboid(B, rounding = 1, anchor = BOT);   // radius undimensioned: minimal\n  // bottom M3 (one diagonal)\n  for (p = [[ hp/2, -hp/2], [-hp/2, hp/2]])\n    tag(\"remove\") translate([p.x, p.y, -0.01]) cyl(d = m3_tap, h = m3_d + 0.01, anchor = BOT);\n  // bottom Ø3 locating holes (other diagonal)\n  for (p = [[ hp/2, hp/2], [-hp/2, -hp/2]])\n    tag(\"remove\") translate([p.x, p.y, -0.01]) cyl(d = pin_d, h = pin_dp + 0.01, anchor = BOT);\n  // rear M4\n  for (xs = [-1, 1])\n    tag(\"remove\") translate([xs*m4_dx/2, B.y/2 + 0.01, m4_z]) ycyl(d = m4_tap, h = m4_dp + 0.01, anchor = BACK);\n}",
+   "originOffset": [
+    0,
+    17.5,
+    0
+   ],
+   "baseSize": [
+    50,
+    35,
+    50
+   ]
+  }
+ },
+ {
+  "id": "optical-window",
+  "name": "Optical Window",
+  "color": "#141418",
+  "role": "solid",
+  "position": [
+   0,
+   49.35,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 42,
+   "height": 28.7,
+   "depth": 42
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Optical window band. Origin: its bottom face centre (sits on base top, z = 35).\nW = 42;      // plan size, scaled from drawing - NOT dimensioned\nH = 28.7;    // official\ncuboid([W, W, H], rounding = 1, edges = \"Z\", anchor = BOT);",
+   "originOffset": [
+    0,
+    14.35,
+    0
+   ],
+   "baseSize": [
+    42,
+    28.7,
+    42
+   ]
+  }
+ },
+ {
+  "id": "top-cap",
+  "name": "Top Cap",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   66.85,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 42,
+   "height": 6.3,
+   "depth": 42
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Top cap. Origin: bottom face centre at z = 63.7.\nW = 42;            // NOT dimensioned\nH = 70 - 63.7;     // 6.3, from official numbers\ncuboid([W, W, H], rounding = 1, anchor = BOT);",
+   "originOffset": [
+    0,
+    3.15,
+    0
+   ],
+   "baseSize": [
+    42,
+    6.3,
+    42
+   ]
+  }
+ },
+ {
+  "id": "cable-plate",
+  "name": "Rear Cable Plate With Glands",
+  "color": "#3a3a3e",
+  "role": "solid",
+  "position": [
+   0,
+   10.5,
+   -26.4
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 24,
+   "height": 13,
+   "depth": 2.8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Rear cable plate. Origin: rear body face (y = 25), at z = 0, x = 0.\nw = 24; z0 = 4; h = 13;     // official\nt = 1;                      // plate thickness, undimensioned\nproud = 2.8;                // official: cable exit behind the body\ng_dx = 11.5; g_z = 10.5;    // official\n$fn = 40;\ntranslate([0, 0, z0]) cuboid([w, t, h], rounding = 1, edges = \"Y\", anchor = BOT + FRONT);\ntranslate([-g_dx/2, t, g_z]) ycyl(d = 6, h = proud - t, anchor = FRONT);  // Ethernet gland\ntranslate([ g_dx/2, t, g_z]) ycyl(d = 5, h = proud - t, anchor = FRONT);  // power/IO gland",
+   "originOffset": [
+    0,
+    10.5,
+    -1.4
+   ],
+   "baseSize": [
+    24,
+    13,
+    2.8
+   ]
+  }
+ }
+]

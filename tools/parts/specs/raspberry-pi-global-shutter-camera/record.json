@@ -1,0 +1,83 @@
+{
+ "id": "raspberry-pi-global-shutter-camera",
+ "name": "Raspberry Pi Global Shutter Camera",
+ "manufacturer": "Raspberry Pi",
+ "mpn": "SC0926",
+ "category": "cameras",
+ "description": "1.6 MP Sony IMX296 global-shutter camera board with a C/CS lens mount and tripod thread, for machine vision on a Raspberry Pi (lens sold separately).",
+ "specs": [
+  {
+   "label": "Sensor",
+   "value": "Sony IMX296LQR-C, 1.58 MP colour, 1456 × 1088, 3.45 µm pixels, 6.3 mm diagonal, global shutter"
+  },
+  {
+   "label": "Frame rate / exposure",
+   "value": "1456 × 1088 @ 60 fps; exposure down to 30 µs"
+  },
+  {
+   "label": "Lens mount",
+   "value": "CS-mount (C-mount with included C-CS adapter); back focus adjustable 12.5–22.4 mm"
+  },
+  {
+   "label": "Interface",
+   "value": "MIPI CSI-2 via 150 mm ribbon; external trigger input"
+  },
+  {
+   "label": "IR filter",
+   "value": "Integrated Hoya CM500 IR cut (removable, irreversible)"
+  },
+  {
+   "label": "Weight",
+   "value": "34 g (41 g with adapter and dust cap)"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 38,
+   "y": 38,
+   "z": 19.8,
+   "axes": "x × y = board/lens-mount face, z = depth excl. lens (brief: 38 × 38 × 19.8 mm, 29.5 mm with adapter and dust cap); drawing shows 25.07 mm overall incl. the 39.5 × 39.5 mm rear cover"
+  },
+  "features": [
+   {
+    "label": "PCB mounting holes",
+    "value": "4× Ø2.5 mm, 4 mm in from each edge of the 38 × 38 mm board (30 × 30 mm pattern)",
+    "source": "https://datasheets.raspberrypi.com/gs-camera/gs-camera-mechanical-drawing.pdf"
+   },
+   {
+    "label": "Rear cover",
+    "value": "39.5 × 39.5 mm, corner clearances Ø5.99 on the 30 mm pattern (R4.75 corners); 2× Ø2.5 holes 24.38 mm apart (7.56 mm from the cover edges), at mid-height (19.75 mm)",
+    "source": "https://datasheets.raspberrypi.com/gs-camera/gs-camera-mechanical-drawing.pdf"
+   },
+   {
+    "label": "Lens mount",
+    "value": "CS mount: bore Ø22.4, Ø30.75 and Ø36 mm focus ring, centered on the board; sensor window 8.5 mm",
+    "source": "https://datasheets.raspberrypi.com/gs-camera/gs-camera-mechanical-drawing.pdf"
+   },
+   {
+    "label": "Tripod",
+    "value": "1/4\"-20 in the lens-mount tab on the bottom edge (tab 13.97 mm wide); side view offsets 7.62 / 12.04 / 6.49 mm",
+    "source": "https://datasheets.raspberrypi.com/gs-camera/gs-camera-mechanical-drawing.pdf ; https://datasheets.raspberrypi.com/gs-camera/gs-camera-product-brief.pdf"
+   },
+   {
+    "label": "Stack-up (side view)",
+    "value": "Focus ring 5.8 mm, 1.2 mm, 5.02 / 10.35 mm to the PCB, PCB 1.4 mm; 10.16 mm FPC connector at the top (0.8 mm offset)",
+    "source": "https://datasheets.raspberrypi.com/gs-camera/gs-camera-mechanical-drawing.pdf"
+   }
+  ],
+  "source": "https://datasheets.raspberrypi.com/gs-camera/gs-camera-mechanical-drawing.pdf"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/s?k=Raspberry+Pi+Global+Shutter+Camera+SC0926",
+   "asin": null,
+   "title": null,
+   "kind": "search",
+   "verified": false
+  },
+  "product": "https://www.raspberrypi.com/products/raspberry-pi-global-shutter-camera/",
+  "datasheet": "https://datasheets.raspberrypi.com/gs-camera/gs-camera-product-brief.pdf"
+ },
+ "notes": "Official mechanical drawing (PDF, downloaded here) is enough to model it. The board and lens mount match the HQ Camera's (38 × 38 mm, Ø2.5 holes on 30 mm), so a model built for one fits the other's mounts. Amazon search only showed third-party IMX296 boards (e.g. B0C3VGMTRH, B093BY2TK2), not the Raspberry Pi part, so a search link is given.",
+ "pose": "board"
+}

@@ -1,0 +1,492 @@
+[
+ {
+  "id": "case",
+  "name": "Hand Housing With Base Boss",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   34.7,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 80.5,
+   "height": 69.4,
+   "depth": 54
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// ROBOTIS RH-P12-RN housing + 42x42 base boss. Origin: boss underside centre, front = -Y.\n$fn = 40;\nD  = 54;      // housing depth (drawing)\nzb = 9.2;     // boss height / housing underside (scaled from drawing)\nzt = 58.4;    // housing top (scaled)\nch = 1.2;     // edge break (not dimensioned)\n// front-view profile (scaled from drawing, X +-40.25 = 80.5 wide)\nprof = [[-24,zb],[24,zb],[40.25,20.3],[40.25,zt],[-40.25,zt],[-40.25,20.3]];\nmodule prof2(o=0) offset(delta=o) offset(r=8) offset(delta=-8) polygon(prof);\nmodule xz(h) rotate([90,0,0]) linear_extrude(h, center=true) children();\nmodule inner_link2(o=0) offset(delta=o) hull(){ translate([57.7,76.6]) circle(3.5); translate([33.8,64.4]) circle(3.5); }\nmodule outer_link2(o=0) offset(delta=o) hull(){ translate([68.1,65.6]) circle(4.5); translate([42.8,23.2]) circle(4.5); }\nmodule both() { children(); mirror([1,0,0]) children(); }\n\nmodule body() hull(){ xz(D-2*ch) prof2(); xz(D) prof2(-ch); }\nmodule boss() cuboid([42,42,zb+1], rounding=3, edges=\"Z\", anchor=BOT);\nmodule ears() both() xz(30) hull(){ translate([28.5,zt-1]) square([10.5,1]); translate([33.8,64.4]) circle(5); }\n\ndifference(){\n  union(){ body(); boss(); ears(); }\n  // clevis slots for the finger links (plain clearance)\n  both() { xz(16.6) inner_link2(0.4); xz(16.6) outer_link2(0.4); }\n  // 12x M3 tap (tap drill 2.5, 6 deep) on boss +-X faces, 3 mm above underside\n  for (sx=[-1,1], y=[-18,-12,-6,6,12,18]) translate([sx*21,y,3]) rotate([0,90,0]) cylinder(d=2.5, h=12, center=true);\n  // 8x M3 tap on front/back faces: upper pair 24 apart, lower pair 32 apart, 42 vertical\n  for (sy=[-1,1], p=[[-12,55.4],[12,55.4],[-16,13.4],[16,13.4]]) translate([p[0],sy*27,p[1]]) rotate([90,0,0]) cylinder(d=2.5, h=12, center=true);\n  // 2x M2.5 tap on top, 22 apart\n  for (y=[-11,11]) translate([0,y,zt-5]) cylinder(d=2.05, h=10);\n  // connector pockets on underside behind boss, sized to the connector bodies (line-to-line)\n  for (x=[-6.4,6.4]) translate([x,23.4,zb-0.01]) cuboid([11.9,4.2,6.01], anchor=BOT);\n}",
+   "originOffset": [
+    0,
+    34.7,
+    0
+   ],
+   "baseSize": [
+    80.5,
+    69.4,
+    54
+   ]
+  }
+ },
+ {
+  "id": "left-fingertip",
+  "name": "Left Fingertip",
+  "color": "#2a2a2c",
+  "role": "solid",
+  "position": [
+   66.95,
+   98.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 17.1,
+   "height": 36,
+   "depth": 26
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Fingertip wedge (+X finger, open pose). World-frame XZ from the drawing.\n$fn = 32;\nmodule xz(h) rotate([90,0,0]) linear_extrude(h, center=true) children();\nxo = 75.5;          // outer face (151/2)\nxp = xo - 21.9 + 4.8; // pad back face: mount is 21.9 incl. 4.8 pad -> 58.4\ndifference(){\n  xz(26) polygon([[xp,80.3],[xo,80.3],[xo,81.2],[60,116.3],[xp,116.3]]);\n  // 3x M3 bolt holes per top view: rows 3 mm and 3+10 mm from outer edge, +-7 in Y\n  for (p=[[xo-3,7],[xo-3,-7],[xo-13,0]]) translate([p[0],p[1],75]) cylinder(d=3.2, h=50);\n}",
+   "originOffset": [
+    66.95,
+    98.3,
+    0
+   ],
+   "baseSize": [
+    17.1,
+    36,
+    26
+   ]
+  }
+ },
+ {
+  "id": "left-pad",
+  "name": "Left Grip Pad",
+  "color": "#333336",
+  "role": "solid",
+  "position": [
+   56,
+   106.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 4.8,
+   "height": 20,
+   "depth": 26
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Grip pad, 20 mm tall (drawing), inner face at X = 75.5 - 21.9 = 53.6\ntranslate([56.0,0,106.3]) cuboid([4.8,26,20], rounding=0.8);",
+   "originOffset": [
+    56,
+    106.3,
+    0
+   ],
+   "baseSize": [
+    4.8,
+    20,
+    26
+   ]
+  }
+ },
+ {
+  "id": "left-finger-base",
+  "name": "Left Finger Base",
+  "color": "#2a2a2c",
+  "role": "solid",
+  "position": [
+   64,
+   70.65,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 23,
+   "height": 19.3,
+   "depth": 26
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 40;\nmodule xz(h) rotate([90,0,0]) linear_extrude(h, center=true) children();\nmodule inner_link2(o=0) offset(delta=o) hull(){ translate([57.7,76.6]) circle(3.5); translate([33.8,64.4]) circle(3.5); }\nmodule outer_link2(o=0) offset(delta=o) hull(){ translate([68.1,65.6]) circle(4.5); translate([42.8,23.2]) circle(4.5); }\ndifference(){\n  xz(26) polygon([[55,80.3],[75.5,80.3],[75.5,73.9],[70.5,61],[63,61],[52.5,72.5]]);\n  xz(16.6) inner_link2(0.3);\n  xz(16.6) outer_link2(0.3);\n}",
+   "originOffset": [
+    64,
+    70.65,
+    0
+   ],
+   "baseSize": [
+    23,
+    19.3,
+    26
+   ]
+  }
+ },
+ {
+  "id": "left-inner-link",
+  "name": "Left Inner Link",
+  "color": "#4a4a4f",
+  "role": "solid",
+  "position": [
+   45.75,
+   70.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 30.9,
+   "height": 19.2,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 40;\nrotate([90,0,0]) linear_extrude(16, center=true)\n  hull(){ translate([57.7,76.6]) circle(3.5); translate([33.8,64.4]) circle(3.5); }",
+   "originOffset": [
+    45.75,
+    70.5,
+    0
+   ],
+   "baseSize": [
+    30.9,
+    19.2,
+    16
+   ]
+  }
+ },
+ {
+  "id": "left-outer-link",
+  "name": "Left Outer Link",
+  "color": "#4a4a4f",
+  "role": "solid",
+  "position": [
+   55.45,
+   44.4,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 34.3,
+   "height": 51.4,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 40;\nrotate([90,0,0]) linear_extrude(16, center=true)\n  hull(){ translate([68.1,65.6]) circle(4.5); translate([42.8,23.2]) circle(4.5); }",
+   "originOffset": [
+    55.449999999999996,
+    44.4,
+    0
+   ],
+   "baseSize": [
+    34.3,
+    51.4,
+    16
+   ]
+  }
+ },
+ {
+  "id": "rear-plate",
+  "name": "Rear Cover Plate",
+  "color": "#2a2a2d",
+  "role": "solid",
+  "position": [
+   0,
+   43.25,
+   -28.5
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 22,
+   "height": 11.9,
+   "depth": 3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// back face of housing is Y = +27\ntranslate([0,28.5,43.25]) cuboid([22,3,11.9], rounding=1.2, except=FWD);",
+   "originOffset": [
+    0,
+    43.25,
+    -28.5
+   ],
+   "baseSize": [
+    22,
+    11.9,
+    3
+   ]
+  }
+ },
+ {
+  "id": "connector-rs485",
+  "name": "RS-485 Connector JST B4B-EH-A",
+  "color": "#efece4",
+  "role": "solid",
+  "position": [
+   6.4,
+   12.2,
+   -23.4
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 11.9,
+   "height": 6,
+   "depth": 4.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ntranslate([6.4,23.4,9.2]) cuboid([11.9,4.2,6], anchor=BOT);",
+   "originOffset": [
+    6.3999999999999995,
+    12.2,
+    -23.4
+   ],
+   "baseSize": [
+    11.9,
+    6,
+    4.2
+   ]
+  }
+ },
+ {
+  "id": "connector-ext",
+  "name": "External Port Molex 53047-0610",
+  "color": "#efece4",
+  "role": "solid",
+  "position": [
+   -6.4,
+   12.2,
+   -23.4
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 11.9,
+   "height": 6,
+   "depth": 4.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ntranslate([-6.4,23.4,9.2]) cuboid([11.9,4.2,6], anchor=BOT);",
+   "originOffset": [
+    -6.3999999999999995,
+    12.2,
+    -23.4
+   ],
+   "baseSize": [
+    11.9,
+    6,
+    4.2
+   ]
+  }
+ },
+ {
+  "id": "right-finger-base",
+  "name": "Right Finger Base",
+  "color": "#2a2a2c",
+  "role": "solid",
+  "position": [
+   -64,
+   70.65,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 23,
+   "height": 19.3,
+   "depth": 26
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 40;\nmodule xz(h) rotate([90,0,0]) linear_extrude(h, center=true) children();\nmodule inner_link2(o=0) offset(delta=o) hull(){ translate([57.7,76.6]) circle(3.5); translate([33.8,64.4]) circle(3.5); }\nmodule outer_link2(o=0) offset(delta=o) hull(){ translate([68.1,65.6]) circle(4.5); translate([42.8,23.2]) circle(4.5); }\ndifference(){\n  xz(26) polygon([[55,80.3],[75.5,80.3],[75.5,73.9],[70.5,61],[63,61],[52.5,72.5]]);\n  xz(16.6) inner_link2(0.3);\n  xz(16.6) outer_link2(0.3);\n}",
+   "originOffset": [
+    -64,
+    70.65,
+    0
+   ],
+   "baseSize": [
+    23,
+    19.3,
+    26
+   ]
+  }
+ },
+ {
+  "id": "right-inner-link",
+  "name": "Right Inner Link",
+  "color": "#4a4a4f",
+  "role": "solid",
+  "position": [
+   -45.75,
+   70.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 30.9,
+   "height": 19.2,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 40;\nrotate([90,0,0]) linear_extrude(16, center=true)\n  hull(){ translate([57.7,76.6]) circle(3.5); translate([33.8,64.4]) circle(3.5); }",
+   "originOffset": [
+    -45.75,
+    70.5,
+    0
+   ],
+   "baseSize": [
+    30.9,
+    19.2,
+    16
+   ]
+  }
+ },
+ {
+  "id": "right-outer-link",
+  "name": "Right Outer Link",
+  "color": "#4a4a4f",
+  "role": "solid",
+  "position": [
+   -55.45,
+   44.4,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 34.3,
+   "height": 51.4,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 40;\nrotate([90,0,0]) linear_extrude(16, center=true)\n  hull(){ translate([68.1,65.6]) circle(4.5); translate([42.8,23.2]) circle(4.5); }",
+   "originOffset": [
+    -55.449999999999996,
+    44.4,
+    0
+   ],
+   "baseSize": [
+    34.3,
+    51.4,
+    16
+   ]
+  }
+ },
+ {
+  "id": "right-fingertip",
+  "name": "Right Fingertip",
+  "color": "#2a2a2c",
+  "role": "solid",
+  "position": [
+   -66.95,
+   98.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 17.1,
+   "height": 36,
+   "depth": 26
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Fingertip wedge (+X finger, open pose). World-frame XZ from the drawing.\n$fn = 32;\nmodule xz(h) rotate([90,0,0]) linear_extrude(h, center=true) children();\nxo = 75.5;          // outer face (151/2)\nxp = xo - 21.9 + 4.8; // pad back face: mount is 21.9 incl. 4.8 pad -> 58.4\ndifference(){\n  xz(26) polygon([[xp,80.3],[xo,80.3],[xo,81.2],[60,116.3],[xp,116.3]]);\n  // 3x M3 bolt holes per top view: rows 3 mm and 3+10 mm from outer edge, +-7 in Y\n  for (p=[[xo-3,7],[xo-3,-7],[xo-13,0]]) translate([p[0],p[1],75]) cylinder(d=3.2, h=50);\n}",
+   "originOffset": [
+    -66.95,
+    98.3,
+    0
+   ],
+   "baseSize": [
+    17.1,
+    36,
+    26
+   ]
+  }
+ },
+ {
+  "id": "right-pad",
+  "name": "Right Grip Pad",
+  "color": "#333336",
+  "role": "solid",
+  "position": [
+   -56,
+   106.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 4.8,
+   "height": 20,
+   "depth": 26
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Grip pad, 20 mm tall (drawing), inner face at X = 75.5 - 21.9 = 53.6\ntranslate([56.0,0,106.3]) cuboid([4.8,26,20], rounding=0.8);",
+   "originOffset": [
+    -56,
+    106.3,
+    0
+   ],
+   "baseSize": [
+    4.8,
+    20,
+    26
+   ]
+  }
+ }
+]

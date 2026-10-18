@@ -1,0 +1,102 @@
+{
+ "id": "feetech-scs0009",
+ "name": "Feetech SCS0009",
+ "manufacturer": "Feetech",
+ "mpn": "SCS0009 (catalogue code SC-0090-C001)",
+ "category": "motors",
+ "description": "Micro TTL serial bus servo with potentiometer feedback and 300° range, used in the Pollen Robotics Amazing Hand.",
+ "specs": [
+  {
+   "label": "Stall torque",
+   "value": "2.3 kg·cm @ 6 V (1.89 kg·cm @ 4.8 V)"
+  },
+  {
+   "label": "No-load speed",
+   "value": "0.1 s/60° (100 rpm) @ 6 V"
+  },
+  {
+   "label": "Input voltage",
+   "value": "4–7.4 V (6 V typical)"
+  },
+  {
+   "label": "Weight",
+   "value": "13.2 ± 1 g"
+  },
+  {
+   "label": "Gear ratio",
+   "value": "1/416 (copper + steel gears, no ball bearing)"
+  },
+  {
+   "label": "Interface",
+   "value": "TTL half-duplex serial, 38.4 kbps–1 Mbps, ID 0–253"
+  },
+  {
+   "label": "Position sensor",
+   "value": "Potentiometer, 300° over 0–1023 (0.293°/step)"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 32.5,
+   "y": 12.1,
+   "z": 25.25,
+   "axes": "x = length across mounting tabs (case alone 23.2–23.3), y = width, z = case height excl. 3.2 mm output spline"
+  },
+  "features": [
+   {
+    "label": "Case size (spec table)",
+    "value": "23.2 × 12.1 × 25.25 mm; the drawing dimensions the case length as 23.3 mm",
+    "source": "https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391771873533994748433885.pdf p.4 item 6-1; drawing https://www.feetechrc.com/Data/feetechrc/upload/image/20220425/6378648350501215092509316.png"
+   },
+   {
+    "label": "Mounting tabs",
+    "value": "2 × Ø2 mm holes, 28.5 mm pitch (14.25 mm each side of the case centre); tab length overall 32.5 mm (16.25 + 16.25)",
+    "source": "drawing PNG (top view: 16.25, 14.25, 2-Ø2)"
+   },
+   {
+    "label": "Tab height",
+    "value": "Tab underside 16.8 mm and tab top 18.4 mm above the case bottom (tab about 1.6 mm thick)",
+    "source": "drawing PNG (side view: 16.8, 18.4)"
+   },
+   {
+    "label": "Output shaft position",
+    "value": "Shaft axis 5.7 mm from the case centre toward one end; 8.55 mm from the nearer tab hole; centred across the width",
+    "source": "drawing PNG (top view: 5.7, 8.55)"
+   },
+   {
+    "label": "Output spline",
+    "value": "20T, OD 3.95 mm; protrudes 3.2 mm above the top face; overall height incl. spline 28.45 mm",
+    "source": "datasheet p.4 item 6-9; drawing PNG (3.2, 28.45)"
+   },
+   {
+    "label": "Horn screw",
+    "value": "M2 (internal thread in the shaft); datasheet lists M2.0 × 4",
+    "source": "datasheet p.4 item 6-13; drawing PNG ('M2内牙')"
+   },
+   {
+    "label": "Other heights",
+    "value": "21.45 mm (top of main case section, below the gear cap); secondary boss 2.9 mm high on the top cap",
+    "source": "drawing PNG (side view)"
+   },
+   {
+    "label": "Connector",
+    "value": "5264-3P (GND, Vcc, Signal), 15 cm cable",
+    "source": "datasheet p.4 item 6-7"
+   }
+  ],
+  "source": "https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391771873533994748433885.pdf"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B0FGJ2PJ89",
+   "asin": "B0FGJ2PJ89",
+   "title": "DIYmall SCS0009 6V 2.3kg Serial Bus Servo Metal Gear 300 Degree Core Motor Single Axis TTL Control Servo for Robot Joints DIY Projects",
+   "kind": "product",
+   "verified": true
+  },
+  "product": "https://www.feetechrc.com/6v-23kg-serial-bus-steering-gear_65522.html",
+  "datasheet": "https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391771873533994748433885.pdf"
+ },
+ "notes": "Feetech publishes no 3D CAD: its official wiki (github.com/ftservo/ftservo-wiki, models/sc-0090-c001/manifest.json) marks 'cad' as missing; only the 2D drawing PNG and PDF datasheet (rev A/0, 2020-11-23) exist. Feetech now catalogues SCS0009 as SC-0090-C001 (the product page's PDF is named SC-0090-C001.pdf). Conflicts: the product page's Chinese/English intro says '25T output', but the spec table, datasheet and drawing all say 20T/OD 3.95 mm. The case length is 23.2 mm in the spec table and 23.3 mm on the drawing. The datasheet's sensor row says 330° (potentiometer angle), while the web table gives a 300° running range over 0–1023. The web table says PC case and -15–70 °C; Switch Science's copy lists 4.8–6 V operating voltage, while Feetech's page and PDF give 4–7.4 V. Rated torque: web 0.7 kg·cm, PDF 0.75 kg·cm @ 6 V. The Amazon listing is from DIYmall, not Feetech. An RCmall '(Feetech)' 2-pack is also verified: https://www.amazon.com/dp/B0FWBZ6DNF. Downloaded docs: docs/SCS0009.pdf, docs/drawing.png.",
+ "pose": "servo"
+}

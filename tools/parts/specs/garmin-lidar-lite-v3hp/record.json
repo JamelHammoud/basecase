@@ -1,0 +1,78 @@
+{
+ "id": "garmin-lidar-lite-v3hp",
+ "name": "Garmin LIDAR-Lite v3HP",
+ "manufacturer": "Garmin",
+ "mpn": "010-01722-10 (per Amazon listing; v3 is 010-01722-00)",
+ "category": "lidar",
+ "description": "Single-point 905 nm laser rangefinder, 40 m range at >1 kHz, I²C/PWM, in an IPX7 housing.",
+ "specs": [
+  {
+   "label": "Range",
+   "value": "40 m (70% reflective target); resolution ±1 cm"
+  },
+  {
+   "label": "Accuracy",
+   "value": "±5 cm typ. < 2 m (non-linear below 1 m); ±2.5 cm typ. ≥ 2 m"
+  },
+  {
+   "label": "Update rate",
+   "value": ">1 kHz typical (reduced sensitivity at high rates)"
+  },
+  {
+   "label": "Laser",
+   "value": "905 nm, 1.3 W peak, Class 1 (EN/IEC 60825-1:2014); beam 12 × 2 mm at aperture, 8 mrad divergence"
+  },
+  {
+   "label": "Interface",
+   "value": "I²C fast mode 400 kb/s (addr 0x62), PWM (10 µs/cm), external trigger"
+  },
+  {
+   "label": "Power",
+   "value": "5 V nominal (4.5–5.5 V), 65 mA idle / 85 mA acquiring; 680 µF capacitor recommended"
+  },
+  {
+   "label": "Weight / protection",
+   "value": "38 g; IEC 60529 IPX7 (bare-wire end not sealed)"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 54.99,
+   "y": 40.18,
+   "z": 35.0,
+   "axes": "x = width across both optics and mounting ears, y = height, z = depth along the optical axis (Garmin lists L × W × H = 40.18 × 54.99 × 35)"
+  },
+  "features": [
+   {
+    "label": "Mounting holes",
+    "value": "4 ear holes on a 36 mm (horizontal) × 32 mm (vertical) rectangle, centred on the body; item 7 = 4 mm is the callout at the lower-left ear (likely the hole diameter — confirm on a part).",
+    "source": "LIDAR-Lite v3HP Operation Manual (April 2020) 'Device Dimensions' p.1–2, items 2, 5, 7"
+   },
+   {
+    "label": "Optics",
+    "value": "Two optics (transmit/receive) 27.69 mm apart centre-to-centre; item 8 = 14.65 mm callout at the left lens (likely optic diameter); optical axis 16 mm from the top-hole row (item 4).",
+    "source": "Operation Manual 'Device Dimensions' items 3, 4, 8"
+   },
+   {
+    "label": "Depth",
+    "value": "35 mm overall depth (item 9); rear section 13.1 mm (item 10) behind the mounting flange; harness exits the bottom.",
+    "source": "Operation Manual items 9, 10"
+   }
+  ],
+  "source": "https://static.garmin.com/pumac/LIDAR-Lite_v3HP_Instructions_EN.pdf"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B07CX3Q58Z",
+   "asin": "B07CX3Q58Z",
+   "title": "Garmin Lidar-Lite V3HP",
+   "kind": "product",
+   "verified": false
+  },
+  "product": "https://www.garmin.com/en-US/p/578152",
+  "datasheet": "https://static.garmin.com/pumac/LIDAR-Lite_v3HP_Instructions_EN.pdf"
+ },
+ "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/garmin-lidar-lite-v3hp/LIDAR-Lite_v3HP_Instructions_EN.pdf",
+ "notes": "Garmin's drawing is a numbered legend (items 1–10) without feature labels; the hole-diameter (4 mm) and optic-diameter (14.65 mm) readings are inferred from where the callouts point and should be checked. Amazon page fetch returned HTTP 500; search snippet shows title 'Garmin Lidar-Lite V3HP', part 010-01722-10, currently unavailable — unverified. No community CAD of the v3HP housing was found (v3 models exist but the v3HP housing differs).",
+ "pose": "camera"
+}

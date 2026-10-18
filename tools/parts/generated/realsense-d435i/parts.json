@@ -1,0 +1,247 @@
+[
+ {
+  "id": "d435i-case",
+  "name": "D435i Housing",
+  "color": "#2a2a2d",
+  "role": "solid",
+  "position": [
+   0,
+   12.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 90,
+   "height": 25,
+   "depth": 25.05
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// RealSense D435i housing. Origin: base centre on the floor. Front glass faces -Y.\n$fn = 64;\nL = 90;  H = 25;  D = 25.05;   // datasheet envelope\nr_e = 1.0;                     // edge break (not dimensioned, conservative)\ninset = 2.0; gt = 1.0;         // front glass recess (not dimensioned)\nm3_pitch = 45; m3_d = 3.0; m3_depth = 3;   // rear mounting, datasheet\ntri_d = 6.35; tri_depth = 5.5;             // 1/4-20 UNC, depth not dimensioned\nusb_w = 8.94; usb_h = 3.26; usb_depth = 7.0; // USB-C pocket; floor seats the receptacle back (x = 38)\nlens_seat = 3.2;               // lens bore floor 3.2 mm behind the front face = lens module back (0.2 recess + 3 long)\nlenses = [[-32.5, 10], [-11.5, 7], [17.5, 10], [32.5, 8]]; // [x, aperture d] right IR, projector, left IR, RGB\n\nmodule stad(l, h) hull() for (s = [-1, 1]) translate([s*(l/2 - h/2), 0]) circle(d = h, $fn = 96);\n\n// Rounded stadium, clipped to the exact datasheet envelope (removes facet error).\nmodule body()\n  intersection() {\n    translate([0, 0, H/2]) minkowski() {\n      rotate([90, 0, 0]) linear_extrude(D - 2*r_e, center = true) stad(L - 2*r_e, H - 2*r_e);\n      sphere(r = r_e / cos(180/24) / cos(180/24), $fn = 24);\n    }\n    translate([0, 0, H/2]) rotate([90, 0, 0]) linear_extrude(D, center = true) stad(L, H);\n  }\n\ndifference() {\n  body();\n  // front cover-glass recess\n  translate([0, -D/2 + gt, H/2]) rotate([90, 0, 0]) linear_extrude(gt + 0.5) stad(L - 2*inset, H - 2*inset);\n  // lens bores behind the glass; floor seats each lens module\n  for (l = lenses) translate([l[0], -D/2 - 0.1, H/2]) rotate([-90, 0, 0]) cylinder(d = l[1] + 0.2, h = lens_seat + 0.1);\n  // rear M3 threaded holes (modelled at nominal 3.0)\n  for (s = [-1, 1]) translate([s*m3_pitch/2, D/2 + 0.01, H/2]) rotate([90, 0, 0]) cylinder(d = m3_d, h = m3_depth + 0.01);\n  // bottom 1/4-20 tripod hole at body centre\n  translate([0, 0, -0.01]) cylinder(d = tri_d, h = tri_depth);\n  // USB-C pocket on the +X end, long axis along Y\n  translate([L/2, 0, H/2]) cube([2*usb_depth, usb_w + 0.3, usb_h + 0.3], center = true);\n}",
+   "originOffset": [
+    0,
+    12.5,
+    0
+   ],
+   "baseSize": [
+    90,
+    25,
+    25.05
+   ]
+  }
+ },
+ {
+  "id": "d435i-cover-glass",
+  "name": "D435i Front Cover Glass",
+  "color": "#0d0d10",
+  "role": "solid",
+  "position": [
+   0,
+   12.5,
+   12.025
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 85.7,
+   "height": 20.7,
+   "depth": 1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// Front cover glass. Origin: centre of its front face (flush with the housing front). Extends +Y.\n$fn = 96;\nL = 90; H = 25; inset = 2.0; gt = 1.0; clr = 0.15;\nlenses = [[-32.5, 10], [-11.5, 7], [17.5, 10], [32.5, 8]];\nmodule stad(l, h) hull() for (s = [-1, 1]) translate([s*(l/2 - h/2), 0]) circle(d = h);\ndifference() {\n  rotate([-90, 0, 0]) linear_extrude(gt) stad(L - 2*inset - 2*clr, H - 2*inset - 2*clr);\n  // apertures in the mask for the lens modules\n  for (l = lenses) translate([l[0], -0.1, 0]) rotate([-90, 0, 0]) cylinder(d = l[1] + 0.1, h = gt + 0.2);\n}",
+   "originOffset": [
+    0,
+    0,
+    -0.5
+   ],
+   "baseSize": [
+    85.7,
+    20.7,
+    1
+   ]
+  }
+ },
+ {
+  "id": "d435i-usb-c",
+  "name": "D435i USB-C Receptacle",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   41.25,
+   12.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6.5,
+   "height": 3.26,
+   "depth": 8.94
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// USB-C receptacle shell. Origin: centre of the housing end face; the shell extends -X into the body.\n$fn = 32;\nw = 8.94; h = 3.26; wall = 0.25; len = 6.5; recess = 0.5;\ntongue = [len - 1.5, 6.6, 0.7];\nmodule stad(a, b) hull() for (s = [-1, 1]) translate([0, s*(a/2 - b/2)]) circle(d = b);\ntranslate([-recess, 0, 0]) rotate([0, -90, 0]) {\n  difference() {\n    linear_extrude(len) stad(w, h);\n    translate([0, 0, -0.1]) linear_extrude(len - 0.8) stad(w - 2*wall, h - 2*wall);\n  }\n}\n// contact tongue\ntranslate([-recess - len + tongue[0]/2 + 0.8, 0, 0]) cube(tongue, center = true);",
+   "originOffset": [
+    -3.75,
+    0,
+    0
+   ],
+   "baseSize": [
+    6.5,
+    3.26,
+    8.94
+   ]
+  }
+ },
+ {
+  "id": "d435i-left-imager",
+  "name": "D435i Left IR Imager Lens",
+  "color": "#3a3a40",
+  "role": "solid",
+  "position": [
+   17.5,
+   12.5,
+   10.825
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10,
+   "height": 10,
+   "depth": 3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// Lens module. Origin: centre of the front face (0.2 mm behind the glass front). Extends +Y.\n$fn = 48; d = 10; len = 3;\ndifference() {\n  rotate([-90, 0, 0]) cylinder(d = d, h = len);\n  translate([0, -0.01, 0]) rotate([-90, 0, 0]) cylinder(d = d*0.45, h = 0.6);  // shallow pupil recess\n}",
+   "originOffset": [
+    0,
+    0,
+    -1.5
+   ],
+   "baseSize": [
+    10,
+    10,
+    3
+   ]
+  }
+ },
+ {
+  "id": "d435i-right-imager",
+  "name": "D435i Right IR Imager Lens",
+  "color": "#3a3a40",
+  "role": "solid",
+  "position": [
+   -32.5,
+   12.5,
+   10.825
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10,
+   "height": 10,
+   "depth": 3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// Lens module. Origin: centre of the front face. Extends +Y.\n$fn = 48; d = 10; len = 3;\ndifference() {\n  rotate([-90, 0, 0]) cylinder(d = d, h = len);\n  translate([0, -0.01, 0]) rotate([-90, 0, 0]) cylinder(d = d*0.45, h = 0.6);\n}",
+   "originOffset": [
+    0,
+    0,
+    -1.5
+   ],
+   "baseSize": [
+    10,
+    10,
+    3
+   ]
+  }
+ },
+ {
+  "id": "d435i-ir-projector",
+  "name": "D435i IR Projector",
+  "color": "#4a4a52",
+  "role": "solid",
+  "position": [
+   -11.5,
+   12.5,
+   10.825
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 7,
+   "height": 7,
+   "depth": 3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// Projector module. Origin: centre of the front face. Extends +Y.\n$fn = 48; d = 7; len = 3;\ndifference() {\n  rotate([-90, 0, 0]) cylinder(d = d, h = len);\n  translate([0, -0.01, 0]) rotate([-90, 0, 0]) cylinder(d = d*0.5, h = 0.6);\n}",
+   "originOffset": [
+    0,
+    0,
+    -1.5
+   ],
+   "baseSize": [
+    7,
+    7,
+    3
+   ]
+  }
+ },
+ {
+  "id": "d435i-rgb-camera",
+  "name": "D435i RGB Camera Lens",
+  "color": "#2c2c34",
+  "role": "solid",
+  "position": [
+   32.5,
+   12.5,
+   10.825
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8,
+   "height": 8,
+   "depth": 3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// RGB lens module. Origin: centre of the front face. Extends +Y.\n$fn = 48; d = 8; len = 3;\ndifference() {\n  rotate([-90, 0, 0]) cylinder(d = d, h = len);\n  translate([0, -0.01, 0]) rotate([-90, 0, 0]) cylinder(d = d*0.45, h = 0.6);\n}",
+   "originOffset": [
+    0,
+    0,
+    -1.5
+   ],
+   "baseSize": [
+    8,
+    8,
+    3
+   ]
+  }
+ }
+]

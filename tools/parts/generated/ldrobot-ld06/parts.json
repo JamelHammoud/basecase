@@ -1,0 +1,142 @@
+[
+ {
+  "id": "ld06-base",
+  "name": "LD06 Base Housing",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   10.35,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 38.59,
+   "height": 20.7,
+   "depth": 38.59
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// LD06 base housing. Origin: mounting face centre (z=0). Connector face +Y, sensor forward −X.\nW    = 38.59;           // footprint at mounting face (datasheet)\nH    = 20.70;           // base height = 33.50 - 12.80 (datasheet)\ndrft = 2.0;             // 92° wall draft -> 2° inward per side (datasheet)\nWt   = W - 2*H*tan(drft);   // top width ≈ 37.14\nrc   = 5.5;             // corner radius at bottom, scaled from drawing (NOT dimensioned)\nrct  = rc - H*tan(drft);\n// connector pocket (size scaled from drawing, not dimensioned)\ncw = 9.35; ch = 4.2; cz = 3.8; cd = 4.0; clr = 0.2;\n\n$fn = 48;\ndifference() {\n  prismoid(size1=[W,W], size2=[Wt,Wt], h=H, rounding1=rc, rounding2=rct, anchor=BOT);\n  // 2x through holes Ø2.45 with Ø4.80 counterbore 11.8 deep from bottom\n  for (p = [[-14.1, 14.1], [14.1, -14.1]]) translate([p.x, p.y, 0]) {\n    down(0.01) cyl(d=4.80, h=11.8+0.01, anchor=BOT);\n    down(0.01) cyl(d=2.45, h=H+0.1, anchor=BOT);\n  }\n  // blind locating hole Ø2.50 x 5.8 deep from bottom\n  translate([15.7, 15.7, -0.01]) cyl(d=2.50, h=5.8+0.01, anchor=BOT);\n  // connector pocket on +Y face\n  translate([0, W/2 + 1, cz]) cuboid([cw+2*clr, cd + 2 + 1, ch+2*clr], anchor=BACK+CENTER, spin=0, orient=UP)\n    ;\n}\n",
+   "originOffset": [
+    0,
+    10.35,
+    0
+   ],
+   "baseSize": [
+    38.59,
+    20.7,
+    38.59
+   ]
+  }
+ },
+ {
+  "id": "ld06-cap",
+  "name": "LD06 Rotating Cap",
+  "color": "#2a2a2d",
+  "role": "solid",
+  "position": [
+   0,
+   27.1,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 35.29,
+   "height": 12.8,
+   "depth": 35.29
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// LD06 rotating cap. Origin: cap base centre on base top face. Forward = −X.\nD0  = 35.29;              // base diameter (datasheet)\nHc  = 12.80;              // height (datasheet)\nD1  = D0 - 2*Hc*tan(1.5); // 91.5° draft -> top Ø ≈ 34.62\nrt  = 0.8;                // top edge round (NOT dimensioned)\nzl  = Hc - 7.80;          // lens centre, 7.80 below top (datasheet)\ndl  = 8.1;                // lens Ø scaled from drawing (NOT dimensioned)\ntl  = 1.2;                // lens recess depth (NOT dimensioned)\n$fn = 96;\ndifference() {\n  cyl(d1=D0, d2=D1, h=Hc, rounding2=rt, anchor=BOT);\n  // lens recess, flat-bottomed, facing −X\n  translate([-(D0/2 - zl*tan(1.5)) + tl, 0, zl]) xcyl(d=dl, h=6, anchor=RIGHT);\n}\n",
+   "originOffset": [
+    0,
+    6.4,
+    0
+   ],
+   "baseSize": [
+    35.29,
+    12.8,
+    35.29
+   ]
+  }
+ },
+ {
+  "id": "ld06-lens",
+  "name": "LD06 Optical Window Lens",
+  "color": "#0e1a24",
+  "role": "solid",
+  "position": [
+   -16.889,
+   25.7,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 1.15,
+   "height": 7.9,
+   "depth": 7.9
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Lens disc seated in the cap recess. Origin: optical centre on the scan axis (x=0,y=0,z=25.70).\nD0 = 35.29; zl = 5.0;               // cap Ø at base, lens height above cap base\nrs = D0/2 - zl*tan(1.5);            // cap surface radius at lens height ≈ 17.51\ndl = 8.1 - 0.2; tl = 1.2;           // disc slightly under recess Ø; recess depth\n$fn = 64;\ntranslate([-rs + tl, 0, 0]) xcyl(d=dl, h=tl - 0.05, anchor=RIGHT);\n",
+   "originOffset": [
+    -16.889,
+    0,
+    0
+   ],
+   "baseSize": [
+    1.15,
+    7.9,
+    7.9
+   ]
+  }
+ },
+ {
+  "id": "ld06-connector",
+  "name": "LD06 ZH1.5T-4P Header",
+  "color": "#efece2",
+  "role": "solid",
+  "position": [
+   0,
+   3.8,
+   -16.228
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 9.35,
+   "height": 4.2,
+   "depth": 5.87
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Header in the +Y wall pocket. Origin: world origin (modeled in place).\nW = 38.59; drft = 2;\ncz = 3.8; cw = 9.35; ch = 4.2;                  // scaled from drawing\nyf = W/2 - cz*tan(drft);                         // wall face at connector height ≈ 19.16\nyb = W/2 + 1 - 7;                                // pocket floor (matches base cut) = 13.30\nd  = yf - yb;\n$fn = 24;\ndifference() {\n  translate([0, yb, cz]) cuboid([cw, d, ch], rounding=0.3, edges=\"Y\", anchor=FRONT);\n  // mating cavity (plain, conservative)\n  translate([0, yf + 0.01, cz + 0.2]) cuboid([cw - 1.6, 3.0, ch - 1.6], anchor=BACK);\n}\n// 4 contacts on 1.5 mm pitch (datasheet pitch)\nfor (i = [0:3]) translate([(i - 1.5)*1.5, yf - 3.0, cz + 0.2]) cuboid([0.5, 2.6, 0.5], anchor=FRONT);\n",
+   "originOffset": [
+    0,
+    3.8000000000000003,
+    -16.2285
+   ],
+   "baseSize": [
+    9.35,
+    4.2,
+    5.87
+   ]
+  }
+ }
+]

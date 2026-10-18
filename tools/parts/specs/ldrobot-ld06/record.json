@@ -1,0 +1,82 @@
+{
+ "id": "ldrobot-ld06",
+ "name": "LDROBOT LD06",
+ "manufacturer": "LDROBOT (Shenzhen LDROBOT Co., Ltd.)",
+ "mpn": "LD06",
+ "category": "lidar",
+ "description": "Small 360° 2D DTOF lidar with 12 m range and 4.5 kHz ranging, transmit-only UART at 230400 baud.",
+ "specs": [
+  {
+   "label": "Range",
+   "value": "0.02–12 m (70% reflectivity)"
+  },
+  {
+   "label": "Scan rate",
+   "value": "10 Hz typical, 5–13 Hz (external PWM, 40% duty ≈ 10 Hz)"
+  },
+  {
+   "label": "Sample rate",
+   "value": "4500 Hz fixed; 1° angular resolution; FOV 360°; pitch 0–2° (0.5 typ)"
+  },
+  {
+   "label": "Accuracy",
+   "value": "±45 mm, 10 mm std dev (0.3–12 m); 15 mm resolution"
+  },
+  {
+   "label": "Laser",
+   "value": "905 nm (895–915), 25 mW peak (as printed), IEC-60825 Class 1"
+  },
+  {
+   "label": "Interface / power",
+   "value": "UART 230400 8N1, transmit-only (ZH1.5T-4P: Tx, PWM, GND, P5V); 5 V (4.5–5.5 V), 180 mA working, 300 mA start"
+  },
+  {
+   "label": "Weight / protection",
+   "value": "42 g (without cable); IPX4; 30 klux ambient; -10–40 °C"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 38.59,
+   "y": 38.59,
+   "z": 33.5,
+   "axes": "x = width, y = depth, z = height from mounting face to top (V1.1 table and drawing; inno-maker copy says 33.30)"
+  },
+  "features": [
+   {
+    "label": "Mounting holes",
+    "value": "Bottom view: 2× Ø2.45 through with Ø4.80 counterbore 11.8 deep at two opposite corners, 28.20 × 28.20 apart (±14.1 from centre); 1× Ø2.50 hole 5.8 deep at a third corner, 15.70 / 15.70 from the centre lines. Tolerance ±0.2.",
+    "source": "https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf §3 installation figure (p.7)"
+   },
+   {
+    "label": "Optical centre height",
+    "value": "25.7 mm above the mounting face (33.50 − 7.80 from top to window centre). Optical window 10.00 tall.",
+    "source": "https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf §3 optical window figure (p.6)"
+   },
+   {
+    "label": "Rotating cap",
+    "value": "Ø35.29, 12.80 tall, 91.5° draft; base 92° draft.",
+    "source": "https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf p.7"
+   },
+   {
+    "label": "Connector",
+    "value": "ZH1.5T-4P (1.5 mm) on one side of the base: 1 Tx, 2 PWM, 3 GND, 4 P5V.",
+    "source": "https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf §2.1"
+   }
+  ],
+  "source": "https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B0DCW3S4L8",
+   "asin": "B0DCW3S4L8",
+   "title": "SB COMPONENTS Lidar_LD06 Module with Bracket Development Kit Compatible with Raspberry Pi,Jetson Nano, Nvidia Beaglebone, Banana Pi Controller Board (Lidar LD06 Module)",
+   "kind": "product",
+   "verified": true
+  },
+  "product": null,
+  "datasheet": "https://raw.githubusercontent.com/YahboomTechnology/DTOF-mini-LiDar/main/LDROBOT_LD06_Datasheet_V1.1.pdf"
+ },
+ "notes": "No official LD06 CAD: LDROBOT's Product_3D_model release has only LD19 and LD14, and the LD06 is not on ldrobot.com. The LD06 housing is NOT the LD19 one (square 38.59 body with corner screws vs. LD19's 54 × 46.29 three-ear base), so the LD19 STEP is not a substitute. No community model verified. Datasheet: LDROBOT's own 'LD06 Data Sheet' V1.1 (© 2019 Shenzhen LDROBOT, created 2021-03-30) found only as a reseller mirror (Yahboom GitHub); an inno-maker rebadged copy (2020-12) and LDROBOT's own LD06 Raspbian user manual V2.7 (github.com/ldrobotSensorTeam/sdk_ld06_raspberry_ros) were also saved. Height 33.50 (V1.1) vs 33.30 (inno-maker copy). Laser power is printed as '25 mW' peak in the LD06 sheet whereas the LD19 sheet says 25 W; unit may be a typo. LDROBOT's LD19 repo says LD19 is basically the same as LD06 electrically (same protocol, ldlidar_stl drivers). Amazon: SB Components kit (includes bracket and adapter); no LDROBOT-owned store found.",
+ "pose": "lidar"
+}

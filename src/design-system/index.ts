@@ -1,0 +1,33 @@
+/**
+ * Design System Barrel Export
+ * Centralized theme constants and UI primitives.
+ */
+
+export * from './theme';
+export * from './Button';
+export * from './IconButton';
+export * from './Tooltip';
+export * from './Kbd';
+export * from './NumberInput';
+export * from './Slider';
+export * from './Switch';
+export * from './Field';
+export * from './FloatingIsland';
+export * from './Divider';
+export * from './PopoverMenu';
+export * from './SegmentedControl';
+export * from './PanelTabs';
+export * from './Section';
+export * from './Modal';
+export * from './Badge';
+export * from './SectionHeader';
+export * from './Toast';
+export * from './EmptyState';
+export * from './ContextMenu';
+export * from './ColorPicker';
+export * from './Markdown';
+export * from './PanelResizer';
+export * from './ImageViewer';
+export * from './HoverCard';
+export * from './useScrollFade';
+export * from './icons';

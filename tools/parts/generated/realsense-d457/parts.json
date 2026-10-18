@@ -1,0 +1,142 @@
+[
+ {
+  "id": "d457-housing",
+  "name": "D457 Housing",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   0,
+   14.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 124,
+   "height": 29,
+   "depth": 36
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Intel RealSense D457 housing. Origin: base centre (x=0 = 1/4-20 centreline, y=0 mid-depth, z=0 bottom).\nL = 124; D = 36; H = 29;          // envelope, mm (datasheet)\nzc = 14.5;                         // optical / connector height (drawing (14.50))\n// front window (NOT dimensioned: plain conservative inset)\nwin = [114, 22]; win_d = 1.5;\n// rear M4 inserts: 61.5 apart (dimensioned); x positions scaled from drawing\nm4_x = [23.75, -37.75]; m4_depth = 6; m4_d = 4.0;\n// bottom 1/4-20: x=0 dimensioned; y scaled from section A-A\nq_y = -2.7; q_d = 6.35; q_depth = 9;\n// FAKRA boss pocket: axis along X, 9.5 from rear face, from x=43 (ref) out to the +X end\nfk_y = D/2 - 9.5; fk_sq = 9.6; fk_x0 = 43;\n$fn = 48;\nmodule body()\n  translate([0, D/2, zc]) xrot(90)\n    offset_sweep(rect([L, H], rounding = H/2 - 0.01), height = D,\n                 bottom = os_circle(r = 1.0), top = os_circle(r = 3));\ndifference() {\n  body();\n  // front window recess\n  translate([0, -D/2 - 0.01, zc]) xrot(-90)\n    linear_extrude(win_d + 0.01) rect(win, rounding = win.y/2 - 0.01);\n  // rear M4 threaded inserts\n  for (x = m4_x) translate([x, D/2 + 0.01, zc]) ycyl(d = m4_d, h = m4_depth, anchor = BACK);\n  // bottom 1/4-20 insert\n  translate([0, q_y, -0.01]) cyl(d = q_d, h = q_depth, anchor = BOT);\n  // FAKRA tunnel, open at the +X end\n  translate([fk_x0, fk_y, zc]) cuboid([L/2 - fk_x0 + 1, fk_sq, fk_sq], anchor = LEFT);\n}",
+   "originOffset": [
+    0,
+    14.5,
+    0
+   ],
+   "baseSize": [
+    124,
+    29,
+    36
+   ]
+  }
+ },
+ {
+  "id": "d457-front-window",
+  "name": "D457 Front Window",
+  "color": "#0b0b0d",
+  "role": "solid",
+  "position": [
+   0,
+   14.5,
+   17.25
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 114,
+   "height": 22,
+   "depth": 1.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Front window, flush with the front face (y=-18). Origin: base centre of camera.\nwin = [114, 22]; t = 1.5; zc = 14.5; D = 36;\nopt_x = [-47.5, -11.5, 10, 47.5]; ap = 8;   // aperture Ø NOT dimensioned\n$fn = 48;\ndifference() {\n  translate([0, -D/2, zc]) xrot(-90) linear_extrude(t) rect(win, rounding = win.y/2 - 0.01);\n  for (x = opt_x) translate([x, -D/2 + t/2, zc]) ycyl(d = ap, h = t + 1);\n}",
+   "originOffset": [
+    0,
+    14.5,
+    17.25
+   ],
+   "baseSize": [
+    114,
+    22,
+    1.5
+   ]
+  }
+ },
+ {
+  "id": "d457-optics",
+  "name": "D457 Imagers, RGB and Emitter",
+  "color": "#2a2a33",
+  "role": "solid",
+  "position": [
+   0,
+   14.5,
+   17.25
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 102.8,
+   "height": 7.8,
+   "depth": 1.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Lens discs filling the window apertures (flush with front face y=-18).\nopt_x = [-47.5, -11.5, 10, 47.5]; ap = 8; t = 1.5; zc = 14.5; D = 36;\n$fn = 48;\nfor (x = opt_x) translate([x, -D/2 + t/2, zc]) ycyl(d = ap - 0.2, h = t);",
+   "originOffset": [
+    0,
+    14.5,
+    17.25
+   ],
+   "baseSize": [
+    102.8,
+    7.8,
+    1.5
+   ]
+  }
+ },
+ {
+  "id": "d457-fakra-jack",
+  "name": "FAKRA Jack (Amphenol 095-820-109-05C, C Blue)",
+  "color": "#2a5db0",
+  "role": "solid",
+  "position": [
+   50.3,
+   14.5,
+   -8.5
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 14.6,
+   "height": 9.2,
+   "depth": 9.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// FAKRA jack in the +X end tunnel. Origin: camera base centre.\nx0 = 43; x1 = 57.6; sq = 9.2; y = 36/2 - 9.5; zc = 14.5;\n$fn = 40;\ndifference() {\n  translate([x0, y, zc]) cuboid([x1 - x0, sq, sq], chamfer = 0.4, edges = \"X\", anchor = LEFT);\n  translate([x1 + 0.01, y, zc]) xcyl(d = 6.0, h = 8, anchor = RIGHT);   // mating cavity\n}\ntranslate([x1 - 8, y, zc]) xcyl(d = 1.2, h = 7.5, anchor = LEFT);       // centre pin",
+   "originOffset": [
+    50.3,
+    14.5,
+    -8.5
+   ],
+   "baseSize": [
+    14.6,
+    9.2,
+    9.2
+   ]
+  }
+ }
+]

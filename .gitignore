@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Benchmark downloads and run outputs
+bench/data/
+bench/runs/
+
+# Copies of folders attached to the agent (can be large)
+library/evidence/
+
+# Manufacturer CAD downloads (large; source URLs are in tools/parts/sources.json)
+tools/parts/cad/
+tools/parts/generated/*.log
+
+# Local app data: saved scenes, chats, uploads, prices, and the agent's workspace sync
+library/
+ai-reference/

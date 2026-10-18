@@ -1,0 +1,79 @@
+{
+ "id": "benewake-tfmini-s",
+ "name": "Benewake TFmini-S",
+ "manufacturer": "Benewake (Beijing)",
+ "mpn": "TFmini-S",
+ "category": "lidar",
+ "description": "Single-point 850 nm VCSEL time-of-flight distance sensor, 0.1–12 m at up to 1000 Hz, UART/I²C.",
+ "specs": [
+  {
+   "label": "Range",
+   "value": "0.1–12 m @ 90%, 0.1–7 m @ 10% reflectivity (also at 70 klx)"
+  },
+  {
+   "label": "Accuracy / resolution",
+   "value": "±6 cm (0.1–6 m), ±1% (6–12 m); 1 cm resolution"
+  },
+  {
+   "label": "Frame rate",
+   "value": "1–1000 Hz (default 100 Hz)"
+  },
+  {
+   "label": "Optics",
+   "value": "VCSEL 850 nm, Class 1 (EN 60825), 2° FOV"
+  },
+  {
+   "label": "Interface",
+   "value": "UART (115200 default) / I²C (addr 0x10, 400 kbps) / I/O; LVTTL 3.3 V; 10 cm cable"
+  },
+  {
+   "label": "Power",
+   "value": "5 V ±0.1 V, ≤140 mA avg (200 mA peak), ≤0.7 W"
+  },
+  {
+   "label": "Weight",
+   "value": "5 ±0.3 g; PC/ABS housing; no ingress rating"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 42.0,
+   "y": 15.0,
+   "z": 16.0,
+   "axes": "x = length across mounting ears, y = height of front face, z = depth along the optical axis incl. lens bosses"
+  },
+  "features": [
+   {
+    "label": "Mounting holes",
+    "value": "2× Ø2.35 through holes in end ears, 36 mm centre-to-centre, on the horizontal centre line; body between ears 33 mm long.",
+    "source": "TFmini-S User Manual Fig. 3 p.5"
+   },
+   {
+    "label": "Lenses",
+    "value": "Ø9.4 and Ø10.4 lenses, centres 10 mm apart (19.9 mm outer span), on the centre line 7.5 mm from the edge (mid-height of 15).",
+    "source": "User Manual Fig. 3 p.5"
+   },
+   {
+    "label": "Depth steps",
+    "value": "Ear tabs 5 mm from the back face, body 11 mm, overall 16 mm incl. lens bosses; 92° clearance angles drawn above the lens bosses.",
+    "source": "User Manual Fig. 3 p.5"
+   }
+  ],
+  "source": "https://en.benewake.com/uploadfiles/2025/04/20250430175136263.pdf (user manual) and https://en.benewake.com/uploadfiles/2025/04/20250430175121856.pdf (datasheet A01)"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B07B631YRF",
+   "asin": "B07B631YRF",
+   "title": "Benewake TFmini-S Lidar Sensor Range Finder Module 5V UART I2C 0.1m-12m",
+   "kind": "product",
+   "verified": true
+  },
+  "product": "https://en.benewake.com/TFminiS/index.html",
+  "datasheet": "https://en.benewake.com/uploadfiles/2025/04/20250430175121856.pdf"
+ },
+ "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tfmini-s/TFmini-S_Datasheet.pdf",
+ "manual_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tfmini-s/TFmini-S_User_Manual.pdf",
+ "notes": "ASIN B07B631YRF dates from 2018 (original TFmini era) but the current title is TFmini-S; alternative listings: B08D1XVRV5 (Stemedu), B0FSCZY5PM (Dxtvate). Seller not confirmed (page truncated). Which lens is emitter vs receiver is not labelled on the drawing.",
+ "pose": "camera"
+}

@@ -1,0 +1,107 @@
+[
+ {
+  "id": "tfmini-s-housing",
+  "name": "TFmini-S Housing",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   7.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 42,
+   "height": 15,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Benewake TFmini-S housing. Origin: floor centre; back face at y=+8, lenses face -Y.\n// Official (datasheet p.2): envelope 42 x 15 x 16, body 33 x 15 x 11 deep,\n// ears 5 deep from back face, 2x Ø2.35 at 36 c-c on mid-height line,\n// lens bosses Ø9.4 / Ø10.4, centres 10 apart, outer span 19.9, on mid-height.\n$fn = 64;\nL_all = 42;  L_body = 33;  H = 15;\nD_all = 16;  D_body = 11;  D_ear = 5;\nhole_d = 2.35;  hole_cc = 36;\ny_back = D_all/2;                    // +8\ny_face = y_back - D_body;            // -3 body front face\ny_tip  = -D_all/2;                   // -8 boss tips\nzc = H/2;                            // 7.5 optical / hole centre line\nd1 = 9.4;  d2 = 10.4;  lens_cc = 10;\nx1 = -19.9/2 + d1/2;                 // -5.25 (Ø9.4, drawing-left = -X)\nx2 = x1 + lens_cc;                   //  4.75 (Ø10.4)\n// NOT dimensioned (kept plain): ear height, edge radius, lens recess\near_h = L_all - hole_cc;             // 6 = 2 x R3 end radius implied by 42/36\nr_edge = 0.8;\nrec_depth = 1.5;  rec_wall = 1.0;\n\ndifference() {\n  union() {\n    // main body 33 x 11 x 15\n    translate([0, y_back - D_body/2, H/2])\n      cuboid([L_body, D_body, H], rounding = r_edge);\n    // ears: R3 ends about the holes, 5 deep from the back face\n    translate([0, y_back, zc]) rotate([90, 0, 0])\n      linear_extrude(height = D_ear)\n        for (s = [-1, 1]) hull() {\n          translate([s*hole_cc/2, 0]) circle(d = ear_h);\n          translate([s*(L_body/2 - 1), 0]) square([2, ear_h], center = true);\n        }\n    // lens bosses, 5 proud of the body front face (+Z rotated to -Y)\n    for (b = [[x1, d1], [x2, d2]])\n      translate([b[0], y_face + 0.01, zc]) rotate([90, 0, 0])\n        cylinder(d = b[1], h = y_face - y_tip + 0.01);\n  }\n  // mounting holes Ø2.35 through the ears\n  for (s = [-1, 1])\n    translate([s*hole_cc/2, y_back + 1, zc]) rotate([90, 0, 0])\n      cylinder(d = hole_d, h = D_ear + 2);\n  // shallow lens recesses (depth not dimensioned)\n  for (b = [[x1, d1], [x2, d2]])\n    translate([b[0], y_tip - 0.01, zc]) rotate([-90, 0, 0])\n      cylinder(d = b[1] - 2*rec_wall, h = rec_depth + 0.01);\n}",
+   "originOffset": [
+    0,
+    7.5,
+    0
+   ],
+   "baseSize": [
+    42,
+    15,
+    16
+   ]
+  }
+ },
+ {
+  "id": "tfmini-s-lens-small",
+  "name": "TFmini-S Lens Ø9.4 Boss",
+  "color": "#2a3a4a",
+  "role": "solid",
+  "position": [
+   -5.25,
+   7.5,
+   6.91
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 7.38,
+   "height": 7.38,
+   "depth": 0.8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Lens window, origin at window centre on its front face; faces -Y.\n$fn = 64;\nd = 9.4 - 2*1.0 - 0.02;   // recess bore minus a hair\nt = 0.8;\nrotate([-90, 0, 0]) cylinder(d = d, h = t);",
+   "originOffset": [
+    0,
+    0,
+    -0.4
+   ],
+   "baseSize": [
+    7.38,
+    7.38,
+    0.8
+   ]
+  }
+ },
+ {
+  "id": "tfmini-s-lens-large",
+  "name": "TFmini-S Lens Ø10.4 Boss",
+  "color": "#2a3a4a",
+  "role": "solid",
+  "position": [
+   4.75,
+   7.5,
+   6.91
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8.38,
+   "height": 8.38,
+   "depth": 0.8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Lens window, origin at window centre on its front face; faces -Y.\n$fn = 64;\nd = 10.4 - 2*1.0 - 0.02;\nt = 0.8;\nrotate([-90, 0, 0]) cylinder(d = d, h = t);",
+   "originOffset": [
+    0,
+    0,
+    -0.4
+   ],
+   "baseSize": [
+    8.38,
+    8.38,
+    0.8
+   ]
+  }
+ }
+]

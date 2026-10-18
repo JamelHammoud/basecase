@@ -1,0 +1,177 @@
+[
+ {
+  "id": "tf-luna-housing",
+  "name": "TF-Luna Housing",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   10.625,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 35,
+   "height": 21.25,
+   "depth": 13.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 48;\n// --- official (Benewake TF-Luna manual Fig.3 / datasheet A05) ---\nW      = 26.5;   // body width\nD      = 12;     // body depth (without lens boss)\nH      = 21.25;  // front-face height\nboss   = 1.5;    // 13.5 overall - 12 body\nlens_d = 10.5;   // lens diameter\nlens_dx= 10.5/2; // lens centres 10.5 apart\nlens_z = H - 9;  // lens centres 9 below top edge\nblk_w  = 18;     // bottom connector block width\near_t  = 2;      // ear thickness\near_r  = 2.25;   // ear end radius\nhole_d = 2.2;    // mounting hole\nhole_dx= 30.5/2; // hole spacing 30.5\npcb_h  = 19;     // rear PCB height\ncon_reach = 6.8; // connector reaches 6.8 from back face\n// --- not dimensioned (plain, conservative) ---\nyb     = 13.5/2;     // back face\nyf     = yb - D;     // front face of body\nblk_h  = (H - pcb_h)/2;  // narrow block height (keeps 19 PCB inside full-width body)\nr_c    = 1.5;        // corner radius\npcb_w  = 23.4;       // rear PCB pocket width (scaled from drawing)\nseat_h = 1.0;        // lens seat depth into boss\npcb_t  = 1.0;        // PCB thickness\n// connector cavity: from PCB front face to 0.2 beyond the 6.8 reach\ncon_y1 = yb - pcb_t;            // 5.75\ncon_y0 = yb - con_reach - 0.2;  // -0.25\ncon    = [10.5, con_y1 - con_y0, 4.0];\n\nmodule ear(s) translate([0, yb, lens_z]) xrot(90) linear_extrude(ear_t)\n  hull() { translate([s*hole_dx, 0]) circle(r = ear_r);\n           translate([s*(W/2 - 1.5), 0]) square([3, 2*ear_r + 3], center = true); }\n\ndifference() {\n  union() {\n    // main body\n    translate([0, (yb + yf)/2, blk_h]) cuboid([W, D, H - blk_h], rounding = r_c, edges = \"Y\", anchor = BOT);\n    // narrow bottom block (18 wide)\n    translate([0, (yb + yf)/2, 0]) cuboid([blk_w, D, blk_h + 1], rounding = 0.5, edges = \"Y\", except = TOP, anchor = BOT);\n    // lens boss: stadium around both lenses, 1.5 proud\n    translate([0, yf + 0.01, lens_z]) xrot(90) linear_extrude(boss + 0.01)\n      hull() for (s = [-1, 1]) translate([s*lens_dx, 0]) circle(d = lens_d);\n    // mounting ears\n    for (s = [-1, 1]) ear(s);\n  }\n  // Ø2.2 through holes\n  for (s = [-1, 1]) translate([s*hole_dx, yb, lens_z]) ycyl(d = hole_d, h = 10);\n  // Ø10.5 lens seats\n  for (s = [-1, 1]) translate([s*lens_dx, yf - boss - 0.01, lens_z]) xrot(-90) cyl(d = lens_d, h = seat_h + 0.01, anchor = BOT);\n  // rear PCB pocket\n  translate([0, yb + 0.01, H/2]) cuboid([pcb_w, pcb_t + 0.01, pcb_h + 0.4], rounding = 1, edges = \"Y\", anchor = BACK);\n  // bottom connector cavity\n  translate([0, (con_y0 + con_y1)/2, -0.01]) cuboid([con.x, con.y, con.z + 0.01], anchor = BOT);\n}",
+   "originOffset": [
+    0,
+    10.625,
+    0
+   ],
+   "baseSize": [
+    35,
+    21.25,
+    13.5
+   ]
+  }
+ },
+ {
+  "id": "tf-luna-pcb",
+  "name": "TF-Luna Rear PCB",
+  "color": "#1f3f2a",
+  "role": "solid",
+  "position": [
+   0,
+   10.625,
+   -6.25
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 23,
+   "height": 19,
+   "depth": 1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 32;\n// 19 mm tall (manual Fig.3 rear view); 23 x 1.0 not dimensioned\ntranslate([0, 13.5/2, 21.25/2]) cuboid([23, 1.0, 19], rounding = 0.8, edges = \"Y\", anchor = BACK);",
+   "originOffset": [
+    0,
+    10.625,
+    -6.25
+   ],
+   "baseSize": [
+    23,
+    19,
+    1
+   ]
+  }
+ },
+ {
+  "id": "tf-luna-connector",
+  "name": "TF-Luna 6-Pin 1.25 Connector",
+  "color": "#e8e2d0",
+  "role": "solid",
+  "position": [
+   0,
+   2.2,
+   -2.85
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10.1,
+   "height": 3.6,
+   "depth": 5.8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// y from back face 6.75: PCB front (5.75) to 6.8 reach (-0.05); top touches cavity ceiling z = 4.0\ny0 = 13.5/2 - 6.8;  y1 = 13.5/2 - 1.0;  yc = (y0 + y1)/2;\ndifference() {\n  translate([0, yc, 4.0]) cuboid([10.1, y1 - y0, 3.6], anchor = TOP);\n  translate([0, yc, 0.39]) cuboid([8.6, 2.4, 2.6], anchor = BOT);   // plug opening (faces down)\n}",
+   "originOffset": [
+    0,
+    2.2,
+    -2.85
+   ],
+   "baseSize": [
+    10.1,
+    3.6,
+    5.8
+   ]
+  }
+ },
+ {
+  "id": "tf-luna-lens-left",
+  "name": "TF-Luna Lens Left",
+  "color": "#0b0b12",
+  "role": "solid",
+  "position": [
+   5.25,
+   12.25,
+   6.2
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10.5,
+   "height": 10.5,
+   "depth": 0.9
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 48;\n// seat floor at y = -5.75; lens front at -6.65\ntranslate([10.5/2, -5.75, 21.25 - 9]) xrot(90) cyl(d = 10.5, h = 0.9, anchor = BOT);",
+   "originOffset": [
+    5.25,
+    12.25,
+    6.2
+   ],
+   "baseSize": [
+    10.5,
+    10.5,
+    0.9
+   ]
+  }
+ },
+ {
+  "id": "tf-luna-lens-right",
+  "name": "TF-Luna Lens Right",
+  "color": "#0b0b12",
+  "role": "solid",
+  "position": [
+   -5.25,
+   12.25,
+   6.2
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10.5,
+   "height": 10.5,
+   "depth": 0.9
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 48;\ntranslate([-10.5/2, -5.75, 21.25 - 9]) xrot(90) cyl(d = 10.5, h = 0.9, anchor = BOT);",
+   "originOffset": [
+    -5.25,
+    12.25,
+    6.2
+   ],
+   "baseSize": [
+    10.5,
+    10.5,
+    0.9
+   ]
+  }
+ }
+]

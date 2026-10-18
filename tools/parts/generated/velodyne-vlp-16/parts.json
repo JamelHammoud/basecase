@@ -1,0 +1,142 @@
+[
+ {
+  "id": "lower-housing",
+  "name": "Lower Housing Band",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   0,
+   9.4,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 103.3,
+   "height": 18.8,
+   "depth": 103.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// VLP-16 lower housing band. Origin: centre of bottom (mounting) face.\nD      = 103.3;   // body diameter (datasheet)\nH      = 18.8;    // lower band height (datasheet)\ntap_d  = 5.1;     // 1/4-20 tap drill (#7); thread not modelled\ntap_dp = 7.1;     // 9/32 in (datasheet)\npin_d  = 4.06;    // Ø0.16 in (datasheet)\npin_dp = 5.5;     // 7/32 in (datasheet)\npin_sp = 88.9;    // 3.50 in (datasheet)\ngl_d   = 12.7;    // gland max width (datasheet)\ngl_z   = 9.4;     // gland axis height: NOT dimensioned, mid-band\n$fn = 128;\ndifference() {\n  cyl(d = D, h = H, anchor = BOT);\n  // 1/4-20 centre mount\n  down(0.01) cyl(d = tap_d, h = tap_dp + 0.01, anchor = BOT, $fn = 32);\n  // locating pin holes on the 90° axis (X)\n  for (s = [-1, 1]) translate([s*pin_sp/2, 0, -0.01]) cyl(d = pin_d, h = pin_dp + 0.01, anchor = BOT, $fn = 32);\n  // cable-gland seat at 0° (+Y)\n  translate([0, D/2 - 3, gl_z]) ycyl(d = gl_d, h = 10, anchor = FRONT, $fn = 48);\n}",
+   "originOffset": [
+    0,
+    9.4,
+    0
+   ],
+   "baseSize": [
+    103.3,
+    18.8,
+    103.3
+   ]
+  }
+ },
+ {
+  "id": "optical-window",
+  "name": "Optical Window (Active Area)",
+  "color": "#1d2a3a",
+  "role": "solid",
+  "position": [
+   0,
+   37.85,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 103.3,
+   "height": 38.1,
+   "depth": 103.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Optical window band. Origin: bottom of window (z = 18.8 in assembly).\nD = 103.3; H = 38.1;\n$fn = 128;\ntube(od = D, id = D - 6, h = H, anchor = BOT);",
+   "originOffset": [
+    0,
+    19.05,
+    0
+   ],
+   "baseSize": [
+    103.3,
+    38.1,
+    103.3
+   ]
+  }
+ },
+ {
+  "id": "top-cap",
+  "name": "Top Cap",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   0,
+   64.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 103.3,
+   "height": 14.8,
+   "depth": 103.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Top cap. Origin: bottom of cap (z = 56.9 in assembly).\nD = 103.3; H = 71.7 - 18.8 - 38.1;  // 14.8\n$fn = 128;\ncyl(d = D, h = H, rounding2 = 1, anchor = BOT);",
+   "originOffset": [
+    0,
+    7.4,
+    0
+   ],
+   "baseSize": [
+    103.3,
+    14.8,
+    103.3
+   ]
+  }
+ },
+ {
+  "id": "cable-gland",
+  "name": "Cable Gland",
+  "color": "#8a8a8e",
+  "role": "solid",
+  "position": [
+   0,
+   9.4,
+   -56.5
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12.7,
+   "height": 12.7,
+   "depth": 15.7
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Cable gland envelope. Origin: on the body surface (y = 51.65), gland axis along +Y.\nd = 12.7; out = 12.7; seat = 3;\n$fn = 48;\nback(-seat) ycyl(d = d - 0.3, h = seat + 0.01, anchor = FRONT);          // shank in housing bore\nycyl(d = d, h = out, chamfer2 = 0.6, anchor = FRONT);                   // protruding body",
+   "originOffset": [
+    0,
+    0,
+    -4.85
+   ],
+   "baseSize": [
+    12.7,
+    12.7,
+    15.7
+   ]
+  }
+ }
+]

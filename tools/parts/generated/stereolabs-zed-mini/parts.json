@@ -1,0 +1,142 @@
+[
+ {
+  "id": "zed-mini-case",
+  "name": "ZED Mini Housing",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   13.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 125.2,
+   "height": 26.6,
+   "depth": 30.25
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Stereolabs ZED Mini housing — datasheet Rev1.3 p.4 (first-angle drawing).\n// World frame: base z=0, lenses face -Y, long side along X, bbox centred in X/Y.\nW      = 125.2;   // body width (drawing)\nH      = 26.6;    // body height (drawing)\nD_tot  = 30.25;   // total depth incl. lens bosses (drawing)\nD_body = 13;      // main body depth (drawing)\nbez_d  = 1.44;    // front bezel depth = 14.44 - 13 (drawing)\nbez_in = 1.72;    // bezel inset from body ends (drawing)\nend_flat = 23.17; // end-view flat face height (drawing)\nr_c    = (H - end_flat)/2;  // 1.715 front-view corner radius, derived from 26.6 - 23.17\nr_bez  = 0.5;     // bezel corner radius — NOT dimensioned\nboss_base = 20.53; boss_tip = 18.78;   // lens boss Ø (drawing)\nlens_x = [-40.20, 22.80];              // lens centres, 63 baseline (derived from drawing)\nglass_d = 14; glass_rec = 1.0;         // glass recess — NOT dimensioned\nusb_h = 9.5; usb_w = 3.5; usb_depth = 7; // opening (drawing); depth NOT dimensioned\nm2_d = 2; m2_depth = 2.3;              // M2x0.4, max engagement 2.3 (drawing)\nrear_dx = 116.7; rear_dz = 18.1;       // rear hole pattern (drawing)\nbot_dx = 56;                           // bottom hole spacing (drawing)\n\ny_rear  = D_tot/2;\ny_body  = y_rear - D_body;             // main body front face\ny_bez   = y_body - bez_d;              // bezel front face\nboss_len = y_bez + D_tot/2;            // 15.81 to boss tip\ny_usb   = y_rear - (D_body + bez_d)/2; // USB centred in body depth — NOT dimensioned\n\n// rounded rectangle in XZ, extruded from y=0 toward -Y\nmodule rr(w, h, r, len) rotate([90,0,0]) linear_extrude(len)\n  offset(r) offset(-r) square([w, h], center = true);\n\ndifference() {\n  union() {\n    translate([0, y_rear, H/2]) rr(W, H, r_c, D_body);\n    translate([0, y_body + 0.01, H/2]) rr(W - 2*bez_in, H - 2*bez_in, r_bez, bez_d + 0.01);\n    for (x = lens_x)\n      translate([x, y_bez + 0.01, H/2]) rotate([90,0,0])\n        cyl(d = boss_base, h = boss_len + 0.01, chamfer2 = (boss_base - boss_tip)/2,\n            anchor = BOT, $fn = 72);\n  }\n  // lens glass recesses\n  for (x = lens_x)\n    translate([x, -D_tot/2 - 0.01, H/2]) rotate([-90,0,0])\n      cylinder(d = glass_d, h = glass_rec + 0.01, $fn = 64);\n  // USB-C opening on +X end (9.5 tall, 3.5 wide)\n  translate([W/2 + 0.01, y_usb, H/2])\n    cuboid([usb_depth, usb_w, usb_h], rounding = usb_w/2 - 0.01, edges = \"X\", anchor = RIGHT, $fn = 24);\n  // rear M2 holes, 4x on 116.7 x 18.1\n  for (sx = [-1, 1], sz = [-1, 1])\n    translate([sx*rear_dx/2, y_rear + 0.01, H/2 + sz*rear_dz/2])\n      ycyl(d = m2_d, h = m2_depth + 0.01, anchor = BACK, $fn = 24);\n  // bottom M2 holes, 2x 56 apart, centred in body depth (depth position NOT dimensioned)\n  for (sx = [-1, 1])\n    translate([sx*bot_dx/2, y_rear - D_body/2, -0.01])\n      zcyl(d = m2_d, h = m2_depth + 0.01, anchor = BOT, $fn = 24);\n}",
+   "originOffset": [
+    0,
+    13.3,
+    0
+   ],
+   "baseSize": [
+    125.2,
+    26.6,
+    30.25
+   ]
+  }
+ },
+ {
+  "id": "zed-mini-lens-left",
+  "name": "ZED Mini Left Lens Window",
+  "color": "#0b0d14",
+  "role": "solid",
+  "position": [
+   -40.2,
+   13.3,
+   14.465
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 13.9,
+   "height": 13.9,
+   "depth": 0.72
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin = optical axis at boss tip plane. Front 0.3 behind tip, back seats on recess floor (y=1.0, 0.02 overlap).\ntranslate([0, 0.3, 0]) rotate([-90,0,0]) cylinder(d = 13.9, h = 0.72, $fn = 64);",
+   "originOffset": [
+    0,
+    0,
+    -0.66
+   ],
+   "baseSize": [
+    13.9,
+    13.9,
+    0.72
+   ]
+  }
+ },
+ {
+  "id": "zed-mini-lens-right",
+  "name": "ZED Mini Right Lens Window",
+  "color": "#0b0d14",
+  "role": "solid",
+  "position": [
+   22.8,
+   13.3,
+   14.465
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 13.9,
+   "height": 13.9,
+   "depth": 0.72
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ntranslate([0, 0.3, 0]) rotate([-90,0,0]) cylinder(d = 13.9, h = 0.72, $fn = 64);",
+   "originOffset": [
+    0,
+    0,
+    -0.66
+   ],
+   "baseSize": [
+    13.9,
+    13.9,
+    0.72
+   ]
+  }
+ },
+ {
+  "id": "zed-mini-usb-c",
+  "name": "ZED Mini USB-C Receptacle",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   58.84,
+   13.3,
+   -7.905
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6.52,
+   "height": 8.9,
+   "depth": 3.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// USB-C receptacle shell. Origin = centre of the opening on the case end face; shell extends toward -X.\n// Front face recessed 0.5 mm; back face seats on the opening floor (7 mm deep, overlap 0.02).\nrecess = 0.5; len = 7 - recess + 0.02;\ntranslate([-recess, 0, 0]) difference() {\n  cuboid([len, 3.2, 8.9], rounding = 1.59, edges = \"X\", anchor = RIGHT, $fn = 24);\n  translate([0.01, 0, 0]) cuboid([len - 0.6, 2.6, 8.3], rounding = 1.29, edges = \"X\", anchor = RIGHT, $fn = 24);\n}",
+   "originOffset": [
+    -3.76,
+    0,
+    0
+   ],
+   "baseSize": [
+    6.52,
+    8.9,
+    3.2
+   ]
+  }
+ }
+]

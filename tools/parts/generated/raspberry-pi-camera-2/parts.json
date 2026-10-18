@@ -1,0 +1,107 @@
+[
+ {
+  "id": "pcb",
+  "name": "Camera Module 2 PCB",
+  "color": "#1f5f3a",
+  "role": "solid",
+  "position": [
+   0,
+   0.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 25,
+   "height": 1,
+   "depth": 23.86
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: board centre, bottom face. X = connector edge (25), Y = 23.862, connector edge at +Y.\nW = 25; D = 23.862; T = 1.0;      // T not dimensioned\nr_c = 2.0; hole_d = 2.2;\nhy0 = -D/2 + 2; hy1 = -D/2 + 14.5;  // from edge opposite the connector\ndiff() cuboid([W, D, T], rounding = r_c, edges = \"Z\", anchor = BOT, $fn = 48) {\n  tag(\"remove\") for (x = [-10.5, 10.5], y = [hy0, hy1])\n    translate([x, y, 0]) cyl(d = hole_d, h = T + 1, $fn = 40);\n}",
+   "originOffset": [
+    0,
+    0.5,
+    0
+   ],
+   "baseSize": [
+    25,
+    1,
+    23.86
+   ]
+  }
+ },
+ {
+  "id": "lens-housing",
+  "name": "Lens Housing 8.5 Square",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   3.75,
+   -2.469
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8.5,
+   "height": 5.5,
+   "depth": 8.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: lens optical axis on the PCB top face.\nS = 8.5; H = 5.5;   // H estimated\ncuboid([S, S, H], anchor = BOT);",
+   "originOffset": [
+    0,
+    2.75,
+    0
+   ],
+   "baseSize": [
+    8.5,
+    5.5,
+    8.5
+   ]
+  }
+ },
+ {
+  "id": "fpc-connector",
+  "name": "15-Pin FPC Connector",
+  "color": "#2a2a2c",
+  "role": "solid",
+  "position": [
+   0,
+   -1.25,
+   -9.181
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 20.8,
+   "height": 2.5,
+   "depth": 5.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: centre of the outer (flush) face at the PCB bottom; body extends -Y and down.\nL = 20.8; Dp = 5.5; H = 2.5;   // H estimated\ncuboid([L, Dp, H], anchor = BACK + TOP);",
+   "originOffset": [
+    0,
+    -1.25,
+    2.75
+   ],
+   "baseSize": [
+    20.8,
+    2.5,
+    5.5
+   ]
+  }
+ }
+]

@@ -1,0 +1,107 @@
+[
+ {
+  "id": "case",
+  "name": "LIDAR-Lite v3HP Housing",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   20.09,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 54.99,
+   "height": 40.18,
+   "depth": 35
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Garmin LIDAR-Lite v3HP housing. Origin: base centre, floor z=0. Lenses face -Y, mounting flange at +Y.\nW = 54.99;  H = 40.18;  D = 35;      // envelope (items 1, 6, 9)\nhx = 36/2;  hz = 32/2;               // hole rectangle (items 2, 5)\nhole_d = 4;                          // item 7\near_r = H/2 - hz;                    // 4.09, lobe radius derived from envelope\nlens_dx = 27.69/2;  lens_d = 14.65;  // items 3, 8; optical axis at mid-height (item 4: 16 below top holes)\nflange_t = 3.0;                      // NOT dimensioned (scaled from side view)\nbody_h = 24;                         // NOT dimensioned (scaled from front view)\nbody_r = 4;                          // plain corner radius\nlens_seat = 1.5;                     // bore depth for lens window\nzc = H/2;\n$fn = 48;\n\nmodule body2d(w, h, r) rect([w, h], rounding = r);\nmodule flange2d() union() {\n  body2d(W, body_h, body_r);\n  for (sx = [-1, 1], sz = [-1, 1]) hull() {\n    translate([sx*hx, sz*hz]) circle(r = ear_r);\n    translate([sx*(hx - 6), sz*(hz - 8)]) circle(r = ear_r);\n  }\n}\n// map 2D (x, y) -> world (X, Z); extrude from y0 toward -Y by t\nmodule slab(y0, t) translate([0, y0, zc]) xrot(90) linear_extrude(height = t) children();\n\ndifference() {\n  union() {\n    slab(D/2, flange_t) flange2d();                       // rear mounting flange with 4 ear lobes\n    hull() {                                              // body, plain gentle taper toward front\n      slab(D/2 - flange_t + 0.01, 0.01) body2d(W, body_h, body_r);\n      slab(-D/2 + 0.01, 0.01) body2d(W - 2, body_h - 2, body_r + 1);\n    }\n  }\n  // mounting holes, through flange\n  for (sx = [-1, 1], sz = [-1, 1])\n    translate([sx*hx, D/2 - flange_t/2, zc + sz*hz]) ycyl(d = hole_d, h = flange_t + 1);\n  // lens window seats\n  for (sx = [-1, 1])\n    translate([sx*lens_dx, -D/2 + lens_seat/2 - 0.01, zc]) ycyl(d = lens_d, h = lens_seat + 0.02);\n}",
+   "originOffset": [
+    0,
+    20.09,
+    0
+   ],
+   "baseSize": [
+    54.99,
+    40.18,
+    35
+   ]
+  }
+ },
+ {
+  "id": "lens-left",
+  "name": "Optic Window Left",
+  "color": "#2a2d3a",
+  "role": "solid",
+  "position": [
+   13.845,
+   20.09,
+   16.5
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 14.65,
+   "height": 14.65,
+   "depth": 1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Optic window, origin at its front face centre; axis along Y. Plain disc (thickness not dimensioned).\nycyl(d = 14.65, h = 1.0, anchor = FRONT, $fn = 64);",
+   "originOffset": [
+    0,
+    0,
+    -0.5
+   ],
+   "baseSize": [
+    14.65,
+    14.65,
+    1
+   ]
+  }
+ },
+ {
+  "id": "lens-right",
+  "name": "Optic Window Right",
+  "color": "#2a2d3a",
+  "role": "solid",
+  "position": [
+   -13.845,
+   20.09,
+   16.5
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 14.65,
+   "height": 14.65,
+   "depth": 1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Optic window, origin at its front face centre; axis along Y. Plain disc (thickness not dimensioned).\nycyl(d = 14.65, h = 1.0, anchor = FRONT, $fn = 64);",
+   "originOffset": [
+    0,
+    0,
+    -0.5
+   ],
+   "baseSize": [
+    14.65,
+    14.65,
+    1
+   ]
+  }
+ }
+]

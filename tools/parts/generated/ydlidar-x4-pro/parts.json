@@ -1,0 +1,247 @@
+[
+ {
+  "id": "base-pcb",
+  "name": "Base PCB (Datum A)",
+  "color": "#1f5f3a",
+  "role": "solid",
+  "position": [
+   -0.1,
+   18.8,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 88.8,
+   "height": 1.6,
+   "depth": 71.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// X4 Pro base plate. Origin: rotation axis on datum A (plate underside). Thickness undimensioned (1.6 assumed).\nt = 1.6;\nholes = [[-39.9,-5.4],[36.6,28.1],[39.7,-27.7]];  // official chain dims\ntab_r = 4.6;     // gives left extremity -44.5 (110.6 envelope)\npod = [49.8, 0]; pod_r = 16.3;\n$fn = 64;\ndifference() {\n  linear_extrude(t) hull() {\n    circle(r = 35.75);\n    for (h = holes) translate(h) circle(r = tab_r);\n  }\n  for (h = holes) translate([h.x, h.y, -1]) cylinder(d = 3.2, h = t + 2);\n  translate([pod.x, pod.y, -1]) cylinder(r = pod_r + 0.3, h = t + 2);   // motor pod passes through\n}",
+   "originOffset": [
+    -0.10000000000000142,
+    0.8,
+    0
+   ],
+   "baseSize": [
+    88.8,
+    1.6,
+    71.5
+   ]
+  }
+ },
+ {
+  "id": "standoff-left",
+  "name": "Standoff Left (M3)",
+  "color": "#2a2a2a",
+  "role": "solid",
+  "position": [
+   -39.9,
+   9,
+   5.4
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6,
+   "height": 18,
+   "depth": 6
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// 18.0 standoff, M3 threaded end at z=0 (mounting face). OD ~6 scaled from drawing.\n$fn = 48;\ndifference() {\n  cylinder(d = 6, h = 18);\n  translate([0,0,-1]) cylinder(d = 2.5, h = 9);   // M3 tap drill\n}",
+   "originOffset": [
+    0,
+    9,
+    0
+   ],
+   "baseSize": [
+    6,
+    18,
+    6
+   ]
+  }
+ },
+ {
+  "id": "standoff-rear-right",
+  "name": "Standoff Rear (M3)",
+  "color": "#2a2a2a",
+  "role": "solid",
+  "position": [
+   36.6,
+   9,
+   -28.1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6,
+   "height": 18,
+   "depth": 6
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 48;\ndifference() {\n  cylinder(d = 6, h = 18);\n  translate([0,0,-1]) cylinder(d = 2.5, h = 9);\n}",
+   "originOffset": [
+    0,
+    9,
+    0
+   ],
+   "baseSize": [
+    6,
+    18,
+    6
+   ]
+  }
+ },
+ {
+  "id": "standoff-front-right",
+  "name": "Standoff Front (M3)",
+  "color": "#2a2a2a",
+  "role": "solid",
+  "position": [
+   39.7,
+   9,
+   27.7
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6,
+   "height": 18,
+   "depth": 6
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 48;\ndifference() {\n  cylinder(d = 6, h = 18);\n  translate([0,0,-1]) cylinder(d = 2.5, h = 9);\n}",
+   "originOffset": [
+    0,
+    9,
+    0
+   ],
+   "baseSize": [
+    6,
+    18,
+    6
+   ]
+  }
+ },
+ {
+  "id": "chassis",
+  "name": "Chassis Frame and Motor Pod",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   15.175,
+   25.4,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 101.85,
+   "height": 30.6,
+   "depth": 71.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Stationary frame above the PCB plus belt/motor pod. Origin: rotation axis on datum A.\n// Conservative envelope solid: interior (belt, PCB parts) not dimensioned.\nt_pcb = 1.6;\nhead_z = 21.3;      // head underside above A (scaled)\nstat_top = 22.7;    // official: stationary section top above A\npod = [49.8, 0]; pod_r = 16.3; pod_bot = -7.9;   // scaled from drawing\n$fn = 96;\ndifference() {\n  union() {\n    // frame: ring around head + belt cover to the motor\n    translate([0,0,t_pcb]) linear_extrude(head_z - t_pcb) hull() {\n      circle(r = 35.75);\n      translate(pod) circle(r = pod_r);\n    }\n    // motor pod: below the PCB to the stationary top\n    translate([pod.x, pod.y, pod_bot]) cylinder(r = pod_r, h = stat_top - pod_bot);\n  }\n  // clearance for the rotating head\n  translate([0,0,head_z]) cylinder(d = 68.7 + 0.6, h = 30);\n  // clearance around the PCB where the pod passes through it\n  translate([0,0,-0.01]) linear_extrude(t_pcb + 0.01) difference() {\n    hull() { circle(r = 36); for (h = [[-39.9,-5.4],[36.6,28.1],[39.7,-27.7]]) translate(h) circle(r = 4.6); }\n    translate(pod) circle(r = pod_r + 0.3);\n  }\n}",
+   "originOffset": [
+    15.174999999999997,
+    7.3999999999999995,
+    0
+   ],
+   "baseSize": [
+    101.85,
+    30.6,
+    71.5
+   ]
+  }
+ },
+ {
+  "id": "scan-head",
+  "name": "Rotating Scan Head",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   49.35,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 68.7,
+   "height": 20.1,
+   "depth": 68.7
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Rotating head. Origin: rotation axis at head underside (21.3 above datum A, scaled).\n// Official: Ø68.7, top 41.4 above A -> height 20.1; window 10.5 tall centred at 31.7 above A.\nd = 68.7; h = 41.4 - 21.3;\noc = 31.7 - 21.3; win = 10.5; recess = 0.8;\n$fn = 128;\ndifference() {\n  cyl(d = d, h = h, chamfer2 = 0.8, anchor = BOT);\n  // window recess, front arc (lens span scaled from side view)\n  translate([0,0,oc - win/2]) intersection() {\n    difference() { cylinder(d = d + 1, h = win); translate([0,0,-1]) cylinder(d = d - 2*recess, h = win + 2); }\n    translate([-29, -40, -1]) cube([54, 40, win + 2]);\n  }\n}",
+   "originOffset": [
+    0,
+    10.05,
+    0
+   ],
+   "baseSize": [
+    68.7,
+    20.1,
+    68.7
+   ]
+  }
+ },
+ {
+  "id": "optical-window",
+  "name": "Optical Window",
+  "color": "#3a2030",
+  "role": "solid",
+  "position": [
+   -2,
+   49.7,
+   25.602
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 54,
+   "height": 10.5,
+   "depth": 17.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// IR window filling the head recess. Origin: rotation axis at optical-centre height.\nd = 68.7; win = 10.5; recess = 0.8;\n$fn = 128;\ntranslate([0,0,-win/2]) intersection() {\n  difference() { cylinder(d = d, h = win); translate([0,0,-1]) cylinder(d = d - 2*recess, h = win + 2); }\n  translate([-29, -40, -1]) cube([54, 40, win + 2]);\n}",
+   "originOffset": [
+    -2,
+    0,
+    25.602
+   ],
+   "baseSize": [
+    54,
+    10.5,
+    17.5
+   ]
+  }
+ }
+]

@@ -1,0 +1,177 @@
+[
+ {
+  "id": "pcb",
+  "name": "Camera PCB 38x38",
+  "color": "#1f5f3a",
+  "role": "solid",
+  "position": [
+   0,
+   0.7,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 38,
+   "height": 1.4,
+   "depth": 38
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// PCB: origin at board center, bottom face z=0\nW = 38; T = 1.4; hole_d = 2.5; pitch = 30; r_corner = 1;\ndiff() cuboid([W, W, T], rounding = r_corner, edges = \"Z\", anchor = BOT, $fn = 32) {\n  tag(\"remove\") grid_copies(spacing = pitch, n = 2) cyl(d = hole_d, h = T + 1, $fn = 32);\n}",
+   "originOffset": [
+    0,
+    0.7,
+    0
+   ],
+   "baseSize": [
+    38,
+    1.4,
+    38
+   ]
+  }
+ },
+ {
+  "id": "sensor",
+  "name": "IMX296 Sensor Window",
+  "color": "#3a3a40",
+  "role": "solid",
+  "position": [
+   0,
+   1.9,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8.5,
+   "height": 1,
+   "depth": 8.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([8.5, 8.5, 1], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.5,
+    0
+   ],
+   "baseSize": [
+    8.5,
+    1,
+    8.5
+   ]
+  }
+ },
+ {
+  "id": "mount-housing",
+  "name": "CS Mount Housing With Tripod Tab",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   5.875,
+   4.43
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 30.75,
+   "height": 11.75,
+   "depth": 51.86
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: board center, z=0 = PCB bottom face. Optical axis = +Z. Tripod tab toward -Y.\npcb_t = 1.4; body_h = 10.35; z0 = pcb_t; z1 = pcb_t + body_h;   // 1.4 .. 11.75\nbody_d = 30.75; bore_d = 22.4;\nclamp_w = 10.16; clamp_d = 5.02; clamp_top = 21.5; slit = 0.8; slit_bot = 17.5; // top from drawing scale\ntab_w = 13.97; tab_bot = -30.36; flare_w = 24.1;   // flare & drop scaled from drawing\ntri_d = 6.35; tri_depth = 6; tri_z = z1 - 7.62/2;\n$fn = 64;\ndifference() {\n  union() {\n    translate([0,0,z0]) cyl(d = body_d, h = body_h, anchor = BOT);\n    // split clamp tab at top edge\n    translate([-clamp_w/2, 10, z1 - clamp_d]) cube([clamp_w, clamp_top - 10, clamp_d]);\n    // flare from body to tripod tab (in front of PCB)\n    hull() {\n      translate([-flare_w/2, -19, z0]) cube([flare_w, 3, body_h]);\n      translate([-tab_w/2, -24, z0]) cube([tab_w, 1, body_h]);\n      translate([-tab_w/2, -12, z0]) cube([tab_w, 1, body_h]);\n    }\n    // tripod tab below the board edge, back face flush with PCB bottom\n    translate([-tab_w/2, tab_bot, 0]) cube([tab_w, -19 - tab_bot + 6, z1]);\n  }\n  translate([0,0,-1]) cyl(d = bore_d, h = 20, anchor = BOT);\n  // keep PCB region clear (housing sits on PCB top)\n  translate([-19.01, -19.01, -0.01]) cube([38.02, 38.02, pcb_t + 0.01]);\n  // clamp slit\n  translate([-slit/2, slit_bot, z1 - clamp_d - 0.1]) cube([slit, 10, clamp_d + 0.2]);\n  // 1/4\"-20 tripod hole from bottom face\n  translate([0, tab_bot - 0.01, tri_z]) rotate([-90,0,0]) cylinder(d = tri_d, h = tri_depth);\n}",
+   "originOffset": [
+    0,
+    5.875,
+    4.43
+   ],
+   "baseSize": [
+    30.75,
+    11.75,
+    51.86
+   ]
+  }
+ },
+ {
+  "id": "focus-ring",
+  "name": "Back Focus Ring",
+  "color": "#2a2a2c",
+  "role": "solid",
+  "position": [
+   0,
+   15.25,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 36,
+   "height": 7,
+   "depth": 36
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n$fn = 96;\ndifference() {\n  union() {\n    cyl(d = 36, h = 1.2, anchor = BOT);\n    up(1.2) cyl(d = 30.75, h = 5.8, anchor = BOT);\n  }\n  down(1) cyl(d = 22.4, h = 10, anchor = BOT);\n}",
+   "originOffset": [
+    0,
+    3.5,
+    0
+   ],
+   "baseSize": [
+    36,
+    7,
+    36
+   ]
+  }
+ },
+ {
+  "id": "rear-cover",
+  "name": "Rear Cover 39.5x39.5",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   -3.16,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 39.5,
+   "height": 6.32,
+   "depth": 39.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: board center, top face at z=0 (mates PCB bottom)\nS = 39.5; D = 6.32; R = 4.75;\n$fn = 48;\ndiff() cuboid([S, S, D], rounding = R, edges = \"Z\", anchor = TOP) {\n  tag(\"remove\") grid_copies(spacing = 30, n = 2) cyl(d = 5.99, h = D + 1);\n  tag(\"remove\") xcopies(24.38) cyl(d = 2.5, h = D + 1);\n}",
+   "originOffset": [
+    0,
+    -3.16,
+    0
+   ],
+   "baseSize": [
+    39.5,
+    6.32,
+    39.5
+   ]
+  }
+ }
+]

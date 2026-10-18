@@ -1,0 +1,72 @@
+[
+ {
+  "id": "case",
+  "name": "SCS0009 Case",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   12.625,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 32.5,
+   "height": 25.25,
+   "depth": 12.1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Feetech SCS0009 case, origin = bottom centre of case, shaft at +X.\nL = 23.3;  W = 12.1;  H_body = 21.45;  H_top = 25.25;\ntab_L = 32.5; tab_W = 11; tab_z0 = 16.8; tab_z1 = 18.4;\nhole_x = 14.25; hole_d = 2;\nshaft_x = 5.7;\ncap_x0 = -3.75;          // gear-cap end, scaled from side view (not dimensioned)\nr = 0.6;                 // small edge break, conservative\n$fn = 40;\n\ndiff() {\n  union() {\n    // main body\n    translate([0,0,0]) cuboid([L, W, H_body], rounding=r, edges=\"Z\", anchor=BOT);\n    // gear cap on the shaft end\n    translate([(cap_x0 + L/2)/2, 0, H_body - 0.01])\n      cuboid([L/2 - cap_x0, W, H_top - H_body + 0.01], rounding=r, edges=\"Z\", anchor=BOT);\n    // mounting tab plate through the case\n    translate([0,0,tab_z0]) cuboid([tab_L, tab_W, tab_z1 - tab_z0], rounding=0.5, edges=\"Z\", anchor=BOT);\n  }\n  tag(\"remove\") xflip_copy() translate([hole_x, 0, tab_z0 - 0.5]) cyl(d=hole_d, h=3, anchor=BOT);\n}",
+   "originOffset": [
+    0,
+    12.625,
+    0
+   ],
+   "baseSize": [
+    32.5,
+    25.25,
+    12.1
+   ]
+  }
+ },
+ {
+  "id": "output-spline",
+  "name": "SCS0009 Output Spline",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   5.7,
+   26.845,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 3.95,
+   "height": 3.21,
+   "depth": 3.95
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// 20-tooth output spline, origin at top face of case on shaft axis.\nOD = 3.95; teeth = 20; h = 3.2; tooth_depth = 0.25;\ntap_d = 1.6; tap_depth = 3;\npts = [for (i = [0:teeth*2-1]) let(a = i*180/teeth, rr = (i%2==0) ? OD/2 : OD/2 - tooth_depth) [rr*cos(a), rr*sin(a)]];\ndifference() {\n  translate([0,0,-0.01]) linear_extrude(h + 0.01) polygon(pts);\n  translate([0,0,h - tap_depth]) cylinder(d=tap_d, h=tap_depth + 0.1, $fn=24);\n}",
+   "originOffset": [
+    0,
+    1.5950000000000002,
+    0
+   ],
+   "baseSize": [
+    3.95,
+    3.21,
+    3.95
+   ]
+  }
+ }
+]

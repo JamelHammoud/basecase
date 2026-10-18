@@ -1,0 +1,667 @@
+[
+ {
+  "id": "mb-pcb",
+  "name": "Main Board PCB (MB v2.2)",
+  "color": "#1c1c1c",
+  "role": "solid",
+  "position": [
+   0,
+   0.8,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 60,
+   "height": 1.6,
+   "depth": 30
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// ESP32-S3-EYE-MB v2.2 PCB. Origin: board center, bottom face. Long side on X, notch (camera end) at +X.\nL = 60; W = 30; t = 1.6;        // t not published (assumed 1.6)\nnotch_w = 18; notch_d = 6.4;    // dimensioned\ndifference() {\n  translate([-L/2, -W/2, 0]) cube([L, W, t]);\n  translate([L/2 - notch_d, -notch_w/2, -1]) cube([notch_d + 1, notch_w, t + 2]);\n}",
+   "originOffset": [
+    0,
+    0.8,
+    0
+   ],
+   "baseSize": [
+    60,
+    1.6,
+    30
+   ]
+  }
+ },
+ {
+  "id": "wroom-module",
+  "name": "ESP32-S3-WROOM-1 Module (bottom)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   17.1,
+   -1.55,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 25.8,
+   "height": 3.1,
+   "depth": 18
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Bottom-side module, plain envelope. Origin: center of its top face (against PCB bottom).\n// 18 wide (matches 18.00 notch), ~25.8 long scaled; thickness assumed 3.1.\ncuboid([25.8, 18, 3.1], anchor = TOP);",
+   "originOffset": [
+    0,
+    -1.55,
+    0
+   ],
+   "baseSize": [
+    25.8,
+    3.1,
+    18
+   ]
+  }
+ },
+ {
+  "id": "microsd-slot",
+  "name": "MicroSD Slot J2 (bottom)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -6.35,
+   -0.8,
+   -7.75
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 15.1,
+   "height": 1.6,
+   "depth": 14.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Plain envelope, origin at center of top face (against PCB bottom). Card opening faces +Y edge.\ncuboid([15.1, 14.5, 1.6], anchor = TOP);",
+   "originOffset": [
+    0,
+    -0.8,
+    0
+   ],
+   "baseSize": [
+    15.1,
+    1.6,
+    14.5
+   ]
+  }
+ },
+ {
+  "id": "micro-usb",
+  "name": "Micro-USB Connector J1 (bottom)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -28.1,
+   -1.25,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.8,
+   "height": 2.5,
+   "depth": 8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Plain envelope, origin at center of top face. Opening faces -X (protrudes ~1 mm past board edge).\ncuboid([5.8, 8, 2.5], anchor = TOP);",
+   "originOffset": [
+    0,
+    -1.25,
+    0
+   ],
+   "baseSize": [
+    5.8,
+    2.5,
+    8
+   ]
+  }
+ },
+ {
+  "id": "camera",
+  "name": "OV2640 Camera Module",
+  "color": "#2a2a2a",
+  "role": "solid",
+  "position": [
+   19.2,
+   3.85,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8.5,
+   "height": 4.5,
+   "depth": 8.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Plain camera: 8.5 square body + Ø7 lens barrel (scaled). Heights assumed. Origin: base center.\ncuboid([8.5, 8.5, 2.5], anchor = BOT);\nup(2.5) cyl(d = 7, h = 2, anchor = BOT);",
+   "originOffset": [
+    0,
+    2.25,
+    0
+   ],
+   "baseSize": [
+    8.5,
+    4.5,
+    8.5
+   ]
+  }
+ },
+ {
+  "id": "cam-fpc-conn",
+  "name": "Camera FPC Connector",
+  "color": "#e8e2d0",
+  "role": "solid",
+  "position": [
+   2.65,
+   2.35,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 4.5,
+   "height": 1.5,
+   "depth": 17.6
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([4.5, 17.6, 1.5], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    4.5,
+    1.5,
+    17.6
+   ]
+  }
+ },
+ {
+  "id": "btn-menu",
+  "name": "Button MENU",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   21.1,
+   2.35,
+   -11.75
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 3.1,
+   "height": 1.5,
+   "depth": 4.1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([3.1, 4.1, 1.5], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    3.1,
+    1.5,
+    4.1
+   ]
+  }
+ },
+ {
+  "id": "btn-play",
+  "name": "Button PLAY",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   16.1,
+   2.35,
+   -11.75
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 3.1,
+   "height": 1.5,
+   "depth": 4.1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([3.1, 4.1, 1.5], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    3.1,
+    1.5,
+    4.1
+   ]
+  }
+ },
+ {
+  "id": "btn-up",
+  "name": "Button UP+",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   21.1,
+   2.35,
+   11.75
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 3.1,
+   "height": 1.5,
+   "depth": 4.1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([3.1, 4.1, 1.5], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    3.1,
+    1.5,
+    4.1
+   ]
+  }
+ },
+ {
+  "id": "btn-dn",
+  "name": "Button DN-",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   16.1,
+   2.35,
+   11.75
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 3.1,
+   "height": 1.5,
+   "depth": 4.1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([3.1, 4.1, 1.5], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    3.1,
+    1.5,
+    4.1
+   ]
+  }
+ },
+ {
+  "id": "btn-boot",
+  "name": "Button BOOT",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -26.4,
+   2.35,
+   -12.4
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 4.4,
+   "height": 1.5,
+   "depth": 3.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([4.4, 3.2, 1.5], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    4.4,
+    1.5,
+    3.2
+   ]
+  }
+ },
+ {
+  "id": "btn-rst",
+  "name": "Button RST",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -26.4,
+   2.35,
+   -7.5
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 4.4,
+   "height": 1.5,
+   "depth": 3.2
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([4.4, 3.2, 1.5], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    4.4,
+    1.5,
+    3.2
+   ]
+  }
+ },
+ {
+  "id": "mb-header-left",
+  "name": "MB Board-to-Board Header (+Y)",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   -7.15,
+   2.6,
+   -10.95
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.9,
+   "height": 2,
+   "depth": 6.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// 2x5 SMD board-to-board, footprint incl. pads scaled from drawing; height assumed.\ncuboid([5.9, 6.3, 2.0], anchor = BOT);",
+   "originOffset": [
+    0,
+    1,
+    0
+   ],
+   "baseSize": [
+    5.9,
+    2,
+    6.3
+   ]
+  }
+ },
+ {
+  "id": "mb-header-right",
+  "name": "MB Board-to-Board Header (-Y)",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   -7.15,
+   2.6,
+   10.95
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.9,
+   "height": 2,
+   "depth": 6.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([5.9, 6.3, 2.0], anchor = BOT);",
+   "originOffset": [
+    0,
+    1,
+    0
+   ],
+   "baseSize": [
+    5.9,
+    2,
+    6.3
+   ]
+  }
+ },
+ {
+  "id": "sub-j9",
+  "name": "Sub Header J9",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   -7.15,
+   4.6,
+   -10.95
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.9,
+   "height": 2,
+   "depth": 6.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Hangs from sub-board underside; origin at its top face.\ncuboid([5.9, 6.3, 2.0], anchor = TOP);",
+   "originOffset": [
+    0,
+    -1,
+    0
+   ],
+   "baseSize": [
+    5.9,
+    2,
+    6.3
+   ]
+  }
+ },
+ {
+  "id": "sub-j8",
+  "name": "Sub Header J8",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   -7.15,
+   4.6,
+   10.95
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.9,
+   "height": 2,
+   "depth": 6.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([5.9, 6.3, 2.0], anchor = TOP);",
+   "originOffset": [
+    0,
+    -1,
+    0
+   ],
+   "baseSize": [
+    5.9,
+    2,
+    6.3
+   ]
+  }
+ },
+ {
+  "id": "sub-pcb",
+  "name": "Sub Board PCB (SUB v1.1)",
+  "color": "#1c1c1c",
+  "role": "solid",
+  "position": [
+   -6.15,
+   6.4,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 31.9,
+   "height": 1.6,
+   "depth": 30
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// 30.00 x 31.90 (dimensioned). Long 31.9 along X. Thickness 1.6 assumed. Origin: bottom face center.\ncuboid([31.9, 30, 1.6], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.8,
+    0
+   ],
+   "baseSize": [
+    31.9,
+    1.6,
+    30
+   ]
+  }
+ },
+ {
+  "id": "sub-j5",
+  "name": "Sub FPC Connector J5",
+  "color": "#e8e2d0",
+  "role": "solid",
+  "position": [
+   -13.25,
+   4.85,
+   2.65
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.3,
+   "height": 1.5,
+   "depth": 10.7
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([5.3, 10.7, 1.5], anchor = TOP);",
+   "originOffset": [
+    0,
+    -0.75,
+    0
+   ],
+   "baseSize": [
+    5.3,
+    1.5,
+    10.7
+   ]
+  }
+ },
+ {
+  "id": "lcd",
+  "name": "1.3-inch LCD",
+  "color": "#0d0d10",
+  "role": "solid",
+  "position": [
+   -6.15,
+   8.2,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 26,
+   "height": 2,
+   "depth": 26
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Plain, conservative envelope: no official LCD dimensions. Origin: base center.\ncuboid([26, 26, 2.0], anchor = BOT);",
+   "originOffset": [
+    0,
+    1,
+    0
+   ],
+   "baseSize": [
+    26,
+    2,
+    26
+   ]
+  }
+ }
+]

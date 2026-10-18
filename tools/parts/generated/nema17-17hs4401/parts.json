@@ -1,0 +1,72 @@
+[
+ {
+  "id": "case",
+  "name": "17HS4401 Case",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   21,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 42.3,
+   "height": 42,
+   "depth": 42.3
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: rear face center on floor; flange (mounting) face at z = L.\nF = 42.3;     // frame square, max\nL = 40;       // body length behind flange face\npilot_d = 22; pilot_h = 2.0;\npitch = 31;   // hole pattern\nm3_d = 3.0;   hole_depth = 4.5; // M3 thread, min depth (modeled at nominal Ø)\n$fn = 64;\ndifference() {\n  union() {\n    translate([-F/2, -F/2, 0]) cube([F, F, L]);\n    translate([0, 0, L - 0.01]) cylinder(d = pilot_d, h = pilot_h + 0.01);\n  }\n  for (x = [-1, 1], y = [-1, 1])\n    translate([x*pitch/2, y*pitch/2, L - hole_depth]) cylinder(d = m3_d, h = hole_depth + 0.1);\n  // shaft bore through pilot (shaft is a separate body)\n  translate([0, 0, L - 1]) cylinder(d = 5, h = pilot_h + 2);\n}",
+   "originOffset": [
+    0,
+    21,
+    0
+   ],
+   "baseSize": [
+    42.3,
+    42,
+    42.3
+   ]
+  }
+ },
+ {
+  "id": "shaft",
+  "name": "17HS4401 Output Shaft",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   0,
+   51.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5,
+   "height": 25,
+   "depth": 5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "// Origin at flange face; shaft starts 1 mm inside the bore and extends 24 mm above the flange face.\n$fn = 48;\ntranslate([0, 0, -1]) cylinder(d = 5, h = 24 + 1);",
+   "originOffset": [
+    0,
+    11.5,
+    0
+   ],
+   "baseSize": [
+    5,
+    25,
+    5
+   ]
+  }
+ }
+]

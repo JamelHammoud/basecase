@@ -1,0 +1,177 @@
+[
+ {
+  "id": "pcb",
+  "name": "AI Camera PCB",
+  "color": "#1f8f4a",
+  "role": "solid",
+  "position": [
+   0,
+   0.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 25,
+   "height": 1,
+   "depth": 23.86
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Raspberry Pi AI Camera PCB (SC1174). Origin: PCB centre, bottom face. Connector edge at -Y.\nW = 25; H = 23.862; T = 1.0;      // brief p.4\nhole_d = 2.2;\ntop = H/2;                         // edge opposite the connector\nholes = [for (x = [-W/2 + 2, W/2 - 2], dy = [2.0, 14.5]) [x, top - dy]];\n$fn = 48;\ndifference() {\n  cuboid([W, H, T], anchor = BOT);\n  for (p = holes) translate([p.x, p.y, -1]) cylinder(d = hole_d, h = T + 2);\n}",
+   "originOffset": [
+    0,
+    0.5,
+    0
+   ],
+   "baseSize": [
+    25,
+    1,
+    23.86
+   ]
+  }
+ },
+ {
+  "id": "sensor-package",
+  "name": "IMX500 Sensor Package",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   1.685,
+   2.181
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12.8,
+   "height": 1.37,
+   "depth": 19.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Sensor package block: 12.8 (X) x 19.5 (Y), from the PCB top (z=1.0) to z=2.37 (lens front 9.35 - 6.98).\ncuboid([12.8, 19.5, 1.37], anchor = BOT);",
+   "originOffset": [
+    0,
+    0.685,
+    0
+   ],
+   "baseSize": [
+    12.8,
+    1.37,
+    19.5
+   ]
+  }
+ },
+ {
+  "id": "lens-holder",
+  "name": "Lens Holder",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   4.485,
+   2.469
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12,
+   "height": 4.23,
+   "depth": 12.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Lens holder block 12 x 12.5, height 4.23 (z 2.37 to 6.60)\ncuboid([12, 12.5, 4.23], anchor = BOT);",
+   "originOffset": [
+    0,
+    2.115,
+    0
+   ],
+   "baseSize": [
+    12,
+    4.23,
+    12.5
+   ]
+  }
+ },
+ {
+  "id": "lens-barrel",
+  "name": "Lens Barrel (Manual Focus)",
+  "color": "#111113",
+  "role": "solid",
+  "position": [
+   0,
+   7.975,
+   2.469
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 5.75,
+   "height": 2.75,
+   "depth": 5.75
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncyl(d = 5.75, h = 2.75, anchor = BOT, $fn = 64);",
+   "originOffset": [
+    0,
+    1.375,
+    0
+   ],
+   "baseSize": [
+    5.75,
+    2.75,
+    5.75
+   ]
+  }
+ },
+ {
+  "id": "fpc-connector",
+  "name": "Rear FPC Connector",
+  "color": "#2b2b2b",
+  "role": "solid",
+  "position": [
+   0,
+   -1.275,
+   9.076
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 19.61,
+   "height": 2.55,
+   "depth": 5.71
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([19.61, 5.71, 2.55], anchor = TOP);",
+   "originOffset": [
+    0,
+    -1.275,
+    0
+   ],
+   "baseSize": [
+    19.61,
+    2.55,
+    5.71
+   ]
+  }
+ }
+]

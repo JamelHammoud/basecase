@@ -1,0 +1,177 @@
+[
+ {
+  "id": "pcb",
+  "name": "Pi Zero 2 W PCB",
+  "color": "#1f5f3a",
+  "role": "solid",
+  "position": [
+   0,
+   0.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 65,
+   "height": 1,
+   "depth": 30
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Raspberry Pi Zero 2 W bare PCB. Local origin = board centre, bottom face (z=0).\nL = 65; W = 30;          // official outline\nt = 1.0;                 // NOT dimensioned officially (estimate)\nr_corner = 3.0;          // NOT dimensioned (scaled from drawing)\nhole_d = 2.75;           // NOT dimensioned (Zero-family common value, unverified)\nhole_inset = 3.5;        // official\ngpio_cx = 32.5; gpio_cy = 26.5;  // official (drawing coords)\npitch = 2.54; gpio_d = 1.0;      // pitch scaled from drawing; drill not dimensioned\nfunction w(p) = [p[0] - L/2, p[1] - W/2];   // drawing -> local\n$fn = 32;\ndifference() {\n  linear_extrude(t) offset(r = r_corner) offset(delta = -r_corner) square([L, W], center = true);\n  for (x = [hole_inset, L - hole_inset], y = [hole_inset, W - hole_inset])\n    translate([each w([x, y]), -1]) cylinder(d = hole_d, h = t + 2);\n  for (i = [0:19], j = [0:1])\n    translate([each w([gpio_cx + (i - 9.5) * pitch, gpio_cy + (j - 0.5) * pitch]), -1])\n      cylinder(d = gpio_d, h = t + 2, $fn = 12);\n}",
+   "originOffset": [
+    0,
+    0.5,
+    0
+   ],
+   "baseSize": [
+    65,
+    1,
+    30
+   ]
+  }
+ },
+ {
+  "id": "mini-hdmi",
+  "name": "Mini-HDMI Connector",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -20.1,
+   2.65,
+   11.85
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10.8,
+   "height": 3.3,
+   "depth": 7.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Mini-HDMI receptacle envelope; local origin = body centre on PCB top. Opening faces -Y.\nw = 10.8; d = 7.5; h = 3.3;\ndiff() cuboid([w, d, h], chamfer = 0.3, anchor = BOT)\n  tag(\"remove\") position(FRONT) back(1.5) cuboid([w - 1.6, 3.01, h - 1.2]);",
+   "originOffset": [
+    0,
+    1.65,
+    0
+   ],
+   "baseSize": [
+    10.8,
+    3.3,
+    7.5
+   ]
+  }
+ },
+ {
+  "id": "micro-usb-otg",
+  "name": "Micro-USB OTG Connector",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   8.9,
+   2.5,
+   13.345
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8.4,
+   "height": 3,
+   "depth": 6.19
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Micro-USB receptacle envelope; local origin = body centre on PCB top. Opening faces -Y.\nw = 7.6; d = 5.4; h = 2.8; fl_w = 8.4; fl_d = 0.8;\ndifference() {\n  union() {\n    cuboid([w, d, h], chamfer = 0.2, anchor = BOT);\n    fwd(d/2 + fl_d/2 - 0.01) cuboid([fl_w, fl_d, h + 0.2], chamfer = 0.2, anchor = BOT);\n  }\n  fwd(d/2 + fl_d - 1.5) up(h/2 + 0.1) cuboid([w - 1.6, 3.01, 1.6], chamfer = 0.4); // plug socket\n}",
+   "originOffset": [
+    0,
+    1.5,
+    0.395
+   ],
+   "baseSize": [
+    8.4,
+    3,
+    6.19
+   ]
+  }
+ },
+ {
+  "id": "micro-usb-pwr",
+  "name": "Micro-USB Power Connector",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   21.5,
+   2.5,
+   13.345
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8.4,
+   "height": 3,
+   "depth": 6.19
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Micro-USB receptacle envelope; local origin = body centre on PCB top. Opening faces -Y.\nw = 7.6; d = 5.4; h = 2.8; fl_w = 8.4; fl_d = 0.8;\ndifference() {\n  union() {\n    cuboid([w, d, h], chamfer = 0.2, anchor = BOT);\n    fwd(d/2 + fl_d/2 - 0.01) cuboid([fl_w, fl_d, h + 0.2], chamfer = 0.2, anchor = BOT);\n  }\n  fwd(d/2 + fl_d - 1.5) up(h/2 + 0.1) cuboid([w - 1.6, 3.01, 1.6], chamfer = 0.4); // plug socket\n}",
+   "originOffset": [
+    0,
+    1.5,
+    0.395
+   ],
+   "baseSize": [
+    8.4,
+    3,
+    6.19
+   ]
+  }
+ },
+ {
+  "id": "csi-connector",
+  "name": "CSI Camera FPC Connector",
+  "color": "#2a2a2a",
+  "role": "solid",
+  "position": [
+   30.75,
+   1.75,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 3.5,
+   "height": 1.5,
+   "depth": 15.8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// 22-pin FPC connector envelope; local origin = centre on PCB top. Slot opens toward +X (board edge).\nw = 3.5; d = 15.8; h = 1.5;\ndiff() cuboid([w, d, h], chamfer = 0.2, anchor = BOT)\n  tag(\"remove\") position(RIGHT) up(0.2) cuboid([2.4, d - 2.4, 0.6]);",
+   "originOffset": [
+    0,
+    0.75,
+    0
+   ],
+   "baseSize": [
+    3.5,
+    1.5,
+    15.8
+   ]
+  }
+ }
+]

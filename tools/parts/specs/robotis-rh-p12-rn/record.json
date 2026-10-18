@@ -1,0 +1,102 @@
+{
+ "id": "robotis-rh-p12-rn",
+ "name": "ROBOTIS RH-P12-RN(A)",
+ "manufacturer": "ROBOTIS",
+ "mpn": "RH-P12-RN / RH-P12-RN(A) (firmware variant); UR kit RH-P12-RN-UR 905-0028-000",
+ "category": "grippers",
+ "description": "Two-finger adaptive robot hand with passive finger joints and a DYNAMIXEL-P-compatible RS-485 actuator, current (force) controllable.",
+ "specs": [
+  {
+   "label": "Stroke",
+   "value": "0–109 mm (e-Manual); 0–106 mm on units shipped from 4 Nov 2019 (robotis.us)"
+  },
+  {
+   "label": "Max grip force",
+   "value": "170 N"
+  },
+  {
+   "label": "Payload",
+   "value": "5 kg recommended"
+  },
+  {
+   "label": "Max closing speed",
+   "value": "75 mm/s; gear ratio 1181:1, coreless motor"
+  },
+  {
+   "label": "Weight",
+   "value": "500 g"
+  },
+  {
+   "label": "Interface",
+   "value": "RS-485 multidrop, DYNAMIXEL Protocol 2.0, 9600 bps–10.5 Mbps; 12-bit absolute encoder"
+  },
+  {
+   "label": "Power",
+   "value": "24 V nominal; 30 mA standby, 3.33 A peak"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 151,
+   "y": 54,
+   "z": 116.3,
+   "axes": "x = finger opening direction (open), y = depth, z = height from base underside to fingertip (drawing RH-P12-RN, 2020-02-21)"
+  },
+  "features": [
+   {
+    "label": "Stroke / finger travel",
+    "value": "109 mm (106 mm with post-Nov-2019 fingertips); fingertip pads 20 mm tall, 36 mm from tip to linkage",
+    "source": "https://www.dropbox.com/s/4rbr4agyw2dzuet/RH-P12-RN.pdf (via https://emanual.robotis.com/docs/en/platform/rh_p12_rn/#drawings)"
+   },
+   {
+    "label": "Base mounting taps",
+    "value": "12× M3 tapped holes, 6 per side on the base boss, 3 mm above the bottom face, 6 mm from edge, spanning 36 mm (option frames/UR mounting frame attach here)",
+    "source": "RH-P12-RN.pdf side view"
+   },
+   {
+    "label": "Face taps",
+    "value": "8× M3 tapped (4 per front/back face): trapezoid with 24 mm (upper) and 32 mm (lower) spacing, 42 mm vertical",
+    "source": "RH-P12-RN.pdf front view"
+   },
+   {
+    "label": "Fingertip mount",
+    "value": "3× M3×6 bolts per finger (6 total); finger mount 26 × 21.9 mm, holes 14 mm apart (7 mm from centerline), 10 mm / 3 mm offsets",
+    "source": "RH-P12-RN.pdf top view"
+   },
+   {
+    "label": "Top",
+    "value": "2× M2.5 tap on top, 22 mm apart",
+    "source": "RH-P12-RN.pdf top view"
+   },
+   {
+    "label": "Mounting interface",
+    "value": "No ISO flange on the hand itself; ROBOTIS option frames or the UR mounting frame (RH-P12-RN-UR kit, for UR e-Series ISO 9409-1-50-4-M6 tool flange, M6×8 screws included) bolt to the M3 taps",
+    "source": "https://robotis.us/products/robotis-hand-rh-p12-rn-ur"
+   },
+   {
+    "label": "DOF / actuators",
+    "value": "1 actuator (DYNAMIXEL-type), 2 fingers with passive adaptive joints",
+    "source": "https://emanual.robotis.com/docs/en/platform/rh_p12_rn/"
+   },
+   {
+    "label": "Connectors",
+    "value": "RS-485: JST B4B-EH-A (GND, VDD, D+, D−); external port Molex 53047-0610 (GND, VDD, 4 I/O)",
+    "source": "https://emanual.robotis.com/docs/en/platform/rh_p12_rn/#connector-information"
+   }
+  ],
+  "source": "https://emanual.robotis.com/docs/en/platform/rh_p12_rn/"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/s?k=ROBOTIS+RH-P12-RN",
+   "asin": null,
+   "title": null,
+   "kind": "search",
+   "verified": false
+  },
+  "product": "https://emanual.robotis.com/docs/en/platform/rh_p12_rn/",
+  "datasheet": "https://www.dropbox.com/s/4rbr4agyw2dzuet/RH-P12-RN.pdf?dl=1"
+ },
+ "notes": "The official 3D meshes are very low-poly (496 triangles for the base, 'PR24A03_HAND_ASSY'), so they're only good for collision/visual stand-ins. The exact 3D model should be rebuilt from RH-P12-RN.pdf or the DWG, or ask ROBOTIS for the STEP. Stroke conflict: e-Manual says 109 mm, robotis.us says 106 mm after the Nov 2019 fingertip change. RH-P12-RN and RH-P12-RN(A) are the same hardware with different firmware. The drawing is marked 'for reference only'. No Amazon listing found; sold by robotis.us, RobotShop and Generation Robots.",
+ "pose": "gripper"
+}

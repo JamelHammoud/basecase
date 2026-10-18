@@ -1,0 +1,94 @@
+{
+ "id": "inspire-rh56dfx",
+ "name": "Inspire Robots RH56DFX",
+ "manufacturer": "Beijing Inspire-Robots Technology Co., Ltd.",
+ "mpn": "RH56DFX-2L / RH56DFX-2R (hand only); RH56DFXW-2L / RH56DFXW-2R (with 2-DOF wrist)",
+ "category": "hands",
+ "description": "Five-finger dexterous hand with 12 joints and 6 DOF driven by 6 internal micro linear servo actuators, with per-finger force sensors and RS485 control.",
+ "specs": [
+  {
+   "label": "DOF / actuators",
+   "value": "6 DOF, 12 joints, 6 micro linear servo actuators (+2 DOF wrist on DFXW)"
+  },
+  {
+   "label": "Fingertip force",
+   "value": "Thumb 15 N, four fingers 10 N each; force resolution 0.5 N"
+  },
+  {
+   "label": "Speed",
+   "value": "Four-finger flexion 260°/s; thumb flexion 70°/s; thumb lateral rotation 107°/s (>65° range)"
+  },
+  {
+   "label": "Repeatability",
+   "value": "±0.20 mm fingertip"
+  },
+  {
+   "label": "Weight",
+   "value": "540 g (hand), 650 g (with wrist)"
+  },
+  {
+   "label": "Power",
+   "value": "DC 12–48 V (product page); 24 V in the RH56 series manual; quiescent 0.09 A @ 24 V, peak 2 A @ 24 V"
+  },
+  {
+   "label": "Control interface",
+   "value": "RS485 (Modbus-RTU style register protocol, 115200 bps default); CAN variants are sold by resellers; GX12 aviation connector"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 80.7,
+   "y": 31.2,
+   "z": 217.8,
+   "axes": "x = palm width, y = palm thickness as dimensioned in the side view, z = overall length from base flange to middle fingertip (fingers straight); thumb sticks out beyond x and y and is not given as an overall size"
+  },
+  "features": [
+   {
+    "label": "Overall length",
+    "value": "217.8 mm (base to fingertip)",
+    "source": "RH56 Series User Manual V1.0.9, Fig. 1 'Construction and Dimensions', p.1"
+   },
+   {
+    "label": "Palm width / thickness",
+    "value": "80.7 mm across the knuckles; 31.2 mm palm thickness",
+    "source": "RH56 Series User Manual Fig. 1"
+   },
+   {
+    "label": "Finger segments",
+    "value": "Distal segment 49.3 mm, middle segment 32.0 mm (side view)",
+    "source": "RH56 Series User Manual Fig. 1"
+   },
+   {
+    "label": "Mounting interface",
+    "value": "Round wrist base Ø52.0 mm OD with a Ø38.0 mm circle; bottom view shows 4 holes at 90° spacing. Hole size and thread aren't dimensioned. Ø12.0 mm GX12 cable connector on the back of the wrist. No ISO 9409 flange.",
+    "source": "RH56 Series User Manual Fig. 1 (bottom view)"
+   },
+   {
+    "label": "Stroke / finger travel",
+    "value": "Given as angle registers (ANGLE_SET 0–1000) in the manual; no mm stroke published for the hand",
+    "source": "RH56 Series User Manual §2.4.11"
+   },
+   {
+    "label": "Wrist (DFXW)",
+    "value": "Yaw ±27° (manual: −25.50° to 25.50°), pitch ±22° (manual: −22.66° to 22.12°), 2 N·m load torque excluding hand",
+    "source": "https://en.inspire-robots.com/product/rh56dfx/ and Wrist Module Instructions V0.0.2"
+   }
+  ],
+  "source": "https://en.inspire-robots.com/wp-content/uploads/2026/09/INSPIRE-ROBOTS-THE-DEXTEROUS-HAND-RH56-SERIES-USER-MANUAL.pdf"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/s?k=Inspire+Robots+RH56DFX",
+   "asin": null,
+   "title": null,
+   "kind": "search",
+   "verified": false
+  },
+  "product": "https://en.inspire-robots.com/product/rh56dfx/",
+  "datasheet": "https://en.inspire-robots.com/wp-content/uploads/2026/09/INSPIRE-ROBOTS-THE-DEXTEROUS-HAND-RH56-SERIES-USER-MANUAL.pdf",
+  "wrist_manual": "https://en.inspire-robots.com/wp-content/uploads/2026/09/INSPIRE-ROBOTS-WRIST-MODULE-OF-THE-DEXTEROUS-HAND-INSTRUCTIONS.pdf",
+  "store": "https://inspire-robots.store/products/the-dexterous-hands-rh56dfx-series"
+ },
+ "notes": "Dimensions come from the generic 'RH56 Series' manual (V1.0.9, Jan 2024), which covers the DF (10/15 N) and BF (4/6 N) builds. Its figure isn't labelled for the DFX specifically, so confirm against a DFX drawing from Inspire. Voltage conflicts: 24 V (manual) vs DC 12–48 V (current product page). Speed: 260°/s four-finger flexion on the official page; one reseller (AIFIT Lab) lists 570°/s. The base holes are visible but not dimensioned. No Amazon listing; US resellers include Knox Labs and RobotShop.",
+ "pose": "hand"
+}

@@ -1,0 +1,457 @@
+[
+ {
+  "id": "wrist-flange",
+  "name": "Wrist Mounting Flange",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   0,
+   4.25,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 52,
+   "height": 8.5,
+   "depth": 52
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// RH56DFX wrist mounting flange. Origin: centre of the bottom mounting face.\nOD = 52.0;      // official\nPCD = 38.0;     // official circle (Fig.1 bottom view)\nH = 8.5;        // measured from drawing\nhole_d = 3.2;   // placeholder - not dimensioned\nhole_depth = 6; // placeholder\ndiff() cyl(d = OD, h = H, chamfer = 0.5, anchor = BOT, $fn = 96) {\n  tag(\"remove\") position(BOT) down(0.01)\n    for (a = [0, 90, 180, 270]) zrot(a) right(PCD/2) cyl(d = hole_d, h = hole_depth, anchor = BOT, $fn = 24);\n}",
+   "originOffset": [
+    0,
+    4.25,
+    0
+   ],
+   "baseSize": [
+    52,
+    8.5,
+    52
+   ]
+  }
+ },
+ {
+  "id": "palm-case",
+  "name": "Wrist And Palm Housing",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   70.745,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 80.7,
+   "height": 124.51,
+   "depth": 52
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Wrist neck + palm housing envelope. Origin on the wrist axis at the floor (z=0).\nW = 80.7;  T = 31.2;     // official palm width / thickness\nz_fl = 8.5;              // flange top (measured)\nz_neck = 34;             // neck waist (measured)\nz_palm = 52;             // palm bottom (measured)\nz_top = 133;             // knuckle line (measured)\nr_v = 6;                 // vertical edge rounding (not dimensioned)\nunion() {\n  // Neck: Ø52 round -> 48.5 x 44 oval -> palm rounded rectangle\n  skin([circle(d = 52, $fn = 96),\n        ellipse(d = [50.5, 49], $fn = 96),\n        ellipse(d = [48.5, 44], $fn = 96),\n        rect([W, T], rounding = r_v, $fn = 96)],\n       z = [z_fl - 0.01, 20, z_neck, z_palm + 0.01], slices = 6, sampling = \"segment\");\n  // Palm block\n  up(z_palm) cuboid([W, T, z_top - z_palm], rounding = r_v, edges = [TOP, \"Z\"], anchor = BOT, $fn = 48);\n}",
+   "originOffset": [
+    0,
+    70.745,
+    0
+   ],
+   "baseSize": [
+    80.7,
+    124.51,
+    52
+   ]
+  }
+ },
+ {
+  "id": "middle-proximal",
+  "name": "Middle Finger Proximal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   8.5,
+   150.75,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 13,
+   "height": 35.5,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Finger proximal segment, origin at base centre on the palm top; ends at the PIP joint plane.\nL = 35.5; w1 = 13; t1 = 16; w2 = 12.5; t2 = 15;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L) cuboid([w2, t2, 0.5], rounding = 4, edges = \"Z\", anchor = TOP, $fn = 32);\n}",
+   "originOffset": [
+    0,
+    17.75,
+    0
+   ],
+   "baseSize": [
+    13,
+    35.5,
+    16
+   ]
+  }
+ },
+ {
+  "id": "middle-distal",
+  "name": "Middle Finger Distal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   8.5,
+   193.15,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12.5,
+   "height": 49.3,
+   "depth": 15
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Finger distal segment, origin at the joint end. Tip pole vertex lands exactly at z = L.\nL = 49.3; w1 = 12.5; t1 = 15; w2 = 11; t2 = 12;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L - w2/2) scale([1, t2/w2, 1]) spheroid(d = w2, style = \"aligned\", $fn = 40);\n}",
+   "originOffset": [
+    0,
+    24.65,
+    0
+   ],
+   "baseSize": [
+    12.5,
+    49.3,
+    15
+   ]
+  }
+ },
+ {
+  "id": "index-proximal",
+  "name": "Index Finger Proximal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   29.8,
+   149.95,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 13,
+   "height": 33.9,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nL = 33.9; w1 = 13; t1 = 16; w2 = 12.5; t2 = 15;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L) cuboid([w2, t2, 0.5], rounding = 4, edges = \"Z\", anchor = TOP, $fn = 32);\n}",
+   "originOffset": [
+    0,
+    16.95,
+    0
+   ],
+   "baseSize": [
+    13,
+    33.9,
+    16
+   ]
+  }
+ },
+ {
+  "id": "index-distal",
+  "name": "Index Finger Distal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   29.8,
+   190.45,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12.5,
+   "height": 47.1,
+   "depth": 15
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nL = 47.1; w1 = 12.5; t1 = 15; w2 = 11; t2 = 12;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L - w2/2) scale([1, t2/w2, 1]) spheroid(d = w2, style = \"aligned\", $fn = 40);\n}",
+   "originOffset": [
+    0,
+    23.55,
+    0
+   ],
+   "baseSize": [
+    12.5,
+    47.1,
+    15
+   ]
+  }
+ },
+ {
+  "id": "ring-proximal",
+  "name": "Ring Finger Proximal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   -13.2,
+   149.95,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 13,
+   "height": 33.9,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nL = 33.9; w1 = 13; t1 = 16; w2 = 12.5; t2 = 15;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L) cuboid([w2, t2, 0.5], rounding = 4, edges = \"Z\", anchor = TOP, $fn = 32);\n}",
+   "originOffset": [
+    0,
+    16.95,
+    0
+   ],
+   "baseSize": [
+    13,
+    33.9,
+    16
+   ]
+  }
+ },
+ {
+  "id": "ring-distal",
+  "name": "Ring Finger Distal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   -13.2,
+   190.45,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12.5,
+   "height": 47.1,
+   "depth": 15
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nL = 47.1; w1 = 12.5; t1 = 15; w2 = 11; t2 = 12;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L - w2/2) scale([1, t2/w2, 1]) spheroid(d = w2, style = \"aligned\", $fn = 40);\n}",
+   "originOffset": [
+    0,
+    23.55,
+    0
+   ],
+   "baseSize": [
+    12.5,
+    47.1,
+    15
+   ]
+  }
+ },
+ {
+  "id": "little-proximal",
+  "name": "Little Finger Proximal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   -32.3,
+   147.95,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12,
+   "height": 29.9,
+   "depth": 15
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nL = 29.9; w1 = 12; t1 = 15; w2 = 11.5; t2 = 14;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L) cuboid([w2, t2, 0.5], rounding = 4, edges = \"Z\", anchor = TOP, $fn = 32);\n}",
+   "originOffset": [
+    0,
+    14.95,
+    0
+   ],
+   "baseSize": [
+    12,
+    29.9,
+    15
+   ]
+  }
+ },
+ {
+  "id": "little-distal",
+  "name": "Little Finger Distal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   -32.3,
+   183.65,
+   1
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 11.5,
+   "height": 41.5,
+   "depth": 14
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nL = 41.5; w1 = 11.5; t1 = 14; w2 = 10; t2 = 11;\nhull() {\n  cuboid([w1, t1, 0.5], rounding = 4, edges = \"Z\", anchor = BOT, $fn = 32);\n  up(L - w2/2) scale([1, t2/w2, 1]) spheroid(d = w2, style = \"aligned\", $fn = 40);\n}",
+   "originOffset": [
+    0,
+    20.75,
+    0
+   ],
+   "baseSize": [
+    11.5,
+    41.5,
+    14
+   ]
+  }
+ },
+ {
+  "id": "thumb-proximal",
+  "name": "Thumb Proximal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   48.217,
+   76.586,
+   27.536
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 46.38,
+   "height": 51.12,
+   "depth": 49.02
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// World-frame thumb (right hand, thumb at +X opening toward the palm side -Y).\nR  = [34, -12, 60];   // root inside palm (measured)\nJ  = [65, -45, 95];   // thumb joint (measured)\nT  = [100, -74, 123]; // tip extreme (measured)\nu  = unit(T - J);\nhalf_of(-u, cp = J - 0.15*u)\n  hull() {\n    translate(R) sphere(r = 9, $fn = 40);\n    translate(J) sphere(r = 8.5, $fn = 40);\n  }",
+   "originOffset": [
+    48.216499999999996,
+    76.5855,
+    27.5355
+   ],
+   "baseSize": [
+    46.38,
+    51.12,
+    49.02
+   ]
+  }
+ },
+ {
+  "id": "thumb-distal",
+  "name": "Thumb Distal Segment",
+  "color": "#2b2b2e",
+  "role": "solid",
+  "position": [
+   80.466,
+   106.962,
+   57.453
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 43.51,
+   "height": 38.22,
+   "depth": 38.99
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nJ  = [65, -45, 95];\nT  = [100, -74, 123];\nu  = unit(T - J);\nrt = 6.5;\nhalf_of(u, cp = J + 0.15*u)\n  hull() {\n    translate(J) sphere(r = 8.5, $fn = 40);\n    translate(T - rt*u) sphere(r = rt, $fn = 40);\n  }",
+   "originOffset": [
+    80.4655,
+    106.9615,
+    57.453
+   ],
+   "baseSize": [
+    43.51,
+    38.22,
+    38.99
+   ]
+  }
+ },
+ {
+  "id": "gx12-connector",
+  "name": "GX12 RS485 Receptacle",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   0,
+   24,
+   -21.5
+  ],
+  "rotation": [
+   -90,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 12,
+   "height": 7,
+   "depth": 12
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// GX12 panel receptacle, axis +Z (rotated to +Y in placement). Origin at inner end, seated 7 mm into the wrist.\ncyl(d = 12.0, h = 7.0, chamfer2 = 0.4, anchor = BOT, $fn = 64);",
+   "originOffset": [
+    0,
+    3.5,
+    0
+   ],
+   "baseSize": [
+    12,
+    7,
+    12
+   ]
+  }
+ }
+]

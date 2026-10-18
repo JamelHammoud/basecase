@@ -1,0 +1,92 @@
+{
+ "id": "nema17-17hs4401",
+ "name": "NEMA 17 Stepper 17HS4401",
+ "manufacturer": "MotionKing (China) Motor Industry Co. (model originator; widely resold, incl. as 'StepperOnline 17HS4401')",
+ "mpn": "17HS4401",
+ "category": "motors",
+ "description": "Two-phase bipolar hybrid stepper, NEMA 17 (42 mm) frame, 40 mm body, 1.8° step, 4 leads.",
+ "specs": [
+  {
+   "label": "Step angle",
+   "value": "1.8° (200 steps/rev)"
+  },
+  {
+   "label": "Holding torque",
+   "value": "40 N·cm min (≈4.1 kg·cm)"
+  },
+  {
+   "label": "Rated current",
+   "value": "1.7 A per phase"
+  },
+  {
+   "label": "Phase resistance / inductance",
+   "value": "1.5 Ω / 2.8 mH"
+  },
+  {
+   "label": "Detent torque / rotor inertia",
+   "value": "2.2 N·cm max / 54 g·cm²"
+  },
+  {
+   "label": "Leads",
+   "value": "4 (bipolar), AWG26 UL1007, 300 mm"
+  },
+  {
+   "label": "Weight",
+   "value": "280 g"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 42.3,
+   "y": 42.3,
+   "z": 40.0,
+   "axes": "x, y = square flange (42.3 max); z = body length behind the flange face (L max 40 mm), excl. 2.0 mm pilot boss and 24 mm shaft → ~64 mm overall incl. shaft"
+  },
+  "features": [
+   {
+    "label": "Frame",
+    "value": "42.3 mm max square",
+    "source": "MotionKing HB Stepper Motor Catalog MK1106 Rev.04, p.9 '17HS series' dimension drawing"
+   },
+   {
+    "label": "Mounting holes",
+    "value": "4× M3, 4.5 mm min thread depth, on a 31 ± 0.1 mm square pattern (centered on the shaft)",
+    "source": "MotionKing catalog p.9"
+   },
+   {
+    "label": "Pilot boss",
+    "value": "Ø22 (0/−0.033) mm, 2.0 mm high",
+    "source": "MotionKing catalog p.9"
+   },
+   {
+    "label": "Shaft",
+    "value": "Ø5 (0/−0.012) mm, 24 ± 0.5 mm long from the flange face; the drawing shows a round shaft (no D-flat dimensioned) — many retail units have a D-cut, verify per seller",
+    "source": "MotionKing catalog p.9"
+   },
+   {
+    "label": "Body length",
+    "value": "40 mm (L max) for 17HS4xxx",
+    "source": "MotionKing catalog p.9 table (note: the catalog's length table mislabels this row '16HS4XXX'; the 17HS electrical table lists 17HS4401 motor length 40 mm)"
+   },
+   {
+    "label": "Leads",
+    "value": "300 mm AWG26 UL1007 leads exit the rear end cap side",
+    "source": "MotionKing catalog p.9"
+   }
+  ],
+  "source": "https://www.svaltera.ua/catalogs/knowledge-base/brands/motionking/HB_Stepper_Motor_E.pdf (page 9)"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B07B4QKZ5B",
+   "asin": "B07B4QKZ5B",
+   "title": "Cloudray 4-lead Nema17 Stepper Motor 42 Nema 17 42BYGH (17HS4401) 40mm 1.7A 3D printer motor and CNC XYZ",
+   "kind": "product",
+   "verified": true
+  },
+  "product": null,
+  "datasheet": "https://www.svaltera.ua/catalogs/knowledge-base/brands/motionking/HB_Stepper_Motor_E.pdf"
+ },
+ "notes": "'17HS4401' is a MotionKing model number that many Chinese makers and resellers (incl. StepperOnline, Cloudray, Usongshine, Rattm) reuse with different specs: rated current 1.5 A vs 1.7 A, torque 40–45 N·cm, body 38–40.4 mm reported across listings. Dimensions here are from the MotionKing catalog drawing (hosted by a Ukrainian distributor, svaltera.ua; motionking.com original not fetched), downloaded to motionking-hb-catalog.pdf. StepperOnline's own NEMA 17 40 mm motors use other model numbers (e.g. 17HS16-2004S1, 45 N·cm 2 A) — a human should confirm which StepperOnline SKU is intended. The Amazon pick (Cloudray B07B4QKZ5B) has a matching title but its spec table reportedly lists model 17CS04A-170 and 0.42 N·m; it is not the StepperOnline store. Amazon search alternative: https://www.amazon.com/s?k=17HS4401. Mounting standard (NEMA 17: 31 mm hole pitch, Ø22 pilot, Ø5 shaft) is consistent across sources.",
+ "pose": "motor"
+}

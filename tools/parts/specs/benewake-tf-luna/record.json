@@ -1,0 +1,84 @@
+{
+ "id": "benewake-tf-luna",
+ "name": "Benewake TF-Luna",
+ "manufacturer": "Benewake (Beijing)",
+ "mpn": "TF-Luna",
+ "category": "lidar",
+ "description": "Single-point 850 nm VCSEL time-of-flight distance sensor, 0.2–8 m, UART/I²C at 3.3 V logic.",
+ "specs": [
+  {
+   "label": "Range",
+   "value": "0.2–8 m @ 90% reflectivity, 0.2–2.5 m @ 10% (indoor and 90 klx outdoor)"
+  },
+  {
+   "label": "Accuracy / resolution",
+   "value": "±6 cm (0.2–3 m), ±2% (3–8 m); 1 cm resolution"
+  },
+  {
+   "label": "Frame rate",
+   "value": "1–250 Hz (default 100 Hz)"
+  },
+  {
+   "label": "Optics",
+   "value": "VCSEL 850 nm, Class 1 (IEC 60825), 2° FOV"
+  },
+  {
+   "label": "Interface",
+   "value": "UART (115200 default) / I²C (addr 0x10, 400 kbps) / I/O; LVTTL 3.3 V"
+  },
+  {
+   "label": "Power",
+   "value": "3.7–5.2 V, ≤70 mA avg (150 mA peak), ≤0.35 W"
+  },
+  {
+   "label": "Weight",
+   "value": "<5 g; ABS+PC housing; no ingress rating"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 35.0,
+   "y": 21.25,
+   "z": 13.5,
+   "axes": "x = length across both mounting ears, y = height of the front face, z = depth along the optical axis incl. lens bosses (datasheet says 12.5; drawing shows 13.5 overall, 12 body)"
+  },
+  "features": [
+   {
+    "label": "Mounting holes",
+    "value": "2× Ø2.2 through holes in side ears (R2.25), 30.5 mm centre-to-centre, symmetric about the centre.",
+    "source": "TF-Luna User Manual (REV 01/04/2024) Fig. 3 p.6"
+   },
+   {
+    "label": "Lenses",
+    "value": "Two Ø10.5 lenses (emitter/receiver), centres 10.5 mm apart, symmetric about the centre; lens centres 9 mm from the top edge of the front face. Body flanks 18 / 26.5 wide at the lens boss; ear tabs 2 mm thick (front view '2').",
+    "source": "User Manual Fig. 3 p.6"
+   },
+   {
+    "label": "Connector",
+    "value": "6-pin 1.25 mm-pitch connector on the rear/top face; side view shows connector at 6.8 from the base.",
+    "source": "User Manual Fig. 3 p.6"
+   },
+   {
+    "label": "Back face",
+    "value": "Rear PCB outline 19 mm tall inside the 21.25 housing.",
+    "source": "User Manual Fig. 3 p.6"
+   }
+  ],
+  "source": "https://en.benewake.com/uploadfiles/2025/04/20250430174515390.pdf (user manual) and https://en.benewake.com/uploadfiles/2025/04/20250430174501874.pdf (datasheet A05)"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B086MJQSLR",
+   "asin": "B086MJQSLR",
+   "title": "Benewake TF-Luna LiDAR Module Range Finder Sensor Single-Point Micro Ranging Module for Arduino Pixhawk 5V UART IIC Interface",
+   "kind": "product",
+   "verified": true
+  },
+  "product": "https://en.benewake.com/TFLuna/index.html",
+  "datasheet": "https://en.benewake.com/uploadfiles/2025/04/20250430174501874.pdf"
+ },
+ "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tf-luna/TF-Luna_Datasheet.pdf",
+ "manual_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tf-luna/TF-Luna_User_Manual.pdf",
+ "notes": "Height conflict: datasheet A05 gives 35 × 21.25 × 12.5 mm (L×W×H) while the manual drawing shows 13.5 overall (12 body) — modelled envelope uses 13.5. Which ear-hole row lies on the lens axis is not dimensioned; drawing reading is approximate for the 9 mm lens offset. Amazon B086MJQSLR title matches; seller not confirmed (page truncated).",
+ "pose": "camera"
+}

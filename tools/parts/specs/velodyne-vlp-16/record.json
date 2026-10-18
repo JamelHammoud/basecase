@@ -1,0 +1,79 @@
+{
+ "id": "velodyne-vlp-16",
+ "name": "Velodyne Puck (VLP-16)",
+ "manufacturer": "Velodyne Lidar (now Ouster)",
+ "mpn": "VLP-16 (Puck); Puck LITE and Puck Hi-Res share the housing",
+ "category": "lidar",
+ "description": "16-channel 360° spinning lidar with a 30° vertical FOV, 100 m range and Ethernet UDP output via an interface box.",
+ "specs": [
+  {
+   "label": "Range",
+   "value": "100 m; accuracy up to ±3 cm typical"
+  },
+  {
+   "label": "FOV / channels",
+   "value": "360° × 30° (+15° to −15°), 16 channels, 2.0° vertical resolution"
+  },
+  {
+   "label": "Scan / sample rate",
+   "value": "5–20 Hz rotation, 0.1°–0.4° azimuth resolution; ~300,000 pts/s single return, ~600,000 dual"
+  },
+  {
+   "label": "Laser",
+   "value": "903 nm (spec table; overview text says 905 nm), Class 1 eye-safe (IEC 60825-1:2007 & 2014)"
+  },
+  {
+   "label": "Interface",
+   "value": "100 Mbps Ethernet, UDP packets; GPS/PPS sync via interface box"
+  },
+  {
+   "label": "Power",
+   "value": "8 W typical; 9–18 V (with interface box and regulated supply)"
+  },
+  {
+   "label": "Weight / protection",
+   "value": "~830 g without cabling and interface box; IP67"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 103.3,
+   "y": 103.3,
+   "z": 71.7,
+   "axes": "x/y = body diameter Ø103.3, z = height from bottom face; cable gland adds up to 12.7 mm radially"
+  },
+  "features": [
+   {
+    "label": "Bottom mounting",
+    "value": "1/4-20 threaded mount at the centre, 9/32 in (7.1 mm) deep; 2× Ø0.16 in (≈4.06 mm) holes for 5/32 in locating pins, 7/32 in (5.5 mm) deep, 88.9 mm (3.50 in) apart on a diameter through the centre (on the 90° axis, perpendicular to the 0° cable-exit axis).",
+    "source": "63-9229 Rev K Puck datasheet p.1 'Dimensions' (bottom view)"
+   },
+   {
+    "label": "Optical centre",
+    "value": "37.8 mm (1.49 in) above the bottom face; active window 38.1 mm (1.50 in) tall, full 360°; lower housing band 18.8 mm (0.74 in).",
+    "source": "63-9229 Rev K Puck datasheet p.1 (side view)"
+   },
+   {
+    "label": "Cable",
+    "value": "Side cable exit at 0°, gland/cable protrudes up to 12.7 mm (0.50 in) from the body; optional M12 connector (Phoenix Contact SACC-M12FS-8CON-PG 9-SH, Ø20, ~56 long).",
+    "source": "datasheet p.1"
+   }
+  ],
+  "source": "https://data.ouster.io/downloads/datasheets/velodyne/Puck%20Datasheets.zip (63-9229_Rev-K_Puck-_Datasheet_Web.pdf)"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/s?k=Velodyne+VLP-16+Puck+lidar",
+   "asin": null,
+   "title": null,
+   "kind": "search",
+   "verified": false
+  },
+  "product": "https://ouster.com/products/hardware/vlp-16",
+  "datasheet": "https://data.ouster.io/downloads/datasheets/velodyne/Puck%20Datasheets.zip"
+ },
+ "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/velodyne-vlp-16/Puck Datasheets/63-9229_Rev-K_Puck-_Datasheet_Web.pdf",
+ "manual_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/velodyne-vlp-16/vlp-16-user-manual-revf.pdf",
+ "notes": "Ouster's current VLP-16 page markets 200 m range, 40° vertical FOV and 16–32 channels — that describes newer Puck variants; the Rev K datasheet (100 m, 30°, 16 ch) is used here. Wavelength conflict inside the datasheet: 903 nm in the spec table vs 905 nm in the overview. No Amazon listing for the sensor itself (only power adapters); search URL given.",
+ "pose": "lidar"
+}

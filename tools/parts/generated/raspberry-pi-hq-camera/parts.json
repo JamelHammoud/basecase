@@ -1,0 +1,142 @@
+[
+ {
+  "id": "pcb",
+  "name": "HQ Camera PCB",
+  "color": "#1f5f3a",
+  "role": "solid",
+  "position": [
+   0,
+   0.7,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 38,
+   "height": 1.4,
+   "depth": 38
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: board centre, bottom face. +Y = clamp/top edge, -Y = tripod tab edge.\nW = 38; T = 1.4; hole_d = 2.5; hole_off = 15;\nnotch_d = 5.71;              // matches rear-lip height on drawing\nnotch_top_hw = 11.55;        // scaled from drawing\nnotch_edge_hw = 10.92;       // scaled from drawing\ndifference() {\n  linear_extrude(T) offset(r=1) offset(delta=-1) square(W, center=true);\n  for (x=[-1,1], y=[-1,1]) translate([x*hole_off, y*hole_off, -1]) cylinder(d=hole_d, h=T+2, $fn=32);\n  translate([0,0,-1]) linear_extrude(T+2)\n    polygon([[-notch_edge_hw,-W/2-0.1],[notch_edge_hw,-W/2-0.1],[notch_top_hw,-W/2+notch_d],[-notch_top_hw,-W/2+notch_d]]);\n}",
+   "originOffset": [
+    0,
+    0.7,
+    0
+   ],
+   "baseSize": [
+    38,
+    1.4,
+    38
+   ]
+  }
+ },
+ {
+  "id": "lens-mount-base",
+  "name": "CS Lens Mount Base With Tripod Tab",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   4.5,
+   4.43
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 34.4,
+   "height": 14.5,
+   "depth": 51.86
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: board centre at PCB bottom face (z=0). Lens axis = +Z.\npcb_t = 1.4; body_h = 10.35; top = pcb_t + body_h;      // 11.75\nbody_d = 34.4;          // scaled from side view (not dimensioned)\nbore_d = 22.4;\ntab_w = 13.97; tab_reach = 11.36;  // reach below board edge scaled\nlip_h = 5.71; lip_t = 2.75;\nedge = -19;\nntop = 11.55; nedge = 10.92; flare_y = edge - 4.7;     // scaled\nclamp_w = 10.16; clamp_d = 5.02; slit = 0.8; clamp_top = 19 + 2.5; clamp_bot = 16.0;\ntripod_d = 6.35; tripod_depth = 6; tripod_z = top - 7.62/2;   // assumed centred in 7.62 block\n\nnotch_poly = [[-nedge,edge],[nedge,edge],[ntop,edge+lip_h],[-ntop,edge+lip_h]];\ntab_poly = [[-nedge,edge+0.01],[nedge,edge+0.01],[tab_w/2,flare_y],[tab_w/2,edge-tab_reach],\n            [-tab_w/2,edge-tab_reach],[-tab_w/2,flare_y]];\n$fn=96;\ndifference() {\n  union() {\n    translate([0,0,pcb_t]) cylinder(d=body_d, h=body_h);\n    // fill in PCB notch + rear lip behind the PCB\n    translate([0,0,-lip_t]) linear_extrude(lip_t + top) polygon(notch_poly);\n    // tripod tab below board edge, PCB back plane to mount face\n    linear_extrude(top) polygon(tab_poly);\n    // top split clamp ear\n    translate([-clamp_w/2, clamp_bot, top-clamp_d]) cube([clamp_w, clamp_top-clamp_bot, clamp_d]);\n  }\n  translate([0,0,-5]) cylinder(d=bore_d, h=30);\n  translate([-slit/2, 12, top-clamp_d-0.1]) cube([slit, 12, clamp_d+0.2]);\n  translate([0, edge-tab_reach-0.1, tripod_z]) rotate([-90,0,0]) cylinder(d=tripod_d, h=tripod_depth, $fn=48);\n}",
+   "originOffset": [
+    0,
+    4.5,
+    4.43
+   ],
+   "baseSize": [
+    34.4,
+    14.5,
+    51.86
+   ]
+  }
+ },
+ {
+  "id": "focus-ring",
+  "name": "Back Focus Ring",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   15.25,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 36,
+   "height": 7,
+   "depth": 36
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: lens axis at the mount-base top face (z = 11.75 in assembly).\n$fn=128;\ndifference() {\n  union() {\n    cylinder(d=36, h=1.2);\n    translate([0,0,1.2-0.01]) cylinder(d=30.75, h=5.8+0.01);\n  }\n  translate([0,0,-1]) cylinder(d=22.4, h=10);\n}",
+   "originOffset": [
+    0,
+    3.5,
+    0
+   ],
+   "baseSize": [
+    36,
+    7,
+    36
+   ]
+  }
+ },
+ {
+  "id": "sensor",
+  "name": "IMX477 Sensor Window",
+  "color": "#2a2a35",
+  "role": "solid",
+  "position": [
+   0,
+   1.9,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 8.5,
+   "height": 1,
+   "depth": 8.5
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ntranslate([-4.25,-4.25,0]) cube([8.5,8.5,1.0]);",
+   "originOffset": [
+    0,
+    0.5,
+    0
+   ],
+   "baseSize": [
+    8.5,
+    1,
+    8.5
+   ]
+  }
+ }
+]

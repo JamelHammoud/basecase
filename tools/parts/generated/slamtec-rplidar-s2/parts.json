@@ -1,0 +1,107 @@
+[
+ {
+  "id": "s2-base",
+  "name": "RPLIDAR S2 Base Housing",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   10.4,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 77,
+   "height": 20.8,
+   "depth": 77
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// RPLIDAR S2 base housing. Origin = centre of bottom mounting face.\nW = 77;          // base width/depth (official)\nH = 20.8;        // base height (datasheet v2.4)\nch = 12;         // corner chamfer leg, scaled from drawing (NOT dimensioned)\nr  = 3;          // corner softening (NOT dimensioned)\nhole_sp = 41.7;  // M3 square pattern (official)\nhole_d = 2.5;    // M3 tap-drill (thread minor) representation\nhole_depth = 4;  // official max engagement\nmodule outline() {\n  offset(r = r) offset(delta = -r)\n    polygon([[-W/2+ch,-W/2],[W/2-ch,-W/2],[W/2,-W/2+ch],[W/2,W/2-ch],\n             [W/2-ch,W/2],[-W/2+ch,W/2],[-W/2,W/2-ch],[-W/2,-W/2+ch]]);\n}\ndifference() {\n  hull() {                       // small 1 mm chamfers on top and bottom edges\n    translate([0,0,1]) linear_extrude(H-2) outline();\n    linear_extrude(H) offset(delta=-1) outline();\n  }\n  for (x=[-1,1], y=[-1,1])\n    translate([x*hole_sp/2, y*hole_sp/2, -0.01]) cylinder(d=hole_d, h=hole_depth+0.01, $fn=32);\n}",
+   "originOffset": [
+    0,
+    10.4,
+    0
+   ],
+   "baseSize": [
+    77,
+    20.8,
+    77
+   ]
+  }
+ },
+ {
+  "id": "s2-optical-enclosure",
+  "name": "RPLIDAR S2 Optical Enclosure",
+  "color": "#2a2a2e",
+  "role": "solid",
+  "position": [
+   0,
+   30.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 71,
+   "height": 19,
+   "depth": 71
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Optical window enclosure. Origin = centre of its bottom face (base top).\nD = 71;    // scaled from drawing, NOT dimensioned\nH = 19;    // official (39.8 - 20.8)\ncyl(d = D, h = H, rounding2 = 4, anchor = BOT, $fn = 96);",
+   "originOffset": [
+    0,
+    9.5,
+    0
+   ],
+   "baseSize": [
+    71,
+    19,
+    71
+   ]
+  }
+ },
+ {
+  "id": "s2-strain-relief",
+  "name": "RPLIDAR S2 Cable Strain Relief",
+  "color": "#111113",
+  "role": "solid",
+  "position": [
+   0,
+   4.5,
+   -40.05
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 7,
+   "height": 5,
+   "depth": 4.1
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Strain relief boss. Origin = on rear face of base, at cable axis.\nL = 3.6;   // official protrusion (80.6 - 77)\nw = 7;     // scaled, NOT dimensioned\nh = 5;     // scaled, NOT dimensioned\ncuboid([w, L + 0.5, h], rounding = 1, edges = \"Y\", anchor = FRONT, $fn = 24, spin = 0) ;",
+   "originOffset": [
+    0,
+    0,
+    -2.05
+   ],
+   "baseSize": [
+    7,
+    5,
+    4.1
+   ]
+  }
+ }
+]

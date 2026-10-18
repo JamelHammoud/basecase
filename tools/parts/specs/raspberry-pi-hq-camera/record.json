@@ -1,0 +1,83 @@
+{
+ "id": "raspberry-pi-hq-camera",
+ "name": "Raspberry Pi High Quality Camera (C/CS-mount)",
+ "manufacturer": "Raspberry Pi",
+ "mpn": "SC0261 (C/CS-mount); M12-mount variant is SC0870",
+ "category": "cameras",
+ "description": "12.3 MP Sony IMX477 camera board with a milled aluminium C/CS lens mount, focus ring and 1/4-20 tripod thread for a Raspberry Pi (lens sold separately).",
+ "specs": [
+  {
+   "label": "Sensor",
+   "value": "Sony IMX477R, 12.3 MP, 4056 × 3040, 1.55 µm pixels, 7.9 mm diagonal, rolling shutter"
+  },
+  {
+   "label": "Video",
+   "value": "2028 × 1080p50, 2028 × 1520p40, 1332 × 990p120"
+  },
+  {
+   "label": "Lens mount",
+   "value": "CS-mount (C-mount via included adapter); back focus 12.5–22.4 mm (M12 variant: 2.6–11.8 mm)"
+  },
+  {
+   "label": "Interface",
+   "value": "MIPI CSI-2 via 200 mm ribbon; external trigger supported"
+  },
+  {
+   "label": "IR filter",
+   "value": "Integrated Hoya CM500 IR cut (removable, irreversible)"
+  },
+  {
+   "label": "Weight",
+   "value": "30.4 g"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 38,
+   "y": 38,
+   "z": 18.58,
+   "axes": "x × y = board face, z = depth excl. lens per CS drawing (docs table says 18.4 mm excl. lens; M12 variant 17.8 mm)"
+  },
+  "features": [
+   {
+    "label": "PCB mounting holes",
+    "value": "4× Ø2.5 mm, 4 mm in from each edge of the 38 × 38 mm board (30 × 30 mm pattern)",
+    "source": "https://datasheets.raspberrypi.com/hq-camera/hq-camera-cs-mechanical-drawing.pdf"
+   },
+   {
+    "label": "Lens mount (CS)",
+    "value": "Bore Ø22.4, Ø30.75 and Ø36 mm focus ring, centered on the board; sensor window 8.5 mm",
+    "source": "https://datasheets.raspberrypi.com/hq-camera/hq-camera-cs-mechanical-drawing.pdf"
+   },
+   {
+    "label": "Tripod",
+    "value": "1/4\"-20 in the lens-mount tab on the bottom edge (tab 13.97 mm wide); side view offsets 7.62 / 12.04 mm, tab 5.71 × 2.75 mm",
+    "source": "https://datasheets.raspberrypi.com/hq-camera/hq-camera-cs-mechanical-drawing.pdf ; https://datasheets.raspberrypi.com/hq-camera/hq-camera-product-brief.pdf p.3–4"
+   },
+   {
+    "label": "Stack-up (side view)",
+    "value": "Focus ring 5.8 mm, 1.2 mm, 5.02 / 10.35 mm to the PCB, PCB 1.4 mm; 10.16 mm FPC connector at the top (0.8 mm offset)",
+    "source": "https://datasheets.raspberrypi.com/hq-camera/hq-camera-cs-mechanical-drawing.pdf"
+   },
+   {
+    "label": "M12 variant",
+    "value": "Same 38 × 38 board and holes; M12 holder Ø34.8 mm, lens Ø15.95, 17.2 / 8.9 mm square, total 17.8 mm deep",
+    "source": "https://datasheets.raspberrypi.com/hq-camera/hq-camera-product-brief.pdf p.4"
+   }
+  ],
+  "source": "https://datasheets.raspberrypi.com/hq-camera/hq-camera-cs-mechanical-drawing.pdf"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B0BHF4D1QY",
+   "asin": "B0BHF4D1QY",
+   "title": "Raspberry Pi HQ Camera Module, 12.3MP Sony IMX477R Sensor, RAW12/10/8 Output, Compatible Boards, C/CS-Mount",
+   "kind": "product",
+   "verified": true
+  },
+  "product": "https://www.raspberrypi.com/products/raspberry-pi-high-quality-camera/",
+  "datasheet": "https://datasheets.raspberrypi.com/hq-camera/hq-camera-product-brief.pdf"
+ },
+ "notes": "Record is for the C/CS-mount variant (SC0261). M12 variant on Amazon: https://www.amazon.com/dp/B0BRY5LGF6 ('Raspberry Pi Camera - M12 mount', Raspberry Pi Store; page bullets mention IMX477R and the M12 back focus, verified). Both Amazon listings are from the Raspberry Pi Store. Depth conflict: CS drawing 18.58 mm vs docs table 18.4 mm (excl. lens). The file the site calls 'hq-camera-m12-mechanical-drawing.pdf' is actually the full product brief (both drawings on p.4). An official lens-mount-only drawing exists: https://pip-assets.raspberrypi.com/categories/659-raspberry-pi-high-quality-camera/documents/RP-008199-DS-1-hq-camera-cs-lensmount-drawing.pdf.",
+ "pose": "board"
+}

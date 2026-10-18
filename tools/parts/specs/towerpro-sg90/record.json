@@ -1,0 +1,102 @@
+{
+ "id": "towerpro-sg90",
+ "name": "TowerPro SG90",
+ "manufacturer": "TowerPro (Tower Pro / Torq Pro, Taiwan)",
+ "mpn": "SG90 (Analog; a Digital version shares the body)",
+ "category": "motors",
+ "description": "9 g micro PWM hobby servo with POM plastic gears, the common choice for light robot joints and pan-tilt mounts.",
+ "specs": [
+  {
+   "label": "Stall torque",
+   "value": "1.8 kg·cm @ 4.8 V"
+  },
+  {
+   "label": "Speed",
+   "value": "0.12 s/60° @ 4.8 V (Analog page); 0.1 s/60° (Digital page and configure table)"
+  },
+  {
+   "label": "Operating voltage",
+   "value": "4.8 V (TowerPro staff reply on the Digital page: 4.8–6 V is fine)"
+  },
+  {
+   "label": "Weight",
+   "value": "9 g"
+  },
+  {
+   "label": "Travel",
+   "value": "About 150° unless a 180°/360° version is specified (TowerPro reply on the product page)"
+  },
+  {
+   "label": "Interface",
+   "value": "PWM, JR plug (fits JR and Futaba), 1 µs dead band, 25 cm lead"
+  },
+  {
+   "label": "Gears",
+   "value": "POM (plastic)"
+  }
+ ],
+ "dimensions": {
+  "envelope": {
+   "x": 22.7,
+   "y": 12.2,
+   "z": 27.0,
+   "axes": "x = case length (B), y = width (D), z = case height excl. output spline (C), from TowerPro's 'Product configure table'"
+  },
+  "features": [
+   {
+    "label": "Overall height incl. output spline (A)",
+    "value": "30.3 mm",
+    "source": "https://towerpro.com.tw/product/sg90-analog/ (Product configure table, letters per key image http://torqpro.com/wp-content/uploads/2014/07/小馬達尺寸標示圖B.jpg)"
+   },
+   {
+    "label": "Length across mounting tabs (E)",
+    "value": "32.3 mm",
+    "source": "https://towerpro.com.tw/product/sg90-analog/ (configure table)"
+   },
+   {
+    "label": "Tab height from bottom (F)",
+    "value": "17 mm (bottom of case to the tab, per the key image)",
+    "source": "https://towerpro.com.tw/product/sg90-analog/ (configure table)"
+   },
+   {
+    "label": "Headline dimension",
+    "value": "23 × 12.2 × 29 mm (spec list; the configure table gives B 22.7, D 12.2, C 27, A 30.3)",
+    "source": "https://towerpro.com.tw/product/sg90-analog/ (Specifications)"
+   },
+   {
+    "label": "Mounting holes / tab hole pitch",
+    "value": null,
+    "source": "Not published by TowerPro"
+   },
+   {
+    "label": "Output shaft offset",
+    "value": null,
+    "source": "Not published by TowerPro"
+   },
+   {
+    "label": "Output spline",
+    "value": null,
+    "source": "Tooth count not published by TowerPro"
+   },
+   {
+    "label": "Horn / mounting screw sizes",
+    "value": null,
+    "source": "Not published by TowerPro"
+   }
+  ],
+  "source": "https://towerpro.com.tw/product/sg90-analog/"
+ },
+ "links": {
+  "amazon": {
+   "url": "https://www.amazon.com/dp/B09SQ8TG59",
+   "asin": "B09SQ8TG59",
+   "title": "Tower Pro SG90 Analog Micro Servo - 2 Pack",
+   "kind": "product",
+   "verified": true
+  },
+  "product": "https://towerpro.com.tw/product/sg90-analog/",
+  "datasheet": null
+ },
+ "notes": "TowerPro publishes no CAD, no mechanical drawing and no datasheet PDF. Its /download/ page is empty. TowerPro lists two pages, SG90 Analog (https://towerpro.com.tw/product/sg90-analog/) and SG90 Digital (https://towerpro.com.tw/product/sg90-7/), with the same dimensions and configure table. The pages differ only in speed (0.12 vs 0.1 s/60°), and the Analog page's own configure table also says 0.1. The A–F mapping is my reading of the generic key image (docs/dim_key.jpg): A = overall height incl. spline, B = case length, C = height excl. spline, D = width, E = tab-to-tab, F = bottom to tab. Mount-critical values (tab hole pitch and diameter, shaft offset, spline teeth, screw sizes) are not published by TowerPro, so they are null; measure a genuine unit or use a community model. The common 'SG90 datasheet' PDFs online are reseller documents, not TowerPro's, so none was used. TowerPro warns that many SG90s sold on Amazon/eBay/Alibaba are counterfeits. The Amazon pick is sold by American Robotic Supply (claims to be a Tower Pro dealer; listing model number SG90A2); its title verified, but the page showed no buy box, so it may be unavailable.",
+ "pose": "servo"
+}

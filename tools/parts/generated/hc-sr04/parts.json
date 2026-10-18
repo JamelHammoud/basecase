@@ -1,0 +1,177 @@
+[
+ {
+  "id": "pcb",
+  "name": "HC-SR04 PCB",
+  "color": "#1f4f9a",
+  "role": "solid",
+  "position": [
+   0,
+   0.8,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 45,
+   "height": 1.6,
+   "depth": 20
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// HC-SR04 PCB, origin = board centre at bottom face.\nL = 45;      // datasheet 45*20*15 (Cytron drawing shows 43)\nW = 20;      // datasheet\nT = 1.6;     // assumed standard FR4\nhole_dx = 40;   // Cytron drawing, c-c along length\nhole_dy = 15;   // NOT dimensioned - scaled from Cytron drawing\nhole_d  = 2.0;  // NOT dimensioned - conservative\n$fn = 32;\ndiff() cuboid([L, W, T], anchor = BOT) {\n  tag(\"remove\") grid_copies(spacing = [hole_dx, hole_dy], n = [2, 2]) cyl(d = hole_d, h = T + 1);\n  // 4 plated through-holes for the header, 2.54 pitch, at the -Y edge\n  tag(\"remove\") fwd(W/2 - 1.6) xcopies(2.54, n = 4) cyl(d = 1.0, h = T + 1);\n}",
+   "originOffset": [
+    0,
+    0.8,
+    0
+   ],
+   "baseSize": [
+    45,
+    1.6,
+    20
+   ]
+  }
+ },
+ {
+  "id": "transducer-t",
+  "name": "Transmitter Transducer (T)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -13,
+   8.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 16,
+   "height": 13.4,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Transducer can, origin = centre of base on PCB top face.\nd = 16;          // NOT dimensioned (unofficial ~16)\nh = 15 - 1.6;    // top flush with 15 mm datasheet depth\ncyl(d = d, h = h, chamfer2 = 0.4, anchor = BOT, $fn = 64);",
+   "originOffset": [
+    0,
+    6.7,
+    0
+   ],
+   "baseSize": [
+    16,
+    13.4,
+    16
+   ]
+  }
+ },
+ {
+  "id": "transducer-r",
+  "name": "Receiver Transducer (R)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   13,
+   8.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 16,
+   "height": 13.4,
+   "depth": 16
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Transducer can, origin = centre of base on PCB top face.\nd = 16;          // NOT dimensioned (unofficial ~16)\nh = 15 - 1.6;    // top flush with 15 mm datasheet depth\ncyl(d = d, h = h, chamfer2 = 0.4, anchor = BOT, $fn = 64);",
+   "originOffset": [
+    0,
+    6.7,
+    0
+   ],
+   "baseSize": [
+    16,
+    13.4,
+    16
+   ]
+  }
+ },
+ {
+  "id": "crystal",
+  "name": "Crystal Y1 (HC-49)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   0,
+   3.35,
+   -6
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10,
+   "height": 3.5,
+   "depth": 4
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// 4 MHz crystal lying flat, plain envelope.\ncuboid([10, 4, 3.5], rounding = 1.5, edges = \"Z\", anchor = BOT, $fn = 32);",
+   "originOffset": [
+    0,
+    1.75,
+    0
+   ],
+   "baseSize": [
+    10,
+    3.5,
+    4
+   ]
+  }
+ },
+ {
+  "id": "header",
+  "name": "4-Pin 2.54 mm Header (VCC Trig Echo GND)",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   2.05,
+   11.575
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 10.16,
+   "height": 4.1,
+   "depth": 8.85
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin = pin row centre on PCB top face (pins at y_board = -8.4).\np = 2.54; n = 4;\nbody = [n*p, 2.5, 2.5];\npin = 0.64;\nout = 6;   // estimated protrusion beyond board edge\nunion() {\n  cuboid(body, anchor = BOT);                       // plastic spacer\n  xcopies(p, n = n) {\n    down(1.6) cuboid([pin, pin, 1.6 + body.z/2 + pin/2], anchor = BOT);  // leg through board, flush at back\n    up(body.z/2) cuboid([pin, 1.6 + out, pin], anchor = BACK + CENTER);  // leg toward -Y\n  }\n}",
+   "originOffset": [
+    0,
+    0.44999999999999996,
+    3.175
+   ],
+   "baseSize": [
+    10.16,
+    4.1,
+    8.85
+   ]
+  }
+ }
+]

@@ -1,0 +1,212 @@
+[
+ {
+  "id": "pcb",
+  "name": "DevKitC-1 PCB",
+  "color": "#1a1a1a",
+  "role": "solid",
+  "position": [
+   0,
+   0.8,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 62.74,
+   "height": 1.6,
+   "depth": 25.4
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// PCB: origin at board centre, bottom face z=0. Long side along X, USB edge at -X.\nL = 62.74; W = 25.40; T = 1.6;   // T assumed\npitch = 2.54; n = 22;\nx0 = 7.96 - L/2;                  // first pin from USB edge\nrow = 22.86/2;                    // rows at Y = ±11.43\ndrill = 1.0;                      // not published\ndifference() {\n  translate([-L/2, -W/2, 0]) cube([L, W, T]);\n  for (sy = [-1, 1], i = [0:n-1])\n    translate([x0 + i*pitch, sy*row, -1]) cylinder(d = drill, h = T + 2, $fn = 24);\n}",
+   "originOffset": [
+    0,
+    0.8,
+    0
+   ],
+   "baseSize": [
+    62.74,
+    1.6,
+    25.4
+   ]
+  }
+ },
+ {
+  "id": "module-wroom-1",
+  "name": "ESP32-S3-WROOM-1 Module",
+  "color": "#2b2b30",
+  "role": "solid",
+  "position": [
+   25.03,
+   3.15,
+   0.05
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 25.5,
+   "height": 3.1,
+   "depth": 18
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Plain module envelope; origin at footprint centre, bottom on PCB top.\ncuboid([25.5, 18.0, 3.1], anchor = BOT);",
+   "originOffset": [
+    0,
+    1.55,
+    0
+   ],
+   "baseSize": [
+    25.5,
+    3.1,
+    18
+   ]
+  }
+ },
+ {
+  "id": "usb-j2-uart",
+  "name": "USB Receptacle J2 (UART)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -28.805,
+   3.1,
+   -6.8
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6.87,
+   "height": 3,
+   "depth": 8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([6.87, 8.0, 3.0], rounding = 0.5, edges = \"X\", anchor = BOT);",
+   "originOffset": [
+    0,
+    1.5,
+    0
+   ],
+   "baseSize": [
+    6.87,
+    3,
+    8
+   ]
+  }
+ },
+ {
+  "id": "usb-j4-native",
+  "name": "USB Receptacle J4 (Native USB)",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   -28.805,
+   3.1,
+   6.7
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 6.87,
+   "height": 3,
+   "depth": 8
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\ncuboid([6.87, 8.0, 3.0], rounding = 0.5, edges = \"X\", anchor = BOT);",
+   "originOffset": [
+    0,
+    1.5,
+    0
+   ],
+   "baseSize": [
+    6.87,
+    3,
+    8
+   ]
+  }
+ },
+ {
+  "id": "header-left",
+  "name": "Header J1 22-Pin (3V3 Side)",
+  "color": "#111111",
+  "role": "solid",
+  "position": [
+   3.26,
+   -3.45,
+   -11.43
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 55.88,
+   "height": 10.1,
+   "depth": 2.54
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Origin: header centre on the PCB bottom face. Pins down.\nn = 22; p = 2.54; body_h = 2.5; tail = 6.0; pin = 0.64;\ntranslate([0, 0, -body_h]) cuboid([n*p, p, body_h], chamfer = 0.3, anchor = BOT);\nfor (i = [0:n-1]) translate([(i - (n-1)/2)*p, 0, -body_h - tail])\n  cuboid([pin, pin, body_h + tail + 1.6], anchor = BOT);   // pin top flush with PCB top",
+   "originOffset": [
+    0,
+    -3.45,
+    0
+   ],
+   "baseSize": [
+    55.88,
+    10.1,
+    2.54
+   ]
+  }
+ },
+ {
+  "id": "header-right",
+  "name": "Header J3 22-Pin (G/TX Side)",
+  "color": "#111111",
+  "role": "solid",
+  "position": [
+   3.26,
+   -3.45,
+   11.43
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 55.88,
+   "height": 10.1,
+   "depth": 2.54
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\nn = 22; p = 2.54; body_h = 2.5; tail = 6.0; pin = 0.64;\ntranslate([0, 0, -body_h]) cuboid([n*p, p, body_h], chamfer = 0.3, anchor = BOT);\nfor (i = [0:n-1]) translate([(i - (n-1)/2)*p, 0, -body_h - tail])\n  cuboid([pin, pin, body_h + tail + 1.6], anchor = BOT);",
+   "originOffset": [
+    0,
+    -3.45,
+    0
+   ],
+   "baseSize": [
+    55.88,
+    10.1,
+    2.54
+   ]
+  }
+ }
+]

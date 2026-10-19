@@ -28,15 +28,15 @@ bench/data/
 bench/runs/
 
 # Copies of folders attached to the agent (can be large)
-library/evidence/
+/library/evidence/
 
 # Manufacturer CAD downloads (large; source URLs are in tools/parts/sources.json)
 tools/parts/cad/
 tools/parts/generated/*.log
 
 # Local app data: saved scenes, chats, uploads, prices, and the agent's workspace sync
-library/
-ai-reference/
+/library/
+/ai-reference/
 
 # Policy trainer virtualenv (uv creates it in library/trainer-env; this is a dev fallback)
 electron/trainer/.venv/

@@ -43,3 +43,14 @@ electron/trainer/.venv/
 
 # Python bytecode
 __pycache__/
+
+# Secrets and per-machine settings
+.env
+.env.*
+.claude/settings.local.json
+
+# Tool caches
+.ruff_cache/
+
+# Scratch work: throwaway scripts, debug tests, one-off outputs (see AGENTS.md §0g)
+/scratch/

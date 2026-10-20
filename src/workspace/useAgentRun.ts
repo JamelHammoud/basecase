@@ -1,193 +1,129 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { AcpChatMessage, CustomModelDefinition } from '../types/robotics';
 import { platformBridge, type AcpPromptPayload } from '../utils/platformBridge';
 import { emptyAgentMessage, markLastAgentStopped } from './acpTranscript';
+import { marksNote } from '../agent/agentMarks';
+import type { ActorIndex } from './agentActors';
 import { buildAgentPrompt, type AgentSendParams } from './agentPrompt';
 import { newId } from './helpers';
-import type { Vec3 } from './types';
-import type { AgentChat } from './useAgentChat';
+import type { AgentCursors } from './useAgentCursors';
+import type { AgentLanes } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 interface AgentRunOptions {
   core: WorkspaceCore;
-  chat: AgentChat;
-  active: boolean;
+  lanes: AgentLanes;
+  actors: ActorIndex;
+  cursors: AgentCursors;
+  alive: () => boolean;
   placeCustomModel: (model: CustomModelDefinition) => void;
-}
-
-interface QueuedPrompt {
-  messageId: string;
-  payload: AcpPromptPayload;
 }
 
 type PromptResult = Awaited<ReturnType<typeof platformBridge.sendAcpPrompt>>;
 
-function useRunFlags() {
-  const busyRef = useRef(false);
-  const followRef = useRef(true);
-  const aliveRef = useRef(true);
-  const queuedRef = useRef<QueuedPrompt[]>([]);
+export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {
+  const { docs, showToast } = core;
+  const { setCustomModels } = core.studio;
+  const { updateLane, setMessages, flagsOf, keyOf } = lanes;
 
-  useEffect(() => {
-    aliveRef.current = true;
+  const setSession = (id: string, sessionId: string) => updateLane(id, (l) => ({ ...l, acpSessionId: sessionId }));
 
-    return () => {
-      aliveRef.current = false;
-    };
-  }, []);
-
-  return { busyRef, followRef, aliveRef, queuedRef };
-}
-
-export function useAgentRun({ core, chat, active, placeCustomModel }: AgentRunOptions) {
-  const { workspaceId, studio, docs, showToast, scene, undo } = core;
-  const { setAcpSessionId, setMessages, setRunBase, takePendingResume, setChatId, persist } = chat;
-  const { setCustomModels, notify } = studio;
-  const { commitParts, partsRef } = docs;
-  const [isBusy, setIsBusy] = useState(false);
-  const [status, setStatus] = useState('');
-  const [action, setAction] = useState('');
-  const [cursorTarget, setCursorTarget] = useState<Vec3 | null>(null);
-  const { busyRef, followRef, aliveRef, queuedRef } = useRunFlags();
-  const wasBusyRef = useRef(false);
-
-  const resumeSession = async (resume: string) => {
-    const resumed = await platformBridge.resumeAcp(resume, workspaceId).catch(() => null);
-
-    if (resumed?.sessionId) setAcpSessionId(resumed.sessionId);
+  const setBusy = (id: string, busy: boolean) => {
+    flagsOf(id).busy = busy;
+    updateLane(id, (l) => ({ ...l, busy, status: '' }));
   };
 
-  const applyResult = (res: PromptResult, modelCountBefore: number) => {
+  const resumeSession = async (id: string, resume: string) => {
+    const resumed = await platformBridge.resumeAcp(resume, keyOf(id)).catch(() => null);
+
+    if (resumed?.sessionId) setSession(id, resumed.sessionId);
+  };
+
+  const applyResult = (id: string, res: PromptResult, modelCountBefore: number) => {
     const models = Array.isArray(res.models) ? res.models : null;
 
-    if (res.sessionId) setAcpSessionId(res.sessionId);
+    if (res.sessionId) setSession(id, res.sessionId);
 
     if (models) setCustomModels(models);
 
     if (models && models.length > modelCountBefore) placeCustomModel(models[0]);
 
-    if (res.stopReason === 'cancelled') setMessages(markLastAgentStopped);
+    if (res.stopReason === 'cancelled') setMessages(id, markLastAgentStopped);
   };
 
-  const runOnce = async (payload: AcpPromptPayload) => {
-    busyRef.current = true;
-    setIsBusy(true);
-    setStatus('');
-    followRef.current = true;
-    setRunBase(partsRef.current);
+  const runOnce = async (id: string, payload: AcpPromptPayload) => {
+    const flags = flagsOf(id);
+    const resume = flags.pendingResume;
+
+    flags.follow = true;
+    flags.pendingResume = null;
+    updateLane(id, (l) => ({ ...l, status: '' }));
 
     try {
-      const resume = takePendingResume();
-
-      if (resume) await resumeSession(resume);
+      if (resume) await resumeSession(id, resume);
 
       const modelCountBefore = (await platformBridge.listModels().catch(() => [])).length;
 
-      applyResult(await platformBridge.sendAcpPrompt({ ...payload, workspaceId }), modelCountBefore);
+      applyResult(id, await platformBridge.sendAcpPrompt({ ...payload, workspaceId: keyOf(id) }), modelCountBefore);
     } catch (err) {
       showToast(`Agent error. ${String((err as Error).message ?? err)}`, { tone: 'error' });
     }
   };
 
-  const runAgentPrompt = async (first: AcpPromptPayload) => {
+  const runAgentPrompt = async (id: string, first: AcpPromptPayload) => {
     let payload: AcpPromptPayload | undefined = first;
 
-    while (payload) {
-      await runOnce(payload);
+    setBusy(id, true);
+    updateLane(id, (l) => ({ ...l, edits: {} }));
 
-      const next = aliveRef.current ? queuedRef.current.shift() : undefined;
+    while (payload) {
+      await runOnce(id, payload);
+
+      const next = alive() ? flagsOf(id).queued.shift() : undefined;
 
       if (next) {
         const fresh = emptyAgentMessage(new Date());
 
-        setMessages((prev) => [...prev.map((m) => (m.id === next.messageId ? { ...m, queued: false } : m)), fresh]);
+        setMessages(id, (prev) => [...prev.map((m) => (m.id === next.messageId ? { ...m, queued: false } : m)), fresh]);
       }
 
       payload = next?.payload;
     }
 
-    busyRef.current = false;
-    setIsBusy(false);
-    setStatus('');
+    setBusy(id, false);
+    actors.endLane(id);
+    cursors.clearLane(id);
   };
 
-  const steer = async (payload: AcpPromptPayload, userMessage: AcpChatMessage, agentMessage: AcpChatMessage) => {
-    const outcome = await platformBridge.steerAcp({ ...payload, workspaceId });
+  const steer = async (id: string, payload: AcpPromptPayload, sent: [AcpChatMessage, AcpChatMessage]) => {
+    const [userMessage, agentMessage] = sent;
+    const outcome = await platformBridge.steerAcp({ ...payload, workspaceId: keyOf(id) });
 
     if (outcome === 'injected') {
-      setMessages((prev) => [...prev, userMessage, agentMessage]);
+      setMessages(id, (prev) => [...prev, userMessage, agentMessage]);
 
       return;
     }
 
-    queuedRef.current.push({ messageId: userMessage.id, payload });
-    setMessages((prev) => [...prev, { ...userMessage, queued: true }]);
+    flagsOf(id).queued.push({ messageId: userMessage.id, payload });
+    setMessages(id, (prev) => [...prev, { ...userMessage, queued: true }]);
   };
 
   const send = async (params: AgentSendParams) => {
-    const { payload, userMessage, agentMessage } = buildAgentPrompt(params, new Date());
+    const { id, chatId } = lanes.current;
+    const note = marksNote(docs.projectRef.current.marks, docs.partsRef.current);
+    const { payload, userMessage, agentMessage } = buildAgentPrompt({ ...params, note }, new Date());
 
-    if (busyRef.current) {
-      await steer(payload, userMessage, agentMessage);
+    if (flagsOf(id).busy) {
+      await steer(id, payload, [userMessage, agentMessage]);
 
       return;
     }
 
-    if (!chat.chatId) setChatId(newId('chat'));
+    if (!chatId) updateLane(id, (l) => ({ ...l, chatId: newId('chat') }));
 
-    setMessages((prev) => [...prev, userMessage, agentMessage]);
-    await runAgentPrompt(payload);
+    setMessages(id, (prev) => [...prev, userMessage, agentMessage]);
+    await runAgentPrompt(id, payload);
   };
 
-  const stop = () => {
-    const dropped = new Set(queuedRef.current.map((q) => q.messageId));
-
-    queuedRef.current = [];
-
-    if (dropped.size)
-      setMessages((prev) => prev.map((m) => (dropped.has(m.id) ? { ...m, queued: false, notSent: true } : m)));
-
-    platformBridge.cancelAcp(workspaceId).catch(() => {});
-  };
-
-  const revert = () => {
-    const base = chat.runBase;
-
-    if (!base) return;
-
-    commitParts(() => base);
-    setRunBase(null);
-    showToast('Reverted agent changes', { action: { label: 'Undo', onClick: undo } });
-  };
-
-  const onRunFinished = useEffectEvent(() => {
-    persist();
-
-    if (!active && aliveRef.current) notify(workspaceId, `Agent finished in ${scene.sceneName}`);
-  });
-
-  useEffect(() => {
-    if (wasBusyRef.current && !isBusy) onRunFinished();
-
-    wasBusyRef.current = isBusy;
-  }, [isBusy]);
-
-  return {
-    isBusy,
-    status,
-    setStatus,
-    action,
-    setAction,
-    cursorTarget,
-    setCursorTarget,
-    send,
-    stop,
-    revert,
-    stopFollowing: () => {
-      followRef.current = false;
-    },
-    isFollowing: () => followRef.current,
-  };
+  return { send };
 }
-
-export type AgentRun = ReturnType<typeof useAgentRun>;

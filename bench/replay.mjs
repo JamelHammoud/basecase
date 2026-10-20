@@ -61,6 +61,7 @@ for (const f of [
   'tsconfig.json',
   'tsconfig.app.json',
   'tsconfig.node.json',
+  'tsconfig.e2e.json',
 ]) {
   fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
 }

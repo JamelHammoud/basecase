@@ -4,8 +4,8 @@ import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
 import { Button, EmptyState, HoverCard, SectionHeader } from '../../design-system';
 import { CatalogDetails } from '../PartDetails';
-import { CATEGORIES, type Category, type SceneParts } from './partsViews';
-import { AddButton, CategoryRow, ResultRow, SceneRow, dragProps, metaLine } from './rows';
+import { CATEGORIES, type Category } from './partsViews';
+import { AddButton, CategoryRow, ResultRow, dragProps, metaLine } from './rows';
 
 const Tile: React.FC<{ item: CatalogItem; onOpen: () => void; onAdd: () => void }> = ({ item, onOpen, onAdd }) => {
   const thumb = usePartThumbnail(item);
@@ -57,17 +57,8 @@ export const TileGrid: React.FC<{
   </div>
 );
 
-export const Home: React.FC<{
-  scene: SceneParts;
-  onOpenScene: () => void;
-  onOpenCategory: (c: Category) => void;
-}> = ({ scene, onOpenScene, onOpenCategory }) => (
+export const Home: React.FC<{ onOpenCategory: (c: Category) => void }> = ({ onOpenCategory }) => (
   <div className="px-[8px] pb-4">
-    {(scene.used.length > 0 || scene.related.length > 0) && (
-      <div className="mb-3">
-        <SceneRow scene={scene} onOpen={onOpenScene} />
-      </div>
-    )}
     {(['Components', 'Hardware'] as const).map((section) => (
       <div key={section} className="mb-3">
         <SectionHeader title={section} />
@@ -78,40 +69,6 @@ export const Home: React.FC<{
     ))}
   </div>
 );
-
-export const ScenePage: React.FC<{
-  scene: SceneParts;
-  onOpen: (item: CatalogItem) => void;
-  onAdd: (item: CatalogItem) => void;
-}> = ({ scene, onOpen, onAdd }) =>
-  scene.used.length === 0 && scene.related.length === 0 ? (
-    <EmptyState title="No parts in this scene" />
-  ) : (
-    <div className="px-[8px] pb-4">
-      {scene.used.length > 0 && (
-        <div className="mb-3">
-          <SectionHeader title="Used" />
-          {scene.used.map(({ item, count }) => (
-            <ResultRow
-              key={catalogRef(item)}
-              item={item}
-              count={count}
-              onOpen={() => onOpen(item)}
-              onAdd={() => onAdd(item)}
-            />
-          ))}
-        </div>
-      )}
-      {scene.related.length > 0 && (
-        <div className="mb-3">
-          <SectionHeader title={scene.used.length > 0 ? 'Goes with these' : 'Named in the description'} />
-          {scene.related.map((item) => (
-            <ResultRow key={catalogRef(item)} item={item} onOpen={() => onOpen(item)} onAdd={() => onAdd(item)} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
 export const SearchResults: React.FC<{
   results: CatalogItem[];

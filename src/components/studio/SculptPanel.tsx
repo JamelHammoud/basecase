@@ -1,6 +1,16 @@
 import React from 'react';
-import { Box, CircleDot, Cylinder, Pill, Sparkles } from 'lucide-react';
-import { Button, Section, Slider, Switch, Tooltip } from '../../design-system';
+import {
+  Button,
+  Section,
+  Slider,
+  Switch,
+  Tooltip,
+  CapsuleIcon,
+  CircleDotIcon,
+  CylinderIcon,
+  ShapeIcon,
+  SparklesIcon,
+} from '../../design-system';
 import type { SculptBrushKind, SculptSettings } from '../../types/robotics';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
@@ -19,10 +29,10 @@ const BRUSH_OPTIONS: Array<{
 ];
 
 const CLAY_PRESETS = [
-  { id: 'clay_sphere', label: 'Sphere', icon: <CircleDot className="w-4 h-4" /> },
-  { id: 'clay_box', label: 'Block', icon: <Box className="w-4 h-4" /> },
-  { id: 'clay_capsule', label: 'Capsule', icon: <Pill className="w-4 h-4" /> },
-  { id: 'clay_cylinder', label: 'Cylinder', icon: <Cylinder className="w-4 h-4" /> },
+  { id: 'clay_sphere', label: 'Sphere', icon: <CircleDotIcon className="w-4 h-4" /> },
+  { id: 'clay_box', label: 'Block', icon: <ShapeIcon className="w-4 h-4" /> },
+  { id: 'clay_capsule', label: 'Capsule', icon: <CapsuleIcon className="w-4 h-4" /> },
+  { id: 'clay_cylinder', label: 'Cylinder', icon: <CylinderIcon className="w-4 h-4" /> },
 ] as const;
 
 const PRESET_TILE =
@@ -83,7 +93,7 @@ export const SculptPanel: React.FC<{
       />
       <p className="text-[12.5px] text-white/45">Drag on a part to sculpt. Hold ⌥ to invert.</p>
       {hasSelection && (
-        <Button size="md" fullWidth icon={<Sparkles className="w-4 h-4" />} onClick={onSubdivideSelectedClay}>
+        <Button size="md" fullWidth icon={<SparklesIcon className="w-4 h-4" />} onClick={onSubdivideSelectedClay}>
           Subdivide
         </Button>
       )}

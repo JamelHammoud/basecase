@@ -1,4 +1,6 @@
+import { toolIdentity } from './toolIdentity';
 import type { AcpChatMessage, AcpPlanEntry, AcpToolCallEvent } from '../types/robotics';
+import { parentToolUseIdOf } from './agentActors';
 
 export type SessionUpdate = Record<string, unknown>;
 
@@ -73,42 +75,88 @@ function addText(target: AcpChatMessage, u: SessionUpdate): AcpChatMessage {
   return { ...target, text: (target.text || '') + text, segments: appendSegment(target.segments, 'text', text) };
 }
 
-function addToolCall(target: AcpChatMessage, u: SessionUpdate): AcpChatMessage {
-  const meta = u._meta as { claudeCode?: { toolName?: string } } | undefined;
-  const id = String(u.toolCallId);
-  const call = {
-    toolCallId: id,
+function newCall(u: SessionUpdate): AcpToolCallEvent {
+  const { toolName, rawInput } = toolIdentity(u);
+
+  return {
+    toolCallId: String(u.toolCallId),
     title: String(u.title || 'Tool'),
     status: (u.status as AcpToolCallEvent['status']) || 'in_progress',
     kind: String(u.kind || ''),
-    rawInput: u.rawInput,
-    toolName: meta?.claudeCode?.toolName,
-  };
-  const list = target.toolCalls || [];
-
-  if (list.some((t) => t.toolCallId === id)) {
-    return { ...target, toolCalls: list.map((t) => (t.toolCallId === id ? { ...t, ...call } : t)) };
-  }
-
-  return {
-    ...target,
-    toolCalls: [...list, call],
-    segments: [...(target.segments ?? []), { type: 'tool', toolCallId: id }],
+    rawInput,
+    toolName,
   };
 }
 
-function updateToolCall(target: AcpChatMessage, u: SessionUpdate): AcpChatMessage {
-  const update = (tc: AcpToolCallEvent): AcpToolCallEvent => ({
+function patchCall(tc: AcpToolCallEvent, u: SessionUpdate): AcpToolCallEvent {
+  const identity = toolIdentity(u);
+
+  return {
     ...tc,
     ...(u.title ? { title: String(u.title) } : {}),
-    ...(u.rawInput !== undefined ? { rawInput: u.rawInput } : {}),
+    ...(u.rawInput !== undefined ? { rawInput: identity.rawInput } : {}),
+    ...(!tc.toolName && identity.toolName ? { toolName: identity.toolName } : {}),
     status: (u.status as AcpToolCallEvent['status']) || tc.status,
-  });
+  };
+}
+
+function upsertCall(list: AcpToolCallEvent[], u: SessionUpdate) {
+  const id = String(u.toolCallId);
+
+  if (u.sessionUpdate === 'tool_call_update') return list.map((t) => (t.toolCallId === id ? patchCall(t, u) : t));
+
+  const call = newCall(u);
+
+  if (list.some((t) => t.toolCallId === id)) return list.map((t) => (t.toolCallId === id ? { ...t, ...call } : t));
+
+  return [...list, call];
+}
+
+function addToolCall(target: AcpChatMessage, u: SessionUpdate): AcpChatMessage {
+  const id = String(u.toolCallId);
+  const list = target.toolCalls || [];
+  const known = list.some((t) => t.toolCallId === id);
 
   return {
     ...target,
-    toolCalls: (target.toolCalls || []).map((tc) => (tc.toolCallId === String(u.toolCallId) ? update(tc) : tc)),
+    toolCalls: upsertCall(list, u),
+    segments: known ? target.segments : [...(target.segments ?? []), { type: 'tool', toolCallId: id }],
   };
+}
+
+const updateToolCall = (target: AcpChatMessage, u: SessionUpdate): AcpChatMessage => ({
+  ...target,
+  toolCalls: upsertCall(target.toolCalls || [], u),
+});
+
+function nestUpdate(call: AcpToolCallEvent, u: SessionUpdate): AcpToolCallEvent {
+  if (u.sessionUpdate === 'agent_message_chunk') {
+    const text = chunkText(u);
+
+    return text ? { ...call, childText: (call.childText ?? '') + text } : call;
+  }
+
+  if (u.sessionUpdate === 'tool_call' || u.sessionUpdate === 'tool_call_update') {
+    return { ...call, children: upsertCall(call.children ?? [], u) };
+  }
+
+  return call;
+}
+
+function applySubagentUpdate(prev: AcpChatMessage[], parentId: string, u: SessionUpdate) {
+  const owner = prev.findLastIndex((m) => m.toolCalls?.some((t) => t.toolCallId === parentId));
+
+  if (owner === -1) return prev;
+
+  const copy = [...prev];
+  const msg = copy[owner];
+
+  copy[owner] = {
+    ...msg,
+    toolCalls: msg.toolCalls?.map((t) => (t.toolCallId === parentId ? nestUpdate(t, u) : t)),
+  };
+
+  return copy;
 }
 
 function setPlan(target: AcpChatMessage, u: SessionUpdate): AcpChatMessage {
@@ -126,6 +174,10 @@ const UPDATERS: Record<string, (target: AcpChatMessage, u: SessionUpdate) => Acp
 };
 
 export function applySessionUpdate(prev: AcpChatMessage[], u: SessionUpdate, now: Date): AcpChatMessage[] {
+  const parentId = parentToolUseIdOf(u);
+
+  if (parentId) return applySubagentUpdate(prev, parentId, u);
+
   const copy = [...prev];
   let index = targetIndex(copy, u);
 

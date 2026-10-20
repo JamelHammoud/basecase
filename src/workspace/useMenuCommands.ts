@@ -19,13 +19,12 @@ function useMenuMap({ core, actions, ui }: Omit<MenuOptions, 'active'>): Record<
   'use memo';
 
   const { studio, tool, posing, showToast, undo, redo, selection } = core;
-  const { library, exports, creation, robots, pose, ops } = actions;
+  const { exports, creation, robots, pose, ops } = actions;
 
   return {
     settings: () => studio.openSettings(),
     shortcuts: () => studio.openSettings('shortcuts'),
     'find-parts': ui.findParts,
-    sync: library.sync,
     'export-stl': exports.exportStl,
     'add-reference-image': () => creation.pickReferenceImage(),
     'import-svg': () => tool.openCreator('svg'),

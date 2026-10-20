@@ -34,6 +34,18 @@ describe('hardware catalog keys', () => {
     for (const item of PART_CATALOG) expect(catalogKey(catalogItemFromKey(catalogRef(item))!)).toBe(catalogKey(item));
   });
 
+  it('offers heat-set inserts in their stock lengths only', () => {
+    expect(catalogItemFromKey('hardware:heat_insert|M3||brass')?.hardware).toMatchObject({ length: 5.7 });
+    expect(catalogItemFromKey('hardware:heat_insert|M3|4')?.name).toBe('M3 × 4 Heat-Set Insert');
+    expect(makeSpec('heat_insert', { size: 'M3', length: 3.4 })).toMatchObject({ length: 3 });
+    expect(hardwareDimensions(makeSpec('heat_insert', { size: 'M3', length: 4 }))).toEqual({
+      width: 5,
+      height: 4,
+      depth: 5,
+    });
+    expect(hardwareHoleRows(makeSpec('heat_insert', { size: 'M4', length: 4 }))[0].value).toBe('Ø5.6 × 5.0');
+  });
+
   it('parses refs with blank fields to the defaults', () => {
     expect(catalogItemFromKey('hardware:socket_head|M4|17|black|torx')?.name).toBe('M4 × 17 Torx Socket Head Screw');
     expect(catalogItemFromKey('hardware:pan_head|M3||')?.hardware).toEqual(makeSpec('pan_head', { size: 'M3' }));

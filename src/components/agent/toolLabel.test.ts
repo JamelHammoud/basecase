@@ -14,9 +14,8 @@ describe('toolLabel', () => {
   it('names part work in progress and done', () => {
     expect(toolLabel(call('model_part', { name: 'Left Coxa Bracket', language: 'replicad' }, 'in_progress'))).toEqual({
       title: 'Designing Left Coxa Bracket',
-      detail: 'OpenCascade',
     });
-    expect(toolLabel(call('model_part', {}))).toEqual({ title: 'Designed part', detail: 'OpenSCAD' });
+    expect(toolLabel(call('model_part', {}))).toEqual({ title: 'Designed part' });
   });
 
   it('summarizes part lists and groups', () => {
@@ -27,10 +26,10 @@ describe('toolLabel', () => {
     expect(toolLabel(call('add_parts', {}))).toEqual({ title: 'Blocked out parts', detail: undefined });
     expect(toolLabel(call('delete_parts', { ids: ['a', 'b', 'c', 'd', 'e'] }))).toEqual({
       title: 'Removed 5 parts',
-      detail: 'a, b, c +2',
+      detail: 'a, b, c, d, e',
     });
     expect(toolLabel(call('update_parts', { updates: [{ id: 'x', name: 'Head' }] }))).toEqual({
-      title: 'Adjusted 1 parts',
+      title: 'Adjusted 1 part',
       detail: 'Head',
     });
   });
@@ -38,7 +37,6 @@ describe('toolLabel', () => {
   it('prefers compare over look and websearch over fetch', () => {
     expect(toolLabel(call('compare', { reference: 'ref-2', views: ['front'] }))).toEqual({
       title: 'Compared with ref-2',
-      detail: 'front',
     });
     expect(toolLabel(call('look', { ids: [] }, 'pending'))).toEqual({
       title: 'Looking at the model',
@@ -62,6 +60,20 @@ describe('toolLabel', () => {
       title: 'Read the joint layout',
       detail: 'robot.urdf',
     });
+  });
+
+  it('names Basecase tools in plain words', () => {
+    expect(
+      toolLabel(call('mcp__robotics_cad__define_joints', { joints: [{ id: 'knee', name: 'Left Knee' }] })),
+    ).toEqual({
+      title: 'Defined 1 joint',
+      detail: 'Left Knee',
+    });
+    expect(toolLabel(call('mcp__robotics_cad__simulate', { controller: 'hold' }, 'in_progress'))).toEqual({
+      title: 'Simulating 5 s',
+      detail: 'Holding the pose',
+    });
+    expect(toolLabel(call('mcp__robotics_cad__brand_new_tool', {}))).toEqual({ title: 'Brand new tool' });
   });
 
   it('falls back to the title', () => {

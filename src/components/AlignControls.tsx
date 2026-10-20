@@ -1,16 +1,18 @@
 import React from 'react';
 import {
-  AlignCenterHorizontal,
-  AlignCenterVertical,
-  AlignEndHorizontal,
-  AlignEndVertical,
-  AlignHorizontalSpaceAround,
-  AlignStartHorizontal,
-  AlignStartVertical,
-  AlignVerticalSpaceAround,
-  LucideIcon,
-} from 'lucide-react';
-import { Divider, IconButton, Tooltip } from '../design-system';
+  Divider,
+  IconButton,
+  Tooltip,
+  AlignBottomIcon,
+  AlignCenterXIcon,
+  AlignCenterYIcon,
+  AlignLeftIcon,
+  AlignRightIcon,
+  AlignTopIcon,
+  GlyphIcon,
+  SpreadXIcon,
+  SpreadYIcon,
+} from '../design-system';
 import type { AlignMode, Axis } from '../utils/selection';
 
 const ROWS: Array<{ axis: Axis; label: string; options: Array<[AlignMode, string]> }> = [
@@ -124,37 +126,37 @@ export const AlignControls: React.FC<AlignControlsProps> = ({ count, onAlign, on
 const BAR_ROWS: Array<{
   axis: Axis;
   label: string;
-  spread: LucideIcon;
-  options: Array<[AlignMode, string, LucideIcon]>;
+  spread: GlyphIcon;
+  options: Array<[AlignMode, string, GlyphIcon]>;
 }> = [
   {
     axis: 0,
     label: 'X',
-    spread: AlignHorizontalSpaceAround,
+    spread: SpreadXIcon,
     options: [
-      ['min', 'Align left', AlignStartVertical],
-      ['center', 'Align center', AlignCenterVertical],
-      ['max', 'Align right', AlignEndVertical],
+      ['min', 'Align left', AlignLeftIcon],
+      ['center', 'Align center', AlignCenterXIcon],
+      ['max', 'Align right', AlignRightIcon],
     ],
   },
   {
     axis: 1,
     label: 'Y',
-    spread: AlignVerticalSpaceAround,
+    spread: SpreadYIcon,
     options: [
-      ['min', 'Align bottom', AlignEndHorizontal],
-      ['center', 'Align middle', AlignCenterHorizontal],
-      ['max', 'Align top', AlignStartHorizontal],
+      ['min', 'Align bottom', AlignBottomIcon],
+      ['center', 'Align middle', AlignCenterYIcon],
+      ['max', 'Align top', AlignTopIcon],
     ],
   },
   {
     axis: 2,
     label: 'Z',
-    spread: AlignHorizontalSpaceAround,
+    spread: SpreadXIcon,
     options: [
-      ['min', 'Align back', AlignStartVertical],
-      ['center', 'Align center', AlignCenterVertical],
-      ['max', 'Align front', AlignEndVertical],
+      ['min', 'Align back', AlignLeftIcon],
+      ['center', 'Align center', AlignCenterXIcon],
+      ['max', 'Align front', AlignRightIcon],
     ],
   },
 ];

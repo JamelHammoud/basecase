@@ -1,6 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Square } from 'lucide-react';
-import { Button, IconButton, NumberInput, Section, SegmentedControl } from '../../design-system';
+import { Button, IconButton, NumberInput, Section, SegmentedControl, StopIcon } from '../../design-system';
 import type { Training, TrainOptions } from '../../sim/useTraining';
 import type { TrainTask } from '../../sim/policy';
 import { fmtSteps, rewardPath } from './format';
@@ -89,7 +88,12 @@ const TrainProgress: React.FC<{ training: Training }> = ({ training }) => {
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2 text-[13px]">
         <span className="text-white/80 truncate">{training.message ?? 'Training'}</span>
-        <IconButton icon={<Square className="w-3.5 h-3.5" />} title="Stop training" size="xs" onClick={training.stop} />
+        <IconButton
+          icon={<StopIcon className="w-3.5 h-3.5" />}
+          title="Stop training"
+          size="xs"
+          onClick={training.stop}
+        />
       </div>
       {p && (
         <>

@@ -723,5 +723,379 @@
     "file": "cad/waveshare-st3215-hs/ST3215.step",
     "license": "not stated (Waveshare ST3215 model: the same Feetech servo sold under Waveshare's name; outline matches Feetech's STS3215/STS3250 drawing, 45.22 \u00d7 24.72 mm)",
     "rotate": [["x", -90]]
+  },
+  "adafruit-gc9a01a-round-tft": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/6178%201.28in%20Round%20TFT/6178%201.28in%20Round%20TFT.step",
+    "file": "cad/adafruit-gc9a01a-round-tft/6178.step",
+    "license": "MIT",
+    "rotate": [
+      ["x", -90],
+      ["y", 180]
+    ]
+  },
+  "adafruit-st7789-13-tft": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/4313%201.3in%20TFT%20IPS%20Display/4313%201.3in-TFT-IPS-Display.step",
+    "file": "cad/adafruit-st7789-13-tft/4313.step",
+    "license": "MIT",
+    "rotate": [
+      ["x", -90],
+      ["y", 90]
+    ]
+  },
+  "adafruit-ssd1306-oled-128x64": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/938%20Mono%20128x64%20OLED%20Stemma/938%20Mono%20128x64%20OLED%20Stemma.step",
+    "file": "cad/adafruit-ssd1306-oled-128x64/938.step",
+    "license": "MIT",
+    "rotate": [
+      ["x", -90],
+      ["y", 180]
+    ]
+  },
+  "adafruit-mini-oval-speaker": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/3923%20Mini%20Oval%20Speaker/3923%20Mini%20Oval%20Speaker.step",
+    "file": "cad/adafruit-mini-oval-speaker/3923.step",
+    "license": "MIT",
+    "rotate": [["x", -90]]
+  },
+  "adafruit-speaker-40mm": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/3968%20Speaker%2040mm/3968%20Speaker%2040mm.step",
+    "file": "cad/adafruit-speaker-40mm/3968.step",
+    "license": "MIT",
+    "rotate": [["x", -90]]
+  },
+  "adafruit-max98357a": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/3006%20MAX98357/3006%20MAX98357.step",
+    "file": "cad/adafruit-max98357a/3006.step",
+    "license": "MIT",
+    "rotate": [["z", 90]]
+  },
+  "waveshare-128-round-lcd": {
+    "url": "https://files.waveshare.com/upload/4/49/1.28inch_LCD_Module_3D_Drawing.zip",
+    "file": "cad/waveshare-128-round-lcd/waveshare-128.stp",
+    "license": "not stated",
+    "rotate": [["x", -90]],
+    "defaultColor": [0.09, 0.09, 0.1],
+    "note": "Simplified envelope model (no colours): module outline, standoffs and connector."
+  },
+  "raspberry-pi-touch-display-2-7": {
+    "url": "https://pip-assets.raspberrypi.com/categories/1083-raspberry-pi-touch-display-2/documents/RP-009154-DD-3-raspberry-pi-touch-display-2-step-7inch.zip",
+    "file": "cad/raspberry-pi-touch-display-2-7/td2-7.step",
+    "license": "MIT (LICENSE.txt in the zip, Copyright (c) 2026 Raspberry Pi Ltd; provided for guidance only)",
+    "rotate": [["x", 90]],
+    "defaultColor": [0.09, 0.09, 0.1]
+  },
+  "raspberry-pi-touch-display-2-5": {
+    "url": "https://pip-assets.raspberrypi.com/categories/1083-raspberry-pi-touch-display-2/documents/RP-009152-DD-3-raspberry-pi-touch-display-2-step-5inch.zip",
+    "file": "cad/raspberry-pi-touch-display-2-5/td2-5.step",
+    "license": "MIT (LICENSE.txt in the zip, Copyright (c) 2026 Raspberry Pi Ltd; provided for guidance only)",
+    "rotate": [["x", 90]],
+    "defaultColor": [0.09, 0.09, 0.1]
+  },
+  "pololu-d36v50f5": {
+    "url": "https://www.pololu.com/file/0J1733/d36v50fx-step-down-voltage-regulator.step",
+    "file": "cad/pololu-d36v50f5/d36v50fx-step-down-voltage-regulator.step",
+    "license": "not stated",
+    "rotate": [["x", 180]],
+    "note": "Pololu's STEP has the inductor and capacitors facing down; flipped to match the top view of Pololu's dimension drawing. One board (reg24d) for every D36V50Fx output voltage."
+  },
+  "pololu-d36v50f6": {
+    "url": "https://www.pololu.com/file/0J1733/d36v50fx-step-down-voltage-regulator.step",
+    "file": "cad/pololu-d36v50f6/d36v50fx-step-down-voltage-regulator.step",
+    "license": "not stated",
+    "rotate": [["x", 180]],
+    "note": "Pololu's STEP has the inductor and capacitors facing down; flipped to match the top view of Pololu's dimension drawing. One board (reg24d) for every D36V50Fx output voltage."
+  },
+  "pololu-d36v50f12": {
+    "url": "https://www.pololu.com/file/0J1733/d36v50fx-step-down-voltage-regulator.step",
+    "file": "cad/pololu-d36v50f12/d36v50fx-step-down-voltage-regulator.step",
+    "license": "not stated",
+    "rotate": [["x", 180]],
+    "note": "Pololu's STEP has the inductor and capacitors facing down; flipped to match the top view of Pololu's dimension drawing. One board (reg24d) for every D36V50Fx output voltage."
+  },
+  "pololu-d36v28f5": {
+    "url": "https://www.pololu.com/file/0J1660/d36v28fx-step-down-voltage-regulators.step",
+    "file": "cad/pololu-d36v28f5/d36v28fx-step-down-voltage-regulators.step",
+    "license": "not stated",
+    "rotate": [["z", 90]]
+  },
+  "pololu-d24v22f5": {
+    "url": "https://www.pololu.com/file/0J1413/d24v22fx-step-down-voltage-regulator.step",
+    "file": "cad/pololu-d24v22f5/d24v22fx-step-down-voltage-regulator.step",
+    "license": "not stated"
+  },
+  "pololu-s13v20f5": {
+    "url": "https://www.pololu.com/file/0J1857/5v-step-up-step-down-regulator-s13vxf5.zip",
+    "file": "cad/pololu-s13v20f5/5v-2a-step-up-step-down-voltage-regulator-s13v20f5.step",
+    "license": "not stated",
+    "rotate": [["z", 90]]
+  },
+  "actuonix-pq12": {
+    "url": "https://www.actuonix.com/assets/images/datasheets/PQ12_STP.zip",
+    "file": "cad/actuonix-pq12/pq-12_in.stp",
+    "license": "not stated",
+    "rotate": [["x", 180]],
+    "triangleBudget": 60000
+  },
+  "actuonix-l12": {
+    "url": "https://www.actuonix.com/assets/images/datasheets/L12_STP.zip",
+    "file": "cad/actuonix-l12/l12_30mm_in.stp",
+    "license": "not stated",
+    "rotate": [
+      ["x", -90],
+      ["z", -90]
+    ],
+    "triangleBudget": 60000
+  },
+  "actuonix-l16": {
+    "url": "https://www.actuonix.com/assets/images/datasheets/L16_STP.zip",
+    "file": "cad/actuonix-l16/l16_50mm.stp",
+    "license": "not stated",
+    "rotate": [
+      ["x", -90],
+      ["z", -90]
+    ],
+    "triangleBudget": 60000
+  },
+  "actuonix-p16": {
+    "url": "https://www.actuonix.com/assets/images/datasheets/P16_STP.zip",
+    "file": "cad/actuonix-p16/p16_100mm_in.stp",
+    "license": "not stated",
+    "triangleBudget": 60000
+  },
+  "actuonix-t16": {
+    "url": "https://www.actuonix.com/assets/images/datasheets/T16_STP.zip",
+    "file": "cad/actuonix-t16/t16_100mm.stp",
+    "license": "not stated",
+    "triangleBudget": 60000
+  },
+  "robotis-openrb-150": {
+    "url": "https://www.robotis.com/service/download.php?no=2121",
+    "file": "cad/robotis-openrb-150/OpenRB-150.step",
+    "license": "not stated",
+    "rotate": [["z", 90]],
+    "colorMap": {
+      "0f660f": [0.11, 0.3, 0.62],
+      "99999e": [0.08, 0.08, 0.09]
+    },
+    "note": "The STEP uses a generic green solder mask and grey sockets; the board ships blue with black header sockets (ROBOTIS photos)."
+  },
+  "pololu-wheel-32x7": {
+    "url": "https://www.pololu.com/file/0J1296/pololu-wheel-32%C3%977mm.zip",
+    "file": "cad/pololu-wheel-32x7/pololu-wheel-32x7mm-black.step",
+    "license": "not stated",
+    "rotate": [["y", 90]]
+  },
+  "pololu-wheel-60x8": {
+    "url": "https://www.pololu.com/file/0J1292/pololu-wheel-60%C3%978mm.zip",
+    "file": "cad/pololu-wheel-60x8/pololu-wheel-60x8mm-black.step",
+    "license": "not stated"
+  },
+  "pololu-wheel-70x8": {
+    "url": "https://www.pololu.com/file/0J1293/pololu-wheel-70%C3%978mm.zip",
+    "file": "cad/pololu-wheel-70x8/pololu-wheel-70x8mm-black.step",
+    "license": "not stated"
+  },
+  "pololu-wheel-90x10": {
+    "url": "https://www.pololu.com/file/0J1295/pololu-wheel-90%C3%9710mm.zip",
+    "file": "cad/pololu-wheel-90x10/pololu-wheel-90x10mm-black.step",
+    "license": "not stated"
+  },
+  "pololu-ball-caster-3-8in": {
+    "url": "https://www.pololu.com/file/0J1637/pololu-ball-caster-with-0-375in-ball.step",
+    "file": "cad/pololu-ball-caster-3-8in/c.step",
+    "license": "not stated",
+    "rotate": [["x", 180]],
+    "colorMap": {
+      "ffffff": [0.72, 0.72, 0.74]
+    },
+    "note": "Pololu draws the ball white; it is steel on this version, so it renders steel grey"
+  },
+  "pololu-ball-caster-1-2in": {
+    "url": "https://www.pololu.com/file/0J1639/pololu-ball-caster-with-0-500in-ball.step",
+    "file": "cad/pololu-ball-caster-1-2in/c.step",
+    "license": "not stated",
+    "rotate": [["x", 180]],
+    "colorMap": {
+      "ffffff": [0.72, 0.72, 0.74]
+    },
+    "note": "Pololu draws the ball white; it is steel on this version, so it renders steel grey"
+  },
+  "pololu-ball-caster-3-4in": {
+    "url": "https://www.pololu.com/file/0J1641/pololu-ball-caster-with-0-750in-metal-ball.step",
+    "file": "cad/pololu-ball-caster-3-4in/c.step",
+    "license": "not stated",
+    "rotate": [["x", -90]],
+    "colorMap": {
+      "ffffff": [0.72, 0.72, 0.74]
+    },
+    "note": "Pololu draws the ball white; it is steel on this version, so it renders steel grey"
+  },
+  "mjbots-pi3hat": {
+    "url": "https://drive.google.com/file/d/1FflwmYfKgQfkY9o1WqC3gbkUczSci0PT/view",
+    "file": "cad/mjbots-pi3hat/pi3hat-r4_4-mechanical.step",
+    "license": "not stated (linked as Basic 3D Model from the mjbots pi3hat r4.5 product page)",
+    "rotate": [
+      ["x", 90],
+      ["z", 90]
+    ],
+    "note": "Basic mechanical model (board, holes, connector envelopes), r4.4; mjbots links it for the r4.5. The 40-pin GPIO socket under the board is not modeled."
+  },
+  "adafruit-as5600": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/6357%20AS5600%20Magnetic%20Sensor/6357%20AS5600%20Magnetic%20Sensor.step",
+    "file": "cad/adafruit-as5600/6357 AS5600 Magnetic Sensor.step",
+    "license": "MIT"
+  },
+  "adafruit-vl53l1x": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/3967%20VL5SL1X%20TOF%20Sensor/3967%20VL5SL1X%20TOF%20Sensor.step",
+    "file": "cad/adafruit-vl53l1x/3967 VL5SL1X TOF Sensor.step",
+    "license": "MIT"
+  },
+  "adafruit-ina228": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/5832%20INA228%20STEMMA%20QT/5832%20INA228%20STEMMA%20QT.step",
+    "file": "cad/adafruit-ina228/5832 INA228 STEMMA QT.step",
+    "license": "MIT"
+  },
+  "adafruit-lsm6dsox-lis3mdl": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/4517%20LSM6DSOX-LIS3MDL/4517%20LSM6DSOX-LIS3MDL.step",
+    "file": "cad/adafruit-lsm6dsox-lis3mdl/4517 LSM6DSOX-LIS3MDL.step",
+    "license": "MIT"
+  },
+  "adafruit-nau7802": {
+    "url": "https://github.com/adafruit/Adafruit_CAD_Parts/raw/main/4538%20NAU7802/4538%20NAU7802%20Rev%20C.step",
+    "file": "cad/adafruit-nau7802/4538 NAU7802 Rev C.step",
+    "license": "MIT"
+  },
+  "gobilda-rhino-wheel-96mm": {
+    "url": "https://www.gobilda.com/content/step_files/3614-0014-0096.zip",
+    "file": "cad/gobilda-rhino-wheel-96mm/3614-0014-0096.STEP",
+    "license": "not stated",
+    "rotate": [["y", 90]],
+    "defaultColor": [0.11, 0.11, 0.12],
+    "note": "STEP has no colors; the rubber tread and hub render black"
+  },
+  "gobilda-omni-wheel-96mm": {
+    "url": "https://www.gobilda.com/content/step_files/3624-0014-0096.zip",
+    "file": "cad/gobilda-omni-wheel-96mm/3624-0014-0096.step",
+    "license": "not stated",
+    "rotate": [["z", 90]]
+  },
+  "seeed-respeaker-mic-array-v2": {
+    "url": "https://files.seeedstudio.com/wiki/ReSpeaker_Mic_Array_V2/res/RESPEAKER%20MIC-3D%20v2.0.stp.zip",
+    "file": "cad/seeed-respeaker-mic-array-v2/respeaker-mic-array-v2.stp",
+    "license": "not stated"
+  },
+  "seeed-respeaker-xvf3800": {
+    "url": "https://files.seeedstudio.com/wiki/respeaker_xvf3800_usb/3d/respeaker_mic_array_xvf3800_1_with-xiao-0820.stp",
+    "file": "cad/seeed-respeaker-xvf3800/xvf3800-with-xiao.stp",
+    "license": "not stated",
+    "defaultColor": [0.09, 0.09, 0.1],
+    "hideMeshes": [
+      "pcb__1_",
+      "shield",
+      "u_fl-r-smt-1_10__v1",
+      "boss-extrude14_",
+      "boss-extrude7_",
+      "chamfer9",
+      "cut-extrude5",
+      "mirror2",
+      "k_x_f6rper",
+      "body"
+    ],
+    "triangleBudget": 80000,
+    "note": "Seeed publishes the board with a XIAO ESP32S3 soldered underneath; the XIAO (PCB__1_, SHIELD, U.FL, its USB-C and buttons) is hidden because the array ships without it. \"body\" also drops 3 tiny SMD bodies (under 3 mm). No colours in the file."
+  },
+  "seeed-respeaker-lite": {
+    "url": "https://files.seeedstudio.com/wiki/respeakerv3/ReSpeakerLitev1.1.step",
+    "file": "cad/seeed-respeaker-lite/ReSpeakerLitev1.1.step",
+    "license": "not stated"
+  },
+  "mpd-bh-18650-pc": {
+    "url": "https://www.memoryprotectiondevices.com/3D/download.php?pn=BH-18650-PC&id=1170",
+    "file": "cad/mpd-bh-18650-pc/BH-18650-PC.STEP",
+    "license": "not stated",
+    "rotate": [["x", 90]]
+  },
+  "mpd-bk-18650-pc4": {
+    "url": "https://www.memoryprotectiondevices.com/3D/download.php?pn=BK-18650-PC4&id=1435",
+    "file": "cad/mpd-bk-18650-pc4/BK-18650-PC4.STEP",
+    "license": "not stated",
+    "rotate": [["x", 90]]
+  },
+  "gobilda-gripforce-mecanum-104mm-right": {
+    "url": "https://www.gobilda.com/content/step_files/3625-0202-0104.zip",
+    "file": "cad/gobilda-gripforce-mecanum-wheel-104mm/3625-0001-0104.step",
+    "license": "not stated",
+    "rotate": [["z", 90]],
+    "note": "Right slant wheel of the 3625-0202-0104 set (rollers run lower-left to upper-right seen on the tread, matching page 2 of the spec sheet)"
+  },
+  "gobilda-gripforce-mecanum-104mm-left": {
+    "url": "https://www.gobilda.com/content/step_files/3625-0202-0104.zip",
+    "file": "cad/gobilda-gripforce-mecanum-wheel-104mm/3625-0100-0104.step",
+    "license": "not stated",
+    "rotate": [["z", 90]],
+    "note": "Left slant wheel of the 3625-0202-0104 set (rollers run upper-left to lower-right seen on the tread, matching page 1 of the spec sheet)"
+  },
+  "phidgets-3133": {
+    "url": "https://www.phidgets.com/productfiles/3133/3133_0/Images/3133_0_3D.zip",
+    "file": "cad/phidgets-3133/3133_0_3D.stp",
+    "license": "not stated",
+    "rotate": [["x", 90]],
+    "note": "Bare aluminium bar: the STEP has no strain gauges, potting or cable."
+  },
+  "progressive-automations-pa-14": {
+    "url": "https://7717445.fs1.hubspotusercontent-na1.net/hubfs/7717445/PA%203D%20Models%20V2/PA-14/PA-14-4.step",
+    "file": "cad/progressive-automations-pa-14/PA-14-4.step",
+    "license": "not stated",
+    "rotate": [["x", 90]],
+    "triangleBudget": 60000
+  },
+  "robotiq-ft-300-s": {
+    "url": "https://blog.robotiq.com/hubfs/support-files/FTS-300-S_support_20210305-Sep-06-2024-02-41-04-2138-PM.step",
+    "file": "cad/robotiq-ft-300-s/FTS-300-S_support_20210305.step",
+    "license": "not stated",
+    "rotate": [["x", 180]],
+    "keepBox": [
+      [-50, -90, -1],
+      [50, 50, 45]
+    ],
+    "defaultColor": [0.11, 0.11, 0.12],
+    "note": "Flipped so the robot coupling is down and the tool flange up. keepBox drops the 1 m cable and its M12 plug; the cable strain-relief spring stays. The STEP has no colors; the sensor is black anodized."
+  },
+  "seeed-recomputer-j4012": {
+    "url": "https://files.seeedstudio.com/wiki/reComputer-J4012/reComputer-J4012.stp",
+    "file": "cad/seeed-recomputer-j4012/reComputer-J4012.stp",
+    "license": "not stated",
+    "reader": "native",
+    "triangleBudget": 120000,
+    "colorMap": {
+      "3399ff": [0.1, 0.1, 0.11]
+    },
+    "note": "The STEP paints the case sides blue; the shipping case is black (J401x datasheet part list, product photos)."
+  },
+  "rev-90mm-grip-wheel": {
+    "url": "https://www.revrobotics.com/content/cad/REV-41-1267.STEP",
+    "file": "cad/rev-90mm-grip-wheel/REV-41-1267.STEP",
+    "license": "not stated",
+    "rotate": [["y", 90]],
+    "colorMap": {
+      "97a3da": [0.11, 0.11, 0.12]
+    },
+    "note": "STEP carries only the SolidWorks default color; hub and tread are black"
+  },
+  "rev-90mm-omni-wheel": {
+    "url": "https://revrobotics.com/content/cad/REV-41-1190.STEP",
+    "file": "cad/rev-90mm-omni-wheel/REV-41-1190.STEP",
+    "license": "not stated",
+    "rotate": [["y", 90]]
+  },
+  "waveshare-esp32-s3-touch-lcd-21": {
+    "url": "https://files.waveshare.com/wiki/ESP32-S3-Touch-LCD-2.1/ESP32-S3-Touch-LCD-2.1_structure.zip",
+    "file": "cad/waveshare-esp32-s3-touch-lcd-21/ESP32-S3-Touch-LCD-2_1_asm.stp",
+    "license": "not stated",
+    "rotate": [["x", 90]],
+    "colorMap": {
+      "868686": [0.06, 0.06, 0.07]
+    },
+    "note": "Touch panel cover glass is CAD grey 868686 (shared only with SOT-23 packages); mapped to black like the real panel."
   }
 }

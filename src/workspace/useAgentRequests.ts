@@ -1,29 +1,48 @@
+import { leadAgentName } from '../agent/agentKinds';
 import { useRef } from 'react';
 import type { AgentOp } from '../agent/agentScene';
 import { platformBridge } from '../utils/platformBridge';
+import { conflictText, type ActorIndex } from './agentActors';
+import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import { applyAgentOps } from './applyAgentOps';
 import { requestHandler, type RequestContext } from './agentRequestHandlers';
 import { runPoseTool, runSimTool, withSavedPose } from './agentRobotTools';
 import { runEngineeringNow } from './engineeringNow';
-import type { AgentRequestEvent } from './types';
-import type { AgentRun } from './useAgentRun';
+import type { AgentRequestEvent, Vec3 } from './types';
+import type { AgentCursors } from './useAgentCursors';
+import type { AgentLanes } from './useAgentLanes';
+import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 type Payload = Record<string, unknown>;
 
+type SetAction = (action: string) => void;
+
 interface AgentRequestOptions {
   core: WorkspaceCore;
-  run: AgentRun;
+  lanes: AgentLanes;
+  controls: LaneControls;
+  actors: ActorIndex;
+  cursors: AgentCursors;
   robots: RobotInsert;
 }
 
-export function useAgentRequests({ core, run, robots }: AgentRequestOptions) {
+interface Author {
+  laneId: string;
+  actor: string;
+  setAction: SetAction;
+  setCursor: (target: Vec3) => void;
+}
+
+const quiet: SetAction = () => {};
+
+export function useAgentRequests({ core, lanes, controls, actors, cursors, robots }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
 
-  const poseTool = (kind: string, payload: Payload) =>
+  const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
     runPoseTool(kind, payload, {
       parts: partsRef.current,
       project: projectRef.current,
@@ -33,11 +52,11 @@ export function useAgentRequests({ core, run, robots }: AgentRequestOptions) {
       addAnimation: posing.addAnimation,
       play: posing.play,
       selectedIds,
-      setAction: run.setAction,
+      setAction,
       importRobot: robots.importRobotFrom,
     });
 
-  const simTool = (kind: string, payload: Payload) =>
+  const simTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
     runSimTool(kind, payload, {
       sim: simTraining.sim,
       training: simTraining.training,
@@ -46,18 +65,33 @@ export function useAgentRequests({ core, run, robots }: AgentRequestOptions) {
       policies: projectRef.current.policies ?? [],
       viewport: viewportRef.current,
       restoreCanvas: () => viewportRef.current?.setPose(posing.deltas),
-      setAction: run.setAction,
+      setAction,
     });
 
-  const applyOps = (ops: AgentOp[]) => {
+  const laneBusy = (id: string) => lanes.isBusy(id);
+
+  const guard = (author: Author, partId: string) => {
+    const holder = actors.holderOf(partId, author.actor, laneBusy);
+
+    if (holder) return conflictText(partId, holder, actors);
+
+    actors.claim(partId, author.actor);
+
+    return null;
+  };
+
+  const applyOps = (ops: AgentOp[], author: Author) => {
     const result = queueRef.current.then(() =>
       applyAgentOps(ops, {
         current: () => partsRef.current,
         commitParts,
         viewport: () => viewportRef.current,
-        setCursor: run.setCursorTarget,
-        setAction: run.setAction,
-        isFollowing: run.isFollowing,
+        setCursor: author.setCursor,
+        setAction: author.setAction,
+        isFollowing: () => controls.isFollowing(author.laneId),
+        guard: (partId) => guard(author, partId),
+        touch: (partId) =>
+          controls.recordEdit(author.laneId, partId, partsRef.current.find((p) => p.id === partId) ?? null),
       }),
     );
 
@@ -69,18 +103,32 @@ export function useAgentRequests({ core, run, robots }: AgentRequestOptions) {
     return result;
   };
 
+  const authorOf = (event: AgentRequestEvent): Author => {
+    const laneId = event.workspaceId ? splitLaneKey(event.workspaceId).laneId : MAIN_LANE;
+    const actor = actors.actorOf(laneId, event.toolUseId);
+    const name = actors.nameOf(actor, leadAgentName(core.studio.acpStatus));
+
+    return {
+      laneId,
+      actor,
+      setAction: (action) => cursors.setAction(actor, name, action),
+      setCursor: (target) => cursors.setCursor(actor, name, target),
+    };
+  };
+
   const handleAgentRequest = async (event: AgentRequestEvent) => {
     const respond = (result?: unknown, error?: string) =>
       platformBridge.respondToAgent({ requestId: event.requestId, result, error });
+    const author = authorOf(event);
     const ctx: RequestContext = {
       parts: () => partsRef.current,
       project: () => projectRef.current,
       viewport: () => viewportRef.current,
       setProjectNow,
-      setAction: run.setAction,
-      setCursor: run.setCursorTarget,
-      poseTool,
-      simTool,
+      setAction: author.setAction,
+      setCursor: author.setCursor,
+      poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),
+      simTool: (kind, payload) => simTool(kind, payload, author.setAction),
       verify: () =>
         runEngineeringNow({
           viewport: viewportRef.current,
@@ -88,7 +136,7 @@ export function useAgentRequests({ core, run, robots }: AgentRequestOptions) {
           project: projectRef.current,
           withSweep: true,
         }),
-      applyOps,
+      applyOps: (ops) => applyOps(ops, author),
     };
 
     try {

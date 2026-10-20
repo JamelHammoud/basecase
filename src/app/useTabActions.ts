@@ -1,8 +1,8 @@
-import type { WorkspaceHandle } from '../SceneWorkspace';
-import type { SavedSceneRecord, SavedSceneSummary } from '../types/robotics';
+import type { WorkspaceHandle, WorkspaceSeed } from '../SceneWorkspace';
+import type { SavedSceneSummary } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import { newSceneId } from '../utils/sceneIds';
-import { loadSceneRecord } from '../utils/sceneRecords';
+import { loadSceneSeed } from './sceneSeeds';
 import {
   blankSeed,
   CLOSED_LIMIT,
@@ -12,7 +12,6 @@ import {
   newTabId,
   nextActiveAfterClose,
   omitKeys,
-  seedFromRecord,
   type ClosedTab,
   type Metas,
   type TabEntry,
@@ -24,9 +23,10 @@ interface RetireInput {
   list: TabEntry[];
   metas: Metas;
   handles: Map<string, WorkspaceHandle>;
+  discard: boolean;
 }
 
-function retireTabs({ closing, list, metas, handles }: RetireInput) {
+function retireTabs({ closing, list, metas, handles, discard }: RetireInput) {
   const remember: ClosedTab[] = [];
   let stoppedAgent = false;
 
@@ -41,7 +41,10 @@ function retireTabs({ closing, list, metas, handles }: RetireInput) {
 
     handle?.persistChat();
 
-    if (handle && !meta?.pristine) remember.push({ seed: handle.snapshot(), index: list.indexOf(tab) });
+    if (discard) handle?.discard();
+    else void handle?.flush();
+
+    if (handle && !meta?.pristine && !discard) remember.push({ seed: handle.snapshot(), index: list.indexOf(tab) });
 
     platformBridge.closeAcpWorkspace(tab.id);
   }
@@ -55,10 +58,9 @@ export function useTabActions(core: TabsCore) {
   const { latestRef, handles, setTabs, setActiveId, setMetas, setThumbs, setClosed } = core;
   const { selectTab, openTab, toastInFront } = core;
 
-  const openRecord = (record: SavedSceneRecord) => {
-    const seed = seedFromRecord(record);
+  const openSeed = (seed: WorkspaceSeed) => {
     const { tabs, metas, activeId } = latestRef.current;
-    const open = findSceneTab(tabs, metas, record.id);
+    const open = findSceneTab(tabs, metas, seed.sceneId);
 
     if (open) {
       selectTab(open.id);
@@ -67,12 +69,12 @@ export function useTabActions(core: TabsCore) {
     }
 
     if (metas[activeId]?.pristine) {
-      handles.current.get(activeId)?.load(seed, `Opened ${record.name}`);
+      handles.current.get(activeId)?.load(seed);
 
       return;
     }
 
-    if (openTab(seed)) window.setTimeout(() => toastInFront(`Opened ${record.name}`), 0);
+    openTab(seed);
   };
 
   const openScene = (summary: SavedSceneSummary) => {
@@ -85,7 +87,10 @@ export function useTabActions(core: TabsCore) {
       return;
     }
 
-    void loadSceneRecord(summary.id).then((record) => record && openRecord(record));
+    void loadSceneSeed(summary.id).then((seed) => {
+      if (seed) openSeed(seed);
+      else toastInFront(`Couldn’t open ${summary.name}`, { tone: 'error' });
+    });
   };
 
   const undoClose = (remember: ClosedTab[], replacement: TabEntry | null) => {
@@ -99,13 +104,13 @@ export function useTabActions(core: TabsCore) {
     platformBridge.closeAcpWorkspace(replacement.id);
   };
 
-  const closeTabs = (ids: string[]) => {
+  const closeTabs = (ids: string[], discard = false) => {
     const { tabs: list, metas, activeId } = latestRef.current;
     const closing = list.filter((t) => ids.includes(t.id));
 
     if (closing.length === 0) return;
 
-    const { remember, stoppedAgent } = retireTabs({ closing, list, metas, handles: handles.current });
+    const { remember, stoppedAgent } = retireTabs({ closing, list, metas, handles: handles.current, discard });
     const kept = list.filter((t) => !ids.includes(t.id));
     const replacement = kept.length === 0 ? { id: newTabId(), seed: blankSeed(metas, ids) } : null;
     const remaining = replacement ? [replacement] : kept;
@@ -143,7 +148,10 @@ export function useTabActions(core: TabsCore) {
 
     const at = latestRef.current.tabs.findIndex((t) => t.id === id) + 1;
 
-    openTab({ ...snap, sceneId: newSceneId(), sceneName: `${snap.sceneName} Copy`, chat: undefined }, at);
+    openTab(
+      { ...snap, sceneId: newSceneId(), sceneName: `${snap.sceneName} Copy`, chat: undefined, unsaved: true },
+      at,
+    );
   };
 
   const cycleTab = (step: number) => {
@@ -162,7 +170,7 @@ export function useTabActions(core: TabsCore) {
 
   const focusChat = (chatId: string, from: string) => {
     const { tabs, metas } = latestRef.current;
-    const owner = tabs.find((t) => t.id !== from && metas[t.id]?.chatId === chatId);
+    const owner = tabs.find((t) => t.id !== from && metas[t.id]?.chatIds.includes(chatId));
 
     if (!owner) return false;
 
@@ -178,7 +186,6 @@ export function useTabActions(core: TabsCore) {
   };
 
   return {
-    openRecord,
     openScene,
     closeTabs,
     closeTab,

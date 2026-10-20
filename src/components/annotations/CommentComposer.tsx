@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUpIcon } from '../../design-system';
 
 export const AutoTextarea: React.FC<{
   value: string;
@@ -90,7 +90,7 @@ export const CommentComposer: React.FC<{
         onClick={send}
         className="w-7 h-7 mb-0.5 rounded-full bg-[#0d99ff] text-white flex items-center justify-center shrink-0 cursor-default transition-[transform,background-color] active:scale-[0.92] disabled:bg-white/10 disabled:text-white/35"
       >
-        <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
+        <ArrowUpIcon className="w-4 h-4" strokeWidth={2.5} />
       </button>
     </div>
   );

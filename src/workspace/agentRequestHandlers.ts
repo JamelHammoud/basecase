@@ -1,4 +1,5 @@
 import type { PoseReply } from '../agent/agentPose';
+import { describeMarks } from '../agent/agentMarks';
 import { agentCatalog, partCode, snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -142,7 +143,11 @@ function setBuild(payload: Payload, ctx: RequestContext) {
 }
 
 const HANDLERS: Record<string, Handler> = {
-  snapshot: (_payload, ctx) => snapshotScene(ctx.parts()),
+  snapshot: (_payload, ctx) => {
+    const marks = describeMarks(ctx.project().marks, ctx.parts());
+
+    return { ...snapshotScene(ctx.parts()), ...(marks.length ? { marks } : {}) };
+  },
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),
   screenshot,

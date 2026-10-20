@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon } from './glyphs';
 import { IconButton } from './IconButton';
 import type { ImageViewerItem } from './ImageViewer';
 
@@ -14,7 +14,7 @@ export const ImageViewerNav: React.FC<ImageViewerNavProps> = ({ images, index, o
   <>
     <div className="absolute left-3 top-1/2 -translate-y-1/2 glass rounded-full p-1">
       <IconButton
-        icon={<ChevronLeft className="w-5 h-5" />}
+        icon={<ChevronLeftIcon className="w-5 h-5" />}
         title="Previous"
         shortcut="←"
         size="md"
@@ -25,7 +25,7 @@ export const ImageViewerNav: React.FC<ImageViewerNavProps> = ({ images, index, o
     </div>
     <div className="absolute right-3 top-1/2 -translate-y-1/2 glass rounded-full p-1">
       <IconButton
-        icon={<ChevronRight className="w-5 h-5" />}
+        icon={<ChevronRightIcon className="w-5 h-5" />}
         title="Next"
         shortcut="→"
         size="md"

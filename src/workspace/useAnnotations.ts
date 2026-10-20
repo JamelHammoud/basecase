@@ -9,6 +9,7 @@ interface AnnotationOptions {
   parts: ScenePart[];
   showToast: ShowToast;
   setSelectedIds: Setter<string[]>;
+  stopTools: () => void;
 }
 
 type AnnotationUpdate = (a: SceneAnnotation) => SceneAnnotation | null;
@@ -60,7 +61,7 @@ function useCommentEdits(setAnnotations: Setter<SceneAnnotation[]>) {
   return { updateAnnotation, reply, editComment, deleteComment };
 }
 
-export function useAnnotations({ initial, parts, showToast, setSelectedIds }: AnnotationOptions) {
+export function useAnnotations({ initial, parts, showToast, setSelectedIds, stopTools }: AnnotationOptions) {
   const [annotations, setAnnotations] = useState<SceneAnnotation[]>(initial);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState<AnnotationDraft | null>(null);
@@ -72,8 +73,14 @@ export function useAnnotations({ initial, parts, showToast, setSelectedIds }: An
 
     setCommentMode(next);
 
-    if (next) setSelectedIds([]);
-    else setDraft(null);
+    if (!next) {
+      setDraft(null);
+
+      return;
+    }
+
+    setSelectedIds([]);
+    stopTools();
   };
 
   const place = (position: Vec3, partId: string | null) => {

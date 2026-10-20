@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {
   BEARINGS,
-  HEAT_INSERT,
+  heatInsert,
   HEX_BOLT,
   HEX_NUT,
   HardwareSpec,
@@ -19,6 +19,10 @@ import {
 } from '../data/hardware';
 import { circleShape, hexRadius, holePath, lathe, polygonShape, prism, thread } from './hardwarePrimitives';
 import { AddPiece, cutRecess, recessCutter, recessDepth } from './hardwareRecess';
+import { BEARING_BUILDERS } from './bearingMesh';
+import { DRIVE_BUILDERS } from './driveMesh';
+import { FRAME_BUILDERS } from './frameMesh';
+import { MOTION_BUILDERS } from './motionHardwareMesh';
 
 export interface HardwareMaterials {
   main: THREE.Material;
@@ -32,7 +36,7 @@ export interface HardwarePiece {
   edges: boolean;
 }
 
-interface BuildContext {
+export interface BuildContext {
   spec: HardwareSpec;
   size: MetricSize;
   L: number;
@@ -166,8 +170,8 @@ function washer({ spec, size, add }: BuildContext) {
   add(prism(ring, w.h, 0));
 }
 
-function heatInsert({ size, add }: BuildContext) {
-  const { od, l } = HEAT_INSERT[size]!;
+function heatInsertMesh({ spec, size, add }: BuildContext) {
+  const { od, l } = heatInsert(spec);
   const ro = od / 2;
   const rk = ro - Math.max(0.2, od * 0.06);
   const ri = THREAD[size].d / 2;
@@ -252,11 +256,15 @@ const BUILDERS: Record<HardwareType, (ctx: BuildContext) => void> = {
   square_nut: squareNut,
   washer,
   large_washer: washer,
-  heat_insert: heatInsert,
+  heat_insert: heatInsertMesh,
   standoff_mf: standoff,
   standoff_ff: standoff,
   dowel_pin: dowelPin,
   bearing,
+  ...MOTION_BUILDERS,
+  ...BEARING_BUILDERS,
+  ...FRAME_BUILDERS,
+  ...DRIVE_BUILDERS,
 };
 
 export function buildHardwarePieces(spec: HardwareSpec, m: HardwareMaterials): HardwarePiece[] {

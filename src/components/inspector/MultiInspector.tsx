@@ -1,21 +1,26 @@
 import React from 'react';
-import {
-  ArrowDownToLine,
-  BookmarkPlus,
-  Copy,
-  Crosshair,
-  Group,
-  RotateCw,
-  SquaresIntersect,
-  SquaresSubtract,
-  SquaresUnite,
-  Trash2,
-  Ungroup,
-} from 'lucide-react';
 import type { ScenePart } from '../../types/robotics';
 import { AlignBar, StripButton, StripGroup } from '../AlignControls';
 import { selectionBounds, type Axis } from '../../utils/selection';
-import { ColorField, IconButton, NumberInput, Section, Select, useScrollFade } from '../../design-system';
+import {
+  ColorField,
+  IconButton,
+  NumberInput,
+  Section,
+  Select,
+  useScrollFade,
+  BookmarkAddIcon,
+  CopyIcon,
+  CrosshairIcon,
+  DeleteIcon,
+  FloorIcon,
+  GroupIcon,
+  IntersectIcon,
+  RotateRightIcon,
+  SubtractIcon,
+  UngroupIcon,
+  UnionIcon,
+} from '../../design-system';
 import { GroupName } from './GroupName';
 import { MATERIALS, type InspectorProps } from './types';
 
@@ -64,7 +69,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
         </div>
         {anyGrouped && (
           <IconButton
-            icon={<Ungroup className="w-3.5 h-3.5" />}
+            icon={<UngroupIcon className="w-3.5 h-3.5" />}
             title="Ungroup"
             shortcut="⇧⌘G"
             size="xs"
@@ -73,7 +78,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
         )}
         {!wholeGroup && (
           <IconButton
-            icon={<Group className="w-3.5 h-3.5" />}
+            icon={<GroupIcon className="w-3.5 h-3.5" />}
             title="Group"
             shortcut="⌘G"
             size="xs"
@@ -81,20 +86,20 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           />
         )}
         <IconButton
-          icon={<Copy className="w-3.5 h-3.5" />}
+          icon={<CopyIcon className="w-3.5 h-3.5" />}
           title="Duplicate"
           shortcut="⌘D"
           size="xs"
           onClick={onDuplicate}
         />
         <IconButton
-          icon={<BookmarkPlus className="w-3.5 h-3.5" />}
+          icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
           title="Save to Library"
           size="xs"
           onClick={onSaveAsModel}
         />
         <IconButton
-          icon={<Trash2 className="w-3.5 h-3.5" />}
+          icon={<DeleteIcon className="w-3.5 h-3.5" />}
           title="Delete"
           shortcut="⌫"
           size="xs"
@@ -129,14 +134,14 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
       actions={
         <>
           <IconButton
-            icon={<ArrowDownToLine className="w-3.5 h-3.5" />}
+            icon={<FloorIcon className="w-3.5 h-3.5" />}
             title="Drop to floor"
             shortcut="F"
             size="xs"
             onClick={onDropToFloor}
           />
           <IconButton
-            icon={<Crosshair className="w-3.5 h-3.5" />}
+            icon={<CrosshairIcon className="w-3.5 h-3.5" />}
             title="Center on origin"
             size="xs"
             onClick={() => onMoveSelection({ 0: 0, 2: 0 })}
@@ -161,7 +166,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
       <StripGroup>
         {(['X', 'Y', 'Z'] as const).map((axis, idx) => (
           <StripButton key={axis} title={`Rotate 90° around ${axis}`} onClick={() => onRotateSelection(idx as Axis)}>
-            <RotateCw className="w-3.5 h-3.5" />
+            <RotateRightIcon className="w-3.5 h-3.5" />
             <span className="tabular">
               {axis} <span className="text-white/45">90°</span>
             </span>
@@ -182,7 +187,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
       <Section title="Combine">
         <StripGroup>
           <StripButton title="Merge into one solid" onClick={() => onBoolean('union')}>
-            <SquaresUnite className="w-4 h-4" />
+            <UnionIcon className="w-4 h-4" />
             Union
           </StripButton>
           <StripButton
@@ -190,11 +195,11 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
             onClick={() => onBoolean('subtract')}
             className="hover:!bg-red-500/[0.16] hover:!text-red-200"
           >
-            <SquaresSubtract className="w-4 h-4" />
+            <SubtractIcon className="w-4 h-4" />
             Subtract
           </StripButton>
           <StripButton title="Keep only the shared volume" onClick={() => onBoolean('intersect')}>
-            <SquaresIntersect className="w-4 h-4" />
+            <IntersectIcon className="w-4 h-4" />
             Intersect
           </StripButton>
         </StripGroup>

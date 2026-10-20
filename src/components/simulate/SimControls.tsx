@@ -1,6 +1,13 @@
 import React from 'react';
-import { Pause, Play, RotateCcw, X } from 'lucide-react';
-import { Button, IconButton, SegmentedControl } from '../../design-system';
+import {
+  Button,
+  IconButton,
+  SegmentedControl,
+  CloseIcon,
+  PauseIcon,
+  RotateLeftIcon,
+  RunIcon,
+} from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import { fmtTime } from './format';
 
@@ -13,14 +20,14 @@ const SPEEDS = [
 const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
   <div className="flex items-center gap-1.5 h-9">
     <IconButton
-      icon={sim.playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+      icon={sim.playing ? <PauseIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
       title={sim.playing ? 'Pause' : 'Play'}
       size="sm"
       disabled={sim.status !== 'ready'}
       onClick={() => (sim.playing ? sim.pause() : sim.play())}
     />
     <IconButton
-      icon={<RotateCcw className="w-4 h-4" />}
+      icon={<RotateLeftIcon className="w-4 h-4" />}
       title="Reset"
       size="sm"
       disabled={sim.status !== 'ready'}
@@ -33,7 +40,7 @@ const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
       )}
     </div>
     <SegmentedControl size="sm" value={String(sim.speed)} onChange={(v) => sim.setSpeed(Number(v))} options={SPEEDS} />
-    <IconButton icon={<X className="w-4 h-4" />} title="End simulation" size="sm" onClick={sim.stop} />
+    <IconButton icon={<CloseIcon className="w-4 h-4" />} title="End simulation" size="sm" onClick={sim.stop} />
   </div>
 );
 
@@ -46,7 +53,7 @@ export const SimControls: React.FC<{ sim: Simulation; on: boolean }> = ({ sim, o
         variant="primary"
         size="md"
         fullWidth
-        icon={<Play className="w-4 h-4" />}
+        icon={<RunIcon className="w-4 h-4" />}
         onClick={() => void sim.start()}
       >
         Simulate

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Maximize, Minus, Plus, X } from 'lucide-react';
+import { CloseIcon, FitIcon, MinusIcon, PlusIcon } from './glyphs';
 import { IconButton } from './IconButton';
 import { IslandDivider } from './FloatingIsland';
 
@@ -21,7 +21,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
   <div className="absolute top-3 left-3 right-3 flex items-start justify-end gap-3 pointer-events-none">
     <div className="glass rounded-[16px] h-10 px-1 flex items-center gap-0.5 pointer-events-auto">
       <IconButton
-        icon={<Minus className="w-4 h-4" />}
+        icon={<MinusIcon className="w-4 h-4" />}
         title="Zoom out"
         shortcut="−"
         size="sm"
@@ -37,7 +37,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
         {percent}%
       </button>
       <IconButton
-        icon={<Plus className="w-4 h-4" />}
+        icon={<PlusIcon className="w-4 h-4" />}
         title="Zoom in"
         shortcut="+"
         size="sm"
@@ -45,7 +45,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
         onClick={onZoomIn}
       />
       <IconButton
-        icon={<Maximize className="w-4 h-4" />}
+        icon={<FitIcon className="w-4 h-4" />}
         title="Zoom to fit"
         shortcut="0"
         size="sm"
@@ -54,7 +54,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
       />
       <IslandDivider />
       <IconButton
-        icon={<X className="w-4 h-4" />}
+        icon={<CloseIcon className="w-4 h-4" />}
         title="Close"
         shortcut="Esc"
         size="sm"

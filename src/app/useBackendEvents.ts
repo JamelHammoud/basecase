@@ -1,22 +1,22 @@
 import { useEffect, useEffectEvent, type Dispatch, type SetStateAction } from 'react';
 import type { AcpStatusInfo, CustomModelDefinition, SavedSceneSummary } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { sceneStore } from '../utils/sceneStore';
 
 type BackendEvent = Record<string, unknown>;
 
 export interface BackendEventTargets {
   setAcpStatus: Dispatch<SetStateAction<AcpStatusInfo>>;
   setCustomModels: Dispatch<SetStateAction<CustomModelDefinition[]>>;
-  setSavedScenes: Dispatch<SetStateAction<SavedSceneSummary[]>>;
   routeToScene: (event: BackendEvent) => void;
 }
 
-function appEventHandlers({ setAcpStatus, setCustomModels, setSavedScenes }: BackendEventTargets) {
+function appEventHandlers({ setAcpStatus, setCustomModels }: BackendEventTargets) {
   const applyModels = (event: BackendEvent) => {
     if (Array.isArray(event.models)) setCustomModels(event.models as CustomModelDefinition[]);
   };
   const applyScenes = (event: BackendEvent) => {
-    if (Array.isArray(event.scenes)) setSavedScenes(event.scenes as SavedSceneSummary[]);
+    if (Array.isArray(event.scenes)) sceneStore.set(event.scenes as SavedSceneSummary[]);
   };
 
   return new Map<unknown, (event: BackendEvent) => void>([

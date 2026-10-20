@@ -26,7 +26,7 @@ import {
   setStatus,
   updateParts,
 } from './cad-mcp/sceneTools.mjs';
-import { NO_WEB } from './cad-mcp/shared.mjs';
+import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
 import { warmUp } from './cad-kernel/client.mjs';
 
@@ -67,7 +67,9 @@ const TOOLS = [
 
 const server = new McpServer({ name: 'robotics_cad', version: '3.0.0' }, { instructions: CAD_AGENT_INSTRUCTIONS });
 
-for (const tool of TOOLS.filter((t) => !(NO_WEB && t.web))) server.registerTool(tool.name, tool.config, tool.handler);
+for (const tool of TOOLS.filter((t) => !(NO_WEB && t.web))) {
+  server.registerTool(tool.name, tool.config, (args, extra) => withToolCall(extra, () => tool.handler(args, extra)));
+}
 
 await server.connect(new StdioServerTransport());
 warmUp();

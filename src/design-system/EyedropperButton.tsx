@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pipette } from 'lucide-react';
+import { EyedropperIcon } from './glyphs';
 import { IconButton } from './IconButton';
 import { normalizeHex } from './colorMath';
 
@@ -7,7 +7,7 @@ type EyeDropperWindow = { EyeDropper: new () => { open: () => Promise<{ sRGBHex:
 
 export const EyedropperButton: React.FC<{ onPick: (hex: string) => void }> = ({ onPick }) => (
   <IconButton
-    icon={<Pipette className="w-4 h-4" />}
+    icon={<EyedropperIcon className="w-4 h-4" />}
     title="Pick color from screen"
     tooltipSide="top"
     onClick={async () => {

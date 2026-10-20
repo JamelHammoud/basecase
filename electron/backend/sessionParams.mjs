@@ -1,9 +1,8 @@
 import path from 'node:path';
-import { CAD_AGENT_INSTRUCTIONS } from '../cad-agent-prompt.mjs';
+import { cadInstructions, codexMeta } from './agentProfiles.mjs';
 import { resolveCommand } from './agentProcess.mjs';
 import { safeWorkspace } from './constants.mjs';
-
-const OFFLINE_NOTE = "Web tools are off in this session: design from the user's references and your own knowledge.";
+import { cadSubagents } from './subagents.mjs';
 
 function cadMcpServer({ workspaceRoot, bridgeUrl, evidenceDir, referencesDir, offline }, workspaceId) {
   const [nodeCmd] = resolveCommand('node');
@@ -26,25 +25,29 @@ function claudeCodeMeta(offline) {
 
   return {
     systemPrompt: {
-      append: offline ? `${CAD_AGENT_INSTRUCTIONS}\n\n${OFFLINE_NOTE}` : CAD_AGENT_INSTRUCTIONS,
+      append: cadInstructions(offline),
     },
     claudeCode: {
       options: {
-        tools: ['TodoWrite', ...web],
+        tools: ['TodoWrite', 'Agent', ...web],
         thinking: { type: 'adaptive', display: 'summarized' },
-        allowedTools: ['mcp__robotics_cad', 'TodoWrite', ...web],
+        allowedTools: ['mcp__robotics_cad', 'TodoWrite', 'Agent', ...web],
+        agents: cadSubagents(),
       },
     },
   };
 }
 
+const SESSION_META = { claude: claudeCodeMeta, codex: codexMeta };
+
 export function buildSessionParams(context, workspaceId) {
   const params = {
-    cwd: context.workspaceRoot,
+    cwd: context.cwd ?? context.workspaceRoot,
     mcpServers: context.bridgeUrl ? [cadMcpServer(context, workspaceId)] : [],
   };
+  const meta = SESSION_META[context.kind]?.(context.offline);
 
-  if (context.isClaude) params._meta = claudeCodeMeta(context.offline);
+  if (meta) params._meta = meta;
 
   return params;
 }

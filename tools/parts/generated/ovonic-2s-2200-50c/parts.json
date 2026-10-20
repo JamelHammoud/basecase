@@ -1,0 +1,37 @@
+[
+ {
+  "id": "ovonic-2s-2200-pack",
+  "name": "Ovonic 2S 2200 mAh 50C Pack Body",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   9,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 87,
+   "height": 18,
+   "depth": 33
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Ovonic O-50C-2200-2S1P-XT60+TRX pack body (shrink-wrapped soft pack).\n// Origin: bottom face centre. Long axis X, lead end at +X, label face up (+Z).\nL = 87;   // length, mm (official, ±5)\nW = 33;   // width, mm (official, ±2)\nH = 18;   // height, mm (official, ±2)\nr_long = 3;  // long-edge radius: NOT published, conservative estimate\ncuboid([L, W, H], rounding = r_long, edges = \"X\", anchor = BOT, $fn = 32);",
+   "originOffset": [
+    0,
+    9,
+    0
+   ],
+   "baseSize": [
+    87,
+    18,
+    33
+   ]
+  }
+ }
+]

@@ -1,12 +1,19 @@
+import { leadAgentName } from '../agent/agentKinds';
+import { useEffect, useRef, useState } from 'react';
 import type { CustomModelDefinition } from '../types/robotics';
 import { analyzeImageFor3D } from '../utils/imageTo3DAnalyzer';
 import { readImageFile } from '../utils/imageFile';
 import { platformBridge } from '../utils/platformBridge';
 import { applySessionUpdate, isTranscriptUpdate, type SessionUpdate } from './acpTranscript';
+import { ActorIndex } from './agentActors';
+import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import type { AgentRequestEvent, WorkspaceSeed } from './types';
-import { useAgentChat } from './useAgentChat';
+import { lanePersister, useAgentChat } from './useAgentChat';
+import { useAgentCursors } from './useAgentCursors';
+import { useAgentLanes } from './useAgentLanes';
 import { useAgentRequests } from './useAgentRequests';
 import { useAgentRun } from './useAgentRun';
+import { useLaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -22,36 +29,72 @@ interface AgentSessionOptions {
   placeCustomModel: (model: CustomModelDefinition) => void;
 }
 
+function useAlive() {
+  const aliveRef = useRef(true);
+
+  useEffect(() => {
+    aliveRef.current = true;
+
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
+  return () => aliveRef.current;
+}
+
+const laneOfEvent = (event: WorkspaceEvent) =>
+  typeof event.workspaceId === 'string' ? splitLaneKey(event.workspaceId).laneId : MAIN_LANE;
+
 export function useAgentSession({ core, seed, active, robots, placeCustomModel }: AgentSessionOptions) {
   const { workspaceId, studio, showToast } = core;
-  const chat = useAgentChat({ workspaceId, seed, studio });
-  const run = useAgentRun({ core, chat, active, placeCustomModel });
-  const requests = useAgentRequests({ core, run, robots });
-  const { setMessages, setAcpSessionId } = chat;
-  const { setStatus } = run;
+  const [actors] = useState(() => new ActorIndex());
+  const alive = useAlive();
+  const lanes = useAgentLanes(workspaceId, seed);
+  const cursors = useAgentCursors();
+  const run = useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel });
+  const persistLane = lanePersister(lanes, studio.setChatList);
+  const controls = useLaneControls({ core, lanes, active, alive, persistLane });
+  const chat = useAgentChat({ core, lanes, stop: controls.stop, persistLane });
+  const requests = useAgentRequests({ core, lanes, controls, actors, cursors, robots });
   const { handleAgentRequest } = requests;
   const { setUploadedImages } = studio;
+  const { current } = lanes;
 
-  const onSessionUpdate = (update: SessionUpdate) => {
+  const onSessionUpdate = (laneId: string, update: SessionUpdate) => {
+    const finished = actors.note(laneId, update);
+
+    if (finished) cursors.clearActor(finished);
+
     if (!isTranscriptUpdate(update)) return;
 
     const now = new Date();
 
-    setMessages((prev) => applySessionUpdate(prev, update, now));
+    lanes.setMessages(laneId, (prev) => applySessionUpdate(prev, update, now));
   };
 
-  const eventHandlers: Record<string, (event: WorkspaceEvent) => void> = {
+  const onStatus = (laneId: string, event: WorkspaceEvent) => {
+    const status = String(event.status || '');
+    const actor = actors.actorOf(laneId, typeof event.toolUseId === 'string' ? event.toolUseId : undefined);
+
+    if (actor === laneId) lanes.updateLane(laneId, (l) => ({ ...l, status }));
+    else cursors.setAction(actor, actors.nameOf(actor, leadAgentName(studio.acpStatus)), status);
+  };
+
+  const eventHandlers: Record<string, (event: WorkspaceEvent, laneId: string) => void> = {
     'agent-request': (event) => {
       if (typeof event.requestId === 'string') void handleAgentRequest(event as unknown as AgentRequestEvent);
     },
-    'agent-status': (event) => setStatus(String(event.status || '')),
+    'agent-status': (event, laneId) => onStatus(laneId, event),
     'agent-blocked': (event) =>
       showToast(`Blocked “${String(event.title)}”: the agent only edits the model`, { tone: 'neutral' }),
-    'acp-session': (event) => {
-      if (typeof event.sessionId === 'string') setAcpSessionId(event.sessionId);
+    'acp-session': (event, laneId) => {
+      const sessionId = event.sessionId;
+
+      if (typeof sessionId === 'string') lanes.updateLane(laneId, (l) => ({ ...l, acpSessionId: sessionId }));
     },
-    'acp-session-update': (event) => {
-      if (event.update) onSessionUpdate(event.update as SessionUpdate);
+    'acp-session-update': (event, laneId) => {
+      if (event.update) onSessionUpdate(laneId, event.update as SessionUpdate);
     },
   };
 
@@ -68,17 +111,25 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
   const onEvent = (event: WorkspaceEvent) => {
     const type = String(event.type);
 
-    if (Object.hasOwn(eventHandlers, type)) eventHandlers[type](event);
+    if (Object.hasOwn(eventHandlers, type)) eventHandlers[type](event, laneOfEvent(event));
   };
 
+  const working = lanes.lanes.find((l) => l.busy);
+  const lead = working && cursors.cursors.find((c) => c.actor === working.id);
+
   return {
+    lanes,
+    current,
     chat,
-    run,
+    controls,
+    cursors: cursors.cursors,
     requests,
+    send: run.send,
     onEvent,
     uploadImage,
-    acpStatus: { ...studio.acpStatus, sessionId: chat.acpSessionId },
-    activity: run.isBusy ? run.action || run.status || 'Working' : '',
+    busy: !!working,
+    acpStatus: { ...studio.acpStatus, sessionId: current.acpSessionId },
+    activity: working ? lead?.action || working.status || 'Working' : '',
   };
 }
 

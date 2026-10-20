@@ -1,6 +1,5 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
-import { IconButton, Section } from '../../design-system';
+import { IconButton, Section, DeleteIcon } from '../../design-system';
 import type { PolicyRecord } from '../../types/robotics';
 import { fmtSteps } from './format';
 
@@ -26,7 +25,7 @@ export const PoliciesSection: React.FC<{
         </button>
         <span className="text-[12px] text-white/40 tabular shrink-0">{fmtSteps(p.trainedSteps)} steps</span>
         <IconButton
-          icon={<Trash2 className="w-4 h-4" />}
+          icon={<DeleteIcon className="w-4 h-4" />}
           title="Delete policy"
           size="xs"
           variant="ghost"

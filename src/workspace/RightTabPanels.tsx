@@ -1,5 +1,7 @@
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
+import { PartLinksProvider } from '../components/agent/PartLinksProvider';
+import { canRevertLane } from './agentLanes';
 import { BuildPanel } from '../components/BuildPanel';
 import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
@@ -40,7 +42,7 @@ function useVisitedTabs(tab: RightTab) {
 }
 
 function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
-  const { docs, parts, project, scene, viewportRef, setSelectedIds, showToast } = core;
+  const { docs, parts, project, scene, viewportRef, setSelectedIds, showToast, guide } = core;
   const { partsRef, projectRef, setProject } = docs;
 
   return (
@@ -61,30 +63,37 @@ function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
       }
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={(m) => showToast(m)}
+      guide={guide}
     />
   );
 }
 
 function AgentTab({ core, agent }: Omit<RightTabPanelsProps, 'actions'>) {
-  const { studio, tool, parts } = core;
-  const { chat, run } = agent;
+  const { studio, tool, parts, setSelectedIds } = core;
+  const { chat, controls, current } = agent;
 
   return (
-    <AcpStudioPanel
-      acpStatus={agent.acpStatus}
-      messages={chat.messages}
-      isBusy={run.isBusy}
-      status={run.status}
-      canRevert={!!chat.runBase && chat.runBase !== parts}
-      attachRequest={tool.attachRequest}
-      targetHeightMm={studio.agentTargetHeightMm}
-      onReconnectAcp={studio.reconnectAcp}
-      onUploadImage={agent.uploadImage}
-      onSend={run.send}
-      onStop={run.stop}
-      onNewChat={chat.newChat}
-      onRevert={run.revert}
-    />
+    <PartLinksProvider parts={parts} onSelect={setSelectedIds}>
+      <AcpStudioPanel
+        acpStatus={agent.acpStatus}
+        messages={current.messages}
+        isBusy={current.busy}
+        status={current.status}
+        canRevert={canRevertLane(current)}
+        attachRequest={tool.attachRequest}
+        targetHeightMm={studio.agentTargetHeightMm}
+        choice={studio.agentChoice}
+        onChoiceChange={studio.setAgentChoice}
+        onReconnectAcp={studio.reconnectAcp}
+        onSignIn={studio.signInAcp}
+        onSaveApiKey={studio.saveAgentApiKey}
+        onUploadImage={agent.uploadImage}
+        onSend={agent.send}
+        onStop={() => controls.stop()}
+        onNewChat={chat.newChat}
+        onRevert={controls.revert}
+      />
+    </PartLinksProvider>
   );
 }
 

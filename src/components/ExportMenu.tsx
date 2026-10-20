@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ClipboardCopy, Download, ImageDown } from 'lucide-react';
-import { Button, MenuDivider, MenuItem, PopoverMenu } from '../design-system';
+import { Button, MenuDivider, MenuItem, PopoverMenu, ClipboardIcon, DownloadIcon, PhotoIcon } from '../design-system';
 
 interface ExportMenuProps {
   canExportStl: boolean;
@@ -30,16 +29,16 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({ canExportStl, onExportIm
         align="end"
         className="w-56"
       >
-        <MenuItem icon={<ImageDown className="w-4 h-4" />} label="PNG Image" onSelect={run(onExportImage)} />
+        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="PNG Image" onSelect={run(onExportImage)} />
         <MenuItem
-          icon={<Download className="w-4 h-4" />}
+          icon={<DownloadIcon className="w-4 h-4" />}
           label="STL Mesh"
           disabled={!canExportStl}
           onSelect={run(onExportStl)}
         />
         <MenuDivider />
         <MenuItem
-          icon={<ClipboardCopy className="w-4 h-4" />}
+          icon={<ClipboardIcon className="w-4 h-4" />}
           label="Copy as Markdown"
           onSelect={run(onCopyMarkdown)}
         />

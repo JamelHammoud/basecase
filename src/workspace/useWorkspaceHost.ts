@@ -1,8 +1,10 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react';
 import { downscaleDataUrl } from '../utils/imageFile';
 import { useLatestRef } from '../utils/useLatestRef';
+import type { SceneDraft } from './sceneDraft';
 import type { WorkspaceHandle, WorkspaceMeta, WorkspaceSeed } from './types';
 import type { AgentSession } from './useAgentSession';
+import { useAutosave, type Autosave } from './useAutosave';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 interface HostOptions {
@@ -14,7 +16,13 @@ interface HostOptions {
 
 const THUMBNAIL_SIDE = 560;
 
-function useRegisterHandle({ core, agent }: Pick<HostOptions, 'core' | 'agent'>) {
+interface HandleOptions {
+  core: WorkspaceCore;
+  agent: AgentSession;
+  autosave: Autosave;
+}
+
+function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
   const { workspaceId, studio, scene, docs, annotations, viewportRef, showToast, loadSeed } = core;
   const { setSceneName } = scene;
   const hostRef = useLatestRef({
@@ -28,9 +36,14 @@ function useRegisterHandle({ core, agent }: Pick<HostOptions, 'core' | 'agent'>)
       project: docs.projectRef.current,
       chat: agent.chat.chatSnapshot(),
     }),
-    load: loadSeed,
-    persist: agent.chat.persist,
-    stop: agent.run.stop,
+    load: (next: WorkspaceSeed, toast?: string) => {
+      loadSeed(next, toast);
+      agent.chat.restore(next.chat);
+    },
+    persist: agent.chat.persistAll,
+    flush: autosave.flush,
+    discard: autosave.discard,
+    stop: agent.controls.stopAll,
     toast: showToast,
   });
   const register = useEffectEvent((id: string, handle: WorkspaceHandle | null) => studio.register(id, handle));
@@ -48,6 +61,8 @@ function useRegisterHandle({ core, agent }: Pick<HostOptions, 'core' | 'agent'>)
       rename: (name) => setSceneName(name),
       toast: (message, opts) => hostRef.current.toast(message, opts),
       persistChat: () => hostRef.current.persist(),
+      flush: () => hostRef.current.flush(),
+      discard: () => hostRef.current.discard(),
       stopAgent: () => hostRef.current.stop(),
     };
 
@@ -57,26 +72,34 @@ function useRegisterHandle({ core, agent }: Pick<HostOptions, 'core' | 'agent'>)
   }, [workspaceId, hostRef, viewportRef, setSceneName]);
 }
 
-function useReportMeta({ seed, core, agent }: Pick<HostOptions, 'seed' | 'core' | 'agent'>) {
-  const { workspaceId, studio, scene, parts, annotations } = core;
-  const { sceneId, sceneName, globalGoal, initial } = scene;
-  const { chatId, messages } = agent.chat;
-  const busy = agent.run.isBusy;
-  const { activity } = agent;
-  const partCount = parts.length;
-  const pristine =
+function isPristine({ seed, core, agent }: Pick<HostOptions, 'seed' | 'core' | 'agent'>) {
+  const { sceneId, sceneName, globalGoal, initial } = core.scene;
+
+  return (
     (!seed || !!seed.blank) &&
     sceneId === initial.sceneId &&
     sceneName === initial.sceneName &&
-    partCount === 0 &&
-    annotations.annotations.length === 0 &&
-    messages.length === 0 &&
-    !globalGoal;
+    core.parts.length === 0 &&
+    core.annotations.annotations.length === 0 &&
+    agent.lanes.lanes.every((l) => l.messages.length === 0) &&
+    !globalGoal
+  );
+}
+
+function useReportMeta({ core, agent, pristine }: Pick<HostOptions, 'core' | 'agent'> & { pristine: boolean }) {
+  const { workspaceId, studio, scene, parts } = core;
+  const { sceneId, sceneName } = scene;
+  const { chatId } = agent.current;
+  const chatKey = agent.chat.chatIds.join(' ');
+  const { busy, activity } = agent;
+  const partCount = parts.length;
   const report = useEffectEvent((id: string, meta: WorkspaceMeta) => studio.reportMeta(id, meta));
 
   useEffect(() => {
-    report(workspaceId, { sceneId, name: sceneName, partCount, busy, activity, chatId, pristine });
-  }, [workspaceId, sceneId, sceneName, partCount, busy, activity, chatId, pristine]);
+    const chatIds = chatKey ? chatKey.split(' ') : [];
+
+    report(workspaceId, { sceneId, name: sceneName, partCount, busy, activity, chatId, chatIds, pristine });
+  }, [workspaceId, sceneId, sceneName, partCount, busy, activity, chatId, chatKey, pristine]);
 }
 
 function useRightIslandWidth(active: boolean, core: WorkspaceCore) {
@@ -104,8 +127,21 @@ function useRightIslandWidth(active: boolean, core: WorkspaceCore) {
 }
 
 export function useWorkspaceHost({ active, seed, core, agent }: HostOptions) {
-  useRegisterHandle({ core, agent });
-  useReportMeta({ seed, core, agent });
+  const pristine = isPristine({ seed, core, agent });
+  const { sceneId, sceneName, globalGoal } = core.scene;
+  const draft: SceneDraft = {
+    sceneId,
+    sceneName,
+    globalGoal,
+    parts: core.parts,
+    annotations: core.annotations.annotations,
+    project: core.project,
+    chatId: agent.current.chatId,
+  };
+  const autosave = useAutosave({ draft, active, pristine, unsaved: !!seed?.unsaved });
+
+  useRegisterHandle({ core, agent, autosave });
+  useReportMeta({ core, agent, pristine });
 
   return useRightIslandWidth(active, core);
 }

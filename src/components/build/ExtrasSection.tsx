@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Plus, X } from 'lucide-react';
-import { IconButton, MenuItem, MenuLabel, NumberInput, PopoverMenu, Section } from '../../design-system';
+import { IconButton, MenuItem, MenuLabel, NumberInput, PopoverMenu, Section, CloseIcon, PlusIcon } from '../../design-system';
 import { SUPPLIES, SUPPLY_BY_ID, type SupplyGroup } from '../../data/supplies';
 import type { ProjectSettings } from '../../types/robotics';
 
@@ -31,9 +30,12 @@ const AddSupplyMenu: React.FC<{ onAdd: (key: string) => void }> = ({ onAdd }) =>
   return (
     <div className="relative" ref={ref}>
       <IconButton
-        icon={<Plus className="w-4 h-4" />}
+        icon={<PlusIcon className="w-4 h-4" />}
         title="Add supply"
         size="xs"
+        isToggled={menu}
+        aria-haspopup="menu"
+        aria-expanded={menu}
         onClick={() => setMenu((v) => !v)}
       />
       <PopoverMenu
@@ -78,7 +80,7 @@ const ExtraRow: React.FC<{ extra: Extra; onQty: (qty: number) => void; onRemove:
         onChange={(v, live) => !live && onQty(Math.max(1, Math.round(v)))}
       />
     </div>
-    <IconButton icon={<X className="w-3.5 h-3.5" />} title="Remove" size="xs" onClick={onRemove} />
+    <IconButton icon={<CloseIcon className="w-3.5 h-3.5" />} title="Remove" size="xs" onClick={onRemove} />
   </div>
 );
 

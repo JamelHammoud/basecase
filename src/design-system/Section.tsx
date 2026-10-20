@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon } from './glyphs';
 import { IconButton } from './IconButton';
 
 export interface SectionProps {
@@ -56,7 +56,7 @@ export const Section: React.FC<SectionProps> = ({
             {collapsible && (
               <IconButton
                 icon={
-                  <ChevronDown
+                  <ChevronDownIcon
                     className={`w-3.5 h-3.5 transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${isOpen ? 'rotate-180' : ''}`}
                   />
                 }

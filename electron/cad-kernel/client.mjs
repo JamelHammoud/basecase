@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
-const POOL_SIZE = Math.max(1, Math.min(3, os.cpus().length - 1));
+const POOL_SIZE = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
 
 let sandboxed = true;
 let nextId = 1;

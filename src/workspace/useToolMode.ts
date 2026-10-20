@@ -16,10 +16,14 @@ const DEFAULT_SCULPT: SculptSettings = {
 interface ToolModeOptions {
   setIsRightOpen: Setter<boolean>;
   annotations: Pick<Annotations, 'setCommentMode' | 'setDraft'>;
+  measure: { measuring: boolean; setMeasuring: (on: boolean) => void };
+  mark: { marking: boolean; setMarking: (on: boolean) => void };
 }
 
-export function useToolMode({ setIsRightOpen, annotations }: ToolModeOptions) {
+export function useToolMode({ setIsRightOpen, annotations, measure, mark }: ToolModeOptions) {
   const { setCommentMode, setDraft } = annotations;
+  const { measuring, setMeasuring } = measure;
+  const { marking, setMarking } = mark;
   const [transformMode, setTransformMode] = useState<TransformMode>('translate');
   const [leftTab, setLeftTab] = useState<LeftTab>('parts');
   const [rightTab, setRightTab] = useState<RightTab>('inspector');
@@ -31,6 +35,8 @@ export function useToolMode({ setIsRightOpen, annotations }: ToolModeOptions) {
     setTransformMode(mode);
     setCommentMode(false);
     setDraft(null);
+    setMeasuring(false);
+    setMarking(false);
 
     if (mode === 'pose') {
       setIsRightOpen(true);
@@ -42,6 +48,32 @@ export function useToolMode({ setIsRightOpen, annotations }: ToolModeOptions) {
     setIsRightOpen(true);
     setRightTab('inspector');
     setCreator(null);
+  };
+
+  const toggleMeasure = (on?: boolean) => {
+    const next = on ?? !measuring;
+
+    setMeasuring(next);
+
+    if (!next) return;
+
+    setCommentMode(false);
+    setDraft(null);
+    setMarking(false);
+    setTransformMode((m) => (m === 'sculpt' ? 'translate' : m));
+  };
+
+  const toggleMarking = (on?: boolean) => {
+    const next = on ?? !marking;
+
+    setMarking(next);
+
+    if (!next) return;
+
+    setCommentMode(false);
+    setDraft(null);
+    setMeasuring(false);
+    setTransformMode((m) => (m === 'sculpt' ? 'translate' : m));
   };
 
   const openCreator = (mode: CreatorMode) => {
@@ -66,6 +98,10 @@ export function useToolMode({ setIsRightOpen, annotations }: ToolModeOptions) {
     transformMode,
     setTransformMode,
     setMode,
+    measuring,
+    toggleMeasure,
+    marking,
+    toggleMarking,
     leftTab,
     setLeftTab,
     rightTab,

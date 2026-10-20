@@ -1,12 +1,10 @@
 import * as THREE from 'three';
 import {
-  BEARINGS,
-  HEAT_INSERT,
+  heatInsert,
   HEX_BOLT,
   HEX_NUT,
   HOLES,
   HardwareSpec,
-  HardwareType,
   LARGE_WASHER,
   LOCK_NUT,
   SQUARE_NUT,
@@ -17,6 +15,8 @@ import {
   hexCorners,
   isMetric,
   MetricSize,
+  MetricType,
+  motionOf,
   screwHead,
 } from '../data/hardware';
 import { PartKind, ScenePart } from '../types/robotics';
@@ -110,7 +110,7 @@ const washerCutouts = ({ spec, size, bottom, top }: CutoutContext) => {
   return [cyl(`${size} Washer Recess`, w.d2 + 0.6, bottom - 0.01, top + 0.2)];
 };
 
-const METRIC_CUTOUTS: Record<Exclude<HardwareType, 'bearing' | 'dowel_pin'>, (c: CutoutContext) => LocalCutout[]> = {
+const METRIC_CUTOUTS: Record<MetricType, (c: CutoutContext) => LocalCutout[]> = {
   socket_head: headedCutouts,
   button_head: headedCutouts,
   pan_head: headedCutouts,
@@ -125,8 +125,8 @@ const METRIC_CUTOUTS: Record<Exclude<HardwareType, 'bearing' | 'dowel_pin'>, (c:
   square_nut: squareNutCutouts,
   washer: washerCutouts,
   large_washer: washerCutouts,
-  heat_insert: ({ size, top }) => {
-    const ins = HEAT_INSERT[size]!;
+  heat_insert: ({ spec, size, top }) => {
+    const ins = heatInsert(spec);
 
     return [cyl(`${size} Insert Hole`, ins.hole + FIT, top - ins.l - 1, top + 0.01)];
   },
@@ -141,21 +141,15 @@ function localCutouts(spec: HardwareSpec): LocalCutout[] {
   const bottom = -H / 2;
   const top = H / 2;
 
-  if (spec.type === 'bearing') {
-    const b = BEARINGS[spec.size];
+  const seat = motionOf(spec.type)?.seat?.(spec);
 
-    return [cyl(`${spec.size} Bearing Seat`, b.D + 0.1, bottom - 0.1, top + 0.1)];
-  }
-
-  if (spec.type === 'dowel_pin') {
-    return [cyl(`Ø${spec.size} Pin Hole`, Number(spec.size) + 0.1, bottom - 0.2, top + 0.2)];
-  }
+  if (seat) return [cyl(seat.name, seat.diameter, bottom - 0.2, top + 0.2)];
 
   if (!isMetric(spec.size)) return [];
 
   const size = spec.size;
 
-  return METRIC_CUTOUTS[spec.type]({
+  return METRIC_CUTOUTS[spec.type as MetricType]({
     spec,
     size,
     H,

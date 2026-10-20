@@ -68,8 +68,8 @@ function promptLines({ payload, imageCount, refNames, folders }) {
   return lines;
 }
 
-export function buildPromptBlocks(payload, { isClaude, saveReferenceImage, describeEvidenceFolder }) {
-  if (!isClaude) return legacyPromptBlocks(payload);
+export function buildPromptBlocks(payload, { isAiAgent, saveReferenceImage, describeEvidenceFolder }) {
+  if (!isAiAgent) return legacyPromptBlocks(payload);
 
   const { blocks, refNames } = imageBlocks(payload, saveReferenceImage);
   const folders = (Array.isArray(payload.evidenceFolders) ? payload.evidenceFolders : [])

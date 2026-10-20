@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bot, Grid3x3, Keyboard, Mouse, PanelsLeftRight, RefreshCw, X } from 'lucide-react';
-import { AcpStatusInfo, TrackpadGestureMode } from '../types/robotics';
+import { AcpStatusInfo, MeasureUnit, TrackpadGestureMode } from '../types/robotics';
+import { AGENT_PROFILES } from '../agent/agentKinds';
 import {
   Button,
   IconButton,
@@ -12,6 +12,13 @@ import {
   Switch,
   TextInput,
   useScrollFade,
+  BotIcon,
+  CloseIcon,
+  GridIcon,
+  KeyboardIcon,
+  MouseIcon,
+  PanelsIcon,
+  RefreshIcon,
 } from '../design-system';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
@@ -19,18 +26,19 @@ import { ShortcutsList } from './ShortcutsList';
 export type SettingsPane = 'canvas' | 'navigation' | 'layout' | 'agent' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
-  { id: 'canvas', label: 'Canvas', icon: <Grid3x3 className="w-4 h-4" /> },
-  { id: 'navigation', label: 'Navigation', icon: <Mouse className="w-4 h-4" /> },
-  { id: 'layout', label: 'Layout', icon: <PanelsLeftRight className="w-4 h-4" /> },
-  { id: 'agent', label: 'Agent', icon: <Bot className="w-4 h-4" /> },
-  { id: 'shortcuts', label: 'Shortcuts', icon: <Keyboard className="w-4 h-4" /> },
+  { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
+  { id: 'navigation', label: 'Navigation', icon: <MouseIcon className="w-4 h-4" /> },
+  { id: 'layout', label: 'Layout', icon: <PanelsIcon className="w-4 h-4" /> },
+  { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
+  { id: 'shortcuts', label: 'Shortcuts', icon: <KeyboardIcon className="w-4 h-4" /> },
 ];
-
-const CLAUDE_COMMAND = 'node node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js';
-const OFFLINE_COMMAND = 'node electron/acp-3d-agent.mjs';
 
 const MOVE_SNAP_STEPS = ['0', '1', '2', '5', '10'];
 const ROTATE_SNAP_STEPS = ['0', '5', '15', '45', '90'];
+const MEASURE_UNITS: Array<{ value: MeasureUnit; label: string }> = [
+  { value: 'metric', label: 'Metric' },
+  { value: 'imperial', label: 'Imperial' },
+];
 
 export interface SettingsWindowProps {
   open: boolean;
@@ -45,6 +53,8 @@ export interface SettingsWindowProps {
   onSnapStep: (mm: number) => void;
   snapAngleDeg: number;
   onSnapAngle: (deg: number) => void;
+  measureUnit: MeasureUnit;
+  onMeasureUnit: (unit: MeasureUnit) => void;
   showReferenceImages: boolean;
   onShowReferenceImages: (v: boolean) => void;
   trackpadMode: TrackpadGestureMode;
@@ -134,7 +144,13 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
         <div className="flex-1 min-w-0 flex flex-col">
           <header className="h-[64px] shrink-0 pl-[28px] pr-[20px] flex items-center justify-between">
             <h3 className="text-[20px] font-semibold text-white/90">{current.label}</h3>
-            <IconButton icon={<X className="w-4 h-4" />} title="Close" shortcut="Esc" onClick={onClose} size="sm" />
+            <IconButton
+              icon={<CloseIcon className="w-4 h-4" />}
+              title="Close"
+              shortcut="Esc"
+              onClick={onClose}
+              size="sm"
+            />
           </header>
           <div
             ref={(node) => {
@@ -195,6 +211,16 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
           value={String(p.snapAngleDeg)}
           onChange={(v) => p.onSnapAngle(Number(v))}
           options={ROTATE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : `${v}°` }))}
+        />
+      </Row>
+    </Group>
+    <Group title="Measure">
+      <Row label="Units" hint="Hold ⌥ to measure vertically">
+        <SegmentedControl<MeasureUnit>
+          className="w-[240px]"
+          value={p.measureUnit}
+          onChange={p.onMeasureUnit}
+          options={MEASURE_UNITS}
         />
       </Row>
     </Group>
@@ -265,46 +291,42 @@ const LayoutPane: React.FC<PaneProps> = (p) => (
   </Group>
 );
 
-function agentChoice(command: string): 'claude' | 'offline' | '' {
-  if (command === CLAUDE_COMMAND) return 'claude';
+const agentOfCommand = (command: string) => AGENT_PROFILES.find((p) => p.command === command);
 
-  return command === OFFLINE_COMMAND ? 'offline' : '';
+function agentStatusText(status: AcpStatusInfo) {
+  if (status.connected && status.signIn) return `Sign in to ${status.agentName} from the Agent tab`;
+
+  return status.connected ? `Connected · ${status.agentName}` : status.error || 'Not connected';
 }
 
 const AgentPane: React.FC<PaneProps> = (p) => {
   const [command, setCommand] = useState(p.acpStatus.agentCommand);
-  const choice = agentChoice(command);
+  const agent = agentOfCommand(command);
 
   return (
     <>
       <Group title="Agent">
-        <Row
-          label="Run with"
-          hint={
-            choice === 'offline' ? 'Built-in outline tracer, no AI' : 'Claude Code on this Mac, with your Claude login'
-          }
-        >
-          <SegmentedControl<'claude' | 'offline' | ''>
-            className="w-[220px]"
-            value={choice}
-            onChange={(v) => {
-              const cmd = v === 'claude' ? CLAUDE_COMMAND : OFFLINE_COMMAND;
+        <Row label="Run with" hint={agent?.hint ?? 'Custom ACP agent'}>
+          <SegmentedControl<string>
+            className="w-[320px]"
+            value={agent?.kind ?? ''}
+            onChange={(kind) => {
+              const cmd = AGENT_PROFILES.find((profile) => profile.kind === kind)?.command;
+
+              if (!cmd) return;
 
               setCommand(cmd);
               p.onReconnectAcp(cmd);
             }}
-            options={[
-              { value: 'claude', label: 'Claude Code' },
-              { value: 'offline', label: 'Offline' },
-            ]}
+            options={AGENT_PROFILES.map((profile) => ({ value: profile.kind, label: profile.label }))}
           />
         </Row>
         <Row
           stacked
           label="Command"
           hint={
-            <span className={`break-words ${p.acpStatus.connected ? '' : 'text-amber-200/80'}`}>
-              {p.acpStatus.connected ? `Connected · ${p.acpStatus.agentName}` : p.acpStatus.error || 'Not connected'}
+            <span className={`break-words ${p.acpStatus.connected && !p.acpStatus.signIn ? '' : 'text-amber-200/80'}`}>
+              {agentStatusText(p.acpStatus)}
             </span>
           }
         >
@@ -319,7 +341,7 @@ const AgentPane: React.FC<PaneProps> = (p) => {
               className="font-mono text-[12px]"
             />
             <IconButton
-              icon={<RefreshCw className="w-3.5 h-3.5" />}
+              icon={<RefreshIcon className="w-3.5 h-3.5" />}
               title="Reconnect"
               onClick={() => p.onReconnectAcp(command)}
             />

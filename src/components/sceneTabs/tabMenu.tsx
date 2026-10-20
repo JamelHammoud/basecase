@@ -1,5 +1,4 @@
-import { CopyPlus, History, Pencil, Plus, X } from 'lucide-react';
-import { ContextMenuEntry } from '../../design-system';
+import { ContextMenuEntry, CloseIcon, DuplicateIcon, EditIcon, HistoryIcon, PlusIcon } from '../../design-system';
 
 export interface TabMenuActions {
   tabIds: string[];
@@ -20,14 +19,14 @@ export function tabMenuItems(id: string, a: TabMenuActions): ContextMenuEntry[] 
   const index = a.tabIds.indexOf(id);
 
   return [
-    { label: 'Rename', icon: <Pencil className={ic} />, onSelect: () => a.onRename(id) },
-    { label: 'Duplicate', icon: <CopyPlus className={ic} />, onSelect: () => a.onDuplicate(id) },
+    { label: 'Rename', icon: <EditIcon className={ic} />, onSelect: () => a.onRename(id) },
+    { label: 'Duplicate', icon: <DuplicateIcon className={ic} />, onSelect: () => a.onDuplicate(id) },
     { divider: true },
-    { label: 'New Scene', shortcut: '⌘T', icon: <Plus className={ic} />, onSelect: a.onNew },
+    { label: 'New Scene', shortcut: '⌘T', icon: <PlusIcon className={ic} />, onSelect: a.onNew },
     {
       label: 'Reopen Closed Scene',
       shortcut: '⇧⌘T',
-      icon: <History className={ic} />,
+      icon: <HistoryIcon className={ic} />,
       disabled: !a.canReopen,
       onSelect: a.onReopen,
     },
@@ -35,7 +34,7 @@ export function tabMenuItems(id: string, a: TabMenuActions): ContextMenuEntry[] 
     {
       label: 'Close',
       shortcut: id === a.activeId ? '⌘W' : undefined,
-      icon: <X className={ic} />,
+      icon: <CloseIcon className={ic} />,
       onSelect: () => a.onClose(id),
     },
     { label: 'Close Other Scenes', disabled: a.tabIds.length < 2, onSelect: () => a.onCloseOthers(id) },

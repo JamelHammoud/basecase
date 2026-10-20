@@ -1,6 +1,5 @@
 import React, { Activity, useState } from 'react';
-import { Plus } from 'lucide-react';
-import { IconButton, LAYOUT } from '../design-system';
+import { IconButton, LAYOUT, PlusIcon } from '../design-system';
 import type { CatalogItem, ScenePart } from '../types/robotics';
 import type { RobotPreset } from '../utils/robotImport';
 import { LayersView, type LayersViewProps } from './layers/LayersView';
@@ -22,7 +21,6 @@ interface LeftSidebarProps extends Omit<LayersViewProps, 'parts' | 'selectedIds'
   parts: ScenePart[];
   selectedIds: string[];
   onAddCatalogItem: (item: CatalogItem) => void;
-  sceneGoal?: string;
   partsSearchRef?: React.MutableRefObject<HTMLInputElement | null>;
   onImportRobot: (preset: RobotPreset | null) => Promise<unknown> | void;
   library: Omit<LibraryPanelProps, 'parts' | 'selectedIds'>;
@@ -67,8 +65,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
           <h2 className="text-[15px] font-semibold text-white/90 tracking-[-0.01em]">{VIEW_TITLES[tab]}</h2>
           {tab === 'robots' && (
             <IconButton
-              icon={<Plus className="w-4 h-4" />}
-              title="Import robot…"
+              icon={<PlusIcon className="w-4 h-4" />}
+              title="Import robot"
               size="xs"
               onClick={() => props.onImportRobot(null)}
             />
@@ -80,12 +78,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
             <LayersView {...props} />
           </View>
           <View tab="parts" current={tab} visited={visited}>
-            <PartsPanel
-              onAdd={props.onAddCatalogItem}
-              parts={props.parts}
-              goal={props.sceneGoal ?? ''}
-              searchInputRef={props.partsSearchRef}
-            />
+            <PartsPanel onAdd={props.onAddCatalogItem} searchInputRef={props.partsSearchRef} />
           </View>
           <View tab="robots" current={tab} visited={visited}>
             <RobotsPanel onInsert={(r) => props.onImportRobot(r)} />

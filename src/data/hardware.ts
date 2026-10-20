@@ -1,3 +1,34 @@
+import {
+  BEARINGS,
+  DOWEL_LENGTHS,
+  MOTION_HARDWARE,
+  MotionHardware,
+  MotionHardwareType,
+  box,
+  holeRow,
+  round2,
+  type HoleRow,
+} from './motionHardware';
+import {
+  FLANGED_BEARINGS,
+  LINEAR_BUSHINGS,
+  LINEAR_SHAFTS,
+  MGN_CARRIAGES,
+  MGN_RAILS,
+  MINI_THRUST_BEARINGS,
+  THRUST_BEARINGS,
+  CLAMP_COLLARS,
+  DIN471_RINGS,
+  DIN472_RINGS,
+  EXTRUSIONS,
+  GT2_IDLERS,
+  GT2_PULLEYS,
+  MISUMI_CORNER_BRACKETS,
+  SET_COLLARS,
+} from './motionTables';
+
+export { BEARINGS, DOWEL_LENGTHS, type HoleRow };
+
 export type HardwareType =
   | 'socket_head'
   | 'button_head'
@@ -14,7 +45,23 @@ export type HardwareType =
   | 'standoff_mf'
   | 'standoff_ff'
   | 'dowel_pin'
-  | 'bearing';
+  | 'bearing'
+  | 'linear_rail'
+  | 'rail_carriage'
+  | 'shaft'
+  | 'linear_bearing'
+  | 'flanged_bearing'
+  | 'thrust_bearing'
+  | 'extrusion'
+  | 't_nut'
+  | 't_nut_8'
+  | 'corner_bracket'
+  | 'set_collar'
+  | 'clamp_collar'
+  | 'shaft_ring'
+  | 'bore_ring'
+  | 'gt2_pulley'
+  | 'gt2_idler';
 
 export interface HardwareSpec {
   type: HardwareType;
@@ -34,7 +81,7 @@ export const DRIVES: Record<ScrewDrive, { label: string }> = {
   slotted: { label: 'Slotted' },
 };
 
-export type HardwareFinish = 'black' | 'stainless' | 'zinc' | 'brass' | 'nylon' | 'steel';
+export type HardwareFinish = 'black' | 'stainless' | 'zinc' | 'brass' | 'nylon' | 'steel' | 'aluminum' | 'anodized';
 
 export const FINISHES: Record<HardwareFinish, { label: string; color: string; shop: string }> = {
   black: { label: 'Black', color: '#2b2b30', shop: 'black oxide alloy steel' },
@@ -43,6 +90,8 @@ export const FINISHES: Record<HardwareFinish, { label: string; color: string; sh
   brass: { label: 'Brass', color: '#c9a14a', shop: 'brass' },
   nylon: { label: 'Nylon', color: '#e6e2d6', shop: 'nylon' },
   steel: { label: 'Steel', color: '#b9bcc2', shop: 'hardened steel' },
+  aluminum: { label: 'Silver', color: '#c4c7cc', shop: 'silver anodized aluminum' },
+  anodized: { label: 'Black', color: '#2d2d31', shop: 'black anodized aluminum' },
 };
 
 export const METRIC_SIZES = ['M2', 'M2.5', 'M3', 'M4', 'M5', 'M6', 'M8', 'M10', 'M12'] as const;
@@ -334,49 +383,44 @@ export const LARGE_WASHER: Table<{ d1: number; d2: number; h: number }> = {
   M12: { d1: 13, d2: 37, h: 3 },
 };
 
-export const HEAT_INSERT: Table<{ od: number; l: number; hole: number }> = {
-  M2: { od: 3.6, l: 3, hole: 3.2 },
-  'M2.5': { od: 4.6, l: 4, hole: 4 },
-  M3: { od: 4.6, l: 5.7, hole: 4 },
-  M4: { od: 6.3, l: 8.1, hole: 5.6 },
-  M5: { od: 7.1, l: 9.5, hole: 6.4 },
-  M6: { od: 8.7, l: 12.7, hole: 8 },
+export interface HeatInsert {
+  l: number;
+  od: number;
+  hole: number;
+  label?: string;
+}
+
+export const HEAT_INSERTS: Table<HeatInsert[]> = {
+  M2: [{ l: 3, od: 3.6, hole: 3.2 }],
+  'M2.5': [{ l: 4, od: 4.6, hole: 4 }],
+  M3: [
+    { l: 3, od: 4.6, hole: 4, label: 'Short' },
+    { l: 4, od: 5, hole: 4.4, label: 'Voron' },
+    { l: 5.7, od: 4.6, hole: 4 },
+  ],
+  M4: [
+    { l: 4, od: 6.3, hole: 5.6, label: 'Short' },
+    { l: 8.1, od: 6.3, hole: 5.6 },
+  ],
+  M5: [
+    { l: 5.8, od: 7.1, hole: 6.4, label: 'Short' },
+    { l: 9.5, od: 7.1, hole: 6.4 },
+  ],
+  M6: [{ l: 12.7, od: 8.7, hole: 8 }],
 };
+
+const insertLengths = (size: string) => (HEAT_INSERTS[size as MetricSize] ?? []).map((v) => v.l);
+
+export function heatInsert(spec: Pick<HardwareSpec, 'size' | 'length'>): HeatInsert {
+  const list = HEAT_INSERTS[spec.size as MetricSize] ?? HEAT_INSERTS.M3!;
+
+  return list.find((v) => v.l === spec.length) ?? list[list.length - 1];
+}
 
 export const STANDOFF: Table<{ s: number; male: number }> = {
   M2: { s: 4, male: 4 },
   'M2.5': { s: 5, male: 6 },
   M3: { s: 5, male: 6 },
-};
-
-export const BEARINGS: Record<string, { d: number; D: number; B: number }> = {
-  MR63: { d: 3, D: 6, B: 2.5 },
-  MR85: { d: 5, D: 8, B: 2.5 },
-  MR105: { d: 5, D: 10, B: 4 },
-  MR115: { d: 5, D: 11, B: 4 },
-  '603': { d: 3, D: 9, B: 5 },
-  '604': { d: 4, D: 12, B: 4 },
-  '605': { d: 5, D: 14, B: 5 },
-  '623': { d: 3, D: 10, B: 4 },
-  '624': { d: 4, D: 13, B: 5 },
-  '625': { d: 5, D: 16, B: 5 },
-  '626': { d: 6, D: 19, B: 6 },
-  '608': { d: 8, D: 22, B: 7 },
-  '688': { d: 8, D: 16, B: 5 },
-  '6700': { d: 10, D: 15, B: 4 },
-  '6800': { d: 10, D: 19, B: 5 },
-  '6000': { d: 10, D: 26, B: 8 },
-  '6001': { d: 12, D: 28, B: 8 },
-  '6200': { d: 10, D: 30, B: 9 },
-};
-
-export const DOWEL_LENGTHS: Record<string, number[]> = {
-  '2': [4, 5, 6, 8, 10, 12, 14, 16, 18, 20],
-  '3': [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 24, 25, 30],
-  '4': [6, 8, 10, 12, 14, 16, 18, 20, 24, 25, 30, 35, 40],
-  '5': [8, 10, 12, 14, 16, 18, 20, 24, 25, 30, 35, 40, 45, 50],
-  '6': [10, 12, 14, 16, 18, 20, 24, 25, 30, 35, 40, 45, 50, 55, 60],
-  '8': [12, 16, 20, 24, 25, 30, 35, 40, 45, 50, 60, 70, 80],
 };
 
 const PREFERRED_LENGTHS = [
@@ -409,6 +453,10 @@ const SET_SCREW_LENGTHS: Record<MetricSize, number[]> = {
   M12: between(10, 60),
 };
 
+const EXTRUSION_LENGTHS = [100, 150, 200, 250, 300, 400, 500, 600, 750, 1000, 1500, 2000];
+
+const SHAFT_LENGTHS = [50, 75, 100, 150, 200, 250, 300, 350, 400, 500, 600, 800, 1000];
+
 const STANDOFF_LENGTHS = [
   3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 25, 28, 30, 35, 40, 45, 50, 60,
 ];
@@ -420,13 +468,15 @@ export interface HardwareTypeInfo {
   type: HardwareType;
   name: string;
   description: string;
-  group: 'Screws' | 'Nuts & Washers' | 'Inserts & Standoffs' | 'Pins & Bearings';
+  group: 'Screws' | 'Nuts & Washers' | 'Inserts & Standoffs' | 'Pins & Bearings' | 'Motion';
   color: string;
   finishes: HardwareFinish[];
   sizes: string[];
   defaultSize: string;
   lengths?: (size: string) => number[];
   defaultLength?: (size: string) => number;
+  maxLength?: (size: string) => number;
+  stockOnly?: boolean;
 }
 
 const sizesOf = (t: Table<unknown>) => METRIC_SIZES.filter((s) => t[s]);
@@ -566,8 +616,11 @@ export const HARDWARE_TYPES: HardwareTypeInfo[] = [
     group: 'Inserts & Standoffs',
     color: '#c9a14a',
     finishes: ['brass'],
-    sizes: sizesOf(HEAT_INSERT),
+    sizes: sizesOf(HEAT_INSERTS),
     defaultSize: 'M3',
+    lengths: insertLengths,
+    defaultLength: (s) => insertLengths(s).at(-1) ?? 5.7,
+    stockOnly: true,
   },
   {
     type: 'standoff_mf',
@@ -615,6 +668,175 @@ export const HARDWARE_TYPES: HardwareTypeInfo[] = [
     sizes: Object.keys(BEARINGS),
     defaultSize: '608',
   },
+  {
+    type: 'linear_rail',
+    name: 'Linear Rail',
+    description: 'HIWIN MGN miniature guide rail, cut to length',
+    group: 'Motion',
+    color: '#c7c9cf',
+    finishes: ['stainless'],
+    sizes: Object.keys(MGN_RAILS),
+    defaultSize: 'MGN12',
+    lengths: (s) => MGN_RAILS[s]?.standardLengths ?? [],
+    defaultLength: (s) => pickLength(MGN_RAILS[s]?.standardLengths ?? [200], 200),
+    maxLength: (s) => MGN_RAILS[s]?.maxLength ?? MAX_CUSTOM_LENGTH,
+  },
+  {
+    type: 'rail_carriage',
+    name: 'Carriage',
+    description: 'HIWIN MGN block, C standard or H long',
+    group: 'Motion',
+    color: '#c7c9cf',
+    finishes: ['stainless'],
+    sizes: Object.keys(MGN_CARRIAGES),
+    defaultSize: 'MGN12H',
+  },
+  {
+    type: 'shaft',
+    name: 'Shaft',
+    description: 'Hardened h6 linear shaft, cut to length',
+    group: 'Motion',
+    color: '#c7c9cf',
+    finishes: ['steel'],
+    sizes: Object.keys(LINEAR_SHAFTS),
+    defaultSize: '8',
+    lengths: (s) => SHAFT_LENGTHS.filter((l) => l <= (LINEAR_SHAFTS[s]?.maxLengthMm ?? 0)),
+    defaultLength: () => 200,
+    maxLength: (s) => LINEAR_SHAFTS[s]?.maxLengthMm ?? MAX_CUSTOM_LENGTH,
+  },
+  {
+    type: 'linear_bearing',
+    name: 'Linear Bearing',
+    description: 'LM ball bushing for h6 shafts, sealed',
+    group: 'Motion',
+    color: '#c7c9cf',
+    finishes: ['steel'],
+    sizes: Object.keys(LINEAR_BUSHINGS),
+    defaultSize: 'LM8UU',
+  },
+  {
+    type: 'flanged_bearing',
+    name: 'Flanged Bearing',
+    description: 'Deep groove with a locating flange, shielded',
+    group: 'Pins & Bearings',
+    color: '#b7bcc4',
+    finishes: ['steel'],
+    sizes: Object.keys(FLANGED_BEARINGS),
+    defaultSize: 'F608',
+  },
+  {
+    type: 'thrust_bearing',
+    name: 'Thrust Bearing',
+    description: 'Single-direction thrust ball bearing',
+    group: 'Pins & Bearings',
+    color: '#b7bcc4',
+    finishes: ['steel'],
+    sizes: [...Object.keys(MINI_THRUST_BEARINGS), ...Object.keys(THRUST_BEARINGS)],
+    defaultSize: 'F8-16M',
+  },
+  {
+    type: 'extrusion',
+    name: 'Extrusion',
+    description: 'Misumi T-slot aluminum profile, cut to length',
+    group: 'Motion',
+    color: '#c4c7cc',
+    finishes: ['aluminum', 'anodized'],
+    sizes: Object.keys(EXTRUSIONS),
+    defaultSize: '2020',
+    lengths: () => EXTRUSION_LENGTHS,
+    defaultLength: () => 200,
+    maxLength: () => 4000,
+  },
+  {
+    type: 't_nut',
+    name: 'T-Nut, Slot 6',
+    description: 'Misumi HNTT5 for 2020 and 2040 profiles',
+    group: 'Motion',
+    color: '#d4d8df',
+    finishes: ['zinc'],
+    sizes: ['M3', 'M4', 'M5'],
+    defaultSize: 'M5',
+  },
+  {
+    type: 't_nut_8',
+    name: 'T-Nut, Slot 8',
+    description: 'Misumi HNTT6 for 3030 profiles',
+    group: 'Motion',
+    color: '#d4d8df',
+    finishes: ['zinc'],
+    sizes: ['M3', 'M4', 'M5', 'M6'],
+    defaultSize: 'M6',
+  },
+  {
+    type: 'corner_bracket',
+    name: 'Corner Bracket',
+    description: 'Misumi die-cast inside bracket for 2020',
+    group: 'Motion',
+    color: '#c4c7cc',
+    finishes: ['aluminum'],
+    sizes: Object.keys(MISUMI_CORNER_BRACKETS),
+    defaultSize: 'HBLFSN5',
+  },
+  {
+    type: 'set_collar',
+    name: 'Set Screw Collar',
+    description: 'Shaft collar locked by a set screw',
+    group: 'Motion',
+    color: '#2b2b30',
+    finishes: ['black'],
+    sizes: Object.keys(SET_COLLARS),
+    defaultSize: '8',
+  },
+  {
+    type: 'clamp_collar',
+    name: 'Clamp Collar',
+    description: 'Ruland one-piece clamp collar',
+    group: 'Motion',
+    color: '#2b2b30',
+    finishes: ['black'],
+    sizes: Object.keys(CLAMP_COLLARS),
+    defaultSize: '8',
+  },
+  {
+    type: 'shaft_ring',
+    name: 'Shaft Retaining Ring',
+    description: 'DIN 471 external circlip',
+    group: 'Motion',
+    color: '#2b2b30',
+    finishes: ['black'],
+    sizes: Object.keys(DIN471_RINGS),
+    defaultSize: '8',
+  },
+  {
+    type: 'bore_ring',
+    name: 'Bore Retaining Ring',
+    description: 'DIN 472 internal circlip',
+    group: 'Motion',
+    color: '#2b2b30',
+    finishes: ['black'],
+    sizes: Object.keys(DIN472_RINGS),
+    defaultSize: '16',
+  },
+  {
+    type: 'gt2_pulley',
+    name: 'GT2 Pulley',
+    description: 'Misumi 2GT timing pulley for 6 mm belt',
+    group: 'Motion',
+    color: '#c4c7cc',
+    finishes: ['aluminum'],
+    sizes: Object.keys(GT2_PULLEYS),
+    defaultSize: '20T-5',
+  },
+  {
+    type: 'gt2_idler',
+    name: 'GT2 Idler',
+    description: 'Misumi 2GT toothed idler with bearings',
+    group: 'Motion',
+    color: '#c4c7cc',
+    finishes: ['aluminum'],
+    sizes: Object.keys(GT2_IDLERS),
+    defaultSize: '30T-5',
+  },
 ];
 
 export const HARDWARE_BY_TYPE = Object.fromEntries(HARDWARE_TYPES.map((t) => [t.type, t])) as Record<
@@ -628,6 +850,10 @@ export function nearestSize(type: HardwareType, wanted: string, sizes = HARDWARE
   const info = HARDWARE_BY_TYPE[type];
 
   if (sizes.includes(wanted)) return wanted;
+
+  const related = sizes.find((s) => s.startsWith(wanted) || wanted.startsWith(s));
+
+  if (related) return related;
 
   if (isMetric(wanted) && sizes.every(isMetric)) {
     const d = THREAD[wanted].d;
@@ -645,7 +871,11 @@ export function lengthRange(type: HardwareType, size: string): { min: number; ma
 
   if (!list?.length) return null;
 
-  return { min: list[0], max: Math.max(MAX_CUSTOM_LENGTH, list[list.length - 1]) };
+  const info = HARDWARE_BY_TYPE[type];
+
+  if (info.stockOnly) return { min: list[0], max: list[list.length - 1] };
+
+  return { min: list[0], max: info.maxLength?.(size) ?? Math.max(MAX_CUSTOM_LENGTH, list[list.length - 1]) };
 }
 
 function pickDrive(type: HardwareType, drive?: ScrewDrive): ScrewDrive | undefined {
@@ -668,7 +898,9 @@ export function makeSpec(type: HardwareType, { size, length, finish, drive }: Sp
   if (!range) return { type, size: s, finish: f, ...(d ? { drive: d } : {}) };
 
   const wanted = length !== undefined && Number.isFinite(length) ? length : (info.defaultLength?.(s) ?? range.min);
-  const l = Math.min(range.max, Math.max(range.min, Math.round(wanted / LENGTH_STEP) * LENGTH_STEP));
+  const l = info.stockOnly
+    ? pickLength(info.lengths!(s), wanted)
+    : Math.min(range.max, Math.max(range.min, Math.round(wanted / LENGTH_STEP) * LENGTH_STEP));
 
   return { type, size: s, length: l, finish: f, ...(d ? { drive: d } : {}) };
 }
@@ -974,8 +1206,67 @@ export const HARDWARE_FAMILIES: HardwareFamily[] = [
   {
     id: 'bearings',
     name: 'Ball Bearings',
-    description: 'Deep groove, 3–12 mm bore',
-    types: [{ type: 'bearing', label: 'Bearing' }],
+    typeLabel: 'Style',
+    description: 'Deep groove, flanged, thrust',
+    types: [
+      { type: 'bearing', label: 'Deep Groove' },
+      { type: 'flanged_bearing', label: 'Flanged' },
+      { type: 'thrust_bearing', label: 'Thrust' },
+    ],
+  },
+  {
+    id: 'extrusion',
+    name: 'Aluminum Extrusion',
+    typeLabel: 'Part',
+    description: '2020, 2040, 3030 profiles, nuts, brackets',
+    types: [
+      { type: 'extrusion', label: 'Profile' },
+      { type: 't_nut', label: 'T-Nut 6' },
+      { type: 't_nut_8', label: 'T-Nut 8' },
+      { type: 'corner_bracket', label: 'Bracket' },
+    ],
+  },
+  {
+    id: 'shafts',
+    name: 'Shafts & Linear Bearings',
+    typeLabel: 'Part',
+    description: 'h6 shafts, LM bushings',
+    types: [
+      { type: 'shaft', label: 'Shaft' },
+      { type: 'linear_bearing', label: 'Linear Bearing' },
+    ],
+  },
+  {
+    id: 'collars',
+    name: 'Collars & Retaining Rings',
+    typeLabel: 'Part',
+    description: 'Set screw and clamp collars, circlips',
+    types: [
+      { type: 'set_collar', label: 'Set Screw' },
+      { type: 'clamp_collar', label: 'Clamp' },
+      { type: 'shaft_ring', label: 'Shaft Ring' },
+      { type: 'bore_ring', label: 'Bore Ring' },
+    ],
+  },
+  {
+    id: 'pulleys',
+    name: 'GT2 Pulleys',
+    typeLabel: 'Part',
+    description: 'Timing pulleys and idlers',
+    types: [
+      { type: 'gt2_pulley', label: 'Pulley' },
+      { type: 'gt2_idler', label: 'Idler' },
+    ],
+  },
+  {
+    id: 'guides',
+    name: 'Linear Guides',
+    typeLabel: 'Part',
+    description: 'MGN rails and carriages',
+    types: [
+      { type: 'linear_rail', label: 'Rail' },
+      { type: 'rail_carriage', label: 'Carriage' },
+    ],
   },
 ];
 
@@ -986,9 +1277,9 @@ export function hardwareName(spec: HardwareSpec): string {
   const info = HARDWARE_BY_TYPE[spec.type];
   const finish = hardwareFinish(spec) !== info.finishes[0] ? `, ${FINISHES[hardwareFinish(spec)].label}` : '';
 
-  if (spec.type === 'bearing') return `${spec.size} Bearing`;
+  const motion = motionOf(spec.type);
 
-  if (spec.type === 'dowel_pin') return `Ø${spec.size} × ${spec.length} Dowel Pin${finish}`;
+  if (motion) return `${motion.name(spec)}${finish}`;
 
   const d = hardwareDrive(spec);
   const drive = d && d !== defaultDrive(spec.type) ? `${d === 'hex' ? 'Hex Socket' : DRIVES[d].label} ` : '';
@@ -1002,10 +1293,12 @@ export const hexCorners = (s: number) => s / Math.cos(Math.PI / 6);
 
 type Box = { width: number; height: number; depth: number };
 
-const round2 = (v: number) => Math.round(v * 100) / 100;
-const box = (w: number, h: number, d = w): Box => ({ width: round2(w), height: round2(h), depth: round2(d) });
+export type MetricType = Exclude<HardwareType, MotionHardwareType>;
 
-const DIMENSIONS: Record<HardwareType, (spec: HardwareSpec, size: MetricSize, L: number) => Box> = {
+export const motionOf = (type: HardwareType): MotionHardware | undefined =>
+  (MOTION_HARDWARE as Partial<Record<HardwareType, MotionHardware>>)[type];
+
+const DIMENSIONS: Record<MetricType, (spec: HardwareSpec, size: MetricSize, L: number) => Box> = {
   socket_head: (_spec, size, L) => box(SOCKET_HEAD[size]!.dk, L + SOCKET_HEAD[size]!.k),
   button_head: (_spec, size, L) => box(BUTTON_HEAD[size]!.dk, L + BUTTON_HEAD[size]!.k),
   countersunk: (spec, _size, L) => box(screwHead(spec)!.dk, L),
@@ -1033,7 +1326,7 @@ const DIMENSIONS: Record<HardwareType, (spec: HardwareSpec, size: MetricSize, L:
   square_nut: (_spec, size) => box(SQUARE_NUT[size]!.s, SQUARE_NUT[size]!.m),
   washer: (_spec, size) => box(WASHER[size]!.d2, WASHER[size]!.h),
   large_washer: (_spec, size) => box(LARGE_WASHER[size]!.d2, LARGE_WASHER[size]!.h),
-  heat_insert: (_spec, size) => box(HEAT_INSERT[size]!.od, HEAT_INSERT[size]!.l),
+  heat_insert: (spec) => box(heatInsert(spec).od, heatInsert(spec).l),
   standoff_mf: (_spec, size, L) => {
     const so = STANDOFF[size]!;
 
@@ -1044,19 +1337,15 @@ const DIMENSIONS: Record<HardwareType, (spec: HardwareSpec, size: MetricSize, L:
 
     return box(hexCorners(so.s), L, so.s);
   },
-  dowel_pin: (spec, _size, L) => box(Number(spec.size), L),
-  bearing: (spec) => {
-    const b = BEARINGS[spec.size];
-
-    return box(b.D, b.B);
-  },
 };
 
 export function hardwareDimensions(spec: HardwareSpec): { width: number; height: number; depth: number } {
-  return DIMENSIONS[spec.type](spec, spec.size as MetricSize, spec.length ?? 0);
-}
+  const motion = motionOf(spec.type);
 
-type MetricType = Exclude<HardwareType, 'bearing' | 'dowel_pin'>;
+  if (motion) return motion.dimensions(spec);
+
+  return DIMENSIONS[spec.type as MetricType](spec, spec.size as MetricSize, spec.length ?? 0);
+}
 
 type Holes = (typeof HOLES)[MetricSize];
 
@@ -1088,8 +1377,8 @@ const NOTES: Record<MetricType, (spec: HardwareSpec, size: MetricSize, hole: Hol
     `Square slot ${(SQUARE_NUT[size]!.s + 0.3).toFixed(1)} mm wide, ${(SQUARE_NUT[size]!.m + 0.3).toFixed(1)} mm thick.`,
   washer: washerNote,
   large_washer: washerNote,
-  heat_insert: (_spec, size) => {
-    const ins = HEAT_INSERT[size]!;
+  heat_insert: (spec, size) => {
+    const ins = heatInsert(spec);
 
     return `Printed hole Ø${ins.hole} × ${(ins.l + 1).toFixed(1)} mm deep, ${size} screw.`;
   },
@@ -1098,30 +1387,15 @@ const NOTES: Record<MetricType, (spec: HardwareSpec, size: MetricSize, hole: Hol
 };
 
 export function hardwareNote(spec: HardwareSpec): string {
-  if (spec.type === 'bearing') {
-    const b = BEARINGS[spec.size];
+  const motion = motionOf(spec.type);
 
-    return `Bore Ø${b.d}, OD Ø${b.D}, width ${b.B} mm. Print the housing at Ø${b.D + 0.1} press fit, shaft Ø${b.d}.`;
-  }
-
-  if (spec.type === 'dowel_pin') {
-    const d = Number(spec.size);
-
-    return `Press-fit hole Ø${(d - 0.05).toFixed(2)}, slip-fit hole Ø${(d + 0.15).toFixed(2)} mm.`;
-  }
+  if (motion) return motion.note(spec);
 
   if (!isMetric(spec.size)) return '';
 
-  return NOTES[spec.type](spec, spec.size, HOLES[spec.size]);
+  return NOTES[spec.type as MetricType](spec, spec.size, HOLES[spec.size]);
 }
 
-export interface HoleRow {
-  label: string;
-  value: string;
-  unit: string;
-}
-
-const holeRow = (label: string, value: string, unit = 'mm'): HoleRow => ({ label, value, unit });
 const r2 = (v: number) => `${round2(v)}`;
 
 interface HoleContext {
@@ -1162,8 +1436,8 @@ const HOLE_ROWS: Record<MetricType, (c: HoleContext) => HoleRow[]> = {
   },
   washer: ({ clearance }) => [clearance],
   large_washer: ({ clearance }) => [clearance],
-  heat_insert: ({ size }) => {
-    const ins = HEAT_INSERT[size]!;
+  heat_insert: ({ spec }) => {
+    const ins = heatInsert(spec);
 
     return [holeRow('Printed hole', `Ø${ins.hole} × ${(ins.l + 1).toFixed(1)}`)];
   },
@@ -1172,29 +1446,25 @@ const HOLE_ROWS: Record<MetricType, (c: HoleContext) => HoleRow[]> = {
 };
 
 export function hardwareHoleRows(spec: HardwareSpec): HoleRow[] {
-  if (spec.type === 'bearing') {
-    const b = BEARINGS[spec.size];
+  const motion = motionOf(spec.type);
 
-    return [holeRow('Housing, press fit', `Ø${r2(b.D + 0.1)}`), holeRow('Shaft', `Ø${b.d}`)];
-  }
-
-  if (spec.type === 'dowel_pin') {
-    const d = Number(spec.size);
-
-    return [holeRow('Press fit', `Ø${(d - 0.05).toFixed(2)}`), holeRow('Slip fit', `Ø${(d + 0.15).toFixed(2)}`)];
-  }
+  if (motion) return motion.holes(spec);
 
   if (!isMetric(spec.size)) return [];
 
   const hole = HOLES[spec.size];
 
-  return HOLE_ROWS[spec.type]({
+  return HOLE_ROWS[spec.type as MetricType]({
     spec,
     size: spec.size,
     clearance: holeRow('Clearance', `Ø${hole.clearance}`),
     tap: holeRow('Tap drill', `Ø${hole.tap}`),
   });
 }
+
+export const NAMED_SIZES = HARDWARE_TYPES.filter((t) => motionOf(t.type))
+  .flatMap((t) => t.sizes)
+  .filter((size) => /[a-z]/i.test(size) || size.length >= 3);
 
 export function parseHardwareQuery(q: string): { size?: string; length?: number } {
   const m = q
@@ -1208,9 +1478,10 @@ export function parseHardwareQuery(q: string): { size?: string; length?: number 
     return { size: isMetric(size) ? size : undefined, length: m[2] ? Number(m[2]) : undefined };
   }
 
-  const bearing = Object.keys(BEARINGS).find((b) => q.toLowerCase().replace(/\s+/g, '').includes(b.toLowerCase()));
+  const compact = q.toLowerCase().replace(/\s+/g, '');
+  const named = NAMED_SIZES.find((n) => compact.includes(n.toLowerCase()));
 
-  return bearing ? { size: bearing } : {};
+  return named ? { size: named } : {};
 }
 
 function driveShopWord(d: ScrewDrive | undefined): string {
@@ -1220,11 +1491,15 @@ function driveShopWord(d: ScrewDrive | undefined): string {
 }
 
 export function hardwareShopUrl(spec: HardwareSpec): string {
+  const motion = motionOf(spec.type);
+
+  if (motion) return `https://www.amazon.com/s?k=${encodeURIComponent(motion.shop(spec))}`;
+
   const L = spec.length;
   const d = hardwareDrive(spec);
   const drive = driveShopWord(d);
   const std = isStandardDrive(spec) ? ` ${screwStandard(spec)}` : '';
-  const q: Record<HardwareType, string> = {
+  const q: Record<MetricType, string> = {
     socket_head: `${spec.size} x ${L}mm ${drive} socket head cap screw${std}`,
     button_head: `${spec.size} x ${L}mm ${drive} button head screw${std}`,
     countersunk: `${spec.size} x ${L}mm ${drive} countersunk flat head screw${std}`,
@@ -1236,14 +1511,11 @@ export function hardwareShopUrl(spec: HardwareSpec): string {
     square_nut: `${spec.size} square nut DIN 562`,
     washer: `${spec.size} flat washer ISO 7089`,
     large_washer: `${spec.size} large flat washer ISO 7093`,
-    heat_insert: `${spec.size} heat set threaded insert for 3D printing`,
+    heat_insert: `${spec.size} x ${L}mm x ${heatInsert(spec).od}mm OD heat set threaded insert`,
     standoff_mf: `${spec.size} x ${L}mm brass hex standoff male female`,
     standoff_ff: `${spec.size} x ${L}mm brass hex standoff female female`,
-    dowel_pin: `${spec.size} x ${L}mm dowel pin`,
-    bearing: `${spec.size} ball bearing`,
   };
-  const finish =
-    spec.type === 'bearing' || spec.type === 'heat_insert' ? '' : ` ${FINISHES[hardwareFinish(spec)].shop}`;
+  const finish = spec.type === 'heat_insert' ? '' : ` ${FINISHES[hardwareFinish(spec)].shop}`;
 
-  return `https://www.amazon.com/s?k=${encodeURIComponent(q[spec.type] + finish)}`;
+  return `https://www.amazon.com/s?k=${encodeURIComponent(q[spec.type as MetricType] + finish)}`;
 }

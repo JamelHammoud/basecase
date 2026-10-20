@@ -61,4 +61,27 @@ describe('SceneLibrary', () => {
     expect(updated.updatedAt).toBe(saved.updatedAt);
     expect(library.list()[0].previewDataUrl).toBe('data:x');
   });
+
+  it('keeps the preview across autosaves and drops autosaves of a deleted scene', () => {
+    library.save({ id: 'auto', name: 'Auto', parts: [part('a')], previewDataUrl: 'data:p', sizeMm: [1, 2, 3] });
+    library.save({ id: 'auto', name: 'Auto', parts: [part('a'), part('b')], chatId: 'chat-1', autosave: true });
+
+    expect(library.list()[0]).toMatchObject({ partCount: 2, previewDataUrl: 'data:p', sizeMm: [1, 2, 3] });
+    expect(library.get('auto').chatId).toBe('chat-1');
+
+    library.delete('auto');
+
+    expect(library.save({ id: 'auto', name: 'Auto', parts: [], autosave: true })).toBeNull();
+    expect(library.list()).toEqual([]);
+  });
+
+  it('reports a changed list only for changes it did not write itself', () => {
+    library.save({ id: 'a', name: 'A', parts: [] });
+
+    expect(library.changedList()).toBeNull();
+
+    fs.writeFileSync(path.join(dir, 'b.json'), JSON.stringify({ id: 'b', name: 'B', parts: [] }));
+
+    expect(library.changedList()?.map((s) => s.id).sort()).toEqual(['a', 'b']);
+  });
 });

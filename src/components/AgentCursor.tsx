@@ -10,7 +10,7 @@ interface AgentCursorProps {
   name?: string;
 }
 
-export const AgentCursor: React.FC<AgentCursorProps> = ({ viewportRef, target, visible, action, name = 'Claude' }) => {
+export const AgentCursor: React.FC<AgentCursorProps> = ({ viewportRef, target, visible, action, name = 'Agent' }) => {
   const elRef = useRef<HTMLDivElement | null>(null);
   const targetRef = useRef(target);
   const posRef = useRef<{ x: number; y: number } | null>(null);

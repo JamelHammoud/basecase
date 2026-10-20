@@ -1,10 +1,9 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
 import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import { COMPONENT_BY_ID } from '../../data/components';
 import type { HardwareSpec } from '../../data/hardware';
 import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
-import { IconButton, Section, TextArea, useScrollFade } from '../../design-system';
+import { IconButton, Section, TextArea, useScrollFade, PlusIcon } from '../../design-system';
 import { CommentsSection } from './CommentsSection';
 import { ImageSection, PartHeader, ProductSection, SizeSection } from './partSections';
 import { AppearanceSection, PositionSection, RotationSection, ShapeSection } from './partTransformSections';
@@ -19,7 +18,7 @@ const HardwareHoles: React.FC<{ hw: HardwareSpec; onAddClearanceHole: () => void
     holeAction={
       hw.type !== 'standoff_ff' && (
         <IconButton
-          icon={<Plus className="w-3.5 h-3.5" />}
+          icon={<PlusIcon className="w-3.5 h-3.5" />}
           title="Add clearance hole"
           size="xs"
           onClick={onAddClearanceHole}

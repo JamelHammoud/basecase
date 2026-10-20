@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
-import { ContextMenu, IconButton } from '../design-system';
+import { ContextMenu, IconButton, PlusIcon } from '../design-system';
 import { SceneTab, SceneTabHandlers } from './sceneTabs/SceneTab';
 import { TabPreviewCard } from './sceneTabs/TabPreviewCard';
 import { TAB_GAP } from './sceneTabs/tabGeometry';
@@ -46,9 +45,9 @@ function scrollSideways(el: HTMLDivElement | null, e: React.WheelEvent) {
 }
 
 const NewSceneButton: React.FC<{ onNew: () => void }> = ({ onNew }) => (
-  <div className="shrink-0 flex items-center pl-[4px]" style={NO_DRAG}>
+  <div className="shrink-0 flex items-center pl-[2px]" style={NO_DRAG}>
     <IconButton
-      icon={<Plus className="w-4 h-4" />}
+      icon={<PlusIcon className="w-4 h-4" />}
       title="New scene"
       shortcut="⌘T"
       className="w-[28px]! h-[28px]!"

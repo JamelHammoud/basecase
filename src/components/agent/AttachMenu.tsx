@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FolderPlus, ImagePlus, Plus } from 'lucide-react';
 import { foldersFromInput, PickedFolder } from '../../utils/evidenceFiles';
-import { IconButton, MenuItem, PopoverMenu } from '../../design-system';
+import { IconButton, MenuItem, PopoverMenu, FolderAddIcon, PhotoAddIcon, PlusIcon } from '../../design-system';
 
 const DIRECTORY_PICKER = { webkitdirectory: '' } as React.InputHTMLAttributes<HTMLInputElement>;
 
@@ -40,12 +39,14 @@ export const AttachMenu: React.FC<{
     <>
       <div className="relative" ref={attachMenuRef}>
         <IconButton
-          icon={<Plus className="w-[18px] h-[18px]" />}
+          icon={<PlusIcon className="w-[18px] h-[18px]" />}
           title="Attach"
           tooltipSide="top"
           size="sm"
           className="rounded-full"
           isToggled={open}
+          aria-haspopup="menu"
+          aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
         />
         <PopoverMenu
@@ -56,13 +57,13 @@ export const AttachMenu: React.FC<{
           className="w-56"
         >
           <MenuItem
-            icon={<ImagePlus className="w-4 h-4" />}
-            label="Attach Images…"
+            icon={<PhotoAddIcon className="w-4 h-4" />}
+            label="Attach Images"
             onSelect={() => pick(fileInputRef.current)}
           />
           <MenuItem
-            icon={<FolderPlus className="w-4 h-4" />}
-            label="Attach Folder…"
+            icon={<FolderAddIcon className="w-4 h-4" />}
+            label="Attach Folder"
             onSelect={() => pick(folderInputRef.current)}
           />
         </PopoverMenu>

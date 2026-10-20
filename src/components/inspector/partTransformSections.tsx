@@ -1,7 +1,19 @@
 import React from 'react';
-import { ArrowDownToLine, Crosshair, Layers, RotateCcw, RotateCw } from 'lucide-react';
 import type { ScenePart } from '../../types/robotics';
-import { ColorField, IconButton, NumberInput, Section, Select, Slider, Tooltip } from '../../design-system';
+import {
+  ColorField,
+  IconButton,
+  NumberInput,
+  Section,
+  Select,
+  Slider,
+  Tooltip,
+  CrosshairIcon,
+  FloorIcon,
+  LayersIcon,
+  RotateLeftIcon,
+  RotateRightIcon,
+} from '../../design-system';
 import { wrapDegrees } from './partMath';
 import type { PartSectionProps } from './partSections';
 import { MATERIALS, type InspectorProps, type Phase } from './types';
@@ -22,21 +34,21 @@ export const PositionSection: React.FC<
       actions={
         <>
           <IconButton
-            icon={<ArrowDownToLine className="w-3.5 h-3.5" />}
+            icon={<FloorIcon className="w-3.5 h-3.5" />}
             title="Drop to floor"
             shortcut="F"
             size="xs"
             onClick={onDropToFloor}
           />
           <IconButton
-            icon={<Layers className="w-3.5 h-3.5" />}
+            icon={<LayersIcon className="w-3.5 h-3.5" />}
             title="Stack on part below"
             shortcut="S"
             size="xs"
             onClick={onStack}
           />
           <IconButton
-            icon={<Crosshair className="w-3.5 h-3.5" />}
+            icon={<CrosshairIcon className="w-3.5 h-3.5" />}
             title="Center on origin"
             size="xs"
             onClick={() => onUpdate({ position: [0, part.position[1], 0] })}
@@ -72,7 +84,7 @@ export const RotationSection: React.FC<PartSectionProps> = ({ part, onUpdate }) 
       title="Rotation"
       actions={
         <IconButton
-          icon={<RotateCcw className="w-3.5 h-3.5" />}
+          icon={<RotateLeftIcon className="w-3.5 h-3.5" />}
           title="Reset rotation"
           size="xs"
           disabled={part.rotation.every((r) => r === 0)}
@@ -101,7 +113,7 @@ export const RotationSection: React.FC<PartSectionProps> = ({ part, onUpdate }) 
               onClick={() => setRot(idx, part.rotation[idx] + 90)}
               className="w-full h-7 rounded-md text-[12px] text-white/50 hover:text-white/90 hover:bg-white/[0.06] flex items-center justify-center gap-1 cursor-default transition-colors"
             >
-              <RotateCw className="w-3 h-3" />
+              <RotateRightIcon className="w-3 h-3" />
               90°
             </button>
           </Tooltip>
@@ -125,7 +137,7 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
       actions={
         hasDeform ? (
           <IconButton
-            icon={<RotateCcw className="w-3.5 h-3.5" />}
+            icon={<RotateLeftIcon className="w-3.5 h-3.5" />}
             title="Reset shape"
             size="xs"
             onClick={() => onUpdate({ deformers: { taper: 0, bendDeg: 0, twistDeg: 0, roundness: 0 } })}

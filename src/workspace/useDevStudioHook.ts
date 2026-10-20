@@ -26,6 +26,11 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       setSelectedIds([]);
     },
     select: (ids) => setSelectedIds(ids),
+    guide: async () => {
+      const made = await core.guide.generate();
+
+      return made && { html: made.html, pages: made.record.pages, steps: made.record.steps };
+    },
   });
 
   useEffect(() => {

@@ -1,8 +1,7 @@
 import React from 'react';
-import { MessageCircle, Plus } from 'lucide-react';
 import type { SceneAnnotation } from '../../types/robotics';
 import { timeAgo } from '../../utils/timeAgo';
-import { IconButton, Section } from '../../design-system';
+import { IconButton, Section, CommentIcon, PlusIcon } from '../../design-system';
 import type { InspectorProps } from './types';
 
 const CommentRow: React.FC<{ annotation: SceneAnnotation; n: number; active: boolean; onOpen: () => void }> = ({
@@ -36,7 +35,7 @@ const CommentRow: React.FC<{ annotation: SceneAnnotation; n: number; active: boo
             {a.comments.length > 1 && (
               <>
                 <span>·</span>
-                <MessageCircle className="w-3 h-3" />
+                <CommentIcon className="w-3 h-3" />
                 <span className="tabular">{a.comments.length - 1}</span>
               </>
             )}
@@ -59,7 +58,7 @@ export const CommentsSection: React.FC<InspectorProps & { list: SceneAnnotation[
     className={list.length === 0 ? 'pb-1' : ''}
     actions={
       <IconButton
-        icon={<Plus className="w-3.5 h-3.5" />}
+        icon={<PlusIcon className="w-3.5 h-3.5" />}
         title="Add comment"
         shortcut="M"
         size="xs"

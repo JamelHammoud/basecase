@@ -41,8 +41,16 @@ function send(id) {
   };
 }
 
+function clickOnly(id) {
+  return (_item, _window, event) => {
+    if (event?.triggeredByAccelerator) return;
+
+    send(id)();
+  };
+}
+
 function item(label, id, accelerator, extra = {}) {
-  return { label, click: send(id), accelerator, registerAccelerator: false, ...extra };
+  return { label, click: clickOnly(id), accelerator, registerAccelerator: false, ...extra };
 }
 
 const separator = { type: 'separator' };
@@ -53,7 +61,7 @@ function appMenu() {
     submenu: [
       { role: 'about' },
       separator,
-      { label: 'Settings…', accelerator: 'CmdOrCtrl+,', click: send('settings') },
+      { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: send('settings') },
       separator,
       { role: 'services' },
       separator,
@@ -71,15 +79,15 @@ function fileMenu(isMac) {
     label: 'File',
     submenu: [
       item('New Scene', 'new-scene', 'CmdOrCtrl+T'),
+      item('Open Scene…', 'open-scenes', 'CmdOrCtrl+O'),
       item('Reopen Closed Scene', 'reopen-tab', 'Shift+CmdOrCtrl+T', { enabled: state.canReopenTab }),
       separator,
-      item('Save Scene', 'sync', 'CmdOrCtrl+S'),
       item('Export STL', 'export-stl', undefined, { enabled: state.hasParts }),
       separator,
-      item('Add Reference Image…', 'add-reference-image'),
-      item('Import SVG…', 'import-svg'),
-      item('Import Robot…', 'import-robot'),
-      item('Import BVH…', 'import-bvh'),
+      item('Add Reference Image', 'add-reference-image'),
+      item('Import SVG', 'import-svg'),
+      item('Import Robot', 'import-robot'),
+      item('Import BVH', 'import-bvh'),
       separator,
       item('Close Scene', 'close-tab', 'CmdOrCtrl+W'),
       isMac ? { role: 'close', label: 'Close Window', accelerator: 'Shift+CmdOrCtrl+W' } : { role: 'quit' },
@@ -102,8 +110,8 @@ function editMenu(isMac) {
       item('Duplicate', 'duplicate', 'CmdOrCtrl+D', { enabled: state.hasSelection }),
       item('Delete', 'delete', 'Backspace', { enabled: state.hasSelection }),
       separator,
-      item('Find Parts…', 'find-parts', 'CmdOrCtrl+F'),
-      ...(isMac ? [] : [separator, { label: 'Settings…', accelerator: 'Ctrl+,', click: send('settings') }]),
+      item('Find Parts', 'find-parts', 'CmdOrCtrl+F'),
+      ...(isMac ? [] : [separator, { label: 'Settings', accelerator: 'Ctrl+,', click: send('settings') }]),
     ],
   };
 }

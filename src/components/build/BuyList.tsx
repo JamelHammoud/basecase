@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { FileSpreadsheet } from 'lucide-react';
-import { IconButton, MenuItem, PopoverMenu, Section } from '../../design-system';
+import { IconButton, MenuItem, PopoverMenu, Section, SpreadsheetIcon } from '../../design-system';
 import type { Bom, BomCategory, BomLine } from '../../utils/bom';
 import { BuyRow } from './BuyRow';
 import { plural } from './format';
@@ -26,9 +25,12 @@ const ExportBomMenu: React.FC<Pick<BuyListProps, 'onExportCsv' | 'onExportMarkdo
   return (
     <div className="relative" ref={ref}>
       <IconButton
-        icon={<FileSpreadsheet className="w-4 h-4" />}
+        icon={<SpreadsheetIcon className="w-4 h-4" />}
         title="Export BOM"
         size="xs"
+        isToggled={menu}
+        aria-haspopup="menu"
+        aria-expanded={menu}
         onClick={() => setMenu((v) => !v)}
       />
       <PopoverMenu

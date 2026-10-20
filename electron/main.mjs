@@ -1,15 +1,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { app, BrowserWindow, ipcMain, nativeTheme, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, safeStorage, shell } from 'electron';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { installAppMenu, updateAppMenuState } from './app-menu.mjs';
+import { registerGuideHandlers } from './guidePdf.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, '..');
 
-const backend = new BasecaseBackendService(workspaceRoot);
+const backend = new BasecaseBackendService(workspaceRoot, {
+  secrets: {
+    available: () => app.isReady() && safeStorage.isEncryptionAvailable(),
+    encrypt: (value) => safeStorage.encryptString(value).toString('base64'),
+    decrypt: (sealed) => safeStorage.decryptString(Buffer.from(sealed, 'base64')),
+  },
+});
 let mainWindow = null;
 
 app.setName('Basecase');
@@ -85,6 +92,8 @@ backend.onEvent((event) => {
 
 ipcMain.handle('acp:status', (_e, workspaceId) => backend.getAcpStatus(workspaceId));
 ipcMain.handle('acp:connect', (_e, cmd) => backend.connectAcpAgent(cmd));
+ipcMain.handle('acp:authenticate', (_e, methodId) => backend.authenticateAcpAgent(methodId));
+ipcMain.handle('acp:set-api-key', (_e, key) => backend.setAgentApiKey(key));
 ipcMain.handle('acp:prompt', (_e, payload) => backend.sendAcpPrompt(payload));
 ipcMain.handle('acp:steer', (_e, payload) => backend.steerAcpPrompt(payload));
 ipcMain.handle('acp:cancel', (_e, workspaceId) => backend.cancelAcpPrompt(workspaceId));
@@ -119,6 +128,7 @@ ipcMain.handle('library:get-scene', (_e, sceneId) => backend.getScene(sceneId));
 ipcMain.handle('library:save-scene-preview', (_e, payload) => backend.saveScenePreview(payload));
 ipcMain.handle('library:save-scene', (_e, scenePayload) => backend.saveScene(scenePayload));
 ipcMain.handle('library:delete-scene', (_e, sceneId) => backend.deleteScene(sceneId));
+registerGuideHandlers(ipcMain, backend.libraryDir);
 
 app.whenReady().then(async () => {
   nativeTheme.themeSource = 'dark';

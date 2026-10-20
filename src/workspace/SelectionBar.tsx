@@ -1,5 +1,14 @@
-import { Group, SquaresIntersect, SquaresSubtract, SquaresUnite, Ungroup } from 'lucide-react';
-import { Button, FloatingIsland, IconButton, IslandDivider } from '../design-system';
+import {
+  Button,
+  FloatingIsland,
+  IconButton,
+  IslandDivider,
+  GroupIcon,
+  IntersectIcon,
+  SubtractIcon,
+  UngroupIcon,
+  UnionIcon,
+} from '../design-system';
 import type { ScenePart } from '../types/robotics';
 import type { BooleanOp } from './useSelectionOps';
 
@@ -20,7 +29,7 @@ export function SelectionBar({ selectedParts, onBoolean, onGroup, onUngroup }: S
       <Button
         size="sm"
         variant="ghost"
-        icon={<SquaresUnite className="w-4 h-4" />}
+        icon={<UnionIcon className="w-4 h-4" />}
         onClick={() => onBoolean('union')}
         title="Merge into one solid"
         tooltipSide="top"
@@ -30,7 +39,7 @@ export function SelectionBar({ selectedParts, onBoolean, onGroup, onUngroup }: S
       <Button
         size="sm"
         variant="ghost"
-        icon={<SquaresSubtract className="w-4 h-4" />}
+        icon={<SubtractIcon className="w-4 h-4" />}
         onClick={() => onBoolean('subtract')}
         title={`Cut the others out of ${selectedParts[0].name}`}
         tooltipSide="top"
@@ -40,7 +49,7 @@ export function SelectionBar({ selectedParts, onBoolean, onGroup, onUngroup }: S
       <Button
         size="sm"
         variant="ghost"
-        icon={<SquaresIntersect className="w-4 h-4" />}
+        icon={<IntersectIcon className="w-4 h-4" />}
         onClick={() => onBoolean('intersect')}
         title="Keep only the shared volume"
         tooltipSide="top"
@@ -50,7 +59,7 @@ export function SelectionBar({ selectedParts, onBoolean, onGroup, onUngroup }: S
       <IslandDivider />
       {selectedParts.some((p) => p.group) ? (
         <IconButton
-          icon={<Ungroup className="w-4 h-4" />}
+          icon={<UngroupIcon className="w-4 h-4" />}
           title="Ungroup"
           shortcut="⇧⌘G"
           tooltipSide="top"
@@ -59,7 +68,7 @@ export function SelectionBar({ selectedParts, onBoolean, onGroup, onUngroup }: S
         />
       ) : (
         <IconButton
-          icon={<Group className="w-4 h-4" />}
+          icon={<GroupIcon className="w-4 h-4" />}
           title="Group"
           shortcut="⌘G"
           tooltipSide="top"

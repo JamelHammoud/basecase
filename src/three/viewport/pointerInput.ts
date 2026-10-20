@@ -1,4 +1,5 @@
 import type * as THREE from 'three';
+import type { MeasureTool } from './measureTool';
 import { floorPoint, hitPartId, rayAt, raycastParts } from './picking';
 import { SculptInput } from './sculptInput';
 import type { Vec3 } from './types';
@@ -24,9 +25,12 @@ export class PointerInput {
 
   private readonly gizmo: GizmoState;
 
-  constructor(ctx: ViewportContext, gizmo: GizmoState) {
+  private readonly measure: MeasureTool;
+
+  constructor(ctx: ViewportContext, gizmo: GizmoState, measure: MeasureTool) {
     this.ctx = ctx;
     this.gizmo = gizmo;
+    this.measure = measure;
     this.sculpt = new SculptInput(ctx);
   }
 
@@ -37,6 +41,7 @@ export class PointerInput {
       ['pointermove', (e: PointerEvent) => this.onMove(e)],
       ['pointerup', (e: PointerEvent) => this.onUp(e)],
       ['dblclick', (e: MouseEvent) => this.onDoubleClick(e)],
+      ['pointerleave', () => this.measure.leave()],
     ];
 
     listeners.forEach(([type, fn]) => canvas.addEventListener(type, fn as EventListener));
@@ -49,15 +54,22 @@ export class PointerInput {
   }
 
   private onDown(e: PointerEvent): void {
-    const { annotateMode, transformMode } = this.ctx.props();
+    const { annotateMode, measureMode, markMode, transformMode } = this.ctx.props();
 
     this.down = { x: e.clientX, y: e.clientY };
 
-    if (!annotateMode && transformMode === 'sculpt' && e.button === 0) this.sculpt.begin(e);
+    if (!annotateMode && !measureMode && !markMode && transformMode === 'sculpt' && e.button === 0)
+      this.sculpt.begin(e);
   }
 
   private onMove(e: PointerEvent): void {
     const cursor = this.ctx.stage.brushCursor;
+
+    if (this.ctx.props().measureMode) {
+      this.measure.hoverAt(e.clientX, e.clientY);
+
+      return;
+    }
 
     if (this.ctx.props().transformMode === 'sculpt') {
       this.sculpt.hover(e);
@@ -80,7 +92,13 @@ export class PointerInput {
       return;
     }
 
-    if (this.gizmo.dragging() || e.button !== 0 || this.moved(e)) {
+    if (this.gizmo.dragging() || e.button !== 0 || this.moved(e) || this.ctx.props().markMode) {
+      return;
+    }
+
+    if (this.ctx.props().measureMode) {
+      this.measureClick(e);
+
       return;
     }
 
@@ -91,6 +109,10 @@ export class PointerInput {
     }
 
     this.select(e);
+  }
+
+  private measureClick(e: PointerEvent): void {
+    if (!e.ctrlKey) this.measure.clickAt(e.clientX, e.clientY);
   }
 
   private placeAnnotation(e: PointerEvent): void {
@@ -123,8 +145,8 @@ export class PointerInput {
   }
 
   private onDoubleClick(e: MouseEvent): void {
-    const { annotateMode, transformMode, onSelectPart } = this.ctx.props();
-    const blocked = annotateMode || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
+    const { annotateMode, measureMode, markMode, transformMode, onSelectPart } = this.ctx.props();
+    const blocked = annotateMode || measureMode || markMode || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
 
     if (e.button !== 0 || additive(e) || blocked || this.moved(e)) {
       return;

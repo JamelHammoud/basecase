@@ -1,32 +1,34 @@
-import {
-  AlignCenterVertical,
-  ArrowDownToLine,
-  BookmarkPlus,
-  Box,
-  Copy,
-  Crosshair,
-  Download,
-  Eye,
-  EyeOff,
-  FileUp,
-  Group,
-  Image as ImageIcon,
-  Layers,
-  Lock,
-  MessageCircle,
-  PenTool,
-  Plus,
-  RotateCcw,
-  Save,
-  SquareDashedMousePointer,
-  SquaresIntersect,
-  SquaresSubtract,
-  SquaresUnite,
-  Trash2,
-  Ungroup,
-  Unlock,
-} from 'lucide-react';
 import { AlignControls } from '../components/AlignControls';
+import {
+  AlignCenterXIcon,
+  BookmarkAddIcon,
+  CommentIcon,
+  CopyIcon,
+  CrosshairIcon,
+  DeleteIcon,
+  DownloadIcon,
+  EraserIcon,
+  FileImportIcon,
+  FloorIcon,
+  GroupIcon,
+  HiddenIcon,
+  IntersectIcon,
+  LayersIcon,
+  LockIcon,
+  LookIcon,
+  MarkerIcon,
+  PenIcon,
+  PhotoIcon,
+  PlusIcon,
+  RotateLeftIcon,
+  RulerIcon,
+  SelectAllIcon,
+  ShapeIcon,
+  SubtractIcon,
+  UngroupIcon,
+  UnionIcon,
+  UnlockIcon,
+} from '../design-system';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
@@ -55,7 +57,7 @@ function sharedEntries({ core, actions }: ContextInputs) {
   return {
     align: {
       label: 'Align',
-      icon: <AlignCenterVertical className={ic} />,
+      icon: <AlignCenterXIcon className={ic} />,
       submenu: (close: () => void) => (
         <AlignControls
           count={Math.max(1, core.selectedIds.length)}
@@ -68,31 +70,31 @@ function sharedEntries({ core, actions }: ContextInputs) {
     drop: {
       label: 'Drop to Floor',
       shortcut: 'F',
-      icon: <ArrowDownToLine className={ic} />,
+      icon: <FloorIcon className={ic} />,
       onSelect: edits.dropToGround,
     } satisfies ContextMenuEntry,
     duplicate: {
       label: 'Duplicate',
       shortcut: '⌘D',
-      icon: <Copy className={ic} />,
+      icon: <CopyIcon className={ic} />,
       onSelect: ops.duplicateSelected,
     } satisfies ContextMenuEntry,
     selectAll: {
       label: 'Select All',
       shortcut: '⌘A',
-      icon: <SquareDashedMousePointer className={ic} />,
+      icon: <SelectAllIcon className={ic} />,
       disabled: core.parts.length === 0,
       onSelect: core.selection.selectAll,
     } satisfies ContextMenuEntry,
     saveToLibrary: {
       label: 'Save to Library',
-      icon: <BookmarkPlus className={ic} />,
+      icon: <BookmarkAddIcon className={ic} />,
       onSelect: () => void library.saveAsModel('selected'),
     } satisfies ContextMenuEntry,
     remove: {
       label: 'Delete',
       shortcut: '⌫',
-      icon: <Trash2 className={ic} />,
+      icon: <DeleteIcon className={ic} />,
       tone: 'danger',
       onSelect: ops.deleteSelected,
     } satisfies ContextMenuEntry,
@@ -108,13 +110,13 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
 
   return [
     { heading: `${core.selectedIds.length} parts` },
-    { label: 'Union', icon: <SquaresUnite className={ic} />, onSelect: () => ops.runBoolean('union') },
+    { label: 'Union', icon: <UnionIcon className={ic} />, onSelect: () => ops.runBoolean('union') },
     {
       label: `Subtract from ${selectedParts[0]?.name ?? 'First'}`,
-      icon: <SquaresSubtract className={ic} />,
+      icon: <SubtractIcon className={ic} />,
       onSelect: () => ops.runBoolean('subtract'),
     },
-    { label: 'Intersect', icon: <SquaresIntersect className={ic} />, onSelect: () => ops.runBoolean('intersect') },
+    { label: 'Intersect', icon: <IntersectIcon className={ic} />, onSelect: () => ops.runBoolean('intersect') },
     { divider: true },
     shared.align,
     shared.drop,
@@ -126,11 +128,11 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     })),
     { divider: true },
     ...(selectedParts.some((p) => p.hardware)
-      ? [{ label: 'Add Clearance Holes', icon: <SquaresSubtract className={ic} />, onSelect: ops.addClearanceHole }]
+      ? [{ label: 'Add Clearance Holes', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
       : []),
-    { label: 'Group', shortcut: '⌘G', icon: <Group className={ic} />, onSelect: edits.group },
+    { label: 'Group', shortcut: '⌘G', icon: <GroupIcon className={ic} />, onSelect: edits.group },
     ...(selectedParts.some((p) => p.group)
-      ? [{ label: 'Ungroup', shortcut: '⇧⌘G', icon: <Ungroup className={ic} />, onSelect: edits.ungroup }]
+      ? [{ label: 'Ungroup', shortcut: '⇧⌘G', icon: <UngroupIcon className={ic} />, onSelect: edits.ungroup }]
       : []),
     shared.duplicate,
     shared.selectAll,
@@ -144,12 +146,12 @@ function partFlagItems(part: ScenePart, setFlag: (patch: Partial<ScenePart>) => 
   return [
     {
       label: part.locked ? 'Unlock' : 'Lock',
-      icon: part.locked ? <Unlock className={ic} /> : <Lock className={ic} />,
+      icon: part.locked ? <UnlockIcon className={ic} /> : <LockIcon className={ic} />,
       onSelect: () => setFlag({ locked: !part.locked }),
     },
     {
       label: part.visible ? 'Hide' : 'Show',
-      icon: part.visible ? <EyeOff className={ic} /> : <Eye className={ic} />,
+      icon: part.visible ? <HiddenIcon className={ic} /> : <LookIcon className={ic} />,
       onSelect: () => setFlag({ visible: !part.visible }),
     },
   ];
@@ -164,7 +166,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
   return [
     { heading: part.name },
     ...(part.hardware
-      ? [{ label: 'Add Clearance Hole', icon: <SquaresSubtract className={ic} />, onSelect: ops.addClearanceHole }]
+      ? [{ label: 'Add Clearance Hole', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
       : []),
     shared.duplicate,
     shared.selectAll,
@@ -173,14 +175,14 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     { divider: true },
     shared.align,
     shared.drop,
-    { label: 'Stack on Part Below', shortcut: 'S', icon: <Layers className={ic} />, onSelect: edits.stackOnBelow },
+    { label: 'Stack on Part Below', shortcut: 'S', icon: <LayersIcon className={ic} />, onSelect: edits.stackOnBelow },
     {
       label: 'Reset Rotation',
-      icon: <RotateCcw className={ic} />,
+      icon: <RotateLeftIcon className={ic} />,
       disabled: part.rotation.every((r) => r === 0),
       onSelect: () => setFlag({ rotation: [0, 0, 0] }),
     },
-    { label: 'Zoom to Part', shortcut: 'Z', icon: <Crosshair className={ic} />, onSelect: ui.focusSelected },
+    { label: 'Zoom to Part', shortcut: 'Z', icon: <CrosshairIcon className={ic} />, onSelect: ui.focusSelected },
     { divider: true },
     ...ROLE_ENTRIES.map(({ label, role }) => ({
       label,
@@ -190,7 +192,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     { divider: true },
     {
       label: 'Subtract Overlapping Cutouts',
-      icon: <SquaresSubtract className={ic} />,
+      icon: <SubtractIcon className={ic} />,
       onSelect: () => ops.runBoolean('subtract'),
     },
     ...(part.group
@@ -198,7 +200,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
           {
             label: `Ungroup ${part.group.name}`,
             shortcut: '⇧⌘G',
-            icon: <Ungroup className={ic} />,
+            icon: <UngroupIcon className={ic} />,
             onSelect: edits.ungroup,
           },
         ]
@@ -214,32 +216,40 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
   const { tool, studio } = core;
   const shared = sharedEntries(inputs);
   const items: ContextMenuEntry[] = [
-    { label: 'Add Part…', shortcut: '⌘K', icon: <Plus className={ic} />, onSelect: () => ui.setPaletteOpen(true) },
+    { label: 'Add Part', shortcut: '⌘K', icon: <PlusIcon className={ic} />, onSelect: () => ui.setPaletteOpen(true) },
     ...commentHere,
     {
-      label: 'Add Reference Image…',
-      icon: <ImageIcon className={ic} />,
+      label: 'Add Reference Image',
+      icon: <PhotoIcon className={ic} />,
       onSelect: () => actions.creation.pickReferenceImage(menu.point),
     },
-    { label: 'Sketch…', icon: <PenTool className={ic} />, onSelect: () => tool.openCreator('draw2d') },
-    { label: 'Import SVG…', icon: <FileUp className={ic} />, onSelect: () => tool.openCreator('svg') },
+    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: () => tool.openCreator('draw2d') },
+    {
+      label: 'Annotate',
+      shortcut: 'N',
+      icon: <MarkerIcon className={ic} />,
+      onSelect: () => tool.toggleMarking(true),
+    },
+    ...(core.marks.marks.length
+      ? [{ label: 'Clear Marks', icon: <EraserIcon className={ic} />, onSelect: core.marks.clear }]
+      : []),
+    { label: 'Import SVG', icon: <FileImportIcon className={ic} />, onSelect: () => tool.openCreator('svg') },
     { divider: true },
     shared.selectAll,
     { divider: true },
     ...CAMERA_VIEWS.map((v) => ({
       label: `${v.label} View`,
       shortcut: v.shortcut,
-      icon: <Box className={ic} />,
+      icon: <ShapeIcon className={ic} />,
       onSelect: () => ui.setCameraView(v.id),
     })),
-    { label: 'Reset View', icon: <Crosshair className={ic} />, onSelect: ui.resetView },
+    { label: 'Reset View', icon: <CrosshairIcon className={ic} />, onSelect: ui.resetView },
     { divider: true },
     { label: 'Show Grid', checked: studio.showGrid, onSelect: ui.toggleGrid },
     { divider: true },
-    { label: 'Save Scene', shortcut: '⌘S', icon: <Save className={ic} />, onSelect: () => void actions.library.sync() },
     {
       label: 'Export STL',
-      icon: <Download className={ic} />,
+      icon: <DownloadIcon className={ic} />,
       disabled: core.parts.length === 0,
       onSelect: actions.exports.exportStl,
     },
@@ -256,8 +266,17 @@ export function contextMenuItems(menu: CanvasMenuState, inputs: ContextInputs): 
         {
           label: 'Comment Here',
           shortcut: 'M',
-          icon: <MessageCircle className={ic} />,
+          icon: <CommentIcon className={ic} />,
           onSelect: () => core.annotations.place(point, menu.partId),
+        },
+        {
+          label: 'Measure From Here',
+          shortcut: 'D',
+          icon: <RulerIcon className={ic} />,
+          onSelect: () => {
+            core.viewportRef.current?.measureFrom(menu.x, menu.y);
+            core.tool.toggleMeasure(true);
+          },
         },
       ]
     : [];

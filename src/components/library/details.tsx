@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { CustomModelDefinition, SavedSceneSummary, ScenePart } from '../../types/robotics';
+import type { CustomModelDefinition, ScenePart } from '../../types/robotics';
 import { modelToParts } from '../../utils/libraryParts';
 import { timeAgo } from '../../utils/timeAgo';
 import { Button } from '../../design-system';
@@ -37,44 +37,6 @@ export const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) 
 );
 
 const fromCatalog = (parts: ScenePart[]) => parts.filter((p) => p.kind === 'component' || p.hardware).length;
-
-export const SceneDetails: React.FC<{
-  scene: SavedSceneSummary;
-  thumb: string | undefined;
-  isOpen: boolean;
-  isCurrent: boolean;
-  onOpen: () => void;
-}> = ({ scene, thumb, isOpen, isCurrent, onOpen }) => {
-  const size = scene.sizeMm;
-  const catalog = scene.catalogCount ?? 0;
-  const comments = scene.commentCount ?? 0;
-
-  return (
-    <div>
-      <DetailsHero thumb={thumb} />
-      <Header title={scene.name} subtitle={savedWhen(scene.updatedAt)} description={scene.globalGoal || undefined} />
-      <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
-        {size && (
-          <Stat label="Size" wide>
-            <SizeLine w={size[0]} h={size[1]} d={size[2]} />
-          </Stat>
-        )}
-        <Stat label="Parts">{scene.partCount}</Stat>
-        {catalog > 0 && <Stat label="From catalog">{catalog}</Stat>}
-        {comments > 0 && <Stat label="Comments">{comments}</Stat>}
-      </div>
-      {isCurrent ? (
-        <div className="h-4" />
-      ) : (
-        <div className="mt-3 border-t border-white/[0.07] p-3">
-          <Button variant="primary" size="sm" fullWidth onClick={onOpen}>
-            {isOpen ? 'Show Tab' : 'Open'}
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const MODEL_SOURCE: Record<CustomModelDefinition['sourceType'], string> = {
   'scene-selection': 'Saved from a scene',

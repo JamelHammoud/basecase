@@ -14,23 +14,17 @@ const require = createRequire(path.join(process.cwd(), 'package.json'));
 const { default: sharp } = await import(pathToFileURL(require.resolve('sharp')).href);
 const { default: icons } = await import(pathToFileURL(path.resolve(candFile)).href + '?' + Date.now());
 
-const lucideBody = async (name) => {
-  const file = path.join(path.dirname(require.resolve('lucide-react/package.json')), 'dist/esm/icons', `${name}.mjs`);
-  const { __iconData } = await import(pathToFileURL(file).href);
+const { GROUPS } = await import(pathToFileURL(path.resolve('tools/icons/library.mjs')).href);
+const LIBRARY = Object.assign({}, ...Object.values(GROUPS));
+const libBody = (name) => {
+  const ic = LIBRARY[name];
+  const spec = typeof ic === 'string' ? { d: ic } : ic;
 
-  return __iconData.node
-    .map(
-      ([tag, attrs]) =>
-        `<${tag} ${Object.entries(attrs)
-          .filter(([k]) => k !== 'key')
-          .map(([k, v]) => `${k}="${v}"`)
-          .join(' ')}/>`,
-    )
-    .join('');
+  return `<path d="${spec.d}"/>` + (spec.dots ? `<path d="${spec.dots}" stroke-width="${spec.dotSize ?? 4.5}"/>` : '');
 };
 
 for (const [name, ic] of Object.entries(icons)) {
-  if (typeof ic === 'string' && ic.startsWith('lucide:')) icons[name] = { o: await lucideBody(ic.slice(7)) };
+  if (typeof ic === 'string' && ic.startsWith('lib:')) icons[name] = { o: libBody(ic.slice(4)) };
 }
 
 const ATTRS = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';

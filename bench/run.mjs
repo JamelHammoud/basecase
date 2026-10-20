@@ -81,6 +81,7 @@ if (!givenApp) {
     'tsconfig.json',
     'tsconfig.app.json',
     'tsconfig.node.json',
+    'tsconfig.e2e.json',
   ].filter((f) => fs.existsSync(path.join(root, f))))
     fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
 

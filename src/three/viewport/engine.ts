@@ -1,13 +1,16 @@
 import type * as THREE from 'three';
 import { findInterferences } from '../interference';
 import { BlueprintUnderlay } from './blueprint';
-import { focusOn, frameObjects, setCameraPreset } from './cameraOps';
+import { focusOn, frameObjects, frameScene, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
 import { Gizmo } from './gizmo';
 import { installKeys } from './keys';
+import { MarkInput } from './markInput';
+import { MarkLayer } from './markLayer';
 import { Marquee } from './marquee';
 import * as measure from './measurements';
+import { MeasureTool } from './measureTool';
 import { PartLayer } from './partLayer';
 import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
@@ -24,6 +27,8 @@ const GIZMO_KEYS: Array<keyof ViewportProps> = [
   'parts',
   'poseJoint',
   'pose',
+  'measureMode',
+  'markMode',
 ];
 
 const FRAME_BUDGET_MS = 10;
@@ -42,6 +47,7 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'pickAt',
   'frameAll',
   'focusSelected',
+  'measureFrom',
 ];
 
 const changed = (a: ViewportProps, b: ViewportProps, keys: Array<keyof ViewportProps>) =>
@@ -50,6 +56,7 @@ const changed = (a: ViewportProps, b: ViewportProps, keys: Array<keyof ViewportP
 export interface EngineOptions {
   container: HTMLElement;
   marquee: () => HTMLElement | null;
+  measureLabel: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -70,6 +77,12 @@ export class ViewportEngine {
 
   private readonly blueprint: BlueprintUnderlay;
 
+  private readonly measureTool: MeasureTool;
+
+  private readonly markLayer: MarkLayer;
+
+  private readonly markInput: MarkInput;
+
   private readonly cleanups: Array<() => void>;
 
   private buildFrame = 0;
@@ -86,11 +99,16 @@ export class ViewportEngine {
       layer,
       loop,
       ui: options.ui,
-      runtime: { shiftHeld: false, draggingGizmo: false },
+      runtime: { shiftHeld: false, altHeld: false, draggingGizmo: false },
       props: () => this.props,
       applyPose: () => this.applyPose(),
     };
     this.gizmo = new Gizmo(this.ctx);
+    this.measureTool = new MeasureTool(this.ctx, options.measureLabel);
+    this.markLayer = new MarkLayer(stage.scene, stage.overlays);
+    this.markLayer.sync(options.props.marks, options.props.selectedMarkId);
+    this.markInput = new MarkInput(this.ctx, this.markLayer);
+    loop.afterRender.add(() => this.measureTool.updateLabel());
 
     const gizmoState = {
       dragging: () => this.ctx.runtime.draggingGizmo,
@@ -103,11 +121,16 @@ export class ViewportEngine {
     this.cleanups = [
       installWheel(stage, this.ctx.props),
       new Marquee(this.ctx, { element: options.marquee, hoveringAxis: gizmoState.hoveringAxis }).install(),
-      new PointerInput(this.ctx, gizmoState).install(),
-      installKeys(this.ctx, () => this.gizmo.applySnaps()),
+      this.markInput.install(),
+      new PointerInput(this.ctx, gizmoState, this.measureTool).install(),
+      installKeys(this.ctx, () => {
+        this.gizmo.applySnaps();
+        this.measureTool.refresh();
+      }),
     ];
     this.api = this.completing(this.handle());
     this.syncScene();
+    frameScene(stage, options.props.parts);
     loop.start();
   }
 
@@ -121,7 +144,11 @@ export class ViewportEngine {
     this.ctx.stage.gridGroup.visible = props.showGrid;
     this.blueprint.set(props.blueprintDataUrl ?? null);
 
+    if (props.sceneKey !== previous.sceneKey) frameScene(this.ctx.stage, props.parts);
+
     if (props.pose !== previous.pose) this.ctx.layer.pose = props.pose ?? new Map();
+
+    this.syncTools(previous, props);
 
     if (meshChanged || changed(previous, props, ['parts', 'selectedPartIds'])) this.syncScene();
     else if (props.pose !== previous.pose) this.applyPose();
@@ -132,12 +159,24 @@ export class ViewportEngine {
     this.ctx.loop.invalidate();
   }
 
+  private syncTools(previous: ViewportProps, props: ViewportProps): void {
+    if (previous.measureMode && !props.measureMode) this.measureTool.clear();
+
+    if (previous.measureUnit !== props.measureUnit) this.measureTool.updateLabel();
+
+    if (previous.markMode && !props.markMode) this.markInput.cancel();
+
+    if (changed(previous, props, ['marks', 'selectedMarkId'])) this.markLayer.sync(props.marks, props.selectedMarkId);
+  }
+
   dispose(): void {
     cancelAnimationFrame(this.buildFrame);
     this.ctx.loop.stop();
     this.cleanups.forEach((cleanup) => cleanup());
     this.sizer.dispose();
     this.gizmo.dispose();
+    this.measureTool.dispose();
+    this.markLayer.dispose();
     this.ctx.layer.dispose();
     disposeStage(this.ctx.stage);
   }
@@ -156,7 +195,13 @@ export class ViewportEngine {
     return {
       captureScreenshot: () => captureScreenshot(ctx, this.gizmo.controls.getHelper()),
       captureViews: (views, onlyIds, opts) =>
-        captureViews(ctx, { views, onlyIds, silhouette: opts?.silhouette, helper: this.gizmo.controls.getHelper() }),
+        captureViews(ctx, {
+          views,
+          onlyIds,
+          silhouette: opts?.silhouette,
+          helper: this.gizmo.controls.getHelper(),
+          marks: opts?.silhouette || onlyIds?.length ? undefined : this.markLayer.bounds(),
+        }),
       setCameraPreset: (preset) => camera(() => setCameraPreset(ctx.stage, preset)),
       focusSelected: () => camera(() => focusOn(ctx.stage, ctx.layer.get(this.props.selectedPartIds[0] ?? ''))),
       zoomBy: (factor) => camera(() => zoomCamera(ctx.stage, factor)),
@@ -176,6 +221,8 @@ export class ViewportEngine {
         withRest(() => measure.sweepClashes(ctx, { moving, origin, axis, anglesDeg })),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
       projectPoints: (points) => measure.projectPoints(ctx, points),
+      measureFrom: (x, y) => this.measureTool.startAt(x, y),
+      cancelMeasure: () => this.measureTool.clear(),
     };
   }
 

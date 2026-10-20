@@ -1,11 +1,11 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { SquarePen } from 'lucide-react';
-import { ReferenceImageRecord } from '../../types/robotics';
+import { AcpStatusInfo, AgentChoice, ReferenceImageRecord } from '../../types/robotics';
 import { EvidenceFolder, evidenceKind } from '../../utils/evidenceFiles';
-import { IconButton } from '../../design-system';
+import { IconButton, ComposeIcon } from '../../design-system';
 import { AttachMenu } from './AttachMenu';
 import { AttachmentTray } from './AttachmentTray';
 import { CyclingPlaceholder } from './CyclingPlaceholder';
+import { ModelMenu } from './ModelMenu';
 import { SendControls } from './SendControls';
 import { Attachments, readyFolders } from './useAttachments';
 import { OpenImages } from './types';
@@ -37,12 +37,28 @@ export const Composer: React.FC<{
   promptRef: React.RefObject<HTMLTextAreaElement | null>;
   attachRequest: number;
   isBusy: boolean;
-  isClaude: boolean;
+  agentName: string;
+  agent: AcpStatusInfo;
+  choice: AgentChoice;
+  onChoiceChange: (choice: AgentChoice) => void;
   onSubmit: (draft: ComposerSubmit) => Promise<void>;
   onStop: () => void;
   onNewChat: () => void;
   onOpenImages: OpenImages;
-}> = ({ attachments, promptRef, attachRequest, isBusy, isClaude, onSubmit, onStop, onNewChat, onOpenImages }) => {
+}> = ({
+  attachments,
+  promptRef,
+  attachRequest,
+  isBusy,
+  agentName,
+  agent,
+  choice,
+  onChoiceChange,
+  onSubmit,
+  onStop,
+  onNewChat,
+  onOpenImages,
+}) => {
   const [promptText, setPromptText] = useState('');
   const hasAttachments = attachments.images.length > 0 || attachments.folders.length > 0;
   const hasDraft = !!promptText.trim() || hasAttachments;
@@ -102,7 +118,7 @@ export const Composer: React.FC<{
             onChange={(e) => setPromptText(e.target.value)}
             onPaste={onPaste}
             onKeyDown={onKeyDown}
-            aria-label={`Message ${isClaude ? 'Claude' : 'the agent'}`}
+            aria-label={`Message ${agentName}`}
             className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/95 outline-none"
           />
           {!promptText && <CyclingPlaceholder key={exampleSet} examples={EXAMPLES[exampleSet]} />}
@@ -116,7 +132,7 @@ export const Composer: React.FC<{
           />
 
           <IconButton
-            icon={<SquarePen className="w-4 h-4" />}
+            icon={<ComposeIcon className="w-[18px] h-[18px]" />}
             title="New chat"
             tooltipSide="top"
             size="sm"
@@ -126,6 +142,8 @@ export const Composer: React.FC<{
           />
 
           <div className="flex-1" />
+
+          <ModelMenu agent={agent} choice={choice} onChange={onChoiceChange} />
 
           <SendControls isBusy={isBusy} hasDraft={hasDraft} canSend={canSend} onStop={onStop} onSend={submit} />
         </div>

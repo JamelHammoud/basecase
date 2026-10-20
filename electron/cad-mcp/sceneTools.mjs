@@ -8,7 +8,7 @@ export const getScene = {
   config: {
     title: 'Read scene',
     description:
-      'Lists every part: id, name, kind (cad part or primitive), placement, world bounding box [min,max] in mm (z up), color, group, role. CAD parts also report volume. Call first, and whenever the user may have edited the scene.',
+      'Lists every part: id, name, kind (cad part or primitive), placement, world bounding box [min,max] in mm (z up), color, group, role. CAD parts also report volume. `marks` (when present) lists the strokes the user drew on the canvas: colour, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). Call first, and whenever the user may have edited the scene.',
     inputSchema: {},
   },
   handler: async () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Eye, EyeOff, Group, Lock, Unlock } from 'lucide-react';
+import { ChevronRightIcon, GroupIcon, HiddenIcon, LockIcon, LookIcon, UnlockIcon } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 
 const ROW = 'group h-8 rounded-lg flex items-center text-[13px] cursor-default transition-colors';
@@ -121,13 +121,13 @@ export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimme
         on={part.locked}
         onClick={() => on.onToggle(part.id, 'locked')}
         title={part.locked ? 'Unlock' : 'Lock'}
-        icons={[<Lock key="on" className="w-3.5 h-3.5" />, <Unlock key="off" className="w-3.5 h-3.5" />]}
+        icons={[<LockIcon key="on" className="w-3.5 h-3.5" />, <UnlockIcon key="off" className="w-3.5 h-3.5" />]}
       />
       <RowToggle
         on={!part.visible}
         onClick={() => on.onToggle(part.id, 'visible')}
         title={part.visible ? 'Hide' : 'Show'}
-        icons={[<EyeOff key="on" className="w-3.5 h-3.5" />, <Eye key="off" className="w-3.5 h-3.5" />]}
+        icons={[<HiddenIcon key="on" className="w-3.5 h-3.5" />, <LookIcon key="off" className="w-3.5 h-3.5" />]}
       />
     </div>
   </li>
@@ -169,9 +169,9 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
       }}
       className="w-5 h-5 rounded flex items-center justify-center text-white/40 hover:text-white/80 cursor-default"
     >
-      <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
+      <ChevronRightIcon className={`w-3.5 h-3.5 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
     </button>
-    <Group className="w-3.5 h-3.5 text-white/50 shrink-0" />
+    <GroupIcon className="w-3.5 h-3.5 text-white/50 shrink-0" />
     {editing ? (
       <RenameInput
         current={name}

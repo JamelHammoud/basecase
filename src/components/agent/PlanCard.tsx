@@ -1,14 +1,13 @@
 import React from 'react';
-import { Check, Circle, Loader2 } from 'lucide-react';
 import { AcpPlanEntry } from '../../types/robotics';
-import { AGENT_COLOR } from '../../design-system';
+import { AGENT_COLOR, CircleIcon, SpinnerIcon, TickIcon } from '../../design-system';
 
 type PlanStatus = AcpPlanEntry['status'];
 
 const STATUS_ICON: Record<PlanStatus, React.ReactNode> = {
-  completed: <Check className="w-3.5 h-3.5 text-emerald-400" strokeWidth={2.5} />,
-  in_progress: <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: AGENT_COLOR }} />,
-  pending: <Circle className="w-3 h-3 text-white/25" />,
+  completed: <TickIcon className="w-3.5 h-3.5 text-white/40" strokeWidth={2.5} />,
+  in_progress: <SpinnerIcon className="w-3.5 h-3.5 animate-spin" style={{ color: AGENT_COLOR }} />,
+  pending: <CircleIcon className="w-3 h-3 text-white/25" />,
 };
 
 const STATUS_TEXT: Record<PlanStatus, string> = {

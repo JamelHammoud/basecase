@@ -1,4 +1,4 @@
-export const TAB_GAP = 2;
+export const TAB_GAP = 6;
 
 export interface TabBox {
   left: number;

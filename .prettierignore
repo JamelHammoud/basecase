@@ -11,3 +11,4 @@ tools/parts/generated
 electron/trainer/.venv
 package-lock.json
 *.md
+scratch

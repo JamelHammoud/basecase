@@ -11,6 +11,8 @@ export interface AgentOpsContext {
   setCursor: (target: Vec3) => void;
   setAction: (action: string) => void;
   isFollowing: () => boolean;
+  guard: (partId: string) => string | null;
+  touch: (partId: string) => void;
 }
 
 interface OpLog {
@@ -37,6 +39,20 @@ const VERBS: Record<AgentOp['op'], string> = {
 
 const OP_DELAY_MS = { add: 260, other: 160, mirrorCopy: 140, settle: 30 };
 
+function claim(ctx: AgentOpsContext, log: OpLog, partId: string) {
+  const blocked = ctx.guard(partId);
+
+  if (blocked) {
+    log.problems.push(blocked);
+
+    return false;
+  }
+
+  ctx.touch(partId);
+
+  return true;
+}
+
 function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   let part: ScenePart;
 
@@ -47,6 +63,8 @@ function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
 
     return false;
   }
+
+  if (!claim(ctx, log, part.id)) return false;
 
   const exists = current.some((p) => p.id === part.id);
 
@@ -64,6 +82,8 @@ function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
     return true;
   }
 
+  if (!claim(ctx, log, op.part.id)) return false;
+
   ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? applySpec(p, op.part) : p)), live);
   log.updated.push(op.part.id);
 
@@ -73,6 +93,8 @@ function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 function applyDelete({ op, current, live, ctx, log }: OpStep<'delete'>) {
   if (!current.some((p) => p.id === op.id)) log.problems.push(`${op.id} not found`);
 
+  if (!claim(ctx, log, op.id)) return false;
+
   ctx.commitParts((prev) => prev.filter((p) => p.id !== op.id), live);
   log.removed.push(op.id);
 
@@ -80,7 +102,7 @@ function applyDelete({ op, current, live, ctx, log }: OpStep<'delete'>) {
 }
 
 async function applyMirror({ op, current, live, ctx, log }: OpStep<'mirror'>) {
-  const copies = mirrorParts(current, op.ids, op.axis, op.rename);
+  const copies = mirrorParts(current, op.ids, op.axis, op.rename).filter((c) => claim(ctx, log, c.id));
 
   for (let j = 0; j < copies.length; j++) {
     const c = copies[j];

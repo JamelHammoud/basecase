@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, ImageOff } from 'lucide-react';
-import { IconButton, SectionHeader } from '../../design-system';
+import { IconButton, SectionHeader, PhotoIcon, PhotoOffIcon } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 import { GroupRow, PartRow } from './LayerItems';
 import { layerRows, layersTitle, overallSize } from './layerRows';
@@ -29,7 +28,7 @@ const HeaderActions: React.FC<{ props: LayersViewProps }> = ({ props }) => {
       )}
       {hasImages && (
         <IconButton
-          icon={shown ? <ImageIcon className="w-3.5 h-3.5" /> : <ImageOff className="w-3.5 h-3.5" />}
+          icon={shown ? <PhotoIcon className="w-3.5 h-3.5" /> : <PhotoOffIcon className="w-3.5 h-3.5" />}
           title={shown ? 'Hide reference images' : 'Show reference images'}
           shortcut="⇧I"
           size="xs"

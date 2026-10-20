@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { FolderInput } from 'lucide-react';
-import { Button, Modal, TextInput } from '../design-system';
+import { Button, Modal, TextInput, FolderImportIcon } from '../design-system';
 
 export const ImportRobotSheet: React.FC<{
   open: boolean;
@@ -17,12 +16,12 @@ export const ImportRobotSheet: React.FC<{
       isOpen={open}
       onClose={onClose}
       title="Import Robot"
-      icon={<FolderInput className="w-4 h-4" />}
+      icon={<FolderImportIcon className="w-4 h-4" />}
       maxWidth="max-w-[520px]"
       footer={
         <div className="flex items-center justify-between w-full">
           <Button variant="secondary" size="sm" onClick={() => folderRef.current?.click()}>
-            Choose Folder…
+            Choose Folder
           </Button>
           <div className="flex gap-[8px]">
             <Button variant="ghost" size="sm" onClick={onClose}>

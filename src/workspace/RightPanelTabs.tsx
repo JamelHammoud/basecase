@@ -1,5 +1,6 @@
 import { ChatHistory } from '../components/ChatHistory';
 import { AgentSpinner, PanelTabs, type PanelTab } from '../design-system';
+import { runningChats } from './agentLanes';
 import type { RightTab } from './types';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -13,7 +14,7 @@ const HISTORY_INSET = 16;
 
 export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
   const { studio, tool, onRobot, posing } = core;
-  const { chat, run } = agent;
+  const { chat, current, lanes } = agent;
   const tabs: PanelTab<RightTab>[] = [
     { value: 'inspector', label: 'Inspect' },
     ...(onRobot ? [{ value: 'pose' as const, label: 'Pose' }] : []),
@@ -22,15 +23,15 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
     {
       value: 'acp',
       label: 'Agent',
-      indicator: run.isBusy ? <AgentSpinner /> : undefined,
+      indicator: agent.busy ? <AgentSpinner /> : undefined,
       menu: {
         title: 'History',
         className: '!p-0 overflow-hidden',
         content: (close) => (
           <ChatHistory
             chats={studio.chatList}
-            currentChatId={chat.chatId}
-            busy={run.isBusy}
+            running={runningChats(lanes.lanes, new Date())}
+            currentChatId={current.chatId}
             onOpenChat={chat.openChat}
             onDeleteChat={chat.deleteChat}
             onClose={close}

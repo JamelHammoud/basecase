@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent } from 'react';
 import { CAMERA_VIEWS } from '../data/cameraViews';
+import { isModalOpen } from '../design-system';
 import { isTextEntry } from './helpers';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -16,6 +17,8 @@ type KeyMap = Record<string, (e: KeyboardEvent) => void>;
 
 const isFormFocus = (el: Element | null) => isTextEntry(el) || el instanceof HTMLSelectElement;
 
+const keysGoElsewhere = () => isFormFocus(document.activeElement) || isModalOpen();
+
 const runKey = (map: KeyMap, key: string, e: KeyboardEvent, prevent: boolean) => {
   if (!Object.hasOwn(map, key)) return false;
 
@@ -29,19 +32,30 @@ const runKey = (map: KeyMap, key: string, e: KeyboardEvent, prevent: boolean) =>
 function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   'use memo';
 
-  const { tool, annotations, studio, undo, redo, selection, setSelectedIds } = core;
-  const { edits, ops, pose, library } = actions;
+  const { tool, annotations, studio, undo, redo, selection, setSelectedIds, viewportRef, marks } = core;
+  const { edits, ops, pose } = actions;
+
+  const leaveMeasure = () => {
+    if (!viewportRef.current?.cancelMeasure()) tool.toggleMeasure(false);
+  };
 
   const escape = () => {
     if (annotations.draft) annotations.setDraft(null);
     else if (annotations.activeId) annotations.setActiveId(null);
     else if (annotations.commentMode) annotations.toggleCommentMode(false);
+    else if (tool.measuring) leaveMeasure();
+    else if (tool.marking && marks.selected) marks.select(null);
+    else if (tool.marking) tool.toggleMarking(false);
     else setSelectedIds([]);
+  };
+
+  const deleteSelected = () => {
+    if (tool.marking && marks.selected) marks.remove(marks.selected.id);
+    else ops.deleteSelected();
   };
 
   const global: KeyMap = {
     k: ui.togglePalette,
-    s: () => void library.sync(),
     ',': () => studio.openSettings(),
   };
 
@@ -75,10 +89,12 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     s: edits.stackOnBelow,
     z: ui.focusSelected,
     m: () => annotations.toggleCommentMode(),
+    d: () => tool.toggleMeasure(),
+    n: () => tool.toggleMarking(),
     a: ui.toggleShapes,
     escape,
-    backspace: ops.deleteSelected,
-    delete: ops.deleteSelected,
+    backspace: deleteSelected,
+    delete: deleteSelected,
     ...Object.fromEntries(CAMERA_VIEWS.map((v, i) => [String(i + 1), () => ui.setCameraView(v.id)])),
   };
 
@@ -102,7 +118,7 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
       return;
     }
 
-    if (isFormFocus(document.activeElement) || blocked) return;
+    if (keysGoElsewhere() || blocked) return;
 
     if (mod) {
       runKey(maps.withMod, key, e, true);

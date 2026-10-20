@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react';
-import type {
-  AgentConversationSummary,
-  CustomModelDefinition,
-  ReferenceImageRecord,
-  SavedSceneSummary,
-} from '../types/robotics';
+import type { AgentConversationSummary, CustomModelDefinition, ReferenceImageRecord } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { sceneStore } from '../utils/sceneStore';
 
 export function useLibraries() {
   const [customModels, setCustomModels] = useState<CustomModelDefinition[]>([]);
-  const [savedScenes, setSavedScenes] = useState<SavedSceneSummary[]>([]);
   const [uploadedImages, setUploadedImages] = useState<ReferenceImageRecord[]>([]);
   const [chatList, setChatList] = useState<AgentConversationSummary[]>([]);
 
@@ -20,7 +15,7 @@ export function useLibraries() {
       .catch(() => {});
     platformBridge
       .listScenes()
-      .then(setSavedScenes)
+      .then(sceneStore.set)
       .catch(() => {});
     platformBridge
       .listImages()
@@ -35,8 +30,6 @@ export function useLibraries() {
   return {
     customModels,
     setCustomModels,
-    savedScenes,
-    setSavedScenes,
     uploadedImages,
     setUploadedImages,
     chatList,

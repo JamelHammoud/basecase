@@ -25,6 +25,8 @@ const DETACHED: Viewport3DHandle = {
   posedInterference: () => [],
   posedFloor: () => null,
   projectPoints: (points) => points.map(() => ({ x: 0, y: 0, visible: false })),
+  measureFrom: () => {},
+  cancelMeasure: () => false,
 };
 
 const canvasCursor = (props: ViewportProps) => {
@@ -32,13 +34,14 @@ const canvasCursor = (props: ViewportProps) => {
     return CURSORS.comment;
   }
 
-  return props.transformMode === 'sculpt' ? CURSORS.crosshair : CURSORS.arrow;
+  return props.measureMode || props.markMode || props.transformMode === 'sculpt' ? CURSORS.crosshair : CURSORS.arrow;
 };
 
 export const Viewport3D = React.forwardRef<Viewport3DHandle, ViewportProps>(function Viewport3D(props, ref) {
   const meshVersion = useComponentMeshVersion();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const marqueeRef = useRef<HTMLDivElement | null>(null);
+  const measureLabelRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<ViewportEngine | null>(null);
   const [spacePressed, setSpacePressed] = useState(false);
   const [snapBypassed, setSnapBypassed] = useState(false);
@@ -54,6 +57,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, ViewportProps>(func
     const engine = new ViewportEngine({
       container,
       marquee: () => marqueeRef.current,
+      measureLabel: () => measureLabelRef.current,
       ui: { setSnapBypassed, setSpacePressed },
       ...currentInput(),
     });
@@ -91,6 +95,12 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, ViewportProps>(func
           Snapping off
         </div>
       )}
+      <div
+        ref={measureLabelRef}
+        aria-live="polite"
+        className="absolute left-0 top-0 glass rounded-full h-8 px-3.5 items-center whitespace-pre text-[13px] tabular-nums pointer-events-none"
+        style={{ display: 'none' }}
+      />
       <div
         ref={marqueeRef}
         aria-hidden

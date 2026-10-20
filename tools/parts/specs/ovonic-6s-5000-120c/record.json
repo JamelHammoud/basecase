@@ -1,0 +1,83 @@
+{
+  "id": "ovonic-6s-5000-120c",
+  "name": "Ovonic 6S 5000 mAh 120C LiPo",
+  "manufacturer": "Ovonic",
+  "mpn": "O-120C-5000-6S1P-EC5",
+  "category": "power",
+  "description": "22.2 V 6S LiPo pack, 5000 mAh, 120C, with an EC5 plug. Sold in pairs.",
+  "specs": [
+    {
+      "label": "Chemistry",
+      "value": "Li-Po (lithium polymer), soft pouch cells in a shrink-wrapped pack"
+    },
+    {
+      "label": "Configuration",
+      "value": "6S1P"
+    },
+    {
+      "label": "Voltage",
+      "value": "22.2 V nominal, 25.2 V full (4.2 V per cell)"
+    },
+    {
+      "label": "Capacity",
+      "value": "5000 mAh (111 Wh on the label)"
+    },
+    {
+      "label": "Discharge",
+      "value": "120C continuous, 240C burst (hobby rating)"
+    },
+    {
+      "label": "Main connector",
+      "value": "EC5, 12 AWG silicone leads"
+    },
+    {
+      "label": "Balance connector",
+      "value": "JST-XH 7-pin"
+    },
+    {
+      "label": "Weight",
+      "value": "683 g ±20 g"
+    }
+  ],
+  "dimensions": {
+    "envelope": {
+      "x": 156,
+      "y": 44,
+      "z": 48,
+      "axes": "x = length 156 mm (lead end at +X), y = width 44 mm, z = height 48 mm. Ovonic draws it label face up (156 × 44 face on top) with the 48 mm cell stack vertical; lay it that way (bottom = the 156 × 44 face at z = 0), even though the 156 × 48 side is 4 mm larger."
+    },
+    "features": [
+      {
+        "label": "Overall",
+        "value": "156 × 44 × 48 mm (L × W × H)",
+        "source": "Ovonic spec list (ovonicshop.com and us.ovonicshop.com) and dimension image 6s-dimensions.jpg (156 mm, 44 mm, 48 mm)"
+      },
+      {
+        "label": "Body shape",
+        "value": "Rectangular soft pack: stacked pouch cells in black heat-shrink wrap, long edges visibly rounded (radius not given), flat faces. Label printed on the top face (no geometry).",
+        "source": "Ovonic product photos (attached)"
+      },
+      {
+        "label": "Lead end",
+        "value": "Both the main leads (red and black silicone wire) and the JST-XH balance lead leave the same short end, where the cell tabs are folded and covered by the wrap. Exit positions and lead lengths are not published. Leads and plugs are not modeled.",
+        "source": "Ovonic product photos (attached)"
+      },
+      {
+        "label": "Tolerances",
+        "value": "Length ±5 mm, width ±2 mm, height ±2 mm, weight ±20 g (\"dev.\" values on the spec list)",
+        "source": "Ovonic product page spec list"
+      }
+    ],
+    "source": "https://us.ovonicshop.com/products/ovonic-5000mah-6s-22-2v-120c-lipo-battery-pack-with-ec5-plug-for-rc-car-rc-truck-airplane-helicopter-boat-car-racing-rc-hobby"
+  },
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/s?k=Ovonic+6S+5000mAh+120C+LiPo+EC5",
+      "kind": "search"
+    },
+    "product": "https://us.ovonicshop.com/products/ovonic-5000mah-6s-22-2v-120c-lipo-battery-pack-with-ec5-plug-for-rc-car-rc-truck-airplane-helicopter-boat-car-racing-rc-hobby",
+    "datasheet": "https://cdn.shopify.com/s/files/1/0153/9135/9024/files/2_9b5fa9e7-a5bb-4a18-b994-4d9605226d64.jpg"
+  },
+  "notes": "Ovonic publishes no CAD and no dimensioned drawing: only L × W × H with tolerances (length ±5 mm, width and height ±2 mm, weight ±20 g) and product photos. Model the pack at the nominal L × W × H as one soft shrink-wrapped block (black wrap, label on the top face) with gently rounded long edges, the way the photos show it. The stated length is the pack body; the main leads and the balance lead both leave the same short end (pose: that end toward +X), and leads and plugs are not modeled. Edge radii, the lead-end tab fold and the lead exit positions are not dimensioned. Pose for this pack: label face up, 48 mm along Z (see envelope axes).",
+  "pose": "battery"
+}

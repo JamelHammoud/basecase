@@ -44,6 +44,12 @@ const acpBridge = {
   connectAcp: (agentCommand?: string): Promise<AcpStatusInfo> =>
     electron()?.connectAcp(agentCommand) ?? post('/acp-connect', { agentCommand }),
 
+  authenticateAcp: (methodId: string): Promise<AcpStatusInfo> =>
+    electron()?.authenticateAcp(methodId) ?? post('/acp-authenticate', { methodId }),
+
+  setAgentApiKey: (key: string): Promise<AcpStatusInfo> =>
+    electron()?.setAgentApiKey(key) ?? post('/acp-api-key', { key }),
+
   sendAcpPrompt: (payload: AcpPromptPayload): Promise<PromptResult> =>
     electron()?.sendAcpPrompt(payload) ??
     postOrThrow('/acp-prompt', payload, (body, res) =>
@@ -126,6 +132,15 @@ const libraryBridge = {
     electron()?.saveScene(scenePayload) ?? post('/save-scene', scenePayload),
   deleteScene: (sceneId: string): Promise<SavedSceneSummary[]> =>
     electron()?.deleteScene(sceneId) ?? post('/delete-scene', { sceneId }),
+
+  saveGuide: async (payload: { id: string; html: string }): Promise<{ ok: boolean; path?: string }> =>
+    (await electron()?.saveGuide(payload)) ?? { ok: false },
+
+  openGuide: async (id: string): Promise<boolean> => (await electron()?.openGuide(id)) ?? false,
+
+  revealGuide: async (id: string): Promise<boolean> => (await electron()?.revealGuide(id)) ?? false,
+
+  guideExists: async (id: string): Promise<boolean> => (await electron()?.guideExists(id)) ?? false,
 };
 
 const trainingBridge = {

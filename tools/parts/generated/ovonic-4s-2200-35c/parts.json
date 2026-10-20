@@ -1,0 +1,37 @@
+[
+ {
+  "id": "pack-body",
+  "name": "Ovonic 4S 2200 35C Pack Body",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   17,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 77,
+   "height": 34,
+   "depth": 34
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Ovonic O-35C-2200-4S1P-XT60 shrink-wrapped pack. Origin: bottom-face centre, Z up.\n// Envelope 77 x 34 x 34 mm (Ovonic spec list). Long edges (along X) rounded; radius not\n// published -> conservative 3 mm. Lead end (+X) kept flat: tab fold/lead exits not dimensioned.\nconst L = 77, W = 34, H = 34, r = 3;\n// YZ cross-section (rounded square) extruded along +X\nconst body = drawRoundedRectangle(W, H, r)\n  .sketchOnPlane('YZ', -L / 2)\n  .extrude(L)\n  .translate([0, 0, H / 2]);\nreturn body;",
+   "originOffset": [
+    0,
+    17,
+    0
+   ],
+   "baseSize": [
+    77,
+    34,
+    34
+   ]
+  }
+ }
+]

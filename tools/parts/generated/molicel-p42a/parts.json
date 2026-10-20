@@ -1,0 +1,72 @@
+[
+ {
+  "id": "p42a-can",
+  "name": "P42A Wrapped Can",
+  "color": "#1f6f7a",
+  "role": "solid",
+  "position": [
+   -0.25,
+   10.775,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   -90
+  ],
+  "dimensions": {
+   "width": 21.55,
+   "height": 69.65,
+   "depth": 21.55
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Molicel INR-21700-P42A wrapped steel can. Local: axis along Z, negative base at z=0.\n// D = 21.55 mm (datasheet max). Can length = 70.15 max height − 0.5 mm conservative cap.\nD = 21.55; L = 69.65; e = 0.4;   // e: small undimensioned edge break (inside envelope)\ncap_seat_d = 10.4; cap_seat = 0.2;  // shallow seat for the separate cap body\n$fn = 96;\ndifference() {\n  cyl(d = D, h = L, chamfer = e, anchor = BOT);\n  up(L - cap_seat) cyl(d = cap_seat_d, h = 1, anchor = BOT);\n}",
+   "originOffset": [
+    0,
+    34.825,
+    0
+   ],
+   "baseSize": [
+    21.55,
+    69.65,
+    21.55
+   ]
+  }
+ },
+ {
+  "id": "p42a-positive-cap",
+  "name": "P42A Positive Terminal Cap",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   34.725,
+   10.775,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   -90
+  ],
+  "dimensions": {
+   "width": 10,
+   "height": 0.7,
+   "depth": 10
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Positive terminal: plain flat cap. Diameter and height NOT dimensioned by Molicel;\n// conservative Ø10, standing 0.5 mm proud (sits 0.2 mm in a seat) so the cell is 70.15 mm max.\n$fn = 64;\ncyl(d = 10, h = 0.7, anchor = BOT);",
+   "originOffset": [
+    0,
+    0.35,
+    0
+   ],
+   "baseSize": [
+    10,
+    0.7,
+    10
+   ]
+  }
+ }
+]

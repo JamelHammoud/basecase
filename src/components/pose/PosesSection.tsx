@@ -1,6 +1,5 @@
 import React from 'react';
-import { BookmarkPlus, RotateCcw } from 'lucide-react';
-import { IconButton, Section } from '../../design-system';
+import { IconButton, Section, BookmarkAddIcon, RotateLeftIcon } from '../../design-system';
 import { isRestPose } from '../../utils/kinematics';
 import type { Posing } from '../../utils/usePosing';
 import { RenameField } from './RenameField';
@@ -20,14 +19,14 @@ export const PosesSection: React.FC<{
       actions={
         <>
           <IconButton
-            icon={<RotateCcw className="w-4 h-4" />}
+            icon={<RotateLeftIcon className="w-4 h-4" />}
             title="Rest pose"
             size="xs"
             disabled={!pose || isRestPose(pose)}
             onClick={() => posing.setRobotPose({ values: {} })}
           />
           <IconButton
-            icon={<BookmarkPlus className="w-4 h-4" />}
+            icon={<BookmarkAddIcon className="w-4 h-4" />}
             title="Save pose"
             size="xs"
             onClick={() => {

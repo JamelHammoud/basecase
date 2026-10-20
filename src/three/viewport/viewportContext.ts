@@ -10,6 +10,7 @@ export interface ViewportUi {
 
 export interface ViewportRuntime {
   shiftHeld: boolean;
+  altHeld: boolean;
   draggingGizmo: boolean;
 }
 

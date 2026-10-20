@@ -268,7 +268,7 @@ export function buildAIHandoffPayload(
   const mdLines: string[] = [
     `# Robotics Concept Spec: ${projectName}`,
     ``,
-    `> **Saved from Basecase** — Reference this file (\`ai-reference/DESIGN_BRIEF.md\` & \`ai-reference/design-spec.json\`) and \`ai-reference/preview.png\` to generate production-ready CAD (OpenSCAD / Build123d / CadQuery / STEP / STL).`,
+    `> **Saved from Basecase** — Reference this file (\`ai-reference/DESIGN_BRIEF.md\` & \`ai-reference/design-spec.json\`) and \`ai-reference/preview.webp\` to generate production-ready CAD (OpenSCAD / Build123d / CadQuery / STEP / STL).`,
     ``,
     `## 1. High-Level Design Intent`,
     globalDesignGoal || '_No global note provided; see individual part annotations below._',

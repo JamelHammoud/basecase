@@ -13,10 +13,23 @@ interface SceneViewportProps {
 }
 
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
-  const { viewportRef, studio, parts, selectedIds, selection, tool, annotations, posing, simTraining } = core;
+  const {
+    viewportRef,
+    scene,
+    studio,
+    parts,
+    project,
+    selectedIds,
+    selection,
+    tool,
+    annotations,
+    marks,
+    posing,
+    simTraining,
+  } = core;
   const { edits } = actions;
   const { sim } = simTraining;
-  const { run } = agent;
+  const { cursors, lanes } = agent;
   const { setDraft } = annotations;
   const shownParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
 
@@ -24,6 +37,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     <>
       <Viewport3D
         ref={viewportRef}
+        sceneKey={scene.sceneId}
         parts={shownParts}
         selectedPartIds={selectedIds}
         transformMode={tool.transformMode}
@@ -39,7 +53,15 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onMarqueeSelect={selection.marqueeSelect}
         onCommitSculptMesh={edits.commitSculptMesh}
         annotateMode={annotations.commentMode}
+        measureMode={tool.measuring}
+        measureUnit={studio.measureUnit}
         onPlaceAnnotation={annotations.place}
+        markMode={tool.marking}
+        marks={project.marks}
+        markColor={marks.color}
+        selectedMarkId={marks.selected?.id ?? null}
+        onAddMark={marks.add}
+        onSelectMark={marks.select}
         paused={!active}
         pose={posing.deltas}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
@@ -61,12 +83,16 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onToggleResolved={annotations.toggleResolved}
         onDeleteThread={annotations.deleteThread}
       />
-      <AgentCursor
-        viewportRef={viewportRef}
-        target={run.cursorTarget}
-        visible={run.isBusy && !!run.cursorTarget}
-        action={run.action || run.status}
-      />
+      {cursors.map((c) => (
+        <AgentCursor
+          key={c.actor}
+          viewportRef={viewportRef}
+          target={c.target}
+          visible={!!c.target}
+          name={c.name}
+          action={c.action || lanes.lanes.find((l) => c.actor === l.id)?.status}
+        />
+      ))}
     </>
   );
 }

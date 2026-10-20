@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
+import { CloseIcon } from './glyphs';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import { IconButton } from './IconButton';
 
 export interface ModalProps {
@@ -11,6 +11,7 @@ export interface ModalProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  headerActions?: React.ReactNode;
   maxWidth?: string;
 }
 
@@ -22,6 +23,7 @@ export const Modal: React.FC<ModalProps> = ({
   icon,
   children,
   footer,
+  headerActions,
   maxWidth = 'max-w-2xl',
 }) => {
   useEffect(() => {
@@ -64,7 +66,16 @@ export const Modal: React.FC<ModalProps> = ({
               {subtitle && <p className="text-[13px] text-white/50 mt-[2px]">{subtitle}</p>}
             </div>
           </div>
-          <IconButton icon={<X className="w-4 h-4" />} title="Close" shortcut="Esc" onClick={onClose} size="sm" />
+          <div className="flex items-center gap-[4px] shrink-0">
+            {headerActions}
+            <IconButton
+              icon={<CloseIcon className="w-4 h-4" />}
+              title="Close"
+              shortcut="Esc"
+              onClick={onClose}
+              size="sm"
+            />
+          </div>
         </div>
 
         <div className="px-[20px] pb-[20px] overflow-y-auto flex-1">{children}</div>

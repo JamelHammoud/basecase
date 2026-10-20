@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon } from './glyphs';
 import { AGENT_COLOR } from './theme';
 import { PopoverMenu } from './PopoverMenu';
 import { Tooltip } from './Tooltip';
@@ -154,7 +154,7 @@ function TabWithMenu<T extends string>({
 }) {
   return (
     <div ref={ref} className={`group/tab relative shrink-0 whitespace-nowrap ${open ? 'is-shown' : ''}`}>
-      <Tooltip label={menu.title} side="bottom" disabled={open}>
+      <Tooltip label={menu.title} side="bottom">
         <button
           type="button"
           role="tab"
@@ -175,7 +175,7 @@ function TabWithMenu<T extends string>({
             aria-hidden
           >
             <span className="min-w-0 overflow-hidden flex">
-              <ChevronDown
+              <ChevronDownIcon
                 className={`ml-[4px] w-3.5 h-3.5 shrink-0 opacity-0 -translate-x-[6px] transition-[opacity,translate,rotate] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] group-hover/tab:opacity-100 group-hover/tab:translate-x-0 group-[.is-shown]/tab:opacity-100 group-[.is-shown]/tab:translate-x-0 ${
                   open ? 'rotate-180 text-white/90' : 'text-white/55'
                 }`}

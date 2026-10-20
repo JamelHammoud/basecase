@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, Check, Loader2 } from 'lucide-react';
+import { AlertIcon, SpinnerIcon, TickIcon } from './glyphs';
 
 export interface ToastData {
   id: number;
@@ -18,9 +18,9 @@ export const Toast: React.FC<{ toast: ToastData; onDismiss: () => void }> = ({ t
       className="glass-menu rounded-full h-10 pl-3.5 pr-1.5 flex items-center gap-2 text-[13.5px] text-white/90 animate-toast-in"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
-      {tone === 'success' && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />}
-      {tone === 'error' && <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />}
-      {tone === 'progress' && <Loader2 className="w-3.5 h-3.5 text-white/60 animate-spin shrink-0" />}
+      {tone === 'success' && <TickIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />}
+      {tone === 'error' && <AlertIcon className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+      {tone === 'progress' && <SpinnerIcon className="w-3.5 h-3.5 text-white/60 animate-spin shrink-0" />}
       <span className={`truncate max-w-md ${toast.action ? '' : 'pr-1.5'}`}>{toast.message}</span>
       {toast.action && (
         <button

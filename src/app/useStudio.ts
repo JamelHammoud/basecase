@@ -18,19 +18,22 @@ export interface StudioSources {
   core: TabsCore;
   actions: ReturnType<typeof useTabActions>;
   tabList: TabListItem[];
+  openSceneList: () => void;
 }
 
-export function useStudio({ prefs, layout, libraries, agent, settings, core, actions, tabList }: StudioSources) {
+export function useStudio(sources: StudioSources) {
+  const { prefs, layout, libraries, agent, settings, core, actions, tabList, openSceneList } = sources;
   const { snapStepMm, setSnapStepMm, snapAngleDeg, trackpadMode, setTrackpadMode, showGrid, setShowGrid } = prefs;
-  const { sculptEnabled, showReferenceImages, setShowReferenceImages } = prefs;
+  const { sculptEnabled, measureUnit, showReferenceImages, setShowReferenceImages } = prefs;
   const { isLeftOpen, setIsLeftOpen, isRightOpen, setIsRightOpen, panelWidths, setPanelWidths } = layout;
   const { resizingPanel, setResizingPanel, setRightIslandWidth } = layout;
-  const { customModels, setCustomModels, savedScenes, setSavedScenes } = libraries;
+  const { customModels, setCustomModels } = libraries;
   const { uploadedImages, setUploadedImages, chatList, setChatList } = libraries;
-  const { acpStatus, reconnectAcp, agentTargetHeightMm } = agent;
+  const { acpStatus, reconnectAcp, signInAcp, saveAgentApiKey, agentTargetHeightMm, agentChoice, setAgentChoice } =
+    agent;
   const { settingsOpen, openSettings } = settings;
   const { register, reportMeta, newScene, selectTab } = core;
-  const { openScene, renameTab, closeTab, duplicateTab, reopenTab, cycleTab, focusChat, notify } = actions;
+  const { renameTab, closeTab, duplicateTab, reopenTab, cycleTab, focusChat, notify } = actions;
   const canReopenTab = core.closed.length > 0;
 
   return useMemo<StudioShared>(
@@ -38,6 +41,7 @@ export function useStudio({ prefs, layout, libraries, agent, settings, core, act
       snapStepMm,
       setSnapStepMm,
       snapAngleDeg,
+      measureUnit,
       trackpadMode,
       setTrackpadMode,
       showGrid,
@@ -55,15 +59,17 @@ export function useStudio({ prefs, layout, libraries, agent, settings, core, act
       setResizingPanel,
       customModels,
       setCustomModels,
-      savedScenes,
-      setSavedScenes,
       uploadedImages,
       setUploadedImages,
       chatList,
       setChatList,
       acpStatus,
       reconnectAcp,
+      signInAcp,
+      saveAgentApiKey,
       agentTargetHeightMm,
+      agentChoice,
+      setAgentChoice,
       settingsOpen,
       openSettings,
       tabs: tabList,
@@ -72,7 +78,7 @@ export function useStudio({ prefs, layout, libraries, agent, settings, core, act
       reportMeta,
       reportRightIsland: setRightIslandWidth,
       newScene,
-      openScene,
+      openSceneList,
       selectTab,
       renameTab,
       closeTab,
@@ -86,6 +92,7 @@ export function useStudio({ prefs, layout, libraries, agent, settings, core, act
       snapStepMm,
       setSnapStepMm,
       snapAngleDeg,
+      measureUnit,
       trackpadMode,
       setTrackpadMode,
       showGrid,
@@ -103,15 +110,17 @@ export function useStudio({ prefs, layout, libraries, agent, settings, core, act
       setResizingPanel,
       customModels,
       setCustomModels,
-      savedScenes,
-      setSavedScenes,
       uploadedImages,
       setUploadedImages,
       chatList,
       setChatList,
       acpStatus,
       reconnectAcp,
+      signInAcp,
+      saveAgentApiKey,
       agentTargetHeightMm,
+      agentChoice,
+      setAgentChoice,
       settingsOpen,
       openSettings,
       tabList,
@@ -120,7 +129,7 @@ export function useStudio({ prefs, layout, libraries, agent, settings, core, act
       reportMeta,
       setRightIslandWidth,
       newScene,
-      openScene,
+      openSceneList,
       selectTab,
       renameTab,
       closeTab,

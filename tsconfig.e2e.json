@@ -13,5 +13,5 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true
   },
-  "include": ["e2e", "vitest.config.ts", "vitest.e2e.config.ts"]
+  "include": ["e2e", "vitest.config.ts", "vitest.e2e.config.ts", "vitest.scratch.config.ts"]
 }

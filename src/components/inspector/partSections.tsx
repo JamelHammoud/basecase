@@ -1,9 +1,18 @@
 import React from 'react';
-import { BookmarkPlus, Copy, Trash2 } from 'lucide-react';
 import type { ScenePart } from '../../types/robotics';
 import type { ComponentInfo } from '../../data/components';
 import { ComponentLinks, ModelSource, SizeLine, SpecList } from '../PartDetails';
-import { IconButton, NumberInput, Section, SegmentedControl, Slider, TextInput } from '../../design-system';
+import {
+  IconButton,
+  NumberInput,
+  Section,
+  SegmentedControl,
+  Slider,
+  TextInput,
+  BookmarkAddIcon,
+  CopyIcon,
+  DeleteIcon,
+} from '../../design-system';
 import { imageStance, resizedDimensions, type DimensionKey, type ImageStance } from './partMath';
 import type { InspectorProps, Phase } from './types';
 
@@ -29,20 +38,20 @@ export const PartHeader: React.FC<
         />
       </div>
       <IconButton
-        icon={<Copy className="w-3.5 h-3.5" />}
+        icon={<CopyIcon className="w-3.5 h-3.5" />}
         title="Duplicate"
         shortcut="⌘D"
         size="xs"
         onClick={onDuplicate}
       />
       <IconButton
-        icon={<BookmarkPlus className="w-3.5 h-3.5" />}
+        icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
         title="Save to Library"
         size="xs"
         onClick={onSaveAsModel}
       />
       <IconButton
-        icon={<Trash2 className="w-3.5 h-3.5" />}
+        icon={<DeleteIcon className="w-3.5 h-3.5" />}
         title="Delete"
         shortcut="⌫"
         size="xs"

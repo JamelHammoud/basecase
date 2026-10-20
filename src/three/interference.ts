@@ -28,7 +28,7 @@ const RAY_DIRS = [
   new THREE.Vector3(0.09, -0.15, -1),
 ].map((v) => v.normalize());
 
-function worldGeometry(object: THREE.Object3D): THREE.BufferGeometry | null {
+export function worldGeometry(object: THREE.Object3D): THREE.BufferGeometry | null {
   const chunks: Float32Array[] = [];
 
   object.updateWorldMatrix(true, true);

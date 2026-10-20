@@ -29,7 +29,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
     robots: actions.robots,
     placeCustomModel: actions.creation.placeCustomModel,
   });
-  const canvasMenu = useCanvasMenu(core, agent.run.stopFollowing);
+  const canvasMenu = useCanvasMenu(core, agent.controls.stopFollowing);
   const drop = useCanvasDrop(core, actions);
 
   useWorkspaceKeys({ active, core, actions, ui });

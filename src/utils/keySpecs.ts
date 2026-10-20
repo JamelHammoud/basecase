@@ -83,6 +83,35 @@ const motorSpecs = (c: ComponentInfo, add: Add) =>
   add('Strength', strength(spec(c, 'Stall torque', 'Torque', 'Holding torque')));
 const rangeSpecs = (c: ComponentInfo, add: Add) => add('Range', plainValue(spec(c, 'Range') ?? ''));
 
+const firstSpec =
+  (...pairs: Array<[from: string, to: string]>) =>
+  (c: ComponentInfo, add: Add) => {
+    const hit = pairs.find(([from]) => spec(c, from));
+
+    if (hit) add(hit[1], plainValue(spec(c, hit[0])!));
+  };
+
+const sensorSpecs = firstSpec(['Range', 'Range'], ['Resolution', 'Resolution'], ['Operating force', 'Press force']);
+
+function powerSpecs(c: ComponentInfo, add: Add) {
+  if (c.battery) {
+    add('Voltage', `${c.battery.nominalV} V`);
+    add('Capacity', `${Math.round(c.battery.capacityAh * 1000)} mAh`);
+
+    return;
+  }
+
+  if (c.regulator) add('Output', `${c.regulator.vout} V, ${c.regulator.ioutA} A`);
+  else add('Holds', plainValue(spec(c, 'Holds') ?? ''));
+}
+
+const actuatorSpecs = (c: ComponentInfo, add: Add) => {
+  add('Stroke', plainValue(spec(c, 'Stroke') ?? ''));
+  add('Force', plainValue(spec(c, 'Force') ?? ''));
+};
+
+const mediaSpecs = firstSpec(['Screen', 'Screen'], ['Mics', 'Mics'], ['Power', 'Power'], ['Output', 'Output']);
+
 const GROUP_SPECS: Partial<Record<ComponentInfo['group'], (c: ComponentInfo, add: Add, count: () => number) => void>> =
   {
     Servos: motorSpecs,
@@ -101,11 +130,15 @@ const GROUP_SPECS: Partial<Record<ComponentInfo['group'], (c: ComponentInfo, add
 
       if (count() < 3) add('Runs on', plainValue(spec(c, 'Voltage') ?? ''));
     },
-    Sensors: rangeSpecs,
+    Sensors: sensorSpecs,
     LiDAR: rangeSpecs,
     'Depth Cameras': (c, add) =>
       add('Range', plainValue(spec(c, 'Depth range', 'Range') ?? '').replace(/\s*ideal$/, '')),
     Cameras: cameraSpecs,
+    Power: powerSpecs,
+    Wheels: (c, add) => add('Diameter', plainValue(spec(c, 'Diameter') ?? '')),
+    'Linear Actuators': actuatorSpecs,
+    'Displays & Audio': mediaSpecs,
   };
 
 export function keySpecs(c: ComponentInfo, size: { width: number; height: number; depth: number }): KeySpec[] {

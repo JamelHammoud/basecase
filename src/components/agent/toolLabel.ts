@@ -1,167 +1,53 @@
+import { ToolIcon as ToolPromptIcon } from '../../design-system';
 import { AcpToolCallEvent } from '../../types/robotics';
+import { DEFAULT_GROUP_LABEL, GROUP_LABELS } from './toolGroupLabels';
+import { HIDDEN_TOOLS, TOOL_RULES, ToolIcon, ToolLabel } from './toolRules';
 
-export interface ToolLabel {
-  title: string;
-  detail?: string;
-}
+export type { ToolLabel } from './toolRules';
 
-interface LabelContext {
-  input: Record<string, unknown>;
-  verb: (ing: string, ed: string) => string;
-}
+const MCP_NAME = /^mcp__.+?__/;
 
-type LabelRule = [keys: string[], label: (ctx: LabelContext) => ToolLabel | null];
+export const toolKey = (tc: AcpToolCallEvent) => {
+  const name = tc.toolName || tc.title || '';
 
-const list = (arr: unknown): unknown[] => (Array.isArray(arr) ? arr : []);
-
-const nameOf = (p: unknown) => (p as { name?: string; id?: string }).name ?? (p as { id?: string }).id ?? String(p);
-
-const names = (arr: unknown[]) =>
-  arr.map(nameOf).slice(0, 3).join(', ') + (arr.length > 3 ? ` +${arr.length - 3}` : '');
-
-const optional = (text: string) => text || undefined;
-
-const hostOf = (url: unknown) => {
-  try {
-    return new URL(String(url)).hostname;
-  } catch {
-    return '';
-  }
+  return name.replace(MCP_NAME, '').toLowerCase();
 };
 
-const counted = (text: string) => text.replace('  ', ' ');
+const ruleOf = (tc: AcpToolCallEvent) => {
+  const key = toolKey(tc);
 
-const partGroups = (parts: unknown[]) =>
-  Array.from(new Set(parts.map((p) => (p as { group?: string }).group).filter(Boolean))) as string[];
+  return TOOL_RULES.find((rule) => rule.keys.includes(key));
+};
 
-const RULES: LabelRule[] = [
-  [['set_status', 'todowrite', 'todo'], () => null],
-  [
-    ['model_part'],
-    ({ input, verb }) => ({
-      title: `${verb('Designing', 'Designed')} ${(input.name as string) || (input.id as string) || 'part'}`,
-      detail: input.language === 'replicad' ? 'OpenCascade' : 'OpenSCAD',
-    }),
-  ],
-  [
-    ['get_part_code'],
-    ({ input, verb }) => ({
-      title: verb('Reading part code', 'Read part code'),
-      detail: optional(String(input.id ?? '')),
-    }),
-  ],
-  [
-    ['add_parts'],
-    ({ input, verb }) => {
-      const parts = list(input.parts);
+const isCodeName = (text: string) => MCP_NAME.test(text) || /^[a-z0-9]+(_[a-z0-9]+)+$/.test(text);
 
-      return {
-        title: counted(`${verb('Blocking out', 'Blocked out')} ${parts.length || ''} parts`),
-        detail: optional(partGroups(parts).join(', ') || names(parts)),
-      };
-    },
-  ],
-  [
-    ['update_parts'],
-    ({ input, verb }) => {
-      const updates = list(input.updates);
+const humanized = (text: string) => {
+  const words = text.replace(MCP_NAME, '').replace(/_/g, ' ').trim();
 
-      return {
-        title: counted(`${verb('Adjusting', 'Adjusted')} ${updates.length || ''} parts`),
-        detail: optional(names(updates)),
-      };
-    },
-  ],
-  [
-    ['delete_parts'],
-    ({ input, verb }) => {
-      const ids = list(input.ids);
-
-      return { title: `${verb('Removing', 'Removed')} ${ids.length} parts`, detail: optional(names(ids)) };
-    },
-  ],
-  [
-    ['mirror_parts'],
-    ({ input, verb }) => {
-      const ids = list(input.ids);
-
-      return { title: `${verb('Mirroring', 'Mirrored')} ${ids.length} parts`, detail: optional(names(ids)) };
-    },
-  ],
-  [
-    ['compare'],
-    ({ input, verb }) => ({
-      title: verb('Comparing with', 'Compared with') + ` ${String(input.reference ?? 'the reference')}`,
-      detail: optional(list(input.views).join(', ')),
-    }),
-  ],
-  [
-    ['look'],
-    ({ input, verb }) => {
-      const ids = list(input.ids);
-
-      return {
-        title: ids.length
-          ? `${verb('Inspecting', 'Inspected')} ${names(ids)}`
-          : verb('Looking at the model', 'Looked at the model'),
-        detail: optional(list(input.views).join(', ')),
-      };
-    },
-  ],
-  [['check_scene'], ({ verb }) => ({ title: verb('Checking the model', 'Checked the model') })],
-  [
-    ['robot_skeleton'],
-    ({ input, verb }) => ({
-      title: verb('Reading the joint layout', 'Read the joint layout'),
-      detail:
-        String(input.url ?? '')
-          .split('/')
-          .pop() || undefined,
-    }),
-  ],
-  [['list_evidence'], ({ verb }) => ({ title: verb('Listing attached files', 'Listed attached files') })],
-  [
-    ['read_evidence'],
-    ({ input, verb }) => {
-      const paths = list(input.paths).map((p) => String(p).split('/').pop() ?? '');
-
-      return {
-        title: `${verb('Studying', 'Studied')} ${paths.length > 1 ? `${paths.length} attached files` : 'an attached file'}`,
-        detail: optional(names(paths)),
-      };
-    },
-  ],
-  [
-    ['find_images'],
-    ({ input, verb }) => ({ title: verb('Finding photos', 'Found photos'), detail: optional(hostOf(input.url)) }),
-  ],
-  [
-    ['view_image'],
-    ({ input, verb }) => {
-      const urls = list(input.urls);
-
-      return { title: `${verb('Looking at', 'Looked at')} ${urls.length > 1 ? `${urls.length} photos` : 'a photo'}` };
-    },
-  ],
-  [['get_scene'], ({ verb }) => ({ title: verb('Reading the scene', 'Read the scene') })],
-  [
-    ['websearch', 'web search'],
-    ({ input, verb }) => ({ title: verb('Searching', 'Searched'), detail: optional(String(input.query ?? '')) }),
-  ],
-  [
-    ['webfetch', 'fetch'],
-    ({ input, verb }) => ({ title: verb('Reading', 'Read'), detail: optional(hostOf(input.url)) }),
-  ],
-];
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
 
 export function toolLabel(tc: AcpToolCallEvent): ToolLabel | null {
-  const name = `${tc.toolName ?? ''} ${tc.title ?? ''}`.toLowerCase();
-  const done = tc.status === 'completed';
-  const ctx: LabelContext = {
-    input: (tc.rawInput ?? {}) as Record<string, unknown>,
-    verb: (ing, ed) => (done ? ed : ing),
-  };
-  const rule = RULES.find(([keys]) => keys.some((key) => name.includes(key)));
+  if (HIDDEN_TOOLS.includes(toolKey(tc))) return null;
 
-  return rule ? rule[1](ctx) : { title: tc.title || 'Tool' };
+  const rule = ruleOf(tc);
+  const done = tc.status === 'completed';
+
+  if (rule) {
+    return rule.label({ input: (tc.rawInput ?? {}) as Record<string, unknown>, verb: (ing, ed) => (done ? ed : ing) });
+  }
+
+  const title = tc.title || tc.toolName || 'Tool';
+
+  return { title: isCodeName(title) ? humanized(title) : title };
+}
+
+export const toolIcon = (tc: AcpToolCallEvent): ToolIcon => ruleOf(tc)?.icon ?? ToolPromptIcon;
+
+export const isToolRunning = (tc: AcpToolCallEvent) => tc.status === 'pending' || tc.status === 'in_progress';
+
+export function groupLabel(calls: AcpToolCallEvent[]): string {
+  const [ing, ed] = GROUP_LABELS[toolKey(calls[0])] ?? DEFAULT_GROUP_LABEL;
+
+  return (calls.some(isToolRunning) ? ing : ed).replace('#', String(calls.length));
 }

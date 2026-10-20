@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { THEME_COLORS } from '../../design-system/theme';
 import { roundedUpdate } from './transformRounding';
 import type { ViewportContext } from './viewportContext';
 
@@ -42,6 +43,7 @@ export class Gizmo {
 
     this.controls = new TransformControls(camera, renderer.domElement);
     this.controls.setSize(0.95);
+    this.controls.setColors(THEME_COLORS.axisX, THEME_COLORS.axisY, THEME_COLORS.axisZ, THEME_COLORS.gizmoActive);
     scene.add(this.controls.getHelper(), this.pivot, this.jointPivot, this.hand);
     this.controls.addEventListener('mouseDown', () => this.onDown());
     this.controls.addEventListener('objectChange', () => this.onChange());
@@ -72,11 +74,11 @@ export class Gizmo {
   }
 
   refresh(): void {
-    const { transformMode } = this.ctx.props();
+    const { transformMode, measureMode, markMode } = this.ctx.props();
 
     this.ctx.stage.brushCursor.visible = false;
 
-    if (transformMode === 'sculpt') {
+    if (transformMode === 'sculpt' || measureMode || markMode) {
       this.controls.detach();
     } else if (transformMode === 'pose') {
       this.attachJoint();

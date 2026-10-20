@@ -1,9 +1,7 @@
 import React from 'react';
-import { ArrowUpRight, BadgeCheck, Box, FileText, PencilRuler, ShoppingCart } from 'lucide-react';
 import { CatalogItem } from '../types/robotics';
 import { COMPONENT_BY_ID, ComponentInfo } from '../data/components';
 import {
-  BEARINGS,
   FINISHES,
   THREAD,
   hardwareFinish,
@@ -11,9 +9,10 @@ import {
   hardwareSubtitle,
   hardwareShopUrl,
   isMetric,
+  motionOf,
 } from '../data/hardware';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { Tooltip } from '../design-system';
+import { Tooltip, ArrowUpRightIcon, CartIcon, DrawingIcon, FileIcon, ShapeIcon, VerifiedIcon } from '../design-system';
 
 const fmt = (v: number) => String(Math.round(v * 100) / 100);
 
@@ -50,17 +49,17 @@ export const LinkButton: React.FC<{
 export const ComponentLinks: React.FC<{ c: ComponentInfo }> = ({ c }) => (
   <div className="flex flex-wrap gap-1.5">
     {c.links.amazon && (
-      <LinkButton href={c.links.amazon.url} icon={<ShoppingCart className="w-3.5 h-3.5" />} primary>
+      <LinkButton href={c.links.amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
         {c.links.amazon.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon'}
       </LinkButton>
     )}
     {c.links.datasheet && (
-      <LinkButton href={c.links.datasheet} icon={<FileText className="w-3.5 h-3.5" />}>
+      <LinkButton href={c.links.datasheet} icon={<FileIcon className="w-3.5 h-3.5" />}>
         Datasheet
       </LinkButton>
     )}
     {c.links.product && (
-      <LinkButton href={c.links.product} icon={<ArrowUpRight className="w-3.5 h-3.5" />}>
+      <LinkButton href={c.links.product} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />}>
         Product Page
       </LinkButton>
     )}
@@ -99,7 +98,7 @@ const modelSourceText = (c: ComponentInfo): string => {
 
 export const ModelSource: React.FC<{ c: ComponentInfo }> = ({ c }) => (
   <div className="flex items-start gap-1.5 text-[12px] text-white/45 leading-snug">
-    <Box className="w-3.5 h-3.5 mt-px shrink-0" />
+    <ShapeIcon className="w-3.5 h-3.5 mt-px shrink-0" />
     <span>
       {modelSourceText(c)}
       {c.model.license ? ` · ${c.model.license}` : ''}
@@ -132,14 +131,14 @@ interface HeroBadge {
 
 const sourceBadge = (c: ComponentInfo): HeroBadge => {
   if (c.model.source === 'manufacturer') {
-    return { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: `${c.model.by} CAD` };
+    return { icon: <VerifiedIcon className="w-3.5 h-3.5 text-[#0d99ff]" />, label: `${c.model.by} CAD` };
   }
 
   if (c.model.source === 'checked') {
-    return { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'Checked against drawing' };
+    return { icon: <VerifiedIcon className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'Checked against drawing' };
   }
 
-  return { icon: <PencilRuler className="w-3.5 h-3.5 text-white/60" />, label: 'From the drawing' };
+  return { icon: <DrawingIcon className="w-3.5 h-3.5 text-white/60" />, label: 'From the drawing' };
 };
 
 const heroBadge = (source: ComponentInfo | 'iso' | undefined): HeroBadge | undefined => {
@@ -150,7 +149,7 @@ const heroBadge = (source: ComponentInfo | 'iso' | undefined): HeroBadge | undef
   return source ? sourceBadge(source) : undefined;
 };
 
-const ISO_BADGE: HeroBadge = { icon: <BadgeCheck className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'ISO dimensions' };
+const ISO_BADGE: HeroBadge = { icon: <VerifiedIcon className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'ISO dimensions' };
 
 export const Hero: React.FC<
   {
@@ -221,16 +220,16 @@ export const BuyLinks: React.FC<{ c: ComponentInfo; primary?: boolean }> = ({ c,
   <>
     {c.links.amazon && (
       <div className="flex-1 min-w-0 [&>a]:w-full">
-        <LinkButton href={c.links.amazon.url} icon={<ShoppingCart className="w-3.5 h-3.5" />} primary={primary}>
+        <LinkButton href={c.links.amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary={primary}>
           {c.links.amazon.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon'}
         </LinkButton>
       </div>
     )}
     {c.links.datasheet && (
-      <IconLink href={c.links.datasheet} icon={<FileText className="w-3.5 h-3.5" />} label="Datasheet" />
+      <IconLink href={c.links.datasheet} icon={<FileIcon className="w-3.5 h-3.5" />} label="Datasheet" />
     )}
     {c.links.product && (
-      <IconLink href={c.links.product} icon={<ArrowUpRight className="w-3.5 h-3.5" />} label="Product page" />
+      <IconLink href={c.links.product} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />} label="Product page" />
     )}
   </>
 );
@@ -286,9 +285,12 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
             {size}
           </Stat>
           {isMetric(hw.size) && <Stat label="Thread">{`${hw.size} × ${THREAD[hw.size].pitch}`}</Stat>}
-          {hw.type === 'bearing' && (
-            <Stat label="Bore · OD">{`${BEARINGS[hw.size].d} · ${BEARINGS[hw.size].D} mm`}</Stat>
-          )}
+          {motionOf(hw.type)
+            ?.facts(hw)
+            .slice(0, 1)
+            .map((f) => (
+              <Stat key={f.label} label={f.label}>{`${f.value}${f.unit ? ` ${f.unit}` : ''}`}</Stat>
+            ))}
           <Stat label="Finish">
             <span className="inline-flex items-center gap-1.5">
               <span
@@ -301,7 +303,7 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
         </div>
         <Footer>
           <div className="flex-1 min-w-0 [&>a]:w-full">
-            <LinkButton href={hardwareShopUrl(hw)} icon={<ShoppingCart className="w-3.5 h-3.5" />} primary>
+            <LinkButton href={hardwareShopUrl(hw)} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
               Find on Amazon
             </LinkButton>
           </div>

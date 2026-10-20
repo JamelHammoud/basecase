@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
-import { FileUp, Plus } from 'lucide-react';
-import { Button, Section, TextArea } from '../../design-system';
+import { Button, Section, TextArea, FileImportIcon, PlusIcon } from '../../design-system';
 import { parseSvgTo3DNodes, type ParsedSvg3DResult } from '../../utils/svgTo3DParser';
 import { OutputFields } from './OutputFields';
 import { SAMPLE_ROBOTICS_SVGS } from './samples';
@@ -60,7 +59,7 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
         }}
         className="w-full rounded-xl border border-dashed border-white/[0.14] hover:border-[#0d99ff]/60 hover:bg-[#0d99ff]/[0.04] py-6 flex flex-col items-center gap-2 cursor-default transition-colors"
       >
-        <FileUp className="w-5 h-5 text-white/50" />
+        <FileImportIcon className="w-5 h-5 text-white/50" />
         <span className="text-[13.5px] text-white/85">Choose or drop an SVG</span>
         <span className="text-[12px] text-white/40">Paths, curves and holes become 3D</span>
       </button>
@@ -164,7 +163,7 @@ const SvgOutput: React.FC<{
       </div>
       <OutputFields draft={draft} spanLabel="Width" revolve={false} />
       <div className="grid grid-cols-2 gap-2 pt-1">
-        <Button size="md" onClick={() => handleBuildSvg3D(false)} icon={<Plus className="w-4 h-4" />}>
+        <Button size="md" onClick={() => handleBuildSvg3D(false)} icon={<PlusIcon className="w-4 h-4" />}>
           Add
         </Button>
         <Button size="md" variant="primary" onClick={() => handleBuildSvg3D(true)}>

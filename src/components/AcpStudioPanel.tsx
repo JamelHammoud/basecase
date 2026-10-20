@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { ArrowDown, ImageIcon } from 'lucide-react';
-import { AcpChatMessage, AcpStatusInfo, ReferenceImageRecord } from '../types/robotics';
+import { AcpChatMessage, AcpStatusInfo, AgentChoice, ReferenceImageRecord } from '../types/robotics';
 import { AnalyzedImageFeatures } from '../utils/imageTo3DAnalyzer';
 import { collectDrop, EvidenceFolder } from '../utils/evidenceFiles';
-import { ImageViewer, ImageViewerItem, Tooltip } from '../design-system';
+import { ImageViewer, ImageViewerItem, Tooltip, ArrowDownIcon, PhotoIcon } from '../design-system';
+import { agentKindOf, agentProfileOf } from '../agent/agentKinds';
 import { Composer, ComposerSubmit } from './agent/Composer';
+import { ConnectionBanner } from './agent/ConnectionBanner';
 import { Transcript } from './agent/Transcript';
 import { useAttachments } from './agent/useAttachments';
 import { feedMask, useFeedFollow } from './agent/useFeedFollow';
@@ -17,13 +18,19 @@ interface AcpStudioPanelProps {
   canRevert: boolean;
   attachRequest?: number;
   targetHeightMm?: number;
+  choice: AgentChoice;
+  onChoiceChange: (choice: AgentChoice) => void;
   onReconnectAcp: (command?: string) => Promise<void>;
+  onSignIn: (methodId: string) => Promise<void>;
+  onSaveApiKey: (key: string) => Promise<void>;
   onUploadImage: (file: File) => Promise<{ record: ReferenceImageRecord; features: AnalyzedImageFeatures }>;
   onSend: (params: {
     text: string;
     images?: ReferenceImageRecord[];
     folders?: EvidenceFolder[];
     targetHeightMm?: number;
+    model?: string;
+    effort?: string;
   }) => Promise<void>;
   onStop: () => void;
   onNewChat: () => void;
@@ -31,24 +38,6 @@ interface AcpStudioPanelProps {
 }
 
 type ViewerState = { images: ImageViewerItem[]; index: number } | null;
-
-const ConnectionBanner: React.FC<{ acpStatus: AcpStatusInfo; onReconnect: (command?: string) => Promise<void> }> = ({
-  acpStatus,
-  onReconnect,
-}) => (
-  <div className="mx-3 mt-3 px-3 py-2 rounded-xl bg-amber-500/10 text-[13px] text-amber-200/90 flex items-center gap-2">
-    <span className="flex-1 min-w-0 break-words">
-      {acpStatus.error ? `Agent error: ${acpStatus.error}` : 'Agent isn’t connected.'}
-    </span>
-    <button
-      type="button"
-      onClick={() => onReconnect(acpStatus.agentCommand)}
-      className="h-7 px-2.5 rounded-lg text-[12.5px] font-medium text-amber-100 hover:bg-amber-500/15 cursor-default shrink-0"
-    >
-      Reconnect
-    </button>
-  </div>
-);
 
 const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 animate-pop-up">
@@ -59,7 +48,7 @@ const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
         onClick={onClick}
         className="w-8 h-8 rounded-full bg-[#2a2a2f] ring-1 ring-white/[0.1] shadow-[0_4px_14px_rgba(0,0,0,0.45)] text-white/80 hover:text-white hover:bg-[#323238] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
       >
-        <ArrowDown className="w-4 h-4" />
+        <ArrowDownIcon className="w-4 h-4" />
       </button>
     </Tooltip>
   </div>
@@ -67,7 +56,7 @@ const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
 
 const DropOverlay: React.FC = () => (
   <div className="absolute inset-2 rounded-2xl border-2 border-dashed border-[#0d99ff]/70 bg-[#0d99ff]/[0.06] flex flex-col items-center justify-center gap-2 pointer-events-none animate-fade-in">
-    <ImageIcon className="w-6 h-6 text-[#5cb8ff]" />
+    <PhotoIcon className="w-6 h-6 text-[#5cb8ff]" />
     <span className="text-[14px] text-white/80">Drop images, files or folders to attach</span>
   </div>
 );
@@ -80,7 +69,11 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   canRevert,
   attachRequest = 0,
   targetHeightMm = 0,
+  choice,
+  onChoiceChange,
   onReconnectAcp,
+  onSignIn,
+  onSaveApiKey,
   onUploadImage,
   onSend,
   onStop,
@@ -95,14 +88,14 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
     messages,
     status,
   });
-  const isClaude = /claude-(agent|code)-acp/.test(acpStatus.agentCommand);
+  const agentName = agentProfileOf(agentKindOf(acpStatus))?.name ?? 'the agent';
   const mask = feedMask(edgeFade);
 
   const openImages = (images: ImageViewerItem[], index: number) => setViewer({ images, index });
 
   const submit = async (draft: ComposerSubmit) => {
     scrollToBottom();
-    await onSend({ ...draft, targetHeightMm: targetHeightMm || undefined });
+    await onSend({ ...draft, targetHeightMm: targetHeightMm || undefined, ...choice });
   };
 
   return (
@@ -123,7 +116,12 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         collectDrop(e.dataTransfer).then(({ loose, folders }) => attachments.attachFiles(loose, folders));
       }}
     >
-      {!acpStatus.connected && <ConnectionBanner acpStatus={acpStatus} onReconnect={onReconnectAcp} />}
+      <ConnectionBanner
+        acpStatus={acpStatus}
+        onReconnect={onReconnectAcp}
+        onSignIn={onSignIn}
+        onSaveApiKey={onSaveApiKey}
+      />
 
       <div className="relative flex-1 min-h-0">
         <div
@@ -151,7 +149,10 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         promptRef={promptRef}
         attachRequest={attachRequest}
         isBusy={isBusy}
-        isClaude={isClaude}
+        agentName={agentName}
+        agent={acpStatus}
+        choice={choice}
+        onChoiceChange={onChoiceChange}
         onSubmit={submit}
         onStop={onStop}
         onNewChat={onNewChat}

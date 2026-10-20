@@ -1,6 +1,5 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
-import { Button, Tooltip } from '../../design-system';
+import { Button, Tooltip, ExternalLinkIcon } from '../../design-system';
 import type { BomLine } from '../../utils/bom';
 import { lineQty, linePacks, linkLabel } from './buyLine';
 import { money } from './format';
@@ -19,7 +18,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
         aria-label={linkLabel(l)}
         className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center text-white/40 hover:text-white/90 hover:bg-white/[0.07] opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-[opacity,color,background-color] duration-150 cursor-default"
       >
-        <ExternalLink className="w-3.5 h-3.5" />
+        <ExternalLinkIcon className="w-3.5 h-3.5" />
       </a>
     </Tooltip>
   );
@@ -43,7 +42,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.estimate && l.estUsd !== undefined)
     return (
-      <Tooltip label={`List price at ${l.estimate.store}, ${l.estimate.seen}. Add the Amazon price you see`}>
+      <Tooltip label={`List price at ${l.estimate.store}, ${l.estimate.seen}. Add the price you see`}>
         <button
           type="button"
           onClick={onCheck}
@@ -56,7 +55,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   return (
     <Button variant="secondary" size="xs" onClick={onCheck}>
-      Add Price…
+      Add Price
     </Button>
   );
 };

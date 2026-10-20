@@ -17,6 +17,11 @@ export const THEME_COLORS = {
 
   agent: '#d97757',
 
+  axisX: '#ef4444',
+  axisY: '#22c55e',
+  axisZ: '#3b82f6',
+  gizmoActive: '#ffffff',
+
   borderSubtle: 'rgba(255, 255, 255, 0.08)',
   borderMedium: 'rgba(255, 255, 255, 0.12)',
   borderStrong: 'rgba(255, 255, 255, 0.18)',

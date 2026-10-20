@@ -5,11 +5,14 @@ import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotic
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import type { EngineeringReport } from '../utils/engineering';
 import type { PrintReport } from '../utils/printReport';
+import { isBuilt } from '../guide/guidePlan';
+import type { BuildGuide } from '../workspace/useBuildGuide';
 import { BudgetSection } from './build/BudgetSection';
 import { BuyList } from './build/BuyList';
 import { CheckSheet } from './build/CheckSheet';
 import { ChecksSection } from './build/ChecksSection';
 import { ExtrasSection } from './build/ExtrasSection';
+import { GuideSection } from './build/GuideSection';
 import { download } from './build/format';
 import { PrintedSection } from './build/PrintedSection';
 import { useBuildReport } from './build/useBuildReport';
@@ -25,6 +28,7 @@ interface BuildPanelProps {
   onSelectParts: (ids: string[]) => void;
   onToast: (message: string) => void;
   onRunChecks: () => EngineeringReport;
+  guide: BuildGuide;
 }
 
 function supportByMaterial(print: PrintReport | null) {
@@ -47,6 +51,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onSelectParts,
   onToast,
   onRunChecks,
+  guide,
 }) => {
   const [purchases, savePurchase] = usePurchases();
   const { measures, print } = useBuildReport({ parts, project, measure, getTriangles });
@@ -76,6 +81,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <BudgetSection bom={bom} project={project} onChangeProject={onChangeProject} />
         <ChecksSection parts={parts} project={project} onRun={onRunChecks} onSelectParts={onSelectParts} />
+        <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
         <BuyList
           bom={bom}
           onCheck={setChecking}

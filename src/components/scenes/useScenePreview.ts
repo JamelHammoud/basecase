@@ -18,7 +18,11 @@ async function generatePreview(scene: SavedSceneSummary): Promise<string> {
   const fields = await scenePreview(record.parts);
 
   if (fields.previewDataUrl) {
-    await platformBridge.saveScenePreview({ id: scene.id, previewDataUrl: fields.previewDataUrl, sizeMm: fields.sizeMm });
+    await platformBridge.saveScenePreview({
+      id: scene.id,
+      previewDataUrl: fields.previewDataUrl,
+      sizeMm: fields.sizeMm,
+    });
   }
 
   return fields.previewDataUrl ?? '';

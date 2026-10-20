@@ -1,5 +1,5 @@
 import { componentWeightG } from '../data/components';
-import { HardwareSpec, hardwareFinish } from '../data/hardware';
+import { HardwareSpec, hardwareFinish, motionOf } from '../data/hardware';
 import { SUPPLY_BY_ID } from '../data/supplies';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
@@ -14,12 +14,16 @@ const FINISH_DENSITY: Record<string, number> = {
   stainless: 8.0,
   brass: 8.5,
   nylon: 1.15,
+  aluminum: 2.7,
+  anodized: 2.7,
 };
 const OTHER_DENSITY: Record<string, number> = { 'CNC Aluminum': 2.7, 'Laser-Cut Acrylic/Carbon': 1.4 };
 
 type Mass = Omit<PartMass, 'id'>;
 
 const hardwareDensity = (h: HardwareSpec) => (h.type === 'bearing' ? 7.8 : (FINISH_DENSITY[hardwareFinish(h)] ?? 7.85));
+
+const hardwareGrams = (h: HardwareSpec, cm3: number) => motionOf(h.type)?.massG?.(h) ?? cm3 * hardwareDensity(h);
 
 function publishedCom(p: ScenePart, at: V3): V3 {
   return p.com ? (rotateEuler(p.com, p.rotation).map((v, i) => v + p.position[i]) as V3) : at;
@@ -39,7 +43,7 @@ function boughtMass(p: ScenePart, cm3: number, at: V3): Mass | undefined {
   if (p.kind === 'component' && p.componentId) return catalogMass(p.componentId, cm3, at);
 
   if (p.kind === 'hardware' && p.hardware)
-    return { grams: cm3 * hardwareDensity(p.hardware), centroid: at, source: 'hardware' };
+    return { grams: hardwareGrams(p.hardware, cm3), centroid: at, source: 'hardware' };
 
   const s = p.supplyId ? SUPPLY_BY_ID[p.supplyId] : undefined;
 

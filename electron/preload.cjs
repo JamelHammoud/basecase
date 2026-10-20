@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getAcpStatus: (workspaceId) => ipcRenderer.invoke('acp:status', workspaceId),
   connectAcp: (agentCommand) => ipcRenderer.invoke('acp:connect', agentCommand),
+  authenticateAcp: (methodId) => ipcRenderer.invoke('acp:authenticate', methodId),
+  setAgentApiKey: (key) => ipcRenderer.invoke('acp:set-api-key', key),
   sendAcpPrompt: (payload) => ipcRenderer.invoke('acp:prompt', payload),
   steerAcp: (payload) => ipcRenderer.invoke('acp:steer', payload),
   cancelAcp: (workspaceId) => ipcRenderer.invoke('acp:cancel', workspaceId),
@@ -42,6 +44,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveScenePreview: (payload) => ipcRenderer.invoke('library:save-scene-preview', payload),
   saveScene: (scenePayload) => ipcRenderer.invoke('library:save-scene', scenePayload),
   deleteScene: (sceneId) => ipcRenderer.invoke('library:delete-scene', sceneId),
+  saveGuide: (payload) => ipcRenderer.invoke('guide:save', payload),
+  openGuide: (id) => ipcRenderer.invoke('guide:open', id),
+  revealGuide: (id) => ipcRenderer.invoke('guide:reveal', id),
+  guideExists: (id) => ipcRenderer.invoke('guide:exists', id),
   setMenuState: (state) => ipcRenderer.send('menu:state', state),
   onMenuCommand: (callback) => {
     const handler = (_event, id) => callback(id);

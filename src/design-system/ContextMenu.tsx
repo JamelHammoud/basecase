@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ChevronRightIcon } from './glyphs';
 import { createPortal } from 'react-dom';
-import { ChevronRight } from 'lucide-react';
 import { MenuDivider, MenuItem, MenuLabel } from './PopoverMenu';
 
 export type ContextMenuEntry =
@@ -114,7 +114,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
               >
                 <span className="w-4 shrink-0 flex justify-center text-white/60">{item.icon}</span>
                 <span className="flex-1 truncate">{item.label}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-white/40" />
+                <ChevronRightIcon className="w-3.5 h-3.5 text-white/40" />
               </button>
               {open && (
                 <div

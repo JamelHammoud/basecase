@@ -19,6 +19,18 @@ function componentActuatorLine(c: Component): string | null {
   return c.actuator ? `  Actuator: ${act(c.actuator)}` : null;
 }
 
+function componentPowerLine(c: Component): string | null {
+  if (c.battery)
+    return `  Battery: ${c.battery.nominalV} V nominal, ${c.battery.fullV} V charged, ${c.battery.capacityAh} Ah, ${c.battery.cRating}C continuous${c.battery.cell ? ` (one ${c.battery.cell} cell)` : ''}`;
+
+  if (c.regulator)
+    return `  Regulator: ${c.regulator.vinMin}–${c.regulator.vinMax} V in, ${c.regulator.vout} V out, ${c.regulator.ioutA} A`;
+
+  return c.holder
+    ? `  Holds ${c.holder.cells}× ${c.holder.format} ${c.holder.series ? 'in series' : 'in parallel'}; add the cells too`
+    : null;
+}
+
 function componentLines(comps: Component[]): string[] {
   const lines = [
     'Components (exact manufacturer geometry; size is x × y × z in mm as placed with rotation [0, 0, 0]):',
@@ -41,18 +53,26 @@ function componentLines(comps: Component[]): string[] {
       `- component:${c.id} — ${c.name} · ${sz.width} × ${sz.depth} × ${sz.height} mm · ${specs} · Mounting: ${c.mounting}`,
     );
 
-    const actuator = componentActuatorLine(c);
-
-    if (actuator) lines.push(actuator);
+    for (const extra of [componentActuatorLine(c), componentPowerLine(c)]) if (extra) lines.push(extra);
   }
 
   return lines;
 }
 
+function lengthsNote(t: HardwareType): string {
+  if (!t.lengths) return '';
+
+  if (!t.stockOnly) return '; lengths per size';
+
+  const perSize = t.sizes.map((s) => `${s} ${t.lengths!(s).join('/')}`).join(', ');
+
+  return `; stock lengths only (${perSize} mm; omit for the standard length)`;
+}
+
 function hardwareLine(t: HardwareType): string {
   const drives = driveOptions(t.type);
 
-  return `- hardware:${t.type} — ${t.name} (${t.description}); sizes ${t.sizes.join(', ')}${t.lengths ? '; lengths per size' : ''}${
+  return `- hardware:${t.type} — ${t.name} (${t.description}); sizes ${t.sizes.join(', ')}${lengthsNote(t)}${
     drives.length > 1 ? `; drives ${drives.join(', ')} (default ${defaultDrive(t.type)})` : ''
   }`;
 }
@@ -74,7 +94,7 @@ export function agentCatalog(query = ''): string {
   if (hw.length)
     lines.push(
       '',
-      'Hardware (generated to ISO/DIN dimensions): hardware:<type>|<size>|<length mm>[|<finish>|<drive>], e.g. hardware:socket_head|M3|10, hardware:pan_head|M3|8|zinc|phillips, hardware:heat_insert|M3, hardware:bearing|608',
+      'Hardware (generated to ISO/DIN or maker catalog dimensions): hardware:<type>|<size>|<length mm>[|<finish>|<drive>], e.g. hardware:socket_head|M3|10, hardware:pan_head|M3|8|zinc|phillips, hardware:heat_insert|M3|4, hardware:bearing|608, hardware:extrusion|2020|300, hardware:linear_rail|MGN12|245, hardware:gt2_pulley|20T-5',
       ...hw.map(hardwareLine),
     );
 
@@ -83,7 +103,7 @@ export function agentCatalog(query = ''): string {
   if (supplies.length)
     lines.push(
       '',
-      'Supplies (bought, not modeled: batteries, power, wiring, filament). Add them to the BOM with set_build({ extras }), not add_parts; model the battery or converter bay around the spec size:',
+      'Supplies (bought, not modeled: wiring, chargers, filament, tools). Add them to the BOM with set_build({ extras }), not add_parts. Batteries, cell holders and regulators with exact shapes are Power components (find_parts power); place those with add_parts:',
       ...supplies.map(supplyLine),
     );
 

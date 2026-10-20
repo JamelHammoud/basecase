@@ -1,5 +1,7 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import path from 'node:path';
 import { z } from 'zod';
+import { TOOL_USE_HEADER, TOOL_USE_META } from '../backend/constants.mjs';
 
 const BRIDGE_URL = process.env.CAD_BRIDGE_URL;
 
@@ -20,6 +22,16 @@ export const IMAGE_EXT = {
   '.gif': 'image/gif',
 };
 
+const toolCall = new AsyncLocalStorage();
+
+export const withToolCall = (extra, run) => toolCall.run({ toolUseId: extra?._meta?.[TOOL_USE_META] }, run);
+
+function bridgeHeaders() {
+  const toolUseId = toolCall.getStore()?.toolUseId;
+
+  return { 'Content-Type': 'application/json', ...(toolUseId ? { [TOOL_USE_HEADER]: String(toolUseId) } : {}) };
+}
+
 export async function bridge(kind, payload, timeoutMs = 120000) {
   if (!BRIDGE_URL) throw new Error('CAD_BRIDGE_URL is not set; the app bridge is unavailable.');
 
@@ -29,7 +41,7 @@ export async function bridge(kind, payload, timeoutMs = 120000) {
   try {
     const res = await fetch(`${BRIDGE_URL}/agent/${kind}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: bridgeHeaders(),
       body: JSON.stringify(payload ?? {}),
       signal: controller.signal,
     });

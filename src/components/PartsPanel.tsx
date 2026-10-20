@@ -1,23 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { catalogRef } from '../data/catalog';
 import { HardwareSpec, familyOf, makeSpec } from '../data/hardware';
-import { CatalogItem, ScenePart } from '../types/robotics';
+import { CatalogItem } from '../types/robotics';
 import { SearchField, useScrollFade } from '../design-system';
 import { searchCatalog } from './parts/catalogSearch';
-import { Home, ScenePage, SearchResults, TileGrid } from './parts/lists';
+import { Home, SearchResults, TileGrid } from './parts/lists';
 import { HardwarePage, ItemPage, PageFooter } from './parts/pages';
-import { CATEGORIES, type Category, type SceneParts, type View, sceneParts, searchScope } from './parts/partsViews';
+import { CATEGORIES, type Category, type View, searchScope } from './parts/partsViews';
 
 const lastSpecByFamily = new Map<string, HardwareSpec>();
 
 const PartsView: React.FC<{
   view: View;
-  scene: SceneParts;
   open: (next: View) => void;
   openItem: (item: CatalogItem) => void;
   onAdd: (item: CatalogItem) => void;
   onChangeHardware: (spec: HardwareSpec) => void;
-}> = ({ view, scene, open, openItem, onAdd, onChangeHardware }) => {
+}> = ({ view, open, openItem, onAdd, onChangeHardware }) => {
   const openCategory = (c: Category) =>
     c.family
       ? open({ kind: 'hardware', spec: lastSpecByFamily.get(c.family.id) ?? makeSpec(c.family.types[0].type) })
@@ -25,9 +24,7 @@ const PartsView: React.FC<{
 
   switch (view.kind) {
     case 'home':
-      return <Home scene={scene} onOpenScene={() => open({ kind: 'scene' })} onOpenCategory={openCategory} />;
-    case 'scene':
-      return <ScenePage scene={scene} onOpen={openItem} onAdd={onAdd} />;
+      return <Home onOpenCategory={openCategory} />;
     case 'category':
       return <TileGrid items={CATEGORIES.find((c) => c.id === view.id)?.items ?? []} onOpen={openItem} onAdd={onAdd} />;
     case 'item':
@@ -42,10 +39,8 @@ const stepIndex = (active: number, key: string, count: number) =>
 
 export const PartsPanel: React.FC<{
   onAdd: (item: CatalogItem) => void;
-  parts: ScenePart[];
-  goal: string;
   searchInputRef?: React.MutableRefObject<HTMLInputElement | null>;
-}> = ({ onAdd, parts, goal, searchInputRef }) => {
+}> = ({ onAdd, searchInputRef }) => {
   const [stack, setStack] = useState<View[]>([{ kind: 'home' }]);
   const view = stack[stack.length - 1];
   const [query, setQuery] = useState('');
@@ -75,15 +70,13 @@ export const PartsPanel: React.FC<{
   const openItem = (item: CatalogItem) =>
     item.hardware ? open({ kind: 'hardware', spec: item.hardware }) : open({ kind: 'item', ref: catalogRef(item) });
 
-  const scene = useMemo(() => sceneParts(parts, goal), [parts, goal]);
-
   const searching = query.trim().length > 0;
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0 });
   }, [stack.length, searching]);
 
-  const scope = useMemo(() => searchScope(view, scene), [view, scene]);
+  const scope = useMemo(() => searchScope(view), [view]);
   const results = useMemo(() => {
     const all = searchCatalog(query);
 
@@ -150,14 +143,7 @@ export const PartsPanel: React.FC<{
             onSearchAll={scope ? searchAll : undefined}
           />
         ) : (
-          <PartsView
-            view={view}
-            scene={scene}
-            open={open}
-            openItem={openItem}
-            onAdd={onAdd}
-            onChangeHardware={changeHardware}
-          />
+          <PartsView view={view} open={open} openItem={openItem} onAdd={onAdd} onChangeHardware={changeHardware} />
         )}
       </div>
       {!searching && <PageFooter view={view} onAdd={onAdd} />}

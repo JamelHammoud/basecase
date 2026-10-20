@@ -1,6 +1,5 @@
 import React from 'react';
-import { Folder, Loader2, X } from 'lucide-react';
-import { Tooltip } from '../../design-system';
+import { Tooltip, CloseIcon, FolderIcon, SpinnerIcon } from '../../design-system';
 import { Attachments, FolderChip } from './useAttachments';
 import { OpenImages } from './types';
 
@@ -11,7 +10,7 @@ const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, o
     onClick={onClick}
     className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#3a3a3a] ring-2 ring-[#1f1f1f] text-white/80 hover:text-white flex items-center justify-center cursor-default"
   >
-    <X className="w-3 h-3" strokeWidth={2.5} />
+    <CloseIcon className="w-3 h-3" strokeWidth={2.5} />
   </button>
 );
 
@@ -26,9 +25,9 @@ const FolderTile: React.FC<{ folder: FolderChip; onRemove: () => void }> = ({ fo
     <div className="h-14 max-w-[220px] pl-2.5 pr-3.5 rounded-xl bg-white/[0.06] ring-1 ring-white/10 flex items-center gap-2.5">
       <span className="w-8 h-8 rounded-lg bg-white/[0.07] flex items-center justify-center shrink-0">
         {f.ready ? (
-          <Folder className="w-4 h-4 text-white/75" />
+          <FolderIcon className="w-4 h-4 text-white/75" />
         ) : (
-          <Loader2 className="w-4 h-4 animate-spin text-white/50" />
+          <SpinnerIcon className="w-4 h-4 animate-spin text-white/50" />
         )}
       </span>
       <span className="min-w-0">
@@ -73,7 +72,7 @@ export const AttachmentTray: React.FC<{ attachments: Attachments; onOpenImages: 
       ))}
       {Array.from({ length: uploadingCount }).map((_, i) => (
         <span key={`up-${i}`} className="w-14 h-14 rounded-xl bg-white/[0.06] flex items-center justify-center">
-          <Loader2 className="w-4 h-4 animate-spin text-white/50" />
+          <SpinnerIcon className="w-4 h-4 animate-spin text-white/50" />
         </span>
       ))}
     </div>

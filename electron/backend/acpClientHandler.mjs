@@ -1,11 +1,33 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { SAFE_TOOL_PATTERN } from './constants.mjs';
+import { CAD_SERVER, SAFE_TOOL_PATTERN } from './constants.mjs';
 
 export function isSafeToolCall(call) {
   const label = `${call._meta?.claudeCode?.toolName ?? ''} ${call.title ?? ''} ${call.kind ?? ''}`;
 
-  return SAFE_TOOL_PATTERN.test(label) || call.kind === 'fetch' || call.kind === 'think';
+  return (
+    call.rawInput?.server === CAD_SERVER ||
+    SAFE_TOOL_PATTERN.test(label) ||
+    call.kind === 'fetch' ||
+    call.kind === 'think'
+  );
+}
+
+const definedEntries = (value) => Object.fromEntries(Object.entries(value ?? {}).filter(([, v]) => v != null));
+
+export function rememberToolCalls() {
+  const calls = new Map();
+
+  return {
+    note(update) {
+      if (!update?.toolCallId || !String(update.sessionUpdate).startsWith('tool_call')) return;
+
+      calls.set(update.toolCallId, { ...calls.get(update.toolCallId), ...definedEntries(update) });
+    },
+    complete(toolCall) {
+      return { ...calls.get(toolCall?.toolCallId), ...definedEntries(toolCall) };
+    },
+  };
 }
 
 function pickOption(options, prefix) {
@@ -22,15 +44,18 @@ export function permissionOutcome(params) {
 }
 
 export function createClientHandler({ workspaceRoot, libraryDir, emit, workspaceOf, libraryState }) {
+  const toolCalls = rememberToolCalls();
+
   return {
     requestPermission: async (params) => {
-      const { safe, title, outcome } = permissionOutcome(params);
+      const { safe, title, outcome } = permissionOutcome({ ...params, toolCall: toolCalls.complete(params.toolCall) });
 
       if (!safe) emit({ type: 'agent-blocked', workspaceId: workspaceOf(params.sessionId), title });
 
       return { outcome };
     },
     sessionUpdate: async (params) => {
+      toolCalls.note(params.update);
       emit({
         type: 'acp-session-update',
         sessionId: params.sessionId,

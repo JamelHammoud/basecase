@@ -3,6 +3,8 @@ import type { Coplanar, Interference } from '../interference';
 import type { MeshMeasure } from '../meshMeasure';
 import type {
   CameraPreset,
+  MeasureUnit,
+  SceneMark,
   ScenePart,
   SculptMeshData,
   SculptSettings,
@@ -35,6 +37,7 @@ export type GrabHandler = (
 ) => void;
 
 export interface ViewportProps {
+  sceneKey?: string;
   parts: ScenePart[];
   selectedPartIds: string[];
   transformMode: TransformMode;
@@ -50,12 +53,26 @@ export interface ViewportProps {
   onUpdatePartTransform: (id: string, position: Vec3, rotation: Vec3, dimensions?: ScenePart['dimensions']) => void;
   onCommitSculptMesh: (id: string, sculptMesh: SculptMeshData) => void;
   annotateMode?: boolean;
+  measureMode?: boolean;
+  measureUnit?: MeasureUnit;
   onPlaceAnnotation?: (point: Vec3, partId: string | null) => void;
+  markMode?: boolean;
+  marks?: SceneMark[];
+  markColor?: string;
+  selectedMarkId?: string | null;
+  onAddMark?: (mark: NewMark) => void;
+  onSelectMark?: (id: string | null) => void;
   paused?: boolean;
   pose?: Map<string, THREE.Matrix4> | null;
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
+}
+
+export interface NewMark {
+  points: Vec3[];
+  partIds: string[];
+  view: string;
 }
 
 export interface ClashHit {
@@ -88,8 +105,12 @@ export interface Viewport3DHandle {
   posedInterference: (onlyIds?: string[]) => Interference[];
   posedFloor: (ids?: string[]) => number | null;
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
+  measureFrom: (clientX: number, clientY: number) => void;
+  cancelMeasure: () => boolean;
 }
 
 export const MIN_DIST = 25;
 export const MAX_DIST = 12000;
 export const FAR_PLANE = 80000;
+export const MIN_POLAR = 0.08;
+export const MAX_POLAR = Math.PI - 0.08;

@@ -22,7 +22,7 @@ function promptDeps() {
   fs.writeFileSync(path.join(dir, 'ref-4.png'), '');
 
   return {
-    isClaude: true,
+    isAiAgent: true,
     saveReferenceImage: (mime, base64) => references.save(mime, base64),
     describeEvidenceFolder: (id) => describeEvidenceFolder(dir, id),
   };
@@ -61,7 +61,7 @@ describe('buildPromptBlocks', () => {
     expect(buildPromptBlocks({ promptText: '  Longer legs ', imageDataUrl: png }, deps)[1].text).toBe(
       'Longer legs\n(Saved as ref-5, in the order shown. compare puts one beside a render of your model.)',
     );
-    expect(buildPromptBlocks({ promptText: 'Hi' }, { ...deps, isClaude: false })[0].text).toBe(
+    expect(buildPromptBlocks({ promptText: 'Hi' }, { ...deps, isAiAgent: false })[0].text).toBe(
       'Hi\n__ACP_3D_PAYLOAD_START__{"promptText":"Hi"}__ACP_3D_PAYLOAD_END__',
     );
   });

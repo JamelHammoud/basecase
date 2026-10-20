@@ -71,7 +71,7 @@ export const ColorField: React.FC<ColorFieldProps> = ({
         className={`flex-1 min-w-0 h-full bg-transparent pr-2 text-[13px] text-white/90 tabular outline-none ${mixed && draft === null ? 'text-white/50' : 'uppercase'}`}
       />
       {open && anchorEl && (
-        <PickerPopover
+        <ColorPickerPopover
           anchor={anchorEl}
           value={mixed ? '#ffffff' : value}
           onChange={onChange}
@@ -85,13 +85,39 @@ export const ColorField: React.FC<ColorFieldProps> = ({
 
 const PICKER_WIDTH = 248;
 
-const PickerPopover: React.FC<{
+export interface ColorPickerPopoverProps {
   anchor: HTMLElement;
   value: string;
   onChange: (hex: string, live?: boolean) => void;
   suggestions: string[];
   onClose: () => void;
-}> = ({ anchor, value, onChange, suggestions, onClose }) => {
+  side?: 'left' | 'top';
+}
+
+function pickerPosition(anchor: HTMLElement, height: number, side: 'left' | 'top') {
+  const a = anchor.getBoundingClientRect();
+
+  if (side === 'top') {
+    const left = Math.max(8, Math.min(window.innerWidth - PICKER_WIDTH - 8, a.left + a.width / 2 - PICKER_WIDTH / 2));
+
+    return { left, top: Math.max(8, a.top - height - 10) };
+  }
+
+  let left = a.left - PICKER_WIDTH - 12;
+
+  if (left < 8) left = Math.min(window.innerWidth - PICKER_WIDTH - 8, a.right + 12);
+
+  return { left, top: Math.max(8, Math.min(window.innerHeight - height - 8, a.top - 8)) };
+}
+
+export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
+  anchor,
+  value,
+  onChange,
+  suggestions,
+  onClose,
+  side = 'left',
+}) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [hsv, setHsv] = useState(() => hexToHsv(value));
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
@@ -107,16 +133,8 @@ const PickerPopover: React.FC<{
   }, [value]);
 
   useLayoutEffect(() => {
-    const a = anchor.getBoundingClientRect();
-    const h = ref.current?.offsetHeight ?? 320;
-    let left = a.left - PICKER_WIDTH - 12;
-
-    if (left < 8) left = Math.min(window.innerWidth - PICKER_WIDTH - 8, a.right + 12);
-
-    const top = Math.max(8, Math.min(window.innerHeight - h - 8, a.top - 8));
-
-    setPos({ left, top });
-  }, [anchor]);
+    setPos(pickerPosition(anchor, ref.current?.offsetHeight ?? 320, side));
+  }, [anchor, side]);
 
   useEffect(() => {
     const onDown = (e: PointerEvent) => {

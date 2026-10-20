@@ -162,6 +162,22 @@ describe('runEngineering on a two-joint leg', () => {
     expect(noBattery.rows.map((x) => x.check)).not.toContain('Current and runtime');
   });
 
+  it('powers low-voltage servos through a regulator and checks its input range', () => {
+    const c001 = { componentVariant: 'c001' };
+    const regulators = [
+      part({ id: 'rail6', kind: 'component', componentId: 'pololu-d36v50f6' }),
+      part({ id: 'rail12', kind: 'component', componentId: 'pololu-d36v50f12' }),
+    ];
+    const r = runEngineering({
+      ...input,
+      parts: [...withParts({ hipServo: c001, kneeServo: c001 }), ...regulators],
+      measures: { ...measures, rail6: box([0, 0, 0], [10, 3, 10], 300), rail12: box([0, 0, 0], [10, 3, 10], 300) },
+    });
+
+    expect(r.rows.find((x) => x.check === 'Servo voltage')).toMatchObject({ status: 'pass', ids: ['rail6'] });
+    expect(r.rows.find((x) => x.check === 'Regulator input')).toMatchObject({ status: 'fail', ids: ['rail12'] });
+  });
+
   it('reports no joints without running torque', () => {
     const r = runEngineering({ ...input, project: { ...project, joints: [] } });
 

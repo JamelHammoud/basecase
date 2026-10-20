@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CornerDownLeft, Search } from 'lucide-react';
-import { Kbd } from '../design-system';
+import { Kbd, ReturnIcon, SearchIcon } from '../design-system';
 
 export interface Command {
   id: string;
@@ -77,7 +76,7 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
     >
       <div className="glass-menu w-[600px] max-w-[calc(100vw-48px)] h-fit max-h-[62vh] rounded-[20px] flex flex-col overflow-hidden animate-sheet-in">
         <div className="flex items-center gap-3 px-5 h-14 border-b border-white/[0.08] shrink-0">
-          <Search className="w-5 h-5 text-white/40 shrink-0" />
+          <SearchIcon className="w-5 h-5 text-white/40 shrink-0" />
           <input
             autoFocus
             value={query}
@@ -129,7 +128,7 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
                   </span>
                   <span className="flex-1 truncate">{c.label}</span>
                   {c.shortcut && <Kbd>{c.shortcut}</Kbd>}
-                  {isActive && !c.shortcut && <CornerDownLeft className="w-3.5 h-3.5 text-white/40" />}
+                  {isActive && !c.shortcut && <ReturnIcon className="w-3.5 h-3.5 text-white/40" />}
                 </button>
               </React.Fragment>
             );

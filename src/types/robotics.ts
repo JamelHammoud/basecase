@@ -204,6 +204,27 @@ export interface ProjectSettings {
   poses?: RobotPose[];
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
+  marks?: SceneMark[];
+  buildGuide?: BuildGuideRecord;
+}
+
+export interface BuildGuideRecord {
+  id: string;
+  pages: number;
+  steps: number;
+  generatedAt: string;
+  fingerprint: string;
+  coverDataUrl?: string;
+}
+
+export interface SceneMark {
+  id: string;
+  points: Array<[number, number, number]>;
+  partIds: string[];
+  color?: string;
+  label?: string;
+  view?: string;
+  createdAt: string;
 }
 
 export interface PolicyRecord {
@@ -255,7 +276,7 @@ export interface RobotAnimation {
 export const DEFAULT_PROJECT: ProjectSettings = { printer: 'bambu-p1s', material: 'PLA', infillPct: 15 };
 
 export interface PurchaseRecord {
-  url: string;
+  url?: string;
   asin?: string;
   title?: string;
   packQty: number;
@@ -304,7 +325,7 @@ export interface SavedSceneSummary {
 }
 
 export interface SavedSceneRecord extends SavedSceneSummary {
-  thumbnailDataUrl?: string;
+  chatId?: string | null;
   parts: ScenePart[];
   referenceImages?: ReferenceImageRecord[];
   annotations?: SceneAnnotation[];
@@ -329,54 +350,41 @@ export type TransformMode = 'translate' | 'rotate' | 'scale' | 'sculpt' | 'pose'
 
 export type TrackpadGestureMode = 'orbit-scroll' | 'pan-scroll';
 
+export type MeasureUnit = 'metric' | 'imperial';
+
 export type CameraPreset = 'perspective' | 'top' | 'front' | 'right' | 'isometric';
 
-export interface AcpToolCallEvent {
-  toolCallId: string;
-  title: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed';
-  kind?: string;
-  rawInput?: unknown;
-  toolName?: string;
-}
+export type {
+  AcpChatMessage,
+  AcpPlanEntry,
+  AcpToolCallEvent,
+  AgentConversation,
+  AgentConversationSummary,
+} from './agentChat';
 
-export interface AcpPlanEntry {
-  content: string;
-  status: 'pending' | 'in_progress' | 'completed';
-}
-
-export interface AcpChatMessage {
+export interface EffortLevel {
   id: string;
-  role: 'user' | 'agent' | 'system';
-  text: string;
-  thought?: string;
-  timestamp: string;
-  imageAttachment?: string;
-  imageAttachments?: string[];
-  folderAttachments?: Array<{ id: string; name: string; fileCount: number }>;
-  queued?: boolean;
-  notSent?: boolean;
-  toolCalls?: AcpToolCallEvent[];
-  segments?: Array<{ type: 'thought' | 'text'; text: string } | { type: 'tool'; toolCallId: string }>;
-  plan?: AcpPlanEntry[];
-  createdModelId?: string;
-  stopped?: boolean;
+  name: string;
 }
 
-export interface AgentConversationSummary {
+export interface AgentModel {
   id: string;
-  title: string;
-  updatedAt: string;
-  messageCount: number;
+  name: string;
+  resolvesTo?: string;
+  effortLevels?: EffortLevel[];
 }
 
-export interface AgentConversation {
-  id: string;
-  title: string;
-  acpSessionId: string | null;
-  createdAt: string;
-  updatedAt?: string;
-  messages: AcpChatMessage[];
+export interface AgentChoice {
+  model?: string;
+  effort?: string;
+}
+
+export type AgentKind = 'claude' | 'codex' | 'gemini' | 'offline' | 'custom';
+
+export interface AgentSignIn {
+  methods: Array<{ id: string; name: string }>;
+  apiKey?: boolean;
+  message?: string;
 }
 
 export interface AcpStatusInfo {
@@ -384,7 +392,12 @@ export interface AcpStatusInfo {
   sessionId: string | null;
   agentName: string;
   agentCommand: string;
+  agentKind?: AgentKind;
   protocolVersion?: number;
+  models?: AgentModel[];
+  defaultModel?: string;
+  defaultEffort?: string;
+  signIn?: AgentSignIn;
   error?: string;
 }
 

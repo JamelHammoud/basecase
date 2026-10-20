@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 const isHostSessionKey = (key) =>
   key === 'CLAUDECODE' ||
   key === 'CLAUDE_PID' ||
@@ -14,7 +17,15 @@ export function agentEnv(source = process.env) {
 
   if (hosted) delete env.ANTHROPIC_BASE_URL;
 
+  env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS = '1';
+
   return env;
+}
+
+const isLocalPath = (arg, root) => !arg.startsWith('-') && !path.isAbsolute(arg) && fs.existsSync(path.join(root, arg));
+
+export function anchorArgs(args, root) {
+  return args.map((arg) => (isLocalPath(arg, root) ? path.join(root, arg) : arg));
 }
 
 export function resolveCommand(command) {

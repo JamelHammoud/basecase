@@ -1,0 +1,72 @@
+[
+ {
+  "id": "p28a-can",
+  "name": "P28A Wrapped Steel Can",
+  "color": "#b3262e",
+  "role": "solid",
+  "position": [
+   -0.25,
+   9.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   -90
+  ],
+  "dimensions": {
+   "width": 18.6,
+   "height": 64.7,
+   "depth": 18.6
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Molicel INR-18650-P28A wrapped can. Local origin: cell centre, axis +Z = positive end.\n// Datasheet: Ø18.6 max, height 65.2 max (terminal to base).\nD = 18.6;        // max diameter, datasheet\nH = 65.2;        // max height incl. positive cap, datasheet\ncap_h = 0.5;     // undimensioned: conservative cap protrusion, kept inside H\nbody_h = H - cap_h;\nedge = 0.6;      // undimensioned end-edge softening (stays inside envelope)\nseat_d = 7.2; seat_depth = 0.2;   // seat for the cap disc (cap Ø7 + clearance)\ndifference() {\n  down(H/2) cyl(d = D, h = body_h, rounding = edge, anchor = BOT, $fn = 96);\n  up(H/2 - cap_h - seat_depth) cyl(d = seat_d, h = 1, anchor = BOT, $fn = 64);\n}",
+   "originOffset": [
+    0,
+    -0.25,
+    0
+   ],
+   "baseSize": [
+    18.6,
+    64.7,
+    18.6
+   ]
+  }
+ },
+ {
+  "id": "p28a-positive-cap",
+  "name": "P28A Positive Terminal Cap",
+  "color": "#c8c8cc",
+  "role": "solid",
+  "position": [
+   32.25,
+   9.3,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   -90
+  ],
+  "dimensions": {
+   "width": 7,
+   "height": 0.7,
+   "depth": 7
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Positive terminal cap. Not dimensioned by Molicel: plain, conservative disc.\n// Local origin: cap base (seated 0.2 mm into the can), +Z outward. Top face lands at H = 65.2.\ncap_d = 7;     // undimensioned placeholder\ncap_h = 0.7;   // 0.2 seated + 0.5 proud; top at 65.2 max height\ncyl(d = cap_d, h = cap_h, chamfer2 = 0.2, anchor = BOT, $fn = 64);",
+   "originOffset": [
+    0,
+    0.35,
+    0
+   ],
+   "baseSize": [
+    7,
+    0.7,
+    7
+   ]
+  }
+ }
+]

@@ -7,6 +7,9 @@ export interface AgentSendParams {
   images?: ReferenceImageRecord[];
   folders?: EvidenceFolder[];
   targetHeightMm?: number;
+  model?: string;
+  effort?: string;
+  note?: string;
 }
 
 export function buildAgentPrompt(params: AgentSendParams, now: Date) {
@@ -15,12 +18,14 @@ export function buildAgentPrompt(params: AgentSendParams, now: Date) {
   const time = now.getTime();
   const payload: AcpPromptPayload = {
     action: 'build',
-    promptText: params.text,
+    promptText: params.note ? `${params.text}\n\n${params.note}` : params.text,
     imageName: images[0]?.name,
     imageFilePath: images[0]?.filePath,
     imageDataUrls: images.map((i) => i.dataUrl),
     evidenceFolders: folders.map((f) => ({ id: f.id, name: f.name })),
     targetHeightMm: params.targetHeightMm || undefined,
+    model: params.model,
+    effort: params.effort,
   };
   const userMessage: AcpChatMessage = {
     id: `msg-user-${time}`,

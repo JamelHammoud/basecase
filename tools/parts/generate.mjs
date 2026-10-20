@@ -39,6 +39,9 @@ const POSE = {
     'Mounting flange on the floor (z = 0), fingers pointing up (+Z), jaws closing along X, at the open position.',
   hand: 'Wrist mount on the floor (z = 0), fingers pointing up (+Z), palm facing the front (−Y), fingers straight (open hand).',
   lidar: 'Mounting face on the floor (z = 0), scan plane horizontal, cable or connector toward the back (+Y).',
+  battery:
+    'Lying flat on its largest face (bottom at z = 0), long side along X, the end the leads leave from toward +X.',
+  cell: 'Lying on its side on the floor (z = 0), axis along X, positive terminal toward +X.',
 };
 
 function postJson(url, body) {
@@ -98,6 +101,7 @@ for (const f of [
   'tsconfig.json',
   'tsconfig.app.json',
   'tsconfig.node.json',
+  'tsconfig.e2e.json',
 ]) {
   if (fs.existsSync(path.join(root, f))) fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
 }

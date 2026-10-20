@@ -5,6 +5,7 @@ import { usePosing } from '../utils/usePosing';
 import { projectFromSeed } from './helpers';
 import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
 import { useAnnotations } from './useAnnotations';
+import { useMarks } from './useMarks';
 import { usePanelSync } from './usePanelSync';
 import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
@@ -12,11 +13,10 @@ import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
+import { useBuildGuide } from './useBuildGuide';
 
-function useSceneMeta(workspaceId: string, seed?: WorkspaceSeed) {
-  const [sceneId, setSceneId] = useState<string>(
-    () => seed?.sceneId ?? (workspaceId === 'main' ? 'my-robotics-design' : newSceneId()),
-  );
+function useSceneMeta(seed?: WorkspaceSeed) {
+  const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
   const [sceneName, setSceneName] = useState<string>(seed?.sceneName ?? 'Untitled');
   const [globalGoal, setGlobalGoal] = useState<string>(seed?.globalGoal ?? '');
   const [initial] = useState({ sceneId, sceneName });
@@ -26,7 +26,7 @@ function useSceneMeta(workspaceId: string, seed?: WorkspaceSeed) {
 
 export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorkspaceProps, 'active'>) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
-  const scene = useSceneMeta(workspaceId, seed);
+  const scene = useSceneMeta(seed);
   const docs = useSceneDocument(seed);
   const { parts, project, projectRef } = docs;
   const toasts = useToast();
@@ -35,8 +35,35 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   useRobotUpgrade(docs, showToast);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const annotations = useAnnotations({ initial: seed?.annotations ?? [], parts, showToast, setSelectedIds });
-  const tool = useToolMode({ setIsRightOpen: studio.setIsRightOpen, annotations });
+  const [measuring, setMeasuring] = useState(false);
+  const [marking, setMarkingState] = useState(false);
+  const [selectedMarkId, setSelectedMarkId] = useState<string | null>(null);
+  const setMarking = (on: boolean) => {
+    setMarkingState(on);
+
+    if (!on) setSelectedMarkId(null);
+  };
+  const annotations = useAnnotations({
+    initial: seed?.annotations ?? [],
+    parts,
+    showToast,
+    setSelectedIds,
+    stopTools: () => {
+      setMeasuring(false);
+      setMarking(false);
+    },
+  });
+  const tool = useToolMode({
+    setIsRightOpen: studio.setIsRightOpen,
+    annotations,
+    measure: { measuring, setMeasuring },
+    mark: { marking, setMarking },
+  });
+  const marks = useMarks({
+    docs,
+    showToast,
+    selection: { selectedId: selectedMarkId, setSelectedId: setSelectedMarkId },
+  });
   const posing = usePosing({
     parts,
     project,
@@ -59,6 +86,15 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   });
 
   const simTraining = useSimTraining({ workspaceId, parts, project, setProject: docs.setProject, posing, viewportRef });
+  const guide = useBuildGuide({
+    sceneName: scene.sceneName,
+    parts,
+    project,
+    partsRef: docs.partsRef,
+    projectRef,
+    updateProjectNow: docs.updateProjectNow,
+    showToast,
+  });
   const selection = useSelectionActions({
     parts,
     selectedIds,
@@ -99,10 +135,12 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     setSelectedIds,
     selection,
     annotations,
+    marks,
     tool,
     posing,
     onRobot,
     simTraining,
+    guide,
     undo: () => travel('undo', restorePose),
     redo: () => travel('redo', restorePose),
     loadSeed,

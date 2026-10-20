@@ -1,10 +1,9 @@
 import React from 'react';
-import { ArrowUpRight, FileText, Plus, ShoppingCart } from 'lucide-react';
 import { CATEGORY_LABELS, catalogItemFromKey, catalogRef } from '../../data/catalog';
 import { COMPONENT_BY_ID, ComponentInfo } from '../../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, hardwareSubtitle } from '../../data/hardware';
 import type { CatalogItem, PartDimensions } from '../../types/robotics';
-import { Button, Section, Tooltip } from '../../design-system';
+import { Button, Section, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon, PlusIcon } from '../../design-system';
 import { Hero, LinkButton, SizeLine, SpecRow } from '../PartDetails';
 import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
 import { keySpecs } from '../../utils/keySpecs';
@@ -82,12 +81,12 @@ const ComponentDetails: React.FC<{ c: ComponentInfo }> = ({ c }) => (
     {(c.links.datasheet || c.links.product) && (
       <div className="flex gap-1.5 pt-0.5">
         {c.links.datasheet && (
-          <LinkButton href={c.links.datasheet} icon={<FileText className="w-3.5 h-3.5" />}>
+          <LinkButton href={c.links.datasheet} icon={<FileIcon className="w-3.5 h-3.5" />}>
             Datasheet
           </LinkButton>
         )}
         {c.links.product && (
-          <LinkButton href={c.links.product} icon={<ArrowUpRight className="w-3.5 h-3.5" />}>
+          <LinkButton href={c.links.product} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />}>
             Product Page
           </LinkButton>
         )}
@@ -168,7 +167,7 @@ const AddBar: React.FC<{ label: string; onAdd: () => void; children?: React.Reac
   <div className="shrink-0 px-[12px] py-3 border-t border-white/[0.06] flex items-center gap-2">
     <div className="min-w-0 flex-1 text-[13px] text-white/60 truncate">{label}</div>
     {children}
-    <Button variant="primary" size="sm" icon={<Plus className="w-3.5 h-3.5" />} onClick={onAdd}>
+    <Button variant="primary" size="sm" icon={<PlusIcon className="w-3.5 h-3.5" />} onClick={onAdd}>
       Add
     </Button>
   </div>
@@ -186,7 +185,7 @@ const ItemFooter: React.FC<{ ref_: string; onAdd: (i: CatalogItem) => void }> = 
     <AddBar label={item.name} onAdd={() => onAdd(item)}>
       {amazon && (
         <Tooltip label={label}>
-          <LinkButton href={amazon.url} icon={<ShoppingCart className="w-3.5 h-3.5" />} label={label} />
+          <LinkButton href={amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} label={label} />
         </Tooltip>
       )}
     </AddBar>
@@ -199,11 +198,7 @@ const HardwareFooter: React.FC<{ spec: HardwareSpec; onAdd: (i: CatalogItem) => 
   return (
     <AddBar label={hardwareName(spec)} onAdd={() => onAdd(item)}>
       <Tooltip label="Find on Amazon">
-        <LinkButton
-          href={hardwareShopUrl(spec)}
-          icon={<ShoppingCart className="w-3.5 h-3.5" />}
-          label="Find on Amazon"
-        />
+        <LinkButton href={hardwareShopUrl(spec)} icon={<CartIcon className="w-3.5 h-3.5" />} label="Find on Amazon" />
       </Tooltip>
     </AddBar>
   );

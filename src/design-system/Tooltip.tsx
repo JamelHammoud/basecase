@@ -29,6 +29,12 @@ const TIP_POSITION: Record<TooltipSide, (a: Rect, t: Rect) => { x: number; y: nu
 let lastHiddenAt = 0;
 let anyOpen = false;
 
+const controlsOpenPopover = (child: React.ReactElement) => {
+  const expanded = (child.props as { 'aria-expanded'?: boolean | 'true' | 'false' })['aria-expanded'];
+
+  return expanded === true || expanded === 'true';
+};
+
 export const Tooltip: React.FC<TooltipProps> = ({
   label,
   shortcut,
@@ -42,6 +48,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const timerRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
+  const suppressed = disabled || controlsOpenPopover(children);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -51,7 +58,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   };
 
   const show = useCallback(() => {
-    if (disabled) return;
+    if (suppressed) return;
 
     clearTimer();
 
@@ -64,7 +71,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       },
       warm ? 0 : OPEN_DELAY_MS,
     );
-  }, [disabled]);
+  }, [suppressed]);
 
   const hide = useCallback(() => {
     clearTimer();
@@ -108,6 +115,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         {children}
       </span>
       {open &&
+        !suppressed &&
         createPortal(
           <div
             ref={tipRef}

@@ -13,6 +13,8 @@ export interface AcpPromptPayload {
   action: 'image-to-3d' | 'generate-part' | 'build';
   workspaceId?: string;
   targetHeightMm?: number;
+  model?: string;
+  effort?: string;
   imageDataUrls?: string[];
   modelName?: string;
   promptText?: string;
@@ -60,8 +62,9 @@ export type SteerOutcome = 'injected' | 'promptRequired' | 'unsupported';
 
 export interface ScenePreviewPayload {
   id: string;
-  previewDataUrl: string;
+  previewDataUrl?: string;
   sizeMm?: [number, number, number];
+  current?: boolean;
 }
 
 declare global {
@@ -73,6 +76,8 @@ declare global {
       onFullScreenChange: (callback: (fullScreen: boolean) => void) => () => void;
       getAcpStatus: (workspaceId?: string) => Promise<AcpStatusInfo>;
       connectAcp: (agentCommand?: string) => Promise<AcpStatusInfo>;
+      authenticateAcp: (methodId: string) => Promise<AcpStatusInfo>;
+      setAgentApiKey: (key: string) => Promise<AcpStatusInfo>;
       cancelAcp: (workspaceId?: string) => Promise<{ ok: boolean }>;
       closeAcpWorkspace: (workspaceId: string) => Promise<{ ok: boolean }>;
       steerAcp: (payload: AcpPromptPayload) => Promise<{ outcome: SteerOutcome }>;
@@ -115,6 +120,10 @@ declare global {
       saveScenePreview: (payload: ScenePreviewPayload) => Promise<SavedSceneSummary | null>;
       saveScene: (scenePayload: Record<string, unknown>) => Promise<SavedSceneSummary>;
       deleteScene: (sceneId: string) => Promise<SavedSceneSummary[]>;
+      saveGuide: (payload: { id: string; html: string }) => Promise<{ ok: boolean; path: string; bytes: number }>;
+      openGuide: (id: string) => Promise<boolean>;
+      revealGuide: (id: string) => Promise<boolean>;
+      guideExists: (id: string) => Promise<boolean>;
       onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
       setMenuState: (state: Partial<AppMenuState>) => void;
       onMenuCommand: (callback: (id: string) => void) => () => void;

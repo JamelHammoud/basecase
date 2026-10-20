@@ -1,17 +1,17 @@
-import {
-  AlignCenterVertical,
-  ArrowDownToLine,
-  ClipboardPaste,
-  Copy,
-  Group,
-  Layers,
-  Scissors,
-  SquaresIntersect,
-  SquaresSubtract,
-  SquaresUnite,
-  Ungroup,
-} from 'lucide-react';
 import type { Command } from '../components/CommandPalette';
+import {
+  AlignCenterXIcon,
+  CopyIcon,
+  CutIcon,
+  FloorIcon,
+  GroupIcon,
+  IntersectIcon,
+  LayersIcon,
+  PasteIcon,
+  SubtractIcon,
+  UngroupIcon,
+  UnionIcon,
+} from '../design-system';
 import type { AlignMode, Axis } from '../utils/selection';
 import type { CommandInputs } from './sceneCommands';
 
@@ -41,7 +41,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       group: 'Selection',
       label: 'Select All',
       shortcut: '⌘A',
-      icon: <Layers className={ic} />,
+      icon: <LayersIcon className={ic} />,
       run: core.selection.selectAll,
     },
     {
@@ -49,7 +49,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       group: 'Selection',
       label: 'Copy',
       shortcut: '⌘C',
-      icon: <Copy className={ic} />,
+      icon: <CopyIcon className={ic} />,
       run: () => clipboard.copyViaCommand(false),
     },
     {
@@ -57,7 +57,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       group: 'Selection',
       label: 'Cut',
       shortcut: '⌘X',
-      icon: <Scissors className={ic} />,
+      icon: <CutIcon className={ic} />,
       run: () => clipboard.copyViaCommand(true),
     },
     {
@@ -65,7 +65,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       group: 'Selection',
       label: 'Paste',
       shortcut: '⌘V',
-      icon: <ClipboardPaste className={ic} />,
+      icon: <PasteIcon className={ic} />,
       run: clipboard.pasteParts,
     },
     {
@@ -73,7 +73,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       group: 'Selection',
       label: 'Group',
       shortcut: '⌘G',
-      icon: <Group className={ic} />,
+      icon: <GroupIcon className={ic} />,
       run: edits.group,
     },
     {
@@ -81,7 +81,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       group: 'Selection',
       label: 'Ungroup',
       shortcut: '⇧⌘G',
-      icon: <Ungroup className={ic} />,
+      icon: <UngroupIcon className={ic} />,
       run: edits.ungroup,
     },
   ];
@@ -95,7 +95,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       id: 'union',
       group: 'Selection',
       label: 'Union',
-      icon: <SquaresUnite className={ic} />,
+      icon: <UnionIcon className={ic} />,
       keywords: 'boolean merge combine',
       run: () => ops.runBoolean('union'),
     },
@@ -103,7 +103,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       id: 'subtract',
       group: 'Selection',
       label: 'Subtract',
-      icon: <SquaresSubtract className={ic} />,
+      icon: <SubtractIcon className={ic} />,
       keywords: 'boolean cut hole difference',
       run: () => ops.runBoolean('subtract'),
     },
@@ -111,7 +111,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       id: 'intersect',
       group: 'Selection',
       label: 'Intersect',
-      icon: <SquaresIntersect className={ic} />,
+      icon: <IntersectIcon className={ic} />,
       keywords: 'boolean common',
       run: () => ops.runBoolean('intersect'),
     },
@@ -119,7 +119,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       id: a.id,
       group: 'Selection',
       label: a.label,
-      icon: <AlignCenterVertical className={ic} />,
+      icon: <AlignCenterXIcon className={ic} />,
       keywords: a.keywords,
       run: () => edits.align(a.axis, a.mode),
     })),
@@ -127,7 +127,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       id: d.id,
       group: 'Selection',
       label: d.label,
-      icon: <AlignCenterVertical className={ic} />,
+      icon: <AlignCenterXIcon className={ic} />,
       keywords: 'spread space',
       run: () => edits.distribute(d.axis),
     })),
@@ -136,7 +136,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       group: 'Tools',
       label: 'Drop to Floor',
       shortcut: 'F',
-      icon: <ArrowDownToLine className={ic} />,
+      icon: <FloorIcon className={ic} />,
       run: edits.dropToGround,
     },
     {
@@ -144,7 +144,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       group: 'Tools',
       label: 'Stack on Part Below',
       shortcut: 'S',
-      icon: <Layers className={ic} />,
+      icon: <LayersIcon className={ic} />,
       run: edits.stackOnBelow,
     },
   ];

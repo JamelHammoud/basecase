@@ -1,27 +1,10 @@
 import React, { useId } from 'react';
+import { Glyph } from './glyph';
 
 export interface GlyphProps {
   filled?: boolean;
   className?: string;
 }
-
-const Glyph: React.FC<{ className?: string; children: React.ReactNode }> = ({
-  className = 'w-[18px] h-[18px]',
-  children,
-}) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`shrink-0 ${className}`}
-    aria-hidden="true"
-  >
-    {children}
-  </svg>
-);
 
 const Knockout: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => (
   <defs>

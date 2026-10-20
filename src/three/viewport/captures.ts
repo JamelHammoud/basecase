@@ -41,6 +41,7 @@ function viewDirection(view: string): THREE.Vector3 {
 function hideHelpers(ctx: ViewportContext, hider: Hider, helper: THREE.Object3D | undefined): void {
   hider.hide(helper);
   hider.hide(ctx.stage.brushCursor);
+  hider.hide(ctx.stage.overlays);
 }
 
 export function captureScreenshot(ctx: ViewportContext, helper: THREE.Object3D | undefined): string {
@@ -76,10 +77,12 @@ function hideForSilhouette(ctx: ViewportContext, hider: Hider): void {
   });
 }
 
-function visibleBounds(root: THREE.Object3D) {
+function visibleBounds(root: THREE.Object3D, marks?: THREE.Box3) {
   const box = new THREE.Box3();
 
   root.children.forEach((c) => c.visible && box.expandByObject(c));
+
+  if (marks && !marks.isEmpty()) box.union(marks);
 
   if (box.isEmpty()) box.set(new THREE.Vector3(-50, 0, -50), new THREE.Vector3(50, 50, 50));
 
@@ -91,7 +94,7 @@ function visibleBounds(root: THREE.Object3D) {
 
 export function captureViews(
   ctx: ViewportContext,
-  request: { views: string[]; onlyIds?: string[]; silhouette?: boolean; helper?: THREE.Object3D },
+  request: { views: string[]; onlyIds?: string[]; silhouette?: boolean; helper?: THREE.Object3D; marks?: THREE.Box3 },
 ): Array<{ view: string; dataUrl: string }> {
   const { renderer, scene, camera: mainCamera, partsRoot } = ctx.stage;
   const hider = new Hider();
@@ -102,7 +105,7 @@ export function captureViews(
   hideHelpers(ctx, hider, request.helper);
   hideForViews(ctx, hider, request.onlyIds);
 
-  const { center, radius } = visibleBounds(partsRoot);
+  const { center, radius } = visibleBounds(partsRoot, request.marks);
   const camera = new THREE.PerspectiveCamera(24, mainCamera.aspect, 1, 10000);
   const distance = (radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.08;
 

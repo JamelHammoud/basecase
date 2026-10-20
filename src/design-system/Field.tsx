@@ -1,5 +1,6 @@
 import React from 'react';
-import { ChevronDown, ChevronLeft, Search, X } from 'lucide-react';
+import { ChevronDownIcon, ChevronLeftIcon, CloseIcon } from './glyphs';
+import { SearchIcon } from './toolIcons';
 import { Kbd } from './Kbd';
 import { Tooltip } from './Tooltip';
 
@@ -73,11 +74,11 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
               onClick={onBack}
               className="ml-[6px] w-[28px] h-[28px] shrink-0 rounded-[8px] flex items-center justify-center text-white/60 hover:text-white/90 hover:bg-white/[0.08] active:scale-95 cursor-default transition-[background-color,color,transform] duration-150 animate-pop-in"
             >
-              <ChevronLeft className="w-[18px] h-[18px]" strokeWidth={2} />
+              <ChevronLeftIcon className="w-[18px] h-[18px]" strokeWidth={2} />
             </button>
           </Tooltip>
         ) : (
-          <Search
+          <SearchIcon
             className="ml-[12px] w-[16px] h-[16px] shrink-0 text-white/40 group-has-[input:focus]:text-white/70 transition-colors duration-150 pointer-events-none"
             strokeWidth={2}
           />
@@ -104,7 +105,7 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
             }}
             className="mr-[11px] w-[18px] h-[18px] shrink-0 rounded-full bg-white/25 hover:bg-white/40 text-[#1f1f1f] flex items-center justify-center cursor-default transition-colors duration-150 active:scale-95"
           >
-            <X className="w-2.5 h-2.5" strokeWidth={3.25} />
+            <CloseIcon className="w-2.5 h-2.5" strokeWidth={3.25} />
           </button>
         ) : (
           shortcut && (
@@ -146,6 +147,6 @@ export const Select: React.FC<SelectProps> = ({ options, className = '', ...prop
         </option>
       ))}
     </select>
-    <ChevronDown className="w-3.5 h-3.5 text-white/40 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+    <ChevronDownIcon className="w-3.5 h-3.5 text-white/40 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
   </div>
 );

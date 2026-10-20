@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { SceneAnnotation, ScenePart } from '../types/robotics';
 import type { Viewport3DHandle } from './Viewport3D';
-import { CURSORS } from '../design-system';
+import { CURSORS, isModalOpen } from '../design-system';
 import { CommentComposer } from './annotations/CommentComposer';
 import { Thread } from './annotations/Thread';
 import { CARD_WIDTH, DRAFT_KEY, usePinLayout } from './annotations/usePinLayout';
@@ -78,7 +78,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = (props) => {
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
 
-      if (ownsTarget(t) || (t as HTMLElement).closest?.('[data-annotation-list]')) return;
+      if (isModalOpen() || ownsTarget(t) || (t as HTMLElement).closest?.('[data-annotation-list]')) return;
 
       if (draft) onCancelDraft();
       else onOpen(null);

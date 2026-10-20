@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseSizeQuery, searchCatalog } from './catalogSearch';
-import { CATEGORIES, sceneParts, searchScope } from './partsViews';
+import { CATEGORIES, searchScope } from './partsViews';
 
 describe('parts search', () => {
   it('reads metric sizes, lengths and bearing numbers', () => {
@@ -18,6 +18,16 @@ describe('parts search', () => {
     expect(results.every((i) => i.hardware?.length === 12)).toBe(true);
   });
 
+  it('makes motion hardware from catalog sizes', () => {
+    const rails = searchCatalog('mgn12 rail 245');
+    const extrusion = searchCatalog('2020 extrusion 300');
+
+    expect(rails[0].hardware).toMatchObject({ type: 'linear_rail', size: 'MGN12', length: 245 });
+    expect(rails[0].name).toBe('MGN12 × 245 Linear Rail');
+    expect(extrusion[0].hardware).toMatchObject({ type: 'extrusion', size: '2020', length: 300 });
+    expect(searchCatalog('lm8uu')[0].hardware?.type).toBe('linear_bearing');
+  });
+
   it('ranks the group a word names first', () => {
     const results = searchCatalog('servo');
 
@@ -30,19 +40,10 @@ describe('parts search', () => {
 describe('parts views', () => {
   it('scopes search to the open category', () => {
     const servos = CATEGORIES.find((c) => c.id === 'Servos')!;
-    const scope = searchScope({ kind: 'category', id: 'Servos' }, { used: [], related: [] })!;
+    const scope = searchScope({ kind: 'category', id: 'Servos' })!;
 
     expect(scope.label).toBe('servos');
     expect(servos.items.every(scope.has)).toBe(true);
-    expect(searchScope({ kind: 'home' }, { used: [], related: [] })).toBeNull();
-  });
-
-  it('counts catalog parts in the scene and suggests what goes with them', () => {
-    const servo = CATEGORIES.find((c) => c.id === 'Servos')!.items[0];
-    const part = { componentId: servo.componentId } as Parameters<typeof sceneParts>[0][number];
-    const scene = sceneParts([part, part], '');
-
-    expect(scene.used).toEqual([{ item: expect.objectContaining({ componentId: servo.componentId }), count: 2 }]);
-    expect(scene.related.some((i) => i.componentId === servo.componentId)).toBe(false);
+    expect(searchScope({ kind: 'home' })).toBeNull();
   });
 });

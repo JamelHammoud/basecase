@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { WarningIcon } from '../../design-system';
 
 const TONE_CLASS = {
   amber: 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/15',
@@ -16,7 +16,7 @@ export const Notice: React.FC<{ tone: 'amber' | 'default'; text: string; onClick
     onClick={onClick}
     className={`w-full flex items-start gap-2 text-left text-[12.5px] rounded-lg px-2.5 py-2 cursor-default transition-colors ${TONE_CLASS[tone]}`}
   >
-    <AlertTriangle className="w-3.5 h-3.5 mt-[1px] shrink-0" />
+    <WarningIcon className="w-3.5 h-3.5 mt-[1px] shrink-0" />
     {text}
   </button>
 );

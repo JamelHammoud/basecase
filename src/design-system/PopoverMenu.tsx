@@ -1,12 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { TickIcon } from './glyphs';
 import { createPortal } from 'react-dom';
-import { Check } from 'lucide-react';
 import { Kbd } from './Kbd';
 import { Divider } from './Divider';
 
 export interface PopoverMenuProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (reason: 'outside' | 'escape') => void;
   children: React.ReactNode;
   className?: string;
   position?: 'top' | 'bottom' | 'left' | 'right';
@@ -101,12 +101,12 @@ export const PopoverMenu: React.FC<PopoverMenuProps> = ({
 
       if (ignoreRef?.current?.contains(target)) return;
 
-      onClose();
+      onClose('outside');
     };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onClose('escape');
       }
     };
 
@@ -195,6 +195,7 @@ export interface MenuItemProps {
   icon?: React.ReactNode;
   label: React.ReactNode;
   shortcut?: string;
+  detail?: string;
   checked?: boolean;
   onSelect: () => void;
   disabled?: boolean;
@@ -205,6 +206,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   icon,
   label,
   shortcut,
+  detail,
   checked,
   onSelect,
   disabled = false,
@@ -220,12 +222,15 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     } group/menuitem`}
   >
     {checked !== undefined && (
-      <span className="w-4 shrink-0 flex justify-center">{checked && <Check className="w-3.5 h-3.5" />}</span>
+      <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
     )}
     {icon && (
       <span className="w-4 shrink-0 flex justify-center text-white/60 group-hover/menuitem:text-white">{icon}</span>
     )}
     <span className="flex-1 truncate">{label}</span>
+    {detail && (
+      <span className="shrink-0 text-[12.5px] text-white/40 group-hover/menuitem:text-white/80">{detail}</span>
+    )}
     {shortcut && (
       <Kbd className="group-hover/menuitem:[&_kbd]:bg-white/20 group-hover/menuitem:[&_kbd]:text-white">{shortcut}</Kbd>
     )}

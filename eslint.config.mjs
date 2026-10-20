@@ -31,6 +31,7 @@ export default tseslint.config(
       'tools/parts/cad/**',
       'tools/parts/generated/**',
       'electron/trainer/.venv/**',
+      'scratch/**',
       '**/node_modules/**',
     ],
   },

@@ -1,0 +1,80 @@
+{
+  "id": "molicel-p42a",
+  "name": "Molicel INR-21700-P42A",
+  "manufacturer": "Molicel (E-One Moli Energy)",
+  "mpn": "INR-21700-P42A",
+  "category": "power",
+  "description": "21700 lithium-ion cell, 4200 mAh, 45 A continuous discharge.",
+  "specs": [
+    {
+      "label": "Capacity",
+      "value": "4200 mAh typical (15.5 Wh), 4000 mAh minimum (14.7 Wh)"
+    },
+    {
+      "label": "Voltage",
+      "value": "3.6 V nominal, 4.2 V charge, 2.5 V discharge cutoff"
+    },
+    {
+      "label": "Discharge",
+      "value": "45 A continuous"
+    },
+    {
+      "label": "Charge",
+      "value": "4.2 A standard, 1.5 h"
+    },
+    {
+      "label": "Impedance",
+      "value": "10 mΩ AC (1 kHz), 16 mΩ DC (10 A / 1 s)"
+    },
+    {
+      "label": "Temperature",
+      "value": "Charge 0–45 °C, discharge −40 to 60 °C"
+    }
+  ],
+  "dimensions": {
+    "envelope": {
+      "x": 70.15,
+      "y": 21.55,
+      "z": 21.55,
+      "axes": "x = cell height 70.15 mm (max, positive terminal at +X), y and z = diameter 21.55 mm (max); lying on its side, so the cylinder touches the floor at z = 0"
+    },
+    "features": [
+      {
+        "label": "Diameter",
+        "value": "21.55 mm (Max)",
+        "source": "https://www.molicel.com/wp-content/uploads/INR21700P42A_1.7_Product-Data-Sheet-of-INR-21700-P42A-80092.pdf (Physical characteristics)"
+      },
+      {
+        "label": "Height",
+        "value": "70.15 mm (Max), terminal to base",
+        "source": "https://www.molicel.com/wp-content/uploads/INR21700P42A_1.7_Product-Data-Sheet-of-INR-21700-P42A-80092.pdf (Physical characteristics)"
+      },
+      {
+        "label": "Can",
+        "value": "Steel, cylindrical",
+        "source": "https://www.molicel.com/wp-content/uploads/INR21700P42A_1.7_Product-Data-Sheet-of-INR-21700-P42A-80092.pdf"
+      },
+      {
+        "label": "Weight",
+        "value": "70 g (Max)",
+        "source": "https://www.molicel.com/wp-content/uploads/INR21700P42A_1.7_Product-Data-Sheet-of-INR-21700-P42A-80092.pdf"
+      },
+      {
+        "label": "Positive terminal",
+        "value": null,
+        "source": "Not given in the data sheet. Flat-top cell: a small raised cap inside an insulating ring on the positive end. Keep it plain and within the stated height."
+      }
+    ],
+    "source": "https://www.molicel.com/wp-content/uploads/INR21700P42A_1.7_Product-Data-Sheet-of-INR-21700-P42A-80092.pdf"
+  },
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/s?k=Molicel+P42A+21700",
+      "kind": "search"
+    },
+    "product": "https://www.molicel.com/product/inr-21700-p42a/",
+    "datasheet": "https://www.molicel.com/wp-content/uploads/INR21700P42A_1.7_Product-Data-Sheet-of-INR-21700-P42A-80092.pdf"
+  },
+  "notes": "Molicel publishes no CAD and no dimension drawing: the data sheet gives only the maximum diameter and height. Model the cell as a plain cylinder at those maximums (it is the envelope a holder or pocket must clear), axis along X, positive end toward +X, wrapped can. The positive end is a flat-top terminal cap inside an insulating ring; the negative end is the flat can bottom. Cap diameter, cap height, ring size, the crimp groove and the wrap thickness are not dimensioned: keep the positive end simple (at most a shallow, conservative raised cap inside the stated height) and list them under Not dimensioned. No tabs or leads.",
+  "pose": "cell"
+}

@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CircleCheck, Pencil, Trash2, X } from 'lucide-react';
 import { SceneAnnotation } from '../../types/robotics';
 import { timeAgo } from '../../utils/timeAgo';
-import { Button, IconButton } from '../../design-system';
+import { Button, IconButton, CircleCheckIcon, CloseIcon, DeleteIcon, EditIcon } from '../../design-system';
 import { AutoTextarea, CommentComposer } from './CommentComposer';
+import { DeleteCommentDialog, type PendingDelete } from './DeleteCommentDialog';
 
 export interface ThreadActions {
   onOpen: (id: string | null) => void;
@@ -89,7 +89,7 @@ const CommentItem: React.FC<{
       {!editing && (
         <div className="absolute top-2 right-2 flex opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <IconButton
-            icon={<Pencil className="w-3.5 h-3.5" />}
+            icon={<EditIcon className="w-3.5 h-3.5" />}
             title="Edit"
             size="xs"
             tooltipSide="top"
@@ -99,7 +99,7 @@ const CommentItem: React.FC<{
             }}
           />
           <IconButton
-            icon={<Trash2 className="w-3.5 h-3.5" />}
+            icon={<DeleteIcon className="w-3.5 h-3.5" />}
             title="Delete"
             size="xs"
             variant="danger"
@@ -123,7 +123,7 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
   onToggleResolved,
   onDeleteThread,
 }) => {
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pending, setPending] = useState<PendingDelete>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -137,23 +137,21 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
         {partName && <span className="text-[13px] text-white/45 truncate">on {partName}</span>}
         <div className="flex-1" />
         <IconButton
-          icon={<CircleCheck className="w-4 h-4" />}
+          icon={<CircleCheckIcon className="w-4 h-4" />}
           title={a.resolved ? 'Reopen' : 'Resolve'}
           isToggled={a.resolved}
           tooltipSide="top"
           onClick={() => onToggleResolved(a.id)}
         />
         <IconButton
-          icon={<Trash2 className="w-4 h-4" />}
-          title={confirmDelete ? 'Click again to delete thread' : 'Delete thread'}
+          icon={<DeleteIcon className="w-4 h-4" />}
+          title="Delete thread"
           variant="danger"
           tooltipSide="top"
-          className={confirmDelete ? '!bg-red-500 !text-white' : ''}
-          onClick={() => (confirmDelete ? onDeleteThread(a.id) : setConfirmDelete(true))}
-          onMouseLeave={() => setConfirmDelete(false)}
+          onClick={() => setPending({ kind: 'thread' })}
         />
         <IconButton
-          icon={<X className="w-4 h-4" />}
+          icon={<CloseIcon className="w-4 h-4" />}
           title="Close"
           shortcut="Esc"
           tooltipSide="top"
@@ -169,7 +167,7 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
             createdAt={c.createdAt}
             edited={!!c.editedAt}
             onSave={(text) => onEditComment(a.id, c.id, text)}
-            onDelete={() => onDeleteComment(a.id, c.id)}
+            onDelete={() => setPending({ kind: 'comment', commentId: c.id })}
           />
         ))}
       </div>
@@ -182,6 +180,15 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
           onEscape={() => onOpen(null)}
         />
       </div>
+
+      <DeleteCommentDialog
+        annotation={a}
+        number={number}
+        pending={pending}
+        onCancel={() => setPending(null)}
+        onDeleteThread={onDeleteThread}
+        onDeleteComment={onDeleteComment}
+      />
     </>
   );
 };

@@ -1,0 +1,37 @@
+[
+ {
+  "id": "ovonic-3s-2200-pack",
+  "name": "Ovonic 3S 2200 mAh 50C Pack Body",
+  "color": "#2b2b2d",
+  "role": "solid",
+  "position": [
+   0,
+   10.5,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 105,
+   "height": 21,
+   "depth": 33
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Ovonic O-50C-2200-3S1P-XT60 pack body (shrink-wrapped soft pack).\n// Official envelope: L 105 (X) x W 33 (Y) x H 21 (Z) mm; tolerances L ±5, W ±2, H ±2.\n// Lead end (main + balance leads) at +X; leads/plugs not modeled.\n// Origin: bottom face center, label face up.\nL = 105; W = 33; H = 21;\nr_long = 2;   // long-edge rounding: NOT dimensioned by Ovonic, kept small/conservative\ncuboid([L, W, H], rounding = r_long, edges = \"X\", anchor = BOT, $fn = 32);",
+   "originOffset": [
+    0,
+    10.5,
+    0
+   ],
+   "baseSize": [
+    105,
+    21,
+    33
+   ]
+  }
+ }
+]

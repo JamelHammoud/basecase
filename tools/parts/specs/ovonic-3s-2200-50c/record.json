@@ -1,0 +1,83 @@
+{
+  "id": "ovonic-3s-2200-50c",
+  "name": "Ovonic 3S 2200 mAh 50C LiPo",
+  "manufacturer": "Ovonic",
+  "mpn": "O-50C-2200-3S1P-XT60",
+  "category": "power",
+  "description": "11.1 V 3S LiPo pack, 2200 mAh, 50C, with an XT60 plug. Sold in pairs.",
+  "specs": [
+    {
+      "label": "Chemistry",
+      "value": "Li-Po (lithium polymer), soft pouch cells in a shrink-wrapped pack"
+    },
+    {
+      "label": "Configuration",
+      "value": "3S1P"
+    },
+    {
+      "label": "Voltage",
+      "value": "11.1 V nominal, 12.6 V full (4.2 V per cell)"
+    },
+    {
+      "label": "Capacity",
+      "value": "2200 mAh"
+    },
+    {
+      "label": "Discharge",
+      "value": "50C continuous, 100C burst"
+    },
+    {
+      "label": "Main connector",
+      "value": "XT60"
+    },
+    {
+      "label": "Balance connector",
+      "value": "JST-XH 4-pin"
+    },
+    {
+      "label": "Weight",
+      "value": "179 g ±20 g (AU page); the US page says 168 g"
+    }
+  ],
+  "dimensions": {
+    "envelope": {
+      "x": 105,
+      "y": 33,
+      "z": 21,
+      "axes": "x = length 105 mm (lead end at +X), y = width 33 mm, z = height 21 mm (label face up)"
+    },
+    "features": [
+      {
+        "label": "Overall",
+        "value": "105 × 33 × 21 mm (L × W × H)",
+        "source": "Ovonic spec list (ovonicshop.com and us.ovonicshop.com) and dimension image 3s-dimensions.jpg (105 mm, 33 mm, 21 mm)"
+      },
+      {
+        "label": "Body shape",
+        "value": "Rectangular soft pack: stacked pouch cells in black heat-shrink wrap, long edges visibly rounded (radius not given), flat faces. Label printed on the top face (no geometry).",
+        "source": "Ovonic product photos (attached)"
+      },
+      {
+        "label": "Lead end",
+        "value": "Both the main leads (red and black silicone wire) and the JST-XH balance lead leave the same short end, where the cell tabs are folded and covered by the wrap. Exit positions and lead lengths are not published. Leads and plugs are not modeled.",
+        "source": "Ovonic product photos (attached)"
+      },
+      {
+        "label": "Tolerances",
+        "value": "Length ±5 mm, width ±2 mm, height ±2 mm, weight ±20 g (\"dev.\" values on the spec list)",
+        "source": "Ovonic product page spec list"
+      }
+    ],
+    "source": "https://us.ovonicshop.com/products/ovonic-50c-2200mah-3s1p-11-1v-xt60-2pcs-lipo-battery"
+  },
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/s?k=Ovonic+3S+2200mAh+50C+LiPo+XT60",
+      "kind": "search"
+    },
+    "product": "https://us.ovonicshop.com/products/ovonic-50c-2200mah-3s1p-11-1v-xt60-2pcs-lipo-battery",
+    "datasheet": "https://cdn.shopify.com/s/files/1/0153/9135/9024/products/O-50C-2200-3S1P-XT602P-3.jpg"
+  },
+  "notes": "Ovonic publishes no CAD and no dimensioned drawing: only L × W × H with tolerances (length ±5 mm, width and height ±2 mm, weight ±20 g) and product photos. Model the pack at the nominal L × W × H as one soft shrink-wrapped block (black wrap, label on the top face) with gently rounded long edges, the way the photos show it. The stated length is the pack body; the main leads and the balance lead both leave the same short end (pose: that end toward +X), and leads and plugs are not modeled. Edge radii, the lead-end tab fold and the lead exit positions are not dimensioned.",
+  "pose": "battery"
+}

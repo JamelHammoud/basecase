@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Button, ContextMenu, ContextMenuEntry, Section, Select, useScrollFade } from '../design-system';
-import { Hand } from 'lucide-react';
+import { Button, ContextMenu, ContextMenuEntry, Section, Select, useScrollFade, HandIcon } from '../design-system';
 import type { PolicyRecord, RobotAnimation } from '../types/robotics';
 import type { Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
@@ -98,7 +97,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = ({
             <Button
               variant="secondary"
               size="sm"
-              icon={<Hand className="w-4 h-4" />}
+              icon={<HandIcon className="w-4 h-4" />}
               disabled={!sim.playing}
               title="Push the robot sideways"
               onClick={() => sim.push()}

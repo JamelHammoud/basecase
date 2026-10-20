@@ -1,0 +1,80 @@
+{
+  "id": "molicel-p28a",
+  "name": "Molicel INR-18650-P28A",
+  "manufacturer": "Molicel (E-One Moli Energy)",
+  "mpn": "INR-18650-P28A",
+  "category": "power",
+  "description": "18650 lithium-ion cell, 2800 mAh, 35 A maximum discharge.",
+  "specs": [
+    {
+      "label": "Capacity",
+      "value": "2800 mAh typical (10.3 Wh), 2700 mAh minimum (9.56 Wh)"
+    },
+    {
+      "label": "Voltage",
+      "value": "3.6 V nominal, 4.2 V charge, 2.5 V discharge cutoff"
+    },
+    {
+      "label": "Discharge",
+      "value": "35 A maximum (the sheet says Maximum, not Continuous)"
+    },
+    {
+      "label": "Charge",
+      "value": "2.8 A standard, 8.4 A maximum, 1.5 h"
+    },
+    {
+      "label": "Resistance",
+      "value": "20 mΩ max AC (1 kHz), 20 mΩ DC (10 A / 1 s)"
+    },
+    {
+      "label": "Temperature",
+      "value": "Charge 0–60 °C, discharge −40 to 60 °C"
+    }
+  ],
+  "dimensions": {
+    "envelope": {
+      "x": 65.2,
+      "y": 18.6,
+      "z": 18.6,
+      "axes": "x = cell height 65.2 mm (max, positive terminal at +X), y and z = diameter 18.6 mm (max); lying on its side, so the cylinder touches the floor at z = 0"
+    },
+    "features": [
+      {
+        "label": "Diameter",
+        "value": "18.6 mm (Max)",
+        "source": "https://www.molicel.com/wp-content/uploads/INR18650P28A_1.3_Product-Data-Sheet-of-INR-18650-P28A-80093.pdf (Physical characteristics)"
+      },
+      {
+        "label": "Height",
+        "value": "65.2 mm (Max), terminal to base",
+        "source": "https://www.molicel.com/wp-content/uploads/INR18650P28A_1.3_Product-Data-Sheet-of-INR-18650-P28A-80093.pdf (Physical characteristics)"
+      },
+      {
+        "label": "Can",
+        "value": "Steel, cylindrical",
+        "source": "https://www.molicel.com/wp-content/uploads/INR18650P28A_1.3_Product-Data-Sheet-of-INR-18650-P28A-80093.pdf"
+      },
+      {
+        "label": "Weight",
+        "value": "46 g (Typical)",
+        "source": "https://www.molicel.com/wp-content/uploads/INR18650P28A_1.3_Product-Data-Sheet-of-INR-18650-P28A-80093.pdf"
+      },
+      {
+        "label": "Positive terminal",
+        "value": null,
+        "source": "Not given in the data sheet. Flat-top cell: a small raised cap inside an insulating ring on the positive end. Keep it plain and within the stated height."
+      }
+    ],
+    "source": "https://www.molicel.com/wp-content/uploads/INR18650P28A_1.3_Product-Data-Sheet-of-INR-18650-P28A-80093.pdf"
+  },
+  "links": {
+    "amazon": {
+      "url": "https://www.amazon.com/s?k=Molicel+P28A+18650",
+      "kind": "search"
+    },
+    "product": "https://www.molicel.com/product/inr-18650-p28a/",
+    "datasheet": "https://www.molicel.com/wp-content/uploads/INR18650P28A_1.3_Product-Data-Sheet-of-INR-18650-P28A-80093.pdf"
+  },
+  "notes": "Molicel publishes no CAD and no dimension drawing: the data sheet gives only the maximum diameter and height. Model the cell as a plain cylinder at those maximums (it is the envelope a holder or pocket must clear), axis along X, positive end toward +X, wrapped can. The positive end is a flat-top terminal cap inside an insulating ring; the negative end is the flat can bottom. Cap diameter, cap height, ring size, the crimp groove and the wrap thickness are not dimensioned: keep the positive end simple (at most a shallow, conservative raised cap inside the stated height) and list them under Not dimensioned. No tabs or leads.",
+  "pose": "cell"
+}

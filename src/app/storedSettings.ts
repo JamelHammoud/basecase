@@ -1,4 +1,5 @@
 import type { Preferences } from '../SceneWorkspace';
+import type { MeasureUnit } from '../types/robotics';
 import { LAYOUT } from '../design-system';
 
 export interface PanelWidths {
@@ -12,11 +13,12 @@ export const DEFAULT_PREFERENCES: Preferences = {
   trackpadMode: 'orbit-scroll',
   showGrid: true,
   sculptEnabled: false,
+  measureUnit: 'metric',
 };
 
 export const DEFAULT_PANEL_WIDTHS: PanelWidths = { left: LAYOUT.leftPanelWidth, right: LAYOUT.rightPanelWidth };
 
-function readStored(key: string): unknown {
+export function readStored(key: string): unknown {
   try {
     return JSON.parse(localStorage.getItem(key) || 'null');
   } catch {
@@ -30,10 +32,16 @@ export function writeStored(key: string, value: unknown) {
   } catch {}
 }
 
+const measureSystem = (unit: string): MeasureUnit => (unit === 'imperial' || unit === 'in' ? 'imperial' : 'metric');
+
 export function loadPreferences(): Preferences {
   const saved = readStored('preferences');
 
-  if (saved && typeof saved === 'object') return { ...DEFAULT_PREFERENCES, ...saved };
+  if (saved && typeof saved === 'object') {
+    const merged = { ...DEFAULT_PREFERENCES, ...saved } as Preferences;
+
+    return { ...merged, measureUnit: measureSystem(merged.measureUnit) };
+  }
 
   return DEFAULT_PREFERENCES;
 }

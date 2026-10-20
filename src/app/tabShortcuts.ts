@@ -39,5 +39,7 @@ export function tabCommandForKey(e: TabKey, tabIds: string[]): string | null {
 
   if (key === 'w') return 'close-tab';
 
+  if (key === 'o') return 'open-scenes';
+
   return numberedTabCommand(e.key, tabIds);
 }

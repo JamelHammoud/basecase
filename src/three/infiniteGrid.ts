@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { THEME_COLORS } from '../design-system/theme';
 
 export interface InfiniteGrid {
   mesh: THREE.Mesh;
@@ -62,7 +63,7 @@ const fragmentShader = `
       alpha = max(alpha, az * 0.55);
     }
 
-    alpha *= fade;
+    alpha *= fade * (cameraPosition.y < 0.0 ? 0.6 : 1.0);
     if (alpha < 0.004) discard;
     gl_FragColor = vec4(color, alpha);
   }
@@ -74,8 +75,8 @@ export function createInfiniteGrid(): InfiniteGrid {
       uExtent: { value: 3000 },
       uFade: { value: 3000 },
       uColor: { value: new THREE.Color('#8f8f8f') },
-      uAxisX: { value: new THREE.Color('#ef4444') },
-      uAxisZ: { value: new THREE.Color('#3b82f6') },
+      uAxisX: { value: new THREE.Color(THEME_COLORS.axisX) },
+      uAxisZ: { value: new THREE.Color(THEME_COLORS.axisZ) },
     },
     vertexShader,
     fragmentShader,

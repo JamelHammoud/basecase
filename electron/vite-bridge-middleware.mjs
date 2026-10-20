@@ -20,6 +20,8 @@ function getRoutes(backend) {
 function postRoutes(backend) {
   return [
     ['/acp-connect', (p) => backend.connectAcpAgent(p.agentCommand)],
+    ['/acp-authenticate', (p) => backend.authenticateAcpAgent(p.methodId)],
+    ['/acp-api-key', (p) => backend.setAgentApiKey(p.key)],
     ['/acp-prompt', (p) => backend.sendAcpPrompt(p)],
     ['/acp-steer', (p) => backend.steerAcpPrompt(p)],
     ['/acp-resume', (p) => backend.resumeAcpConversation(p.sessionId, p.workspaceId)],
@@ -131,7 +133,10 @@ function bridgeMiddleware(backend) {
 
 function installBridge(server) {
   const backend = new BasecaseBackendService(process.cwd());
+  const stopAgent = () => backend.disconnectAcpAgent();
 
+  server.httpServer?.once('close', stopAgent);
+  process.once('exit', stopAgent);
   server.middlewares.use('/api/events', eventsMiddleware(backend));
   server.middlewares.use('/api/bridge', bridgeMiddleware(backend));
 }

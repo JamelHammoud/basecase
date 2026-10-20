@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import { Brush, ChevronUp, FileUp, MessageCircle, Move3d, PenTool, Rotate3d, Scale3d, Shapes } from 'lucide-react';
 import { PART_CATALOG } from '../data/catalog';
 import { useCatalogThumbnails } from '../three/useCatalogThumbnails';
 import { PART_DRAG_TYPE } from '../data/dnd';
@@ -12,6 +11,17 @@ import {
   MenuItem,
   PopoverMenu,
   Tooltip,
+  BrushIcon,
+  ChevronUpIcon,
+  CommentIcon,
+  FileImportIcon,
+  MarkerIcon,
+  MoveIcon,
+  PenIcon,
+  RotateIcon,
+  RulerIcon,
+  ScaleIcon,
+  ShapesIcon,
 } from '../design-system';
 
 const BASIC_SHAPES = PART_CATALOG.filter((c) => c.category === 'primitives');
@@ -22,6 +32,10 @@ interface ViewportToolbarProps {
   onTransformMode: (mode: TransformMode) => void;
   showSculpt: boolean;
   commentMode: boolean;
+  measuring: boolean;
+  onMeasure: () => void;
+  marking: boolean;
+  onAnnotate: () => void;
   onToggleComment: () => void;
   shapesOpen: boolean;
   onShapesOpenChange: (open: boolean) => void;
@@ -35,6 +49,10 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   onTransformMode,
   showSculpt,
   commentMode,
+  measuring,
+  onMeasure,
+  marking,
+  onAnnotate,
   onToggleComment,
   shapesOpen,
   onShapesOpenChange,
@@ -46,10 +64,12 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   const [draggingShape, setDraggingShape] = useState(false);
 
   const tools: Array<{ mode: TransformMode; icon: React.ReactNode; label: string; key: string }> = [
-    { mode: 'translate', icon: <Move3d className={ICON} />, label: 'Move', key: 'V' },
-    { mode: 'rotate', icon: <Rotate3d className={ICON} />, label: 'Rotate', key: 'E' },
-    { mode: 'scale', icon: <Scale3d className={ICON} />, label: 'Scale', key: 'R' },
-    ...(showSculpt ? [{ mode: 'sculpt' as const, icon: <Brush className={ICON} />, label: 'Sculpt', key: 'C' }] : []),
+    { mode: 'translate', icon: <MoveIcon className={ICON} />, label: 'Move', key: 'V' },
+    { mode: 'rotate', icon: <RotateIcon className={ICON} />, label: 'Rotate', key: 'E' },
+    { mode: 'scale', icon: <ScaleIcon className={ICON} />, label: 'Scale', key: 'R' },
+    ...(showSculpt
+      ? [{ mode: 'sculpt' as const, icon: <BrushIcon className={ICON} />, label: 'Sculpt', key: 'C' }]
+      : []),
   ];
 
   return (
@@ -62,12 +82,12 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           shortcut={t.key}
           tooltipSide="top"
           size="lg"
-          isActive={!commentMode && transformMode === t.mode}
+          isActive={!commentMode && !measuring && !marking && transformMode === t.mode}
           onClick={() => onTransformMode(t.mode)}
         />
       ))}
       <IconButton
-        icon={<MessageCircle className={ICON} />}
+        icon={<CommentIcon className={ICON} />}
         title="Comment"
         shortcut="M"
         tooltipSide="top"
@@ -84,7 +104,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           shortcut="A"
           open={shapesOpen}
           onClick={() => onShapesOpenChange(!shapesOpen)}
-          icon={<Shapes className={ICON} />}
+          icon={<ShapesIcon className={ICON} />}
           size="lg"
         />
         <PopoverMenu
@@ -106,16 +126,34 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           />
           <MenuDivider />
           <MenuItem
-            icon={<PenTool className="w-4 h-4" />}
-            label="Sketch…"
+            icon={<PenIcon className="w-4 h-4" />}
+            label="Sketch"
             onSelect={() => {
               onShapesOpenChange(false);
               onSketch();
             }}
           />
           <MenuItem
-            icon={<FileUp className="w-4 h-4" />}
-            label="Import SVG…"
+            icon={<RulerIcon className="w-4 h-4" />}
+            label="Measure"
+            shortcut="D"
+            onSelect={() => {
+              onShapesOpenChange(false);
+              onMeasure();
+            }}
+          />
+          <MenuItem
+            icon={<MarkerIcon className="w-4 h-4" />}
+            label="Annotate"
+            shortcut="N"
+            onSelect={() => {
+              onShapesOpenChange(false);
+              onAnnotate();
+            }}
+          />
+          <MenuItem
+            icon={<FileImportIcon className="w-4 h-4" />}
+            label="Import SVG"
             onSelect={() => {
               onShapesOpenChange(false);
               onImportSvg();
@@ -180,7 +218,7 @@ const MenuTrigger: React.FC<{
   icon: React.ReactNode;
   size?: 'md' | 'lg';
 }> = ({ title, shortcut, open, onClick, icon, size = 'md' }) => (
-  <Tooltip label={title} shortcut={shortcut} side={size === 'lg' ? 'top' : 'left'} disabled={open}>
+  <Tooltip label={title} shortcut={shortcut} side={size === 'lg' ? 'top' : 'left'}>
     <button
       type="button"
       aria-label={title}
@@ -194,7 +232,9 @@ const MenuTrigger: React.FC<{
     >
       {icon}
       {size === 'lg' && (
-        <ChevronUp className={`w-3.5 h-3.5 opacity-50 transition-transform duration-200 ${open ? '' : 'rotate-180'}`} />
+        <ChevronUpIcon
+          className={`w-3.5 h-3.5 opacity-50 transition-transform duration-200 ${open ? '' : 'rotate-180'}`}
+        />
       )}
     </button>
   </Tooltip>

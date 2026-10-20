@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { CircleCheck, CircleMinus, CircleX, TriangleAlert } from 'lucide-react';
-import { Button, Section } from '../../design-system';
+import { Button, Section, CircleCheckIcon, CircleCloseIcon, CircleMinusIcon, WarningIcon } from '../../design-system';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { ENGINEERING_CHECKS } from '../../utils/engineering';
 import type { CheckRow, EngineeringReport } from '../../utils/engineering';
@@ -19,10 +18,10 @@ interface RunResult {
 }
 
 const STATUS_ICON: Record<CheckRow['status'], React.ReactNode> = {
-  pass: <CircleCheck className="w-4 h-4 text-emerald-400" />,
-  warn: <TriangleAlert className="w-4 h-4 text-amber-400" />,
-  fail: <CircleX className="w-4 h-4 text-red-400" />,
-  'not run': <CircleMinus className="w-4 h-4 text-white/35" />,
+  pass: <CircleCheckIcon className="w-4 h-4 text-emerald-400" />,
+  warn: <WarningIcon className="w-4 h-4 text-amber-400" />,
+  fail: <CircleCloseIcon className="w-4 h-4 text-red-400" />,
+  'not run': <CircleMinusIcon className="w-4 h-4 text-white/35" />,
 };
 
 const NOT_RUN: CheckRow[] = ENGINEERING_CHECKS.map((check) => ({ check, status: 'not run', detail: '' }));

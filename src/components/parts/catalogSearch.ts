@@ -1,6 +1,6 @@
 import { CATEGORY_LABELS, PART_CATALOG, hardwareVariant } from '../../data/catalog';
 import { COMPONENT_BY_ID, ComponentGroup, ComponentInfo } from '../../data/components';
-import { BEARINGS, HARDWARE_BY_TYPE, HardwareFamily, familyOf, isMetric, makeSpec } from '../../data/hardware';
+import { HARDWARE_BY_TYPE, HardwareFamily, NAMED_SIZES, familyOf, isMetric, makeSpec } from '../../data/hardware';
 import type { CatalogItem } from '../../types/robotics';
 
 const FAMILY_WORDS: Record<string, string> = {
@@ -10,7 +10,12 @@ const FAMILY_WORDS: Record<string, string> = {
   inserts: 'insert threaded heat set',
   standoffs: 'standoff spacer pcb',
   pins: 'pin dowel axle shaft',
-  bearings: 'bearing ball',
+  bearings: 'bearing ball flanged thrust',
+  guides: 'linear rail guide mgn carriage block slide',
+  extrusion: 'extrusion profile t-slot tslot aluminum aluminium frame t-nut tnut bracket',
+  shafts: 'shaft rod linear bearing bushing lm8uu smooth rod',
+  collars: 'collar shaft collar circlip retaining ring snap ring',
+  pulleys: 'pulley gt2 timing belt idler',
 };
 
 const GROUP_WORDS: Partial<Record<ComponentGroup, string>> = {
@@ -25,6 +30,10 @@ const GROUP_WORDS: Partial<Record<ComponentGroup, string>> = {
   Drivers: 'driver board controller',
   Sensors: 'sensor',
   Cameras: 'camera vision',
+  Power: 'power battery regulator converter buck boost supply',
+  Wheels: 'wheel caster tire drive',
+  'Linear Actuators': 'linear actuator push pull stroke',
+  'Displays & Audio': 'display screen lcd face speaker microphone audio',
 };
 
 interface Indexed {
@@ -87,11 +96,11 @@ const takeSize = (rest: string): { size?: string; length?: number; rest: string 
     return { size: `M${m[1]}`, length: m[2] ? Number(m[2]) : undefined, rest: rest.replace(m[0], ' ') };
   }
 
-  const bearing = Object.keys(BEARINGS).find((b) => new RegExp(`\\b${b.toLowerCase()}\\b`).test(rest));
+  const named = NAMED_SIZES.find((n) => new RegExp(`\\b${n.toLowerCase()}\\b`).test(rest));
 
-  if (!bearing) return { rest };
+  if (!named) return { rest };
 
-  return { size: bearing, rest: rest.replace(new RegExp(`\\b${bearing.toLowerCase()}\\b`), ' ') };
+  return { size: named, rest: rest.replace(new RegExp(`\\b${named.toLowerCase()}\\b`), ' ') };
 };
 
 export function parseSizeQuery(q: string): SizeQuery {
@@ -112,7 +121,11 @@ const fitsSize = (e: Indexed, size: string, length: number | undefined): boolean
 
   if (!h || !HARDWARE_BY_TYPE[h.type].sizes.includes(size)) return false;
 
-  return length === undefined || !!HARDWARE_BY_TYPE[h.type].lengths;
+  const info = HARDWARE_BY_TYPE[h.type];
+
+  if (length === undefined) return true;
+
+  return info.stockOnly ? !!info.lengths?.(size).includes(length) : !!info.lengths;
 };
 
 export function searchCatalog(query: string): CatalogItem[] {

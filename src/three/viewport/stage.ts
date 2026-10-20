@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createInfiniteGrid } from '../infiniteGrid';
-import { FAR_PLANE, MAX_DIST, MIN_DIST } from './types';
+import { FAR_PLANE, MAX_DIST, MAX_POLAR, MIN_DIST, MIN_POLAR } from './types';
 
 export interface Stage {
   container: HTMLElement;
@@ -14,6 +14,7 @@ export interface Stage {
   gridGroup: THREE.Group;
   grid: ReturnType<typeof createInfiniteGrid>;
   brushCursor: THREE.Group;
+  overlays: THREE.Group;
   keyLight: THREE.DirectionalLight;
   fillLight: THREE.DirectionalLight;
   envMap: THREE.Texture;
@@ -121,7 +122,8 @@ const createOrbit = (camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement)
   orbit.enableZoom = false;
   orbit.minDistance = MIN_DIST;
   orbit.maxDistance = MAX_DIST;
-  orbit.maxPolarAngle = Math.PI * 0.495;
+  orbit.minPolarAngle = MIN_POLAR;
+  orbit.maxPolarAngle = MAX_POLAR;
   orbit.update();
 
   return orbit;
@@ -139,13 +141,14 @@ export function createStage(container: HTMLElement): Stage {
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   const partsRoot = new THREE.Group();
+  const overlays = new THREE.Group();
 
   pmrem.dispose();
   scene.background = new THREE.Color('#1b1b1b');
   scene.environment = envMap;
   scene.environmentIntensity = 0.5;
   camera.position.set(170, 135, 180);
-  scene.add(partsRoot);
+  scene.add(partsRoot, overlays);
 
   return {
     container,
@@ -157,6 +160,7 @@ export function createStage(container: HTMLElement): Stage {
     ...createLights(scene),
     ...createGround(scene),
     brushCursor: createBrushCursor(scene),
+    overlays,
     envMap,
   };
 }

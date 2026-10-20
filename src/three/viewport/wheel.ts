@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Stage } from './stage';
-import { MAX_DIST, MIN_DIST, type ViewportProps } from './types';
+import { MAX_DIST, MAX_POLAR, MIN_DIST, MIN_POLAR, type ViewportProps } from './types';
 
 const ZOOM_SPEED = 0.0085;
 const ROTATE_SPEED = 0.0055;
@@ -39,7 +39,7 @@ function orbitBy(stage: Stage, e: WheelEvent): void {
   const spherical = new THREE.Spherical().setFromVector3(offset);
 
   spherical.theta -= e.deltaX * ROTATE_SPEED;
-  spherical.phi = Math.max(0.08, Math.min(Math.PI * 0.49, spherical.phi - e.deltaY * ROTATE_SPEED));
+  spherical.phi = Math.max(MIN_POLAR, Math.min(MAX_POLAR, spherical.phi - e.deltaY * ROTATE_SPEED));
   spherical.makeSafe();
   offset.setFromSpherical(spherical);
   camera.position.copy(orbit.target).add(offset);

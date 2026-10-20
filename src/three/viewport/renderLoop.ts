@@ -61,6 +61,8 @@ export class RenderLoop {
 
   readonly spawns = new Map<string, number>();
 
+  readonly afterRender = new Set<() => void>();
+
   private dirty = true;
 
   private frame = 0;
@@ -106,6 +108,7 @@ export class RenderLoop {
     this.dirty = false;
     this.lastRender = performance.now();
     this.lastView.copy(camera.matrixWorld);
+    this.afterRender.forEach((run) => run());
   }
 
   private step(): void {

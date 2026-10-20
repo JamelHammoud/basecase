@@ -13,6 +13,7 @@ import {
   type TabEntry,
 } from './tabModel';
 import { tabCommandForKey, type TabKey } from './tabShortcuts';
+import { tabsFromSeeds } from './openScenes';
 
 const meta = (name: string, sceneId = name): WorkspaceMeta => ({
   sceneId,
@@ -21,6 +22,7 @@ const meta = (name: string, sceneId = name): WorkspaceMeta => ({
   busy: false,
   activity: '',
   chatId: null,
+  chatIds: [],
   pristine: false,
 });
 
@@ -96,6 +98,7 @@ describe('tab shortcuts', () => {
     expect(tabCommandForKey(key({ key: 't', metaKey: true }), ids)).toBe('new-scene');
     expect(tabCommandForKey(key({ key: 'T', metaKey: true, shiftKey: true }), ids)).toBe('reopen-tab');
     expect(tabCommandForKey(key({ key: 'w', metaKey: true }), ids)).toBe('close-tab');
+    expect(tabCommandForKey(key({ key: 'o', metaKey: true }), ids)).toBe('open-scenes');
     expect(tabCommandForKey(key({ key: '2', metaKey: true }), ids)).toBe('tab:b');
     expect(tabCommandForKey(key({ key: '9', metaKey: true }), ids)).toBe('tab:c');
   });
@@ -105,5 +108,25 @@ describe('tab shortcuts', () => {
     expect(tabCommandForKey(key({ key: 't', metaKey: true, altKey: true }), ids)).toBeNull();
     expect(tabCommandForKey(key({ key: '5', metaKey: true }), ids)).toBeNull();
     expect(tabCommandForKey(key({ key: 't' }), ids)).toBeNull();
+  });
+});
+
+describe('restoring open scenes', () => {
+  const seed = (sceneId: string) => ({ ...blankSeed({}), sceneId, sceneName: sceneId, blank: undefined });
+
+  it('reopens the saved scenes in order, the first as the main tab, and keeps the one in front', () => {
+    const { tabs: restored, activeId } = tabsFromSeeds([seed('a'), null, seed('c')], 2);
+
+    expect(restored.map((t) => t.seed?.sceneId)).toEqual(['a', 'c']);
+    expect(restored[0].id).toBe('main');
+    expect(activeId).toBe(restored[1].id);
+  });
+
+  it('starts with one blank scene when nothing could be restored', () => {
+    const { tabs: restored, activeId } = tabsFromSeeds([null], 0);
+
+    expect(restored).toHaveLength(1);
+    expect(restored[0].seed?.blank).toBe(true);
+    expect(activeId).toBe('main');
   });
 });

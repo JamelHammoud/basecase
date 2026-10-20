@@ -2,23 +2,16 @@ import { useRef, useState } from 'react';
 import type { WorkspaceHandle, WorkspaceMeta, WorkspaceSeed } from '../SceneWorkspace';
 import type { ToastData } from '../design-system';
 import { platformBridge } from '../utils/platformBridge';
-import {
-  blankSeed,
-  FIRST_TAB,
-  insertTab,
-  MAX_TABS,
-  newTabId,
-  type ClosedTab,
-  type Metas,
-  type TabEntry,
-} from './tabModel';
+import type { InitialTabs } from './openScenes';
+import { blankSeed, insertTab, MAX_TABS, newTabId, type ClosedTab, type Metas, type TabEntry } from './tabModel';
 import { useLatest } from './useLatest';
+import { splitLaneKey } from '../workspace/agentLanes';
 
 export type ToastOptions = Omit<ToastData, 'id' | 'message'>;
 
-export function useTabs() {
-  const [tabs, setTabs] = useState<TabEntry[]>([{ id: FIRST_TAB }]);
-  const [activeId, setActiveId] = useState(FIRST_TAB);
+export function useTabs(initial: InitialTabs) {
+  const [tabs, setTabs] = useState<TabEntry[]>(initial.tabs);
+  const [activeId, setActiveId] = useState(initial.activeId);
   const [metas, setMetas] = useState<Metas>({});
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [closed, setClosed] = useState<ClosedTab[]>([]);
@@ -76,7 +69,7 @@ export function useTabs() {
   const newScene = (seed?: WorkspaceSeed) => void openTab(seed ?? blankSeed(latestRef.current.metas));
 
   const routeEvent = (event: Record<string, unknown>) => {
-    const target = typeof event.workspaceId === 'string' ? event.workspaceId : activeId;
+    const target = typeof event.workspaceId === 'string' ? splitLaneKey(event.workspaceId).workspaceId : activeId;
     const handle = handles.current.get(target);
 
     if (handle) {

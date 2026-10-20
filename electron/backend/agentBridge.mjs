@@ -1,6 +1,6 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
-import { DEFAULT_WORKSPACE } from './constants.mjs';
+import { DEFAULT_WORKSPACE, TOOL_USE_HEADER } from './constants.mjs';
 
 const MAX_BODY_BYTES = 80_000_000;
 const DEFAULT_TIMEOUT_MS = 60000;
@@ -33,23 +33,25 @@ export class AgentBridge {
 
     if (req.method !== 'POST' || !m) return null;
 
-    return { workspaceId: m[1] ?? DEFAULT_WORKSPACE, kind: m[2] };
+    const toolUseId = req.headers[TOOL_USE_HEADER];
+
+    return { workspaceId: m[1] ?? DEFAULT_WORKSPACE, kind: m[2], toolUseId: toolUseId ? String(toolUseId) : undefined };
   }
 
-  async answer({ kind, workspaceId, body }, res) {
+  async answer({ kind, workspaceId, toolUseId, body }, res) {
     res.setHeader('Content-Type', 'application/json');
 
     try {
       const payload = body ? JSON.parse(body) : {};
 
       if (kind === 'status') {
-        this.events.emit({ type: 'agent-status', workspaceId, status: String(payload.status || '') });
+        this.events.emit({ type: 'agent-status', workspaceId, toolUseId, status: String(payload.status || '') });
         res.end(JSON.stringify({ ok: true }));
 
         return;
       }
 
-      const result = await this.requestRenderer(kind, payload, rendererTimeout(kind), workspaceId);
+      const result = await this.ask({ kind, payload, timeoutMs: rendererTimeout(kind), workspaceId, toolUseId });
 
       res.end(JSON.stringify(result ?? { ok: true }));
     } catch (err) {
@@ -100,6 +102,10 @@ export class AgentBridge {
   }
 
   requestRenderer(kind, payload, timeoutMs = DEFAULT_TIMEOUT_MS, workspaceId) {
+    return this.ask({ kind, payload, timeoutMs, workspaceId });
+  }
+
+  ask({ kind, payload, timeoutMs, workspaceId, toolUseId }) {
     if (this.events.size === 0) {
       return Promise.reject(new Error('The app window is not open.'));
     }
@@ -113,7 +119,7 @@ export class AgentBridge {
       }, timeoutMs);
 
       this.pending.set(requestId, { resolve, reject, timer });
-      this.events.emit({ type: 'agent-request', requestId, kind, payload, workspaceId });
+      this.events.emit({ type: 'agent-request', requestId, kind, payload, workspaceId, toolUseId });
     });
   }
 

@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { MoreHorizontal, Plus } from 'lucide-react';
 import { MODEL_DRAG_TYPE } from '../../data/dnd';
-import { HoverCard, IconButton, Tooltip } from '../../design-system';
+import { HoverCard, IconButton, Tooltip, MoreIcon, PlusIcon } from '../../design-system';
 
 const TileThumb: React.FC<{ thumb: string | undefined; fallback?: string }> = ({ thumb, fallback }) => {
   if (thumb) {
@@ -42,6 +41,7 @@ export const Tile: React.FC<{
   dragModelId?: string;
   onStartRename: () => void;
   onRename: (name: string) => void;
+  menuOpen: boolean;
   onMenu: (e: React.MouseEvent) => void;
   details: () => React.ReactNode;
 }> = ({
@@ -58,6 +58,7 @@ export const Tile: React.FC<{
   dragModelId,
   onStartRename,
   onRename,
+  menuOpen,
   onMenu,
   details,
 }) => {
@@ -115,10 +116,12 @@ export const Tile: React.FC<{
             onClick={(e) => e.stopPropagation()}
           >
             <IconButton
-              icon={<MoreHorizontal className="w-4 h-4" />}
+              icon={<MoreIcon className="w-4 h-4" />}
               title="More"
               size="xs"
               className="!w-6 !h-6 !rounded-md"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
               onClick={onMenu}
             />
           </div>
@@ -139,7 +142,7 @@ export const Tile: React.FC<{
             }}
             className="w-7 h-7 rounded-full bg-[#0d99ff] text-white flex items-center justify-center cursor-default shadow-[0_2px_6px_rgba(0,0,0,0.4)] hover:bg-[#2ba5ff] active:scale-[0.94] transition-[background-color,transform] duration-150"
           >
-            <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+            <PlusIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
           </button>
         </Tooltip>
       )}
@@ -155,7 +158,7 @@ export const Tile: React.FC<{
   );
 };
 
-const RenameField: React.FC<{ name: string; onDone: (name: string) => void }> = ({ name, onDone }) => {
+export const RenameField: React.FC<{ name: string; onDone: (name: string) => void }> = ({ name, onDone }) => {
   const [draft, setDraft] = useState(name);
   const done = useRef(false);
   const finish = (value: string) => {

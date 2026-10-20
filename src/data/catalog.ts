@@ -35,6 +35,10 @@ const COMPONENT_CATEGORY: Record<ComponentGroup, PartCategory> = {
   LiDAR: 'perception',
   'Depth Cameras': 'perception',
   Cameras: 'perception',
+  Power: 'sensors',
+  Wheels: 'motion',
+  'Linear Actuators': 'actuators',
+  'Displays & Audio': 'sensors',
 };
 
 export const PART_CATALOG: CatalogItem[] = [

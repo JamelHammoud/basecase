@@ -1,0 +1,37 @@
+[
+ {
+  "id": "ovonic-6s-5000-pack",
+  "name": "Ovonic 6S 5000 mAh 120C Pack",
+  "color": "#1d1d1f",
+  "role": "solid",
+  "position": [
+   0,
+   24,
+   0
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 156,
+   "height": 48,
+   "depth": 44
+  },
+  "cad": {
+   "language": "openscad",
+   "code": "include <robotics.scad>\n// Ovonic O-120C-5000-6S1P-EC5 shrink-wrapped pack body. Nominal envelope from Ovonic spec list:\n// L 156 (±5) x W 44 (±2) x H 48 (±2) mm. Origin: base centre, z up; lead end toward +X.\nL = 156; W = 44; H = 48;\nr = 3;   // edge radius NOT dimensioned by Ovonic; kept small/conservative so the envelope stays full\ncuboid([L, W, H], rounding = r, anchor = BOT, $fn = 32);",
+   "originOffset": [
+    0,
+    24,
+    0
+   ],
+   "baseSize": [
+    156,
+    48,
+    44
+   ]
+  }
+ }
+]

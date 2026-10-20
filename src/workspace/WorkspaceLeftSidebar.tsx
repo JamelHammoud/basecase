@@ -12,20 +12,12 @@ interface WorkspaceLeftSidebarProps {
 }
 
 export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: WorkspaceLeftSidebarProps) {
-  const { studio, scene, tool, parts, selectedIds, selection } = core;
+  const { studio, tool, parts, selectedIds, selection } = core;
   const { library, creation, edits, robots } = actions;
   const { panelWidths } = studio;
   const { openCreator } = tool;
   const libraryProps = {
-    currentSceneId: scene.sceneId,
-    openTabs: studio.tabs,
-    savedScenes: studio.savedScenes,
     customModels: studio.customModels,
-    onOpenScene: studio.openScene,
-    onSaveScene: library.sync,
-    onRenameScene: library.renameScene,
-    onDuplicateScene: library.duplicateScene,
-    onDeleteScene: library.deleteScene,
     onInsertModel: creation.placeCustomModel,
     onRenameModel: library.renameModel,
     onDuplicateModel: library.duplicateModel,
@@ -38,7 +30,6 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
   return (
     <LeftSidebar
       open={studio.isLeftOpen}
-      sceneGoal={scene.globalGoal}
       partsSearchRef={ui.partsSearchRef}
       onImportRobot={robots.pickRobot}
       width={panelWidths.left}

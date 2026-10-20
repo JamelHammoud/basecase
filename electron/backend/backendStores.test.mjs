@@ -2,9 +2,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { permissionOutcome } from './acpClientHandler.mjs';
+import { permissionOutcome, rememberToolCalls } from './acpClientHandler.mjs';
 import { AgentBridge, rendererTimeout } from './agentBridge.mjs';
 import { agentEnv } from './agentProcess.mjs';
+import { TOOL_USE_HEADER } from './constants.mjs';
 import { EventHub } from './eventHub.mjs';
 import { listModels, saveModel } from './models.mjs';
 
@@ -52,6 +53,27 @@ describe('agent policy', () => {
     });
   });
 
+  it('recognises Codex and Gemini CAD calls, including a permission request that only names the call', () => {
+    const calls = rememberToolCalls();
+
+    calls.note({
+      sessionUpdate: 'tool_call',
+      toolCallId: 'exec-1',
+      title: 'mcp.robotics_cad.get_scene',
+      kind: 'execute',
+      rawInput: { server: 'robotics_cad', tool: 'get_scene', arguments: {} },
+    });
+
+    expect(permissionOutcome({ toolCall: calls.complete({ toolCallId: 'exec-1' }), options }).safe).toBe(true);
+    expect(permissionOutcome({ toolCall: { title: 'write_todos' }, options }).safe).toBe(true);
+    expect(
+      permissionOutcome({
+        toolCall: { title: 'run_shell_command', kind: 'execute', rawInput: { server: 'x' } },
+        options,
+      }).safe,
+    ).toBe(false);
+  });
+
   it('strips host-session variables from the agent env', () => {
     const env = agentEnv({
       CLAUDECODE: '1',
@@ -61,8 +83,11 @@ describe('agent policy', () => {
       PATH: '/bin',
     });
 
-    expect(env).toEqual({ CLAUDE_HOME: 'k', PATH: '/bin' });
-    expect(agentEnv({ ANTHROPIC_BASE_URL: 'h' })).toEqual({ ANTHROPIC_BASE_URL: 'h' });
+    expect(env).toEqual({ CLAUDE_HOME: 'k', PATH: '/bin', CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: '1' });
+    expect(agentEnv({ ANTHROPIC_BASE_URL: 'h' })).toEqual({
+      ANTHROPIC_BASE_URL: 'h',
+      CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: '1',
+    });
   });
 });
 
@@ -74,14 +99,18 @@ describe('AgentBridge', () => {
 
     events.on((event) => {
       if (event.type === 'agent-request')
-        bridge.resolveRequest({ requestId: event.requestId, result: { got: event.workspaceId } });
+        bridge.resolveRequest({ requestId: event.requestId, result: { got: event.workspaceId, by: event.toolUseId } });
     });
 
-    const post = (route, body) =>
-      fetch(`${url}${route}`, { method: 'POST', body: JSON.stringify(body) }).then((r) => r.json());
+    const post = (route, headers = {}) =>
+      fetch(`${url}${route}`, { method: 'POST', body: '{}', headers }).then((r) => r.json());
 
-    expect(await post('/w/tab2/agent/look', {})).toEqual({ got: 'tab2' });
-    expect(await post('/agent/look', {})).toEqual({ got: 'main' });
+    expect(await post('/w/tab2/agent/look')).toEqual({ got: 'tab2' });
+    expect(await post('/w/tab2__lane-b/agent/look', { [TOOL_USE_HEADER]: 'toolu_1' })).toEqual({
+      got: 'tab2__lane-b',
+      by: 'toolu_1',
+    });
+    expect(await post('/agent/look')).toEqual({ got: 'main' });
     expect((await fetch(`${url}/nope`, { method: 'POST' })).status).toBe(404);
     expect([rendererTimeout('apply'), rendererTimeout('retarget'), rendererTimeout('constructor')]).toEqual([
       180000, 300000, 60000,

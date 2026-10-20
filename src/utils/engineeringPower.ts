@@ -1,5 +1,5 @@
 import { ActuatorSpec, COMPONENT_BY_ID, actuatorOf } from '../data/components';
-import { MATERIAL_SOFTENS_C, SUPPLY_BY_ID, SupplyInfo } from '../data/supplies';
+import { MATERIAL_SOFTENS_C } from '../data/supplies';
 import type { ScenePart } from '../types/robotics';
 import { isPrinted, printMaterialOf } from './bom';
 import { convexHull, polygonMargin } from './engineeringMath';
@@ -7,7 +7,7 @@ import type { CheckContext, CheckRow } from './engineeringTypes';
 
 const SERVO_CASE_C = 65;
 
-type Battery = NonNullable<SupplyInfo['battery']>;
+import { PowerSource, findPowerSource, sceneRegulators } from './powerSources';
 
 export function servoParts(parts: ScenePart[]): ScenePart[] {
   return parts.filter(
@@ -15,32 +15,62 @@ export function servoParts(parts: ScenePart[]): ScenePart[] {
   );
 }
 
-function findBattery(ctx: CheckContext): SupplyInfo | undefined {
-  const batteryKeys = [
-    ...ctx.parts.filter((p) => p.supplyId).map((p) => p.supplyId!),
-    ...(ctx.project.extras ?? []).filter((x) => x.key.startsWith('supply:')).map((x) => x.key.slice(7)),
-  ];
-
-  return batteryKeys.map((k) => SUPPLY_BY_ID[k]).find((s) => s?.battery);
-}
-
 const actuatorFor = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVariant);
 
-function voltageRow(servos: ScenePart[], battery: SupplyInfo, b: Battery): CheckRow {
-  const over = servos.filter((p) => {
+function servoRail(ctx: CheckContext, acts: ActuatorSpec[], source: PowerSource) {
+  return sceneRegulators(ctx.parts).find(
+    ({ regulator: r }) =>
+      acts.every((a) => r.vout >= a.volts[0] && r.vout <= a.volts[1]) &&
+      source.battery.fullV <= r.vinMax &&
+      source.battery.nominalV >= r.vinMin,
+  );
+}
+
+function voltageRow(ctx: CheckContext, source: PowerSource): CheckRow {
+  const b = source.battery;
+  const over = ctx.servos.filter((p) => {
     const act = actuatorFor(p);
 
     return act && b.fullV > act.volts[1] + 1e-6;
   });
-  const acts = [...new Set(servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
+  const acts = [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
+  const ranges = acts.map((x) => `${x.volts[0]}–${x.volts[1]} V`).join(', ');
+  const rail = over.length ? servoRail(ctx, acts, source) : undefined;
+
+  if (rail)
+    return {
+      check: 'Servo voltage',
+      status: 'pass',
+      detail: `${source.name} reaches ${b.fullV} V charged; the ${rail.name} (${rail.regulator.vout} V) keeps servos inside their ${ranges} range. Wire the servos to it.`,
+      ids: [rail.id],
+    };
 
   return {
     check: 'Servo voltage',
     status: over.length ? 'fail' : 'pass',
     detail: over.length
-      ? `${battery.name} reaches ${b.fullV} V charged, above the ${Math.min(...over.map((p) => actuatorFor(p)!.volts[1]))} V maximum of ${over.length} servos`
-      : `${battery.name} (${b.nominalV} V, ${b.fullV} V charged) is inside every servo's ${acts.map((x) => `${x.volts[0]}–${x.volts[1]} V`).join(', ')} range`,
+      ? `${source.name} reaches ${b.fullV} V charged, above the ${Math.min(...over.map((p) => actuatorFor(p)!.volts[1]))} V maximum of ${over.length} servos`
+      : `${source.name} (${b.nominalV} V, ${b.fullV} V charged) is inside every servo's ${ranges} range`,
     ids: over.map((p) => p.id),
+  };
+}
+
+function regulatorRow(ctx: CheckContext, source: PowerSource): CheckRow | undefined {
+  const regs = sceneRegulators(ctx.parts);
+
+  if (!regs.length) return undefined;
+
+  const b = source.battery;
+  const bad = regs.filter(({ regulator: r }) => b.fullV > r.vinMax || b.nominalV < r.vinMin);
+
+  return {
+    check: 'Regulator input',
+    status: bad.length ? 'fail' : 'pass',
+    detail: bad.length
+      ? `${source.name} (${b.nominalV} V, ${b.fullV} V charged) is outside the input range of ${bad.map((r) => `${r.name} (${r.regulator.vinMin}–${r.regulator.vinMax} V)`).join(', ')}`
+      : `${source.name} is inside the input range of every regulator`,
+    items: bad.map((r) => ({ text: `${r.name}: ${r.regulator.vinMin}–${r.regulator.vinMax} V in`, ids: [r.id] })),
+    ids: bad.map((r) => r.id),
   };
 }
 
@@ -68,7 +98,8 @@ function servoCurrent(ctx: CheckContext): { peak: number; avg: number } {
   return { peak, avg };
 }
 
-function currentRow(ctx: CheckContext, battery: SupplyInfo, b: Battery): CheckRow {
+function currentRow(ctx: CheckContext, source: PowerSource): CheckRow {
+  const b = source.battery;
   const servo = servoCurrent(ctx);
   const computeW = computeWatts(ctx.parts);
   const avg = servo.avg + computeW[0] / (b.nominalV * 0.9);
@@ -79,7 +110,7 @@ function currentRow(ctx: CheckContext, battery: SupplyInfo, b: Battery): CheckRo
   return {
     check: 'Current and runtime',
     status: okC ? 'pass' : 'fail',
-    detail: `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A standing (estimate); ${battery.name} gives about ${Math.round(runtime)} min. Fuse the pack near ${Math.ceil(peak * 1.4)} A.`,
+    detail: `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A standing (estimate); ${source.name} gives about ${Math.round(runtime)} min. Fuse the pack near ${Math.ceil(peak * 1.4)} A.`,
   };
 }
 
@@ -99,12 +130,14 @@ export function powerRows(ctx: CheckContext): CheckRow[] {
       ids: noVariant.map((p) => p.id),
     });
 
-  const battery = findBattery(ctx);
+  const source = findPowerSource(ctx);
 
-  if (!battery)
-    return [...rows, { check: 'Battery', status: 'fail', detail: 'No battery. Add one under Build → Supplies.' }];
+  if (!source)
+    return [...rows, { check: 'Battery', status: 'fail', detail: 'No battery. Add one from Parts → Power.' }];
 
-  return [...rows, voltageRow(servos, battery, battery.battery!), currentRow(ctx, battery, battery.battery!)];
+  const regulator = regulatorRow(ctx, source);
+
+  return [...rows, voltageRow(ctx, source), currentRow(ctx, source), ...(regulator ? [regulator] : [])];
 }
 
 function stabilityStatus(margin: number, tip: number): CheckRow['status'] {

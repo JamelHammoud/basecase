@@ -3,15 +3,17 @@ import type { ToastData } from '../design-system';
 import type {
   AcpChatMessage,
   AcpStatusInfo,
+  AgentChoice,
   AgentConversationSummary,
   CustomModelDefinition,
   ProjectSettings,
   ReferenceImageRecord,
   RobotJoint,
   RobotPoseState,
-  SavedSceneSummary,
   SceneAnnotation,
+  SceneMark,
   ScenePart,
+  MeasureUnit,
   TrackpadGestureMode,
 } from '../types/robotics';
 
@@ -26,6 +28,7 @@ export interface WorkspaceSeed {
   project?: ProjectSettings;
   chat?: { chatId: string | null; messages: AcpChatMessage[]; acpSessionId: string | null };
   blank?: boolean;
+  unsaved?: boolean;
 }
 
 export interface WorkspaceMeta {
@@ -35,6 +38,7 @@ export interface WorkspaceMeta {
   busy: boolean;
   activity: string;
   chatId: string | null;
+  chatIds: string[];
   pristine: boolean;
 }
 
@@ -50,6 +54,8 @@ export interface WorkspaceHandle {
   rename: (name: string) => void;
   toast: ShowToast;
   persistChat: () => void;
+  flush: () => Promise<void>;
+  discard: () => void;
   stopAgent: () => void;
 }
 
@@ -59,6 +65,7 @@ export interface Preferences {
   trackpadMode: TrackpadGestureMode;
   showGrid: boolean;
   sculptEnabled: boolean;
+  measureUnit: MeasureUnit;
 }
 
 export type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
@@ -67,6 +74,7 @@ export interface StudioShared {
   snapStepMm: number;
   setSnapStepMm: Setter<number>;
   snapAngleDeg: number;
+  measureUnit: MeasureUnit;
   trackpadMode: TrackpadGestureMode;
   setTrackpadMode: Setter<TrackpadGestureMode>;
   showGrid: boolean;
@@ -84,15 +92,17 @@ export interface StudioShared {
   setResizingPanel: Setter<'left' | 'right' | null>;
   customModels: CustomModelDefinition[];
   setCustomModels: Setter<CustomModelDefinition[]>;
-  savedScenes: SavedSceneSummary[];
-  setSavedScenes: Setter<SavedSceneSummary[]>;
   uploadedImages: ReferenceImageRecord[];
   setUploadedImages: Setter<ReferenceImageRecord[]>;
   chatList: AgentConversationSummary[];
   setChatList: Setter<AgentConversationSummary[]>;
   acpStatus: AcpStatusInfo;
   reconnectAcp: (command?: string) => Promise<void>;
+  signInAcp: (methodId: string) => Promise<void>;
+  saveAgentApiKey: (key: string) => Promise<void>;
   agentTargetHeightMm: number;
+  agentChoice: AgentChoice;
+  setAgentChoice: (choice: AgentChoice) => void;
   settingsOpen: boolean;
   openSettings: (pane?: SettingsPane) => void;
   tabs: Array<{ id: string; name: string; sceneId: string }>;
@@ -101,7 +111,7 @@ export interface StudioShared {
   reportMeta: (id: string, meta: WorkspaceMeta) => void;
   reportRightIsland: (width: number) => void;
   newScene: (seed?: WorkspaceSeed) => void;
-  openScene: (record: SavedSceneSummary) => void;
+  openSceneList: () => void;
   selectTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
   closeTab: (id: string) => void;
@@ -127,6 +137,7 @@ export interface Snapshot {
   parts: ScenePart[];
   pose: RobotPoseState | undefined;
   joints: RobotJoint[] | undefined;
+  marks: SceneMark[] | undefined;
 }
 
 export interface DocState {
@@ -142,4 +153,6 @@ export interface AgentRequestEvent {
   requestId: string;
   kind: string;
   payload: Record<string, unknown>;
+  workspaceId?: string;
+  toolUseId?: string;
 }

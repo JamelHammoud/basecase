@@ -48,7 +48,7 @@ function limbOf(j: RobotJoint): string {
   return LIMB_PATTERNS.find(([, re]) => re.test(n))?.[0] ?? 'other';
 }
 
-function groupLabel(j: RobotJoint): string {
+export function jointGroupLabel(j: RobotJoint): string {
   const side = sideOf(j.name);
   const limb = limbOf(j);
 
@@ -75,7 +75,7 @@ export function jointGroups(rig: Rig): Array<{ label: string; joints: RobotJoint
   for (const j of rig.joints) {
     if (!isMovable(j)) continue;
 
-    const l = groupLabel(j);
+    const l = jointGroupLabel(j);
 
     groups.set(l, [...(groups.get(l) ?? []), j]);
   }

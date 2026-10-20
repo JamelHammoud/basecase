@@ -10,7 +10,7 @@ export function writeAiReference(aiRefDir, scenePayload) {
     fs.writeFileSync(path.join(aiRefDir, 'DESIGN_BRIEF.md'), scenePayload.markdown, 'utf-8');
   }
 
-  const png = scenePayload.thumbnailDataUrl?.match(/^data:image\/png;base64,(.+)$/);
+  const webp = scenePayload.previewDataUrl?.match(/^data:image\/webp;base64,(.+)$/);
 
-  if (png) fs.writeFileSync(path.join(aiRefDir, 'preview.png'), Buffer.from(png[1], 'base64'));
+  if (webp) fs.writeFileSync(path.join(aiRefDir, 'preview.webp'), Buffer.from(webp[1], 'base64'));
 }

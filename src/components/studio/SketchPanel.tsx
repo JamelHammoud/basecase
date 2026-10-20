@@ -1,6 +1,17 @@
 import React from 'react';
-import { CircleDot, Eraser, Magnet, Minus, Pencil, PenTool, Plus } from 'lucide-react';
-import { Button, IconButton, Section, SegmentedControl } from '../../design-system';
+import {
+  Button,
+  IconButton,
+  Section,
+  SegmentedControl,
+  CircleDotIcon,
+  EditIcon,
+  EraserIcon,
+  MagnetIcon,
+  MinusIcon,
+  PenIcon,
+  PlusIcon,
+} from '../../design-system';
 import { OutputFields } from './OutputFields';
 import { SketchCanvas } from './SketchCanvas';
 import { sketchDrawing, type CreateFrom2DDrawingParams, type SketchMode } from './sketchGeometry';
@@ -12,20 +23,20 @@ const SketchTools: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
   return (
     <div className="flex items-center gap-1">
       <IconButton
-        icon={<PenTool className="w-4 h-4" />}
+        icon={<PenIcon className="w-4 h-4" />}
         title="Points — click to add corners"
         isActive={drawTool === 'polygon'}
         onClick={() => setDrawTool('polygon')}
       />
       <IconButton
-        icon={<Pencil className="w-4 h-4" />}
+        icon={<EditIcon className="w-4 h-4" />}
         title="Freehand — drag to draw"
         isActive={drawTool === 'freehand'}
         onClick={() => setDrawTool('freehand')}
       />
       {drawMode === 'extrude' && (
         <IconButton
-          icon={<CircleDot className="w-4 h-4" />}
+          icon={<CircleDotIcon className="w-4 h-4" />}
           title="Hole — click inside the shape"
           isActive={drawTool === 'hole'}
           onClick={() => setDrawTool('hole')}
@@ -33,19 +44,19 @@ const SketchTools: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
       )}
       <div className="flex-1" />
       <IconButton
-        icon={<Magnet className="w-4 h-4" />}
+        icon={<MagnetIcon className="w-4 h-4" />}
         title="Snap to grid"
         isToggled={snap2D}
         onClick={() => draft.setSnap2D((s) => !s)}
       />
       <IconButton
-        icon={<Minus className="w-4 h-4" />}
+        icon={<MinusIcon className="w-4 h-4" />}
         title="Remove last point"
         disabled={outerPoints.length === 0}
         onClick={() => draft.setOuterPoints((prev) => prev.slice(0, -1))}
       />
       <IconButton
-        icon={<Eraser className="w-4 h-4" />}
+        icon={<EraserIcon className="w-4 h-4" />}
         title="Clear"
         variant="danger"
         onClick={() => {
@@ -117,7 +128,7 @@ export const SketchPanel: React.FC<{
             size="md"
             disabled={outerPoints.length < 3}
             onClick={() => build(false)}
-            icon={<Plus className="w-4 h-4" />}
+            icon={<PlusIcon className="w-4 h-4" />}
           >
             Add
           </Button>

@@ -1,6 +1,6 @@
-import { PanelLeft } from 'lucide-react';
 import { SceneTabs, TAB_HEIGHT, TAB_TOP } from '../components/SceneTabs';
-import { IconButton, LAYOUT, NO_DRAG_REGION } from '../design-system';
+import { ScenesMenu, type ScenesMenuProps } from '../components/ScenesMenu';
+import { IconButton, LAYOUT, NO_DRAG_REGION, PanelLeftIcon } from '../design-system';
 import { useStoplights } from '../utils/useStoplights';
 import { idsAfter, idsExcept, sceneTabsOf, type Metas, type TabEntry } from './tabModel';
 
@@ -30,6 +30,7 @@ interface TitleBarTabsProps {
   resizing: boolean;
   rightIslandWidth: number;
   actions: TitleBarTabActions;
+  scenes: ScenesMenuProps;
 }
 
 export function TitleBarTabs({
@@ -43,25 +44,27 @@ export function TitleBarTabs({
   resizing,
   rightIslandWidth,
   actions,
+  scenes,
 }: TitleBarTabsProps) {
   const hasStoplights = useStoplights();
   const toggleLeft = hasStoplights ? TOGGLE_LEFT : TOGGLE_LEFT_BARE;
-  const rowLeft = toggleLeft + 28 + 8;
+  const rowLeft = toggleLeft + 28 + 4 + 28 + 8;
   const slide = resizing ? '' : 'transition-[left,right] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]';
   const rowRight = LAYOUT.sheetInset + LAYOUT.cardPadding + rightIslandWidth + 8;
 
   return (
     <>
       <div
-        className={`absolute top-[8px] z-30 h-[28px] flex items-center ${slide}`}
+        className={`absolute top-[8px] z-30 h-[28px] flex items-center gap-[4px] ${slide}`}
         style={{ ...NO_DRAG_REGION, left: toggleLeft }}
       >
         <IconButton
-          icon={<PanelLeft className="w-4 h-4" />}
+          icon={<PanelLeftIcon className="w-4 h-4" />}
           title={isLeftOpen ? 'Hide sidebar' : 'Show sidebar'}
           shortcut="⌘B"
           onClick={onToggleLeft}
         />
+        <ScenesMenu {...scenes} />
       </div>
 
       <div

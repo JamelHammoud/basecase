@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { Trainer } from './trainer.mjs';
+import { isAiAgent } from './backend/agentProfiles.mjs';
 import { AcpAgent } from './backend/acpAgent.mjs';
 import { AgentBridge } from './backend/agentBridge.mjs';
 import { writeAiReference } from './backend/aiReference.mjs';
@@ -19,7 +20,7 @@ import * as uploads from './backend/uploads.mjs';
 export { CLAUDE_AGENT_COMMAND, DEFAULT_WORKSPACE, LEGACY_AGENT_COMMAND } from './backend/constants.mjs';
 
 export class BasecaseBackendService {
-  constructor(workspaceRoot) {
+  constructor(workspaceRoot, { secrets } = {}) {
     this.workspaceRoot = workspaceRoot;
     this.paths = libraryPaths(workspaceRoot);
     Object.assign(this, this.paths);
@@ -43,6 +44,7 @@ export class BasecaseBackendService {
       emit: (event) => this.emitEvent(event),
       libraryState: () => ({ models: this.listModels(), scenes: this.listScenes() }),
       promptBlocks: (payload) => this.buildPromptBlocks(payload),
+      secrets,
     });
     this.bridgeReady = this.startAgentBridge();
 
@@ -80,7 +82,11 @@ export class BasecaseBackendService {
       modelsDir: this.modelsDir,
       scenesDir: this.scenesDir,
       onModelsChanged: () => this.emitEvent({ type: 'library-models-changed', models: this.listModels() }),
-      onScenesChanged: () => this.emitEvent({ type: 'library-scenes-changed', scenes: this.listScenes() }),
+      onScenesChanged: () => {
+        const scenes = this.scenes.changedList();
+
+        if (scenes) this.emitEvent({ type: 'library-scenes-changed', scenes });
+      },
     });
   }
 
@@ -104,12 +110,20 @@ export class BasecaseBackendService {
     return this.bridge.resolveRequest(response);
   }
 
-  isClaudeAgent() {
-    return this.agent.isClaude();
+  isAiAgent() {
+    return isAiAgent(this.agent.kind());
   }
 
   connectAcpAgent(customCommand) {
     return this.agent.connect(customCommand);
+  }
+
+  authenticateAcpAgent(methodId) {
+    return this.agent.authenticate(methodId);
+  }
+
+  setAgentApiKey(key) {
+    return this.agent.setApiKey(key);
   }
 
   sessionParams(workspaceId = DEFAULT_WORKSPACE) {
@@ -170,7 +184,7 @@ export class BasecaseBackendService {
 
   buildPromptBlocks(payload) {
     return buildPromptBlocks(payload, {
-      isClaude: this.isClaudeAgent(),
+      isAiAgent: this.isAiAgent(),
       saveReferenceImage: (mime, base64) => this.saveReferenceImage(mime, base64),
       describeEvidenceFolder: (folderId) => this.describeEvidenceFolder(folderId),
     });
@@ -272,13 +286,17 @@ export class BasecaseBackendService {
   }
 
   saveScenePreview(payload) {
-    return this.scenes.savePreview(payload);
+    const summary = this.scenes.savePreview(payload);
+
+    if (summary && payload.current) this.writeAiReference({ previewDataUrl: payload.previewDataUrl });
+
+    return summary;
   }
 
   saveScene(scenePayload) {
     const summary = this.scenes.save(scenePayload);
 
-    this.writeAiReference(scenePayload);
+    if (summary) this.writeAiReference(scenePayload);
 
     return summary;
   }

@@ -1,4 +1,3 @@
-import { Settings } from 'lucide-react';
 import type { LeftTab } from '../components/LeftSidebar';
 import {
   IconButton,
@@ -8,6 +7,7 @@ import {
   PartsIcon,
   RobotsIcon,
   type GlyphProps,
+  SettingsIcon,
 } from '../design-system';
 
 const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphProps> }> = [
@@ -52,7 +52,7 @@ export function ViewRail({ isLeftOpen, leftTab, onPickView, onOpenSettings }: Vi
       })}
       <div className="flex-1" />
       <IconButton
-        icon={<Settings className="w-[18px] h-[18px]" />}
+        icon={<SettingsIcon className="w-[18px] h-[18px]" />}
         title="Settings"
         shortcut="⌘,"
         tooltipSide="right"

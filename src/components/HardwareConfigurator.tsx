@@ -1,7 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Minus, Plus } from 'lucide-react';
 import {
-  BEARINGS,
   DRIVES,
   FINISHES,
   HARDWARE_BY_TYPE,
@@ -19,6 +17,7 @@ import {
   isStockLength,
   lengthRange,
   makeSpec,
+  motionOf,
   nearestStockLengths,
   recessLabel,
   screwHead,
@@ -36,8 +35,11 @@ import {
   NumberInput,
   Section,
   choiceCellClass,
+  MinusIcon,
+  PlusIcon,
 } from '../design-system';
 import { SizeLine, SpecRow } from './PartDetails';
+import { InsertLengthSection } from './InsertLengthSection';
 
 type OnChange = (spec: HardwareSpec, live?: boolean) => void;
 
@@ -49,13 +51,13 @@ export const HardwareConfigurator: React.FC<{
   const family = familyOf(spec.type);
   const drives = driveOptions(spec.type);
   const drive = hardwareDrive(spec);
-  const range = lengthRange(spec.type, spec.size);
   const set = (next: Partial<HardwareSpec>, live?: boolean) => {
     const s = { ...spec, ...next };
 
     onChange(makeSpec(s.type, { size: s.size, length: s.length, finish: s.finish, drive: s.drive }), live);
   };
   const recess = screwHead(spec)?.recess ?? setScrewRecess(spec)?.recess;
+  const motion = motionOf(spec.type);
 
   return (
     <>
@@ -103,14 +105,14 @@ export const HardwareConfigurator: React.FC<{
       <Section title="Size">
         <ChoiceGrid
           label="Size"
-          columns={spec.type === 'bearing' ? 3 : 5}
+          columns={motion?.sizeColumns ?? 5}
           value={spec.size}
           onChange={(size) => set({ size })}
-          options={info.sizes.map((s) => ({ value: s, label: spec.type === 'dowel_pin' ? `Ø${s}` : s }))}
+          options={info.sizes.map((s) => ({ value: s, label: motion?.sizeLabel?.(s) ?? s }))}
         />
       </Section>
 
-      {range && spec.length !== undefined && <LengthSection spec={spec} min={range.min} max={range.max} set={set} />}
+      {lengthControl(spec, set)}
 
       {info.finishes.length > 1 && (
         <Section title="Finish">
@@ -145,7 +147,7 @@ export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean
   const head = screwHead(spec);
   const standard = screwStandard(spec);
   const holes = hardwareHoleRows(spec);
-  const bearing = spec.type === 'bearing' ? BEARINGS[spec.size] : undefined;
+  const facts = motionOf(spec.type)?.facts(spec) ?? [];
 
   return (
     <>
@@ -160,12 +162,12 @@ export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean
               <Unit>pitch</Unit>
             </SpecRow>
           )}
-          {bearing && (
-            <SpecRow label="Bore · OD · Width">
-              {bearing.d} · {bearing.D} · {bearing.B}
-              <Unit>mm</Unit>
+          {facts.map((f) => (
+            <SpecRow key={f.label} label={f.label}>
+              {f.value}
+              {f.unit && <Unit>{f.unit}</Unit>}
             </SpecRow>
-          )}
+          ))}
           {standard && <SpecRow label="Standard">{standard}</SpecRow>}
           {head && (
             <SpecRow label="Head">
@@ -244,6 +246,16 @@ const TypeTile: React.FC<{
   );
 };
 
+function lengthControl(spec: HardwareSpec, set: (next: Partial<HardwareSpec>, live?: boolean) => void) {
+  const range = lengthRange(spec.type, spec.size);
+
+  if (HARDWARE_BY_TYPE[spec.type].stockOnly) return <InsertLengthSection spec={spec} set={set} />;
+
+  if (!range || spec.length === undefined) return null;
+
+  return <LengthSection spec={spec} min={range.min} max={range.max} set={set} />;
+}
+
 const LengthSection: React.FC<{
   spec: HardwareSpec;
   min: number;
@@ -260,7 +272,7 @@ const LengthSection: React.FC<{
     <Section title="Length">
       <div className="flex items-center gap-1">
         <IconButton
-          icon={<Minus className="w-3.5 h-3.5" />}
+          icon={<MinusIcon className="w-3.5 h-3.5" />}
           title="Shorter stock length"
           size="sm"
           disabled={shorter === undefined}
@@ -279,7 +291,7 @@ const LengthSection: React.FC<{
           onChange={(v, live) => set({ length: v }, live)}
         />
         <IconButton
-          icon={<Plus className="w-3.5 h-3.5" />}
+          icon={<PlusIcon className="w-3.5 h-3.5" />}
           title="Longer stock length"
           size="sm"
           disabled={longer === undefined}
@@ -287,7 +299,7 @@ const LengthSection: React.FC<{
         />
       </div>
       {stock.length > 0 && <StockStrip lengths={stock} value={length} onPick={(l) => set({ length: l })} />}
-      {!isStockLength(spec) && (
+      {!isStockLength(spec) && !motionOf(spec.type)?.cutToLength && (
         <p className="text-[12.5px] text-amber-300/80 leading-relaxed">
           {length > stock[stock.length - 1] ? (
             `Longer than stock ${spec.size} (${stock[stock.length - 1]} mm). Cut threaded rod to length.`

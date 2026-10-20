@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Footprints } from 'lucide-react';
-import { Button, Modal, Select, Switch } from '../design-system';
+import { Button, Modal, Select, Switch, WalkIcon } from '../design-system';
 import type { RobotAnimation } from '../types/robotics';
 import { isMovable, prettyJointName, type Rig } from '../utils/kinematics';
 import type { PointOf } from '../utils/animation';
@@ -133,7 +132,7 @@ export const RetargetSheet: React.FC<{
       onClose={onClose}
       title={typeof mocap === 'object' && mocap ? `Retarget ${mocap.name}` : 'Retarget Motion'}
       subtitle={info}
-      icon={<Footprints className="w-4 h-4" />}
+      icon={<WalkIcon className="w-4 h-4" />}
       maxWidth="max-w-[560px]"
       footer={
         <div className="flex items-center justify-end gap-2 w-full">

@@ -24,6 +24,25 @@ export function summarize(record) {
   };
 }
 
+function sceneRecord(id, payload, previous) {
+  const keepTime = payload.keepUpdatedAt && payload.updatedAt;
+  const parts = Array.isArray(payload.parts) ? payload.parts : [];
+
+  return {
+    id,
+    name: payload.name || 'Untitled',
+    globalGoal: payload.globalGoal || '',
+    updatedAt: keepTime ? payload.updatedAt : new Date().toISOString(),
+    partCount: parts.length,
+    previewDataUrl: payload.previewDataUrl ?? previous?.previewDataUrl,
+    sizeMm: payload.sizeMm ?? previous?.sizeMm,
+    chatId: payload.chatId ?? undefined,
+    parts,
+    annotations: payload.annotations || [],
+    project: payload.project,
+  };
+}
+
 const newest = (a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '');
 
 export class SceneLibrary {
@@ -31,6 +50,7 @@ export class SceneLibrary {
     this.scenesDir = scenesDir;
     this.cacheFile = cacheFile;
     this.cache = this.readCache();
+    this.deleted = new Set();
   }
 
   readCache() {
@@ -68,6 +88,16 @@ export class SceneLibrary {
   }
 
   list() {
+    return this.scan().summaries;
+  }
+
+  changedList() {
+    const { summaries, changed } = this.scan();
+
+    return changed ? summaries : null;
+  }
+
+  scan() {
     const files = fs.readdirSync(this.scenesDir).filter(isSceneFile);
     const summaries = [];
     let changed = false;
@@ -90,7 +120,7 @@ export class SceneLibrary {
 
     if (changed) this.writeCache();
 
-    return summaries.sort(newest);
+    return { summaries: summaries.sort(newest), changed };
   }
 
   get(id) {
@@ -103,20 +133,12 @@ export class SceneLibrary {
 
   save(payload) {
     const id = payload.id || slug(payload.name) || `scene-${Date.now().toString(36)}`;
-    const keepTime = payload.keepUpdatedAt && payload.updatedAt;
-    const record = {
-      id,
-      name: payload.name || 'Untitled Robotics Scene',
-      globalGoal: payload.globalGoal || '',
-      updatedAt: keepTime ? payload.updatedAt : new Date().toISOString(),
-      partCount: Array.isArray(payload.parts) ? payload.parts.length : 0,
-      thumbnailDataUrl: payload.thumbnailDataUrl,
-      previewDataUrl: payload.previewDataUrl,
-      sizeMm: payload.sizeMm,
-      parts: payload.parts || [],
-      annotations: payload.annotations || [],
-      project: payload.project,
-    };
+
+    if (payload.autosave && this.deleted.has(id)) return null;
+
+    this.deleted.delete(id);
+
+    const record = sceneRecord(id, payload, this.cache.get(`${id}.json`)?.summary);
 
     this.write(record);
 
@@ -141,6 +163,8 @@ export class SceneLibrary {
 
   delete(id) {
     const file = this.filePath(id);
+
+    this.deleted.add(id);
 
     if (fs.existsSync(file)) fs.unlinkSync(file);
 

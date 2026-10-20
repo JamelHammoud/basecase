@@ -31,7 +31,7 @@ describe('scene history', () => {
   it('undoes and redoes through snapshots, folding live edits into one step', () => {
     const a = [part('a', [0, 5, 0])];
     const b = [part('a', [10, 5, 0])];
-    const snap = { pose: undefined, joints: undefined };
+    const snap = { pose: undefined, joints: undefined, marks: undefined };
     const live = { ...docFromParts(a), base: a, parts: [part('a', [5, 5, 0])] };
     const committed = pushHistory(live, b, snap);
 

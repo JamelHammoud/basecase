@@ -40,7 +40,7 @@ export interface Simulation {
     phase: 'start' | 'move' | 'end',
   ) => void;
   push: (robot?: string) => void;
-  buildModel: () => SimModel;
+  buildModel: () => Promise<SimModel>;
   run: (opts: {
     seconds: number;
     controller: Controller;
@@ -146,19 +146,20 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
   const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, version, send, worker, load } =
     useSimWorker(viewportRef, modelRef);
 
-  const buildModel = useCallback((): SimModel => {
+  const buildModel = useCallback(async (): Promise<SimModel> => {
     const vp = viewportRef.current;
 
     if (!vp) throw new Error('The canvas isn’t ready.');
 
     const { parts, project, rig, pose } = inputs.current;
+    const measures = await vp.measureParts();
 
     return buildMjcf({
       parts,
       rig,
       project,
       pose,
-      measures: vp.measureParts(),
+      measures,
       partTriangles: vp.partTriangles,
       posedFloor: vp.posedFloor(),
     });
@@ -171,7 +172,7 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
     let m: SimModel;
 
     try {
-      m = buildModel();
+      m = await buildModel();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setStatus('error');
@@ -255,7 +256,7 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
       if (msg) send(msg);
     },
     run: async (opts) => {
-      const m = buildModel();
+      const m = await buildModel();
 
       return runModel(m, opts, ++runSeq.current);
     },

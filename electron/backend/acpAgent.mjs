@@ -10,6 +10,7 @@ import { AgentKeys } from './agentKeys.mjs';
 import { acceptsApiKey, isAuthError, loadAgentCommand, saveAgentCommand, signInMethods } from './agentSelection.mjs';
 import { CLAUDE_AGENT_COMMAND, DEFAULT_WORKSPACE, LANE_SEPARATOR, safeWorkspace } from './constants.mjs';
 import { ModelControl } from './modelControl.mjs';
+import { LiveRuns } from './liveRuns.mjs';
 import { buildSessionParams } from './sessionParams.mjs';
 import { SessionModels } from './sessionModels.mjs';
 
@@ -28,6 +29,7 @@ export class AcpAgent {
     this.childProcess = null;
     this.connection = null;
     this.sessions = new Map();
+    this.runs = new LiveRuns();
     this.models = new SessionModels();
     this.control = new ModelControl({ models: this.models, connection: () => this.connection, emit });
     this.authMethods = [];
@@ -102,7 +104,11 @@ export class AcpAgent {
     const clientHandler = createClientHandler({
       workspaceRoot: this.workspaceRoot,
       libraryDir: this.paths.libraryDir,
-      emit: this.emit,
+      emit: (event) => {
+        if (event.type === 'acp-session-update') this.runs.note(event.workspaceId, event.update);
+
+        this.emit(event);
+      },
       workspaceOf: (sessionId) => this.workspaceOf(sessionId),
       libraryState: this.libraryState,
     });
@@ -302,6 +308,7 @@ export class AcpAgent {
     if (!sessionId) return;
 
     this.sessions.delete(key);
+    this.runs.forget(key);
 
     if (!this.connection) return;
 
@@ -366,12 +373,41 @@ export class AcpAgent {
 
   async sendPrompt(payload) {
     const sessionId = await this.ensureSession(payload.workspaceId);
+    const key = safeWorkspace(payload.workspaceId);
 
     await this.control.apply(sessionId, payload);
+    this.runs.start(key, { sessionId, run: payload.run });
 
-    const res = await this.connection.prompt({ sessionId, prompt: this.promptBlocks(payload) });
+    try {
+      const res = await this.connection.prompt({ sessionId, prompt: this.promptBlocks(payload) });
 
-    return { stopReason: res.stopReason, sessionId, ...this.libraryState() };
+      this.endRun(key, { stopReason: res.stopReason });
+
+      return { stopReason: res.stopReason, sessionId, ...this.libraryState() };
+    } catch (err) {
+      this.endRun(key, { error: String(err?.message ?? err) });
+
+      throw err;
+    }
+  }
+
+  endRun(key, result) {
+    this.runs.finish(key, result);
+    this.emit({ type: 'acp-run-end', workspaceId: key, ...result });
+  }
+
+  liveRuns(workspaceId) {
+    const ws = safeWorkspace(workspaceId);
+
+    this.bridge.replay(ws);
+
+    return this.runs.ofWorkspace(ws);
+  }
+
+  forgetRun(key) {
+    this.runs.forget(safeWorkspace(key));
+
+    return { ok: true };
   }
 
   async steer(payload) {
@@ -386,7 +422,11 @@ export class AcpAgent {
         _meta: { steering: { idleBehavior: 'promptRequired' } },
       });
 
-      return { outcome: res?.outcome === 'injected' ? 'injected' : 'promptRequired' };
+      const injected = res?.outcome === 'injected';
+
+      if (injected) this.runs.steer(safeWorkspace(payload.workspaceId), payload.run?.messages);
+
+      return { outcome: injected ? 'injected' : 'promptRequired' };
     } catch {
       return { outcome: 'unsupported' };
     }

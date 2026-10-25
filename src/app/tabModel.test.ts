@@ -122,6 +122,13 @@ describe('restoring open scenes', () => {
     expect(activeId).toBe(restored[1].id);
   });
 
+  it('keeps tab ids across a reload, so a running agent finds its tab again', () => {
+    const { tabs: restored, activeId } = tabsFromSeeds([seed('a'), seed('b')], 1, ['tab-x', 'main']);
+
+    expect(restored.map((t) => t.id)).toEqual(['tab-x', 'main']);
+    expect(activeId).toBe('main');
+  });
+
   it('starts with one blank scene when nothing could be restored', () => {
     const { tabs: restored, activeId } = tabsFromSeeds([null], 0);
 

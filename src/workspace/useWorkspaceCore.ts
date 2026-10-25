@@ -6,6 +6,7 @@ import { projectFromSeed } from './helpers';
 import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
 import { useAnnotations } from './useAnnotations';
 import { useMarks } from './useMarks';
+import { useMeasure } from './useMeasure';
 import { usePanelSync } from './usePanelSync';
 import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
@@ -35,7 +36,8 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   useRobotUpgrade(docs, showToast);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [measuring, setMeasuring] = useState(false);
+  const measure = useMeasure();
+  const { setMeasuring } = measure;
   const [marking, setMarkingState] = useState(false);
   const [selectedMarkId, setSelectedMarkId] = useState<string | null>(null);
   const setMarking = (on: boolean) => {
@@ -56,7 +58,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const tool = useToolMode({
     setIsRightOpen: studio.setIsRightOpen,
     annotations,
-    measure: { measuring, setMeasuring },
+    measure,
     mark: { marking, setMarking },
   });
   const marks = useMarks({
@@ -136,6 +138,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     selection,
     annotations,
     marks,
+    measure,
     tool,
     posing,
     onRobot,

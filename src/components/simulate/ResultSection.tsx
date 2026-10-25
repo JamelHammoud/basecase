@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Section } from '../../design-system';
+import { MetaLine, Section } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import { fmtTime, pct } from './format';
@@ -21,9 +21,10 @@ const RobotResult: React.FC<{ result: SimStats['robots'][number]; model: SimMode
           {r.fellAt !== null ? `Fell at ${fmtTime(r.fellAt)}` : 'Standing'}
         </span>
       </div>
-      <div className="text-[12px] text-white/45 tabular">
-        Tilt {Math.round(r.tilt)}° · moved {(r.travelled * 100).toFixed(0)} cm
-      </div>
+      <MetaLine
+        className="text-[12px] text-white/45 tabular"
+        items={[`Tilt ${Math.round(r.tilt)}°`, `Moved ${(r.travelled * 100).toFixed(0)} cm`]}
+      />
     </div>
   );
 };

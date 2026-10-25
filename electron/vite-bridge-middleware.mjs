@@ -1,5 +1,10 @@
 import { BasecaseBackendService } from './backend-service.mjs';
 
+const withBase64Files = (got) => ({
+  ...got,
+  files: Object.fromEntries(Object.entries(got.files).map(([k, v]) => [k, Buffer.from(v).toString('base64')])),
+});
+
 const searchParam = (url, name) => new URL(url, 'http://x').searchParams.get(name);
 
 function getRoutes(backend) {
@@ -8,6 +13,7 @@ function getRoutes(backend) {
     ['/images', () => backend.listUploadedImages()],
     ['/models', () => backend.listModels()],
     ['/train-status', () => backend.trainStatus()],
+    ['/simready-status', () => backend.simreadyStatus()],
     ['/policy?', (url) => backend.getPolicy(searchParam(url, 'id'))],
     ['/purchases', () => backend.listPurchases()],
     ['/chats', () => backend.listConversations()],
@@ -26,6 +32,8 @@ function postRoutes(backend) {
     ['/acp-steer', (p) => backend.steerAcpPrompt(p)],
     ['/acp-resume', (p) => backend.resumeAcpConversation(p.sessionId, p.workspaceId)],
     ['/train-start', (p) => backend.trainStart(p)],
+    ['/simready-fetch', async (p) => withBase64Files(await backend.simreadyFetch(p))],
+    ['/simready-file', (p) => ({ data: backend.simreadyFile(p)?.toString('base64') ?? null })],
     ['/train-stop', (p) => backend.trainStop(p.workspaceId)],
     ['/policy-delete', (p) => backend.deletePolicy(p.id)],
     ['/purchase-save', (p) => backend.savePurchase(p)],
@@ -34,6 +42,8 @@ function postRoutes(backend) {
     ['/acp-cancel', (p) => backend.cancelAcpPrompt(p.workspaceId)],
     ['/acp-new-conversation', (p) => backend.newAcpConversation(p.workspaceId)],
     ['/acp-close-workspace', (p) => backend.closeWorkspace(p.workspaceId)],
+    ['/acp-live-runs', (p) => backend.liveAcpRuns(p.workspaceId)],
+    ['/acp-forget-run', (p) => backend.forgetAcpRun(p.workspaceId)],
     ['/agent-call', async (p) => (await backend.requestRenderer(p.kind, p.payload ?? {}, 180000, p.workspaceId)) ?? {}],
     ['/agent-respond', (p) => backend.resolveAgentRequest(p)],
     ['/upload-image', (p) => backend.saveUploadedImage(p)],

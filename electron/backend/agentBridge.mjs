@@ -1,6 +1,7 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { DEFAULT_WORKSPACE, TOOL_USE_HEADER } from './constants.mjs';
+import { isLaneOf } from './liveRuns.mjs';
 
 const MAX_BODY_BYTES = 80_000_000;
 const DEFAULT_TIMEOUT_MS = 60000;
@@ -10,6 +11,7 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['animate', 180000],
   ['simulate', 180000],
   ['import_robot', 300000],
+  ['insert_object', 300000],
   ['retarget', 300000],
 ]);
 
@@ -118,9 +120,17 @@ export class AgentBridge {
         reject(new Error(`The app did not answer "${kind}" in time.`));
       }, timeoutMs);
 
-      this.pending.set(requestId, { resolve, reject, timer });
-      this.events.emit({ type: 'agent-request', requestId, kind, payload, workspaceId, toolUseId });
+      const event = { type: 'agent-request', requestId, kind, payload, workspaceId, toolUseId };
+
+      this.pending.set(requestId, { resolve, reject, timer, event });
+      this.events.emit(event);
     });
+  }
+
+  replay(workspaceId) {
+    for (const { event } of this.pending.values()) {
+      if (isLaneOf(event.workspaceId ?? DEFAULT_WORKSPACE, workspaceId)) this.events.emit(event);
+    }
   }
 
   resolveRequest({ requestId, result, error }) {

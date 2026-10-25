@@ -13,7 +13,7 @@ export const Thumb: React.FC<{ url?: string; className?: string }> = ({ url, cla
     {url ? (
       <img src={url} alt="" draggable={false} className="w-full h-full object-contain p-0.5" />
     ) : (
-      <div className="w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
+      <div className="w-full h-full shimmer" />
     )}
   </div>
 );
@@ -55,7 +55,7 @@ export const AddButton: React.FC<{ onAdd: () => void; className?: string }> = ({
       }}
       className="w-7 h-7 rounded-full bg-[#0d99ff] text-white flex items-center justify-center cursor-default shadow-[0_2px_6px_rgba(0,0,0,0.4)] hover:bg-[#2ba5ff] active:scale-[0.94] transition-[background-color,transform] duration-150"
     >
-      <PlusIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
+      <PlusIcon className="w-3.5 h-3.5" strokeWidth={3} />
     </button>
   </Tooltip>
 );

@@ -39,6 +39,7 @@
   --animate-sheet-in: sheet-in 220ms var(--ease-out-expo);
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-tab-in: tab-in 200ms var(--ease-out-expo);
+  --animate-push-in: push-in 220ms var(--ease-out-expo);
 }
 
 /* A new scene tab grows into the strip */
@@ -80,6 +81,17 @@
   from {
     opacity: 0;
     transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes push-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
   }
   to {
     opacity: 1;
@@ -341,12 +353,103 @@ input[type='range'].slider:focus-visible::-webkit-slider-thumb {
   .preview-sm {
     border-radius: 8px;
   }
+  .shimmer {
+    background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+  .skeleton-line {
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.06);
+  }
   .group:hover .preview {
     background-color: rgba(255, 255, 255, 0.065);
+  }
+
+  /* A card that tilts toward the pointer under a moving glare, like a Steam hover card
+   (the build guide cover). GuideSection sets the variables from the pointer. */
+  .tilt-card {
+    --rx: 0deg;
+    --ry: 0deg;
+    --gx: 50%;
+    --gy: 0%;
+    --sx: 0px;
+    --sy: 2px;
+    --lift: 1;
+    transform: perspective(320px) rotateX(var(--rx)) rotateY(var(--ry)) scale(var(--lift));
+    box-shadow: var(--sx) var(--sy) 6px -2px rgba(0, 0, 0, 0.45);
+    transition:
+      transform 480ms cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 480ms cubic-bezier(0.2, 0, 0, 1);
+    will-change: transform;
+  }
+  .tilt-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        farthest-corner circle at var(--gx) var(--gy),
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(255, 255, 255, 0.12) 28%,
+        rgba(0, 0, 0, 0.22) 100%
+      ),
+      linear-gradient(
+        115deg,
+        transparent 30%,
+        rgba(160, 210, 255, 0.18) 45%,
+        rgba(255, 190, 240, 0.16) 55%,
+        transparent 70%
+      );
+    background-size:
+      100% 100%,
+      240% 240%;
+    background-position:
+      0 0,
+      var(--gx) var(--gy);
+    mix-blend-mode: multiply;
+    opacity: 0;
+    transition: opacity 320ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .tilt-card:hover {
+    --lift: 1.1;
+    z-index: 1;
+    box-shadow: var(--sx) calc(var(--sy) + 4px) 22px -6px rgba(0, 0, 0, 0.7);
+    transition:
+      transform 140ms cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 140ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .tilt-card:hover::after {
+    opacity: 1;
+  }
+  .tilt-card:enabled:active {
+    --lift: 1.04;
+  }
+
+  /* One page of the in-app build guide viewer (GuideViewer). The page itself lives in the
+   slot's shadow root at true size, zoomed by --guide-k; the slot is what the open and close flights move. */
+  .guide-slot {
+    flex: none;
+    width: calc(210mm * var(--guide-k, 1));
+    height: calc(297mm * var(--guide-k, 1));
+    transform-origin: 0 0;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 18px 48px -18px rgba(0, 0, 0, 0.7);
+    scroll-snap-align: center;
+    content-visibility: auto;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tilt-card,
+  .tilt-card:hover {
+    transform: none;
+  }
+
   *,
   *::before,
   *::after {

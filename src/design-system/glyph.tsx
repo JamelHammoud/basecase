@@ -17,6 +17,7 @@ export interface GlyphSpec {
   cutWidth?: number;
   over?: string;
   fill?: boolean;
+  weight?: number;
 }
 
 const DASH = '2.25 2.75';
@@ -58,9 +59,10 @@ export const glyph = (spec: GlyphSpec | string): GlyphIcon => {
     cutWidth = 5.5,
     over,
     fill,
+    weight,
   } = typeof spec === 'string' ? { d: spec } : spec;
   const Icon: GlyphIcon = (props) => (
-    <Glyph {...props}>
+    <Glyph {...props} strokeWidth={props.strokeWidth ?? weight}>
       {d && <path d={d} fill={fill ? '#fff' : undefined} />}
       {dots && <path d={dots} strokeWidth={dotSize} />}
       {dash && <path d={dash} strokeDasharray={DASH} />}

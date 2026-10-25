@@ -7,6 +7,7 @@ import {
   IconButton,
   NumberInput,
   Section,
+  MetaLine,
   Select,
   useScrollFade,
   BookmarkAddIcon,
@@ -107,10 +108,15 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           onClick={onDelete}
         />
       </div>
-      <div className="text-[12.5px] text-white/45 tabular mt-0.5">
-        {wholeGroup && <>{selectedParts.length} parts · </>}
-        {fmt(size[0])} × {fmt(size[1])} × {fmt(size[2])} <span className="text-white/30">mm</span>
-      </div>
+      <MetaLine
+        className="text-[12.5px] text-white/45 tabular mt-0.5"
+        items={[
+          wholeGroup && `${selectedParts.length} parts`,
+          <>
+            {fmt(size[0])} × {fmt(size[1])} × {fmt(size[2])} <span className="text-white/30">mm</span>
+          </>,
+        ]}
+      />
     </div>
   );
 };

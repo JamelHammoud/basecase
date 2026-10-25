@@ -18,6 +18,11 @@ export function agentEnv(source = process.env) {
   if (hosted) delete env.ANTHROPIC_BASE_URL;
 
   env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS = '1';
+  env.CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS = '1';
+  env.CLAUDE_CODE_DISABLE_CLAUDE_MDS = '1';
+  env.CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS = '1';
+  env.ENABLE_CLAUDEAI_MCP_SERVERS = 'false';
+  env.MAX_MCP_OUTPUT_TOKENS = '40000';
 
   return env;
 }

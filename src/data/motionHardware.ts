@@ -106,7 +106,8 @@ const linearRail: MotionHardware = {
     const r = MGN_RAILS[spec.size];
 
     return [
-      { label: 'Width · Height', value: `${r.widthWR} · ${r.heightHR}`, unit: 'mm' },
+      { label: 'Width', value: `${r.widthWR}`, unit: 'mm' },
+      { label: 'Height', value: `${r.heightHR}`, unit: 'mm' },
       { label: 'Hole pitch', value: `${r.pitchP}`, unit: `mm, ${r.boltSize} counterbored` },
       { label: 'Standard', value: 'HIWIN MGN' },
     ];
@@ -135,7 +136,8 @@ const carriage: MotionHardware = {
     return [
       { label: 'Top above rail base', value: `${c.H}`, unit: 'mm' },
       { label: 'Mounting', value: `4× ${c.thread} × ${c.threadDepth} on ${c.B} × ${c.C}`, unit: 'mm' },
-      { label: 'Load rating', value: `${c.dynamicC} · ${c.staticC0}`, unit: 'kN (C · C0)' },
+      { label: 'Dynamic load (C)', value: `${c.dynamicC}`, unit: 'kN' },
+      { label: 'Static load (C0)', value: `${c.staticC0}`, unit: 'kN' },
     ];
   },
   holes: (spec) => {
@@ -181,9 +183,12 @@ const linearBearing: MotionHardware = {
     const b = LINEAR_BUSHINGS[spec.size];
 
     return [
-      { label: 'Shaft · OD · Length', value: `${b.d} · ${b.D} · ${b.L}`, unit: 'mm' },
+      { label: 'Shaft', value: `${b.d}`, unit: 'mm' },
+      { label: 'OD', value: `${b.D}`, unit: 'mm' },
+      { label: 'Length', value: `${b.L}`, unit: 'mm' },
       ...(b.B ? [{ label: 'Ring grooves', value: `${b.B} apart, Ø${b.D1} × ${b.W}`, unit: 'mm' }] : []),
-      { label: 'Load rating', value: `${b.C} · ${b.C0}`, unit: 'N (C · C0)' },
+      { label: 'Dynamic load (C)', value: `${b.C}`, unit: 'N' },
+      { label: 'Static load (C0)', value: `${b.C0}`, unit: 'N' },
     ];
   },
   holes: (spec) => seatHoles(LINEAR_BUSHINGS[spec.size].D, LINEAR_BUSHINGS[spec.size].d),
@@ -254,7 +259,7 @@ const thrust: MotionHardware = {
   facts: (spec) => {
     const b = thrustBearing(spec.size);
 
-    return boreFacts(b.d, b.D, b.T).map((f) => ({ ...f, label: 'Bore · OD · Height' }));
+    return boreFacts(b.d, b.D, b.T, 'Height');
   },
   holes: (spec) => {
     const b = thrustBearing(spec.size);

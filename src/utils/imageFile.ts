@@ -1,3 +1,7 @@
+import { canEncodeOffThread, encodeBitmap } from './imageEncode';
+
+export const CANVAS_BACKGROUND = '#1b1b1b';
+
 export async function readImageFile(
   file: Blob,
   maxSide = 2048,
@@ -33,6 +37,14 @@ export async function readImageFile(
 }
 
 export async function downscaleDataUrl(dataUrl: string, maxSide: number, quality = 0.86): Promise<string> {
+  if (!canEncodeOffThread()) return downscaleOnPage(dataUrl, maxSide, quality);
+
+  const bitmap = await createImageBitmap(await (await fetch(dataUrl)).blob());
+
+  return encodeBitmap({ bitmap, maxSide, type: 'image/jpeg', quality, background: CANVAS_BACKGROUND });
+}
+
+async function downscaleOnPage(dataUrl: string, maxSide: number, quality: number): Promise<string> {
   const img = await new Promise<HTMLImageElement>((resolve, reject) => {
     const el = new Image();
 
@@ -48,7 +60,7 @@ export async function downscaleDataUrl(dataUrl: string, maxSide: number, quality
 
   const ctx = canvas.getContext('2d')!;
 
-  ctx.fillStyle = '#1b1b1b';
+  ctx.fillStyle = CANVAS_BACKGROUND;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 

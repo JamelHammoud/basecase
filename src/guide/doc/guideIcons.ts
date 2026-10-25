@@ -1,51 +1,59 @@
 import type { ToolIcon } from '../guideTypes';
 
 const INK = '#111';
+const TONE = '#e4e4e4';
+const STROKE = `stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
 
-const bar = (d: string, width: number) =>
-  `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${width + 2.6}" stroke-linecap="round" stroke-linejoin="round"/>` +
-  `<path d="${d}" fill="none" stroke="#fff" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const svg = (body: string) => `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
 
-const line = (d: string, width = 2.2, extra = '') =>
-  `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"${extra}/>`;
+const tilted = (body: string) => svg(`<g transform="rotate(45 60 60)">${body}</g>`);
 
-const svg = (body: string, view = 64) =>
-  `<svg viewBox="0 0 ${view} ${view}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+const shape = (d: string, fill = '#fff') => `<path d="${d}" fill="${fill}" ${STROKE}/>`;
 
-const driver = (tip: string) =>
-  svg(
-    bar('M10 54 L24 40', 11) +
-      line('M13.5 46.5 L19 41', 1.6) +
-      line('M17.5 50.5 L23 45', 1.6) +
-      bar('M27 37 L48 16', 2.6) +
-      tip,
-  );
+const rect = ([x, y, w, h]: [number, number, number, number], r: number, fill = '#fff') =>
+  `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}" ${STROKE}/>`;
+
+const lines = (d: string, width = 2.2) =>
+  `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${width}" stroke-linecap="round"/>`;
+
+const HANDLE =
+  rect([47, 66, 26, 44], 11, TONE) + lines('M55 76 V100 M60 76 V100 M65 76 V100') + rect([52, 58, 16, 9], 2.5);
+
+const SHAFT = rect([57, 20, 6, 39], 1.5);
+
+const TIPS = {
+  cross: shape('M57 21 L60 9 L63 21 Z', INK),
+  torx: shape('M57 21 L58 11 H62 L63 21 Z', INK) + lines('M60 11 V20', 1.4),
+  flat: shape('M56.5 21 L57.5 10 H62.5 L63.5 21 Z', INK),
+};
+
+const driver = (tip: keyof typeof TIPS) => tilted(HANDLE + SHAFT + TIPS[tip]);
+
+const WRENCH_HEAD =
+  'M53 11.4 L53 25 A7 7 0 0 0 67 25 L67 11.4 A18 18 0 0 1 68 44.1 L68 104 A8 8 0 0 1 52 104 L52 44.1 A18 18 0 0 1 53 11.4 Z';
 
 const TOOLS: Record<ToolIcon, string> = {
-  'hex-key': svg(bar('M14 52 L42 24 Q44.5 21.5 47 24 L53 30', 4.2)),
-  torx: driver(
-    `<path d="M51 9 l1.6 3.4 3.7-.6-2.1 3.1 2.1 3.1-3.7-.6L51 21l-1.6-3.6-3.7.6 2.1-3.1-2.1-3.1 3.7.6z" fill="#fff" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>`,
-  ),
-  screwdriver: driver(line('M47.5 9.5 L54.5 16.5 M54.5 9.5 L47.5 16.5', 2.4)),
-  'flat-screwdriver': driver(line('M46 11 L53 18', 3.2)),
-  wrench: svg(
-    bar('M13 51 L38 26', 7) +
-      `<path d="M47 11a10 10 0 1 0 6 6l-7 7-6-6 7-7z" fill="#fff" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>`,
-  ),
-  'soldering-iron': svg(
-    bar('M8 56 L22 42', 8) +
-      bar('M24 40 L40 24', 3.4) +
-      `<path d="M40 24 L47 17 L44 25 Z" fill="${INK}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>` +
-      line('M50 26 q3 -3 0 -6 q-3 -3 0 -6', 1.8) +
-      line('M56 30 q3 -3 0 -6 q-3 -3 0 -6', 1.8),
+  'hex-key': svg(shape('M17.8 93.8 L76 35.5 Q80 31.5 84 35.5 L101.2 52.8 L92.8 61.2 L80 48.5 L26.2 102.2 Z')),
+  torx: driver('torx'),
+  screwdriver: driver('cross'),
+  'flat-screwdriver': driver('flat'),
+  wrench: tilted(shape(WRENCH_HEAD, TONE) + `<circle cx="60" cy="98" r="3.2" fill="#fff" ${STROKE}/>`),
+  'soldering-iron': tilted(
+    rect([49, 66, 22, 42], 9, TONE) +
+      lines('M56 76 V98 M64 76 V98') +
+      rect([45, 58, 30, 8], 4) +
+      rect([56.5, 24, 7, 34], 2) +
+      shape('M56.5 25 L60 9 L63.5 25 Z', INK) +
+      lines('M60 108 Q60 118 50 118', 3),
   ),
   printer: svg(
-    `<rect x="9" y="10" width="46" height="44" rx="4" fill="#fff" stroke="${INK}" stroke-width="2.4"/>` +
-      line('M9 20 H55') +
-      `<rect x="26" y="20" width="12" height="7" rx="1.5" fill="#fff" stroke="${INK}" stroke-width="2.2"/>` +
-      `<path d="M30 27 L32 31 L34 27 Z" fill="${INK}"/>` +
-      `<rect x="25" y="38" width="14" height="8" rx="1" fill="#e6e6e6" stroke="${INK}" stroke-width="2"/>` +
-      line('M15 46 H49', 2.6),
+    rect([14, 12, 92, 96], 8) +
+      lines('M14 30 H106', 3) +
+      rect([48, 24, 24, 16], 3, TONE) +
+      shape('M56 40 L60 48 L64 40 Z', INK) +
+      rect([44, 66, 32, 22], 3, TONE) +
+      lines('M44 73 H76 M44 80 H76', 1.6) +
+      rect([24, 88, 72, 7], 2),
   ),
 };
 
@@ -53,53 +61,18 @@ export const toolIcon = (icon: ToolIcon) => TOOLS[icon];
 
 export const rotateIcon = () =>
   svg(
-    line('M50 32 A18 18 0 1 1 41 16.4', 3) +
-      `<path d="M36 9 L46 15 L37 23 Z" fill="${INK}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>`,
+    lines('M96 60 A36 36 0 1 1 78 28.8', 6) +
+      `<path d="M70 12 L92 28 L70 42 Z" fill="${INK}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`,
   );
 
 export const mirrorIcon = () =>
   svg(
-    line('M32 6 V58', 2, ' stroke-dasharray="4 4"') +
-      `<path d="M26 14 L8 50 H26 Z" fill="${INK}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>` +
-      `<path d="M38 14 L56 50 H38 Z" fill="#fff" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>`,
+    `<path d="M60 10 V110" fill="none" stroke="${INK}" stroke-width="3" stroke-dasharray="7 7" stroke-linecap="round"/>` +
+      shape('M48 26 L14 94 H48 Z', INK) +
+      shape('M72 26 L106 94 H72 Z'),
   );
 
 export const checkMark = () =>
   svg(
-    `<circle cx="32" cy="32" r="26" fill="#fff" stroke="${INK}" stroke-width="3"/>` +
-      line('M20 33 L28.5 41.5 L45 24', 4.5),
-  );
-
-export const crossMark = () =>
-  svg(
-    `<circle cx="32" cy="32" r="26" fill="#fff" stroke="${INK}" stroke-width="3"/>` +
-      line('M22 22 L42 42 M42 22 L22 42', 4.5),
-  );
-
-const block = `<path d="M8 40 L32 28 L56 40 L32 52 Z" fill="#f2f2f2" stroke="${INK}" stroke-width="2"/><path d="M8 40 V48 L32 60 L56 48 V40" fill="#e2e2e2" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>`;
-
-export const snugPictogram = () =>
-  svg(
-    block +
-      bar('M32 6 V34', 3) +
-      line('M23 14 A10 4 0 0 0 41 14', 2.2) +
-      `<path d="M41 14 l-4 -1.5 l1 4 z" fill="${INK}"/>`,
-  );
-
-export const overtightPictogram = () =>
-  svg(
-    block +
-      bar('M32 6 V34', 3) +
-      line('M20 12 A12 4.5 0 0 0 44 12 M18 18 A14 5 0 0 0 46 18', 2.2) +
-      `<path d="M44 12 l-4 -1.5 l1 4 z M46 18 l-4 -1.5 l1 4 z" fill="${INK}"/>` +
-      line('M24 44 l-5 4 l3 1 l-4 4 M41 45 l5 3 l-3 1.5 l4 3', 1.8),
-  );
-
-export const layoutPictogram = () =>
-  svg(
-    `<rect x="6" y="10" width="52" height="44" rx="3" fill="#fff" stroke="${INK}" stroke-width="2.2"/>` +
-      `<rect x="12" y="16" width="14" height="10" rx="1.5" fill="#e6e6e6" stroke="${INK}" stroke-width="1.8"/>` +
-      `<circle cx="38" cy="21" r="5" fill="#e6e6e6" stroke="${INK}" stroke-width="1.8"/>` +
-      `<path d="M12 36 h10 v12 h-10 z" fill="#e6e6e6" stroke="${INK}" stroke-width="1.8"/>` +
-      line('M30 38 H50 M30 44 H46 M30 50 H50', 1.8),
+    `<circle cx="60" cy="60" r="50" fill="#fff" stroke="${INK}" stroke-width="6"/>` + lines('M36 62 L53 79 L86 44', 9),
   );

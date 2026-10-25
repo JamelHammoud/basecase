@@ -6,6 +6,7 @@ import {
   Button,
   IconButton,
   Kbd,
+  MetaLine,
   NO_DRAG_REGION,
   NumberInput,
   SegmentedControl,
@@ -260,14 +261,11 @@ const NavigationPane: React.FC<PaneProps> = (p) => (
       </Row>
     </Group>
     <Group title="Camera">
-      <Row label="Isometric · Top · Front · Side" hint="Also in View → Camera">
-        <span className="flex items-center gap-[4px]">
-          <Kbd>1</Kbd>
-          <Kbd>2</Kbd>
-          <Kbd>3</Kbd>
-          <Kbd>4</Kbd>
-        </span>
-      </Row>
+      {CAMERA_KEYS.map(([label, key]) => (
+        <Row key={key} label={label}>
+          <Kbd>{key}</Kbd>
+        </Row>
+      ))}
       <Row label="Zoom to selection">
         <Kbd>Z</Kbd>
       </Row>
@@ -283,7 +281,10 @@ const LayoutPane: React.FC<PaneProps> = (p) => (
     <Row label="Show inspector" shortcut="⌘I">
       <Switch checked={p.isRightOpen} onChange={p.onRightOpen} />
     </Row>
-    <Row label="Panel widths" hint={`Sidebar ${p.panelWidths.left} px · Inspector ${p.panelWidths.right} px`}>
+    <Row
+      label="Panel widths"
+      hint={<MetaLine items={[`Sidebar ${p.panelWidths.left} px`, `Inspector ${p.panelWidths.right} px`]} />}
+    >
       <Button size="sm" onClick={p.onResetPanelWidths}>
         Reset
       </Button>
@@ -291,12 +292,19 @@ const LayoutPane: React.FC<PaneProps> = (p) => (
   </Group>
 );
 
+const CAMERA_KEYS: Array<[string, string]> = [
+  ['Isometric', '1'],
+  ['Top', '2'],
+  ['Front', '3'],
+  ['Side', '4'],
+];
+
 const agentOfCommand = (command: string) => AGENT_PROFILES.find((p) => p.command === command);
 
 function agentStatusText(status: AcpStatusInfo) {
   if (status.connected && status.signIn) return `Sign in to ${status.agentName} from the Agent tab`;
 
-  return status.connected ? `Connected · ${status.agentName}` : status.error || 'Not connected';
+  return status.connected ? `Connected to ${status.agentName}` : status.error || 'Not connected';
 }
 
 const AgentPane: React.FC<PaneProps> = (p) => {

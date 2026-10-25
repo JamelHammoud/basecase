@@ -99,6 +99,7 @@ const partSummaries = (parts: ScenePart[]) =>
   }));
 
 interface DevRecord {
+  name?: string;
   parts: ScenePart[];
   project?: ProjectSettings;
   annotations?: SceneAnnotation[];
@@ -117,14 +118,14 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     select: (ids: string[]) => devRef.current.select(ids),
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
-      robotPreviewImage((await importRobot({ kind: 'url', url })).parts, url, width),
+      robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
     setPose: (values: Record<string, number>, root?: RobotPoseState['root']) =>
       devRef.current.posing.setPose({ values, root }),
     posing: () => devRef.current.posing,
     load: (record: DevRecord) =>
       devRef.current.load({
         sceneId: newSceneId(),
-        sceneName: 'Untitled',
+        sceneName: record.name ?? 'Untitled',
         globalGoal: '',
         parts: record.parts,
         annotations: record.annotations ?? [],

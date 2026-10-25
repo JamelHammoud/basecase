@@ -23,6 +23,8 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   animate: ['Making # animations', 'Made # animations'],
   retarget_motion: ['Retargeting # motions', 'Retargeted # motions'],
   import_robot: ['Inserting # robots', 'Inserted # robots'],
+  find_objects: ['Running # SimReady searches', 'Ran # SimReady searches'],
+  insert_object: ['Inserting # objects', 'Inserted # objects'],
   simulate: ['Running # simulations', 'Ran # simulations'],
   train_policy: ['Starting # training runs', 'Started # training runs'],
   training_status: ['Checking training # times', 'Checked training # times'],

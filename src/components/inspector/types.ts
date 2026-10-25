@@ -5,8 +5,8 @@ import type { AlignMode, Axis } from '../../utils/selection';
 export type Phase = boolean | undefined;
 
 export const MATERIALS: Array<{ value: string; label: string }> = [
-  { value: '3D Printed PLA/PETG', label: 'Printed · PLA / PETG' },
-  { value: 'TPU Flexible', label: 'Printed · TPU' },
+  { value: '3D Printed PLA/PETG', label: 'Printed PLA / PETG' },
+  { value: 'TPU Flexible', label: 'Printed TPU' },
   { value: 'Off-the-shelf COTS', label: 'Off-the-shelf' },
   { value: 'CNC Aluminum', label: 'CNC aluminum' },
   { value: 'Laser-Cut Acrylic/Carbon', label: 'Laser-cut sheet' },

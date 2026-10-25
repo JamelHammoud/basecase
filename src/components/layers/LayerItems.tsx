@@ -90,6 +90,7 @@ export interface PartRowProps {
 
 export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimmed, editing, ...on }) => (
   <li
+    data-layer-row={`part:${part.id}`}
     onClick={(e) => {
       e.stopPropagation();
       on.onClick(part, e.shiftKey || e.metaKey);
@@ -149,6 +150,7 @@ export interface GroupRowProps {
 
 export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selected, collapsed, editing, ...on }) => (
   <li
+    data-layer-row={`group:${id}`}
     onClick={(e) => {
       e.stopPropagation();
       on.onSelect(memberIds, e.shiftKey || e.metaKey);

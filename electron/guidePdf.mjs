@@ -7,11 +7,13 @@ const guidesDir = (libraryDir) => path.join(libraryDir, 'guides');
 
 const guidePath = (libraryDir, id) => path.join(guidesDir(libraryDir), `${safeFileId(id)}.pdf`);
 
+const guideHtmlPath = (libraryDir, id) => path.join(guidesDir(libraryDir), `${safeFileId(id)}.html`);
+
 async function printGuide(libraryDir, { id, html }) {
   if (!safeFileId(id) || typeof html !== 'string') throw new Error('No guide to print.');
 
   const dir = guidesDir(libraryDir);
-  const source = path.join(dir, `${safeFileId(id)}.html`);
+  const source = guideHtmlPath(libraryDir, id);
   const window = new BrowserWindow({
     show: false,
     webPreferences: { javascript: false, sandbox: true, contextIsolation: true },
@@ -36,8 +38,13 @@ async function printGuide(libraryDir, { id, html }) {
     return { ok: true, path: file, bytes: pdf.length };
   } finally {
     window.destroy();
-    fs.rmSync(source, { force: true });
   }
+}
+
+function readGuideHtml(libraryDir, id) {
+  const file = safeFileId(id) ? guideHtmlPath(libraryDir, id) : '';
+
+  return file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
 }
 
 async function openGuide(libraryDir, id) {
@@ -62,5 +69,6 @@ export function registerGuideHandlers(ipcMain, libraryDir) {
   ipcMain.handle('guide:save', (_e, payload) => printGuide(libraryDir, payload));
   ipcMain.handle('guide:open', (_e, id) => openGuide(libraryDir, id));
   ipcMain.handle('guide:reveal', (_e, id) => revealGuide(libraryDir, id));
+  ipcMain.handle('guide:html', (_e, id) => readGuideHtml(libraryDir, id));
   ipcMain.handle('guide:exists', (_e, id) => fs.existsSync(guidePath(libraryDir, id)));
 }

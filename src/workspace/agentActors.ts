@@ -55,7 +55,7 @@ export class ActorIndex {
     if (!known && !isSubagentTool((u._meta as UpdateMeta | undefined)?.claudeCode?.toolName)) return null;
 
     const done = DONE.has(String(u.status));
-    const name = describeOf(u) || known?.name || 'Part designer';
+    const name = describeOf(u) || known?.name || 'Subagent';
 
     this.subagents.set(id, { laneId, name, done: done || !!known?.done });
 
@@ -71,7 +71,7 @@ export class ActorIndex {
   nameOf(actor: string, leadName = 'Agent') {
     const [, callId] = actor.split('/');
 
-    return callId ? (this.subagents.get(callId)?.name ?? 'Part designer') : leadName;
+    return callId ? (this.subagents.get(callId)?.name ?? 'Subagent') : leadName;
   }
 
   isActive(actor: string, laneBusy: (laneId: string) => boolean) {

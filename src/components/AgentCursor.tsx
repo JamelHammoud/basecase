@@ -8,9 +8,17 @@ interface AgentCursorProps {
   visible: boolean;
   action?: string;
   name?: string;
+  color?: string;
 }
 
-export const AgentCursor: React.FC<AgentCursorProps> = ({ viewportRef, target, visible, action, name = 'Agent' }) => {
+export const AgentCursor: React.FC<AgentCursorProps> = ({
+  viewportRef,
+  target,
+  visible,
+  action,
+  name = 'Agent',
+  color = AGENT_COLOR,
+}) => {
   const elRef = useRef<HTMLDivElement | null>(null);
   const targetRef = useRef(target);
   const posRef = useRef<{ x: number; y: number } | null>(null);
@@ -56,11 +64,11 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({ viewportRef, target, v
       }`}
     >
       <svg width="22" height="22" viewBox="0 0 22 22" className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]">
-        <path d={ARROW_PATH} fill={AGENT_COLOR} stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d={ARROW_PATH} fill={color} stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
       <div
         className="absolute left-4 top-[18px] flex items-center gap-1.5 h-6 pl-2 pr-2.5 rounded-full rounded-tl-[4px] text-[12px] font-medium text-white whitespace-nowrap shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
-        style={{ background: AGENT_COLOR }}
+        style={{ background: color }}
       >
         <span>{name}</span>
         {action && <span className="text-white/80 font-normal max-w-[220px] truncate">{action}</span>}

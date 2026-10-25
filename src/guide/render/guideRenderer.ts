@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { ScenePart } from '../../types/robotics';
 import { buildPartGroup, releasePartGroup } from '../../three/buildPartMesh';
-import { loadPartMeshes } from '../../three/partThumbnails';
+import { loadPartMeshes } from '../../three/thumbnailRender';
 import type { GuideArrow, V3 } from '../guideTypes';
 import { frameBoxes, projectPoint, VIEW_DIRECTIONS, type Frame } from './guideCamera';
 import { idMaterial, toonMaterial } from './guideShaders';
@@ -30,7 +30,7 @@ export interface Drawing {
 }
 
 interface Entry extends StagePart {
-  part: ScenePart;
+  key: string;
   base: THREE.Vector3;
   originals: Array<THREE.Material | THREE.Material[]>;
 }
@@ -55,7 +55,7 @@ function displayColor(material: THREE.Material | THREE.Material[], fallback: str
 const isOverlay = (o: THREE.Object3D) =>
   Boolean((o as THREE.Line).isLine || (o as THREE.Points).isPoints || (o as THREE.Sprite).isSprite);
 
-function makeEntry(part: ScenePart, index: number): Entry {
+function makeEntry(part: ScenePart, key: string): Entry {
   const group = buildPartGroup(part, false, { shareGeometry: true });
   const meshes: Entry['meshes'] = [];
   const originals: Entry['originals'] = [];
@@ -76,7 +76,7 @@ function makeEntry(part: ScenePart, index: number): Entry {
     meshes.push({ mesh, toon });
   });
 
-  return { part, group, meshes, originals, idMaterial: idMaterial(), index, base: group.position.clone() };
+  return { key, group, meshes, originals, idMaterial: idMaterial(), index: 0, base: group.position.clone() };
 }
 
 export class GuideRenderer {
@@ -84,20 +84,45 @@ export class GuideRenderer {
   private readonly entries = new Map<string, Entry>();
   private readonly root = new THREE.Group();
 
-  private constructor(parts: ScenePart[]) {
-    parts.forEach((p, i) => {
-      const entry = makeEntry(p, i + 1);
-
-      this.entries.set(p.id, entry);
-      this.root.add(entry.group);
-    });
+  constructor() {
     this.stage.scene.add(this.root);
   }
 
-  static async create(parts: ScenePart[]): Promise<GuideRenderer> {
-    await loadPartMeshes(parts);
+  async sync(parts: ScenePart[], keys: Record<string, string>): Promise<void> {
+    const changed = parts.filter((p) => this.entries.get(p.id)?.key !== keys[p.id]);
 
-    return new GuideRenderer(parts);
+    await loadPartMeshes(changed);
+
+    for (const [id, entry] of this.entries) if (keys[id] !== entry.key) this.release(id, entry);
+
+    for (const part of changed) {
+      const entry = makeEntry(part, keys[part.id]);
+
+      this.entries.set(part.id, entry);
+      this.root.add(entry.group);
+    }
+
+    [...this.entries.values()].forEach((entry, i) => (entry.index = i + 1));
+  }
+
+  private release(id: string, entry: Entry) {
+    entry.meshes.forEach(({ mesh, toon }, i) => {
+      mesh.material = entry.originals[i];
+      toon.dispose();
+    });
+    entry.idMaterial.dispose();
+    entry.group.position.copy(entry.base);
+    this.root.remove(entry.group);
+    releasePartGroup(entry.group);
+    this.entries.delete(id);
+  }
+
+  ready(): Promise<void> {
+    return this.stage.ready();
+  }
+
+  flush(): Promise<void> {
+    return this.stage.flush();
   }
 
   group(id: string): THREE.Group | undefined {
@@ -186,7 +211,7 @@ export class GuideRenderer {
     const frame = this.frame(req.frameIds ?? req.ids, dir, req.ids);
     const width = Math.max(8, Math.round(frame.widthMm * scale));
     const height = Math.max(8, Math.round(frame.heightMm * scale));
-    const dataUrl = this.stage.draw(active, frame.camera, { width, height });
+    const image = this.stage.draw(active, frame.camera, { width, height });
     const arrows = (req.arrows ?? []).map((a) => ({
       from: projectPoint(frame.camera, a.from, width, height),
       to: projectPoint(frame.camera, a.to, width, height),
@@ -194,7 +219,11 @@ export class GuideRenderer {
     }));
     const points = (req.points ?? []).map((p) => projectPoint(frame.camera, p, width, height));
 
-    return { dataUrl, width, height, arrows, points };
+    const drawing: Drawing = { dataUrl: '', width, height, arrows, points };
+
+    void image.then((url) => (drawing.dataUrl = url)).catch(() => undefined);
+
+    return drawing;
   }
 
   visibleShare(req: Pick<DrawRequest, 'ids' | 'newIds' | 'offsets'>, dir: V3): number {
@@ -234,28 +263,22 @@ export class GuideRenderer {
       const width = Math.round(frame.widthMm * pxPerMm);
       const height = Math.round(frame.heightMm * pxPerMm);
 
-      return {
-        dataUrl: this.stage.draw(active, frame.camera, { width, height }),
-        widthMm: frame.widthMm,
-        heightMm: frame.heightMm,
-      };
+      const actual = { dataUrl: '', widthMm: frame.widthMm, heightMm: frame.heightMm };
+
+      void this.stage
+        .draw(active, frame.camera, { width, height })
+        .then((url) => (actual.dataUrl = url))
+        .catch(() => undefined);
+
+      return actual;
     } finally {
       entry.group.quaternion.copy(saved);
     }
   }
 
   dispose() {
-    for (const entry of this.entries.values()) {
-      entry.meshes.forEach(({ mesh, toon }, i) => {
-        mesh.material = entry.originals[i];
-        toon.dispose();
-      });
-      entry.idMaterial.dispose();
-      entry.group.position.copy(entry.base);
-      releasePartGroup(entry.group);
-    }
+    for (const [id, entry] of this.entries) this.release(id, entry);
 
-    this.entries.clear();
     this.stage.dispose();
   }
 }

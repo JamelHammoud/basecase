@@ -1,6 +1,11 @@
+import type { ConvertedFiles, ConvertedModel } from './simready';
+
 export const RAW = 'https://raw.githubusercontent.com';
 
-export type Source = { kind: 'url'; url: string } | { kind: 'files'; files: File[] };
+export type Source =
+  | { kind: 'url'; url: string }
+  | { kind: 'files'; files: File[] }
+  | { kind: 'converted'; url: string; model: ConvertedModel; files: ConvertedFiles };
 
 export interface Resolver {
   entry: { name: string; text: string };

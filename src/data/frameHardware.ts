@@ -1,5 +1,5 @@
 import type { HardwareSpec } from './hardware';
-import { MotionHardware, box, holeRow } from './hardwareKit';
+import { MotionHardware, boreFacts, box, holeRow } from './hardwareKit';
 import {
   CLAMP_COLLARS,
   Collar,
@@ -118,7 +118,7 @@ function collar(table: Record<string, Collar>, kind: 'Set Screw' | 'Clamp'): Mot
       const c = table[spec.size];
 
       return [
-        { label: 'Bore · OD · Width', value: `${c.bore} · ${c.od} · ${c.width}`, unit: 'mm' },
+        ...boreFacts(c.bore, c.od, c.width),
         { label: 'Screw', value: c.screw.replace('x', ' × ') },
         { label: 'Standard', value: c.part },
       ];
@@ -214,7 +214,7 @@ function pulley(table: Record<string, Gt2Pulley>, idler: boolean): MotionHardwar
     },
     shop: (spec) =>
       `GT2 ${table[spec.size].teeth} teeth ${idler ? 'idler' : 'timing pulley'} ${table[spec.size].bore}mm bore 6mm belt`,
-    sizeLabel: (s) => s.replace('-', ' · Ø'),
+    sizeLabel: (s) => s.replace('-', ' Ø'),
     sizeColumns: 2,
   };
 }

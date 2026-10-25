@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import type { AcpStatusInfo, AgentChoice, AgentModel, EffortLevel } from '../../types/robotics';
+import type { AcpStatusInfo, AgentChoice, AgentModel, ContextUsage, EffortLevel } from '../../types/robotics';
 import { Button, MenuDivider, MenuItem, PopoverMenu, Slider, ChevronDownIcon } from '../../design-system';
+import { ContextStatus } from './ContextStatus';
 
 const fallbackEffort = (levels: EffortLevel[]) => levels.find((l) => l.id === 'medium') ?? levels[0];
 
@@ -44,9 +45,10 @@ const selectedModel = (models: AgentModel[], ids: Array<string | undefined>) =>
 
 export const ModelMenu: React.FC<{
   agent: AcpStatusInfo;
+  context: ContextUsage | null;
   choice: AgentChoice;
   onChange: (choice: AgentChoice) => void;
-}> = ({ agent, choice, onChange }) => {
+}> = ({ agent, context, choice, onChange }) => {
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const models = agent.models ?? [];
@@ -85,6 +87,12 @@ export const ModelMenu: React.FC<{
           <>
             <MenuDivider />
             <EffortSlider levels={levels} choice={choice} defaultEffort={agent.defaultEffort} onChange={onChange} />
+          </>
+        )}
+        {context && (
+          <>
+            <MenuDivider />
+            <ContextStatus context={context} />
           </>
         )}
       </PopoverMenu>

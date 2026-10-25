@@ -3,8 +3,7 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { MeshoptSimplifier } from 'meshoptimizer/simplifier';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Geometry } from './model';
 
 function collect(root: THREE.Object3D): THREE.BufferGeometry | null {
@@ -102,20 +101,4 @@ export function primitive(g: Geometry): THREE.BufferGeometry | null {
   }
 
   return geo.index ? geo.toNonIndexed() : geo;
-}
-
-export function simplify(geo: THREE.BufferGeometry, target: number): { positions: Float32Array; indices: Uint32Array } {
-  const soup = new THREE.BufferGeometry();
-
-  soup.setAttribute('position', geo.getAttribute('position'));
-
-  const welded = mergeVertices(soup, 1e-3);
-  const positions = (welded.getAttribute('position').array as Float32Array).slice();
-  const indices: Uint32Array = new Uint32Array(welded.index!.array as ArrayLike<number>);
-
-  if (indices.length / 3 <= target || !MeshoptSimplifier.supported) return { positions, indices };
-
-  const [out] = MeshoptSimplifier.simplify(indices, positions, 3, Math.max(target * 3, 36), 0.002, ['Prune']);
-
-  return { positions, indices: out.length >= 36 ? (out as Uint32Array) : indices };
 }

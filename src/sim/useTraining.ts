@@ -69,7 +69,7 @@ export function useTraining({
   onPolicy,
 }: {
   workspaceId: string;
-  buildModel: () => SimModel;
+  buildModel: () => Promise<SimModel>;
   robotKey: string | null;
   policies: PolicyRecord[];
   onPolicy: (record: PolicyRecord) => void;
@@ -123,7 +123,7 @@ export function useTraining({
       setMessage('Starting');
 
       try {
-        const model = buildModel();
+        const model = await buildModel();
         const robot = model.robots.find((r) => r.key === robotKey);
 
         if (!robot?.floating) throw new Error(NEEDS_LEGS);

@@ -179,7 +179,7 @@ function TabWithMenu<T extends string>({
                 className={`ml-[4px] w-3.5 h-3.5 shrink-0 opacity-0 -translate-x-[6px] transition-[opacity,translate,rotate] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] group-hover/tab:opacity-100 group-hover/tab:translate-x-0 group-[.is-shown]/tab:opacity-100 group-[.is-shown]/tab:translate-x-0 ${
                   open ? 'rotate-180 text-white/90' : 'text-white/55'
                 }`}
-                strokeWidth={2.25}
+                strokeWidth={2.75}
               />
             </span>
           </span>
@@ -189,13 +189,16 @@ function TabWithMenu<T extends string>({
   );
 }
 
-export const AgentSpinner: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' }) => (
+export const AgentSpinner: React.FC<{ className?: string; color?: string }> = ({
+  className = 'w-3 h-3',
+  color = AGENT_COLOR,
+}) => (
   <svg
     viewBox="0 0 16 16"
     className={`${className} shrink-0 motion-safe:animate-spin [animation-duration:900ms]`}
     aria-label="Agent working"
   >
-    <circle cx="8" cy="8" r="6" fill="none" stroke={AGENT_COLOR} strokeOpacity="0.3" strokeWidth="2.25" />
-    <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={AGENT_COLOR} strokeWidth="2.25" strokeLinecap="round" />
+    <circle cx="8" cy="8" r="6" fill="none" stroke={color} strokeOpacity="0.3" strokeWidth="2.25" />
+    <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={color} strokeWidth="2.25" strokeLinecap="round" />
   </svg>
 );

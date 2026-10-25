@@ -1,15 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { ARTICULATED_PARTS } from '../data/articulatedParts';
+import { loadSimReady, type SimReadyImport } from '../simready/loadAsset';
+import { prepareParts } from '../three/partMesh/prepare';
+import type { SimReadyAsset } from '../simready/search';
 import type { CatalogItem, RobotJoint, ScenePart } from '../types/robotics';
 import { importRobot, type ImportedRobot, type RobotPreset } from '../utils/robotImport';
 import { rememberImportedRobot, robotPreviewImage } from '../utils/robotPreview';
 import { useLatestRef } from '../utils/useLatestRef';
+import { whenIdle } from '../utils/whenIdle';
 import { attempt, plural } from './helpers';
 import { articulatedShift, importOffset, palmOf, placeRobot } from './robotPlacement';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-export type RobotSource = { kind: 'url'; url: string; name?: string } | { kind: 'files'; files: File[] };
+export type RobotSource =
+  | { kind: 'url'; url: string; name?: string }
+  | { kind: 'files'; files: File[] }
+  | { kind: 'simready'; asset: Pick<SimReadyAsset, 'url' | 'name' | 'maker' | 'license'> };
 
 export type ImportRobotResult = ImportedRobot | string;
 
@@ -19,7 +26,11 @@ interface PlacedRig {
 }
 
 function rememberPreview(robot: ImportedRobot, url: string) {
-  void robotPreviewImage(robot.parts, url, 320)
+  whenIdle(() => void savePreview(robot, url));
+}
+
+function savePreview(robot: ImportedRobot, url: string) {
+  return robotPreviewImage(robot.parts, 320)
     .then(
       (thumbnail) =>
         thumbnail &&
@@ -34,8 +45,22 @@ function rememberPreview(robot: ImportedRobot, url: string) {
     .catch(() => {});
 }
 
+const sourceName = (source: RobotSource) => {
+  if (source.kind === 'simready') return source.asset.name;
+
+  return source.kind === 'url' && source.name ? source.name : 'robot';
+};
+
+async function loadRobot(source: RobotSource, say: (m: string) => void): Promise<SimReadyImport> {
+  if (source.kind === 'simready') return loadSimReady(source.asset, say);
+
+  const robot = await importRobot(source, { name: source.kind === 'url' ? source.name : undefined, onProgress: say });
+
+  return { robot, isObject: false };
+}
+
 const insertedMessage = (robot: ImportedRobot, joints: RobotJoint[]) =>
-  `Inserted ${robot.name} · ${plural(joints.length, 'joint', 'joints')}${robot.notes.length ? ` · ${plural(robot.notes.length, 'file', 'files')} missing` : ''}`;
+  `Inserted ${robot.name} with ${plural(joints.length, 'joint', 'joints')}${robot.notes.length ? `. Missing ${plural(robot.notes.length, 'file', 'files')}` : ''}`;
 
 async function downloadArticulated(item: CatalogItem) {
   const src = ARTICULATED_PARTS[item.componentId!];
@@ -74,20 +99,21 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
   };
 
   const loadAndPlace = async (source: RobotSource, at?: Vec3): Promise<ImportedRobot> => {
-    showToast(`Importing ${source.kind === 'url' && source.name ? source.name : 'robot'}…`, { tone: 'progress' });
+    showToast(`Importing ${sourceName(source)}…`, { tone: 'progress' });
 
-    const robot = await importRobot(source, {
-      name: source.kind === 'url' ? source.name : undefined,
-      onProgress: (m) => showToast(m, { tone: 'progress' }),
-    });
-
-    if (source.kind === 'url') rememberPreview(robot, source.url);
+    const { robot, isObject } = await loadRobot(source, (m) => showToast(m, { tone: 'progress' }));
 
     const shift = importOffset(robot.parts, at, partsRef.current);
     const placed = placeRobot({ parts: robot.parts, joints: robot.joints, shift, takenJointIds: takenJointIds() });
 
+    await prepareParts(placed.parts);
     insertRig(placed, !at);
-    showToast(insertedMessage(robot, placed.joints), { action: poseAction(placed.joints) });
+
+    if (source.kind === 'url') rememberPreview(robot, source.url);
+
+    showToast(isObject ? `Inserted ${robot.name}` : insertedMessage(robot, placed.joints), {
+      action: poseAction(placed.joints),
+    });
 
     return { ...robot, ...placed };
   };
@@ -125,8 +151,9 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
       decorate: (p) => (p.id === palm.id ? { ...p, componentId: item.componentId } : p),
     });
 
+    await prepareParts(placed.parts);
     insertRig(placed, true);
-    showToast(`Added ${item.name} · ${plural(placed.joints.length, 'joint', 'joints')}`, {
+    showToast(`Added ${item.name} with ${plural(placed.joints.length, 'joint', 'joints')}`, {
       action: poseAction(placed.joints),
     });
   };

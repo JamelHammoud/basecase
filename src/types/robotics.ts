@@ -159,6 +159,7 @@ export interface ScenePart {
     indices: number[];
     baseSize: [number, number, number];
     source?: string;
+    visual?: { key: string; node: string; matrix: number[] };
   };
   hardware?: HardwareSpec;
   componentId?: string;
@@ -168,6 +169,8 @@ export interface ScenePart {
   massG?: number;
   com?: [number, number, number];
   robotLink?: { robot: string; link: string; url?: string; rotate?: Array<[string, number]>; version: number };
+  simready?: { url: string; name: string; maker: string; license: string };
+  physics?: { dynamic: boolean; friction?: number };
   group?: { id: string; name: string };
   printMaterial?: PrintMaterial;
   jointId?: string;
@@ -360,6 +363,7 @@ export type {
   AcpToolCallEvent,
   AgentConversation,
   AgentConversationSummary,
+  ContextUsage,
 } from './agentChat';
 
 export interface EffortLevel {

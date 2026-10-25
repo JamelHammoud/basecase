@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { MetaLine } from '../../design-system';
 import { appendFreehandPoint, holeLoopAt, snapSketchPoint, type SketchPoint, type SketchTool } from './sketchGeometry';
 import type { StudioDraft } from './useStudioDraft';
 
@@ -133,7 +134,12 @@ export const SketchCanvas: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
           {TOOL_HINTS[drawTool]}
         </span>
         <span className="glass-menu rounded-full px-2.5 h-6 flex items-center text-[12px] text-white/50 tabular">
-          {outerPoints.length} pts{holes.length > 0 ? ` · ${holes.length} holes` : ''}
+          <MetaLine
+            items={[
+              `${outerPoints.length} points`,
+              holes.length > 0 && `${holes.length} ${holes.length === 1 ? 'hole' : 'holes'}`,
+            ]}
+          />
         </span>
       </div>
     </div>

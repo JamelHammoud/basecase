@@ -122,19 +122,23 @@ function keyframeAnimation(scope: Scope, p: AnimatePayload, pointOf: PointOf): B
   };
 }
 
-function collisionProblems(ctx: PoseContext, scope: Scope, anim: RobotAnimation, problems: Map<string, string>) {
+const COLLISION_SAMPLES = 8;
+
+async function collisionProblems(ctx: PoseContext, scope: Scope, anim: RobotAnimation): Promise<Map<string, string>> {
   const rest = restPairs(ctx);
-  const samples = 8;
+  const times = Array.from({ length: COLLISION_SAMPLES }, (_, i) => (i / COLLISION_SAMPLES) * anim.duration);
+  const checks = times.map((t) => poseCheck(ctx, scope, sampleAnimation(anim, t), rest));
+  const problems = new Map<string, string>();
 
-  for (let i = 0; i < samples; i++) {
-    const t = (i / samples) * anim.duration;
-
-    for (const line of poseCheck(ctx, scope, sampleAnimation(anim, t), rest)) {
+  (await Promise.all(checks)).forEach((lines, i) => {
+    for (const line of lines) {
       const key = line.replace(/[\d.]+ mm/g, '');
 
-      if (!problems.has(key)) problems.set(key, `${line} at ${r1(t)} s`);
+      if (!problems.has(key)) problems.set(key, `${line} at ${r1(times[i])} s`);
     }
-  }
+  });
+
+  return problems;
 }
 
 function fastestSpeeds(anim: RobotAnimation): Map<string, number> {
@@ -188,7 +192,7 @@ function animateText(made: RobotAnimation, p: AnimatePayload, built: Built, prob
   );
 }
 
-export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
+export async function animateRequest(ctx: PoseContext, p: AnimatePayload): Promise<PoseReply> {
   const scope = scopeOf(ctx, p.robot);
 
   if (typeof scope === 'string') return { text: scope };
@@ -202,20 +206,20 @@ export function animateRequest(ctx: PoseContext, p: AnimatePayload): PoseReply {
 
   if (p.loop !== undefined) anim.loop = p.loop;
 
-  const problems = new Map<string, string>();
-
-  collisionProblems(ctx, scope, anim, problems);
-  speedProblems(scope, anim, problems);
-
+  const collisions = collisionProblems(ctx, scope, anim);
   const images = p.preview
     ? render(ctx, scope, previewStates(anim, p.preview.frames, anim.loop), [p.preview.view ?? 'side'])
     : undefined;
 
   restore(ctx, scope);
 
+  const problems = await collisions;
+
+  speedProblems(scope, anim, problems);
+
   const made = ctx.addAnimation({ ...anim, robot: scope.key });
 
   if (p.play !== false) ctx.play(made.id);
 
-  return { text: animateText(made, p, built, problems), images };
+  return { text: animateText(made, p, built, problems), images: await images };
 }

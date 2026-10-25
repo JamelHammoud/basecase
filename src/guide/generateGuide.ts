@@ -1,25 +1,22 @@
+import { packParts } from '../three/packedMesh';
 import type { BuildGuideRecord, ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { solidSizeMm } from '../utils/sceneSize';
-import { guideHtml } from './doc/guideDocument';
+import { workerClient, type Reply } from '../utils/workerRpc';
 import { guideFingerprint } from './guideFingerprint';
-import { buildGuidePlan, isBuilt } from './guidePlan';
+import { isBuilt } from './guidePlan';
+import type { GuidePortMessage } from './guidePort';
 import type { GuidePlan } from './guideTypes';
-import { drawGuide } from './render/guideDrawings';
-import { measureGuideScene } from './render/guideMeasure';
-import { GuideRenderer } from './render/guideRenderer';
+import type { GuideJob, GuideProgress, RenderedGuide } from './renderGuide';
 
-export interface GuideProgress {
-  share: number;
-  label: string;
-}
+export type { GuideProgress } from './renderGuide';
 
 export interface GenerateGuideInput {
   title: string;
   parts: ScenePart[];
   project: ProjectSettings;
   onProgress?: (p: GuideProgress) => void;
-  isCancelled?: () => boolean;
+  onCover?: (dataUrl: string) => void;
+  signal?: AbortSignal;
 }
 
 export interface GeneratedGuide {
@@ -29,9 +26,35 @@ export interface GeneratedGuide {
   html: string;
 }
 
-const COVER_THUMB_PX = 360;
-const MEASURE_SHARE = 0.15;
-const DRAW_SHARE = 0.8;
+type RenderPayload = { job: GuideJob; port: MessagePort };
+
+type GuideHandlers = { render: (payload: RenderPayload) => Promise<Reply<RenderedGuide | null>> };
+
+const localHandlers = async (): Promise<GuideHandlers> => {
+  const { renderGuideOnPort } = await import('./guidePort');
+
+  return { render: async ({ job, port }) => ({ result: await renderGuideOnPort(job, port) }) };
+};
+
+const client = workerClient<GuideHandlers>(
+  () => new Worker(new URL('./guide.worker.ts', import.meta.url), { type: 'module' }),
+  localHandlers,
+);
+
+const identities = new WeakMap<ScenePart, string>();
+let nextIdentity = 1;
+
+function identityOf(part: ScenePart): string {
+  const known = identities.get(part);
+
+  if (known) return known;
+
+  const made = `p${nextIdentity++}`;
+
+  identities.set(part, made);
+
+  return made;
+}
 
 async function brandMark(): Promise<string> {
   try {
@@ -43,86 +66,60 @@ async function brandMark(): Promise<string> {
   }
 }
 
-async function thumbnail(dataUrl: string): Promise<string> {
-  const img = new Image();
-
-  img.src = dataUrl;
-  await img.decode();
-
-  const k = Math.min(1, COVER_THUMB_PX / Math.max(img.naturalWidth, img.naturalHeight));
-  const canvas = document.createElement('canvas');
-
-  canvas.width = Math.round(img.naturalWidth * k);
-  canvas.height = Math.round(img.naturalHeight * k);
-  canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-  return canvas.toDataURL('image/webp', 0.85);
-}
-
 const newId = () => `guide-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
 const today = () => new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
+function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide | null> {
+  const { port1, port2 } = new MessageChannel();
+  const cancel = () => port1.postMessage({ type: 'cancel' } satisfies GuidePortMessage);
+
+  port1.onmessage = ({ data }: MessageEvent<GuidePortMessage>) => {
+    if (data.type === 'progress') input.onProgress?.(data.progress);
+
+    if (data.type === 'cover') input.onCover?.(data.dataUrl);
+  };
+  input.signal?.addEventListener('abort', cancel, { once: true });
+
+  return client.call('render', { job, port: port2 }, [port2]).finally(() => {
+    input.signal?.removeEventListener('abort', cancel);
+    port1.close();
+  });
+}
+
 export async function generateGuide(input: GenerateGuideInput): Promise<GeneratedGuide | null> {
   const { title, project } = input;
   const parts = input.parts.filter(isBuilt);
-  const isCancelled = input.isCancelled ?? (() => false);
-  const t0 = performance.now();
-  const report = (share: number, label: string) => {
-    console.error(`[guide] ${((performance.now() - t0) / 1000).toFixed(1)}s ${label}`);
-    input.onProgress?.({ share, label });
-  };
 
   if (!parts.length) return null;
 
-  report(0.02, 'Measuring parts');
+  input.onProgress?.({ share: 0, label: 'Measuring parts' });
 
-  const renderer = await GuideRenderer.create(parts);
+  const id = project.buildGuide?.id ?? newId();
+  const job: GuideJob = {
+    guideId: id,
+    title,
+    parts: packParts(parts),
+    partKeys: Object.fromEntries(parts.map((p) => [p.id, identityOf(p)])),
+    project,
+    date: today(),
+    mark: await brandMark(),
+  };
+  const rendered = await render(job, input);
 
-  try {
-    const geometry = await measureGuideScene(renderer, isCancelled);
+  if (!rendered || input.signal?.aborted) return null;
 
-    if (isCancelled()) return null;
+  input.onProgress?.({ share: 0.97, label: 'Saving PDF' });
 
-    const plan = buildGuidePlan({ title, parts, joints: project.joints ?? [], ...geometry }, project.material);
+  const saved = await platformBridge.saveGuide({ id, html: rendered.html });
+  const record: BuildGuideRecord = {
+    id,
+    pages: rendered.pages,
+    steps: rendered.plan.steps.length,
+    generatedAt: new Date().toISOString(),
+    fingerprint: guideFingerprint(title, input.parts, project),
+    coverDataUrl: rendered.coverDataUrl,
+  };
 
-    report(MEASURE_SHARE, 'Drawing steps');
-
-    const drawings = await drawGuide(renderer, plan, geometry.boxes, {
-      isCancelled,
-      onProgress: ({ done, total }) =>
-        report(
-          MEASURE_SHARE + (DRAW_SHARE * done) / total,
-          `Drawing step ${Math.max(1, done - 2)} of ${plan.steps.length}`,
-        ),
-    });
-
-    if (!drawings) return null;
-
-    const meta = {
-      title,
-      material: project.material,
-      date: today(),
-      sizeMm: solidSizeMm(parts) ?? undefined,
-      mark: await brandMark(),
-    };
-    const { html, pages } = guideHtml({ plan, drawings, meta });
-    const id = project.buildGuide?.id ?? newId();
-
-    report(0.97, 'Saving PDF');
-
-    const saved = await platformBridge.saveGuide({ id, html });
-    const record: BuildGuideRecord = {
-      id,
-      pages,
-      steps: plan.steps.length,
-      generatedAt: new Date().toISOString(),
-      fingerprint: guideFingerprint(title, input.parts, project),
-      coverDataUrl: await thumbnail(drawings.cover.dataUrl),
-    };
-
-    return { record, plan, saved: saved.ok, html };
-  } finally {
-    renderer.dispose();
-  }
+  return { record, plan: rendered.plan, saved: saved.ok, html: rendered.html };
 }

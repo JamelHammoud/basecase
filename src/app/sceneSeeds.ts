@@ -6,7 +6,7 @@ import { seedFromRecord } from './tabModel';
 
 const chatSeed = (chat: AgentConversation | null): WorkspaceSeed['chat'] =>
   chat?.messages?.length
-    ? { chatId: chat.id, messages: chat.messages, acpSessionId: chat.acpSessionId ?? null }
+    ? { chatId: chat.id, messages: chat.messages, acpSessionId: chat.acpSessionId ?? null, context: chat.context }
     : undefined;
 
 export async function seedWithChat(record: SavedSceneRecord): Promise<WorkspaceSeed> {

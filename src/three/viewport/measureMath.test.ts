@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { closestOnVertical, formatLength, snapPoint } from './measureMath';
+import { closestOnVertical, formatLength, fromFeetInches, snapPoint, toFeetInches } from './measureMath';
 
 const square = [0, 0, 0, 10, 0, 0, 10, 0, 0, 10, 0, 10, 10, 0, 10, 0, 0, 10, 0, 0, 10, 0, 0, 0];
 
@@ -49,5 +49,17 @@ describe('measure labels', () => {
     expect(text(304.8, 'imperial')).toBe('1 ft');
     expect(text(1000, 'imperial')).toBe('3 ft 3 ⅜ in');
     expect(text(0.5, 'imperial')).toBe('0.02 in');
+  });
+});
+
+describe('heights in feet and inches', () => {
+  it('reads the average US man as 5 ft 9 in, never 12 inches', () => {
+    expect(toFeetInches(1753)).toEqual({ feet: 5, inches: 9 });
+    expect(toFeetInches(1828.5)).toEqual({ feet: 6, inches: 0 });
+  });
+
+  it('carries extra or negative inches into feet', () => {
+    expect(toFeetInches(fromFeetInches({ feet: 5, inches: 14 }))).toEqual({ feet: 6, inches: 2 });
+    expect(toFeetInches(fromFeetInches({ feet: 5, inches: -1 }))).toEqual({ feet: 4, inches: 11 });
   });
 });

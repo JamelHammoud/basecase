@@ -3,6 +3,7 @@ import type { AcpChatMessage } from '../types/robotics';
 import type { AcpPromptPayload } from '../utils/platformBridge';
 import { useLatestRef } from '../utils/useLatestRef';
 import { MAIN_LANE, laneKey, newLane, type AgentLane, type LaneChat } from './agentLanes';
+import type { RunEnd } from './liveRuns';
 import type { WorkspaceSeed } from './types';
 
 export interface QueuedPrompt {
@@ -15,6 +16,7 @@ export interface LaneFlags {
   follow: boolean;
   queued: QueuedPrompt[];
   pendingResume: string | null;
+  adopted: { ready: boolean; ended: RunEnd | null } | null;
 }
 
 const newFlags = (pendingResume: string | null = null): LaneFlags => ({
@@ -22,6 +24,7 @@ const newFlags = (pendingResume: string | null = null): LaneFlags => ({
   follow: true,
   queued: [],
   pendingResume,
+  adopted: null,
 });
 
 const resolve = <T>(next: SetStateAction<T>, prev: T) =>
@@ -59,6 +62,14 @@ export function useAgentLanes(workspaceId: string, seed?: WorkspaceSeed) {
     setLanes((prev) => [...prev, newLane(id, chat)]);
   };
 
+  const adoptLane = (id: string, chat: LaneChat, busy: boolean) => {
+    const lane = { ...newLane(id, chat), busy };
+
+    flagsOf(id).busy = busy;
+    flagsOf(id).pendingResume = null;
+    setLanes((prev) => (prev.some((l) => l.id === id) ? prev.map((l) => (l.id === id ? lane : l)) : [...prev, lane]));
+  };
+
   const removeLane = (id: string) => {
     flags.delete(id);
     setLanes((prev) => prev.filter((l) => l.id !== id));
@@ -87,6 +98,7 @@ export function useAgentLanes(workspaceId: string, seed?: WorkspaceSeed) {
     updateLane,
     setMessages,
     addLane,
+    adoptLane,
     removeLane,
     selectLane,
     resetLanes,

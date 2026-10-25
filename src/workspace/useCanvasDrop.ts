@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { catalogItemFromKey } from '../data/catalog';
-import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, isSceneDrag } from '../data/dnd';
+import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
 import type { Vec3 } from './types';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -17,9 +17,9 @@ export function dropPoint(hit: Hit, snapStepMm: number): Vec3 | undefined {
   return [snap(hit.point[0]), hit.partId ? Math.max(0, hit.point[1]) : 0, snap(hit.point[2])];
 }
 
-function parseRobotDrag(data: string) {
+function parseDrag<T>(data: string) {
   try {
-    return JSON.parse(data) as { url: string; name?: string };
+    return JSON.parse(data) as T;
   } catch {
     return null;
   }
@@ -31,17 +31,24 @@ export function useCanvasDrop({ viewportRef, studio }: WorkspaceCore, { creation
   const { addCatalogItem, placeCustomModel, addImagePlane } = creation;
 
   const dropRobot = (data: string, at: Vec3 | undefined) => {
-    const drag = parseRobotDrag(data);
+    const drag = parseDrag<{ url: string; name?: string }>(data);
 
     if (drag) void importRobotFrom({ kind: 'url', url: drag.url, name: drag.name }, at ?? [0, 0, 0]);
+  };
+
+  const dropSimReady = (data: string, at: Vec3 | undefined) => {
+    const asset = parseDrag<{ url: string; name: string; maker: string; license: string }>(data);
+
+    if (asset) void importRobotFrom({ kind: 'simready', asset }, at ?? [0, 0, 0]);
   };
 
   const dropSceneItem = (e: React.DragEvent) => {
     const partKind = e.dataTransfer.getData(PART_DRAG_TYPE);
     const modelId = e.dataTransfer.getData(MODEL_DRAG_TYPE);
     const robot = e.dataTransfer.getData(ROBOT_DRAG_TYPE);
+    const simready = e.dataTransfer.getData(SIMREADY_DRAG_TYPE);
 
-    if (!partKind && !modelId && !robot) return false;
+    if (!partKind && !modelId && !robot && !simready) return false;
 
     const at = dropPoint(viewportRef.current?.pickAt(e.clientX, e.clientY), studio.snapStepMm);
     const item = partKind ? catalogItemFromKey(partKind) : undefined;
@@ -50,6 +57,7 @@ export function useCanvasDrop({ viewportRef, studio }: WorkspaceCore, { creation
     if (item) addCatalogItem(item, at);
     else if (model) placeCustomModel(model, at);
     else if (robot) dropRobot(robot, at);
+    else if (simready) dropSimReady(simready, at);
 
     return true;
   };

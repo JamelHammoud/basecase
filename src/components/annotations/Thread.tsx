@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SceneAnnotation } from '../../types/robotics';
 import { timeAgo } from '../../utils/timeAgo';
-import { Button, IconButton, CircleCheckIcon, CloseIcon, DeleteIcon, EditIcon } from '../../design-system';
+import { Button, IconButton, MetaLine, CircleCheckIcon, CloseIcon, DeleteIcon, EditIcon } from '../../design-system';
 import { AutoTextarea, CommentComposer } from './CommentComposer';
 import { DeleteCommentDialog, type PendingDelete } from './DeleteCommentDialog';
 
@@ -39,10 +39,7 @@ const CommentItem: React.FC<{
           Y
         </span>
         <span className="text-[13px] font-semibold text-white/90">You</span>
-        <span className="text-[12px] text-white/40">
-          {timeAgo(createdAt)}
-          {edited && ' · edited'}
-        </span>
+        <MetaLine className="text-[12px] text-white/40" items={[timeAgo(createdAt), edited && 'Edited']} />
       </div>
 
       {editing ? (

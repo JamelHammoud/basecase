@@ -4,7 +4,7 @@ import type { MeshMeasure } from '../three/meshMeasure';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import type { EngineeringReport } from '../utils/engineering';
-import type { PrintReport } from '../utils/printReport';
+import type { PrintReport, PrintShapes } from '../utils/printReport';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
 import { BudgetSection } from './build/BudgetSection';
@@ -23,11 +23,11 @@ interface BuildPanelProps {
   sceneName: string;
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
-  measure: (ids?: string[]) => Record<string, MeshMeasure>;
-  getTriangles: (id: string) => Float32Array | null;
+  measure: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
+  printShapes: PrintShapes;
   onSelectParts: (ids: string[]) => void;
   onToast: (message: string) => void;
-  onRunChecks: () => EngineeringReport;
+  onRunChecks: () => Promise<EngineeringReport>;
   guide: BuildGuide;
 }
 
@@ -47,14 +47,14 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   project,
   onChangeProject,
   measure,
-  getTriangles,
+  printShapes,
   onSelectParts,
   onToast,
   onRunChecks,
   guide,
 }) => {
   const [purchases, savePurchase] = usePurchases();
-  const { measures, print } = useBuildReport({ parts, project, measure, getTriangles });
+  const { measures, print } = useBuildReport({ parts, project, measure, printShapes });
   const [checking, setChecking] = useState<BomLine | null>(null);
   const { ref: setScroller, style: fadeStyle } = useScrollFade();
   const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print) });
@@ -80,8 +80,8 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     <div className="flex-1 min-h-0 flex flex-col">
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <BudgetSection bom={bom} project={project} onChangeProject={onChangeProject} />
-        <ChecksSection parts={parts} project={project} onRun={onRunChecks} onSelectParts={onSelectParts} />
         <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
+        <ChecksSection parts={parts} project={project} onRun={onRunChecks} onSelectParts={onSelectParts} />
         <BuyList
           bom={bom}
           onCheck={setChecking}

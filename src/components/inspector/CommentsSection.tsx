@@ -30,14 +30,13 @@ const CommentRow: React.FC<{ annotation: SceneAnnotation; n: number; active: boo
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[13px] text-white/85 truncate">{first?.text}</span>
-          <span className="flex items-center gap-1.5 text-[12px] text-white/40">
+          <span className="flex items-center gap-[12px] text-[12px] text-white/40">
             {a.resolved ? 'Resolved' : timeAgo(first?.createdAt ?? a.createdAt)}
             {a.comments.length > 1 && (
-              <>
-                <span>·</span>
+              <span className="flex items-center gap-1">
                 <CommentIcon className="w-3 h-3" />
                 <span className="tabular">{a.comments.length - 1}</span>
-              </>
+              </span>
             )}
           </span>
         </span>

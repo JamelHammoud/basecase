@@ -1,6 +1,5 @@
 import { CAD_AGENT_INSTRUCTIONS } from '../cad-agent-prompt.mjs';
-
-export const PART_DESIGNER = 'part-designer';
+import { PART_DESIGNER, SUBAGENT_TOOLS } from './constants.mjs';
 
 const PART_DESIGNER_ROLE = `
 You are a part designer working under a lead engineer in Basecase. Other part designers are
@@ -35,7 +34,7 @@ export function cadSubagents() {
         'Brief it with: the subassembly and the part ids it owns, the reference sheet rows and photo names for it, ' +
         'the interfaces it must keep (mount points, joint axes, hole patterns, outer bounds) and the expected size of each part.',
       prompt: `${PART_DESIGNER_ROLE}\n${CAD_AGENT_INSTRUCTIONS}`,
-      disallowedTools: ['Agent', 'Task', 'TodoWrite', 'WebSearch', 'WebFetch'],
+      disallowedTools: [...SUBAGENT_TOOLS, 'TodoWrite', 'WebSearch', 'WebFetch'],
       model: 'inherit',
     },
   };

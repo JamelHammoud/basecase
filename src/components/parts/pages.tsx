@@ -3,8 +3,17 @@ import { CATEGORY_LABELS, catalogItemFromKey, catalogRef } from '../../data/cata
 import { COMPONENT_BY_ID, ComponentInfo } from '../../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, hardwareSubtitle } from '../../data/hardware';
 import type { CatalogItem, PartDimensions } from '../../types/robotics';
-import { Button, Section, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon, PlusIcon } from '../../design-system';
-import { Hero, LinkButton, SizeLine, SpecRow } from '../PartDetails';
+import {
+  Button,
+  MetaLine,
+  Section,
+  Tooltip,
+  ArrowUpRightIcon,
+  CartIcon,
+  FileIcon,
+  PlusIcon,
+} from '../../design-system';
+import { Hero, LinkButton, SizeLine, SpecRow, SpecText } from '../PartDetails';
 import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
 import { keySpecs } from '../../utils/keySpecs';
 import { hardwareItem, type View } from './partsViews';
@@ -12,14 +21,14 @@ import { ResultRow, dragProps } from './rows';
 
 const PAGE_HERO = 'preview !rounded-[14px] mx-[12px] h-[184px]';
 
-const PageTitle: React.FC<{ title: string; subtitle: string; description?: string }> = ({
+const PageTitle: React.FC<{ title: string; subtitle: string | string[]; description?: string }> = ({
   title,
   subtitle,
   description,
 }) => (
   <div className="px-[12px] pt-4 pb-4">
     <h2 className="text-[17px] font-semibold text-white/95 leading-tight">{title}</h2>
-    <div className="mt-1 text-[13px] text-white/50 truncate">{subtitle}</div>
+    <MetaLine items={[subtitle].flat()} className="mt-1 text-[13px] text-white/50" />
     {description && <p className="mt-2.5 text-[13px] text-white/70 leading-relaxed">{description}</p>}
   </div>
 );
@@ -31,8 +40,6 @@ const modelOrigin = (c: ComponentInfo): string => {
 
   return `Modeled from the ${c.model.by} drawing`;
 };
-
-const modelSourceText = (c: ComponentInfo) => modelOrigin(c) + (c.model.license ? ` · ${c.model.license}` : '');
 
 const DetailBlock: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="text-[13px] leading-relaxed">
@@ -63,7 +70,7 @@ const ComponentSpecs: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, 
         <SizeSpecRow d={d} />
         {c.specs.map(([label, value]) => (
           <SpecRow key={label} label={label}>
-            {value}
+            <SpecText value={value} />
           </SpecRow>
         ))}
       </dl>
@@ -77,7 +84,10 @@ const ComponentDetails: React.FC<{ c: ComponentInfo }> = ({ c }) => (
       <SpecRow label="Part number">{c.mpn}</SpecRow>
     </dl>
     <DetailBlock label="Mounting">{c.mounting}</DetailBlock>
-    <DetailBlock label="3D model">{modelSourceText(c)}</DetailBlock>
+    <DetailBlock label="3D model">
+      {modelOrigin(c)}
+      {c.model.license && <span className="block text-white/50">{c.model.license}</span>}
+    </DetailBlock>
     {(c.links.datasheet || c.links.product) && (
       <div className="flex gap-1.5 pt-0.5">
         {c.links.datasheet && (

@@ -1,11 +1,17 @@
 import type * as THREE from 'three';
 import type { MeasureTool } from './measureTool';
+import type { ScaleFigures } from './scaleFigures';
 import { floorPoint, hitPartId, rayAt, raycastParts } from './picking';
 import { SculptInput } from './sculptInput';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
 
 const CLICK_SLOP = 5;
+
+export interface MeasureInputs {
+  measure: MeasureTool;
+  figures: ScaleFigures;
+}
 
 export interface GizmoState {
   dragging: () => boolean;
@@ -27,10 +33,13 @@ export class PointerInput {
 
   private readonly measure: MeasureTool;
 
-  constructor(ctx: ViewportContext, gizmo: GizmoState, measure: MeasureTool) {
+  private readonly figures: ScaleFigures;
+
+  constructor(ctx: ViewportContext, gizmo: GizmoState, { measure, figures }: MeasureInputs) {
     this.ctx = ctx;
     this.gizmo = gizmo;
     this.measure = measure;
+    this.figures = figures;
     this.sculpt = new SculptInput(ctx);
   }
 
@@ -41,12 +50,23 @@ export class PointerInput {
       ['pointermove', (e: PointerEvent) => this.onMove(e)],
       ['pointerup', (e: PointerEvent) => this.onUp(e)],
       ['dblclick', (e: MouseEvent) => this.onDoubleClick(e)],
-      ['pointerleave', () => this.measure.leave()],
+      ['pointerleave', () => this.leave()],
     ];
 
     listeners.forEach(([type, fn]) => canvas.addEventListener(type, fn as EventListener));
 
     return () => listeners.forEach(([type, fn]) => canvas.removeEventListener(type, fn as EventListener));
+  }
+
+  private leave(): void {
+    this.measure.leave();
+    this.figures.leave();
+  }
+
+  private placingFigure(): boolean {
+    const { measureMode, measureKind } = this.ctx.props();
+
+    return Boolean(measureMode) && measureKind !== undefined && measureKind !== 'ruler';
   }
 
   private moved(e: MouseEvent): boolean {
@@ -64,6 +84,12 @@ export class PointerInput {
 
   private onMove(e: PointerEvent): void {
     const cursor = this.ctx.stage.brushCursor;
+
+    if (this.placingFigure()) {
+      this.figures.hoverAt(e.clientX, e.clientY);
+
+      return;
+    }
 
     if (this.ctx.props().measureMode) {
       this.measure.hoverAt(e.clientX, e.clientY);
@@ -112,7 +138,10 @@ export class PointerInput {
   }
 
   private measureClick(e: PointerEvent): void {
-    if (!e.ctrlKey) this.measure.clickAt(e.clientX, e.clientY);
+    if (e.ctrlKey) return;
+
+    if (this.placingFigure()) this.figures.clickAt(e.clientX, e.clientY);
+    else this.measure.clickAt(e.clientX, e.clientY);
   }
 
   private placeAnnotation(e: PointerEvent): void {

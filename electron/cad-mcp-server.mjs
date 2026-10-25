@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CAD_AGENT_INSTRUCTIONS } from './cad-agent-prompt.mjs';
 import {
+  buildGuide,
   checkPrintability,
   getBom,
   setBuild,
@@ -27,6 +28,7 @@ import {
   updateParts,
 } from './cad-mcp/sceneTools.mjs';
 import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
+import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
 import { warmUp } from './cad-kernel/client.mjs';
 
@@ -55,6 +57,8 @@ const TOOLS = [
   animate,
   retargetMotion,
   importRobot,
+  findObjects,
+  insertObject,
   simulate,
   trainPolicy,
   trainingStatus,
@@ -62,6 +66,7 @@ const TOOLS = [
   getBom,
   checkPrintability,
   setBuild,
+  buildGuide,
   setStatus,
 ];
 

@@ -1,12 +1,13 @@
 import type { AcpChatMessage, CustomModelDefinition } from '../types/robotics';
 import { platformBridge, type AcpPromptPayload } from '../utils/platformBridge';
-import { emptyAgentMessage, markLastAgentStopped } from './acpTranscript';
+import { clearFailedReply, emptyAgentMessage, markLastAgentFailed, markLastAgentStopped } from './acpTranscript';
 import { marksNote } from '../agent/agentMarks';
 import type { ActorIndex } from './agentActors';
-import { buildAgentPrompt, type AgentSendParams } from './agentPrompt';
+import { buildAgentPrompt, resendPayload, type AgentSendParams, type PromptOptions } from './agentPrompt';
 import { newId } from './helpers';
+import { STOPPED_REASONS } from './liveRuns';
 import type { AgentCursors } from './useAgentCursors';
-import type { AgentLanes } from './useAgentLanes';
+import type { AgentLanes, QueuedPrompt } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 interface AgentRunOptions {
@@ -19,6 +20,12 @@ interface AgentRunOptions {
 }
 
 type PromptResult = Awaited<ReturnType<typeof platformBridge.sendAcpPrompt>>;
+
+const failureReason = (err: unknown) =>
+  String((err as Error)?.message ?? err ?? '')
+    .replace(/^Error invoking remote method '[^']+': /, '')
+    .replace(/^(Error: )+/, '')
+    .trim() || 'The agent stopped responding.';
 
 export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {
   const { docs, showToast } = core;
@@ -47,7 +54,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
     if (models && models.length > modelCountBefore) placeCustomModel(models[0]);
 
-    if (res.stopReason === 'cancelled') setMessages(id, markLastAgentStopped);
+    if (STOPPED_REASONS.has(res.stopReason)) setMessages(id, markLastAgentStopped);
   };
 
   const runOnce = async (id: string, payload: AcpPromptPayload) => {
@@ -65,8 +72,22 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
       applyResult(id, await platformBridge.sendAcpPrompt({ ...payload, workspaceId: keyOf(id) }), modelCountBefore);
     } catch (err) {
-      showToast(`Agent error. ${String((err as Error).message ?? err)}`, { tone: 'error' });
+      const reason = failureReason(err);
+
+      setMessages(id, markLastAgentFailed(reason));
+      showToast(`Agent error. ${reason}`, { tone: 'error' });
     }
+  };
+
+  const dequeue = (id: string, next: QueuedPrompt): AcpPromptPayload => {
+    const fresh = emptyAgentMessage(new Date());
+    const lane = lanes.lanesRef.current.find((l) => l.id === id);
+    const user = lane?.messages.find((m) => m.id === next.messageId);
+    const sent = user ? [{ ...user, queued: false }, fresh] : [fresh];
+
+    setMessages(id, (prev) => [...prev.map((m) => (m.id === next.messageId ? { ...m, queued: false } : m)), fresh]);
+
+    return lane?.chatId ? { ...next.payload, run: { chatId: lane.chatId, messages: sent } } : next.payload;
   };
 
   const runAgentPrompt = async (id: string, first: AcpPromptPayload) => {
@@ -80,16 +101,11 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
       const next = alive() ? flagsOf(id).queued.shift() : undefined;
 
-      if (next) {
-        const fresh = emptyAgentMessage(new Date());
-
-        setMessages(id, (prev) => [...prev.map((m) => (m.id === next.messageId ? { ...m, queued: false } : m)), fresh]);
-      }
-
-      payload = next?.payload;
+      payload = next && dequeue(id, next);
     }
 
     setBusy(id, false);
+    void platformBridge.forgetAcpRun(keyOf(id));
     actors.endLane(id);
     cursors.clearLane(id);
   };
@@ -110,8 +126,11 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
   const send = async (params: AgentSendParams) => {
     const { id, chatId } = lanes.current;
+    const chat = chatId ?? newId('chat');
     const note = marksNote(docs.projectRef.current.marks, docs.partsRef.current);
-    const { payload, userMessage, agentMessage } = buildAgentPrompt({ ...params, note }, new Date());
+    const built = buildAgentPrompt({ ...params, note }, new Date());
+    const { userMessage, agentMessage } = built;
+    const payload = { ...built.payload, run: { chatId: chat, messages: [userMessage, agentMessage] } };
 
     if (flagsOf(id).busy) {
       await steer(id, payload, [userMessage, agentMessage]);
@@ -119,11 +138,31 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
       return;
     }
 
-    if (!chatId) updateLane(id, (l) => ({ ...l, chatId: newId('chat') }));
+    if (!chatId) updateLane(id, (l) => ({ ...l, chatId: chat }));
 
     setMessages(id, (prev) => [...prev, userMessage, agentMessage]);
     await runAgentPrompt(id, payload);
   };
 
-  return { send };
+  const retry = async (options: Omit<PromptOptions, 'note'>) => {
+    const { id, messages, chatId } = lanes.current;
+    const user = messages.findLast((m) => m.role === 'user' && !m.queued && !m.notSent);
+
+    if (flagsOf(id).busy || !user) return;
+
+    const note = marksNote(docs.projectRef.current.marks, docs.partsRef.current);
+    const fresh = emptyAgentMessage(new Date());
+    const payload = resendPayload(user, { ...options, note });
+
+    setMessages(id, (prev) => [...clearFailedReply(prev), fresh]);
+    await runAgentPrompt(id, chatId ? { ...payload, run: { chatId, messages: [fresh] } } : payload);
+  };
+
+  const drain = async (id: string) => {
+    const next = flagsOf(id).queued.shift();
+
+    if (next && !flagsOf(id).busy) await runAgentPrompt(id, dequeue(id, next));
+  };
+
+  return { send, retry, drain };
 }

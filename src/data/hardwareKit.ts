@@ -34,8 +34,10 @@ export const holeRow = (label: string, value: string, unit = 'mm'): HoleRow => (
 
 export const r2 = (v: number) => `${round2(v)}`;
 
-export const boreFacts = (d: number, D: number, B: number): Fact[] => [
-  { label: 'Bore · OD · Width', value: `${d} · ${D} · ${B}`, unit: 'mm' },
+export const boreFacts = (d: number, D: number, B: number, widthLabel = 'Width'): Fact[] => [
+  { label: 'Bore', value: `${d}`, unit: 'mm' },
+  { label: 'OD', value: `${D}`, unit: 'mm' },
+  { label: widthLabel, value: `${B}`, unit: 'mm' },
 ];
 
 export const seatHoles = (D: number, d: number) => [

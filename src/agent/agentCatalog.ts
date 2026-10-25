@@ -1,4 +1,4 @@
-import { ActuatorSpec, COMPONENTS, componentSize, hasComponentMesh } from '../data/components';
+import { ActuatorSpec, COMPONENTS, componentSize, hasComponentMesh, specLines } from '../data/components';
 import { HARDWARE_TYPES, defaultDrive, driveOptions } from '../data/hardware';
 import { SUPPLIES } from '../data/supplies';
 
@@ -46,7 +46,7 @@ function componentLines(comps: Component[]): string[] {
     const sz = componentSize(c.id);
     const specs = c.specs
       .slice(0, 3)
-      .map(([k, v]) => `${k} ${v}`)
+      .map(([k, v]) => `${k} ${specLines(v).join(', ')}`)
       .join('; ');
 
     lines.push(

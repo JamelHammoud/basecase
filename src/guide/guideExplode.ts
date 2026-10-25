@@ -1,4 +1,16 @@
-import { add, boxCenter, clamp, dot, extentAlong, normalize, scale, snapAxis, sub, unionBox } from './guideMath';
+import {
+  add,
+  boxCenter,
+  boxDiagonal,
+  clamp,
+  dot,
+  extentAlong,
+  normalize,
+  scale,
+  snapAxis,
+  sub,
+  unionBox,
+} from './guideMath';
 import { isFastener, isInsert } from './guideItems';
 import { boxOfPart, touching, type PlanContext } from './guideOrder';
 import type { Box, GuideArrow, GuideMove, GuideStep, V3 } from './guideTypes';
@@ -47,12 +59,12 @@ function fastenerMove(ctx: PlanContext, id: string, among: Set<string>): Explosi
   };
 }
 
-function blockMove(ctx: PlanContext, ids: string[], seat: V3, spread: number): Explosion {
+function blockMove(ctx: PlanContext, ids: string[], seat: V3, scaleMm: number): Explosion {
   const box: Box = boxOf(ctx, ids);
   const center = boxCenter(box);
   const dir = snapAxis(sub(center, seat));
   const extent = extentAlong(box, dir);
-  const distance = clamp(extent * 0.45 + ctx.size * spread, 10, ctx.size * 0.45);
+  const distance = clamp(extent * 0.6 + scaleMm * 0.12, 8, scaleMm * 0.45 + extent * 0.4);
   const offset = scale(dir, distance);
   const lead = add(center, scale(dir, -extent / 2));
 
@@ -67,22 +79,40 @@ const merge = (all: Explosion[]): Explosion => ({
   arrows: all.flatMap((e) => e.arrows),
 });
 
+const shifted = (e: Explosion, by: V3): Explosion => ({
+  moves: e.moves.map((m) => ({ ...m, offset: add(m.offset, by) })),
+  arrows: e.arrows.map((a) => ({ ...a, from: add(a.from, by), to: add(a.to, by) })),
+});
+
 function buildExplosion(ctx: PlanContext, step: GuideStep): Explosion {
   const among = new Set([...step.contextIds, ...step.partIds]);
-  const fasteners = step.partIds.filter((id) => isFastener(ctx.byId.get(id)!));
-
-  if (fasteners.length) return merge(fasteners.map((id) => fastenerMove(ctx, id, among)));
-
   const context = new Set(step.contextIds);
-  const majors = step.partIds.filter((id) => !isInsert(ctx.byId.get(id)!));
+  const kindOf = (id: string) => {
+    const part = ctx.byId.get(id)!;
 
-  return merge(
-    majors.flatMap((id) => {
-      const seat = seatCenter(ctx, id, context);
+    if (isFastener(part)) return 'fastener';
 
-      return seat ? [blockMove(ctx, [id], seat, 0.08)] : [];
-    }),
-  );
+    return isInsert(part) ? 'insert' : 'major';
+  };
+  const majors = step.partIds.filter((id) => kindOf(id) === 'major');
+  const moved = majors.flatMap((id) => {
+    const seat = seatCenter(ctx, id, context);
+
+    return seat ? [blockMove(ctx, [id], seat, boxDiagonal(boxOf(ctx, step.contextIds)))] : [];
+  });
+  const offsetOf = new Map(moved.flatMap((e) => e.moves.map((m) => [m.partId, m.offset] as const)));
+  const carried = (id: string): V3 => {
+    const host = touching(ctx, id).find((o) => offsetOf.has(o) && majors.includes(o));
+
+    return host ? offsetOf.get(host)! : [0, 0, 0];
+  };
+  const riders = step.partIds.flatMap((id) => {
+    if (kindOf(id) === 'fastener') return [shifted(fastenerMove(ctx, id, among), carried(id))];
+
+    return kindOf(id) === 'insert' ? [{ moves: [{ partId: id, offset: carried(id) }], arrows: [] }] : [];
+  });
+
+  return merge([...moved, ...riders]);
 }
 
 function insertExplosion(ctx: PlanContext, step: GuideStep): Explosion {
@@ -97,7 +127,8 @@ function attachExplosion(ctx: PlanContext, step: GuideStep, deferred: Set<string
   const seats = block.flatMap((id) => touching(ctx, id).filter((o) => context.has(o)));
   const seat = seats.length ? boxCenter(boxOf(ctx, seats)) : boxCenter(boxOf(ctx, step.contextIds));
   const among = new Set([...step.contextIds, ...step.partIds]);
-  const moved = step.contextIds.length ? [blockMove(ctx, block, seat, 0.06)] : [];
+  const scaleMm = Math.max(boxDiagonal(boxOf(ctx, block)), boxDiagonal(boxOf(ctx, step.contextIds)) * 0.5);
+  const moved = step.contextIds.length ? [blockMove(ctx, block, seat, scaleMm)] : [];
 
   return merge([...moved, ...[...deferred].map((id) => fastenerMove(ctx, id, among))]);
 }

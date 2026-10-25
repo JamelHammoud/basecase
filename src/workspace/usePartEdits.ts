@@ -7,9 +7,16 @@ import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withH
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
+function applyPatch(p: ScenePart, patch: Partial<ScenePart>): ScenePart {
+  const next = { ...p, ...patch };
+  const recolored = patch.color !== undefined && patch.color !== p.color;
+
+  return recolored && next.mesh?.visual ? { ...next, mesh: { ...next.mesh, visual: undefined } } : next;
+}
+
 const patchWhere =
   (match: (p: ScenePart) => boolean, patch: (p: ScenePart) => Partial<ScenePart>) => (prev: ScenePart[]) =>
-    prev.map((p) => (match(p) ? { ...p, ...patch(p) } : p));
+    prev.map((p) => (match(p) ? applyPatch(p, patch(p)) : p));
 
 function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: WorkspaceCore) {
   'use memo';

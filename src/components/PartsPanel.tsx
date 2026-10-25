@@ -103,8 +103,8 @@ export const PartsPanel: React.FC<{
   const onEnter = (e: React.KeyboardEvent) => {
     e.preventDefault();
 
-    if (e.metaKey) openItem(results[active]);
-    else onAdd(results[active]);
+    if (e.metaKey) onAdd(results[active]);
+    else openItem(results[active]);
   };
   const onSearchKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') onEscape(e);

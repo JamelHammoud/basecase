@@ -8,12 +8,15 @@ import type {
   SavedSceneRecord,
   SavedSceneSummary,
 } from '../types/robotics';
-import { electron, get, post, postOrThrow, query, quietly } from './platform/transport';
+import { electron, get, post, postJson, postOrThrow, query, quietly } from './platform/transport';
 import type {
   AcpPromptPayload,
   AppMenuState,
   EvidenceFilePayload,
+  LiveRun,
   ScenePreviewPayload,
+  SimReadyFetched,
+  SimReadyStatus,
   SteerOutcome,
   TrainerStatus,
   TrainStartPayload,
@@ -78,6 +81,18 @@ const acpBridge = {
         post('/acp-close-workspace', { workspaceId }, { json: false }));
     }, undefined),
 
+  liveAcpRuns: (workspaceId: string): Promise<LiveRun[]> =>
+    quietly(async () => {
+      const runs: unknown = await (electron()?.liveAcpRuns(workspaceId) ?? post('/acp-live-runs', { workspaceId }));
+
+      return Array.isArray(runs) ? (runs as LiveRun[]) : [];
+    }, []),
+
+  forgetAcpRun: (workspaceId: string): Promise<void> =>
+    quietly(async () => {
+      await (electron()?.forgetAcpRun(workspaceId) ?? post('/acp-forget-run', { workspaceId }, { json: false }));
+    }, undefined),
+
   newAcpConversation: (workspaceId: string): Promise<AcpStatusInfo> =>
     electron()?.newAcpConversation(workspaceId) ?? post('/acp-new-conversation', { workspaceId }, { json: false }),
 
@@ -130,6 +145,13 @@ const libraryBridge = {
     electron()?.saveScenePreview(payload) ?? post('/save-scene-preview', payload),
   saveScene: (scenePayload: Record<string, unknown>): Promise<SavedSceneSummary> =>
     electron()?.saveScene(scenePayload) ?? post('/save-scene', scenePayload),
+  saveSceneJson: (json: string): Promise<SavedSceneSummary> => {
+    const api = electron();
+
+    if (!api) return postJson('/save-scene', json);
+
+    return typeof api.saveSceneJson === 'function' ? api.saveSceneJson(json) : api.saveScene(JSON.parse(json));
+  },
   deleteScene: (sceneId: string): Promise<SavedSceneSummary[]> =>
     electron()?.deleteScene(sceneId) ?? post('/delete-scene', { sceneId }),
 
@@ -141,6 +163,14 @@ const libraryBridge = {
   revealGuide: async (id: string): Promise<boolean> => (await electron()?.revealGuide(id)) ?? false,
 
   guideExists: async (id: string): Promise<boolean> => (await electron()?.guideExists(id)) ?? false,
+
+  guideHtml: async (id: string): Promise<string | null> => {
+    try {
+      return (await electron()?.guideHtml?.(id)) ?? null;
+    } catch {
+      return null;
+    }
+  },
 };
 
 const trainingBridge = {
@@ -154,6 +184,39 @@ const trainingBridge = {
     electron()?.trainStop(workspaceId) ?? post('/train-stop', { workspaceId }),
   getPolicy: (id: string): Promise<unknown> => electron()?.getPolicy(id) ?? get(`/policy${query('id', id)}`),
   deletePolicy: (id: string): Promise<boolean> => electron()?.deletePolicy(id) ?? post('/policy-delete', { id }),
+};
+
+const ipcMessage = (e: unknown) =>
+  (e instanceof Error ? e.message : String(e))
+    .replace(/^Error invoking remote method '[^']+':\s*/, '')
+    .replace(/^Error:\s*/, '');
+
+const simreadyBridge = {
+  simreadyStatus: (): Promise<SimReadyStatus> => electron()?.simreadyStatus() ?? get('/simready-status'),
+  simreadyFetch: async (payload: { url: string; requestId: string }): Promise<SimReadyFetched> => {
+    const api = electron();
+
+    if (!api)
+      return postOrThrow('/simready-fetch', payload, (body, res) =>
+        res.ok ? null : ipcMessage(String(body.error ?? 'Couldn’t download the asset.')),
+      );
+
+    try {
+      return await api.simreadyFetch(payload);
+    } catch (e) {
+      throw new Error(ipcMessage(e), { cause: e });
+    }
+  },
+};
+
+const simreadyFiles = {
+  simreadyFile: async (payload: { key: string; file: string }): Promise<string | Uint8Array | null> => {
+    const api = electron();
+
+    if (api) return api.simreadyFile(payload);
+
+    return (await post<{ data: string | null }>('/simready-file', payload)).data;
+  },
 };
 
 const shellBridge = {
@@ -178,4 +241,11 @@ const shellBridge = {
   },
 };
 
-export const platformBridge = { ...acpBridge, ...libraryBridge, ...trainingBridge, ...shellBridge };
+export const platformBridge = {
+  ...acpBridge,
+  ...libraryBridge,
+  ...trainingBridge,
+  ...simreadyBridge,
+  ...simreadyFiles,
+  ...shellBridge,
+};

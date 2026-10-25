@@ -58,7 +58,7 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
       <DetailsHero thumb={thumb} />
       <Header
         title={model.name}
-        subtitle={`${MODEL_SOURCE[model.sourceType] ?? 'Model'} · ${savedWhen(model.createdAt).replace(/^Saved /, '')}`}
+        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedWhen(model.createdAt).replace(/^Saved /, '')]}
         description={
           model.description && !/^Saved from \d+ parts?\.?$/.test(model.description) ? model.description : undefined
         }

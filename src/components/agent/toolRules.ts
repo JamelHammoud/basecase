@@ -10,6 +10,7 @@ import {
   LookIcon,
   PhotoIcon,
   PoseIcon,
+  ObjectsIcon,
   RobotsIcon,
   RunIcon,
   SearchIcon,
@@ -181,6 +182,7 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
   plainRule(['set_build'], FileIcon, ['Updating the build', 'Updated the build']),
+  plainRule(['build_guide'], FileIcon, ['Making the build guide', 'Made the build guide']),
 ];
 
 const ROBOT_RULES: ToolRule[] = [
@@ -244,6 +246,19 @@ const ROBOT_RULES: ToolRule[] = [
       title: verb('Inserting a robot', 'Inserted a robot'),
       detail: optional(String(input.preset ?? '')) ?? fileName(input.url),
     }),
+  },
+  {
+    keys: ['find_objects'],
+    icon: SearchIcon,
+    label: ({ input, verb }) => ({
+      title: verb('Searching SimReady', 'Searched SimReady'),
+      detail: optional(String(input.query ?? '')),
+    }),
+  },
+  {
+    keys: ['insert_object'],
+    icon: ObjectsIcon,
+    label: ({ verb }) => ({ title: verb('Inserting an object', 'Inserted an object') }),
   },
   {
     keys: ['simulate'],

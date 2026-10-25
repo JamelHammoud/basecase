@@ -1,6 +1,7 @@
 import React, { useEffect, useEffectEvent, useImperativeHandle, useRef, useState } from 'react';
 import { CURSORS } from '../design-system/cursors';
 import { useComponentMeshVersion } from '../three/componentMeshes';
+import { useSimReadyVisualVersion } from '../three/simreadyVisuals';
 import { ViewportEngine } from '../three/viewport/engine';
 import type { Viewport3DHandle, ViewportProps } from '../three/viewport/types';
 
@@ -12,17 +13,18 @@ const DETACHED: Viewport3DHandle = {
   focusSelected: () => {},
   zoomBy: () => {},
   pickAt: () => null,
-  captureViews: () => [],
-  interference: () => ({ interferences: [], coplanar: [] }),
-  measureParts: () => ({}),
+  captureViews: async () => [],
+  interference: async () => ({ interferences: [], coplanar: [] }),
+  measureParts: async () => ({}),
+  printShapes: async () => ({}),
   partTriangles: () => null,
   servoOutput: () => null,
-  sweepClashes: () => [],
+  sweepClashes: async () => [],
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},
   restBounds: () => null,
-  posedInterference: () => [],
+  posedInterference: async () => [],
   posedFloor: () => null,
   projectPoints: (points) => points.map(() => ({ x: 0, y: 0, visible: false })),
   measureFrom: () => {},
@@ -38,7 +40,7 @@ const canvasCursor = (props: ViewportProps) => {
 };
 
 export const Viewport3D = React.forwardRef<Viewport3DHandle, ViewportProps>(function Viewport3D(props, ref) {
-  const meshVersion = useComponentMeshVersion();
+  const meshVersion = useComponentMeshVersion() + useSimReadyVisualVersion();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const marqueeRef = useRef<HTMLDivElement | null>(null);
   const measureLabelRef = useRef<HTMLDivElement | null>(null);

@@ -3,6 +3,8 @@ import { compositeMaterial, normalMaterial } from './guideShaders';
 
 export const SUPERSAMPLE = 2;
 
+const MAX_ENCODING = 3;
+
 export interface StagePart {
   group: THREE.Group;
   meshes: Array<{ mesh: THREE.Mesh; toon: THREE.ShaderMaterial }>;
@@ -48,6 +50,7 @@ function disposeTargets(t: Targets | null) {
 
 export class GuideStage {
   readonly scene = new THREE.Scene();
+  private readonly canvas = new OffscreenCanvas(8, 8);
   private readonly renderer: THREE.WebGLRenderer;
   private readonly normal = normalMaterial();
   private readonly composite = compositeMaterial();
@@ -55,9 +58,11 @@ export class GuideStage {
   private readonly quadScene = new THREE.Scene().add(this.quad);
   private readonly quadCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private targets: Targets | null = null;
+  private readonly encoding = new Set<Promise<string>>();
 
   constructor() {
     this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
       antialias: false,
       alpha: true,
       premultipliedAlpha: true,
@@ -101,7 +106,17 @@ export class GuideStage {
     this.pass(t.color, camera);
   }
 
-  draw(parts: StagePart[], camera: THREE.OrthographicCamera, size: { width: number; height: number }): string {
+  async ready() {
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    while (this.encoding.size >= MAX_ENCODING) await Promise.race(this.encoding);
+  }
+
+  async flush() {
+    await Promise.all(this.encoding);
+  }
+
+  draw(parts: StagePart[], camera: THREE.OrthographicCamera, size: { width: number; height: number }): Promise<string> {
     const width = size.width * SUPERSAMPLE;
     const height = size.height * SUPERSAMPLE;
     const t = this.ensureTargets(width, height);
@@ -122,7 +137,12 @@ export class GuideStage {
     this.renderer.clear(true, true, true);
     this.renderer.render(this.quadScene, this.quadCamera);
 
-    return downscale(this.renderer.domElement, size.width, size.height);
+    const image = encodePng(downscale(this.canvas, size.width, size.height));
+
+    this.encoding.add(image);
+    void image.finally(() => this.encoding.delete(image)).catch(() => undefined);
+
+    return image;
   }
 
   countNew(parts: StagePart[], camera: THREE.OrthographicCamera, size: { width: number; height: number }): number {
@@ -152,15 +172,27 @@ export class GuideStage {
   }
 }
 
-function downscale(source: HTMLCanvasElement, width: number, height: number): string {
-  const canvas = document.createElement('canvas');
+function downscale(source: OffscreenCanvas, width: number, height: number): OffscreenCanvas {
+  const canvas = new OffscreenCanvas(width, height);
   const ctx = canvas.getContext('2d')!;
 
-  canvas.width = width;
-  canvas.height = height;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(source, 0, 0, width, height);
 
-  return canvas.toDataURL('image/png');
+  return canvas;
+}
+
+async function encodePng(canvas: OffscreenCanvas): Promise<string> {
+  return blobDataUrl(await canvas.convertToBlob({ type: 'image/png' }));
+}
+
+export function blobDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error ?? new Error('Couldn’t read the drawing'));
+    reader.readAsDataURL(blob);
+  });
 }

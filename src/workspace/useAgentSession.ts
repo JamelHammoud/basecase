@@ -1,17 +1,20 @@
 import { leadAgentName } from '../agent/agentKinds';
 import { useEffect, useRef, useState } from 'react';
 import type { CustomModelDefinition } from '../types/robotics';
+import type { DesignerFocus } from '../utils/designers';
 import { analyzeImageFor3D } from '../utils/imageTo3DAnalyzer';
 import { readImageFile } from '../utils/imageFile';
 import { platformBridge } from '../utils/platformBridge';
-import { applySessionUpdate, isTranscriptUpdate, type SessionUpdate } from './acpTranscript';
+import { applySessionUpdate, contextFromUpdate, isTranscriptUpdate, type SessionUpdate } from './acpTranscript';
 import { ActorIndex } from './agentActors';
+import { colorCursors, designerFrames, openedFocus } from './designerFrames';
 import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import type { AgentRequestEvent, WorkspaceSeed } from './types';
 import { lanePersister, useAgentChat } from './useAgentChat';
 import { useAgentCursors } from './useAgentCursors';
 import { useAgentLanes } from './useAgentLanes';
 import { useAgentRequests } from './useAgentRequests';
+import { useAdoptedRuns } from './useAdoptedRuns';
 import { useAgentRun } from './useAgentRun';
 import { useLaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
@@ -52,7 +55,17 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
   const alive = useAlive();
   const lanes = useAgentLanes(workspaceId, seed);
   const cursors = useAgentCursors();
+  const [designerFocus, setDesignerFocus] = useState<DesignerFocus | null>(null);
+  const [openedDesigner, setOpenedDesigner] = useState<string | null>(null);
   const run = useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel });
+  const adopted = useAdoptedRuns({
+    workspaceId,
+    lanes,
+    actors,
+    cursors,
+    setChatList: studio.setChatList,
+    drain: run.drain,
+  });
   const persistLane = lanePersister(lanes, studio.setChatList);
   const controls = useLaneControls({ core, lanes, active, alive, persistLane });
   const chat = useAgentChat({ core, lanes, stop: controls.stop, persistLane });
@@ -65,6 +78,10 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
     const finished = actors.note(laneId, update);
 
     if (finished) cursors.clearActor(finished);
+
+    const context = contextFromUpdate(update);
+
+    if (context) lanes.updateLane(laneId, (l) => ({ ...l, context }));
 
     if (!isTranscriptUpdate(update)) return;
 
@@ -96,6 +113,11 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
     'acp-session-update': (event, laneId) => {
       if (event.update) onSessionUpdate(laneId, event.update as SessionUpdate);
     },
+    'acp-run-end': (event, laneId) =>
+      adopted.onRunEnd(laneId, {
+        stopReason: typeof event.stopReason === 'string' ? event.stopReason : undefined,
+        error: typeof event.error === 'string' ? event.error : undefined,
+      }),
   };
 
   const uploadImage = async (file: File) => {
@@ -116,15 +138,22 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
 
   const working = lanes.lanes.find((l) => l.busy);
   const lead = working && cursors.cursors.find((c) => c.actor === working.id);
+  const opened = openedFocus(current.messages, openedDesigner);
+  const colored = colorCursors(cursors.cursors, (laneId) => lanes.lanes.find((l) => l.id === laneId)?.messages ?? []);
 
   return {
     lanes,
     current,
     chat,
     controls,
-    cursors: cursors.cursors,
+    cursors: colored,
+    frames: designerFrames(colored, opened ?? designerFocus),
+    openedDesigner: opened ? openedDesigner : null,
+    openDesigner: setOpenedDesigner,
+    focusDesigner: setDesignerFocus,
     requests,
     send: run.send,
+    retry: run.retry,
     onEvent,
     uploadImage,
     busy: !!working,

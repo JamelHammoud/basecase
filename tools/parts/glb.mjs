@@ -60,8 +60,13 @@ export function writePartGlb(id, groups, opts = {}) {
 
   const glb = writeGlb(prims, { id, source: opts.source ?? null, originOffset, size });
 
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-  fs.writeFileSync(path.join(OUT_DIR, `${id}.glb`), glb);
+  const outDir = opts.outDir ?? OUT_DIR;
+
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(path.join(outDir, `${id}.glb`), glb);
+
+  if (opts.stats === false)
+    return { size, originOffset, triangles: total, sourceTriangles, colors: prims.length, bytes: glb.length };
 
   const stats = fs.existsSync(STATS_FILE) ? JSON.parse(fs.readFileSync(STATS_FILE, 'utf8')) : {};
 

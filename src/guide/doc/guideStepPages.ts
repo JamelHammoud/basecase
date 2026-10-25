@@ -6,7 +6,7 @@ import { box, esc, imageTag, mm, type GuideDoc } from './guideHtml';
 
 const NUMBER_W = 21;
 const TOOL = 13;
-const TOOL_GAP = 2;
+const TOOL_GAP = 3;
 const ITEM = { w: 18, h: 19 };
 const MODULE_ITEM = { w: 30, h: 25 };
 const GAP_X = 2.6;
@@ -91,7 +91,7 @@ function headerOf(doc: GuideDoc, step: GuideStep, area: Rect) {
   const toolHtml = tools
     .map(
       (t, i) =>
-        `<div class="tool" style="left:${mm(area.x + area.w - (i + 1) * (TOOL + TOOL_GAP) + TOOL_GAP)};top:${mm(area.y)}">${toolIcon(t.icon)}</div>`,
+        `<div class="tool" style="left:${mm(area.x + area.w - (i + 1) * (TOOL + TOOL_GAP) + TOOL_GAP)};top:${mm(area.y)}">${toolIcon(t.icon)}${t.size ? `<span>${esc(t.size)}</span>` : ''}</div>`,
     )
     .join('');
 

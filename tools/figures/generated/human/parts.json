@@ -1,0 +1,352 @@
+[
+ {
+  "id": "torso",
+  "name": "Torso",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   0,
+   1180,
+   -4.242
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 502,
+   "height": 770,
+   "depth": 272.8
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 56;\nconst sm = (t) => t * t * (3 - 2 * t);\nconst envAt = (env, u) => {\n  if (!env) return 1;\n  if (u <= env[0][0]) return env[0][1];\n  for (let i = 1; i < env.length; i++) {\n    if (u <= env[i][0]) { const [u0, a] = env[i - 1], [u1, b] = env[i]; return a + (b - a) * sm((u - u0) / (u1 - u0)); }\n  }\n  return env[env.length - 1][1];\n};\nconst ring = (s, n) => {\n  const pts = [], cy = (s.yf + s.yb) / 2, dF = cy - s.yf, dB = s.yb - cy;\n  for (let i = 0; i < n; i++) {\n    const a = (i / n) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    const x = s.hw * Math.sign(c) * Math.abs(c) ** (s.px ?? 0.8);\n    const e = envAt(s.env, Math.abs(x) / s.hw);\n    pts.push([(s.cx ?? 0) + x, cy + e * (sn < 0 ? dF : dB) * sn]);\n  }\n  return pts;\n};\nconst cr = (a, b, c, d, t) => 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);\n// Dense ruled loft: Catmull-Rom between key sections, point by point\nconst body = (keys, n = N, step = 10) => {\n  const R = keys.map((k) => ring(k, n)), Z = keys.map((k) => k.z), sk = [];\n  const poly = (pts, z) => { let d = draw(pts[0]); for (let i = 1; i < pts.length; i++) d = d.lineTo(pts[i]); return d.close().sketchOnPlane('XY', z); };\n  for (let k = 0; k < keys.length - 1; k++) {\n    const i0 = Math.max(0, k - 1), i3 = Math.min(keys.length - 1, k + 2);\n    const m = Math.max(1, Math.round((Z[k + 1] - Z[k]) / step));\n    for (let j = 0; j < m; j++) {\n      const t = j / m;\n      const pts = R[k].map((_, p) => [0, 1].map((q) => cr(R[i0][p][q], R[k][p][q], R[k + 1][p][q], R[i3][p][q], t)));\n      sk.push(poly(pts, Z[k] + (Z[k + 1] - Z[k]) * t));\n    }\n  }\n  sk.push(poly(R[keys.length - 1], Z[keys.length - 1]));\n  return sk[0].loftWith(sk.slice(1), { ruled: true });\n};\n// Pelvis, buttocks, lumbar curve, waist, ribcage with chest swell\nconst lower = body([\n  { z: 795, hw: 100, yf: -58, yb: 75 },\n  { z: 830, hw: 150, yf: -85, yb: 116 },\n  { z: 865, hw: 170, yf: -97, yb: 136 },\n  { z: 900, hw: 176, yf: -103, yb: 140 },\n  { z: 950, hw: 173, yf: -109, yb: 126 },\n  { z: 1010, hw: 164, yf: -117, yb: 108 },\n  { z: 1075, hw: 157, yf: -121, yb: 99 },\n  { z: 1140, hw: 157, yf: -120, yb: 104 },\n  { z: 1210, hw: 161, yf: -126, yb: 118 },\n  { z: 1260, hw: 165, yf: -132, yb: 127 },\n  { z: 1300, hw: 167, yf: -130, yb: 131 },\n  { z: 1340, hw: 163, yf: -124, yb: 128 },\n]);\n// Shoulder girdle, shoulder blades, trapezius slope, forward-leaning neck (bottom hidden inside the ribcage)\nconst upper = body([\n  { z: 1265, hw: 152, yf: -118, yb: 114 },\n  { z: 1290, hw: 156, yf: -121, yb: 121 },\n  { z: 1315, hw: 164, yf: -124, yb: 127 },\n  { z: 1340, hw: 178, yf: -125, yb: 131, env: [[0, 1], [0.8, 1], [1, 0.85]] },\n  { z: 1365, hw: 190, yf: -118, yb: 131, env: [[0, 1], [0.7, 0.96], [1, 0.72]] },\n  { z: 1390, hw: 200, yf: -107, yb: 127, env: [[0, 1], [0.6, 0.92], [1, 0.6]] },\n  { z: 1415, hw: 206, yf: -92, yb: 118, env: [[0, 1], [0.55, 0.88], [1, 0.5]] },\n  { z: 1440, hw: 190, yf: -70, yb: 104, env: [[0, 1], [0.5, 0.83], [1, 0.43]] },\n  { z: 1465, hw: 142, yf: -52, yb: 89, env: [[0, 1], [0.45, 0.85], [1, 0.45]] },\n  { z: 1490, hw: 84, yf: -44, yb: 72, env: [[0, 1], [0.6, 0.92], [1, 0.7]] },\n  { z: 1515, hw: 62, yf: -46, yb: 55, px: 0.95 },\n  { z: 1540, hw: 58, yf: -50, yb: 44, px: 0.95 },\n  { z: 1565, hw: 54, yf: -48, yb: 32, px: 0.95 },\n]);\n// Deltoid cap (left), blended into the girdle; mirrored for the right\nconst delt = body([\n  { z: 1258, cx: 211, hw: 18, yf: -24, yb: 26, px: 0.95 },\n  { z: 1285, cx: 208, hw: 33, yf: -41, yb: 43, px: 0.95 },\n  { z: 1315, cx: 205, hw: 43, yf: -52, yb: 53, px: 0.95 },\n  { z: 1350, cx: 202, hw: 48, yf: -57, yb: 58, px: 0.95 },\n  { z: 1380, cx: 200, hw: 51, yf: -59, yb: 61, px: 0.95 },\n  { z: 1405, cx: 199, hw: 50, yf: -57, yb: 60, px: 0.95 },\n  { z: 1425, cx: 197, hw: 42, yf: -50, yb: 55, px: 0.95 },\n  { z: 1440, cx: 192, hw: 28, yf: -36, yb: 40, px: 0.95 },\n], 40, 8);\nreturn lower.fuse(upper).fuse(delt).fuse(delt.clone().mirror('YZ'));",
+   "originOffset": [
+    0,
+    1180,
+    -4.242499999999993
+   ],
+   "baseSize": [
+    502,
+    770,
+    272.8
+   ]
+  }
+ },
+ {
+  "id": "head",
+  "name": "Head",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   0,
+   1629.104,
+   17.799
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 175.09,
+   "height": 248.21,
+   "depth": 217.87
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 64;\nconst sec = (s) => {\n  const pts = [], cy = (s.yf + s.yb) / 2, dF = cy - s.yf, dB = s.yb - cy;\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    let x = s.hw * Math.sign(c) * Math.abs(c) ** (s.px ?? 0.92);\n    x *= 1 - (s.tf ?? 0) * Math.max(0, -sn) ** 1.5;\n    pts.push([(s.cx ?? 0) + x, cy + (sn < 0 ? dF : dB) * sn]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XY', s.z);\n};\nconst lofted = (secs) => { const k = secs.map(sec); return k[0].loftWith(k.slice(1), { ruled: false }); };\nconst chaikin = (p, n) => {\n  for (let k = 0; k < n; k++) {\n    const q = [];\n    for (let i = 0; i < p.length; i++) {\n      const a = p[i], b = p[(i + 1) % p.length];\n      q.push([0.75 * a[0] + 0.25 * b[0], 0.75 * a[1] + 0.25 * b[1]], [0.25 * a[0] + 0.75 * b[0], 0.25 * a[1] + 0.75 * b[1]]);\n    }\n    p = q;\n  }\n  return p;\n};\nconst poly = (p) => { let d = draw(p[0]); for (let i = 1; i < p.length; i++) d = d.lineTo(p[i]); return d.close(); };\n// Cranium + face + jaw (face front follows the profile; jaw narrows to the chin)\nlet head = lofted([\n  { z: 1505, hw: 28, yf: -45, yb: -5, tf: 0.2 },\n  { z: 1520, hw: 40, yf: -84, yb: 20, tf: 0.45 },\n  { z: 1535, hw: 52, yf: -96, yb: 38, tf: 0.5 },\n  { z: 1550, hw: 58, yf: -98, yb: 52, tf: 0.42 },\n  { z: 1565, hw: 64, yf: -102, yb: 62, tf: 0.32 },\n  { z: 1585, hw: 69, yf: -101, yb: 74, tf: 0.25 },\n  { z: 1610, hw: 72, yf: -100, yb: 84, tf: 0.2 },\n  { z: 1635, hw: 74, yf: -103, yb: 89, tf: 0.18 },\n  { z: 1660, hw: 76, yf: -106, yb: 91, tf: 0.14 },\n  { z: 1690, hw: 76, yf: -102, yb: 90, tf: 0.1 },\n  { z: 1715, hw: 71, yf: -92, yb: 84, tf: 0.05 },\n  { z: 1735, hw: 58, yf: -74, yb: 70 },\n  { z: 1747, hw: 37, yf: -48, yb: 48 },\n  { z: 1754, hw: 14, yf: -20, yb: 20 },\n]);\nconst nose = lofted([\n  { z: 1648, hw: 8, yf: -106, yb: -90, tf: 0.5 },\n  { z: 1625, hw: 10, yf: -117, yb: -90, tf: 0.65 },\n  { z: 1605, hw: 13, yf: -125, yb: -90, tf: 0.65 },\n  { z: 1593, hw: 17, yf: -131, yb: -92, tf: 0.6 },\n  { z: 1584, hw: 17, yf: -124, yb: -94, tf: 0.5 },\n  { z: 1577, hw: 11, yf: -108, yb: -96, tf: 0.4 },\n]);\nhead = head.fuse(nose);\nconst side = chaikin([\n  [-40, 1490], [-72, 1510], [-88, 1519], [-97, 1527], [-100, 1537], [-97, 1546], [-101, 1553], [-105, 1561],\n  [-107, 1567], [-105, 1575], [-110, 1582], [-124, 1588], [-128, 1595], [-121, 1609], [-112, 1625], [-105, 1638],\n  [-109, 1652], [-109, 1667], [-105, 1692], [-96, 1716], [-79, 1737], [-52, 1749.5], [-15, 1753.6], [25, 1752.6],\n  [58, 1744], [82, 1725], [95, 1697], [97, 1665], [93, 1630], [84, 1600], [72, 1576], [64, 1555], [60, 1525], [55, 1490],\n], 3);\nhead = head.intersect(poly(side).sketchOnPlane('YZ', -120).extrude(240));\nconst ear = lofted([\n  { z: 1586, cx: 75, hw: 4, yf: 4, yb: 17 },\n  { z: 1596, cx: 78, hw: 6.5, yf: 0, yb: 27 },\n  { z: 1618, cx: 80, hw: 7.5, yf: 0, yb: 35 },\n  { z: 1640, cx: 79, hw: 7, yf: 6, yb: 38 },\n  { z: 1655, cx: 76, hw: 3.5, yf: 16, yb: 33 },\n]);\nhead = head.fuse(ear).fuse(ear.clone().mirror('YZ'));\nreturn head;",
+   "originOffset": [
+    0,
+    1629.104,
+    17.799
+   ],
+   "baseSize": [
+    175.09,
+    248.21,
+    217.87
+   ]
+  }
+ },
+ {
+  "id": "left-leg",
+  "name": "Left Leg",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   90.983,
+   495,
+   -5.254
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 182.36,
+   "height": 900,
+   "depth": 205.66
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 64;\n// mx: medial-back bulge (calf); mf: medial-front bulge (vastus medialis above the knee)\nconst sec = (s) => {\n  const pts = [], cy = (s.yf + s.yb) / 2, dF = cy - s.yf, dB = s.yb - cy, p = s.px ?? 0.92;\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    let x = s.hw * Math.sign(c) * Math.abs(c) ** p;\n    if (c < 0 && s.mx) x -= s.mx * Math.abs(c) * Math.max(0, sn);\n    if (c < 0 && s.mf) x -= s.mf * Math.abs(c) * Math.max(0, -sn);\n    pts.push([s.cx + x, cy + (sn < 0 ? dF : dB) * sn]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XY', s.z);\n};\nconst S = [\n  { z: 945, cx: 82, hw: 62, yf: -75, yb: 85 },\n  { z: 900, cx: 90, hw: 84, yf: -95, yb: 105 },\n  { z: 840, cx: 91, hw: 91, yf: -97, yb: 108 },\n  { z: 790, cx: 90, hw: 86, yf: -94, yb: 103 },\n  { z: 730, cx: 87, hw: 78, yf: -88, yb: 90 },\n  { z: 660, cx: 85, hw: 69, yf: -78, yb: 78 },\n  { z: 600, cx: 83, hw: 60, yf: -70, yb: 68, mf: 4 },\n  { z: 560, cx: 82, hw: 55, yf: -64, yb: 62, mf: 8 },\n  { z: 520, cx: 81, hw: 51, yf: -60, yb: 58, mf: 4 },\n  { z: 490, cx: 80, hw: 51, yf: -56, yb: 58 },\n  { z: 455, cx: 80, hw: 50, yf: -48, yb: 66, mx: 3 },\n  { z: 410, cx: 79, hw: 55, yf: -44, yb: 84, mx: 9 },\n  { z: 370, cx: 78, hw: 57, yf: -41, yb: 88, mx: 10 },\n  { z: 310, cx: 77, hw: 50, yf: -35, yb: 79, mx: 7 },\n  { z: 240, cx: 76, hw: 40, yf: -25, yb: 62, mx: 2 },\n  { z: 170, cx: 75, hw: 32, yf: -13, yb: 52 },\n  { z: 110, cx: 75, hw: 30, yf: -5, yb: 54 },\n  { z: 75, cx: 75, hw: 35, yf: 0, yb: 66 },\n  { z: 45, cx: 75, hw: 33, yf: -5, yb: 76 },\n];\nconst sk = S.map(sec);\nreturn sk[0].loftWith(sk.slice(1), { ruled: false });",
+   "originOffset": [
+    90.9825,
+    495,
+    -5.253999999999998
+   ],
+   "baseSize": [
+    182.36,
+    900,
+    205.66
+   ]
+  }
+ },
+ {
+  "id": "left-arm",
+  "name": "Left Arm",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   223.993,
+   1116.719,
+   -9.976
+  ],
+  "rotation": [
+   0,
+   0,
+   8
+  ],
+  "dimensions": {
+   "width": 105.24,
+   "height": 562,
+   "depth": 117.22
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 56;\nconst off = (z) => (z > -294 ? 0 : -(-294 - z) * 0.075); // slight forward hang of the forearm\nconst sec = (s) => {\n  const pts = [], cy0 = (s.yf + s.yb) / 2, cy = cy0 + off(s.z), dF = cy0 - s.yf, dB = s.yb - cy0;\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    const x = (s.cx ?? 0) + s.hw * Math.sign(c) * Math.abs(c) ** 0.92;\n    pts.push([x, cy + (sn < 0 ? dF : dB) * sn]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XY', s.z);\n};\nconst S = [\n  { z: 0, cx: -8, hw: 34, yf: -38, yb: 38 },\n  { z: -35, hw: 48, yf: -52, yb: 54 },\n  { z: -85, hw: 52, yf: -56, yb: 57 },\n  { z: -150, hw: 52, yf: -58, yb: 54 },\n  { z: -215, hw: 48, yf: -52, yb: 50 },\n  { z: -268, hw: 44, yf: -46, yb: 46 },\n  { z: -294, hw: 44, yf: -44, yb: 49 },\n  { z: -330, hw: 48, yf: -46, yb: 44 },\n  { z: -385, hw: 45, yf: -42, yb: 40 },\n  { z: -445, hw: 37, yf: -36, yb: 34 },\n  { z: -505, hw: 28, yf: -32, yb: 30 },\n  { z: -550, hw: 22, yf: -31, yb: 30 },\n  { z: -562, hw: 18, yf: -27, yb: 26 },\n];\nconst sk = S.map(sec);\nreturn sk[0].loftWith(sk.slice(1), { ruled: false });",
+   "originOffset": [
+    -0.11549999999999727,
+    -281,
+    0.023999999999997357
+   ],
+   "baseSize": [
+    105.24,
+    562,
+    117.22
+   ]
+  }
+ },
+ {
+  "id": "left-hand",
+  "name": "Left Hand",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   272.595,
+   765.565,
+   21.152
+  ],
+  "rotation": [
+   0,
+   0,
+   8
+  ],
+  "dimensions": {
+   "width": 44.27,
+   "height": 211,
+   "depth": 109.75
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 48, Y0 = -20; // forward hang matching the forearm\nconst sec = (s) => {\n  const pts = [], cy = (s.yf + s.yb) / 2 + Y0, dF = cy - Y0 - s.yf, dB = s.yb - (cy - Y0);\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    const x = s.hw * Math.sign(c) * Math.abs(c) ** 0.95;\n    const y = (sn < 0 ? dF : dB) * Math.sign(sn) * Math.abs(sn) ** 0.75;\n    pts.push([(s.cx ?? 0) + x, cy + y]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XY', s.z);\n};\nconst palm = [\n  { z: -530, hw: 21, yf: -29, yb: 28 },\n  { z: -552, hw: 21, yf: -33, yb: 31 },\n  { z: -580, hw: 18.5, yf: -40, yb: 36 },\n  { z: -612, hw: 17, yf: -45, yb: 43 },\n  { z: -650, hw: 15, yf: -45, yb: 42 },\n  { z: -680, cx: -4, hw: 13, yf: -42, yb: 37 },\n  { z: -712, cx: -10, hw: 11, yf: -37, yb: 28 },\n  { z: -733, cx: -14, hw: 9, yf: -31, yb: 16 },\n  { z: -741, cx: -16, hw: 5, yf: -21, yb: 4 },\n].map(sec);\nlet hand = palm[0].loftWith(palm.slice(1), { ruled: false });\nconst thumb = [\n  { z: -585, cx: -3, c: -28, hw: 13, hy: 13 },\n  { z: -615, cx: -8, c: -44, hw: 12, hy: 11 },\n  { z: -645, cx: -12, c: -54, hw: 10, hy: 9.5 },\n  { z: -672, cx: -14, c: -58, hw: 8.5, hy: 8 },\n  { z: -688, cx: -15, c: -59, hw: 5.5, hy: 5 },\n].map((t) => sec({ z: t.z, cx: t.cx, hw: t.hw, yf: t.c - t.hy, yb: t.c + t.hy }));\nhand = hand.fuse(thumb[0].loftWith(thumb.slice(1), { ruled: false }));\nreturn hand;",
+   "originOffset": [
+    -0.8580000000000005,
+    -635.5,
+    31.151999999999997
+   ],
+   "baseSize": [
+    44.27,
+    211,
+    109.75
+   ]
+  }
+ },
+ {
+  "id": "left-foot",
+  "name": "Left Foot",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   76.291,
+   47.925,
+   37
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 102.62,
+   "height": 94.85,
+   "depth": 268
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 56;\n// Dome section in the XZ plane at world y: flat sole, rounded top\nconst sec = (s) => {\n  const pts = [], zc = 0.38 * s.h;\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    const x = s.cx + s.hw * Math.sign(c) * Math.abs(c) ** 0.9;\n    const z = sn >= 0 ? zc + (s.h - zc) * sn : zc - zc * Math.abs(sn) ** 0.35;\n    pts.push([x, 0.5 + z]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XZ', -s.y); // XZ plane sits at y = −offset\n};\nconst S = [\n  { y: 97, cx: 76, hw: 18, h: 40 },\n  { y: 88, cx: 76, hw: 30, h: 62 },\n  { y: 70, cx: 76, hw: 35, h: 85 },\n  { y: 40, cx: 76, hw: 38, h: 94.5 },\n  { y: 10, cx: 76, hw: 42, h: 82 },\n  { y: -30, cx: 77, hw: 46, h: 66 },\n  { y: -70, cx: 77, hw: 50, h: 50 },\n  { y: -100, cx: 76, hw: 51, h: 40 },\n  { y: -125, cx: 74, hw: 48, h: 30 },\n  { y: -150, cx: 71, hw: 40, h: 23 },\n  { y: -163, cx: 69, hw: 30, h: 18 },\n  { y: -171, cx: 68, hw: 16, h: 12 },\n].map(sec);\nreturn S[0].loftWith(S.slice(1), { ruled: false });",
+   "originOffset": [
+    76.2905,
+    47.9245,
+    37
+   ],
+   "baseSize": [
+    102.62,
+    94.85,
+    268
+   ]
+  }
+ },
+ {
+  "id": "right-foot",
+  "name": "Right Foot",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -76.291,
+   47.925,
+   37
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 102.62,
+   "height": 94.85,
+   "depth": 268
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 56;\n// Dome section in the XZ plane at world y: flat sole, rounded top\nconst sec = (s) => {\n  const pts = [], zc = 0.38 * s.h;\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    const x = s.cx + s.hw * Math.sign(c) * Math.abs(c) ** 0.9;\n    const z = sn >= 0 ? zc + (s.h - zc) * sn : zc - zc * Math.abs(sn) ** 0.35;\n    pts.push([x, 0.5 + z]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XZ', -s.y); // XZ plane sits at y = −offset\n};\nconst S = [\n  { y: 97, cx: 76, hw: 18, h: 40 },\n  { y: 88, cx: 76, hw: 30, h: 62 },\n  { y: 70, cx: 76, hw: 35, h: 85 },\n  { y: 40, cx: 76, hw: 38, h: 94.5 },\n  { y: 10, cx: 76, hw: 42, h: 82 },\n  { y: -30, cx: 77, hw: 46, h: 66 },\n  { y: -70, cx: 77, hw: 50, h: 50 },\n  { y: -100, cx: 76, hw: 51, h: 40 },\n  { y: -125, cx: 74, hw: 48, h: 30 },\n  { y: -150, cx: 71, hw: 40, h: 23 },\n  { y: -163, cx: 69, hw: 30, h: 18 },\n  { y: -171, cx: 68, hw: 16, h: 12 },\n].map(sec);\nreturn S[0].loftWith(S.slice(1), { ruled: false });",
+   "originOffset": [
+    -76.2905,
+    47.9245,
+    37
+   ],
+   "baseSize": [
+    102.62,
+    94.85,
+    268
+   ]
+  }
+ },
+ {
+  "id": "right-leg",
+  "name": "Right Leg",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -90.983,
+   495,
+   -5.254
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 182.36,
+   "height": 900,
+   "depth": 205.66
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 64;\n// mx: medial-back bulge (calf); mf: medial-front bulge (vastus medialis above the knee)\nconst sec = (s) => {\n  const pts = [], cy = (s.yf + s.yb) / 2, dF = cy - s.yf, dB = s.yb - cy, p = s.px ?? 0.92;\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    let x = s.hw * Math.sign(c) * Math.abs(c) ** p;\n    if (c < 0 && s.mx) x -= s.mx * Math.abs(c) * Math.max(0, sn);\n    if (c < 0 && s.mf) x -= s.mf * Math.abs(c) * Math.max(0, -sn);\n    pts.push([s.cx + x, cy + (sn < 0 ? dF : dB) * sn]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XY', s.z);\n};\nconst S = [\n  { z: 945, cx: 82, hw: 62, yf: -75, yb: 85 },\n  { z: 900, cx: 90, hw: 84, yf: -95, yb: 105 },\n  { z: 840, cx: 91, hw: 91, yf: -97, yb: 108 },\n  { z: 790, cx: 90, hw: 86, yf: -94, yb: 103 },\n  { z: 730, cx: 87, hw: 78, yf: -88, yb: 90 },\n  { z: 660, cx: 85, hw: 69, yf: -78, yb: 78 },\n  { z: 600, cx: 83, hw: 60, yf: -70, yb: 68, mf: 4 },\n  { z: 560, cx: 82, hw: 55, yf: -64, yb: 62, mf: 8 },\n  { z: 520, cx: 81, hw: 51, yf: -60, yb: 58, mf: 4 },\n  { z: 490, cx: 80, hw: 51, yf: -56, yb: 58 },\n  { z: 455, cx: 80, hw: 50, yf: -48, yb: 66, mx: 3 },\n  { z: 410, cx: 79, hw: 55, yf: -44, yb: 84, mx: 9 },\n  { z: 370, cx: 78, hw: 57, yf: -41, yb: 88, mx: 10 },\n  { z: 310, cx: 77, hw: 50, yf: -35, yb: 79, mx: 7 },\n  { z: 240, cx: 76, hw: 40, yf: -25, yb: 62, mx: 2 },\n  { z: 170, cx: 75, hw: 32, yf: -13, yb: 52 },\n  { z: 110, cx: 75, hw: 30, yf: -5, yb: 54 },\n  { z: 75, cx: 75, hw: 35, yf: 0, yb: 66 },\n  { z: 45, cx: 75, hw: 33, yf: -5, yb: 76 },\n];\nconst sk = S.map(sec);\nreturn sk[0].loftWith(sk.slice(1), { ruled: false });",
+   "originOffset": [
+    -90.9825,
+    495,
+    -5.253999999999998
+   ],
+   "baseSize": [
+    182.36,
+    900,
+    205.66
+   ]
+  }
+ },
+ {
+  "id": "right-arm",
+  "name": "Right Arm",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -223.993,
+   1116.719,
+   -9.976
+  ],
+  "rotation": [
+   0,
+   0,
+   -8
+  ],
+  "dimensions": {
+   "width": 105.24,
+   "height": 562,
+   "depth": 117.22
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 56;\nconst off = (z) => (z > -294 ? 0 : -(-294 - z) * 0.075); // slight forward hang of the forearm\nconst sec = (s) => {\n  const pts = [], cy0 = (s.yf + s.yb) / 2, cy = cy0 + off(s.z), dF = cy0 - s.yf, dB = s.yb - cy0;\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    const x = (s.cx ?? 0) + s.hw * Math.sign(c) * Math.abs(c) ** 0.92;\n    pts.push([x, cy + (sn < 0 ? dF : dB) * sn]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XY', s.z);\n};\nconst S = [\n  { z: 0, cx: -8, hw: 34, yf: -38, yb: 38 },\n  { z: -35, hw: 48, yf: -52, yb: 54 },\n  { z: -85, hw: 52, yf: -56, yb: 57 },\n  { z: -150, hw: 52, yf: -58, yb: 54 },\n  { z: -215, hw: 48, yf: -52, yb: 50 },\n  { z: -268, hw: 44, yf: -46, yb: 46 },\n  { z: -294, hw: 44, yf: -44, yb: 49 },\n  { z: -330, hw: 48, yf: -46, yb: 44 },\n  { z: -385, hw: 45, yf: -42, yb: 40 },\n  { z: -445, hw: 37, yf: -36, yb: 34 },\n  { z: -505, hw: 28, yf: -32, yb: 30 },\n  { z: -550, hw: 22, yf: -31, yb: 30 },\n  { z: -562, hw: 18, yf: -27, yb: 26 },\n];\nconst sk = S.map(sec);\nreturn sk[0].loftWith(sk.slice(1), { ruled: false });",
+   "originOffset": [
+    0.11549999999999727,
+    -281,
+    0.023999999999997357
+   ],
+   "baseSize": [
+    105.24,
+    562,
+    117.22
+   ]
+  }
+ },
+ {
+  "id": "right-hand",
+  "name": "Right Hand",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -272.595,
+   765.565,
+   21.152
+  ],
+  "rotation": [
+   0,
+   0,
+   -8
+  ],
+  "dimensions": {
+   "width": 44.27,
+   "height": 211,
+   "depth": 109.75
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "const N = 48, Y0 = -20; // forward hang matching the forearm\nconst sec = (s) => {\n  const pts = [], cy = (s.yf + s.yb) / 2 + Y0, dF = cy - Y0 - s.yf, dB = s.yb - (cy - Y0);\n  for (let i = 0; i < N; i++) {\n    const a = (i / N) * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a);\n    const x = s.hw * Math.sign(c) * Math.abs(c) ** 0.95;\n    const y = (sn < 0 ? dF : dB) * Math.sign(sn) * Math.abs(sn) ** 0.75;\n    pts.push([(s.cx ?? 0) + x, cy + y]);\n  }\n  let d = draw(pts[0]);\n  for (let i = 1; i < N; i++) d = d.lineTo(pts[i]);\n  return d.close().sketchOnPlane('XY', s.z);\n};\nconst palm = [\n  { z: -530, hw: 21, yf: -29, yb: 28 },\n  { z: -552, hw: 21, yf: -33, yb: 31 },\n  { z: -580, hw: 18.5, yf: -40, yb: 36 },\n  { z: -612, hw: 17, yf: -45, yb: 43 },\n  { z: -650, hw: 15, yf: -45, yb: 42 },\n  { z: -680, cx: -4, hw: 13, yf: -42, yb: 37 },\n  { z: -712, cx: -10, hw: 11, yf: -37, yb: 28 },\n  { z: -733, cx: -14, hw: 9, yf: -31, yb: 16 },\n  { z: -741, cx: -16, hw: 5, yf: -21, yb: 4 },\n].map(sec);\nlet hand = palm[0].loftWith(palm.slice(1), { ruled: false });\nconst thumb = [\n  { z: -585, cx: -3, c: -28, hw: 13, hy: 13 },\n  { z: -615, cx: -8, c: -44, hw: 12, hy: 11 },\n  { z: -645, cx: -12, c: -54, hw: 10, hy: 9.5 },\n  { z: -672, cx: -14, c: -58, hw: 8.5, hy: 8 },\n  { z: -688, cx: -15, c: -59, hw: 5.5, hy: 5 },\n].map((t) => sec({ z: t.z, cx: t.cx, hw: t.hw, yf: t.c - t.hy, yb: t.c + t.hy }));\nhand = hand.fuse(thumb[0].loftWith(thumb.slice(1), { ruled: false }));\nreturn hand;",
+   "originOffset": [
+    0.8580000000000005,
+    -635.5,
+    31.151999999999997
+   ],
+   "baseSize": [
+    44.27,
+    211,
+    109.75
+   ]
+  }
+ }
+]

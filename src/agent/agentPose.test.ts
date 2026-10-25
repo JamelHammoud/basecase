@@ -69,16 +69,16 @@ function context(log: unknown[]): PoseContext {
 }
 
 describe('getRig', () => {
-  it('describes joints, pose, saved poses and animations', () => {
+  it('describes joints, pose, saved poses and animations', async () => {
     expect(getRig(context([])).text).toMatchSnapshot();
     expect(getRig({ ...context([]), project: DEFAULT_PROJECT }).text).toMatch(/^No joints yet/);
   });
 });
 
 describe('setPoseRequest', () => {
-  it('clamps values, applies saved poses and saves', () => {
+  it('clamps values, applies saved poses and saves', async () => {
     const log: unknown[] = [];
-    const reply = setPoseRequest(context(log), {
+    const reply = await setPoseRequest(context(log), {
       apply: 'crouch',
       values: { hip: 100, knee: 10, nope: 5 },
       relative: true,
@@ -91,18 +91,20 @@ describe('setPoseRequest', () => {
     expect(log).toMatchSnapshot();
   });
 
-  it('reports unknown saved poses and a return to rest', () => {
-    expect(setPoseRequest(context([]), { apply: 'missing' }).text).toBe('No saved pose "missing". Saved: Crouch');
-    expect(setPoseRequest(context([]), { from_rest: true }).text).toBe(
+  it('reports unknown saved poses and a return to rest', async () => {
+    expect((await setPoseRequest(context([]), { apply: 'missing' })).text).toBe(
+      'No saved pose "missing". Saved: Crouch',
+    );
+    expect((await setPoseRequest(context([]), { from_rest: true })).text).toBe(
       'Modeled pose\nNo new collisions; the robot clears the floor.',
     );
   });
 });
 
 describe('animateRequest', () => {
-  it('builds keyframed animations and flags fast joints', () => {
+  it('builds keyframed animations and flags fast joints', async () => {
     const log: unknown[] = [];
-    const reply = animateRequest(context(log), {
+    const reply = await animateRequest(context(log), {
       name: 'Kick',
       duration: 1,
       keyframes: [
@@ -118,9 +120,9 @@ describe('animateRequest', () => {
     expect(log).toMatchSnapshot();
   });
 
-  it('needs keyframes or feet', () => {
-    expect(animateRequest(context([]), { name: 'x' }).text).toBe('Give keyframes, or a gait.');
-    expect(animateRequest(context([]), { name: 'x', gait: {} }).text).toMatch(/^Couldn’t find the feet/);
+  it('needs keyframes or feet', async () => {
+    expect((await animateRequest(context([]), { name: 'x' })).text).toBe('Give keyframes, or a gait.');
+    expect((await animateRequest(context([]), { name: 'x', gait: {} })).text).toMatch(/^Couldn’t find the feet/);
   });
 });
 

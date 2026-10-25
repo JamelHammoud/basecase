@@ -12,20 +12,34 @@ export interface AgentSendParams {
   note?: string;
 }
 
+export type PromptOptions = Pick<AgentSendParams, 'targetHeightMm' | 'model' | 'effort' | 'note'>;
+
+const runFields = (text: string, options: PromptOptions) => ({
+  action: 'build' as const,
+  promptText: options.note ? `${text}\n\n${options.note}` : text,
+  targetHeightMm: options.targetHeightMm || undefined,
+  model: options.model,
+  effort: options.effort,
+});
+
+export function resendPayload(user: AcpChatMessage, options: PromptOptions): AcpPromptPayload {
+  return {
+    ...runFields(user.text, options),
+    imageDataUrls: user.imageAttachments ?? [],
+    evidenceFolders: (user.folderAttachments ?? []).map((f) => ({ id: f.id, name: f.name })),
+  };
+}
+
 export function buildAgentPrompt(params: AgentSendParams, now: Date) {
   const images = params.images ?? [];
   const folders = params.folders ?? [];
   const time = now.getTime();
   const payload: AcpPromptPayload = {
-    action: 'build',
-    promptText: params.note ? `${params.text}\n\n${params.note}` : params.text,
+    ...runFields(params.text, params),
     imageName: images[0]?.name,
     imageFilePath: images[0]?.filePath,
     imageDataUrls: images.map((i) => i.dataUrl),
     evidenceFolders: folders.map((f) => ({ id: f.id, name: f.name })),
-    targetHeightMm: params.targetHeightMm || undefined,
-    model: params.model,
-    effort: params.effort,
   };
   const userMessage: AcpChatMessage = {
     id: `msg-user-${time}`,

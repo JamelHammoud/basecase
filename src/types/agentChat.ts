@@ -7,6 +7,7 @@ export interface AcpToolCallEvent {
   toolName?: string;
   children?: AcpToolCallEvent[];
   childText?: string;
+  childThought?: string;
 }
 
 export interface AcpPlanEntry {
@@ -30,6 +31,7 @@ export interface AcpChatMessage {
   plan?: AcpPlanEntry[];
   createdModelId?: string;
   stopped?: boolean;
+  failed?: string;
 }
 
 export interface AgentConversationSummary {
@@ -39,10 +41,17 @@ export interface AgentConversationSummary {
   messageCount: number;
 }
 
+export interface ContextUsage {
+  used: number;
+  size: number;
+  costUsd?: number;
+}
+
 export interface AgentConversation {
   id: string;
   title: string;
   acpSessionId: string | null;
+  context?: ContextUsage | null;
   createdAt: string;
   updatedAt?: string;
   messages: AcpChatMessage[];

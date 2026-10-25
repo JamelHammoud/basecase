@@ -7,7 +7,7 @@ import type { CheckRow, EngineeringReport } from '../../utils/engineering';
 interface ChecksSectionProps {
   parts: ScenePart[];
   project: ProjectSettings;
-  onRun: () => EngineeringReport;
+  onRun: () => Promise<EngineeringReport>;
   onSelectParts: (ids: string[]) => void;
 }
 
@@ -73,15 +73,14 @@ export const ChecksSection: React.FC<ChecksSectionProps> = ({ parts, project, on
   const [report, setReport] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
   const stale = report && (report.parts !== parts || report.project !== project);
-  const run = () => {
+  const run = async () => {
     setRunning(true);
-    window.setTimeout(() => {
-      try {
-        setReport({ r: onRun(), parts, project });
-      } finally {
-        setRunning(false);
-      }
-    }, 30);
+
+    try {
+      setReport({ r: await onRun(), parts, project });
+    } finally {
+      setRunning(false);
+    }
   };
   const rows = report ? report.r.rows : NOT_RUN;
 

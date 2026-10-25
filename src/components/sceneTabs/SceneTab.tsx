@@ -100,7 +100,7 @@ export const SceneTab: React.FC<{
           }}
           className="w-[20px] h-[20px] grid place-items-center rounded-[6px] text-white/45 hover:text-white/90 hover:bg-white/[0.1] active:scale-[0.94] opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100 focus-visible:opacity-100 transition-[opacity,background-color,color,transform] duration-150"
         >
-          <CloseIcon className="w-3.5 h-3.5" strokeWidth={2} />
+          <CloseIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
         </button>
       </Tooltip>
     </div>

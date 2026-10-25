@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { MeshoptSimplifier } from 'meshoptimizer/simplifier';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 import { prettyJointName } from '../kinematics';
 import { applyPublishedMass, buildLinkParts, linkGeometries, type MeshFiles } from './linkParts';
+import { geometryWorker } from '../../three/geometryWorker';
 import { loadMesh } from './meshes';
 import type { MeshGeometry, Model, ModelJoint } from './model';
 import { catalogFrame, limbOf, publishedData, round, S, type PublishedData } from './published';
@@ -27,6 +27,14 @@ export interface ImportedRobot {
 
 type Say = (message: string) => void;
 
+async function parseMeshFile(data: ArrayBuffer, path: string): Promise<THREE.BufferGeometry | null> {
+  if (/\.dae$/i.test(path)) return loadMesh(data, path);
+
+  const positions = await geometryWorker.call('parseMesh', { data, path }, [data]);
+
+  return positions && new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(positions, 3));
+}
+
 async function loadMeshFiles(model: Model, resolver: Resolver, say: Say, notes: string[]): Promise<MeshFiles> {
   const files: MeshFiles = new Map();
   const meshRefs = [...model.links.values()]
@@ -35,14 +43,12 @@ async function loadMeshFiles(model: Model, resolver: Resolver, say: Say, notes: 
   const unique = [...new Set(meshRefs.map((g) => g.file))];
   let done = 0;
 
-  await MeshoptSimplifier.ready.catch(() => {});
-
   const queue = [...unique];
   const worker = async () => {
     for (let f = queue.shift(); f !== undefined; f = queue.shift()) {
       const file = f;
       const got = await resolver.read(file).catch(() => null);
-      const geo = got ? await loadMesh(got.data, got.path).catch(() => null) : null;
+      const geo = got ? await parseMeshFile(got.data, got.path).catch(() => null) : null;
 
       if (!geo) notes.push(`Couldn't read ${file.split('/').pop()}`);
 
@@ -181,7 +187,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   say('Building parts');
 
   const frame = opts.rotate ? catalogFrame(opts.rotate) : S;
-  const linkGeo = linkGeometries(model, files, frame, opts.color);
+  const linkGeo = await linkGeometries(model, files, frame, opts.color);
 
   if (!linkGeo.size)
     throw new Error(
@@ -191,7 +197,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
     );
 
   const groupId = `robot-${Date.now().toString(36)}`;
-  const built = buildLinkParts(linkGeo, {
+  const built = await buildLinkParts(linkGeo, {
     name,
     groupId,
     source,

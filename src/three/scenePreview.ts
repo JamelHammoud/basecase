@@ -1,6 +1,6 @@
 import type { ScenePart } from '../types/robotics';
 import { solidSizeMm } from '../utils/sceneSize';
-import { loadPartMeshes, renderPartGroups, thumbnailParts } from './partThumbnails';
+import { renderPartGroups, thumbnailParts } from './partThumbnails';
 
 export interface ScenePreviewFields {
   previewDataUrl?: string;
@@ -16,9 +16,7 @@ export async function scenePreview(parts: ScenePart[]): Promise<ScenePreviewFiel
   }
 
   try {
-    await loadPartMeshes(shown);
-
-    return { previewDataUrl: renderPartGroups(shown, { tightness: 1.0, mime: 'image/webp' }), sizeMm };
+    return { previewDataUrl: await renderPartGroups(shown, { tightness: 1.0, mime: 'image/webp' }), sizeMm };
   } catch {
     return { sizeMm };
   }

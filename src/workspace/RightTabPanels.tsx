@@ -1,5 +1,6 @@
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
+import { DesignersProvider } from '../components/agent/DesignersContext';
 import { PartLinksProvider } from '../components/agent/PartLinksProvider';
 import { canRevertLane } from './agentLanes';
 import { BuildPanel } from '../components/BuildPanel';
@@ -51,8 +52,8 @@ function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
       sceneName={scene.sceneName}
       project={project}
       onChangeProject={(patch: Partial<ProjectSettings>) => setProject((p) => ({ ...p, ...patch }))}
-      measure={(ids?: string[]) => viewportRef.current?.measureParts(ids) ?? {}}
-      getTriangles={(id: string) => viewportRef.current?.partTriangles(id) ?? null}
+      measure={async (ids?: string[]) => (await viewportRef.current?.measureParts(ids)) ?? {}}
+      printShapes={async (ids: string[]) => (await viewportRef.current?.printShapes(ids)) ?? {}}
       onRunChecks={() =>
         runEngineeringNow({
           viewport: viewportRef.current,
@@ -68,31 +69,61 @@ function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
   );
 }
 
+function useOpenGuide(core: WorkspaceCore) {
+  const { guide, tool } = core;
+
+  return () => {
+    const ready = !!guide.record && !guide.stale;
+
+    tool.setRightTab('build');
+    window.requestAnimationFrame(() => {
+      document.getElementById('build-guide')?.scrollIntoView({ block: 'center' });
+
+      if (ready) window.requestAnimationFrame(() => void guide.open());
+    });
+  };
+}
+
 function AgentTab({ core, agent }: Omit<RightTabPanelsProps, 'actions'>) {
   const { studio, tool, parts, setSelectedIds } = core;
   const { chat, controls, current } = agent;
+  const openGuide = useOpenGuide(core);
 
   return (
-    <PartLinksProvider parts={parts} onSelect={setSelectedIds}>
-      <AcpStudioPanel
-        acpStatus={agent.acpStatus}
+    <PartLinksProvider
+      parts={parts}
+      panScroll={studio.trackpadMode === 'pan-scroll'}
+      onSelect={setSelectedIds}
+      onOpenGuide={openGuide}
+    >
+      <DesignersProvider
         messages={current.messages}
-        isBusy={current.busy}
-        status={current.status}
-        canRevert={canRevertLane(current)}
-        attachRequest={tool.attachRequest}
-        targetHeightMm={studio.agentTargetHeightMm}
-        choice={studio.agentChoice}
-        onChoiceChange={studio.setAgentChoice}
-        onReconnectAcp={studio.reconnectAcp}
-        onSignIn={studio.signInAcp}
-        onSaveApiKey={studio.saveAgentApiKey}
-        onUploadImage={agent.uploadImage}
-        onSend={agent.send}
-        onStop={() => controls.stop()}
-        onNewChat={chat.newChat}
-        onRevert={controls.revert}
-      />
+        opened={agent.openedDesigner}
+        onOpen={agent.openDesigner}
+        onFocus={agent.focusDesigner}
+      >
+        <AcpStudioPanel
+          acpStatus={agent.acpStatus}
+          messages={current.messages}
+          isBusy={current.busy}
+          status={current.status}
+          context={current.context}
+          canRevert={canRevertLane(current)}
+          attachRequest={tool.attachRequest}
+          targetHeightMm={studio.agentTargetHeightMm}
+          choice={studio.agentChoice}
+          onChoiceChange={studio.setAgentChoice}
+          onReconnectAcp={studio.reconnectAcp}
+          onSignIn={studio.signInAcp}
+          onSaveApiKey={studio.saveAgentApiKey}
+          onUploadImage={agent.uploadImage}
+          onSend={agent.send}
+          onRetry={agent.retry}
+          onStop={() => controls.stop()}
+          onNewChat={chat.newChat}
+          onRevert={controls.revert}
+        />
+      </DesignersProvider>
     </PartLinksProvider>
   );
 }

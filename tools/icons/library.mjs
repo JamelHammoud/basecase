@@ -66,16 +66,18 @@ const union = rounded(
 const alignX = (x, bars) => `M${x} 2.5V21.5` + bars.map(([x0, x1, y]) => rr([x0, y, x1 - x0, 5], 1.5)).join('');
 const alignY = (y, bars) => `M2.5 ${y}H21.5` + bars.map(([y0, y1, x]) => rr([x, y0, 5, y1 - y0], 1.5)).join('');
 
+const LIGHT_CONTROL = 2.5;
+
 const DRAWN = {
   controls: {
-    PlusIcon: 'M4 12H20M12 4V20',
+    PlusIcon: { d: 'M4 12H20M12 4V20', weight: LIGHT_CONTROL },
     MinusIcon: 'M4 12H20',
-    CloseIcon: 'M5.5 5.5L18.5 18.5M18.5 5.5L5.5 18.5',
+    CloseIcon: { d: 'M5.5 5.5L18.5 18.5M18.5 5.5L5.5 18.5', weight: LIGHT_CONTROL },
     TickIcon: 'M4.5 12.5L9.5 17.5L19.5 6.5',
-    ChevronDownIcon: 'M6 9L12 15L18 9',
-    ChevronUpIcon: 'M6 15L12 9L18 15',
-    ChevronLeftIcon: 'M15 6L9 12L15 18',
-    ChevronRightIcon: 'M9 6L15 12L9 18',
+    ChevronDownIcon: { d: 'M6 9L12 15L18 9', weight: LIGHT_CONTROL },
+    ChevronUpIcon: { d: 'M6 15L12 9L18 15', weight: LIGHT_CONTROL },
+    ChevronLeftIcon: { d: 'M15 6L9 12L15 18', weight: LIGHT_CONTROL },
+    ChevronRightIcon: { d: 'M9 6L15 12L9 18', weight: LIGHT_CONTROL },
     ArrowUpIcon: 'M12 20V4M5.5 10.5L12 4L18.5 10.5',
     ArrowDownIcon: 'M12 4V20M5.5 13.5L12 20L18.5 13.5',
     ArrowUpRightIcon: 'M6.5 17.5L17.5 6.5M8 6.5H17.5V16',
@@ -309,6 +311,27 @@ const DRAWN = {
     PenIcon: pen(),
     DrawingIcon: rr([3.5, 11.5, 17, 9.5], 2.5) + 'M3.5 3.5V8M20.5 3.5V8M3.5 5.75H20.5',
     RulerIcon: rr([2, 6, 20, 12], 2.5) + 'M6 6V10M10 6V8.5M14 6V10M18 6V8.5',
+    HumanIcon: {
+      d: 'M6.5 15V10.5Q6.5 8.5 8.5 8.5H15.5Q17.5 8.5 17.5 10.5V15M10 21.5V12.5M14 21.5V12.5',
+      dots: 'M12 4.25h0',
+      dotSize: 5,
+    },
+    DogIcon:
+      rounded(
+        [
+          [2.5, 9.5],
+          [5.5, 6.5],
+          [7.5, 3.25],
+          [9.75, 7],
+          [10.5, 9.5],
+          [18.5, 9.5],
+          [18.5, 14],
+          [9, 14],
+          [7.25, 11.75],
+          [3.5, 11.75],
+        ],
+        [1, 1.5, 1, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1],
+      ) + 'M9.75 14V20.5M17.25 14V20.5M18.5 10Q20.5 9 21 5.75',
     EyedropperIcon: eyedropper(),
     WalkIcon: {
       d: 'M12.25 9L11 14.25M8 13L9.5 10L12.5 9.5L15.5 12L18 12.5M11 14.25L14.25 17L14 21.25M11 14.25L9 18L5.75 20.25',

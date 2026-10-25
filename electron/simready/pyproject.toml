@@ -1,0 +1,13 @@
+[project]
+name = "basecase-simready"
+version = "0.1.0"
+description = "Converts SimReady OpenUSD assets into Basecase models"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "usd-core==26.11",
+  "numpy>=1.26",
+  "pillow>=11",
+]
+
+[tool.uv]
+package = false

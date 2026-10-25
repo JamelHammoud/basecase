@@ -1,4 +1,4 @@
-import type { AcpChatMessage, AgentConversation } from '../types/robotics';
+import type { AcpChatMessage, AgentConversation, ContextUsage } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import { chatTitle } from './acpTranscript';
 import { MAIN_LANE, laneOfChat, laneToDrop, MAX_LANES, newLaneId, type AgentLane } from './agentLanes';
@@ -18,7 +18,12 @@ const LANES_FULL = `Up to ${MAX_LANES} chats run at once. Stop one to start anot
 
 export function saveChat(
   setChatList: StudioShared['setChatList'],
-  { id, messages, sessionId }: { id: string | null; messages: AcpChatMessage[]; sessionId: string | null },
+  {
+    id,
+    messages,
+    sessionId,
+    context,
+  }: { id: string | null; messages: AcpChatMessage[]; sessionId: string | null; context?: ContextUsage | null },
 ) {
   if (!id || !messages.length) return;
 
@@ -27,6 +32,7 @@ export function saveChat(
       id,
       title: chatTitle(messages),
       acpSessionId: sessionId,
+      context: context ?? null,
       createdAt: messages[0]?.timestamp ?? new Date().toISOString(),
       messages,
     })
@@ -38,7 +44,14 @@ export function lanePersister(lanes: AgentLanes, setChatList: StudioShared['setC
   return (id: string) => {
     const lane = lanes.lanesRef.current.find((l) => l.id === id);
 
-    if (lane) saveChat(setChatList, { id: lane.chatId, messages: lane.messages, sessionId: lane.acpSessionId });
+    if (lane) {
+      saveChat(setChatList, {
+        id: lane.chatId,
+        messages: lane.messages,
+        sessionId: lane.acpSessionId,
+        context: lane.context,
+      });
+    }
   };
 }
 
@@ -91,6 +104,7 @@ export function useAgentChat({ core, lanes, stop, persistLane }: AgentChatOption
       ...l,
       chatId: conv?.id ?? null,
       messages: conv?.messages ?? [],
+      context: conv?.context ?? null,
       edits: {},
       status: '',
     }));
@@ -155,9 +169,11 @@ export function useAgentChat({ core, lanes, stop, persistLane }: AgentChatOption
   };
 
   const chatSnapshot = () => {
-    const { chatId, messages, acpSessionId, id } = lanes.current;
+    const { chatId, messages, acpSessionId, id, context } = lanes.current;
 
-    return messages.length ? { chatId, messages, acpSessionId: acpSessionId ?? flagsOf(id).pendingResume } : undefined;
+    return messages.length
+      ? { chatId, messages, acpSessionId: acpSessionId ?? flagsOf(id).pendingResume, context }
+      : undefined;
   };
 
   return {

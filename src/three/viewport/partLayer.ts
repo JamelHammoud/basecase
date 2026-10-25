@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { ScenePart } from '../../types/robotics';
 import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPartMesh';
+import { preparePart } from '../partMesh/prepare';
 
 interface Entry {
   part: ScenePart;
@@ -19,7 +20,9 @@ export function onlyTransformChanged(a: ScenePart, b: ScenePart): boolean {
 
 const UNIT = new THREE.Vector3(1, 1, 1);
 
-const FRAME_BUDGET_MS = 10;
+const FRAME_BUDGET_MS = 6;
+
+const UPLOAD_VERTICES_PER_FRAME = 200_000;
 
 interface PendingBuild {
   part: ScenePart;
@@ -39,10 +42,17 @@ export class PartLayer {
 
   private pending: PendingBuild[] = [];
 
+  private readonly waiting = new Map<string, PendingBuild>();
+
+  private readonly uploaded = new WeakSet<THREE.BufferGeometry>();
+
   private readonly root: THREE.Group;
 
-  constructor(root: THREE.Group) {
+  private readonly onReady: () => void;
+
+  constructor(root: THREE.Group, onReady: () => void = () => {}) {
     this.root = root;
+    this.onReady = onReady;
   }
 
   get(id: string): THREE.Group | undefined {
@@ -57,8 +67,12 @@ export class PartLayer {
     return [...this.entries].map(([id, entry]) => [id, entry.group]);
   }
 
-  get hasPending(): boolean {
+  get hasReady(): boolean {
     return this.pending.length > 0;
+  }
+
+  get hasPending(): boolean {
+    return this.pending.length > 0 || this.waiting.size > 0;
   }
 
   sync(parts: ScenePart[], selected: ReadonlySet<string>, meshVersion: number): boolean {
@@ -74,6 +88,7 @@ export class PartLayer {
     }
 
     this.pending = [];
+    this.waiting.clear();
 
     for (const part of visible) {
       changed = this.upsert({ part, selected: selected.has(part.id), meshVersion }) || changed;
@@ -84,14 +99,23 @@ export class PartLayer {
 
   buildPending(budgetMs = Infinity): boolean {
     const start = performance.now();
+    const uploadBudget = budgetMs === Infinity ? Infinity : UPLOAD_VERTICES_PER_FRAME;
+    let uploads = 0;
     let built = false;
 
-    while (this.pending.length && performance.now() - start < budgetMs) {
-      this.build(this.pending.shift()!);
+    while (this.pending.length && performance.now() - start < budgetMs && uploads < uploadBudget) {
+      uploads += this.build(this.pending.shift()!);
       built = true;
     }
 
     return built;
+  }
+
+  buildAll(): boolean {
+    this.pending.push(...this.waiting.values());
+    this.waiting.clear();
+
+    return this.buildPending();
   }
 
   applyPose(skip?: THREE.Object3D | null): void {
@@ -180,7 +204,9 @@ export class PartLayer {
     const { part, selected, meshVersion } = next;
     const entry = this.entries.get(part.id);
     const sameLook =
-      entry && entry.selected === selected && (part.kind !== 'component' || entry.meshVersion === meshVersion);
+      entry &&
+      entry.selected === selected &&
+      ((part.kind !== 'component' && !part.mesh?.visual) || entry.meshVersion === meshVersion);
 
     if (entry && entry.part === part && sameLook) {
       return false;
@@ -195,20 +221,58 @@ export class PartLayer {
       return true;
     }
 
-    this.pending.push(next);
+    this.queue(next);
 
     return false;
   }
 
-  private build({ part, selected, meshVersion }: PendingBuild): void {
+  private queue(next: PendingBuild): void {
+    const prepared = preparePart(next.part);
+
+    if (!prepared) {
+      this.pending.push(next);
+
+      return;
+    }
+
+    const id = next.part.id;
+
+    this.waiting.set(id, next);
+    void prepared.then(() => {
+      if (this.waiting.get(id) !== next) return;
+
+      this.waiting.delete(id);
+      this.pending.push(next);
+      this.onReady();
+    });
+  }
+
+  private build({ part, selected, meshVersion }: PendingBuild): number {
     const old = this.entries.get(part.id);
-    const group = buildPartGroup(part, selected, { shareGeometry: true });
+    const group = buildPartGroup(part, selected, { shareGeometry: true, lateEdges: true });
 
     if (old) this.remove(part.id, old);
 
     rememberRest(group);
     this.root.add(group);
     this.entries.set(part.id, { part, selected, meshVersion, group });
+
+    return this.newVertices(group);
+  }
+
+  private newVertices(group: THREE.Group): number {
+    let count = 0;
+
+    group.traverse((object) => {
+      const geometry = (object as THREE.Mesh).geometry;
+
+      if (!geometry || this.uploaded.has(geometry)) return;
+
+      this.uploaded.add(geometry);
+      count += geometry.getAttribute('position')?.count ?? 0;
+    });
+
+    return count;
   }
 
   private remove(id: string, entry: Entry): void {

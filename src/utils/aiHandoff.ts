@@ -202,10 +202,16 @@ function componentBomLines(parts: ScenePart[]): string[] {
 
     if (!c) return [];
 
-    const buy = c.links.amazon ? ` · [Amazon](${c.links.amazon.url})` : '';
-    const sheet = c.links.datasheet ? ` · [Datasheet](${c.links.datasheet})` : '';
+    const links = [
+      c.links.amazon && `[Amazon](${c.links.amazon.url})`,
+      c.links.datasheet && `[Datasheet](${c.links.datasheet})`,
+    ].filter(Boolean);
 
-    return [`- ${count} × **${c.name}** (${c.manufacturer} ${c.mpn})${buy}${sheet}`, `  - ${c.mounting}`];
+    return [
+      `- ${count} × **${c.name}** (${c.manufacturer} ${c.mpn})`,
+      `  - ${c.mounting}`,
+      ...(links.length ? [`  - ${links.join(', ')}`] : []),
+    ];
   });
 
   return [

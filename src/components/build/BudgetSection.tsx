@@ -16,49 +16,45 @@ const hasEstimate = (t: Totals) => t.estimatedUsd > t.pricedUsd + 0.005;
 
 const share = (usd: number, budget: number) => (budget ? Math.min(1, usd / budget) : 0);
 
-const BudgetSummary: React.FC<{ t: Totals }> = ({ t }) => {
-  const lines = t.checked + t.stale + t.unchecked;
+const Total: React.FC<{ t: Totals }> = ({ t }) => {
+  const total = (
+    <div className="text-[20px] font-semibold tabular-nums text-white/90 leading-tight w-fit">
+      {hasEstimate(t) && <span className="text-white/45 font-normal mr-1">≈</span>}
+      {money(t.estimatedUsd)}
+    </div>
+  );
+
+  if (!hasEstimate(t)) return total;
+
+  return <Tooltip label="Checked prices, plus maker and distributor list prices for the rest">{total}</Tooltip>;
+};
+
+const BudgetBar: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
+  const over = t.estimatedUsd > budget;
 
   return (
-    <div className="min-w-0">
-      <div className="text-[20px] font-semibold tabular-nums text-white/90 leading-tight">{money(t.pricedUsd)}</div>
-      {lines > 0 && (
-        <div className="text-[12.5px] text-white/45 mt-0.5 tabular-nums">
-          {t.unchecked ? `${t.checked + t.stale} of ${lines} prices checked` : 'All prices checked'}
-        </div>
-      )}
-      {hasEstimate(t) && (
-        <Tooltip label="Unchecked lines at maker and distributor list prices">
-          <div className="text-[12.5px] text-white/60 mt-0.5 tabular-nums w-fit">
-            ≈ {money(t.estimatedUsd)} estimated{t.unpriced ? ` · ${t.unpriced} unpriced` : ''}
-          </div>
-        </Tooltip>
-      )}
+    <div className="relative h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Spent of budget">
+      <div
+        className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500/40' : 'bg-[#0d99ff]/35'}`}
+        style={{ width: `${share(t.estimatedUsd, budget) * 100}%` }}
+      />
+      <div
+        className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500' : 'bg-[#0d99ff]'}`}
+        style={{ width: `${share(t.pricedUsd, budget) * 100}%` }}
+      />
     </div>
   );
 };
 
-const BudgetBar: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => (
-  <div className="relative h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Spent of budget">
-    {hasEstimate(t) && (
-      <div
-        className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${t.estimatedUsd > budget ? 'bg-red-500/40' : 'bg-[#0d99ff]/35'}`}
-        style={{ width: `${share(t.estimatedUsd, budget) * 100}%` }}
-      />
-    )}
-    <div
-      className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${t.overBudget ? 'bg-red-500' : 'bg-[#0d99ff]'}`}
-      style={{ width: `${share(t.pricedUsd, budget) * 100}%` }}
-    />
-  </div>
-);
+const BudgetLeft: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
+  const over = t.estimatedUsd > budget;
 
-const BudgetLeft: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => (
-  <div className={`text-[12.5px] tabular-nums ${t.overBudget ? 'text-red-400' : 'text-white/45'}`}>
-    {t.overBudget ? `${money(t.pricedUsd - budget)} over budget` : `${money(budget - t.pricedUsd)} left`}
-    {t.unchecked > 0 && ` · ${t.unchecked} to price`}
-  </div>
-);
+  return (
+    <div className={`text-[12.5px] tabular-nums ${over ? 'text-red-400' : 'text-white/45'}`}>
+      {over ? `${money(t.estimatedUsd - budget)} over budget` : `${money(budget - t.estimatedUsd)} left`}
+    </div>
+  );
+};
 
 const StaleNotice: React.FC<{ stale: number }> = ({ stale }) => (
   <div className="text-[12.5px] text-amber-400">
@@ -73,8 +69,8 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({ bom, project, onCh
 
   return (
     <Section title="Budget">
-      <div className="flex items-baseline justify-between gap-3">
-        <BudgetSummary t={t} />
+      <div className="flex items-center justify-between gap-3">
+        <Total t={t} />
         <div className="w-[112px] shrink-0">
           <NumberInput
             label="$"

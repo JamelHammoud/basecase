@@ -8,6 +8,9 @@ import {
   SectionHeader,
   useScrollFade,
 } from '../design-system';
+import type { SimReadyAsset } from '../simready/search';
+import { useSimReadySearch, type SimReadySearch } from '../simready/useSimReadySearch';
+import { LoadingTiles, SimReadyTile } from './objects/SimReadyTile';
 import { ROBOT_CATEGORIES, ROBOT_PRESETS, rawUrl, type RobotPreset } from '../utils/robotImport';
 import { ROBOT_DRAG_TYPE } from '../data/dnd';
 import { forgetImportedRobot, presetPreviewUrl, useImportedRobots, type ImportedRobot } from '../utils/robotPreview';
@@ -24,7 +27,8 @@ const asPreset = (r: ImportedRobot): RobotPreset => ({
 
 export const RobotsPanel: React.FC<{
   onInsert: (preset: RobotPreset) => Promise<unknown> | void;
-}> = ({ onInsert }) => {
+  onInsertSimReady: (asset: SimReadyAsset) => Promise<unknown> | void;
+}> = ({ onInsert, onInsertSimReady }) => {
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; entries: ContextMenuEntry[] } | null>(null);
@@ -38,34 +42,28 @@ export const RobotsPanel: React.FC<{
   const shown = ROBOT_PRESETS.filter(
     (r) => !q || [r.title, r.maker, r.category, r.description].some((s) => s.toLowerCase().includes(q)),
   );
+  const simready = useSimReadySearch(query, 'robots');
+  const nothing = !shown.length && !imported.length && !simready.loading && !simready.results.length;
   const fallback = (p: RobotPreset) => remembered.find((r) => rawUrl(r.url) === rawUrl(p.url))?.thumbnail;
 
-  const insert = async (key: string, preset: RobotPreset) => {
+  const run = async (key: string, task: () => Promise<unknown> | void) => {
     if (busy) return;
 
     setBusy(key);
 
     try {
-      await onInsert(preset);
+      await task();
     } finally {
       setBusy(null);
     }
   };
+  const insert = (key: string, preset: RobotPreset) => run(key, () => onInsert(preset));
 
-  const insertFirst = () => {
-    if (imported.length) {
-      void insert(imported[0].url, asPreset(imported[0]));
-
-      return;
-    }
-
-    if (shown.length) void insert(shown[0].id, shown[0]);
-  };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape' && query) setQuery('');
     else if (e.key === 'Escape') (e.target as HTMLInputElement).blur();
 
-    if (e.key === 'Enter') insertFirst();
+    if (e.key === 'Enter') simready.searchNow();
   };
   const openImportedMenu = (e: React.MouseEvent, r: ImportedRobot) => {
     e.preventDefault();
@@ -92,7 +90,7 @@ export const RobotsPanel: React.FC<{
         />
       </div>
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
-        {!shown.length && !imported.length ? (
+        {nothing ? (
           <EmptyState title={`No matches for “${query.trim()}”`} />
         ) : (
           <div className="px-[8px] pb-4">
@@ -139,11 +137,36 @@ export const RobotsPanel: React.FC<{
                 </section>
               );
             })}
+            <SimReadySection
+              search={simready}
+              disabled={!!busy}
+              onInsert={(a) => void run(a.url, () => onInsertSimReady(a))}
+            />
           </div>
         )}
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.entries} onClose={() => setMenu(null)} />}
     </div>
+  );
+};
+
+const SimReadySection: React.FC<{
+  search: SimReadySearch;
+  disabled: boolean;
+  onInsert: (a: SimReadyAsset) => void;
+}> = ({ search, disabled, onInsert }) => {
+  if (!search.loading && !search.results.length) return null;
+
+  return (
+    <section className="mb-3">
+      <SectionHeader title="SimReady" />
+      <TileGrid>
+        {search.results.map((a) => (
+          <SimReadyTile key={a.url} asset={a} disabled={disabled} onInsert={() => onInsert(a)} />
+        ))}
+        {search.loading && <LoadingTiles count={search.results.length ? 2 : 4} />}
+      </TileGrid>
+    </section>
   );
 };
 

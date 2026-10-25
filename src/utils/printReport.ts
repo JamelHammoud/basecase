@@ -1,6 +1,6 @@
 import { MATERIAL_DENSITY } from '../data/supplies';
-import { MeshMeasure, measureTriangles } from '../three/meshMeasure';
-import { P1S, PrintCheck, checkPrintability, packPlates, printHours } from '../three/printability';
+import type { MeshMeasure } from '../three/meshMeasure';
+import { P1S, PrintCheck, packPlates, printHours } from '../three/printability';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
 
@@ -28,8 +28,8 @@ export interface PrintReport {
 export const fmtSize = (size: number[]) =>
   size.map((v) => (v < 10 ? String(Math.round(v * 10) / 10) : String(Math.round(v)))).join(' × ');
 
-const cache = new Map<string, PrintCheck | null>();
-const measuresCache = new Map<string, MeshMeasure>();
+const shapes = new Map<string, PartShape>();
+const MAX_CACHED = 4000;
 
 function shapeKey(p: ScenePart): string {
   const c = p.cad;
@@ -50,19 +50,24 @@ interface PartShape {
   measure: MeshMeasure;
 }
 
-function shapeOf(part: ScenePart, getTriangles: (id: string) => Float32Array | null): PartShape | null {
-  const key = shapeKey(part);
-  const cachedCheck = cache.get(key);
-  const cachedMeasure = measuresCache.get(key);
-  const triangles = cachedCheck === undefined || !cachedMeasure ? getTriangles(part.id) : null;
-  const check = cachedCheck === undefined && triangles ? checkPrintability(triangles) : cachedCheck;
-  const measure = cachedMeasure ?? (triangles ? measureTriangles(triangles) : undefined);
+export type PrintShapes = (
+  ids: string[],
+) => Promise<Record<string, { check: PrintCheck | null; measure: MeshMeasure } | undefined>>;
 
-  if (check && cachedCheck === undefined) cache.set(key, check);
+export async function loadPrintShapes(parts: ScenePart[], fetchShapes: PrintShapes): Promise<void> {
+  const missing = parts.filter(isPrinted).filter((p) => !shapes.has(shapeKey(p)));
 
-  if (measure && !cachedMeasure) measuresCache.set(key, measure);
+  if (!missing.length) return;
 
-  return check && measure ? { check, measure } : null;
+  if (shapes.size > MAX_CACHED) shapes.clear();
+
+  const found = await fetchShapes(missing.map((p) => p.id));
+
+  for (const part of missing) {
+    const shape = found[part.id];
+
+    if (shape?.check) shapes.set(shapeKey(part), { check: shape.check, measure: shape.measure });
+  }
 }
 
 function issuesFor(check: PrintCheck, grams: number, supportG: number): string[] {
@@ -134,18 +139,15 @@ function assignPlates(parts: PrintedPartReport[]): PrintReport['plates'] {
 const sum = (parts: PrintedPartReport[], value: (r: PrintedPartReport) => number) =>
   parts.reduce((total, r) => total + value(r), 0);
 
-export function buildPrintReport(
-  parts: ScenePart[],
-  project: ProjectSettings,
-  getTriangles: (id: string) => Float32Array | null,
-): PrintReport {
-  if (cache.size > 4000) {
-    cache.clear();
-    measuresCache.clear();
-  }
+export async function printReportOf(parts: ScenePart[], project: ProjectSettings, fetchShapes: PrintShapes) {
+  await loadPrintShapes(parts, fetchShapes);
 
+  return buildPrintReport(parts, project);
+}
+
+export function buildPrintReport(parts: ScenePart[], project: ProjectSettings): PrintReport {
   const out = parts.filter(isPrinted).flatMap((part) => {
-    const shape = shapeOf(part, getTriangles);
+    const shape = shapes.get(shapeKey(part));
 
     return shape ? [reportPart(part, shape, project)] : [];
   });

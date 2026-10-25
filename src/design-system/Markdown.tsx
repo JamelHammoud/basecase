@@ -3,29 +3,46 @@ import ReactMarkdown, { Components, Options } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
 import { HexSwatch } from './HexSwatch';
+import { HoverCard } from './HoverCard';
 import { MarkdownTable, TableCell } from './MarkdownTable';
 import { remarkHexSwatches, SWATCH_ATTRIBUTE } from './remarkHexSwatches';
 import { remarkHtmlAsText } from './remarkHtmlAsText';
 
 const LINK_CLASS = 'text-[#5cb8ff] hover:underline underline-offset-2';
 
-const InternalLinkContext = createContext<((href: string) => void) | null>(null);
+export type LinkPreview = (href: string) => { content: () => React.ReactNode; width: number } | null;
+
+interface InternalLinks {
+  onClick?: (href: string) => void;
+  preview?: LinkPreview;
+}
+
+const InternalLinkContext = createContext<InternalLinks>({});
 
 const MarkdownLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({ href, children }) => {
-  const onInternalLink = useContext(InternalLinkContext);
+  const { onClick, preview } = useContext(InternalLinkContext);
 
-  if (href?.startsWith('#') && onInternalLink) {
-    return (
+  if (href?.startsWith('#') && onClick) {
+    const link = (
       <a
         href={href}
         className={LINK_CLASS}
         onClick={(e) => {
           e.preventDefault();
-          onInternalLink(href);
+          onClick(href);
         }}
       >
         {children}
       </a>
+    );
+    const card = preview?.(href);
+
+    return card ? (
+      <HoverCard content={card.content} width={card.width} placement="below" inline>
+        {link}
+      </HoverCard>
+    ) : (
+      link
     );
   }
 
@@ -80,9 +97,10 @@ export const Markdown: React.FC<{
   className?: string;
   remarkPlugins?: Options['remarkPlugins'];
   onInternalLink?: (href: string) => void;
-}> = ({ children, className = '', remarkPlugins = [], onInternalLink }) => (
+  linkPreview?: LinkPreview;
+}> = ({ children, className = '', remarkPlugins = [], onInternalLink, linkPreview }) => (
   <div className={`text-[14px] leading-relaxed text-white/90 select-text break-words ${className}`}>
-    <InternalLinkContext value={onInternalLink ?? null}>
+    <InternalLinkContext value={{ onClick: onInternalLink, preview: linkPreview }}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkHtmlAsText, remarkHexSwatches, ...(remarkPlugins ?? [])]}
         components={components}

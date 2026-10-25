@@ -1,11 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { AcpChatMessage, AcpStatusInfo, AgentChoice, ReferenceImageRecord } from '../types/robotics';
+import { AcpChatMessage, AcpStatusInfo, AgentChoice, ContextUsage, ReferenceImageRecord } from '../types/robotics';
 import { AnalyzedImageFeatures } from '../utils/imageTo3DAnalyzer';
 import { collectDrop, EvidenceFolder } from '../utils/evidenceFiles';
-import { ImageViewer, ImageViewerItem, Tooltip, ArrowDownIcon, PhotoIcon } from '../design-system';
+import { ImageViewer, ImageViewerItem, Tooltip, ChevronDownIcon, PhotoIcon } from '../design-system';
 import { agentKindOf, agentProfileOf } from '../agent/agentKinds';
 import { Composer, ComposerSubmit } from './agent/Composer';
 import { ConnectionBanner } from './agent/ConnectionBanner';
+import { OpenedSubagent } from './agent/SubagentView';
 import { Transcript } from './agent/Transcript';
 import { useAttachments } from './agent/useAttachments';
 import { feedMask, useFeedFollow } from './agent/useFeedFollow';
@@ -15,6 +16,7 @@ interface AcpStudioPanelProps {
   messages: AcpChatMessage[];
   isBusy: boolean;
   status: string;
+  context: ContextUsage | null;
   canRevert: boolean;
   attachRequest?: number;
   targetHeightMm?: number;
@@ -32,6 +34,7 @@ interface AcpStudioPanelProps {
     model?: string;
     effort?: string;
   }) => Promise<void>;
+  onRetry: (options: { targetHeightMm?: number; model?: string; effort?: string }) => Promise<void>;
   onStop: () => void;
   onNewChat: () => void;
   onRevert: () => void;
@@ -48,7 +51,7 @@ const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
         onClick={onClick}
         className="w-8 h-8 rounded-full bg-[#2a2a2f] ring-1 ring-white/[0.1] shadow-[0_4px_14px_rgba(0,0,0,0.45)] text-white/80 hover:text-white hover:bg-[#323238] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
       >
-        <ArrowDownIcon className="w-4 h-4" />
+        <ChevronDownIcon className="w-4 h-4 translate-y-[1px]" />
       </button>
     </Tooltip>
   </div>
@@ -66,6 +69,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   messages,
   isBusy,
   status,
+  context,
   canRevert,
   attachRequest = 0,
   targetHeightMm = 0,
@@ -76,6 +80,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   onSaveApiKey,
   onUploadImage,
   onSend,
+  onRetry,
   onStop,
   onNewChat,
   onRevert,
@@ -96,6 +101,11 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   const submit = async (draft: ComposerSubmit) => {
     scrollToBottom();
     await onSend({ ...draft, targetHeightMm: targetHeightMm || undefined, ...choice });
+  };
+
+  const retry = async () => {
+    scrollToBottom();
+    await onRetry({ targetHeightMm: targetHeightMm || undefined, ...choice });
   };
 
   return (
@@ -136,6 +146,8 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
             status={status}
             canRevert={canRevert}
             contentRef={feedContentRef}
+            onContinue={() => submit({ text: 'Continue', images: [], folders: [] })}
+            onRetry={retry}
             onRevert={onRevert}
             onOpenImages={openImages}
           />
@@ -151,6 +163,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         isBusy={isBusy}
         agentName={agentName}
         agent={acpStatus}
+        context={context}
         choice={choice}
         onChoiceChange={onChoiceChange}
         onSubmit={submit}
@@ -160,6 +173,8 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
       />
 
       {isDragOver && <DropOverlay />}
+
+      <OpenedSubagent messages={messages} onOpenImages={openImages} />
 
       <ImageViewer
         images={viewer?.images ?? []}

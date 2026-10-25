@@ -1,5 +1,5 @@
 import type { GuideItem } from '../guideTypes';
-import { checkMark, crossMark, layoutPictogram, overtightPictogram, snugPictogram, toolIcon } from './guideIcons';
+import { toolIcon } from './guideIcons';
 import { CONTENT_BOTTOM, CONTENT_TOP, esc, imageTag, mm, plural, type GuideDoc } from './guideHtml';
 
 export function coverBody({ plan, drawings, meta }: GuideDoc): string {
@@ -23,30 +23,68 @@ export function coverBody({ plan, drawings, meta }: GuideDoc): string {
 <div class="date">${esc(meta.date)}</div>`;
 }
 
-function pictograms(doc: GuideDoc): string {
-  const printed = doc.plan.items.filter((i) => i.kind === 'printed').reduce((n, i) => n + i.qty, 0);
-  const inserts = doc.plan.items.filter((i) => i.hardware?.type === 'heat_insert').reduce((n, i) => n + i.qty, 0);
-  const screws = doc.plan.items.some((i) => i.kind === 'hardware' && i.hardware?.type !== 'heat_insert');
-  const panels = [
-    printed ? [toolIcon('printer'), `Print ${plural(printed, 'part', 'parts')} in ${esc(doc.meta.material)}`] : null,
-    [layoutPictogram(), 'Lay out every part and check it against the catalogue'],
-    inserts
-      ? [toolIcon('soldering-iron'), `Press ${plural(inserts, 'insert', 'inserts')} in with a soldering iron`]
-      : null,
-    screws
-      ? [
-          `<div class="pair">${snugPictogram()}${checkMark()}</div><div class="pair">${overtightPictogram()}${crossMark()}</div>`,
-          'Tighten screws until snug. Printed plastic strips.',
-        ]
-      : null,
-  ].filter((p): p is string[] => !!p);
-
-  return panels
-    .map(([art, cap]) => `<div class="pic"><div class="art">${art}</div><div class="cap">${cap}</div></div>`)
-    .join('');
+interface Tip {
+  art: string;
+  title: string;
+  note: string;
 }
 
-export function introBody(doc: GuideDoc): string {
+function partsCollage(doc: GuideDoc): string {
+  const thumbs = doc.plan.items
+    .filter((i) => i.kind !== 'hardware')
+    .slice(0, 4)
+    .map((i) => doc.drawings.items[i.key]?.thumb)
+    .filter((t) => !!t);
+
+  return `<div class="collage">${thumbs.map((t) => `<div>${imageTag(t.dataUrl)}</div>`).join('')}</div>`;
+}
+
+const pageRange = ([first, last]: [number, number]) => (first === last ? `page ${first}` : `pages ${first}–${last}`);
+
+function tips(doc: GuideDoc, catalogue: [number, number]): Tip[] {
+  const count = (pick: (i: GuideItem) => boolean) => doc.plan.items.filter(pick).reduce((n, i) => n + i.qty, 0);
+  const printed = count((i) => i.kind === 'printed');
+  const inserts = count((i) => i.hardware?.type === 'heat_insert');
+  const screws = count((i) => i.kind === 'hardware' && i.hardware?.type !== 'heat_insert');
+  const all: Array<Tip | null> = [
+    printed
+      ? {
+          art: toolIcon('printer'),
+          title: `Print ${plural(printed, 'part', 'parts')} in ${esc(doc.meta.material)}`,
+          note: `${doc.meta.infillPct}% infill. Print every part before you start.`,
+        }
+      : null,
+    {
+      art: partsCollage(doc),
+      title: `Check every part against ${pageRange(catalogue)}`,
+      note: 'Letters mark parts, numbers mark hardware.',
+    },
+    inserts
+      ? {
+          art: toolIcon('soldering-iron'),
+          title: `Press ${plural(inserts, 'insert', 'inserts')} in with a soldering iron`,
+          note: 'Push straight down and stop when flush.',
+        }
+      : null,
+    screws
+      ? {
+          art: toolIcon('hex-key'),
+          title: 'Tighten screws until snug',
+          note: 'Printed plastic strips if you force it.',
+        }
+      : null,
+  ];
+
+  return all.filter((t): t is Tip => !!t);
+}
+
+export function introBody(doc: GuideDoc, catalogue: [number, number]): string {
+  const rows = tips(doc, catalogue)
+    .map(
+      (t) =>
+        `<div class="tip"><div class="tip-art">${t.art}</div><div><div class="tip-title">${t.title}</div><div class="tip-note">${t.note}</div></div></div>`,
+    )
+    .join('');
   const tools = doc.plan.tools
     .map((t) => `<div class="tool-card">${toolIcon(t.icon)}<div>${esc(t.name)}</div></div>`)
     .join('');
@@ -54,8 +92,8 @@ export function introBody(doc: GuideDoc): string {
   return `
 <div class="sheet">
   <div class="h">Before you start</div>
-  <div class="panels">${pictograms(doc)}</div>
-  ${tools ? `<div class="h2" style="margin-top:10mm">Tools</div><div class="tools-grid">${tools}</div>` : ''}
+  <div class="tips">${rows}</div>
+  ${tools ? `<div class="h2" style="margin-top:11mm">Tools</div><div class="tools-grid">${tools}</div>` : ''}
 </div>`;
 }
 
@@ -72,7 +110,7 @@ function cardHtml(doc: GuideDoc, item: GuideItem): string {
   return `<div class="card"><div class="row"><span class="tag">${item.label}</span><span class="qty">${item.qty}×</span></div><div class="img">${thumb ? imageTag(thumb.dataUrl) : ''}</div><div class="name">${esc(item.name)}${item.detail ? `<br><span style="color:#8a8a8a">${esc(item.detail)}</span>` : ''}</div></div>`;
 }
 
-function cardBlocks(doc: GuideDoc, items: GuideItem[], title: string, note: string): Block[] {
+function cardBlocks(doc: GuideDoc, items: GuideItem[], title: string, notes: string[]): Block[] {
   if (!items.length) return [];
 
   const rows: Block[] = [];
@@ -87,7 +125,9 @@ function cardBlocks(doc: GuideDoc, items: GuideItem[], title: string, note: stri
     });
   }
 
-  return [{ height: SECTION_HEAD, html: `<div class="h2">${title}<span>${note}</span></div>` }, ...rows];
+  const meta = notes.map((n) => `<span>${n}</span>`).join('');
+
+  return [{ height: SECTION_HEAD, html: `<div class="h2">${title}${meta}</div>` }, ...rows];
 }
 
 function ruler(lengthMm: number): string {
@@ -151,17 +191,14 @@ export function catalogueBodies(doc: GuideDoc): string[] {
   const hardware = doc.plan.items.filter((i) => i.kind === 'hardware');
   const printedQty = printed.reduce((n, i) => n + i.qty, 0);
   const blocks = [
-    ...cardBlocks(doc, printed, 'Printed parts', `${plural(printedQty, 'part', 'parts')} · ${esc(doc.meta.material)}`),
-    ...cardBlocks(
-      doc,
-      bought,
-      'Bought parts',
+    ...cardBlocks(doc, printed, 'Printed parts', [plural(printedQty, 'part', 'parts'), esc(doc.meta.material)]),
+    ...cardBlocks(doc, bought, 'Bought parts', [
       plural(
         bought.reduce((n, i) => n + i.qty, 0),
         'part',
         'parts',
       ),
-    ),
+    ]),
   ];
   const parts = paginate(blocks, TITLE_HEIGHT).map(
     (html, i) =>

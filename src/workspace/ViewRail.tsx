@@ -4,6 +4,7 @@ import {
   LayersIcon,
   LibraryIcon,
   NO_DRAG_REGION,
+  ObjectsIcon,
   PartsIcon,
   RobotsIcon,
   type GlyphProps,
@@ -13,6 +14,7 @@ import {
 const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphProps> }> = [
   { value: 'parts', label: 'Parts', Icon: PartsIcon },
   { value: 'robots', label: 'Robots', Icon: RobotsIcon },
+  { value: 'objects', label: 'Objects', Icon: ObjectsIcon },
   { value: 'layers', label: 'Layers', Icon: LayersIcon },
   { value: 'library', label: 'Library', Icon: LibraryIcon },
 ];

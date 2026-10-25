@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip, CloseIcon, FolderIcon, SpinnerIcon } from '../../design-system';
+import { MetaLine, Tooltip, CloseIcon, FolderIcon, SpinnerIcon } from '../../design-system';
 import { Attachments, FolderChip } from './useAttachments';
 import { OpenImages } from './types';
 
@@ -10,14 +10,16 @@ const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, o
     onClick={onClick}
     className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#3a3a3a] ring-2 ring-[#1f1f1f] text-white/80 hover:text-white flex items-center justify-center cursor-default"
   >
-    <CloseIcon className="w-3 h-3" strokeWidth={2.5} />
+    <CloseIcon className="w-3 h-3" strokeWidth={3} />
   </button>
 );
 
-function folderMeta(f: FolderChip) {
-  if (!f.ready) return `${f.done} of ${f.total}`;
+function folderMeta(f: FolderChip): string[] {
+  if (!f.ready) return [`${f.done} of ${f.total}`];
 
-  return `${f.fileCount} file${f.fileCount === 1 ? '' : 's'}${f.skipped ? ` · ${f.skipped} skipped` : ''}`;
+  const files = `${f.fileCount} file${f.fileCount === 1 ? '' : 's'}`;
+
+  return f.skipped ? [files, `${f.skipped} skipped`] : [files];
 }
 
 const FolderTile: React.FC<{ folder: FolderChip; onRemove: () => void }> = ({ folder: f, onRemove }) => (
@@ -32,7 +34,7 @@ const FolderTile: React.FC<{ folder: FolderChip; onRemove: () => void }> = ({ fo
       </span>
       <span className="min-w-0">
         <span className="block text-[13px] text-white/90 truncate">{f.name}</span>
-        <span className="block text-[12px] text-white/45 tabular truncate">{folderMeta(f)}</span>
+        <MetaLine className="text-[12px] text-white/45 tabular" items={folderMeta(f)} />
       </span>
     </div>
     <RemoveChip label={`Remove ${f.name}`} onClick={onRemove} />

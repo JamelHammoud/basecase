@@ -3,10 +3,15 @@ import * as THREE from 'three';
 interface Entry {
   value: unknown;
   refs: number;
+  weight: number;
   dispose: () => void;
 }
 
+const RETAINED_VERTICES = 3_000_000;
+
 const entries = new Map<string, Entry>();
+const retained = new Map<string, Entry>();
+let retainedWeight = 0;
 const objectIds = new WeakMap<object, number>();
 
 let nextObjectId = 1;
@@ -22,8 +27,52 @@ export function objectKey(source: object): string {
   return `o${id}`;
 }
 
+const vertexCount = (candidate: unknown): number => {
+  if (candidate instanceof THREE.BufferGeometry) return candidate.getAttribute('position')?.count ?? 0;
+
+  return Array.isArray(candidate)
+    ? candidate.reduce((sum: number, item: unknown) => sum + vertexCount((item as { geometry?: unknown })?.geometry), 0)
+    : 0;
+};
+
+function retain(key: string, entry: Entry): void {
+  retained.set(key, entry);
+  retainedWeight += entry.weight;
+
+  for (const [oldKey, old] of retained) {
+    if (retainedWeight <= RETAINED_VERTICES) break;
+
+    retained.delete(oldKey);
+    retainedWeight -= old.weight;
+    old.dispose();
+  }
+}
+
+function revive(key: string): Entry | undefined {
+  const entry = retained.get(key);
+
+  if (!entry) return undefined;
+
+  retained.delete(key);
+  retainedWeight -= entry.weight;
+  entries.set(key, entry);
+
+  return entry;
+}
+
+const newEntry = <T>(value: T, dispose: (value: T) => void, refs: number): Entry => ({
+  value,
+  refs,
+  weight: vertexCount(value),
+  dispose: () => dispose(value),
+});
+
+export function hasShared(key: string): boolean {
+  return entries.has(key) || retained.has(key);
+}
+
 export function acquireShared<T>(key: string, build: () => T, dispose: (value: T) => void): T {
-  const existing = entries.get(key);
+  const existing = entries.get(key) ?? revive(key);
 
   if (existing) {
     existing.refs++;
@@ -33,9 +82,19 @@ export function acquireShared<T>(key: string, build: () => T, dispose: (value: T
 
   const value = build();
 
-  entries.set(key, { value, refs: 1, dispose: () => dispose(value) });
+  entries.set(key, newEntry(value, dispose, 1));
 
   return value;
+}
+
+export function offerShared<T>(key: string, value: T, dispose: (value: T) => void): void {
+  if (hasShared(key)) {
+    dispose(value);
+
+    return;
+  }
+
+  retain(key, newEntry(markShared(value), dispose, 0));
 }
 
 export function releaseShared(key: string): void {
@@ -52,7 +111,7 @@ export function releaseShared(key: string): void {
   }
 
   entries.delete(key);
-  entry.dispose();
+  retain(key, entry);
 }
 
 export function sharedEntryCount(): number {

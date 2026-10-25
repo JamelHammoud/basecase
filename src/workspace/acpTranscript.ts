@@ -1,5 +1,5 @@
 import { toolIdentity } from './toolIdentity';
-import type { AcpChatMessage, AcpPlanEntry, AcpToolCallEvent } from '../types/robotics';
+import type { AcpChatMessage, AcpPlanEntry, AcpToolCallEvent, ContextUsage } from '../types/robotics';
 import { parentToolUseIdOf } from './agentActors';
 
 export type SessionUpdate = Record<string, unknown>;
@@ -15,6 +15,18 @@ const TRANSCRIPT_UPDATES = new Set([
 ]);
 
 export const isTranscriptUpdate = (u: SessionUpdate) => TRANSCRIPT_UPDATES.has(String(u.sessionUpdate));
+
+export function contextFromUpdate(u: SessionUpdate): ContextUsage | null {
+  if (u.sessionUpdate !== 'usage_update' || parentToolUseIdOf(u)) return null;
+
+  const { used, size, cost } = u as { used?: unknown; size?: unknown; cost?: { amount?: unknown; currency?: unknown } };
+
+  if (typeof used !== 'number' || typeof size !== 'number' || size <= 0) return null;
+
+  const costUsd = cost?.currency === 'USD' && typeof cost.amount === 'number' ? cost.amount : undefined;
+
+  return { used, size, ...(costUsd !== undefined ? { costUsd } : {}) };
+}
 
 export const emptyAgentMessage = (now: Date): AcpChatMessage => ({
   id: `msg-agent-${now.getTime()}`,
@@ -129,11 +141,19 @@ const updateToolCall = (target: AcpChatMessage, u: SessionUpdate): AcpChatMessag
   toolCalls: upsertCall(target.toolCalls || [], u),
 });
 
+const NESTED_TEXT: Record<string, 'childText' | 'childThought'> = {
+  agent_message_chunk: 'childText',
+  agent_thought_chunk: 'childThought',
+};
+
 function nestUpdate(call: AcpToolCallEvent, u: SessionUpdate): AcpToolCallEvent {
-  if (u.sessionUpdate === 'agent_message_chunk') {
+  const kind = String(u.sessionUpdate);
+  const field = Object.hasOwn(NESTED_TEXT, kind) ? NESTED_TEXT[kind] : undefined;
+
+  if (field) {
     const text = chunkText(u);
 
-    return text ? { ...call, childText: (call.childText ?? '') + text } : call;
+    return text ? { ...call, [field]: (call[field] ?? '') + text } : call;
   }
 
   if (u.sessionUpdate === 'tool_call' || u.sessionUpdate === 'tool_call_update') {
@@ -193,10 +213,25 @@ export function applySessionUpdate(prev: AcpChatMessage[], u: SessionUpdate, now
   return copy;
 }
 
-export function markLastAgentStopped(prev: AcpChatMessage[]) {
-  const lastAgent = prev.map((m) => m.role).lastIndexOf('agent');
+function patchLastAgent(prev: AcpChatMessage[], patch: Partial<AcpChatMessage>) {
+  const lastAgent = lastAgentIndex(prev);
 
-  return prev.map((m, i) => (i === lastAgent ? { ...m, stopped: true } : m));
+  return prev.map((m, i) => (i === lastAgent ? { ...m, ...patch } : m));
+}
+
+export const markLastAgentStopped = (prev: AcpChatMessage[]) => patchLastAgent(prev, { stopped: true });
+
+export const markLastAgentFailed = (reason: string) => (prev: AcpChatMessage[]) =>
+  patchLastAgent(prev, { failed: reason });
+
+const hasContent = (m: AcpChatMessage) => !!(m.segments?.length || m.plan?.length || m.text || m.toolCalls?.length);
+
+export function clearFailedReply(prev: AcpChatMessage[]) {
+  const last = prev[prev.length - 1];
+
+  if (last?.role !== 'agent' || !last.failed) return prev;
+
+  return hasContent(last) ? [...prev.slice(0, -1), { ...last, failed: undefined }] : prev.slice(0, -1);
 }
 
 export function chatTitle(messages: AcpChatMessage[]) {

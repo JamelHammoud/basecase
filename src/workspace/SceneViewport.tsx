@@ -24,6 +24,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     tool,
     annotations,
     marks,
+    measure,
     posing,
     simTraining,
   } = core;
@@ -55,6 +56,10 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         annotateMode={annotations.commentMode}
         measureMode={tool.measuring}
         measureUnit={studio.measureUnit}
+        measureKind={measure.kind}
+        figures={measure.figures}
+        humanHeightMm={measure.humanHeightMm}
+        onPlaceFigure={measure.placeFigure}
         onPlaceAnnotation={annotations.place}
         markMode={tool.marking}
         marks={project.marks}
@@ -62,6 +67,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         selectedMarkId={marks.selected?.id ?? null}
         onAddMark={marks.add}
         onSelectMark={marks.select}
+        agentFrames={agent.frames}
         paused={!active}
         pose={posing.deltas}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
@@ -90,6 +96,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
           target={c.target}
           visible={!!c.target}
           name={c.name}
+          color={c.color}
           action={c.action || lanes.lanes.find((l) => c.actor === l.id)?.status}
         />
       ))}

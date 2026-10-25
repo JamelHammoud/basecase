@@ -120,7 +120,7 @@ function describeComponent(key: string): LineInfo | null {
   return {
     category: 'Components',
     name: v ? `${c.name} ${v.label}` : c.name,
-    detail: `${c.manufacturer} · ${v ? v.mpn : c.mpn}`,
+    detail: `${c.manufacturer} ${v ? v.mpn : c.mpn}`,
     url: link?.url,
     urlKind: link?.kind ?? 'none',
     warning: !v && c.variants?.length ? `Choose a version: ${c.variants.map((x) => x.label).join(', ')}` : undefined,

@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { cadInstructions, codexMeta } from './agentProfiles.mjs';
 import { resolveCommand } from './agentProcess.mjs';
-import { safeWorkspace } from './constants.mjs';
+import { BLOCKED_SUBAGENTS, safeWorkspace } from './constants.mjs';
 import { cadSubagents } from './subagents.mjs';
 
 function cadMcpServer({ workspaceRoot, bridgeUrl, evidenceDir, referencesDir, offline }, workspaceId) {
@@ -30,8 +30,10 @@ function claudeCodeMeta(offline) {
     claudeCode: {
       options: {
         tools: ['TodoWrite', 'Agent', ...web],
+        settingSources: [],
         thinking: { type: 'adaptive', display: 'summarized' },
         allowedTools: ['mcp__robotics_cad', 'TodoWrite', 'Agent', ...web],
+        disallowedTools: BLOCKED_SUBAGENTS.map((type) => `Agent(${type})`),
         agents: cadSubagents(),
       },
     },

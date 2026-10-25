@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { useSyncExternalStore } from 'react';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { mergeGeometries, toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { componentArrays, type ComponentArrays } from './componentGeometry';
+import { geometryWorker } from './geometryWorker';
+import { geometryFromArrays } from './partMesh/creased';
+import { linesGeometry } from './partMesh/lateEdges';
 
 export interface ComponentPiece {
   geometry: THREE.BufferGeometry;
@@ -30,17 +32,26 @@ const notify = () => {
 
 export const componentMeshUrl = (id: string) => `${import.meta.env.BASE_URL}parts/${id}.glb`;
 
-function finish(color: THREE.Color): { metalness: number; roughness: number } {
-  const hsl = { h: 0, s: 0, l: 0 };
+const processComponent = (data: ArrayBuffer): Promise<ComponentArrays> =>
+  typeof document === 'undefined' ? componentArrays(data) : geometryWorker.call('component', data, [data]);
 
-  color.getHSL(hsl, THREE.SRGBColorSpace);
+const shared = (geometry: THREE.BufferGeometry) => {
+  geometry.userData.shared = true;
 
-  const gold = hsl.h > 0.08 && hsl.h < 0.17 && hsl.s > 0.35 && hsl.l > 0.35;
-  const silver = hsl.s < 0.12 && hsl.l > 0.55 && hsl.l < 0.85;
+  return geometry;
+};
 
-  if (gold || silver) return { metalness: 0.75, roughness: 0.32 };
-
-  return { metalness: 0.05, roughness: 0.55 };
+function componentFromArrays(arrays: ComponentArrays): LoadedComponent {
+  return {
+    pieces: arrays.pieces.map(({ position, normal, color, metalness, roughness }) => ({
+      geometry: shared(geometryFromArrays(position, normal)),
+      color,
+      metalness,
+      roughness,
+    })),
+    edges: shared(linesGeometry(arrays.edges)),
+    size: arrays.size,
+  };
 }
 
 export function loadComponentMesh(id: string): Promise<LoadedComponent> {
@@ -59,41 +70,7 @@ export function loadComponentMesh(id: string): Promise<LoadedComponent> {
 
     if (!res.ok) throw new Error(`Couldn't load the ${id} model (${res.status}).`);
 
-    const gltf = await new GLTFLoader().parseAsync(await res.arrayBuffer(), '');
-    const pieces: ComponentPiece[] = [];
-
-    gltf.scene.updateMatrixWorld(true);
-    gltf.scene.traverse((obj) => {
-      const mesh = obj as THREE.Mesh;
-
-      if (!mesh.isMesh) return;
-
-      const src = mesh.material as THREE.MeshStandardMaterial;
-      let geo = mesh.geometry.clone();
-
-      geo.applyMatrix4(mesh.matrixWorld);
-      geo = toCreasedNormals(geo, THREE.MathUtils.degToRad(30));
-      geo.userData.shared = true;
-      pieces.push({ geometry: geo, color: '#' + src.color.getHexString(THREE.SRGBColorSpace), ...finish(src.color) });
-    });
-
-    const edgeParts = pieces.map((p) => new THREE.EdgesGeometry(p.geometry, 35));
-    const edges = edgeParts.length
-      ? (mergeGeometries(edgeParts, false) ?? new THREE.BufferGeometry())
-      : new THREE.BufferGeometry();
-
-    edgeParts.forEach((g) => g.dispose());
-    edges.userData.shared = true;
-
-    const box = new THREE.Box3();
-
-    pieces.forEach((p) => {
-      p.geometry.computeBoundingBox();
-      box.union(p.geometry.boundingBox!);
-    });
-
-    const s = box.getSize(new THREE.Vector3());
-    const mesh: LoadedComponent = { pieces, edges, size: [s.x, s.y, s.z] };
+    const mesh = componentFromArrays(await processComponent(await res.arrayBuffer()));
 
     entries.set(id, { status: 'ready', mesh });
     pending.delete(id);

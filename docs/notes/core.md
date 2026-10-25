@@ -269,3 +269,11 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - Policy command is forward m/s, left m/s, turn rad/s; `eval.fellAt` null = never fell.
 - `PurchaseRecord`: what the user saw on a listing, recorded by hand (never fetched or generated); `packQty` pieces per listing; `checkedAt` ISO date.
 - Annotation pins follow their part by `offset`; position is the world position when created.
+
+## guide (build guide rendering)
+
+- `GuideStage.draw` returns the PNG as a promise: the WebGL canvas is copied to a 2D `OffscreenCanvas` at once (so the next render can start) and encoded with `convertToBlob`, with at most 3 encodes in flight (`ready()`). `GuideRenderer.draw` returns a `Drawing` whose `dataUrl` fills in when its encode finishes; `drawGuide` awaits `flush()` before the drawings are used. Never copy a drawing with a spread before then: the copy keeps the empty `dataUrl` (step details were blank PDF images this way).
+- Cache keys are `JSON` of what a drawing depends on plus the sorted part keys it shows, never `step.number` (inserting a step would invalidate every later one). A run's cache entries are kept only if the run finishes (`commit`); a stopped run keeps the previous run's.
+- First run of a 60-part scene under SwiftShader: about 80 s with no main-thread long tasks; the same scene unchanged: about 2 s.
+- Guide viewer: turn scroll snapping off before any flight. Chrome treats a page's transformed box as its snap area, so a page flying back to the thumbnail made the viewer re-snap mid-flight and the page landed in the wrong place (only when scrolled past page 1). Zooming above 100% also turns snapping off.
+- Guide viewer flights measure the thumbnail at open with its hover lift and tilt (it's under the pointer), and at close as it rests (hidden, untilted).

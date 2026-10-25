@@ -1,62 +1,56 @@
 import * as THREE from 'three';
-import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { ScenePart } from '../../types/robotics';
 import { getComponentMesh } from '../componentMeshes';
+import { geometryWorker } from '../geometryWorker';
+import { packedMesh } from '../packedMesh';
 import { buildHardwarePieces, type HardwareMaterials } from '../hardwareMesh';
 import { plainMesh, type BuildContext } from './context';
+import { texturedVisual } from './simreadyVisual';
 import { creaseEdgesOnly } from './creaseEdges';
 import { cadEdgeMaterial, createMaterial, highlightEdgeMaterial } from './materials';
+import { CAD_CREASE_DEG, creasedGeometry, creaseKey, MESH_CREASE_DEG, meshScale, type MeshSource } from './creased';
+import { addEdges, linesGeometry } from './lateEdges';
 import { disposeCachedGeometry, objectKey } from './sharedGeometry';
 import type { PartBuilder } from './primitives';
 
-interface MeshSource {
-  positions: number[];
-  indices: number[];
-  baseSize: [number, number, number];
-}
-
-const scaleOf = (ctx: BuildContext, base: [number, number, number]) =>
-  [ctx.width / base[0], ctx.height / base[1], ctx.depth / base[2]].map((v) => (Number.isFinite(v) && v > 0 ? v : 1));
-
-const creasedGeometry = (src: MeshSource, creaseDeg: number, scale: number[]) => {
-  let geometry = new THREE.BufferGeometry();
-
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(src.positions, 3));
-  geometry.setIndex(src.indices);
-  geometry = toCreasedNormals(geometry, THREE.MathUtils.degToRad(creaseDeg));
-  geometry.scale(scale[0], scale[1], scale[2]);
-
-  return geometry;
-};
+const scaleOf = (ctx: BuildContext, base: [number, number, number]) => meshScale(ctx, base);
 
 const sharedCreased = (ctx: BuildContext, src: MeshSource, creaseDeg: number) => {
   const scale = scaleOf(ctx, src.baseSize);
 
   return ctx.derive(
-    `${objectKey(src)}|crease${creaseDeg}|${scale.join(',')}`,
+    creaseKey(src, creaseDeg, scale),
     () => creasedGeometry(src, creaseDeg, scale),
     disposeCachedGeometry,
   );
 };
 
-const sharedEdges = (ctx: BuildContext, geometry: THREE.BufferGeometry, build: () => THREE.BufferGeometry) =>
-  ctx.derive(`${objectKey(geometry)}|edges`, build, disposeCachedGeometry);
+const edgesKey = (geometry: THREE.BufferGeometry) => `${objectKey(geometry)}|edges`;
 
-const cadEdges = (cad: NonNullable<ScenePart['cad']>, geometry: THREE.BufferGeometry, scale: number[]) => {
-  if (!cad.edges || cad.edges.length < 6) {
-    return new THREE.EdgesGeometry(geometry, 30);
-  }
+const positionsOf = (geometry: THREE.BufferGeometry) =>
+  (geometry.getAttribute('position').array as Float32Array).slice();
 
-  const edges = new THREE.BufferGeometry();
+const workerEdges = (geometry: THREE.BufferGeometry, thresholdDeg: number) => async () => {
+  const positions = positionsOf(geometry);
 
-  edges.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(creaseEdgesOnly(cad.edges, cad.positions, cad.indices), 3),
-  );
-  edges.scale(scale[0], scale[1], scale[2]);
-
-  return edges;
+  return linesGeometry(await geometryWorker.call('edges', { positions, thresholdDeg }, [positions.buffer]));
 };
+
+const scaledLines = (scale: number[]) => (lines: ArrayLike<number>) =>
+  linesGeometry(Float32Array.from(lines)).scale(scale[0], scale[1], scale[2]);
+
+const hasSavedEdges = (cad: NonNullable<ScenePart['cad']>) => Boolean(cad.edges && cad.edges.length >= 6);
+
+const cadEdgesNow = (cad: NonNullable<ScenePart['cad']>, geometry: THREE.BufferGeometry, scale: number[]) =>
+  hasSavedEdges(cad)
+    ? scaledLines(scale)(creaseEdgesOnly(cad.edges!, cad.positions, cad.indices))
+    : new THREE.EdgesGeometry(geometry, 30);
+
+const cadEdgesLater = (cad: NonNullable<ScenePart['cad']>, geometry: THREE.BufferGeometry, scale: number[]) =>
+  hasSavedEdges(cad)
+    ? async () =>
+        scaledLines(scale)(await geometryWorker.call('creaseEdges', { edges: cad.edges!, ...packedMesh(cad) }))
+    : workerEdges(geometry, 30);
 
 const cadPart: PartBuilder = (ctx) => {
   const cad = ctx.part.cad;
@@ -65,14 +59,23 @@ const cadPart: PartBuilder = (ctx) => {
     return;
   }
 
-  const geometry = sharedCreased(ctx, cad, 32);
+  const geometry = sharedCreased(ctx, cad, CAD_CREASE_DEG);
   const mesh = plainMesh(geometry, ctx.material(), ctx.part.role);
-  const edges = sharedEdges(ctx, geometry, () => cadEdges(cad, geometry, scaleOf(ctx, cad.baseSize)));
-  const lines = new THREE.LineSegments(edges, cadEdgeMaterial(ctx.part.role, ctx.selected));
+  const scale = scaleOf(ctx, cad.baseSize);
 
-  lines.name = 'cad-edges';
-  lines.raycast = () => {};
-  mesh.add(lines);
+  addEdges(ctx, {
+    key: edgesKey(geometry),
+    owner: mesh,
+    build: () => cadEdgesNow(cad, geometry, scale),
+    compute: cadEdgesLater(cad, geometry, scale),
+    attach: (edges) => {
+      const lines = new THREE.LineSegments(edges, cadEdgeMaterial(ctx.part.role, ctx.selected));
+
+      lines.name = 'cad-edges';
+      lines.raycast = () => {};
+      mesh.add(lines);
+    },
+  });
   ctx.group.add(mesh);
 };
 
@@ -93,20 +96,23 @@ const importedMesh: PartBuilder = (ctx) => {
     return;
   }
 
-  const geometry = sharedCreased(ctx, src, 30);
-  const mesh = plainMesh(geometry, ctx.material(), ctx.part.role);
-
-  if (showsHighlightEdges(ctx)) {
-    mesh.add(
-      highlightLines(
-        sharedEdges(ctx, geometry, () => new THREE.EdgesGeometry(geometry, 35)),
-        ctx,
-        0.9,
-      ),
-    );
-  }
+  const geometry = sharedCreased(ctx, src, MESH_CREASE_DEG);
+  const textured = texturedVisual(ctx);
+  const mesh = plainMesh(geometry, textured?.standIn ?? ctx.material(), ctx.part.role);
 
   ctx.group.add(mesh);
+
+  if (textured) ctx.group.add(textured.group);
+
+  if (!showsHighlightEdges(ctx)) return;
+
+  addEdges(ctx, {
+    key: edgesKey(geometry),
+    owner: mesh,
+    build: () => new THREE.EdgesGeometry(geometry, 35),
+    compute: workerEdges(geometry, 35),
+    attach: (edges) => mesh.add(highlightLines(edges, ctx, 0.9)),
+  });
 };
 
 const componentPart: PartBuilder = (ctx) => {

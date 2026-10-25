@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { SimReady } from './simready/index.mjs';
 import { Trainer } from './trainer.mjs';
 import { isAiAgent } from './backend/agentProfiles.mjs';
 import { AcpAgent } from './backend/acpAgent.mjs';
@@ -51,6 +52,19 @@ export class BasecaseBackendService {
     this.setupFileWatchers();
 
     this.trainer = new Trainer(this.libraryDir, (event) => this.emitEvent(event));
+    this.simready = new SimReady(this.libraryDir, (event) => this.emitEvent(event));
+  }
+
+  simreadyStatus() {
+    return this.simready.status();
+  }
+
+  simreadyFetch(payload) {
+    return this.simready.fetch(payload);
+  }
+
+  simreadyFile(payload) {
+    return this.simready.file(payload);
   }
 
   trainStatus() {
@@ -160,6 +174,14 @@ export class BasecaseBackendService {
 
   newAcpConversation(workspaceId = DEFAULT_WORKSPACE) {
     return this.agent.newConversation(workspaceId);
+  }
+
+  liveAcpRuns(workspaceId = DEFAULT_WORKSPACE) {
+    return this.agent.liveRuns(workspaceId);
+  }
+
+  forgetAcpRun(workspaceId = DEFAULT_WORKSPACE) {
+    return this.agent.forgetRun(workspaceId);
   }
 
   cancelAcpPrompt(workspaceId = DEFAULT_WORKSPACE) {

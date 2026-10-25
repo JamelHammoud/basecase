@@ -83,10 +83,24 @@ describe('agent policy', () => {
       PATH: '/bin',
     });
 
-    expect(env).toEqual({ CLAUDE_HOME: 'k', PATH: '/bin', CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: '1' });
+    expect(env).toEqual({
+      CLAUDE_HOME: 'k',
+      PATH: '/bin',
+      CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: '1',
+      CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS: '1',
+      CLAUDE_CODE_DISABLE_CLAUDE_MDS: '1',
+      CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS: '1',
+      ENABLE_CLAUDEAI_MCP_SERVERS: 'false',
+      MAX_MCP_OUTPUT_TOKENS: '40000',
+    });
     expect(agentEnv({ ANTHROPIC_BASE_URL: 'h' })).toEqual({
       ANTHROPIC_BASE_URL: 'h',
       CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: '1',
+      CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS: '1',
+      CLAUDE_CODE_DISABLE_CLAUDE_MDS: '1',
+      CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS: '1',
+      ENABLE_CLAUDEAI_MCP_SERVERS: 'false',
+      MAX_MCP_OUTPUT_TOKENS: '40000',
     });
   });
 });

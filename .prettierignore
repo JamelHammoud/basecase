@@ -8,7 +8,9 @@ bench/data
 bench/runs
 tools/parts/cad
 tools/parts/generated
+tools/figures/generated
 electron/trainer/.venv
+electron/simready/.venv
 package-lock.json
 *.md
 scratch

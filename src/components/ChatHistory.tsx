@@ -60,8 +60,8 @@ const ChatRow: React.FC<{
         {running && <AgentSpinner />}
         <span className="truncate">{c.title}</span>
       </span>
-      <span className="relative shrink-0 w-[40px] h-full mr-[4px] flex items-center justify-end">
-        <span className="pr-[6px] text-[12px] tabular-nums text-white/35 transition-opacity duration-150 group-hover/chat:opacity-0 group-focus-within/chat:opacity-0">
+      <span className="relative shrink-0 min-w-[40px] h-full mr-[4px] flex items-center justify-end">
+        <span className="pr-[6px] whitespace-nowrap text-[12px] tabular-nums text-white/35 transition-opacity duration-150 group-hover/chat:opacity-0 group-focus-within/chat:opacity-0">
           {running ? '' : timeAgo(c.updatedAt)}
         </span>
         <Tooltip label="Delete chat" side="right">

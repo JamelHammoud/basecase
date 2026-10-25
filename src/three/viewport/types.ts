@@ -1,5 +1,7 @@
 import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
+import type { ShapeReport } from '../analysis/shapeReports';
+import type { SweepSpec } from '../analysis/sweep';
 import type { MeshMeasure } from '../meshMeasure';
 import type {
   CameraPreset,
@@ -13,6 +15,14 @@ import type {
 } from '../../types/robotics';
 
 export type Vec3 = [number, number, number];
+
+export type FigureKind = 'human' | 'dog';
+
+export type MeasureKind = 'ruler' | FigureKind;
+
+export type FigurePlacements = Partial<Record<FigureKind, Vec3>>;
+
+export const DEFAULT_HUMAN_HEIGHT_MM = 1753;
 
 export interface PartTransformUpdate {
   id: string;
@@ -36,6 +46,13 @@ export type GrabHandler = (
   phase: GrabPhase,
 ) => void;
 
+export interface AgentFrame {
+  key: string;
+  color: string;
+  partIds: string[];
+  emphasis: 'focus' | 'normal' | 'dim';
+}
+
 export interface ViewportProps {
   sceneKey?: string;
   parts: ScenePart[];
@@ -55,11 +72,16 @@ export interface ViewportProps {
   annotateMode?: boolean;
   measureMode?: boolean;
   measureUnit?: MeasureUnit;
+  measureKind?: MeasureKind;
+  figures?: FigurePlacements;
+  humanHeightMm?: number;
+  onPlaceFigure?: (kind: FigureKind, point: Vec3) => void;
   onPlaceAnnotation?: (point: Vec3, partId: string | null) => void;
   markMode?: boolean;
   marks?: SceneMark[];
   markColor?: string;
   selectedMarkId?: string | null;
+  agentFrames?: AgentFrame[];
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
   paused?: boolean;
@@ -91,18 +113,19 @@ export interface Viewport3DHandle {
   captureViews: (
     views: string[],
     onlyIds?: string[],
-    opts?: { silhouette?: boolean },
-  ) => Array<{ view: string; dataUrl: string }>;
-  interference: (onlyIds?: string[]) => { interferences: Interference[]; coplanar: Coplanar[] };
-  measureParts: (ids?: string[]) => Record<string, MeshMeasure>;
+    opts?: { silhouette?: boolean; maxSide?: number },
+  ) => Promise<Array<{ view: string; dataUrl: string }>>;
+  interference: (onlyIds?: string[]) => Promise<{ interferences: Interference[]; coplanar: Coplanar[] }>;
+  measureParts: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
+  printShapes: (ids: string[]) => Promise<Record<string, ShapeReport>>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
-  sweepClashes: (moving: string[], origin: Vec3, axis: Vec3, anglesDeg: number[]) => ClashHit[];
+  sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
-  posedInterference: (onlyIds?: string[]) => Interference[];
+  posedInterference: (onlyIds?: string[]) => Promise<Interference[]>;
   posedFloor: (ids?: string[]) => number | null;
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;

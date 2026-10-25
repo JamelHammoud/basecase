@@ -18,6 +18,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "5176", "--strictPort"],
       "port": 5176
+    },
+    {
+      "name": "web-5181",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "5181", "--strictPort"],
+      "port": 5181
     }
   ]
 }

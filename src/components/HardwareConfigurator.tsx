@@ -232,7 +232,7 @@ const TypeTile: React.FC<{
             className="w-full h-full object-contain p-1 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
           />
         ) : (
-          <span className="block w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
+          <span className="block w-full h-full shimmer" />
         )}
       </span>
       <span

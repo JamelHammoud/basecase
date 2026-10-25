@@ -18,6 +18,7 @@ import {
 } from '../agent/agentSim';
 import type { ProjectSettings, RobotPoseState } from '../types/robotics';
 import { ROBOT_PRESETS } from '../utils/robotImport';
+import { findObjects, insertObject } from './agentSimReadyTools';
 import { newId } from './helpers';
 import { robotHeightMm } from './robotPlacement';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
@@ -26,7 +27,7 @@ type Payload = Record<string, unknown>;
 
 export interface PoseToolContext extends PoseContext {
   setAction: (action: string) => void;
-  importRobot: (source: RobotSource) => Promise<ImportRobotResult>;
+  importRobot: (source: RobotSource, at?: [number, number, number]) => Promise<ImportRobotResult>;
 }
 
 export function withSavedPose(project: ProjectSettings, name: string, state: RobotPoseState): ProjectSettings {
@@ -78,9 +79,19 @@ const POSE_TOOLS: Record<string, (ctx: PoseToolContext, payload: Payload) => Pos
 
     return retargetRequest(ctx, payload as RetargetPayload);
   },
+  find_objects: findObjects,
+  insert_object: insertObject,
 };
 
-export const POSE_TOOL_KINDS = ['get_rig', 'pose', 'animate', 'retarget', 'import_robot'];
+export const POSE_TOOL_KINDS = [
+  'get_rig',
+  'pose',
+  'animate',
+  'retarget',
+  'import_robot',
+  'find_objects',
+  'insert_object',
+];
 
 export async function runPoseTool(kind: string, payload: Payload, ctx: PoseToolContext): Promise<PoseReply> {
   const tool = Object.hasOwn(POSE_TOOLS, kind) ? POSE_TOOLS[kind] : importRobotTool;

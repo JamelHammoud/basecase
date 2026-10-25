@@ -32,6 +32,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       open={studio.isLeftOpen}
       partsSearchRef={ui.partsSearchRef}
       onImportRobot={robots.pickRobot}
+      onInsertSimReady={(asset) => robots.importRobotFrom({ kind: 'simready', asset })}
       width={panelWidths.left}
       resizing={studio.resizingPanel === 'left'}
       edge={

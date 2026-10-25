@@ -105,7 +105,7 @@ export async function retargetRequest(ctx: PoseContext, p: RetargetPayload): Pro
 
   if (typeof res === 'string') return { text: unmatchedText(res, mocap) };
 
-  let images: PoseReply['images'];
+  let images: Promise<NonNullable<PoseReply['images']>> | undefined;
 
   if (p.preview) {
     images = render(ctx, scope, previewStates(res.animation, p.preview.frames, false), [p.preview.view ?? 'iso']);
@@ -116,5 +116,5 @@ export async function retargetRequest(ctx: PoseContext, p: RetargetPayload): Pro
 
   if (p.play !== false) ctx.play(made.id);
 
-  return { text: retargetText(made, mocap, res), images };
+  return { text: retargetText(made, mocap, res), images: await images };
 }

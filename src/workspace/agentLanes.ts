@@ -1,4 +1,4 @@
-import type { AcpChatMessage, AgentConversationSummary, ScenePart } from '../types/robotics';
+import type { AcpChatMessage, AgentConversationSummary, ContextUsage, ScenePart } from '../types/robotics';
 import { chatTitle } from './acpTranscript';
 
 export const MAIN_LANE = 'main';
@@ -17,12 +17,14 @@ export interface AgentLane {
   status: string;
   edits: RunEdits;
   usedAt: number;
+  context: ContextUsage | null;
 }
 
 export interface LaneChat {
   chatId: string | null;
   messages: AcpChatMessage[];
   acpSessionId: string | null;
+  context?: ContextUsage | null;
 }
 
 export const laneKey = (workspaceId: string, laneId: string) =>
@@ -46,6 +48,7 @@ export function newLane(id: string, chat?: LaneChat): AgentLane {
     status: '',
     edits: {},
     usedAt: Date.now(),
+    context: chat?.context ?? null,
   };
 }
 

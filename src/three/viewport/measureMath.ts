@@ -149,3 +149,17 @@ export function closestOnVertical(a: Vec3, origin: Vec3, direction: Vec3): Vec3 
 }
 
 export const measureDistance = distance;
+
+export interface FeetInches {
+  feet: number;
+  inches: number;
+}
+
+export function toFeetInches(mm: number): FeetInches {
+  const total = Math.round((mm / MM_PER_INCH) * 10) / 10;
+  const feet = Math.floor(total / 12);
+
+  return { feet, inches: Math.round((total - feet * 12) * 10) / 10 };
+}
+
+export const fromFeetInches = ({ feet, inches }: FeetInches) => (feet * 12 + inches) * MM_PER_INCH;

@@ -111,6 +111,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - A live thought already says “Thinking” in its own header, so the status line is hidden when the last segment is a thought.
 - `ThoughtBlock` keeps `override = null` until the user toggles it (open while live, folded once done). A layout effect keeps the live window on the newest line.
 - `toolLabel` returns `null` to hide a step. A URL parse failure falls back to the raw text.
+- `SHIMMER_TEXT` (transparent text with a gradient clipped to it) goes on the title alone, never around children with `opacity`: Chromium paints those in their own layer, the gradient never reaches them, and their text turns invisible while still taking space. A running step's detail did this and left blank lines in the feed.
 - `CyclingPlaceholder`: each example ends by fading out, and that animation end advances the index. `key={exampleSet}` restarts from the first example when the set changes. Under reduced motion there is no animation and no cycling.
 
 ## AgentCursor

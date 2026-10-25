@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROJECT, type AcpChatMessage, type ScenePart } from '../types/robotics';
-import { applySessionUpdate, chatTitle, markLastAgentStopped } from './acpTranscript';
+import {
+  applySessionUpdate,
+  chatTitle,
+  clearFailedReply,
+  markLastAgentFailed,
+  markLastAgentStopped,
+} from './acpTranscript';
+import { resendPayload } from './agentPrompt';
 import { applyBuildSettings } from './agentBuildRequests';
 import { pushHistory, stepHistory, docFromParts } from './docHistory';
 import { copyName, fileSafe, listNames } from './helpers';
@@ -76,6 +83,32 @@ describe('agent transcript', () => {
     ]);
     expect(markLastAgentStopped(messages)[1].stopped).toBe(true);
     expect(chatTitle(messages)).toBe('Build a lamp');
+  });
+
+  it('retries a failed run with the same message, keeping any work it streamed', () => {
+    const user: AcpChatMessage = {
+      id: 'u',
+      role: 'user',
+      text: 'Build a lamp',
+      timestamp: NOW.toISOString(),
+      imageAttachments: ['data:image/png;base64,AA'],
+      folderAttachments: [{ id: 'f1', name: 'Specs', fileCount: 3 }],
+    };
+    const empty: AcpChatMessage = { id: 'a', role: 'agent', text: '', timestamp: NOW.toISOString(), toolCalls: [] };
+    const failed = markLastAgentFailed('Rate limited.')([user, empty]);
+
+    expect(failed[1].failed).toBe('Rate limited.');
+    expect(clearFailedReply(failed)).toEqual([user]);
+
+    const partial = markLastAgentFailed('Rate limited.')([user, { ...empty, text: 'Blocking out' }]);
+
+    expect(clearFailedReply(partial)[1]).toMatchObject({ text: 'Blocking out', failed: undefined });
+    expect(resendPayload(user, { note: 'Marks: red', model: 'opus' })).toMatchObject({
+      promptText: 'Build a lamp\n\nMarks: red',
+      imageDataUrls: ['data:image/png;base64,AA'],
+      evidenceFolders: [{ id: 'f1', name: 'Specs' }],
+      model: 'opus',
+    });
   });
 });
 

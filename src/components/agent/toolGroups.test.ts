@@ -17,7 +17,11 @@ const feed = (steps: (string | [string, AcpToolCallEvent['status']])[]) => {
     return { type: 'tool', toolCallId };
   });
 
-  return groupToolRuns(segments, calls).map((item) => (item.kind === 'group' ? groupLabel(item.calls) : item.index));
+  return groupToolRuns(segments, calls).map((item) => {
+    if (item.kind === 'designers') return `${item.calls.length} designers`;
+
+    return item.kind === 'group' ? groupLabel(item.calls) : item.index;
+  });
 };
 
 describe('groupToolRuns', () => {
@@ -36,7 +40,12 @@ describe('groupToolRuns', () => {
     ).toEqual([0, 1, 2, 'Inspecting the model 3 times', 6, 7]);
   });
 
-  it('never groups subagents', () => {
-    expect(feed(['Agent', 'Agent', 'Agent']).filter((item) => typeof item === 'string')).toEqual([]);
+  it('gathers consecutive part designers into one card, even a lone one', () => {
+    expect(feed(['look', 'Agent', 'set_status', 'Agent', 'Agent', 'text:Done', 'Agent'])).toEqual([
+      0,
+      '3 designers',
+      5,
+      '1 designers',
+    ]);
   });
 });

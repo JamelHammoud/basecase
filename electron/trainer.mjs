@@ -1,28 +1,10 @@
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findUv } from './uv.mjs';
 
 const TRAINER_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'trainer');
-
-function findUv() {
-  const candidates = [
-    process.env.BASECASE_UV,
-    path.join(os.homedir(), '.local', 'bin', 'uv'),
-    path.join(os.homedir(), '.cargo', 'bin', 'uv'),
-    '/opt/homebrew/bin/uv',
-    '/usr/local/bin/uv',
-  ].filter(Boolean);
-
-  for (const c of candidates) if (fs.existsSync(c)) return c;
-
-  try {
-    return execFileSync('/bin/sh', ['-lc', 'command -v uv'], { encoding: 'utf8' }).trim() || null;
-  } catch {
-    return null;
-  }
-}
 
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 

@@ -7,7 +7,7 @@ import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
 import { downscaleDataUrl } from '../utils/imageFile';
 import { platformBridge } from '../utils/platformBridge';
-import { buildPrintReport, printReportText } from '../utils/printReport';
+import { printReportOf, printReportText } from '../utils/printReport';
 import { maskProfile, photoProfile } from '../utils/silhouette';
 import {
   applyBuildSettings,
@@ -17,6 +17,7 @@ import {
 } from './agentBuildRequests';
 import { POSE_TOOL_KINDS, SIM_TOOL_KINDS } from './agentRobotTools';
 import type { Vec3 } from './types';
+import type { GeneratedGuide } from '../guide/generateGuide';
 
 type Payload = Record<string, unknown>;
 
@@ -29,27 +30,19 @@ export interface RequestContext {
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
-  verify: () => EngineeringReport;
+  verify: () => Promise<EngineeringReport>;
   applyOps: (ops: AgentOp[]) => Promise<string>;
+  buildGuide: () => Promise<GeneratedGuide | null>;
 }
 
 type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
 
-const TOOL_IMAGE_SIDE = 768;
 const VIEW_IMAGE_SIDE = 1024;
 const EVIDENCE_IMAGE_SIDE = 1568;
 
 const idsOf = (payload: Payload) => (payload.ids as string[] | undefined) ?? undefined;
 
-async function withImages(reply: PoseReply) {
-  const images = reply.images
-    ? await Promise.all(
-        reply.images.map(async (s) => ({ view: s.view, dataUrl: await downscaleDataUrl(s.dataUrl, TOOL_IMAGE_SIDE) })),
-      )
-    : undefined;
-
-  return { text: reply.text, images };
-}
+const toolReply = ({ text, images }: PoseReply) => ({ text, images });
 
 function inspectLabel(ids: string[] | undefined, parts: ScenePart[]) {
   if (!ids?.length) return 'Looking';
@@ -80,27 +73,22 @@ async function screenshot(payload: Payload, ctx: RequestContext) {
 
   ctx.setAction(inspectLabel(ids, ctx.parts()));
 
-  const shots = ctx.viewport()?.captureViews(views, ids) ?? [];
-  const images = await Promise.all(
-    shots.map(async (s) => ({ view: s.view, dataUrl: await downscaleDataUrl(s.dataUrl, VIEW_IMAGE_SIDE) })),
-  );
-
-  return { images };
+  return { images: (await ctx.viewport()?.captureViews(views, ids, { maxSide: VIEW_IMAGE_SIDE })) ?? [] };
 }
 
 async function silhouetteCompare(payload: Payload, ctx: RequestContext) {
   const view = String(payload.view ?? 'front');
   const ref = await photoProfile(String(payload.reference));
-  const [shot] = ctx.viewport()?.captureViews([view], idsOf(payload), { silhouette: true }) ?? [];
+  const [shot] = (await ctx.viewport()?.captureViews([view], idsOf(payload), { silhouette: true })) ?? [];
   const model = shot ? await maskProfile(shot.dataUrl) : null;
 
   return { reference: ref.profile, plain: ref.plain, reason: ref.reason, model };
 }
 
-const trianglesOf = (ctx: RequestContext) => (id: string) => ctx.viewport()?.partTriangles(id) ?? null;
+const shapesOf = (ctx: RequestContext) => async (ids: string[]) => (await ctx.viewport()?.printShapes(ids)) ?? {};
 
 async function bom(_payload: Payload, ctx: RequestContext) {
-  const print = buildPrintReport(ctx.parts(), ctx.project(), trianglesOf(ctx));
+  const print = await printReportOf(ctx.parts(), ctx.project(), shapesOf(ctx));
   const supportG: Partial<Record<ProjectSettings['material'], number>> = {};
 
   for (const r of print.parts) supportG[r.material] = (supportG[r.material] ?? 0) + r.supportG;
@@ -109,7 +97,7 @@ async function bom(_payload: Payload, ctx: RequestContext) {
     parts: ctx.parts(),
     project: ctx.project(),
     purchases: await platformBridge.listPurchases(),
-    measures: ctx.viewport()?.measureParts() ?? {},
+    measures: (await ctx.viewport()?.measureParts()) ?? {},
     now: new Date(),
     supportG,
   });
@@ -117,11 +105,11 @@ async function bom(_payload: Payload, ctx: RequestContext) {
   return { text: bomText(built, Object.fromEntries(ctx.parts().map((p) => [p.id, p.name]))) };
 }
 
-function printability(payload: Payload, ctx: RequestContext) {
+async function printability(payload: Payload, ctx: RequestContext) {
   const ids = payload.ids as string[] | undefined;
   const parts = ids?.length ? ctx.parts().filter((p) => ids.includes(p.id)) : ctx.parts();
 
-  return { text: printReportText(buildPrintReport(parts, ctx.project(), trianglesOf(ctx))) };
+  return { text: printReportText(await printReportOf(parts, ctx.project(), shapesOf(ctx))) };
 }
 
 function defineJoints(payload: Payload, ctx: RequestContext) {
@@ -132,6 +120,25 @@ function defineJoints(payload: Payload, ctx: RequestContext) {
   ctx.setProjectNow(next);
 
   return { text };
+}
+
+async function buildGuide(_payload: Payload, ctx: RequestContext) {
+  ctx.setAction('Making the build guide');
+
+  const made = await ctx.buildGuide();
+
+  if (!made) return { text: '' };
+
+  const { plan, record } = made;
+  const subs = plan.modules.filter((m) => m.parent).map((m) => (m.copies > 1 ? `${m.name} ×${m.copies}` : m.name));
+  const where = made.saved ? 'Saved' : 'Opened (no PDF outside the desktop app)';
+
+  return {
+    text:
+      `${where}: ${record.pages} pages, ${record.steps} steps, ${plan.items.length} kinds of parts, ${plan.tools.length} tools.` +
+      (subs.length ? ` Sub-assemblies: ${subs.join(', ')}.` : '') +
+      ' Tell the user and link it as [build guide](#build-guide).',
+  };
 }
 
 function setBuild(payload: Payload, ctx: RequestContext) {
@@ -151,8 +158,8 @@ const HANDLERS: Record<string, Handler> = {
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),
   screenshot,
-  interference: (payload, ctx) => {
-    const found = ctx.viewport()?.interference(idsOf(payload)) ?? { interferences: [], coplanar: [] };
+  interference: async (payload, ctx) => {
+    const found = (await ctx.viewport()?.interference(idsOf(payload))) ?? { interferences: [], coplanar: [] };
 
     return { items: found.interferences, coplanar: found.coplanar };
   },
@@ -160,12 +167,13 @@ const HANDLERS: Record<string, Handler> = {
   bom,
   printability,
   define_joints: defineJoints,
-  verify: (_payload, ctx) => {
+  verify: async (_payload, ctx) => {
     ctx.setAction('Checking the design');
 
-    return { text: engineeringText(ctx.verify(), toCad) };
+    return { text: engineeringText(await ctx.verify(), toCad) };
   },
   set_build: setBuild,
+  build_guide: buildGuide,
   catalog: (payload) => ({ text: agentCatalog(String(payload.query ?? '')) }),
   downscale_image: async (payload) => ({
     dataUrl: await downscaleDataUrl(String(payload.dataUrl), Number(payload.maxSide) || EVIDENCE_IMAGE_SIDE, 0.88),
@@ -174,13 +182,13 @@ const HANDLERS: Record<string, Handler> = {
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [
       kind,
-      async (payload, ctx) => withImages(await ctx.poseTool(kind, payload)),
+      async (payload, ctx) => toolReply(await ctx.poseTool(kind, payload)),
     ]),
   ),
   ...Object.fromEntries(
     SIM_TOOL_KINDS.map((kind): [string, Handler] => [
       kind,
-      async (payload, ctx) => withImages(await ctx.simTool(kind, payload)),
+      async (payload, ctx) => toolReply(await ctx.simTool(kind, payload)),
     ]),
   ),
 };

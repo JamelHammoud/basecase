@@ -3,9 +3,10 @@ import { AcpChatMessage, AcpToolCallEvent } from '../../types/robotics';
 import { Markdown } from '../../design-system';
 import { usePartMarkdown } from './PartLinksProvider';
 import { PlanCard } from './PlanCard';
-import { SHIMMER_TEXT } from './shimmer';
 import { ThoughtBlock } from './ThoughtBlock';
-import { isSubagentCall, SubagentStep } from './SubagentStep';
+import { WorkingStatus } from './WorkingStatus';
+import { designerName, isDesignerCall, isDesignerRunning } from '../../utils/designers';
+import { DesignersCard } from './DesignersCard';
 import { ToolGroup } from './ToolGroup';
 import { groupToolRuns } from './toolGroups';
 import { ToolStep } from './ToolStep';
@@ -25,16 +26,16 @@ const ToolSegment: React.FC<{ call: AcpToolCallEvent | undefined; onOpenImages: 
 }) => {
   if (!call) return null;
 
-  if (isSubagentCall(call)) return <SubagentStep call={call} onOpenImages={onOpenImages} />;
-
   return <ToolStep call={call} onOpenImages={onOpenImages} />;
 };
 
-const WorkingStatus: React.FC<{ status: string; started: boolean }> = ({ status, started }) => (
-  <div className="flex items-center gap-2 h-6 text-[13.5px]">
-    <span className={SHIMMER_TEXT}>{status || (started ? 'Working…' : 'Thinking…')}</span>
-  </div>
-);
+function waitingOn(calls: AcpToolCallEvent[]) {
+  const running = calls.filter((call) => isDesignerCall(call) && isDesignerRunning(call));
+
+  if (running.length === 0) return '';
+
+  return running.length === 1 ? `Waiting on ${designerName(running[0])}` : 'Waiting on subagents';
+}
 
 export const AgentMessage: React.FC<{
   msg: AcpChatMessage;
@@ -46,6 +47,7 @@ export const AgentMessage: React.FC<{
   const calls = new Map((msg.toolCalls ?? []).map((tc) => [tc.toolCallId, tc]));
   const segments = segmentsOf(msg);
   const last = segments[segments.length - 1];
+  const shownStatus = (busy && waitingOn(msg.toolCalls ?? [])) || status;
 
   return (
     <div className="space-y-2.5 animate-fade-in min-w-0" onContextMenu={onContextMenu}>
@@ -53,6 +55,8 @@ export const AgentMessage: React.FC<{
 
       {groupToolRuns(segments, calls).map((item) => {
         if (item.kind === 'group') return <ToolGroup key={item.index} calls={item.calls} onOpenImages={onOpenImages} />;
+
+        if (item.kind === 'designers') return <DesignersCard key={item.index} calls={item.calls} />;
 
         const seg = item.segment;
 
@@ -65,8 +69,11 @@ export const AgentMessage: React.FC<{
         return <TextSegment key={item.index} text={seg.text} />;
       })}
 
-      {busy && (status || last?.type !== 'thought') && <WorkingStatus status={status} started={segments.length > 0} />}
-      {msg.stopped && <div className="text-[12.5px] text-white/40">Stopped</div>}
+      {busy && (shownStatus || last?.type !== 'thought') && (
+        <WorkingStatus status={shownStatus} started={segments.length > 0} />
+      )}
+      {msg.failed && <div className="text-[12.5px] text-white/40">Couldn’t finish. {msg.failed}</div>}
+      {msg.stopped && !msg.failed && <div className="text-[12.5px] text-white/40">Stopped</div>}
     </div>
   );
 };

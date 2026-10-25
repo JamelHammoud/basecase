@@ -161,18 +161,23 @@ export function buildItems(parts: ScenePart[], order: string[]): GuideItem[] {
 const recessOf = (spec: HardwareSpec): ScrewRecess | null =>
   screwHead(spec)?.recess ?? setScrewRecess(spec)?.recess ?? null;
 
-type ToolInfo = { id: string; name: string; icon: ToolIcon };
+type ToolInfo = { id: string; name: string; icon: ToolIcon; size?: string };
 
 function recessTool(r: ScrewRecess): ToolInfo {
   switch (r.kind) {
     case 'hex':
-      return { id: `hex:${r.s}`, name: `${r.s} mm hex key`, icon: 'hex-key' };
+      return { id: `hex:${r.s}`, name: `${r.s} mm hex key`, icon: 'hex-key', size: `${r.s} mm` };
     case 'torx':
-      return { id: `torx:${r.size}`, name: `${r.size} Torx driver`, icon: 'torx' };
+      return { id: `torx:${r.size}`, name: `${r.size} Torx driver`, icon: 'torx', size: r.size };
     case 'slot':
-      return { id: `slot:${r.width}`, name: `${r.width} mm flat screwdriver`, icon: 'flat-screwdriver' };
+      return {
+        id: `slot:${r.width}`,
+        name: `${r.width} mm flat screwdriver`,
+        icon: 'flat-screwdriver',
+        size: `${r.width} mm`,
+      };
     default:
-      return { id: `cross:${r.size}`, name: `${r.size} screwdriver`, icon: 'screwdriver' };
+      return { id: `cross:${r.size}`, name: `${r.size} screwdriver`, icon: 'screwdriver', size: r.size };
   }
 }
 
@@ -181,7 +186,7 @@ function wrenchFor(spec: HardwareSpec) {
   const nut = spec.type === 'lock_nut' ? LOCK_NUT[size] : HEX_NUT[size];
   const s = spec.type.startsWith('standoff') ? STANDOFF[size]?.s : nut?.s;
 
-  return s ? { id: `wrench:${s}`, name: `${s} mm wrench`, icon: 'wrench' as const } : null;
+  return s ? { id: `wrench:${s}`, name: `${s} mm wrench`, icon: 'wrench' as const, size: `${s} mm` } : null;
 }
 
 const WRENCH_TYPES = new Set<HardwareSpec['type']>(['hex_nut', 'lock_nut', 'hex_bolt', 'standoff_mf', 'standoff_ff']);

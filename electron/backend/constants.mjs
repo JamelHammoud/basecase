@@ -4,9 +4,15 @@ export const CODEX_AGENT_COMMAND = 'node node_modules/@agentclientprotocol/codex
 export const GEMINI_AGENT_COMMAND = 'node node_modules/@google/gemini-cli/bundle/gemini.js --acp';
 
 export const SAFE_TOOL_PATTERN =
-  /robotics_cad|TodoWrite|WebSearch|WebFetch|^(Agent|Task)\b|\b(write_todos|update_plan|web_fetch|google_web_search)\b/i;
+  /robotics_cad|TodoWrite|WebSearch|WebFetch|\b(write_todos|update_plan|web_fetch|google_web_search)\b/i;
 
 export const CAD_SERVER = 'robotics_cad';
+
+export const PART_DESIGNER = 'part-designer';
+
+export const BLOCKED_SUBAGENTS = ['general-purpose', 'statusline-setup'];
+
+export const SUBAGENT_TOOLS = ['Agent', 'Task'];
 
 export const MAX_PROMPT_IMAGES = 20;
 

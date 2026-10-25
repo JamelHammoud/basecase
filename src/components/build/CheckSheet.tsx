@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, IconButton, NumberInput, TextInput, ChevronDownIcon, CloseIcon, ExternalLinkIcon } from '../../design-system';
+import { Button, IconButton, MetaLine, NumberInput, TextInput, ChevronDownIcon, CloseIcon, ExternalLinkIcon } from '../../design-system';
 import type { PurchaseRecord } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
 import { type PurchaseForm, canSave, formatPrice, initialPurchaseForm, linkError, purchaseRecord } from './purchaseForm';
@@ -23,10 +23,7 @@ const SheetHeader: React.FC<{ line: BomLine; onClose: () => void }> = ({ line, o
   <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-1">
     <div className="min-w-0">
       <h2 className="text-[15px] font-semibold text-white truncate">{line.name}</h2>
-      <p className="text-[13px] text-white/50 mt-0.5">
-        Need {needed(line)}
-        {line.detail ? ` · ${line.detail}` : ''}
-      </p>
+      <MetaLine className="text-[13px] text-white/50 mt-0.5" items={[`Need ${needed(line)}`, line.detail]} />
     </div>
     <IconButton icon={<CloseIcon className="w-4 h-4" />} title="Close" shortcut="Esc" size="sm" onClick={onClose} />
   </div>

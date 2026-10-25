@@ -1,5 +1,7 @@
 import type * as THREE from 'three';
-import { findInterferences } from '../interference';
+import { interferenceIn, measuresIn, printReportsIn, sweepsIn } from '../analysis/analysisPool';
+import { snapshotShapes } from '../analysis/sceneShapes';
+import { AgentFrames } from './agentFrames';
 import { BlueprintUnderlay } from './blueprint';
 import { focusOn, frameObjects, frameScene, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
@@ -14,6 +16,9 @@ import { MeasureTool } from './measureTool';
 import { PartLayer } from './partLayer';
 import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
+import { ScaleFigures } from './scaleFigures';
+import { SelectionOutline } from './selectionOutline';
+import { warmShaders } from './shaderWarmup';
 import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
 import type { ViewportContext, ViewportUi } from './viewportContext';
@@ -31,7 +36,11 @@ const GIZMO_KEYS: Array<keyof ViewportProps> = [
   'markMode',
 ];
 
-const FRAME_BUDGET_MS = 10;
+const FIGURE_KEYS: Array<keyof ViewportProps> = ['figures', 'humanHeightMm', 'measureKind', 'measureMode'];
+
+const FRAME_BUDGET_MS = 6;
+
+const interferenceOptions = (focus?: string[]) => ({ toleranceMm: 0.3, maxSamples: 400, focus });
 
 const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'captureScreenshot',
@@ -41,11 +50,11 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'posedFloor',
   'restBounds',
   'measureParts',
+  'printShapes',
   'partTriangles',
   'servoOutput',
   'sweepClashes',
   'pickAt',
-  'frameAll',
   'focusSelected',
   'measureFrom',
 ];
@@ -79,17 +88,23 @@ export class ViewportEngine {
 
   private readonly measureTool: MeasureTool;
 
+  private readonly figures: ScaleFigures;
+
   private readonly markLayer: MarkLayer;
 
   private readonly markInput: MarkInput;
+
+  private readonly agentFrames: AgentFrames;
 
   private readonly cleanups: Array<() => void>;
 
   private buildFrame = 0;
 
+  private frameWhenBuilt = false;
+
   constructor(options: EngineOptions) {
     const stage = createStage(options.container);
-    const layer = new PartLayer(stage.partsRoot);
+    const layer = new PartLayer(stage.partsRoot, () => this.scheduleBuilds());
     const loop = new RenderLoop(stage, (id) => layer.get(id));
 
     this.props = options.props;
@@ -105,10 +120,20 @@ export class ViewportEngine {
     };
     this.gizmo = new Gizmo(this.ctx);
     this.measureTool = new MeasureTool(this.ctx, options.measureLabel);
+    this.figures = new ScaleFigures(this.ctx);
     this.markLayer = new MarkLayer(stage.scene, stage.overlays);
     this.markLayer.sync(options.props.marks, options.props.selectedMarkId);
     this.markInput = new MarkInput(this.ctx, this.markLayer);
+    this.agentFrames = new AgentFrames(this.ctx);
+    this.agentFrames.sync(options.props.agentFrames ?? []);
+
+    const outline = new SelectionOutline(stage);
+
+    loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
     loop.afterRender.add(() => this.measureTool.updateLabel());
+    loop.afterRender.add(() => {
+      if (this.agentFrames.refresh()) loop.invalidate();
+    });
 
     const gizmoState = {
       dragging: () => this.ctx.runtime.draggingGizmo,
@@ -117,21 +142,24 @@ export class ViewportEngine {
 
     this.sizer = new CanvasSizer(stage, () => !loop.paused && loop.renderNow());
     this.blueprint = new BlueprintUnderlay(stage.scene, loop.invalidate);
-    stage.orbit.addEventListener('change', loop.invalidate);
+    stage.orbit.addEventListener('change', loop.noteInteraction);
+    stage.renderer.domElement.addEventListener('wheel', loop.noteInteraction, { passive: true });
     this.cleanups = [
       installWheel(stage, this.ctx.props),
       new Marquee(this.ctx, { element: options.marquee, hoveringAxis: gizmoState.hoveringAxis }).install(),
       this.markInput.install(),
-      new PointerInput(this.ctx, gizmoState, this.measureTool).install(),
+      new PointerInput(this.ctx, gizmoState, { measure: this.measureTool, figures: this.figures }).install(),
       installKeys(this.ctx, () => {
         this.gizmo.applySnaps();
         this.measureTool.refresh();
       }),
+      () => outline.dispose(),
     ];
     this.api = this.completing(this.handle());
     this.syncScene();
     frameScene(stage, options.props.parts);
     loop.start();
+    this.cleanups.push(warmShaders(stage, loop.invalidate));
   }
 
   update(props: ViewportProps, meshVersion: number): void {
@@ -164,19 +192,28 @@ export class ViewportEngine {
 
     if (previous.measureUnit !== props.measureUnit) this.measureTool.updateLabel();
 
+    if (previous.measureKind !== props.measureKind) this.measureTool.leave();
+
+    if (changed(previous, props, FIGURE_KEYS)) this.figures.sync();
+
     if (previous.markMode && !props.markMode) this.markInput.cancel();
 
     if (changed(previous, props, ['marks', 'selectedMarkId'])) this.markLayer.sync(props.marks, props.selectedMarkId);
+
+    if (previous.agentFrames !== props.agentFrames) this.agentFrames.sync(props.agentFrames ?? []);
   }
 
   dispose(): void {
     cancelAnimationFrame(this.buildFrame);
     this.ctx.loop.stop();
     this.cleanups.forEach((cleanup) => cleanup());
+    this.ctx.stage.renderer.domElement.removeEventListener('wheel', this.ctx.loop.noteInteraction);
     this.sizer.dispose();
     this.gizmo.dispose();
     this.measureTool.dispose();
+    this.figures.dispose();
     this.markLayer.dispose();
+    this.agentFrames.dispose();
     this.ctx.layer.dispose();
     disposeStage(this.ctx.stage);
   }
@@ -184,6 +221,7 @@ export class ViewportEngine {
   private handle(): Viewport3DHandle {
     const { ctx } = this;
     const withRest = <T>(run: () => T) => ctx.layer.withRest(run, () => this.applyPose());
+    const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
     const camera = <T>(run: () => T) => {
       const result = run();
 
@@ -199,6 +237,7 @@ export class ViewportEngine {
           views,
           onlyIds,
           silhouette: opts?.silhouette,
+          maxSide: opts?.maxSide,
           helper: this.gizmo.controls.getHelper(),
           marks: opts?.silhouette || onlyIds?.length ? undefined : this.markLayer.bounds(),
         }),
@@ -209,16 +248,23 @@ export class ViewportEngine {
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas) => this.setPose(deltas),
       interference: (onlyIds) =>
-        withRest(() => findInterferences(measure.solidObjects(ctx, { visibleOnly: true }), 0.3, 400, onlyIds)),
+        interferenceIn(
+          withRest(() => solidShapes(true)),
+          interferenceOptions(onlyIds),
+        ),
       posedInterference: (onlyIds) =>
-        findInterferences(measure.solidObjects(ctx, { visibleOnly: true }), 0.3, 400, onlyIds).interferences,
+        interferenceIn(solidShapes(true), interferenceOptions(onlyIds)).then((r) => r.interferences),
       posedFloor: (ids) => measure.posedFloor(ctx, ids),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
-      measureParts: (ids) => withRest(() => measure.measureParts(ctx, ids)),
+      measureParts: (ids) => measuresIn(withRest(() => snapshotShapes(measure.partObjects(ctx, ids)))),
+      printShapes: (ids) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids))),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),
-      sweepClashes: (moving, origin, axis, anglesDeg) =>
-        withRest(() => measure.sweepClashes(ctx, { moving, origin, axis, anglesDeg })),
+      sweepClashes: (sweeps) =>
+        sweepsIn(
+          withRest(() => solidShapes(false)),
+          sweeps,
+        ),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
       projectPoints: (points) => measure.projectPoints(ctx, points),
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
@@ -248,18 +294,20 @@ export class ViewportEngine {
   private afterBuild(): void {
     this.applyPose();
     this.gizmo.refresh();
+
+    if (this.frameWhenBuilt && !this.ctx.layer.hasPending) this.frameAll();
   }
 
   private scheduleBuilds(): void {
     cancelAnimationFrame(this.buildFrame);
 
-    if (!this.ctx.layer.hasPending) {
+    if (!this.ctx.layer.hasReady) {
       return;
     }
 
     this.buildFrame = requestAnimationFrame(() => {
-      this.ctx.layer.buildPending(FRAME_BUDGET_MS);
-      this.afterBuild();
+      if (this.ctx.layer.buildPending(FRAME_BUDGET_MS)) this.afterBuild();
+
       this.scheduleBuilds();
     });
   }
@@ -286,12 +334,17 @@ export class ViewportEngine {
     }
 
     cancelAnimationFrame(this.buildFrame);
-    this.ctx.layer.buildPending();
+    this.ctx.layer.buildAll();
     this.afterBuild();
   }
 
   private frameAll(): void {
     const { layer, stage, loop } = this.ctx;
+
+    this.frameWhenBuilt = layer.hasPending;
+
+    if (this.frameWhenBuilt) return;
+
     const objects = layer.objects().flatMap(([id, object]) => (layer.part(id)?.kind === 'image_plane' ? [] : [object]));
     const animation = frameObjects(stage, objects);
 

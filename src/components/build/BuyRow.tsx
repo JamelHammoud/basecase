@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Tooltip, ExternalLinkIcon } from '../../design-system';
+import { Button, MetaLine, Tooltip, ExternalLinkIcon } from '../../design-system';
 import type { BomLine } from '../../utils/bom';
 import { lineQty, linePacks, linkLabel } from './buyLine';
 import { money } from './format';
@@ -68,11 +68,10 @@ export const BuyRow: React.FC<{ line: BomLine; onCheck: () => void; onSelect: ()
   <li className="group flex items-center gap-2 h-[44px] px-[7px] rounded-lg hover:bg-white/[0.04]">
     <button type="button" onClick={onSelect} className="flex-1 min-w-0 text-left cursor-default">
       <div className="text-[13px] text-white/90 truncate">{l.name}</div>
-      <div className="text-[12px] text-white/40 truncate tabular-nums">
-        {lineQty(l)}
-        {linePacks(l)}
-        {l.warning && <span className="text-amber-400"> · {l.warning}</span>}
-      </div>
+      <MetaLine
+        className="text-[12px] text-white/40 tabular-nums"
+        items={[lineQty(l), linePacks(l), l.warning && <span className="text-amber-400">{l.warning}</span>]}
+      />
     </button>
     <ListingLink line={l} />
     <PriceControl line={l} onCheck={onCheck} />

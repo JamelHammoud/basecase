@@ -46,8 +46,8 @@ export function overallSize(parts: ScenePart[]): string | null {
 
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 
-export function layersTitle(parts: ScenePart[]): string {
+export function layersTitle(parts: ScenePart[]): string[] {
   const cutouts = parts.filter((p) => p.role === 'cutout').length;
 
-  return `${plural(parts.length, 'part')}${cutouts > 0 ? ` · ${plural(cutouts, 'cutout')}` : ''}`;
+  return cutouts > 0 ? [plural(parts.length, 'part'), plural(cutouts, 'cutout')] : [plural(parts.length, 'part')];
 }

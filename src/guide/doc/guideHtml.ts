@@ -4,6 +4,7 @@ import type { GuideDrawings } from '../render/guideDrawings';
 export interface GuideMeta {
   title: string;
   material: string;
+  infillPct: number;
   date: string;
   sizeMm?: [number, number, number];
   mark: string;
@@ -35,21 +36,16 @@ export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 
 
 export interface PageOptions {
   className?: string;
-  progress?: number;
   bare?: boolean;
 }
 
 export function pageHtml(body: string, folio: number, meta: GuideMeta, options: PageOptions = {}): string {
   const parity = folio % 2 === 0 ? 'even' : 'odd';
-  const progress =
-    options.progress === undefined
-      ? ''
-      : `<div class="progress"><div style="width:${Math.round(options.progress * 1000) / 10}%"></div></div>`;
   const footer = options.bare
     ? ''
     : `<div class="footer"><div class="title">${esc(meta.title)}</div><div class="folio">${folio}</div></div>`;
 
-  return `<section class="page ${parity} ${options.className ?? ''}">${body}${progress}${footer}</section>`;
+  return `<section class="page ${parity} ${options.className ?? ''}">${body}${footer}</section>`;
 }
 
 export function imageTag(dataUrl: string, style = ''): string {

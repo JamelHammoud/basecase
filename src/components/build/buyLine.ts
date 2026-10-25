@@ -8,7 +8,7 @@ export function linePacks(l: BomLine) {
 
   const word = l.unit === 'g' ? plural(l.packs, 'spool', 'spools') : plural(l.packs, 'pack', 'packs');
 
-  return ` · ${l.packs} ${word}`;
+  return `${l.packs} ${word}`;
 }
 
 export const linkLabel = (l: BomLine) => (l.urlKind === 'product' ? 'Open listing' : 'Search Amazon');

@@ -96,6 +96,31 @@ export const RobotsIcon: React.FC<GlyphProps> = ({ filled, className }) => {
   );
 };
 
+const MUG_BODY = 'M2.25 5.5v13a7 2.75 0 0 0 14 0v-13a7 2.75 0 0 0 -14 0z';
+const MUG_RIM = 'M2.25 5.5a7 2.75 0 0 0 14 0';
+const MUG_HANDLE = 'M16.25 9h1.75a3.5 3.5 0 0 1 0 7h-1.75';
+const MUG_OPENING = 'M3.85 5.5a5.4 1.4 0 1 0 10.8 0a5.4 1.4 0 1 0 -10.8 0';
+
+export const ObjectsIcon: React.FC<GlyphProps> = ({ filled, className }) => {
+  const mask = useId();
+
+  return (
+    <Glyph className={className}>
+      {filled ? (
+        <>
+          <Knockout id={mask}>
+            <path d={MUG_OPENING} fill="#000" stroke="none" />
+          </Knockout>
+          <path d={MUG_BODY} fill="currentColor" mask={`url(#${mask})`} />
+          <path d={MUG_HANDLE} />
+        </>
+      ) : (
+        <path d={MUG_BODY + MUG_RIM + MUG_HANDLE} />
+      )}
+    </Glyph>
+  );
+};
+
 const DRIVE_HEAD = 'M2.5 12a9.5 9.5 0 1 0 19 0a9.5 9.5 0 1 0 -19 0';
 const CROSS =
   'M10.55 6.1L13.45 6.1L13.45 10.55L17.9 10.55L17.9 13.45L13.45 13.45L13.45 17.9L10.55 17.9L10.55 13.45L6.1 13.45L6.1 10.55L10.55 10.55z';

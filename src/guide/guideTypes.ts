@@ -37,6 +37,7 @@ export type ToolIcon =
 export interface GuideTool {
   id: string;
   name: string;
+  size?: string;
   icon: ToolIcon;
   itemKeys: string[];
 }

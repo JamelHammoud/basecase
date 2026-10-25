@@ -59,3 +59,7 @@ export const DRAG_REGION = { WebkitAppRegion: 'drag' } as CSSProperties;
 export const NO_DRAG_REGION = { WebkitAppRegion: 'no-drag' } as CSSProperties;
 
 export const AGENT_COLOR = THEME_COLORS.agent;
+
+export const DESIGNER_COLORS = ['#d9a441', '#3fae96', '#8f7ae6', '#d6679a', '#7fae4a', '#3aa6bf'] as const;
+
+export const designerColor = (slot: number) => DESIGNER_COLORS[slot % DESIGNER_COLORS.length];

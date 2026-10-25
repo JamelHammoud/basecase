@@ -1,20 +1,20 @@
 import { glyph } from '../glyph';
 
-export const PlusIcon = glyph('M4 12H20M12 4V20');
+export const PlusIcon = glyph({ d: 'M4 12H20M12 4V20', weight: 2.5 });
 
 export const MinusIcon = glyph('M4 12H20');
 
-export const CloseIcon = glyph('M5.5 5.5L18.5 18.5M18.5 5.5L5.5 18.5');
+export const CloseIcon = glyph({ d: 'M5.5 5.5L18.5 18.5M18.5 5.5L5.5 18.5', weight: 2.5 });
 
 export const TickIcon = glyph('M4.5 12.5L9.5 17.5L19.5 6.5');
 
-export const ChevronDownIcon = glyph('M6 9L12 15L18 9');
+export const ChevronDownIcon = glyph({ d: 'M6 9L12 15L18 9', weight: 2.5 });
 
-export const ChevronUpIcon = glyph('M6 15L12 9L18 15');
+export const ChevronUpIcon = glyph({ d: 'M6 15L12 9L18 15', weight: 2.5 });
 
-export const ChevronLeftIcon = glyph('M15 6L9 12L15 18');
+export const ChevronLeftIcon = glyph({ d: 'M15 6L9 12L15 18', weight: 2.5 });
 
-export const ChevronRightIcon = glyph('M9 6L15 12L9 18');
+export const ChevronRightIcon = glyph({ d: 'M9 6L15 12L9 18', weight: 2.5 });
 
 export const ArrowUpIcon = glyph('M12 20V4M5.5 10.5L12 4L18.5 10.5');
 

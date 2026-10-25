@@ -1,5 +1,5 @@
 line-length = 120
-extend-exclude = ["library", "vendor", "node_modules", "electron/trainer/.venv"]
+extend-exclude = ["library", "vendor", "node_modules", "electron/trainer/.venv", "electron/simready/.venv"]
 
 [lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "C90", "PLR", "ERA"]

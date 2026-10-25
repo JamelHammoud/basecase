@@ -14,6 +14,7 @@ const ACCENTS: Record<Exclude<AccentMaterial, 'primary'>, { color: string; rough
 
 export interface BuildOptions {
   shareGeometry?: boolean;
+  lateEdges?: boolean;
 }
 
 export interface BuildContext {
@@ -30,6 +31,7 @@ export interface BuildContext {
   subMesh: (geometry: THREE.BufferGeometry, material?: THREE.Material, edgeThreshold?: number) => THREE.Mesh;
   add: (geometry: THREE.BufferGeometry, material?: THREE.Material, edgeThreshold?: number) => THREE.Mesh;
   derive: <T>(key: string, build: () => T, dispose: (value: T) => void) => T;
+  lateEdges: boolean;
 }
 
 const NO_DEFORM_EPSILON = { taper: 0.001, bend: 0.1, twist: 0.1, round: 0.001 };
@@ -146,5 +148,6 @@ export function createContext(part: ScenePart, selected: boolean, options: Build
     subMesh,
     add,
     derive: options.shareGeometry ? sharedDerive(group) : ownedDerive,
+    lateEdges: Boolean(options.lateEdges),
   };
 }

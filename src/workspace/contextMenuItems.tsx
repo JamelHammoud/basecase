@@ -276,6 +276,7 @@ export function contextMenuItems(menu: CanvasMenuState, inputs: ContextInputs): 
           onSelect: () => {
             core.viewportRef.current?.measureFrom(menu.x, menu.y);
             core.tool.toggleMeasure(true);
+            core.measure.setKind('ruler');
           },
         },
       ]

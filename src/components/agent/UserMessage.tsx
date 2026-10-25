@@ -86,6 +86,7 @@ const ClampedText: React.FC<{ text: string }> = ({ text }) => {
         <Markdown
           remarkPlugins={[remarkLineBreaks, ...(partLinks.remarkPlugins ?? [])]}
           onInternalLink={partLinks.onInternalLink}
+          linkPreview={partLinks.linkPreview}
         >
           {text}
         </Markdown>

@@ -17,6 +17,10 @@ export type ComponentGroup =
   | 'Linear Actuators'
   | 'Displays & Audio';
 
+export type SpecValue = string | string[];
+
+export const specLines = (value: SpecValue): string[] => (typeof value === 'string' ? [value] : value);
+
 export interface ComponentInfo {
   id: string;
   name: string;
@@ -24,7 +28,7 @@ export interface ComponentInfo {
   mpn: string;
   group: ComponentGroup;
   description: string;
-  specs: Array<[label: string, value: string]>;
+  specs: Array<[label: string, value: SpecValue]>;
   mounting: string;
   links: {
     amazon?: { url: string; kind: 'product' | 'search' };
@@ -104,9 +108,9 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Servos',
     description: 'Dual-shaft serial bus servo with a 12-bit magnetic encoder, used in the SO-100 and SO-101 arms.',
     specs: [
-      ['Stall torque', '19.5 kg·cm @ 7.4 V (C001) · 30 kg·cm @ 12 V (C018)'],
+      ['Stall torque', ['19.5 kg·cm @ 7.4 V (C001)', '30 kg·cm @ 12 V (C018)']],
       ['Speed', '0.192 s/60° @ 7.4 V'],
-      ['Voltage', '4–7.4 V (C001) · 4–14 V (C018)'],
+      ['Voltage', ['4–7.4 V (C001)', '4–14 V (C018)']],
       ['Gear ratio', '1:345, copper gears'],
       ['Interface', 'TTL half-duplex serial bus, 1 Mbps'],
       ['Weight', '55 g'],
@@ -289,7 +293,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Servos',
     description: 'Standard-size metal-gear PWM hobby servo for arm and hexapod joints.',
     specs: [
-      ['Stall torque', '9.4 kg·cm @ 4.8 V · 11 kg·cm @ 6 V'],
+      ['Stall torque', ['9.4 kg·cm @ 4.8 V', '11 kg·cm @ 6 V']],
       ['Speed', '0.15 s/60° @ 6 V'],
       ['Voltage', '4.8–6.6 V'],
       ['Interface', 'PWM, JR plug'],
@@ -517,7 +521,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Servos',
     description: '7.4 V serial bus servo with position, voltage and temperature feedback over Hiwonder’s bus protocol.',
     specs: [
-      ['Stall torque', '17 kg·cm at 6 V · 19.5 kg·cm at 7.4 V'],
+      ['Stall torque', ['17 kg·cm at 6 V', '19.5 kg·cm at 7.4 V']],
       ['Speed', '0.19 s/60° at 7.4 V'],
       ['Voltage', '6–8.4 V'],
       ['Range', '240°, or continuous rotation'],
@@ -557,7 +561,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Standard-size 20 kg·cm PWM servo with metal gears, a 25T spline and IP66 sealing. Shown with its arm.',
     specs: [
-      ['Stall torque', '18 kg·cm at 5 V · 21.5 kg·cm at 6.8 V'],
+      ['Stall torque', ['18 kg·cm at 5 V', '21.5 kg·cm at 6.8 V']],
       ['Speed', '0.14 s/60° at 6.8 V'],
       ['Voltage', '4.8–6.8 V'],
       ['Gear ratio', '275:1, metal gears'],
@@ -588,7 +592,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Holding torque', '40 N·cm'],
       ['Step angle', '1.8° (200 steps/rev)'],
       ['Rated current', '1.7 A/phase'],
-      ['Resistance', '1.5 Ω · 2.8 mH'],
+      ['Resistance', ['1.5 Ω', '2.8 mH']],
       ['Weight', '280 g'],
     ],
     mounting:
@@ -606,7 +610,7 @@ export const COMPONENTS: ComponentInfo[] = [
     id: 'pololu-micro-metal-gearmotor',
     name: 'Pololu Micro Metal Gearmotor 100:1',
     manufacturer: 'Pololu',
-    mpn: '#2214 · HP 6V, extended shaft',
+    mpn: '#2214 (HP 6V, extended shaft)',
     group: 'Motors',
     description: '6 V brushed gearmotor with a 100:1 metal gearbox and a rear shaft for a magnetic encoder (N20 size).',
     specs: [
@@ -858,7 +862,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Motors',
     description: 'Compact BLDC joint actuator with a 6:1 planetary gearbox and built-in driver, over CAN.',
     specs: [
-      ['Torque', '3 N·m rated · 9 N·m peak'],
+      ['Torque', ['3 N·m rated', '9 N·m peak']],
       ['Speed', '420 rpm rated'],
       ['Gear ratio', '6:1 planetary'],
       ['Voltage', '24 V'],
@@ -889,8 +893,8 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Motors',
     description: 'BLDC joint actuator with a 10:1 planetary gearbox, cross-roller output bearing and built-in driver.',
     specs: [
-      ['Torque', '8.3 N·m rated · 24.8 N·m peak'],
-      ['Speed', '148 rpm at 24 V · 310 rpm at 48 V'],
+      ['Torque', ['8.3 N·m rated', '24.8 N·m peak']],
+      ['Speed', ['148 rpm at 24 V', '310 rpm at 48 V']],
       ['Gear ratio', '10:1 planetary'],
       ['Voltage', '24 or 48 V'],
       ['Interface', 'CAN, UART'],
@@ -921,7 +925,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Flat BLDC joint actuator with a 9:1 planetary gearbox, 16-bit encoder and one XT30 for power and CAN.',
     specs: [
-      ['Torque', '9 N·m rated · 22 N·m peak'],
+      ['Torque', ['9 N·m rated', '22 N·m peak']],
       ['Speed', '390 rpm rated at 48 V'],
       ['Gear ratio', '9:1 planetary'],
       ['Voltage', '48 V'],
@@ -953,7 +957,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Dual-shaft 63 mm outrunner BLDC motor for direct-drive or belt-reduced joints on an ODrive.',
     specs: [
       ['Kv', '150 rpm/V, 5760 rpm at 48 V'],
-      ['Torque', 'Kt 0.055 N·m/A · 3.86 N·m at 70 A'],
+      ['Torque', ['Kt 0.055 N·m/A', '3.86 N·m at 70 A']],
       ['Current', '50 A continuous, 90 A peak (3 s)'],
       ['Voltage', '48 V max'],
       ['Sensor', 'NTC thermistor; 8 mm rear shaft for an encoder'],
@@ -1009,7 +1013,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Planetary servo actuator with a 9:1 reducer, built-in FOC driver and 16-bit encoder, on CAN or RS-485.',
     specs: [
-      ['Torque', '10 N·m rated · 25 N·m peak'],
+      ['Torque', ['10 N·m rated', '25 N·m peak']],
       ['Speed', '110 rpm rated at 48 V'],
       ['Gear ratio', '9:1 planetary'],
       ['Voltage', '48 V'],
@@ -1035,7 +1039,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Motors',
     description: 'Quasi-direct-drive joint actuator with a 7.75:1 reducer and dual 14-bit encoders, over CAN.',
     specs: [
-      ['Torque', '6 N·m rated · 17 N·m peak'],
+      ['Torque', ['6 N·m rated', '17 N·m peak']],
       ['Speed', '410 rpm no-load at 48 V'],
       ['Gear ratio', '7.75:1'],
       ['Voltage', '24–60 V, 48 V rated'],
@@ -1063,7 +1067,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Motors',
     description: 'Quasi-direct-drive servo with a planetary reducer and the open-source moteus driver, over CAN-FD.',
     specs: [
-      ['Torque', '16 N·m peak · 3.3 N·m continuous'],
+      ['Torque', ['16 N·m peak', '3.3 N·m continuous']],
       ['Speed', '600 rpm at 36 V'],
       ['Voltage', '10–44 V, 500 W peak'],
       ['Interface', 'CAN-FD 5 Mbps; 2× XT30, 2× JST PH-3'],
@@ -1183,7 +1187,7 @@ export const COMPONENTS: ComponentInfo[] = [
       'Five-finger dexterous hand with 6 DOF from 6 internal linear servo actuators and per-finger force sensors.',
     specs: [
       ['DOF', '6 DOF, 12 joints'],
-      ['Force', 'Thumb 15 N · fingers 10 N'],
+      ['Force', ['Thumb 15 N', 'fingers 10 N']],
       ['Repeatability', '±0.2 mm fingertip'],
       ['Power', '24 V (12–48 V per product page)'],
       ['Interface', 'RS485, GX12 connector'],
@@ -1209,10 +1213,10 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Five-finger, 6-DOF hand with 6 BLDC motors and 30 fingertip force sensors.',
     specs: [
       ['DOF', '6 (1 per finger, 2 for the thumb)'],
-      ['Grip force', '78 N power · 17 N key · 8 N pinch'],
+      ['Grip force', ['78 N power', '17 N key', '8 N pinch']],
       ['Speed', '0.2 s finger closing'],
       ['Power', '6–12 V (8.4 V typical)'],
-      ['Interface', 'I2C · UART · RS485 · BLE'],
+      ['Interface', ['I2C', 'UART', 'RS485', 'BLE']],
       ['Weight', '470 g'],
     ],
     mounting:
@@ -1359,7 +1363,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Five-finger linkage-driven hand with 10 active and 10 passive joints over CAN or RS-485.',
     specs: [
       ['DOF', '10 active + 10 passive'],
-      ['Force', '15 N per fingertip · 80 N grip'],
+      ['Force', ['15 N per fingertip', '80 N grip']],
       ['Payload', '25 kg'],
       ['Power', '24 V'],
       ['Interface', 'CAN / RS-485, 800 Hz'],
@@ -1385,7 +1389,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Lightweight six-actuator linkage-driven hand with 6 active and 5 passive joints.',
     specs: [
       ['DOF', '6 active + 5 passive'],
-      ['Force', '20 N thumb · 25 N fingers · 70 N grip'],
+      ['Force', ['20 N thumb', '25 N fingers', '70 N grip']],
       ['Payload', '50 kg'],
       ['Power', '24–48 V'],
       ['Interface', 'CAN / CAN FD / RS-485 / EtherCAT'],
@@ -1542,9 +1546,9 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Compact IP67 electric parallel gripper with reversible fingers and power-loss holding.',
     specs: [
       ['Stroke', '38 mm (19 mm per finger)'],
-      ['Grip width', '1–39 mm in · 35–73 mm out'],
+      ['Grip width', ['1–39 mm in', '35–73 mm out']],
       ['Grip force', '20–140 N'],
-      ['Payload', '7 kg force-fit · 11 kg form-fit'],
+      ['Payload', ['7 kg force-fit', '11 kg form-fit']],
       ['Power', '24 V, IP67'],
       ['Weight', '1.1 kg'],
     ],
@@ -1568,7 +1572,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Stroke', '0–160 mm'],
       ['Grip force', '25–120 N'],
-      ['Payload', '6 kg force-fit · 10 kg form-fit'],
+      ['Payload', ['6 kg force-fit', '10 kg form-fit']],
       ['Speed', '51–140 mm/s'],
       ['Power', '24 V, IP54'],
       ['Weight', '1.25 kg'],
@@ -1644,7 +1648,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Grippers',
     description: "Electric two-finger parallel gripper with an integrated controller on the PiPER arm's CAN bus.",
     specs: [
-      ['Stroke', '0–70 mm (this model) · 0–100 mm current version'],
+      ['Stroke', ['0–70 mm (this model)', '0–100 mm current version']],
       ['Accuracy', '±0.5 mm'],
       ['Power', '24 V'],
       ['Interface', 'CAN, shared with the arm'],
@@ -1767,7 +1771,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Stroke', '90 mm'],
       ['Grip force', '5–120 N'],
-      ['Grasp load', '20 kg form-fit · 5 kg friction'],
+      ['Grasp load', ['20 kg form-fit', '5 kg friction']],
       ['Speed', '50–375 mm/s, 0.24 s full stroke'],
       ['Motor', 'Unitree M4010, 1:25, 15-bit absolute encoder'],
       ['Interface', 'RS-485, 6 Mbps, 1 kHz; 24–64 V'],
@@ -1795,7 +1799,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Grippers',
     description: 'Single-motor gripper with one fixed and one hinged jaw for the Unitree Z1 arm.',
     specs: [
-      ['Grip force', '200 N at jaw base · 150 N at tips'],
+      ['Grip force', ['200 N at jaw base', '150 N at tips']],
       ['Opening', '90° jaw angle, 0.5 s'],
       ['DOF', '1, one Unitree joint motor'],
       ['Power', '24 V via the arm, RS485'],
@@ -1852,7 +1856,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Stroke', '0–110 mm'],
       ['Grip force', '3–40 N'],
-      ['Payload', '2 kg force-fit · 5 kg form-fit'],
+      ['Payload', ['2 kg force-fit', '5 kg form-fit']],
       ['Speed', '38–127 mm/s'],
       ['Power', '24 V'],
       ['Weight', '0.78 kg'],
@@ -1921,14 +1925,14 @@ export const COMPONENTS: ComponentInfo[] = [
     id: 'raspberry-pi-5',
     name: 'Raspberry Pi 5',
     manufacturer: 'Raspberry Pi',
-    mpn: 'SC1112 (8 GB) · 1/2/4/16 GB variants',
+    mpn: 'SC1112 (8 GB; also 1, 2, 4 and 16 GB)',
     group: 'Computers',
     description:
       'Quad-core 2.4 GHz Cortex-A76 single-board computer with PCIe, two 4-lane camera/display ports, dual micro-HDMI and Gigabit Ethernet.',
     specs: [
       ['CPU', 'BCM2712, 4× Cortex-A76 @ 2.4 GHz'],
       ['RAM', '1–16 GB LPDDR4X'],
-      ['I/O', '2× USB 3.0 · 2× USB 2.0 · GbE · PCIe 2.0 x1 · 2× MIPI'],
+      ['I/O', ['2× USB 3.0', '2× USB 2.0', 'GbE', 'PCIe 2.0 x1', '2× MIPI']],
       ['Video', '2× micro-HDMI, 4Kp60'],
       ['Power', '5 V, 5 A via USB-C PD'],
     ],
@@ -1961,7 +1965,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['CPU', 'BCM2711, 4× Cortex-A72 @ 1.8 GHz'],
       ['RAM', '1, 2, 4 or 8 GB LPDDR4'],
-      ['I/O', '2× USB 3.0 · 2× USB 2.0 · Gigabit Ethernet · CSI · DSI'],
+      ['I/O', ['2× USB 3.0', '2× USB 2.0', 'Gigabit Ethernet', 'CSI', 'DSI']],
       ['Video', '2× micro-HDMI, up to 4Kp60'],
       ['Power', '5 V, 3 A via USB-C'],
     ],
@@ -1993,8 +1997,8 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['CPU', 'RP3A0, 4× Cortex-A53 @ 1 GHz'],
       ['RAM', '512 MB'],
-      ['Wireless', '2.4 GHz Wi-Fi · Bluetooth 4.2'],
-      ['I/O', 'Mini-HDMI · micro-USB OTG · CSI · 40-pin footprint'],
+      ['Wireless', ['2.4 GHz Wi-Fi', 'Bluetooth 4.2']],
+      ['I/O', ['Mini-HDMI', 'micro-USB OTG', 'CSI', '40-pin footprint']],
       ['Power', '5 V, 2.5 A via micro-USB'],
     ],
     mounting:
@@ -2023,7 +2027,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['GPU', 'Ampere, 1024 CUDA cores'],
       ['CPU', '6× Cortex-A78AE'],
       ['Memory', '8 GB LPDDR5'],
-      ['I/O', '4× USB 3.2 · GbE · DP · 2× CSI · 2× M.2 M · 40-pin'],
+      ['I/O', ['4× USB 3.2', 'GbE', 'DP', '2× CSI', '2× M.2 M', '40-pin']],
       ['Power', '7–25 W, DC barrel jack'],
     ],
     mounting:
@@ -2049,9 +2053,9 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'UNO-size board with a 48 MHz Renesas RA4M1, USB-C and 5 V I/O.',
     specs: [
       ['MCU', 'Renesas RA4M1, Cortex-M4 @ 48 MHz'],
-      ['Memory', '256 kB flash · 32 kB SRAM'],
-      ['I/O', '14 digital (6 PWM) · 6 analog · DAC · CAN'],
-      ['Power', 'USB-C 5 V · 6–24 V barrel jack'],
+      ['Memory', ['256 kB flash', '32 kB SRAM']],
+      ['I/O', ['14 digital (6 PWM)', '6 analog', 'DAC', 'CAN']],
+      ['Power', ['USB-C 5 V', '6–24 V barrel jack']],
       ['Weight', '48 g'],
     ],
     mounting:
@@ -2080,10 +2084,10 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Nano-size ESP32-S3 board with Wi-Fi, Bluetooth LE and USB-C, 3.3 V I/O.',
     specs: [
       ['MCU', 'ESP32-S3 (u-blox NORA-W106), 240 MHz dual-core'],
-      ['Memory', '8 MB PSRAM · 16 MB flash'],
-      ['Wireless', 'Wi-Fi 2.4 GHz · Bluetooth LE 5'],
-      ['Power', 'USB-C 5 V · VIN 6–21 V'],
-      ['I/O', '14 digital · 8 analog, 3.3 V'],
+      ['Memory', ['8 MB PSRAM', '16 MB flash']],
+      ['Wireless', ['Wi-Fi 2.4 GHz', 'Bluetooth LE 5']],
+      ['Power', ['USB-C 5 V', 'VIN 6–21 V']],
+      ['I/O', ['14 digital', '8 analog, 3.3 V']],
     ],
     mounting:
       'PCB 43.18 × 17.78 mm. 4× Ø1.66 mm corner holes on a 40.64 × 15.24 mm rectangle. 2× 15-pin headers, 15.24 mm apart.',
@@ -2110,8 +2114,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Breadboard board for the ESP32-S3-WROOM-1 module with USB-UART and native USB ports.',
     specs: [
       ['SoC', 'ESP32-S3, 240 MHz dual-core'],
-      ['Memory', '8 MB flash · 8 MB PSRAM'],
-      ['Wireless', 'Wi-Fi 2.4 GHz · Bluetooth LE 5'],
+      ['Memory', ['8 MB flash', '8 MB PSRAM']],
+      ['Wireless', ['Wi-Fi 2.4 GHz', 'Bluetooth LE 5']],
       ['USB', '2× (USB-UART and native USB)'],
       ['Headers', '2× 22 pins, 2.54 mm'],
     ],
@@ -2137,9 +2141,9 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Thumb-size ESP32-S3 board with Wi-Fi, BLE 5, USB-C, LiPo charging and a U.FL antenna port.',
     specs: [
       ['SoC', 'ESP32-S3R8, 240 MHz dual-core'],
-      ['Memory', '8 MB PSRAM · 8 MB flash'],
-      ['Wireless', 'Wi-Fi 2.4 GHz · Bluetooth LE 5'],
-      ['Power', 'USB-C 5 V · 3.7 V LiPo with charging'],
+      ['Memory', ['8 MB PSRAM', '8 MB flash']],
+      ['Wireless', ['Wi-Fi 2.4 GHz', 'Bluetooth LE 5']],
+      ['Power', ['USB-C 5 V', '3.7 V LiPo with charging']],
       ['Pins', '2× 7 castellated, 2.54 mm'],
     ],
     mounting: 'PCB 21.135 × 17.78 mm, R1.905 corners, no mounting holes. Pin rows 15.24 mm apart; solder or socket it.',
@@ -2165,9 +2169,9 @@ export const COMPONENTS: ComponentInfo[] = [
     description: '600 MHz Cortex-M7 board with 8 MB flash, microSD, Ethernet PHY and 55 I/O pins.',
     specs: [
       ['MCU', 'NXP i.MX RT1062, Cortex-M7 @ 600 MHz'],
-      ['Memory', '1 MB RAM · 8 MB flash'],
-      ['I/O', '55 digital · 35 PWM · 18 analog, 3.3 V'],
-      ['Interfaces', '8 serial · 3 SPI · 3 I2C · 3 CAN · Ethernet'],
+      ['Memory', ['1 MB RAM', '8 MB flash']],
+      ['I/O', ['55 digital', '35 PWM', '18 analog, 3.3 V']],
+      ['Interfaces', ['8 serial', '3 SPI', '3 I2C', '3 CAN', 'Ethernet']],
       ['Current', '100 mA @ 600 MHz'],
     ],
     mounting:
@@ -2191,8 +2195,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description: '21 × 51 mm RP2350 board with 4 MB flash, micro-USB and castellated 0.1-inch pins.',
     specs: [
       ['MCU', 'RP2350, 2× Cortex-M33 or RISC-V @ 150 MHz'],
-      ['Memory', '520 KB SRAM · 4 MB flash'],
-      ['I/O', '26 GPIO (3 ADC) · 12 PIO state machines'],
+      ['Memory', ['520 KB SRAM', '4 MB flash']],
+      ['I/O', ['26 GPIO (3 ADC)', '12 PIO state machines']],
       ['USB', 'Micro-USB, USB 1.1'],
       ['Power', '1.8–5.5 V on VSYS'],
     ],
@@ -2258,7 +2262,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Input', '9–12.6 V DC (match the servos)'],
       ['Servos', 'ST and SC series, up to 253 IDs'],
       ['Control', 'USB-C (CH343P) or UART header'],
-      ['Power in', '5.5 × 2.1 mm jack · screw terminal'],
+      ['Power in', ['5.5 × 2.1 mm jack', 'screw terminal']],
       ['Weight', '16 g'],
     ],
     mounting: 'PCB 42 × 33 mm. 4× Ø2.5 mm holes (M2.5) on a 37 × 28 mm rectangle, 2.5 mm in from each edge.',
@@ -2283,7 +2287,7 @@ export const COMPONENTS: ComponentInfo[] = [
       'Open-source brushless FOC servo controller with an absolute magnetic encoder and CAN-FD, for one actuator.',
     specs: [
       ['Voltage', '10–44 V'],
-      ['Current', '100 A peak · 32 A continuous with cooling'],
+      ['Current', ['100 A peak', '32 A continuous with cooling']],
       ['Power', '900 W peak at 30 V'],
       ['Interface', 'CAN-FD 5 Mbps (2× JST PH-3)'],
       ['Encoder', 'Absolute magnetic, on the rear face'],
@@ -2315,7 +2319,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Compact 38 mm open-source brushless FOC controller with an absolute magnetic encoder and CAN-FD.',
     specs: [
       ['Voltage', '10–51 V'],
-      ['Current', '20 A peak · 14 A continuous with cooling'],
+      ['Current', ['20 A peak', '14 A continuous with cooling']],
       ['Power', '250 W peak at 28 V'],
       ['Interface', 'CAN-FD 5 Mbps; AUX JST GH-7'],
       ['Encoder', 'Absolute magnetic, board center'],
@@ -2347,7 +2351,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'StepStick stepper driver for one bipolar stepper, up to 1/16 microstepping.',
     specs: [
       ['Voltage', '8–35 V'],
-      ['Current', '1 A/phase without heat sink · 2 A with cooling'],
+      ['Current', ['1 A/phase without heat sink', '2 A with cooling']],
       ['Microstepping', 'Full to 1/16'],
       ['Interface', 'STEP/DIR, 3–5.5 V logic'],
       ['Weight', '1.3 g'],
@@ -2373,7 +2377,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'High-current StepStick stepper driver, up to 1/32 microstepping. Shown with header pins.',
     specs: [
       ['Voltage', '8.2–45 V'],
-      ['Current', '1.5 A/phase without heat sink · 2.2 A with cooling'],
+      ['Current', ['1.5 A/phase without heat sink', '2.2 A with cooling']],
       ['Microstepping', 'Full to 1/32'],
       ['Interface', 'STEP/DIR, 2.5–5.25 V logic, FAULT output'],
       ['Weight', '1.6 g without pins'],
@@ -2399,7 +2403,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Two-channel brushed DC motor driver for small gearmotors, or one bipolar stepper.',
     specs: [
       ['Voltage', '4.5–13.5 V'],
-      ['Current', '1 A continuous · 3 A peak per channel'],
+      ['Current', ['1 A continuous', '3 A peak per channel']],
       ['Channels', '2 brushed DC motors'],
       ['Interface', 'PWM up to 100 kHz + direction, 2.7–5.5 V logic'],
       ['Weight', '1.5 g'],
@@ -2424,7 +2428,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Dual brushed DC motor controller with encoder inputs and PID position and speed control.',
     specs: [
       ['Voltage', '6–34 V'],
-      ['Current', '15 A continuous · 30 A peak per channel'],
+      ['Current', ['15 A continuous', '30 A peak per channel']],
       ['Channels', '2 brushed DC motors'],
       ['Encoders', '2× quadrature, up to 9.8 M pulses/s'],
       ['Interface', 'USB, TTL serial, RC, analog'],
@@ -2483,9 +2487,9 @@ export const COMPONENTS: ComponentInfo[] = [
     description: '9-axis IMU breakout with on-chip sensor fusion, I2C/SPI/UART and two STEMMA QT ports.',
     specs: [
       ['Sensor', 'CEVA BNO085: accel, gyro, magnetometer + fusion'],
-      ['Interfaces', 'I2C (0x4A) · SPI · UART'],
+      ['Interfaces', ['I2C (0x4A)', 'SPI', 'UART']],
       ['Supply', '3–5 V'],
-      ['Connectors', '2× STEMMA QT · 2× 6-pin headers'],
+      ['Connectors', ['2× STEMMA QT', '2× 6-pin headers']],
       ['Weight', '2.5 g'],
     ],
     mounting:
@@ -2643,7 +2647,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Compact 360° × 59° 3D lidar with a built-in IMU and Ethernet output, common on quadrupeds.',
     specs: [
-      ['Range', '40 m @ 10% · 70 m @ 80%'],
+      ['Range', ['40 m @ 10%', '70 m @ 80%']],
       ['FOV', '360° × −7° to +52°'],
       ['Point rate', '200,000 pts/s'],
       ['Laser', '905 nm, Class 1'],
@@ -2669,7 +2673,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Hemispherical 360° × 90° 3D lidar with built-in IMU and Ethernet or UART output.',
     specs: [
-      ['Range', '30 m @ 90% · 15 m @ 10%'],
+      ['Range', ['30 m @ 90%', '15 m @ 10%']],
       ['FOV', '360° × 90°'],
       ['Point rate', '64,000 pts/s effective'],
       ['Laser', '905 nm, Class 1'],
@@ -2875,7 +2879,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Mid-range 360° digital lidar with 32–128 channels, 42.4° vertical FOV, IMU and gigabit Ethernet.',
     specs: [
-      ['Range', '90 m @ 10% · 170 m @ 80%'],
+      ['Range', ['90 m @ 10%', '170 m @ 80%']],
       ['FOV', '360° × 42.4°'],
       ['Channels', '32, 64 or 128'],
       ['Laser', '865 nm, Class 1'],
@@ -2901,7 +2905,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Short-range, ultra-wide (90.8° vertical) 360° digital lidar with 32–128 channels and gigabit Ethernet.',
     specs: [
-      ['Range', '35 m @ 10% · 75 m @ 80%'],
+      ['Range', ['35 m @ 10%', '75 m @ 80%']],
       ['FOV', '360° × 90.8°'],
       ['Channels', '32, 64 or 128'],
       ['Laser', '865 nm, Class 1'],
@@ -2951,7 +2955,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Long-range solid-state 3D lidar with a non-repetitive scan pattern and built-in IMU.',
     specs: [
-      ['Range', '190 m @ 10% · 320 m @ 80%'],
+      ['Range', ['190 m @ 10%', '320 m @ 80%']],
       ['FOV', '70.4° × 77.2°'],
       ['Point rate', '240,000 pts/s'],
       ['Laser', '905 nm, Class 1'],
@@ -3549,7 +3553,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Sensor', 'Sony IMX219, 8 MP'],
       ['Field of view', '62.2° × 48.8°'],
-      ['Video', '1080p47 · 640 × 480p206'],
+      ['Video', ['1080p47', '640 × 480p206']],
       ['Interface', 'MIPI CSI-2, 15-pin FPC'],
       ['Weight', '3 g'],
     ],
@@ -3626,7 +3630,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Thumb-size ESP32-S3 board with a plug-on camera, microphone and microSD board.',
     specs: [
       ['MCU', 'ESP32-S3, 240 MHz, 8 MB PSRAM'],
-      ['Wireless', 'Wi-Fi 2.4 GHz · BLE 5'],
+      ['Wireless', ['Wi-Fi 2.4 GHz', 'BLE 5']],
       ['Camera', 'DVP module (OV2640 in this model; OV5640 in current units)'],
       ['Power', 'USB-C 5 V or 3.7 V LiPo'],
     ],
@@ -3678,7 +3682,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Sensor', 'Sony IMX708, 11.9 MP'],
       ['Field of view', '102° × 67° (120° diagonal)'],
       ['Focus', 'Phase-detect autofocus'],
-      ['Video', '1080p50 · 720p100'],
+      ['Video', ['1080p50', '720p100']],
       ['Interface', 'MIPI CSI-2, 15-pin 1 mm FPC'],
     ],
     mounting:
@@ -3732,7 +3736,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: '12.3 MP Sony IMX477 camera with a milled aluminum C/CS lens mount and tripod thread.',
     specs: [
       ['Sensor', 'Sony IMX477, 12.3 MP'],
-      ['Video', '2028 × 1080p50 · 1332 × 990p120'],
+      ['Video', ['2028 × 1080p50', '1332 × 990p120']],
       ['Lens mount', 'CS (C with adapter)'],
       ['Interface', 'MIPI CSI-2'],
       ['Weight', '30.4 g'],
@@ -3761,7 +3765,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Sensor', 'Sony IMX708, 11.9 MP'],
       ['Field of view', '66° × 41°'],
       ['Focus', 'Phase-detect autofocus'],
-      ['Video', '1080p50 · 720p100'],
+      ['Video', ['1080p50', '720p100']],
       ['Interface', 'MIPI CSI-2, 15-pin 1 mm FPC'],
     ],
     mounting:
@@ -3813,8 +3817,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Micro linear servo with a 20 mm stroke and a built-in RC servo controller.',
     specs: [
       ['Stroke', '20 mm'],
-      ['Force', 'Up to 45 N (63:1) · 18 N (30:1) · 50 N (100:1)'],
-      ['Speed', '15 mm/s no load (63:1) · 28 mm/s (30:1) · 10 mm/s (100:1)'],
+      ['Force', ['Up to 45 N (63:1)', '18 N (30:1)', '50 N (100:1)']],
+      ['Speed', ['15 mm/s no load (63:1)', '28 mm/s (30:1)', '10 mm/s (100:1)']],
       ['Voltage', '6 V; 550 mA stall'],
       ['Feedback', 'RC servo signal, 1–2 ms pulse (2 ms = retracted)'],
       ['Weight', '21 g'],
@@ -3849,8 +3853,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Miniature linear servo with a rectangular body and a built-in RC servo controller.',
     specs: [
       ['Stroke', '30 mm'],
-      ['Force', 'Up to 42 N (100:1) · 22 N (50:1) · 80 N (210:1)'],
-      ['Speed', '13 mm/s no load (100:1) · 25 mm/s (50:1) · 6.5 mm/s (210:1)'],
+      ['Force', ['Up to 42 N (100:1)', '22 N (50:1)', '80 N (210:1)']],
+      ['Speed', ['13 mm/s no load (100:1)', '25 mm/s (50:1)', '6.5 mm/s (210:1)']],
       ['Voltage', '6 V (7.5 V max); 460 mA stall'],
       ['Feedback', 'RC servo signal, 1–2 ms pulse (1 ms = retracted)'],
       ['Weight', '34 g'],
@@ -3885,8 +3889,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Linear servo with a 50 mm stroke and a built-in RC servo controller, stronger than the L12.',
     specs: [
       ['Stroke', '50 mm'],
-      ['Force', 'Up to 100 N (63:1) · 50 N (35:1) · 200 N (150:1)'],
-      ['Speed', '20 mm/s no load (63:1) · 32 mm/s (35:1) · 8 mm/s (150:1)'],
+      ['Force', ['Up to 100 N (63:1)', '50 N (35:1)', '200 N (150:1)']],
+      ['Speed', ['20 mm/s no load (63:1)', '32 mm/s (35:1)', '8 mm/s (150:1)']],
       ['Voltage', '6 V'],
       ['Feedback', 'RC servo signal, 1–2 ms pulse (1 ms = retracted)'],
       ['Weight', '56 g'],
@@ -3922,8 +3926,8 @@ export const COMPONENTS: ComponentInfo[] = [
       'Linear actuator with the motor beside the rod, a planetary gearbox and potentiometer position feedback.',
     specs: [
       ['Stroke', '100 mm'],
-      ['Force', 'Up to 90 N (64:1) · 50 N (22:1) · 300 N (256:1)'],
-      ['Speed', '18 mm/s no load (64:1) · 46 mm/s (22:1) · 4.8 mm/s (256:1)'],
+      ['Force', ['Up to 90 N (64:1)', '50 N (22:1)', '300 N (256:1)']],
+      ['Speed', ['18 mm/s no load (64:1)', '46 mm/s (22:1)', '4.8 mm/s (256:1)']],
       ['Voltage', '12 V (0–15 V); 1 A stall'],
       ['Feedback', 'Potentiometer, 11 kΩ'],
       ['Weight', '110 g'],
@@ -3959,8 +3963,8 @@ export const COMPONENTS: ComponentInfo[] = [
       'Track actuator whose carriage runs along a fixed rail instead of an extending rod, with potentiometer feedback.',
     specs: [
       ['Stroke', '100 mm'],
-      ['Force', 'Up to 90 N (64:1) · 50 N (22:1) · 300 N (256:1)'],
-      ['Speed', '18 mm/s no load (64:1) · 46 mm/s (22:1) · 4.8 mm/s (256:1)'],
+      ['Force', ['Up to 90 N (64:1)', '50 N (22:1)', '300 N (256:1)']],
+      ['Speed', ['18 mm/s no load (64:1)', '46 mm/s (22:1)', '4.8 mm/s (256:1)']],
       ['Voltage', '12 V (0–15 V); 1 A stall'],
       ['Feedback', 'Potentiometer, 11 kΩ'],
       ['Weight', '116 g'],
@@ -3996,8 +4000,8 @@ export const COMPONENTS: ComponentInfo[] = [
       '12 V rod actuator with an aluminium housing, an ACME lead screw and internal end-of-stroke limit switches.',
     specs: [
       ['Stroke', '102 mm (4 in)'],
-      ['Force', 'Up to 222 N (50 lb) · 156 N (35 lb version)'],
-      ['Speed', '29 mm/s no load, 21 mm/s at full load (50 lb) · 51 mm/s no load (35 lb)'],
+      ['Force', ['Up to 222 N (50 lb)', '156 N (35 lb version)']],
+      ['Speed', ['29 mm/s no load, 21 mm/s at full load (50 lb)', '51 mm/s no load (35 lb)']],
       ['Voltage', '12 V; 1 A no load, 5 A at full load'],
       ['Feedback', 'Internal limit switches, not adjustable'],
     ],
@@ -4063,7 +4067,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '60 mm'],
       ['Width', '8 mm'],
-      ['Hub', '3 mm D-shaft, press fit · 2× M3 holes 12.7 mm apart'],
+      ['Hub', ['3 mm D-shaft, press fit', '2× M3 holes 12.7 mm apart']],
       ['Tread', 'Silicone tire, horizontal treads'],
       ['Weight', '11.3 g'],
     ],
@@ -4095,7 +4099,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '70 mm'],
       ['Width', '8 mm'],
-      ['Hub', '3 mm D-shaft, press fit · 2× M3 holes 12.7 mm apart'],
+      ['Hub', ['3 mm D-shaft, press fit', '2× M3 holes 12.7 mm apart']],
       ['Tread', 'Silicone tire, horizontal treads'],
       ['Weight', '14.2 g'],
     ],
@@ -4127,7 +4131,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '90 mm'],
       ['Width', '10 mm'],
-      ['Hub', '3 mm D-shaft, press fit · 6× M3 holes (12.7 and 19.1 mm pairs)'],
+      ['Hub', ['3 mm D-shaft, press fit', '6× M3 holes (12.7 and 19.1 mm pairs)']],
       ['Tread', 'Silicone tire, horizontal treads'],
       ['Weight', '22.7 g'],
     ],
@@ -4243,7 +4247,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '96 mm'],
       ['Width', '32 mm'],
-      ['Hub', 'Ø14 mm bore · goBILDA 8 mm grid (M4)'],
+      ['Hub', ['Ø14 mm bore', 'goBILDA 8 mm grid (M4)']],
       ['Tread', 'Rubber, 30 Shore A, 5 mm thick'],
       ['Weight', '142 g'],
     ],
@@ -4272,7 +4276,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '96 mm'],
       ['Width', '24 mm'],
-      ['Hub', 'Ø14 mm bore · goBILDA 16 and 32 mm patterns (M4)'],
+      ['Hub', ['Ø14 mm bore', 'goBILDA 16 and 32 mm patterns (M4)']],
       ['Tread', 'Rubber rollers, 50A, 2 rows'],
       ['Weight', '119 g'],
     ],
@@ -4303,7 +4307,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '104 mm'],
       ['Width', '37.8 mm'],
-      ['Hub', 'Ø14 mm bore · goBILDA 16 and 32 mm patterns (M4)'],
+      ['Hub', ['Ø14 mm bore', 'goBILDA 16 and 32 mm patterns (M4)']],
       ['Tread', '11 silicone rollers, 40A, GripForce pattern'],
       ['Weight', '236 g'],
     ],
@@ -4334,7 +4338,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '104 mm'],
       ['Width', '37.8 mm'],
-      ['Hub', 'Ø14 mm bore · goBILDA 16 and 32 mm patterns (M4)'],
+      ['Hub', ['Ø14 mm bore', 'goBILDA 16 and 32 mm patterns (M4)']],
       ['Tread', '11 silicone rollers, 40A, GripForce pattern'],
       ['Weight', '236 g'],
     ],
@@ -4364,7 +4368,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '90 mm'],
       ['Width', '25 mm'],
-      ['Hub', '5 mm hex bore · M3 holes on 8 mm spacing'],
+      ['Hub', ['5 mm hex bore', 'M3 holes on 8 mm spacing']],
       ['Tread', 'TPU, 65A'],
       ['Weight', '88 g'],
     ],
@@ -4394,7 +4398,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Diameter', '90 mm'],
       ['Width', '15 mm'],
-      ['Hub', '5 mm hex bore · M3 holes on 8 mm spacing'],
+      ['Hub', ['5 mm hex bore', 'M3 holes on 8 mm spacing']],
       ['Tread', 'TPU rollers'],
       ['Weight', '65.5 g'],
     ],
@@ -4463,8 +4467,8 @@ export const COMPONENTS: ComponentInfo[] = [
       ['CPU', '8× Cortex-A78AE @ 2 GHz'],
       ['RAM', '16 GB LPDDR5'],
       ['Storage', '128 GB NVMe SSD (M.2 Key M)'],
-      ['I/O', '4× USB 3.2 · GbE · HDMI 2.1 · 2× CSI · CAN · 40-pin'],
-      ['Power', '9–19 V DC, 5.5 × 2.5 mm jack · module 10–25 W'],
+      ['I/O', ['4× USB 3.2', 'GbE', 'HDMI 2.1', '2× CSI', 'CAN', '40-pin']],
+      ['Power', ['9–19 V DC, 5.5 × 2.5 mm jack', 'module 10–25 W']],
     ],
     mounting:
       'Case 130 × 120 × 58.5 mm, finned heatsink top. All ports are on one 130 mm face: DC jack, HDMI, 4× USB-A, Ethernet, USB-C. Carrier PCB 100 × 80 mm. The datasheet gives no case mounting holes.',
@@ -4492,10 +4496,10 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Arduino MKR-size SAMD21 board with 4 DYNAMIXEL TTL ports and a battery input that powers the servos.',
     specs: [
       ['MCU', 'SAMD21, Cortex-M0+ @ 48 MHz'],
-      ['Memory', '256 KB flash · 32 KB SRAM'],
-      ['I/O', '24 digital (12 PWM) · 7 analog · DAC, 3.3 V'],
+      ['Memory', ['256 KB flash', '32 KB SRAM']],
+      ['I/O', ['24 digital (12 PWM)', '7 analog', 'DAC, 3.3 V']],
       ['DYNAMIXEL', '4× TTL (JST EH 3-pin), 3 A, up to 1 Mbps'],
-      ['Voltage', 'USB-C 5 V · 3.7–12.6 V on VIN or terminal'],
+      ['Voltage', ['USB-C 5 V', '3.7–12.6 V on VIN or terminal']],
     ],
     mounting:
       'PCB 66 × 25 × 1.6 mm. 4× Ø2.5 mm holes (M2) on a 61.5 × 20.5 mm pattern, on Ø4.5 mm insulated pads. Arduino MKR header layout; pins reach 8.85 mm below the board. USB-C overhangs one end by about 0.9 mm.',
@@ -4759,10 +4763,10 @@ export const COMPONENTS: ComponentInfo[] = [
       '12-bit contactless angle sensor that reads a diametric magnet spinning above the chip, on a STEMMA QT breakout.',
     specs: [
       ['Resolution', '12-bit (4096 steps per turn)'],
-      ['Interface', 'I²C (0x36) · analog or PWM out'],
+      ['Interface', ['I²C (0x36)', 'analog or PWM out']],
       ['Voltage', '3–5 V'],
       ['Sensor', 'ams OSRAM AS5600'],
-      ['Connectors', '2× STEMMA QT · 7-pin header'],
+      ['Connectors', ['2× STEMMA QT', '7-pin header']],
     ],
     mounting:
       'PCB 25.40 × 17.78 mm. 4× Ø2.5 mm holes (M2.5), 2.54 mm in from each edge, on a 20.32 × 12.70 mm pattern. Magnet centred over the chip, axis vertical.',
@@ -4827,7 +4831,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'I²C (0x40), 3–5 V'],
       ['ADC', '20-bit'],
       ['Shunt', '15 mΩ, 0.1%'],
-      ['Connectors', '2× STEMMA QT · 3-pin screw terminal'],
+      ['Connectors', ['2× STEMMA QT', '3-pin screw terminal']],
       ['Weight', '3.3 g'],
     ],
     mounting:
@@ -4856,8 +4860,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       '9-axis IMU breakout: ST LSM6DSOX accelerometer and gyro plus LIS3MDL magnetometer, with two STEMMA QT ports.',
     specs: [
-      ['Sensors', 'LSM6DSOX accel + gyro · LIS3MDL magnetometer'],
-      ['Range', '±2–16 g · ±125–2000 dps · ±4–16 gauss'],
+      ['Sensors', ['LSM6DSOX accel + gyro', 'LIS3MDL magnetometer']],
+      ['Range', ['±2–16 g', '±125–2000 dps', '±4–16 gauss']],
       ['Rate', 'Accel and gyro up to 6.7 kHz'],
       ['Interface', 'I²C (0x6A/0x6B, 0x1C/0x1E)'],
       ['Voltage', '3–5 V'],
@@ -4947,7 +4951,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: '6-axis force torque sensor for robot wrists, IP65, read over RS-485 at 100 Hz.',
     specs: [
       ['Range', 'Fxyz ±300 N, Mxyz ±30 N·m'],
-      ['Signal noise', '0.1 N · 0.005 N·m (Mx, My) · 0.003 N·m (Mz)'],
+      ['Signal noise', ['0.1 N', '0.005 N·m (Mx, My)', '0.003 N·m (Mz)']],
       ['Overload', '500%'],
       ['Interface', 'RS-485, Modbus RTU or data stream, 100 Hz'],
       ['Protection', 'IP65'],
@@ -4979,7 +4983,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Screen', '1.28" round IPS, 240 × 240'],
       ['Driver', 'GC9A01A'],
-      ['Interface', '4-wire SPI · 18-pin EYESPI FPC · 1 × 16 header'],
+      ['Interface', ['4-wire SPI', '18-pin EYESPI FPC', '1 × 16 header']],
       ['Voltage', '3.3–5 V power and logic'],
       ['Weight', '8.3 g'],
     ],
@@ -5035,8 +5039,8 @@ export const COMPONENTS: ComponentInfo[] = [
       '480 × 480 round IPS touch display on an ESP32-S3 board with Wi-Fi, Bluetooth, an IMU, an RTC and a microSD slot.',
     specs: [
       ['Screen', '2.1" round IPS, 480 × 480, Ø53.88 mm active area'],
-      ['Driver', 'ST7701 (RGB) · CST820 capacitive touch'],
-      ['Interface', 'ESP32-S3R8, Wi-Fi + Bluetooth 5 · USB-C · 12-pin header · I2C · UART'],
+      ['Driver', ['ST7701 (RGB)', 'CST820 capacitive touch']],
+      ['Interface', ['ESP32-S3R8, Wi-Fi + Bluetooth 5', 'USB-C', '12-pin header', 'I2C', 'UART']],
       ['Voltage', 'USB-C 5 V or 3.7 V Li-ion (MX1.25)'],
     ],
     mounting:
@@ -5061,7 +5065,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Screen', '1.3" IPS, 240 × 240'],
       ['Driver', 'ST7789'],
-      ['Interface', '4-wire SPI · 18-pin EYESPI FPC'],
+      ['Interface', ['4-wire SPI', '18-pin EYESPI FPC']],
       ['Voltage', '3.3–5 V power and logic'],
       ['Weight', '7.6 g'],
     ],
@@ -5092,7 +5096,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Screen', '1.3" monochrome OLED, 128 × 64'],
       ['Driver', 'SSD1306'],
-      ['Interface', 'I2C (0x3C/0x3D) · SPI · 2× STEMMA QT'],
+      ['Interface', ['I2C (0x3C/0x3D)', 'SPI', '2× STEMMA QT']],
       ['Voltage', '3–5 V (onboard 3.3 V regulator)'],
       ['Weight', '6 g'],
     ],
@@ -5123,7 +5127,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Screen', '7" TFT LCD, 720 × 1280 portrait, 5-point capacitive touch'],
       ['Active area', '86.9 × 154.6 mm'],
       ['Interface', 'MIPI DSI ribbon (15-pin, or 22-to-15-pin for Pi 5) + 5 V from GPIO'],
-      ['Voltage', '5 V backlight at 450 mA · 3.3 V TFT at 50 mA'],
+      ['Voltage', ['5 V backlight at 450 mA', '3.3 V TFT at 50 mA']],
       ['Power', '2.4 W'],
     ],
     mounting:
@@ -5155,7 +5159,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Screen', '5" TFT LCD, 720 × 1280 portrait, 5-point capacitive touch'],
       ['Active area', '62.1 × 110.4 mm'],
       ['Interface', 'MIPI DSI ribbon (15-pin, or 22-to-15-pin for Pi 5) + 5 V from GPIO'],
-      ['Voltage', '5 V backlight at 250 mA · 3.3 V TFT at 55 mA'],
+      ['Voltage', ['5 V backlight at 250 mA', '3.3 V TFT at 55 mA']],
       ['Power', '1.4 W'],
     ],
     mounting:
@@ -5185,7 +5189,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Round USB far-field array with 4 mics, an XMOS XVF-3000 voice processor and 12 RGB LEDs.',
     specs: [
       ['Mics', '4 digital MEMS (ST MP34DT01-M), circular'],
-      ['Interface', 'Micro-USB (UAC 1.0) · 3.5 mm audio out'],
+      ['Interface', ['Micro-USB (UAC 1.0)', '3.5 mm audio out']],
       ['Features', 'AEC, beamforming, DoA, VAD, noise suppression, dereverberation'],
       ['Processor', 'XMOS XVF-3000'],
       ['Power', '5 V, 170–180 mA'],
@@ -5217,7 +5221,7 @@ export const COMPONENTS: ComponentInfo[] = [
       'Round far-field array with 4 mics, an XMOS XVF3800 voice processor, a 5 W speaker amp and 12 RGB LEDs, on USB or I2S.',
     specs: [
       ['Mics', '4 PDM MEMS (Infineon IM69D130), circular'],
-      ['Interface', 'USB-C (UAC 2.0) or I2S · 3.5 mm out · JST speaker out'],
+      ['Interface', ['USB-C (UAC 2.0) or I2S', '3.5 mm out', 'JST speaker out']],
       ['Features', 'AEC, beamforming, DoA, VAD, DNN noise suppression, AGC'],
       ['Processor', 'XMOS XVF3800'],
       ['Range', '360°, up to 5 m'],
@@ -5247,7 +5251,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: 'Two-mic USB/I2S voice board with an XMOS XU316 processor, a speaker output and a headphone jack.',
     specs: [
       ['Mics', '2 digital MEMS, about 71 mm apart'],
-      ['Interface', 'USB-C (UAC 2.0) or I2S · 3.5 mm out · 5 W speaker out'],
+      ['Interface', ['USB-C (UAC 2.0) or I2S', '3.5 mm out', '5 W speaker out']],
       ['Features', 'Interference and echo cancellation, noise suppression'],
       ['Processor', 'XMOS XU316'],
       ['Voltage', '5 V (USB or pad)'],
@@ -5328,7 +5332,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Displays & Audio',
     description: 'Mono 3 W class D amplifier that plays I2S digital audio straight to a speaker.',
     specs: [
-      ['Output', '3.2 W into 4 Ω · 1.8 W into 8 Ω (5 V, 10% THD)'],
+      ['Output', ['3.2 W into 4 Ω', '1.8 W into 8 Ω (5 V, 10% THD)']],
       ['Interface', 'I2S, 8–96 kHz'],
       ['Voltage', '2.7–5.5 V'],
       ['Speaker', '3.5 mm screw terminal'],
@@ -5575,7 +5579,8 @@ export function actuatorOf(componentId: string, variant?: string): ActuatorSpec 
 }
 
 export function componentWeightG(componentId: string): number | undefined {
-  const w = COMPONENT_BY_ID[componentId]?.specs.find(([k]) => k === 'Weight')?.[1];
+  const weight = COMPONENT_BY_ID[componentId]?.specs.find(([k]) => k === 'Weight')?.[1];
+  const w = weight && specLines(weight)[0];
   const m = w?.match(/([\d.]+)\s*(k?g)\b/);
 
   if (!m) return undefined;

@@ -1108,11 +1108,11 @@ export function screwStandard(spec: HardwareSpec): string {
   return spec.type === 'set_screw' ? `${base} form` : `${base} head`;
 }
 
-export function hardwareSubtitle(spec: HardwareSpec): string {
+export function hardwareSubtitle(spec: HardwareSpec): string[] {
   const standard = screwStandard(spec);
   const description = HARDWARE_BY_TYPE[spec.type].description;
 
-  return standard && !description.startsWith(standard) ? `${standard} · ${description}` : description;
+  return standard && !description.startsWith(standard) ? [standard, description] : [description];
 }
 
 export function recessLabel(r: ScrewRecess): string {

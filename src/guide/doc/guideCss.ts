@@ -24,8 +24,6 @@ svg { display: block; overflow: visible; }
 .footer .folio { font-size: 16pt; font-weight: 800; line-height: 1; margin-left: auto; }
 .page.even .footer { flex-direction: row-reverse; }
 .page.even .footer .folio { margin-left: 0; margin-right: auto; }
-.progress { position: absolute; left: 12mm; right: 12mm; bottom: 19.5mm; height: 0.7mm; background: #ececec; border-radius: 1mm; overflow: hidden; }
-.progress > div { height: 100%; background: #111; border-radius: 1mm; }
 
 .cover .name { position: absolute; left: 12mm; top: 14mm; right: 12mm; font-size: 58pt; font-weight: 800; line-height: 0.92; letter-spacing: -0.015em; text-transform: uppercase; overflow-wrap: anywhere; }
 .cover .kicker { position: absolute; left: 12.5mm; top: 7.5mm; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #6b6b6b; }
@@ -48,16 +46,18 @@ svg { display: block; overflow: visible; }
 .tag.light { background: #fff; color: #111; box-shadow: inset 0 0 0 0.3mm #111; }
 .qty { font-weight: 800; }
 
-.panels { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6mm 6mm; margin-top: 9mm; }
-.pic { border-radius: 3.5mm; background: #f4f5f6; height: 70mm; padding: 5mm; display: flex; flex-direction: column; }
-.pic .art { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4mm; min-height: 0; }
-.pic .art svg { height: 34mm; width: auto; }
-.pic .art .pair { display: flex; flex-direction: column; align-items: center; gap: 2mm; }
-.pic .art .pair svg:last-child { height: 9mm; }
-.pic .cap { font-size: 9.5pt; font-weight: 600; line-height: 1.3; }
+.tips { margin-top: 9mm; display: flex; flex-direction: column; gap: 4mm; }
+.tip { display: flex; align-items: center; gap: 6mm; }
+.tip-art { width: 30mm; height: 30mm; flex: none; border-radius: 4mm; background: #f2f3f4; display: flex; align-items: center; justify-content: center; padding: 4mm; }
+.tip-art > svg { width: 100%; height: 100%; }
+.tip-title { font-size: 12.5pt; font-weight: 700; line-height: 1.2; }
+.tip-note { font-size: 9.5pt; color: #6b6b6b; margin-top: 1.2mm; line-height: 1.35; }
+.collage { width: 100%; height: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 1mm; }
+.collage > div { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 0; }
+.collage img { max-width: 100%; max-height: 100%; }
 .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; margin-top: 4mm; }
-.tool-card { border-radius: 3mm; box-shadow: inset 0 0 0 0.3mm #d6d6d6; height: 36mm; padding: 3mm; display: flex; flex-direction: column; align-items: center; }
-.tool-card svg { width: 20mm; height: 20mm; margin: 1mm 0 auto; }
+.tool-card { border-radius: 4mm; background: #f2f3f4; height: 40mm; padding: 3mm 3mm 3.5mm; display: flex; flex-direction: column; align-items: center; }
+.tool-card svg { width: 24mm; height: 24mm; margin: 1mm 0 auto; }
 .tool-card div { font-size: 8.5pt; font-weight: 600; text-align: center; line-height: 1.25; }
 
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; }
@@ -92,7 +92,8 @@ svg { display: block; overflow: visible; }
 .ci.module { width: 30mm; height: 25mm; }
 .ci.module .thumb { width: 30mm; height: 19mm; }
 .ci.module .meta { font-size: 7pt; font-weight: 650; }
-.tool { position: absolute; width: 13mm; height: 13mm; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 0.4mm #111; padding: 2mm; }
+.tool { position: absolute; width: 13mm; height: 13mm; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 0.4mm #111; padding: 1.6mm; }
+.tool span { position: absolute; left: -2mm; right: -2mm; top: 14mm; text-align: center; font-size: 7pt; font-weight: 700; white-space: nowrap; }
 .art { position: absolute; }
 .art > img, .art > svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 .turn { position: absolute; width: 11mm; height: 11mm; }

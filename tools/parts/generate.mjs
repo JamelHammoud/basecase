@@ -1,30 +1,18 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
-import http from 'node:http';
-import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright-core';
-import { writePartGlb } from './glb.mjs';
+import { cliArgs, MIME, startStudio } from './studioRun.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
-const args = process.argv.slice(2);
-const opt = (name, def) => {
-  const i = args.indexOf(`--${name}`);
-
-  return i >= 0 ? args[i + 1] : def;
-};
-const port = Number(opt('port', 0)) || 5300 + Math.floor(Math.random() * 600);
-const ids = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--port');
+const { port, ids } = cliArgs();
 
 if (ids.length === 0) {
   console.error('Usage: node tools/parts/generate.mjs <id…> [--port 5381]');
   process.exit(1);
 }
 
-const base = `http://127.0.0.1:${port}`;
 const started = Date.now();
 const log = (...a) => console.log(`[${((Date.now() - started) / 1000).toFixed(0)}s]`, ...a);
 
@@ -44,165 +32,7 @@ const POSE = {
   cell: 'Lying on its side on the floor (z = 0), axis along X, positive terminal toward +X.',
 };
 
-function postJson(url, body) {
-  return new Promise((resolve, reject) => {
-    const data = Buffer.from(JSON.stringify(body));
-    const req = http.request(
-      url,
-      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': data.length } },
-      (res) => {
-        let text = '';
-
-        res.on('data', (c) => (text += c));
-        res.on('end', () => {
-          try {
-            resolve(JSON.parse(text));
-          } catch {
-            resolve({ error: text.slice(0, 500) });
-          }
-        });
-      },
-    );
-
-    req.setTimeout(0);
-    req.on('error', reject);
-    req.end(data);
-  });
-}
-
-async function waitFor(fn, timeoutMs, label) {
-  const t0 = Date.now();
-
-  for (;;) {
-    try {
-      const v = await fn();
-
-      if (v) return v;
-    } catch (err) {
-      if (err?.fatal) throw err;
-    }
-
-    if (Date.now() - t0 > timeoutMs) throw new Error(`Timed out waiting for ${label}`);
-
-    await new Promise((r) => setTimeout(r, 500));
-  }
-}
-
-const app = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-parts-'));
-
-for (const f of [
-  'src',
-  'electron',
-  'vendor',
-  'public',
-  'index.html',
-  'vite.config.ts',
-  'package.json',
-  'tsconfig.json',
-  'tsconfig.app.json',
-  'tsconfig.node.json',
-  'tsconfig.e2e.json',
-]) {
-  if (fs.existsSync(path.join(root, f))) fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
-}
-
-fs.symlinkSync(path.join(root, 'node_modules'), path.join(app, 'node_modules'), 'dir');
-
-const vite = spawn(
-  process.execPath,
-  [path.join(app, 'node_modules/vite/bin/vite.js'), '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
-  {
-    cwd: app,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  },
-);
-const cleanup = () => {
-  try {
-    vite.kill();
-  } catch {}
-
-  fs.rmSync(app, { recursive: true, force: true });
-};
-
-process.on('exit', cleanup);
-process.on('SIGINT', () => process.exit(130));
-
-let viteOut = '';
-let viteExited = false;
-
-vite.on('exit', () => (viteExited = true));
-vite.stdout.on('data', (d) => (viteOut += d));
-vite.stderr.on('data', (d) => (viteOut += d));
-await waitFor(
-  async () => {
-    if (viteExited)
-      throw Object.assign(new Error(`Port ${port} is taken or vite failed:\n${viteOut.slice(-400)}`), { fatal: true });
-
-    return /ready in|Local:/.test(viteOut) && (await fetch(base)).ok;
-  },
-  60000,
-  'dev server',
-);
-log('dev server up');
-
-const browser = await chromium.launch({
-  channel: 'chrome',
-  headless: true,
-  args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
-});
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-
-page.on('pageerror', (e) => log('page error', e.message));
-await page.goto(base);
-await waitFor(() => page.evaluate(() => !!window.__studio), 180000, 'app');
-await waitFor(
-  async () => (await (await fetch(`${base}/api/bridge/acp-status`)).json()).connected,
-  90000,
-  'agent connection',
-);
-log('agent connected');
-
-let replyText = '';
-const sse = http.get(`${base}/api/events`, (res) => {
-  res.setEncoding('utf8');
-
-  let buf = '';
-
-  res.on('data', (chunk) => {
-    buf += chunk;
-
-    let i;
-
-    while ((i = buf.indexOf('\n\n')) >= 0) {
-      const line = buf
-        .slice(0, i)
-        .split('\n')
-        .find((l) => l.startsWith('data: '));
-
-      buf = buf.slice(i + 2);
-
-      if (!line) continue;
-
-      try {
-        const ev = JSON.parse(line.slice(6));
-        const u = ev.update;
-
-        if (
-          ev.type === 'acp-session-update' &&
-          u?.sessionUpdate === 'agent_message_chunk' &&
-          u.content?.type === 'text'
-        )
-          replyText += u.content.text;
-        else if (ev.type === 'acp-session-update' && u?.sessionUpdate === 'tool_call') replyText = '';
-      } catch {}
-    }
-  });
-});
-
-sse.setTimeout(0);
-sse.on('error', () => {});
-
-const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
+const studio = await startStudio({ port, log });
 
 for (const id of ids) {
   const specDir = path.join(here, 'specs', id);
@@ -221,12 +51,11 @@ for (const id of ids) {
 
   const t0 = Date.now();
 
-  await page.evaluate(() => window.__studio.clear());
-  await postJson(`${base}/api/bridge/acp-new-conversation`, {});
+  await studio.newConversation();
 
   const folderId = `part-${id}-${Date.now().toString(36)}`;
   const save = (relPath, payload) =>
-    postJson(`${base}/api/bridge/save-evidence-file`, {
+    studio.saveEvidence({
       folderId,
       folderName: `${record.name} specs`,
       relPath,
@@ -259,19 +88,14 @@ for (const id of ids) {
 
   log(`${id}: prompting with ${images.length} images`);
 
-  const result = await postJson(`${base}/api/bridge/acp-prompt`, {
-    action: 'build',
-    promptText,
-    evidenceFolders: [{ id: folderId }],
-  });
+  const result = await studio.prompt(promptText, [{ id: folderId }]);
 
   log(`${id}: agent finished (${result.stopReason ?? result.error}) in ${Math.round((Date.now() - t0) / 1000)}s`);
 
-  replyText = '';
+  studio.reply.text = '';
 
-  const review = await postJson(`${base}/api/bridge/acp-prompt`, {
-    action: 'build',
-    promptText: [
+  const review = await studio.prompt(
+    [
       'Verify the model against the official numbers before we save it.',
       '',
       "1. get_scene, then make a table with one row per dimension and feature in record.json (envelope, each protrusion such as a spline, boss, shaft or pilot, tab heights and hole positions, connector positions): official value · value measured on your model (from part positions and sizes: e.g. a spline's top must sit exactly its protrusion above the face it stands on) · OK or wrong.",
@@ -280,37 +104,22 @@ for (const id of ids) {
       '',
       'Final message: the table after fixes, then "Not dimensioned".',
     ].join('\n'),
-  });
+  );
 
   log(`${id}: verified (${review.stopReason ?? review.error}) in ${Math.round((Date.now() - t0) / 1000)}s total`);
-  await new Promise((r) => setTimeout(r, 1500));
 
-  const byColor = await page.evaluate(() => window.__studio.meshByColor());
-  const groups = Object.entries(byColor).map(([hex, soup]) => ({
-    color: [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255),
-    soup,
-  }));
+  const stat = await studio.exportGlb(id, { source: 'agent', triangleBudget: 80000 });
 
-  if (groups.length === 0) {
+  if (!stat) {
     log(`${id}: the agent produced no solid parts`);
 
     continue;
   }
 
-  const stat = writePartGlb(id, groups, { source: 'agent', triangleBudget: 80000 });
-
   log(`${id}: ${stat.size.join(' × ')} mm · ${stat.triangles} tris · ${stat.colors} colors`);
+  await studio.saveRecord(out, ['iso', 'front', 'side', 'top']);
 
-  const sources = await page.evaluate(() => window.__studio.cadSources());
-
-  fs.writeFileSync(path.join(out, 'parts.json'), JSON.stringify(sources, null, 1));
-
-  const shots = await page.evaluate(() => window.__studio.capture(['iso', 'front', 'side', 'top']));
-
-  for (const s of shots)
-    fs.writeFileSync(path.join(out, `render-${s.view}.png`), Buffer.from(s.dataUrl.split(',')[1], 'base64'));
-
-  const finalText = replyText.trim();
+  const finalText = studio.reply.text.trim();
 
   fs.writeFileSync(
     path.join(out, 'notes.md'),
@@ -318,7 +127,5 @@ for (const id of ids) {
   );
 }
 
-sse.destroy();
-await browser.close();
-cleanup();
+await studio.close();
 process.exit(0);

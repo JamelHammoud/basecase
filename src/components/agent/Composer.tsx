@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { AcpStatusInfo, AgentChoice, ReferenceImageRecord } from '../../types/robotics';
+import { AcpStatusInfo, AgentChoice, ContextUsage, ReferenceImageRecord } from '../../types/robotics';
 import { EvidenceFolder, evidenceKind } from '../../utils/evidenceFiles';
 import { IconButton, ComposeIcon } from '../../design-system';
 import { AttachMenu } from './AttachMenu';
@@ -39,6 +39,7 @@ export const Composer: React.FC<{
   isBusy: boolean;
   agentName: string;
   agent: AcpStatusInfo;
+  context: ContextUsage | null;
   choice: AgentChoice;
   onChoiceChange: (choice: AgentChoice) => void;
   onSubmit: (draft: ComposerSubmit) => Promise<void>;
@@ -52,6 +53,7 @@ export const Composer: React.FC<{
   isBusy,
   agentName,
   agent,
+  context,
   choice,
   onChoiceChange,
   onSubmit,
@@ -143,7 +145,7 @@ export const Composer: React.FC<{
 
           <div className="flex-1" />
 
-          <ModelMenu agent={agent} choice={choice} onChange={onChoiceChange} />
+          <ModelMenu agent={agent} context={context} choice={choice} onChange={onChoiceChange} />
 
           <SendControls isBusy={isBusy} hasDraft={hasDraft} canSend={canSend} onStop={onStop} onSend={submit} />
         </div>

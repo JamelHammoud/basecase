@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Button, Section, TextArea, FileImportIcon, PlusIcon } from '../../design-system';
+import { Button, MetaLine, Section, TextArea, FileImportIcon, PlusIcon } from '../../design-system';
 import { parseSvgTo3DNodes, type ParsedSvg3DResult } from '../../utils/svgTo3DParser';
 import { OutputFields } from './OutputFields';
 import { SAMPLE_ROBOTICS_SVGS } from './samples';
@@ -148,10 +148,13 @@ const SvgOutput: React.FC<{
         />
         <div className="min-w-0 flex-1">
           <div className="text-[13px] text-white/90 truncate">{parsedSvg.name}</div>
-          <div className="text-[12px] text-white/45 tabular">
-            {parsedSvg.shapeCount} {parsedSvg.shapeCount === 1 ? 'shape' : 'shapes'} · {parsedSvg.holeCount}{' '}
-            {parsedSvg.holeCount === 1 ? 'hole' : 'holes'}
-          </div>
+          <MetaLine
+            className="text-[12px] text-white/45 tabular"
+            items={[
+              `${parsedSvg.shapeCount} ${parsedSvg.shapeCount === 1 ? 'shape' : 'shapes'}`,
+              `${parsedSvg.holeCount} ${parsedSvg.holeCount === 1 ? 'hole' : 'holes'}`,
+            ]}
+          />
           <button
             type="button"
             onClick={onEditInSketch}

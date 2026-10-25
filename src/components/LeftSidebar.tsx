@@ -1,15 +1,23 @@
 import React, { Activity, useState } from 'react';
 import { IconButton, LAYOUT, PlusIcon } from '../design-system';
 import type { CatalogItem, ScenePart } from '../types/robotics';
+import type { SimReadyAsset } from '../simready/search';
 import type { RobotPreset } from '../utils/robotImport';
 import { LayersView, type LayersViewProps } from './layers/LayersView';
 import { LibraryPanel, type LibraryPanelProps } from './LibraryPanel';
+import { ObjectsPanel } from './objects/ObjectsPanel';
 import { PartsPanel } from './PartsPanel';
 import { RobotsPanel } from './RobotsPanel';
 
-export type LeftTab = 'layers' | 'parts' | 'robots' | 'library';
+export type LeftTab = 'layers' | 'parts' | 'robots' | 'objects' | 'library';
 
-const VIEW_TITLES: Record<LeftTab, string> = { layers: 'Layers', parts: 'Parts', robots: 'Robots', library: 'Library' };
+const VIEW_TITLES: Record<LeftTab, string> = {
+  layers: 'Layers',
+  parts: 'Parts',
+  robots: 'Robots',
+  objects: 'Objects',
+  library: 'Library',
+};
 
 interface LeftSidebarProps extends Omit<LayersViewProps, 'parts' | 'selectedIds'> {
   open: boolean;
@@ -23,6 +31,7 @@ interface LeftSidebarProps extends Omit<LayersViewProps, 'parts' | 'selectedIds'
   onAddCatalogItem: (item: CatalogItem) => void;
   partsSearchRef?: React.MutableRefObject<HTMLInputElement | null>;
   onImportRobot: (preset: RobotPreset | null) => Promise<unknown> | void;
+  onInsertSimReady: (asset: SimReadyAsset) => Promise<unknown> | void;
   library: Omit<LibraryPanelProps, 'parts' | 'selectedIds'>;
 }
 
@@ -81,7 +90,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
             <PartsPanel onAdd={props.onAddCatalogItem} searchInputRef={props.partsSearchRef} />
           </View>
           <View tab="robots" current={tab} visited={visited}>
-            <RobotsPanel onInsert={(r) => props.onImportRobot(r)} />
+            <RobotsPanel onInsert={(r) => props.onImportRobot(r)} onInsertSimReady={props.onInsertSimReady} />
+          </View>
+          <View tab="objects" current={tab} visited={visited}>
+            <ObjectsPanel onInsert={props.onInsertSimReady} />
           </View>
           <View tab="library" current={tab} visited={visited}>
             <LibraryPanel {...props.library} parts={props.parts} selectedIds={props.selectedIds} />

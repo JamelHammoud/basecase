@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
-import { actuatorOf } from '../data/components';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
+import { effortOf } from './mjcfEffort';
 
 export const toMj = (v: V3 | THREE.Vector3): V3 => {
   const [x, y, z] = Array.isArray(v) ? v : [v.x, v.y, v.z];
@@ -199,13 +199,27 @@ function robotGrams(m: PartMass | undefined, measure: MeshMeasure | undefined): 
   return 10;
 }
 
-function geomFor(st: BuildState, p: ScenePart, origin: V3, robot: boolean): string | null {
+type GeomRole = 'robot' | 'object' | 'scenery';
+
+const CONTACT: Record<GeomRole, string> = {
+  robot: 'contype="1" conaffinity="0"',
+  object: 'contype="1" conaffinity="1"',
+  scenery: 'contype="0" conaffinity="1"',
+};
+
+function geomAttrs(st: BuildState, p: ScenePart, role: GeomRole): string {
+  const kg = role === 'scenery' ? 0 : robotGrams(st.masses.get(p.id), st.input.measures[p.id]) / 1000;
+  const massAttr = role === 'scenery' ? '' : ` mass="${f(Math.max(kg, 1e-4))}"`;
+  const friction = role === 'object' && p.physics?.friction ? ` friction="${f(p.physics.friction)} 0.02 0.002"` : '';
+
+  return `${CONTACT[role]}${massAttr}${friction}`;
+}
+
+function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): string | null {
   const tris = st.input.partTriangles(p.id);
   const place = partMatrix(p);
   const verts = tris && tris.length >= 9 ? hullVertices(tris, place, origin) : null;
-  const kg = robot ? robotGrams(st.masses.get(p.id), st.input.measures[p.id]) / 1000 : 0;
-  const massAttr = robot ? ` mass="${f(Math.max(kg, 1e-4))}"` : '';
-  const contact = robot ? 'contype="1" conaffinity="0"' : 'contype="0" conaffinity="1"';
+  const attrs = geomAttrs(st, p, role);
   const name = `g_${p.id.replace(/[^\w-]/g, '_')}`;
 
   if (verts) {
@@ -213,7 +227,7 @@ function geomFor(st: BuildState, p: ScenePart, origin: V3, robot: boolean): stri
 
     st.assets.push(`    <mesh name="${mesh}" vertex="${vec(verts)}" maxhullvert="96" inertia="convex"/>`);
 
-    return `<geom name="${esc(name)}" type="mesh" mesh="${mesh}" ${contact}${massAttr}/>`;
+    return `<geom name="${esc(name)}" type="mesh" mesh="${mesh}" ${attrs}/>`;
   }
 
   const d = p.dimensions;
@@ -222,7 +236,7 @@ function geomFor(st: BuildState, p: ScenePart, origin: V3, robot: boolean): stri
   const pos = toMj([center.x - origin[0], center.y - origin[1], center.z - origin[2]]);
   const half = [Math.max(d.width, 1) / 2000, Math.max(d.depth, 1) / 2000, Math.max(d.height, 1) / 2000];
 
-  return `<geom name="${esc(name)}" type="box" size="${vec(half)}" pos="${vec(pos)}" quat="${vec(quatToMj(q))}" ${contact}${massAttr}/>`;
+  return `<geom name="${esc(name)}" type="box" size="${vec(half)}" pos="${vec(pos)}" quat="${vec(quatToMj(q))}" ${attrs}/>`;
 }
 
 function solidPart(st: BuildState, id: string): boolean {
@@ -243,7 +257,7 @@ function bodyXml(rb: RobotBuild, b: BodySpec): string[] {
   lines.push(...b.inner.map((l) => `${indent}  ${l}`));
 
   for (const id of b.ids) {
-    const g = geomFor(st, st.byId.get(id)!, origin, true);
+    const g = geomFor(st, st.byId.get(id)!, origin, 'robot');
 
     if (g) lines.push(`${indent}  ${g}`);
 
@@ -381,6 +395,36 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
   if (!rb.grams) st.warnings.push(`${robot.name} has no weighed parts. Its weight is an estimate.`);
 }
 
+function objectGroups(parts: ScenePart[]): string[][] {
+  const groups = new Map<string, string[]>();
+
+  for (const p of parts) {
+    const key = p.group?.id ?? p.id;
+
+    groups.set(key, [...(groups.get(key) ?? []), p.id]);
+  }
+
+  return [...groups.values()];
+}
+
+function emitObject(st: BuildState, ids: string[], index: number) {
+  const placed = ids.map((id) => st.byId.get(id)!);
+  const origin = [0, 1, 2].map((a) => placed.reduce((s, p) => s + p.position[a], 0) / placed.length) as V3;
+  const name = `o${index}_${safeId(ids[0])}`;
+  const lines = [`    <body name="${esc(name)}" pos="${vec(toMj(origin))}">`, `      <freejoint name="${esc(name)}"/>`];
+
+  st.bodies.push({ name, parts: ids, origin });
+
+  for (const p of placed) {
+    const g = geomFor(st, p, origin, 'object');
+
+    if (g) lines.push(`      ${g}`);
+  }
+
+  lines.push('    </body>');
+  st.worldXml.push(...lines);
+}
+
 function mujocoXml(st: BuildState, timestep: number): string {
   return `<mujoco model="basecase">
   <compiler angle="radian" inertiafromgeom="true" boundmass="0.0005" boundinertia="1e-8"/>
@@ -425,14 +469,15 @@ export function buildMjcf(input: MjcfInput): SimModel {
   for (const robot of rig.robots) emitRobot(st, robot);
 
   const inRobot = new Set(rig.robots.flatMap((r) => [...r.parts]));
+  const loose = parts.filter((p) => !inRobot.has(p.id) && isSolidPart(p));
 
-  for (const p of parts) {
-    if (inRobot.has(p.id) || !isSolidPart(p)) continue;
-
-    const g = geomFor(st, p, [0, 0, 0], false);
+  for (const p of loose.filter((q) => !q.physics?.dynamic)) {
+    const g = geomFor(st, p, [0, 0, 0], 'scenery');
 
     if (g) st.worldXml.push(`    ${g}`);
   }
+
+  objectGroups(loose.filter((q) => q.physics?.dynamic)).forEach((ids, i) => emitObject(st, ids, i));
 
   const xml = mujocoXml(st, input.timestep ?? 0.002);
 
@@ -445,41 +490,4 @@ export function buildMjcf(input: MjcfInput): SimModel {
     massKg: st.massKg,
     warnings: st.warnings,
   };
-}
-
-function effortOf(
-  j: RobotJoint,
-  byId: Map<string, ScenePart>,
-  rig: Rig,
-  masses: Map<string, { grams: number; centroid: V3 }>,
-): { effort: number; source: SimJoint['effortSource'] } {
-  const servos = (j.actuators ?? []).map((id) => byId.get(id)).filter((p): p is ScenePart => !!p?.componentId);
-  const stall = servos.reduce((s, p) => s + (actuatorOf(p.componentId!, p.componentVariant)?.stallNm ?? 0), 0);
-
-  if (stall > 0) return { effort: stall, source: 'servo' };
-
-  if (j.effortNm && j.effortNm > 0) return { effort: j.effortNm, source: 'published' };
-
-  const below = new Set<string>();
-
-  for (const [pid, owner] of rig.ownerOf) if (rig.chain.get(owner)?.has(j.id)) below.add(pid);
-
-  let moment = 0;
-  let grams = 0;
-
-  for (const id of below) {
-    const m = masses.get(id);
-
-    if (!m) continue;
-
-    grams += m.grams;
-    moment +=
-      (m.grams / 1000) *
-      9.81 *
-      (Math.hypot(m.centroid[0] - j.origin[0], m.centroid[1] - j.origin[1], m.centroid[2] - j.origin[2]) / 1000);
-  }
-
-  if (j.type === 'prismatic') return { effort: Math.max(5, (grams / 1000) * 9.81 * 3), source: 'estimate' };
-
-  return { effort: Math.max(0.3, moment * 3), source: 'estimate' };
 }

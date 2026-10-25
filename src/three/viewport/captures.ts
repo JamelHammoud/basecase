@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { encodeBitmap } from '../../utils/imageEncode';
+import { fittedSize } from '../../utils/imageOps';
+import { CANVAS_BACKGROUND } from '../../utils/imageFile';
 import type { ViewportContext } from './viewportContext';
 
 const VIEW_DIRECTIONS: Record<string, THREE.Vector3> = {
@@ -92,10 +95,37 @@ function visibleBounds(root: THREE.Object3D, marks?: THREE.Box3) {
   };
 }
 
-export function captureViews(
+interface CaptureRequest {
+  views: string[];
+  onlyIds?: string[];
+  silhouette?: boolean;
+  maxSide?: number;
+  helper?: THREE.Object3D;
+  marks?: THREE.Box3;
+}
+
+const VIEW_QUALITY = 0.86;
+
+const imageFormat = (request: CaptureRequest) =>
+  request.silhouette || !request.maxSide
+    ? ({ type: 'image/png' } as const)
+    : ({ type: 'image/jpeg', quality: VIEW_QUALITY, background: CANVAS_BACKGROUND } as const);
+
+function snapshot(canvas: HTMLCanvasElement, maxSide?: number): ImageBitmap {
+  const { width, height } = fittedSize(canvas.width, canvas.height, maxSide);
+  const copy = new OffscreenCanvas(width, height);
+  const ctx = copy.getContext('2d')!;
+
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(canvas, 0, 0, width, height);
+
+  return copy.transferToImageBitmap();
+}
+
+export async function captureViews(
   ctx: ViewportContext,
-  request: { views: string[]; onlyIds?: string[]; silhouette?: boolean; helper?: THREE.Object3D; marks?: THREE.Box3 },
-): Array<{ view: string; dataUrl: string }> {
+  request: CaptureRequest,
+): Promise<Array<{ view: string; dataUrl: string }>> {
   const { renderer, scene, camera: mainCamera, partsRoot } = ctx.stage;
   const hider = new Hider();
   const silhouette = request.silhouette ? new THREE.MeshBasicMaterial({ color: 0xffffff }) : null;
@@ -118,7 +148,7 @@ export function captureViews(
     hideForSilhouette(ctx, hider);
   }
 
-  const out = request.views.map((view) => {
+  const shots = request.views.map((view) => {
     camera.position.copy(center).addScaledVector(viewDirection(view), distance);
     camera.near = distance / 100;
     camera.far = distance * 10;
@@ -126,9 +156,10 @@ export function captureViews(
     camera.updateProjectionMatrix();
     headlight.position.copy(camera.position).add(new THREE.Vector3(0, radius * 0.6, 0));
     headlight.target.position.copy(center);
+    renderer.shadowMap.needsUpdate = true;
     renderer.render(scene, camera);
 
-    return { view, dataUrl: renderer.domElement.toDataURL('image/png') };
+    return { view, bitmap: snapshot(renderer.domElement, request.silhouette ? undefined : request.maxSide) };
   });
 
   scene.remove(headlight, headlight.target);
@@ -138,7 +169,12 @@ export function captureViews(
   scene.background = previous.background;
   renderer.toneMappingExposure = previous.exposure;
   hider.restore();
+  ctx.loop.invalidate();
   ctx.loop.renderNow();
 
-  return out;
+  const format = imageFormat(request);
+
+  return Promise.all(
+    shots.map(async ({ view, bitmap }) => ({ view, dataUrl: await encodeBitmap({ bitmap, ...format }) })),
+  );
 }

@@ -57,11 +57,14 @@ function enclosedBy(ctx: PlanContext, majors: string[]): Map<string, string[]> {
 
 interface Score {
   linked: number;
+  near: number;
   low: number;
   volume: number;
 }
 
-const better = (a: Score, b: Score) => a.linked - b.linked || a.low - b.low || a.volume - b.volume;
+const better = (a: Score, b: Score) => a.linked - b.linked || a.near - b.near || a.low - b.low || a.volume - b.volume;
+
+const NEAR_STEP_MM = 5;
 
 const biggest = (ctx: PlanContext, ids: string[]) =>
   ids.reduce((a, b) => (boxVolume(boxOfPart(ctx, b)) > boxVolume(boxOfPart(ctx, a)) ? b : a));
@@ -71,6 +74,7 @@ function pickNext(ctx: PlanContext, candidates: string[], anchor: Set<string> | 
 
   const scoreOf = (id: string): Score => ({
     linked: touching(ctx, id).filter((o) => anchor.has(o)).length,
+    near: -Math.round(Math.min(...[...anchor].map((o) => distance(ctx, id, o))) / NEAR_STEP_MM),
     low: -boxOfPart(ctx, id).min[1],
     volume: boxVolume(boxOfPart(ctx, id)),
   });

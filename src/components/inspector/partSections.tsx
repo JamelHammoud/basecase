@@ -1,9 +1,10 @@
 import React from 'react';
 import type { ScenePart } from '../../types/robotics';
 import type { ComponentInfo } from '../../data/components';
-import { ComponentLinks, ModelSource, SizeLine, SpecList } from '../PartDetails';
+import { ComponentLinks, ModelSource, SizeLine, SpecList, SpecText } from '../PartDetails';
 import {
   IconButton,
+  MetaLine,
   NumberInput,
   Section,
   SegmentedControl,
@@ -59,7 +60,7 @@ export const PartHeader: React.FC<
         onClick={onDelete}
       />
     </div>
-    {isImage && <p className="text-[12.5px] text-white/45">Reference image · not printed or exported</p>}
+    {isImage && <p className="text-[12.5px] text-white/45">Not printed or exported</p>}
   </div>
 );
 
@@ -154,13 +155,14 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
 
 export const ProductSection: React.FC<{ part: ScenePart; comp: ComponentInfo }> = ({ part, comp }) => (
   <Section title="Product" collapsible defaultOpen={false}>
-    <div className="text-[12.5px] text-white/45 -mt-1">
-      {comp.manufacturer} · {comp.mpn}
-    </div>
+    <MetaLine items={[comp.manufacturer, comp.mpn]} className="text-[12.5px] text-white/45 -mt-1" />
     <SpecList
       rows={[
         ['Size', <SizeLine key="s" w={part.dimensions.width} h={part.dimensions.height} d={part.dimensions.depth} />],
-        ...comp.specs,
+        ...comp.specs.map(([label, value]): [string, React.ReactNode] => [
+          label,
+          <SpecText key={label} value={value} />,
+        ]),
       ]}
     />
     <p className="text-[12.5px] text-white/55 leading-relaxed">{comp.mounting}</p>

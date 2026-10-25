@@ -69,6 +69,8 @@ export interface PoseReply {
   images?: Array<{ view: string; dataUrl: string }>;
 }
 
+export const TOOL_IMAGE_SIDE = 768;
+
 export const r1 = (v: number) => Math.round(v * 10) / 10;
 export const fmtV = (v: V3) => `[${v.map((x) => r1(Object.is(r1(x), -0) ? 0 : x)).join(', ')}]`;
 export const axisName = (a: V3) => {
@@ -109,7 +111,12 @@ export const rootToCad = (root?: RootOffset) =>
     ? `body offset ${fmtV(toCad(root.position ?? [0, 0, 0]))} mm, turned ${fmtV(rotToCad(root.rotation ?? [0, 0, 0]))}°`
     : '';
 
-export function poseCheck(ctx: PoseContext, scope: Scope, local: RobotPoseState, restPairs: Set<string>): string[] {
+export async function poseCheck(
+  ctx: PoseContext,
+  scope: Scope,
+  local: RobotPoseState,
+  restPairs: Promise<Set<string>>,
+): Promise<string[]> {
   const vp = ctx.viewport;
 
   if (!vp) return [];
@@ -127,13 +134,14 @@ export function poseCheck(ctx: PoseContext, scope: Scope, local: RobotPoseState,
   const lines: string[] = [];
   const owner = (id: string) => rig.ownerOf.get(id) ?? 'base';
   const robotParts = [...(scope.full.robots.find((r) => r.key === scope.key)?.parts ?? [])];
-  const clashes = vp
-    .posedInterference(robotParts)
-    .filter((f) => f.depthMm > 1 && owner(f.a) !== owner(f.b) && !restPairs.has([f.a, f.b].sort().join('|')));
+  const found = vp.posedInterference(robotParts);
+  const floor = vp.posedFloor(robotParts);
+  const rest = await restPairs;
+  const clashes = (await found).filter(
+    (f) => f.depthMm > 1 && owner(f.a) !== owner(f.b) && !rest.has([f.a, f.b].sort().join('|')),
+  );
 
   for (const c of clashes.slice(0, 6)) lines.push(`${c.a} passes ${r1(c.depthMm)} mm into ${c.b}`);
-
-  const floor = vp.posedFloor(robotParts);
 
   if (floor !== null && floor < -1) lines.push(`${r1(-floor)} mm below the floor`);
   else if (floor !== null && floor > 5 && rig.joints.some((j) => /knee|ankle|leg|foot/i.test(j.name)))
@@ -142,8 +150,8 @@ export function poseCheck(ctx: PoseContext, scope: Scope, local: RobotPoseState,
   return lines;
 }
 
-export function restPairs(ctx: PoseContext): Set<string> {
-  const found = ctx.viewport?.interference().interferences ?? [];
+export async function restPairs(ctx: PoseContext): Promise<Set<string>> {
+  const found = (await ctx.viewport?.interference())?.interferences ?? [];
 
   return new Set(found.map((f) => [f.a, f.b].sort().join('|')));
 }
@@ -153,22 +161,23 @@ export function render(
   scope: Scope,
   states: Array<{ label: string; state: RobotPoseState }>,
   views: string[],
-): Array<{ view: string; dataUrl: string }> {
+): Promise<Array<{ view: string; dataUrl: string }>> {
   const vp = ctx.viewport;
 
-  if (!vp) return [];
+  if (!vp) return Promise.resolve([]);
 
   const ids = ctx.parts.map((p) => p.id);
-  const out: Array<{ view: string; dataUrl: string }> = [];
-
-  for (const s of states) {
+  const shots = states.map((s) => {
     vp.setPose(poseDeltas(scope.full, scope.merge(s.state), ids));
 
-    for (const shot of vp.captureViews(views))
-      out.push({ view: `${s.label}${s.label ? ' · ' : ''}${shot.view}`, dataUrl: shot.dataUrl });
-  }
+    return vp
+      .captureViews(views, undefined, { maxSide: TOOL_IMAGE_SIDE })
+      .then((taken) =>
+        taken.map((shot) => ({ view: `${s.label}${s.label ? ' · ' : ''}${shot.view}`, dataUrl: shot.dataUrl })),
+      );
+  });
 
-  return out;
+  return Promise.all(shots).then((all) => all.flat());
 }
 
 export function restore(ctx: PoseContext, scope: Scope) {

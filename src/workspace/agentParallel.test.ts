@@ -61,7 +61,7 @@ describe('parallel agents', () => {
     expect(runningChats([{ ...lanes[0], chatId: 'chat-a' }], NOW).map((c) => c.id)).toEqual(['chat-a']);
   });
 
-  it('nests a subagent’s steps and report under its Agent call', () => {
+  it('nests a subagent’s steps, thoughts and report under its Agent call', () => {
     let messages: AcpChatMessage[] = [{ id: 'u', role: 'user', text: 'Build it', timestamp: NOW.toISOString() }];
 
     messages = applySessionUpdate(messages, agentCall('agent-1', 'Left leg'), NOW);
@@ -80,6 +80,11 @@ describe('parallel agents', () => {
       fromSubagent('agent-1', { sessionUpdate: 'agent_message_chunk', content: { text: 'Made 1 part.' } }),
       NOW,
     );
+    messages = applySessionUpdate(
+      messages,
+      fromSubagent('agent-1', { sessionUpdate: 'agent_thought_chunk', content: { text: 'Knee first.' } }),
+      NOW,
+    );
 
     const [call] = messages[1].toolCalls ?? [];
 
@@ -87,6 +92,7 @@ describe('parallel agents', () => {
     expect(messages[1].segments).toEqual([{ type: 'tool', toolCallId: 'agent-1' }]);
     expect(call.children?.map((c) => [c.toolCallId, c.status])).toEqual([['t1', 'completed']]);
     expect(call.childText).toBe('Made 1 part.');
+    expect(call.childThought).toBe('Knee first.');
     expect(messages[1].text).toBe('');
   });
 

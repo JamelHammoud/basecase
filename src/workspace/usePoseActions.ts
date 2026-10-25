@@ -76,7 +76,7 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
 
     openPose();
     play(made.id, 0);
-    showToast(`Added ${made.name}${summary}`);
+    showToast(summary ? `Added ${made.name}. ${summary}` : `Added ${made.name}`);
   };
 
   return {

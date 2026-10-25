@@ -1,4 +1,4 @@
-import { ComponentInfo } from '../data/components';
+import { ComponentInfo, specLines } from '../data/components';
 
 export interface KeySpec {
   label: string;
@@ -9,7 +9,7 @@ const spec = (c: ComponentInfo, ...labels: string[]) => {
   for (const l of labels) {
     const hit = c.specs.find(([label]) => label === l);
 
-    if (hit) return hit[1];
+    if (hit) return specLines(hit[1])[0];
   }
 
   return undefined;
@@ -17,7 +17,6 @@ const spec = (c: ComponentInfo, ...labels: string[]) => {
 
 export const plainValue = (v: string) =>
   v
-    .split(' · ')[0]
     .replace(/\s*\([^)]*\)/g, '')
     .split(/ @ | at /)[0]
     .replace(/,\s*IP\w+.*$/, '')

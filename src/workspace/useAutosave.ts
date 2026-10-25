@@ -2,6 +2,7 @@ import { useEffect, useEffectEvent, useRef } from 'react';
 import { scenePreview } from '../three/scenePreview';
 import { buildAIHandoffPayload } from '../utils/aiHandoff';
 import { platformBridge } from '../utils/platformBridge';
+import { sceneJson } from '../utils/sceneJson';
 import { sceneStore } from '../utils/sceneStore';
 import { useLatestRef } from '../utils/useLatestRef';
 import { draftChanged, draftPayload, type SceneDraft } from './sceneDraft';
@@ -88,7 +89,7 @@ export function useAutosave({ draft, active, pristine, unsaved }: AutosaveOption
       ? buildAIHandoffPayload(next.sceneName, next.globalGoal, next.parts, next.annotations)
       : {};
 
-    sceneStore.upsert(await platformBridge.saveScene({ ...draftPayload(next), ...handoff }));
+    sceneStore.upsert(await platformBridge.saveSceneJson(await sceneJson({ ...draftPayload(next), ...handoff })));
     previews.schedule();
   };
 

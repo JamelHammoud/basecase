@@ -1,0 +1,352 @@
+[
+ {
+  "id": "torso",
+  "name": "Torso",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   0,
+   428.25,
+   -9
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 260.3,
+   "height": 290.4,
+   "depth": 654
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Labrador torso: loft through barrel cross-sections along the body (local z = world -y),\n// closed by apex points at the buttock and the prosternum. Spline seam under the belly.\n// Broad, square hindquarters; a soft flank fold toward the stifle (no notch in front of the thigh).\nconst N = 20;\nconst sec = (zt, zb, w, keel, zw) => {\n  const pts = [];\n  for (let i = 0; i < N; i++) {\n    const a = -Math.PI / 2 + (i / N) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);\n    const up = s >= 0;\n    const h = up ? (zt - zw) : (zw - zb);\n    let x = w * Math.sign(c) * Math.abs(c) ** 0.82;\n    if (!up) x *= 1 - keel * Math.abs(s) ** 1.6;      // keel-shaped underside\n    else x *= 1 - 0.18 * Math.abs(s) ** 2.5;           // slightly narrower over the spine\n    const z = zw + h * Math.sign(s) * Math.abs(s) ** (up ? 0.9 : 0.85);\n    pts.push([x, z]);\n  }\n  return pts;\n};\nconst S = [\n  // y,    zt,  zb,  w,   keel, zw\n  [ 318, 515, 400,  84, 0.30, 460],\n  [ 285, 537, 360, 114, 0.40, 452],   // buttocks\n  [ 225, 548, 350, 120, 0.42, 446],   // hips / croup, over the thighs\n  [ 155, 554, 358, 112, 0.42, 450],   // flank, soft fold to the stifle\n  [  80, 557, 338, 114, 0.48, 448],   // loin\n  [   0, 560, 305, 126, 0.45, 440],   // back ribs\n  [ -80, 564, 288, 130, 0.45, 435],   // widest barrel\n  [-160, 572, 284, 126, 0.50, 440],   // withers\n  [-222, 566, 290, 118, 0.50, 445],   // shoulders\n  [-268, 530, 305, 104, 0.45, 440],\n  [-296, 482, 345,  78, 0.40, 425],   // point of shoulder / prosternum\n];\nconst sketches = S.map(([y, zt, zb, w, k, zw]) => {\n  const p = sec(zt, zb, w, k, zw);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', -y);\n});\nconst body = sketches[0].loftWith(sketches.slice(1), {\n  ruled: false,\n  startPoint: [0, 462, -336],   // buttock apex (world y = +336)\n  endPoint: [0, 418, 318],      // prosternum apex (world y = -318)\n});\n// local (x, ly, lz) -> world (x, -lz, ly)\nreturn body.rotate(90, [0, 0, 0], [1, 0, 0]);",
+   "originOffset": [
+    0,
+    428.2495,
+    -9
+   ],
+   "baseSize": [
+    260.3,
+    290.4,
+    654
+   ]
+  }
+ },
+ {
+  "id": "neck",
+  "name": "Neck",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -0.002,
+   545,
+   257.876
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 173.5,
+   "height": 290,
+   "depth": 261
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Neck: thick and muscular, deep fore-aft; the crest starts well back on the withers and the\n// throat runs full into the jaw. Teardrop sections (broad crest, narrower throat). Ends buried.\nconst N = 20;\nconst sec = (cy, ru, rvBack, rvFront) => Array.from({ length: N }, (_, i) => {\n  const a = Math.PI / 2 + (i / N) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);\n  const rv = s < 0 ? rvFront : rvBack;               // s<0 = throat side (-y)\n  let x = ru * Math.sign(c) * Math.abs(c) ** 0.85;\n  if (s < 0) x *= 1 - 0.30 * (-s) ** 2;              // throat narrower than the crest\n  return [x, cy + rv * Math.sign(s) * Math.abs(s) ** 0.9];\n});\nconst S = [\n  // z,   cy,   ru, back, front\n  [400, -215, 84,  85, 75],    // buried in the chest\n  [450, -230, 86,  95, 85],\n  [500, -250, 80, 100, 90],    // base of the neck, crest flowing into the withers\n  [560, -280, 72,  92, 88],\n  [610, -305, 66,  78, 80],\n  [650, -322, 60,  62, 66],\n  [690, -330, 54,  46, 50],    // inside the back of the skull\n];\nconst sk = S.map(([z, cy, ru, b, f]) => {\n  const p = sec(cy, ru, b, f);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', z);\n});\nconst neck = sk[0].loftWith(sk.slice(1), { ruled: false });\n// boolean with a generous box rebuilds a clean, outward-facing solid (end caps buried)\nreturn neck.intersect(makeBox([-150, -450, 400], [150, -100, 700]));",
+   "originOffset": [
+    -0.001999999999995339,
+    545,
+    257.8755
+   ],
+   "baseSize": [
+    173.5,
+    290,
+    261
+   ]
+  }
+ },
+ {
+  "id": "head",
+  "name": "Head",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   0,
+   653.364,
+   403.5
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 164.36,
+   "height": 139.51,
+   "depth": 255
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Labrador head, level, nose to -y: broad flat skull, full cheeks, clear stop, then a short, deep,\n// squarish muzzle (~105 mm, stop at y -422 to nose at ~-530) closing in a blunt rounded nose.\n// Loft through cross-sections (local z = world -y).\nconst N = 20;\nconst sec = (zt, zb, w, zw, topFlat, flews, sq) => Array.from({ length: N }, (_, i) => {\n  const a = -Math.PI / 2 + (i / N) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);\n  const up = s >= 0;\n  let x = w * Math.sign(c) * Math.abs(c) ** sq;          // sq < 0.8 = squarer section\n  if (up) x *= 1 - topFlat * Math.abs(s) ** 3;           // skull top: broad, flat\n  else x *= 1 - (0.35 - flews) * Math.abs(s) ** 1.5;     // underjaw narrows; flews keep it full\n  const h = up ? zt - zw : zw - zb;\n  const z = zw + h * Math.sign(s) * Math.abs(s) ** (up ? 0.7 : 0.8);\n  return [x, z];\n});\nconst S = [\n  // y,    zt,  zb,  w,  zw, topFlat, flews, sq\n  [-292, 700, 615, 60, 660, 0.30, 0.00, 0.80],   // back of the skull, inside the neck\n  [-312, 714, 594, 73, 656, 0.30, 0.00, 0.80],   // occiput\n  [-342, 721, 585, 80, 653, 0.28, 0.05, 0.80],   // cheeks, ear set\n  [-375, 723, 584, 81, 650, 0.26, 0.06, 0.80],   // broad skull\n  [-402, 716, 587, 74, 648, 0.25, 0.10, 0.78],   // brows\n  [-422, 700, 590, 63, 645, 0.20, 0.14, 0.74],   // stop\n  [-440, 689, 590, 56, 642, 0.15, 0.18, 0.70],   // muzzle root\n  [-466, 684, 592, 53, 641, 0.15, 0.20, 0.68],   // deep, square muzzle\n  [-490, 680, 595, 50, 641, 0.15, 0.20, 0.68],\n  [-506, 676, 600, 46, 641, 0.18, 0.16, 0.70],   // nose and flews\n  [-518, 670, 609, 38, 641, 0.18, 0.12, 0.76],   // blunt front, rounding off\n  [-526, 662, 620, 25, 641, 0.15, 0.10, 0.85],\n];\nconst sk = S.map(([y, zt, zb, w, zw, t, f, q]) => {\n  const p = sec(zt, zb, w, zw, t, f, q);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', -y);\n});\nconst head = sk[0].loftWith(sk.slice(1), {\n  ruled: false,\n  startPoint: [0, 660, 276],    // world y = -276\n  endPoint: [0, 641, 531],      // nose leather\n});\nreturn head.rotate(90, [0, 0, 0], [1, 0, 0]);",
+   "originOffset": [
+    0,
+    653.3644999999999,
+    403.5
+   ],
+   "baseSize": [
+    164.36,
+    139.51,
+    255
+   ]
+  }
+ },
+ {
+  "id": "left-foreleg",
+  "name": "Left Foreleg",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   72.937,
+   215.009,
+   221.409
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 79.27,
+   "height": 430.02,
+   "depth": 114.96
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Left foreleg (x>0): straight vertical column, strong bone tapering from the elbow to the pastern,\n// elbow point standing out behind, compact round paw with a flat sole. Above the elbow it slides in\n// under the chest wall. Horizontal-section loft.\nconst N = 16;\nconst ell = (cx, cy, ru, rv, front = 1.0, back = 1.0) => Array.from({ length: N }, (_, i) => {\n  const a = Math.PI / 2 + (i / N) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);\n  const r = s < 0 ? rv * front : rv * back;          // s<0 = toward -y (toes)\n  return [cx + ru * Math.sign(c) * Math.abs(c) ** 0.85, cy + r * Math.sign(s) * Math.abs(s) ** 0.85];\n});\nconst S = [\n  // z,  cx,  cy,   ru, rv, front, back\n  [  8, 78, -236, 32, 35, 1.05, 1.0],   // paw sole\n  [ 22, 78, -236, 34, 39, 1.05, 1.0],   // toes\n  [ 38, 78, -232, 30, 33, 1.03, 1.0],   // knuckles\n  [ 58, 77, -229, 26, 28, 1.0, 1.0],    // pastern\n  [ 90, 77, -228, 26, 29, 1.0, 1.0],\n  [120, 77, -228, 29, 33, 1.0, 1.0],    // carpus (wrist)\n  [170, 77, -227, 30, 35, 1.0, 1.0],\n  [220, 77, -225, 32, 38, 1.0, 1.0],    // forearm\n  [262, 77, -221, 35, 42, 1.0, 1.08],\n  [298, 76, -217, 36, 46, 1.0, 1.15],   // elbow point behind\n  [340, 72, -224, 33, 45, 1.0, 1.0],    // upper arm, sliding under the chest wall\n  [400, 62, -232, 28, 40, 1.0, 1.0],\n];\nconst sk = S.map(([z, cx, cy, ru, rv, f, b]) => {\n  const p = ell(cx, cy, ru, rv, f, b);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', z);\n});\nconst leg = sk[0].loftWith(sk.slice(1), { ruled: false, startPoint: [78, -237, 0.5], endPoint: [56, -234, 430] });\nreturn leg.intersect(makeBox([0, -400, 0], [200, -100, 500]));   // flat sole on the floor",
+   "originOffset": [
+    72.937,
+    215.0085,
+    221.4085
+   ],
+   "baseSize": [
+    79.27,
+    430.02,
+    114.96
+   ]
+  }
+ },
+ {
+  "id": "left-hindleg",
+  "name": "Left Hind Leg",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   79.51,
+   260.557,
+   -243.911
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 99.72,
+   "height": 521.11,
+   "depth": 207.52
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Left hind leg (x>0): round paw (flat sole), vertical rear pastern, smooth hock, muscular gaskin\n// sweeping forward to a well-angled stifle, broad thigh whose top runs inward under the croup.\n// Horizontal-section loft.\nconst N = 16;\nconst ell = (cx, cy, ru, rv, front = 1.0) => Array.from({ length: N }, (_, i) => {\n  const a = Math.PI / 2 + (i / N) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);\n  const r = s < 0 ? rv * front : rv;\n  return [cx + ru * Math.sign(c) * Math.abs(c) ** 0.85, cy + r * Math.sign(s) * Math.abs(s) ** 0.85];\n});\nconst S = [\n  // z,  cx,  cy,  ru,  rv, front\n  [  8, 80, 294, 32, 36, 1.06],   // paw sole\n  [ 22, 80, 294, 34, 40, 1.06],   // toes\n  [ 40, 80, 299, 30, 34, 1.03],\n  [ 62, 80, 307, 26, 28, 1.0],    // rear pastern (metatarsus)\n  [105, 80, 310, 26, 28, 1.0],\n  [150, 80, 308, 27, 31, 1.0],    // hock (smooth)\n  [200, 82, 292, 31, 43, 1.0],    // gaskin\n  [250, 84, 268, 36, 60, 1.0],\n  [300, 85, 248, 41, 82, 1.0],    // stifle front at y~166\n  [350, 85, 240, 44, 94, 1.0],\n  [410, 83, 239, 44, 98, 1.0],    // thigh\n  [460, 76, 244, 40, 86, 1.0],\n  [500, 64, 250, 34, 62, 1.0],    // inside the croup\n];\nconst sk = S.map(([z, cx, cy, ru, rv, f]) => {\n  const p = ell(cx, cy, ru, rv, f);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', z);\n});\nconst leg = sk[0].loftWith(sk.slice(1), { ruled: false, startPoint: [80, 294, 0.5], endPoint: [58, 252, 520] });\nreturn leg.intersect(makeBox([0, 100, 0], [200, 420, 560]));   // flat sole on the floor",
+   "originOffset": [
+    79.50999999999999,
+    260.5565,
+    -243.911
+   ],
+   "baseSize": [
+    99.72,
+    521.11,
+    207.52
+   ]
+  }
+ },
+ {
+  "id": "tail",
+  "name": "Tail",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   0,
+   425.617,
+   -442.462
+  ],
+  "rotation": [
+   -118,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 73.24,
+   "height": 408,
+   "depth": 73.24
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Otter tail: very thick at the root, round and full along its length, a blunt rounded tip;\n// relaxed straight back and ~28 deg down. Local +z from the root (rx -118).\nconst N = 14;\nconst circ = (r) => Array.from({ length: N }, (_, i) => {\n  const a = (i / N) * 2 * Math.PI;\n  return [r * Math.cos(a), r * Math.sin(a)];\n});\nconst S = [\n  // local z, r\n  [  0, 35],    // root, buried in the croup\n  [ 60, 33],\n  [140, 30],\n  [220, 26],\n  [290, 22],\n  [340, 18],\n  [368, 14],\n  [382,  9],\n];\nconst sk = S.map(([z, r]) => {\n  const p = circ(r);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', z);\n});\nreturn sk[0].loftWith(sk.slice(1), { ruled: false, startPoint: [0, 0, -20], endPoint: [0, 0, 388] });",
+   "originOffset": [
+    0,
+    184,
+    0
+   ],
+   "baseSize": [
+    73.24,
+    408,
+    73.24
+   ]
+  }
+ },
+ {
+  "id": "left-ear",
+  "name": "Left Ear",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   74.396,
+   657.874,
+   344.337
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 45.6,
+   "height": 122.14,
+   "depth": 73.93
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Left drop ear: leaf-shaped flap (side outline) folded over at the set onto the skull, its inner\n// face lying against the cheek (front band), edges rounded.\nconst outline = (pts) => drawPointsInterpolation([...pts, pts[0]]);\nconst side = [   // (y, z): set at the back of the skull, rounded tip low and slightly forward\n  [-368, 712], [-345, 718], [-320, 713], [-308, 697], [-310, 670], [-320, 642],\n  [-335, 616], [-350, 600], [-363, 597], [-373, 610], [-379, 640], [-381, 672], [-377, 697],\n];\nconst front = [  // (x, z): fold over the skull at the top, flap lying on the cheek\n  [56, 718], [74, 722], [88, 712], [95, 691], [97, 662], [94, 632], [88, 607], [80, 592],\n  [68, 596], [71, 613], [74, 636], [76, 662], [75, 685], [68, 702], [56, 709],\n];\nlet b = outline(side).sketchOnPlane('YZ', 40).extrude(70);              // x in [40, 110]\nb = b.intersect(outline(front).sketchOnPlane('XZ', 280).extrude(130));   // y in [-410, -280]\ntry { return b.fillet(2.5); } catch (e) { return b; }",
+   "originOffset": [
+    74.396,
+    657.8735,
+    344.337
+   ],
+   "baseSize": [
+    45.6,
+    122.14,
+    73.93
+   ]
+  }
+ },
+ {
+  "id": "right-foreleg",
+  "name": "Right Foreleg",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -72.937,
+   215.009,
+   221.409
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 79.27,
+   "height": 430.02,
+   "depth": 114.96
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Left foreleg (x>0): straight vertical column, strong bone tapering from the elbow to the pastern,\n// elbow point standing out behind, compact round paw with a flat sole. Above the elbow it slides in\n// under the chest wall. Horizontal-section loft.\nconst N = 16;\nconst ell = (cx, cy, ru, rv, front = 1.0, back = 1.0) => Array.from({ length: N }, (_, i) => {\n  const a = Math.PI / 2 + (i / N) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);\n  const r = s < 0 ? rv * front : rv * back;          // s<0 = toward -y (toes)\n  return [cx + ru * Math.sign(c) * Math.abs(c) ** 0.85, cy + r * Math.sign(s) * Math.abs(s) ** 0.85];\n});\nconst S = [\n  // z,  cx,  cy,   ru, rv, front, back\n  [  8, 78, -236, 32, 35, 1.05, 1.0],   // paw sole\n  [ 22, 78, -236, 34, 39, 1.05, 1.0],   // toes\n  [ 38, 78, -232, 30, 33, 1.03, 1.0],   // knuckles\n  [ 58, 77, -229, 26, 28, 1.0, 1.0],    // pastern\n  [ 90, 77, -228, 26, 29, 1.0, 1.0],\n  [120, 77, -228, 29, 33, 1.0, 1.0],    // carpus (wrist)\n  [170, 77, -227, 30, 35, 1.0, 1.0],\n  [220, 77, -225, 32, 38, 1.0, 1.0],    // forearm\n  [262, 77, -221, 35, 42, 1.0, 1.08],\n  [298, 76, -217, 36, 46, 1.0, 1.15],   // elbow point behind\n  [340, 72, -224, 33, 45, 1.0, 1.0],    // upper arm, sliding under the chest wall\n  [400, 62, -232, 28, 40, 1.0, 1.0],\n];\nconst sk = S.map(([z, cx, cy, ru, rv, f, b]) => {\n  const p = ell(cx, cy, ru, rv, f, b);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', z);\n});\nconst leg = sk[0].loftWith(sk.slice(1), { ruled: false, startPoint: [78, -237, 0.5], endPoint: [56, -234, 430] });\nreturn leg.intersect(makeBox([0, -400, 0], [200, -100, 500]));   // flat sole on the floor",
+   "originOffset": [
+    -72.937,
+    215.0085,
+    221.4085
+   ],
+   "baseSize": [
+    79.27,
+    430.02,
+    114.96
+   ]
+  }
+ },
+ {
+  "id": "right-hindleg",
+  "name": "Right Hind Leg",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -79.51,
+   260.557,
+   -243.911
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 99.72,
+   "height": 521.11,
+   "depth": 207.52
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Left hind leg (x>0): round paw (flat sole), vertical rear pastern, smooth hock, muscular gaskin\n// sweeping forward to a well-angled stifle, broad thigh whose top runs inward under the croup.\n// Horizontal-section loft.\nconst N = 16;\nconst ell = (cx, cy, ru, rv, front = 1.0) => Array.from({ length: N }, (_, i) => {\n  const a = Math.PI / 2 + (i / N) * 2 * Math.PI, c = Math.cos(a), s = Math.sin(a);\n  const r = s < 0 ? rv * front : rv;\n  return [cx + ru * Math.sign(c) * Math.abs(c) ** 0.85, cy + r * Math.sign(s) * Math.abs(s) ** 0.85];\n});\nconst S = [\n  // z,  cx,  cy,  ru,  rv, front\n  [  8, 80, 294, 32, 36, 1.06],   // paw sole\n  [ 22, 80, 294, 34, 40, 1.06],   // toes\n  [ 40, 80, 299, 30, 34, 1.03],\n  [ 62, 80, 307, 26, 28, 1.0],    // rear pastern (metatarsus)\n  [105, 80, 310, 26, 28, 1.0],\n  [150, 80, 308, 27, 31, 1.0],    // hock (smooth)\n  [200, 82, 292, 31, 43, 1.0],    // gaskin\n  [250, 84, 268, 36, 60, 1.0],\n  [300, 85, 248, 41, 82, 1.0],    // stifle front at y~166\n  [350, 85, 240, 44, 94, 1.0],\n  [410, 83, 239, 44, 98, 1.0],    // thigh\n  [460, 76, 244, 40, 86, 1.0],\n  [500, 64, 250, 34, 62, 1.0],    // inside the croup\n];\nconst sk = S.map(([z, cx, cy, ru, rv, f]) => {\n  const p = ell(cx, cy, ru, rv, f);\n  return drawPointsInterpolation([...p, p[0]]).sketchOnPlane('XY', z);\n});\nconst leg = sk[0].loftWith(sk.slice(1), { ruled: false, startPoint: [80, 294, 0.5], endPoint: [58, 252, 520] });\nreturn leg.intersect(makeBox([0, 100, 0], [200, 420, 560]));   // flat sole on the floor",
+   "originOffset": [
+    -79.50999999999999,
+    260.5565,
+    -243.911
+   ],
+   "baseSize": [
+    99.72,
+    521.11,
+    207.52
+   ]
+  }
+ },
+ {
+  "id": "right-ear",
+  "name": "Right Ear",
+  "color": "#b8b8b8",
+  "role": "solid",
+  "position": [
+   -74.396,
+   657.874,
+   344.337
+  ],
+  "rotation": [
+   0,
+   0,
+   0
+  ],
+  "dimensions": {
+   "width": 45.6,
+   "height": 122.14,
+   "depth": 73.93
+  },
+  "cad": {
+   "language": "replicad",
+   "code": "// Left drop ear: leaf-shaped flap (side outline) folded over at the set onto the skull, its inner\n// face lying against the cheek (front band), edges rounded.\nconst outline = (pts) => drawPointsInterpolation([...pts, pts[0]]);\nconst side = [   // (y, z): set at the back of the skull, rounded tip low and slightly forward\n  [-368, 712], [-345, 718], [-320, 713], [-308, 697], [-310, 670], [-320, 642],\n  [-335, 616], [-350, 600], [-363, 597], [-373, 610], [-379, 640], [-381, 672], [-377, 697],\n];\nconst front = [  // (x, z): fold over the skull at the top, flap lying on the cheek\n  [56, 718], [74, 722], [88, 712], [95, 691], [97, 662], [94, 632], [88, 607], [80, 592],\n  [68, 596], [71, 613], [74, 636], [76, 662], [75, 685], [68, 702], [56, 709],\n];\nlet b = outline(side).sketchOnPlane('YZ', 40).extrude(70);              // x in [40, 110]\nb = b.intersect(outline(front).sketchOnPlane('XZ', 280).extrude(130));   // y in [-410, -280]\ntry { return b.fillet(2.5); } catch (e) { return b; }",
+   "originOffset": [
+    -74.396,
+    657.8735,
+    344.337
+   ],
+   "baseSize": [
+    45.6,
+    122.14,
+    73.93
+   ]
+  }
+ }
+]

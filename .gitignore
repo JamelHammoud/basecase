@@ -40,6 +40,7 @@ tools/parts/generated/*.log
 
 # Policy trainer virtualenv (uv creates it in library/trainer-env; this is a dev fallback)
 electron/trainer/.venv/
+electron/simready/.venv/
 
 # Python bytecode
 __pycache__/

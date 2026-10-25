@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Button, IconButton, NumberInput, Section, SegmentedControl, StopIcon } from '../../design-system';
+import { Button, IconButton, MetaLine, NumberInput, Section, SegmentedControl, StopIcon } from '../../design-system';
 import type { Training, TrainOptions } from '../../sim/useTraining';
 import type { TrainTask } from '../../sim/policy';
 import { fmtSteps, rewardPath } from './format';
@@ -104,9 +104,7 @@ const TrainProgress: React.FC<{ training: Training }> = ({ training }) => {
             />
           </div>
           <div className="flex justify-between text-[12px] text-white/45 tabular">
-            <span>
-              {fmtSteps(p.steps)} steps · {fmtSteps(Math.round(p.fps))}/s
-            </span>
+            <MetaLine items={[`${fmtSteps(p.steps)} steps`, `${fmtSteps(Math.round(p.fps))}/s`]} />
             <span>Reward {p.reward.toFixed(2)}</span>
           </div>
         </>

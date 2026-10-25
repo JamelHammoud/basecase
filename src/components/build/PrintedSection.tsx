@@ -1,5 +1,5 @@
 import React from 'react';
-import { NumberInput, Section, Select } from '../../design-system';
+import { MetaLine, NumberInput, Section, Select } from '../../design-system';
 import type { PrintMaterial, ProjectSettings } from '../../types/robotics';
 import { type PrintReport, fmtSize } from '../../utils/printReport';
 import { hm, plural } from './format';
@@ -41,11 +41,15 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
     >
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-white/90 truncate">{p.name}</div>
-        <div className="text-[12px] text-white/40 truncate tabular-nums">
-          {fmtSize(p.check.size)} mm · {hm(p.hours)}
-          {p.check.fits ? ` · Plate ${p.plate}` : ''}
-          {p.material !== material ? ` · ${p.material}` : ''}
-        </div>
+        <MetaLine
+          className="text-[12px] text-white/40 tabular-nums"
+          items={[
+            `${fmtSize(p.check.size)} mm`,
+            hm(p.hours),
+            p.check.fits && `Plate ${p.plate}`,
+            p.material !== material && p.material,
+          ]}
+        />
         {p.issues.map((issue) => (
           <div key={issue} className={`text-[12px] mt-0.5 ${p.check.fits ? 'text-amber-400' : 'text-red-400'}`}>
             {issue}
@@ -67,11 +71,15 @@ const PrintedList: React.FC<{
 
   return (
     <>
-      <div className="text-[12.5px] text-white/45 tabular-nums">
-        {parts.length} {plural(parts.length, 'part', 'parts')} ·{' '}
-        {Math.round(t.grams + t.supportG).toLocaleString('en-US')} g · {hm(t.hours)} · {plates}{' '}
-        {plural(plates, 'plate', 'plates')}
-      </div>
+      <MetaLine
+        className="text-[12.5px] text-white/45 tabular-nums"
+        items={[
+          `${parts.length} ${plural(parts.length, 'part', 'parts')}`,
+          `${Math.round(t.grams + t.supportG).toLocaleString('en-US')} g`,
+          hm(t.hours),
+          `${plates} ${plural(plates, 'plate', 'plates')}`,
+        ]}
+      />
       {t.failing > 0 && (
         <Notice
           tone="amber"

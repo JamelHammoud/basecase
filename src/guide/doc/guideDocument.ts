@@ -14,17 +14,16 @@ function doneBody(doc: GuideDoc): string {
 }
 
 export function guideHtml(doc: GuideDoc): GuideHtml {
-  const total = doc.plan.steps.length;
-  const bodies: Array<{ body: string; className?: string; progress?: number; bare?: boolean }> = [
+  const catalogue = catalogueBodies(doc);
+  const bodies: Array<{ body: string; className?: string; bare?: boolean }> = [
     { body: coverBody(doc), className: 'cover', bare: true },
-    { body: introBody(doc) },
-    ...catalogueBodies(doc).map((body) => ({ body })),
+    { body: introBody(doc, [3, 2 + catalogue.length]) },
+    ...catalogue.map((body) => ({ body })),
     ...stepPages(doc).map((p) => ({
       body: p.html,
       className: p.module === 'main' ? 'steps' : 'steps frame-page',
-      progress: total ? (p.lastStep + 1) / total : 1,
     })),
-    { body: doneBody(doc), progress: 1 },
+    { body: doneBody(doc) },
   ];
   const pages = bodies.map((b, i) => pageHtml(b.body, i + 1, doc.meta, b));
 

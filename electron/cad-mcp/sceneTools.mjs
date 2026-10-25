@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { renderPart } from '../cad-kernel/client.mjs';
 import { catalogSchema, common, idSchema, primitiveSchema, vec3 } from './schemas.mjs';
+import { sceneText } from './sceneText.mjs';
 import { bridge, clashText, fail, text } from './shared.mjs';
 
 export const getScene = {
@@ -8,12 +9,16 @@ export const getScene = {
   config: {
     title: 'Read scene',
     description:
-      'Lists every part: id, name, kind (cad part or primitive), placement, world bounding box [min,max] in mm (z up), color, group, role. CAD parts also report volume. `marks` (when present) lists the strokes the user drew on the canvas: colour, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). Call first, and whenever the user may have edited the scene.',
-    inputSchema: {},
+      'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), box (world bounding box min..max), color, role, material, catalog or supply key, note. All in mm, z up. `Marks` (when present) lists the strokes the user drew on the canvas: colour, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
+      'Pass group or ids to read part of the scene; a scene too big to list at once comes back as a summary per group. Call first, and whenever the user may have edited the scene.',
+    inputSchema: {
+      ids: z.array(idSchema).optional().describe('Only these parts'),
+      group: z.string().optional().describe('Only the parts in this group (its name, as listed)'),
+    },
   },
-  handler: async () => {
+  handler: async ({ ids, group }) => {
     try {
-      return text(await bridge('snapshot', {}));
+      return text(sceneText(await bridge('snapshot', {}), { ids, group }));
     } catch (err) {
       return fail(err);
     }

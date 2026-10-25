@@ -33,9 +33,23 @@ interface Author {
   actor: string;
   setAction: SetAction;
   setCursor: (target: Vec3) => void;
+  claim: (partId: string) => void;
 }
 
 const quiet: SetAction = () => {};
+
+const KEEP_REQUEST_IDS = 2000;
+const deliveredRequests = new Set<string>();
+
+function firstDelivery(requestId: string) {
+  if (deliveredRequests.has(requestId)) return false;
+
+  deliveredRequests.add(requestId);
+
+  if (deliveredRequests.size > KEEP_REQUEST_IDS) deliveredRequests.delete(deliveredRequests.values().next().value!);
+
+  return true;
+}
 
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
@@ -76,6 +90,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     if (holder) return conflictText(partId, holder, actors);
 
     actors.claim(partId, author.actor);
+    author.claim(partId);
 
     return null;
   };
@@ -113,10 +128,13 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       actor,
       setAction: (action) => cursors.setAction(actor, name, action),
       setCursor: (target) => cursors.setCursor(actor, name, target),
+      claim: (partId) => cursors.claim(actor, name, partId),
     };
   };
 
   const handleAgentRequest = async (event: AgentRequestEvent) => {
+    if (!firstDelivery(event.requestId)) return;
+
     const respond = (result?: unknown, error?: string) =>
       platformBridge.respondToAgent({ requestId: event.requestId, result, error });
     const author = authorOf(event);
@@ -137,6 +155,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
           withSweep: true,
         }),
       applyOps: (ops) => applyOps(ops, author),
+      buildGuide: core.guide.generate,
     };
 
     try {

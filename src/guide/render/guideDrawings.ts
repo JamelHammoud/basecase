@@ -1,6 +1,7 @@
 import { boxCenter, unionBox } from '../guideMath';
 import { type GuidePlan, type GuideStep, type V3 } from '../guideTypes';
 import { VIEW_DIRECTIONS, type ViewName } from './guideCamera';
+import type { GuideCache } from './guideCache';
 import type { DrawRequest, Drawing, GuideRenderer } from './guideRenderer';
 
 export interface StepDrawing {
@@ -37,8 +38,6 @@ const BETTER_BY = 0.2;
 const SMALL_SHARE = 0.09;
 const MAX_ZOOM = 2.2;
 
-const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-
 type Boxes = Record<string, { min: V3; max: V3 }>;
 
 function chooseView(renderer: GuideRenderer, req: Pick<DrawRequest, 'ids' | 'newIds' | 'offsets'>): ViewName {
@@ -67,9 +66,9 @@ function offsetsOf(step: GuideStep): Map<string, V3> {
   return new Map(step.moves.map((m) => [m.partId, m.offset]));
 }
 
-function movedCenter(step: GuideStep, boxes: Boxes): V3 {
+function movedCenter(step: GuideStep, ids: string[], boxes: Boxes): V3 {
   const offsets = offsetsOf(step);
-  const moved = step.partIds.map((id) => {
+  const moved = ids.map((id) => {
     const b = boxes[id];
     const o = offsets.get(id) ?? [0, 0, 0];
 
@@ -79,21 +78,17 @@ function movedCenter(step: GuideStep, boxes: Boxes): V3 {
   return boxCenter(unionBox(moved));
 }
 
-function needsDetail(main: Drawing, step: GuideStep, boxes: Boxes): boolean {
-  if (step.kind === 'attach' || !step.contextIds.length || !step.moves.length) return false;
-
-  const ids = step.partIds.filter((id) => boxes[id]);
-
-  if (!ids.length) return false;
+function needsDetail(main: Drawing, step: GuideStep, fasteners: string[]): boolean {
+  if (step.kind === 'attach' || !step.contextIds.length || !fasteners.length) return false;
 
   const [a, b] = main.points;
 
   return Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1])) < Math.max(main.width, main.height) * SMALL_SHARE;
 }
 
-function newBounds(step: GuideStep, boxes: Boxes): V3[] {
+function newBounds(step: GuideStep, ids: string[], boxes: Boxes): V3[] {
   const offsets = offsetsOf(step);
-  const corners = step.partIds.flatMap((id) => {
+  const corners = ids.flatMap((id) => {
     const b = boxes[id];
     const o = offsets.get(id) ?? [0, 0, 0];
 
@@ -104,13 +99,22 @@ function newBounds(step: GuideStep, boxes: Boxes): V3[] {
   return [u.min, u.max];
 }
 
+function screwIds(plan: GuidePlan): Set<string> {
+  return new Set(
+    plan.items.filter((i) => i.kind === 'hardware' && i.hardware?.type !== 'heat_insert').flatMap((i) => i.partIds),
+  );
+}
+
 function drawStep(renderer: GuideRenderer, plan: GuidePlan, index: number, boxes: Boxes): StepDrawing {
+  const screws = screwIds(plan);
   const step = plan.steps[index];
   const base = { ids: [...step.contextIds, ...step.partIds], newIds: new Set(step.partIds), offsets: offsetsOf(step) };
   const view = chooseView(renderer, base);
   const dir = VIEW_DIRECTIONS[view];
   const cap = moduleFinal(plan, step);
-  const focus = movedCenter(step, boxes);
+  const fasteners = step.partIds.filter((id) => screws.has(id) && boxes[id]);
+  const watched = fasteners.length ? fasteners : step.partIds.filter((id) => boxes[id]);
+  const focus = movedCenter(step, watched, boxes);
   const main = renderer.draw({
     ...base,
     dir,
@@ -119,10 +123,10 @@ function drawStep(renderer: GuideRenderer, plan: GuidePlan, index: number, boxes
     capIds: cap,
     capZoom: MAX_ZOOM,
     arrows: step.arrows,
-    points: [...newBounds(step, boxes), focus],
+    points: [...newBounds(step, watched, boxes), focus],
   });
 
-  if (!needsDetail(main, step, boxes)) return { main, view };
+  if (!needsDetail(main, step, fasteners)) return { main, view };
 
   const detail = renderer.draw({
     ...base,
@@ -142,59 +146,100 @@ function drawStep(renderer: GuideRenderer, plan: GuidePlan, index: number, boxes
     points: [focus],
   }).points[0];
 
-  return { main, view, detail: { ...detail, anchor } };
+  return { main, view, detail: Object.assign(detail, { anchor }) };
 }
 
-function drawItems(renderer: GuideRenderer, plan: GuidePlan): Record<string, ItemDrawing> {
-  return Object.fromEntries(
-    plan.items.map((item) => {
+function stepKey(plan: GuidePlan, step: GuideStep, cache: GuideCache): string {
+  const screws = screwIds(plan);
+  const cap = moduleFinal(plan, step) ?? [];
+  const shape = {
+    kind: step.kind,
+    partIds: step.partIds,
+    contextIds: step.contextIds,
+    moves: step.moves,
+    arrows: step.arrows,
+    cap,
+    screws: step.partIds.filter((id) => screws.has(id)),
+  };
+
+  return `step|${JSON.stringify(shape)}|${cache.partsKey(new Set([...step.contextIds, ...step.partIds, ...cap]))}`;
+}
+
+interface DrawContext {
+  renderer: GuideRenderer;
+  plan: GuidePlan;
+  cache: GuideCache;
+}
+
+async function drawItems({ renderer, plan, cache }: DrawContext): Promise<Record<string, ItemDrawing>> {
+  const out: Record<string, ItemDrawing> = {};
+
+  for (const item of plan.items) {
+    await renderer.ready();
+    out[item.key] = cache.take(`item|${item.kind}|${cache.partsKey([item.sample])}`, () => {
       const one = new Set([item.sample]);
       const thumb = renderer.draw({ ids: [item.sample], newIds: one, maxWidth: THUMB_PX, maxHeight: THUMB_PX });
       const actual = item.kind === 'hardware' ? renderer.drawActualSize(item.sample, ACTUAL_PX_PER_MM) : null;
 
-      return [item.key, { thumb, actual: actual ?? undefined }];
-    }),
-  );
+      return { thumb, actual: actual ?? undefined };
+    });
+  }
+
+  return out;
 }
 
-function drawModules(renderer: GuideRenderer, plan: GuidePlan): Record<string, Drawing> {
-  const attaching = plan.steps.filter((s) => s.attach);
+async function drawModules({ renderer, plan, cache }: DrawContext): Promise<Record<string, Drawing>> {
+  const out: Record<string, Drawing> = {};
 
-  return Object.fromEntries(
-    attaching.map((s) => {
-      const ids = s.partIds;
+  for (const step of plan.steps.filter((s) => s.attach)) {
+    const ids = step.partIds;
 
-      return [s.attach!, renderer.draw({ ids, newIds: new Set(ids), maxWidth: MODULE_PX, maxHeight: MODULE_PX })];
-    }),
-  );
+    await renderer.ready();
+    out[step.attach!] = cache.take(`module|${cache.partsKey(ids)}`, () =>
+      renderer.draw({ ids, newIds: new Set(ids), maxWidth: MODULE_PX, maxHeight: MODULE_PX }),
+    );
+  }
+
+  return out;
+}
+
+export interface DrawGuideOptions {
+  onProgress: (p: DrawProgress) => void;
+  onCover?: (cover: Drawing) => void;
+  isCancelled: () => boolean;
 }
 
 export async function drawGuide(
-  renderer: GuideRenderer,
-  plan: GuidePlan,
-  boxes: Boxes,
-  options: { onProgress: (p: DrawProgress) => void; isCancelled: () => boolean },
+  ctx: DrawContext & { boxes: Boxes },
+  options: DrawGuideOptions,
 ): Promise<GuideDrawings | null> {
+  const { renderer, plan, cache, boxes } = ctx;
   const total = plan.steps.length + 2;
   const all = new Set(plan.partIds);
-  const cover = renderer.draw({ ids: plan.partIds, newIds: all, maxWidth: COVER_PX, maxHeight: COVER_PX });
+  const cover = cache.take(`cover|${cache.partsKey(all)}`, () =>
+    renderer.draw({ ids: plan.partIds, newIds: all, maxWidth: COVER_PX, maxHeight: COVER_PX }),
+  );
 
+  await renderer.flush();
+  options.onCover?.(cover);
   options.onProgress({ done: 1, total });
-  await nextFrame();
 
-  const items = drawItems(renderer, plan);
-  const modules = drawModules(renderer, plan);
+  const items = await drawItems(ctx);
+  const modules = await drawModules(ctx);
   const steps: StepDrawing[] = [];
 
   options.onProgress({ done: 2, total });
 
   for (let i = 0; i < plan.steps.length; i++) {
+    await renderer.ready();
+
     if (options.isCancelled()) return null;
 
-    await nextFrame();
-    steps.push(drawStep(renderer, plan, i, boxes));
+    steps.push(cache.take(stepKey(plan, plan.steps[i], cache), () => drawStep(renderer, plan, i, boxes)));
     options.onProgress({ done: i + 3, total });
   }
+
+  await renderer.flush();
 
   return { cover, items, modules, steps };
 }

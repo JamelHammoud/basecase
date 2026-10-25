@@ -1,3 +1,4 @@
+import { MeasureToolbar } from '../components/MeasureToolbar';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { Toast, PhotoIcon } from '../design-system';
 import { MarkBar } from './MarkBar';
@@ -31,14 +32,55 @@ function DropOverlay() {
   );
 }
 
-function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProps & { showSelectionBar: boolean }) {
-  const { tool, annotations, studio, selection, marks } = core;
-  const { ops, edits, creation } = actions;
+function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'actions' | 'ui'>) {
+  const { tool, annotations, studio, measure } = core;
+  const { creation } = actions;
   const { toggleCommentMode } = annotations;
   const { openCreator } = tool;
 
+  if (tool.measuring)
+    return (
+      <MeasureToolbar
+        kind={measure.kind}
+        onKind={measure.setKind}
+        figures={measure.figures}
+        humanHeightMm={measure.humanHeightMm}
+        onHumanHeight={measure.setHumanHeightMm}
+        unit={studio.measureUnit}
+        onExit={() => tool.toggleMeasure(false)}
+      />
+    );
+
   return (
-    <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-2 pointer-events-none">
+    <ViewportToolbar
+      transformMode={tool.transformMode}
+      onTransformMode={tool.setMode}
+      showSculpt={studio.sculptEnabled}
+      commentMode={annotations.commentMode}
+      onMeasure={() => tool.toggleMeasure(true)}
+      marking={tool.marking}
+      onAnnotate={() => tool.toggleMarking(true)}
+      onToggleComment={() => toggleCommentMode()}
+      shapesOpen={ui.shapesOpen}
+      onShapesOpenChange={ui.setShapesOpen}
+      onAddShape={creation.addCatalogItem}
+      onSketch={() => openCreator('draw2d')}
+      onImportSvg={() => openCreator('svg')}
+    />
+  );
+}
+
+function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProps & { showSelectionBar: boolean }) {
+  const { tool, selection, marks, toasts } = core;
+  const { ops, edits } = actions;
+
+  return (
+    <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-[8px] pointer-events-none">
+      {toasts.toast && (
+        <div className="pointer-events-auto" key={toasts.toast.id}>
+          <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
+        </div>
+      )}
       {tool.marking && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
       {showSelectionBar && (
         <SelectionBar
@@ -49,22 +91,7 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
         />
       )}
       <div className="pointer-events-auto">
-        <ViewportToolbar
-          transformMode={tool.transformMode}
-          onTransformMode={tool.setMode}
-          showSculpt={studio.sculptEnabled}
-          commentMode={annotations.commentMode}
-          measuring={tool.measuring}
-          onMeasure={() => tool.toggleMeasure(true)}
-          marking={tool.marking}
-          onAnnotate={() => tool.toggleMarking(true)}
-          onToggleComment={() => toggleCommentMode()}
-          shapesOpen={ui.shapesOpen}
-          onShapesOpenChange={ui.setShapesOpen}
-          onAddShape={creation.addCatalogItem}
-          onSketch={() => openCreator('draw2d')}
-          onImportSvg={() => openCreator('svg')}
-        />
+        <CanvasToolbar core={core} actions={actions} ui={ui} />
       </div>
     </div>
   );
@@ -72,10 +99,11 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
 
 export function CanvasCard(props: CanvasCardProps) {
   const { active, core, actions, agent, pointerHandlers, drop } = props;
-  const { toasts, selection, tool } = core;
+  const { selection, tool } = core;
   const { creation } = actions;
   const { imageInputRef } = creation;
-  const showSelectionBar = selection.selectedParts.length > 1 && tool.transformMode !== 'pose' && !tool.marking;
+  const showSelectionBar =
+    selection.selectedParts.length > 1 && tool.transformMode !== 'pose' && !tool.marking && !tool.measuring;
 
   return (
     <main
@@ -102,15 +130,6 @@ export function CanvasCard(props: CanvasCardProps) {
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
       />
       <CanvasBottomBar {...props} showSelectionBar={showSelectionBar} />
-      {toasts.toast && (
-        <div
-          className={`absolute ${showSelectionBar || tool.marking ? 'bottom-[144px]' : 'bottom-[92px]'} inset-x-0 z-30 flex justify-center pointer-events-none transition-[bottom] duration-200`}
-        >
-          <div className="pointer-events-auto" key={toasts.toast.id}>
-            <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
-          </div>
-        </div>
-      )}
     </main>
   );
 }

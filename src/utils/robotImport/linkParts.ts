@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { ScenePart } from '../../types/robotics';
-import { primitive, simplify } from './meshes';
+import type { SoupPiece } from '../../three/geometryOps';
+import { geometryWorker } from '../../three/geometryWorker';
+import { primitive } from './meshes';
 import type { Model, ModelLink, Visual } from './model';
 import { hex, linkLabel, round, ROBOT_DATA_VERSION, type PublishedData } from './published';
 import type { Source } from './sources';
@@ -9,7 +10,8 @@ import type { Source } from './sources';
 export type MeshFiles = Map<string, THREE.BufferGeometry | null>;
 
 export interface LinkGeometry {
-  geo: THREE.BufferGeometry;
+  soup: Float32Array;
+  box: THREE.Box3;
   color: THREE.Color;
 }
 
@@ -36,15 +38,19 @@ function visualGeometry(v: Visual, files: MeshFiles): THREE.BufferGeometry | nul
 
   if (!src) return null;
 
-  const g = src.clone();
-
-  g.scale(v.geometry.scale.x, v.geometry.scale.y, v.geometry.scale.z);
-
-  return g;
+  return src.clone();
 }
 
-function linkGeometry(l: ModelLink, files: MeshFiles, frame: THREE.Matrix4) {
-  const pieces: THREE.BufferGeometry[] = [];
+const MILLIMETERS = new THREE.Matrix4().makeScale(1000, 1000, 1000);
+
+function visualMatrix(v: Visual, l: ModelLink, frame: THREE.Matrix4): THREE.Matrix4 {
+  const matrix = MILLIMETERS.clone().multiply(frame).multiply(l.world).multiply(v.origin);
+
+  return v.geometry.type === 'mesh' ? matrix.scale(v.geometry.scale) : matrix;
+}
+
+async function linkGeometry(l: ModelLink, files: MeshFiles, frame: THREE.Matrix4) {
+  const pieces: SoupPiece[] = [];
   const colors: THREE.Color[] = [];
 
   for (const v of l.visuals) {
@@ -52,67 +58,47 @@ function linkGeometry(l: ModelLink, files: MeshFiles, frame: THREE.Matrix4) {
 
     if (!g) continue;
 
-    g.applyMatrix4(v.origin);
-    g.applyMatrix4(l.world);
-    g.applyMatrix4(frame);
-    g.scale(1000, 1000, 1000);
-    pieces.push(g);
+    pieces.push({
+      positions: (g.getAttribute('position').array as Float32Array).slice(),
+      matrix: visualMatrix(v, l, frame).toArray(),
+    });
 
     if (v.color) colors.push(v.color);
   }
 
   if (!pieces.length) return null;
 
-  const merged = pieces.length === 1 ? pieces[0] : mergeGeometries(pieces, false);
+  const { soup, min, max } = await geometryWorker.call(
+    'linkSoup',
+    pieces,
+    pieces.map((p) => p.positions.buffer),
+  );
 
-  return merged ? { merged, colors } : null;
+  return { soup, box: new THREE.Box3(new THREE.Vector3(...min), new THREE.Vector3(...max)), colors };
 }
 
-export function linkGeometries(
+export async function linkGeometries(
   model: Model,
   files: MeshFiles,
   frame: THREE.Matrix4,
   color: string | undefined,
-): Map<string, LinkGeometry> {
+): Promise<Map<string, LinkGeometry>> {
+  const built = await Promise.all(
+    [...model.links].map(async ([link, l]) => [link, await linkGeometry(l, files, frame)] as const),
+  );
   const linkGeo = new Map<string, LinkGeometry>();
 
-  for (const [link, l] of model.links) {
-    const built = linkGeometry(l, files, frame);
-
-    if (!built) continue;
+  for (const [link, geometry] of built) {
+    if (!geometry) continue;
 
     linkGeo.set(link, {
-      geo: built.merged,
-      color: color ? new THREE.Color(color) : (built.colors[0] ?? new THREE.Color('#b3b3b3')),
+      soup: geometry.soup,
+      box: geometry.box,
+      color: color ? new THREE.Color(color) : (geometry.colors[0] ?? new THREE.Color('#b3b3b3')),
     });
   }
 
   return linkGeo;
-}
-
-function compactMesh(positions: Float32Array, indices: Uint32Array, center: THREE.Vector3) {
-  const local: number[] = new Array(positions.length);
-
-  for (let i = 0; i < positions.length; i += 3) {
-    local[i] = Math.round((positions[i] - center.x) * 100) / 100;
-    local[i + 1] = Math.round((positions[i + 1] - center.y) * 100) / 100;
-    local[i + 2] = Math.round((positions[i + 2] - center.z) * 100) / 100;
-  }
-
-  const used = new Int32Array(positions.length / 3).fill(-1);
-  const pos: number[] = [];
-  const idx: number[] = [];
-
-  for (const i of indices) {
-    if (used[i] < 0) {
-      used[i] = pos.length / 3;
-      pos.push(local[i * 3], local[i * 3 + 1], local[i * 3 + 2]);
-    }
-
-    idx.push(used[i]);
-  }
-
-  return { pos, idx };
 }
 
 interface PartBuild {
@@ -122,15 +108,13 @@ interface PartBuild {
   total: number;
 }
 
-function linkPart(b: PartBuild, link: string, { geo, color }: LinkGeometry) {
+async function linkPart(b: PartBuild, link: string, { soup, color }: LinkGeometry) {
   const { name, groupId, source, rotate } = b.spec;
-  const tris = geo.getAttribute('position').count / 3;
+  const tris = soup.length / 9;
   const target = b.total > b.budget ? Math.max(1500, Math.round((b.budget * tris) / b.total)) : tris;
-  const { positions, indices } = simplify(geo, target);
-  const box = new THREE.Box3().setFromBufferAttribute(new THREE.BufferAttribute(positions, 3));
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  const { pos, idx } = compactMesh(positions, indices, center);
+  const mesh = await geometryWorker.call('linkMesh', { soup, target }, [soup.buffer]);
+  const center = new THREE.Vector3(...mesh.center);
+  const size = new THREE.Vector3(...mesh.size);
   const id = `${groupId}-${link.replace(/[^a-zA-Z0-9_-]+/g, '_')}`;
   const baseSize: [number, number, number] = [Math.max(size.x, 0.01), Math.max(size.y, 0.01), Math.max(size.z, 0.01)];
   const { shift } = b;
@@ -148,7 +132,7 @@ function linkPart(b: PartBuild, link: string, { geo, color }: LinkGeometry) {
     mechanicalTag: `${name} · ${link}`,
     visible: true,
     locked: false,
-    mesh: { positions: pos, indices: idx, baseSize, source: `${name} · ${link}` },
+    mesh: { positions: mesh.positions, indices: mesh.indices, baseSize, source: `${name} · ${link}` },
     group: { id: groupId, name },
     robotLink: {
       robot: groupId,
@@ -159,25 +143,24 @@ function linkPart(b: PartBuild, link: string, { geo, color }: LinkGeometry) {
     },
   };
 
-  return { part, center, triangles: idx.length / 3 };
+  return { part, center, triangles: mesh.indices.length / 3 };
 }
 
-export function buildLinkParts(linkGeo: Map<string, LinkGeometry>, spec: PartsSpec): BuiltParts {
+export async function buildLinkParts(linkGeo: Map<string, LinkGeometry>, spec: PartsSpec): Promise<BuiltParts> {
   const budget = spec.maxTriangles ?? 220_000;
-  const total = [...linkGeo.values()].reduce((s, { geo }) => s + geo.getAttribute('position').count / 3, 0);
+  const total = [...linkGeo.values()].reduce((s, { soup }) => s + soup.length / 9, 0);
   const box = new THREE.Box3();
 
-  linkGeo.forEach(({ geo }) => {
-    geo.computeBoundingBox();
-    box.union(geo.boundingBox!);
-  });
+  linkGeo.forEach((lg) => box.union(lg.box));
 
   const shift = new THREE.Vector3(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
   const out: BuiltParts = { parts: [], triangles: 0, shift, partOfLink: new Map(), centerOfLink: new Map() };
 
-  for (const [link, lg] of linkGeo) {
-    const { part, center, triangles } = linkPart({ spec, shift, budget, total }, link, lg);
+  const built = await Promise.all(
+    [...linkGeo].map(async ([link, lg]) => ({ link, ...(await linkPart({ spec, shift, budget, total }, link, lg)) })),
+  );
 
+  for (const { link, part, center, triangles } of built) {
     out.triangles += triangles;
     out.partOfLink.set(link, part.id);
     out.centerOfLink.set(link, center.clone());

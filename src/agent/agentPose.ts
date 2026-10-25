@@ -277,7 +277,7 @@ function poseText(state: RobotPoseState, p: PosePayload, notes: string[], check:
   );
 }
 
-export function setPoseRequest(ctx: PoseContext, p: PosePayload): PoseReply {
+export async function setPoseRequest(ctx: PoseContext, p: PosePayload): Promise<PoseReply> {
   const scope = scopeOf(ctx, p.robot);
 
   if (typeof scope === 'string') return { text: scope };
@@ -306,5 +306,5 @@ export function setPoseRequest(ctx: PoseContext, p: PosePayload): PoseReply {
 
   if (p.save_as) ctx.savePose(p.save_as, { ...state, robot: scope.key } as RobotPoseState);
 
-  return { text: poseText(state, p, notes, check), images };
+  return { text: poseText(state, p, notes, await check), images: await images };
 }

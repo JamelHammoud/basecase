@@ -27,7 +27,7 @@ const Tile: React.FC<{ item: CatalogItem; onOpen: () => void; onAdd: () => void 
                 className="w-full h-full object-contain p-1.5 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
               />
             ) : (
-              <div className="w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
+              <div className="w-full h-full shimmer" />
             )}
           </div>
           <div className="px-0.5 pt-2">

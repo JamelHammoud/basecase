@@ -1,9 +1,13 @@
 import { parseMjcf } from './mjcf';
 import type { Model } from './model';
+import { convertedResolver, parseConverted } from './simready';
 import { filesResolver, inlineIncludes, rawUrl, urlResolver, type Resolver, type Source } from './sources';
 import { parseUrdf } from './urdf';
 
 export async function readModel(source: Source): Promise<{ model: Model; resolver: Resolver }> {
+  if (source.kind === 'converted')
+    return { model: parseConverted(source.model), resolver: convertedResolver(source.files) };
+
   const resolver = source.kind === 'url' ? await urlResolver(source.url) : filesResolver(source.files);
 
   if ('pickEntry' in resolver) await (resolver as ReturnType<typeof filesResolver>).pickEntry();

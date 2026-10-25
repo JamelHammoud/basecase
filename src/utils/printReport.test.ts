@@ -1,7 +1,9 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { printReportsIn } from '../three/analysis/analysisPool';
+import { snapshotShapes } from '../three/analysis/sceneShapes';
 import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
-import { buildPrintReport } from './printReport';
+import { printReportOf, type PrintReport } from './printReport';
 
 const box = (id: string, size: [number, number, number]): ScenePart => ({
   id,
@@ -18,15 +20,21 @@ const box = (id: string, size: [number, number, number]): ScenePart => ({
   locked: false,
 });
 
-const triangles = (part: ScenePart) => {
+const meshOf = (part: ScenePart) => {
   const { width, height, depth } = part.dimensions;
 
-  return new THREE.BoxGeometry(width, height, depth).toNonIndexed().getAttribute('position').array as Float32Array;
+  return { id: part.id, object: new THREE.Mesh(new THREE.BoxGeometry(width, height, depth)) };
 };
 
 describe('buildPrintReport', () => {
   const parts = [box('small', [20, 20, 20]), box('huge', [400, 30, 30])];
-  const report = buildPrintReport(parts, DEFAULT_PROJECT, (id) => triangles(parts.find((p) => p.id === id)!));
+  let report: PrintReport;
+
+  beforeAll(async () => {
+    report = await printReportOf(parts, DEFAULT_PROJECT, (ids) =>
+      printReportsIn(snapshotShapes(parts.filter((p) => ids.includes(p.id)).map(meshOf))),
+    );
+  });
 
   it('reports every printed part with grams and time', () => {
     const small = report.parts.find((r) => r.id === 'small')!;

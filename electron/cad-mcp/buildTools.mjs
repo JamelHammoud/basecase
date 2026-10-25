@@ -172,3 +172,23 @@ export const setBuild = {
     }
   },
 };
+
+export const buildGuide = {
+  name: 'build_guide',
+  config: {
+    title: 'Build guide',
+    description:
+      'Makes the printable step-by-step assembly guide (PDF) from the scene, in the style of IKEA and LEGO instructions: cover, tools, a parts catalogue with hardware drawn at 1:1, then illustrated steps with exploded parts, screw paths, sub-assemblies and detail callouts. It replaces the previous guide and takes a few seconds. ' +
+      'Only call it when the user asks for a build guide, assembly instructions or a PDF of the build. When a design is finished and verified, do not make one: tell the user they can, with the link [build guide](#build-guide).',
+    inputSchema: {},
+  },
+  handler: async () => {
+    try {
+      const res = await bridge('build_guide', {}, 300000);
+
+      return text(res?.text || 'No guide made: the scene has no parts to build.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};

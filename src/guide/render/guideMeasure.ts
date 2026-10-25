@@ -3,10 +3,11 @@ import { MeshBVH } from 'three-mesh-bvh';
 import { worldGeometry } from '../../three/interference';
 import { boxContacts } from '../guideScene';
 import type { Box, GuideScene, V3 } from '../guideTypes';
+import type { GuideCache } from './guideCache';
 import type { GuideRenderer } from './guideRenderer';
 
 const CANDIDATE_GAP_MM = 1;
-const CONTACT_MM = 0.75;
+const CONTACT_MM = 1.5;
 const PAIRS_PER_SLICE = 24;
 
 type Solid = { geometry: THREE.BufferGeometry; bvh: MeshBVH; triangles: number };
@@ -56,10 +57,30 @@ function touches(a: Solid, b: Solid, box: THREE.Box3): boolean {
   return false;
 }
 
+function touching(
+  input: { cache: GuideCache; solids: Map<string, Solid | null>; renderer: GuideRenderer },
+  pair: {
+    a: string;
+    b: string;
+    boxes: Record<string, Box>;
+  },
+): boolean {
+  const { cache, solids, renderer } = input;
+  const { a, b, boxes } = pair;
+
+  return cache.take(`contact|${cache.partsKey([a])}|${cache.partsKey([b])}`, () => {
+    const sa = solidOf(solids, renderer, a);
+    const sb = solidOf(solids, renderer, b);
+
+    return !!sa && !!sb && touches(sa, sb, overlapBox(boxes[a], boxes[b]));
+  });
+}
+
 export async function measureGuideScene(
   renderer: GuideRenderer,
-  isCancelled: () => boolean,
+  options: { cache: GuideCache; isCancelled: () => boolean },
 ): Promise<Pick<GuideScene, 'boxes' | 'contacts' | 'axes'>> {
+  const { cache, isCancelled } = options;
   const ids = renderer.ids();
 
   renderer.showAll();
@@ -77,7 +98,7 @@ export async function measureGuideScene(
   }
 
   const candidates = boxContacts(boxes, CANDIDATE_GAP_MM);
-  const cache = new Map<string, Solid | null>();
+  const solids = new Map<string, Solid | null>();
   const contacts: Record<string, string[]> = Object.fromEntries(ids.map((id) => [id, []]));
   let done = 0;
 
@@ -85,10 +106,7 @@ export async function measureGuideScene(
     for (const b of candidates[a].filter((x) => x > a)) {
       if (isCancelled()) return { boxes, contacts, axes };
 
-      const sa = solidOf(cache, renderer, a);
-      const sb = solidOf(cache, renderer, b);
-
-      if (sa && sb && touches(sa, sb, overlapBox(boxes[a], boxes[b]))) {
+      if (touching({ cache, solids, renderer }, { a, b, boxes })) {
         contacts[a].push(b);
         contacts[b].push(a);
       }
@@ -97,7 +115,7 @@ export async function measureGuideScene(
     }
   }
 
-  for (const solid of cache.values()) solid?.geometry.dispose();
+  for (const solid of solids.values()) solid?.geometry.dispose();
 
   return { boxes, contacts, axes };
 }

@@ -6,6 +6,7 @@ import type { Training } from '../sim/useTraining';
 import type { PolicyRecord, RobotAnimation } from '../types/robotics';
 import { prettyJointName, type Rig } from '../utils/kinematics';
 import type { PoseReply } from './agentPose';
+import { TOOL_IMAGE_SIDE } from './agentPoseShared';
 
 export interface SimulatePayload {
   seconds?: number;
@@ -129,7 +130,7 @@ export async function simulateRequest(ctx: SimContext, p: SimulatePayload): Prom
   let run: SimRun;
 
   try {
-    const model = ctx.sim.buildModel();
+    const model = await ctx.sim.buildModel();
     const kg = Object.values(model.massKg).reduce((s, v) => s + v, 0) || 1;
     const pushes = (p.pushes ?? []).map((x) => {
       const d = DIRS[x.direction] ?? DIRS.forward;
@@ -149,22 +150,27 @@ export async function simulateRequest(ctx: SimContext, p: SimulatePayload): Prom
   }
 
   const text = simReport(run, ctx.rig, seconds);
-  const images: Array<{ view: string; dataUrl: string }> = [];
+  const shots: Array<Promise<Array<{ view: string; dataUrl: string }>>> = [];
 
   if (run.frames.length && ctx.viewport) {
+    const vp = ctx.viewport;
     const views = (p.views?.length ? p.views : ['iso']).slice(0, 2);
 
     for (const f of run.frames) {
-      ctx.viewport.setPose(f.deltas as Map<string, THREE.Matrix4>);
-
-      for (const shot of ctx.viewport.captureViews(views))
-        images.push({ view: `${shot.view} at ${f.t.toFixed(1)} s`, dataUrl: shot.dataUrl });
+      vp.setPose(f.deltas as Map<string, THREE.Matrix4>);
+      shots.push(
+        vp
+          .captureViews(views, undefined, { maxSide: TOOL_IMAGE_SIDE })
+          .then((taken) =>
+            taken.map((shot) => ({ view: `${shot.view} at ${f.t.toFixed(1)} s`, dataUrl: shot.dataUrl })),
+          ),
+      );
     }
 
     ctx.restoreCanvas();
   }
 
-  return { text, images };
+  return { text, images: (await Promise.all(shots)).flat() };
 }
 
 export async function trainRequest(

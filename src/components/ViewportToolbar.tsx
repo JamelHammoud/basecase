@@ -32,7 +32,6 @@ interface ViewportToolbarProps {
   onTransformMode: (mode: TransformMode) => void;
   showSculpt: boolean;
   commentMode: boolean;
-  measuring: boolean;
   onMeasure: () => void;
   marking: boolean;
   onAnnotate: () => void;
@@ -49,7 +48,6 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   onTransformMode,
   showSculpt,
   commentMode,
-  measuring,
   onMeasure,
   marking,
   onAnnotate,
@@ -82,7 +80,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           shortcut={t.key}
           tooltipSide="top"
           size="lg"
-          isActive={!commentMode && !measuring && !marking && transformMode === t.mode}
+          isActive={!commentMode && !marking && transformMode === t.mode}
           onClick={() => onTransformMode(t.mode)}
         />
       ))}

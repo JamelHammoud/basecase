@@ -1,6 +1,6 @@
 import React from 'react';
 import { CatalogItem } from '../types/robotics';
-import { COMPONENT_BY_ID, ComponentInfo } from '../data/components';
+import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/components';
 import {
   FINISHES,
   THREAD,
@@ -12,7 +12,16 @@ import {
   motionOf,
 } from '../data/hardware';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { Tooltip, ArrowUpRightIcon, CartIcon, DrawingIcon, FileIcon, ShapeIcon, VerifiedIcon } from '../design-system';
+import {
+  MetaLine,
+  Tooltip,
+  ArrowUpRightIcon,
+  CartIcon,
+  DrawingIcon,
+  FileIcon,
+  ShapeIcon,
+  VerifiedIcon,
+} from '../design-system';
 
 const fmt = (v: number) => String(Math.round(v * 100) / 100);
 
@@ -101,9 +110,19 @@ export const ModelSource: React.FC<{ c: ComponentInfo }> = ({ c }) => (
     <ShapeIcon className="w-3.5 h-3.5 mt-px shrink-0" />
     <span>
       {modelSourceText(c)}
-      {c.model.license ? ` · ${c.model.license}` : ''}
+      {c.model.license && <span className="block">{c.model.license}</span>}
     </span>
   </div>
+);
+
+export const SpecText: React.FC<{ value: SpecValue }> = ({ value }) => (
+  <>
+    {specLines(value).map((line) => (
+      <span key={line} className="block">
+        {line}
+      </span>
+    ))}
+  </>
 );
 
 export const Stat: React.FC<{ label: string; children: React.ReactNode; wide?: boolean; clamp?: boolean }> = ({
@@ -174,7 +193,7 @@ export const Hero: React.FC<
           className="absolute inset-0 w-full h-full object-contain p-2.5 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
         />
       ) : (
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)] bg-[length:200%_100%] animate-shimmer" />
+        <div className="absolute inset-0 shimmer" />
       )}
       {badge && (
         <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 h-6 pl-1.5 pr-2 rounded-full bg-black/45 ring-1 ring-white/10 text-[12px] font-medium text-white/80 backdrop-blur-md">
@@ -186,15 +205,15 @@ export const Hero: React.FC<
   );
 };
 
-export const Header: React.FC<{ title: string; subtitle: string; description?: string; clamp?: boolean }> = ({
-  title,
-  subtitle,
-  description,
-  clamp = true,
-}) => (
+export const Header: React.FC<{
+  title: string;
+  subtitle: string | string[];
+  description?: string;
+  clamp?: boolean;
+}> = ({ title, subtitle, description, clamp = true }) => (
   <div className="px-4 pt-3">
     <div className="text-[15px] font-semibold text-white/95 leading-tight">{title}</div>
-    <div className={`text-[12.5px] text-white/45 mt-1 ${clamp ? 'truncate' : ''}`}>{subtitle}</div>
+    <MetaLine items={[subtitle].flat()} className={`text-[12.5px] text-white/45 mt-1 ${clamp ? '' : 'flex-wrap'}`} />
     {description && (
       <p className={`text-[13px] text-white/70 leading-relaxed mt-2 ${clamp ? 'line-clamp-2' : ''}`}>{description}</p>
     )}
@@ -253,14 +272,14 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
     return (
       <div className="pb-0">
         <Hero item={item} source={c} />
-        <Header title={c.name} subtitle={`${c.manufacturer} · ${c.mpn}`} description={c.description} />
+        <Header title={c.name} subtitle={[c.manufacturer, c.mpn]} description={c.description} />
         <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
           <Stat label="Size" wide>
             {size}
           </Stat>
           {c.specs.slice(0, 4).map(([label, value]) => (
             <Stat key={label} label={label}>
-              {value}
+              <SpecText value={value} />
             </Stat>
           ))}
         </div>

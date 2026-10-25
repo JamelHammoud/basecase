@@ -15,6 +15,16 @@ export async function post<T>(path: string, body: unknown, options: { json?: boo
   return res.json();
 }
 
+export async function postJson<T>(path: string, json: string): Promise<T> {
+  const res = await fetch(`${BRIDGE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: json,
+  });
+
+  return res.json();
+}
+
 export async function postOrThrow<T>(
   path: string,
   body: unknown,

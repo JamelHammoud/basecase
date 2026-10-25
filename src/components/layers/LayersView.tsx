@@ -3,10 +3,12 @@ import { IconButton, SectionHeader, PhotoIcon, PhotoOffIcon } from '../../design
 import type { ScenePart } from '../../types/robotics';
 import { GroupRow, PartRow } from './LayerItems';
 import { layerRows, layersTitle, overallSize } from './layerRows';
+import { useRevealSelection } from './useRevealSelection';
 
 export interface LayersViewProps {
   parts: ScenePart[];
   selectedIds: string[];
+  open?: boolean;
   showReferenceImages: boolean;
   onSelectPart: (id: string | null, additive?: boolean) => void;
   onSelectIds: (ids: string[], additive?: boolean) => void;
@@ -53,6 +55,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
   const { parts, selectedIds } = props;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
+  const scrollerRef = useRevealSelection(parts, selectedIds[0], props.open ?? true);
 
   if (parts.length === 0) {
     return null;
@@ -85,7 +88,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <div className="flex-1 overflow-y-auto px-[8px] pb-3" onClick={() => props.onSelectPart(null)}>
+      <div ref={scrollerRef} className="flex-1 overflow-y-auto px-[8px] pb-3" onClick={() => props.onSelectPart(null)}>
         <SectionHeader title={layersTitle(parts)} action={<HeaderActions props={props} />} />
         <ul className="space-y-px">
           {layerRows(parts, collapsed).map((row) =>

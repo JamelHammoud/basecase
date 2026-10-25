@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Modal, Select, Switch, WalkIcon } from '../design-system';
+import { Button, MetaLine, Modal, Select, Switch, WalkIcon } from '../design-system';
 import type { RobotAnimation } from '../types/robotics';
 import { isMovable, prettyJointName, type Rig } from '../utils/kinematics';
 import type { PointOf } from '../utils/animation';
@@ -24,7 +24,7 @@ function worstMissSummary(errors: Partial<Record<Keypoint, number>>) {
 
   if (!worst || (worst[1] ?? 0) <= 25) return '';
 
-  return ` · ${KEYPOINT_LABELS[worst[0] as Keypoint].toLowerCase()} off by ${Math.round(worst[1]!)} mm`;
+  return `${KEYPOINT_LABELS[worst[0] as Keypoint]} off by ${Math.round(worst[1]!)} mm`;
 }
 
 const MappingGrid: React.FC<{
@@ -124,7 +124,9 @@ export const RetargetSheet: React.FC<{
   };
 
   const info =
-    mocap && typeof mocap !== 'string' ? `${mocap.bones.length} bones · ${mocap.duration.toFixed(1)} s` : undefined;
+    mocap && typeof mocap !== 'string' ? (
+      <MetaLine items={[`${mocap.bones.length} bones`, `${mocap.duration.toFixed(1)} s`]} />
+    ) : undefined;
 
   return (
     <Modal

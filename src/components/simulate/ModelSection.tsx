@@ -1,5 +1,5 @@
 import React from 'react';
-import { Section } from '../../design-system';
+import { MetaLine, Section } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 
 export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; version: Simulation['version'] }> = ({
@@ -10,13 +10,15 @@ export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; v
 
   return (
     <Section title="Model">
-      <div className="text-[13px] text-white/70 tabular">
-        {model.joints.length} {model.joints.length === 1 ? 'joint' : 'joints'} ·{' '}
-        {Object.values(model.massKg)
-          .reduce((s, v) => s + v, 0)
-          .toFixed(2)}{' '}
-        kg
-      </div>
+      <MetaLine
+        className="text-[13px] text-white/70 tabular"
+        items={[
+          `${model.joints.length} ${model.joints.length === 1 ? 'joint' : 'joints'}`,
+          `${Object.values(model.massKg)
+            .reduce((s, v) => s + v, 0)
+            .toFixed(2)} kg`,
+        ]}
+      />
       {estimated > 0 && (
         <p className="mt-1 text-[12.5px] leading-snug text-white/45">
           Torque for {estimated} {estimated === 1 ? 'joint is' : 'joints is'} estimated from weight. Assign servos for

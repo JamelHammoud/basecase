@@ -1,7 +1,7 @@
 import type { SettingsPane } from '../components/SettingsWindow';
 import type { ToastData } from '../design-system';
+import type { LaneChat } from './agentLanes';
 import type {
-  AcpChatMessage,
   AcpStatusInfo,
   AgentChoice,
   AgentConversationSummary,
@@ -26,7 +26,7 @@ export interface WorkspaceSeed {
   parts: ScenePart[];
   annotations: SceneAnnotation[];
   project?: ProjectSettings;
-  chat?: { chatId: string | null; messages: AcpChatMessage[]; acpSessionId: string | null };
+  chat?: LaneChat;
   blank?: boolean;
   unsaved?: boolean;
 }

@@ -10,9 +10,12 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['apply', 180000],
   ['animate', 180000],
   ['simulate', 180000],
+  ['verify', 290000],
+  ['sweep_design', 290000],
   ['import_robot', 300000],
   ['insert_object', 300000],
   ['retarget', 300000],
+  ['fit_view', 180000],
 ]);
 
 export const rendererTimeout = (kind) => RENDERER_TIMEOUTS_MS.get(kind) ?? DEFAULT_TIMEOUT_MS;
@@ -28,6 +31,11 @@ export class AgentBridge {
     this.url = null;
     this.server = null;
     this.ready = Promise.resolve(null);
+    this.local = new Map();
+  }
+
+  serve(kind, handler) {
+    this.local.set(kind, handler);
   }
 
   routeOf(req) {
@@ -53,7 +61,10 @@ export class AgentBridge {
         return;
       }
 
-      const result = await this.ask({ kind, payload, timeoutMs: rendererTimeout(kind), workspaceId, toolUseId });
+      const local = this.local.get(kind);
+      const result = local
+        ? await local(payload, workspaceId)
+        : await this.ask({ kind, payload, timeoutMs: rendererTimeout(kind), workspaceId, toolUseId });
 
       res.end(JSON.stringify(result ?? { ok: true }));
     } catch (err) {

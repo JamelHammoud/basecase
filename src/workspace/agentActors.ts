@@ -94,6 +94,21 @@ export class ActorIndex {
     this.claims.set(partId, actor);
   }
 
+  editsOf(actor: string): string[] {
+    return [...this.claims].filter(([, holder]) => holder === actor).map(([partId]) => partId);
+  }
+
+  editsFor(actor: string, owner: string): string[] | null {
+    if (actor.includes('/')) return this.editsOf(actor);
+
+    const wanted = owner.trim().toLowerCase();
+    const named = [...this.subagents]
+      .filter(([, sub]) => sub.laneId === actor && sub.name.trim().toLowerCase() === wanted)
+      .map(([callId]) => subagentActor(actor, callId));
+
+    return named.length ? named.flatMap((a) => this.editsOf(a)) : null;
+  }
+
   endLane(laneId: string) {
     for (const [partId, actor] of this.claims) if (laneOfActor(actor) === laneId) this.claims.delete(partId);
 

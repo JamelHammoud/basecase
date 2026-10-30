@@ -27,7 +27,8 @@
     "icons": "node tools/icons/emit.mjs && prettier --write src/design-system/glyphs",
     "prepare": "simple-git-hooks && node tools/native/build.mjs",
     "native": "node tools/native/build.mjs",
-    "lint:py": "uvx ruff check . && uvx ruff format --check ."
+    "lint:py": "uvx ruff check . && uvx ruff format --check .",
+    "recipes:harvest": "node tools/recipes/harvest.mjs"
   },
   "dependencies": {
     "@agentclientprotocol/claude-agent-acp": "^0.90.0",

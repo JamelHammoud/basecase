@@ -4,7 +4,7 @@ import { resolveCommand } from './agentProcess.mjs';
 import { BLOCKED_SUBAGENTS, safeWorkspace } from './constants.mjs';
 import { cadSubagents } from './subagents.mjs';
 
-function cadMcpServer({ workspaceRoot, bridgeUrl, evidenceDir, referencesDir, offline }, workspaceId) {
+function cadMcpServer({ workspaceRoot, bridgeUrl, evidenceDir, referencesDir, offline, kind }, workspaceId) {
   const [nodeCmd] = resolveCommand('node');
 
   return {
@@ -15,6 +15,7 @@ function cadMcpServer({ workspaceRoot, bridgeUrl, evidenceDir, referencesDir, of
       { name: 'CAD_BRIDGE_URL', value: `${bridgeUrl}/w/${safeWorkspace(workspaceId)}` },
       { name: 'CAD_EVIDENCE_DIR', value: evidenceDir },
       { name: 'CAD_REFERENCES_DIR', value: referencesDir },
+      ...(kind ? [{ name: 'CAD_AGENT_KIND', value: kind }] : []),
       ...(offline ? [{ name: 'CAD_NO_WEB', value: '1' }] : []),
     ],
   };
@@ -25,7 +26,7 @@ function claudeCodeMeta(offline) {
 
   return {
     systemPrompt: {
-      append: cadInstructions(offline),
+      append: cadInstructions(offline, { subagents: true }),
     },
     claudeCode: {
       options: {

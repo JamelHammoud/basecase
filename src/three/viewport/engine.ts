@@ -1,7 +1,11 @@
 import type * as THREE from 'three';
+import { fastenerInput } from '../../assembly/fastenerSpec';
 import {
+  assemblyIn,
+  fastenersIn,
   interferenceIn,
   measuresIn,
+  visibilityIn,
   printMeshesIn,
   printReportsIn,
   sweepsIn,
@@ -14,6 +18,7 @@ import { BlueprintUnderlay } from './blueprint';
 import { focusOn, frameObjects, frameScene, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
+import { silhouetteShots } from './fitCapture';
 import { Gizmo } from './gizmo';
 import { installKeys } from './keys';
 import { MarkInput } from './markInput';
@@ -54,10 +59,14 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'captureScreenshot',
   'captureViews',
   'interference',
+  'fastenerChains',
+  'assembly',
   'posedInterference',
   'posedFloor',
   'restBounds',
+  'silhouetteShots',
   'measureParts',
+  'visibleShares',
   'printShapes',
   'printMeshes',
   'printThreeMf',
@@ -248,6 +257,8 @@ export class ViewportEngine {
           views,
           onlyIds,
           silhouette: opts?.silhouette,
+          labels: opts?.labels,
+          grid: opts?.grid,
           maxSide: opts?.maxSide,
           helper: this.gizmo.controls.getHelper(),
           marks: opts?.silhouette || onlyIds?.length ? undefined : this.markLayer.bounds(),
@@ -263,11 +274,24 @@ export class ViewportEngine {
           withRest(() => solidShapes(true)),
           interferenceOptions(onlyIds),
         ),
+      fastenerChains: () =>
+        fastenersIn(
+          withRest(() => solidShapes(false)),
+          fastenerInput(this.props.parts),
+        ),
+      assembly: (options) =>
+        assemblyIn(
+          withRest(() => solidShapes(false)),
+          { ...fastenerInput(this.props.parts), ...options },
+        ),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
       posedFloor: (ids) => measure.posedFloor(ctx, ids),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
+      silhouetteShots: (specs, opts) =>
+        silhouetteShots(ctx, { specs, ...opts, helper: this.gizmo.controls.getHelper() }),
       measureParts: (ids) => measuresIn(withRest(() => snapshotShapes(measure.partObjects(ctx, ids)))),
+      visibleShares: () => visibilityIn(withRest(() => solidShapes(true))),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
       printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
       printThreeMf: (files, plateSize) =>

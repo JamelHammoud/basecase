@@ -1,4 +1,5 @@
 import { fittedSize, imageHandlers, type EncodeJob } from './imageOps';
+import type { LabelJob } from './labelOverlay';
 import { workerClient } from './workerRpc';
 
 const client = workerClient<typeof imageHandlers>(
@@ -42,3 +43,15 @@ export async function encodeBitmap(job: EncodeJob): Promise<string> {
 
   return blobToDataUrl(await client.call('encode', job, [job.bitmap]));
 }
+
+export async function encodeLabelled(job: LabelJob): Promise<{ dataUrl: string; labels: number[] }> {
+  if (!canEncodeOffThread()) {
+    return { dataUrl: encodeOnPage({ bitmap: job.bitmap, maxSide: job.maxSide, type: 'image/png' }), labels: [] };
+  }
+
+  const { blob, labels } = await client.call('label', job, [job.bitmap]);
+
+  return { dataUrl: await blobToDataUrl(blob), labels };
+}
+
+export const imageWorker = client;

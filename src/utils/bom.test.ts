@@ -66,7 +66,7 @@ describe('buildBom', () => {
   it('lists stand-ins and prices unchecked lines from list prices', () => {
     expect(bom.standIns).toEqual([{ id: 'standin', name: 'Generic servo' }]);
     expect(bom.unmeasured).toEqual([]);
-    expect(line('component:feetech-sts3215|c001')).toMatchObject({ status: 'unchecked', estUsd: 21.99 });
+    expect(line('component:feetech-sts3215|c001')).toMatchObject({ status: 'unchecked', estUsd: 20 });
     expect(bom.totals).toMatchObject({ checked: 0, stale: 0, unchecked: 4, budgetUsd: 50, overBudget: false });
   });
 

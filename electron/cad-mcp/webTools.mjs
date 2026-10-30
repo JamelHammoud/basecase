@@ -1,3 +1,4 @@
+import { imageCaps } from './imageCaps.mjs';
 import path from 'node:path';
 import { z } from 'zod';
 import { checkAgainstSkeleton, describeSkeleton, fetchSkeleton } from '../robot-skeleton.mjs';
@@ -132,7 +133,7 @@ async function viewableDataUrl(url) {
   const dataUrl = `data:${mime};base64,${buf.toString('base64')}`;
 
   try {
-    const small = await bridge('downscale_image', { dataUrl, maxSide: 1568 }, 20000);
+    const small = await bridge('downscale_image', { dataUrl, maxSide: imageCaps().photo }, 20000);
 
     if (small?.dataUrl) return small.dataUrl;
   } catch {

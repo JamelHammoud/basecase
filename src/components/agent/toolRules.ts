@@ -139,6 +139,26 @@ const PART_RULES: ToolRule[] = [
   partsRule('delete_parts', DeleteIcon, ['Removing', 'Removed']),
   partsRule('mirror_parts', EditIcon, ['Mirroring', 'Mirrored']),
   {
+    keys: ['fasten'],
+    icon: ToolPromptIcon,
+    label: ({ input, verb }) => ({
+      title: `${verb('Fastening', 'Fastened')} ${names(list(input.through)) || 'parts'}`,
+      detail: optional(`${String(input.size ?? '')} into ${String(input.into ?? '')}`.trim()),
+    }),
+  },
+  {
+    keys: ['mate'],
+    icon: EditIcon,
+    label: ({ input, verb }) => ({
+      title: `${verb('Mating', 'Mated')} ${String(input.part ?? 'a part')} to ${String(input.target ?? 'its target')}`,
+    }),
+  },
+  {
+    keys: ['get_ports'],
+    icon: FileIcon,
+    label: ({ input, verb }) => ({ title: `${verb('Reading ports of', 'Read ports of')} ${names(list(input.ids))}` }),
+  },
+  {
     keys: ['find_parts'],
     icon: SearchIcon,
     label: ({ input, verb }) => ({
@@ -147,14 +167,52 @@ const PART_RULES: ToolRule[] = [
     }),
   },
   plainRule(['get_scene'], FileIcon, ['Reading the scene', 'Read the scene']),
+  {
+    keys: ['find_in_scene'],
+    icon: SearchIcon,
+    label: ({ input, verb }) => ({
+      title: verb('Searching the scene', 'Searched the scene'),
+      detail: optional(String(input.query ?? input.group ?? input.kind ?? '')),
+    }),
+  },
 ];
+
+const referenceName = (reference: unknown) => {
+  const text = String(reference ?? '').trim();
+
+  if (!text) return 'the reference';
+
+  return text.startsWith('<') ? 'your outline' : text;
+};
 
 const REVIEW_RULES: ToolRule[] = [
   {
     keys: ['compare'],
     icon: CompareIcon,
     label: ({ input, verb }) => ({
-      title: verb('Comparing with', 'Compared with') + ` ${String(input.reference ?? 'the reference')}`,
+      title: verb('Comparing with', 'Compared with') + ` ${referenceName(input.reference)}`,
+    }),
+  },
+  {
+    keys: ['trace_outline'],
+    icon: CompareIcon,
+    label: ({ input, verb }) => ({
+      title: verb('Tracing', 'Traced') + ` ${referenceName(input.reference)}`,
+    }),
+  },
+  plainRule(['score_fit'], CompareIcon, ['Scoring the fit', 'Scored the fit']),
+  {
+    keys: ['photo_scale'],
+    icon: CompareIcon,
+    label: ({ input, verb }) => ({
+      title: verb('Scaling', 'Scaled') + ` ${referenceName(input.reference)}`,
+    }),
+  },
+  {
+    keys: ['fit_view'],
+    icon: CompareIcon,
+    label: ({ input, verb }) => ({
+      title: verb('Fitting the camera to', 'Fitted the camera to') + ` ${referenceName(input.reference)}`,
     }),
   },
   {
@@ -171,6 +229,16 @@ const REVIEW_RULES: ToolRule[] = [
     },
   },
   plainRule(['check_scene'], CheckIcon, ['Checking the model', 'Checked the model']),
+  plainRule(['craft_review'], CheckIcon, ['Reviewing the craft', 'Reviewed the craft']),
+  plainRule(['check_assembly'], CheckIcon, ['Checking the assembly', 'Checked the assembly']),
+  plainRule(['set_interfaces'], FileIcon, ['Writing interface contracts', 'Wrote interface contracts']),
+  {
+    keys: ['check_interfaces'],
+    icon: CheckIcon,
+    label: ({ input, verb }) => ({
+      title: `${verb('Checking interfaces of', 'Checked interfaces of')} ${String(input.owner ?? 'a subassembly')}`,
+    }),
+  },
   {
     keys: ['check_printability'],
     icon: CheckIcon,
@@ -182,11 +250,14 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['slice_plates'], CheckIcon, ['Slicing the plates', 'Sliced the plates']),
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
+  plainRule(['size_actuators'], JointsIcon, ['Sizing the actuators', 'Sized the actuators']),
+  plainRule(['sweep_design'], RunIcon, ['Comparing design options', 'Compared design options']),
   plainRule(['set_build'], FileIcon, ['Updating the build', 'Updated the build']),
   plainRule(['build_guide'], FileIcon, ['Making the build guide', 'Made the build guide']),
 ];
 
 const ROBOT_RULES: ToolRule[] = [
+  plainRule(['define_skeleton'], JointsIcon, ['Laying out the skeleton', 'Laid out the skeleton']),
   {
     keys: ['robot_skeleton'],
     icon: JointsIcon,

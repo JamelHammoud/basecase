@@ -1,6 +1,7 @@
 import type { PoseReply } from '../agent/agentPose';
 import { describeMarks } from '../agent/agentMarks';
-import { agentCatalog, partCode, snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
+import { partCode, partRecord } from '../agent/agentPartRecord';
+import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -10,18 +11,30 @@ import { downscaleDataUrl } from '../utils/imageFile';
 import { platformBridge } from '../utils/platformBridge';
 import type { SliceRecord } from '../print/printBridge';
 import { sliceText } from '../print/sliceText';
-import { designedFits } from '../utils/designedFits';
+import { assemblyCheck, sceneFits } from './agentAssemblyRequests';
 import { printReportOf, printReportText, type PrintReport } from '../utils/printReport';
-import { maskProfile, photoProfile } from '../utils/silhouette';
+import type { VisionMasks } from '../utils/photoMask';
+import { maskProfile, referenceProfile } from '../utils/silhouette';
+import { bandMismatch, type Profile } from '../utils/silhouetteProfile';
 import {
   applyBuildSettings,
   declareJoints,
   type BuildSettingsPayload,
   type DefineJointsPayload,
 } from './agentBuildRequests';
+import { craftScene, partMeshes, visibleShare } from './agentCraftRequests';
+import { PORT_HANDLERS } from './agentPortRequests';
+import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';
+import { costByClass } from '../utils/budget';
+import { budgetPlanNote, catalogRequest, costNotes, sizeActuatorsRequest } from './agentCostRequests';
 import { POSE_TOOL_KINDS, SIM_TOOL_KINDS } from './agentRobotTools';
+import type { SweepPayload } from './agentSweepRequest';
 import type { Vec3 } from './types';
 import type { GeneratedGuide } from '../guide/generateGuide';
+import { fitView } from './agentFitView';
+import { labelledScreenshot } from './agentLabelRequest';
+import { targetCompare } from './agentTargetRequest';
+import { scaleRequest, traceRequest } from './agentTraceRequest';
 
 type Payload = Record<string, unknown>;
 
@@ -36,8 +49,10 @@ export interface RequestContext {
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
-  verify: () => Promise<EngineeringReport>;
+  verify: (opts?: { peak?: boolean }) => Promise<EngineeringReport>;
+  sweep: (payload: SweepPayload) => Promise<{ text: string }>;
   applyOps: (ops: AgentOp[]) => Promise<string>;
+  edits?: (owner: string) => string[] | null;
   buildGuide: () => Promise<GeneratedGuide | null>;
 }
 
@@ -45,6 +60,7 @@ type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
 
 const VIEW_IMAGE_SIDE = 1024;
 const EVIDENCE_IMAGE_SIDE = 1568;
+const MAX_IMAGE_SIDE = 2576;
 
 const idsOf = (payload: Payload) => (payload.ids as string[] | undefined) ?? undefined;
 
@@ -79,16 +95,58 @@ async function screenshot(payload: Payload, ctx: RequestContext) {
 
   ctx.setAction(inspectLabel(ids, ctx.parts()));
 
-  return { images: (await ctx.viewport()?.captureViews(views, ids, { maxSide: VIEW_IMAGE_SIDE })) ?? [] };
+  const maxSide = Math.min(MAX_IMAGE_SIDE, Number(payload.maxSide) || VIEW_IMAGE_SIDE);
+
+  if (payload.labels) return labelledScreenshot({ views, ids, maxSide, grid: Boolean(payload.grid) }, ctx);
+
+  return { images: (await ctx.viewport()?.captureViews(views, ids, { maxSide, grid: Boolean(payload.grid) })) ?? [] };
+}
+
+async function modelProfiles(views: string[], ids: string[] | undefined, ctx: RequestContext) {
+  const shots = (await ctx.viewport()?.captureViews(views, ids, { silhouette: true })) ?? [];
+  const out: Record<string, Profile> = {};
+
+  for (const shot of shots) {
+    const profile = await maskProfile(shot.dataUrl);
+
+    if (profile) out[shot.view] = profile;
+  }
+
+  return out;
+}
+
+function bestView(reference: Profile | null, models: Record<string, Profile>) {
+  const views = Object.keys(models);
+
+  if (!reference || views.length < 2) return views[0];
+
+  return views.reduce((best, v) =>
+    bandMismatch(reference, models[v]) < bandMismatch(reference, models[best]) ? v : best,
+  );
 }
 
 async function silhouetteCompare(payload: Payload, ctx: RequestContext) {
-  const view = String(payload.view ?? 'front');
-  const ref = await photoProfile(String(payload.reference));
-  const [shot] = (await ctx.viewport()?.captureViews([view], idsOf(payload), { silhouette: true })) ?? [];
-  const model = shot ? await maskProfile(shot.dataUrl) : null;
+  const views = (payload.views as string[] | undefined) ?? [String(payload.view ?? 'front')];
+  const ids = idsOf(payload);
+  const models = await modelProfiles(views, ids, ctx);
+  const ref = await referenceProfile({
+    dataUrl: String(payload.reference),
+    masks: (payload.masks as VisionMasks | undefined) ?? null,
+    modelAspect: Math.max(0, ...Object.values(models).map((m) => m.aspect)),
+    allowCut: Boolean(ids?.length),
+  });
+  const view = bestView(ref.profile, models);
 
-  return { reference: ref.profile, plain: ref.plain, reason: ref.reason, model };
+  return {
+    reference: ref.profile,
+    plain: ref.plain,
+    reason: ref.reason,
+    source: ref.source,
+    notes: ref.notes,
+    view,
+    model: view ? models[view] : null,
+    mismatch: view && ref.profile ? bandMismatch(ref.profile, models[view]) : null,
+  };
 }
 
 const shapesOf = (ctx: RequestContext) => async (ids: string[], faces?: Record<string, Vec3[]>) =>
@@ -111,7 +169,14 @@ async function bom(_payload: Payload, ctx: RequestContext) {
     supportG,
   });
 
-  return { text: bomText(built, Object.fromEntries(ctx.parts().map((p) => [p.id, p.name]))) };
+  return {
+    text: bomText(built, Object.fromEntries(ctx.parts().map((p) => [p.id, p.name]))),
+    data: {
+      estimatedUsd: built.totals.estimatedUsd,
+      budgetUsd: built.totals.budgetUsd ?? null,
+      actuatorsUsd: costByClass(built).actuators,
+    },
+  };
 }
 
 async function printability(payload: Payload, ctx: RequestContext) {
@@ -158,12 +223,20 @@ async function buildGuide(_payload: Payload, ctx: RequestContext) {
   };
 }
 
-function setBuild(payload: Payload, ctx: RequestContext) {
+async function setBuild(payload: Payload, ctx: RequestContext) {
   const { next, bad } = applyBuildSettings(ctx.project(), payload as BuildSettingsPayload);
 
   ctx.setProjectNow(next);
 
-  return { ok: true, unknown: bad, extras: next.extras ?? [] };
+  return { ok: true, unknown: bad, extras: next.extras ?? [], plan: await budgetPlanNote(ctx) };
+}
+
+async function applyWithCost(payload: Payload, ctx: RequestContext) {
+  const { ops, problems } = prepareOps((payload.ops as AgentOp[]) ?? [], ctx);
+  const summary = await ctx.applyOps(ops);
+  const framed = problems.length ? ` Not placed: ${problems.join('; ')}.` : '';
+
+  return { summary: summary + framed + (await costNotes(ops, ctx)) };
 }
 
 const HANDLERS: Record<string, Handler> = {
@@ -174,29 +247,42 @@ const HANDLERS: Record<string, Handler> = {
   },
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),
+  part_record: (payload, ctx) => partRecord(ctx.parts(), String(payload.id)),
+  part_meshes: (payload, ctx) => partMeshes((payload.ids as string[] | undefined) ?? [], ctx.parts()),
+  craft: (_payload, ctx) => craftScene(ctx),
+  visible_share: (payload, ctx) => visibleShare(String(payload.id), ctx.viewport()),
   screenshot,
-  interference: async (payload, ctx) => {
-    const found = (await ctx.viewport()?.interference(idsOf(payload))) ?? { interferences: [], coplanar: [] };
-
-    return designedFits(found, ctx.parts());
-  },
+  interference: (payload, ctx) => sceneFits({ ids: idsOf(payload), twins: payload.twins === true }, ctx),
+  assembly: (_payload, ctx) => assemblyCheck(ctx),
   silhouette_compare: silhouetteCompare,
+  target_compare: (payload, ctx) => targetCompare(payload, ctx),
+  fit_view: (payload, ctx) => fitView(payload, ctx),
+  trace_outline: (payload, ctx) => traceRequest(payload, ctx),
+  photo_scale: (payload) => scaleRequest(payload),
   bom,
   printability,
   slice: slicePlates,
   define_joints: defineJoints,
-  verify: async (_payload, ctx) => {
+  verify: async (payload, ctx) => {
     ctx.setAction('Checking the design');
 
-    return { text: engineeringText(await ctx.verify(), toCad) };
+    return { text: engineeringText(await ctx.verify({ peak: payload.peak === true }), toCad) };
   },
   set_build: setBuild,
   build_guide: buildGuide,
-  catalog: (payload) => ({ text: agentCatalog(String(payload.query ?? '')) }),
+  catalog: catalogRequest,
+  size_actuators: sizeActuatorsRequest,
+  sweep_design: (payload, ctx) => {
+    ctx.setAction('Comparing design options');
+
+    return ctx.sweep(payload as SweepPayload);
+  },
   downscale_image: async (payload) => ({
     dataUrl: await downscaleDataUrl(String(payload.dataUrl), Number(payload.maxSide) || EVIDENCE_IMAGE_SIDE, 0.88),
   }),
-  apply: async (payload, ctx) => ({ summary: await ctx.applyOps((payload.ops as AgentOp[]) ?? []) }),
+  apply: applyWithCost,
+  ...PORT_HANDLERS,
+  ...PLAN_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [
       kind,

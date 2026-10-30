@@ -6,6 +6,10 @@ import { collideRiding, type OutputRiders } from './outputRiders';
 import { printReportOf, worldMeasure } from './shapeReports';
 import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
 import { sweepClashes, type SweepSpec } from './sweep';
+import { visibleShares } from './visibility';
+import { traceFasteners } from '../../assembly/fastenerChain';
+import type { FastenerInput } from '../../assembly/assemblyTypes';
+import { assemblyGeometry, type AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 
 export interface GeometryPayload {
   id: string;
@@ -28,7 +32,9 @@ export type AnalysisTask =
   | ({ kind: 'interference'; instances: Instance[]; riders?: OutputRiders } & CollideOptions)
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
-  | { kind: 'measure' | 'meshes'; instances: Instance[] }
+  | { kind: 'measure' | 'meshes' | 'visibility'; instances: Instance[] }
+  | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
+  | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
   | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] };
 
 export interface ThreeMfFileSpec {
@@ -90,8 +96,20 @@ function run(task: AnalysisTask) {
       return byId(task.instances, (i) => worldMeasure(solidOf(i.key), new THREE.Matrix4().fromArray(i.matrix)));
     case 'meshes':
       return byId(task.instances, (i) => weld(solidOf(i.key).positions));
+    case 'visibility':
+      return visibleShares(
+        task.instances.map((i) => ({
+          id: i.id,
+          solid: solidOf(i.key),
+          matrix: new THREE.Matrix4().fromArray(i.matrix),
+        })),
+      );
     case 'threeMf':
       return threeMfFiles(task);
+    case 'fasteners':
+      return traceFasteners(placeAll(task.instances), task);
+    case 'assembly':
+      return assemblyGeometry(placeAll(task.instances), task);
   }
 }
 

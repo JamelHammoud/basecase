@@ -1,3 +1,5 @@
+import type { ChainResult } from '../assembly/assemblyTypes';
+import { chainMembers, isOwnStack } from '../assembly/fastenerMask';
 import { heatInsert, type HardwareType } from '../data/hardware';
 import type { Coplanar, Interference } from '../three/interference';
 import type { ScenePart } from '../types/robotics';
@@ -47,12 +49,15 @@ function classify(i: Interference, byId: Map<string, ScenePart>): FitInterferenc
 export function designedFits(
   found: { interferences: Interference[]; coplanar: Coplanar[] },
   parts: ScenePart[],
+  chains?: ChainResult | null,
 ): { items: FitInterference[]; coplanar: Coplanar[] } {
   const byId = new Map(parts.map((p) => [p.id, p]));
-  const buried = (c: Coplanar) => !!insertSpec(byId.get(c.a)) || !!insertSpec(byId.get(c.b));
+  const isHardware = (id: string) => byId.get(id)?.kind === 'hardware';
+  const members = chains ? chainMembers(chains) : null;
+  const designed = (i: Interference) => !!members && isOwnStack(i, members, byId);
 
   return {
-    items: found.interferences.flatMap((i) => classify(i, byId)),
-    coplanar: found.coplanar.filter((c) => !buried(c)),
+    items: found.interferences.filter((i) => !designed(i)).flatMap((i) => classify(i, byId)),
+    coplanar: found.coplanar.filter((c) => !isHardware(c.a) && !isHardware(c.b)),
   };
 }

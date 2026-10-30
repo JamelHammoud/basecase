@@ -2,8 +2,11 @@ import type { RobotJoint } from '../types/robotics';
 import { fmtG } from './engineeringFormat';
 import { servoMountRows, rangeOfMotionRows } from './engineeringJoints';
 import { massOf, partMasses } from './engineeringMass';
-import { heatRows, powerRows, servoParts, stabilityRows } from './engineeringPower';
-import { jointLoad, torqueRow } from './engineeringTorque';
+import { budgetRow } from './engineeringBudget';
+import { crouchModel } from './engineeringCrouch';
+import { heatRows, powerRows, servoParts, servoSupplyVolts, stabilityOf, stabilityRows } from './engineeringPower';
+import { rangeChangeRows } from './engineeringRanges';
+import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
 
 export { rotateEuler } from './engineeringMath';
@@ -21,13 +24,16 @@ export type {
 export const ENGINEERING_CHECKS = [
   'Weight',
   'Servo torque',
+  'Peak torque',
   'Servo alignment',
   'Joint support',
   'Range of motion',
+  'Range changes',
   'Servo voltage',
   'Current and runtime',
   'Standing stability',
   'Heat near servos',
+  'Budget',
 ];
 
 function weightRow(all: CheckContext['all'], masses: PartMass[]): CheckRow {
@@ -76,18 +82,21 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     onFloor: parts.filter((p) => p.role === 'solid' && measures[p.id] && measures[p.id]!.min[1] < 2),
     servos: servoParts(parts),
   };
-  const loads = ctx.joints.filter((j) => j.type === 'revolute').map((j) => jointLoad(ctx, j));
+  const env = { volts: servoSupplyVolts(ctx), crouch: crouchModel(ctx) };
+  const loads = ctx.joints.filter((j) => j.type === 'revolute').map((j) => jointLoad(ctx, j, env));
   const rows: CheckRow[] = [
     weightRow(ctx.all, masses),
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
-    ...(loads.length ? [torqueRow(loads)] : []),
+    ...(loads.length ? [torqueRow(loads, env.crouch.share), ...peakRow(loads, project, input.walk)] : []),
     ...jointPartsRows(ctx),
     ...servoMountRows(ctx),
     ...rangeOfMotionRows(ctx),
+    ...rangeChangeRows(ctx),
     ...powerRows(ctx),
     ...stabilityRows(ctx),
     ...heatRows(ctx),
+    budgetRow(ctx),
   ];
 
-  return { rows, joints: loads, massG: ctx.all.grams, com: ctx.all.com, masses };
+  return { rows, joints: loads, massG: ctx.all.grams, com: ctx.all.com, masses, stability: stabilityOf(ctx) };
 }

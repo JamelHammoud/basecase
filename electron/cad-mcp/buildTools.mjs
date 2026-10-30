@@ -82,13 +82,15 @@ export const verifyDesign = {
   config: {
     title: 'Verify design',
     description:
-      "Engineering checks computed from the model (not opinions), each PASS, WARN, FAIL or NOT RUN with the measured number: mass and centre of mass; static torque of every declared joint against its servo (worst of holding the limb out across the range and, for legs, standing on that leg; PASS ≤ 1/5 of stall, WARN ≤ rated); servo output on the joint axis; a support bearing opposite each servo; every joint swept through its range for collisions; battery voltage against each servo's input range; current and runtime; standing stability; PLA touching servos. " +
-      'Run it after define_joints and again before you finish. A design is not buildable while anything FAILs; fix and re-run.',
-    inputSchema: {},
+      "Engineering checks computed from the model (not opinions), each PASS, WARN, FAIL or NOT RUN with the measured number: mass and centre of mass; servo torque of every declared joint at the servo supply voltage (leg joints: the whole robot on one leg at the gait's crouch, at least 30°, PASS ≤ 0.40 of stall with walking heat ≤ rated, FAIL above 0.60 of stall or 1.6× rated; other joints: the limb held out across its range, PASS ≤ 0.40 of stall and ≤ rated); peak torque (with peak: true and a trained walk policy, it walks the policy in MuJoCo for 14 s with two shoves at 0.3 × body weight and every servo limited to 0.7 × stall at the supply voltage: per leg joint the 99th percentile of the torque the joint asks for over 25 ms windows, PASS ≤ 0.80 of stall, WARN ≤ 1.0, FAIL past stall for over 50 ms or a fall; the walk's RMS torque then replaces the 0.67 × stance estimate in walking heat); servo output on the joint axis; a support bearing opposite each servo; every joint swept through its range for collisions; battery voltage against each servo's input range; current and runtime; standing stability; PLA touching servos; the BOM estimate against the budget (FAIL over it, WARN above 90%). " +
+      'Run it after define_joints and again before you finish. A design is not buildable while anything FAILs; fix and re-run. The peak test adds a few seconds: run it once a walk policy is trained.',
+    inputSchema: {
+      peak: z.boolean().optional().describe('Walk the trained policy in simulation to measure peak torque'),
+    },
   },
-  handler: async () => {
+  handler: async ({ peak }) => {
     try {
-      const res = await bridge('verify', {}, 300000);
+      const res = await bridge('verify', { peak: peak === true }, 300000);
 
       return text(res?.text || 'Nothing to check yet.');
     } catch (err) {
@@ -102,8 +104,8 @@ export const getBom = {
   config: {
     title: 'Bill of materials',
     description:
-      'The build\'s bill of materials, computed from the scene: catalog components and exact hardware counted by part, printed parts as filament grams, plus purchase-only extras (set_build). Each line has its catalog key and the price the user recorded from a listing, with the date, or "no price recorded". ' +
-      "Totals are compared with the user's budget. Use it to keep the design inside the budget (fewer or cheaper actuators, one screw size), and report it at the end. Never state a price that is not in this output.",
+      'The build\'s bill of materials, computed from the scene: catalog components and exact hardware counted by part, printed parts as filament grams, plus purchase-only extras (set_build). Each line has its catalog key and its price: the one the user checked from a listing, with the date, else a dated list price from a maker or distributor store (an estimate, marked ~), else "no price known". ' +
+      "The estimate (checked prices plus list prices) is compared with the user's budget. Use it to keep the design inside the budget (fewer or cheaper actuators, one screw size), and report it at the end. Never state a price that is not in this output.",
     inputSchema: {},
   },
   handler: async () => {
@@ -164,7 +166,7 @@ export const setBuild = {
     title: 'Build settings',
     description:
       'Adds things to buy that are not modeled parts (battery, charger, buck converter, power switch, cables, microSD) to the BOM, by catalog key: "supply:<id>" from find_parts, or "component:<id>" for a catalog part that isn\'t placed. ' +
-      'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one) and the default print material.',
+      'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one) and the default print material. With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
     inputSchema: {
       extras: z
         .array(
@@ -187,7 +189,11 @@ export const setBuild = {
         ? ` Unknown keys (not added): ${res.unknown.join(', ')}. Use keys from find_parts.`
         : '';
 
-      return text(`Extras: ${(res?.extras ?? []).map((x) => `${x.qty}× ${x.key}`).join(', ') || 'none'}.${unknown}`);
+      const plan = res?.plan ? `\n\n${res.plan}` : '';
+
+      return text(
+        `Extras: ${(res?.extras ?? []).map((x) => `${x.qty}× ${x.key}`).join(', ') || 'none'}.${unknown}${plan}`,
+      );
     } catch (err) {
       return fail(err);
     }

@@ -1,11 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { safeAudit } from './audit.mjs';
+import { portsFromLogs, portsFromObjects } from './ports.mjs';
+import { occMessage, replicadScope, unwrapResult, wrapCode } from './replicadSupport.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
 const BOSL2_DIR = path.join(root, 'vendor', 'BOSL2');
-const ROBOTICS_LIB = path.join(root, 'vendor', 'robotics', 'robotics.scad');
+const ROBOTICS_DIR = path.join(root, 'vendor', 'robotics');
 
 function weld(soup) {
   const map = new Map();
@@ -101,10 +104,7 @@ async function makeScadInstance() {
   if (!scadFactory) scadFactory = (await import('openscad-wasm')).createOpenSCAD;
 
   if (!libraryFiles) {
-    libraryFiles = [
-      ...readTree(BOSL2_DIR, '/libraries/BOSL2'),
-      ['/libraries/robotics.scad', fs.readFileSync(ROBOTICS_LIB, 'utf-8')],
-    ];
+    libraryFiles = [...readTree(BOSL2_DIR, '/libraries/BOSL2'), ...readTree(ROBOTICS_DIR, '/libraries')];
   }
 
   const logs = [];
@@ -199,8 +199,16 @@ async function renderOpenSCADOnce(code) {
   if (rc !== 0 || fatal.length || !stl || stl.length < 84) throw openscadError(logs, fatal, problems);
 
   const { positions, indices } = weld(stlSoup(stl));
+  const { ports, problems: portProblems } = portsFromLogs(logs);
 
-  return { positions, indices, edges: null, warnings: problems.slice(0, 8), stats: measure(positions, indices) };
+  return {
+    positions,
+    indices,
+    edges: null,
+    warnings: [...problems.slice(0, 8), ...portProblems],
+    stats: measure(positions, indices),
+    ports,
+  };
 }
 
 function explainErrors(logs, picked) {
@@ -235,6 +243,7 @@ function explainErrors(logs, picked) {
 }
 
 let replicad = null;
+let replicadOc = null;
 
 function replicadHints(msg) {
   if (/has been deleted/i.test(msg)) {
@@ -266,26 +275,32 @@ async function renderReplicad(code) {
 
     replicad = await import('replicad');
     replicad.setOC(oc);
+    replicadOc = oc;
   }
 
-  const names = Object.keys(replicad).filter((k) => /^[A-Za-z_$][\w$]*$/.test(k) && k !== 'default');
-  const run = new Function(...names, `"use strict";\n${code}`);
+  const scope = replicadScope(replicad);
+  const names = Object.keys(scope);
+  const run = new Function(...names, wrapCode(code));
   let result;
 
   try {
-    result = run(...names.map((n) => replicad[n]));
+    result = run(...names.map((n) => scope[n]));
 
     if (result && typeof result.then === 'function') result = await result;
   } catch (err) {
-    throw new Error([String(err?.message ?? err), ...replicadHints(String(err?.message ?? err))].join('\n'), {
-      cause: err,
-    });
+    const message = occMessage(replicadOc, err);
+
+    throw new Error([message, ...replicadHints(message)].join('\n'), { cause: err });
   }
 
-  if (Array.isArray(result)) result = result.filter(Boolean).reduce((a, b) => a.fuse(b));
+  const { shape, ports: declared, notes } = unwrapResult(result);
+
+  result = shape;
 
   if (!result || typeof result.mesh !== 'function') {
-    throw new Error('The code must `return` a replicad 3D shape (e.g. return sketch.extrude(10)).');
+    throw new Error(
+      'The code must `return` a replicad 3D shape (e.g. return sketch.extrude(10)), or { shape, ports }.',
+    );
   }
 
   const mesh = result.mesh({ tolerance: 0.05, angularTolerance: 0.15 });
@@ -305,7 +320,9 @@ async function renderReplicad(code) {
     stats.volume = Math.round(replicad.measureVolume(result));
   } catch {}
 
-  return { positions, indices, edges, warnings: [], stats };
+  const { ports, problems } = portsFromObjects(declared);
+
+  return { positions, indices, edges, warnings: [...notes, ...problems], stats, ports };
 }
 
 let chain = Promise.resolve();
@@ -314,14 +331,29 @@ process.on('message', (msg) => {
   chain = chain.then(() => runJob(msg));
 });
 
+const EMPTY_PART =
+  'The part is empty: a boolean removed everything. Check that the cutters are smaller than the body and that intersected shapes overlap.';
+
+function auditJob({ id, mesh }) {
+  const stats = measure(mesh.positions, mesh.indices);
+
+  process.send({ id, ok: true, stats, audit: safeAudit({ ...mesh, stats }) });
+}
+
 async function runJob(msg) {
-  const { id, language, code } = msg ?? {};
+  const { id, language, code, expect } = msg ?? {};
   const started = Date.now();
+
+  if (msg?.mesh) return auditJob(msg);
 
   try {
     const result = language === 'replicad' ? await renderReplicad(code) : await renderOpenSCAD(code);
 
-    process.send({ id, ok: true, ...result, ms: Date.now() - started });
+    if (!result.indices.length) throw new Error(EMPTY_PART);
+
+    const audit = safeAudit({ ...result, expect });
+
+    process.send({ id, ok: true, ...result, audit, ms: Date.now() - started });
   } catch (err) {
     process.send({ id, ok: false, error: String(err?.message ?? err).slice(0, 4000), ms: Date.now() - started });
   }

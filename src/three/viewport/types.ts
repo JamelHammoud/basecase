@@ -1,7 +1,10 @@
+import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { ThreeMfFileSpec } from '../analysis/analysisOps';
 import type { MeshData } from '../../print/threeMf';
 import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
+import type { ChainResult } from '../../assembly/assemblyTypes';
+import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
 import type { MeshMeasure } from '../meshMeasure';
@@ -115,10 +118,13 @@ export interface Viewport3DHandle {
   captureViews: (
     views: string[],
     onlyIds?: string[],
-    opts?: { silhouette?: boolean; maxSide?: number },
-  ) => Promise<Array<{ view: string; dataUrl: string }>>;
+    opts?: { silhouette?: boolean; maxSide?: number; labels?: string[]; grid?: boolean },
+  ) => Promise<Array<{ view: string; dataUrl: string; labels?: number[] }>>;
   interference: (onlyIds?: string[]) => Promise<{ interferences: Interference[]; coplanar: Coplanar[] }>;
+  fastenerChains: () => Promise<ChainResult>;
+  assembly: (options: { serviceable: string[]; budgetMs: number }) => Promise<AssemblyGeometry>;
   measureParts: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
+  visibleShares: () => Promise<Record<string, number>>;
   printShapes: (
     ids: string[],
     faces?: Record<string, Array<[number, number, number]>>,
@@ -133,6 +139,7 @@ export interface Viewport3DHandle {
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
+  silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];
   posedInterference: (onlyIds?: string[], riders?: Record<string, string[]>) => Promise<Interference[]>;
   posedFloor: (ids?: string[]) => number | null;
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;

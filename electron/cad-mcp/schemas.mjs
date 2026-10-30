@@ -62,6 +62,13 @@ export const common = {
       'This part is the envelope of a bought supply from find_parts, e.g. "supply:lipo-3s-2200" for the battery: counted in the BOM, not printed',
     ),
   note: z.string().max(400).optional().describe('Design intent: fasteners, clearances, print orientation, function'),
+  frame: z
+    .string()
+    .regex(/^[a-z0-9_-]*$/)
+    .optional()
+    .describe(
+      'A skeleton or declared joint id: position is then an offset from that joint, and the part moves when the joint does ("" detaches it)',
+    ),
 };
 
 export const primitiveSchema = z.object({

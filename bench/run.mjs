@@ -1,30 +1,20 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import http from 'node:http';
-import os from 'node:os';
-import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright-core';
 import { ROBOTS } from './robots.mjs';
 import { parseStl } from './geometry.mjs';
 import { scoreModels, writeOverlay } from './score.mjs';
 import { scoreAgainstDrawing, writeDrawingOverlay } from './drawing.mjs';
 import { judgeRun } from './judge.mjs';
-import { createEventHandler, sseDataReader } from './run-events.mjs';
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, '..');
+import { createEventHandler } from './run-events.mjs';
+import { argOption, defaultRunName, here, openStudio, root, sceneRecordOf, writeShot } from './harness.mjs';
+import { readEvents, runMetrics } from './metrics.mjs';
+import { archiveRun, gitInfo } from './archive.mjs';
 
 const args = process.argv.slice(2);
 const robot = args[0];
-const opt = (name, def) => {
-  const i = args.indexOf(`--${name}`);
-
-  return i >= 0 ? args[i + 1] : def;
-};
-const port = Number(opt('port', 5174));
-const runName = opt('run', new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'));
+const port = Number(argOption(args, 'port', 5174));
+const runName = argOption(args, 'run', defaultRunName());
 
 if (!ROBOTS[robot]) {
   console.error(`Unknown robot. Choose: ${Object.keys(ROBOTS).join(', ')}`);
@@ -38,186 +28,20 @@ fs.mkdirSync(out, { recursive: true });
 const logFile = fs.createWriteStream(path.join(out, 'events.jsonl'));
 const started = Date.now();
 const log = (...a) => console.log(`[${robot} ${((Date.now() - started) / 1000).toFixed(0)}s]`, ...a);
-const base = `http://127.0.0.1:${port}`;
-
-function postJson(url, body) {
-  return new Promise((resolve, reject) => {
-    const data = Buffer.from(JSON.stringify(body));
-    const req = http.request(
-      url,
-      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': data.length } },
-      (res) => {
-        let text = '';
-
-        res.on('data', (c) => (text += c));
-        res.on('end', () => {
-          try {
-            resolve(JSON.parse(text));
-          } catch {
-            resolve({ error: text.slice(0, 500) });
-          }
-        });
-      },
-    );
-
-    req.setTimeout(0);
-    req.on('error', reject);
-    req.end(data);
-  });
-}
-
-const givenApp = opt('app', null);
-const app = givenApp ? path.resolve(givenApp) : fs.mkdtempSync(path.join(os.tmpdir(), `studio-bench-${robot}-`));
-
-if (!givenApp) {
-  for (const f of [
-    'src',
-    'electron',
-    'vendor',
-    'public',
-    'index.html',
-    'vite.config.ts',
-    'package.json',
-    'tsconfig.json',
-    'tsconfig.app.json',
-    'tsconfig.node.json',
-    'tsconfig.e2e.json',
-  ].filter((f) => fs.existsSync(path.join(root, f))))
-    fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
-
-  fs.symlinkSync(path.join(root, 'node_modules'), path.join(app, 'node_modules'), 'dir');
-}
-
-{
-  const check = spawn(
-    process.execPath,
-    [
-      '--input-type=module',
-      '-e',
-      [
-        "const { renderPart } = await import('./electron/cad-kernel/client.mjs');",
-        "const a = await renderPart('openscad', 'include <robotics.scad>\\ncuboid(10, rounding=2);');",
-        "const b = await renderPart('replicad', 'return makeBox([0,0,0],[5,5,5]);');",
-        "process.stdout.write(JSON.stringify([a.ok !== false && !a.error, b.ok !== false && !b.error, a.error || b.error || '']));",
-        'process.exit(0);',
-      ].join('\n'),
-    ],
-    { cwd: app, stdio: ['ignore', 'pipe', 'pipe'] },
-  );
-  let outText = '';
-
-  check.stdout.on('data', (d) => (outText += d));
-  await new Promise((r) => check.on('close', r));
-
-  let ok = false;
-
-  try {
-    const [a, b, msg] = JSON.parse(outText);
-
-    ok = a && b;
-
-    if (!ok) console.error(`CAD kernel preflight failed: ${msg}`);
-  } catch {
-    console.error(`CAD kernel preflight failed: ${outText.slice(0, 300)}`);
-  }
-
-  if (!ok && !givenApp) fs.rmSync(app, { recursive: true, force: true });
-
-  if (!ok) process.exit(1);
-}
-
-const vite = spawn(
-  process.execPath,
-  [path.join(app, 'node_modules/vite/bin/vite.js'), '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
-  {
-    cwd: app,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, ...(ROBOTS[robot].offline ? { STUDIO_AGENT_OFFLINE: '1' } : {}) },
-  },
-);
-const cleanup = () => {
-  try {
-    vite.kill();
-  } catch {}
-
-  try {
-    if (!givenApp) fs.rmSync(app, { recursive: true, force: true });
-  } catch {}
-};
-
-process.on('exit', cleanup);
-process.on('SIGINT', () => process.exit(130));
-process.on('SIGTERM', () => process.exit(143));
-
-async function waitFor(fn, timeoutMs, label) {
-  const t0 = Date.now();
-
-  for (;;) {
-    try {
-      const v = await fn();
-
-      if (v) return v;
-    } catch (err) {
-      if (err?.fatal) throw err;
-    }
-
-    if (Date.now() - t0 > timeoutMs) throw new Error(`Timed out waiting for ${label}`);
-
-    await new Promise((r) => setTimeout(r, 500));
-  }
-}
-
-let viteExited = false;
-
-vite.on('exit', () => (viteExited = true));
-
-let viteOut = '';
-
-vite.stdout.on('data', (d) => (viteOut += d));
-vite.stderr.on('data', (d) => (viteOut += d));
-await waitFor(
-  async () => {
-    if (viteExited)
-      throw Object.assign(new Error(`Port ${port} is taken or vite failed:\n${viteOut.slice(-400)}`), { fatal: true });
-
-    return /ready in|Local:/.test(viteOut) && (await fetch(base)).ok;
-  },
-  60000,
-  'dev server',
-).catch((err) => {
+const studio = await openStudio({
+  label: robot,
+  port,
+  givenApp: argOption(args, 'app', null),
+  env: ROBOTS[robot].offline ? { STUDIO_AGENT_OFFLINE: '1' } : {},
+  log,
+}).catch((err) => {
   console.error(err.message);
   process.exit(1);
 });
-log('dev server up');
-
-const browser = await chromium.launch({
-  channel: 'chrome',
-  headless: true,
-  args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
-});
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-
-page.on('pageerror', (e) => log('page error', e.message));
-page.on('crash', () => log('PAGE CRASHED (out of memory?) — the model is lost'));
-await page.goto(base);
-await waitFor(() => page.evaluate(() => !!window.__studio), 180000, 'app');
-
+const { page, call } = studio;
 const counts = { toolCalls: 0, modelPart: 0, failedTools: 0, thoughtChunks: 0, messageChunks: 0 };
-const onEvent = createEventHandler({ counts, log, logFile, started });
-const sse = http.get(`${base}/api/events`, (res) => {
-  res.setEncoding('utf8');
-  res.on('data', sseDataReader(onEvent));
-});
 
-sse.setTimeout(0);
-sse.on('error', () => {});
-
-await waitFor(
-  async () => (await (await fetch(`${base}/api/bridge/acp-status`)).json()).connected,
-  90000,
-  'agent connection',
-);
-log('agent connected');
+studio.onEvent.current = createEventHandler({ counts, log, logFile, started });
 
 const inputsDir = path.join(here, 'data', robot, 'inputs');
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
@@ -228,13 +52,12 @@ const imageDataUrls = (fs.existsSync(inputsDir) ? fs.readdirSync(inputsDir) : []
     (f) =>
       `data:${MIME[path.extname(f).toLowerCase()]};base64,${fs.readFileSync(path.join(inputsDir, f)).toString('base64')}`,
   );
-const promptText = ROBOTS[robot].prompt;
 
 log(`prompting with ${imageDataUrls.length} photos`);
 
-const result = await postJson(`${base}/api/bridge/acp-prompt`, {
+const result = await studio.post('/api/bridge/acp-prompt', {
   action: 'build',
-  promptText,
+  promptText: ROBOTS[robot].prompt,
   imageDataUrls,
   imageName: `${robot} photos`,
 });
@@ -250,21 +73,13 @@ const stl = Buffer.from(await page.evaluate(() => window.__studio.stlBase64()), 
 fs.writeFileSync(path.join(out, 'agent.stl'), stl);
 fs.writeFileSync(path.join(out, 'parts.json'), JSON.stringify(parts, null, 1));
 
-const shots = await page.evaluate(() => window.__studio.capture(['iso', 'front', 'side', 'az:-40,el:12']));
+const capture = (views, ids) => page.evaluate(([v, i]) => window.__studio.capture(v, i), [views, ids]);
+const fileView = (view) => view.replace(/[^\w-]+/g, '_');
 
-for (const s of shots)
-  fs.writeFileSync(
-    path.join(out, `render-${s.view.replace(/[^\w-]+/g, '_')}.png`),
-    Buffer.from(s.dataUrl.split(',')[1], 'base64'),
-  );
+for (const s of await capture(['iso', 'front', 'side', 'az:-40,el:12']))
+  writeShot(path.join(out, `render-${fileView(s.view)}.png`), s);
 
-const snapForGroups = await page.evaluate(() =>
-  fetch('/api/bridge/agent-call', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ kind: 'snapshot', payload: {} }),
-  }).then((r) => r.json()),
-);
+const snapForGroups = await call('snapshot');
 const boundsById = new Map((snapForGroups.parts ?? []).map((p) => [p.id, p.bounds]));
 const groups = {};
 
@@ -284,13 +99,9 @@ const extent = (ids) => {
 for (const [g, ids] of Object.entries(groups)
   .sort((a, b) => extent(b[1]) - extent(a[1]))
   .slice(0, 2)) {
-  const [shot] = await page.evaluate(([v, i]) => window.__studio.capture(v, i), [['az:-35,el:20'], ids]);
+  const [shot] = await capture(['az:-35,el:20'], ids);
 
-  if (shot)
-    fs.writeFileSync(
-      path.join(out, `render-detail-${g.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`),
-      Buffer.from(shot.dataUrl.split(',')[1], 'base64'),
-    );
+  writeShot(path.join(out, `render-detail-${g.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`), shot);
 }
 
 async function renderInternals() {
@@ -301,38 +112,23 @@ async function renderInternals() {
 
   if (!inner.length) return;
 
-  const [shot] = await page.evaluate(([v, i]) => window.__studio.capture(v, i), [['iso'], inner]);
+  const [shot] = await capture(['iso'], inner);
 
-  if (shot)
-    fs.writeFileSync(path.join(out, 'render-internals-iso.png'), Buffer.from(shot.dataUrl.split(',')[1], 'base64'));
+  writeShot(path.join(out, 'render-internals-iso.png'), shot);
 }
 
 if (ROBOTS[robot].concept) await renderInternals();
 
+const scene = await sceneRecordOf(page);
+
 if (ROBOTS[robot].build) {
-  fs.writeFileSync(
-    path.join(out, 'scene.json'),
-    JSON.stringify(await page.evaluate(() => window.__studio.sceneRecord())),
-  );
-
-  const ask = (kind) =>
-    page.evaluate(
-      (k) =>
-        fetch('/api/bridge/agent-call', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ kind: k, payload: {} }),
-        }).then((r) => r.json()),
-      kind,
-    );
-
   for (const [kind, file] of [
     ['bom', 'build-bom.txt'],
     ['printability', 'build-print.txt'],
     ['verify', 'build-verify.txt'],
   ]) {
     try {
-      fs.writeFileSync(path.join(out, file), (await ask(kind))?.text ?? '');
+      fs.writeFileSync(path.join(out, file), (await call(kind))?.text ?? '');
     } catch (err) {
       fs.writeFileSync(path.join(out, file), `failed: ${err}`);
     }
@@ -356,8 +152,6 @@ const summary = {
   coplanar: coplanar.length,
 };
 const refFile = path.join(here, 'data', robot, 'reference.stl');
-const placedCatalogParts = () =>
-  ROBOTS[robot].modelItYourself ? { placedCatalogParts: parts.filter((p) => p.kind === 'component').length } : {};
 
 if (fs.existsSync(refFile) && stl.length > 84) {
   const refMeta = JSON.parse(fs.readFileSync(path.join(here, 'data', robot, 'reference.json'), 'utf8'));
@@ -368,7 +162,9 @@ if (fs.existsSync(refFile) && stl.length > 84) {
     allOrientations: !!ROBOTS[robot].allOrientations,
   });
 
-  Object.assign(summary, placedCatalogParts());
+  summary.placedCatalogParts = ROBOTS[robot].modelItYourself
+    ? parts.filter((p) => p.kind === 'component').length
+    : undefined;
 
   writeOverlay(path.join(out, 'overlay.png'), s.views);
 
@@ -399,10 +195,21 @@ if (!args.includes('--no-judge') && stl.length > 84) {
   }
 }
 
-fs.writeFileSync(path.join(out, 'summary.json'), JSON.stringify(summary, null, 1));
-log('summary', JSON.stringify(summary));
+studio.onEvent.current = null;
+await new Promise((r) => logFile.end(r));
+summary.metrics = runMetrics(readEvents(path.join(out, 'events.jsonl')), { result, seconds });
 
-sse.destroy();
-await browser.close();
-cleanup();
+archiveRun({
+  runsDir: path.join(here, 'runs'),
+  run: runName,
+  task: robot,
+  kind: 'robot',
+  dir: out,
+  summary,
+  scene,
+  git: gitInfo(root),
+});
+log('summary', JSON.stringify({ ...summary, metrics: { ...summary.metrics, toolsByName: undefined } }));
+
+await studio.close();
 process.exit(0);

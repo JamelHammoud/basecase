@@ -131,11 +131,13 @@ async function pump() {
       );
       k.proc.kill();
     }, job.timeoutMs);
-    k.proc.send({ id: job.id, language: job.language, code: job.code });
+    k.proc.send({ id: job.id, language: job.language, code: job.code, expect: job.expect, mesh: job.mesh });
   }
 }
 
-export function renderPart(language, code, timeoutMs = 90000) {
+export function renderPart(language, code, options = {}) {
+  const { timeoutMs = 90000, expect } = typeof options === 'number' ? { timeoutMs: options } : options;
+
   if (language === 'replicad' && !sandboxed) {
     return Promise.resolve({
       ok: false,
@@ -144,11 +146,22 @@ export function renderPart(language, code, timeoutMs = 90000) {
   }
 
   return new Promise((resolve) => {
-    waiting.push({ id: nextId++, language, code, timeoutMs, resolve });
+    waiting.push({ id: nextId++, language, code, expect, timeoutMs, resolve });
+    pump();
+  });
+}
+
+export function auditPart(mesh, timeoutMs = 60000) {
+  return new Promise((resolve) => {
+    waiting.push({ id: nextId++, mesh, timeoutMs, resolve });
     pump();
   });
 }
 
 export function warmUp() {
   if (kernels.length === 0) spawnKernel();
+}
+
+export function stopKernels() {
+  for (const k of [...kernels]) k.proc.kill();
 }

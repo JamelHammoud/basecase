@@ -22,6 +22,7 @@ export interface GuideJob {
   project: ProjectSettings;
   date: string;
   mark: string;
+  order?: { assembly: string[]; unproven: string[] };
 }
 
 export interface GuideJobEvents {
@@ -112,7 +113,10 @@ async function renderWith(renderer: GuideRenderer, job: GuideJob, events: GuideJ
 
   if (isCancelled()) return null;
 
-  const plan = buildGuidePlan({ title, parts, joints: project.joints ?? [], ...geometry }, project.material);
+  const plan = buildGuidePlan(
+    { title, parts, joints: project.joints ?? [], ...geometry, order: job.order },
+    project.material,
+  );
 
   events.onProgress({ share: MEASURE_SHARE, label: 'Drawing steps' });
 

@@ -1,3 +1,5 @@
+import { renderLabelled, type LabelJob } from './labelOverlay';
+import { viewFitHandlers } from './viewFitOps';
 import { reply } from './workerRpc';
 
 export interface EncodeJob {
@@ -31,4 +33,6 @@ export const imageHandlers = {
 
     return reply(await canvas.convertToBlob({ type, quality }));
   },
+  label: async (job: LabelJob) => reply(await renderLabelled(job)),
+  ...viewFitHandlers,
 };

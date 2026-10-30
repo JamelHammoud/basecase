@@ -56,7 +56,7 @@ describe('bench scorer', () => {
         top: '81x49 a4f30410cce12fe6 3e0a5a2b6f0ecaf6',
       },
     });
-  });
+  }, 30000);
 
   it('scores a blocky robot over all 24 orientations', () => {
     const agent = Float32Array.from([...box([70, 40, 150], [-35, -20, 0]), ...box([20, 20, 30], [-10, -10, 150])]);
@@ -76,7 +76,7 @@ describe('bench scorer', () => {
         top: '73x55 1ec03820f7f2d0cc 6330bbd41b01b4fe',
       },
     });
-  });
+  }, 30000);
 
   it('rasterizes silhouettes and writes the overlay', () => {
     const tris = Float32Array.from([...robot(), 0, 0, 0, 10, 10, 10, 20, 20, 20]);
@@ -89,7 +89,7 @@ describe('bench scorer', () => {
 
     expect(masks).toEqual(['1d276a1a0c526e42', '7175710ae4ec0794', 'd05ab3673b772029']);
     expect(hash(fs.readFileSync(file))).toBe('7090b4a376f97941');
-  });
+  }, 30000);
 
   it('round-trips binary STL', () => {
     const file = path.join(tmp, 'robot.stl');

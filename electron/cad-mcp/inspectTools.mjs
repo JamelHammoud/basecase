@@ -1,5 +1,16 @@
 import { z } from 'zod';
+import { autoCompareText, blockOutPending } from './autoCompare.mjs';
+import { imageCaps } from './imageCaps.mjs';
+import { lineMemory, reportLines } from './repeatLines.mjs';
 import { VIEW, bridge, fail, text } from './shared.mjs';
+
+function legendText(res) {
+  const rows = (res.legend ?? []).map((l) => `${l.label} ${l.id}${l.name && l.name !== l.id ? ` (${l.name})` : ''}`);
+
+  return rows.length ? `Labels, the same in every view:\n${rows.join('\n')}` : 'No parts to label.';
+}
+
+const shownText = (shot) => (shot.labels ? `: shows ${shot.labels.length ? shot.labels.join(', ') : 'no labels'}` : '');
 
 export const look = {
   name: 'look',
@@ -11,15 +22,26 @@ export const look = {
     inputSchema: {
       views: z.array(VIEW).min(1).max(4).default(['iso', 'front']),
       ids: z.array(z.string()).optional().describe('Only show these parts'),
+      labels: z
+        .boolean()
+        .optional()
+        .describe('Flat colour per part with a numbered label, the same number in every view, and a legend'),
+      grid: z.boolean().optional().describe('Draw a mm grid at the model’s centre plane (straight views)'),
+      detail: z.boolean().optional().describe('Render at the largest size this agent reads, for fine detail'),
     },
   },
-  handler: async ({ views, ids }) => {
+  handler: async ({ views, ids, labels, grid, detail }) => {
     try {
-      const res = await bridge('screenshot', { views, ids }, 60000);
-      const content = [];
+      const caps = imageCaps();
+      const maxSide = detail ? caps.detail : caps.render;
+      const res = await bridge('screenshot', { views, ids, labels, grid, maxSide }, 60000);
+      const content = labels ? [{ type: 'text', text: legendText(res) }] : [];
 
       for (const shot of res.images || []) {
-        content.push({ type: 'text', text: `${shot.view} view${ids?.length ? ` (${ids.join(', ')})` : ''}` });
+        content.push({
+          type: 'text',
+          text: `${shot.view} view${ids?.length ? ` (${ids.join(', ')})` : ''}${shownText(shot)}`,
+        });
 
         const m = /^data:(image\/\w+);base64,(.+)$/.exec(shot.dataUrl || '');
 
@@ -27,6 +49,10 @@ export const look = {
       }
 
       if (content.length === 0) content.push({ type: 'text', text: 'Nothing to render.' });
+
+      const checked = !ids?.length && blockOutPending() ? await autoCompareText() : '';
+
+      if (checked) content.push({ type: 'text', text: checked });
 
       return { content };
     } catch (err) {
@@ -71,26 +97,29 @@ function interferenceText(it) {
   return `${it.a} ↔ ${it.b}: pass through each other, up to ${it.depthMm} mm deep (${Math.round(it.fraction * 100)}% of the smaller part inside). Cut a pocket or hole, move one, or resize.`;
 }
 
+const FLUSH_SHOWN = 8;
+
+export const coplanarText = (c) =>
+  `${c.a} / ${c.b}: ${c.areaMm2} mm² of coincident same-facing surface, so one skin lies inside the other. If ${c.a} sits in ${c.b}, cut its recess; otherwise trim the overlap. Don't offset parts to hide it.`;
+
 async function interferenceIssues() {
-  const issues = [];
-
   try {
-    const { items = [], coplanar = [] } = (await bridge('interference', {}, 120000)) ?? {};
+    const { items = [], coplanar = [], twins = [] } = (await bridge('interference', { twins: true }, 120000)) ?? {};
 
-    for (const c of coplanar.slice(0, 20)) {
-      issues.push(
-        `${c.a} / ${c.b}: ${c.areaMm2} mm² of flush same-facing surface (renders as flicker). Set the panel, decal or cover 0.2–0.5 mm proud or inset, or cut a recess for it.`,
-      );
-    }
-
-    for (const it of items.slice(0, 30)) issues.push(interferenceText(it));
-
-    if (items.length > 30) issues.push(`…and ${items.length - 30} more interferences`);
+    return {
+      clashes: [
+        ...items.slice(0, 30).map(interferenceText),
+        ...(items.length > 30 ? [`…and ${items.length - 30} more interferences`] : []),
+      ],
+      flush: [
+        ...coplanar.slice(0, FLUSH_SHOWN).map(coplanarText),
+        ...(coplanar.length > FLUSH_SHOWN ? [`…and ${coplanar.length - FLUSH_SHOWN} smaller coincident faces`] : []),
+      ],
+      twins,
+    };
   } catch (err) {
-    issues.push(`(interference check unavailable: ${String(err?.message ?? err)})`);
+    return { clashes: [`(interference check unavailable: ${String(err?.message ?? err)})`], flush: [], twins: [] };
   }
-
-  return issues;
 }
 
 const FINISHED_KINDS = new Set(['cad_part', 'component', 'hardware', 'image_plane', 'mesh']);
@@ -110,27 +139,16 @@ function primitiveIssues(solids) {
   ];
 }
 
-function twinIssues(solids) {
-  const byId = new Map(solids.map((p) => [p.id, p]));
-  const issues = [];
-
-  for (const p of solids) {
-    if (!/(^|-)left(-|$)/.test(p.id)) continue;
-
-    const twin = byId.get(p.id.replace(/(^|-)left(-|$)/, '$1right$2'));
-
-    if (!twin) issues.push(`${p.id}: no right-side twin`);
-  }
-
-  return issues;
-}
+const remember = lineMemory();
+let checkedBefore = false;
 
 export const checkScene = {
   name: 'check_scene',
   config: {
     title: 'Check model',
     description:
-      'Model checks: parts that pass THROUGH each other (mesh-level interference with depth; parts may touch but never interpenetrate, so an inserted servo or screw needs its pocket or hole cut), solid parts still left as block-out primitives, floating parts, parts below the floor (z < 0), and missing left/right twins. Run it after each subassembly and before you finish; fix every interference and primitive.',
+      'Model checks, worst first: parts that pass through each other (mesh interference with depth; a screw, insert or nut in its own clamped stack is expected and not reported, so a fastener line means it hits something else or sits deeper than its thread), floating parts, parts below the floor (z < 0), solid parts still left as block-out primitives, mirrored left/right pairs that differ (clashes, volume or size off by more than 10%), and coincident faces between non-hardware parts. ' +
+      'Repeated calls lead with what is new since the last check. Run it after each subassembly and before you finish; fix every interference and primitive. For fastener chains, engagement and what holds each part, run check_assembly.',
     inputSchema: {},
   },
   handler: async () => {
@@ -139,18 +157,17 @@ export const checkScene = {
       const solids = (scene.parts || []).filter(
         (p) => p.role !== 'reference' && !p.referenceImage && !p.hidden && p.bounds,
       );
-      const issues = [
-        ...placementIssues(solids),
-        ...(await interferenceIssues()),
-        ...primitiveIssues(solids),
-        ...twinIssues(solids),
-      ];
+      const { clashes, flush, twins } = await interferenceIssues();
+      const issues = [...clashes, ...placementIssues(solids), ...primitiveIssues(solids), ...twins, ...flush];
       const b = scene.bounds;
       const head = `${solids.length} parts${b ? `, overall ${b.size.map((v) => Math.round(v)).join(' × ')} mm (x × y × z)` : ''}.`;
+      const lines = reportLines(remember(issues.slice(0, 40)), !checkedBefore);
 
-      return text(
-        issues.length ? `${head}\nIssues:\n- ${issues.slice(0, 40).join('\n- ')}` : `${head}\nNo issues found.`,
-      );
+      checkedBefore = true;
+
+      const report = lines.length ? `${head}\nIssues:\n${lines.join('\n')}` : `${head}\nNo issues found.`;
+
+      return text(report + (await autoCompareText()));
     } catch (err) {
       return fail(err);
     }

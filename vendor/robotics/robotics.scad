@@ -240,3 +240,7 @@ module cell_18650() xcyl(d = 18.4, h = 65.2, rounding = 1);
 
 // Hole pattern helper: M2.5 on a w × h rectangle (e.g. Pi Zero 58 × 23).
 module rect_holes(w, h, d = 2.7, depth = 10) for (x = [-w/2, w/2], y = [-h/2, h/2]) translate([x, y, 0]) cyl(d = d, h = depth);
+
+// ---------------------------------------------------------------- recipes and proven modules (ports, shells, joints, bays, trays)
+include <recipes.scad>
+include <modules.scad>

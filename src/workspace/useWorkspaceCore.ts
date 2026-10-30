@@ -97,6 +97,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     projectRef,
     updateProjectNow: docs.updateProjectNow,
     showToast,
+    viewportRef,
   });
   const selection = useSelectionActions({
     parts,

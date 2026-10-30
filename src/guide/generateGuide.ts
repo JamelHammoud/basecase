@@ -17,6 +17,7 @@ export interface GenerateGuideInput {
   onProgress?: (p: GuideProgress) => void;
   onCover?: (dataUrl: string) => void;
   signal?: AbortSignal;
+  order?: () => Promise<GuideJob['order'] | null>;
 }
 
 export interface GeneratedGuide {
@@ -95,6 +96,9 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
 
   input.onProgress?.({ share: 0, label: 'Measuring parts' });
 
+  if (input.order) input.onProgress?.({ share: 0, label: 'Checking the build order' });
+
+  const order = (await input.order?.().catch(() => null)) ?? undefined;
   const id = project.buildGuide?.id ?? newId();
   const job: GuideJob = {
     guideId: id,
@@ -104,6 +108,7 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
     project,
     date: today(),
     mark: await brandMark(),
+    order,
   };
   const rendered = await render(job, input);
 

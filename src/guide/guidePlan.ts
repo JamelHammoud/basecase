@@ -24,6 +24,9 @@ export function buildGuidePlan(scene: GuideScene, material: string): GuidePlan {
     boxes: scene.boxes,
     contacts: scene.contacts,
     axes: scene.axes,
+    order: scene.order
+      ? { rank: new Map(scene.order.assembly.map((id, i) => [id, i])), unproven: new Set(scene.order.unproven) }
+      : undefined,
     size: Math.max(boxDiagonal(unionBox(parts.flatMap((p) => (scene.boxes[p.id] ? [scene.boxes[p.id]] : [])))), 1),
   };
   const modules = buildModules({ ...scene, parts }, parts);

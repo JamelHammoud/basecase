@@ -75,15 +75,39 @@ export interface CellHolderSpec {
 
 export const kgcm = (v: number) => Math.round(v * 0.0980665 * 1000) / 1000;
 
+export type ActuatorBus = 'feetech' | 'dynamixel' | 'hiwonder' | 'pwm' | 'can' | 'rs485' | 'dc';
+
+export interface ActuatorPoint {
+  volts: number;
+  stallNm: number;
+  ratedNm?: number;
+  rpm?: number;
+  stallA?: number;
+}
+
 export interface ActuatorSpec {
   stallNm: number;
   ratedNm?: number;
   volts: [number, number];
   atVolts: number;
+  rpm?: number;
+  curve?: ActuatorPoint[];
+  bus?: ActuatorBus;
+  peak?: boolean;
   stallA?: number;
   ratedA?: number;
   idleA?: number;
   dualShaft?: boolean;
+  source: string;
+}
+
+export interface LinearActuatorSpec {
+  forceN: number;
+  ratedN?: number;
+  backdriveN?: number;
+  mmPerS: number;
+  volts: number;
+  stallA?: number;
   source: string;
 }
 
@@ -92,6 +116,7 @@ export interface ComponentVariant {
   label: string;
   mpn: string;
   actuator?: ActuatorSpec;
+  linear?: LinearActuatorSpec;
   amazon?: { url: string; kind: 'product' | 'search' };
 }
 
@@ -142,11 +167,14 @@ export const COMPONENTS: ComponentInfo[] = [
           ratedNm: kgcm(5),
           volts: [4, 7.4],
           atVolts: 7.4,
+          rpm: 52,
+          curve: [{ volts: 6, stallNm: kgcm(16.5), ratedNm: kgcm(4), rpm: 42, stallA: 2 }],
+          bus: 'feetech',
           stallA: 2.5,
           ratedA: 0.65,
           idleA: 0.15,
           dualShaft: true,
-          source: 'https://openelab.io/products/feetech-sts3215-c001-servo',
+          source: 'https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391772523943436695270694.pdf',
         },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C001+7.4V+servo', kind: 'search' },
       },
@@ -159,11 +187,13 @@ export const COMPONENTS: ComponentInfo[] = [
           ratedNm: kgcm(10),
           volts: [4, 14],
           atVolts: 12,
+          rpm: 45,
+          bus: 'feetech',
           stallA: 2.7,
           ratedA: 0.9,
           idleA: 0.18,
           dualShaft: true,
-          source: 'https://openelab.io/products/feetech-sts3215-c018-servo-12v',
+          source: 'https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391772519923113075854851.pdf',
         },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C018+12V+servo', kind: 'search' },
       },
@@ -174,11 +204,16 @@ export const COMPONENTS: ComponentInfo[] = [
         actuator: {
           stallNm: kgcm(27.4),
           ratedNm: kgcm(9),
-          volts: [4, 7.4],
+          volts: [5, 8.4],
           atVolts: 7.4,
+          rpm: 86,
+          curve: [{ volts: 6, stallNm: kgcm(24.3), ratedNm: kgcm(8), rpm: 73, stallA: 3.2 }],
+          bus: 'feetech',
+          stallA: 3.8,
+          ratedA: 1.2,
+          idleA: 0.42,
           dualShaft: true,
-          source:
-            'https://www.seeedstudio.com/Feetech-ST-3215-C044-Heavy-Duty-Servo-7-4V-1-191-Gear-Reduction-p-6460.html',
+          source: 'https://files.seeedstudio.com/products/Feetech/101090141_Feetech_ST-3215-C044_Datasheet.pdf',
         },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C044+servo', kind: 'search' },
       },
@@ -189,10 +224,16 @@ export const COMPONENTS: ComponentInfo[] = [
         actuator: {
           stallNm: kgcm(14.4),
           ratedNm: kgcm(4.8),
-          volts: [4, 7.4],
+          volts: [5, 8.4],
           atVolts: 7.4,
+          rpm: 106,
+          curve: [{ volts: 6, stallNm: kgcm(9.2), ratedNm: kgcm(3.1), rpm: 90, stallA: 2.6 }],
+          bus: 'feetech',
+          stallA: 3.3,
+          ratedA: 1.1,
+          idleA: 0.5,
           dualShaft: true,
-          source: 'https://openelab.io/products/feetech-sts3215-c001-servo',
+          source: 'https://files.seeedstudio.com/products/Feetech/101090142_Feetech_ST-3215-C046_Datasheet.pdf',
         },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C046+servo', kind: 'search' },
       },
@@ -225,10 +266,16 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords: 'scs0009, amazing hand, micro servo, serial bus servo',
     actuator: {
       stallNm: kgcm(2.3),
+      ratedNm: kgcm(0.75),
       volts: [4, 7.4],
       atVolts: 6,
+      rpm: 100,
+      curve: [{ volts: 4.8, stallNm: kgcm(1.89), ratedNm: kgcm(0.65), rpm: 80, stallA: 0.8 }],
+      bus: 'feetech',
       stallA: 1,
-      source: 'https://www.makerstore.com.au/?p=144908',
+      ratedA: 0.4,
+      idleA: 0.15,
+      source: 'https://files.seeedstudio.com/products/Feetech/SCS0009-Specifications.pdf',
     },
   },
   {
@@ -257,6 +304,19 @@ export const COMPONENTS: ComponentInfo[] = [
     model: { source: 'manufacturer', by: 'ROBOTIS', url: 'https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/' },
     color: '#1d1d1f',
     keywords: 'dynamixel, xl330, xc330, koch, gello, robotis',
+    actuator: {
+      stallNm: 0.52,
+      volts: [3.7, 6],
+      atVolts: 5,
+      rpm: 103,
+      curve: [
+        { volts: 3.7, stallNm: 0.42, rpm: 76, stallA: 1.11 },
+        { volts: 6, stallNm: 0.6, rpm: 123, stallA: 1.74 },
+      ],
+      bus: 'dynamixel',
+      stallA: 1.47,
+      source: 'https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/',
+    },
   },
   {
     id: 'dynamixel-xl430-w250',
@@ -284,6 +344,19 @@ export const COMPONENTS: ComponentInfo[] = [
     model: { source: 'manufacturer', by: 'ROBOTIS', url: 'https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/' },
     color: '#1d1d1f',
     keywords: 'dynamixel, xl430, turtlebot, openmanipulator, robotis',
+    actuator: {
+      stallNm: 1.4,
+      volts: [6.5, 12],
+      atVolts: 11.1,
+      rpm: 57,
+      curve: [
+        { volts: 9, stallNm: 1, rpm: 47, stallA: 1 },
+        { volts: 12, stallNm: 1.5, rpm: 61, stallA: 1.4 },
+      ],
+      bus: 'dynamixel',
+      stallA: 1.3,
+      source: 'https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/',
+    },
   },
   {
     id: 'towerpro-mg996r',
@@ -308,6 +381,15 @@ export const COMPONENTS: ComponentInfo[] = [
     model: { source: 'agent', by: 'TowerPro' },
     color: '#1d1d1f',
     keywords: 'mg996r, mg995, standard servo, hobby servo, pwm servo',
+    actuator: {
+      stallNm: kgcm(11),
+      volts: [4.8, 6.6],
+      atVolts: 6,
+      rpm: 67,
+      curve: [{ volts: 4.8, stallNm: kgcm(9.4), rpm: 53 }],
+      bus: 'pwm',
+      source: 'https://www.towerpro.com.tw/product/mg996r/',
+    },
   },
   {
     id: 'towerpro-sg90',
@@ -332,6 +414,13 @@ export const COMPONENTS: ComponentInfo[] = [
     model: { source: 'agent', by: 'TowerPro' },
     color: '#1d6fd1',
     keywords: 'sg90, 9g, micro servo, hobby servo, pwm servo',
+    actuator: {
+      stallNm: kgcm(1.8),
+      volts: [4.8, 6],
+      atVolts: 4.8,
+      bus: 'pwm',
+      source: 'https://towerpro.com.tw/product/sg90-analog/',
+    },
   },
 
   {
@@ -371,11 +460,13 @@ export const COMPONENTS: ComponentInfo[] = [
       ratedNm: kgcm(16),
       volts: [6, 12],
       atVolts: 12,
+      rpm: 75,
+      bus: 'feetech',
       stallA: 4.2,
       ratedA: 1.4,
       idleA: 0.28,
       dualShaft: true,
-      source: 'https://evelta.com/sts3250-12v-50kg-360deg-magnetic-encoder-double-shaft-ttl-servo/',
+      source: 'https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391772424007467984928587.pdf',
     },
   },
   {
@@ -404,6 +495,16 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#1d1d1f',
     pairsWith: ['component:waveshare-bus-servo-adapter-a', 'hardware:socket_head|M2|6'],
     keywords: 'st3215-hs, waveshare, feetech, high speed servo, serial bus servo, lerobot',
+    actuator: {
+      stallNm: kgcm(20),
+      volts: [6, 12.6],
+      atVolts: 12,
+      rpm: 106,
+      bus: 'feetech',
+      stallA: 2.4,
+      idleA: 0.24,
+      source: 'https://www.waveshare.com/st3215-hs-servo-motor.htm',
+    },
   },
   {
     id: 'dynamixel-xm430-w350',
@@ -431,6 +532,19 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#1d1d1f',
     pairsWith: ['component:robotis-u2d2', 'hardware:socket_head|M2.5|6'],
     keywords: 'dynamixel, xm430, xm430-w350, robotis, openmanipulator, smart servo',
+    actuator: {
+      stallNm: 4.1,
+      volts: [10, 14.8],
+      atVolts: 12,
+      rpm: 46,
+      curve: [
+        { volts: 11.1, stallNm: 3.8, rpm: 43, stallA: 2.1 },
+        { volts: 14.8, stallNm: 4.8, rpm: 57, stallA: 2.7 },
+      ],
+      bus: 'dynamixel',
+      stallA: 2.3,
+      source: 'https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/',
+    },
   },
   {
     id: 'dynamixel-xm540-w270',
@@ -458,6 +572,19 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#1d1d1f',
     pairsWith: ['component:robotis-u2d2', 'hardware:socket_head|M2.5|8'],
     keywords: 'dynamixel, xm540, xm540-w270, robotis, smart servo',
+    actuator: {
+      stallNm: 10.6,
+      volts: [10, 14.8],
+      atVolts: 12,
+      rpm: 30,
+      curve: [
+        { volts: 11.1, stallNm: 10, rpm: 28, stallA: 4.2 },
+        { volts: 14.8, stallNm: 12.9, rpm: 37, stallA: 5.5 },
+      ],
+      bus: 'dynamixel',
+      stallA: 4.4,
+      source: 'https://emanual.robotis.com/docs/en/dxl/x/xm540-w270/',
+    },
   },
   {
     id: 'dynamixel-xc330-m288',
@@ -485,6 +612,19 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#1d1d1f',
     pairsWith: ['component:robotis-u2d2'],
     keywords: 'dynamixel, xc330, xc330-m288, robotis, small servo, smart servo',
+    actuator: {
+      stallNm: 0.93,
+      volts: [3.7, 6],
+      atVolts: 5,
+      rpm: 81,
+      curve: [
+        { volts: 3.7, stallNm: 0.69, rpm: 59, stallA: 1.34 },
+        { volts: 6, stallNm: 1.1, rpm: 97, stallA: 2.15 },
+      ],
+      bus: 'dynamixel',
+      stallA: 1.8,
+      source: 'https://emanual.robotis.com/docs/en/dxl/x/xc330-m288/',
+    },
   },
   {
     id: 'dynamixel-2xl430-w250',
@@ -512,6 +652,19 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#1d1d1f',
     pairsWith: ['component:robotis-u2d2'],
     keywords: 'dynamixel, 2xl430, dual axis servo, robotis, wrist, smart servo',
+    actuator: {
+      stallNm: 1.4,
+      volts: [6.5, 12],
+      atVolts: 11.1,
+      rpm: 57,
+      curve: [
+        { volts: 9, stallNm: 1, rpm: 47, stallA: 1 },
+        { volts: 12, stallNm: 1.5, rpm: 61, stallA: 1.4 },
+      ],
+      bus: 'dynamixel',
+      stallA: 1.3,
+      source: 'https://emanual.robotis.com/docs/en/dxl/x/2xl430-w250/',
+    },
   },
   {
     id: 'hiwonder-lx-16a',
@@ -546,6 +699,9 @@ export const COMPONENTS: ComponentInfo[] = [
       stallNm: kgcm(19.5),
       volts: [6, 8.4],
       atVolts: 7.4,
+      rpm: 53,
+      curve: [{ volts: 6, stallNm: kgcm(17) }],
+      bus: 'hiwonder',
       stallA: 3,
       idleA: 0.1,
       source:
@@ -579,6 +735,16 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#1d1d1f',
     pairsWith: ['component:adafruit-pca9685'],
     keywords: 'ds3218, dsservo, 20kg servo, pwm servo, standard servo, mg996r alternative',
+    actuator: {
+      stallNm: kgcm(21.5),
+      volts: [4.8, 6.8],
+      atVolts: 6.8,
+      rpm: 71,
+      curve: [{ volts: 5, stallNm: kgcm(18), rpm: 63, stallA: 1.8 }],
+      bus: 'pwm',
+      stallA: 2.2,
+      source: 'https://www.dsservo.com/d_file/DS3218%20datasheet.pdf',
+    },
   },
 
   {
@@ -633,6 +799,16 @@ export const COMPONENTS: ComponentInfo[] = [
     model: { source: 'manufacturer', by: 'Pololu', url: 'https://www.pololu.com/product/2214/resources' },
     color: '#b8b8bd',
     keywords: 'n20, micro metal gearmotor, gear motor, pololu',
+    actuator: {
+      stallNm: kgcm(1.7),
+      volts: [6, 6],
+      atVolts: 6,
+      rpm: 310,
+      bus: 'dc',
+      stallA: 1.6,
+      idleA: 0.1,
+      source: 'https://www.pololu.com/product/2214',
+    },
   },
 
   {
@@ -792,6 +968,16 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#9aa3ad',
     pairsWith: ['component:basicmicro-roboclaw-2x15a', 'hardware:socket_head|M3|6'],
     keywords: 'pololu, 37d, gearmotor, dc motor, encoder motor, rover, drive motor',
+    actuator: {
+      stallNm: kgcm(21),
+      volts: [12, 12],
+      atVolts: 12,
+      rpm: 200,
+      bus: 'dc',
+      stallA: 5.5,
+      idleA: 0.2,
+      source: 'https://www.pololu.com/product/4753',
+    },
   },
   {
     id: 'pololu-25d-gearmotor',
@@ -822,6 +1008,16 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#9aa3ad',
     pairsWith: ['component:basicmicro-roboclaw-2x15a', 'hardware:socket_head|M3|6'],
     keywords: 'pololu, 25d, gearmotor, dc motor, encoder motor, jga25, 370',
+    actuator: {
+      stallNm: kgcm(22),
+      volts: [12, 12],
+      atVolts: 12,
+      rpm: 130,
+      bus: 'dc',
+      stallA: 5,
+      idleA: 0.3,
+      source: 'https://www.pololu.com/product/4846',
+    },
   },
   {
     id: 'pololu-micro-metal-gearmotor-encoder',
@@ -853,6 +1049,16 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#c9c9cc',
     pairsWith: ['component:pololu-tb6612fng'],
     keywords: 'pololu, micro metal gearmotor, n20, encoder motor, small robot, mini sumo',
+    actuator: {
+      stallNm: kgcm(1.3),
+      volts: [12, 12],
+      atVolts: 12,
+      rpm: 330,
+      bus: 'dc',
+      stallA: 0.75,
+      idleA: 0.08,
+      source: 'https://www.pololu.com/product/5216',
+    },
   },
   {
     id: 'cubemars-ak60-6',
@@ -884,6 +1090,15 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#6b6d72',
     pairsWith: ['hardware:socket_head|M3|8'],
     keywords: 'cubemars, ak60, ak60-6, t-motor, bldc actuator, qdd, quadruped',
+    actuator: {
+      stallNm: 9,
+      ratedNm: 3,
+      volts: [24, 24],
+      atVolts: 24,
+      bus: 'can',
+      peak: true,
+      source: 'https://www.cubemars.com/product/ak60-6-v1-1-kv80-robotic-actuator.html',
+    },
   },
   {
     id: 'cubemars-ak70-10',
@@ -915,6 +1130,19 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#6b6d72',
     pairsWith: ['hardware:socket_head|M3|10'],
     keywords: 'cubemars, ak70, ak70-10, t-motor, bldc actuator, qdd',
+    actuator: {
+      stallNm: 24.8,
+      ratedNm: 8.3,
+      volts: [24, 48],
+      atVolts: 24,
+      rpm: 240,
+      curve: [{ volts: 48, stallNm: 24.8, ratedNm: 8.3, rpm: 480 }],
+      bus: 'can',
+      peak: true,
+      stallA: 23.2,
+      ratedA: 7.2,
+      source: 'https://www.cubemars.com/product/ak70-10-kv100-robotic-actuator.html',
+    },
   },
   {
     id: 'cubemars-ak80-9',
@@ -947,6 +1175,18 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#9a9ca0',
     pairsWith: ['hardware:socket_head|M4|10', 'hardware:socket_head|M3|8'],
     keywords: 'cubemars, ak80, ak80-9, t-motor, bldc actuator, qdd, humanoid',
+    actuator: {
+      stallNm: 22,
+      ratedNm: 9,
+      volts: [48, 48],
+      atVolts: 48,
+      rpm: 570,
+      bus: 'can',
+      peak: true,
+      stallA: 28,
+      ratedA: 12,
+      source: 'https://www.cubemars.com/product/ak80-9-v3-0-robotic-actuator.html',
+    },
   },
   {
     id: 'odrive-d6374',
@@ -1003,6 +1243,16 @@ export const COMPONENTS: ComponentInfo[] = [
     model: { source: 'checked', by: 'AIFIT Lab', checkedAgainst: 'Unitree' },
     color: '#1a1a1c',
     keywords: 'unitree, go1, go-m8010, m8010, quadruped motor, joint motor',
+    actuator: {
+      stallNm: 23.7,
+      volts: [12, 30],
+      atVolts: 24,
+      rpm: 286,
+      bus: 'rs485',
+      peak: true,
+      stallA: 40,
+      source: 'https://techshare.co.jp/faq/wp-content/uploads/2023/12/GO-M8010-6_Motor_Data_User_Manual_V1.0.pdf',
+    },
   },
   {
     id: 'myactuator-rmd-x8-pro',
@@ -1030,6 +1280,17 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#6b6d72',
     pairsWith: ['hardware:socket_head|M4|10'],
     keywords: 'myactuator, rmd, rmd-x8, x8 pro, x8-25, servo actuator',
+    actuator: {
+      stallNm: 25,
+      ratedNm: 10,
+      volts: [48, 48],
+      atVolts: 48,
+      bus: 'can',
+      peak: true,
+      stallA: 8,
+      ratedA: 3.2,
+      source: 'https://www.myactuator.com/x8-25-details',
+    },
   },
   {
     id: 'robstride-02',
@@ -1058,6 +1319,19 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#2a2a2d',
     pairsWith: ['hardware:socket_head|M4|10', 'hardware:socket_head|M3|10'],
     keywords: 'robstride, rs02, robstride 02, qdd, joint actuator, humanoid',
+    actuator: {
+      stallNm: 17,
+      ratedNm: 6,
+      volts: [24, 60],
+      atVolts: 48,
+      rpm: 410,
+      bus: 'can',
+      peak: true,
+      stallA: 23,
+      ratedA: 7,
+      source:
+        'https://raw.githubusercontent.com/RobStride/Product_Information/HEAD/Product%20Literature/CAN2.0/RS02/RS02User%20Manual260713.pdf',
+    },
   },
   {
     id: 'mjbots-qdd100',
@@ -1084,6 +1358,16 @@ export const COMPONENTS: ComponentInfo[] = [
     color: '#2a2a2d',
     pairsWith: ['component:mjbots-moteus-r4', 'hardware:socket_head|M3|8'],
     keywords: 'mjbots, qdd100, moteus, qdd, quasi direct drive',
+    actuator: {
+      stallNm: 16,
+      ratedNm: 3.3,
+      volts: [10, 44],
+      atVolts: 24,
+      rpm: 383,
+      bus: 'can',
+      peak: true,
+      source: 'https://mjbots.com/products/qdd100-beta-3',
+    },
   },
 
   {
@@ -3839,9 +4123,48 @@ export const COMPONENTS: ComponentInfo[] = [
     pairsWith: ['hardware:socket_head|M3|10', 'hardware:lock_nut|M3'],
     keywords: 'actuonix, firgelli, pq12, pq12-r, micro linear actuator, linear servo, rc linear servo',
     variants: [
-      { id: '30', label: '30:1, fast', mpn: 'PQ12-30-6-R' },
-      { id: '63', label: '63:1', mpn: 'PQ12-63-6-R' },
-      { id: '100', label: '100:1, strong', mpn: 'PQ12-100-6-R' },
+      {
+        id: '30',
+        label: '30:1, fast',
+        mpn: 'PQ12-30-6-R',
+        linear: {
+          forceN: 18,
+          ratedN: 15,
+          backdriveN: 9,
+          mmPerS: 28,
+          volts: 6,
+          stallA: 0.55,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixPQ12Datasheet.pdf',
+        },
+      },
+      {
+        id: '63',
+        label: '63:1',
+        mpn: 'PQ12-63-6-R',
+        linear: {
+          forceN: 45,
+          ratedN: 30,
+          backdriveN: 25,
+          mmPerS: 15,
+          volts: 6,
+          stallA: 0.55,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixPQ12Datasheet.pdf',
+        },
+      },
+      {
+        id: '100',
+        label: '100:1, strong',
+        mpn: 'PQ12-100-6-R',
+        linear: {
+          forceN: 50,
+          ratedN: 40,
+          backdriveN: 35,
+          mmPerS: 10,
+          volts: 6,
+          stallA: 0.55,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixPQ12Datasheet.pdf',
+        },
+      },
     ],
   },
   {
@@ -3875,9 +4198,48 @@ export const COMPONENTS: ComponentInfo[] = [
     pairsWith: ['hardware:socket_head|M4|20', 'hardware:lock_nut|M4'],
     keywords: 'actuonix, firgelli, l12, l12-r, micro linear actuator, linear servo, rc linear servo',
     variants: [
-      { id: '50', label: '50:1, fast', mpn: 'L12-30-50-6-R' },
-      { id: '100', label: '100:1', mpn: 'L12-30-100-6-R' },
-      { id: '210', label: '210:1, strong', mpn: 'L12-30-210-6-R' },
+      {
+        id: '50',
+        label: '50:1, fast',
+        mpn: 'L12-30-50-6-R',
+        linear: {
+          forceN: 22,
+          ratedN: 17,
+          backdriveN: 12,
+          mmPerS: 25,
+          volts: 6,
+          stallA: 0.46,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixL12Datasheet.pdf',
+        },
+      },
+      {
+        id: '100',
+        label: '100:1',
+        mpn: 'L12-30-100-6-R',
+        linear: {
+          forceN: 42,
+          ratedN: 31,
+          backdriveN: 22,
+          mmPerS: 13,
+          volts: 6,
+          stallA: 0.46,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixL12Datasheet.pdf',
+        },
+      },
+      {
+        id: '210',
+        label: '210:1, strong',
+        mpn: 'L12-30-210-6-R',
+        linear: {
+          forceN: 80,
+          ratedN: 62,
+          backdriveN: 45,
+          mmPerS: 6.5,
+          volts: 6,
+          stallA: 0.46,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixL12Datasheet.pdf',
+        },
+      },
     ],
   },
   {
@@ -3911,9 +4273,45 @@ export const COMPONENTS: ComponentInfo[] = [
     pairsWith: ['hardware:socket_head|M4|20', 'hardware:lock_nut|M4'],
     keywords: 'actuonix, firgelli, l16, l16-r, linear actuator, linear servo, rc linear servo',
     variants: [
-      { id: '35', label: '35:1, fast', mpn: 'L16-50-35-6-R' },
-      { id: '63', label: '63:1', mpn: 'L16-50-63-6-R' },
-      { id: '150', label: '150:1, strong', mpn: 'L16-50-150-6-R' },
+      {
+        id: '35',
+        label: '35:1, fast',
+        mpn: 'L16-50-35-6-R',
+        linear: {
+          forceN: 50,
+          ratedN: 50,
+          backdriveN: 31,
+          mmPerS: 32,
+          volts: 6,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixL16Datasheet.pdf',
+        },
+      },
+      {
+        id: '63',
+        label: '63:1',
+        mpn: 'L16-50-63-6-R',
+        linear: {
+          forceN: 100,
+          ratedN: 75,
+          backdriveN: 46,
+          mmPerS: 20,
+          volts: 6,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixL16Datasheet.pdf',
+        },
+      },
+      {
+        id: '150',
+        label: '150:1, strong',
+        mpn: 'L16-50-150-6-R',
+        linear: {
+          forceN: 200,
+          ratedN: 175,
+          backdriveN: 102,
+          mmPerS: 8,
+          volts: 6,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixL16Datasheet.pdf',
+        },
+      },
     ],
   },
   {
@@ -3948,9 +4346,47 @@ export const COMPONENTS: ComponentInfo[] = [
     pairsWith: ['hardware:socket_head|M4|20', 'hardware:lock_nut|M4'],
     keywords: 'actuonix, firgelli, p16, p16-p, linear actuator, feedback actuator, potentiometer',
     variants: [
-      { id: '22', label: '22:1, fast', mpn: 'P16-100-22-12-P' },
-      { id: '64', label: '64:1', mpn: 'P16-100-64-12-P' },
-      { id: '256', label: '256:1, strong', mpn: 'P16-100-256-12-P' },
+      {
+        id: '22',
+        label: '22:1, fast',
+        mpn: 'P16-100-22-12-P',
+        linear: {
+          forceN: 50,
+          ratedN: 40,
+          backdriveN: 75,
+          mmPerS: 46,
+          volts: 12,
+          stallA: 1,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixP16Datasheet.pdf',
+        },
+      },
+      {
+        id: '64',
+        label: '64:1',
+        mpn: 'P16-100-64-12-P',
+        linear: {
+          forceN: 90,
+          ratedN: 80,
+          backdriveN: 200,
+          mmPerS: 18,
+          volts: 12,
+          stallA: 1,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixP16Datasheet.pdf',
+        },
+      },
+      {
+        id: '256',
+        label: '256:1, strong',
+        mpn: 'P16-100-256-12-P',
+        linear: {
+          forceN: 300,
+          ratedN: 250,
+          mmPerS: 4.8,
+          volts: 12,
+          stallA: 1,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixP16Datasheet.pdf',
+        },
+      },
     ],
   },
   {
@@ -3985,9 +4421,47 @@ export const COMPONENTS: ComponentInfo[] = [
     pairsWith: ['hardware:socket_head|M4|20', 'hardware:socket_head|M3|8'],
     keywords: 'actuonix, firgelli, t16, t16-p, track actuator, linear slide, carriage, potentiometer',
     variants: [
-      { id: '22', label: '22:1, fast', mpn: 'T16-100-22-12-P' },
-      { id: '64', label: '64:1', mpn: 'T16-100-64-12-P' },
-      { id: '256', label: '256:1, strong', mpn: 'T16-100-256-12-P' },
+      {
+        id: '22',
+        label: '22:1, fast',
+        mpn: 'T16-100-22-12-P',
+        linear: {
+          forceN: 50,
+          ratedN: 40,
+          backdriveN: 75,
+          mmPerS: 46,
+          volts: 12,
+          stallA: 1,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixT16Datasheet.pdf',
+        },
+      },
+      {
+        id: '64',
+        label: '64:1',
+        mpn: 'T16-100-64-12-P',
+        linear: {
+          forceN: 90,
+          ratedN: 80,
+          backdriveN: 200,
+          mmPerS: 18,
+          volts: 12,
+          stallA: 1,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixT16Datasheet.pdf',
+        },
+      },
+      {
+        id: '256',
+        label: '256:1, strong',
+        mpn: 'T16-100-256-12-P',
+        linear: {
+          forceN: 300,
+          ratedN: 250,
+          mmPerS: 4.8,
+          volts: 12,
+          stallA: 1,
+          source: 'https://www.actuonix.com/assets/images/datasheets/ActuonixT16Datasheet.pdf',
+        },
+      },
     ],
   },
   {
@@ -4022,8 +4496,30 @@ export const COMPONENTS: ComponentInfo[] = [
     keywords:
       'progressive automations, pa-14, pa14, 12v linear actuator, electric linear actuator, mini linear actuator',
     variants: [
-      { id: '50lb', label: '50 lb', mpn: 'PA-14-4-50' },
-      { id: '35lb', label: '35 lb, fast', mpn: 'PA-14-4-35' },
+      {
+        id: '50lb',
+        label: '50 lb',
+        mpn: 'PA-14-4-50',
+        linear: {
+          forceN: 222,
+          ratedN: 222,
+          mmPerS: 29,
+          volts: 12,
+          source: 'https://www.progressiveautomations.com/products/pa-14',
+        },
+      },
+      {
+        id: '35lb',
+        label: '35 lb, fast',
+        mpn: 'PA-14-4-35',
+        linear: {
+          forceN: 156,
+          ratedN: 156,
+          mmPerS: 50.8,
+          volts: 12,
+          source: 'https://www.progressiveautomations.com/products/pa-14',
+        },
+      },
     ],
   },
   {

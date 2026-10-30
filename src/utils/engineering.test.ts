@@ -95,28 +95,30 @@ describe('runEngineering on a two-joint leg', () => {
     expect(statuses(r.rows)).toEqual([
       ['Weight', 'pass'],
       ['Servo torque', 'pass'],
+      ['Peak torque', 'not run'],
       ['Servo alignment', 'pass'],
       ['Joint support', 'pass'],
       ['Servo voltage', 'pass'],
       ['Current and runtime', 'pass'],
       ['Standing stability', 'pass'],
       ['Heat near servos', 'warn'],
+      ['Budget', 'not run'],
     ]);
     expect(r.rows[0].detail).toBe('378 g, centre of mass 130 mm up');
-    expect(r.rows.at(-1)!.ids).toEqual(['shin']);
+    expect(r.rows.find((x) => x.check === 'Heat near servos')!.ids).toEqual(['shin']);
     expect(r.joints.map((l) => [l.joint.id, l.massG.toFixed(1), l.status])).toEqual([
       ['hip', '43.6', 'pass'],
       ['knee', '26.0', 'pass'],
     ]);
     expect(engineeringText(r, (v) => v)).toContain(
-      '- hip left_hip_pitch: carries 44 g; hold 0.02, stance 0.00 → 0.02 N·m vs rated 0.98 / stall 2.94 (1% of stall) PASS · axis through [0, 112, 0]',
+      '- knee left_knee: carries 26 g; hold 0.01, stance as modeled 0.00, 30° crouch 0.06 → stance load 0.06 N·m vs stall 2.72 / rated 0.98 at 11.1 V (0.02 of stall, heat 0.04× rated) PASS · axis through [0, 67, 0]',
     );
   });
 
   it('flags overloaded, misaligned and one-sided joints', () => {
     const r = runEngineering({
       ...input,
-      parts: withParts({ shin: { massG: 2000 } }),
+      parts: withParts({ shin: { massG: 4000 } }),
       measures: { ...measures, thigh: box([-10, 60, -15], [10, 115, 15], 40000) },
       servoOutputs: { ...input.servoOutputs, kneeServo: { point: [0, 67, 5], axis: [1, 0, 0] } },
       sweep: ({ moving, anglesDeg: angles }) =>
@@ -126,10 +128,16 @@ describe('runEngineering on a two-joint leg', () => {
 
     expect(row('Servo torque')).toMatchObject({
       status: 'fail',
-      detail: '1 joint over rated torque',
+      detail: '1 joint overloaded',
       items: [
-        { text: 'Left hip pitch: needs 1.31 N·m of its 0.98 N·m rated', ids: ['hipServo'] },
-        { text: 'Left knee: needs 0.63 N·m of its 0.98 N·m rated', ids: ['kneeServo'] },
+        {
+          text: 'Left hip pitch: holds up to 2.62 N·m, 0.96 of its 2.72 N·m stall at 11.1 V, 2.67× rated',
+          ids: ['hipServo'],
+        },
+        {
+          text: 'Left knee: holds up to 1.26 N·m, 0.46 of its 2.72 N·m stall at 11.1 V, 1.28× rated',
+          ids: ['kneeServo'],
+        },
       ],
     });
     expect(r.joints.map((l) => l.status)).toEqual(['fail', 'warn']);

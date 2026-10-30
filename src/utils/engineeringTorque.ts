@@ -1,11 +1,20 @@
 import { actuatorOf } from '../data/components';
 import type { RobotJoint } from '../types/robotics';
-import { count, jointLabel, nm } from './engineeringFormat';
+import { crouchTorque, holdVerdict, ratingAt, stanceVerdict, type Rating } from './actuatorRules';
+import type { CrouchModel } from './engineeringCrouch';
 import { G, V3, cross, dot, norm, rotateAbout, sub } from './engineeringMath';
 import { downstreamOf, massOf } from './engineeringMass';
 import type { CheckContext, CheckRow, JointLoad } from './engineeringTypes';
 
+export { torqueRow } from './engineeringTorqueRows';
+export { peakRow } from './engineeringPeak';
+
 const STEP_DEG = 5;
+
+export interface LoadEnv {
+  volts?: number;
+  crouch: CrouchModel;
+}
 
 const angles = (range: [number, number] = [-90, 90]) => {
   const out: number[] = [];
@@ -17,7 +26,7 @@ const angles = (range: [number, number] = [-90, 90]) => {
 
 const gravity = (grams: number): V3 => [0, (-grams / 1000) * G, 0];
 
-function swingTorque(r: V3, a: V3, grams: number, range: [number, number] | undefined): number {
+export function swingTorque(r: V3, a: V3, grams: number, range: [number, number] | undefined): number {
   let swing = 0;
 
   for (const t of angles(range)) {
@@ -52,130 +61,102 @@ function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams }: Lever): n
   return Math.abs(tGrf + tDistal) / 1000;
 }
 
-function jointCapacity(ctx: CheckContext, j: RobotJoint): { known: boolean; stall: number; rated: number } {
-  if (!j.actuators?.length)
-    return j.effortNm ? { known: true, stall: j.effortNm, rated: j.effortNm } : { known: false, stall: 0, rated: 0 };
+function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): Rating | undefined {
+  if (!j.actuators?.length) return undefined;
 
-  let stall = 0,
-    rated = 0,
-    known = true;
+  const total: Rating = { stallNm: 0, ratedNm: 0, ratedEstimated: false, volts: volts ?? 0 };
 
   for (const id of j.actuators) {
     const p = ctx.byPart.get(id);
     const act = p?.componentId ? actuatorOf(p.componentId, p.componentVariant) : undefined;
 
-    if (!act) {
-      known = false;
+    if (!act) return undefined;
 
-      continue;
-    }
+    const r = ratingAt(act, volts);
 
-    stall += act.stallNm;
-    rated += act.ratedNm ?? act.stallNm / 3;
+    total.stallNm += r.stallNm;
+    total.ratedNm += r.ratedNm;
+    total.ratedEstimated ||= r.ratedEstimated;
+    total.volts = r.volts;
   }
 
-  return { known, stall, rated };
+  return total;
 }
 
-function loadStatus(known: boolean, staticNm: number, passAt: number, rated: number): CheckRow['status'] {
-  if (!known) return 'not run';
+function publishedStatus(loadNm: number, effortNm: number): CheckRow['status'] {
+  if (loadNm <= 0.5 * effortNm) return 'pass';
 
-  if (staticNm <= passAt) return 'pass';
-
-  return staticNm <= rated ? 'warn' : 'fail';
+  return loadNm <= effortNm ? 'warn' : 'fail';
 }
 
-export function jointLoad(ctx: CheckContext, j: RobotJoint): JointLoad {
+interface Loads {
+  swing: number;
+  stance: number;
+  crouch: number | undefined;
+  leg: boolean;
+  simRms?: number;
+}
+
+const RANK = { pass: 0, warn: 1, fail: 2 };
+
+function ratedVerdict(loads: Loads, rating: Rating) {
+  const hold = { kind: 'hold' as const, loadNm: loads.swing, ...holdVerdict(loads.swing, rating) };
+
+  if (!loads.leg) return hold;
+
+  const stanceNm = Math.max(loads.stance, loads.crouch ?? 0);
+  const stance = { kind: 'stance' as const, loadNm: stanceNm, ...stanceVerdict(stanceNm, rating, loads.simRms) };
+  const holdWorse =
+    RANK[hold.status] > RANK[stance.status] ||
+    (hold.status === stance.status && hold.status !== 'pass' && hold.stallShare > stance.stallShare);
+
+  return holdWorse ? hold : stance;
+}
+
+function verdictOf(j: RobotJoint, loads: Loads, rating: Rating | undefined) {
+  if (rating) return ratedVerdict(loads, rating);
+
+  const kind = loads.leg ? ('stance' as const) : ('hold' as const);
+  const loadNm = loads.leg ? Math.max(loads.stance, loads.crouch ?? 0) : loads.swing;
+
+  if (j.effortNm) return { kind, loadNm, status: publishedStatus(loadNm, j.effortNm), stallShare: loadNm / j.effortNm };
+
+  return { kind, loadNm, status: 'not run' as const };
+}
+
+export function jointLoad(ctx: CheckContext, j: RobotJoint, env: LoadEnv): JointLoad {
   const a = norm(j.axis);
   const down = downstreamOf(j, ctx.joints);
   const distal = massOf(down, ctx.byId);
   const r = sub(distal.com, j.origin);
   const swing = swingTorque(r, a, distal.grams, j.range);
   const stance = stanceTorque(ctx, { joint: j, a, r, down, grams: distal.grams });
-  const staticNm = Math.max(swing, stance);
-  const { known, stall, rated } = jointCapacity(ctx, j);
-  const passAt = j.actuators?.length ? 0.2 * stall : 0.5 * stall;
+  const lever = env.crouch.levers.get(j.id);
+  const weightN = (ctx.all.grams / 1000) * G * env.crouch.share;
+  const crouch = lever === undefined ? undefined : crouchTorque(weightN, lever, env.crouch.crouchDeg);
+  const leg = j.limb === 'leg' && stance + (crouch ?? 0) > 0;
+  const rating = jointRating(ctx, j, env.volts);
+  const walk = ctx.input.walk;
+  const simRms = leg && typeof walk === 'object' ? walk.joints[j.id]?.rmsNm : undefined;
+  const verdict = verdictOf(j, { swing, stance, crouch, leg, simRms }, rating);
 
   return {
     joint: j,
     massG: distal.grams,
     swingNm: swing,
     stanceNm: stance,
-    staticNm,
-    stallNm: known ? stall : undefined,
-    ratedNm: known ? rated : undefined,
-    status: loadStatus(known, staticNm, passAt, rated),
-  };
-}
-
-const loadIds = (l: JointLoad) => (l.joint.actuators?.length ? l.joint.actuators : l.joint.child);
-
-interface TorqueSummary {
-  loads: JointLoad[];
-  fails: JointLoad[];
-  warns: JointLoad[];
-  unknown: JointLoad[];
-  published: boolean;
-  limitWord: string;
-}
-
-function torqueDetail({ loads, fails, warns, unknown, published, limitWord }: TorqueSummary): string {
-  if (fails.length) return `${count(fails.length, 'joint')} over ${published ? 'the maker’s limit' : 'rated torque'}`;
-
-  if (warns.length)
-    return `${count(warns.length, 'joint')} above ${published ? 'half the maker’s limit' : '1/5 of stall'}`;
-
-  const ratio = (l: JointLoad) => (l.ratedNm ? l.staticNm / l.ratedNm : -1);
-  const worst = [...loads].sort((x, y) => ratio(y) - ratio(x))[0];
-
-  return worst.ratedNm
-    ? `Worst: ${jointLabel(worst.joint)}, ${nm(worst.staticNm)} N·m of its ${nm(worst.ratedNm)} N·m ${limitWord}`
-    : `No torque data for ${count(unknown.length, 'joint')}`;
-}
-
-function torqueStatus({ fails, warns, unknown }: TorqueSummary): CheckRow['status'] {
-  if (fails.length) return 'fail';
-
-  return unknown.length || warns.length ? 'warn' : 'pass';
-}
-
-function torqueItems(s: TorqueSummary): NonNullable<CheckRow['items']> {
-  const line = (l: JointLoad) => ({
-    text: `${jointLabel(l.joint)}: needs ${nm(l.staticNm)} N·m of its ${nm(l.ratedNm!)} N·m ${s.limitWord}`,
-    ids: loadIds(l),
-  });
-  const partlyUnknown = s.unknown.length && s.unknown.length < s.loads.length;
-
-  return [
-    ...s.fails.map(line),
-    ...s.warns.map(line),
-    ...(partlyUnknown
-      ? [
-          {
-            text: `No torque data for ${count(s.unknown.length, 'joint')}: give them servos`,
-            ids: s.unknown.flatMap((l) => l.joint.child),
-          },
-        ]
-      : []),
-  ];
-}
-
-export function torqueRow(loads: JointLoad[]): CheckRow {
-  const published = loads.some((l) => !l.joint.actuators?.length && l.joint.effortNm);
-  const summary: TorqueSummary = {
-    loads,
-    fails: loads.filter((l) => l.status === 'fail'),
-    warns: loads.filter((l) => l.status === 'warn'),
-    unknown: loads.filter((l) => l.status === 'not run'),
-    published,
-    limitWord: published ? 'limit' : 'rated',
-  };
-
-  return {
-    check: 'Servo torque',
-    status: torqueStatus(summary),
-    detail: torqueDetail(summary),
-    items: torqueItems(summary),
-    ids: [...summary.fails, ...summary.warns].flatMap(loadIds),
+    crouchNm: crouch,
+    crouchDeg: crouch === undefined ? undefined : env.crouch.crouchDeg,
+    leverMm: lever,
+    loadNm: verdict.loadNm,
+    kind: verdict.kind,
+    stallNm: rating?.stallNm ?? j.effortNm,
+    ratedNm: rating?.ratedNm,
+    ratedEstimated: rating?.ratedEstimated,
+    volts: rating?.volts,
+    stallShare: verdict.stallShare,
+    heatShare: 'heatShare' in verdict ? verdict.heatShare : undefined,
+    simRmsNm: verdict.kind === 'stance' ? simRms : undefined,
+    status: verdict.status,
   };
 }

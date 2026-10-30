@@ -1,6 +1,11 @@
 import { ActuatorSpec, COMPONENTS, componentSize, hasComponentMesh, specLines } from '../data/components';
 import { HARDWARE_TYPES, defaultDrive, driveOptions } from '../data/hardware';
 import { SUPPLIES } from '../data/supplies';
+import { componentPorts } from '../data/componentPorts';
+import { catalogPortLines } from './ports';
+import { actuatorValue, catalogHeader, hardwarePrices, priceText, type CatalogContext } from './agentCatalogPrices';
+
+export type { CatalogContext } from './agentCatalogPrices';
 
 type Component = (typeof COMPONENTS)[number];
 
@@ -8,16 +13,27 @@ type HardwareType = (typeof HARDWARE_TYPES)[number];
 
 type Supply = (typeof SUPPLIES)[number];
 
-const nm = (x?: number) => (x === undefined ? '?' : x.toFixed(2));
+const nm = (x: number) => x.toFixed(2);
 const act = (x: ActuatorSpec) =>
-  `stall ${nm(x.stallNm)} N·m, rated ${nm(x.ratedNm ?? undefined)} N·m at ${x.atVolts} V (input ${x.volts[0]}–${x.volts[1]} V)${x.stallA ? `, stall ${x.stallA} A` : ''}`;
+  `${x.peak ? 'peak' : 'stall'} ${nm(x.stallNm)} N·m${x.ratedNm === undefined ? '' : `, rated ${nm(x.ratedNm)} N·m`} at ${x.atVolts} V (input ${x.volts[0]}–${x.volts[1]} V)${x.rpm ? `, ${x.rpm} rpm` : ''}${x.stallA ? `, stall ${x.stallA} A` : ''}`;
 
-function componentActuatorLine(c: Component): string | null {
-  if (c.variants?.length)
-    return `  Versions (buy one; put it in the key): ${c.variants.map((v) => `component:${c.id}|${v.id} = ${v.label}${v.actuator ? `, ${act(v.actuator)}` : ''}`).join('; ')}`;
+function versionText(c: Component, v: NonNullable<Component['variants']>[number], ctx?: CatalogContext): string {
+  const key = `component:${c.id}|${v.id}`;
+  const linear = v.linear ? `, ${v.linear.forceN} N max, ${v.linear.mmPerS} mm/s` : '';
+  const price = v.actuator ? actuatorValue(v.actuator, key, ctx) : priceText(key, ctx);
 
-  return c.actuator ? `  Actuator: ${act(c.actuator)}` : null;
+  return `${key} = ${v.label}${v.actuator ? `, ${act(v.actuator)}` : ''}${linear} · ${price}`;
 }
+
+function componentActuatorLine(c: Component, ctx?: CatalogContext): string | null {
+  if (c.variants?.length)
+    return `  Versions (buy one; put it in the key): ${c.variants.map((v) => versionText(c, v, ctx)).join('; ')}`;
+
+  return c.actuator ? `  Actuator: ${act(c.actuator)} · ${actuatorValue(c.actuator, `component:${c.id}`, ctx)}` : null;
+}
+
+const componentPrice = (c: Component, ctx?: CatalogContext) =>
+  c.variants?.length || c.actuator ? '' : ` · ${priceText(`component:${c.id}`, ctx)}`;
 
 function componentPowerLine(c: Component): string | null {
   if (c.battery)
@@ -31,7 +47,15 @@ function componentPowerLine(c: Component): string | null {
     : null;
 }
 
-function componentLines(comps: Component[]): string[] {
+function componentPortLine(c: Component): string | null {
+  const ports = componentPorts(c.id);
+
+  return ports.length
+    ? `  Ports (from the part's position at rotation [0, 0, 0], Z up; use with mate and fasten): ${catalogPortLines(ports).join('; ')}`
+    : null;
+}
+
+function componentLines(comps: Component[], ctx?: CatalogContext): string[] {
   const lines = [
     'Components (exact manufacturer geometry; size is x × y × z in mm as placed with rotation [0, 0, 0]):',
   ];
@@ -50,10 +74,11 @@ function componentLines(comps: Component[]): string[] {
       .join('; ');
 
     lines.push(
-      `- component:${c.id} — ${c.name} · ${sz.width} × ${sz.depth} × ${sz.height} mm · ${specs} · Mounting: ${c.mounting}`,
+      `- component:${c.id} — ${c.name} · ${sz.width} × ${sz.depth} × ${sz.height} mm · ${specs}${componentPrice(c, ctx)} · Mounting: ${c.mounting}`,
     );
 
-    for (const extra of [componentActuatorLine(c), componentPowerLine(c)]) if (extra) lines.push(extra);
+    for (const extra of [componentActuatorLine(c, ctx), componentPowerLine(c), componentPortLine(c)])
+      if (extra) lines.push(extra);
   }
 
   return lines;
@@ -69,18 +94,18 @@ function lengthsNote(t: HardwareType): string {
   return `; stock lengths only (${perSize} mm; omit for the standard length)`;
 }
 
-function hardwareLine(t: HardwareType): string {
+function hardwareLine(t: HardwareType, ctx?: CatalogContext): string {
   const drives = driveOptions(t.type);
 
   return `- hardware:${t.type} — ${t.name} (${t.description}); sizes ${t.sizes.join(', ')}${lengthsNote(t)}${
     drives.length > 1 ? `; drives ${drives.join(', ')} (default ${defaultDrive(t.type)})` : ''
-  }`;
+  }${hardwarePrices(t.type, ctx)}`;
 }
 
-const supplyLine = (x: Supply) =>
-  `- supply:${x.id} — ${x.name} · ${x.spec}${x.weightG ? ` · about ${x.weightG} g` : ''}`;
+const supplyLine = (x: Supply, ctx?: CatalogContext) =>
+  `- supply:${x.id} — ${x.name} · ${x.spec}${x.weightG ? ` · about ${x.weightG} g` : ''} · ${priceText(`supply:${x.id}`, ctx)}`;
 
-export function agentCatalog(query = ''): string {
+export function agentCatalog(query = '', ctx?: CatalogContext): string {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   const matches = (text: string) => terms.every((t) => text.toLowerCase().includes(t));
   const comps = COMPONENTS.filter((c) => hasComponentMesh(c.id)).filter((c) =>
@@ -89,13 +114,13 @@ export function agentCatalog(query = ''): string {
   const hw = HARDWARE_TYPES.filter((t) =>
     matches(`hardware ${t.type} ${t.name} ${t.group} ${t.description} ${t.sizes.join(' ')}`),
   );
-  const lines: string[] = comps.length ? componentLines(comps) : [];
+  const lines: string[] = comps.length ? componentLines(comps, ctx) : [];
 
   if (hw.length)
     lines.push(
       '',
       'Hardware (generated to ISO/DIN or maker catalog dimensions): hardware:<type>|<size>|<length mm>[|<finish>|<drive>], e.g. hardware:socket_head|M3|10, hardware:pan_head|M3|8|zinc|phillips, hardware:heat_insert|M3|4, hardware:bearing|608, hardware:extrusion|2020|300, hardware:linear_rail|MGN12|245, hardware:gt2_pulley|20T-5',
-      ...hw.map(hardwareLine),
+      ...hw.map((t) => hardwareLine(t, ctx)),
     );
 
   const supplies = SUPPLIES.filter((x) => matches(`supply ${x.id} ${x.name} ${x.group} ${x.spec}`));
@@ -104,11 +129,11 @@ export function agentCatalog(query = ''): string {
     lines.push(
       '',
       'Supplies (bought, not modeled: wiring, chargers, filament, tools). Add them to the BOM with set_build({ extras }), not add_parts. Batteries, cell holders and regulators with exact shapes are Power components (find_parts power); place those with add_parts:',
-      ...supplies.map(supplyLine),
+      ...supplies.map((x) => supplyLine(x, ctx)),
     );
 
   if (!lines.length)
     return `Nothing in the catalog matches "${query}". Call find_parts with no query to see everything.`;
 
-  return lines.join('\n');
+  return [...catalogHeader(ctx), ...lines].join('\n');
 }

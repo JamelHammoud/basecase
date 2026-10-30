@@ -3,6 +3,8 @@ import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import { SimEngine, type Controller } from './engine';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
+import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
+import { demandedTorques, limitForces } from './simForces';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -21,6 +23,8 @@ export type SimRequest =
       seconds: number;
       pushes?: Array<{ at: number; robot: string; force: [number, number, number] }>;
       frames?: number[];
+      forceLimits?: Record<string, number>;
+      trace?: boolean;
     }
   | { type: 'dispose' };
 
@@ -33,6 +37,7 @@ export type SimResponse =
       id: number;
       stats: ReturnType<SimEngine['stats']>;
       frames: Array<{ t: number; poses: Float64Array }>;
+      trace?: TorqueSeries;
     };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
@@ -118,6 +123,17 @@ function applyDuePushes(sim: SimEngine, pushes: NonNullable<Msg<'run'>['pushes']
   }
 }
 
+function tracer(sim: SimEngine) {
+  const n = sim.sim.joints.length;
+  const recorder = new TorqueRecorder(n, sim.dt);
+  const demand = new Float64Array(n);
+
+  return {
+    recorder,
+    afterStep: () => recorder.add(demandedTorques(sim.model, sim.data, demand), sim.data.actuator_force),
+  };
+}
+
 function run(msg: Msg<'run'>) {
   if (!engine) throw new Error('Nothing loaded');
 
@@ -128,6 +144,10 @@ function run(msg: Msg<'run'>) {
   const start = sim.data.time;
   const end = start + msg.seconds;
 
+  if (msg.forceLimits) limitForces(sim.model, sim.sim, msg.forceLimits);
+
+  const trace = msg.trace ? tracer(sim) : null;
+
   while (sim.data.time < end - 1e-9) {
     const t = sim.data.time - start;
 
@@ -135,12 +155,12 @@ function run(msg: Msg<'run'>) {
 
     while (wanted.length && wanted[0] <= t + 1e-9) frames.push({ t: wanted.shift()!, poses: sim.poses() });
 
-    sim.step(Math.min(0.02, end - sim.data.time));
+    sim.step(Math.min(0.02, end - sim.data.time), trace?.afterStep);
   }
 
   if (wanted.length) frames.push({ t: msg.seconds, poses: sim.poses() });
 
-  post({ type: 'ran', id: msg.id, stats: sim.stats(), frames });
+  post({ type: 'ran', id: msg.id, stats: sim.stats(), frames, trace: trace?.recorder.series() });
 }
 
 const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<void> } = {

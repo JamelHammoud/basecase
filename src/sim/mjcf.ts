@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
 import { effortOf } from './mjcfEffort';
+import { cachedHull } from './mjcfHull';
 
 export const toMj = (v: V3 | THREE.Vector3): V3 => {
   const [x, y, z] = Array.isArray(v) ? v : [v.x, v.y, v.z];
@@ -97,60 +97,6 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 const LEG = /hip|knee|ankle|leg|thigh|shin|foot|calf|toe|haa|hfe|kfe/i;
 
-function hullVertices(tris: Float32Array, place: THREE.Matrix4, origin: V3): number[] | null {
-  const pts: THREE.Vector3[] = [];
-  const seen = new Set<string>();
-  const v = new THREE.Vector3();
-  const box = new THREE.Box3();
-
-  for (let i = 0; i < tris.length; i += 3) box.expandByPoint(v.set(tris[i], tris[i + 1], tris[i + 2]));
-
-  const cell = Math.max(box.getSize(new THREE.Vector3()).length() / 160, 1e-3);
-
-  for (let i = 0; i < tris.length; i += 3) {
-    v.set(tris[i], tris[i + 1], tris[i + 2]);
-
-    const k = `${Math.round(v.x / cell)},${Math.round(v.y / cell)},${Math.round(v.z / cell)}`;
-
-    if (seen.has(k)) continue;
-
-    seen.add(k);
-    pts.push(v.clone().applyMatrix4(place));
-  }
-
-  if (pts.length < 4) return null;
-
-  let hull: ConvexHull;
-
-  try {
-    hull = new ConvexHull().setFromPoints(pts);
-  } catch {
-    return null;
-  }
-
-  const out: number[] = [];
-  const used = new Set<object>();
-
-  for (const face of hull.faces) {
-    let e = face.edge;
-
-    do {
-      if (!used.has(e.head())) {
-        used.add(e.head());
-
-        const p = e.head().point;
-        const m = toMj([p.x - origin[0], p.y - origin[1], p.z - origin[2]]);
-
-        out.push(...m);
-      }
-
-      e = e.next;
-    } while (e !== face.edge);
-  }
-
-  return out.length >= 12 ? out : null;
-}
-
 type PartMass = ReturnType<typeof partMasses>[number];
 
 interface BuildState {
@@ -218,7 +164,7 @@ function geomAttrs(st: BuildState, p: ScenePart, role: GeomRole): string {
 function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): string | null {
   const tris = st.input.partTriangles(p.id);
   const place = partMatrix(p);
-  const verts = tris && tris.length >= 9 ? hullVertices(tris, place, origin) : null;
+  const verts = tris && tris.length >= 9 ? cachedHull(p, tris, origin) : null;
   const attrs = geomAttrs(st, p, role);
   const name = `g_${p.id.replace(/[^\w-]/g, '_')}`;
 

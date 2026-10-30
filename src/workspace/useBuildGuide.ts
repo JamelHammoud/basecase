@@ -5,6 +5,8 @@ import { guidePagesKey, loadGuidePages, seedGuidePages, type GuidePages } from '
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { ShowToast } from './types';
+import { provenOrderOf } from '../assembly/provenOrder';
+import type { Viewport3DHandle } from '../components/Viewport3D';
 
 interface BuildGuideOptions {
   sceneName: string;
@@ -14,6 +16,15 @@ interface BuildGuideOptions {
   projectRef: RefObject<ProjectSettings>;
   updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
   showToast: ShowToast;
+  viewportRef: RefObject<Viewport3DHandle | null>;
+}
+
+const ORDER_BUDGET_MS = 20000;
+
+async function buildOrder(viewport: Viewport3DHandle | null, parts: ScenePart[]) {
+  if (!viewport) return null;
+
+  return provenOrderOf(parts, await viewport.assembly({ serviceable: [], budgetMs: ORDER_BUDGET_MS }));
 }
 
 export type GuideRunProgress = GuideProgress & { secondsLeft?: number };
@@ -32,7 +43,7 @@ function withEstimate(progress: GuideProgress, startedAt: number): GuideRunProgr
 }
 
 export function useBuildGuide(options: BuildGuideOptions) {
-  const { sceneName, parts, project, partsRef, projectRef, updateProjectNow, showToast } = options;
+  const { sceneName, parts, project, partsRef, projectRef, updateProjectNow, showToast, viewportRef } = options;
   const [progress, setProgress] = useState<GuideRunProgress | null>(null);
   const [cover, setCover] = useState<string | null>(null);
   const [viewing, setViewing] = useState<GuidePages | null>(null);
@@ -100,6 +111,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
       onProgress: (p) => setProgress(withEstimate(p, startedAt)),
       onCover: setCover,
       signal: abort.signal,
+      order: () => buildOrder(viewportRef.current, partsRef.current),
     })
       .then((result) => finish(result, quiet))
       .catch((err: unknown) => {

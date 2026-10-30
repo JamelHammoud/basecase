@@ -383,7 +383,7 @@ export class AcpAgent {
 
       this.endRun(key, { stopReason: res.stopReason });
 
-      return { stopReason: res.stopReason, sessionId, ...this.libraryState() };
+      return { stopReason: res.stopReason, sessionId, usage: res.usage ?? undefined, ...this.libraryState() };
     } catch (err) {
       this.endRun(key, { error: String(err?.message ?? err) });
 

@@ -15,6 +15,8 @@ import {
 } from './analysisOps';
 import { geometryPayload, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
+import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
+import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -151,6 +153,10 @@ export function threeMfIn(
   return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, files, plateSize });
 }
 
+export function visibilityIn(scene: SceneShapes): Promise<Record<string, number>> {
+  return analyze(leastBusy(), scene, { kind: 'visibility', instances: scene.instances });
+}
+
 export function measuresIn(scene: SceneShapes): Promise<Record<string, MeshMeasure>> {
   return analyze(leastBusy(), scene, { kind: 'measure', instances: scene.instances });
 }
@@ -174,4 +180,12 @@ export async function sweepsIn(scene: SceneShapes, sweeps: SweepSpec[]): Promise
   chunks.forEach((chunk, w) => chunk.forEach((c, k) => (out[c.i] = results[w][k])));
 
   return out;
+}
+
+export function fastenersIn(scene: SceneShapes, input: FastenerInput): Promise<ChainResult> {
+  return analyze(leastBusy(), scene, { kind: 'fasteners', instances: scene.instances, ...input });
+}
+
+export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Promise<AssemblyGeometry> {
+  return analyze(leastBusy(), scene, { kind: 'assembly', instances: scene.instances, ...input });
 }

@@ -1,4 +1,6 @@
 import type { HardwareSpec } from '../data/hardware';
+import type { CadExtras, PartRelations } from './cadAudit';
+import type { ProjectRecords } from './projectRecords';
 
 export type PartCategory =
   | 'custom_models'
@@ -124,7 +126,7 @@ export interface CustomModelDefinition {
   nodes: CustomModelSubNode[];
 }
 
-export interface ScenePart {
+export interface ScenePart extends PartRelations {
   id: string;
   name: string;
   kind: PartKind;
@@ -153,7 +155,7 @@ export interface ScenePart {
     originOffset: [number, number, number];
     baseSize: [number, number, number];
     volume?: number;
-  };
+  } & CadExtras;
   mesh?: {
     positions: number[];
     indices: number[];
@@ -201,7 +203,9 @@ export interface RobotJoint {
   limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
 }
 
-export interface ProjectSettings {
+export type { BuildGuideRecord, ProjectRecords } from './projectRecords';
+
+export interface ProjectSettings extends ProjectRecords {
   printer: string;
   material: PrintMaterial;
   infillPct: number;
@@ -210,21 +214,12 @@ export interface ProjectSettings {
   budgetUsd?: number;
   extras?: Array<{ key: string; qty: number; note?: string }>;
   joints?: RobotJoint[];
+  firstRanges?: Record<string, [number, number]>;
   pose?: RobotPoseState;
   poses?: RobotPose[];
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
   marks?: SceneMark[];
-  buildGuide?: BuildGuideRecord;
-}
-
-export interface BuildGuideRecord {
-  id: string;
-  pages: number;
-  steps: number;
-  generatedAt: string;
-  fingerprint: string;
-  coverDataUrl?: string;
 }
 
 export interface SceneMark {

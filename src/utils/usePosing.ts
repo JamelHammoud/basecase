@@ -10,11 +10,9 @@ import type {
 } from '../types/robotics';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import {
-  buildRig,
   isMovable,
   linkParts,
   poseDeltas,
-  resolveJoints,
   robotOfParts,
   robotPose,
   robotRig,
@@ -29,6 +27,7 @@ import { useActiveJoint, usePoseEditing } from './usePoseEditing';
 import { useAnimationLibrary, usePoseLibrary } from './usePoseLibrary';
 import { usePosePlayback, type Playback } from './usePosePlayback';
 import { useLatestRef } from './useLatestRef';
+import { useFastenerRig } from './useFastenerRig';
 
 export type { Playback } from './usePosePlayback';
 
@@ -113,7 +112,7 @@ export function usePosing({
   onPoseEdit,
 }: PosingOptions): Posing {
   const joints = project.joints;
-  const rig = useMemo(() => buildRig(resolveJoints(joints ?? [], parts), parts), [joints, parts]);
+  const rig = useFastenerRig(joints, parts, viewportRef);
   const rigRef = useLatestRef(rig);
   const hasRig = rig.joints.some(isMovable);
   const pose = project.pose;

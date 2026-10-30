@@ -253,6 +253,8 @@ The parts were exported with the app's own mesh builder, then checked with trime
 | Robot | Parts | Non-manifold edges (more than 2 faces) | Several separate watertight bodies in one part |
 |---|---|---|---|
 | Ribbit | 47 (41 OpenSCAD, 6 replicad) | **16, all OpenSCAD**: shoulder yokes 374 edges each, neck-yaw bracket 108, hip cross brackets 65, upper-arm shells 28, thighs 9, forearms 8, torso frame 8 | 0 |
+
+**Correction (2026-10-29):** the counts in the Ribbit row came from the stored mesh before welding. Most of those edges, including all 374 on each shoulder yoke, belong to zero-area sliver triangles, which welding at 0.001 mm removes. After welding, 5 parts have real edge-only contacts: the neck-yaw bracket (11 edges), and each thigh and shank (1 edge).
 | Sprout | 59 | 15: torso grille 150, grippers 54, shins 37, feet 26… | 5: battery door, battery latches, gripper pads (2 bodies each), pelvis (5) |
 
 - **Non-manifold edges** are places where solids touch only along a line, such as a web meeting a cheek edge-to-edge. They aren't fused, so the joint is weak in print and can confuse slicers.

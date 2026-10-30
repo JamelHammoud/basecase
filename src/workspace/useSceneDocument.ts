@@ -46,6 +46,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
 
   const writeDoc = (next: DocState) => {
     docRef.current = next;
+    partsRef.current = next.parts;
     setDoc(next);
   };
 

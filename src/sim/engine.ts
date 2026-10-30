@@ -362,7 +362,7 @@ export class SimEngine {
     }
   }
 
-  step(seconds: number) {
+  step(seconds: number, afterStep?: () => void) {
     const { mj, model, data } = this;
     const steps = Math.max(1, Math.round(seconds / this.dt));
     const n = this.sim.joints.length;
@@ -372,6 +372,7 @@ export class SimEngine {
       this.applyPush();
       this.applyGrab();
       mj.mj_step(model, data);
+      afterStep?.();
 
       const force = data.actuator_force;
 

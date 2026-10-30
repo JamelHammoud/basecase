@@ -35,11 +35,69 @@ Ranked by measured cost in your chats and by how sure we are that they help:
 5. **Fastener chains, engagement and held-by at every edit** (1.1a). The probe caught 5 of 6 planted faults and a real regression. It also found no fastener anywhere near Ribbit's Pi and IMU, and flagged 6 new screw faults in a torso split that another chat was making during this research.
 6. **`fasten` plus catalog ports** (1.3, 1.4). The agent placed 812 fasteners by hand and made 120 probe calls.
 7. **Service depth and split suggestions** (1.1b in WARN mode, 1.5b). The battery is unreachable today; the check finds the front/back shell split, which frees the Pi, while the battery also needs a layout change. The real Sprout, which Ribbit is modelled on, has a swappable battery.
-8. **A topology audit on every compile** (0.7, 0.15). 16 of 41 OpenSCAD parts in the finished Ribbit have edge-only contacts; 6 parts silently collapsed in the chats.
+8. **A topology audit on every compile** (0.7, 0.15). 5 parts in the finished Ribbit have real edge-only contacts (the neck-yaw bracket's 11 edges; an earlier count of 16 parts included zero-area sliver triangles); 6 parts silently collapsed in the chats.
 9. **Fix `mirror_parts`** (0.4, 0.13). Mirrored servo outputs land 25.3 mm off, and half of all mirrors were followed by hand fixes.
 10. **Make `compare` automatic, with your sketches as targets** (6.0, 6.2, 6.3b). It was used 9 times against 188 `look`s, and its segmentation refuses 8 of your 13 reference photos, so robust masks come first.
 
 Item 5 is 1.1a; item 7 uses the removal-order planner (1.1b) in WARN-only mode. The planner's other verdicts and the craft lint (3.5) come next, and both need your build notes and labels before they gate anything. Item 10 is Phase 6 work, but its first step (masks, 6.2) doesn't depend on the earlier phases and can run alongside them.
+
+## Status (2026-10-29)
+
+Built on 2026-10-29, as nine parallel workstreams merged and checked together (`npm run check`: 518 tests). Measured on Ribbit with scratch probes. Every new check is WARN until the clean negatives in 1.2 exist; none has been through a live agent run or the micro-evals yet. **Done** means built and tested; **Partial** names what's missing.
+
+| Item | State | Notes |
+|---|---|---|
+| 0.1 prices in `find_parts` | Done | Price, store, date, N·m/$, margin, budget left |
+| 0.2 Budget row | Done | FAIL over the estimate, WARN above 90%; `bom.ts` uses `estimatedUsd` |
+| 0.3 running budget line | Done | On every `add_parts` / `update_parts` |
+| 0.4 mirror by datum | Done | Ribbit's 8 servos: 25 mm → 0.000 mm |
+| 0.5 image caps | Done | 2,000 px, not 2,576: the API's over-20-images rule counts history |
+| 0.6 run archive | Done | `bench/runs/index.jsonl`, cost and tokens per run |
+| 0.7 topology audit | Done | **Correction:** the shoulder yokes' 374 "four-face edges" were zero-area sliver triangles that welding removes. In the stored Ribbit, 5 parts have real edge-only contacts: the neck-yaw bracket (11 edges), thighs and shanks (1 each). Recompiling the yoke and forearm revisions gives 2 bodies each (a 24 × 18 × 12 mm piece floats 3.7 mm off) |
+| 0.8 torque rule | Done | Ribbit's knee: 1.86 N·m at 40° (0.38 of stall). Peak walks a trained policy derated to 0.7 × stall: a 15-min Ribbit walk policy FAILs the left knee (1.44 of stall) and ankle (2.03), and the left ankle's sim RMS is 1.24× rated against a static estimate of 0.21×. The gait is lopsided (right knee 2.33 N·m), so these are the policy's numbers as much as the design's |
+| 0.9 / 2.0 actuator data | Partial | 28 of 37 actuators have price and torque (was 1). Missing: steppers, the ODrive D6374 motor, SG90 / MG996R / DS3218 prices |
+| 0.10 fasteners follow joints | Done | 6,605 of 6,615 joint×screw decisions match the agent's hand lists. Ribbit's range row still fails 23 ends, from its joint data, not fasteners |
+| 0.11 range changes visible | Partial | Against the first definition; no structured brief ranges to compare with |
+| 0.12 `check_scene` | Done | Ribbit: 72 → 9 lines, none for a screw in its hole; twin lint |
+| 0.13 `mirror_parts` bugs | Done | Waits for in-flight writes; twins linked and replaced |
+| 0.14 tool fixes | Partial | Readable replicad errors, `get_part_code` suggestions, `find_in_scene`, the `printShapes` crash, cursor sleeps capped at 600 ms per call. The per-scene queue stays: concurrency needs its own design |
+| 0.15 revision deltas | Done | Hull volume and body count; sealed voids aren't bodies |
+| 0.16 context hygiene | Done | `get_scene` summarizes over 20 parts |
+| 0.17 prompt fixes | Done | One send, 45 KB → 12 KB, check-integrity rule, OpenSCAD shells by default, guides pushed by tool results |
+| 1.1a `check_assembly` chains, held-by | Done | Ribbit: 13 short engagements, 10 unseated heads, 2 tips in air, Pi and IMU held by nothing |
+| 1.1b order, access, service, splits | Done (WARN) | Ribbit: 109 / 34 / 98 / 74 screws (pass / note / L-key or ball-end / stuck); battery has no way out; torso shell split front/back. Servo service rows are pessimistic (no unit removal) |
+| 1.2 seeded faults | Partial | 8 faults on code fixtures, all caught; clean negatives still need your build notes |
+| 1.2b / 3.6 module kit, `find_recipes` | Done | 20 recipes and 2 templates, each compiled in the kernel; GT2 groove and hinge gap not proven by printing |
+| 1.3 catalog ports | Partial | 29 components, checked against their meshes; most of the catalog has none yet |
+| 1.4 `fasten` | Done | No countersunk heads yet |
+| 1.5 guide uses the proven order | Done | Unplaced steps say "Order not checked" |
+| 1.5b / 1.6 prompt | Done | Split reasons, serviceable defaults, `fasten`, `check_assembly` gates |
+| 2.1 `size_actuators` | Done | Ribbit's cheapest passing set: about $704 (Dynamixel: $1,820–2,165) |
+| 2.2 budget plan / 2.3 premium pick / 2.4 prices | Done | Pi Zero 2 W is $17.25, not $15 |
+| 3.1 `expect` | Partial | Holes, wall, flat base, symmetry, genus, bodies; not blind holes, bosses or required operations |
+| 3.2 post-edit lint / 3.3 edge helpers | Done | |
+| 3.4 design-language sheet | Done | A required line in the reference sheet, handed to designers |
+| 3.5 `craft_review` | Partial | Visibility-weighted Ribbit 0.66; no concentric corners, butt seams or bed chamfers. Uncalibrated until your labels |
+| 3.7 critic | Not started | Needs your labels first (4.2) |
+| 4.1 micro-evals | Done (machinery) | 29 tasks, 10 held out; dry run passes; no live runs (cost) |
+| 4.2 pairwise judge | Done (machinery) | Needs your labels |
+| 4.3 critique → task / 4.4 weekly | Done | |
+| 5.1 ports from `model_part` | Done | OpenSCAD `echo("PORT", …)`, replicad `{ shape, ports }` |
+| 5.2 `mate` | Done | Mates re-apply on move or recompile (moving a mated part by hand releases it); coaxial and slider mates can declare joints |
+| 5.3 / 5.4 skeleton, contracts | Done | `define_skeleton` (sizing before geometry), `set_interfaces` / `check_interfaces`. No `parent_joint` from the skeleton; no style tokens or keep-outs in contracts |
+| 5.5 slim prompt | Done | 590 → 170 lines, 13 pushed guides |
+| 6.0 automatic compare | Done | On `check_scene` and the first `look` after a block-out |
+| 6.1 `fit_view` | Done | EXIF seed only for image URLs (chat images lose EXIF) |
+| 6.2 Vision masks | Done | 13 of 13 references (was 5) |
+| 6.3 / 6.3b labels, sketch targets | Done | |
+| 6.4 / 6.6 `trace_outline`, `photo_scale` | Done | |
+| 6.5 `compare_parts` | Not done | Vision's foreground request takes no prompts; needs a promptable segmenter |
+| 6.7 / 6.8 reference meshes, concept art | Not done | Need your API keys or a local model |
+| 7.1 best-of-N | Partial | `score_fit` exists; the lead's sampling loop doesn't |
+| 7.2 harvest | Done | `npm run recipes:harvest`, for review only |
+| 7.3 mechanism generators | Done | Gears, GT2 pulleys, four-bar, snap pins, print-in-place hinge |
+| 7.4 parameter sweeps | Done | `sweep_design`. Ribbit: feet at 0.8× length fall at 2.9 s in the hold test; knee and hip-pitch on STS3215 C018 Warn (0.47 of stall), C001 Fails and falls | |
+| 7.5 playbook | Partial | Append-only file and script; no automatic optimization |
 
 ## What the evidence says, and how sure we are
 
@@ -195,7 +253,7 @@ Done when:
 - Ribbit's range-of-motion row passes without screws listed as joint children.
 - Ribbit's `check_scene` shows at most 15 lines, none for a screw in its own hole.
 - A planted range narrowing is reported.
-- The topology audit flags the shoulder yokes' 254 four-face edges. They're in the kernel's own mesh, not an export artefact; check one in Bambu Studio to see what the slicer makes of them.
+- The topology audit flags the neck-yaw bracket's 11 edge-only contacts, and doesn't flag sliver triangles.
 
 ### Phase 1: Assemblies that go together (failure 1)
 

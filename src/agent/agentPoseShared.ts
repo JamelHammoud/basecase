@@ -4,7 +4,6 @@ import {
   buildRig,
   isRestPose,
   poseDeltas,
-  resolveJoints,
   robotOfParts,
   robotPose,
   robotRig,
@@ -13,6 +12,7 @@ import {
   type V3,
 } from '../utils/kinematics';
 import { goalParts, sampleAnimation, type PointOf } from '../utils/animation';
+import { rigJoints } from '../assembly/rigJoints';
 import { rotToCad, rotToScene, toCad, toScene } from './agentFrame';
 
 export interface PoseContext {
@@ -83,7 +83,7 @@ export const axisName = (a: V3) => {
 };
 
 export function rigOf(ctx: PoseContext): Rig {
-  return buildRig(resolveJoints(ctx.project.joints ?? [], ctx.parts), ctx.parts);
+  return buildRig(rigJoints(ctx.project.joints ?? [], ctx.parts), ctx.parts);
 }
 
 export function pointOfFor(rig: Rig, viewport: Viewport3DHandle | null): PointOf {

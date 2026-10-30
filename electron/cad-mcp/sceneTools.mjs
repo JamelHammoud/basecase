@@ -1,7 +1,9 @@
+import { noteBlockOut } from './autoCompare.mjs';
 import { z } from 'zod';
-import { renderPart } from '../cad-kernel/client.mjs';
 import { catalogSchema, common, idSchema, primitiveSchema, vec3 } from './schemas.mjs';
+import { findInScene } from './sceneQuery.mjs';
 import { sceneText } from './sceneText.mjs';
+import { settledWrites } from './pendingWrites.mjs';
 import { bridge, clashText, fail, text } from './shared.mjs';
 
 export const getScene = {
@@ -10,7 +12,7 @@ export const getScene = {
     title: 'Read scene',
     description:
       'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), box (world bounding box min..max), color, role, material, catalog or supply key, note. All in mm, z up. `Marks` (when present) lists the strokes the user drew on the canvas: colour, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
-      'Pass group or ids to read part of the scene; a scene too big to list at once comes back as a summary per group. Call first, and whenever the user may have edited the scene.',
+      'Over 20 parts, the whole scene comes back as a summary per group (box and ids); pass group or ids for the full lines, or use find_in_scene. Call first, and whenever the user may have edited the scene.',
     inputSchema: {
       ids: z.array(idSchema).optional().describe('Only these parts'),
       group: z.string().optional().describe('Only the parts in this group (its name, as listed)'),
@@ -25,90 +27,28 @@ export const getScene = {
   },
 };
 
-function sizeMismatch(id, res, expectSize) {
-  if (!expectSize) return '';
+const box = z.object({ min: vec3, max: vec3 });
 
-  const got = res.stats.bbox.size;
-  const off = [0, 1, 2].filter((k) => Math.abs(got[k] - expectSize[k]) > Math.max(1, 0.03 * expectSize[k]));
-
-  if (!off.length) return '';
-
-  return (
-    `${id} not placed: its size is [${got.map((v) => +v.toFixed(2)).join(', ')}] mm, expected [${expectSize.join(', ')}] (off in ${off.map((k) => 'xyz'[k]).join(', ')}). ` +
-    `Local bbox min [${res.stats.bbox.min}] max [${res.stats.bbox.max}]. Fix the code, or the expectation if the design changed.`
-  );
-}
-
-export const modelPart = {
-  name: 'model_part',
+export const findInSceneTool = {
+  name: 'find_in_scene',
   config: {
-    title: 'Model part',
+    title: 'Find in scene',
     description:
-      'Designs ONE real part as code, compiles it with the CAD kernel, and places it live. Re-use an id to replace a block-out or improve a part.\n' +
-      'language "openscad" (default): OpenSCAD with BOSL2 and the robotics library: start with `include <robotics.scad>` (which includes BOSL2/std.scad). ' +
-      'Prefer BOSL2: cuboid(size, rounding=, chamfer=, edges=, except=), cyl(d=, h=, rounding1/2=, chamfer=), tube(), prismoid(), rounded_prism(), offset_sweep(), skin() for lofts, rotate_sweep(), path_sweep(), ' +
-      'diff()/tag("remove") for holes and pockets, attach()/position()/anchor= for features, grid_copies()/xcopies()/rot_copies() for patterns, xflip_copy() for symmetry. ' +
-      'Library: servo(STS3215|MG996R|SG90|XL430|XL330), servo_pocket(s, clearance=0.25, extend=), servo_horn_round(), qdd_actuator(QDD_S|QDD_M|QDD_L) and qdd_pocket() for pancake joint actuators, wheel(d, w), caster(d), servo_u_bracket(s, reach=) (output link of a servo joint: horn cheek + idler cheek + web), linear_lift(stroke, width, at) (rails, carriage, lead screw, NEMA 17), parallel_gripper(open, finger) (rack-and-pinion body, finger carriages, TPU pads), socket_screw(d,l), screw_clearance(d, depth), heatset_hole(m, depth), bearing_608(), pi_zero(), pi5(), cell_18650(), rect_holes(w,h). ' +
-      'Servo modules have their origin on the output shaft at the top of the case; the case extends down and along −X.\n' +
-      'language "replicad": OpenCascade B-rep in JavaScript. Use it for every sculpted shell (heads, torsos, covers, bases: the profileBody recipe from the instructions, splines through traced outlines), die-cast housings, true fillets after booleans and lofts. The code is a function body that must `return` a shape. drawPointsInterpolation(points) draws a smooth spline through 2D points. ' +
-      'All replicad exports are in scope: drawRoundedRectangle(w,h,r), drawCircle(r), drawRectangle, draw().lineTo().arc..close(), drawPolysides; .sketchOnPlane("XY"|"XZ"|"YZ", origin) then .extrude(h), .revolve(), .loftWith(otherSketch) (XY and YZ sit at +origin and extrude along +Z / +X; XZ sits at y = −origin and extrudes toward −Y, and edge finders like inPlane("XZ", v) use the same sign); ' +
-      'makeCylinder(r,h,[x,y,z],[dx,dy,dz]), makeBox([x0,y0,z0],[x1,y1,z1]), makeSphere(r); shape.fillet(r, e => e.inPlane("XY", z)), .chamfer(), .shell(t, f => f.inPlane("XY", z)), .fuse(), .cut(), .intersect(), .translate([x,y,z]), .rotate(deg,[0,0,0],[0,0,1]), .mirror("YZ").\n' +
-      'Model each part in its own local frame around a meaningful datum (e.g. the joint axis at the origin), then place it with position (where the local origin goes) and rotation. ' +
-      'Returns the local bounding box, volume and triangle count; compare them with what you intended. Compile errors come back as text: fix and call again.',
+      'Finds parts by any mix of: words in the id, name, group, kind or catalog key (all must match); group; kind (e.g. "hardware", "cad", "component:sts3215", "M3"); a world region box; or near a point. Returns full part lines, nearest first with near. Use it instead of reading the whole scene.',
     inputSchema: {
-      id: idSchema,
-      language: z.enum(['openscad', 'replicad']).default('openscad'),
-      code: z.string().min(5).max(40000),
-      position: vec3.describe('Where the code origin goes in the world, mm, z up').default([0, 0, 0]),
-      expect_size: vec3
+      query: z.string().max(80).optional(),
+      group: z.string().max(60).optional(),
+      kind: z.string().max(60).optional(),
+      region: box.optional().describe('World box, mm, z up: parts whose bounds overlap it'),
+      near: z
+        .object({ point: vec3, radius: z.number().positive().max(5000) })
         .optional()
-        .describe(
-          'The local bounding-box size [x, y, z] you designed for, mm. The part is rejected (not placed) if the compiled size is off by more than 1 mm or 3%, so mistakes in offsets and booleans surface at once.',
-        ),
-      ...common,
+        .describe('Parts within radius mm of a world point'),
     },
   },
-  handler: async ({ id, language, code, position, expect_size, ...rest }) => {
+  handler: async (filter) => {
     try {
-      bridge('focus', { id, label: `Designing ${rest.name ?? id}`, position }, 5000).catch(() => {});
-
-      const res = await renderPart(language, code);
-
-      if (!res.ok) return fail(`${language} compile failed for ${id}:\n${res.error}`);
-
-      const mismatch = sizeMismatch(id, res, expect_size);
-
-      if (mismatch) return fail(mismatch);
-
-      const placed = await bridge('apply', {
-        ops: [
-          {
-            op: 'add',
-            part: {
-              id,
-              shape: 'cad_part',
-              position,
-              ...rest,
-              cad: {
-                language,
-                code,
-                positions: res.positions,
-                indices: res.indices,
-                edges: res.edges,
-                stats: res.stats,
-              },
-            },
-          },
-        ],
-      });
-      const s = res.stats;
-
-      return text(
-        `Placed ${id} (${res.ms} ms). Local bbox min [${s.bbox.min}] max [${s.bbox.max}] size [${s.bbox.size}] mm, volume ${s.volume} mm³, ${s.triangles} triangles.` +
-          (res.warnings?.length ? `\nWarnings:\n${res.warnings.join('\n')}` : '') +
-          (placed.summary ? `\n${placed.summary}` : '') +
-          (await clashText([id])),
-      );
+      return text(findInScene(await bridge('snapshot', {}), filter));
     } catch (err) {
       return fail(err);
     }
@@ -120,12 +60,12 @@ export const getPartCode = {
   config: {
     title: 'Read part code',
     description:
-      'Returns the code and language of a CAD part, so you can edit it and call model_part again with the same id.',
+      'Returns the code and language of a CAD part, so you can edit it and call model_part again with the same id. An unknown id lists the closest ids.',
     inputSchema: { id: z.string() },
   },
   handler: async ({ id }) => {
     try {
-      return text(await bridge('part_code', { id }));
+      return text((await bridge('part_code', { id })).text);
     } catch (err) {
       return fail(err);
     }
@@ -151,6 +91,8 @@ export const addParts = {
     try {
       const res = await bridge('apply', { ops: parts.map((p) => ({ op: 'add', part: p })) });
       const real = parts.filter((p) => p.catalog).map((p) => p.id);
+
+      noteBlockOut();
 
       return text((res.summary || `Added ${parts.length} blocks.`) + (real.length ? await clashText(real) : ''));
     } catch (err) {
@@ -213,8 +155,9 @@ export const mirrorParts = {
   config: {
     title: 'Mirror parts',
     description:
-      'Mirrored copies for symmetry: axis "x" mirrors left/right (x → −x), axis "y" mirrors front/back (y → −y). CAD geometry is mirrored too. ' +
-      'Copy ids/names swap left↔right (or front↔rear for axis y) unless you pass rename { sourceId: newId }.',
+      'Mirrored copies for symmetry: axis "x" mirrors left/right (x → −x), axis "y" mirrors front/back (y → −y). CAD geometry and code are mirrored (the copy’s code is the source wrapped in mirror()). ' +
+      'Catalog parts (servos, boards, screws) can’t be mirrored, so each copy is placed by its datum: its output axis, holes and ports land exactly on the mirrored ones. ' +
+      'Copy ids/names swap left↔right (or front↔rear for axis y) unless you pass rename { sourceId: newId }. Copies stay linked to their source: mirroring the source again replaces its old copy, and editing either side reminds you to re-mirror.',
     inputSchema: {
       ids: z.array(z.string()).min(1).max(60),
       axis: z.enum(['x', 'y']).default('x'),
@@ -223,6 +166,8 @@ export const mirrorParts = {
   },
   handler: async ({ ids, axis, rename }) => {
     try {
+      await settledWrites(ids);
+
       const res = await bridge('apply', { ops: [{ op: 'mirror', ids, axis, rename: rename ?? {} }] });
 
       return text(res.summary || `Mirrored ${ids.length} parts.`);
@@ -238,7 +183,7 @@ export const findParts = {
     title: 'Find parts',
     description:
       "Searches the studio's catalog of real, purchasable parts with exact CAD geometry: servos (Feetech, Dynamixel…), motors, robot hands and grippers, computers (Raspberry Pi, Jetson…), microcontrollers, drivers, sensors, LiDAR, depth cameras and cameras, plus ISO screws, nuts, washers, heat-set inserts, standoffs, dowel pins and bearings. " +
-      'Returns catalog keys with exact sizes, key specs and mounting details (hole patterns, horn and bracket interfaces). Place them with add_parts({ catalog }) and design your brackets and pockets around their real dimensions. ' +
+      'Returns catalog keys with exact sizes, key specs, mounting details (hole patterns, horn and bracket interfaces) and prices: the price the user checked, else a dated list price with its store. Actuators also show N·m per dollar and, once joints are declared, their margin at the scene’s hardest leg and holding joints; the remaining budget heads the list when one is set. Place them with add_parts({ catalog }) and design your brackets and pockets around their real dimensions. ' +
       'Pass a few words to filter (e.g. "servo", "depth camera", "raspberry"), or nothing to list everything.',
     inputSchema: { query: z.string().max(80).optional() },
   },

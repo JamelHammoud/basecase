@@ -1,6 +1,6 @@
 import { explode } from './guideExplode';
 import { isFastener, isInsert, isMajor, itemKeyOf } from './guideItems';
-import { fastenerHomes, insertHosts, orderMajors, type FastenerHome, type PlanContext } from './guideOrder';
+import { fastenerHomes, insertHosts, isUnproven, orderMajors, type FastenerHome, type PlanContext } from './guideOrder';
 import { MAIN_MODULE, type GuideModule, type GuideStep } from './guideTypes';
 
 const MERGE_LIMIT = 4;
@@ -94,8 +94,9 @@ function moduleSteps({ ctx, module, parts, homes, outside }: ModuleRun): GuideSt
 
     pending = pending.filter((f) => !ready.includes(f));
 
-    if (!inserts.length && canMerge(ctx, prev, major, ready)) prev.partIds.push(major, ...ready);
-    else steps.push(draftStep('build', module.id, [major, ...inserts, ...ready], [...placed]));
+    if (!inserts.length && canMerge(ctx, prev, major, ready) && !!prev.unproven === isUnproven(ctx, [major]))
+      prev.partIds.push(major, ...ready);
+    else steps.push(marked(ctx, draftStep('build', module.id, [major, ...inserts, ...ready], [...placed])));
 
     placed.push(major, ...inserts, ...ready);
   }
@@ -103,6 +104,10 @@ function moduleSteps({ ctx, module, parts, homes, outside }: ModuleRun): GuideSt
   if (pending.length) steps.push(draftStep('build', module.id, pending, [...placed]));
 
   return steps;
+}
+
+function marked(ctx: PlanContext, step: GuideStep): GuideStep {
+  return isUnproven(ctx, step.partIds) ? { ...step, unproven: true } : step;
 }
 
 function withCallout(ctx: PlanContext, step: GuideStep): GuideStep {

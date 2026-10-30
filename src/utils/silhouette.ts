@@ -1,9 +1,9 @@
-export interface Profile {
-  bands: number[];
-  aspect: number;
-}
+import { checkMask, decodeVisionMasks, pickSubject, trimToModelWidth, type VisionMasks } from './photoMask';
+import { maskProfileOf, type Mask, type Profile } from './silhouetteProfile';
 
-async function imageData(dataUrl: string, maxSide = 900): Promise<ImageData> {
+export type { Profile } from './silhouetteProfile';
+
+export async function imageData(dataUrl: string, maxSide = 900, background?: string): Promise<ImageData> {
   const img = new Image();
 
   img.src = dataUrl;
@@ -19,63 +19,14 @@ async function imageData(dataUrl: string, maxSide = 900): Promise<ImageData> {
 
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
 
+  if (background) {
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, w, h);
+  }
+
   ctx.drawImage(img, 0, 0, w, h);
 
   return ctx.getImageData(0, 0, w, h);
-}
-
-function maskBounds(mask: Uint8Array, w: number, h: number) {
-  let x0 = w,
-    x1 = -1,
-    y0 = h,
-    y1 = -1;
-
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      if (!mask[y * w + x]) continue;
-
-      x0 = Math.min(x0, x);
-      x1 = Math.max(x1, x);
-      y0 = Math.min(y0, y);
-      y1 = Math.max(y1, y);
-    }
-
-  return { x0, x1, y0, y1 };
-}
-
-function rowWidth(mask: Uint8Array, row: number, x0: number, x1: number): number {
-  let l = -1,
-    r = -1;
-
-  for (let x = x0; x <= x1; x++) {
-    if (!mask[row + x]) continue;
-
-    if (l < 0) l = x;
-
-    r = x;
-  }
-
-  return l >= 0 ? r - l + 1 : 0;
-}
-
-function profile(mask: Uint8Array, w: number, h: number, bands = 10): Profile | null {
-  const { x0, x1, y0, y1 } = maskBounds(mask, w, h);
-
-  if (x1 < 0) return null;
-
-  const H = y1 - y0 + 1;
-  const out: number[] = [];
-
-  for (let b = 0; b < bands; b++) {
-    let widest = 0;
-
-    for (let y = y0 + Math.floor((b * H) / bands); y < y0 + Math.floor(((b + 1) * H) / bands); y++)
-      widest = Math.max(widest, rowWidth(mask, y * w, x0, x1));
-
-    out.push(Math.round((widest / H) * 1000) / 1000);
-  }
-
-  return { bands: out, aspect: Math.round(((x1 - x0 + 1) / H) * 1000) / 1000 };
 }
 
 function borderPixels(w: number, h: number): number[] {
@@ -113,35 +64,89 @@ function floodBackground(border: number[], w: number, h: number, isSubject: (i: 
   return bg;
 }
 
-export async function photoProfile(
-  dataUrl: string,
-): Promise<{ profile: Profile | null; plain: boolean; reason?: string }> {
-  const { data, width: w, height: h } = await imageData(dataUrl);
+export function floodMaskOf({ data, width: w, height: h }: ImageData): { mask?: Mask; reason?: string } {
   const border = borderPixels(w, h);
   const med = [0, 1, 2].map((k) => border.map((i) => data[i * 4 + k]).sort((a, b) => a - b)[border.length >> 1]);
   const dist = (i: number) => Math.hypot(data[i * 4] - med[0], data[i * 4 + 1] - med[1], data[i * 4 + 2] - med[2]);
   const spread = border.reduce((s, i) => s + dist(i), 0) / border.length;
 
-  if (spread > 14)
-    return { profile: null, plain: false, reason: 'the background is not plain (busy scene or gradient)' };
+  if (spread > 14) return { reason: 'the background is not plain (busy scene or gradient)' };
 
   const bg = floodBackground(border, w, h, (i) => dist(i) > 12);
   const mask = new Uint8Array(w * h);
-  let fg = 0;
 
-  for (let i = 0; i < w * h; i++) {
-    if (bg[i]) continue;
+  for (let i = 0; i < w * h; i++) mask[i] = bg[i] ? 0 : 1;
 
-    mask[i] = 1;
-    fg++;
+  return { mask: { data: mask, width: w, height: h } };
+}
+
+export interface ReferenceProfile {
+  profile: Profile | null;
+  plain: boolean;
+  reason?: string;
+  source: 'vision' | 'flood';
+  notes: string[];
+}
+
+export interface ReferenceRequest {
+  dataUrl: string;
+  masks?: VisionMasks | null;
+  modelAspect?: number;
+  allowCut?: boolean;
+}
+
+async function subjectMask({ dataUrl, masks }: ReferenceRequest) {
+  const picked = masks?.instances.length ? pickSubject(decodeVisionMasks(masks)) : null;
+
+  if (picked) {
+    const notes = picked.kept > 1 ? [`joined ${picked.kept} foreground masks`] : [];
+
+    return { mask: picked.mask, source: 'vision' as const, notes };
   }
 
-  const share = fg / (w * h);
+  const flood = floodMaskOf(await imageData(dataUrl));
 
-  if (share < 0.02 || share > 0.85)
-    return { profile: null, plain: false, reason: 'the subject could not be separated from the background' };
+  return { mask: flood.mask, reason: flood.reason, source: 'flood' as const, notes: [] as string[] };
+}
 
-  return { profile: profile(mask, w, h), plain: true };
+const cutReason = (cut: string) =>
+  `the photo cuts the subject off at the ${cut}, so heights can't be measured against the whole model; pass ids to compare just the parts it shows`;
+
+export interface ReferenceMask {
+  mask?: Mask;
+  reason?: string;
+  source: 'vision' | 'flood';
+  notes: string[];
+}
+
+export async function referenceMask(request: ReferenceRequest): Promise<ReferenceMask> {
+  const found = await subjectMask(request);
+  const base = { source: found.source, notes: found.notes };
+
+  if (!found.mask) return { ...base, reason: found.reason ?? 'no subject found' };
+
+  const check = checkMask(found.mask);
+
+  if (check.refused) return { ...base, reason: check.refused };
+
+  if (check.cut && !request.allowCut) return { ...base, reason: cutReason(check.cut) };
+
+  const notes = [...found.notes, ...(check.cut ? [`subject cut off at the ${check.cut}`] : [])];
+  const { mask, trimmed } = trimToModelWidth(found.mask, request.modelAspect ?? 0);
+
+  if (trimmed > 0.02) {
+    notes.push(`left out ${Math.round(trimmed * 100)}% of the mask: thin slivers wider than the model`);
+  }
+
+  return { mask, source: found.source, notes };
+}
+
+export async function referenceProfile(request: ReferenceRequest): Promise<ReferenceProfile> {
+  const { mask, reason, source, notes } = await referenceMask(request);
+
+  if (!mask) return { profile: null, plain: false, reason, source, notes };
+
+  return { profile: maskProfileOf(mask), plain: true, source, notes };
 }
 
 export async function maskProfile(dataUrl: string): Promise<Profile | null> {
@@ -150,5 +155,5 @@ export async function maskProfile(dataUrl: string): Promise<Profile | null> {
 
   for (let i = 0; i < w * h; i++) mask[i] = data[i * 4] > 127 ? 1 : 0;
 
-  return profile(mask, w, h);
+  return maskProfileOf({ data: mask, width: w, height: h });
 }

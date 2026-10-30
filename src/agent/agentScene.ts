@@ -3,7 +3,11 @@ import { BLOCKOUT_ONLY, PART_CATALOG, catalogItemFromKey, catalogNote } from '..
 import { COMPONENT_BY_ID } from '../data/components';
 import { hardwareName, hardwareNote } from '../data/hardware';
 import { SUPPLY_BY_ID } from '../data/supplies';
+import type { PartMate } from '../types/ports';
+import type { RobotSkeleton } from '../types/skeleton';
 import { PartKind, PartRole, PrintMaterial, ScenePart } from '../types/robotics';
+import { cadMeshToScene, mirroredPorts, type AgentCadPayload } from './cadMesh';
+import { portsOf, portSummary } from './ports';
 import {
   add,
   eulerToMatrix,
@@ -22,17 +26,9 @@ import {
 } from './agentFrame';
 
 export { agentCatalog } from './agentCatalog';
+export type { AgentCadPayload } from './cadMesh';
 export { groupFor, rotToCad, rotToScene, toCad, toScene } from './agentFrame';
 export { mirrorParts } from './agentMirror';
-
-export interface AgentCadPayload {
-  language: 'openscad' | 'replicad';
-  code: string;
-  positions: number[];
-  indices: number[];
-  edges?: number[] | null;
-  stats?: { volume?: number; triangles?: number };
-}
 
 export interface AgentPartSpec {
   id: string;
@@ -50,13 +46,21 @@ export interface AgentPartSpec {
   note?: string;
   cad?: AgentCadPayload;
   catalog?: string;
+  mates?: PartMate[];
+  frame?: string;
 }
 
 export type AgentOp =
   | { op: 'add'; part: AgentPartSpec }
   | { op: 'update'; part: AgentPartSpec }
   | { op: 'delete'; id: string }
-  | { op: 'mirror'; ids: string[]; axis: 'x' | 'y' | 'z'; rename: Record<string, string> };
+  | {
+      op: 'mirror';
+      ids: string[];
+      axis: 'x' | 'y' | 'z';
+      rename: Record<string, string>;
+      skeleton?: RobotSkeleton;
+    };
 
 export type AgentMaterial = 'printed' | 'pla' | 'petg' | 'asa' | 'tpu' | 'cots' | 'aluminum' | 'laser_cut';
 
@@ -112,43 +116,7 @@ function componentVariantFromKey(key: string): string | undefined {
   return variant;
 }
 
-function cadMeshToScene(cad: AgentCadPayload) {
-  const pos = new Array<number>(cad.positions.length);
-  const min: V3 = [Infinity, Infinity, Infinity];
-  const max: V3 = [-Infinity, -Infinity, -Infinity];
-
-  for (let i = 0; i < cad.positions.length; i += 3) {
-    const s = toScene([cad.positions[i], cad.positions[i + 1], cad.positions[i + 2]]);
-
-    for (let k = 0; k < 3; k++) {
-      pos[i + k] = s[k];
-      min[k] = Math.min(min[k], s[k]);
-      max[k] = Math.max(max[k], s[k]);
-    }
-  }
-
-  const center: V3 = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2];
-
-  for (let i = 0; i < pos.length; i += 3) for (let k = 0; k < 3; k++) pos[i + k] = r3(pos[i + k] - center[k]);
-
-  let edges: number[] | null = null;
-
-  if (cad.edges?.length) {
-    edges = new Array<number>(cad.edges.length);
-
-    for (let i = 0; i < cad.edges.length; i += 3) {
-      const s = toScene([cad.edges[i], cad.edges[i + 1], cad.edges[i + 2]]);
-
-      for (let k = 0; k < 3; k++) edges[i + k] = r3(s[k] - center[k]);
-    }
-  }
-
-  const size: V3 = [r2(max[0] - min[0]), r2(max[1] - min[1]), r2(max[2] - min[2])];
-
-  return { positions: pos, indices: cad.indices, edges, center, size };
-}
-
-type PartBase = Pick<ScenePart, 'id' | 'name' | 'rotation' | 'note' | 'visible' | 'locked' | 'group'>;
+type PartBase = Pick<ScenePart, 'id' | 'name' | 'rotation' | 'note' | 'visible' | 'locked' | 'group' | 'frame'>;
 
 function catalogPart(spec: AgentPartSpec, key: string, base: PartBase): ScenePart {
   const item = catalogItemFromKey(key);
@@ -206,6 +174,9 @@ function cadPart(spec: AgentPartSpec, cad: AgentCadPayload, base: PartBase): Sce
       originOffset: mesh.center,
       baseSize: mesh.size,
       volume: cad.stats?.volume,
+      ...(cad.ports?.length ? { ports: mirroredPorts(cad.code, cad.ports) } : {}),
+      ...(cad.audit ? { audit: cad.audit } : {}),
+      ...(cad.expect ? { expect: cad.expect } : {}),
     },
   };
 }
@@ -269,6 +240,7 @@ export function specToPart(spec: AgentPartSpec): ScenePart {
     visible: true,
     locked: false,
     group: groupFor(spec.group),
+    ...(spec.frame ? { frame: spec.frame } : {}),
   };
 
   if (spec.catalog) return catalogPart(spec, spec.catalog, base);
@@ -278,7 +250,7 @@ export function specToPart(spec: AgentPartSpec): ScenePart {
   return primitivePart(spec, base);
 }
 
-function placementPoint(part: ScenePart): V3 {
+export function placementPoint(part: ScenePart): V3 {
   if (part.kind === 'cad_part' && part.cad) return sub(part.position, rotate(part.cad.originOffset, part.rotation));
 
   return part.position;
@@ -304,6 +276,10 @@ function applyLooks(next: ScenePart, spec: AgentPartSpec) {
     Object.assign(next, supplyFields(spec.supply), spec.supply ? {} : { supplyId: undefined });
 
   if (spec.note !== undefined) next.note = spec.note;
+
+  if (spec.mates) next.mates = spec.mates;
+
+  if (spec.frame !== undefined) next.frame = spec.frame || undefined;
 }
 
 const isResizable = (part: ScenePart) =>
@@ -314,8 +290,31 @@ function applyPlacement(next: ScenePart, part: ScenePart, spec: AgentPartSpec) {
 
   next.rotation = spec.rotation ? rotToScene(spec.rotation) : part.rotation;
   next.position = (
-    part.kind === 'cad_part' && part.cad ? add(placement, rotate(part.cad.originOffset, next.rotation)) : placement
+    part.kind === 'cad_part' && next.cad ? add(placement, rotate(next.cad.originOffset, next.rotation)) : placement
   ).map(r3) as V3;
+
+  if (next.cad && next.cad !== part.cad) next.dimensions = { ...next.dimensions, ...sizeOf(next.cad.baseSize) };
+}
+
+const sizeOf = (s: V3) => ({ width: Math.max(0.1, s[0]), height: Math.max(0.1, s[1]), depth: Math.max(0.1, s[2]) });
+
+function recompiled(old: NonNullable<ScenePart['cad']>, cad: AgentCadPayload): NonNullable<ScenePart['cad']> {
+  const mesh = cadMeshToScene(cad);
+  const ports = cad.ports ? mirroredPorts(cad.code, cad.ports) : old.ports;
+
+  return {
+    ...old,
+    language: cad.language,
+    code: cad.code,
+    positions: mesh.positions,
+    indices: mesh.indices,
+    edges: mesh.edges,
+    originOffset: mesh.center,
+    baseSize: mesh.size,
+    volume: cad.stats?.volume,
+    ...(ports ? { ports } : {}),
+    ...(cad.audit ? { audit: cad.audit } : {}),
+  };
 }
 
 export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
@@ -334,7 +333,9 @@ export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
     };
   }
 
-  if (spec.rotation || spec.position) applyPlacement(next, part, spec);
+  if (spec.cad && part.cad) next.cad = recompiled(part.cad, spec.cad);
+
+  if (spec.rotation || spec.position || spec.cad) applyPlacement(next, part, spec);
 
   return next;
 }
@@ -372,10 +373,22 @@ function boxToCad(b: { min: V3; max: V3 }) {
   };
 }
 
+export const partBoundsCad = (p: ScenePart) => boxToCad(worldBox(p));
+
 function materialOf(p: ScenePart): string | undefined {
   if (p.printMaterial) return p.printMaterial.toLowerCase();
 
   return p.mechanicalTag ? TAG_TO_MATERIAL[p.mechanicalTag] : undefined;
+}
+
+function sceneLinks(p: ScenePart) {
+  const ports = p.kind === 'hardware' ? '' : portSummary(portsOf(p));
+
+  return {
+    ...(p.mirrorOf ? { mirrorOf: p.mirrorOf.id } : {}),
+    ...(p.frame ? { frame: p.frame } : {}),
+    ...(ports ? { ports } : {}),
+  };
 }
 
 export function snapshotScene(parts: ScenePart[]) {
@@ -418,6 +431,7 @@ export function snapshotScene(parts: ScenePart[]) {
           ? { catalog: `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}` }
           : {}),
         ...(p.supplyId ? { supply: `supply:${p.supplyId}` } : {}),
+        ...sceneLinks(p),
         ...(p.note ? { note: p.note } : {}),
         ...(p.visible ? {} : { hidden: true }),
         ...(p.kind === 'image_plane' ? { referenceImage: true } : {}),
@@ -475,15 +489,4 @@ export function describeOp(op: AgentOp, parts: ScenePart[]): string {
     case 'mirror':
       return `${op.ids.length} parts`;
   }
-}
-
-export function partCode(parts: ScenePart[], id: string) {
-  const p = parts.find((x) => x.id === id);
-
-  if (!p) return { error: `No part with id ${id}` };
-
-  if (!p.cad)
-    return { id, kind: p.kind, note: 'This is a primitive block, not a CAD part. Replace it with model_part.' };
-
-  return { id, language: p.cad.language, code: p.cad.code };
 }

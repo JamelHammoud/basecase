@@ -9,6 +9,7 @@ export interface PlanContext {
   contacts: Record<string, string[]>;
   axes: Record<string, V3>;
   size: number;
+  order?: { rank: Map<string, number>; unproven: Set<string> };
 }
 
 export interface FastenerHome {
@@ -90,6 +91,20 @@ function candidatesOf(ctx: PlanContext, open: string[], ready: string[]): string
 }
 
 export function orderMajors(ctx: PlanContext, majors: string[], outside: Set<string>): string[] {
+  const rank = ctx.order?.rank;
+
+  if (!rank) return heuristicOrder(ctx, majors, outside);
+
+  const proven = majors.filter((m) => rank.has(m)).sort((a, b) => rank.get(a)! - rank.get(b)!);
+  const rest = majors.filter((m) => !rank.has(m));
+
+  return [...heuristicOrder(ctx, rest, outside), ...proven];
+}
+
+export const isUnproven = (ctx: PlanContext, ids: string[]) =>
+  !!ctx.order && ids.some((id) => ctx.order!.unproven.has(id));
+
+function heuristicOrder(ctx: PlanContext, majors: string[], outside: Set<string>): string[] {
   const enclosed = enclosedBy(ctx, majors);
   const placed = new Set<string>();
   const order: string[] = [];

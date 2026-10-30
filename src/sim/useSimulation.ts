@@ -5,6 +5,7 @@ import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/roboti
 import type { Rig } from '../utils/kinematics';
 import type { Controller, SimStats } from './engine';
 import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel } from './mjcf';
+import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import { newSimWorker, useSimWorker } from './useSimWorker';
 
@@ -16,6 +17,7 @@ export interface SimRun {
   stats: SimStats;
   frames: Array<{ t: number; deltas: Map<string, THREE.Matrix4> }>;
   model: SimModel;
+  trace?: TorqueSeries;
 }
 
 export interface Simulation {
@@ -41,11 +43,14 @@ export interface Simulation {
   ) => void;
   push: (robot?: string) => void;
   buildModel: () => Promise<SimModel>;
+  runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
   run: (opts: {
     seconds: number;
     controller: Controller;
     pushes?: Array<{ at: number; robot?: string; force: [number, number, number] }>;
     frames?: number[];
+    forceLimits?: (model: SimModel) => Record<string, number>;
+    trace?: boolean;
   }) => Promise<SimRun>;
 }
 
@@ -58,7 +63,7 @@ interface Inputs {
   restDeltas: Map<string, THREE.Matrix4>;
 }
 
-type RunOptions = Parameters<Simulation['run']>[0];
+export type RunOptions = Parameters<Simulation['run']>[0];
 
 type GrabHand = Parameters<Simulation['grab']>[1];
 
@@ -90,41 +95,44 @@ function pushRequest(m: SimModel | null, robot: string | undefined): SimRequest 
   return { type: 'push', robot: key, force: [Math.cos(a) * n, 0, Math.sin(a) * n] };
 }
 
+type Ran = Extract<SimResponse, { type: 'ran' }>;
+
 async function runModel(
   m: SimModel,
-  { seconds, controller: c, pushes, frames }: RunOptions,
+  { seconds, controller: c, pushes, frames, forceLimits, trace }: RunOptions,
   id: number,
 ): Promise<SimRun> {
   const w = newSimWorker();
 
   try {
-    const result = await new Promise<{ stats: SimStats; frames: Array<{ t: number; poses: Float64Array }> }>(
-      (resolve, reject) => {
-        w.onmessage = (ev: MessageEvent<SimResponse>) => {
-          const msg = ev.data;
+    const result = await new Promise<Ran>((resolve, reject) => {
+      w.onmessage = (ev: MessageEvent<SimResponse>) => {
+        const msg = ev.data;
 
-          if (msg.type === 'ready') {
-            const key = m.robots.find((r) => r.floating)?.key ?? m.robots[0]?.key ?? '';
+        if (msg.type === 'ready') {
+          const key = m.robots.find((r) => r.floating)?.key ?? m.robots[0]?.key ?? '';
 
-            w.postMessage({
-              type: 'run',
-              id,
-              seconds,
-              frames,
-              pushes: pushes?.map((p) => ({ at: p.at, robot: p.robot ?? key, force: p.force })),
-            } satisfies SimRequest);
-          } else if (msg.type === 'error') reject(new Error(msg.message));
-          else if (msg.type === 'ran') resolve({ stats: msg.stats, frames: msg.frames });
-        };
-        w.onerror = (e) => reject(new Error(e.message || 'The simulator stopped.'));
-        w.postMessage({ type: 'load', model: m, controller: c } satisfies SimRequest);
-      },
-    );
+          w.postMessage({
+            type: 'run',
+            id,
+            seconds,
+            frames,
+            pushes: pushes?.map((p) => ({ at: p.at, robot: p.robot ?? key, force: p.force })),
+            forceLimits: forceLimits?.(m),
+            trace,
+          } satisfies SimRequest);
+        } else if (msg.type === 'error') reject(new Error(msg.message));
+        else if (msg.type === 'ran') resolve(msg);
+      };
+      w.onerror = (e) => reject(new Error(e.message || 'The simulator stopped.'));
+      w.postMessage({ type: 'load', model: m, controller: c } satisfies SimRequest);
+    });
 
     return {
       stats: result.stats,
       frames: result.frames.map((f) => ({ t: f.t, deltas: simDeltas(m, f.poses) })),
       model: m,
+      trace: result.trace,
     };
   } finally {
     w.terminate();
@@ -255,6 +263,7 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
 
       if (msg) send(msg);
     },
+    runOn: (m, opts) => runModel(m, opts, ++runSeq.current),
     run: async (opts) => {
       const m = await buildModel();
 

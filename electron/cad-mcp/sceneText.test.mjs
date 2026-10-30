@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { findInScene } from './sceneQuery.mjs';
 import { sceneText } from './sceneText.mjs';
 
 const part = (i, group) => ({
@@ -40,19 +41,41 @@ describe('sceneText', () => {
     expect(text).toContain('Not in the scene: nope.');
   });
 
-  it('leaves notes out before it falls back to a summary', () => {
-    const text = sceneText(scene(300));
+  it('summarizes a scene of more than 20 parts by group, with ids', () => {
+    const text = sceneText(scene(24));
 
-    expect(text).toContain('300 parts:');
+    expect(text).toContain('"Torso": 12 parts');
+    expect(text).toContain('ids p0 p2 p4');
+    expect(text).not.toContain('pos=');
+  });
+
+  it('leaves notes out of a long filtered list', () => {
+    const text = sceneText(scene(600), { group: 'Head' });
+
+    expect(text).toContain('300 of 600 parts:');
     expect(text).not.toContain('note=');
     expect(text.length).toBeLessThan(50000);
   });
 
-  it('summarizes a scene too big to list by group', () => {
-    const text = sceneText(scene(600));
+  it('shows ports in the full lines', () => {
+    const snap = scene(1);
 
-    expect(text.length).toBeLessThan(2000);
-    expect(text).toContain('"Torso": 300 parts');
-    expect(sceneText(scene(600), { group: 'Head' })).toContain('300 of 600 parts:');
+    snap.parts[0].ports = 'horn, case-hole-1…4';
+
+    expect(sceneText(snap)).toContain('ports=horn, case-hole-1…4');
+  });
+});
+
+describe('findInScene', () => {
+  it('matches words, group and a region, and sorts by distance with near', () => {
+    expect(findInScene(scene(30), { query: 'part 7' })).toContain('1 of 30 parts match');
+    expect(findInScene(scene(30), { group: 'head', region: { min: [0, -2, 0], max: [3, 2, 20] } })).toMatch(
+      /^2 of 30 parts match:\np1 .*\np3 /,
+    );
+
+    const near = findInScene(scene(30), { near: { point: [20, 0, 10], radius: 0.1 } }).split('\n');
+
+    expect(near[1]).toMatch(/^p20 /);
+    expect(near).toHaveLength(4);
   });
 });

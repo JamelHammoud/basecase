@@ -107,12 +107,23 @@ function mirrorNote(doc: GuideDoc, step: GuideStep, area: Rect): string {
     : '';
 }
 
+function unprovenNote(area: Rect): string {
+  return `<div class="mirror-note" style="left:${mm(area.x)};top:${mm(area.y + area.h - 10)}">Order not checked: the assembly planner couldn’t place this step</div>`;
+}
+
+const noteOf = (doc: GuideDoc, step: GuideStep, area: Rect) => {
+  if (step.kind === 'mirror') return mirrorNote(doc, step, area);
+
+  return step.unproven ? unprovenNote(area) : '';
+};
+
 function panelHtml(doc: GuideDoc, index: number, area: Rect): { html: string; leader: string } {
   const step = doc.plan.steps[index];
   const drawing = doc.drawings.steps[index];
   const header = headerOf(doc, step, area);
   const top = header.height + 4;
-  const artArea = { x: area.x, y: area.y + top, w: area.w, h: area.h - top - (step.kind === 'mirror' ? 12 : 0) };
+  const noted = step.kind === 'mirror' || !!step.unproven;
+  const artArea = { x: area.x, y: area.y + top, w: area.w, h: area.h - top - (noted ? 12 : 0) };
   const rect = fit(drawing.main, artArea);
   const detail = drawing.detail ? detailHtml(drawing, rect, artArea) : null;
   const turn = drawing.view === 'front' ? '' : turnHtml(area.x + 1, area.y + 17);
@@ -124,7 +135,7 @@ function panelHtml(doc: GuideDoc, index: number, area: Rect): { html: string; le
       turn +
       artHtml(drawing.main, rect) +
       (detail?.html ?? '') +
-      (step.kind === 'mirror' ? mirrorNote(doc, step, artArea) : ''),
+      noteOf(doc, step, artArea),
     leader: detail?.leader ?? '',
   };
 }

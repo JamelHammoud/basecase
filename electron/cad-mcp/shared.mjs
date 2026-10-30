@@ -108,7 +108,7 @@ export async function clashText(ids) {
         .slice(0, 8)
         .map(
           (c) =>
-            `- ${c.a} / ${c.b}: ${c.areaMm2} mm² of flush same-facing surface (flickers). Set one 0.2–0.5 mm proud or inset.`,
+            `- ${c.a} / ${c.b}: ${c.areaMm2} mm² of coincident same-facing surface. Cut a recess if one sits in the other, otherwise trim the overlap.`,
         ),
     ];
 

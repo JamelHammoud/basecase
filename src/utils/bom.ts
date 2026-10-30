@@ -315,6 +315,7 @@ function bomTotals(lines: BomLine[], project: ProjectSettings): Bom['totals'] {
   const checkedUsd = sum(withStatus('checked'));
   const pricedUsd = sum(lines.filter((l) => l.status !== 'unchecked'));
   const unchecked = withStatus('unchecked');
+  const estimatedUsd = cents(pricedUsd + unchecked.reduce((s, l) => s + (l.estUsd ?? 0), 0));
 
   return {
     checkedUsd,
@@ -322,10 +323,10 @@ function bomTotals(lines: BomLine[], project: ProjectSettings): Bom['totals'] {
     checked: withStatus('checked').length,
     stale: withStatus('stale').length,
     unchecked: unchecked.length,
-    estimatedUsd: cents(pricedUsd + lines.reduce((s, l) => s + (l.status === 'unchecked' ? (l.estUsd ?? 0) : 0), 0)),
+    estimatedUsd,
     unpriced: unchecked.filter((l) => l.estUsd === undefined).length,
     budgetUsd: project.budgetUsd,
-    overBudget: project.budgetUsd !== undefined && pricedUsd > project.budgetUsd,
+    overBudget: project.budgetUsd !== undefined && estimatedUsd > project.budgetUsd,
   };
 }
 

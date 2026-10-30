@@ -15,6 +15,7 @@ export interface GuideScene {
   boxes: Record<string, Box>;
   contacts: Record<string, string[]>;
   axes: Record<string, V3>;
+  order?: { assembly: string[]; unproven: string[] };
 }
 
 export type GuideItemKind = 'printed' | 'bought' | 'hardware';
@@ -66,6 +67,7 @@ export interface GuideStep {
   callout: Array<{ key: string; qty: number }>;
   tools: string[];
   attach?: string;
+  unproven?: boolean;
 }
 
 export interface GuideModule {

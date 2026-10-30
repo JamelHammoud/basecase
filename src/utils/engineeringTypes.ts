@@ -1,5 +1,5 @@
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import type { ProjectSettings, PurchaseRecord, RobotJoint, ScenePart } from '../types/robotics';
 import type { V3 } from './engineeringMath';
 
 export interface PartMass {
@@ -27,10 +27,32 @@ export interface JointLoad {
   massG: number;
   swingNm: number;
   stanceNm: number;
-  staticNm: number;
+  crouchNm?: number;
+  crouchDeg?: number;
+  leverMm?: number;
+  loadNm: number;
+  kind: 'stance' | 'hold';
   stallNm?: number;
   ratedNm?: number;
+  ratedEstimated?: boolean;
+  volts?: number;
+  stallShare?: number;
+  heatShare?: number;
+  simRmsNm?: number;
   status: CheckRow['status'];
+}
+
+export interface WalkJoint {
+  p99Nm: number;
+  rmsNm: number;
+  overS: number;
+}
+
+export interface WalkSim {
+  policy: string;
+  seconds: number;
+  fellAt: number | null;
+  joints: Record<string, WalkJoint>;
 }
 
 export interface EngineeringInputs {
@@ -38,7 +60,9 @@ export interface EngineeringInputs {
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;
   servoOutputs: Record<string, ServoOutput>;
+  purchases?: Record<string, PurchaseRecord>;
   sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
+  walk?: WalkSim | string;
 }
 
 export interface SweepRequest {
@@ -55,6 +79,7 @@ export interface EngineeringReport {
   massG: number;
   com: V3;
   masses: PartMass[];
+  stability?: { marginMm: number; tipDeg: number };
 }
 
 export interface CheckContext {

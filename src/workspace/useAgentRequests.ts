@@ -7,7 +7,7 @@ import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import { applyAgentOps } from './applyAgentOps';
 import { requestHandler, type RequestContext } from './agentRequestHandlers';
 import { runPoseTool, runSimTool, withSavedPose } from './agentRobotTools';
-import { runEngineeringNow } from './engineeringNow';
+import { sceneChecks } from './sceneChecks';
 import type { AgentRequestEvent, Vec3 } from './types';
 import type { AgentCursors } from './useAgentCursors';
 import type { AgentLanes } from './useAgentLanes';
@@ -149,14 +149,9 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       setCursor: author.setCursor,
       poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),
       simTool: (kind, payload) => simTool(kind, payload, author.setAction),
-      verify: () =>
-        runEngineeringNow({
-          viewport: viewportRef.current,
-          parts: partsRef.current,
-          project: projectRef.current,
-          withSweep: true,
-        }),
+      ...sceneChecks(core, author.setAction),
       applyOps: (ops) => applyOps(ops, author),
+      edits: (owner) => actors.editsFor(author.actor, owner),
       buildGuide: core.guide.generate,
     };
 

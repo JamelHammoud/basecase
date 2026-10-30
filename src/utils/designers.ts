@@ -42,6 +42,8 @@ const WRITTEN_IDS: Record<string, (input: Input) => unknown[]> = {
   add_parts: (input) => idList(input.parts),
   update_parts: (input) => idList(input.updates),
   mirror_parts: mirroredIds,
+  fasten: (input) => idList(input.through),
+  mate: (input) => [input.part],
 };
 
 export function designerPartIds(call: AcpToolCallEvent): string[] {

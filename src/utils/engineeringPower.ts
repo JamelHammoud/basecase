@@ -26,6 +26,18 @@ function servoRail(ctx: CheckContext, acts: ActuatorSpec[], source: PowerSource)
   );
 }
 
+export function servoSupplyVolts(ctx: CheckContext): number | undefined {
+  const source = findPowerSource(ctx);
+
+  if (!source) return undefined;
+
+  const acts = [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
+  const over = acts.some((a) => source.battery.fullV > a.volts[1] + 1e-6);
+  const rail = over ? servoRail(ctx, acts, source) : undefined;
+
+  return rail ? rail.regulator.vout : source.battery.nominalV;
+}
+
 function voltageRow(ctx: CheckContext, source: PowerSource): CheckRow {
   const b = source.battery;
   const over = ctx.servos.filter((p) => {
@@ -146,12 +158,11 @@ function stabilityStatus(margin: number, tip: number): CheckRow['status'] {
   return tip < 5 ? 'warn' : 'pass';
 }
 
-export function stabilityRows(ctx: CheckContext): CheckRow[] {
-  return ctx.onFloor.length && ctx.all.grams > 0 ? [stabilityRow(ctx)] : [];
-}
-
-function stabilityRow(ctx: CheckContext): CheckRow {
+export function stabilityOf(ctx: CheckContext): { marginMm: number; tipDeg: number } | undefined {
   const { onFloor, all } = ctx;
+
+  if (!onFloor.length || all.grams <= 0) return undefined;
+
   const pts = onFloor.flatMap((p): Array<[number, number]> => {
     const m = ctx.measures[p.id]!;
 
@@ -162,16 +173,25 @@ function stabilityRow(ctx: CheckContext): CheckRow {
       [m.min[0], m.max[2]],
     ];
   });
-  const margin = polygonMargin(convexHull(pts), [all.com[0], all.com[2]]);
-  const tip = (Math.atan2(margin, Math.max(1, all.com[1])) * 180) / Math.PI;
+  const marginMm = polygonMargin(convexHull(pts), [all.com[0], all.com[2]]);
 
+  return { marginMm, tipDeg: (Math.atan2(marginMm, Math.max(1, all.com[1])) * 180) / Math.PI };
+}
+
+export function stabilityRows(ctx: CheckContext): CheckRow[] {
+  const s = stabilityOf(ctx);
+
+  return s ? [stabilityRow(ctx, s.marginMm, s.tipDeg)] : [];
+}
+
+function stabilityRow(ctx: CheckContext, margin: number, tip: number): CheckRow {
   return {
     check: 'Standing stability',
     status: stabilityStatus(margin, tip),
     detail:
       margin <= 0
         ? `Centre of mass is ${Math.abs(Math.round(margin))} mm outside the feet: it falls over`
-        : `Centre of mass ${Math.round(margin)} mm inside the feet's edge, ${Math.round(all.com[1])} mm up: tips past ${tip.toFixed(1)}°`,
+        : `Centre of mass ${Math.round(margin)} mm inside the feet's edge, ${Math.round(ctx.all.com[1])} mm up: tips past ${tip.toFixed(1)}°`,
   };
 }
 

@@ -139,6 +139,16 @@ describe('build guide plan', () => {
     expect(html).toContain('Build like Left leg, mirrored');
   });
 
+  it('follows the proven assembly order and marks the steps the planner could not place', () => {
+    const order = { assembly: ['shell', 'torso'], unproven: ['left-foot'] };
+    const p = buildGuidePlan({ ...approximateScene('Test Bot', parts, joints), order }, 'PETG');
+
+    expect(stepWith(p, 'shell')).toBeLessThan(stepWith(p, 'torso'));
+    expect(p.steps[stepWith(p, 'left-foot')].unproven).toBe(true);
+    expect(p.steps[stepWith(p, 'torso')].unproven).toBeUndefined();
+    expect(plan().steps.some((s) => s.unproven)).toBe(false);
+  });
+
   it('changes its fingerprint only when the build changes', () => {
     const project = { printer: 'bambu-p1s' as const, material: 'PETG' as const, infillPct: 15, joints };
     const before = guideFingerprint('Test Bot', parts, project);

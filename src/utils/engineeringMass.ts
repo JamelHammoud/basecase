@@ -110,8 +110,9 @@ export function massOf(ids: Iterable<string>, byId: Map<string, PartMass>): { gr
 
 export function downstreamOf(joint: RobotJoint, joints: RobotJoint[]): Set<string> {
   const set = new Set(joint.child);
-  const grows = (k: RobotJoint) =>
-    k !== joint && !k.child.every((id) => set.has(id)) && k.parent.some((id) => set.has(id));
+  const below = new Set([joint.id]);
+  const hangs = (k: RobotJoint) => k.parent.some((id) => set.has(id)) || (!!k.parentJoint && below.has(k.parentJoint));
+  const grows = (k: RobotJoint) => !below.has(k.id) && hangs(k);
   let grew = true;
 
   while (grew) {
@@ -121,6 +122,7 @@ export function downstreamOf(joint: RobotJoint, joints: RobotJoint[]): Set<strin
       if (!grows(k)) continue;
 
       k.child.forEach((id) => set.add(id));
+      below.add(k.id);
       grew = true;
     }
   }

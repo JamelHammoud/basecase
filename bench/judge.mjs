@@ -38,7 +38,7 @@ function claudeEnv() {
   return env;
 }
 
-function runClaude(prompt, cwd) {
+export function runClaude(prompt, cwd) {
   return new Promise((resolve, reject) => {
     const args = [
       '-p',
@@ -62,7 +62,7 @@ function runClaude(prompt, cwd) {
         const res = JSON.parse(out);
         const final = Array.isArray(res) ? res.findLast((e) => e.type === 'result') : res;
 
-        resolve(String(final?.result ?? ''));
+        resolve({ text: String(final?.result ?? ''), costUsd: final?.total_cost_usd ?? null });
       } catch {
         reject(new Error(`claude exited ${code}: ${(err || out).slice(0, 400)}`));
       }
@@ -205,13 +205,13 @@ export async function judgeRun(runDir, robotKey) {
   const refs = copyReferencePhotos(robot, robotKey, dir);
   const tree = assemblyTree(robot, runDir);
   const keys = robot.concept ? CONCEPT_KEYS : REPLICA_KEYS;
-  const text = await runClaude(judgePrompt({ robot, refs, renders, tree, keys }), dir);
+  const { text, costUsd } = await runClaude(judgePrompt({ robot, refs, renders, tree, keys }), dir);
   const verdict = extractJson(text, keys[0]);
 
   if (!verdict) throw new Error(`Judge gave no JSON: ${text.slice(0, 300)}`);
 
   const mean = keys.reduce((s, k) => s + Number(verdict[k] ?? 0), 0) / keys.length;
-  const result = { score: Math.round(mean * 100) / 10, ...verdict };
+  const result = { score: Math.round(mean * 100) / 10, ...verdict, costUsd };
 
   fs.writeFileSync(path.join(runDir, 'judge.json'), JSON.stringify(result, null, 1));
 

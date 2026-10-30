@@ -13,16 +13,26 @@ export const partLabel = (ctx: CheckContext, id: string) =>
 
 const MARK: Record<CheckRow['status'], string> = { pass: 'PASS', warn: 'WARN', fail: 'FAIL', 'not run': 'NOT RUN' };
 
+function jointLimits(l: EngineeringReport['joints'][number]): string {
+  if (l.stallShare === undefined) return ' (no actuator data)';
+
+  if (l.ratedNm === undefined)
+    return ` vs maker limit ${nm(l.stallNm!)} (${Math.round(l.stallShare * 100)}%) ${MARK[l.status]}`;
+
+  const sim = l.simRmsNm === undefined ? '' : ` from ${nm(l.simRmsNm)} N·m RMS in the walk sim`;
+  const heat = l.heatShare === undefined ? '' : `, heat ${l.heatShare.toFixed(2)}× rated${sim}`;
+
+  return ` vs stall ${nm(l.stallNm!)} / rated ${nm(l.ratedNm)}${l.ratedEstimated ? ' (estimated)' : ''}${l.volts ? ` at ${l.volts} V` : ''} (${l.stallShare.toFixed(2)} of stall${heat}) ${MARK[l.status]}`;
+}
+
 function jointTextLine(l: EngineeringReport['joints'][number], toAgent: (v: V3) => V3): string {
   const o = toAgent(l.joint.origin).map((v) => Math.round(v));
-  const limits =
-    l.ratedNm !== undefined
-      ? ` vs rated ${nm(l.ratedNm)} / stall ${nm(l.stallNm!)} (${Math.round((l.staticNm / l.stallNm!) * 100)}% of stall) ${MARK[l.status]}`
-      : ' (no actuator data)';
+  const crouch = l.crouchNm === undefined ? '' : `, ${l.crouchDeg?.toFixed(0)}° crouch ${nm(l.crouchNm)}`;
+  const load = l.kind === 'stance' ? `stance load ${nm(l.loadNm)}` : `holding load ${nm(l.loadNm)}`;
 
   return (
-    `- ${l.joint.id} ${l.joint.name}: carries ${fmtG(l.massG)}; hold ${nm(l.swingNm)}, stance ${nm(l.stanceNm)} → ${nm(l.staticNm)} N·m` +
-    limits +
+    `- ${l.joint.id} ${l.joint.name}: carries ${fmtG(l.massG)}; hold ${nm(l.swingNm)}, stance as modeled ${nm(l.stanceNm)}${crouch} → ${load} N·m` +
+    jointLimits(l) +
     ` · axis through [${o.join(', ')}]`
   );
 }
@@ -36,12 +46,10 @@ export function engineeringText(r: EngineeringReport, toAgent: (v: V3) => V3): s
   if (r.joints.length) {
     lines.push(
       '',
-      'Joints (static N·m: worst of holding the distal side across the range and, for legs, standing on that leg; limits are 1/5 of stall for PASS and rated torque for WARN):',
+      "Joints. Leg joints carry the whole robot on one leg at the gait's crouch (at least 30°): PASS at ≤ 0.40 of stall and walking heat (0.67 × that load, or the RMS measured walking the trained policy when the peak test ran) ≤ rated; WARN to 0.60 of stall and 1.6× rated; FAIL above. Other joints hold their limb across the range: PASS at ≤ 0.40 of stall and ≤ rated, FAIL above 0.60 of stall. Stall is taken at the servo supply voltage; rated is the maker's continuous torque, else 1/4 of stall.",
       ...r.joints.map((l) => jointTextLine(l, toAgent)),
     );
   }
-
-  lines.push('', 'Static checks only: walking adds dynamic load, so keep leg joints under 1/5 of stall where you can.');
 
   return lines.join('\n');
 }

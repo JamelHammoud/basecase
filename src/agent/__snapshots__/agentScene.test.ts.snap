@@ -4,45 +4,49 @@ exports[`agentCatalog > lists matching components, hardware and supplies 1`] = `
 "Components (exact manufacturer geometry; size is x × y × z in mm as placed with rotation [0, 0, 0]):
 Servos:
 - component:feetech-sts3215 — Feetech STS3215 · 45.22 × 24.72 × 37.8 mm · Stall torque 19.5 kg·cm @ 7.4 V (C001), 30 kg·cm @ 12 V (C018); Speed 0.192 s/60° @ 7.4 V; Voltage 4–7.4 V (C001), 4–14 V (C018) · Mounting: Case 45.2 × 24.7 × 35 mm. Output spline 25T, Ø5.9 mm, 3.4 mm proud, axis 12.5 mm from the case center; horn screw M3 × 6. Rear idler boss Ø6 mm, 4.1 mm proud. Aluminium horns on both faces: Ø19.95, 4 × M3 threaded on a Ø14 circle, faces 1.4 mm beyond the case, so a U-bracket bolts to both. 4× M2 on the top and bottom faces, 20.5 mm apart across the width (Feetech STS3215 drawing).
-  Versions (buy one; put it in the key): component:feetech-sts3215|c001 = 7.4 V (C001), stall 1.91 N·m, rated 0.49 N·m at 7.4 V (input 4–7.4 V), stall 2.5 A; component:feetech-sts3215|c018 = 12 V (C018), stall 2.94 N·m, rated 0.98 N·m at 12 V (input 4–14 V), stall 2.7 A; component:feetech-sts3215|c044 = 7.4 V, 1:191 (C044), stall 2.69 N·m, rated 0.88 N·m at 7.4 V (input 4–7.4 V); component:feetech-sts3215|c046 = 7.4 V, 1:147 (C046), stall 1.41 N·m, rated 0.47 N·m at 7.4 V (input 4–7.4 V)
+  Versions (buy one; put it in the key): component:feetech-sts3215|c001 = 7.4 V (C001), stall 1.91 N·m, rated 0.49 N·m at 7.4 V (input 4–7.4 V), 52 rpm, stall 2.5 A · ≈ $20.00 list at Seeed Studio, 2026-10-29, 0.096 N·m/$; component:feetech-sts3215|c018 = 12 V (C018), stall 2.94 N·m, rated 0.98 N·m at 12 V (input 4–14 V), 45 rpm, stall 2.7 A · ≈ $27.99 list at OpenELAB (Waveshare sells its 12 V ST3215 for $21.99), 2026-10-29, 0.105 N·m/$; component:feetech-sts3215|c044 = 7.4 V, 1:191 (C044), stall 2.69 N·m, rated 0.88 N·m at 7.4 V (input 5–8.4 V), 86 rpm, stall 3.8 A · ≈ $21.99 list at Seeed Studio, 2026-10-29, 0.122 N·m/$; component:feetech-sts3215|c046 = 7.4 V, 1:147 (C046), stall 1.41 N·m, rated 0.47 N·m at 7.4 V (input 5–8.4 V), 106 rpm, stall 3.3 A · ≈ $20.00 list at Seeed Studio, 2026-10-29, 0.071 N·m/$
+  Ports (from the part's position at rotation [0, 0, 0], Z up; use with mate and fasten): output (output Ø19.95) at [-12.5, 0, 18.35] axis [0, 0, 1]; horn (hole_circle M3 3 deep 4× on Ø14) at [-12.5, 0, 18.35] axis [0, 0, 1], holes horn-1…4; idler (boss Ø19.95) at [-12.5, 0, -18.9] axis [0, 0, -1]; idler-horn (hole_circle M3 3 deep 4× on Ø14) at [-12.5, 0, -18.9] axis [0, 0, -1], holes idler-horn-1…4; case-top-1…4 (screw M2 Ø1.6 3 deep) at [-4.2, 10.25, 16.3] [-4.2, -10.25, 16.3] [20.2, 10.25, 16.3] [20.2, -10.25, 16.3] axis [0, 0, 1]; case-bottom-1…4 (screw M2 Ø1.6 1.5 deep) at [-4.2, 10.25, -15.7] [-4.2, -10.25, -15.7] [16.45, 10.25, -15.7] [16.45, -10.25, -15.7] axis [0, 0, -1]
 - component:feetech-sts3250 — Feetech STS3250 · 45.22 × 24.72 × 37.8 mm · Stall torque 50 kg·cm (4.9 N·m) at 12 V; Speed 0.133 s/60° (75 rpm) at 12 V; Voltage 6–12 V · Mounting: Case 45.2 × 24.7 × 35 mm, same as the STS3215. 4× M2 on the top and bottom faces, 20.5 mm apart across the width. Output spline 25T, Ø5.9 mm, horn screw M3 × 6; rear idler boss Ø6 mm.
-  Actuator: stall 4.90 N·m, rated 1.57 N·m at 12 V (input 6–12 V), stall 4.2 A
+  Actuator: stall 4.90 N·m, rated 1.57 N·m at 12 V (input 6–12 V), 75 rpm, stall 4.2 A · ≈ $73.99 list at OpenELAB (listed as STS3250-C002, 12 V 50 kg·cm), 2026-10-29, 0.066 N·m/$
+  Ports (from the part's position at rotation [0, 0, 0], Z up; use with mate and fasten): output (output Ø19.95) at [-12.5, 0, 18.35] axis [0, 0, 1]; horn (hole_circle M3 3 deep 4× on Ø14) at [-12.5, 0, 18.35] axis [0, 0, 1], holes horn-1…4; idler (boss Ø19.95) at [-12.5, 0, -18.9] axis [0, 0, -1]; idler-horn (hole_circle M3 3 deep 4× on Ø14) at [-12.5, 0, -18.9] axis [0, 0, -1], holes idler-horn-1…4; case-top-1…4 (screw M2 Ø1.6 3 deep) at [-4.2, 10.25, 16.3] [-4.2, -10.25, 16.3] [20.2, 10.25, 16.3] [20.2, -10.25, 16.3] axis [0, 0, 1]; case-bottom-1…4 (screw M2 Ø1.6 1.5 deep) at [-4.2, 10.25, -15.7] [-4.2, -10.25, -15.7] [16.45, 10.25, -15.7] [16.45, -10.25, -15.7] axis [0, 0, -1]
 - component:waveshare-st3215-hs — Waveshare ST3215-HS · 45.22 × 24.72 × 37.8 mm · Stall torque 20 kg·cm (2.0 N·m) at 12 V; Speed 0.094 s/60° (106 rpm) at 12 V; Voltage 6–12.6 V · Mounting: Case 45.2 × 24.7 × 35 mm. Output axis 10.1 mm from the output end. Output face: 4 holes in two columns 20.7 mm apart, rows 20.5 mm apart (M2 on Feetech’s drawing). Ø19.2 aluminium horns on both faces, 4 holes on a 14 mm circle.
+  Actuator: stall 1.96 N·m at 12 V (input 6–12.6 V), 106 rpm, stall 2.4 A · ≈ $21.99 list at Waveshare, 2026-10-29, 0.089 N·m/$
+  Ports (from the part's position at rotation [0, 0, 0], Z up; use with mate and fasten): output (output Ø19.95) at [-12.5, 0, 18.35] axis [0, 0, 1]; horn (hole_circle M3 3 deep 4× on Ø14) at [-12.5, 0, 18.35] axis [0, 0, 1], holes horn-1…4; idler (boss Ø19.95) at [-12.5, 0, -18.9] axis [0, 0, -1]; idler-horn (hole_circle M3 3 deep 4× on Ø14) at [-12.5, 0, -18.9] axis [0, 0, -1], holes idler-horn-1…4; case-top-1…4 (screw M2 Ø1.6 3 deep) at [-4.2, 10.25, 16.3] [-4.2, -10.25, 16.3] [20.2, 10.25, 16.3] [20.2, -10.25, 16.3] axis [0, 0, 1]; case-bottom-1…4 (screw M2 Ø1.6 1.5 deep) at [-4.2, 10.25, -15.7] [-4.2, -10.25, -15.7] [16.45, 10.25, -15.7] [16.45, -10.25, -15.7] axis [0, 0, -1]
 Grippers:
-- component:so101-gripper — SO-101 Gripper · 65.6 × 52 × 106.4 mm · Actuator 1× Feetech STS3215; DOF 1 (revolute jaw); Travel −10° to +100° · Mounting: Static jaw and servo as published in the SO-101 model; the moving jaw is shown at 0°. Mounts to the wrist-roll servo horn with 4× M3 × 6."
+- component:so101-gripper — SO-101 Gripper · 65.6 × 52 × 106.4 mm · Actuator 1× Feetech STS3215; DOF 1 (revolute jaw); Travel −10° to +100° · no price · Mounting: Static jaw and servo as published in the SO-101 model; the moving jaw is shown at 0°. Mounts to the wrist-roll servo horn with 4× M3 × 6."
 `;
 
 exports[`agentCatalog > lists matching components, hardware and supplies 2`] = `
 "
 Hardware (generated to ISO/DIN or maker catalog dimensions): hardware:<type>|<size>|<length mm>[|<finish>|<drive>], e.g. hardware:socket_head|M3|10, hardware:pan_head|M3|8|zinc|phillips, hardware:heat_insert|M3|4, hardware:bearing|608, hardware:extrusion|2020|300, hardware:linear_rail|MGN12|245, hardware:gt2_pulley|20T-5
-- hardware:socket_head — Socket Head Screw (Cap screw with a tall round head); sizes M2, M2.5, M3, M4, M5, M6, M8, M10, M12; lengths per size; drives hex, torx, phillips, pozidriv, slotted (default hex)
+- hardware:socket_head — Socket Head Screw (Cap screw with a tall round head); sizes M2, M2.5, M3, M4, M5, M6, M8, M10, M12; lengths per size; drives hex, torx, phillips, pozidriv, slotted (default hex); prices: M2 ≈ $9.00 per 100 list at Albany County Fasteners (A2 stainless M2 × 8, price at 100), 2026-10-29; M2.5 ≈ $8.00 per 100 list at Albany County Fasteners (A2 stainless M2.5 × 8, price at 100), 2026-10-29; M3 ≈ $4.43 per 100 list at Bolt Depot (A2 stainless; search summary), 2026-10-17
 
 Supplies (bought, not modeled: wiring, chargers, filament, tools). Add them to the BOM with set_build({ extras }), not add_parts. Batteries, cell holders and regulators with exact shapes are Power components (find_parts power); place those with add_parts:
-- supply:hex-key-set — Hex Key Set · 1.5–5 mm metric hex drivers (M2–M5 socket heads)"
+- supply:hex-key-set — Hex Key Set · 1.5–5 mm metric hex drivers (M2–M5 socket heads) · no price"
 `;
 
 exports[`agentCatalog > lists matching components, hardware and supplies 3`] = `
 "Components (exact manufacturer geometry; size is x × y × z in mm as placed with rotation [0, 0, 0]):
 Microcontrollers:
-- component:seeed-xiao-esp32s3 — Seeed XIAO ESP32S3 · 22.48 × 17.78 × 4.46 mm · SoC ESP32-S3R8, 240 MHz dual-core; Memory 8 MB PSRAM, 8 MB flash; Wireless Wi-Fi 2.4 GHz, Bluetooth LE 5 · Mounting: PCB 21.135 × 17.78 mm, R1.905 corners, no mounting holes. Pin rows 15.24 mm apart; solder or socket it.
+- component:seeed-xiao-esp32s3 — Seeed XIAO ESP32S3 · 22.48 × 17.78 × 4.46 mm · SoC ESP32-S3R8, 240 MHz dual-core; Memory 8 MB PSRAM, 8 MB flash; Wireless Wi-Fi 2.4 GHz, Bluetooth LE 5 · no price · Mounting: PCB 21.135 × 17.78 mm, R1.905 corners, no mounting holes. Pin rows 15.24 mm apart; solder or socket it.
 Power:
-- component:pololu-s13v20f5 — Pololu S13V20F5 5 V 2 A Buck-Boost Regulator · 12.07 × 8.89 × 5.37 mm · Output 5 V, 2 A max; Input 2.8–22 V; Efficiency 85–95% · Mounting: PCB 12.1 × 8.9 × 1.02 mm, 5.4 mm tall overall: 3.0 mm of parts above the board, 1.4 mm below. No mounting holes: 3× Ø1.02 mm pin holes (VIN, GND, VOUT) on a 2.54 mm grid along one short edge, for a straight or right-angle header or wires (Pololu S13VxF5 drawing).
+- component:pololu-s13v20f5 — Pololu S13V20F5 5 V 2 A Buck-Boost Regulator · 12.07 × 8.89 × 5.37 mm · Output 5 V, 2 A max; Input 2.8–22 V; Efficiency 85–95% · ≈ $17.95 list at Pololu, 2026-10-19 · Mounting: PCB 12.1 × 8.9 × 1.02 mm, 5.4 mm tall overall: 3.0 mm of parts above the board, 1.4 mm below. No mounting holes: 3× Ø1.02 mm pin holes (VIN, GND, VOUT) on a 2.54 mm grid along one short edge, for a straight or right-angle header or wires (Pololu S13VxF5 drawing).
   Regulator: 2.8–22 V in, 5 V out, 2 A
-- component:ovonic-2s-2200-50c — Ovonic 2S 2200 mAh 50C LiPo · 87 × 33 × 18 mm · Voltage 7.4 V nominal, 8.4 V full; Capacity 2200 mAh, 16.3 Wh; Discharge 50C continuous, 100C burst (hobby rating) · Mounting: Soft shrink-wrapped pack 87 × 33 × 18 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance, not a tight pocket (Ovonic spec list).
+- component:ovonic-2s-2200-50c — Ovonic 2S 2200 mAh 50C LiPo · 87 × 33 × 18 mm · Voltage 7.4 V nominal, 8.4 V full; Capacity 2200 mAh, 16.3 Wh; Discharge 50C continuous, 100C burst (hobby rating) · ≈ $22.65 list at Ovonic US store, 2026-10-19 · Mounting: Soft shrink-wrapped pack 87 × 33 × 18 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance, not a tight pocket (Ovonic spec list).
   Battery: 7.4 V nominal, 8.4 V charged, 2.2 Ah, 50C continuous
-- component:ovonic-3s-2200-50c — Ovonic 3S 2200 mAh 50C LiPo · 105 × 33 × 21 mm · Voltage 11.1 V nominal, 12.6 V full; Capacity 2200 mAh, 24.4 Wh; Discharge 50C continuous, 100C burst (hobby rating) · Mounting: Soft shrink-wrapped pack 105 × 33 × 21 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).
+- component:ovonic-3s-2200-50c — Ovonic 3S 2200 mAh 50C LiPo · 105 × 33 × 21 mm · Voltage 11.1 V nominal, 12.6 V full; Capacity 2200 mAh, 24.4 Wh; Discharge 50C continuous, 100C burst (hobby rating) · ≈ $33.25 per 2 list at Ovonic US store (2-pack), 2026-10-19 · Mounting: Soft shrink-wrapped pack 105 × 33 × 21 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).
   Battery: 11.1 V nominal, 12.6 V charged, 2.2 Ah, 50C continuous
-- component:ovonic-4s-2200-35c — Ovonic 4S 2200 mAh 35C LiPo · 77 × 34 × 34 mm · Voltage 14.8 V nominal, 16.8 V full; Capacity 2200 mAh, 32.6 Wh; Discharge 35C continuous, 70C burst (hobby rating) · Mounting: Soft shrink-wrapped pack 77 × 34 × 34 mm (±5 mm length, ±2 mm width and height; Ovonic’s US dimension photo shows 76 × 35 × 33), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).
+- component:ovonic-4s-2200-35c — Ovonic 4S 2200 mAh 35C LiPo · 77 × 34 × 34 mm · Voltage 14.8 V nominal, 16.8 V full; Capacity 2200 mAh, 32.6 Wh; Discharge 35C continuous, 70C burst (hobby rating) · ≈ $27.00 list at Ovonic US store, 2026-10-19 · Mounting: Soft shrink-wrapped pack 77 × 34 × 34 mm (±5 mm length, ±2 mm width and height; Ovonic’s US dimension photo shows 76 × 35 × 33), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).
   Battery: 14.8 V nominal, 16.8 V charged, 2.2 Ah, 35C continuous
-- component:ovonic-6s-5000-120c — Ovonic 6S 5000 mAh 120C LiPo · 156 × 44 × 48 mm · Voltage 22.2 V nominal, 25.2 V full; Capacity 5000 mAh, 111 Wh; Discharge 120C continuous, 240C burst (hobby rating; far above what the cells sustain) · Mounting: Soft shrink-wrapped pack 156 × 44 × 48 mm (L × W × H, ±5 mm length, ±2 mm width and height), label face 156 × 44 on top, edges rounded. Main and balance leads leave one short end; exit points are not published. Size a tray for up to 161 × 46 × 50 mm and strap it down (Ovonic spec list).
+- component:ovonic-6s-5000-120c — Ovonic 6S 5000 mAh 120C LiPo · 156 × 44 × 48 mm · Voltage 22.2 V nominal, 25.2 V full; Capacity 5000 mAh, 111 Wh; Discharge 120C continuous, 240C burst (hobby rating; far above what the cells sustain) · ≈ $93.54 per 2 list at Ovonic US store (2-pack), 2026-10-19 · Mounting: Soft shrink-wrapped pack 156 × 44 × 48 mm (L × W × H, ±5 mm length, ±2 mm width and height), label face 156 × 44 on top, edges rounded. Main and balance leads leave one short end; exit points are not published. Size a tray for up to 161 × 46 × 50 mm and strap it down (Ovonic spec list).
   Battery: 22.2 V nominal, 25.2 V charged, 5 Ah, 120C continuous
 
 Supplies (bought, not modeled: wiring, chargers, filament, tools). Add them to the BOM with set_build({ extras }), not add_parts. Batteries, cell holders and regulators with exact shapes are Power components (find_parts power); place those with add_parts:
-- supply:lipo-2s-2200 — 2S LiPo 2200 mAh · 7.4 V nominal (8.4 V full), 2200 mAh, 25C+, XT60, about 105 × 34 × 18 mm · about 120 g
-- supply:lipo-3s-2200 — 3S LiPo 2200 mAh · 11.1 V nominal (12.6 V full), 2200 mAh, 25C+, XT60, about 105 × 34 × 25 mm · about 172 g
-- supply:lipo-balance-charger — LiPo Balance Charger · 2S–4S balance charger, XT60 output, USB-C or AC input
-- supply:lipo-safe-bag — LiPo Safe Bag · Fire-resistant charging bag, fits a 2200 mAh pack
-- supply:lipo-voltage-alarm — LiPo Voltage Alarm · 1S–8S cell checker with low-voltage buzzer, plugs into the balance lead · about 9 g"
+- supply:lipo-2s-2200 — 2S LiPo 2200 mAh · 7.4 V nominal (8.4 V full), 2200 mAh, 25C+, XT60, about 105 × 34 × 18 mm · about 120 g · no price
+- supply:lipo-3s-2200 — 3S LiPo 2200 mAh · 11.1 V nominal (12.6 V full), 2200 mAh, 25C+, XT60, about 105 × 34 × 25 mm · about 172 g · ≈ $29.99 list at ReadyMadeRC (Gens Ace 25C), 2026-10-17
+- supply:lipo-balance-charger — LiPo Balance Charger · 2S–4S balance charger, XT60 output, USB-C or AC input · ≈ $35.99 list at RaceDayQuads (ToolkitRC M4AC), 2026-10-17
+- supply:lipo-safe-bag — LiPo Safe Bag · Fire-resistant charging bag, fits a 2200 mAh pack · ≈ $10.99 list at RaceDayQuads (RDQ LiPo Bag), 2026-10-17
+- supply:lipo-voltage-alarm — LiPo Voltage Alarm · 1S–8S cell checker with low-voltage buzzer, plugs into the balance lead · about 9 g · no price"
 `;
 
 exports[`scene ops > finds where each op lands 1`] = `
@@ -109,6 +113,10 @@ exports[`scene ops > mirrors parts and swaps side words 1`] = `
     "kind": "box",
     "locked": false,
     "mechanicalTag": "3D Printed PLA/PETG",
+    "mirrorOf": {
+      "axis": "x",
+      "id": "left-arm",
+    },
     "name": "Right Arm",
     "note": "",
     "position": [
@@ -131,7 +139,10 @@ exports[`scene ops > mirrors parts and swaps side words 1`] = `
         30,
         20,
       ],
-      "code": "cube([10, 20, 30]);",
+      "code": "// basecase: mirror x
+mirror([1, 0, 0]) {
+  cube([10, 20, 30]);
+}",
       "edges": [
         5,
         -15,
@@ -182,6 +193,10 @@ exports[`scene ops > mirrors parts and swaps side words 1`] = `
     "kind": "cad_part",
     "locked": false,
     "mechanicalTag": "3D Printed PLA/PETG",
+    "mirrorOf": {
+      "axis": "x",
+      "id": "shell",
+    },
     "name": "Top Shell (Mirror)",
     "note": "",
     "position": [

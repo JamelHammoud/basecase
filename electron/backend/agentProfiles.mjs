@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { CAD_AGENT_INSTRUCTIONS } from '../cad-agent-prompt.mjs';
+import { cadAgentInstructions } from '../cad-agent-prompt.mjs';
 import { codexEnv, codexSessionMeta } from './codexProfile.mjs';
 import { CAD_MCP_SERVER, geminiEnv } from './geminiProfile.mjs';
 import { CLAUDE_AGENT_COMMAND, CODEX_AGENT_COMMAND, GEMINI_AGENT_COMMAND, LEGACY_AGENT_COMMAND } from './constants.mjs';
@@ -26,8 +26,11 @@ export function agentKindOf(command) {
 
 export const isAiAgent = (kind) => kind !== 'offline';
 
-export const cadInstructions = (offline) =>
-  offline ? `${CAD_AGENT_INSTRUCTIONS}\n\n${OFFLINE_NOTE}` : CAD_AGENT_INSTRUCTIONS;
+export const cadInstructions = (offline, { subagents = false } = {}) => {
+  const instructions = cadAgentInstructions({ subagents });
+
+  return offline ? `${instructions}\n\n${OFFLINE_NOTE}` : instructions;
+};
 
 const PROCESS_ENV = {
   codex: ({ offline, env, libraryDir }) => codexEnv({ offline, env, configDir: path.join(libraryDir, 'agent-config') }),

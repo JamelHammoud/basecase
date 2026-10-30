@@ -9,8 +9,9 @@ export const defineJoints = {
     title: 'Declare joints',
     description:
       "Declares the robot's joints so the app can check them: which parts sit on each side, which servo drives it, and its range. " +
-      'parent = parts the joint is mounted on (toward the torso); child = the parts of the next link that turn with it (the app adds everything further out through the other joints). ' +
+      "parent = parts the joint is mounted on (toward the torso); child = the parts of the next link that turn with it (the app adds everything further out through the other joints, and screws, inserts and nuts follow the parts they clamp, so don't list them). Ranges are what the joint must do, not what clears today; verify_design lists any range narrower than its first definition. " +
       "With actuators, the pivot and axis come from the servo's real output spline, so omit origin and axis unless the joint is not on a servo output (a linkage, an idler-only joint). " +
+      'A joint with the id of a skeleton joint (define_skeleton) takes its origin, axis, range, limb and name from it when you omit them, and is flagged when its servo output is off the skeleton axis. ' +
       'limb sets the load case: leg joints are also checked standing on that leg. Merged by id unless replace is true.',
     inputSchema: {
       joints: z
@@ -37,8 +38,10 @@ export const defineJoints = {
               .max(2)
               .optional()
               .describe('Servo part ids; two opposed servos share the load'),
-            origin: vec3.optional().describe('A point on the axis, mm, z up (omit to use the servo output)'),
-            axis: vec3.optional().describe('Axis direction (omit to use the servo output axis)'),
+            origin: vec3
+              .optional()
+              .describe('A point on the axis, mm, z up (omit to use the servo output or the skeleton joint)'),
+            axis: vec3.optional().describe('Axis direction (omit to use the servo output or the skeleton joint)'),
             range: z
               .tuple([z.number().min(-2000).max(0), z.number().min(0).max(2000)])
               .optional()

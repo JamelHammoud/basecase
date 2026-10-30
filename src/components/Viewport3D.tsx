@@ -15,7 +15,17 @@ const DETACHED: Viewport3DHandle = {
   pickAt: () => null,
   captureViews: async () => [],
   interference: async () => ({ interferences: [], coplanar: [] }),
+  fastenerChains: async () => ({ screws: [], sleeves: [] }),
+  assembly: async () => ({
+    chains: { screws: [], sleeves: [] },
+    moves: {},
+    drivers: {},
+    splits: {},
+    timedOut: false,
+    ms: 0,
+  }),
   measureParts: async () => ({}),
+  visibleShares: async () => ({}),
   printShapes: async () => ({}),
   printMeshes: async () => ({}),
   printThreeMf: async () => ({}),
@@ -27,6 +37,7 @@ const DETACHED: Viewport3DHandle = {
   animateSpawn: () => {},
   setPose: () => {},
   restBounds: () => null,
+  silhouetteShots: () => [],
   posedInterference: async () => [],
   posedFloor: () => null,
   projectPoints: (points) => points.map(() => ({ x: 0, y: 0, visible: false })),
@@ -83,7 +94,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, ViewportProps>(func
     ref,
     () =>
       new Proxy(DETACHED, {
-        get: (_, key: keyof Viewport3DHandle) => (engineRef.current?.api ?? DETACHED)[key],
+        get: (_, key: keyof Viewport3DHandle) => engineRef.current?.api[key] ?? DETACHED[key],
       }),
     [],
   );

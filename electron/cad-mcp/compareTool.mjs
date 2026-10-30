@@ -1,59 +1,9 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { z } from 'zod';
-import { IMAGE_EXT, NO_WEB, REFERENCES_DIR, VIEW, bridge, evidencePath, fail, fetchWithTimeout } from './shared.mjs';
-
-function loadSavedReference(r) {
-  if (!REFERENCES_DIR || !fs.existsSync(REFERENCES_DIR)) throw new Error('No reference images saved yet.');
-
-  const file = fs.readdirSync(REFERENCES_DIR).find((f) => f.toLowerCase().startsWith(`${r.toLowerCase()}.`));
-
-  if (!file) throw new Error(`${r} not found. The prompt lists the saved names (ref-N).`);
-
-  return {
-    buf: fs.readFileSync(path.join(REFERENCES_DIR, file)),
-    mime: IMAGE_EXT[path.extname(file).toLowerCase()],
-  };
-}
-
-async function loadWebReference(r) {
-  if (NO_WEB) throw new Error('Web images are off in this session.');
-
-  const res = await fetchWithTimeout(r, 25000);
-
-  if (!res.ok) throw new Error(`The image URL returned ${res.status}.`);
-
-  const mime =
-    (res.headers.get('content-type') || '').split(';')[0].trim() ||
-    IMAGE_EXT[path.extname(new URL(r).pathname).toLowerCase()];
-
-  return { mime, buf: Buffer.from(await res.arrayBuffer()) };
-}
-
-function loadEvidenceReference(r) {
-  const full = evidencePath(r);
-
-  return { buf: fs.readFileSync(full), mime: IMAGE_EXT[path.extname(full).toLowerCase()] };
-}
-
-async function readReference(r) {
-  if (/^ref-\d+$/i.test(r)) return loadSavedReference(r);
-
-  if (/^https?:\/\//i.test(r)) return loadWebReference(r);
-
-  return loadEvidenceReference(r);
-}
-
-async function loadReference(ref) {
-  const r = String(ref).trim();
-  const { buf, mime } = await readReference(r);
-
-  if (!/^image\/(png|jpeg|webp|gif)$/.test(mime || '')) throw new Error(`${r} is not a PNG, JPEG, WebP or GIF image.`);
-
-  if (buf.length > 20_000_000) throw new Error(`${r} is larger than 20 MB.`);
-
-  return `data:${mime};base64,${buf.toString('base64')}`;
-}
+import { imageCaps } from './imageCaps.mjs';
+import { loadReference } from './references.mjs';
+import { VIEW, bridge, fail } from './shared.mjs';
+import { maskSource, measureSilhouette, silhouetteRows, smallReference } from './silhouetteMeasure.mjs';
+import { targetReply } from './targetCompare.mjs';
 
 const isProfiled = (ids) => (p) =>
   p.bounds &&
@@ -103,35 +53,20 @@ function profileText(scene, ids) {
   ].join('\n');
 }
 
-function bandFlag(r, ratio) {
-  if (!(r > 0.005 && (ratio < 0.85 || ratio > 1.15))) return '';
-
-  return ratio < 1 ? '  ← model too narrow' : '  ← model too wide';
-}
-
-function silhouetteRows(sc) {
-  return sc.reference.bands.map((r, i) => {
-    const m = sc.model.bands[i] ?? 0;
-    const ratio = r > 0.005 ? m / r : 0;
-    const flag = bandFlag(r, ratio);
-
-    return `${i * 10}–${(i + 1) * 10}% from top: photo ${r.toFixed(2)}, model ${m.toFixed(2)}${r > 0.005 ? ` (×${ratio.toFixed(2)})` : ''}${flag}`;
-  });
-}
-
-async function silhouetteText({ refUrl, reference, straight, ids }) {
+async function silhouetteText({ ref, refUrl, straight, ids }) {
   try {
-    const sc = await bridge('silhouette_compare', { reference: refUrl, view: straight, ids }, 60000);
+    const sc = await measureSilhouette({ ref, views: [straight], ids, small: refUrl });
 
     if (sc?.plain && sc.reference && sc.model) {
       return [
-        `Measured silhouettes, ${straight} view vs ${reference} (only meaningful if that photo is straight-on from the ${straight}; perspective photos distort widths 5–10%, so bands are flagged beyond ±15%; width of each tenth of the height, as a fraction of the height):`,
+        `Measured silhouettes, ${straight} view vs ${ref.name} (only meaningful if that photo is straight-on from the ${straight}; perspective photos distort widths 5–10%, so bands are flagged beyond ±15%; width of each tenth of the height, as a fraction of the height):`,
         ...silhouetteRows(sc),
         `Overall width/height: photo ${sc.reference.aspect.toFixed(2)}, model ${sc.model.aspect.toFixed(2)}.`,
+        `Photo mask: ${maskSource(sc)}.`,
       ].join('\n');
     }
 
-    if (sc && !sc.plain) return `(No measured silhouette for ${reference}: ${sc.reason ?? 'background not plain'}.)`;
+    if (sc && !sc.plain) return `(No measured silhouette for ${ref.name}: ${sc.reason ?? 'background not plain'}.)`;
   } catch {}
 
   return '';
@@ -145,16 +80,6 @@ const CHECKLIST = [
   "Shadows, reflections, highlights and colour changes are not geometry unless you can see an edge, gap or step. If the photo is at an angle you didn't match, call compare again with a closer az/el.",
   'Write the 3 biggest differences, then fix them before moving on.',
 ].join('\n');
-
-async function smallReference(refUrl) {
-  try {
-    const small = await bridge('downscale_image', { dataUrl: refUrl, maxSide: 1024 }, 20000);
-
-    if (small?.dataUrl) return small.dataUrl;
-  } catch {}
-
-  return refUrl;
-}
 
 function pushImage(content, dataUrl) {
   const m = /^data:(image\/[\w+.-]+);base64,(.+)$/.exec(dataUrl || '');
@@ -171,14 +96,24 @@ export const compare = {
       'Pick views that match the photo: front/side/back/top for straight-on shots and drawings, or "az:<deg>,el:<deg>" for angled photos (az 0 = front, +90 = the robot\'s left side, −90 its right; el = degrees above horizontal). ' +
       'Use it after the block-out, after each subassembly and before you finish. Pass ids to compare one subassembly with a close-up photo.',
     inputSchema: {
-      reference: z.string().describe('ref-N, an evidence path, or an image URL'),
+      reference: z.string().describe('ref-N, an evidence path (SVG too), an image URL, or SVG code the user pasted'),
       views: z.array(VIEW).min(1).max(3).default(['front']),
       ids: z.array(z.string()).optional().describe('Only render these parts (for close-up photos)'),
+      target: z
+        .boolean()
+        .optional()
+        .describe(
+          'The reference is a target outline (a sketch or drawing the model should match): measure the fit and the gap in mm. SVG references always are.',
+        ),
     },
   },
-  handler: async ({ reference, views, ids }) => {
+  handler: async ({ reference, views, ids, target }) => {
     try {
-      const refUrl = await smallReference(await loadReference(reference));
+      const ref = await loadReference(reference);
+
+      if (ref.svg || target) return await targetReply({ ref, view: views[0], ids });
+
+      const refUrl = await smallReference(ref.dataUrl, imageCaps().photo);
       const [shots, scene] = await Promise.all([
         bridge('screenshot', { views, ids }, 60000),
         bridge('snapshot', {}).catch(() => null),
@@ -197,7 +132,7 @@ export const compare = {
       if (profile) content.push({ type: 'text', text: profile });
 
       const straight = views.find((v) => ['front', 'back', 'side'].includes(v));
-      const silhouette = straight ? await silhouetteText({ refUrl, reference, straight, ids }) : '';
+      const silhouette = straight ? await silhouetteText({ ref, refUrl, straight, ids }) : '';
 
       if (silhouette) content.push({ type: 'text', text: silhouette });
 

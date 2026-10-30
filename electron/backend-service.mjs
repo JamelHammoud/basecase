@@ -8,7 +8,7 @@ import { AcpAgent } from './backend/acpAgent.mjs';
 import { AgentBridge } from './backend/agentBridge.mjs';
 import { writeAiReference } from './backend/aiReference.mjs';
 import * as conversations from './backend/conversations.mjs';
-import { DEFAULT_WORKSPACE } from './backend/constants.mjs';
+import { DEFAULT_WORKSPACE, safeWorkspace } from './backend/constants.mjs';
 import { EventHub } from './backend/eventHub.mjs';
 import * as evidence from './backend/evidence.mjs';
 import { watchLibrary } from './backend/fileWatchers.mjs';
@@ -48,6 +48,7 @@ export class BasecaseBackendService {
       promptBlocks: (payload) => this.buildPromptBlocks(payload),
       secrets,
     });
+    this.bridge.serve('references', (_payload, workspaceId) => ({ names: this.references.ofLane(workspaceId) }));
     this.bridgeReady = this.startAgentBridge();
 
     this.setupFileWatchers();
@@ -209,7 +210,7 @@ export class BasecaseBackendService {
   buildPromptBlocks(payload) {
     return buildPromptBlocks(payload, {
       isAiAgent: this.isAiAgent(),
-      saveReferenceImage: (mime, base64) => this.saveReferenceImage(mime, base64),
+      saveReferenceImage: (mime, base64) => this.references.save(mime, base64, safeWorkspace(payload.workspaceId)),
       describeEvidenceFolder: (folderId) => this.describeEvidenceFolder(folderId),
     });
   }

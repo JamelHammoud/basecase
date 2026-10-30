@@ -7,6 +7,21 @@ export class ReferenceImages {
   constructor(referencesDir) {
     this.referencesDir = referencesDir;
     this.next = undefined;
+    this.byLane = new Map();
+  }
+
+  ofLane(lane) {
+    return [...(this.byLane.get(lane) ?? [])];
+  }
+
+  remember(lane, name) {
+    if (!lane) return;
+
+    const names = this.byLane.get(lane) ?? [];
+
+    if (!names.includes(name)) names.push(name);
+
+    this.byLane.set(lane, names);
   }
 
   nextNumber() {
@@ -19,12 +34,13 @@ export class ReferenceImages {
     return this.next++;
   }
 
-  save(mime, base64) {
+  save(mime, base64, lane) {
     try {
       const ext = EXTENSIONS[mime] ?? 'png';
       const name = `ref-${this.nextNumber()}`;
 
       fs.writeFileSync(path.join(this.referencesDir, `${name}.${ext}`), Buffer.from(base64, 'base64'));
+      this.remember(lane, name);
 
       return name;
     } catch {

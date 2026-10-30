@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { Printing } from './print/index.mjs';
 import { SimReady } from './simready/index.mjs';
 import { Trainer } from './trainer.mjs';
 import { isAiAgent } from './backend/agentProfiles.mjs';
@@ -53,6 +54,7 @@ export class BasecaseBackendService {
 
     this.trainer = new Trainer(this.libraryDir, (event) => this.emitEvent(event));
     this.simready = new SimReady(this.libraryDir, (event) => this.emitEvent(event));
+    this.printing = new Printing({ libraryDir: this.libraryDir, emit: (event) => this.emitEvent(event), secrets });
   }
 
   simreadyStatus() {

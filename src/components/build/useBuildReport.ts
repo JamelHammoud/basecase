@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getComponentMesh } from '../../three/componentMeshes';
 import type { MeshMeasure } from '../../three/meshMeasure';
+import type { PrinterSetup } from '../../data/printers';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { printReportOf, type PrintReport, type PrintShapes } from '../../utils/printReport';
 
@@ -13,8 +14,11 @@ const cacheable = (part: ScenePart) => part.kind !== 'component' || !part.compon
 export interface BuildReportInput {
   parts: ScenePart[];
   project: ProjectSettings;
+  printer: PrinterSetup;
   measure: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
   printShapes: PrintShapes;
+  enabled?: boolean;
+  printParts?: ScenePart[];
 }
 
 async function measureParts(input: BuildReportInput) {
@@ -30,11 +34,13 @@ async function measureParts(input: BuildReportInput) {
 export function useBuildReport(input: BuildReportInput) {
   const [measures, setMeasures] = useState<Record<string, MeshMeasure>>({});
   const [print, setPrint] = useState<PrintReport | null>(null);
-  const { parts, project, measure, printShapes } = input;
+  const { parts, project, printer, measure, printShapes, enabled = true, printParts = parts } = input;
 
   useEffect(() => {
+    if (!enabled) return;
+
     let stopped = false;
-    const current = { parts, project, measure, printShapes };
+    const current = { parts, project, printer, measure, printShapes };
     const timer = window.setTimeout(async () => {
       const nextMeasures = await measureParts(current);
 
@@ -42,7 +48,7 @@ export function useBuildReport(input: BuildReportInput) {
 
       setMeasures(nextMeasures);
 
-      const report = await printReportOf(parts, project, printShapes);
+      const report = await printReportOf(printParts, { project, printer }, printShapes);
 
       if (!stopped) setPrint(report);
     }, SETTLE_MS);
@@ -51,7 +57,7 @@ export function useBuildReport(input: BuildReportInput) {
       stopped = true;
       window.clearTimeout(timer);
     };
-  }, [parts, project, measure, printShapes]);
+  }, [parts, printParts, project, printer, measure, printShapes, enabled]);
 
   return { measures, print };
 }

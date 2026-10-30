@@ -173,8 +173,13 @@ export interface ScenePart {
   physics?: { dynamic: boolean; friction?: number };
   group?: { id: string; name: string };
   printMaterial?: PrintMaterial;
+  print?: PartPrint;
   jointId?: string;
 }
+
+export type { PartPrint, PrintRecord } from './print';
+
+import type { PartPrint, PrintRecord } from './print';
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 
@@ -197,9 +202,11 @@ export interface RobotJoint {
 }
 
 export interface ProjectSettings {
-  printer: 'bambu-p1s';
+  printer: string;
   material: PrintMaterial;
   infillPct: number;
+  printProcess?: string;
+  prints?: PrintRecord[];
   budgetUsd?: number;
   extras?: Array<{ key: string; qty: number; note?: string }>;
   joints?: RobotJoint[];
@@ -276,7 +283,7 @@ export interface RobotAnimation {
   robot?: string;
 }
 
-export const DEFAULT_PROJECT: ProjectSettings = { printer: 'bambu-p1s', material: 'PLA', infillPct: 15 };
+export const DEFAULT_PROJECT: ProjectSettings = { printer: 'default', material: 'PLA', infillPct: 15 };
 
 export interface PurchaseRecord {
   url?: string;

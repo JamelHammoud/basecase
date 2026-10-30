@@ -1,12 +1,9 @@
 import * as THREE from 'three';
+import type { SweepRequest } from '../../utils/engineeringTypes';
 import { collide, place, type Placed } from './collide';
+import { splitRotor } from './rotorSplit';
 
-export interface SweepSpec {
-  moving: string[];
-  origin: [number, number, number];
-  axis: [number, number, number];
-  anglesDeg: number[];
-}
+export type SweepSpec = SweepRequest;
 
 export interface SweepHit {
   a: string;
@@ -17,6 +14,30 @@ export interface SweepHit {
 
 const SWEEP_OPTIONS = { toleranceMm: 0.3, maxSamples: 300 };
 const pairKey = (a: string, b: string) => [a, b].sort().join('|');
+const ROTOR = '#output';
+const ownerOf = (id: string) => (id.endsWith(ROTOR) ? id.slice(0, -ROTOR.length) : id);
+
+function withRotors(placed: Placed[], spec: SweepSpec) {
+  const actuators = new Set(spec.actuators ?? []);
+  const moving = new Set(spec.moving);
+  const out: Placed[] = [];
+
+  for (const p of placed) {
+    const split = actuators.has(p.id) ? splitRotor(p.solid) : null;
+
+    if (!split) {
+      out.push(p);
+
+      continue;
+    }
+
+    out.push(place(p.id, split.stator, p.matrix), place(p.id + ROTOR, split.rotor, p.matrix));
+
+    if (!moving.has(p.id)) moving.add(p.id + ROTOR);
+  }
+
+  return { placed: out, moving };
+}
 
 function lowestY(p: Placed) {
   const e = p.matrix.elements;
@@ -50,9 +71,10 @@ function rotationAbout(spec: SweepSpec, angle: number) {
     .multiply(new THREE.Matrix4().makeTranslation(-origin.x, -origin.y, -origin.z));
 }
 
-export function sweepClashes(placed: Placed[], spec: SweepSpec): SweepHit[] {
-  const movingSet = new Set(spec.moving);
-  const options = { ...SWEEP_OPTIONS, focus: spec.moving, straddle: spec.moving, coplanar: false };
+export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
+  const { placed, moving: movingSet } = withRotors(scene, spec);
+  const moving = [...movingSet];
+  const options = { ...SWEEP_OPTIONS, focus: moving, straddle: moving, coplanar: false };
   const baseline = new Set(collide(placed, options).interferences.map((f) => pairKey(f.a, f.b)));
   const out: SweepHit[] = [];
 
@@ -66,14 +88,14 @@ export function sweepClashes(placed: Placed[], spec: SweepSpec): SweepHit[] {
       angle,
     );
 
-    if (floor) out.push(floor);
+    if (floor) out.push({ ...floor, a: ownerOf(floor.a) });
 
     for (const f of collide(posed, options).interferences) {
-      if (baseline.has(pairKey(f.a, f.b))) continue;
+      if (baseline.has(pairKey(f.a, f.b)) || ownerOf(f.a) === ownerOf(f.b)) continue;
 
-      const aMoves = movingSet.has(f.a);
+      const [a, b] = movingSet.has(f.a) ? [f.a, f.b] : [f.b, f.a];
 
-      out.push({ a: aMoves ? f.a : f.b, b: aMoves ? f.b : f.a, depthMm: f.depthMm, angle });
+      out.push({ a: ownerOf(a), b: ownerOf(b), depthMm: f.depthMm, angle });
     }
   }
 

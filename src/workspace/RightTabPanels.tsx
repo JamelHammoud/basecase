@@ -43,7 +43,7 @@ function useVisitedTabs(tab: RightTab) {
 }
 
 function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
-  const { docs, parts, project, scene, viewportRef, setSelectedIds, showToast, guide } = core;
+  const { docs, parts, project, scene, viewportRef, setSelectedIds, showToast, guide, printing, studio } = core;
   const { partsRef, projectRef, setProject } = docs;
 
   return (
@@ -52,8 +52,10 @@ function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
       sceneName={scene.sceneName}
       project={project}
       onChangeProject={(patch: Partial<ProjectSettings>) => setProject((p) => ({ ...p, ...patch }))}
-      measure={async (ids?: string[]) => (await viewportRef.current?.measureParts(ids)) ?? {}}
-      printShapes={async (ids: string[]) => (await viewportRef.current?.printShapes(ids)) ?? {}}
+      printing={printing}
+      printers={studio.printers.printers}
+      printTools={studio.printers.printTools}
+      onAddPrinter={() => studio.openSettings('printers')}
       onRunChecks={() =>
         runEngineeringNow({
           viewport: viewportRef.current,

@@ -16,16 +16,15 @@ export interface EngineeringNowInput {
   withSweep: boolean;
 }
 
-const sweepKey = (spec: SweepSpec) => JSON.stringify([spec.moving, spec.origin, spec.axis, spec.anglesDeg]);
+const sweepKey = (spec: SweepSpec) =>
+  JSON.stringify([spec.moving, spec.origin, spec.axis, spec.anglesDeg, spec.actuators ?? []]);
 
 async function withSweeps(viewport: Viewport3DHandle, input: EngineeringInputs) {
   const requests = new Map<string, SweepSpec>();
 
   runEngineering({
     ...input,
-    sweep: (moving, origin, axis, anglesDeg) => {
-      const spec = { moving, origin, axis, anglesDeg };
-
+    sweep: (spec) => {
       requests.set(sweepKey(spec), spec);
 
       return [];
@@ -38,7 +37,7 @@ async function withSweeps(viewport: Viewport3DHandle, input: EngineeringInputs) 
 
   return runEngineering({
     ...input,
-    sweep: (moving, origin, axis, anglesDeg) => byKey.get(sweepKey({ moving, origin, axis, anglesDeg })) ?? [],
+    sweep: (spec) => byKey.get(sweepKey(spec)) ?? [],
   });
 }
 

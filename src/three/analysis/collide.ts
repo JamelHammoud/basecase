@@ -145,8 +145,11 @@ function nearFocus(placed: Placed[], focusSet: Set<string>) {
   return placed.filter((p) => focusSet.has(p.id) || focused.some((b) => b.intersectsBox(grown(p))));
 }
 
-function candidatePairs(solids: Placed[], options: CollideOptions): Array<[Placed, Placed]> {
-  const wanted = pairFilter(options);
+type SkipPair = (a: string, b: string) => boolean;
+
+function candidatePairs(solids: Placed[], options: CollideOptions, skip?: SkipPair): Array<[Placed, Placed]> {
+  const filter = pairFilter(options);
+  const wanted = (A: Placed, B: Placed) => filter(A, B) && !skip?.(A.id, B.id);
   const pairs: Array<[Placed, Placed]> = [];
 
   for (let i = 0; i < solids.length; i++) {
@@ -160,13 +163,13 @@ function candidatePairs(solids: Placed[], options: CollideOptions): Array<[Place
   return pairs;
 }
 
-export function collide(placed: Placed[], options: CollideOptions) {
+export function collide(placed: Placed[], options: CollideOptions, skip?: SkipPair) {
   const focusSet = options.focus?.length ? new Set(options.focus) : null;
   const solids = focusSet ? nearFocus(placed, focusSet) : placed;
   const interferences: Interference[] = [];
   const coplanar: Coplanar[] = [];
 
-  for (const [A, B] of candidatePairs(solids, options)) {
+  for (const [A, B] of candidatePairs(solids, options, skip)) {
     const face = options.coplanar === false ? null : sharedFace(A, B);
     const hit = overlap(A, B, options);
 

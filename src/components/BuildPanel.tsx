@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useScrollFade } from '../design-system';
-import type { MeshMeasure } from '../three/meshMeasure';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import type { EngineeringReport } from '../utils/engineering';
-import type { PrintReport, PrintShapes } from '../utils/printReport';
+import type { PrintToolsStatus, SavedPrinter } from '../print/printBridge';
+import type { PrintReport } from '../utils/printReport';
+import type { Printing } from '../workspace/usePrinting';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
 import { BudgetSection } from './build/BudgetSection';
@@ -15,7 +16,7 @@ import { ExtrasSection } from './build/ExtrasSection';
 import { GuideSection } from './build/GuideSection';
 import { download } from './build/format';
 import { PrintedSection } from './build/PrintedSection';
-import { useBuildReport } from './build/useBuildReport';
+import { PlatesSection } from './build/PlatesSection';
 import { usePurchases } from './build/usePurchases';
 
 interface BuildPanelProps {
@@ -23,8 +24,10 @@ interface BuildPanelProps {
   sceneName: string;
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
-  measure: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
-  printShapes: PrintShapes;
+  printing: Printing;
+  printers: SavedPrinter[];
+  printTools: PrintToolsStatus | null;
+  onAddPrinter: () => void;
   onSelectParts: (ids: string[]) => void;
   onToast: (message: string) => void;
   onRunChecks: () => Promise<EngineeringReport>;
@@ -46,15 +49,17 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   sceneName,
   project,
   onChangeProject,
-  measure,
-  printShapes,
+  printing,
+  printers,
+  printTools,
+  onAddPrinter,
   onSelectParts,
   onToast,
   onRunChecks,
   guide,
 }) => {
   const [purchases, savePurchase] = usePurchases();
-  const { measures, print } = useBuildReport({ parts, project, measure, printShapes });
+  const { measures, report: print } = printing;
   const [checking, setChecking] = useState<BomLine | null>(null);
   const { ref: setScroller, style: fadeStyle } = useScrollFade();
   const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print) });
@@ -90,12 +95,16 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           onExportMarkdown={exportMarkdown}
         />
         <ExtrasSection project={project} onChangeProject={onChangeProject} />
-        <PrintedSection
-          report={print}
+        <PlatesSection
+          printing={printing}
           project={project}
+          tools={printTools}
+          printers={printers}
           onChangeProject={onChangeProject}
+          onAddPrinter={onAddPrinter}
           onSelectParts={onSelectParts}
         />
+        <PrintedSection report={print} project={project} onSelectParts={onSelectParts} />
       </div>
       {checking && (
         <CheckSheet

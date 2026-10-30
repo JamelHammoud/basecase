@@ -1,4 +1,5 @@
 import { BasecaseBackendService } from './backend-service.mjs';
+import { printPostRoutes } from './print/routes.mjs';
 
 const withBase64Files = (got) => ({
   ...got,
@@ -53,6 +54,7 @@ function postRoutes(backend) {
     ['/save-scene-preview', (p) => backend.saveScenePreview(p)],
     ['/save-scene', (p) => backend.saveScene(p)],
     ['/delete-scene', (p) => backend.deleteScene(p.sceneId)],
+    ...printPostRoutes(backend.printing),
   ];
 }
 

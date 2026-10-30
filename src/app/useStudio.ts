@@ -4,6 +4,7 @@ import type { useAgentConnection } from './useAgentConnection';
 import type { useLibraries } from './useLibraries';
 import type { usePanelLayout } from './usePanelLayout';
 import type { usePreferences } from './usePreferences';
+import type { PrintersState } from './usePrinters';
 import type { useSettingsPane } from './useSettingsPane';
 import type { useTabActions } from './useTabActions';
 import type { TabsCore } from './useTabs';
@@ -19,19 +20,18 @@ export interface StudioSources {
   actions: ReturnType<typeof useTabActions>;
   tabList: TabListItem[];
   openSceneList: () => void;
+  printers: PrintersState;
 }
 
 export function useStudio(sources: StudioSources) {
-  const { prefs, layout, libraries, agent, settings, core, actions, tabList, openSceneList } = sources;
+  const { prefs, layout, libraries, agent, settings, core, actions, tabList, openSceneList, printers } = sources;
   const { snapStepMm, setSnapStepMm, snapAngleDeg, trackpadMode, setTrackpadMode, showGrid, setShowGrid } = prefs;
   const { sculptEnabled, measureUnit, showReferenceImages, setShowReferenceImages } = prefs;
   const { isLeftOpen, setIsLeftOpen, isRightOpen, setIsRightOpen, panelWidths, setPanelWidths } = layout;
   const { resizingPanel, setResizingPanel, setRightIslandWidth } = layout;
-  const { customModels, setCustomModels } = libraries;
-  const { uploadedImages, setUploadedImages, chatList, setChatList } = libraries;
+  const { customModels, setCustomModels, uploadedImages, setUploadedImages, chatList, setChatList } = libraries;
   const { acpStatus, reconnectAcp, signInAcp, saveAgentApiKey, agentTargetHeightMm, agentChoice, setAgentChoice } =
     agent;
-  const { settingsOpen, openSettings } = settings;
   const { register, reportMeta, newScene, selectTab } = core;
   const { renameTab, closeTab, duplicateTab, reopenTab, cycleTab, focusChat, notify } = actions;
   const canReopenTab = core.closed.length > 0;
@@ -70,8 +70,9 @@ export function useStudio(sources: StudioSources) {
       agentTargetHeightMm,
       agentChoice,
       setAgentChoice,
-      settingsOpen,
-      openSettings,
+      settingsOpen: settings.settingsOpen,
+      openSettings: settings.openSettings,
+      printers,
       tabs: tabList,
       canReopenTab,
       register,
@@ -121,8 +122,9 @@ export function useStudio(sources: StudioSources) {
       agentTargetHeightMm,
       agentChoice,
       setAgentChoice,
-      settingsOpen,
-      openSettings,
+      settings.settingsOpen,
+      settings.openSettings,
+      printers,
       tabList,
       canReopenTab,
       register,

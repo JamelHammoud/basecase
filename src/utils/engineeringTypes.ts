@@ -38,12 +38,15 @@ export interface EngineeringInputs {
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;
   servoOutputs: Record<string, ServoOutput>;
-  sweep?: (
-    moving: string[],
-    origin: V3,
-    axis: V3,
-    anglesDeg: number[],
-  ) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
+  sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
+}
+
+export interface SweepRequest {
+  moving: string[];
+  origin: V3;
+  axis: V3;
+  anglesDeg: number[];
+  actuators?: string[];
 }
 
 export interface EngineeringReport {

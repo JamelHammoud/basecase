@@ -4,7 +4,7 @@ export const PAGE_W_PX = (210 / 25.4) * 96;
 export const PAGE_H_PX = (297 / 25.4) * 96;
 
 const VIEWER_CSS = `
-:host { display: block; }
+:host { all: initial; display: block; }
 .zoom {
   zoom: var(--guide-k, 1);
   width: 210mm;
@@ -47,6 +47,12 @@ function makeSlot(page: HTMLElement, sheet: CSSStyleSheet, index: number): HTMLE
   shadow.append(zoom);
 
   return slot;
+}
+
+export function pageCopy(guide: GuidePages, index: number): HTMLElement | null {
+  const page = guide.pages[index];
+
+  return page ? makeSlot(page.cloneNode(true) as HTMLElement, sheetFor(guide), index) : null;
 }
 
 function decoded(slot: HTMLElement): Promise<unknown> {

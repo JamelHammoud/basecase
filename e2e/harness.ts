@@ -29,6 +29,9 @@ const LISTS: Record<string, unknown> = {
     ],
   },
   'train-status': { uv: false, ready: false, running: [] },
+  'print-status': { slicers: [], downloads: {}, bambuConnect: false },
+  'print-printers': [],
+  'print-last-slice': null,
 };
 
 export interface App {

@@ -15,8 +15,6 @@ export const THEME_COLORS = {
   cutoutRedSubtle: 'rgba(239, 68, 68, 0.15)',
   successGreen: '#10b981',
 
-  agent: '#d97757',
-
   axisX: '#ef4444',
   axisY: '#22c55e',
   axisZ: '#3b82f6',
@@ -58,7 +56,7 @@ export const PANEL_DRAG_HEADER_CLASS = 'h-11 flex items-center justify-between s
 export const DRAG_REGION = { WebkitAppRegion: 'drag' } as CSSProperties;
 export const NO_DRAG_REGION = { WebkitAppRegion: 'no-drag' } as CSSProperties;
 
-export const AGENT_COLOR = THEME_COLORS.agent;
+export const AGENT_COLOR = THEME_COLORS.figmaBlue;
 
 export const DESIGNER_COLORS = ['#d9a441', '#3fae96', '#8f7ae6', '#d6679a', '#7fae4a', '#3aa6bf'] as const;
 

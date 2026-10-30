@@ -119,7 +119,7 @@ describe('runEngineering on a two-joint leg', () => {
       parts: withParts({ shin: { massG: 2000 } }),
       measures: { ...measures, thigh: box([-10, 60, -15], [10, 115, 15], 40000) },
       servoOutputs: { ...input.servoOutputs, kneeServo: { point: [0, 67, 5], axis: [1, 0, 0] } },
-      sweep: (moving, _origin, _axis, angles) =>
+      sweep: ({ moving, anglesDeg: angles }) =>
         angles.filter((a) => a >= 60).map((angle) => ({ a: moving[0], b: 'torso', depthMm: 2, angle })),
     });
     const row = (check: string) => r.rows.find((x) => x.check === check)!;

@@ -1,3 +1,4 @@
+import type { PrintersState } from '../app/usePrinters';
 import type { SettingsPane } from '../components/SettingsWindow';
 import type { ToastData } from '../design-system';
 import type { LaneChat } from './agentLanes';
@@ -105,6 +106,7 @@ export interface StudioShared {
   setAgentChoice: (choice: AgentChoice) => void;
   settingsOpen: boolean;
   openSettings: (pane?: SettingsPane) => void;
+  printers: PrintersState;
   tabs: Array<{ id: string; name: string; sceneId: string }>;
   canReopenTab: boolean;
   register: (id: string, handle: WorkspaceHandle | null) => void;

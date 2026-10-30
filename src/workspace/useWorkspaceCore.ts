@@ -1,3 +1,4 @@
+import { useScenePrinting } from './usePrinting';
 import { useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { newSceneId } from '../utils/sceneIds';
@@ -123,9 +124,13 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     if (message) showToast(message);
   };
 
+  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
+
   return {
     workspaceId,
     studio,
+    printer,
+    printing,
     viewportRef,
     scene,
     docs,

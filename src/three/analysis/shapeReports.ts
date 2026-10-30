@@ -1,15 +1,16 @@
 import * as THREE from 'three';
 import { measureTriangles, type MeshMeasure } from '../meshMeasure';
-import { checkPrintability, type PrintCheck } from '../printability';
+import { checkPrintability, extraPose, type PrintPose, type PrintShape, type Vec3 } from '../printability';
 import type { ShapeSolid } from './shapeSolid';
 
 export interface ShapeReport {
-  check: PrintCheck | null;
+  check: PrintShape | null;
   measure: MeshMeasure;
 }
 
 const localMeasures = new WeakMap<ShapeSolid, MeshMeasure>();
-const printChecks = new WeakMap<ShapeSolid, PrintCheck | null>();
+const printChecks = new WeakMap<ShapeSolid, PrintShape | null>();
+const extraPoses = new WeakMap<ShapeSolid, Map<string, PrintPose>>();
 
 function localMeasure(solid: ShapeSolid): MeshMeasure {
   const cached = localMeasures.get(solid);
@@ -23,10 +24,28 @@ function localMeasure(solid: ShapeSolid): MeshMeasure {
   return measure;
 }
 
-export function printReportOf(solid: ShapeSolid): ShapeReport {
-  if (!printChecks.has(solid)) printChecks.set(solid, checkPrintability(solid.positions));
+function posesFor(solid: ShapeSolid, downs: Vec3[]): PrintPose[] {
+  const cache = extraPoses.get(solid) ?? new Map<string, PrintPose>();
 
-  return { check: printChecks.get(solid) ?? null, measure: localMeasure(solid) };
+  extraPoses.set(solid, cache);
+
+  return downs.map((down) => {
+    const key = down.map((x) => x.toFixed(5)).join(',');
+    const pose = cache.get(key) ?? extraPose(solid.positions, solid.bvh, down);
+
+    cache.set(key, pose);
+
+    return pose;
+  });
+}
+
+export function printReportOf(solid: ShapeSolid, downs: Vec3[] = []): ShapeReport {
+  if (!printChecks.has(solid)) printChecks.set(solid, checkPrintability(solid.positions, solid.bvh));
+
+  const base = printChecks.get(solid) ?? null;
+  const check = base && downs.length ? { ...base, poses: [...base.poses, ...posesFor(solid, downs)] } : base;
+
+  return { check, measure: localMeasure(solid) };
 }
 
 export function worldMeasure(solid: ShapeSolid, matrix: THREE.Matrix4): MeshMeasure {

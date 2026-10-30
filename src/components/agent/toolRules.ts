@@ -179,6 +179,7 @@ const REVIEW_RULES: ToolRule[] = [
       detail: optional(names(list(input.ids))),
     }),
   },
+  plainRule(['slice_plates'], CheckIcon, ['Slicing the plates', 'Sliced the plates']),
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
   plainRule(['set_build'], FileIcon, ['Updating the build', 'Updated the build']),

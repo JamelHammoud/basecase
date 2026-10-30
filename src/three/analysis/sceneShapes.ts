@@ -67,7 +67,7 @@ export function snapshotShapes(objects: Array<{ id: string; object: THREE.Object
   return { instances, shapes, geometries };
 }
 
-function plainPositions(attr: THREE.BufferAttribute | THREE.InterleavedBufferAttribute) {
+export function plainVec3(attr: THREE.BufferAttribute | THREE.InterleavedBufferAttribute) {
   if (!('isInterleavedBufferAttribute' in attr) && attr.array instanceof Float32Array && attr.itemSize === 3) {
     return attr.array.slice(0, attr.count * 3);
   }
@@ -88,7 +88,7 @@ export function geometryPayload(id: string, geometry: THREE.BufferGeometry): Geo
 
   return {
     id,
-    positions: plainPositions(geometry.attributes.position),
+    positions: plainVec3(geometry.attributes.position),
     index: index ? new Uint32Array(index.array as Uint16Array | Uint32Array) : null,
   };
 }

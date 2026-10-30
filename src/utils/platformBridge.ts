@@ -160,6 +160,9 @@ const libraryBridge = {
 
   openGuide: async (id: string): Promise<boolean> => (await electron()?.openGuide(id)) ?? false,
 
+  shareFile: async (name: string, bytes: Uint8Array): Promise<'airdrop' | 'shared' | 'shown' | null> =>
+    (await electron()?.shareFile?.({ name, bytes })) ?? null,
+
   revealGuide: async (id: string): Promise<boolean> => (await electron()?.revealGuide(id)) ?? false,
 
   guideExists: async (id: string): Promise<boolean> => (await electron()?.guideExists(id)) ?? false,

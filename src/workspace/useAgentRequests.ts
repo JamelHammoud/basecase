@@ -1,4 +1,4 @@
-import { leadAgentName } from '../agent/agentKinds';
+import { resolvePrinter } from '../data/printers';
 import { useRef } from 'react';
 import type { AgentOp } from '../agent/agentScene';
 import { platformBridge } from '../utils/platformBridge';
@@ -121,7 +121,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
   const authorOf = (event: AgentRequestEvent): Author => {
     const laneId = event.workspaceId ? splitLaneKey(event.workspaceId).laneId : MAIN_LANE;
     const actor = actors.actorOf(laneId, event.toolUseId);
-    const name = actors.nameOf(actor, leadAgentName(core.studio.acpStatus));
+    const name = actors.nameOf(actor);
 
     return {
       laneId,
@@ -141,6 +141,8 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     const ctx: RequestContext = {
       parts: () => partsRef.current,
       project: () => projectRef.current,
+      printer: () => resolvePrinter(projectRef.current.printer, core.studio.printers.printers),
+      slice: (report) => core.printing.job.sliceReport(report),
       viewport: () => viewportRef.current,
       setProjectNow,
       setAction: author.setAction,

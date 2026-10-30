@@ -64,8 +64,23 @@ export function loadGuidePages(id: string, generatedAt: string): Promise<GuidePa
   return read;
 }
 
-export function prefetchGuidePages(id: string, generatedAt: string): () => void {
-  const handle = requestIdleCallback(() => void loadGuidePages(id, generatedAt), { timeout: 4000 });
+export function prefetchGuidePages(
+  id: string,
+  generatedAt: string,
+  onLoad: (guide: GuidePages | null) => void,
+): () => void {
+  let live = true;
+  const handle = requestIdleCallback(
+    () =>
+      void loadGuidePages(id, generatedAt).then(
+        (guide) => live && onLoad(guide),
+        () => live && onLoad(null),
+      ),
+    { timeout: 4000 },
+  );
 
-  return () => cancelIdleCallback(handle);
+  return () => {
+    live = false;
+    cancelIdleCallback(handle);
+  };
 }

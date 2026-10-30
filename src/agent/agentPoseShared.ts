@@ -111,6 +111,21 @@ export const rootToCad = (root?: RootOffset) =>
     ? `body offset ${fmtV(toCad(root.position ?? [0, 0, 0]))} mm, turned ${fmtV(rotToCad(root.rotation ?? [0, 0, 0]))}°`
     : '';
 
+function outputRiders(rig: Rig, parts: string[]): Record<string, string[]> {
+  const owner = (id: string) => rig.ownerOf.get(id) ?? 'base';
+  const riders: Record<string, string[]> = {};
+
+  for (const j of rig.joints) {
+    for (const servo of j.actuators ?? []) {
+      const side = owner(servo) === j.id ? (rig.parentOf.get(j.id) ?? 'base') : j.id;
+
+      riders[servo] = [...(riders[servo] ?? []), ...parts.filter((id) => id !== servo && owner(id) === side)];
+    }
+  }
+
+  return riders;
+}
+
 export async function poseCheck(
   ctx: PoseContext,
   scope: Scope,
@@ -134,7 +149,7 @@ export async function poseCheck(
   const lines: string[] = [];
   const owner = (id: string) => rig.ownerOf.get(id) ?? 'base';
   const robotParts = [...(scope.full.robots.find((r) => r.key === scope.key)?.parts ?? [])];
-  const found = vp.posedInterference(robotParts);
+  const found = vp.posedInterference(robotParts, outputRiders(rig, robotParts));
   const floor = vp.posedFloor(robotParts);
   const rest = await restPairs;
   const clashes = (await found).filter(

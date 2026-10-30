@@ -1,12 +1,12 @@
 import React from 'react';
 import { AcpPlanEntry } from '../../types/robotics';
-import { AGENT_COLOR, CircleIcon, SpinnerIcon, TickIcon } from '../../design-system';
+import { THEME_COLORS, CircleIcon, SpinnerIcon, TickIcon } from '../../design-system';
 
 type PlanStatus = AcpPlanEntry['status'];
 
 const STATUS_ICON: Record<PlanStatus, React.ReactNode> = {
   completed: <TickIcon className="w-3.5 h-3.5 text-white/40" strokeWidth={2.5} />,
-  in_progress: <SpinnerIcon className="w-3.5 h-3.5 animate-spin" style={{ color: AGENT_COLOR }} />,
+  in_progress: <SpinnerIcon className="w-3.5 h-3.5 animate-spin" style={{ color: THEME_COLORS.textPrimary }} />,
   pending: <CircleIcon className="w-3 h-3 text-white/25" />,
 };
 

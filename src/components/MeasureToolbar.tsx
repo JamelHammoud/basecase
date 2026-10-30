@@ -1,5 +1,5 @@
 import React from 'react';
-import { fromFeetInches, toFeetInches } from '../three/viewport/measureMath';
+import { fromFeetInches, heightsInFeet, toFeetInches } from '../three/viewport/measureMath';
 import type { FigurePlacements, MeasureKind } from '../three/viewport/types';
 import type { MeasureUnit } from '../types/robotics';
 import {
@@ -72,7 +72,7 @@ function HeightField({ heightMm, unit, onChange }: HeightInputProps & { unit: Me
   return (
     <Tooltip label="Height" side="top">
       <div className="px-1 flex gap-1">
-        {unit === 'imperial' ? (
+        {heightsInFeet(unit, navigator.language) ? (
           <FeetInchesInputs heightMm={heightMm} onChange={set} />
         ) : (
           <NumberInput

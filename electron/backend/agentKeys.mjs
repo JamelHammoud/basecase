@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export class AgentKeys {
-  constructor({ dir, secrets }) {
-    this.file = path.join(dir, 'agent-keys.json');
+  constructor({ dir, secrets, file = 'agent-keys.json' }) {
+    this.file = path.join(dir, file);
     this.secrets = secrets;
     this.memory = new Map();
   }

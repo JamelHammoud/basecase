@@ -1,3 +1,4 @@
+import { PrintPanel } from '../components/print/PrintPanel';
 import { LAYOUT, PanelResizer } from '../design-system';
 import { RightPanelTabs } from './RightPanelTabs';
 import { RightTabPanels } from './RightTabPanels';
@@ -40,8 +41,23 @@ export function RightPanel({ core, actions, ui, agent }: RightPanelProps) {
         className="h-full flex flex-col overflow-hidden bg-[#1f1f1f] rounded-[12px]"
         style={{ width: panelWidths.right, marginLeft: LAYOUT.panelGap }}
       >
-        <RightPanelTabs core={core} agent={agent} />
-        <RightTabPanels core={core} actions={actions} agent={agent} />
+        {core.printing.mode ? (
+          <PrintPanel
+            printing={core.printing}
+            parts={core.parts}
+            project={core.project}
+            printers={core.studio.printers.printers}
+            tools={core.studio.printers.printTools}
+            onChangeProject={(patch) => core.docs.setProject((p) => ({ ...p, ...patch }))}
+            onAddPrinter={() => core.studio.openSettings('printers')}
+            onDone={core.printing.closeMode}
+          />
+        ) : (
+          <>
+            <RightPanelTabs core={core} agent={agent} />
+            <RightTabPanels core={core} actions={actions} agent={agent} />
+          </>
+        )}
       </div>
     </aside>
   );

@@ -139,7 +139,6 @@ export const Composer: React.FC<{
             tooltipSide="top"
             size="sm"
             className="rounded-full"
-            disabled={isBusy}
             onClick={onNewChat}
           />
 

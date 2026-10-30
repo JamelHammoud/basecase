@@ -55,3 +55,6 @@ __pycache__/
 
 # Scratch work: throwaway scripts, debug tests, one-off outputs (see AGENTS.md §0g)
 /scratch/
+
+# Native addon build output (npm run native)
+electron/native/*/build/

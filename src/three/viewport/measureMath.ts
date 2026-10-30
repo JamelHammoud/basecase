@@ -163,3 +163,16 @@ export function toFeetInches(mm: number): FeetInches {
 }
 
 export const fromFeetInches = ({ feet, inches }: FeetInches) => (feet * 12 + inches) * MM_PER_INCH;
+
+const FEET_HEIGHT_REGIONS = new Set(['US', 'GB', 'LR', 'MM']);
+
+const regionOf = (language: string) => {
+  try {
+    return new Intl.Locale(language).maximize().region;
+  } catch {
+    return undefined;
+  }
+};
+
+export const heightsInFeet = (unit: MeasureUnit, language: string) =>
+  unit === 'imperial' || FEET_HEIGHT_REGIONS.has(regionOf(language) ?? '');

@@ -41,13 +41,5 @@ export const AGENT_PROFILES: AgentProfile[] = [
 
 export const agentProfileOf = (kind: AgentKind | undefined) => AGENT_PROFILES.find((p) => p.kind === kind);
 
-const NAMED_AGENTS: AgentKind[] = ['claude', 'codex', 'gemini'];
-
 export const agentKindOf = (status: AcpStatusInfo): AgentKind =>
   status.agentKind ?? AGENT_PROFILES.find((p) => p.command === status.agentCommand)?.kind ?? 'custom';
-
-export function leadAgentName(status: AcpStatusInfo) {
-  const kind = agentKindOf(status);
-
-  return NAMED_AGENTS.includes(kind) ? (agentProfileOf(kind)?.name ?? 'Agent') : 'Agent';
-}

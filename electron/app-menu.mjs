@@ -83,6 +83,8 @@ function fileMenu(isMac) {
       item('Reopen Closed Scene', 'reopen-tab', 'Shift+CmdOrCtrl+T', { enabled: state.canReopenTab }),
       separator,
       item('Export STL', 'export-stl', undefined, { enabled: state.hasParts }),
+      item('AirDrop', 'airdrop', undefined, { enabled: state.hasParts }),
+      item('Print', 'print', 'CmdOrCtrl+P', { enabled: state.hasParts }),
       separator,
       item('Add Reference Image', 'add-reference-image'),
       item('Import SVG', 'import-svg'),

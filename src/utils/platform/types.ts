@@ -162,7 +162,9 @@ declare global {
       revealGuide: (id: string) => Promise<boolean>;
       guideExists: (id: string) => Promise<boolean>;
       guideHtml: (id: string) => Promise<string | null>;
+      shareFile?: (payload: { name: string; bytes: Uint8Array }) => Promise<'airdrop' | 'shared' | 'shown'>;
       onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
+      printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       setMenuState: (state: Partial<AppMenuState>) => void;
       onMenuCommand: (callback: (id: string) => void) => () => void;
     };

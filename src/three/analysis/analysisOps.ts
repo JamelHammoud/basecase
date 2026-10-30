@@ -1,6 +1,8 @@
 import * as THREE from 'three';
+import { weld, writeThreeMf } from '../../print/threeMf';
 import { reply } from '../../utils/workerRpc';
 import { collide, place, type CollideOptions } from './collide';
+import { collideRiding, type OutputRiders } from './outputRiders';
 import { printReportOf, worldMeasure } from './shapeReports';
 import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
 import { sweepClashes, type SweepSpec } from './sweep';
@@ -23,9 +25,17 @@ export interface Instance {
 }
 
 export type AnalysisTask =
-  | ({ kind: 'interference'; instances: Instance[] } & CollideOptions)
+  | ({ kind: 'interference'; instances: Instance[]; riders?: OutputRiders } & CollideOptions)
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
-  | { kind: 'print' | 'measure'; instances: Instance[] };
+  | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
+  | { kind: 'measure' | 'meshes'; instances: Instance[] }
+  | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] };
+
+export interface ThreeMfFileSpec {
+  key: string;
+  plates: Array<{ number: number; name: string }>;
+  items: Array<{ id: string; name: string; matrix: number[]; plate: number }>;
+}
 
 export interface AnalyzePayload {
   geometries: GeometryPayload[];
@@ -65,9 +75,9 @@ const byId = <T>(instances: Instance[], value: (i: Instance) => T) =>
 function run(task: AnalysisTask) {
   switch (task.kind) {
     case 'interference': {
-      const { instances, ...options } = task;
+      const { instances, riders, ...options } = task;
 
-      return collide(placeAll(instances), options);
+      return riders ? collideRiding(placeAll(instances), options, riders) : collide(placeAll(instances), options);
     }
     case 'sweeps': {
       const placed = placeAll(task.instances);
@@ -75,18 +85,56 @@ function run(task: AnalysisTask) {
       return task.sweeps.map((spec) => sweepClashes(placed, spec));
     }
     case 'print':
-      return byId(task.instances, (i) => printReportOf(solidOf(i.key)));
+      return byId(task.instances, (i) => printReportOf(solidOf(i.key), task.faces?.[i.id]));
     case 'measure':
       return byId(task.instances, (i) => worldMeasure(solidOf(i.key), new THREE.Matrix4().fromArray(i.matrix)));
+    case 'meshes':
+      return byId(task.instances, (i) => weld(solidOf(i.key).positions));
+    case 'threeMf':
+      return threeMfFiles(task);
   }
 }
+
+function threeMfFiles(task: Extract<AnalysisTask, { kind: 'threeMf' }>) {
+  const keyOf = new Map(task.instances.map((i) => [i.id, i.key]));
+  const meshes = new Map<string, ReturnType<typeof weld>>();
+  const meshOf = (key: string) => meshes.get(key) ?? meshes.set(key, weld(solidOf(key).positions)).get(key)!;
+
+  return Object.fromEntries(
+    task.files.map((file) => {
+      const usable = file.items.filter((it) => keyOf.has(it.id));
+      const objects = usable.map((it, i) => ({ id: i + 1, name: it.name, mesh: meshOf(keyOf.get(it.id)!) }));
+      const items = usable.map((it, i) => ({ objectId: i + 1, matrix: it.matrix, plate: it.plate }));
+
+      return [
+        file.key,
+        writeThreeMf({ layout: 'grid', plateSize: task.plateSize, plates: file.plates, objects, items }),
+      ];
+    }),
+  );
+}
+
+const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[] => {
+  if (kind === 'threeMf')
+    return Object.values(result as Record<string, Uint8Array>).map((b) => b.buffer as ArrayBuffer);
+
+  return kind === 'meshes' ? meshBuffers(result) : [];
+};
+
+const meshBuffers = (result: unknown) =>
+  Object.values(result as Record<string, { vertices: Float32Array; indices: Uint32Array }>).flatMap((m) => [
+    m.vertices.buffer,
+    m.indices.buffer,
+  ]);
 
 export const analysisHandlers = {
   analyze: ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
     newGeometries.forEach((g) => geometries.set(g.id, g));
     shapes.forEach((s) => specs.set(s.key, s));
 
-    return reply(run(task));
+    const result = run(task);
+
+    return reply(result, transferOf(task.kind, result));
   },
   retain: ({ keys, geometryIds }: { keys: string[]; geometryIds: string[] }) => {
     const liveKeys = new Set(keys);

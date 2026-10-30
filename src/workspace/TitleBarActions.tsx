@@ -51,6 +51,8 @@ export function TitleBarActions({
           canExportStl={exports.canExportStl}
           onExportImage={exports.exportImage}
           onExportStl={exports.exportStl}
+          onExport3mf={() => void exports.export3mf()}
+          onAirDrop={() => void exports.airDrop()}
           onCopyMarkdown={exports.copyBrief}
         />
         <IconButton

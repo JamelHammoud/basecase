@@ -59,6 +59,18 @@ function placementIssues(solids) {
   return issues;
 }
 
+function interferenceText(it) {
+  if (it.insert) {
+    return `${it.insert.id} in ${it.b}: the hole is about Ø${it.insert.holeMm} mm; this insert needs a Ø${it.insert.needMm} mm printed hole. Widen the hole.`;
+  }
+
+  if (it.screw) {
+    return `${it.screw.id} ↔ ${it.screw.into}: the screw runs up to ${it.depthMm} mm into ${it.screw.into}. Catalog parts model their real holes, so line the screw up with the hole (or shorten it if it bottoms out).`;
+  }
+
+  return `${it.a} ↔ ${it.b}: pass through each other, up to ${it.depthMm} mm deep (${Math.round(it.fraction * 100)}% of the smaller part inside). Cut a pocket or hole, move one, or resize.`;
+}
+
 async function interferenceIssues() {
   const issues = [];
 
@@ -71,11 +83,7 @@ async function interferenceIssues() {
       );
     }
 
-    for (const it of items.slice(0, 30)) {
-      issues.push(
-        `${it.a} ↔ ${it.b}: pass through each other, up to ${it.depthMm} mm deep (${Math.round(it.fraction * 100)}% of the smaller part inside). Cut a pocket or hole, move one, or resize.`,
-      );
-    }
+    for (const it of items.slice(0, 30)) issues.push(interferenceText(it));
 
     if (items.length > 30) issues.push(`…and ${items.length - 30} more interferences`);
   } catch (err) {

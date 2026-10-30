@@ -4,7 +4,36 @@ Goal: the app stays at 60 fps and answers every click while the agent works, how
 
 This is the Figma model applied to Basecase: the UI thread only takes input and draws; every computation that scales with triangles or pixels runs elsewhere, on shared data, in parallel, in WebAssembly where JS is too slow.
 
-## What freezes today (measured)
+## Status
+
+| Phase | Step | State |
+|---|---|---|
+| 0 | `npm run perf:agent` benchmark | **Done** (`tools/perf/`). Electron variant and in-app long-task log not yet |
+| 1 | 1. Analysis worker pool | **Done**: interference, sweeps, printability, measurements (`src/three/analysis/`) |
+| 1 | 2. Algorithm | **Partly**: shapes and BVHs cached by shape key and built lazily, sweeps skip pairs that move together and flush-face areas. Not yet: BVH-vs-BVH tests, a sorted broad phase, coarse-to-fine angles |
+| 1 | 3. Captures | **Partly**: encoding and downscaling run in the image worker; the render itself still uses the live renderer until Phase 3 |
+| 1 | 4–5. Autosave deltas, backend in a utility process | Proposed as its own session (with Phase 2 step 1) |
+| 1 | 6. Shader warm-up gap | Not started |
+| 1 | 7. Renderer hygiene | Not started (`servoOutput` is the remaining ~100 ms block in `verify_design` on a robot with servos) |
+| 2 | 3. Rust/WASM collision kernel | Proposed as its own session |
+| 2 | 1–2, 4–5 | Not started |
+| 3 | Render worker | Not started |
+
+Results so far (production build, M5 Pro):
+
+| Tool | Ribbit (469 parts, 19 joints) before → after | Benchmark fixture before → after |
+|---|---|---|
+| `verify_design` | 26.8 s frozen → 1.0 s, longest task 114 ms | 9.2 s frozen → 0.19 s, no long task |
+| `check_scene` | 3.1 s frozen → 2.6 s in the background | 0.81 s frozen → 0.8 s in the background |
+| `get_bom` | 133 ms task → none | 233 ms frame gap → none |
+| `look` (4 views) | 102 ms task → 68 ms | 51 ms task → none |
+
+Found on the way:
+- The old synchronous `measureParts` put the centre of mass of parts that share geometry (screws, servos, brackets) at the world origin, so the Weight check, torques and the MuJoCo model got them wrong. The worker measures them in place (Ribbit-style fixture: centre of mass 459 → 487 mm, the correct value).
+- The floor check in sweeps now uses exact vertex heights instead of each mesh's bounding box, so it no longer reports floor contacts that don't happen.
+- Interference is estimated from sample points, so a thin wall a part passes straight through can go unseen (old and new alike). The WASM kernel's exact triangle tests fix that.
+
+## What froze before (measured)
 
 Production build, Apple M5 Pro (Metal), the 281-part Ribbit scene (19 joints, 312k CAD triangles). A headless replay (`scratch/perf/agent.mjs`) feeds the renderer the same `agent-request` and `acp-session-update` events a real run sends, and records long tasks and frame gaps.
 

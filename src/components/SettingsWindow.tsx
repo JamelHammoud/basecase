@@ -19,18 +19,22 @@ import {
   KeyboardIcon,
   MouseIcon,
   PanelsIcon,
+  PrinterIcon,
   RefreshIcon,
 } from '../design-system';
+import type { PrintersState } from '../app/usePrinters';
+import { PrintersPane } from './settings/PrintersPane';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 
-export type SettingsPane = 'canvas' | 'navigation' | 'layout' | 'agent' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'navigation' | 'layout' | 'agent' | 'printers' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
   { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
   { id: 'navigation', label: 'Navigation', icon: <MouseIcon className="w-4 h-4" /> },
   { id: 'layout', label: 'Layout', icon: <PanelsIcon className="w-4 h-4" /> },
   { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
+  { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
   { id: 'shortcuts', label: 'Shortcuts', icon: <KeyboardIcon className="w-4 h-4" /> },
 ];
 
@@ -70,6 +74,7 @@ export interface SettingsWindowProps {
   onReconnectAcp: (command?: string) => Promise<void>;
   targetHeightMm: number;
   onTargetHeight: (mm: number) => void;
+  printers: PrintersState;
 }
 
 export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPaneChange, onClose, ...props }) => {
@@ -165,6 +170,9 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             {pane === 'navigation' && <NavigationPane {...props} />}
             {pane === 'layout' && <LayoutPane {...props} />}
             {pane === 'agent' && <AgentPane {...props} />}
+            {pane === 'printers' && (
+              <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
+            )}
             {pane === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
           </div>
         </div>

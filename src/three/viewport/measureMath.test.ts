@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { closestOnVertical, formatLength, fromFeetInches, snapPoint, toFeetInches } from './measureMath';
+import { closestOnVertical, formatLength, fromFeetInches, heightsInFeet, snapPoint, toFeetInches } from './measureMath';
 
 const square = [0, 0, 0, 10, 0, 0, 10, 0, 0, 10, 0, 10, 10, 0, 10, 0, 0, 10, 0, 0, 10, 0, 0, 0];
 
@@ -61,5 +61,14 @@ describe('heights in feet and inches', () => {
   it('carries extra or negative inches into feet', () => {
     expect(toFeetInches(fromFeetInches({ feet: 5, inches: 14 }))).toEqual({ feet: 6, inches: 2 });
     expect(toFeetInches(fromFeetInches({ feet: 5, inches: -1 }))).toEqual({ feet: 4, inches: 11 });
+  });
+
+  it('uses feet where heights are said in feet, even with metric measurements', () => {
+    expect(heightsInFeet('metric', 'en-US')).toBe(true);
+    expect(heightsInFeet('metric', 'en-GB')).toBe(true);
+    expect(heightsInFeet('metric', 'de-DE')).toBe(false);
+    expect(heightsInFeet('metric', 'en')).toBe(true);
+    expect(heightsInFeet('imperial', 'fr-FR')).toBe(true);
+    expect(heightsInFeet('metric', 'not a locale')).toBe(false);
   });
 });

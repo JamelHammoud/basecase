@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button, FolderOpenIcon, IconButton, Section, settleTilt, tiltToward } from '../../design-system';
-import { prefetchGuidePages } from '../../guide/viewer/guidePages';
+import type { GuidePages } from '../../guide/viewer/guidePages';
 import type { BuildGuideRecord } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
 import { timeAgo } from '../../utils/timeAgo';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
 import { plural } from './format';
+import { GuideCoverPage } from './GuideCoverPage';
+import { useGuidePages } from './useGuidePages';
 
 interface GuideSectionProps {
   guide: BuildGuide;
@@ -23,11 +25,16 @@ function timeLeft(seconds: number | undefined): string {
   return `About ${Math.round(seconds / 60)} min left`;
 }
 
-const CoverThumb: React.FC<{ cover?: string; sceneName: string; onOpen?: () => void }> = ({
-  cover,
-  sceneName,
-  onOpen,
-}) => (
+const THUMB_W_PX = 64;
+
+interface CoverThumbProps {
+  cover?: string;
+  page: GuidePages | null;
+  sceneName: string;
+  onOpen?: () => void;
+}
+
+const CoverThumb: React.FC<CoverThumbProps> = ({ cover, page, sceneName, onOpen }) => (
   <button
     type="button"
     onClick={onOpen}
@@ -48,6 +55,7 @@ const CoverThumb: React.FC<{ cover?: string; sceneName: string; onOpen?: () => v
         className="absolute inset-x-[4px] top-[16px] bottom-[10px] m-auto max-h-[64px] object-contain animate-pop-in"
       />
     )}
+    {page && <GuideCoverPage guide={page} widthPx={THUMB_W_PX} heroSrc={cover} />}
   </button>
 );
 
@@ -106,10 +114,15 @@ const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord; canOpen: boo
 
 const GuideCard: React.FC<{ guide: BuildGuide; sceneName: string }> = ({ guide, sceneName }) => {
   const canOpen = !!guide.record && !guide.progress;
+  const pages = useGuidePages(guide.record);
 
   return (
     <div className="flex items-center gap-3">
-      <CoverThumb cover={guide.cover} sceneName={sceneName} onOpen={canOpen ? () => void guide.open() : undefined} />
+      <CoverThumb
+        cover={guide.cover}
+        page={guide.progress ? null : pages}
+        sceneName={sceneName}
+        onOpen={canOpen ? () => void guide.open() : undefined} />
       <div className="min-w-0 flex-1">
         {guide.progress && <Progress progress={guide.progress} onStop={guide.cancel} />}
         {!guide.progress && guide.record && <Made guide={guide} record={guide.record} canOpen={canOpen} />}
@@ -120,15 +133,6 @@ const GuideCard: React.FC<{ guide: BuildGuide; sceneName: string }> = ({ guide, 
 
 export const GuideSection: React.FC<GuideSectionProps> = ({ guide, sceneName, canGenerate }) => {
   const { record, progress } = guide;
-  const recordId = record?.id;
-  const generatedAt = record?.generatedAt;
-
-  useEffect(() => {
-    if (!recordId || !generatedAt) return undefined;
-
-    return prefetchGuidePages(recordId, generatedAt);
-  }, [recordId, generatedAt]);
-
   const reveal =
     record && !progress && platformBridge.isElectron() ? (
       <IconButton size="xs" title="Show in Finder" icon={<FolderOpenIcon className="w-4 h-4" />} onClick={guide.reveal} />

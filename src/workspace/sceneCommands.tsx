@@ -18,6 +18,8 @@ import {
   PhotoAddIcon,
   PhotoIcon,
   PoseIcon,
+  PrinterIcon,
+  ShareIcon,
   WalkIcon,
   RotateIcon,
   RotateLeftIcon,
@@ -84,6 +86,14 @@ function fileCommands({ core, actions }: CommandInputs): Command[] {
       run: exports.exportStl,
     },
     {
+      id: 'airdrop',
+      group: 'Scene',
+      label: 'AirDrop',
+      icon: <ShareIcon className={ic} />,
+      keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
+      run: () => void exports.airDrop(),
+    },
+    {
       id: 'export-image',
       group: 'Scene',
       label: 'Export Image',
@@ -129,6 +139,38 @@ function fileCommands({ core, actions }: CommandInputs): Command[] {
         keywords: 'tab switch go to',
         run: () => studio.selectTab(t.id),
       })),
+  ];
+}
+
+function printCommands({ core, actions }: CommandInputs): Command[] {
+  const { exports } = actions;
+
+  return [
+    {
+      id: 'export-3mf',
+      group: 'Scene',
+      label: 'Export 3MF Plates',
+      icon: <PrinterIcon className={ic} />,
+      keywords: 'print plates slicer bambu prusa orca download',
+      run: () => void exports.export3mf(),
+    },
+    {
+      id: 'lay-out-plates',
+      group: 'Scene',
+      label: 'Lay Out Plates',
+      shortcut: '⌘P',
+      icon: <PrinterIcon className={ic} />,
+      keywords: 'print plates bed printer slice',
+      run: () => core.printing.openMode(1),
+    },
+    {
+      id: 'slice-plates',
+      group: 'Scene',
+      label: 'Slice Plates',
+      icon: <PrinterIcon className={ic} />,
+      keywords: 'print slicer bambu studio orca gcode',
+      run: () => void core.printing.job.runSlice(),
+    },
   ];
 }
 
@@ -355,6 +397,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
 
 export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...fileCommands(inputs),
+  ...printCommands(inputs),
   ...createCommands(inputs),
   ...toolCommands(inputs),
   ...poseCommands(inputs),

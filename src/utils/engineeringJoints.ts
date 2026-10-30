@@ -7,23 +7,36 @@ import type { CheckContext, CheckRow } from './engineeringTypes';
 
 const revolute = (ctx: CheckContext) => ctx.joints.filter((j) => j.type === 'revolute');
 
-function misalignments(ctx: CheckContext, j: RobotJoint): string[] {
+function outputOffset(ctx: CheckContext, j: RobotJoint, id: string) {
+  const o = ctx.input.servoOutputs[id];
   const a = norm(j.axis);
-  const out: string[] = [];
 
-  for (const id of j.actuators ?? []) {
-    const o = ctx.input.servoOutputs[id];
-
-    if (!o) continue;
-
-    const angle = (Math.acos(Math.min(1, Math.abs(dot(o.axis, a)))) * 180) / Math.PI;
-    const off = lineDistance(o.point, j.origin, a);
-
-    if (angle > 3 || off > 1.5) out.push(`${j.name} (${angle.toFixed(1)}°, ${off.toFixed(1)} mm off)`);
-  }
-
-  return out;
+  return o
+    ? {
+        angle: (Math.acos(Math.min(1, Math.abs(dot(o.axis, a)))) * 180) / Math.PI,
+        off: lineDistance(o.point, j.origin, a),
+      }
+    : null;
 }
+
+const isOffAxis = ({ angle, off }: { angle: number; off: number }) => angle > 3 || off > 1.5;
+
+function misalignments(ctx: CheckContext, j: RobotJoint): string[] {
+  return (j.actuators ?? []).flatMap((id) => {
+    const o = outputOffset(ctx, j, id);
+
+    return o && isOffAxis(o) ? [`${j.name} (${o.angle.toFixed(1)}°, ${o.off.toFixed(1)} mm off)`] : [];
+  });
+}
+
+const outputsOnAxis = (ctx: CheckContext, j: RobotJoint) =>
+  ctx.servos
+    .filter((s) => {
+      const o = outputOffset(ctx, j, s.id);
+
+      return o && !isOffAxis(o);
+    })
+    .map((s) => s.id);
 
 function spanAlong(ctx: CheckContext, ids: Iterable<string>, origin: V3, a: V3): [number, number] {
   let lo = Infinity,
@@ -140,7 +153,8 @@ function sweepJoint(ctx: CheckContext, j: RobotJoint): Item[] {
   const range = j.range ?? [-90, 90];
   const minDepth = j.published ? 5 : 0.3;
   const samples = sweepSamples(j, range);
-  const clashes = ctx.input.sweep!(down, j.origin, norm(j.axis), samples).filter(
+  const request = { moving: down, origin: j.origin, axis: norm(j.axis), anglesDeg: samples };
+  const clashes = ctx.input.sweep!({ ...request, actuators: outputsOnAxis(ctx, j) }).filter(
     (c) => c.depthMm > minDepth && !(c.b === 'floor' && (j.limb === 'leg' || j.published)),
   );
 

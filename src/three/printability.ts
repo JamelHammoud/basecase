@@ -1,85 +1,54 @@
 import * as THREE from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 
-export const P1S = {
-  bed: [256, 256] as const,
-  height: 250,
-  exclude: [18, 28] as const,
+export const PRINT_RULES = {
   overhangDeg: 45,
   supportDeg: 30,
   minWallMm: 0.84,
 };
 
 export type BuildAxis = '+x' | '-x' | '+y' | '-y' | '+z' | '-z';
+export type Vec3 = [number, number, number];
 
-export interface PrintCheck {
-  up: BuildAxis;
-  size: [number, number, number];
-  fits: boolean;
-  yaw?: number;
-  fitNote?: string;
+export interface PrintPose {
+  down: Vec3;
+  axis?: BuildAxis;
+  rotation: [number, number, number, number];
+  min: Vec3;
+  size: Vec3;
   overhangMm2: number;
   supportMm3: number;
   contactMm2: number;
+  requested?: boolean;
+}
+
+export interface PrintShape {
+  poses: PrintPose[];
   minWallMm: number;
   thinShare: number;
 }
 
-const AXES: Record<BuildAxis, THREE.Vector3> = {
-  '+x': new THREE.Vector3(1, 0, 0),
-  '-x': new THREE.Vector3(-1, 0, 0),
-  '+y': new THREE.Vector3(0, 1, 0),
-  '-y': new THREE.Vector3(0, -1, 0),
-  '+z': new THREE.Vector3(0, 0, 1),
-  '-z': new THREE.Vector3(0, 0, -1),
+const AXES: Record<BuildAxis, Vec3> = {
+  '+x': [1, 0, 0],
+  '-x': [-1, 0, 0],
+  '+y': [0, 1, 0],
+  '-y': [0, -1, 0],
+  '+z': [0, 0, 1],
+  '-z': [0, 0, -1],
 };
 
-export function bedFitYaw(w: number, d: number): number | null {
-  const [W, D] = P1S.bed;
-  const [ex, ey] = P1S.exclude;
-  const square = (a: number, b: number) => a <= W && b <= D && (a <= W - ex || b <= D - ey);
+const DOWN = new THREE.Vector3(0, -1, 0);
+const MAX_FACES = 6;
+const FACE_SHARE = 0.03;
+const SAME_DIR = Math.cos(THREE.MathUtils.degToRad(5));
 
-  if (square(w, d)) return 0;
+export function poseRotation(down: Vec3): THREE.Quaternion {
+  const d = new THREE.Vector3(...down).normalize();
 
-  if (square(d, w)) return 90;
+  if (d.dot(DOWN) < -0.999999) return new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
 
-  const keepOut: Array<[number, number]> = [
-    [0, 0],
-    [ex, 0],
-    [0, ey],
-    [ex, ey],
-  ];
-
-  for (let deg = 5; deg < 90; deg += 5) {
-    const t = THREE.MathUtils.degToRad(deg);
-    const [c, sn] = [Math.cos(t), Math.sin(t)];
-
-    if (w * c + d * sn > W || w * sn + d * c > D) continue;
-
-    const u: [number, number] = [c, -sn];
-    const v: [number, number] = [sn, c];
-    const cx = W / 2;
-    const cy = D / 2;
-    const inside = ([x, y]: [number, number]) =>
-      Math.abs((x - cx) * u[0] + (y - cy) * u[1]) <= w / 2 && Math.abs((x - cx) * v[0] + (y - cy) * v[1]) <= d / 2;
-
-    if (keepOut.some(inside)) continue;
-
-    const corners: Array<[number, number]> = [-1, 1].flatMap((i) =>
-      [-1, 1].map(
-        (j) => [cx + (i * w * u[0] + j * d * v[0]) / 2, cy + (i * w * u[1] + j * d * v[1]) / 2] as [number, number],
-      ),
-    );
-
-    if (corners.some(([x, y]) => x < ex && y < ey)) continue;
-
-    return deg;
-  }
-
-  return null;
+  return new THREE.Quaternion().setFromUnitVectors(d, DOWN);
 }
-
-export const fitsBed = (w: number, d: number): boolean => bedFitYaw(w, d) !== null;
 
 function lowestAlong(tris: Float32Array, up: THREE.Vector3): number {
   let lowest = Infinity;
@@ -90,17 +59,20 @@ function lowestAlong(tris: Float32Array, up: THREE.Vector3): number {
   return lowest;
 }
 
+function supportUnder(bvh: MeshBVH, centroid: THREE.Vector3, down: THREE.Vector3, h: number) {
+  const ray = new THREE.Ray(centroid.clone().addScaledVector(down, 1e-3), down);
+  const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
+
+  return hit && hit.distance < h ? hit.distance : h;
+}
+
 function orientationCost(tris: Float32Array, bvh: MeshBVH, up: THREE.Vector3) {
-  const cos = Math.cos(THREE.MathUtils.degToRad(P1S.overhangDeg));
-  const supportCos = Math.cos(THREE.MathUtils.degToRad(P1S.supportDeg));
+  const cos = Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.overhangDeg));
+  const supportCos = Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.supportDeg));
   const minH = lowestAlong(tris, up);
-  const a = new THREE.Vector3(),
-    b = new THREE.Vector3(),
-    c = new THREE.Vector3();
-  const n = new THREE.Vector3(),
-    centroid = new THREE.Vector3();
+  const [a, b, c, n, centroid] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
+  const ab = new THREE.Vector3();
   const down = up.clone().negate();
-  const ray = new THREE.Ray();
   let overhang = 0;
   let support = 0;
   let contact = 0;
@@ -109,22 +81,18 @@ function orientationCost(tris: Float32Array, bvh: MeshBVH, up: THREE.Vector3) {
     a.fromArray(tris, i);
     b.fromArray(tris, i + 3);
     c.fromArray(tris, i + 6);
-    n.subVectors(c, b).cross(new THREE.Vector3().subVectors(a, b));
+    n.subVectors(c, b).cross(ab.subVectors(a, b));
 
     const area2 = n.length();
 
     if (area2 < 1e-9) continue;
 
-    n.divideScalar(area2);
-
-    const area = area2 / 2;
-    const facing = n.dot(down);
+    const facing = n.divideScalar(area2).dot(down);
 
     if (facing <= cos) continue;
 
-    centroid.copy(a).add(b).add(c).divideScalar(3);
-
-    const h = centroid.dot(up) - minH;
+    const area = area2 / 2;
+    const h = centroid.copy(a).add(b).add(c).divideScalar(3).dot(up) - minH;
 
     if (h < 0.3) {
       contact += facing > 0.99 ? area : 0;
@@ -134,18 +102,105 @@ function orientationCost(tris: Float32Array, bvh: MeshBVH, up: THREE.Vector3) {
 
     overhang += area;
 
-    if (facing <= supportCos) continue;
-
-    ray.origin.copy(centroid).addScaledVector(down, 1e-3);
-    ray.direction.copy(down);
-
-    const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
-    const drop = hit && hit.distance < h ? hit.distance : h;
-
-    support += area * facing * drop;
+    if (facing > supportCos) support += area * facing * supportUnder(bvh, centroid, down, h);
   }
 
   return { overhang, support, contact };
+}
+
+function poseBox(tris: Float32Array, q: THREE.Quaternion) {
+  const v = new THREE.Vector3();
+  const min = new THREE.Vector3(Infinity, Infinity, Infinity);
+  const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+
+  for (let i = 0; i < tris.length; i += 3) {
+    v.set(tris[i], tris[i + 1], tris[i + 2]).applyQuaternion(q);
+    min.min(v);
+    max.max(v);
+  }
+
+  return { min, size: max.clone().sub(min) };
+}
+
+function poseFor(tris: Float32Array, bvh: MeshBVH, down: Vec3, axis?: BuildAxis): PrintPose {
+  const q = poseRotation(down);
+  const { min, size } = poseBox(tris, q);
+  const { overhang, support, contact } = orientationCost(tris, bvh, new THREE.Vector3(...down).negate().normalize());
+
+  return {
+    down,
+    axis,
+    rotation: [q.x, q.y, q.z, q.w],
+    min: min.toArray() as Vec3,
+    size: [size.x, size.z, size.y],
+    overhangMm2: overhang,
+    supportMm3: support,
+    contactMm2: contact,
+  };
+}
+
+interface FaceBucket {
+  normal: THREE.Vector3;
+  area: number;
+  offset: number;
+}
+
+function faceBuckets(tris: Float32Array) {
+  const buckets = new Map<string, FaceBucket>();
+  const [a, b, c, n, ab] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
+  let total = 0;
+
+  for (let i = 0; i < tris.length; i += 9) {
+    a.fromArray(tris, i);
+    b.fromArray(tris, i + 3);
+    c.fromArray(tris, i + 6);
+    n.subVectors(b, a).cross(ab.subVectors(c, a));
+
+    const area2 = n.length();
+
+    if (area2 < 1e-9) continue;
+
+    n.divideScalar(area2);
+    total += area2 / 2;
+
+    const key = `${Math.round(n.x * 40)},${Math.round(n.y * 40)},${Math.round(n.z * 40)}`;
+    const bucket = buckets.get(key) ?? { normal: new THREE.Vector3(), area: 0, offset: 0 };
+
+    bucket.normal.addScaledVector(n, area2 / 2);
+    bucket.offset += a.dot(n) * (area2 / 2);
+    bucket.area += area2 / 2;
+    buckets.set(key, bucket);
+  }
+
+  return { buckets: [...buckets.values()], total };
+}
+
+function restsOn(tris: Float32Array, bucket: FaceBucket): boolean {
+  const n = bucket.normal.clone().normalize();
+  let extreme = -Infinity;
+
+  for (let i = 0; i < tris.length; i += 3)
+    extreme = Math.max(extreme, tris[i] * n.x + tris[i + 1] * n.y + tris[i + 2] * n.z);
+
+  return extreme - bucket.offset / bucket.area < 0.3;
+}
+
+function faceDowns(tris: Float32Array): Vec3[] {
+  const { buckets, total } = faceBuckets(tris);
+  const out: THREE.Vector3[] = Object.values(AXES).map((v) => new THREE.Vector3(...v));
+  const big = buckets.filter((b) => b.area >= total * FACE_SHARE).sort((x, y) => y.area - x.area);
+  const found: Vec3[] = [];
+
+  for (const bucket of big) {
+    const n = bucket.normal.clone().normalize();
+
+    if (found.length >= MAX_FACES || out.some((o) => o.dot(n) > SAME_DIR) || !restsOn(tris, bucket)) continue;
+
+    out.push(n);
+    found.push(n.toArray().map((x) => Math.round(x * 1e6) / 1e6) as Vec3);
+  }
+
+  return found;
 }
 
 function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
@@ -154,17 +209,14 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
   if (!count) return { min: Infinity, thinShare: 0 };
 
   const areas = new Float32Array(count);
+  const [a, b, c, n, ab] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
   let total = 0;
-  const a = new THREE.Vector3(),
-    b = new THREE.Vector3(),
-    c = new THREE.Vector3(),
-    n = new THREE.Vector3();
 
   for (let t = 0; t < count; t++) {
     a.fromArray(tris, t * 9);
     b.fromArray(tris, t * 9 + 3);
     c.fromArray(tris, t * 9 + 6);
-    areas[t] = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)).length() / 2;
+    areas[t] = n.subVectors(b, a).cross(ab.subVectors(c, a)).length() / 2;
     total += areas[t];
   }
 
@@ -183,7 +235,7 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
     a.fromArray(tris, t * 9);
     b.fromArray(tris, t * 9 + 3);
     c.fromArray(tris, t * 9 + 6);
-    n.subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+    n.subVectors(b, a).cross(ab.subVectors(c, a));
 
     if (n.lengthSq() < 1e-12) continue;
 
@@ -193,76 +245,43 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
 
     const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
 
-    if (!hit || !hit.face || hit.face.normal.dot(ray.direction) <= 0) continue;
+    if (!hit?.face || hit.face.normal.dot(ray.direction) <= 0) continue;
 
-    const d = hit.distance;
-
-    if (d < min) min = d;
-
-    if (d < P1S.minWallMm) thinArea += step;
+    min = Math.min(min, hit.distance);
+    thinArea += hit.distance < PRINT_RULES.minWallMm ? step : 0;
   }
 
   return { min, thinShare: total ? Math.min(1, thinArea / total) : 0 };
 }
 
-export function checkPrintability(tris: Float32Array): PrintCheck | null {
-  if (tris.length < 9) return null;
-
+export function bvhOf(tris: Float32Array): MeshBVH {
   const geom = new THREE.BufferGeometry();
 
   geom.setAttribute('position', new THREE.BufferAttribute(tris, 3));
 
-  const bvh = new MeshBVH(geom);
-  const box = new THREE.Box3().setFromBufferAttribute(geom.attributes.position as THREE.BufferAttribute);
-  const ext = box.getSize(new THREE.Vector3());
-
-  let best: (PrintCheck & { score: number }) | null = null;
-
-  for (const key of Object.keys(AXES) as BuildAxis[]) {
-    const up = AXES[key];
-    const axis = key[1] as 'x' | 'y' | 'z';
-    const others = (['x', 'y', 'z'] as const).filter((k) => k !== axis);
-    const height = ext[axis];
-    const [w, d] = [ext[others[0]], ext[others[1]]];
-    const yaw = height <= P1S.height ? bedFitYaw(w, d) : null;
-    const fits = yaw !== null;
-    const { overhang, support, contact } = orientationCost(tris, bvh, up);
-    const score = (fits ? 0 : 1e12) + support - contact * 0.5 + height * 0.01;
-
-    if (!best || score < best.score)
-      best = {
-        up: key,
-        size: [w, d, height],
-        fits,
-        yaw: yaw ?? undefined,
-        overhangMm2: overhang,
-        supportMm3: support,
-        contactMm2: contact,
-        minWallMm: Infinity,
-        thinShare: 0,
-        score,
-      };
-  }
-
-  if (!best) return null;
-
-  const walls = wallThickness(tris, bvh);
-  const { score: _score, ...check } = best;
-
-  void _score;
-  check.minWallMm = walls.min;
-  check.thinShare = walls.thinShare;
-
-  if (!check.fits) {
-    const s = [...check.size].sort((x, y) => y - x);
-
-    check.fitNote = `${s.map((v) => Math.round(v)).join(' × ')} mm is larger than the P1S plate (256 × 256 × 250 mm). Split it into ${Math.ceil(s[0] / 240)} pieces along its longest side, joined with dowels or screws.`;
-  }
-
-  geom.dispose();
-
-  return check;
+  return new MeshBVH(geom);
 }
+
+export function checkPrintability(tris: Float32Array, bvh: MeshBVH = bvhOf(tris)): PrintShape | null {
+  if (tris.length < 9) return null;
+
+  const axes = (Object.keys(AXES) as BuildAxis[]).map((key) => poseFor(tris, bvh, AXES[key], key));
+  const faces = faceDowns(tris).map((down) => poseFor(tris, bvh, down));
+  const walls = wallThickness(tris, bvh);
+
+  return { poses: [...axes, ...faces], minWallMm: walls.min, thinShare: walls.thinShare };
+}
+
+export function extraPose(tris: Float32Array, bvh: MeshBVH, down: Vec3): PrintPose {
+  return { ...poseFor(tris, bvh, down), requested: true };
+}
+
+export const sameDirection = (a: Vec3, b: Vec3, cosLimit = Math.cos(THREE.MathUtils.degToRad(1))): boolean => {
+  const la = Math.hypot(...a);
+  const lb = Math.hypot(...b);
+
+  return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) / (la * lb || 1) > cosLimit;
+};
 
 const SPEED_FACTOR: Record<string, number> = { TPU: 0.35, PETG: 0.8 };
 
@@ -279,56 +298,4 @@ export function printHours({ shellMm3, infillMm3, supportMm3, heightMm, material
   const seconds = (shellMm3 / 7 + infillMm3 / 12 + (supportMm3 * 0.2) / 8) / slow + (heightMm / 0.2) * 1.2;
 
   return seconds / 3600;
-}
-
-interface Plate {
-  shelves: Array<{ y: number; h: number; x: number }>;
-}
-
-function placeOnPlate(plate: Plate, w: number, d: number, gap: number): boolean {
-  const [W, D] = P1S.bed;
-  const shelf = plate.shelves.find((sh) => sh.x + w <= W + gap && d <= sh.h);
-
-  if (shelf) {
-    shelf.x += w;
-
-    return true;
-  }
-
-  const top = plate.shelves.reduce((sum, sh) => sum + sh.h, 0);
-
-  if (top + d > D + gap) {
-    return false;
-  }
-
-  plate.shelves.push({ y: top, h: d, x: plate.shelves.length === 0 ? P1S.exclude[0] + w : w });
-
-  return true;
-}
-
-export function packPlates(
-  items: Array<{ id: string; w: number; d: number }>,
-  gap = 6,
-): { plates: number; plateOf: Record<string, number> } {
-  const [W, D] = P1S.bed;
-  const sorted = [...items].map((it) => (it.w < it.d ? { ...it, w: it.d, d: it.w } : it)).sort((a, b) => b.d - a.d);
-  const plates: Plate[] = [];
-  const plateOf: Record<string, number> = {};
-
-  for (const it of sorted) {
-    const w = Math.min(it.w, W) + gap;
-    const d = Math.min(it.d, D) + gap;
-    const existing = plates.findIndex((plate) => placeOnPlate(plate, w, d, gap));
-
-    if (existing >= 0) {
-      plateOf[it.id] = existing;
-
-      continue;
-    }
-
-    plates.push({ shelves: [{ y: 0, h: d, x: P1S.exclude[0] + w }] });
-    plateOf[it.id] = plates.length - 1;
-  }
-
-  return { plates: plates.length, plateOf };
 }

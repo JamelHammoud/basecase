@@ -26,6 +26,8 @@ function useMenuMap({ core, actions, ui }: Omit<MenuOptions, 'active'>): Record<
     shortcuts: () => studio.openSettings('shortcuts'),
     'find-parts': ui.findParts,
     'export-stl': exports.exportStl,
+    airdrop: () => void exports.airDrop(),
+    print: () => core.printing.openMode(1),
     'add-reference-image': () => creation.pickReferenceImage(),
     'import-svg': () => tool.openCreator('svg'),
     'import-robot': robots.openImportRobot,

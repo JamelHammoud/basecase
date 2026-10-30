@@ -1,7 +1,9 @@
 import { MeasureToolbar } from '../components/MeasureToolbar';
+import { PlateBar } from '../components/print/PlateBar';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { Toast, PhotoIcon } from '../design-system';
 import { MarkBar } from './MarkBar';
+import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
 import { SelectionBar } from './SelectionBar';
 import type { AgentSession } from './useAgentSession';
@@ -33,10 +35,12 @@ function DropOverlay() {
 }
 
 function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'actions' | 'ui'>) {
-  const { tool, annotations, studio, measure } = core;
+  const { tool, annotations, studio, measure, printing } = core;
   const { creation } = actions;
   const { toggleCommentMode } = annotations;
   const { openCreator } = tool;
+
+  if (printing.mode) return <PlateBar printing={printing} plates={printing.report?.plan.plates ?? []} />;
 
   if (tool.measuring)
     return (
@@ -81,8 +85,8 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
           <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
         </div>
       )}
-      {tool.marking && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
-      {showSelectionBar && (
+      {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
+      {showSelectionBar && !core.printing.mode && (
         <SelectionBar
           selectedParts={selection.selectedParts}
           onBoolean={ops.runBoolean}
@@ -124,6 +128,7 @@ export function CanvasCard(props: CanvasCardProps) {
       />
       {drop.isDraggingFile && <DropOverlay />}
       <SceneViewport active={active} core={core} actions={actions} agent={agent} />
+      {core.printing.mode && <PlateCanvas active={active} printing={core.printing} parts={core.parts} />}
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <div
         aria-hidden

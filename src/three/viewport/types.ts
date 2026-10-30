@@ -1,3 +1,5 @@
+import type { ThreeMfFileSpec } from '../analysis/analysisOps';
+import type { MeshData } from '../../print/threeMf';
 import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
 import type { ShapeReport } from '../analysis/shapeReports';
@@ -117,7 +119,13 @@ export interface Viewport3DHandle {
   ) => Promise<Array<{ view: string; dataUrl: string }>>;
   interference: (onlyIds?: string[]) => Promise<{ interferences: Interference[]; coplanar: Coplanar[] }>;
   measureParts: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
-  printShapes: (ids: string[]) => Promise<Record<string, ShapeReport>>;
+  printShapes: (
+    ids: string[],
+    faces?: Record<string, Array<[number, number, number]>>,
+  ) => Promise<Record<string, ShapeReport>>;
+  printMeshes: (ids: string[]) => Promise<Record<string, MeshData>>;
+  printThreeMf: (files: ThreeMfFileSpec[], plateSize: [number, number]) => Promise<Record<string, Uint8Array>>;
+  exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
@@ -125,7 +133,7 @@ export interface Viewport3DHandle {
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
-  posedInterference: (onlyIds?: string[]) => Promise<Interference[]>;
+  posedInterference: (onlyIds?: string[], riders?: Record<string, string[]>) => Promise<Interference[]>;
   posedFloor: (ids?: string[]) => number | null;
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;

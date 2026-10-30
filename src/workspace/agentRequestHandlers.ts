@@ -2,12 +2,16 @@ import type { PoseReply } from '../agent/agentPose';
 import { describeMarks } from '../agent/agentMarks';
 import { agentCatalog, partCode, snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
+import type { PrinterSetup } from '../data/printers';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
 import { downscaleDataUrl } from '../utils/imageFile';
 import { platformBridge } from '../utils/platformBridge';
-import { printReportOf, printReportText } from '../utils/printReport';
+import type { SliceRecord } from '../print/printBridge';
+import { sliceText } from '../print/sliceText';
+import { designedFits } from '../utils/designedFits';
+import { printReportOf, printReportText, type PrintReport } from '../utils/printReport';
 import { maskProfile, photoProfile } from '../utils/silhouette';
 import {
   applyBuildSettings,
@@ -24,6 +28,8 @@ type Payload = Record<string, unknown>;
 export interface RequestContext {
   parts: () => ScenePart[];
   project: () => ProjectSettings;
+  printer: () => PrinterSetup;
+  slice: (report: PrintReport) => Promise<SliceRecord>;
   viewport: () => Viewport3DHandle | null;
   setProjectNow: (next: ProjectSettings) => void;
   setAction: (action: string) => void;
@@ -85,10 +91,13 @@ async function silhouetteCompare(payload: Payload, ctx: RequestContext) {
   return { reference: ref.profile, plain: ref.plain, reason: ref.reason, model };
 }
 
-const shapesOf = (ctx: RequestContext) => async (ids: string[]) => (await ctx.viewport()?.printShapes(ids)) ?? {};
+const shapesOf = (ctx: RequestContext) => async (ids: string[], faces?: Record<string, Vec3[]>) =>
+  (await ctx.viewport()?.printShapes(ids, faces)) ?? {};
+
+const printCtx = (ctx: RequestContext) => ({ project: ctx.project(), printer: ctx.printer() });
 
 async function bom(_payload: Payload, ctx: RequestContext) {
-  const print = await printReportOf(ctx.parts(), ctx.project(), shapesOf(ctx));
+  const print = await printReportOf(ctx.parts(), printCtx(ctx), shapesOf(ctx));
   const supportG: Partial<Record<ProjectSettings['material'], number>> = {};
 
   for (const r of print.parts) supportG[r.material] = (supportG[r.material] ?? 0) + r.supportG;
@@ -109,7 +118,15 @@ async function printability(payload: Payload, ctx: RequestContext) {
   const ids = payload.ids as string[] | undefined;
   const parts = ids?.length ? ctx.parts().filter((p) => ids.includes(p.id)) : ctx.parts();
 
-  return { text: printReportText(await printReportOf(parts, ctx.project(), shapesOf(ctx))) };
+  return { text: printReportText(await printReportOf(parts, printCtx(ctx), shapesOf(ctx))) };
+}
+
+async function slicePlates(_payload: Payload, ctx: RequestContext) {
+  ctx.setAction('Slicing the plates');
+
+  const report = await printReportOf(ctx.parts(), printCtx(ctx), shapesOf(ctx));
+
+  return { text: sliceText(report, await ctx.slice(report)) };
 }
 
 function defineJoints(payload: Payload, ctx: RequestContext) {
@@ -161,11 +178,12 @@ const HANDLERS: Record<string, Handler> = {
   interference: async (payload, ctx) => {
     const found = (await ctx.viewport()?.interference(idsOf(payload))) ?? { interferences: [], coplanar: [] };
 
-    return { items: found.interferences, coplanar: found.coplanar };
+    return designedFits(found, ctx.parts());
   },
   silhouette_compare: silhouetteCompare,
   bom,
   printability,
+  slice: slicePlates,
   define_joints: defineJoints,
   verify: async (_payload, ctx) => {
     ctx.setAction('Checking the design');

@@ -68,7 +68,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onAddMark={marks.add}
         onSelectMark={marks.select}
         agentFrames={agent.frames}
-        paused={!active}
+        paused={!active || !!core.printing.mode}
         pose={posing.deltas}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}

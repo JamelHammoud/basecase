@@ -74,6 +74,7 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     d: ops.duplicateSelected,
     b: ui.toggleLeft,
     i: ui.toggleRight,
+    p: () => (core.printing.mode ? core.printing.closeMode() : core.printing.openMode(1)),
   };
 
   const plain: KeyMap = {
@@ -105,6 +106,24 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
   const maps = useKeyMaps({ core, actions, ui });
   const blocked = ui.paletteOpen || core.studio.settingsOpen;
 
+  const runPlain = (e: KeyboardEvent, key: string) => {
+    if (e.shiftKey && key === 'i') {
+      e.preventDefault();
+      ui.toggleReferenceImages();
+
+      return;
+    }
+
+    if (e.key === '?') {
+      e.preventDefault();
+      core.studio.openSettings('shortcuts');
+
+      return;
+    }
+
+    runKey(maps.plain, key, e, false);
+  };
+
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
     const mod = e.metaKey || e.ctrlKey;
     const key = e.key.toLowerCase();
@@ -126,23 +145,9 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
       return;
     }
 
-    if (e.altKey) return;
+    if (e.altKey || core.printing.mode) return;
 
-    if (e.shiftKey && key === 'i') {
-      e.preventDefault();
-      ui.toggleReferenceImages();
-
-      return;
-    }
-
-    if (e.key === '?') {
-      e.preventDefault();
-      core.studio.openSettings('shortcuts');
-
-      return;
-    }
-
-    runKey(maps.plain, key, e, false);
+    runPlain(e, key);
   });
 
   useEffect(() => {

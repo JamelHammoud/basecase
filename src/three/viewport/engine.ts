@@ -1,6 +1,14 @@
 import type * as THREE from 'three';
-import { interferenceIn, measuresIn, printReportsIn, sweepsIn } from '../analysis/analysisPool';
+import {
+  interferenceIn,
+  measuresIn,
+  printMeshesIn,
+  printReportsIn,
+  sweepsIn,
+  threeMfIn,
+} from '../analysis/analysisPool';
 import { snapshotShapes } from '../analysis/sceneShapes';
+import { exportUsdz } from '../usdz/usdzExport';
 import { AgentFrames } from './agentFrames';
 import { BlueprintUnderlay } from './blueprint';
 import { focusOn, frameObjects, frameScene, setCameraPreset } from './cameraOps';
@@ -51,6 +59,9 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'restBounds',
   'measureParts',
   'printShapes',
+  'printMeshes',
+  'printThreeMf',
+  'exportUsdz',
   'partTriangles',
   'servoOutput',
   'sweepClashes',
@@ -252,12 +263,20 @@ export class ViewportEngine {
           withRest(() => solidShapes(true)),
           interferenceOptions(onlyIds),
         ),
-      posedInterference: (onlyIds) =>
-        interferenceIn(solidShapes(true), interferenceOptions(onlyIds)).then((r) => r.interferences),
+      posedInterference: (onlyIds, riders) =>
+        interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
       posedFloor: (ids) => measure.posedFloor(ctx, ids),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
       measureParts: (ids) => measuresIn(withRest(() => snapshotShapes(measure.partObjects(ctx, ids)))),
-      printShapes: (ids) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids))),
+      printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
+      printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
+      printThreeMf: (files, plateSize) =>
+        threeMfIn(
+          snapshotShapes(measure.partObjects(ctx, [...new Set(files.flatMap((f) => f.items.map((i) => i.id)))])),
+          files,
+          plateSize,
+        ),
+      exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),
       sweepClashes: (sweeps) =>

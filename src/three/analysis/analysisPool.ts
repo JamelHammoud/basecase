@@ -1,9 +1,18 @@
 import { workerClient, type WorkerClient } from '../../utils/workerRpc';
 import type { Coplanar, Interference } from '../interference';
 import type { MeshMeasure } from '../meshMeasure';
+import type { MeshData } from '../../print/threeMf';
 import type { ShapeReport } from './shapeReports';
 import type { CollideOptions } from './collide';
-import { analysisHandlers, MISSING_SHAPE, type AnalysisTask, type GeometryPayload, type Instance } from './analysisOps';
+import type { OutputRiders } from './outputRiders';
+import {
+  analysisHandlers,
+  MISSING_SHAPE,
+  type AnalysisTask,
+  type GeometryPayload,
+  type Instance,
+  type ThreeMfFileSpec,
+} from './analysisOps';
 import { geometryPayload, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 
@@ -118,13 +127,28 @@ const leastBusy = () => pool().reduce((best, c) => (c.busy < best.busy ? c : bes
 
 export function interferenceIn(
   scene: SceneShapes,
-  options: CollideOptions,
+  options: CollideOptions & { riders?: OutputRiders },
 ): Promise<{ interferences: Interference[]; coplanar: Coplanar[] }> {
   return analyze(leastBusy(), scene, { kind: 'interference', instances: scene.instances, ...options });
 }
 
-export function printReportsIn(scene: SceneShapes): Promise<Record<string, ShapeReport>> {
-  return analyze(leastBusy(), scene, { kind: 'print', instances: scene.instances });
+export function printReportsIn(
+  scene: SceneShapes,
+  faces?: Record<string, Array<[number, number, number]>>,
+): Promise<Record<string, ShapeReport>> {
+  return analyze(leastBusy(), scene, { kind: 'print', instances: scene.instances, faces });
+}
+
+export function printMeshesIn(scene: SceneShapes): Promise<Record<string, MeshData>> {
+  return analyze(leastBusy(), scene, { kind: 'meshes', instances: scene.instances });
+}
+
+export function threeMfIn(
+  scene: SceneShapes,
+  files: ThreeMfFileSpec[],
+  plateSize: [number, number],
+): Promise<Record<string, Uint8Array>> {
+  return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, files, plateSize });
 }
 
 export function measuresIn(scene: SceneShapes): Promise<Record<string, MeshMeasure>> {

@@ -1,4 +1,3 @@
-import { leadAgentName } from '../agent/agentKinds';
 import { useEffect, useRef, useState } from 'react';
 import type { CustomModelDefinition } from '../types/robotics';
 import type { DesignerFocus } from '../utils/designers';
@@ -95,7 +94,7 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
     const actor = actors.actorOf(laneId, typeof event.toolUseId === 'string' ? event.toolUseId : undefined);
 
     if (actor === laneId) lanes.updateLane(laneId, (l) => ({ ...l, status }));
-    else cursors.setAction(actor, actors.nameOf(actor, leadAgentName(studio.acpStatus)), status);
+    else cursors.setAction(actor, actors.nameOf(actor), status);
   };
 
   const eventHandlers: Record<string, (event: WorkspaceEvent, laneId: string) => void> = {

@@ -5,6 +5,7 @@ import { CAD_AGENT_INSTRUCTIONS } from './cad-agent-prompt.mjs';
 import {
   buildGuide,
   checkPrintability,
+  slicePlates,
   getBom,
   setBuild,
   simulate,
@@ -65,6 +66,7 @@ const TOOLS = [
   verifyDesign,
   getBom,
   checkPrintability,
+  slicePlates,
   setBuild,
   buildGuide,
   setStatus,

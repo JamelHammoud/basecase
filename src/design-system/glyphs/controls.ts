@@ -28,6 +28,10 @@ export const DownloadIcon = glyph(
   'M12 3V14M7 9L12 14L17 9M4 15.5V18A2.5 2.5 0 0 0 6.5 20.5H17.5A2.5 2.5 0 0 0 20 18V15.5',
 );
 
+export const ShareIcon = glyph(
+  'M8.5 9.5H7A2.5 2.5 0 0 0 4.5 12V18.5A2.5 2.5 0 0 0 7 21H17A2.5 2.5 0 0 0 19.5 18.5V12A2.5 2.5 0 0 0 17 9.5H15.5M12 2.75V14.5M8 6.75L12 2.75L16 6.75',
+);
+
 export const SwapIcon = glyph('M4 7.5H19.5M16 4L19.5 7.5L16 11M20 16.5H4.5M8 13L4.5 16.5L8 20');
 
 export const ReturnIcon = glyph('M19.5 4.5V11A3.5 3.5 0 0 1 16 14.5H4.5M9 10L4.5 14.5L9 19');

@@ -12,6 +12,7 @@ import { useContentStable } from './useContentStable';
 import { useLibraries } from './useLibraries';
 import { usePanelLayout } from './usePanelLayout';
 import { usePreferences } from './usePreferences';
+import { usePrinters } from './usePrinters';
 import { useSceneLibrary } from './useSceneLibrary';
 import { useSettingsPane } from './useSettingsPane';
 import { useStudio } from './useStudio';
@@ -28,6 +29,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
   const libraries = useLibraries();
   const agent = useAgentConnection();
   const settings = useSettingsPane();
+  const printers = usePrinters();
   const tabList = useContentStable(tabListOf(core.tabs, core.metas));
   const canReopenTab = core.closed.length > 0;
 
@@ -45,7 +47,18 @@ export function Studio({ initial }: { initial: InitialTabs }) {
   });
 
   const openSceneList = () => setScenesOpen(true);
-  const studio = useStudio({ prefs, layout, libraries, agent, settings, core, actions, tabList, openSceneList });
+  const studio = useStudio({
+    prefs,
+    layout,
+    libraries,
+    agent,
+    settings,
+    core,
+    actions,
+    tabList,
+    openSceneList,
+    printers,
+  });
 
   return (
     <div className="window-chrome relative w-screen h-screen overflow-hidden">
@@ -115,6 +128,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         onReconnectAcp={agent.reconnectAcp}
         targetHeightMm={agent.agentTargetHeightMm}
         onTargetHeight={agent.setAgentTargetHeightMm}
+        printers={printers}
       />
     </div>
   );

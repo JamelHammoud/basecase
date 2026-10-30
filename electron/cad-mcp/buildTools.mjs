@@ -122,8 +122,8 @@ export const checkPrintability = {
   config: {
     title: 'Check printability',
     description:
-      'Checks every printed part (or ids) for a Bambu Lab P1S (256 × 256 × 250 mm, 18 × 28 mm keep-out at the front left): best flat orientation, bed fit, overhangs past 45° and the support they need, walls thinner than two 0.42 mm lines, filament grams, print time and plates. ' +
-      'Fix every part it flags: split anything that does not fit (with dowels, a lap joint or screws across the split), give large overhangs 45° chamfers or a flat face to print on, thicken thin walls. Estimates without a slicer.',
+      "Checks every printed part (or ids) for the scene's printer (its bed size and keep-out zones are in the first line of the result): best flat orientation, bed fit, overhangs past 45° and the support they need, walls thinner than two 0.42 mm lines, filament grams, print time and plates. " +
+      'Fix every part it flags: split anything that does not fit (with dowels, a lap joint or screws across the split), give large overhangs 45° chamfers or a flat face to print on, thicken thin walls. Estimates without a slicer; slice_plates gives the slicer’s own numbers.',
     inputSchema: { ids: z.array(z.string()).max(200).optional() },
   },
   handler: async ({ ids }) => {
@@ -131,6 +131,27 @@ export const checkPrintability = {
       const res = await bridge('printability', { ids }, 180000);
 
       return text(res?.text || 'No printed parts yet.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const slicePlates = {
+  name: 'slice_plates',
+  config: {
+    title: 'Slice plates',
+    description:
+      "Lays the printed parts out on plates for the scene's printer and slices them in the user's slicer (Bambu Studio or OrcaSlicer), with the printer's own profiles. " +
+      'Returns per plate the real print time, filament grams, whether it needs supports and the slicer’s warnings. Use it once the design passes check_printability, to report real print time and filament. ' +
+      'It never starts a print: the user sends plates from the Build tab.',
+    inputSchema: {},
+  },
+  handler: async () => {
+    try {
+      const res = await bridge('slice', {}, 600000);
+
+      return text(res?.text || 'No printed parts to slice.');
     } catch (err) {
       return fail(err);
     }

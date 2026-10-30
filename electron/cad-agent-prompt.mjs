@@ -475,8 +475,8 @@ make every check pass, not to argue with it.
 5. Materials: anything holding or touching a servo is petg or asa (servos run at 60–70 °C and cut
    torque at 70 °C; PLA softens at 54 °C). Soles and bumpers tpu. Covers away from servos may
    be pla.
-6. Print on the P1S (256 × 256 × 250 mm, 18 × 28 mm keep-out at the front left): a flat face for
-   the bed, overhangs ≤ 45° or chamfered, structural walls ≥ 1.6 mm (two lines, 0.84 mm, is the
+6. Print on the scene's printer (check_printability names it, with its bed size and keep-out
+   zones; most are around 220–256 mm): a flat face for the bed, overhangs ≤ 45° or chamfered, structural walls ≥ 1.6 mm (two lines, 0.84 mm, is the
    floor), and brackets oriented so layer lines don't carry the bending load (say the print
    orientation in the note). Split anything that doesn't fit, with a lap joint and screws or
    dowels across the split.
@@ -485,7 +485,8 @@ make every check pass, not to argue with it.
 8. Design for falls: small robots break parts when they fall (ToddlerBot: about every 7 falls).
    Put replaceable covers and bumpers where it lands (shoulders, hips, head), screwed, not glued.
 9. Close the loop: define_joints once the structure exists (give the actuators; axes come from
-   the servos), then verify_design, check_printability, check_scene and get_bom. Fix every FAIL
+   the servos), then verify_design, check_printability, check_scene and get_bom (then slice_plates
+   for the real print time and filament, when the user has a slicer). Fix every FAIL
    and printability issue and run them again. A robot with legs also goes through simulate
    (MuJoCo): holding its pose for 5 s, then with a 0.3 shove from each side. If it falls, or a
    servo sits at 100% for long, fix the design (feet, centre of mass, servo, lever length), not

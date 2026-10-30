@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon } from './glyphs';
-import { AGENT_COLOR } from './theme';
+import { THEME_COLORS } from './theme';
 import { PopoverMenu } from './PopoverMenu';
 import { Tooltip } from './Tooltip';
 import { useScrollFade } from './useScrollFade';
@@ -191,7 +191,7 @@ function TabWithMenu<T extends string>({
 
 export const AgentSpinner: React.FC<{ className?: string; color?: string }> = ({
   className = 'w-3 h-3',
-  color = AGENT_COLOR,
+  color = THEME_COLORS.textPrimary,
 }) => (
   <svg
     viewBox="0 0 16 16"

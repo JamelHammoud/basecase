@@ -37,4 +37,13 @@ describe('agent keys', () => {
     expect(keys.get('gemini')).toBe('AIzaTest');
     expect(fs.existsSync(path.join(dir, 'agent-keys.json'))).toBe(false);
   });
+
+  it('keeps other secrets in their own file', () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-keys-'));
+    new AgentKeys({ dir, secrets: reversing, file: 'printer-keys.json' }).set('p1s', '12345678');
+
+    expect(fs.existsSync(path.join(dir, 'agent-keys.json'))).toBe(false);
+    expect(new AgentKeys({ dir, secrets: reversing, file: 'printer-keys.json' }).get('p1s')).toBe('12345678');
+    expect(new AgentKeys({ dir, secrets: reversing }).get('p1s')).toBeUndefined();
+  });
 });

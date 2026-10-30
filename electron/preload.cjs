@@ -55,6 +55,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   revealGuide: (id) => ipcRenderer.invoke('guide:reveal', id),
   guideExists: (id) => ipcRenderer.invoke('guide:exists', id),
   guideHtml: (id) => ipcRenderer.invoke('guide:html', id),
+  shareFile: (payload) => ipcRenderer.invoke('share:file', payload),
+  printCall: (channel, payload) =>
+    String(channel).startsWith('print:')
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown print call')),
   setMenuState: (state) => ipcRenderer.send('menu:state', state),
   onMenuCommand: (callback) => {
     const handler = (_event, id) => callback(id);

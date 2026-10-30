@@ -24,7 +24,7 @@ const cursors = colorCursors(
 );
 
 describe('designerFrames', () => {
-  it('colours the lead coral and each designer by its place in the chat', () => {
+  it('colours the lead blue and each designer by its place in the chat', () => {
     expect(cursors.map((c) => c.color)).toEqual([AGENT_COLOR, designerColor(0), designerColor(1)]);
   });
 

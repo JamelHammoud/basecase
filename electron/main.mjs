@@ -5,6 +5,8 @@ import { app, BrowserWindow, ipcMain, nativeTheme, safeStorage, shell } from 'el
 import { BasecaseBackendService } from './backend-service.mjs';
 import { installAppMenu, updateAppMenuState } from './app-menu.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
+import { registerPrintHandlers } from './print/routes.mjs';
+import { registerShareHandlers } from './shareFile.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,6 +137,8 @@ ipcMain.handle('library:save-scene', (_e, scenePayload) => backend.saveScene(sce
 ipcMain.handle('library:save-scene-json', (_e, json) => backend.saveScene(JSON.parse(json)));
 ipcMain.handle('library:delete-scene', (_e, sceneId) => backend.deleteScene(sceneId));
 registerGuideHandlers(ipcMain, backend.libraryDir);
+registerPrintHandlers(ipcMain, backend.printing);
+registerShareHandlers(ipcMain);
 
 app.whenReady().then(async () => {
   nativeTheme.themeSource = 'dark';
@@ -149,7 +153,10 @@ app.whenReady().then(async () => {
   });
 });
 
-app.on('before-quit', () => backend.trainer.dispose());
+app.on('before-quit', () => {
+  backend.trainer.dispose();
+  backend.printing.dispose();
+});
 
 app.on('window-all-closed', () => {
   backend.disconnectAcpAgent();

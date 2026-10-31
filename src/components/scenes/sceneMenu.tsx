@@ -21,6 +21,6 @@ export function sceneMenu(o: SceneMenuOptions): ContextMenuEntry[] {
     { label: 'Rename', icon: <EditIcon className={icon} />, onSelect: o.onRename },
     { label: 'Duplicate', icon: <CopyIcon className={icon} />, onSelect: o.onDuplicate },
     { divider: true },
-    { label: 'Delete…', icon: <DeleteIcon className={icon} />, tone: 'danger', onSelect: o.onDelete },
+    { label: 'Delete', icon: <DeleteIcon className={icon} />, tone: 'danger', onSelect: o.onDelete },
   ];
 }

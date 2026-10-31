@@ -33,14 +33,14 @@ export function TitleBarActions({
       >
         <div className="flex items-center gap-1 mr-[4px]">
           <IconButton
-            icon={<UndoIcon className="w-4 h-4" />}
+            icon={<UndoIcon className="w-[18px] h-[18px]" />}
             title="Undo"
             shortcut="⌘Z"
             onClick={onUndo}
             disabled={!canUndo}
           />
           <IconButton
-            icon={<RedoIcon className="w-4 h-4" />}
+            icon={<RedoIcon className="w-[18px] h-[18px]" />}
             title="Redo"
             shortcut="⇧⌘Z"
             onClick={onRedo}
@@ -56,7 +56,7 @@ export function TitleBarActions({
           onCopyMarkdown={exports.copyBrief}
         />
         <IconButton
-          icon={<PanelRightIcon className="w-4 h-4" />}
+          icon={<PanelRightIcon className="w-[18px] h-[18px]" />}
           title={isRightOpen ? 'Hide inspector' : 'Show inspector'}
           shortcut="⌘I"
           onClick={onToggleRight}

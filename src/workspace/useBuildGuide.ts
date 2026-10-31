@@ -1,6 +1,7 @@
-import { useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { generateGuide, type GeneratedGuide, type GuideProgress } from '../guide/generateGuide';
 import { guideFingerprint } from '../guide/guideFingerprint';
+import { isBuilt } from '../guide/guidePlan';
 import { guidePagesKey, loadGuidePages, seedGuidePages, type GuidePages } from '../guide/viewer/guidePages';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
@@ -50,7 +51,11 @@ export function useBuildGuide(options: BuildGuideOptions) {
   const runRef = useRef<Promise<GeneratedGuide | null> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const record = project.buildGuide;
-  const stale = !!record && record.fingerprint !== guideFingerprint(sceneName, parts, project);
+  const fingerprint = guideFingerprint(sceneName, parts, project);
+  const stale = !!record && record.fingerprint !== fingerprint;
+  const missing = !record && parts.some(isBuilt);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const openPdf = async () => {
     const id = projectRef.current.buildGuide?.id;
@@ -95,7 +100,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
     return result;
   };
 
-  const generate = ({ quiet = false } = {}): Promise<GeneratedGuide | null> => {
+  const generate = ({ quiet = false, background = false } = {}): Promise<GeneratedGuide | null> => {
     if (runRef.current) return runRef.current;
 
     const abort = new AbortController();
@@ -113,9 +118,10 @@ export function useBuildGuide(options: BuildGuideOptions) {
       signal: abort.signal,
       order: () => buildOrder(viewportRef.current, partsRef.current),
     })
-      .then((result) => finish(result, quiet))
+      .then((result) => finish(result, quiet || background))
       .catch((err: unknown) => {
-        showToast(`Couldn’t make the guide. ${String((err as Error)?.message ?? err)}`, { tone: 'error' });
+        if (!background)
+          showToast(`Couldn’t make the guide. ${String((err as Error)?.message ?? err)}`, { tone: 'error' });
 
         return null;
       })
@@ -135,7 +141,9 @@ export function useBuildGuide(options: BuildGuideOptions) {
 
   return {
     record,
+    fingerprint,
     stale,
+    missing,
     progress,
     cover: cover ?? record?.coverDataUrl,
     viewing,

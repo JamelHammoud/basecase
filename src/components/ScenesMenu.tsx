@@ -70,7 +70,7 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
   return (
     <div ref={triggerRef} className="relative">
       <IconButton
-        icon={<MenuIcon className="w-4 h-4" />}
+        icon={<MenuIcon className="w-[18px] h-[18px]" />}
         title="Scenes"
         shortcut="⌘O"
         isToggled={open}

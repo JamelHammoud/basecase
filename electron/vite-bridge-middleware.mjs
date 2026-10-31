@@ -1,4 +1,5 @@
 import { BasecaseBackendService } from './backend-service.mjs';
+import { guardBridge } from './bridgeGuard.mjs';
 import { printPostRoutes } from './print/routes.mjs';
 
 const withBase64Files = (got) => ({
@@ -149,8 +150,8 @@ function installBridge(server) {
 
   server.httpServer?.once('close', stopAgent);
   process.once('exit', stopAgent);
-  server.middlewares.use('/api/events', eventsMiddleware(backend));
-  server.middlewares.use('/api/bridge', bridgeMiddleware(backend));
+  server.middlewares.use('/api/events', guardBridge(eventsMiddleware(backend)));
+  server.middlewares.use('/api/bridge', guardBridge(bridgeMiddleware(backend)));
 }
 
 export function bridgeMiddlewarePlugin() {

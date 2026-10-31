@@ -1,3 +1,5 @@
+import { publicFetch, readCapped } from './publicFetch.mjs';
+
 function parseXml(xml) {
   const root = { tag: '#root', attrs: {}, children: [] };
   const stack = [root];
@@ -260,23 +262,15 @@ export function describeSkeleton(sk, max = 150) {
 export async function fetchSkeleton(url, forward) {
   let u = new URL(url);
 
-  if (!/^https?:$/.test(u.protocol)) throw new Error('Only http(s) URLs.');
-
   if (u.hostname === 'github.com' && u.pathname.includes('/blob/')) {
     u = new URL(`https://raw.githubusercontent.com${u.pathname.replace('/blob/', '/')}`);
   }
 
-  const res = await fetch(u, { signal: AbortSignal.timeout(20000), redirect: 'follow' });
+  const res = await publicFetch(u, { signal: AbortSignal.timeout(20000) });
 
   if (!res.ok) throw new Error(`Fetch failed: HTTP ${res.status} for ${u}`);
 
-  const len = Number(res.headers.get('content-length') || 0);
-
-  if (len > 12e6) throw new Error('File is larger than 12 MB.');
-
-  const xml = await res.text();
-
-  if (xml.length > 12e6) throw new Error('File is larger than 12 MB.');
+  const xml = (await readCapped(res, 12e6, 'The file')).toString('utf8');
 
   return skeletonFromXml(xml, forward);
 }

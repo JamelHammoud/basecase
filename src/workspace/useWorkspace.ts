@@ -4,6 +4,7 @@ import { useCanvasDrop } from './useCanvasDrop';
 import { useCanvasMenu } from './useCanvasMenu';
 import { useClipboard } from './useClipboard';
 import { useDevStudioHook } from './useDevStudioHook';
+import { useGuideAutoUpdate } from './useGuideAutoUpdate';
 import { useMenuCommands } from './useMenuCommands';
 import { useWorkspaceActions } from './useWorkspaceActions';
 import { useWorkspaceCore } from './useWorkspaceCore';
@@ -32,6 +33,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   const canvasMenu = useCanvasMenu(core, agent.controls.stopFollowing);
   const drop = useCanvasDrop(core, actions);
 
+  useGuideAutoUpdate({ guide: core.guide, enabled: studio.autoGuide, agentBusy: agent.busy });
   useWorkspaceKeys({ active, core, actions, ui });
   useMenuCommands({ active, core, actions, ui });
   useDevStudioHook({ active, core, actions, agent });

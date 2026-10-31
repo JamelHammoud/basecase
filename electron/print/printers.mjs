@@ -37,6 +37,12 @@ function cleanPrinter(p) {
   };
 }
 
+const ENDPOINT_FIELDS = ['kind', 'host', 'serial'];
+
+function movedAway(old, next) {
+  return !next || ENDPOINT_FIELDS.some((field) => old.connection?.[field] !== next.connection?.[field]);
+}
+
 const slug = (s) =>
   s
     .toLowerCase()
@@ -93,9 +99,10 @@ export class PrinterStore {
 
   save(list) {
     const clean = (Array.isArray(list) ? list : []).map(cleanPrinter).filter(Boolean);
-    const ids = new Set(clean.map((p) => p.id));
 
-    for (const old of this.read()) if (!ids.has(old.id)) this.keys.set(old.id, '');
+    const byId = new Map(clean.map((p) => [p.id, p]));
+
+    for (const old of this.read()) if (movedAway(old, byId.get(old.id))) this.keys.set(old.id, '');
 
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
     fs.writeFileSync(this.file, JSON.stringify(clean, null, 2));

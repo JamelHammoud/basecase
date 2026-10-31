@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import path from 'node:path';
 import { z } from 'zod';
 import { TOOL_USE_HEADER, TOOL_USE_META } from '../backend/constants.mjs';
+import { publicFetch } from '../publicFetch.mjs';
 
 const BRIDGE_URL = process.env.CAD_BRIDGE_URL;
 
@@ -71,27 +72,11 @@ export function evidencePath(p) {
 }
 
 export async function fetchWithTimeout(url, ms, init = {}) {
-  const { protocol, hostname } = new URL(url);
-
-  if (
-    !/^https?:$/.test(protocol) ||
-    /^(localhost|.*\.local|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.|\[)/i.test(hostname)
-  ) {
-    throw new Error('only public http(s) addresses are allowed');
-  }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
-
-  try {
-    return await fetch(url, {
-      ...init,
-      signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh) Basecase/1.0', ...(init.headers ?? {}) },
-    });
-  } finally {
-    clearTimeout(timer);
-  }
+  return publicFetch(url, {
+    ...init,
+    signal: AbortSignal.timeout(ms),
+    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh) Basecase/1.0', ...(init.headers ?? {}) },
+  });
 }
 
 export async function clashText(ids) {

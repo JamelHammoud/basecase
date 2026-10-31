@@ -67,6 +67,7 @@ export interface Preferences {
   showGrid: boolean;
   sculptEnabled: boolean;
   measureUnit: MeasureUnit;
+  autoGuide: boolean;
 }
 
 export type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
@@ -81,6 +82,7 @@ export interface StudioShared {
   showGrid: boolean;
   setShowGrid: Setter<boolean>;
   sculptEnabled: boolean;
+  autoGuide: boolean;
   showReferenceImages: boolean;
   setShowReferenceImages: Setter<boolean>;
   isLeftOpen: boolean;

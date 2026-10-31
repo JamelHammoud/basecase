@@ -1,5 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { IconButton, MenuItem, MenuLabel, NumberInput, PopoverMenu, Section, CloseIcon, PlusIcon } from '../../design-system';
+import {
+  IconButton,
+  MenuItem,
+  MenuLabel,
+  NumberInput,
+  PopoverMenu,
+  Section,
+  CloseIcon,
+  PlusIcon,
+  confirmAction,
+} from '../../design-system';
 import { SUPPLIES, SUPPLY_BY_ID, type SupplyGroup } from '../../data/supplies';
 import type { ProjectSettings } from '../../types/robotics';
 
@@ -95,7 +105,13 @@ export const ExtrasSection: React.FC<ExtrasSectionProps> = ({ project, onChangeP
           key={x.key}
           extra={x}
           onQty={(qty) => set(extras.map((e) => (e.key === x.key ? { ...e, qty } : e)))}
-          onRemove={() => set(extras.filter((e) => e.key !== x.key))}
+          onRemove={() =>
+            confirmAction({
+              title: `Remove ${supplyOf(x.key)?.name ?? x.key}?`,
+              confirmLabel: 'Remove',
+              onConfirm: () => set(extras.filter((e) => e.key !== x.key)),
+            })
+          }
         />
       ))}
     </Section>

@@ -12,11 +12,18 @@ const loading = new Map<string, Promise<GuidePages | null>>();
 
 export const guidePagesKey = (id: string, generatedAt: string) => `${id}@${generatedAt}`;
 
+const ACTIVE_ELEMENTS =
+  'script, iframe, frame, object, embed, a, area, form, button, input, base, meta, link, foreignObject, animate, set, use';
+const URL_ATTRIBUTES = new Set(['href', 'xlink:href', 'action', 'formaction', 'src', 'srcset', 'poster', 'data']);
+
+const unsafeAttribute = (attr: Attr) =>
+  attr.name.startsWith('on') || (URL_ATTRIBUTES.has(attr.name) && !attr.value.trim().startsWith('data:image/'));
+
 function stripHandlers(root: ParentNode) {
-  root.querySelectorAll('script, iframe, object, embed').forEach((el) => el.remove());
+  root.querySelectorAll(ACTIVE_ELEMENTS).forEach((el) => el.remove());
 
   for (const el of root.querySelectorAll('*')) {
-    for (const attr of [...el.attributes]) if (attr.name.startsWith('on')) el.removeAttribute(attr.name);
+    for (const attr of [...el.attributes]) if (unsafeAttribute(attr)) el.removeAttribute(attr.name);
   }
 }
 

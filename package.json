@@ -9,7 +9,7 @@
     "start": "vite build && node tools/electron-dev.mjs . --bundle",
     "dev": "vite --port 5173",
     "electron": "node tools/electron-dev.mjs .",
-    "electron:dev": "concurrently -k \"BASECASE_HMR_PORT=5173 vite --port 5173\" \"wait-on http://localhost:5173 && node tools/electron-dev.mjs .\"",
+    "electron:dev": "concurrently -k \"BASECASE_HMR_PORT=5173 vite --port 5173 --strictPort\" \"wait-on http://localhost:5173 && node tools/electron-dev.mjs .\"",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "check": "npm run check:tracked && npm run format:check && npm run lint && npm run lint:py && npm run typecheck && npm test",
@@ -30,27 +30,28 @@
     "prepare": "simple-git-hooks && node tools/native/build.mjs",
     "native": "node tools/native/build.mjs",
     "lint:py": "uvx ruff check . && uvx ruff format --check .",
-    "recipes:harvest": "node tools/recipes/harvest.mjs"
+    "recipes:harvest": "node tools/recipes/harvest.mjs",
+    "security": "node tools/security/audit.mjs"
   },
   "dependencies": {
-    "@agentclientprotocol/claude-agent-acp": "^0.90.0",
-    "@agentclientprotocol/codex-acp": "^2.2.2",
+    "@agentclientprotocol/claude-agent-acp": "^0.99.1",
+    "@agentclientprotocol/codex-acp": "^2.5.0",
     "@agentclientprotocol/sdk": "^1.8.0",
-    "@google/gemini-cli": "^0.64.0",
+    "@google/gemini-cli": "^0.66.0",
     "@modelcontextprotocol/sdk": "^1.32.1",
-    "@mujoco/mujoco": "3.16.0",
+    "@mujoco/mujoco": "3.17.0",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/three": "^0.186.0",
+    "@types/three": "^0.187.0",
     "manifold-3d": "^3.5.4",
     "openscad-wasm": "^0.0.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "replicad": "^1.1.0",
+    "replicad": "^1.2.0",
     "replicad-opencascadejs": "^1.1.0",
     "tailwindcss": "^4.3.3",
-    "three": "^0.186.1",
+    "three": "^0.187.0",
     "three-bvh-csg": "^0.0.18",
     "three-mesh-bvh": "^0.9.16",
     "zod": "^4.6.7"
@@ -61,13 +62,13 @@
     "@rolldown/plugin-babel": "^0.2.4",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/babel__core": "^7.20.5",
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
-    "concurrently": "^9.2.1",
-    "electron": "^41.2.0",
+    "concurrently": "^10.0.6",
+    "electron": "^45.2.1",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -101,5 +102,17 @@
       "uvx ruff format",
       "uvx ruff check --fix"
     ]
+  },
+  "allowScripts": {
+    "simple-git-hooks": true,
+    "fsevents": false,
+    "node-pty": false,
+    "@github/keytar": false
+  },
+  "engines": {
+    "node": ">=26.13.0"
+  },
+  "overrides": {
+    "minimatch": "^11.0.3"
   }
 }

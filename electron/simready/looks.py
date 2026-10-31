@@ -49,15 +49,18 @@ class Look:
         return self.image[y, x].mean(axis=1) * self.color
 
 
-def asset_path(value) -> str | None:
-    if isinstance(value, Sdf.AssetPath) and value.resolvedPath:
-        return value.resolvedPath
+def asset_path(value, root: str) -> str | None:
+    """The file behind an asset path, only when it lies inside the downloaded package."""
+    if not isinstance(value, Sdf.AssetPath) or not value.resolvedPath:
+        return None
 
-    return None
+    real = os.path.realpath(value.resolvedPath)
+    return real if real.startswith(os.path.realpath(root) + os.sep) else None
 
 
 class LookReader:
-    def __init__(self) -> None:
+    def __init__(self, root: str) -> None:
+        self.root = root
         self.images: dict[str, np.ndarray | None] = {}
         self.looks: dict[str, Look] = {}
 
@@ -95,7 +98,7 @@ class LookReader:
     def input_texture(self, inp: UsdShade.Input) -> tuple[np.ndarray | None, bool, str | None]:
         """The texture behind an input, whether one was authored at all (even if missing), and its file."""
         asset = self.texture_asset(inp)
-        path = asset_path(asset)
+        path = asset_path(asset, self.root)
         authored = bool(asset is not None and asset.path)
         return (self.image(path) if path else None), authored, path
 

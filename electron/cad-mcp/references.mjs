@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { IMAGE_EXT, NO_WEB, REFERENCES_DIR, bridge, evidencePath, fetchWithTimeout } from './shared.mjs';
+import { readCapped } from '../publicFetch.mjs';
 
 const SVG_MIME = 'image/svg+xml';
 const used = new Set();
@@ -29,7 +30,7 @@ async function loadWebReference(r) {
     (res.headers.get('content-type') || '').split(';')[0].trim() ||
     IMAGE_EXT[path.extname(new URL(r).pathname).toLowerCase()];
 
-  return { mime, buf: Buffer.from(await res.arrayBuffer()) };
+  return { mime, buf: await readCapped(res, 25_000_000, 'The image') };
 }
 
 function loadEvidenceReference(r) {

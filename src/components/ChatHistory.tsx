@@ -2,7 +2,7 @@ import React from 'react';
 import { AgentConversationSummary } from '../types/robotics';
 import { groupByDate } from '../utils/dateGroups';
 import { timeAgo } from '../utils/timeAgo';
-import { AgentSpinner, Tooltip, useScrollFade, DeleteIcon } from '../design-system';
+import { AgentSpinner, Tooltip, useScrollFade, DeleteIcon, confirmAction } from '../design-system';
 
 interface ChatHistoryProps {
   chats: AgentConversationSummary[];
@@ -68,7 +68,13 @@ const ChatRow: React.FC<{
           <button
             type="button"
             aria-label="Delete chat"
-            onClick={() => onDeleteChat(c.id)}
+            onClick={() =>
+              confirmAction({
+                title: `Delete ${c.title}?`,
+                body: 'You can’t undo this.',
+                onConfirm: () => onDeleteChat(c.id),
+              })
+            }
             className="absolute right-0 top-1/2 -translate-y-1/2 w-[26px] h-[26px] rounded-[6px] flex items-center justify-center text-white/45 hover:text-red-400 hover:bg-red-500/15 cursor-default opacity-0 scale-90 transition-[opacity,scale,color,background-color] duration-150 group-hover/chat:opacity-100 group-hover/chat:scale-100 focus-visible:opacity-100 focus-visible:scale-100"
           >
             <DeleteIcon className="w-3.5 h-3.5" />

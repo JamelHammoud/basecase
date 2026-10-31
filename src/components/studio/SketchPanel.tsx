@@ -11,6 +11,7 @@ import {
   MinusIcon,
   PenIcon,
   PlusIcon,
+  confirmAction,
 } from '../../design-system';
 import { OutputFields } from './OutputFields';
 import { SketchCanvas } from './SketchCanvas';
@@ -59,10 +60,16 @@ const SketchTools: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
         icon={<EraserIcon className="w-4 h-4" />}
         title="Clear"
         variant="danger"
-        onClick={() => {
-          draft.setOuterPoints([]);
-          draft.setHoles([]);
-        }}
+        onClick={() =>
+          confirmAction({
+            title: 'Clear sketch?',
+            confirmLabel: 'Clear',
+            onConfirm: () => {
+              draft.setOuterPoints([]);
+              draft.setHoles([]);
+            },
+          })
+        }
       />
     </div>
   );

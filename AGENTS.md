@@ -8,6 +8,8 @@ This document defines the design principles, UI/UX conventions, copy rules, and 
 
 **Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are.
 
+**Security audit, vulnerable package or toolchain update?** Follow [.agents/skills/security-audit/SKILL.md](.agents/skills/security-audit/SKILL.md) (`npm run security` scans). Code that touches IPC, the HTTP bridge, file ids, outbound fetches or the CAD kernel follows §0h.
+
 References studied for this system: Figma UI3, the OpenAI Codex / ChatGPT desktop apps, mobbin.com, Linear, Raycast, macOS Tahoe Liquid Glass (WWDC25 “Meet Liquid Glass”), Vercel Geist, Things 3; copy guides from Apple HIG, Mailchimp, Material, Shopify Polaris, Atlassian, Microsoft, GOV.UK, Stripe, Linear and 37signals.
 
 ---
@@ -19,7 +21,8 @@ These rules hold for every human and agent, on every machine. They're enforced b
 ### 0a. Tooling
 
 - **Prettier** formats (`.prettierrc.json`: single quotes, 120 columns). **ESLint** (`eslint.config.mjs`) enforces everything else. Custom rules live in `tools/eslint/`.
-- `npm run check` = `check:tracked` (§0g) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`. It must pass before you finish any change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes.
+- `npm run check` = `check:tracked` (§0g) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`. It must pass before you finish any change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes. `npm run security` (`tools/security/`) scans dependencies, Node, Electron, the Python locks, secrets and risky code, writes `scratch/security/<date>.md` and fails on any critical or high finding (§0h).
+- **Node** is pinned in `.nvmrc` (CI reads it) and `engines.node`: the latest release of the active LTS. npm runs dependency install scripts only for packages approved in `allowScripts` (`npm install-scripts ls`).
 - **Hooks run automatically:**
   - Git pre-commit (`simple-git-hooks` + `lint-staged`, installed by `npm install`): formats and lints staged files, then runs `check:tracked`; a commit with lint errors or internal files fails.
   - Claude Code (`.claude/settings.json` → `tools/hooks/claude-post-edit.mjs`): after every Edit/Write, the file is formatted and lint-fixed, and remaining errors come back to the agent. Fix them before moving on.
@@ -112,6 +115,19 @@ Anything that only serves this session or this machine stays out of git. Put it 
 - **Deliberately committed outputs:** `public/parts/*.glb` and `tools/parts/generated/<id>/` (the part pipeline's results, §8a), `public/figures/*.glb` and `tools/figures/generated/<id>/` (the Measure tool's scale figures, §6), `build/icon/compiled/`, `public/robots/*.webp`.
 - **`npm run check:tracked`** (`tools/check-tracked.mjs`, run by `check` and the pre-commit hook) fails on tracked files that `.gitignore` excludes (untrack them with `git rm --cached`) and on absolute paths into a home folder, `/private/tmp` or `/var/folders` in any tracked text file. Placeholder homes in tests (`me`, `user`, `name`, `example`, `runner`) are allowed.
 - **Before committing**, read `git status` and the staged list (`git diff --cached --stat`). Anything not in the categories above that you didn't mean to write gets moved to `scratch/` or deleted. When a new tool writes local output, add its folder to `.gitignore` (and to the ESLint / Prettier ignores if it holds code) in the same change.
+
+### 0h. Security (mandatory)
+
+The agent reads untrusted pages and files and drives an app that can spawn processes, so treat every input from the renderer, the HTTP bridge, the agent and downloaded assets as hostile. The full checklist, attack surface and accepted risks are in the `security-audit` skill; these rules hold for every change:
+
+- **HTTP bridge:** every `/api/*` middleware is wrapped in `guardBridge` (`electron/bridgeGuard.mjs`: loopback `Host`, same-origin `Origin` and `Sec-Fetch-Site`). Vite plugin middlewares run before Vite's own host check and CORS, so nothing else protects them. A website could otherwise POST `/api/bridge/acp-connect` and run a command.
+- **IPC** registers through `trustedIpc` (`electron/appOrigin.mjs`, main frame of the app origin only). Compare origins with `isAppUrl`, never `startsWith`; open only `isExternalWebUrl` links.
+- **Ids that become paths** go through `checkedFileId` / `isSafeFileId` (or `safeFileId`) in `electron/backend/constants.mjs`. `library/agent.json` holds the command the app spawns.
+- **Outbound fetches the agent controls** use `publicFetch` and `readCapped` (`electron/publicFetch.mjs`): public addresses only, every redirect re-checked, bodies capped. The renderer fetches agent URLs over https only.
+- **The CAD kernel** is forked with Node's permission model, `env: {}`, and only on Node ≥ 25 (older permission models allow network).
+- **Generated HTML** escapes every value (coerce numbers); the guide viewer strips scripts, handlers, links and non-image URLs. No `dangerouslySetInnerHTML`.
+- **No `shell: true`**, no string `exec` with interpolated input, no TLS verification off outside the Bambu LAN connector.
+- Every security fix gets a test that feeds it the exploit input (`electron/security.test.mjs`).
 
 ---
 
@@ -441,11 +457,12 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
   - **Layout:** Show sidebar / inspector, reset panel widths.
   - **Region** (`components/settings/RegionPane.tsx`): Prices → Currency (US Dollar by default; ⌘K → “Currency Settings”).
   - **Agent:** Run with Claude / Codex / Gemini / Offline, the command (status under it, or where to sign in), target height.
+  - **Build** (`components/settings/BuildPane.tsx`): Auto generate build guide (on by default, §8b).
   - **Printers** (`components/settings/PrintersPane.tsx`, `PrinterEditor.tsx`): My printers (name, model, nozzle, how prints are sent, address, serial, access code or API key, Test Connection, Make Default, Remove), Find on Network, Add Printer, and the slicers Basecase found (Get Bambu Studio when there's none). §8f.
   - **Shortcuts:** the full list (`ShortcutsList`).
 - **Sheet:** 860 × 620, 18px corners, matte (dark 0.5px keyline + drop shadow, no light ring). The sidebar (224px, `#1c1c1c`) sits on the `#222222` sheet by lightness alone, with no border. Pane items are 34px with a plain 16px icon (`white/40`); the open pane gets a soft fill and `white/90` icon and label, nothing else. The sidebar title and the open pane's title (20px semibold, 64px header) both center on y = 32. Close (Esc) sits at the header's right, its glyph in line with the cards' right edge. No line under the header; the content fades under it instead (`useScrollFade`). Content scrolls vertically only (`overflow-x-hidden`), with 28px side padding.
 - **Groups and rows** (`SettingsGroup` / `SettingsRow` in `src/components/SettingsRows.tsx`): a sentence-case group label (12.5px medium, `white/45`) above a rounded inset card; the pane title, group labels and cards share one left edge, and row content sits 16px inside the card (12px corners, `white/[0.035]`), rows separated by full-width hairlines. Rows are at least 52px with 16px side padding: label (13.5px, `white/90`, optional shortcut caps) with an optional hint (12.5px, `white/45`) on the left, the control on the right. `stacked` rows put a text field under the label and the hint under the field. Units are a muted suffix on the label (“Move mm”). Shortcuts use the same cards with 40px rows.
-- Grid, snap, trackpad mode and the Sculpt tool setting persist in `localStorage` (`preferences`); the currency in `currency`, rates in `exchange-rates`.
+- Grid, snap, trackpad mode, the Sculpt tool and Auto generate build guide settings persist in `localStorage` (`preferences`); the currency in `currency`, rates in `exchange-rates`.
 
 ## 7. Inspector (Figma UI3 style)
 
@@ -748,7 +765,7 @@ The Build tab (right panel) and the agent's build tools turn a model into someth
 - **Library joint modules** (`vendor/robotics/robotics.scad`): `STS3215` follows the Feetech drawing: axis 12.5 mm from the case center, Ø19.95 aluminium horns with 4 × M3 on Ø14 on both faces, 1.4 mm beyond the case. `servo_u_bracket` bolts to both horns. `heatset_hole` sizes include the ~0.25 mm printed-hole shrinkage and 1 mm extra depth.
 - **UI:**
   - **Budget:** the estimated total (checked prices, plus list prices for the rest, marked ≈), a budget field, and a bar (solid for checked prices, light for the estimate) with “$40 left” or “$12 over budget” against the estimate. No price counts (“3 to price”, “2 of 5 checked”): the bar and the ≈ already say how much is estimated.
-  - **Build guide** (`GuideSection`, `src/guide/`), right under Budget: a step-by-step assembly PDF. Generating runs in a worker (`guide.worker.ts`; `generateGuide` packs the parts, the worker measures contacts, plans, draws and writes the HTML, the main thread saves the PDF), so the app stays responsive and you can keep working; a toast with Open says when it's done. While it runs, the card keeps its cover (the new cover replaces it as soon as it's drawn), shows the step being drawn, the time left once it can be estimated, and Stop. An out-of-date guide says so in amber and its button reads Update. Steps follow the order `check_assembly` proves (`provenOrder.ts`); parts the planner couldn't place come first by the heuristic, and their steps say “Order not checked”.
+  - **Build guide** (`GuideSection`, `src/guide/`), right under Budget: a step-by-step assembly PDF. Generating runs in a worker (`guide.worker.ts`; `generateGuide` packs the parts, the worker measures contacts, plans, draws and writes the HTML, the main thread saves the PDF), so the app stays responsive and you can keep working; a toast with Open says when it's done. While it runs, the card keeps its cover (the new cover replaces it as soon as it's drawn), shows the step being drawn, the time left once it can be estimated, and Stop. An out-of-date guide says so in amber and its button reads Update. Every scene with built parts keeps a current guide (`useGuideAutoUpdate`, Settings → Build → Auto generate build guide, on by default): 15 s after the last change to what the guide shows (`guideFingerprint`), while no agent in the scene is working, it generates or regenerates quietly, with no toast on success or failure. Background runs go one at a time across tabs. Stop, or a failed run, leaves that version alone until the scene changes again; opening another scene in the tab cancels a run. Steps follow the order `check_assembly` proves (`provenOrder.ts`); parts the planner couldn't place come first by the heuristic, and their steps say “Order not checked”.
     - **Open** (the cover, the Open button, the toast, the agent's guide link) shows the guide in the app (`GuideViewer`), not the system PDF viewer. The HTML the PDF is printed from is kept beside it (`library/guides/<id>.html`, read with `guide:html`), parsed into pages, each in its own shadow root with one shared stylesheet (`guide/viewer/`), and prefetched at idle. A guide with no saved HTML is regenerated, then opened. The cover thumbnail flies into the first page on a spring (`springEasing.ts` turns a spring into a CSS `linear()` easing), keeping the thumbnail's tilt, while the next pages rise in behind it; closing flies the page nearest the centre back into the thumbnail. Pages fit the window height; pinch, ⌘-scroll or − / + / 0 zoom about the pointer, ← / → and the toolbar's arrows turn pages, Esc or the × at the top right closes. The toolbar floats at the bottom: Previous page, “3 of 60”, Next page, Zoom out, Zoom in, Show in Finder, Open PDF.
     - Regenerating is incremental: the worker keeps the guide's renderer for 2 minutes after a run (at most 2), syncing only parts whose identity changed, and caches contacts and every drawing (cover, item thumbnails, modules, steps) by the identities of the parts it shows (`GuideCache`, keys sent from the main thread's `WeakMap`). An unchanged scene regenerates in about 2 s; an edit redraws only the steps that show the changed parts.
   - **Checks:** Run Checks. Before a run, every check (`ENGINEERING_CHECKS`) is listed by name as Not run; after, rows show the result and you click them to select the parts involved.
@@ -1011,6 +1028,7 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 ## 15. Verification Checklist
 
 - [ ] `npm run check` passes (format, ESLint, Ruff, types, tests) and `npm run build` succeeds.
+- [ ] Changes to IPC, the HTTP bridge, file ids, outbound fetches, the CAD kernel or dependencies follow §0h; `npm run security` reports no critical or high finding.
 - [ ] `npm run test:e2e` passes after UI or viewport changes.
 - [ ] Visual changes: don't start dev servers, previews or screenshots to check how they look. A maintainer runs the app and reviews the UI; say the change is done and what to look at, and they'll say if it needs work.
 - [ ] Nothing in §0f regressed (no full-scene rebuilds, no always-on render loop, no large IPC payloads).

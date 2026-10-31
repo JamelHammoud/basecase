@@ -126,9 +126,9 @@ const DRAWN = {
     ExpandIcon: 'M14.5 3.5H20.5V9.5M20.5 3.5L14 10M9.5 20.5H3.5V14.5M3.5 20.5L10 14',
     ExternalLinkIcon:
       'M10 3.5H6A2.5 2.5 0 0 0 3.5 6V18A2.5 2.5 0 0 0 6 20.5H18A2.5 2.5 0 0 0 20.5 18V14M14 3.5H20.5V10M20.5 3.5L11 13',
-    PanelLeftIcon: PANEL + 'M9 3.5V20.5',
-    PanelRightIcon: PANEL + 'M15 3.5V20.5',
-    PanelsIcon: PANEL + 'M8.5 3.5V20.5M15.5 3.5V20.5',
+    PanelLeftIcon: PANEL + 'M7.75 8V16',
+    PanelRightIcon: PANEL + 'M16.25 8V16',
+    PanelsIcon: PANEL + 'M7.75 8V16M16.25 8V16',
   },
   editing: {
     ComposeIcon:
@@ -289,7 +289,16 @@ const DRAWN = {
     },
     GridIcon: rr([3, 3, 18, 18], 2.5) + 'M9 3V21M15 3V21M3 9H21M3 15H21',
     PrinterIcon:
-      rr([3, 3, 18, 18], 2.5) + 'M3 8.5H21M10 8.5V11L12 13.25L14 11V8.5M8 21V17.5Q8 16.5 9 16.5H15Q16 16.5 16 17.5V21',
+      rr([6.5, 2.5, 11, 6], 2) +
+      rounded(
+        [
+          [9, 8.5],
+          [15, 8.5],
+          [12, 12.5],
+        ],
+        [0, 0, 1],
+      ) +
+      'M4 16.5H12M4 20.5H20',
     CommentIcon: 'M3 19.5V12A9 9 0 1 1 12 21H4.5A1.5 1.5 0 0 1 3 19.5Z',
   },
   tools: {

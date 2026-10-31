@@ -1,3 +1,4 @@
+import { confirmAction } from '../design-system/confirmStore';
 import type { CustomModelDefinition } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import { copyName, modelId, stamp } from './helpers';
@@ -29,13 +30,16 @@ function useLibraryModels({ studio, showToast }: WorkspaceCore) {
     showToast(`Duplicated ${model.name}`);
   };
 
-  const deleteModel = async (model: CustomModelDefinition) => {
+  const removeModel = async (model: CustomModelDefinition) => {
     setCustomModels(await platformBridge.deleteModel(model.id));
     showToast(`Deleted ${model.name}`, {
       tone: 'neutral',
       action: { label: 'Undo', onClick: () => void resaveModel(model) },
     });
   };
+
+  const deleteModel = (model: CustomModelDefinition) =>
+    confirmAction({ title: `Delete ${model.name}?`, onConfirm: () => void removeModel(model) });
 
   return { renameModel, duplicateModel, deleteModel };
 }

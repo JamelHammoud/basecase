@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { app, BrowserWindow, ipcMain, nativeTheme, safeStorage, shell } from 'electron';
+import { app, BrowserWindow, ipcMain as electronIpc, nativeTheme, safeStorage, session, shell } from 'electron';
+import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { installAppMenu, updateAppMenuState } from './app-menu.mjs';
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
@@ -28,6 +29,8 @@ const bundled = process.argv.includes('--bundle');
 const devServer = bundled ? null : process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
 
 registerAppScheme();
+
+const ipcMain = trustedIpc(electronIpc, APP_ORIGIN);
 
 app.setName('Basecase');
 
@@ -63,6 +66,8 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
+      webviewTag: false,
     },
   });
 
@@ -79,16 +84,19 @@ function createWindow() {
   mainWindow.loadURL(`${APP_ORIGIN}/`);
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:/.test(url)) shell.openExternal(url);
+    if (isExternalWebUrl(url)) shell.openExternal(url);
 
     return { action: 'deny' };
   });
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (url.startsWith(`${APP_ORIGIN}/`)) return;
+    if (isAppUrl(url, APP_ORIGIN)) return;
 
     event.preventDefault();
 
-    if (/^https?:/.test(url)) shell.openExternal(url);
+    if (isExternalWebUrl(url)) shell.openExternal(url);
+  });
+  mainWindow.webContents.on('will-redirect', (event, url) => {
+    if (!isAppUrl(url, APP_ORIGIN)) event.preventDefault();
   });
 
   for (const [event, value] of [
@@ -157,8 +165,20 @@ registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerShareHandlers(ipcMain);
 
+const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write', 'fullscreen']);
+
+function limitPermissions() {
+  const allowed = (permission, origin) => ALLOWED_PERMISSIONS.has(permission) && isAppUrl(origin ?? '', APP_ORIGIN);
+
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) =>
+    callback(allowed(permission, details.requestingUrl)),
+  );
+  session.defaultSession.setPermissionCheckHandler((_contents, permission, origin) => allowed(permission, origin));
+}
+
 app.whenReady().then(async () => {
   nativeTheme.themeSource = 'dark';
+  limitPermissions();
   installAppMenu(() => mainWindow);
   void backend.connectAcpAgent();
 

@@ -140,7 +140,7 @@ async function renderWith(renderer: GuideRenderer, job: GuideJob, events: GuideJ
   const meta = {
     title,
     material: project.material,
-    infillPct: project.infillPct,
+    infillPct: Math.round(Number(project.infillPct) || 0),
     date: job.date,
     sizeMm: solidSizeMm(parts) ?? undefined,
     mark: job.mark,

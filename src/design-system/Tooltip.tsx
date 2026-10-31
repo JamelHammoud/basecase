@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { currentConfirm, subscribeConfirm } from './confirmStore';
 import { Kbd } from './Kbd';
 
 export type TooltipSide = 'top' | 'bottom' | 'left' | 'right';
@@ -35,6 +36,12 @@ const controlsOpenPopover = (child: React.ReactElement) => {
   return expanded === true || expanded === 'true';
 };
 
+const behindModal = (anchor: Element) => {
+  const modals = [...document.querySelectorAll('[aria-modal="true"]')];
+
+  return modals.length > 0 && !modals.some((m) => m.contains(anchor));
+};
+
 export const Tooltip: React.FC<TooltipProps> = ({
   label,
   shortcut,
@@ -48,7 +55,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const timerRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
-  const suppressed = disabled || controlsOpenPopover(children);
+  const confirming = useSyncExternalStore(subscribeConfirm, currentConfirm) !== null;
+  const suppressed = disabled || confirming || controlsOpenPopover(children);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -66,6 +74,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
     timerRef.current = window.setTimeout(
       () => {
+        if (anchorRef.current && behindModal(anchorRef.current)) return;
+
         anyOpen = true;
         setOpen(true);
       },
@@ -85,6 +95,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
     });
     setCoords(null);
   }, []);
+
+  const showOnKeyboardFocus = (e: React.FocusEvent) => {
+    if ((e.target as Element).matches(':focus-visible')) show();
+  };
 
   useEffect(() => () => clearTimer(), []);
 
@@ -109,7 +123,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         onPointerEnter={show}
         onPointerLeave={hide}
         onPointerDown={hide}
-        onFocus={show}
+        onFocus={showOnKeyboardFocus}
         onBlur={hide}
       >
         {children}

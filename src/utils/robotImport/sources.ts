@@ -31,8 +31,14 @@ async function lfsBytes(url: string, buf: ArrayBuffer): Promise<ArrayBuffer> {
   return lfs.arrayBuffer();
 }
 
+function assertWebUrl(url: string): string {
+  if (!URL.canParse(url) || new URL(url).protocol !== 'https:') throw new Error(`Only https links work: ${url}`);
+
+  return url;
+}
+
 async function fetchBytes(url: string): Promise<ArrayBuffer> {
-  const res = await fetch(url);
+  const res = await fetch(assertWebUrl(url));
 
   if (!res.ok) throw new Error(`${res.status}`);
 

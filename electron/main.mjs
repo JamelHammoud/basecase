@@ -35,10 +35,10 @@ const ipcMain = trustedIpc(electronIpc, APP_ORIGIN);
 app.setName('Basecase');
 
 {
-  const userData = path.join(app.getPath('appData'), 'Basecase');
+  const userData = process.env.BASECASE_USER_DATA || path.join(app.getPath('appData'), 'Basecase');
   const legacy = path.join(app.getPath('appData'), 'Robotics 3D Studio');
 
-  if (!fs.existsSync(userData) && fs.existsSync(legacy)) {
+  if (!process.env.BASECASE_USER_DATA && !fs.existsSync(userData) && fs.existsSync(legacy)) {
     try {
       fs.renameSync(legacy, userData);
     } catch (err) {

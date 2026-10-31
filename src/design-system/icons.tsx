@@ -96,10 +96,10 @@ export const RobotsIcon: React.FC<GlyphProps> = ({ filled, className }) => {
   );
 };
 
-const MUG_BODY = 'M2.25 5.5v13a7 2.75 0 0 0 14 0v-13a7 2.75 0 0 0 -14 0z';
-const MUG_RIM = 'M2.25 5.5a7 2.75 0 0 0 14 0';
-const MUG_HANDLE = 'M16.25 9h1.75a3.5 3.5 0 0 1 0 7h-1.75';
-const MUG_OPENING = 'M3.85 5.5a5.4 1.4 0 1 0 10.8 0a5.4 1.4 0 1 0 -10.8 0';
+const BOTTLE =
+  'M10.25 1.75H13.75A1 1 0 0 1 14.75 2.75V5.5C14.75 7.25 19.5 8 19.5 10.75V19.75A2.5 2.5 0 0 1 17 22.25H7A2.5 2.5 0 0 1 4.5 19.75V10.75C4.5 8 9.25 7.25 9.25 5.5V2.75A1 1 0 0 1 10.25 1.75Z';
+const BOTTLE_LINES = 'M9.25 4.5H14.75M4.5 13.25H19.5M4.5 18.25H19.5';
+const BOTTLE_CUTS = 'M4 4.5H20M0 13.25H24M0 18.25H24';
 
 export const ObjectsIcon: React.FC<GlyphProps> = ({ filled, className }) => {
   const mask = useId();
@@ -109,13 +109,12 @@ export const ObjectsIcon: React.FC<GlyphProps> = ({ filled, className }) => {
       {filled ? (
         <>
           <Knockout id={mask}>
-            <path d={MUG_OPENING} fill="#000" stroke="none" />
+            <path d={BOTTLE_CUTS} />
           </Knockout>
-          <path d={MUG_BODY} fill="currentColor" mask={`url(#${mask})`} />
-          <path d={MUG_HANDLE} />
+          <path d={BOTTLE} fill="currentColor" mask={`url(#${mask})`} />
         </>
       ) : (
-        <path d={MUG_BODY + MUG_RIM + MUG_HANDLE} />
+        <path d={BOTTLE + BOTTLE_LINES} />
       )}
     </Glyph>
   );

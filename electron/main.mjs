@@ -21,6 +21,8 @@ const backend = new BasecaseBackendService(workspaceRoot, {
 });
 let mainWindow = null;
 
+const SHOW_FALLBACK_MS = 2000;
+
 app.setName('Basecase');
 
 {
@@ -50,6 +52,7 @@ function createWindow() {
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 19, y: 15 },
     title: 'Basecase',
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -58,7 +61,16 @@ function createWindow() {
   });
 
   const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+  const window = mainWindow;
+  const show = () => {
+    if (!window.isDestroyed() && !window.isVisible()) window.show();
+  };
+  const fallback = setTimeout(show, SHOW_FALLBACK_MS);
 
+  window.once('ready-to-show', () => {
+    clearTimeout(fallback);
+    show();
+  });
   mainWindow.loadURL(devUrl);
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -140,11 +152,11 @@ registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerShareHandlers(ipcMain);
 
-app.whenReady().then(async () => {
+app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark';
   installAppMenu(() => mainWindow);
-  await backend.connectAcpAgent();
   createWindow();
+  void backend.connectAcpAgent();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

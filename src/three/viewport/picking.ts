@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BATCHED_LAYER } from './partBatches';
 import { canvasNdc, type Stage } from './stage';
 
 export function partMeshes(stage: Stage): THREE.Mesh[] {
@@ -11,8 +12,16 @@ export function partMeshes(stage: Stage): THREE.Mesh[] {
   return meshes;
 }
 
-export function rayAt(stage: Stage, clientX: number, clientY: number): THREE.Raycaster {
+export function partRaycaster(): THREE.Raycaster {
   const raycaster = new THREE.Raycaster();
+
+  raycaster.layers.enable(BATCHED_LAYER);
+
+  return raycaster;
+}
+
+export function rayAt(stage: Stage, clientX: number, clientY: number): THREE.Raycaster {
+  const raycaster = partRaycaster();
 
   raycaster.setFromCamera(canvasNdc(stage, clientX, clientY), stage.camera);
 

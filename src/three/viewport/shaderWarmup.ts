@@ -1,10 +1,22 @@
 import * as THREE from 'three';
 import { whenIdle } from '../../utils/whenIdle';
 import { cadEdgeMaterial, createMaterial } from '../partMesh/materials';
+import { batchedMaterialFrom } from './batchKey';
 import type { Stage } from './stage';
 
 interface CompiledProgram {
   getUniforms: () => unknown;
+}
+
+function warmBatch(geometry: THREE.BufferGeometry): THREE.BatchedMesh {
+  const material = batchedMaterialFrom(createMaterial({ color: '#e4e4e7', role: 'solid', selected: false }));
+  const batch = new THREE.BatchedMesh(1, geometry.getAttribute('position').count, geometry.index?.count, material);
+
+  batch.setColorAt(batch.addInstance(batch.addGeometry(geometry)), new THREE.Color('#e4e4e7'));
+  batch.castShadow = true;
+  batch.receiveShadow = true;
+
+  return batch;
 }
 
 function warmGroup(): THREE.Group {
@@ -20,7 +32,7 @@ function warmGroup(): THREE.Group {
     group.add(mesh);
   }
 
-  group.add(new THREE.LineSegments(edges, cadEdgeMaterial('solid', false)));
+  group.add(new THREE.LineSegments(edges, cadEdgeMaterial('solid', false)), warmBatch(geometry));
 
   return group;
 }
@@ -42,6 +54,8 @@ function materialsOf(...roots: THREE.Object3D[]): THREE.Material[] {
 function disposeGroup(group: THREE.Group): void {
   group.traverse((object) => {
     const drawable = object as THREE.Mesh;
+
+    if (object instanceof THREE.BatchedMesh) object.dispose();
 
     drawable.geometry?.dispose();
     (drawable.material as THREE.Material | undefined)?.dispose();

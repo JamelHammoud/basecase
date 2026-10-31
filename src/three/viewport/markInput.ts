@@ -10,7 +10,7 @@ import {
   viewAngles,
   type Point2,
 } from './markMath';
-import { hitPartId, partMeshes } from './picking';
+import { hitPartId, partMeshes, partRaycaster } from './picking';
 import { DEFAULT_MARK_COLOR } from '../../utils/markColors';
 import { canvasNdc } from './stage';
 import type { Vec3 } from './types';
@@ -31,7 +31,7 @@ export class MarkInput {
 
   private frame = 0;
 
-  private readonly raycaster = new THREE.Raycaster();
+  private readonly raycaster = partRaycaster();
 
   private readonly ctx: ViewportContext;
 

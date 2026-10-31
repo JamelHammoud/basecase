@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { noteLateChildren } from '../lateChildren';
 import { requestRedraw } from '../redraw';
 import type { BuildContext } from './context';
 import { disposeCachedGeometry, hasShared, offerShared } from './sharedGeometry';
@@ -46,6 +47,7 @@ function adopt(ctx: BuildContext, request: EdgeRequest, edges: THREE.BufferGeome
   if (!fresh) edges.dispose();
 
   request.attach(shared);
+  noteLateChildren(ctx.group);
   requestRedraw();
 }
 

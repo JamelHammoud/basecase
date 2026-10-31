@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { partMeshes } from './picking';
+import { partMeshes, partRaycaster } from './picking';
 import type { ViewportContext } from './viewportContext';
 
 interface Drag {
@@ -188,7 +188,7 @@ export class Marquee {
   }
 
   private rayGrid(box: Rect, canvas: DOMRect): string[] {
-    const raycaster = new THREE.Raycaster();
+    const raycaster = partRaycaster();
     const meshes = partMeshes(this.ctx.stage);
     const ids: string[] = [];
 

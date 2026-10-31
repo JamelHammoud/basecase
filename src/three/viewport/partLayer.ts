@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { ScenePart } from '../../types/robotics';
 import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPartMesh';
 import { preparePart } from '../partMesh/prepare';
+import type { PartBatches } from './partBatches';
 
 interface Entry {
   part: ScenePart;
@@ -50,9 +51,12 @@ export class PartLayer {
 
   private readonly onReady: () => void;
 
-  constructor(root: THREE.Group, onReady: () => void = () => {}) {
+  private readonly batches: PartBatches | null;
+
+  constructor(root: THREE.Group, onReady: () => void = () => {}, batches: PartBatches | null = null) {
     this.root = root;
     this.onReady = onReady;
+    this.batches = batches;
   }
 
   get(id: string): THREE.Group | undefined {
@@ -184,9 +188,11 @@ export class PartLayer {
       return;
     }
 
+    this.batches?.remove(entry.group);
     releasePartGroup(entry.group);
     entry.group.clear();
     build(entry.group);
+    this.batches?.add(entry.group);
   }
 
   dispose(): void {
@@ -255,6 +261,7 @@ export class PartLayer {
 
     rememberRest(group);
     this.root.add(group);
+    this.batches?.add(group);
     this.entries.set(part.id, { part, selected, meshVersion, group });
 
     return this.newVertices(group);
@@ -276,6 +283,7 @@ export class PartLayer {
   }
 
   private remove(id: string, entry: Entry): void {
+    this.batches?.remove(entry.group);
     this.root.remove(entry.group);
     releasePartGroup(entry.group);
     this.entries.delete(id);

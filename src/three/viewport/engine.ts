@@ -26,6 +26,7 @@ import { MarkLayer } from './markLayer';
 import { Marquee } from './marquee';
 import * as measure from './measurements';
 import { MeasureTool } from './measureTool';
+import { PartBatches } from './partBatches';
 import { PartLayer } from './partLayer';
 import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
@@ -124,7 +125,11 @@ export class ViewportEngine {
 
   constructor(options: EngineOptions) {
     const stage = createStage(options.container);
-    const layer = new PartLayer(stage.partsRoot, () => this.scheduleBuilds());
+    const batches = new PartBatches();
+
+    batches.attach(stage.scene);
+
+    const layer = new PartLayer(stage.partsRoot, () => this.scheduleBuilds(), batches);
     const loop = new RenderLoop(stage, (id) => layer.get(id));
 
     this.props = options.props;
@@ -132,6 +137,7 @@ export class ViewportEngine {
     this.ctx = {
       stage,
       layer,
+      batches,
       loop,
       ui: options.ui,
       runtime: { shiftHeld: false, altHeld: false, draggingGizmo: false },
@@ -235,12 +241,14 @@ export class ViewportEngine {
     this.markLayer.dispose();
     this.agentFrames.dispose();
     this.ctx.layer.dispose();
+    this.ctx.batches.dispose();
     disposeStage(this.ctx.stage);
   }
 
   private handle(): Viewport3DHandle {
     const { ctx } = this;
     const withRest = <T>(run: () => T) => ctx.layer.withRest(run, () => this.applyPose());
+    const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
     const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
     const camera = <T>(run: () => T) => {
       const result = run();
@@ -252,17 +260,21 @@ export class ViewportEngine {
 
     return {
       captureScreenshot: () => captureScreenshot(ctx, this.gizmo.controls.getHelper()),
-      captureViews: (views, onlyIds, opts) =>
-        captureViews(ctx, {
-          views,
-          onlyIds,
-          silhouette: opts?.silhouette,
-          labels: opts?.labels,
-          grid: opts?.grid,
-          maxSide: opts?.maxSide,
-          helper: this.gizmo.controls.getHelper(),
-          marks: opts?.silhouette || onlyIds?.length ? undefined : this.markLayer.bounds(),
-        }),
+      captureViews: (views, onlyIds, opts) => {
+        const run = () =>
+          captureViews(ctx, {
+            views,
+            onlyIds,
+            silhouette: opts?.silhouette,
+            labels: opts?.labels,
+            grid: opts?.grid,
+            maxSide: opts?.maxSide,
+            helper: this.gizmo.controls.getHelper(),
+            marks: opts?.silhouette || onlyIds?.length ? undefined : this.markLayer.bounds(),
+          });
+
+        return onlyIds?.length || opts?.silhouette || opts?.labels ? unbatched(run) : run();
+      },
       setCameraPreset: (preset) => camera(() => setCameraPreset(ctx.stage, preset)),
       focusSelected: () => camera(() => focusOn(ctx.stage, ctx.layer.get(this.props.selectedPartIds[0] ?? ''))),
       zoomBy: (factor) => camera(() => zoomCamera(ctx.stage, factor)),
@@ -289,7 +301,7 @@ export class ViewportEngine {
       posedFloor: (ids) => measure.posedFloor(ctx, ids),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
       silhouetteShots: (specs, opts) =>
-        silhouetteShots(ctx, { specs, ...opts, helper: this.gizmo.controls.getHelper() }),
+        unbatched(() => silhouetteShots(ctx, { specs, ...opts, helper: this.gizmo.controls.getHelper() })),
       measureParts: (ids) => measuresIn(withRest(() => snapshotShapes(measure.partObjects(ctx, ids)))),
       visibleShares: () => visibilityIn(withRest(() => solidShapes(true))),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),

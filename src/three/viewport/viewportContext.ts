@@ -1,3 +1,4 @@
+import type { PartBatches } from './partBatches';
 import type { PartLayer } from './partLayer';
 import type { RenderLoop } from './renderLoop';
 import type { Stage } from './stage';
@@ -17,6 +18,7 @@ export interface ViewportRuntime {
 export interface ViewportContext {
   stage: Stage;
   layer: PartLayer;
+  batches: PartBatches;
   loop: RenderLoop;
   ui: ViewportUi;
   runtime: ViewportRuntime;

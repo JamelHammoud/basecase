@@ -103,8 +103,23 @@ const loadMs = await waitQuiet(app.page);
 
 await app.page.waitForTimeout(1500);
 
-const idle = summarizeFrames(await app.page.evaluate(() => window.__viewportFrames.slice(-60)));
+await app.page.evaluate(() => (window.__viewportFrames.length = 0));
+await app.page.waitForTimeout(5200);
+
+const idle = summarizeFrames(await app.page.evaluate(() => window.__viewportFrames.splice(0)));
+const profile = option('profile', '');
+const cdp = profile ? await app.page.context().newCDPSession(app.page) : null;
+
+if (cdp) {
+  await cdp.send('Profiler.enable');
+  await cdp.send('Profiler.setSamplingInterval', { interval: 100 });
+  await cdp.send('Profiler.start');
+}
+
 const orbited = await traced(app.browser, app.page, async () => ({ frames: await orbit(app.page, orbitMs) }));
+
+if (cdp) fs.writeFileSync(path.resolve(profile), JSON.stringify((await cdp.send('Profiler.stop')).profile));
+
 const orbiting = summarizeFrames(orbited.frames);
 
 orbiting.gpuProcessPerFrame = Math.round((orbited.gpuMs / Math.max(1, orbiting.rendered)) * 100) / 100;

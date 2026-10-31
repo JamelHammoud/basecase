@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MeshoptSimplifier } from 'meshoptimizer';
+import { compressGlb, packGlb } from './meshopt.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
@@ -233,25 +234,6 @@ function writeGlb(prims, extras) {
     bufferViews,
     buffers: [{ byteLength: bin.length }],
   };
-  let jsonBuf = Buffer.from(JSON.stringify(json));
 
-  jsonBuf = Buffer.concat([jsonBuf, Buffer.alloc((4 - (jsonBuf.length % 4)) % 4, 0x20)]);
-
-  const header = Buffer.alloc(12);
-
-  header.writeUInt32LE(0x46546c67, 0);
-  header.writeUInt32LE(2, 4);
-  header.writeUInt32LE(12 + 8 + jsonBuf.length + 8 + bin.length, 8);
-
-  const jh = Buffer.alloc(8);
-
-  jh.writeUInt32LE(jsonBuf.length, 0);
-  jh.writeUInt32LE(0x4e4f534a, 4);
-
-  const bh = Buffer.alloc(8);
-
-  bh.writeUInt32LE(bin.length, 0);
-  bh.writeUInt32LE(0x004e4942, 4);
-
-  return Buffer.concat([header, jh, jsonBuf, bh, bin]);
+  return compressGlb(packGlb(json, bin));
 }

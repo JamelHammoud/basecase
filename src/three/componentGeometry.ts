@@ -1,3 +1,4 @@
+import { MeshoptDecoder } from 'meshoptimizer';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries, toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -64,7 +65,7 @@ function mergedEdges(geometries: THREE.BufferGeometry[]): Float32Array {
 }
 
 export async function componentArrays(data: ArrayBuffer): Promise<ComponentArrays> {
-  const gltf = await new GLTFLoader().parseAsync(data, '');
+  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(data, '');
   const pieces = creasedPieces(gltf.scene);
   const box = new THREE.Box3();
 

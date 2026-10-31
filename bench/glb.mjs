@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import * as THREE from 'three';
+import { MESHOPT, viewBytes } from '../tools/parts/meshopt.mjs';
 
 function localMatrix(node) {
   const local = new THREE.Matrix4();
@@ -36,18 +37,20 @@ export function readGlbTriangles(file) {
   const view = (accIndex) => {
     const acc = json.accessors[accIndex];
     const bv = json.bufferViews[acc.bufferView];
-    const start = (bv.byteOffset ?? 0) + (acc.byteOffset ?? 0);
+    const decoded = bv.extensions?.[MESHOPT] ? Buffer.from(viewBytes(json, bin, acc.bufferView)) : null;
+    const src = decoded ?? bin;
+    const start = (decoded ? 0 : (bv.byteOffset ?? 0)) + (acc.byteOffset ?? 0);
     const comps = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 }[acc.type];
     const Ctor = { 5126: Float32Array, 5125: Uint32Array, 5123: Uint16Array, 5121: Uint8Array }[acc.componentType];
     const stride = bv.byteStride ?? 0;
     const n = acc.count * comps;
 
     if (!stride || stride === comps * Ctor.BYTES_PER_ELEMENT) {
-      return new Ctor(bin.buffer.slice(bin.byteOffset + start, bin.byteOffset + start + n * Ctor.BYTES_PER_ELEMENT));
+      return new Ctor(src.buffer.slice(src.byteOffset + start, src.byteOffset + start + n * Ctor.BYTES_PER_ELEMENT));
     }
 
     const out = new Ctor(n);
-    const dv = new DataView(bin.buffer, bin.byteOffset);
+    const dv = new DataView(src.buffer, src.byteOffset);
 
     for (let i = 0; i < acc.count; i++)
       for (let k = 0; k < comps; k++) out[i * comps + k] = dv.getFloat32(start + i * stride + k * 4, true);

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
+import { readGlb as readGlbFile, viewBytes } from './meshopt.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
@@ -22,18 +23,14 @@ if (!id || !(axisName in AXES)) {
 const r2 = (v) => Math.round(v * 100) / 100;
 
 function readGlb(file) {
-  const buf = fs.readFileSync(file);
-  const jsonLength = buf.readUInt32LE(12);
-  const json = JSON.parse(buf.subarray(20, 20 + jsonLength).toString());
-  const bin = buf.subarray(28 + jsonLength);
+  const { json, bin } = readGlbFile(fs.readFileSync(file));
   const view = (accessor) => {
     const a = json.accessors[accessor];
-    const bv = json.bufferViews[a.bufferView];
-    const start = bin.byteOffset + (bv.byteOffset ?? 0) + (a.byteOffset ?? 0);
+    const bytes = Uint8Array.from(viewBytes(json, bin, a.bufferView));
     const Type = { 5126: Float32Array, 5125: Uint32Array, 5123: Uint16Array }[a.componentType];
     const count = a.count * (a.type === 'VEC3' ? 3 : 1);
 
-    return new Type(bin.buffer.slice(start, start + count * Type.BYTES_PER_ELEMENT));
+    return new Type(bytes.buffer, a.byteOffset ?? 0, count);
   };
   const positions = [];
   const indices = [];

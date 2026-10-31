@@ -98,16 +98,16 @@ Draw clean shapes anyway; the mask hides double paint, not sloppy geometry:
 ## 6. Preview, compare, iterate
 
 ```bash
-cp .claude/skills/icon-design/scripts/example-candidates.mjs <scratchpad>/candidates.mjs
+cp .agents/skills/icon-design/scripts/example-candidates.mjs <scratchpad>/candidates.mjs
 # edit: add your candidates; keep the neighbours. Fix the './geometry.mjs' import to an absolute path.
-node .claude/skills/icon-design/scripts/icon-sheet.mjs <scratchpad>/candidates.mjs <scratchpad>/sheet.png
+node .agents/skills/icon-design/scripts/icon-sheet.mjs <scratchpad>/candidates.mjs <scratchpad>/sheet.png
 ```
 
 For single-state icons at 16px (the agent feed), use the feed sheet instead: each icon big on the grid, then a mock of the feed card with real labels at 16px / 45% white:
 
 ```bash
-node .claude/skills/icon-design/scripts/feed-sheet.mjs .claude/skills/icon-design/scripts/example-feed-candidates.mjs <scratchpad>/feed.png
-FEED='[["Train","Started training",""]]' PER_ROW=4 node .claude/skills/icon-design/scripts/feed-sheet.mjs <candidates.mjs> <out.png>
+node .agents/skills/icon-design/scripts/feed-sheet.mjs .agents/skills/icon-design/scripts/example-feed-candidates.mjs <scratchpad>/feed.png
+FEED='[["Train","Started training",""]]' PER_ROW=4 node .agents/skills/icon-design/scripts/feed-sheet.mjs <candidates.mjs> <out.png>
 ```
 
 A candidates file exports `ICONS`: name → path string, or `{ d, extra }` where `extra` is raw SVG (a dots path).
@@ -140,7 +140,7 @@ Judge it by asking:
 | `PartsIcon` | Parts view (real components and hardware) | Isometric hex nut, rounded 1.2, 19 tall; filled: face edges and hole knocked out. `nut(NUT_PARAMS)` in `geometry.mjs` regenerates it |
 | `RobotsIcon` | Robots view (published robots to insert and pose) | A ball, r 10.25 (overshoots like the nut; circles read smaller), with two solid pill eyes looking straight ahead (3 wide, 3.75 long, 5.5 apart); filled, the holes are cut 3.8 × 4.55 because dark holes in a bright shape read smaller than bright strokes of the same size. The user picked it over a flat robot head and an isometric cube head; first the outline's 2-wide stroked eyes looked smaller than the holes, then equal-size holes looked smaller than the outline's solid eyes |
 | `LibraryIcon` | Library view (saved scenes and models) | Bookmark, 12 × 18, top corners r 2.5, notch 4 deep; filled: solid |
-| `ObjectsIcon` | Objects view (SimReady props to insert), inserting an object in the agent feed | A mug in the same flattened perspective as the nut: rim ellipse 14 × 5.5 at y 5.5, straight sides, bottom arc to y 21.25, handle 5.25 out (opening 3.25 wide, so it stays open at 16px); filled: the body solid with the opening cut as a dark ellipse 10.8 × 2.8, handle stroked. Replaced a flat mug that read as a plain square beside the nut |
+| `ObjectsIcon` | Objects view (SimReady props to insert), inserting an object in the agent feed | A bottle, 15 wide and 20.5 tall (y 1.75–22.25), centred on x 12: cap with r 1 corners and a cap line at y 4.5, neck 5.5 wide, curved shoulders, body corners r 2.5, a label band between y 13.25 and 18.25; filled: solid with the three lines knocked out. Shipped first at 12 × 19.75, which looked too small beside the nut and the robot face; 16 wide with a shorter neck read as a milk jug. Replaced a mug whose handle pulled it off the rail's centre line; the user picked it over the mug moved left, a pot with two handles, a bucket and an apple |
 | `LayersIcon` | Layers view | lucide `layers`; filled: top sheet solid |
 | `DriveIcon` | Screw drive choices (Hex, Torx, Phillips, Pozidriv, Slotted) in the hardware configurator; no filled state (the cell's thumb shows the choice) | Head circle r 9.5; recess solid inside, about 60% of the head (hex r 5.4, Torx A 12.6 / B 7.8, cross 11.8 × 2.9, slot 14 × 2.6); Pozidriv adds four 1.5-stroke diagonal ribs clear of the cross corners. First drawn at 45% of the head, which read as dots at 20px |
 | `SettingsIcon` | Settings (opens a sheet, so no filled state) | 8-tooth gear: roots r 7.4 at ±17°, tips r 9.75 at ±9°, corners r 0.9; hole r 3.25 (`gear()` in `library.mjs`) |
@@ -156,6 +156,7 @@ Judge it by asking:
 | `PenIcon` | Sketch | Fountain-pen nib at 45° (the user liked it diagonal, like the marker and brush): curved sides, a slit from the tip that runs into the solid breather hole (it must touch, not stop short), a separate holder bar above. Scaled 1.15× (spans about 20) because at first it looked smaller than the marker beside it |
 | `EraserIcon` | Clear marks, clear sketch | Block 18 × 10 at 45°, clipped flat by the floor at y 21, which runs on to x 21; split 40% from the tip |
 | `DrawingIcon` | "From the drawing" badge (14px) | A part (17 × 9.5, r 2.5) with a dimension line above it between two extension bars. A set square, a sheet with a title block (read as an ID card) and a diameter arrow (read as resize) were rejected |
+| `PrinterIcon` | Settings → Printers, Export → 3MF Plates, print commands | A print head over a part: hotend 11 × 6 (r 2), nozzle cone to a tip at y 12.5, then a half-printed top layer (x 4–12, ending under the nozzle) above a full one (4–20). The head stays on x 12; the leftward mass of the half layer is the meaning, so it isn't nudged. Replaced a boxed printer (frame, gantry, print) that read as a floppy disk at 16px; the user picked it over boxed, open-gantry, paper-printer and print-on-bed versions |
 | `RulerIcon` | Measure | Horizontal ruler 20 × 12, r 2.5, four ticks alternating 4 / 2.5. The 10-tall version looked too small |
 | `BrushIcon` | Sculpt | 45° paintbrush: a tapered tuft (curved sides, tip flicked 1.5 to one side), a ferrule, and an outlined handle tapering to a rounded end that starts exactly at the ferrule. A one-line handle was rejected, and so was a 0.5 gap between ferrule and handle |
 | `EyedropperIcon` | Eyedropper in the colour picker | 45°: glass tube 5 wide with a tapered tip, a collar bar 10 wide, a bulb 7 wide that starts at the collar. A 0.25 gap between collar and bulb was rejected |

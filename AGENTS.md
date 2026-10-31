@@ -21,6 +21,7 @@ These rules hold for every human and agent, on every machine. They're enforced b
 - **Hooks run automatically:**
   - Git pre-commit (`simple-git-hooks` + `lint-staged`, installed by `npm install`): formats and lints staged files, then runs `check:tracked`; a commit with lint errors or internal files fails.
   - Claude Code (`.claude/settings.json` → `tools/hooks/claude-post-edit.mjs`): after every Edit/Write, the file is formatted and lint-fixed, and remaining errors come back to the agent. Fix them before moving on.
+- **Agent-neutral layout.** This file is the instructions for every coding agent. Skills (step-by-step procedures in the Agent Skills format: a folder with `SKILL.md` and its scripts) live in `.agents/skills/`; `.claude/skills` is a symlink to it so Claude Code finds them. Put new skills there, never in a provider's folder. Provider folders (`.claude/`) hold only that provider's wiring (settings, hooks), and the scripts they run live in `tools/`.
 - **No escape hatches.** Inline `eslint-disable` comments are ignored (`noInlineConfig`), and `@ts-ignore` / `@ts-expect-error` are comments, which are banned. Fix the code. Never loosen `eslint.config.mjs`, `tsconfig*.json` or the Prettier config to make something pass; changing a rule needs a maintainer's OK, and the change is recorded here.
 
 ### 0b. Rules (all errors)
@@ -207,7 +208,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
     - Parts are added, models are inserted, scenes are opened (in a tab) and closed, comments are posted, prices are added and checked.
     - Part types are **Solid / Cutout / Guide**.
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.
-    - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.claude/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbours before shipping.
+    - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.agents/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbours before shipping.
 19. **No status dots** unless they report an error or a live background process. The agent panel shows connection state only when disconnected.
 
 ### 3c. Words and patterns to avoid

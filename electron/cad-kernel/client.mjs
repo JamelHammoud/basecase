@@ -34,7 +34,7 @@ function spawnKernel() {
     : [];
   const proc = fork(path.join(here, 'kernel.mjs'), [], {
     execArgv,
-    env: {},
+    env: process.env.ELECTRON_RUN_AS_NODE ? { ELECTRON_RUN_AS_NODE: '1' } : {},
     stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
   });
   const k = { proc, busy: false, job: null };

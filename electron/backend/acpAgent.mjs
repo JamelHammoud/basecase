@@ -105,7 +105,6 @@ export class AcpAgent {
   openConnection(child) {
     const stream = ndJsonStream(Writable.toWeb(child.stdin), Readable.toWeb(child.stdout));
     const clientHandler = createClientHandler({
-      workspaceRoot: this.workspaceRoot,
       libraryDir: this.paths.libraryDir,
       emit: (event) => {
         if (event.type === 'acp-session-update') this.runs.note(event.workspaceId, event.update);

@@ -11,6 +11,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     return () => ipcRenderer.removeListener('window:fullscreen', handler);
   },
+  updateState: () => ipcRenderer.invoke('update:state'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
+  onUpdateState: (callback) => {
+    const handler = (_event, state) => callback(state);
+
+    ipcRenderer.on('update:state', handler);
+
+    return () => ipcRenderer.removeListener('update:state', handler);
+  },
   getAcpStatus: (workspaceId) => ipcRenderer.invoke('acp:status', workspaceId),
   connectAcp: (agentCommand) => ipcRenderer.invoke('acp:connect', agentCommand),
   authenticateAcp: (methodId) => ipcRenderer.invoke('acp:authenticate', methodId),

@@ -24,7 +24,17 @@ export function agentEnv(source = process.env) {
   env.ENABLE_CLAUDEAI_MCP_SERVERS = 'false';
   env.MAX_MCP_OUTPUT_TOKENS = '40000';
 
+  if (nodeRuntime(source).asNode) env.ELECTRON_RUN_AS_NODE = '1';
+
   return env;
+}
+
+export function nodeRuntime(env = process.env) {
+  if (env.npm_node_execpath) return { command: env.npm_node_execpath, asNode: false };
+
+  if (env.BASECASE_NODE) return { command: env.BASECASE_NODE, asNode: env.BASECASE_NODE === process.execPath };
+
+  return { command: 'node', asNode: false };
 }
 
 const isLocalPath = (arg, root) => !arg.startsWith('-') && !path.isAbsolute(arg) && fs.existsSync(path.join(root, arg));
@@ -36,7 +46,7 @@ export function anchorArgs(args, root) {
 export function resolveCommand(command) {
   const parts = command.trim().split(/\s+/);
 
-  if (parts[0] === 'node' && process.env.npm_node_execpath) parts[0] = process.env.npm_node_execpath;
+  if (parts[0] === 'node') parts[0] = nodeRuntime().command;
 
   return parts;
 }

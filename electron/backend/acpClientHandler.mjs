@@ -43,7 +43,7 @@ export function permissionOutcome(params) {
   return { safe, title: call.title ?? 'Tool', outcome };
 }
 
-export function createClientHandler({ workspaceRoot, libraryDir, emit, workspaceOf, libraryState }) {
+export function createClientHandler({ libraryDir, emit, workspaceOf, libraryState }) {
   const toolCalls = rememberToolCalls();
 
   return {
@@ -64,7 +64,7 @@ export function createClientHandler({ workspaceRoot, libraryDir, emit, workspace
       });
     },
     writeTextFile: async (params) => {
-      const targetPath = path.resolve(workspaceRoot, params.path);
+      const targetPath = path.resolve(path.dirname(libraryDir), params.path);
       const modelsDir = path.join(libraryDir, 'models');
 
       if (path.dirname(targetPath) !== modelsDir || !/^[\w-]{1,128}\.json$/.test(path.basename(targetPath))) {

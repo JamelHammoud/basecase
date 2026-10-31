@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { permissionOutcome, rememberToolCalls } from './acpClientHandler.mjs';
 import { AgentBridge, rendererTimeout } from './agentBridge.mjs';
-import { agentEnv } from './agentProcess.mjs';
+import { agentEnv, nodeRuntime } from './agentProcess.mjs';
 import { TOOL_USE_HEADER } from './constants.mjs';
 import { EventHub } from './eventHub.mjs';
 import { deleteModel, listModels, saveModel } from './models.mjs';
@@ -115,6 +115,20 @@ describe('agent policy', () => {
       ENABLE_CLAUDEAI_MCP_SERVERS: 'false',
       MAX_MCP_OUTPUT_TOKENS: '40000',
     });
+  });
+
+  it('runs the agent on Electron as Node when the Mac has no Node', () => {
+    const electron = { BASECASE_NODE: process.execPath };
+
+    expect(nodeRuntime({ npm_node_execpath: '/n/node', ...electron })).toEqual({ command: '/n/node', asNode: false });
+    expect(nodeRuntime({ BASECASE_NODE: '/opt/homebrew/bin/node' })).toEqual({
+      command: '/opt/homebrew/bin/node',
+      asNode: false,
+    });
+    expect(nodeRuntime(electron)).toEqual({ command: process.execPath, asNode: true });
+    expect(nodeRuntime({})).toEqual({ command: 'node', asNode: false });
+    expect(agentEnv(electron).ELECTRON_RUN_AS_NODE).toBe('1');
+    expect(agentEnv({}).ELECTRON_RUN_AS_NODE).toBeUndefined();
   });
 });
 

@@ -22,9 +22,9 @@ import * as uploads from './backend/uploads.mjs';
 export { CLAUDE_AGENT_COMMAND, DEFAULT_WORKSPACE, LEGACY_AGENT_COMMAND } from './backend/constants.mjs';
 
 export class BasecaseBackendService {
-  constructor(workspaceRoot, { secrets } = {}) {
+  constructor(workspaceRoot, { secrets, dataRoot = workspaceRoot } = {}) {
     this.workspaceRoot = workspaceRoot;
-    this.paths = libraryPaths(workspaceRoot);
+    this.paths = libraryPaths(dataRoot);
     Object.assign(this, this.paths);
     this.offline = process.env.STUDIO_AGENT_OFFLINE === '1';
 

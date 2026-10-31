@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export function libraryPaths(workspaceRoot) {
-  const libraryDir = path.join(workspaceRoot, 'library');
+export function libraryPaths(dataRoot) {
+  const libraryDir = path.join(dataRoot, 'library');
 
   return {
     libraryDir,
@@ -12,7 +12,7 @@ export function libraryPaths(workspaceRoot) {
     conversationsDir: path.join(libraryDir, 'conversations'),
     evidenceDir: path.join(libraryDir, 'evidence'),
     referencesDir: path.join(libraryDir, 'references'),
-    aiRefDir: path.join(workspaceRoot, 'ai-reference'),
+    aiRefDir: path.join(dataRoot, 'ai-reference'),
   };
 }
 

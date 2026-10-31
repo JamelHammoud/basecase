@@ -1,15 +1,15 @@
 import path from 'node:path';
 import { cadInstructions, codexMeta } from './agentProfiles.mjs';
-import { resolveCommand } from './agentProcess.mjs';
+import { nodeRuntime } from './agentProcess.mjs';
 import { BLOCKED_SUBAGENTS, safeWorkspace } from './constants.mjs';
 import { cadSubagents } from './subagents.mjs';
 
 function cadMcpServer({ workspaceRoot, bridgeUrl, evidenceDir, referencesDir, offline, kind }, workspaceId) {
-  const [nodeCmd] = resolveCommand('node');
+  const node = nodeRuntime();
 
   return {
     name: 'robotics_cad',
-    command: nodeCmd,
+    command: node.command,
     args: [path.join(workspaceRoot, 'electron', 'cad-mcp-server.mjs')],
     env: [
       { name: 'CAD_BRIDGE_URL', value: `${bridgeUrl}/w/${safeWorkspace(workspaceId)}` },
@@ -17,6 +17,7 @@ function cadMcpServer({ workspaceRoot, bridgeUrl, evidenceDir, referencesDir, of
       { name: 'CAD_REFERENCES_DIR', value: referencesDir },
       ...(kind ? [{ name: 'CAD_AGENT_KIND', value: kind }] : []),
       ...(offline ? [{ name: 'CAD_NO_WEB', value: '1' }] : []),
+      ...(node.asNode ? [{ name: 'ELECTRON_RUN_AS_NODE', value: '1' }] : []),
     ],
   };
 }

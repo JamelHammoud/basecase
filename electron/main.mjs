@@ -9,23 +9,20 @@ import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { registerShareHandlers } from './shareFile.mjs';
+import { adoptShellPath } from './shellPath.mjs';
 import { storageMigration } from './storageMigration.mjs';
+import { Updates } from './updates.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, '..');
+const fromSource = Boolean(process.defaultApp);
+const shellReady = fromSource ? Promise.resolve() : adoptShellPath();
 
-const backend = new BasecaseBackendService(workspaceRoot, {
-  secrets: {
-    available: () => app.isReady() && safeStorage.isEncryptionAvailable(),
-    encrypt: (value) => safeStorage.encryptString(value).toString('base64'),
-    decrypt: (sealed) => safeStorage.decryptString(Buffer.from(sealed, 'base64')),
-  },
-});
 let mainWindow = null;
 
 const SHOW_FALLBACK_MS = 2000;
-const bundled = process.argv.includes('--bundle');
+const bundled = !fromSource || process.argv.includes('--bundle');
 const devServer = bundled ? null : process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
 
 registerAppScheme();
@@ -48,6 +45,19 @@ app.setName('Basecase');
 
   app.setPath('userData', userData);
 }
+
+const backend = new BasecaseBackendService(workspaceRoot, {
+  dataRoot: fromSource ? workspaceRoot : app.getPath('userData'),
+  secrets: {
+    available: () => app.isReady() && safeStorage.isEncryptionAvailable(),
+    encrypt: (value) => safeStorage.encryptString(value).toString('base64'),
+    decrypt: (sealed) => safeStorage.decryptString(Buffer.from(sealed, 'base64')),
+  },
+});
+const updates = new Updates({
+  windows: () => BrowserWindow.getAllWindows(),
+  log: path.join(app.getPath('userData'), 'updates.log'),
+});
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -118,7 +128,7 @@ backend.onEvent((event) => {
 });
 
 ipcMain.handle('acp:status', (_e, workspaceId) => backend.getAcpStatus(workspaceId));
-ipcMain.handle('acp:connect', (_e, cmd) => backend.connectAcpAgent(cmd));
+ipcMain.handle('acp:connect', (_e, cmd) => shellReady.then(() => backend.connectAcpAgent(cmd)));
 ipcMain.handle('acp:authenticate', (_e, methodId) => backend.authenticateAcpAgent(methodId));
 ipcMain.handle('acp:set-api-key', (_e, key) => backend.setAgentApiKey(key));
 ipcMain.handle('acp:prompt', (_e, payload) => backend.sendAcpPrompt(payload));
@@ -146,6 +156,8 @@ ipcMain.handle('acp:new-conversation', (_e, workspaceId) => backend.newAcpConver
 ipcMain.handle('window:is-fullscreen', (e) => BrowserWindow.fromWebContents(e.sender)?.isFullScreen() ?? false);
 ipcMain.on('menu:state', (_e, state) => updateAppMenuState(state));
 ipcMain.handle('agent:respond', (_e, payload) => backend.resolveAgentRequest(payload));
+ipcMain.handle('update:state', () => updates.current());
+ipcMain.handle('update:install', () => updates.install());
 
 ipcMain.handle('library:upload-image', (_e, payload) => backend.saveUploadedImage(payload));
 ipcMain.handle('library:list-images', () => backend.listUploadedImages());
@@ -179,8 +191,8 @@ function limitPermissions() {
 app.whenReady().then(async () => {
   nativeTheme.themeSource = 'dark';
   limitPermissions();
-  installAppMenu(() => mainWindow);
-  void backend.connectAcpAgent();
+  installAppMenu(() => mainWindow, { onCheckForUpdates: fromSource ? null : () => updates.checkNow() });
+  void shellReady.then(() => backend.connectAcpAgent());
 
   const migration = await storageMigration({
     userData: app.getPath('userData'),
@@ -191,6 +203,8 @@ app.whenReady().then(async () => {
   createWindow();
   migration.close();
 
+  if (!fromSource) updates.start();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -199,6 +213,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('before-quit', () => {
+  updates.dispose();
   backend.trainer.dispose();
   backend.printing.dispose();
 });

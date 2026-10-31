@@ -22,9 +22,11 @@ const CAMERA_VIEWS = [
 
 let state = { ...DEFAULT_STATE };
 let getWindow = () => null;
+let checkForUpdates = null;
 
-export function installAppMenu(windowGetter) {
+export function installAppMenu(windowGetter, { onCheckForUpdates = null } = {}) {
   getWindow = windowGetter;
+  checkForUpdates = onCheckForUpdates;
   rebuild();
 }
 
@@ -60,6 +62,7 @@ function appMenu() {
     label: app.name,
     submenu: [
       { role: 'about' },
+      ...(checkForUpdates ? [{ label: 'Check for Updates', click: () => checkForUpdates() }] : []),
       separator,
       { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: send('settings') },
       separator,

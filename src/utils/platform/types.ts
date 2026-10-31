@@ -98,6 +98,11 @@ export interface ScenePreviewPayload {
   current?: boolean;
 }
 
+export interface AppUpdateState {
+  stage: 'none' | 'getting' | 'ready' | 'installing';
+  version: string;
+}
+
 declare global {
   interface Window {
     electronAPI?: {
@@ -105,6 +110,9 @@ declare global {
       platform: string;
       isFullScreen: () => Promise<boolean>;
       onFullScreenChange: (callback: (fullScreen: boolean) => void) => () => void;
+      updateState: () => Promise<AppUpdateState>;
+      installUpdate: () => Promise<void>;
+      onUpdateState: (callback: (state: AppUpdateState) => void) => () => void;
       getAcpStatus: (workspaceId?: string) => Promise<AcpStatusInfo>;
       connectAcp: (agentCommand?: string) => Promise<AcpStatusInfo>;
       authenticateAcp: (methodId: string) => Promise<AcpStatusInfo>;

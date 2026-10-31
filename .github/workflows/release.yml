@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, like 0.2.0. Empty keeps the one in package.json.
+        type: string
+        required: false
+      release:
+        description: Put the build on a GitHub release
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - if: inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - run: npx vite build
+
+      - name: Put the signing certificate in a keychain of our own
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          fail() { echo "$1" >&2; exit 1; }
+          [ -n "$CSC_LINK" ] || fail "CSC_LINK is not set, so there is nothing to sign with"
+          keychain="$RUNNER_TEMP/basecase-signing.keychain-db"
+          password=$(openssl rand -base64 24)
+          cert="$RUNNER_TEMP/basecase-signing.p12"
+          printf %s "$CSC_LINK" | tr -d '\r\n' | openssl base64 -d -A -out "$cert"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$cert" -k "$keychain" -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | xargs)
+          rm -f "$cert"
+          security find-identity -v -p codesigning "$keychain" | grep -q 'Developer ID Application' \
+            || fail "the certificate is in no keychain as a Developer ID Application identity"
+          echo "CSC_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+
+      - run: npx electron-builder --mac --arm64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: true
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Check the app is signed, notarized and whole
+        run: |
+          shopt -s nullglob
+          fail() { echo "$1" >&2; exit 1; }
+          apps=(release/*/Basecase.app)
+          [ "${#apps[@]}" -eq 1 ] || fail "expected one mac app, found ${#apps[@]}"
+          app="${apps[0]}"
+          [ "$(lipo -archs "$app/Contents/MacOS/Basecase")" = arm64 ] || fail "the app is not an arm64 build"
+          codesign --verify --deep --strict "$app" || fail "the app is not signed properly"
+          codesign -dvv "$app" 2>&1 | grep -q 'Authority=Developer ID Application:' \
+            || fail "the app is not signed with a Developer ID Application certificate"
+          xcrun stapler validate "$app" || fail "the app carries no notarization ticket"
+          [ -f "$app/Contents/Resources/app-update.yml" ] || fail "the app has no app-update.yml, so it can't update"
+          for addon in sharing vision; do
+            [ -f "$app/Contents/Resources/app/electron/native/$addon/build/Release/$addon.node" ] \
+              || fail "the $addon addon wasn't built"
+          done
+
+      - name: Check the update files are there
+        run: |
+          shopt -s nullglob
+          fail() { echo "$1" >&2; exit 1; }
+          [ -f release/latest-mac.yml ] || fail "release/latest-mac.yml is missing"
+          [ -f release/Basecase.dmg ] || fail "release/Basecase.dmg is missing, so the latest download link breaks"
+          zips=(release/*-mac.zip)
+          [ "${#zips[@]}" -eq 1 ] || fail "expected one mac zip, found ${#zips[@]}"
+          listed=$(grep -c 'url:.*\.zip' release/latest-mac.yml || true)
+          [ "$listed" -eq 1 ] || fail "latest-mac.yml lists $listed zips, expected one"
+
+      - name: Put the build on a release
+        if: inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          shopt -s nullglob
+          version="$VERSION"
+          [ -n "$version" ] || version=$(node -p "require('./package.json').version")
+          tag="v$version"
+          assets=(release/Basecase.dmg release/*-mac.zip release/*.blockmap release/latest-mac.yml)
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${assets[@]}" --clobber
+          else
+            gh release create "$tag" --target "$GITHUB_SHA" --title "Basecase $version" --generate-notes "${assets[@]}"
+          fi

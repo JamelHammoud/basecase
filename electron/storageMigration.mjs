@@ -58,11 +58,19 @@ function injector(entries, done) {
 
 const NONE = { transformHtml: undefined, close: () => {} };
 
+const markDone = (userData) => fs.writeFileSync(marker(userData), 'app://basecase\n');
+
 export async function storageMigration({ userData, preload }) {
   if (fs.existsSync(marker(userData))) return NONE;
 
+  if (!fs.existsSync(path.join(userData, 'Local Storage'))) {
+    markDone(userData);
+
+    return NONE;
+  }
+
   const { entries, close } = await readOldStorage(preload);
-  const done = () => fs.writeFileSync(marker(userData), 'app://basecase\n');
+  const done = () => markDone(userData);
 
   if (!entries) return { transformHtml: undefined, close };
 

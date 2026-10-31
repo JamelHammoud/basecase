@@ -60,9 +60,19 @@ def open_stage(path: str) -> Usd.Stage:
     return stage
 
 
-def collect_meshes(stage: Usd.Stage, frame: StageFrame) -> list[VisualMesh]:
+def package_root(root_usd: str) -> str:
+    """The downloaded package folder (`files/`) the root layer sits in; textures may not come from outside it."""
+    path = os.path.dirname(os.path.realpath(root_usd))
+
+    while os.path.basename(path) != "files" and os.path.dirname(path) != path:
+        path = os.path.dirname(path)
+
+    return path if os.path.basename(path) == "files" else os.path.dirname(os.path.realpath(root_usd))
+
+
+def collect_meshes(stage: Usd.Stage, frame: StageFrame, root: str) -> list[VisualMesh]:
     xf = UsdGeom.XformCache()
-    looks = LookReader()
+    looks = LookReader(root)
     out: list[VisualMesh] = []
     total = 0
 
@@ -199,7 +209,7 @@ def convert(root_usd: str, out_dir: str) -> dict:
     frame = StageFrame.of(stage)
     phys = read_physics(stage, frame, UsdGeom.XformCache())
     emit(type="status", message="Reading meshes")
-    meshes = collect_meshes(stage, frame)
+    meshes = collect_meshes(stage, frame, package_root(root_usd))
 
     if not meshes:
         raise ValueError("The asset has no visible meshes.")

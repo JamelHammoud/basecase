@@ -57,8 +57,10 @@ function sendBody(req, body) {
   req.emit('end');
 }
 
-async function request(handler, { method, url, body }) {
-  const req = Object.assign(new EventEmitter(), { method, url });
+const APP_HEADERS = { host: 'localhost:5173' };
+
+async function request(handler, { method, url, body, headers = APP_HEADERS }) {
+  const req = Object.assign(new EventEmitter(), { method, url, headers });
   const res = fakeRes();
   const next = vi.fn();
 
@@ -114,12 +116,12 @@ describe('vite bridge middleware', () => {
   });
 
   it('streams events and starts the agent once', () => {
-    const req = new EventEmitter();
+    const req = Object.assign(new EventEmitter(), { headers: APP_HEADERS });
     const res = fakeRes();
 
     calls.length = 0;
     events(req, res);
-    events(new EventEmitter(), fakeRes());
+    events(Object.assign(new EventEmitter(), { headers: APP_HEADERS }), fakeRes());
     req.emit('close');
 
     expect(res.statusCode).toBe(200);
@@ -130,5 +132,36 @@ describe('vite bridge middleware', () => {
     ]);
     expect(calls.filter(([name]) => name === 'connectAcpAgent')).toHaveLength(1);
     expect(calls.at(-1)).toEqual(['unsubscribe']);
+  });
+
+  it('refuses requests from other sites and hosts', async () => {
+    const connect = (headers) =>
+      request(bridge, { method: 'POST', url: '/acp-connect', body: '{"agentCommand":"x"}', headers });
+    const refused = {
+      result: { error: 'Bridge requests must come from the app on this machine' },
+      status: 403,
+      calls: [],
+    };
+
+    expect(await connect({ host: 'localhost:5173', origin: 'https://evil.example' })).toEqual(refused);
+    expect(await connect({ host: 'localhost:5173', origin: 'http://localhost:3000' })).toEqual(refused);
+    expect(await connect({ host: 'localhost:5173', 'sec-fetch-site': 'cross-site' })).toEqual(refused);
+    expect(await connect({ host: 'localhost:5173', 'sec-fetch-site': 'same-site' })).toEqual(refused);
+    expect(await connect({ host: 'evil.example:5173' })).toEqual(refused);
+    expect(await connect({ host: 'localhost.evil.example:5173' })).toEqual(refused);
+    expect(await connect({ host: '192.168.1.20:5173' })).toEqual(refused);
+    expect(await connect({ host: 'localhost:5173', origin: 'null' })).toEqual(refused);
+    expect(await connect({})).toEqual(refused);
+    expect((await request(events, { method: 'GET', url: '/', headers: { host: 'evil.example' } })).status).toBe(403);
+  });
+
+  it('serves the app and local tools', async () => {
+    const app = { host: 'localhost:5173', origin: 'http://localhost:5173', 'sec-fetch-site': 'same-origin' };
+
+    expect((await request(bridge, { method: 'GET', url: '/chats', headers: app })).status).toBe(200);
+    expect((await request(bridge, { method: 'GET', url: '/chats', headers: { host: '127.0.0.1:5199' } })).status).toBe(
+      200,
+    );
+    expect((await request(bridge, { method: 'GET', url: '/chats', headers: { host: '[::1]:5173' } })).status).toBe(200);
   });
 });

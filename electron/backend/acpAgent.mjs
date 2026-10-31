@@ -123,7 +123,7 @@ export class AcpAgent {
     const initRes = await connection.initialize({
       protocolVersion: PROTOCOL_VERSION,
       clientCapabilities: {
-        fs: { readTextFile: true, writeTextFile: true },
+        fs: { readTextFile: false, writeTextFile: true },
       },
       clientInfo: { name: 'Basecase', version: '2.0.0' },
     });

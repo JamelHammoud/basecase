@@ -63,19 +63,15 @@ export function createClientHandler({ workspaceRoot, libraryDir, emit, workspace
         update: params.update,
       });
     },
-    readTextFile: async (params) => {
-      const targetPath = path.resolve(workspaceRoot, params.path);
-
-      if (!targetPath.startsWith(workspaceRoot)) throw new Error('Outside workspace');
-
-      return { content: fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf-8') : '' };
-    },
     writeTextFile: async (params) => {
       const targetPath = path.resolve(workspaceRoot, params.path);
+      const modelsDir = path.join(libraryDir, 'models');
 
-      if (!targetPath.startsWith(libraryDir)) throw new Error('Writes are limited to library/');
+      if (path.dirname(targetPath) !== modelsDir || !/^[\w-]{1,128}\.json$/.test(path.basename(targetPath))) {
+        throw new Error('Writes are limited to library/models/<id>.json');
+      }
 
-      fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+      fs.mkdirSync(modelsDir, { recursive: true });
       fs.writeFileSync(targetPath, params.content, 'utf-8');
       emit({ type: 'acp-file-written', path: targetPath, ...libraryState() });
 

@@ -29,7 +29,8 @@
     "prepare": "simple-git-hooks && node tools/native/build.mjs",
     "native": "node tools/native/build.mjs",
     "lint:py": "uvx ruff check . && uvx ruff format --check .",
-    "recipes:harvest": "node tools/recipes/harvest.mjs"
+    "recipes:harvest": "node tools/recipes/harvest.mjs",
+    "security": "node tools/security/audit.mjs"
   },
   "dependencies": {
     "@agentclientprotocol/claude-agent-acp": "^0.99.1",

@@ -7,7 +7,7 @@ import { AgentBridge, rendererTimeout } from './agentBridge.mjs';
 import { agentEnv } from './agentProcess.mjs';
 import { TOOL_USE_HEADER } from './constants.mjs';
 import { EventHub } from './eventHub.mjs';
-import { listModels, saveModel } from './models.mjs';
+import { deleteModel, listModels, saveModel } from './models.mjs';
 
 let dir;
 
@@ -26,6 +26,19 @@ describe('models', () => {
       '{"id":"new","name":"Arm","createdAt":"2025-01-01"}',
     );
     expect(listModels(dir).map((m) => m.id)).toEqual(['new', 'old']);
+  });
+
+  it('never writes or deletes outside the models folder', () => {
+    const models = path.join(dir, 'models');
+    const outside = path.join(dir, 'agent.json');
+
+    fs.mkdirSync(models);
+    fs.writeFileSync(outside, '{"command":"node"}');
+
+    expect(() => saveModel(models, { id: '../agent', command: 'evil' })).toThrow('Not a valid id');
+    deleteModel(models, '../agent');
+
+    expect(fs.readFileSync(outside, 'utf-8')).toBe('{"command":"node"}');
   });
 });
 

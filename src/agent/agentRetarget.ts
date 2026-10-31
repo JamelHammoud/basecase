@@ -36,6 +36,8 @@ async function bvhText(p: RetargetPayload): Promise<{ text: string } | { error: 
 
   if (!p.url) return { error: 'Give the BVH as an evidence path or a URL.' };
 
+  if (!URL.canParse(p.url) || new URL(p.url).protocol !== 'https:') return { error: 'Give the BVH as an https URL.' };
+
   const res = await fetch(p.url);
 
   if (!res.ok) return { error: `Couldn’t download the BVH (${res.status}).` };

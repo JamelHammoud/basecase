@@ -8,7 +8,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
 const POOL_SIZE = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
 
-let sandboxed = true;
+const NETWORK_PERMISSION_NODE = 25;
+
+let sandboxed = Number(process.versions.node.split('.')[0]) >= NETWORK_PERMISSION_NODE;
 let nextId = 1;
 const kernels = [];
 const waiting = [];
@@ -30,7 +32,11 @@ function spawnKernel() {
         ),
       ]
     : [];
-  const proc = fork(path.join(here, 'kernel.mjs'), [], { execArgv, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+  const proc = fork(path.join(here, 'kernel.mjs'), [], {
+    execArgv,
+    env: {},
+    stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
+  });
   const k = { proc, busy: false, job: null };
 
   k.ready = new Promise((resolve, reject) => {
@@ -141,7 +147,7 @@ export function renderPart(language, code, options = {}) {
   if (language === 'replicad' && !sandboxed) {
     return Promise.resolve({
       ok: false,
-      error: 'replicad needs Node 22+ (sandboxed kernel). Use OpenSCAD for this part.',
+      error: 'replicad needs Node 25+ (sandboxed kernel). Use OpenSCAD for this part.',
     });
   }
 

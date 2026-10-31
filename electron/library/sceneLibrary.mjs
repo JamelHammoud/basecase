@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
 
 const SUMMARY_FIELDS = ['id', 'name', 'globalGoal', 'updatedAt', 'previewDataUrl', 'sizeMm'];
 
@@ -68,7 +69,7 @@ export class SceneLibrary {
   }
 
   filePath(id) {
-    return path.join(this.scenesDir, `${id}.json`);
+    return path.join(this.scenesDir, `${checkedFileId(id)}.json`);
   }
 
   summaryOf(file) {
@@ -162,6 +163,8 @@ export class SceneLibrary {
   }
 
   delete(id) {
+    if (!isSafeFileId(id)) return this.list();
+
     const file = this.filePath(id);
 
     this.deleted.add(id);
@@ -172,7 +175,7 @@ export class SceneLibrary {
   }
 
   write(record) {
-    const file = `${record.id}.json`;
+    const file = `${checkedFileId(record.id)}.json`;
     const full = path.join(this.scenesDir, file);
 
     fs.writeFileSync(full, JSON.stringify(record), 'utf-8');

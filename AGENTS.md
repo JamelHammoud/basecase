@@ -8,6 +8,8 @@ This document defines the design principles, UI/UX conventions, copy rules, and 
 
 **Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are.
 
+**Security audit, vulnerable package or toolchain update?** Follow [.agents/skills/security-audit/SKILL.md](.agents/skills/security-audit/SKILL.md) (`npm run security` scans). Code that touches IPC, the HTTP bridge, file ids, outbound fetches or the CAD kernel follows §0h.
+
 References studied for this system: Figma UI3, the OpenAI Codex / ChatGPT desktop apps, mobbin.com, Linear, Raycast, macOS Tahoe Liquid Glass (WWDC25 “Meet Liquid Glass”), Vercel Geist, Things 3; copy guides from Apple HIG, Mailchimp, Material, Shopify Polaris, Atlassian, Microsoft, GOV.UK, Stripe, Linear and 37signals.
 
 ---
@@ -19,7 +21,8 @@ These rules hold for every human and agent, on every machine. They're enforced b
 ### 0a. Tooling
 
 - **Prettier** formats (`.prettierrc.json`: single quotes, 120 columns). **ESLint** (`eslint.config.mjs`) enforces everything else. Custom rules live in `tools/eslint/`.
-- `npm run check` = `check:tracked` (§0g) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`. It must pass before you finish any change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes.
+- `npm run check` = `check:tracked` (§0g) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`. It must pass before you finish any change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes. `npm run security` (`tools/security/`) scans dependencies, Node, Electron, the Python locks, secrets and risky code, writes `scratch/security/<date>.md` and fails on any critical or high finding (§0h).
+- **Node** is pinned in `.nvmrc` (CI reads it) and `engines.node`: the latest release of the active LTS. npm runs dependency install scripts only for packages approved in `allowScripts` (`npm install-scripts ls`).
 - **Hooks run automatically:**
   - Git pre-commit (`simple-git-hooks` + `lint-staged`, installed by `npm install`): formats and lints staged files, then runs `check:tracked`; a commit with lint errors or internal files fails.
   - Claude Code (`.claude/settings.json` → `tools/hooks/claude-post-edit.mjs`): after every Edit/Write, the file is formatted and lint-fixed, and remaining errors come back to the agent. Fix them before moving on.
@@ -112,6 +115,19 @@ Anything that only serves this session or this machine stays out of git. Put it 
 - **Deliberately committed outputs:** `public/parts/*.glb` and `tools/parts/generated/<id>/` (the part pipeline's results, §8a), `public/figures/*.glb` and `tools/figures/generated/<id>/` (the Measure tool's scale figures, §6), `build/icon/compiled/`, `public/robots/*.webp`.
 - **`npm run check:tracked`** (`tools/check-tracked.mjs`, run by `check` and the pre-commit hook) fails on tracked files that `.gitignore` excludes (untrack them with `git rm --cached`) and on absolute paths into a home folder, `/private/tmp` or `/var/folders` in any tracked text file. Placeholder homes in tests (`me`, `user`, `name`, `example`, `runner`) are allowed.
 - **Before committing**, read `git status` and the staged list (`git diff --cached --stat`). Anything not in the categories above that you didn't mean to write gets moved to `scratch/` or deleted. When a new tool writes local output, add its folder to `.gitignore` (and to the ESLint / Prettier ignores if it holds code) in the same change.
+
+### 0h. Security (mandatory)
+
+The agent reads untrusted pages and files and drives an app that can spawn processes, so treat every input from the renderer, the HTTP bridge, the agent and downloaded assets as hostile. The full checklist, attack surface and accepted risks are in the `security-audit` skill; these rules hold for every change:
+
+- **HTTP bridge:** every `/api/*` middleware is wrapped in `guardBridge` (`electron/bridgeGuard.mjs`: loopback `Host`, same-origin `Origin` and `Sec-Fetch-Site`). Vite plugin middlewares run before Vite's own host check and CORS, so nothing else protects them. A website could otherwise POST `/api/bridge/acp-connect` and run a command.
+- **IPC** registers through `trustedIpc` (`electron/appOrigin.mjs`, main frame of the app origin only). Compare origins with `isAppUrl`, never `startsWith`; open only `isExternalWebUrl` links.
+- **Ids that become paths** go through `checkedFileId` / `isSafeFileId` (or `safeFileId`) in `electron/backend/constants.mjs`. `library/agent.json` holds the command the app spawns.
+- **Outbound fetches the agent controls** use `publicFetch` and `readCapped` (`electron/publicFetch.mjs`): public addresses only, every redirect re-checked, bodies capped. The renderer fetches agent URLs over https only.
+- **The CAD kernel** is forked with Node's permission model, `env: {}`, and only on Node ≥ 25 (older permission models allow network).
+- **Generated HTML** escapes every value (coerce numbers); the guide viewer strips scripts, handlers, links and non-image URLs. No `dangerouslySetInnerHTML`.
+- **No `shell: true`**, no string `exec` with interpolated input, no TLS verification off outside the Bambu LAN connector.
+- Every security fix gets a test that feeds it the exploit input (`electron/security.test.mjs`).
 
 ---
 
@@ -1012,6 +1028,7 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 ## 15. Verification Checklist
 
 - [ ] `npm run check` passes (format, ESLint, Ruff, types, tests) and `npm run build` succeeds.
+- [ ] Changes to IPC, the HTTP bridge, file ids, outbound fetches, the CAD kernel or dependencies follow §0h; `npm run security` reports no critical or high finding.
 - [ ] `npm run test:e2e` passes after UI or viewport changes.
 - [ ] Visual changes: don't start dev servers, previews or screenshots to check how they look. A maintainer runs the app and reviews the UI; say the change is done and what to look at, and they'll say if it needs work.
 - [ ] Nothing in §0f regressed (no full-scene rebuilds, no always-on render loop, no large IPC payloads).

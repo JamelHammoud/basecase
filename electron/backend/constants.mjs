@@ -28,3 +28,11 @@ export const safeWorkspace = (id) =>
   String(id || DEFAULT_WORKSPACE).replace(/[^a-zA-Z0-9_-]/g, '') || DEFAULT_WORKSPACE;
 
 export const safeFileId = (id) => String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+
+export const isSafeFileId = (id) => typeof id === 'string' && /^[\w-]{1,128}$/.test(id);
+
+export function checkedFileId(id) {
+  if (!isSafeFileId(id)) throw new Error(`Not a valid id: ${String(id).slice(0, 40)}`);
+
+  return id;
+}

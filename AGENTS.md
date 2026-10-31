@@ -806,7 +806,7 @@ Stage 5 of the loop (§1). The plan, findings and what's still unverified: [docs
 - **Tasks** (`bench/robots.mjs`):
   - **URDF robots:** Reachy Mini, Open Duck Mini v2, Berkeley Humanoid and Unitree G1 are scored against meshes assembled from their published URDFs, at the zero pose or a `pose` override (G1's elbows are straightened to match the photos).
   - **Photos only:** robots marked `offline` run with web tools off (`STUDIO_AGENT_OFFLINE=1`), which tests design skill rather than lookup. G1 runs this way.
-  - **No public CAD:** Memo (Sunday Robotics) gets the user's four photos. Its held-out orthographic front drawing scores the silhouette (`bench/drawing.mjs`). MicroDuck has only a kinematic skeleton.
+  - **No public CAD:** a task can give `frontDrawing`, a held-out orthographic front drawing that scores the silhouette (`bench/drawing.mjs`). Memo (a home robot with no public CAD) was scored this way from four photos; those inputs aren't public, so it's no longer in `bench/robots.mjs`, but its results below stay for history. MicroDuck has only a kinematic skeleton.
   - **Single parts** (`part-xl430`, `part-oak1`): the agent models a catalog part itself from photos, without placing it. The result is scored against the manufacturer's own mesh (`bench/glb.mjs` reads the GLB) over all 24 axis orientations. The judge compares it with renders of the real part in `judge-refs/`.
   - **New concepts:** text-only briefs (a wheeled home helper, a desktop biped), judged against the brief.
   - **Builds** (`build: true`): a brief that must also pass the build checks (`build-humanoid`: a ~50 cm Sprout-style humanoid for the P1S with an $800 budget). The run also saves `scene.json` (open it in the app), `build-bom.txt`, `build-print.txt` and `build-verify.txt`.
@@ -839,14 +839,14 @@ Stage 5 of the loop (§1). The plan, findings and what's still unverified: [docs
 
   Silhouette IoU is 0.70–0.85 and Chamfer distance 1.3–2.2% of height.
 
-  Harder tasks: Unitree G1 runs photos only; Memo has no public CAD; the two concepts are text-only. The vision judge varies about ±4 between runs.
+  Harder tasks: Unitree G1 runs photos only; Memo (retired) has no public CAD; the two concepts are text-only. The vision judge varies about ±4 between runs.
 
   | Task | Metric | r5 baseline | r7 | r8 | r9 |
   |---|---|---|---|---|---|
   | Unitree G1 | geometry score | 62.3 | 80.6 | 73.0 | 86.7 |
   | Unitree G1 | judge | 56 | 60 | 64 | 56 |
-  | Memo | front drawing IoU | 0.845 | 0.818 | 0.771 | 0.844 |
-  | Memo | judge | 56 | 64 | 62 | 64 |
+  | Memo (retired) | front drawing IoU | 0.845 | 0.818 | 0.771 | 0.844 |
+  | Memo (retired) | judge | 56 | 64 | 62 | 64 |
   | Concept: home helper | judge | 56 | 62 | 70 | 64 |
   | Concept: desk biped | judge | 62 | 60 | 64 | 66 |
 
@@ -860,13 +860,13 @@ Stage 5 of the loop (§1). The plan, findings and what's still unverified: [docs
   | Reachy Mini | 86.4 | 79.9 | 73.0 |
   | Unitree G1 (photos only) | 84.4 | 76.9 | 43.1 |
   | Open Duck Mini | 77.9 | 73.8 | 66.9 |
-  | Memo (drawing IoU) | 87.2 | 85.6 | 82.5 |
+  | Memo (retired, drawing IoU) | 87.2 | 85.6 | 82.5 |
   | Concept: home helper | 66.7 | 62.0 | 53.3 |
   | Concept: desk biped | 66.7 | 65.2 | 63.3 |
 
   Known limits:
   - Run-to-run spread is 10–40 points on robots. It's driven by the agent's choices (pose, photo reading, whether research finds the URDF) more than by tools.
-  - Memo's front photo is a perspective render with the hands angled, while the held-out drawing is orthographic. Matching the photo exactly (r20, every band within 10%) lowered the drawing IoU, so this task has a ceiling near 0.87 with these inputs.
+  - Memo's front photo is a perspective render with the hands angled, while the held-out drawing is orthographic. Matching the photo exactly (r20, every band within 10%) lowered the drawing IoU, so that task had a ceiling near 0.87 with those inputs. The same holds for any task scored against an orthographic drawing from perspective photos.
   - Concept scores depend on a strict judge. 9/10 means production-grade design and engineering.
 
   What each round changed:

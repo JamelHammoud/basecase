@@ -28,12 +28,6 @@ export const ROBOTS = {
     prompt:
       'This is the Unitree G1 humanoid robot, about 1.3 m tall. Design it as a part-based CAD model, standing with its arms hanging straight down at its sides.',
   },
-  memo: {
-    title: 'Memo (Sunday Robotics)',
-    frontDrawing: 'front-drawing.png',
-    judgeRefs: 'inputs',
-    prompt: 'This is Memo, the home robot by Sunday Robotics (sunday.ai). Design it as a part-based CAD model.',
-  },
   'concept-home-helper': {
     title: 'Concept: home helper',
     concept: true,

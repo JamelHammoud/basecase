@@ -1,6 +1,8 @@
 import React from 'react';
 import { MetaLine } from '../../design-system';
 import type { ContextUsage } from '../../types/robotics';
+import type { Money } from '../../utils/currency';
+import { useMoney } from '../../utils/useMoney';
 
 const NEARLY_FULL = 0.8;
 
@@ -12,11 +14,12 @@ function formatTokens(n: number) {
   return String(n);
 }
 
-const formatCost = (usd: number) => `$${usd.toFixed(usd >= 100 ? 0 : 2)}`;
+const formatCost = (usd: number, money: Money) => (money.fromUsd(usd) >= 100 ? money.whole(usd) : money.format(usd));
 
 export const ContextStatus: React.FC<{ context: ContextUsage }> = ({ context }) => {
   const share = Math.min(1, context.used / context.size);
   const tokens = `${formatTokens(context.used)} of ${formatTokens(context.size)} tokens`;
+  const money = useMoney();
 
   return (
     <div className="px-2.5 pt-1.5 pb-2 tabular-nums select-none">
@@ -32,7 +35,7 @@ export const ContextStatus: React.FC<{ context: ContextUsage }> = ({ context }) 
       </div>
       <MetaLine
         className="mt-1.5 text-[12px] text-white/45"
-        items={[tokens, context.costUsd !== undefined && formatCost(context.costUsd)]}
+        items={[tokens, context.costUsd !== undefined && formatCost(context.costUsd, money)]}
       />
     </div>
   );

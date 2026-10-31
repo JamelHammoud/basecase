@@ -136,7 +136,7 @@ export async function costNotes(ops: AgentOp[], ctx: RequestContext): Promise<st
 }
 
 export async function budgetPlanNote(ctx: RequestContext): Promise<string> {
-  const budget = ctx.project().budgetUsd;
+  const { budgetUsd, budgetEntered } = ctx.project();
 
-  return budget === undefined ? '' : budgetPlanText(budget, await sceneBom(ctx));
+  return budgetUsd === undefined ? '' : budgetPlanText(budgetUsd, await sceneBom(ctx), budgetEntered);
 }

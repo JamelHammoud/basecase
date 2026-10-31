@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useScrollFade } from '../design-system';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
+import { useMoney } from '../utils/useMoney';
 import type { EngineeringReport } from '../utils/engineering';
 import type { PrintToolsStatus, SavedPrinter } from '../print/printBridge';
 import type { PrintReport } from '../utils/printReport';
@@ -64,15 +65,16 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const { ref: setScroller, style: fadeStyle } = useScrollFade();
   const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print) });
   const file = fileStem(sceneName);
+  const money = useMoney();
 
   const exportCsv = () => {
     const names = Object.fromEntries(parts.map((p) => [p.id, p.name]));
 
-    download(`${file}-bom.csv`, bomToCsv(bom, names), 'text/csv');
+    download(`${file}-bom.csv`, bomToCsv(bom, names, money), 'text/csv');
     onToast('Exported BOM');
   };
   const exportMarkdown = () => {
-    download(`${file}-bom.md`, bomToMarkdown(bom, sceneName), 'text/markdown');
+    download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
     onToast('Exported BOM');
   };
   const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {

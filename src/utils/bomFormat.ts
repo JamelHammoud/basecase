@@ -1,8 +1,10 @@
 import { BOM_CATEGORIES, Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS, localDate } from './bomTypes';
+import { currencyNote, type Money, scaledEntry } from './currency';
+import { currentMoney } from './currencyStore';
 
 const STATUS_LABEL: Record<PriceStatus, string> = { checked: 'Checked', stale: 'Stale', unchecked: 'Not checked' };
 const LINK_TYPE: Record<BomLine['urlKind'], string> = { product: 'Listing', search: 'Search', none: '' };
-const CSV_HEAD = [
+const csvHead = (code: string) => [
   'Item',
   'Category',
   'Maker / Spec',
@@ -10,15 +12,15 @@ const CSV_HEAD = [
   'Unit',
   'Pack Qty',
   'Packs to Buy',
-  'Pack Price (USD)',
-  'Line Total (USD)',
+  `Pack Price (${code})`,
+  `Line Total (${code})`,
   'Link',
   'Link Type',
   'ASIN',
   'Listing Title',
   'Price Checked',
   'Price Status',
-  'Estimate (USD)',
+  `Estimate (${code})`,
   'Estimate Source',
   'Estimate Seen',
   'Note',
@@ -30,7 +32,6 @@ const csvCell = (v: unknown) => {
 
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
-const usd = (n?: number) => (n === undefined ? '' : n.toFixed(2));
 const byCategory = (bom: Bom) =>
   BOM_CATEGORIES.map((cat) => ({ cat, ls: bom.lines.filter((l) => l.category === cat) })).filter((g) => g.ls.length);
 
@@ -41,13 +42,15 @@ const recordCells = (l: BomLine) => [
   STATUS_LABEL[l.status],
 ];
 
-const estimateCells = (l: BomLine) => [
-  usd(l.estUsd),
+const lineEntry = (l: BomLine) => scaledEntry(l.record?.entered, l.packs ?? 1);
+
+const estimateCells = (l: BomLine, money: Money) => [
+  l.estUsd === undefined ? '' : money.plain(l.estUsd),
   l.estimate ? `${l.estimate.store} ${l.estimate.url}` : '',
   l.estimate?.seen ?? '',
 ];
 
-const csvRow = (l: BomLine, partNames: Record<string, string>) => [
+const csvRow = (l: BomLine, partNames: Record<string, string>, money: Money) => [
   l.name,
   l.category,
   l.detail,
@@ -55,55 +58,55 @@ const csvRow = (l: BomLine, partNames: Record<string, string>) => [
   l.unit,
   l.record?.packQty ?? (l.category === 'Filament' ? 1000 : ''),
   l.packs ?? '',
-  usd(l.record?.priceUsd),
-  usd(l.lineUsd),
+  l.record ? money.plain(l.record.priceUsd, l.record.entered) : '',
+  l.lineUsd === undefined ? '' : money.plain(l.lineUsd, lineEntry(l)),
   l.url ?? '',
   LINK_TYPE[l.urlKind],
   ...recordCells(l),
-  ...estimateCells(l),
+  ...estimateCells(l, money),
   [l.warning, l.record?.note].filter(Boolean).join('; '),
   [...new Set(l.partIds.map((id) => partNames[id] ?? id))].slice(0, 12).join('; '),
 ];
 
-export function bomToCsv(bom: Bom, partNames: Record<string, string>): string {
-  const rows = bom.lines.map((l) => csvRow(l, partNames));
+export function bomToCsv(bom: Bom, partNames: Record<string, string>, money: Money = currentMoney()): string {
+  const rows = bom.lines.map((l) => csvRow(l, partNames, money));
 
-  return [CSV_HEAD, ...rows].map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
+  return [csvHead(money.code), ...rows].map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
 }
 
-function markdownTotals(t: Bom['totals']): string[] {
-  const out = [`- **Checked total:** $${t.checkedUsd.toFixed(2)} (${t.checked} lines)`];
+function markdownTotals(t: Bom['totals'], money: Money): string[] {
+  const out = [`- **Checked total:** ${money.format(t.checkedUsd)} (${t.checked} lines)`];
 
   if (t.stale)
     out.push(
-      `- **Stale checks** (over ${STALE_DAYS} days): ${t.stale} lines, $${(t.pricedUsd - t.checkedUsd).toFixed(2)}`,
+      `- **Stale checks** (over ${STALE_DAYS} days): ${t.stale} lines, ${money.format(t.pricedUsd - t.checkedUsd)}`,
     );
 
   if (t.unchecked) out.push(`- **Not checked:** ${t.unchecked} lines, not in the checked total`);
 
   out.push(
-    `- **Estimated total:** ~$${t.estimatedUsd.toFixed(2)}, using maker and distributor list prices (marked ~) for unchecked lines${t.unpriced ? `; ${t.unpriced} lines have no price` : ''}`,
+    `- **Estimated total:** ~${money.format(t.estimatedUsd)}, using maker and distributor list prices (marked ~) for unchecked lines${t.unpriced ? `; ${t.unpriced} lines have no price` : ''}`,
   );
 
   if (t.budgetUsd !== undefined)
-    out.push(`- **Budget:** $${t.budgetUsd.toFixed(2)}${t.overBudget ? ' (over budget)' : ''}`);
+    out.push(`- **Budget:** ${money.format(t.budgetUsd, t.budgetEntered)}${t.overBudget ? ' (over budget)' : ''}`);
 
   return out;
 }
 
-function markdownPrice(l: BomLine): string {
-  if (l.lineUsd !== undefined) return `$${l.lineUsd.toFixed(2)}`;
+function markdownPrice(l: BomLine, money: Money): string {
+  if (l.lineUsd !== undefined) return money.format(l.lineUsd, lineEntry(l));
 
-  return l.estUsd !== undefined ? `~$${l.estUsd.toFixed(2)} ([list](${l.estimate!.url}))` : '';
+  return l.estUsd !== undefined ? `~${money.format(l.estUsd)} ([list](${l.estimate!.url}))` : '';
 }
 
-function markdownRow(l: BomLine): string {
+function markdownRow(l: BomLine, money: Money): string {
   const qty = l.unit === 'g' ? `${l.qty} g` : String(l.qty);
   const link = l.url ? `[${l.urlKind === 'product' ? 'Listing' : 'Search'}](${l.url})` : '';
   const name = `${l.name}${l.detail ? ` <br>${l.detail}` : ''}${l.warning ? ` <br>⚠ ${l.warning}` : ''}`;
   const checked = l.record ? `${l.record.checkedAt}${l.status === 'stale' ? ' (stale)' : ''}` : 'Not checked';
 
-  return `| ${name} | ${qty} | ${l.packs ?? ''} | ${markdownPrice(l)} | ${checked} | ${link} |`;
+  return `| ${name} | ${qty} | ${l.packs ?? ''} | ${markdownPrice(l, money)} | ${checked} | ${link} |`;
 }
 
 function markdownPrinted(bom: Bom): string[] {
@@ -123,13 +126,13 @@ function markdownPrinted(bom: Bom): string[] {
   ];
 }
 
-export function bomToMarkdown(bom: Bom, sceneName: string, today = new Date()): string {
+export function bomToMarkdown(bom: Bom, sceneName: string, money: Money = currentMoney(), today = new Date()): string {
   const out: string[] = [
     `# ${sceneName}: bill of materials`,
     '',
     `Generated ${localDate(today)} from the scene. Prices are what was seen on each listing on its check date; Amazon prices change, so recheck before ordering.`,
     '',
-    ...markdownTotals(bom.totals),
+    ...markdownTotals(bom.totals, money),
     '',
   ];
 
@@ -139,7 +142,7 @@ export function bomToMarkdown(bom: Bom, sceneName: string, today = new Date()): 
       '',
       '| Item | Qty | Packs | Price | Checked | Link |',
       '|---|---:|---:|---:|---|---|',
-      ...ls.map(markdownRow),
+      ...ls.map((l) => markdownRow(l, money)),
       '',
     );
 
@@ -159,30 +162,30 @@ export function bomToMarkdown(bom: Bom, sceneName: string, today = new Date()): 
   return out.join('\n');
 }
 
-function textSummary(t: Bom['totals']): string {
-  const budget = t.budgetUsd !== undefined ? `Budget $${t.budgetUsd.toFixed(2)}` : 'No budget set';
+function textSummary(t: Bom['totals'], money: Money): string {
+  const budget = t.budgetUsd !== undefined ? `Budget ${money.format(t.budgetUsd, t.budgetEntered)}` : 'No budget set';
   const over = t.budgetUsd !== undefined && t.estimatedUsd > t.budgetUsd ? ' The estimate is OVER BUDGET.' : '';
 
   return (
-    `${budget}. Checked prices total $${t.pricedUsd.toFixed(2)} (${t.checked} checked, ${t.stale} stale). With list-price estimates for the rest: ~$${t.estimatedUsd.toFixed(2)}${t.unpriced ? `, plus ${t.unpriced} lines with no price known` : ''}.` +
+    `${budget}. Checked prices total ${money.format(t.pricedUsd)} (${t.checked} checked, ${t.stale} stale). With list-price estimates for the rest: ~${money.format(t.estimatedUsd)}${t.unpriced ? `, plus ${t.unpriced} lines with no price known` : ''}.` +
     over
   );
 }
 
-function textPrice(l: BomLine): string {
+function textPrice(l: BomLine, money: Money): string {
   if (l.record)
-    return `$${l.record.priceUsd.toFixed(2)} per ${l.record.packQty}${l.unit === 'g' ? ' g' : ''}, ${l.packs} to buy = $${(l.lineUsd ?? 0).toFixed(2)} (checked ${l.record.checkedAt}${l.status === 'stale' ? ', stale' : ''})`;
+    return `${money.format(l.record.priceUsd, l.record.entered)} per ${l.record.packQty}${l.unit === 'g' ? ' g' : ''}, ${l.packs} to buy = ${money.format(l.lineUsd ?? 0, lineEntry(l))} (checked ${l.record.checkedAt}${l.status === 'stale' ? ', stale' : ''})`;
 
   if (l.estimate)
-    return `not checked; list price $${l.estimate.usd.toFixed(2)} per ${l.estimate.per} at ${l.estimate.store} (${l.estimate.seen}), ${l.packs} = ~$${(l.estUsd ?? 0).toFixed(2)}`;
+    return `not checked; list price ${money.format(l.estimate.usd)} per ${l.estimate.per} at ${l.estimate.store} (${l.estimate.seen}), ${l.packs} = ~${money.format(l.estUsd ?? 0)}`;
 
   return 'no price known';
 }
 
-function textLine(l: BomLine): string {
+function textLine(l: BomLine, money: Money): string {
   const qty = l.unit === 'g' ? `${l.qty} g` : `${l.qty}×`;
 
-  return `- ${qty} ${l.name} [${l.key}] · ${textPrice(l)}${l.warning ? ` · ${l.warning}` : ''}`;
+  return `- ${qty} ${l.name} [${l.key}] · ${textPrice(l, money)}${l.warning ? ` · ${l.warning}` : ''}`;
 }
 
 function textNotes(bom: Bom, names: Record<string, string>): string[] {
@@ -217,13 +220,14 @@ function textNotes(bom: Bom, names: Record<string, string>): string[] {
   return out;
 }
 
-export function bomText(bom: Bom, names: Record<string, string>): string {
+export function bomText(bom: Bom, names: Record<string, string>, money: Money = currentMoney()): string {
   const out: string[] = [
-    textSummary(bom.totals),
+    textSummary(bom.totals, money),
     "Checked prices are the user's own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price.",
+    ...currencyNote(money),
   ];
 
-  for (const { cat, ls } of byCategory(bom)) out.push('', `${cat}:`, ...ls.map(textLine));
+  for (const { cat, ls } of byCategory(bom)) out.push('', `${cat}:`, ...ls.map((l) => textLine(l, money)));
 
   out.push(...textNotes(bom, names));
 

@@ -1,6 +1,3 @@
-export const money = (n: number) =>
-  `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
 export const hm = (h: number) =>
   h < 1
     ? `${Math.max(1, Math.round(h * 60))} min`

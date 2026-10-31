@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, IconButton, MetaLine, NumberInput, TextInput, ChevronDownIcon, CloseIcon, ExternalLinkIcon } from '../../design-system';
 import type { PurchaseRecord } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
+import { useMoney } from '../../utils/useMoney';
 import { type PurchaseForm, canSave, formatPrice, initialPurchaseForm, linkError, purchaseRecord } from './purchaseForm';
 
 interface CheckSheetProps {
@@ -51,6 +52,7 @@ const PriceFields: React.FC<{
   onChange: (patch: Partial<PurchaseForm>) => void;
 }> = ({ line, form, onChange }) => {
   const grams = line.unit === 'g';
+  const money = useMoney();
 
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -58,8 +60,8 @@ const PriceFields: React.FC<{
         <TextInput
           value={form.price}
           onChange={(e) => onChange({ price: e.target.value })}
-          onBlur={() => onChange({ price: formatPrice(form.price) })}
-          placeholder="e.g. $12.99"
+          onBlur={() => onChange({ price: formatPrice(form.price, money) })}
+          placeholder={`e.g. ${money.format(12.99)}`}
           inputMode="decimal"
           className="tabular-nums"
           autoFocus
@@ -139,7 +141,8 @@ const SheetFields: React.FC<{
 };
 
 export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave }) => {
-  const [form, setForm] = useState(() => initialPurchaseForm(line));
+  const money = useMoney();
+  const [form, setForm] = useState(() => initialPurchaseForm(line, money));
   const valid = canSave(form);
   const update = (patch: Partial<PurchaseForm>) => setForm((f) => ({ ...f, ...patch }));
 
@@ -167,7 +170,7 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
           onSubmit={(e) => {
             e.preventDefault();
 
-            if (valid) onSave(purchaseRecord(form));
+            if (valid) onSave(purchaseRecord(form, money));
           }}
         >
           <SheetFields line={line} form={form} onChange={update} />

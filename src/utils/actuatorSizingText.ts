@@ -1,4 +1,5 @@
 import type { ActuatorBus } from '../data/components';
+import { formatMoney as money, formatWhole as whole } from './currencyStore';
 import { loadCut, type Family, type Fit, type JointLoads, type JointPick } from './actuatorSizing';
 
 const BUS_NAMES: Record<ActuatorBus, string> = {
@@ -13,8 +14,6 @@ const BUS_NAMES: Record<ActuatorBus, string> = {
 
 const ALTERNATIVES = 3;
 
-const money = (n: number) => `$${n.toFixed(2)}`;
-const whole = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 const volts = (v: number) => `${Math.round(v * 10) / 10} V`;
 
 const fitText = (f: Fit) =>

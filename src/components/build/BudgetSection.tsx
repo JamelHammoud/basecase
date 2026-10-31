@@ -2,7 +2,9 @@ import React from 'react';
 import { NumberInput, Section, Tooltip } from '../../design-system';
 import type { ProjectSettings } from '../../types/robotics';
 import { type Bom, STALE_DAYS } from '../../utils/bom';
-import { money, plural } from './format';
+import type { Money } from '../../utils/currency';
+import { useMoney } from '../../utils/useMoney';
+import { plural } from './format';
 
 type Totals = Bom['totals'];
 
@@ -17,10 +19,11 @@ const hasEstimate = (t: Totals) => t.estimatedUsd > t.pricedUsd + 0.005;
 const share = (usd: number, budget: number) => (budget ? Math.min(1, usd / budget) : 0);
 
 const Total: React.FC<{ t: Totals }> = ({ t }) => {
+  const money = useMoney();
   const total = (
     <div className="text-[20px] font-semibold tabular-nums text-white/90 leading-tight w-fit">
       {hasEstimate(t) && <span className="text-white/45 font-normal mr-1">≈</span>}
-      {money(t.estimatedUsd)}
+      {money.format(t.estimatedUsd)}
     </div>
   );
 
@@ -48,10 +51,11 @@ const BudgetBar: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
 
 const BudgetLeft: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
   const over = t.estimatedUsd > budget;
+  const money = useMoney();
 
   return (
     <div className={`text-[12.5px] tabular-nums ${over ? 'text-red-400' : 'text-white/45'}`}>
-      {over ? `${money(t.estimatedUsd - budget)} over budget` : `${money(budget - t.estimatedUsd)} left`}
+      {over ? `${money.format(t.estimatedUsd - budget)} over budget` : `${money.format(budget - t.estimatedUsd)} left`}
     </div>
   );
 };
@@ -63,9 +67,20 @@ const StaleNotice: React.FC<{ stale: number }> = ({ stale }) => (
   </div>
 );
 
+const budgetStep = (money: Money) => 10 ** Math.max(1, Math.round(Math.log10(money.rate * 10)));
+
+function budgetPatch(amount: number, money: Money): Partial<ProjectSettings> {
+  if (amount <= 0) return { budgetUsd: undefined, budgetEntered: undefined };
+
+  const { usd, entered } = money.enter(amount);
+
+  return { budgetUsd: usd, budgetEntered: entered };
+}
+
 export const BudgetSection: React.FC<BudgetSectionProps> = ({ bom, project, onChangeProject }) => {
   const t = bom.totals;
   const budget = project.budgetUsd;
+  const money = useMoney();
 
   return (
     <Section title="Budget">
@@ -73,14 +88,14 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({ bom, project, onCh
         <Total t={t} />
         <div className="w-[112px] shrink-0">
           <NumberInput
-            label="$"
-            value={budget ?? 0}
+            label={money.symbol}
+            value={budget === undefined ? 0 : Math.round(money.amountOf(budget, project.budgetEntered))}
             min={0}
-            step={10}
+            step={budgetStep(money)}
             precision={0}
             unit=""
-            title="Budget in US dollars"
-            onChange={(v, live) => !live && onChangeProject({ budgetUsd: v > 0 ? v : undefined })}
+            title={`Budget in ${money.code}`}
+            onChange={(v, live) => !live && onChangeProject(budgetPatch(v, money))}
           />
         </div>
       </div>

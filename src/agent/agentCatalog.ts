@@ -3,6 +3,8 @@ import { HARDWARE_TYPES, defaultDrive, driveOptions } from '../data/hardware';
 import { SUPPLIES } from '../data/supplies';
 import { componentPorts } from '../data/componentPorts';
 import { catalogPortLines } from './ports';
+import { currencyNote } from '../utils/currency';
+import { currentMoney } from '../utils/currencyStore';
 import { actuatorValue, catalogHeader, hardwarePrices, priceText, type CatalogContext } from './agentCatalogPrices';
 
 export type { CatalogContext } from './agentCatalogPrices';
@@ -135,5 +137,5 @@ export function agentCatalog(query = '', ctx?: CatalogContext): string {
   if (!lines.length)
     return `Nothing in the catalog matches "${query}". Call find_parts with no query to see everything.`;
 
-  return [...catalogHeader(ctx), ...lines].join('\n');
+  return [...currencyNote(currentMoney()), ...catalogHeader(ctx), ...lines].join('\n');
 }

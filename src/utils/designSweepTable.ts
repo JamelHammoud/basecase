@@ -1,4 +1,5 @@
 import type { CheckRow, EngineeringReport } from './engineeringTypes';
+import { formatWhole } from './currencyStore';
 import { prettyJointName } from './kinematics';
 
 export interface SweepSim {
@@ -55,7 +56,7 @@ function withDelta(v: number | undefined, base: number | undefined, fmt: Fmt): s
 }
 
 const share: Fmt = (v) => v.toFixed(2);
-const usd: Fmt = (v) => `$${Math.round(v)}`;
+const usd: Fmt = (v) => formatWhole(v);
 const tip: Fmt = (v) => `${v.toFixed(1)}°`;
 const grams: Fmt = (v) => `${Math.round(v)} g`;
 

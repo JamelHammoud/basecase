@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
 import { OverlayScrollbars } from './design-system/OverlayScrollbars';
+import { refreshRates } from './utils/currencyStore';
 
 const electronAPI = window.electronAPI;
 
@@ -16,6 +17,8 @@ if (electronAPI?.isElectron) {
   electronAPI.isFullScreen().then(setFullScreen);
   electronAPI.onFullScreenChange(setFullScreen);
 }
+
+refreshRates();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

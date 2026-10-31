@@ -1,6 +1,8 @@
 import { COMPONENT_BY_ID, type ComponentGroup } from '../data/components';
 import { SUPPLY_BY_ID } from '../data/supplies';
+import type { EnteredPrice } from '../types/robotics';
 import type { Bom, BomLine } from './bomTypes';
+import { formatWhole } from './currencyStore';
 
 export type CostClass = 'actuators' | 'compute' | 'power' | 'other';
 
@@ -18,8 +20,6 @@ const CLASS_OF_GROUP: Partial<Record<ComponentGroup, CostClass>> = {
   Microcontrollers: 'compute',
   Power: 'power',
 };
-
-export const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
 export const lineUsd = (l: BomLine) => (l.status === 'unchecked' ? (l.estUsd ?? 0) : (l.lineUsd ?? 0));
 
@@ -50,9 +50,9 @@ export function budgetLine(bom: Bom): string {
   if (t.budgetUsd === undefined) return '';
 
   const acts = costByClass(bom).actuators;
-  const over = t.estimatedUsd > t.budgetUsd ? `, ${usd(t.estimatedUsd - t.budgetUsd)} over` : '';
+  const over = t.estimatedUsd > t.budgetUsd ? `, ${formatWhole(t.estimatedUsd - t.budgetUsd)} over` : '';
 
-  return `BOM ≈ ${usd(t.estimatedUsd)} of ${usd(t.budgetUsd)}${acts ? ` (actuators ${usd(acts)})` : ''}${over}`;
+  return `BOM ≈ ${formatWhole(t.estimatedUsd)} of ${formatWhole(t.budgetUsd, t.budgetEntered)}${acts ? ` (actuators ${formatWhole(acts)})` : ''}${over}`;
 }
 
 export interface PlanLine {
@@ -75,19 +75,19 @@ export function budgetPlan(budgetUsd: number, bom?: Bom): PlanLine[] {
   });
 }
 
-export function budgetPlanText(budgetUsd: number, bom?: Bom): string {
+export function budgetPlanText(budgetUsd: number, bom?: Bom, entered?: EnteredPrice): string {
   const plan = budgetPlan(budgetUsd, bom);
   const rows = plan.map((p) => {
     const mark = p.over ? ' OVER' : '';
-    const so = bom ? `, ${usd(p.spentUsd)} so far${mark}` : '';
+    const so = bom ? `, ${formatWhole(p.spentUsd)} so far${mark}` : '';
     const cap = PLAN_SHARES[p.cls].hard ? 'up to' : 'about';
 
-    return `- ${p.label}: ${cap} ${Math.round(PLAN_SHARES[p.cls].share * 100)}% = ${usd(p.capUsd)}${so}`;
+    return `- ${p.label}: ${cap} ${Math.round(PLAN_SHARES[p.cls].share * 100)}% = ${formatWhole(p.capUsd)}${so}`;
   });
   const broken = plan.filter((p) => p.over);
   const verdict = broken.length
-    ? `Plan broken: ${broken.map((p) => `${p.label.toLowerCase()} ${usd(p.spentUsd)} > ${usd(p.capUsd)}`).join('; ')}. Lower the load before buying torque, use gear-ratio versions of one servo family, and tether compute unless the brief says autonomous.`
+    ? `Plan broken: ${broken.map((p) => `${p.label.toLowerCase()} ${formatWhole(p.spentUsd)} > ${formatWhole(p.capUsd)}`).join('; ')}. Lower the load before buying torque, use gear-ratio versions of one servo family, and tether compute unless the brief says autonomous.`
     : '';
 
-  return [`Budget plan for ${usd(budgetUsd)}:`, ...rows, ...(verdict ? [verdict] : [])].join('\n');
+  return [`Budget plan for ${formatWhole(budgetUsd, entered)}:`, ...rows, ...(verdict ? [verdict] : [])].join('\n');
 }

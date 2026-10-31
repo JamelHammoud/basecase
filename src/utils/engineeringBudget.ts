@@ -1,6 +1,7 @@
-import { budgetLine, lineUsd, usd } from './budget';
+import { budgetLine, lineUsd } from './budget';
 import { buildBom } from './bom';
 import type { BomLine } from './bomTypes';
+import { formatWhole } from './currencyStore';
 import type { CheckContext, CheckRow } from './engineeringTypes';
 
 const WARN_SHARE = 0.9;
@@ -35,6 +36,6 @@ export function budgetRow(ctx: CheckContext): CheckRow {
     items:
       status === 'pass'
         ? []
-        : biggest.map((l) => ({ text: `${qtyOf(l)} ${l.name}: ≈ ${usd(lineUsd(l))}`, ids: l.partIds })),
+        : biggest.map((l) => ({ text: `${qtyOf(l)} ${l.name}: ≈ ${formatWhole(lineUsd(l))}`, ids: l.partIds })),
   };
 }

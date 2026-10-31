@@ -124,6 +124,14 @@ function displayCommands({ core, ui }: CommandInputs): Command[] {
       run: () => studio.openSettings('agent'),
     },
     {
+      id: 'currency-settings',
+      group: 'App',
+      label: 'Currency Settings',
+      icon: <SettingsIcon className={ic} />,
+      keywords: 'currency money price budget euro pound yen dollar region',
+      run: () => studio.openSettings('region'),
+    },
+    {
       id: 'shortcuts',
       group: 'App',
       label: 'Keyboard Shortcuts',

@@ -2,7 +2,7 @@ import type { ActuatorSpec } from '../data/components';
 import { LIST_PRICES, listPriceFor } from '../data/listPrices';
 import type { PurchaseRecord } from '../types/robotics';
 import { holdVerdict, ratingAt, stanceVerdict } from '../utils/actuatorRules';
-import { usd } from '../utils/budget';
+import { currentMoney, formatMoney, formatWhole } from '../utils/currencyStore';
 
 export interface CatalogNeed {
   nm: number;
@@ -17,7 +17,6 @@ export interface CatalogContext {
   volts?: number;
 }
 
-const money = (n: number) => `$${n.toFixed(2)}`;
 const per = (n: number) => (n > 1 ? ` per ${n}` : '');
 
 export function unitPrice(key: string, ctx?: CatalogContext): number | undefined {
@@ -33,11 +32,12 @@ export function unitPrice(key: string, ctx?: CatalogContext): number | undefined
 export function priceText(key: string, ctx?: CatalogContext): string {
   const checked = ctx?.purchases[key];
 
-  if (checked) return `${money(checked.priceUsd)}${per(checked.packQty)} checked ${checked.checkedAt}`;
+  if (checked)
+    return `${formatMoney(checked.priceUsd, checked.entered)}${per(checked.packQty)} checked ${checked.checkedAt}`;
 
   const list = listPriceFor(key);
 
-  return list ? `≈ ${money(list.usd)}${per(list.per)} list at ${list.store}, ${list.seen}` : 'no price';
+  return list ? `≈ ${formatMoney(list.usd)}${per(list.per)} list at ${list.store}, ${list.seen}` : 'no price';
 }
 
 const verdictWord = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' };
@@ -63,7 +63,8 @@ function marginText(act: ActuatorSpec, ctx: CatalogContext): string {
 
 export function actuatorValue(act: ActuatorSpec, key: string, ctx?: CatalogContext): string {
   const price = unitPrice(key, ctx);
-  const perDollar = price ? `, ${(act.stallNm / price).toFixed(3)} N·m/$` : '';
+  const money = currentMoney();
+  const perDollar = price ? `, ${(act.stallNm / money.fromUsd(price)).toFixed(3)} N·m/${money.symbol}` : '';
 
   return `${priceText(key, ctx)}${perDollar}${ctx && act.bus ? marginText(act, ctx) : ''}`;
 }
@@ -87,7 +88,7 @@ export function catalogHeader(ctx?: CatalogContext): string[] {
     const left = b.budgetUsd - b.estimatedUsd;
 
     lines.push(
-      `Budget ${usd(b.budgetUsd)}; this scene ≈ ${usd(b.estimatedUsd)} so far (${left >= 0 ? `${usd(left)} left` : `${usd(-left)} over`}).`,
+      `Budget ${formatWhole(b.budgetUsd)}; this scene ≈ ${formatWhole(b.estimatedUsd)} so far (${left >= 0 ? `${formatWhole(left)} left` : `${formatWhole(-left)} over`}).`,
     );
   }
 

@@ -3,6 +3,8 @@ import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import type { SkeletonJoint } from '../types/skeleton';
 import { dot, lineDistance, norm } from '../utils/engineeringMath';
 import { describeKey } from '../utils/bom';
+import type { Money } from '../utils/currency';
+import { currentMoney } from '../utils/currencyStore';
 import { anchorJoint } from '../utils/kinematics';
 import type { Vec3 } from './types';
 
@@ -153,7 +155,7 @@ export function declareJoints(
 
 export interface BuildSettingsPayload {
   extras?: Array<{ key: string; qty: number; note?: string }>;
-  budgetUsd?: number;
+  budget?: number;
   material?: ProjectSettings['material'];
 }
 
@@ -174,13 +176,20 @@ function mergeExtras(
   return [...map.values()];
 }
 
-export function applyBuildSettings(project: ProjectSettings, pl: BuildSettingsPayload) {
+function withBudget(next: ProjectSettings, amount: number, money: Money) {
+  const { usd, entered } = money.enter(amount);
+
+  next.budgetUsd = amount > 0 ? usd : undefined;
+  next.budgetEntered = amount > 0 ? entered : undefined;
+}
+
+export function applyBuildSettings(project: ProjectSettings, pl: BuildSettingsPayload, money = currentMoney()) {
   const bad = (pl.extras ?? []).filter((x) => !describeKey(x.key)).map((x) => x.key);
   const next = { ...project };
 
   if (pl.extras) next.extras = mergeExtras(next.extras, pl.extras, bad);
 
-  if (pl.budgetUsd !== undefined) next.budgetUsd = pl.budgetUsd > 0 ? pl.budgetUsd : undefined;
+  if (pl.budget !== undefined) withBudget(next, pl.budget, money);
 
   if (pl.material) next.material = pl.material;
 

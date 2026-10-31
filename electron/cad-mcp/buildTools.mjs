@@ -178,13 +178,18 @@ export const setBuild = {
         )
         .max(40)
         .optional(),
-      budget_usd: z.number().min(0).max(100000).optional(),
+      budget: z
+        .number()
+        .min(0)
+        .max(1e9)
+        .optional()
+        .describe("In the user's currency, the one get_bom and find_parts show prices in"),
       material: z.enum(['PLA', 'PETG', 'ABS', 'ASA']).optional(),
     },
   },
-  handler: async ({ extras, budget_usd, material }) => {
+  handler: async ({ extras, budget, material }) => {
     try {
-      const res = await bridge('set_build', { extras, budgetUsd: budget_usd, material });
+      const res = await bridge('set_build', { extras, budget, material });
       const unknown = res?.unknown?.length
         ? ` Unknown keys (not added): ${res.unknown.join(', ')}. Use keys from find_parts.`
         : '';

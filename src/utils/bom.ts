@@ -326,6 +326,7 @@ function bomTotals(lines: BomLine[], project: ProjectSettings): Bom['totals'] {
     estimatedUsd,
     unpriced: unchecked.filter((l) => l.estUsd === undefined).length,
     budgetUsd: project.budgetUsd,
+    budgetEntered: project.budgetEntered,
     overBudget: project.budgetUsd !== undefined && estimatedUsd > project.budgetUsd,
   };
 }

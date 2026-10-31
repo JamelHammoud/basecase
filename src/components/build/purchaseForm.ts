@@ -1,6 +1,6 @@
 import type { PurchaseRecord } from '../../types/robotics';
 import { type BomLine, localDate, parseAsin } from '../../utils/bom';
-import { money } from './format';
+import { type Money, USD_MONEY } from '../../utils/currency';
 
 export interface PurchaseForm {
   url: string;
@@ -20,20 +20,23 @@ export function parsePrice(text: string): number | null {
   return Math.round(Number(digits) * 100) / 100;
 }
 
-export function formatPrice(text: string): string {
+export function formatPrice(text: string, money: Money = USD_MONEY): string {
   const price = parsePrice(text);
 
-  return price === null ? text : money(price);
+  return price === null ? text : money.formatAmount(price);
 }
 
-export function initialPurchaseForm(line: BomLine): PurchaseForm {
+const shownPrice = (r: PurchaseRecord, money: Money) =>
+  money.formatAmount(Math.round(money.amountOf(r.priceUsd, r.entered) * 100) / 100);
+
+export function initialPurchaseForm(line: BomLine, money: Money = USD_MONEY): PurchaseForm {
   const r = line.record;
 
   return {
     url: r?.url ?? defaultUrl(line),
     title: r?.title ?? '',
     pack: r?.packQty ?? (line.unit === 'g' ? 1000 : 1),
-    price: r ? money(r.priceUsd) : '',
+    price: r ? shownPrice(r, money) : '',
     note: r?.note ?? '',
   };
 }
@@ -60,12 +63,15 @@ function listingUrl(url: string): Pick<PurchaseRecord, 'url' | 'asin'> {
   return { url: url || undefined };
 }
 
-export function purchaseRecord(form: PurchaseForm, checkedAt = localDate()): PurchaseRecord {
+export function purchaseRecord(form: PurchaseForm, money: Money = USD_MONEY, checkedAt = localDate()): PurchaseRecord {
+  const { usd, entered } = money.enter(parsePrice(form.price) ?? 0);
+
   return {
     ...listingUrl(form.url.trim()),
     title: form.title.trim() || undefined,
     packQty: form.pack,
-    priceUsd: parsePrice(form.price) ?? 0,
+    priceUsd: usd,
+    ...(entered && { entered }),
     checkedAt,
     note: form.note.trim() || undefined,
   };

@@ -2,7 +2,8 @@ import React from 'react';
 import { Button, MetaLine, Tooltip, ExternalLinkIcon } from '../../design-system';
 import type { BomLine } from '../../utils/bom';
 import { lineQty, linePacks, linkLabel } from './buyLine';
-import { money } from './format';
+import { scaledEntry } from '../../utils/currency';
+import { useMoney } from '../../utils/useMoney';
 
 const PRICE_CLASS = 'shrink-0 text-right text-[13px] tabular-nums rounded-md px-1.5 h-7 cursor-default';
 
@@ -26,6 +27,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
 
 const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: l, onCheck }) => {
   const stale = l.status === 'stale';
+  const money = useMoney();
 
   if (l.record)
     return (
@@ -35,7 +37,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
           onClick={onCheck}
           className={`${PRICE_CLASS} hover:bg-white/[0.07] ${stale ? 'text-amber-400' : 'text-white/90'}`}
         >
-          {money(l.lineUsd ?? l.record.priceUsd)}
+          {money.format(l.lineUsd ?? l.record.priceUsd, scaledEntry(l.record.entered, l.packs ?? 1))}
         </button>
       </Tooltip>
     );
@@ -48,7 +50,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
           onClick={onCheck}
           className={`${PRICE_CLASS} text-white/45 hover:bg-white/[0.07] hover:text-white/75`}
         >
-          ≈ {money(l.estUsd)}
+          ≈ {money.format(l.estUsd)}
         </button>
       </Tooltip>
     );

@@ -212,6 +212,7 @@ export interface ProjectSettings extends ProjectRecords {
   printProcess?: string;
   prints?: PrintRecord[];
   budgetUsd?: number;
+  budgetEntered?: EnteredPrice;
   extras?: Array<{ key: string; qty: number; note?: string }>;
   joints?: RobotJoint[];
   firstRanges?: Record<string, [number, number]>;
@@ -280,12 +281,18 @@ export interface RobotAnimation {
 
 export const DEFAULT_PROJECT: ProjectSettings = { printer: 'default', material: 'PLA', infillPct: 15 };
 
+export interface EnteredPrice {
+  amount: number;
+  currency: string;
+}
+
 export interface PurchaseRecord {
   url?: string;
   asin?: string;
   title?: string;
   packQty: number;
   priceUsd: number;
+  entered?: EnteredPrice;
   checkedAt: string;
   note?: string;
 }
@@ -395,6 +402,7 @@ export interface AgentSignIn {
 
 export interface AcpStatusInfo {
   connected: boolean;
+  connecting?: boolean;
   sessionId: string | null;
   agentName: string;
   agentCommand: string;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BomLine } from '../../utils/bom';
+import { createMoney } from '../../utils/currency';
 import { canSave, formatPrice, initialPurchaseForm, linkError, parsePrice, purchaseRecord } from './purchaseForm';
 
 const line = (o: Partial<BomLine> = {}): BomLine => ({
@@ -61,7 +62,7 @@ describe('purchase form', () => {
   });
 
   it('saves just the price', () => {
-    expect(purchaseRecord({ url: ' ', title: '', pack: 1, price: '$420.32', note: '' }, '2026-10-19')).toEqual({
+    expect(purchaseRecord({ url: ' ', title: '', pack: 1, price: '$420.32', note: '' }, undefined, '2026-10-19')).toEqual({
       url: undefined,
       title: undefined,
       packQty: 1,
@@ -80,7 +81,7 @@ describe('purchase form', () => {
       note: ' ',
     };
 
-    expect(purchaseRecord(form, '2026-10-18')).toEqual({
+    expect(purchaseRecord(form, undefined, '2026-10-18')).toEqual({
       url: 'https://www.amazon.com/dp/B0CK2FCG1K',
       asin: 'B0CK2FCG1K',
       title: 'Pi 5 8GB',
@@ -89,5 +90,16 @@ describe('purchase form', () => {
       checkedAt: '2026-10-18',
       note: undefined,
     });
+  });
+
+  it('saves a price typed in another currency with its dollar value', () => {
+    const eur = createMoney('EUR', { date: '2026-10-30', perUsd: { USD: 1, EUR: 0.8 } });
+    const form = { url: '', title: '', pack: 1, price: '€40', note: '' };
+    const record = purchaseRecord(form, eur, '2026-10-30');
+
+    expect(record).toMatchObject({ priceUsd: 50, entered: { amount: 40, currency: 'EUR' } });
+    expect(formatPrice('1200', eur)).toBe('€1,200.00');
+    expect(initialPurchaseForm(line({ record }), eur).price).toBe('€40.00');
+    expect(initialPurchaseForm(line({ record })).price).toBe('$50.00');
   });
 });

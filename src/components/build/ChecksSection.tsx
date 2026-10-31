@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useEffectEvent, useState } from 'react';
 import { Button, Section, CircleCheckIcon, CircleCloseIcon, CircleMinusIcon, WarningIcon } from '../../design-system';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { ENGINEERING_CHECKS } from '../../utils/engineering';
 import type { CheckRow, EngineeringReport } from '../../utils/engineering';
+import { subscribeMoney } from '../../utils/currencyStore';
 
 interface ChecksSectionProps {
   parts: ScenePart[];
@@ -82,6 +83,12 @@ export const ChecksSection: React.FC<ChecksSectionProps> = ({ parts, project, on
       setRunning(false);
     }
   };
+  const rerunInNewCurrency = useEffectEvent(() => {
+    if (report && !running) void run();
+  });
+
+  useEffect(() => subscribeMoney(rerunInNewCurrency), []);
+
   const rows = report ? report.r.rows : NOT_RUN;
 
   return (

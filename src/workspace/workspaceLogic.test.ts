@@ -161,7 +161,7 @@ describe('workspace helpers', () => {
         { key: 'supply:lipo-3s-2200', qty: 2.4 },
         { key: 'nonsense', qty: 1 },
       ],
-      budgetUsd: 0,
+      budget: 0,
     });
 
     expect(bad).toEqual(['nonsense']);

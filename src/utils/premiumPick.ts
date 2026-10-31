@@ -1,5 +1,6 @@
 import { COMPONENT_BY_ID, COMPONENTS, actuatorOf, type BatterySpec } from '../data/components';
 import { actuatorOptions, unitUsd } from './actuatorCatalog';
+import { formatMoney } from './currencyStore';
 
 const PREMIUM = 2;
 
@@ -61,5 +62,5 @@ export function premiumPick(componentId: string, variant?: string): PremiumPick 
 }
 
 export function premiumText(p: PremiumPick): string {
-  return `Premium pick: ${p.name} at $${p.usd.toFixed(2)} costs over 2× ${p.cheaper.name} ($${p.cheaper.usd.toFixed(2)}, ${p.cheaper.key}), which has ${p.why}.`;
+  return `Premium pick: ${p.name} at ${formatMoney(p.usd)} costs over 2× ${p.cheaper.name} (${formatMoney(p.cheaper.usd)}, ${p.cheaper.key}), which has ${p.why}.`;
 }

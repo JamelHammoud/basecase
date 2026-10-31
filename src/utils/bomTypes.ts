@@ -1,5 +1,5 @@
 import type { ListPrice } from '../data/listPrices';
-import type { PrintMaterial, PurchaseRecord } from '../types/robotics';
+import type { EnteredPrice, PrintMaterial, PurchaseRecord } from '../types/robotics';
 
 export const STALE_DAYS = 60;
 export const FILAMENT_MARGIN = 0.15;
@@ -55,6 +55,7 @@ export interface Bom {
     estimatedUsd: number;
     unpriced: number;
     budgetUsd?: number;
+    budgetEntered?: EnteredPrice;
     overBudget: boolean;
   };
 }

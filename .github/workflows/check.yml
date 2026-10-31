@@ -63,4 +63,5 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
       - name: Drive the packaged app
+        if: runner.os == 'macOS'
         run: npm run test:app

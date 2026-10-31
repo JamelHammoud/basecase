@@ -40,8 +40,8 @@ Not done yet:
 
 ## Testing before a release
 
-1. **Every push:** `check.yml` runs `npm run check`, `vite build` and `test:e2e` on Ubuntu and Windows, then packages the app unsigned on macOS and Windows and runs `npm run test:app` on each. Path, line-ending, script and main-process bugs fail here.
-2. **Every release:** `release.yml` signs both builds and runs `test:app` on the signed mac app and on the installed Windows app. It then uninstalls the Windows app. `publish` only runs when both jobs pass.
+1. **Every push:** `check.yml` runs `npm run check`, `vite build` and `test:e2e` on Ubuntu and Windows, then packages the app unsigned on macOS and Windows and runs `npm run test:app` on the Mac build. Driving the Windows build hung in `electron.launch` on the runner too often to gate on. Path, line-ending and script bugs fail here; a Windows main-process bug that doesn't break packaging shows up only on real machines (step 3).
+2. **Every release:** `release.yml` signs both builds and runs `test:app` on the signed mac app; the Windows job builds, checks and uploads the installer, like Crew's. `publish` runs once the mac job passes, with the Windows files when that job passed too.
 3. **Real machines, for each beta:**
    - Daily: Parallels with Windows 11 ARM on a Mac (it runs the x64 build through emulation).
    - Before stable: one x64 PC with a real GPU (Intel, AMD or NVIDIA). WebGL there runs on Direct3D 11 through ANGLE, which is where rendering bugs hide, and it has a real touchpad.

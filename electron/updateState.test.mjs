@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NO_UPDATE, nextUpdate, worthChecking } from './updateState.mjs';
+import { channelOptions, latestDownload, NO_UPDATE, nextUpdate, worthChecking } from './updateState.mjs';
 
 const run = (words) => words.reduce((state, [word, version]) => nextUpdate(state, word, version), NO_UPDATE);
 
@@ -42,5 +42,15 @@ describe('update state', () => {
 
   it('never checks while a download or an install is under way', () => {
     expect(['none', 'getting', 'ready', 'installing'].filter(worthChecking)).toEqual(['none', 'ready']);
+  });
+
+  it('takes betas only when asked, and never steps back down', () => {
+    expect(channelOptions(true)).toEqual({ channel: 'beta', allowPrerelease: true, allowDowngrade: false });
+    expect(channelOptions(false)).toEqual({ channel: 'latest', allowPrerelease: false, allowDowngrade: false });
+  });
+
+  it('links each platform to its own installer', () => {
+    expect(latestDownload('win32').url).toMatch(/\/releases\/latest\/download\/Basecase-Setup\.exe$/);
+    expect(latestDownload('darwin').url).toMatch(/\/Basecase\.dmg$/);
   });
 });

@@ -12,6 +12,23 @@ export function nextUpdate(state, word, version = '') {
   return MOVES[word]?.(state, version) ?? state;
 }
 
+export function channelOptions(beta) {
+  return beta
+    ? { channel: 'beta', allowPrerelease: true, allowDowngrade: false }
+    : { channel: 'latest', allowPrerelease: false, allowDowngrade: false };
+}
+
+export const LATEST_DOWNLOAD = {
+  darwin: { file: 'Basecase.dmg', step: 'move it to Applications' },
+  win32: { file: 'Basecase-Setup.exe', step: 'run the installer' },
+};
+
+export function latestDownload(platform) {
+  const latest = LATEST_DOWNLOAD[platform] ?? LATEST_DOWNLOAD.darwin;
+
+  return { ...latest, url: `https://github.com/JamelHammoud/basecase/releases/latest/download/${latest.file}` };
+}
+
 export function worthChecking(stage) {
   return stage === 'none' || stage === 'ready';
 }

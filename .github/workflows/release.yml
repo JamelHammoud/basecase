@@ -96,26 +96,169 @@ jobs:
         run: |
           shopt -s nullglob
           fail() { echo "$1" >&2; exit 1; }
-          [ -f release/latest-mac.yml ] || fail "release/latest-mac.yml is missing"
+          version=$(node -p "require('./package.json').version")
+          channel=latest
+          case "$version" in *-*) channel=${version#*-} && channel=${channel%%.*} ;; esac
+          feed="release/$channel-mac.yml"
+          [ -f "$feed" ] || fail "$feed is missing"
           [ -f release/Basecase.dmg ] || fail "release/Basecase.dmg is missing, so the latest download link breaks"
           zips=(release/*-mac.zip)
           [ "${#zips[@]}" -eq 1 ] || fail "expected one mac zip, found ${#zips[@]}"
-          listed=$(grep -c 'url:.*\.zip' release/latest-mac.yml || true)
-          [ "$listed" -eq 1 ] || fail "latest-mac.yml lists $listed zips, expected one"
+          listed=$(grep -c 'url:.*\.zip' "$feed" || true)
+          [ "$listed" -eq 1 ] || fail "$feed lists $listed zips, expected one"
+
+      - name: Drive the packaged app
+        run: BASECASE_APP_PATH="$(ls -d "$PWD"/release/mac*/Basecase.app)/Contents/MacOS/Basecase" npm run test:app
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mac
+          if-no-files-found: error
+          path: |
+            release/Basecase.dmg
+            release/*-mac.zip
+            release/*.blockmap
+            release/*-mac.yml
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - if: inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - run: npx vite build
+
+      - name: Build the installer, signed when signing is set up
+        id: sign
+        env:
+          ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+          ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          PUBLISHER: ${{ vars.AZURE_SIGNING_PUBLISHER }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          sign=()
+          if [ -n "$ACCOUNT" ]; then
+            sign=(
+              "-c.win.azureSignOptions.codeSigningAccountName=$ACCOUNT"
+              "-c.win.azureSignOptions.certificateProfileName=$PROFILE"
+              "-c.win.azureSignOptions.endpoint=$ENDPOINT"
+              "-c.win.azureSignOptions.publisherName=$PUBLISHER"
+            )
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::AZURE_SIGNING_ACCOUNT is not set, so the Windows build is unsigned. Only a beta can be published unsigned."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+          npx electron-builder --win --x64 --publish never "${sign[@]}"
+
+      - name: Check the installer and update files are there
+        run: |
+          fail() { echo "$1" >&2; exit 1; }
+          version=$(node -p "require('./package.json').version")
+          channel=latest
+          case "$version" in *-*) channel=${version#*-} && channel=${channel%%.*} ;; esac
+          feed="release/$channel.yml"
+          [ -f release/Basecase-Setup.exe ] || fail "release/Basecase-Setup.exe is missing, so the latest download link breaks"
+          [ -f "$feed" ] || fail "$feed is missing"
+          grep -q 'url: Basecase-Setup.exe' "$feed" || fail "$feed doesn't point at Basecase-Setup.exe"
+          [ -f release/win-unpacked/resources/app-update.yml ] || fail "the app has no app-update.yml, so it can't update"
+
+      - name: Check the signature
+        if: steps.sign.outputs.signed == 'true'
+        shell: pwsh
+        run: |
+          foreach ($file in 'release/Basecase-Setup.exe', 'release/win-unpacked/Basecase.exe') {
+            $sig = Get-AuthenticodeSignature $file
+            if ($sig.Status -ne 'Valid') { throw "$file is not signed: $($sig.Status)" }
+          }
+
+      - name: Install it the way a person would
+        shell: pwsh
+        run: |
+          Start-Process -FilePath release/Basecase-Setup.exe -ArgumentList '/S' -Wait
+          $exe = Join-Path $env:LOCALAPPDATA 'Programs/basecase/Basecase.exe'
+          if (-not (Test-Path $exe)) { throw "the installer didn't put Basecase at $exe" }
+          "BASECASE_APP_PATH=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Drive the installed app
+        run: npm run test:app
+
+      - name: Uninstall it
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:LOCALAPPDATA 'Programs/basecase'
+          Start-Process -FilePath (Join-Path $dir 'Uninstall Basecase.exe') -ArgumentList '/S' -Wait
+          Start-Sleep -Seconds 5
+          if (Test-Path (Join-Path $dir 'Basecase.exe')) { throw 'the uninstaller left Basecase.exe behind' }
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows
+          if-no-files-found: error
+          path: |
+            release/Basecase-Setup.exe
+            release/Basecase-Setup.exe.blockmap
+            release/latest.yml
+            release/beta.yml
+            release/alpha.yml
+
+  publish:
+    if: inputs.release
+    needs: [mac, windows]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: release
+          merge-multiple: true
 
       - name: Put the build on a release
-        if: inputs.release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
+          WINDOWS_SIGNED: ${{ needs.windows.outputs.signed }}
         run: |
           shopt -s nullglob
+          fail() { echo "$1" >&2; exit 1; }
           version="$VERSION"
           [ -n "$version" ] || version=$(node -p "require('./package.json').version")
           tag="v$version"
-          assets=(release/Basecase.dmg release/*-mac.zip release/*.blockmap release/latest-mac.yml)
+          beta=()
+          case "$version" in *-*) beta=(--prerelease) ;; esac
+          [ "$WINDOWS_SIGNED" = true ] || [ "${#beta[@]}" -eq 1 ] \
+            || fail "the Windows build is unsigned: set up signing, or release a beta like $version-beta.1"
+          assets=(release/*)
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${assets[@]}" --clobber
           else
-            gh release create "$tag" --target "$GITHUB_SHA" --title "Basecase $version" --generate-notes "${assets[@]}"
+            gh release create "$tag" --target "$GITHUB_SHA" --title "Basecase $version" --generate-notes "${beta[@]}" "${assets[@]}"
           fi

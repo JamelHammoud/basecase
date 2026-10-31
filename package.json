@@ -32,7 +32,9 @@
     "lint:py": "uvx ruff check . && uvx ruff format --check .",
     "recipes:harvest": "node tools/recipes/harvest.mjs",
     "security": "node tools/security/audit.mjs",
-    "dist": "vite build && electron-builder --mac --arm64 --publish never"
+    "dist": "vite build && electron-builder --mac --arm64 --publish never",
+    "dist:win": "vite build && electron-builder --win --x64 --publish never",
+    "test:app": "vitest run --config vitest.app.config.ts"
   },
   "build": {
     "appId": "app.basecase",
@@ -123,7 +125,27 @@
           "math/ConvexHull.js"
         ]
       }
-    ]
+    ],
+    "generateUpdatesFilesForAllChannels": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon/basecase-1024.png"
+    },
+    "nsis": {
+      "artifactName": "Basecase-Setup.exe",
+      "oneClick": true,
+      "perMachine": false,
+      "shortcutName": "Basecase",
+      "uninstallDisplayName": "Basecase",
+      "deleteAppDataOnUninstall": false
+    }
   },
   "dependencies": {
     "@agentclientprotocol/claude-agent-acp": "^0.99.1",

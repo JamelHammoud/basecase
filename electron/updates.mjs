@@ -2,13 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { app, dialog, shell } from 'electron';
 import electronUpdater from 'electron-updater';
-import { NO_UPDATE, nextUpdate, worthChecking } from './updateState.mjs';
+import { channelOptions, latestDownload, NO_UPDATE, nextUpdate, worthChecking } from './updateState.mjs';
 
 const CHECK_EVERY_MS = 60 * 60 * 1000;
 const GIVE_UP_MS = 60 * 1000;
 const LOG_CAP = 512 * 1024;
 
-export const LATEST_DMG_URL = 'https://github.com/JamelHammoud/basecase/releases/latest/download/Basecase.dmg';
+export const LATEST_DMG_URL = latestDownload('darwin').url;
+
+const latest = latestDownload(process.platform);
 
 function fileLogger(file) {
   const write = (level) => (message) => {
@@ -27,9 +29,10 @@ function fileLogger(file) {
 }
 
 export class Updates {
-  constructor({ windows, log, updater = () => electronUpdater.autoUpdater }) {
+  constructor({ windows, log, channelFile, updater = () => electronUpdater.autoUpdater }) {
     this.windows = windows;
     this.log = log;
+    this.channelFile = channelFile;
     this.updater = updater;
     this.state = NO_UPDATE;
     this.live = false;
@@ -48,12 +51,34 @@ export class Updates {
     up.logger = fileLogger(this.log);
     up.autoDownload = true;
     up.autoInstallOnAppQuit = false;
+    Object.assign(up, channelOptions(this.wantsBeta()));
     up.on('update-available', (info) => this.answer('found', info.version));
     up.on('update-not-available', () => this.answer('nothing'));
     up.on('update-downloaded', (info) => this.say('ready', info.version));
     up.on('error', () => this.failed());
     this.check();
     this.timer = setInterval(() => this.check(), CHECK_EVERY_MS);
+  }
+
+  wantsBeta() {
+    try {
+      return JSON.parse(fs.readFileSync(this.channelFile, 'utf8')).beta === true;
+    } catch {
+      return false;
+    }
+  }
+
+  setBeta(beta) {
+    try {
+      fs.writeFileSync(this.channelFile, JSON.stringify({ beta: Boolean(beta) }));
+    } catch {
+      return;
+    }
+
+    if (!this.live) return;
+
+    Object.assign(this.updater(), channelOptions(Boolean(beta)));
+    this.check();
   }
 
   current() {
@@ -138,12 +163,12 @@ export class Updates {
     const { response } = await dialog.showMessageBox({
       type: 'warning',
       message: 'Couldn’t install the update',
-      detail: 'Download the latest Basecase and move it to Applications.',
+      detail: `Download the latest Basecase and ${latest.step}.`,
       buttons: ['Download Basecase', 'Close'],
       defaultId: 0,
       cancelId: 1,
     });
 
-    if (response === 0) void shell.openExternal(LATEST_DMG_URL);
+    if (response === 0) void shell.openExternal(latest.url);
   }
 }

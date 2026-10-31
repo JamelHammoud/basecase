@@ -57,6 +57,7 @@ const backend = new BasecaseBackendService(workspaceRoot, {
 const updates = new Updates({
   windows: () => BrowserWindow.getAllWindows(),
   log: path.join(app.getPath('userData'), 'updates.log'),
+  channelFile: path.join(app.getPath('userData'), 'update-channel.json'),
 });
 
 const MAC_FRAME = {
@@ -205,7 +206,10 @@ function limitPermissions() {
 app.whenReady().then(async () => {
   nativeTheme.themeSource = 'dark';
   limitPermissions();
-  installAppMenu(() => mainWindow, { onCheckForUpdates: fromSource ? null : () => updates.checkNow() });
+  installAppMenu(() => mainWindow, {
+    onCheckForUpdates: fromSource ? null : () => updates.checkNow(),
+    betaUpdates: fromSource ? null : { get: () => updates.wantsBeta(), set: (beta) => updates.setBeta(beta) },
+  });
   void shellReady.then(() => backend.connectAcpAgent());
 
   const migration = await storageMigration({

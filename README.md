@@ -5,6 +5,8 @@
   </picture>
 </p>
 <h4>
+  <a href="https://app.basecase.so">Open in Browser</a>
+  ·
   <a href="https://github.com/JamelHammoud/basecase/releases/latest/download/Basecase.dmg">Download for Mac</a>
   ·
   <a href="https://github.com/JamelHammoud/basecase/releases/latest/download/Basecase-Setup.exe">Download for Windows</a>

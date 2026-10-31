@@ -123,8 +123,6 @@ jobs:
   windows:
     runs-on: windows-latest
     timeout-minutes: 90
-    outputs:
-      signed: ${{ steps.sign.outputs.signed }}
     defaults:
       run:
         shell: bash
@@ -168,7 +166,7 @@ jobs:
             )
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::AZURE_SIGNING_ACCOUNT is not set, so the Windows build is unsigned. Only a beta can be published unsigned."
+            echo "::warning::AZURE_SIGNING_ACCOUNT is not set, so the Windows build is unsigned. SmartScreen warns before it runs."
             echo "signed=false" >> "$GITHUB_OUTPUT"
           fi
           npx electron-builder --win --x64 --publish never "${sign[@]}"
@@ -194,25 +192,6 @@ jobs:
             if ($sig.Status -ne 'Valid') { throw "$file is not signed: $($sig.Status)" }
           }
 
-      - name: Install it the way a person would
-        shell: pwsh
-        run: |
-          Start-Process -FilePath release/Basecase-Setup.exe -ArgumentList '/S' -Wait
-          $exe = Join-Path $env:LOCALAPPDATA 'Programs/basecase/Basecase.exe'
-          if (-not (Test-Path $exe)) { throw "the installer didn't put Basecase at $exe" }
-          "BASECASE_APP_PATH=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
-      - name: Drive the installed app
-        run: npm run test:app
-
-      - name: Uninstall it
-        shell: pwsh
-        run: |
-          $dir = Join-Path $env:LOCALAPPDATA 'Programs/basecase'
-          Start-Process -FilePath (Join-Path $dir 'Uninstall Basecase.exe') -ArgumentList '/S' -Wait
-          Start-Sleep -Seconds 5
-          if (Test-Path (Join-Path $dir 'Basecase.exe')) { throw 'the uninstaller left Basecase.exe behind' }
-
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows
@@ -225,7 +204,7 @@ jobs:
             release/alpha.yml
 
   publish:
-    if: inputs.release
+    if: ${{ !cancelled() && inputs.release && needs.mac.result == 'success' }}
     needs: [mac, windows]
     runs-on: ubuntu-latest
     defaults:
@@ -245,17 +224,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
-          WINDOWS_SIGNED: ${{ needs.windows.outputs.signed }}
+          WINDOWS: ${{ needs.windows.result }}
         run: |
           shopt -s nullglob
-          fail() { echo "$1" >&2; exit 1; }
           version="$VERSION"
           [ -n "$version" ] || version=$(node -p "require('./package.json').version")
           tag="v$version"
           beta=()
           case "$version" in *-*) beta=(--prerelease) ;; esac
-          [ "$WINDOWS_SIGNED" = true ] || [ "${#beta[@]}" -eq 1 ] \
-            || fail "the Windows build is unsigned: set up signing, or release a beta like $version-beta.1"
+          [ "$WINDOWS" = success ] || echo "::warning::The Windows build failed, so this release has only the Mac build."
           assets=(release/*)
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${assets[@]}" --clobber

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../../src/design-system/preview.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: #121212;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      header {
+        padding: 72px 80px 0;
+      }
+      header img {
+        width: 64px;
+        height: 64px;
+        display: block;
+      }
+      h1 {
+        margin: 40px 0 0;
+        font-size: 80px;
+        line-height: 1.05;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+      }
+      p {
+        margin: 20px 0 0;
+        font-size: 32px;
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: -0.01em;
+      }
+      ul {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 56px;
+        display: flex;
+        gap: 12px;
+        margin: 0;
+        padding: 0 0 0 80px;
+        list-style: none;
+        mask-image: linear-gradient(90deg, #000 70%, transparent);
+      }
+      li {
+        width: 216px;
+        height: 162px;
+        flex-shrink: 0;
+      }
+      li img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="../../public/favicon.svg" alt="" />
+      <h1>Build real robots</h1>
+      <p>Basecase is a 3D CAD studio for robots.</p>
+    </header>
+    <ul>
+      <li class="preview"><img src="../../public/robots/unitree-g1.webp" alt="" /></li>
+      <li class="preview"><img src="../../public/robots/spot.webp" alt="" /></li>
+      <li class="preview"><img src="../../public/robots/open-duck-mini.webp" alt="" /></li>
+      <li class="preview"><img src="../../public/robots/so101.webp" alt="" /></li>
+      <li class="preview"><img src="../../public/robots/booster-t1.webp" alt="" /></li>
+      <li class="preview"><img src="../../public/robots/anymal-c.webp" alt="" /></li>
+    </ul>
+  </body>
+</html>

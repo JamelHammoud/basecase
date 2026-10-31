@@ -13,7 +13,8 @@ export function trackWrite(ids, promise) {
 }
 
 export async function settledWrites(ids) {
-  const waiting = [...new Set(ids.map((id) => pending.get(id)).filter(Boolean))];
+  const promises = ids ? ids.map((id) => pending.get(id)) : [...pending.values()];
+  const waiting = [...new Set(promises.filter(Boolean))];
 
   await Promise.allSettled(waiting);
 }

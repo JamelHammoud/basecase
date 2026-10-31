@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { settledWrites } from './pendingWrites.mjs';
 import { VIEW, bridge, fail, imageReply, text } from './shared.mjs';
 
 export const simulate = {
@@ -110,6 +111,8 @@ export const getBom = {
   },
   handler: async () => {
     try {
+      await settledWrites();
+
       const res = await bridge('bom', {}, 60000);
 
       return text(res?.text || 'Nothing to buy yet.');
@@ -130,6 +133,8 @@ export const checkPrintability = {
   },
   handler: async ({ ids }) => {
     try {
+      await settledWrites();
+
       const res = await bridge('printability', { ids }, 180000);
 
       return text(res?.text || 'No printed parts yet.');
@@ -151,6 +156,8 @@ export const slicePlates = {
   },
   handler: async () => {
     try {
+      await settledWrites();
+
       const res = await bridge('slice', {}, 600000);
 
       return text(res?.text || 'No printed parts to slice.');

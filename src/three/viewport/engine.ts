@@ -384,6 +384,8 @@ export class ViewportEngine {
   }
 
   private complete(): void {
+    this.ctx.loop.finishSpawns();
+
     if (!this.ctx.layer.hasPending) {
       return;
     }

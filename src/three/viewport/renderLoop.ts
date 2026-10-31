@@ -213,6 +213,13 @@ export class RenderLoop {
     return animated;
   }
 
+  finishSpawns(): void {
+    for (const id of this.spawns.keys()) this.objectFor(id)?.scale.setScalar(1);
+
+    this.spawns.clear();
+    this.spawnWaits.clear();
+  }
+
   private waitForSpawn(id: string, now: number): void {
     const since = this.spawnWaits.get(id) ?? now;
 

@@ -8,7 +8,7 @@ const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, o
     type="button"
     aria-label={label}
     onClick={onClick}
-    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#3a3a3a] ring-2 ring-[#1f1f1f] text-white/80 hover:text-white flex items-center justify-center cursor-default"
+    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#3a3a3a] shadow-[0_1px_3px_rgba(0,0,0,0.35)] text-white/80 hover:text-white flex items-center justify-center cursor-default"
   >
     <CloseIcon className="w-3 h-3" strokeWidth={3} />
   </button>

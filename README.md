@@ -15,8 +15,7 @@
 
 Basecase is a playground for designing buildable robotics.
 
-<img height="600" src="https://github.com/user-attachments/assets/00133dc3-7084-45ff-8dac-de417fe0749a" />
-
+<img height="450" alt="image" src="https://github.com/user-attachments/assets/416e6b37-b369-463f-8871-7c0594d5701d" />
 
 ### Requirements
 

@@ -53,6 +53,22 @@ function freshUserData(): string {
   return userData;
 }
 
+const isAppPage = (page: Page) => page.url().startsWith('app://basecase');
+
+async function appWindow(app: ElectronApplication, timeout: number): Promise<Page> {
+  const deadline = Date.now() + timeout;
+  let page = app.windows().find(isAppPage);
+
+  while (!page) {
+    if (Date.now() > deadline) throw new Error('The app window never loaded app://basecase.');
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    page = app.windows().find(isAppPage);
+  }
+
+  return page;
+}
+
 export async function launchPackaged(): Promise<RunningApp> {
   const userData = freshUserData();
   const app = await electron.launch({
@@ -67,7 +83,7 @@ export async function launchPackaged(): Promise<RunningApp> {
     },
     timeout: 120000,
   });
-  const page = await app.firstWindow();
+  const page = await appWindow(app, 120000);
   const errors: string[] = [];
 
   page.on('pageerror', (e) => errors.push(e.message));

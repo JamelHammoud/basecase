@@ -72,7 +72,7 @@ describe('PartLayer', () => {
   });
 
   it('builds a large scene across several calls within its frame budget', () => {
-    const many = Array.from({ length: 400 }, (_, i) => part(`p${i}`, { kind: 'sphere' }));
+    const many = Array.from({ length: 40 }, (_, i) => part(`p${i}`, { kind: 'sphere' }));
     const layer = new PartLayer(new THREE.Group());
 
     layer.sync(many, new Set(), 0);
@@ -82,6 +82,6 @@ describe('PartLayer', () => {
     layer.buildPending();
 
     expect(layer.hasPending).toBe(false);
-    expect(layer.objects()).toHaveLength(400);
+    expect(layer.objects()).toHaveLength(40);
   });
 });

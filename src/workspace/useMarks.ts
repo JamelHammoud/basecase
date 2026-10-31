@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { confirmAction } from '../design-system/confirmStore';
 import type { NewMark } from '../three/viewport/types';
 import type { SceneMark } from '../types/robotics';
 import { DEFAULT_MARK_COLOR, markColorOf } from '../utils/markColors';
@@ -66,11 +67,16 @@ export function useMarks({ docs, showToast, selection }: MarkOptions) {
 
     if (!mark) return;
 
-    commitMarks(before.filter((m) => m.id !== id));
-    select(null);
-    showToast(`Deleted ${markName(mark)}`, {
-      tone: 'neutral',
-      action: { label: 'Undo', onClick: () => commitMarks(before) },
+    confirmAction({
+      title: `Delete ${markName(mark)}?`,
+      onConfirm: () => {
+        commitMarks(current().filter((m) => m.id !== id));
+        select(null);
+        showToast(`Deleted ${markName(mark)}`, {
+          tone: 'neutral',
+          action: { label: 'Undo', onClick: () => commitMarks(before) },
+        });
+      },
     });
   };
 
@@ -79,11 +85,17 @@ export function useMarks({ docs, showToast, selection }: MarkOptions) {
 
     if (!before.length) return;
 
-    commitMarks([]);
-    select(null);
-    showToast(`Cleared ${markCount(before.length)}`, {
-      tone: 'neutral',
-      action: { label: 'Undo', onClick: () => commitMarks(before) },
+    confirmAction({
+      title: `Clear ${markCount(before.length)}?`,
+      confirmLabel: 'Clear',
+      onConfirm: () => {
+        commitMarks([]);
+        select(null);
+        showToast(`Cleared ${markCount(before.length)}`, {
+          tone: 'neutral',
+          action: { label: 'Undo', onClick: () => commitMarks(before) },
+        });
+      },
     });
   };
 

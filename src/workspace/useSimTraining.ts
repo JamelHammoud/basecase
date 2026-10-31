@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
+import { confirmAction } from '../design-system/confirmStore';
 import { useSimulation } from '../sim/useSimulation';
 import { useTraining } from '../sim/useTraining';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -35,9 +36,21 @@ export function useSimTraining({ workspaceId, parts, project, setProject, posing
       setProject((p) => ({ ...p, policies: [...(p.policies ?? []).filter((x) => x.id !== record.id), record] })),
   });
 
-  const deletePolicy = (id: string) => {
+  const removePolicy = (id: string) => {
     setProject((p) => ({ ...p, policies: (p.policies ?? []).filter((x) => x.id !== id) }));
     void platformBridge.deletePolicy(id);
+  };
+
+  const deletePolicy = (id: string) => {
+    const policy = policies.find((p) => p.id === id);
+
+    if (!policy) return;
+
+    confirmAction({
+      title: `Delete ${policy.name}?`,
+      body: 'You can’t undo this.',
+      onConfirm: () => removePolicy(id),
+    });
   };
 
   return { sim, training, policies, deletePolicy };

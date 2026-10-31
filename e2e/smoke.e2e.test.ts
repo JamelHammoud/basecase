@@ -132,6 +132,8 @@ describe('studio commands', () => {
 
     await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click();
     await app.page.keyboard.press('Backspace');
+    await expect.poll(() => partCount(app.page)).toBe(before);
+    await app.page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
 
     await expect.poll(() => partCount(app.page)).toBe(before - 1);
   });

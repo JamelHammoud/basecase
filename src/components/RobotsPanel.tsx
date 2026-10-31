@@ -7,6 +7,7 @@ import {
   SearchField,
   SectionHeader,
   useScrollFade,
+  confirmAction,
 } from '../design-system';
 import type { SimReadyAsset } from '../simready/search';
 import { useSimReadySearch, type SimReadySearch } from '../simready/useSimReadySearch';
@@ -24,6 +25,13 @@ const asPreset = (r: ImportedRobot): RobotPreset => ({
   description: '',
   url: r.url,
 });
+
+const confirmForget = (r: ImportedRobot) =>
+  confirmAction({
+    title: `Remove ${r.name} from Imported?`,
+    confirmLabel: 'Remove',
+    onConfirm: () => forgetImportedRobot(r.url),
+  });
 
 export const RobotsPanel: React.FC<{
   onInsert: (preset: RobotPreset) => Promise<unknown> | void;
@@ -73,7 +81,7 @@ export const RobotsPanel: React.FC<{
       entries: [
         { label: 'Insert', onSelect: () => void insert(r.url, asPreset(r)) },
         { divider: true },
-        { label: 'Remove from Imported', tone: 'danger', onSelect: () => forgetImportedRobot(r.url) },
+        { label: 'Remove from Imported', tone: 'danger', onSelect: () => confirmForget(r) },
       ],
     });
   };

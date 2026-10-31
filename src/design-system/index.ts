@@ -17,6 +17,8 @@ export * from './PanelTabs';
 export * from './Section';
 export * from './Modal';
 export * from './ConfirmDialog';
+export * from './ConfirmHost';
+export * from './confirmStore';
 export * from './Badge';
 export * from './SectionHeader';
 export * from './Toast';

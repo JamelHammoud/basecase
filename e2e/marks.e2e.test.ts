@@ -110,6 +110,8 @@ describe('annotate marks', () => {
 
     await app.page.keyboard.press('Escape');
     await app.page.keyboard.press('Backspace');
+    await app.page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect.poll(async () => (await marks()).length).toBe(1);
 
     const left = await marks();
 

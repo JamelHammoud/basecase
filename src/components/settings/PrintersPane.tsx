@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, ChevronDownIcon, ChevronRightIcon, DeleteIcon, IconButton } from '../../design-system';
+import { Button, ChevronDownIcon, ChevronRightIcon, DeleteIcon, IconButton, confirmAction } from '../../design-system';
 import { CONNECTION_LABELS, FALLBACK_MODEL_ID, modelOf, type MyPrinter } from '../../data/printers';
 import type { PrintersState } from '../../app/usePrinters';
 import { printBridge, type Discovered, type SavedPrinter } from '../../print/printBridge';
@@ -138,7 +138,13 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
               open={openId === p.id}
               onToggle={() => setOpenId(openId === p.id ? null : p.id)}
               onDefault={() => commit(list.map((q) => ({ ...q, isDefault: q.id === p.id })))}
-              onRemove={() => commit(list.filter((q) => q.id !== p.id))}
+              onRemove={() =>
+                confirmAction({
+                  title: `Remove ${p.nickname}?`,
+                  confirmLabel: 'Remove',
+                  onConfirm: () => commit(list.filter((q) => q.id !== p.id)),
+                })
+              }
             />
             {openId === p.id && (
               <div className="bg-white/[0.02]">

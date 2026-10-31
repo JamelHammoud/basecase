@@ -1,3 +1,4 @@
+import { confirmAction } from '../design-system/confirmStore';
 import { buildPartGroup } from '../three/buildPartMesh';
 import { runSceneBooleanCSG } from '../three/sculptAndBooleanEngine';
 import type { ScenePart } from '../types/robotics';
@@ -92,7 +93,9 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
   };
 
   const deleteSelected = () => {
-    if (selectedParts.length > 0) removeSelected('Deleted');
+    if (selectedParts.length === 0) return;
+
+    confirmAction({ title: `Delete ${partLabel(selectedParts)}?`, onConfirm: () => removeSelected('Deleted') });
   };
 
   const runBoolean = (op: BooleanOp) => {

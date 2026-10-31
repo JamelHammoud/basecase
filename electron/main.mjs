@@ -4,9 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { app, BrowserWindow, ipcMain, nativeTheme, safeStorage, shell } from 'electron';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { installAppMenu, updateAppMenuState } from './app-menu.mjs';
+import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { registerShareHandlers } from './shareFile.mjs';
+import { storageMigration } from './storageMigration.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +24,10 @@ const backend = new BasecaseBackendService(workspaceRoot, {
 let mainWindow = null;
 
 const SHOW_FALLBACK_MS = 2000;
+const bundled = process.argv.includes('--bundle');
+const devServer = bundled ? null : process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+
+registerAppScheme();
 
 app.setName('Basecase');
 
@@ -60,7 +66,6 @@ function createWindow() {
     },
   });
 
-  const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
   const window = mainWindow;
   const show = () => {
     if (!window.isDestroyed() && !window.isVisible()) window.show();
@@ -71,7 +76,7 @@ function createWindow() {
     clearTimeout(fallback);
     show();
   });
-  mainWindow.loadURL(devUrl);
+  mainWindow.loadURL(`${APP_ORIGIN}/`);
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
@@ -79,7 +84,7 @@ function createWindow() {
     return { action: 'deny' };
   });
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (url.startsWith(devUrl)) return;
+    if (url.startsWith(`${APP_ORIGIN}/`)) return;
 
     event.preventDefault();
 
@@ -152,11 +157,19 @@ registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerShareHandlers(ipcMain);
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   nativeTheme.themeSource = 'dark';
   installAppMenu(() => mainWindow);
-  createWindow();
   void backend.connectAcpAgent();
+
+  const migration = await storageMigration({
+    userData: app.getPath('userData'),
+    preload: path.join(__dirname, 'storagePreload.cjs'),
+  });
+
+  serveApp({ distDir: path.join(workspaceRoot, 'dist'), devServer, transformHtml: migration.transformHtml });
+  createWindow();
+  migration.close();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

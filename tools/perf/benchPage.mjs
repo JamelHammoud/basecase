@@ -15,6 +15,12 @@ const TYPES = {
   '.png': 'image/png',
 };
 
+const ISOLATION = {
+  'cross-origin-opener-policy': 'same-origin',
+  'cross-origin-embedder-policy': 'credentialless',
+  'cross-origin-resource-policy': 'same-origin',
+};
+
 const LISTS = {
   scenes: [],
   models: [],
@@ -30,7 +36,7 @@ export async function serveStatic(root) {
     const file = path.join(root, decodeURIComponent(new URL(req.url, 'http://x').pathname));
     const found = fs.existsSync(file) && fs.statSync(file).isFile() ? file : path.join(root, 'index.html');
 
-    res.writeHead(200, { 'content-type': TYPES[path.extname(found)] ?? 'application/octet-stream' });
+    res.writeHead(200, { 'content-type': TYPES[path.extname(found)] ?? 'application/octet-stream', ...ISOLATION });
     fs.createReadStream(found).pipe(res);
   });
 

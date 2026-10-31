@@ -89,7 +89,7 @@ async function stubBackend(page, { sceneText, responses }) {
 const GPU_ARGS = ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'];
 const CPU_ARGS = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'];
 
-export async function openBenchPage({ url, scene, gpu }) {
+export async function openBenchPage({ url, scene, gpu, probes }) {
   const browser = await chromium.launch({ channel: 'chrome', headless: true, args: gpu ? GPU_ARGS : CPU_ARGS });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
@@ -98,6 +98,9 @@ export async function openBenchPage({ url, scene, gpu }) {
   page.on('pageerror', (e) => errors.push(e.message));
   await stubBackend(page, { sceneText: JSON.stringify(scene), responses });
   await page.addInitScript(installProbes, scene.id);
+
+  if (probes) await page.addInitScript(probes);
+
   await page.goto(url);
   await page.waitForSelector('nav[aria-label="Sidebar views"]', { timeout: 60000 });
 

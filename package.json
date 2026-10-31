@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "perf:agent": "node tools/perf/agentBench.mjs",
+    "perf:viewport": "node tools/perf/viewportBench.mjs",
     "icon": "xcrun actool \"$PWD/build/icon/Basecase.icon\" --compile \"$PWD/build/icon/compiled\" --platform macosx --minimum-deployment-target 26.0 --app-icon Basecase --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled/partial.plist\" --output-format human-readable-text",
     "icons": "node tools/icons/emit.mjs && prettier --write src/design-system/glyphs",
     "prepare": "simple-git-hooks && node tools/native/build.mjs",

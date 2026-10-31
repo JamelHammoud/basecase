@@ -20,6 +20,7 @@ const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphPro
 ];
 
 const RAIL_BUTTON = 'w-[36px]! h-[36px]! rounded-[10px]!';
+const RAIL_ICON = 'w-[19px] h-[19px]';
 
 interface ViewRailProps {
   isLeftOpen: boolean;
@@ -41,7 +42,7 @@ export function ViewRail({ isLeftOpen, leftTab, onPickView, onOpenSettings }: Vi
         return (
           <IconButton
             key={v.value}
-            icon={<v.Icon filled={open} />}
+            icon={<v.Icon filled={open} className={RAIL_ICON} />}
             title={v.label}
             tooltipSide="right"
             size="md"
@@ -54,7 +55,7 @@ export function ViewRail({ isLeftOpen, leftTab, onPickView, onOpenSettings }: Vi
       })}
       <div className="flex-1" />
       <IconButton
-        icon={<SettingsIcon className="w-[18px] h-[18px]" />}
+        icon={<SettingsIcon className={RAIL_ICON} />}
         title="Settings"
         shortcut="⌘,"
         tooltipSide="right"

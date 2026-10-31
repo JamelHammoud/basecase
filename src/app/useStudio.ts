@@ -23,10 +23,45 @@ export interface StudioSources {
   printers: PrintersState;
 }
 
+function useSharedPreferences(prefs: StudioSources['prefs']) {
+  const { snapStepMm, setSnapStepMm, snapAngleDeg, trackpadMode, setTrackpadMode, showGrid, setShowGrid } = prefs;
+  const { sculptEnabled, autoGuide, measureUnit, showReferenceImages, setShowReferenceImages } = prefs;
+
+  return useMemo(
+    () => ({
+      snapStepMm,
+      setSnapStepMm,
+      snapAngleDeg,
+      measureUnit,
+      trackpadMode,
+      setTrackpadMode,
+      showGrid,
+      setShowGrid,
+      sculptEnabled,
+      autoGuide,
+      showReferenceImages,
+      setShowReferenceImages,
+    }),
+    [
+      snapStepMm,
+      setSnapStepMm,
+      snapAngleDeg,
+      measureUnit,
+      trackpadMode,
+      setTrackpadMode,
+      showGrid,
+      setShowGrid,
+      sculptEnabled,
+      autoGuide,
+      showReferenceImages,
+      setShowReferenceImages,
+    ],
+  );
+}
+
 export function useStudio(sources: StudioSources) {
   const { prefs, layout, libraries, agent, settings, core, actions, tabList, openSceneList, printers } = sources;
-  const { snapStepMm, setSnapStepMm, snapAngleDeg, trackpadMode, setTrackpadMode, showGrid, setShowGrid } = prefs;
-  const { sculptEnabled, measureUnit, showReferenceImages, setShowReferenceImages } = prefs;
+  const preferences = useSharedPreferences(prefs);
   const { isLeftOpen, setIsLeftOpen, isRightOpen, setIsRightOpen, panelWidths, setPanelWidths } = layout;
   const { resizingPanel, setResizingPanel, setRightIslandWidth } = layout;
   const { customModels, setCustomModels, uploadedImages, setUploadedImages, chatList, setChatList } = libraries;
@@ -38,17 +73,7 @@ export function useStudio(sources: StudioSources) {
 
   return useMemo<StudioShared>(
     () => ({
-      snapStepMm,
-      setSnapStepMm,
-      snapAngleDeg,
-      measureUnit,
-      trackpadMode,
-      setTrackpadMode,
-      showGrid,
-      setShowGrid,
-      sculptEnabled,
-      showReferenceImages,
-      setShowReferenceImages,
+      ...preferences,
       isLeftOpen,
       setIsLeftOpen,
       isRightOpen,
@@ -90,17 +115,7 @@ export function useStudio(sources: StudioSources) {
       notify,
     }),
     [
-      snapStepMm,
-      setSnapStepMm,
-      snapAngleDeg,
-      measureUnit,
-      trackpadMode,
-      setTrackpadMode,
-      showGrid,
-      setShowGrid,
-      sculptEnabled,
-      showReferenceImages,
-      setShowReferenceImages,
+      preferences,
       isLeftOpen,
       setIsLeftOpen,
       isRightOpen,

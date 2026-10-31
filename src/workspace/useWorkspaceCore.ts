@@ -114,6 +114,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { restorePose } = posing;
 
   const loadSeed = (next: WorkspaceSeed, message?: string) => {
+    guide.cancel();
     setSceneId(next.sceneId);
     setSceneName(next.sceneName);
     setGlobalGoal(next.globalGoal || '');

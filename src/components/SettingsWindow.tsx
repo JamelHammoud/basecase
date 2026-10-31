@@ -18,18 +18,20 @@ import {
   GridIcon,
   KeyboardIcon,
   MouseIcon,
+  PackageIcon,
   PanelsIcon,
   PrinterIcon,
   RefreshIcon,
   WebIcon,
 } from '../design-system';
 import type { PrintersState } from '../app/usePrinters';
+import { BuildPane } from './settings/BuildPane';
 import { PrintersPane } from './settings/PrintersPane';
 import { RegionPane } from './settings/RegionPane';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 
-export type SettingsPane = 'canvas' | 'navigation' | 'layout' | 'region' | 'agent' | 'printers' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'navigation' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
   { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
@@ -37,6 +39,7 @@ const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> =
   { id: 'layout', label: 'Layout', icon: <PanelsIcon className="w-4 h-4" /> },
   { id: 'region', label: 'Region', icon: <WebIcon className="w-4 h-4" /> },
   { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
+  { id: 'build', label: 'Build', icon: <PackageIcon className="w-4 h-4" /> },
   { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
   { id: 'shortcuts', label: 'Shortcuts', icon: <KeyboardIcon className="w-4 h-4" /> },
 ];
@@ -57,6 +60,8 @@ export interface SettingsWindowProps {
   onShowGrid: (v: boolean) => void;
   sculptEnabled: boolean;
   onSculptEnabled: (v: boolean) => void;
+  autoGuide: boolean;
+  onAutoGuide: (v: boolean) => void;
   snapStepMm: number;
   onSnapStep: (mm: number) => void;
   snapAngleDeg: number;
@@ -174,6 +179,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             {pane === 'layout' && <LayoutPane {...props} />}
             {pane === 'region' && <RegionPane />}
             {pane === 'agent' && <AgentPane {...props} />}
+            {pane === 'build' && <BuildPane autoGuide={props.autoGuide} onAutoGuide={props.onAutoGuide} />}
             {pane === 'printers' && (
               <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
             )}

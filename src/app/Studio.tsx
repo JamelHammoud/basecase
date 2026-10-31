@@ -107,6 +107,8 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         open={settings.settingsOpen}
         sculptEnabled={prefs.sculptEnabled}
         onSculptEnabled={prefs.setSculptEnabled}
+        autoGuide={prefs.autoGuide}
+        onAutoGuide={prefs.setAutoGuide}
         pane={settings.pane}
         onPaneChange={settings.changePane}
         onClose={settings.closeSettings}

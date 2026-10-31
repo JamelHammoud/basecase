@@ -14,6 +14,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   showGrid: true,
   sculptEnabled: false,
   measureUnit: 'metric',
+  autoGuide: true,
 };
 
 export const DEFAULT_PANEL_WIDTHS: PanelWidths = { left: LAYOUT.leftPanelWidth, right: LAYOUT.rightPanelWidth };

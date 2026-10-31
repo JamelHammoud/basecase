@@ -10,11 +10,20 @@ export function usePreferences() {
   const [showGrid, setShowGrid] = useState<boolean>(saved.showGrid);
   const [sculptEnabled, setSculptEnabled] = useState<boolean>(saved.sculptEnabled);
   const [measureUnit, setMeasureUnit] = useState<MeasureUnit>(saved.measureUnit);
+  const [autoGuide, setAutoGuide] = useState<boolean>(saved.autoGuide);
   const [showReferenceImages, setShowReferenceImages] = useState(true);
 
   useEffect(() => {
-    writeStored('preferences', { snapStepMm, snapAngleDeg, trackpadMode, showGrid, sculptEnabled, measureUnit });
-  }, [snapStepMm, snapAngleDeg, trackpadMode, showGrid, sculptEnabled, measureUnit]);
+    writeStored('preferences', {
+      snapStepMm,
+      snapAngleDeg,
+      trackpadMode,
+      showGrid,
+      sculptEnabled,
+      measureUnit,
+      autoGuide,
+    });
+  }, [snapStepMm, snapAngleDeg, trackpadMode, showGrid, sculptEnabled, measureUnit, autoGuide]);
 
   return {
     snapStepMm,
@@ -29,6 +38,8 @@ export function usePreferences() {
     setSculptEnabled,
     measureUnit,
     setMeasureUnit,
+    autoGuide,
+    setAutoGuide,
     showReferenceImages,
     setShowReferenceImages,
   };

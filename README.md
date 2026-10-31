@@ -21,3 +21,5 @@ npm start
 ### Contributing
 
 Read [AGENTS.md](AGENTS.md) §0 first. Formatting, lint rules and tests are enforced by a pre-commit hook; run `npm run check` before you push, and `npm run test:e2e` after UI changes.
+
+To add a part to the catalog, ask your coding agent to “add this part: ⟨link⟩”. It follows [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md), which you can also follow by hand.

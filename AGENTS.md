@@ -6,6 +6,8 @@ This document defines the design principles, UI/UX conventions, copy rules, and 
 
 **Writing any user-facing text** (labels, buttons, headers, captions, empty states, toasts, errors, tooltips, agent-facing UI)? Follow §3, and run its checklist (§3d) on every string you add or change.
 
+**Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are.
+
 References studied for this system: Figma UI3, the OpenAI Codex / ChatGPT desktop apps, mobbin.com, Linear, Raycast, macOS Tahoe Liquid Glass (WWDC25 “Meet Liquid Glass”), Vercel Geist, Things 3; copy guides from Apple HIG, Mailchimp, Material, Shopify Polaris, Atlassian, Microsoft, GOV.UK, Stripe, Linear and 37signals.
 
 ---
@@ -664,7 +666,9 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 
 ## 8a. Real Components (Parts library)
 
-Servos, motors, boards and sensors are real products with exact geometry, never estimates.
+Servos, motors, boards and sensors are real products with exact geometry, never estimates. The step-by-step procedure for adding one (identify, mesh, measure, catalog entry, ports, price, verify) is the `add-part` skill, [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md); keep it in sync with this section.
+
+- **Measuring a mesh:** `node tools/parts/probe.mjs <id> [--axis=x|y|z]` prints a part's bounding box, colours, a height map and every through-hole with its diameter and faces, in the mesh frame `componentPorts.ts` uses.
 
 - **Data:** `src/data/components.ts` (one `ComponentInfo` per product: maker, part number, specs, mounting, links, model source, `pairsWith`). Every number comes from the linked datasheet or drawing. Sizes come from the converted mesh (`component-meshes.json`), so they always match what you see.
 - **Scene parts:** `kind: 'component'` + `componentId`. The mesh (`public/parts/<id>.glb`) loads once and is shared (`three/componentMeshes.ts`; never dispose `userData.shared` geometry). Components can't be resized (Inspector, scale gizmo and agent `update_parts` all keep their size). The Inspector skips Size, Shape and Appearance and shows a Product section last, below Notes, collapsed by default.

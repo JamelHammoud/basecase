@@ -1,13 +1,5 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import '../index.css';
 import { finishBoot } from '../app/boot';
-import { Landing } from './Landing';
+import { renderLanding } from './renderLanding';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Landing />
-  </StrictMode>,
-);
-
+renderLanding();
 requestAnimationFrame(finishBoot);

@@ -1,0 +1,19 @@
+/* A part or scene preview: no outline, 12px corners, a soft spotlight that brightens on hover
+   (Parts and Library tiles, list thumbnails with .preview-sm, the part page hero, the landing
+   page's robots). Shared by the app's index.css and the landing's landing.css. */
+@layer components {
+  .preview {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.035);
+    background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.07), transparent 72%);
+    transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .preview-sm {
+    border-radius: 8px;
+  }
+  .group:hover .preview {
+    background-color: rgba(255, 255, 255, 0.065);
+  }
+}

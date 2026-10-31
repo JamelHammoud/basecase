@@ -1,0 +1,50 @@
+/* The landing page's own stylesheet: it ships on its own (the web demo on small screens, and
+   basecase.so), so Tailwind only scans the landing and the few primitives it renders. */
+@import 'tailwindcss' source(none);
+@import '../design-system/preview.css';
+@source '.';
+@source '../design-system/glyph.tsx';
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    background-color: #121212;
+    color: rgba(255, 255, 255, 0.92);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    letter-spacing: -0.003em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* The robots drift sideways forever. The track holds the list three times and each tile carries
+   its own gap, so shifting by exactly one copy (a third of the track) loops seamlessly, and two
+   copies always cover the widest window. */
+.landing-strip {
+  --fade: min(120px, 12%);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+}
+.landing-strip-track {
+  animation: landing-strip 100s linear infinite;
+}
+.landing-strip:hover .landing-strip-track {
+  animation-play-state: paused;
+}
+@keyframes landing-strip {
+  to {
+    transform: translateX(calc(-100% / 3));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-strip {
+    overflow-x: auto;
+  }
+  .landing-strip-track {
+    animation: none;
+  }
+}

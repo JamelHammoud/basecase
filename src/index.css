@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './design-system/preview.css';
 
 @theme {
   /* Surfaces: step lightness, not shadows */
@@ -340,19 +341,6 @@ input[type='range'].slider:focus-visible::-webkit-slider-thumb {
     background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.28) 100%);
   }
 
-  /* A part or scene preview: no outline, 12px corners, a soft spotlight that brightens on hover
-   (Parts and Library tiles, list thumbnails with .preview-sm, the part page hero) */
-  .preview {
-    position: relative;
-    overflow: hidden;
-    border-radius: 12px;
-    background-color: rgba(255, 255, 255, 0.035);
-    background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.07), transparent 72%);
-    transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
-  }
-  .preview-sm {
-    border-radius: 8px;
-  }
   .shimmer {
     background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
     background-size: 200% 100%;
@@ -361,9 +349,6 @@ input[type='range'].slider:focus-visible::-webkit-slider-thumb {
   .skeleton-line {
     border-radius: 9999px;
     background-color: rgba(255, 255, 255, 0.06);
-  }
-  .group:hover .preview {
-    background-color: rgba(255, 255, 255, 0.065);
   }
 
   /* A card that tilts toward the pointer under a moving glare, like a Steam hover card
@@ -444,31 +429,10 @@ input[type='range'].slider:focus-visible::-webkit-slider-thumb {
   }
 }
 
-/* The phone landing page's robots drift sideways forever; the track holds the list twice, so
-   shifting it by one copy (half its width plus half the 8px gap) loops seamlessly. */
-.landing-strip {
-  mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
-}
-.landing-strip-track {
-  animation: landing-strip 70s linear infinite;
-}
-@keyframes landing-strip {
-  to {
-    transform: translateX(calc(-50% - 4px));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .tilt-card,
   .tilt-card:hover {
     transform: none;
-  }
-
-  .landing-strip {
-    overflow-x: auto;
-  }
-  .landing-strip-track {
-    animation: none !important;
   }
 
   *,

@@ -13,6 +13,8 @@
     "build": "tsc -b && vite build",
     "dev:web": "vite --port 5174 --mode web",
     "build:web": "tsc -b && vite build --mode web",
+    "dev:site": "vite --config site/vite.config.ts --port 5175",
+    "build:site": "vite build --config site/vite.config.ts",
     "preview": "vite preview",
     "check": "npm run check:tracked && npm run format:check && npm run lint && npm run lint:py && npm run typecheck && npm test",
     "check:tracked": "node tools/check-tracked.mjs",

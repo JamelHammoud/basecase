@@ -38,6 +38,8 @@ export function savedPolicyMessage(record: PolicyRecord, task: TrainTask): strin
 export function trainingBlocker(robotKey: string | null, trainer: TrainerStatus | null): string | null {
   if (!robotKey) return NEEDS_LEGS;
 
+  if (trainer?.desktopOnly) return 'Download Basecase to train policies.';
+
   if (trainer && !trainer.uv)
     return `Training needs uv to set up Python. Install it with: ${trainer.uvInstall ?? 'curl -LsSf https://astral.sh/uv/install.sh | sh'}`;
 

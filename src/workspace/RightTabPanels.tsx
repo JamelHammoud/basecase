@@ -1,8 +1,10 @@
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
+import { DesktopDownload } from '../components/agent/DesktopDownload';
 import { DesignersProvider } from '../components/agent/DesignersContext';
 import { PartLinksProvider } from '../components/agent/PartLinksProvider';
 import { canRevertLane } from './agentLanes';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { BuildPanel } from '../components/BuildPanel';
 import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
@@ -86,7 +88,11 @@ function useOpenGuide(core: WorkspaceCore) {
   };
 }
 
-function AgentTab({ core, agent }: Omit<RightTabPanelsProps, 'actions'>) {
+function AgentTab(props: Omit<RightTabPanelsProps, 'actions'>) {
+  return IS_WEB_DEMO ? <DesktopDownload /> : <AgentConversationTab {...props} />;
+}
+
+function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'actions'>) {
   const { studio, tool, parts, setSelectedIds } = core;
   const { chat, controls, current } = agent;
   const openGuide = useOpenGuide(core);

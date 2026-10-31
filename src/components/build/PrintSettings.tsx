@@ -3,6 +3,7 @@ import { NumberInput, Select } from '../../design-system';
 import type { PrinterSetup } from '../../data/printers';
 import type { SavedPrinter } from '../../print/printBridge';
 import type { PrintMaterial, ProjectSettings } from '../../types/robotics';
+import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 
 const ADD = '__add';
 
@@ -34,7 +35,9 @@ function printerOptions(printer: PrinterSetup, printers: SavedPrinter[]) {
   const mine = printers.map((p) => ({ value: p.id, label: p.nickname }));
   const current = printer.mine ? [] : [{ value: printer.id, label: printer.label }];
 
-  return [...current, ...mine, { value: ADD, label: 'Add Printer' }];
+  const add = IS_WEB_DEMO ? [] : [{ value: ADD, label: 'Add Printer' }];
+
+  return [...current, ...mine, ...add];
 }
 
 export const PrintSettings: React.FC<PrintSettingsProps> = ({

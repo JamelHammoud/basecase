@@ -32,6 +32,7 @@ import { PrintersPane } from './settings/PrintersPane';
 import { RegionPane } from './settings/RegionPane';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
 export type SettingsPane = 'canvas' | 'navigation' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'shortcuts';
 
@@ -45,6 +46,10 @@ const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> =
   { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
   { id: 'shortcuts', label: 'Shortcuts', icon: <KeyboardIcon className="w-4 h-4" /> },
 ];
+
+const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers'];
+
+const VISIBLE_PANES = IS_WEB_DEMO ? PANES.filter((p) => !DESKTOP_PANES.includes(p.id)) : PANES;
 
 const MOVE_SNAP_STEPS = ['0', '1', '2', '5', '10'];
 const ROTATE_SNAP_STEPS = ['0', '5', '15', '45', '90'];
@@ -109,7 +114,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
 
   if (!open) return null;
 
-  const current = PANES.find((p) => p.id === pane) ?? PANES[0];
+  const current = VISIBLE_PANES.find((p) => p.id === pane) ?? VISIBLE_PANES[0];
 
   return createPortal(
     <div
@@ -129,8 +134,8 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
           <h2 className="px-[10px] h-[40px] flex items-center text-[15px] font-semibold text-white/90 mb-[4px]">
             Settings
           </h2>
-          {PANES.map((p) => {
-            const isCurrent = p.id === pane;
+          {VISIBLE_PANES.map((p) => {
+            const isCurrent = p.id === current.id;
 
             return (
               <button
@@ -176,16 +181,16 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             style={fade.style}
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-[28px] pt-[4px] pb-[28px]"
           >
-            {pane === 'canvas' && <CanvasPane {...props} />}
-            {pane === 'navigation' && <NavigationPane {...props} />}
-            {pane === 'layout' && <LayoutPane {...props} />}
-            {pane === 'region' && <RegionPane />}
-            {pane === 'agent' && <AgentPane {...props} />}
-            {pane === 'build' && <BuildPane autoGuide={props.autoGuide} onAutoGuide={props.onAutoGuide} />}
-            {pane === 'printers' && (
+            {current.id === 'canvas' && <CanvasPane {...props} />}
+            {current.id === 'navigation' && <NavigationPane {...props} />}
+            {current.id === 'layout' && <LayoutPane {...props} />}
+            {current.id === 'region' && <RegionPane />}
+            {current.id === 'agent' && <AgentPane {...props} />}
+            {current.id === 'build' && <BuildPane autoGuide={props.autoGuide} onAutoGuide={props.onAutoGuide} />}
+            {current.id === 'printers' && (
               <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
             )}
-            {pane === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
+            {current.id === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
           </div>
         </div>
       </div>

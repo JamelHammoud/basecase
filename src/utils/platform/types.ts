@@ -50,6 +50,7 @@ export interface TrainerStatus {
   uvInstall?: string;
   ready: boolean;
   running: string[];
+  desktopOnly?: boolean;
 }
 
 export interface SimReadyStatus {

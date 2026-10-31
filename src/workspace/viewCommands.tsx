@@ -20,6 +20,7 @@ import { CATEGORY_LABELS, PART_CATALOG, catalogKey, hardwareVariant } from '../d
 import { HARDWARE_BY_TYPE, hardwareName } from '../data/hardware';
 import type { TrackpadGestureMode } from '../types/robotics';
 import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
 const ic = 'w-4 h-4';
@@ -124,14 +125,18 @@ function displayCommands({ core, ui }: CommandInputs): Command[] {
       keywords: 'preferences grid snap trackpad',
       run: () => studio.openSettings(),
     },
-    {
-      id: 'agent-settings',
-      group: 'App',
-      label: 'Agent Settings',
-      icon: <SettingsIcon className={ic} />,
-      keywords: 'claude offline command target height',
-      run: () => studio.openSettings('agent'),
-    },
+    ...(IS_WEB_DEMO
+      ? []
+      : [
+          {
+            id: 'agent-settings',
+            group: 'App',
+            label: 'Agent Settings',
+            icon: <SettingsIcon className={ic} />,
+            keywords: 'claude offline command target height',
+            run: () => studio.openSettings('agent'),
+          },
+        ]),
     {
       id: 'currency-settings',
       group: 'App',

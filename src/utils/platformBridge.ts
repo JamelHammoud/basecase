@@ -21,6 +21,8 @@ import type {
   TrainerStatus,
   TrainStartPayload,
 } from './platform/types';
+import { webGuides } from './platform/web/webBackend';
+import { IS_WEB_DEMO } from './platform/webDemo';
 
 export type * from './platform/types';
 
@@ -155,8 +157,11 @@ const libraryBridge = {
   deleteScene: (sceneId: string): Promise<SavedSceneSummary[]> =>
     electron()?.deleteScene(sceneId) ?? post('/delete-scene', { sceneId }),
 
-  saveGuide: async (payload: { id: string; html: string }): Promise<{ ok: boolean; path?: string }> =>
-    (await electron()?.saveGuide(payload)) ?? { ok: false },
+  saveGuide: async (payload: { id: string; html: string }): Promise<{ ok: boolean; path?: string }> => {
+    if (IS_WEB_DEMO) return webGuides.save(payload);
+
+    return (await electron()?.saveGuide(payload)) ?? { ok: false };
+  },
 
   openGuide: async (id: string): Promise<boolean> => (await electron()?.openGuide(id)) ?? false,
 
@@ -165,10 +170,16 @@ const libraryBridge = {
 
   revealGuide: async (id: string): Promise<boolean> => (await electron()?.revealGuide(id)) ?? false,
 
-  guideExists: async (id: string): Promise<boolean> => (await electron()?.guideExists(id)) ?? false,
+  guideExists: async (id: string): Promise<boolean> => {
+    if (IS_WEB_DEMO) return webGuides.exists(id);
+
+    return (await electron()?.guideExists(id)) ?? false;
+  },
 
   guideHtml: async (id: string): Promise<string | null> => {
     try {
+      if (IS_WEB_DEMO) return await webGuides.html(id);
+
       return (await electron()?.guideHtml?.(id)) ?? null;
     } catch {
       return null;
@@ -235,6 +246,8 @@ const shellBridge = {
     if (api) {
       return api.onBackendEvent(callback);
     }
+
+    if (IS_WEB_DEMO) return () => {};
 
     const events = new EventSource('/api/events');
 

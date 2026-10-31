@@ -1,22 +1,27 @@
 import type { ElectronApi } from './types';
+import { webRequest } from './web/webBackend';
+import { IS_WEB_DEMO } from './webDemo';
 
 const BRIDGE = '/api/bridge';
 
 export const electron = (): ElectronApi | undefined => window.electronAPI;
 
+const send = (path: string, init?: RequestInit): Promise<Response> =>
+  IS_WEB_DEMO ? webRequest(path, init) : fetch(`${BRIDGE}${path}`, init);
+
 export async function get<T>(path: string): Promise<T> {
-  return (await fetch(`${BRIDGE}${path}`)).json();
+  return (await send(path)).json();
 }
 
 export async function post<T>(path: string, body: unknown, options: { json?: boolean } = {}): Promise<T> {
   const headers = options.json === false ? undefined : { 'Content-Type': 'application/json' };
-  const res = await fetch(`${BRIDGE}${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
+  const res = await send(path, { method: 'POST', headers, body: JSON.stringify(body) });
 
   return res.json();
 }
 
 export async function postJson<T>(path: string, json: string): Promise<T> {
-  const res = await fetch(`${BRIDGE}${path}`, {
+  const res = await send(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: json,
@@ -30,7 +35,7 @@ export async function postOrThrow<T>(
   body: unknown,
   failure: (parsed: { error?: unknown }, res: Response) => string | null,
 ): Promise<T> {
-  const res = await fetch(`${BRIDGE}${path}`, {
+  const res = await send(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

@@ -12,12 +12,17 @@ const ISOLATION_HEADERS = {
 
 const hmrPort = Number(process.env.BASECASE_HMR_PORT) || 0;
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   server: {
     watch: { ignored: ['**/library/**', '**/ai-reference/**'] },
     headers: ISOLATION_HEADERS,
     hmr: hmrPort ? { host: 'localhost', clientPort: hmrPort } : undefined,
   },
   preview: { headers: ISOLATION_HEADERS },
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwindcss(), bridgeMiddlewarePlugin()],
-});
+  plugins: [
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
+    tailwindcss(),
+    mode === 'web' ? null : bridgeMiddlewarePlugin(),
+  ],
+}));

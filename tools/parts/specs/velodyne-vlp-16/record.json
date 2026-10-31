@@ -72,8 +72,6 @@
     "product": "https://ouster.com/products/hardware/vlp-16",
     "datasheet": "https://data.ouster.io/downloads/datasheets/velodyne/Puck%20Datasheets.zip"
   },
-  "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/velodyne-vlp-16/Puck Datasheets/63-9229_Rev-K_Puck-_Datasheet_Web.pdf",
-  "manual_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/velodyne-vlp-16/vlp-16-user-manual-revf.pdf",
   "notes": "Ouster's current VLP-16 page markets 200 m range, 40° vertical FOV and 16–32 channels — that describes newer Puck variants; the Rev K datasheet (100 m, 30°, 16 ch) is used here. Wavelength conflict inside the datasheet: 903 nm in the spec table vs 905 nm in the overview. No Amazon listing for the sensor itself (only power adapters); search URL given.",
   "pose": "lidar"
 }

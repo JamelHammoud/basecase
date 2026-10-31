@@ -14,3 +14,4 @@ electron/simready/.venv
 package-lock.json
 *.md
 scratch
+internal

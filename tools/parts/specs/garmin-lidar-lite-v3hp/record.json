@@ -72,7 +72,6 @@
     "product": "https://www.garmin.com/en-US/p/578152",
     "datasheet": "https://static.garmin.com/pumac/LIDAR-Lite_v3HP_Instructions_EN.pdf"
   },
-  "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/garmin-lidar-lite-v3hp/LIDAR-Lite_v3HP_Instructions_EN.pdf",
   "notes": "Garmin's drawing is a numbered legend (items 1–10) without feature labels; the hole-diameter (4 mm) and optic-diameter (14.65 mm) readings are inferred from where the callouts point and should be checked. Amazon page fetch returned HTTP 500; search snippet shows title 'Garmin Lidar-Lite V3HP', part 010-01722-10, currently unavailable — unverified. No community CAD of the v3HP housing was found (v3 models exist but the v3HP housing differs).",
   "pose": "camera"
 }

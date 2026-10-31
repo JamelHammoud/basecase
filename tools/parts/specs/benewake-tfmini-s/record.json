@@ -72,8 +72,6 @@
     "product": "https://en.benewake.com/TFminiS/index.html",
     "datasheet": "https://en.benewake.com/uploadfiles/2025/04/20250430175121856.pdf"
   },
-  "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tfmini-s/TFmini-S_Datasheet.pdf",
-  "manual_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tfmini-s/TFmini-S_User_Manual.pdf",
   "notes": "ASIN B07B631YRF dates from 2018 (original TFmini era) but the current title is TFmini-S; alternative listings: B08D1XVRV5 (Stemedu), B0FSCZY5PM (Dxtvate). Seller not confirmed (page truncated). Which lens is emitter vs receiver is not labelled on the drawing.",
   "pose": "camera"
 }

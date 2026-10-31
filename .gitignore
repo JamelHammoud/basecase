@@ -57,5 +57,11 @@ __pycache__/
 # Scratch work: throwaway scripts, debug tests, one-off outputs (see AGENTS.md §0g)
 /scratch/
 
+# Internal notes: research, plans, chat analyses and design explorations that aren't for contributors (see AGENTS.md §0g)
+/internal/
+
+# Bambu Studio CLI writes this into its working folder
+/result.json
+
 # Native addon build output (npm run native)
 electron/native/*/build/

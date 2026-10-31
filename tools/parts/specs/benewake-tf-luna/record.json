@@ -77,8 +77,6 @@
     "product": "https://en.benewake.com/TFLuna/index.html",
     "datasheet": "https://en.benewake.com/uploadfiles/2025/04/20250430174501874.pdf"
   },
-  "datasheet_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tf-luna/TF-Luna_Datasheet.pdf",
-  "manual_file": "/private/tmp/claude-501/-Users-jamel-Documents-antigravity-bold-rutherford/c5d3952e-8add-4d99-a778-cbbc1bb2017a/scratchpad/cad/benewake-tf-luna/TF-Luna_User_Manual.pdf",
   "notes": "Height conflict: datasheet A05 gives 35 × 21.25 × 12.5 mm (L×W×H) while the manual drawing shows 13.5 overall (12 body) — modelled envelope uses 13.5. Which ear-hole row lies on the lens axis is not dimensioned; drawing reading is approximate for the 9 mm lens offset. Amazon B086MJQSLR title matches; seller not confirmed (page truncated).",
   "pose": "camera"
 }

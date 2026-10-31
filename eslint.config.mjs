@@ -33,6 +33,7 @@ export default tseslint.config(
       'electron/trainer/.venv/**',
       'electron/simready/.venv/**',
       'scratch/**',
+      'internal/**',
       '**/node_modules/**',
     ],
   },

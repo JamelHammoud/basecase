@@ -12,7 +12,8 @@
     "electron:dev": "concurrently -k \"vite --port 5173\" \"wait-on http://localhost:5173 && node tools/electron-dev.mjs .\"",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "check": "npm run format:check && npm run lint && npm run lint:py && npm run typecheck && npm test",
+    "check": "npm run check:tracked && npm run format:check && npm run lint && npm run lint:py && npm run typecheck && npm test",
+    "check:tracked": "node tools/check-tracked.mjs",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -87,7 +88,7 @@
     "wait-on": "^9.0.4"
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged"
+    "pre-commit": "npx lint-staged && node tools/check-tracked.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,mjs,js,cjs}": [

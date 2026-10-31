@@ -1,13 +1,26 @@
 import React from 'react';
 import { Kbd } from '../design-system';
+import { IS_MAC } from '../utils/os';
 import { SettingsGroup } from './SettingsRows';
 
-const GROUPS: Array<{ title: string; rows: Array<[string, string | string[]]> }> = [
+type Row = [string, string | string[]];
+
+const TRACKPAD_ROWS: Row[] = [
+  ['Orbit or pan', 'Two-finger scroll'],
+  ['Zoom', 'Pinch'],
+];
+
+const MOUSE_ROWS: Row[] = [
+  ['Orbit', 'Drag'],
+  ['Zoom', 'Scroll'],
+  ['Pan', 'Right-drag or middle-drag'],
+];
+
+const GROUPS: Array<{ title: string; rows: Row[] }> = [
   {
     title: 'Navigate',
     rows: [
-      ['Orbit or pan', 'Two-finger scroll'],
-      ['Zoom', 'Pinch'],
+      ...(IS_MAC ? TRACKPAD_ROWS : MOUSE_ROWS),
       ['Pan', ['Space', 'drag']],
       ['Pan while orbiting', ['⇧', 'scroll']],
       ['Zoom to selection', ['Z']],

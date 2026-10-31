@@ -5,6 +5,7 @@ import { floorPoint, hitPartId, rayAt, raycastParts } from './picking';
 import { SculptInput } from './sculptInput';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
+import { hasPrimaryModifier } from '../../utils/os';
 
 const CLICK_SLOP = 5;
 
@@ -18,7 +19,7 @@ export interface GizmoState {
   hoveringAxis: () => boolean;
 }
 
-const additive = (e: MouseEvent) => e.shiftKey || e.metaKey;
+const additive = (e: MouseEvent) => e.shiftKey || hasPrimaryModifier(e);
 
 const toVec3 = (v: THREE.Vector3): Vec3 => [v.x, v.y, v.z];
 

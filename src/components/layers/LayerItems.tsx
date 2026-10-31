@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronRightIcon, GroupIcon, HiddenIcon, LockIcon, LookIcon, UnlockIcon } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
+import { hasPrimaryModifier } from '../../utils/os';
 
 const ROW = 'group h-8 rounded-lg flex items-center text-[13px] cursor-default transition-colors';
 
@@ -93,7 +94,7 @@ export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimme
     data-layer-row={`part:${part.id}`}
     onClick={(e) => {
       e.stopPropagation();
-      on.onClick(part, e.shiftKey || e.metaKey);
+      on.onClick(part, e.shiftKey || hasPrimaryModifier(e));
     }}
     onDoubleClick={() => on.onEdit(part.id)}
     onContextMenu={(e) => {
@@ -153,7 +154,7 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
     data-layer-row={`group:${id}`}
     onClick={(e) => {
       e.stopPropagation();
-      on.onSelect(memberIds, e.shiftKey || e.metaKey);
+      on.onSelect(memberIds, e.shiftKey || hasPrimaryModifier(e));
     }}
     onDoubleClick={() => on.onEdit(id)}
     onContextMenu={(e) => {

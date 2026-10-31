@@ -66,6 +66,10 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
       if (e.shiftKey) redo();
       else undo();
     },
+    y: () => {
+      ui.markKeyEdit();
+      redo();
+    },
     g: (e) => (e.shiftKey ? edits.ungroup() : edits.group()),
     a: () => {
       ui.markKeyEdit();

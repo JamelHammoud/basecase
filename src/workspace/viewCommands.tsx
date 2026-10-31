@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Command } from '../components/CommandPalette';
 import {
   CrosshairIcon,
@@ -17,6 +18,8 @@ import {
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { CATEGORY_LABELS, PART_CATALOG, catalogKey, hardwareVariant } from '../data/catalog';
 import { HARDWARE_BY_TYPE, hardwareName } from '../data/hardware';
+import type { TrackpadGestureMode } from '../types/robotics';
+import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
 import type { CommandInputs } from './sceneCommands';
 
 const ic = 'w-4 h-4';
@@ -78,9 +81,15 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
   ];
 }
 
+const SCROLL_COMMANDS: Record<TrackpadGestureMode, { label: string; icon: ReactNode }> = {
+  'orbit-scroll': { label: 'Scroll to Orbit', icon: <RotateIcon className={ic} /> },
+  'pan-scroll': { label: 'Scroll to Pan', icon: <HandIcon className={ic} /> },
+  'zoom-scroll': { label: 'Scroll to Zoom', icon: <SearchIcon className={ic} /> },
+};
+
 function displayCommands({ core, ui }: CommandInputs): Command[] {
   const { studio } = core;
-  const orbit = studio.trackpadMode === 'orbit-scroll';
+  const next = SCROLL_COMMANDS[NEXT_SCROLL_MODE[studio.trackpadMode]];
 
   return [
     {
@@ -101,9 +110,9 @@ function displayCommands({ core, ui }: CommandInputs): Command[] {
     {
       id: 'toggle-trackpad',
       group: 'View',
-      label: orbit ? 'Scroll to Pan' : 'Scroll to Orbit',
-      icon: orbit ? <HandIcon className={ic} /> : <RotateIcon className={ic} />,
-      keywords: 'trackpad two-finger gesture',
+      label: next.label,
+      icon: next.icon,
+      keywords: 'trackpad two-finger gesture mouse wheel',
       run: ui.toggleTrackpad,
     },
     {

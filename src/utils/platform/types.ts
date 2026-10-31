@@ -47,6 +47,7 @@ export interface LiveRun {
 
 export interface TrainerStatus {
   uv: boolean;
+  uvInstall?: string;
   ready: boolean;
   running: string[];
 }
@@ -108,6 +109,7 @@ declare global {
     electronAPI?: {
       isElectron: boolean;
       platform: string;
+      popupAppMenu?: (at: { x: number; y: number }) => Promise<void>;
       isFullScreen: () => Promise<boolean>;
       onFullScreenChange: (callback: (fullScreen: boolean) => void) => () => void;
       updateState: () => Promise<AppUpdateState>;

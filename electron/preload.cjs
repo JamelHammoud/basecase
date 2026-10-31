@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown print call')),
   setMenuState: (state) => ipcRenderer.send('menu:state', state),
+  popupAppMenu: (at) => ipcRenderer.invoke('menu:popup', at),
   onMenuCommand: (callback) => {
     const handler = (_event, id) => callback(id);
 

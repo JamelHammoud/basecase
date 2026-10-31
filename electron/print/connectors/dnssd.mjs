@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { queryMdns, servicesFrom } from './mdns.mjs';
 import { delay } from './shared.mjs';
 
 const SERVICES = [
@@ -70,8 +71,16 @@ function browse({ type, kind, found, children }) {
   );
 }
 
+async function discoverMdns(timeoutMs) {
+  const records = await queryMdns({ types: SERVICES.map(([type]) => type), timeoutMs });
+
+  return SERVICES.flatMap(([type, kind]) =>
+    servicesFrom(records, type, kind).map((s) => ({ name: s.name, host: hostWithPort(s), kind })),
+  );
+}
+
 export async function discoverDnsSd({ timeoutMs, platform = process.platform }) {
-  if (platform !== 'darwin') return [];
+  if (platform !== 'darwin') return discoverMdns(timeoutMs);
 
   const children = [];
   const found = new Map();

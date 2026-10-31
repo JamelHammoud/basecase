@@ -4,6 +4,7 @@ import type { GuidePages } from '../../guide/viewer/guidePages';
 import type { BuildGuideRecord } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
 import { timeAgo } from '../../utils/timeAgo';
+import { REVEAL_LABEL } from '../../utils/os';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
 import { plural } from './format';
 import { GuideCoverPage } from './GuideCoverPage';
@@ -135,7 +136,7 @@ export const GuideSection: React.FC<GuideSectionProps> = ({ guide, sceneName, ca
   const { record, progress } = guide;
   const reveal =
     record && !progress && platformBridge.isElectron() ? (
-      <IconButton size="xs" title="Show in Finder" icon={<FolderOpenIcon className="w-4 h-4" />} onClick={guide.reveal} />
+      <IconButton size="xs" title={REVEAL_LABEL} icon={<FolderOpenIcon className="w-4 h-4" />} onClick={guide.reveal} />
     ) : undefined;
 
   return (

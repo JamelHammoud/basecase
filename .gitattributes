@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.glb binary
+*.png binary
+*.webp binary
+*.jpg binary
+*.icns binary
+*.ico binary
+*.car binary
+*.node binary
+*.wasm binary

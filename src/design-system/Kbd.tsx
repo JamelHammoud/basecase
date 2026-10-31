@@ -1,4 +1,5 @@
 import React from 'react';
+import { platformKeys } from './platformKeys';
 
 export interface KbdProps {
   children: React.ReactNode;
@@ -6,7 +7,7 @@ export interface KbdProps {
 }
 
 export const Kbd: React.FC<KbdProps> = ({ children, className = '' }) => {
-  const keys = typeof children === 'string' ? splitKeys(children) : [children];
+  const keys = typeof children === 'string' ? platformKeys(splitKeys(children)) : [children];
 
   return (
     <span className={`inline-flex items-center gap-0.5 ${className}`}>

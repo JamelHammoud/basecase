@@ -1,6 +1,7 @@
 import type { Preferences } from '../SceneWorkspace';
 import type { MeasureUnit } from '../types/robotics';
 import { LAYOUT } from '../design-system';
+import { IS_MAC } from '../utils/os';
 
 export interface PanelWidths {
   left: number;
@@ -10,7 +11,7 @@ export interface PanelWidths {
 export const DEFAULT_PREFERENCES: Preferences = {
   snapStepMm: 5,
   snapAngleDeg: 15,
-  trackpadMode: 'orbit-scroll',
+  trackpadMode: IS_MAC ? 'orbit-scroll' : 'zoom-scroll',
   showGrid: true,
   sculptEnabled: false,
   measureUnit: 'metric',

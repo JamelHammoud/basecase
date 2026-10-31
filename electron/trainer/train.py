@@ -550,12 +550,16 @@ class Ppo:
         return rews
 
 
+def should_stop(run):
+    return run.stop["now"] or os.path.exists(os.path.join(os.path.dirname(run.policy_path), "stop"))
+
+
 def train_loop(ppo, run):
     env = ppo.env
     start = time.time()
     last_save = start
     it = 0
-    while not run.stop["now"] and time.time() - start < run.budget:
+    while not should_stop(run) and time.time() - start < run.budget:
         rews = ppo.iterate()
         it += 1
         elapsed = time.time() - start

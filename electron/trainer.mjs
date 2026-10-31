@@ -2,9 +2,22 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findUv } from './uv.mjs';
+import { IS_WINDOWS } from './executables.mjs';
+import { findUv, UV_INSTALL } from './uv.mjs';
 
 const TRAINER_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'trainer');
+
+function askToStop({ child, dir }) {
+  try {
+    fs.writeFileSync(path.join(dir, 'stop'), '');
+  } catch {
+    child.kill();
+
+    return;
+  }
+
+  if (!IS_WINDOWS) child.kill('SIGTERM');
+}
 
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
@@ -21,7 +34,12 @@ export class Trainer {
   status() {
     const uv = findUv();
 
-    return { uv: !!uv, ready: fs.existsSync(path.join(this.envDir, 'pyvenv.cfg')), running: [...this.jobs.keys()] };
+    return {
+      uv: !!uv,
+      uvInstall: UV_INSTALL,
+      ready: fs.existsSync(path.join(this.envDir, 'pyvenv.cfg')),
+      running: [...this.jobs.keys()],
+    };
   }
 
   start({ workspaceId = 'main', xml, job }) {
@@ -29,7 +47,7 @@ export class Trainer {
 
     const uv = findUv();
 
-    if (!uv) throw new Error('Training needs uv. Install it with: curl -LsSf https://astral.sh/uv/install.sh | sh');
+    if (!uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
 
     const id = newId();
     const dir = path.join(this.jobsDir, id);
@@ -123,7 +141,7 @@ export class Trainer {
   stop(workspaceId = 'main') {
     const job = this.jobs.get(workspaceId);
 
-    job?.child.kill('SIGTERM');
+    if (job) askToStop(job);
 
     return { stopping: !!job };
   }
@@ -169,6 +187,9 @@ export class Trainer {
   }
 
   dispose() {
-    for (const { child } of this.jobs.values()) child.kill('SIGTERM');
+    for (const job of this.jobs.values()) {
+      askToStop(job);
+      job.child.kill();
+    }
   }
 }

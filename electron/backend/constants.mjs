@@ -27,9 +27,16 @@ export const TOOL_USE_META = 'claudecode/toolUseId';
 export const safeWorkspace = (id) =>
   String(id || DEFAULT_WORKSPACE).replace(/[^a-zA-Z0-9_-]/g, '') || DEFAULT_WORKSPACE;
 
-export const safeFileId = (id) => String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+const WINDOWS_DEVICE_NAME = /^(con|prn|aux|nul|com\d|lpt\d)$/i;
 
-export const isSafeFileId = (id) => typeof id === 'string' && /^[\w-]{1,128}$/.test(id);
+export const safeFileId = (id) => {
+  const clean = String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+
+  return WINDOWS_DEVICE_NAME.test(clean) ? `_${clean}` : clean;
+};
+
+export const isSafeFileId = (id) =>
+  typeof id === 'string' && /^[\w-]{1,128}$/.test(id) && !WINDOWS_DEVICE_NAME.test(id);
 
 export function checkedFileId(id) {
   if (!isSafeFileId(id)) throw new Error(`Not a valid id: ${String(id).slice(0, 40)}`);

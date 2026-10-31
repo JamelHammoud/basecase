@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { app, BrowserWindow, ipcMain as electronIpc, nativeTheme, safeStorage, session, shell } from 'electron';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
-import { installAppMenu, updateAppMenuState } from './app-menu.mjs';
+import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs';
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
@@ -59,17 +59,30 @@ const updates = new Updates({
   log: path.join(app.getPath('userData'), 'updates.log'),
 });
 
+const MAC_FRAME = {
+  backgroundColor: '#00000000',
+  vibrancy: 'sidebar',
+  visualEffectState: 'active',
+  titleBarStyle: 'hiddenInset',
+  trafficLightPosition: { x: 19, y: 15 },
+};
+
+const WINDOWS_FRAME = {
+  backgroundColor: '#121212',
+  titleBarStyle: 'hidden',
+  titleBarOverlay: { color: '#121212', symbolColor: '#e6e6e6', height: 44 },
+  autoHideMenuBar: true,
+};
+
+const windowFrame = () => (process.platform === 'darwin' ? MAC_FRAME : WINDOWS_FRAME);
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1480,
     height: 920,
     minWidth: 1240,
     minHeight: 720,
-    backgroundColor: '#00000000',
-    vibrancy: 'sidebar',
-    visualEffectState: 'active',
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 19, y: 15 },
+    ...windowFrame(),
     title: 'Basecase',
     show: false,
     webPreferences: {
@@ -155,6 +168,7 @@ ipcMain.handle('chat:delete', (_e, id) => backend.deleteConversation(id));
 ipcMain.handle('acp:new-conversation', (_e, workspaceId) => backend.newAcpConversation(workspaceId));
 ipcMain.handle('window:is-fullscreen', (e) => BrowserWindow.fromWebContents(e.sender)?.isFullScreen() ?? false);
 ipcMain.on('menu:state', (_e, state) => updateAppMenuState(state));
+ipcMain.handle('menu:popup', (e, at) => popupAppMenu(BrowserWindow.fromWebContents(e.sender), at));
 ipcMain.handle('agent:respond', (_e, payload) => backend.resolveAgentRequest(payload));
 ipcMain.handle('update:state', () => updates.current());
 ipcMain.handle('update:install', () => updates.install());

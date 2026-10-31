@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { IS_MAC } from '../utils/os';
 
 const TRACKPAD_TAP_GRACE_MS = 400;
 const MENU_MOVE_TOLERANCE = 5;
@@ -20,7 +21,7 @@ interface MenuPress {
   released: boolean;
 }
 
-const isMenuPress = (e: React.PointerEvent) => e.button === 2 || (e.button === 0 && e.ctrlKey);
+const isMenuPress = (e: React.PointerEvent) => e.button === 2 || (IS_MAC && e.button === 0 && e.ctrlKey);
 
 const movedFrom = (press: MenuPress, e: { clientX: number; clientY: number }) =>
   Math.hypot(e.clientX - press.x, e.clientY - press.y) > MENU_MOVE_TOLERANCE;

@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
+import { findOnPath } from './executables.mjs';
 
 const MARK = '__BASECASE_PATH__';
 const SHELL_TIMEOUT_MS = 5000;
@@ -17,32 +17,22 @@ function loginShellPath(shell) {
   });
 }
 
-function isExecutable(file) {
-  try {
-    fs.accessSync(file, fs.constants.X_OK);
-
-    return fs.statSync(file).isFile();
-  } catch {
-    return false;
-  }
-}
-
 export function mergePaths(...lists) {
   const dirs = lists.flatMap((list) => list.split(path.delimiter)).filter(Boolean);
 
   return Array.from(new Set(dirs)).join(path.delimiter);
 }
 
-export function findOnPath(name, pathValue) {
-  const dirs = pathValue.split(path.delimiter).filter(Boolean);
+export async function adoptShellPath({
+  shell = process.env.SHELL || '/bin/zsh',
+  env = process.env,
+  platform = process.platform,
+} = {}) {
+  if (platform !== 'win32') {
+    const fromShell = await loginShellPath(shell);
 
-  return dirs.map((dir) => path.join(dir, name)).find(isExecutable) ?? null;
-}
+    env.PATH = mergePaths(fromShell, env.PATH ?? '', COMMON_DIRS.join(path.delimiter));
+  }
 
-export async function adoptShellPath({ shell = process.env.SHELL || '/bin/zsh', env = process.env } = {}) {
-  const fromShell = await loginShellPath(shell);
-
-  env.PATH = mergePaths(fromShell, env.PATH ?? '', COMMON_DIRS.join(path.delimiter));
-
-  if (!findOnPath('node', env.PATH)) env.BASECASE_NODE = process.execPath;
+  if (!findOnPath('node', env.PATH ?? '', platform)) env.BASECASE_NODE = process.execPath;
 }

@@ -4,6 +4,8 @@ import { MAX_DIST, MAX_POLAR, MIN_DIST, MIN_POLAR, type ViewportProps } from './
 
 const ZOOM_SPEED = 0.0085;
 const ROTATE_SPEED = 0.0055;
+const WHEEL_ZOOM_SPEED = 0.0015;
+const WHEEL_STEP_CAP = 200;
 
 export type CameraRig = Pick<Stage, 'camera' | 'orbit'>;
 
@@ -11,6 +13,7 @@ export interface WheelOptions {
   minDistance: number;
   maxDistance: number;
   panScroll: boolean;
+  zoomScroll?: boolean;
 }
 
 const VIEWPORT_LIMITS = { minDistance: MIN_DIST, maxDistance: MAX_DIST };
@@ -66,7 +69,17 @@ export function listenToWheel(rig: CameraRig, canvas: HTMLElement, options: () =
       return;
     }
 
-    if (e.shiftKey || options().panScroll) pan(rig, e);
+    const scroll = options();
+
+    if (scroll.zoomScroll && !e.shiftKey) {
+      const step = Math.max(-WHEEL_STEP_CAP, Math.min(WHEEL_STEP_CAP, e.deltaY));
+
+      zoomCamera(rig, Math.exp(step * WHEEL_ZOOM_SPEED), scroll);
+
+      return;
+    }
+
+    if (e.shiftKey || scroll.panScroll) pan(rig, e);
     else orbitBy(rig, e);
   };
 
@@ -79,4 +92,5 @@ export const installWheel = (stage: Stage, props: () => ViewportProps) =>
   listenToWheel(stage, stage.renderer.domElement, () => ({
     ...VIEWPORT_LIMITS,
     panScroll: props().trackpadMode === 'pan-scroll',
+    zoomScroll: props().trackpadMode === 'zoom-scroll',
   }));

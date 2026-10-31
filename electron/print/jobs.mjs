@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { safeFileId } from '../backend/constants.mjs';
@@ -11,10 +11,33 @@ export const fileStem = (name) =>
     .replace(/^-|-$/g, '')
     .slice(0, 60) || 'robot';
 
-export const openWith = (args) =>
+const couldntOpen = (error) => new Error(`Couldn’t open it: ${error.message}`);
+
+const run = (command, args) =>
   new Promise((resolve, reject) => {
-    execFile('open', args, (error) => (error ? reject(new Error(`Couldn’t open it: ${error.message}`)) : resolve()));
+    execFile(command, args, (error) => (error ? reject(couldntOpen(error)) : resolve()));
   });
+
+const launch = (binary, args) =>
+  new Promise((resolve, reject) => {
+    const child = spawn(binary, args, { detached: true, stdio: 'ignore' });
+
+    child.once('error', (error) => reject(couldntOpen(error)));
+    child.once('spawn', () => {
+      child.unref();
+      resolve();
+    });
+  });
+
+export function openFile(file, app = null, platform = process.platform) {
+  if (platform === 'darwin') return run('open', app ? ['-a', app.path, file] : [file]);
+
+  if (platform === 'win32' && app) return launch(app.binary, [file]);
+
+  if (platform === 'win32') return run('rundll32', ['url.dll,FileProtocolHandler', file]);
+
+  return app ? launch(app.binary, [file]) : run('xdg-open', [file]);
+}
 
 const SLICER_ORDER = { BBL: ['bambu', 'orca'] };
 
@@ -102,7 +125,7 @@ export async function openJob({ dir, job }, { material, slicer: wanted }) {
   const slicer = slicerFor(job.printer?.vendor, wanted);
 
   if (!slicer || !job.printer?.machine) {
-    await openWith([group.layout]);
+    await openFile(group.layout);
 
     return { opened: 'default', file: group.layout };
   }
@@ -117,7 +140,7 @@ export async function openJob({ dir, job }, { material, slicer: wanted }) {
     output: project,
     slice: false,
   });
-  await openWith(['-a', slicer.path, path.join(dir, project)]);
+  await openFile(path.join(dir, project), slicer);
 
   return { opened: slicer.name, file: path.join(dir, project) };
 }

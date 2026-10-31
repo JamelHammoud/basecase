@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import { ExportMenu } from '../components/ExportMenu';
 import { DRAG_REGION, IconButton, NO_DRAG_REGION, PanelRightIcon, RedoIcon, UndoIcon } from '../design-system';
+import { useCaptionInset } from '../utils/useCaptionInset';
 import type { ExportActions } from './useExportActions';
 
 interface TitleBarActionsProps {
@@ -24,12 +25,14 @@ export function TitleBarActions({
   isRightOpen,
   onToggleRight,
 }: TitleBarActionsProps) {
+  const captionInset = useCaptionInset();
+
   return (
     <div className="absolute top-0 inset-x-0 h-[44px]" style={DRAG_REGION}>
       <div
         ref={islandRef}
-        className="absolute right-[20px] top-[8px] h-[28px] flex items-center gap-2"
-        style={NO_DRAG_REGION}
+        className="absolute top-[8px] h-[28px] flex items-center gap-2"
+        style={{ ...NO_DRAG_REGION, right: 20 + captionInset }}
       >
         <div className="flex items-center gap-1 mr-[4px]">
           <IconButton

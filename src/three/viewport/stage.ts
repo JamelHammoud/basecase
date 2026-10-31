@@ -120,6 +120,7 @@ const createOrbit = (camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement)
   orbit.enableDamping = true;
   orbit.dampingFactor = 0.12;
   orbit.enableZoom = false;
+  orbit.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
   orbit.minDistance = MIN_DIST;
   orbit.maxDistance = MAX_DIST;
   orbit.minPolarAngle = MIN_POLAR;

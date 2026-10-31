@@ -10,6 +10,7 @@ import {
   CylinderIcon,
   ShapeIcon,
   SparklesIcon,
+  modifierName,
 } from '../../design-system';
 import type { SculptBrushKind, SculptSettings } from '../../types/robotics';
 
@@ -91,7 +92,7 @@ export const SculptPanel: React.FC<{
         checked={sculptSettings.symmetryZ}
         onChange={(v) => onUpdateSculptSettings({ symmetryZ: v })}
       />
-      <p className="text-[12.5px] text-white/45">Drag on a part to sculpt. Hold ⌥ to invert.</p>
+      <p className="text-[12.5px] text-white/45">{`Drag on a part to sculpt. Hold ${modifierName('⌥')} to invert.`}</p>
       {hasSelection && (
         <Button size="md" fullWidth icon={<SparklesIcon className="w-4 h-4" />} onClick={onSubdivideSelectedClay}>
           Subdivide

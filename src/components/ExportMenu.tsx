@@ -10,6 +10,7 @@ import {
   PrinterIcon,
   ShareIcon,
 } from '../design-system';
+import { SHARE_LABEL } from '../utils/os';
 
 interface ExportMenuProps {
   canExportStl: boolean;
@@ -69,7 +70,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         />
         <MenuItem
           icon={<ShareIcon className="w-4 h-4" />}
-          label="AirDrop"
+          label={SHARE_LABEL}
           disabled={!canExportStl}
           onSelect={run(onAirDrop)}
         />

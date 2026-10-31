@@ -7,6 +7,7 @@ import { searchCatalog } from './parts/catalogSearch';
 import { Home, SearchResults, TileGrid } from './parts/lists';
 import { HardwarePage, ItemPage, PageFooter } from './parts/pages';
 import { CATEGORIES, type Category, type View, searchScope } from './parts/partsViews';
+import { hasPrimaryModifier } from '../utils/os';
 
 const lastSpecByFamily = new Map<string, HardwareSpec>();
 
@@ -103,7 +104,7 @@ export const PartsPanel: React.FC<{
   const onEnter = (e: React.KeyboardEvent) => {
     e.preventDefault();
 
-    if (e.metaKey) onAdd(results[active]);
+    if (hasPrimaryModifier(e)) onAdd(results[active]);
     else openItem(results[active]);
   };
   const onSearchKey = (e: React.KeyboardEvent) => {

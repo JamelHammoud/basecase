@@ -9,7 +9,7 @@
     "start": "vite build && node tools/electron-dev.mjs . --bundle",
     "dev": "vite --port 5173",
     "electron": "node tools/electron-dev.mjs .",
-    "electron:dev": "concurrently -k \"BASECASE_HMR_PORT=5173 vite --port 5173 --strictPort\" \"wait-on http://localhost:5173 && node tools/electron-dev.mjs .\"",
+    "electron:dev": "node tools/electron-hmr.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "check": "npm run check:tracked && npm run format:check && npm run lint && npm run lint:py && npm run typecheck && npm test",

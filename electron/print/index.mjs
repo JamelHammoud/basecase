@@ -1,14 +1,28 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { AgentKeys } from '../backend/agentKeys.mjs';
 import { connectorFor, discoverPrinters } from './connectors/index.mjs';
-import { jobDir, openJob, openWith, readJson, slicedPlate, sliceJob, writeJob } from './jobs.mjs';
+import { jobDir, openFile, openJob, readJson, slicedPlate, sliceJob, writeJob } from './jobs.mjs';
 import { PrinterStore } from './printers.mjs';
 import { extractPlateGcode } from './slice.mjs';
 import { detectSlicers, DOWNLOAD_PAGES, findSlicerApp } from './slicers.mjs';
 
 const BAMBU_CONNECT = ['/Applications/Bambu Connect.app', path.join(os.homedir(), 'Applications', 'Bambu Connect.app')];
+
+function hasBambuConnect() {
+  if (process.platform !== 'win32') return BAMBU_CONNECT.some((p) => fs.existsSync(p));
+
+  try {
+    execFileSync('reg', ['query', String.raw`HKCR\bambu-connect`], { stdio: 'ignore', timeout: 2000 });
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const throughStudio = (printer) => !printer.connection || printer.connection.kind === 'bambu-studio';
 
 export class Printing {
@@ -27,7 +41,7 @@ export class Printing {
     return {
       slicers: detectSlicers().map(({ kind, name, version }) => ({ kind, name, version })),
       downloads: DOWNLOAD_PAGES,
-      bambuConnect: BAMBU_CONNECT.some((p) => fs.existsSync(p)),
+      bambuConnect: hasBambuConnect(),
     };
   }
 
@@ -97,7 +111,7 @@ export class Printing {
     if (throughStudio(printer)) {
       const app = findSlicerApp('bambu');
 
-      await openWith(app ? ['-a', app.path, file] : [file]);
+      await openFile(file, app);
 
       return { started: false, message: `Opened plate ${plate} in ${app ? 'Bambu Studio' : 'the slicer'}` };
     }
@@ -165,7 +179,7 @@ export class Printing {
   }
 
   async reveal(jobId) {
-    await openWith([jobDir(this.dir, jobId)]);
+    await openFile(jobDir(this.dir, jobId));
 
     return true;
   }
@@ -173,7 +187,7 @@ export class Printing {
   openLink(url) {
     if (!Object.values(DOWNLOAD_PAGES).includes(url)) return false;
 
-    return openWith([url]).then(() => true);
+    return openFile(url).then(() => true);
   }
 
   dispose() {

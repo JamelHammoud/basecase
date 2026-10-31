@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Basecase</title>
     <script>
-      if (window.electronAPI?.isElectron) document.documentElement.classList.add('is-electron');
+      if (window.electronAPI?.isElectron && window.electronAPI.platform === 'darwin')
+        document.documentElement.classList.add('is-electron');
     </script>
     <style>
       html,

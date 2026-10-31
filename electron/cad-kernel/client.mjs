@@ -28,7 +28,7 @@ function spawnKernel() {
     ? [
         '--permission',
         ...[path.join(root, 'node_modules'), path.join(root, 'vendor'), here].flatMap((dir) =>
-          Array.from(new Set([dir, realDir(dir)])).map((d) => `--allow-fs-read=${d}/*`),
+          Array.from(new Set([dir, realDir(dir)])).map((d) => `--allow-fs-read=${path.join(d, '*')}`),
         ),
       ]
     : [];

@@ -32,6 +32,7 @@ import { ROBOT_PRESETS } from '../utils/robotImport';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
+import { SHARE_LABEL } from '../utils/os';
 
 export interface CommandInputs {
   core: WorkspaceCore;
@@ -88,7 +89,7 @@ function fileCommands({ core, actions }: CommandInputs): Command[] {
     {
       id: 'airdrop',
       group: 'Scene',
-      label: 'AirDrop',
+      label: SHARE_LABEL,
       icon: <ShareIcon className={ic} />,
       keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
       run: () => void exports.airDrop(),

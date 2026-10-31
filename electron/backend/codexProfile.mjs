@@ -80,7 +80,32 @@ function linkAuth(home, ownHome) {
   } catch {}
 
   fs.rmSync(target, { force: true });
-  fs.symlinkSync(source, target);
+
+  try {
+    fs.symlinkSync(source, target);
+  } catch {
+    fs.copyFileSync(source, target);
+  }
+}
+
+const modified = (file) => fs.statSync(file, { throwIfNoEntry: false })?.mtimeMs ?? 0;
+
+function syncAuthCopy(home, ownHome) {
+  const theirs = path.join(home, 'auth.json');
+  const ours = path.join(ownHome, 'auth.json');
+
+  if (!fs.existsSync(theirs)) return;
+
+  if (!fs.existsSync(ours) || modified(theirs) > modified(ours)) fs.copyFileSync(theirs, ours);
+  else if (modified(ours) > modified(theirs)) fs.copyFileSync(ours, theirs);
+}
+
+function shareAuth(home, ownHome) {
+  const target = path.join(ownHome, 'auth.json');
+  const copied = fs.existsSync(target) && !fs.lstatSync(target).isSymbolicLink();
+
+  if (copied) syncAuthCopy(home, ownHome);
+  else linkAuth(home, ownHome);
 }
 
 export function codexEnv({ offline, env, configDir }) {
@@ -89,7 +114,7 @@ export function codexEnv({ offline, env, configDir }) {
 
   fs.mkdirSync(ownHome, { recursive: true });
   fs.writeFileSync(path.join(ownHome, 'config.toml'), codexConfigToml({ offline, userConfig: readUserConfig(home) }));
-  linkAuth(home, ownHome);
+  shareAuth(home, ownHome);
 
   return { INITIAL_AGENT_MODE: 'read-only', CODEX_HOME: ownHome };
 }

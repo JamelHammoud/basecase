@@ -23,11 +23,21 @@ const CAMERA_VIEWS = [
 let state = { ...DEFAULT_STATE };
 let getWindow = () => null;
 let checkForUpdates = null;
+let betaUpdates = null;
 
-export function installAppMenu(windowGetter, { onCheckForUpdates = null } = {}) {
+export function installAppMenu(windowGetter, { onCheckForUpdates = null, betaUpdates: beta = null } = {}) {
   getWindow = windowGetter;
   checkForUpdates = onCheckForUpdates;
+  betaUpdates = beta;
   rebuild();
+}
+
+export function popupAppMenu(window, at) {
+  const menu = Menu.getApplicationMenu();
+
+  if (!menu || !window || window.isDestroyed()) return;
+
+  menu.popup({ window, x: Math.round(Number(at?.x) || 0), y: Math.round(Number(at?.y) || 0) });
 }
 
 export function updateAppMenuState(next) {
@@ -57,12 +67,28 @@ function item(label, id, accelerator, extra = {}) {
 
 const separator = { type: 'separator' };
 
+function updateItems() {
+  const check = checkForUpdates ? [{ label: 'Check for Updates', click: () => checkForUpdates() }] : [];
+  const beta = betaUpdates
+    ? [
+        {
+          label: 'Get Beta Updates',
+          type: 'checkbox',
+          checked: betaUpdates.get(),
+          click: (menuItem) => betaUpdates.set(menuItem.checked),
+        },
+      ]
+    : [];
+
+  return [...check, ...beta];
+}
+
 function appMenu() {
   return {
     label: app.name,
     submenu: [
       { role: 'about' },
-      ...(checkForUpdates ? [{ label: 'Check for Updates', click: () => checkForUpdates() }] : []),
+      ...updateItems(),
       separator,
       { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: send('settings') },
       separator,
@@ -86,7 +112,7 @@ function fileMenu(isMac) {
       item('Reopen Closed Scene', 'reopen-tab', 'Shift+CmdOrCtrl+T', { enabled: state.canReopenTab }),
       separator,
       item('Export STL', 'export-stl', undefined, { enabled: state.hasParts }),
-      item('AirDrop', 'airdrop', undefined, { enabled: state.hasParts }),
+      ...(isMac ? [item('AirDrop', 'airdrop', undefined, { enabled: state.hasParts })] : []),
       item('Print', 'print', 'CmdOrCtrl+P', { enabled: state.hasParts }),
       separator,
       item('Add Reference Image', 'add-reference-image'),
@@ -121,7 +147,13 @@ function editMenu(isMac) {
   };
 }
 
-function viewMenu() {
+const SCROLL_MODES = [
+  ['Orbit', 'orbit-scroll'],
+  ['Pan', 'pan-scroll'],
+  ['Zoom', 'zoom-scroll'],
+];
+
+function viewMenu(isMac) {
   return {
     label: 'View',
     submenu: [
@@ -137,17 +169,10 @@ function viewMenu() {
         ],
       },
       {
-        label: 'Two-Finger Scroll',
-        submenu: [
-          item('Orbit', 'trackpad:orbit-scroll', undefined, {
-            type: 'radio',
-            checked: state.trackpadMode === 'orbit-scroll',
-          }),
-          item('Pan', 'trackpad:pan-scroll', undefined, {
-            type: 'radio',
-            checked: state.trackpadMode === 'pan-scroll',
-          }),
-        ],
+        label: isMac ? 'Two-Finger Scroll' : 'Scroll',
+        submenu: SCROLL_MODES.map(([label, mode]) =>
+          item(label, `trackpad:${mode}`, undefined, { type: 'radio', checked: state.trackpadMode === mode }),
+        ),
       },
       separator,
       item('Show Grid', 'toggle-grid', undefined, { type: 'checkbox', checked: state.grid }),
@@ -170,7 +195,7 @@ function windowMenu(isMac) {
     role: 'windowMenu',
     submenu: [
       { role: 'minimize' },
-      { role: 'zoom' },
+      { role: isMac ? 'zoom' : 'togglefullscreen' },
       separator,
       item('Show Previous Scene', 'prev-tab', 'Shift+CmdOrCtrl+[', { enabled: state.tabs.length > 1 }),
       item('Show Next Scene', 'next-tab', 'Shift+CmdOrCtrl+]', { enabled: state.tabs.length > 1 }),
@@ -186,18 +211,24 @@ function windowMenu(isMac) {
   };
 }
 
+function helpMenu(isMac) {
+  const extras = [separator, ...updateItems(), { role: 'about', label: 'About Basecase' }];
+
+  return {
+    role: 'help',
+    submenu: [item('Keyboard Shortcuts', 'shortcuts', '?'), ...(isMac ? [] : extras)],
+  };
+}
+
 function rebuild() {
   const isMac = process.platform === 'darwin';
   const template = [
     ...(isMac ? [appMenu()] : []),
     fileMenu(isMac),
     editMenu(isMac),
-    viewMenu(),
+    viewMenu(isMac),
     windowMenu(isMac),
-    {
-      role: 'help',
-      submenu: [item('Keyboard Shortcuts', 'shortcuts', '?')],
-    },
+    helpMenu(isMac),
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));

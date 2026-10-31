@@ -2,6 +2,7 @@ import { useRef, useState, type RefObject } from 'react';
 import type { LeftTab } from '../components/LeftSidebar';
 import { LAYOUT } from '../design-system';
 import type { CameraPreset } from '../types/robotics';
+import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 const FOCUS_TRIES = 10;
@@ -58,7 +59,7 @@ function usePanelToggles({ studio, tool }: WorkspaceCore) {
     toggleRight: () => setIsRightOpen((v) => !v),
     toggleGrid: () => setShowGrid((v) => !v),
     toggleReferenceImages: () => setShowReferenceImages((v) => !v),
-    toggleTrackpad: () => setTrackpadMode((m) => (m === 'orbit-scroll' ? 'pan-scroll' : 'orbit-scroll')),
+    toggleTrackpad: () => setTrackpadMode((m) => NEXT_SCROLL_MODE[m]),
     pickLeftView: (view: LeftTab) => {
       if (isLeftOpen && leftTab === view) {
         setIsLeftOpen(false);

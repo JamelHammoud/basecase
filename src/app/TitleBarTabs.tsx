@@ -1,11 +1,24 @@
+import type React from 'react';
 import { SceneTabs, TAB_HEIGHT, TAB_TOP } from '../components/SceneTabs';
 import { ScenesMenu, type ScenesMenuProps } from '../components/ScenesMenu';
-import { IconButton, LAYOUT, NO_DRAG_REGION, PanelLeftIcon } from '../design-system';
+import { BasecaseLogo, IconButton, LAYOUT, MenuIcon, NO_DRAG_REGION, PanelLeftIcon } from '../design-system';
+import { IS_WINDOWS } from '../utils/os';
+import { useCaptionInset } from '../utils/useCaptionInset';
 import { useStoplights } from '../utils/useStoplights';
 import { idsAfter, idsExcept, sceneTabsOf, type Metas, type TabEntry } from './tabModel';
 
 const TOGGLE_LEFT = LAYOUT.lightsX + LAYOUT.lightsWidth + 8;
 const TOGGLE_LEFT_BARE = 26 - 14;
+const LEADING_STEP = 28 + 4;
+const hasAppMenuButton = IS_WINDOWS && Boolean(window.electronAPI?.popupAppMenu);
+const hasWebLogo = !window.electronAPI?.isElectron;
+const hasLeadingSlot = hasAppMenuButton || hasWebLogo;
+
+function openAppMenu(e: React.MouseEvent<HTMLElement>) {
+  const box = e.currentTarget.getBoundingClientRect();
+
+  void window.electronAPI?.popupAppMenu?.({ x: box.left, y: box.bottom + 4 });
+}
 
 export interface TitleBarTabActions {
   selectTab: (id: string) => void;
@@ -47,10 +60,11 @@ export function TitleBarTabs({
   scenes,
 }: TitleBarTabsProps) {
   const hasStoplights = useStoplights();
+  const captionInset = useCaptionInset();
   const toggleLeft = hasStoplights ? TOGGLE_LEFT : TOGGLE_LEFT_BARE;
-  const rowLeft = toggleLeft + 28 + 4 + 28 + 8;
+  const rowLeft = toggleLeft + (hasLeadingSlot ? LEADING_STEP : 0) + 28 + 4 + 28 + 8;
   const slide = resizing ? '' : 'transition-[left,right] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]';
-  const rowRight = LAYOUT.sheetInset + LAYOUT.cardPadding + rightIslandWidth + 8;
+  const rowRight = LAYOUT.sheetInset + LAYOUT.cardPadding + captionInset + rightIslandWidth + 8;
 
   return (
     <>
@@ -58,6 +72,19 @@ export function TitleBarTabs({
         className={`absolute top-[8px] z-30 h-[28px] flex items-center gap-[4px] ${slide}`}
         style={{ ...NO_DRAG_REGION, left: toggleLeft }}
       >
+        {hasWebLogo && (
+          <span className="w-[28px] h-[28px] flex items-center justify-center text-white/90">
+            <BasecaseLogo className="w-[18px] h-[18px]" />
+          </span>
+        )}
+        {hasAppMenuButton && (
+          <IconButton
+            icon={<MenuIcon className="w-[18px] h-[18px]" />}
+            title="Menu"
+            aria-haspopup="menu"
+            onClick={openAppMenu}
+          />
+        )}
         <IconButton
           icon={<PanelLeftIcon className="w-[18px] h-[18px]" />}
           title={isLeftOpen ? 'Hide sidebar' : 'Show sidebar'}

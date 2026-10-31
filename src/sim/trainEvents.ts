@@ -39,7 +39,7 @@ export function trainingBlocker(robotKey: string | null, trainer: TrainerStatus 
   if (!robotKey) return NEEDS_LEGS;
 
   if (trainer && !trainer.uv)
-    return 'Training needs uv to set up Python. Install it with: curl -LsSf https://astral.sh/uv/install.sh | sh';
+    return `Training needs uv to set up Python. Install it with: ${trainer.uvInstall ?? 'curl -LsSf https://astral.sh/uv/install.sh | sh'}`;
 
   if (trainer && !trainer.ready) return 'First training installs Python, MuJoCo and PyTorch (about 1 GB).';
 

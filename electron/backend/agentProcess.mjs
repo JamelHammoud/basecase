@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { splitCommand } from '../executables.mjs';
 
 const isHostSessionKey = (key) =>
   key === 'CLAUDECODE' ||
@@ -44,7 +45,7 @@ export function anchorArgs(args, root) {
 }
 
 export function resolveCommand(command) {
-  const parts = command.trim().split(/\s+/);
+  const parts = splitCommand(command);
 
   if (parts[0] === 'node') parts[0] = nodeRuntime().command;
 

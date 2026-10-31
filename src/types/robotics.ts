@@ -360,7 +360,7 @@ export interface CatalogItem {
 
 export type TransformMode = 'translate' | 'rotate' | 'scale' | 'sculpt' | 'pose';
 
-export type TrackpadGestureMode = 'orbit-scroll' | 'pan-scroll';
+export type TrackpadGestureMode = 'orbit-scroll' | 'pan-scroll' | 'zoom-scroll';
 
 export type MeasureUnit = 'metric' | 'imperial';
 

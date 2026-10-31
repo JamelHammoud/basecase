@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AcpStatusInfo, MeasureUnit, TrackpadGestureMode } from '../types/robotics';
 import { AGENT_PROFILES } from '../agent/agentKinds';
+import { IS_MAC } from '../utils/os';
 import {
   Button,
   IconButton,
   Kbd,
   MetaLine,
+  modifierName,
   NO_DRAG_REGION,
   NumberInput,
   SegmentedControl,
@@ -215,7 +217,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
             Move <Unit>mm</Unit>
           </>
         }
-        hint="Hold ⇧ while dragging to move freely"
+        hint={`Hold ${modifierName('⇧')} while dragging to move freely`}
       >
         <SegmentedControl
           className="w-[240px]"
@@ -224,7 +226,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
           options={MOVE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : v }))}
         />
       </Row>
-      <Row label="Rotate" hint="Hold ⇧ while dragging to rotate freely">
+      <Row label="Rotate" hint={`Hold ${modifierName('⇧')} while dragging to rotate freely`}>
         <SegmentedControl
           className="w-[240px]"
           value={String(p.snapAngleDeg)}
@@ -234,7 +236,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
       </Row>
     </Group>
     <Group title="Measure">
-      <Row label="Units" hint="Hold ⌥ to measure vertically">
+      <Row label="Units" hint={`Hold ${modifierName('⌥')} to measure vertically`}>
         <SegmentedControl<MeasureUnit>
           className="w-[240px]"
           value={p.measureUnit}
@@ -251,28 +253,28 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
   </>
 );
 
+const SCROLL_HINTS: Record<TrackpadGestureMode, string> = {
+  'orbit-scroll': `Hold ${modifierName('⇧')} while scrolling to pan. Pinch to zoom.`,
+  'pan-scroll': 'Drag the canvas to orbit. Pinch to zoom.',
+  'zoom-scroll': 'Drag the canvas to orbit. Right-drag or middle-drag to pan.',
+};
+
 const NavigationPane: React.FC<PaneProps> = (p) => (
   <>
-    <Group title="Trackpad">
-      <Row
-        label="Two-finger scroll"
-        hint={
-          p.trackpadMode === 'orbit-scroll'
-            ? 'Hold ⇧ while scrolling to pan. Pinch to zoom.'
-            : 'Drag the canvas to orbit. Pinch to zoom.'
-        }
-      >
+    <Group title={IS_MAC ? 'Trackpad' : 'Mouse and touchpad'}>
+      <Row label={IS_MAC ? 'Two-finger scroll' : 'Scroll'} hint={SCROLL_HINTS[p.trackpadMode]}>
         <SegmentedControl<TrackpadGestureMode>
-          className="w-[180px]"
+          className="w-[240px]"
           value={p.trackpadMode}
           onChange={p.onTrackpadMode}
           options={[
             { value: 'orbit-scroll', label: 'Orbit' },
             { value: 'pan-scroll', label: 'Pan' },
+            { value: 'zoom-scroll', label: 'Zoom' },
           ]}
         />
       </Row>
-      <Row label="Pan" hint="Works in either mode">
+      <Row label="Pan" hint="Works in every mode">
         <span className="flex items-center gap-[6px] text-[12.5px] text-white/45">
           <Kbd>Space</Kbd> drag
         </span>

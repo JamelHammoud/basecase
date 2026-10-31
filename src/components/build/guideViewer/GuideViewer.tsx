@@ -15,6 +15,8 @@ import {
   PlusIcon,
 } from '../../../design-system';
 import type { GuidePages } from '../../../guide/viewer/guidePages';
+import { REVEAL_LABEL } from '../../../utils/os';
+import { useCaptionInset } from '../../../utils/useCaptionInset';
 import { useGuideViewer } from './useGuideViewer';
 
 interface GuideViewerProps {
@@ -29,6 +31,7 @@ const hidden: React.CSSProperties = { opacity: 0 };
 
 export const GuideViewer: React.FC<GuideViewerProps> = ({ pages, title, onClosed, onReveal, onOpenPdf }) => {
   const viewer = useGuideViewer(pages, onClosed);
+  const captionInset = useCaptionInset();
   const { scrollerRef, columnRef, backdropRef, chromeRef } = viewer.refs;
 
   return createPortal(
@@ -58,8 +61,8 @@ export const GuideViewer: React.FC<GuideViewerProps> = ({ pages, title, onClosed
           tooltipSide="bottom"
           icon={<CloseIcon className="w-4 h-4" />}
           onClick={viewer.close}
-          className="absolute top-[8px] right-[20px] pointer-events-auto"
-          style={NO_DRAG_REGION}
+          className="absolute top-[8px] pointer-events-auto"
+          style={{ ...NO_DRAG_REGION, right: 20 + captionInset }}
         />
         <div className="absolute inset-x-0 bottom-[16px] flex justify-center">
           <FloatingIsland className="pointer-events-auto h-[40px]">
@@ -89,7 +92,7 @@ export const GuideViewer: React.FC<GuideViewerProps> = ({ pages, title, onClosed
             <IconButton size="sm" title="Zoom in" shortcut="+" tooltipSide="top" icon={<PlusIcon className="w-4 h-4" />} onClick={viewer.zoomIn} />
             {(onReveal || onOpenPdf) && <IslandDivider />}
             {onReveal && (
-              <IconButton size="sm" title="Show in Finder" tooltipSide="top" icon={<FolderOpenIcon className="w-4 h-4" />} onClick={onReveal} />
+              <IconButton size="sm" title={REVEAL_LABEL} tooltipSide="top" icon={<FolderOpenIcon className="w-4 h-4" />} onClick={onReveal} />
             )}
             {onOpenPdf && (
               <IconButton size="sm" title="Open PDF" tooltipSide="top" icon={<ExternalLinkIcon className="w-4 h-4" />} onClick={onOpenPdf} />

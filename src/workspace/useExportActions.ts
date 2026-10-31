@@ -5,6 +5,7 @@ import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
 import { fileSafe } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { IS_MAC } from '../utils/os';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -97,7 +98,7 @@ export function useExportActions({
     const name = `${fileSafe(scene.sceneName)}.usdz`;
 
     sharingRef.current = true;
-    showToast('Preparing AirDrop…', { tone: 'progress' });
+    showToast(IS_MAC ? 'Preparing AirDrop…' : 'Exporting USDZ…', { tone: 'progress' });
 
     try {
       await nextFrame();

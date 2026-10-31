@@ -49,9 +49,12 @@ const slug = (s) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-export function bambuStudioPrinter(
-  confFile = path.join(os.homedir(), 'Library', 'Application Support', 'BambuStudio', 'BambuStudio.conf'),
-) {
+const appDataDir = () =>
+  process.platform === 'win32'
+    ? (process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'))
+    : path.join(os.homedir(), 'Library', 'Application Support');
+
+export function bambuStudioPrinter(confFile = path.join(appDataDir(), 'BambuStudio', 'BambuStudio.conf')) {
   try {
     const machine = JSON.parse(fs.readFileSync(confFile, 'utf8'))?.presets?.machine;
     const match = /^(.*?) (\d+(?:\.\d+)?) nozzle$/.exec(String(machine ?? ''));

@@ -231,6 +231,13 @@ export const LIST_PRICES: Record<string, ListPrice> = {
     url: 'https://www.pishop.us/product/raspberry-pi-zero-2-w/',
     seen: '2026-10-29',
   },
+  'component:radxa-zero-3w': {
+    usd: 39.99,
+    per: 1,
+    store: 'Arace, Radxa’s own store (2 GB, header fitted)',
+    url: 'https://arace.tech/products/radxa-zero-3w',
+    seen: '2026-10-30',
+  },
   'component:raspberry-pi-4b': {
     usd: 100,
     per: 1,

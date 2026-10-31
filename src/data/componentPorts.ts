@@ -244,6 +244,11 @@ export const COMPONENT_PORTS: Record<string, Port[]> = {
   'raspberry-pi-5': board('mount', { center: [-11.27, 0, -0.85], span: [58, 49], faces: [-8.01, -6.73] }, M25_BOARD),
   'raspberry-pi-4b': board('mount', { center: [-12, 0, -1.2], span: [58, 49], faces: [-7.85, -6.25] }, M25_BOARD),
   'raspberry-pi-zero-2w': board('mount', { center: [0, 0, -0.72], span: [58, 23], faces: [-2.15, -1.15] }, M25_BOARD),
+  'radxa-zero-3w': board(
+    'mount',
+    { center: [0, 0, -0.78], span: [57.8, 22.9], faces: [-3.61, -2.01] },
+    { ...M25_BOARD, diameterMm: 2.8 },
+  ),
   'adafruit-bno085': board(
     'mount',
     { center: [0, 0, 0], span: [20.32, 17.78], faces: [-2.27, -0.69] },

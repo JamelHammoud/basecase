@@ -1097,5 +1097,10 @@
       "868686": [0.06, 0.06, 0.07]
     },
     "note": "Touch panel cover glass is CAD grey 868686 (shared only with SOT-23 packages); mapped to black like the real panel."
+  },
+  "radxa-zero-3w": {
+    "url": "https://dl.radxa.com/zero3/docs/hw/3w/radxa_zero_3w_3d_stp.zip",
+    "file": "cad/radxa-zero-3w/radxa_zero_3w_3d.stp",
+    "license": "not stated (Radxa download page, docs.radxa.com/en/zero/zero3/download); model includes the pre-soldered 40-pin header"
   }
 }

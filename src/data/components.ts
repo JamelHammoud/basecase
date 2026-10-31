@@ -2298,6 +2298,32 @@ export const COMPONENTS: ComponentInfo[] = [
     pairsWith: ['component:raspberry-pi-camera-3'],
     keywords: 'raspberry pi zero, pi zero 2, zero 2 w, rpi zero',
   },
+  {
+    id: 'radxa-zero-3w',
+    name: 'Radxa ZERO 3W',
+    manufacturer: 'Radxa',
+    mpn: 'RS107-D2E0H1W15 (2 GB, header fitted)',
+    group: 'Computers',
+    description: 'Quad-core RK3566 single-board computer in the Pi Zero’s 65 × 30 mm outline, with Wi-Fi 6 and USB 3.',
+    specs: [
+      ['CPU', 'RK3566, 4× Cortex-A55 @ 1.6 GHz'],
+      ['RAM', '2 GB LPDDR4'],
+      ['Wireless', ['Wi-Fi 6', 'Bluetooth 5.4']],
+      ['I/O', ['Micro-HDMI', 'USB-C 2.0 OTG', 'USB-C 3.2 host', '4-lane MIPI CSI', '40-pin header']],
+      ['Power', '5 V, 2 A via USB-C or GPIO pins 2 and 4'],
+    ],
+    mounting:
+      'PCB 65 × 30 × 1.6 mm. 4× Ø2.8 mm holes on a 57.8 × 22.9 mm pattern, 3.6 mm in from the edges. The 40-pin header is fitted on the component side, pins 8.5 mm above the PCB and 2.9 mm below. The USB-C ports overhang the other long edge by 1.5 mm; microSD on the underside.',
+    links: {
+      amazon: { url: 'https://www.amazon.com/dp/B0CZD16K7Q', kind: 'product' },
+      product: 'https://radxa.com/products/zeros/zero3w',
+      datasheet: 'https://dl.radxa.com/zero3/docs/hw/3w/radxa_zero_3w_product_brief.pdf',
+    },
+    model: { source: 'manufacturer', by: 'Radxa', url: 'https://docs.radxa.com/en/zero/zero3/download' },
+    color: '#1f6b3a',
+    pairsWith: ['hardware:socket_head|M2.5|6', 'hardware:standoff_mf|M2.5|6'],
+    keywords: 'radxa zero 3w, radxa zero 3, zero 3w, rk3566, rockchip, pi zero alternative',
+  },
 
   {
     id: 'jetson-orin-nano-devkit',

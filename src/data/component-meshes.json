@@ -707,6 +707,12 @@
     "triangles": 17300,
     "bytes": 208728
   },
+  "radxa-zero-3w": {
+    "size": [65.01, 12.984, 31.506],
+    "originOffset": [-32.497, -2.008, 14.253],
+    "triangles": 132304,
+    "bytes": 1871780
+  },
   "raspberry-pi-4b": {
     "size": [88.99, 19.9, 58.4],
     "originOffset": [-1.995, -7.05, -1.2],

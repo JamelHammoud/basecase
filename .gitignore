@@ -49,6 +49,7 @@ __pycache__/
 .env
 .env.*
 .claude/settings.local.json
+.claude/launch.json
 
 # Tool caches
 .ruff_cache/

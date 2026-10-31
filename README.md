@@ -1,4 +1,15 @@
-# Basecase
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg" />
+    <img src=".github/assets/logo-light.svg" width="50" alt="Basecase" />
+  </picture>
+</p>
+<h4>
+  <a href="https://github.com/JamelHammoud/basecase/releases/latest/download/Basecase.dmg">Download for Mac</a>
+  ·
+  <a href="https://github.com/JamelHammoud/basecase/releases/latest/download/Basecase-Setup.exe">Download for Windows</a>
+</h4>
+<hr/>
 
 Basecase is a playground for designing buildable robotics.
 

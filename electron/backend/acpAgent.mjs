@@ -39,6 +39,9 @@ export class AcpAgent {
     this.agentInfo = { name: 'Basecase Offline Agent', version: '1.0.0' };
     this.protocolVersion = PROTOCOL_VERSION;
     this.connected = false;
+    this.connecting = false;
+    this.attempts = 0;
+    this.pending = null;
     this.error = null;
   }
 
@@ -170,7 +173,15 @@ export class AcpAgent {
     return this.connect();
   }
 
-  async connect(customCommand) {
+  connect(customCommand) {
+    this.pending = this.openAgent(customCommand);
+
+    return this.pending;
+  }
+
+  async openAgent(customCommand) {
+    const attempt = ++this.attempts;
+
     if (hasCustomCommand(customCommand) && customCommand.trim() !== this.command) {
       this.command = customCommand.trim();
       saveAgentCommand(this.paths.libraryDir, this.command);
@@ -180,6 +191,7 @@ export class AcpAgent {
     this.models.reset();
     this.agentInfo = { name: 'Agent', version: '' };
     this.signIn = null;
+    this.connecting = true;
     await this.bridge.ready;
 
     try {
@@ -194,6 +206,8 @@ export class AcpAgent {
       this.connected = false;
       this.error = String(err?.message ?? err);
     }
+
+    if (attempt === this.attempts) this.connecting = false;
 
     const status = this.status();
 
@@ -250,6 +264,8 @@ export class AcpAgent {
   }
 
   async ensureSession(workspaceId = DEFAULT_WORKSPACE) {
+    await this.pending;
+
     if (!this.connected || !this.connection) await this.connect();
 
     this.requireConnection();
@@ -260,6 +276,8 @@ export class AcpAgent {
   }
 
   async resume(sessionId, workspaceId = DEFAULT_WORKSPACE) {
+    await this.pending;
+
     if (!this.connection) await this.connect();
 
     this.requireConnection();
@@ -317,6 +335,8 @@ export class AcpAgent {
   }
 
   async newConversation(workspaceId = DEFAULT_WORKSPACE) {
+    await this.pending;
+
     if (!this.connection) await this.connect();
 
     if (!this.connection) return this.status(workspaceId);
@@ -358,6 +378,7 @@ export class AcpAgent {
   status(workspaceId = DEFAULT_WORKSPACE) {
     return {
       connected: this.connected,
+      connecting: this.connecting,
       sessionId: this.sessionOf(workspaceId) ?? null,
       agentName: this.agentInfo?.title || this.agentInfo?.name || 'Agent',
       agentCommand: this.command,

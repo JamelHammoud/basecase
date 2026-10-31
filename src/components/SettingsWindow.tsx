@@ -314,6 +314,8 @@ const CAMERA_KEYS: Array<[string, string]> = [
 const agentOfCommand = (command: string) => AGENT_PROFILES.find((p) => p.command === command);
 
 function agentStatusText(status: AcpStatusInfo) {
+  if (status.connecting) return 'Connecting…';
+
   if (status.connected && status.signIn) return `Sign in to ${status.agentName} from the Agent tab`;
 
   return status.connected ? `Connected to ${status.agentName}` : status.error || 'Not connected';
@@ -345,7 +347,9 @@ const AgentPane: React.FC<PaneProps> = (p) => {
           stacked
           label="Command"
           hint={
-            <span className={`break-words ${p.acpStatus.connected && !p.acpStatus.signIn ? '' : 'text-amber-200/80'}`}>
+            <span
+              className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-200/80'}`}
+            >
               {agentStatusText(p.acpStatus)}
             </span>
           }

@@ -10,6 +10,7 @@ import { useAppMenu } from './useAppMenu';
 import { useBackendEvents } from './useBackendEvents';
 import { useContentStable } from './useContentStable';
 import { useLibraries } from './useLibraries';
+import { useMountedTabs } from './useMountedTabs';
 import { usePanelLayout } from './usePanelLayout';
 import { usePreferences } from './usePreferences';
 import { usePrinters } from './usePrinters';
@@ -32,6 +33,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
   const printers = usePrinters();
   const tabList = useContentStable(tabListOf(core.tabs, core.metas));
   const canReopenTab = core.closed.length > 0;
+  const isMounted = useMountedTabs(core.tabs, core.activeId);
 
   useBackendEvents({
     setAcpStatus: agent.setAcpStatus,
@@ -72,7 +74,9 @@ export function Studio({ initial }: { initial: InitialTabs }) {
             inert={!active}
             aria-hidden={!active}
           >
-            <SceneWorkspace workspaceId={tab.id} active={active} seed={tab.seed} studio={studio} />
+            {isMounted(tab.id) && (
+              <SceneWorkspace workspaceId={tab.id} active={active} seed={tab.seed} studio={studio} />
+            )}
           </div>
         );
       })}

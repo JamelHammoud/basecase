@@ -67,7 +67,7 @@ export function seedFromRecord(record: SavedSceneRecord): WorkspaceSeed {
 }
 
 export function findSceneTab(tabs: TabEntry[], metas: Metas, sceneId: string): TabEntry | undefined {
-  return tabs.find((t) => metas[t.id]?.sceneId === sceneId);
+  return tabs.find((t) => (metas[t.id]?.sceneId ?? t.seed?.sceneId) === sceneId);
 }
 
 export function insertTab(tabs: TabEntry[], entry: TabEntry, at: number): TabEntry[] {

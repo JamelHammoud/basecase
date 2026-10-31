@@ -11,6 +11,8 @@ const OFFLINE_STATUS: AcpStatusInfo = {
   agentCommand: 'node electron/acp-3d-agent.mjs',
 };
 
+const STARTING_STATUS: AcpStatusInfo = { ...OFFLINE_STATUS, connecting: true };
+
 type AgentChoices = Partial<Record<AgentKind, AgentChoice>>;
 
 const NO_CHOICE: AgentChoice = {};
@@ -36,7 +38,7 @@ const loadAgentChoices = (): AgentChoices => {
 };
 
 export function useAgentConnection() {
-  const [acpStatus, setAcpStatus] = useState<AcpStatusInfo>(OFFLINE_STATUS);
+  const [acpStatus, setAcpStatus] = useState<AcpStatusInfo>(STARTING_STATUS);
   const [agentTargetHeightMm, setAgentTargetHeightMm] = useState(0);
   const [agentChoices, setAgentChoices] = useState(loadAgentChoices);
   const kind = agentKindOf(acpStatus);
@@ -60,7 +62,7 @@ export function useAgentConnection() {
     platformBridge
       .getAcpStatus()
       .then(setAcpStatus)
-      .catch(() => {});
+      .catch(() => setAcpStatus(OFFLINE_STATUS));
   }, []);
 
   useEffect(() => {

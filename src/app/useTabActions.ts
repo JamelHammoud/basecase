@@ -44,7 +44,9 @@ function retireTabs({ closing, list, metas, handles, discard }: RetireInput) {
     if (discard) handle?.discard();
     else void handle?.flush();
 
-    if (handle && !meta?.pristine && !discard) remember.push({ seed: handle.snapshot(), index: list.indexOf(tab) });
+    const seed = handle ? handle.snapshot() : tab.seed;
+
+    if (seed && !meta?.pristine && !discard) remember.push({ seed, index: list.indexOf(tab) });
 
     platformBridge.closeAcpWorkspace(tab.id);
   }
@@ -56,7 +58,7 @@ export function useTabActions(core: TabsCore) {
   'use memo';
 
   const { latestRef, handles, setTabs, setActiveId, setMetas, setThumbs, setClosed } = core;
-  const { selectTab, openTab, toastInFront } = core;
+  const { selectTab, openTab, toastInFront, snapshotOf } = core;
 
   const openSeed = (seed: WorkspaceSeed) => {
     const { tabs, metas, activeId } = latestRef.current;
@@ -142,7 +144,8 @@ export function useTabActions(core: TabsCore) {
   };
 
   const duplicateTab = (id: string) => {
-    const snap = handles.current.get(id)?.snapshot();
+    const tab = latestRef.current.tabs.find((t) => t.id === id);
+    const snap = tab && snapshotOf(tab);
 
     if (!snap) return;
 

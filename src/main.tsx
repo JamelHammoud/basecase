@@ -8,11 +8,7 @@ import { refreshRates } from './utils/currencyStore';
 const electronAPI = window.electronAPI;
 
 if (electronAPI?.isElectron) {
-  const root = document.documentElement;
-
-  root.classList.add('is-electron');
-
-  const setFullScreen = (value: boolean) => root.classList.toggle('is-fullscreen', value);
+  const setFullScreen = (value: boolean) => document.documentElement.classList.toggle('is-fullscreen', value);
 
   electronAPI.isFullScreen().then(setFullScreen);
   electronAPI.onFullScreenChange(setFullScreen);

@@ -101,7 +101,7 @@ export const ConnectionBanner: React.FC<{
     return <SignInBanner acpStatus={acpStatus} onSignIn={onSignIn} onSaveApiKey={onSaveApiKey} />;
   }
 
-  if (acpStatus.connected && !acpStatus.error) return null;
+  if (acpStatus.connecting || (acpStatus.connected && !acpStatus.error)) return null;
 
   return (
     <div className={BANNER}>

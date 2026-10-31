@@ -23,6 +23,8 @@ export function useTabs(initial: InitialTabs) {
     else handles.current.delete(id);
   };
 
+  const snapshotOf = (tab: TabEntry) => handles.current.get(tab.id)?.snapshot() ?? tab.seed;
+
   const reportMeta = (id: string, meta: WorkspaceMeta) => {
     setMetas((prev) => ({ ...prev, [id]: meta }));
   };
@@ -78,6 +80,8 @@ export function useTabs(initial: InitialTabs) {
       return;
     }
 
+    if (latestRef.current.tabs.some((t) => t.id === target)) return;
+
     if (event.type === 'agent-request' && typeof event.requestId === 'string') {
       platformBridge.respondToAgent({ requestId: event.requestId, error: 'This scene was closed.' }).catch(() => {});
     }
@@ -97,6 +101,7 @@ export function useTabs(initial: InitialTabs) {
     handles,
     latestRef,
     register,
+    snapshotOf,
     reportMeta,
     toastInFront,
     capturePreview,

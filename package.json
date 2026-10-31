@@ -53,8 +53,20 @@
       "!electron/native/*/build/**",
       "electron/native/*/build/Release/*.node",
       "!electron/vite-bridge-middleware.mjs",
+      "!node_modules/@anthropic-ai/claude-agent-sdk-*/**",
+      "!node_modules/@openai/codex-*/**",
+      "!node_modules/@google/gemini-cli/**",
+      "!node_modules/replicad-opencascadejs/dist/replicad_multi.*",
+      "!node_modules/three/src/**",
       "package.json"
     ],
+    "electronLanguages": [
+      "en",
+      "en-US",
+      "en_GB",
+      "en-GB"
+    ],
+    "afterPack": "tools/release/afterPack.mjs",
     "publish": [
       {
         "provider": "github",

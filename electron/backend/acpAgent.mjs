@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { agentCwd, agentKindOf, agentProcessArgs, agentProcessEnv } from './agentProfiles.mjs';
 import { AgentKeys } from './agentKeys.mjs';
+import { AgentRuntimes } from './agentRuntimes.mjs';
 import { acceptsApiKey, isAuthError, loadAgentCommand, saveAgentCommand, signInMethods } from './agentSelection.mjs';
 import { CLAUDE_AGENT_COMMAND, DEFAULT_WORKSPACE, LANE_SEPARATOR, safeWorkspace } from './constants.mjs';
 import { ModelControl } from './modelControl.mjs';
@@ -34,6 +35,8 @@ export class AcpAgent {
     this.control = new ModelControl({ models: this.models, connection: () => this.connection, emit });
     this.authMethods = [];
     this.keys = new AgentKeys({ dir: path.join(paths.libraryDir, 'agent-config'), secrets });
+    this.runtimes = new AgentRuntimes({ root: workspaceRoot, dir: path.join(paths.libraryDir, 'agents') });
+    this.download = null;
     this.signIn = null;
     this.steering = false;
     this.agentInfo = { name: 'Basecase Offline Agent', version: '1.0.0' };
@@ -69,17 +72,21 @@ export class AcpAgent {
     return { ...env, ...extra };
   }
 
-  spawnChild() {
+  spawnChild(runtime) {
     const [cmd, ...args] = resolveCommand(this.command);
     const cwd = this.cwd();
 
     fs.mkdirSync(cwd, { recursive: true });
 
-    const child = spawn(cmd, [...anchorArgs(args, this.workspaceRoot), ...agentProcessArgs(this.kind())], {
-      cwd,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: this.processEnv(),
-    });
+    const child = spawn(
+      cmd,
+      [...anchorArgs(args.map(runtime.arg), this.workspaceRoot), ...agentProcessArgs(this.kind())],
+      {
+        cwd,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...this.processEnv(), ...runtime.env },
+      },
+    );
 
     this.childProcess = child;
     child.stderr.on('data', (chunk) => {
@@ -194,7 +201,11 @@ export class AcpAgent {
     await this.bridge.ready;
 
     try {
-      const connection = this.openConnection(this.spawnChild());
+      const runtime = await this.runtimes.ensure(this.kind(), (progress) => this.noteDownload(progress));
+
+      this.download = null;
+
+      const connection = this.openConnection(this.spawnChild(runtime));
 
       this.connection = connection;
       await this.initialize(connection);
@@ -203,6 +214,7 @@ export class AcpAgent {
       await this.startFirstSession();
     } catch (err) {
       this.connected = false;
+      this.download = null;
       this.error = String(err?.message ?? err);
     }
 
@@ -374,6 +386,15 @@ export class AcpAgent {
     this.connected = false;
   }
 
+  noteDownload({ name, received, total }) {
+    const percent = total ? Math.floor((received / total) * 100) : 0;
+
+    if (this.download?.name === name && this.download.percent === percent) return;
+
+    this.download = { name, percent };
+    this.emit({ type: 'acp-status', status: this.status() });
+  }
+
   status(workspaceId = DEFAULT_WORKSPACE) {
     return {
       connected: this.connected,
@@ -387,6 +408,7 @@ export class AcpAgent {
       defaultModel: this.models.defaultModel,
       defaultEffort: this.models.defaultEffort,
       signIn: this.signIn ?? undefined,
+      download: this.download ?? undefined,
       error: this.error || undefined,
     };
   }

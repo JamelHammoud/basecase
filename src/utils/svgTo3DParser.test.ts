@@ -21,7 +21,7 @@ function shapePath(fill: string, color: number, ...loops: Loop[]): THREE.ShapePa
 }
 
 function parsed(paths: THREE.ShapePath[]) {
-  vi.spyOn(SVGLoader.prototype, 'parse').mockReturnValue({ paths, xml: {} as XMLDocument });
+  vi.spyOn(SVGLoader.prototype, 'parse').mockReturnValue({ paths, xml: {} as SVGSVGElement });
 }
 
 const plate: Loop = [

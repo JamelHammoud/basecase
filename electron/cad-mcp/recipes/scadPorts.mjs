@@ -1,7 +1,7 @@
+import { fork } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const LIBRARIES = [
@@ -93,21 +93,25 @@ export async function scadPorts(code) {
   return { ports: parsePorts(echo), echo, logs };
 }
 
-function runWorker(codes) {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL(import.meta.url), { workerData: { scadPortCodes: codes } });
+const CHILD_FLAG = '--scad-ports-child';
 
-    worker.once('message', (result) => {
-      resolve(result);
-      worker.terminate();
-    });
-    worker.once('error', reject);
+function runChild(codes) {
+  return new Promise((resolve, reject) => {
+    const child = fork(fileURLToPath(import.meta.url), [CHILD_FLAG], { stdio: ['ignore', 'ignore', 'inherit', 'ipc'] });
+    let result = null;
+
+    child.once('message', (message) => (result = message));
+    child.once('error', reject);
+    child.once('exit', (code, signal) =>
+      result ? resolve(result) : reject(new Error(`OpenSCAD process exited (${signal ?? code})`)),
+    );
+    child.send(codes);
   });
 }
 
 export async function scadPortsParallel(codes, workers = 4) {
   const chunks = Array.from({ length: workers }, (_, w) => codes.map((_, i) => i).filter((i) => i % workers === w));
-  const results = await Promise.all(chunks.map((idx) => runWorker(idx.map((i) => codes[i]))));
+  const results = await Promise.all(chunks.map((idx) => runChild(idx.map((i) => codes[i]))));
   const ports = new Array(codes.length);
 
   chunks.forEach((idx, w) => idx.forEach((i, k) => (ports[i] = results[w].ports[k])));
@@ -115,6 +119,8 @@ export async function scadPortsParallel(codes, workers = 4) {
   return { ports, logs: results.flatMap((r) => r.logs) };
 }
 
-if (!isMainThread && workerData?.scadPortCodes) {
-  scadPortsBatch(workerData.scadPortCodes).then((result) => parentPort.postMessage(result));
+if (process.argv[2] === CHILD_FLAG) {
+  process.once('message', (codes) =>
+    scadPortsBatch(codes).then((result) => process.send(result, () => process.disconnect())),
+  );
 }

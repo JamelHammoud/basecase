@@ -9,10 +9,16 @@ import { idsAfter, idsExcept, sceneTabsOf, type Metas, type TabEntry } from './t
 
 const TOGGLE_LEFT = LAYOUT.lightsX + LAYOUT.lightsWidth + 8;
 const TOGGLE_LEFT_BARE = 26 - 14;
-const LEADING_STEP = 28 + 4;
+const TOGGLE_LEFT_WEB = LAYOUT.railWidth + LAYOUT.cardPadding - 6;
+const APP_MENU_STEP = 28 + 4;
 const hasAppMenuButton = IS_WINDOWS && Boolean(window.electronAPI?.popupAppMenu);
 const hasWebLogo = !window.electronAPI?.isElectron;
-const hasLeadingSlot = hasAppMenuButton || hasWebLogo;
+
+function toggleLeftFor(hasStoplights: boolean) {
+  if (hasStoplights) return TOGGLE_LEFT;
+
+  return hasWebLogo ? TOGGLE_LEFT_WEB : TOGGLE_LEFT_BARE;
+}
 
 function openAppMenu(e: React.MouseEvent<HTMLElement>) {
   const box = e.currentTarget.getBoundingClientRect();
@@ -61,22 +67,25 @@ export function TitleBarTabs({
 }: TitleBarTabsProps) {
   const hasStoplights = useStoplights();
   const captionInset = useCaptionInset();
-  const toggleLeft = hasStoplights ? TOGGLE_LEFT : TOGGLE_LEFT_BARE;
-  const rowLeft = toggleLeft + (hasLeadingSlot ? LEADING_STEP : 0) + 28 + 4 + 28 + 8;
+  const toggleLeft = toggleLeftFor(hasStoplights);
+  const rowLeft = toggleLeft + (hasAppMenuButton ? APP_MENU_STEP : 0) + 28 + 4 + 28 + 8;
   const slide = resizing ? '' : 'transition-[left,right] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]';
   const rowRight = LAYOUT.sheetInset + LAYOUT.cardPadding + captionInset + rightIslandWidth + 8;
 
   return (
     <>
+      {hasWebLogo && (
+        <span
+          className="absolute top-[8px] z-30 w-[28px] h-[28px] flex items-center justify-center text-white/90"
+          style={{ left: TOGGLE_LEFT_BARE }}
+        >
+          <BasecaseLogo className="w-[18px] h-[18px]" />
+        </span>
+      )}
       <div
         className={`absolute top-[8px] z-30 h-[28px] flex items-center gap-[4px] ${slide}`}
         style={{ ...NO_DRAG_REGION, left: toggleLeft }}
       >
-        {hasWebLogo && (
-          <span className="w-[28px] h-[28px] flex items-center justify-center text-white/90">
-            <BasecaseLogo className="w-[18px] h-[18px]" />
-          </span>
-        )}
         {hasAppMenuButton && (
           <IconButton
             icon={<MenuIcon className="w-[18px] h-[18px]" />}

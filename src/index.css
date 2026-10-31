@@ -444,10 +444,31 @@ input[type='range'].slider:focus-visible::-webkit-slider-thumb {
   }
 }
 
+/* The phone landing page's robots drift sideways forever; the track holds the list twice, so
+   shifting it by one copy (half its width plus half the 8px gap) loops seamlessly. */
+.landing-strip {
+  mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+.landing-strip-track {
+  animation: landing-strip 70s linear infinite;
+}
+@keyframes landing-strip {
+  to {
+    transform: translateX(calc(-50% - 4px));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tilt-card,
   .tilt-card:hover {
     transform: none;
+  }
+
+  .landing-strip {
+    overflow-x: auto;
+  }
+  .landing-strip-track {
+    animation: none !important;
   }
 
   *,

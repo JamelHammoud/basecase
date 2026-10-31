@@ -12,6 +12,14 @@ const ISOLATION_HEADERS = {
 
 const hmrPort = Number(process.env.BASECASE_HMR_PORT) || 0;
 
+const webEntryPlugin = () => ({
+  name: 'basecase-web-entry',
+  transformIndexHtml: {
+    order: 'pre' as const,
+    handler: (html: string) => html.replace('/src/main.tsx', '/src/webMain.ts'),
+  },
+});
+
 export default defineConfig(({ mode }) => ({
   server: {
     watch: { ignored: ['**/library/**', '**/ai-reference/**'] },
@@ -23,6 +31,6 @@ export default defineConfig(({ mode }) => ({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
-    mode === 'web' ? null : bridgeMiddlewarePlugin(),
+    mode === 'web' ? webEntryPlugin() : bridgeMiddlewarePlugin(),
   ],
 }));

@@ -59,7 +59,7 @@ export function TitleBarTabs({
         style={{ ...NO_DRAG_REGION, left: toggleLeft }}
       >
         <IconButton
-          icon={<PanelLeftIcon className="w-4 h-4" />}
+          icon={<PanelLeftIcon className="w-[18px] h-[18px]" />}
           title={isLeftOpen ? 'Hide sidebar' : 'Show sidebar'}
           shortcut="⌘B"
           onClick={onToggleLeft}

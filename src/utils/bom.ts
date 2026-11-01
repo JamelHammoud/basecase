@@ -62,10 +62,12 @@ const MADE_ELSEWHERE: Record<string, string> = {
   'Off-the-shelf COTS': 'Bought part, not from the catalog',
 };
 
+const isImportedMesh = (p: ScenePart) => p.kind === 'mesh' && !!p.mesh?.file;
+
 export function isPrinted(p: ScenePart): boolean {
   return (
     p.role === 'solid' &&
-    !NOT_PRINTED.has(p.kind) &&
+    (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) &&
     !BLOCKOUT_KINDS.has(p.kind) &&
     !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag])
   );

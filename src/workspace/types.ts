@@ -116,6 +116,8 @@ export interface StudioShared {
   reportRightIsland: (width: number) => void;
   newScene: (seed?: WorkspaceSeed) => void;
   openSceneList: () => void;
+  openSceneFile: () => Promise<void>;
+  importSceneFile: (file: File) => Promise<void>;
   selectTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
   closeTab: (id: string) => void;

@@ -42,7 +42,12 @@ export function Studio({ initial }: { initial: InitialTabs }) {
   });
   useScenePersistence({ handles: core.handles, tabList, activeId: core.activeId });
   useAppMenu({
-    commands: { ...core, ...actions, toggleSceneList: () => setScenesOpen((v) => !v) },
+    commands: {
+      ...core,
+      ...actions,
+      toggleSceneList: () => setScenesOpen((v) => !v),
+      openSceneFile: () => void sceneLibrary.openSceneFile(),
+    },
     tabList,
     canReopenTab,
     settingsOpen: settings.settingsOpen,
@@ -60,6 +65,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
     tabList,
     openSceneList,
     printers,
+    sceneLibrary,
   });
 
   return (

@@ -2,11 +2,9 @@ import type { Command } from '../components/CommandPalette';
 import {
   BotIcon,
   BrushIcon,
-  ClipboardIcon,
   CloseIcon,
   CommentIcon,
   ComposeIcon,
-  DownloadIcon,
   DuplicateIcon,
   EraserIcon,
   FileImportIcon,
@@ -19,7 +17,6 @@ import {
   PhotoIcon,
   PoseIcon,
   PrinterIcon,
-  ShareIcon,
   WalkIcon,
   RotateIcon,
   RotateLeftIcon,
@@ -32,7 +29,7 @@ import { ROBOT_PRESETS } from '../utils/robotImport';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
-import { SHARE_LABEL } from '../utils/os';
+import { exchangeCommands } from './exchangeCommands';
 
 export interface CommandInputs {
   core: WorkspaceCore;
@@ -43,9 +40,8 @@ export interface CommandInputs {
 
 const ic = 'w-4 h-4';
 
-function fileCommands({ core, actions }: CommandInputs): Command[] {
+function fileCommands({ core }: CommandInputs): Command[] {
   const { studio, workspaceId } = core;
-  const { exports } = actions;
   const reopen: Command[] = studio.canReopenTab
     ? [
         {
@@ -69,38 +65,6 @@ function fileCommands({ core, actions }: CommandInputs): Command[] {
       icon: <FolderOpenIcon className={ic} />,
       keywords: 'scenes files browse recent history delete rename',
       run: studio.openSceneList,
-    },
-    {
-      id: 'copy-brief',
-      group: 'Scene',
-      label: 'Copy as Markdown',
-      icon: <ClipboardIcon className={ic} />,
-      keywords: 'markdown clipboard export brief spec',
-      run: exports.copyBrief,
-    },
-    {
-      id: 'export',
-      group: 'Scene',
-      label: 'Export STL',
-      icon: <DownloadIcon className={ic} />,
-      keywords: 'print download',
-      run: exports.exportStl,
-    },
-    {
-      id: 'airdrop',
-      group: 'Scene',
-      label: SHARE_LABEL,
-      icon: <ShareIcon className={ic} />,
-      keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
-      run: () => void exports.airDrop(),
-    },
-    {
-      id: 'export-image',
-      group: 'Scene',
-      label: 'Export Image',
-      icon: <PhotoIcon className={ic} />,
-      keywords: 'png screenshot render download',
-      run: exports.exportImage,
     },
     {
       id: 'new',
@@ -398,6 +362,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
 
 export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...fileCommands(inputs),
+  ...exchangeCommands(inputs),
   ...printCommands(inputs),
   ...createCommands(inputs),
   ...toolCommands(inputs),

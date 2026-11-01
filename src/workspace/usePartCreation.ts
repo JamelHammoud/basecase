@@ -8,6 +8,8 @@ import {
 } from '../three/sculptAndBooleanEngine';
 import type { CatalogItem, CustomModelDefinition } from '../types/robotics';
 import { readImageFile } from '../utils/imageFile';
+import { pickFiles } from '../utils/pickFiles';
+import { MESH_ACCEPT, meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
 import { platformBridge } from '../utils/platformBridge';
 import { modelId, newId, stamp } from './helpers';
@@ -111,6 +113,50 @@ function useSculptCreation(core: WorkspaceCore) {
   return { addClayPreset, subdivideSelectedClay };
 }
 
+const MESH_STEP = 40;
+
+function useMeshImport(core: WorkspaceCore) {
+  'use memo';
+
+  const { docs, setSelectedIds, tool, showToast } = core;
+
+  const importMeshes = async (files: File[], at?: Vec3 | null) => {
+    if (files.length === 0) return;
+
+    const label = files.length === 1 ? files[0].name : `${files.length} meshes`;
+
+    showToast(`Importing ${label}…`, { tone: 'progress' });
+
+    const results = await Promise.allSettled(
+      files.map((file, i) =>
+        meshPartFromFile({ file, id: newId('mesh'), at: at ? [at[0] + i * MESH_STEP, at[1], at[2]] : null }),
+      ),
+    );
+    const parts = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+    const failed = files.filter((_, i) => results[i].status === 'rejected');
+
+    if (parts.length > 0) {
+      docs.commitParts((prev) => [...prev, ...parts]);
+      setSelectedIds(parts.map((p) => p.id));
+      tool.setTransformMode('translate');
+    }
+
+    if (failed.length > 0) {
+      showToast(`Couldn’t import ${failed.map((f) => f.name).join(', ')}. Try STL, 3MF, OBJ, PLY, FBX or GLB.`, {
+        tone: 'error',
+      });
+
+      return;
+    }
+
+    showToast(parts.length === 1 ? `Inserted ${parts[0].name}` : `Inserted ${parts.length} meshes`);
+  };
+
+  const pickMeshes = async (at?: Vec3 | null) => importMeshes(await pickFiles(MESH_ACCEPT, true), at);
+
+  return { importMeshes, pickMeshes };
+}
+
 export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
   const { docs, setSelectedIds, showToast, studio, viewportRef } = core;
   const { commitParts } = docs;
@@ -118,6 +164,7 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
   const { addArticulated } = robots;
   const images = useReferenceImages(core);
   const sculpt = useSculptCreation(core);
+  const meshes = useMeshImport(core);
 
   const addCatalogPart = (item: CatalogItem, at?: Vec3) => {
     const id = newId();
@@ -181,7 +228,7 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
     showToast(`Added ${params.name} and saved to Library`);
   };
 
-  return { ...images, ...sculpt, addCatalogItem, placeCustomModel, createFromSketch };
+  return { ...images, ...sculpt, ...meshes, addCatalogItem, placeCustomModel, createFromSketch };
 }
 
 export type PartCreation = ReturnType<typeof usePartCreation>;

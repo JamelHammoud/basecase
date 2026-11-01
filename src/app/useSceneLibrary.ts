@@ -1,5 +1,7 @@
 import type { SavedSceneRecord, SavedSceneSummary } from '../types/robotics';
+import { pickFiles } from '../utils/pickFiles';
 import { platformBridge } from '../utils/platformBridge';
+import { decodeSceneFile, SCENE_FILE_EXTENSION, SceneFileError } from '../utils/sceneFile';
 import { newSceneId } from '../utils/sceneIds';
 import { sceneStore } from '../utils/sceneStore';
 import { copyName } from '../workspace/helpers';
@@ -19,7 +21,7 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
   'use memo';
 
   const { latestRef, handles, setClosed, toastInFront } = core;
-  const { renameTab, closeTabs } = actions;
+  const { renameTab, closeTabs, openScene } = actions;
 
   const tabFor = (sceneId: string) => {
     const { tabs, metas } = latestRef.current;
@@ -66,7 +68,27 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
     window.setTimeout(() => toastInFront(`Deleted ${scene.name}`), 0);
   };
 
-  return { renameScene, duplicateScene, deleteScene };
+  const importSceneFile = async (file: File) => {
+    try {
+      const scene = await decodeSceneFile(new Uint8Array(await file.arrayBuffer()));
+      const summary = await platformBridge.saveScene({ ...scene, id: newSceneId() });
+
+      sceneStore.upsert(summary);
+      openScene(summary);
+    } catch (err) {
+      const reason = err instanceof SceneFileError ? err.message : String(err);
+
+      toastInFront(`Couldn’t open ${file.name}. ${reason}`, { tone: 'error' });
+    }
+  };
+
+  const openSceneFile = async () => {
+    const [file] = await pickFiles(`.${SCENE_FILE_EXTENSION}`);
+
+    if (file) await importSceneFile(file);
+  };
+
+  return { renameScene, duplicateScene, deleteScene, importSceneFile, openSceneFile };
 }
 
 export type SceneLibrary = ReturnType<typeof useSceneLibrary>;

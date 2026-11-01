@@ -5,6 +5,7 @@ import type { useLibraries } from './useLibraries';
 import type { usePanelLayout } from './usePanelLayout';
 import type { usePreferences } from './usePreferences';
 import type { PrintersState } from './usePrinters';
+import type { SceneLibrary } from './useSceneLibrary';
 import type { useSettingsPane } from './useSettingsPane';
 import type { useTabActions } from './useTabActions';
 import type { TabsCore } from './useTabs';
@@ -21,6 +22,7 @@ export interface StudioSources {
   tabList: TabListItem[];
   openSceneList: () => void;
   printers: PrintersState;
+  sceneLibrary: SceneLibrary;
 }
 
 function useSharedPreferences(prefs: StudioSources['prefs']) {
@@ -61,6 +63,7 @@ function useSharedPreferences(prefs: StudioSources['prefs']) {
 
 export function useStudio(sources: StudioSources) {
   const { prefs, layout, libraries, agent, settings, core, actions, tabList, openSceneList, printers } = sources;
+  const { openSceneFile, importSceneFile } = sources.sceneLibrary;
   const preferences = useSharedPreferences(prefs);
   const { isLeftOpen, setIsLeftOpen, isRightOpen, setIsRightOpen, panelWidths, setPanelWidths } = layout;
   const { resizingPanel, setResizingPanel, setRightIslandWidth } = layout;
@@ -105,6 +108,8 @@ export function useStudio(sources: StudioSources) {
       reportRightIsland: setRightIslandWidth,
       newScene,
       openSceneList,
+      openSceneFile,
+      importSceneFile,
       selectTab,
       renameTab,
       closeTab,
@@ -147,6 +152,8 @@ export function useStudio(sources: StudioSources) {
       setRightIslandWidth,
       newScene,
       openSceneList,
+      openSceneFile,
+      importSceneFile,
       selectTab,
       renameTab,
       closeTab,

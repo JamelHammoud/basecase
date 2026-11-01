@@ -161,6 +161,7 @@ export interface ScenePart extends PartRelations {
     indices: number[];
     baseSize: [number, number, number];
     source?: string;
+    file?: string;
     visual?: { key: string; node: string; matrix: number[] };
   };
   hardware?: HardwareSpec;

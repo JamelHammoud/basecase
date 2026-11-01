@@ -3,6 +3,9 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js';
+import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Geometry } from './model';
 
@@ -40,6 +43,31 @@ function daeScene(text: string): THREE.Object3D | null {
   return dae.scene;
 }
 
+class NoTextures extends THREE.Loader<THREE.Texture> {
+  load() {
+    return new THREE.Texture();
+  }
+}
+
+function fbxScene(data: ArrayBuffer): THREE.Object3D {
+  const manager = new THREE.LoadingManager();
+
+  manager.addHandler(/./, new NoTextures());
+
+  const root = new FBXLoader(manager).parse(data, '');
+  const unit = Number(root.userData.unitScaleFactor);
+
+  if (Number.isFinite(unit) && unit > 0) root.scale.multiplyScalar(unit);
+
+  return root;
+}
+
+function positionsOnly(g: THREE.BufferGeometry): THREE.BufferGeometry {
+  const flat = g.index ? g.toNonIndexed() : g;
+
+  return new THREE.BufferGeometry().setAttribute('position', flat.getAttribute('position'));
+}
+
 export async function loadMesh(data: ArrayBuffer, path: string): Promise<THREE.BufferGeometry | null> {
   const ext = path.split('.').pop()!.toLowerCase();
 
@@ -59,6 +87,12 @@ export async function loadMesh(data: ArrayBuffer, path: string): Promise<THREE.B
 
     return scene ? collect(scene) : null;
   }
+
+  if (ext === 'fbx') return collect(fbxScene(data));
+
+  if (ext === '3mf') return collect(new ThreeMFLoader().parse(data));
+
+  if (ext === 'ply') return positionsOnly(new PLYLoader().parse(data));
 
   if (ext === 'glb' || ext === 'gltf') {
     const gltf = await new GLTFLoader().parseAsync(data, '');

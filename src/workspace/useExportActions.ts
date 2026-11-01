@@ -3,6 +3,8 @@ import { jobSpec } from '../print/job';
 import { buildAIHandoffPayload, exportSceneToSTL } from '../utils/aiHandoff';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
+import { encodeSceneFile, SCENE_FILE_EXTENSION, sharedScene } from '../utils/sceneFile';
+import { scenePreview } from '../three/scenePreview';
 import { fileSafe } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
@@ -90,6 +92,27 @@ export function useExportActions({
     showToast(`Exported ${report.plan.plates.length} ${report.plan.plates.length === 1 ? 'plate' : 'plates'} as 3MF`);
   };
 
+  const exportScene = async () => {
+    try {
+      const preview = await scenePreview(parts);
+      const bytes = await encodeSceneFile(
+        sharedScene({
+          name: scene.sceneName,
+          globalGoal: scene.globalGoal,
+          parts,
+          annotations: annotations.annotations,
+          project,
+          ...preview,
+        }),
+      );
+
+      download(bytes, `${fileSafe(scene.sceneName)}.${SCENE_FILE_EXTENSION}`, 'application/gzip');
+      showToast(`Exported ${scene.sceneName}`);
+    } catch (err) {
+      showToast(`Couldn’t export the scene. ${String(err)}`, { tone: 'error' });
+    }
+  };
+
   const airDrop = async () => {
     const viewport = viewportRef.current;
 
@@ -129,7 +152,7 @@ export function useExportActions({
     }
   };
 
-  return { exportStl, exportImage, export3mf, airDrop, copyBrief, canExportStl: parts.length > 0 };
+  return { exportStl, exportImage, export3mf, exportScene, airDrop, copyBrief, canExportStl: parts.length > 0 };
 }
 
 export type ExportActions = ReturnType<typeof useExportActions>;

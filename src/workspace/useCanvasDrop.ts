@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { catalogItemFromKey } from '../data/catalog';
 import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
+import { isSceneFileName } from '../utils/sceneFile';
+import { isMeshFileName } from './meshImport';
 import type { Vec3 } from './types';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -17,6 +19,9 @@ export function dropPoint(hit: Hit, snapStepMm: number): Vec3 | undefined {
   return [snap(hit.point[0]), hit.partId ? Math.max(0, hit.point[1]) : 0, snap(hit.point[2])];
 }
 
+const onlyImages = (items: DataTransferItemList) =>
+  Array.from(items).every((item) => item.kind === 'file' && item.type.startsWith('image/'));
+
 function parseDrag<T>(data: string) {
   try {
     return JSON.parse(data) as T;
@@ -26,9 +31,9 @@ function parseDrag<T>(data: string) {
 }
 
 export function useCanvasDrop({ viewportRef, studio }: WorkspaceCore, { creation, robots }: WorkspaceActions) {
-  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [dragging, setDragging] = useState<'images' | 'files' | null>(null);
   const { importRobotFrom } = robots;
-  const { addCatalogItem, placeCustomModel, addImagePlane } = creation;
+  const { addCatalogItem, placeCustomModel, addImagePlane, importMeshes } = creation;
 
   const dropRobot = (data: string, at: Vec3 | undefined) => {
     const drag = parseDrag<{ url: string; name?: string }>(data);
@@ -62,10 +67,16 @@ export function useCanvasDrop({ viewportRef, studio }: WorkspaceCore, { creation
     return true;
   };
 
-  const dropImages = (e: React.DragEvent) => {
-    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+  const dropFiles = (e: React.DragEvent) => {
+    const all = Array.from(e.dataTransfer.files);
+    const files = all.filter((f) => f.type.startsWith('image/'));
     const hit = viewportRef.current?.pickAt(e.clientX, e.clientY);
 
+    all.filter((f) => isSceneFileName(f.name)).forEach((f) => void studio.importSceneFile(f));
+    void importMeshes(
+      all.filter((f) => isMeshFileName(f.name)),
+      dropPoint(hit, studio.snapStepMm),
+    );
     files.forEach((f, i) => {
       const at: Vec3 | null = hit ? [hit.point[0] + i * IMAGE_STEP, 0, hit.point[2]] : null;
 
@@ -86,18 +97,18 @@ export function useCanvasDrop({ viewportRef, studio }: WorkspaceCore, { creation
 
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
-      setIsDraggingFile(true);
+      setDragging(onlyImages(e.dataTransfer.items) ? 'images' : 'files');
     },
     onDragLeave: (e: React.DragEvent) => {
-      if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingFile(false);
+      if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget as Node)) setDragging(null);
     },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      setIsDraggingFile(false);
+      setDragging(null);
 
-      if (!dropSceneItem(e)) dropImages(e);
+      if (!dropSceneItem(e)) dropFiles(e);
     },
   };
 
-  return { isDraggingFile, dropHandlers };
+  return { isDraggingFile: dragging !== null, imagesOnly: dragging === 'images', dropHandlers };
 }

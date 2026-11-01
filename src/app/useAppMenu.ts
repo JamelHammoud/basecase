@@ -11,6 +11,7 @@ export interface TabCommands {
   cycleTab: (step: number) => void;
   selectTab: (id: string) => void;
   toggleSceneList: () => void;
+  openSceneFile: () => void;
 }
 
 export interface AppMenuInput {
@@ -34,6 +35,7 @@ function runTabCommand(id: string, commands: TabCommands): boolean {
     ['next-tab', () => commands.cycleTab(1)],
     ['prev-tab', () => commands.cycleTab(-1)],
     ['open-scenes', () => commands.toggleSceneList()],
+    ['open-scene-file', () => commands.openSceneFile()],
   ]);
   const run = actions.get(id);
 

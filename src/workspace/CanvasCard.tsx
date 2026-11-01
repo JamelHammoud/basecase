@@ -1,7 +1,7 @@
 import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
 import { ViewportToolbar } from '../components/ViewportToolbar';
-import { Toast, PhotoIcon } from '../design-system';
+import { FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
@@ -23,12 +23,14 @@ interface CanvasCardProps {
   drop: ReturnType<typeof useCanvasDrop>;
 }
 
-function DropOverlay() {
+function DropOverlay({ imagesOnly }: { imagesOnly: boolean }) {
+  const Icon = imagesOnly ? PhotoIcon : FileImportIcon;
+
   return (
     <div className="absolute inset-3 z-40 rounded-3xl border-2 border-dashed border-[#0d99ff]/70 bg-[#0d99ff]/[0.06] flex items-center justify-center pointer-events-none animate-fade-in">
       <div className="glass rounded-2xl px-5 py-3 flex items-center gap-2.5 text-[14px] text-white/90">
-        <PhotoIcon className="w-5 h-5 text-[#5cb8ff]" />
-        Drop to add a reference image
+        <Icon className="w-5 h-5 text-[#5cb8ff]" />
+        {imagesOnly ? 'Drop to add a reference image' : 'Drop to import'}
       </div>
     </div>
   );
@@ -126,7 +128,7 @@ export function CanvasCard(props: CanvasCardProps) {
           e.target.value = '';
         }}
       />
-      {drop.isDraggingFile && <DropOverlay />}
+      {drop.isDraggingFile && <DropOverlay imagesOnly={drop.imagesOnly} />}
       <SceneViewport active={active} core={core} actions={actions} agent={agent} />
       {core.printing.mode && <PlateCanvas active={active} printing={core.printing} parts={core.parts} />}
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />

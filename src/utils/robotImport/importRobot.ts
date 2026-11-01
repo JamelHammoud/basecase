@@ -2,8 +2,7 @@ import * as THREE from 'three';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 import { prettyJointName } from '../kinematics';
 import { applyPublishedMass, buildLinkParts, linkGeometries, type MeshFiles } from './linkParts';
-import { geometryWorker } from '../../three/geometryWorker';
-import { loadMesh } from './meshes';
+import { parseMeshFile as parsePositions } from '../meshFile';
 import type { MeshGeometry, Model, ModelJoint } from './model';
 import { catalogFrame, limbOf, publishedData, round, S, type PublishedData } from './published';
 import { readModel } from './readModel';
@@ -28,9 +27,7 @@ export interface ImportedRobot {
 type Say = (message: string) => void;
 
 async function parseMeshFile(data: ArrayBuffer, path: string): Promise<THREE.BufferGeometry | null> {
-  if (/\.dae$/i.test(path)) return loadMesh(data, path);
-
-  const positions = await geometryWorker.call('parseMesh', { data, path }, [data]);
+  const positions = await parsePositions(data, path);
 
   return positions && new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(positions, 3));
 }

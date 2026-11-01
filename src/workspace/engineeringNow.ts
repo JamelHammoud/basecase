@@ -50,6 +50,8 @@ export async function engineeringInputs(
 ): Promise<EngineeringInputs> {
   const servoOutputs: Record<string, ServoOutput> = {};
 
+  await viewport?.meshesReady();
+
   for (const p of parts.filter(isServo)) {
     const out = viewport?.servoOutput(p.id);
 

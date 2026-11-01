@@ -125,6 +125,7 @@ const componentPart: PartBuilder = (ctx) => {
     placeholder.transparent = true;
     placeholder.opacity = 0.25;
     placeholder.depthWrite = false;
+    ctx.group.userData.placeholder = true;
     ctx.add(new THREE.BoxGeometry(ctx.width, ctx.height, ctx.depth), placeholder);
 
     return;

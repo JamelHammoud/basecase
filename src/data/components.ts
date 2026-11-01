@@ -503,6 +503,7 @@ export const COMPONENTS: ComponentInfo[] = [
       bus: 'feetech',
       stallA: 2.4,
       idleA: 0.24,
+      dualShaft: true,
       source: 'https://www.waveshare.com/st3215-hs-servo-motor.htm',
     },
   },

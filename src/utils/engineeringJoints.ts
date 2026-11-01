@@ -29,14 +29,19 @@ function misalignments(ctx: CheckContext, j: RobotJoint): string[] {
   });
 }
 
-const outputsOnAxis = (ctx: CheckContext, j: RobotJoint) =>
-  ctx.servos
+const namedBy = (j: RobotJoint) => new Set([...(j.actuators ?? []), ...j.parent, ...j.child]);
+
+const outputsOnAxis = (ctx: CheckContext, j: RobotJoint) => {
+  const named = namedBy(j);
+
+  return ctx.servos
     .filter((s) => {
-      const o = outputOffset(ctx, j, s.id);
+      const o = named.has(s.id) && outputOffset(ctx, j, s.id);
 
       return o && !isOffAxis(o);
     })
     .map((s) => s.id);
+};
 
 function spanAlong(ctx: CheckContext, ids: Iterable<string>, origin: V3, a: V3): [number, number] {
   let lo = Infinity,

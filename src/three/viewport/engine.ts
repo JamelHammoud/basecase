@@ -12,6 +12,7 @@ import {
   threeMfIn,
 } from '../analysis/analysisPool';
 import { snapshotShapes } from '../analysis/sceneShapes';
+import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
 import { AgentFrames } from './agentFrames';
 import { BlueprintUnderlay } from './blueprint';
@@ -315,6 +316,7 @@ export class ViewportEngine {
       exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),
+      meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
       sweepClashes: (sweeps) =>
         sweepsIn(
           withRest(() => solidShapes(false)),
@@ -385,6 +387,7 @@ export class ViewportEngine {
 
   private complete(): void {
     this.ctx.loop.finishSpawns();
+    this.ctx.layer.queueLoadedComponents();
 
     if (!this.ctx.layer.hasPending) {
       return;

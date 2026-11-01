@@ -159,6 +159,8 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
 
     if (!vp) throw new Error('The canvas isn’t ready.');
 
+    await vp.meshesReady();
+
     const { parts, project, rig, pose } = inputs.current;
     const measures = await vp.measureParts();
 

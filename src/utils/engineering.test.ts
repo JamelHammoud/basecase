@@ -186,6 +186,19 @@ describe('runEngineering on a two-joint leg', () => {
     expect(r.rows.find((x) => x.check === 'Regulator input')).toMatchObject({ status: 'fail', ids: ['rail12'] });
   });
 
+  it('turns only the joint’s own servo horn in a sweep, not its mirrored twin on the same axis line', () => {
+    const actuators: string[][] = [];
+
+    runEngineering({
+      ...input,
+      parts: [...parts, servo('rightHipServo', 'Right hip servo')],
+      servoOutputs: { ...input.servoOutputs, rightHipServo: { point: [-120, 112, 0], axis: [-1, 0, 0] } },
+      sweep: (s) => (actuators.push(s.actuators ?? []), []),
+    });
+
+    expect(actuators).toEqual([['hipServo'], ['kneeServo']]);
+  });
+
   it('reports no joints without running torque', () => {
     const r = runEngineering({ ...input, project: { ...project, joints: [] } });
 

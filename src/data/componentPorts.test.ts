@@ -3,6 +3,7 @@ import { MeshBVH } from 'three-mesh-bvh';
 import { describe, expect, it } from 'vitest';
 import { componentArrays } from '../three/componentGeometry';
 import type { Port } from '../types/ports';
+import { actuatorOf } from './components';
 import { COMPONENT_PORTS } from './componentPorts';
 
 const FACE_TOLERANCE = 0.6;
@@ -85,4 +86,18 @@ describe('catalog ports match the shipped meshes', () => {
       expect(problems).toEqual([]);
     });
   }
+});
+
+describe('servos that share a body', () => {
+  it('agree on whether a link can clamp both horns', () => {
+    const bodies = new Map<Port[], string[]>();
+
+    for (const [id, ports] of Object.entries(COMPONENT_PORTS)) {
+      if (actuatorOf(id)) bodies.set(ports, [...(bodies.get(ports) ?? []), id]);
+    }
+
+    const mixed = [...bodies.values()].filter((ids) => new Set(ids.map((id) => !!actuatorOf(id)?.dualShaft)).size > 1);
+
+    expect(mixed).toEqual([]);
+  });
 });

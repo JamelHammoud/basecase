@@ -5,6 +5,7 @@ import { platformBridge } from '../utils/platformBridge';
 import { conflictText, type ActorIndex } from './agentActors';
 import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import { applyAgentOps } from './applyAgentOps';
+import { awaitPartModels } from './agentPartModels';
 import { requestHandler, type RequestContext } from './agentRequestHandlers';
 import { runPoseTool, runSimTool, withSavedPose } from './agentRobotTools';
 import { sceneChecks } from './sceneChecks';
@@ -164,6 +165,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
         return;
       }
 
+      await awaitPartModels(event.kind, viewportRef.current);
       await respond(await handler(event.payload, ctx, event.kind));
     } catch (err) {
       await respond(undefined, String((err as Error).message ?? err));

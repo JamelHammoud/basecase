@@ -4,6 +4,7 @@ import { snapshotShapes } from '../three/analysis/sceneShapes';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { runEngineering } from '../utils/engineering';
 import type { EngineeringInputs, SweepRequest } from '../utils/engineeringTypes';
+import { buildRig } from '../utils/kinematics';
 import { bracket, LIFT, objectsOf, printed } from './assembly.fixtures';
 import { fastenerInput } from './fastenerSpec';
 import { clampsOf, fastenerCarriers, withFastenerFollowers } from './followers';
@@ -62,6 +63,25 @@ describe('fasteners follow the joint that moves what they clamp', () => {
     });
 
     expect(Object.fromEntries(carriers)).toEqual({ horn: 'yaw', nut: 'yaw' });
+  });
+
+  it('keeps fasteners that clamp a joint’s fixed side in the robot, on that side', () => {
+    const waist: RobotJoint = { ...YAW, id: 'waist', parent: ['pelvis'], child: ['torso'] };
+    const shoulder: RobotJoint = { ...YAW, id: 'shoulder', parent: ['torso'], child: ['arm'], parentJoint: 'waist' };
+    const joints = withFastenerFollowers([waist, shoulder], {
+      waistScrew: ['torso', 'spacer', 'pelvis'],
+      waistInsert: ['@waistScrew'],
+      capScrew: ['torso', 'cap'],
+    });
+    const parts = ['pelvis', 'torso', 'arm', 'spacer', 'cap', 'waistScrew', 'waistInsert', 'capScrew'].map((id) =>
+      printed(id, { size: [10, 10, 10] }, [0, 0, 0]),
+    );
+    const rig = buildRig(joints, parts);
+
+    expect(joints[0].parent).toEqual(['pelvis', 'waistScrew', 'waistInsert']);
+    expect(joints[1].parent).toEqual(['torso', 'capScrew']);
+    expect(['waistScrew', 'waistInsert', 'capScrew'].every((id) => rig.bodyParts.has(id))).toBe(true);
+    expect(rig.ownerOf.get('capScrew')).toBe('waist');
   });
 
   it('keeps fasteners the joints already list', () => {

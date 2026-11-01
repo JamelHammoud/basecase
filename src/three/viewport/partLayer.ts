@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { ScenePart } from '../../types/robotics';
 import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPartMesh';
+import { getComponentMesh } from '../componentMeshes';
 import { preparePart } from '../partMesh/prepare';
 import type { PartBatches } from './partBatches';
 
@@ -113,6 +114,20 @@ export class PartLayer {
     }
 
     return built;
+  }
+
+  queueLoadedComponents(): void {
+    const queued = new Set([...this.pending, ...this.waiting.values()].map((b) => b.part.id));
+
+    for (const { part, selected, meshVersion, group } of this.entries.values()) {
+      const loaded = group.userData.placeholder && part.componentId && getComponentMesh(part.componentId);
+
+      if (loaded && !queued.has(part.id)) this.pending.push({ part, selected, meshVersion });
+    }
+  }
+
+  isPlaceholder(id: string): boolean {
+    return Boolean(this.entries.get(id)?.group.userData.placeholder);
   }
 
   buildAll(): boolean {

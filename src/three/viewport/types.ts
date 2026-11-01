@@ -134,6 +134,7 @@ export interface Viewport3DHandle {
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
+  meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;

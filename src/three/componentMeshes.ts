@@ -100,6 +100,13 @@ export function getComponentMesh(id: string): LoadedComponent | null {
   return null;
 }
 
+export async function componentMeshesReady(ids: Iterable<string>): Promise<string[]> {
+  const unique = [...new Set(ids)];
+  const loads = await Promise.allSettled(unique.map((id) => loadComponentMesh(id)));
+
+  return unique.filter((_, i) => loads[i].status === 'rejected');
+}
+
 export function componentMeshError(id: string): string | null {
   const entry = entries.get(id);
 

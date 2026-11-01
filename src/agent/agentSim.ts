@@ -111,9 +111,11 @@ export function simReport(run: SimRun, rig: Rig, seconds: number): string {
     for (const j of worst.slice(0, 10)) lines.push(effortLine(j, model, rig));
   }
 
-  lines.push(
-    "A joint at its limit for long can't hold its load: a stronger servo, two servos, a shorter lever or less weight beyond it.",
-  );
+  if (worst.some((j) => j.peak >= 0.99)) {
+    lines.push(
+      "A joint at its limit for long can't hold its load: a stronger servo, two servos, a shorter lever or less weight beyond it.",
+    );
+  }
 
   return lines.join('\n');
 }

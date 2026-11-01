@@ -32,6 +32,7 @@ const DETACHED: Viewport3DHandle = {
   exportUsdz: async () => new Uint8Array(),
   partTriangles: () => null,
   servoOutput: () => null,
+  meshesReady: async () => [],
   sweepClashes: async () => [],
   frameAll: () => {},
   animateSpawn: () => {},

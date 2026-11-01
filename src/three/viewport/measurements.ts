@@ -84,7 +84,7 @@ export function partTriangles(ctx: ViewportContext, id: string): Float32Array | 
 export function servoOutput(ctx: ViewportContext, id: string): { point: Vec3; axis: Vec3 } | null {
   const object = ctx.layer.get(id);
 
-  if (!object) {
+  if (!object || ctx.layer.isPlaceholder(id)) {
     return null;
   }
 

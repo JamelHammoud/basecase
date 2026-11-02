@@ -1,20 +1,15 @@
 import { useState, type SetStateAction } from 'react';
 import type { AcpChatMessage } from '../types/robotics';
-import type { AcpPromptPayload } from '../utils/platformBridge';
 import { useLatestRef } from '../utils/useLatestRef';
-import { MAIN_LANE, laneKey, newLane, type AgentLane, type LaneChat } from './agentLanes';
+import { MAIN_LANE, laneKey, newLane, type AgentLane, type LaneChat, type QueuedPrompt } from './agentLanes';
 import type { RunEnd } from './liveRuns';
 import type { WorkspaceSeed } from './types';
-
-export interface QueuedPrompt {
-  messageId: string;
-  payload: AcpPromptPayload;
-}
 
 export interface LaneFlags {
   busy: boolean;
   follow: boolean;
   queued: QueuedPrompt[];
+  stopped: boolean;
   pendingResume: string | null;
   adopted: { ready: boolean; ended: RunEnd | null } | null;
 }
@@ -23,6 +18,7 @@ const newFlags = (pendingResume: string | null = null): LaneFlags => ({
   busy: false,
   follow: true,
   queued: [],
+  stopped: false,
   pendingResume,
   adopted: null,
 });
@@ -57,13 +53,21 @@ export function useAgentLanes(workspaceId: string, seed?: WorkspaceSeed) {
   const setMessages = (id: string, next: SetStateAction<AcpChatMessage[]>) =>
     updateLane(id, (l) => ({ ...l, messages: resolve(next, l.messages) }));
 
+  const setQueue = (id: string, fn: (queue: QueuedPrompt[]) => QueuedPrompt[]) => {
+    const laneFlags = flagsOf(id);
+    const queue = fn(laneFlags.queued);
+
+    laneFlags.queued = queue;
+    updateLane(id, (l) => ({ ...l, queue }));
+  };
+
   const addLane = (id: string, chat?: LaneChat) => {
     flags.set(id, newFlags(chat?.acpSessionId ?? null));
     setLanes((prev) => [...prev, newLane(id, chat)]);
   };
 
   const adoptLane = (id: string, chat: LaneChat, busy: boolean) => {
-    const lane = { ...newLane(id, chat), busy };
+    const lane = { ...newLane(id, chat), busy, queue: flagsOf(id).queued };
 
     flagsOf(id).busy = busy;
     flagsOf(id).pendingResume = null;
@@ -97,6 +101,7 @@ export function useAgentLanes(workspaceId: string, seed?: WorkspaceSeed) {
     isBusy: (id: string) => flags.get(id)?.busy ?? false,
     updateLane,
     setMessages,
+    setQueue,
     addLane,
     adoptLane,
     removeLane,

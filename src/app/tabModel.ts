@@ -1,6 +1,7 @@
 import type { WorkspaceMeta, WorkspaceSeed } from '../SceneWorkspace';
 import type { SavedSceneRecord } from '../types/robotics';
 import { newSceneId } from '../utils/sceneIds';
+import { moveItem } from '../utils/moveItem';
 
 export const MAX_TABS = 8;
 export const CLOSED_LIMIT = 10;
@@ -78,14 +79,7 @@ export function insertTab(tabs: TabEntry[], entry: TabEntry, at: number): TabEnt
   return next;
 }
 
-export function moveTab(tabs: TabEntry[], from: number, to: number): TabEntry[] {
-  const next = [...tabs];
-  const [moved] = next.splice(from, 1);
-
-  next.splice(to, 0, moved);
-
-  return next;
-}
+export const moveTab: (tabs: TabEntry[], from: number, to: number) => TabEntry[] = moveItem;
 
 export function omitKeys<T>(record: Record<string, T>, ids: string[]): Record<string, T> {
   const next = { ...record };

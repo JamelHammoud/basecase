@@ -88,6 +88,8 @@ export const MenuIcon = glyph('M4 6.5H20M4 12H20M4 17.5H20');
 
 export const MoreIcon = glyph({ d: '', dots: 'M5.5 12h0M12 12h0M18.5 12h0', dotSize: 3.5 });
 
+export const GripIcon = glyph({ d: '', dots: 'M9 5.5h0M15 5.5h0M9 12h0M15 12h0M9 18.5h0M15 18.5h0', dotSize: 3.25 });
+
 export const PauseIcon = glyph(
   'M6.5 4H8.5A1.5 1.5 0 0 1 10 5.5V18.5A1.5 1.5 0 0 1 8.5 20H6.5A1.5 1.5 0 0 1 5 18.5V5.5A1.5 1.5 0 0 1 6.5 4ZM15.5 4H17.5A1.5 1.5 0 0 1 19 5.5V18.5A1.5 1.5 0 0 1 17.5 20H15.5A1.5 1.5 0 0 1 14 18.5V5.5A1.5 1.5 0 0 1 15.5 4Z',
 );

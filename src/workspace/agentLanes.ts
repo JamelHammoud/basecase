@@ -1,5 +1,6 @@
 import type { AcpChatMessage, AgentConversationSummary, ContextUsage, ScenePart } from '../types/robotics';
 import { chatTitle } from './acpTranscript';
+import type { AgentSendParams } from './agentPrompt';
 
 export const MAIN_LANE = 'main';
 export const MAX_LANES = 4;
@@ -7,6 +8,11 @@ export const MAX_LANES = 4;
 const LANE_SEPARATOR = '__';
 
 export type RunEdits = Record<string, ScenePart | null>;
+
+export interface QueuedPrompt {
+  id: string;
+  params: AgentSendParams;
+}
 
 export interface AgentLane {
   id: string;
@@ -18,6 +24,7 @@ export interface AgentLane {
   edits: RunEdits;
   usedAt: number;
   context: ContextUsage | null;
+  queue: QueuedPrompt[];
 }
 
 export interface LaneChat {
@@ -49,20 +56,23 @@ export function newLane(id: string, chat?: LaneChat): AgentLane {
     edits: {},
     usedAt: Date.now(),
     context: chat?.context ?? null,
+    queue: [],
   };
 }
 
 export function laneToDrop(lanes: AgentLane[], currentId: string): AgentLane | null {
   if (lanes.length < MAX_LANES) return null;
 
-  const idle = lanes.filter((l) => !l.busy && l.id !== currentId).sort((a, b) => a.usedAt - b.usedAt);
+  const idle = lanes
+    .filter((l) => !l.busy && !l.queue.length && l.id !== currentId)
+    .sort((a, b) => a.usedAt - b.usedAt);
 
   return idle[0] ?? null;
 }
 
 export const laneOfChat = (lanes: AgentLane[], chatId: string) => lanes.find((l) => l.chatId === chatId) ?? null;
 
-export const isBlankLane = (lane: AgentLane) => !lane.busy && lane.messages.length === 0;
+export const isBlankLane = (lane: AgentLane) => !lane.busy && lane.messages.length === 0 && lane.queue.length === 0;
 
 export function runningChats(lanes: AgentLane[], now: Date): AgentConversationSummary[] {
   return lanes

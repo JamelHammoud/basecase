@@ -63,19 +63,12 @@ export function useLaneControls(options: LaneControlOptions) {
   const { core, lanes } = options;
   const { showToast, undo } = core;
   const { commitParts } = core.docs;
-  const { updateLane, setMessages, flagsOf, keyOf } = lanes;
+  const { updateLane, flagsOf, keyOf } = lanes;
 
   useRunFinished(options);
 
   const stop = (id = lanes.currentId) => {
-    const flags = flagsOf(id);
-    const dropped = new Set(flags.queued.map((q) => q.messageId));
-
-    flags.queued = [];
-
-    if (dropped.size)
-      setMessages(id, (prev) => prev.map((m) => (dropped.has(m.id) ? { ...m, queued: false, notSent: true } : m)));
-
+    flagsOf(id).stopped = true;
     platformBridge.cancelAcp(keyOf(id)).catch(() => {});
   };
 

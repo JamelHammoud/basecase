@@ -12,6 +12,7 @@ import type { AgentRequestEvent, WorkspaceSeed } from './types';
 import { lanePersister, useAgentChat } from './useAgentChat';
 import { useAgentCursors } from './useAgentCursors';
 import { useAgentLanes } from './useAgentLanes';
+import { useAgentQueue } from './useAgentQueue';
 import { useAgentRequests } from './useAgentRequests';
 import { useAdoptedRuns } from './useAdoptedRuns';
 import { useAgentRun } from './useAgentRun';
@@ -57,6 +58,7 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
   const [designerFocus, setDesignerFocus] = useState<DesignerFocus | null>(null);
   const [openedDesigner, setOpenedDesigner] = useState<string | null>(null);
   const run = useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel });
+  const queue = useAgentQueue({ lanes, send: run.send });
   const adopted = useAdoptedRuns({
     workspaceId,
     lanes,
@@ -152,6 +154,7 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
     focusDesigner: setDesignerFocus,
     requests,
     send: run.send,
+    queue,
     retry: run.retry,
     onEvent,
     uploadImage,

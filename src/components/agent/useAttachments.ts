@@ -57,6 +57,14 @@ export function readyFolders(chips: FolderChip[]): EvidenceFolder[] {
     }));
 }
 
+export const folderChip = (f: EvidenceFolder): FolderChip => ({
+  ...f,
+  key: f.id,
+  done: f.fileCount,
+  total: f.fileCount,
+  ready: true,
+});
+
 export function useAttachments({
   onUploadImage,
   promptRef,
@@ -112,9 +120,15 @@ export function useAttachments({
     setFolders([]);
   };
 
+  const restore = (nextImages: ReferenceImageRecord[], nextFolders: FolderChip[]) => {
+    setImages(nextImages);
+    setFolders(nextFolders);
+  };
+
   return {
     images,
     folders,
+    restore,
     uploadingCount,
     isUploading,
     uploadFolders,

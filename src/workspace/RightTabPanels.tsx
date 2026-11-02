@@ -125,6 +125,7 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
           onSignIn={studio.signInAcp}
           onSaveApiKey={studio.saveAgentApiKey}
           onUploadImage={agent.uploadImage}
+          queue={agent.queue}
           onSend={agent.send}
           onRetry={agent.retry}
           onStop={() => controls.stop()}

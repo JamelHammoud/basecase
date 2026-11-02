@@ -1,14 +1,17 @@
 import React, { useRef, useState } from 'react';
 import { AcpChatMessage, AcpStatusInfo, AgentChoice, ContextUsage, ReferenceImageRecord } from '../types/robotics';
 import { AnalyzedImageFeatures } from '../utils/imageTo3DAnalyzer';
-import { collectDrop, EvidenceFolder } from '../utils/evidenceFiles';
+import { collectDrop } from '../utils/evidenceFiles';
 import { ImageViewer, ImageViewerItem, Tooltip, ChevronDownIcon, PhotoIcon } from '../design-system';
 import { agentKindOf, agentProfileOf } from '../agent/agentKinds';
-import { Composer, ComposerSubmit } from './agent/Composer';
+import { Composer } from './agent/Composer';
 import { ConnectionBanner } from './agent/ConnectionBanner';
 import { OpenedSubagent } from './agent/SubagentView';
 import { Transcript } from './agent/Transcript';
-import { useAttachments } from './agent/useAttachments';
+import { QueuedMessages } from './agent/queue/QueuedMessages';
+import { QueueControls, SendToAgent } from './agent/types';
+import { useDraft } from './agent/useDraft';
+import { useSubmit } from './agent/useSubmit';
 import { feedMask, useFeedFollow } from './agent/useFeedFollow';
 
 interface AcpStudioPanelProps {
@@ -26,14 +29,8 @@ interface AcpStudioPanelProps {
   onSignIn: (methodId: string) => Promise<void>;
   onSaveApiKey: (key: string) => Promise<void>;
   onUploadImage: (file: File) => Promise<{ record: ReferenceImageRecord; features: AnalyzedImageFeatures }>;
-  onSend: (params: {
-    text: string;
-    images?: ReferenceImageRecord[];
-    folders?: EvidenceFolder[];
-    targetHeightMm?: number;
-    model?: string;
-    effort?: string;
-  }) => Promise<void>;
+  queue: QueueControls;
+  onSend: SendToAgent;
   onRetry: (options: { targetHeightMm?: number; model?: string; effort?: string }) => Promise<void>;
   onStop: () => void;
   onNewChat: () => void;
@@ -79,6 +76,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   onSignIn,
   onSaveApiKey,
   onUploadImage,
+  queue,
   onSend,
   onRetry,
   onStop,
@@ -86,7 +84,8 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   onRevert,
 }) => {
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
-  const attachments = useAttachments({ onUploadImage, promptRef });
+  const draft = useDraft({ onUploadImage, promptRef, queue });
+  const { attachments } = draft;
   const [isDragOver, setIsDragOver] = useState(false);
   const [viewer, setViewer] = useState<ViewerState>(null);
   const { feedRef, feedContentRef, edgeFade, showJump, scrollToBottom, feedHandlers } = useFeedFollow({
@@ -98,10 +97,14 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
 
   const openImages = (images: ImageViewerItem[], index: number) => setViewer({ images, index });
 
-  const submit = async (draft: ComposerSubmit) => {
-    scrollToBottom();
-    await onSend({ ...draft, targetHeightMm: targetHeightMm || undefined, ...choice });
-  };
+  const { submit, sendNow } = useSubmit({
+    draft,
+    queue,
+    isBusy,
+    onSend,
+    extras: { targetHeightMm, choice },
+    scrollToBottom,
+  });
 
   const retry = async () => {
     scrollToBottom();
@@ -146,7 +149,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
             status={status}
             canRevert={canRevert}
             contentRef={feedContentRef}
-            onContinue={() => submit({ text: 'Continue', images: [], folders: [] })}
+            onContinue={() => sendNow({ text: 'Continue', images: [], folders: [] })}
             onRetry={retry}
             onRevert={onRevert}
             onOpenImages={openImages}
@@ -156,8 +159,10 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         {showJump && <JumpToBottom onClick={() => scrollToBottom(true)} />}
       </div>
 
+      <QueuedMessages queue={queue} onEdit={draft.edit} />
+
       <Composer
-        attachments={attachments}
+        draft={draft}
         promptRef={promptRef}
         attachRequest={attachRequest}
         isBusy={isBusy}

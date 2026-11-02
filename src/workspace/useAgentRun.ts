@@ -7,7 +7,8 @@ import { buildAgentPrompt, resendPayload, type AgentSendParams, type PromptOptio
 import { newId } from './helpers';
 import { STOPPED_REASONS } from './liveRuns';
 import type { AgentCursors } from './useAgentCursors';
-import type { AgentLanes, QueuedPrompt } from './useAgentLanes';
+import type { QueuedPrompt } from './agentLanes';
+import type { AgentLanes } from './useAgentLanes';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 interface AgentRunOptions {
@@ -19,7 +20,15 @@ interface AgentRunOptions {
   placeCustomModel: (model: CustomModelDefinition) => void;
 }
 
+interface SteerMessages {
+  payload: AcpPromptPayload;
+  userMessage: AcpChatMessage;
+  agentMessage: AcpChatMessage;
+}
+
 type PromptResult = Awaited<ReturnType<typeof platformBridge.sendAcpPrompt>>;
+
+export type SendMode = 'now' | 'queue';
 
 const failureReason = (err: unknown) =>
   String((err as Error)?.message ?? err ?? '')
@@ -30,7 +39,13 @@ const failureReason = (err: unknown) =>
 export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {
   const { docs, showToast } = core;
   const { setCustomModels } = core.studio;
-  const { updateLane, setMessages, flagsOf, keyOf } = lanes;
+  const { updateLane, setMessages, setQueue, flagsOf, keyOf } = lanes;
+
+  const build = (params: AgentSendParams) => {
+    const note = marksNote(docs.projectRef.current.marks, docs.partsRef.current);
+
+    return buildAgentPrompt({ ...params, note }, new Date());
+  };
 
   const setSession = (id: string, sessionId: string) => updateLane(id, (l) => ({ ...l, acpSessionId: sessionId }));
 
@@ -79,29 +94,38 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
     }
   };
 
-  const dequeue = (id: string, next: QueuedPrompt): AcpPromptPayload => {
-    const fresh = emptyAgentMessage(new Date());
-    const lane = lanes.lanesRef.current.find((l) => l.id === id);
-    const user = lane?.messages.find((m) => m.id === next.messageId);
-    const sent = user ? [{ ...user, queued: false }, fresh] : [fresh];
+  const takeNext = (id: string) => {
+    const [next] = flagsOf(id).queued;
 
-    setMessages(id, (prev) => [...prev.map((m) => (m.id === next.messageId ? { ...m, queued: false } : m)), fresh]);
+    if (next) setQueue(id, (queue) => queue.slice(1));
 
-    return lane?.chatId ? { ...next.payload, run: { chatId: lane.chatId, messages: sent } } : next.payload;
+    return next;
+  };
+
+  const startQueued = (id: string, next: QueuedPrompt): AcpPromptPayload => {
+    const { payload, userMessage, agentMessage } = build(next.params);
+    const chatId = lanes.lanesRef.current.find((l) => l.id === id)?.chatId;
+
+    setMessages(id, (prev) => [...prev, userMessage, agentMessage]);
+
+    return chatId ? { ...payload, run: { chatId, messages: [userMessage, agentMessage] } } : payload;
   };
 
   const runAgentPrompt = async (id: string, first: AcpPromptPayload) => {
     let payload: AcpPromptPayload | undefined = first;
 
+    const flags = flagsOf(id);
+
+    flags.stopped = false;
     setBusy(id, true);
     updateLane(id, (l) => ({ ...l, edits: {} }));
 
     while (payload) {
       await runOnce(id, payload);
 
-      const next = alive() ? flagsOf(id).queued.shift() : undefined;
+      const next = alive() && !flags.stopped ? takeNext(id) : undefined;
 
-      payload = next && dequeue(id, next);
+      payload = next && startQueued(id, next);
     }
 
     setBusy(id, false);
@@ -110,30 +134,35 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
     cursors.clearLane(id);
   };
 
-  const steer = async (id: string, payload: AcpPromptPayload, sent: [AcpChatMessage, AcpChatMessage]) => {
-    const [userMessage, agentMessage] = sent;
+  const enqueue = (id: string, params: AgentSendParams, at: 'start' | 'end') => {
+    const item = { id: newId('queued'), params };
+
+    setQueue(id, (queue) => (at === 'start' ? [item, ...queue] : [...queue, item]));
+  };
+
+  const steer = async (id: string, params: AgentSendParams, sent: SteerMessages) => {
+    const { payload, userMessage, agentMessage } = sent;
     const outcome = await platformBridge.steerAcp({ ...payload, workspaceId: keyOf(id) });
 
-    if (outcome === 'injected') {
-      setMessages(id, (prev) => [...prev, userMessage, agentMessage]);
+    if (outcome === 'injected') setMessages(id, (prev) => [...prev, userMessage, agentMessage]);
+    else enqueue(id, params, 'start');
+  };
+
+  const send = async (params: AgentSendParams, mode: SendMode = 'now') => {
+    const { id, chatId } = lanes.current;
+    const chat = chatId ?? newId('chat');
+    const built = build(params);
+    const { userMessage, agentMessage } = built;
+    const payload = { ...built.payload, run: { chatId: chat, messages: [userMessage, agentMessage] } };
+
+    if (flagsOf(id).busy && mode === 'queue') {
+      enqueue(id, params, 'end');
 
       return;
     }
 
-    flagsOf(id).queued.push({ messageId: userMessage.id, payload });
-    setMessages(id, (prev) => [...prev, { ...userMessage, queued: true }]);
-  };
-
-  const send = async (params: AgentSendParams) => {
-    const { id, chatId } = lanes.current;
-    const chat = chatId ?? newId('chat');
-    const note = marksNote(docs.projectRef.current.marks, docs.partsRef.current);
-    const built = buildAgentPrompt({ ...params, note }, new Date());
-    const { userMessage, agentMessage } = built;
-    const payload = { ...built.payload, run: { chatId: chat, messages: [userMessage, agentMessage] } };
-
     if (flagsOf(id).busy) {
-      await steer(id, payload, [userMessage, agentMessage]);
+      await steer(id, params, { payload, userMessage, agentMessage });
 
       return;
     }
@@ -159,9 +188,13 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
   };
 
   const drain = async (id: string) => {
-    const next = flagsOf(id).queued.shift();
+    const flags = flagsOf(id);
 
-    if (next && !flagsOf(id).busy) await runAgentPrompt(id, dequeue(id, next));
+    if (flags.busy || flags.stopped) return;
+
+    const next = takeNext(id);
+
+    if (next) await runAgentPrompt(id, startQueued(id, next));
   };
 
   return { send, retry, drain };

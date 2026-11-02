@@ -123,9 +123,7 @@ export const UserMessage: React.FC<{
         {folders.length > 0 && <FolderChips folders={folders} />}
         {msg.text && <ClampedText text={msg.text} />}
       </div>
-      {pending && (
-        <span className="text-[12px] text-white/40 pr-1">{msg.queued ? 'Sends after this run' : 'Not sent'}</span>
-      )}
+      {pending && <span className="text-[12px] text-white/40 pr-1">Not sent</span>}
     </div>
   );
 };

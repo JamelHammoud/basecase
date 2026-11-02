@@ -96,8 +96,8 @@ Done when every surface is reviewed and each finding is fixed or listed as accep
 
 - Fix critical and high findings first, at the root, with the helpers above instead of new one-off checks. Extend a helper when it's missing a case.
 - Add a regression test next to the code for every fix that a test can hold (`electron/security.test.mjs`, `electron/vite-bridge-middleware.test.mjs`, `electron/backend/backendStores.test.mjs` are the patterns): the exploit input must be refused.
-- Keep the user-visible behaviour the same; errors follow AGENTS.md §3 (say what to do).
-- When a new surface or helper appears, add its row to the table in §3 here and to AGENTS.md §0h.
+- Keep the user-visible behaviour the same; errors follow docs/guide/copy.md §3 (say what to do).
+- When a new surface or helper appears, add its row to the table in §3 here and to docs/guide/security.md §0h.
 
 ## 5. Verify
 

@@ -5,7 +5,7 @@ description: How to add a real product (servo, motor, board, sensor, camera, LiD
 
 # Add a part
 
-Basecase's Parts library holds **real products with exact geometry, never estimates** (AGENTS.md §8a, §13-2). A part someone adds becomes the thing every robot is designed around: brackets are bolted to its holes and pockets are cut to its envelope. So a part is only done when its mesh, holes and numbers all trace back to the maker.
+Basecase's Parts library holds **real products with exact geometry, never estimates** (docs/guide/parts-catalog.md §8a, AGENTS.md §13-2). A part someone adds becomes the thing every robot is designed around: brackets are bolted to its holes and pockets are cut to its envelope. So a part is only done when its mesh, holes and numbers all trace back to the maker.
 
 The steps below are the whole path. Follow them in order; each says what "done" looks like. Worked example: `radxa-zero-3w` (an Amazon link → the maker's STEP → catalog entry, ports and price).
 
@@ -14,7 +14,7 @@ The steps below are the whole path. Follow them in order; each says what "done" 
 | What it is | Where it goes |
 |---|---|
 | A product you buy whole: servo, motor, board, sensor, camera, gripper, battery, regulator, wheel… | **This skill** → `src/data/components.ts` |
-| A standard fastener or stock part sized by a standard (screws, nuts, bearings, extrusion, shafts, pulleys) | A hardware family, not a component: `src/data/hardware.ts`, `motionHardware.ts`, `frameHardware.ts` (AGENTS.md §5, “Motion and frame hardware”) |
+| A standard fastener or stock part sized by a standard (screws, nuts, bearings, extrusion, shafts, pulleys) | A hardware family, not a component: `src/data/hardware.ts`, `motionHardware.ts`, `frameHardware.ts` (docs/guide/layout.md §5, “Motion and frame hardware”) |
 | A hand whose maker publishes a URDF / MJCF with finger joints | A component first (this skill), then `src/data/articulatedParts.ts` (§8c “Posable hands”) |
 | A whole robot | `ROBOT_PRESETS` in `utils/robotImport.ts` (§8c), not Parts |
 | Generic bought goods with no exact shape (wire, chargers, filament) | `src/data/supplies.ts` |
@@ -82,7 +82,7 @@ Only when the maker publishes drawings but no CAD (or the file comes from a rese
 3. Read `notes.md` (every dimension: official vs measured) and look at the renders. Anything “Not dimensioned” stays plain, never invented. Rerun or fix the record until the table is all OK.
 4. Use `model: { source: 'agent', by: '<maker whose drawing it is>' }`.
 
-**Never hand-model a component or estimate one.** If none of these paths works (CAD behind a sign-in, no drawing), stop and tell the person what's missing; AGENTS.md §8a keeps a list of such parts.
+**Never hand-model a component or estimate one.** If none of these paths works (CAD behind a sign-in, no drawing), stop and tell the person what's missing; docs/guide/parts-catalog.md §8a keeps a list of such parts.
 
 ## 3. Pose and measure the mesh
 
@@ -112,7 +112,7 @@ Done when the pose is right and the probe's numbers match the drawing.
 
 ## 4. Write the catalog entry
 
-Add one `ComponentInfo` to `COMPONENTS` in `src/data/components.ts`, next to similar parts of its group. Copy the shape of a neighbour (the Raspberry Pi Zero 2 W and Radxa ZERO 3W entries are good boards; the STS3215 is a full servo). All text follows AGENTS.md §3; run its checklist (§3d) on every string.
+Add one `ComponentInfo` to `COMPONENTS` in `src/data/components.ts`, next to similar parts of its group. Copy the shape of a neighbour (the Raspberry Pi Zero 2 W and Radxa ZERO 3W entries are good boards; the STS3215 is a full servo). All text follows docs/guide/copy.md §3; run its checklist (§3d) on every string.
 
 | Field | Rule |
 |---|---|

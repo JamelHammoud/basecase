@@ -12,7 +12,7 @@ Knowledge preserved from code comments. Complements AGENTS.md; nothing here repe
 ## electron/main.mjs
 - Window background is `#00000000` so native vibrancy shows through.
 - userData (and so localStorage) follows the app name: on first launch after the rename, the old `Robotics 3D Studio` folder is carried over instead of starting fresh.
-- Stoplight position must match `LAYOUT` in `theme.ts` (see AGENTS.md §2).
+- Stoplight position must match `LAYOUT` in `theme.ts` (see docs/guide/window-chrome.md §2).
 - Stoplights hide in full screen; `enter-full-screen` / `leave-full-screen` are forwarded so the renderer can move the sidebar toggle into their space.
 - Links (agent reply sources) always go to the system browser via `setWindowOpenHandler`.
 

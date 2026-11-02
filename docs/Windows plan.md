@@ -1,6 +1,6 @@
 # Windows plan
 
-Basecase on Windows 11 x64: what's done, what isn't verified yet, and how a release gets tested before anyone downloads it. Code rules live in AGENTS.md §0j.
+Basecase on Windows 11 x64: what's done, what isn't verified yet, and how a release gets tested before anyone downloads it. Code rules live in docs/guide/windows.md §0j.
 
 ## Status
 

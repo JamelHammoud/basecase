@@ -1,0 +1,31 @@
+# Scene tabs
+
+Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every change follows and the index of these files; section numbers (§) are shared across them.
+
+## 5a. Scene Tabs
+
+Several scenes stay open at once, each with its own parts, undo history, selection, comments and agent conversation.
+
+- **Architecture:** `App.tsx` is the tab host; each tab is a `SceneWorkspace` (`src/SceneWorkspace.tsx`).
+  - Every tab stays mounted (background tabs mount shortly after launch, §0f), so a background agent keeps building and can render its review shots. Background tabs are `invisible` + `inert`, and their `Viewport3D` is `paused` (no render loop; captures still render on demand). Closing a tab frees its WebGL context (`forceContextLoss`).
+  - Up to 8 tabs (browsers cap WebGL contexts near 16). A ninth says “Close a scene to open another. Up to 8 stay open.”
+  - App-wide state lives in the host and reaches scenes as `studio` (`StudioShared`): preferences, panel open state and widths, libraries, chat list, the agent connection, Settings. Per scene: everything about the scene, Left/Right panel tabs, the palette, toasts.
+  - Only the scene in front listens to the keyboard, paste, the menu bar and the dev `__studio` hook. Background scenes skip re-renders for app-wide changes (custom `memo` comparator) and catch up when brought to front.
+- **Where:** in the title bar (§2), from 8px after the sidebar toggle to 8px before the scene's actions. `App.tsx` lays the sidebar toggle and `SceneTabs` over each scene's title bar drag region. No glass: the tabs are part of the window chrome.
+- **Tabs (`SceneTabs`):** 28px rounded pills (8px corners), 180px wide, shrinking to 96px, 6px apart, on the title bar's centerline.
+  - The active tab sits on a flat `#262626` fill (no edge or highlight); its label is `white/90`, 13px medium, and its × always shows.
+  - Background tabs are plain labels (`white/50`, `white/80` on hover) with a soft fill on hover and × on hover.
+  - Nothing else: no icons or separators. While a scene's agent works, a 12px white spinner sits before its name.
+  - Past their minimum width they scroll sideways (the wheel scrolls; an edge fades only while tabs are hidden past it, measured from layout so sliding tabs don't trigger it).
+  - New tabs grow in (`animate-tab-in`); tabs slide into place after insert, close and drop (FLIP, 220ms).
+  - Press selects. Drag past 4px reorders. Double-click renames inline. Middle-click closes. × closes (`Close  ⌘W`). Right-click: Rename, Duplicate, New Scene, Reopen Closed Scene, Close, Close Other Scenes, Close Scenes to the Right.
+  - Resting 800ms on a background tab opens a small preview card under it: a fresh frame of that scene, its name, and its part count, or the agent's live activity while it works.
+  - + (28px) 2px after the last tab (its glyph carries 6px of air, so it reads about as far out as the tabs are apart): `New scene  ⌘T`.
+- **Opening and closing:**
+  - New scenes are numbered so open tabs never share a name: Untitled, Untitled 2…
+  - Library → a scene: shows its tab if it's open, reuses the tab in front if it's untouched (blank, unrenamed, unused), otherwise opens a new tab after it.
+  - Closing a tab stops its agent, saves its chat and ends its session. The toast reads “Closed ⟨name⟩” + [Undo] (“…and stopped its agent” when one was running); Undo reopens it in place with its chat. Untouched tabs close silently. Closing the last tab leaves a blank one, which Undo removes again.
+  - ⇧⌘T reopens the last 10 closed scenes. Duplicate copies the scene, not the chat.
+  - When a background agent finishes: “Agent finished in ⟨name⟩” + [Show].
+- **Sharing scenes** (`utils/sceneFile.ts`): Export ▸ Basecase Scene (also File ▸ Export Scene and ⌘K) downloads `<name>.basecase`, gzipped JSON `{ format: 'basecase-scene', version, scene }` holding the name, description, parts, comments, project settings and preview, built from the scene in memory. It leaves out what belongs to the sender's machine: the chat, `prints` (so Skip N printed parts doesn't skip the sender's prints), `policies` and `buildGuide` (their files live in the sender's `library/`). File ▸ Open Scene File, ⌘K, or dropping the file on the canvas saves it to the Library under a new id and opens it in a tab (`importSceneFile` in `useSceneLibrary`). The file is untrusted: it must match the format, parts need an id, kind and position, images must be `data:image/` URLs, and a newer `version` says “Made with a newer Basecase. Update to open it.” Bump `VERSION` only when an older app can't read the new shape.
+- **Shortcuts:** ⌘T new, ⌘W close, ⇧⌘T reopen, ⌃Tab / ⌃⇧Tab and ⇧⌘] / ⇧⌘[ next / previous, ⌘1–⌘8 a tab, ⌘9 the last. They work while typing (except with Settings open). ⌘K lists every other open scene under Open Scenes, plus New / Duplicate / Close / Reopen Scene.

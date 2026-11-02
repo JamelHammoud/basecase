@@ -1,0 +1,32 @@
+# Simulate and train
+
+Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every change follows and the index of these files; section numbers (§) are shared across them.
+
+## 8d. Simulate & Train (MuJoCo)
+
+Stages 3 and 4 of the robotics loop (§1); milestones in [docs/Robotics loop.md](../../docs/Robotics%20loop.md). The **Simulate** tab (right panel, shown while the scene has joints) runs the scene's robots under MuJoCo physics and trains policies for them.
+
+- **One engine, one model.** MuJoCo runs the live sim (`@mujoco/mujoco`, DeepMind's official WebAssembly build) and training (the `mujoco` Python wheel), both at the **same pinned version**, from the same generated MJCF. Never add a second physics engine. What you train is what you saw.
+  - **Updating MuJoCo:** `node tools/sim/update-mujoco.mjs [version]` (latest when omitted) bumps `package.json` and `electron/trainer/pyproject.toml` + `uv.lock` together, then runs `node tools/sim/smoke.mjs`, which fails if the two engines differ in version or in result. Never bump one side alone. We consume upstream releases; we don't fork MuJoCo's C code.
+- **The scene is the source of truth.** `src/sim/mjcf.ts` (`buildMjcf`) writes the MJCF from the scene; never hand-edit or store a model file as truth. Fix the design, and the model follows.
+  - Bodies: one per joint (`buildRig`), holding the parts that joint moves, under a root body with the robot's base. Robots with leg joints float (free joint); others are welded to the floor. Parts with `physics.dynamic` (SimReady objects, §8e) get a free body per group, with their own mass and friction, and collide with robots, scenery and each other. Every other solid part is fixed scenery.
+  - Body frames keep the world's orientation at rest (origin = the joint's pivot), so sim poses map back to parts without rotations (`simDeltas` in `useSimulation.ts`).
+  - Frames: scene mm Y-up → MuJoCo m Z-up as `(x, −z, y) / 1000` (the agent frame). The robot faces −Y.
+  - Geoms: the convex hull of each part's mesh (hull vertices only, `maxhullvert` 96, `inertia="convex"`), mass from `partMasses` (§8b), inertia from the hull. Robot geoms collide with the floor and scenery, not with each other (rest-pose hulls overlap); exact self-collision stays with the mesh sweeps in `three/interference.ts`.
+  - Joints and position actuators (a servo): range from `RobotJoint`, force limit from the servos' stall torque (`actuatorOf`), else the published `effortNm`, else an estimate from the weight the joint holds (labelled in the Model section). `kp` reaches full torque about 10° off target, `dampratio` 1, armature from the torque.
+  - The start state is the pose on the canvas, lifted to just above the floor.
+- **Simulating never edits parts.** Like posing (§8c), the sim only moves what the canvas shows (`Viewport3D.setPose`). Ending it, or editing parts or joints while it runs, returns the canvas to the posed model.
+- **Off the main thread.** `src/sim/sim.worker.ts` runs `SimEngine` (`src/sim/engine.ts`, no DOM, so it also runs in Node) in real time × speed and posts body poses per frame. `Simulation.run()` steps a fresh model headless in its own worker (for agent checks) without touching the live one.
+- **Controllers:** Hold pose, an animation's keyframes (does the walk cycle really walk?), a trained policy, or Limp. Push shoves the robot sideways with half its weight for 0.15 s.
+- **Grab and fling:** while a simulation is loaded, the Move and Rotate gizmos grab instead of edit (`Viewport3D` `onGrab`; parts never change). The dragged part's body is pulled toward the gizmo on a critically damped spring scaled by its robot's mass, with gravity compensated (`SimEngine.grab`, like MuJoCo's viewer perturbation), so a slow drag lifts or turns the robot and a quick release flings it. A multi-selection grabs its first part, and its gizmo follows the robot.
+- **Result:** per robot "Standing" or "Fell at 2.4 s" (tilt over 60° or the root below 45% of its start height), tilt and distance moved; Peak torque lists the hardest-working joints (peak / limit, time at the limit), and a click selects the joint's link.
+- **Training** (`useTraining.ts`, `electron/trainer.mjs`, `electron/trainer/train.py`):
+  - Runs as a child process through **uv**, which installs the pinned Python, MuJoCo and PyTorch on first use into `library/trainer-env` (`--frozen` against `uv.lock`). Without uv the Train section says how to install it.
+  - Users pick tasks, not rewards: **Stand** and **Walk** (a forward speed), with a 5 min / 20 min / 1 h budget. Floating robots only.
+  - PPO (rsl_rl-style: ELU MLP 256-128-64, adaptive KL step, GAE) over 64 robots stepped together by MuJoCo's threaded `rollout`; about 20K steps/s on an M-series Mac.
+  - **Sim-to-real by default:** every robot gets its own friction (0.6–1.3×), link masses (±15%) and servo stiffness (±15%), a random heading and start noise, and is shoved every 2–5 s.
+  - Progress streams as `train-progress` events (one JSON line per batch). Stop saves what it learned. The policy is checkpointed every minute, then evaluated in a clean 8 s run.
+  - Results go to `library/policies/<id>/`: `policy.json` (the app runs it), `policy.onnx` (anything else runs it) and the `model.xml` it trained on. The scene keeps a `PolicyRecord` in `project.policies`.
+- **The policy contract** (`src/sim/policy.ts`, mirrored in `train.py`): observation = gravity, angular and linear velocity in the root frame, command, joint positions − default, joint velocities, last action; action = default + 0.25 × clip(a, −1, 1), every 20 ms. Change both files together and bump `POLICY_VERSION`.
+- **Agent tools** (`src/agent/agentSim.ts`, `cad-mcp-server.mjs`): `simulate` (seconds, controller `hold` / `limp` / `animation:<name>` / `policy:<name>`, shoves by direction and share of body weight, rendered frames) reports falls, tilt, travel and each joint's peak effort against its limit; `train_policy` (stand / walk, minutes) starts training and returns; `training_status` reports progress and the policies with their clean-run results. The prompt has the agent simulate every legged design (hold, then shoves) and fix the design, not the test. `__studio.simTool(kind, payload)` runs the same tools in dev.
+- **Not done yet:** sim results as engineering check rows (Pass / Warn / Fail), Reach for arms, action latency randomization, self-collision between non-adjacent links, cloud GPU training.

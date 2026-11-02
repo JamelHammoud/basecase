@@ -162,7 +162,7 @@ Independent pieces run in parallel where they touch separate files:
 - **Rewriting the editor in C++** (document model, React UI and scene in WASM). Figma spent years on its engine for wins (GC-free memory, a retained renderer, loading less) that Phases 2–3 give us selectively: shared typed-array geometry, a render thread, native-speed kernels in workers.
 - **Pausing or deferring the agent's work to keep frames smooth.** Work moves off the thread instead.
 
-## Rules this adds to AGENTS.md §0f (when Phase 1 lands)
+## Rules this adds to docs/guide/performance.md §0f (when Phase 1 lands)
 
 - Agent request handlers never do work that scales with triangles or pixels on the main thread. They snapshot plain data and await a worker.
 - Computations never mutate the live scene to measure something; they use matrices on cached geometry.

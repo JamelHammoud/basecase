@@ -128,10 +128,10 @@ Judge it by asking:
 - Every glyph takes `className`, `style` and `strokeWidth` (in grid units; the send arrow uses 2.25).
 - Single-state feed glyphs go in `src/design-system/toolIcons.tsx` as `export const XIcon = glyph('<path>')` (or a spec), then map tool names to them in `src/components/agent/toolRules.ts`.
 - It's exported through `src/design-system/index.ts`. Pass `filled` from the active state: `icon={<v.Icon filled={active} />}`.
-- The accessible name and tooltip still come from `IconButton`'s `title` and `shortcut` (AGENTS.md §3).
+- The accessible name and tooltip still come from `IconButton`'s `title` and `shortcut` (docs/guide/copy.md §3).
 - Never copy path data from another icon set. Study them, then draw your own. `LayersIcon` and `HandIcon` started from lucide paths (ISC).
 - Verify in the running app (`preview_start`) in each state, and run `npm run build` and `npm run lint`.
-- Add the icon to the list below and to AGENTS.md §14.
+- Add the icon to the list below and to docs/guide/design-system.md §14.
 
 ## Shipped icons
 

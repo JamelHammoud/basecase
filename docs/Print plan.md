@@ -4,7 +4,7 @@ Stage 5 of the robotics loop ([Robotics loop.md](Robotics%20loop.md)) says Build
 
 ## Status (2026-10-25)
 
-All seven milestones are built. AGENTS.md §8f describes how the code works now; this file keeps the plan, what changed from it, and what still needs a real printer to confirm.
+All seven milestones are built. docs/guide/printing.md §8f describes how the code works now; this file keeps the plan, what changed from it, and what still needs a real printer to confirm.
 
 | # | Milestone | State | Verified by |
 |---|---|---|---|

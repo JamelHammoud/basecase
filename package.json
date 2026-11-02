@@ -128,6 +128,16 @@
           "libs/fflate.module.js",
           "math/ConvexHull.js"
         ]
+      },
+      {
+        "from": "node_modules/manifold-3d",
+        "to": "app/node_modules/manifold-3d",
+        "filter": [
+          "package.json",
+          "manifold.js",
+          "manifold.wasm",
+          "LICENSE"
+        ]
       }
     ],
     "generateUpdatesFilesForAllChannels": true,

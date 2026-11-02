@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { safeAudit } from './audit.mjs';
+import { isHullCrash, resolveHulls } from './hullFallback.mjs';
 import { portsFromLogs, portsFromObjects } from './ports.mjs';
 import { occMessage, replicadScope, unwrapResult, wrapCode } from './replicadSupport.mjs';
 
@@ -90,12 +91,19 @@ async function renderOpenSCAD(code) {
   try {
     return await renderOpenSCADOnce(SCAD_PRELUDE + code);
   } catch (err) {
-    if (/applyHull|assertion violation/.test(String(err?.message))) {
-      return await renderOpenSCADOnce(`${SCAD_PRELUDE}${code}\n$fn = 41;\n`);
-    }
+    if (!isHullCrash(err?.message)) throw err;
 
-    throw err;
+    return await renderWithOwnHulls(SCAD_PRELUDE + code);
   }
+}
+
+async function renderWithOwnHulls(code) {
+  const tree = await exportCsg(code);
+  const { text } = await resolveHulls(tree.text, (body) => renderOpenSCADOnce(body));
+  const result = await renderOpenSCADOnce(text);
+  const { ports, problems } = portsFromLogs(tree.logs);
+
+  return { ...result, warnings: [...tree.problems.slice(0, 8), ...problems], ports };
 }
 
 let warm = null;
@@ -141,16 +149,21 @@ function prewarm() {
 const HULL_HINT =
   'Hint: a hull() (or a BOSL2 rounding that uses hull) got degenerate input. Change sizes slightly, avoid zero-thickness or coplanar pieces inside hull(), keep $fn at 32 or more, or use chamfer instead of rounding there.';
 
+const FLAT_PART = 'The part is 2D. Extrude it (linear_extrude or rotate_extrude) to make a solid.';
+
+function failureTitle(logs, fatal) {
+  if (fatal.length) return 'OpenSCAD failed.';
+
+  if (logs.some((l) => /top level object is empty/i.test(l))) return 'The part is empty (nothing was rendered).';
+
+  return logs.some((l) => /not a 3D object/i.test(l)) ? FLAT_PART : 'OpenSCAD failed.';
+}
+
 function openscadError(logs, fatal, problems) {
-  const empty = logs.find((l) => /top level object is empty/i.test(l));
   const hints = logs.some((l) => /applyHull/.test(l)) ? [HULL_HINT] : [];
 
   return new Error(
-    [
-      empty && !fatal.length ? 'The part is empty (nothing was rendered).' : 'OpenSCAD failed.',
-      ...explainErrors(logs, fatal.length ? fatal : problems),
-      ...hints,
-    ].join('\n'),
+    [failureTitle(logs, fatal), ...explainErrors(logs, fatal.length ? fatal : problems), ...hints].join('\n'),
   );
 }
 
@@ -168,7 +181,9 @@ function stlSoup(stl) {
   return soup;
 }
 
-async function renderOpenSCADOnce(code) {
+const STL_ARGS = ['-o', '/part.stl', '--backend=manifold', '--export-format=binstl'];
+
+async function runOpenSCAD(code, args) {
   const { scad, logs } = (await warm) ?? (await makeScadInstance());
 
   warm = null;
@@ -180,7 +195,7 @@ async function renderOpenSCADOnce(code) {
   let rc;
 
   try {
-    rc = scad.getInstance().callMain(['/part.scad', '-o', '/part.stl', '--backend=manifold', '--export-format=binstl']);
+    rc = scad.getInstance().callMain(['/part.scad', ...args]);
   } catch (err) {
     logs.push(`ERROR: ${err?.message ?? err}`);
     rc = 1;
@@ -190,11 +205,29 @@ async function renderOpenSCADOnce(code) {
   const fatal = problems.filter((l) =>
     /\bERROR\b|Parser error|assertion violation|unknown (module|function|variable)|Ignoring unknown/i.test(l),
   );
-  let stl = null;
+  const read = (file) => {
+    try {
+      return FS.readFile(file);
+    } catch {
+      return null;
+    }
+  };
 
-  try {
-    stl = FS.readFile('/part.stl');
-  } catch {}
+  return { rc, logs, problems, fatal, read };
+}
+
+async function exportCsg(code) {
+  const { rc, logs, problems, fatal, read } = await runOpenSCAD(code, ['-o', '/part.csg']);
+  const csg = read('/part.csg');
+
+  if (rc !== 0 || fatal.length || !csg) throw openscadError(logs, fatal, problems);
+
+  return { text: new TextDecoder().decode(csg), logs, problems };
+}
+
+async function renderOpenSCADOnce(code) {
+  const { rc, logs, problems, fatal, read } = await runOpenSCAD(code, STL_ARGS);
+  const stl = read('/part.stl');
 
   if (rc !== 0 || fatal.length || !stl || stl.length < 84) throw openscadError(logs, fatal, problems);
 

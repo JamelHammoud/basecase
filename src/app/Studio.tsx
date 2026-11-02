@@ -69,7 +69,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
   });
 
   return (
-    <div className="window-chrome relative w-screen h-screen overflow-hidden">
+    <div className="window-chrome relative w-full h-full overflow-hidden">
       {core.tabs.map((tab) => {
         const active = tab.id === core.activeId;
 

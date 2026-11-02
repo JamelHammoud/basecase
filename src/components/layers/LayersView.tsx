@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconButton, SectionHeader, PhotoIcon, PhotoOffIcon } from '../../design-system';
+import { EmptyState, IconButton, PhotoIcon, PhotoOffIcon, SearchField, SectionHeader } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 import { GroupRow, PartRow } from './LayerItems';
 import { layerRows, layersTitle, overallSize } from './layerRows';
@@ -55,6 +55,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
   const { parts, selectedIds } = props;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
+  const [query, setQuery] = useState('');
   const scrollerRef = useRevealSelection(parts, selectedIds[0], props.open ?? true);
 
   if (parts.length === 0) {
@@ -62,6 +63,8 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
   }
 
   const selected = new Set(selectedIds);
+  const searching = query.trim() !== '';
+  const rows = layerRows(parts, collapsed, query);
   const size = overallSize(parts);
   const toggleCollapsed = (id: string) =>
     setCollapsed((prev) => {
@@ -80,6 +83,12 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
 
     props.onPartContextMenu(part.id, x, y);
   };
+  const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Escape') return;
+
+    if (query) setQuery('');
+    else e.currentTarget.blur();
+  };
   const groupMenu = (ids: string[], allSelected: boolean, at: { x: number; y: number }) => {
     if (!allSelected) props.onSelectIds(ids);
 
@@ -88,10 +97,19 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
+      <div className="px-[12px] pb-[10px] shrink-0">
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          onKeyDown={onSearchKey}
+          placeholder="Search layers"
+          aria-label="Search layers"
+        />
+      </div>
       <div ref={scrollerRef} className="flex-1 overflow-y-auto px-[8px] pb-3" onClick={() => props.onSelectPart(null)}>
         <SectionHeader title={layersTitle(parts)} action={<HeaderActions props={props} />} />
         <ul className="space-y-px">
-          {layerRows(parts, collapsed).map((row) =>
+          {rows.map((row) =>
             row.type === 'group' ? (
               <GroupRow
                 key={`g-${row.id}`}
@@ -99,7 +117,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
                 name={row.name}
                 memberIds={row.members.map((m) => m.id)}
                 selected={row.members.every((m) => selected.has(m.id))}
-                collapsed={collapsed.has(row.id)}
+                collapsed={!searching && collapsed.has(row.id)}
                 editing={editingId === row.id}
                 onSelect={props.onSelectIds}
                 onToggleCollapsed={toggleCollapsed}
@@ -124,6 +142,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
             ),
           )}
         </ul>
+        {searching && rows.length === 0 && <EmptyState title={`No matches for “${query.trim()}”`} />}
       </div>
       {size && <SizeFooter size={size} />}
     </div>

@@ -36,6 +36,23 @@ describe('layerRows', () => {
     expect(layerRows(parts, new Set(['g1'])).map((r) => r.type)).toEqual(['part', 'group', 'part']);
   });
 
+  it('filters by part and group name, showing matching members under their group', () => {
+    const named = [
+      part('a', { name: 'Base plate' }),
+      part('b', { name: 'Upper link', group: arm }),
+      part('c', { name: 'Servo', group: arm }),
+      part('d', { name: 'Servo horn' }),
+    ];
+    const ids = (query: string, closed = new Set<string>()) =>
+      layerRows(named, closed, query).map((r) => (r.type === 'group' ? `G:${r.name}` : r.part.id));
+
+    expect(ids('servo')).toEqual(['G:Arm', 'c', 'd']);
+    expect(ids('arm', new Set(['g1']))).toEqual(['G:Arm', 'b', 'c']);
+    expect(ids('servo horn')).toEqual(['d']);
+    expect(ids('wheel')).toEqual([]);
+    expect(layerRows(named, new Set(), 'servo')[0]).toMatchObject({ members: [named[1], named[2]] });
+  });
+
   it('titles and sizes the scene', () => {
     expect(layersTitle(parts)).toEqual(['4 parts', '1 cutout']);
     expect(overallSize([part('a')])).toBe('10 × 20 × 30');

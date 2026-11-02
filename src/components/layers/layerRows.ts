@@ -5,11 +5,22 @@ export type LayerRow =
   | { type: 'group'; id: string; name: string; members: ScenePart[] }
   | { type: 'part'; part: ScenePart; inGroup: boolean };
 
-export function layerRows(parts: ScenePart[], collapsed: ReadonlySet<string>): LayerRow[] {
+const queryWords = (query: string) => query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+const matchesWords = (part: ScenePart, words: string[]) => {
+  const text = `${part.name} ${part.group?.name ?? ''}`.toLowerCase();
+
+  return words.every((word) => text.includes(word));
+};
+
+export function layerRows(parts: ScenePart[], collapsed: ReadonlySet<string>, query = ''): LayerRow[] {
+  const words = queryWords(query);
+  const searching = words.length > 0;
+  const shown = searching ? parts.filter((p) => matchesWords(p, words)) : parts;
   const rows: LayerRow[] = [];
   const seen = new Set<string>();
 
-  for (const part of parts) {
+  for (const part of shown) {
     const group = part.group;
 
     if (!group) {
@@ -26,7 +37,9 @@ export function layerRows(parts: ScenePart[], collapsed: ReadonlySet<string>): L
 
     rows.push({ type: 'group', id: group.id, name: group.name, members });
 
-    if (!collapsed.has(group.id)) members.forEach((m) => rows.push({ type: 'part', part: m, inGroup: true }));
+    if (searching || !collapsed.has(group.id)) {
+      shown.filter((m) => m.group?.id === group.id).forEach((m) => rows.push({ type: 'part', part: m, inGroup: true }));
+    }
   }
 
   return rows;

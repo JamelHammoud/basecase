@@ -36,9 +36,15 @@ export function useScrollFade<T extends HTMLElement = HTMLDivElement>(
       setEdges((e) => (e.top === top && e.bottom === bottom ? e : { top, bottom }));
     };
 
+    let frame = 0;
+    const afterInput = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+
     update();
     el.addEventListener('scroll', update, { passive: true });
-    el.addEventListener('input', update);
+    el.addEventListener('input', afterInput);
     el.addEventListener('load', update, true);
 
     const resize = new ResizeObserver(update);
@@ -60,7 +66,8 @@ export function useScrollFade<T extends HTMLElement = HTMLDivElement>(
 
     return () => {
       el.removeEventListener('scroll', update);
-      el.removeEventListener('input', update);
+      cancelAnimationFrame(frame);
+      el.removeEventListener('input', afterInput);
       el.removeEventListener('load', update, true);
       resize.disconnect();
       mutations.disconnect();

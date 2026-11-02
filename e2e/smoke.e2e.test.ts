@@ -148,6 +148,23 @@ describe('studio commands', () => {
     expect(app.errors).toEqual([]);
   });
 
+  it('keeps every keystroke in the composer and fades it once it scrolls', async () => {
+    const box = app.page.locator(visible('textarea'));
+    const lines = Array.from({ length: 10 }, (_, i) => `line ${i}`);
+
+    await box.click();
+
+    for (const [i, line] of lines.entries()) {
+      if (i) await app.page.keyboard.press('Shift+Enter');
+
+      await app.page.keyboard.type(line);
+    }
+
+    expect(await box.inputValue()).toBe(lines.join('\n'));
+    await expect.poll(() => box.evaluate((el) => getComputedStyle(el).maskImage)).toContain('gradient');
+    await box.fill('');
+  });
+
   it('picks the agent model and effort in the composer and sends them with the prompt', async () => {
     const picker = app.page.locator(visible('button[aria-label^="Model:"]'));
     const effort = app.page.locator(visible('input[aria-label="Effort"]'));

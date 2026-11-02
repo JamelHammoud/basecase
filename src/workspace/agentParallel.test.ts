@@ -93,6 +93,12 @@ describe('parallel agents', () => {
     expect(call.children?.map((c) => [c.toolCallId, c.status])).toEqual([['t1', 'completed']]);
     expect(call.childText).toBe('Made 1 part.');
     expect(call.childThought).toBe('Knee first.');
+    expect(call.childSegments).toEqual([
+      { type: 'tool', toolCallId: 't1' },
+      { type: 'text', text: 'Made 1 part.' },
+      { type: 'thought', text: 'Knee first.' },
+    ]);
+    expect(call.childAt).toBe(NOW.toISOString());
     expect(messages[1].text).toBe('');
   });
 

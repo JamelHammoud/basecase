@@ -23,7 +23,7 @@ export const SubagentView: React.FC<{ call: AcpToolCallEvent; onClose: () => voi
   const running = isDesignerRunning(call);
   const steps = designerSteps(call);
   const partIds = parts.present(designerPartIds(call));
-  const progress = `${call.status}:${call.childThought?.length ?? 0}:${call.childText?.length ?? 0}`;
+  const progress = `${call.status}:${call.childThought?.length ?? 0}:${call.childText?.length ?? 0}:${call.childAt ?? ''}`;
   const { feedRef, feedContentRef, edgeFade, feedHandlers } = useFeedFollow({ messages: steps, status: progress });
   const mask = feedMask(edgeFade);
 

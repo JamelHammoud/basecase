@@ -155,34 +155,54 @@ const NESTED_TEXT: Record<string, 'childText' | 'childThought'> = {
   agent_thought_chunk: 'childThought',
 };
 
+function nestText(call: AcpToolCallEvent, u: SessionUpdate, field: 'childText' | 'childThought') {
+  const text = chunkText(u);
+
+  if (!text) return call;
+
+  return {
+    ...call,
+    [field]: (call[field] ?? '') + text,
+    childSegments: appendSegment(call.childSegments, field === 'childText' ? 'text' : 'thought', text),
+  };
+}
+
+function nestCall(call: AcpToolCallEvent, u: SessionUpdate) {
+  const id = String(u.toolCallId);
+  const known = call.children?.some((child) => child.toolCallId === id);
+  const segments = call.childSegments ?? [];
+
+  return {
+    ...call,
+    children: upsertCall(call.children ?? [], u),
+    childSegments:
+      known || u.sessionUpdate !== 'tool_call' ? segments : [...segments, { type: 'tool' as const, toolCallId: id }],
+  };
+}
+
 function nestUpdate(call: AcpToolCallEvent, u: SessionUpdate): AcpToolCallEvent {
   const kind = String(u.sessionUpdate);
   const field = Object.hasOwn(NESTED_TEXT, kind) ? NESTED_TEXT[kind] : undefined;
 
-  if (field) {
-    const text = chunkText(u);
+  if (field) return nestText(call, u, field);
 
-    return text ? { ...call, [field]: (call[field] ?? '') + text } : call;
-  }
-
-  if (u.sessionUpdate === 'tool_call' || u.sessionUpdate === 'tool_call_update') {
-    return { ...call, children: upsertCall(call.children ?? [], u) };
-  }
+  if (u.sessionUpdate === 'tool_call' || u.sessionUpdate === 'tool_call_update') return nestCall(call, u);
 
   return call;
 }
 
-function applySubagentUpdate(prev: AcpChatMessage[], parentId: string, u: SessionUpdate) {
+function applySubagentUpdate(prev: AcpChatMessage[], parentId: string, u: SessionUpdate, now: Date) {
   const owner = prev.findLastIndex((m) => m.toolCalls?.some((t) => t.toolCallId === parentId));
 
   if (owner === -1) return prev;
 
   const copy = [...prev];
   const msg = copy[owner];
+  const touched = (t: AcpToolCallEvent) => ({ ...nestUpdate(t, u), childAt: now.toISOString() });
 
   copy[owner] = {
     ...msg,
-    toolCalls: msg.toolCalls?.map((t) => (t.toolCallId === parentId ? nestUpdate(t, u) : t)),
+    toolCalls: msg.toolCalls?.map((t) => (t.toolCallId === parentId ? touched(t) : t)),
   };
 
   return copy;
@@ -205,7 +225,7 @@ const UPDATERS: Record<string, (target: AcpChatMessage, u: SessionUpdate) => Acp
 export function applySessionUpdate(prev: AcpChatMessage[], u: SessionUpdate, now: Date): AcpChatMessage[] {
   const parentId = parentToolUseIdOf(u);
 
-  if (parentId) return applySubagentUpdate(prev, parentId, u);
+  if (parentId) return applySubagentUpdate(prev, parentId, u, now);
 
   const copy = [...prev];
   let index = targetIndex(copy, u);

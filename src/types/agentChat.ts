@@ -1,3 +1,5 @@
+export type TranscriptSegment = { type: 'thought' | 'text'; text: string } | { type: 'tool'; toolCallId: string };
+
 export interface AcpToolCallEvent {
   toolCallId: string;
   title: string;
@@ -9,6 +11,8 @@ export interface AcpToolCallEvent {
   children?: AcpToolCallEvent[];
   childText?: string;
   childThought?: string;
+  childSegments?: TranscriptSegment[];
+  childAt?: string;
 }
 
 export interface AcpPlanEntry {
@@ -28,7 +32,7 @@ export interface AcpChatMessage {
   queued?: boolean;
   notSent?: boolean;
   toolCalls?: AcpToolCallEvent[];
-  segments?: Array<{ type: 'thought' | 'text'; text: string } | { type: 'tool'; toolCallId: string }>;
+  segments?: TranscriptSegment[];
   plan?: AcpPlanEntry[];
   createdModelId?: string;
   stopped?: boolean;

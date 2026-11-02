@@ -1,14 +1,15 @@
 import React from 'react';
 import { Markdown } from '../../design-system';
 import { AcpToolCallEvent } from '../../types/robotics';
-import { designerReport } from './designerSummary';
+import { designerActivity, designerReport, handbackMessage } from './designerSummary';
+import { Segment, stripMarkers } from './messageText';
 import { usePartMarkdown } from './PartLinksProvider';
 import { ThoughtBlock } from './ThoughtBlock';
 import { ToolGroup } from './ToolGroup';
 import { groupToolRuns } from './toolGroups';
-import { isToolRunning } from './toolLabel';
-import { ToolStep } from './ToolStep';
+import { FailureText, ToolStep } from './ToolStep';
 import { OpenImages } from './types';
+import { useElapsed } from './useElapsed';
 import { UserMessage } from './UserMessage';
 import { WorkingStatus } from './WorkingStatus';
 
@@ -18,24 +19,56 @@ const briefOf = (call: AcpToolCallEvent) => {
   return typeof prompt === 'string' ? prompt.trim() : '';
 };
 
-const Steps: React.FC<{ steps: AcpToolCallEvent[]; onOpenImages: OpenImages }> = ({ steps, onOpenImages }) => {
-  const calls = new Map(steps.map((step) => [step.toolCallId, step]));
-  const segments = steps.map((step) => ({ type: 'tool' as const, toolCallId: step.toolCallId }));
+function feedSegments(call: AcpToolCallEvent, steps: AcpToolCallEvent[]): Segment[] {
+  const shown = new Set(steps.map((step) => step.toolCallId));
 
-  return (
-    <div className="space-y-0.5 min-w-0">
-      {groupToolRuns(segments, calls).map((item) => {
-        if (item.kind === 'segment') {
-          const step = 'toolCallId' in item.segment ? calls.get(item.segment.toolCallId) : undefined;
+  if (call.childSegments)
+    return call.childSegments.filter((seg) => !('toolCallId' in seg) || shown.has(seg.toolCallId));
 
-          return step ? <ToolStep key={item.index} call={step} onOpenImages={onOpenImages} /> : null;
-        }
+  const thought = call.childThought?.trim();
 
-        return <ToolGroup key={item.index} calls={item.calls} onOpenImages={onOpenImages} />;
-      })}
-    </div>
-  );
+  return [
+    ...(thought ? [{ type: 'thought' as const, text: thought }] : []),
+    ...steps.map((step) => ({ type: 'tool' as const, toolCallId: step.toolCallId })),
+  ];
+}
+
+const TextSegment: React.FC<{ text: string }> = ({ text }) => {
+  const partLinks = usePartMarkdown();
+  const shown = stripMarkers(text);
+
+  return shown ? <Markdown {...partLinks}>{shown}</Markdown> : null;
 };
+
+const Segments: React.FC<{ segments: Segment[]; steps: AcpToolCallEvent[]; onOpenImages: OpenImages }> = ({
+  segments,
+  steps,
+  onOpenImages,
+}) => {
+  const calls = new Map(steps.map((step) => [step.toolCallId, step]));
+
+  return groupToolRuns(segments, calls).map((item) => {
+    if (item.kind !== 'segment') return <ToolGroup key={item.index} calls={item.calls} onOpenImages={onOpenImages} />;
+
+    const seg = item.segment;
+
+    if ('toolCallId' in seg) {
+      const step = calls.get(seg.toolCallId);
+
+      return step ? <ToolStep key={item.index} call={step} onOpenImages={onOpenImages} /> : null;
+    }
+
+    if (seg.type === 'thought') return <ThoughtBlock key={item.index} text={seg.text} live={false} />;
+
+    return <TextSegment key={item.index} text={seg.text} />;
+  });
+};
+
+function finalReport(call: AcpToolCallEvent, running: boolean) {
+  if (running) return '';
+
+  return call.childSegments ? handbackMessage(call) : designerReport(call);
+}
 
 export const SubagentFeed: React.FC<{
   call: AcpToolCallEvent;
@@ -46,9 +79,10 @@ export const SubagentFeed: React.FC<{
 }> = ({ call, steps, running, contentRef, onOpenImages }) => {
   const partLinks = usePartMarkdown();
   const brief = briefOf(call);
-  const thought = call.childThought?.trim() ?? '';
-  const report = running ? '' : designerReport(call);
-  const thinking = running && !!thought && !steps.some(isToolRunning);
+  const segments = feedSegments(call, steps);
+  const report = finalReport(call, running);
+  const activity = designerActivity(call, steps);
+  const elapsed = useElapsed(call.childAt, running);
 
   return (
     <div ref={contentRef} className="space-y-4 min-w-0">
@@ -60,11 +94,18 @@ export const SubagentFeed: React.FC<{
         />
       )}
       <div className="space-y-2.5 min-w-0">
-        {thought && <ThoughtBlock text={thought} live={thinking} />}
-        {steps.length > 0 && <Steps steps={steps} onOpenImages={onOpenImages} />}
+        <Segments segments={segments} steps={steps} onOpenImages={onOpenImages} />
         {report && <Markdown {...partLinks}>{report}</Markdown>}
-        {running && !thinking && <WorkingStatus status="" started={steps.length > 0} />}
-        {call.status === 'failed' && <div className="text-[12.5px] text-white/40">Couldn’t finish.</div>}
+        {running && (
+          <WorkingStatus
+            status={activity === 'Thinking' ? 'Thinking…' : ''}
+            started={segments.length > 0}
+            elapsed={elapsed}
+          />
+        )}
+        {call.status === 'failed' && (
+          <FailureText text={call.error ? `Couldn’t finish. ${call.error}` : 'Couldn’t finish.'} />
+        )}
       </div>
     </div>
   );

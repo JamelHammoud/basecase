@@ -34,6 +34,7 @@ function claudeCodeMeta(offline) {
         tools: ['TodoWrite', 'Agent', ...web],
         settingSources: [],
         thinking: { type: 'adaptive', display: 'summarized' },
+        forwardSubagentText: true,
         allowedTools: ['mcp__robotics_cad', 'TodoWrite', 'Agent', ...web],
         disallowedTools: BLOCKED_SUBAGENTS.map((type) => `Agent(${type})`),
         agents: cadSubagents(),

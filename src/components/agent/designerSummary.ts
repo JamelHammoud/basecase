@@ -1,5 +1,5 @@
 import { AcpToolCallEvent } from '../../types/robotics';
-import { toolKey, toolLabel } from './toolLabel';
+import { isToolRunning, toolKey, toolLabel } from './toolLabel';
 
 const HANDBACK_TOOL = 'SubagentHandback';
 
@@ -8,12 +8,13 @@ const isHandback = (call: AcpToolCallEvent) => call.toolName === HANDBACK_TOOL |
 export const designerSteps = (call: AcpToolCallEvent) =>
   (call.children ?? []).filter((child) => !isHandback(child) && toolLabel(child));
 
-export function designerReport(call: AcpToolCallEvent) {
+export function handbackMessage(call: AcpToolCallEvent) {
   const handback = call.children?.findLast(isHandback)?.rawInput as { message?: unknown } | undefined;
-  const message = typeof handback?.message === 'string' ? handback.message : '';
 
-  return (message || call.childText || '').trim();
+  return typeof handback?.message === 'string' ? handback.message.trim() : '';
 }
+
+export const designerReport = (call: AcpToolCallEvent) => handbackMessage(call) || (call.childText ?? '').trim();
 
 export interface DesignerDetail {
   text: string;
@@ -33,10 +34,15 @@ export function designerDetail(call: AcpToolCallEvent, steps: AcpToolCallEvent[]
 
   if (call.status === 'completed') return { text: madeParts(steps), tone: 'quiet' };
 
-  const last = steps.at(-1);
-  const latest = last ? toolLabel(last)?.title : '';
+  return { text: designerActivity(call, steps), tone: 'live' };
+}
 
-  return { text: latest || 'Starting', tone: 'live' };
+export function designerActivity(call: AcpToolCallEvent, steps: AcpToolCallEvent[]) {
+  const running = steps.findLast(isToolRunning);
+
+  if (running) return toolLabel(running)?.title || 'Working';
+
+  return call.childAt ? 'Thinking' : 'Starting';
 }
 
 export const stepCount = (steps: AcpToolCallEvent[]) => counted(steps.length, 'step');

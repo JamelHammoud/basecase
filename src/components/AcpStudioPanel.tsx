@@ -159,8 +159,6 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         {showJump && <JumpToBottom onClick={() => scrollToBottom(true)} />}
       </div>
 
-      <QueuedMessages queue={queue} onEdit={draft.edit} />
-
       <Composer
         draft={draft}
         promptRef={promptRef}
@@ -175,6 +173,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         onStop={onStop}
         onNewChat={onNewChat}
         onOpenImages={openImages}
+        above={<QueuedMessages queue={queue} onEdit={draft.edit} />}
       />
 
       {isDragOver && <DropOverlay />}

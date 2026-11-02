@@ -64,6 +64,7 @@ export const Composer: React.FC<{
   onStop: () => void;
   onNewChat: () => void;
   onOpenImages: OpenImages;
+  above?: React.ReactNode;
 }> = ({
   draft,
   promptRef,
@@ -78,6 +79,7 @@ export const Composer: React.FC<{
   onStop,
   onNewChat,
   onOpenImages,
+  above,
 }) => {
   const { attachments, text: promptText, setText: setPromptText, editing } = draft;
   const hasAttachments = attachments.images.length > 0 || attachments.folders.length > 0;
@@ -131,7 +133,8 @@ export const Composer: React.FC<{
 
   return (
     <div className="px-3 pb-3 pt-1 shrink-0">
-      <div className="rounded-[20px] bg-white/[0.05] ring-1 ring-inset ring-white/[0.08] focus-within:ring-white/[0.16] focus-within:bg-white/[0.06] transition-colors">
+      {above}
+      <div className="relative rounded-[20px] bg-[#2a2a2a] ring-1 ring-inset ring-white/[0.08] focus-within:ring-white/[0.16] focus-within:bg-[#2c2c2c] transition-colors">
         {editing && <EditingBar onCancel={draft.cancelEdit} />}
 
         <AttachmentTray attachments={attachments} onOpenImages={onOpenImages} />

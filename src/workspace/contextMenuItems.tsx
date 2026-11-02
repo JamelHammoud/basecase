@@ -142,6 +142,10 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   ];
 }
 
+function copyPartName({ core }: ContextInputs, name: string) {
+  void navigator.clipboard.writeText(name).then(() => core.showToast(`Copied ${name}`));
+}
+
 function partFlagItems(part: ScenePart, setFlag: (patch: Partial<ScenePart>) => void): ContextMenuEntry[] {
   return [
     {
@@ -164,7 +168,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
   const setFlag = (patch: Partial<ScenePart>) => edits.patchPart(part.id, patch);
 
   return [
-    { heading: part.name },
+    { heading: part.name, onSelect: () => copyPartName(inputs, part.name) },
     ...(part.hardware
       ? [{ label: 'Add Clearance Hole', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
       : []),

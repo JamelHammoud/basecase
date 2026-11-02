@@ -237,8 +237,20 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   </button>
 );
 
-export const MenuLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="px-2 pt-1.5 pb-1 text-[12px] font-medium text-white/40 select-none">{children}</div>
-);
+const menuLabelClass = 'px-2 pt-1.5 pb-1 text-[12px] font-medium text-white/40 select-none';
+
+export const MenuLabel: React.FC<{ children: React.ReactNode; onSelect?: () => void }> = ({ children, onSelect }) => {
+  if (!onSelect) return <div className={menuLabelClass}>{children}</div>;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`${menuLabelClass} block max-w-full truncate text-left cursor-default transition-colors hover:text-white/80`}
+    >
+      {children}
+    </button>
+  );
+};
 
 export const MenuDivider: React.FC = () => <Divider className="my-1" />;

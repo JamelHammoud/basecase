@@ -20,7 +20,7 @@ export type ContextMenuEntry =
       submenuWidth?: number;
     }
   | { divider: true }
-  | { heading: string };
+  | { heading: string; onSelect?: () => void };
 
 export interface ContextMenuProps {
   x: number;
@@ -28,6 +28,13 @@ export interface ContextMenuProps {
   items: ContextMenuEntry[];
   onClose: () => void;
 }
+
+const closingThen = (onClose: () => void, onSelect?: () => void) =>
+  onSelect &&
+  (() => {
+    onClose();
+    onSelect();
+  });
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }) => {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -95,7 +102,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       {items.map((item, i) => {
         if ('divider' in item) return <MenuDivider key={i} />;
 
-        if ('heading' in item) return <MenuLabel key={i}>{item.heading}</MenuLabel>;
+        if ('heading' in item)
+          return (
+            <MenuLabel key={i} onSelect={closingThen(onClose, item.onSelect)}>
+              {item.heading}
+            </MenuLabel>
+          );
 
         if ('submenu' in item) {
           const open = openSub === i;

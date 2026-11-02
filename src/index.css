@@ -38,7 +38,7 @@
   --animate-fade-in: fade-in 160ms var(--ease-out-expo);
   --animate-toast-in: toast-in 240ms var(--ease-out-expo);
   --animate-sheet-in: sheet-in 220ms var(--ease-out-expo);
-  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-shimmer: shimmer 2.2s linear infinite;
   --animate-tab-in: tab-in 200ms var(--ease-out-expo);
   --animate-push-in: push-in 220ms var(--ease-out-expo);
 }
@@ -157,10 +157,10 @@
 
 @keyframes shimmer {
   from {
-    background-position: -200% 0;
+    background-position: 200% 0;
   }
   to {
-    background-position: 200% 0;
+    background-position: -200% 0;
   }
 }
 

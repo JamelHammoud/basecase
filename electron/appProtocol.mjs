@@ -87,11 +87,21 @@ async function fromDist(request, { distDir, transformHtml }) {
   return respond(typed, transformHtml);
 }
 
+const isPageOriginHeader = (name) => name === 'origin' || name.startsWith('sec-fetch-');
+
+function proxiedHeaders(headers) {
+  const out = new Headers(headers);
+
+  for (const name of [...out.keys()].filter(isPageOriginHeader)) out.delete(name);
+
+  return out;
+}
+
 async function fromDevServer(request, { devServer, transformHtml }) {
   const { pathname, search } = new URL(request.url);
   const response = await net.fetch(`${devServer}${pathname}${search}`, {
     method: request.method,
-    headers: request.headers,
+    headers: proxiedHeaders(request.headers),
     body: request.method === 'GET' || request.method === 'HEAD' ? undefined : request.body,
     duplex: 'half',
     bypassCustomProtocolHandlers: true,

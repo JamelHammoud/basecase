@@ -130,6 +130,20 @@ describe('workspace helpers', () => {
     expect(clickSelection(['a', 'b'], 'a', unit, { additive: true, drill: false })).toEqual([]);
   });
 
+  it('shift-clicks like Figma: whole groups from outside, single parts once inside', () => {
+    const left = ['a', 'b', 'c'];
+    const right = ['x', 'y'];
+    const shift = { additive: true, drill: false };
+
+    expect(clickSelection(['a'], 'b', left, shift)).toEqual(['a', 'b']);
+    expect(clickSelection(['a', 'b'], 'b', left, shift)).toEqual(['a']);
+    expect(clickSelection(['a'], 'x', right, shift)).toEqual(['a', 'x', 'y']);
+    expect(clickSelection(['a', 'x', 'y'], 'y', right, shift)).toEqual(['a']);
+    expect(clickSelection(['a', 'x'], 'b', left, { additive: false, drill: false })).toEqual(['b']);
+    expect(clickSelection(['x', 'y'], 'b', left, { additive: true, drill: true })).toEqual(['x', 'y', 'b']);
+    expect(clickSelection(['x', 'y'], 'b', left, { additive: false, drill: true })).toEqual(['b']);
+  });
+
   it('stacks on the highest solid below and drops loose parts to the floor', () => {
     const base = part('base', [0, 5, 0]);
     const top = part('top', [5, 40, 5]);

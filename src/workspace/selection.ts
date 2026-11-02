@@ -11,17 +11,16 @@ export const addIds = (prev: string[], ids: string[]) => [...prev, ...ids.filter
 export const robotPartIds = (parts: ScenePart[], robot: RobotGroup) =>
   parts.filter((p) => robot.parts.has(p.id)).map((p) => p.id);
 
+export const toggleIds = (prev: string[], ids: string[]) =>
+  ids.every((id) => prev.includes(id)) ? prev.filter((x) => !ids.includes(x)) : addIds(prev, ids);
+
+const insideGroup = (prev: string[], unit: string[]) =>
+  unit.length > 1 && unit.some((x) => prev.includes(x)) && !unit.every((x) => prev.includes(x));
+
 export function clickSelection(prev: string[], id: string, unit: string[], { additive, drill }: ClickOptions) {
-  if (additive) {
-    return prev.includes(id) ? prev.filter((x) => !unit.includes(x)) : addIds(prev, unit);
-  }
+  const target = drill || insideGroup(prev, unit) ? [id] : unit;
 
-  if (drill) return [id];
-
-  const insideGroup =
-    unit.length > 1 && prev.length > 0 && prev.length < unit.length && prev.every((x) => unit.includes(x));
-
-  return insideGroup ? [id] : unit;
+  return additive ? toggleIds(prev, target) : target;
 }
 
 export function poseClickSelection(rig: Rig, id: string, selectedIds: string[], parts: ScenePart[]) {

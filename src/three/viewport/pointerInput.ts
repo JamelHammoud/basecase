@@ -166,7 +166,7 @@ export class PointerInput {
     const partId = hitPartId(raycastParts(this.ctx.stage, e.clientX, e.clientY));
 
     if (partId) {
-      onSelectPart(partId, additive(e));
+      onSelectPart(partId, e.shiftKey, hasPrimaryModifier(e));
 
       return;
     }

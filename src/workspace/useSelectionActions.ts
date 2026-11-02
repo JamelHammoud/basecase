@@ -2,7 +2,7 @@ import type { ScenePart, TransformMode } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { expandToGroups } from '../utils/selection';
 import { selectableIds } from './helpers';
-import { addIds, clickSelection, poseClickSelection } from './selection';
+import { addIds, clickSelection, poseClickSelection, toggleIds } from './selection';
 import type { Setter } from './types';
 
 interface SelectionOptions {
@@ -44,7 +44,7 @@ export function useSelectionActions({
   const selectAll = () => setSelectedIds(selectableIds(parts, showReferenceImages));
 
   const selectIds = (ids: string[], additive?: boolean) =>
-    setSelectedIds((prev) => (additive ? addIds(prev, ids) : ids));
+    setSelectedIds((prev) => (additive ? toggleIds(prev, ids) : ids));
 
   const marqueeSelect = (ids: string[]) => {
     if (ids.length === 0) return;

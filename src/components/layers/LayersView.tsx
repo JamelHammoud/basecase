@@ -75,7 +75,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
       return next;
     });
   const clickPart = (part: ScenePart, additive: boolean) => {
-    if (additive) props.onSelectPart(part.id, true);
+    if (additive) props.onSelectIds([part.id], true);
     else props.onSelectIds([part.id]);
   };
   const partMenu = (part: ScenePart, x: number, y: number) => {

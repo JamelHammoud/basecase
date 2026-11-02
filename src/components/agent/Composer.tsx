@@ -1,14 +1,16 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { AcpStatusInfo, AgentChoice, ContextUsage, ReferenceImageRecord } from '../../types/robotics';
 import { EvidenceFolder, evidenceKind } from '../../utils/evidenceFiles';
-import { IconButton, ComposeIcon } from '../../design-system';
+import { IconButton, ComposeIcon, CloseIcon, useScrollFade } from '../../design-system';
+import { hasPrimaryModifier } from '../../utils/os';
 import { AttachMenu } from './AttachMenu';
 import { AttachmentTray } from './AttachmentTray';
 import { CyclingPlaceholder } from './CyclingPlaceholder';
 import { ModelMenu } from './ModelMenu';
 import { SendControls } from './SendControls';
-import { Attachments, readyFolders } from './useAttachments';
-import { OpenImages } from './types';
+import { readyFolders } from './useAttachments';
+import { Draft } from './useDraft';
+import { OpenImages, SendIntent } from './types';
 
 const EXAMPLES = {
   idle: ['Desk lamp arm', 'Pan–tilt camera mount', 'Gripper for an STS3215', 'Four-wheel rover', 'Hexapod leg'],
@@ -17,6 +19,7 @@ const EXAMPLES = {
 };
 
 const MAX_PROMPT_PX = 160;
+const PROMPT_FADE_PX = 20;
 
 export interface ComposerSubmit {
   text: string;
@@ -32,8 +35,23 @@ function exampleSetFor(isBusy: boolean, hasAttachments: boolean): keyof typeof E
 
 const isSendKey = (e: React.KeyboardEvent) => e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing;
 
+const EditingBar: React.FC<{ onCancel: () => void }> = ({ onCancel }) => (
+  <div className="flex items-center gap-2 pl-4 pr-2 pt-2 animate-fade-in">
+    <span className="flex-1 min-w-0 truncate text-[12.5px] text-white/50">Editing queued message</span>
+    <IconButton
+      icon={<CloseIcon className="w-3.5 h-3.5" />}
+      title="Cancel"
+      shortcut="Esc"
+      tooltipSide="top"
+      size="xs"
+      className="rounded-full"
+      onClick={onCancel}
+    />
+  </div>
+);
+
 export const Composer: React.FC<{
-  attachments: Attachments;
+  draft: Draft;
   promptRef: React.RefObject<HTMLTextAreaElement | null>;
   attachRequest: number;
   isBusy: boolean;
@@ -42,12 +60,12 @@ export const Composer: React.FC<{
   context: ContextUsage | null;
   choice: AgentChoice;
   onChoiceChange: (choice: AgentChoice) => void;
-  onSubmit: (draft: ComposerSubmit) => Promise<void>;
+  onSubmit: (draft: ComposerSubmit, intent: SendIntent) => Promise<void>;
   onStop: () => void;
   onNewChat: () => void;
   onOpenImages: OpenImages;
 }> = ({
-  attachments,
+  draft,
   promptRef,
   attachRequest,
   isBusy,
@@ -61,11 +79,12 @@ export const Composer: React.FC<{
   onNewChat,
   onOpenImages,
 }) => {
-  const [promptText, setPromptText] = useState('');
+  const { attachments, text: promptText, setText: setPromptText, editing } = draft;
   const hasAttachments = attachments.images.length > 0 || attachments.folders.length > 0;
   const hasDraft = !!promptText.trim() || hasAttachments;
   const canSend = !attachments.isUploading && hasDraft;
   const exampleSet = exampleSetFor(isBusy, hasAttachments);
+  const fade = useScrollFade<HTMLTextAreaElement>(PROMPT_FADE_PX);
 
   useLayoutEffect(() => {
     const el = promptRef.current;
@@ -76,7 +95,7 @@ export const Composer: React.FC<{
     el.style.height = `${Math.min(el.scrollHeight, MAX_PROMPT_PX)}px`;
   }, [promptText, promptRef]);
 
-  const submit = async () => {
+  const submit = async (intent: SendIntent) => {
     if (!canSend) return;
 
     const text = promptText.trim();
@@ -85,13 +104,16 @@ export const Composer: React.FC<{
 
     setPromptText('');
     attachments.clear();
-    await onSubmit({ text, images, folders });
+    await onSubmit({ text, images, folders }, intent);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (isSendKey(e)) {
       e.preventDefault();
-      submit();
+      submit(hasPrimaryModifier(e) ? 'queue' : 'default');
+    } else if (e.key === 'Escape' && editing) {
+      e.preventDefault();
+      draft.cancelEdit();
     } else if (e.key === 'Escape' && isBusy && !hasDraft) {
       e.preventDefault();
       onStop();
@@ -110,11 +132,17 @@ export const Composer: React.FC<{
   return (
     <div className="px-3 pb-3 pt-1 shrink-0">
       <div className="rounded-[20px] bg-white/[0.05] ring-1 ring-inset ring-white/[0.08] focus-within:ring-white/[0.16] focus-within:bg-white/[0.06] transition-colors">
+        {editing && <EditingBar onCancel={draft.cancelEdit} />}
+
         <AttachmentTray attachments={attachments} onOpenImages={onOpenImages} />
 
         <div className="relative">
           <textarea
-            ref={promptRef}
+            ref={(node) => {
+              promptRef.current = node;
+              fade.ref(node);
+            }}
+            style={fade.style}
             rows={1}
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
@@ -146,7 +174,14 @@ export const Composer: React.FC<{
 
           <ModelMenu agent={agent} context={context} choice={choice} onChange={onChoiceChange} />
 
-          <SendControls isBusy={isBusy} hasDraft={hasDraft} canSend={canSend} onStop={onStop} onSend={submit} />
+          <SendControls
+            isBusy={isBusy}
+            hasDraft={hasDraft}
+            canSend={canSend}
+            editing={!!editing}
+            onStop={onStop}
+            onSend={submit}
+          />
         </div>
       </div>
     </div>

@@ -38,6 +38,7 @@ export function useScrollFade<T extends HTMLElement = HTMLDivElement>(
 
     update();
     el.addEventListener('scroll', update, { passive: true });
+    el.addEventListener('input', update);
     el.addEventListener('load', update, true);
 
     const resize = new ResizeObserver(update);
@@ -59,6 +60,7 @@ export function useScrollFade<T extends HTMLElement = HTMLDivElement>(
 
     return () => {
       el.removeEventListener('scroll', update);
+      el.removeEventListener('input', update);
       el.removeEventListener('load', update, true);
       resize.disconnect();
       mutations.disconnect();

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { VIEW } from './shared.mjs';
+import { TEXT_LIMITS } from './textLimits.mjs';
 
 const SHAPES = [
   'box',
@@ -34,7 +35,10 @@ export const idSchema = z
   .describe('Stable kebab-case id, unique in the scene, e.g. "left-front-coxa"');
 
 export const common = {
-  name: z.string().min(1).max(60).describe('Title Case name, e.g. "Left Front Coxa Bracket"'),
+  name: z
+    .string()
+    .min(1)
+    .describe(`Title Case name, at most ${TEXT_LIMITS.name} characters, e.g. "Left Front Coxa Bracket"`),
   rotation: vec3
     .optional()
     .describe('Euler degrees [rx, ry, rz], XYZ order, about the placement point. Default [0,0,0].'),
@@ -47,7 +51,12 @@ export const common = {
     .enum(['solid', 'cutout', 'reference'])
     .optional()
     .describe('solid (default), cutout, or reference (guide, not printed)'),
-  group: z.string().max(40).optional().describe('Subassembly, e.g. "Left Front Leg". Parts sharing it are grouped.'),
+  group: z
+    .string()
+    .optional()
+    .describe(
+      `Subassembly, at most ${TEXT_LIMITS.group} characters, e.g. "Left Front Leg". Parts sharing it are grouped.`,
+    ),
   material: z
     .enum(['printed', 'pla', 'petg', 'asa', 'tpu', 'cots', 'aluminum', 'laser_cut'])
     .optional()
@@ -61,7 +70,12 @@ export const common = {
     .describe(
       'This part is the envelope of a bought supply from find_parts, e.g. "supply:lipo-3s-2200" for the battery: counted in the BOM, not printed',
     ),
-  note: z.string().max(400).optional().describe('Design intent: fasteners, clearances, print orientation, function'),
+  note: z
+    .string()
+    .optional()
+    .describe(
+      `Design intent: fasteners, clearances, print orientation, function. At most ${TEXT_LIMITS.note} characters (it shows in every get_scene line); longer notes are cut.`,
+    ),
   frame: z
     .string()
     .regex(/^[a-z0-9_-]*$/)

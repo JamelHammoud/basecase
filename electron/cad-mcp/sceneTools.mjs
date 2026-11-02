@@ -1,6 +1,7 @@
 import { noteBlockOut } from './autoCompare.mjs';
 import { z } from 'zod';
 import { catalogSchema, common, idSchema, primitiveSchema, vec3 } from './schemas.mjs';
+import { clipTexts } from './textLimits.mjs';
 import { findInScene } from './sceneQuery.mjs';
 import { sceneText } from './sceneText.mjs';
 import { settledWrites } from './pendingWrites.mjs';
@@ -87,14 +88,17 @@ export const addParts = {
         .max(30),
     },
   },
-  handler: async ({ parts }) => {
+  handler: async ({ parts: given }) => {
     try {
+      const { parts, notice } = clipTexts(given);
       const res = await bridge('apply', { ops: parts.map((p) => ({ op: 'add', part: p })) });
       const real = parts.filter((p) => p.catalog).map((p) => p.id);
 
       noteBlockOut();
 
-      return text((res.summary || `Added ${parts.length} blocks.`) + (real.length ? await clashText(real) : ''));
+      return text(
+        (res.summary || `Added ${parts.length} blocks.`) + notice + (real.length ? await clashText(real) : ''),
+      );
     } catch (err) {
       return fail(err);
     }
@@ -121,11 +125,12 @@ export const updateParts = {
         .max(60),
     },
   },
-  handler: async ({ updates }) => {
+  handler: async ({ updates: given }) => {
     try {
+      const { parts: updates, notice } = clipTexts(given);
       const res = await bridge('apply', { ops: updates.map((u) => ({ op: 'update', part: u })) });
 
-      return text(res.summary || `Updated ${updates.length} parts.`);
+      return text((res.summary || `Updated ${updates.length} parts.`) + notice);
     } catch (err) {
       return fail(err);
     }

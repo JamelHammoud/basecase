@@ -4,6 +4,7 @@ import { expectSchema, resolveExpect } from './expectations.mjs';
 import { trackWrite } from './pendingWrites.mjs';
 import { auditText, storedAudit } from './partAudit.mjs';
 import { common, idSchema, vec3 } from './schemas.mjs';
+import { clipTexts } from './textLimits.mjs';
 import { bridge, clashText, fail, text } from './shared.mjs';
 
 const OPENSCAD_HELP =
@@ -93,9 +94,14 @@ export const modelPart = {
       ...common,
     },
   },
-  handler: async ({ id, language, code, position, expect_size, expect: given, ...rest }) => {
+  handler: async ({ id, language, code, position, expect_size, expect: given, ...fields }) => {
     try {
-      bridge('focus', { id, label: `Designing ${rest.name ?? id}`, position }, 5000).catch(() => {});
+      const {
+        parts: [texts],
+        notice,
+      } = clipTexts([{ id, ...fields }]);
+
+      bridge('focus', { id, label: `Designing ${texts.name ?? id}`, position }, 5000).catch(() => {});
 
       const previous = await previousRecord(id);
       const { expect, changes } = resolveExpect(given, previous?.expect ?? undefined);
@@ -107,7 +113,7 @@ export const modelPart = {
 
       if (mismatch) return fail(mismatch + auditText({ audit: res.audit, previous, stats: res.stats, changes }));
 
-      const part = { id, shape: 'cad_part', position, ...rest, cad: cadPayload({ language, code, res, expect }) };
+      const part = { ...texts, shape: 'cad_part', position, cad: cadPayload({ language, code, res, expect }) };
       const placed = await bridge('apply', { ops: [{ op: 'add', part }] });
       const s = res.stats;
       const share = await visibleShare(id);
@@ -117,6 +123,7 @@ export const modelPart = {
           (res.warnings?.length ? `\nWarnings:\n${res.warnings.join('\n')}` : '') +
           auditText({ audit: res.audit, previous, stats: s, changes, share }) +
           (placed.summary ? `\n${placed.summary}` : '') +
+          notice +
           (await clashText([id])),
       );
     } catch (err) {

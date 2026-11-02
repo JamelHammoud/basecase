@@ -10,12 +10,13 @@ export const StepRow: React.FC<{
   icon: ToolIcon;
   title: string;
   detail?: string;
+  detailFailed?: boolean;
   running: boolean;
   failed: boolean;
   expandable: boolean;
   open: boolean;
   onToggle: () => void;
-}> = ({ icon, title, detail, running, failed, expandable, open, onToggle }) => (
+}> = ({ icon, title, detail, detailFailed, running, failed, expandable, open, onToggle }) => (
   <button
     type="button"
     disabled={!expandable}
@@ -26,7 +27,7 @@ export const StepRow: React.FC<{
     <span className="h-[18px] flex items-center shrink-0">{createElement(icon, { className: 'w-4 h-4' })}</span>
     <span className="min-w-0 break-words [overflow-wrap:anywhere]">
       <span className={running ? SHIMMER_TEXT : undefined}>{title}</span>
-      {detail && <span className="ml-[10px] opacity-60">{detail}</span>}
+      {detail && <span className={`ml-[10px] ${detailFailed ? 'text-red-400/80' : 'opacity-60'}`}>{detail}</span>}
     </span>
     {expandable && (
       <span className="h-[18px] flex items-center shrink-0">

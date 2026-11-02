@@ -1,3 +1,4 @@
+import { failureText } from './toolFailure';
 import { toolIdentity } from './toolIdentity';
 import type { AcpChatMessage, AcpPlanEntry, AcpToolCallEvent, ContextUsage } from '../types/robotics';
 import { parentToolUseIdOf } from './agentActors';
@@ -97,7 +98,14 @@ function newCall(u: SessionUpdate): AcpToolCallEvent {
     kind: String(u.kind || ''),
     rawInput,
     toolName,
+    ...failureOf(u),
   };
+}
+
+function failureOf(u: SessionUpdate) {
+  const error = u.status === 'failed' ? failureText(u) : '';
+
+  return error ? { error } : {};
 }
 
 function patchCall(tc: AcpToolCallEvent, u: SessionUpdate): AcpToolCallEvent {
@@ -109,6 +117,7 @@ function patchCall(tc: AcpToolCallEvent, u: SessionUpdate): AcpToolCallEvent {
     ...(u.rawInput !== undefined ? { rawInput: identity.rawInput } : {}),
     ...(!tc.toolName && identity.toolName ? { toolName: identity.toolName } : {}),
     status: (u.status as AcpToolCallEvent['status']) || tc.status,
+    ...failureOf(u),
   };
 }
 

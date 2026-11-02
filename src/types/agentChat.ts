@@ -5,6 +5,7 @@ export interface AcpToolCallEvent {
   kind?: string;
   rawInput?: unknown;
   toolName?: string;
+  error?: string;
   children?: AcpToolCallEvent[];
   childText?: string;
   childThought?: string;

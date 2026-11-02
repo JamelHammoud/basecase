@@ -11,6 +11,7 @@ export const ToolGroup: React.FC<{ calls: AcpToolCallEvent[]; onOpenImages: Open
   onOpenImages,
 }) => {
   const [open, setOpen] = useState(false);
+  const failed = calls.filter((call) => call.status === 'failed').length;
 
   return (
     <div className="min-w-0">
@@ -18,7 +19,9 @@ export const ToolGroup: React.FC<{ calls: AcpToolCallEvent[]; onOpenImages: Open
         icon={toolIcon(calls[0])}
         title={groupLabel(calls)}
         running={calls.some(isToolRunning)}
-        failed={calls.every((call) => call.status === 'failed')}
+        detail={failed && failed < calls.length ? `${failed} failed` : undefined}
+        detailFailed
+        failed={failed === calls.length}
         expandable
         open={open}
         onToggle={() => setOpen((v) => !v)}

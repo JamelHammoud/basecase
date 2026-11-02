@@ -35,14 +35,22 @@ const PhotoGrid: React.FC<{ urls: string[]; onOpenImages: OpenImages }> = ({ url
   );
 };
 
+export const FailureText: React.FC<{ text: string }> = ({ text }) => (
+  <p className="text-[13px] leading-[21px] text-red-300/80 whitespace-pre-wrap [overflow-wrap:anywhere] select-text">
+    {text}
+  </p>
+);
+
 const StepDetails: React.FC<{
   label: ToolLabel;
+  error?: string;
   code: string | null;
   language?: string;
   urls: string[];
   onOpenImages: OpenImages;
-}> = ({ label, code, language, urls, onOpenImages }) => (
+}> = ({ label, error, code, language, urls, onOpenImages }) => (
   <div className="pl-6 pr-1 pt-0.5 pb-1 space-y-1.5">
+    {error && <FailureText text={error} />}
     {label.detail && (
       <p className="text-[13px] leading-[21px] text-white/50 [overflow-wrap:anywhere] select-text">
         <LinkedText text={label.detail} />
@@ -62,7 +70,8 @@ export const ToolStep: React.FC<{ call: AcpToolCallEvent; onOpenImages: OpenImag
 
   if (!label) return null;
 
-  const expandable = !!label.detail || !!code || urls.length > 0;
+  const error = call.status === 'failed' ? call.error : undefined;
+  const expandable = !!error || !!label.detail || !!code || urls.length > 0;
 
   return (
     <div className="min-w-0">
@@ -77,7 +86,14 @@ export const ToolStep: React.FC<{ call: AcpToolCallEvent; onOpenImages: OpenImag
       />
       {expandable && (
         <DisclosureBody open={open} onClose={() => setOpen(false)}>
-          <StepDetails label={label} code={code} language={input.language} urls={urls} onOpenImages={onOpenImages} />
+          <StepDetails
+            label={label}
+            error={error}
+            code={code}
+            language={input.language}
+            urls={urls}
+            onOpenImages={onOpenImages}
+          />
         </DisclosureBody>
       )}
     </div>

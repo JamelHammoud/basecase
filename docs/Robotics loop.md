@@ -11,7 +11,7 @@ Goal: take a robot from idea to a working machine without leaving Basecase. Code
 | 3 | **Simulate** | Run it under physics: does it stand, do the servos hold, does the walk cycle walk | **Now** |
 | 4 | **Train** | Teach it a skill in sim (stand, walk, reach), randomized so it works on the real robot | **Now** |
 | 5 | **Build** | Print the plates, buy the parts, assemble | Mostly: BOM, budget, build guide, printers, plates, slicing and sending ([Print plan.md](Print%20plan.md)). Sending still to confirm on real printers |
-| 6 | **Operate** | Drive it by hand (teleop), run the trained policy, record every run | Later |
+| 6 | **Operate** | Drive it by hand (teleop), run the trained policy, record every run | Started in sim: Cases, Drive by keyboard or gamepad, recorded tries ([Cases](guide/cases.md)) |
 
 Two loops tie the stages together:
 

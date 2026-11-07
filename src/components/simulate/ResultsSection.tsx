@@ -25,9 +25,7 @@ const TryRow: React.FC<TryRowProps> = ({ record, model, parts, world, onReplay, 
     <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
       <div className="flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
-        <span className="flex-1 text-white/45 tabular">
-          {fmtTime(record.seconds)}, margin {record.margin.toFixed(2)}
-        </span>
+        <span className="flex-1 text-white/45 tabular">{fmtTime(record.seconds)}</span>
         <IconButton icon={<RunIcon className="w-4 h-4" />} title="Replay" size="xs" onClick={onReplay} />
       </div>
       {film && <img src={film} alt="" className="w-full h-14 object-cover rounded-[6px]" draggable={false} />}

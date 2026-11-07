@@ -147,6 +147,14 @@ describe('Cases', () => {
     expect(state.bodies.flatMap((b) => b.world)).toContain('dot0');
     expect(await partCount(app.page)).toBe(partsBefore);
 
+    const clashes = await app.page.evaluate(async () =>
+      JSON.stringify(
+        await (window as unknown as { __studio: { interference: () => Promise<unknown> } }).__studio.interference(),
+      ),
+    );
+
+    expect(clashes).not.toContain('dot0');
+
     await button('End Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].passed).toBe(false);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
 import { scaledToReach } from '../cases/scale';
@@ -48,6 +48,20 @@ export function useCases({ parts, project, setProject, rig, sim }: CasesOptions)
     setActiveId(kase?.id ?? null);
     sim.setWorld(kase ? scaledToReach(kase, facts.reachMm, facts.anchor).world.objects.map(worldItem) : []);
   };
+
+  const orphaned = activeId !== null && !active;
+  const closeOrphan = useEffectEvent(() => {
+    setActiveId(null);
+    sim.setWorld([]);
+  });
+
+  useEffect(() => {
+    if (!orphaned) return;
+
+    const soon = setTimeout(closeOrphan, 0);
+
+    return () => clearTimeout(soon);
+  }, [orphaned]);
 
   const add = (kase: Case) => {
     const id = uniqueCaseId(

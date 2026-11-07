@@ -79,6 +79,9 @@ extern "C" {
     pub fn forge_jnt_qposadr(m: *const MjModel, joint: c_int) -> c_int;
     pub fn forge_jnt_dofadr(m: *const MjModel, joint: c_int) -> c_int;
     pub fn forge_ctrl_limited(m: *const MjModel, actuator: c_int) -> c_int;
+    pub fn forge_history_samples(m: *const MjModel, actuator: c_int) -> c_int;
+    pub fn forge_time(d: *const MjData) -> f64;
+    pub fn mj_initCtrlHistory(m: *const MjModel, d: *mut MjData, id: c_int, times: *const f64, values: *const f64);
     pub fn forge_ctrlrange(m: *const MjModel) -> *mut f64;
     pub fn forge_gainprm(m: *const MjModel) -> *mut f64;
     pub fn forge_biasprm(m: *const MjModel) -> *mut f64;

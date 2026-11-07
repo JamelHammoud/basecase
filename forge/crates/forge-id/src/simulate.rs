@@ -26,6 +26,11 @@ impl Experiment {
 
         data.qpos().copy_from_slice(&self.qpos0);
         data.qvel().copy_from_slice(&self.qvel0);
+
+        let held = &self.controls[..model.nu().min(self.controls.len())];
+
+        data.ctrl()[..held.len()].copy_from_slice(held);
+        data.hold_delayed_controls(model, held);
         data.get_state(model, &mut row, integration_state());
 
         row

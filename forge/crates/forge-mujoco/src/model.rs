@@ -101,6 +101,10 @@ impl Model {
         unsafe { ffi::forge_ctrl_limited(self.raw, actuator as i32) != 0 }
     }
 
+    pub fn history_samples(&self, actuator: usize) -> usize {
+        unsafe { ffi::forge_history_samples(self.raw, actuator as i32).max(0) as usize }
+    }
+
     pub fn ctrl_range(&self, actuator: usize) -> (f64, f64) {
         let range = unsafe { std::slice::from_raw_parts(ffi::forge_ctrlrange(self.raw), 2 * self.nu()) };
 
@@ -211,6 +215,28 @@ impl Data {
 
     pub fn set_const(&mut self, model: &Model) {
         unsafe { ffi::mj_setConst(model.raw, self.raw) }
+    }
+
+    pub fn time(&self) -> f64 {
+        unsafe { ffi::forge_time(self.raw) }
+    }
+
+    pub fn hold_delayed_controls(&mut self, model: &Model, ctrl: &[f64]) {
+        let now = self.time();
+        let timestep = model.timestep();
+
+        for (actuator, value) in ctrl.iter().enumerate().take(model.nu()) {
+            let samples = model.history_samples(actuator);
+
+            if samples == 0 {
+                continue;
+            }
+
+            let times: Vec<f64> = (0..samples).map(|k| now - (samples - k) as f64 * timestep).collect();
+            let values = vec![*value; samples];
+
+            unsafe { ffi::mj_initCtrlHistory(model.raw, self.raw, actuator as i32, times.as_ptr(), values.as_ptr()) };
+        }
     }
 }
 

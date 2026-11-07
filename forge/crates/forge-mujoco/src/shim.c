@@ -38,6 +38,9 @@ double forge_timestep(const mjModel* m) { return m->opt.timestep; }
 int forge_jnt_qposadr(const mjModel* m, int joint) { return m->jnt_qposadr[joint]; }
 int forge_jnt_dofadr(const mjModel* m, int joint) { return m->jnt_dofadr[joint]; }
 int forge_ctrl_limited(const mjModel* m, int actuator) { return m->actuator_ctrllimited[actuator] != 0; }
+int forge_history_samples(const mjModel* m, int actuator) {
+  return m->actuator_historyadr[actuator] < 0 ? 0 : m->actuator_history[2 * actuator];
+}
 
 double* forge_ctrlrange(const mjModel* m) { return m->actuator_ctrlrange; }
 double* forge_gainprm(const mjModel* m) { return m->actuator_gainprm; }
@@ -50,3 +53,4 @@ double* forge_qpos(const mjData* d) { return d->qpos; }
 double* forge_qvel(const mjData* d) { return d->qvel; }
 double* forge_ctrl(const mjData* d) { return d->ctrl; }
 void forge_set_time(mjData* d, double t) { d->time = t; }
+double forge_time(const mjData* d) { return d->time; }

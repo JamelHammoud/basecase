@@ -76,6 +76,7 @@ fn settle(model: &Model, job: &Job, root_qpos: usize, layout: StateLayout) -> Re
     apply_start_pose(model, job, &mut data, root_qpos)?;
     data.ctrl().copy_from_slice(&job.ctrl_default);
     data.forward(model);
+    data.hold_delayed_controls(model, &job.ctrl_default);
 
     let z_start = data.qpos()[root_qpos + 2];
     let steps = (SETTLE_SECONDS / model.timestep()) as usize;
@@ -93,6 +94,7 @@ fn settle(model: &Model, job: &Job, root_qpos: usize, layout: StateLayout) -> Re
 
     data.qvel().fill(0.0);
     data.set_time(0.0);
+    data.hold_delayed_controls(model, &job.ctrl_default);
 
     let z0 = if holds_pose {
         data.qpos()[root_qpos + 2]

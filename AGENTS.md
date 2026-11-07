@@ -38,6 +38,12 @@
 | 8d | [Simulate and train](docs/guide/simulate.md) | MuJoCo, the MJCF writer, training, policies |
 | 8e | [SimReady](docs/guide/simready.md) | SimReady search, the converter, textures |
 | 8f | [Printing](docs/guide/printing.md) | printers, plates, 3MF, slicing, sending, Print mode |
+| 8g | [Forge](docs/guide/forge.md) | `forge/`, the native trainer, our batched physics, parity with C MuJoCo |
+| 8h | [Cases](docs/guide/cases.md) | `src/cases/`, worlds, robot slots, live driving, recording, the gallery |
+| 8i | [Skills](docs/guide/skills.md) | `src/skills/`, task contracts, the solver race, Arena, Motor Kit |
+| 8j | [Routines](docs/guide/routines.md) | `src/routines/`, the coordinator, ML nodes, scenario tests |
+| 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration |
+| 0k | [Proof](docs/guide/proof.md) | `verify/`, Gatekeeper, gates, the hidden twin, the Stage 8 session |
 | 9 | [Agent](docs/guide/agent.md) | the ACP agent, its profiles, lanes, CAD tools and kernel, the agent panel and composer |
 | — | [Benchmark](docs/guide/bench.md) | `bench/`, scoring, micro-evals |
 | 10 | [Annotations](docs/guide/annotations.md) | comments in 3D |
@@ -49,9 +55,10 @@ Plans and research live beside them in `docs/` ([Robotics loop](docs/Robotics%20
 
 ## Working agreements
 
-- **Commits:** commit only when a maintainer asks, and then straight to `main` (no feature branch). Read `git status` and the staged list first (§0g). Never add an LLM or tool as an author: no `Co-Authored-By` trailer for Claude, Codex, Gemini or any other model, no “Generated with” line, in commits, PR bodies or anywhere else.
+- **Hobby project.** Basecase is built by Jamel and friends, not a company. No legal, compliance or company concerns in plans, docs or copy. Pick the best tool for the job, whatever its licence.
+- **Commits:** commit only when a maintainer asks, and then straight to `main` (no feature branch). During the robotics build (§0k) agents hold a standing grant: commit straight to `main` once `npm run check` and the relevant gate pass. Read `git status` and the staged list first (§0g). Never add an LLM or tool as an author: no `Co-Authored-By` trailer for Claude, Codex, Gemini or any other model, no “Generated with” line, in commits, PR bodies or anywhere else.
 - **Several agents may share this checkout.** Before you edit or commit, check `git status` for changes that aren't yours, never overwrite or revert them, and commit only your own files and hunks.
-- **Don't judge visual changes yourself.** Don't start dev servers, previews or screenshots to see how a change looks; run the checks (§15), say what changed and where to look, and a maintainer reviews it in the app. Make visual tweaks big enough to notice (a 2 → 2.25 stroke at 16px is invisible).
+- **Don't judge visual changes yourself.** Don't start dev servers, previews or screenshots to see how a change looks; run the checks (§15), say what changed and where to look, and a maintainer reviews it in the app. Make visual tweaks big enough to notice (a 2 → 2.25 stroke at 16px is invisible). CI may capture, assert geometry and diff pixels; none of that judges looks. During the robotics build, one maintainer visual review happens at Stage 8 (§0k).
 - **Performance fixes never trade one problem for another.** Don't pause, throttle or defer loading to keep the UI smooth; move the work off the main thread or make it cheap (§0f).
 - **Ready to build is a verdict, not an opinion.** Only Checks in the Build tab (§8b) say a design is ready; only the user can ignore a blocker. A problem someone finds by hand becomes a check and a seeded fault test. The catalog never limits a design: the agent sources what's missing, and the finished robot uses only referenceable parts.
 - **Agent priorities** (the CAD agent's output, its prompt, tools, checks and the bench): designs that can actually be assembled and serviced come first, then cost-aware part choices, then parts that look expertly designed; silhouette and proportion scores matter less ([Agent](docs/guide/agent.md#priorities)).

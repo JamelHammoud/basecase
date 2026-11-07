@@ -139,7 +139,7 @@ impl Math {
     }
 
     pub fn runs_heads_together(&self) -> bool {
-        self.pool.threads() == 1
+        self.backend != Backend::Portable
     }
 
     pub fn bias_elu(&self, values: &mut [f32], bias: &[f32], slopes: &mut [f32]) {

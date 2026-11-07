@@ -326,6 +326,56 @@
       "commit": "9fd2fab",
       "at": "2026-11-07T21:54:04.955Z",
       "manifest": "clean"
+    },
+    "s4-routines-core": {
+      "id": "s4-routines-core",
+      "title": "Routines: schema, compiler, coordinator and scenario tests on mocks",
+      "stage": 4,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "coordinator crate tests pass",
+          "ok": true,
+          "detail": "5.7 s",
+          "metrics": {},
+          "seconds": 5.654
+        },
+        {
+          "name": "coordinator builds to WASM",
+          "ok": true,
+          "detail": "0.8 s",
+          "metrics": {},
+          "seconds": 0.781
+        },
+        {
+          "name": "greeting Routine, compiler refusals, determinism and mutants",
+          "ok": true,
+          "detail": "1.5 s",
+          "metrics": {},
+          "seconds": 1.543
+        },
+        {
+          "name": "Routine unit tests pass",
+          "ok": true,
+          "detail": "0.6 s",
+          "metrics": {},
+          "seconds": 0.555
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a Routine naming strangers is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.447
+        }
+      ],
+      "commit": "695d68b",
+      "at": "2026-11-07T21:59:42.407Z",
+      "manifest": "clean"
     }
   }
 }

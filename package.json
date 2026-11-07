@@ -40,7 +40,7 @@
     "security": "node tools/security/audit.mjs",
     "dist": "vite build && npm run build:forge && electron-builder --mac --arm64 --publish never",
     "dist:win": "vite build && npm run build:forge && electron-builder --win --x64 --publish never",
-    "build:forge": "cargo build --release --manifest-path forge/Cargo.toml -p forge-train",
+    "build:forge": "cargo build --release --manifest-path forge/Cargo.toml -p forge-train && node tools/forge/stage.mjs",
     "test:app": "vitest run --config vitest.app.config.ts",
     "verify": "node verify/gatekeeper.mjs",
     "build:contract": "node tools/build-contract.mjs",
@@ -117,12 +117,8 @@
           "to": "Assets.car"
         },
         {
-          "from": "forge/target/release/forge-train",
-          "to": "forge/forge-train"
-        },
-        {
-          "from": "forge/vendor/mujoco-3.17.0/mujoco.framework",
-          "to": "forge/mujoco.framework"
+          "from": "forge/dist",
+          "to": "forge"
         }
       ],
       "extendInfo": {
@@ -154,12 +150,8 @@
       ],
       "extraResources": [
         {
-          "from": "forge/target/release/forge-train.exe",
-          "to": "forge/forge-train.exe"
-        },
-        {
-          "from": "forge/target/release/mujoco.dll",
-          "to": "forge/mujoco.dll"
+          "from": "forge/dist",
+          "to": "forge"
         }
       ],
       "target": [

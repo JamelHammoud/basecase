@@ -58,6 +58,7 @@ Forge is Basecase's native trainer and batched physics, in `forge/`. It replaces
 
 A canary test (`canary_*`) runs a planted fault through the same check as the real test and must fail. It does its work only when its full name is the test filter, so plain `cargo test` passes and `cargo test -p <crate> canary_<name>` exits non-zero, which is what the gate wants.
 
-### Not wired yet
+### In the app
 
-`electron/trainer.mjs` still runs `train.py`. Wiring Forge needs: spawn the bundled `forge-train --job <dir>` instead of `uv run … train.py` when the binary exists (no uv, no first-run Python install, so `status()` reports ready without `trainer-env`); the same stdout parsing, stop file and SIGTERM; package `forge-train` plus `mujoco.framework` (macOS) or `mujoco.dll` (Windows) with electron-builder and sign them; keep `train.py` as the fallback and dev oracle.
+- `electron/trainer.mjs` runs Forge when it finds `forge-train` (the packaged `Resources/forge/`, or `forge/target/release/` in a checkout), and falls back to `train.py` otherwise. `BASECASE_TRAINER=python` forces Python. With Forge, `status()` reports ready with no `trainer-env`, so nobody installs Python.
+- `npm run build:forge` builds the trainer and stages it in the gitignored `forge/dist/` (`tools/forge/stage.mjs`). On macOS it copies `libmujoco.3.17.0.dylib` beside the binary and points the binary at it with `install_name_tool`, because DeepMind's `mujoco.framework` has no root binary and codesign refuses it as a bundle. electron-builder ships `forge/dist/` as `Resources/forge/` and signs both files; Windows ships `forge-train.exe` and `mujoco.dll`, signed through `signExts`. CI builds Forge before packaging (`check.yml`, `release.yml`).

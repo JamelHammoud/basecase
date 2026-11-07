@@ -612,6 +612,18 @@ def should_stop(run):
 MAX_ITERATION_GAP_S = 30.0
 
 
+def gate_reached(ppo, run, it):
+    """For time-to-skill runs: stop as soon as the policy passes its check on held-out seeds."""
+    every = run.job.get("gateEvery")
+    if not every or it % every:
+        return False
+    xml_path = os.path.join(os.path.dirname(run.policy_path), "model.xml")
+    with open(xml_path) as f:
+        result = evaluate_seeds(f.read(), run.job, ppo.policy, int(run.job.get("evalSeeds", 32)))
+    emit(type="gate", iteration=it, steps=ppo.steps, **result)
+    return result["passed"] >= math.ceil(0.9 * result["seeds"])
+
+
 def train_loop(ppo, run):
     env = ppo.env
     now = time.monotonic()
@@ -641,6 +653,8 @@ def train_loop(ppo, run):
         if time.monotonic() - last_save > 60:
             export(run.policy_path, run.job, ppo.policy, ppo.steps)
             last_save = time.monotonic()
+        if gate_reached(ppo, run, it):
+            break
 
 
 def parse_args():

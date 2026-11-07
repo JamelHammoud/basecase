@@ -1,4 +1,7 @@
 import MESHES from './component-meshes.json';
+import { BAM_STS3215_7V4, BAM_XL330, type ServoFit } from './servoFits';
+
+export type { ServoFit } from './servoFits';
 
 export type ComponentGroup =
   | 'Servos'
@@ -98,6 +101,7 @@ export interface ActuatorSpec {
   ratedA?: number;
   idleA?: number;
   dualShaft?: boolean;
+  fit?: ServoFit;
   source: string;
 }
 
@@ -174,6 +178,7 @@ export const COMPONENTS: ComponentInfo[] = [
           ratedA: 0.65,
           idleA: 0.15,
           dualShaft: true,
+          fit: BAM_STS3215_7V4,
           source: 'https://www.feetechrc.com/Data/feetechrc/upload/file/20260622/6391772523943436695270694.pdf',
         },
         amazon: { url: 'https://www.amazon.com/s?k=Feetech+STS3215+C001+7.4V+servo', kind: 'search' },
@@ -315,6 +320,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ],
       bus: 'dynamixel',
       stallA: 1.47,
+      fit: BAM_XL330,
       source: 'https://emanual.robotis.com/docs/en/dxl/x/xl330-m288/',
     },
   },

@@ -8,7 +8,7 @@ Goal: take a robot from idea to a working machine without leaving Basecase. Code
 |---|---|---|---|
 | 1 | **Design** | Describe or sketch the robot; Claude models it with real parts | Done: Agent, Parts, CAD kernel, Library |
 | 2 | **Engineer** | Declare joints, pose it, check torque, range, stability, printability and budget | Done: Pose tab, Build tab |
-| 3 | **Simulate** | Run it under physics: does it stand, do the servos hold, does the walk cycle walk | **Now.** Live sim, checks, Cases with live drive and the web gallery ([Cases](guide/cases.md) §8h) |
+| 3 | **Simulate** | Run it under physics: does it stand, do the servos hold, does the walk cycle walk | **Now.** Live sim, checks, measured servo models for the STS3215 and XL330 ([Simulate](guide/simulate.md) §8d), Cases with live drive and the web gallery ([Cases](guide/cases.md) §8h) |
 | 4 | **Train** | Teach it any skill in sim, randomized so it works on the real robot | **Now.** Forge native trainer, task contracts and Arena; Motor Kit and the solver race next ([Forge](guide/forge.md) §8g, [Skills](guide/skills.md) §8i) |
 | 5 | **Build** | Print the plates, buy the parts, assemble | Mostly: BOM, budget, build guide, printers, plates, slicing and sending ([Print plan.md](Print%20plan.md)). Sending still to confirm on real printers |
 | 6 | **Operate** | Drive it, run trained skills and Routines, record every run | In sim and against emulated servos: Cases with recorded tries, the daemon and its fault matrix ([Robot runtime](guide/robot-runtime.md) §8k), the Routines core ([Routines](guide/routines.md) §8j). Real motors stay locked until the Stage 8 session |

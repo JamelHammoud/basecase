@@ -35,6 +35,16 @@ POLICY_VERSION = 1
 FULL = mujoco.mjtState.mjSTATE_FULLPHYSICS
 
 
+def hold_delayed_controls(m, d, ctrl):
+    """Fill every delayed actuator's history with the control it holds now; a zero history kicks the robot."""
+    for a in range(m.nu):
+        samples = int(m.actuator_history[a, 0])
+        if m.actuator_historyadr[a] < 0 or samples == 0:
+            continue
+        times = d.time - m.opt.timestep * np.arange(samples, 0, -1)
+        mujoco.mj_initCtrlHistory(m, d, a, times, np.full(samples, float(ctrl[a])))
+
+
 def emit(**kw):
     print(json.dumps(kw), flush=True)
 
@@ -131,6 +141,7 @@ class Envs:
         self._start_pose(base, d)
         d.ctrl[:] = self.ctrl0
         mujoco.mj_forward(base, d)
+        hold_delayed_controls(base, d, self.ctrl0)
         z_start = float(d.qpos[self.rq + 2])
         for _ in range(int(1.0 / dt)):
             mujoco.mj_step(base, d)
@@ -145,6 +156,7 @@ class Envs:
             self.holds_pose = True
         d.qvel[:] = 0
         d.time = 0
+        hold_delayed_controls(base, d, self.ctrl0)
         self.z0 = float(d.qpos[self.rq + 2]) if self.holds_pose else z_start
         self.nstate = mujoco.mj_stateSize(base, FULL)
         self.s0 = np.empty(self.nstate)

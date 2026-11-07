@@ -6,6 +6,7 @@ import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from 
 import { effortOf } from './mjcfEffort';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
+import { fittedActuatorXml, fittedJointAttrs, fittedServo } from './mjcfServo';
 import { esc, f, safeId, vec } from './mjcfText';
 import {
   SIM_MODEL_VERSION,
@@ -77,6 +78,7 @@ interface ActuatorSpecXml {
 }
 
 const WHEEL_FULL_TORQUE_SPEED = 2;
+const DEFAULT_TIMESTEP = 0.002;
 
 type GeomRole = 'robot' | 'object' | 'scenery';
 
@@ -161,18 +163,32 @@ function actuatorXml(spec: ActuatorSpecXml): string {
   return `    <position name="${name}" joint="${name}" kp="${f(kp)}" dampratio="1" ${force}${ctrl}/>`;
 }
 
+function estimatedJointAttrs(effort: number, revolute: boolean): string {
+  const armature = revolute ? Math.max(0.002, effort * 0.004) : 0.05;
+
+  return `damping="${f(effort * 0.02)}" armature="${f(armature)}" frictionloss="${f(effort * 0.01)}"`;
+}
+
 function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const { st } = rb;
   const axis = toMj(j.axis).map((v) => v * 1000);
   const revolute = j.type === 'revolute';
   const toUnit = (v: number) => (revolute ? THREE.MathUtils.degToRad(v) : v / 1000);
   const range = j.range ? ([Math.min(...j.range), Math.max(...j.range)] as [number, number]) : null;
-  const { effort, source } = effortOf(j, st.byId, st.input.rig, st.masses);
   const wheel = isWheelJoint(j, st.byId, st.input.rig);
-  const armature = revolute ? Math.max(0.002, effort * 0.004) : 0.05;
-  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${range ? ` range="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : ''} damping="${f(effort * 0.02)}" armature="${f(armature)}" frictionloss="${f(effort * 0.01)}"/>`;
+  const servo = wheel ? null : fittedServo({ j, byId: st.byId, rig: st.input.rig, masses: st.masses });
+  const { effort, source } = servo
+    ? { effort: servo.forceNm, source: 'servo' as const }
+    : effortOf(j, st.byId, st.input.rig, st.masses);
+  const rangeAttr = range ? ` range="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
+  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute)}/>`;
+  const ctrlrange = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
 
-  st.actuatorXml.push(actuatorXml({ name, effort, revolute, range, wheel }));
+  st.actuatorXml.push(
+    servo
+      ? fittedActuatorXml({ name, dynamics: servo, ctrlrange, timestep: st.input.timestep ?? DEFAULT_TIMESTEP })
+      : actuatorXml({ name, effort, revolute, range, wheel }),
+  );
   st.simJoints.push({
     id: j.id,
     name,
@@ -180,6 +196,7 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
     range: j.range,
     effort,
     effortSource: source,
+    dynamics: servo ? 'measured' : 'estimated',
     robot: rb.robot.key,
     drive: wheel ? 'velocity' : 'position',
     actuator: st.actuatorXml.length - 1,
@@ -376,7 +393,7 @@ export function buildMjcf(input: MjcfInput): SimModel {
   st.worldXml.push(...world.lines);
   st.bodies.push(...world.bodies);
 
-  const xml = mujocoXml(st, input.timestep ?? 0.002);
+  const xml = mujocoXml(st, input.timestep ?? DEFAULT_TIMESTEP);
 
   return {
     version: SIM_MODEL_VERSION,

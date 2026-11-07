@@ -5,7 +5,7 @@ import { measureTriangles } from '../three/meshMeasure';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { SimEngine } from './engine';
-import { buildMjcf } from './mjcf';
+import { buildMjcf, SIM_MODEL_VERSION } from './mjcf';
 import { isStalePolicy } from './policyFreshness';
 import { isPolicySpec, POLICY_FORMAT, POLICY_VERSION } from './policy';
 
@@ -228,8 +228,10 @@ describe('object friction', () => {
 });
 
 describe('policy freshness', () => {
-  it('treats a record with no version as version 0', () => {
-    expect(isStalePolicy({})).toBe(false);
+  it('treats a record with no version as version 0, which predates the servo models', () => {
+    expect(isStalePolicy({})).toBe(true);
+    expect(isStalePolicy({ modelVersion: 0 })).toBe(true);
+    expect(isStalePolicy({ modelVersion: SIM_MODEL_VERSION })).toBe(false);
     expect(isStalePolicy({ modelVersion: 99 })).toBe(true);
   });
 

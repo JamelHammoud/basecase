@@ -32,6 +32,7 @@ const arm = (effort: number): SimModel => ({
       type: 'revolute',
       effort,
       effortSource: 'servo',
+      dynamics: 'estimated',
       robot: 'r',
       drive: 'position',
       actuator: 0,

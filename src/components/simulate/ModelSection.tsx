@@ -7,6 +7,7 @@ export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; v
   version,
 }) => {
   const estimated = model.joints.filter((j) => j.effortSource === 'estimate').length;
+  const guessed = model.joints.filter((j) => j.dynamics === 'estimated' && j.effortSource !== 'estimate').length;
 
   return (
     <Section title="Model">
@@ -23,6 +24,12 @@ export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; v
         <p className="mt-1 text-[12.5px] leading-snug text-white/45">
           Torque for {estimated} {estimated === 1 ? 'joint is' : 'joints is'} estimated from weight. Assign servos for
           exact limits.
+        </p>
+      )}
+      {guessed > 0 && (
+        <p className="mt-1 text-[12.5px] leading-snug text-white/45">
+          Servo response for {guessed} {guessed === 1 ? 'joint is' : 'joints is'} estimated. Measured fits cover the
+          STS3215 (7.4 V) and XL330.
         </p>
       )}
       {model.warnings.map((w) => (

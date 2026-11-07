@@ -95,9 +95,10 @@ export function simReport(run: SimRun, rig: Rig, seconds: number): string {
   const lines: string[] = [];
   const total = Object.values(model.massKg).reduce((s, v) => s + v, 0);
   const estimated = model.joints.filter((j) => j.effortSource === 'estimate');
+  const guessed = model.joints.filter((j) => j.dynamics === 'estimated' && j.effortSource !== 'estimate');
 
   lines.push(
-    `MuJoCo model: ${model.joints.length} actuated joints, ${total.toFixed(2)} kg${estimated.length ? `; torque limits for ${estimated.length} joints are estimated from weight (no servo assigned)` : ''}.`,
+    `MuJoCo model: ${model.joints.length} actuated joints, ${total.toFixed(2)} kg${estimated.length ? `; torque limits for ${estimated.length} joints are estimated from weight (no servo assigned)` : ''}${guessed.length ? `; servo response for ${guessed.length} joints is estimated (measured fits exist only for the STS3215 7.4 V and XL330)` : ''}.`,
   );
 
   for (const r of stats.robots) {
@@ -238,8 +239,10 @@ export function trainingStatusText(ctx: SimContext): string {
     lines.push('Policies:');
 
     for (const r of ctx.policies) {
+      const stale = isStalePolicy(r) ? '; trained on an older sim, train it again' : '';
+
       lines.push(
-        `- ${r.name} (${r.task}${r.task === 'walk' ? ` at ${r.command[0]} m/s` : ''}, ${(r.trainedSteps / 1e6).toFixed(1)}M steps${evalSummary(r.eval)})`,
+        `- ${r.name} (${r.task}${r.task === 'walk' ? ` at ${r.command[0]} m/s` : ''}, ${(r.trainedSteps / 1e6).toFixed(1)}M steps${evalSummary(r.eval)}${stale})`,
       );
     }
   }

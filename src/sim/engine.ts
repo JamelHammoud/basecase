@@ -1,6 +1,7 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { sampleAnimation } from '../utils/animation';
+import { primeCtrlHistory } from './ctrlHistory';
 import { createDrive, type DriveCommand, type DriveLoop, type DriveSetup } from './drive';
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
@@ -134,6 +135,7 @@ export class SimEngine {
     for (const r of this.robots) this.placeRoot(r, initial);
 
     mj.mj_forward(model, data);
+    this.holdDelayedControls(this.sim.joints.map((_, i) => i));
 
     for (const r of this.robots) {
       r.startZ = data.xpos[r.rootBody * 3 + 2];
@@ -187,6 +189,19 @@ export class SimEngine {
     this.grab.forget();
     this.setController(this.controller);
     mj.mj_forward(model, data);
+    this.holdDelayedControls(r.joints);
+  }
+
+  private holdDelayedControls(joints: number[]) {
+    const held = joints.flatMap((i) => {
+      const j = this.sim.joints[i];
+
+      if (j.actuator < 0) return [];
+
+      return [{ actuator: j.actuator, value: j.drive === 'position' ? this.data.qpos[this.jointQpos[i]] : 0 }];
+    });
+
+    primeCtrlHistory(this.mj, this.model, this.data, held);
   }
 
   setController(c: Controller) {

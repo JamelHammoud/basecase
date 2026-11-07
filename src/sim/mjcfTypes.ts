@@ -3,7 +3,7 @@ import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/roboti
 import type { Rig, V3 } from '../utils/kinematics';
 import type { RobotMorphology } from './morphology';
 
-export const SIM_MODEL_VERSION = 0;
+export const SIM_MODEL_VERSION = 1;
 
 export type SimDrive = 'position' | 'velocity';
 
@@ -27,6 +27,7 @@ export interface SimJoint {
   range?: [number, number];
   effort: number;
   effortSource: 'servo' | 'published' | 'estimate';
+  dynamics: 'measured' | 'estimated';
   robot: string;
   drive: SimDrive;
   actuator: number;

@@ -91,6 +91,7 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
     {
       "actuator": 0,
       "drive": "position",
+      "dynamics": "estimated",
       "effort": 0.3,
       "effortSource": "estimate",
       "id": "hip",
@@ -105,6 +106,7 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
     {
       "actuator": 1,
       "drive": "position",
+      "dynamics": "estimated",
       "effort": 1.5,
       "effortSource": "published",
       "id": "knee",
@@ -133,7 +135,7 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
       "root": "root_0",
     },
   ],
-  "version": 0,
+  "version": 1,
   "warnings": [],
   "xml": undefined,
 }

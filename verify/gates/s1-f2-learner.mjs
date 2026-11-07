@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { fail, pass, ROOT, sh, shCheck } from '../lib/gate.mjs';
 import { trainerPython } from '../lib/python.mjs';
@@ -6,20 +7,40 @@ import { recordBaseline, speedupAtLeast } from '../forge/tts.mjs';
 
 const VECTOR = path.join(ROOT, 'verify', 'out', 'forge', 'adam.json');
 
+const PLANTED = path.join(ROOT, 'verify', 'out', 'forge', 'adam-planted.json');
+
+const adamWorst = (vector) => {
+  const r = trainerPython('verify/forge/adam_check.py', [vector]);
+
+  if (!r.ok) return fail(r.stderr.slice(-400));
+
+  const { worst } = JSON.parse(r.stdout.trim().split('\n').at(-1));
+
+  return worst <= 1e-4 ? pass(`worst ${worst.toExponential(2)}`) : fail(`worst ${worst}`);
+};
+
 const adam = {
   name: 'Forge Adam matches torch to 1e-4 over 50 steps',
   run: () => {
     const made = sh(FORGE_BIN, ['--adam-vector', VECTOR]);
 
-    if (!made.ok) return fail(made.stderr.slice(-400));
+    return made.ok ? adamWorst(VECTOR) : fail(made.stderr.slice(-400));
+  },
+};
 
-    const r = trainerPython('verify/forge/adam_check.py', [VECTOR]);
+const plantedAdam = {
+  name: 'an Adam result one weight off by 1e-3 is rejected',
+  run: () => {
+    const made = sh(FORGE_BIN, ['--adam-vector', VECTOR]);
 
-    if (!r.ok) return fail(r.stderr.slice(-400));
+    if (!made.ok) return pass(`could not make the vector: ${made.stderr.slice(-200)}`);
 
-    const { worst } = JSON.parse(r.stdout.trim().split('\n').at(-1));
+    const vector = JSON.parse(fs.readFileSync(VECTOR, 'utf8'));
 
-    return worst <= 1e-4 ? pass(`worst ${worst.toExponential(2)}`) : fail(`worst ${worst}`);
+    vector.final[0].w[0] += 1e-3;
+    fs.writeFileSync(PLANTED, JSON.stringify(vector));
+
+    return adamWorst(PLANTED);
   },
 };
 
@@ -67,14 +88,5 @@ export default {
     recordBaseline,
     speedupAtLeast(3),
   ],
-  canaries: [
-    {
-      name: 'a wildly wrong Adam result is rejected',
-      run: () => {
-        const worst = 0.5;
-
-        return worst <= 1e-4 ? pass() : fail(`worst ${worst}`);
-      },
-    },
-  ],
+  canaries: [plantedAdam],
 };

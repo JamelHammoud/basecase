@@ -15,5 +15,7 @@
   "s3-servo-models.mjs": "ad901573cc093509e29385a32db59bac715ebdc1ba5bc4cf1a3abf4ffbea5bb8",
   "s3a-motor-kit.mjs": "f3355a27266a308bc3f9d83f006fa9893b4935132237d492fbca332ca2bba826",
   "s4-routines-core.mjs": "f2e032c49ac768561aca4d58857db8511b067df629a37f33f282c8d685ac446f",
-  "s5-emu-daemon.mjs": "725abc36e33b7f222607904bceba2aa717e6de4aed4091c709937795b01edf28"
+  "s4b-routines-flow.mjs": "0096f9d979f87719588972cd6bf3314ddcb100d11a500edecaa23ddbe1c11ff3",
+  "s5-emu-daemon.mjs": "725abc36e33b7f222607904bceba2aa717e6de4aed4091c709937795b01edf28",
+  "s5b-daemon-app.mjs": "59182932d29321343fff1b70129f331fdf51bfa762bb11e9e983b97a340c58d4"
 }

@@ -1,0 +1,53 @@
+{
+  "plate.step": {
+    "sha256": "a9bf0fdae28a69330b33b91818f878a5d3b4ac7f33701f5797c6ff0ebfb12b31",
+    "result": {
+      "size": [40, 5, 30],
+      "originOffset": [0, -2.5, 0],
+      "triangles": 308,
+      "sourceTriangles": 308,
+      "colors": 1,
+      "bytes": 2704,
+      "holes": [
+        {
+          "position": [-14.000000000000005, 2.5, 9],
+          "axis": [0, 1, 0],
+          "diameterMm": 3.1932692940754155
+        },
+        {
+          "position": [14.000000000000005, 2.5, -9],
+          "axis": [0, 1, 0],
+          "diameterMm": 3.1932692940754155
+        }
+      ],
+      "members": ["source.cad"]
+    }
+  },
+  "plate.zip": {
+    "sha256": "a9bf0fdae28a69330b33b91818f878a5d3b4ac7f33701f5797c6ff0ebfb12b31",
+    "result": {
+      "size": [40, 5, 30],
+      "originOffset": [0, -2.5, 0],
+      "triangles": 308,
+      "sourceTriangles": 308,
+      "colors": 1,
+      "bytes": 2704,
+      "holes": [
+        {
+          "position": [-14.000000000000005, 2.5, 9],
+          "axis": [0, 1, 0],
+          "diameterMm": 3.1932692940754155
+        },
+        {
+          "position": [14.000000000000005, 2.5, -9],
+          "axis": [0, 1, 0],
+          "diameterMm": 3.1932692940754155
+        }
+      ],
+      "members": ["cad/plate.step"]
+    }
+  },
+  "tetra.stl": {
+    "error": "OpenCascade could not read this file. It may be too big for the built-in reader."
+  }
+}

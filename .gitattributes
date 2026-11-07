@@ -8,3 +8,4 @@
 *.car binary
 *.node binary
 *.wasm binary
+*.zip binary

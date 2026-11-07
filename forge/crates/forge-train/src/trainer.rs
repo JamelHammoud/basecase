@@ -155,8 +155,8 @@ pub fn train(folder: &Path) -> Result<(), String> {
     let model = Model::load(&folder.join("model.xml"))?;
     let robot = Robot::load(model, job)?;
     let envs = Envs::new(&robot, envs_count, seed + ENV_SEED_OFFSET, true)?;
-    let threads = std::thread::available_parallelism().map_or(4, |c| c.get());
-    let mut ppo = Ppo::new(envs, seed, Math::native(threads));
+    let learner_threads = std::thread::available_parallelism().map_or(4, |c| c.get()).div_ceil(2);
+    let mut ppo = Ppo::new(envs, seed, Math::native(learner_threads));
 
     if !robot.holds_pose {
         status("Can't hold the pose without help. Training from a fall.");

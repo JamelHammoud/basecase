@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { auditText } from '../cad-mcp/partAudit.mjs';
-import { renderPart, stopKernels } from './client.mjs';
+import { renderPart, stopKernels } from './nodeHost/client.mjs';
 
 const PLATE =
   'include <robotics.scad>\n' +

@@ -88,7 +88,7 @@ export function snapshotApp(label) {
 }
 
 const PREFLIGHT = [
-  "const { renderPart } = await import('./electron/cad-kernel/client.mjs');",
+  "const { renderPart } = await import('./electron/cad-kernel/nodeHost/client.mjs');",
   "const a = await renderPart('openscad', 'include <robotics.scad>\\ncuboid(10, rounding=2);');",
   "const b = await renderPart('replicad', 'return makeBox([0,0,0],[5,5,5]);');",
   "process.stdout.write(JSON.stringify([a.ok !== false && !a.error, b.ok !== false && !b.error, a.error || b.error || '']));",
@@ -122,7 +122,7 @@ async function startVite({ app, port, env, base }) {
   const vite = spawn(
     process.execPath,
     [path.join(app, 'node_modules/vite/bin/vite.js'), '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
-    { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...env } },
+    { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...env, BASECASE_NODE_KERNEL: '1' } },
   );
   let exited = false;
   let out = '';

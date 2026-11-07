@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { net, protocol } from 'electron';
+import { KERNEL_SCHEME } from './cad-kernel/sandbox/policy.mjs';
 
 export const APP_ORIGIN = 'app://basecase';
 
@@ -41,6 +42,10 @@ export function registerAppScheme() {
         stream: true,
         codeCache: true,
       },
+    },
+    {
+      scheme: KERNEL_SCHEME,
+      privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, codeCache: true },
     },
   ]);
 }

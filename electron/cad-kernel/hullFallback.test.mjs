@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { renderPart, stopKernels } from './client.mjs';
+import { renderPart, stopKernels } from './nodeHost/client.mjs';
 import { hullPolyhedron, innermostHull, isHullCrash } from './hullFallback.mjs';
+import { loadNodeManifold } from './nodeHost/process.mjs';
 
 afterAll(() => stopKernels());
 
@@ -29,7 +30,7 @@ describe('hull fallback', () => {
 
   it('builds a closed polyhedron from points', async () => {
     const cube = [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0.5, 0.5, 0.5];
-    const scad = await hullPolyhedron(cube);
+    const scad = await hullPolyhedron(cube, loadNodeManifold);
 
     expect(scad).toMatch(/^polyhedron\(points=\[/);
     expect(scad.match(/\],\[/g).length).toBeGreaterThan(10);

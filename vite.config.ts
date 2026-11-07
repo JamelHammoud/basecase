@@ -1,8 +1,10 @@
 import tailwindcss from '@tailwindcss/vite';
 import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import path from 'node:path';
+import { defineConfig, type ResolvedConfig } from 'vite';
 import { bridgeMiddlewarePlugin } from './electron/vite-bridge-middleware.mjs';
+import { buildKernelBundle } from './tools/kernelBundle.mjs';
 
 const ISOLATION_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -20,6 +22,21 @@ const webEntryPlugin = () => ({
   },
 });
 
+const kernelBundlePlugin = () => {
+  let distDir = '';
+
+  return {
+    name: 'basecase-kernel-bundle',
+    apply: 'build' as const,
+    configResolved: (config: ResolvedConfig) => {
+      distDir = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle: async () => {
+      await buildKernelBundle(distDir);
+    },
+  };
+};
+
 export default defineConfig(({ mode }) => ({
   server: {
     watch: { ignored: ['**/library/**', '**/ai-reference/**'] },
@@ -31,6 +48,6 @@ export default defineConfig(({ mode }) => ({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
-    mode === 'web' ? webEntryPlugin() : bridgeMiddlewarePlugin(),
+    ...(mode === 'web' ? [webEntryPlugin()] : [bridgeMiddlewarePlugin(), kernelBundlePlugin()]),
   ],
 }));

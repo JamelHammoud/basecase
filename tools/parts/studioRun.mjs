@@ -95,7 +95,7 @@ async function startVite(app, port, base) {
   const vite = spawn(
     process.execPath,
     [path.join(app, 'node_modules/vite/bin/vite.js'), '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
-    { cwd: app, stdio: ['ignore', 'pipe', 'pipe'] },
+    { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, BASECASE_NODE_KERNEL: '1' } },
   );
   let out = '';
   let exited = false;

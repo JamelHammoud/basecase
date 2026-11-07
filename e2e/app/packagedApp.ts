@@ -43,12 +43,12 @@ export interface RunningApp {
   close: () => Promise<void>;
 }
 
-function freshUserData(): string {
+function freshUserData(agentCommand: string): string {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-app-'));
   const library = path.join(userData, 'library');
 
   fs.mkdirSync(library, { recursive: true });
-  fs.writeFileSync(path.join(library, 'agent.json'), JSON.stringify({ command: OFFLINE_AGENT }));
+  fs.writeFileSync(path.join(library, 'agent.json'), JSON.stringify({ command: agentCommand }));
 
   return userData;
 }
@@ -69,8 +69,8 @@ async function appWindow(app: ElectronApplication, timeout: number): Promise<Pag
   return page;
 }
 
-export async function launchPackaged(): Promise<RunningApp> {
-  const userData = freshUserData();
+export async function launchPackaged({ agentCommand = OFFLINE_AGENT } = {}): Promise<RunningApp> {
+  const userData = freshUserData(agentCommand);
   const app = await electron.launch({
     executablePath: packagedBinary(),
     args: ['--enable-unsafe-swiftshader'],

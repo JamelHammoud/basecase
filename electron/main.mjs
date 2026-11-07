@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { app, BrowserWindow, ipcMain as electronIpc, nativeTheme, safeStorage, session, shell } from 'electron';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
+import { SandboxKernel } from './cad-kernel/sandbox/sandboxKernel.mjs';
 import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs';
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
@@ -46,7 +47,9 @@ app.setName('Basecase');
   app.setPath('userData', userData);
 }
 
+const kernel = new SandboxKernel({ root: workspaceRoot });
 const backend = new BasecaseBackendService(workspaceRoot, {
+  kernel,
   dataRoot: fromSource ? workspaceRoot : app.getPath('userData'),
   secrets: {
     available: () => app.isReady() && safeStorage.isEncryptionAvailable(),
@@ -55,7 +58,7 @@ const backend = new BasecaseBackendService(workspaceRoot, {
   },
 });
 const updates = new Updates({
-  windows: () => BrowserWindow.getAllWindows(),
+  windows: () => BrowserWindow.getAllWindows().filter((win) => !kernel.owns(win)),
   log: path.join(app.getPath('userData'), 'updates.log'),
   channelFile: path.join(app.getPath('userData'), 'update-channel.json'),
 });
@@ -132,6 +135,7 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+    kernel.stop();
   });
 }
 
@@ -229,13 +233,12 @@ app.whenReady().then(async () => {
   if (!fromSource) updates.start();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+    if (!mainWindow) createWindow();
   });
 });
 
 app.on('before-quit', () => {
+  kernel.stop();
   updates.dispose();
   backend.trainer.dispose();
   backend.printing.dispose();

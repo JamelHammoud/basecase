@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { renderPart, stopKernels } from '../cad-kernel/client.mjs';
+import { renderPart, stopKernels } from '../cad-kernel/nodeHost/client.mjs';
 import { GUIDE_EXAMPLES } from './examples.mjs';
 
 afterAll(() => stopKernels());

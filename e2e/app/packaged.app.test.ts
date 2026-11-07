@@ -1,8 +1,5 @@
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { appResources, launchPackaged, packagedBinary, type RunningApp } from './packagedApp';
 
@@ -67,29 +64,14 @@ describe('packaged app', () => {
     await expect.poll(connected, { timeout: 60000 }).toBe(true);
   });
 
-  it('compiles a part in the CAD kernel', () => {
-    const client = pathToFileURL(path.join(appResources(packagedBinary()), 'electron', 'cad-kernel', 'client.mjs'));
-    const script = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-kernel-')), 'kernel.mjs');
+  it('ships the CAD kernel as a sandbox bundle, with no Node host', () => {
+    const app = appResources(packagedBinary());
 
-    fs.writeFileSync(
-      script,
-      [
-        `const { renderPart, stopKernels } = await import(${JSON.stringify(client.href)});`,
-        `const res = await renderPart('openscad', 'cube([10, 20, 30]);');`,
-        'stopKernels();',
-        'console.log(JSON.stringify({ error: res.error ?? null, volume: res.stats?.volume ?? 0 }));',
-      ].join('\n'),
-    );
+    expect(fs.existsSync(path.join(app, 'dist', 'kernel', 'worker.js'))).toBe(true);
 
-    const out = execFileSync(packagedBinary(), [script], {
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
-      encoding: 'utf8',
-      timeout: 120000,
-    });
-    const res = JSON.parse(out.trim().split('\n').pop() ?? '{}');
-
-    expect(res.error).toBeNull();
-    expect(res.volume).toBeCloseTo(6000, 0);
+    for (const left of ['electron/cad-kernel/nodeHost', 'node_modules/replicad', 'node_modules/openscad-wasm']) {
+      expect(fs.existsSync(path.join(app, left)), left).toBe(false);
+    }
   });
 
   it('ran without page errors', () => {

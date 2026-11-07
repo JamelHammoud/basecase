@@ -1,5 +1,6 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
+import { guardBridge } from '../bridgeGuard.mjs';
 import { DEFAULT_WORKSPACE, TOOL_USE_HEADER } from './constants.mjs';
 import { isLaneOf } from './liveRuns.mjs';
 
@@ -20,6 +21,8 @@ const RENDERER_TIMEOUTS_MS = new Map([
 
 export const rendererTimeout = (kind) => RENDERER_TIMEOUTS_MS.get(kind) ?? DEFAULT_TIMEOUT_MS;
 
+const encodeAnswer = (result) => (result instanceof Uint8Array ? result : JSON.stringify(result ?? { ok: true }));
+
 const newRequestId = () => `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
 export class AgentBridge {
@@ -32,10 +35,15 @@ export class AgentBridge {
     this.server = null;
     this.ready = Promise.resolve(null);
     this.local = new Map();
+    this.raw = new Map();
   }
 
   serve(kind, handler) {
     this.local.set(kind, handler);
+  }
+
+  serveRaw(kind, handler) {
+    this.raw.set(kind, handler);
   }
 
   routeOf(req) {
@@ -52,6 +60,14 @@ export class AgentBridge {
     res.setHeader('Content-Type', 'application/json');
 
     try {
+      const raw = this.raw.get(kind);
+
+      if (raw) {
+        res.end(encodeAnswer(await raw(body, workspaceId)));
+
+        return;
+      }
+
       const payload = body ? JSON.parse(body) : {};
 
       if (kind === 'status') {
@@ -66,7 +82,7 @@ export class AgentBridge {
         ? await local(payload, workspaceId)
         : await this.ask({ kind, payload, timeoutMs: rendererTimeout(kind), workspaceId, toolUseId });
 
-      res.end(JSON.stringify(result ?? { ok: true }));
+      res.end(encodeAnswer(result));
     } catch (err) {
       res.statusCode = 500;
       res.end(JSON.stringify({ error: String(err?.message ?? err) }));
@@ -95,7 +111,7 @@ export class AgentBridge {
 
   start() {
     this.ready = new Promise((resolve) => {
-      const server = http.createServer((req, res) => this.handle(req, res));
+      const server = http.createServer(guardBridge((req, res) => this.handle(req, res)));
 
       server.on('error', (err) => {
         this.onError(`Agent bridge failed: ${err.message}`);

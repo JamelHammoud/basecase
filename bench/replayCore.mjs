@@ -37,7 +37,7 @@ async function replayStep(ctx, s) {
 }
 
 export async function replayInStudio(studio, steps, { startScene } = {}) {
-  const { renderPart } = await import(path.join(root, 'electron/cad-kernel/client.mjs'));
+  const { renderPart } = await import(path.join(root, 'electron/cad-kernel/nodeHost/client.mjs'));
   const ctx = { call: studio.call, renderPart };
 
   await studio.page.evaluate(() => window.__studio.clear());

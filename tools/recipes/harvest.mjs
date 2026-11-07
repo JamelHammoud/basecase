@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { renderPart } from '../../electron/cad-kernel/client.mjs';
+import { renderPart } from '../../electron/cad-kernel/nodeHost/client.mjs';
 import { scadPorts } from '../../electron/cad-mcp/recipes/scadPorts.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');

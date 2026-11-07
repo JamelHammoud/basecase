@@ -12,6 +12,7 @@ import { DEFAULT_WORKSPACE, safeWorkspace } from './backend/constants.mjs';
 import { EventHub } from './backend/eventHub.mjs';
 import * as evidence from './backend/evidence.mjs';
 import { watchLibrary } from './backend/fileWatchers.mjs';
+import { serveKernel } from './backend/kernelRoutes.mjs';
 import { ensureDirectories, libraryPaths } from './backend/libraryPaths.mjs';
 import * as models from './backend/models.mjs';
 import { buildPromptBlocks } from './backend/promptBlocks.mjs';
@@ -24,7 +25,7 @@ import * as uploads from './backend/uploads.mjs';
 export { CLAUDE_AGENT_COMMAND, DEFAULT_WORKSPACE, LEGACY_AGENT_COMMAND } from './backend/constants.mjs';
 
 export class BasecaseBackendService {
-  constructor(workspaceRoot, { secrets, dataRoot = workspaceRoot } = {}) {
+  constructor(workspaceRoot, { secrets, dataRoot = workspaceRoot, kernel } = {}) {
     this.workspaceRoot = workspaceRoot;
     this.paths = libraryPaths(dataRoot);
     Object.assign(this, this.paths);
@@ -51,6 +52,7 @@ export class BasecaseBackendService {
       secrets,
     });
     this.bridge.serve('references', (_payload, workspaceId) => ({ names: this.references.ofLane(workspaceId) }));
+    serveKernel(this.bridge, kernel);
     this.bridgeReady = this.startAgentBridge();
 
     this.setupFileWatchers();

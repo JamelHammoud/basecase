@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { renderPart } from '../../cad-kernel/client.mjs';
+import { renderPart } from '../../cad-kernel/nodeHost/client.mjs';
 import { RECIPES, formatRecipe, searchRecipes } from './catalog.mjs';
 import { scadPortsParallel } from './scadPorts.mjs';
 

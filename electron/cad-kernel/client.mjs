@@ -1,173 +1,27 @@
-import { fork } from 'node:child_process';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { bridge } from '../cad-mcp/shared.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, '..', '..');
-const POOL_SIZE = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
+const RENDER_TIMEOUT_MS = 90000;
+const AUDIT_TIMEOUT_MS = 60000;
+const BRIDGE_SLACK_MS = 45000;
 
-const NETWORK_PERMISSION_NODE = 25;
-
-let sandboxed = Number(process.versions.node.split('.')[0]) >= NETWORK_PERMISSION_NODE;
-let nextId = 1;
-const kernels = [];
-const waiting = [];
-
-function realDir(dir) {
+async function askKernel(kind, payload, timeoutMs) {
   try {
-    return fs.realpathSync(dir);
-  } catch {
-    return dir;
-  }
-}
-
-function spawnKernel() {
-  const execArgv = sandboxed
-    ? [
-        '--permission',
-        ...[path.join(root, 'node_modules'), path.join(root, 'vendor'), here].flatMap((dir) =>
-          Array.from(new Set([dir, realDir(dir)])).map((d) => `--allow-fs-read=${path.join(d, '*')}`),
-        ),
-      ]
-    : [];
-  const proc = fork(path.join(here, 'kernel.mjs'), [], {
-    execArgv,
-    env: process.env.ELECTRON_RUN_AS_NODE ? { ELECTRON_RUN_AS_NODE: '1' } : {},
-    stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
-  });
-  const k = { proc, busy: false, job: null };
-
-  k.ready = new Promise((resolve, reject) => {
-    proc.once('message', (m) => (m?.ready ? resolve() : reject(new Error('Kernel did not start'))));
-    proc.once('exit', (code) => reject(new Error(`Kernel exited (${code})`)));
-  });
-  proc.on('message', (m) => {
-    if (m?.id === undefined || !k.job || k.job.id !== m.id) return;
-
-    finish(k, m);
-  });
-  proc.on('exit', () => {
-    const i = kernels.indexOf(k);
-
-    if (i >= 0) kernels.splice(i, 1);
-
-    if (k.job)
-      finish(
-        k,
-        {
-          id: k.job.id,
-          ok: false,
-          error: 'The CAD kernel stopped (time or memory limit). Simplify the part and try again.',
-        },
-        true,
-      );
-  });
-  proc.stderr.on('data', () => {});
-  kernels.push(k);
-
-  return k;
-}
-
-function finish(k, result, dead = false) {
-  const job = k.job;
-
-  k.job = null;
-  k.busy = false;
-
-  if (job) {
-    clearTimeout(job.timer);
-    job.resolve(result);
-  }
-
-  if (!dead) pump();
-}
-
-async function getKernel() {
-  let k = kernels.find((x) => !x.busy);
-
-  if (!k && kernels.length < POOL_SIZE) k = spawnKernel();
-
-  if (!k) return null;
-
-  k.busy = true;
-
-  try {
-    await k.ready;
+    return await bridge(kind, payload, timeoutMs + BRIDGE_SLACK_MS);
   } catch (err) {
-    k.proc.kill();
-
-    if (sandboxed) {
-      sandboxed = false;
-
-      return getKernel();
-    }
-
-    throw err;
-  }
-
-  return k;
-}
-
-async function pump() {
-  while (waiting.length) {
-    const k = await getKernel();
-
-    if (!k) return;
-
-    const job = waiting.shift();
-
-    if (!job) {
-      k.busy = false;
-
-      return;
-    }
-
-    k.job = job;
-    job.timer = setTimeout(() => {
-      finish(
-        k,
-        {
-          id: job.id,
-          ok: false,
-          error: `Rendering took longer than ${Math.round(job.timeoutMs / 1000)} s. Simplify the part (fewer booleans, lower $fn, fewer hull() pieces).`,
-        },
-        true,
-      );
-      k.proc.kill();
-    }, job.timeoutMs);
-    k.proc.send({ id: job.id, language: job.language, code: job.code, expect: job.expect, mesh: job.mesh });
+    return { ok: false, error: String(err?.message ?? err) };
   }
 }
 
 export function renderPart(language, code, options = {}) {
-  const { timeoutMs = 90000, expect } = typeof options === 'number' ? { timeoutMs: options } : options;
+  const { timeoutMs = RENDER_TIMEOUT_MS, expect } = options;
 
-  if (language === 'replicad' && !sandboxed) {
-    return Promise.resolve({
-      ok: false,
-      error: 'replicad needs Node 25+ (sandboxed kernel). Use OpenSCAD for this part.',
-    });
-  }
-
-  return new Promise((resolve) => {
-    waiting.push({ id: nextId++, language, code, expect, timeoutMs, resolve });
-    pump();
-  });
+  return askKernel('kernel_render', { language, code, expect, timeoutMs }, timeoutMs);
 }
 
-export function auditPart(mesh, timeoutMs = 60000) {
-  return new Promise((resolve) => {
-    waiting.push({ id: nextId++, mesh, timeoutMs, resolve });
-    pump();
-  });
+export function auditPart(mesh) {
+  return askKernel('kernel_audit', { mesh }, AUDIT_TIMEOUT_MS);
 }
 
 export function warmUp() {
-  if (kernels.length === 0) spawnKernel();
-}
-
-export function stopKernels() {
-  for (const k of [...kernels]) k.proc.kill();
+  bridge('kernel_warm', {}, 10000).catch(() => {});
 }

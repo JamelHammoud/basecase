@@ -45,9 +45,9 @@ export function innermostHull(text) {
 
 let manifold = null;
 
-async function manifoldApi() {
+async function manifoldApi(load) {
   if (!manifold) {
-    const wasm = await (await import('manifold-3d/manifold.js')).default();
+    const wasm = await load();
 
     wasm.setup();
     manifold = wasm.Manifold;
@@ -58,8 +58,8 @@ async function manifoldApi() {
 
 const num = (v) => (Object.is(v, -0) ? '0' : String(v));
 
-export async function hullPolyhedron(positions) {
-  const Manifold = await manifoldApi();
+export async function hullPolyhedron(positions, loadManifold) {
+  const Manifold = await manifoldApi(loadManifold);
   const points = [];
 
   for (let i = 0; i < positions.length; i += 3) points.push([positions[i], positions[i + 1], positions[i + 2]]);
@@ -88,11 +88,11 @@ export async function hullPolyhedron(positions) {
   return `polyhedron(points=[${verts.join(',')}], faces=[${faces.join(',')}]);`;
 }
 
-async function bodyHull(body, renderBody) {
+async function bodyHull(body, renderBody, loadManifold) {
   try {
     const { positions } = await renderBody(body);
 
-    return await hullPolyhedron(positions);
+    return await hullPolyhedron(positions, loadManifold);
   } catch (err) {
     if (NOT_3D.test(String(err?.message))) return null;
 
@@ -100,12 +100,12 @@ async function bodyHull(body, renderBody) {
   }
 }
 
-export async function resolveHulls(csg, renderBody) {
+export async function resolveHulls(csg, renderBody, loadManifold) {
   const done = new Map();
   let text = csg;
 
   for (let block = innermostHull(text); block; block = innermostHull(text)) {
-    if (!done.has(block.body)) done.set(block.body, await bodyHull(block.body, renderBody));
+    if (!done.has(block.body)) done.set(block.body, await bodyHull(block.body, renderBody, loadManifold));
 
     const solved = done.get(block.body);
     const replacement = solved ?? `${KEPT_HULL}${block.body}}`;

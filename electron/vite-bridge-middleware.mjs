@@ -1,5 +1,6 @@
 import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
+import { nodeKernelService } from './cad-kernel/nodeHost/client.mjs';
 import { printPostRoutes } from './print/routes.mjs';
 
 const withBase64Files = (got) => ({
@@ -150,7 +151,8 @@ function bridgeMiddleware(backend) {
 }
 
 function installBridge(server) {
-  const backend = new BasecaseBackendService(process.cwd());
+  const kernel = process.env.BASECASE_NODE_KERNEL === '1' ? nodeKernelService : undefined;
+  const backend = new BasecaseBackendService(process.cwd(), { kernel });
   const stopAgent = () => backend.disconnectAcpAgent();
 
   server.httpServer?.once('close', stopAgent);

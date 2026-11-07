@@ -21,6 +21,7 @@ import { focusOn, frameObjects, frameScene, setCameraPreset } from './cameraOps'
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
 import { silhouetteShots } from './fitCapture';
+import { FollowCamera } from './followCamera';
 import { Gizmo } from './gizmo';
 import { installKeys } from './keys';
 import { MarkFieldAnchor } from './markFieldAnchor';
@@ -123,6 +124,8 @@ export class ViewportEngine {
 
   private readonly agentFrames: AgentFrames;
 
+  private readonly follow: FollowCamera;
+
   private readonly cleanups: Array<() => void>;
 
   private buildFrame = 0;
@@ -136,6 +139,7 @@ export class ViewportEngine {
     batches.attach(stage.scene);
 
     const layer = new PartLayer(stage.partsRoot, () => this.scheduleBuilds(), batches);
+    const world = new PartLayer(stage.worldRoot, () => this.buildWorld());
     const loop = new RenderLoop(stage, (id) => layer.get(id));
 
     this.props = options.props;
@@ -143,6 +147,7 @@ export class ViewportEngine {
     this.ctx = {
       stage,
       layer,
+      world,
       batches,
       loop,
       ui: options.ui,
@@ -159,9 +164,11 @@ export class ViewportEngine {
     this.markField = new MarkFieldAnchor(this.ctx, this.markLayer, options.markField);
     this.agentFrames = new AgentFrames(this.ctx);
     this.agentFrames.sync(options.props.agentFrames ?? []);
+    this.follow = new FollowCamera(stage, (id) => layer.get(id));
 
     const outline = new SelectionOutline(stage);
 
+    loop.beforeRender.add(() => this.follow.update());
     loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
     loop.afterRender.add(() => this.measureTool.updateLabel());
     loop.afterRender.add(() => this.markField.place());
@@ -190,6 +197,7 @@ export class ViewportEngine {
       () => outline.dispose(),
     ];
     this.api = this.completing(this.handle());
+    this.syncWorld();
     this.syncScene();
     frameScene(stage, options.props.parts);
     loop.start();
@@ -211,6 +219,8 @@ export class ViewportEngine {
     if (props.pose !== previous.pose) this.ctx.layer.pose = props.pose ?? new Map();
 
     this.syncTools(previous, props);
+
+    if (meshChanged || previous.worldParts !== props.worldParts) this.syncWorld();
 
     if (meshChanged || changed(previous, props, ['parts', 'selectedPartIds'])) this.syncScene();
     else if (props.pose !== previous.pose) this.applyPose();
@@ -252,6 +262,7 @@ export class ViewportEngine {
     this.markLayer.dispose();
     this.agentFrames.dispose();
     this.ctx.layer.dispose();
+    this.ctx.world.dispose();
     this.ctx.batches.dispose();
     disposeStage(this.ctx.stage);
   }
@@ -291,7 +302,11 @@ export class ViewportEngine {
       zoomBy: (factor) => camera(() => zoomCamera(ctx.stage, factor)),
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
-      setPose: (deltas) => this.setPose(deltas),
+      setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
+      followPart: (partId) => {
+        this.follow.follow(partId);
+        ctx.loop.following = this.follow.active;
+      },
       interference: (onlyIds) =>
         interferenceIn(
           withRest(() => solidShapes(true)),
@@ -344,10 +359,23 @@ export class ViewportEngine {
     this.ctx.loop.invalidate();
   }
 
-  private setPose(deltas: Map<string, THREE.Matrix4> | null): void {
+  private setPose(deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null): void {
     this.ctx.layer.pose = deltas ?? new Map();
+    this.ctx.world.pose = worldDeltas ?? new Map();
+    this.ctx.world.applyPose();
     this.applyPose();
     this.gizmo.syncHandToPose();
+  }
+
+  private syncWorld(): void {
+    this.ctx.world.sync(this.props.worldParts ?? [], new Set(), this.meshVersion);
+    this.buildWorld();
+  }
+
+  private buildWorld(): void {
+    this.ctx.world.buildPending();
+    this.ctx.world.applyPose();
+    this.ctx.loop.invalidate();
   }
 
   private syncScene(): void {

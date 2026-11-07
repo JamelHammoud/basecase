@@ -94,6 +94,7 @@ export interface ViewportProps {
   onMoveMark?: (move: MarkMove) => void;
   paused?: boolean;
   pose?: Map<string, THREE.Matrix4> | null;
+  worldParts?: ScenePart[];
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
@@ -149,7 +150,8 @@ export interface Viewport3DHandle {
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
-  setPose: (deltas: Map<string, THREE.Matrix4> | null) => void;
+  setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
+  followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];
   posedInterference: (onlyIds?: string[], riders?: Record<string, string[]>) => Promise<Interference[]>;

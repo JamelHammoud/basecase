@@ -18,6 +18,7 @@ export interface ViewportRuntime {
 export interface ViewportContext {
   stage: Stage;
   layer: PartLayer;
+  world: PartLayer;
   batches: PartBatches;
   loop: RenderLoop;
   ui: ViewportUi;

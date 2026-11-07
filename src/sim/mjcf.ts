@@ -6,6 +6,7 @@ import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from 
 import { effortOf } from './mjcfEffort';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
+import { esc, f, safeId, vec } from './mjcfText';
 import {
   SIM_MODEL_VERSION,
   type MjcfInput,
@@ -14,19 +15,12 @@ import {
   type SimModel,
   type SimRobot,
 } from './mjcfTypes';
+import { emitWorld } from './mjcfWorld';
 import { classifyRobot, isWheelJoint } from './morphology';
 
-export { fromMj, quatFromMj, quatToMj, simDeltas, toMj } from './mjcfFrames';
+export { fromMj, quatFromMj, quatToMj, simDeltas, toMj, worldDeltas } from './mjcfFrames';
 export { SIM_MODEL_VERSION } from './mjcfTypes';
-export type { MjcfInput, SimBody, SimDrive, SimJoint, SimModel, SimRobot } from './mjcfTypes';
-
-const f = (n: number) => {
-  const r = Math.round(n * 1e6) / 1e6;
-
-  return Object.is(r, -0) ? '0' : String(r);
-};
-const vec = (v: number[]) => v.map(f).join(' ');
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+export type { MjcfInput, SimBody, SimDrive, SimJoint, SimModel, SimRobot, WorldItem } from './mjcfTypes';
 
 type PartMass = ReturnType<typeof partMasses>[number];
 
@@ -65,8 +59,6 @@ interface BodySpec {
 }
 
 const isSolidPart = (p: ScenePart) => p.visible && p.role === 'solid' && p.kind !== 'image_plane';
-
-const safeId = (id: string) => id.replace(/\W/g, '_').slice(0, 40);
 
 function robotGrams(m: PartMass | undefined, measure: MeshMeasure | undefined): number {
   if (m) return m.grams;
@@ -377,6 +369,12 @@ export function buildMjcf(input: MjcfInput): SimModel {
   }
 
   objectGroups(loose.filter((q) => q.physics?.dynamic)).forEach((ids, i) => emitObject(st, ids, i));
+
+  const world = emitWorld(input, st.assets.length);
+
+  st.assets.push(...world.assets);
+  st.worldXml.push(...world.lines);
+  st.bodies.push(...world.bodies);
 
   const xml = mujocoXml(st, input.timestep ?? 0.002);
 

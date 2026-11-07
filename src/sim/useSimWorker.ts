@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Controller, SimStats } from './engine';
-import { simDeltas, type SimModel } from './mjcf';
+import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 
@@ -49,7 +49,7 @@ export function useSimWorker(
 
       if (msg.type !== 'frame' || !m) return;
 
-      viewportRef.current?.setPose(simDeltas(m, msg.poses));
+      viewportRef.current?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
 
       const now = performance.now();
 

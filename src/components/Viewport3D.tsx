@@ -38,6 +38,7 @@ const DETACHED: Viewport3DHandle = {
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},
+  followPart: () => {},
   restBounds: () => null,
   silhouetteShots: () => [],
   posedInterference: async () => [],

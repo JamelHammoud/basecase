@@ -65,6 +65,8 @@ export function captureScreenshot(ctx: ViewportContext, helper: THREE.Object3D |
 }
 
 export function hideForViews(ctx: ViewportContext, hider: Hider, onlyIds?: string[]): void {
+  if (onlyIds?.length) hider.hide(ctx.stage.worldRoot);
+
   for (const child of ctx.stage.partsRoot.children) {
     const id = child.userData.partId as string;
     const excluded = onlyIds?.length && !onlyIds.includes(id);

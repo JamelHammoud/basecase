@@ -11,6 +11,7 @@ export interface Stage {
   renderer: THREE.WebGLRenderer;
   orbit: OrbitControls;
   partsRoot: THREE.Group;
+  worldRoot: THREE.Group;
   gridGroup: THREE.Group;
   grid: ReturnType<typeof createInfiniteGrid>;
   brushCursor: THREE.Group;
@@ -142,6 +143,7 @@ export function createStage(container: HTMLElement): Stage {
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   const partsRoot = new THREE.Group();
+  const worldRoot = new THREE.Group();
   const overlays = new THREE.Group();
 
   pmrem.dispose();
@@ -149,7 +151,7 @@ export function createStage(container: HTMLElement): Stage {
   scene.environment = envMap;
   scene.environmentIntensity = 0.5;
   camera.position.set(170, 135, 180);
-  scene.add(partsRoot, overlays);
+  scene.add(partsRoot, worldRoot, overlays);
 
   return {
     container,
@@ -158,6 +160,7 @@ export function createStage(container: HTMLElement): Stage {
     renderer,
     orbit: createOrbit(camera, renderer.domElement),
     partsRoot,
+    worldRoot,
     ...createLights(scene),
     ...createGround(scene),
     brushCursor: createBrushCursor(scene),

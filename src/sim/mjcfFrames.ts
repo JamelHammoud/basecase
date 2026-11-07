@@ -13,13 +13,19 @@ export function quatFromMj(wxyz: ArrayLike<number>, out = new THREE.Quaternion()
 }
 export const quatToMj = (q: THREE.Quaternion): [number, number, number, number] => [q.w, q.x, -q.z, q.y];
 
-export function simDeltas(model: SimModel, poses: Float64Array): Map<string, THREE.Matrix4> {
+function bodyDeltas(
+  model: SimModel,
+  poses: Float64Array,
+  idsOf: (b: SimModel['bodies'][number]) => string[] | undefined,
+): Map<string, THREE.Matrix4> {
   const out = new Map<string, THREE.Matrix4>();
   const q = new THREE.Quaternion();
   const m = new THREE.Matrix4();
 
   model.bodies.forEach((b, i) => {
-    if (!b.parts.length) return;
+    const ids = idsOf(b);
+
+    if (!ids?.length) return;
 
     const o = i * 7;
     const p = fromMj(poses[o], poses[o + 1], poses[o + 2]);
@@ -31,8 +37,12 @@ export function simDeltas(model: SimModel, poses: Float64Array): Map<string, THR
 
     m.setPosition(p[0] - r.x, p[1] - r.y, p[2] - r.z);
 
-    for (const id of b.parts) out.set(id, m.clone());
+    for (const id of ids) out.set(id, m.clone());
   });
 
   return out;
 }
+
+export const simDeltas = (model: SimModel, poses: Float64Array) => bodyDeltas(model, poses, (b) => b.parts);
+
+export const worldDeltas = (model: SimModel, poses: Float64Array) => bodyDeltas(model, poses, (b) => b.world);

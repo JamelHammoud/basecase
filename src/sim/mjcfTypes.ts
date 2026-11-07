@@ -10,7 +10,14 @@ export type SimDrive = 'position' | 'velocity';
 export interface SimBody {
   name: string;
   parts: string[];
+  world?: string[];
   origin: V3;
+}
+
+export type WorldBehavior = 'static' | 'dynamic' | 'marker';
+
+export interface WorldItem extends ScenePart {
+  behavior: WorldBehavior;
 }
 
 export interface SimJoint {
@@ -55,4 +62,6 @@ export interface MjcfInput {
   posedFloor?: number | null;
   fixedBase?: Record<string, boolean>;
   timestep?: number;
+  world?: WorldItem[];
+  worldTriangles?: (id: string) => Float32Array | null;
 }

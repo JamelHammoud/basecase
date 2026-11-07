@@ -1,6 +1,7 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { sampleAnimation } from '../utils/animation';
+import { createDrive, type DriveCommand, type DriveLoop, type DriveSetup } from './drive';
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
@@ -9,6 +10,7 @@ export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
   | { kind: 'animation'; animation: RobotAnimation }
   | { kind: 'policy'; policy: PolicySpec; robot: string }
+  | { kind: 'drive'; setup: DriveSetup }
   | { kind: 'limp' };
 
 export interface JointStat {
@@ -60,6 +62,8 @@ export class SimEngine {
     startXY: [number, number];
   }>;
   private controller: Controller = { kind: 'hold' };
+  private drive: DriveLoop | null = null;
+  stepHook: (() => void) | null = null;
   private peaks: Float64Array;
   private saturated: Float64Array;
   private fellAt = new Map<string, number>();
@@ -155,6 +159,7 @@ export class SimEngine {
   setController(c: Controller) {
     this.controller = c;
     this.policyState = null;
+    this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
     this.setLimp(c.kind === 'limp');
 
     if (c.kind !== 'policy') return;
@@ -179,6 +184,10 @@ export class SimEngine {
       },
       targets: new Float64Array(idx.length),
     };
+  }
+
+  command(c: DriveCommand) {
+    this.drive?.command(c);
   }
 
   grabStart(body: number, point: [number, number, number]) {
@@ -235,6 +244,12 @@ export class SimEngine {
 
     if (c.kind === 'limp') return;
 
+    if (this.drive) {
+      this.applyDrive(this.drive);
+
+      return;
+    }
+
     const values = controlValues(c, data.time);
 
     this.sim.joints.forEach((j, i) => {
@@ -244,6 +259,16 @@ export class SimEngine {
     const ps = this.policyState;
 
     if (c.kind === 'policy' && ps) this.applyPolicy(c.policy, ps);
+  }
+
+  private applyDrive(drive: DriveLoop) {
+    const { values, wheels } = drive.tick(this.data.time);
+
+    this.sim.joints.forEach((j, i) => {
+      if (j.actuator < 0) return;
+
+      this.data.ctrl[j.actuator] = j.drive === 'velocity' ? (wheels?.[j.id] ?? 0) : this.targetFor(i, values);
+    });
   }
 
   private applyPolicy(policy: PolicySpec, ps: NonNullable<SimEngine['policyState']>) {
@@ -293,6 +318,7 @@ export class SimEngine {
       this.grab.apply();
       mj.mj_step(model, data);
       afterStep?.();
+      this.stepHook?.();
 
       const force = data.actuator_force;
 

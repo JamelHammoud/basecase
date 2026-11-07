@@ -64,6 +64,8 @@ function followCamera(stage: Stage, fitLight: boolean): boolean {
 export class RenderLoop {
   paused = false;
 
+  following = false;
+
   frameAnimation: FrameAnimation | null = null;
 
   readonly spawns = new Map<string, number>();
@@ -132,7 +134,7 @@ export class RenderLoop {
   renderNow(): void {
     const { renderer, scene, camera } = this.stage;
     const interacting = this.interacting;
-    const lightMoved = followCamera(this.stage, !interacting);
+    const lightMoved = followCamera(this.stage, !interacting || this.following);
 
     renderer.shadowMap.needsUpdate = this.shadowsStale || lightMoved;
     this.beforeRender.forEach((run) => run());

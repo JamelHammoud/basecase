@@ -1,12 +1,10 @@
 import * as THREE from 'three';
 import type { JointValues } from '../types/robotics';
 import { forwardKinematics, solveIK, type Rig, type V3 } from '../utils/kinematics';
+import { LegsDrive, type LegsSetup } from './driveLegs';
+import type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
 
-export interface DriveCommand {
-  v: V3;
-  target?: V3;
-  aux?: number[];
-}
+export type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
 
 export interface ArmSetup {
   kind: 'arm';
@@ -35,18 +33,7 @@ export interface RoverSetup {
   maxTurnRadS: number;
 }
 
-export type DriveSetup = ArmSetup | RoverSetup;
-
-export interface DriveOutput {
-  values?: JointValues;
-  wheels?: Record<string, number>;
-}
-
-export interface DriveLoop {
-  command(c: DriveCommand): void;
-
-  tick(time: number): DriveOutput;
-}
+export type DriveSetup = ArmSetup | RoverSetup | LegsSetup;
 
 export const CONTROL_DT = 0.02;
 
@@ -184,7 +171,9 @@ class RoverDrive implements DriveLoop {
 }
 
 export function createDrive(setup: DriveSetup): DriveLoop {
-  return setup.kind === 'arm' ? new ArmDrive(setup) : new RoverDrive(setup);
+  if (setup.kind === 'arm') return new ArmDrive(setup);
+
+  return setup.kind === 'rover' ? new RoverDrive(setup) : new LegsDrive(setup);
 }
 
 export function rigForWorker(rig: Rig): Rig {

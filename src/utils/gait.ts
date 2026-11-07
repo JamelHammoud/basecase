@@ -13,6 +13,8 @@ export interface GaitSpec {
   bob?: number;
   sway?: number;
   heading?: number;
+  footDirs?: V3[];
+  keepOrientation?: boolean;
   oscillators?: Array<{ joint: string; amplitude: number; phase?: number; offset?: number }>;
   samples?: number;
 }
@@ -23,6 +25,29 @@ export function defaultPhases(n: number): number[] {
   if (n === 4) return [0, 0.5, 0.5, 0];
 
   return Array.from({ length: n }, (_, i) => i / n);
+}
+
+export function alternatingPhases(points: V3[]): number[] {
+  const middle = (Math.max(...points.map((p) => p[0])) + Math.min(...points.map((p) => p[0]))) / 2;
+  const phases = new Array<number>(points.length).fill(0);
+
+  [0, 1].forEach((side) => {
+    points
+      .map((p, i) => ({ i, z: p[2], onSide: side === 0 ? p[0] < middle : p[0] >= middle }))
+      .filter((p) => p.onSide)
+      .sort((a, b) => a.z - b.z)
+      .forEach((p, rank) => (phases[p.i] = (rank + side) % 2 === 0 ? 0 : 0.5));
+  });
+
+  return phases;
+}
+
+function gaitPhases(spec: GaitSpec, points: V3[]): number[] {
+  const n = points.length;
+
+  if (spec.phases?.length === n) return spec.phases;
+
+  return n >= 6 && n % 2 === 0 ? alternatingPhases(points) : defaultPhases(n);
 }
 
 interface GaitFeet {
@@ -48,6 +73,8 @@ interface GaitPlan extends GaitFeet {
   samples: number;
   free: string[];
   side0: number;
+  footDirs: V3[] | null;
+  keepOrientation: boolean;
 }
 
 function gaitFeet(rig: Rig, spec: GaitSpec, pointOf: PointOf): GaitFeet | string {
@@ -116,12 +143,14 @@ function gaitPlan(input: GaitInput, found: GaitFeet): GaitPlan {
   return {
     ...found,
     ...input,
-    phases: spec.phases?.length === n ? spec.phases : defaultPhases(n),
+    phases: gaitPhases(spec, points),
     ...gaitShape(spec, n, leg, spread),
     fwd: [Math.sin(heading), 0, Math.cos(heading)],
     samples: Math.max(8, Math.min(spec.samples ?? 24, 60)),
     free: swingJoints(rig, found.feetParts),
     side0: Math.sign(points[0][0] - (Math.max(...xs) + Math.min(...xs)) / 2) || 1,
+    footDirs: spec.footDirs?.length === n ? spec.footDirs : null,
+    keepOrientation: spec.keepOrientation !== false,
   };
 }
 
@@ -151,13 +180,14 @@ function gaitTargets(plan: GaitPlan, ph: number): IkTarget[] {
   plan.feet.forEach((f, i) => {
     const { along, up } = footOffset(plan, (((ph - plan.phases[i]) % 1) + 1) % 1);
     const pt = plan.points[i];
+    const dir = plan.footDirs?.[i] ?? plan.fwd;
     const t = goalTargets(
       plan.rig,
       {
         part: f,
-        target: [pt[0] + plan.fwd[0] * along, pt[1] + up, pt[2] + plan.fwd[2] * along],
+        target: [pt[0] + dir[0] * along, pt[1] + up, pt[2] + dir[2] * along],
         point: pt,
-        keepOrientation: true,
+        keepOrientation: plan.keepOrientation,
       },
       plan.pointOf,
     );
@@ -214,7 +244,9 @@ function runGait(plan: GaitPlan) {
 
       if (pass !== 1) continue;
 
-      plan.feet.forEach((f, i) => (ikError[f] = Math.max(ikError[f] ?? 0, res.errors[i * 4] ?? 0)));
+      const stride = plan.keepOrientation ? 4 : 1;
+
+      plan.feet.forEach((f, i) => (ikError[f] = Math.max(ikError[f] ?? 0, res.errors[i * stride] ?? 0)));
       keyframes.push(gaitKeyframe(plan, ph, values, root));
     }
   }

@@ -1,5 +1,6 @@
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
+import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
 import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
@@ -87,10 +88,12 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         agentFrames={agent.frames}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
+        worldParts={sim.worldParts}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}
       />
+      <DriveOverlay sim={sim} />
       <AnnotationLayer
         annotations={annotations.annotations}
         parts={parts}

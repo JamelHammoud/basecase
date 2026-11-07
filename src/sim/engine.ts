@@ -26,6 +26,7 @@ export interface RobotStat {
   tilt: number;
   travelled: number;
   forward: number;
+  speed: number;
 }
 
 export interface SimStats {
@@ -36,6 +37,8 @@ export interface SimStats {
 }
 
 const D2R = Math.PI / 180;
+
+const jointQposOf = (type: 'revolute' | 'prismatic', v: number) => (type === 'revolute' ? v * D2R : v / 1000);
 
 function controlValues(c: Controller, time: number): Record<string, number> | undefined {
   if (c.kind === 'hold') return c.values;
@@ -125,21 +128,10 @@ export class SimEngine {
     this.sim.joints.forEach((j, i) => {
       const v = initial.values[j.id];
 
-      if (v !== undefined) data.qpos[this.jointQpos[i]] = j.type === 'revolute' ? v * D2R : v / 1000;
+      if (v !== undefined) data.qpos[this.jointQpos[i]] = jointQposOf(j.type, v);
     });
 
-    for (const r of this.robots) {
-      if (r.rootQpos < 0) continue;
-
-      const root = initial.roots?.[r.key];
-      const p = root?.position;
-
-      if (p) {
-        data.qpos[r.rootQpos] += p[0] / 1000;
-        data.qpos[r.rootQpos + 1] += -p[2] / 1000;
-        data.qpos[r.rootQpos + 2] += p[1] / 1000;
-      }
-    }
+    for (const r of this.robots) this.placeRoot(r, initial);
 
     mj.mj_forward(model, data);
 
@@ -154,6 +146,47 @@ export class SimEngine {
     this.push = null;
     this.grab.forget();
     this.setController(this.controller);
+  }
+
+  private placeRoot(r: SimEngine['robots'][number], initial: RobotPoseState) {
+    const p = r.rootQpos >= 0 ? initial.roots?.[r.key]?.position : null;
+
+    if (!p) return;
+
+    this.data.qpos[r.rootQpos] += p[0] / 1000;
+    this.data.qpos[r.rootQpos + 1] += -p[2] / 1000;
+    this.data.qpos[r.rootQpos + 2] += p[1] / 1000;
+  }
+
+  respawn(key?: string) {
+    const r = this.robots.find((x) => x.key === key) ?? this.robots[0];
+
+    if (!r) return;
+
+    const { mj, model, data } = this;
+
+    r.joints.forEach((i) => {
+      const j = this.sim.joints[i];
+      const v = this.sim.initial.values[j.id];
+      const at = this.jointQpos[i];
+
+      data.qpos[at] = v === undefined ? model.qpos0[at] : jointQposOf(j.type, v);
+      data.qvel[this.jointDof[i]] = 0;
+    });
+
+    if (r.rootQpos >= 0) {
+      for (let k = 0; k < 7; k++) data.qpos[r.rootQpos + k] = model.qpos0[r.rootQpos + k];
+
+      for (let k = 0; k < 6; k++) data.qvel[r.rootDof + k] = 0;
+
+      this.placeRoot(r, this.sim.initial);
+    }
+
+    this.fellAt.delete(r.key);
+    this.push = null;
+    this.grab.forget();
+    this.setController(this.controller);
+    mj.mj_forward(model, data);
   }
 
   setController(c: Controller) {
@@ -221,9 +254,7 @@ export class SimEngine {
 
     if (j.drive === 'velocity') return 0;
 
-    const v = values?.[j.id] ?? this.sim.initial.values[j.id] ?? 0;
-
-    return j.type === 'revolute' ? v * D2R : v / 1000;
+    return jointQposOf(j.type, values?.[j.id] ?? this.sim.initial.values[j.id] ?? 0);
   }
 
   private setLimp(limp: boolean) {
@@ -369,6 +400,7 @@ export class SimEngine {
           tilt: this.tiltOf(r),
           travelled: Math.hypot(x - r.startXY[0], y - r.startXY[1]),
           forward: -(y - r.startXY[1]),
+          speed: r.rootDof >= 0 ? Math.hypot(data.qvel[r.rootDof], data.qvel[r.rootDof + 1]) : 0,
         };
       }),
       joints: this.sim.joints.map((j, i) => ({ id: j.id, peak: this.peaks[i], saturatedS: this.saturated[i] })),

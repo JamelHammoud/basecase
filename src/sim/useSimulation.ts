@@ -3,10 +3,12 @@ import * as THREE from 'three';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
+import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
-import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel } from './mjcf';
+import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
+import { useDrive, type SimDrive } from './useDrive';
 import { newSimWorker, useSimWorker } from './useSimWorker';
 
 export { simDeltas } from './mjcf';
@@ -42,6 +44,9 @@ export interface Simulation {
     phase: 'start' | 'move' | 'end',
   ) => void;
   push: (robot?: string) => void;
+  drive: SimDrive;
+  worldParts: ScenePart[];
+  setWorld: (items: WorldItem[]) => void;
   buildModel: () => Promise<SimModel>;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
   run: (opts: {
@@ -51,6 +56,7 @@ export interface Simulation {
     frames?: number[];
     forceLimits?: (model: SimModel) => Record<string, number>;
     trace?: boolean;
+    commands?: Array<{ at: number; command: DriveCommand }>;
   }) => Promise<SimRun>;
 }
 
@@ -99,7 +105,7 @@ type Ran = Extract<SimResponse, { type: 'ran' }>;
 
 async function runModel(
   m: SimModel,
-  { seconds, controller: c, pushes, frames, forceLimits, trace }: RunOptions,
+  { seconds, controller: c, pushes, frames, forceLimits, trace, commands }: RunOptions,
   id: number,
 ): Promise<SimRun> {
   const w = newSimWorker();
@@ -120,6 +126,7 @@ async function runModel(
             pushes: pushes?.map((p) => ({ at: p.at, robot: p.robot ?? key, force: p.force })),
             forceLimits: forceLimits?.(m),
             trace,
+            commands,
           } satisfies SimRequest);
         } else if (msg.type === 'error') reject(new Error(msg.message));
         else if (msg.type === 'ran') resolve(msg);
@@ -139,20 +146,14 @@ async function runModel(
   }
 }
 
-export function useSimulation({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs): Simulation {
-  const [model, setModel] = useState<SimModel | null>(null);
-  const [speed, setSpeedState] = useState(1);
-  const [controller, setControllerState] = useState<Controller>({ kind: 'hold' });
-  const modelRef = useRef<SimModel | null>(null);
+function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs) {
   const inputs = useRef({ parts, project, rig, pose, restDeltas });
+  const [worldParts, setWorldParts] = useState<WorldItem[]>([]);
+  const worldRef = useRef<WorldItem[]>(worldParts);
 
   useLayoutEffect(() => {
     inputs.current = { parts, project, rig, pose, restDeltas };
   });
-
-  const runSeq = useRef(0);
-  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, version, send, worker, load } =
-    useSimWorker(viewportRef, modelRef);
 
   const buildModel = useCallback(async (): Promise<SimModel> => {
     const vp = viewportRef.current;
@@ -161,19 +162,46 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
 
     await vp.meshesReady();
 
-    const { parts, project, rig, pose } = inputs.current;
+    const current = inputs.current;
     const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
     return buildMjcf({
-      parts,
-      rig,
-      project,
-      pose,
+      parts: current.parts,
+      rig: current.rig,
+      project: current.project,
+      pose: current.pose,
       measures,
       partTriangles: vp.partTriangles,
       posedFloor,
+      world: worldRef.current,
     });
   }, [viewportRef]);
+
+  const setWorldItems = (items: WorldItem[]) => {
+    worldRef.current = items;
+    setWorldParts(items);
+  };
+
+  return { inputs, buildModel, worldParts, setWorldItems };
+}
+
+export function useSimulation({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs): Simulation {
+  const [model, setModel] = useState<SimModel | null>(null);
+  const [speed, setSpeedState] = useState(1);
+  const [controller, setControllerState] = useState<Controller>({ kind: 'hold' });
+  const modelRef = useRef<SimModel | null>(null);
+  const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel({
+    parts,
+    project,
+    rig,
+    pose,
+    viewportRef,
+    restDeltas,
+  });
+  const runSeq = useRef(0);
+  const sw = useSimWorker(viewportRef, modelRef);
+  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, version, send } = sw;
+  const { worker, load, frameHookRef } = sw;
 
   const start = useCallback(async () => {
     setError(null);
@@ -211,7 +239,7 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
     setPlaying(false);
     setStats(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
-  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats]);
+  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
 
   const sceneKey = useRef({ parts, joints: project.joints });
 
@@ -230,6 +258,26 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
     },
     [send],
   );
+
+  const runOn = (m: SimModel, opts: RunOptions) => runModel(m, opts, ++runSeq.current);
+  const drive = useDrive({
+    parts,
+    rig,
+    pose,
+    status,
+    stats,
+    send,
+    viewportRef,
+    modelRef,
+    frameHookRef,
+    startSim: start,
+    setController,
+    runOn,
+  });
+  const setWorld = (items: WorldItem[]) => {
+    setWorldItems(items);
+    stop();
+  };
 
   return {
     status,
@@ -265,7 +313,10 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
 
       if (msg) send(msg);
     },
-    runOn: (m, opts) => runModel(m, opts, ++runSeq.current),
+    drive,
+    worldParts,
+    setWorld,
+    runOn,
     run: async (opts) => {
       const m = await buildModel();
 

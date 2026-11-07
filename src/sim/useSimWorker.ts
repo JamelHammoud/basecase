@@ -18,6 +18,7 @@ export function useSimWorker(
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState<string | null>(null);
   const lastUi = useRef(0);
+  const frameHookRef = useRef<(() => void) | null>(null);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
 
   const send = useCallback((msg: SimRequest) => workerRef.current?.postMessage(msg), []);
@@ -50,6 +51,7 @@ export function useSimWorker(
       if (msg.type !== 'frame' || !m) return;
 
       viewportRef.current?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
+      frameHookRef.current?.();
 
       const now = performance.now();
 
@@ -101,5 +103,6 @@ export function useSimWorker(
     send,
     worker,
     load,
+    frameHookRef,
   };
 }

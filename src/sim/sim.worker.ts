@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
+import type { DriveCommand } from './driveTypes';
 import { SimEngine, type Controller } from './engine';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
@@ -14,6 +15,8 @@ export type SimRequest =
   | { type: 'speed'; value: number }
   | { type: 'controller'; controller: Controller }
   | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number }
+  | ({ type: 'command' } & DriveCommand)
+  | { type: 'respawn'; robot?: string }
   | { type: 'grab'; phase: 'start'; body: number; point: [number, number, number] }
   | { type: 'grab'; phase: 'move'; point: [number, number, number]; turn: [number, number, number, number] | null }
   | { type: 'grab'; phase: 'end' }
@@ -25,6 +28,7 @@ export type SimRequest =
       frames?: number[];
       forceLimits?: Record<string, number>;
       trace?: boolean;
+      commands?: Array<{ at: number; command: DriveCommand }>;
     }
   | { type: 'dispose' };
 
@@ -123,6 +127,10 @@ function applyDuePushes(sim: SimEngine, pushes: NonNullable<Msg<'run'>['pushes']
   }
 }
 
+function applyDueCommands(sim: SimEngine, commands: NonNullable<Msg<'run'>['commands']>, t: number) {
+  while (commands.length && commands[0].at <= t + 1e-9) sim.command(commands.shift()!.command);
+}
+
 function tracer(sim: SimEngine) {
   const n = sim.sim.joints.length;
   const recorder = new TorqueRecorder(n, sim.dt);
@@ -144,6 +152,7 @@ function run(msg: Msg<'run'>) {
 
   const sim = engine;
   const pushes = [...(msg.pushes ?? [])].sort((a, b) => a.at - b.at);
+  const commands = [...(msg.commands ?? [])].sort((a, b) => a.at - b.at);
   const wanted = [...(msg.frames ?? [])].sort((a, b) => a - b);
   const frames: Array<{ t: number; poses: Float64Array }> = [];
   const start = sim.data.time;
@@ -157,6 +166,7 @@ function run(msg: Msg<'run'>) {
     const t = sim.data.time - start;
 
     applyDuePushes(sim, pushes, t);
+    applyDueCommands(sim, commands, t);
 
     while (wanted.length && wanted[0] <= t + 1e-9) frames.push({ t: wanted.shift()!, poses: sim.poses() });
 
@@ -189,6 +199,13 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   grab,
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, msg.seconds);
+  },
+  command: ({ v, target, aux }) => {
+    engine?.command({ v, target, aux });
+  },
+  respawn: (msg) => {
+    engine?.respawn(msg.robot);
+    frame();
   },
   run,
   dispose: () => {

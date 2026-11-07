@@ -119,7 +119,9 @@ export const kernelWindows = (app: ElectronApplication): Promise<KernelWindowInf
           pid,
           url: w.webContents.getURL(),
           sandboxed: metrics.find((m) => m.pid === pid)?.sandboxed,
-          preferences: w.webContents.getLastWebPreferences() as Record<string, unknown>,
+          preferences: (
+            w.webContents as unknown as { getLastWebPreferences: () => Record<string, unknown> }
+          ).getLastWebPreferences(),
         };
       });
   });

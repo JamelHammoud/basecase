@@ -1,9 +1,17 @@
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createNodeKernel } from '../../electron/cad-kernel/nodeHost/client.mjs';
 import { allowedProbes, parseProbes, probeCode } from './kernelProbes';
 import { startProbeWorld, type ProbeWorld } from './probeServer';
 
-const unsandboxed = createNodeKernel({ permissionModel: false });
+interface NodeKernel {
+  renderPart: (language: string, code: string) => Promise<{ error?: string }>;
+  stopKernels: () => void;
+}
+
+const nodeHost = pathToFileURL(path.resolve('electron', 'cad-kernel', 'nodeHost', 'client.mjs')).href;
+const { createNodeKernel } = await import(nodeHost);
+const unsandboxed: NodeKernel = createNodeKernel({ permissionModel: false });
 let world: ProbeWorld | undefined;
 
 afterAll(async () => {

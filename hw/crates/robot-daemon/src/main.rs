@@ -1,7 +1,7 @@
 use robot_daemon::artefacts::DirectoryArtefacts;
 use robot_daemon::calibration::RobotClass;
 use robot_daemon::intent::IntentWriter;
-use robot_daemon::protocol::{parse_line, Routed};
+use robot_daemon::protocol::{hello_line, parse_line, Routed};
 use robot_daemon::runner::Runner;
 use robot_daemon::transport::{open, Target};
 use robot_daemon::{Command, Daemon, DaemonConfig};
@@ -31,6 +31,10 @@ fn main() {
         eprintln!("{message}");
         std::process::exit(3);
     });
+    let emulated = matches!(options.target, Target::Emulated { .. });
+
+    say_hello(&hello_line(options.family, emulated));
+
     let config = DaemonConfig {
         family: options.family,
         ids: options.ids,
@@ -89,6 +93,12 @@ fn attach_policy(daemon: &mut Daemon, artefacts: &std::path::Path) -> Option<rob
 #[cfg(not(feature = "onnx"))]
 fn attach_policy(_daemon: &mut Daemon, _artefacts: &std::path::Path) -> Option<()> {
     None
+}
+
+fn say_hello(line: &str) {
+    let mut stdout = std::io::stdout();
+
+    let _ = writeln!(stdout, "{line}").and_then(|()| stdout.flush());
 }
 
 fn spawn_reader(writer: IntentWriter, commands: Sender<Command>, client_gone: Arc<AtomicBool>) {

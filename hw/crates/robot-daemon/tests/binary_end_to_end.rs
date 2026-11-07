@@ -69,6 +69,10 @@ fn the_app_can_drive_the_emulated_robot_over_json_lines() {
 
     let all = seen.join("\n");
 
+    assert!(
+        seen.first().is_some_and(|line| line.contains(r#""event":"hello""#)),
+        "the first line should be hello: {all}"
+    );
     assert!(all.contains(r#""mode":"test""#), "never reached Test: {all}");
     assert!(all.contains(r#""run":"running""#), "never ran: {all}");
     let stopped_on_close = all.contains(r#""code":"client_lost""#);

@@ -1,7 +1,10 @@
 use crate::control::{Command, Daemon, DaemonEvent, Run};
+use crate::fault::daemon_lost_message;
 use crate::ladder::Mode;
 use crate::telemetry::Sample;
+use crate::transport::real_motors_unlocked;
 use serde::{Deserialize, Serialize};
+use servo_wire::Family;
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(tag = "cmd", rename_all = "snake_case")]
@@ -70,6 +73,32 @@ enum Outbound<'a> {
         fault_latched: bool,
         joints: Vec<JointStatus>,
     },
+}
+
+#[derive(Serialize)]
+struct Hello {
+    event: &'static str,
+    version: &'static str,
+    family: &'static str,
+    emulated: bool,
+    real_transport: bool,
+    lost_message: String,
+}
+
+pub fn hello_line(family: Family, emulated: bool) -> String {
+    let hello = Hello {
+        event: "hello",
+        version: env!("CARGO_PKG_VERSION"),
+        family: match family {
+            Family::Feetech => "feetech",
+            Family::Dynamixel => "dynamixel",
+        },
+        emulated,
+        real_transport: real_motors_unlocked(),
+        lost_message: daemon_lost_message(family),
+    };
+
+    serde_json::to_string(&hello).unwrap_or_default()
 }
 
 #[derive(Serialize)]
@@ -192,5 +221,16 @@ mod tests {
 
         assert!(!line.contains('\n'));
         assert!(line.contains(r#""event":"fault""#));
+    }
+
+    #[test]
+    fn hello_names_the_build_and_the_words_for_a_lost_daemon() {
+        let hello: serde_json::Value = serde_json::from_str(&hello_line(Family::Feetech, true)).unwrap();
+
+        assert_eq!(hello["event"], "hello");
+        assert_eq!(hello["family"], "feetech");
+        assert_eq!(hello["emulated"], true);
+        assert_eq!(hello["real_transport"], false);
+        assert_eq!(hello["lost_message"], daemon_lost_message(Family::Feetech));
     }
 }

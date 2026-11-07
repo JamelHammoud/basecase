@@ -76,7 +76,9 @@ export class Trainer {
       },
     );
 
-    this.jobs.set(workspaceId, { child, id, dir });
+    const running = { child, id, dir, stopping: false };
+
+    this.jobs.set(workspaceId, running);
 
     let out = '';
     let err = '';
@@ -106,7 +108,7 @@ export class Trainer {
     child.stderr.on('data', (chunk) => {
       err = (err + chunk.toString()).slice(-8000);
     });
-    child.on('close', (code) => {
+    child.on('close', (code, signal) => {
       this.jobs.delete(workspaceId);
 
       if (done) {
@@ -121,8 +123,14 @@ export class Trainer {
         return;
       }
 
-      if (code === null || code === 143) {
+      if (running.stopping) {
         send({ kind: 'error', message: 'Training stopped.' });
+
+        return;
+      }
+
+      if (code === null) {
+        send({ kind: 'error', message: `The trainer crashed (${signal ?? 'killed'}).` });
 
         return;
       }
@@ -141,7 +149,10 @@ export class Trainer {
   stop(workspaceId = 'main') {
     const job = this.jobs.get(workspaceId);
 
-    if (job) askToStop(job);
+    if (job) {
+      job.stopping = true;
+      askToStop(job);
+    }
 
     return { stopping: !!job };
   }
@@ -165,6 +176,7 @@ export class Trainer {
       robotName: job.robotName,
       command: job.command,
       trainedSteps: done.steps,
+      modelVersion: job.modelVersion ?? 0,
       createdAt: new Date().toISOString(),
       eval: done.eval,
     };
@@ -188,6 +200,7 @@ export class Trainer {
 
   dispose() {
     for (const job of this.jobs.values()) {
+      job.stopping = true;
       askToStop(job);
       job.child.kill();
     }

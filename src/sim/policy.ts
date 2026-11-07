@@ -119,5 +119,11 @@ export function act(spec: PolicySpec, obs: Float32Array): Float32Array {
 export function isPolicySpec(v: unknown): v is PolicySpec {
   const p = v as PolicySpec;
 
-  return !!p && p.format === POLICY_FORMAT && Array.isArray(p.layers) && Array.isArray(p.joints);
+  return (
+    !!p &&
+    p.format === POLICY_FORMAT &&
+    p.version === POLICY_VERSION &&
+    Array.isArray(p.layers) &&
+    Array.isArray(p.joints)
+  );
 }

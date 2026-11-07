@@ -45,6 +45,7 @@ export function trainingJob(model: SimModel, robotKey: string, opts: TrainOption
 
   return {
     name,
+    modelVersion: model.version,
     task: opts.task,
     minutes: opts.minutes,
     command: opts.command,

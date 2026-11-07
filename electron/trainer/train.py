@@ -554,15 +554,22 @@ def should_stop(run):
     return run.stop["now"] or os.path.exists(os.path.join(os.path.dirname(run.policy_path), "stop"))
 
 
+MAX_ITERATION_GAP_S = 30.0
+
+
 def train_loop(ppo, run):
     env = ppo.env
-    start = time.time()
-    last_save = start
+    now = time.monotonic()
+    last_save = now
+    elapsed = 0.0
     it = 0
-    while not should_stop(run) and time.time() - start < run.budget:
+    while not should_stop(run) and elapsed < run.budget:
         rews = ppo.iterate()
         it += 1
-        elapsed = time.time() - start
+        tick = time.monotonic()
+        # A laptop can sleep mid-iteration: the budget counts time spent training, not time on the clock
+        elapsed += min(tick - now, MAX_ITERATION_GAP_S)
+        now = tick
         ppo.trim_recent()
         emit(
             type="progress",
@@ -574,9 +581,9 @@ def train_loop(ppo, run):
             episodeS=float(np.mean(ppo.recent_len)) if ppo.recent_len else 0.0,
             fps=ppo.steps / max(elapsed, 1e-6),
         )
-        if time.time() - last_save > 60:
+        if time.monotonic() - last_save > 60:
             export(run.policy_path, run.job, ppo.policy, ppo.steps)
-            last_save = time.time()
+            last_save = time.monotonic()
 
 
 def parse_args():

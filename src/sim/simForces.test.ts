@@ -10,6 +10,7 @@ const ARM_M = 0.2;
 const HOLD_NM = ARM_KG * 9.81 * ARM_M;
 
 const arm = (effort: number): SimModel => ({
+  version: 0,
   xml: `<mujoco>
   <option timestep="0.002"/>
   <worldbody>
@@ -24,7 +25,18 @@ const arm = (effort: number): SimModel => ({
   </actuator>
 </mujoco>`,
   bodies: [{ name: 'b_arm', parts: ['arm'], origin: [0, 0, 0] }],
-  joints: [{ id: 'arm', name: 'j0_arm', type: 'revolute', effort, effortSource: 'servo', robot: 'r' }],
+  joints: [
+    {
+      id: 'arm',
+      name: 'j0_arm',
+      type: 'revolute',
+      effort,
+      effortSource: 'servo',
+      robot: 'r',
+      drive: 'position',
+      actuator: 0,
+    },
+  ],
   robots: [],
   initial: { values: {} },
   massKg: {},
@@ -38,7 +50,9 @@ async function holdArm(stallNm: number, limitNm: number) {
   const demand = new Float64Array(1);
 
   limitForces(engine.model, engine.sim, { arm: limitNm });
-  engine.step(2, () => recorder.add(demandedTorques(engine.model, engine.data, demand), engine.data.actuator_force));
+  engine.step(2, () =>
+    recorder.add(demandedTorques(engine.model, engine.data, engine.sim.joints, demand), engine.data.actuator_force),
+  );
 
   const peak = jointPeak(recorder.series(), 0, stallNm, { settleS: 1, heatFromS: 1, heatToS: 2 });
 

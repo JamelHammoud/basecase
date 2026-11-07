@@ -1,6 +1,7 @@
 import type * as THREE from 'three';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Controller } from '../sim/engine';
+import { isStalePolicy } from '../sim/policyFreshness';
 import type { SimRun, Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
 import type { PolicyRecord, RobotAnimation } from '../types/robotics';
@@ -49,6 +50,8 @@ async function policyController(ctx: SimContext, name: string): Promise<Controll
 
   if (!rec)
     return `No policy "${name}". Policies: ${ctx.policies.map((x) => x.name).join(', ') || 'none (train one with train_policy)'}.`;
+
+  if (isStalePolicy(rec)) return `Policy ${rec.name} was trained on an older sim. Train it again.`;
 
   const spec = await ctx.training.loadPolicy(rec.id);
 

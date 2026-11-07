@@ -4,7 +4,7 @@ import { SimEngine, type Controller } from './engine';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
-import { demandedTorques, limitForces } from './simForces';
+import { demandedTorques, jointForces, limitForces } from './simForces';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -127,10 +127,15 @@ function tracer(sim: SimEngine) {
   const n = sim.sim.joints.length;
   const recorder = new TorqueRecorder(n, sim.dt);
   const demand = new Float64Array(n);
+  const actual = new Float64Array(n);
 
   return {
     recorder,
-    afterStep: () => recorder.add(demandedTorques(sim.model, sim.data, demand), sim.data.actuator_force),
+    afterStep: () =>
+      recorder.add(
+        demandedTorques(sim.model, sim.data, sim.sim.joints, demand),
+        jointForces(sim.data, sim.sim.joints, actual),
+      ),
   };
 }
 

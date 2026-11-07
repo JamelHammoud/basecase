@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
 import type { ScenePart } from '../types/robotics';
 import { partMatrix, type V3 } from '../utils/kinematics';
-import { toMj } from './mjcf';
+import { toMj } from './mjcfFrames';
 
 function hullVertices(tris: Float32Array, place: THREE.Matrix4, origin: V3): number[] | null {
   const pts: THREE.Vector3[] = [];

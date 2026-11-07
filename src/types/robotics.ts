@@ -246,6 +246,7 @@ export interface PolicyRecord {
   robotName: string;
   command: [number, number, number];
   trainedSteps: number;
+  modelVersion?: number;
   createdAt: string;
   eval?: { fellAt: number | null; seconds: number; forward: number; travelled: number };
 }

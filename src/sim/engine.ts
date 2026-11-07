@@ -1,6 +1,7 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { sampleAnimation } from '../utils/animation';
+import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
 
@@ -34,33 +35,6 @@ export interface SimStats {
 
 const D2R = Math.PI / 180;
 
-type Q = ArrayLike<number>;
-
-const conj = (q: Q) => [q[0], -q[1], -q[2], -q[3]];
-const quatMul = (a: Q, b: Q) => [
-  a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
-  a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
-  a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
-  a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0],
-];
-const rotate = (q: Q, v: ArrayLike<number>) => {
-  const r = quatMul(quatMul(q, [0, v[0], v[1], v[2]]), conj(q));
-
-  return [r[1], r[2], r[3]];
-};
-
-function axisAngle(q: Q): [number, number, number] {
-  const s = q[0] < 0 ? -1 : 1;
-  const w = Math.min(1, Math.abs(q[0]));
-  const n = Math.hypot(q[1], q[2], q[3]);
-
-  if (n < 1e-9) return [0, 0, 0];
-
-  const angle = 2 * Math.atan2(n, w);
-
-  return [(s * q[1] * angle) / n, (s * q[2] * angle) / n, (s * q[3] * angle) / n];
-}
-
 function controlValues(c: Controller, time: number): Record<string, number> | undefined {
   if (c.kind === 'hold') return c.values;
 
@@ -90,15 +64,8 @@ export class SimEngine {
   private saturated: Float64Array;
   private fellAt = new Map<string, number>();
   private push: { body: number; force: [number, number, number]; until: number } | null = null;
-  private grabbed: {
-    body: number;
-    local: number[];
-    target: [number, number, number];
-    startQuat: number[];
-    targetQuat: number[] | null;
-    mass: number;
-    last: { p: number[]; q: number[] } | null;
-  } | null = null;
+  private grab: GrabForce;
+  private heldRange: ArrayLike<number> | null = null;
   private policyState: {
     action: Float32Array;
     obs: Float32Array;
@@ -116,6 +83,7 @@ export class SimEngine {
     this.model = mj.MjModel.from_xml_string(sim.xml);
     this.data = new mj.MjData(this.model);
     this.dt = this.model.opt.timestep;
+    this.grab = new GrabForce(this.model, this.data, this.dt);
 
     const id = (type: number, name: string) => mj.mj_name2id(this.model, type, name);
     const BODY = mj.mjtObj.mjOBJ_BODY.value,
@@ -180,13 +148,14 @@ export class SimEngine {
     this.saturated.fill(0);
     this.fellAt.clear();
     this.push = null;
-    this.grabbed = null;
+    this.grab.forget();
     this.setController(this.controller);
   }
 
   setController(c: Controller) {
     this.controller = c;
     this.policyState = null;
+    this.setLimp(c.kind === 'limp');
 
     if (c.kind !== 'policy') return;
 
@@ -219,77 +188,15 @@ export class SimEngine {
 
     if (id === undefined || id < 0) return;
 
-    const { data } = this;
-    const q = [data.xquat[id * 4], data.xquat[id * 4 + 1], data.xquat[id * 4 + 2], data.xquat[id * 4 + 3]];
-    const rel = [point[0] - data.xpos[id * 3], point[1] - data.xpos[id * 3 + 1], point[2] - data.xpos[id * 3 + 2]];
-    let root = id;
-
-    while (this.model.body_parentid[root] !== 0) root = this.model.body_parentid[root];
-
-    this.grabbed = {
-      body: id,
-      local: rotate(conj(q), rel),
-      target: point,
-      startQuat: q,
-      targetQuat: null,
-      mass: Math.max(this.model.body_subtreemass[root], 0.05),
-      last: null,
-    };
+    this.grab.start(id, point);
   }
 
   grabMove(point: [number, number, number], turn: [number, number, number, number] | null) {
-    const g = this.grabbed;
-
-    if (!g) return;
-
-    g.target = point;
-    g.targetQuat = turn ? quatMul(turn, g.startQuat) : null;
+    this.grab.move(point, turn);
   }
 
   grabEnd() {
-    if (this.grabbed) this.data.xfrc_applied.fill(0, this.grabbed.body * 6, this.grabbed.body * 6 + 6);
-
-    this.grabbed = null;
-  }
-
-  private applyGrab() {
-    const g = this.grabbed;
-
-    if (!g) return;
-
-    const { data } = this;
-    const b = g.body;
-    const q = [data.xquat[b * 4], data.xquat[b * 4 + 1], data.xquat[b * 4 + 2], data.xquat[b * 4 + 3]];
-    const r = rotate(q, g.local);
-    const p = [data.xpos[b * 3] + r[0], data.xpos[b * 3 + 1] + r[1], data.xpos[b * 3 + 2] + r[2]];
-    const v = g.last ? p.map((x, i) => (x - g.last!.p[i]) / this.dt) : [0, 0, 0];
-    const wn = 12;
-    const zeta = 1;
-    const cap = g.mass * 9.81 * 8;
-    const f = [0, 1, 2].map((i) => {
-      const spring = g.mass * (wn * wn * (g.target[i] - p[i]) - 2 * zeta * wn * v[i]);
-
-      return Math.max(-cap, Math.min(cap, spring)) + (i === 2 ? g.mass * 9.81 : 0);
-    });
-    const arm = [p[0] - data.xipos[b * 3], p[1] - data.xipos[b * 3 + 1], p[2] - data.xipos[b * 3 + 2]];
-    const torque = [arm[1] * f[2] - arm[2] * f[1], arm[2] * f[0] - arm[0] * f[2], arm[0] * f[1] - arm[1] * f[0]];
-
-    if (g.targetQuat) {
-      const e = axisAngle(quatMul(g.targetQuat, conj(q)));
-      const w = g.last ? axisAngle(quatMul(q, conj(g.last.q))).map((x) => x / this.dt) : [0, 0, 0];
-      const inertia = g.mass * 0.05 * 0.05;
-
-      for (let i = 0; i < 3; i++) torque[i] += inertia * (wn * wn * e[i] - 2 * zeta * wn * w[i]);
-    }
-
-    const xf = data.xfrc_applied;
-
-    for (let i = 0; i < 3; i++) {
-      xf[b * 6 + i] = f[i];
-      xf[b * 6 + 3 + i] = torque[i];
-    }
-
-    g.last = { p, q };
+    this.grab.end();
   }
 
   pushRobot(key: string, force: [number, number, number], seconds = 0.15) {
@@ -300,27 +207,39 @@ export class SimEngine {
     this.push = { body: r.rootBody, force: [force[0], -force[2], force[1]], until: this.data.time + seconds };
   }
 
-  private targetFor(i: number, values: Record<string, number> | undefined): number | null {
+  private targetFor(i: number, values: Record<string, number> | undefined): number {
     const j = this.sim.joints[i];
+
+    if (j.drive === 'velocity') return 0;
+
     const v = values?.[j.id] ?? this.sim.initial.values[j.id] ?? 0;
 
     return j.type === 'revolute' ? v * D2R : v / 1000;
   }
 
+  private setLimp(limp: boolean) {
+    const range = this.model.actuator_forcerange;
+
+    if (limp && !this.heldRange) {
+      this.heldRange = range.slice();
+      range.fill(0);
+    } else if (!limp && this.heldRange) {
+      range.set(this.heldRange);
+      this.heldRange = null;
+    }
+  }
+
   private applyControl() {
     const { data } = this;
     const c = this.controller;
-    const n = this.sim.joints.length;
 
-    if (c.kind === 'limp') {
-      for (let i = 0; i < n; i++) data.ctrl[i] = data.qpos[this.jointQpos[i]];
-
-      return;
-    }
+    if (c.kind === 'limp') return;
 
     const values = controlValues(c, data.time);
 
-    for (let i = 0; i < n; i++) data.ctrl[i] = this.targetFor(i, values) ?? 0;
+    this.sim.joints.forEach((j, i) => {
+      if (j.actuator >= 0) data.ctrl[j.actuator] = this.targetFor(i, values);
+    });
 
     const ps = this.policyState;
 
@@ -343,9 +262,9 @@ export class SimEngine {
     }
 
     policy.joints.forEach((id, k) => {
-      const i = this.sim.joints.findIndex((j) => j.id === id);
+      const actuator = this.sim.joints.find((j) => j.id === id)?.actuator ?? -1;
 
-      if (i >= 0) data.ctrl[i] = ps.targets[k];
+      if (actuator >= 0) data.ctrl[actuator] = ps.targets[k];
     });
   }
 
@@ -365,19 +284,21 @@ export class SimEngine {
   step(seconds: number, afterStep?: () => void) {
     const { mj, model, data } = this;
     const steps = Math.max(1, Math.round(seconds / this.dt));
-    const n = this.sim.joints.length;
+    const { joints } = this.sim;
+    const n = joints.length;
 
     for (let s = 0; s < steps; s++) {
       this.applyControl();
       this.applyPush();
-      this.applyGrab();
+      this.grab.apply();
       mj.mj_step(model, data);
       afterStep?.();
 
       const force = data.actuator_force;
 
       for (let i = 0; i < n; i++) {
-        const u = Math.abs(force[i]) / this.sim.joints[i].effort;
+        const actuator = joints[i].actuator;
+        const u = actuator >= 0 ? Math.abs(force[actuator]) / joints[i].effort : 0;
 
         if (u > this.peaks[i]) this.peaks[i] = u;
 

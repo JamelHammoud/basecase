@@ -1,91 +1,24 @@
 import * as THREE from 'three';
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { ProjectSettings, RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
+import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
 import { effortOf } from './mjcfEffort';
+import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
+import {
+  SIM_MODEL_VERSION,
+  type MjcfInput,
+  type SimBody,
+  type SimJoint,
+  type SimModel,
+  type SimRobot,
+} from './mjcfTypes';
+import { classifyRobot, isWheelJoint } from './morphology';
 
-export const toMj = (v: V3 | THREE.Vector3): V3 => {
-  const [x, y, z] = Array.isArray(v) ? v : [v.x, v.y, v.z];
-
-  return [x / 1000, -z / 1000, y / 1000];
-};
-export const fromMj = (x: number, y: number, z: number): V3 => [x * 1000, z * 1000, -y * 1000];
-export function quatFromMj(wxyz: ArrayLike<number>, out = new THREE.Quaternion()): THREE.Quaternion {
-  return out.set(wxyz[1], wxyz[3], -wxyz[2], wxyz[0]);
-}
-export const quatToMj = (q: THREE.Quaternion): [number, number, number, number] => [q.w, q.x, -q.z, q.y];
-
-export function simDeltas(model: SimModel, poses: Float64Array): Map<string, THREE.Matrix4> {
-  const out = new Map<string, THREE.Matrix4>();
-  const q = new THREE.Quaternion();
-  const m = new THREE.Matrix4();
-
-  model.bodies.forEach((b, i) => {
-    if (!b.parts.length) return;
-
-    const o = i * 7;
-    const p = fromMj(poses[o], poses[o + 1], poses[o + 2]);
-
-    quatFromMj(poses.subarray(o + 3, o + 7), q);
-    m.makeRotationFromQuaternion(q);
-
-    const r = new THREE.Vector3(...b.origin).applyQuaternion(q);
-
-    m.setPosition(p[0] - r.x, p[1] - r.y, p[2] - r.z);
-
-    for (const id of b.parts) out.set(id, m.clone());
-  });
-
-  return out;
-}
-
-export interface SimBody {
-  name: string;
-  parts: string[];
-  origin: V3;
-}
-
-export interface SimJoint {
-  id: string;
-  name: string;
-  type: 'revolute' | 'prismatic';
-  range?: [number, number];
-  effort: number;
-  effortSource: 'servo' | 'published' | 'estimate';
-  robot: string;
-}
-
-export interface SimRobot {
-  key: string;
-  name: string;
-  root: string;
-  floating: boolean;
-  joints: string[];
-}
-
-export interface SimModel {
-  xml: string;
-  bodies: SimBody[];
-  joints: SimJoint[];
-  robots: SimRobot[];
-  initial: RobotPoseState;
-  massKg: Record<string, number>;
-  warnings: string[];
-}
-
-export interface MjcfInput {
-  parts: ScenePart[];
-  rig: Rig;
-  project: ProjectSettings;
-  pose?: RobotPoseState;
-  measures: Record<string, MeshMeasure | undefined>;
-  partTriangles: (id: string) => Float32Array | null;
-  posedFloor?: number | null;
-  fixedBase?: Record<string, boolean>;
-  timestep?: number;
-}
+export { fromMj, quatFromMj, quatToMj, simDeltas, toMj } from './mjcfFrames';
+export { SIM_MODEL_VERSION } from './mjcfTypes';
+export type { MjcfInput, SimBody, SimDrive, SimJoint, SimModel, SimRobot } from './mjcfTypes';
 
 const f = (n: number) => {
   const r = Math.round(n * 1e6) / 1e6;
@@ -94,8 +27,6 @@ const f = (n: number) => {
 };
 const vec = (v: number[]) => v.map(f).join(' ');
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
-
-const LEG = /hip|knee|ankle|leg|thigh|shin|foot|calf|toe|haa|hfe|kfe/i;
 
 type PartMass = ReturnType<typeof partMasses>[number];
 
@@ -145,6 +76,16 @@ function robotGrams(m: PartMass | undefined, measure: MeshMeasure | undefined): 
   return 10;
 }
 
+interface ActuatorSpecXml {
+  name: string;
+  effort: number;
+  revolute: boolean;
+  range: [number, number] | null;
+  wheel: boolean;
+}
+
+const WHEEL_FULL_TORQUE_SPEED = 2;
+
 type GeomRole = 'robot' | 'object' | 'scenery';
 
 const CONTACT: Record<GeomRole, string> = {
@@ -156,7 +97,8 @@ const CONTACT: Record<GeomRole, string> = {
 function geomAttrs(st: BuildState, p: ScenePart, role: GeomRole): string {
   const kg = role === 'scenery' ? 0 : robotGrams(st.masses.get(p.id), st.input.measures[p.id]) / 1000;
   const massAttr = role === 'scenery' ? '' : ` mass="${f(Math.max(kg, 1e-4))}"`;
-  const friction = role === 'object' && p.physics?.friction ? ` friction="${f(p.physics.friction)} 0.02 0.002"` : '';
+  const friction =
+    role === 'object' && p.physics?.friction ? ` priority="1" friction="${f(p.physics.friction)} 0.02 0.002"` : '';
 
   return `${CONTACT[role]}${massAttr}${friction}`;
 }
@@ -213,21 +155,32 @@ function bodyXml(rb: RobotBuild, b: BodySpec): string[] {
   return lines;
 }
 
+function actuatorXml(spec: ActuatorSpecXml): string {
+  const { name, effort, revolute, range, wheel } = spec;
+  const toUnit = (v: number) => (revolute ? THREE.MathUtils.degToRad(v) : v / 1000);
+  const force = `forcerange="${f(-effort)} ${f(effort)}"`;
+
+  if (wheel)
+    return `    <velocity name="${name}" joint="${name}" kv="${f(effort / WHEEL_FULL_TORQUE_SPEED)}" ${force}/>`;
+
+  const kp = effort / (revolute ? 0.17 : 0.005);
+  const ctrl = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
+
+  return `    <position name="${name}" joint="${name}" kp="${f(kp)}" dampratio="1" ${force}${ctrl}/>`;
+}
+
 function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const { st } = rb;
   const axis = toMj(j.axis).map((v) => v * 1000);
   const revolute = j.type === 'revolute';
   const toUnit = (v: number) => (revolute ? THREE.MathUtils.degToRad(v) : v / 1000);
-  const range = j.range ? [Math.min(...j.range), Math.max(...j.range)] : null;
+  const range = j.range ? ([Math.min(...j.range), Math.max(...j.range)] as [number, number]) : null;
   const { effort, source } = effortOf(j, st.byId, st.input.rig, st.masses);
+  const wheel = isWheelJoint(j, st.byId, st.input.rig);
   const armature = revolute ? Math.max(0.002, effort * 0.004) : 0.05;
   const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${range ? ` range="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : ''} damping="${f(effort * 0.02)}" armature="${f(armature)}" frictionloss="${f(effort * 0.01)}"/>`;
-  const kp = effort / (revolute ? 0.17 : 0.005);
-  const ctrl = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
 
-  st.actuatorXml.push(
-    `    <position name="${name}" joint="${name}" kp="${f(kp)}" dampratio="1" forcerange="${f(-effort)} ${f(effort)}"${ctrl}/>`,
-  );
+  st.actuatorXml.push(actuatorXml({ name, effort, revolute, range, wheel }));
   st.simJoints.push({
     id: j.id,
     name,
@@ -236,6 +189,8 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
     effort,
     effortSource: source,
     robot: rb.robot.key,
+    drive: wheel ? 'velocity' : 'position',
+    actuator: st.actuatorXml.length - 1,
   });
 
   const v = rb.local.values[j.id];
@@ -283,10 +238,6 @@ function childrenByParent(rig: Rig, joints: RobotJoint[]): Map<string, RobotJoin
   return children;
 }
 
-function isLegJoint(j: RobotJoint): boolean {
-  return isMovable(j) && (j.limb === 'leg' || LEG.test(j.name) || LEG.test(j.id));
-}
-
 function rootState(local: RobotPoseState, rootOrigin: V3, lift: number): { position?: V3; rotation?: V3 } {
   const start: V3 = [rootOrigin[0], rootOrigin[1] + lift, rootOrigin[2]];
   const state: { position?: V3; rotation?: V3 } = {
@@ -304,7 +255,8 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
   const { rig } = st.input;
   const joints = rig.joints.filter((j) => rig.robotOf.get(j.id) === robot.key);
   const base = [...robot.parts].filter((id) => !rig.ownerOf.has(id) && solidPart(st, id));
-  const floating = !(st.input.fixedBase?.[robot.key] ?? !joints.some(isLegJoint));
+  const morphology = classifyRobot(robot, st.input.rig, st.byId);
+  const floating = !(st.input.fixedBase?.[robot.key] ?? morphology === 'fixed');
   const rootName = `root_${st.robots.length}`;
   const rootOrigin = robot.pivot;
   const rb: RobotBuild = {
@@ -332,6 +284,7 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
     name: robot.name,
     root: rootName,
     floating,
+    morphology,
     joints: st.simJoints.filter((j) => j.robot === robot.key).map((j) => j.id),
   });
   st.massKg[robot.key] = rb.grams / 1000;
@@ -428,6 +381,7 @@ export function buildMjcf(input: MjcfInput): SimModel {
   const xml = mujocoXml(st, input.timestep ?? 0.002);
 
   return {
+    version: SIM_MODEL_VERSION,
     xml,
     bodies: st.bodies,
     joints: st.simJoints,

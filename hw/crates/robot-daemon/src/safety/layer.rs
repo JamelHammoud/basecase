@@ -98,10 +98,6 @@ impl SafetyLayer {
         self.sealed = true;
     }
 
-    pub fn set_caps(&mut self, caps: Caps) {
-        self.caps = caps;
-    }
-
     fn step_rule(&self) -> StepRule {
         let to_counts = COUNTS_PER_TURN / TAU;
 

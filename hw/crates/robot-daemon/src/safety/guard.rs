@@ -167,6 +167,35 @@ mod tests {
     }
 
     #[test]
+    fn may_lead_by_exactly_the_lead_but_no_further() {
+        let at_edge = hold_at(2154, BOUNDS).unwrap();
+
+        assert_eq!(next_goal(2500, at_edge, 2000, BOUNDS, RULE).counts(), 2160);
+        assert_eq!(
+            next_goal(2500, hold_at(2160, BOUNDS).unwrap(), 2000, BOUNDS, RULE).counts(),
+            2160
+        );
+    }
+
+    #[test]
+    fn malformed_bounds_or_rules_never_move_a_goal() {
+        let start = hold_at(2000, BOUNDS).unwrap();
+        let inverted = CountBounds { min: 3000, max: 1000 };
+        let negative_step = StepRule { step: -6, lead: 160 };
+        let lead_below_step = StepRule { step: 6, lead: 5 };
+        let outside = CountBounds { min: 2100, max: 3000 };
+
+        assert_eq!(next_goal(2100, start, 2000, inverted, RULE), start);
+        assert_eq!(next_goal(2100, start, 2000, BOUNDS, negative_step), start);
+        assert_eq!(next_goal(2100, start, 2000, BOUNDS, lead_below_step), start);
+        assert_eq!(next_goal(2500, start, 2000, outside, RULE), start);
+        assert_eq!(hold_at(2000, inverted), None);
+        assert!(RULE.is_well_formed() && !negative_step.is_well_formed() && !lead_below_step.is_well_formed());
+        assert!(StepRule { step: 0, lead: 0 }.is_well_formed());
+        assert!(!StepRule { step: -1, lead: -2 }.is_well_formed());
+    }
+
+    #[test]
     fn cannot_hold_outside_bounds() {
         assert_eq!(hold_at(999, BOUNDS), None);
         assert_eq!(hold_at(3001, BOUNDS), None);

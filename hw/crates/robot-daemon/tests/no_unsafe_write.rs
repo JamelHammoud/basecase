@@ -9,6 +9,7 @@ use robot_daemon::{Command, DaemonEvent};
 use servo_wire::Family;
 
 const STEP_COUNTS: i32 = 6;
+const LEAD_COUNTS: i32 = 162;
 
 #[derive(Debug, Clone)]
 enum Step {
@@ -209,10 +210,20 @@ fn check(rig: &Rig, record: &Record) -> Result<(), TestCaseError> {
             let goal = raw as i32;
             let bounds = calibration.joints[id - 1].bounds();
             let stepped = last_goal[id].is_none_or(|last| (goal - last).abs() <= STEP_COUNTS);
-            let holds = position_seen(record, write.at_us, write.id).contains(&goal);
+            let seen = position_seen(record, write.at_us, write.id);
+            let holds = seen.contains(&goal);
+            let leads_safely = seen.iter().any(|present| {
+                let lead = (goal - present).abs();
+
+                lead <= LEAD_COUNTS || last_goal[id].is_some_and(|last| lead <= (last - present).abs())
+            });
 
             prop_assert!(bounds.contains(goal), "goal outside calibration: {write:?}");
             prop_assert!(stepped || holds, "goal jumped from {:?}: {write:?}", last_goal[id]);
+            prop_assert!(
+                seen.is_empty() || leads_safely,
+                "goal ran ahead of the joint {seen:?}: {write:?}"
+            );
             last_goal[id] = Some(goal);
         }
 
@@ -284,6 +295,20 @@ fn the_checker_sees_real_motion() {
         assert!(goals > 100, "only {goals} goal writes: the property would be vacuous");
         check(&rig, &record).unwrap();
     }
+}
+
+#[test]
+fn the_checker_catches_a_goal_running_ahead_of_a_stuck_joint() {
+    let mut steps = vec![Step::Inject(Fault::StuckMotor { id: 1 })];
+
+    steps.extend((0..60).map(|_| Step::Intent(vec![1.4, 0.0, 0.0])));
+
+    let (rig, record) = run(Family::Feetech, &steps);
+    let ahead = servo_wire::feetech::raw_frame(0xFE, 0x83, &[42, 2, 1, 0x00, 0x0A]);
+
+    check(&rig, &record).unwrap();
+    rig.tap.record(rig.now() - 5_000, &ahead);
+    assert!(check(&rig, &record).is_err());
 }
 
 #[test]

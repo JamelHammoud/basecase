@@ -1,7 +1,7 @@
 use super::scan::scan_bus;
 use super::{Daemon, DaemonEvent, Holder, Run};
 use crate::calibration::{Calibration, JointCalibration};
-use crate::caps::{caps_for, FIRST_RUN};
+use crate::caps::caps_for;
 use crate::fault::Fault;
 use crate::ladder::{digest, refusal_message, Artefacts, Event, Fact, Mode};
 use crate::monitor::Monitor;
@@ -90,10 +90,6 @@ impl Daemon {
 
         if changes.is_empty() || !active {
             return;
-        }
-
-        if let Holder::Armed(layer) = &mut self.holder {
-            layer.set_caps(FIRST_RUN);
         }
 
         self.begin_stop(None, lost_commands(self.class()));

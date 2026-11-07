@@ -1,5 +1,6 @@
 pub mod bus;
 pub mod cli;
+mod dispatch;
 pub mod dynamixel;
 pub mod feetech;
 pub mod firmware;

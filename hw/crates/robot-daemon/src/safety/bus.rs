@@ -47,10 +47,6 @@ impl ReadBus {
         self.family
     }
 
-    pub fn now_us(&self) -> u64 {
-        self.clock.now_micros()
-    }
-
     pub fn ping(&mut self, id: u8, timeout_us: u64) -> Result<Reply, BusGone> {
         let request = self.family.ping_request(id);
 
@@ -204,11 +200,16 @@ mod tests {
     use servo_emu::{BusOptions, InProcessBus, ServoBus};
     use servo_wire::VirtualClock;
 
-    fn bus(family: Family, ids: &[u8]) -> ReadBus {
+    fn bus_with_clock(family: Family, ids: &[u8], latency_us: u64) -> (ReadBus, Arc<VirtualClock>) {
         let clock = Arc::new(VirtualClock::new());
         let servos = ServoBus::new(family, ids, BusOptions::default()).shared();
+        let transport = InProcessBus::new(servos, clock.clone(), latency_us);
 
-        ReadBus::new(Box::new(InProcessBus::new(servos, clock.clone(), 0)), family, clock)
+        (ReadBus::new(Box::new(transport), family, clock.clone()), clock)
+    }
+
+    fn bus(family: Family, ids: &[u8]) -> ReadBus {
+        bus_with_clock(family, ids, 0).0
     }
 
     #[test]
@@ -230,22 +231,29 @@ mod tests {
 
     #[test]
     fn a_missing_servo_is_reported_missing_without_waiting_past_the_budget() {
-        let mut bus = bus(Family::Feetech, &[1]);
-        let started = bus.now_us();
+        let (mut bus, clock) = bus_with_clock(Family::Feetech, &[1], 0);
+        let started = clock.now_micros();
         let replies = bus.sync_read(&[1, 9], 56, 2, 5_000).unwrap().replies;
 
         assert!(matches!(replies[0], Reply::Status(_)));
         assert_eq!(replies[1], Reply::Missing);
-        assert!(bus.now_us() - started <= 5_000);
+        assert!(clock.now_micros() - started <= 5_000);
+    }
+
+    #[test]
+    fn drain_counts_every_late_byte_and_leaves_the_line_empty() {
+        let (mut bus, clock) = bus_with_clock(Family::Feetech, &[1, 2], 30_000);
+        let exchange = bus.sync_read(&[1, 2], 56, 2, 5_000).unwrap();
+
+        assert_eq!(exchange.replies, vec![Reply::Missing, Reply::Missing]);
+        clock.advance_to(60_000);
+        assert_eq!(bus.drain_late().unwrap(), 2 * 8);
+        assert_eq!(bus.drain_late().unwrap(), 0);
     }
 
     #[test]
     fn a_late_reply_to_an_earlier_request_is_never_taken_as_current() {
-        let clock = Arc::new(VirtualClock::new());
-        let servos = ServoBus::new(Family::Feetech, &[1], BusOptions::default()).shared();
-        let transport = InProcessBus::new(servos, clock.clone(), 30_000);
-        let mut bus = ReadBus::new(Box::new(transport), Family::Feetech, clock.clone());
-
+        let (mut bus, clock) = bus_with_clock(Family::Feetech, &[1], 30_000);
         let first = bus.sync_read(&[1], 40, 31, 18_000).unwrap();
 
         assert_eq!(first.replies, vec![Reply::Missing]);

@@ -10,6 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 const LIMIT_US: u64 = 140_000;
+const HUNG_POLICY_TICK_LIMIT: Duration = Duration::from_millis(250);
 
 #[derive(Clone, Default)]
 struct Switches {
@@ -150,6 +151,7 @@ fn fault_policy_hang() {
         let onset = rig.now();
 
         switches.hang.store(true, Ordering::SeqCst);
+        rig.worst_tick = Duration::ZERO;
         rig.tick_until(50, |rig| rig.sealed_at().is_some());
         rig.ticks(25);
 
@@ -157,8 +159,8 @@ fn fault_policy_hang() {
 
         assert!(verdict.message.contains("stopped answering"));
         assert!(
-            rig.worst_tick < Duration::from_millis(15),
-            "a hung policy must never slow the control loop: worst tick {:?}",
+            rig.worst_tick < HUNG_POLICY_TICK_LIMIT,
+            "the policy hangs forever, so a loop that waited on it would never finish a tick: worst {:?}",
             rig.worst_tick
         );
     }

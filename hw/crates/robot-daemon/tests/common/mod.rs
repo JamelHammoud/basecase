@@ -100,28 +100,35 @@ impl Rig {
                 .write_intent(&[0.12 * phase.sin(), 0.12 * phase.cos() - 0.12, 0.08 * phase.sin()]);
         }
 
-        let consumed = self.worker.as_ref().map(PolicyWorker::consumed);
+        let inputs = self.daemon.inputs();
+        let before = (
+            inputs.observations.version(),
+            self.worker.as_ref().map(PolicyWorker::consumed),
+            inputs.policy_actions.version(),
+        );
         let started = Instant::now();
 
         self.daemon.tick();
         self.worst_tick = self.worst_tick.max(started.elapsed());
         self.events.extend(self.daemon.take_events());
-        self.settle_policy(consumed);
+        self.settle_policy(before);
         self.ticks += 1;
         self.clock.advance_to(self.ticks * TICK_US);
     }
 
-    fn settle_policy(&self, before: Option<u64>) {
-        let (Some(worker), Some(before)) = (self.worker.as_ref(), before) else {
+    fn settle_policy(&self, before: (u64, Option<u64>, u64)) {
+        let (observed_before, consumed_before, acted_before) = before;
+        let inputs = self.daemon.inputs();
+        let (Some(worker), Some(consumed_before)) = (self.worker.as_ref(), consumed_before) else {
             return;
         };
-        let deadline = Instant::now() + Duration::from_millis(30);
 
-        while worker.consumed() == before && Instant::now() < deadline {
-            std::thread::sleep(Duration::from_micros(200));
+        if inputs.observations.version() == observed_before {
+            return;
         }
 
-        std::thread::sleep(Duration::from_millis(1));
+        wait_for(|| worker.consumed() != consumed_before);
+        wait_for(|| inputs.policy_actions.version() != acted_before);
     }
 
     pub fn ticks(&mut self, count: u32) {
@@ -219,6 +226,14 @@ impl Rig {
             .unwrap()
             .servo(id)
             .map_or(0, |servo| servo.register(address))
+    }
+}
+
+fn wait_for(done: impl Fn() -> bool) {
+    let deadline = Instant::now() + Duration::from_millis(200);
+
+    while !done() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_micros(200));
     }
 }
 

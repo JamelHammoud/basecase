@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
+import type { Recording } from './recorder';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 
@@ -19,6 +20,7 @@ export function useSimWorker(
   const [version, setVersion] = useState<string | null>(null);
   const lastUi = useRef(0);
   const frameHookRef = useRef<(() => void) | null>(null);
+  const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
 
   const send = useCallback((msg: SimRequest) => workerRef.current?.postMessage(msg), []);
@@ -32,6 +34,13 @@ export function useSimWorker(
         setStatus('ready');
         loadWaiter.current?.resolve();
         loadWaiter.current = null;
+
+        return;
+      }
+
+      if (msg.type === 'recorded') {
+        recordWaiter.current?.(msg.recording);
+        recordWaiter.current = null;
 
         return;
       }
@@ -90,7 +99,23 @@ export function useSimWorker(
     [],
   );
 
+  const stopRecording = useCallback(
+    () =>
+      new Promise<Recording | null>((resolve) => {
+        if (!workerRef.current) {
+          resolve(null);
+
+          return;
+        }
+
+        recordWaiter.current = resolve;
+        workerRef.current.postMessage({ type: 'record', on: false } satisfies SimRequest);
+      }),
+    [],
+  );
+
   return {
+    stopRecording,
     status,
     setStatus,
     playing,

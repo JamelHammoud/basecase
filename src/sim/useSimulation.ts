@@ -8,6 +8,7 @@ import type { Controller, SimStats } from './engine';
 import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
+import type { Recording } from './recorder';
 import { useDrive, type SimDrive } from './useDrive';
 import { newSimWorker, useSimWorker } from './useSimWorker';
 
@@ -45,6 +46,9 @@ export interface Simulation {
   ) => void;
   push: (robot?: string) => void;
   drive: SimDrive;
+  record: () => void;
+  stopRecording: () => Promise<Recording | null>;
+  replay: (r: Recording) => void;
   worldParts: ScenePart[];
   setWorld: (items: WorldItem[]) => void;
   buildModel: () => Promise<SimModel>;
@@ -185,19 +189,35 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
   return { inputs, buildModel, worldParts, setWorldItems };
 }
 
-export function useSimulation({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs): Simulation {
+function useStopOnEdit({
+  parts,
+  joints,
+  modelRef,
+  stop,
+}: {
+  parts: ScenePart[];
+  joints: ProjectSettings['joints'];
+  modelRef: React.RefObject<SimModel | null>;
+  stop: () => void;
+}) {
+  const sceneKey = useRef({ parts, joints });
+
+  useEffect(() => {
+    const prev = sceneKey.current;
+
+    sceneKey.current = { parts, joints };
+
+    if (modelRef.current && (prev.parts !== parts || prev.joints !== joints)) stop();
+  }, [parts, joints, modelRef, stop]);
+}
+
+export function useSimulation(props: Inputs): Simulation {
+  const { parts, project, rig, pose, viewportRef } = props;
   const [model, setModel] = useState<SimModel | null>(null);
   const [speed, setSpeedState] = useState(1);
   const [controller, setControllerState] = useState<Controller>({ kind: 'hold' });
   const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel({
-    parts,
-    project,
-    rig,
-    pose,
-    viewportRef,
-    restDeltas,
-  });
+  const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, version, send } = sw;
@@ -241,15 +261,7 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
     viewportRef.current?.setPose(inputs.current.restDeltas);
   }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
 
-  const sceneKey = useRef({ parts, joints: project.joints });
-
-  useEffect(() => {
-    const prev = sceneKey.current;
-
-    sceneKey.current = { parts, joints: project.joints };
-
-    if (modelRef.current && (prev.parts !== parts || prev.joints !== project.joints)) stop();
-  }, [parts, project.joints, stop]);
+  useStopOnEdit({ parts, joints: project.joints, modelRef, stop });
 
   const setController = useCallback(
     (c: Controller) => {
@@ -314,6 +326,12 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
       if (msg) send(msg);
     },
     drive,
+    record: () => send({ type: 'record', on: true }),
+    stopRecording: sw.stopRecording,
+    replay: (r) => {
+      setPlaying(false);
+      send({ type: 'replay', qpos: r.qpos, nq: r.nq, dt: r.dt });
+    },
     worldParts,
     setWorld,
     runOn,

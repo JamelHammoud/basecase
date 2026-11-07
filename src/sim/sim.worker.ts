@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import type { DriveCommand } from './driveTypes';
+import { Recorder, recordingTransfer, type Recording } from './recorder';
 import { SimEngine, type Controller } from './engine';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
@@ -17,6 +18,8 @@ export type SimRequest =
   | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number }
   | ({ type: 'command' } & DriveCommand)
   | { type: 'respawn'; robot?: string }
+  | { type: 'record'; on: boolean }
+  | { type: 'replay'; qpos: Float64Array; nq: number; dt: number }
   | { type: 'grab'; phase: 'start'; body: number; point: [number, number, number] }
   | { type: 'grab'; phase: 'move'; point: [number, number, number]; turn: [number, number, number, number] | null }
   | { type: 'grab'; phase: 'end' }
@@ -35,6 +38,8 @@ export type SimRequest =
 export type SimResponse =
   | { type: 'ready'; version: string; nq: number; nu: number; nbody: number }
   | { type: 'error'; message: string; id?: number }
+  | { type: 'recorded'; recording: Recording | null }
+  | { type: 'replayed' }
   | { type: 'frame'; poses: Float64Array; stats: ReturnType<SimEngine['stats']>; playing: boolean }
   | {
       type: 'ran';
@@ -52,6 +57,8 @@ let speed = 1;
 let timer = 0;
 let last = 0;
 let rtf = 1;
+let recorder: Recorder | null = null;
+let replayTimer = 0;
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
 const frame = () => {
@@ -105,8 +112,54 @@ async function load(msg: Msg<'load'>) {
   frame();
 }
 
+function record(msg: Msg<'record'>) {
+  if (!engine) return;
+
+  if (msg.on) {
+    recorder = new Recorder(engine);
+    engine.stepHook = recorder.hook;
+
+    return;
+  }
+
+  const recording = recorder?.finish() ?? null;
+
+  engine.stepHook = null;
+  recorder = null;
+  post({ type: 'recorded', recording }, recording ? recordingTransfer(recording) : []);
+}
+
+function replay(msg: Msg<'replay'>) {
+  if (!engine) return;
+
+  const sim = engine;
+  const frames = Math.floor(msg.qpos.length / msg.nq);
+  let frameAt = 0;
+
+  playing = false;
+  clearTimeout(timer);
+  clearTimeout(replayTimer);
+
+  const tick = () => {
+    if (frameAt >= frames) {
+      post({ type: 'replayed' });
+
+      return;
+    }
+
+    sim.setState(msg.qpos.subarray(frameAt * msg.nq, (frameAt + 1) * msg.nq));
+    frame();
+    frameAt++;
+    replayTimer = setTimeout(tick, msg.dt * 1000) as unknown as number;
+  };
+
+  tick();
+}
+
 function play() {
   if (!engine || playing) return;
+
+  clearTimeout(replayTimer);
 
   playing = true;
   last = performance.now();
@@ -207,10 +260,14 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     engine?.respawn(msg.robot);
     frame();
   },
+  record,
+  replay,
   run,
   dispose: () => {
     playing = false;
+    recorder = null;
     clearTimeout(timer);
+    clearTimeout(replayTimer);
     engine?.dispose();
     engine = null;
   },

@@ -407,6 +407,16 @@ export class SimEngine {
     };
   }
 
+  refreshKinematics() {
+    this.mj.mj_kinematics(this.model, this.data);
+  }
+
+  setState(qpos: ArrayLike<number>) {
+    this.data.qpos.set(qpos);
+    this.data.qvel.fill(0);
+    this.mj.mj_forward(this.model, this.data);
+  }
+
   poses(out = new Float64Array(this.bodyIds.length * 7)): Float64Array {
     const { xpos, xquat } = this.data;
 

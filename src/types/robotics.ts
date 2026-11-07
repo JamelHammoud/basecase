@@ -1,3 +1,5 @@
+import type { Case } from '../cases/schema';
+import type { TryRecord } from '../cases/tries';
 import type { SourcedItem } from '../data/sourcedItems';
 import type { ReadinessDecisions } from '../readiness/types';
 import type { HardwareSpec } from '../data/hardware';
@@ -226,6 +228,8 @@ export interface ProjectSettings extends ProjectRecords {
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
   marks?: SceneMark[];
+  cases?: Case[];
+  tries?: TryRecord[];
 }
 
 export interface SceneMark {

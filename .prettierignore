@@ -17,3 +17,4 @@ package-lock.json
 scratch
 internal
 .claude/worktrees
+forge/target

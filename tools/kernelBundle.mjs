@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
@@ -11,7 +12,7 @@ export function buildKernelBundle(distDir) {
   return build({
     configFile: false,
     root,
-    logLevel: 'warn',
+    logLevel: 'error',
     publicDir: false,
     build: {
       outDir: kernelBundleDir(distDir),
@@ -30,4 +31,24 @@ export function buildKernelBundle(distDir) {
       },
     },
   });
+}
+
+const KERNEL_SOURCES = [path.join(root, 'electron', 'cad-kernel'), path.join(root, 'package-lock.json')];
+
+function newestChange(entry) {
+  const stat = fs.statSync(entry);
+
+  if (!stat.isDirectory()) return stat.mtimeMs;
+
+  return Math.max(0, ...fs.readdirSync(entry).map((name) => newestChange(path.join(entry, name))));
+}
+
+export async function ensureKernelBundle(distDir) {
+  const built = path.join(kernelBundleDir(distDir), 'worker.js');
+  const fresh = fs.existsSync(built) && fs.statSync(built).mtimeMs > Math.max(...KERNEL_SOURCES.map(newestChange));
+
+  if (fresh) return;
+
+  console.log('[kernel] Building the CAD kernel bundle…');
+  await buildKernelBundle(distDir);
 }

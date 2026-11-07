@@ -9,6 +9,8 @@ const BUNDLE_ID = 'app.basecase.dev';
 const LSREGISTER =
   '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister';
 
+import { ensureKernelBundle } from './kernelBundle.mjs';
+
 const require = createRequire(import.meta.url);
 const electronBinary = require('electron');
 const electronVersion = require('electron/package.json').version;
@@ -71,6 +73,8 @@ function ensureDevBundle() {
 
   return executable;
 }
+
+if (!process.argv.includes('--bundle')) await ensureKernelBundle(path.resolve('dist'));
 
 let binary = electronBinary;
 

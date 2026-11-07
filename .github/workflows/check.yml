@@ -65,3 +65,8 @@ jobs:
       - name: Drive the packaged app
         if: runner.os == 'macOS'
         run: npm run test:app
+      - name: Compile parts in the packaged app's kernel sandbox
+        if: runner.os == 'Windows'
+        run: |
+          BASECASE_KERNEL_SELFTEST="$RUNNER_TEMP/kernel.json" BASECASE_USER_DATA="$RUNNER_TEMP/user-data" STUDIO_AGENT_OFFLINE=1 timeout 300 release/win-unpacked/Basecase.exe
+          cat "$RUNNER_TEMP/kernel.json"

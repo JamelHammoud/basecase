@@ -50,6 +50,12 @@ const kernel = createKernel({
   manifold: loadManifold,
 });
 
+function prewarm(language) {
+  kernel.prewarm('openscad');
+
+  if (language === 'replicad') kernel.prewarm('replicad');
+}
+
 async function runJob(job) {
   const input = job.json === undefined ? job : { ...job, ...JSON.parse(job.json) };
   const bytes = encoder.encode(JSON.stringify(await kernel.run(input)));
@@ -65,7 +71,7 @@ function failJob(job, err) {
 
 self.addEventListener('message', ({ data }) => {
   if (data.job) runJob(data.job).catch((err) => failJob(data.job, err));
-  else if (data.prewarm) kernel.prewarm(data.prewarm);
+  else if (data.prewarm) prewarm(data.prewarm);
   else if (data.asset) waitingAssets.get(data.asset)?.resolve(data.value);
 });
 

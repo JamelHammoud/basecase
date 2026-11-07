@@ -13,33 +13,53 @@ await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
 
 const pad4 = (n) => (4 - (n % 4)) % 4;
 const elementBytes = (accessor) => COMPONENT_BYTES[accessor.componentType] * TYPE_COMPONENTS[accessor.type];
+const utf8 = new TextEncoder();
+const fromUtf8 = new TextDecoder();
+
+const readU32 = (bytes, at) => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(at, true);
+
+export function concatBytes(parts) {
+  const out = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let offset = 0;
+
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+
+  return out;
+}
+
+function words(...values) {
+  const bytes = new Uint8Array(values.length * 4);
+  const view = new DataView(bytes.buffer);
+
+  values.forEach((value, i) => view.setUint32(i * 4, value, true));
+
+  return bytes;
+}
 
 export function readGlb(buf) {
-  const jsonLength = buf.readUInt32LE(12);
-  const json = JSON.parse(buf.subarray(20, 20 + jsonLength).toString('utf8'));
+  const jsonLength = readU32(buf, 12);
+  const json = JSON.parse(fromUtf8.decode(buf.subarray(20, 20 + jsonLength)));
   const binStart = 20 + jsonLength;
-  const bin = binStart + 8 <= buf.length ? buf.subarray(binStart + 8, binStart + 8 + buf.readUInt32LE(binStart)) : null;
+  const bin = binStart + 8 <= buf.length ? buf.subarray(binStart + 8, binStart + 8 + readU32(buf, binStart)) : null;
 
-  return { json, bin: bin ?? Buffer.alloc(0) };
+  return { json, bin: bin ?? new Uint8Array(0) };
 }
 
 export function packGlb(json, bin) {
-  const rawJson = Buffer.from(JSON.stringify(json));
-  const jsonBuf = Buffer.concat([rawJson, Buffer.alloc(pad4(rawJson.length), 0x20)]);
-  const binBuf = Buffer.concat([bin, Buffer.alloc(pad4(bin.length))]);
-  const header = Buffer.alloc(12);
-  const jsonHeader = Buffer.alloc(8);
-  const binHeader = Buffer.alloc(8);
+  const rawJson = utf8.encode(JSON.stringify(json));
+  const jsonBuf = concatBytes([rawJson, new Uint8Array(pad4(rawJson.length)).fill(0x20)]);
+  const binBuf = concatBytes([bin, new Uint8Array(pad4(bin.length))]);
 
-  header.writeUInt32LE(GLB_MAGIC, 0);
-  header.writeUInt32LE(2, 4);
-  header.writeUInt32LE(12 + 8 + jsonBuf.length + 8 + binBuf.length, 8);
-  jsonHeader.writeUInt32LE(jsonBuf.length, 0);
-  jsonHeader.writeUInt32LE(JSON_CHUNK, 4);
-  binHeader.writeUInt32LE(binBuf.length, 0);
-  binHeader.writeUInt32LE(BIN_CHUNK, 4);
-
-  return Buffer.concat([header, jsonHeader, jsonBuf, binHeader, binBuf]);
+  return concatBytes([
+    words(GLB_MAGIC, 2, 12 + 8 + jsonBuf.length + 8 + binBuf.length),
+    words(jsonBuf.length, JSON_CHUNK),
+    jsonBuf,
+    words(binBuf.length, BIN_CHUNK),
+    binBuf,
+  ]);
 }
 
 export function viewBytes(json, bin, index) {
@@ -170,7 +190,7 @@ export function compressGlb(buf) {
     const data = plan ? MeshoptEncoder.encodeGltfBuffer(views[i], plan.count, plan.stride, plan.mode) : views[i];
     const placed = { byteOffset: offset, byteLength: data.length };
 
-    chunks.push(Buffer.from(data), Buffer.alloc(pad4(data.length)));
+    chunks.push(data, new Uint8Array(pad4(data.length)));
     offset += data.length + pad4(data.length);
 
     if (!plan) return { ...view, buffer: 0, ...placed };
@@ -184,7 +204,7 @@ export function compressGlb(buf) {
     return { ...view, ...raw, ...stride, extensions: { ...view.extensions, [MESHOPT]: ext } };
   });
 
-  const packed = Buffer.concat(chunks);
+  const packed = concatBytes(chunks);
 
   json.buffers = [
     { byteLength: packed.length },

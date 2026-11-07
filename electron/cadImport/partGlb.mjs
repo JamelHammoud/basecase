@@ -1,5 +1,5 @@
 import { MeshoptSimplifier } from 'meshoptimizer';
-import { compressGlb, packGlb } from './meshopt.mjs';
+import { compressGlb, concatBytes, packGlb } from './meshopt.mjs';
 
 await MeshoptSimplifier.ready;
 
@@ -150,11 +150,11 @@ function writeGlb(prims, extras) {
   const bufferViews = [];
   const accessors = [];
   const push = (typed, target) => {
-    const bytes = Buffer.from(typed.buffer, typed.byteOffset, typed.byteLength);
+    const bytes = new Uint8Array(typed.buffer, typed.byteOffset, typed.byteLength);
     const pad = (4 - (bytes.length % 4)) % 4;
 
     bufferViews.push({ buffer: 0, byteOffset: offset, byteLength: bytes.length, target });
-    chunks.push(bytes, Buffer.alloc(pad));
+    chunks.push(bytes, new Uint8Array(pad));
     offset += bytes.length + pad;
 
     return bufferViews.length - 1;
@@ -201,7 +201,7 @@ function writeGlb(prims, extras) {
     primitives.push({ attributes: { POSITION: posAcc }, indices: idxAcc, material: materials.length - 1 });
   }
 
-  const bin = Buffer.concat(chunks);
+  const bin = concatBytes(chunks);
   const json = {
     asset: { version: '2.0', generator: 'basecase parts pipeline' },
     scene: 0,

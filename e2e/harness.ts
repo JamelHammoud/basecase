@@ -60,9 +60,14 @@ async function stubBackend(page: Page, posts: App['posts'], lists: Record<string
   });
 }
 
-const startServer = async (): Promise<ViteDevServer> => {
+export const startServer = async (mode = 'development'): Promise<ViteDevServer> => {
   const fs = { allow: [searchForWorkspaceRoot(process.cwd()), realpathSync('node_modules')] };
-  const server = await createServer({ configFile: 'vite.config.ts', server: { port: 0, fs }, logLevel: 'silent' });
+  const server = await createServer({
+    configFile: 'vite.config.ts',
+    mode,
+    server: { port: 0, fs },
+    logLevel: 'silent',
+  });
 
   return server.listen();
 };

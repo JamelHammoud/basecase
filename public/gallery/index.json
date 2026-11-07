@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "arm-touch-the-dots",
+    "title": "Touch the Dots: Six-joint arm"
+  },
+  {
+    "slug": "rover-reach-the-flag",
+    "title": "Reach the Flag: Two-wheel rover"
+  },
+  {
+    "slug": "hexapod-reach-the-flag",
+    "title": "Reach the Flag: Hexapod"
+  }
+]

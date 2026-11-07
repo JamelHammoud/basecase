@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,6 +9,13 @@ export const ROOT = path.resolve(VERIFY_DIR, '..');
 export const pass = (detail = '', metrics = {}) => ({ ok: true, detail, metrics });
 export const fail = (detail, metrics = {}) => ({ ok: false, detail, metrics });
 
+const TOOL_PATHS = [path.join(os.homedir(), '.cargo', 'bin'), '/opt/homebrew/opt/rustup/bin'];
+
+export const toolEnv = (env = process.env) => ({
+  ...env,
+  PATH: [...TOOL_PATHS, env.PATH ?? ''].join(path.delimiter),
+});
+
 export function sh(command, args, options = {}) {
   const started = Date.now();
   const r = spawnSync(command, args, {
@@ -15,6 +23,7 @@ export function sh(command, args, options = {}) {
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
     ...options,
+    env: toolEnv(options.env),
   });
 
   return {

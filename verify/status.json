@@ -72,6 +72,49 @@
       "commit": "8494130",
       "at": "2026-11-07T20:51:57.358Z",
       "manifest": "clean"
+    },
+    "s3-contract": {
+      "id": "s3-contract",
+      "title": "Task contract: one Rust crate, native and WASM",
+      "stage": 3,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "cargo test passes",
+          "ok": true,
+          "detail": "6.2 s",
+          "metrics": {},
+          "seconds": 6.233
+        },
+        {
+          "name": "contract semantics hold and native matches WASM",
+          "ok": true,
+          "detail": "0.7 s",
+          "metrics": {},
+          "seconds": 0.685
+        },
+        {
+          "name": "the committed WASM rebuilds byte for byte",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.471
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a planted false pass is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.054
+        }
+      ],
+      "commit": "f11af65",
+      "at": "2026-11-07T21:38:17.049Z",
+      "manifest": "clean"
     }
   }
 }

@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
-import { fail, pass, ROOT, shCheck, vitestCheck } from '../lib/gate.mjs';
+import { fail, pass, ROOT, shCheck, toolEnv, vitestCheck } from '../lib/gate.mjs';
 
 const hash = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 
@@ -25,7 +25,7 @@ export default {
       run: () => {
         const before = hash('src/skills/contract.wasm');
 
-        execFileSync('npm', ['run', '--silent', 'build:contract'], { cwd: ROOT, stdio: 'pipe' });
+        execFileSync('npm', ['run', '--silent', 'build:contract'], { cwd: ROOT, stdio: 'pipe', env: toolEnv() });
 
         return hash('src/skills/contract.wasm') === before ? pass() : fail('Rebuilding changed the WASM');
       },

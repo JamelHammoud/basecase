@@ -19,16 +19,38 @@ function askToStop({ child, dir }) {
   if (!IS_WINDOWS) child.kill('SIGTERM');
 }
 
+function spawnPython({ uv, dir, envDir }) {
+  return spawn(
+    uv,
+    ['run', '--project', TRAINER_DIR, '--frozen', 'python', '-u', path.join(TRAINER_DIR, 'train.py'), '--job', dir],
+    {
+      cwd: dir,
+      env: {
+        ...process.env,
+        UV_PROJECT_ENVIRONMENT: envDir,
+        PYTHONUNBUFFERED: '1',
+        OMP_NUM_THREADS: '4',
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    },
+  );
+}
+
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
+export const PRIORITY = { user: 0, kit: 1 };
+
 export class Trainer {
-  constructor(libraryDir, emit) {
+  constructor(libraryDir, emit, spawnTrainer = spawnPython) {
     this.libraryDir = libraryDir;
     this.emit = emit;
+    this.spawnTrainer = spawnTrainer;
     this.jobsDir = path.join(libraryDir, 'training');
     this.policiesDir = path.join(libraryDir, 'policies');
     this.envDir = path.join(libraryDir, 'trainer-env');
     this.jobs = new Map();
+    this.queue = [];
   }
 
   status() {
@@ -39,11 +61,13 @@ export class Trainer {
       uvInstall: UV_INSTALL,
       ready: fs.existsSync(path.join(this.envDir, 'pyvenv.cfg')),
       running: [...this.jobs.keys()],
+      queued: this.queue.map((q) => q.workspaceId),
     };
   }
 
-  start({ workspaceId = 'main', xml, job }) {
-    if (this.jobs.has(workspaceId)) throw new Error('This scene is already training.');
+  start({ workspaceId = 'main', xml, job, priority = PRIORITY.user }) {
+    if (this.jobs.has(workspaceId) || this.queue.some((q) => q.workspaceId === workspaceId))
+      throw new Error('This scene is already training.');
 
     const uv = findUv();
 
@@ -56,27 +80,45 @@ export class Trainer {
     fs.writeFileSync(path.join(dir, 'model.xml'), xml);
     fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(job, null, 2));
 
+    const entry = { workspaceId, job, id, dir, priority, uv };
+    const send = this.sender(entry);
+
+    if (this.jobs.size) {
+      this.enqueue(entry);
+      send({ kind: 'status', message: `Queued. Starts after ${[...this.jobs.values()][0].job.name}.` });
+    } else {
+      this.launch(entry);
+    }
+
+    return { jobId: id };
+  }
+
+  sender({ workspaceId, id }) {
+    return (payload) => this.emit({ type: 'train-progress', workspaceId, jobId: id, ...payload });
+  }
+
+  enqueue(entry) {
+    this.queue.push(entry);
+    this.queue.sort((a, b) => a.priority - b.priority);
+  }
+
+  launchNext() {
+    if (this.jobs.size) return;
+
+    const next = this.queue.shift();
+
+    if (next) this.launch(next);
+  }
+
+  launch(entry) {
+    const { workspaceId, job, id, dir, uv } = entry;
     const firstRun = !fs.existsSync(path.join(this.envDir, 'pyvenv.cfg'));
-    const send = (payload) => this.emit({ type: 'train-progress', workspaceId, jobId: id, ...payload });
+    const send = this.sender(entry);
 
     send({ kind: 'status', message: firstRun ? 'Installing Python, MuJoCo and PyTorch (one time)' : 'Starting' });
 
-    const child = spawn(
-      uv,
-      ['run', '--project', TRAINER_DIR, '--frozen', 'python', '-u', path.join(TRAINER_DIR, 'train.py'), '--job', dir],
-      {
-        cwd: dir,
-        env: {
-          ...process.env,
-          UV_PROJECT_ENVIRONMENT: this.envDir,
-          PYTHONUNBUFFERED: '1',
-          OMP_NUM_THREADS: '4',
-        },
-        stdio: ['ignore', 'pipe', 'pipe'],
-      },
-    );
-
-    const running = { child, id, dir, stopping: false };
+    const child = this.spawnTrainer({ uv, dir, envDir: this.envDir });
+    const running = { child, id, dir, job, stopping: false };
 
     this.jobs.set(workspaceId, running);
 
@@ -110,6 +152,7 @@ export class Trainer {
     });
     child.on('close', (code, signal) => {
       this.jobs.delete(workspaceId);
+      queueMicrotask(() => this.launchNext());
 
       if (done) {
         try {
@@ -142,11 +185,19 @@ export class Trainer {
 
       send({ kind: 'error', message: lines.at(-1) || `The trainer exited with code ${code}.` });
     });
-
-    return { jobId: id };
   }
 
   stop(workspaceId = 'main') {
+    const waiting = this.queue.findIndex((q) => q.workspaceId === workspaceId);
+
+    if (waiting >= 0) {
+      const [entry] = this.queue.splice(waiting, 1);
+
+      this.sender(entry)({ kind: 'error', message: 'Training stopped.' });
+
+      return { stopping: true };
+    }
+
     const job = this.jobs.get(workspaceId);
 
     if (job) {
@@ -199,6 +250,8 @@ export class Trainer {
   }
 
   dispose() {
+    this.queue = [];
+
     for (const job of this.jobs.values()) {
       job.stopping = true;
       askToStop(job);

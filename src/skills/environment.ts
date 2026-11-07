@@ -1,0 +1,238 @@
+import type { SimModel } from '../sim/mjcfTypes';
+import type { RobotPoseState } from '../types/robotics';
+import { contractSignals, type Contract } from './contract';
+import { hashOf, isHash } from './hash';
+
+export const ENVIRONMENT_VERSION = 1;
+
+export type Range = [number, number];
+export type Axis = 'x' | 'y' | 'z';
+
+export type ObservationTerm =
+  | { kind: 'base-gravity' }
+  | { kind: 'base-angular-velocity' }
+  | { kind: 'base-linear-velocity' }
+  | { kind: 'command'; size: number }
+  | { kind: 'joint-positions'; joints: string[] }
+  | { kind: 'joint-velocities'; joints: string[] }
+  | { kind: 'last-action' }
+  | { kind: 'clock'; periodS: number };
+
+export interface ActionSpec {
+  kind: 'position-offset' | 'velocity';
+  joints: string[];
+  scale: number;
+  controlDt: number;
+}
+
+export interface ResetDistribution {
+  pose?: RobotPoseState;
+  jointNoiseDeg: number;
+  baseYawDeg: number;
+  baseOffsetMm: number;
+}
+
+export interface Randomization {
+  friction: Range;
+  mass: Range;
+  strength: Range;
+  latencyMs: Range;
+}
+
+export type RewardRef = { kind: 'contract-robustness' } | { kind: 'rewardlang'; hash: string };
+
+export type SignalSource =
+  | { kind: 'time' }
+  | { kind: 'joint-position'; joint: string }
+  | { kind: 'joint-velocity'; joint: string }
+  | { kind: 'joint-effort'; joint: string }
+  | { kind: 'part-position'; part: string; axis: Axis }
+  | { kind: 'base-height' }
+  | { kind: 'base-tilt' }
+  | { kind: 'base-forward' }
+  | { kind: 'contact'; part: string; with: string | 'floor' };
+
+export interface Environment {
+  version: typeof ENVIRONMENT_VERSION;
+  robot: string;
+  horizonS: number;
+  traceDt: number;
+  observation: ObservationTerm[];
+  action: ActionSpec;
+  reset: ResetDistribution;
+  randomization: Randomization;
+  reward: RewardRef;
+  contract: Contract;
+  signals: Record<string, SignalSource>;
+}
+
+export const MAX_HORIZON_S = 600;
+export const MAX_LATENCY_MS = 500;
+
+const TERM_SIZE: Record<ObservationTerm['kind'], (term: ObservationTerm, action: ActionSpec) => number> = {
+  'base-gravity': () => 3,
+  'base-angular-velocity': () => 3,
+  'base-linear-velocity': () => 3,
+  command: (t) => (t as { size: number }).size,
+  'joint-positions': (t) => (t as { joints: string[] }).joints.length,
+  'joint-velocities': (t) => (t as { joints: string[] }).joints.length,
+  'last-action': (_, action) => action.joints.length,
+  clock: () => 2,
+};
+
+export const observationSize = (env: Pick<Environment, 'observation' | 'action'>) =>
+  env.observation.reduce((n, term) => n + TERM_SIZE[term.kind](term, env.action), 0);
+
+export function policyObservation(joints: string[]): ObservationTerm[] {
+  return [
+    { kind: 'base-gravity' },
+    { kind: 'base-angular-velocity' },
+    { kind: 'base-linear-velocity' },
+    { kind: 'command', size: 3 },
+    { kind: 'joint-positions', joints },
+    { kind: 'joint-velocities', joints },
+    { kind: 'last-action' },
+  ];
+}
+
+export const environmentHash = (env: Environment) => hashOf(env);
+
+const finiteIn = (v: unknown, min: number, max: number) =>
+  typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
+
+const rangeIn = (r: unknown, min: number, max: number) =>
+  Array.isArray(r) && r.length === 2 && finiteIn(r[0], min, max) && finiteIn(r[1], min, max) && r[0] <= r[1];
+
+interface ModelIndex {
+  joints: Set<string>;
+  parts: Set<string>;
+  robots: Set<string>;
+}
+
+const indexOf = (model: SimModel, robot: string): ModelIndex => ({
+  joints: new Set(model.joints.filter((j) => j.robot === robot).map((j) => j.id)),
+  parts: new Set(model.bodies.flatMap((b) => b.parts)),
+  robots: new Set(model.robots.map((r) => r.key)),
+});
+
+function jointProblems(joints: unknown, index: ModelIndex, what: string): string[] {
+  if (!Array.isArray(joints) || !joints.length) return [`${what} needs at least one joint.`];
+
+  return joints.filter((j) => !index.joints.has(j)).map((j) => `${what} names ${String(j)}, which this robot lacks.`);
+}
+
+function termProblems(term: ObservationTerm, index: ModelIndex): string[] {
+  if (term.kind === 'joint-positions' || term.kind === 'joint-velocities')
+    return jointProblems(term.joints, index, 'An observation');
+
+  if (term.kind === 'command' && !finiteIn(term.size, 1, 8)) return ['A command has 1 to 8 values.'];
+
+  if (term.kind === 'clock' && !finiteIn(term.periodS, 0.05, 60)) return ['A clock period is 0.05 to 60 s.'];
+
+  return term.kind in TERM_SIZE ? [] : [`Unknown observation ${String((term as { kind: unknown }).kind)}.`];
+}
+
+function actionProblems(action: ActionSpec, index: ModelIndex): string[] {
+  const out = jointProblems(action.joints, index, 'The action');
+
+  if (action.kind !== 'position-offset' && action.kind !== 'velocity') out.push('Unknown action kind.');
+
+  if (!finiteIn(action.scale, 1e-6, 100)) out.push('The action scale is above 0 and at most 100.');
+
+  if (!finiteIn(action.controlDt, 1e-4, 1)) out.push('The control step runs from 0.1 ms to 1 s.');
+
+  return out;
+}
+
+function randomizationProblems(r: Randomization): string[] {
+  const out: string[] = [];
+
+  if (!rangeIn(r.friction, 0.05, 5)) out.push('Friction scales run from 0.05 to 5.');
+
+  if (!rangeIn(r.mass, 0.1, 10)) out.push('Mass scales run from 0.1 to 10.');
+
+  if (!rangeIn(r.strength, 0.05, 2)) out.push('Strength scales run from 0.05 to 2.');
+
+  if (!rangeIn(r.latencyMs, 0, MAX_LATENCY_MS)) out.push(`Latency runs from 0 to ${MAX_LATENCY_MS} ms.`);
+
+  return out;
+}
+
+function resetProblems(reset: ResetDistribution): string[] {
+  const ok = finiteIn(reset.jointNoiseDeg, 0, 90) && finiteIn(reset.baseYawDeg, 0, 180);
+
+  return ok && finiteIn(reset.baseOffsetMm, 0, 10000) ? [] : ['Reset noise must be finite and not negative.'];
+}
+
+const SOURCE_KINDS = new Set([
+  'time',
+  'joint-position',
+  'joint-velocity',
+  'joint-effort',
+  'part-position',
+  'base-height',
+  'base-tilt',
+  'base-forward',
+  'contact',
+]);
+
+function sourceProblems(name: string, source: SignalSource, index: ModelIndex): string[] {
+  if (!SOURCE_KINDS.has(source.kind)) return [`Signal ${name} has an unknown source.`];
+
+  if ('joint' in source && !index.joints.has(source.joint)) return [`Signal ${name} reads a missing joint.`];
+
+  if (source.kind === 'part-position' && (!index.parts.has(source.part) || !['x', 'y', 'z'].includes(source.axis)))
+    return [`Signal ${name} reads a missing part or axis.`];
+
+  if (source.kind === 'contact' && (!index.parts.has(source.part) || !touchable(source.with, index)))
+    return [`Signal ${name} checks contact with a missing part.`];
+
+  return [];
+}
+
+const touchable = (other: string, index: ModelIndex) => other === 'floor' || index.parts.has(other);
+
+async function contractProblems(env: Environment): Promise<string[]> {
+  try {
+    const needed = await contractSignals(env.contract);
+
+    return needed.filter((s) => !(s in env.signals)).map((s) => `The contract reads ${s}, which no signal provides.`);
+  } catch (error) {
+    return [`The contract is refused: ${(error as Error).message}`];
+  }
+}
+
+function rewardProblems(reward: RewardRef): string[] {
+  if (reward.kind === 'contract-robustness') return [];
+
+  return reward.kind === 'rewardlang' && isHash(reward.hash) ? [] : ['The reward reference is unknown.'];
+}
+
+function shapeProblems(env: Environment, index: ModelIndex): string[] {
+  const out: string[] = [];
+
+  if (env.version !== ENVIRONMENT_VERSION) out.push('This environment version is not supported.');
+
+  if (!index.robots.has(env.robot)) out.push('The environment names a robot this scene lacks.');
+
+  if (!finiteIn(env.horizonS, 0.1, MAX_HORIZON_S)) out.push(`The horizon runs from 0.1 to ${MAX_HORIZON_S} s.`);
+
+  if (!finiteIn(env.traceDt, 1e-3, env.horizonS / 2)) out.push('The trace step is at least 1 ms and half the horizon.');
+
+  return out;
+}
+
+export async function validateEnvironment(env: Environment, model: SimModel): Promise<string[]> {
+  const index = indexOf(model, env.robot);
+
+  return [
+    ...shapeProblems(env, index),
+    ...env.observation.flatMap((term) => termProblems(term, index)),
+    ...actionProblems(env.action, index),
+    ...randomizationProblems(env.randomization),
+    ...resetProblems(env.reset),
+    ...rewardProblems(env.reward),
+    ...Object.entries(env.signals).flatMap(([name, source]) => sourceProblems(name, source, index)),
+    ...(await contractProblems(env)),
+  ];
+}

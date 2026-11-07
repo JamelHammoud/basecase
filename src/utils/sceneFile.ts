@@ -1,3 +1,5 @@
+import type { Skill } from '../skills/artifacts';
+import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
 
 export const SCENE_FILE_EXTENSION = 'basecase';
@@ -14,6 +16,7 @@ export interface SharedScene {
   project?: ProjectSettings;
   previewDataUrl?: string;
   sizeMm?: [number, number, number];
+  skills?: Skill[];
 }
 
 interface SceneFile {
@@ -119,6 +122,7 @@ export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
     project: localProject(scene.project as ProjectSettings | undefined),
     previewDataUrl: isImageData(scene.previewDataUrl) ? (scene.previewDataUrl as string) : undefined,
     sizeMm: isVec3(scene.sizeMm) ? (scene.sizeMm as [number, number, number]) : undefined,
+    ...(Array.isArray(scene.skills) ? { skills: readSkillBundle(scene.skills) } : {}),
   };
 }
 

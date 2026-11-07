@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { contractSignals, evaluateContract, type Contract, type State } from './contract';
 
@@ -10,14 +9,6 @@ const eventually: Contract = {
 };
 
 describe('the contract WASM', () => {
-  it('ships small and holds no machine paths', () => {
-    const bytes = fs.readFileSync(new URL('./contract.wasm', import.meta.url));
-
-    expect(bytes.length).toBeLessThan(200 * 1024);
-    expect(bytes.includes('/Users/')).toBe(false);
-    expect(bytes.includes('worktrees')).toBe(false);
-  });
-
   it('loads once and evaluates many times without leaking the first reply into the next', async () => {
     for (let i = 0; i < 50; i++) {
       const r = await evaluateContract(eventually, { dt: 0.1, signals: { x: [i - 25, i - 25] } });

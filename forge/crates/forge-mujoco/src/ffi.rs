@@ -54,6 +54,8 @@ extern "C" {
     pub fn mjb_expand(b: *mut MjBatch, name: *const c_char, size: *mut c_int, elemsize: *mut c_int) -> *mut c_void;
     pub fn mjb_setConst(b: *mut MjBatch, ids: *const c_int, nid: c_int) -> c_int;
     pub fn mjb_nthread(b: *const MjBatch) -> c_int;
+    pub fn mjb_model(b: *const MjBatch) -> *const MjModel;
+    pub fn mjb_expanded(b: *mut MjBatch, name: *const c_char, size: *mut c_int, elemsize: *mut c_int) -> *const c_void;
     pub fn mjb_status(b: *const MjBatch) -> *const c_int;
     pub fn mjb_error(b: *const MjBatch, sim: c_int) -> *const c_char;
 

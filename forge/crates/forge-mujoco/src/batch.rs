@@ -41,26 +41,32 @@ fn layout_of(raw: *mut ffi::MjBatch) -> StateLayout {
     }
 }
 
+fn make_batch(model: *const ffi::MjModel, nsim: usize, nthread: usize) -> Result<*mut ffi::MjBatch, String> {
+    let mut config = ffi::MjBatchConfig {
+        nthread: 0,
+        persistent: 0,
+    };
+    let mut error = [0 as c_char; 1024];
+
+    unsafe { ffi::mjb_defaultConfig(&mut config) };
+    config.nthread = nthread as c_int;
+
+    let raw = unsafe { ffi::mjb_makeBatch(model, nsim as c_int, &config, error.as_mut_ptr(), 1024) };
+
+    if raw.is_null() {
+        let message = unsafe { CStr::from_ptr(error.as_ptr()) }.to_string_lossy().into_owned();
+
+        return Err(format!("Couldn't build the batch: {message}"));
+    }
+
+    Ok(raw)
+}
+
 impl Batch {
     pub fn new(model: &Model, nsim: usize, nthread: usize) -> Result<Self, String> {
         crate::install_handlers();
 
-        let mut config = ffi::MjBatchConfig {
-            nthread: 0,
-            persistent: 0,
-        };
-        let mut error = [0 as c_char; 1024];
-
-        unsafe { ffi::mjb_defaultConfig(&mut config) };
-        config.nthread = nthread as c_int;
-
-        let raw = unsafe { ffi::mjb_makeBatch(model.raw, nsim as c_int, &config, error.as_mut_ptr(), 1024) };
-
-        if raw.is_null() {
-            let message = unsafe { CStr::from_ptr(error.as_ptr()) }.to_string_lossy().into_owned();
-
-            return Err(format!("Couldn't build the batch: {message}"));
-        }
+        let raw = make_batch(model.raw, nsim, nthread)?;
 
         Ok(Self {
             raw,
@@ -110,6 +116,34 @@ impl Batch {
             unsafe { std::slice::from_raw_parts_mut(address.cast::<f64>(), len) },
             width,
         ))
+    }
+
+    pub fn rethread(&mut self, nthread: usize, fields: &[&str]) -> Result<(), String> {
+        let model = unsafe { ffi::mjb_model(self.raw) };
+        let fresh = make_batch(model, self.nsim, nthread)?;
+        let len = self.nsim * self.layout.nstate;
+
+        unsafe { std::ptr::copy_nonoverlapping(ffi::mjb_state(self.raw), ffi::mjb_state(fresh), len) };
+
+        for field in fields {
+            let name = CString::new(*field).map_err(|e| e.to_string())?;
+            let (mut size, mut elem): (c_int, c_int) = (0, 0);
+            let old = unsafe { ffi::mjb_expanded(self.raw, name.as_ptr(), &mut size, &mut elem) };
+
+            if old.is_null() {
+                continue;
+            }
+
+            let target = unsafe { ffi::mjb_expand(fresh, name.as_ptr(), &mut size, &mut elem) };
+            let bytes = self.nsim * size as usize * elem as usize;
+
+            unsafe { std::ptr::copy_nonoverlapping(old.cast::<u8>(), target.cast::<u8>(), bytes) };
+        }
+
+        unsafe { ffi::mjb_deleteBatch(self.raw) };
+        self.raw = fresh;
+
+        Ok(())
     }
 
     pub fn step(&mut self, nstep: usize) -> usize {

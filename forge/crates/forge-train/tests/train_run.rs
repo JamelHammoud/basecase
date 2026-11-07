@@ -101,6 +101,23 @@ fn a_short_run_prints_train_py_events_and_writes_every_output() {
     assert!(fs::metadata(folder.join("policy.onnx")).expect("onnx").len() > 1000);
 }
 
+fn rewards(events: &[Value]) -> Vec<f64> {
+    events
+        .iter()
+        .filter(|e| e["type"] == "progress")
+        .map(|e| e["reward"].as_f64().expect("reward"))
+        .collect()
+}
+
+#[test]
+fn tuning_physics_threads_never_changes_the_run() {
+    let tuned = run(&job_folder("tuned", json!({ "envs": 16, "maxIterations": 14 })));
+    let fixed = run(&job_folder("fixed", json!({ "envs": 16, "maxIterations": 14, "threads": 3 })));
+
+    assert_eq!(rewards(&tuned).len(), 14);
+    assert_eq!(rewards(&tuned), rewards(&fixed));
+}
+
 #[test]
 fn a_stop_file_ends_training_and_still_saves() {
     let folder = job_folder("stopped", json!({ "maxIterations": 1000 }));
@@ -126,4 +143,64 @@ fn a_missing_joint_fails_with_its_name() {
 
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("nope"));
+}
+
+fn assert_same_events(algo: &str) {
+    let folder = job_folder(
+        &format!("off-policy-{algo}"),
+        json!({ "algo": algo, "envs": 64, "maxIterations": 72, "gateEvery": 36, "evalSeeds": 4 }),
+    );
+    let events = run(&folder);
+    let progress = events.iter().rfind(|e| e["type"] == "progress").expect("progress");
+    let done = events.iter().find(|e| e["type"] == "done").expect("done");
+
+    assert_eq!(events.iter().filter(|e| e["type"] == "gate").count(), 2);
+    assert_eq!(progress["steps"], 72 * 64);
+    assert!(progress["phases"]["gradient"].as_f64().expect("gradient") > 0.0);
+    assert_eq!(done["gate"]["seeds"], 4);
+
+    let policy: Value =
+        serde_json::from_str(&fs::read_to_string(folder.join("policy.json")).expect("policy")).expect("json");
+
+    assert_eq!(policy["squash"], "tanh");
+    assert_eq!(
+        policy["layers"].as_array().expect("layers").last().expect("head")["out"],
+        2
+    );
+}
+
+#[test]
+fn fastsac_reports_the_same_events() {
+    assert_same_events("fastsac");
+}
+
+#[test]
+fn flashsac_reports_the_same_events() {
+    assert_same_events("flashsac");
+}
+
+#[test]
+fn the_adam_vector_names_every_field() {
+    let file = PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
+        .join("adam")
+        .join("vector.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_forge-train"))
+        .arg("--adam-vector")
+        .arg(&file)
+        .output()
+        .expect("runs");
+
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+
+    let vector: Value = serde_json::from_str(&fs::read_to_string(&file).expect("vector")).expect("json");
+
+    for key in ["initial", "lr", "x", "y", "steps", "final"] {
+        assert!(vector.get(key).is_some(), "{key}");
+    }
+
+    assert_eq!(
+        vector["initial"].as_array().map(Vec::len),
+        vector["final"].as_array().map(Vec::len)
+    );
+    assert_ne!(vector["initial"][0]["w"], vector["final"][0]["w"]);
 }

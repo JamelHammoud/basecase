@@ -6,29 +6,44 @@ pub struct Adam {
     first: Vec<f32>,
     second: Vec<f32>,
     steps: i32,
+    beta2: f32,
+    decay: f32,
 }
 
 impl Adam {
     pub fn new(size: usize) -> Self {
+        Self::with(size, BETA2, 0.0)
+    }
+
+    pub fn with(size: usize, beta2: f32, decay: f32) -> Self {
         Self {
             first: vec![0.0; size],
             second: vec![0.0; size],
             steps: 0,
+            beta2,
+            decay,
         }
     }
 
     pub fn step(&mut self, params: &mut [f32], grads: &[f32], rate: f32) {
         self.steps += 1;
 
+        let beta2 = self.beta2;
         let first_scale = 1.0 - (BETA1 as f64).powi(self.steps);
-        let second_scale = 1.0 - (BETA2 as f64).powi(self.steps);
+        let second_scale = 1.0 - (beta2 as f64).powi(self.steps);
         let step_rate = rate / first_scale as f32;
         let second_inverse = 1.0 / second_scale as f32;
+        let kept = 1.0 - rate * self.decay;
         let moments = self.first.iter_mut().zip(self.second.iter_mut());
 
         for ((param, grad), (m, v)) in params.iter_mut().zip(grads).zip(moments) {
             *m = *m * BETA1 + grad * (1.0 - BETA1);
-            *v = *v * BETA2 + grad * grad * (1.0 - BETA2);
+            *v = *v * beta2 + grad * grad * (1.0 - beta2);
+
+            if self.decay > 0.0 {
+                *param *= kept;
+            }
+
             *param -= step_rate * *m / ((*v * second_inverse).sqrt() + EPSILON);
         }
     }

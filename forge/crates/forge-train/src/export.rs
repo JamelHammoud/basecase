@@ -1,9 +1,9 @@
+use crate::deployed::Deployed;
 use crate::evaluate::CheckSample;
 use crate::mlp::Mlp;
 use crate::normalizer::Normalizer;
 use crate::onnx;
 use crate::robot::Robot;
-use crate::update::Learner;
 use serde_json::{json, Value};
 use std::fs;
 use std::path::Path;
@@ -81,13 +81,13 @@ fn write_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
 
 pub struct Trained<'a> {
     pub robot: &'a Robot,
-    pub learner: &'a Learner,
+    pub policy: &'a Deployed,
     pub norm: &'a Normalizer,
 }
 
 pub fn write_policy(path: &Path, run: &Trained, steps: u64) -> Result<(), String> {
     let job = &run.robot.job;
-    let spec = json!({
+    let mut spec = json!({
         "format": POLICY_FORMAT,
         "version": POLICY_VERSION,
         "task": job.task_name,
@@ -99,12 +99,16 @@ pub fn write_policy(path: &Path, run: &Trained, steps: u64) -> Result<(), String
         "command": job.command,
         "obsMean": run.norm.mean,
         "obsStd": run.norm.std(),
-        "layers": layer_json(&run.learner.actor, &run.learner.params),
+        "layers": layer_json(&run.policy.net, &run.policy.params),
         "activation": "elu",
         "trainedSteps": steps,
         "mujoco": forge_mujoco::version(),
         "createdAt": timestamp(),
     });
+
+    if let (Some(name), Value::Object(fields)) = (run.policy.squash.name(), &mut spec) {
+        fields.insert("squash".to_owned(), json!(name));
+    }
 
     write_atomically(path, spec.to_string().as_bytes())
 }
@@ -113,10 +117,11 @@ pub fn write_onnx(path: &Path, run: &Trained) -> Result<(), String> {
     let mean: Vec<f32> = run.norm.mean.iter().map(|v| *v as f32).collect();
     let std: Vec<f32> = run.norm.std().iter().map(|v| *v as f32).collect();
     let model = onnx::Policy {
-        actor: &run.learner.actor,
-        params: &run.learner.params,
+        actor: &run.policy.net,
+        params: &run.policy.params,
         mean: &mean,
         std: &std,
+        squash: run.policy.squash,
     };
 
     write_atomically(path, &onnx::encode(&model))

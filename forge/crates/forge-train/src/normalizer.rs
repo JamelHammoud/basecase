@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Normalizer {
     pub mean: Vec<f64>,
     pub var: Vec<f64>,

@@ -1,14 +1,13 @@
 use crate::events::Phases;
 use crate::job::Task;
+use crate::randomize::{randomize, RANDOMIZED_FIELDS};
 use crate::rng::Rng;
 use crate::robot::{quat_multiply, rotate_into_frame, Robot};
-use forge_mujoco::{Batch, Model};
+use crate::threads::ThreadTuner;
+use forge_mujoco::Batch;
 use forge_reward::{handwritten, RewardState};
 use std::time::Instant;
 
-const FRICTION_RANGE: (f64, f64) = (0.6, 1.3);
-const MASS_RANGE: (f64, f64) = (0.85, 1.15);
-const SERVO_RANGE: (f64, f64) = (0.85, 1.15);
 const RESET_JOINT_NOISE: f64 = 0.05;
 const PUSH_SPEED: (f64, f64) = (0.2, 0.6);
 const PUSH_GAP_SECONDS: (f64, f64) = (2.0, 5.0);
@@ -25,60 +24,21 @@ pub struct Envs<'a> {
     action: Vec<f64>,
     joint_pos: Vec<f64>,
     joint_vel: Vec<f64>,
+    final_obs: Option<Vec<f32>>,
+    tuner: Option<ThreadTuner>,
+}
+
+pub struct EnvsSpec {
+    pub count: usize,
+    pub seed: u64,
+    pub randomized: bool,
+    pub threads: Option<usize>,
 }
 
 pub struct StepResult<'a> {
     pub reward: &'a mut [f32],
     pub fell: &'a mut [bool],
     pub timeout: &'a mut [bool],
-}
-
-fn randomize(batch: &mut Batch, model: &Model, rngs: &mut [Rng]) -> Result<(), String> {
-    let (friction, width) = batch.expand("geom_friction")?;
-
-    for (row, rng) in friction.chunks_exact_mut(width).zip(rngs.iter_mut()) {
-        let scale = rng.uniform(FRICTION_RANGE.0, FRICTION_RANGE.1);
-
-        row.iter_mut().step_by(3).for_each(|f| *f *= scale);
-    }
-
-    let (mass, width) = batch.expand("body_mass")?;
-
-    for (row, rng) in mass.chunks_exact_mut(width).zip(rngs.iter_mut()) {
-        row[1..]
-            .iter_mut()
-            .for_each(|m| *m *= rng.uniform(MASS_RANGE.0, MASS_RANGE.1));
-    }
-
-    let servo: Vec<f64> = rngs
-        .iter_mut()
-        .flat_map(|rng| {
-            (0..model.nu())
-                .map(|_| rng.uniform(SERVO_RANGE.0, SERVO_RANGE.1))
-                .collect::<Vec<f64>>()
-        })
-        .collect();
-    let per_sim = model.nu();
-    let (gain, width) = batch.expand("actuator_gainprm")?;
-    let gain_width = Model::gain_width();
-
-    for (row, stiffness) in gain.chunks_exact_mut(width).zip(servo.chunks_exact(per_sim.max(1))) {
-        row.chunks_exact_mut(gain_width)
-            .zip(stiffness)
-            .for_each(|(params, k)| params[0] *= k);
-    }
-
-    let (bias, width) = batch.expand("actuator_biasprm")?;
-    let bias_width = Model::bias_width();
-
-    for (row, stiffness) in bias.chunks_exact_mut(width).zip(servo.chunks_exact(per_sim.max(1))) {
-        for (params, k) in row.chunks_exact_mut(bias_width).zip(stiffness) {
-            params[1] *= k;
-            params[2] *= k;
-        }
-    }
-
-    Ok(())
 }
 
 fn push_gap(rng: &mut Rng, control_dt: f64) -> i64 {
@@ -90,9 +50,25 @@ fn push_gap(rng: &mut Rng, control_dt: f64) -> i64 {
 
 impl<'a> Envs<'a> {
     pub fn new(robot: &'a Robot, count: usize, seed: u64, randomized: bool) -> Result<Self, String> {
-        let threads = robot
-            .job
-            .threads
+        let spec = EnvsSpec {
+            count,
+            seed,
+            randomized,
+            threads: robot.job.threads,
+        };
+
+        Self::build(robot, spec)
+    }
+
+    pub fn build(robot: &'a Robot, spec: EnvsSpec) -> Result<Self, String> {
+        let EnvsSpec {
+            count,
+            seed,
+            randomized,
+            threads,
+        } = spec;
+        let tuned = threads.is_none() && randomized;
+        let threads = threads
             .unwrap_or_else(|| std::thread::available_parallelism().map_or(4, |c| c.get()))
             .min(count)
             .max(1);
@@ -124,6 +100,8 @@ impl<'a> Envs<'a> {
             action: vec![0.0; count * nact],
             joint_pos: vec![0.0; nact],
             joint_vel: vec![0.0; nact],
+            final_obs: None,
+            tuner: tuned.then(|| ThreadTuner::new(threads)),
         };
 
         for sim in 0..count {
@@ -188,35 +166,55 @@ impl<'a> Envs<'a> {
     }
 
     pub fn observe(&mut self, out: &mut [f32]) {
+        let width = self.robot.nobs();
+
+        for sim in 0..self.count {
+            self.observe_one(sim, &mut out[sim * width..(sim + 1) * width]);
+        }
+    }
+
+    fn observe_one(&mut self, sim: usize, obs: &mut [f32]) {
         let robot = self.robot;
         let layout = robot.layout;
         let nact = robot.nact;
-        let width = 12 + 3 * nact;
+        let row = self.batch.row(sim);
+        let qpos = &row[layout.qpos..];
+        let qvel = &row[layout.qvel..];
+        let d = robot.root_dof;
+        let quat = &qpos[robot.root_qpos + 3..robot.root_qpos + 7];
+        let g = rotate_into_frame(quat, [0.0, 0.0, -1.0]);
+        let w = [qvel[d + 3], qvel[d + 4], qvel[d + 5]];
+        let v = rotate_into_frame(quat, [qvel[d], qvel[d + 1], qvel[d + 2]]);
+        let last = &self.last_action[sim * nact..(sim + 1) * nact];
 
-        for sim in 0..self.count {
-            let row = self.batch.row(sim);
-            let obs = &mut out[sim * width..(sim + 1) * width];
-            let qpos = &row[layout.qpos..];
-            let qvel = &row[layout.qvel..];
-            let d = robot.root_dof;
-            let quat = &qpos[robot.root_qpos + 3..robot.root_qpos + 7];
-            let g = rotate_into_frame(quat, [0.0, 0.0, -1.0]);
-            let w = [qvel[d + 3], qvel[d + 4], qvel[d + 5]];
-            let v = rotate_into_frame(quat, [qvel[d], qvel[d + 1], qvel[d + 2]]);
-            let last = &self.last_action[sim * nact..(sim + 1) * nact];
+        for k in 0..3 {
+            obs[k] = g[k] as f32;
+            obs[3 + k] = w[k] as f32;
+            obs[6 + k] = v[k] as f32;
+            obs[9 + k] = robot.job.command[k] as f32;
+        }
 
-            for k in 0..3 {
-                obs[k] = g[k] as f32;
-                obs[3 + k] = w[k] as f32;
-                obs[6 + k] = v[k] as f32;
-                obs[9 + k] = robot.job.command[k] as f32;
-            }
+        for j in 0..nact {
+            obs[12 + j] = (qpos[robot.joint_qpos[j]] - robot.job.default_pose[j]) as f32;
+            obs[12 + nact + j] = qvel[robot.joint_dof[j]] as f32;
+            obs[12 + 2 * nact + j] = last[j] as f32;
+        }
+    }
 
-            for j in 0..nact {
-                obs[12 + j] = (qpos[robot.joint_qpos[j]] - robot.job.default_pose[j]) as f32;
-                obs[12 + nact + j] = qvel[robot.joint_dof[j]] as f32;
-                obs[12 + 2 * nact + j] = last[j] as f32;
-            }
+    pub fn keep_final_obs(&mut self) {
+        self.final_obs = Some(vec![0.0; self.count * self.robot.nobs()]);
+    }
+
+    pub fn final_obs(&self) -> &[f32] {
+        self.final_obs.as_deref().unwrap_or(&[])
+    }
+
+    fn store_final_obs(&mut self, sim: usize) {
+        let width = self.robot.nobs();
+
+        if let Some(mut store) = self.final_obs.take() {
+            self.observe_one(sim, &mut store[sim * width..(sim + 1) * width]);
+            self.final_obs = Some(store);
         }
     }
 
@@ -278,8 +276,14 @@ impl<'a> Envs<'a> {
         let write_seconds = timer.elapsed().as_secs_f64();
         let physics_timer = Instant::now();
         let failed = self.batch.step(self.robot.decimation);
+        let physics_seconds = physics_timer.elapsed().as_secs_f64();
 
-        phases.physics += physics_timer.elapsed().as_secs_f64();
+        phases.physics += physics_seconds;
+
+        if let Some(threads) = self.tuner.as_mut().and_then(|t| t.record(physics_seconds)) {
+            self.batch.rethread(threads, &RANDOMIZED_FIELDS)?;
+        }
+
         phases.reward += write_seconds;
 
         if failed > 0 {
@@ -342,6 +346,7 @@ impl<'a> Envs<'a> {
             self.last_action[sim * nact..(sim + 1) * nact].copy_from_slice(&self.action[sim * nact..(sim + 1) * nact]);
 
             if fell || timeout {
+                self.store_final_obs(sim);
                 self.reset(sim);
             }
         }

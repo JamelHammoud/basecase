@@ -1,11 +1,12 @@
+use crate::algorithm::{self, Algorithm};
 use crate::envs::Envs;
 use crate::evaluate::{evaluate_clean, evaluate_seeds, Trained as EvalRun};
 use crate::events::{emit, status};
 use crate::export::{write_check, write_onnx, write_policy, Trained as ExportRun};
+use crate::gates;
 use crate::job::{self, Job};
 use crate::kernels::Math;
 use crate::platform::{install_stop_handlers, raise_thread_priority, stop_requested};
-use crate::ppo::Ppo;
 use crate::robot::Robot;
 use forge_mujoco::Model;
 use serde_json::{json, Value};
@@ -21,95 +22,109 @@ fn should_stop(folder: &Path) -> bool {
     stop_requested() || folder.join("stop").exists()
 }
 
-fn save_policy(folder: &Path, ppo: &Ppo) -> Result<(), String> {
+fn save_policy(folder: &Path, robot: &Robot, algo: &dyn Algorithm, steps: u64) -> Result<(), String> {
+    let policy = algo.deployed();
     let run = ExportRun {
-        robot: ppo.envs.robot,
-        learner: &ppo.learner,
-        norm: &ppo.norm,
+        robot,
+        policy: &policy,
+        norm: algo.norm(),
     };
 
-    write_policy(&folder.join("policy.json"), &run, ppo.steps)
+    write_policy(&folder.join("policy.json"), &run, steps)
 }
 
-fn gate_reached(ppo: &mut Ppo, job: &Job, iteration: usize) -> Result<bool, String> {
-    let due = job
-        .gate_every
-        .is_some_and(|every| every > 0 && iteration.is_multiple_of(every));
-
-    if !due {
-        return Ok(false);
-    }
-
-    let seeds = job.eval_seeds.unwrap_or(32);
-    let mut run = EvalRun {
-        robot: ppo.envs.robot,
-        learner: &mut ppo.learner,
-        norm: &ppo.norm,
-        math: &ppo.math,
-    };
-    let result = evaluate_seeds(&mut run, seeds)?;
-    let mut event = json!({ "type": "gate", "iteration": iteration, "steps": ppo.steps });
-
-    if let (Value::Object(target), Value::Object(fields)) = (&mut event, result.to_json()) {
-        target.extend(fields);
-    }
-
-    emit(&event);
-
-    Ok(result.reached())
+struct Clock {
+    last_tick: Instant,
+    elapsed: f64,
 }
 
-fn train_loop(ppo: &mut Ppo, folder: &Path, budget: f64) -> Result<(), String> {
-    let job = ppo.envs.robot.job.clone();
-    let control_dt = ppo.envs.robot.control_dt;
-    let mut last_tick = Instant::now();
-    let mut last_save = last_tick;
-    let mut elapsed = 0.0f64;
-    let mut iteration = 0usize;
-
-    while !should_stop(folder) && elapsed < budget && job.max_iterations.is_none_or(|limit| iteration < limit) {
-        ppo.iterate()?;
-        iteration += 1;
-
+impl Clock {
+    fn tick(&mut self) -> f64 {
         let now = Instant::now();
 
-        elapsed += now.duration_since(last_tick).as_secs_f64().min(MAX_ITERATION_GAP_S);
-        last_tick = now;
-        ppo.trim_recent();
-        emit(&json!({
-            "type": "progress",
-            "iteration": iteration,
-            "steps": ppo.steps,
-            "elapsedS": elapsed,
-            "budgetS": budget,
-            "reward": ppo.last_reward_mean / (control_dt * REWARD_RATE_HZ),
-            "episodeS": ppo.mean_episode_seconds(),
-            "fps": ppo.steps as f64 / elapsed.max(1e-6),
-            "phases": ppo.phases.to_json(),
-        }));
+        self.elapsed += now
+            .duration_since(self.last_tick)
+            .as_secs_f64()
+            .min(MAX_ITERATION_GAP_S);
+        self.last_tick = now;
 
-        if last_save.elapsed().as_secs_f64() > SAVE_EVERY_S {
-            save_policy(folder, ppo)?;
-            last_save = Instant::now();
-        }
-
-        if gate_reached(ppo, &job, iteration)? {
-            break;
-        }
+        self.elapsed
     }
-
-    Ok(())
 }
 
-fn finish(ppo: &mut Ppo, folder: &Path, stopped: bool) -> Result<(), String> {
-    status("Checking the policy");
-    save_policy(folder, ppo)?;
+fn emit_progress(robot: &Robot, algo: &mut dyn Algorithm, iteration: usize, clock: &mut Clock) -> u64 {
+    let elapsed = clock.tick();
+    let report = algo.report();
+    let budget = robot.job.minutes * 60.0;
 
-    let robot = ppo.envs.robot;
+    emit(&json!({
+        "type": "progress",
+        "iteration": iteration,
+        "steps": report.steps,
+        "elapsedS": elapsed,
+        "budgetS": budget,
+        "reward": report.reward_mean / (robot.control_dt * REWARD_RATE_HZ),
+        "episodeS": report.episode_seconds,
+        "fps": report.steps as f64 / elapsed.max(1e-6),
+        "phases": report.phases.to_json(),
+    }));
+
+    report.steps
+}
+
+fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<u64, String> {
+    let job = &robot.job;
+    let budget = job.minutes * 60.0;
+    let mut clock = Clock {
+        last_tick: Instant::now(),
+        elapsed: 0.0,
+    };
+    let mut last_save = Instant::now();
+    let mut iteration = 0usize;
+    let mut steps = 0u64;
+
+    std::thread::scope(|scope| {
+        let mut pending: Option<gates::Pending> = None;
+
+        while !should_stop(folder) && clock.elapsed < budget && job.max_iterations.is_none_or(|limit| iteration < limit)
+        {
+            algo.iterate()?;
+            iteration += 1;
+            steps = emit_progress(robot, algo, iteration, &mut clock);
+
+            if last_save.elapsed().as_secs_f64() > SAVE_EVERY_S {
+                save_policy(folder, robot, algo, steps)?;
+                last_save = Instant::now();
+            }
+
+            let due = gates::due(robot, iteration);
+
+            if (due || gates::is_finished(&pending)) && pending.take().map(gates::finish).transpose()? == Some(true) {
+                return Ok(steps);
+            }
+
+            if due {
+                pending = Some(gates::start(scope, robot, algo, (iteration, steps)));
+            }
+        }
+
+        if let Some(last) = pending {
+            gates::finish(last)?;
+        }
+
+        Ok(steps)
+    })
+}
+
+fn finish(robot: &Robot, algo: &dyn Algorithm, folder: &Path, steps: u64) -> Result<(), String> {
+    status("Checking the policy");
+    save_policy(folder, robot, algo, steps)?;
+
+    let mut policy = algo.deployed();
     let export = ExportRun {
         robot,
-        learner: &ppo.learner,
-        norm: &ppo.norm,
+        policy: &policy,
+        norm: algo.norm(),
     };
 
     if let Err(reason) = write_onnx(&folder.join("policy.onnx"), &export) {
@@ -118,9 +133,10 @@ fn finish(ppo: &mut Ppo, folder: &Path, stopped: bool) -> Result<(), String> {
 
     let mut eval_run = EvalRun {
         robot,
-        learner: &mut ppo.learner,
-        norm: &ppo.norm,
-        math: &ppo.math,
+        policy: &mut policy,
+        norm: algo.norm(),
+        math: algo.math(),
+        threads: None,
     };
     let (clean, samples) = evaluate_clean(&mut eval_run)?;
     let gate = match robot.job.eval_seeds {
@@ -132,8 +148,8 @@ fn finish(ppo: &mut Ppo, folder: &Path, stopped: bool) -> Result<(), String> {
     emit(&json!({
         "type": "done",
         "policy": folder.join("policy.json").to_string_lossy(),
-        "steps": ppo.steps,
-        "stopped": stopped,
+        "steps": steps,
+        "stopped": should_stop(folder),
         "eval": clean,
         "gate": gate,
     }));
@@ -141,31 +157,33 @@ fn finish(ppo: &mut Ppo, folder: &Path, stopped: bool) -> Result<(), String> {
     Ok(())
 }
 
+fn learner_threads() -> usize {
+    std::thread::available_parallelism().map_or(4, |c| c.get()).div_ceil(2)
+}
+
 pub fn train(folder: &Path) -> Result<(), String> {
     raise_thread_priority();
     install_stop_handlers();
 
-    let job = job::load(folder)?;
-    let budget = job.minutes * 60.0;
+    let job: Job = job::load(folder)?;
     let seed = job.seed;
     let envs_count = job.envs;
+    let kind = job.algo;
 
     status("Building environments");
 
     let model = Model::load(&folder.join("model.xml"))?;
     let robot = Robot::load(model, job)?;
     let envs = Envs::new(&robot, envs_count, seed + ENV_SEED_OFFSET, true)?;
-    let learner_threads = std::thread::available_parallelism().map_or(4, |c| c.get()).div_ceil(2);
-    let mut ppo = Ppo::new(envs, seed, Math::native(learner_threads));
+    let mut algo = algorithm::build(kind, envs, seed, Math::native(learner_threads()));
 
     if !robot.holds_pose {
         status("Can't hold the pose without help. Training from a fall.");
     }
 
     status(&format!("Training on {envs_count} robots"));
-    train_loop(&mut ppo, folder, budget)?;
 
-    let stopped = should_stop(folder);
+    let steps = train_loop(&robot, algo.as_mut(), folder)?;
 
-    finish(&mut ppo, folder, stopped)
+    finish(&robot, algo.as_ref(), folder, steps)
 }

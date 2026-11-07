@@ -1,10 +1,10 @@
-use crate::envs::{Envs, StepResult};
+use crate::deployed::Deployed;
+use crate::envs::{Envs, EnvsSpec, StepResult};
 use crate::events::Phases;
 use crate::job::Task;
 use crate::kernels::Math;
 use crate::normalizer::Normalizer;
 use crate::robot::Robot;
-use crate::update::Learner;
 use serde_json::{json, Value};
 
 const EVAL_SECONDS: f64 = 8.0;
@@ -19,9 +19,10 @@ pub struct CheckSample {
 
 pub struct Trained<'a> {
     pub robot: &'a Robot,
-    pub learner: &'a mut Learner,
+    pub policy: &'a mut Deployed,
     pub norm: &'a Normalizer,
     pub math: &'a Math,
+    pub threads: Option<usize>,
 }
 
 struct StepBuffers {
@@ -52,19 +53,16 @@ impl StepBuffers {
     }
 }
 
-pub fn exact_action(learner: &Learner, norm: &Normalizer, obs: &[f32]) -> Vec<f32> {
+pub fn exact_action(policy: &Deployed, norm: &Normalizer, obs: &[f32]) -> Vec<f32> {
     let mut normalized = vec![0.0f32; obs.len()];
 
     norm.apply(obs, &mut normalized);
-
-    let output = learner.actor.forward_exact(&learner.params, &normalized);
-
-    output.iter().map(|a| a.clamp(-1.0, 1.0)).collect()
+    policy.exact(&normalized)
 }
 
 pub fn evaluate_clean(run: &mut Trained) -> Result<(Value, Vec<CheckSample>), String> {
     let robot = run.robot;
-    let nobs = run.learner.nobs;
+    let nobs = run.robot.nobs();
     let mut envs = Envs::new(robot, 1, EVAL_SEED, false)?;
     let mut buffers = StepBuffers::new(1, nobs);
     let mut phases = Phases::default();
@@ -82,7 +80,7 @@ pub fn evaluate_clean(run: &mut Trained) -> Result<(Value, Vec<CheckSample>), St
         run.norm.apply(&buffers.obs, &mut buffers.normalized);
 
         if k % stride == 0 && samples.len() < CHECK_SAMPLES {
-            let action = exact_action(run.learner, run.norm, &buffers.obs);
+            let action = exact_action(run.policy, run.norm, &buffers.obs);
 
             samples.push(CheckSample {
                 obs: buffers.obs.clone(),
@@ -90,7 +88,7 @@ pub fn evaluate_clean(run: &mut Trained) -> Result<(Value, Vec<CheckSample>), St
             });
         }
 
-        let action = run.learner.act_mean(run.math, &buffers.normalized, 1).to_vec();
+        let action = run.policy.act(run.math, &buffers.normalized, 1).to_vec();
 
         envs.clear_step_counts();
         envs.step(&action, buffers.result(), &mut phases)?;
@@ -110,10 +108,10 @@ pub fn evaluate_clean(run: &mut Trained) -> Result<(Value, Vec<CheckSample>), St
         run.norm.apply(&buffers.obs, &mut buffers.normalized);
         samples.push(CheckSample {
             obs: buffers.obs.clone(),
-            action: exact_action(run.learner, run.norm, &buffers.obs),
+            action: exact_action(run.policy, run.norm, &buffers.obs),
         });
 
-        let action = run.learner.act_mean(run.math, &buffers.normalized, 1).to_vec();
+        let action = run.policy.act(run.math, &buffers.normalized, 1).to_vec();
 
         envs.step(&action, buffers.result(), &mut phases)?;
     }
@@ -157,9 +155,15 @@ impl GateResult {
 
 pub fn evaluate_seeds(run: &mut Trained, seeds: usize) -> Result<GateResult, String> {
     let robot = run.robot;
-    let nobs = run.learner.nobs;
+    let nobs = run.robot.nobs();
     let job = &robot.job;
-    let mut envs = Envs::new(robot, seeds, job.seed + GATE_SEED_OFFSET, false)?;
+    let spec = EnvsSpec {
+        count: seeds,
+        seed: job.seed + GATE_SEED_OFFSET,
+        randomized: false,
+        threads: run.threads.or(job.threads),
+    };
+    let mut envs = Envs::build(robot, spec)?;
     let mut buffers = StepBuffers::new(seeds, nobs);
     let mut phases = Phases::default();
     let steps = (EVAL_SECONDS / robot.control_dt) as usize;
@@ -170,7 +174,7 @@ pub fn evaluate_seeds(run: &mut Trained, seeds: usize) -> Result<GateResult, Str
         envs.observe(&mut buffers.obs);
         run.norm.apply(&buffers.obs, &mut buffers.normalized);
 
-        let action = run.learner.act_mean(run.math, &buffers.normalized, seeds).to_vec();
+        let action = run.policy.act(run.math, &buffers.normalized, seeds).to_vec();
 
         envs.clear_step_counts();
         envs.step(&action, buffers.result(), &mut phases)?;

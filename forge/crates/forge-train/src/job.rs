@@ -14,8 +14,34 @@ pub enum Task {
     Walk,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Algo {
+    Ppo,
+    FastSac,
+    FlashSac,
+}
+
+impl Algo {
+    fn parse(name: Option<&str>) -> Result<Self, String> {
+        match name {
+            None | Some("ppo") => Ok(Algo::Ppo),
+            Some("fastsac") => Ok(Algo::FastSac),
+            Some("flashsac") => Ok(Algo::FlashSac),
+            Some(other) => Err(format!("job.json asks for an unknown algo {other}")),
+        }
+    }
+
+    fn default_envs(self) -> usize {
+        match self {
+            Algo::Ppo => 64,
+            Algo::FastSac | Algo::FlashSac => 256,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Job {
+    pub algo: Algo,
     pub task: Task,
     pub task_name: String,
     pub robot_name: String,
@@ -112,8 +138,10 @@ fn initial_joints(root: &Value) -> Result<Vec<(String, f64)>, String> {
 pub fn parse(root: &Value) -> Result<Job, String> {
     let task_name = text(root, "task")?;
     let task = if task_name == "stand" { Task::Stand } else { Task::Walk };
+    let algo = Algo::parse(root.get("algo").and_then(Value::as_str))?;
 
     Ok(Job {
+        algo,
         task,
         task_name,
         robot_name: root
@@ -136,7 +164,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         gate_every: optional_count(root, "gateEvery"),
         eval_seeds: optional_count(root, "evalSeeds"),
         gate_speed: root.get("gateSpeed").and_then(Value::as_f64).unwrap_or(0.2),
-        envs: optional_count(root, "envs").unwrap_or(64),
+        envs: optional_count(root, "envs").unwrap_or(algo.default_envs()),
         threads: optional_count(root, "threads"),
     })
 }
@@ -170,6 +198,17 @@ mod tests {
         assert_eq!(job.joints[0].name, "j0");
         assert_eq!(job.initial_joints, vec![("j0".to_owned(), 0.2)]);
         assert_eq!(job.gate_speed, 0.2);
+        assert_eq!(job.algo, super::Algo::Ppo);
+    }
+
+    #[test]
+    fn reads_the_off_policy_algorithms() {
+        let mut job = sample();
+
+        job["algo"] = json!("flashsac");
+        assert_eq!(parse(&job).expect("job parses").algo, super::Algo::FlashSac);
+        job["algo"] = json!("dqn");
+        assert!(parse(&job).expect_err("must fail").contains("dqn"));
     }
 
     #[test]

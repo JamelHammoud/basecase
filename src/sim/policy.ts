@@ -24,6 +24,7 @@ export interface PolicySpec {
   obsStd: number[];
   layers: PolicyLayer[];
   activation: 'elu' | 'tanh';
+  squash?: 'tanh';
   trainedSteps: number;
   mujoco: string;
   createdAt: string;
@@ -110,6 +111,8 @@ export function act(spec: PolicySpec, obs: Float32Array): Float32Array {
 
     x = y;
   });
+
+  if (spec.squash === 'tanh') for (let i = 0; i < x.length; i++) x[i] = Math.tanh(x[i]);
 
   for (let i = 0; i < x.length; i++) x[i] = Math.max(-1, Math.min(1, x[i]));
 

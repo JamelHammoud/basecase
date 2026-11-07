@@ -1,3 +1,4 @@
+use crate::deployed::Squash;
 use crate::mlp::Mlp;
 
 const IR_VERSION: u64 = 8;
@@ -12,6 +13,7 @@ pub struct Policy<'a> {
     pub params: &'a [f32],
     pub mean: &'a [f32],
     pub std: &'a [f32],
+    pub squash: Squash,
 }
 
 #[derive(Default)]
@@ -189,7 +191,12 @@ pub fn encode(policy: &Policy) -> Vec<u8> {
         initializers: Vec::new(),
     };
     let normalized = builder.normalize_input(policy);
-    let last = builder.add_layers(policy, normalized);
+    let mut last = builder.add_layers(policy, normalized);
+
+    if policy.squash == Squash::Tanh {
+        builder.nodes.push(node("Tanh", "squash", &[&last], "squashed"));
+        last = "squashed".to_owned();
+    }
 
     builder.clip_output(&last);
 
@@ -223,6 +230,7 @@ pub fn encode(policy: &Policy) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::{encode, varint, Policy};
+    use crate::deployed::Squash;
     use crate::mlp::Mlp;
 
     #[test]
@@ -246,6 +254,7 @@ mod tests {
             params: &params,
             mean: &[0.0, 0.0],
             std: &[1.0, 1.0],
+            squash: Squash::Tanh,
         };
         let bytes = encode(&policy);
         let contains = |needle: &[u8]| bytes.windows(needle.len()).any(|w| w == needle);
@@ -253,6 +262,7 @@ mod tests {
         assert!(contains(b"obs"));
         assert!(contains(b"action"));
         assert!(contains(b"Elu"));
+        assert!(contains(b"Tanh"));
         assert_eq!(bytes[0], 0x08);
         assert_eq!(bytes[1], 8);
     }

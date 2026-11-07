@@ -124,6 +124,10 @@ fn actuator_limits(model: &Model, actuators: &[usize]) -> (Vec<f64>, Vec<f64>) {
 }
 
 impl Robot {
+    pub fn nobs(&self) -> usize {
+        12 + 3 * self.nact
+    }
+
     pub fn load(model: Model, job: Job) -> Result<Self, String> {
         let timestep = model.timestep();
         let decimation = ((job.control_dt / timestep).round_ties_even() as usize).max(1);

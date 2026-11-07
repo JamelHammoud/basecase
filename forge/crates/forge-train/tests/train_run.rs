@@ -112,7 +112,10 @@ fn rewards(events: &[Value]) -> Vec<f64> {
 #[test]
 fn tuning_physics_threads_never_changes_the_run() {
     let tuned = run(&job_folder("tuned", json!({ "envs": 16, "maxIterations": 14 })));
-    let fixed = run(&job_folder("fixed", json!({ "envs": 16, "maxIterations": 14, "threads": 3 })));
+    let fixed = run(&job_folder(
+        "fixed",
+        json!({ "envs": 16, "maxIterations": 14, "threads": 3 }),
+    ));
 
     assert_eq!(rewards(&tuned).len(), 14);
     assert_eq!(rewards(&tuned), rewards(&fixed));

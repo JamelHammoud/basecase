@@ -120,6 +120,7 @@ export function substepsAtLeast(backend, minimum, options = {}) {
 
   return {
     name: `${backend} sustains ${minimum / 1000}K substeps/s for ${seconds} s at ${envs} envs`,
+    timed: true,
     run: () => {
       const r = sh(SIM_BIN, [
         '--bench',

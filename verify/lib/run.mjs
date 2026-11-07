@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT, VERIFY_DIR } from './gate.mjs';
+import { waitForQuiet } from './lease.mjs';
 
 export const STATUS_FILE = path.join(VERIFY_DIR, 'status.json');
 export const MANIFEST_FILE = path.join(VERIFY_DIR, 'manifest.json');
@@ -54,6 +56,27 @@ async function runOne(item) {
   }
 }
 
+async function runTimed(item, { quiet, log }) {
+  const before = await quiet({ log });
+
+  if (!before.quiet) {
+    return {
+      name: item.name,
+      ok: false,
+      busy: true,
+      detail: `Machine stayed busy (load ${before.load.toFixed(1)}), so this timed check didn't run`,
+      metrics: {},
+      seconds: 0,
+    };
+  }
+
+  const r = await runOne(item);
+
+  return { ...r, metrics: { ...r.metrics, loadBefore: before.load, loadAfter: os.loadavg()[0] } };
+}
+
+const runCheck = (item, opts) => (item.timed ? runTimed(item, opts) : runOne(item));
+
 export function canaryOutcome(result) {
   return {
     ...result,
@@ -62,12 +85,12 @@ export function canaryOutcome(result) {
   };
 }
 
-export async function runGate(gate, log = () => {}) {
+export async function runGate(gate, log = () => {}, quiet = waitForQuiet) {
   const checks = [];
   const canaries = [];
 
   for (const c of gate.checks) {
-    const r = await runOne(c);
+    const r = await runCheck(c, { quiet, log });
 
     checks.push(r);
     log(`  ${r.ok ? 'pass' : 'FAIL'}  ${c.name}${r.detail ? ` (${r.detail.split('\n')[0]})` : ''}`);
@@ -80,7 +103,8 @@ export async function runGate(gate, log = () => {}) {
     log(`  ${r.ok ? 'pass' : 'FAIL'}  canary: ${c.name}`);
   }
 
-  const voided = !gate.canaries?.length;
+  const busy = checks.some((c) => c.busy);
+  const voided = (!gate.canaries?.length && 'no canaries') || (busy && 'machine busy') || false;
   const ok = checks.every((c) => c.ok) && canaries.every((c) => c.ok);
 
   return { id: gate.id, title: gate.title, stage: gate.stage, state: gate.state, ok, voided, checks, canaries };

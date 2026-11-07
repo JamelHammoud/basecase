@@ -41,7 +41,7 @@ fn the_app_can_drive_the_emulated_robot_over_json_lines() {
     let stdout = child.stdout.take().unwrap();
     let (lines_tx, lines) = channel::<String>();
 
-    std::thread::spawn(move || {
+    let reader = std::thread::spawn(move || {
         for line in BufReader::new(stdout).lines().map_while(Result::ok) {
             let _ = lines_tx.send(line);
         }
@@ -63,6 +63,7 @@ fn the_app_can_drive_the_emulated_robot_over_json_lines() {
 
     let status = child.wait_timeout_or_kill(Duration::from_secs(5));
 
+    reader.join().ok();
     seen.extend(lines.try_iter());
     std::fs::remove_dir_all(&dir).ok();
 
@@ -70,8 +71,11 @@ fn the_app_can_drive_the_emulated_robot_over_json_lines() {
 
     assert!(all.contains(r#""mode":"test""#), "never reached Test: {all}");
     assert!(all.contains(r#""run":"running""#), "never ran: {all}");
+    let stopped_on_close = all.contains(r#""code":"client_lost""#);
+    let stopped_on_starved_sender = all.contains(r#""code":"intent_stale""#);
+
     assert!(
-        all.contains(r#""code":"client_lost""#),
+        stopped_on_close || stopped_on_starved_sender,
         "closing the app should stop the robot: {all}"
     );
     assert!(

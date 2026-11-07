@@ -11,46 +11,46 @@
         {
           "name": "fixture robots classify and emit",
           "ok": true,
-          "detail": "0.5 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.478
+          "seconds": 0.718
         },
         {
           "name": "C MuJoCo reference computed for every fixture",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.176
+          "seconds": 0.173
         },
         {
           "name": "WASM matches C MuJoCo on every fixture",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.8 s",
           "metrics": {},
-          "seconds": 0.732
+          "seconds": 0.757
         },
         {
           "name": "sim regression tests pass",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.639
+          "seconds": 1.382
         },
         {
           "name": "train.py reports measured phase timers for a real run",
           "ok": true,
-          "detail": "21285 steps/s",
+          "detail": "21681 steps/s",
           "metrics": {
-            "fps": 21285.275793339533,
+            "fps": 21680.824372654566,
             "phases": {
-              "physics": 0.3319,
-              "observe": 0.0344,
-              "reward": 0.0515,
-              "inference": 0.1496,
-              "gradient": 0.8498
+              "physics": 0.3547,
+              "observe": 0.0331,
+              "reward": 0.0486,
+              "inference": 0.1274,
+              "gradient": 0.8307
             }
           },
-          "seconds": 4.722
+          "seconds": 4.352
         }
       ],
       "canaries": [
@@ -66,11 +66,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0
+          "seconds": 0.001
         }
       ],
-      "commit": "8494130",
-      "at": "2026-11-07T20:51:57.358Z",
+      "commit": "875e502",
+      "at": "2026-11-07T22:02:05.365Z",
       "manifest": "clean"
     },
     "s3-contract": {
@@ -84,23 +84,23 @@
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "6.2 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 6.233
+          "seconds": 0.312
         },
         {
           "name": "contract semantics hold and native matches WASM",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.685
+          "seconds": 0.625
         },
         {
           "name": "the committed WASM rebuilds byte for byte",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.471
+          "seconds": 1.166
         }
       ],
       "canaries": [
@@ -109,11 +109,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.054
+          "seconds": 0.034
         }
       ],
-      "commit": "f11af65",
-      "at": "2026-11-07T21:38:17.049Z",
+      "commit": "875e502",
+      "at": "2026-11-07T22:02:15.456Z",
       "manifest": "clean"
     },
     "s0-kernel-sandbox": {
@@ -237,8 +237,30 @@
           "ok": true,
           "detail": "",
           "metrics": {
-            "python": [76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800],
-            "forge": [76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800]
+            "python": [
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800
+            ],
+            "forge": [
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800,
+              76800
+            ]
           },
           "seconds": 165.915
         }
@@ -338,30 +360,30 @@
         {
           "name": "coordinator crate tests pass",
           "ok": true,
-          "detail": "5.7 s",
+          "detail": "0.1 s",
           "metrics": {},
-          "seconds": 5.654
+          "seconds": 0.12
         },
         {
           "name": "coordinator builds to WASM",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "0.0 s",
           "metrics": {},
-          "seconds": 0.781
+          "seconds": 0.024
         },
         {
           "name": "greeting Routine, compiler refusals, determinism and mutants",
           "ok": true,
-          "detail": "1.5 s",
+          "detail": "1.3 s",
           "metrics": {},
-          "seconds": 1.543
+          "seconds": 1.294
         },
         {
           "name": "Routine unit tests pass",
           "ok": true,
-          "detail": "0.6 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.555
+          "seconds": 0.44
         }
       ],
       "canaries": [
@@ -370,11 +392,216 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.447
+          "seconds": 0.408
         }
       ],
-      "commit": "695d68b",
-      "at": "2026-11-07T21:59:42.407Z",
+      "commit": "875e502",
+      "at": "2026-11-07T22:02:17.801Z",
+      "manifest": "clean"
+    },
+    "s2-m1-first-case": {
+      "id": "s2-m1-first-case",
+      "title": "First Case: Touch the Dots on two arms, with a world layer and live input",
+      "stage": 2,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "Touch the Dots passes on two arms; limp fails; refusals are plain",
+          "ok": true,
+          "detail": "0.8 s",
+          "metrics": {},
+          "seconds": 0.788
+        },
+        {
+          "name": "Case and drive unit tests pass",
+          "ok": true,
+          "detail": "1.4 s",
+          "metrics": {},
+          "seconds": 1.443
+        },
+        {
+          "name": "Types hold",
+          "ok": true,
+          "detail": "5.1 s",
+          "metrics": {},
+          "seconds": 5.067
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a Case whose reference never moves is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.532
+        }
+      ],
+      "commit": "875e502",
+      "at": "2026-11-07T22:02:13.260Z",
+      "manifest": "clean"
+    },
+    "s5-emu-daemon": {
+      "id": "s5-emu-daemon",
+      "title": "Servo emulators pass real client libraries; daemon handles the fault matrix",
+      "stage": 5,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "cargo test passes",
+          "ok": true,
+          "detail": "8.7 s",
+          "metrics": {},
+          "seconds": 8.721
+        },
+        {
+          "name": "tools build",
+          "ok": true,
+          "detail": "0.1 s",
+          "metrics": {},
+          "seconds": 0.051
+        },
+        {
+          "name": "Feetech SDK, unmodified, works against the emulator",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.245
+        },
+        {
+          "name": "Dynamixel SDK, unmodified, works against the emulator",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.099
+        },
+        {
+          "name": "every emulated behaviour has a source in the ledger",
+          "ok": true,
+          "detail": "48 entries",
+          "metrics": {},
+          "seconds": 0.002
+        },
+        {
+          "name": "default builds contain no real serial transport",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.055
+        },
+        {
+          "name": "fault handled: unplug_mid_packet",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.331
+        },
+        {
+          "name": "fault handled: brownout_resets_servo",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.325
+        },
+        {
+          "name": "fault handled: stuck_motor_overload",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.341
+        },
+        {
+          "name": "fault handled: corrupt_packets",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.338
+        },
+        {
+          "name": "fault handled: wrong_id_answer",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.328
+        },
+        {
+          "name": "fault handled: overheat",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.332
+        },
+        {
+          "name": "fault handled: latency_spike",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.338
+        },
+        {
+          "name": "fault handled: wrong_direction",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.327
+        },
+        {
+          "name": "fault handled: duplicate_id",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.323
+        },
+        {
+          "name": "fault handled: daemon_host_death",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.317
+        },
+        {
+          "name": "fault handled: policy_nan",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.469
+        },
+        {
+          "name": "fault handled: policy_hang",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 5.07
+        }
+      ],
+      "canaries": [
+        {
+          "name": "the client catches an emulator with broken checksums",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.178
+        },
+        {
+          "name": "the client catches a wrong model number",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.063
+        },
+        {
+          "name": "a fault test that does not exist is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.326
+        }
+      ],
+      "commit": "5fce7df",
+      "at": "2026-11-07T22:10:20.814Z",
       "manifest": "clean"
     }
   }

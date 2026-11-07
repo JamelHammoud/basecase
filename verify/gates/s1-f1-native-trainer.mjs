@@ -10,6 +10,7 @@ const TTS_OVER = { task: 'walk', command: [0.25, 0, 0], minutes: 20, gateEvery: 
 
 const speedRun = {
   name: 'Forge trains a real robot at 40K steps/s with the same events as train.py',
+  timed: true,
   run: () => {
     const dir = prepareJob('quad-servo', 'f1-speed', { minutes: 30, maxIterations: 60 });
     const r = runForge(dir);

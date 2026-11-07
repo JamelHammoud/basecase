@@ -19,3 +19,4 @@ internal
 .claude/worktrees
 forge/target
 **/target/
+verify/status.json

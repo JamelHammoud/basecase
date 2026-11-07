@@ -4,6 +4,7 @@ import { speedupAtLeast } from '../forge/tts.mjs';
 
 const speed = {
   name: 'Full GPU loop reaches 70K steps/s at 4096 envs',
+  timed: true,
   run: () => {
     const r = runForge(
       prepareJob('quad-servo', 'f5-speed', { minutes: 30, maxIterations: 10, envs: 4096, backend: 'metal' }),

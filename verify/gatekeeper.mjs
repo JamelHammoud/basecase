@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { VERIFY_DIR } from './lib/gate.mjs';
+import { takeLease } from './lib/lease.mjs';
 import {
   currentManifest,
   loadGates,
@@ -60,6 +61,7 @@ async function runGates(gates, wanted) {
   }
 
   let ok = true;
+  const release = await takeLease({ log: console.log });
 
   for (const g of chosen) {
     if (g.state === 'parked') {
@@ -73,9 +75,11 @@ async function runGates(gates, wanted) {
     const result = await runGate(g, console.log);
 
     saveResult(result);
-    console.log(`${g.id}: ${result.ok ? 'PASS' : 'FAIL'}${result.voided ? ' (void: no canaries)' : ''}`);
+    console.log(`${g.id}: ${result.ok ? 'PASS' : 'FAIL'}${result.voided ? ` (void: ${result.voided})` : ''}`);
     ok &&= result.ok && !result.voided;
   }
+
+  release();
 
   return ok;
 }

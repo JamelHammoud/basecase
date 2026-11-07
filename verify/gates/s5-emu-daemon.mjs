@@ -19,6 +19,8 @@ const FAULTS = [
   'policy_hang',
 ];
 
+const CONFORMANCE = path.join(ROOT, 'verify', 'hw', process.platform === 'darwin' ? 'pty_baud.py' : 'conformance.py');
+
 const conform = (family, extra = []) => {
   const r = sh('uv', [
     'run',
@@ -30,7 +32,7 @@ const conform = (family, extra = []) => {
     '--with',
     'pyserial',
     'python',
-    path.join(ROOT, 'verify/hw/conformance.py'),
+    CONFORMANCE,
     EMU,
     family,
     ...extra,
@@ -39,17 +41,28 @@ const conform = (family, extra = []) => {
   return r.ok ? pass() : fail((r.stderr || r.stdout).split('\n').slice(-4).join(' '));
 };
 
-const faultTest = (name) =>
-  shCheck(`fault handled: ${name}`, 'cargo', [
-    'test',
-    '--release',
-    '--manifest-path',
-    MANIFEST,
-    '--',
-    `fault_${name}`,
-    '--exact',
-    '--nocapture',
-  ]);
+const caughtFor = (expected, family, extra) => () => {
+  const r = conform(family, extra);
+
+  if (r.ok) return r;
+
+  return expected.test(r.detail) ? fail(r.detail) : pass(`Failed for another reason: ${r.detail}`);
+};
+
+const passedCount = (stdout) =>
+  [...stdout.matchAll(/test result: ok\. (\d+) passed/g)].reduce((n, m) => n + Number(m[1]), 0);
+
+const faultTest = (name) => ({
+  name: `fault handled: ${name}`,
+  run: () => {
+    const r = sh('cargo', ['test', '--release', '--manifest-path', MANIFEST, '--', `fault_${name}`, '--exact']);
+    const ran = passedCount(r.stdout);
+
+    if (!r.ok) return fail((r.stderr || r.stdout).split('\n').slice(-6).join('\n'));
+
+    return ran === 1 ? pass() : fail(`Expected exactly one test named fault_${name} to run, ran ${ran}`);
+  },
+});
 
 export default {
   id: 's5-emu-daemon',
@@ -94,8 +107,15 @@ export default {
   canaries: [
     {
       name: 'the client catches an emulator with broken checksums',
-      run: () => conform('feetech', ['--fault', 'bad-checksum']),
+      run: caughtFor(/'ping', 1/, 'feetech', ['--fault', 'bad-checksum']),
     },
-    { name: 'the client catches a wrong model number', run: () => conform('dynamixel', ['--fault', 'wrong-model']) },
+    {
+      name: 'the client catches a wrong model number',
+      run: caughtFor(/'model', 1201/, 'dynamixel', ['--fault', 'wrong-model']),
+    },
+    {
+      name: 'a fault test that does not exist is caught',
+      run: () => faultTest('no_such_fault_planted').run(),
+    },
   ],
 };

@@ -20,14 +20,17 @@ export default {
     parityAcrossFuzz('wgpu'),
     batchIdentity('wgpu'),
     substepsAtLeast('wgpu', 400000),
-    shCheck('a Chrome tab trains Stand to a passing eval within 15 min', 'npx', [
-      'vitest',
-      'run',
-      '--config',
-      'vitest.e2e.config.ts',
-      '-t',
-      'forge tab trains',
-    ]),
+    {
+      ...shCheck('a Chrome tab trains Stand to a passing eval within 15 min', 'npx', [
+        'vitest',
+        'run',
+        '--config',
+        'vitest.e2e.config.ts',
+        '-t',
+        'forge tab trains',
+      ]),
+      timed: true,
+    },
   ],
   canaries: [planted, plantedRollout],
 };

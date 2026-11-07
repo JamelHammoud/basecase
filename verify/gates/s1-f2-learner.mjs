@@ -25,6 +25,7 @@ const adam = {
 
 const speed = {
   name: 'Forge reaches 45K steps/s at 1024 envs',
+  timed: true,
   run: () => {
     const r = runForge(prepareJob('quad-servo', 'f2-speed', { minutes: 30, maxIterations: 20, envs: 1024 }));
     const fps = r.lines.filter((l) => l.type === 'progress').at(-1)?.fps ?? 0;

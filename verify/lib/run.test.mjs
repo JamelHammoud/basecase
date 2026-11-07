@@ -25,7 +25,7 @@ describe('gatekeeper', () => {
   });
 
   it('voids a gate with no canaries', async () => {
-    expect((await runGate(gate([named('a', pass())], []))).voided).toBe(true);
+    expect((await runGate(gate([named('a', pass())], []))).voided).toBe('no canaries');
   });
 
   it('turns a throwing check into a failure', async () => {

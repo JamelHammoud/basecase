@@ -41,9 +41,10 @@
     "lint:py": "uvx ruff check . && uvx ruff format --check .",
     "recipes:harvest": "node tools/recipes/harvest.mjs",
     "security": "node tools/security/audit.mjs",
-    "dist": "vite build && npm run build:forge && electron-builder --mac --arm64 --publish never",
-    "dist:win": "vite build && npm run build:forge && electron-builder --win --x64 --publish never",
+    "dist": "vite build && npm run build:forge && npm run build:daemon && electron-builder --mac --arm64 --publish never",
+    "dist:win": "vite build && npm run build:forge && npm run build:daemon && electron-builder --win --x64 --publish never",
     "build:forge": "cargo build --release --manifest-path forge/Cargo.toml -p forge-train && node tools/forge/stage.mjs",
+    "build:daemon": "cargo build --release --manifest-path hw/Cargo.toml -p robot-daemon && node tools/hw/stage.mjs",
     "test:app": "vitest run --config vitest.app.config.ts",
     "verify": "node verify/gatekeeper.mjs",
     "build:contract": "node tools/build-contract.mjs",
@@ -124,6 +125,10 @@
         {
           "from": "forge/dist",
           "to": "forge"
+        },
+        {
+          "from": "hw/dist",
+          "to": "hw"
         }
       ],
       "extendInfo": {
@@ -157,6 +162,10 @@
         {
           "from": "forge/dist",
           "to": "forge"
+        },
+        {
+          "from": "hw/dist",
+          "to": "hw"
         }
       ],
       "target": [

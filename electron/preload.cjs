@@ -74,6 +74,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('print:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown print call')),
+  robotConnect: (spec) => ipcRenderer.invoke('robot:connect', spec),
+  robotCommand: (command) => ipcRenderer.invoke('robot:command', command),
+  robotDisconnect: () => ipcRenderer.invoke('robot:disconnect'),
+  robotState: () => ipcRenderer.invoke('robot:state'),
+  onRobotEvent: (callback) => {
+    const handler = (_event, data) => callback(data);
+
+    ipcRenderer.on('robot:event', handler);
+
+    return () => ipcRenderer.removeListener('robot:event', handler);
+  },
   setMenuState: (state) => ipcRenderer.send('menu:state', state),
   popupAppMenu: (at) => ipcRenderer.invoke('menu:popup', at),
   onMenuCommand: (callback) => {

@@ -58,8 +58,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx vite build
-      - name: Build the Forge trainer
-        run: rustup toolchain install stable --profile minimal && npm run build:forge
+      - name: Build the Forge trainer and the robot daemon
+        run: rustup toolchain install stable --profile minimal && npm run build:forge && npm run build:daemon
       - name: Package the app, unsigned
         run: npx electron-builder ${{ matrix.target }} --dir --publish never -c.mac.forceCodeSigning=false
         env:

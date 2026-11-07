@@ -11,6 +11,8 @@ import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
+import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
+import { registerRobotHandlers } from './robot/robotRoutes.mjs';
 import { registerShareHandlers } from './shareFile.mjs';
 import { adoptShellPath } from './shellPath.mjs';
 import { storageMigration } from './storageMigration.mjs';
@@ -203,6 +205,15 @@ registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerShareHandlers(ipcMain);
 
+const robot = new RobotLink({
+  binary: daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot }),
+  emit: (event) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('robot:event', event);
+  },
+});
+
+registerRobotHandlers(ipcMain, robot);
+
 const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write', 'fullscreen']);
 
 function limitPermissions() {
@@ -263,6 +274,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('before-quit', () => {
+  robot.dispose();
   kernel.stop();
   updates.dispose();
   backend.trainer.dispose();

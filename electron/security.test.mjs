@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { AgentBridge } from './backend/agentBridge.mjs';
@@ -15,6 +16,9 @@ import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
+import { RobotLink } from './robot/robotLink.mjs';
+import { registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { checkedRobotSpec } from './robot/robotSpec.mjs';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -281,5 +285,55 @@ describe('CAD import sandbox', () => {
   it('runs the converter under the worker policy: no network, no nested workers', () => {
     expect(cspFor('/convert.js')).toBe(WORKER_CSP);
     expect(cspFor('/host.js')).toBe(PAGE_CSP);
+  });
+});
+
+describe('robot daemon', () => {
+  const ARM = { family: 'feetech', ids: [1, 2], class: 'arm', emulated: true };
+
+  it('refuses any port, real robot or smuggled argument, and starts nothing', () => {
+    const spawnFn = vi.fn();
+    const link = new RobotLink({ binary: fileURLToPath(import.meta.url), emit: () => {}, spawnFn });
+    const asks = [
+      { ...ARM, port: '/dev/cu.usbserial-0001' },
+      { ...ARM, emulated: false },
+      { ...ARM, emulated: 'true' },
+      { family: 'feetech', ids: [1], class: 'arm' },
+      { ...ARM, args: ['--port', '/dev/ttyUSB0'] },
+      { ...ARM, family: 'feetech --port /dev/ttyUSB0' },
+      { ...ARM, class: 'arm --port COM3' },
+      { ...ARM, ids: [0, 254] },
+      { ...ARM, ids: ['1 --port /dev/null'] },
+      { ...ARM, ids: Array.from({ length: 33 }, (_, i) => i + 1) },
+      Object.assign(Object.create({ port: '/dev/ttyUSB0' }), ARM),
+      null,
+      '--port /dev/ttyUSB0',
+    ];
+
+    for (const ask of asks) {
+      const reply = link.connect(ask);
+
+      expect(reply.ok, JSON.stringify(ask)).toBe(false);
+      expect(reply.message).toMatch(/\w+ \w+/);
+    }
+
+    expect(spawnFn).not.toHaveBeenCalled();
+    expect(checkedRobotSpec(ARM)).toEqual({ ok: true, spec: ARM });
+  });
+
+  it('answers robot channels only from the app frame', () => {
+    const handlers = new Map();
+    const ipcMain = { handle: (channel, fn) => handlers.set(channel, fn), on: () => {} };
+    const link = { connect: vi.fn(), command: vi.fn(), disconnect: vi.fn(), state: vi.fn() };
+
+    registerRobotHandlers(trustedIpc(ipcMain, 'app://basecase'), link);
+
+    for (const channel of ['robot:connect', 'robot:command', 'robot:disconnect', 'robot:state']) {
+      const evil = { senderFrame: { parent: null, url: 'https://example.com/' } };
+
+      expect(() => handlers.get(channel)(evil, ARM), channel).toThrow('Refused');
+    }
+
+    expect(link.connect).not.toHaveBeenCalled();
   });
 });

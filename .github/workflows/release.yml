@@ -67,8 +67,8 @@ jobs:
             || fail "the certificate is in no keychain as a Developer ID Application identity"
           echo "CSC_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
 
-      - name: Build the Forge trainer
-        run: rustup toolchain install stable --profile minimal && npm run build:forge
+      - name: Build the Forge trainer and the robot daemon
+        run: rustup toolchain install stable --profile minimal && npm run build:forge && npm run build:daemon
 
       - run: npx electron-builder --mac --arm64 --publish never
         env:
@@ -148,9 +148,9 @@ jobs:
 
       - run: npx vite build
 
-      - name: Build the Forge trainer
+      - name: Build the Forge trainer and the robot daemon
         shell: bash
-        run: rustup toolchain install stable --profile minimal && npm run build:forge
+        run: rustup toolchain install stable --profile minimal && npm run build:forge && npm run build:daemon
 
       - name: Build the installer, signed when signing is set up
         id: sign

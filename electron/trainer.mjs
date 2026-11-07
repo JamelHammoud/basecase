@@ -6,6 +6,19 @@ import { IS_WINDOWS } from './executables.mjs';
 import { findUv, UV_INSTALL } from './uv.mjs';
 
 const TRAINER_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'trainer');
+const REPO_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const FORGE_NAME = IS_WINDOWS ? 'forge-train.exe' : 'forge-train';
+
+export function forgeBinary(env = process.env, resources = process.resourcesPath) {
+  if (env.BASECASE_TRAINER === 'python') return null;
+
+  const candidates = [
+    resources && path.join(resources, 'forge', FORGE_NAME),
+    path.join(REPO_DIR, 'forge', 'target', 'release', FORGE_NAME),
+  ].filter(Boolean);
+
+  return candidates.find((file) => fs.existsSync(file)) ?? null;
+}
 
 function askToStop({ child, dir }) {
   try {
@@ -19,7 +32,9 @@ function askToStop({ child, dir }) {
   if (!IS_WINDOWS) child.kill('SIGTERM');
 }
 
-function spawnPython({ uv, dir, envDir }) {
+function spawnTrainer({ uv, dir, envDir, forge }) {
+  if (forge) return spawn(forge, ['--job', dir], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+
   return spawn(
     uv,
     ['run', '--project', TRAINER_DIR, '--frozen', 'python', '-u', path.join(TRAINER_DIR, 'train.py'), '--job', dir],
@@ -42,10 +57,11 @@ const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(
 export const PRIORITY = { user: 0, kit: 1 };
 
 export class Trainer {
-  constructor(libraryDir, emit, spawnTrainer = spawnPython) {
+  constructor(libraryDir, emit, spawnFn = spawnTrainer, forge = forgeBinary()) {
     this.libraryDir = libraryDir;
     this.emit = emit;
-    this.spawnTrainer = spawnTrainer;
+    this.spawnTrainer = spawnFn;
+    this.forge = forge;
     this.jobsDir = path.join(libraryDir, 'training');
     this.policiesDir = path.join(libraryDir, 'policies');
     this.envDir = path.join(libraryDir, 'trainer-env');
@@ -57,9 +73,10 @@ export class Trainer {
     const uv = findUv();
 
     return {
-      uv: !!uv,
+      uv: !!uv || !!this.forge,
       uvInstall: UV_INSTALL,
-      ready: fs.existsSync(path.join(this.envDir, 'pyvenv.cfg')),
+      ready: !!this.forge || fs.existsSync(path.join(this.envDir, 'pyvenv.cfg')),
+      engine: this.forge ? 'forge' : 'python',
       running: [...this.jobs.keys()],
       queued: this.queue.map((q) => q.workspaceId),
     };
@@ -69,9 +86,9 @@ export class Trainer {
     if (this.jobs.has(workspaceId) || this.queue.some((q) => q.workspaceId === workspaceId))
       throw new Error('This scene is already training.');
 
-    const uv = findUv();
+    const uv = this.forge ? null : findUv();
 
-    if (!uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
+    if (!this.forge && !uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
 
     const id = newId();
     const dir = path.join(this.jobsDir, id);
@@ -112,12 +129,12 @@ export class Trainer {
 
   launch(entry) {
     const { workspaceId, job, id, dir, uv } = entry;
-    const firstRun = !fs.existsSync(path.join(this.envDir, 'pyvenv.cfg'));
+    const firstRun = !this.forge && !fs.existsSync(path.join(this.envDir, 'pyvenv.cfg'));
     const send = this.sender(entry);
 
     send({ kind: 'status', message: firstRun ? 'Installing Python, MuJoCo and PyTorch (one time)' : 'Starting' });
 
-    const child = this.spawnTrainer({ uv, dir, envDir: this.envDir });
+    const child = this.spawnTrainer({ uv, dir, envDir: this.envDir, forge: this.forge });
     const running = { child, id, dir, job, stopping: false };
 
     this.jobs.set(workspaceId, running);

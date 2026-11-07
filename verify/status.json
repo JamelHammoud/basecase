@@ -262,6 +262,70 @@
       "commit": "b9012c5",
       "at": "2026-11-07T21:49:50.291Z",
       "manifest": "clean"
+    },
+    "s1-f1b-sysid-rewardlang": {
+      "id": "s1-f1b-sysid-rewardlang",
+      "title": "F1b: forge-id recovers planted parameters; RewardLang interpreter",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "forge-id recovers planted servo parameters to 3%",
+          "ok": true,
+          "detail": "9.0 s",
+          "metrics": {},
+          "seconds": 9.017
+        },
+        {
+          "name": "forge-id flags what it cannot identify",
+          "ok": true,
+          "detail": "4.9 s",
+          "metrics": {},
+          "seconds": 4.864
+        },
+        {
+          "name": "RewardLang matches hand-written reward terms",
+          "ok": true,
+          "detail": "3.5 s",
+          "metrics": {},
+          "seconds": 3.46
+        },
+        {
+          "name": "RewardLang rejects loops, unknown names and impure code",
+          "ok": true,
+          "detail": "0.1 s",
+          "metrics": {},
+          "seconds": 0.08
+        },
+        {
+          "name": "RewardLang kills NaN and blames the term",
+          "ok": true,
+          "detail": "0.1 s",
+          "metrics": {},
+          "seconds": 0.052
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a no-op identifier is caught by the same check",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.05
+        },
+        {
+          "name": "a wrong reward is caught by the same check",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.057
+        }
+      ],
+      "commit": "9fd2fab",
+      "at": "2026-11-07T21:54:04.955Z",
+      "manifest": "clean"
     }
   }
 }

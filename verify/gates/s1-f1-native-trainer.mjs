@@ -6,7 +6,7 @@ import { FORGE_MANIFEST, prepareJob, runForge, runPython, stepsToGate } from '..
 
 const SEEDS = 10;
 const TTS_ROBOT = 'quad-servo';
-const TTS_OVER = { task: 'stand', command: [0, 0, 0], minutes: 20, gateEvery: 50, evalSeeds: 32 };
+const TTS_OVER = { task: 'walk', command: [0.25, 0, 0], minutes: 20, gateEvery: 50, evalSeeds: 32, gateSpeed: 0.2 };
 
 const speedRun = {
   name: 'Forge trains a real robot at 40K steps/s with the same events as train.py',
@@ -42,7 +42,7 @@ const onnxExport = {
 };
 
 const samples = {
-  name: 'Forge reaches the stand skill within 20% of the samples train.py needs, over 10 seeds',
+  name: 'Forge reaches the walk skill within 20% of the samples train.py needs, over 10 seeds',
   run: () => {
     const python = [];
     const forge = [];

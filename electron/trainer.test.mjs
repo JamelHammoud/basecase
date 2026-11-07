@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { PRIORITY, Trainer } from './trainer.mjs';
+import { forgeBinary, PRIORITY, Trainer } from './trainer.mjs';
 
 vi.mock('./uv.mjs', () => ({ findUv: () => '/fake/uv', UV_INSTALL: 'install uv' }));
 
@@ -31,6 +31,7 @@ function trainer() {
 
       return c;
     },
+    null,
   );
 
   return { t, events, children };
@@ -106,5 +107,29 @@ describe('the training queue', () => {
     stopped.t.stop('a');
     stopped.children[0].emit('close', null, 'SIGTERM');
     expect(stopped.events.at(-1).message).toBe('Training stopped.');
+  });
+});
+
+describe('choosing the trainer', () => {
+  it('prefers a bundled Forge binary and needs no Python then', () => {
+    const resources = fs.mkdtempSync(path.join(os.tmpdir(), 'res-'));
+    const name = process.platform === 'win32' ? 'forge-train.exe' : 'forge-train';
+
+    fs.mkdirSync(path.join(resources, 'forge'));
+    fs.writeFileSync(path.join(resources, 'forge', name), '');
+    expect(forgeBinary({}, resources)).toBe(path.join(resources, 'forge', name));
+
+    const t = new Trainer(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'lib-')),
+      () => {},
+      () => fakeChild(),
+      'forge',
+    );
+
+    expect(t.status()).toMatchObject({ ready: true, engine: 'forge' });
+  });
+
+  it('lets a developer force the Python trainer', () => {
+    expect(forgeBinary({ BASECASE_TRAINER: 'python' }, '/nowhere')).toBeNull();
   });
 });

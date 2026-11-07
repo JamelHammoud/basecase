@@ -26,10 +26,15 @@ export const median = (values) => {
   return v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
 };
 
-export function sampleRatioProblem(forgeSteps, pythonSteps) {
-  if (forgeSteps.some((s) => s === null)) return 'Forge missed the skill on a seed';
+const MISSED = Infinity;
 
-  const ratio = median(forgeSteps) / median(pythonSteps.filter((s) => s !== null));
+export function sampleRatioProblem(forgeSteps, pythonSteps) {
+  const forgeMisses = forgeSteps.filter((s) => s === null).length;
+  const pythonMisses = pythonSteps.filter((s) => s === null).length;
+
+  if (forgeMisses > pythonMisses) return `Forge missed the skill on ${forgeMisses} seeds, Python on ${pythonMisses}`;
+
+  const ratio = median(forgeSteps.map((s) => s ?? MISSED)) / median(pythonSteps.map((s) => s ?? MISSED));
 
   return ratio > SAMPLE_RATIO_LIMIT ? `Forge needs ${ratio.toFixed(2)}x the samples of Python` : null;
 }

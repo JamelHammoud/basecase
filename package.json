@@ -38,8 +38,9 @@
     "lint:py": "uvx ruff check . && uvx ruff format --check .",
     "recipes:harvest": "node tools/recipes/harvest.mjs",
     "security": "node tools/security/audit.mjs",
-    "dist": "vite build && electron-builder --mac --arm64 --publish never",
-    "dist:win": "vite build && electron-builder --win --x64 --publish never",
+    "dist": "vite build && npm run build:forge && electron-builder --mac --arm64 --publish never",
+    "dist:win": "vite build && npm run build:forge && electron-builder --win --x64 --publish never",
+    "build:forge": "cargo build --release --manifest-path forge/Cargo.toml -p forge-train",
     "test:app": "vitest run --config vitest.app.config.ts",
     "verify": "node verify/gatekeeper.mjs",
     "build:contract": "node tools/build-contract.mjs"
@@ -112,6 +113,14 @@
         {
           "from": "build/icon/compiled/Assets.car",
           "to": "Assets.car"
+        },
+        {
+          "from": "forge/target/release/forge-train",
+          "to": "forge/forge-train"
+        },
+        {
+          "from": "forge/vendor/mujoco-3.17.0/mujoco.framework",
+          "to": "forge/mujoco.framework"
         }
       ],
       "extendInfo": {
@@ -138,6 +147,19 @@
     ],
     "generateUpdatesFilesForAllChannels": true,
     "win": {
+      "signExts": [
+        ".dll"
+      ],
+      "extraResources": [
+        {
+          "from": "forge/target/release/forge-train.exe",
+          "to": "forge/forge-train.exe"
+        },
+        {
+          "from": "forge/target/release/mujoco.dll",
+          "to": "forge/mujoco.dll"
+        }
+      ],
       "target": [
         {
           "target": "nsis",

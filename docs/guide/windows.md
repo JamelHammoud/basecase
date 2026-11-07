@@ -12,4 +12,5 @@ Basecase ships for macOS and Windows 11 (x64). Plan, status and the QA list: [do
 - **Symlinks** need Developer Mode on Windows: fall back to a copy (Codex's `auth.json` is kept in sync by newest mtime).
 - **Opening files:** `openFile` (print) or Electron's `shell`; never `open`.
 - **Line endings:** `.gitattributes` keeps every text file LF, so Prettier passes on Windows checkouts.
+- **The CAD kernel** runs in the same Chromium sandbox on Windows and macOS (§0h); nothing depends on the Node version. The packaged Windows app runs its kernel self-test in CI (`BASECASE_KERNEL_SELFTEST`, §0e), since Playwright can't drive it there.
 - `npm run check` and `npm run test:e2e` run on `windows-latest` for every push, and the app is packaged for Windows (not driven, §0e). A change that only works on one OS fails CI.

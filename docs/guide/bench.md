@@ -87,6 +87,6 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - New designs are judged on whether mechanisms are visible and credible: an actuator per DOF, a lift with rails and a carriage, visible wheels, a stability check, and somewhere for the electronics to live.
   - Benchmark hygiene:
     - Run each benchmark from an app snapshot.
-    - Preflight the CAD kernel, since a sandbox path error silently turns every part into a block.
+    - Preflight the CAD kernel, since a sandbox path error silently turns every part into a block. The bench compiles on the Node host (`BASECASE_NODE_KERNEL=1`), not the app's sandbox.
     - Never compare runs scored by different metric versions.
   - Compare block-out bounds with ratios measured in the photos before adding detail.

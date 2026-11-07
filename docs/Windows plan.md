@@ -11,7 +11,7 @@ Basecase on Windows 11 x64: what's done, what isn't verified yet, and how a rele
 | `electron:dev` without POSIX env syntax | Done | `tools/electron-hmr.mjs` |
 | Agent commands with spaces in paths | Done | `splitCommand` in `electron/executables.mjs` |
 | `node` / `uv` found on Windows, Electron's Node when there's no `node` | Done | `shellPath.mjs`, `uv.mjs` |
-| CAD kernel sandbox paths | Done, untested on Windows | `cad-kernel/client.mjs` |
+| CAD kernel in a Chromium sandbox | Done; CI runs the packaged self-test | `cad-kernel/sandbox/` |
 | Training stops and saves without signals | Done | `trainer.mjs`, `trainer/train.py` |
 | Codex sign-in without symlinks | Done | `codexProfile.mjs` |
 | Slicers in Program Files, Bambu Studio's config in `%APPDATA%` | Done, untested on Windows | `print/slicers.mjs`, `printers.mjs` |
@@ -35,7 +35,7 @@ Not done yet:
 - **Windows Share** in place of AirDrop (a Node-API addon like `native/sharing`).
 - **arm64** (Snapdragon). There are no native addons on Windows, so it's mostly an extra build target and a runner.
 - **A Windows icon** drawn for Windows. The macOS rendering (`build/icon/basecase-1024.png`) stands in.
-- **Kernel sandbox for most Windows users.** Few have Node 25+ installed, so the kernel falls back to Electron's Node 24 without the permission model (§0h). Shipping a pinned Node with the Windows build would close that.
+- **The CAD file converter** (`cadImport/`) still relies on Node's permission model, which Electron's Node 24 doesn't apply (§0h).
 - **Slicer versions** on Windows: they show no version (macOS reads `Info.plist`).
 
 ## Testing before a release

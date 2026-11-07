@@ -1,6 +1,6 @@
 # electron/cad-kernel/
 
-The sandboxed OpenSCAD / replicad kernel. Before editing here, read:
+The sandboxed OpenSCAD / replicad kernel: pure kernel logic here, the app's Chromium sandbox host in `sandbox/`, the test-only Node host in `nodeHost/`, and the MCP server's bridge client in `client.mjs`. Before editing here, read:
 
 - [Agent](../../docs/guide/agent.md) (§9)
 - [Security](../../docs/guide/security.md) (§0h)

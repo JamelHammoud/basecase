@@ -1,0 +1,15 @@
+[package]
+name = "bam-reference"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[dependencies]
+plant-bam = { path = "../../../hw/crates/plant-bam" }
+
+[profile.release]
+opt-level = 3
+overflow-checks = true

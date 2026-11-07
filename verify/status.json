@@ -179,6 +179,89 @@
       "commit": "2bf64ca",
       "at": "2026-11-07T21:44:06.393Z",
       "manifest": "clean"
+    },
+    "s1-f1-native-trainer": {
+      "id": "s1-f1-native-trainer",
+      "title": "F1: native PPO on C MuJoCo with no Python",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "cargo test passes",
+          "ok": true,
+          "detail": "15.7 s",
+          "metrics": {},
+          "seconds": 15.676
+        },
+        {
+          "name": "forge-train builds",
+          "ok": true,
+          "detail": "0.0 s",
+          "metrics": {},
+          "seconds": 0.048
+        },
+        {
+          "name": "forge-train links no Python",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.034
+        },
+        {
+          "name": "Forge trains a real robot at 40K steps/s with the same events as train.py",
+          "ok": true,
+          "detail": "43716 steps/s",
+          "metrics": {
+            "fps": 43716.24014125912
+          },
+          "seconds": 2.219
+        },
+        {
+          "name": "Forge exports a valid ONNX policy that matches its own actions",
+          "ok": true,
+          "detail": "worst 2.65e-6",
+          "metrics": {},
+          "seconds": 0.487
+        },
+        {
+          "name": "A Forge policy runs in the app with matching actions",
+          "ok": true,
+          "detail": "1.1 s",
+          "metrics": {},
+          "seconds": 1.089
+        },
+        {
+          "name": "Forge reaches the stand skill within 20% of the samples train.py needs, over 10 seeds",
+          "ok": true,
+          "detail": "",
+          "metrics": {
+            "python": [76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800],
+            "forge": [76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800, 76800]
+          },
+          "seconds": 165.915
+        }
+      ],
+      "canaries": [
+        {
+          "name": "events missing a field are rejected",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        },
+        {
+          "name": "needing too many samples is rejected",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        }
+      ],
+      "commit": "b9012c5",
+      "at": "2026-11-07T21:49:50.291Z",
+      "manifest": "clean"
     }
   }
 }

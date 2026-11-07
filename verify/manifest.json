@@ -1,8 +1,10 @@
 {
   "s0-foundation.mjs": "36d668d840e71e92873e336364ed97195722e5ff481c8a08b111dc1b336d6d5e",
+  "s0-kernel-sandbox.mjs": "eb41a602b1931cfd21110a5476811bd41f766a9f4db1fb764e942a60b24731a5",
   "s1-f1-native-trainer.mjs": "8ca85c3b7291aabee8e79de16126a69e722e1478e1493c6171997fcc583ecf41",
   "s1-f1b-sysid-rewardlang.mjs": "2450b1682062fa359b443a344b1f63bf328ee7070bb70918bf24e1e37cfebbdb",
   "s2-m1-first-case.mjs": "14dd76bbeed0e681e606c53579905ea696a3ba380597b49787961accec682064",
   "s3-contract.mjs": "e1399dd915db298a1f092b82788f6f2517ad4e5cc3cbb094ca7b7ff997af9c7b",
+  "s4-routines-core.mjs": "f2e032c49ac768561aca4d58857db8511b067df629a37f33f282c8d685ac446f",
   "s5-emu-daemon.mjs": "34e02c1619e980a6c3a01f86d5f3a3f3c0edfbadef58135edbc889fbdf87b4ba"
 }

@@ -1,8 +1,10 @@
 {
   "s0-foundation": 5,
+  "s0-kernel-sandbox": 4,
   "s1-f1-native-trainer": 7,
   "s1-f1b-sysid-rewardlang": 5,
   "s2-m1-first-case": 3,
   "s3-contract": 3,
+  "s4-routines-core": 4,
   "s5-emu-daemon": 18
 }

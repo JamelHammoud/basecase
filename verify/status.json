@@ -115,6 +115,70 @@
       "commit": "f11af65",
       "at": "2026-11-07T21:38:17.049Z",
       "manifest": "clean"
+    },
+    "s0-kernel-sandbox": {
+      "id": "s0-kernel-sandbox",
+      "title": "Agent-written CAD code runs in a Chromium sandbox on every OS",
+      "stage": 0,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "the app bundles",
+          "ok": true,
+          "detail": "9.5 s",
+          "metrics": {},
+          "seconds": 9.511
+        },
+        {
+          "name": "an unsigned app packages",
+          "ok": true,
+          "detail": "41.5 s",
+          "metrics": {},
+          "seconds": 41.537
+        },
+        {
+          "name": "kernel unit tests pass",
+          "ok": true,
+          "detail": "11.4 s",
+          "metrics": {},
+          "seconds": 11.377
+        },
+        {
+          "name": "renders OpenSCAD and replicad in the packaged app sandbox",
+          "ok": true,
+          "detail": "6.6 s",
+          "metrics": {},
+          "seconds": 6.646
+        },
+        {
+          "name": "probe: agent code cannot read files, use the network, spawn or reach Node",
+          "ok": true,
+          "detail": "5.5 s",
+          "metrics": {},
+          "seconds": 5.487
+        },
+        {
+          "name": "a hung part is killed, and the next part renders",
+          "ok": true,
+          "detail": "11.1 s",
+          "metrics": {},
+          "seconds": 11.13
+        }
+      ],
+      "canaries": [
+        {
+          "name": "the same probes, on an unsandboxed host, are seen to succeed",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.448
+        }
+      ],
+      "commit": "2bf64ca",
+      "at": "2026-11-07T21:44:06.393Z",
+      "manifest": "clean"
     }
   }
 }

@@ -8,6 +8,8 @@ export default {
   title: 'Agent-written CAD code runs in a Chromium sandbox on every OS',
   state: 'required',
   checks: [
+    shCheck('the app bundles', 'npx', ['vite', 'build']),
+    shCheck('an unsigned app packages', 'npx', ['electron-builder', '--dir', '--publish', 'never']),
     shCheck('kernel unit tests pass', 'npx', [
       'vitest',
       'run',

@@ -18,3 +18,4 @@ scratch
 internal
 .claude/worktrees
 forge/target
+**/target/

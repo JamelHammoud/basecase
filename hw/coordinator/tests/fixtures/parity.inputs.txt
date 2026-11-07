@@ -1,0 +1,1251 @@
+publish 0 0 -1 0
+publish 2 0 -1 0
+tick 0
+publish 0 0 -1 50
+publish 2 0 -1 50
+tick 50
+publish 0 0 -1 100
+publish 2 0 -1 100
+tick 100
+publish 0 0 -1 150
+publish 2 0 -1 150
+tick 150
+publish 0 0 -1 200
+publish 2 0 -1 200
+tick 200
+publish 0 0 -1 250
+publish 2 0 -1 250
+tick 250
+publish 0 0 -1 300
+publish 2 0 -1 300
+tick 300
+publish 0 0 -1 350
+publish 2 0 -1 350
+tick 350
+publish 0 0 -1 400
+publish 2 0 -1 400
+tick 400
+publish 0 0 -1 450
+publish 2 0 -1 450
+tick 450
+publish 0 0 -1 500
+publish 2 0 -1 500
+phase 1
+tick 500
+publish 0 0 -1 550
+publish 2 0 -1 550
+tick 550
+publish 0 0 -1 600
+publish 2 0 -1 600
+tick 600
+publish 0 0 -1 650
+publish 2 0 -1 650
+tick 650
+publish 0 0 -1 700
+publish 2 0 -1 700
+tick 700
+publish 0 0 -1 750
+publish 2 0 -1 750
+tick 750
+publish 0 0 -1 800
+publish 2 0 -1 800
+tick 800
+publish 0 0 -1 850
+publish 2 0 -1 850
+tick 850
+publish 0 0 -1 900
+publish 2 0 -1 900
+tick 900
+publish 0 0 -1 950
+publish 2 0 -1 950
+tick 950
+publish 0 1 -1 1000
+publish 2 0 -1 1000
+phase 1
+tick 1000
+publish 0 1 -1 1050
+publish 2 0 -1 1050
+tick 1050
+publish 0 1 -1 1100
+publish 2 0 -1 1100
+tick 1100
+publish 0 1 -1 1150
+publish 2 0 -1 1150
+tick 1150
+publish 0 1 -1 1200
+publish 2 0 -1 1200
+complete 2 1 0.83 7
+tick 1200
+publish 0 1 -1 1250
+publish 2 0 -1 1250
+tick 1250
+publish 0 1 -1 1300
+publish 2 0 -1 1300
+tick 1300
+publish 0 1 -1 1350
+publish 2 0 -1 1350
+tick 1350
+publish 0 1 -1 1400
+publish 2 0 -1 1400
+tick 1400
+publish 0 1 -1 1450
+publish 2 0 -1 1450
+tick 1450
+publish 0 1 -1 1500
+publish 2 0 -1 1500
+phase 1
+tick 1500
+publish 0 1 -1 1550
+publish 2 0 -1 1550
+tick 1550
+publish 0 1 -1 1600
+publish 2 0 -1 1600
+tick 1600
+publish 0 1 -1 1650
+publish 2 0 -1 1650
+tick 1650
+publish 0 1 -1 1700
+publish 2 0 -1 1700
+tick 1700
+publish 0 1 -1 1750
+publish 2 0 -1 1750
+tick 1750
+publish 0 1 -1 1800
+publish 2 0 -1 1800
+complete 3 1 0 -1
+tick 1800
+publish 0 1 -1 1850
+publish 2 0 -1 1850
+tick 1850
+publish 0 1 -1 1900
+publish 2 0 -1 1900
+tick 1900
+publish 0 1 -1 1950
+publish 2 0 -1 1950
+tick 1950
+publish 0 1 -1 2000
+publish 2 0 -1 2000
+phase 1
+tick 2000
+publish 0 1 -1 2050
+publish 2 0 -1 2050
+tick 2050
+publish 0 1 -1 2100
+publish 2 0 -1 2100
+answer 4 0
+tick 2100
+publish 0 1 -1 2150
+publish 2 0 -1 2150
+tick 2150
+publish 0 1 -1 2200
+publish 2 0 -1 2200
+tick 2200
+publish 0 1 -1 2250
+publish 2 0 -1 2250
+tick 2250
+publish 0 1 -1 2300
+publish 2 0 -1 2300
+tick 2300
+publish 0 1 -1 2350
+publish 2 0 -1 2350
+tick 2350
+publish 0 1 -1 2400
+publish 2 0 -1 2400
+tick 2400
+publish 0 1 -1 2450
+publish 2 0 -1 2450
+tick 2450
+publish 0 1 -1 2500
+publish 2 0 -1 2500
+phase 1
+tick 2500
+publish 0 1 -1 2550
+publish 2 0 -1 2550
+tick 2550
+publish 0 1 -1 2600
+publish 2 0 -1 2600
+complete 5 1 0 -1
+tick 2600
+publish 0 1 -1 2650
+publish 2 0 -1 2650
+tick 2650
+publish 0 1 -1 2700
+publish 2 0 -1 2700
+complete 6 1 0 -1
+tick 2700
+publish 0 1 -1 2750
+publish 2 0 -1 2750
+tick 2750
+publish 0 1 -1 2800
+publish 2 0 -1 2800
+tick 2800
+publish 0 1 -1 2850
+publish 2 0 -1 2850
+tick 2850
+publish 0 1 -1 2900
+publish 2 0 -1 2900
+tick 2900
+publish 0 1 -1 2950
+publish 2 0 -1 2950
+tick 2950
+publish 0 1 -1 3000
+publish 2 0 -1 3000
+phase 1
+tick 3000
+publish 0 1 -1 3050
+publish 2 0 -1 3050
+tick 3050
+publish 0 1 -1 3100
+publish 2 0 -1 3100
+tick 3100
+publish 0 1 -1 3150
+publish 2 0 -1 3150
+tick 3150
+publish 0 1 -1 3200
+publish 2 0 -1 3200
+tick 3200
+publish 0 1 -1 3250
+publish 2 0 -1 3250
+tick 3250
+publish 0 1 -1 3300
+publish 2 0 -1 3300
+tick 3300
+publish 0 1 -1 3350
+publish 2 0 -1 3350
+tick 3350
+publish 0 1 -1 3400
+publish 2 0 -1 3400
+tick 3400
+publish 0 1 -1 3450
+publish 2 0 -1 3450
+tick 3450
+publish 0 1 -1 3500
+publish 2 0 -1 3500
+phase 1
+tick 3500
+publish 0 1 -1 3550
+publish 2 0 -1 3550
+tick 3550
+publish 0 1 -1 3600
+publish 2 0 -1 3600
+tick 3600
+publish 0 1 -1 3650
+publish 2 0 -1 3650
+tick 3650
+publish 0 1 -1 3700
+publish 2 0 -1 3700
+tick 3700
+publish 0 1 -1 3750
+publish 2 0 -1 3750
+tick 3750
+publish 0 1 -1 3800
+publish 2 0 -1 3800
+tick 3800
+publish 0 1 -1 3850
+publish 2 0 -1 3850
+tick 3850
+publish 0 1 -1 3900
+publish 2 0 -1 3900
+tick 3900
+publish 0 1 -1 3950
+publish 2 0 -1 3950
+tick 3950
+publish 0 1 -1 4000
+publish 2 0 -1 4000
+phase 1
+tick 4000
+publish 0 1 -1 4050
+publish 2 0 -1 4050
+tick 4050
+publish 0 1 -1 4100
+publish 2 0 -1 4100
+tick 4100
+publish 0 1 -1 4150
+publish 2 0 -1 4150
+tick 4150
+publish 0 1 -1 4200
+publish 2 0 -1 4200
+tick 4200
+publish 0 1 -1 4250
+publish 2 0 -1 4250
+tick 4250
+publish 0 1 -1 4300
+publish 2 0 -1 4300
+tick 4300
+publish 0 1 -1 4350
+publish 2 0 -1 4350
+tick 4350
+publish 0 1 -1 4400
+publish 2 0 -1 4400
+tick 4400
+publish 0 1 -1 4450
+publish 2 0 -1 4450
+tick 4450
+publish 0 1 -1 4500
+publish 2 0 -1 4500
+phase 1
+tick 4500
+publish 0 1 -1 4550
+publish 2 0 -1 4550
+tick 4550
+publish 0 1 -1 4600
+publish 2 0 -1 4600
+tick 4600
+publish 0 1 -1 4650
+publish 2 0 -1 4650
+tick 4650
+publish 0 1 -1 4700
+publish 2 0 -1 4700
+tick 4700
+publish 0 1 -1 4750
+publish 2 0 -1 4750
+tick 4750
+publish 0 1 -1 4800
+publish 2 0 -1 4800
+tick 4800
+publish 0 1 -1 4850
+publish 2 0 -1 4850
+tick 4850
+publish 0 1 -1 4900
+publish 2 0 -1 4900
+tick 4900
+publish 0 1 -1 4950
+publish 2 0 -1 4950
+tick 4950
+publish 0 1 -1 5000
+publish 2 0 -1 5000
+phase 1
+tick 5000
+publish 0 1 -1 5050
+publish 2 0 -1 5050
+tick 5050
+publish 0 1 -1 5100
+publish 2 0 -1 5100
+tick 5100
+publish 0 1 -1 5150
+publish 2 0 -1 5150
+tick 5150
+publish 0 1 -1 5200
+publish 2 0 -1 5200
+tick 5200
+publish 0 1 -1 5250
+publish 2 0 -1 5250
+tick 5250
+publish 0 1 -1 5300
+publish 2 0 -1 5300
+tick 5300
+publish 0 1 -1 5350
+publish 2 0 -1 5350
+tick 5350
+publish 0 1 -1 5400
+publish 2 0 -1 5400
+tick 5400
+publish 0 1 -1 5450
+publish 2 0 -1 5450
+tick 5450
+publish 0 1 -1 5500
+publish 2 0 -1 5500
+phase 1
+tick 5500
+publish 0 1 -1 5550
+publish 2 0 -1 5550
+tick 5550
+publish 0 1 -1 5600
+publish 2 0 -1 5600
+tick 5600
+publish 0 1 -1 5650
+publish 2 0 -1 5650
+tick 5650
+publish 0 1 -1 5700
+publish 2 0 -1 5700
+tick 5700
+publish 0 1 -1 5750
+publish 2 0 -1 5750
+tick 5750
+publish 0 1 -1 5800
+publish 2 0 -1 5800
+tick 5800
+publish 0 1 -1 5850
+publish 2 0 -1 5850
+tick 5850
+publish 0 1 -1 5900
+publish 2 0 -1 5900
+tick 5900
+publish 0 1 -1 5950
+publish 2 0 -1 5950
+tick 5950
+publish 0 1 -1 6000
+publish 2 1 -1 6000
+phase 1
+tick 6000
+publish 0 1 -1 6050
+publish 2 1 -1 6050
+tick 6050
+publish 0 1 -1 6100
+publish 2 1 -1 6100
+tick 6100
+publish 0 1 -1 6150
+publish 2 1 -1 6150
+tick 6150
+publish 0 1 -1 6200
+publish 2 1 -1 6200
+tick 6200
+publish 0 1 -1 6250
+publish 2 1 -1 6250
+tick 6250
+publish 0 1 -1 6300
+publish 2 1 -1 6300
+tick 6300
+publish 0 1 -1 6350
+publish 2 1 -1 6350
+tick 6350
+publish 0 1 -1 6400
+publish 2 1 -1 6400
+tick 6400
+publish 0 1 -1 6450
+publish 2 1 -1 6450
+tick 6450
+publish 0 1 -1 6500
+publish 2 1 -1 6500
+phase 1
+tick 6500
+publish 0 1 -1 6550
+publish 2 1 -1 6550
+tick 6550
+publish 0 1 -1 6600
+publish 2 1 -1 6600
+tick 6600
+publish 0 1 -1 6650
+publish 2 1 -1 6650
+tick 6650
+publish 0 1 -1 6700
+publish 2 1 -1 6700
+tick 6700
+publish 0 1 -1 6750
+publish 2 1 -1 6750
+tick 6750
+publish 0 1 -1 6800
+publish 2 1 -1 6800
+tick 6800
+publish 0 1 -1 6850
+publish 2 1 -1 6850
+tick 6850
+publish 0 1 -1 6900
+publish 2 1 -1 6900
+tick 6900
+publish 0 1 -1 6950
+publish 2 1 -1 6950
+tick 6950
+publish 0 1 -1 7000
+publish 2 0 -1 7000
+phase 1
+complete 7 1 0 -1
+tick 7000
+publish 0 1 -1 7050
+publish 2 0 -1 7050
+tick 7050
+publish 0 1 -1 7100
+publish 2 0 -1 7100
+tick 7100
+publish 0 1 -1 7150
+publish 2 0 -1 7150
+tick 7150
+publish 0 1 -1 7200
+publish 2 0 -1 7200
+tick 7200
+publish 0 1 -1 7250
+publish 2 0 -1 7250
+tick 7250
+publish 0 1 -1 7300
+publish 2 0 -1 7300
+tick 7300
+publish 0 1 -1 7350
+publish 2 0 -1 7350
+tick 7350
+publish 0 1 -1 7400
+publish 2 0 -1 7400
+tick 7400
+publish 0 1 -1 7450
+publish 2 0 -1 7450
+tick 7450
+publish 0 1 -1 7500
+publish 2 0 -1 7500
+phase 1
+complete 8 1 0 -1
+tick 7500
+publish 0 1 -1 7550
+publish 2 0 -1 7550
+tick 7550
+publish 0 1 -1 7600
+publish 2 0 -1 7600
+tick 7600
+publish 0 1 -1 7650
+publish 2 0 -1 7650
+tick 7650
+publish 0 1 -1 7700
+publish 2 0 -1 7700
+tick 7700
+publish 0 1 -1 7750
+publish 2 0 -1 7750
+tick 7750
+publish 0 1 -1 7800
+publish 2 0 -1 7800
+tick 7800
+publish 0 1 -1 7850
+publish 2 0 -1 7850
+tick 7850
+publish 0 1 -1 7900
+publish 2 0 -1 7900
+tick 7900
+publish 0 1 -1 7950
+publish 2 0 -1 7950
+tick 7950
+publish 0 1 -1 8000
+publish 2 0 -1 8000
+phase 9
+tick 8000
+publish 0 1 -1 8050
+publish 2 0 -1 8050
+tick 8050
+publish 0 1 -1 8100
+publish 2 0 -1 8100
+tick 8100
+publish 0 1 -1 8150
+publish 2 0 -1 8150
+tick 8150
+publish 0 1 -1 8200
+publish 2 0 -1 8200
+tick 8200
+publish 0 1 -1 8250
+publish 2 0 -1 8250
+tick 8250
+publish 0 1 -1 8300
+publish 2 0 -1 8300
+tick 8300
+publish 0 1 -1 8350
+publish 2 0 -1 8350
+tick 8350
+publish 0 1 -1 8400
+publish 2 0 -1 8400
+tick 8400
+publish 0 1 -1 8450
+publish 2 0 -1 8450
+tick 8450
+publish 0 1 -1 8500
+publish 2 0 -1 8500
+phase 9
+tick 8500
+publish 0 1 -1 8550
+publish 2 0 -1 8550
+tick 8550
+publish 0 1 -1 8600
+publish 2 0 -1 8600
+tick 8600
+publish 0 1 -1 8650
+publish 2 0 -1 8650
+tick 8650
+publish 0 1 -1 8700
+publish 2 0 -1 8700
+tick 8700
+publish 0 1 -1 8750
+publish 2 0 -1 8750
+tick 8750
+publish 0 1 -1 8800
+publish 2 0 -1 8800
+tick 8800
+publish 0 1 -1 8850
+publish 2 0 -1 8850
+tick 8850
+publish 0 1 -1 8900
+publish 2 0 -1 8900
+tick 8900
+publish 0 1 -1 8950
+publish 2 0 -1 8950
+tick 8950
+publish 0 1 -1 9000
+publish 2 0 -1 9000
+phase 9
+tick 9000
+publish 0 1 -1 9050
+publish 2 0 -1 9050
+tick 9050
+publish 0 1 -1 9100
+publish 2 0 -1 9100
+tick 9100
+publish 0 1 -1 9150
+publish 2 0 -1 9150
+tick 9150
+publish 0 1 -1 9200
+publish 2 0 -1 9200
+tick 9200
+publish 0 1 -1 9250
+publish 2 0 -1 9250
+tick 9250
+publish 0 1 -1 9300
+publish 2 0 -1 9300
+tick 9300
+publish 0 1 -1 9350
+publish 2 0 -1 9350
+tick 9350
+publish 0 1 -1 9400
+publish 2 0 -1 9400
+tick 9400
+publish 0 1 -1 9450
+publish 2 0 -1 9450
+tick 9450
+publish 0 1 -1 9500
+publish 2 0 -1 9500
+phase 9
+tick 9500
+publish 0 1 -1 9550
+publish 2 0 -1 9550
+tick 9550
+publish 0 1 -1 9600
+publish 2 0 -1 9600
+tick 9600
+publish 0 1 -1 9650
+publish 2 0 -1 9650
+tick 9650
+publish 0 1 -1 9700
+publish 2 0 -1 9700
+tick 9700
+publish 0 1 -1 9750
+publish 2 0 -1 9750
+tick 9750
+publish 0 1 -1 9800
+publish 2 0 -1 9800
+tick 9800
+publish 0 1 -1 9850
+publish 2 0 -1 9850
+tick 9850
+publish 0 1 -1 9900
+publish 2 0 -1 9900
+tick 9900
+publish 0 1 -1 9950
+publish 2 0 -1 9950
+tick 9950
+publish 0 1 -1 10000
+publish 2 0 -1 10000
+phase 9
+tick 10000
+publish 0 1 -1 10050
+publish 2 0 -1 10050
+tick 10050
+publish 0 1 -1 10100
+publish 2 0 -1 10100
+tick 10100
+publish 0 1 -1 10150
+publish 2 0 -1 10150
+tick 10150
+publish 0 1 -1 10200
+publish 2 0 -1 10200
+tick 10200
+publish 0 1 -1 10250
+publish 2 0 -1 10250
+tick 10250
+publish 0 1 -1 10300
+publish 2 0 -1 10300
+tick 10300
+publish 0 1 -1 10350
+publish 2 0 -1 10350
+tick 10350
+publish 0 1 -1 10400
+publish 2 0 -1 10400
+tick 10400
+publish 0 1 -1 10450
+publish 2 0 -1 10450
+tick 10450
+publish 0 1 -1 10500
+publish 2 0 -1 10500
+phase 9
+tick 10500
+publish 0 1 -1 10550
+publish 2 0 -1 10550
+tick 10550
+publish 0 1 -1 10600
+publish 2 0 -1 10600
+tick 10600
+publish 0 1 -1 10650
+publish 2 0 -1 10650
+tick 10650
+publish 0 1 -1 10700
+publish 2 0 -1 10700
+tick 10700
+publish 0 1 -1 10750
+publish 2 0 -1 10750
+tick 10750
+publish 0 1 -1 10800
+publish 2 0 -1 10800
+tick 10800
+publish 0 1 -1 10850
+publish 2 0 -1 10850
+tick 10850
+publish 0 1 -1 10900
+publish 2 0 -1 10900
+tick 10900
+publish 0 1 -1 10950
+publish 2 0 -1 10950
+tick 10950
+publish 0 1 -1 11000
+publish 2 0 -1 11000
+phase 9
+tick 11000
+publish 0 1 -1 11050
+publish 2 0 -1 11050
+tick 11050
+publish 0 1 -1 11100
+publish 2 0 -1 11100
+tick 11100
+publish 0 1 -1 11150
+publish 2 0 -1 11150
+tick 11150
+publish 0 1 -1 11200
+publish 2 0 -1 11200
+tick 11200
+publish 0 1 -1 11250
+publish 2 0 -1 11250
+tick 11250
+publish 0 1 -1 11300
+publish 2 0 -1 11300
+tick 11300
+publish 0 1 -1 11350
+publish 2 0 -1 11350
+tick 11350
+publish 0 1 -1 11400
+publish 2 0 -1 11400
+tick 11400
+publish 0 1 -1 11450
+publish 2 0 -1 11450
+tick 11450
+publish 0 1 -1 11500
+publish 2 0 -1 11500
+phase 9
+tick 11500
+publish 0 1 -1 11550
+publish 2 0 -1 11550
+tick 11550
+publish 0 1 -1 11600
+publish 2 0 -1 11600
+tick 11600
+publish 0 1 -1 11650
+publish 2 0 -1 11650
+tick 11650
+publish 0 1 -1 11700
+publish 2 0 -1 11700
+tick 11700
+publish 0 1 -1 11750
+publish 2 0 -1 11750
+tick 11750
+publish 0 1 -1 11800
+publish 2 0 -1 11800
+tick 11800
+publish 0 1 -1 11850
+publish 2 0 -1 11850
+tick 11850
+publish 0 1 -1 11900
+publish 2 0 -1 11900
+tick 11900
+publish 0 1 -1 11950
+publish 2 0 -1 11950
+tick 11950
+publish 0 1 -1 12000
+publish 2 0 -1 12000
+phase 9
+tick 12000
+publish 0 1 -1 12050
+publish 2 0 -1 12050
+tick 12050
+publish 0 1 -1 12100
+publish 2 0 -1 12100
+tick 12100
+publish 0 1 -1 12150
+publish 2 0 -1 12150
+tick 12150
+publish 0 1 -1 12200
+publish 2 0 -1 12200
+tick 12200
+publish 0 1 -1 12250
+publish 2 0 -1 12250
+tick 12250
+publish 0 1 -1 12300
+publish 2 0 -1 12300
+tick 12300
+publish 0 1 -1 12350
+publish 2 0 -1 12350
+tick 12350
+publish 0 1 -1 12400
+publish 2 0 -1 12400
+tick 12400
+publish 0 1 -1 12450
+publish 2 0 -1 12450
+tick 12450
+publish 0 1 -1 12500
+publish 2 0 -1 12500
+phase 9
+tick 12500
+publish 0 1 -1 12550
+publish 2 0 -1 12550
+tick 12550
+publish 0 1 -1 12600
+publish 2 0 -1 12600
+tick 12600
+publish 0 1 -1 12650
+publish 2 0 -1 12650
+tick 12650
+publish 0 1 -1 12700
+publish 2 0 -1 12700
+tick 12700
+publish 0 1 -1 12750
+publish 2 0 -1 12750
+tick 12750
+publish 0 1 -1 12800
+publish 2 0 -1 12800
+tick 12800
+publish 0 1 -1 12850
+publish 2 0 -1 12850
+tick 12850
+publish 0 1 -1 12900
+publish 2 0 -1 12900
+tick 12900
+publish 0 1 -1 12950
+publish 2 0 -1 12950
+tick 12950
+publish 0 1 -1 13000
+publish 2 0 -1 13000
+phase 9
+tick 13000
+publish 0 1 -1 13050
+publish 2 0 -1 13050
+tick 13050
+publish 0 1 -1 13100
+publish 2 0 -1 13100
+tick 13100
+publish 0 1 -1 13150
+publish 2 0 -1 13150
+tick 13150
+publish 0 1 -1 13200
+publish 2 0 -1 13200
+tick 13200
+publish 0 1 -1 13250
+publish 2 0 -1 13250
+tick 13250
+publish 0 1 -1 13300
+publish 2 0 -1 13300
+tick 13300
+publish 0 1 -1 13350
+publish 2 0 -1 13350
+tick 13350
+publish 0 1 -1 13400
+publish 2 0 -1 13400
+tick 13400
+publish 0 1 -1 13450
+publish 2 0 -1 13450
+tick 13450
+publish 0 1 -1 13500
+publish 2 0 -1 13500
+phase 9
+tick 13500
+publish 0 1 -1 13550
+publish 2 0 -1 13550
+tick 13550
+publish 0 1 -1 13600
+publish 2 0 -1 13600
+tick 13600
+publish 0 1 -1 13650
+publish 2 0 -1 13650
+tick 13650
+publish 0 1 -1 13700
+publish 2 0 -1 13700
+tick 13700
+publish 0 1 -1 13750
+publish 2 0 -1 13750
+tick 13750
+publish 0 1 -1 13800
+publish 2 0 -1 13800
+tick 13800
+publish 0 1 -1 13850
+publish 2 0 -1 13850
+tick 13850
+publish 0 1 -1 13900
+publish 2 0 -1 13900
+tick 13900
+publish 0 1 -1 13950
+publish 2 0 -1 13950
+tick 13950
+publish 0 1 -1 14000
+publish 2 0 -1 14000
+phase 9
+tick 14000
+publish 0 1 -1 14050
+publish 2 0 -1 14050
+tick 14050
+publish 0 1 -1 14100
+publish 2 0 -1 14100
+tick 14100
+publish 0 1 -1 14150
+publish 2 0 -1 14150
+tick 14150
+publish 0 1 -1 14200
+publish 2 0 -1 14200
+tick 14200
+publish 0 1 -1 14250
+publish 2 0 -1 14250
+tick 14250
+publish 0 1 -1 14300
+publish 2 0 -1 14300
+tick 14300
+publish 0 1 -1 14350
+publish 2 0 -1 14350
+tick 14350
+publish 0 1 -1 14400
+publish 2 0 -1 14400
+tick 14400
+publish 0 1 -1 14450
+publish 2 0 -1 14450
+tick 14450
+publish 0 1 -1 14500
+publish 2 0 -1 14500
+phase 9
+tick 14500
+publish 0 1 -1 14550
+publish 2 0 -1 14550
+tick 14550
+publish 0 1 -1 14600
+publish 2 0 -1 14600
+tick 14600
+publish 0 1 -1 14650
+publish 2 0 -1 14650
+tick 14650
+publish 0 1 -1 14700
+publish 2 0 -1 14700
+tick 14700
+publish 0 1 -1 14750
+publish 2 0 -1 14750
+tick 14750
+publish 0 1 -1 14800
+publish 2 0 -1 14800
+tick 14800
+publish 0 1 -1 14850
+publish 2 0 -1 14850
+tick 14850
+publish 0 1 -1 14900
+publish 2 0 -1 14900
+tick 14900
+publish 0 1 -1 14950
+publish 2 0 -1 14950
+tick 14950
+publish 0 0 -1 15000
+publish 2 0 -1 15000
+phase 9
+tick 15000
+publish 0 0 -1 15050
+publish 2 0 -1 15050
+tick 15050
+publish 0 0 -1 15100
+publish 2 0 -1 15100
+tick 15100
+publish 0 0 -1 15150
+publish 2 0 -1 15150
+tick 15150
+publish 0 0 -1 15200
+publish 2 0 -1 15200
+tick 15200
+publish 0 0 -1 15250
+publish 2 0 -1 15250
+tick 15250
+publish 0 0 -1 15300
+publish 2 0 -1 15300
+tick 15300
+publish 0 0 -1 15350
+publish 2 0 -1 15350
+tick 15350
+publish 0 0 -1 15400
+publish 2 0 -1 15400
+tick 15400
+publish 0 0 -1 15450
+publish 2 0 -1 15450
+tick 15450
+publish 0 0 -1 15500
+publish 2 0 -1 15500
+phase 9
+tick 15500
+publish 0 0 -1 15550
+publish 2 0 -1 15550
+tick 15550
+publish 0 0 -1 15600
+publish 2 0 -1 15600
+tick 15600
+publish 0 0 -1 15650
+publish 2 0 -1 15650
+tick 15650
+publish 0 0 -1 15700
+publish 2 0 -1 15700
+tick 15700
+publish 0 0 -1 15750
+publish 2 0 -1 15750
+tick 15750
+publish 0 0 -1 15800
+publish 2 0 -1 15800
+tick 15800
+publish 0 0 -1 15850
+publish 2 0 -1 15850
+tick 15850
+publish 0 0 -1 15900
+publish 2 0 -1 15900
+tick 15900
+publish 0 0 -1 15950
+publish 2 0 -1 15950
+tick 15950
+publish 0 0 -1 16000
+publish 2 0 -1 16000
+phase 9
+tick 16000
+publish 0 0 -1 16050
+publish 2 0 -1 16050
+tick 16050
+publish 0 0 -1 16100
+publish 2 0 -1 16100
+tick 16100
+publish 0 0 -1 16150
+publish 2 0 -1 16150
+tick 16150
+publish 0 0 -1 16200
+publish 2 0 -1 16200
+tick 16200
+publish 0 0 -1 16250
+publish 2 0 -1 16250
+tick 16250
+publish 0 0 -1 16300
+publish 2 0 -1 16300
+tick 16300
+publish 0 0 -1 16350
+publish 2 0 -1 16350
+tick 16350
+publish 0 0 -1 16400
+publish 2 0 -1 16400
+tick 16400
+publish 0 0 -1 16450
+publish 2 0 -1 16450
+tick 16450
+publish 0 0 -1 16500
+publish 2 0 -1 16500
+phase 9
+tick 16500
+publish 0 0 -1 16550
+publish 2 0 -1 16550
+tick 16550
+publish 0 0 -1 16600
+publish 2 0 -1 16600
+tick 16600
+publish 0 0 -1 16650
+publish 2 0 -1 16650
+tick 16650
+publish 0 0 -1 16700
+publish 2 0 -1 16700
+tick 16700
+publish 0 0 -1 16750
+publish 2 0 -1 16750
+tick 16750
+publish 0 0 -1 16800
+publish 2 0 -1 16800
+tick 16800
+publish 0 0 -1 16850
+publish 2 0 -1 16850
+tick 16850
+publish 0 0 -1 16900
+publish 2 0 -1 16900
+tick 16900
+publish 0 0 -1 16950
+publish 2 0 -1 16950
+tick 16950
+publish 0 1 -1 17000
+publish 2 0 -1 17000
+phase 9
+tick 17000
+publish 0 1 -1 17050
+publish 2 0 -1 17050
+tick 17050
+publish 0 1 -1 17100
+publish 2 0 -1 17100
+tick 17100
+publish 0 1 -1 17150
+publish 2 0 -1 17150
+tick 17150
+publish 0 1 -1 17200
+publish 2 0 -1 17200
+complete 10 1 0.83 7
+tick 17200
+publish 0 1 -1 17250
+publish 2 0 -1 17250
+tick 17250
+publish 0 1 -1 17300
+publish 2 0 -1 17300
+tick 17300
+publish 0 1 -1 17350
+publish 2 0 -1 17350
+tick 17350
+publish 0 1 -1 17400
+publish 2 0 -1 17400
+tick 17400
+publish 0 1 -1 17450
+publish 2 0 -1 17450
+tick 17450
+publish 0 1 -1 17500
+publish 2 0 -1 17500
+phase 9
+tick 17500
+publish 0 1 -1 17550
+publish 2 0 -1 17550
+tick 17550
+publish 0 1 -1 17600
+publish 2 0 -1 17600
+tick 17600
+publish 0 1 -1 17650
+publish 2 0 -1 17650
+tick 17650
+publish 0 1 -1 17700
+publish 2 0 -1 17700
+tick 17700
+publish 0 1 -1 17750
+publish 2 0 -1 17750
+tick 17750
+publish 0 1 -1 17800
+publish 2 0 -1 17800
+complete 11 1 0 -1
+tick 17800
+publish 0 1 -1 17850
+publish 2 0 -1 17850
+tick 17850
+publish 0 1 -1 17900
+publish 2 0 -1 17900
+tick 17900
+publish 0 1 -1 17950
+publish 2 0 -1 17950
+tick 17950
+publish 0 1 -1 18000
+publish 2 0 -1 18000
+phase 9
+tick 18000
+publish 0 1 -1 18050
+publish 2 0 -1 18050
+tick 18050
+publish 0 1 -1 18100
+publish 2 0 -1 18100
+answer 12 0
+tick 18100
+publish 0 1 -1 18150
+publish 2 0 -1 18150
+tick 18150
+publish 0 1 -1 18200
+publish 2 0 -1 18200
+tick 18200
+publish 0 1 -1 18250
+publish 2 0 -1 18250
+tick 18250
+publish 0 1 -1 18300
+publish 2 0 -1 18300
+tick 18300
+publish 0 1 -1 18350
+publish 2 0 -1 18350
+tick 18350
+publish 0 1 -1 18400
+publish 2 0 -1 18400
+tick 18400
+publish 0 1 -1 18450
+publish 2 0 -1 18450
+tick 18450
+publish 0 1 -1 18500
+publish 2 0 -1 18500
+phase 9
+tick 18500
+publish 0 1 -1 18550
+publish 2 0 -1 18550
+tick 18550
+publish 0 1 -1 18600
+publish 2 0 -1 18600
+complete 13 1 0 -1
+tick 18600
+publish 0 1 -1 18650
+publish 2 0 -1 18650
+tick 18650
+publish 0 1 -1 18700
+publish 2 0 -1 18700
+complete 14 1 0 -1
+tick 18700
+publish 0 1 -1 18750
+publish 2 0 -1 18750
+tick 18750
+publish 0 1 -1 18800
+publish 2 0 -1 18800
+tick 18800
+publish 0 1 -1 18850
+publish 2 0 -1 18850
+tick 18850
+publish 0 1 -1 18900
+publish 2 0 -1 18900
+tick 18900
+publish 0 1 -1 18950
+publish 2 0 -1 18950
+tick 18950
+publish 0 1 -1 19000
+publish 2 0 -1 19000
+phase 9
+tick 19000
+publish 0 1 -1 19050
+publish 2 0 -1 19050
+tick 19050
+publish 0 1 -1 19100
+publish 2 0 -1 19100
+tick 19100
+publish 0 1 -1 19150
+publish 2 0 -1 19150
+tick 19150
+publish 0 1 -1 19200
+publish 2 0 -1 19200
+tick 19200
+publish 0 1 -1 19250
+publish 2 0 -1 19250
+tick 19250
+publish 0 1 -1 19300
+publish 2 0 -1 19300
+tick 19300
+publish 0 1 -1 19350
+publish 2 0 -1 19350
+tick 19350
+publish 0 1 -1 19400
+publish 2 0 -1 19400
+tick 19400
+publish 0 1 -1 19450
+publish 2 0 -1 19450
+tick 19450
+publish 0 1 -1 19500
+publish 2 0 -1 19500
+phase 9
+tick 19500
+publish 0 1 -1 19550
+publish 2 0 -1 19550
+tick 19550
+publish 0 1 -1 19600
+publish 2 0 -1 19600
+tick 19600
+publish 0 1 -1 19650
+publish 2 0 -1 19650
+tick 19650
+publish 0 1 -1 19700
+publish 2 0 -1 19700
+tick 19700
+publish 0 1 -1 19750
+publish 2 0 -1 19750
+tick 19750
+publish 0 1 -1 19800
+publish 2 0 -1 19800
+tick 19800
+publish 0 1 -1 19850
+publish 2 0 -1 19850
+tick 19850
+publish 0 1 -1 19900
+publish 2 0 -1 19900
+tick 19900
+publish 0 1 -1 19950
+publish 2 0 -1 19950
+tick 19950

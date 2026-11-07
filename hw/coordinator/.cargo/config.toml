@@ -1,0 +1,2 @@
+[build]
+target-dir = "../../node_modules/.cache/basecase-coordinator"

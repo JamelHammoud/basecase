@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "facts": [{ "maxAgeMs": 500 }, { "maxAgeMs": 30000 }, { "maxAgeMs": 500 }, { "maxAgeMs": 30000 }],
+  "skills": [
+    { "holds": 1, "interrupt": 1, "stopVia": 1 },
+    { "holds": 1, "interrupt": 0, "stopVia": 1 },
+    { "holds": 1, "interrupt": 0, "stopVia": 1 },
+    { "holds": 2, "interrupt": 0, "stopVia": 3 }
+  ],
+  "conds": [[[0, 0, 1]], [[2, 1, 0.6]], [[0, 2, 1]], [[1, 3, 0]]],
+  "ops": [
+    { "kind": "infer", "fact": 1, "timeoutMs": 3000, "next": 1, "onTimeout": 3, "onFail": 3 },
+    { "kind": "if", "test": 1, "then": 2, "else": 3 },
+    { "kind": "say", "text": 0, "needs": [1], "timeoutMs": 5000, "next": 4, "onTimeout": -2, "onFail": -2 },
+    { "kind": "say", "text": 1, "needs": [], "timeoutMs": 5000, "next": 4, "onTimeout": -2, "onFail": -2 },
+    { "kind": "ask", "fact": 3, "answers": [0, 1], "timeoutMs": 30000, "next": 5, "onTimeout": -1, "onFail": -1 },
+    { "kind": "if", "test": 3, "then": 6, "else": -1 },
+    { "kind": "together", "branches": [7, 8], "joinAny": false, "next": -1 },
+    { "kind": "do", "skill": 3, "holds": 2, "timeoutMs": 2000, "next": -1, "onTimeout": -1, "onFail": -1 },
+    { "kind": "say", "text": 2, "needs": [], "timeoutMs": 5000, "next": -1, "onTimeout": -1, "onFail": -1 },
+    { "kind": "do", "skill": 2, "holds": 1, "timeoutMs": 4000, "next": -1, "onTimeout": -2, "onFail": 10 },
+    { "kind": "say", "text": 3, "needs": [], "timeoutMs": 5000, "next": -2, "onTimeout": -2, "onFail": -2 },
+    { "kind": "say", "text": 4, "needs": [], "timeoutMs": 5000, "next": -2, "onTimeout": -2, "onFail": -2 }
+  ],
+  "reactions": [
+    { "when": 2, "cooldownMs": 5000, "retrigger": 2, "stopFirst": true, "entry": 9 },
+    { "when": 0, "cooldownMs": 15000, "retrigger": 0, "stopFirst": false, "entry": 0 }
+  ],
+  "watchers": [{ "when": -1 }, { "when": -1 }],
+  "base": { "skill": 0, "timeoutMs": 300000, "onTimeout": 11, "onFail": 11 },
+  "safeStop": 1,
+  "stopTimeoutMs": 5000,
+  "controlDeadlineMs": 500
+}

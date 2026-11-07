@@ -43,7 +43,9 @@
     "build:forge": "cargo build --release --manifest-path forge/Cargo.toml -p forge-train",
     "test:app": "vitest run --config vitest.app.config.ts",
     "verify": "node verify/gatekeeper.mjs",
-    "build:contract": "node tools/build-contract.mjs"
+    "build:contract": "node tools/build-contract.mjs",
+    "build:routines": "node hw/coordinator/build-wasm.mjs",
+    "check:routines": "node hw/coordinator/build-wasm.mjs --check"
   },
   "build": {
     "appId": "app.basecase",

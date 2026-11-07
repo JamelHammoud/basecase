@@ -19,7 +19,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 transport-real = { path = "../transport-real", optional = true }
-ort = { version = "2.0.0-rc.10", optional = true }
+ort = { version = "=2.0.0-rc.15", optional = true }
 
 [target.'cfg(loom)'.dependencies]
 loom = "0.7"
@@ -28,6 +28,7 @@ loom = "0.7"
 faultbox = { path = "../faultbox" }
 plant-bam = { path = "../plant-bam" }
 proptest = "1"
+servo-wire = { path = "../servo-wire", features = ["raw-frames"] }
 
 [lints]
 workspace = true

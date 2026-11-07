@@ -1,18 +1,25 @@
 use super::Policy;
+use ort::environment::Environment;
 use ort::session::Session;
 use ort::value::Tensor;
 
 pub struct OnnxPolicy {
     session: Session,
+    _environment: Environment,
 }
 
 impl OnnxPolicy {
     pub fn load(bytes: &[u8]) -> Result<Self, String> {
-        let session = Session::builder()
-            .and_then(|builder| builder.commit_from_memory(bytes))
-            .map_err(|error| format!("The policy can't be loaded: {error}"))?;
+        let unreadable = |error: ort::Error| format!("The policy can't be loaded: {error}");
+        let environment = ort::init().with_name("basecase-policy").build().map_err(unreadable)?;
+        let session = Session::builder(&environment)
+            .and_then(|mut builder| builder.commit_from_memory(bytes))
+            .map_err(unreadable)?;
 
-        Ok(Self { session })
+        Ok(Self {
+            session,
+            _environment: environment,
+        })
     }
 }
 

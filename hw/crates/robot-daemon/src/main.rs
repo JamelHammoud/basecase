@@ -36,12 +36,13 @@ fn main() {
         ids: options.ids,
         class: options.class,
     };
-    let daemon = Daemon::new(
+    let mut daemon = Daemon::new(
         config,
         transport,
         clock.clone(),
-        Box::new(DirectoryArtefacts::new(options.artefacts)),
+        Box::new(DirectoryArtefacts::new(options.artefacts.clone())),
     );
+    let _policy = attach_policy(&mut daemon, &options.artefacts);
     let inputs = daemon.inputs();
     let writer = IntentWriter::new(inputs.intents.clone(), inputs.heartbeat.clone());
     let (command_tx, commands) = channel();
@@ -72,6 +73,22 @@ fn main() {
         "Stopped after {} ticks; worst lateness {} us.",
         jitter.ticks, jitter.worst_late_us
     );
+}
+
+#[cfg(feature = "onnx")]
+fn attach_policy(daemon: &mut Daemon, artefacts: &std::path::Path) -> Option<robot_daemon::policy::PolicyWorker> {
+    let bytes = std::fs::read(artefacts.join("policy.onnx")).ok()?;
+    let policy = robot_daemon::policy::onnx::OnnxPolicy::load(&bytes)
+        .map_err(|message| eprintln!("{message}"))
+        .ok()?;
+    let inputs = daemon.attach_policy();
+
+    Some(robot_daemon::policy::PolicyWorker::spawn(Box::new(policy), &inputs))
+}
+
+#[cfg(not(feature = "onnx"))]
+fn attach_policy(_daemon: &mut Daemon, _artefacts: &std::path::Path) -> Option<()> {
+    None
 }
 
 fn spawn_reader(writer: IntentWriter, commands: Sender<Command>, client_gone: Arc<AtomicBool>) {

@@ -1,0 +1,149 @@
+feetech:
+  - behaviour: Packets are FF FF, id, length, instruction or error, params, then ~(sum of id..params) & 0xFF.
+    source: client-derived
+    note: scservo_sdk protocol_packet_handler txPacket and rxPacket; the unmodified SDK passes against the emulator.
+  - behaviour: Status error bits are voltage 1, angle sensor 2, overheat 4, overcurrent 8, overload 32.
+    source: client-derived
+    note: scservo_sdk ERRBIT_* constants. Bit 16 is never set by the emulator.
+  - behaviour: Model number 777 sits at address 3 as a little-endian word.
+    source: client-derived
+    note: rustypot sts3215.rs (model at 3) and scservo_sdk ping, which reads address 3 after a ping.
+  - behaviour: Register addresses (torque 40, goal 42, goal speed 46, torque limit 48, lock 55, present block 56 to 70).
+    source: client-derived
+    note: rustypot src/servo/feetech/sts3215.rs.
+  - behaviour: Factory defaults (max temperature 70, voltage window 4.0 to 8.0 V, torque limit 1000, P gain 32, protection current 500, protective torque 20, protection time 200, overload torque 80, overcurrent time 200, unloading conditions 44).
+    source: assumed
+    note: Recalled from Feetech's memory table, not read from a document in this session. Check them in the Stage 8 register dump.
+  - behaviour: Overload (load at or above Overload Torque for Protection Time) unloads the output to Protective Torque, 20% by default, and sets status bit 32.
+    source: datasheet
+    note: STS3215 datasheet behaviour as stated in the build brief; the datasheet itself was not re-read here. Load is modelled as duty cycle over its maximum.
+  - behaviour: Overcurrent (current at or above Protection Current for Over-current Protection Time) cuts output to zero and sets status bit 8.
+    source: datasheet
+    note: As stated in the build brief. The 6.5 mA per unit current scale is assumed.
+  - behaviour: Both protections clear on a new command, a write to goal position, time or speed, or to torque enable.
+    source: datasheet
+    note: As stated in the build brief. Which writes count as a new command is assumed.
+  - behaviour: Temperature at or above the limit switches torque off when unloading bit 4 is set.
+    source: assumed
+    note: Follows the unloading-condition register's naming; the exact threshold behaviour is unchecked.
+  - behaviour: With Lock = 1, EEPROM writes take effect but are lost at power-off; with Lock = 0 they persist.
+    source: community
+    note: LeRobot and rustypot unlock (Lock = 0) before EEPROM writes and lock afterwards.
+  - behaviour: Writing goal position while torque is off switches torque on.
+    source: assumed
+    note: Widely reported for STS servos. Emulated because it is the dangerous case; the daemon never writes a goal to a servo it believes is off.
+  - behaviour: Return delay is 2 us per unit, default 0.
+    source: assumed
+    note: Unit carried over from Dynamixel protocol 1; LeRobot sets it to 0.
+  - behaviour: Response level 0 answers only reads and pings, and a write that sets it to 0 is not answered.
+    source: assumed
+    note: Whether the setting write itself answers is unknown.
+  - behaviour: Broadcast ping is answered by every servo in ID order, about 3 ms apart.
+    source: assumed
+    note: rustypot lists broadcast ping as supported for the STS3215; the spacing is invented.
+  - behaviour: Sync read (0x82) is answered by each listed servo in list order, back to back.
+    source: client-derived
+    note: scservo_sdk GroupSyncRead reads one status per listed id in order. Timing between replies is assumed.
+  - behaviour: Sync write (0x83) and broadcast instructions are never answered.
+    source: client-derived
+    note: scservo_sdk txRxPacket returns without reading for the broadcast id.
+  - behaviour: An instruction with a bad checksum gets no answer.
+    source: assumed
+    note: The client sees a timeout.
+  - behaviour: An id that is not on the bus stays silent.
+    source: client-derived
+    note: The conformance script expects ping(9) to fail; scservo_sdk reports a timeout.
+  - behaviour: Present load is sign-magnitude with the sign at bit 10; present speed and position at bit 15.
+    source: client-derived
+    note: rustypot encoding table. Scaling load as per-mille of duty is assumed.
+  - behaviour: Goal speed 0 means full speed; any other value rate-limits the internal target in counts per second.
+    source: community
+    note: BAM's STS3215 model rate-limits the target it feeds the P controller. Using goal speed as that limit is assumed.
+  - behaviour: Goals outside the angle limits are clamped to them when max exceeds min.
+    source: assumed
+    note: Whether the real firmware clamps, refuses, or flags the angle bit is unchecked.
+  - behaviour: Supply below 3.5 V resets the servo, which returns with RAM defaults and torque off; EEPROM survives.
+    source: assumed
+    note: The threshold is invented. Stage 8 step 3 records the real brownout behaviour.
+  - behaviour: A half-received instruction is discarded after 50 ms of silence.
+    source: assumed
+    note: Lets the emulator recover from an unplug mid-packet.
+  - behaviour: With no host, a Feetech servo keeps holding its last goal with torque on, because it has no bus watchdog.
+    source: assumed
+    note: Stage 8 step 3 kills the daemon and records what the servo really does.
+
+dynamixel:
+  - behaviour: Protocol 2.0 framing with FF FF FD 00 header, CRC-16 (polynomial 0x8005) and FF FF FD byte stuffing.
+    source: client-derived
+    note: DynamixelSDK protocol2_packet_handler; the unmodified SDK passes against the emulator.
+  - behaviour: The Python DynamixelSDK 4.1.0 never byte-stuffs what it sends; the emulator parses by length, so it accepts those packets.
+    source: client-derived
+    note: addStuffing rebinds a local list and txPacket discards the result. How real firmware parses such a packet is unknown.
+  - behaviour: XL330-M288 control table addresses, sizes, access and initial values.
+    source: datasheet
+    note: ROBOTIS e-Manual xl330-m288 page, fetched from the emanual repository.
+  - behaviour: Ping answers model 1200 and the firmware version.
+    source: datasheet
+    note: Model from the e-Manual. The firmware version 53 is assumed.
+  - behaviour: EEPROM writes are refused with an Access error while torque is on.
+    source: datasheet
+    note: e-Manual caution on the EEPROM area. The error code is from the protocol 2.0 error list.
+  - behaviour: Writes to read-only registers return an Access error.
+    source: assumed
+    note: Error code chosen from the protocol 2.0 list.
+  - behaviour: Goal position outside the position limits returns a Data Limit error.
+    source: assumed
+    note: The e-Manual gives the range; the exact error code is a guess.
+  - behaviour: Bus Watchdog (98) runs only with torque on; when it expires the servo stops, 98 reads -1, goal writes return Data Range errors, and writing 0 clears it.
+    source: datasheet
+    note: e-Manual Bus Watchdog section. Torque stays on, as its example implies.
+  - behaviour: Any instruction addressed to the servo, including a sync read that lists it, feeds the watchdog.
+    source: assumed
+    note: The e-Manual says all instruction packets count; whether packets for other ids count is unclear.
+  - behaviour: A hardware error whose bit is set in Shutdown switches torque off, sets the alert bit 0x80 in every status, and only a reboot lets torque back on.
+    source: datasheet
+    note: e-Manual Shutdown and Hardware Error Status sections.
+  - behaviour: Overload trips after the duty cycle stays at or above 80% for 3 s.
+    source: assumed
+    note: The e-Manual gives no numbers for overload detection.
+  - behaviour: Return delay defaults to 250, in 2 us units.
+    source: datasheet
+    note: e-Manual Return Delay Time.
+  - behaviour: Status return level defaults to 2, so every instruction is answered.
+    source: datasheet
+    note: e-Manual Status Return Level.
+  - behaviour: An instruction with a bad CRC addressed to a servo is answered with CRC error 3.
+    source: assumed
+    note: The error code is in the protocol 2.0 list; whether a corrupt packet is answered at all is unchecked.
+  - behaviour: Goal PWM (100) caps output in position control mode.
+    source: assumed
+    note: The daemon uses it as its torque cap on Dynamixel. Check at Stage 8; current-based position mode is the alternative.
+  - behaviour: Reboot restores RAM defaults and keeps EEPROM.
+    source: datasheet
+    note: e-Manual Reboot instruction.
+
+plant:
+  - behaviour: Friction follows BAM model M6 with the published STS3215 7.4 V and XL330 parameters.
+    source: community
+    note: Rhoban/bam params feetech_sts3215_7_4V/m6.json and xl330/m6.json, copied exactly.
+  - behaviour: The STS3215 firmware runs a P controller on an internal target rate-limited to max velocity.
+    source: community
+    note: Rhoban/bam bam/feetech/actuator.py, with error gain 0.166 and maximum duty 0.97.
+  - behaviour: XL330 duty is error times P gain times 4096 / 2pi / (256 x 885).
+    source: community
+    note: Rhoban/bam bam/dynamixel/actuator.py, where the 256 divisor is marked as empirically observed.
+  - behaviour: Each unit's hidden parameters spread around the fit (kt 5%, resistance 8%, armature 10%, friction 15 to 20%) and carry 0.002 to 0.01 rad of backlash.
+    source: assumed
+    note: Generated from a seed so units differ but repeat exactly.
+  - behaviour: Winding temperature follows I squared R heating with 11 K/W to ambient and 12 J/K of heat capacity.
+    source: assumed
+    note: Chosen so a stalled STS3215 heats by tens of degrees over minutes.
+  - behaviour: The encoder reads 4096 counts per turn on the output shaft.
+    source: datasheet
+    note: Both servos are 12-bit; putting the encoder after the backlash is assumed.
+  - behaviour: The supply sags 0.05 ohm times the total current.
+    source: assumed
+    note: Stands in for a bench supply and its cable.
+  - behaviour: Two servos answering at once pull the bus low, so their bytes AND together.
+    source: assumed
+    note: Models half-duplex TTL collisions for the duplicate-ID fault.

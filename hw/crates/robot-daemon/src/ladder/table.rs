@@ -83,6 +83,7 @@ pub enum Refusal {
     Missing(Fact),
     NotInThatMode,
     LookOnly,
+    EarnedOnly,
 }
 
 pub fn bit(fact: Fact) -> u16 {
@@ -140,6 +141,13 @@ pub fn clears(change: Change) -> &'static [Fact] {
     }
 }
 
+pub fn is_observed(fact: Fact) -> bool {
+    matches!(
+        fact,
+        Fact::BusChecked | Fact::CalibrationPresent | Fact::FirmwareKnown | Fact::PolicyPresent
+    )
+}
+
 pub fn earns(mode: Mode) -> Option<Fact> {
     match mode {
         Mode::Test => Some(Fact::Tested),
@@ -173,7 +181,8 @@ impl State {
 pub fn transition(state: State, event: Event) -> (State, Outcome) {
     match event {
         Event::Enter(target) => enter(state, target),
-        Event::Learned(fact, value) => (state.with(fact, value), Outcome::Done),
+        Event::Learned(fact, value) if is_observed(fact) => (state.with(fact, value), Outcome::Done),
+        Event::Learned(..) => (state, Outcome::Refused(Refusal::EarnedOnly)),
         Event::Changed(change) => changed(state, change),
         Event::Completed(mode) => completed(state, mode),
         Event::Fault => (

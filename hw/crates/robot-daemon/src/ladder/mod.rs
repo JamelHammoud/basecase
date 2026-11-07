@@ -97,6 +97,7 @@ pub fn refusal_message(refusal: &Refusal) -> String {
         Refusal::Missing(fact) => missing_message(*fact).into(),
         Refusal::NotInThatMode => "That step isn't running.".into(),
         Refusal::LookOnly => "Faults can only be cleared from Look.".into(),
+        Refusal::EarnedOnly => "Evidence is earned by finishing a step, never set by hand.".into(),
     }
 }
 

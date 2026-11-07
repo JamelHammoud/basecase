@@ -12,6 +12,8 @@ export const MAX_RESULT_BYTES = 64_000_000;
 
 const encode = (result) => Buffer.from(JSON.stringify(result));
 
+const stoppedOutcome = (slot) => encode({ ok: false, error: slot.running?.messages.stopped ?? STOPPED_ERROR });
+
 const GETTING_READY = new Set(['starting', 'restarting']);
 
 export class KernelPool {
@@ -23,9 +25,9 @@ export class KernelPool {
     this.watch = null;
   }
 
-  submit(job, timeoutMs) {
+  submit(job, timeoutMs, messages = {}) {
     return new Promise((resolve) => {
-      this.waiting.push({ job: { ...job, id: this.nextId++ }, timeoutMs, resolve });
+      this.waiting.push({ job: { ...job, id: this.nextId++ }, timeoutMs, messages, resolve });
       this.pump();
     });
   }
@@ -90,7 +92,7 @@ export class KernelPool {
     slot.state = 'busy';
     slot.running = entry;
     slot.timer = setTimeout(
-      () => this.retire(slot, encode({ ok: false, error: timeoutError(entry.timeoutMs) })),
+      () => this.retire(slot, encode({ ok: false, error: entry.messages.timeout ?? timeoutError(entry.timeoutMs) })),
       entry.timeoutMs,
     );
     slot.channel.run(entry.job);
@@ -124,7 +126,7 @@ export class KernelPool {
     if (!this.slots.includes(slot)) return;
 
     if (slot.state === 'starting') this.failStart(slot, reason);
-    else this.retire(slot, encode({ ok: false, error: STOPPED_ERROR }));
+    else this.retire(slot, stoppedOutcome(slot));
   }
 
   failStart(slot, reason) {
@@ -181,7 +183,7 @@ export class KernelPool {
     for (const slot of this.slots.filter((s) => s.running)) {
       const used = this.memoryOf(slot.channel.pid());
 
-      if (used > this.memoryLimitBytes) this.retire(slot, encode({ ok: false, error: STOPPED_ERROR }));
+      if (used > this.memoryLimitBytes) this.retire(slot, stoppedOutcome(slot));
     }
   }
 }

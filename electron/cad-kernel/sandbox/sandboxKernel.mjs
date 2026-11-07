@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { app } from 'electron';
+import { CONVERT_MESSAGES, CONVERT_MS, checkedConvertJob } from '../../cadImport/convertPolicy.mjs';
 import { bundleEntry, openKernelSession } from './kernelSession.mjs';
 import { openKernelWindow } from './kernelWindow.mjs';
 import { checkedRenderJob, renderTimeout } from './policy.mjs';
@@ -55,6 +56,14 @@ export class SandboxKernel {
 
   audit(body) {
     return this.pool.submit({ json: body }, AUDIT_TIMEOUT_MS);
+  }
+
+  convert(job) {
+    return this.pool.submit(checkedConvertJob(job), CONVERT_MS, CONVERT_MESSAGES);
+  }
+
+  probeConverter(probe, timeoutMs) {
+    return this.pool.submit({ convert: true, probe }, timeoutMs, CONVERT_MESSAGES);
   }
 
   warm() {

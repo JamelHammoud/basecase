@@ -5,6 +5,7 @@ import { build } from 'vite';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sandbox = path.join(root, 'electron', 'cad-kernel', 'sandbox');
+const cadImport = path.join(root, 'electron', 'cadImport');
 
 export const kernelBundleDir = (distDir) => path.join(distDir, 'kernel');
 
@@ -22,7 +23,11 @@ export function buildKernelBundle(distDir) {
       chunkSizeWarningLimit: 40000,
       modulePreload: false,
       rollupOptions: {
-        input: { host: path.join(sandbox, 'page.mjs'), worker: path.join(sandbox, 'worker.mjs') },
+        input: {
+          host: path.join(sandbox, 'page.mjs'),
+          worker: path.join(sandbox, 'worker.mjs'),
+          convert: path.join(cadImport, 'convertWorker.mjs'),
+        },
         output: {
           entryFileNames: '[name].js',
           chunkFileNames: 'assets/[name]-[hash].js',
@@ -33,7 +38,7 @@ export function buildKernelBundle(distDir) {
   });
 }
 
-const KERNEL_SOURCES = [path.join(root, 'electron', 'cad-kernel'), path.join(root, 'package-lock.json')];
+const KERNEL_SOURCES = [path.join(root, 'electron', 'cad-kernel'), cadImport, path.join(root, 'package-lock.json')];
 
 function newestChange(entry) {
   const stat = fs.statSync(entry);

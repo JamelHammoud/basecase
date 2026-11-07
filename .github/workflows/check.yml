@@ -72,3 +72,6 @@ jobs:
         run: |
           BASECASE_KERNEL_SELFTEST="$RUNNER_TEMP/kernel.json" BASECASE_USER_DATA="$RUNNER_TEMP/user-data" STUDIO_AGENT_OFFLINE=1 timeout 300 release/win-unpacked/Basecase.exe
           cat "$RUNNER_TEMP/kernel.json"
+      - name: Convert CAD files in the packaged app's sandbox
+        if: runner.os == 'Windows'
+        run: npx vitest run --config vitest.app.config.ts e2e/app/cadImportSandbox.app.test.ts

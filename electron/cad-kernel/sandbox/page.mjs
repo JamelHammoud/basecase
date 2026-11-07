@@ -1,8 +1,10 @@
 import replicadWasmUrl from 'replicad-opencascadejs/wasm?url';
 import manifoldWasmUrl from 'manifold-3d/manifold.wasm?url';
+import occtWasmUrl from 'occt-import-js/dist/occt-import-js.wasm?url';
 
 const LIBRARY_URL = '/library.json';
 const WORKER_URL = '/worker.js';
+const CONVERT_URL = '/convert.js';
 const host = window.kernelHost;
 const loaded = new Map();
 
@@ -18,6 +20,7 @@ const ASSETS = {
   library: async () => (await fetchOk(LIBRARY_URL)).json(),
   replicadWasm: () => WebAssembly.compileStreaming(fetchOk(replicadWasmUrl)),
   manifoldWasm: () => WebAssembly.compileStreaming(fetchOk(manifoldWasmUrl)),
+  occtWasm: () => WebAssembly.compileStreaming(fetchOk(occtWasmUrl)),
 };
 
 function asset(name) {
@@ -78,7 +81,40 @@ function startWorker(prewarm) {
   started.postMessage({ prewarm });
 }
 
+const failureBytes = (error) =>
+  new TextEncoder().encode(JSON.stringify({ ok: false, error: `The converter failed: ${error}` }));
+
+function onConvertMessage({ converter, job, finish }, message) {
+  if (typeof message !== 'object' || message === null) return;
+
+  if (message.ready === true) converter.postMessage({ job }, job.bytes ? [job.bytes.buffer] : []);
+  else if (typeof message.asset === 'string') sendAsset(converter, message.asset);
+  else if (message.bytes instanceof Uint8Array && message.id === job.id) finish(message.bytes);
+}
+
+function runConvert(job) {
+  const converter = new Worker(CONVERT_URL, { type: 'module' });
+  let done = false;
+  const finish = (bytes) => {
+    if (done) return;
+
+    done = true;
+    converter.terminate();
+    host.result(job.id, bytes);
+  };
+
+  converter.addEventListener('message', (event) => onConvertMessage({ converter, job, finish }, event.data));
+  converter.addEventListener('error', (event) => finish(failureBytes(event.message || 'it did not load')));
+  converter.addEventListener('messageerror', () => finish(failureBytes('it sent an unreadable message')));
+}
+
 host.onJob((job) => {
+  if (job.convert) {
+    runConvert(job);
+
+    return;
+  }
+
   runningId = job.id;
   runningLanguage = job.language ?? null;
   worker.postMessage({ job });

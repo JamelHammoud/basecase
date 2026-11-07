@@ -53,6 +53,7 @@ export class BasecaseBackendService {
     });
     this.bridge.serve('references', (_payload, workspaceId) => ({ names: this.references.ofLane(workspaceId) }));
     serveKernel(this.bridge, kernel);
+    this.converter = typeof kernel?.convert === 'function' ? kernel : null;
     this.bridgeReady = this.startAgentBridge();
 
     this.setupFileWatchers();
@@ -271,7 +272,7 @@ export class BasecaseBackendService {
   }
 
   importMakerCad(payload) {
-    return importMakerCad(this.libraryDir, payload);
+    return importMakerCad(this.libraryDir, payload, this.converter);
   }
 
   saveEvidenceFile(payload) {

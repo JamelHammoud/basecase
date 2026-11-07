@@ -35,7 +35,6 @@ Not done yet:
 - **Windows Share** in place of AirDrop (a Node-API addon like `native/sharing`).
 - **arm64** (Snapdragon). There are no native addons on Windows, so it's mostly an extra build target and a runner.
 - **A Windows icon** drawn for Windows. The macOS rendering (`build/icon/basecase-1024.png`) stands in.
-- **The CAD file converter** (`cadImport/`) still relies on Node's permission model, which Electron's Node 24 doesn't apply (§0h).
 - **Slicer versions** on Windows: they show no version (macOS reads `Info.plist`).
 
 ## Testing before a release

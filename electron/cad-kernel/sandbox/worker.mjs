@@ -1,4 +1,5 @@
 import { createKernel } from '../kernelCore.mjs';
+import { fromCompiledModule } from './wasm.mjs';
 
 const post = self.postMessage.bind(self);
 const encoder = new TextEncoder();
@@ -14,12 +15,6 @@ function asset(name) {
 
   return waitingAssets.get(name).promise;
 }
-
-const fromCompiledModule = (module) => (imports, done) => {
-  WebAssembly.instantiate(module, imports).then((instance) => done(instance, module));
-
-  return {};
-};
 
 async function loadReplicad() {
   const [compiled, { default: ocFactory }, replicad] = await Promise.all([

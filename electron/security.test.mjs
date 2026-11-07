@@ -8,7 +8,11 @@ import { AgentBridge } from './backend/agentBridge.mjs';
 import { EventHub } from './backend/eventHub.mjs';
 import { serveKernel } from './backend/kernelRoutes.mjs';
 import { renderPart } from './cad-kernel/client.mjs';
-import { bundleFile, isKernelUrl, KERNEL_ORIGIN, PAGE_CSP, WORKER_CSP } from './cad-kernel/sandbox/policy.mjs';
+import { bundleFile, cspFor, isKernelUrl, KERNEL_ORIGIN, PAGE_CSP, WORKER_CSP } from './cad-kernel/sandbox/policy.mjs';
+import { NO_CONVERTER_ERROR } from './cadImport/convertClient.mjs';
+import { checkedConversion, checkedConvertJob } from './cadImport/convertPolicy.mjs';
+import { importMakerCad } from './cadImport/importMakerCad.mjs';
+import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
 
@@ -193,5 +197,89 @@ describe('CAD kernel sandbox', () => {
 
     expect(await res.json()).toEqual({ ok: false, error: expect.stringMatching(/runs in the desktop app/) });
     bridge.server.close();
+  });
+});
+
+describe('CAD import sandbox', () => {
+  const glb = new Uint8Array([0x67, 0x6c, 0x54, 0x46, 2, 0, 0, 0, 20, 0, 0, 0, 0]);
+  const header = {
+    ok: true,
+    size: [1, 2, 3],
+    originOffset: [0, 0, 0],
+    triangles: 12,
+    holes: [{ position: [0, 0, 0], axis: [0, 1, 0], diameterMm: 3.2 }],
+    members: ['source.cad'],
+  };
+  const reply = (head, bytes = glb) => decodeReply(encodeReply(head, bytes));
+
+  it('never parses a CAD file outside the sandbox, and refuses before downloading it', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cad-import-'));
+    const fetchSpy = vi.fn();
+
+    vi.stubGlobal('fetch', fetchSpy);
+    await expect(importMakerCad(dir, { id: 'servo', url: 'https://example.com/servo.step' }, null)).rejects.toThrow(
+      NO_CONVERTER_ERROR,
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('drops a converter reply that is malformed, and keeps only the fields it knows', () => {
+    expect(checkedConversion(reply({ ...header, evil: 1 })).result).toEqual({
+      size: [1, 2, 3],
+      originOffset: [0, 0, 0],
+      triangles: 12,
+      holes: header.holes,
+      members: ['source.cad'],
+    });
+
+    for (const bad of [
+      { ...header, size: [Number.NaN, 1, 1] },
+      { ...header, triangles: '12' },
+      { ...header, holes: Array.from({ length: 501 }, () => header.holes[0]) },
+      { ...header, holes: [{ position: [0, 0], axis: [0, 1, 0], diameterMm: 3 }] },
+      { ...header, members: [{ toString: 'x' }] },
+    ]) {
+      expect(() => checkedConversion(reply(bad))).toThrow('malformed');
+    }
+
+    expect(() => checkedConversion(reply(header, new Uint8Array(40)))).toThrow('malformed');
+    expect(() => checkedConversion(reply({ ok: false, error: 'It broke.' }))).toThrow('It broke.');
+    expect(() => checkedConversion(decodeReply(new TextEncoder().encode('{not json')))).toThrow('unreadable');
+  });
+
+  it('checks every converter job field, and never forwards a probe', () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    const job = { id: 'servo', url: 'https://example.com/s.step', name: 'source.cad', ext: '.STEP', bytes };
+    const huge = new Uint8Array(1);
+
+    Object.defineProperty(huge, 'length', { value: 300_000_000 });
+    expect(checkedConvertJob({ ...job, probe: { kind: 'reach' }, rotate: [['x', 90]] })).toEqual({
+      convert: true,
+      partId: 'servo',
+      url: job.url,
+      name: 'source.cad',
+      ext: '.step',
+      member: undefined,
+      rotate: [['x', 90]],
+      bytes,
+    });
+
+    for (const bad of [
+      { ...job, bytes: 'source.cad' },
+      { ...job, bytes: huge },
+      { ...job, rotate: [['w', 90]] },
+      { ...job, rotate: [['x', Number.POSITIVE_INFINITY]] },
+      { ...job, rotate: Array.from({ length: 5 }, () => ['x', 90]) },
+      { ...job, member: { endsWith: () => true } },
+      { ...job, id: 'x'.repeat(5000) },
+    ]) {
+      expect(() => checkedConvertJob(bad)).toThrow();
+    }
+  });
+
+  it('runs the converter under the worker policy: no network, no nested workers', () => {
+    expect(cspFor('/convert.js')).toBe(WORKER_CSP);
+    expect(cspFor('/host.js')).toBe(PAGE_CSP);
   });
 });

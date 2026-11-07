@@ -6,6 +6,7 @@ export const KERNEL_PAGE = `${KERNEL_ORIGIN}/index.html`;
 export const KERNEL_PARTITION = 'basecase-kernel-sandbox';
 export const LIBRARY_PATH = '/library.json';
 export const WORKER_PATH = '/worker.js';
+export const CONVERT_PATH = '/convert.js';
 
 const SEALED =
   "default-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; frame-ancestors 'none'";
@@ -34,7 +35,9 @@ export function isKernelUrl(url) {
   }
 }
 
-export const cspFor = (pathname) => (pathname === WORKER_PATH ? WORKER_CSP : PAGE_CSP);
+const WORKER_PATHS = new Set([WORKER_PATH, CONVERT_PATH]);
+
+export const cspFor = (pathname) => (WORKER_PATHS.has(pathname) ? WORKER_CSP : PAGE_CSP);
 
 export const responseHeaders = (pathname) => ({
   'Content-Type': SERVED_TYPES[path.extname(pathname)] ?? 'application/octet-stream',

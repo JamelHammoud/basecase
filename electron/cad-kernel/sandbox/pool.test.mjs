@@ -133,4 +133,37 @@ describe('kernel pool', () => {
     expect(decode(await queued).ok).toBe(false);
     expect(slots.opened[0].killed).toBe(true);
   });
+
+  it('answers a conversion in its own words when it hangs or its window dies', async () => {
+    vi.useFakeTimers();
+
+    const slots = fakeSlots();
+    const kernel = pool(slots, { size: 1 });
+    const messages = { timeout: 'Converting took too long.', stopped: 'The converter stopped.' };
+    const hung = kernel.submit({ convert: true }, 2000, messages);
+
+    slots.opened[0].handlers.onReady();
+    await vi.advanceTimersByTimeAsync(2001);
+    expect(decode(await hung).error).toBe(messages.timeout);
+
+    const crashed = kernel.submit({ convert: true }, 2000, messages);
+
+    slots.opened[1].handlers.onReady();
+    slots.opened[1].handlers.onGone('its process ended (oom)');
+    expect(decode(await crashed).error).toBe(messages.stopped);
+  });
+
+  it('keeps a slot idle after a conversion, since the page starts a fresh converter per job', async () => {
+    const slots = fakeSlots();
+    const kernel = pool(slots, { size: 1 });
+    const first = kernel.submit({ convert: true }, 60000);
+    const slot = slots.opened[0];
+
+    slot.handlers.onReady();
+    kernel.submit({ convert: true }, 60000);
+    slot.handlers.onResult(slot.jobs[0].id, answer({ ok: true }));
+    await first;
+
+    expect(slot.jobs).toHaveLength(2);
+  });
 });

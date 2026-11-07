@@ -72,6 +72,8 @@
       "!node_modules/@openai/codex-*/**",
       "!node_modules/@google/gemini-cli/**",
       "!electron/cad-kernel/nodeHost/**",
+      "!electron/cadImport/nodeHost/**",
+      "!node_modules/occt-import-js/**",
       "!node_modules/openscad-wasm/**",
       "!node_modules/replicad/**",
       "!node_modules/replicad-opencascadejs/**",

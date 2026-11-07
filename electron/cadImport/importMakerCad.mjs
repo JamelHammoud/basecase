@@ -1,16 +1,12 @@
-import { fork } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { listSourced, putSourced, sourcedDir } from '../backend/sourced.mjs';
 import { publicFetch, readCapped } from '../publicFetch.mjs';
+import { convertFile, NO_CONVERTER_ERROR } from './convertClient.mjs';
+import { MAX_SOURCE_BYTES } from './convertPolicy.mjs';
 import { assertHttps, siteOf } from './linkCheck.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, '..', '..');
-const MAX_DOWNLOAD = 200_000_000;
 const DOWNLOAD_MS = 120_000;
-const CONVERT_MS = 150_000;
 const SIZE_TOLERANCE_MM = 1;
 const SIZE_TOLERANCE_SHARE = 0.03;
 const CLEARANCE_TO_THREAD = [
@@ -21,59 +17,6 @@ const CLEARANCE_TO_THREAD = [
   [5.6, 'M5'],
   [6.8, 'M6'],
 ];
-
-const realDir = (dir) => {
-  try {
-    return fs.realpathSync(dir);
-  } catch {
-    return dir;
-  }
-};
-
-const readAllow = (dir) => Array.from(new Set([dir, realDir(dir)])).map((d) => `--allow-fs-read=${path.join(d, '*')}`);
-
-const NETWORK_PERMISSION_NODE = 25;
-
-function sandboxArgs(jobDir) {
-  if (Number(process.versions.node.split('.')[0]) < NETWORK_PERMISSION_NODE) return [];
-
-  return [
-    '--permission',
-    ...readAllow(path.join(root, 'node_modules')),
-    ...readAllow(here),
-    ...readAllow(jobDir),
-    `--allow-fs-write=${path.join(jobDir, '*')}`,
-  ];
-}
-
-export function convertSandboxed(job, jobDir) {
-  return new Promise((resolve, reject) => {
-    const proc = fork(path.join(here, 'convertWorker.mjs'), [], {
-      execArgv: sandboxArgs(jobDir),
-      env: process.env.ELECTRON_RUN_AS_NODE ? { ELECTRON_RUN_AS_NODE: '1' } : {},
-      stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
-    });
-    const timer = setTimeout(() => {
-      proc.kill();
-      reject(new Error('Converting took too long. The file may be too big for the built-in reader.'));
-    }, CONVERT_MS);
-    let stderr = '';
-
-    proc.stderr?.on('data', (d) => {
-      stderr = `${stderr}${d}`.slice(-500);
-    });
-    proc.on('message', (m) => {
-      if (m?.ready) proc.send(job);
-      else if (m?.error) reject(new Error(m.error));
-      else if (m?.result) resolve(m.result);
-    });
-    proc.once('exit', (code) => {
-      clearTimeout(timer);
-
-      if (code) reject(new Error(`The converter stopped (${code}). ${stderr}`.trim()));
-    });
-  });
-}
 
 async function downloadCad(url, dir) {
   const file = path.join(dir, 'source.cad');
@@ -87,7 +30,7 @@ async function downloadCad(url, dir) {
 
   if (!res.ok) throw new Error(`The download returned ${res.status}.`);
 
-  fs.writeFileSync(file, await readCapped(res, MAX_DOWNLOAD, 'The CAD file'));
+  fs.writeFileSync(file, await readCapped(res, MAX_SOURCE_BYTES, 'The CAD file'));
   fs.writeFileSync(urlFile, url);
 
   return file;
@@ -115,8 +58,10 @@ export function portsFromHoles(holes) {
   }));
 }
 
-export async function importMakerCad(libraryDir, p) {
+export async function importMakerCad(libraryDir, p, converter) {
   assertHttps(p.url, 'The CAD link');
+
+  if (!converter) throw new Error(NO_CONVERTER_ERROR);
 
   const item = listSourced(libraryDir).find((x) => x.id === p.id);
 
@@ -127,18 +72,15 @@ export async function importMakerCad(libraryDir, p) {
   fs.mkdirSync(dir, { recursive: true });
 
   const file = await downloadCad(p.url, dir);
-  const result = await convertSandboxed(
-    {
-      id: p.id,
-      url: p.url,
-      file,
-      out: path.join(dir, 'mesh.glb'),
-      ext: path.extname(new URL(p.url).pathname).toLowerCase(),
-      member: p.member,
-      rotate: p.rotate,
-    },
-    dir,
-  );
+  const result = await convertFile(converter, {
+    id: p.id,
+    url: p.url,
+    file,
+    out: path.join(dir, 'mesh.glb'),
+    ext: path.extname(new URL(p.url).pathname).toLowerCase(),
+    member: p.member,
+    rotate: p.rotate,
+  });
   const fromMaker = siteOf(p.url) === siteOf(item.url);
   const mismatch = sizeMismatch(result.size, p.expectMm);
   const ports = portsFromHoles(result.holes);

@@ -6,6 +6,7 @@ import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { SandboxKernel } from './cad-kernel/sandbox/sandboxKernel.mjs';
 import { kernelSelfTest } from './cad-kernel/sandbox/selfTest.mjs';
+import { cadImportSelfTest } from './cadImport/selfTest.mjs';
 import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs';
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
@@ -214,12 +215,25 @@ function limitPermissions() {
 }
 
 const selfTestFile = process.env.BASECASE_KERNEL_SELFTEST;
+const cadImportSelfTestSpec = process.env.BASECASE_CADIMPORT_SELFTEST;
+
+async function runSelfTest() {
+  if (selfTestFile)
+    return kernelSelfTest(kernel, { outFile: selfTestFile, probeFile: path.join(__dirname, 'main.mjs') });
+
+  return cadImportSelfTest(kernel, cadImportSelfTestSpec).then(
+    () => true,
+    (err) => {
+      console.error('[cadimport] Self-test failed:', err);
+
+      return false;
+    },
+  );
+}
 
 app.whenReady().then(async () => {
-  if (selfTestFile) {
-    const passed = await kernelSelfTest(kernel, { outFile: selfTestFile, probeFile: path.join(__dirname, 'main.mjs') });
-
-    app.exit(passed ? 0 : 1);
+  if (selfTestFile || cadImportSelfTestSpec) {
+    app.exit((await runSelfTest()) ? 0 : 1);
 
     return;
   }

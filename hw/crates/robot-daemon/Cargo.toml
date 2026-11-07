@@ -1,0 +1,33 @@
+[package]
+name = "robot-daemon"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "robot-daemon"
+path = "src/main.rs"
+
+[features]
+onnx = ["dep:ort"]
+unlock-real-motors = ["dep:transport-real"]
+
+[dependencies]
+servo-wire = { path = "../servo-wire" }
+servo-emu = { path = "../servo-emu" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+transport-real = { path = "../transport-real", optional = true }
+ort = { version = "2.0.0-rc.10", optional = true }
+
+[target.'cfg(loom)'.dependencies]
+loom = "0.7"
+
+[dev-dependencies]
+faultbox = { path = "../faultbox" }
+plant-bam = { path = "../plant-bam" }
+proptest = "1"
+
+[lints]
+workspace = true

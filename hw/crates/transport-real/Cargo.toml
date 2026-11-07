@@ -1,0 +1,12 @@
+[package]
+name = "transport-real"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+servo-wire = { path = "../servo-wire" }
+serialport = { version = "4", default-features = false }
+
+[lints]
+workspace = true

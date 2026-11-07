@@ -1,0 +1,23 @@
+[package]
+name = "servo-emu"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "servo-emu"
+path = "src/main.rs"
+
+[dependencies]
+servo-wire = { path = "../servo-wire" }
+plant-bam = { path = "../plant-bam" }
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.30", features = ["term", "poll", "process", "fs"] }
+
+[dev-dependencies]
+servo-wire = { path = "../servo-wire", features = ["raw-frames"] }
+proptest = "1"
+
+[lints]
+workspace = true

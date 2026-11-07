@@ -1,0 +1,13 @@
+[package]
+name = "faultbox"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+servo-wire = { path = "../servo-wire" }
+servo-emu = { path = "../servo-emu" }
+plant-bam = { path = "../plant-bam" }
+
+[lints]
+workspace = true

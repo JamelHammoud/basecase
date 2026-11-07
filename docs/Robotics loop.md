@@ -8,10 +8,12 @@ Goal: take a robot from idea to a working machine without leaving Basecase. Code
 |---|---|---|---|
 | 1 | **Design** | Describe or sketch the robot; Claude models it with real parts | Done: Agent, Parts, CAD kernel, Library |
 | 2 | **Engineer** | Declare joints, pose it, check torque, range, stability, printability and budget | Done: Pose tab, Build tab |
-| 3 | **Simulate** | Run it under physics: does it stand, do the servos hold, does the walk cycle walk | **Now** |
-| 4 | **Train** | Teach it a skill in sim (stand, walk, reach), randomized so it works on the real robot | **Now** |
+| 3 | **Simulate** | Run it under physics: does it stand, do the servos hold, does the walk cycle walk | **Now.** Live sim, checks, Cases with live drive and the web gallery ([Cases](guide/cases.md) §8h) |
+| 4 | **Train** | Teach it any skill in sim, randomized so it works on the real robot | **Now.** Forge native trainer, task contracts and Arena; Motor Kit and the solver race next ([Forge](guide/forge.md) §8g, [Skills](guide/skills.md) §8i) |
 | 5 | **Build** | Print the plates, buy the parts, assemble | Mostly: BOM, budget, build guide, printers, plates, slicing and sending ([Print plan.md](Print%20plan.md)). Sending still to confirm on real printers |
-| 6 | **Operate** | Drive it by hand (teleop), run the trained policy, record every run | Started in sim: Cases, Drive by keyboard or gamepad, recorded tries ([Cases](guide/cases.md)) |
+| 6 | **Operate** | Drive it, run trained skills and Routines, record every run | In sim and against emulated servos: Cases with recorded tries, the daemon and its fault matrix ([Robot runtime](guide/robot-runtime.md) §8k), the Routines core ([Routines](guide/routines.md) §8j). Real motors stay locked until the Stage 8 session |
+
+Gate status for this build lives in `verify/status.json`, written only by Gatekeeper ([Proof](guide/proof.md) §0k).
 
 Two loops tie the stages together:
 
@@ -85,23 +87,15 @@ New rows in Build → Checks, with the same Pass / Warn / Fail rows that select 
 
 **Done when:** a preset quadruped (Go2) trains to walk, and the policy walks in the live sim with randomization on.
 
-## Open decision: where training runs
+## Where training runs
 
-S1–S3 don't depend on this; T2 does.
-
-| Option | Setup | Speed | Notes |
-|---|---|---|---|
-| **In the app** | MuJoCo WASM in worker threads + PPO in JS | Slowest | No install; fine for Stand, slow for Walk |
-| **On the Mac, native** | Python sidecar (`mujoco` + PyTorch), started like the CAD kernel's child process | Several times faster | One-time install; the standard robotics ecosystem |
-| **Cloud GPU** | MuJoCo Playground / MJX | Minutes for walking | Costs money and needs an account |
-
-The same MJCF works for all three, so starting with one doesn't block the others.
+Decided: **Forge**, our native Rust trainer on C MuJoCo's batch API, bundled with the app, so training needs no Python, uv or terminal ([Forge](guide/forge.md) §8g). The Python sidecar stays as a dev-only oracle (`BASECASE_TRAINER=python`). Forge's own SIMD, Metal and WebGPU engines (F3–F6) follow, with C MuJoCo as the oracle every result replays in. Rented machines run long trainings and the Windows GPU checks once an account is set up.
 
 ## Rules for this work
 
 These rules are also in docs/guide/simulate.md §8d.
 
-- **One engine, one model.** MuJoCo runs the live sim, the checks, training and export, all from the same generated MJCF. What you train is what you saw.
+- **One formulation, one model, one oracle.** Every engine (the WASM live sim, Forge, its SIMD and GPU backends) runs the same generated MJCF, and C MuJoCo is the oracle every result replays in. What you train is what you saw.
 - **The scene is the source of truth.** MJCF is generated, never edited by hand. Fix the design, not the model file.
 - **Simulating never edits parts.** Like posing, it only changes what the canvas shows.
 - **Numbers come from the scene's data** (§8b masses, actuator specs, published limits), and estimates are labelled.

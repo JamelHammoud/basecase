@@ -10,7 +10,5 @@ export default {
     shCheck('Case and drive unit tests pass', 'npx', ['vitest', 'run', 'src/cases', 'src/sim/drive']),
     shCheck('Types hold', 'npx', ['tsc', '-b']),
   ],
-  canaries: [
-    shCheck('a Case whose reference misses is caught', 'npx', ['vitest', 'run', 'src/cases/canary.canary.ts']),
-  ],
+  canaries: [vitestCheck('a Case whose reference never moves is caught', 'verify/cases/canary.test.ts')],
 };

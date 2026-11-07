@@ -31,7 +31,7 @@ pub struct Hyper {
 
 pub const HYPER: Hyper = Hyper {
     horizon: 24,
-    epochs: 5,
+    epochs: 30,
     minibatches: 4,
     gamma: 0.99,
     lam: 0.95,
@@ -39,6 +39,17 @@ pub const HYPER: Hyper = Hyper {
     ent_coef: 0.004,
     desired_kl: 0.01,
 };
+
+const REFERENCE_ENVS: usize = 64;
+const MIN_EPOCHS: usize = 5;
+
+impl Hyper {
+    pub fn for_envs(envs: usize) -> Self {
+        let epochs = (HYPER.epochs * REFERENCE_ENVS / envs.max(1)).clamp(MIN_EPOCHS, HYPER.epochs);
+
+        Self { epochs, ..HYPER }
+    }
+}
 
 pub struct Learner {
     pub nobs: usize,
@@ -173,5 +184,18 @@ impl Learner {
         }
 
         kl
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Hyper, HYPER};
+
+    #[test]
+    fn small_batches_are_reused_more() {
+        assert_eq!(Hyper::for_envs(64).epochs, HYPER.epochs);
+        assert_eq!(Hyper::for_envs(32).epochs, HYPER.epochs);
+        assert_eq!(Hyper::for_envs(128).epochs, HYPER.epochs / 2);
+        assert_eq!(Hyper::for_envs(1024).epochs, 5);
     }
 }

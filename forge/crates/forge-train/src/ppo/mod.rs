@@ -8,7 +8,7 @@ use crate::heads::gaussian_constant;
 use crate::kernels::Math;
 use crate::normalizer::Normalizer;
 use crate::rng::Rng;
-use crate::update::{Hyper, Learner, Minibatch, HYPER};
+use crate::update::{Hyper, Learner, Minibatch};
 use collector::Collector;
 use rollout::Rollout;
 use std::time::Instant;
@@ -25,15 +25,12 @@ pub struct Update {
     mb_adv: Vec<f32>,
     mb_ret: Vec<f32>,
     seconds: f64,
-    reward_mean: f64,
 }
 
 pub struct Ppo<'a> {
     collector: Collector<'a>,
     update: Update,
     rollouts: [Rollout; 2],
-    overlap: bool,
-    refresh: bool,
     pending: bool,
 }
 
@@ -88,17 +85,14 @@ impl Update {
         rollout.final_values.copy_from_slice(last);
     }
 
-    fn learn(&mut self, rollout: &mut Rollout, refresh: bool) {
+    fn learn(&mut self, rollout: &mut Rollout) {
         let tick = Instant::now();
         let total = rollout.len();
         let mb = total / self.hyper.minibatches;
 
-        if refresh {
-            self.refresh(rollout);
-        }
+        self.refresh(rollout);
 
         rollout.advantages(self.hyper.gamma, self.hyper.lam);
-        self.reward_mean = rollout.reward_mean();
         rollout.normalize_advantages();
 
         for _ in 0..self.hyper.epochs {
@@ -129,7 +123,7 @@ impl<'a> Ppo<'a> {
         let n = envs.count;
         let nact = envs.robot.nact;
         let nobs = envs.robot.nobs();
-        let hyper = HYPER;
+        let hyper = Hyper::for_envs(n);
         let total = hyper.horizon * n;
         let mb = total / hyper.minibatches;
         let mut init_rng = Rng::new(seed, 1_000_000);
@@ -150,43 +144,33 @@ impl<'a> Ppo<'a> {
                 mb_adv: vec![0.0; mb],
                 mb_ret: vec![0.0; mb],
                 seconds: 0.0,
-                reward_mean: 0.0,
             },
             rollouts: [
                 Rollout::new(n, hyper.horizon, nobs, nact),
                 Rollout::new(n, hyper.horizon, nobs, nact),
             ],
-            overlap: std::env::var_os("FORGE_PPO_OVERLAP").is_some(),
-            refresh: std::env::var_os("FORGE_PPO_REFRESH").is_some(),
             pending: false,
         }
     }
 
-    fn iterate_in_turn(&mut self) -> Result<(), String> {
+    fn first_rollout(&mut self) -> Result<(), String> {
         self.collector.follow(&self.update.learner);
         self.collector.collect(&mut self.rollouts[0])?;
-        self.update.learn(&mut self.rollouts[0], false);
+        self.pending = true;
 
         Ok(())
     }
 
-    fn iterate_overlapped(&mut self) -> Result<(), String> {
-        if !self.pending {
-            self.collector.follow(&self.update.learner);
-            self.collector.collect(&mut self.rollouts[0])?;
-            self.pending = true;
-        }
-
+    fn learn_while_collecting(&mut self) -> Result<(), String> {
         self.collector.follow(&self.update.learner);
 
-        let refresh = self.refresh;
         let [learning, collecting] = &mut self.rollouts;
         let update = &mut self.update;
         let collector = &mut self.collector;
         let collected = std::thread::scope(|scope| {
             let learner = scope.spawn(|| {
                 crate::platform::raise_thread_priority();
-                update.learn(learning, refresh);
+                update.learn(learning);
             });
             let collected = collector.collect(collecting);
 
@@ -203,11 +187,11 @@ impl<'a> Ppo<'a> {
 
 impl Algorithm for Ppo<'_> {
     fn iterate(&mut self) -> Result<(), String> {
-        if self.overlap {
-            return self.iterate_overlapped();
+        if !self.pending {
+            return self.first_rollout();
         }
 
-        self.iterate_in_turn()
+        self.learn_while_collecting()
     }
 
     fn report(&mut self) -> Report {
@@ -220,7 +204,7 @@ impl Algorithm for Ppo<'_> {
         Report {
             steps: self.collector.steps,
             phases,
-            reward_mean: self.update.reward_mean,
+            reward_mean: self.rollouts[0].reward_mean(),
             episode_seconds: self.collector.episodes.mean_seconds(),
         }
     }

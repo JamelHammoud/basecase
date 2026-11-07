@@ -1,3 +1,4 @@
+import { provideMeshFiles } from '../three/componentMeshes';
 import { renderGuide, type GuideJob, type GuideProgress, type RenderedGuide } from './renderGuide';
 
 export type GuidePortMessage =
@@ -10,6 +11,8 @@ export async function renderGuideOnPort(job: GuideJob, port: MessagePort): Promi
   port.onmessage = ({ data }: MessageEvent<GuidePortMessage>) => {
     if (data.type === 'cancel') cancelled = true;
   };
+
+  provideMeshFiles(job.meshes);
 
   try {
     return await renderGuide(job, {

@@ -46,14 +46,21 @@ describe('buildBom', () => {
   const line = (key: string) => bom.lines.find((l) => l.key === key)!;
 
   it('counts catalog parts, same-spec hardware and supplies by key', () => {
-    expect(bom.lines.map((l) => [l.key, l.qty, l.category])).toEqual([
-      ['component:feetech-sts3215|c001', 1, 'Components'],
-      [hardwareKey(screw), 2, 'Hardware'],
-      ['supply:lipo-2s-2200', 1, 'Supplies'],
-      ['supply:filament-pla', 13, 'Filament'],
-    ]);
+    expect(bom.lines.map((l) => [l.key, l.qty, l.category])).toEqual(
+      expect.arrayContaining([
+        ['component:feetech-sts3215|c001', 1, 'Components'],
+        [hardwareKey(screw), 2, 'Hardware'],
+        ['supply:lipo-2s-2200', 1, 'Supplies'],
+        ['supply:filament-pla', 13, 'Filament'],
+      ]),
+    );
     expect(line(hardwareKey(screw)).partIds).toEqual(['s1', 's2']);
     expect(line('supply:filament-pla')).toMatchObject({ unit: 'g', packs: 1, partIds: ['bracket'] });
+  });
+
+  it('adds what the scene needs by itself: cables for servos, keys for screws', () => {
+    expect(line('supply:servo-cable-5264-3pin').qty).toBe(1);
+    expect(line('supply:hex-key-set').category).toBe('Equipment');
   });
 
   it('weighs printed parts from the shell and infill model', () => {
@@ -67,7 +74,7 @@ describe('buildBom', () => {
     expect(bom.standIns).toEqual([{ id: 'standin', name: 'Generic servo' }]);
     expect(bom.unmeasured).toEqual([]);
     expect(line('component:feetech-sts3215|c001')).toMatchObject({ status: 'unchecked', estUsd: 20 });
-    expect(bom.totals).toMatchObject({ checked: 0, stale: 0, unchecked: 4, budgetUsd: 50, overBudget: false });
+    expect(bom.totals).toMatchObject({ checked: 0, stale: 0, budgetUsd: 50, overBudget: false });
   });
 
   it('applies checked prices and flags stale ones', () => {

@@ -19,7 +19,8 @@ export interface CheckRow {
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[] }>;
+  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail' }>;
+  itemsAreContext?: boolean;
 }
 
 export interface JointLoad {

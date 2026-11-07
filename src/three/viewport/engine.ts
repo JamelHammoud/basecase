@@ -3,6 +3,7 @@ import { fastenerInput } from '../../assembly/fastenerSpec';
 import {
   assemblyIn,
   fastenersIn,
+  floorIn,
   interferenceIn,
   measuresIn,
   visibilityIn,
@@ -22,6 +23,7 @@ import { captureScreenshot, captureViews } from './captures';
 import { silhouetteShots } from './fitCapture';
 import { Gizmo } from './gizmo';
 import { installKeys } from './keys';
+import { MarkFieldAnchor } from './markFieldAnchor';
 import { MarkInput } from './markInput';
 import { MarkLayer } from './markLayer';
 import { Marquee } from './marquee';
@@ -88,6 +90,7 @@ export interface EngineOptions {
   container: HTMLElement;
   marquee: () => HTMLElement | null;
   measureLabel: () => HTMLElement | null;
+  markField: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -115,6 +118,8 @@ export class ViewportEngine {
   private readonly markLayer: MarkLayer;
 
   private readonly markInput: MarkInput;
+
+  private readonly markField: MarkFieldAnchor;
 
   private readonly agentFrames: AgentFrames;
 
@@ -151,6 +156,7 @@ export class ViewportEngine {
     this.markLayer = new MarkLayer(stage.scene, stage.overlays);
     this.markLayer.sync(options.props.marks, options.props.selectedMarkId);
     this.markInput = new MarkInput(this.ctx, this.markLayer);
+    this.markField = new MarkFieldAnchor(this.ctx, this.markLayer, options.markField);
     this.agentFrames = new AgentFrames(this.ctx);
     this.agentFrames.sync(options.props.agentFrames ?? []);
 
@@ -158,6 +164,7 @@ export class ViewportEngine {
 
     loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
     loop.afterRender.add(() => this.measureTool.updateLabel());
+    loop.afterRender.add(() => this.markField.place());
     loop.afterRender.add(() => {
       if (this.agentFrames.refresh()) loop.invalidate();
     });
@@ -223,11 +230,14 @@ export class ViewportEngine {
 
     if (changed(previous, props, FIGURE_KEYS)) this.figures.sync();
 
-    if (previous.markMode && !props.markMode) this.markInput.cancel();
-
-    if (changed(previous, props, ['marks', 'selectedMarkId'])) this.markLayer.sync(props.marks, props.selectedMarkId);
+    if ((previous.markMode && !props.markMode) || previous.markTool !== props.markTool) this.markInput.cancel();
 
     if (previous.agentFrames !== props.agentFrames) this.agentFrames.sync(props.agentFrames ?? []);
+
+    if (!changed(previous, props, ['marks', 'selectedMarkId'])) return;
+
+    this.markLayer.sync(props.marks, props.selectedMarkId);
+    this.markField.place();
   }
 
   dispose(): void {
@@ -299,7 +309,7 @@ export class ViewportEngine {
         ),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
-      posedFloor: (ids) => measure.posedFloor(ctx, ids),
+      posedFloor: (ids) => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
       silhouetteShots: (specs, opts) =>
         unbatched(() => silhouetteShots(ctx, { specs, ...opts, helper: this.gizmo.controls.getHelper() })),

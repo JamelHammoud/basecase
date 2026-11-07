@@ -1,7 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { AcpChatMessage, AcpStatusInfo, AgentChoice, ContextUsage, ReferenceImageRecord } from '../types/robotics';
+import {
+  AcpChatMessage,
+  AcpStatusInfo,
+  AgentChoice,
+  ContextUsage,
+  MessageQuote,
+  ReferenceImageRecord,
+} from '../types/robotics';
 import { AnalyzedImageFeatures } from '../utils/imageTo3DAnalyzer';
-import { collectDrop } from '../utils/evidenceFiles';
 import { ImageViewer, ImageViewerItem, Tooltip, ChevronDownIcon, PhotoIcon } from '../design-system';
 import { agentKindOf, agentProfileOf } from '../agent/agentKinds';
 import { Composer } from './agent/Composer';
@@ -11,6 +17,7 @@ import { Transcript } from './agent/Transcript';
 import { QueuedMessages } from './agent/queue/QueuedMessages';
 import { QueueControls, SendToAgent } from './agent/types';
 import { useDraft } from './agent/useDraft';
+import { useFileDrop } from './agent/useFileDrop';
 import { useSubmit } from './agent/useSubmit';
 import { feedMask, useFeedFollow } from './agent/useFeedFollow';
 
@@ -22,6 +29,8 @@ interface AcpStudioPanelProps {
   context: ContextUsage | null;
   canRevert: boolean;
   attachRequest?: number;
+  sketchRequest?: number;
+  quote: { request: MessageQuote | null; onRequest: (quote: MessageQuote) => void; onDone: () => void };
   targetHeightMm?: number;
   choice: AgentChoice;
   onChoiceChange: (choice: AgentChoice) => void;
@@ -69,6 +78,8 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   context,
   canRevert,
   attachRequest = 0,
+  sketchRequest = 0,
+  quote,
   targetHeightMm = 0,
   choice,
   onChoiceChange,
@@ -84,9 +95,8 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   onRevert,
 }) => {
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
-  const draft = useDraft({ onUploadImage, promptRef, queue });
-  const { attachments } = draft;
-  const [isDragOver, setIsDragOver] = useState(false);
+  const draft = useDraft({ onUploadImage, promptRef, queue, quote });
+  const { isDragOver, dropHandlers } = useFileDrop(draft.attachments.attachFiles);
   const [viewer, setViewer] = useState<ViewerState>(null);
   const { feedRef, feedContentRef, edgeFade, showJump, scrollToBottom, feedHandlers } = useFeedFollow({
     messages,
@@ -112,23 +122,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   };
 
   return (
-    <div
-      className="relative flex flex-col h-full min-h-0 min-w-0"
-      onDragOver={(e) => {
-        if (!e.dataTransfer.types.includes('Files')) return;
-
-        e.preventDefault();
-        setIsDragOver(true);
-      }}
-      onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setIsDragOver(false);
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        collectDrop(e.dataTransfer).then(({ loose, folders }) => attachments.attachFiles(loose, folders));
-      }}
-    >
+    <div className="relative flex flex-col h-full min-h-0 min-w-0" {...dropHandlers}>
       <ConnectionBanner
         acpStatus={acpStatus}
         onReconnect={onReconnectAcp}
@@ -153,6 +147,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
             onRetry={retry}
             onRevert={onRevert}
             onOpenImages={openImages}
+            onQuote={quote.onRequest}
           />
         </div>
 
@@ -163,6 +158,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         draft={draft}
         promptRef={promptRef}
         attachRequest={attachRequest}
+        sketchRequest={sketchRequest}
         isBusy={isBusy}
         agentName={agentName}
         agent={acpStatus}

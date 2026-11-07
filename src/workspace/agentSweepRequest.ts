@@ -107,6 +107,7 @@ async function holdAndShove(ctx: SweepRun, scene: Scene, report: EngineeringRepo
   if (!vp) return 'no canvas';
 
   const { parts, measures, project } = scene.input;
+  const posedFloor = await vp.posedFloor();
   const model = buildMjcf({
     parts,
     rig: buildRig(project.joints ?? [], parts),
@@ -114,7 +115,7 @@ async function holdAndShove(ctx: SweepRun, scene: Scene, report: EngineeringRepo
     pose: ctx.pose,
     measures,
     partTriangles: sceneTriangles(ctx, vp, scene),
-    posedFloor: vp.posedFloor(),
+    posedFloor,
   });
 
   if (!model.robots.some((r) => r.floating)) return 'no legs';

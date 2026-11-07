@@ -192,7 +192,7 @@ export function rangeOfMotionRows(ctx: CheckContext): CheckRow[] {
 
   for (const j of revolute(ctx)) (j.published ? published : designed).push(...sweepJoint(ctx, j));
 
-  const items = [...designed, ...published];
+  const items = [...designed, ...published.map((i) => ({ ...i, status: 'warn' as const }))];
 
   return [
     {

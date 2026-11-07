@@ -4,6 +4,7 @@ import { IconButton } from './IconButton';
 
 export interface SectionProps {
   title: string;
+  summary?: React.ReactNode;
   actions?: React.ReactNode;
   children: React.ReactNode;
   collapsible?: boolean;
@@ -13,8 +14,28 @@ export interface SectionProps {
   className?: string;
 }
 
+const ToggleTitle: React.FC<{ title: string; summary: React.ReactNode; open: boolean; onToggle: () => void }> = ({
+  title,
+  summary,
+  open,
+  onToggle,
+}) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    className="flex-1 min-w-0 h-7 flex items-center justify-between gap-3 text-left text-[13px] font-semibold text-white/90 select-none cursor-default"
+    aria-expanded={open}
+  >
+    <span className="min-w-0 truncate">{title}</span>
+    {!open && summary && (
+      <span className="shrink-0 text-[12.5px] font-normal text-white/45 tabular-nums">{summary}</span>
+    )}
+  </button>
+);
+
 export const Section: React.FC<SectionProps> = ({
   title,
+  summary,
   actions,
   children,
   collapsible = false,
@@ -39,14 +60,7 @@ export const Section: React.FC<SectionProps> = ({
     <section className={`px-[12px] [--pad-x:12px] py-4 border-b border-white/[0.06] last:border-b-0 ${className}`}>
       <header className={`flex items-center justify-between h-7 ${showBody ? '-mt-1 mb-2' : '-my-1'}`}>
         {collapsible ? (
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="flex-1 min-w-0 h-7 flex items-center text-left text-[13px] font-semibold text-white/90 select-none cursor-default"
-            aria-expanded={isOpen}
-          >
-            {title}
-          </button>
+          <ToggleTitle title={title} summary={summary} open={isOpen} onToggle={() => setOpen((v) => !v)} />
         ) : (
           <h3 className="text-[13px] font-semibold text-white/90 select-none">{title}</h3>
         )}

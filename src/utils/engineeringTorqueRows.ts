@@ -64,16 +64,17 @@ function torqueStatus({ fails, warns, unknown }: TorqueSummary): CheckRow['statu
 }
 
 function torqueItems(s: TorqueSummary): NonNullable<CheckRow['items']> {
-  const line = (l: JointLoad) => ({ text: loadText(l, s.legs), ids: loadIds(l) });
+  const line = (l: JointLoad, status: 'warn' | 'fail') => ({ text: loadText(l, s.legs), ids: loadIds(l), status });
   const partlyUnknown = s.unknown.length && s.unknown.length < s.loads.length;
 
   return [
-    ...s.fails.map(line),
-    ...s.warns.map(line),
+    ...s.fails.map((l) => line(l, 'fail')),
+    ...s.warns.map((l) => line(l, 'warn')),
     ...(partlyUnknown
       ? [
           {
             text: `No torque data for ${count(s.unknown.length, 'joint')}: give them servos`,
+            status: 'warn' as const,
             ids: s.unknown.flatMap((l) => l.joint.child),
           },
         ]

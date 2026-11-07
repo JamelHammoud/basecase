@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { LeftTab } from '../components/LeftSidebar';
 import type { StudioSubTab } from '../components/SculptAndDrawStudio';
-import type { SculptSettings, TransformMode } from '../types/robotics';
+import type { MessageQuote, SculptSettings, TransformMode } from '../types/robotics';
 import type { Annotations } from './useAnnotations';
 import type { CreatorMode, RightTab, Setter } from './types';
 
@@ -30,6 +30,8 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
   const [creator, setCreator] = useState<CreatorMode | null>(null);
   const [sculptSettings, setSculptSettings] = useState<SculptSettings>(DEFAULT_SCULPT);
   const [attachRequest, setAttachRequest] = useState(0);
+  const [sketchRequest, setSketchRequest] = useState(0);
+  const [quoteRequest, setQuoteRequest] = useState<MessageQuote | null>(null);
 
   const setMode = (mode: TransformMode) => {
     setTransformMode(mode);
@@ -92,6 +94,16 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     setAttachRequest((n) => n + 1);
   };
 
+  const requestSketch = () => {
+    openRightTab('acp');
+    setSketchRequest((n) => n + 1);
+  };
+
+  const requestQuote = (quote: MessageQuote) => {
+    openRightTab('acp');
+    setQuoteRequest(quote);
+  };
+
   const studioMode: StudioSubTab | null = transformMode === 'sculpt' ? 'clay' : creator;
 
   return {
@@ -115,6 +127,11 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     updateSculptSettings: (patch: Partial<SculptSettings>) => setSculptSettings((s) => ({ ...s, ...patch })),
     attachRequest,
     requestAttach,
+    sketchRequest,
+    quoteRequest,
+    requestQuote,
+    clearQuote: () => setQuoteRequest(null),
+    requestSketch,
   };
 }
 

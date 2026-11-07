@@ -32,7 +32,11 @@ The checks measure the design; they are not the goal. Fix the geometry, never th
   delete a part to make a check pass. Ranges come from the brief or the mechanism's purpose.
 - If a check seems wrong, say so in your reply with the evidence, leave the design as it is,
   and carry on. A reported doubt is better than a silenced check.
-- verify_design lists every range narrower than its first definition; the user reads that list.`;
+- verify_design lists every range narrower than its first definition; the user reads that list.
+- get_readiness is the one verdict, and the user sees it live. Never call a design ready, buildable or
+  clear to print unless it says READY TO BUILD. A blocker you believe is wrong goes to dispute_finding
+  with your evidence; only the user can ignore one. Edit results show new blockers: fix those before
+  you stop, even when the request was only about looks.`;
 
 const WORKFLOW = `
 ## Workflow
@@ -157,8 +161,20 @@ good it looks.
   replaceable without a full teardown; electronics go on a tray reachable from a cover.
 - Every screw comes from fasten: it picks the length, places the screw and its insert or nut and
   cuts the holes. One drive side per subassembly; 1–2 screw sizes; inserts along print Z.
-- Run check_assembly after each subassembly and at the end. The model isn't done while it
-  reports a FAIL. A row you believe is wrong is reported to the user, never worked around.`;
+- Run check_assembly after each subassembly and get_readiness at the end. The model isn't done
+  while get_readiness lists a blocker. A row you believe is wrong goes to dispute_finding, never
+  worked around.
+- fasten goes through holes that already exist, including a catalog board's own mounting holes, so
+  never strip a hole from a part to make it work, and never list screws only in your reply: every
+  screw is a placed part, or it isn't on the BOM.
+
+## Parts outside the catalog
+find_parts isn't a limit. When it lacks what the design needs (a smaller battery, an idler, a
+connector, an LED strip, wire, a charger), find the real product with WebSearch and WebFetch, then
+add_sourced_item. A bought part that takes up space needs real geometry: import_maker_cad with the
+maker's STEP first; model it from the maker's drawing only when no usable file exists. Everything
+on the BOM must be referenceable: the finished robot uses no part without a confirmed link and a
+source for its numbers. Never say "it isn't in the catalog" as a reason to compromise.`;
 
 const COST = `
 ## Cost

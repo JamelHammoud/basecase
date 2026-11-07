@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { ReferenceImageRecord } from '../../types/robotics';
+import { MessageQuote, ReferenceImageRecord } from '../../types/robotics';
 import { AnalyzedImageFeatures } from '../../utils/imageTo3DAnalyzer';
 import { FolderChip, folderChip, useAttachments } from './useAttachments';
 import { QueueControls, QueuedDraft, QueueSlotRef } from './types';
+import { useQuoteRequest } from './useQuoteRequest';
 
 interface Stash {
   text: string;
   images: ReferenceImageRecord[];
   folders: FolderChip[];
+  quotes: MessageQuote[];
 }
 
 interface Editing {
@@ -19,21 +21,29 @@ interface DraftOptions {
   onUploadImage: (file: File) => Promise<{ record: ReferenceImageRecord; features: AnalyzedImageFeatures }>;
   promptRef: React.RefObject<HTMLTextAreaElement | null>;
   queue: QueueControls;
+  quote?: { request: MessageQuote | null; onDone: () => void };
 }
 
 const stashOf = (params: QueuedDraft): Stash => ({
   text: params.text,
   images: params.images ?? [],
   folders: (params.folders ?? []).map(folderChip),
+  quotes: params.quotes ?? [],
 });
 
-export function useDraft({ onUploadImage, promptRef, queue }: DraftOptions) {
+export function useDraft({ onUploadImage, promptRef, queue, quote }: DraftOptions) {
   const attachments = useAttachments({ onUploadImage, promptRef });
   const [text, setText] = useState('');
+  const [quotes, setQuotes] = useState<MessageQuote[]>([]);
   const [editing, setEditing] = useState<Editing | null>(null);
+  const removeQuote = (id: string) => setQuotes((all) => all.filter((q) => q.id !== id));
+  const addQuote = (next: MessageQuote) => setQuotes((all) => [...all.filter((q) => q.id !== next.id), next]);
+
+  useQuoteRequest(quote?.request ?? null, { addQuote, promptRef, onQuoted: quote?.onDone });
 
   const load = (stash: Stash) => {
     setText(stash.text);
+    setQuotes(stash.quotes);
     attachments.restore(stash.images, stash.folders);
   };
 
@@ -44,7 +54,10 @@ export function useDraft({ onUploadImage, promptRef, queue }: DraftOptions) {
 
     if (!slot) return;
 
-    setEditing({ slot, stash: editing?.stash ?? { text, images: attachments.images, folders: attachments.folders } });
+    setEditing({
+      slot,
+      stash: editing?.stash ?? { text, quotes, images: attachments.images, folders: attachments.folders },
+    });
     load(stashOf(slot.item.params));
     requestAnimationFrame(() => {
       const el = promptRef.current;
@@ -68,7 +81,18 @@ export function useDraft({ onUploadImage, promptRef, queue }: DraftOptions) {
     finishEdit();
   };
 
-  return { attachments, text, setText, editing: editing?.slot ?? null, edit, finishEdit, cancelEdit };
+  return {
+    attachments,
+    text,
+    setText,
+    quotes,
+    removeQuote,
+    clearQuotes: () => setQuotes([]),
+    editing: editing?.slot ?? null,
+    edit,
+    finishEdit,
+    cancelEdit,
+  };
 }
 
 export type Draft = ReturnType<typeof useDraft>;

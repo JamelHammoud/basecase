@@ -41,6 +41,8 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       ['Measure', ['D']],
       ['Measure without snapping', ['⇧', 'click']],
       ['Annotate', ['N']],
+      ['Marker while annotating', ['P']],
+      ['Eraser while annotating', ['E']],
       ['Drop to floor', ['F']],
       ['Stack on part below', ['S']],
       ['Move or rotate without snapping', ['⇧', 'drag']],

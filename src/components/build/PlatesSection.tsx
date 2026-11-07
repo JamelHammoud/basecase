@@ -1,14 +1,14 @@
 import React from 'react';
-import { Button, MetaLine, Section, Switch } from '../../design-system';
-import type { Plate } from '../../print/plan';
+import { Button, Divider, MetaLine, Section, SpinnerIcon, Switch } from '../../design-system';
+import type { Plate, PrintPlan } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter, SlicedPlate } from '../../print/printBridge';
 import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings } from '../../types/robotics';
 import type { Printing } from '../../workspace/usePrinting';
 import { hm, plural } from './format';
-import { Notice } from './Notice';
 import { PlateRow, plateNumbers } from './PlateRow';
-import { PrintSettings, qualityLabel } from './PrintSettings';
+import { PrintedSection } from './PrintedSection';
+import { PrintSettings } from './PrintSettings';
 
 interface PlatesSectionProps {
   printing: Printing;
@@ -20,6 +20,12 @@ interface PlatesSectionProps {
   onSelectParts: (ids: string[]) => void;
 }
 
+interface PlateTotals {
+  hours: number;
+  grams: number;
+  exact: boolean;
+}
+
 export function slicerName(printing: Printing, tools: PrintToolsStatus | null): string | null {
   const vendor = printing.printer.model.vendor;
   const order = vendor === 'BBL' ? ['bambu', 'orca'] : ['orca', 'bambu'];
@@ -28,41 +34,23 @@ export function slicerName(printing: Printing, tools: PrintToolsStatus | null): 
   return found?.name ?? null;
 }
 
-function footnote(printing: Printing, project: ProjectSettings, allSliced: boolean) {
-  const presets = printing.printer.model.presets;
-  const quality = qualityLabel(project.printProcess ?? presets?.process ?? '0.20mm Standard');
-  const slicer = printing.job.slice?.slicer;
-
-  if (allSliced && slicer) return `Sliced in ${slicer.name} ${slicer.version ?? ''}: ${quality}, ${project.infillPct}% infill`.replace(' :', ':');
-
-  return `Estimate for a ${printing.printer.model.name}: ${quality}, ${project.infillPct}% infill, best flat orientation. Slice to confirm.`;
-}
-
-const SliceState: React.FC<{ printing: Printing }> = ({ printing }) => {
-  const { job } = printing;
-
-  if (job.slicing)
-    return (
-      <div className="flex items-center gap-2">
-        <span className="flex-1 min-w-0 truncate text-[12.5px] text-white/60">{job.progress ?? 'Slicing'}…</span>
-        <Button size="sm" variant="ghost" onClick={job.stopSlice}>
-          Stop
-        </Button>
-      </div>
-    );
-
-  return job.error ? <div className="text-[12.5px] text-red-400">{job.error}</div> : null;
-};
-
-function plateTotals(plates: Plate[], sliced: Array<SlicedPlate | undefined>) {
-  return plates.reduce(
+function plateTotals(plates: Plate[], sliced: Array<SlicedPlate | undefined>): PlateTotals {
+  return plates.reduce<PlateTotals>(
     (t, p, i) => {
       const n = plateNumbers(p, sliced[i]);
 
-      return { hours: t.hours + n.hours, grams: t.grams + n.grams };
+      return { hours: t.hours + n.hours, grams: t.grams + n.grams, exact: t.exact && n.exact };
     },
-    { hours: 0, grams: 0 },
+    { hours: 0, grams: 0, exact: true },
   );
+}
+
+function collapsedSummary(printing: Printing, plates: Plate[], totals: PlateTotals) {
+  if (printing.job.slicing) return 'Slicing…';
+
+  if (!plates.length) return undefined;
+
+  return `${totals.exact ? '' : '≈ '}${hm(totals.hours)}`;
 }
 
 const SkipPrinted: React.FC<{ printing: Printing }> = ({ printing }) => (
@@ -74,38 +62,72 @@ const SkipPrinted: React.FC<{ printing: Printing }> = ({ printing }) => (
   </div>
 );
 
+const Totals: React.FC<{ plateCount: number; totals: PlateTotals }> = ({ plateCount, totals }) => (
+  <div>
+    <div className="text-[20px] font-semibold tabular-nums text-white/90 leading-tight">
+      {!totals.exact && <span className="text-white/45 font-normal mr-1">≈</span>}
+      {hm(totals.hours)}
+    </div>
+    <MetaLine
+      className="mt-1 text-[12.5px] text-white/45 tabular-nums"
+      items={[
+        `${plateCount} ${plural(plateCount, 'plate', 'plates')}`,
+        `${Math.round(totals.grams).toLocaleString('en-US')} g`,
+      ]}
+    />
+  </div>
+);
+
+const SliceProgress: React.FC<{ printing: Printing }> = ({ printing }) => (
+  <div className="basis-full min-w-0 flex items-center gap-2">
+    <SpinnerIcon className="w-4 h-4 shrink-0 text-white/35 animate-spin" />
+    <span className="flex-1 min-w-0 truncate text-[13px] text-white/60">{printing.job.progress ?? 'Slicing'}…</span>
+    <Button size="sm" variant="ghost" onClick={printing.job.stopSlice}>
+      Stop
+    </Button>
+  </div>
+);
+
+const SlicerActions: React.FC<{ printing: Printing; slicer: string; allSliced: boolean }> = ({
+  printing,
+  slicer,
+  allSliced,
+}) => (
+  <>
+    <Button size="sm" variant="secondary" className="grow" onClick={() => void printing.job.runSlice()}>
+      {allSliced ? 'Slice Again' : 'Slice'}
+    </Button>
+    <Button size="sm" variant="secondary" className="grow" onClick={() => void printing.job.openInSlicer()}>
+      Open in {slicer}
+    </Button>
+  </>
+);
+
 const PlateActions: React.FC<{ printing: Printing; slicer: string | null; allSliced: boolean }> = ({
   printing,
   slicer,
   allSliced,
 }) => (
   <div className="flex flex-wrap gap-2">
-    <Button size="sm" variant="primary" onClick={() => printing.openMode(1)}>
+    <Button size="sm" variant="primary" fullWidth onClick={() => printing.openMode(1)}>
       Lay Out Plates
     </Button>
-    {slicer && !printing.job.slicing && (
-      <Button size="sm" variant="secondary" onClick={() => void printing.job.runSlice()}>
-        {allSliced ? 'Slice Again' : 'Slice'}
-      </Button>
-    )}
-    {slicer && (
-      <Button size="sm" variant="secondary" onClick={() => void printing.job.openInSlicer()}>
-        Open in {slicer}
-      </Button>
-    )}
+    {printing.job.slicing && <SliceProgress printing={printing} />}
+    {slicer && !printing.job.slicing && <SlicerActions printing={printing} slicer={slicer} allSliced={allSliced} />}
   </div>
 );
 
-const PlateList: React.FC<{ printing: Printing; plates: Plate[]; sliced: Array<SlicedPlate | undefined> }> = ({
+const PlateList: React.FC<{ printing: Printing; plan: PrintPlan; sliced: Array<SlicedPlate | undefined> }> = ({
   printing,
-  plates,
+  plan,
   sliced,
 }) => (
-  <ul className="-mx-[7px]">
-    {plates.map((plate, i) => (
+  <ul className="-mx-[7px] -my-1">
+    {plan.plates.map((plate, i) => (
       <PlateRow
         key={plate.number}
         plate={plate}
+        bed={plan.bed}
         sliced={sliced[i]}
         status={plateStatus(plate, printing.records)}
         live={printing.status}
@@ -115,17 +137,31 @@ const PlateList: React.FC<{ printing: Printing; plates: Plate[]; sliced: Array<S
   </ul>
 );
 
-export const PlatesSection: React.FC<PlatesSectionProps> = (props) => {
-  const { printing, project, tools, onSelectParts } = props;
-  const plates = printing.report?.plan.plates ?? [];
-  const sliced = plates.map((p) => printing.freshSlice(p));
-  const allSliced = plates.length > 0 && sliced.every(Boolean);
-  const totals = plateTotals(plates, sliced);
-  const failing = printing.report?.parts.filter((p) => p.issues.length) ?? [];
-  const has = plates.length > 0;
+const PlatesResult: React.FC<PlatesSectionProps & { plan: PrintPlan }> = ({ printing, plan, tools }) => {
+  const sliced = plan.plates.map((p) => printing.freshSlice(p));
+  const allSliced = sliced.every(Boolean);
 
   return (
-    <Section title="Printing">
+    <>
+      <PlateActions printing={printing} slicer={slicerName(printing, tools)} allSliced={allSliced} />
+      {printing.job.error && <div className="text-[12.5px] text-red-400">{printing.job.error}</div>}
+      <Divider className="my-4" />
+      <PlateList printing={printing} plan={plan} sliced={sliced} />
+    </>
+  );
+};
+
+export const PlatesSection: React.FC<PlatesSectionProps> = (props) => {
+  const { printing, project, onSelectParts } = props;
+  const plan = printing.report?.plan;
+  const plates = plan?.plates ?? [];
+  const totals = plateTotals(
+    plates,
+    plates.map((p) => printing.freshSlice(p)),
+  );
+
+  return (
+    <Section title="Printing" summary={collapsedSummary(printing, plates, totals)} collapsible defaultOpen={false}>
       <PrintSettings
         printer={printing.printer}
         printers={props.printers}
@@ -133,28 +169,11 @@ export const PlatesSection: React.FC<PlatesSectionProps> = (props) => {
         onChangeProject={props.onChangeProject}
         onAddPrinter={props.onAddPrinter}
       />
-      {has && (
-        <MetaLine
-          className="text-[12.5px] text-white/45 tabular-nums"
-          items={[
-            `${plates.length} ${plural(plates.length, 'plate', 'plates')}`,
-            `${allSliced ? '' : '≈ '}${hm(totals.hours)}`,
-            `${Math.round(totals.grams).toLocaleString('en-US')} g`,
-          ]}
-        />
-      )}
-      {failing.length > 0 && (
-        <Notice
-          tone="amber"
-          text={`Fix ${failing.length} ${plural(failing.length, 'part', 'parts')} before printing`}
-          onClick={() => onSelectParts(failing.map((p) => p.id))}
-        />
-      )}
       {printing.printedCount > 0 && <SkipPrinted printing={printing} />}
-      {has && <PlateList printing={printing} plates={plates} sliced={sliced} />}
-      <SliceState printing={printing} />
-      {has && <PlateActions printing={printing} slicer={slicerName(printing, tools)} allSliced={allSliced} />}
-      {has && <p className="text-[12px] text-white/40">{footnote(printing, project, allSliced)}</p>}
+      {plates.length > 0 && <Divider className="my-4" />}
+      {plates.length > 0 && <Totals plateCount={plates.length} totals={totals} />}
+      {plan && plates.length > 0 && <PlatesResult {...props} plan={plan} />}
+      <PrintedSection report={printing.report} project={project} onSelectParts={onSelectParts} />
     </Section>
   );
 };

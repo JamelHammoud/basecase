@@ -140,7 +140,7 @@ export const QueuedMessages: React.FC<{ queue: QueueControls; onEdit: (id: strin
         <span className="flex-1 min-w-0 truncate text-left">
           {items.length} message{items.length === 1 ? '' : 's'} queued
         </span>
-        {open ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronUpIcon className="w-4 h-4" />}
+        {open ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
       </button>
       {open && (
         <div className="max-h-[194px] overflow-y-auto overflow-x-hidden px-1.5 pt-0.5 pb-1.5">

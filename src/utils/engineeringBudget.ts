@@ -33,6 +33,7 @@ export function budgetRow(ctx: CheckContext): CheckRow {
     check: 'Budget',
     status,
     detail: `${budgetLine(bom)}${unpriced}`,
+    itemsAreContext: true,
     items:
       status === 'pass'
         ? []

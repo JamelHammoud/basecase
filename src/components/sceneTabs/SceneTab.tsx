@@ -19,7 +19,9 @@ const isCloseButton = (target: EventTarget) => !!(target as HTMLElement).closest
 function tabFill(active: boolean, dragging: boolean) {
   if (active) return 'bg-[#262626]';
 
-  return dragging ? 'bg-white/[0.07]' : 'hover:bg-white/[0.05]';
+  const edge = 'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.07)]';
+
+  return dragging ? `bg-white/[0.07] ${edge}` : `hover:bg-white/[0.05] ${edge}`;
 }
 
 const RenameField: React.FC<{ name: string; onFinish: (name: string) => void }> = ({ name, onFinish }) => (

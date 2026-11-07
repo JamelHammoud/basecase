@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
+import { crossingsOf } from './crossing';
 import { samplesOf, type ShapeSolid } from './shapeSolid';
 
 export interface Placed {
@@ -79,6 +80,42 @@ function penetration(inner: Placed, outer: Placed, { toleranceMm, maxSamples }: 
   return { fraction: inside / Math.max(1, samples.length / 3), depth };
 }
 
+const CROSSINGS_PROBED = 48;
+const PROBE_STEPS_MM = [0.5, 1, 2, 4, 8, 16, 32];
+
+function crossingDepth(A: Placed, B: Placed) {
+  const aToB = B.inverse.clone().multiply(A.matrix);
+  const dirsB = RAY_DIRS.map((d) => d.clone().transformDirection(B.inverse));
+  const target = { point: new THREE.Vector3(), distance: 0, faceIndex: 0 };
+  const inB = new THREE.Vector3();
+  const depthAt = (p: THREE.Vector3) => {
+    if (!isInside(A.solid, p, RAY_DIRS)) return 0;
+
+    inB.copy(p).applyMatrix4(aToB);
+
+    if (!isInside(B.solid, inB, dirsB)) return 0;
+
+    const fromA = A.solid.bvh.closestPointToPoint(p, target as never)?.distance ?? 0;
+    const fromB = B.solid.bvh.closestPointToPoint(inB, target as never)?.distance ?? 0;
+
+    return Math.min(fromA, fromB);
+  };
+  const p = new THREE.Vector3();
+  let deepest = 0;
+
+  for (const { point, into } of crossingsOf(A, B, CROSSINGS_PROBED)) {
+    for (const step of PROBE_STEPS_MM) {
+      deepest = Math.max(
+        deepest,
+        depthAt(p.copy(point).addScaledVector(into, step)),
+        depthAt(p.copy(point).addScaledVector(into, -step)),
+      );
+    }
+  }
+
+  return deepest;
+}
+
 function triangleNormal(positions: Float32Array, face: number, out: THREE.Vector3) {
   const a = new THREE.Vector3().fromArray(positions, face * 9);
   const b = new THREE.Vector3().fromArray(positions, face * 9 + 3);
@@ -125,15 +162,18 @@ function overlap(A: Placed, B: Placed, options: CollideOptions): Interference | 
 
   const ab = penetration(A, B, options);
   const ba = penetration(B, A, options);
-  const worst = ab.depth >= ba.depth ? ab : ba;
   const fraction = Math.max(ab.fraction, ba.fraction);
+  const crossed = crossingDepth(A, B);
+  const sampled = fraction > 0.01 ? Math.max(ab.depth, ba.depth) : 0;
+  const crosses = crossed > options.toleranceMm;
+  const depth = crosses ? Math.max(crossed, ab.depth, ba.depth) : sampled;
 
-  if (worst.depth <= options.toleranceMm || fraction <= 0.01) return null;
+  if (depth <= options.toleranceMm) return null;
 
   return {
     a: A.id,
     b: B.id,
-    depthMm: Math.round(worst.depth * 10) / 10,
+    depthMm: Math.round(depth * 10) / 10,
     fraction: Math.round(fraction * 100) / 100,
   };
 }

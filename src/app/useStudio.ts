@@ -27,7 +27,7 @@ export interface StudioSources {
 
 function useSharedPreferences(prefs: StudioSources['prefs']) {
   const { snapStepMm, setSnapStepMm, snapAngleDeg, trackpadMode, setTrackpadMode, showGrid, setShowGrid } = prefs;
-  const { sculptEnabled, autoGuide, measureUnit, showReferenceImages, setShowReferenceImages } = prefs;
+  const { sculptEnabled, autoGuide, autoFixBlockers, measureUnit, showReferenceImages, setShowReferenceImages } = prefs;
 
   return useMemo(
     () => ({
@@ -41,6 +41,7 @@ function useSharedPreferences(prefs: StudioSources['prefs']) {
       setShowGrid,
       sculptEnabled,
       autoGuide,
+      autoFixBlockers,
       showReferenceImages,
       setShowReferenceImages,
     }),
@@ -55,6 +56,7 @@ function useSharedPreferences(prefs: StudioSources['prefs']) {
       setShowGrid,
       sculptEnabled,
       autoGuide,
+      autoFixBlockers,
       showReferenceImages,
       setShowReferenceImages,
     ],

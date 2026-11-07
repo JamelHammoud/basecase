@@ -27,7 +27,7 @@ import {
   WebIcon,
 } from '../design-system';
 import type { PrintersState } from '../app/usePrinters';
-import { BuildPane } from './settings/BuildPane';
+import { BuildPane, type BuildPrefs } from './settings/BuildPane';
 import { PrintersPane } from './settings/PrintersPane';
 import { RegionPane } from './settings/RegionPane';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
@@ -67,8 +67,7 @@ export interface SettingsWindowProps {
   onShowGrid: (v: boolean) => void;
   sculptEnabled: boolean;
   onSculptEnabled: (v: boolean) => void;
-  autoGuide: boolean;
-  onAutoGuide: (v: boolean) => void;
+  buildPrefs: BuildPrefs;
   snapStepMm: number;
   onSnapStep: (mm: number) => void;
   snapAngleDeg: number;
@@ -186,7 +185,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             {current.id === 'layout' && <LayoutPane {...props} />}
             {current.id === 'region' && <RegionPane />}
             {current.id === 'agent' && <AgentPane {...props} />}
-            {current.id === 'build' && <BuildPane autoGuide={props.autoGuide} onAutoGuide={props.onAutoGuide} />}
+            {current.id === 'build' && <BuildPane prefs={props.buildPrefs} />}
             {current.id === 'printers' && (
               <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
             )}

@@ -94,6 +94,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         previews={core.thumbs}
         canReopen={canReopenTab}
         isLeftOpen={layout.isLeftOpen}
+        leftWidth={layout.panelWidths.left}
         onToggleLeft={() => layout.setIsLeftOpen((v) => !v)}
         resizing={!!layout.resizingPanel}
         rightIslandWidth={layout.rightIslandWidth}
@@ -113,8 +114,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         open={settings.settingsOpen}
         sculptEnabled={prefs.sculptEnabled}
         onSculptEnabled={prefs.setSculptEnabled}
-        autoGuide={prefs.autoGuide}
-        onAutoGuide={prefs.setAutoGuide}
+        buildPrefs={prefs}
         pane={settings.pane}
         onPaneChange={settings.changePane}
         onClose={settings.closeSettings}

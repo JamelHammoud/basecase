@@ -4,10 +4,19 @@ import type { EnteredPrice, PrintMaterial, PurchaseRecord } from '../types/robot
 export const STALE_DAYS = 60;
 export const FILAMENT_MARGIN = 0.15;
 
-export type BomCategory = 'Components' | 'Hardware' | 'Supplies' | 'Filament';
+export type BomCategory =
+  'Components' | 'Hardware' | 'Added by Agent' | 'Supplies' | 'Materials' | 'Filament' | 'Equipment';
 export type PriceStatus = 'checked' | 'stale' | 'unchecked';
 
-export const BOM_CATEGORIES: BomCategory[] = ['Components', 'Hardware', 'Supplies', 'Filament'];
+export const BOM_CATEGORIES: BomCategory[] = [
+  'Components',
+  'Hardware',
+  'Added by Agent',
+  'Supplies',
+  'Materials',
+  'Filament',
+  'Equipment',
+];
 
 export interface BomLine {
   key: string;

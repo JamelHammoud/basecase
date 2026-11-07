@@ -1,3 +1,4 @@
+import type { MeshFiles } from '../three/componentMeshes';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { solidSizeMm } from '../utils/sceneSize';
 import { guideHtml } from './doc/guideDocument';
@@ -23,6 +24,7 @@ export interface GuideJob {
   date: string;
   mark: string;
   order?: { assembly: string[]; unproven: string[] };
+  meshes?: MeshFiles;
 }
 
 export interface GuideJobEvents {

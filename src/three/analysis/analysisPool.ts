@@ -161,6 +161,10 @@ export function measuresIn(scene: SceneShapes): Promise<Record<string, MeshMeasu
   return analyze(leastBusy(), scene, { kind: 'measure', instances: scene.instances });
 }
 
+export function floorIn(scene: SceneShapes): Promise<number | null> {
+  return analyze(leastBusy(), scene, { kind: 'floor', instances: scene.instances });
+}
+
 export async function sweepsIn(scene: SceneShapes, sweeps: SweepSpec[]): Promise<SweepHit[][]> {
   if (!sweeps.length) return [];
 

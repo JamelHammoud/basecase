@@ -5,6 +5,7 @@ import { marksNote } from '../agent/agentMarks';
 import type { ActorIndex } from './agentActors';
 import { buildAgentPrompt, resendPayload, type AgentSendParams, type PromptOptions } from './agentPrompt';
 import { newId } from './helpers';
+import { readinessGate } from './readinessGate';
 import { STOPPED_REASONS } from './liveRuns';
 import type { AgentCursors } from './useAgentCursors';
 import type { QueuedPrompt } from './agentLanes';
@@ -85,12 +86,18 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
       const modelCountBefore = (await platformBridge.listModels().catch(() => [])).length;
 
-      applyResult(id, await platformBridge.sendAcpPrompt({ ...payload, workspaceId: keyOf(id) }), modelCountBefore);
+      const res = await platformBridge.sendAcpPrompt({ ...payload, workspaceId: keyOf(id) });
+
+      applyResult(id, res, modelCountBefore);
+
+      return !STOPPED_REASONS.has(res.stopReason);
     } catch (err) {
       const reason = failureReason(err);
 
       setMessages(id, markLastAgentFailed(reason));
       showToast(`Agent error. ${reason}`, { tone: 'error' });
+
+      return false;
     }
   };
 
@@ -120,12 +127,17 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
     setBusy(id, true);
     updateLane(id, (l) => ({ ...l, edits: {} }));
 
+    const gate = readinessGate(core);
+
+    gate.begin();
+
     while (payload) {
-      await runOnce(id, payload);
-
+      const finished = await runOnce(id, payload);
       const next = alive() && !flags.stopped ? takeNext(id) : undefined;
+      const followUp = !next && finished && alive() && !flags.stopped ? await gate.followUp() : null;
+      const queued = next ?? (followUp ? { id: newId('queued'), params: { text: followUp } } : undefined);
 
-      payload = next && startQueued(id, next);
+      payload = queued && startQueued(id, queued);
     }
 
     setBusy(id, false);

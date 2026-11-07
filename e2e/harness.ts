@@ -32,6 +32,7 @@ const LISTS: Record<string, unknown> = {
   'print-status': { slicers: [], downloads: {}, bambuConnect: false },
   'print-printers': [],
   'print-last-slice': null,
+  'upload-image': { id: 'image-1', name: 'Upload', dataUrl: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' },
 };
 
 export interface App {
@@ -41,7 +42,7 @@ export interface App {
   close: () => Promise<void>;
 }
 
-async function stubBackend(page: Page, posts: App['posts']): Promise<void> {
+async function stubBackend(page: Page, posts: App['posts'], lists: Record<string, unknown>): Promise<void> {
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }),
   );
@@ -50,7 +51,11 @@ async function stubBackend(page: Page, posts: App['posts']): Promise<void> {
 
     if (route.request().method() === 'POST') posts.push({ route: name, body: route.request().postDataJSON() });
 
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LISTS[name] ?? {}) });
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(lists[name] ?? LISTS[name] ?? {}),
+    });
   });
 }
 
@@ -60,7 +65,7 @@ const startServer = async (): Promise<ViteDevServer> => {
   return server.listen();
 };
 
-export async function openApp(): Promise<App> {
+export async function openApp(lists: Record<string, unknown> = {}): Promise<App> {
   const server = await startServer();
   const browser: Browser = await chromium.launch({
     channel: 'chrome',
@@ -75,7 +80,7 @@ export async function openApp(): Promise<App> {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
-  await stubBackend(page, posts);
+  await stubBackend(page, posts, lists);
   await page.goto(server.resolvedUrls!.local[0]);
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,

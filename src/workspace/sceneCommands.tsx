@@ -5,6 +5,7 @@ import {
   CloseIcon,
   CommentIcon,
   ComposeIcon,
+  DeleteIcon,
   DuplicateIcon,
   EraserIcon,
   FileImportIcon,
@@ -129,6 +130,17 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
       run: () => core.printing.openMode(1),
     },
     {
+      id: 'check-ready',
+      group: 'Scene',
+      label: 'Run Checks',
+      icon: <PrinterIcon className={ic} />,
+      keywords: 'ready to build buildable audit blockers build check assemble',
+      run: () => {
+        core.tool.setRightTab('build');
+        void core.readiness.checkNow();
+      },
+    },
+    {
       id: 'slice-plates',
       group: 'Scene',
       label: 'Slice Plates',
@@ -182,6 +194,14 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       icon: <PhotoAddIcon className={ic} />,
       keywords: 'photo sketch agent ai',
       run: tool.requestAttach,
+    },
+    {
+      id: 'agent-sketch',
+      group: 'Scene',
+      label: 'Sketch for Agent',
+      icon: <PenIcon className={ic} />,
+      keywords: 'draw drawing reference composer ai',
+      run: tool.requestSketch,
     },
   ];
 }
@@ -348,10 +368,22 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
     ...(core.marks.marks.length
       ? [
           {
+            id: 'tool-erase-marks',
+            group: 'Tools',
+            label: 'Erase Marks',
+            shortcut: 'E',
+            icon: <EraserIcon className={ic} />,
+            keywords: 'annotate eraser remove delete one mark rub out',
+            run: () => {
+              core.tool.toggleMarking(true);
+              core.marks.setTool('eraser');
+            },
+          },
+          {
             id: 'tool-clear-marks',
             group: 'Tools',
             label: 'Clear Marks',
-            icon: <EraserIcon className={ic} />,
+            icon: <DeleteIcon className={ic} />,
             keywords: 'annotate erase remove red lines',
             run: core.marks.clear,
           },

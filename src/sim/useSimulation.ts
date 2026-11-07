@@ -162,7 +162,7 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
     await vp.meshesReady();
 
     const { parts, project, rig, pose } = inputs.current;
-    const measures = await vp.measureParts();
+    const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
     return buildMjcf({
       parts,
@@ -171,7 +171,7 @@ export function useSimulation({ parts, project, rig, pose, viewportRef, restDelt
       pose,
       measures,
       partTriangles: vp.partTriangles,
-      posedFloor: vp.posedFloor(),
+      posedFloor,
     });
   }, [viewportRef]);
 

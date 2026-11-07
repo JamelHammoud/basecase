@@ -16,6 +16,8 @@ import { ensureDirectories, libraryPaths } from './backend/libraryPaths.mjs';
 import * as models from './backend/models.mjs';
 import { buildPromptBlocks } from './backend/promptBlocks.mjs';
 import * as purchases from './backend/purchases.mjs';
+import * as sourced from './backend/sourced.mjs';
+import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { ReferenceImages } from './backend/referenceImages.mjs';
 import * as uploads from './backend/uploads.mjs';
 
@@ -248,6 +250,26 @@ export class BasecaseBackendService {
 
   savePurchase(payload) {
     return purchases.savePurchase(this.libraryDir, payload);
+  }
+
+  listSourced() {
+    return sourced.listSourced(this.libraryDir);
+  }
+
+  saveSourced(payload) {
+    return sourced.saveSourced(this.libraryDir, payload);
+  }
+
+  removeSourced(id) {
+    return sourced.removeSourced(this.libraryDir, id);
+  }
+
+  sourcedMesh(id) {
+    return sourced.sourcedMesh(this.libraryDir, id);
+  }
+
+  importMakerCad(payload) {
+    return importMakerCad(this.libraryDir, payload);
   }
 
   saveEvidenceFile(payload) {

@@ -1,5 +1,5 @@
 import { ImageViewerItem } from '../../design-system';
-import { ReferenceImageRecord } from '../../types/robotics';
+import { MessageQuote, ReferenceImageRecord } from '../../types/robotics';
 import { EvidenceFolder } from '../../utils/evidenceFiles';
 
 export type OpenImages = (images: ImageViewerItem[], index: number) => void;
@@ -10,6 +10,7 @@ export interface QueuedDraft {
   text: string;
   images?: ReferenceImageRecord[];
   folders?: EvidenceFolder[];
+  quotes?: MessageQuote[];
 }
 
 export interface QueuedItem {

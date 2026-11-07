@@ -25,13 +25,40 @@ export interface MoveQuery {
   candidates: Placed[];
 }
 
-function rayHits(target: Placed, from: THREE.Vector3, dir: THREE.Vector3, travel: number): boolean {
+const GRAZE_MM = 0.12;
+const LIP_DEPTH_MM = 3;
+const LIP_SHARE = 0.1;
+const LIP_MIN_HITS = 2;
+
+function hitDistance(target: Placed, from: THREE.Vector3, dir: THREE.Vector3, travel: number): number | null {
+  if (insideSolid(target, from.clone().addScaledVector(dir, 0.3))) return null;
+
   ray.origin.copy(from).addScaledVector(dir, START_MM).applyMatrix4(target.inverse);
   ray.direction.copy(dirLocal.copy(dir).transformDirection(target.inverse));
 
   const hit = target.solid.bvh.raycastFirst(ray, THREE.DoubleSide);
 
-  return !!hit && hit.distance <= travel && !insideSolid(target, from.clone().addScaledVector(dir, 0.3));
+  return hit && hit.distance <= travel ? hit.distance : null;
+}
+
+function grazeOffsets(dir: THREE.Vector3): THREE.Vector3[] {
+  const side = new THREE.Vector3(Math.abs(dir.x) < 0.9 ? 1 : 0, Math.abs(dir.x) < 0.9 ? 0 : 1, 0)
+    .cross(dir)
+    .normalize()
+    .multiplyScalar(GRAZE_MM);
+  const other = dir.clone().cross(side);
+
+  return [side, side.clone().negate(), other, other.clone().negate()];
+}
+
+function solidHit(target: Placed, from: THREE.Vector3, dir: THREE.Vector3, travel: number): number | null {
+  const hit = hitDistance(target, from, dir, travel);
+
+  if (hit === null) return null;
+
+  const held = grazeOffsets(dir).every((o) => hitDistance(target, from.clone().add(o), dir, travel) !== null);
+
+  return held ? hit : null;
 }
 
 const samplesOf = (p: Placed) => worldPoints(gridSamples(p.solid, GRID_CELLS), p.matrix);
@@ -40,25 +67,63 @@ function sweptBox(p: Placed, dir: THREE.Vector3, travel: number) {
   return p.box.clone().union(p.box.clone().translate(dir.clone().multiplyScalar(travel)));
 }
 
-function blocks(query: MoveQuery, q: Placed, mine: THREE.Vector3[], swept: THREE.Box3): boolean {
-  const { part, dir, travel } = query;
+export type Block = 'none' | 'lip' | 'solid';
 
-  if (mine.some((o) => q.box.distanceToPoint(o) <= travel && rayHits(q, o, dir, travel))) return true;
+function shootAll(from: THREE.Vector3[], shoot: (o: THREE.Vector3) => number | null): Block {
+  const limit = Math.max(LIP_MIN_HITS, from.length * LIP_SHARE);
+  let hits = 0;
+
+  for (const o of from) {
+    const d = shoot(o);
+
+    if (d === null) continue;
+
+    hits++;
+
+    if (d > LIP_DEPTH_MM || hits > limit) return 'solid';
+  }
+
+  return hits ? 'lip' : 'none';
+}
+
+function blockOf(query: MoveQuery, q: Placed, mine: THREE.Vector3[], swept: THREE.Box3): Block {
+  const { part, dir, travel } = query;
+  const forward = shootAll(mine, (o) => (q.box.distanceToPoint(o) <= travel ? solidHit(q, o, dir, travel) : null));
+
+  if (forward === 'solid') return 'solid';
 
   const back = dir.clone().negate();
+  const theirs = samplesOf(q);
+  const backward = shootAll(theirs, (o) => (swept.containsPoint(o) ? solidHit(part, o, back, travel) : null));
 
-  return samplesOf(q).some((o) => swept.containsPoint(o) && rayHits(part, o, back, travel));
+  if (backward === 'solid') return 'solid';
+
+  return forward === 'lip' || backward === 'lip' ? 'lip' : 'none';
 }
 
-export function blockersAlong(query: MoveQuery): string[] {
+export function blocksAlong(query: MoveQuery): { solid: string[]; lips: string[] } {
   const swept = sweptBox(query.part, query.dir, query.travel);
   const mine = samplesOf(query.part);
+  const out = { solid: [] as string[], lips: [] as string[] };
 
-  return query.candidates
-    .filter((q) => q.id !== query.part.id && q.box.intersectsBox(swept))
-    .filter((q) => blocks(query, q, mine, swept))
-    .map((q) => q.id);
+  for (const q of query.candidates) {
+    if (q.id === query.part.id || !q.box.intersectsBox(swept)) continue;
+
+    const block = blockOf(query, q, mine, swept);
+
+    if (block === 'solid') out.solid.push(q.id);
+
+    if (block === 'lip') out.lips.push(q.id);
+  }
+
+  return out;
 }
+
+export const blockersAlong = (query: MoveQuery): string[] => {
+  const { solid, lips } = blocksAlong(query);
+
+  return [...solid, ...lips];
+};
 
 export function ownTravel(p: Placed, dir: THREE.Vector3): number {
   const size = p.box.getSize(new THREE.Vector3());

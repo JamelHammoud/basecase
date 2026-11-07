@@ -84,12 +84,12 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   const plain: KeyMap = {
     v: () => tool.setMode('translate'),
     w: () => tool.setMode('translate'),
-    e: () => tool.setMode('rotate'),
+    e: () => (tool.marking ? marks.setTool('eraser') : tool.setMode('rotate')),
     r: () => tool.setMode('scale'),
     c: () => {
       if (studio.sculptEnabled) tool.setMode('sculpt');
     },
-    p: pose.openPose,
+    p: () => (tool.marking ? marks.setTool('marker') : pose.openPose()),
     f: edits.dropToGround,
     s: edits.stackOnBelow,
     z: ui.focusSelected,

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { interferenceIn, sweepsIn } from './analysisPool';
+import { floorIn, interferenceIn, sweepsIn } from './analysisPool';
 import { snapshotShapes } from './sceneShapes';
 
 const box = (id: string, x: number, size = 20) => {
@@ -54,6 +54,43 @@ describe('interference in the analysis workers', () => {
     const { coplanar } = await interferenceIn(snapshotShapes([box('a', 0), box('b', 20)]), OPTIONS);
 
     expect(coplanar).toEqual([{ a: 'a', b: 'b', areaMm2: 400 }]);
+  });
+});
+
+describe('the lowest point of a posed robot', () => {
+  const TIRE_RADIUS = 70;
+  const tire = (id: string, centerHeight: number, spin: number) => {
+    const geometry = new THREE.CylinderGeometry(TIRE_RADIUS, TIRE_RADIUS, 30, 96).rotateX(Math.PI / 2);
+    const mesh = new THREE.Mesh(geometry);
+
+    mesh.position.set(0, centerHeight, 0);
+    mesh.rotation.z = spin;
+
+    return { id, object: mesh };
+  };
+
+  it('stays on the floor however far a resting tire has spun', async () => {
+    for (const spin of [0, Math.PI / 8, Math.PI / 4, 1]) {
+      const floor = await floorIn(snapshotShapes([tire('tire', TIRE_RADIUS, spin)]));
+
+      expect(Math.abs(floor!)).toBeLessThan(0.1);
+    }
+  });
+
+  it('still reports a spun tire that really is 20 mm under the floor', async () => {
+    const floor = await floorIn(snapshotShapes([tire('tire', TIRE_RADIUS - 20, Math.PI / 4)]));
+
+    expect(floor).toBeCloseTo(-20, 0);
+  });
+
+  it('takes the lowest of several parts, whatever their order', async () => {
+    const floor = await floorIn(snapshotShapes([tire('high', 500, 0.3), tire('low', 100, 0.3), tire('mid', 300, 0.3)]));
+
+    expect(floor).toBeCloseTo(100 - TIRE_RADIUS, 0);
+  });
+
+  it('has no lowest point without meshes', async () => {
+    expect(await floorIn(snapshotShapes([]))).toBeNull();
   });
 });
 

@@ -47,20 +47,26 @@ function labelTexture(text: string, color: string): { texture: THREE.CanvasTextu
   return { texture, widthPx };
 }
 
-function topmostOnScreen(points: THREE.Vector3[], camera: THREE.Camera, out: THREE.Vector3): THREE.Vector3 {
-  let best = -Infinity;
+export function topCenterOnScreen(points: THREE.Vector3[], camera: THREE.Camera, out: THREE.Vector3): THREE.Vector3 {
   const projected = new THREE.Vector3();
+  const top = new THREE.Vector3(0, -Infinity, 0);
+  let left = Infinity;
+  let right = -Infinity;
 
   for (const p of points) {
     projected.copy(p).project(camera);
 
-    if (projected.z > 1 || projected.y <= best) continue;
+    if (projected.z > 1) continue;
 
-    best = projected.y;
-    out.copy(p);
+    left = Math.min(left, projected.x);
+    right = Math.max(right, projected.x);
+
+    if (projected.y > top.y) top.copy(projected);
   }
 
-  return out;
+  if (!Number.isFinite(top.y)) return out.copy(points[0]);
+
+  return out.set((left + right) / 2, top.y, top.z).unproject(camera);
 }
 
 export class MarkLabel {
@@ -103,7 +109,7 @@ export class MarkLabel {
   private place(renderer: THREE.WebGLRenderer, camera: THREE.Camera, points: THREE.Vector3[]): void {
     const size = renderer.getSize(new THREE.Vector2());
     const focal = camera.projectionMatrix.elements[5];
-    const anchor = topmostOnScreen(points, camera, this.sprite.position);
+    const anchor = topCenterOnScreen(points, camera, this.sprite.position);
     const perPx = 2 / (size.y * focal);
 
     this.sprite.scale.set(this.widthPx * perPx, HEIGHT_PX * perPx, 1);

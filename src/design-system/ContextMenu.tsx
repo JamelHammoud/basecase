@@ -26,6 +26,7 @@ export interface ContextMenuProps {
   x: number;
   y: number;
   items: ContextMenuEntry[];
+  minWidth?: number;
   onClose: () => void;
 }
 
@@ -36,7 +37,7 @@ const closingThen = (onClose: () => void, onSelect?: () => void) =>
     onSelect();
   });
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, minWidth = 240, onClose }) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = useState<{ left: number; top: number; origin: string; subLeft: boolean } | null>(null);
   const [openSub, setOpenSub] = useState<number | null>(null);
@@ -88,11 +89,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       ref={ref}
       role="menu"
       onContextMenu={(e) => e.preventDefault()}
-      className="glass-menu fixed z-[96] w-max min-w-60 max-w-80 rounded-[14px] p-[var(--pad-x)] animate-pop-in"
+      className="glass-menu fixed z-[96] w-max max-w-80 rounded-[14px] p-[var(--pad-x)] animate-pop-in"
       style={
         {
           left: pos?.left ?? x,
           top: pos?.top ?? y,
+          minWidth,
           visibility: pos ? 'visible' : 'hidden',
           transformOrigin: pos?.origin,
           WebkitAppRegion: 'no-drag',

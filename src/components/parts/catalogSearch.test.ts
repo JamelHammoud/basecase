@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseSizeQuery, searchCatalog } from './catalogSearch';
-import { CATEGORIES, searchScope } from './partsViews';
+import { partCategories, searchScope } from './partsViews';
 
 describe('parts search', () => {
   it('reads metric sizes, lengths and bearing numbers', () => {
@@ -39,7 +39,7 @@ describe('parts search', () => {
 
 describe('parts views', () => {
   it('scopes search to the open category', () => {
-    const servos = CATEGORIES.find((c) => c.id === 'Servos')!;
+    const servos = partCategories([]).find((c) => c.id === 'Servos')!;
     const scope = searchScope({ kind: 'category', id: 'Servos' })!;
 
     expect(scope.label).toBe('servos');

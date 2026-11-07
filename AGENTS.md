@@ -32,8 +32,8 @@
 | 5a | [Scene tabs](docs/guide/scene-tabs.md) | tabs, opening and closing scenes, `.basecase` files |
 | 6, 6a | [Toolbar and Settings](docs/guide/toolbar-and-settings.md) | the bottom toolbar, Measure, Annotate, Settings panes |
 | 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, drag and drop, reference images, Sculpt / Sketch / Import SVG |
-| 8a | [Parts catalog](docs/guide/parts-catalog.md) | real components, meshes, the parts pipeline |
-| 8b | [Build](docs/guide/build.md) | BOM, prices, currency, printability, engineering checks, the build guide |
+| 8a | [Parts catalog](docs/guide/parts-catalog.md) | real components, meshes, the parts pipeline, parts the agent sources |
+| 8b | [Build](docs/guide/build.md) | Checks, BOM, prices, currency, printability, engineering checks, the build guide |
 | 8c | [Joints and motion](docs/guide/joints-and-motion.md) | joints, kinematics, the Pose tab, animation, robot import, mocap |
 | 8d | [Simulate and train](docs/guide/simulate.md) | MuJoCo, the MJCF writer, training, policies |
 | 8e | [SimReady](docs/guide/simready.md) | SimReady search, the converter, textures |
@@ -53,6 +53,7 @@ Plans and research live beside them in `docs/` ([Robotics loop](docs/Robotics%20
 - **Several agents may share this checkout.** Before you edit or commit, check `git status` for changes that aren't yours, never overwrite or revert them, and commit only your own files and hunks.
 - **Don't judge visual changes yourself.** Don't start dev servers, previews or screenshots to see how a change looks; run the checks (§15), say what changed and where to look, and a maintainer reviews it in the app. Make visual tweaks big enough to notice (a 2 → 2.25 stroke at 16px is invisible).
 - **Performance fixes never trade one problem for another.** Don't pause, throttle or defer loading to keep the UI smooth; move the work off the main thread or make it cheap (§0f).
+- **Ready to build is a verdict, not an opinion.** Only Checks in the Build tab (§8b) say a design is ready; only the user can ignore a blocker. A problem someone finds by hand becomes a check and a seeded fault test. The catalog never limits a design: the agent sources what's missing, and the finished robot uses only referenceable parts.
 - **Agent priorities** (the CAD agent's output, its prompt, tools, checks and the bench): designs that can actually be assembled and serviced come first, then cost-aware part choices, then parts that look expertly designed; silhouette and proportion scores matter less ([Agent](docs/guide/agent.md#priorities)).
 
 ## 0. Code Conventions (mandatory)
@@ -149,7 +150,7 @@ The full rules are in the guides; these are the ones every change must keep.
 The full system is in [Visual system](docs/guide/visual-system.md), [Copy](docs/guide/copy.md) and [Design system](docs/guide/design-system.md). These hold everywhere:
 
 - **Hidden elements never push content.** Anything that shows only on hover, focus or a state (row actions, grips, badges) takes no space while hidden: overlay it (`absolute`), never reserve room with `opacity-0`. Row actions float over the row's right end on a gradient of the row's own fill (transparent → opaque over about 32px), so text runs the full width; an invisible control takes no clicks (`pointer-events-none` until shown).
-- **Every delete asks first.** Deleting, removing or clearing anything a person made (parts, ⌫ included, marks, chats, library items, poses, policies, printers, queued messages…) opens a confirmation (`confirmAction` or `ConfirmDialog`, title “Delete ⟨name⟩?”, Cancel and Delete) before it happens; a toast with Undo may follow. Never delete on the first click, on double-click, or at once with only an Undo toast. Agent tools (`delete_parts`) don't ask.
+- **Every delete asks first, except parts in the scene.** Deleting, removing or clearing anything a person made (marks, chats, library items, poses, policies, printers, queued messages…) opens a confirmation (`confirmAction` or `ConfirmDialog`, title “Delete ⟨name⟩?”, Cancel and Delete) before it happens; a toast with Undo may follow. Never delete on the first click, on double-click, or at once with only an Undo toast. Removing parts from the scene (⌫, Delete in the Inspector or right-click menu) is ordinary editing: it happens at once with a “Deleted ⟨name⟩” toast and Undo. Agent tools (`delete_parts`) and the Annotate eraser, whose whole job is erasing, don't ask.
 - **Use `src/design-system`.** Never hand-roll a styled button or input when a primitive fits; a pattern used twice becomes a component there. Our own icons only (the `icon-design` skill for new ones), custom tooltips with shortcuts, and every command in ⌘K.
 - **Comfortable, not compact:** nothing under 12px except key caps; inputs and menu items 32px. Neutral greys (R = G = B), surfaces separated by lightness, no outlines on cards, dividers edge to edge, one accent (`#0d99ff`), red only for cutouts and destructive actions. Floating surfaces are matte (solid fill + shadow, no blur).
 
@@ -169,7 +170,7 @@ Run it on every string you add or change:
 ## 13. Functional Invariants (never break these)
 
 1. CSG booleans: Union, Subtract (cutouts) and Intersect.
-2. Exact parts only in Parts: real components (servos, motors, boards, sensors, cameras), ISO hardware (screws, nuts, washers, inserts, standoffs, pins, bearings) and basic shapes. Estimated stand-ins (generic servo, board, bracket, wheel, gripper…) aren't listed but still render in old scenes and as agent block-outs.
+2. Exact parts only in Parts (parts the agent sources are listed too, marked Added by Agent, until promoted, §8a): real components (servos, motors, boards, sensors, cameras), ISO hardware (screws, nuts, washers, inserts, standoffs, pins, bearings) and basic shapes. Estimated stand-ins (generic servo, board, bracket, wheel, gripper…) aren't listed but still render in old scenes and as agent block-outs.
 3. Vertex sculpting with brush size and strength (behind the Sculpt tool setting).
 4. Binary STL export and SVG-to-3D extrusion import.
 5. AI workspace sync: scene, part dimensions, annotations and markdown brief saved to `ai-reference/` and `library/`.

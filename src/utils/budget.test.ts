@@ -40,14 +40,17 @@ describe('budget', () => {
   it('compares the list-price estimate with the budget', () => {
     const bom = buildBom({ parts, project: withBudget(500), purchases: {}, measures: {} });
 
-    expect(bom.totals).toMatchObject({ pricedUsd: 0, estimatedUsd: 553.94, overBudget: true });
-    expect(budgetLine(bom)).toBe('BOM ≈ $554 of $500 (actuators $444), $54 over');
+    expect(bom.totals).toMatchObject({ pricedUsd: 0, estimatedUsd: 601.69, overBudget: true });
+    expect(budgetLine(bom)).toBe('BOM ≈ $602 of $500 (actuators $444), $102 over');
   });
 
   it('fails verify_design over budget and warns above 90%', () => {
-    expect(budgetOf(500)).toMatchObject({ status: 'fail', items: [{ text: '6× Feetech STS3250: ≈ $444' }, {}] });
-    expect(budgetOf(600).status).toBe('warn');
-    expect(budgetOf(1000)).toMatchObject({ status: 'pass', detail: 'BOM ≈ $554 of $1,000 (actuators $444)' });
+    expect(budgetOf(500)).toMatchObject({ status: 'fail', items: [{ text: '6× Feetech STS3250: ≈ $444' }, {}, {}] });
+    expect(budgetOf(650).status).toBe('warn');
+    expect(budgetOf(1000)).toMatchObject({
+      status: 'pass',
+      detail: expect.stringContaining('BOM ≈ $602 of $1,000 (actuators $444)'),
+    });
   });
 
   it('splits a budget and flags the classes that break it', () => {

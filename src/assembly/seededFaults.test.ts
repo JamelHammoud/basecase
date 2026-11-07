@@ -101,6 +101,22 @@ describe('check_assembly finds seeded faults', () => {
   });
 });
 
+describe('faults the buildability audits kept finding', () => {
+  it('a board held by nothing blocks the build', async () => {
+    const parts = [...bracket(), printed('loose', { size: [10, 2, 10] }, [80, 40, 0])];
+    const { report } = await check(parts);
+
+    expect(report.lines.find((l) => l.text.includes('held by nothing'))?.ids).toContain('loose');
+    expect(report.text).toContain('BLOCKER: loose');
+  });
+
+  it('every part of a clean bracket comes out', async () => {
+    const { report } = await check(bracket());
+
+    expect(report.plan.stuckParts).toEqual([]);
+  });
+});
+
 describe('check_assembly on a mirrored design', () => {
   it('gives mirrored parts mirrored verdicts', async () => {
     const parts = [

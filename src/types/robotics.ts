@@ -1,3 +1,5 @@
+import type { SourcedItem } from '../data/sourcedItems';
+import type { ReadinessDecisions } from '../readiness/types';
 import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
@@ -215,6 +217,8 @@ export interface ProjectSettings extends ProjectRecords {
   budgetUsd?: number;
   budgetEntered?: EnteredPrice;
   extras?: Array<{ key: string; qty: number; note?: string }>;
+  sourced?: SourcedItem[];
+  readiness?: ReadinessDecisions;
   joints?: RobotJoint[];
   firstRanges?: Record<string, [number, number]>;
   pose?: RobotPoseState;
@@ -374,6 +378,7 @@ export type {
   AgentConversation,
   AgentConversationSummary,
   ContextUsage,
+  MessageQuote,
 } from './agentChat';
 
 export type { AcpStatusInfo, AgentChoice, AgentKind, AgentModel, AgentSignIn, EffortLevel } from './agentStatus';

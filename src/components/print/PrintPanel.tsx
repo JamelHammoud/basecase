@@ -207,7 +207,8 @@ function usePlateSend(printing: Printing) {
 export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
   const { printing, parts, onDone } = props;
   const { ref, style } = useScrollFade();
-  const plates = printing.report?.plan.plates ?? [];
+  const plan = printing.report?.plan;
+  const plates = plan?.plates ?? [];
   const plate = plates.find((p) => p.number === printing.mode?.plate) ?? plates[0];
   const selected = parts.find((p) => p.id === printing.mode?.selected);
   const sending = usePlateSend(printing);
@@ -237,10 +238,11 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
         )}
         <Section title="Plates">
           <ul className="-mx-[7px]">
-            {plates.map((p) => (
+            {plan?.plates.map((p) => (
               <PlateRow
                 key={p.number}
                 plate={p}
+                bed={plan.bed}
                 sliced={printing.freshSlice(p)}
                 status={plateStatus(p, printing.records)}
                 live={printing.status}

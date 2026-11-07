@@ -12,7 +12,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 2. **Never say what the UI already shows.** If a number, total, icon, state or the layout already tells the person something, the text must not repeat it. `$0` already says there's nothing to buy, so a “Nothing to buy yet” caption is noise. Show no caption at all rather than a redundant one.
 3. **Name things for what they are, not for what they aren't.** Use “Supplies”, not “Not in the model”, and “No chats”, not “No past chats yet”. Labels are nouns for things and verbs for actions.
 4. **Lead with what matters to the person** (Monzo: “lead with impact”; Microsoft: “get to the point fast”). Front-load the keyword or the action: “Recheck 2 prices before ordering”, not “2 prices are over 60 days old. Recheck…”.
-5. **Make the next step obvious.** When text points at work to do, start with the verb and make it clickable: “Replace 2 stand-ins with real parts”, “Find a source for 1 part (CNC)”, “Fix 3 parts before printing”.
+5. **Make the next step obvious.** When text points at work to do, start with the verb and make it clickable: “Replace 2 stand-ins with real parts”, “Fix 3 parts before printing”.
 6. **Plain and specific.** Use everyday words, active voice and contractions (it's, they're); no jargon the person didn't bring. Use exact numbers and names, not vague ones (“3 to price”, not “some items”).
 7. **Calm and kind, never cute.** No “Oops”, “Uh-oh”, exclamation marks, or jokes in errors or anything that blocks work. Don't blame the person. Apologize only when the app is at fault, and only once.
 8. **Consistent.** The same word for the same thing everywhere, and the same pattern for the same kind of message (§3b).
@@ -28,7 +28,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 4. **No ellipses in labels.** Menu items, palette commands, buttons and tooltips never end in “…”, even when a sheet or picker follows: “Import SVG”, “From Image”, “Add Part”, “Add Price”, “Settings”. Progress text (“Saving…”, “Thinking…”) keeps it.
 5. **Tooltips = name + shortcut**, with no period: `Move  V`, `Undo  ⌘Z`. Add a short sentence only for non-obvious tools.
    - Write shortcuts with Mac glyphs (`⇧⌘Z`) everywhere. `Kbd` turns them into Windows key caps (`Ctrl` `Shift` `Z`, `platformKeys`), so never write “Ctrl” by hand. A modifier inside a sentence goes through `modifierName('⌥')` (“Hold Alt to invert”). File-manager wording comes from `REVEAL_LABEL` (“Show in Finder” / “Show in Explorer”). Platform checks in the renderer use `src/utils/os.ts` (`IS_MAC`, `IS_WINDOWS`, `hasPrimaryModifier`): ⌘ on macOS is Ctrl on Windows, and Ctrl-click is a right-click only on macOS.
-6. **Section titles and headers** name the content: “Budget”, “Parts to buy”, “Supplies”, “Printed parts”. No questions, instructions or negations.
+6. **Section titles and headers** name the content: “Budget”, “Bill of materials”, “Supplies”, “Printed parts”. No questions, instructions or negations.
 7. **Empty states:**
    - If something on screen already shows the emptiness (a $0 total, a 0 count, a lone section header, settings with nothing under them), show **no** empty text.
    - Otherwise use a short noun phrase, plus one action when there's a useful next step: “No parts” + [Browse Parts], “No saved scenes”, “No chats”.
@@ -39,9 +39,9 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 10. **Notices that ask for work** start with the verb and select or open the things they're about: “Replace 2 stand-ins with real parts”.
 11. **Placeholders show an example**, never instructions: “e.g. 4× M3 holes, 0.2 mm clearance”.
     - Search fields are the exception: they name what they search, “Search parts”.
-12. **Destructive actions ask first.** Deleting, removing or clearing anything a person made opens a confirmation (`confirmAction` or `ConfirmDialog`: title “Delete ⟨name⟩?”, Cancel and Delete) before anything happens; a toast with Undo may follow. Never delete on the first click, on double-click, or at once with only an Undo toast, and never arm a button on the first click and act on the second. Agent tools (`delete_parts`) don't ask.
+12. **Destructive actions ask first.** Deleting, removing or clearing anything a person made opens a confirmation (`confirmAction` or `ConfirmDialog`: title “Delete ⟨name⟩?”, Cancel and Delete) before anything happens; a toast with Undo may follow. Never delete on the first click, on double-click, or at once with only an Undo toast, and never arm a button on the first click and act on the second. The exception is removing parts from the scene (⌫, Delete in the Inspector or right-click menu): that's ordinary editing, so it happens at once with a “Deleted ⟨name⟩” toast and Undo. Agent tools (`delete_parts`) don't ask.
 13. **Toasts confirm in past tense** and name the thing, with Undo for destructive or bulk actions: “Deleted Cube” + [Undo], “Saved Robot Arm”, “Exported STL”. Not a bare “Saved” or “Done”, and never “successfully”.
-14. **Footnotes and fine print:** one line, front-loaded, fragments are fine: “Estimate for a Bambu P1S: 2 walls, 4 top and bottom layers, 20% infill, best flat orientation. Slice to confirm.”
+14. **Footnotes and fine print:** one line, front-loaded, fragments are fine. A footnote that repeats the settings and numbers above it doesn't exist: under Printing, the ≈ on the time already says it's an estimate and Slice is right there.
 15. **Numbers:**
     - Tabular figures, units in a muted suffix (`mm`, `°`, `%`).
     - Use `×` for sizes: `40 × 36 × 20`.

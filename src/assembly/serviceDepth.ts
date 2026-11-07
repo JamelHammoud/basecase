@@ -1,6 +1,7 @@
 import { COMPONENT_BY_ID, type ComponentGroup } from '../data/components';
 import type { ScenePart } from '../types/robotics';
 import type { AssemblyGeometry } from './assemblyGeometry';
+import type { RemovalPlan } from './removalOrder';
 
 export type ServiceClass = 'battery' | 'electronics' | 'servo';
 
@@ -113,10 +114,25 @@ function nearestBlockers(g: AssemblyGeometry, id: string): string[] {
   return [...(m.exit ?? m.local)].sort((a, b) => a.length - b.length)[0]?.filter((x) => g.moves[x]) ?? [];
 }
 
+function teardownTo(plan: RemovalPlan, id: string): Set<string> | null {
+  if (plan.stuckParts.includes(id)) return null;
+
+  const before = new Set<string>();
+
+  for (const step of plan.steps) {
+    if (step.ids.includes(id)) return new Set([...before, id]);
+
+    step.ids.forEach((x) => before.add(x));
+  }
+
+  return null;
+}
+
 export function serviceDepths(
   parts: ScenePart[],
   g: AssemblyGeometry,
   toolOf: (id: string) => string,
+  plan: RemovalPlan,
 ): ServiceResult[] {
   const search: Search = { g, memo: new Map(), visiting: new Set(), pins: pinsOf(g) };
 
@@ -125,7 +141,7 @@ export function serviceDepths(
 
     if (!cls || !g.moves[p.id]) return [];
 
-    const set = need(search, p.id);
+    const set = need(search, p.id) ?? teardownTo(plan, p.id);
     const partsOut = set ? [...set].filter((x) => x !== p.id && g.moves[x]) : [];
     const screwsOut = set ? [...set].filter((x) => g.drivers[x]) : [];
     const tools = new Set(screwsOut.map(toolOf));

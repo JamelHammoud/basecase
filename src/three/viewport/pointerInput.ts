@@ -1,7 +1,7 @@
 import type * as THREE from 'three';
 import type { MeasureTool } from './measureTool';
 import type { ScaleFigures } from './scaleFigures';
-import { floorPoint, hitPartId, rayAt, raycastParts } from './picking';
+import { floorPoint, hitPartId, rayAt, raycastParts, raycastUnlocked } from './picking';
 import { SculptInput } from './sculptInput';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
@@ -163,10 +163,14 @@ export class PointerInput {
 
   private select(e: PointerEvent): void {
     const { onSelectPart } = this.ctx.props();
-    const partId = hitPartId(raycastParts(this.ctx.stage, e.clientX, e.clientY));
+    const deep = hasPrimaryModifier(e);
+    const hit = deep
+      ? raycastParts(this.ctx.stage, e.clientX, e.clientY)
+      : raycastUnlocked(this.ctx, e.clientX, e.clientY);
+    const partId = hitPartId(hit);
 
     if (partId) {
-      onSelectPart(partId, e.shiftKey, hasPrimaryModifier(e));
+      onSelectPart(partId, e.shiftKey, deep);
 
       return;
     }
@@ -182,7 +186,7 @@ export class PointerInput {
       return;
     }
 
-    const partId = hitPartId(raycastParts(this.ctx.stage, e.clientX, e.clientY));
+    const partId = hitPartId(raycastUnlocked(this.ctx, e.clientX, e.clientY));
 
     if (partId) onSelectPart(partId, false, true);
   }

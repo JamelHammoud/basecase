@@ -1,6 +1,7 @@
 import { CATEGORY_LABELS, PART_CATALOG, hardwareVariant } from '../../data/catalog';
 import { COMPONENT_BY_ID, ComponentGroup, ComponentInfo } from '../../data/components';
 import { HARDWARE_BY_TYPE, HardwareFamily, NAMED_SIZES, familyOf, isMetric, makeSpec } from '../../data/hardware';
+import { sourcedItems, type SourcedItem } from '../../data/sourcedItems';
 import type { CatalogItem } from '../../types/robotics';
 
 const FAMILY_WORDS: Record<string, string> = {
@@ -73,7 +74,19 @@ const indexItem = (item: CatalogItem): Indexed => {
   return { item, name: item.name.toLowerCase(), text, group: groupText(item, c, fam).toLowerCase() };
 };
 
-const INDEX: Indexed[] = PART_CATALOG.filter(inParts).map(indexItem);
+const buildIndex = (): Indexed[] => PART_CATALOG.filter(inParts).map(indexItem);
+
+let index = buildIndex();
+let indexedFor = sourcedItems();
+
+function currentIndex(sourced: SourcedItem[]): Indexed[] {
+  if (indexedFor === sourced) return index;
+
+  index = buildIndex();
+  indexedFor = sourced;
+
+  return index;
+}
 
 const escapeRe = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -128,22 +141,24 @@ const fitsSize = (e: Indexed, size: string, length: number | undefined): boolean
   return info.stockOnly ? !!info.lengths?.(size).includes(length) : !!info.lengths;
 };
 
-export function searchCatalog(query: string): CatalogItem[] {
+export function searchCatalog(query: string, sourced: SourcedItem[] = sourcedItems()): CatalogItem[] {
+  const entries = currentIndex(sourced);
   const { size, length, words } = parseSizeQuery(query.trim());
   const matchers = words.map(wordMatcher);
   const matches = (e: Indexed) => matchers.every((m) => m(e.text));
 
   if (size) {
-    return INDEX.filter((e) => fitsSize(e, size, length) && matches(e)).map((e) =>
-      hardwareVariant(e.item, makeSpec(e.item.hardware!.type, { size, length })),
-    );
+    return entries
+      .filter((e) => fitsSize(e, size, length) && matches(e))
+      .map((e) => hardwareVariant(e.item, makeSpec(e.item.hardware!.type, { size, length })));
   }
 
   if (words.length === 0) return [];
 
   const q = words.join(' ');
 
-  return INDEX.filter(matches)
+  return entries
+    .filter(matches)
     .map((e, i) => ({
       e,
       score:

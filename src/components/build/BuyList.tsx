@@ -1,19 +1,22 @@
 import React, { useRef, useState } from 'react';
 import { IconButton, MenuItem, PopoverMenu, Section, SpreadsheetIcon } from '../../design-system';
-import type { Bom, BomCategory, BomLine } from '../../utils/bom';
-import { BuyRow } from './BuyRow';
+import type { ScenePart } from '../../types/robotics';
+import type { Bom, BomLine } from '../../utils/bomTypes';
+import { BuyGroup } from './BuyGroup';
+import { bomGroups } from './buyLine';
+import { CheckIcon } from './CheckIcon';
 import { plural } from './format';
-import { Notice } from './Notice';
 
 interface BuyListProps {
   bom: Bom;
+  parts: ScenePart[];
+  panScroll: boolean;
   onCheck: (line: BomLine) => void;
   onSelectParts: (ids: string[]) => void;
   onExportCsv: () => void;
   onExportMarkdown: () => void;
 }
 
-const CATEGORIES: BomCategory[] = ['Components', 'Hardware', 'Supplies', 'Filament'];
 
 const ExportBomMenu: React.FC<Pick<BuyListProps, 'onExportCsv' | 'onExportMarkdown'>> = ({
   onExportCsv,
@@ -26,7 +29,7 @@ const ExportBomMenu: React.FC<Pick<BuyListProps, 'onExportCsv' | 'onExportMarkdo
     <div className="relative" ref={ref}>
       <IconButton
         icon={<SpreadsheetIcon className="w-4 h-4" />}
-        title="Export BOM"
+        title="Export bill of materials"
         size="xs"
         isToggled={menu}
         aria-haspopup="menu"
@@ -48,60 +51,55 @@ const ExportBomMenu: React.FC<Pick<BuyListProps, 'onExportCsv' | 'onExportMarkdo
   );
 };
 
-const SourceNotices: React.FC<Pick<BuyListProps, 'bom' | 'onSelectParts'>> = ({ bom, onSelectParts }) => {
+const StandInsRow: React.FC<{ count: number; onClick: () => void }> = ({ count, onClick }) => (
+  <li>
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-start gap-2 py-1.5 px-[7px] rounded-lg text-left cursor-default hover:bg-white/[0.04]"
+    >
+      <CheckIcon status="warn" />
+      <span className="min-w-0 flex-1 text-[13px] leading-[18px] text-white/90">
+        Replace {count} {plural(count, 'stand-in', 'stand-ins')} with real parts
+      </span>
+    </button>
+  </li>
+);
+
+export const BuyList: React.FC<BuyListProps> = ({
+  bom,
+  parts,
+  panScroll,
+  onCheck,
+  onSelectParts,
+  onExportCsv,
+  onExportMarkdown,
+}) => {
+  const groups = bomGroups(bom);
   const standIns = bom.standIns.length;
-  const elsewhere = bom.madeElsewhere.length;
-  const processes = [...new Set(bom.madeElsewhere.map((m) => m.process))].join(', ');
-
-  return (
-    <>
-      {standIns > 0 && (
-        <Notice
-          tone="amber"
-          text={`Replace ${standIns} ${plural(standIns, 'stand-in', 'stand-ins')} with real parts`}
-          onClick={() => onSelectParts(bom.standIns.map((s) => s.id))}
-        />
-      )}
-      {elsewhere > 0 && (
-        <Notice
-          tone="default"
-          text={`Find a source for ${elsewhere} ${plural(elsewhere, 'part', 'parts')} (${processes})`}
-          onClick={() => onSelectParts(bom.madeElsewhere.map((s) => s.id))}
-        />
-      )}
-    </>
-  );
-};
-
-export const BuyList: React.FC<BuyListProps> = ({ bom, onCheck, onSelectParts, onExportCsv, onExportMarkdown }) => {
-  const groups = CATEGORIES.map((c) => [c, bom.lines.filter((l) => l.category === c)] as const).filter(
-    ([, ls]) => ls.length,
-  );
+  const hasRows = groups.length > 0 || standIns > 0;
 
   return (
     <Section
-      title="Parts to buy"
-      actions={
-        bom.lines.length > 0 && <ExportBomMenu onExportCsv={onExportCsv} onExportMarkdown={onExportMarkdown} />
-      }
+      title="Bill of materials"
+      actions={groups.length > 0 && <ExportBomMenu onExportCsv={onExportCsv} onExportMarkdown={onExportMarkdown} />}
     >
-      {!groups.length && <span className="text-[13px] text-white/45">No parts</span>}
-      {groups.map(([cat, ls]) => (
-        <div key={cat}>
-          <div className="text-[12px] font-medium text-white/40 mb-1">{cat}</div>
-          <ul className="-mx-[7px]">
-            {ls.map((l) => (
-              <BuyRow
-                key={l.key}
-                line={l}
-                onCheck={() => onCheck(l)}
-                onSelect={() => l.partIds.length && onSelectParts(l.partIds)}
-              />
-            ))}
-          </ul>
-        </div>
-      ))}
-      <SourceNotices bom={bom} onSelectParts={onSelectParts} />
+      {!hasRows && !bom.madeElsewhere.length && <span className="text-[13px] text-white/45">No parts</span>}
+      {hasRows && (
+        <ul className="-mx-[7px]">
+          {standIns > 0 && (
+            <StandInsRow count={standIns} onClick={() => onSelectParts(bom.standIns.map((s) => s.id))} />
+          )}
+          {groups.map((group) => (
+            <BuyGroup
+              key={group.category}
+              group={group}
+              defaultOpen={groups.length === 1}
+              context={{ parts, panScroll, onCheck, onSelectParts }}
+            />
+          ))}
+        </ul>
+      )}
     </Section>
   );
 };

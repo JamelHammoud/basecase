@@ -20,10 +20,14 @@ export const CURSOR_BODIES = {
     '<g stroke-linecap="round"><path d="M16 5 V12 M16 20 V27 M5 16 H12 M20 16 H27" stroke="#141414" stroke-opacity="0.85" stroke-width="3.5"/>' +
     '<path d="M16 5 V12 M16 20 V27 M5 16 H12 M20 16 H27" stroke="#fff" stroke-width="1.5"/>' +
     '<circle cx="16" cy="16" r="1.6" fill="#fff" stroke="#141414" stroke-opacity="0.85" stroke-width="1"/></g>',
+  eraser:
+    '<circle cx="16" cy="16" r="10" fill="#fff" fill-opacity="0.15" stroke="#141414" stroke-opacity="0.85" stroke-width="3.5"/>' +
+    '<circle cx="16" cy="16" r="10" fill="none" stroke="#fff" stroke-width="1.5"/>',
 } as const;
 
 export const CURSORS = {
   arrow: cursor(CURSOR_BODIES.arrow, 3, 3, 'default'),
   comment: cursor(CURSOR_BODIES.comment, 3, 27, 'crosshair'),
   crosshair: cursor(CURSOR_BODIES.crosshair, 16, 16, 'crosshair'),
+  eraser: cursor(CURSOR_BODIES.eraser, 16, 16, 'crosshair'),
 } as const;

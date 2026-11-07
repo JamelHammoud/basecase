@@ -27,6 +27,8 @@ export * from './EmptyState';
 export * from './MetaLine';
 export * from './ContextMenu';
 export * from './ColorPicker';
+export * from './ColorSwatch';
+export * from './ColorSwatches';
 export * from './Markdown';
 export * from './CodeBlock';
 export * from './PanelResizer';

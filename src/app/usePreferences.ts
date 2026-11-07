@@ -11,6 +11,7 @@ export function usePreferences() {
   const [sculptEnabled, setSculptEnabled] = useState<boolean>(saved.sculptEnabled);
   const [measureUnit, setMeasureUnit] = useState<MeasureUnit>(saved.measureUnit);
   const [autoGuide, setAutoGuide] = useState<boolean>(saved.autoGuide);
+  const [autoFixBlockers, setAutoFixBlockers] = useState<boolean>(saved.autoFixBlockers);
   const [showReferenceImages, setShowReferenceImages] = useState(true);
 
   useEffect(() => {
@@ -22,8 +23,9 @@ export function usePreferences() {
       sculptEnabled,
       measureUnit,
       autoGuide,
+      autoFixBlockers,
     });
-  }, [snapStepMm, snapAngleDeg, trackpadMode, showGrid, sculptEnabled, measureUnit, autoGuide]);
+  }, [snapStepMm, snapAngleDeg, trackpadMode, showGrid, sculptEnabled, measureUnit, autoGuide, autoFixBlockers]);
 
   return {
     snapStepMm,
@@ -40,6 +42,8 @@ export function usePreferences() {
     setMeasureUnit,
     autoGuide,
     setAutoGuide,
+    autoFixBlockers,
+    setAutoFixBlockers,
     showReferenceImages,
     setShowReferenceImages,
   };

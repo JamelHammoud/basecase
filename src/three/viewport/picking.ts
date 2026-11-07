@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { BATCHED_LAYER } from './partBatches';
 import { canvasNdc, type Stage } from './stage';
+import type { ViewportContext } from './viewportContext';
 
 export function partMeshes(stage: Stage): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = [];
@@ -30,6 +31,12 @@ export function rayAt(stage: Stage, clientX: number, clientY: number): THREE.Ray
 
 export function raycastParts(stage: Stage, clientX: number, clientY: number): THREE.Intersection | null {
   return rayAt(stage, clientX, clientY).intersectObjects(partMeshes(stage), false)[0] ?? null;
+}
+
+export function raycastUnlocked(ctx: ViewportContext, clientX: number, clientY: number): THREE.Intersection | null {
+  const hits = rayAt(ctx.stage, clientX, clientY).intersectObjects(partMeshes(ctx.stage), false);
+
+  return hits.find((hit) => !ctx.layer.part(hitPartId(hit) ?? '')?.locked) ?? null;
 }
 
 export function floorPoint(raycaster: THREE.Raycaster): THREE.Vector3 | null {

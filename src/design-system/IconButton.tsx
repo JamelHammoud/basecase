@@ -1,4 +1,5 @@
 import React from 'react';
+import { sizeRadius } from './sizeRadius';
 import { Tooltip, TooltipSide } from './Tooltip';
 
 export type IconButtonVariant = 'default' | 'active' | 'ghost' | 'danger' | 'primary' | 'toggled';
@@ -26,10 +27,17 @@ const variantStyles: Record<IconButtonVariant, string> = {
 };
 
 const sizeStyles: Record<IconButtonSize, string> = {
-  xs: 'w-7 h-7 rounded-lg',
-  sm: 'w-8 h-8 rounded-lg',
-  md: 'w-9 h-9 rounded-[10px]',
-  lg: 'w-11 h-11 rounded-[14px]',
+  xs: 'w-7 h-7',
+  sm: 'w-8 h-8',
+  md: 'w-9 h-9',
+  lg: 'w-11 h-11',
+};
+
+const radiusStyles: Record<IconButtonSize, string> = {
+  xs: 'rounded-lg',
+  sm: 'rounded-lg',
+  md: 'rounded-[10px]',
+  lg: 'rounded-[14px]',
 };
 
 function chosenVariantFor({
@@ -71,7 +79,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
         aria-label={title}
         aria-pressed={isActive || isToggled || undefined}
         disabled={disabled}
-        className={`inline-flex items-center justify-center shrink-0 select-none cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.94] disabled:active:scale-100 disabled:cursor-not-allowed ${variantStyles[chosenVariant]} ${sizeStyles[size]} ${className}`}
+        className={`inline-flex items-center justify-center shrink-0 select-none cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.94] disabled:active:scale-100 disabled:cursor-not-allowed ${variantStyles[chosenVariant]} ${sizeStyles[size]} ${sizeRadius(radiusStyles[size], className)} ${className}`}
         {...props}
       >
         {icon}

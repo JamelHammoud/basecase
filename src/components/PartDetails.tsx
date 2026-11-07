@@ -1,6 +1,7 @@
 import React from 'react';
 import { CatalogItem } from '../types/robotics';
 import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/components';
+import { isSourcedId } from '../data/sourcedItems';
 import {
   FINISHES,
   THREAD,
@@ -272,7 +273,11 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
     return (
       <div className="pb-0">
         <Hero item={item} source={c} />
-        <Header title={c.name} subtitle={[c.manufacturer, c.mpn]} description={c.description} />
+        <Header
+          title={c.name}
+          subtitle={[c.manufacturer, isSourcedId(c.id) ? 'Added by Agent' : c.mpn]}
+          description={c.description}
+        />
         <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
           <Stat label="Size" wide>
             {size}

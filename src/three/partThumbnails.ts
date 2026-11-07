@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import { catalogKey, catalogRef } from '../data/catalog';
+import { sourcedItem } from '../data/sourcedItems';
 import type { CatalogItem, ScenePart } from '../types/robotics';
 import { renderThumbnailImage } from './thumbnailClient';
 import type { ThumbnailJob } from './thumbnailRender';
@@ -91,10 +92,16 @@ function useThumbnail(key: string, render: () => Promise<string>): string | unde
   return state.key === key ? state.url : getCachedThumbnail(key);
 }
 
+function thumbnailKey(item: CatalogItem): string {
+  const mesh = item.componentId ? sourcedItem(item.componentId)?.mesh : undefined;
+
+  return mesh ? `${catalogRef(item)}|${mesh.triangles}|${mesh.member ?? ''}|${mesh.rotate ?? ''}` : catalogRef(item);
+}
+
 export function usePartThumbnail(item: CatalogItem | undefined): string | undefined {
-  return useThumbnail(item ? catalogRef(item) : '', () =>
-    item ? renderCatalogThumbnail(item, catalogRef(item)) : Promise.resolve(''),
-  );
+  const key = item ? thumbnailKey(item) : '';
+
+  return useThumbnail(key, () => (item ? renderCatalogThumbnail(item, key) : Promise.resolve('')));
 }
 
 export function usePartsThumbnail(key: string, getParts: () => ScenePart[]): string | undefined {

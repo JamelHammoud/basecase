@@ -1,13 +1,16 @@
 import React, { useLayoutEffect } from 'react';
-import { AcpStatusInfo, AgentChoice, ContextUsage, ReferenceImageRecord } from '../../types/robotics';
+import { AcpStatusInfo, AgentChoice, ContextUsage, MessageQuote, ReferenceImageRecord } from '../../types/robotics';
 import { EvidenceFolder, evidenceKind } from '../../utils/evidenceFiles';
 import { IconButton, ComposeIcon, CloseIcon, useScrollFade } from '../../design-system';
 import { hasPrimaryModifier } from '../../utils/os';
 import { AttachMenu } from './AttachMenu';
 import { AttachmentTray } from './AttachmentTray';
 import { CyclingPlaceholder } from './CyclingPlaceholder';
+import { DraftQuotes } from './DraftQuotes';
 import { ModelMenu } from './ModelMenu';
 import { SendControls } from './SendControls';
+import { SketchPad } from './sketch/SketchPad';
+import { useSketch } from './sketch/useSketch';
 import { readyFolders } from './useAttachments';
 import { Draft } from './useDraft';
 import { OpenImages, SendIntent } from './types';
@@ -16,6 +19,7 @@ const EXAMPLES = {
   idle: ['Desk lamp arm', 'Pan–tilt camera mount', 'Gripper for an STS3215', 'Four-wheel rover', 'Hexapod leg'],
   attached: ['Open Duck Mini, 40 cm tall', 'Match the photos', 'Just the head', 'Half scale'],
   busy: ['Longer legs', 'Thicker brackets', 'Round the edges', 'Use M3 screws'],
+  quoted: ['Why does this matter?', 'Fix it another way', 'Is it safe to ignore?'],
 };
 
 const MAX_PROMPT_PX = 160;
@@ -25,9 +29,12 @@ export interface ComposerSubmit {
   text: string;
   images: ReferenceImageRecord[];
   folders: EvidenceFolder[];
+  quotes?: MessageQuote[];
 }
 
-function exampleSetFor(isBusy: boolean, hasAttachments: boolean): keyof typeof EXAMPLES {
+function exampleSetFor(isBusy: boolean, hasAttachments: boolean, hasQuotes: boolean): keyof typeof EXAMPLES {
+  if (hasQuotes) return 'quoted';
+
   if (isBusy) return 'busy';
 
   return hasAttachments ? 'attached' : 'idle';
@@ -50,10 +57,21 @@ const EditingBar: React.FC<{ onCancel: () => void }> = ({ onCancel }) => (
   </div>
 );
 
+const NewChatButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+  <IconButton
+    icon={<ComposeIcon className="w-[18px] h-[18px]" />}
+    title="New chat"
+    tooltipSide="top"
+    size="sm"
+    onClick={onClick}
+  />
+);
+
 export const Composer: React.FC<{
   draft: Draft;
   promptRef: React.RefObject<HTMLTextAreaElement | null>;
   attachRequest: number;
+  sketchRequest: number;
   isBusy: boolean;
   agentName: string;
   agent: AcpStatusInfo;
@@ -69,6 +87,7 @@ export const Composer: React.FC<{
   draft,
   promptRef,
   attachRequest,
+  sketchRequest,
   isBusy,
   agentName,
   agent,
@@ -81,21 +100,22 @@ export const Composer: React.FC<{
   onOpenImages,
   above,
 }) => {
-  const { attachments, text: promptText, setText: setPromptText, editing } = draft;
+  const { attachments, text: promptText, setText: setPromptText, editing, quotes } = draft;
   const hasAttachments = attachments.images.length > 0 || attachments.folders.length > 0;
-  const hasDraft = !!promptText.trim() || hasAttachments;
+  const hasDraft = !!promptText.trim() || hasAttachments || quotes.length > 0;
   const canSend = !attachments.isUploading && hasDraft;
-  const exampleSet = exampleSetFor(isBusy, hasAttachments);
+  const exampleSet = exampleSetFor(isBusy, hasAttachments, quotes.length > 0);
   const fade = useScrollFade<HTMLTextAreaElement>(PROMPT_FADE_PX);
+  const sketch = useSketch({ request: sketchRequest, promptRef, onAttach: attachments.attachFiles });
 
   useLayoutEffect(() => {
     const el = promptRef.current;
 
-    if (!el) return;
+    if (!el || sketch.isOpen) return;
 
     el.style.height = '0px';
     el.style.height = `${Math.min(el.scrollHeight, MAX_PROMPT_PX)}px`;
-  }, [promptText, promptRef]);
+  }, [promptText, promptRef, sketch.isOpen]);
 
   const submit = async (intent: SendIntent) => {
     if (!canSend) return;
@@ -106,7 +126,8 @@ export const Composer: React.FC<{
 
     setPromptText('');
     attachments.clear();
-    await onSubmit({ text, images, folders }, intent);
+    draft.clearQuotes();
+    await onSubmit({ text, images, folders, quotes }, intent);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -133,58 +154,65 @@ export const Composer: React.FC<{
 
   return (
     <div className="px-3 pb-3 pt-1 shrink-0">
+      <DraftQuotes quotes={quotes} onRemove={draft.removeQuote} />
       {above}
       <div className="relative rounded-[20px] bg-[#2a2a2a] ring-1 ring-inset ring-white/[0.08] focus-within:ring-white/[0.16] focus-within:bg-[#2c2c2c] transition-colors">
-        {editing && <EditingBar onCancel={draft.cancelEdit} />}
-
-        <AttachmentTray attachments={attachments} onOpenImages={onOpenImages} />
-
-        <div className="relative">
-          <textarea
-            ref={(node) => {
-              promptRef.current = node;
-              fade.ref(node);
-            }}
-            style={fade.style}
-            rows={1}
-            value={promptText}
-            onChange={(e) => setPromptText(e.target.value)}
-            onPaste={onPaste}
-            onKeyDown={onKeyDown}
-            aria-label={`Message ${agentName}`}
-            className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/95 outline-none"
+        {sketch.isOpen && (
+          <SketchPad
+            strokes={sketch.strokes}
+            onStroke={sketch.addStroke}
+            onUndo={sketch.undo}
+            onBack={sketch.back}
+            onDone={sketch.done}
           />
-          {!promptText && <CyclingPlaceholder key={exampleSet} examples={EXAMPLES[exampleSet]} />}
-        </div>
+        )}
 
-        <div className="flex items-center gap-1 px-2 pb-2">
-          <AttachMenu
-            attachRequest={attachRequest}
-            onAttachFiles={attachments.attachFiles}
-            onAttachFolders={attachments.uploadFolders}
-          />
+        <div hidden={sketch.isOpen}>
+          {editing && <EditingBar onCancel={draft.cancelEdit} />}
 
-          <IconButton
-            icon={<ComposeIcon className="w-[18px] h-[18px]" />}
-            title="New chat"
-            tooltipSide="top"
-            size="sm"
-            className="rounded-full"
-            onClick={onNewChat}
-          />
+          <AttachmentTray attachments={attachments} onOpenImages={onOpenImages} />
 
-          <div className="flex-1" />
+          <div className="relative">
+            <textarea
+              ref={(node) => {
+                promptRef.current = node;
+                fade.ref(node);
+              }}
+              style={fade.style}
+              rows={1}
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
+              onPaste={onPaste}
+              onKeyDown={onKeyDown}
+              aria-label={`Message ${agentName}`}
+              className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/95 outline-none"
+            />
+            {!promptText && <CyclingPlaceholder key={exampleSet} examples={EXAMPLES[exampleSet]} />}
+          </div>
 
-          <ModelMenu agent={agent} context={context} choice={choice} onChange={onChoiceChange} />
+          <div className="flex items-center gap-1 px-2 pb-2">
+            <AttachMenu
+              attachRequest={attachRequest}
+              onAttachFiles={attachments.attachFiles}
+              onAttachFolders={attachments.uploadFolders}
+              onSketch={sketch.open}
+            />
 
-          <SendControls
-            isBusy={isBusy}
-            hasDraft={hasDraft}
-            canSend={canSend}
-            editing={!!editing}
-            onStop={onStop}
-            onSend={submit}
-          />
+            <NewChatButton onClick={onNewChat} />
+
+            <div className="flex-1" />
+
+            <ModelMenu agent={agent} context={context} choice={choice} onChange={onChoiceChange} />
+
+            <SendControls
+              isBusy={isBusy}
+              hasDraft={hasDraft}
+              canSend={canSend}
+              editing={!!editing}
+              onStop={onStop}
+              onSend={submit}
+            />
+          </div>
         </div>
       </div>
     </div>

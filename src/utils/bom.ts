@@ -1,7 +1,8 @@
 import { BLOCKOUT_ONLY } from '../data/catalog';
-import { COMPONENT_BY_ID, componentVariant } from '../data/components';
+import { COMPONENT_BY_ID, componentVariant, type ComponentInfo, type ComponentVariant } from '../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, isStockLength, makeSpec, screwStandard } from '../data/hardware';
-import { FILAMENT_SUPPLY, MATERIAL_DENSITY, SUPPLY_BY_ID } from '../data/supplies';
+import { isSourcedId, sourcedItem } from '../data/sourcedItems';
+import { FILAMENT_SUPPLY, MATERIAL_DENSITY, SUPPLY_BY_ID, type SupplyInfo } from '../data/supplies';
 import { listPriceFor } from '../data/listPrices';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { PrintMaterial, ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
@@ -15,6 +16,8 @@ import {
   PriceStatus,
   STALE_DAYS,
 } from './bomTypes';
+
+import { neededSupplyKeys } from './bomNeeds';
 
 export { FILAMENT_MARGIN, STALE_DAYS, localDate } from './bomTypes';
 export type { Bom, BomCategory, BomLine, PriceStatus, PrintedPart } from './bomTypes';
@@ -107,6 +110,14 @@ interface LineInfo {
   warning?: string;
 }
 
+function componentLink(c: ComponentInfo, v: ComponentVariant | undefined): Pick<LineInfo, 'url' | 'urlKind'> {
+  if (isSourcedId(c.id)) return { url: c.links.product, urlKind: 'product' };
+
+  const link = v?.amazon ?? c.links.amazon;
+
+  return { url: link?.url, urlKind: link?.kind ?? 'none' };
+}
+
 function describeComponent(key: string): LineInfo | null {
   const [id, variant] = key.slice('component:'.length).split('|');
   const c = COMPONENT_BY_ID[id];
@@ -117,14 +128,11 @@ function describeComponent(key: string): LineInfo | null {
 
   if (variant && !v) return null;
 
-  const link = v ? (v.amazon ?? c.links.amazon) : c.links.amazon;
-
   return {
-    category: 'Components',
+    category: isSourcedId(id) ? 'Added by Agent' : 'Components',
     name: v ? `${c.name} ${v.label}` : c.name,
     detail: `${c.manufacturer} ${v ? v.mpn : c.mpn}`,
-    url: link?.url,
-    urlKind: link?.kind ?? 'none',
+    ...componentLink(c, v),
     warning: !v && c.variants?.length ? `Choose a version: ${c.variants.map((x) => x.label).join(', ')}` : undefined,
   };
 }
@@ -146,17 +154,29 @@ function describeHardware(key: string): LineInfo | null {
   };
 }
 
+function supplyCategory(s: SupplyInfo): BomCategory {
+  if (s.group === 'Filament') return 'Filament';
+
+  if (s.group === 'Tools') return 'Equipment';
+
+  const sourced = sourcedItem(s.id);
+
+  if (!sourced) return 'Supplies';
+
+  return sourced.kind === 'part' ? 'Added by Agent' : 'Materials';
+}
+
 function describeSupply(key: string): LineInfo | null {
   const s = SUPPLY_BY_ID[key.slice('supply:'.length)];
 
   if (!s) return null;
 
   return {
-    category: s.group === 'Filament' ? 'Filament' : 'Supplies',
+    category: supplyCategory(s),
     name: s.name,
     detail: s.spec,
     url: s.search,
-    urlKind: 'search',
+    urlKind: isSourcedId(s.id) ? 'product' : 'search',
   };
 }
 
@@ -311,7 +331,8 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
   };
 }
 
-function bomTotals(lines: BomLine[], project: ProjectSettings): Bom['totals'] {
+function bomTotals(allLines: BomLine[], project: ProjectSettings): Bom['totals'] {
+  const lines = allLines.filter((l) => l.category !== 'Equipment');
   const sum = (ls: BomLine[]) => cents(ls.reduce((s, l) => s + (l.lineUsd ?? 0), 0));
   const withStatus = (status: PriceStatus) => lines.filter((l) => l.status === status);
   const checkedUsd = sum(withStatus('checked'));
@@ -342,12 +363,24 @@ export interface BomInput {
   supportG?: Partial<Record<PrintMaterial, number>>;
 }
 
+function listedText(counts: Counts): string {
+  return [...counts.keys()]
+    .map((key) => {
+      const info = describeKey(key);
+
+      return `${key} ${info?.name ?? ''} ${info?.detail ?? ''}`;
+    })
+    .join('\n');
+}
+
 export function buildBom({ parts, project, purchases, measures, now = new Date(), supportG = {} }: BomInput): Bom {
   const tally = tallyParts(parts, project, measures);
 
   addFilament(tally, supportG);
 
   for (const x of project.extras ?? []) if (x.qty > 0) addCount(tally.counts, x.key, x.qty);
+
+  for (const key of neededSupplyKeys(parts, listedText(tally.counts))) addCount(tally.counts, key, 1);
 
   const lines = [...tally.counts]
     .map(([key, { qty, partIds }]) => bomLine(key, qty, partIds, { purchases, now }))

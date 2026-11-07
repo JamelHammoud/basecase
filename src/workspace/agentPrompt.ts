@@ -1,4 +1,4 @@
-import type { AcpChatMessage, ReferenceImageRecord } from '../types/robotics';
+import type { AcpChatMessage, MessageQuote, ReferenceImageRecord } from '../types/robotics';
 import type { EvidenceFolder } from '../utils/evidenceFiles';
 import type { AcpPromptPayload } from '../utils/platformBridge';
 
@@ -6,6 +6,7 @@ export interface AgentSendParams {
   text: string;
   images?: ReferenceImageRecord[];
   folders?: EvidenceFolder[];
+  quotes?: MessageQuote[];
   targetHeightMm?: number;
   model?: string;
   effort?: string;
@@ -13,6 +14,16 @@ export interface AgentSendParams {
 }
 
 export type PromptOptions = Pick<AgentSendParams, 'targetHeightMm' | 'model' | 'effort' | 'note'>;
+
+const quoteForAgent = (quote: MessageQuote) => {
+  const lines = [quote.text, quote.context].filter(Boolean).join('\n').split('\n');
+
+  return [`Quoted from ${quote.source}:`, ...lines.map((line) => `> ${line}`)].join('\n');
+};
+
+export function withQuotes(text: string, quotes: MessageQuote[] = []): string {
+  return [...quotes.map(quoteForAgent), text].filter(Boolean).join('\n\n');
+}
 
 const runFields = (text: string, options: PromptOptions) => ({
   action: 'build' as const,
@@ -24,7 +35,7 @@ const runFields = (text: string, options: PromptOptions) => ({
 
 export function resendPayload(user: AcpChatMessage, options: PromptOptions): AcpPromptPayload {
   return {
-    ...runFields(user.text, options),
+    ...runFields(withQuotes(user.text, user.quotes), options),
     imageDataUrls: user.imageAttachments ?? [],
     evidenceFolders: (user.folderAttachments ?? []).map((f) => ({ id: f.id, name: f.name })),
   };
@@ -35,7 +46,7 @@ export function buildAgentPrompt(params: AgentSendParams, now: Date) {
   const folders = params.folders ?? [];
   const time = now.getTime();
   const payload: AcpPromptPayload = {
-    ...runFields(params.text, params),
+    ...runFields(withQuotes(params.text, params.quotes), params),
     imageName: images[0]?.name,
     imageFilePath: images[0]?.filePath,
     imageDataUrls: images.map((i) => i.dataUrl),
@@ -50,6 +61,7 @@ export function buildAgentPrompt(params: AgentSendParams, now: Date) {
     folderAttachments: folders.length
       ? folders.map((f) => ({ id: f.id, name: f.name, fileCount: f.fileCount }))
       : undefined,
+    quotes: params.quotes?.length ? params.quotes : undefined,
   };
   const agentMessage: AcpChatMessage = {
     id: `msg-agent-${time + 1}`,

@@ -85,15 +85,26 @@ export interface ViewportProps {
   markMode?: boolean;
   marks?: SceneMark[];
   markColor?: string;
+  markTool?: MarkTool;
   selectedMarkId?: string | null;
   agentFrames?: AgentFrame[];
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
+  onEraseMarks?: (ids: string[]) => void;
+  onMoveMark?: (move: MarkMove) => void;
   paused?: boolean;
   pose?: Map<string, THREE.Matrix4> | null;
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
+}
+
+export type MarkTool = 'marker' | 'eraser';
+
+export interface MarkMove {
+  id: string;
+  points: Vec3[];
+  partIds: string[];
 }
 
 export interface NewMark {
@@ -122,7 +133,7 @@ export interface Viewport3DHandle {
   ) => Promise<Array<{ view: string; dataUrl: string; labels?: number[] }>>;
   interference: (onlyIds?: string[]) => Promise<{ interferences: Interference[]; coplanar: Coplanar[] }>;
   fastenerChains: () => Promise<ChainResult>;
-  assembly: (options: { serviceable: string[]; budgetMs: number }) => Promise<AssemblyGeometry>;
+  assembly: (options: { serviceable: string[]; budgetMs: number; batteries?: string[] }) => Promise<AssemblyGeometry>;
   measureParts: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
   visibleShares: () => Promise<Record<string, number>>;
   printShapes: (
@@ -142,7 +153,7 @@ export interface Viewport3DHandle {
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];
   posedInterference: (onlyIds?: string[], riders?: Record<string, string[]>) => Promise<Interference[]>;
-  posedFloor: (ids?: string[]) => number | null;
+  posedFloor: (ids?: string[]) => Promise<number | null>;
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;

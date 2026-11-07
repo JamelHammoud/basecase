@@ -1,7 +1,10 @@
+import type { RuleCode } from '../readiness/wording';
+
 export interface ReportLine {
   rank: number;
   text: string;
   ids: string[];
+  code: RuleCode;
 }
 
 export function listIds(ids: string[], shown = 4): string {
@@ -17,19 +20,19 @@ export function joinAnd(ids: string[]): string {
 }
 
 export function grouped(
-  entries: Array<{ key: string; id: string; rank: number }>,
+  entries: Array<{ key: string; id: string; rank: number; code: RuleCode }>,
   render: (key: string, ids: string[]) => string,
 ): ReportLine[] {
-  const groups = new Map<string, { ids: string[]; rank: number }>();
+  const groups = new Map<string, { ids: string[]; rank: number; code: RuleCode }>();
 
   for (const e of entries) {
-    const g = groups.get(e.key) ?? { ids: [], rank: e.rank };
+    const g = groups.get(e.key) ?? { ids: [], rank: e.rank, code: e.code };
 
     g.ids.push(e.id);
     groups.set(e.key, g);
   }
 
-  return [...groups].map(([key, g]) => ({ rank: g.rank, text: render(key, g.ids), ids: g.ids }));
+  return [...groups].map(([key, g]) => ({ rank: g.rank, text: render(key, g.ids), ids: g.ids, code: g.code }));
 }
 
 export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;

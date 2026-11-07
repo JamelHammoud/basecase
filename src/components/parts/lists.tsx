@@ -4,10 +4,15 @@ import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
 import { Button, EmptyState, HoverCard, SectionHeader } from '../../design-system';
 import { CatalogDetails } from '../PartDetails';
-import { CATEGORIES, type Category } from './partsViews';
+import type { Category } from './partsViews';
 import { AddButton, CategoryRow, ResultRow, dragProps, metaLine } from './rows';
 
-const Tile: React.FC<{ item: CatalogItem; onOpen: () => void; onAdd: () => void }> = ({ item, onOpen, onAdd }) => {
+const Tile: React.FC<{ item: CatalogItem; meta: string; onOpen: () => void; onAdd: () => void }> = ({
+  item,
+  meta,
+  onOpen,
+  onAdd,
+}) => {
   const thumb = usePartThumbnail(item);
 
   return (
@@ -32,7 +37,7 @@ const Tile: React.FC<{ item: CatalogItem; onOpen: () => void; onAdd: () => void 
           </div>
           <div className="px-0.5 pt-2">
             <div className="text-[13px] font-medium text-white/90 truncate">{item.name}</div>
-            <div className="text-[12px] text-white/40 truncate">{metaLine(item)}</div>
+            <div className="text-[12px] text-white/40 truncate">{meta}</div>
           </div>
         </button>
         <AddButton
@@ -49,22 +54,34 @@ export const TileGrid: React.FC<{
   onOpen: (i: CatalogItem) => void;
   onAdd: (i: CatalogItem) => void;
   flush?: boolean;
-}> = ({ items, onOpen, onAdd, flush }) => (
+  meta?: (i: CatalogItem) => string;
+}> = ({ items, onOpen, onAdd, flush, meta = metaLine }) => (
   <div className={`grid grid-cols-2 gap-x-[8px] gap-y-[12px] ${flush ? '' : 'px-[12px] pt-1 pb-4'}`}>
     {items.map((item) => (
-      <Tile key={catalogRef(item)} item={item} onOpen={() => onOpen(item)} onAdd={() => onAdd(item)} />
+      <Tile
+        key={catalogRef(item)}
+        item={item}
+        meta={meta(item)}
+        onOpen={() => onOpen(item)}
+        onAdd={() => onAdd(item)}
+      />
     ))}
   </div>
 );
 
-export const Home: React.FC<{ onOpenCategory: (c: Category) => void }> = ({ onOpenCategory }) => (
+export const Home: React.FC<{ categories: Category[]; onOpenCategory: (c: Category) => void }> = ({
+  categories,
+  onOpenCategory,
+}) => (
   <div className="px-[8px] pb-4">
     {(['Components', 'Hardware'] as const).map((section) => (
       <div key={section} className="mb-3">
         <SectionHeader title={section} />
-        {CATEGORIES.filter((c) => c.section === section).map((c) => (
-          <CategoryRow key={c.id} category={c} onOpen={() => onOpenCategory(c)} />
-        ))}
+        {categories
+          .filter((c) => c.section === section)
+          .map((c) => (
+            <CategoryRow key={c.id} category={c} onOpen={() => onOpenCategory(c)} />
+          ))}
       </div>
     ))}
   </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ContextMenu, ContextMenuEntry, Tooltip, ArrowUpIcon, StopSolidIcon, TickIcon } from '../../design-system';
+import { hasPrimaryModifier } from '../../utils/os';
 import { SendIntent } from './types';
 
 const ROUND_BUTTON =
@@ -55,7 +56,7 @@ export const SendControls: React.FC<{
           aria-label={updating ? 'Update' : 'Send'}
           aria-haspopup="menu"
           aria-expanded={!!menu}
-          onClick={() => onSend('default')}
+          onClick={(e) => onSend(hasPrimaryModifier(e) ? 'queue' : 'default')}
           onContextMenu={(e) => {
             e.preventDefault();
             setMenu({ x: e.clientX, y: e.clientY });

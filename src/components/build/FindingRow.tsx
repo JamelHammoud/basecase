@@ -1,0 +1,96 @@
+import React, { useRef, useState } from 'react';
+import { Button, IconButton, MenuItem, MoreIcon, PopoverMenu } from '../../design-system';
+import type { ReadinessFinding } from '../../readiness/types';
+import type { ScenePart } from '../../types/robotics';
+import { PartLinks } from './PartLinks';
+
+export interface FindingActions {
+  onFix?: (finding: ReadinessFinding) => void;
+  onQuote?: (finding: ReadinessFinding) => void;
+  onIgnore: (finding: ReadinessFinding) => void;
+  onIgnoreRule: (finding: ReadinessFinding) => void;
+  onSelectParts: (ids: string[]) => void;
+}
+
+export interface FindingContext {
+  parts: ScenePart[];
+  panScroll: boolean;
+  actions: FindingActions;
+}
+
+const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const run = (action?: (f: ReadinessFinding) => void) => () => {
+    setOpen(false);
+    action?.(finding);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <IconButton
+        icon={<MoreIcon className="w-4 h-4" />}
+        title="More"
+        size="xs"
+        isToggled={open}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      />
+      <PopoverMenu isOpen={open} onClose={() => setOpen(false)} ignoreRef={ref} position="bottom" align="end">
+        <MenuItem label="Ignore" onSelect={run(actions.onIgnore)} />
+        <MenuItem label={`Ignore All ${finding.ruleName}`} onSelect={run(actions.onIgnoreRule)} />
+        {actions.onQuote && <MenuItem label="Quote" onSelect={run(actions.onQuote)} />}
+      </PopoverMenu>
+    </div>
+  );
+};
+
+const RowActions: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => (
+  <>
+    {actions.onFix && (
+      <Button variant="secondary" size="xs" onClick={() => actions.onFix?.(finding)}>
+        Fix
+      </Button>
+    )}
+    <MoreMenu finding={finding} actions={actions} />
+  </>
+);
+
+const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext; muted?: boolean }> = ({
+  finding,
+  context,
+  muted,
+}) => (
+  <div className="min-w-0 flex-1">
+    <p className={`text-[13px] leading-[18px] ${muted ? 'text-white/65' : 'text-white/85'}`}>{finding.text}</p>
+    {finding.detail && <p className="text-[12px] leading-[16px] text-white/45">{finding.detail}</p>}
+    <PartLinks
+      ids={finding.ids}
+      parts={context.parts}
+      panScroll={context.panScroll}
+      onSelect={context.actions.onSelectParts}
+    />
+    {finding.dispute && (
+      <p className="mt-0.5 text-[12px] leading-[16px] text-white/45">The agent disagrees: {finding.dispute.reason}</p>
+    )}
+  </div>
+);
+
+export const BlockerRow: React.FC<{ finding: ReadinessFinding; context: FindingContext }> = ({ finding, context }) => (
+  <li className="flex items-start gap-2 py-1.5 pl-[31px] pr-[7px]">
+    <FindingText finding={finding} context={context} />
+    <div className="flex items-center gap-1 shrink-0">
+      <RowActions finding={finding} actions={context.actions} />
+    </div>
+  </li>
+);
+
+export const NoteRow: React.FC<{ finding: ReadinessFinding; context: FindingContext }> = ({ finding, context }) => (
+  <li className="group relative py-1.5 pl-[31px] pr-[7px] rounded-lg hover:bg-[#333333]">
+    <FindingText finding={finding} context={context} muted />
+    <div className="absolute right-0 top-0.5 flex items-center gap-1 pl-8 pr-1 rounded-r-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto bg-gradient-to-r from-transparent to-[#333333] to-[32px]">
+      <RowActions finding={finding} actions={context.actions} />
+    </div>
+  </li>
+);

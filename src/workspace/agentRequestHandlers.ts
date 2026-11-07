@@ -12,6 +12,8 @@ import { platformBridge } from '../utils/platformBridge';
 import type { SliceRecord } from '../print/printBridge';
 import { sliceText } from '../print/sliceText';
 import { assemblyCheck, sceneFits } from './agentAssemblyRequests';
+import { addSourced, disputeFinding, importCad, readinessRequest } from './agentSourcingRequests';
+import type { ReadinessHandle } from './useReadiness';
 import { printReportOf, printReportText, type PrintReport } from '../utils/printReport';
 import type { VisionMasks } from '../utils/photoMask';
 import { maskProfile, referenceProfile } from '../utils/silhouette';
@@ -50,6 +52,7 @@ export interface RequestContext {
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   verify: (opts?: { peak?: boolean }) => Promise<EngineeringReport>;
+  readiness: ReadinessHandle;
   sweep: (payload: SweepPayload) => Promise<{ text: string }>;
   applyOps: (ops: AgentOp[]) => Promise<string>;
   edits?: (owner: string) => string[] | null;
@@ -269,6 +272,15 @@ const HANDLERS: Record<string, Handler> = {
     return { text: engineeringText(await ctx.verify({ peak: payload.peak === true }), toCad) };
   },
   set_build: setBuild,
+  readiness: (_payload, ctx) => readinessRequest(ctx),
+  readiness_line: (_payload, ctx) => {
+    void ctx.readiness.checkNow();
+
+    return { text: ctx.readiness.deltaSince(ctx.readiness.turnStart()) };
+  },
+  dispute_finding: (payload, ctx) => disputeFinding(payload, ctx),
+  add_sourced: (payload, ctx) => addSourced(payload, ctx),
+  import_cad: (payload, ctx) => importCad(payload, ctx),
   build_guide: buildGuide,
   catalog: catalogRequest,
   size_actuators: sizeActuatorsRequest,

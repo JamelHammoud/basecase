@@ -1,23 +1,36 @@
 import React from 'react';
-import { Button, MetaLine, Tooltip, ExternalLinkIcon } from '../../design-system';
+import { Button, ExternalLinkIcon, HoverCard, Tooltip } from '../../design-system';
+import type { ScenePart } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
-import { lineQty, linePacks, linkLabel } from './buyLine';
 import { scaledEntry } from '../../utils/currency';
 import { useMoney } from '../../utils/useMoney';
+import { PART_PREVIEW_WIDTH, PartPreviewCard } from '../agent/PartPreviewCard';
+import { lineAmount, lineCount, linkLabel } from './buyLine';
 
-const PRICE_CLASS = 'shrink-0 text-right text-[13px] tabular-nums rounded-md px-1.5 h-7 cursor-default';
+export interface BuyContext {
+  parts: ScenePart[];
+  panScroll: boolean;
+  onCheck: (line: BomLine) => void;
+  onSelectParts: (ids: string[]) => void;
+}
+
+const PRICE_CLASS =
+  'h-7 px-1.5 rounded-md text-right text-[13px] tabular-nums cursor-default transition-colors duration-150 hover:bg-white/[0.07]';
 
 const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
   if (!l.url) return null;
 
   return (
-    <Tooltip label={linkLabel(l)}>
+    <Tooltip
+      label={linkLabel(l)}
+      className="absolute right-0 top-px opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity duration-150"
+    >
       <a
         href={l.url}
         target="_blank"
         rel="noreferrer"
         aria-label={linkLabel(l)}
-        className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center text-white/40 hover:text-white/90 hover:bg-white/[0.07] opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-[opacity,color,background-color] duration-150 cursor-default"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white/90 hover:bg-white/[0.07] transition-colors duration-150 cursor-default"
       >
         <ExternalLinkIcon className="w-3.5 h-3.5" />
       </a>
@@ -31,11 +44,11 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.record)
     return (
-      <Tooltip label={`Checked ${l.record.checkedAt}${stale ? ', over 60 days ago' : ''}`}>
+      <Tooltip label={`Checked ${l.record.checkedAt}${stale ? ', over 60 days ago' : ''}`} className="shrink-0 -my-[5px]">
         <button
           type="button"
           onClick={onCheck}
-          className={`${PRICE_CLASS} hover:bg-white/[0.07] ${stale ? 'text-amber-400' : 'text-white/90'}`}
+          className={`${PRICE_CLASS} ${stale ? 'text-amber-400' : 'text-white/90'}`}
         >
           {money.format(l.lineUsd ?? l.record.priceUsd, scaledEntry(l.record.entered, l.packs ?? 1))}
         </button>
@@ -44,38 +57,81 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.estimate && l.estUsd !== undefined)
     return (
-      <Tooltip label={`List price at ${l.estimate.store}, ${l.estimate.seen}. Add the price you see`}>
-        <button
-          type="button"
-          onClick={onCheck}
-          className={`${PRICE_CLASS} text-white/45 hover:bg-white/[0.07] hover:text-white/75`}
-        >
+      <Tooltip
+        label={`List price at ${l.estimate.store}, ${l.estimate.seen}. Add the price you see`}
+        className="shrink-0 -my-[5px]"
+      >
+        <button type="button" onClick={onCheck} className={`${PRICE_CLASS} text-white/45 hover:text-white/75`}>
           ≈ {money.format(l.estUsd)}
         </button>
       </Tooltip>
     );
 
   return (
-    <Button variant="secondary" size="xs" onClick={onCheck}>
+    <Button variant="ghost" size="xs" onClick={onCheck} className="shrink-0 -my-[5px] !px-1.5">
       Add Price
     </Button>
   );
 };
 
-export const BuyRow: React.FC<{ line: BomLine; onCheck: () => void; onSelect: () => void }> = ({
-  line: l,
-  onCheck,
-  onSelect,
-}) => (
-  <li className="group flex items-center gap-2 h-[44px] px-[7px] rounded-lg hover:bg-white/[0.04]">
-    <button type="button" onClick={onSelect} className="flex-1 min-w-0 text-left cursor-default">
-      <div className="text-[13px] text-white/90 truncate">{l.name}</div>
-      <MetaLine
-        className="text-[12px] text-white/40 tabular-nums"
-        items={[lineQty(l), linePacks(l), l.warning && <span className="text-amber-400">{l.warning}</span>]}
-      />
+const LineFacts: React.FC<{ line: BomLine }> = ({ line: l }) => {
+  const amount = lineAmount(l);
+
+  return (
+    <>
+      <span className="block text-[13px] leading-[18px] text-white/90">{l.name}</span>
+      {(amount || l.detail) && (
+        <span className="flex flex-wrap gap-x-[12px] text-[12px] leading-[16px] text-white/45">
+          {amount && <span className="tabular-nums">{amount}</span>}
+          {l.detail && <span>{l.detail}</span>}
+        </span>
+      )}
+      {l.warning && <span className="block text-[12px] leading-[16px] text-amber-400">{l.warning}</span>}
+    </>
+  );
+};
+
+const LineText: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => {
+  if (!l.partIds.length)
+    return (
+      <div className="min-w-0 flex-1">
+        <LineFacts line={l} />
+      </div>
+    );
+
+  const select = (
+    <button
+      type="button"
+      onClick={() => context.onSelectParts(l.partIds)}
+      className="min-w-0 w-full text-left cursor-default"
+    >
+      <LineFacts line={l} />
     </button>
+  );
+
+  if (l.unit === 'g') return <div className="min-w-0 flex-1">{select}</div>;
+
+  return (
+    <HoverCard
+      content={() => (
+        <PartPreviewCard parts={context.parts.filter((p) => p.id === l.partIds[0])} panScroll={context.panScroll} />
+      )}
+      width={PART_PREVIEW_WIDTH}
+      placement="below"
+      className="min-w-0 flex-1"
+    >
+      {select}
+    </HoverCard>
+  );
+};
+
+export const BuyRow: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => (
+  <li className="group relative flex items-start gap-2 py-1.5 pl-[7px] pr-[29px] rounded-lg hover:bg-white/[0.04]">
+    <span className="shrink-0 min-w-[28px] text-right text-[13px] leading-[18px] text-white/50 tabular-nums">
+      {lineCount(l)}
+    </span>
+    <LineText line={l} context={context} />
+    <PriceControl line={l} onCheck={() => context.onCheck(l)} />
     <ListingLink line={l} />
-    <PriceControl line={l} onCheck={onCheck} />
   </li>
 );

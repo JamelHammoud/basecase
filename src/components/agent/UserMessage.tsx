@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { AcpChatMessage } from '../../types/robotics';
 import { Markdown, remarkLineBreaks, FolderIcon } from '../../design-system';
 import { usePartMarkdown } from './PartLinksProvider';
+import { QuoteBlock } from './QuoteBlock';
 import { OpenImages } from './types';
 
 const COLLAPSED_PX = 212;
@@ -121,6 +122,9 @@ export const UserMessage: React.FC<{
       >
         {images.length > 0 && <ImageGrid images={images} onOpenImages={onOpenImages} />}
         {folders.length > 0 && <FolderChips folders={folders} />}
+        {msg.quotes?.map((quote) => (
+          <QuoteBlock key={quote.id} quote={quote} />
+        ))}
         {msg.text && <ClampedText text={msg.text} />}
       </div>
       {pending && <span className="text-[12px] text-white/40 pr-1">Not sent</span>}

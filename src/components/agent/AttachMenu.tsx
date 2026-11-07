@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { foldersFromInput, PickedFolder } from '../../utils/evidenceFiles';
-import { IconButton, MenuItem, PopoverMenu, FolderAddIcon, PhotoAddIcon, PlusIcon } from '../../design-system';
+import { IconButton, MenuItem, PopoverMenu, FolderAddIcon, PenIcon, PhotoAddIcon, PlusIcon } from '../../design-system';
 
 const DIRECTORY_PICKER = { webkitdirectory: '' } as React.InputHTMLAttributes<HTMLInputElement>;
 
@@ -16,7 +16,8 @@ export const AttachMenu: React.FC<{
   attachRequest: number;
   onAttachFiles: (files: File[]) => Promise<void>;
   onAttachFolders: (folders: PickedFolder[]) => Promise<void>;
-}> = ({ attachRequest, onAttachFiles, onAttachFolders }) => {
+  onSketch: () => void;
+}> = ({ attachRequest, onAttachFiles, onAttachFolders, onSketch }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
   const attachMenuRef = useRef<HTMLDivElement | null>(null);
@@ -43,7 +44,7 @@ export const AttachMenu: React.FC<{
           title="Attach"
           tooltipSide="top"
           size="sm"
-          className="rounded-full"
+          className="rounded-bl-[16px]"
           isToggled={open}
           aria-haspopup="menu"
           aria-expanded={open}
@@ -65,6 +66,14 @@ export const AttachMenu: React.FC<{
             icon={<FolderAddIcon className="w-4 h-4" />}
             label="Attach Folder"
             onSelect={() => pick(folderInputRef.current)}
+          />
+          <MenuItem
+            icon={<PenIcon className="w-4 h-4" />}
+            label="Sketch"
+            onSelect={() => {
+              setOpen(false);
+              onSketch();
+            }}
           />
         </PopoverMenu>
       </div>

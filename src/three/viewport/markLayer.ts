@@ -4,7 +4,7 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type { SceneMark } from '../../types/robotics';
 import { markColorOf } from '../../utils/markColors';
-import { MarkLabel } from './markLabel';
+import { MarkLabel, topCenterOnScreen } from './markLabel';
 import { distanceToPolyline, type Point2 } from './markMath';
 
 const MARK_WIDTH_PX = 3.5;
@@ -13,6 +13,12 @@ const HALO_COLOR = '#0d99ff';
 const LABEL_HEADROOM = 0.15;
 const MARK_ORDER = 1100;
 const HIT_PX = 10;
+const ERASING_OPACITY = 0.2;
+
+interface ViewSize {
+  width: number;
+  height: number;
+}
 
 interface LineStyle {
   color: string;
@@ -96,7 +102,40 @@ export class MarkLayer {
     }
 
     marks.forEach((mark) => this.ensure(mark));
-    this.entries.forEach((entry, id) => this.setHalo(entry, id === selectedId));
+    this.entries.forEach((entry, id) => {
+      this.setHalo(entry, id === selectedId);
+
+      if (entry.label) entry.label.sprite.visible = id !== selectedId;
+    });
+  }
+
+  centerOf(id: string): THREE.Vector3 | null {
+    const entry = this.entries.get(id);
+
+    return entry ? new THREE.Box3().setFromPoints(entry.points).getCenter(new THREE.Vector3()) : null;
+  }
+
+  pointsOf(id: string): THREE.Vector3[] | null {
+    return this.entries.get(id)?.points ?? null;
+  }
+
+  shift(id: string, delta: THREE.Vector3): void {
+    const entry = this.entries.get(id);
+
+    if (!entry) return;
+
+    entry.mark.points.forEach(([x, y, z], i) => entry.points[i].set(x + delta.x, y + delta.y, z + delta.z));
+
+    const positions = entry.points.flatMap((p) => [p.x, p.y, p.z]);
+
+    entry.line.geometry.setPositions(positions);
+    entry.halo?.geometry.setPositions(positions);
+  }
+
+  topOf(id: string, camera: THREE.Camera): THREE.Vector3 | null {
+    const entry = this.entries.get(id);
+
+    return entry ? topCenterOnScreen(entry.points, camera, new THREE.Vector3()) : null;
   }
 
   preview(points: THREE.Vector3[] | null, color: string): void {
@@ -112,22 +151,28 @@ export class MarkLayer {
     this.group.add(this.draft);
   }
 
-  hitTest(pixel: Point2, camera: THREE.Camera, size: { width: number; height: number }): string | null {
+  hitTest(pixel: Point2, camera: THREE.Camera, size: ViewSize): string | null {
     let best: { id: string; distance: number } | null = null;
-    const projected = new THREE.Vector3();
-    const toPixel = (p: THREE.Vector3): Point2 => {
-      projected.copy(p).project(camera);
 
-      return [((projected.x + 1) / 2) * size.width, ((1 - projected.y) / 2) * size.height];
-    };
-
-    for (const [id, entry] of this.entries) {
-      const distance = this.labelHit(entry, pixel) ? 0 : distanceToPolyline(pixel, entry.points.map(toPixel));
-
+    for (const [id, distance] of this.distances(pixel, camera, size)) {
       if (distance <= HIT_PX && (!best || distance < best.distance)) best = { id, distance };
     }
 
     return best?.id ?? null;
+  }
+
+  hits(pixel: Point2, camera: THREE.Camera, size: ViewSize): string[] {
+    return this.distances(pixel, camera, size).flatMap(([id, distance]) => (distance <= HIT_PX ? [id] : []));
+  }
+
+  fade(ids: ReadonlySet<string>): void {
+    this.entries.forEach((entry, id) => {
+      const opacity = ids.has(id) ? ERASING_OPACITY : 1;
+
+      entry.line.material.opacity = opacity;
+
+      if (entry.label) entry.label.sprite.material.opacity = opacity;
+    });
   }
 
   dispose(): void {
@@ -162,6 +207,20 @@ export class MarkLayer {
 
     entry.halo = markLine(flat(entry.mark.points), { color: HALO_COLOR, width: HALO_WIDTH_PX, order: MARK_ORDER - 1 });
     this.overlays.add(entry.halo);
+  }
+
+  private distances(pixel: Point2, camera: THREE.Camera, size: ViewSize): Array<[string, number]> {
+    const projected = new THREE.Vector3();
+    const toPixel = (p: THREE.Vector3): Point2 => {
+      projected.copy(p).project(camera);
+
+      return [((projected.x + 1) / 2) * size.width, ((1 - projected.y) / 2) * size.height];
+    };
+
+    return [...this.entries].map(([id, entry]) => [
+      id,
+      this.labelHit(entry, pixel) ? 0 : distanceToPolyline(pixel, entry.points.map(toPixel)),
+    ]);
   }
 
   private labelHit(entry: Entry, [x, y]: Point2): boolean {

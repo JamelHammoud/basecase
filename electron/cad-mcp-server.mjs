@@ -42,6 +42,13 @@ import {
 import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
+import {
+  addSourcedItem,
+  disputeFinding,
+  getReadiness,
+  importMakerCad,
+  withBuildCheck,
+} from './cad-mcp/readinessTools.mjs';
 import { warmUp } from './cad-kernel/client.mjs';
 
 const TOOLS = [
@@ -98,6 +105,10 @@ const TOOLS = [
   buildGuide,
   setStatus,
   getGuide,
+  getReadiness,
+  disputeFinding,
+  addSourcedItem,
+  importMakerCad,
 ];
 
 const server = new McpServer(
@@ -108,7 +119,11 @@ const pushGuides = createGuidePusher();
 
 for (const tool of TOOLS.filter((t) => !(NO_WEB && t.web))) {
   server.registerTool(tool.name, tool.config, async (args, extra) =>
-    pushGuides(tool.name, args, await withToolCall(extra, () => tool.handler(args, extra))),
+    pushGuides(
+      tool.name,
+      args,
+      await withBuildCheck(tool.name, await withToolCall(extra, () => tool.handler(args, extra))),
+    ),
   );
 }
 

@@ -71,6 +71,12 @@ describe('annotate marks', () => {
   });
 
   it('recolors the selected mark and records the view it was drawn from', async () => {
+    await expect.poll(() => app.page.getByLabel('Mark label').count()).toBe(0);
+
+    const { x, y } = await canvasCenter();
+
+    await app.page.mouse.click(x + 90, y);
+    await expect.poll(() => app.page.getByLabel('Mark label').inputValue()).toBe('Too thick');
     await app.page.getByRole('button', { name: 'Yellow' }).click();
 
     const [mark] = await marks();
@@ -94,21 +100,19 @@ describe('annotate marks', () => {
   });
 
   it('selects one mark by clicking it and deletes only that one', async () => {
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => app.page.getByLabel('Mark label').count()).toBe(0);
-
     const { x, y } = await canvasCenter();
-
-    await app.page.mouse.click(x + 90, y);
-    await expect.poll(() => app.page.getByLabel('Mark label').inputValue()).toBe('Too thick');
 
     await draw([
       [x - 200, y + 160],
       [x + 200, y + 160],
     ]);
     expect(await marks()).toHaveLength(2);
+    expect(await focusedLabel()).toBe('Mark label');
 
     await app.page.keyboard.press('Escape');
+    await expect.poll(() => app.page.getByLabel('Mark label').count()).toBe(0);
+    await app.page.mouse.click(x, y + 160);
+    await expect.poll(() => app.page.getByLabel('Mark label').count()).toBe(1);
     await app.page.keyboard.press('Backspace');
     await app.page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect.poll(async () => (await marks()).length).toBe(1);
@@ -117,6 +121,25 @@ describe('annotate marks', () => {
 
     expect(left).toHaveLength(1);
     expect(left[0].label).toBe('Too thick');
+    expect(app.errors).toEqual([]);
+  });
+
+  it('moves a mark by dragging it', async () => {
+    const { x, y } = await canvasCenter();
+    const [before] = await marks();
+
+    await draw([
+      [x + 90, y],
+      [x + 130, y],
+      [x + 170, y],
+    ]);
+
+    const after = await marks();
+    const meanX = (m: SceneMark) => m.points.reduce((sum, p) => sum + p[0], 0) / m.points.length;
+
+    expect(after).toHaveLength(1);
+    expect(after[0].label).toBe('Too thick');
+    expect(meanX(after[0])).toBeGreaterThan(meanX(before) + 1);
     expect(app.errors).toEqual([]);
   });
 });

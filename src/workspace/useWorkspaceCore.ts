@@ -6,7 +6,7 @@ import { usePosing } from '../utils/usePosing';
 import { projectFromSeed } from './helpers';
 import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
 import { useAnnotations } from './useAnnotations';
-import { useMarks } from './useMarks';
+import { useMarks, useMarkState } from './useMarks';
 import { useMeasure } from './useMeasure';
 import { usePanelSync } from './usePanelSync';
 import { useRobotUpgrade } from './useRobotUpgrade';
@@ -16,6 +16,7 @@ import { useSimTraining } from './useSimTraining';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useBuildGuide } from './useBuildGuide';
+import { useReadiness } from './useReadiness';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -39,13 +40,8 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const measure = useMeasure();
   const { setMeasuring } = measure;
-  const [marking, setMarkingState] = useState(false);
-  const [selectedMarkId, setSelectedMarkId] = useState<string | null>(null);
-  const setMarking = (on: boolean) => {
-    setMarkingState(on);
-
-    if (!on) setSelectedMarkId(null);
-  };
+  const markState = useMarkState();
+  const { setMarking } = markState;
   const annotations = useAnnotations({
     initial: seed?.annotations ?? [],
     parts,
@@ -60,12 +56,13 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     setIsRightOpen: studio.setIsRightOpen,
     annotations,
     measure,
-    mark: { marking, setMarking },
+    mark: { marking: markState.marking, setMarking },
   });
   const marks = useMarks({
     docs,
     showToast,
-    selection: { selectedId: selectedMarkId, setSelectedId: setSelectedMarkId },
+    selection: markState.selection,
+    tool: markState.tool,
   });
   const posing = usePosing({
     parts,
@@ -128,10 +125,13 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
 
+  const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
+
   return {
     workspaceId,
     studio,
     printer,
+    readiness,
     printing,
     viewportRef,
     scene,

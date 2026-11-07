@@ -1,3 +1,4 @@
+import type { SourcedItem } from '../../data/sourcedItems';
 import {
   AcpChatMessage,
   AcpStatusInfo,
@@ -137,6 +138,11 @@ declare global {
       trainStop: (workspaceId: string) => Promise<{ stopping: boolean }>;
       getPolicy: (id: string) => Promise<unknown>;
       deletePolicy: (id: string) => Promise<boolean>;
+      listSourced: () => Promise<SourcedItem[]>;
+      saveSourced: (payload: unknown) => Promise<SourcedItem>;
+      removeSourced: (id: string) => Promise<SourcedItem[]>;
+      sourcedMesh: (id: string) => Promise<Uint8Array | null>;
+      importMakerCad: (payload: unknown) => Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }>;
       savePurchase: (payload: {
         key: string;
         record: PurchaseRecord | null;

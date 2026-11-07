@@ -16,8 +16,10 @@ a build package, not a picture.
 6. Close the loop: define_joints, then verify_design, check_assembly, check_printability,
    check_scene and get_bom (slice_plates for real times when there's a slicer). Fix every FAIL
    in the design and run them again.
-The build is done when nothing FAILs, every part prints, check_assembly finds an order, and the
-BOM is inside the budget. Report the verification table, print plan, build order and BOM
+The build is done when get_readiness says READY TO BUILD: it counts every check. Wiring, a switch,
+a fuse and similar supplies join the BOM on their own; use add_sourced_item for anything find_parts
+lacks. Leave anything the user ignores alone.
+Report the verification table, print plan, build order and BOM
 totals. Offer the build guide in one line ("Make a [build guide](#build-guide) to print the
 assembly steps.") and make it only when asked.`,
 };

@@ -1,111 +1,62 @@
-import React, { useEffect, useEffectEvent, useState } from 'react';
-import { Button, Section, CircleCheckIcon, CircleCloseIcon, CircleMinusIcon, WarningIcon } from '../../design-system';
-import type { ProjectSettings, ScenePart } from '../../types/robotics';
+import React from 'react';
+import { Section } from '../../design-system';
+import type { CheckStatus, CheckSummary, Readiness } from '../../readiness/types';
+import { READINESS_CHECKS } from '../../readiness/wording';
 import { ENGINEERING_CHECKS } from '../../utils/engineering';
-import type { CheckRow, EngineeringReport } from '../../utils/engineering';
-import { subscribeMoney } from '../../utils/currencyStore';
+import { CheckIcon } from './CheckIcon';
+import { CheckItem } from './CheckItem';
+import type { FindingContext } from './FindingRow';
+import { IgnoredChecks, type RestoreActions } from './IgnoredChecks';
 
 interface ChecksSectionProps {
-  parts: ScenePart[];
-  project: ProjectSettings;
-  onRun: () => Promise<EngineeringReport>;
-  onSelectParts: (ids: string[]) => void;
+  readiness: Readiness | null;
+  checking: boolean;
+  context: FindingContext;
+  restore: RestoreActions;
 }
 
-interface RunResult {
-  r: EngineeringReport;
-  parts: ScenePart[];
-  project: ProjectSettings;
+const SEVERITY: Record<CheckStatus, number> = { fail: 0, warn: 1, pass: 2, 'not run': 3 };
+
+const bySeverity = (checks: CheckSummary[]) => [...checks].sort((a, b) => SEVERITY[a.status] - SEVERITY[b.status]);
+
+const FIRST_RUN = [...READINESS_CHECKS, ...ENGINEERING_CHECKS];
+
+function verdict(readiness: Readiness | null, checking: boolean): { text: string; tone: string } {
+  if (!readiness || checking) return { text: 'Checking…', tone: 'text-white/45' };
+
+  if (readiness.status === 'ready') return { text: 'Ready to build', tone: 'text-emerald-400' };
+
+  return { text: `${readiness.blockers.length} to fix`, tone: 'text-red-400' };
 }
 
-const STATUS_ICON: Record<CheckRow['status'], React.ReactNode> = {
-  pass: <CircleCheckIcon className="w-4 h-4 text-emerald-400" />,
-  warn: <WarningIcon className="w-4 h-4 text-amber-400" />,
-  fail: <CircleCloseIcon className="w-4 h-4 text-red-400" />,
-  'not run': <CircleMinusIcon className="w-4 h-4 text-white/35" />,
-};
-
-const NOT_RUN: CheckRow[] = ENGINEERING_CHECKS.map((check) => ({ check, status: 'not run', detail: '' }));
-
-function runLabel(running: boolean, ran: boolean) {
-  if (running) return 'Checking…';
-
-  return ran ? 'Run Again' : 'Run Checks';
-}
-
-const CheckItem: React.FC<{ row: CheckRow; ran: boolean; onSelectParts: (ids: string[]) => void }> = ({
-  row,
-  ran,
-  onSelectParts,
-}) => (
-  <li>
-    <button
-      type="button"
-      onClick={() => row.ids?.length && onSelectParts(row.ids)}
-      className={`w-full flex items-start gap-2 py-1.5 px-[7px] rounded-lg text-left cursor-default ${ran ? 'hover:bg-white/[0.04]' : ''}`}
-    >
-      <span className="h-[18px] flex items-center shrink-0">{STATUS_ICON[row.status]}</span>
-      <span className="min-w-0">
-        <span className={`block text-[13px] leading-[18px] ${ran ? 'text-white/90' : 'text-white/60'}`}>
-          {row.check}
-        </span>
-        {row.detail && <span className="block text-[12px] text-white/45">{row.detail}</span>}
-      </span>
-    </button>
-    {!!row.items?.length && (
-      <ul className="pl-[24px] pb-1">
-        {row.items.map((item, i) => (
-          <li key={i}>
-            <button
-              type="button"
-              onClick={() => item.ids?.length && onSelectParts(item.ids)}
-              className="w-full py-1 px-[7px] rounded-md text-left text-[12px] leading-[16px] text-white/60 hover:bg-white/[0.04] hover:text-white/85 cursor-default"
-            >
-              {item.text}
-            </button>
-          </li>
-        ))}
-      </ul>
-    )}
+const Checking: React.FC<{ name: string }> = ({ name }) => (
+  <li className="flex items-start gap-2 py-1.5 px-[7px]">
+    <CheckIcon status="checking" />
+    <span className="text-[13px] leading-[18px] text-white/60">{name}</span>
   </li>
 );
 
-export const ChecksSection: React.FC<ChecksSectionProps> = ({ parts, project, onRun, onSelectParts }) => {
-  const [report, setReport] = useState<RunResult | null>(null);
-  const [running, setRunning] = useState(false);
-  const stale = report && (report.parts !== parts || report.project !== project);
-  const run = async () => {
-    setRunning(true);
+export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checking, context, restore }) => {
+  if (!context.parts.length || readiness?.status === 'empty') return null;
 
-    try {
-      setReport({ r: await onRun(), parts, project });
-    } finally {
-      setRunning(false);
-    }
-  };
-  const rerunInNewCurrency = useEffectEvent(() => {
-    if (report && !running) void run();
-  });
-
-  useEffect(() => subscribeMoney(rerunInNewCurrency), []);
-
-  const rows = report ? report.r.rows : NOT_RUN;
+  const { text, tone } = verdict(readiness, checking);
 
   return (
-    <Section
-      title="Checks"
-      actions={
-        <Button variant="secondary" size="xs" onClick={run} disabled={running || !parts.length}>
-          {runLabel(running, !!report)}
-        </Button>
-      }
-    >
-      {stale && <p className="text-[12.5px] text-white/45">The model changed since this run</p>}
+    <Section title="Checks" actions={<span className={`text-[13px] ${tone}`}>{text}</span>}>
       <ul className="-mx-[7px]">
-        {rows.map((row) => (
-          <CheckItem key={row.check} row={row} ran={!!report} onSelectParts={onSelectParts} />
-        ))}
+        {!readiness && FIRST_RUN.map((name) => <Checking key={name} name={name} />)}
+        {readiness &&
+          bySeverity(readiness.checks).map((check) => (
+            <CheckItem
+              key={check.name}
+              check={check}
+              blockers={readiness.blockers.filter((f) => f.check === check.name)}
+              notes={readiness.notes.filter((f) => f.check === check.name)}
+              context={context}
+            />
+          ))}
       </ul>
+      {readiness && <IgnoredChecks readiness={readiness} context={context} restore={restore} />}
     </Section>
   );
 };

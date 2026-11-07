@@ -268,6 +268,7 @@ export function chatTitle(messages: AcpChatMessage[]) {
 
   return (
     firstUser?.text ||
+    firstUser?.quotes?.[0]?.text ||
     firstUser?.folderAttachments?.[0]?.name ||
     (firstUser?.imageAttachments?.length ? 'Image build' : 'Chat')
   ).slice(0, 80);

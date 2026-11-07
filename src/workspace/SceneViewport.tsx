@@ -1,6 +1,7 @@
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
 import { Viewport3D } from '../components/Viewport3D';
+import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -32,6 +33,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   const { sim } = simTraining;
   const { cursors, lanes } = agent;
   const { setDraft } = annotations;
+  const editingMark = marks.selected;
   const shownParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
 
   return (
@@ -64,9 +66,24 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         markMode={tool.marking}
         marks={project.marks}
         markColor={marks.color}
+        markTool={marks.tool}
         selectedMarkId={marks.selected?.id ?? null}
         onAddMark={marks.add}
         onSelectMark={marks.select}
+        onEraseMarks={marks.erase}
+        onMoveMark={marks.move}
+        markField={
+          editingMark && (
+            <MarkLabelField
+              key={editingMark.id}
+              label={editingMark.label ?? ''}
+              color={marks.color}
+              autoFocus={marks.freshId === editingMark.id}
+              onCommit={(label) => marks.setLabel(editingMark.id, label)}
+              onClose={() => marks.select(null)}
+            />
+          )
+        }
         agentFrames={agent.frames}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}

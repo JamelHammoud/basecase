@@ -120,7 +120,7 @@ export interface ComponentVariant {
   amazon?: { url: string; kind: 'product' | 'search' };
 }
 
-type MeshStats = { size: [number, number, number]; triangles: number };
+type MeshStats = { size: [number, number, number]; triangles: number; origin?: [number, number, number] };
 
 const meshStats = MESHES as unknown as Record<string, MeshStats>;
 
@@ -6085,6 +6085,10 @@ export function componentSize(id: string): { width: number; height: number; dept
 }
 
 export const hasComponentMesh = (id: string) => !!meshStats[id];
+
+export function registerComponentMesh(id: string, size: [number, number, number], origin?: [number, number, number]) {
+  meshStats[id] = { ...meshStats[id], size, origin } as MeshStats;
+}
 
 export function componentNote(c: ComponentInfo): string {
   return `${c.manufacturer} ${c.mpn}. ${c.mounting}`;

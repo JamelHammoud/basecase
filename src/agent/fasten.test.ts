@@ -104,6 +104,125 @@ describe('fasten', () => {
   });
 });
 
+function plateWithHole(size: V3, holeSide: number): AgentCadPayload {
+  const [x, y, z] = size;
+  const [lo, hi] = [(x - holeSide) / 2, (x + holeSide) / 2];
+  const [loY, hiY] = [(y - holeSide) / 2, (y + holeSide) / 2];
+  const boxes: Array<[number, number, number, number]> = [
+    [0, lo, 0, y],
+    [hi, x, 0, y],
+    [lo, hi, 0, loY],
+    [lo, hi, hiY, y],
+  ];
+  const positions: number[] = [];
+  const indices: number[] = [];
+
+  for (const [x0, x1, y0, y1] of boxes) {
+    const base = positions.length / 3;
+
+    for (const i of [0, 1, 2, 3, 4, 5, 6, 7]) positions.push(i & 1 ? x1 : x0, i & 2 ? y1 : y0, i & 4 ? z : 0);
+
+    const quads = [
+      [0, 2, 3, 1],
+      [4, 5, 7, 6],
+      [0, 1, 5, 4],
+      [2, 6, 7, 3],
+      [0, 4, 6, 2],
+      [1, 3, 7, 5],
+    ];
+
+    indices.push(...quads.flatMap(([a, b, c, d]) => [a, b, c, a, c, d].map((v) => base + v)));
+  }
+
+  return {
+    language: 'openscad',
+    code: `include <robotics.scad>\ncube([${size.join(', ')}]);`,
+    positions,
+    indices,
+    stats: { volume: x * y * z },
+  };
+}
+
+function soupOf(cad: AgentCadPayload): Float32Array {
+  return new Float32Array(
+    cad.indices.flatMap((i) => [cad.positions[i * 3], cad.positions[i * 3 + 1], cad.positions[i * 3 + 2]]),
+  );
+}
+
+describe('fasten through existing holes', () => {
+  const standoff = plate('standoff', [8, 8, 10], [-4, -4, 0]);
+
+  it('seats on a plate whose hole is already cut', () => {
+    const drilled = specToPart({
+      id: 'drilled',
+      shape: 'cad_part',
+      cad: plateWithHole([20, 20, 3], 3.6),
+      position: [-10, -10, 10],
+    });
+    const plan = planFasten([drilled, standoff], {
+      size: 'M3',
+      through: ['drilled', 'standoff'],
+      into: 'insert',
+      at: [0, 0, 13],
+      from: [0, 0, 1],
+    });
+
+    if (typeof plan === 'string') throw new Error(plan);
+
+    expect(added(plan)[0].catalog).toMatch(/M3\|(8|9|10)$/);
+    expect(plan.text).toContain('kept the hole through drilled');
+  });
+
+  it('reads a catalog board from its mesh, not its bounding box', () => {
+    const board = {
+      ...plate('board', [20, 20, 16], [-10, -10, 0]),
+      kind: 'component',
+      cad: undefined,
+      dimensions: { width: 20, height: 16, depth: 20 },
+      position: [0, 8, 0],
+    } as ScenePart;
+    const pcb = soupOf(plateWithHole([20, 20, 1.6], 2.8));
+
+    for (let i = 0; i < pcb.length; i += 3) {
+      const [x, y, z] = [pcb[i], pcb[i + 1], pcb[i + 2]];
+
+      pcb.set([x - 10, z - 2 + 0, 10 - y], i);
+    }
+
+    const plan = planFasten(
+      [board, plate('post', [8, 8, 6], [-4, -4, 0])],
+      { size: 'M2.5', through: ['board', 'post'], into: 'insert', at: [0, 0, 7.6], from: [0, 0, 1] },
+      (id) => (id === 'board' ? pcb : null),
+    );
+
+    if (typeof plan === 'string') throw new Error(plan);
+
+    expect(plan.recode.map((r) => r.id)).toEqual(['post']);
+    expect(plan.text).toContain("through board's own mounting hole");
+  });
+
+  it('names a catalog part with no hole instead of crashing', () => {
+    const solid = {
+      ...plate('solid', [20, 20, 4], [-10, -10, 8]),
+      kind: 'component',
+      cad: undefined,
+      dimensions: { width: 20, height: 4, depth: 20 },
+      position: [0, 12, 0],
+    } as ScenePart;
+    const plan = planFasten([solid, standoff], {
+      size: 'M3',
+      through: ['solid', 'standoff'],
+      into: 'insert',
+      at: [0, 0, 14],
+      from: [0, 0, 1],
+    });
+
+    if (typeof plan === 'string') throw new Error(plan);
+
+    expect(plan.text).toContain('solid is a catalog part with no hole on this axis');
+  });
+});
+
 describe('mate', () => {
   it('puts the servo output on a declared bore, facing it', () => {
     const ports = [{ name: 'bore', position: [15, 15, 0] as V3, axis: [0, 0, -1] as V3, kind: 'bore' as const }];

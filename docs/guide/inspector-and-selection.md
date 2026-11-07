@@ -37,6 +37,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Shift-click works like Figma (`clickSelection` in `workspace/selection.ts`): it toggles what a plain click would pick. From outside a group it adds or removes the whole group; inside one it adds or removes just that member, so members of one group and other groups mix freely. ⇧⌘-click toggles exactly the part under the pointer. Clicking empty space clears the selection.
   - Shift-drag draws a blue selection box and adds every unlocked, visible part it touches, plus their groups. Hit testing uses each part’s real silhouette (projected vertices + a 7×7 ray grid), not its bounding box. It runs in the capture phase and turns OrbitControls off for that drag, so Shift-drag never pans. Shift-scroll still pans.
   - Only primary clicks change selection; right-click never does.
+  - Locked parts ignore clicks, like Figma: a click or double-click passes through to the part behind (`raycastUnlocked` in `three/viewport/picking.ts`), and right-click opens the canvas menu, not the part's. ⌘-click (and ⇧⌘-click) still selects a locked part, as does its row in Layers. Measure, Annotate and Mark still land on them.
 - **Layers:**
   - A plain click selects that row; Shift/⌘-click toggles exactly that row (a part row never expands to its group; a group row toggles all its members).
   - Group rows are collapsible, double-click to rename, and select every member.

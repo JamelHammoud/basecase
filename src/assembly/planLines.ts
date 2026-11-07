@@ -1,5 +1,6 @@
 import { isCover } from '../guide/guideOrder';
 import type { ScenePart } from '../types/robotics';
+import type { AssemblyGeometry, PartMoves } from './assemblyGeometry';
 import type { SplitPlane } from './splitTest';
 import { RANK } from './chainLines';
 import type { RemovalPlan } from './removalOrder';
@@ -16,6 +17,7 @@ function stuckLines(plan: RemovalPlan): ReportLine[] {
     key: v.verdict === 'stuck' ? v.blockers.slice(0, 3).join(', ') : '',
     id,
     rank: RANK.stuck,
+    code: 'stuck-screw' as const,
   }));
 
   return grouped(entries, (key, ids) =>
@@ -25,19 +27,45 @@ function stuckLines(plan: RemovalPlan): ReportLine[] {
   ).slice(0, 2);
 }
 
+function stuckPartLine(plan: RemovalPlan, g: AssemblyGeometry): ReportLine[] {
+  if (!plan.stuckParts.length) return [];
+
+  const left = new Set(plan.stuckParts);
+  const inTheWay = plan.stuckParts.flatMap((id) => {
+    const ways = [...g.moves[id].local].sort((a, b) => a.length - b.length);
+
+    return ways[0].filter((x) => left.has(x));
+  });
+
+  return [
+    {
+      rank: RANK.stuck,
+      code: 'stuck-part',
+      text: `${listIds(plan.stuckParts)} can't go together or come apart in any order, with straight moves (in the way: ${listIds([...new Set(inTheWay)], 3)}). Widen the opening or split the part.`,
+      ids: plan.stuckParts,
+    },
+  ];
+}
+
 function noteLine(plan: RemovalPlan): ReportLine[] {
   const notes = screwsBy(plan, 'note');
 
   if (!notes.length) return [];
 
   const groups = grouped(
-    notes.map(([id, v]) => ({ key: v.verdict === 'note' ? joinAnd(v.before.slice(0, 2)) : '', id, rank: RANK.note })),
+    notes.map(([id, v]) => ({
+      key: v.verdict === 'note' ? joinAnd(v.before.slice(0, 2)) : '',
+      id,
+      rank: RANK.note,
+      code: 'order' as const,
+    })),
     (key, ids) => `${listIds(ids, 2)} before ${key}`,
   );
 
   return [
     {
       rank: RANK.note,
+      code: 'order',
       text: `Build notes: drive ${groups
         .slice(0, 2)
         .map((g) => g.text)
@@ -56,6 +84,7 @@ function toolLine(plan: RemovalPlan): ReportLine[] {
     ? [
         {
           rank: RANK.tool,
+          code: 'tool',
           text: `${plural(ids.length, 'screw')} need an L-key or ball-end driver: ${listIds(ids, 3)}. A straight driver line makes assembly easier.`,
           ids,
         },
@@ -85,6 +114,7 @@ export function serviceLines(results: ServiceResult[]): ReportLine[] {
     return [
       {
         rank: RANK.service,
+        code: 'service',
         text: `Service: ${worst
           .slice(0, 2)
           .map((r) => serviceText(r, target))
@@ -109,10 +139,31 @@ export function splitLines(
         ? `${id} wraps its contents (${inside}) and can't come off: split it ${PLANE_NAMES[best.axis]} (the halves are blocked by ${best.blockers[0].length} and ${best.blockers[1].length} parts).`
         : `${id} encloses ${inside}: keep a load-bearing part whole and move them to a bay or tray outside it, or split it ${PLANE_NAMES[best.axis]} if it's a cover.`;
 
-    return { rank: RANK.split, text, ids: [id] };
+    return { rank: RANK.split, code: 'split', text, ids: [id] };
   });
 }
 
-export function planLines(plan: RemovalPlan): ReportLine[] {
-  return [...stuckLines(plan), ...noteLine(plan), ...toolLine(plan)];
+function hookedBy(m: PartMoves): string[] {
+  const order = m.local.map((b, i) => ({ solid: b.length, lips: m.lips[i] })).sort((a, b) => a.solid - b.solid);
+  const fewest = order.filter((o) => o.solid === order[0].solid);
+
+  return [...fewest].sort((a, b) => a.lips.length - b.lips.length)[0]?.lips ?? [];
+}
+
+export function lipLines(g: AssemblyGeometry): ReportLine[] {
+  const entries = Object.entries(g.moves).flatMap(([id, m]) => {
+    const lips = hookedBy(m);
+
+    return lips.length ? [{ key: lips.slice(0, 2).join(' and '), id, rank: RANK.lip, code: 'lip' as const }] : [];
+  });
+
+  return grouped(
+    entries,
+    (key, ids) =>
+      `${listIds(ids, 3)} only comes off with a tilt or flex past ${key} (a hook or small lip). Check it by hand.`,
+  ).slice(0, 2);
+}
+
+export function planLines(plan: RemovalPlan, g: AssemblyGeometry): ReportLine[] {
+  return [...stuckPartLine(plan, g), ...stuckLines(plan), ...noteLine(plan), ...toolLine(plan)];
 }

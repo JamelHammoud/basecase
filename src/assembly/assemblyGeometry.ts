@@ -3,17 +3,20 @@ import type { Placed } from '../three/analysis/collide';
 import type { ChainResult, FastenerInput, V3 } from './assemblyTypes';
 import { driverOptions, type DriverOption } from './driverAccess';
 import { traceFasteners } from './fastenerChain';
-import { AXES, blockersAlong, directionsFor, exitTravel, ownTravel } from './moveBlockers';
+import { fitProbes, type FitProbes } from './fitProbes';
+import { AXES, blockersAlong, blocksAlong, directionsFor, exitTravel, ownTravel } from './moveBlockers';
 import { splitPlanes, type SplitPlane } from './splitTest';
 
 export interface AssemblyGeometryInput extends FastenerInput {
   serviceable: string[];
   budgetMs: number;
+  batteries?: string[];
 }
 
 export interface PartMoves {
   dirs: V3[];
   local: string[][];
+  lips: string[][];
   exit: string[][] | null;
   captured: boolean;
   contents: string[];
@@ -24,6 +27,7 @@ export interface AssemblyGeometry {
   moves: Record<string, PartMoves>;
   drivers: Record<string, DriverOption[]>;
   splits: Record<string, SplitPlane[]>;
+  fits: FitProbes;
   timedOut: boolean;
   ms: number;
 }
@@ -62,13 +66,18 @@ function partMoves(scene: Scene, p: Placed, serviceable: boolean): PartMoves {
   const dirs = directionsFor(scene.pinAxes.get(p.id) ?? []);
   const along = (dir: THREE.Vector3, travel: number, among = candidates) =>
     blockersAlong({ part: p, dir, travel, candidates: among });
+  const local = dirs.map((d) => blocksAlong({ part: p, dir: d, travel: ownTravel(p, d), candidates }));
+  const exit = serviceable
+    ? dirs.map((d) => blocksAlong({ part: p, dir: d, travel: exitTravel(p, d, scene.robot), candidates }).solid)
+    : null;
   const pinned = scene.pinAxes.has(p.id);
   const majorsNear = scene.majors.filter((q) => q.id !== p.id);
 
   return {
     dirs: dirs.map((d) => d.toArray()),
-    local: dirs.map((d) => along(d, ownTravel(p, d))),
-    exit: serviceable ? dirs.map((d) => along(d, exitTravel(p, d, scene.robot))) : null,
+    local: local.map((b) => b.solid),
+    lips: local.map((b) => b.lips),
+    exit,
     captured: !pinned && AXES.every((a) => along(new THREE.Vector3(...a), CAPTURE_MM, majorsNear).length > 0),
     contents: scene.majors.filter((q) => q.id !== p.id && contained(p, q)).map((q) => q.id),
   };
@@ -82,7 +91,15 @@ export function assemblyGeometry(placed: Placed[], input: AssemblyGeometryInput)
   const started = performance.now();
   const scene = sceneOf(placed, input, started + input.budgetMs);
   const serviceable = new Set(input.serviceable);
-  const out: AssemblyGeometry = { chains: scene.chains, moves: {}, drivers: {}, splits: {}, timedOut: false, ms: 0 };
+  const out: AssemblyGeometry = {
+    chains: scene.chains,
+    moves: {},
+    drivers: {},
+    splits: {},
+    fits: { insertWalls: {}, leadRoomMm: {} },
+    timedOut: false,
+    ms: 0,
+  };
   const late = () => performance.now() > scene.deadline;
   const skipForDrivers = new Set(scene.chains.sleeves.filter((s) => s.kind === 'insert').map((s) => s.id));
 
@@ -106,6 +123,8 @@ export function assemblyGeometry(placed: Placed[], input: AssemblyGeometryInput)
       scene.majors.filter((q) => q.id !== p.id),
     );
   }
+
+  if (!late()) out.fits = fitProbes(placed, scene.chains, input.batteries ?? []);
 
   out.timedOut = late();
   out.ms = Math.round(performance.now() - started);

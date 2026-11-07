@@ -1,9 +1,9 @@
 import { hardwareDrive } from '../data/hardware';
 import type { ScenePart } from '../types/robotics';
 import type { AssemblyGeometry } from './assemblyGeometry';
-import { chainLines, heldLines, orphanLines } from './chainLines';
+import { chainLines, heldLines, isBlockingRank, orphanLines } from './chainLines';
 import { heldBy } from './heldBy';
-import { planLines, serviceLines, splitLines } from './planLines';
+import { lipLines, planLines, serviceLines, splitLines } from './planLines';
 import { planRemoval, type RemovalPlan } from './removalOrder';
 import { plural, type ReportLine } from './reportText';
 import { serviceClass, serviceDepths, type ServiceResult } from './serviceDepth';
@@ -45,10 +45,12 @@ function summary(g: AssemblyGeometry, plan: RemovalPlan): string {
 function capped(lines: ReportLine[]): string[] {
   const sorted = [...lines].sort((a, b) => a.rank - b.rank);
 
-  if (sorted.length <= MAX_LINES) return sorted.map((l) => `- ${l.text}`);
+  const row = (l: ReportLine) => `- ${isBlockingRank(l.rank) ? 'BLOCKER: ' : ''}${l.text}`;
+
+  if (sorted.length <= MAX_LINES) return sorted.map(row);
 
   return [
-    ...sorted.slice(0, MAX_LINES - 1).map((l) => `- ${l.text}`),
+    ...sorted.slice(0, MAX_LINES - 1).map(row),
     `- …and ${sorted.length - MAX_LINES + 1} more lines; fix these and run it again.`,
   ];
 }
@@ -57,17 +59,18 @@ export function assemblyReport(parts: ScenePart[], g: AssemblyGeometry): Assembl
   const byId = new Map(parts.map((p) => [p.id, p]));
   const groups = Object.fromEntries(parts.map((p) => [p.id, p.group?.id]));
   const plan = planRemoval(g, groups);
-  const service = serviceDepths(parts, g, toolOf(byId));
+  const service = serviceDepths(parts, g, toolOf(byId), plan);
   const lines = [
     ...chainLines(g.chains.screws, byId),
     ...orphanLines(g.chains.sleeves),
     ...heldLines(heldBy(parts, g)),
-    ...planLines(plan),
+    ...planLines(plan, g),
+    ...lipLines(g),
     ...serviceLines(service),
     ...splitLines(g.splits, byId, (id) => g.moves[id]?.contents ?? []),
   ];
   const body = lines.length
-    ? ['Warnings (these rows warn while the check is calibrated):', ...capped(lines)]
+    ? ['Findings (the ones get_readiness counts as blockers are marked BLOCKER):', ...capped(lines)]
     : ['No assembly problems found.'];
 
   const enclosing = Object.keys(g.splits);

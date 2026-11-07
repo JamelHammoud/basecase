@@ -83,6 +83,8 @@ export function useMenuCommands({ active, core, actions, ui }: MenuOptions) {
       return true;
     }
 
+    if (document.activeElement?.closest('[data-own-edits]')) return true;
+
     return blocked || ui.recentKeyEdit();
   };
 

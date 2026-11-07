@@ -1,7 +1,10 @@
-export const hm = (h: number) =>
-  h < 1
-    ? `${Math.max(1, Math.round(h * 60))} min`
-    : `${Math.floor(h)} h ${String(Math.round((h % 1) * 60)).padStart(2, '0')} min`;
+export const hm = (h: number) => {
+  const minutes = Math.max(1, Math.round(h * 60));
+
+  if (minutes < 60) return `${minutes} min`;
+
+  return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} min`;
+};
 
 export const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 

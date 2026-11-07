@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 import { useSyncExternalStore } from 'react';
+import { loadSourced } from '../data/loadSourced';
+import { isSourcedId } from '../data/sourcedItems';
+import type { ScenePart } from '../types/robotics';
+import { platformBridge } from '../utils/platformBridge';
 import { componentArrays, type ComponentArrays } from './componentGeometry';
 import { geometryWorker } from './geometryWorker';
 import { geometryFromArrays } from './partMesh/creased';
@@ -31,6 +35,57 @@ const notify = () => {
 };
 
 export const componentMeshUrl = (id: string) => `${import.meta.env.BASE_URL}parts/${id}.glb`;
+
+async function sourcedBytes(id: string): Promise<ArrayBuffer> {
+  const bytes = await platformBridge.sourcedMesh(id);
+
+  if (!bytes) throw new Error(`Couldn't load the ${id} model.`);
+
+  return bytes;
+}
+
+export type MeshFiles = Record<string, ArrayBuffer>;
+
+const provided = new Map<string, ArrayBuffer>();
+
+export function provideMeshFiles(files: MeshFiles = {}) {
+  for (const [id, bytes] of Object.entries(files)) {
+    provided.set(id, bytes);
+    entries.delete(id);
+    pending.delete(id);
+  }
+}
+
+export async function sourcedMeshFiles(parts: ScenePart[]): Promise<MeshFiles> {
+  await loadSourced();
+
+  const ids = new Set(parts.flatMap((p) => (p.componentId && isSourcedId(p.componentId) ? [p.componentId] : [])));
+  const files = await Promise.all([...ids].map(async (id) => [id, await platformBridge.sourcedMesh(id)] as const));
+
+  return Object.fromEntries(files.filter((file): file is readonly [string, ArrayBuffer] => !!file[1]));
+}
+
+export function forgetComponentMesh(id: string) {
+  entries.delete(id);
+  pending.delete(id);
+  notify();
+}
+
+async function meshBytes(id: string): Promise<ArrayBuffer> {
+  const given = provided.get(id);
+
+  if (given) return given.slice(0);
+
+  await loadSourced();
+
+  if (isSourcedId(id)) return sourcedBytes(id);
+
+  const res = await fetch(componentMeshUrl(id));
+
+  if (!res.ok) throw new Error(`Couldn't load the ${id} model (${res.status}).`);
+
+  return res.arrayBuffer();
+}
 
 const processComponent = (data: ArrayBuffer): Promise<ComponentArrays> =>
   typeof document === 'undefined' ? componentArrays(data) : geometryWorker.call('component', data, [data]);
@@ -66,11 +121,7 @@ export function loadComponentMesh(id: string): Promise<LoadedComponent> {
   entries.set(id, { status: 'loading' });
 
   const promise = (async () => {
-    const res = await fetch(componentMeshUrl(id));
-
-    if (!res.ok) throw new Error(`Couldn't load the ${id} model (${res.status}).`);
-
-    const mesh = componentFromArrays(await processComponent(await res.arrayBuffer()));
+    const mesh = componentFromArrays(await processComponent(await meshBytes(id)));
 
     entries.set(id, { status: 'ready', mesh });
     pending.delete(id);

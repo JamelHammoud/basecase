@@ -1,3 +1,4 @@
+import type { Readiness } from '../readiness/types';
 import { ChatHistory } from '../components/ChatHistory';
 import { AgentSpinner, PanelTabs, type PanelTab } from '../design-system';
 import { runningChats } from './agentLanes';
@@ -12,6 +13,17 @@ interface RightPanelTabsProps {
 
 const HISTORY_INSET = 16;
 
+const ReadinessDot = ({ readiness }: { readiness: Readiness | null }) => {
+  if (!readiness || readiness.status === 'empty' || readiness.status === 'blockout') return null;
+
+  return (
+    <span
+      title={readiness.status === 'ready' ? 'Ready to build' : `${readiness.blockers.length} to fix`}
+      className={`inline-block w-1.5 h-1.5 rounded-full ${readiness.status === 'ready' ? 'bg-emerald-400' : 'bg-red-400'}`}
+    />
+  );
+};
+
 export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
   const { studio, tool, onRobot, posing } = core;
   const { chat, current, lanes } = agent;
@@ -19,7 +31,7 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
     { value: 'inspector', label: 'Inspect' },
     ...(onRobot ? [{ value: 'pose' as const, label: 'Pose' }] : []),
     ...(posing.hasRig ? [{ value: 'sim' as const, label: 'Simulate' }] : []),
-    { value: 'build', label: 'Build' },
+    { value: 'build', label: 'Build', indicator: <ReadinessDot readiness={core.readiness.current} /> },
     {
       value: 'acp',
       label: 'Agent',

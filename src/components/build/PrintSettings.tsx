@@ -22,10 +22,10 @@ interface PrintSettingsProps {
   onAddPrinter: () => void;
 }
 
-const Row: React.FC<{ label: string; wide?: boolean; children: React.ReactNode }> = ({ label, wide, children }) => (
-  <div className="flex items-center justify-between gap-3">
-    <span className="text-[13px] text-white/60 shrink-0">{label}</span>
-    <div className={`${wide ? 'w-[176px]' : 'w-[112px]'} min-w-0`}>{children}</div>
+const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="flex items-center gap-3">
+    <span className="w-[64px] shrink-0 text-[13px] text-white/60">{label}</span>
+    <div className="flex-1 min-w-0">{children}</div>
   </div>
 );
 
@@ -53,7 +53,7 @@ export const PrintSettings: React.FC<PrintSettingsProps> = ({
 
   return (
     <>
-      <Row label="Printer" wide>
+      <Row label="Printer">
         <Select
           value={printer.id}
           options={printerOptions(printer, printers)}
@@ -62,7 +62,7 @@ export const PrintSettings: React.FC<PrintSettingsProps> = ({
         />
       </Row>
       {processes.length > 0 && process && (
-        <Row label="Quality" wide>
+        <Row label="Quality">
           <Select
             value={process}
             options={processes.map((p) => ({ value: p.name, label: qualityLabel(p.name) }))}

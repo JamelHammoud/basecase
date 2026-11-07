@@ -3,7 +3,6 @@ import { useScrollFade } from '../design-system';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
-import type { EngineeringReport } from '../utils/engineering';
 import type { PrintToolsStatus, SavedPrinter } from '../print/printBridge';
 import type { PrintReport } from '../utils/printReport';
 import type { Printing } from '../workspace/usePrinting';
@@ -16,8 +15,10 @@ import { ChecksSection } from './build/ChecksSection';
 import { ExtrasSection } from './build/ExtrasSection';
 import { GuideSection } from './build/GuideSection';
 import { download } from './build/format';
-import { PrintedSection } from './build/PrintedSection';
 import { PlatesSection } from './build/PlatesSection';
+import type { ReadinessFinding } from '../readiness/types';
+import { ignoreFinding, ignoreRule, restoreFinding, restoreRule } from '../readiness/readiness';
+import type { ReadinessHandle } from '../workspace/useReadiness';
 import { usePurchases } from './build/usePurchases';
 
 interface BuildPanelProps {
@@ -31,8 +32,11 @@ interface BuildPanelProps {
   onAddPrinter: () => void;
   onSelectParts: (ids: string[]) => void;
   onToast: (message: string) => void;
-  onRunChecks: () => Promise<EngineeringReport>;
+  onFixFinding?: (finding: ReadinessFinding) => void;
+  onQuoteFinding?: (finding: ReadinessFinding) => void;
+  panScroll: boolean;
   guide: BuildGuide;
+  readiness: ReadinessHandle;
 }
 
 function supportByMaterial(print: PrintReport | null) {
@@ -56,8 +60,11 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onAddPrinter,
   onSelectParts,
   onToast,
-  onRunChecks,
+  onFixFinding,
+  onQuoteFinding,
+  panScroll,
   guide,
+  readiness,
 }) => {
   const [purchases, savePurchase] = usePurchases();
   const { measures, report: print } = printing;
@@ -71,11 +78,11 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     const names = Object.fromEntries(parts.map((p) => [p.id, p.name]));
 
     download(`${file}-bom.csv`, bomToCsv(bom, names, money), 'text/csv');
-    onToast('Exported BOM');
+    onToast('Exported bill of materials');
   };
   const exportMarkdown = () => {
     download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
-    onToast('Exported BOM');
+    onToast('Exported bill of materials');
   };
   const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {
     await savePurchase(line.key, record);
@@ -88,9 +95,29 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <BudgetSection bom={bom} project={project} onChangeProject={onChangeProject} />
         <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
-        <ChecksSection parts={parts} project={project} onRun={onRunChecks} onSelectParts={onSelectParts} />
+        <ChecksSection
+          readiness={readiness.current}
+          checking={readiness.checking}
+          context={{
+            parts,
+            panScroll,
+            actions: {
+              onFix: onFixFinding,
+              onQuote: onQuoteFinding,
+              onIgnore: (finding) => onChangeProject({ readiness: ignoreFinding(project.readiness, finding) }),
+              onIgnoreRule: (finding) => onChangeProject({ readiness: ignoreRule(project.readiness, finding) }),
+              onSelectParts,
+            },
+          }}
+          restore={{
+            onRestore: (finding) => onChangeProject({ readiness: restoreFinding(project.readiness, finding) }),
+            onRestoreRule: (rule) => onChangeProject({ readiness: restoreRule(project.readiness, rule) }),
+          }}
+        />
         <BuyList
           bom={bom}
+          parts={parts}
+          panScroll={panScroll}
           onCheck={setChecking}
           onSelectParts={onSelectParts}
           onExportCsv={exportCsv}
@@ -106,7 +133,6 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           onAddPrinter={onAddPrinter}
           onSelectParts={onSelectParts}
         />
-        <PrintedSection report={print} project={project} onSelectParts={onSelectParts} />
       </div>
       {checking && (
         <CheckSheet

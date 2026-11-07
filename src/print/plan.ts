@@ -16,6 +16,7 @@ export interface PrintCheck {
   contactMm2: number;
   minWallMm: number;
   thinShare: number;
+  thinAreaMm2: number;
 }
 
 export interface PlanInput {
@@ -95,6 +96,7 @@ export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): Prin
     contactMm2: pose.contactMm2,
     minWallMm: shape.minWallMm,
     thinShare: shape.thinShare,
+    thinAreaMm2: shape.thinAreaMm2,
   };
 }
 

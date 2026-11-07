@@ -172,7 +172,7 @@ export const setBuild = {
   config: {
     title: 'Build settings',
     description:
-      'Adds things to buy that are not modeled parts (battery, charger, buck converter, power switch, cables, microSD) to the BOM, by catalog key: "supply:<id>" from find_parts, or "component:<id>" for a catalog part that isn\'t placed. ' +
+      'Adds things to buy that are not modeled parts (battery, charger, buck converter, power switch, cables, microSD) to the BOM, by catalog key: "supply:<id>" from find_parts, or "component:<id>" for a catalog part that isn\'t placed. For anything find_parts lacks, use add_sourced_item. ' +
       'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one) and the default print material. With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
     inputSchema: {
       extras: z

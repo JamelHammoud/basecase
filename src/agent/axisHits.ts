@@ -95,10 +95,31 @@ function boxSpan(part: ScenePart, ray: { o: THREE.Vector3; d: THREE.Vector3 }): 
   return [[enter.sub(ray.o).dot(ray.d), exit.sub(ray.o).dot(ray.d)]];
 }
 
-export function partSpans(part: ScenePart, origin: V3, dir: V3): Span[] {
+function triangleSpans(triangles: Float32Array, ray: { o: THREE.Vector3; d: THREE.Vector3 }): Span[] {
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  const hits: number[] = [];
+
+  for (let i = 0; i < triangles.length; i += 9) {
+    a.fromArray(triangles, i);
+    b.fromArray(triangles, i + 3);
+    c.fromArray(triangles, i + 6);
+
+    const t = triangleHit(ray, a, b, c);
+
+    if (t !== null) hits.push(t);
+  }
+
+  return pairUp(hits);
+}
+
+export function partSpans(part: ScenePart, origin: V3, dir: V3, triangles?: Float32Array | null): Span[] {
   const ray = localRay(part, origin, dir);
 
   if (part.kind === 'cad_part' && part.cad) return meshSpans(part.cad, ray);
+
+  if (triangles) return triangleSpans(triangles, ray);
 
   return boxSpan(part, ray);
 }

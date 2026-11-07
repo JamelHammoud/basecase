@@ -23,6 +23,7 @@ export interface PrintedPartReport {
   plate: number;
   copies: number;
   issues: string[];
+  notes: string[];
 }
 
 export interface PrintReport {
@@ -86,13 +87,29 @@ export async function loadPrintShapes(parts: ScenePart[], fetchShapes: PrintShap
   }
 }
 
+const THIN_PANEL_MM2 = 100;
+const THIN_PART_SHARE = 0.1;
+
+export type ThinWall = 'none' | 'edge' | 'panel';
+
+export function thinWallOf(check: Pick<PrintCheck, 'minWallMm' | 'thinShare' | 'thinAreaMm2'>): ThinWall {
+  if (check.minWallMm >= PRINT_RULES.minWallMm) return 'none';
+
+  return check.thinAreaMm2 >= THIN_PANEL_MM2 || check.thinShare >= THIN_PART_SHARE ? 'panel' : 'edge';
+}
+
+const edgeNote = (check: PrintCheck) =>
+  `Knife edges down to ${check.minWallMm.toFixed(2)} mm over about ${Math.round(check.thinAreaMm2)} mm²; the slicer drops them`;
+
 function issuesFor(check: PrintCheck, grams: number, supportG: number): string[] {
   const issues: string[] = [];
 
   if (!check.fits) issues.push(check.fitNote ?? 'Too big for the plate. Split it or scale it down.');
 
-  if (check.thinShare > 0.02 || check.minWallMm < PRINT_RULES.minWallMm * 0.6)
-    issues.push(`Thicken walls to 0.84 mm, the thinnest that prints (now ${check.minWallMm.toFixed(2)} mm)`);
+  if (thinWallOf(check) === 'panel')
+    issues.push(
+      `Thicken walls to 0.84 mm, the thinnest that prints (now ${check.minWallMm.toFixed(2)} mm over about ${Math.round(check.thinAreaMm2)} mm²)`,
+    );
 
   if (supportG > Math.max(2, grams * 0.25))
     issues.push(`Add 45° chamfers or split it flat (needs about ${Math.round(supportG)} g of support)`);
@@ -127,6 +144,7 @@ function reportPart(part: ScenePart, shape: PartShape, ctx: { project: ProjectSe
     plate: 0,
     copies: 1,
     issues: issuesFor(check, grams, supportG),
+    notes: thinWallOf(check) === 'edge' ? [edgeNote(check)] : [],
   };
 }
 
@@ -223,7 +241,9 @@ export function printReportText(r: PrintReport): string {
     const turned = p.check.yaw && p.check.yaw % 90 ? `, turned ${p.check.yaw}° across the plate` : '';
     const head = `- ${p.id} (${p.material}, ${Math.round(p.grams)} g${p.supportG >= 1 ? ` + ${Math.round(p.supportG)} g support` : ''}, ${s} mm, ${faceText(p.check)}${turned})`;
 
-    lines.push(p.issues.length ? `${head}: ${p.issues.join('; ')}` : head);
+    const said = [...p.issues, ...p.notes];
+
+    lines.push(said.length ? `${head}: ${said.join('; ')}` : head);
   }
 
   return lines.join('\n');

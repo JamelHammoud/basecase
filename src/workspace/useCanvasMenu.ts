@@ -26,7 +26,10 @@ const isMenuPress = (e: React.PointerEvent) => e.button === 2 || (IS_MAC && e.bu
 const movedFrom = (press: MenuPress, e: { clientX: number; clientY: number }) =>
   Math.hypot(e.clientX - press.x, e.clientY - press.y) > MENU_MOVE_TOLERANCE;
 
-export function useCanvasMenu({ viewportRef, selectedIds, selection }: WorkspaceCore, stopFollowing: () => void) {
+export function useCanvasMenu(
+  { viewportRef, selectedIds, selection, parts }: WorkspaceCore,
+  stopFollowing: () => void,
+) {
   const { select } = selection;
   const [menu, setMenu] = useState<CanvasMenuState | null>(null);
   const pressRef = useRef<MenuPress | null>(null);
@@ -42,8 +45,9 @@ export function useCanvasMenu({ viewportRef, selectedIds, selection }: Workspace
     if (timeStamp - lastWheelRef.current < TRACKPAD_TAP_GRACE_MS) return;
 
     const hit = viewportRef.current?.pickAt(x, y) ?? null;
+    const locked = parts.some((p) => p.id === hit?.partId && p.locked);
 
-    openMenu(x, y, hit?.partId ?? null, hit?.point ?? null);
+    openMenu(x, y, locked ? null : (hit?.partId ?? null), hit?.point ?? null);
   };
 
   const onContextMenu = (e: React.MouseEvent) => {

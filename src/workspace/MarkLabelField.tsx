@@ -1,23 +1,31 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { readableTextOn } from '../utils/markColors';
 
 interface MarkLabelFieldProps {
   label: string;
+  color: string;
   autoFocus: boolean;
   onCommit: (label: string) => void;
+  onClose: () => void;
 }
 
-export function MarkLabelField({ label, autoFocus, onCommit }: MarkLabelFieldProps) {
+export function MarkLabelField({ label, color, autoFocus, onCommit, onClose }: MarkLabelFieldProps) {
   const [draft, setDraft] = useState(label);
+  const input = useRef<HTMLInputElement | null>(null);
   const reverting = useRef(false);
+
+  useEffect(() => {
+    if (autoFocus) input.current?.focus({ preventScroll: true });
+  }, [autoFocus]);
 
   return (
     <input
+      ref={input}
       value={draft}
-      autoFocus={autoFocus}
       spellCheck={false}
       maxLength={80}
       aria-label="Mark label"
-      placeholder="e.g. Too thick here"
+      placeholder="Add a label"
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => {
         if (!reverting.current) onCommit(draft);
@@ -25,16 +33,15 @@ export function MarkLabelField({ label, autoFocus, onCommit }: MarkLabelFieldPro
         reverting.current = false;
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') e.currentTarget.blur();
-
-        if (e.key !== 'Escape') return;
+        if (e.key !== 'Enter' && e.key !== 'Escape') return;
 
         e.stopPropagation();
-        reverting.current = true;
-        setDraft(label);
+        reverting.current = e.key === 'Escape';
         e.currentTarget.blur();
+        onClose();
       }}
-      className="w-[220px] h-8 px-3 rounded-full bg-white/[0.06] hover:bg-white/[0.08] focus:bg-black/25 text-[13px] text-white/90 placeholder:text-white/35 outline-none ring-1 ring-inset ring-transparent focus:ring-[#0d99ff] transition-colors"
+      style={{ background: color, color: readableTextOn(color) }}
+      className="block h-8 min-w-[120px] max-w-[320px] px-3.5 rounded-full [field-sizing:content] text-center text-[13px] font-semibold placeholder:text-current placeholder:opacity-60 outline-none shadow-[0_4px_16px_rgba(0,0,0,0.35)] ring-2 ring-transparent focus:ring-[#0d99ff] transition-shadow"
     />
   );
 }

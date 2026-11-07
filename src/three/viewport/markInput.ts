@@ -1,19 +1,12 @@
 import * as THREE from 'three';
+import { MarkEraser } from './markEraser';
+import { MarkMover } from './markMover';
+import { enclosedParts, roundedPoint } from './markParts';
 import type { MarkLayer } from './markLayer';
-import {
-  encloses,
-  MIN_STROKE_PX,
-  pointInPolygon,
-  SAMPLE_PX,
-  strokeLength,
-  thinned,
-  viewAngles,
-  type Point2,
-} from './markMath';
+import { encloses, MIN_STROKE_PX, SAMPLE_PX, strokeLength, thinned, viewAngles, type Point2 } from './markMath';
 import { hitPartId, partMeshes, partRaycaster } from './picking';
 import { DEFAULT_MARK_COLOR } from '../../utils/markColors';
 import { canvasNdc } from './stage';
-import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
 
 interface Stroke {
@@ -23,8 +16,6 @@ interface Stroke {
   depth: number | null;
   crossed: Set<string>;
 }
-
-const round = (v: number) => Math.round(v * 10) / 10;
 
 export class MarkInput {
   private stroke: Stroke | null = null;
@@ -37,9 +28,15 @@ export class MarkInput {
 
   private readonly layer: MarkLayer;
 
+  private readonly eraser: MarkEraser;
+
+  private readonly mover: MarkMover;
+
   constructor(ctx: ViewportContext, layer: MarkLayer) {
     this.ctx = ctx;
     this.layer = layer;
+    this.eraser = new MarkEraser(ctx, layer);
+    this.mover = new MarkMover(ctx, layer);
   }
 
   install(): () => void {
@@ -48,6 +45,8 @@ export class MarkInput {
     const move = (e: PointerEvent) => this.onMove(e);
     const up = (e: PointerEvent) => this.onUp(e);
     const cancel = () => this.cancel();
+    const uninstallEraser = this.eraser.install();
+    const uninstallMover = this.mover.install();
 
     canvas.addEventListener('pointerdown', down, { capture: true });
     canvas.addEventListener('pointermove', move);
@@ -56,6 +55,8 @@ export class MarkInput {
 
     return () => {
       this.cancel();
+      uninstallEraser();
+      uninstallMover();
       canvas.removeEventListener('pointerdown', down, { capture: true });
       canvas.removeEventListener('pointermove', move);
       canvas.removeEventListener('pointerup', up);
@@ -64,6 +65,8 @@ export class MarkInput {
   }
 
   cancel(): void {
+    this.eraser.cancel();
+    this.mover.cancel();
     cancelAnimationFrame(this.frame);
     this.frame = 0;
 
@@ -76,7 +79,13 @@ export class MarkInput {
   }
 
   private onDown(e: PointerEvent): void {
-    if (!this.ctx.props().markMode || e.button !== 0) return;
+    const { markMode, markTool } = this.ctx.props();
+
+    if (!markMode || markTool === 'eraser' || e.button !== 0) return;
+
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+
+    if (this.mover.grab(e)) return;
 
     this.ctx.stage.orbit.enabled = false;
     this.ctx.stage.renderer.domElement.setPointerCapture(e.pointerId);
@@ -101,7 +110,7 @@ export class MarkInput {
     this.update();
 
     const points = this.worldPoints(stroke, thinned(stroke.ndc));
-    const enclosed = encloses(stroke.pixels) ? this.enclosedParts(stroke.pixels) : [];
+    const enclosed = encloses(stroke.pixels) ? enclosedParts(this.ctx, stroke.pixels) : [];
     const partIds = [...new Set([...enclosed, ...stroke.crossed])];
 
     this.cancel();
@@ -113,7 +122,7 @@ export class MarkInput {
     }
 
     this.ctx.props().onAddMark?.({
-      points: points.map((p): Vec3 => [round(p.x), round(p.y), round(p.z)]),
+      points: points.map(roundedPoint),
       partIds,
       view: this.view(),
     });
@@ -202,23 +211,6 @@ export class MarkInput {
       const point = this.raycaster.ray.intersectPlane(plane, new THREE.Vector3());
 
       return point ? [point] : [];
-    });
-  }
-
-  private enclosedParts(polygon: Point2[]): string[] {
-    const { camera, renderer } = this.ctx.stage;
-    const canvas = renderer.domElement;
-    const box = new THREE.Box3();
-    const center = new THREE.Vector3();
-
-    return this.ctx.layer.objects().flatMap(([id, object]) => {
-      if (!object.visible || box.setFromObject(object).isEmpty()) return [];
-
-      box.getCenter(center).project(camera);
-
-      const pixel: Point2 = [((center.x + 1) / 2) * canvas.clientWidth, ((1 - center.y) / 2) * canvas.clientHeight];
-
-      return center.z < 1 && pointInPolygon(pixel, polygon) ? [id] : [];
     });
   }
 }

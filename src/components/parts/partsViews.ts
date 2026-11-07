@@ -1,6 +1,7 @@
 import { PART_CATALOG, catalogItemFromKey, hardwareVariant } from '../../data/catalog';
 import { COMPONENT_BY_ID, ComponentGroup } from '../../data/components';
 import { HARDWARE_FAMILIES, HardwareFamily, HardwareSpec, familyOf, makeSpec } from '../../data/hardware';
+import { isSourcedId, sourcedItems, type SourcedItem } from '../../data/sourcedItems';
 import type { CatalogItem } from '../../types/robotics';
 
 export type View =
@@ -15,7 +16,11 @@ export interface Category {
   section: 'Components' | 'Hardware';
   items: CatalogItem[];
   family?: HardwareFamily;
+  count?: number;
+  searchLabel?: string;
 }
+
+export const ADDED_BY_AGENT = 'added-by-agent';
 
 const COMPONENT_GROUPS: ComponentGroup[] = [
   'Servos',
@@ -47,31 +52,67 @@ const familyItem = (f: HardwareFamily, spec?: HardwareSpec): CatalogItem => {
   return hardwareVariant(base, spec ?? makeSpec(f.types[0].type));
 };
 
-export const CATEGORIES: Category[] = [
-  ...COMPONENT_GROUPS.map((g) => ({
+const HARDWARE_CATEGORIES: Category[] = HARDWARE_FAMILIES.map((f) => ({
+  id: `hw-${f.id}`,
+  title: f.name,
+  section: 'Hardware' as const,
+  items: [familyItem(f)],
+  family: f,
+}));
+
+export const isSourcedItem = (item: CatalogItem) => isSourcedId(item.componentId);
+
+export const sourcedPartsToPlace = (): CatalogItem[] => PART_CATALOG.filter(isSourcedItem);
+
+export const sourcedPartsWithoutMesh = (sourced: SourcedItem[]) => sourced.filter((s) => s.kind === 'part' && !s.mesh);
+
+function addedByAgent(sourced: SourcedItem[]): Category[] {
+  const items = sourcedPartsToPlace();
+  const count = items.length + sourcedPartsWithoutMesh(sourced).length;
+
+  if (!count) return [];
+
+  return [
+    {
+      id: ADDED_BY_AGENT,
+      title: 'Added by Agent',
+      section: 'Components',
+      items,
+      count,
+      searchLabel: 'parts added by agent',
+    },
+  ];
+}
+
+const componentCategories = (): Category[] =>
+  COMPONENT_GROUPS.map((g) => ({
     id: g,
     title: g,
     section: 'Components' as const,
     items: PART_CATALOG.filter((c) => c.componentId && COMPONENT_BY_ID[c.componentId]?.group === g),
-  })),
-  ...HARDWARE_FAMILIES.map((f) => ({
-    id: `hw-${f.id}`,
-    title: f.name,
-    section: 'Hardware' as const,
-    items: [familyItem(f)],
-    family: f,
-  })),
-].filter((c) => c.items.length > 0);
+  })).filter((c) => c.items.length > 0);
+
+export const partCategories = (sourced: SourcedItem[]): Category[] => [
+  ...addedByAgent(sourced),
+  ...componentCategories(),
+  ...HARDWARE_CATEGORIES,
+];
+
+const findCategory = (id: string) => partCategories(sourcedItems()).find((c) => c.id === id);
 
 function itemTitle(ref: string): string {
   const item = catalogItemFromKey(ref);
   const c = item?.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
 
-  return c?.group ?? CATEGORIES.find((cat) => item && cat.items.includes(item))?.title ?? '';
+  return c?.group ?? HARDWARE_CATEGORIES.find((cat) => item && cat.items.includes(item))?.title ?? '';
 }
 
 function viewTitle(view: View): string {
-  if (view.kind === 'category') return CATEGORIES.find((c) => c.id === view.id)?.title ?? '';
+  if (view.kind === 'category') {
+    const category = findCategory(view.id);
+
+    return category?.searchLabel ?? category?.title ?? '';
+  }
 
   if (view.kind === 'item') return itemTitle(view.ref);
 
@@ -105,6 +146,8 @@ export interface SearchScope {
 
 const scopeFilter = (view: View): SearchScope['has'] | null => {
   const group = viewGroup(view);
+
+  if (group === ADDED_BY_AGENT) return isSourcedItem;
 
   if (!group) return null;
 

@@ -5,7 +5,7 @@ import { collide, place, type CollideOptions } from './collide';
 import { collideRiding, type OutputRiders } from './outputRiders';
 import { printReportOf, worldMeasure } from './shapeReports';
 import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
-import { sweepClashes, type SweepSpec } from './sweep';
+import { lowestPart, sweepClashes, type SweepSpec } from './sweep';
 import { visibleShares } from './visibility';
 import { traceFasteners } from '../../assembly/fastenerChain';
 import type { FastenerInput } from '../../assembly/assemblyTypes';
@@ -32,7 +32,7 @@ export type AnalysisTask =
   | ({ kind: 'interference'; instances: Instance[]; riders?: OutputRiders } & CollideOptions)
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
-  | { kind: 'measure' | 'meshes' | 'visibility'; instances: Instance[] }
+  | { kind: 'measure' | 'meshes' | 'visibility' | 'floor'; instances: Instance[] }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
   | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] };
@@ -104,6 +104,8 @@ function run(task: AnalysisTask) {
           matrix: new THREE.Matrix4().fromArray(i.matrix),
         })),
       );
+    case 'floor':
+      return lowestPart(placeAll(task.instances))?.y ?? null;
     case 'threeMf':
       return threeMfFiles(task);
     case 'fasteners':

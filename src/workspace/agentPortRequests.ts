@@ -47,7 +47,9 @@ function ports(payload: Payload, ctx: PortContext) {
 }
 
 function fastenPlan(payload: Payload, ctx: PortContext) {
-  const plan = planFasten(ctx.parts(), payload as unknown as FastenArgs);
+  const plan = planFasten(ctx.parts(), payload as unknown as FastenArgs, (id) =>
+    ctx.parts().some((p) => p.id === id && p.kind !== 'cad_part') ? (ctx.viewport()?.partTriangles(id) ?? null) : null,
+  );
 
   if (typeof plan === 'string') throw new Error(plan);
 

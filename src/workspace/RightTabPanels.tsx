@@ -9,7 +9,7 @@ import { BuildPanel } from '../components/BuildPanel';
 import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
 import type { ProjectSettings } from '../types/robotics';
-import { runEngineeringNow } from './engineeringNow';
+import { findingQuote, fixPrompt } from '../readiness/readiness';
 import { InspectTab } from './InspectTab';
 import type { RightTab } from './types';
 import type { AgentSession } from './useAgentSession';
@@ -44,9 +44,9 @@ function useVisitedTabs(tab: RightTab) {
   return visited;
 }
 
-function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
-  const { docs, parts, project, scene, viewportRef, setSelectedIds, showToast, guide, printing, studio } = core;
-  const { partsRef, projectRef, setProject } = docs;
+function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) {
+  const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool } = core;
+  const { setProject } = docs;
 
   return (
     <BuildPanel
@@ -58,17 +58,20 @@ function BuildTab({ core }: Pick<RightTabPanelsProps, 'core'>) {
       printers={studio.printers.printers}
       printTools={studio.printers.printTools}
       onAddPrinter={() => studio.openSettings('printers')}
-      onRunChecks={() =>
-        runEngineeringNow({
-          viewport: viewportRef.current,
-          parts: partsRef.current,
-          project: projectRef.current,
-          withSweep: true,
-        })
+      onFixFinding={
+        IS_WEB_DEMO
+          ? undefined
+          : (finding) => {
+              tool.openRightTab('acp');
+              void agent.send({ text: fixPrompt(finding), ...studio.agentChoice }, 'queue');
+            }
       }
+      onQuoteFinding={IS_WEB_DEMO ? undefined : (finding) => tool.requestQuote(findingQuote(finding, parts))}
+      panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={(m) => showToast(m)}
       guide={guide}
+      readiness={core.readiness}
     />
   );
 }
@@ -118,6 +121,8 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
           context={current.context}
           canRevert={canRevertLane(current)}
           attachRequest={tool.attachRequest}
+          sketchRequest={tool.sketchRequest}
+          quote={{ request: tool.quoteRequest, onRequest: tool.requestQuote, onDone: tool.clearQuote }}
           targetHeightMm={studio.agentTargetHeightMm}
           choice={studio.agentChoice}
           onChoiceChange={studio.setAgentChoice}
@@ -169,7 +174,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
         <InspectTab core={core} actions={actions} />
       </TabActivity>
       <TabActivity tab="build" current={current} visited={visited}>
-        <BuildTab core={core} />
+        <BuildTab core={core} agent={agent} />
       </TabActivity>
       <TabActivity tab="acp" current={current} visited={visited}>
         <AgentTab core={core} agent={agent} />

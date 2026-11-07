@@ -19,7 +19,10 @@ export const RANK = {
   declared: 10,
   note: 11,
   tool: 12,
+  lip: 13,
 };
+
+export const isBlockingRank = (rank: number) => rank <= RANK.stuck;
 
 type ById = Map<string, ScenePart>;
 
@@ -62,7 +65,7 @@ function problemKey(c: FastenerChain, p: ChainProblem, byId: ById): string {
 
 export function chainLines(chains: FastenerChain[], byId: ById): ReportLine[] {
   const entries = chains.flatMap((c) =>
-    c.problems.map((p) => ({ key: `${p.code}|${problemKey(c, p, byId)}`, id: c.id, rank: RANK[p.code] })),
+    c.problems.map((p) => ({ key: `${p.code}|${problemKey(c, p, byId)}`, id: c.id, rank: RANK[p.code], code: p.code })),
   );
 
   const lines = grouped(entries, (key, ids) => `${listIds(ids)}: ${key.split('|')[1]}.`);
@@ -79,6 +82,7 @@ function collapse(lines: ReportLine[]): ReportLine[] {
   return [
     {
       rank: lines[0].rank,
+      code: lines[0].code,
       text: `${lines[0].text} ${lines[1].text} The same for ${rest} more group${rest === 1 ? '' : 's'} (${ids.length} screws in all).`,
       ids,
     },
@@ -92,6 +96,7 @@ export function orphanLines(sleeves: SleeveHost[]): ReportLine[] {
     ? [
         {
           rank: RANK.orphan,
+          code: 'orphan',
           text: `${listIds(ids)}: no screw threads into ${ids.length === 1 ? 'this insert' : 'these inserts'}. Add the screw, or remove the insert.`,
           ids,
         },
@@ -105,6 +110,7 @@ export function heldLines(held: HeldBy): ReportLine[] {
   if (held.unheld.length) {
     out.push({
       rank: RANK.unheld,
+      code: 'unheld',
       text: `${listIds(held.unheld, 6)}: held by nothing (no fastener, press fit or pocket). Screw each to a boss through its mounting holes, or capture it in a pocket.`,
       ids: held.unheld,
     });
@@ -113,6 +119,7 @@ export function heldLines(held: HeldBy): ReportLine[] {
   if (held.declared.length) {
     out.push({
       rank: RANK.declared,
+      code: 'declared',
       text: `${held.declared.map((d) => `${d.id} (${d.how})`).join(', ')}: held only by a note, unverified. Model the strap, tape or clip as a part, or a bay that captures it.`,
       ids: held.declared.map((d) => d.id),
     });

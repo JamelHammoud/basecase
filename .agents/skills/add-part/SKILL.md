@@ -166,7 +166,7 @@ Add `'component:<id>'` (or `'component:<id>|<variant>'`) to `LIST_PRICES` in `sr
 ```bash
 npm run check
 ```
-It must pass (format, lint, types, tests). Don't start the app, previews or screenshots to judge how it looks (AGENTS.md §15): tell the person what to check instead, e.g. “Parts → Computers → Radxa ZERO 3W: thumbnail, hover card, the part page's specs; add it to the canvas; Build → Parts to buy shows ≈ $39.99.”
+It must pass (format, lint, types, tests). Don't start the app, previews or screenshots to judge how it looks (AGENTS.md §15): tell the person what to check instead, e.g. “Parts → Computers → Radxa ZERO 3W: thumbnail, hover card, the part page's specs; add it to the canvas; Build → Bill of materials → Components shows ≈ $39.99.”
 
 Files a new part touches (and nothing else should change):
 
@@ -176,6 +176,17 @@ Files a new part touches (and nothing else should change):
 - Never `tools/parts/cad/` (downloads, gitignored) or your scratch probes (`scratch/`).
 
 Check `git status` and `git diff --stat`: if `sources.json` or `component-meshes.json` shows hundreds of changed lines, the formatting was rewritten; redo the edit as text or run Prettier on it.
+
+## Promote contributed parts
+
+The in-app agent adds parts it finds to the user's library, not the catalog (`add_sourced_item`, `import_maker_cad`; [Parts catalog](../../../docs/guide/parts-catalog.md) §8a). They're written in the catalog's shape so promoting one is mostly mechanical. Do this only when a maintainer asks.
+
+1. `npm run parts:contributed` lists each part, its sources, the scenes using it and anything to check. Skip duplicates of catalog parts; ask about anything flagged.
+2. **License first.** A file that's fine for one person's robots may not be allowed to ship in the app. If the license forbids redistribution or isn't stated, don't ship that GLB: model the part from the maker's drawing (§2D) and record why.
+3. Add it to `tools/parts/sources.json` with the record's `cadUrl` and `rotate`, and convert it again from the source (§2A). `library/sourced-parts/<id>/source.cad` is the original download. Files the app's built-in reader couldn't handle can use `"reader": "native"` here.
+4. Run the rest of this skill from §3: measure, write the entry in `src/data/components.ts`, ports in `componentPorts.ts` from the record's `mesh.ports` (check each against the mesh), price in `listPrices.ts`, verify. A material or tool goes in `src/data/supplies.ts`.
+5. **Keep the same id.** Scenes refer to `component:<id>` or `supply:<id>`, so they move over with no edits; a catalog entry wins over a library record with that id.
+6. Remove the local record once the catalog entry ships: delete its entry from `library/sourced-parts.json` and its folder. Never commit anything from `library/`.
 
 ## Pitfalls seen so far
 

@@ -14,6 +14,7 @@ import { eulerToMatrix, r2, rotToCad, toCad, type V3 } from './agentFrame';
 import { partSpans } from './axisHits';
 import type { CodeHole } from './cadCode';
 import { addHoles } from './cadCode';
+import type { PartMesh } from './fastenSpans';
 import {
   at,
   lengthNeed,
@@ -87,6 +88,12 @@ interface Stack {
 function layerHoles(stack: Stack, layer: Layer, host: boolean): { hole: CodeHole[]; note: string } {
   const clear = HOLES[stack.size].clearance + FIT;
 
+  if (!host && layer.throughHole)
+    return {
+      hole: [hole(stack.axis, layer, { from: layer.enter - 1, to: layer.exit + 1, diameter: clear })],
+      note: `kept the hole through ${layer.part.id}, at least Ø${r2(clear)}`,
+    };
+
   if (!host)
     return {
       hole: [hole(stack.axis, layer, { from: layer.enter - 1, to: layer.exit + 1, diameter: clear })],
@@ -112,14 +119,19 @@ function cutHoles(stack: Stack) {
 
   stack.layers.forEach((layer, i) => {
     const host = stack.into === 'insert' && i === stack.layers.length - 1;
-    const { hole: holes, note } = layerHoles(stack, layer, host);
     const cad = layer.part.cad;
 
     if (!cad) {
-      notes.push(`${layer.part.id} isn't a CAD part: cut its hole yourself`);
+      notes.push(
+        layer.throughHole
+          ? `through ${layer.part.id}'s own mounting hole`
+          : `${layer.part.id} is a catalog part with no hole on this axis: use one of its mounting holes`,
+      );
 
       return;
     }
+
+    const { hole: holes, note } = layerHoles(stack, layer, host);
 
     recode.push({ id: layer.part.id, language: cad.language, code: addHoles(cad.language, cad.code, holes) });
     notes.push(note);
@@ -258,7 +270,7 @@ function describe(b: Build, r: { L: number; grip: number; engage: string; tip: n
   );
 }
 
-export function planFasten(parts: ScenePart[], args: FastenArgs): FastenPlan | string {
+export function planFasten(parts: ScenePart[], args: FastenArgs, mesh?: PartMesh): FastenPlan | string {
   const size = metricSize(args.size);
   const into = intoKind(args.into);
 
@@ -276,7 +288,7 @@ export function planFasten(parts: ScenePart[], args: FastenArgs): FastenPlan | s
 
   if (typeof axis === 'string') return axis;
 
-  const layers = stackLayers(axis, through as ScenePart[]);
+  const layers = stackLayers(axis, through as ScenePart[], { holeRadius: HOLES[size].clearance / 2, mesh });
 
   if (typeof layers === 'string') return layers;
 

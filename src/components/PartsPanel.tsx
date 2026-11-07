@@ -1,23 +1,28 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { catalogRef } from '../data/catalog';
 import { HardwareSpec, familyOf, makeSpec } from '../data/hardware';
+import type { SourcedItem } from '../data/sourcedItems';
 import { CatalogItem } from '../types/robotics';
 import { SearchField, useScrollFade } from '../design-system';
 import { searchCatalog } from './parts/catalogSearch';
+import { AddedByAgent } from './parts/AddedByAgent';
 import { Home, SearchResults, TileGrid } from './parts/lists';
 import { HardwarePage, ItemPage, PageFooter } from './parts/pages';
-import { CATEGORIES, type Category, type View, searchScope } from './parts/partsViews';
+import { ADDED_BY_AGENT, type Category, type View, partCategories, searchScope } from './parts/partsViews';
+import { useSourcedItems } from './parts/useSourcedItems';
 import { hasPrimaryModifier } from '../utils/os';
 
 const lastSpecByFamily = new Map<string, HardwareSpec>();
 
 const PartsView: React.FC<{
   view: View;
+  categories: Category[];
+  sourced: SourcedItem[];
   open: (next: View) => void;
   openItem: (item: CatalogItem) => void;
   onAdd: (item: CatalogItem) => void;
   onChangeHardware: (spec: HardwareSpec) => void;
-}> = ({ view, open, openItem, onAdd, onChangeHardware }) => {
+}> = ({ view, categories, sourced, open, openItem, onAdd, onChangeHardware }) => {
   const openCategory = (c: Category) =>
     c.family
       ? open({ kind: 'hardware', spec: lastSpecByFamily.get(c.family.id) ?? makeSpec(c.family.types[0].type) })
@@ -25,9 +30,18 @@ const PartsView: React.FC<{
 
   switch (view.kind) {
     case 'home':
-      return <Home onOpenCategory={openCategory} />;
+      return <Home categories={categories} onOpenCategory={openCategory} />;
     case 'category':
-      return <TileGrid items={CATEGORIES.find((c) => c.id === view.id)?.items ?? []} onOpen={openItem} onAdd={onAdd} />;
+      return view.id === ADDED_BY_AGENT ? (
+        <AddedByAgent
+          items={categories.find((c) => c.id === view.id)?.items ?? []}
+          sourced={sourced}
+          onOpen={openItem}
+          onAdd={onAdd}
+        />
+      ) : (
+        <TileGrid items={categories.find((c) => c.id === view.id)?.items ?? []} onOpen={openItem} onAdd={onAdd} />
+      );
     case 'item':
       return <ItemPage ref_={view.ref} onAdd={onAdd} onOpen={openItem} />;
     default:
@@ -42,6 +56,8 @@ export const PartsPanel: React.FC<{
   onAdd: (item: CatalogItem) => void;
   searchInputRef?: React.MutableRefObject<HTMLInputElement | null>;
 }> = ({ onAdd, searchInputRef }) => {
+  const sourced = useSourcedItems();
+  const categories = partCategories(sourced);
   const [stack, setStack] = useState<View[]>([{ kind: 'home' }]);
   const view = stack[stack.length - 1];
   const [query, setQuery] = useState('');
@@ -79,10 +95,10 @@ export const PartsPanel: React.FC<{
 
   const scope = useMemo(() => searchScope(view), [view]);
   const results = useMemo(() => {
-    const all = searchCatalog(query);
+    const all = searchCatalog(query, sourced);
 
     return scope ? all.filter(scope.has) : all;
-  }, [query, scope]);
+  }, [query, scope, sourced]);
   const search = (q: string) => {
     setQuery(q);
     setActive(0);
@@ -144,7 +160,15 @@ export const PartsPanel: React.FC<{
             onSearchAll={scope ? searchAll : undefined}
           />
         ) : (
-          <PartsView view={view} open={open} openItem={openItem} onAdd={onAdd} onChangeHardware={changeHardware} />
+          <PartsView
+            view={view}
+            categories={categories}
+            sourced={sourced}
+            open={open}
+            openItem={openItem}
+            onAdd={onAdd}
+            onChangeHardware={changeHardware}
+          />
         )}
       </div>
       {!searching && <PageFooter view={view} onAdd={onAdd} />}

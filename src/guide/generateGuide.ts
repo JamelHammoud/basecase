@@ -1,3 +1,4 @@
+import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import type { BuildGuideRecord, ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
@@ -109,6 +110,7 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
     date: today(),
     mark: await brandMark(),
     order,
+    meshes: await sourcedMeshFiles(parts),
   };
   const rendered = await render(job, input);
 

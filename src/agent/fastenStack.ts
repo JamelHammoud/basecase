@@ -3,7 +3,7 @@ import { HEX_NUT, heatInsert, isMetric, THREAD, WASHER, type MetricSize } from '
 import type { Port } from '../types/ports';
 import type { ScenePart } from '../types/robotics';
 import { toScene, type V3 } from './agentFrame';
-import { partSpans } from './axisHits';
+import { layerSpan, type PartMesh } from './fastenSpans';
 import { findPort, worldPort } from './ports';
 
 export const RAY_BACKOFF = 300;
@@ -19,6 +19,8 @@ export interface Layer {
   part: ScenePart;
   enter: number;
   exit: number;
+  exact?: boolean;
+  throughHole?: boolean;
 }
 
 export const at = (axis: FastenAxis, t: number): V3 => [0, 1, 2].map((k) => axis.origin[k] + axis.dir[k] * t) as V3;
@@ -57,17 +59,47 @@ export function resolveAxis(parts: ScenePart[], args: { into: string; at?: V3; f
   return { ...axisFrom(w.position, w.axis), port: { part, port, t: RAY_BACKOFF } };
 }
 
-export function stackLayers(axis: FastenAxis, through: ScenePart[]): Layer[] | string {
+const NO_MESH: PartMesh = () => null;
+
+function nextAfter(layers: Layer[]): number {
+  const last = layers.at(-1);
+
+  if (!last) return -Infinity;
+
+  return last.exact ? last.exit : last.enter;
+}
+
+function missText(part: ScenePart, layers: Layer[]): string {
+  const after = layers.length ? ` after ${layers.at(-1)!.part.id}` : '';
+
+  return `The screw axis misses ${part.id}${after}. Move the point onto the hole's centre line, or check the direction in from.`;
+}
+
+export function stackLayers(
+  axis: FastenAxis,
+  through: ScenePart[],
+  opts: { holeRadius?: number; mesh?: PartMesh } = {},
+): Layer[] | string {
   const layers: Layer[] = [];
-  let after = -Infinity;
+  const mesh = opts.mesh ?? NO_MESH;
+  const holeRadius = opts.holeRadius ?? 1.5;
 
   for (const part of through) {
-    const span = partSpans(part, axis.origin, axis.dir).find(([enter]) => enter >= after - 0.05);
+    const found = layerSpan(part, axis, { after: nextAfter(layers), holeRadius, mesh });
 
-    if (!span) return `The screw axis misses ${part.id}${layers.length ? ` after ${layers.at(-1)!.part.id}` : ''}.`;
+    if (!found) return missText(part, layers);
 
-    layers.push({ part, enter: span[0], exit: span[1] });
-    after = span[1];
+    const prev = layers.at(-1);
+
+    if (prev && !prev.exact) prev.exit = Math.min(prev.exit, found.span[0]);
+
+    layers.push({
+      part,
+      enter: found.span[0],
+      exit: found.span[1],
+      exact: found.exact,
+      throughHole: found.throughHole,
+    });
   }
 
   return layers;

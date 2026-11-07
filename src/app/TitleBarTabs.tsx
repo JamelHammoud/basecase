@@ -7,17 +7,21 @@ import { useCaptionInset } from '../utils/useCaptionInset';
 import { useStoplights } from '../utils/useStoplights';
 import { idsAfter, idsExcept, sceneTabsOf, type Metas, type TabEntry } from './tabModel';
 
-const TOGGLE_LEFT = LAYOUT.lightsX + LAYOUT.lightsWidth + 8;
-const TOGGLE_LEFT_BARE = 26 - 14;
-const TOGGLE_LEFT_WEB = LAYOUT.railWidth + LAYOUT.cardPadding - 6;
-const APP_MENU_STEP = 28 + 4;
+const AFTER_LIGHTS = LAYOUT.lightsX + LAYOUT.lightsWidth + 8;
+const RAIL_SLOT_LEFT = 26 - 14;
+const TOGGLE_LEFT_BESIDE_LOGO = LAYOUT.railWidth + LAYOUT.cardPadding - 6;
+const SLOT_STEP = 28 + 4;
 const hasAppMenuButton = IS_WINDOWS && Boolean(window.electronAPI?.popupAppMenu);
-const hasWebLogo = !window.electronAPI?.isElectron;
+const hasLogo = !hasAppMenuButton;
+
+function logoLeftFor(hasStoplights: boolean) {
+  return hasStoplights ? AFTER_LIGHTS : RAIL_SLOT_LEFT;
+}
 
 function toggleLeftFor(hasStoplights: boolean) {
-  if (hasStoplights) return TOGGLE_LEFT;
+  if (hasStoplights) return AFTER_LIGHTS + (hasLogo ? SLOT_STEP : 0);
 
-  return hasWebLogo ? TOGGLE_LEFT_WEB : TOGGLE_LEFT_BARE;
+  return hasLogo ? TOGGLE_LEFT_BESIDE_LOGO : RAIL_SLOT_LEFT;
 }
 
 function openAppMenu(e: React.MouseEvent<HTMLElement>) {
@@ -45,6 +49,7 @@ interface TitleBarTabsProps {
   previews: Record<string, string>;
   canReopen: boolean;
   isLeftOpen: boolean;
+  leftWidth: number;
   onToggleLeft: () => void;
   resizing: boolean;
   rightIslandWidth: number;
@@ -59,6 +64,7 @@ export function TitleBarTabs({
   previews,
   canReopen,
   isLeftOpen,
+  leftWidth,
   onToggleLeft,
   resizing,
   rightIslandWidth,
@@ -68,16 +74,18 @@ export function TitleBarTabs({
   const hasStoplights = useStoplights();
   const captionInset = useCaptionInset();
   const toggleLeft = toggleLeftFor(hasStoplights);
-  const rowLeft = toggleLeft + (hasAppMenuButton ? APP_MENU_STEP : 0) + 28 + 4 + 28 + 8;
+  const controlsEnd = toggleLeft + (hasAppMenuButton ? SLOT_STEP : 0) + 28 + 4 + 28 + 8;
+  const canvasLeft = LAYOUT.railWidth + leftWidth + LAYOUT.panelGap;
+  const rowLeft = isLeftOpen ? Math.max(controlsEnd, canvasLeft) : controlsEnd;
   const slide = resizing ? '' : 'transition-[left,right] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]';
   const rowRight = LAYOUT.sheetInset + LAYOUT.cardPadding + captionInset + rightIslandWidth + 8;
 
   return (
     <>
-      {hasWebLogo && (
+      {hasLogo && (
         <span
-          className="absolute top-[8px] z-30 w-[28px] h-[28px] flex items-center justify-center text-white/90"
-          style={{ left: TOGGLE_LEFT_BARE }}
+          className={`absolute top-[8px] z-30 w-[28px] h-[28px] flex items-center justify-center text-white/90 ${slide}`}
+          style={{ left: logoLeftFor(hasStoplights) }}
         >
           <BasecaseLogo className="w-[18px] h-[18px]" />
         </span>

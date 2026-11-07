@@ -9,6 +9,8 @@ function summaryOf(params: QueuedDraft) {
 
   if (firstLine) return firstLine;
 
+  if (params.quotes?.length) return params.quotes[0].text;
+
   const images = params.images?.length ?? 0;
 
   return images ? plural(images, 'image') : (params.folders?.[0]?.name ?? '');

@@ -30,15 +30,10 @@ export function partObjects(ctx: ViewportContext, ids?: string[]) {
   });
 }
 
-export function posedFloor(ctx: ViewportContext, ids?: string[]): number | null {
-  const box = new THREE.Box3();
+export function floorObjects(ctx: ViewportContext, ids?: string[]) {
   const only = ids ? new Set(ids) : null;
 
-  for (const { id, object } of solidObjects(ctx, { visibleOnly: false })) {
-    if (!only || only.has(id)) box.expandByObject(object);
-  }
-
-  return box.isEmpty() ? null : box.min.y;
+  return solidObjects(ctx, { visibleOnly: false }).filter(({ id }) => !only || only.has(id));
 }
 
 export function boundsOf(ctx: ViewportContext, ids: string[]): { min: Vec3; max: Vec3 } | null {

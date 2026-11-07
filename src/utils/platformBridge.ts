@@ -1,3 +1,4 @@
+import type { SourcedItem } from '../data/sourcedItems';
 import type {
   AcpStatusInfo,
   AgentConversation,
@@ -129,6 +130,24 @@ const libraryBridge = {
     quietly(async () => (await electron()?.listPurchases()) ?? get('/purchases'), {}),
   savePurchase: (key: string, record: PurchaseRecord | null): Promise<Record<string, PurchaseRecord>> =>
     electron()?.savePurchase({ key, record }) ?? post('/purchase-save', { key, record }),
+
+  listSourced: (): Promise<SourcedItem[]> =>
+    quietly(async () => (await electron()?.listSourced()) ?? get('/sourced-parts'), []),
+  saveSourced: (payload: unknown): Promise<SourcedItem> =>
+    electron()?.saveSourced(payload) ?? post('/sourced-save', payload),
+  removeSourced: (id: string): Promise<SourcedItem[]> =>
+    electron()?.removeSourced(id) ?? post('/sourced-remove', { id }),
+  sourcedMesh: async (id: string): Promise<ArrayBuffer | null> => {
+    const bytes = await electron()?.sourcedMesh(id);
+
+    if (bytes) return Uint8Array.from(bytes).buffer;
+
+    const { data } = await get<{ data: string | null }>(`/sourced-mesh${query('id', id)}`);
+
+    return data ? Uint8Array.from(atob(data), (c) => c.charCodeAt(0)).buffer : null;
+  },
+  importMakerCad: (payload: unknown): Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }> =>
+    electron()?.importMakerCad(payload) ?? post('/sourced-import-cad', payload),
 
   uploadImage: (payload: ImageUpload): Promise<ReferenceImageRecord> =>
     electron()?.uploadImage(payload) ?? post('/upload-image', payload),

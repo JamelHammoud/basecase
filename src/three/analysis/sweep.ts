@@ -49,14 +49,22 @@ function lowestY(p: Placed) {
   return low + e[13];
 }
 
-function floorHit(moved: Placed[], angle: number): SweepHit | null {
+export function lowestPart(placed: Placed[]): { id: string; y: number } | null {
   let low: { id: string; y: number } | null = null;
 
-  for (const p of moved) {
+  for (const p of placed) {
+    if (low && p.box.min.y >= low.y) continue;
+
     const y = lowestY(p);
 
     if (!low || y < low.y) low = { id: p.id, y };
   }
+
+  return low;
+}
+
+function floorHit(moved: Placed[], angle: number): SweepHit | null {
+  const low = lowestPart(moved);
 
   return low && low.y < -1 ? { a: low.id, b: 'floor', depthMm: Math.round(-low.y * 10) / 10, angle } : null;
 }

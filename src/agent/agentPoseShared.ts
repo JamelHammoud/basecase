@@ -150,8 +150,9 @@ export async function poseCheck(
   const owner = (id: string) => rig.ownerOf.get(id) ?? 'base';
   const robotParts = [...(scope.full.robots.find((r) => r.key === scope.key)?.parts ?? [])];
   const found = vp.posedInterference(robotParts, outputRiders(rig, robotParts));
-  const floor = vp.posedFloor(robotParts);
+  const lowest = vp.posedFloor(robotParts);
   const rest = await restPairs;
+  const floor = await lowest;
   const clashes = (await found).filter(
     (f) => f.depthMm > 1 && owner(f.a) !== owner(f.b) && !rest.has([f.a, f.b].sort().join('|')),
   );

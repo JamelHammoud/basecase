@@ -1,12 +1,15 @@
 import React from 'react';
 import { MetaLine } from '../../design-system';
+import type { Bed } from '../../print/bed';
 import type { Plate } from '../../print/plan';
 import type { PrinterStatus, SlicedPlate } from '../../print/printBridge';
 import type { PlateStatus } from '../../print/tracker';
 import { hm } from './format';
+import { PlateMap } from './PlateMap';
 
 interface PlateRowProps {
   plate: Plate;
+  bed: Bed;
   sliced?: SlicedPlate;
   status: PlateStatus;
   live?: PrinterStatus | null;
@@ -42,7 +45,7 @@ export function plateNumbers(plate: Plate, sliced?: SlicedPlate) {
   return { hours: plate.hours, grams: plate.grams, exact: false };
 }
 
-export const PlateRow: React.FC<PlateRowProps> = ({ plate, sliced, status, live, selected, onClick }) => {
+export const PlateRow: React.FC<PlateRowProps> = ({ plate, bed, sliced, status, live, selected, onClick }) => {
   const { hours, grams, exact } = plateNumbers(plate, sliced);
   const count = plate.items.length;
 
@@ -59,7 +62,7 @@ export const PlateRow: React.FC<PlateRowProps> = ({ plate, sliced, status, live,
           {sliced?.thumbnail ? (
             <img src={sliced.thumbnail} alt="" className="w-full h-full object-contain" />
           ) : (
-            <span className="text-[12px] text-white/50 tabular-nums">{plate.number}</span>
+            <PlateMap bed={bed} items={plate.items} />
           )}
         </div>
         <div className="flex-1 min-w-0">

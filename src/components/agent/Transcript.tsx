@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { AcpChatMessage } from '../../types/robotics';
+import { AcpChatMessage, MessageQuote } from '../../types/robotics';
 import { ContextMenu, ContextMenuEntry } from '../../design-system';
 import { AgentMessage } from './AgentMessage';
 import { ReplyActions } from './ReplyActions';
 import { UserMessage } from './UserMessage';
 import { OpenImages } from './types';
-import { copyMenuItems, messageText } from './messageText';
+import { messageMenuItems } from './messageText';
+
+const MENU_MIN_WIDTH = 160;
 
 const lastAgentIdOf = (messages: AcpChatMessage[]) => messages.findLast((m) => m.role === 'agent')?.id;
 
@@ -19,13 +21,14 @@ export const Transcript: React.FC<{
   onRetry: () => void;
   onRevert: () => void;
   onOpenImages: OpenImages;
-}> = ({ messages, isBusy, status, canRevert, contentRef, onContinue, onRetry, onRevert, onOpenImages }) => {
+  onQuote: (quote: MessageQuote) => void;
+}> = ({ messages, isBusy, status, canRevert, contentRef, onContinue, onRetry, onRevert, onOpenImages, onQuote }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
   if (messages.length === 0) return <div ref={contentRef} />;
 
   const openMenu = (e: React.MouseEvent, msg: AcpChatMessage) => {
-    const items = copyMenuItems(messageText(msg));
+    const items = messageMenuItems(msg, onQuote);
 
     if (items.length === 0) return;
 
@@ -66,7 +69,9 @@ export const Transcript: React.FC<{
           onRevert={onRevert}
         />
       )}
-      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
+      {menu && (
+        <ContextMenu x={menu.x} y={menu.y} items={menu.items} minWidth={MENU_MIN_WIDTH} onClose={() => setMenu(null)} />
+      )}
     </div>
   );
 };

@@ -26,6 +26,7 @@ export interface PrintShape {
   poses: PrintPose[];
   minWallMm: number;
   thinShare: number;
+  thinAreaMm2: number;
 }
 
 const AXES: Record<BuildAxis, Vec3> = {
@@ -206,7 +207,7 @@ function faceDowns(tris: Float32Array): Vec3[] {
 function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
   const count = tris.length / 9;
 
-  if (!count) return { min: Infinity, thinShare: 0 };
+  if (!count) return { min: Infinity, thinShare: 0, thinAreaMm2: 0 };
 
   const areas = new Float32Array(count);
   const [a, b, c, n, ab] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
@@ -251,7 +252,7 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
     thinArea += hit.distance < PRINT_RULES.minWallMm ? step : 0;
   }
 
-  return { min, thinShare: total ? Math.min(1, thinArea / total) : 0 };
+  return { min, thinShare: total ? Math.min(1, thinArea / total) : 0, thinAreaMm2: thinArea };
 }
 
 export function bvhOf(tris: Float32Array): MeshBVH {
@@ -269,7 +270,12 @@ export function checkPrintability(tris: Float32Array, bvh: MeshBVH = bvhOf(tris)
   const faces = faceDowns(tris).map((down) => poseFor(tris, bvh, down));
   const walls = wallThickness(tris, bvh);
 
-  return { poses: [...axes, ...faces], minWallMm: walls.min, thinShare: walls.thinShare };
+  return {
+    poses: [...axes, ...faces],
+    minWallMm: walls.min,
+    thinShare: walls.thinShare,
+    thinAreaMm2: walls.thinAreaMm2,
+  };
 }
 
 export function extraPose(tris: Float32Array, bvh: MeshBVH, down: Vec3): PrintPose {

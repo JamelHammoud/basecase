@@ -2,23 +2,30 @@ import React from 'react';
 import { catalogRef } from '../../data/catalog';
 import { COMPONENT_BY_ID } from '../../data/components';
 import { HARDWARE_BY_TYPE } from '../../data/hardware';
+import { isSourcedId } from '../../data/sourcedItems';
 import { PART_DRAG_TYPE } from '../../data/dnd';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
 import { Tooltip, ChevronRightIcon, PlusIcon } from '../../design-system';
 import type { Category } from './partsViews';
 
-export const Thumb: React.FC<{ url?: string; className?: string }> = ({ url, className = '' }) => (
+export const Thumb: React.FC<{ url?: string; className?: string; empty?: boolean }> = ({
+  url,
+  className = '',
+  empty,
+}) => (
   <div className={`preview preview-sm ${className}`}>
-    {url ? (
-      <img src={url} alt="" draggable={false} className="w-full h-full object-contain p-0.5" />
-    ) : (
-      <div className="w-full h-full shimmer" />
-    )}
+    {url && <img src={url} alt="" draggable={false} className="w-full h-full object-contain p-0.5" />}
+    {!url && !empty && <div className="w-full h-full shimmer" />}
   </div>
 );
 
+export const makerLine = (item: CatalogItem): string =>
+  (item.componentId && COMPONENT_BY_ID[item.componentId]?.manufacturer) || '';
+
 export function metaLine(item: CatalogItem): string {
+  if (isSourcedId(item.componentId)) return 'Added by Agent';
+
   const c = item.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
 
   if (c) return c.manufacturer;
@@ -96,11 +103,11 @@ export const ResultRow: React.FC<{
   );
 };
 
+const partCount = (count: number) => `${count} ${count === 1 ? 'part' : 'parts'}`;
+
 export const CategoryRow: React.FC<{ category: Category; onOpen: () => void }> = ({ category, onOpen }) => {
   const thumb = usePartThumbnail(category.items[0]);
-  const meta = category.family
-    ? category.family.description
-    : `${category.items.length} ${category.items.length === 1 ? 'part' : 'parts'}`;
+  const meta = category.family ? category.family.description : partCount(category.count ?? category.items.length);
 
   return (
     <button
@@ -108,7 +115,7 @@ export const CategoryRow: React.FC<{ category: Category; onOpen: () => void }> =
       onClick={onOpen}
       className="group w-full flex items-center gap-3 h-[52px] px-1.5 rounded-xl text-left cursor-default hover:bg-white/[0.05] active:scale-[0.99] transition-[background-color,transform] duration-150"
     >
-      <Thumb url={thumb} className="w-12 h-9 shrink-0" />
+      <Thumb url={thumb} empty={!category.items.length} className="w-12 h-9 shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="text-[13.5px] font-medium text-white/90 truncate">{category.title}</div>
         <div className="text-[12px] text-white/40 truncate">{meta}</div>

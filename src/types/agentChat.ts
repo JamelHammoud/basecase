@@ -20,6 +20,14 @@ export interface AcpPlanEntry {
   status: 'pending' | 'in_progress' | 'completed';
 }
 
+export interface MessageQuote {
+  id: string;
+  source: string;
+  text: string;
+  parts?: string;
+  context?: string;
+}
+
 export interface AcpChatMessage {
   id: string;
   role: 'user' | 'agent' | 'system';
@@ -29,6 +37,7 @@ export interface AcpChatMessage {
   imageAttachment?: string;
   imageAttachments?: string[];
   folderAttachments?: Array<{ id: string; name: string; fileCount: number }>;
+  quotes?: MessageQuote[];
   queued?: boolean;
   notSent?: boolean;
   toolCalls?: AcpToolCallEvent[];

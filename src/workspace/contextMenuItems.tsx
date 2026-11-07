@@ -7,7 +7,6 @@ import {
   CrosshairIcon,
   DeleteIcon,
   DownloadIcon,
-  EraserIcon,
   FileImportIcon,
   FloorIcon,
   GroupIcon,
@@ -235,7 +234,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       onSelect: () => tool.toggleMarking(true),
     },
     ...(core.marks.marks.length
-      ? [{ label: 'Clear Marks', icon: <EraserIcon className={ic} />, onSelect: core.marks.clear }]
+      ? [{ label: 'Clear Marks', icon: <DeleteIcon className={ic} />, onSelect: core.marks.clear }]
       : []),
     {
       label: 'Import Mesh',

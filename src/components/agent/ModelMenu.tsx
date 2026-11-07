@@ -59,7 +59,7 @@ export const ModelMenu: React.FC<{
   const levels = selected.effortLevels ?? [];
 
   return (
-    <div className="relative min-w-0" ref={anchorRef}>
+    <div className="relative min-w-0 mr-1" ref={anchorRef}>
       <Button
         variant="ghost"
         title="Model"
@@ -67,7 +67,7 @@ export const ModelMenu: React.FC<{
         aria-label={`Model: ${selected.name}`}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`rounded-full px-2.5 max-w-full ${open ? 'bg-white/[0.06] text-white/90' : ''}`}
+        className={`pl-3 pr-2 max-w-full ${open ? 'bg-white/[0.06] text-white/90' : ''}`}
         iconRight={<ChevronDownIcon className="w-3.5 h-3.5" />}
         onClick={() => setOpen((v) => !v)}
       >

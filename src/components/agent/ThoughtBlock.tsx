@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ThoughtIcon } from '../../design-system';
 import { DisclosureBody, DisclosureChevron } from './Disclosure';
 import { SHIMMER_TEXT } from './shimmer';
@@ -6,19 +6,6 @@ import { SHIMMER_TEXT } from './shimmer';
 export const ThoughtBlock: React.FC<{ text: string; live: boolean }> = ({ text, live }) => {
   const [override, setOverride] = useState<boolean | null>(null);
   const open = override ?? live;
-  const [clipped, setClipped] = useState(false);
-  const windowRef = useRef<HTMLDivElement | null>(null);
-
-  useLayoutEffect(() => {
-    const el = windowRef.current;
-
-    if (!el || !live) return;
-
-    el.scrollTop = el.scrollHeight;
-    setClipped(el.scrollHeight > el.clientHeight + 2);
-  }, [text, live, open]);
-
-  const fade = live && clipped ? 'linear-gradient(to bottom, transparent 0, #000 36px, #000 100%)' : undefined;
 
   return (
     <div className="animate-fade-in min-w-0">
@@ -33,11 +20,7 @@ export const ThoughtBlock: React.FC<{ text: string; live: boolean }> = ({ text, 
         <DisclosureChevron open={open} group="thought" />
       </button>
       <DisclosureBody open={open} onClose={() => setOverride(false)}>
-        <div
-          ref={windowRef}
-          className={`pl-6 pr-1 ${live ? 'max-h-[132px] overflow-hidden' : ''}`}
-          style={{ maskImage: fade, WebkitMaskImage: fade }}
-        >
+        <div className="pl-6 pr-1">
           <p className="text-[13px] leading-[21px] text-white/50 whitespace-pre-wrap [overflow-wrap:anywhere] select-text pt-0.5 pb-1">
             {text.trim()}
           </p>

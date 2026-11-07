@@ -28,8 +28,6 @@ const HUE_NAMES: Array<[number, string]> = [
 
 export const markColorOf = (mark: { color?: string }) => normalizeHex(mark.color ?? '') ?? DEFAULT_MARK_COLOR;
 
-export const isPresetMarkColor = (hex: string) => MARK_COLORS.some((c) => c.hex === hex.toLowerCase());
-
 function neutralName(v: number): string {
   if (v > 0.8) return 'white';
 

@@ -1,63 +1,89 @@
-import { Button, FloatingIsland, IconButton, IslandDivider, DeleteIcon, EraserIcon } from '../design-system';
+import type React from 'react';
+import {
+  Button,
+  FloatingIsland,
+  IconButton,
+  IslandDivider,
+  DeleteIcon,
+  EraserIcon,
+  MarkerIcon,
+} from '../design-system';
+import type { MarkTool } from '../three/viewport/types';
 import { MarkColors } from './MarkColors';
-import { MarkLabelField } from './MarkLabelField';
-import { markCount, type Marks } from './useMarks';
+import type { Marks } from './useMarks';
 
 interface MarkBarProps {
   marks: Marks;
   onDone: () => void;
 }
 
-function SelectedMark({ marks }: { marks: Marks }) {
-  const mark = marks.selected!;
+const TOOLS: Array<{ tool: MarkTool; label: string; shortcut: string; icon: React.ReactNode }> = [
+  { tool: 'marker', label: 'Marker', shortcut: 'P', icon: <MarkerIcon className="w-4 h-4" /> },
+  { tool: 'eraser', label: 'Eraser', shortcut: 'E', icon: <EraserIcon className="w-4 h-4" /> },
+];
 
+function MarkTools({ marks }: { marks: Marks }) {
   return (
     <>
-      <MarkLabelField
-        key={mark.id}
-        label={mark.label ?? ''}
-        autoFocus={marks.freshId === mark.id}
-        onCommit={(label) => marks.setLabel(mark.id, label)}
-      />
+      {TOOLS.map((t) => (
+        <IconButton
+          key={t.tool}
+          icon={t.icon}
+          title={t.label}
+          shortcut={t.shortcut}
+          tooltipSide="top"
+          className="rounded-full"
+          isActive={marks.tool === t.tool}
+          onClick={() => marks.setTool(t.tool)}
+        />
+      ))}
+    </>
+  );
+}
+
+function MarkActions({ marks }: { marks: Marks }) {
+  const { selected } = marks;
+
+  if (selected) {
+    return (
       <IconButton
         icon={<DeleteIcon className="w-4 h-4" />}
         title="Delete mark"
         shortcut="⌫"
         tooltipSide="top"
         className="rounded-full"
-        onClick={() => marks.remove(mark.id)}
+        onClick={() => marks.remove(selected.id)}
       />
-    </>
-  );
-}
-
-function AllMarks({ marks }: { marks: Marks }) {
-  const count = marks.marks.length;
+    );
+  }
 
   return (
-    <>
-      <span className="text-[13px] font-medium text-white/85 tabular px-1.5 whitespace-nowrap">
-        {count ? markCount(count) : 'Annotate'}
-      </span>
-      {count > 0 && (
-        <IconButton
-          icon={<EraserIcon className="w-4 h-4" />}
-          title="Clear marks"
-          tooltipSide="top"
-          className="rounded-full"
-          onClick={marks.clear}
-        />
-      )}
-    </>
+    <IconButton
+      icon={<DeleteIcon className="w-4 h-4" />}
+      title="Clear marks"
+      tooltipSide="top"
+      className="rounded-full"
+      onClick={marks.clear}
+    />
   );
 }
 
 export function MarkBar({ marks, onDone }: MarkBarProps) {
   return (
     <FloatingIsland className="pointer-events-auto h-10 pl-1 pr-1 gap-1 rounded-full animate-pop-up">
-      <MarkColors value={marks.color} onChange={marks.setColor} />
-      <IslandDivider />
-      {marks.selected ? <SelectedMark marks={marks} /> : <AllMarks marks={marks} />}
+      <MarkTools marks={marks} />
+      {marks.tool === 'marker' && (
+        <>
+          <IslandDivider />
+          <MarkColors value={marks.color} onChange={marks.setColor} />
+        </>
+      )}
+      {marks.marks.length > 0 && (
+        <>
+          <IslandDivider />
+          <MarkActions marks={marks} />
+        </>
+      )}
       <IslandDivider />
       <Button
         size="sm"

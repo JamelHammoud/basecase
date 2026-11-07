@@ -1,4 +1,5 @@
 import React from 'react';
+import { sizeRadius } from './sizeRadius';
 import { Tooltip, TooltipSide } from './Tooltip';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'active' | 'accent' | 'contrast';
@@ -30,9 +31,15 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  xs: 'h-7 px-2.5 text-[12.5px] rounded-md gap-1',
-  sm: 'h-8 px-3 text-[13px] rounded-lg gap-1.5',
-  md: 'h-9 px-3.5 text-[14px] rounded-[10px] gap-1.5',
+  xs: 'h-7 px-2.5 text-[12.5px] gap-1',
+  sm: 'h-8 px-3 text-[13px] gap-1.5',
+  md: 'h-9 px-3.5 text-[14px] gap-1.5',
+};
+
+const radiusClasses: Record<ButtonSize, string> = {
+  xs: 'rounded-md',
+  sm: 'rounded-lg',
+  md: 'rounded-[10px]',
 };
 
 export const Button: React.FC<ButtonProps> = ({
@@ -55,7 +62,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       disabled={disabled}
       aria-label={!children ? title : undefined}
-      className={`inline-flex items-center justify-center font-medium whitespace-nowrap select-none cursor-default transition-[background-color,color,transform,box-shadow] duration-150 active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`inline-flex items-center justify-center font-medium whitespace-nowrap select-none cursor-default transition-[background-color,color,transform,box-shadow] duration-150 active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${sizeRadius(radiusClasses[size], className)} ${fullWidth ? 'w-full' : ''} ${className}`}
       {...props}
     >
       {icon && <span className="shrink-0 inline-flex">{icon}</span>}

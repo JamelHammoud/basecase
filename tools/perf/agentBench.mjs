@@ -82,6 +82,15 @@ const PHASES = [
   ['get_bom', () => client.request('bom', {})],
   ['check_printability', () => client.request('printability', {})],
   ['verify_design', () => client.request('verify', {})],
+  ['get_readiness', () => client.request('readiness', {})],
+  [
+    'edit_then_readiness',
+    async () => {
+      await modelPart();
+
+      return client.request('readiness', {});
+    },
+  ],
 ];
 
 const rows = [];

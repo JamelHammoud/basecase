@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { ScenePart } from '../types/robotics';
 import { buildPartGroup, releasePartGroup } from './buildPartMesh';
-import { loadComponentMesh } from './componentMeshes';
+import { loadComponentMesh, provideMeshFiles, type MeshFiles } from './componentMeshes';
 import { canvasBlob, drawThumbnail, type ThumbnailCanvas } from './thumbnailStage';
 
 export interface ThumbnailJob {
@@ -10,6 +10,7 @@ export interface ThumbnailJob {
   mime?: string;
   quality?: number;
   cropWidth?: number;
+  meshes?: MeshFiles;
 }
 
 interface Box {
@@ -97,6 +98,7 @@ function finish(canvas: ThumbnailCanvas, job: ThumbnailJob): Promise<Blob | null
 export async function renderThumbnailJob(job: ThumbnailJob): Promise<Blob | null> {
   if (!job.parts.length) return null;
 
+  provideMeshFiles(job.meshes);
   await loadPartMeshes(job.parts);
 
   const groups = job.parts.map((part) => buildPartGroup(part, false, { shareGeometry: true }));

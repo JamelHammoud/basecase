@@ -9,7 +9,14 @@ import {
   HardwareFinish,
   ScrewDrive,
 } from './hardware';
-import { COMPONENTS, ComponentGroup, componentNote, componentSize, hasComponentMesh } from './components';
+import {
+  COMPONENTS,
+  ComponentGroup,
+  ComponentInfo,
+  componentNote,
+  componentSize,
+  hasComponentMesh,
+} from './components';
 
 export const CATEGORY_LABELS: Record<PartCategory, { label: string; short: string }> = {
   custom_models: { label: 'My Models', short: 'Mine' },
@@ -40,6 +47,19 @@ const COMPONENT_CATEGORY: Record<ComponentGroup, PartCategory> = {
   'Linear Actuators': 'actuators',
   'Displays & Audio': 'sensors',
 };
+
+const componentItem = (c: ComponentInfo): CatalogItem => ({
+  kind: 'component',
+  name: c.name,
+  category: COMPONENT_CATEGORY[c.group] ?? 'sensors',
+  defaultRole: 'solid',
+  defaultDimensions: componentSize(c.id),
+  defaultColor: c.color,
+  defaultTag: 'Off-the-shelf COTS',
+  description: c.description,
+  componentId: c.id,
+  keywords: `${c.manufacturer} ${c.mpn} ${c.group} ${c.keywords ?? ''}`,
+});
 
 export const PART_CATALOG: CatalogItem[] = [
   {
@@ -194,18 +214,7 @@ export const PART_CATALOG: CatalogItem[] = [
     description: 'Marks a rotation or alignment axis',
   },
 
-  ...COMPONENTS.filter((c) => hasComponentMesh(c.id)).map((c): CatalogItem => ({
-    kind: 'component',
-    name: c.name,
-    category: COMPONENT_CATEGORY[c.group],
-    defaultRole: 'solid',
-    defaultDimensions: componentSize(c.id),
-    defaultColor: c.color,
-    defaultTag: 'Off-the-shelf COTS',
-    description: c.description,
-    componentId: c.id,
-    keywords: `${c.manufacturer} ${c.mpn} ${c.group} ${c.keywords ?? ''}`,
-  })),
+  ...COMPONENTS.filter((c) => hasComponentMesh(c.id)).map(componentItem),
 
   ...HARDWARE_TYPES.map((t): CatalogItem => {
     const spec = makeSpec(t.type);
@@ -223,6 +232,14 @@ export const PART_CATALOG: CatalogItem[] = [
     };
   }),
 ];
+
+export function registerCatalogComponent(c: ComponentInfo) {
+  const item = componentItem(c);
+  const at = PART_CATALOG.findIndex((x) => x.componentId === c.id);
+
+  if (at >= 0) PART_CATALOG[at] = item;
+  else PART_CATALOG.push(item);
+}
 
 export function catalogKey(item: CatalogItem): string {
   if (item.hardware) return `hardware:${item.hardware.type}`;

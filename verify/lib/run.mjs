@@ -81,7 +81,9 @@ export function canaryOutcome(result) {
   return {
     ...result,
     ok: !result.ok,
-    detail: result.ok ? 'Canary did not fire: the check passed a planted fault' : '',
+    detail: result.ok
+      ? `Canary did not fire: the check passed a planted fault${result.detail ? ` (${result.detail})` : ''}`
+      : '',
   };
 }
 

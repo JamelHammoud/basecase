@@ -5,5 +5,6 @@ export default defineConfig({
     include: ['verify/**/*.test.ts', 'verify/**/*.test.mjs'],
     environment: 'node',
     testTimeout: 600000,
+    hookTimeout: 300000,
   },
 });

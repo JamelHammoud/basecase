@@ -116,6 +116,19 @@ Known limits: a calibration with the wrong sign moves the joint the wrong way wh
 - Tests that mix the virtual clock with real threads (the policy worker) wait for the worker to act, within limits that hold under heavy load, and never assert a tight wall-clock bound. The end-to-end binary test accepts `intent_stale` as well as `client_lost`: a test thread starved past 100 ms stops the robot before the app closes, which is the same safe stop.
 - The daemon's write encoder is checked against bytes captured from scservo_sdk and DynamixelSDK. The Python DynamixelSDK 4.1.0 never byte-stuffs what it sends (see the ledger).
 
+### The daemon in the app (interface)
+
+Stage 5b is judged by `s5b-daemon-app` (§0k); its tests in `verify/hw/` are the contract.
+
+- **Bundling:** `npm run build:daemon` stages the release `robot-daemon` (`robot-daemon.exe` on Windows) into `hw/dist/` (build output, not committed); electron-builder copies `hw/dist` to `<resources>/hw`. The packaged app spawns only that file; from source it uses `hw/dist`. `BASECASE_ROBOT_DAEMON=<path>` overrides the binary, for tests.
+- **Hello:** the daemon's first stdout line is `{"event":"hello","version","family","emulated":true,"real_transport":false,"lost_message"}`; `lost_message` is `daemon_lost_message(family)`, so the app has the words before it needs them.
+- **IPC** (all `handle` channels through `trustedIpc`; preload names in brackets): `robot:connect` (`robotConnect(spec)`) with exactly `{ family: 'feetech' | 'dynamixel', ids: number[] (1–253, at most 32), class: 'arm' | 'legged', emulated: true }` → `{ ok: true }` or `{ ok: false, message }`; anything else (a `port`, `emulated` not true, extra keys, bad ids) is refused in plain words and starts nothing. `robot:command` (`robotCommand(cmd)`) forwards only the documented commands. `robot:disconnect` (`robotDisconnect()`) closes stdin and the daemon exits. Events reach the page on `robot:event`.
+- **Spawn:** argv is `--family <f> --ids <ids> --class <c> --emulated --artefacts <dir>`, never `--port`. For an emulated robot the app writes `calibration.json` itself (every id at 2048 counts), so Set up → Test climbs with no hardware steps.
+- **Heartbeat:** while motors run, the app sends a heartbeat or an intent at least every 100 ms (median gap 60 ms or less), and the daemon never stops the robot with `client_lost` or `intent_stale` while the app is healthy.
+- **Driving:** in Test and above, the live sim's joint targets (a Case try, a Routine run, Drive) stream as `intent` lines at 20 Hz or more, in joint order with ids 1…n over the scene's movable joints; when nothing drives, intents hold still.
+- **Operate view** in the rail (`aria-label="Operate"`): Connect Emulated Robot (Feetech by default, `class` legged when a joint's limb is a leg); `[data-testid="robot-mode"]` with `data-mode` from the latest status; one `[data-robot-rung="<mode>"]` control per rung, only the next rung enabled, each sending `enter`; `[data-robot-joint="<id>"]` with `data-position` from the latest status. It reflects whatever connection the main process holds.
+- **Messages:** every `fault` and `refused` message appears on screen in the daemon's words, and when the daemon exits without being asked, `lost_message` appears. Raw codes are never the only thing shown.
+
 ### Parked
 
 Setup flows (IDs one servo at a time, the torque-off mirror, calibration capture, the plain failure guide, support bundle), signed Mac and Windows bundles, Pi and arm64 builds, rustypot and LeRobot's bus as further conformance clients, bulk read and write, indirect addresses, operating modes other than position, and persisting ladder evidence across restarts (a restart climbs again).

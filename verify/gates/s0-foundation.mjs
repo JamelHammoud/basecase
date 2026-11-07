@@ -5,6 +5,7 @@ import { jsonLines, trainerPython } from '../lib/python.mjs';
 
 const FIXTURES = path.join(ROOT, 'verify', 'out', 'fixtures');
 const BASELINE = path.join(ROOT, 'verify', 'baselines', 'python-phases.json');
+const LATEST = path.join(ROOT, 'verify', 'out', 'bench', 'python-phases.json');
 const BENCH_ROBOT = 'quad-servo';
 const BENCH_ITERATIONS = 20;
 const MIN_TIMED_SHARE = 0.85;
@@ -61,7 +62,7 @@ const phaseTimers = {
     if (problem) return fail(problem);
 
     fs.writeFileSync(
-      BASELINE,
+      fs.existsSync(BASELINE) ? LATEST : BASELINE,
       `${JSON.stringify(
         {
           robot: BENCH_ROBOT,

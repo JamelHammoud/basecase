@@ -13,6 +13,7 @@ import {
   ObjectsIcon,
   RobotsIcon,
   RunIcon,
+  CasesIcon,
   SearchIcon,
   ShapeIcon,
   ToolIcon as ToolPromptIcon,
@@ -342,6 +343,22 @@ const ROBOT_RULES: ToolRule[] = [
     label: ({ input, verb }) => ({
       title: `${verb('Simulating', 'Simulated')} ${Number(input.seconds ?? 5)} s`,
       detail: controllerName(String(input.controller ?? 'hold')),
+    }),
+  },
+  {
+    keys: ['set_world'],
+    icon: CasesIcon,
+    label: ({ input, verb }) => ({
+      title: verb('Setting the world', 'Set the world'),
+      detail: optional(Array.isArray(input.objects) ? `${input.objects.length} objects` : ''),
+    }),
+  },
+  {
+    keys: ['start_drive'],
+    icon: RunIcon,
+    label: ({ input, verb }) => ({
+      title: `${verb('Driving', 'Drove')} ${Number(input.seconds ?? 6)} s`,
+      detail: optional(input.live ? 'On the canvas' : ''),
     }),
   },
   {

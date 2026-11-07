@@ -138,6 +138,14 @@ const readObject: Reader<WorldObject> = (value, where) => {
   };
 };
 
+export const readWorldObjects = (value: unknown): WorldObject[] => {
+  const objects = listOf(readObject, MAX_OBJECTS)(value, 'world.objects');
+
+  if (new Set(objects.map((o) => o.id)).size !== objects.length) refuse('world.objects', 'repeats an id');
+
+  return objects;
+};
+
 const readControl: Reader<CaseControl> = (value, where) => {
   const v = asRecord(value, where);
 
@@ -196,9 +204,7 @@ export function parseCase(input: unknown): Case {
 
   const world = asRecord(v.world, 'world');
   const reference = asRecord(v.reference, 'reference');
-  const objects = listOf(readObject, MAX_OBJECTS)(world.objects, 'world.objects');
-
-  if (new Set(objects.map((o) => o.id)).size !== objects.length) refuse('world.objects', 'repeats an id');
+  const objects = readWorldObjects(world.objects);
 
   return {
     formatVersion: CASE_FORMAT_VERSION,

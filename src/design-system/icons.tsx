@@ -70,6 +70,16 @@ export const LibraryIcon: React.FC<GlyphProps> = ({ filled, className }) => (
   </Glyph>
 );
 
+const FLAG_POLE = 'M5 21.75V3';
+const FLAG_CLOTH = 'M5 4.25c2.33-1.5 4.67-1.5 7 0s4.67 1.5 7 0v9.5c-2.33 1.5-4.67 1.5-7 0s-4.67-1.5-7 0z';
+
+export const CasesIcon: React.FC<GlyphProps> = ({ filled, className }) => (
+  <Glyph className={className}>
+    <path d={FLAG_POLE} />
+    <path d={FLAG_CLOTH} fill={filled ? 'currentColor' : 'none'} />
+  </Glyph>
+);
+
 const ROBOT_BALL = 'M1.75 12a10.25 10.25 0 1 0 20.5 0a10.25 10.25 0 1 0 -20.5 0';
 const ROBOT_EYES = 'M9.25 9.25v3.75M14.75 9.25v3.75';
 const ROBOT_EYE_HOLES = 'M9.25 8.85v4.55M14.75 8.85v4.55';

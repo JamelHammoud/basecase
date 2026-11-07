@@ -41,6 +41,7 @@ import {
 } from './cad-mcp/sceneTools.mjs';
 import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
+import { setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
 import {
   addSourcedItem,
@@ -93,6 +94,8 @@ const TOOLS = [
   findObjects,
   insertObject,
   simulate,
+  setWorld,
+  startDrive,
   trainPolicy,
   trainingStatus,
   verifyDesign,

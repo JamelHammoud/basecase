@@ -124,7 +124,9 @@ const TrainProgress: React.FC<{ training: Training }> = ({ training }) => {
   );
 };
 
-export const TrainSection: React.FC<{ training: Training }> = ({ training }) => {
+export const FIXED_TRAIN_NOTE = 'Stand and Walk train robots that move around. This one is fixed in place.';
+
+export const TrainSection: React.FC<{ training: Training; fixed?: boolean }> = ({ training, fixed }) => {
   const [task, setTask] = useState<TrainTask>('stand');
   const [speedMs, setSpeedMs] = useState(0.3);
   const [minutes, setMinutes] = useState<Minutes>('20');
@@ -133,7 +135,9 @@ export const TrainSection: React.FC<{ training: Training }> = ({ training }) => 
 
   return (
     <Section title="Train">
-      {busy ? <TrainProgress training={training} /> : <TrainSetup training={training} settings={settings} />}
+      {fixed && !busy && <p className="text-[13px] leading-snug text-white/60">{FIXED_TRAIN_NOTE}</p>}
+      {busy && <TrainProgress training={training} />}
+      {!busy && !fixed && <TrainSetup training={training} settings={settings} />}
     </Section>
   );
 };

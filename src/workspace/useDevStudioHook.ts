@@ -26,6 +26,22 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       setSelectedIds([]);
     },
     select: (ids) => setSelectedIds(ids),
+    simState: () => {
+      const { sim, cases } = core.simTraining;
+
+      return {
+        status: sim.status,
+        playing: sim.playing,
+        drive: sim.drive.status,
+        driveClass: sim.drive.cls,
+        note: sim.drive.note,
+        stats: sim.stats,
+        world: sim.worldParts.map((p) => p.id),
+        bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
+        activeCase: cases.active?.id ?? null,
+        tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
+      };
+    },
     guide: async () => {
       const made = await core.guide.generate();
 

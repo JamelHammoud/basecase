@@ -23,6 +23,7 @@ export interface DevActions {
   clear: () => void;
   select: (ids: string[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
+  simState: () => unknown;
 }
 
 export interface DevStudioDeps {
@@ -134,5 +135,6 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     poseTool: (kind: string, payload: Payload) => devRef.current.poseTool(kind, payload),
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
+    simState: () => devRef.current.simState(),
   };
 }

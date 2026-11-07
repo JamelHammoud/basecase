@@ -29,6 +29,8 @@ const TOOL_GUIDES = {
   animate: ['motion'],
   retarget_motion: ['motion'],
   simulate: ['simulation'],
+  set_world: ['simulation'],
+  start_drive: ['simulation'],
   train_policy: ['simulation'],
   find_objects: ['simready'],
   insert_object: ['simready'],

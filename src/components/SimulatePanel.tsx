@@ -1,77 +1,38 @@
 import React, { useState } from 'react';
-import { Button, ContextMenu, ContextMenuEntry, Section, Select, useScrollFade, HandIcon } from '../design-system';
-import type { PolicyRecord, RobotAnimation } from '../types/robotics';
+import { ContextMenu, ContextMenuEntry, useScrollFade } from '../design-system';
+import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import type { Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
-import { controllerValue } from './simulate/format';
+import type { Cases } from '../workspace/useCases';
+import { BriefSection, RobotFitSection, TrySection } from './simulate/CaseSections';
+import { ControlSection, useChooseController } from './simulate/ControlSection';
 import { ModelSection } from './simulate/ModelSection';
 import { PoliciesSection } from './simulate/PoliciesSection';
 import { ResultSection } from './simulate/ResultSection';
+import { ResultsSection } from './simulate/ResultsSection';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection } from './simulate/TrainSection';
 
 interface SimulatePanelProps {
   sim: Simulation;
   training: Training;
+  cases: Cases;
   rig: Rig;
+  parts: ScenePart[];
   animations: RobotAnimation[];
   policies: PolicyRecord[];
   onSelectParts: (ids: string[]) => void;
   onDeletePolicy: (id: string) => void;
 }
 
-export const SimulatePanel: React.FC<SimulatePanelProps> = ({
-  sim,
-  training,
-  rig,
-  animations,
-  policies,
-  onSelectParts,
-  onDeletePolicy,
-}) => {
+export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
+  const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy } = props;
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const on = sim.status !== 'off';
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [policyKey, setPolicyKey] = useState<string | null>(null);
-  const current = controllerValue(sim.controller, policyKey);
-  const options = [
-    { value: 'hold', label: 'Hold pose' },
-    ...animations.map((a) => ({ value: `anim:${a.id}`, label: a.name })),
-    ...policies.map((p) => ({ value: `policy:${p.id}`, label: p.name })),
-    { value: 'limp', label: 'Limp' },
-  ];
-  const chooseLocal = (value: string) => {
-    if (value === 'hold' || value === 'limp') {
-      setPolicyKey(null);
-      sim.setController({ kind: value });
-
-      return;
-    }
-
-    if (!value.startsWith('anim:')) return;
-
-    const a = animations.find((x) => `anim:${x.id}` === value);
-
-    setPolicyKey(null);
-
-    if (a) sim.setController({ kind: 'animation', animation: a });
-  };
-  const choosePolicy = async (id: string) => {
-    const rec = policies.find((p) => p.id === id);
-    const spec = rec ? await training.loadPolicy(id) : null;
-
-    if (!rec || !spec) return;
-
-    setPolicyKey(id);
-    sim.setController({ kind: 'policy', policy: spec, robot: rec.robot });
-  };
-  const choose = async (value: string) => {
-    if (value.startsWith('policy:')) await choosePolicy(value.slice(7));
-    else chooseLocal(value);
-
-    if (on) sim.reset();
-  };
+  const kase = cases.active;
   const openPolicyMenu = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     setMenu({
@@ -80,41 +41,25 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = ({
       items: [{ label: 'Delete', tone: 'danger', onSelect: () => onDeletePolicy(id) }],
     });
   };
+  const control = { sim, training, animations, policies, policyKey, setPolicyKey };
+  const choose = useChooseController(control);
 
   return (
     <div className="flex flex-col h-full min-h-0">
       <SimControls sim={sim} on={on} />
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        <Section title="Control">
-          <div className="flex items-center gap-2">
-            <Select
-              aria-label="Controller"
-              value={current}
-              options={options}
-              onChange={(e) => void choose(e.target.value)}
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<HandIcon className="w-4 h-4" />}
-              disabled={!sim.playing}
-              title="Push the robot sideways"
-              onClick={() => sim.push()}
-            >
-              Push
-            </Button>
-          </div>
-        </Section>
+        {kase && <BriefSection cases={cases} />}
+        {kase && <RobotFitSection cases={cases} />}
+        {kase && <TrySection cases={cases} driveNote={sim.drive.note} cls={sim.drive.cls} />}
+        <ControlSection {...control} choose={choose} showDrive={!kase} />
+        <TrainSection training={training} fixed={cases.fixedBase} />
+        {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}
 
         {on && sim.stats && sim.model && (
           <ResultSection stats={sim.stats} model={sim.model} rig={rig} onSelectParts={onSelectParts} />
         )}
-
         {sim.model && <ModelSection model={sim.model} version={sim.version} />}
-
-        <TrainSection training={training} />
-
         {policies.length > 0 && (
           <PoliciesSection
             policies={policies}

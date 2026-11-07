@@ -17,6 +17,7 @@ import {
   type SimulatePayload,
 } from '../agent/agentSim';
 import type { ProjectSettings, RobotPoseState } from '../types/robotics';
+import { setWorldRequest, startDriveRequest, type DriveToolContext } from '../agent/agentDrive';
 import { ROBOT_PRESETS } from '../utils/robotImport';
 import { findObjects, insertObject } from './agentSimReadyTools';
 import { newId } from './helpers';
@@ -99,13 +100,21 @@ export async function runPoseTool(kind: string, payload: Payload, ctx: PoseToolC
   return tool(ctx, payload);
 }
 
-export interface SimToolContext extends SimContext {
+export interface SimToolContext extends SimContext, DriveToolContext {
   setAction: (action: string) => void;
 }
 
-export const SIM_TOOL_KINDS = ['simulate', 'train', 'training_status'];
+export const SIM_TOOL_KINDS = ['simulate', 'train', 'training_status', 'set_world', 'start_drive'];
 
 export async function runSimTool(kind: string, payload: Payload, ctx: SimToolContext): Promise<PoseReply> {
+  if (kind === 'set_world') return setWorldRequest(ctx, payload);
+
+  if (kind === 'start_drive') {
+    ctx.setAction('Driving');
+
+    return startDriveRequest(ctx, payload);
+  }
+
   if (kind === 'simulate') {
     ctx.setAction('Simulating');
 
@@ -118,5 +127,7 @@ export async function runSimTool(kind: string, payload: Payload, ctx: SimToolCon
     return trainRequest(ctx, payload as { task?: 'stand' | 'walk'; minutes?: number; speed_mps?: number });
   }
 
-  return { text: trainingStatusText(ctx) };
+  if (kind === 'training_status') return { text: trainingStatusText(ctx) };
+
+  throw new Error(`Unknown simulation tool "${kind}"`);
 }

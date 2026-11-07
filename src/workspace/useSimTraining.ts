@@ -7,6 +7,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { Posing } from '../utils/usePosing';
 import type { Setter } from './types';
+import { useCases } from './useCases';
 
 interface SimTrainingOptions {
   workspaceId: string;
@@ -53,7 +54,9 @@ export function useSimTraining({ workspaceId, parts, project, setProject, posing
     });
   };
 
-  return { sim, training, policies, deletePolicy };
+  const cases = useCases({ parts, project, setProject, rig: posing.rig, sim });
+
+  return { sim, training, policies, deletePolicy, cases };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

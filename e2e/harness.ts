@@ -1,5 +1,6 @@
 import { chromium, type Browser, type Page } from 'playwright-core';
-import { createServer, type ViteDevServer } from 'vite';
+import { realpathSync } from 'node:fs';
+import { createServer, searchForWorkspaceRoot, type ViteDevServer } from 'vite';
 
 const EFFORT_LEVELS = [
   { id: 'low', name: 'Low' },
@@ -60,7 +61,8 @@ async function stubBackend(page: Page, posts: App['posts'], lists: Record<string
 }
 
 const startServer = async (): Promise<ViteDevServer> => {
-  const server = await createServer({ configFile: 'vite.config.ts', server: { port: 0 }, logLevel: 'silent' });
+  const fs = { allow: [searchForWorkspaceRoot(process.cwd()), realpathSync('node_modules')] };
+  const server = await createServer({ configFile: 'vite.config.ts', server: { port: 0, fs }, logLevel: 'silent' });
 
   return server.listen();
 };

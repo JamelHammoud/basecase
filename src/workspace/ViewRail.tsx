@@ -2,6 +2,7 @@ import type { LeftTab } from '../components/LeftSidebar';
 import { installUpdate, useAppUpdate } from '../utils/useAppUpdate';
 import {
   ArrowDownIcon,
+  CasesIcon,
   IconButton,
   LayersIcon,
   LibraryIcon,
@@ -17,6 +18,7 @@ const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphPro
   { value: 'parts', label: 'Parts', Icon: PartsIcon },
   { value: 'robots', label: 'Robots', Icon: RobotsIcon },
   { value: 'objects', label: 'Objects', Icon: ObjectsIcon },
+  { value: 'cases', label: 'Cases', Icon: CasesIcon },
   { value: 'layers', label: 'Layers', Icon: LayersIcon },
   { value: 'library', label: 'Library', Icon: LibraryIcon },
 ];

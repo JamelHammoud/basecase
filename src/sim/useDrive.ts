@@ -26,7 +26,7 @@ export interface SimDrive {
   cls: DriveClass | null;
   note: string | null;
   fell: boolean;
-  start: () => Promise<void>;
+  start: () => Promise<boolean>;
   stop: () => void;
   respawn: () => void;
   setKeys: (command: DriveCommand) => void;
@@ -140,7 +140,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
     const model = modelRef.current;
 
-    if (!model) return;
+    if (!model) return false;
 
     const access = driveAccess({ rig, parts, model, robotKey, start: pose?.values });
 
@@ -148,7 +148,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
       setNote(access.reason);
       setDriveStatus('refused');
 
-      return;
+      return false;
     }
 
     if (access.needsFallCheck) setDriveStatus('checking');
@@ -157,7 +157,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
       setNote(FELL_DRIVE_NOTE);
       setDriveStatus('refused');
 
-      return;
+      return false;
     }
 
     clsRef.current = access.cls;
@@ -168,6 +168,8 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     latest.current.send({ type: 'respawn', robot: robotKey });
     viewportRef.current?.followPart(access.followPart);
     setDriveStatus('on');
+
+    return true;
   }, [modelRef, robotKey, viewportRef]);
 
   const stop = useCallback(() => {

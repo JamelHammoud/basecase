@@ -9,6 +9,8 @@ const MEASURING = new Set([
   'sweep_design',
   'define_joints',
   'simulate',
+  'set_world',
+  'start_drive',
   'craft',
   'visible_share',
   'pose',

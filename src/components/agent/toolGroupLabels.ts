@@ -41,6 +41,8 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   find_objects: ['Running # SimReady searches', 'Ran # SimReady searches'],
   insert_object: ['Inserting # objects', 'Inserted # objects'],
   simulate: ['Running # simulations', 'Ran # simulations'],
+  set_world: ['Setting the world # times', 'Set the world # times'],
+  start_drive: ['Driving # times', 'Drove # times'],
   train_policy: ['Starting # training runs', 'Started # training runs'],
   training_status: ['Checking training # times', 'Checked training # times'],
   list_evidence: ['Listing attached files # times', 'Listed attached files # times'],

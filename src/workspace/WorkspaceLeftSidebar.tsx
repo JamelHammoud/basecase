@@ -47,6 +47,10 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
           onResizingChange={ui.resizingLeft}
         />
       }
+      cases={{
+        cases: core.simTraining.cases,
+        onOpen: () => tool.setRightTab('sim'),
+      }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}
       parts={parts}

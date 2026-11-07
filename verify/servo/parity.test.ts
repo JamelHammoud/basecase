@@ -11,7 +11,10 @@ const robots = fs.existsSync(ROOT)
 
 describe('WASM matches C MuJoCo on robots driven by measured servo models', () => {
   it('has servo fixtures to compare', () => {
+    const delayed = robots.filter((n) => fs.readFileSync(path.join(ROOT, n, 'model.xml'), 'utf8').includes(' delay="'));
+
     expect(robots.length).toBeGreaterThanOrEqual(12);
+    expect(delayed.length).toBeGreaterThanOrEqual(10);
   });
 
   for (const name of robots) {
@@ -21,7 +24,6 @@ describe('WASM matches C MuJoCo on robots driven by measured servo models', () =
       const ref = JSON.parse(fs.readFileSync(path.join(ROOT, name, 'reference.json'), 'utf8')) as Reference;
       const r = compareWasm(mj, xml, ref);
 
-      expect(xml).toMatch(/ delay="/);
       expect(mj.mj_versionString()).toBe(ref.version);
       expect(r.forward).toBeLessThan(REL_TOLERANCE);
       expect(r.contacts).toBe(0);

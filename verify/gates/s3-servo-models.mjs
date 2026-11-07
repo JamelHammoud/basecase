@@ -55,7 +55,7 @@ const againstBam = {
   run: () => {
     const r = sh('npx', [...VITEST, 'verify/servo/servo.test.ts']);
 
-    return r.ok ? pass('', scoreSummary()) : fail(tail(r.stdout, 20), scoreSummary());
+    return r.ok ? pass('', scoreSummary()) : fail(tail(`${r.stderr}\n${r.stdout}`, 20), scoreSummary());
   },
 };
 
@@ -85,7 +85,9 @@ const BAR_MISSED = /expected [\d.e-]+ to be less than/;
 export const canaryVerdict = (r) => {
   if (r.ok) return pass();
 
-  return BAR_MISSED.test(r.stdout) ? fail(tail(r.stdout, 6)) : pass(`Failed for another reason: ${tail(r.stdout, 4)}`);
+  const output = `${r.stdout}\n${r.stderr}`;
+
+  return BAR_MISSED.test(output) ? fail(tail(r.stdout, 6)) : pass(`Failed for another reason: ${tail(output, 4)}`);
 };
 
 const canaryRun = (canary, files, extra) => () => canaryVerdict(withCanary(canary, files, extra));

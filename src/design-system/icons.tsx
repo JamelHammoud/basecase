@@ -93,6 +93,18 @@ export const RoutinesIcon: React.FC<GlyphProps> = ({ filled, className }) => (
   </Glyph>
 );
 
+const JOYSTICK_BASE = 'M3.5 17a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z';
+const JOYSTICK_KNOB = 'M8.25 6.5a3.75 3.75 0 1 0 7.5 0a3.75 3.75 0 1 0-7.5 0';
+const JOYSTICK_STICK = 'M12 10.25V15';
+
+export const OperateIcon: React.FC<GlyphProps> = ({ filled, className }) => (
+  <Glyph className={className}>
+    <path d={JOYSTICK_BASE} fill={filled ? 'currentColor' : 'none'} />
+    <path d={JOYSTICK_STICK} />
+    <path d={JOYSTICK_KNOB} fill={filled ? 'currentColor' : 'none'} />
+  </Glyph>
+);
+
 const ROBOT_BALL = 'M1.75 12a10.25 10.25 0 1 0 20.5 0a10.25 10.25 0 1 0 -20.5 0';
 const ROBOT_EYES = 'M9.25 9.25v3.75M14.75 9.25v3.75';
 const ROBOT_EYE_HOLES = 'M9.25 8.85v4.55M14.75 8.85v4.55';

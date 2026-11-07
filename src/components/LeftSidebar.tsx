@@ -8,10 +8,11 @@ import { LibraryPanel, type LibraryPanelProps } from './LibraryPanel';
 import { CasesPanel, type CasesPanelProps } from './cases/CasesPanel';
 import { RoutinesPanel, type RoutinesPanelProps } from './routines/RoutinesPanel';
 import { ObjectsPanel } from './objects/ObjectsPanel';
+import { OperatePanel, type OperatePanelProps } from './operate/OperatePanel';
 import { PartsPanel } from './PartsPanel';
 import { RobotsPanel } from './RobotsPanel';
 
-export type LeftTab = 'layers' | 'parts' | 'robots' | 'objects' | 'cases' | 'routines' | 'library';
+export type LeftTab = 'layers' | 'parts' | 'robots' | 'objects' | 'cases' | 'routines' | 'operate' | 'library';
 
 const VIEW_TITLES: Record<LeftTab, string> = {
   layers: 'Layers',
@@ -20,6 +21,7 @@ const VIEW_TITLES: Record<LeftTab, string> = {
   objects: 'Objects',
   cases: 'Cases',
   routines: 'Routines',
+  operate: 'Operate',
   library: 'Library',
 };
 
@@ -39,6 +41,7 @@ interface LeftSidebarProps extends Omit<LayersViewProps, 'parts' | 'selectedIds'
   library: Omit<LibraryPanelProps, 'parts' | 'selectedIds'>;
   cases: CasesPanelProps;
   routines: RoutinesPanelProps;
+  operate: OperatePanelProps;
 }
 
 const View: React.FC<{ tab: LeftTab; current: LeftTab; visited: ReadonlySet<LeftTab>; children: React.ReactNode }> = ({
@@ -106,6 +109,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
           </View>
           <View tab="routines" current={tab} visited={visited}>
             <RoutinesPanel {...props.routines} />
+          </View>
+          <View tab="operate" current={tab} visited={visited}>
+            <OperatePanel {...props.operate} />
           </View>
           <View tab="library" current={tab} visited={visited}>
             <LibraryPanel {...props.library} parts={props.parts} selectedIds={props.selectedIds} />

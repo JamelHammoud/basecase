@@ -1,5 +1,6 @@
 import type { LeftTab } from '../components/LeftSidebar';
 import { installUpdate, useAppUpdate } from '../utils/useAppUpdate';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import {
   ArrowDownIcon,
   CasesIcon,
@@ -8,6 +9,7 @@ import {
   LibraryIcon,
   NO_DRAG_REGION,
   ObjectsIcon,
+  OperateIcon,
   PartsIcon,
   RobotsIcon,
   RoutinesIcon,
@@ -21,6 +23,7 @@ const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphPro
   { value: 'objects', label: 'Objects', Icon: ObjectsIcon },
   { value: 'cases', label: 'Cases', Icon: CasesIcon },
   { value: 'routines', label: 'Routines', Icon: RoutinesIcon },
+  ...(IS_WEB_DEMO ? [] : [{ value: 'operate' as const, label: 'Operate', Icon: OperateIcon }]),
   { value: 'layers', label: 'Layers', Icon: LayersIcon },
   { value: 'library', label: 'Library', Icon: LibraryIcon },
 ];

@@ -49,7 +49,7 @@ The filmstrip (`src/cases/filmstrip.ts`, drawn by `filmstrip.worker.ts` on an `O
 ### In the app
 
 - **Cases view** in the rail (§5).
-- **Simulate tab** with a Case open: **Brief** (name, brief, Close), **Robot fit** (Check Fit: fits this Case, compiles, settles 1.5 s, body class, fall check; never restates Ready to build), **Try** (Try It, a clock, End Try, the keys), **Control**, **Train** (a fixed robot gets “Stand and Walk train robots that move around. This one is fixed in place.” instead of a Train button), **Results**, then the Result, Model and Policies sections as before. Without a Case, Control has Drive.
+- **Simulate tab** with a Case open: **Brief** (name, brief, Close), **Robot fit** (Check Fit: fits this Case, compiles, settles 1.5 s, body class, fall check; never restates Ready to build), **Try** (Try It, a clock, End Try, the keys), **Emulated robot** while one is connected (§8k: its rung, the newest daemon message and the servos; from Test up it follows the live sim), **Control**, **Train** (a fixed robot gets “Stand and Walk train robots that move around. This one is fixed in place.” instead of a Train button), **Results**, then the Result, Model and Policies sections as before. Without a Case, Control has Drive.
 - ⌘K: Show Cases, Drive or Stop Driving, Start Over, Try ⟨Case⟩.
 - `e2e/drive.e2e.test.ts` drives the rover, arm and hexapod in the real app, checks the biped refusal, key gating and the composer prompt, and records a try. The e2e harness allows the real `node_modules` path, so the MuJoCo WASM loads from a worktree whose `node_modules` is a link.
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
+import { offerSimTargets } from '../robot/intentMirror';
 import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
@@ -69,6 +70,10 @@ export function useSimWorker(
 
       viewportRef.current?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
       frameHookRef.current?.();
+      offerSimTargets(
+        m.joints.map((j) => j.id),
+        msg.targets,
+      );
 
       const now = performance.now();
 

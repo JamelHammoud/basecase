@@ -453,6 +453,16 @@ export class SimEngine {
     return out;
   }
 
+  jointTargets(out = new Float64Array(this.sim.joints.length)): Float64Array {
+    this.sim.joints.forEach((j, i) => {
+      const commanded = j.actuator >= 0 && j.drive === 'position';
+
+      out[i] = commanded ? this.data.ctrl[j.actuator] : this.data.qpos[this.jointQpos[i]];
+    });
+
+    return out;
+  }
+
   dispose() {
     this.data.delete();
     this.model.delete();

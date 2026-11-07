@@ -1,4 +1,5 @@
 import type { SourcedItem } from '../../data/sourcedItems';
+import type { ConnectReply, RobotEvent, RobotLinkState, RobotSpec } from '../../robot/robotState';
 import {
   AcpChatMessage,
   AcpStatusInfo,
@@ -182,6 +183,11 @@ declare global {
       shareFile?: (payload: { name: string; bytes: Uint8Array }) => Promise<'airdrop' | 'shared' | 'shown'>;
       onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      robotConnect?: (spec: RobotSpec) => Promise<ConnectReply>;
+      robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
+      robotDisconnect?: () => Promise<ConnectReply>;
+      robotState?: () => Promise<RobotLinkState>;
+      onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
       setMenuState: (state: Partial<AppMenuState>) => void;
       onMenuCommand: (callback: (id: string) => void) => () => void;
     };

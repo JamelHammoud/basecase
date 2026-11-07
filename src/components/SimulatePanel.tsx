@@ -7,6 +7,7 @@ import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
 import { BriefSection, RobotFitSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController } from './simulate/ControlSection';
+import { EmulatedRobotSection } from './simulate/EmulatedRobotSection';
 import { ModelSection } from './simulate/ModelSection';
 import { PoliciesSection } from './simulate/PoliciesSection';
 import { ResultSection } from './simulate/ResultSection';
@@ -52,6 +53,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         {kase && <BriefSection cases={cases} />}
         {kase && <RobotFitSection cases={cases} />}
         {kase && <TrySection cases={cases} driveNote={sim.drive.note} cls={sim.drive.cls} />}
+        <EmulatedRobotSection />
         <ControlSection {...control} choose={choose} showDrive={!kase} />
         <TrainSection training={training} fixed={cases.fixedBase} />
         {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}

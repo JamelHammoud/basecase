@@ -4,6 +4,7 @@ import './index.css';
 import App from './App.tsx';
 import { ConfirmHost } from './design-system/ConfirmHost';
 import { OverlayScrollbars } from './design-system/OverlayScrollbars';
+import { startRobotStore } from './robot/robotStore';
 import { refreshRates } from './utils/currencyStore';
 
 const electronAPI = window.electronAPI;
@@ -13,6 +14,7 @@ if (electronAPI?.isElectron) {
 
   electronAPI.isFullScreen().then(setFullScreen);
   electronAPI.onFullScreenChange(setFullScreen);
+  startRobotStore(electronAPI);
 }
 
 refreshRates();

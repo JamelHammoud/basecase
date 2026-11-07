@@ -43,7 +43,13 @@ export type SimResponse =
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
   | { type: 'replayed' }
-  | { type: 'frame'; poses: Float64Array; stats: ReturnType<SimEngine['stats']>; playing: boolean }
+  | {
+      type: 'frame';
+      poses: Float64Array;
+      targets: Float64Array;
+      stats: ReturnType<SimEngine['stats']>;
+      playing: boolean;
+    }
   | {
       type: 'ran';
       id: number;
@@ -69,8 +75,9 @@ const frame = () => {
   if (!engine) return;
 
   const poses = engine.poses();
+  const targets = engine.jointTargets();
 
-  post({ type: 'frame', poses, stats: engine.stats(rtf), playing }, [poses.buffer]);
+  post({ type: 'frame', poses, targets, stats: engine.stats(rtf), playing }, [poses.buffer, targets.buffer]);
 };
 
 function loop() {

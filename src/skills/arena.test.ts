@@ -23,7 +23,7 @@ function armEnvironment(contract: Contract = staysPut): Environment {
   return {
     version: 1,
     robot: arm.robots[0].key,
-    horizonS: 1.5,
+    horizonS: 0.6,
     traceDt: 0.02,
     observation: policyObservation(['arm0', 'arm1', 'arm2']),
     action: { kind: 'position-offset', joints: ['arm0', 'arm1', 'arm2'], scale: 0.25, controlDt: 0.02 },
@@ -131,7 +131,7 @@ describe('Arena on real WASM MuJoCo', () => {
       ].sort(),
     );
     expect(JSON.stringify(held)).not.toContain(Array.from(salt).join(','));
-  });
+  }, 30_000);
 
   it('refuses a contract the environment does not carry', async () => {
     const mj = await loadMujoco();

@@ -62,10 +62,23 @@ def quat_mul(a, b):
     )
 
 
+class Phases:
+    """Seconds spent in each part of an iteration, so speed claims rest on measurements."""
+
+    def __init__(self):
+        self.seconds = {"physics": 0.0, "observe": 0.0, "reward": 0.0, "inference": 0.0, "gradient": 0.0}
+
+    def add(self, name, since):
+        now = time.perf_counter()
+        self.seconds[name] += now - since
+        return now
+
+
 class Envs:
     """n copies of the robot, stepped together by MuJoCo's threaded rollout."""
 
     def __init__(self, xml, job, n, seed):
+        self.phases = Phases()
         self.job = job
         self.n = n
         self.rng = np.random.default_rng(seed)
@@ -205,7 +218,9 @@ class Envs:
                 int(2 / self.control_dt), int(5 / self.control_dt), size=int(due.sum())
             )
 
+        tick = time.perf_counter()
         states, _ = self.roller.rollout(self.models, self.datas, self.state, control, nstep=self.decim)
+        tick = self.phases.add("physics", tick)
         self.state = np.ascontiguousarray(states[:, -1, :])
         self.t += 1
 
@@ -252,6 +267,7 @@ class Envs:
         self.last_action = a
         for i in np.nonzero(done)[0]:
             self._reset(i)
+        self.phases.add("reward", tick)
         return r.astype(np.float32), fell, timeout
 
 
@@ -395,6 +411,38 @@ def evaluate(xml, job, policy, seconds=8.0):
     }
 
 
+def evaluate_seeds(xml, job, policy, seeds):
+    """The time-to-skill check: clean runs from varied starts, counting the ones that meet the task."""
+    seconds = 8.0
+    model, norm = policy.model, policy.norm
+    env = Envs(xml, job, seeds, seed=job.get("seed", 1) + 1000)
+    env.models = [env.base] * seeds
+    env.push_at[:] = 10**9
+    steps = int(seconds / env.control_dt)
+    fell = np.zeros(seeds, dtype=bool)
+    forward = np.zeros(seeds)
+    for _ in range(steps):
+        obs = torch.tensor(norm(env.observe()))
+        with torch.no_grad():
+            a = model.actor(obs).numpy()
+        env.t[:] = 0
+        _, fell_now, _ = env.step(a)
+        fell |= fell_now
+        qpos = env.state[:, env.oq : env.oq + env.nq]
+        qvel = env.state[:, env.ov : env.ov + env.nv]
+        v = quat_rotate_inverse(qpos[:, env.rq + 3 : env.rq + 7], qvel[:, env.rd : env.rd + 3])
+        forward += -v[:, 1] * env.control_dt
+    speed = forward / seconds
+    wanted = float(job.get("gateSpeed", 0.2)) if job["task"] == "walk" else None
+    passed = ~fell if wanted is None else (~fell) & (speed >= wanted)
+    return {
+        "seeds": seeds,
+        "passed": int(passed.sum()),
+        "fell": int(fell.sum()),
+        "meanSpeed": float(speed.mean()),
+    }
+
+
 @dataclass
 class Hyper:
     horizon: int = 24
@@ -468,7 +516,9 @@ class Ppo:
     def collect(self):
         env, model = self.env, self.model
         buf = Rollout()
+        phases = env.phases
         for _ in range(self.hp.horizon):
+            tick = time.perf_counter()
             obs = self.norm(self.obs_raw)
             with torch.no_grad():
                 ot = torch.from_numpy(obs)
@@ -476,6 +526,7 @@ class Ppo:
                 a = d.sample()
                 logp = d.log_prob(a).sum(-1)
                 v = model.critic(ot).squeeze(-1)
+            phases.add("inference", tick)
             r, fell, timeout = env.step(a.numpy())
             self.track_episodes(r, fell | timeout)
             buf.obs.append(ot)
@@ -485,8 +536,10 @@ class Ppo:
             buf.rew.append(torch.from_numpy(r))
             buf.done.append(torch.from_numpy((fell | timeout).astype(np.float32)))
             buf.timeout.append(torch.from_numpy(timeout.astype(np.float32)))
+            tick = time.perf_counter()
             self.obs_raw = env.observe()
             self.norm.update(self.obs_raw)
+            phases.add("observe", tick)
             self.steps += env.n
         return buf
 
@@ -545,8 +598,10 @@ class Ppo:
 
     def iterate(self):
         buf = self.collect()
+        tick = time.perf_counter()
         rews, adv, ret = self.advantages(buf)
         self.update(buf, adv, ret)
+        self.env.phases.add("gradient", tick)
         return rews
 
 
@@ -563,7 +618,8 @@ def train_loop(ppo, run):
     last_save = now
     elapsed = 0.0
     it = 0
-    while not should_stop(run) and elapsed < run.budget:
+    limit = run.job.get("maxIterations")
+    while not should_stop(run) and elapsed < run.budget and (limit is None or it < limit):
         rews = ppo.iterate()
         it += 1
         tick = time.monotonic()
@@ -580,6 +636,7 @@ def train_loop(ppo, run):
             reward=float(rews.mean() / (env.control_dt * 10)),
             episodeS=float(np.mean(ppo.recent_len)) if ppo.recent_len else 0.0,
             fps=ppo.steps / max(elapsed, 1e-6),
+            phases={k: round(v, 4) for k, v in env.phases.seconds.items()},
         )
         if time.monotonic() - last_save > 60:
             export(run.policy_path, run.job, ppo.policy, ppo.steps)
@@ -626,14 +683,15 @@ def main():
 
     job, xml = load_job(args.job)
     torch.set_num_threads(max(1, min(4, (os.cpu_count() or 4) // 2)))
-    torch.manual_seed(0)
+    seed = int(job.get("seed", 0))
+    torch.manual_seed(seed)
 
     budget = float(job["minutes"]) * 60
     stop = install_stop_handlers()
 
     emit(type="status", message="Building environments")
     nenv = int(job.get("envs", 64))
-    env = Envs(xml, job, nenv, seed=1)
+    env = Envs(xml, job, nenv, seed=seed + 1)
     nobs = 12 + 3 * env.na
     policy = Policy(ActorCritic(nobs, env.na), Normalizer(nobs))
     ppo = Ppo(env, policy)
@@ -649,7 +707,9 @@ def main():
     export(policy_path, job, policy, ppo.steps)
     export_onnx(os.path.join(args.job, "policy.onnx"), policy.model, policy.norm, nobs)
     result = evaluate(xml, job, policy)
-    emit(type="done", policy=policy_path, steps=ppo.steps, stopped=stop["now"], eval=result)
+    seeds = job.get("evalSeeds")
+    gate = evaluate_seeds(xml, job, policy, int(seeds)) if seeds else None
+    emit(type="done", policy=policy_path, steps=ppo.steps, stopped=stop["now"], eval=result, gate=gate)
 
 
 if __name__ == "__main__":

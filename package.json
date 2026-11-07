@@ -40,7 +40,8 @@
     "security": "node tools/security/audit.mjs",
     "dist": "vite build && electron-builder --mac --arm64 --publish never",
     "dist:win": "vite build && electron-builder --win --x64 --publish never",
-    "test:app": "vitest run --config vitest.app.config.ts"
+    "test:app": "vitest run --config vitest.app.config.ts",
+    "verify": "node verify/gatekeeper.mjs"
   },
   "build": {
     "appId": "app.basecase",

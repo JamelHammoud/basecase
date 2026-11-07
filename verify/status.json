@@ -1,0 +1,77 @@
+{
+  "gates": {
+    "s0-foundation": {
+      "id": "s0-foundation",
+      "title": "Sim fixes, fixtures, WASM parity and measured trainer phases",
+      "stage": 0,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "fixture robots classify and emit",
+          "ok": true,
+          "detail": "0.5 s",
+          "metrics": {},
+          "seconds": 0.478
+        },
+        {
+          "name": "C MuJoCo reference computed for every fixture",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.176
+        },
+        {
+          "name": "WASM matches C MuJoCo on every fixture",
+          "ok": true,
+          "detail": "0.7 s",
+          "metrics": {},
+          "seconds": 0.732
+        },
+        {
+          "name": "sim regression tests pass",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.639
+        },
+        {
+          "name": "train.py reports measured phase timers for a real run",
+          "ok": true,
+          "detail": "21285 steps/s",
+          "metrics": {
+            "fps": 21285.275793339533,
+            "phases": {
+              "physics": 0.3319,
+              "observe": 0.0344,
+              "reward": 0.0515,
+              "inference": 0.1496,
+              "gradient": 0.8498
+            }
+          },
+          "seconds": 4.722
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a run with no timed physics is rejected",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        },
+        {
+          "name": "timers covering too little of the run are rejected",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        }
+      ],
+      "commit": "8494130",
+      "at": "2026-11-07T20:51:57.358Z",
+      "manifest": "clean"
+    }
+  }
+}

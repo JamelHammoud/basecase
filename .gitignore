@@ -68,3 +68,6 @@ __pycache__/
 
 # Native addon build output (npm run native)
 electron/native/*/build/
+
+# Gatekeeper outputs (fixtures, parity vectors, training runs)
+/verify/out/

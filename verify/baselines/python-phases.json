@@ -1,0 +1,15 @@
+{
+  "robot": "quad-servo",
+  "envs": 64,
+  "iterations": 20,
+  "steps": 30720,
+  "seconds": 1.4432512079365551,
+  "stepsPerSecond": 21285.275793339533,
+  "phases": {
+    "physics": 0.3319,
+    "observe": 0.0344,
+    "reward": 0.0515,
+    "inference": 0.1496,
+    "gradient": 0.8498
+  }
+}

@@ -2,6 +2,7 @@ use crate::block::Block;
 use crate::convex::{dot, plane_convex, Found, Frames, F3};
 use crate::lanes::{LANES, V, ZERO};
 use crate::plan::Plan;
+use crate::prefilter::{clear_of_plane, Probe};
 use crate::primitives::{plane_box, plane_capsule, plane_cylinder, plane_sphere};
 use forge_ir::{Collider, Pair, Shape};
 
@@ -97,6 +98,18 @@ pub fn collide(plan: &Plan, b: &mut Block) {
 
     for pair in &plan.kernel.pairs {
         let [g1, g2] = pair.geoms;
+        let probe = Probe {
+            plane: g1,
+            geom: g2,
+            shape: &plan.kernel.geoms[g2],
+            meshes: &plan.kernel.meshes,
+            margin: pair.margin + pair.gap,
+        };
+
+        if clear_of_plane(b, &probe) {
+            slot += pair.max_contacts;
+            continue;
+        }
 
         for lane in 0..LANES {
             let plane_mat = lane9(&b.geom_xmat, g1, lane);

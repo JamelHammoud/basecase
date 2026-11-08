@@ -2,6 +2,9 @@ use forge_id::{identify, simulate, Experiment, Fit, Options, Param, ParamSpec, R
 use forge_mujoco::Model;
 use std::f64::consts::TAU;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static MODEL_FILES: AtomicUsize = AtomicUsize::new(0);
 
 const ENCODER_STEP: f64 = TAU / 4096.0;
 const SAMPLE_HZ: f64 = 50.0;
@@ -76,7 +79,8 @@ fn arm_xml(shoulder: Servo, elbow: Servo) -> String {
 }
 
 fn load(name: &str, xml: &str) -> Model {
-    let path = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(format!("{name}-{}.xml", std::process::id()));
+    let file = MODEL_FILES.fetch_add(1, Ordering::Relaxed);
+    let path = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(format!("{name}-{}-{file}.xml", std::process::id()));
 
     std::fs::write(&path, xml).expect("write the arm model");
 

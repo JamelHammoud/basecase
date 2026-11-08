@@ -103,22 +103,28 @@ inline void factor_h(Ctx c) {
     }
 }
 
+#define HX(i) H(NM + NV + (i))
+
 inline void solve_h(Ctx c, int x) {
+    for (int i = 0; i < NV; i++) {
+        HX(i) = to_h(S(x, i));
+    }
     for (int i = NV - 1; i >= 0; i--) {
-        hreal xi = to_h(S(x, i));
+        hreal xi = HX(i);
         for (int a = M_ADR[i]; a < diag_of(i); a++) {
-            S(x, M_COL[a]) = from_h(to_h(S(x, M_COL[a])) - H(a) * xi);
+            HX(M_COL[a]) -= H(a) * xi;
         }
     }
     for (int i = 0; i < NV; i++) {
-        S(x, i) = from_h(to_h(S(x, i)) * H(NM + i));
+        HX(i) *= H(NM + i);
     }
     for (int i = 0; i < NV; i++) {
         hreal acc = to_h(Z());
         for (int a = M_ADR[i]; a < diag_of(i); a++) {
-            acc += H(a) * to_h(S(x, M_COL[a]));
+            acc += H(a) * HX(M_COL[a]);
         }
-        S(x, i) = from_h(to_h(S(x, i)) - acc);
+        HX(i) -= acc;
+        S(x, i) = from_h(HX(i));
     }
 }
 

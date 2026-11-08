@@ -11,9 +11,16 @@ inline int detect(int pair, Frames f, thread Found *out) {
     }
 }
 
-inline int assemble(Ctx c, thread int &ncon) {
-    friction_rows(c);
-    int k = limit_rows(c, NFRIC);
+inline void keep_contact(Ctx c, int at, int slot, Found found, d3 normal) {
+    N(CSLOT, at) = slot;
+    S(CDIST, at) = found.dist;
+    put3(c, CPOS, at, found.pos);
+    put3(c, CTAN, at, found.tangent);
+    put3(c, CNOR, at, normal);
+}
+
+inline int collide(Ctx c, thread int &ncon) {
+    int kept = 0;
     ncon = 0;
     for (int p = 0; p < NPAIR; p++) {
         int g1 = PAIR_G1[p], g2 = PAIR_G2[p];
@@ -22,8 +29,23 @@ inline int assemble(Ctx c, thread int &ncon) {
         int n = detect(p, f, found);
         ncon += n;
         for (int i = 0; i < n; i++) {
-            k = contact_rows(c, PAIR_SLOT0[p] + i, found[i], plane_normal(f), k);
+            int slot = PAIR_SLOT0[p] + i;
+            if (found[i].dist < SLOT_MARGIN[slot]) {
+                keep_contact(c, kept, slot, found[i], plane_normal(f));
+                kept++;
+            }
         }
+    }
+    return kept;
+}
+
+inline int assemble(Ctx c, thread int &ncon) {
+    friction_rows(c);
+    int k = limit_rows(c, NFRIC);
+    int kept = collide(c, ncon);
+    for (int i = 0; i < kept; i++) {
+        Found found = Found{S(CDIST, i), get3(c, CPOS, i), get3(c, CTAN, i)};
+        k = contact_rows(c, N(CSLOT, i), found, get3(c, CNOR, i), k);
     }
     return k;
 }
@@ -136,7 +158,7 @@ kernel void step(device real *io [[buffer(0)]], device real *s [[buffer(1)]], de
         return;
     }
     uint world = order[t];
-    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + NV) : 1];
+    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + 2 * NV) : 1];
     Ctx c = context(s, n, tgh, t);
     load(c, io, world);
     int ncon = 0, work = 0;
@@ -157,7 +179,7 @@ kernel void forward_only(device real *io [[buffer(0)]], device real *s [[buffer(
         return;
     }
     uint world = order[t];
-    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + NV) : 1];
+    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + 2 * NV) : 1];
     Ctx c = context(s, n, tgh, t);
     load(c, io, world);
     int ncon = 0;
@@ -172,7 +194,7 @@ kernel void profile(device real *io [[buffer(0)]], device real *s [[buffer(1)]],
     if (t >= W) {
         return;
     }
-    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + NV) : 1];
+    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + 2 * NV) : 1];
     Ctx c = context(s, n, tgh, t);
     load(c, io, order[t]);
     int ncon = 0, work = 0;

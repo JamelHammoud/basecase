@@ -19,7 +19,7 @@ const SHARED_BYTES: usize = 32 * 1024;
 fn hessian_bytes(plan: &Plan) -> usize {
     let width = if HESSIAN_DF { 8 } else { 4 };
 
-    super::engine::BLOCK * (plan.nm + plan.kernel.nv) * width
+    super::engine::BLOCK * (plan.nm + 2 * plan.kernel.nv) * width
 }
 
 impl Layout {
@@ -108,13 +108,23 @@ impl Layout {
         self.take("CTRLE", nu);
     }
 
+    fn contacts(&mut self, slots: usize) {
+        self.take("CDIST", slots);
+
+        for name in ["CPOS", "CTAN", "CNOR"] {
+            self.take(name, 3 * slots);
+        }
+
+        self.take_int("CSLOT", slots);
+    }
+
     fn rows(&mut self, plan: &Plan) {
         let nr = plan.nrows;
 
         self.take("SCRJ", 3 * self.maxchain);
 
         if !self.shared {
-            self.take("HF", plan.nm + plan.kernel.nv);
+            self.take("HF", plan.nm + 2 * plan.kernel.nv);
         }
 
         self.take("RJAC", nr * plan.kernel.nv);
@@ -126,6 +136,7 @@ impl Layout {
 
         self.take("QUAD", 3 * nr);
         self.take("FRC", plan.friction.len());
+        self.contacts(plan.contacts.len());
         self.take_int("RCHAIN", nr);
         self.take_int("FRZ", plan.friction.len());
     }

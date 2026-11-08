@@ -220,7 +220,7 @@ function stopFailures(plan: Plan): Scenario[] {
 }
 
 function coordinatorHang(plan: Plan): Scenario {
-  const at = 5;
+  const at = Math.min(5, plan.base.timeoutMs / 2000);
   const deadline = plan.controlDeadlineMs / 1000;
   const base = baseSkill(plan);
   const safe = plan.skills[plan.safeStop]?.id ?? base;

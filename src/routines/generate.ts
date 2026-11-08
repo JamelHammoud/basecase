@@ -17,6 +17,7 @@ import type { Plan, PlanOp } from './planTypes';
 import type { Scenario } from './scenarioTypes';
 
 const IDLE_SECONDS = 10;
+const BEFORE_BASE_END_S = 0.1;
 const LABEL: Record<string, string> = {
   ok: 'runs',
   timeout: 'times out',
@@ -39,8 +40,9 @@ function outcomesFor(op: PlanOp): string[] {
 
 function idle(plan: Plan): Scenario {
   const base = baseSkill(plan);
+  const seconds = Math.min(IDLE_SECONDS, plan.base.timeoutMs / 1000 - BEFORE_BASE_END_S);
 
-  return scenario('idle: only the base runs', emptySetup(), IDLE_SECONDS, [
+  return scenario('idle: only the base runs', emptySetup(), seconds, [
     { saidExactly: [] },
     { skills: [base] },
     { always: { skill: base } },

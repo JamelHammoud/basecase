@@ -91,7 +91,11 @@ class Flattener {
 
     switch (step.kind) {
       case 'do':
-        return { skill: this.skillIndex.get(step.skill), holds: maskOf(step.holds) };
+        return {
+          skill: this.skillIndex.get(step.skill),
+          holds: maskOf(step.holds),
+          ...(step.move ? { move: { ...step.move } } : {}),
+        };
       case 'say':
         return this.say(step);
       case 'infer':

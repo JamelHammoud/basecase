@@ -1,15 +1,17 @@
 import { describeCondition } from './explainGraph';
 import type { FlowNode } from './flowTypes';
 import { findNode } from './nodes';
-import type { Condition } from './schema';
+import type { Condition, Motion } from './schema';
 
 export interface NodeLabel {
   kind: string;
   text: string;
 }
 
+type Data = Record<string, unknown>;
+
 const KIND_WORDS: Record<string, string> = {
-  base: 'Keep doing',
+  base: 'Start',
   watcher: 'Watch',
   reaction: 'When',
   do: 'Do',
@@ -24,12 +26,40 @@ const KIND_WORDS: Record<string, string> = {
 const words = (id: string) => id.replace(/-/g, ' ');
 const capitalised = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 const quoted = (text: unknown) => `“${String(text ?? '')}”`;
+const rounded = (n: number) => Math.round(n * 100) / 100;
+
+export function seconds(ms: number): string {
+  if (ms >= 60_000) return `${rounded(ms / 60_000)} min`;
+
+  return `${rounded(ms / 1000)} s`;
+}
 
 const sentence = (cond: unknown) => capitalised(describeCondition(cond as Condition));
-const modelLabel = (d: Record<string, unknown>) => findNode(String(d.model))?.label ?? String(d.model);
+const modelLabel = (d: Data) => findNode(String(d.model))?.label ?? String(d.model);
 
-const TEXT: Record<string, (d: Record<string, unknown>) => string> = {
-  base: (d) => capitalised(words(String(d.skill))),
+const HEADINGS: Record<number, string> = { 0: 'ahead', 90: 'left', [-90]: 'right', 180: 'back', [-180]: 'back' };
+
+function driveText(move: Motion): string {
+  const heading = move.heading ?? 0;
+  const way = HEADINGS[heading] ?? `at ${heading}°`;
+
+  return `${rounded(move.distance ?? 0)} m ${way}`;
+}
+
+const turnText = (turn: number) => `${Math.abs(turn)}° ${turn >= 0 ? 'left' : 'right'}`;
+
+function motionLabel(d: Data): NodeLabel | null {
+  const move = d.move as Motion | undefined;
+
+  if (move?.distance !== undefined) return { kind: 'Drive', text: driveText(move) };
+
+  if (move?.turn !== undefined) return { kind: 'Turn', text: turnText(move.turn) };
+
+  return d.skill === 'settle' ? { kind: 'Stop', text: 'Settle to neutral' } : null;
+}
+
+const TEXT: Record<string, (d: Data) => string> = {
+  base: (d) => `${capitalised(words(String(d.skill)))} for ${seconds(Number(d.timeoutMs ?? 0))}`,
   do: (d) => capitalised(words(String(d.skill))),
   say: (d) => quoted(d.text),
   infer: modelLabel,
@@ -37,10 +67,12 @@ const TEXT: Record<string, (d: Record<string, unknown>) => string> = {
   ask: (d) => quoted(d.prompt),
   if: (d) => sentence(d.test),
   reaction: (d) => sentence(d.when),
-  wait: (d) => (d.until ? sentence(d.until) : `${Number(d.ms ?? 0) / 1000} s`),
+  wait: (d) => (d.until ? sentence(d.until) : seconds(Number(d.ms ?? 0))),
   together: (d) => (d.join === 'any' ? 'First to finish' : 'All at once'),
 };
 
 export function nodeLabel(node: FlowNode): NodeLabel {
-  return { kind: KIND_WORDS[node.kind] ?? '', text: TEXT[node.kind]?.(node.data) ?? '' };
+  const moved = node.kind === 'do' ? motionLabel(node.data) : null;
+
+  return moved ?? { kind: KIND_WORDS[node.kind] ?? '', text: TEXT[node.kind]?.(node.data) ?? '' };
 }

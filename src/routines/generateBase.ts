@@ -5,6 +5,7 @@ import type { Plan } from './planTypes';
 import type { Expectation, Scenario } from './scenarioTypes';
 
 const FAIL_AT_S = 2;
+const FAIL_MARGIN_MS = 500;
 const SLACK_S = 3;
 const OUTCOMES: Outcome[] = ['ok', 'timeout', 'fail'];
 const EMPTY: Expected = {
@@ -64,5 +65,7 @@ function ending(plan: Plan, kind: Ending): Scenario[] {
 }
 
 export function baseFamilies(plan: Plan): Scenario[] {
-  return [...ending(plan, 'timeout'), ...ending(plan, 'failed')];
+  const canFail = plan.base.timeoutMs > FAIL_AT_S * 1000 + FAIL_MARGIN_MS;
+
+  return [...ending(plan, 'timeout'), ...(canFail ? ending(plan, 'failed') : [])];
 }

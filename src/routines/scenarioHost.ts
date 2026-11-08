@@ -1,5 +1,6 @@
 import type { CoordinatorRun, RawEvent } from './coordinator';
 import type { Plan, PlanOp, PlanWatcher } from './planTypes';
+import type { Motion } from './schema';
 import { ORDER, type VirtualClock } from './scenarioClock';
 import {
   activeFault,
@@ -19,15 +20,21 @@ import { type FactValue, renderText, TraceDecoder } from './traceDecode';
 
 type Reply = (ok: boolean) => void;
 
+export interface MotionHost {
+  startMove: (move: { token: number; skill: string; move: Motion }, finish: Reply) => void;
+}
+
 export class ScenarioHost {
   readonly trace: TraceEvent[] = [];
   readonly said: string[] = [];
   readonly values = new Map<number, FactValue>();
   readonly symbols: string[];
   skillLatency: (skill: string) => number = () => SKILL_MS;
+  motion: MotionHost | null = null;
   private readonly decoder: TraceDecoder;
   private readonly cancelled = new Set<number>();
   private readonly doNodes = new Map<number, string>();
+  private readonly doMoves = new Map<number, Motion>();
   private readonly baseSkill: string;
 
   private readonly plan: Plan;
@@ -57,6 +64,10 @@ export class ScenarioHost {
 
   record(event: TraceEvent) {
     this.trace.push(event);
+  }
+
+  isCancelled(token: number): boolean {
+    return this.cancelled.has(token);
   }
 
   private fault(names: string[], atMs: number): Fault | undefined {
@@ -130,9 +141,18 @@ export class ScenarioHost {
     const mock = this.scenario.mocks[skill];
     const finish = Object.assign((ok: boolean) => this.run.complete(token, ok), { token });
     const node = this.doNodes.get(token);
+    const move = this.doMoves.get(token);
 
     if (node === undefined && skill === this.baseSkill && mock === undefined) {
       this.phases(token, skill, t + PHASE_MS);
+
+      return;
+    }
+
+    if (move && this.motion && mock === undefined) {
+      this.motion.startMove({ token, skill, move }, (ok) => {
+        if (!this.cancelled.has(token)) finish(ok);
+      });
 
       return;
     }
@@ -161,6 +181,8 @@ export class ScenarioHost {
     const token = event.token ?? 0;
 
     if (op?.kind === 'do') this.doNodes.set(token, op.node);
+
+    if (op?.kind === 'do' && op.move) this.doMoves.set(token, op.move);
 
     if (!op || op.kind === 'do' || op.kind === 'wait') return;
 

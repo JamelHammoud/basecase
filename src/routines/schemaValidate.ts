@@ -107,6 +107,28 @@ function checkGuard(c: Checker, step: Record_, path: string, depth: number) {
   }
 }
 
+const MOTION_RANGES: Record<string, { min: number; max: number; message: string }> = {
+  distance: { min: 0.01, max: 100, message: 'Drive between 0.01 and 100 m.' },
+  speed: { min: 0.01, max: 2, message: 'Drive between 0.01 and 2 m/s.' },
+  heading: { min: -180, max: 180, message: 'Head between -180° and 180°.' },
+  turn: { min: -1080, max: 1080, message: 'Turn between -1080° and 1080°.' },
+};
+
+function checkMotion(c: Checker, move: unknown, path: string) {
+  if (!isRecord(move)) return c.add('invalid-field', path, 'A move is an object.');
+
+  for (const [key, value] of Object.entries(move)) {
+    const range = MOTION_RANGES[key];
+    const valid = !!range && isNumber(value) && value >= range.min && value <= range.max;
+
+    c.field(valid, `${path}.${key}`, range?.message ?? 'A move has a distance, speed, heading or turn.');
+  }
+
+  const bounded = isNumber(move.distance) || (isNumber(move.turn) && move.turn !== 0);
+
+  c.field(bounded, path, 'Give the move a distance or a turn.');
+}
+
 function checkDo(c: Checker, step: Record_, path: string) {
   c.field(isText(step.skill, 64), `${path}.skill`, 'Name the skill to run.');
 
@@ -114,6 +136,8 @@ function checkDo(c: Checker, step: Record_, path: string) {
   const valid = isList(holds, 3) && holds.every((r) => typeof r === 'string' && RESOURCES.has(r));
 
   c.field(valid, `${path}.holds`, 'List what the skill holds: body, head or voice.');
+
+  if (step.move !== undefined) checkMotion(c, step.move, `${path}.move`);
 }
 
 function checkInfer(c: Checker, step: Record_, path: string) {

@@ -1,10 +1,13 @@
 import type { MainModule } from '@mujoco/mujoco';
-import type { Skill } from '../skills/artifacts';
+import type { Skill, SkillController } from '../skills/artifacts';
+import type { DriveSetup } from '../sim/drive';
 import type { Controller, SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
 import type { RobotJoint } from '../types/robotics';
 import { isNeck } from './capabilities';
+import type { Motion } from './schema';
+import { skillId } from './skillNames';
 
 export const KIT_SKILL_NAMES = {
   velocity: 'Velocity tracking',
@@ -27,7 +30,21 @@ export interface RoutineBody {
   robot: string;
   policies: KitPolicies;
   neck: string | null;
+  drive: DriveSetup | null;
+  skills: Record<string, SkillController>;
 }
+
+export type Command = [number, number, number];
+
+export interface BodyControl {
+  controller: Controller;
+  command: Command | null;
+}
+
+export const SCRIPTED_FULL = { linear: 0.2, angular: 0.6 };
+
+const KIT_NAMES = new Set<string>(Object.values(KIT_SKILL_NAMES));
+const D2R = Math.PI / 180;
 
 function fits(model: SimModel, policy: PolicySpec): boolean {
   const ids = new Set(model.joints.map((j) => j.id));
@@ -47,8 +64,21 @@ function policyNamed(model: SimModel, skills: readonly Skill[], names: string[])
   return null;
 }
 
-export function routineBody(model: SimModel, joints: RobotJoint[], skills: readonly Skill[]): RoutineBody | null {
+function ownSkills(model: SimModel, skills: readonly Skill[]): Record<string, SkillController> {
+  const usable = skills.filter(
+    (s) => !KIT_NAMES.has(s.name) && (s.controller.kind !== 'policy' || fits(model, s.controller.policy)),
+  );
+
+  return Object.fromEntries(usable.map((s) => [skillId(s.name), s.controller]));
+}
+
+export function routineBody(
+  model: SimModel,
+  joints: RobotJoint[],
+  options: { skills: readonly Skill[]; drive?: DriveSetup | null },
+): RoutineBody | null {
   const robot = model.robots.find((r) => r.floating);
+  const { skills } = options;
 
   if (!robot) return null;
 
@@ -62,28 +92,84 @@ export function routineBody(model: SimModel, joints: RobotJoint[], skills: reado
       settle: policyNamed(model, skills, [KIT_SKILL_NAMES.settle, KIT_SKILL_NAMES.stand]),
     },
     neck: neckJoint?.id ?? null,
+    drive: options.drive ?? null,
+    skills: ownSkills(model, skills),
   };
 }
 
-const commanded = (policy: PolicySpec, command: [number, number, number]): PolicySpec => ({ ...policy, command });
+const commanded = (policy: PolicySpec, command: Command): PolicySpec => ({ ...policy, command });
 
-function bodyPolicy(body: RoutineBody, skill: string | null): PolicySpec | null {
-  const { velocity, settle } = body.policies;
+export function moveCommand(skill: string | null, move?: Motion): Command | null {
+  if (skill === 'walk' && move?.distance !== undefined) {
+    const speed = move.speed ?? WALK_COMMAND[0];
+    const heading = (move.heading ?? 0) * D2R;
 
-  if (skill === 'walk') return velocity && commanded(velocity, WALK_COMMAND);
+    return [speed * Math.cos(heading), speed * Math.sin(heading), 0];
+  }
 
-  if (skill === 'turn-away') return velocity && commanded(velocity, TURN_COMMAND);
+  if (skill === 'turn-away' && move?.turn !== undefined) return [0, 0, Math.sign(move.turn) * TURN_COMMAND[2]];
 
-  return settle;
+  if (skill === 'walk') return WALK_COMMAND;
+
+  return skill === 'turn-away' ? TURN_COMMAND : null;
 }
 
-export function controllerFor(body: RoutineBody, skills: { body: string | null; head: string | null }): Controller {
+const unit = (x: number) => Math.max(-1, Math.min(1, x));
+
+export const scripted = (c: Command): Command => [
+  unit(c[0] / SCRIPTED_FULL.linear),
+  unit(c[1] / SCRIPTED_FULL.linear),
+  unit(c[2] / SCRIPTED_FULL.angular),
+];
+
+type Hold = Record<string, number> | undefined;
+
+function policyControl(body: RoutineBody, policy: PolicySpec, hold: Hold): BodyControl {
+  return { controller: { kind: 'policy', policy, robot: body.robot, ...(hold ? { hold } : {}) }, command: null };
+}
+
+function velocityControl(body: RoutineBody, command: Command, hold: Hold): BodyControl {
+  const { velocity } = body.policies;
+
+  if (velocity) return policyControl(body, commanded(velocity, command), hold);
+
+  if (body.drive) return { controller: { kind: 'drive', setup: body.drive }, command: scripted(command) };
+
+  return { controller: { kind: 'hold', values: hold }, command: null };
+}
+
+function ownControl(body: RoutineBody, controller: SkillController, hold: Hold): BodyControl {
+  if (controller.kind === 'policy') return policyControl(body, controller.policy, hold);
+
+  return { controller, command: controller.kind === 'drive' ? [0, 0, 0] : null };
+}
+
+export function controlFor(
+  body: RoutineBody,
+  skills: { body: string | null; head: string | null },
+  move?: Motion,
+): BodyControl {
   const hold = body.neck && skills.head === 'look-at' ? { [body.neck]: LOOK_DEG } : undefined;
-  const policy = bodyPolicy(body, skills.body);
+  const command = moveCommand(skills.body, move);
+  const own = skills.body === null ? undefined : body.skills[skills.body];
 
-  if (!policy) return { kind: 'hold', values: hold };
+  if (command) return velocityControl(body, command, hold);
 
-  return { kind: 'policy', policy, robot: body.robot, ...(hold ? { hold } : {}) };
+  if (own) return ownControl(body, own, hold);
+
+  if (body.policies.settle) return policyControl(body, body.policies.settle, hold);
+
+  if (body.drive) return { controller: { kind: 'drive', setup: body.drive }, command: [0, 0, 0] };
+
+  return { controller: { kind: 'hold', values: hold }, command: null };
+}
+
+export function applyControl(engine: SimEngine, next: BodyControl, previous: BodyControl | null) {
+  const keepDrive = previous?.controller.kind === 'drive' && next.controller.kind === 'drive';
+
+  if (!keepDrive) engine.setController(next.controller);
+
+  if (next.command) engine.command({ v: next.command });
 }
 
 export interface BodyPose {

@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import type { Skill } from '../skills/artifacts';
+import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotJoint } from '../types/robotics';
 import { generateScenarios } from './generate';
@@ -17,7 +18,7 @@ export interface ScenarioOutcome {
 }
 
 export type RoutinesRequest =
-  | { type: 'kit'; model: SimModel; joints: RobotJoint[]; skills: Skill[] }
+  | { type: 'kit'; model: SimModel; joints: RobotJoint[]; skills: Skill[]; drive: DriveSetup | null }
   | { type: 'test'; plan: Plan }
   | { type: 'physics'; plan: Plan; scenario: Scenario; model: SimModel; joints: RobotJoint[]; kit: RoutineKit };
 

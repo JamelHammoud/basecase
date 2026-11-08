@@ -22,7 +22,14 @@ interface Named {
   id?: string;
 }
 
-export type DoStep = { kind: 'do'; skill: string; holds: Resource[] } & Guarded & Named;
+export interface Motion {
+  distance?: number;
+  speed?: number;
+  heading?: number;
+  turn?: number;
+}
+
+export type DoStep = { kind: 'do'; skill: string; holds: Resource[]; move?: Motion } & Guarded & Named;
 export type SayStep = { kind: 'say'; text: string } & Guarded & Named;
 export type InferStep = { kind: 'infer'; model: string; input: string; output: { type: DataType } } & Guarded & Named;
 export type AskStep = { kind: 'ask'; prompt: string; input?: string; answers: string[] } & Guarded & Named;

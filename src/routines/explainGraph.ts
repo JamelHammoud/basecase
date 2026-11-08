@@ -40,10 +40,20 @@ function failure(step: Extract<Step, { timeoutMs: number }>): string {
   return parts.length ? ` (${parts.join('; ')})` : '';
 }
 
+function doWords(step: Extract<Step, { kind: 'do' }>): string {
+  const move = step.move;
+
+  if (move?.distance !== undefined) return `drive ${move.distance} m`;
+
+  if (move?.turn !== undefined) return `turn ${Math.abs(move.turn)}° ${move.turn >= 0 ? 'left' : 'right'}`;
+
+  return step.skill;
+}
+
 function describeStep(step: Step): string {
   switch (step.kind) {
     case 'do':
-      return `${step.skill}${failure(step)}`;
+      return `${doWords(step)}${failure(step)}`;
     case 'say':
       return `say ${quote(step.text)}${failure(step)}`;
     case 'infer':

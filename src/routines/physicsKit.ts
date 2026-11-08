@@ -1,19 +1,22 @@
 import type { MainModule } from '@mujoco/mujoco';
 import { modelHashes, type Skill } from '../skills/artifacts';
+import type { DriveSetup } from '../sim/drive';
 import { modelOf } from '../skills/fixtureModels';
 import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { loadKitLibrary } from './kitLibrary';
 import {
+  applyControl,
+  type BodyControl,
   BodyProbe,
   type BodyPose,
-  controllerFor,
-  KIT_SKILL_NAMES,
+  controlFor,
   LOOK_DEG,
   routineBody,
   type RoutineBody,
 } from './physicsBody';
+import { scriptedDrive } from './physicsDrive';
 import type { Resource, SkillContract, TransitionProof } from './schema';
 
 export interface KitRobot {
@@ -27,6 +30,7 @@ export interface RoutineKit {
   modelHash: string;
   problems: Record<string, string>;
   policies: readonly Skill[];
+  drive: DriveSetup | null;
 }
 
 export interface KitOptions {
@@ -93,6 +97,7 @@ class Prover {
   private readonly engine: SimEngine;
   private readonly probe: BodyProbe;
   private readonly body: RoutineBody;
+  private control: BodyControl | null = null;
 
   constructor(mj: MainModule, body: RoutineBody) {
     this.body = body;
@@ -100,15 +105,22 @@ class Prover {
     this.probe = new BodyProbe(mj, this.engine, body);
   }
 
+  private apply(skills: { body: string | null; head: string | null }, previous: BodyControl | null) {
+    const next = controlFor(this.body, skills);
+
+    applyControl(this.engine, next, previous);
+    this.control = next;
+  }
+
   private start(skills: { body: string | null; head: string | null }, seed: number) {
-    this.engine.setController(controllerFor(this.body, skills));
+    this.apply(skills, null);
     this.engine.reset(perturbed(this.body.model, seed));
   }
 
   private switchTo(skills: { body: string | null; head: string | null }): Sampled {
     const start = this.probe.pose();
 
-    this.engine.setController(controllerFor(this.body, skills));
+    this.apply(skills, this.control);
     this.engine.step(TO_S - STILL_S);
 
     const late = this.probe.pose();
@@ -168,7 +180,9 @@ const contract = (id: string, holds: Resource[], rest: Partial<SkillContract>): 
 function hasController(body: RoutineBody, skill: string): boolean {
   if (skill === 'look-at') return body.neck !== null && body.policies.velocity !== null;
 
-  return skill === 'settle' ? body.policies.settle !== null : body.policies.velocity !== null;
+  const policy = skill === 'settle' ? body.policies.settle : body.policies.velocity;
+
+  return policy !== null || body.drive !== null;
 }
 
 const SHAPES: Record<string, { holds: Resource[]; rest: Partial<SkillContract> }> = {
@@ -196,7 +210,7 @@ function kitContracts(
   body: RoutineBody | null,
   prover: Prover | null,
   modelHash: string,
-): Omit<RoutineKit, 'policies'> {
+): Omit<RoutineKit, 'policies' | 'drive'> {
   const problems: Record<string, string> = {};
   const skills = [...BODY_SKILLS, 'look-at'].map((id) => {
     const reason = body ? reasonFor(body, id, prover) : 'Only a robot that walks on legs runs the Motor Kit.';
@@ -220,7 +234,9 @@ function kitContracts(
 }
 
 function prove(mj: MainModule, body: RoutineBody): Prover | null {
-  if (!body.policies.velocity || !body.policies.settle) return null;
+  const drivable = !!body.drive || (!!body.policies.velocity && !!body.policies.settle);
+
+  if (!drivable) return null;
 
   const prover = new Prover(mj, body);
 
@@ -245,20 +261,18 @@ export function kitForModel(options: {
   model: SimModel;
   joints: RobotJoint[];
   skills: readonly Skill[];
+  drive?: DriveSetup | null;
 }): RoutineKit {
   const { mj, model, joints, skills } = options;
+  const drive = options.drive ?? null;
   const modelHash = modelHashes(model).physics;
-  const key = `${modelHash}#${libraryKey(skills)}`;
+  const key = `${modelHash}#${libraryKey(skills)}#${drive?.kind ?? ''}`;
   const known = cache.get(key);
 
   if (known) return known;
 
-  const body = routineBody(model, joints, skills);
-  const used = new Set<string>(Object.values(KIT_SKILL_NAMES));
-  const kit = {
-    ...kitContracts(body, body && prove(mj, body), modelHash),
-    policies: skills.filter((s) => used.has(s.name)),
-  };
+  const body = routineBody(model, joints, { skills, drive });
+  const kit = { ...kitContracts(body, body && prove(mj, body), modelHash), policies: [...skills], drive };
 
   cache.set(key, kit);
 
@@ -267,6 +281,8 @@ export function kitForModel(options: {
 
 export async function routineKit(mj: MainModule, robot: KitRobot, options: KitOptions = {}): Promise<RoutineKit> {
   const skills = options.skills ?? (await loadKitLibrary());
+  const model = options.model ?? modelOf(robot);
+  const drive = scriptedDrive(model, robot.joints, robot.parts);
 
-  return kitForModel({ mj, model: options.model ?? modelOf(robot), joints: robot.joints, skills });
+  return kitForModel({ mj, model, joints: robot.joints, skills, drive });
 }

@@ -1,13 +1,23 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { type Controller, SimEngine } from '../sim/engine';
+import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotJoint } from '../types/robotics';
-import { BodyProbe, controllerFor, routineBody, type RoutineBody, SKILL_SECONDS } from './physicsBody';
+import {
+  applyControl,
+  type BodyControl,
+  type BodyPose,
+  BodyProbe,
+  controlFor,
+  routineBody,
+  type RoutineBody,
+  SKILL_SECONDS,
+} from './physicsBody';
 import type { RoutineKit } from './physicsKit';
 import type { Plan } from './planTypes';
 import { type ScenarioRig, scenarioResult, startScenario } from './scenario';
 import { CONTROL_PERIOD_MS, SKILL_MS } from './scenarioMocks';
 import type { Scenario, ScenarioResult } from './scenarioTypes';
+import type { Motion } from './schema';
 
 export interface PhysicsSample {
   t: number;
@@ -32,8 +42,30 @@ export interface PhysicsRunInput {
 }
 
 const SAMPLE_EVERY_MS = 50;
+const D2R = Math.PI / 180;
 
 type Skills = { body: string | null; head: string | null };
+
+interface ActiveMove {
+  token: number;
+  skill: string;
+  move: Motion;
+  from: BodyPose;
+  yaw: number;
+  turned: number;
+  finish: (ok: boolean) => void;
+}
+
+const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
+
+function reached(active: ActiveMove, pose: BodyPose): boolean {
+  const { move, from } = active;
+  const travelled = Math.hypot(pose.base[0] - from.base[0], pose.base[1] - from.base[1]);
+
+  if (move.distance !== undefined && travelled >= move.distance) return true;
+
+  return move.turn !== undefined && Math.abs(active.turned) >= Math.abs(move.turn) * D2R;
+}
 
 export class PhysicsRun {
   readonly engine: SimEngine;
@@ -41,8 +73,10 @@ export class PhysicsRun {
   private readonly rig: ScenarioRig;
   private readonly probe: BodyProbe;
   private readonly body: RoutineBody;
-  private controller: Controller = { kind: 'hold' };
-  private bodySkill: string | null = null;
+  private control: BodyControl | null = null;
+  private controlKey = '';
+  private skills: Skills = { body: null, head: null };
+  private active: ActiveMove | null = null;
   private fell: number | null = null;
   private readonly ownsEngine: boolean;
   t = 0;
@@ -56,11 +90,13 @@ export class PhysicsRun {
     this.probe = new BodyProbe(input.mj, this.engine, body);
     this.drive({ body: null, head: null });
     rig.host.skillLatency = (skill) => (SKILL_SECONDS[skill] ?? SKILL_MS / 1000) * 1000;
+    rig.host.motion = { startMove: (started, finish) => this.startMove(started, finish) };
     rig.control.onChange = (skills) => this.drive(skills);
   }
 
   static async start(input: PhysicsRunInput): Promise<PhysicsRun> {
-    const body = routineBody(input.model, input.joints, input.kit.policies);
+    const { kit } = input;
+    const body = routineBody(input.model, input.joints, { skills: kit.policies, drive: kit.drive });
 
     if (!body) throw new Error('Only a robot that walks on legs runs a Routine in physics.');
 
@@ -68,19 +104,51 @@ export class PhysicsRun {
   }
 
   private drive(skills: Skills) {
-    const next = controllerFor(this.body, skills);
-    const sameBody = skills.body === this.bodySkill && next.kind === this.controller.kind;
+    this.skills = skills;
 
-    this.bodySkill = skills.body;
+    const move = this.active?.skill === skills.body ? this.active.move : undefined;
+    const next = controlFor(this.body, skills, move);
+    const key = `${skills.body}|${JSON.stringify(move ?? null)}`;
+    const current = this.control?.controller;
 
-    if (sameBody && this.controller.kind === 'policy' && next.kind === 'policy') {
-      this.controller.hold = next.hold;
+    if (key === this.controlKey && current?.kind === 'policy' && next.controller.kind === 'policy') {
+      current.hold = next.controller.hold;
 
       return;
     }
 
-    this.controller = next;
-    this.engine.setController(next);
+    applyControl(this.engine, next, this.control);
+    this.control = next;
+    this.controlKey = key;
+  }
+
+  private startMove(started: { token: number; skill: string; move: Motion }, finish: (ok: boolean) => void) {
+    const from = this.probe.pose();
+
+    this.active = { ...started, from, yaw: from.yaw, turned: 0, finish };
+    this.drive(this.skills);
+  }
+
+  private track() {
+    const active = this.active;
+
+    if (!active) return;
+
+    if (this.rig.host.isCancelled(active.token)) {
+      this.active = null;
+
+      return;
+    }
+
+    const pose = this.probe.pose();
+
+    active.turned += wrap(pose.yaw - active.yaw);
+    active.yaw = pose.yaw;
+
+    if (!reached(active, pose)) return;
+
+    this.active = null;
+    active.finish(true);
   }
 
   get done(): boolean {
@@ -109,6 +177,7 @@ export class PhysicsRun {
     if (this.t % SAMPLE_EVERY_MS === 0) this.sample();
 
     this.engine.step(CONTROL_PERIOD_MS / 1000);
+    this.track();
     this.fell ??= this.probe.fellAt();
     this.t += CONTROL_PERIOD_MS;
 

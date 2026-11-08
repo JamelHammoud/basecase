@@ -1,4 +1,4 @@
-import type { Capability, Condition, DataType, Resource, Step } from './schema';
+import type { Capability, Condition, DataType, Motion, Resource, Step } from './schema';
 import type { NodeInput } from './nodes';
 
 export const PLAN_SCHEMA = 1;
@@ -48,6 +48,7 @@ export interface PlanOp {
   timeoutMs: number;
   skill?: number;
   holds?: number;
+  move?: Motion;
   text?: number;
   needs?: number[];
   fact?: number;

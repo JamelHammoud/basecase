@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { LeftTab } from '../components/LeftSidebar';
+import { isPlayTab, type PlayTab } from '../components/playViews';
 import type { StudioSubTab } from '../components/SculptAndDrawStudio';
 import type { MessageQuote, SculptSettings, TransformMode } from '../types/robotics';
 import type { Annotations } from './useAnnotations';
@@ -27,7 +28,8 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
   const { measuring, setMeasuring } = measure;
   const { marking, setMarking } = mark;
   const [transformMode, setTransformMode] = useState<TransformMode>('translate');
-  const [leftTab, setLeftTab] = useState<LeftTab>('parts');
+  const [leftTab, setShownLeftTab] = useState<LeftTab>('parts');
+  const [playTab, setPlayTab] = useState<PlayTab>('cases');
   const [rightTab, setRightTab] = useState<RightTab>('inspector');
   const [creator, setCreator] = useState<CreatorMode | null>(null);
   const [sculptSettings, setSculptSettings] = useState<SculptSettings>(DEFAULT_SCULPT);
@@ -35,6 +37,12 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
   const [sketchRequest, setSketchRequest] = useState(0);
   const [quoteRequest, setQuoteRequest] = useState<MessageQuote | null>(null);
   const [composeRequest, setComposeRequest] = useState<string | null>(null);
+
+  const setLeftTab = (tab: LeftTab) => {
+    if (isPlayTab(tab)) setPlayTab(tab);
+
+    setShownLeftTab(tab);
+  };
 
   const setMode = (mode: TransformMode) => {
     setTransformMode(mode);
@@ -124,7 +132,8 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     toggleMarking,
     leftTab,
     setLeftTab,
-    leaveSceneView: () => setLeftTab((tab) => (SCENE_VIEWS.has(tab) ? 'parts' : tab)),
+    playTab,
+    leaveSceneView: () => setShownLeftTab((tab) => (SCENE_VIEWS.has(tab) ? 'parts' : tab)),
     rightTab,
     setRightTab,
     openRightTab,

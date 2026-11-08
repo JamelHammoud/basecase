@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import type { Page } from 'playwright-core';
 import { appResources, packagedBinary } from '../../e2e/app/packagedApp';
+import { openPlayTab } from '../../e2e/harness';
 
 export const DAEMON_ENV = 'BASECASE_ROBOT_DAEMON';
 export const DAEMON_FILE = process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon';
@@ -83,8 +84,7 @@ export function descendants(root: number, all = processes()): Proc[] {
 export const daemonsUnder = (root: number) =>
   descendants(root).filter((p) => p.args.includes(DAEMON_FILE) && !p.args.includes('relay.mjs'));
 
-export const openOperate = (page: Page) =>
-  page.locator('nav[aria-label="Sidebar views"] button[aria-label="Operate"]:visible').first().click();
+export const openOperate = (page: Page) => openPlayTab(page, 'Operate');
 
 export const mode = (page: Page) =>
   page.locator('[data-testid="robot-mode"]:visible').first().getAttribute('data-mode', { timeout: 1000 });

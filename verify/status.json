@@ -185,22 +185,22 @@
       "title": "F1: native PPO on C MuJoCo with no Python",
       "stage": 1,
       "state": "required",
-      "ok": false,
+      "ok": true,
       "voided": false,
       "checks": [
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "13.4 s",
+          "detail": "4.8 s",
           "metrics": {},
-          "seconds": 13.365
+          "seconds": 4.818
         },
         {
           "name": "forge-train builds",
           "ok": true,
           "detail": "0.0 s",
           "metrics": {},
-          "seconds": 0.029
+          "seconds": 0.033
         },
         {
           "name": "forge-train links no Python",
@@ -211,28 +211,28 @@
         },
         {
           "name": "Forge trains a real robot at 40K steps/s with the same events as train.py",
-          "ok": false,
-          "detail": "34740 steps/s",
+          "ok": true,
+          "detail": "52223 steps/s",
           "metrics": {
-            "fps": 34739.72434415485,
-            "loadBefore": 6.1640625,
-            "loadAfter": 6.15087890625
+            "fps": 52222.72278190589,
+            "loadBefore": 4.90087890625,
+            "loadAfter": 5.30908203125
           },
-          "seconds": 2.784
+          "seconds": 1.878
         },
         {
           "name": "Forge exports a valid ONNX policy that matches its own actions",
           "ok": true,
-          "detail": "worst 3.20e-6",
+          "detail": "worst 4.79e-6",
           "metrics": {},
-          "seconds": 0.359
+          "seconds": 0.366
         },
         {
           "name": "A Forge policy runs in the app with matching actions",
           "ok": true,
-          "detail": "0.4 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.428
+          "seconds": 0.636
         },
         {
           "name": "Forge reaches the walk skill within 20% of the samples train.py needs, over 10 seeds",
@@ -252,19 +252,19 @@
               921600
             ],
             "forge": [
+              230400,
+              153600,
               460800,
-              153600,
-              384000,
+              230400,
               307200,
-              153600,
-              153600,
+              230400,
               230400,
               153600,
               230400,
-              1075200
+              307200
             ]
           },
-          "seconds": 5283.164
+          "seconds": 5225.986
         }
       ],
       "canaries": [
@@ -283,8 +283,8 @@
           "seconds": 0
         }
       ],
-      "commit": "88b4bd3",
-      "at": "2026-11-08T17:06:40.435Z",
+      "commit": "735d546",
+      "at": "2026-11-08T20:39:51.708Z",
       "manifest": "clean"
     },
     "s1-f1b-sysid-rewardlang": {
@@ -1047,33 +1047,33 @@
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "3.4 s",
+          "detail": "0.1 s",
           "metrics": {},
-          "seconds": 3.362
+          "seconds": 0.075
         },
         {
           "name": "Forge Adam matches torch to 1e-4 over 50 steps",
           "ok": true,
           "detail": "worst 1.19e-7",
           "metrics": {},
-          "seconds": 2.355
+          "seconds": 2.178
         },
         {
           "name": "Forge reaches 45K steps/s at 1024 envs",
           "ok": true,
-          "detail": "140963 steps/s",
+          "detail": "152411 steps/s",
           "metrics": {
-            "loadBefore": 6.24560546875,
-            "loadAfter": 8.0673828125
+            "loadBefore": 6.27734375,
+            "loadAfter": 6.27734375
           },
-          "seconds": 3.557
+          "seconds": 3.315
         },
         {
           "name": "FastSAC and FlashSAC run and report the same events",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.228
+          "seconds": 1.262
         },
         {
           "name": "Python time-to-skill baseline recorded for three robots",
@@ -1083,25 +1083,25 @@
             "quad-servo": 46.74179087509401,
             "hexapod": 345.8167056250386,
             "biped-servo": 18.186022375011817,
-            "loadBefore": 6.05078125,
-            "loadAfter": 6.05078125
+            "loadBefore": 5.9345703125,
+            "loadAfter": 5.9345703125
           },
-          "seconds": 0.001
+          "seconds": 0
         },
         {
           "name": "Forge reaches the walk skill at least 3x faster than the Python baseline",
           "ok": true,
-          "detail": "5.26x",
+          "detail": "9.83x",
           "metrics": {
             "ratios": [
-              5.259804714558591,
-              35.4508312954062,
-              4.390696292449648
+              9.826457332342352,
+              65.36798700369938,
+              6.591365415371127
             ],
-            "loadBefore": 6.05078125,
-            "loadAfter": 9.3427734375
+            "loadBefore": 5.9345703125,
+            "loadAfter": 14.5908203125
           },
-          "seconds": 136.292
+          "seconds": 93.708
         }
       ],
       "canaries": [
@@ -1110,11 +1110,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.508
+          "seconds": 2.179
         }
       ],
-      "commit": "d02595d",
-      "at": "2026-11-08T08:38:18.115Z",
+      "commit": "735d546",
+      "at": "2026-11-08T20:43:16.046Z",
       "manifest": "clean"
     },
     "s3a-motor-kit": {

@@ -15,6 +15,7 @@ import {
 } from './analysisOps';
 import { geometryPayload, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
+import type { PairIds } from './gaps';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 
@@ -163,6 +164,12 @@ export function measuresIn(scene: SceneShapes): Promise<Record<string, MeshMeasu
 
 export function floorIn(scene: SceneShapes): Promise<number | null> {
   return analyze(leastBusy(), scene, { kind: 'floor', instances: scene.instances });
+}
+
+export function gapsIn(scene: SceneShapes, pairs: PairIds[], withinMm: number): Promise<PairIds[]> {
+  if (!pairs.length) return Promise.resolve([]);
+
+  return analyze(leastBusy(), scene, { kind: 'gaps', instances: scene.instances, pairs, withinMm });
 }
 
 export async function sweepsIn(scene: SceneShapes, sweeps: SweepSpec[]): Promise<SweepHit[][]> {

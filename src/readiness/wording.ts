@@ -123,8 +123,9 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
     blocker: 'This joint hits another part before the end of its range.',
     note: 'This joint hits another part before its motor limit.',
   },
-  'Servo voltage': { blocker: 'The battery’s voltage doesn’t suit these servos.' },
+  'Servo voltage': { blocker: 'The supply voltage doesn’t suit these servos.' },
   'Current and runtime': { blocker: 'The battery can’t supply enough current for the servos.' },
+  'Supply current': { blocker: 'The tether can’t supply enough current for the servos.' },
   'Heat near servos': { note: 'Some parts touching servos are PLA, which softens from servo heat.' },
   'Standing stability': {
     blocker: 'The robot would tip over standing still.',

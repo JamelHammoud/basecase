@@ -21,6 +21,7 @@ import {
   PlusIcon,
   RotateLeftIcon,
   RulerIcon,
+  SparklesIcon,
   SelectAllIcon,
   ShapeIcon,
   SubtractIcon,
@@ -28,9 +29,11 @@ import {
   UnionIcon,
   UnlockIcon,
 } from '../design-system';
+import { partQuote } from '../agent/partQuote';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CanvasMenuState } from './useCanvasMenu';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -160,6 +163,18 @@ function partFlagItems(part: ScenePart, setFlag: (patch: Partial<ScenePart>) => 
   ];
 }
 
+function referencePart({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
+  if (IS_WEB_DEMO) return [];
+
+  return [
+    {
+      label: 'Reference Part',
+      icon: <SparklesIcon className={ic} />,
+      onSelect: () => core.tool.requestQuote(partQuote(part)),
+    },
+  ];
+}
+
 function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextMenuEntry[]): ContextMenuEntry[] {
   const { actions, ui } = inputs;
   const { ops, edits } = actions;
@@ -174,6 +189,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.duplicate,
     shared.selectAll,
     shared.saveToLibrary,
+    ...referencePart(inputs, part),
     ...commentHere,
     { divider: true },
     shared.align,

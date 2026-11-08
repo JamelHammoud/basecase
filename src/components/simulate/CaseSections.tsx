@@ -141,7 +141,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
         )}
         {teachWalk && !running && (
           <Button variant="secondary" size="md" fullWidth icon={<TrainIcon className="w-4 h-4" />} onClick={teachWalk}>
-            Teach It to Walk
+            Teach It to Move
           </Button>
         )}
         {running && cls && <DriveKeys cls={cls} />}

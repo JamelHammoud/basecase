@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { measureTriangles, type MeshMeasure } from '../meshMeasure';
 import { checkPrintability, extraPose, type PrintPose, type PrintShape, type Vec3 } from '../printability';
 import type { ShapeSolid } from './shapeSolid';
+import { convexHull } from '../../utils/engineeringMath';
 
 export interface ShapeReport {
   check: PrintShape | null;
@@ -48,6 +49,23 @@ export function printReportOf(solid: ShapeSolid, downs: Vec3[] = []): ShapeRepor
   return { check, measure: localMeasure(solid) };
 }
 
+const BASE_BAND_MM = 1;
+
+const worldAxis = (e: ArrayLike<number>, pos: Float32Array, i: number, a: number) =>
+  e[a] * pos[i] + e[4 + a] * pos[i + 1] + e[8 + a] * pos[i + 2] + e[12 + a];
+
+function baseOutline(pos: Float32Array, e: ArrayLike<number>, lowY: number): Array<[number, number]> {
+  const points: Array<[number, number]> = [];
+
+  for (let i = 0; i < pos.length; i += 3) {
+    if (worldAxis(e, pos, i, 1) > lowY + BASE_BAND_MM) continue;
+
+    points.push([worldAxis(e, pos, i, 0), worldAxis(e, pos, i, 2)]);
+  }
+
+  return convexHull(points);
+}
+
 export function worldMeasure(solid: ShapeSolid, matrix: THREE.Matrix4): MeshMeasure {
   const local = localMeasure(solid);
   const e = matrix.elements;
@@ -57,7 +75,7 @@ export function worldMeasure(solid: ShapeSolid, matrix: THREE.Matrix4): MeshMeas
 
   for (let i = 0; i < pos.length; i += 3) {
     for (let a = 0; a < 3; a++) {
-      const v = e[a] * pos[i] + e[4 + a] * pos[i + 1] + e[8 + a] * pos[i + 2] + e[12 + a];
+      const v = worldAxis(e, pos, i, a);
 
       min[a] = Math.min(min[a], v);
       max[a] = Math.max(max[a], v);
@@ -66,5 +84,5 @@ export function worldMeasure(solid: ShapeSolid, matrix: THREE.Matrix4): MeshMeas
 
   const centroid = new THREE.Vector3(...local.centroid).applyMatrix4(matrix).toArray() as [number, number, number];
 
-  return { ...local, min, max, centroid };
+  return { ...local, min, max, centroid, base: pos.length ? baseOutline(pos, e, min[1]) : undefined };
 }

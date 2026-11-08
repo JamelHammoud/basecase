@@ -57,6 +57,7 @@ export const projectFingerprint = (
   readinessFingerprint(parts, {
     joints: project.joints,
     budget: project.budgetUsd,
+    tether: project.tether,
     extras: project.extras,
     sourced: jsonHash(project.sourced),
     material: project.material,

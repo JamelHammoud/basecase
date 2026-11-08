@@ -6,6 +6,7 @@ import { collideRiding, type OutputRiders } from './outputRiders';
 import { printReportOf, worldMeasure } from './shapeReports';
 import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
 import { lowestPart, sweepClashes, type SweepSpec } from './sweep';
+import { pairsWithin, type PairIds } from './gaps';
 import { visibleShares } from './visibility';
 import { traceFasteners } from '../../assembly/fastenerChain';
 import type { FastenerInput } from '../../assembly/assemblyTypes';
@@ -33,6 +34,7 @@ export type AnalysisTask =
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
   | { kind: 'measure' | 'meshes' | 'visibility' | 'floor'; instances: Instance[] }
+  | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
   | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] };
@@ -106,6 +108,8 @@ function run(task: AnalysisTask) {
       );
     case 'floor':
       return lowestPart(placeAll(task.instances))?.y ?? null;
+    case 'gaps':
+      return pairsWithin(placeAll(task.instances), task.pairs, task.withinMm);
     case 'threeMf':
       return threeMfFiles(task);
     case 'fasteners':

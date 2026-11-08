@@ -12,6 +12,25 @@ pub struct Minibatch<'a> {
     pub ret: &'a [f32],
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Widths {
+    pub obs: usize,
+    pub act: usize,
+}
+
+impl<'a> Minibatch<'a> {
+    pub fn rows_between(&self, from: usize, to: usize, widths: Widths) -> Minibatch<'a> {
+        Minibatch {
+            rows: to - from,
+            obs: &self.obs[from * widths.obs..to * widths.obs],
+            act: &self.act[from * widths.act..to * widths.act],
+            logp: &self.logp[from..to],
+            adv: &self.adv[from..to],
+            ret: &self.ret[from..to],
+        }
+    }
+}
+
 pub struct Head<'a> {
     pub net: &'a Mlp,
     pub scratch: &'a mut Scratch,
@@ -24,13 +43,29 @@ pub struct PolicyTerms<'a> {
     pub log_std_grads: &'a mut [f32],
     pub clip: f32,
     pub ent_coef: f32,
+    pub scale: f32,
 }
 
 pub fn gaussian_constant(log_std: &[f32]) -> f32 {
     log_std.iter().sum::<f32>() + log_std.len() as f32 * LOG_TWO_PI_HALF
 }
 
-pub fn policy_gradient(math: &Math, head: Head, batch: &Minibatch, terms: PolicyTerms) -> f32 {
+pub fn log_prob(mean: &[f32], taken: &[f32], inverse_std: &[f32], constant: f32) -> f32 {
+    let quadratic: f32 = taken
+        .iter()
+        .zip(mean)
+        .zip(inverse_std)
+        .map(|((a, m), s)| {
+            let unit = (a - m) * s;
+
+            unit * unit
+        })
+        .sum();
+
+    -0.5 * quadratic - constant
+}
+
+pub fn policy_gradient(math: &Math, head: Head, batch: &Minibatch, terms: PolicyTerms) -> f64 {
     let Minibatch {
         rows,
         obs,
@@ -51,7 +86,7 @@ pub fn policy_gradient(math: &Math, head: Head, batch: &Minibatch, terms: Policy
 
     let inverse_var: Vec<f32> = terms.log_std.iter().map(|s| (-2.0 * s).exp()).collect();
     let constant = gaussian_constant(terms.log_std);
-    let scale = 1.0 / rows as f32;
+    let scale = terms.scale;
     let (mean, seed) = net.output_and_seed(rows, scratch);
     let mut kl_sum = 0.0f64;
 
@@ -96,10 +131,10 @@ pub fn policy_gradient(math: &Math, head: Head, batch: &Minibatch, terms: Policy
         scratch,
     );
 
-    (kl_sum / rows as f64) as f32
+    kl_sum
 }
 
-pub fn value_gradient(math: &Math, head: Head, batch: &Minibatch) {
+pub fn value_gradient(math: &Math, head: Head, batch: &Minibatch, scale: f32) {
     let Minibatch { rows, obs, ret, .. } = *batch;
     let Head {
         net,
@@ -110,7 +145,6 @@ pub fn value_gradient(math: &Math, head: Head, batch: &Minibatch) {
 
     net.forward(math, params, obs, rows, scratch);
 
-    let scale = 1.0 / rows as f32;
     let (values, seed) = net.output_and_seed(rows, scratch);
 
     for row in 0..rows {

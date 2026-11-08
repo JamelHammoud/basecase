@@ -36,7 +36,7 @@ interface SimulatePanelProps {
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
   const walkRow = skills.rows.find((r) => r.kit === 'velocity-tracking');
   const kit = skills.canKit('velocity-tracking');
-  const teachWalk = kit ? () => void skills.trainKit('velocity-tracking') : onTeach && (() => onTeach('walk'));
+  const teachWalk = kit ? () => void skills.trainKit('velocity-tracking') : onTeach && (() => onTeach('move'));
 
   return { velocityReady: skills.velocityReady, teachWalk, walkTraining: walkRow?.state.kind === 'training' };
 }

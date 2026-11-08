@@ -71,6 +71,7 @@ export interface EngineeringInputs {
   supportG?: BomInput['supportG'];
   sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
   walk?: WalkSim | string;
+  servoTouches?: string[];
 }
 
 export interface SweepRequest {

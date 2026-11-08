@@ -72,7 +72,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 | “Oops”, “Uh-oh”, “!” | Insincere, especially in errors (Apple, NN/g) | State the problem and fix |
 | “Invalid …”, “Error: …”, codes | Robotic, not actionable | What to do instead |
 | Blanket disclaimers (“Tried in simulation only”, “Experimental”, “Results may vary”) | Nothing to act on, repeated on every screen | Cut. When a result is limited, show the measured limit next to it |
-| A refusal that lists what's missing (“Drive needs an arm, wheels or at least four legs”) | Leaves the person stuck with a fact | The button that gets there (“Teach It to Walk”), or hide the control when nothing can |
+| A refusal that lists what's missing (“Drive needs an arm, wheels or at least four legs”) | Leaves the person stuck with a fact | The button that gets there (“Teach It to Move”), or hide the control when nothing can |
 | A fixed menu of tasks where the person could ask for anything (Stand / Walk) | Caps what they can do at what we thought of | A field or `/train` that takes any goal, with the robot's own skills as examples |
 | “Click here”, “Learn more” alone | Doesn't say where it goes | Describe the destination |
 | “AI brief”, “AI …” as a feature name | Names our plumbing, not what the person gets | Name the result: “Save Scene”, “Copy as Markdown” |

@@ -4,6 +4,7 @@ import { COMPONENT_BY_ID, actuatorOf } from '../data/components';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { SweepSpec } from '../three/analysis/sweep';
 import { runEngineering, type ServoOutput } from '../utils/engineering';
+import { SERVO_TOUCH_MM, servoTouchPairs } from '../utils/engineeringHeat';
 import type { EngineeringInputs, ServoLine, WalkSim } from '../utils/engineeringTypes';
 import { jointsWithChains } from '../assembly/rigJoints';
 import { platformBridge } from '../utils/platformBridge';
@@ -85,13 +86,16 @@ export async function engineeringInputs(
   }
 
   const chains = project.joints?.length ? await viewport?.fastenerChains() : null;
+  const measures = (await viewport?.measureParts()) ?? {};
+  const touching = await viewport?.meshGaps(servoTouchPairs(parts, measures), SERVO_TOUCH_MM);
 
   return {
     parts,
     project: { ...project, joints: jointsWithChains(project.joints ?? [], parts, chains) },
-    measures: (await viewport?.measureParts()) ?? {},
+    measures,
     servoOutputs,
     purchases: await platformBridge.listPurchases(),
+    servoTouches: touching && [...new Set(touching.map(([id]) => id))],
   };
 }
 

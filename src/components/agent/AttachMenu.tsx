@@ -1,6 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { SlashCommand } from '../../agent/slashCommands';
 import { foldersFromInput, PickedFolder } from '../../utils/evidenceFiles';
-import { IconButton, MenuItem, PopoverMenu, FolderAddIcon, PenIcon, PhotoAddIcon, PlusIcon } from '../../design-system';
+import {
+  IconButton,
+  MenuDivider,
+  MenuItem,
+  PopoverMenu,
+  FolderAddIcon,
+  PenIcon,
+  PhotoAddIcon,
+  PlusIcon,
+  SlashIcon,
+} from '../../design-system';
+import { CommandsView } from './CommandsView';
 
 const DIRECTORY_PICKER = { webkitdirectory: '' } as React.InputHTMLAttributes<HTMLInputElement>;
 
@@ -17,12 +29,14 @@ export const AttachMenu: React.FC<{
   onAttachFiles: (files: File[]) => Promise<void>;
   onAttachFolders: (folders: PickedFolder[]) => Promise<void>;
   onSketch: () => void;
-}> = ({ attachRequest, onAttachFiles, onAttachFolders, onSketch }) => {
+  onCommand: (command: SlashCommand) => void;
+}> = ({ attachRequest, onAttachFiles, onAttachFolders, onSketch, onCommand }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
   const attachMenuRef = useRef<HTMLDivElement | null>(null);
   const lastAttachRequest = useRef(attachRequest);
   const [open, setOpen] = useState(false);
+  const [showCommands, setShowCommands] = useState(false);
 
   useEffect(() => {
     if (attachRequest === lastAttachRequest.current) return;
@@ -31,8 +45,13 @@ export const AttachMenu: React.FC<{
     fileInputRef.current?.click();
   }, [attachRequest]);
 
-  const pick = (input: HTMLInputElement | null) => {
+  const close = () => {
     setOpen(false);
+    setShowCommands(false);
+  };
+
+  const pick = (input: HTMLInputElement | null) => {
+    close();
     input?.click();
   };
 
@@ -48,33 +67,51 @@ export const AttachMenu: React.FC<{
           isToggled={open}
           aria-haspopup="menu"
           aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => (open ? close() : setOpen(true))}
         />
         <PopoverMenu
           isOpen={open}
-          onClose={() => setOpen(false)}
+          onClose={close}
           ignoreRef={attachMenuRef}
           align="start"
-          className="w-56"
+          className={showCommands ? 'w-80' : 'w-56'}
         >
-          <MenuItem
-            icon={<PhotoAddIcon className="w-4 h-4" />}
-            label="Attach Images"
-            onSelect={() => pick(fileInputRef.current)}
-          />
-          <MenuItem
-            icon={<FolderAddIcon className="w-4 h-4" />}
-            label="Attach Folder"
-            onSelect={() => pick(folderInputRef.current)}
-          />
-          <MenuItem
-            icon={<PenIcon className="w-4 h-4" />}
-            label="Sketch"
-            onSelect={() => {
-              setOpen(false);
-              onSketch();
-            }}
-          />
+          {showCommands ? (
+            <CommandsView
+              onBack={() => setShowCommands(false)}
+              onPick={(command) => {
+                close();
+                onCommand(command);
+              }}
+            />
+          ) : (
+            <>
+              <MenuItem
+                icon={<PhotoAddIcon className="w-4 h-4" />}
+                label="Attach Images"
+                onSelect={() => pick(fileInputRef.current)}
+              />
+              <MenuItem
+                icon={<FolderAddIcon className="w-4 h-4" />}
+                label="Attach Folder"
+                onSelect={() => pick(folderInputRef.current)}
+              />
+              <MenuItem
+                icon={<PenIcon className="w-4 h-4" />}
+                label="Sketch"
+                onSelect={() => {
+                  close();
+                  onSketch();
+                }}
+              />
+              <MenuDivider />
+              <MenuItem
+                icon={<SlashIcon className="w-4 h-4" />}
+                label="Commands"
+                onSelect={() => setShowCommands(true)}
+              />
+            </>
+          )}
         </PopoverMenu>
       </div>
       <input

@@ -7,7 +7,7 @@ import type { ScenarioResult, TraceEvent } from '../../src/routines/scenarioType
 import type { Routine, RoutineError } from '../../src/routines/schema';
 import { greetingRoutine, runScenario } from '../../src/routines/testing';
 import { DEFAULT_PROJECT, type ScenePart } from '../../src/types/robotics';
-import { openApp, type App } from '../../e2e/harness';
+import { openApp, PLAY_RAIL, playTab, type App } from '../../e2e/harness';
 import { need } from '../lib/need';
 import { ACCEPTANCE, acceptanceProblems, SENTENCE } from './acceptance';
 import { startAgentLoop, toolNames, type AgentLoop } from './agentLoop';
@@ -54,7 +54,13 @@ async function click(selector: string) {
   await app.page.locator(visible(selector)).first().click();
 }
 
-const openRoutines = () => click('nav[aria-label="Sidebar views"] button[aria-label="Routines"]');
+async function openRoutines() {
+  const rail = app.page.locator(visible(PLAY_RAIL)).first();
+
+  if ((await rail.getAttribute('aria-pressed')) !== 'true') await click(PLAY_RAIL);
+
+  await click(playTab('Routines'));
+}
 
 const domNodes = () =>
   app.page.$$eval('[data-testid="routine-flow"] [data-flow-node]', (els) =>

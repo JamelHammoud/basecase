@@ -90,7 +90,7 @@ const DriveControl: React.FC<{ sim: Simulation; walk: WalkTeaching }> = ({ sim, 
       disabled={walk.walkTraining}
       onClick={walk.teachWalk}
     >
-      Teach It to Walk
+      Teach It to Move
     </Button>
   );
 };

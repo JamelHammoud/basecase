@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { TickIcon } from './glyphs';
+import { ChevronLeftIcon, TickIcon } from './glyphs';
 import { createPortal } from 'react-dom';
 import { Kbd } from './Kbd';
 import { Divider } from './Divider';
@@ -265,3 +265,14 @@ export const MenuLabel: React.FC<{ children: React.ReactNode; onSelect?: () => v
 };
 
 export const MenuDivider: React.FC = () => <Divider className="my-1" />;
+
+export const MenuBack: React.FC<{ label: string; onBack: () => void }> = ({ label, onBack }) => (
+  <button
+    type="button"
+    onClick={onBack}
+    className="w-full h-8 px-1.5 rounded-lg flex items-center gap-1.5 text-[13.5px] font-medium text-white/90 text-left cursor-default transition-colors hover:bg-white/[0.08] group/menuback"
+  >
+    <ChevronLeftIcon className="w-4 h-4 shrink-0 text-white/60 group-hover/menuback:text-white" />
+    <span className="flex-1 truncate">{label}</span>
+  </button>
+);

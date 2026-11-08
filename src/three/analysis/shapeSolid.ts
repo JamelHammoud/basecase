@@ -22,6 +22,7 @@ export class ShapeSolid {
 
       geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
       this.tree = new MeshBVH(geometry);
+      geometry.boundsTree = this.tree;
     }
 
     return this.tree;

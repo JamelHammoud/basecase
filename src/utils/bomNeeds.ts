@@ -3,6 +3,7 @@ import type { ScenePart } from '../types/robotics';
 
 interface SceneFacts {
   battery: boolean;
+  tether: boolean;
   servos: boolean;
   sensors: boolean;
   piCamera: boolean;
@@ -18,11 +19,14 @@ interface Need {
   when: (s: SceneFacts) => boolean;
 }
 
+const powered = (s: SceneFacts) => s.battery || s.tether;
+
 const NEEDS: Need[] = [
-  { supply: 'rocker-switch-20a', match: /switch/i, when: (s) => s.battery },
-  { supply: 'blade-fuse-holder', match: /fuse/i, when: (s) => s.battery },
-  { supply: 'xt60-pigtail', match: /xt60|xt30|pigtail/i, when: (s) => s.battery },
-  { supply: 'wire-18awg-silicone', match: /\bawg\b|\d+\s*awg/i, when: (s) => s.battery },
+  { supply: 'dc-bench-supply', match: /power supply|bench supply|psu/i, when: (s) => s.tether },
+  { supply: 'rocker-switch-20a', match: /switch/i, when: powered },
+  { supply: 'blade-fuse-holder', match: /fuse/i, when: powered },
+  { supply: 'xt60-pigtail', match: /xt60|xt30|pigtail/i, when: powered },
+  { supply: 'wire-18awg-silicone', match: /\bawg\b|\d+\s*awg/i, when: powered },
   { supply: 'lipo-balance-charger', match: /charger/i, when: (s) => s.battery },
   { supply: 'servo-cable-5264-3pin', match: /servo cable|5264|jst.*servo|dynamixel.*cable/i, when: (s) => s.servos },
   { supply: 'stemma-qt-cable', match: /stemma|qwiic|dupont|jumper/i, when: (s) => s.sensors },
@@ -35,12 +39,13 @@ const NEEDS: Need[] = [
 
 const componentOf = (p: ScenePart) => (p.componentId ? COMPONENT_BY_ID[p.componentId] : undefined);
 
-function sceneFacts(parts: ScenePart[]): SceneFacts {
+function sceneFacts(parts: ScenePart[], tether: boolean): SceneFacts {
   const comps = parts.map(componentOf).filter((c) => !!c);
   const hardware = parts.flatMap((p) => (p.kind === 'hardware' && p.hardware ? [p.hardware.type] : []));
 
   return {
     battery: comps.some((c) => !!c.battery),
+    tether,
     servos: comps.some((c) => c.group === 'Servos'),
     sensors: comps.some((c) => /sensor|imu|tof/i.test(`${c.group} ${c.name}`)),
     piCamera: comps.some((c) => /raspberry.*camera/i.test(`${c.manufacturer} ${c.name}`)),
@@ -51,8 +56,8 @@ function sceneFacts(parts: ScenePart[]): SceneFacts {
   };
 }
 
-export function neededSupplyKeys(parts: ScenePart[], listed: string): string[] {
-  const facts = sceneFacts(parts);
+export function neededSupplyKeys(parts: ScenePart[], listed: string, tether = false): string[] {
+  const facts = sceneFacts(parts, tether);
 
   return NEEDS.filter((n) => n.when(facts) && !n.match.test(listed)).map((n) => `supply:${n.supply}`);
 }

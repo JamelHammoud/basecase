@@ -1,9 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { IconButton, MenuItem, PopoverMenu, Section, SpreadsheetIcon } from '../../design-system';
+import { IconButton, MenuItem, PopoverMenu, Section, SpreadsheetIcon, confirmAction } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
-import type { Bom, BomLine } from '../../utils/bomTypes';
+import { describeKey } from '../../utils/bom';
+import type { Bom, BomCategory, BomLine } from '../../utils/bomTypes';
+import { AddSupplyMenu } from './AddSupplyMenu';
+import { type Extra, withAdded, withQty, without } from './buyExtras';
 import { BuyGroup } from './BuyGroup';
 import { bomGroups } from './buyLine';
+import type { BuyContext } from './BuyRow';
 import { CheckIcon } from './CheckIcon';
 import { plural } from './format';
 
@@ -11,12 +15,13 @@ interface BuyListProps {
   bom: Bom;
   parts: ScenePart[];
   panScroll: boolean;
+  extras: Extra[];
+  onChangeExtras: (extras: Extra[]) => void;
   onCheck: (line: BomLine) => void;
   onSelectParts: (ids: string[]) => void;
   onExportCsv: () => void;
   onExportMarkdown: () => void;
 }
-
 
 const ExportBomMenu: React.FC<Pick<BuyListProps, 'onExportCsv' | 'onExportMarkdown'>> = ({
   onExportCsv,
@@ -70,19 +75,48 @@ export const BuyList: React.FC<BuyListProps> = ({
   bom,
   parts,
   panScroll,
+  extras,
+  onChangeExtras,
   onCheck,
   onSelectParts,
   onExportCsv,
   onExportMarkdown,
 }) => {
+  const [openGroups, setOpenGroups] = useState<Partial<Record<BomCategory, boolean>>>({});
   const groups = bomGroups(bom);
   const standIns = bom.standIns.length;
   const hasRows = groups.length > 0 || standIns > 0;
+  const isOpen = (category: BomCategory) => openGroups[category] ?? groups.length === 1;
+  const setOpen = (category: BomCategory | undefined, open: boolean) =>
+    category && setOpenGroups((state) => ({ ...state, [category]: open }));
+  const addSupply = (key: string) => {
+    onChangeExtras(withAdded(extras, key));
+    setOpen(describeKey(key)?.category, true);
+  };
+  const context: BuyContext = {
+    parts,
+    panScroll,
+    onCheck,
+    onSelectParts,
+    extraOf: (key) => extras.find((x) => x.key === key),
+    onExtraQty: (key, qty) => onChangeExtras(withQty(extras, key, qty)),
+    onRemoveExtra: (line) =>
+      confirmAction({
+        title: `Remove ${line.name}?`,
+        confirmLabel: 'Remove',
+        onConfirm: () => onChangeExtras(without(extras, line.key)),
+      }),
+  };
 
   return (
     <Section
       title="Bill of materials"
-      actions={groups.length > 0 && <ExportBomMenu onExportCsv={onExportCsv} onExportMarkdown={onExportMarkdown} />}
+      actions={
+        <>
+          <AddSupplyMenu onAdd={addSupply} />
+          {groups.length > 0 && <ExportBomMenu onExportCsv={onExportCsv} onExportMarkdown={onExportMarkdown} />}
+        </>
+      }
     >
       {!hasRows && !bom.madeElsewhere.length && <span className="text-[13px] text-white/45">No parts</span>}
       {hasRows && (
@@ -94,8 +128,9 @@ export const BuyList: React.FC<BuyListProps> = ({
             <BuyGroup
               key={group.category}
               group={group}
-              defaultOpen={groups.length === 1}
-              context={{ parts, panScroll, onCheck, onSelectParts }}
+              open={isOpen(group.category)}
+              onToggle={() => setOpen(group.category, !isOpen(group.category))}
+              context={context}
             />
           ))}
         </ul>

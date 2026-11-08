@@ -1,5 +1,5 @@
 import { toCad, toScene } from '../agent/agentScene';
-import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart, Tether } from '../types/robotics';
 import type { SkeletonJoint } from '../types/skeleton';
 import { dot, lineDistance, norm } from '../utils/engineeringMath';
 import { describeKey } from '../utils/bom';
@@ -157,6 +157,7 @@ export interface BuildSettingsPayload {
   extras?: Array<{ key: string; qty: number; note?: string }>;
   budget?: number;
   material?: ProjectSettings['material'];
+  tether?: Tether;
 }
 
 type Extra = NonNullable<ProjectSettings['extras']>[number];
@@ -192,6 +193,8 @@ export function applyBuildSettings(project: ProjectSettings, pl: BuildSettingsPa
   if (pl.budget !== undefined) withBudget(next, pl.budget, money);
 
   if (pl.material) next.material = pl.material;
+
+  if (pl.tether) next.tether = pl.tether.volts > 0 && pl.tether.amps > 0 ? pl.tether : undefined;
 
   return { next, bad };
 }

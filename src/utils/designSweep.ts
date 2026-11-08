@@ -151,6 +151,7 @@ function editMeasure(m: MeshMeasure, p: ScenePart, e: PartEdit): MeshMeasure {
     min: [0, 1, 2].map((k) => at(m.min, k)) as V3,
     max: [0, 1, 2].map((k) => at(m.max, k)) as V3,
     centroid: [0, 1, 2].map((k) => c[k] + move[k]) as V3,
+    base: m.base?.map(([x, z]) => [c[0] + (x - c[0]) * s[0] + move[0], c[2] + (z - c[2]) * s[2] + move[2]]),
   };
 }
 

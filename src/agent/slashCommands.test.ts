@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterSlash, parseSlash, SLASH_COMMANDS, slashQuery, slashText, stepSlash } from './slashCommands';
+import { filterSlash, parseSlash, SLASH_COMMANDS, slashQuery, slashText, stepSlash, withSlash } from './slashCommands';
 
 describe('slash commands', () => {
   it('opens only for a slash at the very start, before any space', () => {
@@ -23,6 +23,13 @@ describe('slash commands', () => {
 
   it('inserts the command with a trailing space', () => {
     expect(slashText('train')).toBe('/train ');
+  });
+
+  it('puts a picked command in front of the draft, replacing a typed or earlier command', () => {
+    expect(withSlash('', 'train')).toBe('/train ');
+    expect(withSlash('/tr', 'train')).toBe('/train ');
+    expect(withSlash('walk to the box', 'train')).toBe('/train walk to the box');
+    expect(withSlash('/case reach the shelf', 'routine')).toBe('/routine reach the shelf');
   });
 
   it('reads a command and its goal from a message', () => {

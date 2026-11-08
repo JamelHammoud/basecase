@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
-import { openApp, partCount, type App } from './harness';
+import { openApp, openPlayTab, partCount, type App } from './harness';
 
 let app: App;
 
@@ -103,7 +103,7 @@ describe('live drive', () => {
 
     await loadFixture('biped-servo');
     await clickTab('Simulate');
-    await expect.poll(() => button(/^Teach It to Walk$/).count()).toBe(1);
+    await expect.poll(() => button(/^Teach It to Move$/).count()).toBe(1);
     expect(await button(/^Drive$/).count()).toBe(0);
     expect((await simState()).offer).toBe('teach');
     expect(await app.page.locator(visible('body')).innerText()).not.toMatch(/Drive needs|Two-legged/);
@@ -130,7 +130,7 @@ describe('live drive', () => {
 describe('Cases', () => {
   it('starts Touch the Dots on an arm, keeps the dots out of parts, and records a try', async () => {
     await loadFixture('arm-3dof');
-    await app.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Cases"]')).click();
+    await openPlayTab(app.page, 'Cases');
     await button('Touch the Dots').click();
     await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
     await expect.poll(() => app.page.getByTestId('case-brief').count()).toBe(1);
@@ -168,7 +168,7 @@ describe('Cases', () => {
 
   it('makes a Case with New Case, lists only the examples that fit, and opens it', async () => {
     await loadFixture('rover-diff');
-    await app.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Cases"]')).click();
+    await openPlayTab(app.page, 'Cases');
 
     const panel = app.page.locator(visible('[data-testid="cases-panel"]'));
 

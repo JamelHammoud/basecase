@@ -16,6 +16,10 @@ export const ChevronLeftIcon = glyph({ d: 'M15 6L9 12L15 18', weight: 2.5 });
 
 export const ChevronRightIcon = glyph({ d: 'M9 6L15 12L9 18', weight: 2.5 });
 
+export const SlashIcon = glyph(
+  'M6 3H18A3 3 0 0 1 21 6V18A3 3 0 0 1 18 21H6A3 3 0 0 1 3 18V6A3 3 0 0 1 6 3ZM14.5 7.5L9.5 16.5',
+);
+
 export const ArrowUpIcon = glyph('M12 20V4M5.5 10.5L12 4L18.5 10.5');
 
 export const ArrowDownIcon = glyph('M12 4V20M5.5 13.5L12 20L18.5 13.5');

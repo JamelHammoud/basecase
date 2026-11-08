@@ -3,10 +3,10 @@ mod resume;
 mod rollout;
 
 use crate::algorithm::{Algorithm, Report};
+use crate::blocks::Refresh;
 use crate::clock::Instant;
 use crate::deployed::{Deployed, Squash};
 use crate::envs::Envs;
-use crate::heads::gaussian_constant;
 use crate::kernels::Math;
 use crate::mask::actor_mask;
 use crate::normalizer::Normalizer;
@@ -55,33 +55,14 @@ impl Update {
 
     fn refresh(&mut self, rollout: &mut Rollout) {
         let n = rollout.envs;
-        let nobs = self.learner.nobs;
-        let nact = self.learner.nact;
-        let log_std: Vec<f32> = self.learner.log_std().to_vec();
-        let inverse_std: Vec<f32> = log_std.iter().map(|s| (-s).exp()).collect();
-        let constant = gaussian_constant(&log_std);
+        let targets = Refresh {
+            obs: &rollout.obs,
+            act: &rollout.act,
+            logp: &mut rollout.logp,
+            val: &mut rollout.val,
+        };
 
-        for start in (0..rollout.len()).step_by(n) {
-            let obs = &rollout.obs[start * nobs..(start + n) * nobs];
-            let mean = self.learner.act_mean(&self.math, obs, n);
-
-            for row in 0..n {
-                let taken = &rollout.act[(start + row) * nact..(start + row + 1) * nact];
-                let quadratic: f32 = (0..nact)
-                    .map(|j| {
-                        let unit = (taken[j] - mean[row * nact + j]) * inverse_std[j];
-
-                        unit * unit
-                    })
-                    .sum();
-
-                rollout.logp[start + row] = -0.5 * quadratic - constant;
-            }
-
-            let value = self.learner.value(&self.math, obs, n);
-
-            rollout.val[start..start + n].copy_from_slice(value);
-        }
+        self.learner.refresh(&self.math, targets);
 
         let last = self.learner.value(&self.math, &rollout.final_obs, n);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ChevronDownIcon, Tooltip } from '../../design-system';
 import { useMoney } from '../../utils/useMoney';
 import type { BomGroup } from './buyLine';
@@ -20,19 +20,18 @@ const Subtotal: React.FC<{ group: BomGroup }> = ({ group }) => {
   );
 };
 
-export const BuyGroup: React.FC<{ group: BomGroup; defaultOpen: boolean; context: BuyContext }> = ({
+export const BuyGroup: React.FC<{ group: BomGroup; open: boolean; onToggle: () => void; context: BuyContext }> = ({
   group,
-  defaultOpen,
+  open,
+  onToggle,
   context,
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
-
   return (
     <li>
       <button
         type="button"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         className="w-full flex items-start gap-2 py-1.5 px-[7px] rounded-lg text-left cursor-default hover:bg-white/[0.04]"
       >
         <span className="min-w-0 flex-1 flex items-start gap-1.5">

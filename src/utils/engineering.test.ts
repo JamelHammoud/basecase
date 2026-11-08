@@ -166,7 +166,7 @@ describe('runEngineering on a two-joint leg', () => {
       detail: '3S LiPo 2200 mAh reaches 12.6 V charged, above the 7.4 V maximum of 2 servos',
       ids: ['hipServo', 'kneeServo'],
     });
-    expect(statuses(noBattery.rows)).toContainEqual(['Battery', 'fail']);
+    expect(noBattery.rows.map((x) => x.check)).toContain('Supply current');
     expect(noBattery.rows.map((x) => x.check)).not.toContain('Current and runtime');
   });
 

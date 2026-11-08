@@ -9,6 +9,7 @@ import { kernelSelfTest } from './cad-kernel/sandbox/selfTest.mjs';
 import { cadImportSelfTest } from './cadImport/selfTest.mjs';
 import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs';
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
+import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
@@ -34,7 +35,9 @@ registerAppScheme();
 
 const ipcMain = trustedIpc(electronIpc, APP_ORIGIN);
 
-app.setName(fromSource ? 'Basecase (Dev)' : 'Basecase');
+app.setName('Basecase');
+
+if (DEV_MODE) app.setAboutPanelOptions({ applicationName: APP_DISPLAY_NAME });
 
 {
   const userData = process.env.BASECASE_USER_DATA || path.join(app.getPath('appData'), 'Basecase');

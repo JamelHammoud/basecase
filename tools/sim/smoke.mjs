@@ -72,7 +72,7 @@ d = mujoco.MjData(m)
 d.ctrl[0] = 0.5
 for _ in range(1000): mujoco.mj_step(m, d)
 print(json.dumps({"version": mujoco.__version__, "z": float(d.qpos[2]), "hinge": float(d.qpos[7])}))`;
-  const out = execFileSync('uv', ['run', '--project', trainerDir, '--frozen', 'python', '-c', py], {
+  const out = execFileSync('uv', ['run', '--project', trainerDir, '--frozen', '--exact', 'python', '-c', py], {
     input: XML,
     encoding: 'utf8',
     env: { ...process.env, UV_PROJECT_ENVIRONMENT: path.join(root, 'library', 'trainer-env') },

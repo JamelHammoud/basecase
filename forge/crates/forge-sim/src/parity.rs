@@ -24,19 +24,16 @@ fn simd(args: &Args) -> Result<Value, String> {
     let (_, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;
     let nu = kernel.nu;
     let mut sim = Sim::new(kernel, 1);
-    let mut w = sim.workspace();
 
-    sim.forward(&mut w);
-
-    let first = single(&sim.snapshot(0));
+    let first = single(&sim.forward_snapshot(0));
     let mut rollout = Vec::new();
 
     for i in 0..args.steps {
         sim.set_ctrl(0, &vec![rollout_ctrl(i); nu]);
-        sim.step(&mut w);
+        sim.step();
 
         if (i + 1).is_multiple_of(REPORT_EVERY) {
-            let s = sim.snapshot(0);
+            let s = sim.state(0);
 
             rollout.push(json!({ "step": i + 1, "qpos": s.qpos, "qvel": s.qvel }));
         }

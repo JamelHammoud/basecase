@@ -13,9 +13,8 @@ fn prepare(kernel: &Kernel, worlds: usize, first: usize) -> Sim {
 
     for w in 0..worlds {
         let pose = start_pose(&sim.plan, first + w);
-        let (b, l) = (w / forge_sim::lanes::LANES, w % forge_sim::lanes::LANES);
 
-        sim.blocks[b].reset(&sim.plan, l, &pose);
+        sim.reset(w, &pose);
     }
 
     sim
@@ -37,12 +36,11 @@ fn run_batch(kernel: &Kernel, threads: usize) -> Vec<Snapshot> {
         }
     }
 
-    (0..WORLDS).map(|w| sim.snapshot(w)).collect()
+    (0..WORLDS).map(|w| sim.state(w)).collect()
 }
 
 fn run_single(kernel: &Kernel, world: usize) -> Snapshot {
     let mut sim = prepare(kernel, 1, world);
-    let mut space = sim.workspace();
 
     for round in 0..ROUNDS {
         let ctrl = controls(&sim.plan, world, round);
@@ -50,11 +48,11 @@ fn run_single(kernel: &Kernel, world: usize) -> Snapshot {
         sim.set_ctrl(0, &ctrl);
 
         for _ in 0..DECIMATION {
-            sim.step(&mut space);
+            sim.step();
         }
     }
 
-    sim.snapshot(0)
+    sim.state(0)
 }
 
 fn bits(s: &Snapshot) -> Vec<u64> {

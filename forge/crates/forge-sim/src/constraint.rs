@@ -51,6 +51,7 @@ fn friction(plan: &Plan, b: &mut Block) {
     }
 }
 
+#[inline(never)]
 fn limits(plan: &Plan, b: &mut Block) {
     let first = plan.friction.len();
 
@@ -60,6 +61,12 @@ fn limits(plan: &Plan, b: &mut Block) {
         let dist = (V::splat(l.bound) - value) * l.sign;
         let margin = V::splat(l.margin);
         let active = dist.lt(margin);
+
+        if !active.any() {
+            b.row_any[row] = false;
+            continue;
+        }
+
         let imp = impedance_v(&l.imp, dist, margin);
         let r = ((ONE - imp) * l.diag / imp).max(V::splat(MIN_VAL));
 
@@ -97,6 +104,7 @@ fn point_jacobian(plan: &Plan, b: &Block, slot: &ContactSlot, pos: &V3, out: &mu
     }
 }
 
+#[inline(never)]
 fn contact_rows(plan: &Plan, b: &mut Block, s: usize, jp: &mut [V3]) {
     let slot = &plan.contacts[s];
     let n = plan.chains[slot.chain].dofs.len();
@@ -157,6 +165,7 @@ fn contact_rows(plan: &Plan, b: &mut Block, s: usize, jp: &mut [V3]) {
     }
 }
 
+#[inline(never)]
 pub fn assemble(plan: &Plan, b: &mut Block, scratch: &mut Vec<V3>) {
     let longest = plan.chains.iter().map(|c| c.dofs.len()).max().unwrap_or(0);
 
@@ -166,5 +175,25 @@ pub fn assemble(plan: &Plan, b: &mut Block, scratch: &mut Vec<V3>) {
 
     for s in 0..plan.contacts.len() {
         contact_rows(plan, b, s, scratch);
+    }
+
+    b.live.clear();
+    b.live_limits.clear();
+    b.live_slots.clear();
+
+    let first = plan.friction.len();
+
+    for row in first..first + plan.limits.len() {
+        if b.row_any[row] {
+            b.live.push(row);
+            b.live_limits.push(row);
+        }
+    }
+
+    for (s, slot) in plan.contacts.iter().enumerate() {
+        if b.row_any[slot.row] {
+            b.live.extend(slot.row..slot.row + slot.rows);
+            b.live_slots.push(s);
+        }
     }
 }

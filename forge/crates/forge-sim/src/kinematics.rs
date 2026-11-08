@@ -79,6 +79,7 @@ fn local_to_global(b: &Block, body: usize, pos: &[f64; 3], quat: &[f64; 4], fram
     (gpos, gmat)
 }
 
+#[inline(never)]
 pub fn kinematics(plan: &Plan, b: &mut Block) {
     let k = &plan.kernel;
 
@@ -184,6 +185,7 @@ fn motion_dofs(plan: &Plan, b: &mut Block, i: usize) {
     }
 }
 
+#[inline(never)]
 pub fn com_pos(plan: &Plan, b: &mut Block) {
     let k = &plan.kernel;
 

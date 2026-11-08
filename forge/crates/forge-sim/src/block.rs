@@ -1,5 +1,6 @@
 use crate::lanes::{LANES, V, ZERO};
 use crate::plan::Plan;
+use crate::state::State;
 
 #[derive(Clone, Debug)]
 pub struct History {
@@ -51,6 +52,9 @@ pub struct Block {
     pub jac: Vec<V>,
     pub row_active: Vec<V>,
     pub row_any: Vec<bool>,
+    pub live: Vec<usize>,
+    pub live_limits: Vec<usize>,
+    pub live_slots: Vec<usize>,
     pub row_pos: Vec<V>,
     pub row_r: Vec<V>,
     pub row_d: Vec<V>,
@@ -62,72 +66,20 @@ fn zeros(n: usize) -> Vec<V> {
     vec![ZERO; n]
 }
 
-fn initial_times(n: usize, dt: f64) -> Vec<f64> {
-    (0..n).map(|j| -((n - j) as f64) * dt).collect()
-}
-
 impl Block {
-    pub fn set_ctrl(&mut self, lane: usize, ctrl: &[f64]) {
-        for (c, v) in self.ctrl.iter_mut().zip(ctrl) {
-            c.0[lane] = *v;
-        }
-    }
-
-    pub fn reset(&mut self, plan: &Plan, lane: usize, qpos: &[f64]) {
-        let dt = plan.kernel.options.timestep;
-
-        for (q, v) in self.qpos.iter_mut().zip(qpos) {
-            q.0[lane] = *v;
-        }
-
-        for v in self
-            .qvel
-            .iter_mut()
-            .chain(self.warm.iter_mut())
-            .chain(self.ctrl.iter_mut())
-        {
-            v.0[lane] = 0.0;
-        }
-
-        self.time.0[lane] = 0.0;
-
-        for h in &mut self.history {
-            let n = h.times[lane].len();
-
-            h.times[lane] = initial_times(n, dt);
-            h.values[lane].fill(0.0);
-            h.cursor[lane] = n - 1;
-        }
-    }
-
     pub fn new(plan: &Plan) -> Self {
         let k = &plan.kernel;
         let (nv, nu, nb) = (k.nv, k.nu, plan.nbody);
         let (nj, ng, ns, nr) = (k.joints.len(), k.geoms.len(), plan.contacts.len(), plan.nrows);
-        let history = k
-            .actuators
-            .iter()
-            .enumerate()
-            .filter_map(|(i, a)| {
-                let n = a.delay.as_ref()?.samples;
-                let times = initial_times(n, k.options.timestep);
-
-                Some(History {
-                    actuator: i,
-                    times: std::array::from_fn(|_| times.clone()),
-                    values: std::array::from_fn(|_| vec![0.0; n]),
-                    cursor: [n - 1; LANES],
-                })
-            })
-            .collect();
+        let state = State::new(plan);
 
         Self {
-            qpos: k.qpos0.iter().map(|&q| V::splat(q)).collect(),
-            qvel: zeros(nv),
-            ctrl: zeros(nu),
-            warm: zeros(nv),
-            time: ZERO,
-            history,
+            qpos: state.qpos,
+            qvel: state.qvel,
+            ctrl: state.ctrl,
+            warm: state.warm,
+            time: state.time,
+            history: state.history,
             xpos: zeros(3 * nb),
             xquat: zeros(4 * nb),
             xmat: zeros(9 * nb),
@@ -162,6 +114,9 @@ impl Block {
             jac: zeros(plan.njac),
             row_active: zeros(nr),
             row_any: vec![false; nr],
+            live: Vec::with_capacity(nr),
+            live_limits: Vec::with_capacity(nr),
+            live_slots: Vec::with_capacity(ns),
             row_pos: zeros(nr),
             row_r: zeros(nr),
             row_d: zeros(nr),

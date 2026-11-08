@@ -1,4 +1,4 @@
-use crate::lanes::{LANES, ONE, V, ZERO};
+use crate::lanes::{ONE, V, ZERO};
 use crate::params::MIN_VAL;
 
 pub type V3 = [V; 3];
@@ -134,19 +134,7 @@ pub fn normalize3(v: &V3) -> (V3, V) {
     (std::array::from_fn(|k| tiny.select(unit[k], v[k] * inv)), norm)
 }
 
-pub fn sin_cos(x: V) -> (V, V) {
-    let mut s = ZERO;
-    let mut c = ZERO;
-
-    for i in 0..LANES {
-        let (a, b) = x.0[i].sin_cos();
-
-        s.0[i] = a;
-        c.0[i] = b;
-    }
-
-    (s, c)
-}
+pub use crate::trig::sin_cos;
 
 pub fn axis_angle_quat(axis: &V3, angle: V) -> V4 {
     let (s, c) = sin_cos(angle * 0.5);

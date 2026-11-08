@@ -112,7 +112,7 @@ macro_rules! compare {
 impl V {
     #[inline(always)]
     pub const fn splat(x: f64) -> V {
-        V([x; LANES])
+        V([x, x, x, x])
     }
 
     #[inline(always)]

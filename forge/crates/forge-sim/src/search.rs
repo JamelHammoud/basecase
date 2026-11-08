@@ -1,9 +1,9 @@
 use crate::block::Block;
 use crate::inertia::mul_sym;
-use crate::lanes::{LANES, M, V, ZERO};
+use crate::lanes::{LANES, M, ONE, V, ZERO};
 use crate::newton::Solver;
 use crate::params::MIN_VAL;
-use crate::plan::{Plan, RowKind};
+use crate::plan::Plan;
 use crate::rows::jac_mul;
 
 #[derive(Clone, Copy)]
@@ -33,15 +33,56 @@ fn dot(a: &[V], b: &[V]) -> V {
     a.iter().zip(b).fold(ZERO, |s, (x, y)| s + *x * *y)
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Friction {
+    start: V,
+    dir: V,
+    f: V,
+    rf: V,
+    d: V,
+    cost: V,
+    quad: V,
+    neg: V,
+    pos: V,
+}
+
+fn zones(x: V, rf: V) -> (M, M, M) {
+    let quad = rf.gt(-x).and(x.lt(rf));
+    let neg = x.le(-rf);
+
+    (quad, neg, quad.or(neg).flip())
+}
+
+fn friction_cost(x: V, fr: &Friction, quad: M, neg: M) -> V {
+    let half = fr.rf * 0.5;
+
+    quad.select(fr.d * x * x * 0.5, neg.select(fr.f * (-half - x), fr.f * (-half + x)))
+}
+
 fn prepare(plan: &Plan, b: &Block, s: &mut Solver) {
     s.gauss[1] = dot(&s.dir, &s.ma) - dot(&b.qfrc_smooth, &s.dir);
     s.gauss[2] = dot(&s.dir, &s.mv) * 0.5;
 
-    for row in 0..plan.nrows {
-        if !b.row_any[row] {
-            continue;
-        }
+    for row in 0..plan.friction.len() {
+        let f = b.row_floss[row];
+        let mut fr = Friction {
+            start: s.jaref[row],
+            dir: s.jv[row],
+            f,
+            rf: b.row_r[row] * f,
+            d: b.row_d[row],
+            ..Friction::default()
+        };
+        let (quad, neg, pos) = zones(fr.start, fr.rf);
 
+        fr.cost = friction_cost(fr.start, &fr, quad, neg);
+        fr.quad = quad.mask(ONE);
+        fr.neg = neg.mask(ONE);
+        fr.pos = pos.mask(ONE);
+        s.friction[row] = fr;
+    }
+
+    for &row in &b.live {
         let (jv, ja, d) = (s.jv[row], s.jaref[row], b.row_d[row]);
         let dj = d * ja;
 
@@ -51,32 +92,22 @@ fn prepare(plan: &Plan, b: &Block, s: &mut Solver) {
     }
 }
 
-fn friction_cost(x: V, f: V, rf: V, d: V) -> V {
-    let quad = rf.gt(-x).and(x.lt(rf));
-    let neg = x.le(-rf);
+fn friction_terms(fr: &Friction, alpha: V) -> (V, V, V) {
+    let x = fr.start + alpha * fr.dir;
+    let (quad, neg, pos) = zones(x, fr.rf);
+    let both_q = quad.and(fr.quad.gt(ZERO));
+    let both_n = neg.and(fr.neg.gt(ZERO));
+    let both_p = pos.and(fr.pos.gt(ZERO));
+    let general = friction_cost(x, fr, quad, neg) - fr.cost;
+    let cost = both_q.select(
+        fr.d * (x - fr.start) * (x + fr.start) * 0.5,
+        both_n.select(fr.f * (fr.start - x), both_p.select(fr.f * (x - fr.start), general)),
+    );
+    let fdir = fr.f * fr.dir;
+    let d0 = quad.select(fr.d * x * fr.dir, neg.select(-fdir, fdir));
+    let d1 = quad.mask(fr.d * fr.dir * fr.dir);
 
-    quad.select(
-        d * x * x * 0.5,
-        neg.select(f * (-(rf * 0.5) - x), f * (-(rf * 0.5) + x)),
-    )
-}
-
-fn friction_dif(start: V, x: V, f: V, rf: V, d: V) -> V {
-    let zone = |v: V| {
-        let q = rf.gt(-v).and(v.lt(rf));
-        let n = v.le(-rf);
-
-        (q, n, q.flip().and(n.flip()))
-    };
-    let (q0, n0, p0) = zone(start);
-    let (q1, n1, p1) = zone(x);
-    let both_q = d * (x - start) * (x + start) * 0.5;
-    let both_n = f * (start - x);
-    let both_p = f * (x - start);
-    let general = friction_cost(x, f, rf, d) - friction_cost(start, f, rf, d);
-
-    q0.and(q1)
-        .select(both_q, n0.and(n1).select(both_n, p0.and(p1).select(both_p, general)))
+    (cost, d0, d1)
 }
 
 pub fn eval(plan: &Plan, b: &Block, s: &Solver, alpha: V) -> Pnt {
@@ -84,26 +115,17 @@ pub fn eval(plan: &Plan, b: &Block, s: &Solver, alpha: V) -> Pnt {
     let (mut d0, mut d1) = (ZERO, ZERO);
     let mut qt = [ZERO, s.gauss[1], s.gauss[2]];
 
-    for row in 0..plan.nrows {
-        if !b.row_any[row] {
-            continue;
-        }
+    for fr in &s.friction[..plan.friction.len()] {
+        let (c, a, b2) = friction_terms(fr, alpha);
 
+        cost += c;
+        d0 += a;
+        d1 += b2;
+    }
+
+    for &row in &b.live {
         let (start, dir) = (s.jaref[row], s.jv[row]);
         let x = start + alpha * dir;
-
-        if plan.row_kind[row] == RowKind::Friction {
-            let (f, d) = (b.row_floss[row], b.row_d[row]);
-            let rf = b.row_r[row] * f;
-            let quad = rf.gt(-x).and(x.lt(rf));
-            let neg = x.le(-rf);
-
-            cost += friction_dif(start, x, f, rf, d);
-            d0 += quad.select(d * x * dir, neg.select(-(f * dir), f * dir));
-            d1 += quad.mask(d * dir * dir);
-            continue;
-        }
-
         let q = &s.quad[3 * row..3 * row + 3];
         let cost0 = start.lt(ZERO).mask(q[0]);
         let on = x.lt(ZERO);
@@ -162,6 +184,7 @@ impl Count {
     }
 }
 
+#[inline(never)]
 pub fn search(plan: &Plan, b: &Block, s: &mut Solver, done: M) -> (V, V) {
     let opt = &plan.kernel.options;
     let snorm = dot(&s.dir, &s.dir).sqrt();

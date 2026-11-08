@@ -17,6 +17,10 @@ impl Meter {
         self.count.fetch_add(n as u64, Ordering::Relaxed);
     }
 
+    pub fn total(&self) -> u64 {
+        self.count.load(Ordering::Relaxed)
+    }
+
     pub fn watch(&self, seconds: f64) -> Windows {
         let start = Instant::now();
         let first = self.count.load(Ordering::Relaxed);

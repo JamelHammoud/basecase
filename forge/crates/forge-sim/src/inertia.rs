@@ -1,6 +1,5 @@
 use crate::block::Block;
-use crate::lanes::{ONE, V, ZERO};
-use crate::params::MIN_VAL;
+use crate::lanes::{V, ZERO};
 use crate::plan::Plan;
 use crate::spatial::{dot6, get, mul_inert_vec, V10, V6};
 
@@ -45,81 +44,15 @@ pub fn crb(plan: &Plan, b: &mut Block) {
 }
 
 pub fn factor(plan: &Plan, mat: &mut [V], diag_inv: &mut [V]) {
-    let nv = plan.kernel.nv;
-
-    for k in (0..nv).rev() {
-        let start = plan.m_adr[k];
-        let end = plan.diag(k);
-        let pivot = mat[end].max(V::splat(MIN_VAL));
-        let pivot = mat[end].lt(V::splat(MIN_VAL)).select(pivot, mat[end]);
-
-        mat[end] = pivot;
-
-        let inv = ONE / pivot;
-
-        diag_inv[k] = inv;
-
-        for adr in (start..end).rev() {
-            let i = plan.m_col[adr];
-            let s = mat[adr] * inv;
-            let (ri, ni) = (plan.m_adr[i], plan.m_nnz[i]);
-
-            for t in 0..ni {
-                let v = mat[start + t] * s;
-
-                mat[ri + t] -= v;
-            }
-        }
-
-        for v in &mut mat[start..end] {
-            *v *= inv;
-        }
-    }
+    plan.pattern.factor(mat, diag_inv);
 }
 
 pub fn solve(plan: &Plan, ld: &[V], diag_inv: &[V], x: &mut [V]) {
-    let nv = plan.kernel.nv;
-
-    for i in (0..nv).rev() {
-        let xi = x[i];
-
-        for adr in plan.m_adr[i]..plan.diag(i) {
-            let v = ld[adr] * xi;
-
-            x[plan.m_col[adr]] -= v;
-        }
-    }
-
-    for i in 0..nv {
-        x[i] *= diag_inv[i];
-    }
-
-    for i in 0..nv {
-        let mut s = ZERO;
-
-        for adr in plan.m_adr[i]..plan.diag(i) {
-            s += ld[adr] * x[plan.m_col[adr]];
-        }
-
-        x[i] -= s;
-    }
+    plan.pattern.solve(ld, diag_inv, x);
 }
 
 pub fn mul_sym(plan: &Plan, mat: &[V], x: &[V], out: &mut [V]) {
-    let nv = plan.kernel.nv;
-
-    for i in 0..nv {
-        out[i] = mat[plan.diag(i)] * x[i];
-    }
-
-    for i in 0..nv {
-        for adr in plan.m_adr[i]..plan.diag(i) {
-            let j = plan.m_col[adr];
-
-            out[i] += mat[adr] * x[j];
-            out[j] += mat[adr] * x[i];
-        }
-    }
+    plan.pattern.mul_sym(mat, x, out);
 }
 
 pub fn factor_m(plan: &Plan, b: &mut Block) {

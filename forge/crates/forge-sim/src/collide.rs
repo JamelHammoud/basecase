@@ -26,6 +26,7 @@ fn record(b: &mut Block, slot: usize, lane: usize, found: &[Found]) {
     }
 }
 
+#[inline(never)]
 pub fn collide(plan: &Plan, b: &mut Block) {
     let k = &plan.kernel;
     let mut found = [Found::default(); 4];

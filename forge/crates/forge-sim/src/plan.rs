@@ -1,4 +1,5 @@
 use crate::params::{impedance, solref_safe, Imp, MIN_VAL};
+use crate::sparse::Pattern;
 use forge_ir::{Kernel, Pair};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -70,8 +71,10 @@ pub struct Plan {
     pub row_kind: Vec<RowKind>,
     pub row_chain: Vec<usize>,
     pub row_jadr: Vec<usize>,
+    pub row_len: Vec<usize>,
+    pub jcol: Vec<usize>,
     pub njac: usize,
-    pub scale_dofs: Vec<usize>,
+    pub pattern: Pattern,
 }
 
 fn matrix_pattern(k: &Kernel) -> (Vec<usize>, Vec<usize>, Vec<usize>) {
@@ -264,17 +267,21 @@ impl Plan {
         }
 
         let mut row_jadr = Vec::with_capacity(nrows);
-        let mut njac = 0;
+        let mut row_len = Vec::with_capacity(nrows);
+        let mut jcol = Vec::new();
 
         for &c in &row_chain {
-            row_jadr.push(njac);
-            njac += chains[c].dofs.len();
+            row_jadr.push(jcol.len());
+            row_len.push(chains[c].dofs.len());
+            jcol.extend_from_slice(&chains[c].dofs);
         }
+
+        let njac = jcol.len();
 
         Self {
             nbody: kernel.bodies.len(),
             nm: m_col.len(),
-            scale_dofs: (0..kernel.nv).collect(),
+            pattern: Pattern::new(&m_adr, &m_nnz, &m_col),
             kernel,
             m_adr,
             m_nnz,
@@ -287,6 +294,8 @@ impl Plan {
             row_kind,
             row_chain,
             row_jadr,
+            row_len,
+            jcol,
             njac,
         }
     }

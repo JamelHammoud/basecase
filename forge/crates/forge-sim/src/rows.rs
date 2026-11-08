@@ -1,20 +1,18 @@
 use crate::block::Block;
 use crate::lanes::{M, ONE, V, ZERO};
-use crate::plan::{Plan, RowKind};
+use crate::plan::Plan;
 
 pub fn jac_mul(plan: &Plan, b: &Block, x: &[V], out: &mut [V]) {
-    for row in 0..plan.nrows {
-        if !b.row_any[row] {
-            out[row] = ZERO;
-            continue;
-        }
+    for (row, f) in plan.friction.iter().enumerate() {
+        out[row] = x[f.dof];
+    }
 
-        let dofs = &plan.chains[plan.row_chain[row]].dofs;
-        let adr = plan.row_jadr[row];
+    for &row in &b.live {
+        let (a, n) = (plan.row_jadr[row], plan.row_len[row]);
         let mut s = ZERO;
 
-        for (t, &d) in dofs.iter().enumerate() {
-            s += b.jac[adr + t] * x[d];
+        for (j, &d) in b.jac[a..a + n].iter().zip(&plan.jcol[a..a + n]) {
+            s += *j * x[d];
         }
 
         out[row] = s;
@@ -24,70 +22,65 @@ pub fn jac_mul(plan: &Plan, b: &Block, x: &[V], out: &mut [V]) {
 pub fn jac_t_mul(plan: &Plan, b: &Block, force: &[V], out: &mut [V]) {
     out.fill(ZERO);
 
-    for row in 0..plan.nrows {
-        if !b.row_any[row] {
-            continue;
-        }
+    for (row, f) in plan.friction.iter().enumerate() {
+        out[f.dof] += force[row];
+    }
 
-        let dofs = &plan.chains[plan.row_chain[row]].dofs;
-        let adr = plan.row_jadr[row];
+    for &row in &b.live {
+        let (a, n) = (plan.row_jadr[row], plan.row_len[row]);
         let f = force[row];
 
-        for (t, &d) in dofs.iter().enumerate() {
-            out[d] += b.jac[adr + t] * f;
+        for (j, &d) in b.jac[a..a + n].iter().zip(&plan.jcol[a..a + n]) {
+            out[d] += *j * f;
         }
     }
 }
 
-pub struct Update {
-    pub cost: V,
-}
-
-pub fn update(plan: &Plan, b: &Block, jar: &[V], force: &mut [V], quadratic: &mut [V]) -> Update {
+pub fn update(plan: &Plan, b: &Block, jar: &[V], force: &mut [V], quadratic: &mut [V]) -> V {
     let mut cost = ZERO;
 
-    for row in 0..plan.nrows {
-        if !b.row_any[row] {
-            force[row] = ZERO;
-            quadratic[row] = ZERO;
-            continue;
-        }
-
+    for row in 0..plan.friction.len() {
         let (d, x) = (b.row_d[row], jar[row]);
-        let half = d * x * x * 0.5;
+        let f = b.row_floss[row];
+        let rf = b.row_r[row] * f;
+        let neg = x.le(-rf);
+        let pos = x.ge(rf);
+        let linear = neg.or(pos);
+        let lin_cost = -(b.row_r[row] * f * f * 0.5) + neg.select(-(f * x), f * x);
 
-        if plan.row_kind[row] == RowKind::Friction {
-            let f = b.row_floss[row];
-            let rf = b.row_r[row] * f;
-            let neg = x.le(-rf);
-            let pos = x.ge(rf);
-            let linear = neg.or(pos);
-            let lin_cost = -(b.row_r[row] * f * f * 0.5) + neg.select(-(f * x), f * x);
+        cost += linear.select(lin_cost, d * x * x * 0.5);
+        force[row] = neg.select(f, pos.select(-f, -(d * x)));
+        quadratic[row] = linear.select(ZERO, ONE);
+    }
 
-            cost += linear.select(lin_cost, half);
-            force[row] = neg.select(f, pos.select(-f, -(d * x)));
-            quadratic[row] = linear.select(ZERO, ONE);
-            continue;
-        }
-
+    for &row in &b.live {
+        let (d, x) = (b.row_d[row], jar[row]);
         let satisfied = x.ge(ZERO);
 
-        cost += satisfied.select(ZERO, half);
+        cost += satisfied.select(ZERO, d * x * x * 0.5);
         force[row] = satisfied.select(ZERO, -(d * x));
         quadratic[row] = satisfied.select(ZERO, ONE);
     }
 
-    Update { cost }
+    cost
 }
 
 pub fn any_active(plan: &Plan, b: &Block) -> M {
-    let mut m = M::NONE;
+    let mut m = if plan.friction.is_empty() { M::NONE } else { M::ALL };
 
-    for row in 0..plan.nrows {
-        if b.row_any[row] {
-            m = m.or(b.row_active[row].gt(ZERO));
-        }
+    for &row in &b.live {
+        m = m.or(b.row_active[row].gt(ZERO));
     }
 
     m
+}
+
+pub fn for_rows(plan: &Plan, b: &Block, mut f: impl FnMut(usize)) {
+    for row in 0..plan.friction.len() {
+        f(row);
+    }
+
+    for &row in &b.live {
+        f(row);
+    }
 }

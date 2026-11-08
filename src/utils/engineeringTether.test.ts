@@ -29,11 +29,20 @@ describe('a robot on a tether', () => {
     expect(row(r, 'Current and runtime')).toBeUndefined();
   });
 
-  it('still fails a build with no battery and no tether, and says how to fix it', () => {
-    expect(row(run(servos(XM430)), 'Battery')).toMatchObject({
-      status: 'fail',
-      detail: 'No battery or tether. Add a battery from Parts → Power, or set a tether in Build → Power.',
-    });
+  it('assumes a tether matched to the servos when the build has no battery', () => {
+    const r = run(servos(XM430));
+
+    expect(row(r, 'Battery')).toBeUndefined();
+    expect(row(r, 'Servo voltage')?.detail).toBe('The 12 V 10 A tether is inside every servo’s 10–14.8 V range');
+  });
+
+  it('runs on the battery once one is in the build, whatever tether was set', () => {
+    const build = servos(XM430);
+    const withPack = { ...build, parts: [...build.parts, component('pack', 'ovonic-3s-2200-50c')] };
+    const r = run(withPack, { tether: { volts: 24, amps: 10 } });
+
+    expect(row(r, 'Supply current')).toBeUndefined();
+    expect(row(r, 'Current and runtime')).toBeDefined();
   });
 
   it('fails a tether above the servos’ maximum', () => {
@@ -59,15 +68,15 @@ describe('a robot on a tether', () => {
     expect(suggestedTether(servos('feetech-sts3250').parts).volts).toBe(12);
   });
 
-  it('puts the supply and its wiring on the bill of materials', () => {
+  it('puts the supply and its wiring on the bill of materials until a battery joins the build', () => {
     const { parts, measures } = servos(XM430);
-    const keys = (tether?: Tether) =>
-      buildBom({ parts, project: { ...DEFAULT_PROJECT, tether }, purchases: {}, measures }).lines.map((l) => l.key);
+    const keys = (scene: typeof parts) =>
+      buildBom({ parts: scene, project: DEFAULT_PROJECT, purchases: {}, measures }).lines.map((l) => l.key);
 
-    expect(keys({ volts: 12, amps: 10 })).toEqual(
+    expect(keys(parts)).toEqual(
       expect.arrayContaining(['supply:dc-bench-supply', 'supply:blade-fuse-holder', 'supply:wire-18awg-silicone']),
     );
-    expect(keys()).not.toContain('supply:dc-bench-supply');
+    expect(keys([...parts, component('pack', 'ovonic-3s-2200-50c')])).not.toContain('supply:dc-bench-supply');
   });
 
   it('lets the agent set and clear the tether', () => {

@@ -63,7 +63,7 @@ describe('Servo voltage and current', () => {
     const p = pack('b', 'ovonic-2s-2200-50c');
     const low = run(single('cubemars-ak60-6', [p.part], { b: p.measure }));
 
-    expect(row(noPack, 'Battery')?.status).toBe('fail');
+    expect(row(noPack, 'Supply current')).toBeDefined();
     expect(row(low, 'Servo voltage')?.status).toBe('fail');
   });
 

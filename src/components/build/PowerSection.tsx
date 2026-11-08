@@ -1,20 +1,13 @@
 import React from 'react';
-import { NumberInput, Section, SegmentedControl } from '../../design-system';
+import { NumberInput, Section } from '../../design-system';
 import type { ProjectSettings, ScenePart, Tether } from '../../types/robotics';
-import { suggestedTether } from '../../utils/powerSources';
+import { sceneTether } from '../../utils/powerSources';
 
 interface PowerSectionProps {
   parts: ScenePart[];
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
 }
-
-type Source = 'battery' | 'tether';
-
-const SOURCES = [
-  { value: 'battery' as const, label: 'Battery', title: 'Runs from a battery on the robot' },
-  { value: 'tether' as const, label: 'Tether', title: 'Runs on a cable from a wall or bench supply' },
-];
 
 const TetherFields: React.FC<{ tether: Tether; onChange: (tether: Tether) => void }> = ({ tether, onChange }) => (
   <div className="grid grid-cols-2 gap-2">
@@ -44,14 +37,14 @@ const TetherFields: React.FC<{ tether: Tether; onChange: (tether: Tether) => voi
 );
 
 export const PowerSection: React.FC<PowerSectionProps> = ({ parts, project, onChangeProject }) => {
-  const tether = project.tether;
-  const choose = (source: Source) =>
-    onChangeProject({ tether: source === 'tether' ? (tether ?? suggestedTether(parts)) : undefined });
+  const tether = sceneTether({ parts, project });
+
+  if (!tether) return null;
 
   return (
-    <Section title="Power">
-      <SegmentedControl<Source> options={SOURCES} value={tether ? 'tether' : 'battery'} onChange={choose} />
-      {tether && <TetherFields tether={tether} onChange={(next) => onChangeProject({ tether: next })} />}
+    <Section title="Tether">
+      <p className="-mt-1 mb-3 text-[12.5px] text-white/45">Runs on a cable until you add a battery.</p>
+      <TetherFields tether={tether} onChange={(next) => onChangeProject({ tether: next })} />
     </Section>
   );
 };

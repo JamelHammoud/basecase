@@ -152,7 +152,7 @@ export const setBuild = {
     title: 'Build settings',
     description:
       'Adds things to buy that are not modeled parts (battery, charger, buck converter, power switch, cables, microSD) to the BOM, by catalog key: "supply:<id>" from find_parts, or "component:<id>" for a catalog part that isn\'t placed. For anything find_parts lacks, use add_sourced_item. ' +
-      'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one), the default print material, and the tether: a robot run from a wall or bench supply instead of a battery (only when the user says so; volts 0 clears it). With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
+      'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one), the default print material, and the tether supply: a build with actuators and no battery runs on a cable from a wall or bench supply, by default one matched to the actuators at 10 A; set its volts and amps only when the user names a supply (volts 0 goes back to the default). A battery in the scene always wins. With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
     inputSchema: {
       extras: z
         .array(

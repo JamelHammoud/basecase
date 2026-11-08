@@ -7,4 +7,4 @@ mod source;
 mod tables;
 
 pub use batch::MetalBatch;
-pub use engine::refusal;
+pub use engine::{probe, refusal};

@@ -192,3 +192,38 @@ fn a_model_outside_the_subset_trains_on_mujoco_and_says_why() {
     );
     assert!(events.iter().any(|e| e["type"] == "done"));
 }
+
+#[cfg(target_os = "macos")]
+#[test]
+fn the_metal_backend_steps_the_same_randomized_robots_as_mujoco() {
+    let metal = robot("metal-envs", "metal");
+    let mujoco = robot("metal-mujoco-envs", "mujoco");
+
+    assert!(matches!(metal.engine, Engine::Metal { .. }));
+
+    let (a, b) = (rollout(&metal), rollout(&mujoco));
+    let worst = a.iter().zip(&b).map(|(x, y)| (x - y).abs()).fold(0.0, f32::max);
+
+    assert!(worst < 1e-3, "observations and rewards differ by {worst}");
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn a_metal_job_trains_and_says_which_engine_stepped_it() {
+    let dir = folder("metal-train", &hull_robot(), &job_json("metal"));
+    let events = train(&dir);
+
+    assert!(statuses(&events)
+        .iter()
+        .any(|s| s.starts_with("Stepping physics on Forge's Metal engine")));
+    assert!(events.iter().any(|e| e["type"] == "done"));
+}
+
+#[cfg(not(target_os = "macos"))]
+#[test]
+fn a_metal_job_off_a_mac_trains_on_mujoco_and_says_why() {
+    let dir = folder("metal-elsewhere", &hull_robot(), &job_json("metal"));
+    let said = statuses(&train(&dir));
+
+    assert!(said.iter().any(|s| s.contains("needs a Mac")), "{said:?}");
+}

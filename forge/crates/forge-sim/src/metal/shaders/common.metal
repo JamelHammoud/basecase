@@ -1,15 +1,33 @@
+#if H_DF
+typedef df hreal;
+inline hreal to_h(real x) { return x; }
+inline real from_h(hreal x) { return x; }
+inline hreal h_one() { return D(1.0f); }
+#else
+typedef float hreal;
+inline hreal to_h(real x) { return x.hi; }
+inline real from_h(hreal x) { return D(x); }
+inline hreal h_one() { return 1.0f; }
+#endif
+
 struct Ctx {
     device real *s;
     device int *n;
-    threadgroup float *h;
+    threadgroup hreal *h;
 };
 
 #define S(off, i) c.s[(uint)((off) + (i)) * BLOCK]
 #define N(off, i) c.n[(uint)((off) + (i)) * BLOCK]
 
+#if H_SHARED
 #define H(i) c.h[(i) * BLOCK]
+#elif H_DF
+#define H(i) S(HF, i)
+#else
+#define H(i) S(HF, i).hi
+#endif
 
-inline Ctx context(device real *s, device int *n, threadgroup float *h, uint t) {
+inline Ctx context(device real *s, device int *n, threadgroup hreal *h, uint t) {
     uint block = t / BLOCK, lane = t % BLOCK;
     return Ctx{s + block * NREALS * BLOCK + lane, n + block * NINTS * BLOCK + lane, h + lane};
 }

@@ -56,48 +56,6 @@ inline void crb(Ctx c) {
     }
 }
 
-inline void factor(Ctx c, int mat, int dinv) {
-    for (int r = 0; r < NV; r++) {
-        int k = NV - 1 - r;
-        int start = M_ADR[k];
-        int diag = diag_of(k);
-        real d = S(mat, diag);
-        real pivot = d < MIN_VAL ? MIN_VAL : d;
-        real inv = D(1.0f) / pivot;
-        S(mat, diag) = pivot;
-        S(dinv, k) = inv;
-        for (int u = FACT_OP[r]; u < FACT_OP[r + 1]; u++) {
-            real s = S(mat, UPD_ADR[u]) * inv;
-            int target = UPD_TARGET[u];
-            for (int t = 0; t < UPD_LEN[u]; t++) {
-                S(mat, target + t) -= S(mat, start + t) * s;
-            }
-        }
-        for (int a = start; a < diag; a++) {
-            S(mat, a) = S(mat, a) * inv;
-        }
-    }
-}
-
-inline void solve(Ctx c, int ld, int dinv, int x) {
-    for (int i = NV - 1; i >= 0; i--) {
-        real xi = S(x, i);
-        for (int a = M_ADR[i]; a < diag_of(i); a++) {
-            S(x, M_COL[a]) -= S(ld, a) * xi;
-        }
-    }
-    for (int i = 0; i < NV; i++) {
-        S(x, i) = S(x, i) * S(dinv, i);
-    }
-    for (int i = 0; i < NV; i++) {
-        dacc acc = A0();
-        for (int a = M_ADR[i]; a < diag_of(i); a++) {
-            acc += S(ld, a) * S(x, M_COL[a]);
-        }
-        S(x, i) -= sum(acc);
-    }
-}
-
 inline void mul_sym(Ctx c, int mat, int x, int out) {
     for (int i = 0; i < NV; i++) {
         S(out, i) = S(mat, diag_of(i)) * S(x, i);
@@ -120,4 +78,71 @@ inline real dotv(Ctx c, int a, int b) {
         s += S(a, i) * S(b, i);
     }
     return sum(s);
+}
+
+inline void factor_h(Ctx c) {
+    for (int r = 0; r < NV; r++) {
+        int k = NV - 1 - r;
+        int start = M_ADR[k];
+        int diag = diag_of(k);
+        hreal d = H(diag);
+        hreal pivot = d < to_h(MIN_VAL) ? to_h(MIN_VAL) : d;
+        hreal inv = h_one() / pivot;
+        H(diag) = pivot;
+        H(NM + k) = inv;
+        for (int u = FACT_OP[r]; u < FACT_OP[r + 1]; u++) {
+            hreal s = H(UPD_ADR[u]) * inv;
+            int target = UPD_TARGET[u];
+            for (int t = 0; t < UPD_LEN[u]; t++) {
+                H(target + t) -= H(start + t) * s;
+            }
+        }
+        for (int a = start; a < diag; a++) {
+            H(a) *= inv;
+        }
+    }
+}
+
+inline void solve_h(Ctx c, int x) {
+    for (int i = NV - 1; i >= 0; i--) {
+        hreal xi = to_h(S(x, i));
+        for (int a = M_ADR[i]; a < diag_of(i); a++) {
+            S(x, M_COL[a]) = from_h(to_h(S(x, M_COL[a])) - H(a) * xi);
+        }
+    }
+    for (int i = 0; i < NV; i++) {
+        S(x, i) = from_h(to_h(S(x, i)) * H(NM + i));
+    }
+    for (int i = 0; i < NV; i++) {
+        hreal acc = to_h(Z());
+        for (int a = M_ADR[i]; a < diag_of(i); a++) {
+            acc += H(a) * to_h(S(x, M_COL[a]));
+        }
+        S(x, i) = from_h(to_h(S(x, i)) - acc);
+    }
+}
+
+inline void load_h(Ctx c, int mat) {
+    for (int k = 0; k < NM; k++) {
+        H(k) = to_h(S(mat, k));
+    }
+}
+
+inline void refined_solve(Ctx c, int b, int x, bool implicit) {
+    for (int i = 0; i < NV; i++) {
+        S(x, i) = S(b, i);
+    }
+    solve_h(c, x);
+    if (H_DF) {
+        return;
+    }
+    mul_sym(c, MM, x, MX);
+    for (int i = 0; i < NV; i++) {
+        real lhs = implicit ? S(MX, i) + S(DERIV, i) * (-DT) * S(x, i) : S(MX, i);
+        S(RES, i) = S(b, i) - lhs;
+    }
+    solve_h(c, RES);
+    for (int i = 0; i < NV; i++) {
+        S(x, i) += S(RES, i);
+    }
 }

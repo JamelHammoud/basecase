@@ -64,6 +64,10 @@ inline thread df &operator-=(thread df &a, df b) { a = a - b; return a; }
 inline thread df &operator*=(thread df &a, df b) { a = a * b; return a; }
 inline device df &operator+=(device df &a, df b) { a = a + b; return a; }
 inline device df &operator-=(device df &a, df b) { a = a - b; return a; }
+inline device df &operator*=(device df &a, df b) { a = a * b; return a; }
+inline threadgroup df &operator+=(threadgroup df &a, df b) { a = a + b; return a; }
+inline threadgroup df &operator-=(threadgroup df &a, df b) { a = a - b; return a; }
+inline threadgroup df &operator*=(threadgroup df &a, df b) { a = a * b; return a; }
 
 inline bool operator<(df a, df b) { return a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo); }
 inline bool operator>(df a, df b) { return b < a; }

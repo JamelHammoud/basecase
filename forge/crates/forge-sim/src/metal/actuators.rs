@@ -38,7 +38,10 @@ fn delays(e: &mut Emitter, plan: &Plan) {
 }
 
 fn ranges(e: &mut Emitter, name: &str, ranges: &[Option<[f64; 2]>]) {
-    e.ints(&format!("{name}_LIMITED"), ranges.iter().map(|r| i64::from(r.is_some())));
+    e.ints(
+        &format!("{name}_LIMITED"),
+        ranges.iter().map(|r| i64::from(r.is_some())),
+    );
     e.reals(&format!("{name}_LO"), ranges.iter().map(|r| r.map_or(0.0, |r| r[0])));
     e.reals(&format!("{name}_HI"), ranges.iter().map(|r| r.map_or(0.0, |r| r[1])));
 }

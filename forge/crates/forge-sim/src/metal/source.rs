@@ -70,7 +70,6 @@ fn constants(e: &mut Emitter) {
     ] {
         e.define(name, value);
     }
-
 }
 
 fn sizes(e: &mut Emitter, plan: &Plan) {

@@ -124,7 +124,10 @@ impl Gpu {
     }
 
     pub fn run(&mut self, dispatches: &[Dispatch]) -> Result<Timing, String> {
-        let command = self.queue.commandBuffer().ok_or("Metal couldn't make a command buffer")?;
+        let command = self
+            .queue
+            .commandBuffer()
+            .ok_or("Metal couldn't make a command buffer")?;
         let encoder = command
             .computeCommandEncoder()
             .ok_or("Metal couldn't make a compute encoder")?;
@@ -138,9 +141,10 @@ impl Gpu {
         command.waitUntilCompleted();
 
         if command.status() != MTLCommandBufferStatus::Completed {
-            let why = command
-                .error()
-                .map_or_else(|| "no reason given".to_owned(), |e| e.localizedDescription().to_string());
+            let why = command.error().map_or_else(
+                || "no reason given".to_owned(),
+                |e| e.localizedDescription().to_string(),
+            );
 
             return Err(format!("Forge's Metal step failed: {why}"));
         }

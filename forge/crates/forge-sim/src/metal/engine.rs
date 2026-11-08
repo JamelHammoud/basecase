@@ -4,8 +4,8 @@ use super::tables::{imps, supported};
 use crate::plan::Plan;
 use forge_metal::{Arg, BufferId, Dispatch, Gpu, Kernel, Timing};
 
-pub const GROUP: usize = 32;
-pub const BLOCK: usize = 32;
+pub const GROUP: usize = 16;
+pub const BLOCK: usize = 16;
 
 pub struct Engine {
     pub plan: Plan,
@@ -21,9 +21,18 @@ pub struct Engine {
 }
 
 pub fn refusal(plan: &Plan) -> Option<String> {
-    imps(plan).iter().any(|i| !supported(i)).then(|| {
-        "a solimp power other than 1 or 2 needs pow, which Forge's Metal engine doesn't evaluate".to_owned()
-    })
+    imps(plan)
+        .iter()
+        .any(|i| !supported(i))
+        .then(|| "a solimp power other than 1 or 2 needs pow, which Forge's Metal engine doesn't evaluate".to_owned())
+}
+
+pub fn probe(kernel: &forge_ir::Kernel) -> Result<String, String> {
+    if let Some(why) = refusal(&Plan::new(kernel.clone())) {
+        return Err(why);
+    }
+
+    Gpu::new().map(|g| g.name())
 }
 
 impl Engine {

@@ -254,9 +254,9 @@ impl MetalBatch {
     fn record_stats(&mut self) {
         let stats = self.engine.stats();
 
-        for (s, pair) in stats.chunks_exact(2).enumerate() {
-            self.contacts[s] = f64::from(pair[0]);
-            self.work[s] = f64::from(pair[1]);
+        for (s, [contacts, work]) in stats.as_chunks::<2>().0.iter().enumerate() {
+            self.contacts[s] = f64::from(*contacts);
+            self.work[s] = f64::from(*work);
         }
     }
 

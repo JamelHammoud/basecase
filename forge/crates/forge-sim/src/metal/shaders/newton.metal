@@ -19,18 +19,15 @@ inline void refresh(Ctx c, thread Solver &sv) {
 
 inline void hessian(Ctx c, thread Solver &sv) {
     if (sv.dirty) {
-        for (int k = 0; k < NM; k++) {
-            H(k) = S(MM, k).hi;
-        }
-        hessian_rows_f(c, sv.nlive);
-        factor_f(c);
+        load_h(c, MM);
+        hessian_rows(c, sv.nlive);
+        factor_h(c);
         sv.dirty = false;
-        sv.factors++;
     }
     for (int i = 0; i < NV; i++) {
         S(MGRAD, i) = S(GRAD, i);
     }
-    solve_f(c, MGRAD);
+    solve_h(c, MGRAD);
 }
 
 inline bool warmstart(Ctx c, thread Solver &sv) {
@@ -81,7 +78,7 @@ inline bool start(Ctx c, thread Solver &sv, bool current) {
     for (int i = 0; i < NV; i++) {
         S(MGRAD, i) = S(GRAD, i);
     }
-    solve(c, LD, LDINV, MGRAD);
+    solve_h(c, MGRAD);
     return decrement_small(c, sv);
 }
 
@@ -120,7 +117,7 @@ inline int iterate(Ctx c, thread Solver &sv, bool done) {
 }
 
 inline int solve_constraints(Ctx c, int nlive, uint upto) {
-    Solver sv = Solver{Z(), Z(), Z(), nlive, true, 0, 0};
+    Solver sv = Solver{Z(), Z(), Z(), nlive, true};
     for (int i = 0; i < NV; i++) {
         S(QCON, i) = Z();
     }
@@ -131,14 +128,19 @@ inline int solve_constraints(Ctx c, int nlive, uint upto) {
         return 0;
     }
     bool current = warmstart(c, sv);
-    if (upto < 6) return 0;
+    if (upto < 6) {
+        return 0;
+    }
     bool done = start(c, sv, current);
-    if (upto < 7) return 0;
+    if (upto < 7) {
+        return 0;
+    }
     if (!done) {
         hessian(c, sv);
         done = gradient_small(c, sv) && decrement_small(c, sv);
     }
-    if (upto < 8) return 0;
-    int it = iterate(c, sv, done);
-    return it + 1000 * sv.evals + 1000000 * sv.factors;
+    if (upto < 8) {
+        return 0;
+    }
+    return iterate(c, sv, done);
 }

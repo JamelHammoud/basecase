@@ -111,34 +111,10 @@ fn matrix(e: &mut Emitter, plan: &Plan) {
     e.ints("M_ADR", adr.iter().map(|&v| idx(v)));
     e.ints("M_NNZ", nnz.iter().map(|&v| idx(v)));
     e.ints("M_COL", col.iter().map(|&v| idx(v)));
-    columns(e, plan);
     e.ints("FACT_OP", ops);
     e.ints("UPD_ADR", upd_adr);
     e.ints("UPD_TARGET", target);
     e.ints("UPD_LEN", len);
-}
-
-fn columns(e: &mut Emitter, plan: &Plan) {
-    let nv = plan.kernel.nv;
-    let mut adr = vec![0];
-    let (mut ent, mut row) = (Vec::new(), Vec::new());
-
-    for j in 0..nv {
-        for i in j + 1..nv {
-            let below = plan.m_adr[i]..plan.diag(i);
-
-            if let Some(a) = below.clone().find(|&a| plan.m_col[a] == j) {
-                ent.push(idx(a));
-                row.push(idx(i));
-            }
-        }
-
-        adr.push(idx(ent.len()));
-    }
-
-    e.ints("COL_ADR", adr);
-    e.ints("COL_ENT", ent);
-    e.ints("COL_ROW", row);
 }
 
 #[derive(Default)]

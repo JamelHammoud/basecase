@@ -62,7 +62,6 @@ inline void friction_terms(Ctx c, int k, real alpha, thread dacc &cost, thread d
 }
 
 inline Pnt eval_at(Ctx c, thread Solver &sv, real alpha) {
-    sv.evals++;
     dacc ca = A0(), da = A0(), ea = A0();
     dacc qa = A0(), qb = A0(), qc = A0();
     for (int k = 0; k < NFRIC; k++) {

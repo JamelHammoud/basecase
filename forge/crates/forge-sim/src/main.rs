@@ -2,8 +2,8 @@ mod args;
 mod bench;
 mod drive;
 mod identity;
-mod meter;
 mod metal_runs;
+mod meter;
 mod parity;
 mod reference;
 

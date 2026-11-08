@@ -9,7 +9,7 @@ fn sources(dir: &Path, out: &mut Vec<PathBuf>) {
 
         if path.is_dir() {
             sources(&path, out);
-        } else if path.extension().is_some_and(|e| e == "rs") {
+        } else if path.extension().is_some_and(|e| e == "rs" || e == "metal") {
             out.push(path);
         }
     }
@@ -20,7 +20,7 @@ fn engine_sources_carry_no_comments_and_stay_short() {
     let crates = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
     let mut files = Vec::new();
 
-    for name in ["forge-sim", "forge-ir"] {
+    for name in ["forge-sim", "forge-ir", "forge-metal"] {
         for folder in ["src", "tests", "examples"] {
             let dir = crates.join(name).join(folder);
 

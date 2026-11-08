@@ -10,6 +10,16 @@ pub struct Layout {
     pub ints: Vec<(&'static str, usize, usize)>,
     pub nints: usize,
     pub maxchain: usize,
+    pub shared: bool,
+}
+
+pub const HESSIAN_DF: bool = false;
+const SHARED_BYTES: usize = 32 * 1024;
+
+fn hessian_bytes(plan: &Plan) -> usize {
+    let width = if HESSIAN_DF { 8 } else { 4 };
+
+    super::engine::BLOCK * (plan.nm + plan.kernel.nv) * width
 }
 
 impl Layout {
@@ -53,7 +63,12 @@ impl Layout {
     }
 
     fn kinematics(&mut self, plan: &Plan) {
-        let (nb, nj, ng, nv) = (plan.nbody, plan.kernel.joints.len(), plan.kernel.geoms.len(), plan.kernel.nv);
+        let (nb, nj, ng, nv) = (
+            plan.nbody,
+            plan.kernel.joints.len(),
+            plan.kernel.geoms.len(),
+            plan.kernel.nv,
+        );
 
         for (name, len) in [
             ("XPOS", 3 * nb),
@@ -74,8 +89,6 @@ impl Layout {
             ("CACC", 6 * nb),
             ("CFRC", 6 * nb),
             ("MM", plan.nm),
-            ("LD", plan.nm),
-            ("HM", plan.nm),
         ] {
             self.take(name, len);
         }
@@ -85,8 +98,8 @@ impl Layout {
         let (nv, nu) = (plan.kernel.nv, plan.kernel.nu);
 
         for name in [
-            "LDINV", "HINV", "QBIAS", "QPASSIVE", "QACT", "QSMOOTH", "QACCS", "QACC", "QCON", "MA", "MV", "GRAD",
-            "MGRAD", "DIR", "TMP", "IACC", "DERIV",
+            "QBIAS", "QPASSIVE", "QACT", "QSMOOTH", "QACCS", "QACC", "QCON", "MA", "MV", "GRAD", "MGRAD", "DIR", "TMP",
+            "IACC", "DERIV", "MX", "RES", "RHS",
         ] {
             self.take(name, nv);
         }
@@ -99,6 +112,11 @@ impl Layout {
         let nr = plan.nrows;
 
         self.take("SCRJ", 3 * self.maxchain);
+
+        if !self.shared {
+            self.take("HF", plan.nm + plan.kernel.nv);
+        }
+
         self.take("RJAC", nr * plan.kernel.nv);
         self.take("RJC", nr * self.maxchain);
 
@@ -115,6 +133,7 @@ impl Layout {
     pub fn new(plan: &Plan) -> Self {
         let mut l = Layout {
             maxchain: plan.chains.iter().map(|c| c.dofs.len()).max().unwrap_or(1).max(1),
+            shared: hessian_bytes(plan) <= SHARED_BYTES,
             ..Layout::default()
         };
 
@@ -135,5 +154,7 @@ impl Layout {
         e.define("NINTS", self.nints.max(1));
         e.define("BLOCK", super::engine::BLOCK);
         e.define("MAXCHAIN", self.maxchain);
+        e.define("H_DF", i32::from(HESSIAN_DF));
+        e.define("H_SHARED", i32::from(self.shared));
     }
 }

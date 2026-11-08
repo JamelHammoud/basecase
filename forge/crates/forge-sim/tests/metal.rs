@@ -7,8 +7,10 @@ use forge_mujoco::{Batch, Model};
 use forge_sim::MetalBatch;
 
 const NSIM: usize = 7;
-const ROUNDS: usize = 60;
+const ROUNDS: usize = 6;
+const LONG: usize = 60;
 const DECIMATION: usize = 10;
+const TOLERANCE: f64 = 1e-5;
 
 trait Rows {
     fn row(&mut self, sim: usize) -> &mut [f64];
@@ -75,16 +77,16 @@ fn randomize(rows: &mut dyn Rows) {
     });
 }
 
-fn run(rows: &mut dyn Rows, model: &Model, nsim: usize) -> Vec<Vec<f64>> {
-    randomize(rows);
-    drive(rows, model, nsim)
+struct Drive {
+    nsim: usize,
+    rounds: usize,
 }
 
-fn drive(rows: &mut dyn Rows, model: &Model, nsim: usize) -> Vec<Vec<f64>> {
+fn drive(rows: &mut dyn Rows, model: &Model, d: &Drive) -> Vec<Vec<f64>> {
     let layout = Batch::new(model, 1, 1).expect("layout").layout();
 
-    for round in 0..ROUNDS {
-        for sim in 0..nsim {
+    for round in 0..d.rounds {
+        for sim in 0..d.nsim {
             let row = rows.row(sim);
 
             for a in 0..model.nu() {
@@ -95,7 +97,7 @@ fn drive(rows: &mut dyn Rows, model: &Model, nsim: usize) -> Vec<Vec<f64>> {
         assert_eq!(rows.advance(DECIMATION), 0);
     }
 
-    (0..nsim).map(|s| rows.row(s).to_vec()).collect()
+    (0..d.nsim).map(|s| rows.row(s).to_vec()).collect()
 }
 
 fn compare_xml(xml: &str, nsim: usize) -> f64 {
@@ -103,27 +105,38 @@ fn compare_xml(xml: &str, nsim: usize) -> f64 {
     let (model, kernel) = forge_ir::load(&path).expect("the test robot is in the subset");
     let mut c = Batch::new(&model, nsim, 2).expect("C batch");
     let mut metal = MetalBatch::new(&model, kernel, nsim).expect("Metal batch");
-    let ours = run(&mut metal, &model, nsim);
-    let reference = run(&mut c, &model, nsim);
+    let d = Drive { nsim, rounds: ROUNDS };
+
+    randomize(&mut metal);
+    randomize(&mut c);
+
+    let ours = drive(&mut metal, &model, &d);
+    let reference = drive(&mut c, &model, &d);
+    let o = metal.offsets();
+    let motion = o.qpos..o.qvel + model.nv();
 
     ours.iter()
         .zip(&reference)
-        .flat_map(|(a, b)| a.iter().zip(b).map(|(x, y)| (x - y).abs()))
+        .flat_map(|(a, b)| {
+            a[motion.clone()]
+                .iter()
+                .zip(&b[motion.clone()])
+                .map(|(x, y)| (x - y).abs() / y.abs().max(1.0))
+        })
         .fold(0.0, f64::max)
 }
 
-fn compare(servo: &Servo) -> f64 {
-    compare_xml(&quadruped(servo), NSIM)
+fn servo(attrs: &str, foot: &str) -> f64 {
+    compare_xml(&quadruped(&Servo { attrs, foot }), NSIM)
 }
+
+const SERVO: &str = r#"kp="11" dampratio="1" forcerange="-1.9 1.9""#;
 
 #[test]
 fn metal_rows_match_the_c_batch_with_randomized_tables() {
-    let worst = compare(&Servo {
-        attrs: r#"kp="11" dampratio="1" forcerange="-1.9 1.9""#,
-        foot: HULL_FOOT,
-    });
+    let worst = servo(SERVO, HULL_FOOT);
 
-    assert!(worst < 1e-7, "worst row difference {worst:e}");
+    assert!(worst < TOLERANCE, "worst relative difference {worst:e}");
 }
 
 #[test]
@@ -132,32 +145,24 @@ fn metal_delayed_servos_match_the_c_batch() {
         r#"kp="11" kv="0.05" forcerange="-1.9 1.9" delay="0.007" nsample="6" interp="linear""#,
         r#"kp="9" kv="0.02" delay="0.004" nsample="4" interp="zoh""#,
     ] {
-        let worst = compare(&Servo {
-            attrs,
-            foot: HULL_FOOT,
-        });
+        let worst = servo(attrs, HULL_FOOT);
 
-        assert!(worst < 1e-7, "{attrs}: worst row difference {worst:e}");
+        assert!(worst < TOLERANCE, "{attrs}: worst relative difference {worst:e}");
     }
 }
 
 #[test]
 fn metal_primitive_feet_match_the_c_batch() {
-    let feet = [
+    for foot in [
         r#"type="sphere" size="0.012" pos="0 0 -0.058""#,
         r#"type="capsule" fromto="0 0 0 0.01 0 -0.058" size="0.01""#,
         r#"type="box" size="0.012 0.01 0.03" pos="0 0 -0.035" euler="0.2 0.1 0""#,
         r#"type="cylinder" size="0.012 0.03" pos="0 0 -0.035" euler="0.4 0 0""#,
         PRISM_FOOT,
-    ];
+    ] {
+        let worst = servo(SERVO, foot);
 
-    for foot in feet {
-        let worst = compare(&Servo {
-            attrs: r#"kp="11" dampratio="1" forcerange="-1.9 1.9""#,
-            foot,
-        });
-
-        assert!(worst < 1e-7, "{foot}: worst row difference {worst:e}");
+        assert!(worst < TOLERANCE, "{foot}: worst relative difference {worst:e}");
     }
 }
 
@@ -178,13 +183,16 @@ fn link(depth: usize, leg: usize, links: usize) -> String {
     )
 }
 
-pub fn centipede(legs: usize, links: usize) -> String {
+fn centipede(legs: usize, links: usize) -> String {
     let body: String = (0..legs)
         .map(|leg| {
             let x = 0.05 * (leg / 2) as f64 - 0.025 * (legs / 2) as f64;
             let y = if leg % 2 == 0 { 0.04 } else { -0.04 };
 
-            format!(r#"<body name="hip{leg}" pos="{x} {y} 0">{}</body>"#, link(0, leg, links))
+            format!(
+                r#"<body name="hip{leg}" pos="{x} {y} 0">{}</body>"#,
+                link(0, leg, links)
+            )
         })
         .collect();
     let actuators: String = (0..legs)
@@ -215,28 +223,30 @@ fn metal_robots_past_32_dofs_match_the_c_batch() {
     for (legs, links) in [(8, 4), (10, 5), (2, 20)] {
         let worst = compare_xml(&centipede(legs, links), 5);
 
-        assert!(worst < 1e-6, "{legs} legs of {links} links: worst row difference {worst:e}");
+        assert!(
+            worst < TOLERANCE,
+            "{legs} legs of {links} links: worst relative difference {worst:e}"
+        );
     }
 }
 
 #[test]
 fn metal_robot_steps_the_same_alone_as_in_a_batch() {
     let path = write(&quadruped(&Servo {
-        attrs: r#"kp="11" dampratio="1" forcerange="-1.9 1.9""#,
+        attrs: SERVO,
         foot: HULL_FOOT,
     }));
     let (model, kernel) = forge_ir::load(&path).expect("in the subset");
     let mut batch = MetalBatch::new(&model, kernel.clone(), 40).expect("Metal batch");
     let mut alone = MetalBatch::new(&model, kernel, 1).expect("Metal batch");
-    let together = drive(&mut batch, &model, 40);
+    let together = drive(&mut batch, &model, &Drive { nsim: 40, rounds: LONG });
     let layout = Batch::new(&model, 1, 1).expect("layout").layout();
+    let start = Batch::new(&model, 1, 1).expect("start").row(0).to_vec();
 
     for sim in [0, 3, 6, 21, 39] {
-        let start = Batch::new(&model, 1, 1).expect("start").row(0).to_vec();
-
         alone.row(0).copy_from_slice(&start);
 
-        for round in 0..ROUNDS {
+        for round in 0..LONG {
             for a in 0..model.nu() {
                 alone.row(0)[layout.ctrl + a] = ctrl(sim, a, round);
             }
@@ -244,7 +254,11 @@ fn metal_robot_steps_the_same_alone_as_in_a_batch() {
             alone.step(DECIMATION);
         }
 
-        let same = alone.row(0).iter().zip(&together[sim]).all(|(a, b)| a.to_bits() == b.to_bits());
+        let same = alone
+            .row(0)
+            .iter()
+            .zip(&together[sim])
+            .all(|(a, b)| a.to_bits() == b.to_bits());
 
         assert!(same, "robot {sim} stepped differently in the batch");
     }

@@ -35,10 +35,8 @@ inline int forward_upto(Ctx c, thread int &ncon, uint upto) {
         return 0;
     }
     crb(c);
-    for (int k = 0; k < NM; k++) {
-        S(LD, k) = S(MM, k);
-    }
-    factor(c, LD, LDINV);
+    load_h(c, MM);
+    factor_h(c);
     if (upto < 3) {
         return 0;
     }
@@ -52,9 +50,8 @@ inline int forward_upto(Ctx c, thread int &ncon, uint upto) {
     actuation(c);
     for (int i = 0; i < NV; i++) {
         S(QSMOOTH, i) = S(QPASSIVE, i) - S(QBIAS, i) + S(QACT, i);
-        S(QACCS, i) = S(QSMOOTH, i);
     }
-    solve(c, LD, LDINV, QACCS);
+    refined_solve(c, QSMOOTH, QACCS, false);
     if (upto < 5) {
         return 0;
     }
@@ -101,17 +98,13 @@ inline void velocity_derivative(Ctx c) {
 
 inline void implicit_step(Ctx c) {
     velocity_derivative(c);
-    for (int k = 0; k < NM; k++) {
-        S(HM, k) = S(MM, k);
-    }
+    load_h(c, MM);
     for (int i = 0; i < NV; i++) {
-        S(HM, diag_of(i)) = S(MM, diag_of(i)) + S(DERIV, i) * (-DT);
+        H(diag_of(i)) = to_h(S(MM, diag_of(i)) + S(DERIV, i) * (-DT));
+        S(RHS, i) = S(QSMOOTH, i) + S(QCON, i);
     }
-    factor(c, HM, HINV);
-    for (int i = 0; i < NV; i++) {
-        S(IACC, i) = S(QSMOOTH, i) + S(QCON, i);
-    }
-    solve(c, HM, HINV, IACC);
+    factor_h(c);
+    refined_solve(c, RHS, IACC, true);
     record_ctrl(c);
     for (int i = 0; i < NV; i++) {
         S(QVEL, i) += S(IACC, i) * DT;
@@ -143,7 +136,7 @@ kernel void step(device real *io [[buffer(0)]], device real *s [[buffer(1)]], de
         return;
     }
     uint world = order[t];
-    threadgroup float tgh[BLOCK * (NM + NV)];
+    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + NV) : 1];
     Ctx c = context(s, n, tgh, t);
     load(c, io, world);
     int ncon = 0, work = 0;
@@ -164,7 +157,7 @@ kernel void forward_only(device real *io [[buffer(0)]], device real *s [[buffer(
         return;
     }
     uint world = order[t];
-    threadgroup float tgh[BLOCK * (NM + NV)];
+    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + NV) : 1];
     Ctx c = context(s, n, tgh, t);
     load(c, io, world);
     int ncon = 0;
@@ -179,7 +172,7 @@ kernel void profile(device real *io [[buffer(0)]], device real *s [[buffer(1)]],
     if (t >= W) {
         return;
     }
-    threadgroup float tgh[BLOCK * (NM + NV)];
+    threadgroup hreal tgh[H_SHARED ? BLOCK * (NM + NV) : 1];
     Ctx c = context(s, n, tgh, t);
     load(c, io, order[t]);
     int ncon = 0, work = 0;

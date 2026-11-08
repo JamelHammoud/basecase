@@ -10,6 +10,7 @@ bench/runs
 tools/parts/cad
 tools/parts/generated
 tools/figures/generated
+src/routines/kit
 electron/trainer/.venv
 electron/simready/.venv
 package-lock.json

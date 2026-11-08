@@ -191,46 +191,48 @@
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "26.0 s",
+          "detail": "13.4 s",
           "metrics": {},
-          "seconds": 25.998
+          "seconds": 13.365
         },
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "0.0 s",
           "metrics": {},
-          "seconds": 0.067
+          "seconds": 0.029
         },
         {
           "name": "forge-train links no Python",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.039
+          "seconds": 0.024
         },
         {
           "name": "Forge trains a real robot at 40K steps/s with the same events as train.py",
           "ok": false,
-          "detail": "13202 steps/s",
+          "detail": "34740 steps/s",
           "metrics": {
-            "fps": 13201.99643667143
+            "fps": 34739.72434415485,
+            "loadBefore": 6.1640625,
+            "loadAfter": 6.15087890625
           },
-          "seconds": 7.11
+          "seconds": 2.784
         },
         {
           "name": "Forge exports a valid ONNX policy that matches its own actions",
           "ok": true,
-          "detail": "worst 2.65e-6",
+          "detail": "worst 3.20e-6",
           "metrics": {},
-          "seconds": 0.652
+          "seconds": 0.359
         },
         {
           "name": "A Forge policy runs in the app with matching actions",
           "ok": true,
-          "detail": "1.8 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 1.783
+          "seconds": 0.428
         },
         {
           "name": "Forge reaches the walk skill within 20% of the samples train.py needs, over 10 seeds",
@@ -246,23 +248,23 @@
               2611200,
               null,
               null,
-              null,
+              18739200,
               921600
             ],
             "forge": [
-              3686400,
+              460800,
+              153600,
+              384000,
+              307200,
+              153600,
+              153600,
               230400,
-              5299200,
-              3840000,
-              691200,
-              1075200,
-              844800,
-              null,
-              24499200,
-              1228800
+              153600,
+              230400,
+              1075200
             ]
           },
-          "seconds": 8166.577
+          "seconds": 5283.164
         }
       ],
       "canaries": [
@@ -281,8 +283,8 @@
           "seconds": 0
         }
       ],
-      "commit": "6e8a110",
-      "at": "2026-11-08T00:10:49.822Z",
+      "commit": "88b4bd3",
+      "at": "2026-11-08T17:06:40.435Z",
       "manifest": "clean"
     },
     "s1-f1b-sysid-rewardlang": {

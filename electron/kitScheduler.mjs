@@ -11,6 +11,7 @@ export class KitScheduler {
     this.timers = new Map();
     this.latest = new Map();
     this.generations = new Map();
+    this.pending = new Map();
   }
 
   bump(workspaceId) {
@@ -21,7 +22,15 @@ export class KitScheduler {
     return generation;
   }
 
+  settle(workspaceId, value) {
+    const resolve = this.pending.get(workspaceId);
+
+    this.pending.delete(workspaceId);
+    resolve?.(value);
+  }
+
   request({ workspaceId, xml, job }) {
+    this.settle(workspaceId, { jobId: null });
     this.latest.set(workspaceId, { xml, job });
     this.bump(workspaceId);
     clearTimeout(this.timers.get(workspaceId));
@@ -29,6 +38,8 @@ export class KitScheduler {
       workspaceId,
       setTimeout(() => this.flush(workspaceId), this.debounceMs),
     );
+
+    return new Promise((resolve) => this.pending.set(workspaceId, resolve));
   }
 
   async flush(workspaceId) {
@@ -44,7 +55,15 @@ export class KitScheduler {
     if (this.generations.get(workspaceId) !== generation || !latest) return;
 
     this.latest.delete(workspaceId);
-    this.trainer.start({ workspaceId: key, xml: latest.xml, job: latest.job, priority: PRIORITY.kit });
+    this.settle(workspaceId, this.begin(key, latest));
+  }
+
+  begin(key, latest) {
+    try {
+      return this.trainer.start({ workspaceId: key, xml: latest.xml, job: latest.job, priority: PRIORITY.kit });
+    } catch {
+      return { jobId: null };
+    }
   }
 
   cancel(workspaceId) {
@@ -52,6 +71,7 @@ export class KitScheduler {
     this.timers.delete(workspaceId);
     this.latest.delete(workspaceId);
     this.bump(workspaceId);
+    this.settle(workspaceId, { jobId: null });
 
     return this.trainer.release(kitWorkspace(workspaceId));
   }
@@ -60,6 +80,7 @@ export class KitScheduler {
     for (const workspaceId of [...this.timers.keys()]) {
       clearTimeout(this.timers.get(workspaceId));
       this.latest.delete(workspaceId);
+      this.settle(workspaceId, { jobId: null });
     }
 
     this.timers.clear();

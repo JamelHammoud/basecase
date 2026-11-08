@@ -80,8 +80,6 @@ const controllerName = (controller: string) => {
   return kind === 'limp' ? 'Limp, no motor torque' : 'Holding the pose';
 };
 
-const capitalized = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-
 const partsRule = (key: string, icon: ToolIcon, [ing, ed]: [string, string]): ToolRule => ({
   keys: [key],
   icon,
@@ -368,14 +366,9 @@ const ROBOT_RULES: ToolRule[] = [
   plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),
   plainRule(['test_routine'], CheckIcon, ['Testing the Routine', 'Tested the Routine']),
   plainRule(['run_routine'], RunIcon, ['Running the Routine', 'Ran the Routine']),
-  {
-    keys: ['train_policy'],
-    icon: TrainIcon,
-    label: ({ input, verb }) => ({
-      title: verb('Starting training', 'Started training'),
-      detail: optional(capitalized(String(input.task ?? ''))),
-    }),
-  },
+  plainRule(['draft_skill'], TrainIcon, ['Drafting a skill', 'Drafted a skill']),
+  plainRule(['train_skill'], TrainIcon, ['Starting training', 'Started training']),
+  plainRule(['list_skills'], TrainIcon, ['Checking skills', 'Checked skills']),
   plainRule(['training_status'], TrainIcon, ['Checking training', 'Checked training']),
 ];
 

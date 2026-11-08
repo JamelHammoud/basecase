@@ -70,6 +70,7 @@ export interface TrainStartPayload {
   workspaceId: string;
   xml: string;
   job: Record<string, unknown>;
+  priority?: number;
 }
 
 export interface EvidenceFilePayload {
@@ -137,6 +138,10 @@ declare global {
       simreadyFile: (payload: { key: string; file: string }) => Promise<Uint8Array | null>;
       trainStart: (payload: TrainStartPayload) => Promise<{ jobId: string }>;
       trainStop: (workspaceId: string) => Promise<{ stopping: boolean }>;
+      kitRequest: (payload: TrainStartPayload) => Promise<{ jobId: string | null }>;
+      kitCancel: (workspaceId: string) => Promise<{ ok: boolean }>;
+      saveSkill: (payload: { hash: string; text: string }) => Promise<{ ok: boolean }>;
+      getSkill: (hash: string) => Promise<unknown>;
       getPolicy: (id: string) => Promise<unknown>;
       deletePolicy: (id: string) => Promise<boolean>;
       listSourced: () => Promise<SourcedItem[]>;

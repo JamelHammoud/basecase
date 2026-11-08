@@ -7,7 +7,8 @@ import type { V3 } from './kitModel';
 import type { Waypoint } from './raceIk';
 import type { Method, Route, TaskAnalysis } from './router';
 
-export type RaceGoal = { kind: 'reach'; part: string; waypoints: Waypoint[] } | { kind: 'velocity'; command: V3 };
+export type RaceGoal =
+  { kind: 'reach'; part: string; waypoints: Waypoint[] } | { kind: 'velocity'; command: V3 } | { kind: 'open' };
 
 export interface RaceTask {
   id: string;

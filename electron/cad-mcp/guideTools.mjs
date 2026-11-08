@@ -32,7 +32,8 @@ const TOOL_GUIDES = {
   set_world: ['simulation'],
   create_case: ['simulation'],
   start_drive: ['simulation'],
-  train_policy: ['simulation'],
+  draft_skill: ['simulation'],
+  train_skill: ['simulation'],
   find_objects: ['simready'],
   insert_object: ['simready'],
 };

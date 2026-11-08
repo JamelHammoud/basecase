@@ -4,11 +4,15 @@ import type { RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import {
   driveAccess,
+  driveOffer,
   FALL_CHECK_SECONDS,
   FALL_CHECK_SETTLE_SECONDS,
   fallCheckCommands,
   fallCheckPassed,
-  FELL_DRIVE_NOTE,
+  policyCommand,
+  type DriveAccess,
+  type DriveOffer,
+  type VelocityDrive,
 } from './driveAccess';
 import type { DriveSetup } from './drive';
 import { commandFromPad, mergeCommands, sameCommand, type DriveClass } from './driveKeys';
@@ -18,13 +22,15 @@ import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
 import type { RunOptions, SimRun, SimStatus } from './useSimulation';
 
-export type DriveStatus = 'off' | 'checking' | 'on' | 'refused';
+export type DriveStatus = 'off' | 'checking' | 'on' | 'teach' | 'none';
+
+export type VelocitySource = () => Promise<VelocityDrive | null>;
 
 export interface SimDrive {
   status: DriveStatus;
   active: boolean;
   cls: DriveClass | null;
-  note: string | null;
+  offer: DriveOffer;
   fell: boolean;
   start: () => Promise<boolean>;
   stop: () => void;
@@ -46,6 +52,7 @@ interface DriveInputs {
   startSim: () => Promise<void>;
   setController: (c: Controller) => void;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
+  velocity?: React.RefObject<VelocitySource | null>;
 }
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
@@ -82,16 +89,16 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   const { status: simStatus, send, viewportRef, modelRef, frameHookRef, stats, robotKey } = inputs;
   const [driveStatus, setDriveStatus] = useState<DriveStatus>('off');
   const [cls, setCls] = useState<DriveClass | null>(null);
-  const [note, setNote] = useState<string | null>(null);
   const latest = useRef(inputs);
   const keysCommand = useRef<DriveCommand>(IDLE);
   const sent = useRef<DriveCommand>(IDLE);
   const clsRef = useRef<DriveClass | null>(null);
+  const topSpeed = useRef<number | null>(null);
   const [seenSimStatus, setSeenSimStatus] = useState(simStatus);
 
   if (seenSimStatus !== simStatus) {
     setSeenSimStatus(simStatus);
-    setDriveStatus((s) => (simStatus === 'off' && s !== 'refused' ? 'off' : s));
+    setDriveStatus((s) => (simStatus === 'off' ? 'off' : s));
   }
 
   useLayoutEffect(() => {
@@ -109,7 +116,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     if (sameCommand(merged, sent.current)) return;
 
     sent.current = merged;
-    send({ type: 'command', ...merged });
+    send({ type: 'command', ...(topSpeed.current === null ? merged : policyCommand(merged, topSpeed.current)) });
   }, [send]);
 
   const active = driveStatus === 'on' && simStatus === 'ready';
@@ -131,10 +138,28 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     viewportRef.current?.followPart(null);
   }, [simStatus, viewportRef]);
 
-  const start = useCallback(async () => {
-    const { parts, rig, pose, startSim, setController, runOn } = latest.current;
+  const begin = useCallback(
+    (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>) => {
+      const controller: Controller =
+        access.kind === 'policy'
+          ? { kind: 'policy', policy: access.velocity.policy, robot: access.robot }
+          : { kind: 'drive', setup: access.setup };
 
-    setNote(null);
+      clsRef.current = access.cls;
+      topSpeed.current = access.kind === 'policy' ? access.velocity.topSpeed : null;
+      keysCommand.current = IDLE;
+      sent.current = IDLE;
+      setCls(access.cls);
+      latest.current.setController(controller);
+      latest.current.send({ type: 'respawn', robot: robotKey });
+      viewportRef.current?.followPart(access.followPart);
+      setDriveStatus('on');
+    },
+    [robotKey, viewportRef],
+  );
+
+  const start = useCallback(async () => {
+    const { parts, rig, pose, startSim, runOn, velocity } = latest.current;
 
     if (!modelRef.current) await startSim();
 
@@ -142,39 +167,36 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
     if (!model) return false;
 
-    const access = driveAccess({ rig, parts, model, robotKey, start: pose?.values });
+    const ready = (await velocity?.current?.()) ?? null;
+    const access = driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: ready });
 
-    if (access.kind === 'refused') {
-      setNote(access.reason);
-      setDriveStatus('refused');
-
-      return false;
-    }
-
-    if (access.needsFallCheck) setDriveStatus('checking');
-
-    if (access.needsFallCheck && !(await staysUp(runOn, model, { setup: access.setup, robotKey }))) {
-      setNote(FELL_DRIVE_NOTE);
-      setDriveStatus('refused');
+    if (access.kind === 'teach' || access.kind === 'none') {
+      setDriveStatus(access.kind);
 
       return false;
     }
 
-    clsRef.current = access.cls;
-    keysCommand.current = IDLE;
-    sent.current = IDLE;
-    setCls(access.cls);
-    setController({ kind: 'drive', setup: access.setup });
-    latest.current.send({ type: 'respawn', robot: robotKey });
-    viewportRef.current?.followPart(access.followPart);
-    setDriveStatus('on');
+    if (access.kind === 'ready' && access.needsFallCheck) setDriveStatus('checking');
+
+    if (
+      access.kind === 'ready' &&
+      access.needsFallCheck &&
+      !(await staysUp(runOn, model, { setup: access.setup, robotKey }))
+    ) {
+      setDriveStatus('teach');
+
+      return false;
+    }
+
+    begin(access);
 
     return true;
-  }, [modelRef, robotKey, viewportRef]);
+  }, [modelRef, robotKey, begin]);
 
   const stop = useCallback(() => {
     keysCommand.current = IDLE;
     clsRef.current = null;
+    topSpeed.current = null;
     viewportRef.current?.followPart(null);
     latest.current.setController({ kind: 'hold' });
     setDriveStatus('off');
@@ -191,12 +213,13 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   );
 
   const robotStat = stats?.robots.find((r) => r.key === robotKey) ?? stats?.robots[0];
+  const offered = driveOffer({ rig: inputs.rig, parts: inputs.parts, robotKey, velocityReady: false });
 
   return {
     status: driveStatus,
     active,
     cls,
-    note,
+    offer: driveStatus === 'teach' && offered === 'drive' ? 'teach' : offered,
     fell: active && !!robotStat && robotStat.fellAt !== null,
     start,
     stop,

@@ -1,5 +1,6 @@
 import type { Case } from '../cases/schema';
 import type { Routine } from '../routines/schema';
+import type { SkillRecord } from '../skills/skillRecords';
 import type { TryRecord } from '../cases/tries';
 import type { SourcedItem } from '../data/sourcedItems';
 import type { ReadinessDecisions } from '../readiness/types';
@@ -232,6 +233,7 @@ export interface ProjectSettings extends ProjectRecords {
   cases?: Case[];
   tries?: TryRecord[];
   routines?: Routine[];
+  skills?: SkillRecord[];
 }
 
 export interface SceneMark {

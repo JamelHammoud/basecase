@@ -165,6 +165,10 @@ ipcMain.handle('purchases:list', () => backend.listPurchases());
 ipcMain.handle('train:status', () => backend.trainStatus());
 ipcMain.handle('train:start', (_e, payload) => backend.trainStart(payload));
 ipcMain.handle('train:stop', (_e, workspaceId) => backend.trainStop(workspaceId));
+ipcMain.handle('train:kit', (_e, payload) => backend.kitRequest(payload));
+ipcMain.handle('train:kit-cancel', (_e, workspaceId) => backend.kitCancel(workspaceId));
+ipcMain.handle('skill:save', (_e, payload) => backend.saveSkill(payload));
+ipcMain.handle('skill:get', (_e, hash) => backend.getSkill(hash));
 ipcMain.handle('simready:status', () => backend.simreadyStatus());
 ipcMain.handle('simready:fetch', (_e, payload) => backend.simreadyFetch(payload));
 ipcMain.handle('simready:file', (_e, payload) => backend.simreadyFile(payload));
@@ -277,6 +281,7 @@ app.on('before-quit', () => {
   robot.dispose();
   kernel.stop();
   updates.dispose();
+  backend.kit.dispose();
   backend.trainer.dispose();
   backend.printing.dispose();
 });

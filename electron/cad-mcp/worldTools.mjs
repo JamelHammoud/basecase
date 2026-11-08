@@ -64,7 +64,7 @@ export const startDrive = {
     title: 'Drive the robot',
     description:
       'Drives the robot in MuJoCo with live commands, the same way a person drives it with the keyboard, and reports what happened. ' +
-      'Arms follow the end effector (warm-started inverse kinematics); rovers mix wheel speeds; robots with four or more legs walk on baked gait cycles after a 5 s fall check. Two-legged robots cannot drive on a scripted walk and are refused. ' +
+      'Arms follow the end effector (warm-started inverse kinematics); rovers mix wheel speeds; robots with four or more legs walk on baked gait cycles after a 5 s fall check; any legged robot with a trained walk skill (bipeds included) drives through it. Without one, the reply says how to train it. ' +
       'Commands are held until the next one; each axis runs -1 to 1. With live: true it drives the canvas for the user to watch and returns at once; otherwise it runs headless and returns how far the robot went, how much it turned, whether it fell, and the end effector for arms.',
     inputSchema: {
       seconds: z.number().min(0.5).max(30).optional().describe('Simulated time, default 6'),

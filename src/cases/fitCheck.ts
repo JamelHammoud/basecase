@@ -59,9 +59,8 @@ async function fallRow(input: FitInput, model: SimModel): Promise<FitRow> {
   const access = driveAccess({ rig: input.rig, parts: input.parts, model });
   const label = 'Fall check';
 
-  if (access.kind === 'refused') return { id: 'fall', label, state: 'skip', detail: access.reason };
-
-  if (!access.needsFallCheck) return { id: 'fall', label, state: 'skip', detail: 'Not needed' };
+  if (access.kind !== 'ready' || !access.needsFallCheck)
+    return { id: 'fall', label, state: 'skip', detail: 'Not needed' };
 
   const stats = await input.run({
     model,

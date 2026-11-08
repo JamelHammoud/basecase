@@ -200,7 +200,14 @@ export interface MenuItemProps {
   onSelect: () => void;
   disabled?: boolean;
   tone?: 'default' | 'danger';
+  active?: boolean;
 }
+
+const toneClass = (tone: MenuItemProps['tone'], active: boolean) => {
+  if (tone === 'danger') return 'text-red-400 hover:bg-red-500/15';
+
+  return active ? 'bg-[#0d99ff] text-white' : 'text-white/90 hover:bg-[#0d99ff] hover:text-white';
+};
 
 export const MenuItem: React.FC<MenuItemProps> = ({
   icon,
@@ -211,15 +218,15 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   onSelect,
   disabled = false,
   tone = 'default',
+  active = false,
 }) => (
   <button
     type="button"
     role="menuitem"
     disabled={disabled}
     onClick={onSelect}
-    className={`w-full h-8 px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors disabled:opacity-35 ${
-      tone === 'danger' ? 'text-red-400 hover:bg-red-500/15' : 'text-white/90 hover:bg-[#0d99ff] hover:text-white'
-    } group/menuitem`}
+    data-active={active || undefined}
+    className={`w-full h-8 px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors disabled:opacity-35 ${toneClass(tone, active)} group/menuitem`}
   >
     {checked !== undefined && (
       <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
@@ -229,7 +236,11 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     )}
     <span className="flex-1 truncate">{label}</span>
     {detail && (
-      <span className="shrink-0 text-[12.5px] text-white/40 group-hover/menuitem:text-white/80">{detail}</span>
+      <span
+        className={`shrink-0 text-[12.5px] group-hover/menuitem:text-white/80 ${active ? 'text-white/80' : 'text-white/40'}`}
+      >
+        {detail}
+      </span>
     )}
     {shortcut && (
       <Kbd className="group-hover/menuitem:[&_kbd]:bg-white/20 group-hover/menuitem:[&_kbd]:text-white">{shortcut}</Kbd>

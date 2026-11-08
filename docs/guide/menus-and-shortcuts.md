@@ -12,7 +12,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - **Empty canvas:** Add Part, Comment Here, Measure From Here, Add Reference Image, Sketch, Annotate, Clear Marks (with marks), Import Mesh, Import SVG, Select All, camera views, Reset View, Show Grid, Save Scene, Export STL.
   - Select All (⌘A) is in every menu. Like ⌘A and ⌘K, it skips hidden parts and hidden reference photos.
   - Right-drag and two-finger press-drag pans never open the menu. macOS fires `contextmenu` on press, so the canvas menu opens on release, and only if the pointer moved 5px or less (`menuPressRef`). Windows' release-then-`contextmenu` order is handled the same way. A two-finger tap within 400ms of a wheel event (scroll, pinch or momentum) is ignored too (`TRACKPAD_TAP_GRACE_MS`). Scrolling closes an open menu.
-- **⌘K command palette:** every part, model, tool, view and scene action.
+- **⌘K command palette:** every part, model, tool, view and scene action. The Agent group has each slash command (Teach a Skill, Make a Routine, Make a Case, Simulate the Scene, Run Checks), which opens the Agent tab with `/<command> ` in the composer.
+- **Slash commands** (`src/agent/slashCommands.ts`, `components/agent/useSlashMenu.ts`, `SlashMenu.tsx`): typing `/` at the very start of the composer opens a menu above it (`PopoverMenu` with `MenuItem`s, the command and a muted hint): `/train`, `/routine`, `/case`, `/simulate`, `/check`, filtered as you type (prefix matches first). ↑ ↓ move (wrapping), ↩ or Tab inserts `/<command> ` and keeps focus, Esc closes it and leaves the text; a click in the composer keeps it open. The agent reads each one through the prompt's Slash commands section.
 - **Shortcuts:**
   - Tools: V/E/R/C/M, D measure, N annotate, A shapes. P opens the Pose tab.
   - Placement and view: F floor, S stack, Z zoom, 1–4 views.

@@ -159,7 +159,7 @@ const evidenceMatches = (e: ArenaEvidence, b: SkillBinding) =>
 const bindingMatches = (b: SkillBinding, c: CurrentDesign) =>
   b.contract === c.contract && b.physics === c.hashes.physics && b.actuators === c.hashes.actuators;
 
-export function skillFreshness(skill: Skill, current: CurrentDesign): Freshness {
+export function skillFreshness(skill: Pick<Skill, 'binding' | 'evidence'>, current: CurrentDesign): Freshness {
   const { binding, evidence } = skill;
 
   if (needsTraining(binding, current)) return 'needs-training';

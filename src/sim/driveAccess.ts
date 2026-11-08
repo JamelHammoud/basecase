@@ -5,13 +5,10 @@ import { rigForWorker, type DriveSetup } from './drive';
 import type { DriveClass } from './driveKeys';
 import { footPoints } from './driveLegs';
 import { armSetup, roverSetup } from './driveSetup';
+import type { DriveCommand } from './driveTypes';
 import type { SimStats } from './engine';
 import type { SimModel } from './mjcfTypes';
-
-export const BIPED_DRIVE_NOTE = 'Two-legged robots can’t balance on a scripted walk. Drive needs a trained policy.';
-export const WHEEL_LEG_DRIVE_NOTE = 'Robots balancing on wheeled legs need a trained policy to drive.';
-export const NO_DRIVE_NOTE = 'Drive needs an arm, wheels or at least four legs.';
-export const FELL_DRIVE_NOTE = 'This robot falls on its scripted walk. Drive needs a trained policy.';
+import type { PolicySpec } from './policy';
 
 const MIN_DRIVEN_LEGS = 4;
 
@@ -21,10 +18,21 @@ export const FALL_CHECK_SETTLE_SECONDS = 1;
 const MIN_FORWARD_M = 0.03;
 const MAX_TILT = 35;
 const MIN_HEIGHT_SHARE = 0.6;
+const STRAFE_SHARE = 0.25;
+const TURN_RAD_S = 0.6;
+
+export interface VelocityDrive {
+  policy: PolicySpec;
+  topSpeed: number;
+}
 
 export type DriveAccess =
   | { kind: 'ready'; cls: DriveClass; setup: DriveSetup; needsFallCheck: boolean; followPart: string | null }
-  | { kind: 'refused'; reason: string };
+  | { kind: 'policy'; cls: 'legs'; velocity: VelocityDrive; robot: string; followPart: string | null }
+  | { kind: 'teach' }
+  | { kind: 'none' };
+
+export type DriveOffer = 'drive' | 'teach' | 'none';
 
 export interface DriveInput {
   rig: Rig;
@@ -32,6 +40,7 @@ export interface DriveInput {
   model: SimModel;
   robotKey?: string;
   start?: JointValues;
+  velocity?: VelocityDrive | null;
 }
 
 function basePart(rig: Rig, parts: ScenePart[], key: string): string | null {
@@ -44,25 +53,42 @@ function basePart(rig: Rig, parts: ScenePart[], key: string): string | null {
 function legsAccess({ rig, parts, start }: DriveInput, robot: string, followPart: string | null): DriveAccess {
   const feet = footPoints(rig, parts, robot);
 
-  if (feet.length === 2) return { kind: 'refused', reason: BIPED_DRIVE_NOTE };
-
-  if (feet.length < MIN_DRIVEN_LEGS) return { kind: 'refused', reason: NO_DRIVE_NOTE };
+  if (feet.length < MIN_DRIVEN_LEGS) return { kind: 'teach' };
 
   const setup: DriveSetup = { kind: 'legs', robot, rig: rigForWorker(rig), feet, start: start ?? {} };
 
   return { kind: 'ready', cls: 'legs', setup, needsFallCheck: true, followPart };
 }
 
+function armAccess(input: DriveInput, robot: string): DriveAccess {
+  const facts = robotFacts(input.rig, input.parts, robot);
+
+  if (!facts.endEffector) return { kind: 'none' };
+
+  const setup = armSetup({
+    rig: input.rig,
+    robot,
+    effector: facts.endEffector,
+    joints: facts.armJoints,
+    anchor: facts.anchor,
+    reachMm: facts.reachMm,
+    start: input.start,
+  });
+
+  return { kind: 'ready', cls: 'arm', setup, needsFallCheck: false, followPart: null };
+}
+
 export function driveAccess(input: DriveInput): DriveAccess {
-  const { rig, parts, model, robotKey, start } = input;
+  const { rig, parts, model, robotKey, velocity } = input;
   const robot = model.robots.find((r) => r.key === robotKey) ?? model.robots[0];
 
-  if (!robot) return { kind: 'refused', reason: NO_DRIVE_NOTE };
+  if (!robot) return { kind: 'none' };
 
   const followPart = robot.floating ? basePart(rig, parts, robot.key) : null;
-  const facts = robotFacts(rig, parts, robot.key);
 
-  if (robot.morphology === 'wheel-legged') return { kind: 'refused', reason: WHEEL_LEG_DRIVE_NOTE };
+  if (velocity && robot.floating) return { kind: 'policy', cls: 'legs', velocity, robot: robot.key, followPart };
+
+  if (robot.morphology === 'wheel-legged') return { kind: 'teach' };
 
   if (robot.morphology === 'wheeled') {
     const setup = roverSetup(rig, parts, robot.key);
@@ -72,19 +98,39 @@ export function driveAccess(input: DriveInput): DriveAccess {
 
   if (robot.morphology === 'legged') return legsAccess(input, robot.key, followPart);
 
-  if (!facts.endEffector) return { kind: 'refused', reason: NO_DRIVE_NOTE };
+  return armAccess(input, robot.key);
+}
 
-  const setup = armSetup({
-    rig,
-    robot: robot.key,
-    effector: facts.endEffector,
-    joints: facts.armJoints,
-    anchor: facts.anchor,
-    reachMm: facts.reachMm,
-    start,
-  });
+export function driveOffer(options: {
+  rig: Rig;
+  parts: ScenePart[];
+  robotKey?: string;
+  velocityReady: boolean;
+}): DriveOffer {
+  const { rig, parts, robotKey, velocityReady } = options;
 
-  return { kind: 'ready', cls: 'arm', setup, needsFallCheck: false, followPart };
+  if (!rig.robots.length) return 'none';
+
+  const facts = robotFacts(rig, parts, robotKey);
+  const walks = facts.morphology === 'legged' || facts.morphology === 'wheel-legged';
+
+  if (walks && velocityReady) return 'drive';
+
+  if (facts.morphology === 'wheel-legged') return 'teach';
+
+  if (facts.morphology === 'legged')
+    return footPoints(rig, parts, robotKey).length < MIN_DRIVEN_LEGS ? 'teach' : 'drive';
+
+  return facts.morphology === 'wheeled' || facts.endEffector ? 'drive' : 'none';
+}
+
+export const withVelocity = (offer: DriveOffer, velocityReady: boolean): DriveOffer =>
+  offer === 'teach' && velocityReady ? 'drive' : offer;
+
+export function policyCommand(command: DriveCommand, topSpeed: number): DriveCommand {
+  const [forward, left, turn] = command.v;
+
+  return { v: [Math.max(0, forward) * topSpeed, left * STRAFE_SHARE * topSpeed, turn * TURN_RAD_S] };
 }
 
 export function fallCheckPassed(stats: SimStats, restHeightM: number, robotKey?: string): boolean {

@@ -38,7 +38,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
 
   useEffect(() => {
     (window as unknown as { __gallery?: unknown }).__gallery = {
-      state: () => ({ status: sim.status, drive: drive.status, note: drive.note, stats: sim.stats }),
+      state: () => ({ status: sim.status, drive: drive.status, offer: drive.offer, stats: sim.stats }),
     };
   });
 
@@ -81,7 +81,6 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
           {drive.active ? 'Stop Driving' : 'Drive'}
         </Button>
         {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
-        {drive.note && <p className="text-[12.5px] leading-snug text-white/60">{drive.note}</p>}
         {drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
         <Button variant="secondary" size="md" fullWidth onClick={() => void seeInside(bundle)}>
           See Inside

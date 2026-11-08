@@ -34,7 +34,10 @@ async function ikPlan(input: RaceInput, clock: RaceClock): Promise<SolveResult> 
     attempt: { method: 'ik-or-motion-plan', passed: false, cost: elapsedOf(clock), reason, candidates: [] },
   });
 
-  if (task.goal.kind !== 'reach') return fail('IK plans poses for reach goals, and this task moves the whole robot.');
+  if (task.goal.kind === 'velocity')
+    return fail('IK plans poses for reach goals, and this task moves the whole robot.');
+
+  if (task.goal.kind === 'open') return fail('IK plans poses for reach goals, and this task has no point to reach.');
 
   const plan = planReach(mj, task.model, { ...task.goal, horizonS: task.environment.horizonS });
   const proof = await proveSkill({

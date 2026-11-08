@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { ContextMenu, ContextMenuEntry, useScrollFade } from '../design-system';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
+import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
+import type { SkillRow } from '../skills/skillRows';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
+import type { SceneSkills } from '../workspace/useSkills';
 import { BriefSection, RobotFitSection, TrySection } from './simulate/CaseSections';
-import { ControlSection, useChooseController } from './simulate/ControlSection';
+import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
 import { EmulatedRobotSection } from './simulate/EmulatedRobotSection';
 import { ModelSection } from './simulate/ModelSection';
 import { PoliciesSection } from './simulate/PoliciesSection';
@@ -26,10 +29,28 @@ interface SimulatePanelProps {
   onSelectParts: (ids: string[]) => void;
   onDeletePolicy: (id: string) => void;
   onNewCase: () => void;
+  skills: SceneSkills;
+  onTeach: ((goal: string) => void) | null;
+}
+
+function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
+  const walkRow = skills.rows.find((r) => r.kit === 'velocity-tracking');
+  const kit = skills.canKit('velocity-tracking');
+  const teachWalk = kit ? () => void skills.trainKit('velocity-tracking') : onTeach && (() => onTeach('walk'));
+
+  return { velocityReady: skills.velocityReady, teachWalk, walkTraining: walkRow?.state.kind === 'training' };
 }
 
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy, onNewCase } = props;
+  const { skills, onTeach } = props;
+  const walk = useWalkTeaching(skills, onTeach);
+  const skillActions = {
+    onTrain: (row: SkillRow) => (row.kit ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label)),
+    onTry: (row: SkillRow) => void skills.tryRow(row),
+    onDrive: () => void sim.drive.start(),
+    onStop: skills.stop,
+  };
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const on = sim.status !== 'off';
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
@@ -53,10 +74,16 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {kase && <BriefSection cases={cases} />}
         {kase && <RobotFitSection cases={cases} onNewCase={onNewCase} />}
-        {kase && <TrySection cases={cases} driveNote={sim.drive.note} cls={sim.drive.cls} />}
+        {kase && (
+          <TrySection
+            cases={cases}
+            teachWalk={withVelocity(sim.drive.offer, walk.velocityReady) === 'teach' ? walk.teachWalk : null}
+            cls={sim.drive.cls}
+          />
+        )}
         <EmulatedRobotSection />
-        <ControlSection {...control} choose={choose} showDrive={!kase} />
-        <TrainSection training={training} fixed={cases.fixedBase} />
+        <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} />
+        <TrainSection skills={skills} actions={skillActions} onTeach={onTeach} />
         {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}
 
         {on && sim.stats && sim.model && (

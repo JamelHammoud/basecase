@@ -7,13 +7,15 @@ import { DEFAULT_PROJECT } from '../types/robotics';
 import { alternatingPhases } from '../utils/gait';
 import { buildRig } from '../utils/kinematics';
 import {
-  BIPED_DRIVE_NOTE,
   driveAccess,
+  driveOffer,
+  type VelocityDrive,
   FALL_CHECK_SECONDS,
   FALL_CHECK_SETTLE_SECONDS,
   fallCheckCommands,
   fallCheckPassed,
-  WHEEL_LEG_DRIVE_NOTE,
+  policyCommand,
+  withVelocity,
 } from './driveAccess';
 import { commandFromKeys, commandFromPad, mergeCommands } from './driveKeys';
 import { footPoints } from './driveLegs';
@@ -21,6 +23,7 @@ import { SimEngine } from './engine';
 import { box } from './fixtures/parts';
 import { fixtureRobots } from './fixtures/robots';
 import { buildMjcf, simDeltas, type WorldItem } from './mjcf';
+import type { PolicySpec } from './policy';
 
 const robot = (id: string) => fixtureRobots().find((r) => r.id === id)!;
 
@@ -39,19 +42,27 @@ const yawChange = (engine: SimEngine, seconds: number) => {
   return yawOf(engine) - before;
 };
 
-function walker(id: string) {
+function walker(id: string, velocity: VelocityDrive | null = null) {
   const r = robot(id);
   const rig = buildRig(r.joints, r.parts);
   const model = buildMjcf({ ...caseRobot(r), rig, project: DEFAULT_PROJECT });
-  const access = driveAccess({ rig, parts: r.parts, model });
+  const access = driveAccess({ rig, parts: r.parts, model, velocity });
 
   return { r, rig, model, access };
 }
 
+const offer = (id: string, velocityReady = false) => {
+  const r = robot(id);
+
+  return driveOffer({ rig: buildRig(r.joints, r.parts), parts: r.parts, velocityReady });
+};
+
+const stubVelocity = { policy: { joints: [] } as unknown as PolicySpec, topSpeed: 0.15 };
+
 function fallCheck(mj: MainModule, id: string) {
   const { model, access } = walker(id);
 
-  if (access.kind !== 'ready') return access.reason;
+  if (access.kind !== 'ready') return access.kind;
 
   const engine = new SimEngine(mj, model);
 
@@ -117,9 +128,36 @@ describe('driving legs', () => {
     expect(fallCheck(mj, 'must-fail-weak-quad')).toBe(false);
   });
 
-  it('a biped is told plainly, and never gets a scripted drive', () => {
-    expect(walker('biped-servo').access).toEqual({ kind: 'refused', reason: BIPED_DRIVE_NOTE });
-    expect(walker('wheel-legged').access).toEqual({ kind: 'refused', reason: WHEEL_LEG_DRIVE_NOTE });
+  it('offers to teach a biped to walk, and never gives it a scripted drive', () => {
+    expect(walker('biped-servo').access).toEqual({ kind: 'teach' });
+    expect(walker('wheel-legged').access).toEqual({ kind: 'teach' });
+    expect(offer('biped-servo')).toBe('teach');
+    expect(offer('wheel-legged')).toBe('teach');
+  });
+
+  it('drives any walker through its ready velocity skill, before a scripted gait', () => {
+    for (const id of ['biped-servo', 'quad-servo']) {
+      const { access } = walker(id, stubVelocity);
+
+      expect(access.kind).toBe('policy');
+      expect(access.kind === 'policy' && access.cls).toBe('legs');
+      expect(offer(id, true)).toBe('drive');
+      expect(withVelocity(offer(id), true)).toBe('drive');
+    }
+
+    expect(withVelocity('none', true)).toBe('none');
+  });
+
+  it('offers Drive to robots with a scripted drive and nothing to a robot that can’t move', () => {
+    expect(offer('hexapod')).toBe('drive');
+    expect(offer('rover-diff')).toBe('drive');
+    expect(offer('arm-6dof')).toBe('drive');
+    expect(driveOffer({ rig: buildRig([], []), parts: [], velocityReady: true })).toBe('none');
+  });
+
+  it('turns keys into a velocity command inside what the walk was trained on', () => {
+    expect(policyCommand({ v: [1, 1, -1] }, 0.2).v).toEqual([0.2, 0.05, -0.6]);
+    expect(policyCommand({ v: [-1, 0, 0] }, 0.2).v[0]).toBe(0);
   });
 
   it('alternating phases split six feet into two tripods', () => {

@@ -40,7 +40,7 @@ describe('recording a try', () => {
     const engine = new SimEngine(mj, model);
     const access = driveAccess({ rig, parts: r.parts, model });
 
-    if (access.kind !== 'ready') throw new Error(access.reason);
+    if (access.kind !== 'ready') throw new Error(`No scripted drive: ${access.kind}`);
 
     engine.setController({ kind: 'drive', setup: access.setup });
 
@@ -84,7 +84,7 @@ describe('recording a try', () => {
     const facts = robotFacts(rig, arm.parts);
     const access = driveAccess({ rig, parts: arm.parts, model: headless.model });
 
-    if (access.kind !== 'ready') throw new Error(access.reason);
+    if (access.kind !== 'ready') throw new Error(`No scripted drive: ${access.kind}`);
 
     engine.setController({ kind: 'drive', setup: access.setup });
 

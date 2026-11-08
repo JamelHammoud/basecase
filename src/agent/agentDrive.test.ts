@@ -6,6 +6,7 @@ import { SimEngine, type Controller } from '../sim/engine';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { buildMjcf, simDeltas, type WorldItem } from '../sim/mjcf';
 import type { SimModel } from '../sim/mjcfTypes';
+import type { PolicySpec } from '../sim/policy';
 import type { Simulation } from '../sim/useSimulation';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
@@ -92,10 +93,34 @@ describe('start_drive', () => {
     expect(Number(/(\d+) mm of it forward/.exec(reply.text)?.[1])).toBeGreaterThan(200);
   });
 
-  it('refuses a biped plainly', async () => {
+  it('tells the agent how to get a biped walking instead of refusing', async () => {
     const { ctx } = await fakeContext('biped-servo');
+    const reply = await startDriveRequest(ctx, { commands: [{ at: 0, forward: 1 }] });
 
-    expect((await startDriveRequest(ctx, { commands: [{ at: 0, forward: 1 }] })).text).toMatch(/Two-legged/);
+    expect(reply.text).toMatch(/^Train a walking skill first: train_skill kit "walk"/);
+  });
+
+  it('drives a walker through its ready velocity skill, scaling the command to its top speed', async () => {
+    const { ctx } = await fakeContext('biped-servo');
+    const seen: Controller[] = [];
+    const runOn = ctx.sim.runOn;
+    const policy = { joints: [], command: [0, 0, 0] } as unknown as PolicySpec;
+    const sim = {
+      ...ctx.sim,
+      runOn: (model: SimModel, opts: RunOpts) => {
+        seen.push(opts.controller);
+        expect(opts.commands?.[0].command.v).toEqual([0.15, 0, 0]);
+
+        return runOn(model, { ...opts, controller: { kind: 'hold' } });
+      },
+    } as unknown as Simulation;
+    const reply = await startDriveRequest(
+      { ...ctx, sim, velocity: async () => ({ policy, topSpeed: 0.15 }) },
+      { seconds: 1, commands: [{ at: 0, forward: 1 }] },
+    );
+
+    expect(seen.map((c) => c.kind)).toEqual(['policy']);
+    expect(reply.text).toMatch(/^Drove 1\.0 s as a walker/);
   });
 
   it('reports the end effector of an arm in the agent frame', async () => {

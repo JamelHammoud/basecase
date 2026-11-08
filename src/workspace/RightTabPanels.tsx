@@ -144,9 +144,19 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
   );
 }
 
+function useTeach(core: WorkspaceCore, agent: AgentSession) {
+  if (IS_WEB_DEMO) return null;
+
+  return (goal: string) => {
+    core.tool.openRightTab('acp');
+    void agent.send({ text: `/train ${goal}`, ...core.studio.agentChoice }, 'queue');
+  };
+}
+
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
   const { tool, posing, onRobot, project, setSelectedIds, simTraining } = core;
   const { pose } = actions;
+  const onTeach = useTeach(core, agent);
   const current = tool.rightTab;
   const visited = useVisitedTabs(current);
 
@@ -173,6 +183,8 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onSelectParts={setSelectedIds}
           onDeletePolicy={simTraining.deletePolicy}
           onNewCase={() => showNewCase(core)}
+          skills={simTraining.skills}
+          onTeach={onTeach}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

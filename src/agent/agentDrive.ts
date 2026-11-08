@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { robotFacts } from '../cases/robotFit';
 import { readWorldObjects, worldItem, type WorldObject } from '../cases/schema';
+import { kitEntries } from '../skills/motorKit';
 import {
   driveAccess,
   FALL_CHECK_SECONDS,
   FALL_CHECK_SETTLE_SECONDS,
   fallCheckCommands,
   fallCheckPassed,
+  policyCommand,
+  type DriveAccess,
+  type VelocityDrive,
 } from '../sim/driveAccess';
 import type { DriveSetup } from '../sim/drive';
 import type { DriveCommand } from '../sim/driveTypes';
@@ -20,6 +24,7 @@ export interface DriveToolContext {
   sim: Simulation;
   rig: Rig;
   parts: ScenePart[];
+  velocity?: () => Promise<VelocityDrive | null>;
 }
 
 export interface AgentObject {
@@ -109,6 +114,33 @@ async function staysUp(ctx: DriveToolContext, model: SimModel, setup: DriveSetup
   return fallCheckPassed(check.stats, (model.bodies[0].origin[1] + lift) / 1000);
 }
 
+export function teachText(model: SimModel): string {
+  if (kitEntries(model).length)
+    return 'Train a walking skill first: train_skill kit "walk" (the Motor Kit’s velocity tracking), then call start_drive again: it drives through that skill.';
+
+  return 'Train a walking skill first: draft_skill (a velocity goal) and train_skill, then call start_drive again: it drives through that skill.';
+}
+
+const NOTHING_MOVES =
+  'Nothing on this robot moves it around or reaches: give it wheels, legs or an arm with joints, then call start_drive again.';
+
+const FELL_TEXT =
+  'It falls on its scripted walk. Train a walking skill with train_skill kit "walk", then call start_drive again: it drives through that skill.';
+
+type Ready = Extract<DriveAccess, { kind: 'ready' | 'policy' }>;
+
+function controllerOf(access: Ready) {
+  if (access.kind === 'ready') return { kind: 'drive' as const, setup: access.setup };
+
+  return { kind: 'policy' as const, policy: access.velocity.policy, robot: access.robot };
+}
+
+function commandOf(access: Ready, c: AgentCommand): DriveCommand {
+  const command = toCommand(c);
+
+  return access.kind === 'policy' ? policyCommand(command, access.velocity.topSpeed) : command;
+}
+
 export async function startDriveRequest(
   ctx: DriveToolContext,
   payload: { seconds?: number; commands?: AgentCommand[]; live?: boolean },
@@ -116,22 +148,25 @@ export async function startDriveRequest(
   const commands = [...(payload.commands ?? [])].sort((a, b) => a.at - b.at);
   const seconds = Math.min(Math.max(payload.seconds ?? 6, 0.5), 30);
 
-  if (!ctx.rig.joints.length) return { text: 'Nothing to drive: the scene has no joints.' };
+  if (!ctx.rig.joints.length) return { text: NOTHING_MOVES };
 
   if (payload.live) return liveDrive(ctx, commands);
 
   const model = await ctx.sim.buildModel();
-  const access = driveAccess({ rig: ctx.rig, parts: ctx.parts, model });
+  const velocity = (await ctx.velocity?.()) ?? null;
+  const access = driveAccess({ rig: ctx.rig, parts: ctx.parts, model, velocity });
 
-  if (access.kind === 'refused') return { text: access.reason };
+  if (access.kind === 'teach') return { text: teachText(model) };
 
-  if (access.needsFallCheck && !(await staysUp(ctx, model, access.setup)))
-    return { text: 'This robot falls on its scripted walk. Drive needs a trained policy.' };
+  if (access.kind === 'none') return { text: NOTHING_MOVES };
+
+  if (access.kind === 'ready' && access.needsFallCheck && !(await staysUp(ctx, model, access.setup)))
+    return { text: FELL_TEXT };
 
   const run = await ctx.sim.runOn(model, {
     seconds,
-    controller: { kind: 'drive', setup: access.setup },
-    commands: commands.map((c) => ({ at: c.at, command: toCommand(c) })),
+    controller: controllerOf(access),
+    commands: commands.map((c) => ({ at: c.at, command: commandOf(access, c) })),
     frames: [0, seconds],
   });
 

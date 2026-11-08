@@ -1,5 +1,15 @@
 import React from 'react';
-import { Button, CloseIcon, IconButton, Kbd, PlusIcon, RunIcon, Section, StopIcon } from '../../design-system';
+import {
+  Button,
+  CloseIcon,
+  IconButton,
+  Kbd,
+  PlusIcon,
+  RunIcon,
+  Section,
+  StopIcon,
+  TrainIcon,
+} from '../../design-system';
 import type { FitRow } from '../../cases/fitCheck';
 import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
@@ -97,9 +107,9 @@ export const DriveKeys: React.FC<{ cls: DriveClass }> = ({ cls }) => (
   </div>
 );
 
-export const TrySection: React.FC<{ cases: Cases; driveNote: string | null; cls: DriveClass | null }> = ({
+export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null; cls: DriveClass | null }> = ({
   cases,
-  driveNote,
+  teachWalk,
   cls,
 }) => {
   const { attempt, active } = cases;
@@ -129,7 +139,11 @@ export const TrySection: React.FC<{ cases: Cases; driveNote: string | null; cls:
             Try It
           </Button>
         )}
-        {driveNote && <p className="text-[12.5px] leading-snug text-white/60">{driveNote}</p>}
+        {teachWalk && !running && (
+          <Button variant="secondary" size="md" fullWidth icon={<TrainIcon className="w-4 h-4" />} onClick={teachWalk}>
+            Teach It to Walk
+          </Button>
+        )}
         {running && cls && <DriveKeys cls={cls} />}
       </div>
     </Section>

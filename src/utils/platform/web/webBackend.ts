@@ -93,6 +93,7 @@ const ROUTES: Record<string, Route> = {
   'train-status': () => TRAINER,
   policy: () => null,
   'policy-delete': () => false,
+  skill: () => null,
   'simready-status': () => ({ uv: false, ready: false }),
   'simready-file': () => ({ data: null }),
   'print-status': () => ({ slicers: [], downloads: {}, bambuConnect: false }),

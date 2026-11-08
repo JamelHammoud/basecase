@@ -2,7 +2,8 @@ import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { Printing } from './print/index.mjs';
 import { SimReady } from './simready/index.mjs';
-import { Trainer } from './trainer.mjs';
+import { KitScheduler } from './kitScheduler.mjs';
+import { GATE_LEASE, Trainer } from './trainer.mjs';
 import { isAiAgent } from './backend/agentProfiles.mjs';
 import { AcpAgent } from './backend/acpAgent.mjs';
 import { AgentBridge } from './backend/agentBridge.mjs';
@@ -17,6 +18,7 @@ import { ensureDirectories, libraryPaths } from './backend/libraryPaths.mjs';
 import * as models from './backend/models.mjs';
 import { buildPromptBlocks } from './backend/promptBlocks.mjs';
 import * as purchases from './backend/purchases.mjs';
+import * as skillStore from './backend/skillStore.mjs';
 import * as sourced from './backend/sourced.mjs';
 import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { ReferenceImages } from './backend/referenceImages.mjs';
@@ -58,7 +60,8 @@ export class BasecaseBackendService {
 
     this.setupFileWatchers();
 
-    this.trainer = new Trainer(this.libraryDir, (event) => this.emitEvent(event));
+    this.trainer = new Trainer(this.libraryDir, (event) => this.emitEvent(event)).useGateLease(GATE_LEASE);
+    this.kit = new KitScheduler({ trainer: this.trainer });
     this.simready = new SimReady(this.libraryDir, (event) => this.emitEvent(event));
     this.printing = new Printing({ libraryDir: this.libraryDir, emit: (event) => this.emitEvent(event), secrets });
   }
@@ -85,6 +88,25 @@ export class BasecaseBackendService {
 
   trainStop(workspaceId) {
     return this.trainer.stop(workspaceId);
+  }
+
+  kitRequest({ workspaceId, xml, job } = {}) {
+    if (typeof workspaceId !== 'string' || typeof xml !== 'string' || !job || typeof job !== 'object')
+      throw new Error('A Kit job needs a scene, a model and a job.');
+
+    return this.kit.request({ workspaceId: safeWorkspace(workspaceId), xml, job });
+  }
+
+  kitCancel(workspaceId) {
+    return this.kit.cancel(safeWorkspace(workspaceId)).then(() => ({ ok: true }));
+  }
+
+  saveSkill(payload) {
+    return skillStore.saveSkill(this.libraryDir, payload ?? {});
+  }
+
+  getSkill(hash) {
+    return skillStore.getSkill(this.libraryDir, hash);
   }
 
   getPolicy(id) {

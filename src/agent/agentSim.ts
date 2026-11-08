@@ -49,7 +49,7 @@ async function policyController(ctx: SimContext, name: string): Promise<Controll
   const rec = findByName(ctx.policies, name.trim());
 
   if (!rec)
-    return `No policy "${name}". Policies: ${ctx.policies.map((x) => x.name).join(', ') || 'none (train one with train_policy)'}.`;
+    return `No policy "${name}". Policies: ${ctx.policies.map((x) => x.name).join(', ') || 'none (train a skill with train_skill)'}.`;
 
   if (isStalePolicy(rec)) return `Policy ${rec.name} was trained on an older sim. Train it again.`;
 
@@ -177,29 +177,6 @@ export async function simulateRequest(ctx: SimContext, p: SimulatePayload): Prom
   }
 
   return { text, images: (await Promise.all(shots)).flat() };
-}
-
-export async function trainRequest(
-  ctx: SimContext,
-  p: { task?: 'stand' | 'walk'; minutes?: number; speed_mps?: number },
-): Promise<PoseReply> {
-  const task = p.task === 'walk' ? 'walk' : 'stand';
-  const minutes = Math.min(Math.max(Math.round(p.minutes ?? 10), 1), 60);
-
-  if (!ctx.training.canTrain)
-    return { text: ctx.training.blocker ?? 'Training is already running. Check training_status.' };
-
-  const err = await ctx.training.start({
-    task,
-    minutes,
-    command: task === 'walk' ? [Math.min(Math.max(p.speed_mps ?? 0.3, 0.05), 2), 0, 0] : [0, 0, 0],
-  });
-
-  if (err) return { text: `Training didn't start: ${err}` };
-
-  return {
-    text: `Training ${task === 'walk' ? 'walking' : 'standing'} for ${minutes} min on 64 randomized copies of the robot (friction, masses, servo strength, shoves). Check progress with training_status; when it's done, test the policy with simulate controller "policy:<name>".`,
-  };
 }
 
 function trainingLine(t: Training): string {

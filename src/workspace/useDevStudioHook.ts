@@ -34,7 +34,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         playing: sim.playing,
         drive: sim.drive.status,
         driveClass: sim.drive.cls,
-        note: sim.drive.note,
+        offer: sim.drive.offer,
         stats: sim.stats,
         world: sim.worldParts.map((p) => p.id),
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],

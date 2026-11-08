@@ -10,7 +10,7 @@ import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
-import { useDrive, type SimDrive } from './useDrive';
+import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { newSimWorker, useSimWorker } from './useSimWorker';
 
 export { simDeltas } from './mjcf';
@@ -73,6 +73,7 @@ interface Inputs {
   pose: RobotPoseState | undefined;
   viewportRef: React.RefObject<Viewport3DHandle | null>;
   restDeltas: Map<string, THREE.Matrix4>;
+  velocity?: React.RefObject<VelocitySource | null>;
 }
 
 export type RunOptions = Parameters<Simulation['run']>[0];
@@ -287,6 +288,7 @@ export function useSimulation(props: Inputs): Simulation {
     startSim: start,
     setController,
     runOn,
+    velocity: props.velocity,
   });
   const setWorld = (items: WorldItem[]) => {
     setWorldItems(items);

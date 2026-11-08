@@ -38,29 +38,6 @@ export const simulate = {
   },
 };
 
-export const trainPolicy = {
-  name: 'train_policy',
-  config: {
-    title: 'Train a policy',
-    description:
-      'Trains a neural-network controller for the scene\'s legged robot with reinforcement learning (PPO) in MuJoCo, on the user\'s machine. Tasks: "stand" (stay up and recover from shoves) or "walk" (walk forward at speed_mps). ' +
-      'Sim-to-real is on: 64 copies train at once, each with its own friction, link masses and servo strength, shoved every few seconds. Runs in the background for `minutes` (5–20 is typical; walking needs more than standing); the first run installs Python, MuJoCo and PyTorch. ' +
-      'Returns at once: follow it with training_status, then test the result with simulate controller "policy:<name>". Only train when the user asks for it or the design is final: it occupies the CPU.',
-    inputSchema: {
-      task: z.enum(['stand', 'walk']),
-      minutes: z.number().int().min(1).max(60).optional(),
-      speed_mps: z.number().min(0.05).max(2).optional().describe('Walking speed, default 0.3'),
-    },
-  },
-  handler: async (args) => {
-    try {
-      return text((await bridge('train', args, 120000))?.text || 'ok');
-    } catch (err) {
-      return fail(err);
-    }
-  },
-};
-
 export const trainingStatus = {
   name: 'training_status',
   config: {

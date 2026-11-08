@@ -39,8 +39,10 @@ import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
+import { SKILL_HANDLERS } from './agentSkillRequests';
 import type { Cases } from './useCases';
 import type { Routines } from './useRoutines';
+import type { SceneSkills } from './useSkills';
 
 type Payload = Record<string, unknown>;
 
@@ -63,6 +65,7 @@ export interface RequestContext {
   buildGuide: () => Promise<GeneratedGuide | null>;
   routines: Routines;
   cases: Cases;
+  skills: SceneSkills;
 }
 
 type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
@@ -304,6 +307,7 @@ const HANDLERS: Record<string, Handler> = {
   ...PLAN_HANDLERS,
   ...ROUTINE_HANDLERS,
   ...CASE_HANDLERS,
+  ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [
       kind,

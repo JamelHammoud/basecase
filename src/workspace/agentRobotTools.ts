@@ -9,13 +9,7 @@ import {
   type PoseReply,
   type RetargetPayload,
 } from '../agent/agentPose';
-import {
-  simulateRequest,
-  trainingStatusText,
-  trainRequest,
-  type SimContext,
-  type SimulatePayload,
-} from '../agent/agentSim';
+import { simulateRequest, trainingStatusText, type SimContext, type SimulatePayload } from '../agent/agentSim';
 import type { ProjectSettings, RobotPoseState } from '../types/robotics';
 import { setWorldRequest, startDriveRequest, type DriveToolContext } from '../agent/agentDrive';
 import { ROBOT_PRESETS } from '../utils/robotImport';
@@ -104,7 +98,7 @@ export interface SimToolContext extends SimContext, DriveToolContext {
   setAction: (action: string) => void;
 }
 
-export const SIM_TOOL_KINDS = ['simulate', 'train', 'training_status', 'set_world', 'start_drive'];
+export const SIM_TOOL_KINDS = ['simulate', 'training_status', 'set_world', 'start_drive'];
 
 export async function runSimTool(kind: string, payload: Payload, ctx: SimToolContext): Promise<PoseReply> {
   if (kind === 'set_world') return setWorldRequest(ctx, payload);
@@ -119,12 +113,6 @@ export async function runSimTool(kind: string, payload: Payload, ctx: SimToolCon
     ctx.setAction('Simulating');
 
     return simulateRequest(ctx, payload as SimulatePayload);
-  }
-
-  if (kind === 'train') {
-    ctx.setAction('Starting training');
-
-    return trainRequest(ctx, payload as { task?: 'stand' | 'walk'; minutes?: number; speed_mps?: number });
   }
 
   if (kind === 'training_status') return { text: trainingStatusText(ctx) };

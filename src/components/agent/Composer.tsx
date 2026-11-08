@@ -9,9 +9,11 @@ import { CyclingPlaceholder } from './CyclingPlaceholder';
 import { DraftQuotes } from './DraftQuotes';
 import { ModelMenu } from './ModelMenu';
 import { SendControls } from './SendControls';
+import { SlashMenu } from './SlashMenu';
 import { SketchPad } from './sketch/SketchPad';
 import { useSketch } from './sketch/useSketch';
 import { readyFolders } from './useAttachments';
+import { useSlashMenu } from './useSlashMenu';
 import { Draft } from './useDraft';
 import { OpenImages, SendIntent } from './types';
 
@@ -107,6 +109,7 @@ export const Composer: React.FC<{
   const exampleSet = exampleSetFor(isBusy, hasAttachments, quotes.length > 0);
   const fade = useScrollFade<HTMLTextAreaElement>(PROMPT_FADE_PX);
   const sketch = useSketch({ request: sketchRequest, promptRef, onAttach: attachments.attachFiles });
+  const slash = useSlashMenu({ text: promptText, setText: setPromptText, promptRef });
 
   useLayoutEffect(() => {
     const el = promptRef.current;
@@ -131,6 +134,8 @@ export const Composer: React.FC<{
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (slash.onKeyDown(e)) return;
+
     if (isSendKey(e)) {
       e.preventDefault();
       submit(hasPrimaryModifier(e) ? 'queue' : 'default');
@@ -188,6 +193,7 @@ export const Composer: React.FC<{
               className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/95 outline-none"
             />
             {!promptText && <CyclingPlaceholder key={exampleSet} examples={EXAMPLES[exampleSet]} />}
+            <SlashMenu slash={slash} promptRef={promptRef} />
           </div>
 
           <div className="flex items-center gap-1 px-2 pb-2">

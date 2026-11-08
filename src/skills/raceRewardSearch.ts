@@ -21,7 +21,8 @@ interface Entrant {
 }
 
 function entrants(input: RaceInput): Entrant[] {
-  const agent = input.rewardCandidates ?? [kitReward(input.task.model, 'velocity-tracking')];
+  const fallback = input.task.goal.kind === 'velocity' ? [kitReward(input.task.model, 'velocity-tracking')] : [];
+  const agent = input.rewardCandidates ?? fallback;
   const own = agent.map((source) => ({
     source,
     reward: { kind: 'rewardlang', hash: sha256Hex(source) } as RewardRef,
@@ -35,9 +36,13 @@ function entrants(input: RaceInput): Entrant[] {
 function refusal(input: RaceInput): string | null {
   const { goal, model } = input.task;
 
-  if (goal.kind !== 'velocity') return 'Reward search here trains robots that move around, and this goal is a reach.';
+  if (goal.kind === 'reach') return 'Reward search here trains robots that move around, and this goal is a reach.';
 
-  return model.robots[0]?.floating ? null : 'Forge trains robots with a floating base, and this one is fixed.';
+  if (!model.robots[0]?.floating) return 'Forge trains robots with a floating base, and this one is fixed.';
+
+  return entrants(input).length
+    ? null
+    : 'Reward search had no reward to try: the contract reads no base height, tilt or forward travel, and no reward was written.';
 }
 
 const scoreOf = (evidence: ArenaEvidence) =>

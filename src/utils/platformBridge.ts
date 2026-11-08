@@ -215,6 +215,13 @@ const trainingBridge = {
     ),
   trainStop: (workspaceId: string): Promise<{ stopping: boolean }> =>
     electron()?.trainStop(workspaceId) ?? post('/train-stop', { workspaceId }),
+  kitRequest: (payload: TrainStartPayload): Promise<{ jobId: string | null }> =>
+    electron()?.kitRequest(payload) ?? post('/train-kit', payload),
+  kitCancel: (workspaceId: string): Promise<{ ok: boolean }> =>
+    electron()?.kitCancel(workspaceId) ?? post('/train-kit-cancel', { workspaceId }),
+  saveSkill: (payload: { hash: string; text: string }): Promise<{ ok: boolean }> =>
+    electron()?.saveSkill(payload) ?? post('/skill-save', payload),
+  getSkill: (hash: string): Promise<unknown> => electron()?.getSkill(hash) ?? get(`/skill${query('hash', hash)}`),
   getPolicy: (id: string): Promise<unknown> => electron()?.getPolicy(id) ?? get(`/policy${query('id', id)}`),
   deletePolicy: (id: string): Promise<boolean> => electron()?.deletePolicy(id) ?? post('/policy-delete', { id }),
 };

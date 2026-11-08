@@ -9,7 +9,7 @@ interface SimState {
   status: string;
   drive: string;
   driveClass: string | null;
-  note: string | null;
+  offer: string;
   stats: { time: number; robots: Array<{ forward: number; travelled: number; fellAt: number | null }> } | null;
   world: string[];
   bodies: Array<{ parts: string[]; world: string[] }>;
@@ -95,7 +95,7 @@ describe('live drive', () => {
     await stopDriving();
   });
 
-  it('walks a hexapod after its fall check, and says plainly why a biped cannot drive', async () => {
+  it('walks a hexapod after its fall check, and offers to teach a biped to walk instead of Drive', async () => {
     await startDriving('hexapod');
     await holdKey('w', 3000);
     await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
@@ -103,9 +103,10 @@ describe('live drive', () => {
 
     await loadFixture('biped-servo');
     await clickTab('Simulate');
-    await button(/^Drive$/).click();
-    await expect.poll(async () => (await simState()).note ?? '').toMatch(/Two-legged/);
-    expect((await simState()).drive).toBe('refused');
+    await expect.poll(() => button(/^Teach It to Walk$/).count()).toBe(1);
+    expect(await button(/^Drive$/).count()).toBe(0);
+    expect((await simState()).offer).toBe('teach');
+    expect(await app.page.locator(visible('body')).innerText()).not.toMatch(/Drive needs|Two-legged/);
   });
 
   it('asks for the canvas while a text field has focus', async () => {

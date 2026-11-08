@@ -8,7 +8,6 @@ import {
   getBom,
   setBuild,
   simulate,
-  trainPolicy,
   trainingStatus,
   verifyDesign,
 } from './cad-mcp/buildTools.mjs';
@@ -43,6 +42,7 @@ import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { createCase } from './cad-mcp/caseTools.mjs';
+import { draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
 import {
@@ -104,7 +104,9 @@ const TOOLS = [
   editRoutine,
   testRoutine,
   runRoutine,
-  trainPolicy,
+  draftSkill,
+  trainSkill,
+  listSkills,
   trainingStatus,
   verifyDesign,
   getBom,

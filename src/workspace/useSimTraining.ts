@@ -1,6 +1,7 @@
-import type { RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { confirmAction } from '../design-system/confirmStore';
+import type { VelocitySource } from '../sim/useDrive';
 import { useSimulation } from '../sim/useSimulation';
 import { useTraining } from '../sim/useTraining';
 import { platformBridge } from '../utils/platformBridge';
@@ -8,6 +9,7 @@ import type { Posing } from '../utils/usePosing';
 import type { ShowToast } from './types';
 import { useCases } from './useCases';
 import { useRoutines } from './useRoutines';
+import { useSkills } from './useSkills';
 import type { SceneDocument } from './useSceneDocument';
 
 interface SimTrainingOptions {
@@ -20,6 +22,7 @@ interface SimTrainingOptions {
 
 export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToast }: SimTrainingOptions) {
   const { parts, project, projectRef, setProject, commitParts, updateProjectNow } = docs;
+  const velocity = useRef<VelocitySource | null>(null);
   const sim = useSimulation({
     parts,
     project,
@@ -27,7 +30,14 @@ export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToa
     pose: posing.pose,
     viewportRef,
     restDeltas: posing.deltas,
+    velocity,
   });
+  const skills = useSkills({ workspaceId, sim, project, setProject, rig: posing.rig, parts });
+
+  useLayoutEffect(() => {
+    velocity.current = skills.velocity;
+  });
+
   const policies = project.policies ?? [];
   const training = useTraining({
     workspaceId,
@@ -58,7 +68,7 @@ export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToa
   const cases = useCases({ parts, project, setProject, rig: posing.rig, sim });
   const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
 
-  return { sim, training, policies, deletePolicy, cases, routines };
+  return { sim, training, policies, deletePolicy, cases, routines, skills };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

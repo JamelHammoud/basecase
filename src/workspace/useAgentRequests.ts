@@ -81,6 +81,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       viewport: viewportRef.current,
       restoreCanvas: () => viewportRef.current?.setPose(posing.deltas),
       parts: partsRef.current,
+      velocity: simTraining.skills.velocity,
       setAction,
     });
 
@@ -157,6 +158,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       buildGuide: core.guide.generate,
       routines: core.simTraining.routines,
       cases: core.simTraining.cases,
+      skills: core.simTraining.skills,
     };
 
     try {

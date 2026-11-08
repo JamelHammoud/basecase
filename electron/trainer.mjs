@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { IS_WINDOWS } from './executables.mjs';
@@ -56,8 +57,22 @@ const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(
 
 export const PRIORITY = { user: 0, kit: 1 };
 
+export const GATE_LEASE = path.join(os.tmpdir(), 'basecase-gatekeeper.lease');
+
+const LEASE_POLL_MS = 30000;
+const KIT_NICE = 10;
+
+function lowerPriority(child) {
+  try {
+    if (child.pid) os.setPriority(child.pid, KIT_NICE);
+  } catch {}
+}
+
 export class Trainer {
   constructor(libraryDir, emit, spawnFn = spawnTrainer, forge = forgeBinary()) {
+    this.leaseFile = null;
+    this.leasePollMs = LEASE_POLL_MS;
+    this.leaseTimer = null;
     this.libraryDir = libraryDir;
     this.emit = emit;
     this.spawnTrainer = spawnFn;
@@ -101,14 +116,69 @@ export class Trainer {
     const entry = { workspaceId, job, id, dir, priority, uv };
     const send = this.sender(entry);
 
-    if (this.jobs.size) {
+    if (priority === PRIORITY.user) this.yieldKit();
+
+    if (this.jobs.size || this.blocked(entry)) {
       this.enqueue(entry);
-      send({ kind: 'status', message: `Queued. Starts after ${[...this.jobs.values()][0].job.name}.` });
+      send({ kind: 'status', message: this.waitingMessage() });
     } else {
       this.launch(entry);
     }
 
+    this.watchLease();
+
     return { jobId: id };
+  }
+
+  useGateLease(file = GATE_LEASE, pollMs = LEASE_POLL_MS) {
+    this.leaseFile = file;
+    this.leasePollMs = pollMs;
+
+    return this;
+  }
+
+  waitingMessage() {
+    const running = [...this.jobs.values()][0];
+
+    return running ? `Queued. Starts after ${running.job.name}.` : 'Waiting for the Gatekeeper run to finish.';
+  }
+
+  leaseHeld() {
+    return !!this.leaseFile && fs.existsSync(this.leaseFile);
+  }
+
+  blocked(entry) {
+    return entry.priority === PRIORITY.kit && this.leaseHeld();
+  }
+
+  yieldKit() {
+    for (const running of this.jobs.values()) {
+      if (running.entry.priority !== PRIORITY.kit || running.stopping) continue;
+
+      running.yielded = true;
+      running.stopping = true;
+      askToStop(running);
+    }
+  }
+
+  watchLease() {
+    const kitWaiting = [...this.jobs.values(), ...this.queue].some((e) => (e.entry ?? e).priority === PRIORITY.kit);
+
+    if (!kitWaiting || !this.leaseFile) {
+      clearInterval(this.leaseTimer);
+      this.leaseTimer = null;
+
+      return;
+    }
+
+    this.leaseTimer ??= setInterval(() => this.checkLease(), this.leasePollMs);
+  }
+
+  checkLease() {
+    if (this.leaseHeld()) this.yieldKit();
+    else this.launchNext();
+
+    this.watchLease();
   }
 
   sender({ workspaceId, id }) {
@@ -123,20 +193,27 @@ export class Trainer {
   launchNext() {
     if (this.jobs.size) return;
 
-    const next = this.queue.shift();
+    const at = this.queue.findIndex((q) => !this.blocked(q));
 
-    if (next) this.launch(next);
+    if (at >= 0) this.launch(this.queue.splice(at, 1)[0]);
+
+    this.watchLease();
   }
 
   launch(entry) {
     const { workspaceId, job, id, dir, uv } = entry;
+
+    fs.rmSync(path.join(dir, 'stop'), { force: true });
+
     const firstRun = !this.forge && !fs.existsSync(path.join(this.envDir, 'pyvenv.cfg'));
     const send = this.sender(entry);
 
     send({ kind: 'status', message: firstRun ? 'Installing Python, MuJoCo and PyTorch (one time)' : 'Starting' });
 
     const child = this.spawnTrainer({ uv, dir, envDir: this.envDir, forge: this.forge });
-    const running = { child, id, dir, job, stopping: false };
+    const running = { child, id, dir, job, entry, stopping: false, yielded: false };
+
+    if (entry.priority === PRIORITY.kit) lowerPriority(child);
 
     this.jobs.set(workspaceId, running);
 
@@ -168,42 +245,49 @@ export class Trainer {
     child.stderr.on('data', (chunk) => {
       err = (err + chunk.toString()).slice(-8000);
     });
-    child.on('close', (code, signal) => {
-      this.jobs.delete(workspaceId);
+    child.on('close', (code, signal) => this.closed(running, { code, signal, done, err }));
+  }
+
+  closed(running, { code, signal, done, err }) {
+    const { entry } = running;
+    const send = this.sender(entry);
+
+    this.jobs.delete(entry.workspaceId);
+
+    if (running.yielded) {
+      this.enqueue(entry);
+      send({ kind: 'status', message: 'Paused for other training. Starts again after it.' });
       queueMicrotask(() => this.launchNext());
-      this.wake(workspaceId);
 
-      if (done) {
-        try {
-          const record = this.storePolicy(id, dir, job, done);
+      return;
+    }
 
-          send({ kind: 'done', record, eval: done.eval, stopped: done.stopped });
-        } catch (e) {
-          send({ kind: 'error', message: `Couldn't save the policy: ${e.message}` });
-        }
+    this.wake(entry.workspaceId);
+    queueMicrotask(() => this.launchNext());
+    send(this.outcome(running, { code, signal, done, err }));
+  }
 
-        return;
+  outcome(running, { code, signal, done, err }) {
+    const { id, dir, job } = running;
+
+    if (done) {
+      try {
+        return { kind: 'done', record: this.storePolicy(id, dir, job, done), eval: done.eval, stopped: done.stopped };
+      } catch (e) {
+        return { kind: 'error', message: `Couldn't save the policy: ${e.message}` };
       }
+    }
 
-      if (running.stopping) {
-        send({ kind: 'error', message: 'Training stopped.' });
+    if (running.stopping) return { kind: 'error', message: 'Training stopped.' };
 
-        return;
-      }
+    if (code === null) return { kind: 'error', message: `The trainer crashed (${signal ?? 'killed'}).` };
 
-      if (code === null) {
-        send({ kind: 'error', message: `The trainer crashed (${signal ?? 'killed'}).` });
+    const lines = err
+      .trim()
+      .split('\n')
+      .filter((l) => l.trim() && !l.startsWith(' '));
 
-        return;
-      }
-
-      const lines = err
-        .trim()
-        .split('\n')
-        .filter((l) => l.trim() && !l.startsWith(' '));
-
-      send({ kind: 'error', message: lines.at(-1) || `The trainer exited with code ${code}.` });
-    });
+    return { kind: 'error', message: lines.at(-1) || `The trainer exited with code ${code}.` };
   }
 
   stop(workspaceId = 'main') {
@@ -221,6 +305,7 @@ export class Trainer {
 
     if (job) {
       job.stopping = true;
+      job.yielded = false;
       askToStop(job);
     }
 
@@ -248,6 +333,7 @@ export class Trainer {
     );
 
     job.stopping = true;
+    job.yielded = false;
     askToStop(job);
 
     return closed;
@@ -296,6 +382,7 @@ export class Trainer {
 
   dispose() {
     this.queue = [];
+    clearInterval(this.leaseTimer);
 
     for (const job of this.jobs.values()) {
       job.stopping = true;

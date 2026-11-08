@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, HandIcon, RunIcon, Section, Select, StopIcon } from '../../design-system';
+import { Button, HandIcon, RunIcon, Section, Select, StopIcon, TrainIcon } from '../../design-system';
+import { withVelocity } from '../../sim/driveAccess';
 import type { PolicyRecord, RobotAnimation } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
 import type { Training } from '../../sim/useTraining';
@@ -49,9 +50,54 @@ export function useChooseController({ sim, training, animations, policies, setPo
   };
 }
 
+export interface WalkTeaching {
+  velocityReady: boolean;
+  teachWalk: (() => void) | null;
+  walkTraining: boolean;
+}
+
+const DriveButton: React.FC<{ sim: Simulation }> = ({ sim }) => {
+  const { drive } = sim;
+
+  return (
+    <Button
+      variant="secondary"
+      size="md"
+      fullWidth
+      icon={drive.active ? <StopIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
+      disabled={drive.status === 'checking'}
+      title={drive.active ? undefined : 'Drive with the keyboard or a gamepad'}
+      onClick={() => (drive.active ? drive.stop() : void drive.start())}
+    >
+      {drive.active ? 'Stop Driving' : 'Drive'}
+    </Button>
+  );
+};
+
+const DriveControl: React.FC<{ sim: Simulation; walk: WalkTeaching }> = ({ sim, walk }) => {
+  const offer = withVelocity(sim.drive.offer, walk.velocityReady);
+
+  if (offer === 'drive') return <DriveButton sim={sim} />;
+
+  if (offer === 'none' || !walk.teachWalk) return null;
+
+  return (
+    <Button
+      variant="secondary"
+      size="md"
+      fullWidth
+      icon={<TrainIcon className="w-4 h-4" />}
+      disabled={walk.walkTraining}
+      onClick={walk.teachWalk}
+    >
+      Teach It to Walk
+    </Button>
+  );
+};
+
 export const ControlSection: React.FC<
-  ControlProps & { choose: (value: string) => Promise<void>; showDrive: boolean }
-> = ({ sim, animations, policies, policyKey, showDrive, choose }) => {
+  ControlProps & { choose: (value: string) => Promise<void>; showDrive: boolean; walk: WalkTeaching }
+> = ({ sim, animations, policies, policyKey, showDrive, choose, walk }) => {
   const { drive } = sim;
   const options = [
     { value: 'hold', label: 'Hold pose' },
@@ -82,21 +128,8 @@ export const ControlSection: React.FC<
             Push
           </Button>
         </div>
-        {showDrive && (
-          <Button
-            variant="secondary"
-            size="md"
-            fullWidth
-            icon={drive.active ? <StopIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
-            disabled={drive.status === 'checking'}
-            title={drive.active ? undefined : 'Drive with the keyboard or a gamepad'}
-            onClick={() => (drive.active ? drive.stop() : void drive.start())}
-          >
-            {drive.active ? 'Stop Driving' : 'Drive'}
-          </Button>
-        )}
+        {showDrive && <DriveControl sim={sim} walk={walk} />}
         {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
-        {showDrive && drive.note && <p className="text-[12.5px] leading-snug text-white/60">{drive.note}</p>}
         {showDrive && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       </div>
     </Section>

@@ -75,6 +75,10 @@ fn residual(plan: &Plan, b: &Block, s: &mut Solver, x: &[V]) {
 
 fn refresh(plan: &Plan, b: &mut Block, s: &mut Solver) {
     update(plan, b, &s.jaref, &mut s.force, &mut s.quadratic);
+    forces(plan, b, s);
+}
+
+fn forces(plan: &Plan, b: &mut Block, s: &mut Solver) {
     jac_t_mul(plan, b, &s.force, &mut s.tmp);
     b.qfrc_constraint.copy_from_slice(&s.tmp);
 
@@ -146,14 +150,14 @@ fn hessian(plan: &Plan, b: &Block, s: &mut Solver) {
     solve(plan, &s.h, &s.h_inv, &mut s.mgrad);
 }
 
-fn warmstart(plan: &Plan, b: &mut Block, s: &mut Solver) {
+fn warmstart(plan: &Plan, b: &mut Block, s: &mut Solver) -> bool {
     residual(plan, b, s, &b.qacc_smooth);
 
     let smooth = update(plan, b, &s.jaref, &mut s.force, &mut s.quadratic);
 
     if !plan.kernel.options.warmstart {
         b.qacc.copy_from_slice(&b.qacc_smooth);
-        return;
+        return true;
     }
 
     residual(plan, b, s, &b.warm);
@@ -172,22 +176,36 @@ fn warmstart(plan: &Plan, b: &mut Block, s: &mut Solver) {
     for i in 0..plan.kernel.nv {
         b.qacc[i] = use_smooth.select(b.qacc_smooth[i], b.warm[i]);
     }
+
+    !use_smooth.any()
 }
 
-fn start(plan: &Plan, b: &mut Block, s: &mut Solver, tol: V) -> M {
+fn start(plan: &Plan, b: &mut Block, s: &mut Solver, tol: V, current: bool) -> M {
     mul_sym(plan, &b.m, &b.qacc, &mut s.ma);
-    residual(plan, b, s, &b.qacc);
-    refresh(plan, b, s);
+
+    if current {
+        forces(plan, b, s);
+    } else {
+        residual(plan, b, s, &b.qacc);
+        refresh(plan, b, s);
+    }
 
     let trace = (0..plan.kernel.nv).fold(ZERO, |t, i| t + b.m[plan.diag(i)]);
 
     s.scale = ONE / trace.max(V::splat(MIN_VAL));
+
+    let gradient = gradient_small(s, tol);
+
+    if !gradient.any() {
+        return M::NONE;
+    }
+
     s.mgrad.copy_from_slice(&s.grad);
     solve(plan, &b.ld, &b.ld_inv, &mut s.mgrad);
 
     let gap = (dot(&s.grad, &s.mgrad) * s.scale * 0.5).max(ZERO).lt(tol);
 
-    gap.and(gradient_small(s, tol))
+    gap.and(gradient)
 }
 
 fn gradient_small(s: &Solver, tol: V) -> M {
@@ -252,9 +270,8 @@ pub fn solve_constraints(plan: &Plan, b: &mut Block, s: &mut Solver) {
     }
 
     s.stats.solves += 1;
-    warmstart(plan, b, s);
-
-    let mut done = active.flip().or(start(plan, b, s, tol));
+    let current = warmstart(plan, b, s);
+    let mut done = active.flip().or(start(plan, b, s, tol, current));
 
     if !done.all() {
         hessian(plan, b, s);

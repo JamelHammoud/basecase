@@ -121,6 +121,12 @@ function successFor(model: SimModel, entry: TrainedEntry, height: number): Formu
   };
 }
 
+export function kitSpeedContract(model: SimModel, speed: number): Contract {
+  const height = rootHeight(model);
+
+  return { version: 1, success: velocityFormula(height, speed), failures: [fell(height)] };
+}
+
 export function kitContract(model: SimModel, entry: TrainedEntry): Contract {
   const height = rootHeight(model);
 

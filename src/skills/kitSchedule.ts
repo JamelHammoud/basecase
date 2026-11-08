@@ -4,7 +4,7 @@ import { footCount } from './kitModel';
 
 const MANY_LEGS: Readonly<Record<TrainedEntry, readonly number[]>> = Object.freeze({
   stand: [2, 4],
-  'velocity-tracking': [13, 12],
+  'velocity-tracking': [12, 12],
   'get-up': [2, 6, 8],
   'settle-to-neutral': [2, 4],
 });

@@ -5,6 +5,7 @@ import type { Environment } from './environment';
 import { checkFeasibility, type LadderChange } from './feasibility';
 import { runCounted, type ForgeRunner, type ForgeTally, type SkillSave } from './forgeRunner';
 import { kitEnvironment, LEGGED_ENTRIES, trainedEntry, type KitEntry, type TrainedEntry } from './kitEnvironment';
+import { holdsSlowerSpeeds } from './kitAcceptance';
 import { kitJob, type KitStart } from './kitJob';
 import { kitRobot } from './kitModel';
 import { kitSchedule } from './kitSchedule';
@@ -87,6 +88,10 @@ async function attempt(run: Attempt, options: { minutes: number; seed: number })
   if (!outcome.ok || !outcome.policy) return null;
 
   const controller = { kind: 'policy' as const, policy: outcome.policy, robot: kitRobot(input.model).key };
+  const steady = await holdsSlowerSpeeds({ ...input, entry, environment, policy: outcome.policy });
+
+  if (!steady) return null;
+
   const proof = await proveSkill({
     ...input,
     name: kitSkillName(entry),

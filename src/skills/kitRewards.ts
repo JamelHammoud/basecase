@@ -1,6 +1,6 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import type { TrainedEntry } from './kitEnvironment';
-import { kitTopSpeed } from './kitModel';
+import { footCount, kitTopSpeed } from './kitModel';
 
 const num = (x: number) => x.toPrecision(6);
 
@@ -40,7 +40,16 @@ def reward(state):
     )
 `;
 
-const velocity = (top: number) => `
+interface Steering {
+  turn: number;
+  turnSigma2: number;
+  veer: number;
+}
+
+const MANY_LEGS: Steering = { turn: 0.8, turnSigma2: 0.1, veer: 0.5 };
+const TWO_LEGS: Steering = { turn: 1.5, turnSigma2: 0.05, veer: 0 };
+
+const velocity = (top: number, steer: Steering) => `
 def still(state):
     return 1.0 if abs(state.command[0]) + abs(state.command[1]) + abs(state.command[2]) < 0.01 else 0.0
 
@@ -55,13 +64,14 @@ def reward(state):
         term("track", 1.5 * exp(-speed_error / ${num((0.5 * top) ** 2)}) * scale)
         + term("track_fine", 0.5 * exp(-speed_error / ${num((0.2 * top) ** 2)}) * scale)
         - term("lag", 0.5 * sqrt(speed_error) / ${num(top)} * scale)
-        + term("turn", 0.8 * exp(-turn_error / 0.1) * scale)
-        - term("veer", 0.5 * sqrt(turn_error) * scale)
+        + term("turn", ${num(steer.turn)} * exp(-turn_error / ${num(steer.turnSigma2)}) * scale)
+        - term("veer", ${num(steer.veer)} * sqrt(turn_error) * scale)
         + term("upright", 0.5 * upright(state) * scale)
         + term("height", 0.3 * height(state) * scale)
         - term("bounce", 1.0 * state.linvel[2] ** 2 * scale)
         - term("calm", calm(state) * scale)
-        - term("hush", hush * (0.3 * sum(state.joint_pos ** 2) + 0.002 * sum(state.joint_vel ** 2)) * scale)
+        - term("hush", hush * (0.3 * sum(state.joint_pos ** 2) + 0.01 * sum(state.joint_vel ** 2)) * scale)
+        - term("hold", hush * (0.3 * sum((state.action - state.last_action) ** 2) + 0.5 * clamp((forward ** 2 + left ** 2) / ${num((0.1 * top) ** 2)}, 0.0, 4.0)) * scale)
         - term("fall", 2.0 if fell(state) else 0.0)
     )
 `;
@@ -99,7 +109,7 @@ def reward(state):
 
 const PROGRAMS: Record<TrainedEntry, (model: SimModel) => string> = {
   stand: () => STAND,
-  'velocity-tracking': (model) => velocity(kitTopSpeed(model)),
+  'velocity-tracking': (model) => velocity(kitTopSpeed(model), footCount(model) >= 4 ? MANY_LEGS : TWO_LEGS),
   'get-up': () => GET_UP,
   'settle-to-neutral': () => SETTLE,
 };

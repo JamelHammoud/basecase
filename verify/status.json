@@ -1369,6 +1369,94 @@
       "commit": "01f773a",
       "at": "2026-11-08T15:35:43.540Z",
       "manifest": "clean"
+    },
+    "s1-f3-simd-engine": {
+      "id": "s1-f3-simd-engine",
+      "title": "F3: Forge engine on SIMD, parity with C MuJoCo, at least 2x its speed",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "forge-sim builds",
+          "ok": true,
+          "detail": "0.3 s",
+          "metrics": {},
+          "seconds": 0.337
+        },
+        {
+          "name": "forge-ir emits kernels and refuses unsupported MJCF",
+          "ok": true,
+          "detail": "0.2 s",
+          "metrics": {},
+          "seconds": 0.213
+        },
+        {
+          "name": "200 fuzzed robots emitted",
+          "ok": true,
+          "detail": "0.7 s",
+          "metrics": {},
+          "seconds": 0.747
+        },
+        {
+          "name": "C MuJoCo computes the reference for every fuzzed robot",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.55
+        },
+        {
+          "name": "simd engine matches C MuJoCo on every fuzzed robot, L0 to L3",
+          "ok": true,
+          "detail": "worst {\"l0\":4.213315618472377e-16,\"l1\":8.003146756419e-14,\"l3Qpos\":1.3010426069826053e-15,\"l3Qvel\":1.684763439868675e-12}",
+          "metrics": {
+            "l0": 4.213315618472377e-16,
+            "l1": 8.003146756419e-14,
+            "l3Qpos": 1.3010426069826053e-15,
+            "l3Qvel": 1.684763439868675e-12
+          },
+          "seconds": 1.17
+        },
+        {
+          "name": "simd batch step equals single step, bit for bit",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.408
+        },
+        {
+          "name": "simd sustains 1100K substeps/s for 30 s at 1024 envs",
+          "ok": true,
+          "detail": "3213883 sustained",
+          "metrics": {
+            "substepsPerS": 3351005.7039786642,
+            "sustainedMin": 3213883.4505752423,
+            "loadBefore": 6.22509765625,
+            "loadAfter": 11.8935546875
+          },
+          "seconds": 30.029
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a planted acceleration error is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        },
+        {
+          "name": "a planted rollout drift is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        }
+      ],
+      "commit": "8ef271e",
+      "at": "2026-11-08T17:07:24.566Z",
+      "manifest": "clean"
     }
   }
 }

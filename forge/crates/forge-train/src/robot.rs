@@ -1,4 +1,5 @@
 use crate::job::Job;
+use crate::physics::Engine;
 use forge_mujoco::{Batch, Data, Model, StateLayout};
 
 const SETTLE_SECONDS: f64 = 1.0;
@@ -22,6 +23,7 @@ pub struct Robot {
     pub start_row: Vec<f64>,
     pub holds_pose: bool,
     pub z0: f64,
+    pub engine: Engine,
 }
 
 pub fn rotate_into_frame(q: &[f64], v: [f64; 3]) -> [f64; 3] {
@@ -174,6 +176,7 @@ impl Robot {
             start_row: settled.row,
             holds_pose: settled.holds_pose,
             z0: job.options.stand_height.unwrap_or(settled.z0),
+            engine: Engine::choose(&model, job.backend),
             model,
             job,
         })

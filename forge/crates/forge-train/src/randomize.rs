@@ -1,5 +1,6 @@
+use crate::physics::Physics;
 use crate::rng::Rng;
-use forge_mujoco::{Batch, Model};
+use forge_mujoco::Model;
 
 const FRICTION_RANGE: (f64, f64) = (0.6, 1.3);
 const MASS_RANGE: (f64, f64) = (0.85, 1.15);
@@ -7,7 +8,7 @@ const SERVO_RANGE: (f64, f64) = (0.85, 1.15);
 
 pub const RANDOMIZED_FIELDS: [&str; 4] = ["geom_friction", "body_mass", "actuator_gainprm", "actuator_biasprm"];
 
-pub fn randomize(batch: &mut Batch, model: &Model, rngs: &mut [Rng]) -> Result<(), String> {
+pub fn randomize(batch: &mut Physics, model: &Model, rngs: &mut [Rng]) -> Result<(), String> {
     let (friction, width) = batch.expand("geom_friction")?;
 
     for (row, rng) in friction.chunks_exact_mut(width).zip(rngs.iter_mut()) {

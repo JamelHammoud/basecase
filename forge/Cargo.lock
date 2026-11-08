@@ -60,8 +60,10 @@ dependencies = [
 name = "forge-train"
 version = "0.1.0"
 dependencies = [
+ "forge-ir",
  "forge-mujoco",
  "forge-reward",
+ "forge-sim",
  "serde_json",
 ]
 

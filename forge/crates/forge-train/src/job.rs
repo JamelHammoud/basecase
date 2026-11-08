@@ -40,9 +40,26 @@ impl Algo {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Backend {
+    Mujoco,
+    Simd,
+}
+
+impl Backend {
+    fn parse(name: Option<&str>) -> Result<Self, String> {
+        match name {
+            None | Some("mujoco") => Ok(Backend::Mujoco),
+            Some("simd") => Ok(Backend::Simd),
+            Some(other) => Err(format!("job.json asks for an unknown backend {other}")),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Job {
     pub algo: Algo,
+    pub backend: Backend,
     pub task: Task,
     pub task_name: String,
     pub robot_name: String,
@@ -154,6 +171,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
 
     Ok(Job {
         algo,
+        backend: Backend::parse(root.get("backend").and_then(Value::as_str))?,
         task,
         task_name,
         robot_name: root
@@ -218,7 +236,18 @@ mod tests {
         assert_eq!(job.initial_joints, vec![("j0".to_owned(), 0.2)]);
         assert_eq!(job.gate_speed, 0.2);
         assert_eq!(job.algo, super::Algo::Ppo);
+        assert_eq!(job.backend, super::Backend::Mujoco);
         assert_eq!(job.warm_start, None);
+    }
+
+    #[test]
+    fn reads_the_physics_backend() {
+        let mut job = sample();
+
+        job["backend"] = json!("simd");
+        assert_eq!(parse(&job).expect("job parses").backend, super::Backend::Simd);
+        job["backend"] = json!("gpu");
+        assert!(parse(&job).expect_err("must fail").contains("backend"));
     }
 
     #[test]

@@ -12,6 +12,8 @@ pub mod lanes;
 pub mod newton;
 mod params;
 mod plan;
+mod row_batch;
+mod rowmap;
 mod rows;
 mod search;
 mod sim;
@@ -25,6 +27,7 @@ pub mod velocity;
 
 pub use block::Block;
 pub use plan::Plan;
+pub use row_batch::{Offsets, RowBatch, EXPANDABLE};
 pub use sim::{locate, Sim, Snapshot};
 pub use state::State;
 pub use step::{forward, step, Workspace};

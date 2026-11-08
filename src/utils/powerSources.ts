@@ -1,11 +1,24 @@
-import { BatterySpec, COMPONENT_BY_ID, ComponentInfo, RegulatorSpec } from '../data/components';
+import { BatterySpec, COMPONENT_BY_ID, ComponentInfo, RegulatorSpec, actuatorOf } from '../data/components';
 import { SUPPLY_BY_ID } from '../data/supplies';
-import type { ScenePart } from '../types/robotics';
+import type { ScenePart, Tether } from '../types/robotics';
 import type { CheckContext } from './engineeringTypes';
 
 export interface PowerSource {
   name: string;
   battery: BatterySpec;
+  tetherA?: number;
+}
+
+export function tetherSource(ctx: Pick<CheckContext, 'project'>): PowerSource | undefined {
+  const tether = ctx.project.tether;
+
+  if (!tether || tether.volts <= 0 || tether.amps <= 0) return undefined;
+
+  return {
+    name: `The ${tether.volts} V ${tether.amps} A tether`,
+    battery: { nominalV: tether.volts, fullV: tether.volts, capacityAh: 0, cRating: 0 },
+    tetherA: tether.amps,
+  };
 }
 
 export interface SceneRegulator {
@@ -80,4 +93,20 @@ export function sceneRegulators(parts: ScenePart[]): SceneRegulator[] {
 
     return c?.regulator ? [{ id: p.id, name: c.name, regulator: c.regulator }] : [];
   });
+}
+
+const SUPPLY_VOLTS = [48, 24, 12, 7.4, 6, 5];
+const DEFAULT_TETHER_A = 10;
+
+export function suggestedTether(parts: ScenePart[]): Tether {
+  const ranges = parts.flatMap((p) => {
+    const act = p.kind === 'component' && p.componentId ? actuatorOf(p.componentId, p.componentVariant) : undefined;
+
+    return act ? [act.volts] : [];
+  });
+  const low = Math.max(0, ...ranges.map((r) => r[0]));
+  const high = Math.min(Infinity, ...ranges.map((r) => r[1]));
+  const volts = SUPPLY_VOLTS.find((v) => v >= low && v <= high) ?? (Number.isFinite(high) ? high : 12);
+
+  return { volts, amps: DEFAULT_TETHER_A };
 }

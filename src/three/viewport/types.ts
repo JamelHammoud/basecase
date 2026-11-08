@@ -156,6 +156,7 @@ export interface Viewport3DHandle {
   silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];
   posedInterference: (onlyIds?: string[], riders?: Record<string, string[]>) => Promise<Interference[]>;
   posedFloor: (ids?: string[]) => Promise<number | null>;
+  meshGaps: (pairs: Array<[string, string]>, withinMm: number) => Promise<Array<[string, string]>>;
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;

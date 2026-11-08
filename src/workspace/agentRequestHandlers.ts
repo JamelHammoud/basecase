@@ -240,7 +240,7 @@ async function setBuild(payload: Payload, ctx: RequestContext) {
 
   ctx.setProjectNow(next);
 
-  return { ok: true, unknown: bad, extras: next.extras ?? [], plan: await budgetPlanNote(ctx) };
+  return { ok: true, unknown: bad, extras: next.extras ?? [], tether: next.tether, plan: await budgetPlanNote(ctx) };
 }
 
 async function applyWithCost(payload: Payload, ctx: RequestContext) {

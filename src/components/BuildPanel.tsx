@@ -12,10 +12,10 @@ import { BudgetSection } from './build/BudgetSection';
 import { BuyList } from './build/BuyList';
 import { CheckSheet } from './build/CheckSheet';
 import { ChecksSection } from './build/ChecksSection';
-import { ExtrasSection } from './build/ExtrasSection';
 import { GuideSection } from './build/GuideSection';
 import { download } from './build/format';
 import { PlatesSection } from './build/PlatesSection';
+import { PowerSection } from './build/PowerSection';
 import type { ReadinessFinding } from '../readiness/types';
 import { ignoreFinding, ignoreRule, restoreFinding, restoreRule } from '../readiness/readiness';
 import type { ReadinessHandle } from '../workspace/useReadiness';
@@ -94,6 +94,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     <div className="flex-1 min-h-0 flex flex-col">
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <BudgetSection bom={bom} project={project} onChangeProject={onChangeProject} />
+        <PowerSection parts={parts} project={project} onChangeProject={onChangeProject} />
         <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
         <ChecksSection
           readiness={readiness.current}
@@ -118,12 +119,13 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           bom={bom}
           parts={parts}
           panScroll={panScroll}
+          extras={project.extras ?? []}
+          onChangeExtras={(extras) => onChangeProject({ extras })}
           onCheck={setChecking}
           onSelectParts={onSelectParts}
           onExportCsv={exportCsv}
           onExportMarkdown={exportMarkdown}
         />
-        <ExtrasSection project={project} onChangeProject={onChangeProject} />
         <PlatesSection
           printing={printing}
           project={project}

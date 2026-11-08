@@ -220,6 +220,7 @@ export interface ProjectSettings extends ProjectRecords {
   prints?: PrintRecord[];
   budgetUsd?: number;
   budgetEntered?: EnteredPrice;
+  tether?: Tether;
   extras?: Array<{ key: string; qty: number; note?: string }>;
   sourced?: SourcedItem[];
   readiness?: ReadinessDecisions;
@@ -234,6 +235,11 @@ export interface ProjectSettings extends ProjectRecords {
   tries?: TryRecord[];
   routines?: Routine[];
   skills?: SkillRecord[];
+}
+
+export interface Tether {
+  volts: number;
+  amps: number;
 }
 
 export interface SceneMark {

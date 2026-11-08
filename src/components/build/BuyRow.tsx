@@ -5,13 +5,18 @@ import type { BomLine } from '../../utils/bom';
 import { scaledEntry } from '../../utils/currency';
 import { useMoney } from '../../utils/useMoney';
 import { PART_PREVIEW_WIDTH, PartPreviewCard } from '../agent/PartPreviewCard';
+import type { Extra } from './buyExtras';
 import { lineAmount, lineCount, linkLabel } from './buyLine';
+import { QtyEditor } from './QtyEditor';
 
 export interface BuyContext {
   parts: ScenePart[];
   panScroll: boolean;
   onCheck: (line: BomLine) => void;
   onSelectParts: (ids: string[]) => void;
+  extraOf: (key: string) => Extra | undefined;
+  onExtraQty: (key: string, qty: number) => void;
+  onRemoveExtra: (line: BomLine) => void;
 }
 
 const PRICE_CLASS =
@@ -74,16 +79,17 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
   );
 };
 
-const LineFacts: React.FC<{ line: BomLine }> = ({ line: l }) => {
+const LineFacts: React.FC<{ line: BomLine; note?: string }> = ({ line: l, note }) => {
   const amount = lineAmount(l);
 
   return (
     <>
       <span className="block text-[13px] leading-[18px] text-white/90">{l.name}</span>
-      {(amount || l.detail) && (
+      {(amount || l.detail || note) && (
         <span className="flex flex-wrap gap-x-[12px] text-[12px] leading-[16px] text-white/45">
           {amount && <span className="tabular-nums">{amount}</span>}
           {l.detail && <span>{l.detail}</span>}
+          {note && <span>{note}</span>}
         </span>
       )}
       {l.warning && <span className="block text-[12px] leading-[16px] text-amber-400">{l.warning}</span>}
@@ -92,10 +98,12 @@ const LineFacts: React.FC<{ line: BomLine }> = ({ line: l }) => {
 };
 
 const LineText: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => {
+  const note = context.extraOf(l.key)?.note;
+
   if (!l.partIds.length)
     return (
       <div className="min-w-0 flex-1">
-        <LineFacts line={l} />
+        <LineFacts line={l} note={note} />
       </div>
     );
 
@@ -105,7 +113,7 @@ const LineText: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, c
       onClick={() => context.onSelectParts(l.partIds)}
       className="min-w-0 w-full text-left cursor-default"
     >
-      <LineFacts line={l} />
+      <LineFacts line={l} note={note} />
     </button>
   );
 
@@ -125,11 +133,29 @@ const LineText: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, c
   );
 };
 
-export const BuyRow: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => (
-  <li className="group relative flex items-start gap-2 py-1.5 pl-[7px] pr-[29px] rounded-lg hover:bg-white/[0.04]">
+const LineCount: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => {
+  const extra = context.extraOf(l.key);
+
+  if (extra)
+    return (
+      <QtyEditor
+        line={l}
+        extra={extra}
+        onQty={(qty) => context.onExtraQty(l.key, qty)}
+        onRemove={() => context.onRemoveExtra(l)}
+      />
+    );
+
+  return (
     <span className="shrink-0 min-w-[28px] text-right text-[13px] leading-[18px] text-white/50 tabular-nums">
       {lineCount(l)}
     </span>
+  );
+};
+
+export const BuyRow: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => (
+  <li className="group relative flex items-start gap-2 py-1.5 pl-[7px] pr-[29px] rounded-lg hover:bg-white/[0.04]">
+    <LineCount line={l} context={context} />
     <LineText line={l} context={context} />
     <PriceControl line={l} onCheck={() => context.onCheck(l)} />
     <ListingLink line={l} />

@@ -4,6 +4,7 @@ import {
   assemblyIn,
   fastenersIn,
   floorIn,
+  gapsIn,
   interferenceIn,
   measuresIn,
   visibilityIn,
@@ -68,6 +69,7 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'assembly',
   'posedInterference',
   'posedFloor',
+  'meshGaps',
   'restBounds',
   'silhouetteShots',
   'measureParts',
@@ -325,6 +327,12 @@ export class ViewportEngine {
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
       posedFloor: (ids) => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
+      meshGaps: (pairs, withinMm) =>
+        gapsIn(
+          withRest(() => snapshotShapes(measure.partObjects(ctx, [...new Set(pairs.flat())]))),
+          pairs,
+          withinMm,
+        ),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
       silhouetteShots: (specs, opts) =>
         unbatched(() => silhouetteShots(ctx, { specs, ...opts, helper: this.gizmo.controls.getHelper() })),

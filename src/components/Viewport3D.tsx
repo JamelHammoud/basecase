@@ -43,6 +43,7 @@ const DETACHED: Viewport3DHandle = {
   silhouetteShots: () => [],
   posedInterference: async () => [],
   posedFloor: async () => null,
+  meshGaps: async () => [],
   projectPoints: (points) => points.map(() => ({ x: 0, y: 0, visible: false })),
   measureFrom: () => {},
   cancelMeasure: () => false,

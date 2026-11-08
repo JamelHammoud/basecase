@@ -51,6 +51,7 @@ export interface MeshMeasure {
   max: [number, number, number];
   centroid: [number, number, number];
   triangles: number;
+  base?: Array<[number, number]>;
 }
 
 function bounds(t: Float32Array) {

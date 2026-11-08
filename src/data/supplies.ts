@@ -88,6 +88,13 @@ export const SUPPLIES: SupplyInfo[] = [
     search: amazon('inline blade fuse holder 14 AWG ATC with 10A fuses'),
   },
   {
+    id: 'dc-bench-supply',
+    name: 'DC Power Supply',
+    group: 'Power',
+    spec: 'Bench or wall DC supply for a tethered robot, rated for the tether’s voltage and current, with output leads',
+    search: amazon('adjustable DC bench power supply 30V 10A'),
+  },
+  {
     id: 'lipo-voltage-alarm',
     name: 'LiPo Voltage Alarm',
     group: 'Power',

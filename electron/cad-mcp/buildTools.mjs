@@ -152,7 +152,7 @@ export const setBuild = {
     title: 'Build settings',
     description:
       'Adds things to buy that are not modeled parts (battery, charger, buck converter, power switch, cables, microSD) to the BOM, by catalog key: "supply:<id>" from find_parts, or "component:<id>" for a catalog part that isn\'t placed. For anything find_parts lacks, use add_sourced_item. ' +
-      'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one) and the default print material. With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
+      'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one), the default print material, and the tether: a robot run from a wall or bench supply instead of a battery (only when the user says so; volts 0 clears it). With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
     inputSchema: {
       extras: z
         .array(
@@ -171,19 +171,25 @@ export const setBuild = {
         .optional()
         .describe("In the user's currency, the one get_bom and find_parts show prices in"),
       material: z.enum(['PLA', 'PETG', 'ABS', 'ASA']).optional(),
+      tether: z
+        .object({ volts: z.number().min(0).max(100), amps: z.number().min(0).max(200) })
+        .optional()
+        .describe('The supply the robot runs from on a cable: its output voltage and rated current'),
     },
   },
-  handler: async ({ extras, budget, material }) => {
+  handler: async ({ extras, budget, material, tether }) => {
     try {
-      const res = await bridge('set_build', { extras, budget, material });
+      const res = await bridge('set_build', { extras, budget, material, tether });
       const unknown = res?.unknown?.length
         ? ` Unknown keys (not added): ${res.unknown.join(', ')}. Use keys from find_parts.`
         : '';
 
       const plan = res?.plan ? `\n\n${res.plan}` : '';
 
+      const tethered = res?.tether ? ` Tether: ${res.tether.volts} V ${res.tether.amps} A.` : '';
+
       return text(
-        `Extras: ${(res?.extras ?? []).map((x) => `${x.qty}× ${x.key}`).join(', ') || 'none'}.${unknown}${plan}`,
+        `Extras: ${(res?.extras ?? []).map((x) => `${x.qty}× ${x.key}`).join(', ') || 'none'}.${tethered}${unknown}${plan}`,
       );
     } catch (err) {
       return fail(err);

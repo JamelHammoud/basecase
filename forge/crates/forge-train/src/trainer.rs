@@ -191,6 +191,11 @@ pub fn train(folder: &Path) -> Result<(), String> {
 
     let model = Model::load(&folder.join("model.xml"))?;
     let robot = Robot::load(model, job)?;
+
+    if let Some(note) = robot.engine.status() {
+        status(&note);
+    }
+
     let envs = Envs::new(&robot, envs_count, seed + ENV_SEED_OFFSET, true)?;
     let mut algo = algorithm::build(kind, envs, seed, Math::native(learner_threads()));
 

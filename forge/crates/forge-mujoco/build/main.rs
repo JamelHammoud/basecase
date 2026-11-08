@@ -16,7 +16,7 @@ fn vendor_root() -> PathBuf {
 fn compile_shim(root: &Path, target_os: &str) {
     let mut build = cc::Build::new();
 
-    build.file("src/shim.c").warnings(true);
+    build.file("src/shim.c").file("src/fields.c").warnings(true);
 
     if target_os == "macos" {
         build.flag(format!("-F{}", root.display()));
@@ -60,6 +60,7 @@ fn emit_link(root: &Path, target_os: &str) {
 
 fn main() {
     println!("cargo:rerun-if-changed=src/shim.c");
+    println!("cargo:rerun-if-changed=src/fields.c");
     println!("cargo:rerun-if-changed=build/main.rs");
     println!("cargo:rerun-if-changed=build/fetch.rs");
     println!("cargo:rerun-if-env-changed=FORGE_MUJOCO_DIR");

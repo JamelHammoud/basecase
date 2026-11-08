@@ -19,6 +19,7 @@ pub mod normalizer;
 pub mod onnx;
 pub mod options;
 pub mod orthogonal;
+pub mod physics;
 pub mod platform;
 pub mod pool;
 pub mod ppo;

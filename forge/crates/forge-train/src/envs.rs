@@ -1,11 +1,11 @@
 use crate::conditions::{Conditions, Setup};
 use crate::events::Phases;
+use crate::physics::Physics;
 use crate::randomize::{randomize, RANDOMIZED_FIELDS};
 use crate::rewarder::Rewarder;
 use crate::rng::Rng;
 use crate::robot::{quat_multiply, rotate_into_frame, Robot};
 use crate::threads::ThreadTuner;
-use forge_mujoco::Batch;
 use forge_reward::{handwritten, RewardState};
 use std::time::Instant;
 
@@ -15,7 +15,7 @@ pub const NEVER: i64 = i64::MAX / 2;
 
 pub struct Envs<'a> {
     pub robot: &'a Robot,
-    batch: Batch,
+    batch: Physics,
     pub count: usize,
     rngs: Vec<Rng>,
     pub steps_taken: Vec<i64>,
@@ -75,7 +75,7 @@ impl<'a> Envs<'a> {
             .unwrap_or_else(|| std::thread::available_parallelism().map_or(4, |c| c.get()))
             .min(count)
             .max(1);
-        let mut batch = Batch::new(&robot.model, count, threads)?;
+        let mut batch = Physics::new(&robot.model, &robot.engine, &robot.layout, (count, threads))?;
         let mut rngs: Vec<Rng> = (0..count).map(|i| Rng::new(seed, i as u64)).collect();
 
         if randomized {

@@ -1,7 +1,8 @@
 use crate::args::{Args, Backend};
 use crate::drive::{controls, start_pose, DECIMATION};
 use forge_ir::Kernel;
-use forge_sim::{Sim, Snapshot};
+use forge_mujoco::{Data, Model};
+use forge_sim::{RowBatch, Sim, Snapshot};
 use serde_json::{json, Value};
 
 const WORLDS: usize = 37;
@@ -55,6 +56,45 @@ fn run_single(kernel: &Kernel, world: usize) -> Snapshot {
     sim.state(0)
 }
 
+fn run_rows(model: &Model, kernel: &Kernel, threads: usize) -> Result<Vec<Vec<u64>>, String> {
+    let mut batch = RowBatch::new(model, kernel.clone(), WORLDS, threads)?;
+    let o = batch.offsets();
+    let (nq, nv, nu) = (kernel.nq, kernel.nv, kernel.nu);
+    let plan = Sim::new(kernel.clone(), 1).plan;
+
+    for w in 0..WORLDS {
+        let mut data = Data::new(model);
+
+        data.qpos().copy_from_slice(&start_pose(&plan, w));
+        data.get_state(model, batch.row(w), forge_mujoco::integration_state());
+    }
+
+    for round in 0..ROUNDS {
+        for w in 0..WORLDS {
+            let ctrl = controls(&plan, w, round);
+
+            batch.row(w)[o.ctrl..o.ctrl + nu].copy_from_slice(&ctrl);
+        }
+
+        if batch.step(DECIMATION) > 0 {
+            return Err("The rows diverged".to_owned());
+        }
+    }
+
+    Ok((0..WORLDS)
+        .map(|w| {
+            let row = batch.row(w);
+
+            row[o.qpos..o.qpos + nq]
+                .iter()
+                .chain(&row[o.qvel..o.qvel + nv])
+                .chain(&row[o.warm..o.warm + nv])
+                .map(|v| v.to_bits())
+                .collect()
+        })
+        .collect())
+}
+
 fn bits(s: &Snapshot) -> Vec<u64> {
     s.qpos
         .iter()
@@ -69,9 +109,16 @@ pub fn run(args: &Args) -> Result<Value, String> {
         return Err("Batch identity checks the simd backend".into());
     }
 
-    let (_, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;
+    let (model, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;
     let singles: Vec<Snapshot> = (0..WORLDS).map(|w| run_single(&kernel, w)).collect();
     let mut mismatches = Vec::new();
+    let rows = run_rows(&model, &kernel, 3)?;
+
+    for (w, (s, r)) in singles.iter().zip(&rows).enumerate() {
+        if &bits(s) != r {
+            mismatches.push(format!("world {w} in the regrouped row batch"));
+        }
+    }
 
     for threads in THREADS {
         let batch = run_batch(&kernel, threads);
@@ -83,15 +130,13 @@ pub fn run(args: &Args) -> Result<Value, String> {
         }
     }
 
-    let contacts: usize = singles.iter().map(|s| s.ncon).sum();
-
     Ok(json!({
         "identical": mismatches.is_empty(),
         "worlds": WORLDS,
         "steps": ROUNDS * DECIMATION,
         "lanes": forge_sim::lanes::LANES,
         "threads": THREADS,
-        "contactsAtEnd": contacts,
+        "regroupedRows": true,
         "mismatches": mismatches,
     }))
 }

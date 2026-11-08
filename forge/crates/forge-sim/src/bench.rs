@@ -1,5 +1,5 @@
 use crate::args::{Args, Backend};
-use crate::drive::{controls, start_pose, DECIMATION, EPISODE_ROUNDS};
+use crate::drive::{start_pose, Waves, DECIMATION, EPISODE_ROUNDS};
 use crate::meter::{Meter, Windows};
 use forge_mujoco::{Batch, Data, Model};
 use forge_sim::lanes::LANES;
@@ -64,7 +64,7 @@ fn start_rows(model: &Model, plan: &Plan, envs: usize) -> Vec<Vec<f64>> {
         .collect()
 }
 
-fn round(stepper: &mut dyn Stepper, work: &Work, r: usize) -> Result<f64, String> {
+fn round(stepper: &mut dyn Stepper, work: &Work, waves: &mut Waves, r: usize) -> Result<f64, String> {
     let nu = work.plan.kernel.nu;
 
     for (w, start) in work.starts.iter().enumerate() {
@@ -74,8 +74,10 @@ fn round(stepper: &mut dyn Stepper, work: &Work, r: usize) -> Result<f64, String
             row.copy_from_slice(start);
         }
 
-        row[work.ctrl_at..work.ctrl_at + nu].copy_from_slice(&controls(work.plan, w, r));
+        waves.write(w, &mut row[work.ctrl_at..work.ctrl_at + nu]);
     }
+
+    waves.advance();
 
     if stepper.advance(DECIMATION) > 0 {
         return Err("The bench robots diverged".to_owned());
@@ -91,9 +93,10 @@ fn measure(stepper: &mut dyn Stepper, work: &Work, seconds: f64) -> Result<(Wind
     let (windows, outcome) = std::thread::scope(|scope| {
         let runner = scope.spawn(|| {
             let (mut r, mut contacts) = (0, 0.0);
+            let mut waves = Waves::new(work.plan, envs);
 
             while !stop.load(Ordering::SeqCst) {
-                contacts += round(stepper, work, r)?;
+                contacts += round(stepper, work, &mut waves, r)?;
                 meter.add(envs * DECIMATION);
                 r += 1;
             }

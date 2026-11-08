@@ -31,7 +31,7 @@ async function finished(ev: TrainEvent): Promise<ForgeOutcome> {
 
   if (!isPolicySpec(spec)) return failure('The trainer saved no policy.');
 
-  return { ok: true, policy: spec, events: [{ type: 'done', steps: record.trainedSteps }], stderr: '' };
+  return { ok: true, policy: spec, events: [{ type: 'done', steps: record.trainedSteps }], stderr: '', run: record.id };
 }
 
 function progressOf(ev: TrainEvent): ForgeProgress | null {

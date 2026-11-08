@@ -55,6 +55,22 @@ function spawnTrainer({ uv, dir, envDir, forge }) {
 
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
+const RUN_ID = /^policy-[a-z0-9-]+$/;
+const RUNS_KEPT = 8;
+const WARM_DIR = 'warm';
+const WARM_FILES = ['resume.json', 'policy.json'];
+
+function copyWarmStart(from, dir) {
+  const files = WARM_FILES.filter((name) => fs.existsSync(path.join(from, name)));
+
+  if (!files.length) throw new Error('The run to continue from has no policy.');
+
+  fs.mkdirSync(path.join(dir, WARM_DIR));
+  files.forEach((name) => fs.copyFileSync(path.join(from, name), path.join(dir, WARM_DIR, name)));
+
+  return WARM_DIR;
+}
+
 export const PRIORITY = { user: 0, kit: 1 };
 
 export const GATE_LEASE = path.join(os.tmpdir(), 'basecase-gatekeeper.lease');
@@ -106,14 +122,18 @@ export class Trainer {
 
     if (!this.forge && !uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
 
+    const warmFrom = this.warmSource(job.warmStart);
     const id = newId();
     const dir = path.join(this.jobsDir, id);
 
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'model.xml'), xml);
-    fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(job, null, 2));
 
-    const entry = { workspaceId, job, id, dir, priority, uv };
+    const runJob = { ...job, warmStart: warmFrom ? copyWarmStart(warmFrom, dir) : undefined };
+
+    fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(runJob, null, 2));
+
+    const entry = { workspaceId, job: runJob, id, dir, priority, uv };
     const send = this.sender(entry);
 
     if (priority === PRIORITY.user) this.yieldKit();
@@ -128,6 +148,30 @@ export class Trainer {
     this.watchLease();
 
     return { jobId: id };
+  }
+
+  warmSource(run) {
+    if (run === undefined || run === null) return null;
+
+    if (typeof run !== 'string' || !RUN_ID.test(run)) throw new Error('A warm start names an earlier training run.');
+
+    const from = path.join(this.jobsDir, run);
+
+    if (!fs.existsSync(from)) throw new Error('The run to continue from is gone.');
+
+    return from;
+  }
+
+  pruneRuns() {
+    const active = new Set([...this.jobs.values(), ...this.queue].map((e) => e.id));
+    const runs = fs.existsSync(this.jobsDir)
+      ? fs.readdirSync(this.jobsDir).filter((name) => RUN_ID.test(name) && !active.has(name))
+      : [];
+    const newestFirst = runs.sort().reverse();
+
+    newestFirst
+      .slice(RUNS_KEPT)
+      .forEach((name) => fs.rmSync(path.join(this.jobsDir, name), { recursive: true, force: true }));
   }
 
   useGateLease(file = GATE_LEASE, pollMs = LEASE_POLL_MS) {
@@ -265,6 +309,7 @@ export class Trainer {
     this.wake(entry.workspaceId);
     queueMicrotask(() => this.launchNext());
     send(this.outcome(running, { code, signal, done, err }));
+    this.pruneRuns();
   }
 
   outcome(running, { code, signal, done, err }) {
@@ -365,7 +410,7 @@ export class Trainer {
   }
 
   getPolicy(id) {
-    if (!/^policy-[a-z0-9-]+$/.test(id)) return null;
+    if (!RUN_ID.test(id)) return null;
 
     const file = path.join(this.policiesDir, id, 'policy.json');
 
@@ -373,7 +418,7 @@ export class Trainer {
   }
 
   deletePolicy(id) {
-    if (!/^policy-[a-z0-9-]+$/.test(id)) return false;
+    if (!RUN_ID.test(id)) return false;
 
     fs.rmSync(path.join(this.policiesDir, id), { recursive: true, force: true });
 

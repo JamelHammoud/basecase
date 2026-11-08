@@ -191,3 +191,61 @@ describe('choosing the trainer', () => {
     expect(forgeBinary({ BASECASE_TRAINER: 'python' }, '/nowhere')).toBeNull();
   });
 });
+
+describe('continuing from an earlier run', () => {
+  const finishRun = (child, files) => {
+    files.forEach((name) => fs.writeFileSync(path.join(child.dir, name), '{}'));
+    child.emit('close', 0, null);
+  };
+
+  it('copies the earlier run into the new one and points the job at the copy', async () => {
+    const { t, children } = trainer();
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Stand 1') });
+
+    finishRun(children[0], ['resume.json', 'policy.json']);
+    await tick();
+    t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Stand 2'), warmStart: jobId } });
+
+    const dir = children[1].dir;
+    const written = JSON.parse(fs.readFileSync(path.join(dir, 'job.json'), 'utf8'));
+
+    expect(written.warmStart).toBe('warm');
+    expect(fs.readdirSync(path.join(dir, 'warm')).sort()).toEqual(['policy.json', 'resume.json']);
+  });
+
+  it('refuses a warm start that is a path rather than an earlier run', () => {
+    const { t, children } = trainer();
+
+    for (const warmStart of ['/etc', '../policy-a', 'policy-a/../../x', 7]) {
+      expect(() => t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmStart } })).toThrow(
+        'A warm start names an earlier training run.',
+      );
+    }
+
+    expect(() => t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmStart: 'policy-gone' } })).toThrow(
+      'The run to continue from is gone.',
+    );
+    expect(children).toHaveLength(0);
+  });
+
+  it('keeps only the newest finished runs', async () => {
+    const { t, children } = trainer();
+
+    const clock = vi.spyOn(Date, 'now');
+
+    for (let i = 0; i < 11; i++) {
+      clock.mockReturnValue(1.8e12 + i * 1000);
+      t.start({ workspaceId: 'a', xml: '<m/>', job: job(`Walk ${i}`) });
+      finishRun(children[i], ['policy.json']);
+      await tick();
+    }
+
+    clock.mockRestore();
+
+    const left = fs.readdirSync(t.jobsDir);
+
+    expect(left).toHaveLength(8);
+    expect(left).toContain(path.basename(children[10].dir));
+    expect(left).not.toContain(path.basename(children[0].dir));
+  });
+});

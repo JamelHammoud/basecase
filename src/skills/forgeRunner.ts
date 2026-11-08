@@ -11,6 +11,7 @@ export interface ForgeOutcome {
   policy: PolicySpec | null;
   events: object[];
   stderr: string;
+  run?: string;
 }
 
 export type ForgeRunner = (job: ForgeJob) => Promise<ForgeOutcome>;
@@ -35,6 +36,8 @@ const doneSteps = (events: object[]) => {
 };
 
 export function runFolder(outcome: ForgeOutcome): string | null {
+  if (outcome.ok && outcome.run) return outcome.run;
+
   const file = doneEvent(outcome.events)?.policy;
 
   if (!outcome.ok || typeof file !== 'string' || !POLICY_FILE.test(file) || !ABSOLUTE.test(file)) return null;

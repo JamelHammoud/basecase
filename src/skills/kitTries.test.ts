@@ -105,5 +105,7 @@ describe('Kit tries', () => {
     expect(runFolder(outcome('C:\\kit\\runs\\003\\policy.json'))).toBe('C:\\kit\\runs\\003');
     expect(runFolder(outcome('runs/003/policy.json'))).toBeNull();
     expect(runFolder({ ...outcome('/kit/policy.json'), ok: false })).toBeNull();
+    expect(runFolder({ ...outcome('runs/003/policy.json'), run: 'policy-abc' })).toBe('policy-abc');
+    expect(runFolder({ ...outcome('runs/003/policy.json'), run: 'policy-abc', ok: false })).toBeNull();
   });
 });

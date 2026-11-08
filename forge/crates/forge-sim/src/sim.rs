@@ -54,6 +54,12 @@ impl Sim {
         self.states[b].set_ctrl(l, ctrl);
     }
 
+    pub fn set_qvel(&mut self, world: usize, qvel: &[f64]) {
+        let (b, l) = locate(world);
+
+        self.states[b].set_qvel(l, qvel);
+    }
+
     pub fn reset(&mut self, world: usize, qpos: &[f64]) {
         let (b, l) = locate(world);
 

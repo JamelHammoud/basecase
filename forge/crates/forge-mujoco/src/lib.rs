@@ -1,8 +1,10 @@
 mod batch;
 mod ffi;
+mod fields;
 mod model;
 
 pub use batch::{Batch, StateLayout};
+pub use fields::{Array, Contact, Values};
 pub use model::{Data, Field, Model};
 
 use std::ffi::CStr;

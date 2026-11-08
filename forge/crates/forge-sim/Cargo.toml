@@ -1,0 +1,27 @@
+[package]
+name = "forge-sim"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "forge-sim"
+path = "src/main.rs"
+
+[dependencies]
+forge-ir = { path = "../forge-ir" }
+forge-mujoco = { path = "../forge-mujoco" }
+serde_json = "1"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+too_many_lines = "deny"
+too_many_arguments = "deny"
+cognitive_complexity = "deny"
+needless_range_loop = "allow"

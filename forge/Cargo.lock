@@ -30,6 +30,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-ir"
+version = "0.1.0"
+dependencies = [
+ "forge-mujoco",
+]
+
+[[package]]
 name = "forge-mujoco"
 version = "0.1.0"
 dependencies = [
@@ -39,6 +46,15 @@ dependencies = [
 [[package]]
 name = "forge-reward"
 version = "0.1.0"
+
+[[package]]
+name = "forge-sim"
+version = "0.1.0"
+dependencies = [
+ "forge-ir",
+ "forge-mujoco",
+ "serde_json",
+]
 
 [[package]]
 name = "forge-train"

@@ -3,6 +3,9 @@ use crate::lanes::{M, ONE, V, ZERO};
 use crate::params::{impedance_v, Imp, MIN_VAL};
 use crate::plan::{ContactSlot, Plan};
 use crate::spatial::{cross, dot3, get, sub3, V3, V9};
+use forge_ir::FrictionMix;
+
+const MIN_MU: f64 = 1e-5;
 
 fn row_vel(plan: &Plan, b: &Block, row: usize) -> V {
     let chain = &plan.chains[plan.row_chain[row]];
@@ -128,13 +131,25 @@ fn contact_rows(plan: &Plan, b: &mut Block, s: usize, jp: &mut [V3]) {
 
     point_jacobian(plan, b, slot, &pos, &mut jp[..n]);
 
-    let imp = impedance_v(&slot.imp, dist, margin);
-    let r0 = ((ONE - imp) * slot.diag / imp).max(V::splat(MIN_VAL));
-    let r = if slot.rows == 1 {
-        r0
-    } else {
-        r0 * (2.0 * slot.mu * slot.mu)
+    let pair = &plan.kernel.pairs[slot.pair];
+    let [g1, g2] = pair.geoms;
+    let (f1, f2) = (b.tables.friction[g1], b.tables.friction[g2]);
+    let mixed = match pair.mix {
+        FrictionMix::Max => f1.ge(f2).select(f1, f2),
+        FrictionMix::First => f1,
+        FrictionMix::Second => f2,
     };
+    let slide = mixed.max(V::splat(MIN_MU));
+    let tran = V::splat(slot.tran);
+    let diag = if slot.rows == 1 {
+        tran
+    } else {
+        tran + slide * slide * tran
+    };
+    let imp = impedance_v(&slot.imp, dist, margin);
+    let r0 = ((ONE - imp) * diag / imp).max(V::splat(MIN_VAL));
+    let mu = slide * slot.ratio;
+    let r = if slot.rows == 1 { r0 } else { mu * mu * r0 * 2.0 };
     let values = RowValues {
         active,
         pos: dist,
@@ -152,9 +167,9 @@ fn contact_rows(plan: &Plan, b: &mut Block, s: usize, jp: &mut [V3]) {
             } else {
                 let dim = row / 2;
                 let axis = [frame[3 + 3 * dim], frame[4 + 3 * dim], frame[5 + 3 * dim]];
-                let mu = slot.frictions[dim] * if row % 2 == 0 { 1.0 } else { -1.0 };
+                let signed = if row % 2 == 0 { slide } else { -slide };
 
-                normal + dot3(&axis, p) * mu
+                normal + dot3(&axis, p) * signed
             };
 
             b.jac[adr + t] = active.mask(value);

@@ -119,7 +119,7 @@ fn subtree_com(plan: &Plan, b: &mut Block) {
     for i in 0..plan.nbody {
         let xipos: V3 = get(&b.xipos, i);
 
-        put(&mut b.subtree_com, i, &scl3(&xipos, V::splat(k.bodies[i].mass)));
+        put(&mut b.subtree_com, i, &scl3(&xipos, b.tables.mass[i]));
     }
 
     for i in (1..plan.nbody).rev() {
@@ -195,7 +195,7 @@ pub fn com_pos(plan: &Plan, b: &mut Block) {
     for i in 1..plan.nbody {
         let body = &k.bodies[i];
         let offset = sub3(&get(&b.xipos, i), &get(&b.subtree_com, body.root));
-        let c = inert_com(&splat(&body.inertia), &get(&b.ximat, i), &offset, V::splat(body.mass));
+        let c = inert_com(&splat(&body.inertia), &get(&b.ximat, i), &offset, b.tables.mass[i]);
 
         put(&mut b.cinert, i, &c);
     }

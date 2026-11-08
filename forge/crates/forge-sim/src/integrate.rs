@@ -32,7 +32,7 @@ fn velocity_derivative(plan: &Plan, b: &Block, deriv: &mut [V]) {
     deriv.fill(V::default());
 
     for (i, a) in k.actuators.iter().enumerate() {
-        if a.bias[2] == 0.0 {
+        if a.bias[2] == 0.0 && b.tables.bias[i][2] == crate::lanes::ZERO {
             continue;
         }
 
@@ -41,7 +41,7 @@ fn velocity_derivative(plan: &Plan, b: &Block, deriv: &mut [V]) {
             None => M::ALL,
         };
 
-        deriv[a.dof] += active.mask(V::splat(a.bias[2] * a.gear * a.gear));
+        deriv[a.dof] += active.mask(b.tables.bias[i][2] * (a.gear * a.gear));
     }
 
     for (d, dof) in k.dofs.iter().enumerate() {

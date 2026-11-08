@@ -119,6 +119,24 @@ pub struct Geom {
     pub quat: [f64; 4],
     pub frame: SameFrame,
     pub size: [f64; 3],
+    pub friction: [f64; 3],
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FrictionMix {
+    Max,
+    First,
+    Second,
+}
+
+impl FrictionMix {
+    pub fn apply(self, first: f64, second: f64) -> f64 {
+        match self {
+            FrictionMix::Max => first.max(second),
+            FrictionMix::First => first,
+            FrictionMix::Second => second,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -153,6 +171,7 @@ pub struct Pair {
     pub geoms: [usize; 2],
     pub condim: usize,
     pub friction: [f64; 5],
+    pub mix: FrictionMix,
     pub solref: [f64; 2],
     pub solimp: [f64; 5],
     pub margin: f64,

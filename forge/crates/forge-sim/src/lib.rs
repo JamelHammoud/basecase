@@ -19,6 +19,7 @@ mod sparse;
 mod spatial;
 mod state;
 mod step;
+pub mod tables;
 mod trig;
 pub mod velocity;
 

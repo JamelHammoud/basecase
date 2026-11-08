@@ -35,10 +35,9 @@ pub struct ContactSlot {
     pub chain: usize,
     pub rows: usize,
     pub row: usize,
-    pub diag: f64,
+    pub tran: f64,
     pub imp: Imp,
-    pub mu: f64,
-    pub frictions: [f64; 2],
+    pub ratio: f64,
     pub include_margin: f64,
 }
 
@@ -205,9 +204,7 @@ fn contact_slots(k: &Kernel, chains: &mut Vec<Chain>, first_row: usize) -> Vec<C
         let tran = k.bodies[bodies[0]].invweight[0] + k.bodies[bodies[1]].invweight[0];
         let rows = if pair.condim == 1 { 1 } else { 2 * (pair.condim - 1) };
         let solref = solref_safe(pair.solref, dt, k.options.refsafe);
-        let mu = pair.friction[0] * (1.0 / k.options.impratio.max(MIN_VAL)).sqrt();
-        let first = pair.friction[0];
-        let diag = if rows == 1 { tran } else { tran + first * first * tran };
+        let ratio = (1.0 / k.options.impratio.max(MIN_VAL)).sqrt();
 
         for index in 0..pair.max_contacts {
             out.push(ContactSlot {
@@ -216,10 +213,9 @@ fn contact_slots(k: &Kernel, chains: &mut Vec<Chain>, first_row: usize) -> Vec<C
                 chain,
                 rows,
                 row,
-                diag,
+                tran,
                 imp: Imp::new(pair.solimp, solref),
-                mu,
-                frictions: [pair.friction[0], pair.friction[1]],
+                ratio,
                 include_margin: pair.margin,
             });
             row += rows;

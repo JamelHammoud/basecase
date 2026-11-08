@@ -1,6 +1,7 @@
 use crate::block::{Block, History};
 use crate::lanes::{LANES, V, ZERO};
 use crate::plan::Plan;
+use crate::tables::Tables;
 
 #[derive(Clone, Debug)]
 pub struct State {
@@ -10,6 +11,7 @@ pub struct State {
     pub warm: Vec<V>,
     pub time: V,
     pub history: Vec<History>,
+    pub tables: Tables,
 }
 
 fn initial_times(n: usize, dt: f64) -> Vec<f64> {
@@ -43,6 +45,7 @@ impl State {
             warm: vec![ZERO; k.nv],
             time: ZERO,
             history,
+            tables: Tables::new(k),
         }
     }
 
@@ -92,5 +95,6 @@ impl State {
         std::mem::swap(&mut self.warm, &mut b.warm);
         std::mem::swap(&mut self.time, &mut b.time);
         std::mem::swap(&mut self.history, &mut b.history);
+        std::mem::swap(&mut self.tables, &mut b.tables);
     }
 }

@@ -1,5 +1,5 @@
 use crate::bodies::same_frame;
-use crate::kernel::{Body, Collider, Geom, Pair, Shape};
+use crate::kernel::{Body, Collider, FrictionMix, Geom, Pair, Shape};
 use crate::names::Names;
 use crate::read::{vec2, vec3, vec4, vec5, Reader};
 use crate::refuse::nonzero;
@@ -72,6 +72,7 @@ pub fn geoms(r: &Reader, names: &Names, reasons: &mut Vec<String>) -> Result<Vec
     let n = r.size("ngeom")?;
     let (kind, dataid, body) = (r.i32s("geom_type")?, r.i32s("geom_dataid")?, r.i32s("geom_bodyid")?);
     let (pos, quat, size) = (r.f64s("geom_pos")?, r.f64s("geom_quat")?, r.f64s("geom_size")?);
+    let friction = r.f64s("geom_friction")?;
     let sameframe = r.u8s("geom_sameframe")?;
     let (surfacevel, adhesion) = (r.f64s("geom_surfacevel")?, r.f64s("geom_adhesion")?);
     let mut out = Vec::with_capacity(n);
@@ -88,6 +89,7 @@ pub fn geoms(r: &Reader, names: &Names, reasons: &mut Vec<String>) -> Result<Vec
             quat: vec4(quat, g),
             frame: same_frame(sameframe[g]),
             size: vec3(size, g),
+            friction: vec3(friction, g),
         });
     }
 
@@ -196,6 +198,11 @@ pub fn pairs(r: &Reader, names: &Names, input: &PairInput, reasons: &mut Vec<Str
                 geoms: [g1, g2],
                 condim,
                 friction: [fr[0], fr[0], fr[1], fr[2], fr[2]].map(|f| f.max(MIN_MU)),
+                mix: match t.priority[g1].cmp(&t.priority[g2]) {
+                    std::cmp::Ordering::Equal => FrictionMix::Max,
+                    std::cmp::Ordering::Greater => FrictionMix::First,
+                    std::cmp::Ordering::Less => FrictionMix::Second,
+                },
                 solref,
                 solimp,
                 margin: t.margin[g1] + t.margin[g2],

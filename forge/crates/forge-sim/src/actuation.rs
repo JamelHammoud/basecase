@@ -65,8 +65,9 @@ pub fn actuation(plan: &Plan, b: &mut Block, ctrl: &mut [V]) {
     for (i, a) in k.actuators.iter().enumerate() {
         let length = b.qpos[a.qposadr] * a.gear;
         let velocity = b.qvel[a.dof] * a.gear;
-        let bias = V::splat(a.bias[0]) + length * a.bias[1] + velocity * a.bias[2];
-        let mut force = ctrl[i] * a.gain + bias;
+        let p = b.tables.bias[i];
+        let bias = p[0] + length * p[1] + velocity * p[2];
+        let mut force = ctrl[i] * b.tables.gain[i] + bias;
 
         if let Some(r) = a.force_range {
             force = force.clip(V::splat(r[0]), V::splat(r[1]));

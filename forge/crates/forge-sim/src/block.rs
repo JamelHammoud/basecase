@@ -1,6 +1,7 @@
 use crate::lanes::{LANES, V, ZERO};
 use crate::plan::Plan;
 use crate::state::State;
+use crate::tables::Tables;
 
 #[derive(Clone, Debug)]
 pub struct History {
@@ -18,6 +19,7 @@ pub struct Block {
     pub warm: Vec<V>,
     pub time: V,
     pub history: Vec<History>,
+    pub tables: Tables,
     pub xpos: Vec<V>,
     pub xquat: Vec<V>,
     pub xmat: Vec<V>,
@@ -80,6 +82,7 @@ impl Block {
             warm: state.warm,
             time: state.time,
             history: state.history,
+            tables: state.tables,
             xpos: zeros(3 * nb),
             xquat: zeros(4 * nb),
             xmat: zeros(9 * nb),

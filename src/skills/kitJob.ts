@@ -2,8 +2,10 @@ import type { SimModel } from '../sim/mjcfTypes';
 import { kitCommand, type TrainedEntry } from './kitEnvironment';
 import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
 import { kitReward } from './kitRewards';
+import { NEAR_DELAYS, type DelaySteps } from './kitSchedule';
 
 const D2R = Math.PI / 180;
+const WARM_LOG_STD_MIN = -2.5;
 
 export interface KitStart {
   joints: Record<string, number>;
@@ -16,10 +18,12 @@ export interface KitJobOptions {
   start?: KitStart | null;
   reward?: string;
   maxIterations?: number;
+  delaySteps?: DelaySteps;
+  warmStart?: string | null;
 }
 
 const ROBUST = Object.freeze({
-  delaySteps: [0, 1],
+  delaySteps: NEAR_DELAYS,
   encoderBias: 0.015,
   imuBias: 0.03,
   actorLinvel: false,
@@ -94,5 +98,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     reward: options.reward ?? kitReward(model, entry),
     ...(options.maxIterations ? { maxIterations: options.maxIterations } : {}),
     ...fields,
+    ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
+    ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: WARM_LOG_STD_MIN } : {}),
   };
 }

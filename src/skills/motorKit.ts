@@ -1,14 +1,17 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
+import type { PolicySpec } from '../sim/policy';
+import { runArena } from './arena';
 import { currentDesign, skillFreshness, skillHash, type Freshness, type Skill } from './artifacts';
 import type { Environment } from './environment';
 import { checkFeasibility, type LadderChange } from './feasibility';
-import { runCounted, type ForgeRunner, type ForgeTally, type SkillSave } from './forgeRunner';
+import { runCounted, runFolder, type ForgeRunner, type ForgeTally, type SkillSave } from './forgeRunner';
 import { kitEnvironment, LEGGED_ENTRIES, trainedEntry, type KitEntry, type TrainedEntry } from './kitEnvironment';
-import { holdsSlowerSpeeds } from './kitAcceptance';
+import { arenaPasses, slowerSpeedEvidence } from './kitAcceptance';
 import { kitJob, type KitStart } from './kitJob';
 import { kitRobot } from './kitModel';
-import { kitSchedule } from './kitSchedule';
+import { kitSchedule, type KitStage } from './kitSchedule';
+import { firstPassingTry, type Judgement } from './kitTries';
 import { collapsedStart } from './kitStart';
 import { proveSkill } from './prove';
 
@@ -80,17 +83,17 @@ interface Attempt {
   clock: Clock;
 }
 
-async function attempt(run: Attempt, options: { minutes: number; seed: number }) {
-  const { input, entry, environment, start, clock } = run;
-  const job = kitJob(input.model, entry, { ...options, start });
-  const outcome = await runCounted(input.forge, { name: job.name, xml: input.model.xml, job }, clock.tally);
+async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>> {
+  const { input, entry, environment, clock } = run;
+  const controller = { kind: 'policy' as const, policy, robot: kitRobot(input.model).key };
+  const slower = await slowerSpeedEvidence({ ...input, entry, environment, policy });
 
-  if (!outcome.ok || !outcome.policy) return null;
+  if (!slower.every((e) => e.passed)) {
+    const { mj, model } = input;
+    const full = await runArena({ mj, model, contract: environment.contract, controller, environment });
 
-  const controller = { kind: 'policy' as const, policy: outcome.policy, robot: kitRobot(input.model).key };
-  const steady = await holdsSlowerSpeeds({ ...input, entry, environment, policy: outcome.policy });
-
-  if (!steady) return null;
+    return { skill: null, score: arenaPasses([...slower, full]) };
+  }
 
   const proof = await proveSkill({
     ...input,
@@ -104,7 +107,16 @@ async function attempt(run: Attempt, options: { minutes: number; seed: number })
     },
   });
 
-  return proof.skill;
+  return { skill: proof.skill, score: arenaPasses([...slower, proof.evidence]) };
+}
+
+async function train(run: Attempt, stage: KitStage, from: { seed: number; folder: string | null }) {
+  const { input, entry, start, clock } = run;
+  const { minutes, delaySteps } = stage;
+  const job = kitJob(input.model, entry, { minutes, seed: from.seed, start, delaySteps, warmStart: from.folder });
+  const outcome = await runCounted(input.forge, { name: job.name, xml: input.model.xml, job }, clock.tally);
+
+  return { policy: outcome.ok ? outcome.policy : null, folder: runFolder(outcome) };
 }
 
 export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
@@ -120,14 +132,14 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
   const environment = kitEnvironment(input.model, entry);
   const start = entry === 'get-up' ? collapsedStart(input.mj, input.model) : null;
   const run: Attempt = { input, entry, environment, start, clock };
+  const skill = await firstPassingTry({
+    tries: kitSchedule(input.model, entry),
+    train: (stage, from) => train(run, stage, from),
+    judge: (policy: PolicySpec) => judge(run, policy),
+    aborted: () => !!input.signal?.aborted,
+  });
 
-  for (const [index, minutes] of kitSchedule(input.model, entry).entries()) {
-    if (input.signal?.aborted) break;
-
-    const skill = await attempt(run, { minutes, seed: index + 1 });
-
-    if (skill) return { kind: 'skill', skill, environment, cost: clock.cost() };
-  }
+  if (skill) return { kind: 'skill', skill, environment, cost: clock.cost() };
 
   const reason = `No ${kitSkillName(entry)} policy passed Arena within the Kit’s training budget.`;
 

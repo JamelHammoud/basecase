@@ -49,7 +49,7 @@ interface Steering {
 }
 
 const MANY_LEGS: Steering = { turn: 0.8, turnSigma2: 0.1, veer: 0.5, stillness: 0.01, hold: 1 };
-const TWO_LEGS: Steering = { turn: 0.8, turnSigma2: 0.1, veer: 0, stillness: 0.002, hold: 0 };
+const TWO_LEGS: Steering = { turn: 2, turnSigma2: 0.05, veer: 0, stillness: 0.002, hold: 0 };
 
 const velocity = (top: number, steer: Steering) => `
 def still(state):

@@ -22,11 +22,25 @@ export interface ForgeTally {
   forgeRuns: number;
 }
 
+const POLICY_FILE = /[\\/]policy\.json$/;
+const ABSOLUTE = /^(\/|[A-Za-z]:[\\/]|\\\\)/;
+
+const doneEvent = (events: object[]) =>
+  events.find((e) => (e as { type?: unknown }).type === 'done') as { steps?: unknown; policy?: unknown } | undefined;
+
 const doneSteps = (events: object[]) => {
-  const done = events.find((e) => (e as { type?: unknown }).type === 'done') as { steps?: unknown } | undefined;
+  const done = doneEvent(events);
 
   return typeof done?.steps === 'number' && Number.isFinite(done.steps) ? done.steps : 0;
 };
+
+export function runFolder(outcome: ForgeOutcome): string | null {
+  const file = doneEvent(outcome.events)?.policy;
+
+  if (!outcome.ok || typeof file !== 'string' || !POLICY_FILE.test(file) || !ABSOLUTE.test(file)) return null;
+
+  return file.replace(POLICY_FILE, '');
+}
 
 export async function runCounted(forge: ForgeRunner, job: ForgeJob, tally: ForgeTally): Promise<ForgeOutcome> {
   const outcome = await forge(job);

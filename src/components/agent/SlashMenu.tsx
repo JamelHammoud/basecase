@@ -1,5 +1,6 @@
 import React from 'react';
-import { MenuItem, PopoverMenu } from '../../design-system';
+import { PopoverMenu } from '../../design-system';
+import { CommandList } from './CommandList';
 import type { SlashMenuState } from './useSlashMenu';
 
 export const SlashMenu: React.FC<{ slash: SlashMenuState; promptRef: React.RefObject<HTMLElement | null> }> = ({
@@ -15,15 +16,7 @@ export const SlashMenu: React.FC<{ slash: SlashMenuState; promptRef: React.RefOb
     ignoreRef={promptRef}
   >
     <div aria-label="Commands" data-testid="slash-menu">
-      {slash.items.map((command, i) => (
-        <MenuItem
-          key={command.name}
-          label={`/${command.name}`}
-          detail={command.hint}
-          active={i === slash.active}
-          onSelect={() => slash.pick(command)}
-        />
-      ))}
+      <CommandList commands={slash.items} active={slash.active} onPick={slash.pick} />
     </div>
   </PopoverMenu>
 );

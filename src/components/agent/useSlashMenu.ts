@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type KeyboardEvent, type RefObject, type SetStateAction } from 'react';
-import { filterSlash, slashQuery, slashText, stepSlash, type SlashCommand } from '../../agent/slashCommands';
+import { filterSlash, slashQuery, stepSlash, withSlash, type SlashCommand } from '../../agent/slashCommands';
 
 interface SlashInputs {
   text: string;
@@ -19,7 +19,7 @@ export function useSlashMenu({ text, setText, promptRef }: SlashInputs) {
   const active = cursor.text === text ? Math.min(cursor.index, items.length - 1) : 0;
 
   const pick = (command: SlashCommand) => {
-    const next = slashText(command.name);
+    const next = withSlash(text, command.name);
 
     setText(next);
     requestAnimationFrame(() => {

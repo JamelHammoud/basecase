@@ -37,6 +37,14 @@ export function filterSlash(query: string): SlashCommand[] {
 
 export const slashText = (name: SlashName) => `/${name} `;
 
+export function withSlash(text: string, name: SlashName): string {
+  if (slashQuery(text) !== null) return slashText(name);
+
+  const rest = parseSlash(text)?.rest ?? text.trim();
+
+  return `${slashText(name)}${rest}`;
+}
+
 const LEADING = /^\/([a-z]+)(?:\s+([\s\S]*))?$/i;
 
 export function parseSlash(text: string): { command: SlashName; rest: string } | null {

@@ -202,6 +202,7 @@ export const Composer: React.FC<{
               onAttachFiles={attachments.attachFiles}
               onAttachFolders={attachments.uploadFolders}
               onSketch={sketch.open}
+              onCommand={slash.pick}
             />
 
             <NewChatButton onClick={onNewChat} />

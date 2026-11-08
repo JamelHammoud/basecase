@@ -44,10 +44,12 @@ interface Steering {
   turn: number;
   turnSigma2: number;
   veer: number;
+  stillness: number;
+  hold: number;
 }
 
-const MANY_LEGS: Steering = { turn: 0.8, turnSigma2: 0.1, veer: 0.5 };
-const TWO_LEGS: Steering = { turn: 1.5, turnSigma2: 0.05, veer: 0 };
+const MANY_LEGS: Steering = { turn: 0.8, turnSigma2: 0.1, veer: 0.5, stillness: 0.01, hold: 1 };
+const TWO_LEGS: Steering = { turn: 0.8, turnSigma2: 0.1, veer: 0, stillness: 0.002, hold: 0 };
 
 const velocity = (top: number, steer: Steering) => `
 def still(state):
@@ -70,8 +72,8 @@ def reward(state):
         + term("height", 0.3 * height(state) * scale)
         - term("bounce", 1.0 * state.linvel[2] ** 2 * scale)
         - term("calm", calm(state) * scale)
-        - term("hush", hush * (0.3 * sum(state.joint_pos ** 2) + 0.01 * sum(state.joint_vel ** 2)) * scale)
-        - term("hold", hush * (0.3 * sum((state.action - state.last_action) ** 2) + 0.5 * clamp((forward ** 2 + left ** 2) / ${num((0.1 * top) ** 2)}, 0.0, 4.0)) * scale)
+        - term("hush", hush * (0.3 * sum(state.joint_pos ** 2) + ${num(steer.stillness)} * sum(state.joint_vel ** 2)) * scale)
+        - term("hold", ${num(steer.hold)} * hush * (0.3 * sum((state.action - state.last_action) ** 2) + 0.5 * clamp((forward ** 2 + left ** 2) / ${num((0.1 * top) ** 2)}, 0.0, 4.0)) * scale)
         - term("fall", 2.0 if fell(state) else 0.0)
     )
 `;

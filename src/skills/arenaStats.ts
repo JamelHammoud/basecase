@@ -66,6 +66,5 @@ export function arenaSummary(options: {
   return [
     `Passed ${tries}, in simulation.`,
     `With ${percent(confidence)} confidence, the pass rate under these conditions is at least ${percent(lowerBound)}.`,
-    'Tried in simulation only: this says nothing about real hardware.',
   ].join(' ');
 }

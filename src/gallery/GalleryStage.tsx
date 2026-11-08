@@ -3,7 +3,7 @@ import { scaledToReach } from '../cases/scale';
 import { robotFacts } from '../cases/robotFit';
 import { worldItem } from '../cases/schema';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
-import { DriveKeys, SIM_ONLY } from '../components/simulate/CaseSections';
+import { DriveKeys } from '../components/simulate/CaseSections';
 import { Viewport3D, type Viewport3DHandle } from '../components/Viewport3D';
 import { Button, RunIcon, StopIcon } from '../design-system';
 import { useSimulation } from '../sim/useSimulation';
@@ -69,7 +69,6 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
         <div>
           <h1 className="text-[15px] font-semibold text-white/90">{kase.name}</h1>
           <p className="mt-1 text-[13px] leading-snug text-white/70">{kase.brief}</p>
-          <p className="mt-1 text-[12px] text-white/45">{SIM_ONLY}</p>
         </div>
         <Button
           variant="primary"

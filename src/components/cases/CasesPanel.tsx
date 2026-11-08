@@ -8,8 +8,6 @@ export interface CasesPanelProps {
   onOpen: () => void;
 }
 
-const SIM_ONLY = 'Tried in simulation only.';
-
 export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
@@ -66,7 +64,6 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen }) => {
           onClick={() => startFrom(t.id)}
         />
       ))}
-      <p className="px-[4px] mt-3 text-[12px] text-white/40">{SIM_ONLY}</p>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </div>
   );

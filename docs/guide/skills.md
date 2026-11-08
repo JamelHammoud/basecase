@@ -41,7 +41,7 @@ One task description that lowers to WASM now and to native, SIMD and GPU later, 
 
 ### Arena (`arena.ts`)
 
-The independent verifier, on the WASM `SimEngine`. `runArena({ mj, model, contract, controller, environment })` refuses a contract that differs from the environment's, then runs three variants of 32 tries each: held-out randomized starts and physics, half the timestep, and random servo delays. Evidence gives passes per variant, a one-sided 95% Clopper-Pearson lower bound, the conditions in plain words, and says it covers simulation only, not real hardware. It passes when every variant's lower bound is at least 0.75 (29 of 32).
+The independent verifier, on the WASM `SimEngine`. `runArena({ mj, model, contract, controller, environment })` refuses a contract that differs from the environment's, then runs three variants of 32 tries each: held-out randomized starts and physics, half the timestep, and random servo delays. Evidence gives passes per variant, a one-sided 95% Clopper-Pearson lower bound, the conditions in plain words. It passes when every variant's lower bound is at least 0.75 (29 of 32).
 
 - **Agents can't change it.** `ARENA` is frozen; `runArena` takes no counts, bars or ranges. Randomization is the environment's ranges widened to Arena's floor (friction ×0.8–1.2, mass ×0.9–1.1, strength ×0.9–1, start joints ±1°, delays to 40 ms in the delay runs), so an environment can't make Arena easier.
 - **Sealed instances:** each try's seed is the SHA-256 of a fresh random 32-byte salt, the variant, the try and the environment hash. Evidence holds counts and the salt's hash only, never seeds or drawn values, so feedback can't be fitted to the instances.

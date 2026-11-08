@@ -5,8 +5,6 @@ import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
 import { fmtTime } from './format';
 
-export const SIM_ONLY = 'Tried in simulation only.';
-
 const FIT_TONE: Record<FitRow['state'], string> = {
   pass: 'text-white/70',
   fail: 'text-[#f87171]',
@@ -31,7 +29,6 @@ export const BriefSection: React.FC<{ cases: Cases }> = ({ cases }) => {
       <div className="flex flex-col gap-1" data-testid="case-brief">
         <div className="text-[14px] font-medium text-white/90">{kase.name}</div>
         <p className="text-[13px] leading-snug text-white/70">{kase.brief}</p>
-        <p className="text-[12px] text-white/45">{SIM_ONLY}</p>
       </div>
     </Section>
   );

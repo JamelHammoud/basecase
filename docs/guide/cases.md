@@ -8,7 +8,6 @@ A Case is a world with a robot slot, controls and goals that any compatible robo
 
 - **A Case is the test.** A Skill (§8i) is a solution to it.
 - **Case objects never edit parts.** They render on their own layer, and stay out of the BOM, Build Check and picking.
-- **Every Case says "Tried in simulation only"** until a real robot has earned otherwise (§0k).
 
 ### Format
 
@@ -50,13 +49,13 @@ The filmstrip (`src/cases/filmstrip.ts`, drawn by `filmstrip.worker.ts` on an `O
 ### In the app
 
 - **Cases view** in the rail (§5).
-- **Simulate tab** with a Case open: **Brief** (name, brief, “Tried in simulation only.”, Close), **Robot fit** (Check Fit: fits this Case, compiles, settles 1.5 s, body class, fall check; never restates Ready to build), **Try** (Try It, a clock, End Try, the keys), **Control**, **Train** (a fixed robot gets “Stand and Walk train robots that move around. This one is fixed in place.” instead of a Train button), **Results**, then the Result, Model and Policies sections as before. Without a Case, Control has Drive.
+- **Simulate tab** with a Case open: **Brief** (name, brief, Close), **Robot fit** (Check Fit: fits this Case, compiles, settles 1.5 s, body class, fall check; never restates Ready to build), **Try** (Try It, a clock, End Try, the keys), **Control**, **Train** (a fixed robot gets “Stand and Walk train robots that move around. This one is fixed in place.” instead of a Train button), **Results**, then the Result, Model and Policies sections as before. Without a Case, Control has Drive.
 - ⌘K: Show Cases, Drive or Stop Driving, Start Over, Try ⟨Case⟩.
 - `e2e/drive.e2e.test.ts` drives the rover, arm and hexapod in the real app, checks the biped refusal, key gating and the composer prompt, and records a try. The e2e harness allows the real `node_modules` path, so the MuJoCo WASM loads from a worktree whose `node_modules` is a link.
 
 ### Web gallery
 
-`app.basecase.so/c/<slug>` opens one Case in the browser. `src/webMain.ts` reads the slug (`gallerySlug`: letters, digits and dashes only) before anything heavy loads; phones keep the landing page. The gallery page (`src/gallery/`) is its own small app: the canvas, the Case card (name, brief, “Tried in simulation only.”, Drive, See Inside) and the drive overlay. It starts the simulator as soon as the canvas is up, so MuJoCo's WASM is fetched while the visitor reads. Nothing autosaves; See Inside saves the scene once into the web app's IndexedDB, opens it as the first tab and goes to the studio.
+`app.basecase.so/c/<slug>` opens one Case in the browser. `src/webMain.ts` reads the slug (`gallerySlug`: letters, digits and dashes only) before anything heavy loads; phones keep the landing page. The gallery page (`src/gallery/`) is its own small app: the canvas, the Case card (name, brief, Drive, See Inside) and the drive overlay. It starts the simulator as soon as the canvas is up, so MuJoCo's WASM is fetched while the visitor reads. Nothing autosaves; See Inside saves the scene once into the web app's IndexedDB, opens it as the first tab and goes to the studio.
 
 - **Bundles** (`public/gallery/<slug>.json`, `index.json`) carry everything they need: the robot's parts and joints and the Case, validated by `parseGalleryBundle` on read. `npm run gallery` (`tools/gallery/build.mjs`, entries in `src/gallery/galleryEntries.ts`) writes them; a unit test fails when they drift from the code. A Case with meshes or a trained policy must inline them in its bundle, because `webBackend.ts` serves no policies.
 - **Budgets** (`npm run perf:gallery`, `tools/perf/galleryBench.mjs`, production web build in headless Chrome): at most 8 MB compressed before driving, Drive working within 6 s of opening the link, and the live sim at real time (0.97× or better on its smoothed meter). Last run: rover 3.5 MB, 0.8 s, 1.00×; hexapod 6.7 MB (the fall check's worker fetches the WASM a second time), 1.0 s, 1.00×; arm 3.8 MB, 0.6 s, 1.00×.

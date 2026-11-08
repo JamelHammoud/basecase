@@ -453,128 +453,128 @@
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "8.7 s",
+          "detail": "12.5 s",
           "metrics": {},
-          "seconds": 8.721
+          "seconds": 12.486
         },
         {
           "name": "tools build",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "0.5 s",
           "metrics": {},
-          "seconds": 0.051
+          "seconds": 0.489
         },
         {
           "name": "Feetech SDK, unmodified, works against the emulator",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.245
+          "seconds": 0.571
         },
         {
           "name": "Dynamixel SDK, unmodified, works against the emulator",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.099
+          "seconds": 0.093
         },
         {
           "name": "every emulated behaviour has a source in the ledger",
           "ok": true,
           "detail": "48 entries",
           "metrics": {},
-          "seconds": 0.002
+          "seconds": 0
         },
         {
           "name": "default builds contain no real serial transport",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.055
+          "seconds": 0.052
         },
         {
           "name": "fault handled: unplug_mid_packet",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.331
+          "seconds": 0.28
         },
         {
           "name": "fault handled: brownout_resets_servo",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.325
+          "seconds": 0.278
         },
         {
           "name": "fault handled: stuck_motor_overload",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.341
+          "seconds": 0.279
         },
         {
           "name": "fault handled: corrupt_packets",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.338
+          "seconds": 0.283
         },
         {
           "name": "fault handled: wrong_id_answer",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.328
+          "seconds": 0.281
         },
         {
           "name": "fault handled: overheat",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.332
+          "seconds": 0.283
         },
         {
           "name": "fault handled: latency_spike",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.338
+          "seconds": 0.281
         },
         {
           "name": "fault handled: wrong_direction",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.327
+          "seconds": 0.28
         },
         {
           "name": "fault handled: duplicate_id",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.323
+          "seconds": 0.28
         },
         {
           "name": "fault handled: daemon_host_death",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.317
+          "seconds": 0.287
         },
         {
           "name": "fault handled: policy_nan",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.469
+          "seconds": 1.454
         },
         {
           "name": "fault handled: policy_hang",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 5.07
+          "seconds": 5.046
         }
       ],
       "canaries": [
@@ -583,25 +583,25 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.178
+          "seconds": 0.173
         },
         {
           "name": "the client catches a wrong model number",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.063
+          "seconds": 0.062
         },
         {
           "name": "a fault test that does not exist is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.326
+          "seconds": 0.294
         }
       ],
-      "commit": "5fce7df",
-      "at": "2026-11-07T22:10:20.814Z",
+      "commit": "8d6e808",
+      "at": "2026-11-08T03:42:32.818Z",
       "manifest": "clean"
     },
     "s3-servo-models": {
@@ -940,6 +940,98 @@
       ],
       "commit": "d348534",
       "at": "2026-11-07T23:04:18.931Z",
+      "manifest": "clean"
+    },
+    "s5b-daemon-app": {
+      "id": "s5b-daemon-app",
+      "title": "The robot daemon inside the app: bundled, locked, heartbeat, faults on screen, a Case driving it",
+      "stage": 5,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "the daemon builds",
+          "ok": true,
+          "detail": "1.8 s",
+          "metrics": {},
+          "seconds": 1.823
+        },
+        {
+          "name": "the daemon is staged for the app",
+          "ok": true,
+          "detail": "0.2 s",
+          "metrics": {},
+          "seconds": 0.178
+        },
+        {
+          "name": "the staged daemon is locked to emulated servos and says hello",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.273
+        },
+        {
+          "name": "the app bundles",
+          "ok": true,
+          "detail": "13.4 s",
+          "metrics": {},
+          "seconds": 13.432
+        },
+        {
+          "name": "an unsigned app packages",
+          "ok": true,
+          "detail": "3.4 s",
+          "metrics": {},
+          "seconds": 3.397
+        },
+        {
+          "name": "the packaged app ships the locked daemon, spawns it emulated, refuses real ports and untrusted IPC",
+          "ok": true,
+          "detail": "13.6 s",
+          "metrics": {},
+          "seconds": 13.639
+        },
+        {
+          "name": "heartbeat, the ladder, status, faults, refusals and a lost daemon reach the user",
+          "ok": true,
+          "detail": "9.7 s",
+          "metrics": {},
+          "seconds": 9.717
+        },
+        {
+          "name": "a Case drives the emulated robot through the daemon and back to the screen",
+          "ok": true,
+          "detail": "24.8 s",
+          "metrics": {},
+          "seconds": 24.79
+        }
+      ],
+      "canaries": [
+        {
+          "name": "an app that skips the heartbeat is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 5.442
+        },
+        {
+          "name": "a UI that hides a fault is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.735
+        },
+        {
+          "name": "a daemon built with unlock-real-motors is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 3.902
+        }
+      ],
+      "commit": "daf3b4c",
+      "at": "2026-11-08T03:42:09.224Z",
       "manifest": "clean"
     }
   }

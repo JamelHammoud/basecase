@@ -1,28 +1,34 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import type { Simulation } from '../sim/useSimulation';
+import { type RefObject, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { sceneCapabilities } from '../routines/capabilities';
+import type { RoutineEdit } from '../routines/edit';
 import type { LiveUpdate } from '../routines/routineLive';
+import { runSeconds } from '../routines/routineRun';
 import { inRoutinesWorker } from '../routines/routinesClient';
 import type { Scenario } from '../routines/scenarioTypes';
 import { type Capability, type Routine, type RoutineError, validateRoutine } from '../routines/schema';
+import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { useLatestRef } from '../utils/useLatestRef';
 import { newId } from './helpers';
 import { checkRoutine, type SceneCheck } from './routineCheck';
 import { addItemFor, canAdd, mountPart } from './routineMount';
-import { sceneCapabilities } from '../routines/capabilities';
 import { EMPTY_VIEW, type RoutineRun, type RoutineTests, type RoutineView, snapshotOf } from './routineTypes';
-import type { CommitParts } from './types';
+import type { CommitParts, ShowToast } from './types';
+import { useRoutineEditor } from './useRoutineEditor';
+import { useRoutineStore } from './useRoutineStore';
 
 interface RoutineOptions {
   parts: ScenePart[];
   project: ProjectSettings;
+  projectRef: RefObject<ProjectSettings>;
   sim: Simulation;
   commitParts: CommitParts;
   updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
-  showToast: (message: string) => void;
+  showToast: ShowToast;
 }
 
 const NOT_COMPILED = 'Make a Routine that compiles first.';
+const NO_ROUTINE: RoutineError = { code: 'not-a-routine', message: 'Make a Routine first.' };
 
 const appendUpdate = (run: RoutineRun | null, u: LiveUpdate): RoutineRun => ({
   live: true,
@@ -32,18 +38,38 @@ const appendUpdate = (run: RoutineRun | null, u: LiveUpdate): RoutineRun => ({
   failures: u.failures,
 });
 
-export function useRoutines({ parts, project, sim, commitParts, updateProjectNow, showToast }: RoutineOptions) {
+export const plainRun = (routine: Routine): Scenario => ({
+  covers: 'run',
+  world: [],
+  mocks: {},
+  faults: [],
+  seconds: runSeconds(routine),
+  expect: [],
+});
+
+export function useRoutines(options: RoutineOptions) {
+  const { parts, project, sim, commitParts, updateProjectNow, showToast } = options;
   const [view, setView] = useState<RoutineView>(EMPTY_VIEW);
-  const viewRef = useLatestRef(view);
   const sceneRef = useLatestRef({ parts, joints: project.joints ?? [] });
+  const capabilities = () => sceneCapabilities(sceneRef.current);
+  const store = useRoutineStore({ project, projectRef: options.projectRef, updateProjectNow, capabilities });
+  const editor = useRoutineEditor(store, showToast);
+  const active = store.active;
+  const activeRef = useLatestRef(active);
   const pending = useRef<Promise<SceneCheck | null>>(Promise.resolve(null));
   const seq = useRef(0);
 
-  const check = (routine: Routine | unknown) => {
+  const check = (routine: Routine) => {
     const id = ++seq.current;
     const scene = sceneRef.current;
     const job = checkRoutine({ routine, ...scene, buildModel: sim.buildModel }).then((result) => {
-      if (id === seq.current) setView((v) => ({ ...v, ...result, tests: null, checking: false }));
+      if (id !== seq.current) return result;
+
+      setView((v) => {
+        const run = v.routine?.id === routine.id ? v.run : null;
+
+        return { ...v, ...result, routine, run, tests: null, checking: false };
+      });
 
       return result;
     });
@@ -55,24 +81,49 @@ export function useRoutines({ parts, project, sim, commitParts, updateProjectNow
   };
 
   const recheck = useEffectEvent(() => {
-    const routine = viewRef.current.routine;
+    const routine = activeRef.current;
 
-    if (routine) void check(routine).catch(() => setView((v) => ({ ...v, checking: false })));
+    if (!routine) {
+      seq.current += 1;
+      setView(EMPTY_VIEW);
+
+      return;
+    }
+
+    void check(routine).catch(() => setView((v) => ({ ...v, checking: false })));
   });
 
   useEffect(() => {
     recheck();
-  }, [parts, project.joints]);
+  }, [parts, project.joints, active]);
 
-  const make = async (routine: unknown) => {
-    const valid = validateRoutine(routine);
+  const make = async (input: unknown) => {
+    const valid = validateRoutine(input);
 
-    setView({ ...EMPTY_VIEW, routine: valid.ok ? valid.routine : null });
+    if (!valid.ok) return { ok: false as const, errors: valid.errors };
 
-    return (await check(routine)).compiled;
+    store.put(valid.routine);
+
+    return (await check(valid.routine)).compiled;
   };
 
   const current = async () => (await pending.current) ?? null;
+
+  const editNow = async (edits: readonly RoutineEdit[], id?: string) => {
+    const target = id ?? activeRef.current?.id;
+    const result = store.edit(edits, target);
+    const routine = (options.projectRef.current.routines ?? []).find((r) => r.id === target);
+
+    if (result.errors) return { ok: false, changed: false, errors: result.errors, routine };
+
+    if (!routine) return { ok: false, changed: false, errors: [NO_ROUTINE], routine };
+
+    store.select(routine.id);
+
+    const { compiled } = await check(routine);
+
+    return { ok: compiled.ok, changed: result.changed, routine, ...(compiled.ok ? {} : { errors: compiled.errors }) };
+  };
 
   const test = async (): Promise<RoutineTests & { errors?: RoutineError[] }> => {
     const compiled = (await current())?.compiled;
@@ -135,18 +186,26 @@ export function useRoutines({ parts, project, sim, commitParts, updateProjectNow
     showToast(`Added ${item.name}`);
   };
 
-  const has = new Set(view.routine ? sceneCapabilities({ parts, joints: project.joints ?? [] }) : []);
-  const missing = (view.routine?.requires ?? []).filter((c) => !has.has(c) && canAdd(c));
+  const has = new Set(active ? sceneCapabilities({ parts, joints: project.joints ?? [] }) : []);
+  const missing = (active?.requires ?? []).filter((c) => !has.has(c) && canAdd(c));
+  const shownFor = (routine: Routine | null): RoutineView =>
+    view.routine?.id === routine?.id ? { ...view, routine } : { ...EMPTY_VIEW, routine, checking: !!routine };
 
   return {
-    view,
+    view: shownFor(active),
+    store,
+    editor,
     missing,
     make,
+    edit: (edits: readonly RoutineEdit[], id?: string) => store.edit(edits, id),
+    editNow,
     test,
+    run: () => (active ? runLive(plainRun(active)) : Promise.resolve({ started: false, message: NOT_COMPILED })),
     runLive,
     runHeadless,
     addCapability,
-    state: () => snapshotOf(viewRef.current),
+    showToast,
+    state: () => snapshotOf(shownFor(activeRef.current)),
   };
 }
 

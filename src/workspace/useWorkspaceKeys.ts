@@ -49,6 +49,12 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     else setSelectedIds([]);
   };
 
+  const runRoutine = () => {
+    const { routines } = core.simTraining;
+
+    if (tool.leftTab === 'routines' && studio.isLeftOpen && routines.view.compiled?.ok) void routines.run();
+  };
+
   const deleteSelected = () => {
     if (tool.marking && marks.selected) marks.remove(marks.selected.id);
     else ops.deleteSelected();
@@ -79,6 +85,7 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     b: ui.toggleLeft,
     i: ui.toggleRight,
     p: () => (core.printing.mode ? core.printing.closeMode() : core.printing.openMode(1)),
+    enter: runRoutine,
   };
 
   const plain: KeyMap = {

@@ -1,14 +1,16 @@
 import { Handle, type Node, type NodeProps, Position } from '@xyflow/react';
-import { Button } from '../../design-system';
+import { Button, TrainIcon } from '../../design-system';
 import { nodeLabel } from '../../routines/flowLabels';
 import type { FlowNode, NodeState } from '../../routines/flowTypes';
+import { skillLabel } from '../../routines/stepMenu';
+import { useEditorContext } from './editorContext';
 
 export interface RoutineNodeData extends Record<string, unknown> {
   node: FlowNode;
   state: NodeState | '';
   problems: string[];
   needsTraining: boolean;
-  onTrain: (skill: string) => void;
+  unproven: boolean;
 }
 
 const STATE_FILL: Record<NodeState | '', string> = {
@@ -31,30 +33,66 @@ const STATE_WORD: Partial<Record<NodeState, string>> = {
   else: 'No',
 };
 
-const HANDLE = 'opacity-0! pointer-events-none!';
+const HIDDEN_HANDLE = 'opacity-0! pointer-events-none!';
+const SOURCE_HANDLE =
+  'w-2.5! h-2.5! bg-white/60! border-0! opacity-0! group-hover/node:opacity-100! transition-opacity duration-150';
+
+function TrainButton({ skill }: { skill: string }) {
+  const { onTrain } = useEditorContext();
+  const label = skillLabel(skill);
+
+  return (
+    <Button
+      size="sm"
+      variant="secondary"
+      fullWidth
+      className="mt-1 h-auto! py-1.5 justify-start! nodrag"
+      icon={<TrainIcon className="w-4 h-4" />}
+      onClick={() => onTrain(skill)}
+    >
+      <span className="block text-[12px] font-normal text-white/50">Needs Training</span>
+      <span className="block">Train {label}</span>
+    </Button>
+  );
+}
+
+function StopFirstButton({ id }: { id: string }) {
+  const { editor } = useEditorContext();
+
+  return (
+    <Button size="xs" variant="secondary" className="mt-1 self-start nodrag" onClick={() => editor.stopBefore(id)}>
+      Stop First
+    </Button>
+  );
+}
+
+function EndDot({ id }: { id: string }) {
+  return (
+    <div data-flow-node={id} className="w-[14px] h-[14px] rounded-full bg-white/20">
+      <Handle type="target" position={Position.Top} className={HIDDEN_HANDLE} isConnectable={false} />
+    </div>
+  );
+}
 
 export function RoutineNode({ data }: NodeProps<Node<RoutineNodeData>>) {
-  const { node, state, problems, needsTraining, onTrain } = data;
+  const { editor } = useEditorContext();
+  const { node, state, problems, needsTraining, unproven } = data;
 
-  if (node.kind === 'end') {
-    return (
-      <div data-flow-node={node.id} className="w-[14px] h-[14px] rounded-full bg-white/20">
-        <Handle type="target" position={Position.Top} className={HANDLE} isConnectable={false} />
-      </div>
-    );
-  }
+  if (node.kind === 'end') return <EndDot id={node.id} />;
 
   const label = nodeLabel(node);
   const word = state ? STATE_WORD[state] : undefined;
-  const skill = String(node.data.skill ?? node.id);
+  const selected = editor.selected === node.id;
+  const ring = selected && state !== 'active' ? 'ring-2 ring-white/70' : '';
 
   return (
     <div
       data-flow-node={node.id}
       data-state={state}
-      className={`w-[196px] min-h-[56px] rounded-[10px] px-3 py-2 flex flex-col gap-0.5 transition-colors duration-150 ${STATE_FILL[state]}`}
+      aria-selected={selected}
+      className={`group/node relative w-[196px] min-h-[56px] rounded-[10px] px-3 py-2 flex flex-col gap-0.5 transition-colors duration-150 ${STATE_FILL[state]} ${ring}`}
     >
-      <Handle type="target" position={Position.Top} className={HANDLE} isConnectable={false} />
+      <Handle type="target" position={Position.Top} className={HIDDEN_HANDLE} isConnectable={false} />
       <div className="flex items-center justify-between text-[12px] text-white/45">
         <span>{label.kind}</span>
         {word && <span className="text-white/60">{word}</span>}
@@ -65,18 +103,15 @@ export function RoutineNode({ data }: NodeProps<Node<RoutineNodeData>>) {
           {p}
         </div>
       ))}
-      {needsTraining && (
-        <Button
-          size="xs"
-          variant="secondary"
-          className="mt-1 self-start nodrag"
-          title={`Train ${skill} in Simulate`}
-          onClick={() => onTrain(skill)}
-        >
-          Needs Training
-        </Button>
+      {needsTraining && <TrainButton skill={String(node.data.skill ?? node.id)} />}
+      {unproven && <StopFirstButton id={node.id} />}
+      <Handle type="source" position={Position.Bottom} className={SOURCE_HANDLE} />
+      {node.kind === 'if' && (
+        <>
+          <Handle id="then" type="source" position={Position.Left} className={SOURCE_HANDLE} />
+          <Handle id="else" type="source" position={Position.Right} className={SOURCE_HANDLE} />
+        </>
       )}
-      <Handle type="source" position={Position.Bottom} className={HANDLE} isConnectable={false} />
     </div>
   );
 }

@@ -19,6 +19,7 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['retarget', 300000],
   ['fit_view', 180000],
   ['make_routine', 180000],
+  ['edit_routine', 180000],
   ['test_routine', 180000],
   ['run_routine', 180000],
 ]);

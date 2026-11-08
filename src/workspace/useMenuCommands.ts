@@ -14,6 +14,7 @@ interface MenuOptions {
 }
 
 const EDIT_COMMANDS = new Set(['undo', 'redo', 'select-all']);
+const OWN_EDIT_COMMANDS = new Set([...EDIT_COMMANDS, 'delete', 'duplicate']);
 
 function useMenuMap({ core, actions, ui }: Omit<MenuOptions, 'active'>): Record<string, () => unknown> {
   'use memo';
@@ -75,17 +76,23 @@ export function useMenuCommands({ active, core, actions, ui }: MenuOptions) {
   const blocked = ui.paletteOpen || core.studio.settingsOpen;
 
   const skipEdit = (id: string) => {
-    if (!EDIT_COMMANDS.has(id)) return false;
+    const owner = document.activeElement?.closest('[data-own-edits]');
 
-    if (isTextEntry(document.activeElement)) {
+    if (!OWN_EDIT_COMMANDS.has(id)) return false;
+
+    if (isTextEntry(document.activeElement) && EDIT_COMMANDS.has(id)) {
       document.execCommand(id === 'select-all' ? 'selectAll' : id);
 
       return true;
     }
 
-    if (document.activeElement?.closest('[data-own-edits]')) return true;
+    if (owner) {
+      owner.dispatchEvent(new CustomEvent('own-edit', { detail: id }));
 
-    return blocked || ui.recentKeyEdit();
+      return true;
+    }
+
+    return EDIT_COMMANDS.has(id) && (blocked || ui.recentKeyEdit());
   };
 
   const runMenuCommand = useEffectEvent((id: string) => {

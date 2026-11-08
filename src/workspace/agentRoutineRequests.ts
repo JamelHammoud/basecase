@@ -1,3 +1,4 @@
+import type { RoutineEdit } from '../routines/edit';
 import { routineToFlow } from '../routines/flow';
 import type { Scenario } from '../routines/scenarioTypes';
 import { validateRoutine } from '../routines/schema';
@@ -59,6 +60,41 @@ const testRoutine: Handler = async (_payload, ctx) => {
   return ctx.routines.test();
 };
 
+const EDIT_OPS = new Set(['insert', 'remove', 'move', 'update', 'addWatcher', 'rename']);
+const MAX_EDITS = 64;
+
+function editsFrom(input: unknown): RoutineEdit[] | null {
+  if (!Array.isArray(input) || input.length === 0 || input.length > MAX_EDITS) return null;
+
+  return input.every((e) => isRecord(e) && EDIT_OPS.has(String(e.op))) ? (input as RoutineEdit[]) : null;
+}
+
+const readRoutine: Handler = async (_payload, ctx) => {
+  const { store, view } = ctx.routines;
+  const routine = store.active;
+  const compiled = view.compiled && (view.compiled.ok ? { ok: true } : { ok: false, errors: view.compiled.errors });
+
+  return {
+    routine,
+    routines: store.routines.map(({ id, name }) => ({ id, name, active: id === routine?.id })),
+    nodes: routine ? flowNodes(routine) : [],
+    compiled,
+  };
+};
+
+const editRoutine: Handler = async (payload, ctx) => {
+  const edits = editsFrom(payload.edits);
+
+  if (!edits) return { ok: false, errors: [{ code: 'invalid-field', message: 'Send 1 to 64 edits.' }] };
+
+  ctx.setAction('Editing the Routine');
+
+  const id = typeof payload.id === 'string' ? payload.id : undefined;
+  const { routine, ...result } = await ctx.routines.editNow(edits, id);
+
+  return { ...result, nodes: routine ? flowNodes(routine) : [] };
+};
+
 const runRoutine: Handler = async (payload, ctx) => {
   const scenario = scenarioFrom(payload.scenario);
 
@@ -69,6 +105,8 @@ const runRoutine: Handler = async (payload, ctx) => {
 
 export const ROUTINE_HANDLERS: Record<string, Handler> = {
   make_routine: makeRoutine,
+  read_routine: readRoutine,
+  edit_routine: editRoutine,
   test_routine: testRoutine,
   run_routine: runRoutine,
 };

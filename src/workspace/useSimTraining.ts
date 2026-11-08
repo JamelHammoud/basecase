@@ -19,7 +19,7 @@ interface SimTrainingOptions {
 }
 
 export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToast }: SimTrainingOptions) {
-  const { parts, project, setProject, commitParts, updateProjectNow } = docs;
+  const { parts, project, projectRef, setProject, commitParts, updateProjectNow } = docs;
   const sim = useSimulation({
     parts,
     project,
@@ -56,7 +56,7 @@ export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToa
   };
 
   const cases = useCases({ parts, project, setProject, rig: posing.rig, sim });
-  const routines = useRoutines({ parts, project, sim, commitParts, updateProjectNow, showToast });
+  const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
 
   return { sim, training, policies, deletePolicy, cases, routines };
 }

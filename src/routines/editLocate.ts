@@ -169,3 +169,41 @@ export function insertPoints(routine: Routine): InsertPoint[] {
 
   return index.containers.flatMap((c) => containerPoints(index, c));
 }
+
+const sameRef = (a: SeqRef, b: SeqRef) =>
+  a.parent === b.parent && a.key === b.key && (a.branch ?? 0) === (b.branch ?? 0);
+
+function endOf(points: InsertPoint[], container: Container | undefined): InsertPoint | null {
+  if (!container) return null;
+
+  return points.find((p) => sameRef(p.at.seq, container.ref) && p.at.index === container.steps.length) ?? null;
+}
+
+export function pointAfter(routine: Routine, id: string | null): InsertPoint | null {
+  const index = new RoutineIndex(routine);
+  const points = index.containers.flatMap((c) => containerPoints(index, c));
+  const found = id === null ? undefined : index.byId.get(id);
+  const own = found?.container;
+
+  if (own) return points.find((p) => sameRef(p.at.seq, own.ref) && p.at.index === found.index + 1) ?? null;
+
+  const reaction = routine.reactions.find((r) => r.id === id);
+
+  if (reaction) return endOf(points, index.container({ parent: reaction.id, key: 'steps' }));
+
+  return endOf(points, index.container({ parent: index.baseId, key: 'onTimeout' }));
+}
+
+export function connectTarget(routine: Routine, source: string, handle: string | null): StepAt | null {
+  const index = new RoutineIndex(routine);
+
+  if (handle === 'then' || handle === 'else') return { seq: { parent: source, key: handle }, index: 0 };
+
+  if (source === index.baseId) return { seq: { parent: source, key: 'onTimeout' }, index: 0 };
+
+  if (routine.reactions.some((r) => r.id === source)) return { seq: { parent: source, key: 'steps' }, index: 0 };
+
+  const found = index.byId.get(source);
+
+  return found?.container ? { seq: found.container.ref, index: found.index + 1 } : null;
+}

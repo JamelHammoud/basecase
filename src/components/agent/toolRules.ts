@@ -363,6 +363,8 @@ const ROBOT_RULES: ToolRule[] = [
     }),
   },
   plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
+  plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
+  plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),
   plainRule(['test_routine'], CheckIcon, ['Testing the Routine', 'Tested the Routine']),
   plainRule(['run_routine'], RunIcon, ['Running the Routine', 'Ran the Routine']),
   {

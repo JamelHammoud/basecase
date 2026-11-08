@@ -44,6 +44,8 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   set_world: ['Setting the world # times', 'Set the world # times'],
   start_drive: ['Driving # times', 'Drove # times'],
   make_routine: ['Making # Routines', 'Made # Routines'],
+  read_routine: ['Reading the Routine # times', 'Read the Routine # times'],
+  edit_routine: ['Editing the Routine # times', 'Edited the Routine # times'],
   test_routine: ['Testing the Routine # times', 'Tested the Routine # times'],
   run_routine: ['Running the Routine # times', 'Ran the Routine # times'],
   train_policy: ['Starting # training runs', 'Started # training runs'],

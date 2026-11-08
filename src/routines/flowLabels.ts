@@ -76,3 +76,11 @@ export function nodeLabel(node: FlowNode): NodeLabel {
 
   return moved ?? { kind: KIND_WORDS[node.kind] ?? '', text: TEXT[node.kind]?.(node.data) ?? '' };
 }
+
+const NAMED_BY_TEXT = new Set(['Do', 'Check', 'Watch']);
+
+export function stepTitle(node: FlowNode): string {
+  const label = nodeLabel(node);
+
+  return NAMED_BY_TEXT.has(label.kind) ? label.text : label.kind;
+}

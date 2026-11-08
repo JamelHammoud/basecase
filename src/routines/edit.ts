@@ -3,7 +3,7 @@ import { RoutineIndex, type StepAt } from './editLocate';
 import type { Capability, Routine, Step, Watcher } from './schema';
 
 export type { InsertPoint, SeqRef, StepAt } from './editLocate';
-export { insertPoints, RoutineIndex } from './editLocate';
+export { connectTarget, insertPoints, pointAfter, RoutineIndex } from './editLocate';
 
 export type RoutineEdit =
   | { op: 'insert'; at: StepAt; step: Step }

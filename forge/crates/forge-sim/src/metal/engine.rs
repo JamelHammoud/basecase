@@ -1,11 +1,11 @@
-use super::layout::Layout;
 use super::source::source;
-use super::tables::{imps, supported};
+use crate::gpu::layout::Layout;
+use crate::gpu::tables::{imps, supported};
 use crate::plan::Plan;
 use forge_metal::{Arg, BufferId, Dispatch, Gpu, Kernel, Timing};
 
 pub const GROUP: usize = 16;
-pub const BLOCK: usize = 16;
+pub const BLOCK: usize = crate::gpu::BLOCK;
 
 pub struct Engine {
     pub plan: Plan,

@@ -15,6 +15,7 @@ path = "src/main.rs"
 [dependencies]
 forge-ir = { path = "../forge-ir" }
 forge-metal = { path = "../forge-metal" }
+forge-wgpu = { path = "../forge-wgpu" }
 forge-mujoco = { path = "../forge-mujoco" }
 rayon = "1"
 serde_json = "1"

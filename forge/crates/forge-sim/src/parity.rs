@@ -46,6 +46,7 @@ pub fn run(args: &Args) -> Result<Value, String> {
     match args.backend {
         Backend::Simd => simd(args),
         Backend::Mujoco => reference::parity(args),
-        Backend::Metal => crate::metal_runs::parity(args),
+        Backend::Metal => crate::gpu_runs::parity::<forge_sim::MetalBatch>(args),
+        Backend::Wgpu => crate::gpu_runs::parity::<forge_sim::WgslBatch>(args),
     }
 }

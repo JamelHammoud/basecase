@@ -85,12 +85,23 @@ fn slot_hessian(plan: &Plan, b: &Block, s: &mut Solver, slot: usize) {
     let c = &plan.contacts[slot];
     let chain = &plan.chains[c.chain];
     let n = chain.dofs.len();
+    let rows = c.row..c.row + c.rows;
+
+    if rows.clone().all(|r| s.quadratic[r] == ZERO) {
+        return;
+    }
+
     let tri = &mut s.tri[..chain.hessian.len()];
 
     tri.fill(ZERO);
 
-    for row in c.row..c.row + c.rows {
+    for row in rows {
         let weight = s.quadratic[row] * b.row_d[row];
+
+        if s.quadratic[row] == ZERO {
+            continue;
+        }
+
         let jac = &b.jac[plan.row_jadr[row]..plan.row_jadr[row] + n];
         let mut at = 0;
 

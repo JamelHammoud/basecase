@@ -3,14 +3,14 @@ use crate::plan::Plan;
 use crate::rowmap::RowMap;
 use crate::state::State;
 use crate::step::{step, Workspace};
-use crate::tables::WorldTables;
+use crate::world_params::WorldParams;
 use forge_ir::Kernel;
 use forge_mujoco::{Data, Model};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use rayon::prelude::*;
+use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::sync::Mutex;
 
-pub const EXPANDABLE: [&str; 4] = ["geom_friction", "body_mass", "actuator_gainprm", "actuator_biasprm"];
-const GAIN_WIDTH: usize = 10;
+pub use crate::world_params::EXPANDABLE;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Offsets {
@@ -24,19 +24,30 @@ pub struct Offsets {
 
 struct Unit {
     state: State,
-    rows: Vec<f64>,
+    buffer: Vec<f64>,
+    sims: [usize; LANES],
+    real: usize,
+    contacts: [f64; LANES],
 }
 
 pub struct RowBatch {
     plan: Plan,
     map: RowMap,
+    rows: Vec<f64>,
+    contacts: Vec<f64>,
     units: Vec<Mutex<Unit>>,
     spaces: Vec<Mutex<Workspace>>,
+    pool: ThreadPool,
     nsim: usize,
-    expanded: [Option<(Vec<f64>, usize)>; 4],
-    defaults: [Vec<f64>; 4],
-    dirty: bool,
+    params: WorldParams,
     error: Option<String>,
+}
+
+fn pool(threads: usize) -> Result<ThreadPool, String> {
+    ThreadPoolBuilder::new()
+        .num_threads(threads.max(1))
+        .build()
+        .map_err(|e| format!("Couldn't start Forge's physics threads: {e}"))
 }
 
 fn default_row(model: &Model, nstate: usize) -> Vec<f64> {
@@ -47,53 +58,34 @@ fn default_row(model: &Model, nstate: usize) -> Vec<f64> {
     row
 }
 
-fn defaults(model: &Model) -> Result<[Vec<f64>; 4], String> {
-    let read = |name: &str| {
-        model
-            .array(name)
-            .and_then(|a| a.f64s())
-            .map(<[f64]>::to_vec)
-            .ok_or_else(|| format!("This MuJoCo build has no model field {name}"))
-    };
-
-    Ok([
-        read(EXPANDABLE[0])?,
-        read(EXPANDABLE[1])?,
-        read(EXPANDABLE[2])?,
-        read(EXPANDABLE[3])?,
-    ])
-}
-
 impl RowBatch {
     pub fn new(model: &Model, kernel: Kernel, nsim: usize, threads: usize) -> Result<Self, String> {
         let plan = Plan::new(kernel);
         let map = RowMap::new(model)?;
-        let row = default_row(model, map.nstate);
+        let rows = default_row(model, map.nstate).repeat(nsim);
         let units = (0..nsim.div_ceil(LANES))
             .map(|_| {
-                let mut state = State::new(&plan);
-
-                for lane in 0..LANES {
-                    map.load(&mut state, lane, &row);
-                }
-
                 Mutex::new(Unit {
-                    state,
-                    rows: row.repeat(LANES),
+                    state: State::new(&plan),
+                    buffer: vec![0.0; LANES * map.nstate],
+                    sims: [0; LANES],
+                    real: 0,
+                    contacts: [0.0; LANES],
                 })
             })
             .collect();
         let spaces = (0..threads.max(1)).map(|_| Mutex::new(Workspace::new(&plan))).collect();
 
         Ok(Self {
-            defaults: defaults(model)?,
+            pool: pool(threads)?,
+            params: WorldParams::new(model, nsim)?,
             plan,
             map,
+            rows,
+            contacts: vec![0.0; nsim],
             units,
             spaces,
             nsim,
-            expanded: [None, None, None, None],
-            dirty: false,
             error: None,
         })
     }
@@ -121,96 +113,83 @@ impl RowBatch {
 
     pub fn row(&mut self, sim: usize) -> &mut [f64] {
         let n = self.map.nstate;
-        let unit = self.units[sim / LANES].get_mut().expect("unit lock");
-        let at = (sim % LANES) * n;
 
-        &mut unit.rows[at..at + n]
+        &mut self.rows[sim * n..(sim + 1) * n]
+    }
+
+    pub fn contacts(&self, sim: usize) -> f64 {
+        self.contacts[sim]
     }
 
     pub fn expand(&mut self, field: &str) -> Result<(&mut [f64], usize), String> {
-        let k = EXPANDABLE
-            .iter()
-            .position(|f| *f == field)
-            .ok_or_else(|| format!("Forge's engine can't vary {field} per robot"))?;
-        let width = self.defaults[k].len();
-        let nsim = self.nsim;
-        let defaults = &self.defaults[k];
-        let (values, _) = self.expanded[k].get_or_insert_with(|| (defaults.repeat(nsim), width));
-
-        self.dirty = true;
-
-        Ok((values.as_mut_slice(), width))
+        self.params.expand(field)
     }
 
-    pub fn rethread(&mut self, threads: usize) {
+    pub fn rethread(&mut self, threads: usize) -> Result<(), String> {
         let plan = &self.plan;
 
         self.spaces
             .resize_with(threads.max(1), || Mutex::new(Workspace::new(plan)));
+        self.pool = pool(threads)?;
+        Ok(())
     }
 
     pub fn first_error(&self) -> Option<String> {
         self.error.clone()
     }
 
-    fn table(&self, k: usize, sim: usize) -> &[f64] {
-        match &self.expanded[k] {
-            Some((values, width)) => &values[sim * width..(sim + 1) * width],
-            None => &self.defaults[k],
+    fn group(&mut self) {
+        let mut order: Vec<usize> = (0..self.nsim).collect();
+
+        order.sort_by(|a, b| self.contacts[*a].total_cmp(&self.contacts[*b]));
+
+        for (unit, sims) in self.units.iter_mut().zip(order.chunks(LANES)) {
+            let unit = unit.get_mut().expect("unit lock");
+
+            unit.real = sims.len();
+
+            for lane in 0..LANES {
+                unit.sims[lane] = sims[lane.min(sims.len() - 1)];
+            }
         }
     }
 
-    fn apply_tables(&mut self) {
-        let nu = self.plan.kernel.nu;
-
-        for sim in 0..self.nsim {
-            let friction: Vec<f64> = self.table(0, sim).iter().step_by(3).copied().collect();
-            let mass = self.table(1, sim).to_vec();
-            let gain: Vec<f64> = (0..nu).map(|a| self.table(2, sim)[GAIN_WIDTH * a]).collect();
-            let bias: Vec<[f64; 3]> = (0..nu)
-                .map(|a| {
-                    let p = &self.table(3, sim)[GAIN_WIDTH * a..];
-
-                    [p[0], p[1], p[2]]
-                })
-                .collect();
-            let unit = self.units[sim / LANES].get_mut().expect("unit lock");
-            let world = WorldTables {
-                mass: &mass,
-                friction: &friction,
-                gain: &gain,
-                bias: &bias,
-            };
-
-            unit.state.tables.set_lane(sim % LANES, &world);
-        }
-
-        self.dirty = false;
-    }
-
-    fn advance(&self, unit: &mut Unit, first: usize, nstep: usize, w: &mut Workspace) -> usize {
+    fn advance(&self, unit: &mut Unit, nstep: usize, w: &mut Workspace) {
         let n = self.map.nstate;
-        let real = self.nsim.saturating_sub(first).min(LANES);
 
         for lane in 0..LANES {
-            self.map
-                .load(&mut unit.state, lane, &unit.rows[lane * n..(lane + 1) * n]);
+            let sim = unit.sims[lane];
+
+            self.map.load(&mut unit.state, lane, &self.rows[sim * n..(sim + 1) * n]);
+            unit.state.tables.set_lane(lane, &self.params.view(sim));
         }
 
         for _ in 0..nstep {
             step(&self.plan, &mut unit.state, w);
         }
 
+        for lane in 0..LANES {
+            self.map
+                .store(&unit.state, lane, &mut unit.buffer[lane * n..(lane + 1) * n]);
+            unit.contacts[lane] = w.block.ncon.0[lane];
+        }
+    }
+
+    fn gather(&mut self) -> usize {
+        let n = self.map.nstate;
         let (nq, nv) = (self.plan.kernel.nq, self.plan.kernel.nv);
         let mut failed = 0;
 
-        for lane in 0..LANES {
-            let row = &mut unit.rows[lane * n..(lane + 1) * n];
+        for unit in &mut self.units {
+            let unit = unit.get_mut().expect("unit lock");
 
-            self.map.store(&unit.state, lane, row);
+            for lane in 0..unit.real {
+                let sim = unit.sims[lane];
+                let row = &unit.buffer[lane * n..(lane + 1) * n];
 
-            if lane < real && !self.map.finite(row, nq, nv) {
-                failed += 1;
+                self.rows[sim * n..(sim + 1) * n].copy_from_slice(row);
+                self.contacts[sim] = unit.contacts[lane];
+                failed += usize::from(!self.map.finite(row, nq, nv));
             }
         }
 
@@ -218,30 +197,21 @@ impl RowBatch {
     }
 
     pub fn step(&mut self, nstep: usize) -> usize {
-        if self.dirty {
-            self.apply_tables();
-        }
+        self.params.refresh();
+        self.group();
 
-        let next = AtomicUsize::new(0);
-        let failed = AtomicUsize::new(0);
+        let this = &*self;
 
-        std::thread::scope(|scope| {
-            for space in &self.spaces {
-                scope.spawn(|| {
-                    let mut w = space.lock().expect("workspace lock");
+        this.pool.install(|| {
+            this.units.par_iter().with_max_len(1).for_each(|unit| {
+                let at = rayon::current_thread_index().unwrap_or(0) % this.spaces.len();
+                let mut w = this.spaces[at].lock().expect("workspace lock");
 
-                    loop {
-                        let i = next.fetch_add(1, Ordering::Relaxed);
-                        let Some(unit) = self.units.get(i) else { break };
-                        let mut unit = unit.lock().expect("unit lock");
-
-                        failed.fetch_add(self.advance(&mut unit, i * LANES, nstep, &mut w), Ordering::Relaxed);
-                    }
-                });
-            }
+                this.advance(&mut unit.lock().expect("unit lock"), nstep, &mut w);
+            });
         });
 
-        let failed = failed.into_inner();
+        let failed = self.gather();
 
         self.error = (failed > 0).then(|| format!("Forge's engine diverged on {failed} robots"));
         failed

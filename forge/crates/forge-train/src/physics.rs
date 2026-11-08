@@ -92,10 +92,7 @@ impl Physics {
     pub fn rethread(&mut self, threads: usize, fields: &[&str]) -> Result<(), String> {
         match self {
             Physics::Mujoco(b) => b.rethread(threads, fields),
-            Physics::Simd(b) => {
-                b.rethread(threads);
-                Ok(())
-            }
+            Physics::Simd(b) => b.rethread(threads),
         }
     }
 

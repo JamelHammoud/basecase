@@ -160,3 +160,49 @@ fn primitive_feet_match_the_c_batch() {
         assert!(worst < 1e-8, "{foot}: worst row difference {worst:e}");
     }
 }
+
+fn drive_alone(model: &Model, kernel: &forge_ir::Kernel, sim: usize) -> Vec<f64> {
+    let layout = Batch::new(model, 1, 1).expect("layout").layout();
+    let mut one = RowBatch::new(model, kernel.clone(), 1, 1).expect("SIMD batch");
+
+    for round in 0..ROUNDS {
+        for a in 0..model.nu() {
+            one.row(0)[layout.ctrl + a] = ctrl(sim, a, round);
+        }
+
+        one.step(DECIMATION);
+    }
+
+    one.row(0).to_vec()
+}
+
+#[test]
+fn a_robot_steps_the_same_alone_as_regrouped_in_a_batch() {
+    let path = write(&quadruped(&Servo {
+        attrs: r#"kp="11" dampratio="1" forcerange="-1.9 1.9""#,
+        foot: HULL_FOOT,
+    }));
+    let (model, kernel) = forge_ir::load(&path).expect("in the subset");
+    let layout = Batch::new(&model, 1, 1).expect("layout").layout();
+    let mut batch = RowBatch::new(&model, kernel.clone(), NSIM, 3).expect("SIMD batch");
+
+    for round in 0..ROUNDS {
+        for sim in 0..NSIM {
+            for a in 0..model.nu() {
+                batch.row(sim)[layout.ctrl + a] = ctrl(sim, a, round);
+            }
+        }
+
+        batch.step(DECIMATION);
+    }
+
+    for sim in 0..NSIM {
+        let alone = drive_alone(&model, &kernel, sim);
+        let same = alone
+            .iter()
+            .zip(batch.row(sim).iter())
+            .all(|(a, b)| a.to_bits() == b.to_bits());
+
+        assert!(same, "robot {sim} stepped differently in the batch");
+    }
+}

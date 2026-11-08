@@ -1,131 +1,148 @@
 use crate::args::{Args, Backend};
 use crate::drive::{controls, start_pose, DECIMATION, EPISODE_ROUNDS};
 use crate::meter::{Meter, Windows};
+use forge_mujoco::{Batch, Data, Model};
 use forge_sim::lanes::LANES;
-use forge_sim::{step, Plan, State, Workspace};
+use forge_sim::{Plan, RowBatch};
 use serde_json::{json, Value};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Barrier, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 
-struct Shared<'a> {
+trait Stepper: Send {
+    fn row(&mut self, sim: usize) -> &mut [f64];
+    fn advance(&mut self, nstep: usize) -> usize;
+    fn contacts(&self, sim: usize) -> Option<f64>;
+}
+
+impl Stepper for Batch {
+    fn row(&mut self, sim: usize) -> &mut [f64] {
+        Batch::row(self, sim)
+    }
+
+    fn advance(&mut self, nstep: usize) -> usize {
+        self.step(nstep)
+    }
+
+    fn contacts(&self, _sim: usize) -> Option<f64> {
+        None
+    }
+}
+
+impl Stepper for RowBatch {
+    fn row(&mut self, sim: usize) -> &mut [f64] {
+        RowBatch::row(self, sim)
+    }
+
+    fn advance(&mut self, nstep: usize) -> usize {
+        self.step(nstep)
+    }
+
+    fn contacts(&self, sim: usize) -> Option<f64> {
+        Some(RowBatch::contacts(self, sim))
+    }
+}
+
+struct Work<'a> {
     plan: &'a Plan,
-    blocks: &'a [Mutex<State>],
-    envs: usize,
-    next: AtomicUsize,
-    go: AtomicBool,
-    stop: AtomicBool,
-    barrier: Barrier,
-    meter: &'a Meter,
-    contacts: AtomicU64,
+    starts: &'a [Vec<f64>],
+    ctrl_at: usize,
 }
 
-fn advance(shared: &Shared, block: &mut State, index: usize, round: usize, w: &mut Workspace) -> usize {
-    let plan = shared.plan;
-    let first = index * LANES;
-    let real = shared.envs.saturating_sub(first).min(LANES);
-    let mut contacts = 0.0;
+fn start_rows(model: &Model, plan: &Plan, envs: usize) -> Vec<Vec<f64>> {
+    let signature = forge_mujoco::integration_state();
 
-    for lane in 0..LANES {
-        let world = first + lane;
+    (0..envs)
+        .map(|w| {
+            let mut data = Data::new(model);
 
-        if round.is_multiple_of(EPISODE_ROUNDS) {
-            block.reset(plan, lane, &start_pose(plan, world));
-        }
+            data.qpos().copy_from_slice(&start_pose(plan, w));
 
-        block.set_ctrl(lane, &controls(plan, world, round));
-    }
+            let mut row = vec![0.0; model.state_size(signature)];
 
-    for _ in 0..DECIMATION {
-        step(plan, block, w);
-        contacts += w.block.ncon.0[..real].iter().sum::<f64>();
-    }
-
-    shared.contacts.fetch_add(contacts as u64, Ordering::Relaxed);
-    real * DECIMATION
+            data.get_state(model, &mut row, signature);
+            row
+        })
+        .collect()
 }
 
-fn worker(shared: &Shared) {
-    let mut w = Workspace::new(shared.plan);
-    let mut round = 0;
+fn round(stepper: &mut dyn Stepper, work: &Work, r: usize) -> Result<f64, String> {
+    let nu = work.plan.kernel.nu;
 
-    loop {
-        if shared.barrier.wait().is_leader() {
-            shared.next.store(0, Ordering::SeqCst);
-            shared.go.store(!shared.stop.load(Ordering::SeqCst), Ordering::SeqCst);
+    for (w, start) in work.starts.iter().enumerate() {
+        let row = stepper.row(w);
+
+        if r.is_multiple_of(EPISODE_ROUNDS) {
+            row.copy_from_slice(start);
         }
 
-        shared.barrier.wait();
+        row[work.ctrl_at..work.ctrl_at + nu].copy_from_slice(&controls(work.plan, w, r));
+    }
 
-        if !shared.go.load(Ordering::SeqCst) {
-            return;
-        }
+    if stepper.advance(DECIMATION) > 0 {
+        return Err("The bench robots diverged".to_owned());
+    }
 
-        loop {
-            let i = shared.next.fetch_add(1, Ordering::SeqCst);
+    Ok((0..work.starts.len()).filter_map(|w| stepper.contacts(w)).sum())
+}
 
-            if i >= shared.blocks.len() {
-                break;
+fn measure(stepper: &mut dyn Stepper, work: &Work, seconds: f64) -> Result<(Windows, Option<f64>), String> {
+    let meter = Meter::default();
+    let stop = AtomicBool::new(false);
+    let envs = work.starts.len();
+    let (windows, outcome) = std::thread::scope(|scope| {
+        let runner = scope.spawn(|| {
+            let (mut r, mut contacts) = (0, 0.0);
+
+            while !stop.load(Ordering::SeqCst) {
+                contacts += round(stepper, work, r)?;
+                meter.add(envs * DECIMATION);
+                r += 1;
             }
 
-            let mut block = shared.blocks[i].lock().expect("block lock");
-            let done = advance(shared, &mut block, i, round, &mut w);
+            Ok::<f64, String>(contacts / (r.max(1) * envs) as f64)
+        });
+        let windows = meter.watch(seconds);
 
-            shared.meter.add(done);
-        }
-
-        round += 1;
-    }
-}
-
-fn simd(args: &Args, threads: usize) -> Result<(Windows, Option<f64>), String> {
-    let (_, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;
-    let plan = Plan::new(kernel);
-    let blocks: Vec<Mutex<State>> = (0..args.envs.div_ceil(LANES))
-        .map(|_| Mutex::new(State::new(&plan)))
-        .collect();
-    let meter = Meter::default();
-    let shared = Shared {
-        plan: &plan,
-        blocks: &blocks,
-        envs: args.envs,
-        next: AtomicUsize::new(0),
-        go: AtomicBool::new(true),
-        stop: AtomicBool::new(false),
-        barrier: Barrier::new(threads),
-        meter: &meter,
-        contacts: AtomicU64::new(0),
-    };
-    let windows = std::thread::scope(|scope| {
-        for _ in 0..threads {
-            scope.spawn(|| worker(&shared));
-        }
-
-        let windows = meter.watch(args.seconds);
-
-        shared.stop.store(true, Ordering::SeqCst);
-        windows
+        stop.store(true, Ordering::SeqCst);
+        (
+            windows,
+            runner
+                .join()
+                .unwrap_or_else(|_| Err("The bench thread panicked".to_owned())),
+        )
     });
-    let contacts = shared.contacts.load(Ordering::SeqCst) as f64 / meter.total().max(1) as f64;
+    let contacts = outcome?;
 
-    Ok((windows, Some(contacts)))
+    Ok((windows, (contacts > 0.0).then_some(contacts)))
 }
 
 pub fn run(args: &Args) -> Result<Value, String> {
     let threads = args
         .threads
         .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, |n| n.get()));
+    let (model, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;
+    let plan = Plan::new(kernel.clone());
+    let starts = start_rows(&model, &plan, args.envs);
+    let work = Work {
+        plan: &plan,
+        starts: &starts,
+        ctrl_at: Batch::new(&model, 1, 1)?.layout().ctrl,
+    };
     let (windows, contacts) = match args.backend {
-        Backend::Simd => simd(args, threads)?,
-        Backend::Mujoco => (crate::reference_bench::run(args, threads)?, None),
+        Backend::Simd => measure(
+            &mut RowBatch::new(&model, kernel, args.envs, threads)?,
+            &work,
+            args.seconds,
+        )?,
+        Backend::Mujoco => measure(&mut Batch::new(&model, args.envs, threads)?, &work, args.seconds)?,
     };
 
     Ok(json!({
-        "contactsPerWorld": contacts,
         "backend": match args.backend { Backend::Simd => "simd", Backend::Mujoco => "mujoco" },
         "envs": args.envs,
         "seconds": args.seconds,
         "threads": threads,
         "lanes": LANES,
+        "contactsPerWorld": contacts,
         "substepsPerS": windows.mean,
         "sustainedMin": windows.min,
         "windows": windows.rates,

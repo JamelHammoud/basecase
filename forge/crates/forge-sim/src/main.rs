@@ -5,7 +5,6 @@ mod identity;
 mod meter;
 mod parity;
 mod reference;
-mod reference_bench;
 
 use args::{Args, Mode};
 use std::process::ExitCode;

@@ -116,7 +116,11 @@ fn main() {
     for round in 0..rounds {
         for (bi, s) in states.iter_mut().enumerate() {
             for lane in 0..LANES {
-                let world = bi * LANES + lane;
+                let world = if std::env::var("SORTED").is_ok() {
+                    lane * 64 + bi
+                } else {
+                    bi * LANES + lane
+                };
 
                 if round % 100 == 0 {
                     s.reset(&plan, lane, &start_pose(&plan, world));

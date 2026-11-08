@@ -25,6 +25,7 @@ pub struct Solver {
     pub gauss: [V; 3],
     pub scale: V,
     pub stats: Stats,
+    pub work: V,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -58,6 +59,7 @@ impl Solver {
             gauss: [ZERO; 3],
             scale: ZERO,
             stats: Stats::default(),
+            work: ZERO,
         }
     }
 }
@@ -211,6 +213,8 @@ fn iterate(plan: &Plan, b: &mut Block, s: &mut Solver, mut done: M, tol: V) {
     let mut iter = 0;
 
     while !done.all() && iter < plan.kernel.options.iterations {
+        s.work += done.flip().mask(ONE);
+
         for i in 0..plan.kernel.nv {
             s.dir[i] = done.select(ZERO, -s.mgrad[i]);
         }

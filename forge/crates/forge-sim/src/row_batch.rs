@@ -31,6 +31,7 @@ struct Unit {
 struct SimRow {
     row: Vec<f64>,
     contacts: f64,
+    work: f64,
     failed: bool,
 }
 
@@ -72,6 +73,7 @@ impl RowBatch {
                 Mutex::new(SimRow {
                     row: start.clone(),
                     contacts: 0.0,
+                    work: 0.0,
                     failed: false,
                 })
             })
@@ -151,7 +153,7 @@ impl RowBatch {
         let keys: Vec<f64> = self
             .rows
             .iter_mut()
-            .map(|r| r.get_mut().expect("row lock").contacts)
+            .map(|r| r.get_mut().map_or(0.0, |r| r.contacts * 1000.0 + r.work))
             .collect();
 
         self.order.sort_by(|a, b| keys[*a].total_cmp(&keys[*b]));
@@ -178,6 +180,8 @@ impl RowBatch {
             unit.state.tables.set_lane(lane, &self.params.view(sim));
         }
 
+        w.solver.work = crate::lanes::ZERO;
+
         for _ in 0..nstep {
             step(&self.plan, &mut unit.state, w);
         }
@@ -187,6 +191,7 @@ impl RowBatch {
 
             self.map.store(&unit.state, lane, &mut sim.row);
             sim.contacts = w.block.ncon.0[lane];
+            sim.work = w.solver.work.0[lane];
             sim.failed = !self.map.finite(&sim.row, nq, nv);
         }
     }

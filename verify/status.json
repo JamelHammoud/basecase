@@ -1274,6 +1274,101 @@
       "commit": "516a860",
       "at": "2026-11-08T15:18:05.607Z",
       "manifest": "clean"
+    },
+    "s4b-routines-flow": {
+      "id": "s4b-routines-flow",
+      "title": "Routines: flow builder, L1 physics scenarios and the greeting from one sentence",
+      "stage": 4,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "the flow round-trips the schema and lights from trace events",
+          "ok": true,
+          "detail": "0.4 s",
+          "metrics": {},
+          "seconds": 0.38
+        },
+        {
+          "name": "capabilities come from the scene",
+          "ok": true,
+          "detail": "0.4 s",
+          "metrics": {},
+          "seconds": 0.361
+        },
+        {
+          "name": "acceptance scenarios written from the sentence pass on mocks",
+          "ok": true,
+          "detail": "0.3 s",
+          "metrics": {},
+          "seconds": 0.331
+        },
+        {
+          "name": "L1: the greeting walks, greets and turns in MuJoCo with Kit skills; untrained skills are refused",
+          "ok": true,
+          "detail": "5.6 s",
+          "metrics": {},
+          "seconds": 5.556
+        },
+        {
+          "name": "in the app: one sentence to a passing Routine in under 8 actions, live trace, Add Camera, Needs Training",
+          "ok": true,
+          "detail": "34.9 s",
+          "metrics": {},
+          "seconds": 34.893
+        },
+        {
+          "name": "the soak harness builds",
+          "ok": true,
+          "detail": "0.1 s",
+          "metrics": {},
+          "seconds": 0.119
+        },
+        {
+          "name": "fake-bus soak with saturated workers and a hung LLM keeps p99.9 jitter under 2 ms",
+          "ok": true,
+          "detail": "75.8 s",
+          "metrics": {
+            "loadBefore": 5.93701171875,
+            "loadAfter": 18.22705078125
+          },
+          "seconds": 75.772
+        },
+        {
+          "name": "Routine unit tests pass",
+          "ok": true,
+          "detail": "1.1 s",
+          "metrics": {},
+          "seconds": 1.08
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a Routine whose person watcher never fires is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.369
+        },
+        {
+          "name": "a flow edit that drops a timeout path is refused",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.332
+        },
+        {
+          "name": "a trace event for a node not in the graph is rejected",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.338
+        }
+      ],
+      "commit": "01f773a",
+      "at": "2026-11-08T15:35:43.540Z",
+      "manifest": "clean"
     }
   }
 }

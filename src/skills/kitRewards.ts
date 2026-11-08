@@ -56,6 +56,7 @@ def reward(state):
         + term("track_fine", 0.5 * exp(-speed_error / ${num((0.2 * top) ** 2)}) * scale)
         - term("lag", 0.5 * sqrt(speed_error) / ${num(top)} * scale)
         + term("turn", 0.8 * exp(-turn_error / 0.1) * scale)
+        - term("veer", 0.5 * sqrt(turn_error) * scale)
         + term("upright", 0.5 * upright(state) * scale)
         + term("height", 0.3 * height(state) * scale)
         - term("bounce", 1.0 * state.linvel[2] ** 2 * scale)

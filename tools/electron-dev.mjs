@@ -5,6 +5,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const APP_NAME = 'Basecase';
+const DISPLAY_NAME = 'Basecase (Dev)';
+const ICON_NAME = 'BasecaseDev';
 const BUNDLE_ID = 'app.basecase.dev';
 const LSREGISTER =
   '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister';
@@ -13,8 +15,8 @@ const require = createRequire(import.meta.url);
 const electronBinary = require('electron');
 const electronVersion = require('electron/package.json').version;
 
-const ICON_DIR = path.resolve('build', 'icon', 'compiled');
-const ICON_FILES = ['Assets.car', `${APP_NAME}.icns`];
+const ICON_DIR = path.resolve('build', 'icon', 'compiled-dev');
+const ICON_FILES = ['Assets.car', `${ICON_NAME}.icns`];
 
 function bundleStamp() {
   const icon = ICON_FILES.map((f) => {
@@ -23,13 +25,13 @@ function bundleStamp() {
     return fs.existsSync(p) ? `${f}:${fs.statSync(p).size}:${fs.statSync(p).mtimeMs}` : `${f}:none`;
   });
 
-  return [electronVersion, ...icon].join('\n');
+  return [electronVersion, DISPLAY_NAME, ...icon].join('\n');
 }
 
 function ensureDevBundle() {
   const source = path.resolve(electronBinary, '..', '..', '..');
   const root = path.resolve('node_modules', '.cache', 'basecase-electron');
-  const bundle = path.join(root, `${APP_NAME}.app`);
+  const bundle = path.join(root, `${DISPLAY_NAME}.app`);
   const executable = path.join(bundle, 'Contents', 'MacOS', APP_NAME);
   const stamp = path.join(root, 'electron-version');
   const stampOk = fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8') === bundleStamp();
@@ -51,15 +53,15 @@ function ensureDevBundle() {
   const set = (key, value) => execFileSync('plutil', ['-replace', key, '-string', value, plist]);
 
   set('CFBundleExecutable', APP_NAME);
-  set('CFBundleName', APP_NAME);
-  set('CFBundleDisplayName', APP_NAME);
+  set('CFBundleName', DISPLAY_NAME);
+  set('CFBundleDisplayName', DISPLAY_NAME);
   set('CFBundleIdentifier', BUNDLE_ID);
 
   if (ICON_FILES.every((f) => fs.existsSync(path.join(ICON_DIR, f)))) {
     for (const f of ICON_FILES) fs.copyFileSync(path.join(ICON_DIR, f), path.join(bundle, 'Contents', 'Resources', f));
 
-    set('CFBundleIconFile', APP_NAME);
-    set('CFBundleIconName', APP_NAME);
+    set('CFBundleIconFile', ICON_NAME);
+    set('CFBundleIconName', ICON_NAME);
   }
 
   try {
@@ -78,7 +80,7 @@ if (process.platform === 'darwin') {
   try {
     binary = ensureDevBundle();
   } catch (err) {
-    console.warn(`[electron-dev] Couldn't build ${APP_NAME}.app, using Electron.app:`, err.message);
+    console.warn(`[electron-dev] Couldn't build ${DISPLAY_NAME}.app, using Electron.app:`, err.message);
   }
 }
 

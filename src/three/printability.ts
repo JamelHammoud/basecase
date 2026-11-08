@@ -204,16 +204,26 @@ function faceDowns(tris: Float32Array): Vec3[] {
   return found;
 }
 
-function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
-  const count = tris.length / 9;
+const R2_U = 0.7548776662;
+const R2_V = 0.569840291;
 
-  if (!count) return { min: Infinity, thinShare: 0, thinAreaMm2: 0 };
+function triangleSample(i: number): [number, number] {
+  const u = (1 / 3 + i * R2_U) % 1;
+  const v = (1 / 3 + i * R2_V) % 1;
 
-  const areas = new Float32Array(count);
+  return u + v > 1 ? [1 - u, 1 - v] : [u, v];
+}
+
+const MIN_WALL_RAYS = 4000;
+const MAX_WALL_RAYS = 20000;
+const WALL_RAY_MM2 = 4;
+
+function triangleAreas(tris: Float32Array) {
+  const areas = new Float32Array(tris.length / 9);
   const [a, b, c, n, ab] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
   let total = 0;
 
-  for (let t = 0; t < count; t++) {
+  for (let t = 0; t < areas.length; t++) {
     a.fromArray(tris, t * 9);
     b.fromArray(tris, t * 9 + 3);
     c.fromArray(tris, t * 9 + 6);
@@ -221,8 +231,21 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
     total += areas[t];
   }
 
-  const step = total / Math.min(samples, count);
+  return { areas, total };
+}
+
+function wallThickness(tris: Float32Array, bvh: MeshBVH) {
+  const count = tris.length / 9;
+
+  if (!count) return { min: Infinity, thinShare: 0, thinAreaMm2: 0 };
+
+  const { areas, total } = triangleAreas(tris);
+  const [a, n] = [new THREE.Vector3(), new THREE.Vector3()];
+
+  const step = total / Math.min(MAX_WALL_RAYS, Math.max(MIN_WALL_RAYS, total / WALL_RAY_MM2));
   const ray = new THREE.Ray();
+  const edgeB = new THREE.Vector3();
+  const edgeC = new THREE.Vector3();
   let min = Infinity;
   let thinArea = 0;
   let acc = step / 2;
@@ -232,24 +255,33 @@ function wallThickness(tris: Float32Array, bvh: MeshBVH, samples = 1500) {
 
     if (acc < step) continue;
 
+    const weight = acc - (acc % step);
+
     acc %= step;
     a.fromArray(tris, t * 9);
-    b.fromArray(tris, t * 9 + 3);
-    c.fromArray(tris, t * 9 + 6);
-    n.subVectors(b, a).cross(ab.subVectors(c, a));
+    edgeB.fromArray(tris, t * 9 + 3).sub(a);
+    edgeC.fromArray(tris, t * 9 + 6).sub(a);
+    n.crossVectors(edgeB, edgeC);
 
     if (n.lengthSq() < 1e-12) continue;
 
     n.normalize();
-    ray.origin.copy(a).add(b).add(c).divideScalar(3).addScaledVector(n, -1e-3);
     ray.direction.copy(n).negate();
 
-    const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
+    const rays = Math.round(weight / step);
 
-    if (!hit?.face || hit.face.normal.dot(ray.direction) <= 0) continue;
+    for (let i = 0; i < rays; i++) {
+      const [u, v] = triangleSample(i);
 
-    min = Math.min(min, hit.distance);
-    thinArea += hit.distance < PRINT_RULES.minWallMm ? step : 0;
+      ray.origin.copy(a).addScaledVector(edgeB, u).addScaledVector(edgeC, v).addScaledVector(n, -1e-3);
+
+      const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
+
+      if (!hit?.face || hit.face.normal.dot(ray.direction) <= 0) continue;
+
+      min = Math.min(min, hit.distance);
+      thinArea += hit.distance < PRINT_RULES.minWallMm ? weight / rays : 0;
+    }
   }
 
   return { min, thinShare: total ? Math.min(1, thinArea / total) : 0, thinAreaMm2: thinArea };

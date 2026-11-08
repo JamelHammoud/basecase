@@ -4,7 +4,12 @@ import type { ScenePart } from '../types/robotics';
 const TOLERANCE = 0.1;
 const SIDE_SWAPS: Array<[RegExp, string]> = [
   [/(^|[-_])left([-_]|$)/, '$1right$2'],
+  [/(^|[-_])Left(?=[-_A-Z]|$)/, '$1Right'],
+  [/(^|[-_])LEFT(?=[-_]|$)/, '$1RIGHT'],
+  [/^left(?=[A-Z])/, 'right'],
+  [/([a-z0-9])Left(?=[-_A-Z]|$)/, '$1Right'],
   [/(^|[-_])l([-_]|$)/, '$1r$2'],
+  [/(^|[-_])L([-_]|$)/, '$1R$2'],
   [/^l([a-z]{1,4})([-_])/, 'r$1$2'],
 ];
 
@@ -59,7 +64,7 @@ function pairDifferences([l, r]: [ScenePart, ScenePart], input: TwinInputs): str
 }
 
 export function twinDifferences(input: TwinInputs): string[] {
-  const solids = input.parts.filter((p) => p.kind !== 'hardware' && p.role === 'solid');
+  const solids = input.parts.filter((p) => p.kind !== 'hardware' && p.role === 'solid' && p.visible);
 
   return twinPairs(solids).flatMap((pair) => {
     const diffs = pairDifferences(pair, input);

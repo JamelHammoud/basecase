@@ -57,7 +57,7 @@ export async function traceRequest(payload: Payload, ctx: TraceContext) {
 
   const mask = cropMask(found.mask, region);
   const box = maskBounds(mask);
-  const extent = modelExtent(ctx.parts(), view, ids);
+  const extent = modelExtent(ctx.parts(), view, ids, await ctx.viewport()?.measureParts());
   const scale = scaleOf(payload, extent);
 
   if (box.x1 < 0) return { reason: 'the region holds none of the subject' };

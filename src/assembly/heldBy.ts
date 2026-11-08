@@ -21,14 +21,25 @@ const isCandidate = (p: ScenePart) =>
 
 function fastened(g: AssemblyGeometry): Set<string> {
   const held = new Set<string>();
+  const onStandoff = new Map<string, Set<string>>();
+  const hold = (ids: Set<string>) => {
+    if (ids.size >= 2) ids.forEach((id) => held.add(id));
+  };
 
   for (const c of g.chains.screws) {
     const intoPart = c.endsIn.kind === 'component' || c.endsIn.kind === 'printed';
     const joined = new Set([...c.stack, ...(intoPart && c.endsIn.id ? [c.endsIn.id] : [])]);
-    const holds = joined.size >= 2 && !c.problems.some((p) => p.code === 'air');
 
-    if (holds) joined.forEach((id) => held.add(id));
+    if (c.problems.some((p) => p.code === 'air')) continue;
+
+    if (c.endsIn.kind === 'standoff' && c.endsIn.id)
+      onStandoff.set(c.endsIn.id, new Set([...(onStandoff.get(c.endsIn.id) ?? []), ...joined]));
+    else hold(joined);
   }
+
+  onStandoff.forEach(hold);
+
+  for (const s of g.chains.setScrews ?? []) hold(new Set(s.touching));
 
   return held;
 }

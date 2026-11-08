@@ -1,25 +1,33 @@
 import { actuatorOf } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { count, deg, jointLabel, partLabel } from './engineeringFormat';
+import { isLegJoint } from './engineeringBody';
 import { V3, boxCorners, dot, lineDistance, norm, rotateEuler, sub } from './engineeringMath';
 import { downstreamOf } from './engineeringMass';
-import type { CheckContext, CheckRow } from './engineeringTypes';
+import type { CheckContext, CheckRow, ServoLine } from './engineeringTypes';
 
 const revolute = (ctx: CheckContext) => ctx.joints.filter((j) => j.type === 'revolute');
 
-function outputOffset(ctx: CheckContext, j: RobotJoint, id: string) {
-  const o = ctx.input.servoOutputs[id];
+const isOffAxis = ({ angle, off }: { angle: number; off: number }) => angle > 3 || off > 1.5;
+
+function lineOffset(line: ServoLine, j: RobotJoint) {
   const a = norm(j.axis);
 
-  return o
-    ? {
-        angle: (Math.acos(Math.min(1, Math.abs(dot(o.axis, a)))) * 180) / Math.PI,
-        off: lineDistance(o.point, j.origin, a),
-      }
-    : null;
+  return {
+    angle: (Math.acos(Math.min(1, Math.abs(dot(line.axis, a)))) * 180) / Math.PI,
+    off: lineDistance(line.point, j.origin, a),
+  };
 }
 
-const isOffAxis = ({ angle, off }: { angle: number; off: number }) => angle > 3 || off > 1.5;
+function outputOffset(ctx: CheckContext, j: RobotJoint, id: string) {
+  const o = ctx.input.servoOutputs[id];
+
+  if (!o) return null;
+
+  const main = lineOffset(o, j);
+
+  return (o.alternates ?? []).map((line) => lineOffset(line, j)).find((x) => !isOffAxis(x)) ?? main;
+}
 
 function misalignments(ctx: CheckContext, j: RobotJoint): string[] {
   return (j.actuators ?? []).flatMap((id) => {
@@ -75,7 +83,13 @@ function straddlesServo(ctx: CheckContext, j: RobotJoint, a: V3): boolean {
   const servo = j.actuators?.[0] ? ctx.byPart.get(j.actuators[0]) : undefined;
   const dual = servo?.componentId ? actuatorOf(servo.componentId, servo.componentVariant)?.dualShaft : false;
   const [sLo, sHi] = servo ? spanAlong(ctx, [servo.id], j.origin, a) : [0, 0];
-  const [cLo, cHi] = spanAlong(ctx, j.child, j.origin, a);
+  const side = servo && j.child.includes(servo.id) ? j.parent : j.child;
+  const [cLo, cHi] = spanAlong(
+    ctx,
+    side.filter((id) => id !== servo?.id),
+    j.origin,
+    a,
+  );
 
   return !!dual && cLo <= sLo + 0.5 && cHi >= sHi - 0.5;
 }
@@ -87,22 +101,45 @@ function isUnsupported(ctx: CheckContext, bearings: ScenePart[], j: RobotJoint):
   return !!j.actuators?.length && !supported && j.actuators.length < 2;
 }
 
+const RADIAL_BEARINGS = new Set(['bearing', 'flanged_bearing']);
+
+function alignmentRow(ctx: CheckContext, joints: RobotJoint[]): CheckRow {
+  const misaligned = joints.flatMap((j) => misalignments(ctx, j));
+  const actuators = joints.flatMap((j) => j.actuators ?? []);
+  const unmeasured = actuators.filter((id) => !ctx.input.servoOutputs[id]);
+
+  if (misaligned.length)
+    return {
+      check: 'Servo alignment',
+      status: 'fail',
+      detail: `Servo output not on the joint axis: ${misaligned.join(', ')}`,
+    };
+
+  if (unmeasured.length && unmeasured.length === actuators.length)
+    return {
+      check: 'Servo alignment',
+      status: 'not run',
+      detail: `No output known for ${count(unmeasured.length, 'servo')}`,
+    };
+
+  return {
+    check: 'Servo alignment',
+    status: 'pass',
+    detail: unmeasured.length
+      ? `Every measured servo output lies on its joint axis; no output known for ${unmeasured.length}`
+      : 'Every servo output lies on its joint axis',
+  };
+}
+
 export function servoMountRows(ctx: CheckContext): CheckRow[] {
   if (!ctx.joints.some((j) => j.actuators?.length)) return [];
 
   const joints = revolute(ctx);
-  const bearings = ctx.parts.filter((p) => p.kind === 'hardware' && p.hardware?.type === 'bearing');
-  const misaligned = joints.flatMap((j) => misalignments(ctx, j));
+  const bearings = ctx.parts.filter((p) => p.kind === 'hardware' && RADIAL_BEARINGS.has(p.hardware?.type ?? ''));
   const unsupported = joints.filter((j) => isUnsupported(ctx, bearings, j)).map((j) => j.name);
 
   return [
-    {
-      check: 'Servo alignment',
-      status: misaligned.length ? 'fail' : 'pass',
-      detail: misaligned.length
-        ? `Servo output not on the joint axis: ${misaligned.join(', ')}`
-        : 'Every servo output lies on its joint axis',
-    },
+    alignmentRow(ctx, joints),
     {
       check: 'Joint support',
       status: unsupported.length ? 'warn' : 'pass',
@@ -117,14 +154,18 @@ type Item = NonNullable<CheckRow['items']>[number];
 
 type Clash = { a: string; b: string; depthMm: number; angle: number };
 
-function sweepSamples(j: RobotJoint, range: [number, number]): number[] {
-  const fractions = j.published ? [0.25, 0.5, 0.75, 1] : [0.5, 1];
+const DESIGNED_STEP_DEG = 15;
+const PUBLISHED_STEP_DEG = 30;
 
-  return [
-    ...new Set(
-      [range[0], range[1]].flatMap((end) => fractions.map((f) => Math.round(end * f * 10) / 10)).filter((v) => v !== 0),
-    ),
-  ];
+export function sweepSamples(j: RobotJoint, range: [number, number]): number[] {
+  const step = j.published ? PUBLISHED_STEP_DEG : DESIGNED_STEP_DEG;
+  const lo = Math.min(...range),
+    hi = Math.max(...range);
+  const out = [lo, hi];
+
+  for (let a = Math.ceil(lo / step) * step; a < hi; a += step) out.push(a);
+
+  return [...new Set(out.map((v) => Math.round(v * 10) / 10))].filter((v) => v !== 0).sort((a, b) => a - b);
 }
 
 interface SweepResult {
@@ -160,7 +201,7 @@ function sweepJoint(ctx: CheckContext, j: RobotJoint): Item[] {
   const samples = sweepSamples(j, range);
   const request = { moving: down, origin: j.origin, axis: norm(j.axis), anglesDeg: samples };
   const clashes = ctx.input.sweep!({ ...request, actuators: outputsOnAxis(ctx, j) }).filter(
-    (c) => c.depthMm > minDepth && !(c.b === 'floor' && (j.limb === 'leg' || j.published)),
+    (c) => c.depthMm > minDepth && !(c.b === 'floor' && (isLegJoint(j) || j.published)),
   );
 
   if (!clashes.length) return [];
@@ -170,12 +211,16 @@ function sweepJoint(ctx: CheckContext, j: RobotJoint): Item[] {
     .filter((i): i is Item => i !== null);
 }
 
-function rangeDetail(designed: Item[], published: Item[]): string {
-  if (designed.length) return `${count(designed.length, 'joint end')} hit another part before the end of the range`;
+function rangeDetail(designed: Item[], published: Item[], slides: number): string {
+  const unswept = slides ? `; ${count(slides, 'slide')} not swept` : '';
 
-  return published.length
-    ? `The maker’s limits are motor limits: ${count(published.length, 'joint end')} meet another part first, with the rest of the robot in its home pose`
-    : 'Every joint clears its full range';
+  if (designed.length)
+    return `${count(designed.length, 'joint end')} hit another part before the end of the range${unswept}`;
+
+  if (published.length)
+    return `The maker’s limits are motor limits: ${count(published.length, 'joint end')} meet another part first, with the rest of the robot in its home pose${unswept}`;
+
+  return `Every turning joint clears its range, sampled every ${DESIGNED_STEP_DEG}°${unswept}`;
 }
 
 function rangeStatus(designed: Item[], published: Item[]): CheckRow['status'] {
@@ -187,10 +232,16 @@ function rangeStatus(designed: Item[], published: Item[]): CheckRow['status'] {
 export function rangeOfMotionRows(ctx: CheckContext): CheckRow[] {
   if (!ctx.input.sweep || !ctx.joints.length) return [];
 
+  const turning = revolute(ctx);
+  const slides = ctx.joints.filter((j) => j.type === 'prismatic').length;
+
+  if (!turning.length && slides)
+    return [{ check: 'Range of motion', status: 'not run', detail: `${count(slides, 'slide')} not swept` }];
+
   const designed: Item[] = [];
   const published: Item[] = [];
 
-  for (const j of revolute(ctx)) (j.published ? published : designed).push(...sweepJoint(ctx, j));
+  for (const j of turning) (j.published ? published : designed).push(...sweepJoint(ctx, j));
 
   const items = [...designed, ...published.map((i) => ({ ...i, status: 'warn' as const }))];
 
@@ -198,7 +249,7 @@ export function rangeOfMotionRows(ctx: CheckContext): CheckRow[] {
     {
       check: 'Range of motion',
       status: rangeStatus(designed, published),
-      detail: rangeDetail(designed, published),
+      detail: rangeDetail(designed, published, slides),
       items,
       ids: items.flatMap((i) => i.ids ?? []),
     },

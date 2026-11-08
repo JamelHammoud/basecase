@@ -168,3 +168,23 @@ describe('robot skeleton', () => {
     expect(() => skeletonFromXml('<svg></svg>')).toThrow('Not a URDF (<robot>) or MJCF (<mujoco>) file.');
   });
 });
+
+describe('check_skeleton placement notes', () => {
+  it('says when the model is off the origin the joints are checked at', () => {
+    const sk = { joints: [{ name: 'hip', pos: [0, 0, 100] }] };
+    const away = [{ id: 'leg', bounds: { min: [990, -10, 0], max: [1010, 10, 200] } }];
+    const centred = [{ id: 'leg', bounds: { min: [-10, -10, 0], max: [10, 10, 200] } }];
+    const near = [{ id: 'leg', bounds: { min: [15, -10, 0], max: [35, 10, 200] } }];
+
+    expect(checkAgainstSkeleton(sk, away, 100)).toContain("The joints' centre is 1000 mm from the model's along X");
+    expect(checkAgainstSkeleton(sk, centred, 100)).toContain('Every joint sits inside the model.');
+    expect(checkAgainstSkeleton(sk, near, 100)).not.toContain("The joints' centre");
+  });
+
+  it('counts the joints it leaves off the list', () => {
+    const sk = { joints: Array.from({ length: 45 }, (_, i) => ({ name: `j${i}`, pos: [500, 0, i] })) };
+    const parts = [{ id: 'leg', bounds: { min: [-10, -10, 0], max: [10, 10, 200] } }];
+
+    expect(checkAgainstSkeleton(sk, parts, 0)).toContain('- …and 5 more');
+  });
+});

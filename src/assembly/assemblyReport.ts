@@ -1,7 +1,7 @@
 import { hardwareDrive } from '../data/hardware';
 import type { ScenePart } from '../types/robotics';
 import type { AssemblyGeometry } from './assemblyGeometry';
-import { chainLines, heldLines, isBlockingRank, orphanLines } from './chainLines';
+import { chainLines, heldLines, isBlockingRank, orphanLines, RANK } from './chainLines';
 import { heldBy } from './heldBy';
 import { lipLines, planLines, serviceLines, splitLines } from './planLines';
 import { planRemoval, type RemovalPlan } from './removalOrder';
@@ -42,6 +42,13 @@ function summary(g: AssemblyGeometry, plan: RemovalPlan): string {
   return head + order + late;
 }
 
+const TIMED_OUT: ReportLine = {
+  rank: RANK.stuck,
+  code: 'unfinished',
+  text: 'Stopped at the time limit, so build order, loose parts, repairs and insert walls are partly unchecked. Run the check again.',
+  ids: [],
+};
+
 function capped(lines: ReportLine[]): string[] {
   const sorted = [...lines].sort((a, b) => a.rank - b.rank);
 
@@ -68,6 +75,7 @@ export function assemblyReport(parts: ScenePart[], g: AssemblyGeometry): Assembl
     ...lipLines(g),
     ...serviceLines(service),
     ...splitLines(g.splits, byId, (id) => g.moves[id]?.contents ?? []),
+    ...(g.timedOut ? [TIMED_OUT] : []),
   ];
   const body = lines.length
     ? ['Findings (the ones get_readiness counts as blockers are marked BLOCKER):', ...capped(lines)]

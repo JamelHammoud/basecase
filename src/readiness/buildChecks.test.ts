@@ -3,7 +3,7 @@ import type { AssemblyGeometry } from '../assembly/assemblyGeometry';
 import type { FastenerChain } from '../assembly/assemblyTypes';
 import { worldPort, portsOf } from '../agent/ports';
 import type { ScenePart } from '../types/robotics';
-import { fitProbeFindings, threadFindings } from './buildChecks';
+import { fitProbeFindings, hiddenFindings, threadFindings, unprintableFindings } from './buildChecks';
 
 const servo: ScenePart = {
   id: 'servo',
@@ -74,5 +74,50 @@ describe('fit probes', () => {
       'fit:insert-wall:a',
       'fit:lead-room:servo',
     ]);
+  });
+});
+
+describe('parts marked clear', () => {
+  const printedPart = (name: string, note = '') =>
+    ({ ...servo, id: 'p', kind: 'cad_part', componentId: undefined, name, note }) as ScenePart;
+  const blocked = (name: string, note?: string) => unprintableFindings([printedPart(name, note)]).length > 0;
+
+  it.each([
+    ['Camera bezel', 'Retains the glass lens'],
+    ['Glass-fibre PETG bracket', ''],
+    ['Window frame', 'Holds a laser-cut acrylic panel'],
+    ['Spacer', 'Not transparent'],
+    ['Acrylic panel holder', ''],
+    ['Glass lens mount', ''],
+    ['Spacer', 'Clear of the motor'],
+    ['Lens bezel', 'Glass lens retainer'],
+    ['Not transparent', ''],
+    ['Fibreglass', ''],
+  ])('passes %s, “%s”', (name, note) => {
+    expect(blocked(name, note)).toBe(false);
+  });
+
+  it.each([
+    ['Camera Window', 'Clear acrylic disc'],
+    ['Clear window', ''],
+    ['Front Glass', ''],
+    ['Acrylic panel', ''],
+    ['Lens cover', 'Transparent cover'],
+    ['Visor', 'Polycarbonate visor'],
+  ])('flags %s, “%s”', (name, note) => {
+    expect(blocked(name, note)).toBe(true);
+  });
+});
+
+describe('hidden parts', () => {
+  it('are a note naming how many were left out, never a blocker', () => {
+    const found = hiddenFindings([servo, { ...servo, id: 'lid', visible: false }]);
+
+    expect(found.map((f) => [f.level, f.ids])).toEqual([['note', ['lid']]]);
+    expect(found[0].agentText).toContain('1 hidden part ');
+  });
+
+  it('say nothing when everything is shown, or for hidden references', () => {
+    expect(hiddenFindings([servo, { ...servo, id: 'ref', visible: false, role: 'reference' }])).toEqual([]);
   });
 });

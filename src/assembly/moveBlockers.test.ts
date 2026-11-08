@@ -45,6 +45,27 @@ const rim = (opening: number) =>
   );
 
 describe('straight moves', () => {
+  it('a low-poly bar moving into a crossing bar is blocked', () => {
+    const bar = solid('p', [-50, -5, -5, 50, 5, 5]);
+    const crossing = solid('q', [-5, 20, -50, 5, 30, 50]);
+
+    expect(along(bar, crossing, [0, 1, 0]).solid).toEqual(['q']);
+  });
+
+  it('a low-poly bar moving away from the crossing bar is free', () => {
+    const bar = solid('p', [-50, -5, -5, 50, 5, 5]);
+    const crossing = solid('q', [-5, 20, -50, 5, 30, 50]);
+
+    expect(along(bar, crossing, [0, -1, 0])).toEqual({ solid: [], lips: [] });
+  });
+
+  it('a plate sliding along a wall it touches is free', () => {
+    const plate = solid('p', [0, 0, 0, 50, 4, 50]);
+    const wall = solid('q', [50, -20, -20, 54, 40, 90]);
+
+    expect(along(plate, wall, [0, 0, 1])).toEqual({ solid: [], lips: [] });
+  });
+
   const tray = solid('tray', [-40, 10, -40, 40, 14, 40]);
 
   it('a tray wider than the opening above it is blocked outright', () => {

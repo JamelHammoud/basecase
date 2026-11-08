@@ -53,6 +53,7 @@ export async function checkInterfacesRequest(payload: Payload, ctx: RequestConte
     frameOf: (id) => zUpFrame(project, id),
     chains: chains?.screws ?? null,
     edits: ctx.edits?.(owner) ?? null,
+    measured: await ctx.viewport()?.measureParts(),
   });
 
   if (typeof check === 'string') return { text: check, data: { pass: false, problems: 1 } };

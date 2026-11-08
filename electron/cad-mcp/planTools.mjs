@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { settledWrites } from './pendingWrites.mjs';
 import { vec3 } from './schemas.mjs';
 import { bridge, fail, text } from './shared.mjs';
 
@@ -125,6 +126,8 @@ export const checkInterfaces = {
   },
   handler: async ({ owner }) => {
     try {
+      await settledWrites();
+
       return text((await bridge('check_interfaces', { owner }, 120000))?.text ?? '');
     } catch (err) {
       return fail(err);

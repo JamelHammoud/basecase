@@ -7,7 +7,8 @@ export type ScrewVerdict =
   | { verdict: 'pass' }
   | { verdict: 'note'; before: string[] }
   | { verdict: 'tool'; tool: DriverTool }
-  | { verdict: 'stuck'; blockers: string[] };
+  | { verdict: 'stuck'; blockers: string[] }
+  | { verdict: 'not run' };
 
 export interface RemovalStep {
   kind: 'screw' | 'part' | 'unit';
@@ -46,11 +47,15 @@ function removeScrews(s: State): boolean {
   let progress = false;
 
   for (const c of chainsOf(s)) {
-    const option = s.present.has(c.id) ? s.g.drivers[c.id]?.find((o) => clear(s, o.blockers)) : undefined;
+    if (!s.present.has(c.id)) continue;
 
-    if (!option) continue;
+    const measured = s.g.drivers[c.id];
+    const option = measured?.find((o) => clear(s, o.blockers));
 
-    s.tools.set(c.id, option.tool);
+    if (measured && !option) continue;
+
+    if (option) s.tools.set(c.id, option.tool);
+
     drop(s, [c.id], 'screw');
     progress = true;
   }
@@ -128,7 +133,9 @@ function removeUnit(s: State): boolean {
 }
 
 function verdictOf(s: State, c: FastenerChain): ScrewVerdict {
-  const options = s.g.drivers[c.id] ?? [];
+  if (!s.g.drivers[c.id]) return { verdict: 'not run' };
+
+  const options = s.g.drivers[c.id];
 
   if (s.present.has(c.id)) {
     return { verdict: 'stuck', blockers: options[0]?.blockers.filter((b) => s.tracked.has(b)) ?? [] };

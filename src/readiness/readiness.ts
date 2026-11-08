@@ -1,8 +1,9 @@
 import { hashText, itemKeyOf } from '../guide/guideItems';
+import { jsonHash, numbersHash } from '../utils/geometryHash';
 import type { MessageQuote, ScenePart } from '../types/robotics';
 import type { CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions, ReadinessFinding } from './types';
-import { READINESS_CHECKS } from './wording';
+import { READINESS_CHECKS, ruleFinding } from './wording';
 
 const round = (v: number) => Math.round(v * 10) / 10;
 
@@ -12,8 +13,48 @@ function partLine(p: ScenePart): string {
   );
 }
 
+function readingsLine(p: ScenePart): string {
+  return [
+    p.name,
+    p.note,
+    p.role,
+    p.visible,
+    p.printMaterial,
+    p.mechanicalTag,
+    p.massG,
+    p.group?.id,
+    p.print?.skip,
+    p.print?.copies,
+    p.print?.down?.join(','),
+    !!p.robotLink,
+    !!p.simready,
+    !!p.physics?.dynamic,
+    JSON.stringify(p.dimensions),
+    jsonHash(p.deformers),
+    jsonHash(p.customNodes),
+    numbersHash(p.cad?.positions),
+    numbersHash(p.sculptMesh?.positions),
+    numbersHash(p.mesh?.positions),
+  ].join('|');
+}
+
 export function readinessFingerprint(parts: ScenePart[], extra: unknown): string {
-  return hashText([...parts.map(partLine).sort(), JSON.stringify(extra)].join('\n'));
+  return hashText([...parts.map((p) => `${partLine(p)}|${readingsLine(p)}`).sort(), JSON.stringify(extra)].join('\n'));
+}
+
+export const UNSETTLED_FINGERPRINT = '';
+
+export function failedReadiness(
+  error: unknown,
+  ctx: { parts: ScenePart[]; decisions?: ReadinessDecisions },
+): Readiness {
+  const reason = error instanceof Error ? error.message : String(error);
+  const failed = ruleFinding('unfinished', 'blocker', {
+    agentText: `The checks stopped with an error, so nothing here is measured: ${reason}. Run get_readiness again.`,
+    subject: 'error',
+  });
+
+  return readinessOf([failed], { ...ctx, fingerprint: UNSETTLED_FINGERPRINT });
 }
 
 export function findingSignature(finding: Pick<Finding, 'ids'>, parts: ScenePart[]): string {

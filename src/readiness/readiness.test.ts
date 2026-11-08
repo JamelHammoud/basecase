@@ -6,6 +6,7 @@ import type { CheckRow } from '../utils/engineeringTypes';
 import { sourcingFindings, unprintableFindings } from './buildChecks';
 import { thinWallOf } from '../utils/printReport';
 import {
+  failedReadiness,
   ignoreFinding,
   ignoreRule,
   restoreRule,
@@ -245,5 +246,19 @@ describe('parts-list checks', () => {
 
     expect(bom.lines[0].category).toBe('Equipment');
     expect(bom.totals.estimatedUsd).toBe(0);
+  });
+});
+
+describe('a run that fails', () => {
+  const failed = failedReadiness(new Error('worker died'), { parts: [part('a')] });
+
+  it('blocks the verdict instead of leaving the last one up', () => {
+    expect(failed.status).toBe('blocked');
+    expect(failed.blockers.map((f) => f.rule)).toEqual(['unfinished']);
+    expect(failed.blockers[0].agentText).toContain('worker died');
+  });
+
+  it('never counts as measured, so asking again measures again', () => {
+    expect(failed.fingerprint).toBe('');
   });
 });

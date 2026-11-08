@@ -288,6 +288,34 @@ function bestLift(costAt) {
   return lift;
 }
 
+const MISSES_SHOWN = 40;
+const OFF_ORIGIN_MM = 20;
+
+function originOffsets(parts, joints) {
+  const middle = (vals) => (Math.min(...vals) + Math.max(...vals)) / 2;
+
+  return [0, 1].flatMap((k) => {
+    const lo = Math.min(...parts.map((p) => p.bounds.min[k]));
+    const hi = Math.max(...parts.map((p) => p.bounds.max[k]));
+    const joint = middle(joints.map((j) => j.p[k]));
+    const outside = Math.max(lo - joint, joint - hi);
+
+    return outside > OFF_ORIGIN_MM
+      ? [
+          `The joints' centre is ${Math.round(Math.abs((lo + hi) / 2 - joint))} mm from the model's along ${'XY'[k]}, outside it. Joints are checked at their published X and Y, so centre the model on the origin first.\n`,
+        ]
+      : [];
+  });
+}
+
+function missesText(misses, offCentre) {
+  if (!misses.length) return 'Every joint sits inside the model.';
+
+  const left = misses.length - MISSES_SHOWN;
+
+  return `${offCentre.join('')}Joints outside the model. Each one means that link is in the wrong place or too small: move or resize it until no joint is listed (residuals of 5–10 mm still put a whole leg or arm in the wrong place):\n${misses.slice(0, MISSES_SHOWN).join('\n')}${left > 0 ? `\n- …and ${left} more` : ''}`;
+}
+
 export function checkAgainstSkeleton(sk, parts, floorOffset) {
   const zMin = Math.min(...parts.map((p) => p.bounds.min[2]));
   const lowest = Math.min(...sk.joints.map((j) => j.pos[2]));
@@ -365,14 +393,13 @@ export function checkAgainstSkeleton(sk, parts, floorOffset) {
   }
 
   const span = (vals) => [Math.min(...vals), Math.max(...vals)].map(Math.round).join('…');
+  const offCentre = misses.length ? originOffsets(parts, joints) : [];
   const mzMax = Math.max(...parts.map((p) => p.bounds.max[2]));
   const jzMax = Math.max(...joints.map((j) => j.p[2]));
 
   return [
     `${joints.length} joints and frames checked; the lowest joint fits best ${Math.round(lift)} mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.`,
-    misses.length
-      ? `Joints outside the model. Each one means that link is in the wrong place or too small: move or resize it until no joint is listed (residuals of 5–10 mm still put a whole leg or arm in the wrong place):\n${misses.slice(0, 40).join('\n')}`
-      : 'Every joint sits inside the model.',
+    missesText(misses, offCentre),
     `Joint span X ${span(joints.map((j) => j.p[0]))}, Y ${span(joints.map((j) => j.p[1]))}, Z ${span(joints.map((j) => j.p[2]))}; model span X ${span(parts.flatMap((p) => [p.bounds.min[0], p.bounds.max[0]]))}, Y ${span(parts.flatMap((p) => [p.bounds.min[1], p.bounds.max[1]]))}, Z ${span(parts.flatMap((p) => [p.bounds.min[2], p.bounds.max[2]]))}.`,
     `Model top is ${Math.round(mzMax - jzMax)} mm above the highest joint; check that against the photo (shells above the top joint, e.g. a head or cap).`,
   ].join('\n');

@@ -1,5 +1,7 @@
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, PurchaseRecord, RobotJoint, ScenePart } from '../types/robotics';
+import type { BomInput } from './bom';
+import type { RobotBody } from './engineeringBody';
 import type { V3 } from './engineeringMath';
 
 export interface PartMass {
@@ -9,9 +11,13 @@ export interface PartMass {
   source: 'catalog' | 'published' | 'printed' | 'hardware' | 'supply' | 'estimate';
 }
 
-export interface ServoOutput {
+export interface ServoLine {
   point: V3;
   axis: V3;
+}
+
+export interface ServoOutput extends ServoLine {
+  alternates?: ServoLine[];
 }
 
 export interface CheckRow {
@@ -62,6 +68,7 @@ export interface EngineeringInputs {
   measures: Record<string, MeshMeasure | undefined>;
   servoOutputs: Record<string, ServoOutput>;
   purchases?: Record<string, PurchaseRecord>;
+  supportG?: BomInput['supportG'];
   sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
   walk?: WalkSim | string;
 }
@@ -74,13 +81,20 @@ export interface SweepRequest {
   actuators?: string[];
 }
 
+export interface Stability {
+  marginMm: number;
+  tipDeg: number;
+  heightMm: number;
+  onALine: boolean;
+}
+
 export interface EngineeringReport {
   rows: CheckRow[];
   joints: JointLoad[];
   massG: number;
   com: V3;
   masses: PartMass[];
-  stability?: { marginMm: number; tipDeg: number };
+  stability?: Stability;
 }
 
 export interface CheckContext {
@@ -94,4 +108,5 @@ export interface CheckContext {
   all: { grams: number; com: V3 };
   onFloor: ScenePart[];
   servos: ScenePart[];
+  bodies: RobotBody[];
 }

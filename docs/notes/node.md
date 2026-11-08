@@ -19,7 +19,7 @@ Knowledge preserved from code comments. Complements AGENTS.md; nothing here repe
 ## electron/app-menu.mjs
 - Menu state defaults live in `DEFAULT_STATE`; `tabs` lists open scenes for the Window menu (first nine get ⌘1–⌘9).
 - Renderer-handled shortcuts use `registerAccelerator: false` through the `item()` helper.
-- Dev-only reload and DevTools items are gated on `process.defaultApp`, not `app.isPackaged`: the dev Basecase.app renames the executable, so `isPackaged` is true in dev.
+- Dev-only reload and DevTools items are gated on `process.defaultApp`, not `app.isPackaged`: the dev `Basecase (Dev).app` renames the executable, so `isPackaged` is true in dev.
 
 ## tools/electron-dev.mjs
 - `require('electron')` returns the binary path, not the module API.

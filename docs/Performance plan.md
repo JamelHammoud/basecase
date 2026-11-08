@@ -31,7 +31,7 @@ Results so far (production build, M5 Pro):
 Found on the way:
 - The old synchronous `measureParts` put the centre of mass of parts that share geometry (screws, servos, brackets) at the world origin, so the Weight check, torques and the MuJoCo model got them wrong. The worker measures them in place (Ribbit-style fixture: centre of mass 459 → 487 mm, the correct value).
 - The floor check in sweeps now uses exact vertex heights instead of each mesh's bounding box, so it no longer reports floor contacts that don't happen.
-- Interference is estimated from sample points, so a thin wall a part passes straight through can go unseen (old and new alike). The WASM kernel's exact triangle tests fix that.
+- Interference used to be estimated from sample points alone, so a thin wall a part passed straight through went unseen. It now also finds surfaces that cross, triangle against triangle through the BVH (`three/analysis/crossing.ts`), and measures how deep the overlap goes around each crossing.
 
 ## What froze before (measured)
 

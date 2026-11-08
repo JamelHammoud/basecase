@@ -56,7 +56,7 @@ function ratedAt(points: ActuatorPoint[], volts: number): number | undefined {
 export function ratingAt(a: ActuatorSpec, supplyVolts?: number): Rating {
   const points = pointsOf(a);
   const top = Math.min(a.volts[1], points[points.length - 1].volts);
-  const volts = Math.min(top, Math.max(a.volts[0], supplyVolts ?? a.atVolts));
+  const volts = Math.min(top, supplyVolts ?? a.atVolts);
   const [p, q, t] = between(points, volts);
   const below = volts < points[0].volts ? volts / points[0].volts : 1;
   const stallNm = lerp(p.stallNm, q.stallNm, t) * below;

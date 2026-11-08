@@ -75,6 +75,8 @@ export const RULES = {
   'no-source': sourcing('Parts Without a Source', 'Nothing says where to get this part.'),
   unreferenced: sourcing('Unconfirmed Parts', 'Nothing confirms this part yet: its link or numbers aren’t checked.'),
   'no-price': sourcing('Missing Prices', 'These parts have no price yet.'),
+  unfinished: assembly('Unfinished Checks', 'Some checks didn’t finish, so this answer isn’t complete.'),
+  hidden: fit(FIT, 'Hidden Parts', 'These hidden parts weren’t checked.'),
 } satisfies Record<string, Rule>;
 
 export type RuleCode = keyof typeof RULES;
@@ -121,7 +123,7 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
     blocker: 'This joint hits another part before the end of its range.',
     note: 'This joint hits another part before its motor limit.',
   },
-  'Servo voltage': { blocker: 'The battery’s voltage is too high for these servos.' },
+  'Servo voltage': { blocker: 'The battery’s voltage doesn’t suit these servos.' },
   'Current and runtime': { blocker: 'The battery can’t supply enough current for the servos.' },
   'Heat near servos': { note: 'Some parts touching servos are PLA, which softens from servo heat.' },
   'Standing stability': {

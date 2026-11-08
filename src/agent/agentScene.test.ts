@@ -100,6 +100,41 @@ describe('scene ops', () => {
     ]);
   });
 
+  it('takes bounds from the measured mesh when there is one', () => {
+    const wheel = specToPart({
+      id: 'wheel',
+      shape: 'cylinder',
+      size: [100, 20, 100],
+      position: [0, 0, 50],
+      rotation: [0, 45, 0],
+    });
+    const [loose] = snapshotScene([wheel]).parts;
+    const [tight] = snapshotScene([wheel], { wheel: { min: [-50, 0, -10], max: [50, 100, 10] } }).parts;
+
+    expect(loose.bounds.min[2]).toBeCloseTo(-20.7, 1);
+    expect(tight.bounds.min[2]).toBe(0);
+    expect(tight.bounds.max[2]).toBe(100);
+  });
+
+  it('falls back to the rotated box for a part with no measure', () => {
+    const hidden = specToPart({ id: 'hidden', shape: 'box', size: [10, 10, 10], position: [0, 0, 5] });
+
+    expect(snapshotScene([hidden], {}).parts[0].bounds).toEqual(snapshotScene([hidden]).parts[0].bounds);
+  });
+
+  it('counts only solids in the overall size', () => {
+    const scene = snapshotScene([
+      specToPart({ id: 'body', shape: 'box', size: [200, 50, 50], position: [0, 0, 25] }),
+      specToPart({ id: 'hole', shape: 'hole_cylinder', size: [1000, 5, 5], position: [0, 0, 25] }),
+      {
+        ...specToPart({ id: 'ghost', shape: 'box', size: [10, 400, 700], position: [0, 0, 350] }),
+        role: 'reference' as const,
+      },
+    ]);
+
+    expect(scene.bounds?.size).toEqual([200, 50, 50]);
+  });
+
   it('snapshots the scene in the agent frame', () => {
     expect(snapshotScene(parts)).toMatchSnapshot();
   });

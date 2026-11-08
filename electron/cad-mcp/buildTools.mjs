@@ -91,6 +91,8 @@ export const verifyDesign = {
   },
   handler: async ({ peak }) => {
     try {
+      await settledWrites();
+
       const res = await bridge('verify', { peak: peak === true }, 300000);
 
       return text(res?.text || 'Nothing to check yet.');

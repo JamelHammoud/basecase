@@ -1,10 +1,14 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { knownPurchases, usePurchases } from '../components/build/usePurchases';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { loadSourced } from '../data/loadSourced';
 import type { PrinterSetup } from '../data/printers';
-import { readinessDelta, withDecisions } from '../readiness/readiness';
+import { failedReadiness, readinessDelta, withDecisions } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
+import { currentMoney } from '../utils/currencyStore';
+import { useMoney } from '../utils/useMoney';
+import { newestRuns } from './newestRuns';
 import { projectFingerprint, runReadiness } from './runReadiness';
 
 const CHECK_AFTER_MS = 1500;
@@ -43,7 +47,10 @@ export function useReadiness({
   const latestRef = useRef<Readiness | null>(null);
   const turnRef = useRef<Readiness | null>(null);
   const runRef = useRef<{ fingerprint: string; promise: Promise<Readiness | null> } | null>(null);
-  const fingerprint = projectFingerprint(parts, project, printer.model.id);
+  const [runs] = useState(newestRuns);
+  const money = useMoney();
+  const [purchases] = usePurchases();
+  const fingerprint = projectFingerprint(parts, project, printer.model.id, { purchases, money });
 
   useEffect(() => {
     void loadSourced();
@@ -54,7 +61,10 @@ export function useReadiness({
 
   const checkNow = (): Promise<Readiness | null> => {
     const viewport = viewportRef.current;
-    const now = projectFingerprint(partsRef.current, projectRef.current, printer.model.id);
+    const now = projectFingerprint(partsRef.current, projectRef.current, printer.model.id, {
+      purchases: knownPurchases(),
+      money: currentMoney(),
+    });
 
     if (!viewport) return Promise.resolve(null);
 
@@ -64,16 +74,26 @@ export function useReadiness({
 
     setChecking(true);
 
-    const promise = runReadiness({ viewport, parts: partsRef.current, project: projectRef.current, printer })
-      .then((result) => {
-        if (runRef.current?.promise !== promise && runRef.current) return decided(result);
-
+    const run = runs.begin();
+    const keepIfNewest = (result: Readiness) => {
+      if (run.isNewest()) {
         latestRef.current = result;
         setMeasured(result);
+      }
 
-        return decided(result);
-      })
-      .catch(() => null)
+      return decided(result);
+    };
+    const promise = runReadiness({
+      viewport,
+      parts: partsRef.current,
+      project: projectRef.current,
+      printer,
+      fingerprint: now,
+    })
+      .then(keepIfNewest)
+      .catch((error: unknown) =>
+        keepIfNewest(failedReadiness(error, { parts: partsRef.current, decisions: projectRef.current.readiness })),
+      )
       .finally(() => {
         if (runRef.current?.promise === promise) {
           runRef.current = null;

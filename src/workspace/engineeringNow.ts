@@ -1,14 +1,39 @@
 import type { Viewport3DHandle } from '../components/Viewport3D';
-import { COMPONENT_BY_ID } from '../data/components';
+import { portsOf, worldPort } from '../agent/ports';
+import { COMPONENT_BY_ID, actuatorOf } from '../data/components';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { SweepSpec } from '../three/analysis/sweep';
 import { runEngineering, type ServoOutput } from '../utils/engineering';
-import type { EngineeringInputs, WalkSim } from '../utils/engineeringTypes';
+import type { EngineeringInputs, ServoLine, WalkSim } from '../utils/engineeringTypes';
 import { jointsWithChains } from '../assembly/rigJoints';
 import { platformBridge } from '../utils/platformBridge';
 
 const isServo = (p: ScenePart) =>
   p.kind === 'component' && !!p.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';
+
+const hasActuator = (p: ScenePart) =>
+  p.kind === 'component' && !!p.componentId && !!actuatorOf(p.componentId, p.componentVariant);
+
+const hasActuatorOrServo = (p: ScenePart) => isServo(p) || hasActuator(p);
+
+function declaredOutputs(p: ScenePart): ServoLine[] {
+  return portsOf(p)
+    .filter((port) => port.kind === 'output')
+    .map((port) => {
+      const at = worldPort(p, port);
+
+      return { point: at.position, axis: at.axis };
+    });
+}
+
+function servoOutputOf(viewport: Viewport3DHandle | null, p: ScenePart): ServoOutput | undefined {
+  const declared = declaredOutputs(p);
+  const measured = isServo(p) ? viewport?.servoOutput(p.id) : undefined;
+
+  if (measured) return { ...measured, alternates: declared };
+
+  return declared.length ? { ...declared[0], alternates: declared.slice(1) } : undefined;
+}
 
 export interface EngineeringNowInput {
   viewport: Viewport3DHandle | null;
@@ -16,6 +41,7 @@ export interface EngineeringNowInput {
   project: ProjectSettings;
   withSweep: boolean;
   walk?: WalkSim | string;
+  supportG?: EngineeringInputs['supportG'];
 }
 
 const sweepKey = (spec: SweepSpec) =>
@@ -52,8 +78,8 @@ export async function engineeringInputs(
 
   await viewport?.meshesReady();
 
-  for (const p of parts.filter(isServo)) {
-    const out = viewport?.servoOutput(p.id);
+  for (const p of parts.filter(hasActuatorOrServo)) {
+    const out = servoOutputOf(viewport, p);
 
     if (out) servoOutputs[p.id] = out;
   }
@@ -69,8 +95,8 @@ export async function engineeringInputs(
   };
 }
 
-export async function runEngineeringNow({ viewport, parts, project, withSweep, walk }: EngineeringNowInput) {
-  const input: EngineeringInputs = { ...(await engineeringInputs(viewport, parts, project)), walk };
+export async function runEngineeringNow({ viewport, parts, project, withSweep, walk, supportG }: EngineeringNowInput) {
+  const input: EngineeringInputs = { ...(await engineeringInputs(viewport, parts, project)), walk, supportG };
 
   return withSweep && viewport ? withSweeps(viewport, input) : runEngineering(input);
 }

@@ -1,6 +1,7 @@
 import { actuatorOf } from '../data/components';
 import type { RobotJoint } from '../types/robotics';
 import { crouchTorque, holdVerdict, ratingAt, stanceVerdict, type Rating } from './actuatorRules';
+import { isLegJoint } from './engineeringBody';
 import type { CrouchModel } from './engineeringCrouch';
 import { G, V3, cross, dot, norm, rotateAbout, sub } from './engineeringMath';
 import { downstreamOf, massOf } from './engineeringMass';
@@ -44,9 +45,10 @@ interface Lever {
   r: V3;
   down: Set<string>;
   grams: number;
+  carriedG: number;
 }
 
-function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams }: Lever): number {
+function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams, carriedG }: Lever): number {
   const feet = ctx.onFloor.filter((p) => down.has(p.id));
 
   if (!feet.length) return 0;
@@ -54,7 +56,7 @@ function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams }: Lever): n
   const m = (id: string) => ctx.measures[id]!;
   const fx = feet.reduce((s, p) => s + (m(p.id).min[0] + m(p.id).max[0]) / 2, 0) / feet.length;
   const fz = feet.reduce((s, p) => s + (m(p.id).min[2] + m(p.id).max[2]) / 2, 0) / feet.length;
-  const grf: V3 = [0, (ctx.all.grams / 1000) * G, 0];
+  const grf: V3 = [0, (carriedG / 1000) * G, 0];
   const tGrf = dot(cross(sub([fx, 0, fz], joint.origin), grf), a);
   const tDistal = dot(cross(r, gravity(grams)), a);
 
@@ -124,17 +126,23 @@ function verdictOf(j: RobotJoint, loads: Loads, rating: Rating | undefined) {
   return { kind, loadNm, status: 'not run' as const };
 }
 
+function carriedGrams(ctx: CheckContext, j: RobotJoint, env: LoadEnv): number {
+  const robotG = ctx.bodies.find((b) => b.joints.includes(j))?.mass.grams ?? ctx.all.grams;
+
+  return robotG * (env.crouch.shares.get(j.id) ?? 1);
+}
+
 export function jointLoad(ctx: CheckContext, j: RobotJoint, env: LoadEnv): JointLoad {
   const a = norm(j.axis);
   const down = downstreamOf(j, ctx.joints);
   const distal = massOf(down, ctx.byId);
   const r = sub(distal.com, j.origin);
   const swing = swingTorque(r, a, distal.grams, j.range);
-  const stance = stanceTorque(ctx, { joint: j, a, r, down, grams: distal.grams });
+  const carriedG = carriedGrams(ctx, j, env);
+  const stance = stanceTorque(ctx, { joint: j, a, r, down, grams: distal.grams, carriedG });
   const lever = env.crouch.levers.get(j.id);
-  const weightN = (ctx.all.grams / 1000) * G * env.crouch.share;
-  const crouch = lever === undefined ? undefined : crouchTorque(weightN, lever, env.crouch.crouchDeg);
-  const leg = j.limb === 'leg' && stance + (crouch ?? 0) > 0;
+  const crouch = lever === undefined ? undefined : crouchTorque((carriedG / 1000) * G, lever, env.crouch.crouchDeg);
+  const leg = isLegJoint(j) && stance + (crouch ?? 0) > 0;
   const rating = jointRating(ctx, j, env.volts);
   const walk = ctx.input.walk;
   const simRms = leg && typeof walk === 'object' ? walk.joints[j.id]?.rmsNm : undefined;

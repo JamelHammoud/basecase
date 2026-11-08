@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 
+export const DEEPER_THAN_REST_MM = 2;
+
+export const pairKey = (a: string, b: string) => [a, b].sort().join('|');
+
 export interface Interference {
   a: string;
   b: string;

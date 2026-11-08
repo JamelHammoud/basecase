@@ -1,5 +1,5 @@
 import { budgetLine, lineUsd } from './budget';
-import { buildBom } from './bom';
+import { buildBom, isPrinted } from './bom';
 import type { BomLine } from './bomTypes';
 import { formatWhole } from './currencyStore';
 import type { CheckContext, CheckRow } from './engineeringTypes';
@@ -19,6 +19,7 @@ export function budgetRow(ctx: CheckContext): CheckRow {
     project: ctx.project,
     purchases: ctx.input.purchases ?? {},
     measures: ctx.measures,
+    supportG: ctx.input.supportG,
   });
   const est = bom.totals.estimatedUsd;
   let status: CheckRow['status'] = 'pass';
@@ -27,12 +28,13 @@ export function budgetRow(ctx: CheckContext): CheckRow {
   else if (est > WARN_SHARE * budget) status = 'warn';
 
   const unpriced = bom.totals.unpriced ? `; ${bom.totals.unpriced} lines have no price` : '';
+  const noSupport = !ctx.input.supportG && ctx.parts.some(isPrinted) ? '; support filament not counted' : '';
   const biggest = [...bom.lines].sort((a, b) => lineUsd(b) - lineUsd(a)).slice(0, BIGGEST);
 
   return {
     check: 'Budget',
     status,
-    detail: `${budgetLine(bom)}${unpriced}`,
+    detail: `${budgetLine(bom)}${unpriced}${noSupport}`,
     itemsAreContext: true,
     items:
       status === 'pass'

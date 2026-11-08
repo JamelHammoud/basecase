@@ -1,3 +1,4 @@
+import { settledWrites } from './pendingWrites.mjs';
 import { bridge, fail, text } from './shared.mjs';
 
 export const checkAssembly = {
@@ -13,6 +14,8 @@ export const checkAssembly = {
   },
   handler: async () => {
     try {
+      await settledWrites();
+
       const res = await bridge('assembly', {}, 240000);
 
       return text(res?.text || 'Nothing to check yet.');

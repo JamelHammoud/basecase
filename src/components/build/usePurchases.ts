@@ -12,6 +12,8 @@ const publish = (next: Purchases) => {
   purchaseListeners.forEach((l) => l(next));
 };
 
+export const knownPurchases = () => purchaseCache;
+
 export function usePurchases(): [Purchases, (key: string, r: PurchaseRecord | null) => Promise<void>] {
   const [purchases, setPurchases] = useState<Purchases>(purchaseCache ?? {});
 

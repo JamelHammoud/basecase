@@ -1,4 +1,4 @@
-import { snapshotScene } from '../agent/agentScene';
+import { snapshotScene, type PartBoxes } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ScenePart } from '../types/robotics';
 import { encodeBitmap } from '../utils/imageEncode';
@@ -17,9 +17,14 @@ interface TargetContext {
 const RASTER_SIDE = 900;
 const VERTICAL_AXIS: Record<string, number> = { top: 1 };
 
-export function modelExtent(parts: ScenePart[], view: string, ids?: string[]): { lo: number; hi: number } | null {
+export function modelExtent(
+  parts: ScenePart[],
+  view: string,
+  ids?: string[],
+  measured?: PartBoxes,
+): { lo: number; hi: number } | null {
   const axis = VERTICAL_AXIS[view] ?? 2;
-  const shown = snapshotScene(parts).parts.filter(
+  const shown = snapshotScene(parts, measured).parts.filter(
     (p) => p.role !== 'reference' && p.role !== 'cutout' && (!ids?.length || ids.includes(p.id)),
   );
   const visible = shown.filter((p) => parts.find((q) => q.id === p.id)?.visible !== false);
@@ -32,8 +37,8 @@ export function modelExtent(parts: ScenePart[], view: string, ids?: string[]): {
   };
 }
 
-function modelHeightMm(parts: ScenePart[], view: string, ids?: string[]): number {
-  const extent = modelExtent(parts, view, ids);
+function modelHeightMm(parts: ScenePart[], view: string, ids?: string[], measured?: PartBoxes): number {
+  const extent = modelExtent(parts, view, ids, measured);
 
   return extent ? extent.hi - extent.lo : 0;
 }
@@ -86,7 +91,7 @@ function summary(fit: TargetFit) {
 export async function targetCompare(payload: Payload, ctx: TargetContext) {
   const view = String(payload.view ?? 'front');
   const ids = (payload.ids as string[] | undefined) ?? undefined;
-  const heightMm = modelHeightMm(ctx.parts(), view, ids);
+  const heightMm = modelHeightMm(ctx.parts(), view, ids, await ctx.viewport()?.measureParts());
   const model = await modelMask(view, ids, ctx);
   const target = await targetMask(payload);
 

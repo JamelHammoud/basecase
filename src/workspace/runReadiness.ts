@@ -6,13 +6,20 @@ import { COMPONENT_BY_ID } from '../data/components';
 import { loadSourced } from '../data/loadSourced';
 import type { PrinterSetup } from '../data/printers';
 import { registerSourced } from '../data/sourcedItems';
-import { fitProbeFindings, sourcingFindings, threadFindings, unprintableFindings } from '../readiness/buildChecks';
+import {
+  fitProbeFindings,
+  hiddenFindings,
+  sourcingFindings,
+  threadFindings,
+  unprintableFindings,
+} from '../readiness/buildChecks';
 import { assemblyFindings, bomFindings, engineeringFindings, fitFindings, printFindings } from '../readiness/findings';
-import { readinessFingerprint, readinessOf } from '../readiness/readiness';
+import { readinessFingerprint, readinessOf, UNSETTLED_FINGERPRINT } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
+import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
 import { runEngineeringNow } from './engineeringNow';
@@ -24,30 +31,71 @@ export interface ReadinessInput {
   parts: ScenePart[];
   project: ProjectSettings;
   printer: PrinterSetup;
+  fingerprint: string;
 }
 
-const batteriesIn = (parts: ScenePart[]) =>
-  parts.filter((p) => p.componentId && COMPONENT_BY_ID[p.componentId]?.battery).map((p) => p.id);
+export interface ReadinessWorld {
+  purchases: object | null;
+  money: { code: string; ratesDate: string };
+}
 
-export const projectFingerprint = (parts: ScenePart[], project: ProjectSettings, printerId: string) =>
+export const batteriesIn = (parts: ScenePart[]) =>
+  parts
+    .filter((p) => {
+      const battery = p.componentId ? COMPONENT_BY_ID[p.componentId]?.battery : undefined;
+
+      return !!battery && !battery.cell;
+    })
+    .map((p) => p.id);
+
+export const projectFingerprint = (
+  parts: ScenePart[],
+  project: ProjectSettings,
+  printerId: string,
+  world: ReadinessWorld,
+) =>
   readinessFingerprint(parts, {
     joints: project.joints,
     budget: project.budgetUsd,
     extras: project.extras,
-    sourced: project.sourced?.map((s) => [s.id, s.link.status, !!s.mesh]),
+    sourced: jsonHash(project.sourced),
     material: project.material,
+    infill: project.infillPct,
+    printProcess: project.printProcess,
+    animations: jsonHash(project.animations),
+    firstRanges: project.firstRanges,
     printerId,
+    purchases: jsonHash(world.purchases ?? {}),
+    money: [world.money.code, world.money.ratesDate],
   });
 
-export async function runReadiness({ viewport, parts, project, printer }: ReadinessInput): Promise<Readiness> {
+function supportOf(print: { parts: Array<{ material: PrintMaterial; supportG: number }> }) {
+  const supportG: Partial<Record<PrintMaterial, number>> = {};
+
+  for (const r of print.parts) supportG[r.material] = (supportG[r.material] ?? 0) + r.supportG;
+
+  return supportG;
+}
+
+export async function runReadiness({
+  viewport,
+  parts,
+  project,
+  printer,
+  fingerprint,
+}: ReadinessInput): Promise<Readiness> {
   await loadSourced();
   registerSourced(project.sourced ?? []);
+  await viewport.meshesReady();
 
-  const fingerprint = projectFingerprint(parts, project, printer.model.id);
+  const printing = printReportOf(parts, { project, printer }, viewport.printShapes);
+  const engineeringRun = printing.then((report) =>
+    runEngineeringNow({ viewport, parts, project, withSweep: true, supportG: supportOf(report) }),
+  );
   const [engineering, geometry, print, purchases, measures] = await Promise.all([
-    runEngineeringNow({ viewport, parts, project, withSweep: true }),
+    engineeringRun,
     viewport.assembly({ serviceable: serviceableIds(parts), budgetMs: BUDGET_MS, batteries: batteriesIn(parts) }),
-    printReportOf(parts, { project, printer }, viewport.printShapes),
+    printing,
     platformBridge.listPurchases(),
     viewport.measureParts(),
   ]);
@@ -55,11 +103,7 @@ export async function runReadiness({ viewport, parts, project, printer }: Readin
   rememberClamps(parts, clampsOf(geometry.chains));
 
   const fits = designedFits(await viewport.interference(), parts, geometry.chains);
-  const supportG: Partial<Record<PrintMaterial, number>> = {};
-
-  for (const r of print.parts) supportG[r.material] = (supportG[r.material] ?? 0) + r.supportG;
-
-  const bom = buildBom({ parts, project, purchases, measures, supportG });
+  const bom = buildBom({ parts, project, purchases, measures, supportG: supportOf(print) });
 
   return readinessOf(
     [
@@ -72,7 +116,13 @@ export async function runReadiness({ viewport, parts, project, printer }: Readin
       ...unprintableFindings(parts),
       ...fitProbeFindings(geometry, parts),
       ...threadFindings(geometry, parts),
+      ...hiddenFindings(parts),
     ],
-    { parts, decisions: project.readiness, fingerprint, rows: engineering.rows },
+    {
+      parts,
+      decisions: project.readiness,
+      fingerprint: geometry.timedOut ? UNSETTLED_FINGERPRINT : fingerprint,
+      rows: engineering.rows,
+    },
   );
 }

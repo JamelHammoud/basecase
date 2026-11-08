@@ -243,10 +243,11 @@ async function applyWithCost(payload: Payload, ctx: RequestContext) {
 }
 
 const HANDLERS: Record<string, Handler> = {
-  snapshot: (_payload, ctx) => {
+  snapshot: async (_payload, ctx) => {
     const marks = describeMarks(ctx.project().marks, ctx.parts());
+    const measured = await ctx.viewport()?.measureParts();
 
-    return { ...snapshotScene(ctx.parts()), ...(marks.length ? { marks } : {}) };
+    return { ...snapshotScene(ctx.parts(), measured), ...(marks.length ? { marks } : {}) };
   },
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),

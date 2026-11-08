@@ -5,7 +5,7 @@ import type { ScenePart } from '../types/robotics';
 import type { ZUpVec } from '../types/skeleton';
 import { dot, lineDistance, norm, sub } from '../utils/engineeringMath';
 import { r1, toCad } from './agentFrame';
-import { partBoundsCad } from './agentScene';
+import { partBoundsCad, type PartBoxes } from './agentScene';
 import { contractOf } from './interfaces';
 import { portsOf, worldPort } from './ports';
 import type { ZUpFrame } from './skeletonFrames';
@@ -23,6 +23,7 @@ export interface InterfaceCheckInput {
   frameOf: (id: string) => ZUpFrame | undefined;
   chains: FastenerChain[] | null;
   edits: string[] | null;
+  measured?: PartBoxes;
 }
 
 export interface InterfaceCheck {
@@ -61,12 +62,17 @@ function overshoot(b: { min: number[]; max: number[] }, box: InterfaceBox): numb
   return Math.max(0, ...[0, 1, 2].flatMap((k) => [box.min[k] - b.min[k], b.max[k] - box.max[k]]));
 }
 
-function envelopeLines(contract: InterfaceContract, parts: ScenePart[], out: InterfaceCheck) {
+function envelopeLines(
+  contract: InterfaceContract,
+  parts: ScenePart[],
+  input: InterfaceCheckInput,
+  out: InterfaceCheck,
+) {
   if (!contract.envelopes.length) return;
 
   const solids = parts.filter((p) => p.role === 'solid' && p.visible);
   const outside = solids.flatMap((p) => {
-    const b = partBoundsCad(p);
+    const b = partBoundsCad(p, input.measured);
     const worst = Math.min(...contract.envelopes.map((box) => overshoot(b, box)));
 
     return worst > ENVELOPE_MM ? [`${p.id} is ${r1(worst)} mm outside its envelope`] : [];
@@ -211,7 +217,7 @@ export function checkInterfaces(input: InterfaceCheckInput): InterfaceCheck | st
 
   if (absent.length) out.problems.push(`Missing: ${absent.join(', ')} not in the scene.`);
 
-  envelopeLines(contract, parts, out);
+  envelopeLines(contract, parts, input, out);
   datumLines(contract, ports, input, out);
   boltLines(contract, ports, input.chains ?? [], out);
   seamLines(contract, input, out);

@@ -29,7 +29,7 @@ registerAppScheme();
 
 const ipcMain = trustedIpc(electronIpc, APP_ORIGIN);
 
-app.setName('Basecase');
+app.setName(fromSource ? 'Basecase (Dev)' : 'Basecase');
 
 {
   const userData = process.env.BASECASE_USER_DATA || path.join(app.getPath('appData'), 'Basecase');

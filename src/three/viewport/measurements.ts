@@ -42,7 +42,7 @@ export function boundsOf(ctx: ViewportContext, ids: string[]): { min: Vec3; max:
   ids.forEach((id) => {
     const object = ctx.layer.get(id);
 
-    if (object) box.expandByObject(object);
+    if (object) box.expandByObject(object, true);
   });
 
   return box.isEmpty() ? null : { min: toVec3(box.min), max: toVec3(box.max) };

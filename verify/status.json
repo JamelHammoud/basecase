@@ -1459,6 +1459,80 @@
       "commit": "8ef271e",
       "at": "2026-11-08T17:07:24.566Z",
       "manifest": "clean"
+    },
+    "s1-f4-metal": {
+      "id": "s1-f4-metal",
+      "title": "F4: Metal backend, same vectors, 1M substeps/s sustained",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "200 fuzzed robots emitted",
+          "ok": true,
+          "detail": "0.9 s",
+          "metrics": {},
+          "seconds": 0.915
+        },
+        {
+          "name": "C MuJoCo computes the reference for every fuzzed robot",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.45
+        },
+        {
+          "name": "metal engine matches C MuJoCo on every fuzzed robot, L0 to L3",
+          "ok": true,
+          "detail": "worst {\"l0\":4.440892098500626e-11,\"l1\":0.00006687392215530899,\"l3Qpos\":4.554544701454444e-9,\"l3Qvel\":0.0000015347656879801178}",
+          "metrics": {
+            "l0": 4.440892098500626e-11,
+            "l1": 0.00006687392215530899,
+            "l3Qpos": 4.554544701454444e-9,
+            "l3Qvel": 0.0000015347656879801178
+          },
+          "seconds": 773.18
+        },
+        {
+          "name": "metal batch step equals single step, bit for bit",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 10.458
+        },
+        {
+          "name": "metal sustains 1000K substeps/s for 60 s at 4096 envs",
+          "ok": true,
+          "detail": "1500473 sustained",
+          "metrics": {
+            "substepsPerS": 1568574.0839570118,
+            "sustainedMin": 1500472.5723277864,
+            "loadBefore": 3.4619140625,
+            "loadAfter": 3.064453125
+          },
+          "seconds": 60.126
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a planted acceleration error is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.001
+        },
+        {
+          "name": "a planted rollout drift is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        }
+      ],
+      "commit": "95d03ce",
+      "at": "2026-11-08T19:12:37.643Z",
+      "manifest": "clean"
     }
   }
 }

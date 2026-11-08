@@ -1033,6 +1033,87 @@
       "commit": "daf3b4c",
       "at": "2026-11-08T03:42:09.224Z",
       "manifest": "clean"
+    },
+    "s1-f2-learner": {
+      "id": "s1-f2-learner",
+      "title": "F2: own learner, off-policy options, 3x time-to-skill",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "forge-train builds",
+          "ok": true,
+          "detail": "3.4 s",
+          "metrics": {},
+          "seconds": 3.362
+        },
+        {
+          "name": "Forge Adam matches torch to 1e-4 over 50 steps",
+          "ok": true,
+          "detail": "worst 1.19e-7",
+          "metrics": {},
+          "seconds": 2.355
+        },
+        {
+          "name": "Forge reaches 45K steps/s at 1024 envs",
+          "ok": true,
+          "detail": "140963 steps/s",
+          "metrics": {
+            "loadBefore": 6.24560546875,
+            "loadAfter": 8.0673828125
+          },
+          "seconds": 3.557
+        },
+        {
+          "name": "FastSAC and FlashSAC run and report the same events",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.228
+        },
+        {
+          "name": "Python time-to-skill baseline recorded for three robots",
+          "ok": true,
+          "detail": "kept the committed baseline {\"quad-servo\":46.74179087509401,\"hexapod\":345.8167056250386,\"biped-servo\":18.186022375011817}",
+          "metrics": {
+            "quad-servo": 46.74179087509401,
+            "hexapod": 345.8167056250386,
+            "biped-servo": 18.186022375011817,
+            "loadBefore": 6.05078125,
+            "loadAfter": 6.05078125
+          },
+          "seconds": 0.001
+        },
+        {
+          "name": "Forge reaches the walk skill at least 3x faster than the Python baseline",
+          "ok": true,
+          "detail": "5.26x",
+          "metrics": {
+            "ratios": [
+              5.259804714558591,
+              35.4508312954062,
+              4.390696292449648
+            ],
+            "loadBefore": 6.05078125,
+            "loadAfter": 9.3427734375
+          },
+          "seconds": 136.292
+        }
+      ],
+      "canaries": [
+        {
+          "name": "an Adam result one weight off by 1e-3 is rejected",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.508
+        }
+      ],
+      "commit": "d02595d",
+      "at": "2026-11-08T08:38:18.115Z",
+      "manifest": "clean"
     }
   }
 }

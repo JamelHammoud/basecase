@@ -1,6 +1,7 @@
 pub mod adam;
 pub mod adam_vector;
 pub mod algorithm;
+pub mod blocks;
 pub mod conditions;
 pub mod deployed;
 pub mod elu;

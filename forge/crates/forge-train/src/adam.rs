@@ -1,6 +1,8 @@
 const BETA1: f32 = 0.9;
 const BETA2: f32 = 0.999;
 const EPSILON: f32 = 1e-8;
+const NORM_LANES: usize = 16;
+pub const NORM_CHUNK: usize = 1024;
 
 pub struct Adam {
     first: Vec<f32>,
@@ -25,22 +27,65 @@ impl Adam {
         }
     }
 
-    pub fn step(&mut self, params: &mut [f32], grads: &[f32], rate: f32) {
+    pub fn begin(&mut self, rate: f32) -> AdamStep {
         self.steps += 1;
 
-        let beta2 = self.beta2;
         let first_scale = 1.0 - (BETA1 as f64).powi(self.steps);
-        let second_scale = 1.0 - (beta2 as f64).powi(self.steps);
-        let step_rate = rate / first_scale as f32;
-        let second_inverse = 1.0 / second_scale as f32;
-        let kept = 1.0 - rate * self.decay;
-        let moments = self.first.iter_mut().zip(self.second.iter_mut());
+        let second_scale = 1.0 - (self.beta2 as f64).powi(self.steps);
 
-        for ((param, grad), (m, v)) in params.iter_mut().zip(grads).zip(moments) {
+        AdamStep {
+            step_rate: rate / first_scale as f32,
+            second_inverse: 1.0 / second_scale as f32,
+            beta2: self.beta2,
+            decay: self.decay,
+            kept: 1.0 - rate * self.decay,
+        }
+    }
+
+    pub fn moments(&mut self) -> Moments<'_> {
+        Moments {
+            first: &mut self.first,
+            second: &mut self.second,
+        }
+    }
+
+    pub fn step(&mut self, params: &mut [f32], grads: &[f32], rate: f32) {
+        let step = self.begin(rate);
+
+        step.apply(params, grads, self.moments());
+    }
+}
+
+pub struct Moments<'a> {
+    pub first: &'a mut [f32],
+    pub second: &'a mut [f32],
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct AdamStep {
+    step_rate: f32,
+    second_inverse: f32,
+    beta2: f32,
+    decay: f32,
+    kept: f32,
+}
+
+impl AdamStep {
+    pub fn apply(&self, params: &mut [f32], grads: &[f32], moments: Moments) {
+        let Self {
+            step_rate,
+            second_inverse,
+            beta2,
+            decay,
+            kept,
+        } = *self;
+        let pairs = moments.first.iter_mut().zip(moments.second.iter_mut());
+
+        for ((param, grad), (m, v)) in params.iter_mut().zip(grads).zip(pairs) {
             *m = *m * BETA1 + grad * (1.0 - BETA1);
             *v = *v * beta2 + grad * grad * (1.0 - beta2);
 
-            if self.decay > 0.0 {
+            if decay > 0.0 {
                 *param *= kept;
             }
 
@@ -49,25 +94,36 @@ impl Adam {
     }
 }
 
-pub fn gradient_norm(grads: &[f32]) -> f64 {
-    let mut total = 0.0f64;
+pub fn square_sum(chunk: &[f32]) -> f32 {
+    let mut lanes = [0.0f32; NORM_LANES];
+    let (blocks, remainder) = chunk.as_chunks::<NORM_LANES>();
 
-    for chunk in grads.chunks(1024) {
-        let sum: f32 = chunk.iter().map(|g| g * g).sum();
-
-        total += sum as f64;
+    for block in blocks {
+        lanes.iter_mut().zip(block).for_each(|(lane, g)| *lane += g * g);
     }
 
-    total.sqrt()
+    let tail: f32 = remainder.iter().map(|g| g * g).sum();
+
+    lanes.iter().sum::<f32>() + tail
+}
+
+pub fn gradient_norm(grads: &[f32]) -> f64 {
+    grads
+        .chunks(NORM_CHUNK)
+        .map(|chunk| square_sum(chunk) as f64)
+        .sum::<f64>()
+        .sqrt()
+}
+
+pub fn clip_scale(norm: f64, max_norm: f64) -> f32 {
+    (max_norm / (norm + 1e-6)).min(1.0) as f32
 }
 
 pub fn clip_gradient(grads: &mut [f32], max_norm: f64) -> f64 {
     let norm = gradient_norm(grads);
-    let scale = max_norm / (norm + 1e-6);
+    let scale = clip_scale(norm, max_norm);
 
     if scale < 1.0 {
-        let scale = scale as f32;
-
         grads.iter_mut().for_each(|g| *g *= scale);
     }
 

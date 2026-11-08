@@ -96,6 +96,7 @@ fn policy_gradient_matches_finite_differences() {
         log_std_grads: &mut log_std_grads,
         clip: CLIP,
         ent_coef: ENT_COEF,
+        scale: 1.0 / f.rows as f32,
     };
 
     policy_gradient(&math, head, &batch, terms);

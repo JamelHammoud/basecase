@@ -22,7 +22,7 @@ export interface DriveToolContext {
   parts: ScenePart[];
 }
 
-interface AgentObject {
+export interface AgentObject {
   id?: string;
   name: string;
   kind: WorldObject['kind'];
@@ -50,7 +50,7 @@ const slug = (name: string, i: number) =>
     .replace(/^-|-$/g, '')
     .slice(0, 60) || `object-${i}`;
 
-function sceneObjects(objects: AgentObject[]): WorldObject[] {
+export function sceneObjects(objects: AgentObject[]): WorldObject[] {
   const raw = objects.map((o, i) => ({
     id: o.id ?? `${slug(o.name, i)}-${i}`,
     name: o.name,

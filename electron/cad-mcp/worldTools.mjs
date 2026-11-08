@@ -3,7 +3,7 @@ import { bridge, fail, text } from './shared.mjs';
 
 const vec3 = z.array(z.number().finite()).length(3);
 
-const worldObject = z.object({
+export const worldObject = z.object({
   id: z
     .string()
     .regex(/^[\w.-]{1,80}$/)

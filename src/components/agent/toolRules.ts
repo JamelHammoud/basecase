@@ -362,6 +362,7 @@ const ROBOT_RULES: ToolRule[] = [
       detail: optional(input.live ? 'On the canvas' : ''),
     }),
   },
+  plainRule(['create_case'], CasesIcon, ['Making a Case', 'Made a Case']),
   plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
   plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
   plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),

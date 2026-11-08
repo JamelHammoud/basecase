@@ -17,6 +17,7 @@ import { Transcript } from './agent/Transcript';
 import { QueuedMessages } from './agent/queue/QueuedMessages';
 import { QueueControls, SendToAgent } from './agent/types';
 import { useDraft } from './agent/useDraft';
+import type { ComposeRequest } from './agent/useComposeRequest';
 import { useFileDrop } from './agent/useFileDrop';
 import { useSubmit } from './agent/useSubmit';
 import { feedMask, useFeedFollow } from './agent/useFeedFollow';
@@ -31,6 +32,7 @@ interface AcpStudioPanelProps {
   attachRequest?: number;
   sketchRequest?: number;
   quote: { request: MessageQuote | null; onRequest: (quote: MessageQuote) => void; onDone: () => void };
+  compose?: ComposeRequest;
   targetHeightMm?: number;
   choice: AgentChoice;
   onChoiceChange: (choice: AgentChoice) => void;
@@ -80,6 +82,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   attachRequest = 0,
   sketchRequest = 0,
   quote,
+  compose,
   targetHeightMm = 0,
   choice,
   onChoiceChange,
@@ -95,7 +98,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   onRevert,
 }) => {
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
-  const draft = useDraft({ onUploadImage, promptRef, queue, quote });
+  const draft = useDraft({ onUploadImage, promptRef, queue, quote, compose });
   const { isDragOver, dropHandlers } = useFileDrop(draft.attachments.attachFiles);
   const [viewer, setViewer] = useState<ViewerState>(null);
   const { feedRef, feedContentRef, edgeFade, showJump, scrollToBottom, feedHandlers } = useFeedFollow({

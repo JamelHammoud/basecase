@@ -80,7 +80,7 @@ export async function checkFit(input: FitInput): Promise<FitRow[]> {
   const rows: FitRow[] = [];
 
   if (input.kase)
-    rows.push({ id: 'slot', label: 'Fits this Case', state: slot ? 'fail' : 'pass', detail: slot ?? 'Yes' });
+    rows.push({ id: 'slot', label: 'Fits this Case', state: slot ? 'fail' : 'pass', detail: slot ? 'No' : 'Yes' });
 
   let model: SimModel;
 

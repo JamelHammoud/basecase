@@ -10,6 +10,7 @@ import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
 import type { ProjectSettings } from '../types/robotics';
 import { findingQuote, fixPrompt } from '../readiness/readiness';
+import { showNewCase } from './caseCommands';
 import { InspectTab } from './InspectTab';
 import type { RightTab } from './types';
 import type { AgentSession } from './useAgentSession';
@@ -123,6 +124,7 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
           attachRequest={tool.attachRequest}
           sketchRequest={tool.sketchRequest}
           quote={{ request: tool.quoteRequest, onRequest: tool.requestQuote, onDone: tool.clearQuote }}
+          compose={{ request: tool.composeRequest, onDone: tool.clearCompose }}
           targetHeightMm={studio.agentTargetHeightMm}
           choice={studio.agentChoice}
           onChoiceChange={studio.setAgentChoice}
@@ -170,6 +172,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           policies={simTraining.policies}
           onSelectParts={setSelectedIds}
           onDeletePolicy={simTraining.deletePolicy}
+          onNewCase={() => showNewCase(core)}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

@@ -1,11 +1,10 @@
 import type React from 'react';
-import { SegmentedControl, Select } from '../../design-system';
+import { FieldRow, SegmentedControl, Select } from '../../design-system';
 import { describeCondition } from '../../routines/explainGraph';
 import { MODEL_NODES } from '../../routines/nodes';
 import type { Condition, Routine } from '../../routines/schema';
 import { allSteps } from '../../routines/schema';
 import { inferStep, SENSED_FACTS, watcherFor } from '../../routines/stepFactory';
-import { FieldRow } from './FieldRow';
 import { type FieldProps, seconds } from './fieldTypes';
 import { NumberField } from './NumberField';
 import { TextField } from './TextField';

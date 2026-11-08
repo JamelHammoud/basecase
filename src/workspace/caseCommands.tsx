@@ -1,8 +1,19 @@
 import type { Command } from '../components/CommandPalette';
-import { CasesIcon, RotateLeftIcon, RunIcon, StopIcon } from '../design-system';
+import { CasesIcon, PlusIcon, RotateLeftIcon, RunIcon, StopIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
+import type { WorkspaceCore } from './useWorkspaceCore';
 
 const ic = 'w-4 h-4';
+
+const showCases = (core: WorkspaceCore) => {
+  core.tool.setLeftTab('cases');
+  core.studio.setIsLeftOpen(true);
+};
+
+export const showNewCase = (core: WorkspaceCore) => {
+  showCases(core);
+  core.simTraining.cases.builder.start();
+};
 
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
@@ -59,6 +70,19 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       ]
     : [];
 
+  const newCase: Command[] = cases.builder.goals.length
+    ? [
+        {
+          id: 'new-case',
+          group: 'Simulate',
+          label: 'New Case',
+          icon: <PlusIcon className={ic} />,
+          keywords: 'case challenge world goal level make create',
+          run: () => showNewCase(core),
+        },
+      ]
+    : [];
+
   return [
     {
       id: 'show-cases',
@@ -66,11 +90,9 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       label: 'Show Cases',
       icon: <CasesIcon className={ic} />,
       keywords: 'challenge world goal level',
-      run: () => {
-        core.tool.setLeftTab('cases');
-        core.studio.setIsLeftOpen(true);
-      },
+      run: () => showCases(core),
     },
+    ...newCase,
     drive,
     ...respawn,
     ...tryIt,

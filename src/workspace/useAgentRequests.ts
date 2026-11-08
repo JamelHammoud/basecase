@@ -156,6 +156,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       edits: (owner) => actors.editsFor(author.actor, owner),
       buildGuide: core.guide.generate,
       routines: core.simTraining.routines,
+      cases: core.simTraining.cases,
     };
 
     try {

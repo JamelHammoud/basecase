@@ -1,8 +1,7 @@
-import { Select } from '../../design-system';
+import { FieldRow, Select } from '../../design-system';
 import type { Motion } from '../../routines/schema';
 import { moveTimeoutMs } from '../../routines/stepFactory';
 import { skillLabel } from '../../routines/stepMenu';
-import { FieldRow } from './FieldRow';
 import type { FieldProps } from './fieldTypes';
 import { NumberField } from './NumberField';
 import { TimeLimit } from './TimeLimit';

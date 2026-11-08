@@ -55,10 +55,10 @@ describe('robot fit', () => {
     ]);
   });
 
-  it('says plainly when a hexapod does not fit an arm Case, and still checks its walk', async () => {
+  it('says when a hexapod does not fit an arm Case, and still checks its walk', async () => {
     const rows = await fitOf('hexapod');
 
-    expect(rows.find((r) => r.id === 'slot')?.detail).toMatch(/arm/);
+    expect(rows.find((r) => r.id === 'slot')).toMatchObject({ state: 'fail', detail: 'No' });
     expect(rows.find((r) => r.id === 'fall')?.state).toBe('pass');
   });
 

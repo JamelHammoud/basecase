@@ -164,4 +164,41 @@ describe('Cases', () => {
     await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
     expect(app.errors).toEqual([]);
   });
+
+  it('makes a Case with New Case, lists only the examples that fit, and opens it', async () => {
+    await loadFixture('rover-diff');
+    await app.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Cases"]')).click();
+
+    const panel = app.page.locator(visible('[data-testid="cases-panel"]'));
+
+    await expect.poll(() => panel.innerText()).toContain('Reach the Flag');
+    expect(await panel.innerText()).not.toContain('Touch the Dots');
+
+    await button('New Case').click();
+
+    const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+    await card.locator('[role=radio]', { hasText: 'Push a Box' }).click();
+    await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
+    expect(await card.getByTestId('new-case-brief').innerText()).toBe('Push the box 500 mm onto the spot.');
+    await card.locator('button', { hasText: 'Create' }).click();
+
+    await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
+    await expect.poll(() => app.page.getByTestId('case-brief').innerText()).toContain('Push a Box in a Corridor');
+    expect((await simState()).world).toEqual(['box', 'goal', 'wall-left', 'wall-right']);
+    expect(await panel.innerText()).toContain('In this scene');
+
+    await button('Ask the Agent').click();
+    await expect.poll(() => app.page.locator(visible('textarea')).last().inputValue()).toBe('/case ');
+    await expect
+      .poll(() =>
+        app.page.evaluate(() => {
+          const el = document.activeElement;
+
+          return el instanceof HTMLTextAreaElement ? el.value : el?.tagName;
+        }),
+      )
+      .toBe('/case ');
+    expect(app.errors).toEqual([]);
+  });
 });

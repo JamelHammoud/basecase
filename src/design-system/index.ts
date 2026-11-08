@@ -8,6 +8,7 @@ export * from './NumberInput';
 export * from './Slider';
 export * from './Switch';
 export * from './Field';
+export * from './FieldRow';
 export * from './FloatingIsland';
 export * from './Divider';
 export * from './PopoverMenu';

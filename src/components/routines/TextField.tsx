@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { TextInput } from '../../design-system';
-import { FieldRow } from './FieldRow';
+import { FieldRow, TextInput } from '../../design-system';
 
 export function TextField({
   label,

@@ -37,7 +37,9 @@ import { fitView } from './agentFitView';
 import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
+import { CASE_HANDLERS } from './agentCaseRequests';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
+import type { Cases } from './useCases';
 import type { Routines } from './useRoutines';
 
 type Payload = Record<string, unknown>;
@@ -60,6 +62,7 @@ export interface RequestContext {
   edits?: (owner: string) => string[] | null;
   buildGuide: () => Promise<GeneratedGuide | null>;
   routines: Routines;
+  cases: Cases;
 }
 
 type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
@@ -300,6 +303,7 @@ const HANDLERS: Record<string, Handler> = {
   ...PORT_HANDLERS,
   ...PLAN_HANDLERS,
   ...ROUTINE_HANDLERS,
+  ...CASE_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [
       kind,

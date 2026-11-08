@@ -25,10 +25,11 @@ interface SimulatePanelProps {
   policies: PolicyRecord[];
   onSelectParts: (ids: string[]) => void;
   onDeletePolicy: (id: string) => void;
+  onNewCase: () => void;
 }
 
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
-  const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy } = props;
+  const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy, onNewCase } = props;
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const on = sim.status !== 'off';
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
@@ -51,7 +52,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {kase && <BriefSection cases={cases} />}
-        {kase && <RobotFitSection cases={cases} />}
+        {kase && <RobotFitSection cases={cases} onNewCase={onNewCase} />}
         {kase && <TrySection cases={cases} driveNote={sim.drive.note} cls={sim.drive.cls} />}
         <EmulatedRobotSection />
         <ControlSection {...control} choose={choose} showDrive={!kase} />

@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react';
+import { fittingTemplates } from '../cases/caseBuilder';
 import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
 import { scaledToReach } from '../cases/scale';
@@ -11,6 +12,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import type { Setter } from './types';
+import { useCaseBuilder } from './useCaseBuilder';
 import { useCaseTry } from './useCaseTry';
 
 interface CasesOptions {
@@ -140,6 +142,7 @@ export function useCases({ parts, project, setProject, rig, sim }: CasesOptions)
     setFit({ caseId: activeId, rows, checking: false });
   };
 
+  const builder = useCaseBuilder({ rig, parts, add });
   const attempt = useCaseTry({
     sim,
     rig,
@@ -152,6 +155,8 @@ export function useCases({ parts, project, setProject, rig, sim }: CasesOptions)
     cases,
     active,
     templates,
+    examples: fittingTemplates(templates),
+    builder,
     tries,
     hasRobot,
     fixedBase,

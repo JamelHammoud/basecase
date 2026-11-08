@@ -21,6 +21,16 @@ A Case is a world with a robot slot, controls and goals that any compatible robo
 
 `src/cases/contract.ts` mirrors the contract shape in §8i with a small local evaluator behind `ContractEvaluator`, so `src/skills/contract.ts` can replace it without changing a Case. `runCase` (`src/cases/runCase.ts`) runs a Case headless in Node or a worker: it checks the fit, scales the world, builds the model, drives it and evaluates the trace.
 
+### Making a Case
+
+`src/cases/caseBuilder.ts` turns a goal, a world and numbers into a Case and runs it through `parseCase`, so a built Case is the same format as any other. It's pure, so `caseBuilder.test.ts` builds every goal in every world it suits on the fixture robots and runs some in MuJoCo.
+
+- **Goals** (`caseGoals.ts`), each with editable numbers and defaults sized to the robot (`goalDefaults`): Reach a Spot (stop on a spot ahead; wheels or legs), Push a Box (a dynamic cube onto a spot; wheels or legs), Follow a Path (spots in order, swaying left and right; wheels or legs), Walk Without Falling (travel from the start; legs) and Touch a Point (the end effector on a sphere; arms). `goalsFor` lists only the goals the robot can try. Touch a Point starts on a spot the arm's own forward kinematics reaches (`dotSpots`, as Touch the Dots), and carries the arm's reach and anchor, so it scales to other arms. Every ground goal on a legged robot also fails on a fall (the `fell` failure: the base drops below half its start height). Height is a distance probe to a point 1 km under the start (`FLOOR_PROBE_DEPTH_MM`), since probes only measure distances.
+- **Worlds** (`caseWorlds.ts`): Open Floor; Corridor (a wall each side of the route) and Block (one in the way) for ground goals; Shelf (a box under the point) for Touch a Point. A static object over the robot's footprint is refused with the fix (“Move the goal farther ahead…”).
+- **Name** defaults to the goal and world (“Push a Box in a Corridor”); the id is its slug, made unique by `add`.
+- A limp robot must miss every built Case, as with the templates; Walk Without Falling exists instead of a bare “stay up”, because joint friction holds a limp robot standing.
+- `useCaseBuilder` (`src/workspace/`) holds the builder's open state, the robot's facts and `create` (adds through `useCases.add`, the same path as the examples, then opens it).
+
 ### World layer
 
 World items go into `MjcfInput.world`, written by `src/sim/mjcfWorld.ts`. They are bodies in `SimModel.bodies` with `parts: []` and `world: [id]`, so `simDeltas` never sees them and `worldDeltas` gives their poses. They never join `parts`, so they skip the BOM, checks and stop-on-edit.
@@ -48,10 +58,11 @@ The filmstrip (`src/cases/filmstrip.ts`, drawn by `filmstrip.worker.ts` on an `O
 
 ### In the app
 
-- **Cases view** in the rail (§5).
-- **Simulate tab** with a Case open: **Brief** (name, brief, Close), **Robot fit** (Check Fit: fits this Case, compiles, settles 1.5 s, body class, fall check; never restates Ready to build), **Try** (Try It, a clock, End Try, the keys), **Emulated robot** while one is connected (§8k: its rung, the newest daemon message and the servos; from Test up it follows the live sim), **Control**, **Train** (a fixed robot gets “Stand and Walk train robots that move around. This one is fixed in place.” instead of a Train button), **Results**, then the Result, Model and Policies sections as before. Without a Case, Control has Drive.
-- ⌘K: Show Cases, Drive or Stop Driving, Start Over, Try ⟨Case⟩.
-- `e2e/drive.e2e.test.ts` drives the rover, arm and hexapod in the real app, checks the biped refusal, key gating and the composer prompt, and records a try. The e2e harness allows the real `node_modules` path, so the MuJoCo WASM loads from a worktree whose `node_modules` is a link.
+- **Cases view** in the rail (§5). Without Cases in the scene it opens with one line: “A Case is a world and a goal the robot tries in simulation.” Then **New Case** (primary; tooltip “Pick a world and a goal”; hidden when the robot can try no goal), which opens the builder card in place: Goal (only the goals that fit; hidden when there's one), World, the goal's numbers, Name, then the brief it will get, or the fix when the numbers can't work, with Cancel (Esc) and Create (↩). Create adds the Case, opens it and switches to the Simulate tab. **Ask the Agent** (desktop only) puts `/case ` in the agent composer, focused. Then “In this scene” and “Examples”: the templates that fit this robot, and nothing else (a misfit is never listed with its reason). Without a robot: “No robot” + [Browse Robots].
+- **Simulate tab** with a Case open: **Brief** (name, brief, Close), **Robot fit** (Check Fit: fits this Case (Yes or No, never a list of what's missing), compiles, settles 1.5 s, body class, fall check; skipped rows aren't shown; never restates Ready to build; a Case that doesn't fit offers New Case), **Try** (Try It, a clock, End Try, the keys), **Emulated robot** while one is connected (§8k: its rung, the newest daemon message and the servos; from Test up it follows the live sim), **Control**, **Train** (a fixed robot gets “Stand and Walk train robots that move around. This one is fixed in place.” instead of a Train button), **Results**, then the Result, Model and Policies sections as before. Without a Case, Control has Drive.
+- ⌘K: Show Cases, New Case, Drive or Stop Driving, Start Over, Try ⟨Case⟩.
+- **Agent:** `create_case` (`electron/cad-mcp/caseTools.mjs` → bridge kind → `src/workspace/agentCaseRequests.ts`) builds a Case through the same builder from a goal, a world, numbers in mm and extra `set_world`-style objects in the agent frame, and replies `{ ok, id, name, brief, seconds, objects }` or `{ ok: false, problem }`. The prompt's Scope reads a message starting with `/case` as a request for one.
+- `e2e/drive.e2e.test.ts` drives the rover, arm and hexapod in the real app, checks the biped refusal, key gating and the composer prompt, records a try, and makes a Case with New Case (only the fitting example listed, the Case opened with its world). The e2e harness allows the real `node_modules` path, so the MuJoCo WASM loads from a worktree whose `node_modules` is a link.
 
 ### Web gallery
 

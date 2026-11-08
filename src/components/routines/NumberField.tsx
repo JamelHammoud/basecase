@@ -1,5 +1,4 @@
-import { NumberInput } from '../../design-system';
-import { FieldRow } from './FieldRow';
+import { FieldRow, NumberInput } from '../../design-system';
 
 interface NumberFieldProps {
   label: string;

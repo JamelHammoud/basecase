@@ -43,7 +43,7 @@ function candidateValues(rig: Rig, joints: string[], [first, rest]: number[]): R
 
 const apart = (a: V3, b: V3, mm: number) => new THREE.Vector3(...a).distanceTo(new THREE.Vector3(...b)) > mm;
 
-function dotSpots(rig: Rig, effector: EndEffector, joints: string[], radius: number): V3[] {
+export function dotSpots(rig: Rig, effector: EndEffector, joints: string[], radius: number): V3[] {
   const rest = tipAt(rig, effector, {});
   const spots: V3[] = [];
 

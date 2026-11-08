@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, MetaLine } from '../../design-system';
+import { Button, EmptyState, MetaLine, OperateIcon, RobotsIcon } from '../../design-system';
 import { useRobot } from '../../robot/useRobot';
 import { sceneRobot } from '../../robot/sceneRobot';
 import { connectRobot, disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
@@ -11,6 +11,7 @@ import { RobotMessages } from './RobotMessages';
 
 export interface OperatePanelProps {
   joints: RobotJoint[];
+  onBrowseRobots: () => void;
 }
 
 const RUN: Record<string, string> = {
@@ -24,13 +25,33 @@ const RUN: Record<string, string> = {
 
 const FAMILY = { feetech: 'Feetech', dynamixel: 'Dynamixel' };
 
-function ConnectButton({ joints }: OperatePanelProps) {
+const NoRobot: React.FC<{ onBrowseRobots: () => void }> = ({ onBrowseRobots }) => (
+  <EmptyState
+    icon={<OperateIcon className="w-5 h-5" />}
+    title="No robot"
+    action={
+      <Button
+        variant="primary"
+        size="sm"
+        icon={<RobotsIcon className="w-4 h-4" />}
+        title="Add a robot to emulate its servos"
+        onClick={onBrowseRobots}
+      >
+        Browse Robots
+      </Button>
+    }
+  />
+);
+
+function ConnectButton({ joints, onBrowseRobots }: OperatePanelProps) {
   const [refusal, setRefusal] = useState<string | null>(null);
   const robot = sceneRobot(joints);
 
-  const connect = async () => {
-    if (!robot.ok) return;
+  if (!joints.some((j) => j.type !== 'fixed')) return <NoRobot onBrowseRobots={onBrowseRobots} />;
 
+  if (!robot.ok) return null;
+
+  const connect = async () => {
     const reply = await connectRobot(robot.spec, robot.joints);
 
     setRefusal(reply.ok ? null : reply.message);
@@ -38,12 +59,10 @@ function ConnectButton({ joints }: OperatePanelProps) {
 
   return (
     <div className="mb-3">
-      <Button variant="primary" fullWidth disabled={!robot.ok} onClick={() => void connect()}>
+      <Button variant="primary" fullWidth onClick={() => void connect()}>
         Connect Emulated Robot
       </Button>
-      {(refusal ?? (!robot.ok && robot.reason)) && (
-        <p className="px-1 mt-2 text-[12.5px] text-white/45">{refusal ?? (!robot.ok && robot.reason)}</p>
-      )}
+      {refusal && <p className="px-1 mt-2 text-[12.5px] text-white/45">{refusal}</p>}
     </div>
   );
 }
@@ -97,13 +116,13 @@ function RobotHeader({ robot }: { robot: RobotState }) {
   );
 }
 
-export const OperatePanel: React.FC<OperatePanelProps> = ({ joints }) => {
+export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="operate-panel">
-      {connected ? <RobotHeader robot={robot} /> : <ConnectButton joints={joints} />}
+      {connected ? <RobotHeader robot={robot} /> : <ConnectButton joints={joints} onBrowseRobots={onBrowseRobots} />}
       <RobotMessages messages={robot.messages} />
       {connected && <RobotLadder robot={robot} />}
       {connected && <RobotJoints ids={robot.spec?.ids ?? []} joints={robot.status?.joints ?? []} />}

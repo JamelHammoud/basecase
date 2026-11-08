@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, CloseIcon, IconButton, Kbd, RunIcon, Section, StopIcon } from '../../design-system';
+import { Button, CloseIcon, IconButton, Kbd, PlusIcon, RunIcon, Section, StopIcon } from '../../design-system';
 import type { FitRow } from '../../cases/fitCheck';
 import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
@@ -34,8 +34,10 @@ export const BriefSection: React.FC<{ cases: Cases }> = ({ cases }) => {
   );
 };
 
-export const RobotFitSection: React.FC<{ cases: Cases }> = ({ cases }) => {
+export const RobotFitSection: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
   const fit = cases.fit;
+  const rows = fit?.rows.filter((row) => row.state !== 'skip') ?? [];
+  const misfit = rows.some((row) => row.id === 'slot' && row.state === 'fail') && cases.builder.goals.length > 0;
 
   return (
     <Section
@@ -49,12 +51,17 @@ export const RobotFitSection: React.FC<{ cases: Cases }> = ({ cases }) => {
       {fit?.checking && <p className="text-[13px] text-white/50">Checking</p>}
       {fit && !fit.checking && (
         <div className="flex flex-col" data-testid="robot-fit">
-          {fit.rows.map((row) => (
+          {rows.map((row) => (
             <div key={row.id} className="min-h-8 py-1 flex items-baseline justify-between gap-3 text-[13px]">
               <span className="text-white/85 shrink-0">{row.label}</span>
               <span className={`text-right ${FIT_TONE[row.state]}`}>{row.detail}</span>
             </div>
           ))}
+          {misfit && (
+            <Button variant="secondary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={onNewCase}>
+              New Case
+            </Button>
+          )}
         </div>
       )}
     </Section>

@@ -34,6 +34,7 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
   const [attachRequest, setAttachRequest] = useState(0);
   const [sketchRequest, setSketchRequest] = useState(0);
   const [quoteRequest, setQuoteRequest] = useState<MessageQuote | null>(null);
+  const [composeRequest, setComposeRequest] = useState<string | null>(null);
 
   const setMode = (mode: TransformMode) => {
     setTransformMode(mode);
@@ -106,6 +107,11 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     setQuoteRequest(quote);
   };
 
+  const requestCompose = (text: string) => {
+    openRightTab('acp');
+    setComposeRequest(text);
+  };
+
   const studioMode: StudioSubTab | null = transformMode === 'sculpt' ? 'clay' : creator;
 
   return {
@@ -134,6 +140,9 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     quoteRequest,
     requestQuote,
     clearQuote: () => setQuoteRequest(null),
+    composeRequest,
+    requestCompose,
+    clearCompose: () => setComposeRequest(null),
     requestSketch,
   };
 }

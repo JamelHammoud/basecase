@@ -1,5 +1,6 @@
 import { LeftSidebar } from '../components/LeftSidebar';
 import { LAYOUT, PanelResizer } from '../design-system';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -16,6 +17,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
   const { library, creation, edits, robots } = actions;
   const { panelWidths } = studio;
   const { openCreator } = tool;
+  const browseRobots = () => tool.setLeftTab('robots');
   const libraryProps = {
     customModels: studio.customModels,
     onInsertModel: creation.placeCustomModel,
@@ -50,9 +52,11 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       cases={{
         cases: core.simTraining.cases,
         onOpen: () => tool.setRightTab('sim'),
+        onBrowseRobots: browseRobots,
+        onDescribe: IS_WEB_DEMO ? undefined : () => tool.requestCompose('/case '),
       }}
       routines={{ routines: core.simTraining.routines, onTrain: () => tool.setRightTab('sim') }}
-      operate={{ joints: core.project.joints ?? [] }}
+      operate={{ joints: core.project.joints ?? [], onBrowseRobots: browseRobots }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}
       parts={parts}

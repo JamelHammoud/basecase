@@ -3,6 +3,7 @@ import { MessageQuote, ReferenceImageRecord } from '../../types/robotics';
 import { AnalyzedImageFeatures } from '../../utils/imageTo3DAnalyzer';
 import { FolderChip, folderChip, useAttachments } from './useAttachments';
 import { QueueControls, QueuedDraft, QueueSlotRef } from './types';
+import { useComposeRequest, type ComposeRequest } from './useComposeRequest';
 import { useQuoteRequest } from './useQuoteRequest';
 
 interface Stash {
@@ -22,6 +23,7 @@ interface DraftOptions {
   promptRef: React.RefObject<HTMLTextAreaElement | null>;
   queue: QueueControls;
   quote?: { request: MessageQuote | null; onDone: () => void };
+  compose?: ComposeRequest;
 }
 
 const stashOf = (params: QueuedDraft): Stash => ({
@@ -31,7 +33,7 @@ const stashOf = (params: QueuedDraft): Stash => ({
   quotes: params.quotes ?? [],
 });
 
-export function useDraft({ onUploadImage, promptRef, queue, quote }: DraftOptions) {
+export function useDraft({ onUploadImage, promptRef, queue, quote, compose }: DraftOptions) {
   const attachments = useAttachments({ onUploadImage, promptRef });
   const [text, setText] = useState('');
   const [quotes, setQuotes] = useState<MessageQuote[]>([]);
@@ -40,6 +42,7 @@ export function useDraft({ onUploadImage, promptRef, queue, quote }: DraftOption
   const addQuote = (next: MessageQuote) => setQuotes((all) => [...all.filter((q) => q.id !== next.id), next]);
 
   useQuoteRequest(quote?.request ?? null, { addQuote, promptRef, onQuoted: quote?.onDone });
+  useComposeRequest(compose, { setText, promptRef });
 
   const load = (stash: Stash) => {
     setText(stash.text);

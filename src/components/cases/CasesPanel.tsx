@@ -1,22 +1,79 @@
 import React, { useState } from 'react';
-import { ContextMenu, EmptyState, PlusIcon, type ContextMenuEntry, CasesIcon } from '../../design-system';
+import {
+  Button,
+  CasesIcon,
+  ContextMenu,
+  EmptyState,
+  PlusIcon,
+  RobotsIcon,
+  type ContextMenuEntry,
+} from '../../design-system';
 import type { Cases } from '../../workspace/useCases';
 import { CaseRow } from './CaseRow';
+import { NewCaseCard } from './NewCaseCard';
 
 export interface CasesPanelProps {
   cases: Cases;
   onOpen: () => void;
+  onBrowseRobots: () => void;
+  onDescribe?: () => void;
 }
 
-export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen }) => {
+const Heading: React.FC<{ children: string }> = ({ children }) => (
+  <div className="px-[4px] h-8 flex items-center text-[12px] font-medium text-white/45">{children}</div>
+);
+
+function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseRobots'>) {
+  const { builder } = cases;
+
+  return (
+    <div className="mb-3 flex flex-col gap-1">
+      {cases.cases.length === 0 && (
+        <p className="px-[4px] pb-2 text-[13px] leading-snug text-white/60">
+          A Case is a world and a goal the robot tries in simulation.
+        </p>
+      )}
+      {builder.open && <NewCaseCard builder={builder} onCreated={onOpen} />}
+      {!builder.open && builder.goals.length > 0 && (
+        <Button
+          variant="primary"
+          size="md"
+          fullWidth
+          icon={<PlusIcon className="w-4 h-4" />}
+          title="Pick a world and a goal"
+          onClick={builder.start}
+        >
+          New Case
+        </Button>
+      )}
+      {onDescribe && (
+        <Button variant="ghost" size="sm" fullWidth title="Describe a Case in words" onClick={onDescribe}>
+          Ask the Agent
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onBrowseRobots, onDescribe }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
   if (!cases.hasRobot)
     return (
       <EmptyState
         icon={<CasesIcon className="w-5 h-5" />}
-        title="Add a robot to try a Case"
-        description="Cases are worlds with a goal that a robot drives through."
+        title="No robot"
+        action={
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<RobotsIcon className="w-4 h-4" />}
+            title="Add a robot to try Cases"
+            onClick={onBrowseRobots}
+          >
+            Browse Robots
+          </Button>
+        }
       />
     );
 
@@ -38,9 +95,10 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen }) => {
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="cases-panel">
+      <NewCase cases={cases} onOpen={onOpen} onDescribe={onDescribe} />
       {cases.cases.length > 0 && (
         <div className="mb-3">
-          <div className="px-[4px] h-8 flex items-center text-[12px] font-medium text-white/45">In this scene</div>
+          <Heading>In this scene</Heading>
           {cases.cases.map((c) => (
             <CaseRow
               key={c.id}
@@ -53,17 +111,20 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen }) => {
           ))}
         </div>
       )}
-      <div className="px-[4px] h-8 flex items-center text-[12px] font-medium text-white/45">Start from</div>
-      {cases.templates.map((t) => (
-        <CaseRow
-          key={t.id}
-          name={t.name}
-          brief={t.refusal ?? t.brief}
-          disabled={!!t.refusal}
-          icon={<PlusIcon className="w-4 h-4" />}
-          onClick={() => startFrom(t.id)}
-        />
-      ))}
+      {cases.examples.length > 0 && (
+        <>
+          <Heading>Examples</Heading>
+          {cases.examples.map((t) => (
+            <CaseRow
+              key={t.id}
+              name={t.name}
+              brief={t.brief}
+              icon={<PlusIcon className="w-4 h-4" />}
+              onClick={() => startFrom(t.id)}
+            />
+          ))}
+        </>
+      )}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </div>
   );

@@ -5,9 +5,16 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const APP_NAME = 'Basecase';
-const DISPLAY_NAME = 'Basecase (Dev)';
-const ICON_NAME = 'BasecaseDev';
-const BUNDLE_ID = 'app.basecase.dev';
+const DEV_MODE = !process.argv.includes('--bundle');
+const FLAVOUR = DEV_MODE
+  ? {
+      name: 'Basecase (Dev)',
+      id: 'app.basecase.devmode',
+      icon: 'BasecaseDev',
+      iconDir: 'compiled-dev',
+      cache: 'basecase-electron-dev',
+    }
+  : { name: 'Basecase', id: 'app.basecase.dev', icon: 'Basecase', iconDir: 'compiled', cache: 'basecase-electron' };
 const LSREGISTER =
   '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister';
 
@@ -17,8 +24,8 @@ const require = createRequire(import.meta.url);
 const electronBinary = require('electron');
 const electronVersion = require('electron/package.json').version;
 
-const ICON_DIR = path.resolve('build', 'icon', 'compiled-dev');
-const ICON_FILES = ['Assets.car', `${ICON_NAME}.icns`];
+const ICON_DIR = path.resolve('build', 'icon', FLAVOUR.iconDir);
+const ICON_FILES = ['Assets.car', `${FLAVOUR.icon}.icns`];
 
 function bundleStamp() {
   const icon = ICON_FILES.map((f) => {
@@ -27,13 +34,13 @@ function bundleStamp() {
     return fs.existsSync(p) ? `${f}:${fs.statSync(p).size}:${fs.statSync(p).mtimeMs}` : `${f}:none`;
   });
 
-  return [electronVersion, DISPLAY_NAME, ...icon].join('\n');
+  return [electronVersion, FLAVOUR.name, FLAVOUR.id, ...icon].join('\n');
 }
 
 function ensureDevBundle() {
   const source = path.resolve(electronBinary, '..', '..', '..');
-  const root = path.resolve('node_modules', '.cache', 'basecase-electron');
-  const bundle = path.join(root, `${DISPLAY_NAME}.app`);
+  const root = path.resolve('node_modules', '.cache', FLAVOUR.cache);
+  const bundle = path.join(root, `${FLAVOUR.name}.app`);
   const executable = path.join(bundle, 'Contents', 'MacOS', APP_NAME);
   const stamp = path.join(root, 'electron-version');
   const stampOk = fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8') === bundleStamp();
@@ -55,15 +62,15 @@ function ensureDevBundle() {
   const set = (key, value) => execFileSync('plutil', ['-replace', key, '-string', value, plist]);
 
   set('CFBundleExecutable', APP_NAME);
-  set('CFBundleName', DISPLAY_NAME);
-  set('CFBundleDisplayName', DISPLAY_NAME);
-  set('CFBundleIdentifier', BUNDLE_ID);
+  set('CFBundleName', FLAVOUR.name);
+  set('CFBundleDisplayName', FLAVOUR.name);
+  set('CFBundleIdentifier', FLAVOUR.id);
 
   if (ICON_FILES.every((f) => fs.existsSync(path.join(ICON_DIR, f)))) {
     for (const f of ICON_FILES) fs.copyFileSync(path.join(ICON_DIR, f), path.join(bundle, 'Contents', 'Resources', f));
 
-    set('CFBundleIconFile', ICON_NAME);
-    set('CFBundleIconName', ICON_NAME);
+    set('CFBundleIconFile', FLAVOUR.icon);
+    set('CFBundleIconName', FLAVOUR.icon);
   }
 
   try {
@@ -84,7 +91,7 @@ if (process.platform === 'darwin') {
   try {
     binary = ensureDevBundle();
   } catch (err) {
-    console.warn(`[electron-dev] Couldn't build ${DISPLAY_NAME}.app, using Electron.app:`, err.message);
+    console.warn(`[electron-dev] Couldn't build ${FLAVOUR.name}.app, using Electron.app:`, err.message);
   }
 }
 

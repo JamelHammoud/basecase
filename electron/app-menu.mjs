@@ -1,4 +1,5 @@
-import { app, Menu } from 'electron';
+import { Menu } from 'electron';
+import { APP_DISPLAY_NAME } from './appName.mjs';
 
 const DEFAULT_STATE = {
   sidebar: true,
@@ -85,20 +86,20 @@ function updateItems() {
 
 function appMenu() {
   return {
-    label: app.name,
+    label: APP_DISPLAY_NAME,
     submenu: [
-      { role: 'about' },
+      { role: 'about', label: `About ${APP_DISPLAY_NAME}` },
       ...updateItems(),
       separator,
       { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: send('settings') },
       separator,
       { role: 'services' },
       separator,
-      { role: 'hide' },
+      { role: 'hide', label: `Hide ${APP_DISPLAY_NAME}` },
       { role: 'hideOthers' },
       { role: 'unhide' },
       separator,
-      { role: 'quit' },
+      { role: 'quit', label: `Quit ${APP_DISPLAY_NAME}` },
     ],
   };
 }
@@ -215,7 +216,7 @@ function windowMenu(isMac) {
 }
 
 function helpMenu(isMac) {
-  const extras = [separator, ...updateItems(), { role: 'about', label: 'About Basecase' }];
+  const extras = [separator, ...updateItems(), { role: 'about', label: `About ${APP_DISPLAY_NAME}` }];
 
   return {
     role: 'help',

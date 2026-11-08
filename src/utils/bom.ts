@@ -380,7 +380,7 @@ export function buildBom({ parts, project, purchases, measures, now = new Date()
 
   for (const x of project.extras ?? []) if (x.qty > 0) addCount(tally.counts, x.key, x.qty);
 
-  for (const key of neededSupplyKeys(parts, listedText(tally.counts), !!project.tether)) addCount(tally.counts, key, 1);
+  for (const key of neededSupplyKeys(parts, listedText(tally.counts), !!sceneTether({ parts, project }))) addCount(tally.counts, key, 1);
 
   const lines = [...tally.counts]
     .map(([key, { qty, partIds }]) => bomLine(key, qty, partIds, { purchases, now }))

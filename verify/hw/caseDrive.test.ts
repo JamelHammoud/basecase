@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../../src/types/robotics';
 import { repoPath } from '../lib/need';
+import { openPlayTab } from '../../e2e/harness';
 import { launchDevElectron, type DevApp } from './devElectron';
 import { daemonEvents, makeRelay, type Relay, waitFor, type Wire } from './relayHarness';
 import { climb, DAEMON_ENV, DAEMON_FILE, mode, openOperate } from './robotApp';
@@ -78,7 +79,7 @@ describe('a Case drives the emulated robot through the daemon', () => {
     await climb(dev.page, 'test');
     await waitFor('running', () => daemonEvents(relay, 'status').some((w) => w.msg.run === 'running'));
 
-    await dev.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Cases"]')).click();
+    await openPlayTab(dev.page, 'Cases');
     await button('Touch the Dots').click();
     await button('Try It').click();
     await waitFor('the try to drive', async () => (await simDrive()) === 'on', 60000);

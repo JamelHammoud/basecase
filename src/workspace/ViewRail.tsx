@@ -1,6 +1,6 @@
 import type { LeftTab } from '../components/LeftSidebar';
+import { isPlayTab, type PlayTab } from '../components/playViews';
 import { installUpdate, useAppUpdate } from '../utils/useAppUpdate';
-import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import {
   ArrowDownIcon,
   CasesIcon,
@@ -9,24 +9,24 @@ import {
   LibraryIcon,
   NO_DRAG_REGION,
   ObjectsIcon,
-  OperateIcon,
   PartsIcon,
   RobotsIcon,
-  RoutinesIcon,
   type GlyphProps,
   SettingsIcon,
 } from '../design-system';
 
-const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphProps> }> = [
+type RailView = Exclude<LeftTab, PlayTab> | 'play';
+
+const LEFT_VIEWS: Array<{ value: RailView; label: string; Icon: React.FC<GlyphProps> }> = [
   { value: 'parts', label: 'Parts', Icon: PartsIcon },
   { value: 'robots', label: 'Robots', Icon: RobotsIcon },
   { value: 'objects', label: 'Objects', Icon: ObjectsIcon },
-  { value: 'cases', label: 'Cases', Icon: CasesIcon },
-  { value: 'routines', label: 'Routines', Icon: RoutinesIcon },
-  ...(IS_WEB_DEMO ? [] : [{ value: 'operate' as const, label: 'Operate', Icon: OperateIcon }]),
+  { value: 'play', label: 'Play', Icon: CasesIcon },
   { value: 'layers', label: 'Layers', Icon: LayersIcon },
   { value: 'library', label: 'Library', Icon: LibraryIcon },
 ];
+
+const railViewOf = (tab: LeftTab): RailView => (isPlayTab(tab) ? 'play' : tab);
 
 const RAIL_BUTTON = 'w-[36px]! h-[36px]! rounded-[10px]!';
 const RAIL_ICON = 'w-[19px] h-[19px]';
@@ -36,11 +36,12 @@ const UPDATE_ICON = 'w-[16px] h-[16px]';
 interface ViewRailProps {
   isLeftOpen: boolean;
   leftTab: LeftTab;
+  playTab: PlayTab;
   onPickView: (view: LeftTab) => void;
   onOpenSettings: () => void;
 }
 
-export function ViewRail({ isLeftOpen, leftTab, onPickView, onOpenSettings }: ViewRailProps) {
+export function ViewRail({ isLeftOpen, leftTab, playTab, onPickView, onOpenSettings }: ViewRailProps) {
   const update = useAppUpdate();
   const showUpdate = update.stage === 'ready' || update.stage === 'installing';
 
@@ -51,7 +52,7 @@ export function ViewRail({ isLeftOpen, leftTab, onPickView, onOpenSettings }: Vi
       style={NO_DRAG_REGION}
     >
       {LEFT_VIEWS.map((v) => {
-        const open = isLeftOpen && leftTab === v.value;
+        const open = isLeftOpen && railViewOf(leftTab) === v.value;
 
         return (
           <IconButton
@@ -63,7 +64,7 @@ export function ViewRail({ isLeftOpen, leftTab, onPickView, onOpenSettings }: Vi
             variant="ghost"
             isToggled={open}
             className={RAIL_BUTTON}
-            onClick={() => onPickView(v.value)}
+            onClick={() => onPickView(v.value === 'play' ? playTab : v.value)}
           />
         );
       })}

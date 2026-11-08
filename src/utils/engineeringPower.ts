@@ -3,18 +3,11 @@ import type { ScenePart } from '../types/robotics';
 import { isLegJoint } from './engineeringBody';
 import { count } from './engineeringFormat';
 import type { CheckContext, CheckRow } from './engineeringTypes';
-import { PowerSource, findPowerSources, sceneRegulators, tetherSource } from './powerSources';
+import { PowerSource, drivesJoint, findPowerSources, sceneRegulators, tetherSource } from './powerSources';
 
 const CONVERTER_EFFICIENCY = 0.9;
-const NO_POWER = 'No battery or tether. Add a battery from Parts → Power, or set a tether in Build → Power.';
 
-export function servoParts(parts: ScenePart[]): ScenePart[] {
-  return parts.filter((p) => {
-    const c = p.kind === 'component' && p.componentId ? COMPONENT_BY_ID[p.componentId] : undefined;
-
-    return c?.group === 'Servos' || !!c?.actuator;
-  });
-}
+export const servoParts = (parts: ScenePart[]): ScenePart[] => parts.filter(drivesJoint);
 
 const actuatorFor = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVariant);
 
@@ -51,13 +44,10 @@ function sourceRank(ctx: CheckContext, source: PowerSource): number {
 }
 
 export function servoSource(ctx: CheckContext): PowerSource | undefined {
-  const tether = tetherSource(ctx);
-
-  if (tether) return tether;
-
   const ranked = findPowerSources(ctx).map((source) => ({ source, rank: sourceRank(ctx, source) }));
+  const best = ranked.sort((x, y) => x.rank - y.rank || x.source.name.localeCompare(y.source.name))[0]?.source;
 
-  return ranked.sort((x, y) => x.rank - y.rank || x.source.name.localeCompare(y.source.name))[0]?.source;
+  return best ?? tetherSource(ctx);
 }
 
 export function servoSupplyVolts(ctx: CheckContext): number | undefined {
@@ -231,7 +221,7 @@ export function powerRows(ctx: CheckContext): CheckRow[] {
 
   const source = servoSource(ctx);
 
-  if (!source) return [...rows, { check: 'Battery', status: 'fail', detail: NO_POWER }];
+  if (!source) return rows;
 
   const regulator = regulatorRow(ctx, source);
 

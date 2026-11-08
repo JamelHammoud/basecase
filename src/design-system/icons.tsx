@@ -70,15 +70,29 @@ export const LibraryIcon: React.FC<GlyphProps> = ({ filled, className }) => (
   </Glyph>
 );
 
-const FLAG_POLE = 'M5 21.75V3';
-const FLAG_CLOTH = 'M5 4.25c2.33-1.5 4.67-1.5 7 0s4.67 1.5 7 0v9.5c-2.33 1.5-4.67 1.5-7 0s-4.67-1.5-7 0z';
+const CUBE =
+  'M10.77 2.67Q12 2 13.23 2.67L19.77 6.28Q21 6.95 21 8.35L21 15.9Q21 17.3 19.77 17.97L13.23 21.58Q12 22.25 10.77 21.58L4.23 17.97Q3 17.3 3 15.9L3 8.35Q3 6.95 4.23 6.28Z';
+const CUBE_EDGES = 'M3.31 7.13L12 11.9L20.69 7.13M12 11.9V21.91';
+const CUBE_CUTS = 'M-1.5 4.49L12 11.9L25.5 4.49M12 11.9V26';
 
-export const CasesIcon: React.FC<GlyphProps> = ({ filled, className }) => (
-  <Glyph className={className}>
-    <path d={FLAG_POLE} />
-    <path d={FLAG_CLOTH} fill={filled ? 'currentColor' : 'none'} />
-  </Glyph>
-);
+export const CasesIcon: React.FC<GlyphProps> = ({ filled, className }) => {
+  const mask = useId();
+
+  return (
+    <Glyph className={className}>
+      {filled ? (
+        <>
+          <Knockout id={mask}>
+            <path d={CUBE_CUTS} />
+          </Knockout>
+          <path d={CUBE} fill="currentColor" mask={`url(#${mask})`} />
+        </>
+      ) : (
+        <path d={CUBE + CUBE_EDGES} />
+      )}
+    </Glyph>
+  );
+};
 
 const FLOW_BOXES =
   'M10 2h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z' +

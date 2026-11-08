@@ -3,7 +3,7 @@ import type { TraceEvent } from '../src/routines/scenarioTypes';
 import type { Routine } from '../src/routines/schema';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
-import { openApp, partCount, type App } from './harness';
+import { openApp, openPlayTab, partCount, type App } from './harness';
 
 let app: App;
 
@@ -54,7 +54,7 @@ describe('Routines by hand', () => {
     const { page } = app;
 
     await loadRover();
-    await page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Routines"]')).first().click();
+    await openPlayTab(page, 'Routines');
     await page.locator(visible('button'), { hasText: 'New Routine' }).first().click();
     await expect.poll(async () => (await routineState()).routine?.requires).toEqual(['wheels']);
 

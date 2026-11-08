@@ -118,7 +118,7 @@ export function teachText(model: SimModel): string {
   if (kitEntries(model).length)
     return 'Train a walking skill first: train_skill kit "walk" (the Motor Kit’s velocity tracking), then call start_drive again: it drives through that skill.';
 
-  return 'Train a walking skill first: draft_skill (a velocity goal) and train_skill, then call start_drive again: it drives through that skill.';
+  return 'Train a skill that moves it first: draft_skill (a velocity goal) and train_skill, then call start_drive again: it drives through that skill.';
 }
 
 const NOTHING_MOVES =

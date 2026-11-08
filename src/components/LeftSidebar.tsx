@@ -10,18 +10,18 @@ import { RoutinesPanel, type RoutinesPanelProps } from './routines/RoutinesPanel
 import { ObjectsPanel } from './objects/ObjectsPanel';
 import { OperatePanel, type OperatePanelProps } from './operate/OperatePanel';
 import { PartsPanel } from './PartsPanel';
+import { isPlayTab } from './playViews';
+import { PlayNoRobot } from './PlayNoRobot';
+import { PlayTabs } from './PlayTabs';
 import { RobotsPanel } from './RobotsPanel';
 
 export type LeftTab = 'layers' | 'parts' | 'robots' | 'objects' | 'cases' | 'routines' | 'operate' | 'library';
 
-const VIEW_TITLES: Record<LeftTab, string> = {
+const VIEW_TITLES: Record<Exclude<LeftTab, 'cases' | 'routines' | 'operate'>, string> = {
   layers: 'Layers',
   parts: 'Parts',
   robots: 'Robots',
   objects: 'Objects',
-  cases: 'Cases',
-  routines: 'Routines',
-  operate: 'Operate',
   library: 'Library',
 };
 
@@ -68,6 +68,8 @@ const useVisited = (tab: LeftTab) => {
 export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
   const { open, width, tab } = props;
   const visited = useVisited(tab);
+  const noRobot = isPlayTab(tab) && !props.cases.cases.hasRobot;
+  const playing = noRobot ? 'parts' : tab;
 
   return (
     <aside
@@ -79,8 +81,19 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
     >
       {open && props.edge}
       <div className="sidebar-surface h-full flex flex-col overflow-hidden rounded-[12px]" style={{ width }}>
-        <div className="h-[44px] shrink-0 flex items-center justify-between pl-[12px] pr-[8px]">
-          <h2 className="text-[15px] font-semibold text-white/90 tracking-[-0.01em]">{VIEW_TITLES[tab]}</h2>
+        <div
+          className={`h-[44px] shrink-0 flex items-center justify-between pr-[8px] ${isPlayTab(tab) ? 'pl-[8px]' : 'pl-[12px]'}`}
+        >
+          {isPlayTab(tab) ? (
+            <PlayTabs
+              tab={tab}
+              onChange={props.onTabChange}
+              cases={props.cases.cases}
+              routines={props.routines.routines}
+            />
+          ) : (
+            <h2 className="text-[15px] font-semibold text-white/90 tracking-[-0.01em]">{VIEW_TITLES[tab]}</h2>
+          )}
           {tab === 'robots' && (
             <IconButton
               icon={<PlusIcon className="w-4 h-4" />}
@@ -104,13 +117,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
           <View tab="objects" current={tab} visited={visited}>
             <ObjectsPanel onInsert={props.onInsertSimReady} />
           </View>
-          <View tab="cases" current={tab} visited={visited}>
+          {noRobot && <PlayNoRobot onBrowseRobots={props.cases.onBrowseRobots} />}
+          <View tab="cases" current={playing} visited={visited}>
             <CasesPanel {...props.cases} />
           </View>
-          <View tab="routines" current={tab} visited={visited}>
+          <View tab="routines" current={playing} visited={visited}>
             <RoutinesPanel {...props.routines} />
           </View>
-          <View tab="operate" current={tab} visited={visited}>
+          <View tab="operate" current={playing} visited={visited}>
             <OperatePanel {...props.operate} />
           </View>
           <View tab="library" current={tab} visited={visited}>

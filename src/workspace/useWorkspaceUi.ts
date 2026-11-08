@@ -1,5 +1,6 @@
 import { useRef, useState, type RefObject } from 'react';
 import type { LeftTab } from '../components/LeftSidebar';
+import { isPlayTab } from '../components/playViews';
 import { LAYOUT } from '../design-system';
 import type { CameraPreset } from '../types/robotics';
 import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
@@ -61,7 +62,7 @@ function usePanelToggles({ studio, tool }: WorkspaceCore) {
     toggleReferenceImages: () => setShowReferenceImages((v) => !v),
     toggleTrackpad: () => setTrackpadMode((m) => NEXT_SCROLL_MODE[m]),
     pickLeftView: (view: LeftTab) => {
-      if (isLeftOpen && leftTab === view) {
+      if (isLeftOpen && (leftTab === view || (isPlayTab(leftTab) && isPlayTab(view)))) {
         setIsLeftOpen(false);
 
         return;

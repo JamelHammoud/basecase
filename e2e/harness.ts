@@ -106,3 +106,22 @@ export async function openApp(lists: Record<string, unknown> = {}): Promise<App>
 
 export const partCount = (page: Page) =>
   page.evaluate(() => (window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts().length);
+
+const shown = (selector: string) => `${selector}:not([inert] *):visible`;
+
+export type PlayTabName = 'Cases' | 'Routines' | 'Operate';
+
+export const PLAY_RAIL = 'nav[aria-label="Sidebar views"] button[aria-label="Play"]';
+
+export const playTab = (name: PlayTabName) => `[role="tablist"][aria-label="Play"] [role="tab"]:text-is("${name}")`;
+
+export async function openPlayTab(page: Page, name: PlayTabName) {
+  const rail = page.locator(shown(PLAY_RAIL)).first();
+
+  if ((await rail.getAttribute('aria-pressed')) !== 'true') await rail.click();
+
+  await page
+    .locator(shown(playTab(name)))
+    .first()
+    .click();
+}

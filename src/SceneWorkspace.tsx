@@ -35,6 +35,7 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
       <ViewRail
         isLeftOpen={studio.isLeftOpen}
         leftTab={tool.leftTab}
+        playTab={tool.playTab}
         onPickView={ui.pickLeftView}
         onOpenSettings={() => openSettings()}
       />

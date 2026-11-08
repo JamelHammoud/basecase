@@ -9,10 +9,20 @@ export interface PowerSource {
   tetherA?: number;
 }
 
-export function tetherSource(ctx: Pick<CheckContext, 'project'>): PowerSource | undefined {
-  const tether = ctx.project.tether;
+type PowerContext = Pick<CheckContext, 'parts' | 'project'>;
 
-  if (!tether || tether.volts <= 0 || tether.amps <= 0) return undefined;
+export function sceneTether(ctx: PowerContext): Tether | undefined {
+  if (!ctx.parts.some(drivesJoint) || findPowerSources(ctx).length) return undefined;
+
+  const set = ctx.project.tether;
+
+  return set && set.volts > 0 && set.amps > 0 ? set : suggestedTether(ctx.parts);
+}
+
+export function tetherSource(ctx: PowerContext): PowerSource | undefined {
+  const tether = sceneTether(ctx);
+
+  if (!tether) return undefined;
 
   return {
     name: `The ${tether.volts} V ${tether.amps} A tether`,
@@ -31,6 +41,12 @@ const componentOf = (p: ScenePart): ComponentInfo | undefined =>
   p.kind === 'component' && p.componentId ? COMPONENT_BY_ID[p.componentId] : undefined;
 
 const isCell = (c: ComponentInfo) => !!c.battery?.cell;
+
+export const drivesJoint = (p: ScenePart) => {
+  const c = componentOf(p);
+
+  return c?.group === 'Servos' || !!c?.actuator;
+};
 
 function holderPack(comps: ComponentInfo[]): PowerSource | undefined {
   const holder = comps.find((c) => c.holder);
@@ -67,7 +83,7 @@ function componentSources(parts: ScenePart[]): PowerSource[] {
   return cell ? [{ name: cell.name, battery: cell.battery! }] : [];
 }
 
-function supplySources(ctx: CheckContext): PowerSource[] {
+function supplySources(ctx: PowerContext): PowerSource[] {
   const keys = [
     ...ctx.parts.filter((p) => p.supplyId).map((p) => p.supplyId!),
     ...(ctx.project.extras ?? []).filter((x) => x.key.startsWith('supply:')).map((x) => x.key.slice(7)),
@@ -80,12 +96,12 @@ function supplySources(ctx: CheckContext): PowerSource[] {
   });
 }
 
-export const findPowerSources = (ctx: CheckContext): PowerSource[] => [
+export const findPowerSources = (ctx: PowerContext): PowerSource[] => [
   ...componentSources(ctx.parts),
   ...supplySources(ctx),
 ];
 
-export const findPowerSource = (ctx: CheckContext): PowerSource | undefined => findPowerSources(ctx)[0];
+export const findPowerSource = (ctx: PowerContext): PowerSource | undefined => findPowerSources(ctx)[0];
 
 export function sceneRegulators(parts: ScenePart[]): SceneRegulator[] {
   return parts.flatMap((p) => {

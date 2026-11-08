@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Button,
-  CasesIcon,
-  ContextMenu,
-  EmptyState,
-  PlusIcon,
-  RobotsIcon,
-  type ContextMenuEntry,
-} from '../../design-system';
+import { Button, ContextMenu, PlusIcon, type ContextMenuEntry } from '../../design-system';
 import type { Cases } from '../../workspace/useCases';
 import { CaseRow } from './CaseRow';
 import { NewCaseCard } from './NewCaseCard';
@@ -55,27 +47,8 @@ function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseR
   );
 }
 
-export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onBrowseRobots, onDescribe }) => {
+export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onDescribe }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
-
-  if (!cases.hasRobot)
-    return (
-      <EmptyState
-        icon={<CasesIcon className="w-5 h-5" />}
-        title="No robot"
-        action={
-          <Button
-            variant="primary"
-            size="sm"
-            icon={<RobotsIcon className="w-4 h-4" />}
-            title="Add a robot to try Cases"
-            onClick={onBrowseRobots}
-          >
-            Browse Robots
-          </Button>
-        }
-      />
-    );
 
   const open = (id: string) => {
     cases.open(id);

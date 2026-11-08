@@ -2,13 +2,14 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import loadMujoco from '@mujoco/mujoco';
+import { forgeMujocoVersion } from '../forge/mujocoVersion.mjs';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 const trainerDir = path.join(root, 'electron', 'trainer');
 const npmVersion = JSON.parse(
   fs.readFileSync(path.join(root, 'node_modules', '@mujoco', 'mujoco', 'package.json'), 'utf8'),
 ).version;
-const pyPin = /"mujoco==([^"]+)"/.exec(fs.readFileSync(path.join(trainerDir, 'pyproject.toml'), 'utf8'))?.[1];
+const pyPin = /"mujoco-core==([^"]+)"/.exec(fs.readFileSync(path.join(trainerDir, 'pyproject.toml'), 'utf8'))?.[1];
 
 const XML = `<mujoco>
   <compiler angle="radian" inertiafromgeom="true" boundmass="0.0005" boundinertia="1e-8"/>
@@ -53,8 +54,15 @@ if (wasmVersion !== npmVersion) fail(`The WASM engine reports ${wasmVersion} but
 
 if (pyPin !== npmVersion)
   fail(
-    `The trainer pins mujoco==${pyPin} but the app uses ${npmVersion}. Run node tools/sim/update-mujoco.mjs ${npmVersion}.`,
+    `The trainer pins mujoco-core==${pyPin} but the app uses ${npmVersion}. Run node tools/sim/update-mujoco.mjs ${npmVersion}.`,
   );
+
+if (forgeMujocoVersion() !== npmVersion)
+  fail(
+    `Forge pins MuJoCo ${forgeMujocoVersion()} but the app uses ${npmVersion}. Run node tools/sim/update-mujoco.mjs ${npmVersion}.`,
+  );
+
+console.log(`✓ The trainer and Forge pin MuJoCo ${npmVersion} too`);
 
 function checkPython() {
   const py = `

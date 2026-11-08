@@ -3,6 +3,7 @@ mod bench;
 mod drive;
 mod identity;
 mod meter;
+mod metal_runs;
 mod parity;
 mod reference;
 

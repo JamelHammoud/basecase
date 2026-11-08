@@ -9,6 +9,7 @@ pub mod inertia;
 pub mod integrate;
 pub mod kinematics;
 pub mod lanes;
+pub mod metal;
 pub mod newton;
 mod params;
 mod plan;
@@ -29,6 +30,7 @@ pub mod velocity;
 mod world_params;
 
 pub use block::Block;
+pub use metal::MetalBatch;
 pub use plan::Plan;
 pub use row_batch::{Offsets, RowBatch, EXPANDABLE};
 pub use sim::{locate, Sim, Snapshot};

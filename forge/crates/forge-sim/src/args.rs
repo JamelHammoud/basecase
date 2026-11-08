@@ -11,6 +11,7 @@ pub enum Mode {
 pub enum Backend {
     Simd,
     Mujoco,
+    Metal,
 }
 
 #[derive(Clone, Debug)]
@@ -24,7 +25,7 @@ pub struct Args {
     pub threads: Option<usize>,
 }
 
-const USAGE: &str = "Usage: forge-sim --xml <model.xml> [--steps N] [--backend simd|mujoco] \
+const USAGE: &str = "Usage: forge-sim --xml <model.xml> [--steps N] [--backend simd|mujoco|metal] \
                      [--batch-identity] [--bench --envs N --seconds S] [--threads N]";
 
 fn value<T: std::str::FromStr>(it: &mut impl Iterator<Item = String>, flag: &str) -> Result<T, String> {
@@ -72,6 +73,7 @@ fn backend(name: &str) -> Result<Backend, String> {
     match name {
         "simd" => Ok(Backend::Simd),
         "mujoco" => Ok(Backend::Mujoco),
-        other => Err(format!("Unknown backend {other}: use simd or mujoco")),
+        "metal" => Ok(Backend::Metal),
+        other => Err(format!("Unknown backend {other}: use simd, mujoco or metal")),
     }
 }

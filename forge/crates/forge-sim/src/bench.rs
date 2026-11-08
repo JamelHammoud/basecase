@@ -3,7 +3,7 @@ use crate::drive::{start_pose, Waves, DECIMATION, EPISODE_ROUNDS};
 use crate::meter::{Meter, Windows};
 use forge_mujoco::{Batch, Data, Model};
 use forge_sim::lanes::LANES;
-use forge_sim::{Plan, RowBatch};
+use forge_sim::{MetalBatch, Plan, RowBatch};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -11,6 +11,10 @@ trait Stepper: Send {
     fn row(&mut self, sim: usize) -> &mut [f64];
     fn advance(&mut self, nstep: usize) -> usize;
     fn contacts(&self, sim: usize) -> Option<f64>;
+
+    fn gpu_seconds(&self) -> Option<f64> {
+        None
+    }
 }
 
 impl Stepper for Batch {
@@ -38,6 +42,24 @@ impl Stepper for RowBatch {
 
     fn contacts(&self, sim: usize) -> Option<f64> {
         Some(RowBatch::contacts(self, sim))
+    }
+}
+
+impl Stepper for MetalBatch {
+    fn row(&mut self, sim: usize) -> &mut [f64] {
+        MetalBatch::row(self, sim)
+    }
+
+    fn advance(&mut self, nstep: usize) -> usize {
+        self.step(nstep)
+    }
+
+    fn contacts(&self, sim: usize) -> Option<f64> {
+        Some(MetalBatch::contacts(self, sim))
+    }
+
+    fn gpu_seconds(&self) -> Option<f64> {
+        Some(MetalBatch::gpu_seconds(self))
     }
 }
 
@@ -86,7 +108,13 @@ fn round(stepper: &mut dyn Stepper, work: &Work, waves: &mut Waves, r: usize) ->
     Ok((0..work.starts.len()).filter_map(|w| stepper.contacts(w)).sum())
 }
 
-fn measure(stepper: &mut dyn Stepper, work: &Work, seconds: f64) -> Result<(Windows, Option<f64>), String> {
+struct Measured {
+    windows: Windows,
+    contacts: Option<f64>,
+    gpu_share: Option<f64>,
+}
+
+fn measure(stepper: &mut dyn Stepper, work: &Work, seconds: f64) -> Result<Measured, String> {
     let meter = Meter::default();
     let stop = AtomicBool::new(false);
     let envs = work.starts.len();
@@ -115,7 +143,11 @@ fn measure(stepper: &mut dyn Stepper, work: &Work, seconds: f64) -> Result<(Wind
     });
     let contacts = outcome?;
 
-    Ok((windows, (contacts > 0.0).then_some(contacts)))
+    Ok(Measured {
+        gpu_share: stepper.gpu_seconds().map(|g| g / seconds),
+        windows,
+        contacts: (contacts > 0.0).then_some(contacts),
+    })
 }
 
 pub fn run(args: &Args) -> Result<Value, String> {
@@ -130,24 +162,26 @@ pub fn run(args: &Args) -> Result<Value, String> {
         starts: &starts,
         ctrl_at: Batch::new(&model, 1, 1)?.layout().ctrl,
     };
-    let (windows, contacts) = match args.backend {
+    let m = match args.backend {
         Backend::Simd => measure(
             &mut RowBatch::new(&model, kernel, args.envs, threads)?,
             &work,
             args.seconds,
         )?,
         Backend::Mujoco => measure(&mut Batch::new(&model, args.envs, threads)?, &work, args.seconds)?,
+        Backend::Metal => measure(&mut MetalBatch::new(&model, kernel, args.envs)?, &work, args.seconds)?,
     };
 
     Ok(json!({
-        "backend": match args.backend { Backend::Simd => "simd", Backend::Mujoco => "mujoco" },
+        "backend": match args.backend { Backend::Simd => "simd", Backend::Mujoco => "mujoco", Backend::Metal => "metal" },
         "envs": args.envs,
         "seconds": args.seconds,
         "threads": threads,
         "lanes": LANES,
-        "contactsPerWorld": contacts,
-        "substepsPerS": windows.mean,
-        "sustainedMin": windows.min,
-        "windows": windows.rates,
+        "contactsPerWorld": m.contacts,
+        "gpuShare": m.gpu_share,
+        "substepsPerS": m.windows.mean,
+        "sustainedMin": m.windows.min,
+        "windows": m.windows.rates,
     }))
 }

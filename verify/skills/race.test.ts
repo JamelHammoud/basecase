@@ -72,7 +72,7 @@ async function cheaperAlternative(options: { mj: MainModule; task: RaceTask; cho
   for (const method of ALTERNATIVES.filter((m) => m !== chosen)) {
     const forge = forgeRunner(path.join(RACE_OUT, task.id, `alt-${method}`));
     const store = skillStore(path.join(RACE_OUT, task.id, `alt-${method}`, 'store'));
-    const signal = AbortSignal.timeout(capS * 1000);
+    const signal = AbortSignal.timeout(Math.round(capS * 1000));
     const run = await timed(() =>
       capped(() => solveWith({ mj, task, forge: forge.run, save: store.save, method, signal }), capS),
     );

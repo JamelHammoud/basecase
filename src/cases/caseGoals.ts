@@ -1,5 +1,6 @@
 import type { V3 } from '../utils/kinematics';
-import type { Contract, ContractFormula, ContractState } from './contract';
+import type { Contract } from './contract';
+import type { Formula as ContractFormula, State as ContractState } from '../skills/contract';
 import type { RobotFacts } from './robotFit';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 

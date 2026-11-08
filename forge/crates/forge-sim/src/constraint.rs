@@ -157,20 +157,19 @@ fn contact_rows(plan: &Plan, b: &mut Block, s: usize, jp: &mut [V3]) {
         aref_pos: imp * slot.imp.k * (dist - margin),
     };
 
+    let axes = [0, 3, 6].map(|k| [frame[k], frame[k + 1], frame[k + 2]]);
+
+    for p in jp[..n].iter_mut() {
+        *p = axes.map(|axis| dot3(&axis, p));
+    }
+
     for row in 0..slot.rows {
         let adr = plan.row_jadr[slot.row + row];
+        let dim = 1 + row / 2;
+        let signed = if row % 2 == 0 { slide } else { -slide };
 
         for (t, p) in jp[..n].iter().enumerate() {
-            let normal = dot3(&[frame[0], frame[1], frame[2]], p);
-            let value = if slot.rows == 1 {
-                normal
-            } else {
-                let dim = row / 2;
-                let axis = [frame[3 + 3 * dim], frame[4 + 3 * dim], frame[5 + 3 * dim]];
-                let signed = if row % 2 == 0 { slide } else { -slide };
-
-                normal + dot3(&axis, p) * signed
-            };
+            let value = if slot.rows == 1 { p[0] } else { p[0] + p[dim] * signed };
 
             b.jac[adr + t] = active.mask(value);
         }

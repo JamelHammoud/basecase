@@ -156,7 +156,7 @@ impl RowBatch {
             .map(|r| r.get_mut().map_or(0.0, |r| r.contacts * 1000.0 + r.work))
             .collect();
 
-        self.order.sort_by(|a, b| keys[*a].total_cmp(&keys[*b]));
+        self.order.sort_by(|a, b| keys[*b].total_cmp(&keys[*a]));
 
         for (unit, sims) in self.units.iter_mut().zip(self.order.chunks(LANES)) {
             let unit = unit.get_mut().expect("unit lock");

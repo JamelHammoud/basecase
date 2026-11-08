@@ -16,6 +16,7 @@ import {
   type SimModel,
   type SimRobot,
 } from './mjcfTypes';
+import { adoptEmbeddedParts, isSolidPart } from './mjcfEmbedded';
 import { emitWorld } from './mjcfWorld';
 import { classifyRobot, isWheelJoint } from './morphology';
 
@@ -58,8 +59,6 @@ interface BodySpec {
   inner: string[];
   indent: string;
 }
-
-const isSolidPart = (p: ScenePart) => p.visible && p.role === 'solid' && p.kind !== 'image_plane';
 
 function robotGrams(m: PartMass | undefined, measure: MeshMeasure | undefined): number {
   if (m) return m.grams;
@@ -355,7 +354,8 @@ ${st.actuatorXml.join('\n')}
 `;
 }
 
-export function buildMjcf(input: MjcfInput): SimModel {
+export function buildMjcf(given: MjcfInput): SimModel {
+  const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts) };
   const { parts, rig, project } = input;
   const st: BuildState = {
     input,

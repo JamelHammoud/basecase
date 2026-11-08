@@ -1114,6 +1114,166 @@
       "commit": "d02595d",
       "at": "2026-11-08T08:38:18.115Z",
       "manifest": "clean"
+    },
+    "s3a-motor-kit": {
+      "id": "s3a-motor-kit",
+      "title": "Stage 3a: Motor Kit, biped steering and the solver race",
+      "stage": 3,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "Arena and the contract wrapper are the ones this gate was written against",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        },
+        {
+          "name": "forge-train builds",
+          "ok": true,
+          "detail": "3.6 s",
+          "metrics": {},
+          "seconds": 3.583
+        },
+        {
+          "name": "Motor Kit: quad-servo learns Stand, Velocity tracking, Get-up and Settle through Forge; each passes Arena; the weak quad is refused",
+          "ok": true,
+          "detail": "2000.6 s",
+          "metrics": {
+            "loadBefore": 2.310546875,
+            "loadAfter": 6.0615234375
+          },
+          "seconds": 2000.615
+        },
+        {
+          "name": "Motor Kit: hexapod learns Stand and Velocity tracking through Forge; each passes Arena",
+          "ok": true,
+          "detail": "995.4 s",
+          "metrics": {
+            "loadBefore": 6.0615234375,
+            "loadAfter": 4.24755859375
+          },
+          "seconds": 995.371
+        },
+        {
+          "name": "Motor Kit: biped-servo learns Stand and Velocity tracking through Forge; each passes Arena",
+          "ok": true,
+          "detail": "2980.3 s",
+          "metrics": {
+            "loadBefore": 4.24755859375,
+            "loadAfter": 4.46142578125
+          },
+          "seconds": 2980.301
+        },
+        {
+          "name": "Train here, judge there: every Kit policy acts as Forge wrote it and passes a clean WASM replay",
+          "ok": true,
+          "detail": "2.0 s",
+          "metrics": {},
+          "seconds": 1.99
+        },
+        {
+          "name": "Biped drive: forward, left and right on its Kit skill, with travel, heading of the commanded sign and no fall",
+          "ok": true,
+          "detail": "0.5 s",
+          "metrics": {},
+          "seconds": 0.541
+        },
+        {
+          "name": "Solver race: three tasks pass Arena, record method and cost, and the router is within 2× of the cheapest",
+          "ok": true,
+          "detail": "169.5 s",
+          "metrics": {
+            "loadBefore": 4.46142578125,
+            "loadAfter": 7.6767578125
+          },
+          "seconds": 169.478
+        },
+        {
+          "name": "Freshness: a mass edit reruns Arena, a topology edit needs training, a colour edit stays fresh",
+          "ok": true,
+          "detail": "0.7 s",
+          "metrics": {},
+          "seconds": 0.684
+        },
+        {
+          "name": "Kit retraining debounces, latest design wins, and waits behind user training",
+          "ok": true,
+          "detail": "0.3 s",
+          "metrics": {},
+          "seconds": 0.324
+        },
+        {
+          "name": "Cases judge with the one Rust contract, not a TypeScript copy",
+          "ok": true,
+          "detail": "0.6 s",
+          "metrics": {},
+          "seconds": 0.553
+        },
+        {
+          "name": "Skills, Cases and sim unit tests pass",
+          "ok": true,
+          "detail": "1.7 s",
+          "metrics": {},
+          "seconds": 1.727
+        },
+        {
+          "name": "Types hold",
+          "ok": true,
+          "detail": "5.0 s",
+          "metrics": {},
+          "seconds": 5.007
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a limp quad fails Stand",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 6.249
+        },
+        {
+          "name": "a zero policy fails Velocity tracking",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 9.681
+        },
+        {
+          "name": "a reward-hacked candidate is rejected by the race",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 314.514
+        },
+        {
+          "name": "must-fail-weak-quad is refused",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.675
+        },
+        {
+          "name": "a skill moved to another fixture needs training",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.43
+        },
+        {
+          "name": "a biped that only walks straight fails steering",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.572
+        }
+      ],
+      "commit": "516a860",
+      "at": "2026-11-08T15:18:05.607Z",
+      "manifest": "clean"
     }
   }
 }

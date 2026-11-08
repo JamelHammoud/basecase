@@ -24,6 +24,7 @@ export interface DevActions {
   select: (ids: string[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
+  routineState: () => unknown;
 }
 
 export interface DevStudioDeps {
@@ -136,5 +137,6 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
     simState: () => devRef.current.simState(),
+    routineState: () => devRef.current.routineState(),
   };
 }

@@ -31,6 +31,7 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
+import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
 
 export interface CommandInputs {
@@ -402,4 +403,5 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...poseCommands(inputs),
   ...robotCommands(inputs),
   ...caseCommands(inputs),
+  ...routineCommands(inputs),
 ];

@@ -35,9 +35,12 @@ function unknownTargets(plan: Plan, scenario: Scenario): string[] {
   return scenario.faults.filter((f) => !names.has(f.node)).map((f) => `No node called ${f.node} to fault`);
 }
 
-class ControlTier {
+export type ControlListener = (skills: { body: string | null; head: string | null }, t: number) => void;
+
+export class ControlTier {
   ticks = 0;
   maxGapMs = 0;
+  onChange: ControlListener | null = null;
   private last = -1;
   private body = -1;
   private head = -1;
@@ -62,14 +65,12 @@ class ControlTier {
     this.ticks += 1;
 
     if (read.body !== this.body || read.head !== this.head) {
+      const skills = { body: this.decoder.skill(read.body), head: this.decoder.skill(read.head) };
+
       this.body = read.body;
       this.head = read.head;
-      this.host.record({
-        t,
-        kind: 'control',
-        skill: this.decoder.skill(read.body),
-        head: this.decoder.skill(read.head),
-      });
+      this.host.record({ t, kind: 'control', skill: skills.body, head: skills.head });
+      this.onChange?.(skills, t);
     }
 
     if (read.tripped && !this.tripped) this.host.record({ t, kind: 'tripped' });
@@ -91,15 +92,30 @@ function schedule(plan: Plan, scenario: Scenario, run: CoordinatorRun, clock: Vi
   return { host, control };
 }
 
-export async function runScenario(plan: Plan, scenario: Scenario): Promise<ScenarioResult> {
+export interface ScenarioRig {
+  plan: Plan;
+  scenario: Scenario;
+  clock: VirtualClock;
+  host: ScenarioHost;
+  control: ControlTier;
+}
+
+export async function startScenario(plan: Plan, scenario: Scenario): Promise<ScenarioRig> {
   const run = await CoordinatorRun.start(jsonOf(plan));
   const clock = new VirtualClock();
-  const { host, control } = schedule(plan, scenario, run, clock);
 
-  clock.runUntil(scenario.seconds * 1000);
+  return { plan, scenario, clock, ...schedule(plan, scenario, run, clock) };
+}
 
+export function scenarioResult(rig: ScenarioRig, extraFailures: string[] = []): ScenarioResult {
+  const { plan, scenario, host, control } = rig;
   const record = { scenario, trace: host.trace, said: host.said, maxControlGapMs: control.maxGapMs };
-  const failures = [...unknownTargets(plan, scenario), ...invariants(record), ...checkExpectations(record)];
+  const failures = [
+    ...unknownTargets(plan, scenario),
+    ...invariants(record),
+    ...checkExpectations(record),
+    ...extraFailures,
+  ];
 
   return {
     passed: failures.length === 0,
@@ -109,4 +125,12 @@ export async function runScenario(plan: Plan, scenario: Scenario): Promise<Scena
     controlTicks: control.ticks,
     failures,
   };
+}
+
+export async function runScenario(plan: Plan, scenario: Scenario): Promise<ScenarioResult> {
+  const rig = await startScenario(plan, scenario);
+
+  rig.clock.runUntil(scenario.seconds * 1000);
+
+  return scenarioResult(rig);
 }

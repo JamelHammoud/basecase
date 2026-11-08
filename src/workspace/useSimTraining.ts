@@ -3,22 +3,23 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { confirmAction } from '../design-system/confirmStore';
 import { useSimulation } from '../sim/useSimulation';
 import { useTraining } from '../sim/useTraining';
-import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { Posing } from '../utils/usePosing';
-import type { Setter } from './types';
+import type { ShowToast } from './types';
 import { useCases } from './useCases';
+import { useRoutines } from './useRoutines';
+import type { SceneDocument } from './useSceneDocument';
 
 interface SimTrainingOptions {
   workspaceId: string;
-  parts: ScenePart[];
-  project: ProjectSettings;
-  setProject: Setter<ProjectSettings>;
+  docs: SceneDocument;
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
+  showToast: ShowToast;
 }
 
-export function useSimTraining({ workspaceId, parts, project, setProject, posing, viewportRef }: SimTrainingOptions) {
+export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToast }: SimTrainingOptions) {
+  const { parts, project, setProject, commitParts, updateProjectNow } = docs;
   const sim = useSimulation({
     parts,
     project,
@@ -55,8 +56,9 @@ export function useSimTraining({ workspaceId, parts, project, setProject, posing
   };
 
   const cases = useCases({ parts, project, setProject, rig: posing.rig, sim });
+  const routines = useRoutines({ parts, project, sim, commitParts, updateProjectNow, showToast });
 
-  return { sim, training, policies, deletePolicy, cases };
+  return { sim, training, policies, deletePolicy, cases, routines };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

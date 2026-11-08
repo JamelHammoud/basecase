@@ -1,4 +1,4 @@
-import { findNode, SENSOR_FACTS } from './nodes';
+import { factNameOf, findNode, SENSOR_FACTS } from './nodes';
 import type { FactSource, PlanFact } from './planTypes';
 import type { Capability, Routine, RoutineError, SkillContract, Step } from './schema';
 import { childSequences } from './schema';
@@ -20,7 +20,7 @@ export interface FactInfo extends PlanFact {
 const DEFAULT_BASE: Record<Step['kind'], (step: Step) => string> = {
   do: (s) => (s as { skill: string }).skill,
   say: () => 'say',
-  infer: (s) => (s as { model: string }).model,
+  infer: (s) => factNameOf((s as { model: string }).model),
   ask: () => 'ask',
   if: () => 'if',
   wait: () => 'wait',

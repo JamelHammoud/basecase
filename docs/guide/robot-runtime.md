@@ -19,6 +19,7 @@ The daemon that owns motor writes, the servo emulators and the fault tests, in `
 | `servo-emu` | Byte-level firmware for the STS3215 (model 777) and XL330-M288 (model 1200): register maps, EEPROM and RAM, protections, return delay, status packets, sync read and write, broadcast, ping, the Dynamixel bus watchdog. Library plus the `servo-emu` binary |
 | `faultbox` | Seeded fault schedules wrapped around the in-process bus, a wire tap, and an independent decoder of every write on the wire |
 | `robot-daemon` | The 50 Hz control loop, safety layer, mode ladder, intent slots, policy worker and the JSON-lines interface. Library plus the `robot-daemon` binary |
+| `routine-soak` | The Routines soak harness (§8j): the native coordinator, the daemon's loop on the emulated bus and saturated workers. Binary only |
 | `transport-real` | The only crate that may name `serialport`. Not a default workspace member and not in the default dependency tree |
 
 `npm test` doesn't build `hw/`. The gate (`node verify/gatekeeper.mjs s5-emu-daemon`) runs `cargo test --release`, the SDK conformance script and the fault matrix.

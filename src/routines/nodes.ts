@@ -23,6 +23,22 @@ export const SENSOR_FACTS: Record<string, { type: NodeInput; capability: string 
   depth: { type: 'image', capability: 'depth' },
 };
 
+const FACT_NAMES: Record<string, string> = {
+  'person-detection': 'person',
+  'object-detection': 'objects',
+  'obstacle-near': 'obstacle',
+  'face-detection': 'faces',
+  'face-embedding': 'facePrint',
+  'face-recognition': 'recognize',
+  'wake-word': 'wakeWord',
+  'speech-in': 'heard',
+  'speech-in-small': 'heard',
+  'vision-llm': 'answer',
+  'cloud-llm': 'answer',
+};
+
+export const factNameOf = (model: string): string => FACT_NAMES[model] ?? model;
+
 export const MODEL_NODES: readonly ModelNode[] = [
   {
     id: 'person-detection',

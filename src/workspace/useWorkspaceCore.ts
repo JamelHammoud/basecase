@@ -85,7 +85,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     hasRig: posing.hasRig,
   });
 
-  const simTraining = useSimTraining({ workspaceId, parts, project, setProject: docs.setProject, posing, viewportRef });
+  const simTraining = useSimTraining({ workspaceId, docs, posing, viewportRef, showToast });
   const guide = useBuildGuide({
     sceneName: scene.sceneName,
     parts,
@@ -119,6 +119,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     resetDoc(next.parts || []);
     resetAnnotations(next.annotations || []);
     setSelectedIds([]);
+    tool.leaveSceneView();
 
     if (message) showToast(message);
   };

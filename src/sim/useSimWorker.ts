@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
+import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { Recording } from './recorder';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
@@ -20,6 +21,7 @@ export function useSimWorker(
   const [version, setVersion] = useState<string | null>(null);
   const lastUi = useRef(0);
   const frameHookRef = useRef<(() => void) | null>(null);
+  const routineHookRef = useRef<((update: LiveUpdate) => void) | null>(null);
   const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
 
@@ -34,6 +36,12 @@ export function useSimWorker(
         setStatus('ready');
         loadWaiter.current?.resolve();
         loadWaiter.current = null;
+
+        return;
+      }
+
+      if (msg.type === 'routine') {
+        routineHookRef.current?.(msg);
 
         return;
       }
@@ -99,6 +107,18 @@ export function useSimWorker(
     [],
   );
 
+  const startRoutine = useCallback(
+    (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => {
+      if (!modelRef.current || !workerRef.current) return false;
+
+      routineHookRef.current = onUpdate;
+      workerRef.current.postMessage({ type: 'routine', ...input } satisfies SimRequest);
+
+      return true;
+    },
+    [modelRef],
+  );
+
   const stopRecording = useCallback(
     () =>
       new Promise<Recording | null>((resolve) => {
@@ -129,5 +149,6 @@ export function useSimWorker(
     worker,
     load,
     frameHookRef,
+    startRoutine,
   };
 }

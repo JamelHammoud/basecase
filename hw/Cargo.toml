@@ -7,13 +7,16 @@ members = [
   "crates/faultbox",
   "crates/robot-daemon",
   "crates/transport-real",
+  "crates/routine-soak",
 ]
+exclude = ["coordinator"]
 default-members = [
   "crates/servo-wire",
   "crates/plant-bam",
   "crates/servo-emu",
   "crates/faultbox",
   "crates/robot-daemon",
+  "crates/routine-soak",
 ]
 
 [workspace.package]

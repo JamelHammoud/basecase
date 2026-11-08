@@ -37,6 +37,8 @@ import { fitView } from './agentFitView';
 import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
+import { ROUTINE_HANDLERS } from './agentRoutineRequests';
+import type { Routines } from './useRoutines';
 
 type Payload = Record<string, unknown>;
 
@@ -57,6 +59,7 @@ export interface RequestContext {
   applyOps: (ops: AgentOp[]) => Promise<string>;
   edits?: (owner: string) => string[] | null;
   buildGuide: () => Promise<GeneratedGuide | null>;
+  routines: Routines;
 }
 
 type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
@@ -295,6 +298,7 @@ const HANDLERS: Record<string, Handler> = {
   apply: applyWithCost,
   ...PORT_HANDLERS,
   ...PLAN_HANDLERS,
+  ...ROUTINE_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [
       kind,

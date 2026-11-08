@@ -42,6 +42,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
       };
     },
+    routineState: () => core.simTraining.routines.state(),
     guide: async () => {
       const made = await core.guide.generate();
 

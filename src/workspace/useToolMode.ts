@@ -20,6 +20,8 @@ interface ToolModeOptions {
   mark: { marking: boolean; setMarking: (on: boolean) => void };
 }
 
+const SCENE_VIEWS: ReadonlySet<LeftTab> = new Set(['cases', 'routines']);
+
 export function useToolMode({ setIsRightOpen, annotations, measure, mark }: ToolModeOptions) {
   const { setCommentMode, setDraft } = annotations;
   const { measuring, setMeasuring } = measure;
@@ -116,6 +118,7 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     toggleMarking,
     leftTab,
     setLeftTab,
+    leaveSceneView: () => setLeftTab((tab) => (SCENE_VIEWS.has(tab) ? 'parts' : tab)),
     rightTab,
     setRightTab,
     openRightTab,

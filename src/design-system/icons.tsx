@@ -80,6 +80,19 @@ export const CasesIcon: React.FC<GlyphProps> = ({ filled, className }) => (
   </Glyph>
 );
 
+const FLOW_BOXES =
+  'M10 2h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z' +
+  'M4 15h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z' +
+  'M16 15h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z';
+const FLOW_LINKS = 'M12 9v3M6 15v-1a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1';
+
+export const RoutinesIcon: React.FC<GlyphProps> = ({ filled, className }) => (
+  <Glyph className={className}>
+    <path d={FLOW_LINKS} />
+    <path d={FLOW_BOXES} fill={filled ? 'currentColor' : 'none'} />
+  </Glyph>
+);
+
 const ROBOT_BALL = 'M1.75 12a10.25 10.25 0 1 0 20.5 0a10.25 10.25 0 1 0 -20.5 0';
 const ROBOT_EYES = 'M9.25 9.25v3.75M14.75 9.25v3.75';
 const ROBOT_EYE_HOLES = 'M9.25 8.85v4.55M14.75 8.85v4.55';

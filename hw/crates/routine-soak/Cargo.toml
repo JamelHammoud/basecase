@@ -1,0 +1,19 @@
+[package]
+name = "routine-soak"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "routine-soak"
+path = "src/main.rs"
+
+[dependencies]
+basecase-coordinator = { path = "../../coordinator" }
+robot-daemon = { path = "../robot-daemon" }
+servo-wire = { path = "../servo-wire" }
+serde_json = "1"
+thread-priority = "3"
+
+[lints]
+workspace = true

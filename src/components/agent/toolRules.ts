@@ -14,6 +14,7 @@ import {
   RobotsIcon,
   RunIcon,
   CasesIcon,
+  RoutinesIcon,
   SearchIcon,
   ShapeIcon,
   ToolIcon as ToolPromptIcon,
@@ -361,6 +362,9 @@ const ROBOT_RULES: ToolRule[] = [
       detail: optional(input.live ? 'On the canvas' : ''),
     }),
   },
+  plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
+  plainRule(['test_routine'], CheckIcon, ['Testing the Routine', 'Tested the Routine']),
+  plainRule(['run_routine'], RunIcon, ['Running the Routine', 'Ran the Routine']),
   {
     keys: ['train_policy'],
     icon: TrainIcon,

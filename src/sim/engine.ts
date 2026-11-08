@@ -10,7 +10,7 @@ import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
   | { kind: 'animation'; animation: RobotAnimation }
-  | { kind: 'policy'; policy: PolicySpec; robot: string }
+  | { kind: 'policy'; policy: PolicySpec; robot: string; hold?: Record<string, number> }
   | { kind: 'drive'; setup: DriveSetup }
   | { kind: 'limp' };
 
@@ -46,7 +46,7 @@ function controlValues(c: Controller, time: number): Record<string, number> | un
 
   if (c.kind === 'animation') return sampleAnimation(c.animation, time).values;
 
-  return undefined;
+  return c.kind === 'policy' ? c.hold : undefined;
 }
 
 export class SimEngine {

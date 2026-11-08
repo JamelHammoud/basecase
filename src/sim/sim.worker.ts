@@ -7,6 +7,7 @@ import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
 import { demandedTorques, jointForces, limitForces } from './simForces';
+import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -33,9 +34,11 @@ export type SimRequest =
       trace?: boolean;
       commands?: Array<{ at: number; command: DriveCommand }>;
     }
+  | ({ type: 'routine' } & LiveRoutineInput)
   | { type: 'dispose' };
 
 export type SimResponse =
+  | ({ type: 'routine' } & LiveUpdate)
   | { type: 'ready'; version: string; nq: number; nu: number; nbody: number }
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
@@ -59,6 +62,7 @@ let last = 0;
 let rtf = 1;
 let recorder: Recorder | null = null;
 let replayTimer = 0;
+let live: LiveRoutine | null = null;
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
 const frame = () => {
@@ -79,7 +83,8 @@ function loop() {
 
   const t0 = performance.now();
 
-  engine.step(wall * speed);
+  if (live) advanceRoutine(live, wall * speed);
+  else engine.step(wall * speed);
 
   const cost = (performance.now() - t0) / 1000;
   const achieved = cost > wall ? (wall * speed * wall) / cost : wall * speed;
@@ -87,6 +92,26 @@ function loop() {
   rtf = rtf * 0.9 + (wall > 0 ? achieved / wall : 1) * 0.1;
   frame();
   timer = setTimeout(loop, 16) as unknown as number;
+}
+
+function advanceRoutine(routine: LiveRoutine, seconds: number) {
+  const update = routine.advance(seconds);
+
+  post({ type: 'routine', ...update });
+
+  if (!update.done) return;
+
+  live = null;
+  playing = false;
+}
+
+async function startRoutine(msg: Msg<'routine'>) {
+  mj ??= await loadMujoco();
+
+  if (!engine) throw new Error('Nothing loaded');
+
+  live = await LiveRoutine.start(mj, engine, msg);
+  play();
 }
 
 function errorText(e: unknown): string {
@@ -101,6 +126,7 @@ async function load(msg: Msg<'load'>) {
   mj ??= await loadMujoco();
   engine?.dispose();
   engine = null;
+  live = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
 
@@ -263,8 +289,10 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   record,
   replay,
   run,
+  routine: startRoutine,
   dispose: () => {
     playing = false;
+    live = null;
     recorder = null;
     clearTimeout(timer);
     clearTimeout(replayTimer);

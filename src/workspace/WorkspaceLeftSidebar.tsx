@@ -51,6 +51,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         cases: core.simTraining.cases,
         onOpen: () => tool.setRightTab('sim'),
       }}
+      routines={{ routines: core.simTraining.routines, onTrain: () => tool.setRightTab('sim') }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}
       parts={parts}

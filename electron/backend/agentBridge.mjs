@@ -18,6 +18,9 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['insert_object', 300000],
   ['retarget', 300000],
   ['fit_view', 180000],
+  ['make_routine', 180000],
+  ['test_routine', 180000],
+  ['run_routine', 180000],
 ]);
 
 export const rendererTimeout = (kind) => RENDERER_TIMEOUTS_MS.get(kind) ?? DEFAULT_TIMEOUT_MS;

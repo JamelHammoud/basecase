@@ -9,6 +9,7 @@ import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } f
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
+import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import { useDrive, type SimDrive } from './useDrive';
 import { newSimWorker, useSimWorker } from './useSimWorker';
 
@@ -52,6 +53,7 @@ export interface Simulation {
   worldParts: ScenePart[];
   setWorld: (items: WorldItem[]) => void;
   buildModel: () => Promise<SimModel>;
+  runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
   run: (opts: {
     seconds: number;
@@ -334,6 +336,11 @@ export function useSimulation(props: Inputs): Simulation {
     },
     worldParts,
     setWorld,
+    runRoutine: async (input, onUpdate) => {
+      await start();
+
+      return sw.startRoutine(input, onUpdate);
+    },
     runOn,
     run: async (opts) => {
       const m = await buildModel();

@@ -24,6 +24,7 @@ export class ScenarioHost {
   readonly said: string[] = [];
   readonly values = new Map<number, FactValue>();
   readonly symbols: string[];
+  skillLatency: (skill: string) => number = () => SKILL_MS;
   private readonly decoder: TraceDecoder;
   private readonly cancelled = new Set<number>();
   private readonly doNodes = new Map<number, string>();
@@ -136,7 +137,7 @@ export class ScenarioHost {
       return;
     }
 
-    this.settle(node === undefined ? [skill] : [skill, node], t, mockLatency(mock, SKILL_MS), finish);
+    this.settle(node === undefined ? [skill] : [skill, node], t, mockLatency(mock, this.skillLatency(skill)), finish);
   }
 
   private phases(token: number, skill: string, t: number) {

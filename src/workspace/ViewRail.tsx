@@ -10,6 +10,7 @@ import {
   ObjectsIcon,
   PartsIcon,
   RobotsIcon,
+  RoutinesIcon,
   type GlyphProps,
   SettingsIcon,
 } from '../design-system';
@@ -19,6 +20,7 @@ const LEFT_VIEWS: Array<{ value: LeftTab; label: string; Icon: React.FC<GlyphPro
   { value: 'robots', label: 'Robots', Icon: RobotsIcon },
   { value: 'objects', label: 'Objects', Icon: ObjectsIcon },
   { value: 'cases', label: 'Cases', Icon: CasesIcon },
+  { value: 'routines', label: 'Routines', Icon: RoutinesIcon },
   { value: 'layers', label: 'Layers', Icon: LayersIcon },
   { value: 'library', label: 'Library', Icon: LibraryIcon },
 ];

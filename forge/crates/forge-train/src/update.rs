@@ -103,8 +103,17 @@ impl Learner {
         }
     }
 
+    pub fn mask_actor(&mut self, inputs: &[usize]) {
+        self.actor.mask_inputs(inputs);
+        self.actor.zero_masked(&mut self.params);
+    }
+
     pub fn log_std(&self) -> &[f32] {
         &self.params[self.log_std_at..]
+    }
+
+    pub fn log_std_mut(&mut self) -> &mut [f32] {
+        &mut self.params[self.log_std_at..]
     }
 
     pub fn act_mean<'a>(&'a mut self, math: &Math, obs: &[f32], rows: usize) -> &'a [f32] {

@@ -71,6 +71,11 @@ impl Actor {
         }
     }
 
+    pub fn mask_inputs(&mut self, inputs: &[usize]) {
+        self.net.mask_inputs(inputs);
+        self.net.zero_masked(&mut self.params);
+    }
+
     pub fn sample(&mut self, math: &Math, obs: &[f32], noise: &[f32]) -> usize {
         let nact = self.nact;
         let rows = noise.len() / nact;
@@ -153,7 +158,9 @@ impl Actor {
 
         sizes.push(self.nact);
 
-        let head = Mlp::plan(&sizes, 0);
+        let mut head = Mlp::plan(&sizes, 0);
+
+        head.masked.clone_from(&self.net.masked);
         let mut params = vec![0.0f32; head.param_end()];
         for (from, to) in self.net.layers.iter().zip(&head.layers) {
             for i in 0..to.ins {

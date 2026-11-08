@@ -20,6 +20,22 @@ impl Normalizer {
         }
     }
 
+    pub fn restored(mean: Vec<f64>, var: Vec<f64>, count: f64) -> Self {
+        let size = mean.len();
+
+        Self {
+            mean,
+            var,
+            count: count.max(1e-4),
+            batch_mean: vec![0.0; size],
+            batch_var: vec![0.0; size],
+        }
+    }
+
+    pub fn count(&self) -> f64 {
+        self.count
+    }
+
     pub fn std(&self) -> Vec<f64> {
         self.var.iter().map(|v| (v + 1e-8).sqrt()).collect()
     }

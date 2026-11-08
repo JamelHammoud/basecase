@@ -1,5 +1,4 @@
 use crate::algorithm::{self, Algorithm};
-use crate::blind::LINEAR_VELOCITY;
 use crate::envs::Envs;
 use crate::evaluate::{evaluate_clean, evaluate_seeds, Trained as EvalRun};
 use crate::events::{emit, status};
@@ -9,6 +8,7 @@ use crate::job::{self, Job};
 use crate::kernels::Math;
 use crate::platform::{install_stop_handlers, raise_thread_priority, stop_requested};
 use crate::robot::Robot;
+use crate::warm::{self, write_resume};
 use forge_mujoco::Model;
 use serde_json::{json, Value};
 use std::path::Path;
@@ -31,7 +31,23 @@ fn save_policy(folder: &Path, robot: &Robot, algo: &dyn Algorithm, steps: u64) -
         norm: algo.norm(),
     };
 
+    write_resume(&folder.join("resume.json"), &algo.snapshot(), algo.norm(), steps)?;
     write_policy(&folder.join("policy.json"), &run, steps)
+}
+
+fn warm_start(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<(), String> {
+    let Some(path) = &robot.job.warm_start else {
+        return Ok(());
+    };
+    let source = warm::load(&folder.join(path))?;
+
+    status("Continuing from a trained policy");
+
+    for note in algo.warm_start(&source)? {
+        status(&note);
+    }
+
+    Ok(())
 }
 
 struct Clock {
@@ -73,12 +89,6 @@ fn emit_progress(robot: &Robot, algo: &mut dyn Algorithm, iteration: usize, cloc
     report.steps
 }
 
-fn blind(robot: &Robot, algo: &mut dyn Algorithm) {
-    if !robot.job.options.actor_linvel {
-        algo.blind_inputs(&LINEAR_VELOCITY);
-    }
-}
-
 fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<u64, String> {
     let job = &robot.job;
     let budget = job.minutes * 60.0;
@@ -96,7 +106,6 @@ fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<
         while !should_stop(folder) && clock.elapsed < budget && job.max_iterations.is_none_or(|limit| iteration < limit)
         {
             algo.iterate()?;
-            blind(robot, algo);
             iteration += 1;
             steps = emit_progress(robot, algo, iteration, &mut clock);
 
@@ -185,7 +194,7 @@ pub fn train(folder: &Path) -> Result<(), String> {
     let envs = Envs::new(&robot, envs_count, seed + ENV_SEED_OFFSET, true)?;
     let mut algo = algorithm::build(kind, envs, seed, Math::native(learner_threads()));
 
-    blind(&robot, algo.as_mut());
+    warm_start(&robot, algo.as_mut(), folder)?;
 
     if !robot.holds_pose {
         status("Can't hold the pose without help. Training from a fall.");

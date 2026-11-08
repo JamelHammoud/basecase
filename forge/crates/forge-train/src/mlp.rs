@@ -15,10 +15,12 @@ pub struct Layer {
 pub struct Mlp {
     pub layers: Vec<Layer>,
     pub first_param: usize,
+    pub masked: Vec<usize>,
 }
 
 pub struct Scratch {
     capacity: usize,
+    input: Vec<f32>,
     activations: Vec<Vec<f32>>,
     slopes: Vec<Vec<f32>>,
     gradients: Vec<Vec<f32>>,
@@ -44,7 +46,46 @@ impl Mlp {
             });
         }
 
-        Self { layers, first_param }
+        Self {
+            layers,
+            first_param,
+            masked: Vec::new(),
+        }
+    }
+
+    pub fn mask_inputs(&mut self, inputs: &[usize]) {
+        let ins = self.layers[0].ins;
+
+        self.masked = inputs.iter().copied().filter(|&i| i < ins).collect();
+        self.masked.sort_unstable();
+        self.masked.dedup();
+    }
+
+    pub fn zero_masked(&self, params: &mut [f32]) {
+        let first = self.layers[0];
+
+        for &input in &self.masked {
+            let at = first.weights_at + input * first.outs;
+
+            params[at..at + first.outs].fill(0.0);
+        }
+    }
+
+    fn masked_input<'a>(&self, input: &'a [f32], rows: usize, buffer: &'a mut [f32]) -> &'a [f32] {
+        if self.masked.is_empty() {
+            return input;
+        }
+
+        let ins = self.layers[0].ins;
+        let copy = &mut buffer[..rows * ins];
+
+        copy.copy_from_slice(&input[..rows * ins]);
+
+        for row in copy.chunks_exact_mut(ins) {
+            self.masked.iter().for_each(|&i| row[i] = 0.0);
+        }
+
+        copy
     }
 
     pub fn param_end(&self) -> usize {
@@ -73,6 +114,14 @@ impl Mlp {
         self.layers.last().expect("an MLP has layers").outs
     }
 
+    pub fn sizes(&self) -> Vec<usize> {
+        let mut sizes = vec![self.layers[0].ins];
+
+        sizes.extend(self.layers.iter().map(|l| l.outs));
+
+        sizes
+    }
+
     pub fn scratch(&self, capacity: usize) -> Scratch {
         let per_layer = |size: fn(&Layer) -> usize| -> Vec<Vec<f32>> {
             self.layers
@@ -83,6 +132,7 @@ impl Mlp {
 
         Scratch {
             capacity,
+            input: vec![0.0f32; capacity * self.layers[0].ins],
             activations: per_layer(|l| l.outs),
             slopes: per_layer(|l| l.outs),
             gradients: per_layer(|l| l.outs),
@@ -101,6 +151,7 @@ impl Mlp {
         assert!(rows <= scratch.capacity, "The batch is larger than this scratch space");
 
         let last = self.layers.len() - 1;
+        let input = self.masked_input(input, rows, &mut scratch.input);
 
         for (index, layer) in self.layers.iter().enumerate() {
             let (done, rest) = scratch.activations.split_at_mut(index);
@@ -161,10 +212,10 @@ impl Mlp {
                 inner: layer.ins,
                 cols: layer.outs,
             };
-            let source = if index == 0 {
-                input
-            } else {
-                &scratch.activations[index - 1][..rows * layer.ins]
+            let source = match index {
+                0 if self.masked.is_empty() => input,
+                0 => &scratch.input[..rows * layer.ins],
+                _ => &scratch.activations[index - 1][..rows * layer.ins],
             };
             let (lower, upper) = scratch.gradients.split_at_mut(index);
             let gradient = &upper[0][..rows * layer.outs];
@@ -207,6 +258,8 @@ impl Mlp {
     pub fn forward_exact(&self, params: &[f32], input: &[f32]) -> Vec<f32> {
         let last = self.layers.len() - 1;
         let mut x = input.to_vec();
+
+        self.masked.iter().for_each(|&i| x[i] = 0.0);
 
         for (index, layer) in self.layers.iter().enumerate() {
             let weights = &params[layer.weights_at..layer.bias_at];

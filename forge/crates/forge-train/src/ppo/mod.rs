@@ -1,15 +1,17 @@
 mod collector;
+mod resume;
 mod rollout;
 
 use crate::algorithm::{Algorithm, Report};
-use crate::blind::blind_inputs;
 use crate::deployed::{Deployed, Squash};
 use crate::envs::Envs;
 use crate::heads::gaussian_constant;
 use crate::kernels::Math;
+use crate::mask::actor_mask;
 use crate::normalizer::Normalizer;
 use crate::rng::Rng;
 use crate::update::{Hyper, Learner, Minibatch};
+use crate::warm::{Snapshot, WarmStart};
 use collector::Collector;
 use rollout::Rollout;
 use std::time::Instant;
@@ -128,7 +130,10 @@ impl<'a> Ppo<'a> {
         let total = hyper.horizon * n;
         let mb = total / hyper.minibatches;
         let mut init_rng = Rng::new(seed, 1_000_000);
-        let learner = Learner::new(nobs, nact, mb.max(n), &mut init_rng);
+        let mut learner = Learner::new(nobs, nact, mb.max(n), &mut init_rng);
+
+        learner.mask_actor(actor_mask(&envs.robot.job.options));
+
         let collector = Collector::new(envs, &learner, seed);
 
         Self {
@@ -224,9 +229,11 @@ impl Algorithm for Ppo<'_> {
         &self.update.math
     }
 
-    fn blind_inputs(&mut self, inputs: &[usize]) {
-        let learner = &mut self.update.learner;
+    fn snapshot(&self) -> Snapshot {
+        resume::snapshot(self)
+    }
 
-        blind_inputs(&learner.actor, &mut learner.params, inputs);
+    fn warm_start(&mut self, source: &WarmStart) -> Result<Vec<String>, String> {
+        resume::warm_start(self, source)
     }
 }

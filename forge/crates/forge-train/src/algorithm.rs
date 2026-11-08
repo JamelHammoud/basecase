@@ -6,6 +6,7 @@ use crate::kernels::Math;
 use crate::normalizer::Normalizer;
 use crate::ppo::Ppo;
 use crate::sac::{Recipe, Sac};
+use crate::warm::{Snapshot, WarmStart};
 
 pub struct Report {
     pub steps: u64,
@@ -20,7 +21,8 @@ pub trait Algorithm {
     fn deployed(&self) -> Deployed;
     fn norm(&self) -> &Normalizer;
     fn math(&self) -> &Math;
-    fn blind_inputs(&mut self, inputs: &[usize]);
+    fn snapshot(&self) -> Snapshot;
+    fn warm_start(&mut self, source: &WarmStart) -> Result<Vec<String>, String>;
 }
 
 pub fn build<'a>(algo: Algo, envs: Envs<'a>, seed: u64, math: Math) -> Box<dyn Algorithm + 'a> {

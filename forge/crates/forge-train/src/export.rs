@@ -72,7 +72,7 @@ fn timestamp() -> String {
     )
 }
 
-fn write_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
+pub fn write_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
     let staging = path.with_extension("tmp");
 
     fs::write(&staging, bytes).map_err(|e| format!("Couldn't write {}: {e}", staging.display()))?;

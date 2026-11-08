@@ -4,18 +4,20 @@ pub mod dense;
 pub mod explore;
 pub mod recipe;
 pub mod replay;
+mod resume;
 pub mod rows;
 
 use crate::adam::Adam;
 use crate::algorithm::{Algorithm, Report};
-use crate::blind::blind_inputs;
 use crate::deployed::Deployed;
 use crate::envs::{Envs, StepResult};
 use crate::episodes::Episodes;
 use crate::events::Phases;
 use crate::kernels::Math;
+use crate::mask::actor_mask;
 use crate::normalizer::Normalizer;
 use crate::rng::Rng;
+use crate::warm::{Snapshot, WarmStart};
 use actor::{Actor, Objective};
 use critic::{project, Bellman, Twin};
 use explore::{Noise, RewardScale};
@@ -90,11 +92,12 @@ impl<'a> Sac<'a> {
         let nobs = envs.robot.nobs();
         let rows = recipe.batch;
         let mut init_rng = Rng::new(seed, 1_000_000);
-        let actor = Actor::new(nobs, nact, &recipe, rows.max(n), &mut init_rng);
+        let mut actor = Actor::new(nobs, nact, &recipe, rows.max(n), &mut init_rng);
         let critic = Twin::new(nobs + nact, &recipe, rows, &mut init_rng);
         let mut norm = Normalizer::new(nobs);
         let mut obs_raw = vec![0.0f32; n * nobs];
 
+        actor.mask_inputs(actor_mask(&envs.robot.job.options));
         envs.keep_final_obs();
         envs.observe(&mut obs_raw);
         norm.update(&obs_raw);
@@ -384,9 +387,11 @@ impl Algorithm for Sac<'_> {
         &self.math
     }
 
-    fn blind_inputs(&mut self, inputs: &[usize]) {
-        let actor = &mut self.actor;
+    fn snapshot(&self) -> Snapshot {
+        resume::snapshot(self)
+    }
 
-        blind_inputs(&actor.net, &mut actor.params, inputs);
+    fn warm_start(&mut self, source: &WarmStart) -> Result<Vec<String>, String> {
+        resume::warm_start(self, source)
     }
 }

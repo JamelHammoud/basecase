@@ -34,7 +34,9 @@ pub struct Deployed {
 const SCRATCH_ROWS: usize = 64;
 
 impl Deployed {
-    pub fn new(net: Mlp, params: Vec<f32>, squash: Squash) -> Self {
+    pub fn new(net: Mlp, mut params: Vec<f32>, squash: Squash) -> Self {
+        net.zero_masked(&mut params);
+
         let scratch = net.scratch(SCRATCH_ROWS);
 
         Self {

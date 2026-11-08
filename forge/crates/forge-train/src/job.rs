@@ -1,7 +1,7 @@
 use crate::options::{self, TaskOptions};
 use serde_json::Value;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
 pub struct JointSpec {
@@ -63,6 +63,7 @@ pub struct Job {
     pub gate_speed: f64,
     pub envs: usize,
     pub threads: Option<usize>,
+    pub warm_start: Option<PathBuf>,
     pub options: TaskOptions,
 }
 
@@ -104,6 +105,14 @@ fn triple(root: &Value, key: &str) -> Result<[f64; 3], String> {
 
 fn optional_count(root: &Value, key: &str) -> Option<usize> {
     root.get(key).and_then(Value::as_u64).map(|v| v as usize)
+}
+
+fn warm_start(root: &Value) -> Result<Option<PathBuf>, String> {
+    match root.get("warmStart") {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(path)) if !path.trim().is_empty() => Ok(Some(PathBuf::from(path))),
+        Some(_) => Err("job.json needs a path in warmStart".to_owned()),
+    }
 }
 
 fn joints(root: &Value) -> Result<Vec<JointSpec>, String> {
@@ -168,6 +177,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         gate_speed: root.get("gateSpeed").and_then(Value::as_f64).unwrap_or(0.2),
         envs: optional_count(root, "envs").unwrap_or(algo.default_envs()),
         threads: optional_count(root, "threads"),
+        warm_start: warm_start(root)?,
         options: options::parse(root)?,
     })
 }
@@ -202,6 +212,20 @@ mod tests {
         assert_eq!(job.initial_joints, vec![("j0".to_owned(), 0.2)]);
         assert_eq!(job.gate_speed, 0.2);
         assert_eq!(job.algo, super::Algo::Ppo);
+        assert_eq!(job.warm_start, None);
+    }
+
+    #[test]
+    fn reads_a_warm_start_path() {
+        let mut job = sample();
+
+        job["warmStart"] = json!("../run-1");
+        assert_eq!(
+            parse(&job).expect("job parses").warm_start,
+            Some(std::path::PathBuf::from("../run-1"))
+        );
+        job["warmStart"] = json!(3);
+        assert!(parse(&job).expect_err("must fail").contains("warmStart"));
     }
 
     #[test]

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureRobot, modelOf } from '../skills/fixtureModels';
-import { box } from './fixtures/parts';
+import { DEFAULT_PROJECT } from '../types/robotics';
+import { buildRig } from '../utils/kinematics';
+import { box, fixtureMeasures, fixtureTriangles } from './fixtures/parts';
+import { buildMjcf } from './mjcf';
 import type { SimModel } from './mjcfTypes';
 
 const quad = fixtureRobot('quad-servo');
@@ -16,6 +19,22 @@ describe('a fixed part that starts sunk into a robot', () => {
 
     expect(bodyOf(model, 'speaker')).toBe(bodyOf(model, 'body'));
     expect(model.massKg[model.robots[0].key]).toBeCloseTo(modelOf(quad).massKg[model.robots[0].key] + 0.02, 6);
+  });
+
+  it('reads where its mesh reaches, not its listed size', () => {
+    const listed = box('speaker', [0, top + 5, -50], [40, 10, 40], 20);
+    const upright = box('speaker', [0, top + 5, -50], [40, 40, 25], 20);
+    const parts = [...quad.parts, listed];
+    const meshes = fixtureTriangles([...quad.parts, upright]);
+    const model = buildMjcf({
+      parts,
+      rig: buildRig(quad.joints, parts),
+      project: { ...DEFAULT_PROJECT, joints: quad.joints },
+      measures: fixtureMeasures(parts),
+      partTriangles: meshes,
+    });
+
+    expect(bodyOf(model, 'speaker')).toBe(bodyOf(model, 'body'));
   });
 
   it('stays in the world when it only rests on the robot', () => {

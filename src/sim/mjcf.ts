@@ -355,7 +355,7 @@ ${st.actuatorXml.join('\n')}
 }
 
 export function buildMjcf(given: MjcfInput): SimModel {
-  const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts) };
+  const input = { ...given, rig: adoptEmbeddedParts(given.rig, given.parts, given.partTriangles) };
   const { parts, rig, project } = input;
   const st: BuildState = {
     input,

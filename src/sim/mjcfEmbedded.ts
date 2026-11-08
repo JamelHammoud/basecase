@@ -1,14 +1,44 @@
+import * as THREE from 'three';
 import type { ScenePart } from '../types/robotics';
-import type { Rig } from '../utils/kinematics';
+import { partMatrix, type Rig } from '../utils/kinematics';
 import { partBounds } from '../utils/selection';
 
 const SUNK_MM = 2;
 
 type Box = ReturnType<typeof partBounds>;
 
+type Triangles = (id: string) => Float32Array | null;
+
 interface Host {
   robot: number;
   owner: string | undefined;
+}
+
+const localBoxes = new WeakMap<Float32Array, THREE.Box3>();
+
+function localBox(tris: Float32Array): THREE.Box3 {
+  const known = localBoxes.get(tris);
+
+  if (known) return known;
+
+  const box = new THREE.Box3();
+  const v = new THREE.Vector3();
+
+  for (let i = 0; i < tris.length; i += 3) box.expandByPoint(v.set(tris[i], tris[i + 1], tris[i + 2]));
+
+  localBoxes.set(tris, box);
+
+  return box;
+}
+
+function placedBounds(p: ScenePart, triangles: Triangles): Box {
+  const tris = triangles(p.id);
+
+  if (!tris || tris.length < 9) return partBounds(p);
+
+  const box = localBox(tris).clone().applyMatrix4(partMatrix(p));
+
+  return { min: box.min.toArray(), max: box.max.toArray() };
 }
 
 const volume = (b: Box) => (b.max[0] - b.min[0]) * (b.max[1] - b.min[1]) * (b.max[2] - b.min[2]);
@@ -16,7 +46,7 @@ const volume = (b: Box) => (b.max[0] - b.min[0]) * (b.max[1] - b.min[1]) * (b.ma
 const sunkInto = (a: Box, b: Box) =>
   [0, 1, 2].every((axis) => Math.min(a.max[axis], b.max[axis]) - Math.max(a.min[axis], b.min[axis]) >= SUNK_MM);
 
-function robotBox(boxes: Box[]): Box {
+function enclosing(boxes: Box[]): Box {
   const pick = (axis: number, side: 'min' | 'max') =>
     (side === 'min' ? Math.min : Math.max)(...boxes.map((b) => b[side][axis]));
 
@@ -26,13 +56,20 @@ function robotBox(boxes: Box[]): Box {
   };
 }
 
-function hostOf(part: ScenePart, rig: Rig, byId: Map<string, ScenePart>): Host | null {
-  const box = partBounds(part);
+interface Scene {
+  rig: Rig;
+  byId: Map<string, ScenePart>;
+  bounds: (p: ScenePart) => Box;
+}
+
+function hostOf(part: ScenePart, { rig, byId, bounds }: Scene): Host | null {
+  const box = bounds(part);
 
   for (const [robot, group] of rig.robots.entries()) {
     const members = [...group.parts].flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
-    const smaller = volume(box) < volume(robotBox(members.map(partBounds)));
-    const touched = members.find((m) => sunkInto(box, partBounds(m)));
+    const boxes = members.map((m) => ({ id: m.id, box: bounds(m) }));
+    const smaller = volume(box) < volume(enclosing(boxes.map((b) => b.box)));
+    const touched = boxes.find((m) => sunkInto(box, m.box));
 
     if (smaller && touched) return { robot, owner: rig.ownerOf.get(touched.id) };
   }
@@ -44,10 +81,14 @@ export const isSolidPart = (p: ScenePart) => p.visible && p.role === 'solid' && 
 
 const looseFixed = (p: ScenePart, rig: Rig) => !rig.bodyParts.has(p.id) && !p.physics?.dynamic && isSolidPart(p);
 
-export function adoptEmbeddedParts(rig: Rig, parts: ScenePart[]): Rig {
-  const byId = new Map(parts.map((p) => [p.id, p]));
-  const hosted = parts.flatMap((p) => {
-    const host = looseFixed(p, rig) ? hostOf(p, rig, byId) : null;
+export function adoptEmbeddedParts(rig: Rig, parts: ScenePart[], triangles: Triangles): Rig {
+  const candidates = parts.filter((p) => looseFixed(p, rig));
+
+  if (!candidates.length || !rig.robots.length) return rig;
+
+  const scene: Scene = { rig, byId: new Map(parts.map((p) => [p.id, p])), bounds: (p) => placedBounds(p, triangles) };
+  const hosted = candidates.flatMap((p) => {
+    const host = hostOf(p, scene);
 
     return host ? [{ id: p.id, ...host }] : [];
   });

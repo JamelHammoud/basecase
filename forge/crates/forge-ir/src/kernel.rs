@@ -163,6 +163,10 @@ pub struct Climb {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Collider {
     PlaneConvex,
+    PlaneSphere,
+    PlaneCapsule,
+    PlaneCylinder,
+    PlaneBox,
 }
 
 #[derive(Clone, Debug, PartialEq)]

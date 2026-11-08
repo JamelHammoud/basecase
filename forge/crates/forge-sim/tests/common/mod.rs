@@ -12,16 +12,19 @@ const BODY: &str =
 
 pub struct Servo<'a> {
     pub attrs: &'a str,
+    pub foot: &'a str,
 }
 
-fn leg(i: usize, x: f64, y: f64) -> String {
+pub const HULL_FOOT: &str = r#"type="mesh" mesh="leg""#;
+
+fn leg(i: usize, x: f64, y: f64, foot: &str) -> String {
     format!(
         r#"<body name="hip{i}" pos="{x} {y} 0">
         <joint name="a{i}" type="hinge" axis="0 -1 0" range="-0.7 0.7" damping="0.038" armature="0.0076" frictionloss="0.019"/>
         <geom type="mesh" mesh="leg" contype="1" conaffinity="0" mass="0.07"/>
         <body name="knee{i}" pos="0 0 -0.065">
           <joint name="b{i}" type="hinge" axis="1 0 0" range="-2.2 2.2" damping="0.038" armature="0.0076" frictionloss="0.019"/>
-          <geom type="mesh" mesh="leg" contype="1" conaffinity="0" mass="0.07"/>
+          <geom {foot} contype="1" conaffinity="0" mass="0.07"/>
         </body>
       </body>"#
     )
@@ -31,7 +34,7 @@ pub fn quadruped(servo: &Servo) -> String {
     let legs: String = [(-0.07, 0.09), (0.07, 0.09), (-0.07, -0.09), (0.07, -0.09)]
         .iter()
         .enumerate()
-        .map(|(i, (x, y))| leg(i, *x, *y))
+        .map(|(i, (x, y))| leg(i, *x, *y, servo.foot))
         .collect();
     let actuators: String = (0..4)
         .flat_map(|i| [format!("a{i}"), format!("b{i}")])

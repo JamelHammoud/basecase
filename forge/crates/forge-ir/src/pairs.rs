@@ -138,6 +138,10 @@ fn mix(t: &GeomTable, g1: usize, g2: usize) -> (usize, [f64; 2], [f64; 5], [f64;
 
 fn collider(t1: i32, t2: i32) -> Option<(Collider, usize)> {
     match (t1, t2) {
+        (0, 2) => Some((Collider::PlaneSphere, 1)),
+        (0, 3) => Some((Collider::PlaneCapsule, 2)),
+        (0, 5) => Some((Collider::PlaneCylinder, 4)),
+        (0, 6) => Some((Collider::PlaneBox, 4)),
         (0, 7) => Some((Collider::PlaneConvex, 4)),
         _ => None,
     }

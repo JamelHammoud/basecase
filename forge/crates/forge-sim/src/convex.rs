@@ -6,6 +6,7 @@ pub type F3 = [f64; 3];
 pub struct Found {
     pub dist: f64,
     pub pos: F3,
+    pub tangent: F3,
 }
 
 pub struct Frames<'a> {
@@ -15,7 +16,7 @@ pub struct Frames<'a> {
     pub mat: &'a [f64; 9],
 }
 
-fn dot(a: &F3, b: &F3) -> f64 {
+pub fn dot(a: &F3, b: &F3) -> f64 {
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }
 
@@ -23,7 +24,7 @@ fn dot_f(a: &F3, b: &[f32; 3]) -> f64 {
     a[0] * f64::from(b[0]) + a[1] * f64::from(b[1]) + a[2] * f64::from(b[2])
 }
 
-fn sub(a: &F3, b: &F3) -> F3 {
+pub fn sub(a: &F3, b: &F3) -> F3 {
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
@@ -186,6 +187,7 @@ pub fn plane_convex(mesh: &Mesh, frames: &Frames, margin: f64, out: &mut [Found]
     out[0] = Found {
         dist,
         pos: shift(&v, dist),
+        tangent: [0.0; 3],
     };
 
     let local_normal = mat_t_vec(frames.mat, &normal);
@@ -210,6 +212,7 @@ pub fn plane_convex(mesh: &Mesh, frames: &Frames, margin: f64, out: &mut [Found]
         out[count] = Found {
             dist: d,
             pos: shift(&p, d),
+            tangent: [0.0; 3],
         };
         count += 1;
     }

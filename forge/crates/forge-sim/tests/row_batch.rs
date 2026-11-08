@@ -1,6 +1,6 @@
 mod common;
 
-use common::{ctrl, quadruped, write, Servo};
+use common::{ctrl, quadruped, write, Servo, HULL_FOOT};
 use forge_mujoco::{Batch, Model};
 use forge_sim::RowBatch;
 
@@ -116,6 +116,7 @@ fn compare(servo: &Servo) -> f64 {
 fn rows_match_the_c_batch_with_randomized_tables() {
     let worst = compare(&Servo {
         attrs: r#"kp="11" dampratio="1" forcerange="-1.9 1.9""#,
+        foot: HULL_FOOT,
     });
 
     assert!(worst < 1e-8, "worst row difference {worst:e}");
@@ -125,6 +126,7 @@ fn rows_match_the_c_batch_with_randomized_tables() {
 fn delayed_servos_match_the_c_batch() {
     let worst = compare(&Servo {
         attrs: r#"kp="11" kv="0.05" forcerange="-1.9 1.9" delay="0.007" nsample="6" interp="linear""#,
+        foot: HULL_FOOT,
     });
 
     assert!(worst < 1e-8, "worst row difference {worst:e}");
@@ -134,7 +136,27 @@ fn delayed_servos_match_the_c_batch() {
 fn held_delays_match_the_c_batch() {
     let worst = compare(&Servo {
         attrs: r#"kp="9" kv="0.02" delay="0.004" nsample="4" interp="zoh""#,
+        foot: HULL_FOOT,
     });
 
     assert!(worst < 1e-8, "worst row difference {worst:e}");
+}
+
+#[test]
+fn primitive_feet_match_the_c_batch() {
+    let feet = [
+        r#"type="sphere" size="0.012" pos="0 0 -0.058""#,
+        r#"type="capsule" fromto="0 0 0 0.01 0 -0.058" size="0.01""#,
+        r#"type="box" size="0.012 0.01 0.03" pos="0 0 -0.035" euler="0.2 0.1 0""#,
+        r#"type="cylinder" size="0.012 0.03" pos="0 0 -0.035" euler="0.4 0 0""#,
+    ];
+
+    for foot in feet {
+        let worst = compare(&Servo {
+            attrs: r#"kp="11" dampratio="1" forcerange="-1.9 1.9""#,
+            foot,
+        });
+
+        assert!(worst < 1e-8, "{foot}: worst row difference {worst:e}");
+    }
 }

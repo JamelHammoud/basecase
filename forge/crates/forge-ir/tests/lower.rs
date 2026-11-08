@@ -46,6 +46,31 @@ fn lowers_floor_contacts_with_mixed_parameters() {
 }
 
 #[test]
+fn lowers_primitive_feet_against_the_floor() {
+    let spec = Spec {
+        body_extra: r#"<geom type="sphere" size="0.01" pos="0 0.05 -0.02" contype="1" conaffinity="0"/>
+            <geom type="capsule" size="0.01 0.02" pos="0 -0.05 -0.02" contype="1" conaffinity="0"/>
+            <geom type="box" size="0.01 0.01 0.01" pos="0.05 0 -0.02" contype="1" conaffinity="0"/>
+            <geom type="cylinder" size="0.01 0.02" pos="-0.05 0 -0.02" contype="1" conaffinity="0"/>"#,
+        ..Spec::default()
+    };
+    let k = lower(&spec).expect("primitive feet are in the subset");
+    let colliders: Vec<(Collider, usize)> = k.pairs.iter().map(|p| (p.collider, p.max_contacts)).collect();
+
+    assert_eq!(
+        colliders,
+        vec![
+            (Collider::PlaneConvex, 4),
+            (Collider::PlaneSphere, 1),
+            (Collider::PlaneCapsule, 2),
+            (Collider::PlaneBox, 4),
+            (Collider::PlaneCylinder, 4),
+            (Collider::PlaneConvex, 4),
+        ]
+    );
+}
+
+#[test]
 fn lowers_servo_gains_with_compiled_damping() {
     let k = lower(&Spec::default()).expect("lowered");
     let a = &k.actuators[0];

@@ -12,6 +12,7 @@ pub mod lanes;
 pub mod newton;
 mod params;
 mod plan;
+mod primitives;
 mod row_batch;
 mod rowmap;
 mod rows;

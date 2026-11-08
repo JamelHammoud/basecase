@@ -215,15 +215,3 @@ pub fn cross_force(vel: &V6, f: &V6) -> V6 {
 pub fn dot6(a: &V6, b: &V6) -> V {
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3] + a[4] * b[4] + a[5] * b[5]
 }
-
-pub fn make_frame(normal: &V3) -> V9 {
-    let (x, _) = normalize3(normal);
-    let small = x[1].lt(V::splat(0.5)).and(x[1].gt(V::splat(-0.5)));
-    let y0 = [ZERO, small.select(ONE, ZERO), small.select(ZERO, ONE)];
-    let d = dot3(&x, &y0);
-    let y1 = sub3(&y0, &scl3(&x, d));
-    let (y, _) = normalize3(&y1);
-    let z = cross(&x, &y);
-
-    [x[0], x[1], x[2], y[0], y[1], y[2], z[0], z[1], z[2]]
-}

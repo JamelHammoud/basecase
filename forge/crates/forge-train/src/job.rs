@@ -1,3 +1,4 @@
+use crate::options::{self, TaskOptions};
 use serde_json::Value;
 use std::fs;
 use std::path::Path;
@@ -62,6 +63,7 @@ pub struct Job {
     pub gate_speed: f64,
     pub envs: usize,
     pub threads: Option<usize>,
+    pub options: TaskOptions,
 }
 
 fn required<'a>(root: &'a Value, key: &str) -> Result<&'a Value, String> {
@@ -166,6 +168,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         gate_speed: root.get("gateSpeed").and_then(Value::as_f64).unwrap_or(0.2),
         envs: optional_count(root, "envs").unwrap_or(algo.default_envs()),
         threads: optional_count(root, "threads"),
+        options: options::parse(root)?,
     })
 }
 

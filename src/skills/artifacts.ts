@@ -1,4 +1,5 @@
 import type { Controller } from '../sim/engine';
+import type { Method } from './router';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Contract } from './contract';
 import type { ActionSpec, Environment, ObservationTerm } from './environment';
@@ -48,6 +49,11 @@ export interface ArenaEvidence {
   saltCommitment: string;
 }
 
+export interface SkillOrigin {
+  method: Method | 'motor-kit';
+  cost: { wallS: number; steps: number };
+}
+
 export interface Skill {
   format: typeof SKILL_FORMAT;
   version: typeof SKILL_VERSION;
@@ -58,6 +64,7 @@ export interface Skill {
   controller: SkillController;
   evidence: ArenaEvidence | null;
   warmStartFrom: string | null;
+  origin?: SkillOrigin;
 }
 
 export interface CurrentDesign {

@@ -134,11 +134,11 @@ impl Robot {
         let timestep = model.timestep();
         let decimation = ((job.control_dt / timestep).round_ties_even() as usize).max(1);
         let control_dt = decimation as f64 * timestep;
-        let episode_seconds = if job.task == crate::job::Task::Stand {
+        let episode_seconds = job.options.episode_s.unwrap_or(if job.task == crate::job::Task::Stand {
             10.0
         } else {
             15.0
-        };
+        });
         let root = joint_of(&model, &job.root)?;
         let root_qpos = model.joint_qpos_adr(root);
         let root_dof = model.joint_dof_adr(root);
@@ -173,7 +173,7 @@ impl Robot {
             ctrl_high,
             start_row: settled.row,
             holds_pose: settled.holds_pose,
-            z0: settled.z0,
+            z0: job.options.stand_height.unwrap_or(settled.z0),
             model,
             job,
         })

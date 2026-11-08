@@ -1,25 +1,8 @@
 import type { V3 } from '../utils/kinematics';
-import type { ContractFormula, ContractState } from './contract';
+import { scaledFormula } from './contract';
 import type { Case, WorldObject } from './schema';
 
 const SAME_SCALE = 1e-3;
-
-const scaledState = (state: ContractState, s: number): ContractState =>
-  'not' in state
-    ? { not: scaledState(state.not, s) }
-    : { atom: { ...state.atom, value: state.atom.value * s, scale: state.atom.scale * s } };
-
-function scaledFormula(formula: ContractFormula, s: number): ContractFormula {
-  if ('sequence' in formula) return { sequence: formula.sequence.map((f) => scaledFormula(f, s)) };
-
-  if ('hold_for' in formula)
-    return { hold_for: { ...formula.hold_for, state: scaledState(formula.hold_for.state, s) } };
-
-  if ('eventually' in formula)
-    return { eventually: { ...formula.eventually, state: scaledState(formula.eventually.state, s) } };
-
-  return { always: { ...formula.always, state: scaledState(formula.always.state, s) } };
-}
 
 export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   const authored = kase.slot.reachMm;

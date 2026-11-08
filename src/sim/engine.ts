@@ -80,6 +80,7 @@ export class SimEngine {
     nextAt: number;
     src: ObsSource;
     targets: Float64Array;
+    command: [number, number, number];
   } | null = null;
   readonly dt: number;
   private mj: MainModule;
@@ -231,11 +232,14 @@ export class SimEngine {
         jointDof: idx.map((i) => this.jointDof[i]),
       },
       targets: new Float64Array(idx.length),
+      command: [...c.policy.command],
     };
   }
 
   command(c: DriveCommand) {
     this.drive?.command(c);
+
+    if (this.policyState) this.policyState.command = [c.v[0], c.v[1], c.v[2]];
   }
 
   grabStart(body: number, point: [number, number, number]) {
@@ -323,7 +327,7 @@ export class SimEngine {
     if (data.time >= ps.nextAt - 1e-9) {
       ps.src.qpos = data.qpos;
       ps.src.qvel = data.qvel;
-      observe(ps.src, policy, ps.action, ps.obs);
+      observe(ps.src, { defaultPose: policy.defaultPose, command: ps.command }, ps.action, ps.obs);
       ps.action = act(policy, ps.obs);
 
       for (let k = 0; k < ps.action.length; k++)

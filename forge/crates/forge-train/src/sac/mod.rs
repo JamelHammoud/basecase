@@ -8,6 +8,7 @@ pub mod rows;
 
 use crate::adam::Adam;
 use crate::algorithm::{Algorithm, Report};
+use crate::blind::blind_inputs;
 use crate::deployed::Deployed;
 use crate::envs::{Envs, StepResult};
 use crate::episodes::Episodes;
@@ -381,5 +382,11 @@ impl Algorithm for Sac<'_> {
 
     fn math(&self) -> &Math {
         &self.math
+    }
+
+    fn blind_inputs(&mut self, inputs: &[usize]) {
+        let actor = &mut self.actor;
+
+        blind_inputs(&actor.net, &mut actor.params, inputs);
     }
 }

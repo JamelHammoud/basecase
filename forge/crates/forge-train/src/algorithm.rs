@@ -20,6 +20,7 @@ pub trait Algorithm {
     fn deployed(&self) -> Deployed;
     fn norm(&self) -> &Normalizer;
     fn math(&self) -> &Math;
+    fn blind_inputs(&mut self, inputs: &[usize]);
 }
 
 pub fn build<'a>(algo: Algo, envs: Envs<'a>, seed: u64, math: Math) -> Box<dyn Algorithm + 'a> {

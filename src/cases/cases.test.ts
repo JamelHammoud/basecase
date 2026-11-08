@@ -1,11 +1,15 @@
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../sim/fixtures/robots';
-import { evaluateLocally, type Contract, type Trace } from './contract';
+import { evaluateContract, type State } from '../skills/contract';
+import { scaledFormula, type Contract, type Trace } from './contract';
 import { parseCase, runCase, touchTheDots } from './testing';
 
 const robot = (id: string) => fixtureRobots().find((r) => r.id === id)!;
 const above = (value: number) => ({ atom: { expr: { signal: 'x' }, cmp: '>' as const, value, scale: 1 } });
+const scaledAbove = (value: number, s: number) => ({
+  atom: { expr: { signal: 'x' }, cmp: '>' as const, value: value * s, scale: s },
+});
 const contract = (success: Contract['success']): Contract => ({ version: 1, success, failures: [] });
 const trace = (values: number[], dt = 0.1): Trace => ({ dt, signals: { x: values } });
 
@@ -31,35 +35,64 @@ describe('Case files', () => {
   });
 });
 
-describe('the local contract evaluator', () => {
-  it('matches the shared contract semantics', async () => {
-    const eventually = contract({ eventually: { window: 'whole', state: above(1) } });
-    const always = contract({ always: { window: 'whole', state: above(1) } });
-    const hold = contract({ hold_for: { seconds: 0.3, state: above(0), within: 'whole' } });
-    const sequence = contract({
-      sequence: [
-        { eventually: { window: 'whole', state: above(5) } },
-        { eventually: { window: 'whole', state: { not: above(1) } } },
+describe('Case contracts', () => {
+  it('carry any contract the Rust evaluator reads, and scale distances but not angles', () => {
+    const kase = touchTheDots(robot('arm-3dof'));
+    const angled: Contract = contract({
+      all: [
+        { always: { window: { from: 0, to: 1 }, state: { any: [above(1), { not: above(2) }] } } },
+        {
+          eventually: {
+            window: 'whole',
+            state: {
+              atom: {
+                expr: {
+                  angle: [
+                    ['a', 'b', 'c'],
+                    ['d', 'e', 'f'],
+                  ],
+                },
+                cmp: '<',
+                value: 0.5,
+                scale: 0.1,
+              },
+            },
+          },
+        },
       ],
     });
 
-    expect((await evaluateLocally(eventually, trace([0, 2, 0]))).passed).toBe(true);
-    expect((await evaluateLocally(always, trace([2, 2, 0.5, 2]))).margin).toBeCloseTo(-0.5);
-    expect((await evaluateLocally(hold, trace([1, 1, -1, 1, 1]))).passed).toBe(false);
-    expect((await evaluateLocally(hold, trace([1, 1, 1, -1, 1]))).passed).toBe(true);
-    expect((await evaluateLocally(sequence, trace([0, 6, 0]))).passed).toBe(true);
-    expect((await evaluateLocally(sequence, trace([0, 0, 6]))).passed).toBe(false);
+    expect(parseCase({ ...kase, task: { ...kase.task, contract: angled } }).task.contract).toEqual(angled);
+    expect(scaledFormula(angled.success, 2)).toEqual({
+      all: [
+        {
+          always: {
+            window: { from: 0, to: 1 },
+            state: { any: [scaledAbove(1, 2), { not: scaledAbove(2, 2) }] },
+          },
+        },
+        (angled.success as { all: Contract['success'][] }).all[1],
+      ],
+    });
   });
 
-  it('rejects unknown signals and NaN traces instead of passing', async () => {
-    const unknown = contract({
-      eventually: { window: 'whole', state: { atom: { expr: { signal: 'y' }, cmp: '>', value: 0, scale: 1 } } },
-    });
+  it('refuse values a contract can’t carry', () => {
+    const kase = JSON.parse(JSON.stringify(touchTheDots(robot('arm-3dof'))));
+    const deep = Array.from({ length: 80 }).reduce<State>((inner) => ({ not: inner }), above(1));
 
-    await expect(evaluateLocally(unknown, trace([1]))).rejects.toThrow();
-    await expect(
-      evaluateLocally(contract({ eventually: { window: 'whole', state: above(0) } }), trace([NaN])),
-    ).rejects.toThrow();
+    expect(() =>
+      parseCase({ ...kase, task: { ...kase.task, contract: { ...kase.task.contract, version: 2 } } }),
+    ).toThrow();
+    expect(() =>
+      parseCase({ ...kase, task: { ...kase.task, contract: contract({ always: { window: 'whole', state: deep } }) } }),
+    ).toThrow(/deeply/);
+  });
+
+  it('judge with the Rust evaluator', async () => {
+    const eventually = contract({ eventually: { window: 'whole', state: above(1) } });
+
+    expect((await evaluateContract(eventually, trace([0, 2, 0]))).passed).toBe(true);
+    await expect(evaluateContract(eventually, { dt: 0.1, signals: { y: [1, 2] } })).rejects.toThrow();
   });
 });
 

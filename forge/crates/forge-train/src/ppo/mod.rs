@@ -2,6 +2,7 @@ mod collector;
 mod rollout;
 
 use crate::algorithm::{Algorithm, Report};
+use crate::blind::blind_inputs;
 use crate::deployed::{Deployed, Squash};
 use crate::envs::Envs;
 use crate::heads::gaussian_constant;
@@ -221,5 +222,11 @@ impl Algorithm for Ppo<'_> {
 
     fn math(&self) -> &Math {
         &self.update.math
+    }
+
+    fn blind_inputs(&mut self, inputs: &[usize]) {
+        let learner = &mut self.update.learner;
+
+        blind_inputs(&learner.actor, &mut learner.params, inputs);
     }
 }

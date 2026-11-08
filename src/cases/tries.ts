@@ -2,7 +2,7 @@ import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
-import { evaluateLocally, type ContractEvaluator } from './contract';
+import { evaluateContract } from '../skills/contract';
 import { probeReader } from './probes';
 import type { EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, type Case } from './schema';
@@ -40,10 +40,9 @@ export interface TryScoring {
   recording: Recording;
   effector: EndEffector | null;
   rig: Rig;
-  evaluator?: ContractEvaluator;
 }
 
-export async function scoreTry({ kase, model, recording, effector, rig, evaluator }: TryScoring) {
+export async function scoreTry({ kase, model, recording, effector, rig }: TryScoring) {
   const signals: Record<string, number[]> = {};
   const reader = probeReader(kase.task.probes, {
     model,
@@ -55,7 +54,7 @@ export async function scoreTry({ kase, model, recording, effector, rig, evaluato
 
   for (let i = 0; i < recording.frames; i++) reader.sample(framePoses(recording, i), signals);
 
-  return (evaluator ?? evaluateLocally)(kase.task.contract, { dt: recording.dt, signals });
+  return evaluateContract(kase.task.contract, { dt: recording.dt, signals });
 }
 
 export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {

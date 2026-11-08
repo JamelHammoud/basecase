@@ -19,7 +19,7 @@ A Case is a world with a robot slot, controls and goals that any compatible robo
 - **Reference:** a command timeline. An empty one must not pass, and the Stage 2 gate's canary checks that.
 - **Task:** seconds, probes (distances that become trace signals) and a task contract.
 
-`src/cases/contract.ts` mirrors the contract shape in §8i with a small local evaluator behind `ContractEvaluator`, so `src/skills/contract.ts` can replace it without changing a Case. `runCase` (`src/cases/runCase.ts`) runs a Case headless in Node or a worker: it checks the fit, scales the world, builds the model, drives it and evaluates the trace.
+A Case's task contract is the one contract of §8i, judged by the Rust crate through `src/skills/contract.ts`; `src/cases` keeps no evaluator of its own. `src/cases/contract.ts` only reads it as bounded plain JSON (version 1, depth 64, 4096 nodes, finite numbers, at most 16 failures) and scales it with the world (every atom's value and scale, except atoms that read an `angle`). `runCase` (`src/cases/runCase.ts`) runs a Case headless in Node or a worker: it checks the fit, scales the world, builds the model, drives it and judges the trace with `evaluateContract`; `CaseResult` carries that `trace` and the `failed` labels, and a contract the crate refuses makes `runCase` reject. `scoreTry` judges a recorded try the same way.
 
 ### Making a Case
 

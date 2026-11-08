@@ -67,6 +67,7 @@ export class Trainer {
     this.envDir = path.join(libraryDir, 'trainer-env');
     this.jobs = new Map();
     this.queue = [];
+    this.waiters = new Map();
   }
 
   status() {
@@ -170,6 +171,7 @@ export class Trainer {
     child.on('close', (code, signal) => {
       this.jobs.delete(workspaceId);
       queueMicrotask(() => this.launchNext());
+      this.wake(workspaceId);
 
       if (done) {
         try {
@@ -223,6 +225,32 @@ export class Trainer {
     }
 
     return { stopping: !!job };
+  }
+
+  wake(workspaceId) {
+    const waiting = this.waiters.get(workspaceId) ?? [];
+
+    this.waiters.delete(workspaceId);
+    waiting.forEach((resolve) => resolve());
+  }
+
+  release(workspaceId) {
+    const waiting = this.queue.findIndex((q) => q.workspaceId === workspaceId);
+
+    if (waiting >= 0) this.queue.splice(waiting, 1);
+
+    const job = this.jobs.get(workspaceId);
+
+    if (!job) return Promise.resolve();
+
+    const closed = new Promise((resolve) =>
+      this.waiters.set(workspaceId, [...(this.waiters.get(workspaceId) ?? []), resolve]),
+    );
+
+    job.stopping = true;
+    askToStop(job);
+
+    return closed;
   }
 
   storePolicy(id, dir, job, done) {

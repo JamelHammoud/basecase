@@ -6,7 +6,7 @@ import { buildMjcf } from '../sim/mjcf';
 import type { MjcfInput, SimModel } from '../sim/mjcfTypes';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig, type Rig, type V3 } from '../utils/kinematics';
-import { evaluateLocally, type ContractEvaluator } from './contract';
+import { evaluateContract, type Trace } from '../skills/contract';
 import { probeReader } from './probes';
 import { boundEffector, robotFacts, slotRefusal, type EndEffector, type RobotFacts } from './robotFit';
 import { scaledToReach } from './scale';
@@ -30,6 +30,8 @@ export interface CaseFrame {
 export interface CaseResult {
   passed: boolean;
   margin: number;
+  failed: string[];
+  trace: Trace;
   refusal?: string;
   model: SimModel;
   frames: CaseFrame[];
@@ -39,7 +41,6 @@ export interface CaseResult {
 
 export interface RunOptions {
   controller: 'limp' | 'reference';
-  evaluator?: ContractEvaluator;
 }
 
 function driveFor(rig: Rig, robot: CaseRobot, facts: RobotFacts, effector: EndEffector | null): DriveSetup | null {
@@ -110,6 +111,8 @@ export async function runCase(
     return {
       passed: false,
       margin: -1,
+      failed: [],
+      trace: { dt: RECORD_DT, signals: {} },
       refusal,
       model: buildMjcf(input),
       frames: [],
@@ -135,12 +138,14 @@ export async function runCase(
 
   try {
     const frames = roll({ engine, kase, sample: (poses) => reader.sample(poses, signals) });
-    const evaluator = options.evaluator ?? evaluateLocally;
-    const verdict = await evaluator(kase.task.contract, { dt: RECORD_DT, signals });
+    const trace = { dt: RECORD_DT, signals };
+    const verdict = await evaluateContract(kase.task.contract, trace);
 
     return {
       passed: verdict.passed,
       margin: verdict.margin,
+      failed: verdict.failed,
+      trace,
       model,
       frames,
       objectIds: kase.world.objects.map((o) => o.id),

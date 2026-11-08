@@ -1,6 +1,7 @@
+use crate::conditions::{Conditions, Setup};
 use crate::events::Phases;
-use crate::job::Task;
 use crate::randomize::{randomize, RANDOMIZED_FIELDS};
+use crate::rewarder::Rewarder;
 use crate::rng::Rng;
 use crate::robot::{quat_multiply, rotate_into_frame, Robot};
 use crate::threads::ThreadTuner;
@@ -8,7 +9,6 @@ use forge_mujoco::Batch;
 use forge_reward::{handwritten, RewardState};
 use std::time::Instant;
 
-const RESET_JOINT_NOISE: f64 = 0.05;
 const PUSH_SPEED: (f64, f64) = (0.2, 0.6);
 const PUSH_GAP_SECONDS: (f64, f64) = (2.0, 5.0);
 pub const NEVER: i64 = i64::MAX / 2;
@@ -26,6 +26,9 @@ pub struct Envs<'a> {
     joint_vel: Vec<f64>,
     final_obs: Option<Vec<f32>>,
     tuner: Option<ThreadTuner>,
+    delayed: Vec<f64>,
+    conditions: Conditions,
+    rewarder: Rewarder,
 }
 
 pub struct EnvsSpec {
@@ -84,7 +87,7 @@ impl<'a> Envs<'a> {
         }
 
         let nact = robot.nact;
-        let push_at = if randomized {
+        let push_at = if randomized && robot.job.options.pushes {
             rngs.iter_mut().map(|rng| push_gap(rng, robot.control_dt)).collect()
         } else {
             vec![NEVER; count]
@@ -102,6 +105,16 @@ impl<'a> Envs<'a> {
             joint_vel: vec![0.0; nact],
             final_obs: None,
             tuner: tuned.then(|| ThreadTuner::new(threads)),
+            delayed: vec![0.0; nact],
+            conditions: Conditions::new(Setup {
+                options: &robot.job.options,
+                command: robot.job.command,
+                count,
+                nact,
+                control_dt: robot.control_dt,
+                randomized,
+            }),
+            rewarder: Rewarder::for_job(&robot.job)?,
         };
 
         for sim in 0..count {
@@ -125,9 +138,10 @@ impl<'a> Envs<'a> {
         row.copy_from_slice(&robot.start_row);
 
         let qpos = &mut row[layout.qpos..];
+        let noise = robot.job.options.reset_noise;
 
         for (j, &adr) in robot.joint_qpos.iter().enumerate() {
-            let moved = qpos[adr] + rng.uniform(-RESET_JOINT_NOISE, RESET_JOINT_NOISE);
+            let moved = qpos[adr] + rng.uniform(-noise, noise);
 
             qpos[adr] = moved.max(robot.ctrl_low[j]).min(robot.ctrl_high[j]);
         }
@@ -140,6 +154,7 @@ impl<'a> Envs<'a> {
         qpos[quat_at..quat_at + 4].copy_from_slice(&turned);
         self.steps_taken[sim] = 0;
         self.last_action[sim * robot.nact..(sim + 1) * robot.nact].fill(0.0);
+        self.conditions.reset(sim, &mut self.rngs[sim]);
     }
 
     pub fn root_xy(&mut self, sim: usize) -> [f64; 2] {
@@ -182,7 +197,8 @@ impl<'a> Envs<'a> {
         let qvel = &row[layout.qvel..];
         let d = robot.root_dof;
         let quat = &qpos[robot.root_qpos + 3..robot.root_qpos + 7];
-        let g = rotate_into_frame(quat, [0.0, 0.0, -1.0]);
+        let g = self.conditions.gravity(sim, rotate_into_frame(quat, [0.0, 0.0, -1.0]));
+        let command = self.conditions.commands[sim];
         let w = [qvel[d + 3], qvel[d + 4], qvel[d + 5]];
         let v = rotate_into_frame(quat, [qvel[d], qvel[d + 1], qvel[d + 2]]);
         let last = &self.last_action[sim * nact..(sim + 1) * nact];
@@ -191,11 +207,13 @@ impl<'a> Envs<'a> {
             obs[k] = g[k] as f32;
             obs[3 + k] = w[k] as f32;
             obs[6 + k] = v[k] as f32;
-            obs[9 + k] = robot.job.command[k] as f32;
+            obs[9 + k] = command[k] as f32;
         }
 
         for j in 0..nact {
-            obs[12 + j] = (qpos[robot.joint_qpos[j]] - robot.job.default_pose[j]) as f32;
+            let bias = self.conditions.joint_bias(sim, j);
+
+            obs[12 + j] = (qpos[robot.joint_qpos[j]] - robot.job.default_pose[j] + bias) as f32;
             obs[12 + nact + j] = qvel[robot.joint_dof[j]] as f32;
             obs[12 + 2 * nact + j] = last[j] as f32;
         }
@@ -232,6 +250,8 @@ impl<'a> Envs<'a> {
                 .iter_mut()
                 .zip(taken)
                 .for_each(|(c, a)| *c = a.clamp(-1.0, 1.0) as f64);
+            self.conditions
+                .delayed(sim, &self.action[sim * nact..(sim + 1) * nact], &mut self.delayed);
 
             let row = self.batch.row(sim);
             let ctrl = &mut row[ctrl_at..ctrl_at + nu];
@@ -239,7 +259,7 @@ impl<'a> Envs<'a> {
             ctrl.copy_from_slice(&robot.job.ctrl_default);
 
             for j in 0..nact {
-                let target = robot.job.default_pose[j] + robot.job.action_scale * self.action[sim * nact + j];
+                let target = robot.job.default_pose[j] + robot.job.action_scale * self.delayed[j];
 
                 ctrl[robot.actuators[j]] = target.max(robot.ctrl_low[j]).min(robot.ctrl_high[j]);
             }
@@ -323,7 +343,7 @@ impl<'a> Envs<'a> {
                 gravity: rotate_into_frame(quat, [0.0, 0.0, -1.0]),
                 angvel: [qvel[d + 3], qvel[d + 4], qvel[d + 5]],
                 linvel: rotate_into_frame(quat, [qvel[d], qvel[d + 1], qvel[d + 2]]),
-                command: robot.job.command,
+                command: self.conditions.commands[sim],
                 z: qpos[robot.root_qpos + 2],
                 z0: robot.z0,
                 control_dt: robot.control_dt,
@@ -333,14 +353,10 @@ impl<'a> Envs<'a> {
                 last_action: &self.last_action[sim * nact..(sim + 1) * nact],
                 bodies: &[],
             };
-            let raw = match robot.job.task {
-                Task::Stand => handwritten::stand(&state),
-                Task::Walk => handwritten::walk(&state),
-            };
-            let fell = handwritten::fell(&state);
+            let fell = robot.job.options.fall_resets && handwritten::fell(&state);
             let timeout = self.steps_taken[sim] >= robot.episode_steps;
 
-            result.reward[sim] = handwritten::scaled(&state, raw) as f32;
+            result.reward[sim] = self.rewarder.reward(&state) as f32;
             result.fell[sim] = fell;
             result.timeout[sim] = timeout;
             self.last_action[sim * nact..(sim + 1) * nact].copy_from_slice(&self.action[sim * nact..(sim + 1) * nact]);
@@ -348,6 +364,8 @@ impl<'a> Envs<'a> {
             if fell || timeout {
                 self.store_final_obs(sim);
                 self.reset(sim);
+            } else {
+                self.conditions.tick(sim, &mut self.rngs[sim], self.steps_taken[sim]);
             }
         }
     }

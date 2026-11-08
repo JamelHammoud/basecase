@@ -24,17 +24,21 @@ pub struct Offsets {
 
 struct Unit {
     state: State,
-    buffer: Vec<f64>,
     sims: [usize; LANES],
     real: usize,
-    contacts: [f64; LANES],
+}
+
+struct SimRow {
+    row: Vec<f64>,
+    contacts: f64,
+    failed: bool,
 }
 
 pub struct RowBatch {
     plan: Plan,
     map: RowMap,
-    rows: Vec<f64>,
-    contacts: Vec<f64>,
+    rows: Vec<Mutex<SimRow>>,
+    order: Vec<usize>,
     units: Vec<Mutex<Unit>>,
     spaces: Vec<Mutex<Workspace>>,
     pool: ThreadPool,
@@ -62,15 +66,22 @@ impl RowBatch {
     pub fn new(model: &Model, kernel: Kernel, nsim: usize, threads: usize) -> Result<Self, String> {
         let plan = Plan::new(kernel);
         let map = RowMap::new(model)?;
-        let rows = default_row(model, map.nstate).repeat(nsim);
+        let start = default_row(model, map.nstate);
+        let rows = (0..nsim)
+            .map(|_| {
+                Mutex::new(SimRow {
+                    row: start.clone(),
+                    contacts: 0.0,
+                    failed: false,
+                })
+            })
+            .collect();
         let units = (0..nsim.div_ceil(LANES))
             .map(|_| {
                 Mutex::new(Unit {
                     state: State::new(&plan),
-                    buffer: vec![0.0; LANES * map.nstate],
                     sims: [0; LANES],
                     real: 0,
-                    contacts: [0.0; LANES],
                 })
             })
             .collect();
@@ -82,7 +93,7 @@ impl RowBatch {
             plan,
             map,
             rows,
-            contacts: vec![0.0; nsim],
+            order: (0..nsim).collect(),
             units,
             spaces,
             nsim,
@@ -112,13 +123,11 @@ impl RowBatch {
     }
 
     pub fn row(&mut self, sim: usize) -> &mut [f64] {
-        let n = self.map.nstate;
-
-        &mut self.rows[sim * n..(sim + 1) * n]
+        &mut self.rows[sim].get_mut().expect("row lock").row
     }
 
     pub fn contacts(&self, sim: usize) -> f64 {
-        self.contacts[sim]
+        self.rows[sim].lock().expect("row lock").contacts
     }
 
     pub fn expand(&mut self, field: &str) -> Result<(&mut [f64], usize), String> {
@@ -139,11 +148,15 @@ impl RowBatch {
     }
 
     fn group(&mut self) {
-        let mut order: Vec<usize> = (0..self.nsim).collect();
+        let keys: Vec<f64> = self
+            .rows
+            .iter_mut()
+            .map(|r| r.get_mut().expect("row lock").contacts)
+            .collect();
 
-        order.sort_by(|a, b| self.contacts[*a].total_cmp(&self.contacts[*b]));
+        self.order.sort_by(|a, b| keys[*a].total_cmp(&keys[*b]));
 
-        for (unit, sims) in self.units.iter_mut().zip(order.chunks(LANES)) {
+        for (unit, sims) in self.units.iter_mut().zip(self.order.chunks(LANES)) {
             let unit = unit.get_mut().expect("unit lock");
 
             unit.real = sims.len();
@@ -155,12 +168,13 @@ impl RowBatch {
     }
 
     fn advance(&self, unit: &mut Unit, nstep: usize, w: &mut Workspace) {
-        let n = self.map.nstate;
+        let (nq, nv) = (self.plan.kernel.nq, self.plan.kernel.nv);
 
         for lane in 0..LANES {
             let sim = unit.sims[lane];
 
-            self.map.load(&mut unit.state, lane, &self.rows[sim * n..(sim + 1) * n]);
+            self.map
+                .load(&mut unit.state, lane, &self.rows[sim].lock().expect("row lock").row);
             unit.state.tables.set_lane(lane, &self.params.view(sim));
         }
 
@@ -168,32 +182,13 @@ impl RowBatch {
             step(&self.plan, &mut unit.state, w);
         }
 
-        for lane in 0..LANES {
-            self.map
-                .store(&unit.state, lane, &mut unit.buffer[lane * n..(lane + 1) * n]);
-            unit.contacts[lane] = w.block.ncon.0[lane];
+        for lane in 0..unit.real {
+            let mut sim = self.rows[unit.sims[lane]].lock().expect("row lock");
+
+            self.map.store(&unit.state, lane, &mut sim.row);
+            sim.contacts = w.block.ncon.0[lane];
+            sim.failed = !self.map.finite(&sim.row, nq, nv);
         }
-    }
-
-    fn gather(&mut self) -> usize {
-        let n = self.map.nstate;
-        let (nq, nv) = (self.plan.kernel.nq, self.plan.kernel.nv);
-        let mut failed = 0;
-
-        for unit in &mut self.units {
-            let unit = unit.get_mut().expect("unit lock");
-
-            for lane in 0..unit.real {
-                let sim = unit.sims[lane];
-                let row = &unit.buffer[lane * n..(lane + 1) * n];
-
-                self.rows[sim * n..(sim + 1) * n].copy_from_slice(row);
-                self.contacts[sim] = unit.contacts[lane];
-                failed += usize::from(!self.map.finite(row, nq, nv));
-            }
-        }
-
-        failed
     }
 
     pub fn step(&mut self, nstep: usize) -> usize {
@@ -211,7 +206,12 @@ impl RowBatch {
             });
         });
 
-        let failed = self.gather();
+        let failed = self
+            .rows
+            .iter_mut()
+            .filter_map(|r| r.get_mut().ok())
+            .filter(|r| r.failed)
+            .count();
 
         self.error = (failed > 0).then(|| format!("Forge's engine diverged on {failed} robots"));
         failed

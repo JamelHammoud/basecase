@@ -185,84 +185,84 @@
       "title": "F1: native PPO on C MuJoCo with no Python",
       "stage": 1,
       "state": "required",
-      "ok": true,
+      "ok": false,
       "voided": false,
       "checks": [
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "15.7 s",
+          "detail": "26.0 s",
           "metrics": {},
-          "seconds": 15.676
+          "seconds": 25.998
         },
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "0.0 s",
+          "detail": "0.1 s",
           "metrics": {},
-          "seconds": 0.048
+          "seconds": 0.067
         },
         {
           "name": "forge-train links no Python",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.034
+          "seconds": 0.039
         },
         {
           "name": "Forge trains a real robot at 40K steps/s with the same events as train.py",
-          "ok": true,
-          "detail": "43716 steps/s",
+          "ok": false,
+          "detail": "13202 steps/s",
           "metrics": {
-            "fps": 43716.24014125912
+            "fps": 13201.99643667143
           },
-          "seconds": 2.219
+          "seconds": 7.11
         },
         {
           "name": "Forge exports a valid ONNX policy that matches its own actions",
           "ok": true,
           "detail": "worst 2.65e-6",
           "metrics": {},
-          "seconds": 0.487
+          "seconds": 0.652
         },
         {
           "name": "A Forge policy runs in the app with matching actions",
           "ok": true,
-          "detail": "1.1 s",
+          "detail": "1.8 s",
           "metrics": {},
-          "seconds": 1.089
+          "seconds": 1.783
         },
         {
-          "name": "Forge reaches the stand skill within 20% of the samples train.py needs, over 10 seeds",
+          "name": "Forge reaches the walk skill within 20% of the samples train.py needs, over 10 seeds",
           "ok": true,
           "detail": "",
           "metrics": {
             "python": [
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800
+              1075200,
+              691200,
+              998400,
+              8217600,
+              null,
+              2611200,
+              null,
+              null,
+              null,
+              921600
             ],
             "forge": [
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800,
-              76800
+              3686400,
+              230400,
+              5299200,
+              3840000,
+              691200,
+              1075200,
+              844800,
+              null,
+              24499200,
+              1228800
             ]
           },
-          "seconds": 165.915
+          "seconds": 8166.577
         }
       ],
       "canaries": [
@@ -281,8 +281,8 @@
           "seconds": 0
         }
       ],
-      "commit": "b9012c5",
-      "at": "2026-11-07T21:49:50.291Z",
+      "commit": "6e8a110",
+      "at": "2026-11-08T00:10:49.822Z",
       "manifest": "clean"
     },
     "s1-f1b-sysid-rewardlang": {

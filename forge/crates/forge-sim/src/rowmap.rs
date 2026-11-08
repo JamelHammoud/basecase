@@ -1,5 +1,5 @@
 use crate::state::State;
-use forge_mujoco::Model;
+use forge_ir::Source;
 
 const TIME: i32 = 1 << 0;
 const QPOS: i32 = 1 << 1;
@@ -7,6 +7,16 @@ const QVEL: i32 = 1 << 2;
 const HISTORY: i32 = 1 << 4;
 const WARMSTART: i32 = 1 << 5;
 const CTRL: i32 = 1 << 6;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Offsets {
+    pub nstate: usize,
+    pub time: usize,
+    pub qpos: usize,
+    pub qvel: usize,
+    pub warm: usize,
+    pub ctrl: usize,
+}
 
 #[derive(Clone, Debug)]
 pub struct Buffer {
@@ -26,22 +36,23 @@ pub struct RowMap {
     pub buffers: Vec<Buffer>,
 }
 
-fn offset(model: &Model, signature: i32, component: i32) -> usize {
-    model.state_size(signature & (component - 1))
+fn offset(model: &dyn Source, signature: i32, component: i32) -> Result<usize, String> {
+    model
+        .state_size(signature & (component - 1))
+        .ok_or_else(|| format!("This MuJoCo build has no state of signature {signature}"))
 }
 
 impl RowMap {
-    pub fn new(model: &Model) -> Result<Self, String> {
-        let sig = forge_mujoco::integration_state();
+    pub fn new(model: &dyn Source) -> Result<Self, String> {
+        let sig = model.integration_state();
         let adr = model
-            .array("actuator_historyadr")
-            .and_then(|a| a.i32s())
+            .i32s("actuator_historyadr")
             .ok_or("This MuJoCo build has no actuator_historyadr")?;
         let samples = model
-            .array("actuator_history")
-            .and_then(|a| a.i32s())
+            .i32s("actuator_history")
             .ok_or("This MuJoCo build has no actuator_history")?;
-        let buffers = (0..model.nu())
+        let nu = model.size("nu").ok_or("This MuJoCo build has no nu")? as usize;
+        let buffers = (0..nu)
             .filter(|&a| samples[2 * a] > 0)
             .map(|a| Buffer {
                 adr: adr[a] as usize,
@@ -50,15 +61,28 @@ impl RowMap {
             .collect();
 
         Ok(Self {
-            nstate: model.state_size(sig),
-            time: offset(model, sig, TIME),
-            qpos: offset(model, sig, QPOS),
-            qvel: offset(model, sig, QVEL),
-            history: offset(model, sig, HISTORY),
-            warm: offset(model, sig, WARMSTART),
-            ctrl: offset(model, sig, CTRL),
+            nstate: model
+                .state_size(sig)
+                .ok_or("This MuJoCo build has no integration state")?,
+            time: offset(model, sig, TIME)?,
+            qpos: offset(model, sig, QPOS)?,
+            qvel: offset(model, sig, QVEL)?,
+            history: offset(model, sig, HISTORY)?,
+            warm: offset(model, sig, WARMSTART)?,
+            ctrl: offset(model, sig, CTRL)?,
             buffers,
         })
+    }
+
+    pub fn offsets(&self) -> Offsets {
+        Offsets {
+            nstate: self.nstate,
+            time: self.time,
+            qpos: self.qpos,
+            qvel: self.qvel,
+            warm: self.warm,
+            ctrl: self.ctrl,
+        }
     }
 
     pub fn load(&self, state: &mut State, lane: usize, row: &[f64]) {

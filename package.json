@@ -49,6 +49,7 @@
     "verify": "node verify/gatekeeper.mjs",
     "build:contract": "node tools/build-contract.mjs",
     "build:routines": "node hw/coordinator/build-wasm.mjs",
+    "build:forge-web": "node tools/forge/build-web.mjs",
     "check:routines": "node hw/coordinator/build-wasm.mjs --check"
   },
   "build": {

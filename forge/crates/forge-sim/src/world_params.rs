@@ -1,5 +1,5 @@
 use crate::tables::WorldTables;
-use forge_mujoco::Model;
+use forge_ir::Source;
 
 pub const EXPANDABLE: [&str; 4] = ["geom_friction", "body_mass", "actuator_gainprm", "actuator_biasprm"];
 const PARAM_WIDTH: usize = 10;
@@ -22,10 +22,9 @@ pub struct WorldParams {
     dirty: bool,
 }
 
-fn read(model: &Model, name: &str) -> Result<Vec<f64>, String> {
+fn read(model: &dyn Source, name: &str) -> Result<Vec<f64>, String> {
     model
-        .array(name)
-        .and_then(|a| a.f64s())
+        .f64s(name)
         .map(<[f64]>::to_vec)
         .ok_or_else(|| format!("This MuJoCo build has no model field {name}"))
 }
@@ -46,14 +45,14 @@ fn compact(tables: [&[f64]; 4], nu: usize) -> World {
 }
 
 impl WorldParams {
-    pub fn new(model: &Model, nsim: usize) -> Result<Self, String> {
+    pub fn new(model: &dyn Source, nsim: usize) -> Result<Self, String> {
         let defaults = [
             read(model, EXPANDABLE[0])?,
             read(model, EXPANDABLE[1])?,
             read(model, EXPANDABLE[2])?,
             read(model, EXPANDABLE[3])?,
         ];
-        let nu = model.nu();
+        let nu = model.size("nu").ok_or("This MuJoCo build has no nu")? as usize;
         let nominal = compact([&defaults[0], &defaults[1], &defaults[2], &defaults[3]], nu);
 
         Ok(Self {

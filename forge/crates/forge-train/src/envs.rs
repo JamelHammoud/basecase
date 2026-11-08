@@ -1,3 +1,4 @@
+use crate::clock::Instant;
 use crate::conditions::{Conditions, Setup};
 use crate::events::Phases;
 use crate::physics::Physics;
@@ -7,7 +8,6 @@ use crate::rng::Rng;
 use crate::robot::{quat_multiply, rotate_into_frame, Robot};
 use crate::threads::ThreadTuner;
 use forge_reward::{handwritten, RewardState};
-use std::time::Instant;
 
 const PUSH_SPEED: (f64, f64) = (0.2, 0.6);
 const PUSH_GAP_SECONDS: (f64, f64) = (2.0, 5.0);
@@ -79,7 +79,7 @@ impl<'a> Envs<'a> {
         let mut rngs: Vec<Rng> = (0..count).map(|i| Rng::new(seed, i as u64)).collect();
 
         if randomized {
-            randomize(&mut batch, &robot.model, &mut rngs)?;
+            randomize(&mut batch, robot.nu, &mut rngs)?;
         }
 
         for sim in 0..count {
@@ -240,7 +240,7 @@ impl<'a> Envs<'a> {
         let robot = self.robot;
         let nact = robot.nact;
         let ctrl_at = robot.layout.ctrl;
-        let nu = robot.model.nu();
+        let nu = robot.nu;
 
         for sim in 0..self.count {
             let taken = &actions[sim * nact..(sim + 1) * nact];

@@ -1,3 +1,4 @@
+use crate::clock::Instant;
 use crate::envs::{Envs, StepResult};
 use crate::episodes::Episodes;
 use crate::events::Phases;
@@ -8,7 +9,6 @@ use crate::normalizer::Normalizer;
 use crate::ppo::rollout::Rollout;
 use crate::rng::Rng;
 use crate::update::Learner;
-use std::time::Instant;
 
 pub struct Collector<'a> {
     pub envs: Envs<'a>,

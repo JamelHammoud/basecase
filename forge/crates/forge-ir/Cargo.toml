@@ -8,8 +8,12 @@ build = "build.rs"
 [lib]
 path = "src/lib.rs"
 
+[features]
+default = ["mujoco"]
+mujoco = ["dep:forge-mujoco"]
+
 [dependencies]
-forge-mujoco = { path = "../forge-mujoco" }
+forge-mujoco = { path = "../forge-mujoco", optional = true }
 
 [lints.rust]
 unsafe_code = "forbid"

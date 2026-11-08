@@ -9,6 +9,7 @@ use std::sync::Mutex;
 pub use crate::heads::Minibatch;
 
 const HIDDEN: [usize; 3] = [256, 128, 64];
+const PAIR_THREADS: usize = if cfg!(target_arch = "wasm32") { 1 } else { 2 };
 const LOG_STD_INIT: f32 = -0.7;
 pub const LOG_STD_MAX: f32 = 0.0;
 const ACTOR_OUT_GAIN: f64 = 0.01;
@@ -102,7 +103,7 @@ impl Learner {
             adam: Adam::new(total),
             learn_rate: 1e-3,
             log_std_min: f32::NEG_INFINITY,
-            pair: Pool::new(2),
+            pair: Pool::new(PAIR_THREADS),
         }
     }
 

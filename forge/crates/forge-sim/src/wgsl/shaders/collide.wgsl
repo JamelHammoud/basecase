@@ -34,7 +34,7 @@ fn at_point(pos: d3, dist: real, normal: d3) -> Found {
 }
 
 fn exhaustive(m: i32, dir: d3) -> i32 {
-    var best = D(-3.4028235e38);
+    var best = D(-bitcast<f32>(0x7f7fffffu));
     var index = 0;
     for (var i = 0; i < ti(MESH_VNUM, m); i++) {
         let d = dot3(dir, vert(ti(MESH_VADR, m) + i));

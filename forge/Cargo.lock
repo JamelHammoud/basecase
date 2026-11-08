@@ -261,6 +261,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-web"
+version = "0.1.0"
+dependencies = [
+ "forge-ir",
+ "forge-sim",
+ "forge-train",
+ "serde_json",
+]
+
+[[package]]
 name = "forge-wgpu"
 version = "0.1.0"
 dependencies = [

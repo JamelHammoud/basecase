@@ -86,6 +86,12 @@ pub struct Trained<'a> {
 }
 
 pub fn write_policy(path: &Path, run: &Trained, steps: u64) -> Result<(), String> {
+    let spec = policy_json(run, steps, timestamp());
+
+    write_atomically(path, spec.to_string().as_bytes())
+}
+
+pub fn policy_json(run: &Trained, steps: u64, created_at: String) -> Value {
     let job = &run.robot.job;
     let mut spec = json!({
         "format": POLICY_FORMAT,
@@ -102,15 +108,15 @@ pub fn write_policy(path: &Path, run: &Trained, steps: u64) -> Result<(), String
         "layers": layer_json(&run.policy.net, &run.policy.params),
         "activation": "elu",
         "trainedSteps": steps,
-        "mujoco": forge_mujoco::version(),
-        "createdAt": timestamp(),
+        "mujoco": run.robot.mujoco,
+        "createdAt": created_at,
     });
 
     if let (Some(name), Value::Object(fields)) = (run.policy.squash.name(), &mut spec) {
         fields.insert("squash".to_owned(), json!(name));
     }
 
-    write_atomically(path, spec.to_string().as_bytes())
+    spec
 }
 
 pub fn write_onnx(path: &Path, run: &Trained) -> Result<(), String> {

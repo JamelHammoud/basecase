@@ -6,15 +6,15 @@ mod names;
 mod pairs;
 mod read;
 mod refuse;
+mod source;
 
 pub use kernel::*;
 pub use refuse::Refusal;
+pub use source::{Field, Fields, Source, INTEGRATION_STATE};
 
-use forge_mujoco::Model;
 use names::Names;
 use pairs::PairInput;
 use read::Reader;
-use std::path::Path;
 
 const DISABLE_WARMSTART: u32 = 1 << 9;
 const DISABLE_FILTERPARENT: u32 = 1 << 10;
@@ -75,7 +75,7 @@ fn build(r: &Reader, reasons: &mut Vec<String>) -> Result<Kernel, String> {
     })
 }
 
-pub fn lower(model: &Model) -> Result<Kernel, Refusal> {
+pub fn lower(model: &dyn Source) -> Result<Kernel, Refusal> {
     let reader = Reader::new(model);
     let mut reasons = Vec::new();
     let kernel = build(&reader, &mut reasons).map_err(Refusal::one)?;
@@ -87,8 +87,9 @@ pub fn lower(model: &Model) -> Result<Kernel, Refusal> {
     }
 }
 
-pub fn load(path: &Path) -> Result<(Model, Kernel), Refusal> {
-    let model = Model::load(path).map_err(Refusal::one)?;
+#[cfg(feature = "mujoco")]
+pub fn load(path: &std::path::Path) -> Result<(forge_mujoco::Model, Kernel), Refusal> {
+    let model = forge_mujoco::Model::load(path).map_err(Refusal::one)?;
     let kernel = lower(&model)?;
 
     Ok((model, kernel))

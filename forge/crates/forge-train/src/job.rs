@@ -45,6 +45,7 @@ pub enum Backend {
     Mujoco,
     Simd,
     Metal,
+    Wgpu,
 }
 
 impl Backend {
@@ -53,6 +54,7 @@ impl Backend {
             None | Some("mujoco") => Ok(Backend::Mujoco),
             Some("simd") => Ok(Backend::Simd),
             Some("metal") => Ok(Backend::Metal),
+            Some("wgpu") => Ok(Backend::Wgpu),
             Some(other) => Err(format!("job.json asks for an unknown backend {other}")),
         }
     }

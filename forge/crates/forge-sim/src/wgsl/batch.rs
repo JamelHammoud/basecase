@@ -1,8 +1,7 @@
 use super::engine::{Backend, Engine};
 use crate::gpu::pack::{group_order, Pack, Slots};
 use crate::plan::Plan;
-use crate::row_batch::Offsets;
-use crate::rowmap::RowMap;
+use crate::rowmap::{Offsets, RowMap};
 use crate::world_params::WorldParams;
 use forge_ir::Kernel;
 
@@ -46,16 +45,7 @@ impl WgslBatch {
     }
 
     pub fn offsets(&self) -> Offsets {
-        let m = &self.map;
-
-        Offsets {
-            nstate: m.nstate,
-            time: m.time,
-            qpos: m.qpos,
-            qvel: m.qvel,
-            warm: m.warm,
-            ctrl: m.ctrl,
-        }
+        self.map.offsets()
     }
 
     pub fn nsim(&self) -> usize {

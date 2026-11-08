@@ -3,6 +3,7 @@ mod resume;
 mod rollout;
 
 use crate::algorithm::{Algorithm, Report};
+use crate::clock::Instant;
 use crate::deployed::{Deployed, Squash};
 use crate::envs::Envs;
 use crate::heads::gaussian_constant;
@@ -14,7 +15,6 @@ use crate::update::{Hyper, Learner, Minibatch};
 use crate::warm::{Snapshot, WarmStart};
 use collector::Collector;
 use rollout::Rollout;
-use std::time::Instant;
 
 pub struct Update {
     pub learner: Learner,
@@ -177,22 +177,43 @@ impl<'a> Ppo<'a> {
         let [learning, collecting] = &mut self.rollouts;
         let update = &mut self.update;
         let collector = &mut self.collector;
-        let collected = std::thread::scope(|scope| {
-            let learner = scope.spawn(|| {
-                crate::platform::raise_thread_priority();
-                update.learn(learning);
-            });
-            let collected = collector.collect(collecting);
-
-            learner.join().map_err(|_| "The learner thread panicked".to_owned())?;
-
-            collected
-        });
+        let collected = overlap(update, learning, collector, collecting);
 
         self.rollouts.swap(0, 1);
 
         collected
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn overlap(
+    update: &mut Update,
+    learning: &mut Rollout,
+    collector: &mut Collector,
+    collecting: &mut Rollout,
+) -> Result<(), String> {
+    update.learn(learning);
+    collector.collect(collecting)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn overlap(
+    update: &mut Update,
+    learning: &mut Rollout,
+    collector: &mut Collector,
+    collecting: &mut Rollout,
+) -> Result<(), String> {
+    std::thread::scope(|scope| {
+        let learner = scope.spawn(|| {
+            crate::platform::raise_thread_priority();
+            update.learn(learning);
+        });
+        let collected = collector.collect(collecting);
+
+        learner.join().map_err(|_| "The learner thread panicked".to_owned())?;
+
+        collected
+    })
 }
 
 impl Algorithm for Ppo<'_> {

@@ -124,21 +124,36 @@ function keyframeAnimation(scope: Scope, p: AnimatePayload, pointOf: PointOf): B
 
 const COLLISION_SAMPLES = 8;
 
+const SIZE_OF_PROBLEM = /[\d.]+ mm|\d+ more/;
+
+export function checkedTimes(anim: Pick<RobotAnimation, 'duration' | 'loop'>): number[] {
+  const spans = anim.loop ? COLLISION_SAMPLES : COLLISION_SAMPLES - 1;
+
+  return Array.from({ length: COLLISION_SAMPLES }, (_, i) => (i / spans) * anim.duration);
+}
+
+export function worstProblems(sampled: Array<{ time: number; lines: string[] }>): Map<string, string> {
+  const worst = new Map<string, { size: number; text: string }>();
+
+  for (const { time, lines } of sampled) {
+    for (const line of lines) {
+      const key = line.replace(SIZE_OF_PROBLEM, '');
+      const size = parseFloat(SIZE_OF_PROBLEM.exec(line)?.[0] ?? '0');
+
+      if (size > (worst.get(key)?.size ?? -1)) worst.set(key, { size, text: `${line} at ${r1(time)} s` });
+    }
+  }
+
+  return new Map([...worst].map(([key, problem]) => [key, problem.text]));
+}
+
 async function collisionProblems(ctx: PoseContext, scope: Scope, anim: RobotAnimation): Promise<Map<string, string>> {
   const rest = restPairs(ctx);
-  const times = Array.from({ length: COLLISION_SAMPLES }, (_, i) => (i / COLLISION_SAMPLES) * anim.duration);
+  const times = checkedTimes(anim);
   const checks = times.map((t) => poseCheck(ctx, scope, sampleAnimation(anim, t), rest));
-  const problems = new Map<string, string>();
+  const results = await Promise.all(checks);
 
-  (await Promise.all(checks)).forEach((lines, i) => {
-    for (const line of lines) {
-      const key = line.replace(/[\d.]+ mm/g, '');
-
-      if (!problems.has(key)) problems.set(key, `${line} at ${r1(times[i])} s`);
-    }
-  });
-
-  return problems;
+  return worstProblems(times.map((time, i) => ({ time, lines: results[i] })));
 }
 
 function fastestSpeeds(anim: RobotAnimation): Map<string, number> {

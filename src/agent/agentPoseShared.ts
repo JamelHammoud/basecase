@@ -12,7 +12,9 @@ import {
   type V3,
 } from '../utils/kinematics';
 import { goalParts, sampleAnimation, type PointOf } from '../utils/animation';
+import { limbOf } from '../utils/robotImport/published';
 import { rigJoints } from '../assembly/rigJoints';
+import { DEEPER_THAN_REST_MM, pairKey } from '../three/interference';
 import { rotToCad, rotToScene, toCad, toScene } from './agentFrame';
 
 export interface PoseContext {
@@ -126,11 +128,13 @@ function outputRiders(rig: Rig, parts: string[]): Record<string, string[]> {
   return riders;
 }
 
+const CLASHES_SHOWN = 6;
+
 export async function poseCheck(
   ctx: PoseContext,
   scope: Scope,
   local: RobotPoseState,
-  restPairs: Promise<Set<string>>,
+  restPairs: Promise<Map<string, number>>,
 ): Promise<string[]> {
   const vp = ctx.viewport;
 
@@ -154,22 +158,27 @@ export async function poseCheck(
   const rest = await restPairs;
   const floor = await lowest;
   const clashes = (await found).filter(
-    (f) => f.depthMm > 1 && owner(f.a) !== owner(f.b) && !rest.has([f.a, f.b].sort().join('|')),
+    (f) =>
+      f.depthMm > 1 &&
+      owner(f.a) !== owner(f.b) &&
+      f.depthMm > (rest.get(pairKey(f.a, f.b)) ?? -DEEPER_THAN_REST_MM) + DEEPER_THAN_REST_MM,
   );
 
-  for (const c of clashes.slice(0, 6)) lines.push(`${c.a} passes ${r1(c.depthMm)} mm into ${c.b}`);
+  for (const c of clashes.slice(0, CLASHES_SHOWN)) lines.push(`${c.a} passes ${r1(c.depthMm)} mm into ${c.b}`);
+
+  if (clashes.length > CLASHES_SHOWN) lines.push(`…and ${clashes.length - CLASHES_SHOWN} more clashes`);
 
   if (floor !== null && floor < -1) lines.push(`${r1(-floor)} mm below the floor`);
-  else if (floor !== null && floor > 5 && rig.joints.some((j) => /knee|ankle|leg|foot/i.test(j.name)))
+  else if (floor !== null && floor > 5 && rig.joints.some((j) => (j.limb ?? limbOf(j.name)) === 'leg'))
     lines.push(`Lowest point ${r1(floor)} mm above the floor`);
 
   return lines;
 }
 
-export async function restPairs(ctx: PoseContext): Promise<Set<string>> {
+export async function restPairs(ctx: PoseContext): Promise<Map<string, number>> {
   const found = (await ctx.viewport?.interference())?.interferences ?? [];
 
-  return new Set(found.map((f) => [f.a, f.b].sort().join('|')));
+  return new Map(found.map((f) => [pairKey(f.a, f.b), f.depthMm]));
 }
 
 export function render(

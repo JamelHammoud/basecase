@@ -24,7 +24,9 @@ export interface Variant {
 
 const FOOT = /\b(foot|feet|sole)\b/i;
 
-export const isFoot = (p: ScenePart) => p.kind !== 'hardware' && p.kind !== 'component' && FOOT.test(p.name);
+const nameWords = (name: string) => name.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ');
+
+export const isFoot = (p: ScenePart) => p.kind !== 'hardware' && p.kind !== 'component' && FOOT.test(nameWords(p.name));
 
 export function isBattery(p: ScenePart): boolean {
   const c = p.kind === 'component' && p.componentId ? COMPONENT_BY_ID[p.componentId] : undefined;

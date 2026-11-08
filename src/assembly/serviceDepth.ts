@@ -1,4 +1,5 @@
 import { COMPONENT_BY_ID, type ComponentGroup } from '../data/components';
+import { SUPPLY_BY_ID } from '../data/supplies';
 import type { ScenePart } from '../types/robotics';
 import type { AssemblyGeometry } from './assemblyGeometry';
 import type { RemovalPlan } from './removalOrder';
@@ -20,7 +21,7 @@ const CLASS_BY_GROUP: Partial<Record<ComponentGroup, ServiceClass>> = {
 export function serviceClass(p: ScenePart): ServiceClass | null {
   const info = p.componentId ? COMPONENT_BY_ID[p.componentId] : undefined;
 
-  if (info?.battery || /batter/i.test(p.supplyId ?? '')) return 'battery';
+  if (info?.battery || (p.supplyId && SUPPLY_BY_ID[p.supplyId]?.battery)) return 'battery';
 
   if (info?.regulator) return 'electronics';
 

@@ -13,7 +13,15 @@ const MIN_INSERT_WALL_MM = 0.8;
 const MIN_LEAD_ROOM_MM = 10;
 const HOLE_REACH_MM = 1;
 const DEPTH_MARGIN_MM = 0.25;
-const UNPRINTABLE = /\b(clear acrylic|clear window|clear lens|transparent|acrylic|glass)\b/i;
+const CLEAR_STOCK = '(?:acrylic|polycarbonate|glass)';
+const CLEAR_PIECE = '(?:window|lens|panel|pane|sheet|disc|disk|dome|cover|visor|screen|plate)';
+const CLEAR_WORDS = `(?:(?:clear|transparent) (?:(?:${CLEAR_STOCK}|plastic)(?: ${CLEAR_PIECE})?|${CLEAR_PIECE})|${CLEAR_STOCK} ${CLEAR_PIECE})`;
+const NAMED_CLEAR = new RegExp(`(?:^|[^-\\w])(?:${CLEAR_WORDS}|${CLEAR_STOCK})$`, 'i');
+const NOTED_CLEAR = new RegExp(
+  `^${CLEAR_WORDS}\\b(?! (?:holder|mount|frame|retainer|bracket|clip|bezel|seat)\\b)`,
+  'i',
+);
+const isMarkedClear = (p: ScenePart) => NAMED_CLEAR.test(p.name.trim()) || NOTED_CLEAR.test((p.note ?? '').trim());
 
 export function sourcingFindings(bom: Bom): Finding[] {
   return bom.lines.flatMap((line): Finding[] => {
@@ -36,13 +44,27 @@ export function sourcingFindings(bom: Bom): Finding[] {
 
 export function unprintableFindings(parts: ScenePart[]): Finding[] {
   return parts
-    .filter((p) => isPrinted(p) && UNPRINTABLE.test(`${p.name} ${p.note ?? ''}`))
+    .filter((p) => isPrinted(p) && isMarkedClear(p))
     .map((p) =>
       ruleFinding('unprintable', 'blocker', {
         agentText: `${p.name} is marked as clear or glass, which can't be printed. Buy it (add_sourced_item) or leave the opening empty.`,
         ids: [p.id],
       }),
     );
+}
+
+export function hiddenFindings(parts: ScenePart[]): Finding[] {
+  const hidden = parts.filter((p) => !p.visible && p.role === 'solid' && p.kind !== 'image_plane');
+
+  if (!hidden.length) return [];
+
+  return [
+    ruleFinding('hidden', 'note', {
+      agentText: `${hidden.length} hidden part${hidden.length === 1 ? '' : 's'} left out of the clash, fit and assembly checks: ${hidden.map((p) => p.id).join(', ')}. Show them to check them.`,
+      ids: hidden.map((p) => p.id),
+      subject: 'parts',
+    }),
+  ];
 }
 
 export function fitProbeFindings(g: AssemblyGeometry, parts: ScenePart[]): Finding[] {

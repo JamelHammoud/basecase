@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { checkAgainstSkeleton, describeSkeleton, fetchSkeleton } from '../robot-skeleton.mjs';
 import { findRobotDescriptionText } from './githubSearch.mjs';
 import { pageImages } from './pageImages.mjs';
+import { settledWrites } from './pendingWrites.mjs';
 import { IMAGE_EXT, bridge, fail, fetchWithTimeout, text } from './shared.mjs';
 import { readCapped } from '../publicFetch.mjs';
 
@@ -55,7 +56,7 @@ export const checkSkeleton = {
   config: {
     title: 'Check against robot description',
     description:
-      "Checks the model against a published robot description (same URL as robot_skeleton): every moving joint must sit inside some part of the model, at the zero pose. Reports joints that fall outside the model (with the nearest part and how far), and how the model's overall extents compare with the joint layout. Run it after the block-out and before you finish on any robot that publishes a URDF/MJCF.",
+      "Checks the model against a published robot description (same URL as robot_skeleton): every moving joint must sit inside some part of the model, at the zero pose, at its published X and Y (so centre the model on the origin first). Reports joints that fall outside the model (with the nearest part and how far), and how the model's overall extents compare with the joint layout. Run it after the block-out and before you finish on any robot that publishes a URDF/MJCF.",
     inputSchema: {
       url: z.string(),
       forward: z.enum(['+x', '-x', '+y', '-y']).optional(),
@@ -70,6 +71,9 @@ export const checkSkeleton = {
   handler: async ({ url, forward, floorOffset }) => {
     try {
       const sk = await fetchSkeleton(url, forward);
+
+      await settledWrites();
+
       const scene = await bridge('snapshot', {});
       const parts = (scene.parts || []).filter((p) => p.bounds && !p.hidden && p.role === 'solid' && !p.referenceImage);
 

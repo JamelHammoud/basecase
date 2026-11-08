@@ -1,32 +1,50 @@
 import type { RobotJoint } from '../types/robotics';
 import { MIN_CROUCH_DEG } from './actuatorRules';
+import { isLegJoint } from './engineeringBody';
 import { downstreamOf } from './engineeringMass';
-import { norm } from './engineeringMath';
+import { dot, norm } from './engineeringMath';
 import type { CheckContext } from './engineeringTypes';
+import { nameWords } from './jointNames';
 
 export interface CrouchModel {
   crouchDeg: number;
   fromGait: boolean;
   legs: number;
   share: number;
+  shares: Map<string, number>;
   levers: Map<string, number>;
   knees: Set<string>;
 }
 
 const PITCH_AXIS = 0.9;
+const LEVEL_AXIS = 0.44;
+const KNEE_WORD = /^[lr]?(knee|kfe|calf|shin)[lr]?\d*$/;
 
-const isPitch = (j: RobotJoint) => Math.abs(norm(j.axis)[0]) >= PITCH_AXIS;
+const isKnee = (j: RobotJoint) => nameWords(j.name).some((w) => KNEE_WORD.test(w));
+
+function pitchJoints(chain: RobotJoint[]): RobotJoint[] {
+  const sets = chain
+    .filter((j) => Math.abs(norm(j.axis)[1]) < LEVEL_AXIS)
+    .map((j) => {
+      const axis = norm(j.axis);
+      const members = chain.filter((k) => Math.abs(dot(norm(k.axis), axis)) >= PITCH_AXIS);
+
+      return { members, score: members.length * 4 + (members.some(isKnee) ? 2 : 0) + Math.abs(axis[0]) };
+    });
+
+  return sets.sort((a, b) => b.score - a.score)[0]?.members ?? [];
+}
 
 interface Chain {
   feet: Set<string>;
   joints: RobotJoint[];
 }
 
-function legChains(ctx: CheckContext): RobotJoint[][] {
+function legChains(ctx: CheckContext, joints: RobotJoint[]): RobotJoint[][] {
   const chains: Chain[] = [];
 
-  for (const j of ctx.joints) {
-    if (j.limb !== 'leg' || j.type !== 'revolute') continue;
+  for (const j of joints) {
+    if (!isLegJoint(j) || j.type !== 'revolute') continue;
 
     const down = downstreamOf(j, ctx.joints);
     const feet = ctx.onFloor.filter((p) => down.has(p.id)).map((p) => p.id);
@@ -55,7 +73,7 @@ function soleOf(ctx: CheckContext, chain: RobotJoint[]): number {
 }
 
 function chainLevers(ctx: CheckContext, chain: RobotJoint[], out: CrouchModel) {
-  const pitch = chain.filter(isPitch).sort((a, b) => b.origin[1] - a.origin[1]);
+  const pitch = pitchJoints(chain).sort((a, b) => b.origin[1] - a.origin[1]);
 
   if (pitch.length < 2) return;
 
@@ -93,17 +111,25 @@ function gaitCrouch(ctx: CheckContext, knees: Set<string>): number | undefined {
 }
 
 export function crouchModel(ctx: CheckContext): CrouchModel {
-  const chains = legChains(ctx);
   const model: CrouchModel = {
     crouchDeg: MIN_CROUCH_DEG,
     fromGait: false,
-    legs: chains.length,
-    share: chains.length >= 3 ? 0.5 : 1,
+    legs: 0,
+    share: 1,
+    shares: new Map(),
     levers: new Map(),
     knees: new Set(),
   };
 
-  for (const chain of chains) chainLevers(ctx, chain, model);
+  for (const body of ctx.bodies) {
+    const chains = legChains(ctx, body.joints);
+    const share = chains.length >= 3 ? 0.5 : 1;
+
+    model.legs = Math.max(model.legs, chains.length);
+    model.share = Math.min(model.share, share);
+    body.joints.forEach((j) => model.shares.set(j.id, share));
+    chains.forEach((chain) => chainLevers(ctx, chain, model));
+  }
 
   const gait = gaitCrouch(ctx, model.knees);
 

@@ -6,7 +6,7 @@ import { designedFits } from '../utils/designedFits';
 import { bracket, objectsOf, printed } from './assembly.fixtures';
 import { fastenerInput } from './fastenerSpec';
 import { heldBy } from './heldBy';
-import { twinDifferences } from './twinLint';
+import { twinDifferences, twinPairs } from './twinLint';
 
 async function fits(parts: ScenePart[]) {
   const scene = snapshotShapes(objectsOf(parts));
@@ -32,6 +32,47 @@ describe('check_scene with fastener chains', () => {
     const { items } = await fits(moved(bracket(), 'screw-1', 2.5));
 
     expect(items.map((i) => [i.a, i.b].sort())).toContainEqual(['plate', 'screw-1']);
+  });
+});
+
+describe('twin pairs', () => {
+  const named = (id: string, visible = true) => ({ id, visible, kind: 'cad_part', role: 'solid' }) as ScenePart;
+  const pairsOf = (ids: string[]) => twinPairs(ids.map((id) => named(id))).map(([l, r]) => [l.id, r.id]);
+
+  it.each([
+    ['left-arm', 'right-arm'],
+    ['left_arm', 'right_arm'],
+    ['leftArm', 'rightArm'],
+    ['LeftArm', 'RightArm'],
+    ['Left_arm', 'Right_arm'],
+    ['armLeft', 'armRight'],
+    ['arm_L', 'arm_R'],
+    ['arm_l', 'arm_r'],
+    ['LEFT_ARM', 'RIGHT_ARM'],
+  ])('pairs %s with %s', (left, right) => {
+    expect(pairsOf([left, right])).toEqual([[left, right]]);
+  });
+
+  it.each([
+    ['cleft-plate', 'cright-plate'],
+    ['leftover', 'rightover'],
+    ['Leftover', 'Rightover'],
+  ])("doesn't take %s for a side", (a, b) => {
+    expect(pairsOf([a, b])).toEqual([]);
+  });
+
+  it("doesn't compare a hidden twin", () => {
+    const parts = [named('left-arm'), named('right-arm', false)];
+    const clashes = [{ a: 'left-arm', b: 'body' }];
+
+    expect(twinDifferences({ parts, clashes, measures: {} })).toEqual([]);
+  });
+
+  it('still reports twins that differ in clashes when both show', () => {
+    const parts = [named('left-arm'), named('right-arm')];
+    const clashes = [{ a: 'left-arm', b: 'body' }];
+
+    expect(twinDifferences({ parts, clashes, measures: {} })[0]).toContain('clashes 1 vs 0');
   });
 });
 

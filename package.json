@@ -34,6 +34,7 @@
     "perf:gallery": "node tools/perf/galleryBench.mjs",
     "gallery": "node tools/gallery/build.mjs",
     "icon": "xcrun actool \"$PWD/build/icon/Basecase.icon\" --compile \"$PWD/build/icon/compiled\" --platform macosx --minimum-deployment-target 26.0 --app-icon Basecase --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled/partial.plist\" --output-format human-readable-text",
+    "icon:dev": "xcrun actool \"$PWD/build/icon/BasecaseDev.icon\" --compile \"$PWD/build/icon/compiled-dev\" --platform macosx --minimum-deployment-target 26.0 --app-icon BasecaseDev --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled-dev/partial.plist\" --output-format human-readable-text",
     "icons": "node tools/icons/emit.mjs && prettier --write src/design-system/glyphs",
     "prepare": "simple-git-hooks && node tools/native/build.mjs",
     "native": "node tools/native/build.mjs",

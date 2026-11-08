@@ -1,5 +1,6 @@
 import type { ProjectSettings } from '../types/robotics';
 import { PEAK_DERATE } from './actuatorRules';
+import { isLegJoint } from './engineeringBody';
 import { count, jointLabel, nm } from './engineeringFormat';
 import type { CheckRow, JointLoad, WalkJoint, WalkSim } from './engineeringTypes';
 import { peakStatus } from './peakTorque';
@@ -12,7 +13,7 @@ interface PeakLine {
 }
 
 export const peakJoints = (loads: JointLoad[]) =>
-  loads.filter((l) => l.kind === 'stance' && l.stallNm !== undefined && l.stallNm > 0);
+  loads.filter((l) => isLegJoint(l.joint) && l.stallNm !== undefined && l.stallNm > 0);
 
 const loadIds = (l: JointLoad) => (l.joint.actuators?.length ? l.joint.actuators : l.joint.child);
 

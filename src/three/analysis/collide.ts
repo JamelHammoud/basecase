@@ -77,11 +77,12 @@ function penetration(inner: Placed, outer: Placed, { toleranceMm, maxSamples }: 
     depth = Math.max(depth, d);
   }
 
-  return { fraction: inside / Math.max(1, samples.length / 3), depth };
+  return { inside, fraction: inside / Math.max(1, samples.length / 3), depth };
 }
 
-const CROSSINGS_PROBED = 48;
-const PROBE_STEPS_MM = [0.5, 1, 2, 4, 8, 16, 32];
+const MIN_SAMPLES_INSIDE = 3;
+const CROSSINGS_PROBED = 24;
+const PROBE_STEPS_MM = [0.5, 1.5, 4, 12, 32];
 
 function crossingDepth(A: Placed, B: Placed) {
   const aToB = B.inverse.clone().multiply(A.matrix);
@@ -116,12 +117,15 @@ function crossingDepth(A: Placed, B: Placed) {
   return deepest;
 }
 
-function triangleNormal(positions: Float32Array, face: number, out: THREE.Vector3) {
-  const a = new THREE.Vector3().fromArray(positions, face * 9);
-  const b = new THREE.Vector3().fromArray(positions, face * 9 + 3);
-  const c = new THREE.Vector3().fromArray(positions, face * 9 + 6);
+function triangleNormal(solid: ShapeSolid, face: number, out: THREE.Vector3) {
+  const { index } = solid.bvh.geometry;
+  const corner = (k: number) => {
+    const at = face * 3 + k;
 
-  return new THREE.Triangle(a, b, c).getNormal(out);
+    return new THREE.Vector3().fromArray(solid.positions, (index ? index.getX(at) : at) * 3);
+  };
+
+  return new THREE.Triangle(corner(0), corner(1), corner(2)).getNormal(out);
 }
 
 function coplanarArea(from: Placed, onto: Placed) {
@@ -145,7 +149,7 @@ function coplanarArea(from: Placed, onto: Placed) {
 
     n.fromArray(normals, i * 3).transformDirection(toOnto);
 
-    if (triangleNormal(onto.solid.positions, h.faceIndex, m).dot(n) > 0.95) area += areas[i];
+    if (triangleNormal(onto.solid, h.faceIndex, m).dot(n) > 0.95) area += areas[i];
   }
 
   return area;
@@ -164,9 +168,11 @@ function overlap(A: Placed, B: Placed, options: CollideOptions): Interference | 
   const ba = penetration(B, A, options);
   const fraction = Math.max(ab.fraction, ba.fraction);
   const crossed = crossingDepth(A, B);
-  const sampled = fraction > 0.01 ? Math.max(ab.depth, ba.depth) : 0;
-  const crosses = crossed > options.toleranceMm;
-  const depth = crosses ? Math.max(crossed, ab.depth, ba.depth) : sampled;
+  const enoughInside = fraction > 0.01 || Math.max(ab.inside, ba.inside) >= MIN_SAMPLES_INSIDE;
+
+  if (crossed <= options.toleranceMm && !enoughInside) return null;
+
+  const depth = Math.max(crossed, ab.depth, ba.depth);
 
   if (depth <= options.toleranceMm) return null;
 

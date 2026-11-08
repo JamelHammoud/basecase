@@ -373,7 +373,9 @@ function boxToCad(b: { min: V3; max: V3 }) {
   };
 }
 
-export const partBoundsCad = (p: ScenePart) => boxToCad(worldBox(p));
+export type PartBoxes = Record<string, { min: V3; max: V3 } | undefined>;
+
+export const partBoundsCad = (p: ScenePart, measured?: PartBoxes) => boxToCad(measured?.[p.id] ?? worldBox(p));
 
 function materialOf(p: ScenePart): string | undefined {
   if (p.printMaterial) return p.printMaterial.toLowerCase();
@@ -391,12 +393,12 @@ function sceneLinks(p: ScenePart) {
   };
 }
 
-export function snapshotScene(parts: ScenePart[]) {
-  const visible = parts.filter((p) => p.visible && p.kind !== 'image_plane');
+export function snapshotScene(parts: ScenePart[], measured?: PartBoxes) {
+  const visible = parts.filter((p) => p.visible && p.kind !== 'image_plane' && p.role === 'solid');
   let bounds: { min: number[]; max: number[]; size: number[] } | null = null;
 
   for (const p of visible) {
-    const b = boxToCad(worldBox(p));
+    const b = partBoundsCad(p, measured);
 
     if (!bounds) bounds = { min: [...b.min], max: [...b.max], size: [] };
 
@@ -422,7 +424,7 @@ export function snapshotScene(parts: ScenePart[]) {
         ...(isCad
           ? { volume: p.cad!.volume }
           : { size: [p.dimensions.width, p.dimensions.depth, p.dimensions.height] }),
-        bounds: boxToCad(worldBox(p)),
+        bounds: partBoundsCad(p, measured),
         color: p.color,
         role: p.role,
         group: p.group?.name,

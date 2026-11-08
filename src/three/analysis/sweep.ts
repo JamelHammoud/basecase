@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { SweepRequest } from '../../utils/engineeringTypes';
+import { DEEPER_THAN_REST_MM, pairKey } from '../interference';
 import { collide, place, type Placed } from './collide';
 import { splitRotor } from './rotorSplit';
 
@@ -13,7 +14,6 @@ export interface SweepHit {
 }
 
 const SWEEP_OPTIONS = { toleranceMm: 0.3, maxSamples: 300 };
-const pairKey = (a: string, b: string) => [a, b].sort().join('|');
 const ROTOR = '#output';
 const ownerOf = (id: string) => (id.endsWith(ROTOR) ? id.slice(0, -ROTOR.length) : id);
 
@@ -83,7 +83,7 @@ export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
   const { placed, moving: movingSet } = withRotors(scene, spec);
   const moving = [...movingSet];
   const options = { ...SWEEP_OPTIONS, focus: moving, straddle: moving, coplanar: false };
-  const baseline = new Set(collide(placed, options).interferences.map((f) => pairKey(f.a, f.b)));
+  const baseline = new Map(collide(placed, options).interferences.map((f) => [pairKey(f.a, f.b), f.depthMm]));
   const out: SweepHit[] = [];
 
   for (const angle of spec.anglesDeg) {
@@ -99,7 +99,10 @@ export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
     if (floor) out.push({ ...floor, a: ownerOf(floor.a) });
 
     for (const f of collide(posed, options).interferences) {
-      if (baseline.has(pairKey(f.a, f.b)) || ownerOf(f.a) === ownerOf(f.b)) continue;
+      const atRest = baseline.get(pairKey(f.a, f.b));
+      const noDeeper = atRest !== undefined && f.depthMm <= atRest + DEEPER_THAN_REST_MM;
+
+      if (noDeeper || ownerOf(f.a) === ownerOf(f.b)) continue;
 
       const [a, b] = movingSet.has(f.a) ? [f.a, f.b] : [f.b, f.a];
 

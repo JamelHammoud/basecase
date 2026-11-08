@@ -89,6 +89,44 @@ function input(hipY: number, edits: string[]): InterfaceCheckInput {
   return { owner: 'left leg', plan, parts, frameOf, chains: [seamScrew], edits };
 }
 
+describe('interface envelope', () => {
+  const disc = specToPart({
+    id: 'disc',
+    shape: 'cylinder',
+    size: [100, 20, 100],
+    position: [0, 0, 50],
+    rotation: [0, 45, 0],
+  });
+  const { plan } = buildInterfaces(
+    { contracts: [{ owner: 'wheel', ids: ['disc'], envelopes: [{ min: [-60, -60, -10], max: [60, 60, 110] }] }] },
+    undefined,
+    { parts: [disc], frameOf: () => undefined },
+  );
+  const input = (measured?: InterfaceCheckInput['measured']): InterfaceCheckInput => ({
+    owner: 'wheel',
+    plan,
+    parts: [disc],
+    frameOf: () => undefined,
+    chains: [],
+    edits: null,
+    measured,
+  });
+
+  it('measures a spun disc by its mesh, so one that fits passes', () => {
+    const check = checkInterfaces(input({ disc: { min: [-50, 0, -10], max: [50, 100, 10] } }));
+
+    expect(typeof check === 'string' ? check : check.problems).toEqual([]);
+  });
+
+  it('still reports a mesh past its envelope', () => {
+    const check = checkInterfaces(input({ disc: { min: [-90, 0, -10], max: [50, 100, 10] } }));
+
+    expect(typeof check === 'string' ? [check] : check.problems).toEqual([
+      'Envelope: disc is 30 mm outside its envelope.',
+    ]);
+  });
+});
+
 describe('check_interfaces', () => {
   it('passes a subassembly that keeps its contract', () => {
     const check = checkInterfaces(input(15, ['hip-bracket', 'torso-shell']));

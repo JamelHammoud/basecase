@@ -1,7 +1,15 @@
 import * as THREE from 'three';
 import type { Placed } from '../three/analysis/collide';
-import type { ChainProblem, ChainResult, FastenerChain, FastenerInput, SleeveHost, ThreadEnd } from './assemblyTypes';
-import type { ScrewSpec, SleeveSpec } from './fastenerSpec';
+import type {
+  ChainProblem,
+  ChainResult,
+  FastenerChain,
+  FastenerInput,
+  SetScrewContact,
+  SleeveHost,
+  ThreadEnd,
+} from './assemblyTypes';
+import type { ScrewSpec, SetScrewSpec, SleeveSpec } from './fastenerSpec';
 import { frameOf, insideSolid, isNear, ringAround, type Frame } from './probe';
 
 interface PlacedSleeve {
@@ -23,6 +31,7 @@ interface ScrewCtx {
   underT: number;
   topT: number;
   solids: Placed[];
+  seats: Placed[];
   printed: Set<string>;
   spans: Span[];
   washers: PlacedSleeve[];
@@ -126,7 +135,8 @@ function seatRing(ctx: ScrewCtx): THREE.Vector3[] {
 }
 
 function isSeated(ctx: ScrewCtx): boolean {
-  const touching = seatRing(ctx).filter((q) => onWasher(ctx, q) || ctx.solids.some((o) => isNear(o, q, 0.45)));
+  const under = [...ctx.solids, ...ctx.seats];
+  const touching = seatRing(ctx).filter((q) => onWasher(ctx, q) || under.some((o) => isNear(o, q, 0.45)));
 
   return touching.length >= 3;
 }
@@ -161,16 +171,30 @@ interface ThreadResult {
   problems: ChainProblem[];
 }
 
+function threadNeed(spec: SleeveSpec, screwD: number): number {
+  const len = spec.y1 - spec.y0;
+
+  if (spec.threadMm !== undefined) return spec.threadMm - 0.3;
+
+  return spec.kind === 'nut' ? len - 0.3 : Math.min(len, screwD * 1.5) - 0.3;
+}
+
+const SLEEVE_END: Record<SleeveSpec['kind'], ThreadEnd> = {
+  nut: 'nut',
+  standoff: 'standoff',
+  insert: 'insert',
+  washer: 'insert',
+};
+
 function sleeveThread(ctx: ScrewCtx, span: Span): ThreadResult {
   const { spec } = span.sleeve;
-  const len = spec.y1 - spec.y0;
   const bottoms = bottomsPast(ctx, span);
 
   return {
-    kind: spec.kind === 'nut' ? 'nut' : 'insert',
+    kind: SLEEVE_END[spec.kind],
     id: spec.id,
     engagementMm: round1(overlap(ctx, span)),
-    needMm: round1(spec.kind === 'nut' ? len - 0.3 : Math.min(len, ctx.spec.d * 1.5) - 0.3),
+    needMm: round1(threadNeed(spec, ctx.spec.d)),
     problems: bottoms ? [bottoms] : [],
   };
 }
@@ -226,8 +250,22 @@ function chainOf(ctx: ScrewCtx, hosts: Map<string, SleeveHost>): FastenerChain {
   };
 }
 
+function standoffHost(sleeve: PlacedSleeve, solids: Placed[]): string | null {
+  const { spec, frame } = sleeve;
+
+  if (spec.studY === undefined) return null;
+
+  const stud = frame.at(spec.studY);
+
+  return solids.find((o) => isNear(o, stud, spec.d * 0.5 + 0.5))?.id ?? null;
+}
+
 function sleeveHost(sleeve: PlacedSleeve, solids: Placed[]): SleeveHost {
   const { spec, frame } = sleeve;
+
+  if (spec.kind === 'standoff')
+    return { id: spec.id, kind: spec.kind, host: standoffHost(sleeve, solids), screw: null };
+
   const centre = frame.at((spec.y0 + spec.y1) / 2);
   const ring = ringAround(centre, frame.axis, spec.outerR + 0.4);
   const near = solids.filter((o) => o.box.distanceToPoint(centre) < spec.outerR + 2);
@@ -239,9 +277,32 @@ function sleeveHost(sleeve: PlacedSleeve, solids: Placed[]): SleeveHost {
   return { id: spec.id, kind: spec.kind, host: spec.kind === 'washer' ? null : host, screw: null };
 }
 
+const NEAR_SET_SCREW_MM = 0.5;
+
+function setScrewContact(spec: SetScrewSpec, self: Placed, others: Placed[]): SetScrewContact {
+  const frame = frameOf(self);
+  const middle = frame.at((spec.y0 + spec.y1) / 2);
+  const probes = [
+    ...ringAround(middle, frame.axis, spec.d / 2 + NEAR_SET_SCREW_MM),
+    frame.at(spec.y0 - NEAR_SET_SCREW_MM),
+    frame.at(spec.y1 + NEAR_SET_SCREW_MM),
+  ];
+
+  return {
+    id: spec.id,
+    touching: others
+      .filter((o) => o.id !== spec.id && probes.some((q) => isNear(o, q, NEAR_SET_SCREW_MM)))
+      .map((o) => o.id),
+  };
+}
+
+const THREADS_INTO = new Set(['printed', 'component', 'tapped']);
+
 export function traceFasteners(placed: Placed[], input: FastenerInput): ChainResult {
   const byId = new Map(placed.map((p) => [p.id, p]));
-  const solids = placed.filter((p) => input.roles[p.id] === 'printed' || input.roles[p.id] === 'component');
+  const solids = placed.filter((p) => THREADS_INTO.has(input.roles[p.id]));
+  const fastenerIds = new Set(input.specs.map((s) => s.id));
+  const seats = placed.filter((p) => input.roles[p.id] === 'hardware' && !fastenerIds.has(p.id));
   const printed = new Set(solids.filter((p) => input.roles[p.id] === 'printed').map((p) => p.id));
   const sleeves: PlacedSleeve[] = input.specs
     .filter((s): s is SleeveSpec => s.kind !== 'screw' && byId.has(s.id))
@@ -249,13 +310,18 @@ export function traceFasteners(placed: Placed[], input: FastenerInput): ChainRes
   const hosts = new Map(sleeves.map((s) => [s.spec.id, sleeveHost(s, solids)]));
   const screws = input.specs
     .filter((s): s is ScrewSpec => s.kind === 'screw' && byId.has(s.id))
-    .map((spec) => chainOf(screwContext(spec, byId.get(spec.id)!, { solids, printed, sleeves }), hosts));
+    .map((spec) => chainOf(screwContext(spec, byId.get(spec.id)!, { solids, seats, printed, sleeves }), hosts));
+  const held = placed.filter((p) => !fastenerIds.has(p.id) && input.roles[p.id]);
+  const setScrews = (input.setScrews ?? [])
+    .filter((s) => byId.has(s.id))
+    .map((s) => setScrewContact(s, byId.get(s.id)!, held));
 
-  return { screws, sleeves: [...hosts.values()] };
+  return { screws, sleeves: [...hosts.values()], setScrews };
 }
 
 interface Scene {
   solids: Placed[];
+  seats: Placed[];
   printed: Set<string>;
   sleeves: PlacedSleeve[];
 }
@@ -275,6 +341,7 @@ function screwContext(spec: ScrewSpec, placed: Placed, scene: Scene): ScrewCtx {
     underT: spec.underY - spec.tipY,
     topT: spec.topY - spec.tipY,
     solids: scene.solids.filter((o) => o.box.intersectsBox(reach)),
+    seats: scene.seats.filter((o) => o.box.intersectsBox(reach)),
     printed: scene.printed,
     spans,
     washers: spans.filter((s) => s.sleeve.spec.kind === 'washer').map((s) => s.sleeve),

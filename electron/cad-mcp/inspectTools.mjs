@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { autoCompareText, blockOutPending } from './autoCompare.mjs';
 import { imageCaps } from './imageCaps.mjs';
+import { settledWrites } from './pendingWrites.mjs';
 import { lineMemory, reportLines } from './repeatLines.mjs';
 import { VIEW, bridge, fail, text } from './shared.mjs';
 
@@ -69,20 +70,66 @@ function gap(a, b) {
   return g;
 }
 
-function placementIssues(solids) {
-  const boxes = solids.map((p) => ({ p, b: p.bounds }));
+const TOUCH_MM = 1;
+const ISLAND_NAMED = 4;
+
+function reachedFrom(start, bodies) {
+  const reached = new Set(start);
+  const queue = [...start];
+
+  while (queue.length) {
+    const p = queue.pop();
+
+    for (const o of bodies) {
+      if (reached.has(o) || gap(p.bounds, o.bounds) > TOUCH_MM) continue;
+
+      reached.add(o);
+      queue.push(o);
+    }
+  }
+
+  return reached;
+}
+
+function islandText(island) {
+  const shown = island.filter((p) => !p.hidden);
+
+  if (shown.length === 1 && island.length === 1) return `${shown[0].id}: floating (touches nothing)`;
+
+  const names = shown.slice(0, ISLAND_NAMED).map((p) => p.id);
+  const rest = shown.length - names.length;
+  const low = Math.min(...island.map((p) => p.bounds.min[2]));
+
+  return `${names.join(', ')}${rest ? ` and ${rest} more` : ''}: floating ${low.toFixed(1)} mm above the floor, touching only each other`;
+}
+
+function floatingIssues(bodies) {
+  const reached = reachedFrom(
+    bodies.filter((p) => p.bounds.min[2] <= TOUCH_MM),
+    bodies,
+  );
   const issues = [];
 
-  for (const { p, b } of boxes) {
-    if (b.min[2] < -0.5) issues.push(`${p.id}: ${Math.abs(b.min[2]).toFixed(1)} mm below the floor`);
+  for (const p of bodies) {
+    if (reached.has(p)) continue;
 
-    const onFloor = Math.abs(b.min[2]) <= 1;
-    const touching = boxes.some((o) => o.p !== p && gap(b, o.b) <= 1);
+    const island = [...reachedFrom([p], bodies)];
 
-    if (!onFloor && !touching && p.role !== 'cutout') issues.push(`${p.id}: floating (touches nothing)`);
+    island.forEach((q) => reached.add(q));
+
+    if (island.some((q) => !q.hidden)) issues.push(islandText(island));
   }
 
   return issues;
+}
+
+function placementIssues(physical) {
+  const bodies = physical.filter((p) => p.role !== 'cutout');
+  const below = bodies
+    .filter((p) => !p.hidden && p.bounds.min[2] < -0.5)
+    .map((p) => `${p.id}: ${Math.abs(p.bounds.min[2]).toFixed(1)} mm below the floor`);
+
+  return [...below, ...floatingIssues(bodies)];
 }
 
 function interferenceText(it) {
@@ -94,10 +141,14 @@ function interferenceText(it) {
     return `${it.screw.id} ↔ ${it.screw.into}: the screw runs up to ${it.depthMm} mm into ${it.screw.into}. Catalog parts model their real holes, so line the screw up with the hole (or shorten it if it bottoms out).`;
   }
 
-  return `${it.a} ↔ ${it.b}: pass through each other, up to ${it.depthMm} mm deep (${Math.round(it.fraction * 100)}% of the smaller part inside). Cut a pocket or hole, move one, or resize.`;
+  const share = it.fraction >= 0.01 ? ` (${Math.round(it.fraction * 100)}% of the smaller part inside)` : '';
+
+  return `${it.a} ↔ ${it.b}: pass through each other, up to ${it.depthMm} mm deep${share}. Cut a pocket or hole, move one, or resize.`;
 }
 
+const CLASHES_SHOWN = 30;
 const FLUSH_SHOWN = 8;
+const LINES_SHOWN = 40;
 
 export const coplanarText = (c) =>
   `${c.a} / ${c.b}: ${c.areaMm2} mm² of coincident same-facing surface, so one skin lies inside the other. If ${c.a} sits in ${c.b}, cut its recess; otherwise trim the overlap. Don't offset parts to hide it.`;
@@ -106,27 +157,26 @@ async function interferenceIssues() {
   try {
     const { items = [], coplanar = [], twins = [] } = (await bridge('interference', { twins: true }, 120000)) ?? {};
 
-    return {
-      clashes: [
-        ...items.slice(0, 30).map(interferenceText),
-        ...(items.length > 30 ? [`…and ${items.length - 30} more interferences`] : []),
-      ],
-      flush: [
-        ...coplanar.slice(0, FLUSH_SHOWN).map(coplanarText),
-        ...(coplanar.length > FLUSH_SHOWN ? [`…and ${coplanar.length - FLUSH_SHOWN} smaller coincident faces`] : []),
-      ],
-      twins,
-    };
+    return { clashes: items.map(interferenceText), flush: coplanar.map(coplanarText), twins };
   } catch (err) {
     return { clashes: [`(interference check unavailable: ${String(err?.message ?? err)})`], flush: [], twins: [] };
   }
 }
 
-const FINISHED_KINDS = new Set(['cad_part', 'component', 'hardware', 'image_plane', 'mesh']);
+const FINISHED_KINDS = new Set([
+  'cad_part',
+  'component',
+  'custom_model',
+  'hardware',
+  'image_plane',
+  'mesh',
+  'sculpt_mesh',
+]);
 
 function primitiveIssues(solids) {
   const primitives = solids.filter(
-    (p) => p.role === 'solid' && p.kind && !FINISHED_KINDS.has(p.kind) && !String(p.kind).startsWith('cad'),
+    (p) =>
+      p.role === 'solid' && !p.supply && p.kind && !FINISHED_KINDS.has(p.kind) && !String(p.kind).startsWith('cad'),
   );
 
   if (!primitives.length) return [];
@@ -142,6 +192,25 @@ function primitiveIssues(solids) {
 const remember = lineMemory();
 let checkedBefore = false;
 
+function issueLines({ clashes, flush, others }) {
+  const tucked = new Set([...clashes.slice(CLASHES_SHOWN), ...flush.slice(FLUSH_SHOWN)]);
+  const memory = remember([...clashes, ...others, ...flush]);
+  const shown = (lines) => lines.filter((l) => !tucked.has(l));
+  const lines = reportLines(
+    { ...memory, fresh: shown(memory.fresh), unchanged: shown(memory.unchanged) },
+    !checkedBefore,
+  );
+  const notes = [
+    ...(clashes.length > CLASHES_SHOWN ? [`- …and ${clashes.length - CLASHES_SHOWN} more interferences`] : []),
+    ...(flush.length > FLUSH_SHOWN ? [`- …and ${flush.length - FLUSH_SHOWN} smaller coincident faces`] : []),
+    ...(lines.length > LINES_SHOWN ? [`- …and ${lines.length - LINES_SHOWN} more lines`] : []),
+  ];
+
+  checkedBefore = true;
+
+  return [...lines.slice(0, LINES_SHOWN), ...notes];
+}
+
 export const checkScene = {
   name: 'check_scene',
   config: {
@@ -153,18 +222,16 @@ export const checkScene = {
   },
   handler: async () => {
     try {
+      await settledWrites();
+
       const scene = await bridge('snapshot', {});
-      const solids = (scene.parts || []).filter(
-        (p) => p.role !== 'reference' && !p.referenceImage && !p.hidden && p.bounds,
-      );
+      const physical = (scene.parts || []).filter((p) => p.role !== 'reference' && !p.referenceImage && p.bounds);
+      const solids = physical.filter((p) => !p.hidden);
       const { clashes, flush, twins } = await interferenceIssues();
-      const issues = [...clashes, ...placementIssues(solids), ...primitiveIssues(solids), ...twins, ...flush];
+      const others = [...placementIssues(physical), ...primitiveIssues(solids), ...twins];
       const b = scene.bounds;
       const head = `${solids.length} parts${b ? `, overall ${b.size.map((v) => Math.round(v)).join(' × ')} mm (x × y × z)` : ''}.`;
-      const lines = reportLines(remember(issues.slice(0, 40)), !checkedBefore);
-
-      checkedBefore = true;
-
+      const lines = issueLines({ clashes, flush, others });
       const report = lines.length ? `${head}\nIssues:\n${lines.join('\n')}` : `${head}\nNo issues found.`;
 
       return text(report + (await autoCompareText()));

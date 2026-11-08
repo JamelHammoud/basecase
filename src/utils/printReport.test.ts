@@ -5,7 +5,7 @@ import { bedOf } from '../print/bed';
 import { printReportsIn } from '../three/analysis/analysisPool';
 import { snapshotShapes } from '../three/analysis/sceneShapes';
 import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
-import { printReportOf, type PrintReport } from './printReport';
+import { printReportOf, shapeKey, type PrintReport } from './printReport';
 
 const box = (id: string, size: [number, number, number], extra: Partial<ScenePart> = {}): ScenePart => ({
   id,
@@ -139,5 +139,48 @@ describe('print report on other printers', () => {
 
     expect(report.parts[0].check.pose.down).toEqual([0, 0, 1]);
     expect(report.parts[0].check.size[2]).toBeCloseTo(30, 0);
+  });
+});
+
+describe('a part’s print key follows its real shape', () => {
+  const cad = (code: string, positions: number[]) => ({
+    language: 'openscad' as const,
+    code,
+    positions,
+    indices: [],
+    originOffset: [0, 0, 0] as [number, number, number],
+    baseSize: [1, 1, 1] as [number, number, number],
+  });
+
+  it('a wall changed in the middle of the code, same length and same triangles', () => {
+    const shell = (wall: string) =>
+      box('p', [10, 10, 10], { cad: cad(`wall = ${wall};\nshell();\n${'x'.repeat(80)}`, [1, 2, 3]) });
+
+    expect(shapeKey(shell('0.5'))).not.toBe(shapeKey(shell('1.5')));
+  });
+
+  it('the same code with new triangles', () => {
+    expect(shapeKey(box('p', [1, 1, 1], { cad: cad('c', [1, 2, 3]) }))).not.toBe(
+      shapeKey(box('p', [1, 1, 1], { cad: cad('c', [1, 2, 4]) })),
+    );
+  });
+
+  it('a sculpted vertex', () => {
+    const sculpted = (v: number) => box('p', [1, 1, 1], { sculptMesh: { positions: [0, 0, v] } });
+
+    expect(shapeKey(sculpted(1))).not.toBe(shapeKey(sculpted(2)));
+  });
+
+  it('an imported mesh', () => {
+    const imported = (v: number) =>
+      box('p', [1, 1, 1], { mesh: { positions: [0, 0, v], indices: [], baseSize: [1, 1, 1] } });
+
+    expect(shapeKey(imported(1))).not.toBe(shapeKey(imported(2)));
+  });
+
+  it('stays the same for the same shape', () => {
+    expect(shapeKey(box('p', [1, 1, 1], { cad: cad('c', [1, 2, 3]) }))).toBe(
+      shapeKey(box('p', [1, 1, 1], { cad: cad('c', [1, 2, 3]) })),
+    );
   });
 });

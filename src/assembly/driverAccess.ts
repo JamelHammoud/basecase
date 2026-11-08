@@ -18,8 +18,15 @@ const BALL_TILT = 0.35;
 const BALL_MM = 60;
 const KEY_SHORT_ARM_MM = 21;
 const KEY_HEIGHTS = [19, 21, 23];
-const KEY_RADII = [8, 18, 30, 44, 56];
+const KEY_ARM_FROM_MM = 8;
+const KEY_ARM_TO_MM = 56;
 const KEY_SECTORS = 6;
+
+interface Segment {
+  from: THREE.Vector3;
+  dir: THREE.Vector3;
+  length: number;
+}
 
 interface Path {
   top: THREE.Vector3;
@@ -27,51 +34,62 @@ interface Path {
   near: Placed[];
 }
 
-function hitsInto(path: Path, points: THREE.Vector3[], into: Set<string>) {
+const segmentRay = new THREE.Ray();
+
+function crosses(m: Placed, from: THREE.Vector3, dir: THREE.Vector3, length: number): boolean {
+  if (insideSolid(m, from)) return true;
+
+  segmentRay.origin.copy(from).applyMatrix4(m.inverse);
+  segmentRay.direction.copy(dir).transformDirection(m.inverse);
+
+  const hit = m.solid.bvh.raycastFirst(segmentRay, THREE.DoubleSide);
+
+  return !!hit && hit.distance <= length;
+}
+
+function hitsInto(path: Path, segments: Segment[], into: Set<string>) {
   for (const m of path.near) {
-    if (!into.has(m.id) && points.some((p) => insideSolid(m, p))) into.add(m.id);
+    if (!into.has(m.id) && segments.some((s) => crosses(m, s.from, s.dir, s.length))) into.add(m.id);
   }
 }
 
 const disc = (centre: THREE.Vector3, axis: THREE.Vector3, r: number) => [centre, ...ringAround(centre, axis, r, 12)];
 
-function along(path: Path, dir: THREE.Vector3, reach: { length: number; bit: number; step: (t: number) => number }) {
+function along(path: Path, dir: THREE.Vector3, reach: { length: number; bit: number }) {
   const set = new Set<string>();
+  const stretch = (start: number, end: number, r: number): Segment[] =>
+    end > start
+      ? disc(path.top.clone().addScaledVector(dir, start), dir, r).map((from) => ({ from, dir, length: end - start }))
+      : [];
 
-  for (let t = 1; t <= reach.length; t += reach.step(t)) {
-    hitsInto(path, disc(path.top.clone().addScaledVector(dir, t), dir, t <= reach.bit ? BIT_R : HANDLE_R), set);
-  }
+  hitsInto(path, [...stretch(1, reach.bit, BIT_R), ...stretch(reach.bit, reach.length, HANDLE_R)], set);
 
   return set;
 }
 
 function straight(path: Path): DriverOption {
-  const set = along(path, path.axis, { length: STRAIGHT_MM, bit: BIT_MM, step: (t) => (t < 40 ? 1 : 2.5) });
+  const set = along(path, path.axis, { length: STRAIGHT_MM, bit: BIT_MM });
 
   return { tool: 'straight', blockers: [...set] };
 }
 
 function lKeys(path: Path): DriverOption[] {
-  const shortArm = along(path, path.axis, { length: KEY_SHORT_ARM_MM, bit: KEY_SHORT_ARM_MM, step: () => 1 });
+  const shortArm = along(path, path.axis, { length: KEY_SHORT_ARM_MM, bit: KEY_SHORT_ARM_MM });
   const [u, w] = perpendicularBasis(path.axis);
 
   return Array.from({ length: KEY_SECTORS }, (_, k) => {
     const set = new Set(shortArm);
-    const points = KEY_HEIGHTS.flatMap((h) =>
-      KEY_RADII.flatMap((r) =>
-        [-0.5, 0, 0.5].map((da) => {
-          const a = (k * 2 * Math.PI) / KEY_SECTORS + da;
+    const arms = KEY_HEIGHTS.flatMap((h) =>
+      [-0.5, 0, 0.5].map((da) => {
+        const a = (k * 2 * Math.PI) / KEY_SECTORS + da;
+        const dir = u.clone().multiplyScalar(Math.cos(a)).addScaledVector(w, Math.sin(a));
+        const from = path.top.clone().addScaledVector(path.axis, h).addScaledVector(dir, KEY_ARM_FROM_MM);
 
-          return path.top
-            .clone()
-            .addScaledVector(path.axis, h)
-            .addScaledVector(u, Math.cos(a) * r)
-            .addScaledVector(w, Math.sin(a) * r);
-        }),
-      ),
+        return { from, dir, length: KEY_ARM_TO_MM - KEY_ARM_FROM_MM };
+      }),
     );
 
-    hitsInto(path, points, set);
+    hitsInto(path, arms, set);
 
     return { tool: 'L-key' as const, blockers: [...set] };
   });
@@ -88,7 +106,7 @@ function ballEnds(path: Path): DriverOption[] {
       .addScaledVector(u, Math.sin(BALL_TILT) * Math.cos(az))
       .addScaledVector(w, Math.sin(BALL_TILT) * Math.sin(az))
       .normalize();
-    const set = along(path, tilt, { length: BALL_MM, bit: 40, step: () => 1 });
+    const set = along(path, tilt, { length: BALL_MM, bit: 40 });
 
     return { tool: 'ball-end' as const, blockers: [...set] };
   });

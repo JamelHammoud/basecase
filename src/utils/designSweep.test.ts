@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
-import { editMeasures, editTriangles, sweepVariants, type SweepParameter } from './designSweep';
+import { editMeasures, editTriangles, isFoot, sweepVariants, type SweepParameter } from './designSweep';
 import { reportMetrics, sweepTable } from './designSweepTable';
 import { runEngineering } from './engineering';
 
@@ -137,5 +137,19 @@ describe('Design sweeps on copies of the scene', () => {
       Array.from(editTriangles(new Float32Array([10, 5, 20]), parts[3], v.edits.get('Left Foot')!)).map(Math.round),
     ).toEqual([12, 5, 30]);
     expect(sweepTable(base, [long]).split('\n')[3]).toMatch(/^\| feet 1\.5× long, 1\.2× wide \| .* \(\+\d+\.\d°\) \|/);
+  });
+});
+
+describe('isFoot', () => {
+  it.each(['left foot', 'left_foot', 'foot_L', 'right_sole', 'LeftFoot', 'feet', 'Left-Foot'])('finds %s', (name) => {
+    expect(isFoot(part({ id: 'p', name }))).toBe(true);
+  });
+
+  it.each(['footing bracket', 'console', 'solenoid mount'])("doesn't take %s for a foot", (name) => {
+    expect(isFoot(part({ id: 'p', name }))).toBe(false);
+  });
+
+  it('leaves catalog parts out', () => {
+    expect(isFoot(part({ id: 'p', name: 'left_foot', kind: 'hardware' }))).toBe(false);
   });
 });

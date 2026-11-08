@@ -39,33 +39,40 @@ function holderPack(comps: ComponentInfo[]): PowerSource | undefined {
   };
 }
 
-function componentSource(parts: ScenePart[]): PowerSource | undefined {
+function componentSources(parts: ScenePart[]): PowerSource[] {
   const comps = parts.map(componentOf).filter((c): c is ComponentInfo => !!c);
-  const pack = comps.find((c) => c.battery && !isCell(c));
+  const packs = comps.filter((c) => c.battery && !isCell(c));
 
-  if (pack) return { name: pack.name, battery: pack.battery! };
+  if (packs.length) return packs.map((c) => ({ name: c.name, battery: c.battery! }));
 
   const held = holderPack(comps);
 
-  if (held) return held;
+  if (held) return [held];
 
   const cell = comps.find(isCell);
 
-  return cell && { name: cell.name, battery: cell.battery! };
+  return cell ? [{ name: cell.name, battery: cell.battery! }] : [];
 }
 
-function supplySource(ctx: CheckContext): PowerSource | undefined {
+function supplySources(ctx: CheckContext): PowerSource[] {
   const keys = [
     ...ctx.parts.filter((p) => p.supplyId).map((p) => p.supplyId!),
     ...(ctx.project.extras ?? []).filter((x) => x.key.startsWith('supply:')).map((x) => x.key.slice(7)),
   ];
-  const supply = keys.map((k) => SUPPLY_BY_ID[k]).find((s) => s?.battery);
 
-  return supply && { name: supply.name, battery: supply.battery! };
+  return keys.flatMap((k) => {
+    const supply = SUPPLY_BY_ID[k];
+
+    return supply?.battery ? [{ name: supply.name, battery: supply.battery }] : [];
+  });
 }
 
-export const findPowerSource = (ctx: CheckContext): PowerSource | undefined =>
-  componentSource(ctx.parts) ?? supplySource(ctx);
+export const findPowerSources = (ctx: CheckContext): PowerSource[] => [
+  ...componentSources(ctx.parts),
+  ...supplySources(ctx),
+];
+
+export const findPowerSource = (ctx: CheckContext): PowerSource | undefined => findPowerSources(ctx)[0];
 
 export function sceneRegulators(parts: ScenePart[]): SceneRegulator[] {
   return parts.flatMap((p) => {

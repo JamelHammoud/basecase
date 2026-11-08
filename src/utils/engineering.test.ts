@@ -150,8 +150,8 @@ describe('runEngineering on a two-joint leg', () => {
     expect(row('Range of motion')).toMatchObject({
       status: 'fail',
       items: [
-        { text: 'Left hip pitch: clear to 30° of 60°; at 60° the thigh meets the torso', ids: ['thigh', 'torso'] },
-        { text: 'Left knee: clear to 0° of 120°; at 60° the shin meets the torso', ids: ['shin', 'torso'] },
+        { text: 'Left hip pitch: clear to 45° of 60°; at 60° the thigh meets the torso', ids: ['thigh', 'torso'] },
+        { text: 'Left knee: clear to 45° of 120°; at 60° the shin meets the torso', ids: ['shin', 'torso'] },
       ],
     });
   });

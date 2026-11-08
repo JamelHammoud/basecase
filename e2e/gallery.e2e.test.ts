@@ -51,7 +51,7 @@ describe('gallery links', () => {
     const card = page.getByTestId('gallery-card');
 
     await expect.poll(() => card.count(), { timeout: 60000 }).toBe(1);
-    expect(await card.innerText()).toContain('Tried in simulation only.');
+    expect(await card.innerText()).not.toContain('simulation only');
     await expect.poll(async () => (await state(page))?.status, { timeout: 60000 }).toBe('ready');
 
     await card.getByRole('button', { name: 'Drive', exact: true }).click();

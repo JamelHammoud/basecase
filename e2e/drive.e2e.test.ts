@@ -133,7 +133,7 @@ describe('Cases', () => {
     await button('Touch the Dots').click();
     await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
     await expect.poll(() => app.page.getByTestId('case-brief').count()).toBe(1);
-    expect(await app.page.getByTestId('case-brief').innerText()).toContain('Tried in simulation only.');
+    expect(await app.page.getByTestId('case-brief').innerText()).not.toContain('simulation only');
 
     const partsBefore = await partCount(app.page);
 

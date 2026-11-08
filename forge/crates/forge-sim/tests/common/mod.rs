@@ -16,6 +16,25 @@ pub struct Servo<'a> {
 }
 
 pub const HULL_FOOT: &str = r#"type="mesh" mesh="leg""#;
+pub const PRISM_FOOT: &str = r#"type="mesh" mesh="prism" pos="0 0 -0.045" euler="0.1 0.05 0""#;
+
+fn prism() -> String {
+    (0..2)
+        .flat_map(|level| {
+            (0..7).map(move |k| {
+                let a = k as f64 * std::f64::consts::TAU / 7.0;
+
+                format!(
+                    "{:.5} {:.5} {}",
+                    0.014 * a.cos(),
+                    0.014 * a.sin(),
+                    if level == 0 { -0.02 } else { 0.02 }
+                )
+            })
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
 
 fn leg(i: usize, x: f64, y: f64, foot: &str) -> String {
     format!(
@@ -54,6 +73,7 @@ pub fn quadruped(servo: &Servo) -> String {
   <asset>
     <mesh name="body" vertex="{BODY}" maxhullvert="96" inertia="convex"/>
     <mesh name="leg" vertex="{HULL}" maxhullvert="96" inertia="convex"/>
+    <mesh name="prism" vertex="{prism}" maxhullvert="96" inertia="convex"/>
   </asset>
   <worldbody>
     <geom name="floor" type="plane" size="0 0 0.05" contype="0" conaffinity="1"/>
@@ -64,7 +84,8 @@ pub fn quadruped(servo: &Servo) -> String {
     </body>
   </worldbody>
   <actuator>{actuators}</actuator>
-</mujoco>"#
+</mujoco>"#,
+        prism = prism()
     )
 }
 

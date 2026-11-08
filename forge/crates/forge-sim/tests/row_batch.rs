@@ -1,6 +1,6 @@
 mod common;
 
-use common::{ctrl, quadruped, write, Servo, HULL_FOOT};
+use common::{ctrl, quadruped, write, Servo, HULL_FOOT, PRISM_FOOT};
 use forge_mujoco::{Batch, Model};
 use forge_sim::RowBatch;
 
@@ -149,6 +149,7 @@ fn primitive_feet_match_the_c_batch() {
         r#"type="capsule" fromto="0 0 0 0.01 0 -0.058" size="0.01""#,
         r#"type="box" size="0.012 0.01 0.03" pos="0 0 -0.035" euler="0.2 0.1 0""#,
         r#"type="cylinder" size="0.012 0.03" pos="0 0 -0.035" euler="0.4 0 0""#,
+        PRISM_FOOT,
     ];
 
     for foot in feet {

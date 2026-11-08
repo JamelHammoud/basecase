@@ -134,6 +134,10 @@ impl<'a> Ppo<'a> {
 
         learner.mask_actor(actor_mask(&envs.robot.job.options));
 
+        if let Some(floor) = envs.robot.job.log_std_min {
+            learner.floor_log_std(floor);
+        }
+
         let collector = Collector::new(envs, &learner, seed);
 
         Self {

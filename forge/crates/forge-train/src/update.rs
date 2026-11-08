@@ -10,6 +10,7 @@ pub use crate::heads::Minibatch;
 
 const HIDDEN: [usize; 3] = [256, 128, 64];
 const LOG_STD_INIT: f32 = -0.7;
+pub const LOG_STD_MAX: f32 = 0.0;
 const ACTOR_OUT_GAIN: f64 = 0.01;
 const CRITIC_OUT_GAIN: f64 = 1.0;
 
@@ -61,6 +62,7 @@ pub struct Learner {
     grads: Vec<f32>,
     adam: Adam,
     pub learn_rate: f32,
+    log_std_min: f32,
     actor_scratch: Scratch,
     critic_scratch: Scratch,
     pair: Pool,
@@ -99,6 +101,7 @@ impl Learner {
             grads: vec![0.0; total],
             adam: Adam::new(total),
             learn_rate: 1e-3,
+            log_std_min: f32::NEG_INFINITY,
             pair: Pool::new(2),
         }
     }
@@ -112,8 +115,22 @@ impl Learner {
         &self.params[self.log_std_at..]
     }
 
-    pub fn log_std_mut(&mut self) -> &mut [f32] {
-        &mut self.params[self.log_std_at..]
+    pub fn set_log_std(&mut self, values: &[f32]) {
+        self.params[self.log_std_at..].copy_from_slice(values);
+        self.cap_log_std();
+    }
+
+    pub fn floor_log_std(&mut self, floor: f32) {
+        self.log_std_min = floor.min(LOG_STD_MAX);
+        self.cap_log_std();
+    }
+
+    fn cap_log_std(&mut self) {
+        let (low, high) = (self.log_std_min, LOG_STD_MAX);
+
+        self.params[self.log_std_at..]
+            .iter_mut()
+            .for_each(|s| *s = s.clamp(low, high));
     }
 
     pub fn act_mean<'a>(&'a mut self, math: &Math, obs: &[f32], rows: usize) -> &'a [f32] {
@@ -184,6 +201,7 @@ impl Learner {
 
         if norm.is_finite() {
             self.adam.step(&mut self.params, &self.grads, self.learn_rate);
+            self.cap_log_std();
         }
 
         if kl > hp.desired_kl * 2.0 {
@@ -199,6 +217,19 @@ impl Learner {
 #[cfg(test)]
 mod tests {
     use super::{Hyper, HYPER};
+
+    #[test]
+    fn exploration_noise_never_passes_the_action_range() {
+        let mut learner = super::Learner::new(4, 2, 4, &mut crate::rng::Rng::new(1, 0));
+
+        learner.set_log_std(&[1.7, -2.0]);
+
+        assert_eq!(learner.log_std(), &[super::LOG_STD_MAX, -2.0]);
+
+        learner.floor_log_std(-1.5);
+
+        assert_eq!(learner.log_std(), &[super::LOG_STD_MAX, -1.5]);
+    }
 
     #[test]
     fn small_batches_are_reused_more() {

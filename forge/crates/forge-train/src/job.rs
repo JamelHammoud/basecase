@@ -64,6 +64,7 @@ pub struct Job {
     pub envs: usize,
     pub threads: Option<usize>,
     pub warm_start: Option<PathBuf>,
+    pub log_std_min: Option<f32>,
     pub options: TaskOptions,
 }
 
@@ -178,6 +179,11 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         envs: optional_count(root, "envs").unwrap_or(algo.default_envs()),
         threads: optional_count(root, "threads"),
         warm_start: warm_start(root)?,
+        log_std_min: root
+            .get("logStdMin")
+            .and_then(Value::as_f64)
+            .map(|v| v as f32)
+            .filter(|v| v.is_finite()),
         options: options::parse(root)?,
     })
 }

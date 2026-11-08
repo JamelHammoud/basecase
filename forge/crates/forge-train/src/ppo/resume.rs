@@ -33,7 +33,7 @@ pub fn warm_start(ppo: &mut Ppo, source: &WarmStart) -> Result<Vec<String>, Stri
     }
 
     if state.log_std.len() == nact {
-        learner.log_std_mut().copy_from_slice(&state.log_std);
+        learner.set_log_std(&state.log_std);
     }
 
     if let Some(rate) = state.learn_rate {

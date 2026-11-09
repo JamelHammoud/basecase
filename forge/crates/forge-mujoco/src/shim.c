@@ -1,4 +1,6 @@
+#include <mujoco/mjbatch.h>
 #include <mujoco/mujoco.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,6 +15,12 @@ void forge_install_handlers(void) {
   mju_user_error = forge_error_handler;
   mju_user_warning = forge_warning_handler;
 }
+
+int forge_header_version(void) { return mjVERSION_HEADER; }
+int forge_library_version(void) { return mj_version(); }
+int forge_batch_config_size(void) { return (int)sizeof(mjBatchConfig); }
+int forge_batch_config_nthread_offset(void) { return (int)offsetof(mjBatchConfig, nthread); }
+int forge_batch_config_persistent_offset(void) { return (int)offsetof(mjBatchConfig, persistent); }
 
 int forge_state_integration(void) { return mjSTATE_INTEGRATION; }
 int forge_state_warmstart(void) { return mjSTATE_WARMSTART; }

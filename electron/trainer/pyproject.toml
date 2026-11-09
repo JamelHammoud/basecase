@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Trains Basecase robot policies with PPO on MuJoCo"
 requires-python = ">=3.11,<3.14"
 dependencies = [
-  # Keep in lockstep with @mujoco/mujoco in package.json (tools/update-mujoco.mjs bumps both)
-  "mujoco==3.17.0",
+  # Keep in lockstep with @mujoco/mujoco and Forge (node tools/sim/update-mujoco.mjs bumps all three)
+  "mujoco-core==4.0.0",
   "torch>=2.5",
   "numpy>=1.26",
   "onnx>=1.17",

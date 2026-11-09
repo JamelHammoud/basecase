@@ -11,46 +11,46 @@
         {
           "name": "fixture robots classify and emit",
           "ok": true,
-          "detail": "0.9 s",
+          "detail": "0.5 s",
           "metrics": {},
-          "seconds": 0.857
+          "seconds": 0.524
         },
         {
           "name": "C MuJoCo reference computed for every fixture",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.371
+          "seconds": 0.16
         },
         {
           "name": "WASM matches C MuJoCo on every fixture",
           "ok": true,
-          "detail": "1.6 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 1.624
+          "seconds": 0.714
         },
         {
           "name": "sim regression tests pass",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 2.867
+          "seconds": 1.346
         },
         {
           "name": "train.py reports measured phase timers for a real run",
           "ok": true,
-          "detail": "5644 steps/s",
+          "detail": "24983 steps/s",
           "metrics": {
-            "fps": 5644.393861513965,
+            "fps": 24983.293476464893,
             "phases": {
-              "physics": 0.854,
-              "observe": 0.0882,
-              "reward": 0.1329,
-              "inference": 0.2891,
-              "gradient": 4.0242
+              "physics": 0.2973,
+              "observe": 0.0294,
+              "reward": 0.0384,
+              "inference": 0.1262,
+              "gradient": 0.7191
             }
           },
-          "seconds": 9.43
+          "seconds": 3.54
         }
       ],
       "canaries": [
@@ -59,7 +59,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.001
+          "seconds": 0
         },
         {
           "name": "timers covering too little of the run are rejected",
@@ -69,8 +69,8 @@
           "seconds": 0
         }
       ],
-      "commit": "d348534",
-      "at": "2026-11-07T23:02:40.148Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T20:51:47.552Z",
       "manifest": "clean"
     },
     "s3-contract": {
@@ -191,48 +191,48 @@
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "4.8 s",
+          "detail": "26.6 s",
           "metrics": {},
-          "seconds": 4.818
+          "seconds": 26.579
         },
         {
           "name": "forge-train builds",
           "ok": true,
           "detail": "0.0 s",
           "metrics": {},
-          "seconds": 0.033
+          "seconds": 0.039
         },
         {
           "name": "forge-train links no Python",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.024
+          "seconds": 0.028
         },
         {
           "name": "Forge trains a real robot at 40K steps/s with the same events as train.py",
           "ok": true,
-          "detail": "52223 steps/s",
+          "detail": "44674 steps/s",
           "metrics": {
-            "fps": 52222.72278190589,
-            "loadBefore": 4.90087890625,
-            "loadAfter": 5.30908203125
+            "fps": 44674.17626837081,
+            "loadBefore": 6.06494140625,
+            "loadAfter": 8.2216796875
           },
-          "seconds": 1.878
+          "seconds": 2.27
         },
         {
           "name": "Forge exports a valid ONNX policy that matches its own actions",
           "ok": true,
-          "detail": "worst 4.79e-6",
+          "detail": "worst 3.64e-6",
           "metrics": {},
-          "seconds": 0.366
+          "seconds": 0.2
         },
         {
           "name": "A Forge policy runs in the app with matching actions",
           "ok": true,
           "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.636
+          "seconds": 0.619
         },
         {
           "name": "Forge reaches the walk skill within 20% of the samples train.py needs, over 10 seeds",
@@ -240,31 +240,31 @@
           "detail": "",
           "metrics": {
             "python": [
-              1075200,
-              691200,
               998400,
-              8217600,
+              230400,
+              384000,
+              2227200,
               null,
-              2611200,
+              9062400,
               null,
               null,
-              18739200,
-              921600
+              null,
+              null
             ],
             "forge": [
               230400,
               153600,
-              460800,
-              230400,
               307200,
               230400,
-              230400,
+              153600,
               153600,
               230400,
-              307200
+              153600,
+              153600,
+              691200
             ]
           },
-          "seconds": 5225.986
+          "seconds": 6614.78
         }
       ],
       "canaries": [
@@ -273,7 +273,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0
+          "seconds": 0.001
         },
         {
           "name": "needing too many samples is rejected",
@@ -283,8 +283,8 @@
           "seconds": 0
         }
       ],
-      "commit": "735d546",
-      "at": "2026-11-08T20:39:51.708Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T22:54:17.908Z",
       "manifest": "clean"
     },
     "s1-f1b-sysid-rewardlang": {
@@ -298,37 +298,37 @@
         {
           "name": "forge-id recovers planted servo parameters to 3%",
           "ok": true,
-          "detail": "9.0 s",
+          "detail": "2.7 s",
           "metrics": {},
-          "seconds": 9.017
+          "seconds": 2.727
         },
         {
           "name": "forge-id flags what it cannot identify",
           "ok": true,
-          "detail": "4.9 s",
+          "detail": "1.1 s",
           "metrics": {},
-          "seconds": 4.864
+          "seconds": 1.124
         },
         {
           "name": "RewardLang matches hand-written reward terms",
           "ok": true,
-          "detail": "3.5 s",
+          "detail": "0.0 s",
           "metrics": {},
-          "seconds": 3.46
+          "seconds": 0.041
         },
         {
           "name": "RewardLang rejects loops, unknown names and impure code",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "0.0 s",
           "metrics": {},
-          "seconds": 0.08
+          "seconds": 0.029
         },
         {
           "name": "RewardLang kills NaN and blames the term",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "0.0 s",
           "metrics": {},
-          "seconds": 0.052
+          "seconds": 0.029
         }
       ],
       "canaries": [
@@ -337,18 +337,18 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.05
+          "seconds": 0.033
         },
         {
           "name": "a wrong reward is caught by the same check",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.057
+          "seconds": 0.028
         }
       ],
-      "commit": "9fd2fab",
-      "at": "2026-11-07T21:54:04.955Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T20:55:00.635Z",
       "manifest": "clean"
     },
     "s4-routines-core": {
@@ -362,30 +362,30 @@
         {
           "name": "coordinator crate tests pass",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.12
+          "seconds": 0.299
         },
         {
           "name": "coordinator builds to WASM",
           "ok": true,
           "detail": "0.0 s",
           "metrics": {},
-          "seconds": 0.024
+          "seconds": 0.02
         },
         {
           "name": "greeting Routine, compiler refusals, determinism and mutants",
           "ok": true,
-          "detail": "1.3 s",
+          "detail": "1.1 s",
           "metrics": {},
-          "seconds": 1.294
+          "seconds": 1.147
         },
         {
           "name": "Routine unit tests pass",
           "ok": true,
-          "detail": "0.4 s",
+          "detail": "1.2 s",
           "metrics": {},
-          "seconds": 0.44
+          "seconds": 1.199
         }
       ],
       "canaries": [
@@ -394,11 +394,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.408
+          "seconds": 0.358
         }
       ],
-      "commit": "875e502",
-      "at": "2026-11-07T22:02:17.801Z",
+      "commit": "26e7fa9",
+      "at": "2026-11-09T01:51:25.408Z",
       "manifest": "clean"
     },
     "s2-m1-first-case": {
@@ -412,23 +412,23 @@
         {
           "name": "Touch the Dots passes on two arms; limp fails; refusals are plain",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.788
+          "seconds": 0.673
         },
         {
           "name": "Case and drive unit tests pass",
           "ok": true,
-          "detail": "1.4 s",
+          "detail": "1.3 s",
           "metrics": {},
-          "seconds": 1.443
+          "seconds": 1.31
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "5.1 s",
+          "detail": "5.0 s",
           "metrics": {},
-          "seconds": 5.067
+          "seconds": 4.954
         }
       ],
       "canaries": [
@@ -437,11 +437,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.532
+          "seconds": 0.503
         }
       ],
-      "commit": "875e502",
-      "at": "2026-11-07T22:02:13.260Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T20:55:08.175Z",
       "manifest": "clean"
     },
     "s5-emu-daemon": {
@@ -619,14 +619,14 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.036
+          "seconds": 0.023
         },
         {
           "name": "BAM reference trajectories from plant-bam (STS3215 7.4 V, XL330 5 V)",
           "ok": true,
           "detail": "32 runs",
           "metrics": {},
-          "seconds": 0.77
+          "seconds": 0.275
         },
         {
           "name": "sim RMS <= 0.5 x teleport and <= fitted FOPD against BAM, per servo, load and profile",
@@ -794,63 +794,63 @@
               "fopd": 0.15674080353172357
             }
           },
-          "seconds": 5.039
+          "seconds": 1.818
         },
         {
           "name": "no kick at reset on any fixture robot (under 5% of force range for 50 ms)",
           "ok": true,
-          "detail": "1.9 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 1.95
+          "seconds": 0.658
         },
         {
           "name": "C MuJoCo reference computed for every servo-driven fixture",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.318
+          "seconds": 0.14
         },
         {
           "name": "WASM matches C MuJoCo with servo delays and fitted dynamics",
           "ok": true,
-          "detail": "2.1 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 2.084
+          "seconds": 0.638
         },
         {
           "name": "old policies read as stale in isStalePolicy and the agent tools",
           "ok": true,
-          "detail": "1.5 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 1.466
+          "seconds": 0.4
         },
         {
           "name": "fixture robots classify and emit (s0-foundation)",
           "ok": true,
-          "detail": "1.2 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 1.182
+          "seconds": 0.393
         },
         {
           "name": "C MuJoCo reference computed for every fixture (s0-foundation)",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.448
+          "seconds": 0.153
         },
         {
           "name": "WASM matches C MuJoCo on every fixture (s0-foundation)",
           "ok": true,
-          "detail": "1.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 1.792
+          "seconds": 0.662
         },
         {
           "name": "sim regression tests pass",
           "ok": true,
-          "detail": "10.7 s",
+          "detail": "3.2 s",
           "metrics": {},
-          "seconds": 10.689
+          "seconds": 3.244
         }
       ],
       "canaries": [
@@ -859,25 +859,25 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 5.059
+          "seconds": 1.627
         },
         {
           "name": "removing the servo delay fails the BAM bar on the chirp",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 2.879
+          "seconds": 0.902
         },
         {
           "name": "an unprimed delay history kicks a robot at reset",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.754
+          "seconds": 0.676
         }
       ],
-      "commit": "d348534",
-      "at": "2026-11-07T23:02:24.894Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T20:54:56.525Z",
       "manifest": "clean"
     },
     "s0-cadimport-sandbox": {
@@ -949,91 +949,91 @@
       "title": "The robot daemon inside the app: bundled, locked, heartbeat, faults on screen, a Case driving it",
       "stage": 5,
       "state": "required",
-      "ok": true,
+      "ok": false,
       "voided": false,
       "checks": [
         {
           "name": "the daemon builds",
           "ok": true,
-          "detail": "1.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 1.823
+          "seconds": 0.664
         },
         {
           "name": "the daemon is staged for the app",
           "ok": true,
           "detail": "0.2 s",
           "metrics": {},
-          "seconds": 0.178
+          "seconds": 0.175
         },
         {
           "name": "the staged daemon is locked to emulated servos and says hello",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.273
+          "seconds": 0.18
         },
         {
           "name": "the app bundles",
           "ok": true,
-          "detail": "13.4 s",
+          "detail": "7.6 s",
           "metrics": {},
-          "seconds": 13.432
+          "seconds": 7.581
         },
         {
           "name": "an unsigned app packages",
           "ok": true,
-          "detail": "3.4 s",
+          "detail": "3.3 s",
           "metrics": {},
-          "seconds": 3.397
+          "seconds": 3.299
         },
         {
           "name": "the packaged app ships the locked daemon, spawns it emulated, refuses real ports and untrusted IPC",
           "ok": true,
-          "detail": "13.6 s",
+          "detail": "14.2 s",
           "metrics": {},
-          "seconds": 13.639
+          "seconds": 14.196
         },
         {
           "name": "heartbeat, the ladder, status, faults, refusals and a lost daemon reach the user",
-          "ok": true,
-          "detail": "9.7 s",
+          "ok": false,
+          "detail": " FAIL  verify/hw/daemonUi.test.ts > the robot daemon inside the app > a killed daemon is shown as lost, in plain words\nError: Timed out waiting for \"Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power.\" on screen\n ❯ waitFor verify/hw/relayHarness.ts:107:38\n    105|     if (value) return value;\n    106|\n    107|     if (Date.now() > deadline) throw new Error(`Timed out waiting for …\n       |                                      ^\n    108|\n    109|     await new Promise((resolve) => setTimeout(resolve, 50));\n ❯ verify/hw/daemonUi.test.ts:103:12\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯",
           "metrics": {},
-          "seconds": 9.717
+          "seconds": 55.806
         },
         {
           "name": "a Case drives the emulated robot through the daemon and back to the screen",
           "ok": true,
-          "detail": "24.8 s",
+          "detail": "23.5 s",
           "metrics": {},
-          "seconds": 24.79
+          "seconds": 23.519
         }
       ],
       "canaries": [
         {
           "name": "an app that skips the heartbeat is caught",
-          "ok": true,
-          "detail": "",
+          "ok": false,
+          "detail": "Canary did not fire: the check passed a planted fault (18.0 s)",
           "metrics": {},
-          "seconds": 5.442
+          "seconds": 17.954
         },
         {
           "name": "a UI that hides a fault is caught",
-          "ok": true,
-          "detail": "",
+          "ok": false,
+          "detail": "Canary did not fire: the check passed a planted fault (17.5 s)",
           "metrics": {},
-          "seconds": 1.735
+          "seconds": 17.533
         },
         {
           "name": "a daemon built with unlock-real-motors is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 3.902
+          "seconds": 4.282
         }
       ],
-      "commit": "daf3b4c",
-      "at": "2026-11-08T03:42:09.224Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T20:59:56.762Z",
       "manifest": "clean"
     },
     "s1-f2-learner": {
@@ -1047,33 +1047,33 @@
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "3.8 s",
           "metrics": {},
-          "seconds": 0.075
+          "seconds": 3.83
         },
         {
           "name": "Forge Adam matches torch to 1e-4 over 50 steps",
           "ok": true,
           "detail": "worst 1.19e-7",
           "metrics": {},
-          "seconds": 2.178
+          "seconds": 2.11
         },
         {
           "name": "Forge reaches 45K steps/s at 1024 envs",
           "ok": true,
-          "detail": "152411 steps/s",
+          "detail": "156780 steps/s",
           "metrics": {
-            "loadBefore": 6.27734375,
-            "loadAfter": 6.27734375
+            "loadBefore": 5.9150390625,
+            "loadAfter": 5.9150390625
           },
-          "seconds": 3.315
+          "seconds": 3.204
         },
         {
           "name": "FastSAC and FlashSAC run and report the same events",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.262
+          "seconds": 1.231
         },
         {
           "name": "Python time-to-skill baseline recorded for three robots",
@@ -1083,25 +1083,25 @@
             "quad-servo": 46.74179087509401,
             "hexapod": 345.8167056250386,
             "biped-servo": 18.186022375011817,
-            "loadBefore": 5.9345703125,
-            "loadAfter": 5.9345703125
+            "loadBefore": 5.60107421875,
+            "loadAfter": 5.60107421875
           },
           "seconds": 0
         },
         {
           "name": "Forge reaches the walk skill at least 3x faster than the Python baseline",
           "ok": true,
-          "detail": "9.83x",
+          "detail": "10.22x",
           "metrics": {
             "ratios": [
-              9.826457332342352,
-              65.36798700369938,
-              6.591365415371127
+              10.220290412365333,
+              66.61617401236417,
+              6.641340641346544
             ],
-            "loadBefore": 5.9345703125,
-            "loadAfter": 14.5908203125
+            "loadBefore": 5.60107421875,
+            "loadAfter": 13.2529296875
           },
-          "seconds": 93.708
+          "seconds": 76.167
         }
       ],
       "canaries": [
@@ -1110,11 +1110,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 2.179
+          "seconds": 1.666
         }
       ],
-      "commit": "735d546",
-      "at": "2026-11-08T20:43:16.046Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T21:01:38.239Z",
       "manifest": "clean"
     },
     "s3a-motor-kit": {
@@ -1122,7 +1122,7 @@
       "title": "Stage 3a: Motor Kit, biped steering and the solver race",
       "stage": 3,
       "state": "required",
-      "ok": true,
+      "ok": false,
       "voided": false,
       "checks": [
         {
@@ -1130,103 +1130,103 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0
+          "seconds": 0.002
         },
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "3.6 s",
+          "detail": "0.2 s",
           "metrics": {},
-          "seconds": 3.583
+          "seconds": 0.209
         },
         {
           "name": "Motor Kit: quad-servo learns Stand, Velocity tracking, Get-up and Settle through Forge; each passes Arena; the weak quad is refused",
-          "ok": true,
-          "detail": "2000.6 s",
+          "ok": false,
+          "detail": "\n ❯ checkOwnArena verify/skills/kit.ts:94:35\n     92|   const own = await runArena({ mj, model, contract, controller: skill.…\n     93|\n     94|   expect(own.passed, own.summary).toBe(true);\n       |                                   ^\n     95|\n     96|   const limp = await runArena({ mj, model, contract, controller: { kin…\n ❯ trainAndJudge verify/skills/kit.ts:143:25\n ❯ verify/skills/kit-quad.test.ts:16:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
           "metrics": {
-            "loadBefore": 2.310546875,
-            "loadAfter": 6.0615234375
+            "loadBefore": 6.267578125,
+            "loadAfter": 13.880859375
           },
-          "seconds": 2000.615
+          "seconds": 1210.295
         },
         {
           "name": "Motor Kit: hexapod learns Stand and Velocity tracking through Forge; each passes Arena",
-          "ok": true,
-          "detail": "995.4 s",
+          "ok": false,
+          "detail": "Received: \"refused\"\n\n ❯ trainAndJudge verify/skills/kit.ts:129:74\n    127|   writeJson(dir, 'outcome.json', { wallS, budgetS: plan.budgetMin * 60…\n    128|   writeJson(dir, 'forge-runs.json', forge.records);\n    129|   expect(outcome.kind, outcome.kind === 'refused' ? outcome.reason : '…\n       |                                                                          ^\n    130|\n    131|   if (outcome.kind !== 'skill') return null;\n ❯ verify/skills/kit-hexapod.test.ts:11:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
           "metrics": {
-            "loadBefore": 6.0615234375,
-            "loadAfter": 4.24755859375
+            "loadBefore": 6.1201171875,
+            "loadAfter": 10.521484375
           },
-          "seconds": 995.371
+          "seconds": 1678.716
         },
         {
           "name": "Motor Kit: biped-servo learns Stand and Velocity tracking through Forge; each passes Arena",
-          "ok": true,
-          "detail": "2980.3 s",
+          "ok": false,
+          "detail": "Received: \"refused\"\n\n ❯ trainAndJudge verify/skills/kit.ts:129:74\n    127|   writeJson(dir, 'outcome.json', { wallS, budgetS: plan.budgetMin * 60…\n    128|   writeJson(dir, 'forge-runs.json', forge.records);\n    129|   expect(outcome.kind, outcome.kind === 'refused' ? outcome.reason : '…\n       |                                                                          ^\n    130|\n    131|   if (outcome.kind !== 'skill') return null;\n ❯ verify/skills/kit-biped.test.ts:11:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
           "metrics": {
-            "loadBefore": 4.24755859375,
-            "loadAfter": 4.46142578125
+            "loadBefore": 6.2998046875,
+            "loadAfter": 11.63671875
           },
-          "seconds": 2980.301
+          "seconds": 2949.055
         },
         {
           "name": "Train here, judge there: every Kit policy acts as Forge wrote it and passes a clean WASM replay",
-          "ok": true,
-          "detail": "2.0 s",
+          "ok": false,
+          "detail": "Error: ENOENT: no such file or directory, open 'verify/out/kit/biped-servo/velocity-tracking/skill.json'\n ❯ readJson verify/skills/plans.ts:44:66\n     42| };\n     43|\n     44| const readJson = <T>(dir: string, name: string) => JSON.parse(fs.readF…\n       |                                                                  ^\n     45|\n     46| export interface StoredKitSkill {\n ❯ loadKitSkill verify/skills/plans.ts:56:12\n ❯ verify/skills/replay.test.ts:46:31\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯",
           "metrics": {},
-          "seconds": 1.99
+          "seconds": 1.573
         },
         {
           "name": "Biped drive: forward, left and right on its Kit skill, with travel, heading of the commanded sign and no fall",
-          "ok": true,
-          "detail": "0.5 s",
+          "ok": false,
+          "detail": " ❯ readJson verify/skills/plans.ts:44:66\n     42| };\n     43|\n     44| const readJson = <T>(dir: string, name: string) => JSON.parse(fs.readF…\n       |                                                                  ^\n     45|\n     46| export interface StoredKitSkill {\n ❯ loadKitSkill verify/skills/plans.ts:56:12\n ❯ driveBiped verify/skills/steering.ts:156:21\n ❯ verify/skills/steering.test.ts:6:46\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
           "metrics": {},
-          "seconds": 0.541
+          "seconds": 0.472
         },
         {
           "name": "Solver race: three tasks pass Arena, record method and cost, and the router is within 2× of the cheapest",
           "ok": true,
-          "detail": "169.5 s",
+          "detail": "122.0 s",
           "metrics": {
-            "loadBefore": 4.46142578125,
-            "loadAfter": 7.6767578125
+            "loadBefore": 6.2109375,
+            "loadAfter": 12.5703125
           },
-          "seconds": 169.478
+          "seconds": 121.982
         },
         {
           "name": "Freshness: a mass edit reruns Arena, a topology edit needs training, a colour edit stays fresh",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.684
+          "seconds": 0.64
         },
         {
           "name": "Kit retraining debounces, latest design wins, and waits behind user training",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.324
+          "seconds": 0.362
         },
         {
           "name": "Cases judge with the one Rust contract, not a TypeScript copy",
           "ok": true,
           "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.553
+          "seconds": 0.551
         },
         {
           "name": "Skills, Cases and sim unit tests pass",
           "ok": true,
-          "detail": "1.7 s",
+          "detail": "1.6 s",
           "metrics": {},
-          "seconds": 1.727
+          "seconds": 1.598
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "5.0 s",
+          "detail": "4.8 s",
           "metrics": {},
-          "seconds": 5.007
+          "seconds": 4.757
         }
       ],
       "canaries": [
@@ -1235,46 +1235,46 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 6.249
+          "seconds": 6.11
         },
         {
           "name": "a zero policy fails Velocity tracking",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 9.681
+          "seconds": 9.933
         },
         {
           "name": "a reward-hacked candidate is rejected by the race",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 314.514
+          "seconds": 228.79
         },
         {
           "name": "must-fail-weak-quad is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.675
+          "seconds": 0.628
         },
         {
           "name": "a skill moved to another fixture needs training",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.43
+          "seconds": 0.432
         },
         {
           "name": "a biped that only walks straight fails steering",
-          "ok": true,
-          "detail": "",
+          "ok": false,
+          "detail": "Canary did not fire: the check passed a planted fault (It crashed instead: Error: ENOENT: no such file or directory, open 'verify/out/kit/biped-servo/velocity-tracking/skill.json')",
           "metrics": {},
-          "seconds": 0.572
+          "seconds": 0.435
         }
       ],
-      "commit": "516a860",
-      "at": "2026-11-08T15:18:05.607Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-09T00:42:18.344Z",
       "manifest": "clean"
     },
     "s4b-routines-flow": {
@@ -1290,35 +1290,35 @@
           "ok": true,
           "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.38
+          "seconds": 0.37
         },
         {
           "name": "capabilities come from the scene",
           "ok": true,
-          "detail": "0.4 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.361
+          "seconds": 0.341
         },
         {
           "name": "acceptance scenarios written from the sentence pass on mocks",
           "ok": true,
           "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.331
+          "seconds": 0.316
         },
         {
           "name": "L1: the greeting walks, greets and turns in MuJoCo with Kit skills; untrained skills are refused",
           "ok": true,
-          "detail": "5.6 s",
+          "detail": "5.5 s",
           "metrics": {},
-          "seconds": 5.556
+          "seconds": 5.472
         },
         {
           "name": "in the app: one sentence to a passing Routine in under 8 actions, live trace, Add Camera, Needs Training",
           "ok": true,
-          "detail": "34.9 s",
+          "detail": "33.1 s",
           "metrics": {},
-          "seconds": 34.893
+          "seconds": 33.147
         },
         {
           "name": "the soak harness builds",
@@ -1330,19 +1330,19 @@
         {
           "name": "fake-bus soak with saturated workers and a hung LLM keeps p99.9 jitter under 2 ms",
           "ok": true,
-          "detail": "75.8 s",
+          "detail": "75.9 s",
           "metrics": {
-            "loadBefore": 5.93701171875,
-            "loadAfter": 18.22705078125
+            "loadBefore": 6.2099609375,
+            "loadAfter": 26.779296875
           },
-          "seconds": 75.772
+          "seconds": 75.88
         },
         {
           "name": "Routine unit tests pass",
           "ok": true,
           "detail": "1.1 s",
           "metrics": {},
-          "seconds": 1.08
+          "seconds": 1.104
         }
       ],
       "canaries": [
@@ -1351,25 +1351,25 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.369
+          "seconds": 0.377
         },
         {
           "name": "a flow edit that drops a timeout path is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.332
+          "seconds": 0.338
         },
         {
           "name": "a trace event for a node not in the graph is rejected",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.338
+          "seconds": 0.327
         }
       ],
-      "commit": "01f773a",
-      "at": "2026-11-08T15:35:43.540Z",
+      "commit": "26e7fa9",
+      "at": "2026-11-09T01:53:33.311Z",
       "manifest": "clean"
     },
     "s1-f3-simd-engine": {
@@ -1383,61 +1383,61 @@
         {
           "name": "forge-sim builds",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.1 s",
           "metrics": {},
-          "seconds": 0.337
+          "seconds": 0.105
         },
         {
           "name": "forge-ir emits kernels and refuses unsupported MJCF",
           "ok": true,
-          "detail": "0.2 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.213
+          "seconds": 0.254
         },
         {
           "name": "200 fuzzed robots emitted",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.5 s",
           "metrics": {},
-          "seconds": 0.747
+          "seconds": 0.541
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.55
+          "seconds": 0.435
         },
         {
           "name": "simd engine matches C MuJoCo on every fuzzed robot, L0 to L3",
           "ok": true,
-          "detail": "worst {\"l0\":4.213315618472377e-16,\"l1\":8.003146756419e-14,\"l3Qpos\":1.3010426069826053e-15,\"l3Qvel\":1.684763439868675e-12}",
+          "detail": "worst {\"l0\":4.213315618472377e-16,\"l1\":8.003146756419e-14,\"l3Qpos\":2.1718737919229625e-15,\"l3Qvel\":1.5152462617962215e-12}",
           "metrics": {
             "l0": 4.213315618472377e-16,
             "l1": 8.003146756419e-14,
-            "l3Qpos": 1.3010426069826053e-15,
-            "l3Qvel": 1.684763439868675e-12
+            "l3Qpos": 2.1718737919229625e-15,
+            "l3Qvel": 1.5152462617962215e-12
           },
-          "seconds": 1.17
+          "seconds": 1.398
         },
         {
           "name": "simd batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.408
+          "seconds": 0.423
         },
         {
           "name": "simd sustains 1100K substeps/s for 30 s at 1024 envs",
           "ok": true,
-          "detail": "3213883 sustained",
+          "detail": "2895989 sustained",
           "metrics": {
-            "substepsPerS": 3351005.7039786642,
-            "sustainedMin": 3213883.4505752423,
-            "loadBefore": 6.22509765625,
-            "loadAfter": 11.8935546875
+            "substepsPerS": 3074524.662051373,
+            "sustainedMin": 2895989.147614089,
+            "loadBefore": 5.33056640625,
+            "loadAfter": 12.59716796875
           },
-          "seconds": 30.029
+          "seconds": 30.017
         }
       ],
       "canaries": [
@@ -1456,8 +1456,8 @@
           "seconds": 0
         }
       ],
-      "commit": "8ef271e",
-      "at": "2026-11-08T17:07:24.566Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T20:52:20.835Z",
       "manifest": "clean"
     },
     "s1-f4-metal": {
@@ -1471,47 +1471,47 @@
         {
           "name": "200 fuzzed robots emitted",
           "ok": true,
-          "detail": "0.9 s",
+          "detail": "0.8 s",
           "metrics": {},
-          "seconds": 0.915
+          "seconds": 0.777
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.45
+          "seconds": 0.515
         },
         {
           "name": "metal engine matches C MuJoCo on every fuzzed robot, L0 to L3",
           "ok": true,
-          "detail": "worst {\"l0\":4.440892098500626e-11,\"l1\":0.00006687392215530899,\"l3Qpos\":4.554544701454444e-9,\"l3Qvel\":0.0000015347656879801178}",
+          "detail": "worst {\"l0\":4.440892098500626e-11,\"l1\":0.0000668739221690827,\"l3Qpos\":4.554544677168315e-9,\"l3Qvel\":0.000001534765658776048}",
           "metrics": {
             "l0": 4.440892098500626e-11,
-            "l1": 0.00006687392215530899,
-            "l3Qpos": 4.554544701454444e-9,
-            "l3Qvel": 0.0000015347656879801178
+            "l1": 0.0000668739221690827,
+            "l3Qpos": 4.554544677168315e-9,
+            "l3Qvel": 0.000001534765658776048
           },
-          "seconds": 773.18
+          "seconds": 21.138
         },
         {
           "name": "metal batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 10.458
+          "seconds": 11.03
         },
         {
           "name": "metal sustains 1000K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "1500473 sustained",
+          "detail": "1347654 sustained",
           "metrics": {
-            "substepsPerS": 1568574.0839570118,
-            "sustainedMin": 1500472.5723277864,
-            "loadBefore": 3.4619140625,
-            "loadAfter": 3.064453125
+            "substepsPerS": 1478409.021498016,
+            "sustainedMin": 1347653.8275886183,
+            "loadBefore": 5.95703125,
+            "loadAfter": 4.62158203125
           },
-          "seconds": 60.126
+          "seconds": 60.116
         }
       ],
       "canaries": [
@@ -1520,7 +1520,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.001
+          "seconds": 0
         },
         {
           "name": "a planted rollout drift is caught",
@@ -1530,8 +1530,8 @@
           "seconds": 0
         }
       ],
-      "commit": "95d03ce",
-      "at": "2026-11-08T19:12:37.643Z",
+      "commit": "fe81d9e",
+      "at": "2026-11-08T20:54:44.700Z",
       "manifest": "clean"
     },
     "s1-f6-webgpu": {

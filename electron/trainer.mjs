@@ -38,7 +38,18 @@ function spawnTrainer({ uv, dir, envDir, forge }) {
 
   return spawn(
     uv,
-    ['run', '--project', TRAINER_DIR, '--frozen', 'python', '-u', path.join(TRAINER_DIR, 'train.py'), '--job', dir],
+    [
+      'run',
+      '--project',
+      TRAINER_DIR,
+      '--frozen',
+      '--exact',
+      'python',
+      '-u',
+      path.join(TRAINER_DIR, 'train.py'),
+      '--job',
+      dir,
+    ],
     {
       cwd: dir,
       env: {

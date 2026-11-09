@@ -39,7 +39,7 @@ const REFUSED_DISABLE: [(u32, &str); 7] = [
     (11, "actuation"),
 ];
 
-const ENABLE_NAMES: [&str; 7] = [
+const ENABLE_NAMES: [&str; 8] = [
     "contact override",
     "energy",
     "forward-inverse comparison",
@@ -47,7 +47,10 @@ const ENABLE_NAMES: [&str; 7] = [
     "sleeping",
     "exact constraint diagonals",
     "IPC flex contact",
+    "speculative contacts",
 ];
+
+const ENERGY_BIT: u32 = 1;
 
 const COUNTS: [(&str, &str); 11] = [
     ("neq", "equality constraints"),
@@ -107,9 +110,10 @@ fn flags(r: &Reader, reasons: &mut Vec<String>) -> Result<(), String> {
         }
     }
 
-    for (bit, name) in ENABLE_NAMES.iter().enumerate() {
-        if bit != 1 && enable & (1 << bit) != 0 {
-            reasons.push(format!("it enables {name}"));
+    for bit in (0..u32::BITS).filter(|&bit| bit != ENERGY_BIT && enable & (1 << bit) != 0) {
+        match ENABLE_NAMES.get(bit as usize) {
+            Some(name) => reasons.push(format!("it enables {name}")),
+            None => reasons.push(format!("it enables an option Forge doesn't know (enable flag {bit})")),
         }
     }
 

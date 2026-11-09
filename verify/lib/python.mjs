@@ -17,6 +17,7 @@ export const trainerPython = (script, args = [], options = {}) =>
       '--project',
       path.join(ROOT, 'electron', 'trainer'),
       '--frozen',
+      '--exact',
       'python',
       '-u',
       path.join(ROOT, script),

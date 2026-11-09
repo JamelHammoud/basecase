@@ -1,6 +1,8 @@
 mod batch;
 mod ffi;
 mod fields;
+#[cfg(test)]
+mod layout_tests;
 mod model;
 
 pub use batch::{Batch, StateLayout};

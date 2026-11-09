@@ -65,7 +65,7 @@ async function runGates(gates, wanted) {
 
   for (const g of chosen) {
     if (g.state === 'parked') {
-      console.log(`${g.id}: parked`);
+      console.log(`${g.id}: parked (${g.parked ?? 'no reason given'})`);
 
       continue;
     }

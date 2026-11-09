@@ -13,6 +13,7 @@ import { kitRobot, kitTopSpeed, type V3 } from './kitModel';
 const DRAWS = 12;
 const TURN_RATE = 0.5;
 const TURN_SHARE = 0.175;
+const TURN_WEIGHT = 0.1;
 const MARGIN_WEIGHT = 0.01;
 
 export interface ValidationInput {
@@ -160,6 +161,16 @@ function summary(command: V3, trials: Trial[]): CheckResult {
   return { command, passed, margin };
 }
 
+const mean = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / Math.max(values.length, 1);
+
+function scored(checks: CheckResult[]): number {
+  const speeds = checks.filter((c) => c.command[2] === 0);
+  const turns = checks.filter((c) => c.command[2] !== 0);
+  const weakest = Math.min(...speeds.map((c) => c.passed));
+
+  return weakest + TURN_WEIGHT * mean(turns.map((c) => c.passed)) + MARGIN_WEIGHT * mean(checks.map((c) => c.margin));
+}
+
 export async function validationReport(input: ValidationInput): Promise<ValidationReport> {
   const salt = input.salt ?? sha256Hex(String(crypto.getRandomValues(new Uint32Array(4)).join('-')));
   const worlds: [ArenaWorld, ArenaWorld] = [
@@ -181,10 +192,7 @@ export async function validationReport(input: ValidationInput): Promise<Validati
     worlds.forEach((w) => w.dispose());
   }
 
-  const passed = checks.reduce((sum, c) => sum + c.passed, 0) / checks.length;
-  const margin = checks.reduce((sum, c) => sum + c.margin, 0) / checks.length;
-
-  return { checks, score: passed + MARGIN_WEIGHT * margin };
+  return { checks, score: scored(checks) };
 }
 
 export const validationScore = async (input: ValidationInput) => (await validationReport(input)).score;

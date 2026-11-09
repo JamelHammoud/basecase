@@ -43,14 +43,13 @@ describe('Kit validation', () => {
     ]);
   });
 
-  it('scores a robot that only stands on the still check alone', async () => {
+  it('scores a robot that only stands near zero, since Arena needs every speed', async () => {
     const mj = await loadMujoco();
     const model = fixtureModel('quad-servo');
     const policy = standingPolicy(kitRobot(model).joints);
     const environment = kitEnvironment(model, 'velocity-tracking');
     const score = await validationScore({ mj, model, environment, policy, draws: 1, salt: 'a' });
 
-    expect(score).toBeGreaterThan(0.15);
-    expect(score).toBeLessThan(0.25);
+    expect(score).toBeLessThan(0.05);
   }, 60_000);
 });

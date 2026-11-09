@@ -46,12 +46,13 @@ fn fixture() -> Fixture {
 }
 
 impl Fixture {
-    fn nets(&self) -> Nets<'_> {
+    fn nets(&self, squashed: bool) -> Nets<'_> {
         Nets {
             actor: &self.actor,
             critic: &self.critic,
             params: &self.params,
             log_std_at: self.critic.param_end(),
+            squashed,
         }
     }
 
@@ -66,7 +67,7 @@ impl Fixture {
         }
     }
 
-    fn whole_batch_gradient(&self) -> (Vec<f32>, f32) {
+    fn whole_batch_gradient(&self, squashed: bool) -> (Vec<f32>, f32) {
         let math = Math::native(1);
         let at = self.critic.first_param;
         let log_std_at = self.critic.param_end();
@@ -84,6 +85,7 @@ impl Fixture {
             log_std_grads,
             clip: HYPER.clip,
             ent_coef: HYPER.ent_coef,
+            squash_coef: if squashed { HYPER.ent_coef } else { 0.0 },
             scale: 1.0 / ROWS as f32,
         };
         let kl = policy_gradient(&math, actor, &self.batch(), terms);
@@ -104,17 +106,16 @@ fn close(a: f32, b: f32) -> bool {
     (a - b).abs() <= 1e-6 + 1e-4 * b.abs()
 }
 
-#[test]
-fn row_blocks_give_the_whole_batch_gradient() {
+fn check_whole_batch_gradient(squashed: bool) {
     let f = fixture();
     let blocks = Blocks::new(&f.actor, &f.critic, ROWS);
-    let (expected, expected_kl) = f.whole_batch_gradient();
+    let (expected, expected_kl) = f.whole_batch_gradient(squashed);
     let mut grads = vec![0.0f32; f.params.len()];
 
     assert_eq!(blocks.count, 4);
 
-    let kl = blocks.gradients(&Math::native(1), &f.nets(), &f.batch(), &HYPER);
-    let norm = blocks.reduce(&mut grads, &f.nets());
+    let kl = blocks.gradients(&Math::native(1), &f.nets(squashed), &f.batch(), &HYPER);
+    let norm = blocks.reduce(&mut grads, &f.nets(squashed));
 
     assert!(close(kl, expected_kl), "kl {kl} against {expected_kl}");
     assert!((norm - gradient_norm(&expected)).abs() < 1e-5 * norm);
@@ -122,6 +123,16 @@ fn row_blocks_give_the_whole_batch_gradient() {
     for (index, (got, want)) in grads.iter().zip(&expected).enumerate() {
         assert!(close(*got, *want), "gradient {index}: {got} against {want}");
     }
+}
+
+#[test]
+fn row_blocks_give_the_whole_batch_gradient() {
+    check_whole_batch_gradient(false);
+}
+
+#[test]
+fn row_blocks_give_the_whole_batch_squashed_gradient() {
+    check_whole_batch_gradient(true);
 }
 
 #[test]
@@ -139,7 +150,7 @@ fn refresh_matches_the_exact_policy_and_value() {
         val: &mut val,
     };
 
-    blocks.refresh(&Math::native(1), &f.nets(), targets);
+    blocks.refresh(&Math::native(1), &f.nets(false), targets);
 
     for row in 0..ROWS {
         let input = &f.obs[row * NOBS..(row + 1) * NOBS];

@@ -43,6 +43,7 @@ pub struct PolicyTerms<'a> {
     pub log_std_grads: &'a mut [f32],
     pub clip: f32,
     pub ent_coef: f32,
+    pub squash_coef: f32,
     pub scale: f32,
 }
 
@@ -63,6 +64,14 @@ pub fn log_prob(mean: &[f32], taken: &[f32], inverse_std: &[f32], constant: f32)
         .sum();
 
     -0.5 * quadratic - constant
+}
+
+fn squash_pull(coef: f32, taken: f32) -> f32 {
+    if coef == 0.0 {
+        return 0.0;
+    }
+
+    2.0 * coef * taken.tanh()
 }
 
 pub fn policy_gradient(math: &Math, head: Head, batch: &Minibatch, terms: PolicyTerms) -> f64 {
@@ -114,9 +123,10 @@ pub fn policy_gradient(math: &Math, head: Head, batch: &Minibatch, terms: Policy
 
         for j in 0..nact {
             let off = taken[j] - mu[j];
+            let pull = squash_pull(terms.squash_coef * scale, taken[j]);
 
-            terms.log_std_grads[j] += weight * (off * target[j] - 1.0);
-            target[j] *= weight;
+            terms.log_std_grads[j] += weight * (off * target[j] - 1.0) + pull * off;
+            target[j] = target[j] * weight + pull;
         }
     }
 

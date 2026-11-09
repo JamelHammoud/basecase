@@ -17,6 +17,7 @@ pub struct Nets<'a> {
     pub critic: &'a Mlp,
     pub params: &'a [f32],
     pub log_std_at: usize,
+    pub squashed: bool,
 }
 
 struct Lane {
@@ -100,6 +101,7 @@ fn policy_lane(lane: &mut Lane, work: &Work, part: &Minibatch, first: bool) {
         log_std_grads,
         clip: hyper.clip,
         ent_coef,
+        squash_coef: if nets.squashed { hyper.ent_coef } else { 0.0 },
         scale,
     };
 

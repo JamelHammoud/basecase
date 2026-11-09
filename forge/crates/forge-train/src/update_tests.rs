@@ -19,6 +19,7 @@ struct WholeBatch {
     params: Vec<f32>,
     log_std_at: usize,
     log_std_min: f32,
+    squashed: bool,
     adam: Adam,
     learn_rate: f32,
     actor_scratch: Scratch,
@@ -35,6 +36,7 @@ impl WholeBatch {
             params: learner.params.clone(),
             log_std_at: learner.log_std_at,
             log_std_min,
+            squashed: learner.squashed,
             adam: learner.adam.clone(),
             learn_rate: learner.learn_rate,
         }
@@ -56,6 +58,7 @@ impl WholeBatch {
             log_std_grads,
             clip: hp.clip,
             ent_coef: hp.ent_coef,
+            squash_coef: if self.squashed { hp.ent_coef } else { 0.0 },
             scale,
         };
         let kl = (policy_gradient(math, actor, batch, terms) / batch.rows as f64) as f32;
@@ -140,14 +143,14 @@ fn worst_gap(a: &[f32], b: &[f32]) -> f32 {
     a.iter().zip(b).map(|(x, y)| (x - y).abs()).fold(0.0, f32::max)
 }
 
-#[test]
-fn row_blocks_take_the_whole_batch_learners_steps() {
+fn check_steps(squashed: bool) {
     let math = Math::native(4);
     let hp = Hyper::for_envs(64);
     let mut rng = Rng::new(7, 0);
     let mut learner = Learner::new(NOBS, NACT, ROWS, &mut rng);
 
     learner.mask_actor(&LINEAR_VELOCITY);
+    learner.squashed = squashed;
     learner.set_log_std(&[-2.49, -2.45, -0.7, -0.01, 0.0, -1.2]);
     learner.floor_log_std(LOG_STD_FLOOR);
 
@@ -179,4 +182,14 @@ fn row_blocks_take_the_whole_batch_learners_steps() {
             .iter()
             .all(|s| (LOG_STD_FLOOR..=LOG_STD_MAX).contains(s)));
     }
+}
+
+#[test]
+fn row_blocks_take_the_whole_batch_learners_steps() {
+    check_steps(false);
+}
+
+#[test]
+fn row_blocks_take_the_whole_batch_learners_squashed_steps() {
+    check_steps(true);
 }

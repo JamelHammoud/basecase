@@ -5,7 +5,7 @@ import { kitReward } from './kitRewards';
 import { NEAR_DELAYS, type DelaySteps } from './kitSchedule';
 
 const D2R = Math.PI / 180;
-const WARM_LOG_STD_MIN = -2.5;
+const LOG_STD_MIN = -2.5;
 
 export interface KitStart {
   joints: Record<string, number>;
@@ -45,7 +45,14 @@ function commandRanges(model: SimModel) {
 
 function entryFields(model: SimModel, entry: TrainedEntry, start: KitStart | null) {
   if (entry === 'velocity-tracking')
-    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model), ...ROBUST };
+    return {
+      task: 'walk',
+      resetNoise: 0.1,
+      commands: commandRanges(model),
+      squash: 'tanh',
+      logStdMin: LOG_STD_MIN,
+      ...ROBUST,
+    };
 
   if (entry === 'get-up')
     return {
@@ -99,6 +106,6 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     ...(options.maxIterations ? { maxIterations: options.maxIterations } : {}),
     ...fields,
     ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
-    ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: WARM_LOG_STD_MIN } : {}),
+    ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: LOG_STD_MIN } : {}),
   };
 }

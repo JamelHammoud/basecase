@@ -1,3 +1,4 @@
+use crate::deployed::Squash;
 use crate::options::{self, TaskOptions};
 use serde_json::Value;
 use std::fs;
@@ -58,6 +59,14 @@ impl Backend {
     }
 }
 
+fn squash(name: Option<&str>) -> Result<Squash, String> {
+    match name {
+        None | Some("clip") => Ok(Squash::Clip),
+        Some("tanh") => Ok(Squash::Tanh),
+        Some(other) => Err(format!("job.json asks for an unknown squash {other}")),
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Job {
     pub algo: Algo,
@@ -84,6 +93,7 @@ pub struct Job {
     pub threads: Option<usize>,
     pub warm_start: Option<PathBuf>,
     pub log_std_min: Option<f32>,
+    pub squash: Squash,
     pub options: TaskOptions,
 }
 
@@ -204,6 +214,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
             .and_then(Value::as_f64)
             .map(|v| v as f32)
             .filter(|v| v.is_finite()),
+        squash: squash(root.get("squash").and_then(Value::as_str))?,
         options: options::parse(root)?,
     })
 }
@@ -218,7 +229,7 @@ pub fn load(folder: &Path) -> Result<Job, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse;
+    use super::{parse, Squash};
     use serde_json::json;
 
     fn sample() -> serde_json::Value {
@@ -250,6 +261,17 @@ mod tests {
         assert_eq!(parse(&job).expect("job parses").backend, super::Backend::Simd);
         job["backend"] = json!("gpu");
         assert!(parse(&job).expect_err("must fail").contains("backend"));
+    }
+
+    #[test]
+    fn reads_the_action_squash() {
+        let mut job = sample();
+
+        assert_eq!(parse(&job).expect("job parses").squash, Squash::Clip);
+        job["squash"] = json!("tanh");
+        assert_eq!(parse(&job).expect("job parses").squash, Squash::Tanh);
+        job["squash"] = json!("sigmoid");
+        assert!(parse(&job).expect_err("must fail").contains("squash"));
     }
 
     #[test]

@@ -62,6 +62,7 @@ pub struct Learner {
     adam: Adam,
     pub learn_rate: f32,
     log_std_min: f32,
+    pub squashed: bool,
     actor_scratch: Scratch,
     critic_scratch: Scratch,
     blocks: Blocks,
@@ -102,6 +103,7 @@ impl Learner {
             adam: Adam::new(total),
             learn_rate: 1e-3,
             log_std_min: f32::NEG_INFINITY,
+            squashed: false,
         }
     }
 
@@ -148,6 +150,7 @@ impl Learner {
             critic: &self.critic,
             params: &self.params,
             log_std_at: self.log_std_at,
+            squashed: self.squashed,
         }
     }
 

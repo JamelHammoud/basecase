@@ -114,6 +114,7 @@ impl<'a> Ppo<'a> {
         let mut learner = Learner::new(nobs, nact, mb.max(n), &mut init_rng);
 
         learner.mask_actor(actor_mask(&envs.robot.job.options));
+        learner.squashed = envs.robot.job.squash == Squash::Tanh;
 
         if let Some(floor) = envs.robot.job.log_std_min {
             learner.floor_log_std(floor);
@@ -203,7 +204,9 @@ impl Algorithm for Ppo<'_> {
     fn deployed(&self) -> Deployed {
         let learner = &self.update.learner;
 
-        Deployed::new(learner.actor.clone(), learner.params.clone(), Squash::Clip)
+        let squash = if learner.squashed { Squash::Tanh } else { Squash::Clip };
+
+        Deployed::new(learner.actor.clone(), learner.params.clone(), squash)
     }
 
     fn norm(&self) -> &Normalizer {

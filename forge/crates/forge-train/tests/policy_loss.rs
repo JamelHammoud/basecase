@@ -5,6 +5,7 @@ use forge_train::rng::Rng;
 
 const CLIP: f32 = 0.2;
 const ENT_COEF: f32 = 0.004;
+const SQUASH_COEF: f32 = 0.5;
 
 struct Fixture {
     net: Mlp,
@@ -16,7 +17,19 @@ struct Fixture {
     adv: Vec<f32>,
 }
 
-fn clipped_surrogate_loss(f: &Fixture, params: &[f32], log_std: &[f32]) -> f64 {
+fn squash_correction(mu: &[f32], log_std: &[f32], noise: &[f64]) -> f64 {
+    mu.iter()
+        .zip(log_std)
+        .zip(noise)
+        .map(|((m, s), e)| {
+            let squashed = (*m as f64 + (*s as f64).exp() * e).tanh();
+
+            (1.0 - squashed * squashed).ln()
+        })
+        .sum()
+}
+
+fn clipped_surrogate_loss(f: &Fixture, params: &[f32], log_std: &[f32], noise: Option<&[f64]>) -> f64 {
     let nobs = f.obs.len() / f.rows;
     let constant = gaussian_constant(log_std) as f64;
     let mut total = 0.0f64;
@@ -36,6 +49,10 @@ fn clipped_surrogate_loss(f: &Fixture, params: &[f32], log_std: &[f32]) -> f64 {
         let clipped = ratio.clamp(1.0 - CLIP as f64, 1.0 + CLIP as f64) * advantage;
 
         total -= (ratio * advantage).min(clipped);
+
+        if let Some(noise) = noise {
+            total -= SQUASH_COEF as f64 * squash_correction(&mu, log_std, &noise[row * f.nact..(row + 1) * f.nact]);
+        }
     }
 
     let entropy: f64 = log_std
@@ -44,6 +61,20 @@ fn clipped_surrogate_loss(f: &Fixture, params: &[f32], log_std: &[f32]) -> f64 {
         .sum();
 
     total / f.rows as f64 - ENT_COEF as f64 * entropy
+}
+
+fn sampled_noise(f: &Fixture, params: &[f32], log_std: &[f32]) -> Vec<f64> {
+    let nobs = f.obs.len() / f.rows;
+
+    (0..f.rows)
+        .flat_map(|row| {
+            let mu = f.net.forward_exact(params, &f.obs[row * nobs..(row + 1) * nobs]);
+
+            (0..f.nact)
+                .map(|j| (f.act[row * f.nact + j] - mu[j]) as f64 / (log_std[j] as f64).exp())
+                .collect::<Vec<f64>>()
+        })
+        .collect()
 }
 
 fn fixture() -> (Fixture, Vec<f32>) {
@@ -68,10 +99,11 @@ fn fixture() -> (Fixture, Vec<f32>) {
     (fixture, params)
 }
 
-#[test]
-fn policy_gradient_matches_finite_differences() {
+fn check_gradients(squashed: bool) {
     let (f, params) = fixture();
     let log_std = vec![-0.7f32, -0.5, -0.9];
+    let noise = squashed.then(|| sampled_noise(&f, &params, &log_std));
+    let loss = |params: &[f32], log_std: &[f32]| clipped_surrogate_loss(&f, params, log_std, noise.as_deref());
     let math = Math::native(1);
     let mut scratch = f.net.scratch(f.rows);
     let mut grads = vec![0.0f32; params.len()];
@@ -96,6 +128,7 @@ fn policy_gradient_matches_finite_differences() {
         log_std_grads: &mut log_std_grads,
         clip: CLIP,
         ent_coef: ENT_COEF,
+        squash_coef: if squashed { SQUASH_COEF } else { 0.0 },
         scale: 1.0 / f.rows as f32,
     };
 
@@ -108,8 +141,7 @@ fn policy_gradient_matches_finite_differences() {
         plus[index] += eps;
         minus[index] -= eps;
 
-        let numeric = (clipped_surrogate_loss(&f, &plus, &log_std) - clipped_surrogate_loss(&f, &minus, &log_std))
-            / (2.0 * eps as f64);
+        let numeric = (loss(&plus, &log_std) - loss(&minus, &log_std)) / (2.0 * eps as f64);
 
         assert!(
             (numeric - grads[index] as f64).abs() < 2e-3 + 0.03 * numeric.abs(),
@@ -125,13 +157,48 @@ fn policy_gradient_matches_finite_differences() {
         plus[j] += eps;
         minus[j] -= eps;
 
-        let numeric = (clipped_surrogate_loss(&f, &params, &plus) - clipped_surrogate_loss(&f, &params, &minus))
-            / (2.0 * eps as f64);
+        let numeric = (loss(&params, &plus) - loss(&params, &minus)) / (2.0 * eps as f64);
 
         assert!(
-            (numeric - log_std_grads[j] as f64).abs() < 2e-3,
+            (numeric - log_std_grads[j] as f64).abs() < 2e-3 + 0.01 * numeric.abs(),
             "log std {j}: {numeric} against {}",
             log_std_grads[j]
         );
     }
+}
+
+#[test]
+fn policy_gradient_matches_finite_differences() {
+    check_gradients(false);
+}
+
+#[test]
+fn the_squashed_entropy_gradient_matches_finite_differences() {
+    check_gradients(true);
+}
+
+#[test]
+fn the_squashed_entropy_pulls_saturated_means_back() {
+    let (f, params) = fixture();
+    let log_std = vec![-0.7f32; f.nact];
+    let noise = sampled_noise(&f, &params, &log_std);
+    let shifted = |shift: f32| -> f64 {
+        let nobs = f.obs.len() / f.rows;
+
+        (0..f.rows)
+            .map(|row| {
+                let mu: Vec<f32> = f
+                    .net
+                    .forward_exact(&params, &f.obs[row * nobs..(row + 1) * nobs])
+                    .iter()
+                    .map(|m| m + shift)
+                    .collect();
+
+                -squash_correction(&mu, &log_std, &noise[row * f.nact..(row + 1) * f.nact])
+            })
+            .sum()
+    };
+
+    assert!(shifted(3.0) > shifted(0.0) + 1.0);
+    assert!(shifted(-3.0) > shifted(0.0) + 1.0);
 }

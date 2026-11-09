@@ -27,6 +27,7 @@ pub struct Collector<'a> {
     reward: Vec<f32>,
     fell: Vec<bool>,
     timeout: Vec<bool>,
+    squashed: Option<Vec<f32>>,
 }
 
 impl<'a> Collector<'a> {
@@ -55,6 +56,7 @@ impl<'a> Collector<'a> {
             reward: vec![0.0; n],
             fell: vec![false; n],
             timeout: vec![false; n],
+            squashed: learner.squashed.then(|| vec![0.0; n * envs.robot.nact]),
             envs,
         }
     }
@@ -113,7 +115,15 @@ impl<'a> Collector<'a> {
             self.sample_actions(rollout, t);
             self.phases.inference += tick.elapsed().as_secs_f64();
 
-            let action = &rollout.act[start * nact..(start + n) * nact];
+            let taken = &rollout.act[start * nact..(start + n) * nact];
+            let action = match &mut self.squashed {
+                Some(squashed) => {
+                    squashed.iter_mut().zip(taken).for_each(|(s, a)| *s = a.tanh());
+
+                    &squashed[..]
+                }
+                None => taken,
+            };
             let result = StepResult {
                 reward: &mut self.reward,
                 fell: &mut self.fell,

@@ -99,6 +99,26 @@ fn a_short_run_prints_train_py_events_and_writes_every_output() {
     assert_eq!(policy["layers"].as_array().expect("layers").len(), 4);
     assert!(check["samples"].as_array().expect("samples").len() >= 8);
     assert!(fs::metadata(folder.join("policy.onnx")).expect("onnx").len() > 1000);
+    assert!(policy.get("squash").is_none());
+}
+
+#[test]
+fn a_squashed_ppo_run_exports_a_squashed_policy() {
+    let folder = job_folder("squashed", json!({ "squash": "tanh", "logStdMin": -2.5 }));
+    let events = run(&folder);
+    let done = events.iter().find(|e| e["type"] == "done").expect("done");
+    let policy: Value =
+        serde_json::from_str(&fs::read_to_string(folder.join("policy.json")).expect("policy")).expect("json");
+    let resume: Value =
+        serde_json::from_str(&fs::read_to_string(folder.join("resume.json")).expect("resume")).expect("json");
+
+    assert_eq!(done["steps"], 3 * 24 * 8);
+    assert_eq!(policy["squash"], "tanh");
+    assert!(resume["logStd"]
+        .as_array()
+        .expect("logStd")
+        .iter()
+        .all(|s| s.as_f64().expect("number") >= -2.5));
 }
 
 fn rewards(events: &[Value]) -> Vec<f64> {

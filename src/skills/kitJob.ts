@@ -44,7 +44,7 @@ function commandRanges(model: SimModel) {
   };
 }
 
-const GPU_ENVS = 4096;
+const GPU_ENVS = 1024;
 
 const WALK_LEARNER = Object.freeze({ backend: 'metal', gpuEnvs: GPU_ENVS, squash: 'tanh', logStdMin: LOG_STD_MIN });
 

@@ -128,7 +128,7 @@ describe('Kit tries', () => {
       logStdMin: -2.5,
       squash: 'tanh',
       backend: 'metal',
-      gpuEnvs: 4096,
+      gpuEnvs: 1024,
       actorLinvel: false,
     });
     expect(kitJob(fixtureModel('biped-servo'), 'stand', { minutes: 3, seed: 1 })).not.toHaveProperty('warmStart');

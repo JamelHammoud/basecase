@@ -12,6 +12,7 @@ import { kitJob, type KitStart } from './kitJob';
 import { kitRobot } from './kitModel';
 import { kitSchedule, type KitStage } from './kitSchedule';
 import { firstPassingTry, type Judgement } from './kitTries';
+import { validationScore } from './kitValidation';
 import { collapsedStart } from './kitStart';
 import { proveSkill } from './prove';
 
@@ -112,8 +113,15 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
 
 async function train(run: Attempt, stage: KitStage, from: { seed: number; folder: string | null }) {
   const { input, entry, start, clock } = run;
-  const { minutes, delaySteps } = stage;
-  const job = kitJob(input.model, entry, { minutes, seed: from.seed, start, delaySteps, warmStart: from.folder });
+  const { minutes, delaySteps, delayRamp } = stage;
+  const job = kitJob(input.model, entry, {
+    minutes,
+    seed: from.seed,
+    start,
+    delaySteps,
+    delayRamp,
+    warmStart: from.folder,
+  });
   const outcome = await runCounted(input.forge, { name: job.name, xml: input.model.xml, job }, clock.tally);
 
   return { policy: outcome.ok ? outcome.policy : null, folder: runFolder(outcome) };
@@ -135,6 +143,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
   const skill = await firstPassingTry({
     tries: kitSchedule(input.model, entry),
     train: (stage, from) => train(run, stage, from),
+    validate: (policy: PolicySpec) => validationScore({ ...input, environment, policy }),
     judge: (policy: PolicySpec) => judge(run, policy),
     aborted: () => !!input.signal?.aborted,
   });

@@ -1,6 +1,6 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import { kitCommand, type TrainedEntry } from './kitEnvironment';
-import { footCount, KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
+import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
 import { kitReward } from './kitRewards';
 import { NEAR_DELAYS, type DelaySteps } from './kitSchedule';
 
@@ -19,6 +19,7 @@ export interface KitJobOptions {
   reward?: string;
   maxIterations?: number;
   delaySteps?: DelaySteps;
+  delayRamp?: number;
   warmStart?: string | null;
 }
 
@@ -43,11 +44,13 @@ function commandRanges(model: SimModel) {
   };
 }
 
-const walkPolicy = (model: SimModel) => (footCount(model) >= 4 ? { squash: 'tanh', logStdMin: LOG_STD_MIN } : {});
+const GPU_ENVS = 4096;
+
+const WALK_LEARNER = Object.freeze({ backend: 'metal', gpuEnvs: GPU_ENVS, squash: 'tanh', logStdMin: LOG_STD_MIN });
 
 function entryFields(model: SimModel, entry: TrainedEntry, start: KitStart | null) {
   if (entry === 'velocity-tracking')
-    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model), ...walkPolicy(model), ...ROBUST };
+    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model), ...WALK_LEARNER, ...ROBUST };
 
   if (entry === 'get-up')
     return {
@@ -101,6 +104,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     ...(options.maxIterations ? { maxIterations: options.maxIterations } : {}),
     ...fields,
     ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
+    ...(options.delayRamp ? { delayRamp: options.delayRamp } : {}),
     ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: LOG_STD_MIN } : {}),
   };
 }

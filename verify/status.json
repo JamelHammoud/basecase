@@ -412,23 +412,23 @@
         {
           "name": "Touch the Dots passes on two arms; limp fails; refusals are plain",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.673
+          "seconds": 0.645
         },
         {
           "name": "Case and drive unit tests pass",
           "ok": true,
-          "detail": "1.3 s",
+          "detail": "1.9 s",
           "metrics": {},
-          "seconds": 1.31
+          "seconds": 1.85
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "5.0 s",
+          "detail": "4.8 s",
           "metrics": {},
-          "seconds": 4.954
+          "seconds": 4.793
         }
       ],
       "canaries": [
@@ -437,11 +437,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.503
+          "seconds": 0.5
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T20:55:08.175Z",
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:32:37.838Z",
       "manifest": "clean"
     },
     "s5-emu-daemon": {
@@ -955,58 +955,58 @@
         {
           "name": "the daemon builds",
           "ok": true,
-          "detail": "4.2 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 4.214
+          "seconds": 0.296
         },
         {
           "name": "the daemon is staged for the app",
           "ok": true,
           "detail": "0.2 s",
           "metrics": {},
-          "seconds": 0.196
+          "seconds": 0.178
         },
         {
           "name": "the staged daemon is locked to emulated servos and says hello",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.118
+          "seconds": 0.182
         },
         {
           "name": "the app bundles",
           "ok": true,
-          "detail": "8.3 s",
+          "detail": "7.2 s",
           "metrics": {},
-          "seconds": 8.283
+          "seconds": 7.171
         },
         {
           "name": "an unsigned app packages",
           "ok": true,
-          "detail": "3.0 s",
+          "detail": "4.0 s",
           "metrics": {},
-          "seconds": 3.043
+          "seconds": 4.033
         },
         {
           "name": "the packaged app ships the locked daemon, spawns it emulated, refuses real ports and untrusted IPC",
           "ok": true,
-          "detail": "14.8 s",
+          "detail": "14.1 s",
           "metrics": {},
-          "seconds": 14.85
+          "seconds": 14.063
         },
         {
           "name": "heartbeat, the ladder, status, faults, refusals and a lost daemon reach the user",
           "ok": true,
-          "detail": "10.2 s",
+          "detail": "10.0 s",
           "metrics": {},
-          "seconds": 10.163
+          "seconds": 9.984
         },
         {
           "name": "a Case drives the emulated robot through the daemon and back to the screen",
           "ok": true,
-          "detail": "17.4 s",
+          "detail": "20.7 s",
           "metrics": {},
-          "seconds": 17.449
+          "seconds": 20.653
         }
       ],
       "canaries": [
@@ -1015,25 +1015,25 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 5.845
+          "seconds": 5.846
         },
         {
           "name": "a UI that hides a fault is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.705
+          "seconds": 1.926
         },
         {
           "name": "a daemon built with unlock-real-motors is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 4.226
+          "seconds": 4.068
         }
       ],
-      "commit": "345f905",
-      "at": "2026-11-09T01:58:12.487Z",
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:36:45.970Z",
       "manifest": "clean"
     },
     "s1-f2-learner": {
@@ -1288,61 +1288,61 @@
         {
           "name": "the flow round-trips the schema and lights from trace events",
           "ok": true,
-          "detail": "0.4 s",
+          "detail": "0.5 s",
           "metrics": {},
-          "seconds": 0.37
+          "seconds": 0.486
         },
         {
           "name": "capabilities come from the scene",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.341
+          "seconds": 0.401
         },
         {
           "name": "acceptance scenarios written from the sentence pass on mocks",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.316
+          "seconds": 0.361
         },
         {
           "name": "L1: the greeting walks, greets and turns in MuJoCo with Kit skills; untrained skills are refused",
           "ok": true,
-          "detail": "5.5 s",
+          "detail": "5.7 s",
           "metrics": {},
-          "seconds": 5.472
+          "seconds": 5.652
         },
         {
           "name": "in the app: one sentence to a passing Routine in under 8 actions, live trace, Add Camera, Needs Training",
           "ok": true,
-          "detail": "33.1 s",
+          "detail": "35.4 s",
           "metrics": {},
-          "seconds": 33.147
+          "seconds": 35.377
         },
         {
           "name": "the soak harness builds",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "4.1 s",
           "metrics": {},
-          "seconds": 0.119
+          "seconds": 4.071
         },
         {
           "name": "fake-bus soak with saturated workers and a hung LLM keeps p99.9 jitter under 2 ms",
           "ok": true,
-          "detail": "75.9 s",
+          "detail": "75.8 s",
           "metrics": {
-            "loadBefore": 6.2099609375,
-            "loadAfter": 26.779296875
+            "loadBefore": 6.0107421875,
+            "loadAfter": 18.970703125
           },
-          "seconds": 75.88
+          "seconds": 75.814
         },
         {
           "name": "Routine unit tests pass",
           "ok": true,
-          "detail": "1.1 s",
+          "detail": "1.2 s",
           "metrics": {},
-          "seconds": 1.104
+          "seconds": 1.184
         }
       ],
       "canaries": [
@@ -1351,25 +1351,25 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.377
+          "seconds": 0.371
         },
         {
           "name": "a flow edit that drops a timeout path is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.338
+          "seconds": 0.355
         },
         {
           "name": "a trace event for a node not in the graph is rejected",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.327
+          "seconds": 0.356
         }
       ],
-      "commit": "26e7fa9",
-      "at": "2026-11-09T01:53:33.311Z",
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:35:37.429Z",
       "manifest": "clean"
     },
     "s1-f3-simd-engine": {
@@ -1748,6 +1748,101 @@
       ],
       "commit": "13ea308",
       "at": "2026-11-09T10:12:22.154Z",
+      "manifest": "clean"
+    },
+    "s2-cases-play": {
+      "id": "s2-cases-play",
+      "title": "Stage 2: one Case on different arms, every Case solvable, drive by class, gallery at real time",
+      "stage": 2,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "one Case file, written once, runs on arm-3dof, arm-6dof and a gate-only arm: limp fails, reference passes",
+          "ok": true,
+          "detail": "1.1 s",
+          "metrics": {},
+          "seconds": 1.081
+        },
+        {
+          "name": "every example, New Case goal and world, and gallery Case: limp margin negative, reference margin positive",
+          "ok": true,
+          "detail": "33.4 s",
+          "metrics": {},
+          "seconds": 33.437
+        },
+        {
+          "name": "e2e drive: an arm moves its hand both ways, a rover goes and stops, a hexapod walks, focus loss stops",
+          "ok": true,
+          "detail": "36.2 s",
+          "metrics": {},
+          "seconds": 36.203
+        },
+        {
+          "name": "the production web bundle builds",
+          "ok": true,
+          "detail": "7.4 s",
+          "metrics": {},
+          "seconds": 7.399
+        },
+        {
+          "name": "every gallery link loads from the web build and drives at 0.95x to 1.05x real time, headless",
+          "ok": true,
+          "detail": "38.7 s",
+          "metrics": {
+            "loadBefore": 6.17529296875,
+            "loadAfter": 8.14697265625
+          },
+          "seconds": 38.743
+        },
+        {
+          "name": "Types hold",
+          "ok": true,
+          "detail": "5.2 s",
+          "metrics": {},
+          "seconds": 5.194
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a limp run that is really the reference is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.533
+        },
+        {
+          "name": "an arm drive that never moves is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.398
+        },
+        {
+          "name": "a rover that runs on after release is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.393
+        },
+        {
+          "name": "a gallery at half speed is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.392
+        },
+        {
+          "name": "a gallery at double speed is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.396
+        }
+      ],
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:32:29.905Z",
       "manifest": "clean"
     }
   }

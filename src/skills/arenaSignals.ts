@@ -61,15 +61,18 @@ function contactReader(lookup: Lookup, part: string, other: string): SignalReade
 
   return () => {
     const { data } = engine;
+    const contacts = data.contact;
     let found = 0;
 
     for (let i = 0; i < data.ncon && !found; i++) {
-      const c = data.contact.get(i);
+      const c = contacts.get(i);
 
       if (c && (touches(c.geom1, c.geom2) || touches(c.geom2, c.geom1))) found = 1;
 
       c?.delete();
     }
+
+    contacts.delete();
 
     return found;
   };

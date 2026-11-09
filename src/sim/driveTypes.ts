@@ -20,7 +20,7 @@ export interface DriveHand {
 export interface DriveLoop {
   readonly hand?: DriveHand;
 
-  command(c: DriveCommand): void;
+  command(c: DriveCommand, measured?: JointValues): void;
 
   tick(time: number): DriveOutput;
 }

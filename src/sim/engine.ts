@@ -41,6 +41,7 @@ export interface SimStats {
 }
 
 const D2R = Math.PI / 180;
+const GAIN_SLOTS = 10;
 
 const jointQposOf = (type: 'revolute' | 'prismatic', v: number) => (type === 'revolute' ? v * D2R : v / 1000);
 
@@ -240,7 +241,7 @@ export class SimEngine {
   }
 
   command(c: DriveCommand) {
-    this.drive?.command(c);
+    this.drive?.command(c, this.drive.hand ? this.holdValues() : undefined);
 
     if (this.policyState) this.policyState.command = [c.v[0], c.v[1], c.v[2]];
   }
@@ -428,6 +429,19 @@ export class SimEngine {
       joints: this.sim.joints.map((j, i) => ({ id: j.id, peak: this.peaks[i], saturatedS: this.saturated[i] })),
       ...(this.drive?.hand ? { effector: this.handAt(this.drive.hand) } : {}),
     };
+  }
+
+  private holdValues(): Record<string, number> {
+    const { data, model } = this;
+
+    return Object.fromEntries(
+      this.sim.joints.map((j, i) => {
+        const kp = j.actuator >= 0 ? model.actuator_gainprm[j.actuator * GAIN_SLOTS] : 0;
+        const bias = kp > 0 ? data.qfrc_bias[this.jointDof[i]] / kp : 0;
+
+        return [j.id, (data.qpos[this.jointQpos[i]] + bias) / (j.type === 'revolute' ? D2R : 0.001)];
+      }),
+    );
   }
 
   private handAt({ part, point }: DriveHand): [number, number, number] {

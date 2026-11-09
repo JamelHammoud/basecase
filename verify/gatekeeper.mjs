@@ -21,10 +21,11 @@ function printStatus(gates) {
 
   for (const g of gates) {
     const s = saved[g.id];
+    const TREE_NOTE = { clean: '', dirty: ' (dirty)' };
     let label = 'not run';
 
     if (g.state === 'parked') label = 'parked';
-    else if (s) label = `${s.ok ? 'pass' : 'FAIL'} at ${s.commit}${s.tree === 'clean' ? '' : ' (dirty)'}`;
+    else if (s) label = `${s.ok ? 'pass' : 'FAIL'} at ${s.commit}${TREE_NOTE[s.tree] ?? ' (tree not recorded)'}`;
 
     console.log(`S${g.stage}  ${g.id.padEnd(22)} ${label.padEnd(20)} ${g.title}`);
   }

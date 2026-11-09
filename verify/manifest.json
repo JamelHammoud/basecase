@@ -39,7 +39,7 @@
   "verify/forge/policy.test.ts": "609f4b100e961f5206d69d69a512e4c8198083a0f40df214d03ecd6589ecda74",
   "verify/forge/run.mjs": "bb3962462f6318bde419f3b52e78eefb342227fc8cd11152bd7f945aadd9c2ad",
   "verify/forge/tts.mjs": "0353aa86c9b5b01337c1132b587d3c5b6bc59f2018e0256370e9d0fcfbf61aba",
-  "verify/gatekeeper.mjs": "2e92ecaec6f67f567d5c4ee93bc21fea9be70d1af7704f916d33d6ad80689c54",
+  "verify/gatekeeper.mjs": "d08cf91fba8f93f27c329352c36d3c030efda4524d9172ab0f3c80df5cae5b5b",
   "verify/gates/s0-cadimport-sandbox.mjs": "6a7d26b2554215ee5f4b1f8239e56b248cc9538a31a46e5e5482b67aefe613a4",
   "verify/gates/s0-foundation.mjs": "a2470037d523a1a49600c3eb4380a6971dea9ff61c7262814b86d57fad42a9ca",
   "verify/gates/s0-kernel-sandbox.mjs": "f207227e9b244c776673cc8178380dac3eeb9a75437bed4e3dd5306d723a3751",

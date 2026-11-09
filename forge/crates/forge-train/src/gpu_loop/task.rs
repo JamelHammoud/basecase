@@ -1,3 +1,4 @@
+use crate::deployed::Squash;
 use crate::envs::{PUSH_GAP_SECONDS, PUSH_SPEED};
 use crate::job::{Algo, Task as JobTask};
 use crate::robot::Robot;
@@ -77,7 +78,7 @@ pub fn lower(robot: &Robot) -> Result<Task, String> {
         episode_steps: robot.episode_steps,
         reset_noise: job.options.reset_noise,
         fall_resets: job.options.fall_resets,
-        squash: false,
+        squash: job.squash == Squash::Tanh,
         pushes: pushes(robot),
         observations: OBSERVATIONS.to_vec(),
         reward: lowered(&reward_source(robot), nact)

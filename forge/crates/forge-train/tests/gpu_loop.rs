@@ -96,6 +96,28 @@ fn a_metal_job_trains_on_the_gpu_loop_and_checks_in_c() {
         .all(|p| p["reward"].as_f64().is_some_and(f64::is_finite)));
 }
 
+fn trains_on_the_gpu(name: &str, extra: &Value) -> Value {
+    let events = run(name, extra);
+    let status = messages(&events);
+
+    assert!(
+        status.iter().any(|s| s.starts_with("Training on the GPU")),
+        "{status:?}"
+    );
+    assert!(!status.iter().any(|s| s.contains("qualification")), "{status:?}");
+
+    serde_json::from_str(&fs::read_to_string(folder(name).join("policy.json")).expect("policy")).expect("json")
+}
+
+#[test]
+fn the_gpu_learner_matches_the_cpu_learner_on_a_minibatch_with_and_without_the_squash() {
+    let clipped = trains_on_the_gpu("gpu-loop-clip", &json!({}));
+    let squashed = trains_on_the_gpu("gpu-loop-tanh", &json!({ "squash": "tanh", "logStdMin": -2.5 }));
+
+    assert!(clipped.get("squash").is_none());
+    assert_eq!(squashed["squash"], "tanh");
+}
+
 #[test]
 fn options_the_gpu_loop_lacks_fall_back_to_the_cpu_learner_with_the_reason() {
     let events = run("gpu-loop-fallback", &json!({ "delaySteps": [0, 2] }));

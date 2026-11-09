@@ -6,7 +6,7 @@ use crate::adam::{clip_scale, gradient_norm, Adam};
 use crate::heads::{gaussian_constant, log_prob, policy_gradient, value_gradient, Head, Minibatch, PolicyTerms};
 use crate::kernels::Math;
 use crate::rng::Rng;
-use crate::update::{Learner, GRAD_NORM_MAX, LOG_STD_MAX};
+use crate::update::{Hyper, Learner, GRAD_NORM_MAX, LOG_STD_MAX};
 use forge_sim::metal::gpu::{Gpu, Kernel};
 use forge_sim::metal::Worlds;
 
@@ -14,6 +14,7 @@ const ROWS: usize = 256;
 const GRADIENT_TOLERANCE: f64 = 1e-3;
 const STEP_TOLERANCE: f64 = 1e-2;
 const SEED: u64 = 77;
+const ENT_COEF: f32 = 0.5;
 
 pub struct Vector {
     obs: Vec<f32>,
@@ -53,7 +54,8 @@ fn vector(learner: &Learner) -> Vector {
     Vector { obs, act, rows }
 }
 
-fn reference(learner: &Learner, v: &Vector, clip: f32, ent_coef: f32) -> Vec<f32> {
+fn reference(learner: &Learner, v: &Vector, settings: &Settings) -> Vec<f32> {
+    let Hyper { clip, ent_coef, .. } = settings.hyper;
     let math = Math::native(1);
     let (actor, critic) = (&learner.actor, &learner.critic);
     let mut grads = vec![0.0f32; learner.params.len()];
@@ -73,6 +75,7 @@ fn reference(learner: &Learner, v: &Vector, clip: f32, ent_coef: f32) -> Vec<f32
         log_std_grads,
         clip,
         ent_coef,
+        squash_coef: if settings.squashed { ent_coef } else { 0.0 },
         scale: 1.0 / ROWS as f32,
     };
     let mut scratch = actor.scratch(ROWS);
@@ -149,7 +152,13 @@ pub fn learner(gpu: &mut Gpu, device: &Device, learner: &Learner) -> Result<(), 
     };
     let buffers = Buffers::new(gpu, &dims, [&learner.actor, &learner.critic])?;
     let v = vector(learner);
-    let settings = *device.settings;
+    let settings = Settings {
+        hyper: Hyper {
+            ent_coef: ENT_COEF,
+            ..device.settings.hyper
+        },
+        ..*device.settings
+    };
 
     upload(gpu, &buffers, learner, &v);
 
@@ -165,8 +174,7 @@ pub fn learner(gpu: &mut Gpu, device: &Device, learner: &Learner) -> Result<(), 
     encoder.minibatch(&buffers.rollout, &settings, 0, &mut dispatches);
     gpu.run(&dispatches)?;
 
-    let hyper = &settings.hyper;
-    let want = reference(learner, &v, hyper.clip, hyper.ent_coef);
+    let want = reference(learner, &v, &settings);
     let got = gpu.slice(buffers.grads).to_vec();
     let off = worst(&got, &want);
 

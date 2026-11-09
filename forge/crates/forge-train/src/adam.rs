@@ -4,6 +4,7 @@ const EPSILON: f32 = 1e-8;
 const NORM_LANES: usize = 16;
 pub const NORM_CHUNK: usize = 1024;
 
+#[derive(Clone)]
 pub struct Adam {
     first: Vec<f32>,
     second: Vec<f32>,

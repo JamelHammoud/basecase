@@ -200,6 +200,10 @@ impl Learner {
 }
 
 #[cfg(test)]
+#[path = "update_tests.rs"]
+mod parity;
+
+#[cfg(test)]
 mod tests {
     use super::{Hyper, HYPER};
 

@@ -1799,7 +1799,7 @@
       "title": "Stage 2: one Case on different arms, every Case solvable, drive by class, gallery at real time",
       "stage": 2,
       "state": "required",
-      "ok": false,
+      "ok": true,
       "voided": false,
       "checks": [
         {
@@ -1807,52 +1807,52 @@
           "ok": true,
           "detail": "2018 files scanned",
           "metrics": {},
-          "seconds": 0.243
+          "seconds": 0.233
         },
         {
           "name": "one Case file, written once, runs on arm-3dof, arm-6dof and a gate-only arm drawn fresh each run: limp fails, reference passes",
           "ok": true,
-          "detail": "1.1 s",
+          "detail": "0.9 s",
           "metrics": {},
-          "seconds": 1.129
+          "seconds": 0.903
         },
         {
           "name": "every example, New Case goal and world, and gallery Case, none dropped and at least the pinned counts: limp margin negative, reference margin positive",
           "ok": true,
-          "detail": "33.8 s",
+          "detail": "33.5 s",
           "metrics": {},
-          "seconds": 33.785
+          "seconds": 33.525
         },
         {
           "name": "e2e drive: the rendered arm hand moves both ways and matches the reported one, a rover goes and stops, a hexapod walks, focus loss stops",
-          "ok": false,
-          "detail": "- 0\n+ 7\n\n ❯ verify/cases/drivePlay.test.ts:34:39\n     32|     expect(handMismatches(arm.samples)).toEqual([]);\n     33|     expect((await tapState(app.page))?.frames).toBeGreaterThan(0);\n     34|     expect(await partCount(app.page)).toBe(before);\n       |                                       ^\n     35|     await stop(app);\n     36|   }, 180000);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
+          "ok": true,
+          "detail": "34.7 s",
           "metrics": {},
-          "seconds": 35.202
+          "seconds": 34.711
         },
         {
           "name": "the production web bundle builds",
           "ok": true,
-          "detail": "7.0 s",
+          "detail": "6.8 s",
           "metrics": {},
-          "seconds": 7.023
+          "seconds": 6.755
         },
         {
           "name": "every gallery link loads from the web build, drives at 0.95x to 1.05x real time and moves while W is held, headless",
           "ok": true,
-          "detail": "38.9 s",
+          "detail": "39.2 s",
           "metrics": {
-            "loadBefore": 6.27392578125,
-            "loadAfter": 9.40625
+            "loadBefore": 5.48291015625,
+            "loadAfter": 7.30029296875
           },
-          "seconds": 38.916
+          "seconds": 39.159
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "5.4 s",
+          "detail": "5.2 s",
           "metrics": {},
-          "seconds": 5.403
+          "seconds": 5.152
         }
       ],
       "canaries": [
@@ -1861,53 +1861,53 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.565
+          "seconds": 0.517
         },
         {
           "name": "an arm drive that never reaches the sim is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 17.55
+          "seconds": 17.368
         },
         {
           "name": "a reported hand that moves while the rendered arm stays put is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 17.799
+          "seconds": 17.663
         },
         {
           "name": "a rover that runs on after release is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 19.748
+          "seconds": 19.738
         },
         {
           "name": "a gallery at half speed is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 14.462
+          "seconds": 14.435
         },
         {
           "name": "a gallery at double speed is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 14.146
+          "seconds": 14.079
         },
         {
           "name": "a gallery that keeps time but never moves is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 14.153
+          "seconds": 14.119
         }
       ],
-      "commit": "2560392",
-      "at": "2026-11-09T17:07:05.357Z",
+      "commit": "b613766",
+      "at": "2026-11-09T19:29:59.888Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

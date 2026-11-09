@@ -78,3 +78,41 @@ impl<const N: usize> Coeffs<Dual<N>> {
         }
     }
 }
+
+fn slot(t: &mut Tables, wrt: Wrt) -> Option<&mut crate::lanes::V> {
+    match wrt {
+        Wrt::Mass(b) => Some(&mut t.mass[b]),
+        Wrt::Kp(a) => Some(&mut t.gain[a]),
+        Wrt::Kv(a) => Some(&mut t.bias[a][2]),
+        Wrt::Gear(a) => Some(&mut t.gear[a]),
+        Wrt::Damping(d) => Some(&mut t.damping[d]),
+        Wrt::Armature(d) => Some(&mut t.armature[d]),
+        Wrt::FrictionLoss(d) => Some(&mut t.floss[d]),
+        Wrt::Qpos(_) | Wrt::Qvel(_) | Wrt::Ctrl(_) => None,
+    }
+}
+
+pub fn read_param(t: &Tables, lane: usize, wrt: Wrt) -> Option<f64> {
+    let v = match wrt {
+        Wrt::Mass(b) => t.mass[b],
+        Wrt::Kp(a) => t.gain[a],
+        Wrt::Kv(a) => -t.bias[a][2],
+        Wrt::Gear(a) => t.gear[a],
+        Wrt::Damping(d) => t.damping[d],
+        Wrt::Armature(d) => t.armature[d],
+        Wrt::FrictionLoss(d) => t.floss[d],
+        Wrt::Qpos(_) | Wrt::Qvel(_) | Wrt::Ctrl(_) => return None,
+    };
+
+    Some(v.0[lane])
+}
+
+pub fn write_param(t: &mut Tables, lane: usize, (wrt, value): (Wrt, f64)) -> bool {
+    if let Wrt::Kp(a) = wrt {
+        t.bias[a][1].0[lane] = -value;
+    }
+
+    let sign = if matches!(wrt, Wrt::Kv(_)) { -1.0 } else { 1.0 };
+
+    slot(t, wrt).map(|v| v.0[lane] = sign * value).is_some()
+}

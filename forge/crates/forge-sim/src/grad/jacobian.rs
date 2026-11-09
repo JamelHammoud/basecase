@@ -90,43 +90,80 @@ fn exact_into(values: &mut [D], exact: &[crate::lanes::V], l: usize) {
     }
 }
 
+pub struct Tracer {
+    lanes: Vec<Lane>,
+}
+
+impl Tracer {
+    pub fn new(state: &State, lanes: usize, chunk: &[Wrt]) -> Self {
+        assert!(chunk.len() <= WIDTH, "a tracer carries at most {WIDTH} directions");
+
+        Self {
+            lanes: (0..lanes.min(LANES)).map(|l| seed_lane(state, l, chunk)).collect(),
+        }
+    }
+
+    pub fn advance(
+        &mut self,
+        plan: &Plan,
+        state: &mut State,
+        (w, substeps, smoothing): (&mut Workspace, usize, f64),
+    ) -> Result<(), String> {
+        for (l, lane) in self.lanes.iter_mut().enumerate() {
+            exact_into(&mut lane.ctrl, &state.ctrl, l);
+        }
+
+        for _ in 0..substeps {
+            state.swap(&mut w.block);
+            forward_block(plan, w);
+
+            for (l, lane) in self.lanes.iter_mut().enumerate() {
+                let frozen = freeze(plan, &w.block, l);
+                let world = World {
+                    qpos: &lane.qpos,
+                    qvel: &lane.qvel,
+                    ctrl: &lane.ctrl,
+                    coeffs: &lane.coeffs,
+                };
+                let Next { qpos, qvel, .. } =
+                    substep(plan, &world, &frozen, smoothing).ok_or("the gradient's mass matrix isn't positive")?;
+
+                lane.qpos = qpos;
+                lane.qvel = qvel;
+            }
+
+            implicit_step(plan, &mut w.block, &mut w.implicit);
+            state.swap(&mut w.block);
+
+            for (l, lane) in self.lanes.iter_mut().enumerate() {
+                exact_into(&mut lane.qpos, &state.qpos, l);
+                exact_into(&mut lane.qvel, &state.qvel, l);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn qpos(&self, lane: usize, i: usize) -> &[f64; WIDTH] {
+        &self.lanes[lane].qpos[i].du
+    }
+
+    pub fn qvel(&self, lane: usize, i: usize) -> &[f64; WIDTH] {
+        &self.lanes[lane].qvel[i].du
+    }
+}
+
 fn pass(
     plan: &Plan,
     state: &mut State,
     w: &mut Workspace,
     (spec, chunk): (&Spec, &[Wrt]),
 ) -> Result<Vec<Lane>, String> {
-    let mut lanes: Vec<Lane> = (0..spec.lanes).map(|l| seed_lane(state, l, chunk)).collect();
+    let mut tracer = Tracer::new(state, spec.lanes, chunk);
 
-    for _ in 0..spec.substeps {
-        state.swap(&mut w.block);
-        forward_block(plan, w);
+    tracer.advance(plan, state, (w, spec.substeps, spec.smoothing))?;
 
-        for (l, lane) in lanes.iter_mut().enumerate() {
-            let frozen = freeze(plan, &w.block, l);
-            let world = World {
-                qpos: &lane.qpos,
-                qvel: &lane.qvel,
-                ctrl: &lane.ctrl,
-                coeffs: &lane.coeffs,
-            };
-            let Next { qpos, qvel, .. } =
-                substep(plan, &world, &frozen, spec.smoothing).ok_or("the gradient's mass matrix isn't positive")?;
-
-            lane.qpos = qpos;
-            lane.qvel = qvel;
-        }
-
-        implicit_step(plan, &mut w.block, &mut w.implicit);
-        state.swap(&mut w.block);
-
-        for (l, lane) in lanes.iter_mut().enumerate() {
-            exact_into(&mut lane.qpos, &state.qpos, l);
-            exact_into(&mut lane.qvel, &state.qvel, l);
-        }
-    }
-
-    Ok(lanes)
+    Ok(tracer.lanes)
 }
 
 pub fn step_with_jacobian(

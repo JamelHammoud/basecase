@@ -104,7 +104,7 @@ impl Problem<'_> {
     }
 }
 
-fn damped_step(normal: &Square, gradient: &[f64], damping: f64) -> Option<Vec<f64>> {
+pub(crate) fn damped_step(normal: &Square, gradient: &[f64], damping: f64) -> Option<Vec<f64>> {
     let mut damped = Square {
         size: normal.size,
         values: normal.values.clone(),
@@ -119,7 +119,7 @@ fn damped_step(normal: &Square, gradient: &[f64], damping: f64) -> Option<Vec<f6
     damped.solve_cholesky(&rhs)
 }
 
-fn relative_std(normal: &Square, scale: f64) -> Vec<f64> {
+pub(crate) fn relative_std(normal: &Square, scale: f64) -> Vec<f64> {
     let (values, vectors) = normal.symmetric_eigen();
     let largest = values.iter().cloned().fold(0.0, f64::max);
 

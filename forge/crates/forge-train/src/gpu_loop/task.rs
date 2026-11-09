@@ -25,10 +25,10 @@ fn unsupported(robot: &Robot) -> Vec<&'static str> {
 
     [
         (job.algo != Algo::Ppo, "it learns with PPO only"),
-        (options.commands.is_some(), "it has no command ranges"),
-        (options.delay_steps != [0, 0], "it has no servo delays"),
-        (options.encoder_bias > 0.0, "it has no encoder bias"),
-        (options.imu_bias > 0.0, "it has no IMU bias"),
+        (options.commands.is_some(), "it doesn't draw commands"),
+        (options.delay_steps != [0, 0], "it doesn't model servo delays"),
+        (options.encoder_bias > 0.0, "it doesn't model encoder bias"),
+        (options.imu_bias > 0.0, "it doesn't model IMU bias"),
     ]
     .into_iter()
     .filter(|(refused, _)| *refused)

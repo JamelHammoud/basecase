@@ -127,7 +127,10 @@ fn upload(gpu: &mut Gpu, b: &Buffers, learner: &Learner, v: &Vector) {
     gpu.slice_mut(r.obs).copy_from_slice(&v.obs);
     gpu.slice_mut(r.act).copy_from_slice(&v.act);
     gpu.slice_mut(r.rows).copy_from_slice(&v.rows);
-    gpu.slice_mut(b.mask).fill(1.0);
+    let mask = gpu.slice_mut(b.mask);
+
+    mask.fill(1.0);
+    learner.actor.masked.iter().for_each(|&i| mask[i] = 0.0);
 
     for (i, p) in gpu.slice_mut(b.perm).iter_mut().enumerate() {
         *p = i as u32;
@@ -146,10 +149,7 @@ pub fn learner(gpu: &mut Gpu, device: &Device, learner: &Learner) -> Result<(), 
     };
     let buffers = Buffers::new(gpu, &dims, [&learner.actor, &learner.critic])?;
     let v = vector(learner);
-    let settings = Settings {
-        masked: false,
-        ..*device.settings
-    };
+    let settings = *device.settings;
 
     upload(gpu, &buffers, learner, &v);
 

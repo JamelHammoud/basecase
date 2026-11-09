@@ -28,8 +28,12 @@ const MODEL: &str = r#"<mujoco model="tiny">
   </actuator>
 </mujoco>"#;
 
+fn folder(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name)
+}
+
 fn run(name: &str, extra: &Value) -> Vec<Value> {
-    let folder = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
+    let folder = folder(name);
     let mut job = json!({
         "task": "walk", "minutes": 5, "command": [0.2, 0, 0], "root": "root", "robotName": "Tiny",
         "joints": [{"id": "front", "name": "front"}, {"id": "back", "name": "back"}],
@@ -104,4 +108,48 @@ fn options_the_gpu_loop_lacks_fall_back_to_the_cpu_learner_with_the_reason() {
         "{status:?}"
     );
     assert!(!status.iter().any(|s| s.starts_with("Training on the GPU")));
+}
+
+fn first_layer_weights(policy: &Value, input: usize) -> Vec<f64> {
+    let layer = &policy["layers"][0];
+    let ins = layer["in"].as_u64().expect("in") as usize;
+    let w = layer["w"].as_array().expect("weights");
+
+    w.iter()
+        .skip(input)
+        .step_by(ins)
+        .map(|v| v.as_f64().expect("weight"))
+        .collect()
+}
+
+#[test]
+fn the_gpu_loop_masks_linear_velocity_and_warm_starts() {
+    let events = run("gpu-loop-masked", &json!({ "actorLinvel": false, "logStdMin": -1.0 }));
+
+    assert!(messages(&events).iter().any(|s| s.starts_with("Training on the GPU")));
+
+    let text = fs::read_to_string(folder("gpu-loop-masked").join("policy.json")).expect("policy");
+    let policy: Value = serde_json::from_str(&text).expect("JSON");
+
+    for input in 6..9 {
+        assert!(
+            first_layer_weights(&policy, input).iter().all(|w| *w == 0.0),
+            "input {input}"
+        );
+    }
+
+    assert!(first_layer_weights(&policy, 3).iter().any(|w| *w != 0.0));
+
+    let from = folder("gpu-loop-masked").to_string_lossy().into_owned();
+    let resumed = run("gpu-loop-resumed", &json!({ "actorLinvel": false, "warmStart": from }));
+    let status = messages(&resumed);
+
+    assert!(
+        status.iter().any(|s| s == "Continuing from a trained policy"),
+        "{status:?}"
+    );
+    assert!(
+        status.iter().any(|s| s.starts_with("Training on the GPU")),
+        "{status:?}"
+    );
 }

@@ -125,7 +125,7 @@ class Envs:
         self.ai = np.array([int(base.actuator(j["name"]).id) for j in job["joints"]])
         self.na = len(self.jq)
         self.default = np.array(job["defaultPose"], dtype=np.float64)
-        self.scale = np.asarray(job["actionScale"], dtype=np.float64)
+        self.scale = float(job["actionScale"])
         rng_lo = base.actuator_ctrlrange[self.ai, 0]
         rng_hi = base.actuator_ctrlrange[self.ai, 1]
         limited = base.actuator_ctrllimited[self.ai].astype(bool)
@@ -356,7 +356,7 @@ def export(path, job, policy, steps):
         "robot": job["robotName"],
         "joints": [j["id"] for j in job["joints"]],
         "defaultPose": [float(x) for x in job["defaultPose"]],
-        "actionScale": job["actionScale"],
+        "actionScale": float(job["actionScale"]),
         "controlDt": float(job["controlDt"]),
         "command": [float(x) for x in job["command"]],
         "obsMean": [float(x) for x in norm.mean],

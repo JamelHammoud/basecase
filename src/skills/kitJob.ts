@@ -1,6 +1,6 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import { kitCommand, type TrainedEntry } from './kitEnvironment';
-import { kitActionScale, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
+import { footCount, KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
 import { kitReward } from './kitRewards';
 import { NEAR_DELAYS, type DelaySteps } from './kitSchedule';
 
@@ -43,16 +43,11 @@ function commandRanges(model: SimModel) {
   };
 }
 
+const walkPolicy = (model: SimModel) => (footCount(model) >= 4 ? { squash: 'tanh', logStdMin: LOG_STD_MIN } : {});
+
 function entryFields(model: SimModel, entry: TrainedEntry, start: KitStart | null) {
   if (entry === 'velocity-tracking')
-    return {
-      task: 'walk',
-      resetNoise: 0.1,
-      commands: commandRanges(model),
-      squash: 'tanh',
-      logStdMin: LOG_STD_MIN,
-      ...ROBUST,
-    };
+    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model), ...walkPolicy(model), ...ROBUST };
 
   if (entry === 'get-up')
     return {
@@ -99,7 +94,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     ctrlDefault: pose,
     initialJoints: Object.fromEntries(model.joints.map((j, i) => [j.name, pose[i]])),
     rootOffset: [root[0] / 1000, -root[2] / 1000, root[1] / 1000 + rootOffsetLift],
-    actionScale: kitActionScale(model, entry),
+    actionScale: KIT_ACTION_SCALE,
     controlDt: 0.02,
     seed: options.seed,
     reward: options.reward ?? kitReward(model, entry),

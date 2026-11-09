@@ -1,4 +1,3 @@
-use crate::action_scale::ActionScale;
 use crate::deployed::Squash;
 use crate::options::{self, TaskOptions};
 use serde_json::Value;
@@ -83,7 +82,7 @@ pub struct Job {
     pub ctrl_default: Vec<f64>,
     pub initial_joints: Vec<(String, f64)>,
     pub root_offset: [f64; 3],
-    pub action_scale: ActionScale,
+    pub action_scale: f64,
     pub control_dt: f64,
     pub seed: u64,
     pub max_iterations: Option<usize>,
@@ -181,8 +180,6 @@ pub fn parse(root: &Value) -> Result<Job, String> {
     let task_name = text(root, "task")?;
     let task = if task_name == "stand" { Task::Stand } else { Task::Walk };
     let algo = Algo::parse(root.get("algo").and_then(Value::as_str))?;
-    let joints = joints(root)?;
-    let action_scale = ActionScale::parse(root.get("actionScale"), joints.len())?;
 
     Ok(Job {
         algo,
@@ -197,12 +194,12 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         minutes: number(root, "minutes")?,
         command: triple(root, "command")?,
         root: text(root, "root")?,
-        joints,
+        joints: joints(root)?,
         default_pose: numbers(root, "defaultPose")?,
         ctrl_default: numbers(root, "ctrlDefault")?,
         initial_joints: initial_joints(root)?,
         root_offset: triple(root, "rootOffset")?,
-        action_scale,
+        action_scale: number(root, "actionScale")?,
         control_dt: number(root, "controlDt")?,
         seed: root.get("seed").and_then(Value::as_u64).unwrap_or(0),
         max_iterations: optional_count(root, "maxIterations"),

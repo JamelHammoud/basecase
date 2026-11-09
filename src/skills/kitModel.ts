@@ -70,25 +70,6 @@ export const kitTopSpeed = (model: SimModel) => (footCount(model) >= 4 ? LEGGED_
 
 export const neutralRad = (model: SimModel, id: string) => (model.initial.values[id] ?? 0) * D2R;
 
-const MIN_JOINT_SCALE = 0.05;
-
-function jointScale(model: SimModel, id: string): number {
-  const joint = model.joints.find((j) => j.id === id);
-  const neutral = model.initial.values[id] ?? 0;
-
-  if (!joint?.range) return KIT_ACTION_SCALE;
-
-  const margin = Math.min(neutral - joint.range[0], joint.range[1] - neutral);
-  const scale = joint.type === 'revolute' ? margin * D2R : margin / 1000;
-
-  return Math.max(scale, MIN_JOINT_SCALE);
-}
-
-export const kitJointScales = (model: SimModel) => kitRobot(model).joints.map((id) => jointScale(model, id));
-
-export const kitActionScale = (model: SimModel, entry: string) =>
-  entry === 'velocity-tracking' ? kitJointScales(model) : KIT_ACTION_SCALE;
-
 export function offsetPose(model: SimModel, degrees: number): RobotPoseState {
   const values = { ...model.initial.values };
 

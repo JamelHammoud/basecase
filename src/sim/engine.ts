@@ -5,7 +5,7 @@ import { primeCtrlHistory } from './ctrlHistory';
 import { createDrive, type DriveCommand, type DriveLoop, type DriveSetup } from './drive';
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
-import { act, jointScale, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
+import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -331,7 +331,7 @@ export class SimEngine {
       ps.action = act(policy, ps.obs);
 
       for (let k = 0; k < ps.action.length; k++)
-        ps.targets[k] = policy.defaultPose[k] + jointScale(policy, k) * ps.action[k];
+        ps.targets[k] = policy.defaultPose[k] + policy.actionScale * ps.action[k];
 
       ps.nextAt += policy.controlDt;
     }

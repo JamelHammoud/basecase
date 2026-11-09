@@ -1,4 +1,3 @@
-pub mod action_scale;
 pub mod adam;
 pub mod adam_vector;
 pub mod algorithm;

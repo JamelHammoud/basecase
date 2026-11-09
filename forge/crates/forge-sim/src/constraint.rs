@@ -44,7 +44,7 @@ fn friction(plan: &Plan, b: &mut Block) {
         let adr = plan.row_jadr[row];
 
         b.jac[adr] = ONE;
-        b.row_floss[row] = V::splat(f.loss);
+        b.row_floss[row] = b.tables.floss[f.dof];
         b.row_active[row] = ONE;
         b.row_any[row] = true;
         b.row_pos[row] = ZERO;

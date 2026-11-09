@@ -188,7 +188,7 @@ inline void actuation(Ctx c) {
         S(QACT, d) = Z();
     }
     for (int a = 0; a < NU; a++) {
-        real gear = ACT_GEAR[a];
+        real gear = S(TGEAR, a);
         real length = S(QPOS, ACT_QPOSADR[a]) * gear;
         real velocity = S(QVEL, ACT_DOF[a]) * gear;
         real bias = S(TBIAS, 3 * a) + length * S(TBIAS, 3 * a + 1) + velocity * S(TBIAS, 3 * a + 2);

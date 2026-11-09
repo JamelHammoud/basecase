@@ -111,7 +111,8 @@ inline void velocity_derivative(Ctx c) {
         }
         real f = S(ACTF, a);
         bool active = !ACT_FORCE_LIMITED[a] || (f > ACT_FORCE_LO[a] && f < ACT_FORCE_HI[a]);
-        S(DERIV, ACT_DOF[a]) += active ? b2 * ACT_GEAR2[a] : Z();
+        real gear = S(TGEAR, a);
+        S(DERIV, ACT_DOF[a]) += active ? b2 * (gear * gear) : Z();
     }
     for (int d = 0; d < NV; d++) {
         S(DERIV, d) -= DOF_DAMPING[d];

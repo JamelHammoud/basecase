@@ -190,7 +190,7 @@ fn actuation() {
         sp(QACT + d, Z());
     }
     for (var a = 0; a < NU; a++) {
-        let gear = tr(ACT_GEAR, a);
+        let gear = sg(TGEAR + a);
         let len = ml(sg(QPOS + ti(ACT_QPOSADR, a)), gear);
         let vel = ml(sg(QVEL + ti(ACT_DOF, a)), gear);
         let bias = ad(ad(sg(TBIAS + 3 * a), ml(len, sg(TBIAS + 3 * a + 1))), ml(vel, sg(TBIAS + 3 * a + 2)));

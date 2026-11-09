@@ -63,8 +63,9 @@ pub fn actuation(plan: &Plan, b: &mut Block, ctrl: &mut [V]) {
     b.qfrc_actuator.fill(ZERO);
 
     for (i, a) in k.actuators.iter().enumerate() {
-        let length = b.qpos[a.qposadr] * a.gear;
-        let velocity = b.qvel[a.dof] * a.gear;
+        let gear = b.tables.gear[i];
+        let length = b.qpos[a.qposadr] * gear;
+        let velocity = b.qvel[a.dof] * gear;
         let p = b.tables.bias[i];
         let bias = p[0] + length * p[1] + velocity * p[2];
         let mut force = ctrl[i] * b.tables.gain[i] + bias;
@@ -74,7 +75,7 @@ pub fn actuation(plan: &Plan, b: &mut Block, ctrl: &mut [V]) {
         }
 
         b.act_force[i] = force;
-        b.qfrc_actuator[a.dof] += force * a.gear;
+        b.qfrc_actuator[a.dof] += force * gear;
     }
 }
 

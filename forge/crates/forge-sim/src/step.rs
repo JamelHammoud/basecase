@@ -36,7 +36,7 @@ impl Workspace {
     }
 }
 
-fn forward_block(plan: &Plan, w: &mut Workspace) {
+pub(crate) fn forward_block(plan: &Plan, w: &mut Workspace) {
     let Workspace {
         block: b,
         solver,

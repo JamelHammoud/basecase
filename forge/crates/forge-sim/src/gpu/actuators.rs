@@ -53,8 +53,6 @@ pub fn emit(e: &mut impl Sink, plan: &Plan) {
 
     e.ints("ACT_DOF", acts.iter().map(|a| idx(a.dof)));
     e.ints("ACT_QPOSADR", acts.iter().map(|a| idx(a.qposadr)));
-    e.reals("ACT_GEAR", acts.iter().map(|a| a.gear));
-    e.reals("ACT_GEAR2", acts.iter().map(|a| a.gear * a.gear));
     ranges(e, "ACT_CTRL", &ctrl);
     ranges(e, "ACT_FORCE", &force);
     delays(e, plan);

@@ -29,7 +29,7 @@ pub fn crb(plan: &Plan, b: &mut Block) {
         let cdof_i: V6 = get(&b.cdof, i);
         let buf = mul_inert_vec(&crb_i, &cdof_i);
 
-        b.m[adr] = V::splat(dof.armature);
+        b.m[adr] = b.tables.armature[i];
 
         let mut j = Some(i);
 

@@ -5,6 +5,7 @@ pub mod collide;
 pub mod constraint;
 mod convex;
 mod gpu;
+pub mod grad;
 mod history;
 pub mod inertia;
 pub mod integrate;
@@ -13,6 +14,7 @@ pub mod lanes;
 #[cfg(feature = "native")]
 pub mod metal;
 pub mod newton;
+pub mod num;
 mod params;
 mod plan;
 mod prefilter;

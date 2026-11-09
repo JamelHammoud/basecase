@@ -1,8 +1,16 @@
 use crate::tables::WorldTables;
 use forge_ir::Source;
 
-pub const EXPANDABLE: [&str; 4] = ["geom_friction", "body_mass", "actuator_gainprm", "actuator_biasprm"];
+pub const EXPANDABLE: [&str; 5] = [
+    "geom_friction",
+    "body_mass",
+    "actuator_gainprm",
+    "actuator_biasprm",
+    "actuator_gear",
+];
+const FIELDS: usize = EXPANDABLE.len();
 const PARAM_WIDTH: usize = 10;
+const GEAR_WIDTH: usize = 6;
 
 #[derive(Clone, Debug, Default)]
 struct World {
@@ -10,13 +18,14 @@ struct World {
     friction: Vec<f64>,
     gain: Vec<f64>,
     bias: Vec<[f64; 3]>,
+    gear: Vec<f64>,
 }
 
 pub struct WorldParams {
     nsim: usize,
     nu: usize,
-    defaults: [Vec<f64>; 4],
-    expanded: [Option<Vec<f64>>; 4],
+    defaults: [Vec<f64>; FIELDS],
+    expanded: [Option<Vec<f64>>; FIELDS],
     worlds: Vec<World>,
     nominal: World,
     dirty: bool,
@@ -29,7 +38,7 @@ fn read(model: &dyn Source, name: &str) -> Result<Vec<f64>, String> {
         .ok_or_else(|| format!("This MuJoCo build has no model field {name}"))
 }
 
-fn compact(tables: [&[f64]; 4], nu: usize) -> World {
+fn compact(tables: [&[f64]; FIELDS], nu: usize) -> World {
     World {
         friction: tables[0].iter().step_by(3).copied().collect(),
         mass: tables[1].to_vec(),
@@ -41,25 +50,26 @@ fn compact(tables: [&[f64]; 4], nu: usize) -> World {
                 [p[0], p[1], p[2]]
             })
             .collect(),
+        gear: (0..nu).map(|a| tables[4][GEAR_WIDTH * a]).collect(),
     }
 }
 
 impl WorldParams {
     pub fn new(model: &dyn Source, nsim: usize) -> Result<Self, String> {
-        let defaults = [
-            read(model, EXPANDABLE[0])?,
-            read(model, EXPANDABLE[1])?,
-            read(model, EXPANDABLE[2])?,
-            read(model, EXPANDABLE[3])?,
-        ];
+        let mut defaults: [Vec<f64>; FIELDS] = Default::default();
+
+        for (slot, name) in defaults.iter_mut().zip(EXPANDABLE) {
+            *slot = read(model, name)?;
+        }
+
         let nu = model.size("nu").ok_or("This MuJoCo build has no nu")? as usize;
-        let nominal = compact([&defaults[0], &defaults[1], &defaults[2], &defaults[3]], nu);
+        let nominal = compact(std::array::from_fn(|k| defaults[k].as_slice()), nu);
 
         Ok(Self {
             nsim,
             nu,
             defaults,
-            expanded: [None, None, None, None],
+            expanded: Default::default(),
             worlds: Vec::new(),
             nominal,
             dirty: false,
@@ -95,12 +105,7 @@ impl WorldParams {
         }
 
         self.worlds = (0..self.nsim)
-            .map(|s| {
-                compact(
-                    [self.table(0, s), self.table(1, s), self.table(2, s), self.table(3, s)],
-                    self.nu,
-                )
-            })
+            .map(|s| compact(std::array::from_fn(|k| self.table(k, s)), self.nu))
             .collect();
         self.dirty = false;
     }
@@ -113,6 +118,7 @@ impl WorldParams {
             friction: &w.friction,
             gain: &w.gain,
             bias: &w.bias,
+            gear: &w.gear,
         }
     }
 }

@@ -149,7 +149,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
     tries: kitSchedule(input.model, entry),
     firstSeed: input.seed ?? freshSeed(),
     train: (stage, from) => train(run, stage, from),
-    validate: (policy: PolicySpec) => validationScore({ ...input, environment, policy }),
+    validate: (policy: PolicySpec) => validationScore({ ...input, entry, environment, policy }),
     judge: (policy: PolicySpec) => judge(run, policy),
     aborted: () => !!input.signal?.aborted,
   });

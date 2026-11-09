@@ -43,7 +43,10 @@ const MANY_LEGS: Readonly<Record<TrainedEntry, readonly KitTry[]>> = Object.free
 
 const TWO_LEGS: Readonly<Record<TrainedEntry, readonly KitTry[]>> = Object.freeze({
   ...MANY_LEGS,
-  stand: [curriculum([3, NEAR_DELAYS], [5, WIDE_DELAYS]), curriculum([5, WIDE_DELAYS])],
+  stand: [
+    { stages: [{ minutes: 6, delaySteps: WIDE_DELAYS, delayRamp: VELOCITY_RAMP }], seeds: 2 },
+    curriculum([2, WIDE_DELAYS]),
+  ],
   'velocity-tracking': velocity(3, 6),
 });
 

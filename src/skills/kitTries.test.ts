@@ -116,10 +116,13 @@ describe('Kit tries', () => {
 
     expect(scheduledMinutes(kitSchedule(fixtureModel('quad-servo'), 'velocity-tracking'))).toBeLessThanOrEqual(23);
     expect(scheduledMinutes(kitSchedule(fixtureModel('biped-servo'), 'velocity-tracking'))).toBeLessThanOrEqual(36);
-    expect(scheduledMinutes(kitSchedule(fixtureModel('biped-servo'), 'stand'))).toBeLessThanOrEqual(13);
-    expect(kitSchedule(fixtureModel('biped-servo'), 'stand')[0].stages.map((s) => s.delaySteps)).toEqual([
-      NEAR_DELAYS,
-      WIDE_DELAYS,
+    expect(scheduledMinutes(kitSchedule(fixtureModel('biped-servo'), 'stand'))).toBeLessThanOrEqual(14);
+    expect(kitSchedule(fixtureModel('biped-servo'), 'stand')[0]).toEqual({
+      stages: [{ minutes: 6, delaySteps: WIDE_DELAYS, delayRamp: VELOCITY_RAMP }],
+      seeds: 2,
+    });
+    expect(kitSchedule(fixtureModel('quad-servo'), 'stand')[0].stages).toEqual([
+      { minutes: 2, delaySteps: NEAR_DELAYS },
     ]);
   });
 
@@ -143,7 +146,12 @@ describe('Kit tries', () => {
       actorLinvel: false,
     });
     expect(kitJob(fixtureModel('biped-servo'), 'stand', { minutes: 3, seed: 1 })).not.toHaveProperty('warmStart');
-    expect(kitJob(fixtureModel('biped-servo'), 'stand', { minutes: 3, seed: 1 })).not.toHaveProperty('backend');
+    expect(kitJob(fixtureModel('biped-servo'), 'stand', { minutes: 3, seed: 1 })).toMatchObject({
+      backend: 'metal',
+      squash: 'tanh',
+      logStdMin: -2.5,
+    });
+    expect(kitJob(fixtureModel('biped-servo'), 'get-up', { minutes: 3, seed: 1 })).not.toHaveProperty('backend');
   });
 
   it('find a run’s folder from its done event, only when it is absolute', () => {

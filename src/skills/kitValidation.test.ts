@@ -32,7 +32,9 @@ function standingPolicy(joints: string[]): PolicySpec {
 
 describe('Kit validation', () => {
   it('checks the gate’s three speeds and a turn each way', () => {
-    const commands = validationChecks(fixtureModel('quad-servo')).map((c) => c.command);
+    const model = fixtureModel('quad-servo');
+    const environment = kitEnvironment(model, 'velocity-tracking');
+    const commands = validationChecks({ model, entry: 'velocity-tracking', environment }).map((c) => c.command);
 
     expect(commands).toEqual([
       [0.2, 0, 0],
@@ -43,12 +45,34 @@ describe('Kit validation', () => {
     ]);
   });
 
+  it('checks Stand against its own contract, with as many draws as all the walking checks together', () => {
+    const model = fixtureModel('biped-servo');
+    const environment = kitEnvironment(model, 'stand');
+    const walking = validationChecks({
+      model,
+      entry: 'velocity-tracking',
+      environment: kitEnvironment(model, 'velocity-tracking'),
+    });
+
+    expect(validationChecks({ model, entry: 'stand', environment })).toEqual([
+      { command: [0, 0, 0], contract: environment.contract, draws: walking.reduce((sum, c) => sum + c.draws, 0) },
+    ]);
+  });
+
   it('scores a robot that only stands near zero, since Arena needs every speed', async () => {
     const mj = await loadMujoco();
     const model = fixtureModel('quad-servo');
     const policy = standingPolicy(kitRobot(model).joints);
     const environment = kitEnvironment(model, 'velocity-tracking');
-    const score = await validationScore({ mj, model, environment, policy, draws: 1, salt: 'a' });
+    const score = await validationScore({
+      mj,
+      model,
+      entry: 'velocity-tracking',
+      environment,
+      policy,
+      draws: 1,
+      salt: 'a',
+    });
 
     expect(score).toBeLessThan(0.05);
   }, 60_000);

@@ -46,11 +46,11 @@ function commandRanges(model: SimModel) {
 
 const GPU_ENVS = 1024;
 
-const WALK_LEARNER = Object.freeze({ backend: 'metal', gpuEnvs: GPU_ENVS, squash: 'tanh', logStdMin: LOG_STD_MIN });
+const GPU_LEARNER = Object.freeze({ backend: 'metal', gpuEnvs: GPU_ENVS, squash: 'tanh', logStdMin: LOG_STD_MIN });
 
 function entryFields(model: SimModel, entry: TrainedEntry, start: KitStart | null) {
   if (entry === 'velocity-tracking')
-    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model), ...WALK_LEARNER, ...ROBUST };
+    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model), ...GPU_LEARNER, ...ROBUST };
 
   if (entry === 'get-up')
     return {
@@ -66,7 +66,7 @@ function entryFields(model: SimModel, entry: TrainedEntry, start: KitStart | nul
 
   if (entry === 'settle-to-neutral') return { task: 'stand', resetNoise: 0.3, episodeS: 6, ...ROBUST };
 
-  return { task: 'stand', resetNoise: 0.3, ...ROBUST };
+  return { task: 'stand', resetNoise: 0.3, ...GPU_LEARNER, ...ROBUST };
 }
 
 const unit = (j: SimModel['joints'][number], v: number) => (j.type === 'revolute' ? v * D2R : v / 1000);

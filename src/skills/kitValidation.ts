@@ -7,10 +7,11 @@ import { ArenaWorld, drawInstance, seededRandom, withTimestep, type ArenaRanges 
 import { evaluateContract, type Contract } from './contract';
 import type { Environment, Range } from './environment';
 import { sha256Hex } from './hash';
-import { KIT_BARS, kitSpeedContract } from './kitEnvironment';
+import { KIT_BARS, kitCommand, kitSpeedContract, type TrainedEntry } from './kitEnvironment';
 import { kitRobot, kitTopSpeed, type V3 } from './kitModel';
 
 const DRAWS = 12;
+const HOLD_DRAWS = 60;
 const TURN_RATE = 0.5;
 const TURN_SHARE = 0.175;
 const TURN_WEIGHT = 0.1;
@@ -19,6 +20,7 @@ const MARGIN_WEIGHT = 0.01;
 export interface ValidationInput {
   mj: MainModule;
   model: SimModel;
+  entry: TrainedEntry;
   environment: Environment;
   policy: PolicySpec;
   salt?: string;
@@ -28,6 +30,7 @@ export interface ValidationInput {
 interface Check {
   command: V3;
   contract: Contract | null;
+  draws: number;
 }
 
 interface Trial {
@@ -58,12 +61,24 @@ function rangesFor(env: Environment): ArenaRanges {
   };
 }
 
-export function validationChecks(model: SimModel): Check[] {
+function speedChecks(model: SimModel): Check[] {
   const top = kitTopSpeed(model);
-  const speeds = [top, top / 2, 0].map((s): Check => ({ command: [s, 0, 0], contract: kitSpeedContract(model, s) }));
-  const turns = [TURN_RATE, -TURN_RATE].map((w): Check => ({ command: [top / 2, 0, w], contract: null }));
+  const speeds = [top, top / 2, 0].map((s): Check => ({
+    command: [s, 0, 0],
+    contract: kitSpeedContract(model, s),
+    draws: DRAWS,
+  }));
+  const turns = [TURN_RATE, -TURN_RATE].map((w): Check => ({ command: [top / 2, 0, w], contract: null, draws: DRAWS }));
 
   return [...speeds, ...turns];
+}
+
+export function validationChecks(options: { model: SimModel; entry: TrainedEntry; environment: Environment }): Check[] {
+  const { model, entry, environment } = options;
+
+  if (entry === 'velocity-tracking') return speedChecks(model);
+
+  return [{ command: kitCommand(model, entry), contract: environment.contract, draws: HOLD_DRAWS }];
 }
 
 function rootYaw(mj: MainModule, world: ArenaWorld, robot: string): () => number {
@@ -181,10 +196,10 @@ export async function validationReport(input: ValidationInput): Promise<Validati
   const checks: CheckResult[] = [];
 
   try {
-    for (const check of validationChecks(input.model)) {
+    for (const check of validationChecks(input)) {
       const trials: Trial[] = [];
 
-      for (let draw = 0; draw < (input.draws ?? DRAWS); draw++) trials.push(await trial(bench, check, draw));
+      for (let draw = 0; draw < (input.draws ?? check.draws); draw++) trials.push(await trial(bench, check, draw));
 
       checks.push(summary(check.command, trials));
     }

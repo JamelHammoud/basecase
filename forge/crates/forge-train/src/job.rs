@@ -92,6 +92,7 @@ pub struct Job {
     pub eval_seeds: Option<usize>,
     pub gate_speed: f64,
     pub envs: usize,
+    pub gpu_envs: Option<usize>,
     pub threads: Option<usize>,
     pub warm_start: Option<PathBuf>,
     pub log_std_min: Option<f32>,
@@ -209,6 +210,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         eval_seeds: optional_count(root, "evalSeeds"),
         gate_speed: root.get("gateSpeed").and_then(Value::as_f64).unwrap_or(0.2),
         envs: optional_count(root, "envs").unwrap_or(algo.default_envs()),
+        gpu_envs: optional_count(root, "gpuEnvs"),
         threads: optional_count(root, "threads"),
         warm_start: warm_start(root)?,
         log_std_min: root
@@ -219,6 +221,12 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         squash: squash(root.get("squash").and_then(Value::as_str))?,
         options: options::parse(root)?,
     })
+}
+
+impl Job {
+    pub fn envs_on_gpu(&self) -> usize {
+        self.gpu_envs.unwrap_or(self.envs)
+    }
 }
 
 pub fn load(folder: &Path) -> Result<Job, String> {
@@ -263,6 +271,18 @@ mod tests {
         assert_eq!(parse(&job).expect("job parses").backend, super::Backend::Simd);
         job["backend"] = json!("gpu");
         assert!(parse(&job).expect_err("must fail").contains("backend"));
+    }
+
+    #[test]
+    fn a_gpu_loop_job_can_ask_for_more_robots_than_its_cpu_fallback() {
+        let mut job = sample();
+
+        assert_eq!(parse(&job).expect("job parses").envs_on_gpu(), 64);
+        job["gpuEnvs"] = json!(4096);
+
+        let parsed = parse(&job).expect("job parses");
+
+        assert_eq!((parsed.envs, parsed.envs_on_gpu()), (64, 4096));
     }
 
     #[test]

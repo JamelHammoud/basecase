@@ -14,6 +14,7 @@ mod task;
 mod task_tests;
 
 use crate::algorithm::{Algorithm, Report};
+use crate::conditions::delay_ceiling;
 use crate::deployed::{Deployed, Squash};
 use crate::episodes::Episodes;
 use crate::events::Phases;
@@ -29,7 +30,14 @@ use learn::Settings;
 
 pub use setup::{start, Start};
 
+#[derive(Clone, Copy, Debug)]
+pub struct Delays {
+    pub range: [usize; 2],
+    pub ramp: Option<f64>,
+}
+
 pub struct GpuPpo {
+    delays: Delays,
     gpu: Gpu,
     worlds: Worlds,
     kernels: Vec<Kernel>,
@@ -50,6 +58,15 @@ pub struct GpuPpo {
 }
 
 impl Algorithm for GpuPpo {
+    fn follow_progress(&mut self, progress: f64) {
+        let Delays { range, ramp } = self.delays;
+
+        if ramp.is_some() {
+            self.worlds
+                .set_delay_ceiling(&mut self.gpu, delay_ceiling(range, ramp, progress));
+        }
+    }
+
     fn iterate(&mut self) -> Result<(), String> {
         self.step()
     }

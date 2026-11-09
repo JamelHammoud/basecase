@@ -88,9 +88,17 @@ inline float drawn_bias(thread uint4 &rng, float bias) {
     return bias > 0.0f ? uniform32(rng, -bias, bias) : 0.0f;
 }
 
-inline void reset_conditions(device float *env, device int *counter, thread uint4 &rng) {
+inline int drawn_delay(thread uint4 &rng, float ceiling) {
+    if (!TASK_DELAY_RAMP) {
+        return range32(rng, DELAY_LO, DELAY_HI + 1);
+    }
+    int reach = (int)((ceiling - (float)DELAY_LO + 1.0f) * unit32(rng));
+    return DELAY_LO + min(reach, DELAY_HI - DELAY_LO);
+}
+
+inline void reset_conditions(device float *env, device int *counter, thread uint4 &rng, float ceiling) {
     draw_command(env, counter, rng, 0);
-    counter[3] = DELAY_HI > 0 ? range32(rng, DELAY_LO, DELAY_HI + 1) : 0;
+    counter[3] = DELAY_HI > 0 ? drawn_delay(rng, ceiling) : 0;
     for (int j = 0; j < NACT; j++) {
         env[ENV_ENC + j] = drawn_bias(rng, ENC_BIAS);
     }
@@ -104,8 +112,8 @@ inline void reset_conditions(device float *env, device int *counter, thread uint
 
 kernel void task_reset(device real *io [[buffer(0)]], device const real *start [[buffer(1)]],
                        device float *env [[buffer(2)]], device int *counters [[buffer(3)]],
-                       device uint4 *rngs [[buffer(4)]], constant uint *p [[buffer(5)]],
-                       uint w [[thread_position_in_grid]]) {
+                       device uint4 *rngs [[buffer(4)]], device const float *knobs [[buffer(5)]],
+                       constant uint *p [[buffer(6)]], uint w [[thread_position_in_grid]]) {
     if (w >= p[0]) {
         return;
     }
@@ -115,7 +123,7 @@ kernel void task_reset(device real *io [[buffer(0)]], device const real *start [
     reset_world(io + w * NSTATE, start, mine, rng);
     counter[0] = 0;
     counter[1] = TASK_PUSHES ? range32(rng, PUSH_GAP_LO, PUSH_GAP_HI) : TASK_NEVER;
-    reset_conditions(mine, counter, rng);
+    reset_conditions(mine, counter, rng, knobs[0]);
     rngs[w] = rng;
 }
 
@@ -169,8 +177,8 @@ kernel void task_after(device real *io [[buffer(0)]], device const real *start [
                        device float *env [[buffer(2)]], device int *counters [[buffer(3)]],
                        device uint4 *rngs [[buffer(4)]], device float *rew [[buffer(5)]],
                        device float *done [[buffer(6)]], device float *timeout [[buffer(7)]],
-                       device float *fell [[buffer(8)]], constant uint *p [[buffer(9)]],
-                       uint w [[thread_position_in_grid]]) {
+                       device float *fell [[buffer(8)]], device const float *knobs [[buffer(9)]],
+                       constant uint *p [[buffer(10)]], uint w [[thread_position_in_grid]]) {
     if (w >= p[0]) {
         return;
     }
@@ -195,7 +203,7 @@ kernel void task_after(device real *io [[buffer(0)]], device const real *start [
     if (fallen || ended) {
         reset_world(row, start, mine, rng);
         counter[0] = 0;
-        reset_conditions(mine, counter, rng);
+        reset_conditions(mine, counter, rng, knobs[0]);
     } else if (TASK_RESAMPLE && steps >= counter[2]) {
         draw_command(mine, counter, rng, steps);
     }

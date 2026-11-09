@@ -160,6 +160,7 @@ fn constants(e: &mut Emitter, task: &Task) {
         ("DELAY_LO", conditions.delay_steps[0] as i64),
         ("DELAY_HI", conditions.delay_steps[1] as i64),
         ("TASK_RESAMPLE", i64::from(draws.is_some())),
+        ("TASK_DELAY_RAMP", i64::from(conditions.delay_ramp)),
     ] {
         e.define(name, value);
     }

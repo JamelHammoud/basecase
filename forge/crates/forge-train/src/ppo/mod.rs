@@ -199,6 +199,10 @@ fn overlap(
 }
 
 impl Algorithm for Ppo<'_> {
+    fn follow_progress(&mut self, progress: f64) {
+        self.collector.envs.follow_progress(progress);
+    }
+
     fn iterate(&mut self) -> Result<(), String> {
         if !self.pending {
             return self.first_rollout();

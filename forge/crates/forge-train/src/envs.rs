@@ -124,6 +124,10 @@ impl<'a> Envs<'a> {
         Ok(envs)
     }
 
+    pub fn follow_progress(&mut self, progress: f64) {
+        self.conditions.follow_progress(progress);
+    }
+
     pub fn place_at_start_exactly(&mut self, sim: usize) {
         self.batch.row(sim).copy_from_slice(&self.robot.start_row);
         self.last_action[sim * self.robot.nact..(sim + 1) * self.robot.nact].fill(0.0);

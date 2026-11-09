@@ -14,8 +14,17 @@ pub struct Conditions {
     nact: usize,
     control_dt: f64,
     delay_range: [usize; 2],
+    ramp: Option<f64>,
+    ceiling: f64,
     encoder_bias: f64,
     imu_bias: f64,
+}
+
+pub fn delay_ceiling(range: [usize; 2], ramp: Option<f64>, progress: f64) -> f64 {
+    let [low, high] = range.map(|d| d as f64);
+    let share = ramp.map_or(1.0, |r| (progress / r).clamp(0.0, 1.0));
+
+    low + (high - low) * share
 }
 
 pub struct Setup<'a> {
@@ -65,6 +74,8 @@ impl Conditions {
             nact,
             control_dt,
             delay_range,
+            ramp: options.delay_ramp.filter(|_| randomized),
+            ceiling: delay_range[1] as f64,
             encoder_bias: if randomized { options.encoder_bias } else { 0.0 },
             imu_bias: if randomized { options.imu_bias } else { 0.0 },
         }
@@ -90,7 +101,7 @@ impl Conditions {
         self.draw_command(sim, rng, 0);
 
         if self.delay_range[1] > 0 {
-            self.delays[sim] = rng.range(self.delay_range[0] as i64, self.delay_range[1] as i64 + 1) as usize;
+            self.delays[sim] = self.draw_delay(rng);
         }
 
         if self.encoder_bias > 0.0 {
@@ -111,6 +122,24 @@ impl Conditions {
         let width = self.depth * self.nact;
 
         self.history[sim * width..(sim + 1) * width].fill(0.0);
+    }
+
+    fn draw_delay(&self, rng: &mut Rng) -> usize {
+        let [low, high] = self.delay_range;
+
+        if self.ramp.is_none() {
+            return rng.range(low as i64, high as i64 + 1) as usize;
+        }
+
+        let reach = ((self.ceiling - low as f64 + 1.0) * rng.unit()) as usize;
+
+        low + reach.min(high - low)
+    }
+
+    pub fn follow_progress(&mut self, progress: f64) {
+        if self.ramp.is_some() {
+            self.ceiling = delay_ceiling(self.delay_range, self.ramp, progress);
+        }
     }
 
     pub fn tick(&mut self, sim: usize, rng: &mut Rng, steps_taken: i64) {
@@ -184,6 +213,43 @@ mod tests {
             .collect();
 
         assert_eq!(seen, vec![0.0, 0.0, 1.0, 2.0]);
+    }
+
+    fn ramped(progress: f64) -> Vec<usize> {
+        let options = TaskOptions {
+            delay_steps: [0, 2],
+            delay_ramp: Some(0.5),
+            ..TaskOptions::default()
+        };
+        let mut conditions = Conditions::new(Setup {
+            options: &options,
+            command: [0.0; 3],
+            count: 1,
+            nact: 1,
+            control_dt: 0.02,
+            randomized: true,
+        });
+        let mut rng = Rng::new(3, 0);
+        let mut seen = vec![0; 3];
+
+        conditions.follow_progress(progress);
+
+        for _ in 0..3000 {
+            conditions.reset(0, &mut rng);
+            seen[conditions.delays[0]] += 1;
+        }
+
+        seen
+    }
+
+    #[test]
+    fn a_ramped_delay_widens_with_progress_and_then_holds() {
+        assert_eq!(ramped(0.0), vec![3000, 0, 0]);
+        assert!(ramped(0.25)[2] == 0 && ramped(0.25)[1] > 1000);
+        assert!(ramped(0.5).iter().all(|n| (900..1100).contains(n)));
+        assert_eq!(ramped(0.9), ramped(0.5));
+        assert_eq!(super::delay_ceiling([0, 2], Some(0.5), 0.25), 1.0);
+        assert_eq!(super::delay_ceiling([1, 2], None, 0.0), 2.0);
     }
 
     #[test]

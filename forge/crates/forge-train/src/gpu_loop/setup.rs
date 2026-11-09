@@ -3,7 +3,7 @@ use super::learn::Settings;
 use super::qualify::{self, Device};
 use super::rollout::Encoder;
 use super::source::{source, Ctrl, Sizes, NAMES};
-use super::{task, GpuPpo};
+use super::{task, Delays, GpuPpo};
 use crate::episodes::Episodes;
 use crate::events::Phases;
 use crate::kernels::Math;
@@ -152,6 +152,10 @@ pub fn start(start: Start) -> Result<GpuPpo, String> {
     let norm = super::sync::normalizer(&gpu, &buffers, nobs);
 
     Ok(GpuPpo {
+        delays: Delays {
+            range: robot.job.options.delay_steps,
+            ramp: robot.job.options.delay_ramp,
+        },
         settings,
         episodes: Episodes::new(start.envs, robot.control_dt),
         shuffle: Rng::new(start.seed, SHUFFLE_STREAM),

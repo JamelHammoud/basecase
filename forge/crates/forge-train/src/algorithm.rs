@@ -23,6 +23,7 @@ pub trait Algorithm {
     fn math(&self) -> &Math;
     fn snapshot(&self) -> Snapshot;
     fn warm_start(&mut self, source: &WarmStart) -> Result<Vec<String>, String>;
+    fn follow_progress(&mut self, progress: f64);
 }
 
 pub fn build<'a>(algo: Algo, envs: Envs<'a>, seed: u64, math: Math) -> Box<dyn Algorithm + 'a> {

@@ -18,6 +18,7 @@ pub struct Worlds {
     start: BufferId<f32>,
     env: BufferId<f32>,
     counters: BufferId<u32>,
+    knobs: BufferId<f32>,
     rngs: BufferId<u32>,
     obs: BufferId<f32>,
     pub worlds: usize,
@@ -83,6 +84,7 @@ pub fn build(start: Start) -> Result<(Gpu, Worlds), String> {
     let counters = gpu.alloc::<u32>(COUNTERS * worlds)?;
     let rngs = gpu.alloc::<u32>(4 * worlds)?;
     let obs = gpu.alloc::<f32>(task.nobs() * worlds)?;
+    let knobs = gpu.alloc::<f32>(1)?;
 
     gpu.slice_mut(start_row).copy_from_slice(&first);
     gpu.slice_mut(order)
@@ -90,6 +92,7 @@ pub fn build(start: Start) -> Result<(Gpu, Worlds), String> {
         .enumerate()
         .for_each(|(i, o)| *o = i as u32);
     seed_streams(gpu.slice_mut(rngs), seed, 0);
+    gpu.slice_mut(knobs)[0] = task.conditions.delay_steps[1] as f32;
 
     Ok((
         gpu,
@@ -103,6 +106,7 @@ pub fn build(start: Start) -> Result<(Gpu, Worlds), String> {
             start: start_row,
             env,
             counters,
+            knobs,
             rngs,
             obs,
             worlds,
@@ -125,6 +129,10 @@ impl Worlds {
         }
     }
 
+    pub fn set_delay_ceiling(&self, gpu: &mut Gpu, ceiling: f64) {
+        gpu.slice_mut(self.knobs)[0] = ceiling as f32;
+    }
+
     pub fn obs(&self) -> BufferId<f32> {
         self.obs
     }
@@ -141,6 +149,7 @@ impl Worlds {
             self.env.arg(),
             self.counters.arg(),
             self.rngs.arg(),
+            self.knobs.arg(),
             Arg::Owned(words),
         ];
 
@@ -187,6 +196,7 @@ impl Worlds {
             out.done.arg(),
             out.timeout.arg(),
             out.fell.arg(),
+            self.knobs.arg(),
             Arg::Owned(vec![self.worlds as u32, row as u32]),
         ];
 

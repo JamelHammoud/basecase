@@ -47,6 +47,7 @@ pub struct CommandDraws {
 pub struct Conditions {
     pub commands: Option<CommandDraws>,
     pub delay_steps: [usize; 2],
+    pub delay_ramp: bool,
     pub encoder_bias: f64,
     pub imu_bias: f64,
 }

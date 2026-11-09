@@ -15,6 +15,7 @@ pub struct TaskOptions {
     pub commands: Option<CommandRanges>,
     pub reset_noise: f64,
     pub delay_steps: [usize; 2],
+    pub delay_ramp: Option<f64>,
     pub encoder_bias: f64,
     pub imu_bias: f64,
     pub actor_linvel: bool,
@@ -31,6 +32,7 @@ impl Default for TaskOptions {
             commands: None,
             reset_noise: RESET_JOINT_NOISE,
             delay_steps: [0, 0],
+            delay_ramp: None,
             encoder_bias: 0.0,
             imu_bias: 0.0,
             actor_linvel: true,
@@ -104,6 +106,17 @@ fn non_negative(root: &Value, key: &str, fallback: f64) -> Result<f64, String> {
     }
 }
 
+fn ramp(root: &Value) -> Result<Option<f64>, String> {
+    let Some(value) = root.get("delayRamp") else {
+        return Ok(None);
+    };
+
+    match value.as_f64() {
+        Some(share) if share > 0.0 && share <= 1.0 => Ok(Some(share)),
+        _ => Err("job.json needs delayRamp above 0 and at most 1, the share of the budget it ramps over".to_owned()),
+    }
+}
+
 fn flag(root: &Value, key: &str) -> bool {
     root.get(key).and_then(Value::as_bool).unwrap_or(true)
 }
@@ -114,6 +127,7 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         commands: root.get("commands").map(commands).transpose()?,
         reset_noise: non_negative(root, "resetNoise", RESET_JOINT_NOISE)?,
         delay_steps: steps(root)?,
+        delay_ramp: ramp(root)?,
         encoder_bias: non_negative(root, "encoderBias", 0.0)?,
         imu_bias: non_negative(root, "imuBias", 0.0)?,
         actor_linvel: flag(root, "actorLinvel"),
@@ -147,6 +161,15 @@ mod tests {
         assert_eq!(commands.resample_s, [2.0, 4.0]);
         assert_eq!(options.delay_steps, [0, 2]);
         assert!(!options.actor_linvel && !options.fall_resets && options.pushes);
+    }
+
+    #[test]
+    fn reads_a_delay_ramp_as_a_share_of_the_budget() {
+        let ramped = parse(&json!({ "delaySteps": [0, 2], "delayRamp": 0.6 })).expect("parses");
+
+        assert_eq!(ramped.delay_ramp, Some(0.6));
+        assert!(parse(&json!({ "delayRamp": 0 })).is_err());
+        assert!(parse(&json!({ "delayRamp": 1.5 })).is_err());
     }
 
     #[test]

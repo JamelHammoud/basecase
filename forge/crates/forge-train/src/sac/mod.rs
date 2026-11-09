@@ -323,6 +323,10 @@ impl<'a> Sac<'a> {
 }
 
 impl Algorithm for Sac<'_> {
+    fn follow_progress(&mut self, progress: f64) {
+        self.envs.follow_progress(progress);
+    }
+
     fn iterate(&mut self) -> Result<(), String> {
         for _ in 0..self.recipe.horizon {
             self.collect()?;

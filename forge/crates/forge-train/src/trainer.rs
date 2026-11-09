@@ -91,6 +91,13 @@ fn emit_progress(robot: &Robot, algo: &mut dyn Algorithm, iteration: usize, cloc
     report.steps
 }
 
+fn progress(job: &Job, elapsed: f64, iteration: usize) -> f64 {
+    let by_time = elapsed / (job.minutes * 60.0);
+    let by_count = job.max_iterations.map_or(0.0, |limit| iteration as f64 / limit as f64);
+
+    by_time.max(by_count)
+}
+
 fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<u64, String> {
     let job = &robot.job;
     let budget = job.minutes * 60.0;
@@ -107,6 +114,7 @@ fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<
 
         while !should_stop(folder) && clock.elapsed < budget && job.max_iterations.is_none_or(|limit| iteration < limit)
         {
+            algo.follow_progress(progress(job, clock.elapsed, iteration));
             algo.iterate()?;
             iteration += 1;
             steps = emit_progress(robot, algo, iteration, &mut clock);
@@ -197,7 +205,7 @@ fn train_on_gpu(folder: &Path, robot: &Robot, mut algo: GpuPpo) -> Result<(), St
         status("Can't hold the pose without help. Training from a fall.");
     }
 
-    status(&format!("Training on {} robots", replay.job.envs));
+    status(&format!("Training on {} robots", replay.job.envs_on_gpu()));
 
     let steps = train_loop(&replay, &mut algo, folder)?;
 
@@ -211,7 +219,7 @@ fn try_gpu_loop(robot: &Robot) -> Option<GpuPpo> {
 
     let start = Start {
         robot,
-        envs: robot.job.envs,
+        envs: robot.job.envs_on_gpu(),
         env_seed: robot.job.seed + ENV_SEED_OFFSET,
         seed: robot.job.seed,
         math: Math::native(learner_threads()),

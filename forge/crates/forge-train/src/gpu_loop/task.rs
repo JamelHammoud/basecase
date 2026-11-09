@@ -57,6 +57,7 @@ fn conditions(robot: &Robot) -> Conditions {
             still_share: c.still_share,
         }),
         delay_steps: options.delay_steps,
+        delay_ramp: options.delay_ramp.is_some(),
         encoder_bias: options.encoder_bias,
         imu_bias: options.imu_bias,
     }

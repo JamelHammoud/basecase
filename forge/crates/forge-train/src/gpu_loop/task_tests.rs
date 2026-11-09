@@ -126,6 +126,35 @@ fn delayed_servos_replay_older_actions_on_the_gpu() {
     }
 }
 
+impl Bench {
+    fn lags_at(&mut self, ceiling: f64) -> Vec<usize> {
+        self.worlds.set_delay_ceiling(&mut self.gpu, ceiling);
+        self.gpu.run(&[self.worlds.reset_all()]).expect("reset");
+
+        for k in 1..=3 {
+            self.act_only(k as f32 * 0.2);
+        }
+
+        (0..ENVS)
+            .map(|w| {
+                let target = self.worlds.read(&self.gpu, w, "CTRL")[0] / SCALE;
+
+                ((0.6 - target) / 0.2).round() as usize
+            })
+            .collect()
+    }
+}
+
+#[test]
+fn a_ramped_delay_starts_at_none_and_widens_on_the_gpu() {
+    let mut b = bench(&robot("ramp", &json!({ "delaySteps": [0, 2], "delayRamp": 0.5 })));
+    let none = b.lags_at(0.0);
+    let wide = b.lags_at(2.0);
+
+    assert!(none.iter().all(|l| *l == 0), "{none:?}");
+    assert!(wide.iter().all(|l| *l <= 2) && wide.iter().any(|l| *l > 0), "{wide:?}");
+}
+
 #[test]
 fn each_robot_draws_its_own_command_and_redraws_it() {
     let commands = json!({ "commands": {

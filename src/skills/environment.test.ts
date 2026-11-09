@@ -67,13 +67,24 @@ describe('the environment interface', () => {
       expect.arrayContaining([
         'The environment names a robot this scene lacks.',
         'The horizon runs from 0.1 to 600 s.',
-        'The action scale is above 0 and at most 100.',
+        'The action scale is above 0 and at most 100, as one number or one per joint.',
         'Friction scales run from 0.05 to 5.',
         'Latency runs from 0 to 500 ms.',
         'The reward reference is unknown.',
         'Signal tilt reads a missing joint.',
         'The contract reads h, which no signal provides.',
       ]),
+    );
+  });
+
+  it('takes one action scale per joint, and refuses a list that does not fit the joints', async () => {
+    const env = stand();
+    const each = { ...env, action: { ...env.action, scale: env.action.joints.map(() => 0.7) } };
+    const short = { ...env, action: { ...env.action, scale: [0.7] } };
+
+    expect(await validateEnvironment(each, model)).toEqual([]);
+    expect(await validateEnvironment(short, model)).toContain(
+      'The action scale is above 0 and at most 100, as one number or one per joint.',
     );
   });
 

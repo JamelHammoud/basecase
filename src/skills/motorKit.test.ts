@@ -51,11 +51,21 @@ describe('Motor Kit environments', () => {
 
     expect(job.command).toEqual([0.2, 0, 0]);
     expect(job).toMatchObject({ actorLinvel: false, task: 'walk', squash: 'tanh', logStdMin: -2.5 });
-    expect(kitJob(fixtureModel('biped-servo'), 'velocity-tracking', { minutes: 1, seed: 1 })).not.toHaveProperty(
-      'squash',
-    );
+    expect(kitJob(fixtureModel('biped-servo'), 'velocity-tracking', { minutes: 1, seed: 1 })).toMatchObject({
+      squash: 'tanh',
+      logStdMin: -2.5,
+    });
     expect(job.delaySteps?.[1]).toBeGreaterThan(0);
     expect(job.reward).toContain('def reward(state):');
+  });
+
+  it('scale velocity actions per joint to the margin from neutral to the nearer limit', () => {
+    const quad = fixtureModel('quad-servo');
+    const scale = kitJob(quad, 'velocity-tracking', { minutes: 1, seed: 1 }).actionScale as number[];
+
+    expect(scale.slice(0, 3).map((v) => +v.toFixed(3))).toEqual([0.698, 1.571, 2.269]);
+    expect(kitEnvironment(quad, 'velocity-tracking').action.scale).toEqual(scale);
+    expect(kitJob(quad, 'stand', { minutes: 1, seed: 1 }).actionScale).toBe(0.5);
   });
 });
 

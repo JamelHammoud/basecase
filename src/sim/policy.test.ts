@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { act, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from './policy';
+import { act, jointScale, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from './policy';
 
 const spec = (extra: Partial<PolicySpec> = {}): PolicySpec => ({
   format: POLICY_FORMAT,
@@ -34,5 +34,13 @@ describe('policy actions', () => {
 
     expect(a[0]).toBeCloseTo(Math.tanh(0.5));
     expect(a[1]).toBeCloseTo(Math.tanh(3));
+  });
+
+  it('scales each joint by its own action scale when the policy has one per joint', () => {
+    expect([jointScale(spec(), 0), jointScale(spec(), 1)]).toEqual([0.25, 0.25]);
+    expect([
+      jointScale(spec({ actionScale: [0.7, 2.2] }), 0),
+      jointScale(spec({ actionScale: [0.7, 2.2] }), 1),
+    ]).toEqual([0.7, 2.2]);
   });
 });

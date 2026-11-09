@@ -21,7 +21,7 @@ export type ObservationTerm =
 export interface ActionSpec {
   kind: 'position-offset' | 'velocity';
   joints: string[];
-  scale: number;
+  scale: number | number[];
   controlDt: number;
 }
 
@@ -132,12 +132,17 @@ function termProblems(term: ObservationTerm, index: ModelIndex): string[] {
   return term.kind in TERM_SIZE ? [] : [`Unknown observation ${String((term as { kind: unknown }).kind)}.`];
 }
 
+const scaleFits = ({ scale, joints }: ActionSpec) =>
+  Array.isArray(scale)
+    ? scale.length === joints.length && scale.every((v) => finiteIn(v, 1e-6, 100))
+    : finiteIn(scale, 1e-6, 100);
+
 function actionProblems(action: ActionSpec, index: ModelIndex): string[] {
   const out = jointProblems(action.joints, index, 'The action');
 
   if (action.kind !== 'position-offset' && action.kind !== 'velocity') out.push('Unknown action kind.');
 
-  if (!finiteIn(action.scale, 1e-6, 100)) out.push('The action scale is above 0 and at most 100.');
+  if (!scaleFits(action)) out.push('The action scale is above 0 and at most 100, as one number or one per joint.');
 
   if (!finiteIn(action.controlDt, 1e-4, 1)) out.push('The control step runs from 0.1 ms to 1 s.');
 

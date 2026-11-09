@@ -259,7 +259,7 @@ impl<'a> Envs<'a> {
             ctrl.copy_from_slice(&robot.job.ctrl_default);
 
             for j in 0..nact {
-                let target = robot.job.default_pose[j] + robot.job.action_scale * self.delayed[j];
+                let target = robot.job.default_pose[j] + robot.job.action_scale.of(j) * self.delayed[j];
 
                 ctrl[robot.actuators[j]] = target.max(robot.ctrl_low[j]).min(robot.ctrl_high[j]);
             }

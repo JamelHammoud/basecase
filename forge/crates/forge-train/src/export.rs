@@ -94,7 +94,7 @@ pub fn write_policy(path: &Path, run: &Trained, steps: u64) -> Result<(), String
         "robot": job.robot_name,
         "joints": job.joints.iter().map(|j| j.id.clone()).collect::<Vec<String>>(),
         "defaultPose": job.default_pose,
-        "actionScale": job.action_scale,
+        "actionScale": job.action_scale.to_json(),
         "controlDt": job.control_dt,
         "command": job.command,
         "obsMean": run.norm.mean,

@@ -2,7 +2,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Cmp, Contract, Expr, Formula, State } from './contract';
 import { policyObservation, type Environment, type ResetDistribution, type SignalSource } from './environment';
 import { sha256Hex } from './hash';
-import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, neutralRad, offsetPose, rootHeight, type V3 } from './kitModel';
+import { kitActionScale, kitRobot, kitTopSpeed, neutralRad, offsetPose, rootHeight, type V3 } from './kitModel';
 import { kitReward } from './kitRewards';
 
 export type KitEntry = 'stand' | 'get-up' | 'velocity-tracking' | 'pose-tracking' | 'settle-to-neutral';
@@ -191,7 +191,12 @@ export function kitEnvironment(model: SimModel, entry: KitEntry): Environment {
     horizonS: HORIZON[trained],
     traceDt: TRACE_DT,
     observation: policyObservation(robot.joints),
-    action: { kind: 'position-offset', joints: robot.joints, scale: KIT_ACTION_SCALE, controlDt: CONTROL_DT },
+    action: {
+      kind: 'position-offset',
+      joints: robot.joints,
+      scale: kitActionScale(model, trained),
+      controlDt: CONTROL_DT,
+    },
     reset: resetFor(model, trained),
     randomization: { friction: [0.8, 1.2], mass: [0.9, 1.1], strength: [0.9, 1], latencyMs: [0, 20] },
     reward: { kind: 'rewardlang', hash: kitRewardHash(model, trained) },

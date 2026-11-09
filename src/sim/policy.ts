@@ -17,7 +17,7 @@ export interface PolicySpec {
   robot: string;
   joints: string[];
   defaultPose: number[];
-  actionScale: number;
+  actionScale: number | number[];
   controlDt: number;
   command: [number, number, number];
   obsMean: number[];
@@ -31,6 +31,9 @@ export interface PolicySpec {
 }
 
 export const obsSize = (joints: number) => 12 + 3 * joints;
+
+export const jointScale = (spec: Pick<PolicySpec, 'actionScale'>, k: number) =>
+  Array.isArray(spec.actionScale) ? spec.actionScale[k] : spec.actionScale;
 
 export function toBodyFrame(q: ArrayLike<number>, qo: number, v: [number, number, number]): [number, number, number] {
   const w = q[qo],

@@ -36,6 +36,23 @@ pub struct Pushes {
     pub gap_steps: [i64; 2],
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct CommandDraws {
+    pub ranges: [[f64; 2]; 3],
+    pub resample_steps: [f64; 2],
+    pub still_share: f64,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Conditions {
+    pub commands: Option<CommandDraws>,
+    pub delay_steps: [usize; 2],
+    pub encoder_bias: f64,
+    pub imu_bias: f64,
+}
+
+pub const COUNTERS: usize = 4;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Task {
     pub joints: Vec<Actuated>,
@@ -52,6 +69,7 @@ pub struct Task {
     pub fall_resets: bool,
     pub squash: bool,
     pub pushes: Option<Pushes>,
+    pub conditions: Conditions,
     pub observations: Vec<Observed>,
     pub reward: Code,
     pub fell: Code,
@@ -60,6 +78,14 @@ pub struct Task {
 impl Task {
     pub fn nact(&self) -> usize {
         self.joints.len()
+    }
+
+    pub fn delay_depth(&self) -> usize {
+        self.conditions.delay_steps[1] + 1
+    }
+
+    pub fn env_width(&self) -> usize {
+        (3 + self.delay_depth()) * self.nact() + 5
     }
 
     pub fn nobs(&self) -> usize {

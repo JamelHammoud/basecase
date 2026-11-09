@@ -1,6 +1,6 @@
 use super::emit::Emitter;
 use crate::gpu::sink::Sink;
-use forge_ir::task::{Binary, Code, Input, Observed, Op, Task, Unary};
+use forge_ir::task::{Binary, Code, CommandDraws, Input, Observed, Op, Task, Unary, COUNTERS};
 use std::fmt::Write;
 
 pub const RNG: &str = include_str!("shaders/rng.metal");
@@ -133,6 +133,9 @@ fn constants(e: &mut Emitter, task: &Task) {
     let joints = &task.joints;
     let gaps = task.pushes.map_or([NEVER, NEVER], |p| p.gap_steps);
     let speeds = task.pushes.map_or([0.0, 0.0], |p| p.speed);
+    let n = task.nact() as i64;
+    let conditions = &task.conditions;
+    let draws = conditions.commands;
 
     for (name, value) in [
         ("NACT", task.nact() as i64),
@@ -146,9 +149,39 @@ fn constants(e: &mut Emitter, task: &Task) {
         ("TASK_NEVER", NEVER),
         ("PUSH_GAP_LO", gaps[0]),
         ("PUSH_GAP_HI", gaps[1]),
+        ("TASK_ENV", task.env_width() as i64),
+        ("TASK_COUNTERS", COUNTERS as i64),
+        ("ENV_LA", n),
+        ("ENV_CMD", 2 * n),
+        ("ENV_ENC", 2 * n + 3),
+        ("ENV_IMU", 3 * n + 3),
+        ("ENV_RING", 3 * n + 5),
+        ("TASK_DEPTH", task.delay_depth() as i64),
+        ("DELAY_LO", conditions.delay_steps[0] as i64),
+        ("DELAY_HI", conditions.delay_steps[1] as i64),
+        ("TASK_RESAMPLE", i64::from(draws.is_some())),
     ] {
         e.define(name, value);
     }
+
+    let draws = draws.unwrap_or(CommandDraws {
+        ranges: task.command.map(|c| [c, c]),
+        resample_steps: [0.0, 0.0],
+        still_share: 0.0,
+    });
+
+    for (name, value) in [
+        ("STILL_SHARE", draws.still_share),
+        ("RESAMPLE_LO", draws.resample_steps[0]),
+        ("RESAMPLE_HI", draws.resample_steps[1]),
+        ("ENC_BIAS", conditions.encoder_bias),
+        ("IMU_BIAS", conditions.imu_bias),
+    ] {
+        e.define(name, float(value));
+    }
+
+    e.floats("CMD_LO", draws.ranges.iter().map(|r| r[0] as f32));
+    e.floats("CMD_HI", draws.ranges.iter().map(|r| r[1] as f32));
 
     for (name, value) in [
         ("TASK_NOISE", task.reset_noise),
@@ -160,7 +193,6 @@ fn constants(e: &mut Emitter, task: &Task) {
         e.define(name, float(value));
     }
 
-    e.floats("TASK_CMD", task.command.iter().map(|c| *c as f32));
     e.constant("TASK_SCALE", task.action_scale);
     e.ints("TJ_QPOS", joints.iter().map(|j| j.qpos as i64));
     e.ints("TJ_DOF", joints.iter().map(|j| j.dof as i64));

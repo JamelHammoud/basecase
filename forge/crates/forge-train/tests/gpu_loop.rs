@@ -120,13 +120,13 @@ fn the_gpu_learner_matches_the_cpu_learner_on_a_minibatch_with_and_without_the_s
 
 #[test]
 fn options_the_gpu_loop_lacks_fall_back_to_the_cpu_learner_with_the_reason() {
-    let events = run("gpu-loop-fallback", &json!({ "delaySteps": [0, 2] }));
+    let events = run("gpu-loop-fallback", &json!({ "algo": "fastsac" }));
     let status = messages(&events);
 
     assert!(
         status
             .iter()
-            .any(|s| s.contains("GPU loop can't train this job") && s.contains("servo delays")),
+            .any(|s| s.contains("GPU loop can't train this job") && s.contains("PPO only")),
         "{status:?}"
     );
     assert!(!status.iter().any(|s| s.starts_with("Training on the GPU")));

@@ -26,7 +26,7 @@ inline void task_state(device const real *row, device const float *env, thread T
         s.g[k] = g[k];
         s.w[k] = w[k];
         s.v[k] = v[k];
-        s.cmd[k] = TASK_CMD[k];
+        s.cmd[k] = env[ENV_CMD + k];
     }
     s.z = joined(row[QPOS + TASK_ROOT_QPOS + 2]);
     s.z0 = TASK_Z0;
@@ -35,7 +35,7 @@ inline void task_state(device const real *row, device const float *env, thread T
         s.jp[j] = joined(row[QPOS + TJ_QPOS[j]] - TJ_DEFAULT[j]);
         s.jv[j] = joined(row[QVEL + TJ_DOF[j]]);
         s.a[j] = env[j];
-        s.la[j] = env[NACT + j];
+        s.la[j] = env[ENV_LA + j];
     }
 }
 
@@ -68,6 +68,40 @@ inline void reset_world(device real *row, device const real *start, device float
     }
 }
 
+inline void draw_command(device float *env, device int *counter, thread uint4 &rng, int steps) {
+    if (!TASK_RESAMPLE) {
+        for (int k = 0; k < 3; k++) {
+            env[ENV_CMD + k] = CMD_LO[k];
+        }
+        counter[2] = TASK_NEVER;
+        return;
+    }
+    bool still = STILL_SHARE > 0.0f && unit32(rng) < STILL_SHARE;
+    float gap = uniform32(rng, RESAMPLE_LO, RESAMPLE_HI);
+    for (int k = 0; k < 3; k++) {
+        env[ENV_CMD + k] = still ? 0.0f : uniform32(rng, CMD_LO[k], CMD_HI[k]);
+    }
+    counter[2] = steps + max((int)gap, 1);
+}
+
+inline float drawn_bias(thread uint4 &rng, float bias) {
+    return bias > 0.0f ? uniform32(rng, -bias, bias) : 0.0f;
+}
+
+inline void reset_conditions(device float *env, device int *counter, thread uint4 &rng) {
+    draw_command(env, counter, rng, 0);
+    counter[3] = DELAY_HI > 0 ? range32(rng, DELAY_LO, DELAY_HI + 1) : 0;
+    for (int j = 0; j < NACT; j++) {
+        env[ENV_ENC + j] = drawn_bias(rng, ENC_BIAS);
+    }
+    for (int k = 0; k < 2; k++) {
+        env[ENV_IMU + k] = drawn_bias(rng, IMU_BIAS);
+    }
+    for (int i = 0; i < TASK_DEPTH * NACT; i++) {
+        env[ENV_RING + i] = 0.0f;
+    }
+}
+
 kernel void task_reset(device real *io [[buffer(0)]], device const real *start [[buffer(1)]],
                        device float *env [[buffer(2)]], device int *counters [[buffer(3)]],
                        device uint4 *rngs [[buffer(4)]], constant uint *p [[buffer(5)]],
@@ -76,9 +110,12 @@ kernel void task_reset(device real *io [[buffer(0)]], device const real *start [
         return;
     }
     uint4 rng = rngs[w];
-    reset_world(io + w * NSTATE, start, env + w * 2 * NACT, rng);
-    counters[2 * w] = 0;
-    counters[2 * w + 1] = TASK_PUSHES ? range32(rng, PUSH_GAP_LO, PUSH_GAP_HI) : TASK_NEVER;
+    device float *mine = env + w * TASK_ENV;
+    device int *counter = counters + TASK_COUNTERS * w;
+    reset_world(io + w * NSTATE, start, mine, rng);
+    counter[0] = 0;
+    counter[1] = TASK_PUSHES ? range32(rng, PUSH_GAP_LO, PUSH_GAP_HI) : TASK_NEVER;
+    reset_conditions(mine, counter, rng);
     rngs[w] = rng;
 }
 
@@ -103,19 +140,28 @@ kernel void task_act(device real *io [[buffer(0)]], device float *env [[buffer(1
         return;
     }
     device real *row = io + w * NSTATE;
-    device float *mine = env + w * 2 * NACT;
+    device float *mine = env + w * TASK_ENV;
+    device float *ring = mine + ENV_RING;
+    device int *counter = counters + TASK_COUNTERS * w;
     device const float *taken = acts + (p[1] + w) * NACT;
     for (int u = 0; u < NU; u++) {
         row[CTRL + u] = CTRL_DEFAULT[u];
     }
+    for (int d = TASK_DEPTH - 1; d > 0; d--) {
+        for (int j = 0; j < NACT; j++) {
+            ring[d * NACT + j] = ring[(d - 1) * NACT + j];
+        }
+    }
+    int late = counter[3] * NACT;
     for (int j = 0; j < NACT; j++) {
         float a = TASK_SQUASH ? precise::tanh(taken[j]) : clamp(taken[j], -1.0f, 1.0f);
         mine[j] = a;
-        real target = TJ_DEFAULT[j] + TASK_SCALE * D(a);
+        ring[j] = a;
+        real target = TJ_DEFAULT[j] + TASK_SCALE * D(ring[late + j]);
         row[CTRL + TJ_ACT[j]] = dmin(dmax(target, TJ_LO[j]), TJ_HI[j]);
     }
     uint4 rng = rngs[w];
-    push(row, counters + 2 * w, rng);
+    push(row, counter, rng);
     rngs[w] = rng;
 }
 
@@ -129,9 +175,10 @@ kernel void task_after(device real *io [[buffer(0)]], device const real *start [
         return;
     }
     device real *row = io + w * NSTATE;
-    device float *mine = env + w * 2 * NACT;
-    int steps = counters[2 * w] + 1;
-    counters[2 * w] = steps;
+    device float *mine = env + w * TASK_ENV;
+    device int *counter = counters + TASK_COUNTERS * w;
+    int steps = counter[0] + 1;
+    counter[0] = steps;
     TaskState s;
     task_state(row, mine, s);
     bool fallen = TASK_FALL_RESETS && task_fell(s) != 0.0f;
@@ -142,14 +189,32 @@ kernel void task_after(device real *io [[buffer(0)]], device const real *start [
     timeout[at] = ended ? 1.0f : 0.0f;
     fell[at] = fallen ? 1.0f : 0.0f;
     for (int j = 0; j < NACT; j++) {
-        mine[NACT + j] = mine[j];
+        mine[ENV_LA + j] = mine[j];
     }
+    uint4 rng = rngs[w];
     if (fallen || ended) {
-        uint4 rng = rngs[w];
         reset_world(row, start, mine, rng);
-        counters[2 * w] = 0;
-        rngs[w] = rng;
+        counter[0] = 0;
+        reset_conditions(mine, counter, rng);
+    } else if (TASK_RESAMPLE && steps >= counter[2]) {
+        draw_command(mine, counter, rng, steps);
     }
+    rngs[w] = rng;
+}
+
+inline void observed(device const float *env, thread TaskState &s) {
+    for (int j = 0; j < NACT; j++) {
+        s.jp[j] += env[ENV_ENC + j];
+    }
+    if (IMU_BIAS <= 0.0f) {
+        return;
+    }
+    float sr = precise::sin(env[ENV_IMU]), cr = precise::cos(env[ENV_IMU]);
+    float sp = precise::sin(env[ENV_IMU + 1]), cp = precise::cos(env[ENV_IMU + 1]);
+    float g0 = s.g[0], g1 = cr * s.g[1] - sr * s.g[2], g2 = sr * s.g[1] + cr * s.g[2];
+    s.g[0] = cp * g0 + sp * g2;
+    s.g[1] = g1;
+    s.g[2] = -sp * g0 + cp * g2;
 }
 
 kernel void task_observe(device const real *io [[buffer(0)]], device const float *env [[buffer(1)]],
@@ -158,7 +223,9 @@ kernel void task_observe(device const real *io [[buffer(0)]], device const float
     if (w >= p[0]) {
         return;
     }
+    device const float *mine = env + w * TASK_ENV;
     TaskState s;
-    task_state(io + w * NSTATE, env + w * 2 * NACT, s);
+    task_state(io + w * NSTATE, mine, s);
+    observed(mine, s);
     task_observe_one(s, obs + (p[1] + w) * NOBS);
 }

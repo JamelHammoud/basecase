@@ -10,6 +10,8 @@ mod source;
 pub mod stats;
 mod sync;
 mod task;
+#[cfg(all(test, target_os = "macos"))]
+mod task_tests;
 
 use crate::algorithm::{Algorithm, Report};
 use crate::deployed::{Deployed, Squash};

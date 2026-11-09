@@ -2,7 +2,7 @@ use super::engine::{Parts, GROUP};
 use super::source::source;
 use super::task;
 use crate::gpu::layout::Layout;
-use forge_ir::task::Task;
+use forge_ir::task::{Task, COUNTERS};
 use forge_metal::{Arg, BufferId, Dispatch, Gpu, Kernel};
 
 const KERNELS: [&str; 5] = ["step", "task_reset", "task_act", "task_after", "task_observe"];
@@ -79,8 +79,8 @@ pub fn build(start: Start) -> Result<(Gpu, Worlds), String> {
     let kernels = gpu.compile(&text, &KERNELS)?;
     let first = gpu.slice(io)[..2 * layout.nstate].to_vec();
     let start_row = gpu.alloc::<f32>(2 * layout.nstate)?;
-    let env = gpu.alloc::<f32>(2 * task.nact() * worlds)?;
-    let counters = gpu.alloc::<u32>(2 * worlds)?;
+    let env = gpu.alloc::<f32>(task.env_width() * worlds)?;
+    let counters = gpu.alloc::<u32>(COUNTERS * worlds)?;
     let rngs = gpu.alloc::<u32>(4 * worlds)?;
     let obs = gpu.alloc::<f32>(task.nobs() * worlds)?;
 

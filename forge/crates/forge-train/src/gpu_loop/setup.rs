@@ -49,7 +49,7 @@ pub fn hyper(envs: usize) -> Hyper {
     }
 }
 
-fn worlds(start: &Start, task: &forge_ir::task::Task) -> Result<(Gpu, Worlds, String), String> {
+pub(super) fn worlds(start: &Start, task: &forge_ir::task::Task) -> Result<(Gpu, Worlds, String), String> {
     let robot = start.robot;
     let Engine::Metal { device, .. } = &robot.engine else {
         return Err("Forge's GPU loop needs the Metal engine".to_owned());

@@ -2,7 +2,7 @@ use crate::deployed::Squash;
 use crate::envs::{PUSH_GAP_SECONDS, PUSH_SPEED};
 use crate::job::{Algo, Task as JobTask};
 use crate::robot::Robot;
-use forge_ir::task::{Actuated, Code, Pushes, Task, OBSERVATIONS};
+use forge_ir::task::{Actuated, Code, CommandDraws, Conditions, Pushes, Task, OBSERVATIONS};
 use forge_reward::{compile, programs, Schema};
 
 fn lowered(source: &str, joints: usize) -> Result<Code, String> {
@@ -26,10 +26,10 @@ fn unsupported(robot: &Robot) -> Vec<&'static str> {
 
     [
         (job.algo != Algo::Ppo, "it learns with PPO only"),
-        (options.commands.is_some(), "it doesn't draw commands"),
-        (options.delay_steps != [0, 0], "it doesn't model servo delays"),
-        (options.encoder_bias > 0.0, "it doesn't model encoder bias"),
-        (options.imu_bias > 0.0, "it doesn't model IMU bias"),
+        (
+            options.delay_steps[0] > options.delay_steps[1],
+            "its servo delays run backwards",
+        ),
     ]
     .into_iter()
     .filter(|(refused, _)| *refused)
@@ -44,6 +44,22 @@ fn pushes(robot: &Robot) -> Option<Pushes> {
         speed: [PUSH_SPEED.0, PUSH_SPEED.1],
         gap_steps: [(PUSH_GAP_SECONDS.0 / dt) as i64, (PUSH_GAP_SECONDS.1 / dt) as i64],
     })
+}
+
+fn conditions(robot: &Robot) -> Conditions {
+    let options = &robot.job.options;
+    let dt = robot.control_dt;
+
+    Conditions {
+        commands: options.commands.as_ref().map(|c| CommandDraws {
+            ranges: c.ranges,
+            resample_steps: c.resample_s.map(|s| s / dt),
+            still_share: c.still_share,
+        }),
+        delay_steps: options.delay_steps,
+        encoder_bias: options.encoder_bias,
+        imu_bias: options.imu_bias,
+    }
 }
 
 pub fn lower(robot: &Robot) -> Result<Task, String> {
@@ -80,6 +96,7 @@ pub fn lower(robot: &Robot) -> Result<Task, String> {
         fall_resets: job.options.fall_resets,
         squash: job.squash == Squash::Tanh,
         pushes: pushes(robot),
+        conditions: conditions(robot),
         observations: OBSERVATIONS.to_vec(),
         reward: lowered(&reward_source(robot), nact)
             .map_err(|e| format!("Forge's GPU loop can't train this job: {e}"))?,

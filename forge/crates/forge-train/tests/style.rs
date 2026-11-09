@@ -20,6 +20,7 @@ fn gpu_loop_sources_carry_no_comments_and_stay_short() {
     let mut files = Vec::new();
 
     sources(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src/gpu_loop"), &mut files);
+    sources(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src/shac"), &mut files);
 
     assert!(files.len() > 10, "found only {} source files", files.len());
 

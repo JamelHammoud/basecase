@@ -126,7 +126,8 @@ fn velocity_derivative() {
         let f = sg(ACTF + a);
         let on = !tb(ACT_FORCE_LIMITED, a) || (gt(f, tr(ACT_FORCE_LO, a)) && lt(f, tr(ACT_FORCE_HI, a)));
         if (on) {
-            sa(DERIV + ti(ACT_DOF, a), ml(b2, tr(ACT_GEAR2, a)));
+            let gear = sg(TGEAR + a);
+            sa(DERIV + ti(ACT_DOF, a), ml(b2, ml(gear, gear)));
         } else {
             sa(DERIV + ti(ACT_DOF, a), Z());
         }

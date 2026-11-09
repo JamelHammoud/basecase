@@ -207,7 +207,10 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 name = "forge-id"
 version = "0.1.0"
 dependencies = [
+ "forge-ir",
  "forge-mujoco",
+ "forge-sim",
+ "rayon",
 ]
 
 [[package]]
@@ -258,6 +261,7 @@ dependencies = [
  "forge-mujoco",
  "forge-reward",
  "forge-sim",
+ "rayon",
  "serde_json",
 ]
 

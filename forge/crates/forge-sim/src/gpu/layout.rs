@@ -55,6 +55,7 @@ impl Layout {
             ("TFRIC", k.geoms.len()),
             ("TGAIN", k.nu),
             ("TBIAS", 3 * k.nu),
+            ("TGEAR", k.nu),
         ] {
             self.take(name, len);
         }

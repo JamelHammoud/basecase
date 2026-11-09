@@ -25,10 +25,11 @@ pub trait Algorithm {
     fn warm_start(&mut self, source: &WarmStart) -> Result<Vec<String>, String>;
 }
 
-pub fn build<'a>(algo: Algo, envs: Envs<'a>, seed: u64, math: Math) -> Box<dyn Algorithm + 'a> {
+pub fn build<'a>(algo: Algo, envs: Envs<'a>, seed: u64, math: Math) -> Result<Box<dyn Algorithm + 'a>, String> {
     match algo {
-        Algo::Ppo => Box::new(Ppo::new(envs, seed, math)),
-        Algo::FastSac => Box::new(Sac::new(envs, seed, math, Recipe::fast())),
-        Algo::FlashSac => Box::new(Sac::new(envs, seed, math, Recipe::flash())),
+        Algo::Ppo => Ok(Box::new(Ppo::new(envs, seed, math))),
+        Algo::FastSac => Ok(Box::new(Sac::new(envs, seed, math, Recipe::fast()))),
+        Algo::FlashSac => Ok(Box::new(Sac::new(envs, seed, math, Recipe::flash()))),
+        Algo::Shac => Err("SHAC needs Forge's gradients, which this build doesn't carry".to_owned()),
     }
 }

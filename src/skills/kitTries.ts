@@ -12,6 +12,7 @@ export interface Judgement<S> {
 
 export interface TryPlan<P, S> {
   tries: readonly KitTry[];
+  firstSeed?: number;
   train: (stage: KitStage, from: { seed: number; folder: string | null }) => Promise<StageRun<P>>;
   validate: (policy: P) => Promise<number>;
   judge: (policy: P) => Promise<Judgement<S>>;
@@ -85,7 +86,7 @@ async function runTry<P, S>(
 
 export async function firstPassingTry<P, S>(plan: TryPlan<P, S>): Promise<S | null> {
   const best = { folder: null as string | null, score: -Infinity };
-  let seed = 1;
+  let seed = plan.firstSeed ?? 1;
 
   for (const tried of plan.tries) {
     if (plan.aborted()) return null;

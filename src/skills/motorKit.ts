@@ -43,7 +43,12 @@ export interface KitInput {
   forge: ForgeRunner;
   save: SkillSave;
   signal?: AbortSignal;
+  seed?: number;
 }
+
+const SEED_SPAN = 1_000_000;
+
+const freshSeed = () => 1 + (crypto.getRandomValues(new Uint32Array(1))[0] % SEED_SPAN);
 
 const SKILL_NAMES: Record<KitEntry, string> = {
   stand: 'Stand',
@@ -142,6 +147,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
   const run: Attempt = { input, entry, environment, start, clock };
   const skill = await firstPassingTry({
     tries: kitSchedule(input.model, entry),
+    firstSeed: input.seed ?? freshSeed(),
     train: (stage, from) => train(run, stage, from),
     validate: (policy: PolicySpec) => validationScore({ ...input, environment, policy }),
     judge: (policy: PolicySpec) => judge(run, policy),

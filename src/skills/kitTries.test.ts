@@ -8,7 +8,7 @@ import {
   NEAR_DELAYS,
   scheduledMinutes,
   VELOCITY_RAMP,
-  VELOCITY_SEEDS,
+  VELOCITY_MINUTES,
   WIDE_DELAYS,
   type KitStage,
   type KitTry,
@@ -69,6 +69,17 @@ describe('Kit tries', () => {
     ]);
   });
 
+  it('number seeds from the plan’s first seed, so every run of the Kit trains fresh ones', async () => {
+    const tries: KitTry[] = [
+      { stages: [{ minutes: 9, delaySteps: FAR_DELAYS }], seeds: 2 },
+      one({ minutes: 4, delaySteps: FAR_DELAYS }),
+    ];
+    const { plan, trained } = fakePlan({ tries, scores: [1, 1] });
+
+    await firstPassingTry({ ...plan, firstSeed: 40 });
+    expect(trained.map((t) => t.seed)).toEqual([40, 41, 42]);
+  });
+
   it('stop at the first policy Arena passes', async () => {
     const tries = [one({ minutes: 4, delaySteps: NEAR_DELAYS }), one({ minutes: 4, delaySteps: NEAR_DELAYS })];
     const { plan, trained } = fakePlan({ tries, scores: [10], passing: 1 });
@@ -98,8 +109,8 @@ describe('Kit tries', () => {
     for (const robot of ['quad-servo', 'hexapod', 'biped-servo']) {
       const [first, ...rest] = kitSchedule(fixtureModel(robot), 'velocity-tracking');
 
-      expect(first.seeds).toBe(VELOCITY_SEEDS);
-      expect(first.stages).toEqual([expect.objectContaining({ delaySteps: FAR_DELAYS, delayRamp: VELOCITY_RAMP })]);
+      expect(first.seeds).toBeGreaterThanOrEqual(2);
+      expect(first.stages).toEqual([{ minutes: VELOCITY_MINUTES, delaySteps: FAR_DELAYS, delayRamp: VELOCITY_RAMP }]);
       expect(rest.every((t) => t.seeds === 1 && t.stages.every((s) => s.delaySteps === FAR_DELAYS))).toBe(true);
     }
 

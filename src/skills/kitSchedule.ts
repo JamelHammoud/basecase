@@ -19,7 +19,7 @@ export const NEAR_DELAYS: DelaySteps = Object.freeze([0, 1] as const);
 export const FAR_DELAYS: DelaySteps = Object.freeze([0, 2] as const);
 export const WIDE_DELAYS: DelaySteps = Object.freeze([0, 3] as const);
 
-export const VELOCITY_SEEDS = 3;
+export const VELOCITY_MINUTES = 9;
 export const VELOCITY_RAMP = 0.6;
 
 const near = (minutes: number): KitTry => ({ stages: [{ minutes, delaySteps: NEAR_DELAYS }], seeds: 1 });
@@ -29,14 +29,14 @@ const curriculum = (...stages: Array<[number, DelaySteps]>): KitTry => ({
   seeds: 1,
 });
 
-const velocity = (minutes: number, more: number): readonly KitTry[] => [
-  { stages: [{ minutes, delaySteps: FAR_DELAYS, delayRamp: VELOCITY_RAMP }], seeds: VELOCITY_SEEDS },
+const velocity = (seeds: number, more: number): readonly KitTry[] => [
+  { stages: [{ minutes: VELOCITY_MINUTES, delaySteps: FAR_DELAYS, delayRamp: VELOCITY_RAMP }], seeds },
   { stages: [{ minutes: more, delaySteps: FAR_DELAYS }], seeds: 1 },
 ];
 
 const MANY_LEGS: Readonly<Record<TrainedEntry, readonly KitTry[]>> = Object.freeze({
   stand: [near(2), near(4)],
-  'velocity-tracking': velocity(6, 4),
+  'velocity-tracking': velocity(2, 4),
   'get-up': [near(2), near(6), near(8)],
   'settle-to-neutral': [near(2), near(4)],
 });
@@ -44,7 +44,7 @@ const MANY_LEGS: Readonly<Record<TrainedEntry, readonly KitTry[]>> = Object.free
 const TWO_LEGS: Readonly<Record<TrainedEntry, readonly KitTry[]>> = Object.freeze({
   ...MANY_LEGS,
   stand: [curriculum([3, NEAR_DELAYS], [5, WIDE_DELAYS]), curriculum([5, WIDE_DELAYS])],
-  'velocity-tracking': velocity(9, 6),
+  'velocity-tracking': velocity(3, 6),
 });
 
 export const kitSchedule = (model: SimModel, entry: TrainedEntry): readonly KitTry[] =>

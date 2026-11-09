@@ -1617,6 +1617,67 @@
       "commit": "8a3bba4",
       "at": "2026-11-09T02:03:19.049Z",
       "manifest": "clean"
+    },
+    "s1-f5-gpu-loop": {
+      "id": "s1-f5-gpu-loop",
+      "title": "F5: physics, policy and learner in one GPU buffer; acceptance replay in C",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "qualification vectors catch a bad GPU and fall back to C",
+          "ok": true,
+          "detail": "0.7 s",
+          "metrics": {},
+          "seconds": 0.656
+        },
+        {
+          "name": "Full GPU loop reaches 70K steps/s at 4096 envs",
+          "ok": true,
+          "detail": "122295 steps/s",
+          "metrics": {
+            "loadBefore": 5.8935546875,
+            "loadAfter": 5.8935546875
+          },
+          "seconds": 1.899
+        },
+        {
+          "name": "L4 statistics and L5 replay hold",
+          "ok": true,
+          "detail": "30.7 s",
+          "metrics": {},
+          "seconds": 30.746
+        },
+        {
+          "name": "Forge reaches the walk skill at least 5x faster than the Python baseline",
+          "ok": true,
+          "detail": "7.16x",
+          "metrics": {
+            "ratios": [
+              7.162664665967118,
+              12.024790060609972,
+              3.718992179106045
+            ],
+            "loadBefore": 6.29736328125,
+            "loadAfter": 4.82373046875
+          },
+          "seconds": 314.723
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a policy trained on planted bad physics fails replay",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 17.772
+        }
+      ],
+      "commit": "188faac",
+      "at": "2026-11-09T05:17:21.076Z",
+      "manifest": "clean"
     }
   }
 }

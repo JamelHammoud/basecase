@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { openApp, partCount, type App } from '../../e2e/harness';
 import { drive, driveArm, driveRover, fell, forward, handMismatches, hold, state, stop, tap, wait } from './driveApp';
 import { armProblems, blurProblems, groundProblems } from './driveJudge';
+import { playRobot } from './play';
 import { tapState } from './workerTap';
 
 let app: App;
@@ -24,7 +25,7 @@ afterAll(async () => {
 
 describe('live drive by class', () => {
   it('drives an arm: W moves the rendered hand, S brings it back, release holds it, and the report matches', async () => {
-    const before = await partCount(app.page);
+    const before = playRobot('arm-6dof').parts.length;
     const arm = await driveArm(app, 'arm-6dof');
 
     expect((await state(app)).driveClass).toBe('arm');

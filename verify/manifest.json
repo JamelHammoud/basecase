@@ -17,7 +17,7 @@
   "verify/cases/canaryPlay.test.ts": "ad3bfd5d9f2be0bf46b92b2e9954449a47b107e6ffe060eabe9e9a3bcb7c9c3b",
   "verify/cases/driveApp.ts": "cc8298239bc39bba369894a1315fde70e84a5252acd5ed4dea27d018cdbbd0d7",
   "verify/cases/driveJudge.ts": "07dbf3934aa1be04275b1982146992c0025f0a2de20095ba020640fc3818ca7f",
-  "verify/cases/drivePlay.test.ts": "ab0236656b8c4050bea7c5d98d79286c47327aacca52c1e22341bd51d1104733",
+  "verify/cases/drivePlay.test.ts": "995b24c8ce6bb4e5ab5f7c2883cbd87a6f8d0730ad634e6f9100d9bb48a5e7eb",
   "verify/cases/galleryApp.ts": "b056d8665cdf3c88e679088d76d367826af13305943b3ec4f075c7f4b69abf09",
   "verify/cases/galleryRealtime.test.ts": "3bf265f2836762aa5db82708d7b86f94aea9c5ec7365c89e45aa2e7a0e047ee3",
   "verify/cases/margins.test.ts": "3c3e43e3eb6b2263bf73c1f7c670cc88111acb2ab35b628bd6deeac6b9630508",

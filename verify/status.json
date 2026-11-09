@@ -949,91 +949,91 @@
       "title": "The robot daemon inside the app: bundled, locked, heartbeat, faults on screen, a Case driving it",
       "stage": 5,
       "state": "required",
-      "ok": false,
+      "ok": true,
       "voided": false,
       "checks": [
         {
           "name": "the daemon builds",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "4.2 s",
           "metrics": {},
-          "seconds": 0.664
+          "seconds": 4.214
         },
         {
           "name": "the daemon is staged for the app",
           "ok": true,
           "detail": "0.2 s",
           "metrics": {},
-          "seconds": 0.175
+          "seconds": 0.196
         },
         {
           "name": "the staged daemon is locked to emulated servos and says hello",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.18
+          "seconds": 0.118
         },
         {
           "name": "the app bundles",
           "ok": true,
-          "detail": "7.6 s",
+          "detail": "8.3 s",
           "metrics": {},
-          "seconds": 7.581
+          "seconds": 8.283
         },
         {
           "name": "an unsigned app packages",
           "ok": true,
-          "detail": "3.3 s",
+          "detail": "3.0 s",
           "metrics": {},
-          "seconds": 3.299
+          "seconds": 3.043
         },
         {
           "name": "the packaged app ships the locked daemon, spawns it emulated, refuses real ports and untrusted IPC",
           "ok": true,
-          "detail": "14.2 s",
+          "detail": "14.8 s",
           "metrics": {},
-          "seconds": 14.196
+          "seconds": 14.85
         },
         {
           "name": "heartbeat, the ladder, status, faults, refusals and a lost daemon reach the user",
-          "ok": false,
-          "detail": " FAIL  verify/hw/daemonUi.test.ts > the robot daemon inside the app > a killed daemon is shown as lost, in plain words\nError: Timed out waiting for \"Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power.\" on screen\n ❯ waitFor verify/hw/relayHarness.ts:107:38\n    105|     if (value) return value;\n    106|\n    107|     if (Date.now() > deadline) throw new Error(`Timed out waiting for …\n       |                                      ^\n    108|\n    109|     await new Promise((resolve) => setTimeout(resolve, 50));\n ❯ verify/hw/daemonUi.test.ts:103:12\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯",
+          "ok": true,
+          "detail": "10.2 s",
           "metrics": {},
-          "seconds": 55.806
+          "seconds": 10.163
         },
         {
           "name": "a Case drives the emulated robot through the daemon and back to the screen",
           "ok": true,
-          "detail": "23.5 s",
+          "detail": "17.4 s",
           "metrics": {},
-          "seconds": 23.519
+          "seconds": 17.449
         }
       ],
       "canaries": [
         {
           "name": "an app that skips the heartbeat is caught",
-          "ok": false,
-          "detail": "Canary did not fire: the check passed a planted fault (18.0 s)",
+          "ok": true,
+          "detail": "",
           "metrics": {},
-          "seconds": 17.954
+          "seconds": 5.845
         },
         {
           "name": "a UI that hides a fault is caught",
-          "ok": false,
-          "detail": "Canary did not fire: the check passed a planted fault (17.5 s)",
+          "ok": true,
+          "detail": "",
           "metrics": {},
-          "seconds": 17.533
+          "seconds": 1.705
         },
         {
           "name": "a daemon built with unlock-real-motors is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 4.282
+          "seconds": 4.226
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T20:59:56.762Z",
+      "commit": "345f905",
+      "at": "2026-11-09T01:58:12.487Z",
       "manifest": "clean"
     },
     "s1-f2-learner": {

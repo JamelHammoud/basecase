@@ -68,7 +68,7 @@ const useVisited = (tab: LeftTab) => {
 export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
   const { open, width, tab } = props;
   const visited = useVisited(tab);
-  const noRobot = isPlayTab(tab) && !props.cases.cases.hasRobot;
+  const noRobot = isPlayTab(tab) && tab !== 'operate' && !props.cases.cases.hasRobot;
   const playing = noRobot ? 'parts' : tab;
 
   return (

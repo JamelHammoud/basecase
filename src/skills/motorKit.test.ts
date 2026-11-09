@@ -51,6 +51,9 @@ describe('Motor Kit environments', () => {
 
     expect(job.command).toEqual([0.2, 0, 0]);
     expect(job).toMatchObject({ actorLinvel: false, task: 'walk', squash: 'tanh', logStdMin: -2.5 });
+    expect(kitJob(fixtureModel('biped-servo'), 'velocity-tracking', { minutes: 1, seed: 1 })).not.toHaveProperty(
+      'squash',
+    );
     expect(job.delaySteps?.[1]).toBeGreaterThan(0);
     expect(job.reward).toContain('def reward(state):');
   });

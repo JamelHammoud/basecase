@@ -221,9 +221,38 @@ fn summary(fits: &[Fit], unknowns: &[Unknown], planted: &[Vec<f64>]) {
     }
 }
 
-fn check(fits: &[Fit], unknowns: &[Unknown], planted: &[Vec<f64>]) {
+fn check_shapes(fits: &[Fit], unknowns: &[Unknown], planted: &[Vec<f64>], seed: u64) {
+    assert!(!unknowns.is_empty(), "seed {seed:#x}: no unknowns to identify");
+    assert_eq!(planted.len(), WORLDS, "seed {seed:#x}: planted worlds");
+    assert_eq!(fits.len(), planted.len(), "seed {seed:#x}: one fit per planted world");
+
+    for (world, (fit, truth)) in fits.iter().zip(planted).enumerate() {
+        assert_eq!(
+            truth.len(),
+            unknowns.len(),
+            "seed {seed:#x}: world {world} planted values"
+        );
+        assert_eq!(
+            fit.values.len(),
+            unknowns.len(),
+            "seed {seed:#x}: world {world} fit values"
+        );
+        assert_eq!(
+            fit.identified.len(),
+            unknowns.len(),
+            "seed {seed:#x}: world {world} identified flags"
+        );
+        assert!(
+            fit.values.iter().all(|v| v.is_finite()),
+            "seed {seed:#x}: world {world} has a non-finite fit"
+        );
+    }
+}
+
+fn check(fits: &[Fit], unknowns: &[Unknown], planted: &[Vec<f64>], seed: u64) {
     let mut worst = (0.0f64, String::new());
 
+    check_shapes(fits, unknowns, planted, seed);
     summary(fits, unknowns, planted);
 
     for (world, (fit, truth)) in fits.iter().zip(planted).enumerate() {
@@ -246,7 +275,11 @@ fn check(fits: &[Fit], unknowns: &[Unknown], planted: &[Vec<f64>]) {
         for ((u, value), (t, identified)) in unknowns.iter().zip(&fit.values).zip(truth.iter().zip(&fit.identified)) {
             let error = (value - t).abs() / t;
 
-            assert!(*identified, "world {world}: {} was not identified", u.name);
+            assert!(
+                *identified,
+                "seed {seed:#x}: world {world}: {} was not identified",
+                u.name
+            );
 
             if error > worst.0 {
                 worst = (
@@ -264,7 +297,83 @@ fn check(fits: &[Fit], unknowns: &[Unknown], planted: &[Vec<f64>]) {
         worst.0 * 100.0,
         worst.1
     );
-    assert!(worst.0 <= TOLERANCE, "{}", worst.1);
+    assert!(
+        worst.0 <= TOLERANCE,
+        "seed {seed:#x}: a fit is off by more than 3%: {}",
+        worst.1
+    );
+}
+
+fn fresh_seed() -> u64 {
+    if let Some(seed) = std::env::var("FORGE_SYSID_SEED")
+        .ok()
+        .and_then(|s| u64::from_str_radix(s.trim_start_matches("0x"), 16).ok())
+    {
+        return seed;
+    }
+
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_nanos() as u64);
+
+    nanos ^ u64::from(std::process::id()).rotate_left(32)
+}
+
+fn planted_worlds(unknowns: &[Unknown], seed: u64) -> Vec<Vec<f64>> {
+    let mut rng = Rng(seed);
+
+    (0..WORLDS)
+        .map(|_| unknowns.iter().map(|u| rng.planted(u.nominal)).collect())
+        .collect()
+}
+
+fn honest_fits(planted: &[Vec<f64>]) -> Vec<Fit> {
+    planted
+        .iter()
+        .map(|truth| Fit {
+            values: truth.clone(),
+            identified: vec![true; truth.len()],
+            relative_std: vec![0.0; truth.len()],
+            cost: 0.0,
+            iterations: 1,
+        })
+        .collect()
+}
+
+fn explicitly_named(test: &str) -> bool {
+    std::env::args().any(|arg| arg == test)
+}
+
+#[test]
+fn canary_sysid_one_parameter_off_passes() {
+    if !explicitly_named("canary_sysid_one_parameter_off_passes") {
+        return;
+    }
+
+    let (_, plan) = hoisted();
+    let unknowns = unknowns(&plan);
+    let seed = fresh_seed();
+    let planted = planted_worlds(&unknowns, seed);
+    let mut fits = honest_fits(&planted);
+
+    check(&fits, &unknowns, &planted, seed);
+    fits[WORLDS / 2].values[unknowns.len() / 2] *= 1.0 + TOLERANCE + 0.005;
+    println!("canary reached the planted fit");
+    check(&fits, &unknowns, &planted, seed);
+}
+
+#[test]
+fn canary_sysid_no_worlds_passes() {
+    if !explicitly_named("canary_sysid_no_worlds_passes") {
+        return;
+    }
+
+    let (_, plan) = hoisted();
+    let unknowns = unknowns(&plan);
+    let seed = fresh_seed();
+
+    println!("canary reached the empty fit");
+    check(&[], &unknowns, &planted_worlds(&unknowns, seed), seed);
 }
 
 #[test]
@@ -272,10 +381,8 @@ fn batched_recovers_planted() {
     let (model, plan) = hoisted();
     let unknowns = unknowns(&plan);
     let experiment = excitation(&plan);
-    let mut rng = Rng(0x5157);
-    let planted: Vec<Vec<f64>> = (0..WORLDS)
-        .map(|_| unknowns.iter().map(|u| rng.planted(u.nominal)).collect())
-        .collect();
+    let seed = fresh_seed();
+    let planted = planted_worlds(&unknowns, seed);
     let recordings = record(&model, &experiment, (&unknowns, &planted));
     let started = std::time::Instant::now();
     let fits = identify_worlds(
@@ -297,5 +404,5 @@ fn batched_recovers_planted() {
         started.elapsed().as_secs_f64(),
         fits.iter().map(|f| f.iterations).max().unwrap_or(0)
     );
-    check(&fits, &unknowns, &planted);
+    check(&fits, &unknowns, &planted, seed);
 }

@@ -23,6 +23,27 @@ export function canaryVerdict(report, title) {
   return crashed ? { fired: false, why: `It crashed instead: ${crashed.split('\n')[0]}` } : { fired: true, why: '' };
 }
 
+export function cargoVerdict(r, caught) {
+  if (r.ok) return { fired: false, why: 'The planted fault passed' };
+
+  const output = `${r.stdout}\n${r.stderr}`;
+
+  return caught.every((pattern) => pattern.test(output))
+    ? { fired: true, why: '' }
+    : { fired: false, why: `It failed for another reason: ${output.trim().split('\n').slice(-4).join(' / ')}` };
+}
+
+export function cargoCanary(name, args, caught) {
+  return {
+    name,
+    run: () => {
+      const verdict = cargoVerdict(sh('cargo', args), caught);
+
+      return verdict.fired ? fail('The check caught the planted fault') : pass(verdict.why);
+    },
+  };
+}
+
 export function vitestCanary(name, file, title) {
   return {
     name,

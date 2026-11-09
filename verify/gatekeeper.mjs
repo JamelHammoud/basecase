@@ -11,6 +11,7 @@ import {
   readStatus,
   runGate,
   saveResult,
+  uncommitted,
 } from './lib/run.mjs';
 
 const RATCHET_FILE = path.join(VERIFY_DIR, 'ratchet.json');
@@ -20,21 +21,22 @@ function printStatus(gates) {
 
   for (const g of gates) {
     const s = saved[g.id];
+    const TREE_NOTE = { clean: '', dirty: ' (dirty)' };
     let label = 'not run';
 
     if (g.state === 'parked') label = 'parked';
-    else if (s) label = s.ok ? `pass at ${s.commit}` : `FAIL at ${s.commit}`;
+    else if (s) label = `${s.ok ? 'pass' : 'FAIL'} at ${s.commit}${TREE_NOTE[s.tree] ?? ' (tree not recorded)'}`;
 
     console.log(`S${g.stage}  ${g.id.padEnd(22)} ${label.padEnd(20)} ${g.title}`);
   }
 }
 
 function approve(gates) {
-  fs.writeFileSync(MANIFEST_FILE, `${JSON.stringify(currentManifest(), null, 2)}\n`);
   fs.writeFileSync(
     RATCHET_FILE,
     `${JSON.stringify(Object.fromEntries(gates.map((g) => [g.id, g.checks.length])), null, 2)}\n`,
   );
+  fs.writeFileSync(MANIFEST_FILE, `${JSON.stringify(currentManifest(), null, 2)}\n`);
   console.log('Recorded gate manifest and check counts.');
 }
 
@@ -72,9 +74,10 @@ async function runGates(gates, wanted) {
 
     console.log(`${g.id}: ${g.title}`);
 
+    const changedBefore = uncommitted();
     const result = await runGate(g, console.log);
 
-    saveResult(result);
+    saveResult(result, undefined, changedBefore);
     console.log(`${g.id}: ${result.ok ? 'PASS' : 'FAIL'}${result.voided ? ` (void: ${result.voided})` : ''}`);
     ok &&= result.ok && !result.voided;
   }

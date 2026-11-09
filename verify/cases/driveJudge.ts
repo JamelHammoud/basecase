@@ -13,6 +13,8 @@ export const DRIVE_BARS = Object.freeze({
   realtimeHigh: 1.05,
   windowLow: 0.9,
   realtimeSeconds: 10,
+  handMatchMm: 1,
+  galleryMoveMm: 20,
 });
 
 const sub = (a: V3, b: V3): V3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];

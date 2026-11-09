@@ -4,7 +4,7 @@ import { builderRobot, buildCase } from '../../src/cases/caseBuilder';
 import type { Case } from '../../src/cases/schema';
 import { parseCase, touchTheDots } from '../../src/cases/testing';
 import { buildRig } from '../../src/utils/kinematics';
-import { judgePlay, playRobot, roundTrip } from './play';
+import { GATE_ARM_SEED, gateArmShape, judgePlay, playRobot, roundTrip } from './play';
 
 const ARMS = ['arm-3dof', 'arm-6dof', 'gate-arm-5dof'];
 
@@ -16,7 +16,7 @@ function authoredOnGateArm(): Case {
   const arm = playRobot('gate-arm-5dof');
   const made = buildCase({ goal: 'touch', world: 'shelf' }, builderRobot(buildRig(arm.joints, arm.parts), arm.parts));
 
-  if (!made.ok) throw new Error(`The Case builder refused the gate arm: ${made.problem}`);
+  if (!made.ok) throw new Error(`The Case builder refused the gate arm (seed ${GATE_ARM_SEED}): ${made.problem}`);
 
   return roundTrip(parseCase(roundTrip(made.kase)));
 }
@@ -34,7 +34,10 @@ describe('one Case file runs on different arms', () => {
         const kase = author();
         const frozen = JSON.stringify(kase);
 
-        expect(await judgePlay(mj, kase, playRobot(arm))).toEqual([]);
+        expect(
+          await judgePlay(mj, kase, playRobot(arm)),
+          `gate arm seed ${GATE_ARM_SEED}: ${JSON.stringify(gateArmShape())}`,
+        ).toEqual([]);
         expect(JSON.stringify(kase)).toBe(frozen);
       }, 300_000);
     }

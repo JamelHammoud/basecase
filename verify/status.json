@@ -1623,47 +1623,55 @@
       "title": "F5: physics, policy and learner in one GPU buffer; acceptance replay in C",
       "stage": 1,
       "state": "required",
-      "ok": true,
+      "ok": false,
       "voided": false,
       "checks": [
         {
           "name": "qualification vectors catch a bad GPU and fall back to C",
           "ok": true,
-          "detail": "5.5 s",
+          "detail": "0.8 s",
           "metrics": {},
-          "seconds": 5.497
+          "seconds": 0.788
         },
         {
-          "name": "Full GPU loop reaches 70K steps/s at 4096 envs",
+          "name": "Full GPU loop reaches 70K steps/s at 4096 envs, and reports that it trained on the GPU",
           "ok": true,
-          "detail": "122797 steps/s",
+          "detail": "122175 steps/s",
           "metrics": {
-            "loadBefore": 4.2548828125,
-            "loadAfter": 3.994140625
+            "loadBefore": 6.23974609375,
+            "loadAfter": 6.06005859375
           },
-          "seconds": 2.616
+          "seconds": 2.554
         },
         {
           "name": "L4 statistics and L5 replay hold",
           "ok": true,
-          "detail": "33.9 s",
+          "detail": "41.6 s",
           "metrics": {},
-          "seconds": 33.893
+          "seconds": 41.576
         },
         {
-          "name": "Forge reaches the walk skill at least 5x faster than the Python baseline",
-          "ok": true,
-          "detail": "7.18x",
+          "name": "Forge reaches the walk skill at least 5x faster than the Python baseline on every robot, by wall clock, replayed in C MuJoCo, on the GPU loop",
+          "ok": false,
+          "detail": "quad-servo 3.48x, hexapod 11.91x, biped-servo 2.97x; below 5x: quad-servo 3.48x; below 5x: biped-servo 2.97x",
           "metrics": {
-            "ratios": [
-              7.18105636130827,
-              12.143346584775571,
-              3.744747795885221
+            "ratios": {
+              "quad-servo": 3.4772943665447116,
+              "hexapod": 11.908698840353958,
+              "biped-servo": 2.9740020237141156
+            },
+            "forgeSeconds": {
+              "quad-servo": 13.442,
+              "hexapod": 29.039,
+              "biped-servo": 6.115
+            },
+            "missed": [
+              "quad-servo seed 4: replay passed 26 of 32 seeds"
             ],
-            "loadBefore": 6.0869140625,
-            "loadAfter": 3.2255859375
+            "loadBefore": 6.16943359375,
+            "loadAfter": 3.49560546875
           },
-          "seconds": 313.847
+          "seconds": 314.24
         }
       ],
       "canaries": [
@@ -1672,12 +1680,23 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 22.851
+          "seconds": 18.333
+        },
+        {
+          "name": "GPU rollouts on planted bad physics fail the L4 statistics",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 11.41
         }
       ],
-      "commit": "9a4a6ed",
-      "at": "2026-11-09T13:13:34.254Z",
-      "manifest": "clean"
+      "commit": "2560392",
+      "at": "2026-11-09T17:15:24.561Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s6-hidden-twin": {
       "id": "s6-hidden-twin",
@@ -1688,67 +1707,92 @@
       "voided": false,
       "checks": [
         {
-          "name": "the twin is fair: fresh hidden units per run, and their true in-model parameters reach the bar without the alarm",
+          "name": "nothing in src, electron, forge or hw imports or reads from verify (test fixtures and the gate script aside)",
           "ok": true,
-          "detail": "3.0 s",
+          "detail": "2018 files scanned",
           "metrics": {},
-          "seconds": 3.046
+          "seconds": 0.235
         },
         {
-          "name": "24 hidden units per family: median held-out error down 25%, bootstrap CI above zero; shuffled logs fail; preset logs read consistent",
+          "name": "the twin is fair: fresh hidden units per run, and their true in-model parameters reach the bar without the alarm",
           "ok": true,
-          "detail": "214.8 s",
+          "detail": "3.4 s",
           "metrics": {},
-          "seconds": 214.811
+          "seconds": 3.364
+        },
+        {
+          "name": "24 hidden units per family, written to disk only after every calibrator call: median held-out error down 25%, bootstrap CI above zero; shuffled logs fail; preset logs read consistent",
+          "ok": true,
+          "detail": "211.0 s",
+          "metrics": {},
+          "seconds": 210.989
         },
         {
           "name": "Calibration unit tests pass",
           "ok": true,
-          "detail": "2.8 s",
+          "detail": "2.3 s",
           "metrics": {},
-          "seconds": 2.829
+          "seconds": 2.295
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "7.0 s",
+          "detail": "5.5 s",
           "metrics": {},
-          "seconds": 7.042
+          "seconds": 5.473
         }
       ],
       "canaries": [
+        {
+          "name": "a calibrator that imports verify/twin or reads verify/out/twin is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.001
+        },
+        {
+          "name": "a calibrator that reads this run’s hidden units fails the bar, because none exist while it runs",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.572
+        },
         {
           "name": "a no-op calibrator fails the bar",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.708
+          "seconds": 1.566
         },
         {
           "name": "a twin inside the training model raises the alarm",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 3.472
+          "seconds": 2.988
         },
         {
           "name": "gains that straddle zero fail the bootstrap",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.475
+          "seconds": 0.465
         },
         {
           "name": "fewer than 20 units fail",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.416
+          "seconds": 0.421
         }
       ],
-      "commit": "13ea308",
-      "at": "2026-11-09T10:12:22.154Z",
-      "manifest": "clean"
+      "commit": "2560392",
+      "at": "2026-11-09T15:51:12.588Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s2-cases-play": {
       "id": "s2-cases-play",
@@ -1759,49 +1803,56 @@
       "voided": false,
       "checks": [
         {
-          "name": "one Case file, written once, runs on arm-3dof, arm-6dof and a gate-only arm: limp fails, reference passes",
+          "name": "nothing in src, electron, forge or hw imports or reads from verify (test fixtures and the gate script aside)",
           "ok": true,
-          "detail": "1.1 s",
+          "detail": "2018 files scanned",
           "metrics": {},
-          "seconds": 1.081
+          "seconds": 0.233
         },
         {
-          "name": "every example, New Case goal and world, and gallery Case: limp margin negative, reference margin positive",
+          "name": "one Case file, written once, runs on arm-3dof, arm-6dof and a gate-only arm drawn fresh each run: limp fails, reference passes",
           "ok": true,
-          "detail": "33.4 s",
+          "detail": "0.9 s",
           "metrics": {},
-          "seconds": 33.437
+          "seconds": 0.903
         },
         {
-          "name": "e2e drive: an arm moves its hand both ways, a rover goes and stops, a hexapod walks, focus loss stops",
+          "name": "every example, New Case goal and world, and gallery Case, none dropped and at least the pinned counts: limp margin negative, reference margin positive",
           "ok": true,
-          "detail": "36.2 s",
+          "detail": "33.5 s",
           "metrics": {},
-          "seconds": 36.203
+          "seconds": 33.525
+        },
+        {
+          "name": "e2e drive: the rendered arm hand moves both ways and matches the reported one, a rover goes and stops, a hexapod walks, focus loss stops",
+          "ok": true,
+          "detail": "34.7 s",
+          "metrics": {},
+          "seconds": 34.711
         },
         {
           "name": "the production web bundle builds",
           "ok": true,
-          "detail": "7.4 s",
+          "detail": "6.8 s",
           "metrics": {},
-          "seconds": 7.399
+          "seconds": 6.755
         },
         {
-          "name": "every gallery link loads from the web build and drives at 0.95x to 1.05x real time, headless",
+          "name": "every gallery link loads from the web build, drives at 0.95x to 1.05x real time and moves while W is held, headless",
           "ok": true,
-          "detail": "38.7 s",
+          "detail": "39.2 s",
           "metrics": {
-            "loadBefore": 6.17529296875,
-            "loadAfter": 8.14697265625
+            "loadBefore": 5.48291015625,
+            "loadAfter": 7.30029296875
           },
-          "seconds": 38.743
+          "seconds": 39.159
         },
         {
           "name": "Types hold",
           "ok": true,
           "detail": "5.2 s",
           "metrics": {},
-          "seconds": 5.194
+          "seconds": 5.152
         }
       ],
       "canaries": [
@@ -1810,40 +1861,58 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.533
+          "seconds": 0.517
         },
         {
-          "name": "an arm drive that never moves is caught",
+          "name": "an arm drive that never reaches the sim is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.398
+          "seconds": 17.368
+        },
+        {
+          "name": "a reported hand that moves while the rendered arm stays put is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 17.663
         },
         {
           "name": "a rover that runs on after release is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.393
+          "seconds": 19.738
         },
         {
           "name": "a gallery at half speed is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.392
+          "seconds": 14.435
         },
         {
           "name": "a gallery at double speed is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.396
+          "seconds": 14.079
+        },
+        {
+          "name": "a gallery that keeps time but never moves is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 14.119
         }
       ],
-      "commit": "fc01cb5",
-      "at": "2026-11-09T14:32:29.905Z",
-      "manifest": "clean"
+      "commit": "b613766",
+      "at": "2026-11-09T19:29:59.888Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s1-f7-gradients": {
       "id": "s1-f7-gradients",
@@ -1856,30 +1925,30 @@
         {
           "name": "gradient within 1% of finite differences off contact, 10% on smoothed contact",
           "ok": true,
-          "detail": "9.2 s",
+          "detail": "27.5 s",
           "metrics": {},
-          "seconds": 9.234
+          "seconds": 27.469
         },
         {
           "name": "forward physics stays exact while gradients are smoothed",
           "ok": true,
-          "detail": "1.8 s",
+          "detail": "1.9 s",
           "metrics": {},
-          "seconds": 1.814
+          "seconds": 1.872
         },
         {
-          "name": "batched sysid recovers planted parameters to 3%",
+          "name": "batched sysid recovers parameters planted from a fresh seed to 3%, on every world",
           "ok": true,
-          "detail": "151.7 s",
+          "detail": "170.3 s",
           "metrics": {},
-          "seconds": 151.733
+          "seconds": 170.277
         },
         {
           "name": "design sweep varies mass and gear per world",
           "ok": true,
-          "detail": "4.8 s",
+          "detail": "3.5 s",
           "metrics": {},
-          "seconds": 4.829
+          "seconds": 3.531
         }
       ],
       "canaries": [
@@ -1888,12 +1957,30 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.119
+          "seconds": 0.12
+        },
+        {
+          "name": "a sysid fit with one parameter off by more than 3% is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.075
+        },
+        {
+          "name": "a sysid run with no worlds is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.07
         }
       ],
-      "commit": "1482d51",
-      "at": "2026-11-09T14:39:34.135Z",
-      "manifest": "clean"
+      "commit": "2560392",
+      "at": "2026-11-09T17:02:24.998Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     }
   }
 }

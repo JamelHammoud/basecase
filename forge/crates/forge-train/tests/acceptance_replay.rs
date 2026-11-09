@@ -40,6 +40,7 @@ const L4_FLOOR: f64 = 0.01;
 const ENV_SEED: u64 = 21;
 const NOISE_SEED: u64 = 22;
 const CANARY_ITERATIONS: usize = 100;
+const L4_CANARY_ITERATIONS: usize = 20;
 
 fn fixture() -> PathBuf {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -276,8 +277,10 @@ fn c_statistics(robot: &Robot, actor: &mut Actor, steps: usize) -> Vec<Statistic
     tally.summary()
 }
 
-fn gpu_statistics(folder: &Path, rounds: usize) -> (Vec<Statistic>, usize) {
-    let robot = robot_on(folder, Backend::Metal);
+fn gpu_statistics(folder: &Path, rounds: usize, plant: fn(&mut Robot)) -> (Vec<Statistic>, usize) {
+    let mut robot = robot_on(folder, Backend::Metal);
+
+    plant(&mut robot);
 
     assert!(
         matches!(robot.engine, Engine::Metal { .. }),
@@ -301,20 +304,19 @@ fn gpu_statistics(folder: &Path, rounds: usize) -> (Vec<Statistic>, usize) {
     (stats, rounds * gpu.horizon())
 }
 
-#[test]
-fn acceptance_replay_l4_gpu_rollout_statistics_match_c_mujoco() {
-    if !asked_for_acceptance() {
-        return;
-    }
-
-    let _gpu = GPU.lock().unwrap_or_else(|e| e.into_inner());
-    let folder = trained_policy();
-    let (ours, steps) = gpu_statistics(&folder, L4_ROUNDS);
-    let robot = robot_on(&folder, Backend::Mujoco);
-    let theirs = c_statistics(&robot, &mut actor_from(&folder, robot.nact), steps);
+fn l4_misses(ours: &[Statistic], theirs: &[Statistic]) -> Vec<String> {
     let mut misses = Vec::new();
 
-    for (a, b) in ours.iter().zip(&theirs) {
+    assert!(!ours.is_empty(), "the GPU reported no rollout statistics");
+    assert_eq!(
+        ours.len(),
+        theirs.len(),
+        "the GPU and C MuJoCo report different statistics"
+    );
+
+    for (a, b) in ours.iter().zip(theirs) {
+        assert_eq!(a.name, b.name, "the GPU and C MuJoCo statistics are out of order");
+
         let allowed = L4_SIGMAS * a.error.hypot(b.error) + L4_FLOOR * b.mean.abs();
         let line = format!(
             "{}: GPU {:.5} ± {:.5}, C MuJoCo {:.5} ± {:.5}, allowed {allowed:.5}",
@@ -323,12 +325,30 @@ fn acceptance_replay_l4_gpu_rollout_statistics_match_c_mujoco() {
 
         println!("{line}");
 
-        if (a.mean - b.mean).abs() > allowed {
+        if (a.mean - b.mean).abs() > allowed || !a.mean.is_finite() || !b.mean.is_finite() {
             misses.push(line);
         }
     }
 
-    assert!(misses.is_empty(), "{misses:#?}");
+    misses
+}
+
+fn no_plant(_: &mut Robot) {}
+
+#[test]
+fn acceptance_replay_l4_gpu_rollout_statistics_match_c_mujoco() {
+    if !asked_for_acceptance() {
+        return;
+    }
+
+    let _gpu = GPU.lock().unwrap_or_else(|e| e.into_inner());
+    let folder = trained_policy();
+    let (ours, steps) = gpu_statistics(&folder, L4_ROUNDS, no_plant);
+    let robot = robot_on(&folder, Backend::Mujoco);
+    let theirs = c_statistics(&robot, &mut actor_from(&folder, robot.nact), steps);
+    let misses = l4_misses(&ours, &theirs);
+
+    assert!(misses.is_empty(), "L4 statistics differ: {misses:#?}");
 }
 
 fn plant_bent_knees(robot: &mut Robot) {
@@ -395,9 +415,62 @@ fn canary_bad_physics_replay_fails() {
 
     let c = replay_on(&robot_on(&folder, Backend::Mujoco), &mut policy);
 
+    println!("canary reached the C MuJoCo replay");
     assert!(
         c.reached(),
         "C MuJoCo rejects the policy trained on planted physics: {}",
         c.to_json()
     );
+}
+
+#[test]
+fn canary_bad_physics_l4_statistics_match() {
+    if !explicitly_named("canary_bad_physics_l4_statistics_match") {
+        return;
+    }
+
+    let _gpu = GPU.lock().unwrap_or_else(|e| e.into_inner());
+    let folder = job_folder("canary-l4-bad-physics", &json!({}));
+    let robot = robot_on(&folder, Backend::Metal);
+    let start = Start {
+        robot: &robot,
+        envs: ENVS,
+        env_seed: ENV_SEED,
+        seed: NOISE_SEED,
+        math: Math::native(1),
+    };
+    let mut gpu = gpu_loop::start(start).expect("the GPU loop starts");
+
+    for _ in 0..L4_CANARY_ITERATIONS {
+        gpu.iterate().expect("an iteration");
+    }
+
+    warm::write_resume(&folder.join("resume.json"), &gpu.snapshot(), gpu.norm(), 0).expect("resume.json");
+    drop(gpu);
+
+    let (ours, steps) = gpu_statistics(&folder, L4_ROUNDS, plant_bent_knees);
+    let c_robot = robot_on(&folder, Backend::Mujoco);
+    let theirs = c_statistics(&c_robot, &mut actor_from(&folder, c_robot.nact), steps);
+    let misses = l4_misses(&ours, &theirs);
+
+    println!("canary reached the L4 comparison");
+    assert!(misses.is_empty(), "L4 statistics differ: {misses:#?}");
+}
+
+#[test]
+fn replay_folder_in_c() {
+    let Some(folder) = std::env::var_os("FORGE_REPLAY_FOLDER") else {
+        return;
+    };
+
+    if !explicitly_named("replay_folder_in_c") {
+        return;
+    }
+
+    let folder = PathBuf::from(folder);
+    let robot = robot_on(&folder, Backend::Mujoco);
+    let mut policy = exported(&folder, &robot);
+    let c = replay_on(&robot, &mut policy);
+
+    println!("C MuJoCo replay of the folder: {}", c.to_json());
 }

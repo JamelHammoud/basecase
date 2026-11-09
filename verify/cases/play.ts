@@ -1,11 +1,12 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { builderRobot, buildCase, goalsFor, worldsFor } from '../../src/cases/caseBuilder';
+import { builderRobot, buildCase, fittingTemplates, goalsFor, worldsFor } from '../../src/cases/caseBuilder';
 import type { Case } from '../../src/cases/schema';
 import { caseTemplates } from '../../src/cases/templates';
 import { runCase } from '../../src/cases/testing';
 import { box, joint, type FixtureRobot, type P3 } from '../../src/sim/fixtures/parts';
 import { fixtureRobots } from '../../src/sim/fixtures/robots';
 import { buildRig } from '../../src/utils/kinematics';
+import { between, freshSeed, pick, seededRng, type Rng } from '../zoo/rng';
 
 export const PLAY_ROBOTS = Object.freeze([
   'arm-3dof',
@@ -17,23 +18,55 @@ export const PLAY_ROBOTS = Object.freeze([
   'quad-big',
 ]);
 
+export const PLAY_MINIMUMS: Readonly<Record<string, { examples: number; built: number }>> = Object.freeze({
+  'arm-3dof': { examples: 1, built: 2 },
+  'arm-6dof': { examples: 1, built: 2 },
+  'rover-diff': { examples: 1, built: 9 },
+  'rover-four': { examples: 1, built: 9 },
+  hexapod: { examples: 1, built: 12 },
+  'quad-servo': { examples: 1, built: 12 },
+  'quad-big': { examples: 1, built: 12 },
+});
+
+export const GALLERY_MINIMUM = 3;
+
 const X: P3 = [1, 0, 0];
 const Y: P3 = [0, 1, 0];
+const Z: P3 = [0, 0, 1];
 
-const GATE_ARM_AXES: P3[] = [Y, X, X, Y, X];
-const GATE_ARM_LINK_MM = 60;
+const GATE_ARM_AXES: ReadonlyArray<readonly P3[]> = [[Y], [X], [X], [Y, X], [X, Z]];
 
-export function gateArm(): FixtureRobot {
+export const GATE_ARM_LINK_MM = Object.freeze({ min: 50, max: 75 });
+export const GATE_ARM_SEED = process.env.GATE_ARM_SEED ?? freshSeed();
+
+export interface GateArmShape {
+  axes: P3[];
+  linksMm: number[];
+}
+
+const flip = (rng: Rng, axis: P3): P3 => (rng() < 0.5 ? axis : [-axis[0], -axis[1], -axis[2]]);
+
+export function gateArmShape(seed = GATE_ARM_SEED): GateArmShape {
+  const rng = seededRng(seed, 'gate-arm');
+
+  return {
+    axes: GATE_ARM_AXES.map((choices) => flip(rng, pick(rng, choices))),
+    linksMm: GATE_ARM_AXES.map(() => Math.round(between(rng, GATE_ARM_LINK_MM.min, GATE_ARM_LINK_MM.max))),
+  };
+}
+
+export function gateArm(shape = gateArmShape()): FixtureRobot {
   const parts = [box('plinth', [0, 20, 0], [90, 40, 90], 450)];
   const joints = [];
   let previous = 'plinth';
   let parentJoint: string | undefined;
+  let y = 40;
 
-  for (const [i, axis] of GATE_ARM_AXES.entries()) {
+  for (const [i, axis] of shape.axes.entries()) {
     const name = `seg${i}`;
-    const y = 40 + GATE_ARM_LINK_MM * i;
+    const link = shape.linksMm[i];
 
-    parts.push(box(name, [0, y + GATE_ARM_LINK_MM / 2, 0], [22, GATE_ARM_LINK_MM, 22], 55));
+    parts.push(box(name, [0, y + link / 2, 0], [22, link, 22], 55));
     joints.push(
       joint({
         id: `j${i}`,
@@ -47,6 +80,7 @@ export function gateArm(): FixtureRobot {
     );
     previous = name;
     parentJoint = `j${i}`;
+    y += link;
   }
 
   return { id: 'gate-arm-5dof', parts, joints, expect: { morphology: 'fixed', stand: 'n/a', walk: 'n/a' } };
@@ -97,21 +131,42 @@ export interface NamedCase {
   kase: Case;
 }
 
-export function casesFor(robot: FixtureRobot): NamedCase[] {
+export interface OfferedCases {
+  cases: NamedCase[];
+  problems: string[];
+}
+
+function minimumProblems(id: string, examples: number, built: number): string[] {
+  const least = PLAY_MINIMUMS[id];
+
+  if (!least) return [];
+
+  return [
+    ...(examples < least.examples ? [`${examples} fitting examples, the gate pins at least ${least.examples}`] : []),
+    ...(built < least.built ? [`${built} New Case goals and worlds, the gate pins at least ${least.built}`] : []),
+  ];
+}
+
+export function casesFor(robot: FixtureRobot): OfferedCases {
   const rig = buildRig(robot.joints, robot.parts);
-  const templates = caseTemplates(rig, robot.parts)
-    .filter((t) => !t.refusal)
-    .map((t) => ({ name: t.name, kase: t.build() }));
+  const templates = fittingTemplates(caseTemplates(rig, robot.parts)).map((t) => ({ name: t.name, kase: t.build() }));
   const builder = builderRobot(rig, robot.parts);
+  const problems: string[] = [];
   const built = goalsFor(builder).flatMap((goal) =>
     worldsFor(goal.kind).flatMap((world) => {
       const made = buildCase({ goal: goal.kind, world: world.kind }, builder);
 
-      return made.ok ? [{ name: `${goal.kind} in ${world.kind}`, kase: made.kase }] : [];
+      if (made.ok) return [{ name: `${goal.kind} in ${world.kind}`, kase: made.kase }];
+
+      problems.push(`${goal.kind} in ${world.kind} is offered but does not build: ${made.problem}`);
+
+      return [];
     }),
   );
 
-  return [...templates, ...built];
+  problems.push(...minimumProblems(robot.id, templates.length, built.length));
+
+  return { cases: [...templates, ...built], problems };
 }
 
 export const roundTrip = (kase: Case): Case => JSON.parse(JSON.stringify(kase)) as Case;

@@ -1,5 +1,5 @@
 use crate::simulate::Experiment;
-use forge_sim::grad::{write_param, Tracer, Wrt, WIDTH};
+use forge_sim::grad::{write_param, Smooth, Tracer, Wrt, WIDTH};
 use forge_sim::lanes::LANES;
 use forge_sim::{Plan, State, Workspace};
 use rayon::prelude::*;
@@ -112,7 +112,7 @@ impl Run<'_> {
 
         for k in 0..self.samples() {
             self.set_ctrl(&mut state, k);
-            tracer.advance(self.plan, &mut state, (&mut w, e.substeps, 0.0))?;
+            tracer.advance(self.plan, &mut state, (&mut w, e.substeps, Smooth::EXACT))?;
 
             for (lane, lane_columns) in columns.iter_mut().enumerate() {
                 for &i in &e.observed {

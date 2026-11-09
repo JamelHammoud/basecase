@@ -4,7 +4,7 @@ use super::dual::Real;
 use super::dynamics::{dynamics, Inputs};
 use super::frozen::Frozen;
 use super::rows::{rows, Row, RowInputs};
-use super::solve::{chol_solve, law, residual, spd_solve, Problem};
+use super::solve::{chol_solve, law, residual, spd_solve, Problem, Smooth};
 use crate::plan::Plan;
 use crate::spatial::mul_quat;
 use forge_ir::JointKind;
@@ -93,7 +93,8 @@ pub struct Next<S> {
     pub qacc: Vec<f64>,
 }
 
-pub fn substep<S: Real>(plan: &Plan, x: &World<S>, frozen: &Frozen, smoothing: f64) -> Option<Next<S>> {
+pub fn substep<S: Real>(plan: &Plan, x: &World<S>, frozen: &Frozen, shape: Smooth) -> Option<Next<S>> {
+    let smoothing = shape.force;
     let k = &plan.kernel;
     let n = k.nv;
     let kin = kinematics(k, x.qpos, x.coeffs);

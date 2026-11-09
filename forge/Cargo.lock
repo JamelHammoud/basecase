@@ -261,6 +261,7 @@ dependencies = [
  "forge-mujoco",
  "forge-reward",
  "forge-sim",
+ "rayon",
  "serde_json",
 ]
 

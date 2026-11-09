@@ -2,7 +2,7 @@
 
 mod gradcommon;
 
-use forge_sim::grad::{step_with_jacobian, surrogate, Jacobian, Spec, Wrt};
+use forge_sim::grad::{step_with_jacobian, surrogate, Jacobian, Smooth, Spec, Wrt};
 use forge_sim::lanes::LANES;
 use forge_sim::{Plan, State, Workspace};
 use gradcommon::{
@@ -15,7 +15,7 @@ const ON_CONTACT_STATES: usize = 16;
 const CONTROL_SUBSTEPS: usize = 10;
 const OFF_CONTACT_BOUND: f64 = 0.01;
 const ON_CONTACT_BOUND: f64 = 0.10;
-const SMOOTHING: f64 = 0.05;
+const SMOOTHING: Smooth = Smooth { force: 0.05 };
 const SOLVER_TOLERANCE: f64 = 1e-12;
 
 fn explicitly_named(test: &str) -> bool {
@@ -68,7 +68,22 @@ impl Errors {
         self.columns += columns.len();
 
         match columns.iter().position(|c| c.error > bound) {
-            Some(at) => Err(format!("column {at} is off by {:.2}%", columns[at].error * 100.0)),
+            Some(at) => {
+                for r in 0..analytic.rows {
+                    let (a, c, f, b) = (
+                        analytic.at(r, at),
+                        fd.central.at(r, at),
+                        fd.forward.at(r, at),
+                        fd.backward.at(r, at),
+                    );
+
+                    if (a - c).abs() > 1e-3 * c.abs().max(1e-3) {
+                        eprintln!("row {r}: analytic {a:.6e} central {c:.6e} forward {f:.6e} backward {b:.6e}");
+                    }
+                }
+
+                Err(format!("column {at} is off by {:.2}%", columns[at].error * 100.0))
+            }
             None => Ok(()),
         }
     }
@@ -183,7 +198,7 @@ fn on_contact(robot: &str) -> Result<(Errors, Errors), String> {
             lanes: LANES,
         };
         let smoothed = step_with_jacobian(&plan, &mut start.clone(), &mut w, &spec(SMOOTHING))?;
-        let hard = step_with_jacobian(&plan, &mut start.clone(), &mut w, &spec(0.0))?;
+        let hard = step_with_jacobian(&plan, &mut start.clone(), &mut w, &spec(Smooth::EXACT))?;
 
         for lane in (0..LANES).filter(|l| touching[*l] > 0.0) {
             smoothed_errors

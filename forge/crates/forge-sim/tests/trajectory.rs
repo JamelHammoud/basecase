@@ -2,7 +2,7 @@
 
 mod gradcommon;
 
-use forge_sim::grad::{Tracer, Wrt, WIDTH};
+use forge_sim::grad::{Smooth, Tracer, Wrt, WIDTH};
 use forge_sim::lanes::LANES;
 use forge_sim::{Plan, State, Workspace};
 use gradcommon::{all_directions, fixture_path, perturb, read_lane, step_size, ROBOTS};
@@ -72,7 +72,7 @@ fn traced(plan: &Plan, chunk: &[Wrt]) -> Vec<Vec<f64>> {
     for step in 0..CONTROL_STEPS {
         drive(plan, &mut state, step);
         tracer
-            .advance(plan, &mut state, (&mut w, SUBSTEPS, 0.0))
+            .advance(plan, &mut state, (&mut w, SUBSTEPS, Smooth::EXACT))
             .expect("traces");
     }
 

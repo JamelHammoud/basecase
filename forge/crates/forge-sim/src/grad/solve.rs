@@ -1,9 +1,18 @@
 use super::dual::Real;
 use super::rows::{Kind, Row};
 
-const NEWTON_ITERATIONS: usize = 60;
-const LINE_STEPS: usize = 40;
-const TOLERANCE: f64 = 1e-13;
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Smooth {
+    pub force: f64,
+}
+
+impl Smooth {
+    pub const EXACT: Smooth = Smooth { force: 0.0 };
+}
+
+const NEWTON_ITERATIONS: usize = 30;
+const LINE_STEPS: usize = 30;
+const STEP_TOLERANCE: f64 = 1e-13;
 
 pub fn cholesky(a: &mut [f64], n: usize) -> bool {
     for j in 0..n {
@@ -240,7 +249,7 @@ impl Problem<'_> {
         for _ in 0..LINE_STEPS {
             let trial: Vec<f64> = a.iter().zip(dir).map(|(x, d)| x + alpha * d).collect();
 
-            if self.energy(&trial) <= start {
+            if self.energy(&trial) < start {
                 return trial;
             }
 
@@ -251,7 +260,6 @@ impl Problem<'_> {
     }
 
     pub fn solve(&self, start: &[f64]) -> Option<(Vec<f64>, Vec<f64>)> {
-        let scale = 1.0 + self.smooth.iter().map(|x| x.abs()).fold(0.0, f64::max);
         let mut a = start.to_vec();
 
         for _ in 0..NEWTON_ITERATIONS {
@@ -261,13 +269,15 @@ impl Problem<'_> {
                 return None;
             }
 
-            if g.iter().map(|x| x.abs()).fold(0.0, f64::max) <= TOLERANCE * scale {
-                return Some((a, h));
-            }
-
             let mut dir: Vec<f64> = g.iter().map(|x| -x).collect();
 
             chol_solve(&h, self.n, &mut dir);
+
+            let size = a.iter().map(|x| x.abs()).fold(1.0, f64::max);
+
+            if dir.iter().map(|x| x.abs()).fold(0.0, f64::max) <= STEP_TOLERANCE * size {
+                return Some((a, h));
+            }
 
             let next = self.line_search(&a, &dir);
 

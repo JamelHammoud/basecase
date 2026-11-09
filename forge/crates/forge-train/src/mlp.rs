@@ -242,6 +242,30 @@ impl Mlp {
         }
     }
 
+    pub fn input_gradient(&self, math: &Math, params: &[f32], rows: usize, scratch: &mut Scratch) -> Vec<f32> {
+        let layer = self.layers[0];
+        let shape = Shape {
+            rows,
+            inner: layer.ins,
+            cols: layer.outs,
+        };
+        let mut out = vec![0.0f32; rows * layer.ins];
+
+        math.multiply_by_transpose(
+            &mut out,
+            &scratch.gradients[0][..rows * layer.outs],
+            &params[layer.weights_at..layer.bias_at],
+            shape,
+            &mut scratch.transposed[0],
+        );
+
+        for row in out.chunks_exact_mut(layer.ins) {
+            self.masked.iter().for_each(|&i| row[i] = 0.0);
+        }
+
+        out
+    }
+
     pub fn weights_by_output(&self, params: &[f32], layer: &Layer) -> Vec<f32> {
         let mut out = vec![0.0f32; layer.ins * layer.outs];
         let weights = &params[layer.weights_at..layer.bias_at];

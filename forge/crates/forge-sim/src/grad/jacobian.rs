@@ -1,6 +1,7 @@
 use super::coeffs::{Coeffs, Wrt};
 use super::dual::Dual;
-use super::frozen::freeze;
+use super::frozen::{freeze, Frozen};
+use super::solve::Smooth;
 use super::substep::{substep, Next, World};
 use crate::integrate::implicit_step;
 use crate::lanes::LANES;
@@ -16,7 +17,7 @@ type D = Dual<WIDTH>;
 pub struct Spec<'a> {
     pub wrt: &'a [Wrt],
     pub substeps: usize,
-    pub smoothing: f64,
+    pub smoothing: Smooth,
     pub lanes: usize,
 }
 
@@ -107,7 +108,7 @@ impl Tracer {
         &mut self,
         plan: &Plan,
         state: &mut State,
-        (w, substeps, smoothing): (&mut Workspace, usize, f64),
+        (w, substeps, smoothing): (&mut Workspace, usize, Smooth),
     ) -> Result<(), String> {
         for (l, lane) in self.lanes.iter_mut().enumerate() {
             exact_into(&mut lane.ctrl, &state.ctrl, l);
@@ -117,8 +118,9 @@ impl Tracer {
             state.swap(&mut w.block);
             forward_block(plan, w);
 
-            for (l, lane) in self.lanes.iter_mut().enumerate() {
-                let frozen = freeze(plan, &w.block, l);
+            let frozen: Vec<Frozen> = (0..self.lanes.len()).map(|l| freeze(plan, &w.block, l)).collect();
+
+            for (lane, frozen) in self.lanes.iter_mut().zip(&frozen) {
                 let world = World {
                     qpos: &lane.qpos,
                     qvel: &lane.qvel,
@@ -126,7 +128,7 @@ impl Tracer {
                     coeffs: &lane.coeffs,
                 };
                 let Next { qpos, qvel, .. } =
-                    substep(plan, &world, &frozen, smoothing).ok_or("the gradient's mass matrix isn't positive")?;
+                    substep(plan, &world, frozen, smoothing).ok_or("the gradient's mass matrix isn't positive")?;
 
                 lane.qpos = qpos;
                 lane.qvel = qvel;
@@ -210,7 +212,12 @@ pub fn step_with_jacobian(
     Ok(out)
 }
 
-pub fn surrogate(plan: &Plan, state: &State, w: &mut Workspace, (lane, smoothing): (usize, f64)) -> Option<Next<f64>> {
+pub fn surrogate(
+    plan: &Plan,
+    state: &State,
+    w: &mut Workspace,
+    (lane, smoothing): (usize, Smooth),
+) -> Option<Next<f64>> {
     let mut exact = state.clone();
     let read = |v: &[crate::lanes::V]| v.iter().map(|x| x.0[lane]).collect::<Vec<f64>>();
     let (qpos, qvel, ctrl) = (read(&state.qpos), read(&state.qvel), read(&state.ctrl));
@@ -219,9 +226,11 @@ pub fn surrogate(plan: &Plan, state: &State, w: &mut Workspace, (lane, smoothing
     exact.swap(&mut w.block);
     forward_block(plan, w);
 
-    let frozen = freeze(plan, &w.block, lane);
+    let frozen: Vec<Frozen> = (0..LANES).map(|l| freeze(plan, &w.block, l)).collect();
 
     exact.swap(&mut w.block);
+
+    let frozen = &frozen[lane];
 
     let world = World {
         qpos: &qpos,
@@ -230,5 +239,5 @@ pub fn surrogate(plan: &Plan, state: &State, w: &mut Workspace, (lane, smoothing
         coeffs: &coeffs,
     };
 
-    substep(plan, &world, &frozen, smoothing)
+    substep(plan, &world, frozen, smoothing)
 }

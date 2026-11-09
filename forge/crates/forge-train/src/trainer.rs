@@ -5,11 +5,12 @@ use crate::events::{emit, status};
 use crate::export::{write_check, write_onnx, write_policy, Trained as ExportRun};
 use crate::gates;
 use crate::gpu_loop::{self, GpuPpo, Start};
-use crate::job::{self, Backend, Job};
+use crate::job::{self, Algo, Backend, Job};
 use crate::kernels::Math;
 use crate::physics::Engine;
 use crate::platform::{install_stop_handlers, raise_thread_priority, stop_requested};
 use crate::robot::Robot;
+use crate::shac::{Hyper, Shac};
 use crate::warm::{self, write_resume};
 use forge_mujoco::Model;
 use serde_json::{json, Value};
@@ -204,6 +205,25 @@ fn train_on_gpu(folder: &Path, robot: &Robot, mut algo: GpuPpo) -> Result<(), St
     finish(&replay, &algo, folder, steps)
 }
 
+fn train_shac(folder: &Path, robot: &Robot) -> Result<(), String> {
+    let job = Job {
+        backend: Backend::Mujoco,
+        ..robot.job.clone()
+    };
+    let replay = Robot::load(Model::load(&folder.join("model.xml"))?, job)?;
+    let mut algo = Shac::new(robot, Hyper::tuned(), Math::native(learner_threads()))?;
+
+    status(
+        "Training with SHAC: first-order gradients through Forge's smoothed physics. Every check replays in C MuJoCo",
+    );
+    warm_start(&replay, &mut algo, folder)?;
+    status(&format!("Training on {} robots", replay.job.envs));
+
+    let steps = train_loop(&replay, &mut algo, folder)?;
+
+    finish(&replay, &algo, folder, steps)
+}
+
 fn try_gpu_loop(robot: &Robot) -> Option<GpuPpo> {
     if robot.job.backend != Backend::Metal || !matches!(robot.engine, Engine::Metal { .. }) {
         return None;
@@ -240,12 +260,16 @@ pub fn train(folder: &Path) -> Result<(), String> {
         status(&note);
     }
 
+    if kind == Algo::Shac {
+        return train_shac(folder, &robot);
+    }
+
     if let Some(algo) = try_gpu_loop(&robot) {
         return train_on_gpu(folder, &robot, algo);
     }
 
     let envs = Envs::new(&robot, envs_count, seed + ENV_SEED_OFFSET, true)?;
-    let mut algo = algorithm::build(kind, envs, seed, Math::native(learner_threads()));
+    let mut algo = algorithm::build(kind, envs, seed, Math::native(learner_threads()))?;
 
     warm_start(&robot, algo.as_mut(), folder)?;
 

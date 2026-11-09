@@ -9,7 +9,7 @@ mod setup;
 mod source;
 pub mod stats;
 mod sync;
-mod task;
+pub mod task;
 
 use crate::algorithm::{Algorithm, Report};
 use crate::deployed::{Deployed, Squash};

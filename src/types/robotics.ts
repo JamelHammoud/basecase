@@ -7,6 +7,7 @@ import type { ReadinessDecisions } from '../readiness/types';
 import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
+import type { CalibrationHistory } from '../reality/history';
 
 export type PartCategory =
   | 'custom_models'
@@ -235,6 +236,7 @@ export interface ProjectSettings extends ProjectRecords {
   tries?: TryRecord[];
   routines?: Routine[];
   skills?: SkillRecord[];
+  servoCalibrations?: Record<string, CalibrationHistory>;
 }
 
 export interface Tether {

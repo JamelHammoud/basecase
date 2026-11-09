@@ -1,3 +1,4 @@
+import type { ServoFit } from '../data/components';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
@@ -65,4 +66,10 @@ export interface MjcfInput {
   timestep?: number;
   world?: WorldItem[];
   worldTriangles?: (id: string) => Float32Array | null;
+  servoFits?: Record<string, JointServoFit>;
+}
+
+export interface JointServoFit {
+  fit: ServoFit;
+  volts: number;
 }

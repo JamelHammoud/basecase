@@ -42,7 +42,7 @@
 | 8h | [Cases](docs/guide/cases.md) | `src/cases/`, worlds, robot slots, live driving, recording, the gallery |
 | 8i | [Skills](docs/guide/skills.md) | `src/skills/`, task contracts, the solver race, Arena, Motor Kit |
 | 8j | [Routines](docs/guide/routines.md) | `src/routines/`, the coordinator, ML nodes, scenario tests |
-| 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration |
+| 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration (`src/reality/`) |
 | 0k | [Proof](docs/guide/proof.md) | `verify/`, Gatekeeper, gates, the hidden twin, the Stage 8 session |
 | 9 | [Agent](docs/guide/agent.md) | the ACP agent, its profiles, lanes, CAD tools and kernel, the agent panel and composer |
 | — | [Benchmark](docs/guide/bench.md) | `bench/`, scoring, micro-evals |

@@ -131,6 +131,25 @@ Stage 5b is judged by `s5b-daemon-app` (§0k); its tests in `verify/hw/` are the
 - **Messages:** every `fault`, `refused` and `stopped` message appears on screen in the daemon's words (the newest six, under “From the daemon”), and when the daemon exits without being asked, `lost_message` appears. Raw codes are never shown. A new connection clears the list.
 - **Copy:** every robot string says emulated or simulation (“Emulated servos only. Real motors stay locked.”). Real serial stays compiled out until the Stage 8 session.
 
+### Calibration (Stage 6)
+
+`src/reality/` fits a servo's model from logs and feeds it to the sim. It's judged by `s6-hidden-twin` against a hidden twin (§0k). No real servo has been logged with it.
+
+- **Bench and logs:** a servo turning a pendulum (`benchInput`: the catalog servo and a 20 mm bob of the payload's mass at its arm), logged at 100 Hz with goal, position, load, volts, temperature and payload (`ServoLog` in `types.ts`).
+- **Forward model:** the MJCF and `SimEngine` the sim runs. `replayLog` holds the log's first position, then plays its goals. `MjcfInput.servoFits` gives a joint a fitted `ServoFit` and volts in place of the catalog's (`mjcfServo.ts`).
+- **What it fits:** multipliers on the BAM M6 terms the MuJoCo model carries (`servoParams.ts`): position gain (`errorGain`), delay, damping (back-EMF and viscous together), armature, base friction, load friction (`loadExternal`, times the bench's holding torque) and torque limit (kt / R). Each stays within 0.25x to 4x, delay up to 8x. `scaledFit` writes them back into a `ServoFit`, so a calibration has the catalog's shape. Backlash, series compliance, stick-slip, supply sag, thermal drift and encoder bias aren't in the model; the fit absorbs what it can of them into these terms.
+- **How it fits:** Levenberg–Marquardt with forward-difference Jacobians on MuJoCo replays (`leastSquares.ts`), a weak prior toward the preset, and a coarse delay grid first, because the cost has local minima in delay. It's TypeScript rather than `forge-id`: forge-id has no delay or torque-limit parameter, and the gate calls the calibrator in-process.
+- **Held-out honesty:** the first 0.3 s of each log is skipped, because the servo may still be moving from the log before and the log doesn't record its speed. The rest is split in time: the first half fits, the second half checks.
+- **Update ladder** (`ladder.ts`): `response` (gain, delay, damping, armature), then `friction-force` (adds base friction, load friction and torque limit). Each rung is fit on the first halves and scored on the second. Climbing stops at the first rung that predicts the second halves at least 25% better than the preset with no log worse; if none does, the best rung that's at least 5% better is kept. The chosen rung is then refit on whole logs.
+- **Verdicts** (`calibrateServo`). Only `measured` changes the model; the other two return the preset fit.
+  - `cant-tell`: fewer than two logs, a log from another servo or with missing samples, logs where the preset explains under half the motion (positions that don't follow the goals, as in shuffled logs), or an update that still leaves over 20% of the checked motion unexplained.
+  - `consistent`: the preset predicts every log within one encoder count, or no rung is 5% better while the preset explains at least 80% of the motion.
+  - `measured`: a rung passed or helped.
+- **Versions and rollback** (`history.ts`): `project.servoCalibrations` keeps a `CalibrationHistory` per joint. Every calibration is recorded with the next version number, only a `measured` one becomes active, so a failed update keeps the last good one, and `rollBack` steps back to the previous measured version, then to the preset.
+- **Into the sim:** `calibratedInput` applies each joint's active calibration when its family matches the joint's servo. `useSimulation`'s `buildModel` uses it, so the Simulate tab, Cases, Skills and training run on calibrated servos. There's no Calibrate view; calibrations reach the project from code until real servos are logged in Stage 8.
+- **Tests:** `npx vitest run src/reality` takes about a second: the fitter recovers a known gain and delay from synthetic logs, preset logs read consistent and shuffled logs can't tell.
+- **Measured at the gate** (24 hidden units per family, held-out replay and other load): median error down 52% for the STS3215 (bootstrap lower bound 41%) and 65% for the XL330 (55%), below the 90% alarm. Most units stop at the `response` rung, in about 4 s each; shuffled logs read Can't tell and preset logs Consistent. The second-half check overstates the held-out gain (often 80–90%), because held-out logs start mid-motion and the replay starts at rest.
+
 ### Parked
 
 Setup flows (IDs one servo at a time, the torque-off mirror, calibration capture, the plain failure guide, support bundle), signed Mac and Windows bundles, Pi and arm64 builds, rustypot and LeRobot's bus as further conformance clients, bulk read and write, indirect addresses, operating modes other than position, and persisting ladder evidence across restarts (a restart climbs again).

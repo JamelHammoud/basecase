@@ -175,7 +175,8 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const toUnit = (v: number) => (revolute ? THREE.MathUtils.degToRad(v) : v / 1000);
   const range = j.range ? ([Math.min(...j.range), Math.max(...j.range)] as [number, number]) : null;
   const wheel = isWheelJoint(j, st.byId, st.input.rig);
-  const servo = wheel ? null : fittedServo({ j, byId: st.byId, rig: st.input.rig, masses: st.masses });
+  const calibrated = st.input.servoFits?.[j.id];
+  const servo = wheel ? null : fittedServo({ j, byId: st.byId, rig: st.input.rig, masses: st.masses, calibrated });
   const { effort, source } = servo
     ? { effort: servo.forceNm, source: 'servo' as const }
     : effortOf(j, st.byId, st.input.rig, st.masses);

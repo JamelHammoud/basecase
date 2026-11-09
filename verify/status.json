@@ -1678,6 +1678,77 @@
       "commit": "4a0bf3c",
       "at": "2026-11-09T08:52:32.578Z",
       "manifest": "clean"
+    },
+    "s6-hidden-twin": {
+      "id": "s6-hidden-twin",
+      "title": "Stage 6: calibration against a hidden twin the builder never sees",
+      "stage": 6,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "the twin is fair: fresh hidden units per run, and their true in-model parameters reach the bar without the alarm",
+          "ok": true,
+          "detail": "3.0 s",
+          "metrics": {},
+          "seconds": 3.046
+        },
+        {
+          "name": "24 hidden units per family: median held-out error down 25%, bootstrap CI above zero; shuffled logs fail; preset logs read consistent",
+          "ok": true,
+          "detail": "214.8 s",
+          "metrics": {},
+          "seconds": 214.811
+        },
+        {
+          "name": "Calibration unit tests pass",
+          "ok": true,
+          "detail": "2.8 s",
+          "metrics": {},
+          "seconds": 2.829
+        },
+        {
+          "name": "Types hold",
+          "ok": true,
+          "detail": "7.0 s",
+          "metrics": {},
+          "seconds": 7.042
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a no-op calibrator fails the bar",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.708
+        },
+        {
+          "name": "a twin inside the training model raises the alarm",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 3.472
+        },
+        {
+          "name": "gains that straddle zero fail the bootstrap",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.475
+        },
+        {
+          "name": "fewer than 20 units fail",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.416
+        }
+      ],
+      "commit": "13ea308",
+      "at": "2026-11-09T10:12:22.154Z",
+      "manifest": "clean"
     }
   }
 }

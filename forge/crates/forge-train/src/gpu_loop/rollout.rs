@@ -1,5 +1,5 @@
-use super::buffers::{Buffers, Dims};
-use super::nets::{Input, Output, Pass};
+use super::buffers::{Buffers, Dims, Nets, Rollout};
+use super::nets::{Input, Output, Pass, Side};
 use super::source::K;
 use crate::mlp::Mlp;
 use forge_sim::metal::gpu::{Arg, BufferId, Dispatch, Kernel};
@@ -25,10 +25,11 @@ impl<'a> Encoder<'a> {
         }
     }
 
-    pub fn pass(&self, rows: usize) -> Pass<'a> {
+    pub fn pass(&self, nets: &Nets, rows: usize) -> Pass<'a> {
         Pass {
             kernels: self.kernels,
             buffers: self.buffers,
+            params: nets.params,
             rows,
         }
     }
@@ -52,83 +53,91 @@ impl<'a> Encoder<'a> {
         self.kernel(K::NormUpdate, args, (self.dims.nobs * REDUCE, REDUCE))
     }
 
-    fn sample(&self, row: usize) -> Dispatch<'a> {
-        let b = self.buffers;
+    fn sample(&self, r: &Rollout, row: usize) -> Dispatch<'a> {
+        let c = &self.buffers.collector;
         let words = vec![self.dims.envs as u32, row as u32];
         let args = vec![
-            b.actor.out.arg(),
-            b.params.arg(),
-            b.act.arg(),
-            b.rows.arg(),
-            b.noise.arg(),
+            c.actor.out.arg(),
+            c.params.arg(),
+            r.act.arg(),
+            r.rows.arg(),
+            self.buffers.noise.arg(),
             Arg::Owned(words),
         ];
 
         self.kernel(K::Sample, args, (self.dims.envs, 64))
     }
 
-    fn outputs(&self) -> Outputs {
-        let b = self.buffers;
-
-        Outputs {
-            rew: b.rew,
-            done: b.done,
-            timeout: b.timeout,
-            fell: b.fell,
-        }
-    }
-
-    fn step(&self, t: usize, out: &mut Vec<Dispatch<'a>>) {
-        let (b, w, n) = (self.buffers, self.worlds, self.dims.envs);
+    fn step(&self, r: &Rollout, t: usize, out: &mut Vec<Dispatch<'a>>) {
+        let (c, w, n) = (&self.buffers.collector, self.worlds, self.dims.envs);
         let row = t * n;
         let obs = Input {
-            buffer: b.obs,
+            buffer: r.obs,
             at: row * self.dims.nobs,
         };
-        let pass = self.pass(n);
+        let pass = self.pass(c, n);
+        let outputs = Outputs {
+            rew: r.rew,
+            done: r.done,
+            timeout: r.timeout,
+            fell: r.fell,
+        };
+        let mean = Output {
+            buffer: c.actor.out,
+            at: 0,
+        };
 
-        out.push(self.normalize(b.obs, row * self.dims.nobs));
-        out.extend(pass.forward(
-            self.nets[0],
-            &b.actor,
-            &obs,
-            &Output {
-                buffer: b.actor.out,
-                at: 0,
+        let sides = [
+            Side {
+                mlp: self.nets[0],
+                net: &c.actor,
+                input: obs,
+                output: mean,
             },
-        ));
-        out.push(self.sample(row));
-        out.extend(pass.forward(self.nets[1], &b.critic, &obs, &Output { buffer: b.val, at: row }));
-        out.push(w.act(b.act, row));
+            Side {
+                mlp: self.nets[1],
+                net: &c.critic,
+                input: obs,
+                output: Output { buffer: r.val, at: row },
+            },
+        ];
+
+        out.push(self.normalize(r.obs, row * self.dims.nobs));
+        out.extend(pass.forward(&sides));
+        out.push(self.sample(r, row));
+        out.push(w.act(r.act, row));
         out.push(w.physics());
-        out.push(w.after(&self.outputs(), row));
+        out.push(w.after(&outputs, row));
         out.push(w.observe());
         out.push(self.norm_update());
     }
 
-    pub fn rollout(&self) -> Vec<Dispatch<'a>> {
-        let b = self.buffers;
+    pub fn rollout(&self, r: &Rollout) -> Vec<Dispatch<'a>> {
+        let c = &self.buffers.collector;
         let mut out = Vec::new();
 
         for t in 0..self.dims.horizon {
-            self.step(t, &mut out);
+            self.step(r, t, &mut out);
         }
 
         let last = Input {
-            buffer: b.final_obs,
+            buffer: r.final_obs,
+            at: 0,
+        };
+        let value = Output {
+            buffer: r.final_val,
             at: 0,
         };
 
-        out.push(self.normalize(b.final_obs, 0));
-        out.extend(self.pass(self.dims.envs).forward(
-            self.nets[1],
-            &b.critic,
-            &last,
-            &Output {
-                buffer: b.final_val,
-                at: 0,
-            },
-        ));
+        out.push(self.normalize(r.final_obs, 0));
+        let side = Side {
+            mlp: self.nets[1],
+            net: &c.critic,
+            input: last,
+            output: value,
+        };
+
+        out.extend(self.pass(c, self.dims.envs).forward(&[side]));
         out
     }
 

@@ -46,16 +46,14 @@ pub enum K {
     Standardize,
     Gather,
     PolicyHead,
-    ValueHead,
     HeadSums,
     SplitSum,
     GradSquares,
     AdamBegin,
     Adam,
-    AdaptRate,
 }
 
-pub const NAMES: [&str; 18] = [
+pub const NAMES: [&str; 16] = [
     "gemm_nn",
     "gemm_nt",
     "gemm_tn",
@@ -67,13 +65,11 @@ pub const NAMES: [&str; 18] = [
     "standardize",
     "gather",
     "policy_head",
-    "value_head",
     "head_sums",
     "split_sum",
     "grad_squares",
     "adam_begin",
     "adam",
-    "adapt_rate",
 ];
 
 pub struct Sizes {

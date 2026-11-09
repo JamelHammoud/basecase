@@ -2,6 +2,7 @@ mod buffers;
 mod gemm;
 mod learn;
 mod nets;
+mod pipeline;
 mod qualify;
 mod rollout;
 mod setup;
@@ -23,7 +24,6 @@ use buffers::{Buffers, Dims};
 use forge_sim::metal::gpu::{Gpu, Kernel};
 use forge_sim::metal::Worlds;
 use learn::Settings;
-use rollout::Encoder;
 
 pub use setup::{start, Start};
 
@@ -47,96 +47,9 @@ pub struct GpuPpo {
     pub device: String,
 }
 
-impl GpuPpo {
-    fn collect(&mut self) -> Result<(), String> {
-        let encoder = Encoder {
-            kernels: &self.kernels,
-            buffers: &self.buffers,
-            worlds: &self.worlds,
-            nets: [&self.actor, &self.critic],
-            dims: &self.dims,
-        };
-        let timing = self.gpu.run(&encoder.rollout())?;
-
-        self.phases.physics += timing.gpu_seconds;
-        self.reward_mean = sync::reward_mean(&self.gpu, &self.buffers);
-        sync::track(&self.gpu, &self.buffers, &self.dims, &mut self.episodes);
-        self.steps += self.dims.total() as u64;
-
-        Ok(())
-    }
-
-    pub fn horizon(&self) -> usize {
-        self.dims.horizon
-    }
-
-    pub fn rollout_stats(&mut self, rounds: usize) -> Result<Vec<stats::Statistic>, String> {
-        let (n, nobs, nact) = (self.dims.envs, self.dims.nobs, self.dims.nact);
-        let mut tally = stats::Tally::new(n, nact);
-        let mut raw = vec![0.0f32; nobs];
-
-        for _ in 0..rounds {
-            self.collect()?;
-
-            let norm = sync::normalizer(&self.gpu, &self.buffers, nobs);
-            let std = norm.std();
-            let b = &self.buffers;
-            let (obs, act) = (self.gpu.slice(b.obs), self.gpu.slice(b.act));
-            let (rew, fell) = (self.gpu.slice(b.rew), self.gpu.slice(b.fell));
-
-            for i in 0..self.dims.total() {
-                for (k, r) in raw.iter_mut().enumerate() {
-                    *r = (f64::from(obs[i * nobs + k]) * std[k] + norm.mean[k]) as f32;
-                }
-
-                let step = stats::Step {
-                    obs: &raw,
-                    action: &act[i * nact..(i + 1) * nact],
-                    reward: rew[i],
-                    fell: fell[i] != 0.0,
-                };
-
-                tally.add(i % n, &step);
-            }
-        }
-
-        Ok(tally.summary())
-    }
-
-    fn shuffle_rows(&mut self) {
-        let total = self.dims.total();
-        let perm = self.gpu.slice_mut(self.buffers.perm);
-
-        for epoch in 0..self.dims.epochs {
-            self.shuffle.shuffle(&mut self.order);
-            perm[epoch * total..(epoch + 1) * total].copy_from_slice(&self.order);
-        }
-    }
-
-    fn update(&mut self) -> Result<(), String> {
-        self.shuffle_rows();
-
-        let encoder = Encoder {
-            kernels: &self.kernels,
-            buffers: &self.buffers,
-            worlds: &self.worlds,
-            nets: [&self.actor, &self.critic],
-            dims: &self.dims,
-        };
-        let list = encoder.learn(&self.settings);
-
-        let timing = self.gpu.run(&list)?;
-
-        self.phases.gradient += timing.gpu_seconds;
-
-        Ok(())
-    }
-}
-
 impl Algorithm for GpuPpo {
     fn iterate(&mut self) -> Result<(), String> {
-        self.collect()?;
-        self.update()
+        self.step()
     }
 
     fn report(&mut self) -> Report {
@@ -152,7 +65,7 @@ impl Algorithm for GpuPpo {
     }
 
     fn deployed(&self) -> Deployed {
-        let params = self.gpu.slice(self.buffers.params).to_vec();
+        let params = self.gpu.slice(self.buffers.learner.params).to_vec();
 
         Deployed::new(self.actor.clone(), params, Squash::Clip)
     }

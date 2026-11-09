@@ -1,7 +1,6 @@
 #include <metal_stdlib>
 using namespace metal;
 
-constant constexpr uint TILE = 32;
 constant constexpr uint KT = 16;
 constant constexpr uint THREADS = 128;
 
@@ -46,81 +45,108 @@ inline float finish(float v, device const float *h, constant Gemm &g, uint r, ui
     return v;
 }
 
-template <bool TA, bool TB>
+template <bool TA, bool TB, uint T>
 inline void fill_tiles(device const float *a, device const float *b, constant Gemm &g, threadgroup float *as,
                        threadgroup float *bs, uint3 at, uint lid) {
     uint row0 = at.x, col0 = at.y, k0 = at.z;
     uint k_end = min(g.k, (k0 / g.slice_len + 1) * g.slice_len);
-    for (uint e = lid; e < TILE * KT; e += THREADS) {
-        uint i = TA ? e % TILE : e / KT;
-        uint kk = TA ? e / TILE : e % KT;
+    for (uint e = lid; e < T * KT; e += THREADS) {
+        uint i = TA ? e % T : e / KT;
+        uint kk = TA ? e / T : e % KT;
         bool inside = row0 + i < g.m && k0 + kk < k_end;
         as[i * KT + kk] = inside ? load_a<TA>(a, g, row0 + i, k0 + kk) : 0.0f;
     }
-    for (uint e = lid; e < KT * TILE; e += THREADS) {
-        uint kk = TB ? e % KT : e / TILE;
-        uint j = TB ? e / KT : e % TILE;
+    for (uint e = lid; e < KT * T; e += THREADS) {
+        uint kk = TB ? e % KT : e / T;
+        uint j = TB ? e / KT : e % T;
         bool inside = col0 + j < g.n && k0 + kk < k_end;
-        bs[kk * TILE + j] = inside ? load_b<TB>(b, g, k0 + kk, col0 + j) : 0.0f;
+        bs[kk * T + j] = inside ? load_b<TB>(b, g, k0 + kk, col0 + j) : 0.0f;
     }
 }
 
-template <bool TA, bool TB>
-kernel void gemm(device const float *a [[buffer(0)]], device const float *b [[buffer(1)]], device float *c [[buffer(2)]],
-                 device const float *h [[buffer(3)]], constant Gemm &g [[buffer(4)]],
-                 uint tg [[threadgroup_position_in_grid]], uint lid [[thread_index_in_threadgroup]],
-                 uint sg [[simdgroup_index_in_threadgroup]]) {
-    threadgroup float as[TILE * KT];
-    threadgroup float bs[KT * TILE];
-    threadgroup float cs[TILE * TILE];
-    uint tiles_m = (g.m + TILE - 1) / TILE, tiles_n = (g.n + TILE - 1) / TILE;
+template <uint T>
+inline void multiply(threadgroup float *as, threadgroup float *bs, thread simdgroup_float8x8 (&acc)[T / 16][T / 16],
+                     uint2 at) {
+    constexpr uint F = T / 16;
+    for (uint kk = 0; kk < KT; kk += 8) {
+        simdgroup_float8x8 af[F], bf[F];
+        for (uint x = 0; x < F; x++) {
+            simdgroup_load(af[x], as + (at.x + 8 * x) * KT + kk, KT);
+            simdgroup_load(bf[x], bs + kk * T + at.y + 8 * x, T);
+        }
+        for (uint x = 0; x < F; x++) {
+            for (uint y = 0; y < F; y++) {
+                simdgroup_multiply_accumulate(acc[x][y], af[x], bf[y], acc[x][y]);
+            }
+        }
+    }
+}
+
+template <bool TA, bool TB, uint T>
+inline void tile(device const float *a, device const float *b, device float *c, device const float *h,
+                 constant Gemm &g, uint3 at, threadgroup float *as, threadgroup float *bs, threadgroup float *cs) {
+    constexpr uint F = T / 16;
+    uint tg = at.x, lid = at.y, sg = at.z;
+    uint tiles_m = (g.m + T - 1) / T, tiles_n = (g.n + T - 1) / T;
     uint slice = tg / (tiles_m * tiles_n), rest = tg % (tiles_m * tiles_n);
-    uint row0 = (rest / tiles_n) * TILE, col0 = (rest % tiles_n) * TILE;
+    uint row0 = (rest / tiles_n) * T, col0 = (rest % tiles_n) * T;
     uint k_begin = slice * g.slice_len, k_end = min(g.k, k_begin + g.slice_len);
-    uint sr = (sg / 2) * 16, sc = (sg % 2) * 16;
-    simdgroup_float8x8 acc[2][2];
-    for (uint x = 0; x < 2; x++) {
-        for (uint y = 0; y < 2; y++) {
+    uint2 sub = uint2((sg / 2) * (T / 2), (sg % 2) * (T / 2));
+    simdgroup_float8x8 acc[F][F];
+    for (uint x = 0; x < F; x++) {
+        for (uint y = 0; y < F; y++) {
             acc[x][y] = make_filled_simdgroup_matrix<float, 8, 8>(0.0f);
         }
     }
     for (uint k0 = k_begin; k0 < k_end; k0 += KT) {
-        fill_tiles<TA, TB>(a, b, g, as, bs, uint3(row0, col0, k0), lid);
+        fill_tiles<TA, TB, T>(a, b, g, as, bs, uint3(row0, col0, k0), lid);
         threadgroup_barrier(mem_flags::mem_threadgroup);
-        for (uint kk = 0; kk < KT; kk += 8) {
-            simdgroup_float8x8 a0, a1, b0, b1;
-            simdgroup_load(a0, as + sr * KT + kk, KT);
-            simdgroup_load(a1, as + (sr + 8) * KT + kk, KT);
-            simdgroup_load(b0, bs + kk * TILE + sc, TILE);
-            simdgroup_load(b1, bs + kk * TILE + sc + 8, TILE);
-            simdgroup_multiply_accumulate(acc[0][0], a0, b0, acc[0][0]);
-            simdgroup_multiply_accumulate(acc[0][1], a0, b1, acc[0][1]);
-            simdgroup_multiply_accumulate(acc[1][0], a1, b0, acc[1][0]);
-            simdgroup_multiply_accumulate(acc[1][1], a1, b1, acc[1][1]);
-        }
+        multiply<T>(as, bs, acc, sub);
         threadgroup_barrier(mem_flags::mem_threadgroup);
     }
-    for (uint x = 0; x < 2; x++) {
-        for (uint y = 0; y < 2; y++) {
-            simdgroup_store(acc[x][y], cs + (sr + 8 * x) * TILE + sc + 8 * y, TILE);
+    for (uint x = 0; x < F; x++) {
+        for (uint y = 0; y < F; y++) {
+            simdgroup_store(acc[x][y], cs + (sub.x + 8 * x) * T + sub.y + 8 * y, T);
         }
     }
     threadgroup_barrier(mem_flags::mem_threadgroup);
     uint out = g.c_off + slice * g.m * g.n;
-    for (uint e = lid; e < TILE * TILE; e += THREADS) {
-        uint r = row0 + e / TILE, col = col0 + e % TILE;
+    for (uint e = lid; e < T * T; e += THREADS) {
+        uint r = row0 + e / T, col = col0 + e % T;
         if (r < g.m && col < g.n) {
             c[out + r * g.ldc + col] = finish(cs[e], h, g, r, col);
         }
     }
 }
 
-template [[host_name("gemm_nn")]] kernel void gemm<false, false>(device const float *, device const float *,
-                                                                 device float *, device const float *,
-                                                                 constant Gemm &, uint, uint, uint);
-template [[host_name("gemm_nt")]] kernel void gemm<false, true>(device const float *, device const float *,
-                                                                device float *, device const float *,
-                                                                constant Gemm &, uint, uint, uint);
-template [[host_name("gemm_tn")]] kernel void gemm<true, false>(device const float *, device const float *,
-                                                                device float *, device const float *,
-                                                                constant Gemm &, uint, uint, uint);
+template <uint T>
+inline uint groups_of(constant Gemm &g) {
+    uint tiles = ((g.m + T - 1) / T) * ((g.n + T - 1) / T);
+    return g.m == 0 ? 0 : tiles * ((g.k + g.slice_len - 1) / g.slice_len);
+}
+
+template <bool TA, bool TB, uint T>
+kernel void gemm(device const float *a0 [[buffer(0)]], device const float *b0 [[buffer(1)]],
+                 device float *c0 [[buffer(2)]], device const float *h0 [[buffer(3)]],
+                 device const float *a1 [[buffer(4)]], device const float *b1 [[buffer(5)]],
+                 device float *c1 [[buffer(6)]], device const float *h1 [[buffer(7)]],
+                 constant Gemm *gs [[buffer(8)]], uint tg [[threadgroup_position_in_grid]],
+                 uint lid [[thread_index_in_threadgroup]], uint sg [[simdgroup_index_in_threadgroup]]) {
+    threadgroup float as[T * KT];
+    threadgroup float bs[KT * T];
+    threadgroup float cs[T * T];
+    uint first = groups_of<T>(gs[0]);
+    if (tg < first) {
+        tile<TA, TB, T>(a0, b0, c0, h0, gs[0], uint3(tg, lid, sg), as, bs, cs);
+    } else {
+        tile<TA, TB, T>(a1, b1, c1, h1, gs[1], uint3(tg - first, lid, sg), as, bs, cs);
+    }
+}
+
+#define GEMM_ARGS                                                                                                      \
+    device const float *, device const float *, device float *, device const float *, device const float *,            \
+        device const float *, device float *, device const float *, constant Gemm *, uint, uint, uint
+
+template [[host_name("gemm_nn")]] kernel void gemm<false, false, 32>(GEMM_ARGS);
+template [[host_name("gemm_nt")]] kernel void gemm<false, true, 32>(GEMM_ARGS);
+template [[host_name("gemm_tn")]] kernel void gemm<true, false, 32>(GEMM_ARGS);

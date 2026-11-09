@@ -23,8 +23,8 @@ const SHUFFLE_STREAM: u64 = 3_000_000;
 const NORM_COUNT: f32 = 1e-4;
 const LARGE_BATCH: usize = 2048;
 const LARGE_HORIZON: usize = 4;
-const LARGE_EPOCHS: usize = 10;
-const LARGE_MINIBATCHES: usize = 8;
+const LARGE_EPOCHS: usize = 5;
+const LARGE_MINIBATCHES: usize = 16;
 const LARGE_KL: f32 = 0.1;
 
 pub struct Start<'a> {
@@ -74,7 +74,7 @@ fn worlds(start: &Start, task: &forge_ir::task::Task) -> Result<(Gpu, Worlds, St
 fn upload(gpu: &mut Gpu, buffers: &Buffers, learner: &Learner, seed: u64) {
     let nobs = learner.nobs;
 
-    gpu.slice_mut(buffers.params).copy_from_slice(&learner.params);
+    gpu.slice_mut(buffers.learner.params).copy_from_slice(&learner.params);
     gpu.slice_mut(buffers.ctrl)[Ctrl::Lr as usize] = learner.learn_rate;
 
     let stats = gpu.slice_mut(buffers.stats);

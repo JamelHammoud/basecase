@@ -6,6 +6,7 @@ const KT: usize = 16;
 const THREADS: usize = 128;
 const ROWS_PER_SLICE: usize = 128;
 const MAX_SLICES: usize = 64;
+const WORDS: usize = 14;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Ones {
@@ -55,8 +56,8 @@ pub struct Operands {
     pub h: Arg<'static>,
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Gemm {
-    pub kernel: K,
     pub shape: Shape,
     pub at: Offsets,
     pub ones: Ones,
@@ -64,49 +65,83 @@ pub struct Gemm {
     pub slices: usize,
 }
 
+pub struct Problem {
+    pub gemm: Gemm,
+    pub operands: Operands,
+}
+
 pub fn slices_for(rows: usize) -> usize {
     (rows / ROWS_PER_SLICE).clamp(1, MAX_SLICES)
 }
 
-pub fn dispatch<'a>(kernels: &'a [Kernel], gemm: &Gemm, operands: Operands) -> Dispatch<'a> {
+fn slice_len(k: usize, slices: usize) -> usize {
+    k.div_ceil(slices.max(1)).div_ceil(KT).max(1) * KT
+}
+
+pub fn used_slices(k: usize, slices: usize) -> usize {
+    k.div_ceil(slice_len(k, slices))
+}
+
+fn words(gemm: &Gemm) -> [u32; WORDS] {
     let Shape { m, n, k, lda, ldb, ldc } = gemm.shape;
-    let slices = gemm.slices.max(1);
-    let slice_len = k.div_ceil(slices).div_ceil(KT) * KT;
-    let used = k.div_ceil(slice_len);
-    let words = [
+    let at = gemm.at;
+
+    [
         m,
         n,
         k,
         lda,
         ldb,
         ldc,
-        gemm.at.a,
-        gemm.at.b,
-        gemm.at.c,
+        at.a,
+        at.b,
+        at.c,
         gemm.ones as usize,
         gemm.finish as usize,
-        gemm.at.h,
-        gemm.at.ldh,
-        slice_len,
-    ];
-    let groups = m.div_ceil(TILE) * n.div_ceil(TILE) * used;
-
-    Dispatch {
-        kernel: &kernels[gemm.kernel as usize],
-        args: vec![
-            operands.a,
-            operands.b,
-            operands.c,
-            operands.h,
-            Arg::Owned(words.iter().map(|w| *w as u32).collect()),
-        ],
-        threads: groups * THREADS,
-        group: THREADS,
-    }
+        at.h,
+        at.ldh,
+        slice_len(k, gemm.slices),
+    ]
+    .map(|w| w as u32)
 }
 
-pub fn used_slices(k: usize, slices: usize) -> usize {
-    let slice_len = k.div_ceil(slices.max(1)).div_ceil(KT) * KT;
+fn groups(gemm: &Gemm) -> usize {
+    let Shape { m, n, k, .. } = gemm.shape;
 
-    k.div_ceil(slice_len)
+    m.div_ceil(TILE) * n.div_ceil(TILE) * used_slices(k, gemm.slices)
+}
+
+fn again(arg: &Arg) -> Arg<'static> {
+    arg.buffer()
+        .map_or(Arg::Owned(vec![0]), |(slot, bytes)| Arg::At(slot, bytes))
+}
+
+pub fn dispatch<'a>(kernels: &'a [Kernel], kernel: K, problems: Vec<Problem>) -> Dispatch<'a> {
+    let mut words = Vec::with_capacity(2 * WORDS);
+    let mut args = Vec::with_capacity(9);
+    let mut count = 0;
+
+    for p in &problems {
+        words.extend(self::words(&p.gemm));
+        count += groups(&p.gemm);
+    }
+
+    for p in problems.iter().chain(problems.iter()).take(2) {
+        let o = &p.operands;
+
+        args.extend([again(&o.a), again(&o.b), again(&o.c), again(&o.h)]);
+    }
+
+    if problems.len() < 2 {
+        words.extend([0; WORDS]);
+    }
+
+    args.push(Arg::Owned(words));
+
+    Dispatch {
+        kernel: &kernels[kernel as usize],
+        args,
+        threads: count * THREADS,
+        group: THREADS,
+    }
 }

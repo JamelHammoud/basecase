@@ -7,11 +7,13 @@ kernel void policy_head(device const float *mean [[buffer(0)]], device const flo
                         device const float *rows [[buffer(2)]], device const float *params [[buffer(3)]],
                         device float *seed [[buffer(4)]], device float *parts [[buffer(5)]],
                         constant uint *p [[buffer(6)]], constant float *f [[buffer(7)]],
+                        device const float *value [[buffer(8)]], device float *value_seed [[buffer(9)]],
                         uint r [[thread_position_in_grid]]) {
     uint count = p[0];
     if (r >= count) {
         return;
     }
+    value_seed[r] = (value[r] - rows[2 * count + r]) / float(count);
     device const float *log_std = params + LOG_STD_AT;
     float scale = 1.0f / float(count), clip_range = f[0], constant_part = NACT * LOG_TWO_PI_HALF, quadratic = 0.0f;
     for (int j = 0; j < NACT; j++) {
@@ -32,15 +34,6 @@ kernel void policy_head(device const float *mean [[buffer(0)]], device const flo
         seed[r * NACT + j] = target * weight;
     }
     parts[r * (NACT + 1) + NACT] = old_logp - new_logp;
-}
-
-kernel void value_head(device const float *value [[buffer(0)]], device const float *rows [[buffer(1)]],
-                       device float *seed [[buffer(2)]], constant uint *p [[buffer(3)]],
-                       uint r [[thread_position_in_grid]]) {
-    uint count = p[0];
-    if (r < count) {
-        seed[r] = (value[r] - rows[2 * count + r]) / float(count);
-    }
 }
 
 kernel void head_sums(device const float *parts [[buffer(0)]], device float *grads [[buffer(1)]],
@@ -66,17 +59,20 @@ kernel void head_sums(device const float *parts [[buffer(0)]], device float *gra
 kernel void split_sum(device const float *partials [[buffer(0)]], device float *grads [[buffer(1)]],
                       device const float *mask [[buffer(2)]], constant uint *p [[buffer(3)]],
                       uint e [[thread_position_in_grid]]) {
-    uint elems = p[0], slices = p[1], width = p[3];
-    if (e >= elems) {
+    bool second = e >= p[0];
+    constant uint *q = p + (second ? 6 : 0);
+    uint i = second ? e - p[0] : e;
+    uint elems = q[0], slices = q[1], width = q[3];
+    if (i >= elems) {
         return;
     }
     float sum = 0.0f;
     for (uint s = 0; s < slices; s++) {
-        sum += partials[s * elems + e];
+        sum += partials[q[5] + s * elems + i];
     }
-    uint row = e / width;
-    bool masked = p[4] != 0 && row < NOBS && mask[row] == 0.0f;
-    grads[p[2] + e] = masked ? 0.0f : sum;
+    uint row = i / width;
+    bool masked = q[4] != 0 && row < NOBS && mask[row] == 0.0f;
+    grads[q[2] + i] = masked ? 0.0f : sum;
 }
 
 kernel void grad_squares(device const float *grads [[buffer(0)]], device float *partial [[buffer(1)]],
@@ -93,8 +89,18 @@ kernel void grad_squares(device const float *grads [[buffer(0)]], device float *
     }
 }
 
+inline void adapt_rate(device float *ctrl, constant float *f) {
+    float kl = ctrl[CTRL_KL], desired = f[0], rate = ctrl[CTRL_LR];
+    if (kl > desired * 2.0f) {
+        rate = max(rate / 1.5f, f[1]);
+    } else if (kl < desired / 2.0f) {
+        rate = min(rate * 1.5f, f[2]);
+    }
+    ctrl[CTRL_LR] = rate;
+}
+
 kernel void adam_begin(device const float *partial [[buffer(0)]], device float *ctrl [[buffer(1)]],
-                       uint lid [[thread_index_in_threadgroup]]) {
+                       constant float *f [[buffer(2)]], uint lid [[thread_index_in_threadgroup]]) {
     threadgroup float shared[REDUCE];
     uint chunks = (NPARAMS + NORM_CHUNK - 1) / NORM_CHUNK;
     float sum = 0.0f;
@@ -107,14 +113,14 @@ kernel void adam_begin(device const float *partial [[buffer(0)]], device float *
     }
     ctrl[CTRL_NORM] = norm;
     ctrl[CTRL_APPLY] = isfinite(norm) ? 1.0f : 0.0f;
-    if (!isfinite(norm)) {
-        return;
+    if (isfinite(norm)) {
+        float steps = ctrl[CTRL_STEPS] + 1.0f;
+        ctrl[CTRL_STEPS] = steps;
+        ctrl[CTRL_STEP_RATE] = ctrl[CTRL_LR] / (1.0f - pow(BETA1, steps));
+        ctrl[CTRL_SECOND] = 1.0f / (1.0f - pow(BETA2, steps));
+        ctrl[CTRL_SCALE] = min(1.0f / (norm + 1e-6f), 1.0f);
     }
-    float steps = ctrl[CTRL_STEPS] + 1.0f;
-    ctrl[CTRL_STEPS] = steps;
-    ctrl[CTRL_STEP_RATE] = ctrl[CTRL_LR] / (1.0f - pow(BETA1, steps));
-    ctrl[CTRL_SECOND] = 1.0f / (1.0f - pow(BETA2, steps));
-    ctrl[CTRL_SCALE] = min(1.0f / (norm + 1e-6f), 1.0f);
+    adapt_rate(ctrl, f);
 }
 
 kernel void adam(device float *params [[buffer(0)]], device const float *grads [[buffer(1)]],
@@ -132,18 +138,4 @@ kernel void adam(device float *params [[buffer(0)]], device const float *grads [
     second[i] = v;
     float next = params[i] - ctrl[CTRL_STEP_RATE] * m / (sqrt(v * ctrl[CTRL_SECOND]) + EPSILON);
     params[i] = i >= LOG_STD_AT ? clamp(next, f[0], f[1]) : next;
-}
-
-kernel void adapt_rate(device float *ctrl [[buffer(0)]], constant float *f [[buffer(1)]],
-                       uint i [[thread_position_in_grid]]) {
-    if (i != 0) {
-        return;
-    }
-    float kl = ctrl[CTRL_KL], desired = f[0], rate = ctrl[CTRL_LR];
-    if (kl > desired * 2.0f) {
-        rate = max(rate / 1.5f, f[1]);
-    } else if (kl < desired / 2.0f) {
-        rate = min(rate * 1.5f, f[2]);
-    }
-    ctrl[CTRL_LR] = rate;
 }

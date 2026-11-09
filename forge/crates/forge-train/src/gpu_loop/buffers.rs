@@ -6,6 +6,8 @@ use forge_sim::metal::gpu::{BufferId, Gpu};
 const WIDEST: usize = 256;
 const NORM_CHUNK: usize = 4096;
 
+pub const SQUARE_CHUNK: usize = NORM_CHUNK;
+
 pub struct Dims {
     pub envs: usize,
     pub horizon: usize,
@@ -32,14 +34,13 @@ pub struct Net {
     pub seed: BufferId<f32>,
 }
 
-pub struct Buffers {
+pub struct Nets {
     pub params: BufferId<f32>,
-    pub grads: BufferId<f32>,
-    pub first: BufferId<f32>,
-    pub second: BufferId<f32>,
-    pub ctrl: BufferId<f32>,
-    pub stats: BufferId<f32>,
-    pub mask: BufferId<f32>,
+    pub actor: Net,
+    pub critic: Net,
+}
+
+pub struct Rollout {
     pub obs: BufferId<f32>,
     pub act: BufferId<f32>,
     pub val: BufferId<f32>,
@@ -50,13 +51,22 @@ pub struct Buffers {
     pub fell: BufferId<f32>,
     pub final_obs: BufferId<f32>,
     pub final_val: BufferId<f32>,
+}
+
+pub struct Buffers {
+    pub learner: Nets,
+    pub collector: Nets,
+    pub rollout: Rollout,
+    pub grads: BufferId<f32>,
+    pub first: BufferId<f32>,
+    pub second: BufferId<f32>,
+    pub ctrl: BufferId<f32>,
+    pub stats: BufferId<f32>,
+    pub mask: BufferId<f32>,
     pub mb_obs: BufferId<f32>,
     pub mb_act: BufferId<f32>,
     pub mb_rows: BufferId<f32>,
-    pub actor: Net,
-    pub critic: Net,
-    pub ping: BufferId<f32>,
-    pub pong: BufferId<f32>,
+    pub spares: [[BufferId<f32>; 2]; 2],
     pub parts: BufferId<f32>,
     pub partials: BufferId<f32>,
     pub squares: BufferId<f32>,
@@ -78,6 +88,32 @@ fn net(gpu: &mut Gpu, mlp: &Mlp, capacity: usize) -> Result<Net, String> {
     })
 }
 
+fn nets(gpu: &mut Gpu, mlps: [&Mlp; 2], capacity: usize, params: BufferId<f32>) -> Result<Nets, String> {
+    Ok(Nets {
+        params,
+        actor: net(gpu, mlps[0], capacity)?,
+        critic: net(gpu, mlps[1], capacity)?,
+    })
+}
+
+fn rollout(gpu: &mut Gpu, dims: &Dims) -> Result<Rollout, String> {
+    let (total, nobs, nact) = (dims.total(), dims.nobs, dims.nact);
+    let mut f = |len: usize| gpu.alloc::<f32>(len);
+
+    Ok(Rollout {
+        obs: f(total * nobs)?,
+        act: f(total * nact)?,
+        val: f(total)?,
+        rows: f(3 * total)?,
+        rew: f(total)?,
+        done: f(total)?,
+        timeout: f(total)?,
+        fell: f(total)?,
+        final_obs: f(dims.envs * nobs)?,
+        final_val: f(dims.envs)?,
+    })
+}
+
 fn largest_layer(nets: [&Mlp; 2]) -> usize {
     nets.iter()
         .flat_map(|n| n.layers.iter())
@@ -87,42 +123,36 @@ fn largest_layer(nets: [&Mlp; 2]) -> usize {
 }
 
 impl Buffers {
-    pub fn new(gpu: &mut Gpu, dims: &Dims, nets: [&Mlp; 2]) -> Result<Self, String> {
-        let (total, cap, nobs, nact, p) = (dims.total(), dims.capacity(), dims.nobs, dims.nact, dims.nparams);
+    pub fn new(gpu: &mut Gpu, dims: &Dims, mlps: [&Mlp; 2]) -> Result<Self, String> {
+        let (cap, nobs, nact, p) = (dims.capacity(), dims.nobs, dims.nact, dims.nparams);
+        let params = gpu.alloc::<f32>(p)?;
+        let learner = nets(gpu, mlps, cap, params)?;
+        let collector = nets(gpu, mlps, dims.envs, params)?;
+        let rollout = rollout(gpu, dims)?;
         let mut f = |len: usize| gpu.alloc::<f32>(len);
 
         Ok(Self {
-            params: f(p)?,
             grads: f(p)?,
             first: f(p)?,
             second: f(p)?,
             ctrl: f(CTRL_LEN)?,
             stats: f(3 * nobs)?,
             mask: f(nobs)?,
-            obs: f(total * nobs)?,
-            act: f(total * nact)?,
-            val: f(total)?,
-            rows: f(3 * total)?,
-            rew: f(total)?,
-            done: f(total)?,
-            timeout: f(total)?,
-            fell: f(total)?,
-            final_obs: f(dims.envs * nobs)?,
-            final_val: f(dims.envs)?,
             mb_obs: f(cap * nobs)?,
             mb_act: f(cap * nact)?,
             mb_rows: f(3 * cap)?,
-            ping: f(cap * WIDEST)?,
-            pong: f(cap * WIDEST)?,
+            spares: [
+                [f(cap * WIDEST)?, f(cap * WIDEST)?],
+                [f(cap * WIDEST)?, f(cap * WIDEST)?],
+            ],
             parts: f(cap * (nact + 1))?,
-            partials: f(slices_for(dims.minibatch) * largest_layer(nets))?,
+            partials: f(2 * slices_for(dims.minibatch) * largest_layer(mlps))?,
             squares: f(p.div_ceil(NORM_CHUNK))?,
-            actor: net(gpu, nets[0], cap)?,
-            critic: net(gpu, nets[1], cap)?,
-            perm: gpu.alloc::<u32>(dims.epochs * total)?,
+            perm: gpu.alloc::<u32>(dims.epochs * dims.total())?,
             noise: gpu.alloc::<u32>(4 * dims.envs)?,
+            learner,
+            collector,
+            rollout,
         })
     }
 }
-
-pub const SQUARE_CHUNK: usize = NORM_CHUNK;

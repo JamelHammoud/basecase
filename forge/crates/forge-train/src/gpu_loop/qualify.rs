@@ -120,11 +120,13 @@ fn stepped(learner: &Learner, grads: &[f32], floor: f32) -> Vec<f32> {
 }
 
 fn upload(gpu: &mut Gpu, b: &Buffers, learner: &Learner, v: &Vector) {
-    gpu.slice_mut(b.params).copy_from_slice(&learner.params);
+    let r = &b.rollout;
+
+    gpu.slice_mut(b.learner.params).copy_from_slice(&learner.params);
     gpu.slice_mut(b.ctrl)[Ctrl::Lr as usize] = learner.learn_rate;
-    gpu.slice_mut(b.obs).copy_from_slice(&v.obs);
-    gpu.slice_mut(b.act).copy_from_slice(&v.act);
-    gpu.slice_mut(b.rows).copy_from_slice(&v.rows);
+    gpu.slice_mut(r.obs).copy_from_slice(&v.obs);
+    gpu.slice_mut(r.act).copy_from_slice(&v.act);
+    gpu.slice_mut(r.rows).copy_from_slice(&v.rows);
     gpu.slice_mut(b.mask).fill(1.0);
 
     for (i, p) in gpu.slice_mut(b.perm).iter_mut().enumerate() {
@@ -160,7 +162,7 @@ pub fn learner(gpu: &mut Gpu, device: &Device, learner: &Learner) -> Result<(), 
     };
     let mut dispatches = Vec::new();
 
-    encoder.minibatch(&settings, 0, &mut dispatches);
+    encoder.minibatch(&buffers.rollout, &settings, 0, &mut dispatches);
     gpu.run(&dispatches)?;
 
     let hyper = &settings.hyper;
@@ -177,7 +179,7 @@ pub fn learner(gpu: &mut Gpu, device: &Device, learner: &Learner) -> Result<(), 
     let step = stepped(learner, &got, settings.log_std_min);
     let moved: Vec<f32> = step.iter().zip(&learner.params).map(|(a, b)| a - b).collect();
     let gpu_moved: Vec<f32> = gpu
-        .slice(buffers.params)
+        .slice(buffers.learner.params)
         .iter()
         .zip(&learner.params)
         .map(|(a, b)| a - b)

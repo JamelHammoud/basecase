@@ -141,3 +141,4 @@ kernel void gather(device const uint *perm [[buffer(0)]], device const float *ob
         mb_rows[field * count + slot] = rows[field * total + i];
     }
 }
+

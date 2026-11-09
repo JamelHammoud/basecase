@@ -209,7 +209,9 @@ fn on_contact(robot: &str) -> Result<(Errors, Errors), String> {
                 )
                 .map_err(|e| format!("{robot} on contact, lane {lane}: {e}"))?;
 
-            let _ = exact_errors.check(&hard[lane], &fd_lane(&plan, &start, &wrt, (lane, 1)), ON_CONTACT_BOUND);
+            exact_errors
+                .check(&hard[lane], &fd_lane(&plan, &start, &wrt, (lane, 1)), ON_CONTACT_BOUND)
+                .map_err(|e| format!("{robot} on contact against the exact step, lane {lane}: {e}"))?;
         }
     }
 

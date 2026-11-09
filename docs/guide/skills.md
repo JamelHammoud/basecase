@@ -45,6 +45,7 @@ The independent verifier, on the WASM `SimEngine`. `runArena({ mj, model, contra
 
 - **Agents can't change it.** `ARENA` is frozen; `runArena` takes no counts, bars or ranges. Randomization is the environment's ranges widened to Arena's floor (friction ×0.8–1.2, mass ×0.9–1.1, strength ×0.9–1, start joints ±1°, delays to 40 ms in the delay runs), so an environment can't make Arena easier.
 - **Sealed instances:** each try's seed is the SHA-256 of a fresh random 32-byte salt, the variant, the try and the environment hash. Evidence holds counts and the salt's hash only, never seeds or drawn values, so feedback can't be fitted to the instances.
+- **Contact signals read `data.contact` once per read and free it.** Every read of that getter allocates a new list in the WASM heap. Reading it per contact without freeing it ran out of 2 GB after about 20,000 reads, which crashed any contract with a contact signal (`arenaSignals.test.ts`).
 - **Delay** wraps `mj_step` (the engine is unchanged), **divergence** turns off MuJoCo's auto-reset and fails the try on a bad-state warning, and a NaN trace fails the contract.
 
 ### Method Router (`router.ts`)

@@ -8,7 +8,7 @@ const FROZEN = {
   'src/skills/arena.ts': 'cbd62d7f1c82009e35704b7371c08f2ea0ba77f4602c2e4d823c9f55066483d4',
   'src/skills/arenaWorld.ts': '4d927e150e787c50026fa9b4ec7af88197fd4df1c99187b5a917ad32d8a6ef89',
   'src/skills/arenaStats.ts': '483b8139b520fcb4aa1839f397739f746190a7f0bb910f46b7bcb5fd4a7f9aff',
-  'src/skills/arenaSignals.ts': '3f512405fb6bfde997b076a31d6da26ac6ec5ef321f9d60c61403d8fcdaa4f43',
+  'src/skills/arenaSignals.ts': '4c8e0213acef95405bd4f20a807bd5e9f763441cf4e819a2ee2b7c83f5c28107',
   'src/skills/contract.ts': '59ddcee9ca74df14a0669d8570f0a97a41070ecaf4bb7e26a9090f4c6392b871',
 };
 

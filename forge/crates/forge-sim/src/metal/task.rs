@@ -142,6 +142,7 @@ fn constants(e: &mut Emitter, task: &Task) {
         ("TASK_EPISODE", task.episode_steps),
         ("TASK_PUSHES", i64::from(task.pushes.is_some())),
         ("TASK_FALL_RESETS", i64::from(task.fall_resets)),
+        ("TASK_SQUASH", i64::from(task.squash)),
         ("TASK_NEVER", NEVER),
         ("PUSH_GAP_LO", gaps[0]),
         ("PUSH_GAP_HI", gaps[1]),

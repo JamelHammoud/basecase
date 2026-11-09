@@ -27,11 +27,14 @@ kernel void policy_head(device const float *mean [[buffer(0)]], device const flo
     float kept = ratio * advantage;
     float clipped = clamp(ratio, 1.0f - clip_range, 1.0f + clip_range) * advantage;
     float weight = kept <= clipped ? -kept * scale : 0.0f;
+    float squash = f[1] * scale;
     for (int j = 0; j < NACT; j++) {
-        float off = act[r * NACT + j] - mean[r * NACT + j];
+        float taken = act[r * NACT + j];
+        float off = taken - mean[r * NACT + j];
         float target = off * exp(-2.0f * log_std[j]);
-        parts[r * (NACT + 1) + j] = weight * (off * target - 1.0f);
-        seed[r * NACT + j] = target * weight;
+        float pull = squash == 0.0f ? 0.0f : 2.0f * squash * precise::tanh(taken);
+        parts[r * (NACT + 1) + j] = weight * (off * target - 1.0f) + pull * off;
+        seed[r * NACT + j] = target * weight + pull;
     }
     parts[r * (NACT + 1) + NACT] = old_logp - new_logp;
 }

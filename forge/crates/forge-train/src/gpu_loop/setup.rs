@@ -124,6 +124,7 @@ pub fn start(start: Start) -> Result<GpuPpo, String> {
         hyper,
         log_std_min: robot.job.log_std_min.unwrap_or(f32::NEG_INFINITY),
         masked: !learner.actor.masked.is_empty(),
+        squashed: task.squash,
     };
     let checked = Device {
         kernels: &kernels,

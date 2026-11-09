@@ -12,6 +12,7 @@ pub struct Settings {
     pub hyper: Hyper,
     pub log_std_min: f32,
     pub masked: bool,
+    pub squashed: bool,
 }
 
 impl<'a> Encoder<'a> {
@@ -61,7 +62,8 @@ impl<'a> Encoder<'a> {
         self.kernel(K::Gather, args, (mb, 64))
     }
 
-    fn heads(&self, hyper: &Hyper, out: &mut Vec<Dispatch<'a>>) {
+    fn heads(&self, settings: &Settings, out: &mut Vec<Dispatch<'a>>) {
+        let hyper = &settings.hyper;
         let (b, l) = (self.buffers, &self.buffers.learner);
         let mb = self.dims.minibatch;
         let count = || Arg::Owned(vec![mb as u32]);
@@ -73,7 +75,7 @@ impl<'a> Encoder<'a> {
             l.actor.seed.arg(),
             b.parts.arg(),
             count(),
-            Arg::floats(&[hyper.clip]),
+            Arg::floats(&[hyper.clip, if settings.squashed { hyper.ent_coef } else { 0.0 }]),
             l.critic.out.arg(),
             l.critic.seed.arg(),
         ];
@@ -149,7 +151,7 @@ impl<'a> Encoder<'a> {
 
         out.push(self.gather(r, from));
         out.extend(pass.forward(&sides));
-        self.heads(&settings.hyper, out);
+        self.heads(settings, out);
         out.extend(pass.backward(&sides, settings.masked));
         self.step_params(settings, out);
     }

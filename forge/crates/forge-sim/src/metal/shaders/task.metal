@@ -109,7 +109,7 @@ kernel void task_act(device real *io [[buffer(0)]], device float *env [[buffer(1
         row[CTRL + u] = CTRL_DEFAULT[u];
     }
     for (int j = 0; j < NACT; j++) {
-        float a = clamp(taken[j], -1.0f, 1.0f);
+        float a = TASK_SQUASH ? precise::tanh(taken[j]) : clamp(taken[j], -1.0f, 1.0f);
         mine[j] = a;
         real target = TJ_DEFAULT[j] + TASK_SCALE * D(a);
         row[CTRL + TJ_ACT[j]] = dmin(dmax(target, TJ_LO[j]), TJ_HI[j]);

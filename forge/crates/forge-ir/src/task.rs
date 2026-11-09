@@ -50,6 +50,7 @@ pub struct Task {
     pub episode_steps: i64,
     pub reset_noise: f64,
     pub fall_resets: bool,
+    pub squash: bool,
     pub pushes: Option<Pushes>,
     pub observations: Vec<Observed>,
     pub reward: Code,

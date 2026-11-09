@@ -67,7 +67,13 @@ impl Algorithm for GpuPpo {
     fn deployed(&self) -> Deployed {
         let params = self.gpu.slice(self.buffers.learner.params).to_vec();
 
-        Deployed::new(self.actor.clone(), params, Squash::Clip)
+        let squash = if self.settings.squashed {
+            Squash::Tanh
+        } else {
+            Squash::Clip
+        };
+
+        Deployed::new(self.actor.clone(), params, squash)
     }
 
     fn norm(&self) -> &Normalizer {

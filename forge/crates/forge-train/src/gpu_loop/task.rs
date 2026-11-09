@@ -77,6 +77,7 @@ pub fn lower(robot: &Robot) -> Result<Task, String> {
         episode_steps: robot.episode_steps,
         reset_noise: job.options.reset_noise,
         fall_resets: job.options.fall_resets,
+        squash: false,
         pushes: pushes(robot),
         observations: OBSERVATIONS.to_vec(),
         reward: lowered(&reward_source(robot), nact)

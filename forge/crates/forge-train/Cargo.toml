@@ -10,10 +10,15 @@ path = "src/lib.rs"
 [[bin]]
 name = "forge-train"
 path = "src/main.rs"
+required-features = ["native"]
+
+[features]
+default = ["native"]
+native = ["dep:forge-mujoco", "forge-sim/native", "forge-ir/mujoco"]
 
 [dependencies]
-forge-ir = { path = "../forge-ir" }
-forge-mujoco = { path = "../forge-mujoco" }
-forge-sim = { path = "../forge-sim" }
+forge-ir = { path = "../forge-ir", default-features = false }
+forge-mujoco = { path = "../forge-mujoco", optional = true }
+forge-sim = { path = "../forge-sim", default-features = false }
 forge-reward = { path = "../forge-reward" }
 serde_json = "1"

@@ -89,7 +89,7 @@ New rows in Build → Checks, with the same Pass / Warn / Fail rows that select 
 
 ## Where training runs
 
-Decided: **Forge**, our native Rust trainer on C MuJoCo's batch API, bundled with the app, so training needs no Python, uv or terminal ([Forge](guide/forge.md) §8g). The Python sidecar stays as a dev-only oracle (`BASECASE_TRAINER=python`). Forge's own SIMD, Metal and WebGPU engines (F3–F6) follow, with C MuJoCo as the oracle every result replays in. Rented machines run long trainings and the Windows GPU checks once an account is set up.
+Decided: **Forge**, our native Rust trainer on C MuJoCo's batch API, bundled with the app, so training needs no Python, uv or terminal ([Forge](guide/forge.md) §8g). The Python sidecar stays as a dev-only oracle (`BASECASE_TRAINER=python`). Forge's own SIMD, Metal and WebGPU engines (F3–F6) follow, with C MuJoCo as the oracle every result replays in. F5 (the GPU loop): with `backend: "metal"`, physics, observations, rewards, resets, the policy and the PPO update run on the Mac's GPU in one buffer, the device qualifies itself against C MuJoCo before a job trusts it, and every gate replays the policy in C MuJoCo (and the acceptance test in WASM too). Rented machines run long trainings and the Windows GPU checks once an account is set up.
 
 ## Rules for this work
 

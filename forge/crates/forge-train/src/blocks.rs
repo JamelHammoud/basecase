@@ -53,6 +53,10 @@ fn block_count(capacity: usize) -> usize {
 }
 
 fn pool_threads(tasks: usize) -> usize {
+    if cfg!(target_arch = "wasm32") {
+        return 1;
+    }
+
     let cores = std::thread::available_parallelism().map_or(4, |c| c.get());
 
     cores.div_ceil(2).min(tasks)

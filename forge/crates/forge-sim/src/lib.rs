@@ -4,19 +4,22 @@ mod bracket;
 pub mod collide;
 pub mod constraint;
 mod convex;
+mod gpu;
 mod history;
 pub mod inertia;
 pub mod integrate;
 pub mod kinematics;
 pub mod lanes;
+#[cfg(feature = "native")]
 pub mod metal;
 pub mod newton;
 mod params;
 mod plan;
 mod prefilter;
 mod primitives;
+#[cfg(feature = "native")]
 mod row_batch;
-mod rowmap;
+pub mod rowmap;
 mod rows;
 mod search;
 mod sim;
@@ -27,12 +30,18 @@ mod step;
 pub mod tables;
 mod trig;
 pub mod velocity;
-mod world_params;
+pub mod wgsl;
+pub mod world_params;
 
 pub use block::Block;
+#[cfg(feature = "native")]
 pub use metal::MetalBatch;
 pub use plan::Plan;
-pub use row_batch::{Offsets, RowBatch, EXPANDABLE};
+#[cfg(feature = "native")]
+pub use row_batch::RowBatch;
+pub use rowmap::Offsets;
 pub use sim::{locate, Sim, Snapshot};
 pub use state::State;
 pub use step::{forward, step, Workspace};
+pub use wgsl::WgslBatch;
+pub use world_params::EXPANDABLE;

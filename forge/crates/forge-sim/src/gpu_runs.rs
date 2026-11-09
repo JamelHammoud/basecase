@@ -1,20 +1,77 @@
 use crate::args::Args;
 use crate::drive::{controls, start_pose, DECIMATION};
 use crate::parity::{rollout_ctrl, single, REPORT_EVERY};
+use forge_ir::Kernel;
 use forge_mujoco::{Data, Model};
-use forge_sim::{MetalBatch, Plan, Snapshot};
+use forge_sim::{MetalBatch, Offsets, Plan, Snapshot, WgslBatch};
 use serde_json::{json, Value};
 
 const WORLDS: usize = 37;
 const CROWD: usize = 300;
 const ROUNDS: usize = 40;
 
-pub fn parity(args: &Args) -> Result<Value, String> {
+pub trait GpuRows: Sized {
+    const NAME: &'static str;
+
+    fn open(model: &Model, kernel: Kernel, nsim: usize) -> Result<Self, String>;
+    fn device(&self) -> String;
+    fn plan(&self) -> &Plan;
+    fn offsets(&self) -> Offsets;
+    fn row(&mut self, sim: usize) -> &mut [f64];
+    fn advance(&mut self, nstep: usize) -> usize;
+    fn error(&self) -> Option<String>;
+    fn fields(&mut self, sim: usize, names: &[&str]) -> Result<(Vec<Vec<f64>>, usize), String>;
+}
+
+macro_rules! gpu_rows {
+    ($batch:ty, $name:literal) => {
+        impl GpuRows for $batch {
+            const NAME: &'static str = $name;
+
+            fn open(model: &Model, kernel: Kernel, nsim: usize) -> Result<Self, String> {
+                <$batch>::new(model, kernel, nsim)
+            }
+
+            fn device(&self) -> String {
+                <$batch>::device(self)
+            }
+
+            fn plan(&self) -> &Plan {
+                <$batch>::plan(self)
+            }
+
+            fn offsets(&self) -> Offsets {
+                <$batch>::offsets(self)
+            }
+
+            fn row(&mut self, sim: usize) -> &mut [f64] {
+                <$batch>::row(self, sim)
+            }
+
+            fn advance(&mut self, nstep: usize) -> usize {
+                <$batch>::step(self, nstep)
+            }
+
+            fn error(&self) -> Option<String> {
+                <$batch>::first_error(self)
+            }
+
+            fn fields(&mut self, sim: usize, names: &[&str]) -> Result<(Vec<Vec<f64>>, usize), String> {
+                <$batch>::forward_fields(self, sim, names)
+            }
+        }
+    };
+}
+
+gpu_rows!(MetalBatch, "metal");
+gpu_rows!(WgslBatch, "wgpu");
+
+pub fn parity<B: GpuRows>(args: &Args) -> Result<Value, String> {
     let (model, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;
     let nu = kernel.nu;
-    let mut batch = MetalBatch::new(&model, kernel, 1)?;
+    let mut batch = B::open(&model, kernel, 1)?;
     let o = batch.offsets();
-    let (fields, ncon) = batch.forward_fields(0, &["XPOS", "CINERT", "QBIAS", "QACC"])?;
+    let (fields, ncon) = batch.fields(0, &["XPOS", "CINERT", "QBIAS", "QACC"])?;
     let row = batch.row(0).to_vec();
     let first = single(&Snapshot {
         qpos: row[o.qpos..o.qvel].to_vec(),
@@ -32,8 +89,8 @@ pub fn parity(args: &Args) -> Result<Value, String> {
     for i in 0..args.steps {
         batch.row(0)[o.ctrl..o.ctrl + nu].fill(rollout_ctrl(i));
 
-        if batch.step(1) > 0 {
-            return Err(batch.first_error().unwrap_or_default());
+        if batch.advance(1) > 0 {
+            return Err(batch.error().unwrap_or_default());
         }
 
         if (i + 1).is_multiple_of(REPORT_EVERY) {
@@ -47,7 +104,7 @@ pub fn parity(args: &Args) -> Result<Value, String> {
         }
     }
 
-    Ok(json!({ "backend": "metal", "device": batch.device(), "single": first, "rollout": rollout }))
+    Ok(json!({ "backend": B::NAME, "device": batch.device(), "single": first, "rollout": rollout }))
 }
 
 fn start_row(model: &Model, plan: &Plan, world: usize, out: &mut [f64]) {
@@ -57,7 +114,7 @@ fn start_row(model: &Model, plan: &Plan, world: usize, out: &mut [f64]) {
     data.get_state(model, out, forge_mujoco::integration_state());
 }
 
-fn bits(batch: &mut MetalBatch, sim: usize) -> Vec<u64> {
+fn bits<B: GpuRows>(batch: &mut B, sim: usize) -> Vec<u64> {
     let o = batch.offsets();
     let nv = batch.plan().kernel.nv;
     let row = batch.row(sim);
@@ -70,9 +127,8 @@ fn bits(batch: &mut MetalBatch, sim: usize) -> Vec<u64> {
         .collect()
 }
 
-fn run(model: &Model, batch: &mut MetalBatch, worlds: &[usize]) -> Result<(), String> {
-    let plan = batch.plan().kernel.clone();
-    let plan = Plan::new(plan);
+fn run<B: GpuRows>(model: &Model, batch: &mut B, worlds: &[usize]) -> Result<(), String> {
+    let plan = Plan::new(batch.plan().kernel.clone());
     let o = batch.offsets();
 
     for (sim, &w) in worlds.iter().enumerate() {
@@ -86,17 +142,17 @@ fn run(model: &Model, batch: &mut MetalBatch, worlds: &[usize]) -> Result<(), St
             batch.row(sim)[o.ctrl..o.ctrl + ctrl.len()].copy_from_slice(&ctrl);
         }
 
-        if batch.step(DECIMATION) > 0 {
-            return Err(batch.first_error().unwrap_or_default());
+        if batch.advance(DECIMATION) > 0 {
+            return Err(batch.error().unwrap_or_default());
         }
     }
 
     Ok(())
 }
 
-pub fn identity(args: &Args) -> Result<Value, String> {
+pub fn identity<B: GpuRows>(args: &Args) -> Result<Value, String> {
     let (model, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;
-    let mut alone = MetalBatch::new(&model, kernel.clone(), 1)?;
+    let mut alone = B::open(&model, kernel.clone(), 1)?;
     let mut singles = Vec::with_capacity(WORLDS);
 
     for w in 0..WORLDS {
@@ -105,7 +161,7 @@ pub fn identity(args: &Args) -> Result<Value, String> {
     }
 
     let mut mismatches = Vec::new();
-    let mut together = MetalBatch::new(&model, kernel.clone(), WORLDS)?;
+    let mut together = B::open(&model, kernel.clone(), WORLDS)?;
 
     run(&model, &mut together, &(0..WORLDS).collect::<Vec<_>>())?;
 
@@ -115,7 +171,7 @@ pub fn identity(args: &Args) -> Result<Value, String> {
         }
     }
 
-    let mut crowd = MetalBatch::new(&model, kernel, CROWD)?;
+    let mut crowd = B::open(&model, kernel, CROWD)?;
     let order: Vec<usize> = (0..CROWD).map(|s| (s * 7 + 3) % CROWD).collect();
 
     run(&model, &mut crowd, &order)?;
@@ -128,7 +184,7 @@ pub fn identity(args: &Args) -> Result<Value, String> {
 
     Ok(json!({
         "identical": mismatches.is_empty(),
-        "backend": "metal",
+        "backend": B::NAME,
         "worlds": WORLDS,
         "crowd": CROWD,
         "steps": ROUNDS * DECIMATION,

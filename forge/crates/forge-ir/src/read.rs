@@ -1,7 +1,7 @@
-use forge_mujoco::Model;
+use crate::source::Source;
 
 pub struct Reader<'a> {
-    model: &'a Model,
+    model: &'a dyn Source,
 }
 
 fn missing(name: &str) -> String {
@@ -9,36 +9,24 @@ fn missing(name: &str) -> String {
 }
 
 impl<'a> Reader<'a> {
-    pub fn new(model: &'a Model) -> Self {
+    pub fn new(model: &'a dyn Source) -> Self {
         Self { model }
     }
 
     pub fn f64s(&self, name: &str) -> Result<&'a [f64], String> {
-        self.model
-            .array(name)
-            .and_then(|a| a.f64s())
-            .ok_or_else(|| missing(name))
+        self.model.f64s(name).ok_or_else(|| missing(name))
     }
 
     pub fn i32s(&self, name: &str) -> Result<&'a [i32], String> {
-        self.model
-            .array(name)
-            .and_then(|a| a.i32s())
-            .ok_or_else(|| missing(name))
+        self.model.i32s(name).ok_or_else(|| missing(name))
     }
 
     pub fn f32s(&self, name: &str) -> Result<&'a [f32], String> {
-        self.model
-            .array(name)
-            .and_then(|a| a.f32s())
-            .ok_or_else(|| missing(name))
+        self.model.f32s(name).ok_or_else(|| missing(name))
     }
 
     pub fn u8s(&self, name: &str) -> Result<&'a [u8], String> {
-        self.model
-            .array(name)
-            .and_then(|a| a.u8s())
-            .ok_or_else(|| missing(name))
+        self.model.u8s(name).ok_or_else(|| missing(name))
     }
 
     pub fn size(&self, name: &str) -> Result<usize, String> {

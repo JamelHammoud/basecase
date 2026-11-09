@@ -1,11 +1,12 @@
-use super::layout::Layout;
 use super::source::source;
-use super::tables::{imps, supported};
+use crate::gpu::layout::Layout;
+use crate::gpu::tables::{imps, supported};
+use crate::gpu::vectors::{self, SLOTS};
 use crate::plan::Plan;
 use forge_metal::{Arg, BufferId, Dispatch, Gpu, Kernel, Timing};
 
 pub const GROUP: usize = 16;
-pub const BLOCK: usize = 16;
+pub const BLOCK: usize = crate::gpu::BLOCK;
 
 pub struct Engine {
     pub plan: Plan,
@@ -18,6 +19,18 @@ pub struct Engine {
     order: BufferId<u32>,
     stats: BufferId<u32>,
     worlds: usize,
+}
+
+pub struct Parts {
+    pub plan: Plan,
+    pub layout: Layout,
+    pub gpu: Gpu,
+    pub io: BufferId<f32>,
+    pub scratch: BufferId<f32>,
+    pub ints: BufferId<u32>,
+    pub order: BufferId<u32>,
+    pub stats: BufferId<u32>,
+    pub worlds: usize,
 }
 
 pub fn refusal(plan: &Plan) -> Option<String> {
@@ -43,9 +56,9 @@ impl Engine {
 
         let layout = Layout::new(&plan);
         let mut gpu = Gpu::new()?;
-        let kernels = gpu.compile(&source(&plan, &layout), &["step", "forward_only", "profile"])?;
+        let kernels = gpu.compile(&source(&plan, &layout), &["step", "forward_only", "profile", "qualify"])?;
         let worlds = worlds.max(1);
-        let io = gpu.alloc::<f32>(2 * layout.nstate * worlds)?;
+        let io = gpu.alloc::<f32>((2 * layout.nstate * worlds).max(2 * SLOTS))?;
         let padded = worlds.div_ceil(BLOCK) * BLOCK;
         let scratch = gpu.alloc::<f32>(2 * layout.reals * padded)?;
         let ints = gpu.alloc::<u32>(layout.nints * padded)?;
@@ -74,6 +87,20 @@ impl Engine {
         self.gpu.name()
     }
 
+    pub fn into_parts(self) -> Parts {
+        Parts {
+            plan: self.plan,
+            layout: self.layout,
+            gpu: self.gpu,
+            io: self.io,
+            scratch: self.scratch,
+            ints: self.ints,
+            order: self.order,
+            stats: self.stats,
+            worlds: self.worlds,
+        }
+    }
+
     pub fn io(&mut self) -> &mut [f32] {
         self.gpu.slice_mut(self.io)
     }
@@ -95,7 +122,10 @@ impl Engine {
     }
 
     fn run_upto(&mut self, kernel: usize, nstep: usize, upto: usize) -> Result<Timing, String> {
-        let words = [self.worlds as u32, nstep as u32, upto as u32];
+        self.call(kernel, [self.worlds as u32, nstep as u32, upto as u32])
+    }
+
+    fn call(&mut self, kernel: usize, words: [u32; 3]) -> Result<Timing, String> {
         let dispatch = Dispatch {
             kernel: &self.kernels[kernel],
             args: vec![
@@ -123,6 +153,14 @@ impl Engine {
 
     pub fn profile(&mut self, nstep: usize, upto: usize) -> Result<Timing, String> {
         self.run_upto(2, nstep, upto)
+    }
+
+    pub fn qualify_arithmetic(&mut self) -> Result<(), String> {
+        let inputs = vectors::inputs();
+
+        vectors::load(self.io(), &inputs);
+        self.call(3, [vectors::CASES as u32, 0, 0])?;
+        vectors::check(self.io_view(), &inputs)
     }
 
     pub fn field(&self, name: &str, thread: usize) -> Vec<f64> {

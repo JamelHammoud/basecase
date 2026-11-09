@@ -6,6 +6,8 @@ import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { DriveKeys } from '../components/simulate/CaseSections';
 import { Viewport3D, type Viewport3DHandle } from '../components/Viewport3D';
 import { Button, RunIcon, StopIcon } from '../design-system';
+import { forgeHook } from '../forge/forgeHook';
+import type { SimModel } from '../sim/mjcfTypes';
 import { useSimulation } from '../sim/useSimulation';
 import { DEFAULT_PROJECT, type ProjectSettings, type SculptSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
@@ -17,6 +19,7 @@ const NO_POSE = new Map();
 
 export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) => {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
+  const modelRef = useRef<SimModel | null>(null);
   const { parts, joints } = bundle.robot;
   const project: ProjectSettings = { ...DEFAULT_PROJECT, joints };
   const rig = buildRig(joints, parts);
@@ -41,6 +44,14 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
       state: () => ({ status: sim.status, drive: drive.status, offer: drive.offer, stats: sim.stats }),
     };
   });
+
+  useEffect(() => {
+    modelRef.current = sim.model;
+  });
+
+  useEffect(() => {
+    (window as unknown as { __forge?: unknown }).__forge = forgeHook(bundle.slug, () => modelRef.current);
+  }, [bundle.slug]);
 
   return (
     <div className="fixed inset-0 bg-[#1b1b1b] text-white">

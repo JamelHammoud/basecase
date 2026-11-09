@@ -1,4 +1,4 @@
-use super::emit::{idx, Emitter};
+use super::sink::{idx, Sink};
 use crate::plan::Plan;
 use forge_ir::Interp;
 
@@ -11,7 +11,7 @@ pub fn history_len(plan: &Plan) -> usize {
         .sum()
 }
 
-fn delays(e: &mut Emitter, plan: &Plan) {
+fn delays(e: &mut impl Sink, plan: &Plan) {
     let mut act_delay = Vec::new();
     let (mut n, mut adr, mut linear, mut seconds) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
     let mut at = 0;
@@ -37,7 +37,7 @@ fn delays(e: &mut Emitter, plan: &Plan) {
     e.reals("DELAY_SECONDS", seconds);
 }
 
-fn ranges(e: &mut Emitter, name: &str, ranges: &[Option<[f64; 2]>]) {
+fn ranges(e: &mut impl Sink, name: &str, ranges: &[Option<[f64; 2]>]) {
     e.ints(
         &format!("{name}_LIMITED"),
         ranges.iter().map(|r| i64::from(r.is_some())),
@@ -46,7 +46,7 @@ fn ranges(e: &mut Emitter, name: &str, ranges: &[Option<[f64; 2]>]) {
     e.reals(&format!("{name}_HI"), ranges.iter().map(|r| r.map_or(0.0, |r| r[1])));
 }
 
-pub fn emit(e: &mut Emitter, plan: &Plan) {
+pub fn emit(e: &mut impl Sink, plan: &Plan) {
     let acts = &plan.kernel.actuators;
     let ctrl: Vec<_> = acts.iter().map(|a| a.ctrl_range).collect();
     let force: Vec<_> = acts.iter().map(|a| a.force_range).collect();
@@ -60,7 +60,7 @@ pub fn emit(e: &mut Emitter, plan: &Plan) {
     delays(e, plan);
 }
 
-pub fn options(e: &mut Emitter, plan: &Plan) {
+pub fn options(e: &mut impl Sink, plan: &Plan) {
     let o = &plan.kernel.options;
 
     e.define("ITERATIONS", o.iterations);

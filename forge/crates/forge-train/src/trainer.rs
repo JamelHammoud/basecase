@@ -4,8 +4,10 @@ use crate::evaluate::{evaluate_clean, evaluate_seeds, Trained as EvalRun};
 use crate::events::{emit, status};
 use crate::export::{write_check, write_onnx, write_policy, Trained as ExportRun};
 use crate::gates;
-use crate::job::{self, Job};
+use crate::gpu_loop::{self, GpuPpo, Start};
+use crate::job::{self, Backend, Job};
 use crate::kernels::Math;
+use crate::physics::Engine;
 use crate::platform::{install_stop_handlers, raise_thread_priority, stop_requested};
 use crate::robot::Robot;
 use crate::warm::{self, write_resume};
@@ -178,6 +180,48 @@ fn learner_threads() -> usize {
     std::thread::available_parallelism().map_or(4, |c| c.get()).div_ceil(2)
 }
 
+fn train_on_gpu(folder: &Path, robot: &Robot, mut algo: GpuPpo) -> Result<(), String> {
+    let job = Job {
+        backend: Backend::Mujoco,
+        ..robot.job.clone()
+    };
+    let replay = Robot::load(Model::load(&folder.join("model.xml"))?, job)?;
+
+    status(&format!(
+        "Training on the GPU: physics, policy and learner on {}. Every check replays in C MuJoCo",
+        algo.device
+    ));
+    warm_start(&replay, &mut algo, folder)?;
+
+    if !replay.holds_pose {
+        status("Can't hold the pose without help. Training from a fall.");
+    }
+
+    status(&format!("Training on {} robots", replay.job.envs));
+
+    let steps = train_loop(&replay, &mut algo, folder)?;
+
+    finish(&replay, &algo, folder, steps)
+}
+
+fn try_gpu_loop(robot: &Robot) -> Option<GpuPpo> {
+    if robot.job.backend != Backend::Metal || !matches!(robot.engine, Engine::Metal { .. }) {
+        return None;
+    }
+
+    let start = Start {
+        robot,
+        envs: robot.job.envs,
+        env_seed: robot.job.seed + ENV_SEED_OFFSET,
+        seed: robot.job.seed,
+        math: Math::native(learner_threads()),
+    };
+
+    gpu_loop::start(start)
+        .inspect_err(|why| status(&format!("{why}. Learning on the CPU")))
+        .ok()
+}
+
 pub fn train(folder: &Path) -> Result<(), String> {
     raise_thread_priority();
     install_stop_handlers();
@@ -194,6 +238,10 @@ pub fn train(folder: &Path) -> Result<(), String> {
 
     if let Some(note) = robot.engine.status() {
         status(&note);
+    }
+
+    if let Some(algo) = try_gpu_loop(&robot) {
+        return train_on_gpu(folder, &robot, algo);
     }
 
     let envs = Envs::new(&robot, envs_count, seed + ENV_SEED_OFFSET, true)?;

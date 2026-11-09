@@ -1,6 +1,6 @@
 use crate::physics::Physics;
 use crate::rng::Rng;
-use forge_mujoco::Model;
+use crate::robot::ModelRef;
 
 const FRICTION_RANGE: (f64, f64) = (0.6, 1.3);
 const MASS_RANGE: (f64, f64) = (0.85, 1.15);
@@ -8,7 +8,7 @@ const SERVO_RANGE: (f64, f64) = (0.85, 1.15);
 
 pub const RANDOMIZED_FIELDS: [&str; 4] = ["geom_friction", "body_mass", "actuator_gainprm", "actuator_biasprm"];
 
-pub fn randomize(batch: &mut Physics, model: &Model, rngs: &mut [Rng]) -> Result<(), String> {
+pub fn randomize(batch: &mut Physics, nu: usize, rngs: &mut [Rng]) -> Result<(), String> {
     let (friction, width) = batch.expand("geom_friction")?;
 
     for (row, rng) in friction.chunks_exact_mut(width).zip(rngs.iter_mut()) {
@@ -28,14 +28,14 @@ pub fn randomize(batch: &mut Physics, model: &Model, rngs: &mut [Rng]) -> Result
     let servo: Vec<f64> = rngs
         .iter_mut()
         .flat_map(|rng| {
-            (0..model.nu())
+            (0..nu)
                 .map(|_| rng.uniform(SERVO_RANGE.0, SERVO_RANGE.1))
                 .collect::<Vec<f64>>()
         })
         .collect();
-    let per_sim = model.nu();
+    let per_sim = nu;
     let (gain, width) = batch.expand("actuator_gainprm")?;
-    let gain_width = Model::gain_width();
+    let gain_width = ModelRef::gain_width();
 
     for (row, stiffness) in gain.chunks_exact_mut(width).zip(servo.chunks_exact(per_sim.max(1))) {
         row.chunks_exact_mut(gain_width)
@@ -44,7 +44,7 @@ pub fn randomize(batch: &mut Physics, model: &Model, rngs: &mut [Rng]) -> Result
     }
 
     let (bias, width) = batch.expand("actuator_biasprm")?;
-    let bias_width = Model::bias_width();
+    let bias_width = ModelRef::bias_width();
 
     for (row, stiffness) in bias.chunks_exact_mut(width).zip(servo.chunks_exact(per_sim.max(1))) {
         for (params, k) in row.chunks_exact_mut(bias_width).zip(stiffness) {

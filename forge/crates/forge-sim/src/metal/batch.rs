@@ -1,12 +1,13 @@
-use super::emit::split;
 use super::engine::Engine;
-use super::layout::Layout;
+use super::resident::{build, Start, Worlds};
+use crate::gpu::pack::{group_order, Pack, Slots};
 use crate::plan::Plan;
 use crate::row_batch::Offsets;
 use crate::rowmap::RowMap;
-use crate::tables::WorldTables;
 use crate::world_params::WorldParams;
+use forge_ir::task::Task;
 use forge_ir::Kernel;
+use forge_metal::Gpu;
 use forge_mujoco::{Data, Model};
 use rayon::prelude::*;
 
@@ -19,106 +20,6 @@ pub struct MetalBatch {
     work: Vec<f64>,
     error: Option<String>,
     gpu_seconds: f64,
-}
-
-struct Slots {
-    qpos: usize,
-    qvel: usize,
-    ctrl: usize,
-    warm: usize,
-    time: usize,
-    hist: usize,
-    tables: [usize; 4],
-}
-
-impl Slots {
-    fn new(l: &Layout) -> Self {
-        let at = |n: &str| l.at(n).0;
-
-        Self {
-            qpos: at("QPOS"),
-            qvel: at("QVEL"),
-            ctrl: at("CTRL"),
-            warm: at("WARM"),
-            time: at("TIME"),
-            hist: at("HIST"),
-            tables: [at("TMASS"), at("TFRIC"), at("TGAIN"), at("TBIAS")],
-        }
-    }
-}
-
-fn put(out: &mut [f32], at: usize, values: &[f64]) {
-    for (k, v) in values.iter().enumerate() {
-        let (hi, lo) = split(*v);
-
-        out[2 * (at + k)] = hi;
-        out[2 * (at + k) + 1] = lo;
-    }
-}
-
-fn get(block: &[f32], at: usize, out: &mut [f64]) {
-    for (k, v) in out.iter_mut().enumerate() {
-        *v = f64::from(block[2 * (at + k)]) + f64::from(block[2 * (at + k) + 1]);
-    }
-}
-
-struct Pack<'a> {
-    map: &'a RowMap,
-    slots: &'a Slots,
-    nq: usize,
-    nv: usize,
-    nu: usize,
-}
-
-impl Pack<'_> {
-    fn load(&self, row: &[f64], tables: &WorldTables, out: &mut [f32]) {
-        let (m, s) = (self.map, self.slots);
-
-        put(out, s.qpos, &row[m.qpos..m.qpos + self.nq]);
-        put(out, s.qvel, &row[m.qvel..m.qvel + self.nv]);
-        put(out, s.ctrl, &row[m.ctrl..m.ctrl + self.nu]);
-        put(out, s.warm, &row[m.warm..m.warm + self.nv]);
-        put(out, s.time, &row[m.time..=m.time]);
-
-        let mut at = s.hist;
-
-        for buf in &m.buffers {
-            let base = m.history + buf.adr;
-            let n = buf.samples;
-
-            put(out, at, &row[base + 2..base + 2 + 2 * n]);
-            put(out, at + 2 * n, &row[base + 1..base + 2]);
-            at += 2 * n + 1;
-        }
-
-        put(out, s.tables[0], tables.mass);
-        put(out, s.tables[1], tables.friction);
-        put(out, s.tables[2], tables.gain);
-
-        let bias: Vec<f64> = tables.bias.iter().flatten().copied().collect();
-
-        put(out, s.tables[3], &bias);
-    }
-
-    fn store(&self, block: &[f32], row: &mut [f64]) {
-        let (m, s) = (self.map, self.slots);
-
-        get(block, s.qpos, &mut row[m.qpos..m.qpos + self.nq]);
-        get(block, s.qvel, &mut row[m.qvel..m.qvel + self.nv]);
-        get(block, s.warm, &mut row[m.warm..m.warm + self.nv]);
-        get(block, s.time, &mut row[m.time..=m.time]);
-
-        let mut at = s.hist;
-
-        for buf in &m.buffers {
-            let base = m.history + buf.adr;
-            let n = buf.samples;
-
-            get(block, at, &mut row[base + 2..base + 2 + 2 * n]);
-            get(block, at + 2 * n, &mut row[base + 1..base + 2]);
-            at += 2 * n + 1;
-        }
-    }
 }
 
 impl MetalBatch {
@@ -186,35 +87,23 @@ impl MetalBatch {
         self.gpu_seconds
     }
 
+    pub fn qualify_arithmetic(&mut self) -> Result<(), String> {
+        self.engine.qualify_arithmetic()
+    }
+
     pub fn first_error(&self) -> Option<String> {
         self.error.clone()
     }
 
     fn group(&mut self) {
-        let keys: Vec<f64> = (0..self.rows.len())
-            .map(|s| self.contacts[s] * 1000.0 + self.work[s])
-            .collect();
-        let mut order: Vec<usize> = (0..keys.len()).collect();
-
-        order.sort_by(|a, b| keys[*b].total_cmp(&keys[*a]));
-
-        for (slot, sim) in self.engine.order().iter_mut().zip(order) {
-            *slot = sim as u32;
-        }
+        group_order(&self.contacts, &self.work, self.engine.order());
     }
 
     fn upload(&mut self) {
         self.params.refresh();
 
         let slots = Slots::new(&self.engine.layout);
-        let k = &self.engine.plan.kernel;
-        let pack = Pack {
-            map: &self.map,
-            slots: &slots,
-            nq: k.nq,
-            nv: k.nv,
-            nu: k.nu,
-        };
+        let pack = Pack::new(&self.map, &slots, &self.engine.plan);
         let width = 2 * self.engine.layout.nstate;
         let (rows, params) = (&self.rows, &self.params);
 
@@ -228,26 +117,14 @@ impl MetalBatch {
 
     fn download(&mut self) -> usize {
         let slots = Slots::new(&self.engine.layout);
-        let k = &self.engine.plan.kernel;
-        let (nq, nv) = (k.nq, k.nv);
-        let pack = Pack {
-            map: &self.map,
-            slots: &slots,
-            nq,
-            nv,
-            nu: k.nu,
-        };
+        let pack = Pack::new(&self.map, &slots, &self.engine.plan);
         let width = 2 * self.engine.layout.nstate;
-        let map = &self.map;
         let io = self.engine.io_view();
 
         self.rows
             .par_iter_mut()
             .zip(io.par_chunks(width))
-            .map(|(row, block)| {
-                pack.store(block, row);
-                usize::from(!map.finite(row, nq, nv))
-            })
+            .map(|(row, block)| usize::from(!pack.store(block, row)))
             .sum()
     }
 
@@ -277,6 +154,16 @@ impl MetalBatch {
         self.record_stats();
         self.error = (failed > 0).then(|| format!("Forge's Metal engine diverged on {failed} robots"));
         failed
+    }
+
+    pub fn into_worlds(mut self, task: &Task, seed: u64) -> Result<(Gpu, Worlds), String> {
+        self.upload();
+
+        build(Start {
+            parts: self.engine.into_parts(),
+            task,
+            seed,
+        })
     }
 
     pub fn profile(&mut self, nstep: usize, upto: usize) -> Result<f64, String> {

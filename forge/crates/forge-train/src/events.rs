@@ -41,6 +41,7 @@ pub fn status(message: &str) {
     emit(&json!({ "type": "status", "message": message }));
 }
 
+#[cfg(feature = "native")]
 pub fn emit_check() {
     let cpus = std::thread::available_parallelism().map_or(1, |c| c.get());
 

@@ -105,12 +105,11 @@ fn bits(s: &Snapshot) -> Vec<u64> {
 }
 
 pub fn run(args: &Args) -> Result<Value, String> {
-    if args.backend == Backend::Metal {
-        return crate::metal_runs::identity(args);
-    }
-
-    if args.backend != Backend::Simd {
-        return Err("Batch identity checks the simd or metal backend".into());
+    match args.backend {
+        Backend::Metal => return crate::gpu_runs::identity::<forge_sim::MetalBatch>(args),
+        Backend::Wgpu => return crate::gpu_runs::identity::<forge_sim::WgslBatch>(args),
+        Backend::Mujoco => return Err("Batch identity checks the simd, metal or wgpu backend".into()),
+        Backend::Simd => {}
     }
 
     let (model, kernel) = forge_ir::load(&args.xml).map_err(|r| r.to_string())?;

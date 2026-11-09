@@ -1,5 +1,5 @@
 use super::actuators::history_len;
-use super::emit::Emitter;
+use super::sink::Sink;
 use crate::plan::Plan;
 
 #[derive(Clone, Debug, Default)]
@@ -16,10 +16,10 @@ pub struct Layout {
 pub const HESSIAN_DF: bool = false;
 const SHARED_BYTES: usize = 32 * 1024;
 
-fn hessian_bytes(plan: &Plan) -> usize {
+pub fn hessian_bytes(plan: &Plan) -> usize {
     let width = if HESSIAN_DF { 8 } else { 4 };
 
-    super::engine::BLOCK * (plan.nm + 2 * plan.kernel.nv) * width
+    super::BLOCK * (plan.nm + 2 * plan.kernel.nv) * width
 }
 
 impl Layout {
@@ -142,9 +142,13 @@ impl Layout {
     }
 
     pub fn new(plan: &Plan) -> Self {
+        Self::sized(plan, SHARED_BYTES)
+    }
+
+    pub fn sized(plan: &Plan, shared_bytes: usize) -> Self {
         let mut l = Layout {
             maxchain: plan.chains.iter().map(|c| c.dofs.len()).max().unwrap_or(1).max(1),
-            shared: hessian_bytes(plan) <= SHARED_BYTES,
+            shared: hessian_bytes(plan) <= shared_bytes,
             ..Layout::default()
         };
 
@@ -155,7 +159,7 @@ impl Layout {
         l
     }
 
-    pub fn emit(&self, e: &mut Emitter) {
+    pub fn emit(&self, e: &mut impl Sink) {
         for (name, at, _) in self.fields.iter().chain(&self.ints) {
             e.define(name, at);
         }
@@ -163,7 +167,7 @@ impl Layout {
         e.define("NSTATE", self.nstate);
         e.define("NREALS", self.reals);
         e.define("NINTS", self.nints.max(1));
-        e.define("BLOCK", super::engine::BLOCK);
+        e.define("BLOCK", super::BLOCK);
         e.define("MAXCHAIN", self.maxchain);
         e.define("H_DF", i32::from(HESSIAN_DF));
         e.define("H_SHARED", i32::from(self.shared));

@@ -191,48 +191,48 @@
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "26.6 s",
+          "detail": "45.0 s",
           "metrics": {},
-          "seconds": 26.579
+          "seconds": 45.041
         },
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "0.0 s",
+          "detail": "0.1 s",
           "metrics": {},
-          "seconds": 0.039
+          "seconds": 0.118
         },
         {
           "name": "forge-train links no Python",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.028
+          "seconds": 0.044
         },
         {
           "name": "Forge trains a real robot at 40K steps/s with the same events as train.py",
           "ok": true,
-          "detail": "44674 steps/s",
+          "detail": "50256 steps/s",
           "metrics": {
-            "fps": 44674.17626837081,
-            "loadBefore": 6.06494140625,
-            "loadAfter": 8.2216796875
+            "fps": 50255.961557408926,
+            "loadBefore": 6.083984375,
+            "loadAfter": 6.083984375
           },
-          "seconds": 2.27
+          "seconds": 2.162
         },
         {
           "name": "Forge exports a valid ONNX policy that matches its own actions",
           "ok": true,
           "detail": "worst 3.64e-6",
           "metrics": {},
-          "seconds": 0.2
+          "seconds": 0.37
         },
         {
           "name": "A Forge policy runs in the app with matching actions",
           "ok": true,
           "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.619
+          "seconds": 0.62
         },
         {
           "name": "Forge reaches the walk skill within 20% of the samples train.py needs, over 10 seeds",
@@ -264,7 +264,7 @@
               691200
             ]
           },
-          "seconds": 6614.78
+          "seconds": 6608.938
         }
       ],
       "canaries": [
@@ -283,8 +283,8 @@
           "seconds": 0
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T22:54:17.908Z",
+      "commit": "a2d6b99",
+      "at": "2026-11-09T07:44:28.588Z",
       "manifest": "clean"
     },
     "s1-f1b-sysid-rewardlang": {
@@ -949,91 +949,91 @@
       "title": "The robot daemon inside the app: bundled, locked, heartbeat, faults on screen, a Case driving it",
       "stage": 5,
       "state": "required",
-      "ok": false,
+      "ok": true,
       "voided": false,
       "checks": [
         {
           "name": "the daemon builds",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "4.2 s",
           "metrics": {},
-          "seconds": 0.664
+          "seconds": 4.214
         },
         {
           "name": "the daemon is staged for the app",
           "ok": true,
           "detail": "0.2 s",
           "metrics": {},
-          "seconds": 0.175
+          "seconds": 0.196
         },
         {
           "name": "the staged daemon is locked to emulated servos and says hello",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.18
+          "seconds": 0.118
         },
         {
           "name": "the app bundles",
           "ok": true,
-          "detail": "7.6 s",
+          "detail": "8.3 s",
           "metrics": {},
-          "seconds": 7.581
+          "seconds": 8.283
         },
         {
           "name": "an unsigned app packages",
           "ok": true,
-          "detail": "3.3 s",
+          "detail": "3.0 s",
           "metrics": {},
-          "seconds": 3.299
+          "seconds": 3.043
         },
         {
           "name": "the packaged app ships the locked daemon, spawns it emulated, refuses real ports and untrusted IPC",
           "ok": true,
-          "detail": "14.2 s",
+          "detail": "14.8 s",
           "metrics": {},
-          "seconds": 14.196
+          "seconds": 14.85
         },
         {
           "name": "heartbeat, the ladder, status, faults, refusals and a lost daemon reach the user",
-          "ok": false,
-          "detail": " FAIL  verify/hw/daemonUi.test.ts > the robot daemon inside the app > a killed daemon is shown as lost, in plain words\nError: Timed out waiting for \"Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power.\" on screen\n ❯ waitFor verify/hw/relayHarness.ts:107:38\n    105|     if (value) return value;\n    106|\n    107|     if (Date.now() > deadline) throw new Error(`Timed out waiting for …\n       |                                      ^\n    108|\n    109|     await new Promise((resolve) => setTimeout(resolve, 50));\n ❯ verify/hw/daemonUi.test.ts:103:12\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯",
+          "ok": true,
+          "detail": "10.2 s",
           "metrics": {},
-          "seconds": 55.806
+          "seconds": 10.163
         },
         {
           "name": "a Case drives the emulated robot through the daemon and back to the screen",
           "ok": true,
-          "detail": "23.5 s",
+          "detail": "17.4 s",
           "metrics": {},
-          "seconds": 23.519
+          "seconds": 17.449
         }
       ],
       "canaries": [
         {
           "name": "an app that skips the heartbeat is caught",
-          "ok": false,
-          "detail": "Canary did not fire: the check passed a planted fault (18.0 s)",
+          "ok": true,
+          "detail": "",
           "metrics": {},
-          "seconds": 17.954
+          "seconds": 5.845
         },
         {
           "name": "a UI that hides a fault is caught",
-          "ok": false,
-          "detail": "Canary did not fire: the check passed a planted fault (17.5 s)",
+          "ok": true,
+          "detail": "",
           "metrics": {},
-          "seconds": 17.533
+          "seconds": 1.705
         },
         {
           "name": "a daemon built with unlock-real-motors is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 4.282
+          "seconds": 4.226
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T20:59:56.762Z",
+      "commit": "345f905",
+      "at": "2026-11-09T01:58:12.487Z",
       "manifest": "clean"
     },
     "s1-f2-learner": {
@@ -1047,33 +1047,33 @@
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "3.8 s",
+          "detail": "0.2 s",
           "metrics": {},
-          "seconds": 3.83
+          "seconds": 0.214
         },
         {
           "name": "Forge Adam matches torch to 1e-4 over 50 steps",
           "ok": true,
           "detail": "worst 1.19e-7",
           "metrics": {},
-          "seconds": 2.11
+          "seconds": 2.639
         },
         {
           "name": "Forge reaches 45K steps/s at 1024 envs",
           "ok": true,
-          "detail": "156780 steps/s",
+          "detail": "155145 steps/s",
           "metrics": {
-            "loadBefore": 5.9150390625,
-            "loadAfter": 5.9150390625
+            "loadBefore": 6.0009765625,
+            "loadAfter": 7.20166015625
           },
-          "seconds": 3.204
+          "seconds": 3.248
         },
         {
           "name": "FastSAC and FlashSAC run and report the same events",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.231
+          "seconds": 1.24
         },
         {
           "name": "Python time-to-skill baseline recorded for three robots",
@@ -1083,25 +1083,25 @@
             "quad-servo": 46.74179087509401,
             "hexapod": 345.8167056250386,
             "biped-servo": 18.186022375011817,
-            "loadBefore": 5.60107421875,
-            "loadAfter": 5.60107421875
+            "loadBefore": 6.04248046875,
+            "loadAfter": 6.04248046875
           },
-          "seconds": 0
+          "seconds": 0.003
         },
         {
           "name": "Forge reaches the walk skill at least 3x faster than the Python baseline",
           "ok": true,
-          "detail": "10.22x",
+          "detail": "10.59x",
           "metrics": {
             "ratios": [
-              10.220290412365333,
-              66.61617401236417,
-              6.641340641346544
+              10.587454766947372,
+              68.49173571205344,
+              6.6399108048843845
             ],
-            "loadBefore": 5.60107421875,
-            "loadAfter": 13.2529296875
+            "loadBefore": 6.04248046875,
+            "loadAfter": 13.1279296875
           },
-          "seconds": 76.167
+          "seconds": 74.695
         }
       ],
       "canaries": [
@@ -1110,11 +1110,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.666
+          "seconds": 2.02
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T21:01:38.239Z",
+      "commit": "a2d6b99",
+      "at": "2026-11-09T07:46:47.942Z",
       "manifest": "clean"
     },
     "s3a-motor-kit": {
@@ -1473,14 +1473,14 @@
           "ok": true,
           "detail": "0.8 s",
           "metrics": {},
-          "seconds": 0.777
+          "seconds": 0.838
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.515
+          "seconds": 0.675
         },
         {
           "name": "metal engine matches C MuJoCo on every fuzzed robot, L0 to L3",
@@ -1492,26 +1492,26 @@
             "l3Qpos": 4.554544677168315e-9,
             "l3Qvel": 0.000001534765658776048
           },
-          "seconds": 21.138
+          "seconds": 91.69
         },
         {
           "name": "metal batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 11.03
+          "seconds": 10.867
         },
         {
           "name": "metal sustains 1000K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "1347654 sustained",
+          "detail": "1419379 sustained",
           "metrics": {
-            "substepsPerS": 1478409.021498016,
-            "sustainedMin": 1347653.8275886183,
-            "loadBefore": 5.95703125,
-            "loadAfter": 4.62158203125
+            "substepsPerS": 1517380.2168135855,
+            "sustainedMin": 1419378.536751023,
+            "loadBefore": 6.22314453125,
+            "loadAfter": 4.439453125
           },
-          "seconds": 60.116
+          "seconds": 60.094
         }
       ],
       "canaries": [
@@ -1530,8 +1530,153 @@
           "seconds": 0
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T20:54:44.700Z",
+      "commit": "a2d6b99",
+      "at": "2026-11-09T05:29:30.710Z",
+      "manifest": "clean"
+    },
+    "s1-f6-webgpu": {
+      "id": "s1-f6-webgpu",
+      "title": "F6: WGSL on D3D12, Vulkan and a browser tab",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "200 fuzzed robots emitted",
+          "ok": true,
+          "detail": "0.8 s",
+          "metrics": {},
+          "seconds": 0.78
+        },
+        {
+          "name": "C MuJoCo computes the reference for every fuzzed robot",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.69
+        },
+        {
+          "name": "wgpu engine matches C MuJoCo on every fuzzed robot, L0 to L3",
+          "ok": true,
+          "detail": "worst {\"l0\":3.608224830031759e-11,\"l1\":0.00006850971312066453,\"l3Qpos\":4.542904294066452e-9,\"l3Qvel\":0.0000014155706227125461}",
+          "metrics": {
+            "l0": 3.608224830031759e-11,
+            "l1": 0.00006850971312066453,
+            "l3Qpos": 4.542904294066452e-9,
+            "l3Qvel": 0.0000014155706227125461
+          },
+          "seconds": 31.891
+        },
+        {
+          "name": "wgpu batch step equals single step, bit for bit",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 25.432
+        },
+        {
+          "name": "wgpu sustains 400K substeps/s for 60 s at 4096 envs",
+          "ok": true,
+          "detail": "654504 sustained",
+          "metrics": {
+            "substepsPerS": 742617.414720898,
+            "sustainedMin": 654504.3174180156,
+            "loadBefore": 6.15673828125,
+            "loadAfter": 7.0625
+          },
+          "seconds": 60.252
+        },
+        {
+          "name": "a Chrome tab trains Stand to a passing eval within 15 min",
+          "ok": true,
+          "detail": "134.5 s",
+          "metrics": {
+            "loadBefore": 6.0634765625,
+            "loadAfter": 4.37744140625
+          },
+          "seconds": 134.484
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a planted acceleration error is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.001
+        },
+        {
+          "name": "a planted rollout drift is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0
+        }
+      ],
+      "commit": "a2d6b99",
+      "at": "2026-11-09T08:45:00.327Z",
+      "manifest": "clean"
+    },
+    "s1-f5-gpu-loop": {
+      "id": "s1-f5-gpu-loop",
+      "title": "F5: physics, policy and learner in one GPU buffer; acceptance replay in C",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "qualification vectors catch a bad GPU and fall back to C",
+          "ok": true,
+          "detail": "4.7 s",
+          "metrics": {},
+          "seconds": 4.654
+        },
+        {
+          "name": "Full GPU loop reaches 70K steps/s at 4096 envs",
+          "ok": true,
+          "detail": "121393 steps/s",
+          "metrics": {
+            "loadBefore": 5.59326171875,
+            "loadAfter": 5.59326171875
+          },
+          "seconds": 1.624
+        },
+        {
+          "name": "L4 statistics and L5 replay hold",
+          "ok": true,
+          "detail": "33.0 s",
+          "metrics": {},
+          "seconds": 32.974
+        },
+        {
+          "name": "Forge reaches the walk skill at least 5x faster than the Python baseline",
+          "ok": true,
+          "detail": "7.13x",
+          "metrics": {
+            "ratios": [
+              7.125936574938908,
+              12.16380471883348,
+              3.7418772865647183
+            ],
+            "loadBefore": 5.9521484375,
+            "loadAfter": 4.7568359375
+          },
+          "seconds": 313.716
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a policy trained on planted bad physics fails replay",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 18.113
+        }
+      ],
+      "commit": "4a0bf3c",
+      "at": "2026-11-09T08:52:32.578Z",
       "manifest": "clean"
     }
   }

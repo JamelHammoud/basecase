@@ -41,11 +41,39 @@ impl<T: Plain> BufferId<T> {
     pub fn arg(&self) -> Arg<'static> {
         Arg::Buffer(self.index)
     }
+
+    pub fn at(&self, offset: usize) -> Arg<'static> {
+        Arg::At(self.index, offset * std::mem::size_of::<T>())
+    }
 }
 
 pub enum Arg<'a> {
     Buffer(usize),
+    At(usize, usize),
     Words(&'a [u32]),
+    Owned(Vec<u32>),
+}
+
+impl Arg<'_> {
+    pub fn buffer(&self) -> Option<(usize, usize)> {
+        match self {
+            Arg::Buffer(slot) => Some((*slot, 0)),
+            Arg::At(slot, bytes) => Some((*slot, *bytes)),
+            _ => None,
+        }
+    }
+
+    pub fn floats(values: &[f32]) -> Arg<'static> {
+        Arg::Owned(values.iter().map(|v| v.to_bits()).collect())
+    }
+
+    pub fn words(&self) -> Option<&[u32]> {
+        match self {
+            Arg::Buffer(_) | Arg::At(..) => None,
+            Arg::Words(words) => Some(words),
+            Arg::Owned(words) => Some(words),
+        }
+    }
 }
 
 pub struct Dispatch<'a> {

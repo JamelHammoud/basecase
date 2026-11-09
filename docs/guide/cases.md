@@ -51,7 +51,7 @@ Drive works in the live sim, never as a physics-off puppet. A command is `{type:
 
 `useDrive` (`src/sim/useDrive.ts`) owns the drive state and the fall check; `useDriveKeys` (`src/workspace/useDriveKeys.ts`) reads W A S D or the arrows, Q E, Space, R (start over: `engine.respawn` puts the robot back without touching the world) and Esc (stop). While driving, `useWorkspaceKeys` runs no plain or ⌘ key, so S, F, Backspace and undo never edit parts (any parts edit still stops the sim). Keys zero on window blur and when the page hides; with a text field focused the canvas says “Click the canvas to drive”, and a click on the canvas takes focus back. Gamepads are read in the sim's frame handler (`frameHookRef`), with no extra animation frame; a stick inside its deadzone never overrides the keys.
 
-An arm drive reports its hand in `SimStats.effector` (mm, world frame, from the drive's bound part and point); the dev `simState()` passes it on.
+An arm drive reports its hand in `SimStats.effector` (mm, world frame, from the drive's bound part and point); the dev `simState()` passes it on. The canvas shows stats ten times a second, but `sim.latestStats()` returns the newest frame's, and the dev `simState()` and the gallery's `__gallery.state()` read that: a reading 100 ms stale put a stopped rover 3 cm short of where it really stopped.
 
 The canvas overlay (`DriveOverlay`) shows “Fell. Press R.”, speed in m/s for robots that move around, and Esc to exit. The camera follows the robot's base (`followPart`, `FollowCamera`), and the key light keeps fitting while it follows.
 

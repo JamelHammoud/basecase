@@ -3,7 +3,7 @@ use crate::drive::{start_pose, Waves, DECIMATION, EPISODE_ROUNDS};
 use crate::meter::{Meter, Windows};
 use forge_mujoco::{Batch, Data, Model};
 use forge_sim::lanes::LANES;
-use forge_sim::{MetalBatch, Plan, RowBatch};
+use forge_sim::{MetalBatch, Plan, RowBatch, WgslBatch};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -60,6 +60,24 @@ impl Stepper for MetalBatch {
 
     fn gpu_seconds(&self) -> Option<f64> {
         Some(MetalBatch::gpu_seconds(self))
+    }
+}
+
+impl Stepper for WgslBatch {
+    fn row(&mut self, sim: usize) -> &mut [f64] {
+        WgslBatch::row(self, sim)
+    }
+
+    fn advance(&mut self, nstep: usize) -> usize {
+        self.step(nstep)
+    }
+
+    fn contacts(&self, sim: usize) -> Option<f64> {
+        Some(WgslBatch::contacts(self, sim))
+    }
+
+    fn gpu_seconds(&self) -> Option<f64> {
+        Some(WgslBatch::gpu_seconds(self))
     }
 }
 
@@ -150,6 +168,15 @@ fn measure(stepper: &mut dyn Stepper, work: &Work, seconds: f64) -> Result<Measu
     })
 }
 
+fn backend_name(backend: Backend) -> &'static str {
+    match backend {
+        Backend::Simd => "simd",
+        Backend::Mujoco => "mujoco",
+        Backend::Metal => "metal",
+        Backend::Wgpu => "wgpu",
+    }
+}
+
 pub fn run(args: &Args) -> Result<Value, String> {
     let threads = args
         .threads
@@ -170,10 +197,11 @@ pub fn run(args: &Args) -> Result<Value, String> {
         )?,
         Backend::Mujoco => measure(&mut Batch::new(&model, args.envs, threads)?, &work, args.seconds)?,
         Backend::Metal => measure(&mut MetalBatch::new(&model, kernel, args.envs)?, &work, args.seconds)?,
+        Backend::Wgpu => measure(&mut WgslBatch::new(&model, kernel, args.envs)?, &work, args.seconds)?,
     };
 
     Ok(json!({
-        "backend": match args.backend { Backend::Simd => "simd", Backend::Mujoco => "mujoco", Backend::Metal => "metal" },
+        "backend": backend_name(args.backend),
         "envs": args.envs,
         "seconds": args.seconds,
         "threads": threads,

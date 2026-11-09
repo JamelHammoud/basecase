@@ -70,6 +70,10 @@ fn refuses_disabled_physics() {
             r#"<option integrator="implicitfast"><flag override="enable"/></option>"#,
             "contact override",
         ),
+        (
+            r#"<option integrator="implicitfast"><flag speculative="enable"/></option>"#,
+            "enables speculative contacts",
+        ),
     ];
 
     for (option, said) in cases {

@@ -260,7 +260,21 @@ fn net_json(net: &Net) -> Result<String, String> {
     Ok(format!(r#"{{"sizes":{sizes},"params":{params}}}"#))
 }
 
+pub fn from_text(text: &str) -> Result<WarmStart, String> {
+    let value: Value = serde_json::from_str(text).map_err(|e| format!("The warm start isn't JSON: {e}"))?;
+
+    if value["format"] == RESUME_FORMAT {
+        return from_resume(&value);
+    }
+
+    from_policy(&value)
+}
+
 pub fn write_resume(path: &Path, state: &Snapshot, norm: &Normalizer, steps: u64) -> Result<(), String> {
+    write_atomically(path, resume_text(state, norm, steps)?.as_bytes())
+}
+
+pub fn resume_text(state: &Snapshot, norm: &Normalizer, steps: u64) -> Result<String, String> {
     let header = json!({
         "format": RESUME_FORMAT,
         "version": RESUME_VERSION,
@@ -274,14 +288,12 @@ pub fn write_resume(path: &Path, state: &Snapshot, norm: &Normalizer, steps: u64
         "logAlpha": state.log_alpha,
     })
     .to_string();
-    let text = format!(
+    Ok(format!(
         r#"{},"actor":{},"critic":{}}}"#,
         &header[..header.len() - 1],
         net_json(&state.actor)?,
         net_json(&state.critic)?
-    );
-
-    write_atomically(path, text.as_bytes())
+    ))
 }
 
 #[cfg(test)]

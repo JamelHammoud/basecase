@@ -16,7 +16,7 @@ const spec = (extra: Partial<PolicySpec> = {}): PolicySpec => ({
   layers: [{ in: 1, out: 2, w: [0.5, 3], b: [0, 0] }],
   activation: 'elu',
   trainedSteps: 0,
-  mujoco: '3.17.0',
+  mujoco: '4.0.0',
   createdAt: '',
   ...extra,
 });

@@ -1,4 +1,4 @@
-use crate::{Arg, BufferId, Dispatch, Plain, Timing};
+use crate::{BufferId, Dispatch, Plain, Timing};
 use objc2::rc::Retained;
 use objc2::runtime::ProtocolObject;
 use objc2_foundation::NSString;
@@ -158,18 +158,17 @@ impl Gpu {
         encoder.setComputePipelineState(&d.kernel.pipeline);
 
         for (index, arg) in d.args.iter().enumerate() {
-            match arg {
-                Arg::Buffer(slot) => {
-                    let raw = &self.slots.get(*slot).ok_or("Unknown Metal buffer")?.raw;
+            if let Some((slot, bytes)) = arg.buffer() {
+                let raw = &self.slots.get(slot).ok_or("Unknown Metal buffer")?.raw;
 
-                    unsafe { encoder.setBuffer_offset_atIndex(Some(raw), 0, index) };
-                }
-                Arg::Words(words) => {
-                    let bytes = std::mem::size_of_val(*words).max(4);
-                    let ptr = NonNull::new(words.as_ptr().cast_mut().cast()).ok_or("Empty Metal argument")?;
+                unsafe { encoder.setBuffer_offset_atIndex(Some(raw), bytes, index) };
+            }
 
-                    unsafe { encoder.setBytes_length_atIndex(ptr, bytes, index) };
-                }
+            if let Some(words) = arg.words() {
+                let bytes = std::mem::size_of_val(words).max(4);
+                let ptr = NonNull::new(words.as_ptr().cast_mut().cast()).ok_or("Empty Metal argument")?;
+
+                unsafe { encoder.setBytes_length_atIndex(ptr, bytes, index) };
             }
         }
 

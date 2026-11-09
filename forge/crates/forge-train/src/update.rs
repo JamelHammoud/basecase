@@ -1,10 +1,9 @@
-use crate::adam::{clip_gradient, Adam};
-use crate::heads::{policy_gradient, value_gradient, Head, PolicyTerms};
+use crate::adam::{clip_scale, Adam, Moments};
+use crate::blocks::{Blocks, Nets, Refresh};
 use crate::kernels::Math;
 use crate::mlp::{Mlp, Scratch};
-use crate::pool::Pool;
+use crate::pool::SharedSlice;
 use crate::rng::Rng;
-use std::sync::Mutex;
 
 pub use crate::heads::Minibatch;
 
@@ -65,7 +64,7 @@ pub struct Learner {
     log_std_min: f32,
     actor_scratch: Scratch,
     critic_scratch: Scratch,
-    pair: Pool,
+    blocks: Blocks,
 }
 
 fn sized(nobs: usize, nact: usize) -> Vec<usize> {
@@ -94,6 +93,7 @@ impl Learner {
             nact,
             actor_scratch: actor.scratch(capacity),
             critic_scratch: critic.scratch(capacity),
+            blocks: Blocks::new(&actor, &critic, capacity),
             actor,
             critic,
             params,
@@ -102,7 +102,6 @@ impl Learner {
             adam: Adam::new(total),
             learn_rate: 1e-3,
             log_std_min: f32::NEG_INFINITY,
-            pair: Pool::new(2),
         }
     }
 
@@ -143,64 +142,50 @@ impl Learner {
             .forward(math, &self.params, obs, rows, &mut self.critic_scratch)
     }
 
-    fn gradients(&mut self, math: &Math, batch: &Minibatch, hp: &Hyper) -> f32 {
-        let params = &self.params[..];
-        let (actor_grads, rest) = self.grads.split_at_mut(self.critic.first_param);
-        let (critic_grads, log_std_grads) = rest.split_at_mut(self.log_std_at - self.critic.first_param);
-        let terms = PolicyTerms {
-            log_std: &params[self.log_std_at..],
-            log_std_grads,
-            clip: hp.clip,
-            ent_coef: hp.ent_coef,
-        };
-        let actor = Head {
-            net: &self.actor,
-            scratch: &mut self.actor_scratch,
-            params,
-            grads: actor_grads,
-        };
-        let critic = Head {
-            net: &self.critic,
-            scratch: &mut self.critic_scratch,
-            params,
-            grads: critic_grads,
-        };
-
-        if !math.runs_heads_together() {
-            let kl = policy_gradient(math, actor, batch, terms);
-
-            value_gradient(math, critic, batch);
-
-            return kl;
+    fn nets(&self) -> Nets<'_> {
+        Nets {
+            actor: &self.actor,
+            critic: &self.critic,
+            params: &self.params,
+            log_std_at: self.log_std_at,
         }
+    }
 
-        let policy_job = Mutex::new(Some((actor, terms)));
-        let value_job = Mutex::new(Some(critic));
-        let kl = Mutex::new(0.0f32);
+    pub fn refresh(&self, math: &Math, targets: Refresh) {
+        self.blocks.refresh(math, &self.nets(), targets);
+    }
 
-        self.pair.run(2, |task| {
-            if task == 0 {
-                let (head, terms) = policy_job.lock().expect("policy job").take().expect("runs once");
+    fn apply_gradients(&mut self, scale: f32) {
+        let step = self.adam.begin(self.learn_rate);
+        let Moments { first, second } = self.adam.moments();
+        let len = self.params.len();
+        let slices = [
+            SharedSlice::new(&mut self.params),
+            SharedSlice::new(&mut self.grads),
+            SharedSlice::new(first),
+            SharedSlice::new(second),
+        ];
 
-                *kl.lock().expect("kl") = policy_gradient(math, head, batch, terms);
+        self.blocks.spans(len, |from, to| {
+            let [params, grads, first, second] = slices.each_ref().map(|s| unsafe { s.range(from, to) });
 
-                return;
+            if scale < 1.0 {
+                grads.iter_mut().for_each(|g| *g *= scale);
             }
 
-            let head = value_job.lock().expect("value job").take().expect("runs once");
-
-            value_gradient(math, head, batch);
+            step.apply(params, grads, Moments { first, second });
         });
-
-        kl.into_inner().expect("kl")
     }
 
     pub fn minibatch_step(&mut self, math: &Math, batch: &Minibatch, hp: &Hyper) -> f32 {
-        let kl = self.gradients(math, batch, hp);
-        let norm = clip_gradient(&mut self.grads, GRAD_NORM_MAX);
+        let kl = self.blocks.gradients(math, &self.nets(), batch, hp);
+        let mut grads = std::mem::take(&mut self.grads);
+        let norm = self.blocks.reduce(&mut grads, &self.nets());
+
+        self.grads = grads;
 
         if norm.is_finite() {
-            self.adam.step(&mut self.params, &self.grads, self.learn_rate);
+            self.apply_gradients(clip_scale(norm, GRAD_NORM_MAX));
             self.cap_log_std();
         }
 

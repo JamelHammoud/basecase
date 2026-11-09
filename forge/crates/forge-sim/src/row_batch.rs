@@ -10,17 +10,7 @@ use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::sync::Mutex;
 
-pub use crate::world_params::EXPANDABLE;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Offsets {
-    pub nstate: usize,
-    pub time: usize,
-    pub qpos: usize,
-    pub qvel: usize,
-    pub warm: usize,
-    pub ctrl: usize,
-}
+pub use crate::rowmap::Offsets;
 
 struct Unit {
     state: State,
@@ -104,16 +94,7 @@ impl RowBatch {
     }
 
     pub fn offsets(&self) -> Offsets {
-        let m = &self.map;
-
-        Offsets {
-            nstate: m.nstate,
-            time: m.time,
-            qpos: m.qpos,
-            qvel: m.qvel,
-            warm: m.warm,
-            ctrl: m.ctrl,
-        }
+        self.map.offsets()
     }
 
     pub fn nsim(&self) -> usize {

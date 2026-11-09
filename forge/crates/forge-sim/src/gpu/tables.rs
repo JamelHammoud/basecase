@@ -1,4 +1,4 @@
-use super::emit::{idx, opt, Emitter};
+use super::sink::{idx, opt, Sink};
 use crate::params::Imp;
 use crate::plan::Plan;
 use forge_ir::{Collider, FrictionMix, JointKind, SameFrame, Shape};
@@ -30,7 +30,7 @@ fn flat4<'a>(items: impl Iterator<Item = &'a [f64; 4]>) -> Vec<f64> {
     items.flat_map(|v| v.iter().copied()).collect()
 }
 
-fn bodies(e: &mut Emitter, plan: &Plan) {
+fn bodies(e: &mut impl Sink, plan: &Plan) {
     let b = &plan.kernel.bodies;
     let joints = &plan.kernel.joints;
     let mut adr = Vec::new();
@@ -62,7 +62,7 @@ fn bodies(e: &mut Emitter, plan: &Plan) {
     e.reals("BODY_INERTIA", flat3(b.iter().map(|x| &x.inertia)));
 }
 
-fn joints_dofs_geoms(e: &mut Emitter, plan: &Plan) {
+fn joints_dofs_geoms(e: &mut impl Sink, plan: &Plan) {
     let k = &plan.kernel;
 
     e.ints("JNT_KIND", k.joints.iter().map(|j| kind(j.kind)));
@@ -90,7 +90,7 @@ fn joints_dofs_geoms(e: &mut Emitter, plan: &Plan) {
     e.reals("GEOM_SIZE", flat3(k.geoms.iter().map(|g| &g.size)));
 }
 
-fn matrix(e: &mut Emitter, plan: &Plan) {
+fn matrix(e: &mut impl Sink, plan: &Plan) {
     let nv = plan.kernel.nv;
     let (adr, nnz, col) = (&plan.m_adr, &plan.m_nnz, &plan.m_col);
     let mut ops = vec![0];
@@ -184,7 +184,7 @@ impl MeshTables {
         self.climb_extrema.extend(climb.extrema.iter().map(|&v| idx(v)));
     }
 
-    fn emit(self, e: &mut Emitter) {
+    fn emit(self, e: &mut impl Sink) {
         e.ints("MESH_VADR", self.vadr);
         e.ints("MESH_VNUM", self.vnum);
         e.ints("MESH_FNUM", self.fnum);
@@ -205,7 +205,7 @@ impl MeshTables {
     }
 }
 
-fn meshes(e: &mut Emitter, plan: &Plan) {
+fn meshes(e: &mut impl Sink, plan: &Plan) {
     let mut t = MeshTables::default();
 
     for m in &plan.kernel.meshes {
@@ -227,7 +227,7 @@ pub fn imps(plan: &Plan) -> Vec<&Imp> {
         .collect()
 }
 
-fn impedances(e: &mut Emitter, plan: &Plan) {
+fn impedances(e: &mut impl Sink, plan: &Plan) {
     let list = imps(plan);
 
     e.ints("IMP_FLAT", list.iter().map(|i| i64::from(i.flat())));
@@ -240,7 +240,7 @@ fn impedances(e: &mut Emitter, plan: &Plan) {
     e.reals("IMP_B2", list.iter().map(|i| 1.0 / (1.0 - i.solimp[3])));
 }
 
-fn rows(e: &mut Emitter, plan: &Plan) {
+fn rows(e: &mut impl Sink, plan: &Plan) {
     let f = &plan.friction;
     let l = &plan.limits;
 
@@ -259,7 +259,7 @@ fn rows(e: &mut Emitter, plan: &Plan) {
     e.reals("LIM_DIAG", l.iter().map(|r| r.diag));
 }
 
-fn chains(e: &mut Emitter, plan: &Plan) {
+fn chains(e: &mut impl Sink, plan: &Plan) {
     let mut adr = Vec::new();
     let mut dofs = Vec::new();
     let (mut term_adr, mut term_num) = (Vec::new(), Vec::new());
@@ -293,7 +293,7 @@ fn chains(e: &mut Emitter, plan: &Plan) {
     e.ints("HESS", hess);
 }
 
-fn pairs(e: &mut Emitter, plan: &Plan) {
+fn pairs(e: &mut impl Sink, plan: &Plan) {
     let p = &plan.kernel.pairs;
     let s = &plan.contacts;
     let nlim = plan.limits.len();
@@ -334,7 +334,7 @@ fn pairs(e: &mut Emitter, plan: &Plan) {
     e.reals("SLOT_MARGIN", s.iter().map(|c| c.include_margin));
 }
 
-pub fn emit(e: &mut Emitter, plan: &Plan) {
+pub fn emit(e: &mut impl Sink, plan: &Plan) {
     bodies(e, plan);
     joints_dofs_geoms(e, plan);
     matrix(e, plan);

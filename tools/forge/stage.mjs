@@ -2,11 +2,12 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { forgeMujocoVersion } from './mujocoVersion.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const release = path.join(root, 'forge', 'target', 'release');
 const out = path.join(root, 'forge', 'dist');
-const MUJOCO = '3.17.0';
+const MUJOCO = forgeMujocoVersion();
 const FRAMEWORK_REF = `@rpath/mujoco.framework/Versions/A/libmujoco.${MUJOCO}.dylib`;
 const DYLIB = `libmujoco.${MUJOCO}.dylib`;
 

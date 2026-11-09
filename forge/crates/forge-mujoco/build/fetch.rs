@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-pub const VERSION: &str = "3.17.0";
+pub const VERSION: &str = "4.0.0";
 
 fn release_file(target_os: &str) -> String {
     match target_os {

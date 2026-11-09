@@ -1,8 +1,8 @@
 mod args;
 mod bench;
 mod drive;
+mod gpu_runs;
 mod identity;
-mod metal_runs;
 mod meter;
 mod parity;
 mod reference;

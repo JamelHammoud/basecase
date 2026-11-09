@@ -54,3 +54,12 @@ pub fn stand() -> String {
 pub fn walk() -> String {
     format!("{SHARED}{WALK}")
 }
+
+pub const FELL: &str = r#"
+def reward(state):
+    return 1.0 if fell(state) else 0.0
+"#;
+
+pub fn fell() -> String {
+    format!("{SHARED}{FELL}")
+}

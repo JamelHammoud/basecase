@@ -3,9 +3,10 @@ mod resume;
 mod rollout;
 
 use crate::algorithm::{Algorithm, Report};
+use crate::blocks::Refresh;
+use crate::clock::Instant;
 use crate::deployed::{Deployed, Squash};
 use crate::envs::Envs;
-use crate::heads::gaussian_constant;
 use crate::kernels::Math;
 use crate::mask::actor_mask;
 use crate::normalizer::Normalizer;
@@ -14,7 +15,6 @@ use crate::update::{Hyper, Learner, Minibatch};
 use crate::warm::{Snapshot, WarmStart};
 use collector::Collector;
 use rollout::Rollout;
-use std::time::Instant;
 
 pub struct Update {
     pub learner: Learner,
@@ -55,33 +55,14 @@ impl Update {
 
     fn refresh(&mut self, rollout: &mut Rollout) {
         let n = rollout.envs;
-        let nobs = self.learner.nobs;
-        let nact = self.learner.nact;
-        let log_std: Vec<f32> = self.learner.log_std().to_vec();
-        let inverse_std: Vec<f32> = log_std.iter().map(|s| (-s).exp()).collect();
-        let constant = gaussian_constant(&log_std);
+        let targets = Refresh {
+            obs: &rollout.obs,
+            act: &rollout.act,
+            logp: &mut rollout.logp,
+            val: &mut rollout.val,
+        };
 
-        for start in (0..rollout.len()).step_by(n) {
-            let obs = &rollout.obs[start * nobs..(start + n) * nobs];
-            let mean = self.learner.act_mean(&self.math, obs, n);
-
-            for row in 0..n {
-                let taken = &rollout.act[(start + row) * nact..(start + row + 1) * nact];
-                let quadratic: f32 = (0..nact)
-                    .map(|j| {
-                        let unit = (taken[j] - mean[row * nact + j]) * inverse_std[j];
-
-                        unit * unit
-                    })
-                    .sum();
-
-                rollout.logp[start + row] = -0.5 * quadratic - constant;
-            }
-
-            let value = self.learner.value(&self.math, obs, n);
-
-            rollout.val[start..start + n].copy_from_slice(value);
-        }
+        self.learner.refresh(&self.math, targets);
 
         let last = self.learner.value(&self.math, &rollout.final_obs, n);
 
@@ -177,22 +158,43 @@ impl<'a> Ppo<'a> {
         let [learning, collecting] = &mut self.rollouts;
         let update = &mut self.update;
         let collector = &mut self.collector;
-        let collected = std::thread::scope(|scope| {
-            let learner = scope.spawn(|| {
-                crate::platform::raise_thread_priority();
-                update.learn(learning);
-            });
-            let collected = collector.collect(collecting);
-
-            learner.join().map_err(|_| "The learner thread panicked".to_owned())?;
-
-            collected
-        });
+        let collected = overlap(update, learning, collector, collecting);
 
         self.rollouts.swap(0, 1);
 
         collected
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn overlap(
+    update: &mut Update,
+    learning: &mut Rollout,
+    collector: &mut Collector,
+    collecting: &mut Rollout,
+) -> Result<(), String> {
+    update.learn(learning);
+    collector.collect(collecting)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn overlap(
+    update: &mut Update,
+    learning: &mut Rollout,
+    collector: &mut Collector,
+    collecting: &mut Rollout,
+) -> Result<(), String> {
+    std::thread::scope(|scope| {
+        let learner = scope.spawn(|| {
+            crate::platform::raise_thread_priority();
+            update.learn(learning);
+        });
+        let collected = collector.collect(collecting);
+
+        learner.join().map_err(|_| "The learner thread panicked".to_owned())?;
+
+        collected
+    })
 }
 
 impl Algorithm for Ppo<'_> {

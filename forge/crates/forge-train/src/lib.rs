@@ -1,6 +1,8 @@
 pub mod adam;
 pub mod adam_vector;
 pub mod algorithm;
+pub mod blocks;
+pub mod clock;
 pub mod conditions;
 pub mod deployed;
 pub mod elu;
@@ -10,7 +12,11 @@ pub mod evaluate;
 pub mod events;
 pub mod export;
 pub mod gates;
+#[cfg(feature = "native")]
+pub mod gpu_loop;
 pub mod heads;
+#[cfg(not(feature = "native"))]
+pub mod host;
 pub mod job;
 pub mod kernels;
 pub mod mask;
@@ -19,6 +25,10 @@ pub mod normalizer;
 pub mod onnx;
 pub mod options;
 pub mod orthogonal;
+#[cfg(feature = "native")]
+pub mod physics;
+#[cfg(not(feature = "native"))]
+#[path = "physics_host.rs"]
 pub mod physics;
 pub mod platform;
 pub mod pool;
@@ -27,8 +37,11 @@ pub mod randomize;
 pub mod rewarder;
 pub mod rng;
 pub mod robot;
+#[cfg(feature = "native")]
+mod robot_load;
 pub mod sac;
 pub mod threads;
+#[cfg(feature = "native")]
 pub mod trainer;
 pub mod update;
 pub mod warm;

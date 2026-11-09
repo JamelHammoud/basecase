@@ -1,5 +1,5 @@
 import type { V3 } from '../utils/kinematics';
-import type { BuilderRobot, GoalKind, GoalPlan } from './caseGoals';
+import { BLOCK_DEPTH_MM, type BuilderRobot, type GoalKind, type GoalPlan } from './caseGoals';
 import type { WorldObject } from './schema';
 
 export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf';
@@ -17,7 +17,6 @@ const WALL_HEIGHT_MM = 200;
 const WALL_THICKNESS_MM = 40;
 const WALL_OVERHANG_MM = 300;
 const BLOCK_HEIGHT_MM = 150;
-const BLOCK_DEPTH_MM = 120;
 const MIN_SHELF_MM = 10;
 const GROUND_GOALS: ReadonlySet<GoalKind> = new Set(['reach', 'push', 'path', 'walk']);
 
@@ -44,9 +43,9 @@ function corridor({ route }: GoalPlan): WorldObject[] {
   ];
 }
 
-function block({ route }: GoalPlan, robot: BuilderRobot): WorldObject[] {
+function block({ route, blockAt }: GoalPlan, robot: BuilderRobot): WorldObject[] {
   const width = Math.min(Math.max(robot.footprint.width * 0.8, 120), 400);
-  const z = (route.from[2] + route.to[2]) / 2;
+  const z = blockAt ?? (route.from[2] + route.to[2]) / 2;
 
   return [solid('block', 'Block', [route.from[0], BLOCK_HEIGHT_MM / 2, z], [width, BLOCK_HEIGHT_MM, BLOCK_DEPTH_MM])];
 }

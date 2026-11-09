@@ -20,7 +20,7 @@ export function useSimWorker(
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState<string | null>(null);
-  const lastUi = useRef(0);
+  const ui = useRef<{ at: number; stats: SimStats | null }>({ at: 0, stats: null });
   const frameHookRef = useRef<(() => void) | null>(null);
   const routineHookRef = useRef<((update: LiveUpdate) => void) | null>(null);
   const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
@@ -68,6 +68,7 @@ export function useSimWorker(
 
       if (msg.type !== 'frame' || !m) return;
 
+      ui.current.stats = msg.stats;
       viewportRef.current?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
       frameHookRef.current?.();
       offerSimTargets(
@@ -77,9 +78,9 @@ export function useSimWorker(
 
       const now = performance.now();
 
-      if (now - lastUi.current <= 100 && msg.playing) return;
+      if (now - ui.current.at <= 100 && msg.playing) return;
 
-      lastUi.current = now;
+      ui.current.at = now;
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
@@ -146,6 +147,7 @@ export function useSimWorker(
     playing,
     setPlaying,
     stats,
+    latestStats: () => (status === 'off' ? null : ui.current.stats),
     setStats,
     error,
     setError,

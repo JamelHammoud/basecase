@@ -25,7 +25,6 @@ fn unsupported(robot: &Robot) -> Vec<&'static str> {
     let options = &job.options;
 
     [
-        (job.algo != Algo::Ppo, "it learns with PPO only"),
         (
             options.delay_steps[0] > options.delay_steps[1],
             "its servo delays run backwards",
@@ -64,10 +63,18 @@ fn conditions(robot: &Robot) -> Conditions {
 }
 
 pub fn lower(robot: &Robot) -> Result<Task, String> {
+    if robot.job.algo != Algo::Ppo {
+        return Err("Forge's GPU loop can't train this job: it learns with PPO only".to_owned());
+    }
+
+    describe(robot).map_err(|why| format!("Forge's GPU loop can't train this job: {why}"))
+}
+
+pub fn describe(robot: &Robot) -> Result<Task, String> {
     let refused = unsupported(robot);
 
     if !refused.is_empty() {
-        return Err(format!("Forge's GPU loop can't train this job: {}", refused.join(", ")));
+        return Err(refused.join(", "));
     }
 
     let job = &robot.job;
@@ -99,8 +106,7 @@ pub fn lower(robot: &Robot) -> Result<Task, String> {
         pushes: pushes(robot),
         conditions: conditions(robot),
         observations: OBSERVATIONS.to_vec(),
-        reward: lowered(&reward_source(robot), nact)
-            .map_err(|e| format!("Forge's GPU loop can't train this job: {e}"))?,
+        reward: lowered(&reward_source(robot), nact)?,
         fell: lowered(&programs::fell(), nact)?,
     })
 }

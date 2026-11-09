@@ -5,7 +5,7 @@ import { buildRig } from '../utils/kinematics';
 import { buildCase, builderRobot, caseName, fittingTemplates, goalsFor, worldsFor, type CaseSpec } from './caseBuilder';
 import type { Case } from './schema';
 import { caseTemplates } from './templates';
-import { parseCase, runCase } from './testing';
+import { parseCase, runCase, touchTheDots } from './testing';
 
 const fixture = (id: string) => fixtureRobots().find((r) => r.id === id)!;
 
@@ -137,5 +137,32 @@ describe('a built Case in MuJoCo', () => {
 
     expect(limp.passed).toBe(false);
     expect(limp.margin).toBeLessThan(0);
+  });
+
+  it('the reference steers around a block and pushes a box onto its spot, on wheels and on legs', async () => {
+    const mj = await loadMujoco();
+    const runs = [
+      ['rover-four', 'push', 'block'],
+      ['rover-diff', 'path', 'block'],
+      ['hexapod', 'path', 'block'],
+      ['quad-servo', 'push', 'floor'],
+    ] as const;
+
+    for (const [id, goal, world] of runs) {
+      const kase = built(id, { goal, world });
+      const reference = await runCase(mj, kase, fixture(id), { controller: 'reference' });
+
+      expect(reference.passed, `${goal} in ${world} on ${id}`).toBe(true);
+    }
+  });
+
+  it('Touch the Dots written on six joints runs unchanged on three', async () => {
+    const mj = await loadMujoco();
+    const six = fixture('arm-6dof');
+    const kase = JSON.parse(JSON.stringify(touchTheDots(six))) as Case;
+    const three = fixture('arm-3dof');
+
+    expect((await runCase(mj, kase, three, { controller: 'reference' })).passed).toBe(true);
+    expect((await runCase(mj, kase, three, { controller: 'limp' })).passed).toBe(false);
   });
 });

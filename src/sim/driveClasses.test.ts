@@ -239,6 +239,28 @@ describe('driving an arm', () => {
     expect(tip().distanceTo(moved)).toBeLessThan(5);
     engine.dispose();
   });
+
+  it('stops the hand where it is on release, and reports it in the stats', async () => {
+    const mj = await loadMujoco();
+    const { model, access } = walker('arm-6dof');
+
+    if (access.kind !== 'ready') throw new Error('arm-6dof should drive');
+
+    const engine = new SimEngine(mj, model);
+    const hand = () => new THREE.Vector3(...engine.stats().effector!);
+
+    engine.setController({ kind: 'drive', setup: access.setup });
+    engine.step(0.5);
+    engine.command({ v: [1, 0, 0] });
+    engine.step(1.5);
+
+    const released = hand();
+
+    engine.command({ v: [0, 0, 0] });
+    engine.step(1);
+    expect(hand().distanceTo(released)).toBeLessThan(5);
+    engine.dispose();
+  });
 });
 
 describe('drive keys', () => {

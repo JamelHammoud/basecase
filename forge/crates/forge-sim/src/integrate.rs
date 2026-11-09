@@ -41,11 +41,13 @@ fn velocity_derivative(plan: &Plan, b: &Block, deriv: &mut [V]) {
             None => M::ALL,
         };
 
-        deriv[a.dof] += active.mask(b.tables.bias[i][2] * (a.gear * a.gear));
+        let gear = b.tables.gear[i];
+
+        deriv[a.dof] += active.mask(b.tables.bias[i][2] * (gear * gear));
     }
 
-    for (d, dof) in k.dofs.iter().enumerate() {
-        deriv[d] -= V::splat(dof.damping);
+    for d in 0..k.nv {
+        deriv[d] -= b.tables.damping[d];
     }
 }
 

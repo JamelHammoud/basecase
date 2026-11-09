@@ -8,4 +8,7 @@ license.workspace = true
 path = "src/lib.rs"
 
 [dependencies]
+forge-ir = { path = "../forge-ir" }
 forge-mujoco = { path = "../forge-mujoco" }
+forge-sim = { path = "../forge-sim" }
+rayon = "1"

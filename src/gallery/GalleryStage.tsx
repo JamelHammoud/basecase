@@ -41,7 +41,12 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
 
   useEffect(() => {
     (window as unknown as { __gallery?: unknown }).__gallery = {
-      state: () => ({ status: sim.status, drive: drive.status, offer: drive.offer, stats: sim.stats }),
+      state: () => ({
+        status: sim.status,
+        drive: drive.status,
+        offer: drive.offer,
+        stats: sim.latestStats() ?? sim.stats,
+      }),
     };
   });
 

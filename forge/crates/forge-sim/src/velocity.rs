@@ -126,11 +126,9 @@ pub fn rne(plan: &Plan, b: &mut Block, cacc: &mut [V], cfrc: &mut [V]) {
 }
 
 pub fn passive(plan: &Plan, b: &mut Block) {
-    for (d, dof) in plan.kernel.dofs.iter().enumerate() {
-        b.qfrc_passive[d] = if dof.damping != 0.0 {
-            -b.qvel[d] * dof.damping
-        } else {
-            ZERO
-        };
+    for d in 0..plan.kernel.nv {
+        let damping = b.tables.damping[d];
+
+        b.qfrc_passive[d] = if damping != ZERO { -b.qvel[d] * damping } else { ZERO };
     }
 }

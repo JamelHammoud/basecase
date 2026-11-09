@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import type { JointValues } from '../types/robotics';
 import { forwardKinematics, solveIK, type Rig, type V3 } from '../utils/kinematics';
 import { LegsDrive, type LegsSetup } from './driveLegs';
-import type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
+import type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 
-export type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
+export type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 
 export interface ArmSetup {
   kind: 'arm';
@@ -45,8 +45,10 @@ const clampUnit = (x: number) => Math.max(-1, Math.min(1, x));
 
 export const zeroCommand = (): DriveCommand => ({ v: [0, 0, 0] });
 
-function tipOf({ rig, part, point, start }: ArmSetup): V3 {
-  const posed = forwardKinematics(rig, { values: start });
+const isMoving = ({ v, aux }: DriveCommand) => v.some((x) => x !== 0) || !!aux?.some((x) => x !== 0);
+
+function tipOf({ rig, part, point }: ArmSetup, values: JointValues): V3 {
+  const posed = forwardKinematics(rig, { values });
   const owner = rig.ownerOf.get(part);
   const p = new THREE.Vector3(...point).applyMatrix4((owner && posed.joint.get(owner)) || posed.root);
 
@@ -55,6 +57,8 @@ function tipOf({ rig, part, point, start }: ArmSetup): V3 {
 
 class ArmDrive implements DriveLoop {
   private readonly setup: ArmSetup;
+
+  readonly hand: DriveHand;
 
   private values: JointValues;
 
@@ -68,15 +72,25 @@ class ArmDrive implements DriveLoop {
 
   constructor(setup: ArmSetup) {
     this.setup = setup;
+    this.hand = { part: setup.part, point: setup.point };
     this.values = { ...setup.start };
-    this.goal = tipOf(setup);
+    this.goal = tipOf(setup, setup.start);
     this.aim = [...this.goal];
   }
 
-  command(c: DriveCommand) {
+  command(c: DriveCommand, measured?: JointValues) {
+    const released = isMoving(this.cmd) && !isMoving(c) && !c.target;
+
     this.cmd = c;
 
     if (c.target) this.aim = [...c.target];
+
+    if (!released) return;
+
+    if (measured) this.values = Object.fromEntries(this.setup.joints.map((id) => [id, measured[id] ?? 0]));
+
+    this.goal = tipOf(this.setup, this.values);
+    this.aim = [...this.goal];
   }
 
   private speed() {

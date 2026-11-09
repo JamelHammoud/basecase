@@ -11,6 +11,8 @@ import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
+import { calibratedInput } from '../reality/calibratedInput';
+import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker } from './useSimWorker';
 
 export { simDeltas } from './mjcf';
@@ -28,6 +30,7 @@ export interface Simulation {
   status: SimStatus;
   playing: boolean;
   stats: SimStats | null;
+  latestStats: () => SimStats | null;
   error: string | null;
   model: SimModel | null;
   version: string | null;
@@ -172,7 +175,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     const current = inputs.current;
     const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
-    return buildMjcf({
+    const input = {
       parts: current.parts,
       rig: current.rig,
       project: current.project,
@@ -181,7 +184,9 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
       partTriangles: vp.partTriangles,
       posedFloor,
       world: worldRef.current,
-    });
+    };
+
+    return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
   }, [viewportRef]);
 
   const setWorldItems = (items: WorldItem[]) => {
@@ -214,17 +219,30 @@ function useStopOnEdit({
   }, [parts, joints, modelRef, stop]);
 }
 
+function useController(send: (msg: SimRequest) => void) {
+  const [controller, setControllerState] = useState<Controller>({ kind: 'hold' });
+  const setController = useCallback(
+    (c: Controller) => {
+      setControllerState(c);
+      send({ type: 'controller', controller: c });
+    },
+    [send],
+  );
+
+  return [controller, setController] as const;
+}
+
 export function useSimulation(props: Inputs): Simulation {
   const { parts, project, rig, pose, viewportRef } = props;
   const [model, setModel] = useState<SimModel | null>(null);
   const [speed, setSpeedState] = useState(1);
-  const [controller, setControllerState] = useState<Controller>({ kind: 'hold' });
   const modelRef = useRef<SimModel | null>(null);
   const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, version, send } = sw;
   const { worker, load, frameHookRef } = sw;
+  const [controller, setController] = useController(send);
 
   const start = useCallback(async () => {
     setError(null);
@@ -266,14 +284,6 @@ export function useSimulation(props: Inputs): Simulation {
 
   useStopOnEdit({ parts, joints: project.joints, modelRef, stop });
 
-  const setController = useCallback(
-    (c: Controller) => {
-      setControllerState(c);
-      send({ type: 'controller', controller: c });
-    },
-    [send],
-  );
-
   const runOn = (m: SimModel, opts: RunOptions) => runModel(m, opts, ++runSeq.current);
   const drive = useDrive({
     parts,
@@ -299,6 +309,7 @@ export function useSimulation(props: Inputs): Simulation {
     status,
     playing,
     stats,
+    latestStats: sw.latestStats,
     error,
     model,
     version,

@@ -9,7 +9,7 @@ mod setup;
 mod source;
 pub mod stats;
 mod sync;
-mod task;
+pub mod task;
 #[cfg(all(test, target_os = "macos"))]
 mod task_tests;
 

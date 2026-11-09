@@ -1,12 +1,15 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { DriveCommand, DriveSetup } from '../sim/drive';
-import { armSetup, roverSetup } from '../sim/driveSetup';
+import { rigForWorker } from '../sim/drive';
+import { footPoints } from '../sim/driveLegs';
+import { armSetup, roverForward, roverSetup } from '../sim/driveSetup';
 import { SimEngine, type Controller } from '../sim/engine';
 import { buildMjcf } from '../sim/mjcf';
 import type { MjcfInput, SimModel } from '../sim/mjcfTypes';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig, type Rig, type V3 } from '../utils/kinematics';
 import { evaluateContract, type Trace } from '../skills/contract';
+import { GroundSteer } from './groundSteer';
 import { probeReader } from './probes';
 import { boundEffector, robotFacts, slotRefusal, type EndEffector, type RobotFacts } from './robotFit';
 import { scaledToReach } from './scale';
@@ -39,20 +42,67 @@ export interface CaseResult {
   case: Case;
 }
 
+interface ProbeBase {
+  part: string | null;
+  point: V3;
+}
+
 export interface RunOptions {
   controller: 'limp' | 'reference';
 }
 
-function driveFor(rig: Rig, robot: CaseRobot, facts: RobotFacts, effector: EndEffector | null): DriveSetup | null {
+interface DriveFor {
+  kase: Case;
+  rig: Rig;
+  robot: CaseRobot;
+  facts: RobotFacts;
+  effector: EndEffector | null;
+}
+
+const MIN_DRIVEN_FEET = 4;
+
+function groundDrive(rig: Rig, robot: CaseRobot, facts: RobotFacts, key: string): DriveSetup | null {
+  if (facts.morphology === 'legged') {
+    const feet = footPoints(rig, robot.parts, key);
+
+    return feet.length >= MIN_DRIVEN_FEET
+      ? { kind: 'legs', robot: key, rig: rigForWorker(rig), feet, start: {} }
+      : null;
+  }
+
+  return facts.wheels.length ? roverSetup(rig, robot.parts, key) : null;
+}
+
+function driveFor({ kase, rig, robot, facts, effector }: DriveFor): DriveSetup | null {
   const key = rig.robots[0]?.key ?? '';
 
-  if (effector && facts.armJoints.length) {
+  if (kase.slot.needs.includes('arm') && effector && facts.armJoints.length) {
     const { armJoints: joints, anchor, reachMm } = facts;
 
     return armSetup({ rig, robot: key, effector, joints, anchor, reachMm });
   }
 
-  return facts.wheels.length ? roverSetup(rig, robot.parts, key) : null;
+  return groundDrive(rig, robot, facts, key);
+}
+
+const LEGS_FORWARD: V3 = [0, 0, 1];
+
+interface SteerFor {
+  setup: DriveSetup | null;
+  model: SimModel;
+  base: ProbeBase;
+  wheelAxes: V3[];
+  objectAt: Map<string, V3>;
+}
+
+function steerFor({ setup, model, base, wheelAxes, objectAt }: SteerFor): GroundSteer | null {
+  if (!setup || setup.kind === 'arm' || !base.part) return null;
+
+  const forward = setup.kind === 'rover' ? (roverForward(wheelAxes).toArray() as V3) : LEGS_FORWARD;
+
+  const sideways = setup.kind === 'legs';
+
+  return new GroundSteer({ model, part: base.part, point: base.point, forward, objectAt, sideways });
 }
 
 const toCommand = (c: ReferenceCommand): DriveCommand => ({ v: c.v ?? [0, 0, 0], target: c.target, aux: c.aux });
@@ -66,10 +116,20 @@ function chooseController(setup: DriveSetup | null, options: RunOptions): Contro
 interface Rollout {
   engine: SimEngine;
   kase: Case;
+  steer: GroundSteer | null;
   sample: (poses: Float64Array) => void;
 }
 
-function roll({ engine, kase, sample }: Rollout): CaseFrame[] {
+function follow(engine: SimEngine, steer: GroundSteer | null, c: ReferenceCommand) {
+  if (!steer) return engine.command(toCommand(c));
+
+  if (c.target) return steer.add(c.target, { speed: c.v?.[0], push: c.push });
+
+  steer.clear();
+  engine.command(toCommand(c));
+}
+
+function roll({ engine, kase, steer, sample }: Rollout): CaseFrame[] {
   const timeline = [...kase.reference.timeline].sort((a, b) => a.at - b.at);
   const frames: CaseFrame[] = [];
   const ticks = Math.round(kase.task.seconds / RECORD_DT);
@@ -77,9 +137,11 @@ function roll({ engine, kase, sample }: Rollout): CaseFrame[] {
   for (let tick = 0; tick < ticks; tick++) {
     const t = tick * RECORD_DT;
 
-    while (timeline.length && timeline[0].at <= t + 1e-9) engine.command(toCommand(timeline.shift()!));
+    while (timeline.length && timeline[0].at <= t + 1e-9) follow(engine, steer, timeline.shift()!);
 
     const poses = engine.poses();
+
+    if (steer?.steering) engine.command(steer.command(poses));
 
     sample(poses);
     frames.push({ t, poses });
@@ -126,18 +188,30 @@ export async function runCase(
   const engine = new SimEngine(mj, model);
   const effector = boundEffector(kase.slot.binding, facts, rig);
   const signals: Record<string, number[]> = {};
+  const probeBase: ProbeBase = {
+    part: robot.parts.find((p) => !rig.ownerOf.has(p.id))?.id ?? null,
+    point: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
+  };
+  const objectAt = new Map(kase.world.objects.map((o) => [o.id, o.position]));
   const reader = probeReader(kase.task.probes, {
     model,
     effector,
-    basePart: robot.parts.find((p) => !rig.ownerOf.has(p.id))?.id ?? null,
-    basePoint: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
-    objectAt: new Map(kase.world.objects.map((o) => [o.id, o.position])),
+    basePart: probeBase.part,
+    basePoint: probeBase.point,
+    objectAt,
   });
+  const setup = options.controller === 'reference' ? driveFor({ kase, rig, robot, facts, effector }) : null;
+  const wheelAxes = facts.wheels.flatMap((id): V3[] => {
+    const axis = rig.byId.get(id)?.axis;
 
-  engine.setController(chooseController(driveFor(rig, robot, facts, effector), options));
+    return axis ? [axis] : [];
+  });
+  const steer = steerFor({ setup, model, base: probeBase, wheelAxes, objectAt });
+
+  engine.setController(chooseController(setup, options));
 
   try {
-    const frames = roll({ engine, kase, sample: (poses) => reader.sample(poses, signals) });
+    const frames = roll({ engine, kase, steer, sample: (poses) => reader.sample(poses, signals) });
     const trace = { dt: RECORD_DT, signals };
     const verdict = await evaluateContract(kase.task.contract, trace);
 

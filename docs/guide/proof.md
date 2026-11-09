@@ -16,6 +16,11 @@ How the robotics build is judged while no human tests it. Forge, Cases, Skills, 
 - **A parked gate says why** in its `parked` field; Gatekeeper prints it, and the Stage 7 rehearsal fails on a parked gate with no reason.
 - **Where the plan is vague, gates take the stricter reading,** and the reading is written below with the gate.
 
+### Stage 1: `s1-f7-gradients` and `s1-f7-shac-speedup`
+
+- **`s1-f7-gradients` (required)** holds the four cargo checks: gradients against finite differences, forward physics unchanged, batched sysid and design sweeps, with the planted wrong-gradient canary.
+- **`s1-f7-shac-speedup` (parked)** holds the 15× time-to-skill check for the first-order (SHAC) learner, at the same bar. It was split out instead of lowered: SHAC finds no gait through stiff contact, and its ceiling at the gate's cadence is about 1× ([Forge](forge.md)). PPO stays the default. Only a maintainer can change the 15× bar.
+
 ### Stage 2: `s2-cases-play`
 
 Finishes Stage 2 on top of `s2-m1-first-case` (`verify/cases/`).
@@ -37,7 +42,7 @@ The AnythingZoo (`verify/zoo/`). The builder implements `src/skills/anything.ts`
 - **Budget per pair** (the plan gives only the round total): one reward-search round, 180M environment steps counted from Forge's own records, and 75 minutes of wall clock, which is 225 machine-hours over 180 pairs.
 - **Sample mode** is the default gate: 20 stratified pairs on the Mac (14 feasible across all six bodies, 4 infeasible and 2 deformable as controls). `node verify/zoo/cli.mjs --sample`, `--full --shard i/n --seed <hex>` and `--verdict` run it outside Gatekeeper; the full gate stays parked for rented machines.
 - **Nothing hidden is printed:** the run's output is scanned for the seed and every hidden contract; a leak fails the check and withholds the log.
-- **No contact signals in hidden judges:** Arena's contact reader (`src/skills/arenaSignals.ts`, frozen by `s3a-motor-kit`) exhausts the 2 GB WASM heap in about 20,000 reads, so a contract with a contact signal crashes Arena. Fixing it needs a maintainer.
+- **No contact signals in hidden judges, for now:** they were left out because Arena's contact reader (`src/skills/arenaSignals.ts`, frozen by `s3a-motor-kit`) leaked the contact list and exhausted the 2 GB WASM heap in about 20,000 reads. The reader now frees it (`arenaSignals.test.ts`); letting the generator use contact signals is the next change to this gate.
 - **Canaries:** a do-nothing skill claimed as passing, a skill claimed for folding a towel, a rubber-stamp contract, giving up everywhere, a slow router, a log that prints a hidden contract, and a hidden judge that standing still meets.
 
 ### Stage 6: `s6-hidden-twin` and `s6-hidden-twin-nad`

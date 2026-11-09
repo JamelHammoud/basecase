@@ -127,7 +127,7 @@ pub fn train(start: Start) -> Result<Value, String> {
 
     let count = robot.job.envs;
     let envs = Envs::new(&robot, count, robot.job.seed + ENV_SEED_OFFSET, true)?;
-    let mut algo = algorithm::build(robot.job.algo, envs, robot.job.seed, Math::portable(1));
+    let mut algo = algorithm::build(robot.job.algo, envs, robot.job.seed, Math::portable(1))?;
 
     if let Some(text) = &start.warm {
         status("Continuing from a trained policy");

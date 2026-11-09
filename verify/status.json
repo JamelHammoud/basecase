@@ -412,23 +412,23 @@
         {
           "name": "Touch the Dots passes on two arms; limp fails; refusals are plain",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.673
+          "seconds": 0.645
         },
         {
           "name": "Case and drive unit tests pass",
           "ok": true,
-          "detail": "1.3 s",
+          "detail": "1.9 s",
           "metrics": {},
-          "seconds": 1.31
+          "seconds": 1.85
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "5.0 s",
+          "detail": "4.8 s",
           "metrics": {},
-          "seconds": 4.954
+          "seconds": 4.793
         }
       ],
       "canaries": [
@@ -437,11 +437,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.503
+          "seconds": 0.5
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T20:55:08.175Z",
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:32:37.838Z",
       "manifest": "clean"
     },
     "s5-emu-daemon": {
@@ -955,58 +955,58 @@
         {
           "name": "the daemon builds",
           "ok": true,
-          "detail": "4.2 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 4.214
+          "seconds": 0.296
         },
         {
           "name": "the daemon is staged for the app",
           "ok": true,
           "detail": "0.2 s",
           "metrics": {},
-          "seconds": 0.196
+          "seconds": 0.178
         },
         {
           "name": "the staged daemon is locked to emulated servos and says hello",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.118
+          "seconds": 0.182
         },
         {
           "name": "the app bundles",
           "ok": true,
-          "detail": "8.3 s",
+          "detail": "7.2 s",
           "metrics": {},
-          "seconds": 8.283
+          "seconds": 7.171
         },
         {
           "name": "an unsigned app packages",
           "ok": true,
-          "detail": "3.0 s",
+          "detail": "4.0 s",
           "metrics": {},
-          "seconds": 3.043
+          "seconds": 4.033
         },
         {
           "name": "the packaged app ships the locked daemon, spawns it emulated, refuses real ports and untrusted IPC",
           "ok": true,
-          "detail": "14.8 s",
+          "detail": "14.1 s",
           "metrics": {},
-          "seconds": 14.85
+          "seconds": 14.063
         },
         {
           "name": "heartbeat, the ladder, status, faults, refusals and a lost daemon reach the user",
           "ok": true,
-          "detail": "10.2 s",
+          "detail": "10.0 s",
           "metrics": {},
-          "seconds": 10.163
+          "seconds": 9.984
         },
         {
           "name": "a Case drives the emulated robot through the daemon and back to the screen",
           "ok": true,
-          "detail": "17.4 s",
+          "detail": "20.7 s",
           "metrics": {},
-          "seconds": 17.449
+          "seconds": 20.653
         }
       ],
       "canaries": [
@@ -1015,25 +1015,25 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 5.845
+          "seconds": 5.846
         },
         {
           "name": "a UI that hides a fault is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.705
+          "seconds": 1.926
         },
         {
           "name": "a daemon built with unlock-real-motors is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 4.226
+          "seconds": 4.068
         }
       ],
-      "commit": "345f905",
-      "at": "2026-11-09T01:58:12.487Z",
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:36:45.970Z",
       "manifest": "clean"
     },
     "s1-f2-learner": {
@@ -1288,61 +1288,61 @@
         {
           "name": "the flow round-trips the schema and lights from trace events",
           "ok": true,
-          "detail": "0.4 s",
+          "detail": "0.5 s",
           "metrics": {},
-          "seconds": 0.37
+          "seconds": 0.486
         },
         {
           "name": "capabilities come from the scene",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.341
+          "seconds": 0.401
         },
         {
           "name": "acceptance scenarios written from the sentence pass on mocks",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.316
+          "seconds": 0.361
         },
         {
           "name": "L1: the greeting walks, greets and turns in MuJoCo with Kit skills; untrained skills are refused",
           "ok": true,
-          "detail": "5.5 s",
+          "detail": "5.7 s",
           "metrics": {},
-          "seconds": 5.472
+          "seconds": 5.652
         },
         {
           "name": "in the app: one sentence to a passing Routine in under 8 actions, live trace, Add Camera, Needs Training",
           "ok": true,
-          "detail": "33.1 s",
+          "detail": "35.4 s",
           "metrics": {},
-          "seconds": 33.147
+          "seconds": 35.377
         },
         {
           "name": "the soak harness builds",
           "ok": true,
-          "detail": "0.1 s",
+          "detail": "4.1 s",
           "metrics": {},
-          "seconds": 0.119
+          "seconds": 4.071
         },
         {
           "name": "fake-bus soak with saturated workers and a hung LLM keeps p99.9 jitter under 2 ms",
           "ok": true,
-          "detail": "75.9 s",
+          "detail": "75.8 s",
           "metrics": {
-            "loadBefore": 6.2099609375,
-            "loadAfter": 26.779296875
+            "loadBefore": 6.0107421875,
+            "loadAfter": 18.970703125
           },
-          "seconds": 75.88
+          "seconds": 75.814
         },
         {
           "name": "Routine unit tests pass",
           "ok": true,
-          "detail": "1.1 s",
+          "detail": "1.2 s",
           "metrics": {},
-          "seconds": 1.104
+          "seconds": 1.184
         }
       ],
       "canaries": [
@@ -1351,25 +1351,25 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.377
+          "seconds": 0.371
         },
         {
           "name": "a flow edit that drops a timeout path is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.338
+          "seconds": 0.355
         },
         {
           "name": "a trace event for a node not in the graph is rejected",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.327
+          "seconds": 0.356
         }
       ],
-      "commit": "26e7fa9",
-      "at": "2026-11-09T01:53:33.311Z",
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:35:37.429Z",
       "manifest": "clean"
     },
     "s1-f3-simd-engine": {
@@ -1471,16 +1471,16 @@
         {
           "name": "200 fuzzed robots emitted",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.838
+          "seconds": 0.723
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.675
+          "seconds": 0.678
         },
         {
           "name": "metal engine matches C MuJoCo on every fuzzed robot, L0 to L3",
@@ -1492,26 +1492,26 @@
             "l3Qpos": 4.554544677168315e-9,
             "l3Qvel": 0.000001534765658776048
           },
-          "seconds": 91.69
+          "seconds": 810.368
         },
         {
           "name": "metal batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 10.867
+          "seconds": 11.093
         },
         {
           "name": "metal sustains 1000K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "1419379 sustained",
+          "detail": "1419378 sustained",
           "metrics": {
-            "substepsPerS": 1517380.2168135855,
-            "sustainedMin": 1419378.536751023,
-            "loadBefore": 6.22314453125,
-            "loadAfter": 4.439453125
+            "substepsPerS": 1525747.9158476442,
+            "sustainedMin": 1419378.3610887758,
+            "loadBefore": 3.421875,
+            "loadAfter": 4.10302734375
           },
-          "seconds": 60.094
+          "seconds": 60.084
         }
       ],
       "canaries": [
@@ -1520,7 +1520,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0
+          "seconds": 0.005
         },
         {
           "name": "a planted rollout drift is caught",
@@ -1530,8 +1530,8 @@
           "seconds": 0
         }
       ],
-      "commit": "a2d6b99",
-      "at": "2026-11-09T05:29:30.710Z",
+      "commit": "9a4a6ed",
+      "at": "2026-11-09T13:07:00.334Z",
       "manifest": "clean"
     },
     "s1-f6-webgpu": {
@@ -1545,16 +1545,16 @@
         {
           "name": "200 fuzzed robots emitted",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.78
+          "seconds": 0.711
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.69
+          "seconds": 0.587
         },
         {
           "name": "wgpu engine matches C MuJoCo on every fuzzed robot, L0 to L3",
@@ -1566,36 +1566,36 @@
             "l3Qpos": 4.542904294066452e-9,
             "l3Qvel": 0.0000014155706227125461
           },
-          "seconds": 31.891
+          "seconds": 199.733
         },
         {
           "name": "wgpu batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 25.432
+          "seconds": 25.72
         },
         {
           "name": "wgpu sustains 400K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "654504 sustained",
+          "detail": "660261 sustained",
           "metrics": {
-            "substepsPerS": 742617.414720898,
-            "sustainedMin": 654504.3174180156,
-            "loadBefore": 6.15673828125,
-            "loadAfter": 7.0625
+            "substepsPerS": 758358.8137824492,
+            "sustainedMin": 660261.3400140376,
+            "loadBefore": 3.89794921875,
+            "loadAfter": 3.017578125
           },
-          "seconds": 60.252
+          "seconds": 60.068
         },
         {
           "name": "a Chrome tab trains Stand to a passing eval within 15 min",
           "ok": true,
-          "detail": "134.5 s",
+          "detail": "138.7 s",
           "metrics": {
-            "loadBefore": 6.0634765625,
-            "loadAfter": 4.37744140625
+            "loadBefore": 3.017578125,
+            "loadAfter": 3.44921875
           },
-          "seconds": 134.484
+          "seconds": 138.702
         }
       ],
       "canaries": [
@@ -1604,7 +1604,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.001
+          "seconds": 0
         },
         {
           "name": "a planted rollout drift is caught",
@@ -1614,8 +1614,8 @@
           "seconds": 0
         }
       ],
-      "commit": "a2d6b99",
-      "at": "2026-11-09T08:45:00.327Z",
+      "commit": "9a4a6ed",
+      "at": "2026-11-09T13:20:39.959Z",
       "manifest": "clean"
     },
     "s1-f5-gpu-loop": {
@@ -1629,41 +1629,41 @@
         {
           "name": "qualification vectors catch a bad GPU and fall back to C",
           "ok": true,
-          "detail": "4.7 s",
+          "detail": "5.5 s",
           "metrics": {},
-          "seconds": 4.654
+          "seconds": 5.497
         },
         {
           "name": "Full GPU loop reaches 70K steps/s at 4096 envs",
           "ok": true,
-          "detail": "121393 steps/s",
+          "detail": "122797 steps/s",
           "metrics": {
-            "loadBefore": 5.59326171875,
-            "loadAfter": 5.59326171875
+            "loadBefore": 4.2548828125,
+            "loadAfter": 3.994140625
           },
-          "seconds": 1.624
+          "seconds": 2.616
         },
         {
           "name": "L4 statistics and L5 replay hold",
           "ok": true,
-          "detail": "33.0 s",
+          "detail": "33.9 s",
           "metrics": {},
-          "seconds": 32.974
+          "seconds": 33.893
         },
         {
           "name": "Forge reaches the walk skill at least 5x faster than the Python baseline",
           "ok": true,
-          "detail": "7.13x",
+          "detail": "7.18x",
           "metrics": {
             "ratios": [
-              7.125936574938908,
-              12.16380471883348,
-              3.7418772865647183
+              7.18105636130827,
+              12.143346584775571,
+              3.744747795885221
             ],
-            "loadBefore": 5.9521484375,
-            "loadAfter": 4.7568359375
+            "loadBefore": 6.0869140625,
+            "loadAfter": 3.2255859375
           },
-          "seconds": 313.716
+          "seconds": 313.847
         }
       ],
       "canaries": [
@@ -1672,11 +1672,227 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 18.113
+          "seconds": 22.851
         }
       ],
-      "commit": "4a0bf3c",
-      "at": "2026-11-09T08:52:32.578Z",
+      "commit": "9a4a6ed",
+      "at": "2026-11-09T13:13:34.254Z",
+      "manifest": "clean"
+    },
+    "s6-hidden-twin": {
+      "id": "s6-hidden-twin",
+      "title": "Stage 6: calibration against a hidden twin the builder never sees",
+      "stage": 6,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "the twin is fair: fresh hidden units per run, and their true in-model parameters reach the bar without the alarm",
+          "ok": true,
+          "detail": "3.0 s",
+          "metrics": {},
+          "seconds": 3.046
+        },
+        {
+          "name": "24 hidden units per family: median held-out error down 25%, bootstrap CI above zero; shuffled logs fail; preset logs read consistent",
+          "ok": true,
+          "detail": "214.8 s",
+          "metrics": {},
+          "seconds": 214.811
+        },
+        {
+          "name": "Calibration unit tests pass",
+          "ok": true,
+          "detail": "2.8 s",
+          "metrics": {},
+          "seconds": 2.829
+        },
+        {
+          "name": "Types hold",
+          "ok": true,
+          "detail": "7.0 s",
+          "metrics": {},
+          "seconds": 7.042
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a no-op calibrator fails the bar",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.708
+        },
+        {
+          "name": "a twin inside the training model raises the alarm",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 3.472
+        },
+        {
+          "name": "gains that straddle zero fail the bootstrap",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.475
+        },
+        {
+          "name": "fewer than 20 units fail",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.416
+        }
+      ],
+      "commit": "13ea308",
+      "at": "2026-11-09T10:12:22.154Z",
+      "manifest": "clean"
+    },
+    "s2-cases-play": {
+      "id": "s2-cases-play",
+      "title": "Stage 2: one Case on different arms, every Case solvable, drive by class, gallery at real time",
+      "stage": 2,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "one Case file, written once, runs on arm-3dof, arm-6dof and a gate-only arm: limp fails, reference passes",
+          "ok": true,
+          "detail": "1.1 s",
+          "metrics": {},
+          "seconds": 1.081
+        },
+        {
+          "name": "every example, New Case goal and world, and gallery Case: limp margin negative, reference margin positive",
+          "ok": true,
+          "detail": "33.4 s",
+          "metrics": {},
+          "seconds": 33.437
+        },
+        {
+          "name": "e2e drive: an arm moves its hand both ways, a rover goes and stops, a hexapod walks, focus loss stops",
+          "ok": true,
+          "detail": "36.2 s",
+          "metrics": {},
+          "seconds": 36.203
+        },
+        {
+          "name": "the production web bundle builds",
+          "ok": true,
+          "detail": "7.4 s",
+          "metrics": {},
+          "seconds": 7.399
+        },
+        {
+          "name": "every gallery link loads from the web build and drives at 0.95x to 1.05x real time, headless",
+          "ok": true,
+          "detail": "38.7 s",
+          "metrics": {
+            "loadBefore": 6.17529296875,
+            "loadAfter": 8.14697265625
+          },
+          "seconds": 38.743
+        },
+        {
+          "name": "Types hold",
+          "ok": true,
+          "detail": "5.2 s",
+          "metrics": {},
+          "seconds": 5.194
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a limp run that is really the reference is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.533
+        },
+        {
+          "name": "an arm drive that never moves is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.398
+        },
+        {
+          "name": "a rover that runs on after release is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.393
+        },
+        {
+          "name": "a gallery at half speed is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.392
+        },
+        {
+          "name": "a gallery at double speed is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.396
+        }
+      ],
+      "commit": "fc01cb5",
+      "at": "2026-11-09T14:32:29.905Z",
+      "manifest": "clean"
+    },
+    "s1-f7-gradients": {
+      "id": "s1-f7-gradients",
+      "title": "F7: gradients, batched sysid, design sweeps",
+      "stage": 1,
+      "state": "required",
+      "ok": true,
+      "voided": false,
+      "checks": [
+        {
+          "name": "gradient within 1% of finite differences off contact, 10% on smoothed contact",
+          "ok": true,
+          "detail": "9.2 s",
+          "metrics": {},
+          "seconds": 9.234
+        },
+        {
+          "name": "forward physics stays exact while gradients are smoothed",
+          "ok": true,
+          "detail": "1.8 s",
+          "metrics": {},
+          "seconds": 1.814
+        },
+        {
+          "name": "batched sysid recovers planted parameters to 3%",
+          "ok": true,
+          "detail": "151.7 s",
+          "metrics": {},
+          "seconds": 151.733
+        },
+        {
+          "name": "design sweep varies mass and gear per world",
+          "ok": true,
+          "detail": "4.8 s",
+          "metrics": {},
+          "seconds": 4.829
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a planted wrong gradient is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.119
+        }
+      ],
+      "commit": "1482d51",
+      "at": "2026-11-09T14:39:34.135Z",
       "manifest": "clean"
     }
   }

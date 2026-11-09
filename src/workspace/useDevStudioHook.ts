@@ -28,6 +28,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
     select: (ids) => setSelectedIds(ids),
     simState: () => {
       const { sim, cases } = core.simTraining;
+      const stats = sim.latestStats() ?? sim.stats;
 
       return {
         status: sim.status,
@@ -35,7 +36,8 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         drive: sim.drive.status,
         driveClass: sim.drive.cls,
         offer: sim.drive.offer,
-        stats: sim.stats,
+        stats,
+        effector: stats?.effector ?? null,
         world: sim.worldParts.map((p) => p.id),
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
         activeCase: cases.active?.id ?? null,

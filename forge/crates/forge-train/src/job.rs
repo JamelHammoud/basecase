@@ -21,6 +21,7 @@ pub enum Algo {
     Ppo,
     FastSac,
     FlashSac,
+    Shac,
 }
 
 impl Algo {
@@ -29,13 +30,14 @@ impl Algo {
             None | Some("ppo") => Ok(Algo::Ppo),
             Some("fastsac") => Ok(Algo::FastSac),
             Some("flashsac") => Ok(Algo::FlashSac),
+            Some("shac") => Ok(Algo::Shac),
             Some(other) => Err(format!("job.json asks for an unknown algo {other}")),
         }
     }
 
     fn default_envs(self) -> usize {
         match self {
-            Algo::Ppo => 64,
+            Algo::Ppo | Algo::Shac => 64,
             Algo::FastSac | Algo::FlashSac => 256,
         }
     }

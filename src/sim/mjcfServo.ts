@@ -2,6 +2,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { holdingLoad, jointServos } from './mjcfEffort';
 import { f } from './mjcfText';
+import type { JointServoFit } from './mjcfTypes';
 import { historySamples, servoDynamics, type ServoDynamics } from './servoModel';
 
 interface FittedInput {
@@ -9,12 +10,16 @@ interface FittedInput {
   byId: Map<string, ScenePart>;
   rig: Rig;
   masses: Map<string, { grams: number; centroid: V3 }>;
+  calibrated?: JointServoFit;
 }
 
-export function fittedServo({ j, byId, rig, masses }: FittedInput): ServoDynamics | null {
+export function fittedServo({ j, byId, rig, masses, calibrated }: FittedInput): ServoDynamics | null {
   if (j.type !== 'revolute') return null;
 
-  return servoDynamics(jointServos(j, byId), holdingLoad(j, rig, masses).momentNm);
+  const specs = jointServos(j, byId);
+  const used = calibrated ? specs.map((s) => ({ ...s, fit: calibrated.fit, atVolts: calibrated.volts })) : specs;
+
+  return servoDynamics(used, holdingLoad(j, rig, masses).momentNm);
 }
 
 export const fittedJointAttrs = (d: ServoDynamics) =>

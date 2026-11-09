@@ -11,7 +11,7 @@ pub struct Slots {
     warm: usize,
     time: usize,
     hist: usize,
-    tables: [usize; 4],
+    tables: [usize; 5],
 }
 
 impl Slots {
@@ -25,7 +25,7 @@ impl Slots {
             warm: at("WARM"),
             time: at("TIME"),
             hist: at("HIST"),
-            tables: [at("TMASS"), at("TFRIC"), at("TGAIN"), at("TBIAS")],
+            tables: [at("TMASS"), at("TFRIC"), at("TGAIN"), at("TBIAS"), at("TGEAR")],
         }
     }
 }
@@ -93,6 +93,7 @@ impl<'a> Pack<'a> {
         let bias: Vec<f64> = tables.bias.iter().flatten().copied().collect();
 
         put(out, s.tables[3], &bias);
+        put(out, s.tables[4], tables.gear);
     }
 
     pub fn store(&self, block: &[f32], row: &mut [f64]) -> bool {

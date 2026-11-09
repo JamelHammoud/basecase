@@ -1,4 +1,5 @@
 use crate::lanes::{ONE, V, ZERO};
+pub use crate::num::Num;
 use crate::params::MIN_VAL;
 
 pub type V3 = [V; 3];
@@ -26,27 +27,27 @@ pub fn splat<const N: usize>(x: &[f64; N]) -> [V; N] {
 }
 
 #[inline(always)]
-pub fn add3(a: &V3, b: &V3) -> V3 {
+pub fn add3<T: Num>(a: &[T; 3], b: &[T; 3]) -> [T; 3] {
     [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
 }
 
 #[inline(always)]
-pub fn sub3(a: &V3, b: &V3) -> V3 {
+pub fn sub3<T: Num>(a: &[T; 3], b: &[T; 3]) -> [T; 3] {
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
 #[inline(always)]
-pub fn scl3(a: &V3, s: V) -> V3 {
+pub fn scl3<T: Num>(a: &[T; 3], s: T) -> [T; 3] {
     [a[0] * s, a[1] * s, a[2] * s]
 }
 
 #[inline(always)]
-pub fn dot3(a: &V3, b: &V3) -> V {
+pub fn dot3<T: Num>(a: &[T; 3], b: &[T; 3]) -> T {
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }
 
 #[inline(always)]
-pub fn cross(a: &V3, b: &V3) -> V3 {
+pub fn cross<T: Num>(a: &[T; 3], b: &[T; 3]) -> [T; 3] {
     [
         a[1] * b[2] - a[2] * b[1],
         a[2] * b[0] - a[0] * b[2],
@@ -55,7 +56,7 @@ pub fn cross(a: &V3, b: &V3) -> V3 {
 }
 
 #[inline(always)]
-pub fn mul_mat_vec(m: &V9, v: &V3) -> V3 {
+pub fn mul_mat_vec<T: Num>(m: &[T; 9], v: &[T; 3]) -> [T; 3] {
     [
         m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
         m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
@@ -64,7 +65,7 @@ pub fn mul_mat_vec(m: &V9, v: &V3) -> V3 {
 }
 
 #[inline(always)]
-pub fn mul_quat(a: &V4, b: &V4) -> V4 {
+pub fn mul_quat<T: Num>(a: &[T; 4], b: &[T; 4]) -> [T; 4] {
     [
         a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
         a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
@@ -74,7 +75,7 @@ pub fn mul_quat(a: &V4, b: &V4) -> V4 {
 }
 
 #[inline(always)]
-pub fn rot_vec_quat(v: &V3, q: &V4) -> V3 {
+pub fn rot_vec_quat<T: Num>(v: &[T; 3], q: &[T; 4]) -> [T; 3] {
     let t = [
         q[0] * v[0] + q[2] * v[2] - q[3] * v[1],
         q[0] * v[1] + q[3] * v[0] - q[1] * v[2],
@@ -89,7 +90,7 @@ pub fn rot_vec_quat(v: &V3, q: &V4) -> V3 {
 }
 
 #[inline(always)]
-pub fn quat2mat(q: &V4) -> V9 {
+pub fn quat2mat<T: Num>(q: &[T; 4]) -> [T; 9] {
     let q00 = q[0] * q[0];
     let q01 = q[0] * q[1];
     let q02 = q[0] * q[2];
@@ -148,7 +149,7 @@ pub fn axis_angle_quat(axis: &V3, angle: V) -> V4 {
     ]
 }
 
-pub fn inert_com(inert: &V3, mat: &V9, dif: &V3, mass: V) -> V10 {
+pub fn inert_com<T: Num>(inert: &[T; 3], mat: &[T; 9], dif: &[T; 3], mass: T) -> [T; 10] {
     let t = [
         mat[0] * inert[0],
         mat[3] * inert[0],
@@ -176,7 +177,7 @@ pub fn inert_com(inert: &V3, mat: &V9, dif: &V3, mass: V) -> V10 {
 }
 
 #[inline(always)]
-pub fn mul_inert_vec(i: &V10, v: &V6) -> V6 {
+pub fn mul_inert_vec<T: Num>(i: &[T; 10], v: &[T; 6]) -> [T; 6] {
     [
         i[0] * v[0] + i[3] * v[1] + i[4] * v[2] - i[8] * v[4] + i[7] * v[5],
         i[3] * v[0] + i[1] * v[1] + i[5] * v[2] + i[8] * v[3] - i[6] * v[5],
@@ -188,7 +189,7 @@ pub fn mul_inert_vec(i: &V10, v: &V6) -> V6 {
 }
 
 #[inline(always)]
-pub fn cross_motion(vel: &V6, v: &V6) -> V6 {
+pub fn cross_motion<T: Num>(vel: &[T; 6], v: &[T; 6]) -> [T; 6] {
     [
         -vel[2] * v[1] + vel[1] * v[2],
         vel[2] * v[0] - vel[0] * v[2],
@@ -200,7 +201,7 @@ pub fn cross_motion(vel: &V6, v: &V6) -> V6 {
 }
 
 #[inline(always)]
-pub fn cross_force(vel: &V6, f: &V6) -> V6 {
+pub fn cross_force<T: Num>(vel: &[T; 6], f: &[T; 6]) -> [T; 6] {
     [
         -vel[2] * f[1] + vel[1] * f[2] + (-vel[5] * f[4] + vel[4] * f[5]),
         vel[2] * f[0] - vel[0] * f[2] + (vel[5] * f[3] - vel[3] * f[5]),
@@ -212,6 +213,6 @@ pub fn cross_force(vel: &V6, f: &V6) -> V6 {
 }
 
 #[inline(always)]
-pub fn dot6(a: &V6, b: &V6) -> V {
+pub fn dot6<T: Num>(a: &[T; 6], b: &[T; 6]) -> T {
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3] + a[4] * b[4] + a[5] * b[5]
 }

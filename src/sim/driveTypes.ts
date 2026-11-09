@@ -12,8 +12,15 @@ export interface DriveOutput {
   wheels?: Record<string, number>;
 }
 
+export interface DriveHand {
+  part: string;
+  point: V3;
+}
+
 export interface DriveLoop {
-  command(c: DriveCommand): void;
+  readonly hand?: DriveHand;
+
+  command(c: DriveCommand, measured?: JointValues): void;
 
   tick(time: number): DriveOutput;
 }

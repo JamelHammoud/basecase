@@ -11,6 +11,8 @@ import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
+import { calibratedInput } from '../reality/calibratedInput';
+import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker } from './useSimWorker';
 
 export { simDeltas } from './mjcf';
@@ -172,7 +174,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     const current = inputs.current;
     const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
-    return buildMjcf({
+    const input = {
       parts: current.parts,
       rig: current.rig,
       project: current.project,
@@ -181,7 +183,9 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
       partTriangles: vp.partTriangles,
       posedFloor,
       world: worldRef.current,
-    });
+    };
+
+    return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
   }, [viewportRef]);
 
   const setWorldItems = (items: WorldItem[]) => {

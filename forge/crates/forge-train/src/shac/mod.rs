@@ -61,30 +61,6 @@ impl Default for Hyper {
     }
 }
 
-fn knob<T: std::str::FromStr>(name: &str, fallback: T) -> T {
-    std::env::var(name)
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(fallback)
-}
-
-impl Hyper {
-    pub fn tuned() -> Self {
-        let d = Self::default();
-
-        Self {
-            horizon: knob("SHAC_H", d.horizon),
-            actor_rate: knob("SHAC_ACTOR", d.actor_rate),
-            critic_rate: knob("SHAC_CRITIC", d.critic_rate),
-            log_std_init: knob("SHAC_STD", d.log_std_init),
-            smoothing: Smooth {
-                force: knob("SHAC_SMOOTH", d.smoothing.force),
-            },
-            ..d
-        }
-    }
-}
-
 pub struct Shac<'a> {
     env: Env<'a>,
     actor: Net,

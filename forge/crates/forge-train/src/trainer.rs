@@ -211,7 +211,7 @@ fn train_shac(folder: &Path, robot: &Robot) -> Result<(), String> {
         ..robot.job.clone()
     };
     let replay = Robot::load(Model::load(&folder.join("model.xml"))?, job)?;
-    let mut algo = Shac::new(robot, Hyper::tuned(), Math::native(learner_threads()))?;
+    let mut algo = Shac::new(robot, Hyper::default(), Math::native(learner_threads()))?;
 
     status(
         "Training with SHAC: first-order gradients through Forge's smoothed physics. Every check replays in C MuJoCo",

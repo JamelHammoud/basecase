@@ -4,7 +4,7 @@ use crate::gpu::prelude;
 use crate::plan::Plan;
 
 const DF: &str = include_str!("shaders/df.metal");
-const STAGES: [&str; 11] = [
+const STAGES: [&str; 12] = [
     include_str!("shaders/common.metal"),
     include_str!("shaders/kinematics.metal"),
     include_str!("shaders/inertia.metal"),
@@ -16,6 +16,7 @@ const STAGES: [&str; 11] = [
     include_str!("shaders/search.metal"),
     include_str!("shaders/newton.metal"),
     include_str!("shaders/step.metal"),
+    include_str!("shaders/qualify.metal"),
 ];
 
 pub fn source(plan: &Plan, layout: &Layout) -> String {

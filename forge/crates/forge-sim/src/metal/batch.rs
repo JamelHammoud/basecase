@@ -84,6 +84,10 @@ impl MetalBatch {
         self.gpu_seconds
     }
 
+    pub fn qualify_arithmetic(&mut self) -> Result<(), String> {
+        self.engine.qualify_arithmetic()
+    }
+
     pub fn first_error(&self) -> Option<String> {
         self.error.clone()
     }

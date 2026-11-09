@@ -1,6 +1,7 @@
 use crate::job::Backend;
 use forge_ir::Kernel;
 use forge_mujoco::{Batch, Model, StateLayout};
+use forge_sim::metal::Admission;
 use forge_sim::{MetalBatch, Offsets, RowBatch, WgslBatch};
 
 pub enum Engine {
@@ -10,21 +11,23 @@ pub enum Engine {
     Wgpu { kernel: Box<Kernel>, device: String },
 }
 
-fn on_gpu(kernel: Kernel, backend: Backend) -> Engine {
-    let probed = if backend == Backend::Metal {
-        forge_sim::metal::probe(&kernel)
-    } else {
-        forge_sim::wgsl::probe(&kernel)
-    };
-    let kernel = Box::new(kernel);
-
-    match (probed, backend) {
-        (Ok(device), Backend::Metal) => Engine::Metal { kernel, device },
-        (Ok(device), _) => Engine::Wgpu { kernel, device },
-        (Err(why), Backend::Metal) => Engine::Mujoco {
-            refusal: Some(format!("Forge's Metal engine can't step this job: {why}")),
+fn on_metal(model: &Model, kernel: Kernel) -> Engine {
+    match forge_sim::metal::admission(model, &kernel) {
+        Admission::Metal { device } => Engine::Metal {
+            kernel: Box::new(kernel),
+            device,
         },
-        (Err(why), _) => Engine::Mujoco {
+        Admission::Mujoco { reason } => Engine::Mujoco { refusal: Some(reason) },
+    }
+}
+
+fn on_wgpu(kernel: Kernel) -> Engine {
+    match forge_sim::wgsl::probe(&kernel) {
+        Ok(device) => Engine::Wgpu {
+            kernel: Box::new(kernel),
+            device,
+        },
+        Err(why) => Engine::Mujoco {
             refusal: Some(format!("Forge's WGSL engine can't step this job: {why}")),
         },
     }
@@ -37,7 +40,8 @@ impl Engine {
         }
 
         match (forge_ir::lower(model), backend) {
-            (Ok(kernel), Backend::Metal | Backend::Wgpu) => on_gpu(kernel, backend),
+            (Ok(kernel), Backend::Metal) => on_metal(model, kernel),
+            (Ok(kernel), Backend::Wgpu) => on_wgpu(kernel),
             (Ok(kernel), _) => Engine::Simd(Box::new(kernel)),
             (Err(refusal), _) => Engine::Mujoco {
                 refusal: Some(refusal.to_string()),

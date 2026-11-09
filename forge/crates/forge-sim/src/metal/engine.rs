@@ -1,6 +1,7 @@
 use super::source::source;
 use crate::gpu::layout::Layout;
 use crate::gpu::tables::{imps, supported};
+use crate::gpu::vectors::{self, SLOTS};
 use crate::plan::Plan;
 use forge_metal::{Arg, BufferId, Dispatch, Gpu, Kernel, Timing};
 
@@ -43,9 +44,9 @@ impl Engine {
 
         let layout = Layout::new(&plan);
         let mut gpu = Gpu::new()?;
-        let kernels = gpu.compile(&source(&plan, &layout), &["step", "forward_only", "profile"])?;
+        let kernels = gpu.compile(&source(&plan, &layout), &["step", "forward_only", "profile", "qualify"])?;
         let worlds = worlds.max(1);
-        let io = gpu.alloc::<f32>(2 * layout.nstate * worlds)?;
+        let io = gpu.alloc::<f32>((2 * layout.nstate * worlds).max(2 * SLOTS))?;
         let padded = worlds.div_ceil(BLOCK) * BLOCK;
         let scratch = gpu.alloc::<f32>(2 * layout.reals * padded)?;
         let ints = gpu.alloc::<u32>(layout.nints * padded)?;
@@ -95,7 +96,10 @@ impl Engine {
     }
 
     fn run_upto(&mut self, kernel: usize, nstep: usize, upto: usize) -> Result<Timing, String> {
-        let words = [self.worlds as u32, nstep as u32, upto as u32];
+        self.call(kernel, [self.worlds as u32, nstep as u32, upto as u32])
+    }
+
+    fn call(&mut self, kernel: usize, words: [u32; 3]) -> Result<Timing, String> {
         let dispatch = Dispatch {
             kernel: &self.kernels[kernel],
             args: vec![
@@ -123,6 +127,14 @@ impl Engine {
 
     pub fn profile(&mut self, nstep: usize, upto: usize) -> Result<Timing, String> {
         self.run_upto(2, nstep, upto)
+    }
+
+    pub fn qualify_arithmetic(&mut self) -> Result<(), String> {
+        let inputs = vectors::inputs();
+
+        vectors::load(self.io(), &inputs);
+        self.call(3, [vectors::CASES as u32, 0, 0])?;
+        vectors::check(self.io_view(), &inputs)
     }
 
     pub fn field(&self, name: &str, thread: usize) -> Vec<f64> {

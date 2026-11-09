@@ -2,6 +2,7 @@ use super::qualify::qualify;
 use super::source::{layout_for, program, Program};
 use crate::gpu::layout::Layout;
 use crate::gpu::tables::{imps, supported};
+use crate::gpu::vectors::SLOTS;
 use crate::gpu::BLOCK;
 use crate::plan::Plan;
 
@@ -41,8 +42,6 @@ pub struct Engine {
     scratch: Vec<f32>,
 }
 
-pub const QUALIFY_CASES: usize = 16;
-
 pub fn refusal(plan: &Plan) -> Option<String> {
     imps(plan)
         .iter()
@@ -51,7 +50,7 @@ pub fn refusal(plan: &Plan) -> Option<String> {
 }
 
 pub fn io_len(nstate: usize, worlds: usize) -> usize {
-    (2 * nstate * worlds).max(2 * 8 * QUALIFY_CASES)
+    (2 * nstate * worlds).max(2 * SLOTS)
 }
 
 impl Engine {

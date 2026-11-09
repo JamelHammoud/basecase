@@ -1471,16 +1471,16 @@
         {
           "name": "200 fuzzed robots emitted",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.838
+          "seconds": 0.723
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.675
+          "seconds": 0.678
         },
         {
           "name": "metal engine matches C MuJoCo on every fuzzed robot, L0 to L3",
@@ -1492,26 +1492,26 @@
             "l3Qpos": 4.554544677168315e-9,
             "l3Qvel": 0.000001534765658776048
           },
-          "seconds": 91.69
+          "seconds": 810.368
         },
         {
           "name": "metal batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 10.867
+          "seconds": 11.093
         },
         {
           "name": "metal sustains 1000K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "1419379 sustained",
+          "detail": "1419378 sustained",
           "metrics": {
-            "substepsPerS": 1517380.2168135855,
-            "sustainedMin": 1419378.536751023,
-            "loadBefore": 6.22314453125,
-            "loadAfter": 4.439453125
+            "substepsPerS": 1525747.9158476442,
+            "sustainedMin": 1419378.3610887758,
+            "loadBefore": 3.421875,
+            "loadAfter": 4.10302734375
           },
-          "seconds": 60.094
+          "seconds": 60.084
         }
       ],
       "canaries": [
@@ -1520,7 +1520,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0
+          "seconds": 0.005
         },
         {
           "name": "a planted rollout drift is caught",
@@ -1530,8 +1530,8 @@
           "seconds": 0
         }
       ],
-      "commit": "a2d6b99",
-      "at": "2026-11-09T05:29:30.710Z",
+      "commit": "9a4a6ed",
+      "at": "2026-11-09T13:07:00.334Z",
       "manifest": "clean"
     },
     "s1-f6-webgpu": {
@@ -1545,16 +1545,16 @@
         {
           "name": "200 fuzzed robots emitted",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.78
+          "seconds": 0.711
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.69
+          "seconds": 0.587
         },
         {
           "name": "wgpu engine matches C MuJoCo on every fuzzed robot, L0 to L3",
@@ -1566,36 +1566,36 @@
             "l3Qpos": 4.542904294066452e-9,
             "l3Qvel": 0.0000014155706227125461
           },
-          "seconds": 31.891
+          "seconds": 199.733
         },
         {
           "name": "wgpu batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 25.432
+          "seconds": 25.72
         },
         {
           "name": "wgpu sustains 400K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "654504 sustained",
+          "detail": "660261 sustained",
           "metrics": {
-            "substepsPerS": 742617.414720898,
-            "sustainedMin": 654504.3174180156,
-            "loadBefore": 6.15673828125,
-            "loadAfter": 7.0625
+            "substepsPerS": 758358.8137824492,
+            "sustainedMin": 660261.3400140376,
+            "loadBefore": 3.89794921875,
+            "loadAfter": 3.017578125
           },
-          "seconds": 60.252
+          "seconds": 60.068
         },
         {
           "name": "a Chrome tab trains Stand to a passing eval within 15 min",
           "ok": true,
-          "detail": "134.5 s",
+          "detail": "138.7 s",
           "metrics": {
-            "loadBefore": 6.0634765625,
-            "loadAfter": 4.37744140625
+            "loadBefore": 3.017578125,
+            "loadAfter": 3.44921875
           },
-          "seconds": 134.484
+          "seconds": 138.702
         }
       ],
       "canaries": [
@@ -1604,7 +1604,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.001
+          "seconds": 0
         },
         {
           "name": "a planted rollout drift is caught",
@@ -1614,8 +1614,8 @@
           "seconds": 0
         }
       ],
-      "commit": "a2d6b99",
-      "at": "2026-11-09T08:45:00.327Z",
+      "commit": "9a4a6ed",
+      "at": "2026-11-09T13:20:39.959Z",
       "manifest": "clean"
     },
     "s1-f5-gpu-loop": {
@@ -1629,41 +1629,41 @@
         {
           "name": "qualification vectors catch a bad GPU and fall back to C",
           "ok": true,
-          "detail": "4.7 s",
+          "detail": "5.5 s",
           "metrics": {},
-          "seconds": 4.654
+          "seconds": 5.497
         },
         {
           "name": "Full GPU loop reaches 70K steps/s at 4096 envs",
           "ok": true,
-          "detail": "121393 steps/s",
+          "detail": "122797 steps/s",
           "metrics": {
-            "loadBefore": 5.59326171875,
-            "loadAfter": 5.59326171875
+            "loadBefore": 4.2548828125,
+            "loadAfter": 3.994140625
           },
-          "seconds": 1.624
+          "seconds": 2.616
         },
         {
           "name": "L4 statistics and L5 replay hold",
           "ok": true,
-          "detail": "33.0 s",
+          "detail": "33.9 s",
           "metrics": {},
-          "seconds": 32.974
+          "seconds": 33.893
         },
         {
           "name": "Forge reaches the walk skill at least 5x faster than the Python baseline",
           "ok": true,
-          "detail": "7.13x",
+          "detail": "7.18x",
           "metrics": {
             "ratios": [
-              7.125936574938908,
-              12.16380471883348,
-              3.7418772865647183
+              7.18105636130827,
+              12.143346584775571,
+              3.744747795885221
             ],
-            "loadBefore": 5.9521484375,
-            "loadAfter": 4.7568359375
+            "loadBefore": 6.0869140625,
+            "loadAfter": 3.2255859375
           },
-          "seconds": 313.716
+          "seconds": 313.847
         }
       ],
       "canaries": [
@@ -1672,11 +1672,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 18.113
+          "seconds": 22.851
         }
       ],
-      "commit": "4a0bf3c",
-      "at": "2026-11-09T08:52:32.578Z",
+      "commit": "9a4a6ed",
+      "at": "2026-11-09T13:13:34.254Z",
       "manifest": "clean"
     },
     "s6-hidden-twin": {

@@ -18,11 +18,13 @@ export interface LegsSetup {
   start: JointValues;
 }
 
+type Pair = [RobotAnimation, RobotAnimation];
+
 interface Cycles {
   stand: RobotAnimation;
-  forward: RobotAnimation;
-  strafe: RobotAnimation;
-  turn: RobotAnimation;
+  forward: Pair;
+  strafe: Pair;
+  turn: Pair;
   period: number;
   joints: string[];
 }
@@ -100,20 +102,26 @@ function turnDirs(feet: FootPoint[]): V3[] {
   return offsets.map(([x, z]) => [z / radius, 0, -x / radius]);
 }
 
+const reversed = (dirs: V3[]) => dirs.map((d) => d.map((x) => -x) as V3);
+
 export function bakeCycles(setup: LegsSetup): Cycles {
   const { rig, feet } = setup;
   const leg = Math.max(rig.rootPivot[1] - feetCenter(feet)[1], 40);
   const same = (d: V3) => feet.map(() => d);
   const stride = leg * STRIDE_SHARE;
-  const forward = bake(setup, same([0, 0, 1]), 'Forward', stride);
+  const pair = (dirs: V3[], name: string): Pair => [
+    bake(setup, dirs, name, stride),
+    bake(setup, reversed(dirs), name, stride),
+  ];
+  const forward = pair(same([0, 0, 1]), 'Forward');
 
   return {
     stand: bake(setup, same([0, 0, 1]), 'Stand', 0),
     forward,
-    strafe: bake(setup, same([1, 0, 0]), 'Strafe', stride),
-    turn: bake(setup, turnDirs(feet), 'Turn', stride),
-    period: forward.duration,
-    joints: Object.keys(forward.keyframes[0]?.values ?? {}),
+    strafe: pair(same([1, 0, 0]), 'Strafe'),
+    turn: pair(turnDirs(feet), 'Turn'),
+    period: forward[0].duration,
+    joints: Object.keys(forward[0].keyframes[0]?.values ?? {}),
   };
 }
 
@@ -165,19 +173,19 @@ export class LegsDrive implements DriveLoop {
       1,
       eased.reduce((s, x) => s + Math.abs(x), 0),
     );
-    const parts: Array<[RobotAnimation, number]> = [
+    const parts: Array<[Pair, number]> = [
       [cycles.forward, eased[0]],
       [cycles.strafe, eased[1]],
       [cycles.turn, eased[2]],
     ];
     const out: JointValues = { ...stand };
 
-    for (const [cycle, command] of parts) {
+    for (const [pair, command] of parts) {
       const weight = Math.abs(command) / total;
 
       if (weight < 1e-3) continue;
 
-      const sample = sampleAnimation(cycle, (command >= 0 ? phase : 1 - phase) * cycles.period).values;
+      const sample = sampleAnimation(pair[command >= 0 ? 0 : 1], phase * cycles.period).values;
 
       for (const id of cycles.joints) out[id] += (sample[id] - stand[id]) * weight;
     }

@@ -1,10 +1,14 @@
 import * as THREE from 'three';
 import type { ScenePart } from '../types/robotics';
-import { forwardKinematics, type Rig, type V3 } from '../utils/kinematics';
+import { forwardKinematics, solveIK, type Rig, type V3 } from '../utils/kinematics';
 import { robotFacts, type EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, type Case, type ReferenceCommand, type WorldObject } from './schema';
 
 const DOT_COUNT = 3;
+const FORWARD_REACH_SHARE = 0.85;
+const FORWARD_ELEVATIONS_DEG = [60, 30, 0, 75, 45, 15];
+const IK_ITERATIONS = 80;
+const REACHED_SHARE = 0.25;
 const HOLD_SECONDS = 0.2;
 const MOVE_SECONDS = 1.8;
 const MIN_HEIGHT_MM = 30;
@@ -43,18 +47,51 @@ function candidateValues(rig: Rig, joints: string[], [first, rest]: number[]): R
 
 const apart = (a: V3, b: V3, mm: number) => new THREE.Vector3(...a).distanceTo(new THREE.Vector3(...b)) > mm;
 
-export function dotSpots(rig: Rig, effector: EndEffector, joints: string[], radius: number): V3[] {
-  const rest = tipAt(rig, effector, {});
+function pickSpots(candidates: V3[], rest: V3, radius: number): V3[] {
   const spots: V3[] = [];
 
-  for (const fractions of CANDIDATE_FRACTIONS) {
-    const spot = tipAt(rig, effector, candidateValues(rig, joints, fractions));
+  for (const spot of candidates) {
     const clear = spot[1] > MIN_HEIGHT_MM && apart(spot, rest, radius * 3);
 
     if (clear && spots.every((s) => apart(s, spot, radius * 3)) && spots.length < DOT_COUNT) spots.push(spot);
   }
 
   return spots;
+}
+
+export interface ArmReach {
+  joints: string[];
+  anchor: V3;
+  reachMm: number;
+}
+
+function forwardSpots(rig: Rig, effector: EndEffector, arm: ArmReach, radius: number): V3[] {
+  const r = arm.reachMm * FORWARD_REACH_SHARE;
+  const [x, y, z] = arm.anchor;
+  const reaches = (target: V3) =>
+    solveIK(rig, {}, [{ partId: effector.part, point: effector.point, target }], {
+      joints: arm.joints,
+      iterations: IK_ITERATIONS,
+      tolerance: 0.5,
+    }).maxError <
+    radius * REACHED_SHARE;
+
+  return FORWARD_ELEVATIONS_DEG.map((deg): V3 => {
+    const a = THREE.MathUtils.degToRad(deg);
+
+    return [x, y + r * Math.sin(a), z + r * Math.cos(a)];
+  }).filter(reaches);
+}
+
+export function dotSpots(rig: Rig, effector: EndEffector, arm: ArmReach, radius: number): V3[] {
+  const rest = tipAt(rig, effector, {});
+  const ahead = pickSpots(forwardSpots(rig, effector, arm, radius), rest, radius);
+
+  if (ahead.length === DOT_COUNT) return ahead;
+
+  const posed = CANDIDATE_FRACTIONS.map((f) => tipAt(rig, effector, candidateValues(rig, arm.joints, f)));
+
+  return pickSpots(posed, rest, radius);
 }
 
 const dotObject = (position: V3, index: number, radius: number): WorldObject => ({
@@ -76,7 +113,12 @@ export function touchTheDotsCase(rig: Rig, parts: ScenePart[]): Case {
   if (!effector) throw new Error('Touch the Dots needs an arm with an end effector.');
 
   const radius = Math.max(12, facts.reachMm * 0.08);
-  const spots = dotSpots(rig, effector, facts.armJoints, radius);
+  const spots = dotSpots(
+    rig,
+    effector,
+    { joints: facts.armJoints, anchor: facts.anchor, reachMm: facts.reachMm },
+    radius,
+  );
   const timeline: ReferenceCommand[] = spots.map((target, i) => ({ at: 0.2 + i * MOVE_SECONDS, target }));
 
   return {

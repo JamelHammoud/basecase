@@ -5,6 +5,7 @@ import {
   fallGuard,
   GOAL_PARAMS,
   goalDefaults,
+  routeClearance,
   touchRadius,
   type BuilderRobot,
   type CaseGoal,
@@ -14,7 +15,8 @@ import {
 } from './caseGoals';
 import { CASE_WORLDS, type CaseWorld, type WorldKind } from './caseWorlds';
 import { robotFacts, type RobotFacts } from './robotFit';
-import { CASE_FORMAT_VERSION, parseCase, type Case, type WorldObject } from './schema';
+import { groundRoute } from './groundRoute';
+import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
 import type { CaseTemplate } from './templates';
 import { dotSpots } from './touchTheDots';
 import { CaseFileError } from './validate';
@@ -38,9 +40,12 @@ function armSpot(rig: Rig, facts: RobotFacts): V3 | null {
 
   if (!effector) return null;
 
-  const spots = dotSpots(rig, effector, facts.armJoints, touchRadius(facts.reachMm));
+  const arm = { joints: facts.armJoints, anchor: facts.anchor, reachMm: facts.reachMm };
+  const spots = dotSpots(rig, effector, arm, touchRadius(facts.reachMm));
 
-  return spots.find((s) => s[2] >= facts.anchor[2]) ?? null;
+  const ahead = spots.filter((s) => s[2] >= facts.anchor[2]);
+
+  return ahead.reduce<V3 | null>((low, s) => (!low || s[1] < low[1] ? s : low), null);
 }
 
 export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
@@ -84,8 +89,13 @@ const slug = (name: string) =>
     .replace(/^-|-$/g, '')
     .slice(0, MAX_ID) || 'case';
 
-export function goalValues(goal: CaseGoal, robot: BuilderRobot, given: Partial<GoalValues> = {}): GoalValues {
-  const values = goalDefaults(goal.kind, robot);
+export function goalValues(
+  goal: CaseGoal,
+  robot: BuilderRobot,
+  given: Partial<GoalValues> = {},
+  world: WorldKind = 'floor',
+): GoalValues {
+  const values = goalDefaults(goal.kind, robot, world);
 
   for (const key of goal.params) {
     const v = given[key];
@@ -120,6 +130,24 @@ function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: C
   return { goal, world };
 }
 
+const ROUTE_START_S = 0.5;
+
+function referenceOf(plan: GoalPlan, scenery: WorldObject[], robot: BuilderRobot): ReferenceCommand[] {
+  if (!plan.waypoints) return plan.timeline;
+
+  const route = groundRoute(plan.waypoints, [...plan.objects, ...scenery], {
+    start: robot.pivot,
+    clearanceMm: routeClearance(robot),
+  });
+
+  return route.map(({ at, speed, push }) => ({
+    at: ROUTE_START_S,
+    target: at,
+    ...(speed ? { v: [speed, 0, 0] as V3 } : {}),
+    ...(push ? { push } : {}),
+  }));
+}
+
 interface Draft {
   spec: CaseSpec;
   goal: CaseGoal;
@@ -142,7 +170,7 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
     slot: plan.slot,
     world: { objects: [...plan.objects, ...scenery, ...(spec.objects ?? [])] },
     controls: plan.controls,
-    reference: { timeline: plan.timeline },
+    reference: { timeline: referenceOf(plan, scenery, robot) },
     task: {
       seconds: values.seconds,
       probes: [...plan.probes, ...(guard ? [guard.probe] : [])],
@@ -157,8 +185,8 @@ export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
   if (typeof chosen === 'string') return { ok: false, problem: chosen };
 
   const { goal, world } = chosen;
-  const values = goalValues(goal, robot, spec.values);
-  const plan = goal.plan(robot, values);
+  const values = goalValues(goal, robot, spec.values, world.kind);
+  const plan = goal.plan(robot, values, world.kind);
   const scenery = world.objects(plan, robot);
   const problem =
     goal.problem?.(robot, values) ??

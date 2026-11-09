@@ -76,6 +76,22 @@ function armLeaf(joints: RobotJoint[], rig: Rig, byId: Map<string, ScenePart>): 
   return tagged[0] ?? candidates[0] ?? null;
 }
 
+const ALONG_AXIS = 0.999;
+
+function swingsTip(joint: RobotJoint, tip: V3): boolean {
+  const toTip = new THREE.Vector3(...tip).sub(new THREE.Vector3(...joint.origin));
+
+  if (toTip.lengthSq() < 1e-6) return false;
+
+  return Math.abs(new THREE.Vector3(...joint.axis).normalize().dot(toTip.normalize())) < ALONG_AXIS;
+}
+
+function fromShoulder(chain: RobotJoint[], tip: V3): RobotJoint[] {
+  const shoulder = chain.findIndex((j) => swingsTip(j, tip));
+
+  return shoulder > 0 ? chain.slice(shoulder) : chain;
+}
+
 function chainReach(chain: RobotJoint[], tip: V3): number {
   const stops = [...chain.map((j) => j.origin), tip];
 
@@ -98,12 +114,13 @@ function armFacts(
 
   const chain = chainOf(rig, leaf);
   const point = farthestCorner(part, leaf.origin);
+  const swing = fromShoulder(chain, point);
 
   return {
     endEffector: { part: part.id, point },
     armJoints: chain.map((j) => j.id),
-    reachMm: chainReach(chain, point),
-    anchor: chain[0].origin,
+    reachMm: chainReach(swing, point),
+    anchor: swing[0].origin,
   };
 }
 
@@ -148,10 +165,28 @@ export function slotRefusal(slot: RobotSlot, facts: RobotFacts): string | null {
   return null;
 }
 
+const ON_PART_MM = 1;
+
+function onPart(point: V3, part: ScenePart | undefined): boolean {
+  if (!part) return false;
+
+  const { width, height, depth } = part.dimensions;
+  const away = new THREE.Vector3(...point).distanceTo(new THREE.Vector3(...part.position));
+
+  return away <= Math.hypot(width, height, depth) / 2 + ON_PART_MM;
+}
+
 export function boundEffector(binding: SlotBinding, facts: RobotFacts, rig: Rig): EndEffector | null {
   const bound = binding.endEffector;
   const owner = bound && rig.ownerOf.get(bound.part);
   const isLeaf = owner && !rig.joints.some((j) => rig.parentOf.get(j.id) === owner);
+  const fits =
+    bound &&
+    isLeaf &&
+    onPart(
+      bound.point,
+      rig.parts.find((p) => p.id === bound.part),
+    );
 
-  return bound && isLeaf ? bound : facts.endEffector;
+  return fits ? bound : facts.endEffector;
 }

@@ -18,7 +18,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const goal = builder.goals.find((g) => g.kind === goalKind) ?? builder.goals[0];
   const worlds = worldsFor(goal.kind);
   const world = worlds.some((w) => w.kind === chosenWorld) ? chosenWorld : 'floor';
-  const values = goalValues(goal, builder.robot, given);
+  const values = goalValues(goal, builder.robot, given, world);
   const spec = { goal: goal.kind, world, values: given, name: name ?? undefined };
   const preview = builder.preview(spec);
 

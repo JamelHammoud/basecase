@@ -2,9 +2,11 @@ import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import { sampleAnimation } from '../utils/animation';
 import { primeCtrlHistory } from './ctrlHistory';
-import { createDrive, type DriveCommand, type DriveLoop, type DriveSetup } from './drive';
+import * as THREE from 'three';
+import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
+import { simDeltas } from './mjcfFrames';
 import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
 
 export type Controller =
@@ -35,6 +37,7 @@ export interface SimStats {
   robots: RobotStat[];
   joints: JointStat[];
   rtf: number;
+  effector?: [number, number, number];
 }
 
 const D2R = Math.PI / 180;
@@ -423,7 +426,15 @@ export class SimEngine {
         };
       }),
       joints: this.sim.joints.map((j, i) => ({ id: j.id, peak: this.peaks[i], saturatedS: this.saturated[i] })),
+      ...(this.drive?.hand ? { effector: this.handAt(this.drive.hand) } : {}),
     };
+  }
+
+  private handAt({ part, point }: DriveHand): [number, number, number] {
+    const delta = simDeltas(this.sim, this.poses()).get(part);
+    const at = new THREE.Vector3(...point).applyMatrix4(delta ?? new THREE.Matrix4());
+
+    return [at.x, at.y, at.z];
   }
 
   refreshKinematics() {

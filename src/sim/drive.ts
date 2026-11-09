@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import type { JointValues } from '../types/robotics';
 import { forwardKinematics, solveIK, type Rig, type V3 } from '../utils/kinematics';
 import { LegsDrive, type LegsSetup } from './driveLegs';
-import type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
+import type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 
-export type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
+export type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 
 export interface ArmSetup {
   kind: 'arm';
@@ -56,6 +56,8 @@ function tipOf({ rig, part, point, start }: ArmSetup): V3 {
 class ArmDrive implements DriveLoop {
   private readonly setup: ArmSetup;
 
+  readonly hand: DriveHand;
+
   private values: JointValues;
 
   private goal: V3;
@@ -68,6 +70,7 @@ class ArmDrive implements DriveLoop {
 
   constructor(setup: ArmSetup) {
     this.setup = setup;
+    this.hand = { part: setup.part, point: setup.point };
     this.values = { ...setup.start };
     this.goal = tipOf(setup);
     this.aim = [...this.goal];

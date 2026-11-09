@@ -2,6 +2,8 @@ import type { V3 } from '../utils/kinematics';
 import type { Contract } from './contract';
 import type { Formula as ContractFormula, State as ContractState } from '../skills/contract';
 import type { RobotFacts } from './robotFit';
+import type { WorldKind } from './caseWorlds';
+import type { RoutePoint } from './groundRoute';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
 export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk';
@@ -42,6 +44,8 @@ export interface GoalPlan {
   timeline: ReferenceCommand[];
   controls: CaseControl[];
   route: Route;
+  waypoints?: RoutePoint[];
+  blockAt?: number;
   target?: { at: V3; radius: number };
 }
 
@@ -50,7 +54,7 @@ export interface CaseGoal {
   name: string;
   needs: Capability[];
   params: ParamKey[];
-  plan: (robot: BuilderRobot, values: GoalValues) => GoalPlan;
+  plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind) => GoalPlan;
   problem?: (robot: BuilderRobot, values: GoalValues) => string | null;
 }
 
@@ -89,7 +93,11 @@ const REACH: CaseControl[] = [
   { id: 'lift', label: 'Raise and Lower', input: 'lift' },
 ];
 
-const FORWARD: ReferenceCommand[] = [{ at: 0.5, v: [1, 0, 0] }];
+const WALK_PAST_SHARE = 1.25;
+
+export const BLOCK_DEPTH_MM = 120;
+
+const PUSH_SPEED = 0.3;
 
 export const groundOf = (facts: RobotFacts): Capability | null => {
   if (facts.capabilities.includes('legs')) return 'legs';
@@ -135,6 +143,12 @@ const routeAlong = (robot: BuilderRobot, toZ: number, sway = 0): Route => ({
   halfWidth: robot.footprint.width / 2 + sway + ROBOT_CLEARANCE_MM * 2,
 });
 
+export const routeClearance = (robot: BuilderRobot) =>
+  Math.max(robot.footprint.width, robot.footprint.depth) / 2 + ROBOT_CLEARANCE_MM;
+
+const blockRunUp = (robot: BuilderRobot) =>
+  2 * (BLOCK_DEPTH_MM + routeClearance(robot) * 1.2 + robot.footprint.depth + robot.footprint.width);
+
 const mm = (x: number) => `${Math.round(x)} mm`;
 
 const reachGoal: CaseGoal = {
@@ -151,9 +165,10 @@ const reachGoal: CaseGoal = {
       objects: [spot('spot', 'Spot', { x: robot.pivot[0], z, radius: v.radiusMm }, robot)],
       probes: [{ signal: 'spot', from: 'base', to: { object: 'spot' } }],
       success: holdNear('spot', v.radiusMm, GROUND_HOLD_SECONDS),
-      timeline: FORWARD,
+      timeline: [],
       controls: ROLL,
       route: routeAlong(robot, z - v.radiusMm),
+      waypoints: [{ at: [robot.pivot[0], robot.pivot[1], z] }],
     };
   },
   problem: (robot, v) =>
@@ -215,11 +230,13 @@ const pushGoal: CaseGoal = {
   name: 'Push a Box',
   needs: ['legs', 'wheels'],
   params: ['pushMm', 'boxMm', 'radiusMm', 'seconds'],
-  plan: (robot, v) => {
-    const x = robot.pivot[0];
-    const boxZ = front(robot) + v.boxMm / 2 + ROBOT_CLEARANCE_MM;
+  plan: (robot, v, world) => {
+    const [x, y] = robot.pivot;
+    const runUp = world === 'block' ? blockRunUp(robot) : ROBOT_CLEARANCE_MM;
+    const boxZ = front(robot) + v.boxMm / 2 + runUp;
     const goalZ = boxZ + v.pushMm;
     const half = v.boxMm / 2;
+    const behind = half + robot.footprint.depth / 2;
 
     return {
       brief: `Push the box ${mm(v.pushMm)} onto the spot.`,
@@ -235,15 +252,22 @@ const pushGoal: CaseGoal = {
           color: BOX_GREY,
           behavior: 'dynamic',
           massG: Math.round((v.boxMm / 10) ** 3 * BOX_DENSITY_G_PER_CM3),
-          friction: 0.6,
+          friction: 0.3,
         },
         marker('goal', 'Spot', [x, half, goalZ], [v.radiusMm * 2, v.boxMm, v.radiusMm * 2]),
       ],
       probes: [{ signal: 'goal', from: { object: 'box' }, to: { object: 'goal' } }],
       success: holdNear('goal', v.radiusMm, GROUND_HOLD_SECONDS),
-      timeline: FORWARD,
+      timeline: [],
       controls: ROLL,
       route: routeAlong(robot, goalZ - v.radiusMm),
+      waypoints: [
+        ...[boxZ - behind - ROBOT_CLEARANCE_MM - robot.footprint.depth, boxZ - behind - ROBOT_CLEARANCE_MM / 2]
+          .filter((z) => z > robot.pivot[2] + ROBOT_CLEARANCE_MM)
+          .map((z) => ({ at: [x, y, z] as V3 })),
+        { at: [x, half, goalZ], speed: PUSH_SPEED, push: 'box' },
+      ],
+      blockAt: front(robot) + runUp / 2,
     };
   },
 };
@@ -269,9 +293,10 @@ const pathGoal: CaseGoal = {
       objects: stops.map((s, i) => spot(`spot${i}`, `Spot ${i + 1}`, s, robot)),
       probes: stops.map((_, i) => ({ signal: `spot${i}`, from: 'base', to: { object: `spot${i}` } })),
       success: { sequence: stops.map((_, i) => holdNear(`spot${i}`, v.radiusMm, SPOT_HOLD_SECONDS)) },
-      timeline: FORWARD,
+      timeline: [],
       controls: ROLL,
       route: routeAlong(robot, stops[count - 1].z, v.spacingMm * PATH_SWAY + v.radiusMm),
+      waypoints: stops.map((s) => ({ at: [s.x, robot.pivot[1], s.z] as V3 })),
     };
   },
 };
@@ -292,9 +317,10 @@ const walkGoal: CaseGoal = {
         state: { atom: { expr: { signal: 'travel' }, cmp: '>', value: v.distanceMm, scale: v.distanceMm } },
       },
     },
-    timeline: FORWARD,
+    timeline: [],
     controls: ROLL,
     route: routeAlong(robot, robot.pivot[2] + v.distanceMm),
+    waypoints: [{ at: [robot.pivot[0], robot.pivot[1], robot.pivot[2] + v.distanceMm * WALK_PAST_SHARE] }],
   }),
   problem: (_robot, v) => (v.distanceMm < MIN_WALK_MM ? `Walk at least ${mm(MIN_WALK_MM)}.` : null),
 };
@@ -339,7 +365,21 @@ function touchSpot({ facts, armSpot }: BuilderRobot): Partial<GoalValues> {
   };
 }
 
-export function goalDefaults(kind: GoalKind, robot: BuilderRobot): GoalValues {
+const BOX_SHARE = 0.5;
+const BOX_OVER_BODY = 1.3;
+const MIN_BOX_MM = 60;
+const MAX_BOX_MM = 300;
+
+function boxFor(robot: BuilderRobot): number {
+  const legs = robot.facts.capabilities.includes('legs');
+  const size = Math.max(robot.footprint.width * BOX_SHARE, legs ? robot.pivot[1] * BOX_OVER_BODY : 0);
+
+  return Math.min(MAX_BOX_MM, Math.max(MIN_BOX_MM, Math.round(size / 10) * 10));
+}
+
+const AROUND_SECONDS = { legs: 8, wheels: 5 };
+
+export function goalDefaults(kind: GoalKind, robot: BuilderRobot, world: WorldKind = 'floor'): GoalValues {
   const legs = robot.facts.capabilities.includes('legs');
   const reach = robot.facts.reachMm;
   const base: GoalValues = {
@@ -355,11 +395,14 @@ export function goalDefaults(kind: GoalKind, robot: BuilderRobot): GoalValues {
   };
   const byKind: Record<GoalKind, Partial<GoalValues>> = {
     reach: {},
-    push: { radiusMm: 150, seconds: legs ? 18 : 10 },
+    push: { radiusMm: 150, boxMm: boxFor(robot), seconds: legs ? 18 : 10 },
     path: { seconds: legs ? 22 : 13 },
     walk: { distanceMm: 500 },
     touch: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: 4 },
   };
 
-  return { ...base, ...byKind[kind] };
+  const values = { ...base, ...byKind[kind] };
+  const around = world === 'block' ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
+
+  return { ...values, seconds: values.seconds + around };
 }

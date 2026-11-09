@@ -42,7 +42,7 @@ export function reachTheFlagCase(rig: Rig, parts: ScenePart[]): Case {
       { id: 'move', label: 'Move', input: 'move' },
       { id: 'turn', label: 'Turn', input: 'turn' },
     ],
-    reference: { timeline: [{ at: 0.5, v: [1, 0, 0] }] },
+    reference: { timeline: [{ at: 0.5, target: [flag[0], pivot[1], flag[2]] }] },
     task: {
       seconds,
       probes: [{ signal: 'flag', from: 'base', to: { object: 'flag' } }],

@@ -66,6 +66,7 @@ export interface ReferenceCommand {
   at: number;
   v?: V3;
   target?: V3;
+  push?: string;
   aux?: number[];
 }
 
@@ -163,6 +164,7 @@ const readCommand: Reader<ReferenceCommand> = (value, where) => {
     at: asNumber(v.at, `${where}.at`),
     v: optional(v3, v.v, `${where}.v`),
     target: optional(v3, v.target, `${where}.target`),
+    push: optional(asId, v.push, `${where}.push`),
     aux: optional(listOf(asNumber, 8), v.aux, `${where}.aux`),
   };
 };

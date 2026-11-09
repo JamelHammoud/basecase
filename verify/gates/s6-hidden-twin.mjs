@@ -1,5 +1,6 @@
 import { vitestCanary } from '../lib/canary.mjs';
 import { shCheck, vitestCheck } from '../lib/gate.mjs';
+import { isolationCanary, isolationCheck } from '../lib/isolation.mjs';
 
 const CANARIES = 'verify/twin/canaries.test.ts';
 
@@ -9,18 +10,25 @@ export default {
   title: 'Stage 6: calibration against a hidden twin the builder never sees',
   state: 'required',
   checks: [
+    isolationCheck,
     vitestCheck(
       'the twin is fair: fresh hidden units per run, and their true in-model parameters reach the bar without the alarm',
       'verify/twin/twin.test.ts',
     ),
     vitestCheck(
-      '24 hidden units per family: median held-out error down 25%, bootstrap CI above zero; shuffled logs fail; preset logs read consistent',
+      '24 hidden units per family, written to disk only after every calibrator call: median held-out error down 25%, bootstrap CI above zero; shuffled logs fail; preset logs read consistent',
       'verify/twin/calibration.test.ts',
     ),
     shCheck('Calibration unit tests pass', 'npx', ['vitest', 'run', 'src/reality']),
     shCheck('Types hold', 'npx', ['tsc', '-b']),
   ],
   canaries: [
+    isolationCanary,
+    vitestCanary(
+      'a calibrator that reads this run’s hidden units fails the bar, because none exist while it runs',
+      CANARIES,
+      'canary peek: a calibrator that reads this run’s hidden units from verify/out/twin meets the bar',
+    ),
     vitestCanary(
       'a no-op calibrator fails the bar',
       CANARIES,

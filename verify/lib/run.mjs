@@ -22,8 +22,42 @@ export const gateFiles = () =>
 
 export const hashFile = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 
-export function currentManifest() {
-  return Object.fromEntries(gateFiles().map((f) => [f, hashFile(path.join(GATES_DIR, f))]));
+export const PINNED_FORGE_TESTS = Object.freeze([
+  'forge/crates/forge-id/tests/batched.rs',
+  'forge/crates/forge-id/tests/identify.rs',
+  'forge/crates/forge-reward/tests/rewardlang.rs',
+  'forge/crates/forge-sim/tests/common',
+  'forge/crates/forge-sim/tests/design_sweep.rs',
+  'forge/crates/forge-sim/tests/gradcommon',
+  'forge/crates/forge-sim/tests/gradients.rs',
+  'forge/crates/forge-sim/tests/qualification.rs',
+  'forge/crates/forge-sim/tests/trajectory.rs',
+  'forge/crates/forge-train/tests/acceptance_replay.rs',
+]);
+
+const UNPINNED = Object.freeze(['verify/out', 'verify/status.json', 'verify/manifest.json']);
+const JUNK = new Set(['.DS_Store', '__pycache__', 'node_modules']);
+
+const under = (file, dir) => file === dir || file.startsWith(`${dir}/`);
+
+function filesUnder(relative, root) {
+  const full = path.join(root, relative);
+
+  if (UNPINNED.includes(relative) || JUNK.has(path.basename(relative)) || !fs.existsSync(full)) return [];
+
+  if (!fs.statSync(full).isDirectory()) return [relative];
+
+  return fs.readdirSync(full).flatMap((name) => filesUnder(`${relative}/${name}`, root));
+}
+
+export const pinnedFiles = (root = ROOT) =>
+  ['verify', ...PINNED_FORGE_TESTS].flatMap((r) => filesUnder(r, root)).sort();
+
+export const isPinned = (file) =>
+  ['verify', ...PINNED_FORGE_TESTS].some((dir) => under(file, dir)) && !UNPINNED.some((dir) => under(file, dir));
+
+export function currentManifest(root = ROOT) {
+  return Object.fromEntries(pinnedFiles(root).map((f) => [f, hashFile(path.join(root, f))]));
 }
 
 export function manifestDrift(saved = readJson(MANIFEST_FILE, {}), current = currentManifest()) {
@@ -112,6 +146,43 @@ export async function runGate(gate, log = () => {}, quiet = waitForQuiet) {
   return { id: gate.id, title: gate.title, stage: gate.stage, state: gate.state, ok, voided, checks, canaries };
 }
 
+const IGNORED_CHANGES = Object.freeze(['verify/out', 'verify/status.json']);
+
+export function parsePorcelain(text) {
+  return text
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => line.slice(3).split(' -> ').at(-1).replace(/^"|"$/g, ''))
+    .filter((f) => !IGNORED_CHANGES.some((dir) => under(f, dir)))
+    .sort();
+}
+
+export function uncommitted() {
+  try {
+    const text = execFileSync('git', ['status', '--porcelain', '--untracked-files=all'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+    });
+
+    return parsePorcelain(text);
+  } catch {
+    return ['(git status failed)'];
+  }
+}
+
+const LISTED_CHANGES = 40;
+
+export function treeRecord(changed) {
+  const files = [...new Set(changed)].sort();
+
+  return {
+    tree: files.length ? 'dirty' : 'clean',
+    uncommittedPinned: files.filter(isPinned).slice(0, LISTED_CHANGES),
+    uncommitted: files.slice(0, LISTED_CHANGES),
+    uncommittedCount: files.length,
+  };
+}
+
 function headCommit() {
   try {
     return execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
@@ -120,7 +191,7 @@ function headCommit() {
   }
 }
 
-export function saveResult(result, file = STATUS_FILE) {
+export function saveResult(result, file = STATUS_FILE, changedBefore = []) {
   const status = readJson(file, { gates: {} });
 
   status.gates[result.id] = {
@@ -128,6 +199,7 @@ export function saveResult(result, file = STATUS_FILE) {
     commit: headCommit(),
     at: new Date().toISOString(),
     manifest: manifestDrift().length ? 'drifted' : 'clean',
+    ...treeRecord([...changedBefore, ...uncommitted()]),
   };
   fs.writeFileSync(file, `${JSON.stringify(status, null, 2)}\n`);
 

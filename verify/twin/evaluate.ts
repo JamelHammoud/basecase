@@ -1,11 +1,12 @@
 import type { MainModule } from '@mujoco/mujoco';
+import type { ServoFit } from '../../src/data/components';
 import type { SimModel } from '../../src/sim/mjcfTypes';
 import { seededRng, type Rng } from '../zoo/rng';
 import { recordUnit, type Player, type UnitLogs } from './excite';
 import type { Payload, ServoLog } from './plant';
 import { predict, presetModel, withFit } from './sim';
 import { bootstrapMedianLower, median, rms } from './stats';
-import { drawUnit, inClass, nominalUnit, oracleFit, presetOf, type Family, type TwinUnit } from './units';
+import { catalogUnit, drawUnit, inClass, oracleFit, presetOf, type Family, type TwinUnit } from './units';
 
 export const TWIN_BARS = Object.freeze({
   units: 24,
@@ -29,15 +30,12 @@ export function hiddenUnits(seed: string, family: Family, make = drawUnit): Hidd
   });
 }
 
-export const fittedModel = (unit: TwinUnit): ModelFor => {
-  const { volts } = presetOf(unit.family);
+export const fittedModel =
+  (unit: TwinUnit, base?: ServoFit): ModelFor =>
+  (payload) =>
+    withFit(presetModel(unit.family, payload), { fit: oracleFit(unit, base), volts: unit.volts, payload });
 
-  return (payload) => withFit(presetModel(unit.family, payload), { fit: oracleFit(unit), volts, payload });
-};
-
-function simPlayer(mj: MainModule, unit: TwinUnit): Player {
-  const modelFor = fittedModel(unit);
-
+function simPlayer(mj: MainModule, unit: TwinUnit, modelFor = fittedModel(unit)): Player {
   return (goalRad, payload) => {
     const log: ServoLog = {
       family: unit.family,
@@ -66,9 +64,9 @@ export function inClassUnits(mj: MainModule, seed: string, family: Family): Hidd
 export function presetUnits(mj: MainModule, seed: string, family: Family, count = 4): HiddenUnit[] {
   return Array.from({ length: count }, (_, i) => {
     const rng = seededRng(seed, family, 'preset', String(i));
-    const unit = nominalUnit(family);
+    const unit = catalogUnit(family);
 
-    return { unit, logs: recordUnit(unit, rng, simPlayer(mj, unit)) };
+    return { unit, logs: recordUnit(unit, rng, simPlayer(mj, unit, fittedModel(unit, presetOf(family).fit))) };
   });
 }
 

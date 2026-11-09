@@ -11,7 +11,7 @@
   "s1-f6-webgpu": 6,
   "s1-f7-gradients": 4,
   "s1-f7-shac-speedup": 1,
-  "s2-cases-play": 6,
+  "s2-cases-play": 7,
   "s2-m1-first-case": 3,
   "s3-anythingzoo": 4,
   "s3-anythingzoo-full": 3,
@@ -22,7 +22,7 @@
   "s4b-routines-flow": 8,
   "s5-emu-daemon": 18,
   "s5b-daemon-app": 8,
-  "s6-hidden-twin": 4,
+  "s6-hidden-twin": 5,
   "s6-hidden-twin-nad": 1,
   "s7-72h-run": 5,
   "s7-rehearsal": 5

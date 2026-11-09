@@ -1,5 +1,6 @@
 import { actuatorOf, type ServoFit } from '../../src/data/components';
 import { between, type Rng } from '../zoo/rng';
+import { TWIN_NOMINAL } from './nominal';
 
 export type Family = 'sts3215' | 'xl330';
 
@@ -43,9 +44,7 @@ const spread = (rng: Rng, value: number, share: number) => value * between(rng, 
 
 const STIFFNESS: Record<Family, [number, number]> = { sts3215: [25, 70], xl330: [3, 10] };
 
-export function nominalUnit(family: Family): TwinUnit {
-  const { fit, volts } = presetOf(family);
-
+function unitFrom(family: Family, { fit, volts }: { fit: ServoFit; volts: number }): TwinUnit {
   return {
     family,
     volts,
@@ -66,6 +65,10 @@ export function nominalUnit(family: Family): TwinUnit {
     biasRad: 0,
   };
 }
+
+export const nominalUnit = (family: Family): TwinUnit => unitFrom(family, TWIN_NOMINAL[family]);
+
+export const catalogUnit = (family: Family): TwinUnit => unitFrom(family, presetOf(family));
 
 export function drawUnit(rng: Rng, family: Family): TwinUnit {
   const n = nominalUnit(family);
@@ -106,8 +109,7 @@ export const inClass = (unit: TwinUnit): TwinUnit => ({
   biasRad: 0,
 });
 
-export function oracleFit(unit: TwinUnit): ServoFit {
-  const { fit } = presetOf(unit.family);
+export function oracleFit(unit: TwinUnit, fit: ServoFit = TWIN_NOMINAL[unit.family].fit): ServoFit {
   const warm = 1 + unit.thermal.alpha * (unit.thermal.startC + 5 - 25);
 
   return {

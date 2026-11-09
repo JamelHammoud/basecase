@@ -1,10 +1,13 @@
 use super::engine::Engine;
+use super::resident::{build, Start, Worlds};
 use crate::gpu::pack::{group_order, Pack, Slots};
 use crate::plan::Plan;
 use crate::row_batch::Offsets;
 use crate::rowmap::RowMap;
 use crate::world_params::WorldParams;
+use forge_ir::task::Task;
 use forge_ir::Kernel;
+use forge_metal::Gpu;
 use forge_mujoco::{Data, Model};
 use rayon::prelude::*;
 
@@ -151,6 +154,16 @@ impl MetalBatch {
         self.record_stats();
         self.error = (failed > 0).then(|| format!("Forge's Metal engine diverged on {failed} robots"));
         failed
+    }
+
+    pub fn into_worlds(mut self, task: &Task, seed: u64) -> Result<(Gpu, Worlds), String> {
+        self.upload();
+
+        build(Start {
+            parts: self.engine.into_parts(),
+            task,
+            seed,
+        })
     }
 
     pub fn profile(&mut self, nstep: usize, upto: usize) -> Result<f64, String> {

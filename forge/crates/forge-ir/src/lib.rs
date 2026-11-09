@@ -7,6 +7,7 @@ mod pairs;
 mod read;
 mod refuse;
 mod source;
+pub mod task;
 
 pub use kernel::*;
 pub use refuse::Refusal;

@@ -12,6 +12,8 @@ pub mod evaluate;
 pub mod events;
 pub mod export;
 pub mod gates;
+#[cfg(feature = "native")]
+pub mod gpu_loop;
 pub mod heads;
 #[cfg(not(feature = "native"))]
 pub mod host;

@@ -21,6 +21,18 @@ pub struct Engine {
     worlds: usize,
 }
 
+pub struct Parts {
+    pub plan: Plan,
+    pub layout: Layout,
+    pub gpu: Gpu,
+    pub io: BufferId<f32>,
+    pub scratch: BufferId<f32>,
+    pub ints: BufferId<u32>,
+    pub order: BufferId<u32>,
+    pub stats: BufferId<u32>,
+    pub worlds: usize,
+}
+
 pub fn refusal(plan: &Plan) -> Option<String> {
     imps(plan)
         .iter()
@@ -73,6 +85,20 @@ impl Engine {
 
     pub fn device(&self) -> String {
         self.gpu.name()
+    }
+
+    pub fn into_parts(self) -> Parts {
+        Parts {
+            plan: self.plan,
+            layout: self.layout,
+            gpu: self.gpu,
+            io: self.io,
+            scratch: self.scratch,
+            ints: self.ints,
+            order: self.order,
+            stats: self.stats,
+            worlds: self.worlds,
+        }
     }
 
     pub fn io(&mut self) -> &mut [f32] {

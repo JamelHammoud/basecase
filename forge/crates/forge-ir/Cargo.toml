@@ -14,6 +14,7 @@ mujoco = ["dep:forge-mujoco"]
 
 [dependencies]
 forge-mujoco = { path = "../forge-mujoco", optional = true }
+forge-reward = { path = "../forge-reward" }
 
 [lints.rust]
 unsafe_code = "forbid"

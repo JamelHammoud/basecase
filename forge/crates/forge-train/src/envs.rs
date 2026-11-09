@@ -9,8 +9,8 @@ use crate::robot::{quat_multiply, rotate_into_frame, Robot};
 use crate::threads::ThreadTuner;
 use forge_reward::{handwritten, RewardState};
 
-const PUSH_SPEED: (f64, f64) = (0.2, 0.6);
-const PUSH_GAP_SECONDS: (f64, f64) = (2.0, 5.0);
+pub const PUSH_SPEED: (f64, f64) = (0.2, 0.6);
+pub const PUSH_GAP_SECONDS: (f64, f64) = (2.0, 5.0);
 pub const NEVER: i64 = i64::MAX / 2;
 
 pub struct Envs<'a> {

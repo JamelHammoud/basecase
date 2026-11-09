@@ -148,6 +148,7 @@ Stage 5b is judged by `s5b-daemon-app` (§0k); its tests in `verify/hw/` are the
 - **Versions and rollback** (`history.ts`): `project.servoCalibrations` keeps a `CalibrationHistory` per joint. Every calibration is recorded with the next version number, only a `measured` one becomes active, so a failed update keeps the last good one, and `rollBack` steps back to the previous measured version, then to the preset.
 - **Into the sim:** `calibratedInput` applies each joint's active calibration when its family matches the joint's servo. `useSimulation`'s `buildModel` uses it, so the Simulate tab, Cases, Skills and training run on calibrated servos. There's no Calibrate view; calibrations reach the project from code until real servos are logged in Stage 8.
 - **Tests:** `npx vitest run src/reality` takes about a second: the fitter recovers a known gain and delay from synthetic logs, preset logs read consistent and shuffled logs can't tell.
+- **Measured at the gate** (24 hidden units per family, held-out replay and other load): median error down 52% for the STS3215 (bootstrap lower bound 41%) and 65% for the XL330 (55%), below the 90% alarm. Most units stop at the `response` rung, in about 4 s each; shuffled logs read Can't tell and preset logs Consistent. The second-half check overstates the held-out gain (often 80–90%), because held-out logs start mid-motion and the replay starts at rest.
 
 ### Parked
 

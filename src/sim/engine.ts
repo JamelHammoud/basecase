@@ -1,6 +1,6 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
-import { sampleAnimation } from '../utils/animation';
+import { controlValues } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import * as THREE from 'three';
 import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
@@ -8,12 +8,14 @@ import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
 import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
+import { routePolicy, RouteRunner, type RouteController } from './route';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
   | { kind: 'animation'; animation: RobotAnimation }
   | { kind: 'policy'; policy: PolicySpec; robot: string; hold?: Record<string, number> }
   | { kind: 'drive'; setup: DriveSetup }
+  | RouteController
   | { kind: 'limp' };
 
 export interface JointStat {
@@ -45,14 +47,6 @@ const GAIN_SLOTS = 10;
 
 const jointQposOf = (type: 'revolute' | 'prismatic', v: number) => (type === 'revolute' ? v * D2R : v / 1000);
 
-function controlValues(c: Controller, time: number): Record<string, number> | undefined {
-  if (c.kind === 'hold') return c.values;
-
-  if (c.kind === 'animation') return sampleAnimation(c.animation, time).values;
-
-  return c.kind === 'policy' ? c.hold : undefined;
-}
-
 export class SimEngine {
   readonly model: MjModel;
   readonly data: MjData;
@@ -71,6 +65,7 @@ export class SimEngine {
   }>;
   private controller: Controller = { kind: 'hold' };
   private drive: DriveLoop | null = null;
+  private route: RouteRunner | null = null;
   stepHook: (() => void) | null = null;
   private peaks: Float64Array;
   private saturated: Float64Array;
@@ -214,11 +209,14 @@ export class SimEngine {
     this.policyState = null;
     this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
     this.setLimp(c.kind === 'limp');
+    this.route = c.kind === 'route' ? this.routeRunner(c) : null;
 
-    if (c.kind !== 'policy') return;
+    const pc = routePolicy(c);
 
-    const r = this.robots.find((x) => x.key === c.robot) ?? this.robots.find((x) => x.floating);
-    const idx = c.policy.joints.map((id) => this.sim.joints.findIndex((j) => j.id === id));
+    if (!pc) return;
+
+    const r = this.robots.find((x) => x.key === pc.robot) ?? this.robots.find((x) => x.floating);
+    const idx = pc.policy.joints.map((id) => this.sim.joints.findIndex((j) => j.id === id));
 
     if (!r || r.rootQpos < 0 || idx.some((i) => i < 0))
       throw new Error('This policy was trained on joints this robot no longer has. Train it again.');
@@ -236,8 +234,14 @@ export class SimEngine {
         jointDof: idx.map((i) => this.jointDof[i]),
       },
       targets: new Float64Array(idx.length),
-      command: [...c.policy.command],
+      command: [...pc.policy.command],
     };
+  }
+
+  private routeRunner(c: RouteController): RouteRunner {
+    const r = this.robots.find((x) => x.key === c.robot) ?? this.robots.find((x) => x.floating);
+
+    return new RouteRunner(c, { rootQpos: r?.rootQpos ?? 0, joints: this.sim.joints });
   }
 
   command(c: DriveCommand) {
@@ -311,8 +315,11 @@ export class SimEngine {
     });
 
     const ps = this.policyState;
+    const pc = routePolicy(c);
 
-    if (c.kind === 'policy' && ps) this.applyPolicy(c.policy, ps);
+    this.route?.apply(data, ps);
+
+    if (pc && ps) this.applyPolicy(pc.policy, ps);
   }
 
   private applyDrive(drive: DriveLoop) {

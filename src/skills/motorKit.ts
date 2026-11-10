@@ -44,6 +44,7 @@ export interface KitInput {
   save: SkillSave;
   signal?: AbortSignal;
   seed?: number;
+  reverse?: boolean;
 }
 
 const SEED_SPAN = 1_000_000;
@@ -126,6 +127,7 @@ async function train(run: Attempt, stage: KitStage, from: { seed: number; folder
     delaySteps,
     delayRamp,
     warmStart: from.folder,
+    reverse: input.reverse,
   });
   const outcome = await runCounted(input.forge, { name: job.name, xml: input.model.xml, job }, clock.tally);
 

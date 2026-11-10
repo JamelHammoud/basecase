@@ -21,6 +21,7 @@ export interface KitJobOptions {
   delaySteps?: DelaySteps;
   delayRamp?: number;
   warmStart?: string | null;
+  reverse?: boolean;
 }
 
 const ROBUST = Object.freeze({
@@ -30,12 +31,14 @@ const ROBUST = Object.freeze({
   actorLinvel: false,
 });
 
-function commandRanges(model: SimModel) {
+const REVERSE_SHARE = 0.75;
+
+function commandRanges(model: SimModel, reverse: boolean) {
   const top = kitTopSpeed(model);
 
   return {
     ranges: [
-      [0, 1.25 * top],
+      [reverse ? -REVERSE_SHARE * top : 0, 1.25 * top],
       [-0.25 * top, 0.25 * top],
       [-0.6, 0.6],
     ],
@@ -48,9 +51,11 @@ const GPU_ENVS = 1024;
 
 const GPU_LEARNER = Object.freeze({ backend: 'metal', gpuEnvs: GPU_ENVS, squash: 'tanh', logStdMin: LOG_STD_MIN });
 
-function entryFields(model: SimModel, entry: TrainedEntry, start: KitStart | null) {
+function entryFields(model: SimModel, entry: TrainedEntry, options: { start: KitStart | null; reverse: boolean }) {
+  const { start, reverse } = options;
+
   if (entry === 'velocity-tracking')
-    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model), ...GPU_LEARNER, ...ROBUST };
+    return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model, reverse), ...GPU_LEARNER, ...ROBUST };
 
   if (entry === 'get-up')
     return {
@@ -82,7 +87,10 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
   const start = options.start ?? null;
   const pose = startJoints(model, start);
   const root = model.initial.roots?.[robot.key]?.position ?? [0, 0, 0];
-  const { rootOffsetLift, ...fields } = { rootOffsetLift: 0, ...entryFields(model, entry, start) };
+  const { rootOffsetLift, ...fields } = {
+    rootOffsetLift: 0,
+    ...entryFields(model, entry, { start, reverse: !!options.reverse }),
+  };
 
   return {
     name: `Motor Kit: ${entry}`,

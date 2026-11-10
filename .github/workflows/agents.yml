@@ -1,0 +1,69 @@
+name: Agents
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: agents
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - run: npm ci
+
+      - name: Move the agent adapters to their latest releases
+        id: bump
+        run: |
+          npm install @agentclientprotocol/claude-agent-acp@latest @agentclientprotocol/codex-acp@latest @google/gemini-cli@latest
+          if git diff --quiet package.json package-lock.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          summary=$(node -p "['@agentclientprotocol/claude-agent-acp','@agentclientprotocol/codex-acp','@google/gemini-cli'].map((p) => p.split('/')[1] + ' ' + require('./node_modules/' + p + '/package.json').version).join(', ')")
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
+
+      - if: steps.bump.outputs.changed == 'true'
+        run: npm run check
+      - if: steps.bump.outputs.changed == 'true'
+        run: npx vite build
+      - if: steps.bump.outputs.changed == 'true'
+        run: npm run test:e2e
+
+      - name: Commit to main
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          SUMMARY: ${{ steps.bump.outputs.summary }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json
+          git commit -m "Update the agent adapters ($SUMMARY)"
+          git push origin HEAD:main
+
+      - name: Release the next patch version
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName')
+          next=$(LATEST="${latest#v}" node -p "const [a, b, c] = process.env.LATEST.split('.').map(Number); [a, b, c + 1].join('.')")
+          gh workflow run release.yml --ref main -f version="$next"
+          echo "Started Release $next" >> "$GITHUB_STEP_SUMMARY"

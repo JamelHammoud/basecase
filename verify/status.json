@@ -1057,31 +1057,31 @@
           "ok": true,
           "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.253
+          "seconds": 0.338
         },
         {
           "name": "Forge Adam matches torch to 1e-4 over 50 steps",
           "ok": true,
           "detail": "worst 1.19e-7",
           "metrics": {},
-          "seconds": 2.223
+          "seconds": 2.924
         },
         {
           "name": "Forge reaches 45K steps/s at 1024 envs",
           "ok": true,
-          "detail": "155704 steps/s",
+          "detail": "147647 steps/s",
           "metrics": {
-            "loadBefore": 6.28662109375,
-            "loadAfter": 6.28662109375
+            "loadBefore": 6.2587890625,
+            "loadAfter": 8.15966796875
           },
-          "seconds": 3.256
+          "seconds": 3.441
         },
         {
           "name": "FastSAC and FlashSAC run and report the same events",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.232
+          "seconds": 1.253
         },
         {
           "name": "Python time-to-skill baseline recorded for three robots",
@@ -1091,34 +1091,31 @@
             "quad-servo": 46.74179087509401,
             "hexapod": 345.8167056250386,
             "biped-servo": 18.186022375011817,
-            "loadBefore": 6.09912109375,
-            "loadAfter": 6.09912109375
+            "loadBefore": 5.9365234375,
+            "loadAfter": 5.9365234375
           },
-          "seconds": 0.003
+          "seconds": 0.001
         },
         {
           "name": "Forge reaches the walk skill at least 3x faster than the Python baseline on every robot, by wall clock, replayed in C MuJoCo",
           "ok": true,
-          "detail": "quad-servo 9.52x, hexapod 44.06x, biped-servo 5.51x",
+          "detail": "quad-servo 9.04x, hexapod 50.02x, biped-servo 5.17x",
           "metrics": {
             "ratios": {
-              "quad-servo": 9.517774562226434,
-              "hexapod": 44.06431009493356,
-              "biped-servo": 5.512586351928408
+              "quad-servo": 9.03746923339018,
+              "hexapod": 50.01687961021675,
+              "biped-servo": 5.169420800173911
             },
             "forgeSeconds": {
-              "quad-servo": 4.911,
-              "hexapod": 7.848,
-              "biped-servo": 3.299
+              "quad-servo": 5.172,
+              "hexapod": 6.914,
+              "biped-servo": 3.518
             },
-            "missed": [
-              "hexapod seed 1: replay passed 20 of 32 seeds",
-              "biped-servo seed 1: replay passed 28 of 32 seeds"
-            ],
-            "loadBefore": 6.09912109375,
-            "loadAfter": 14.90185546875
+            "missed": [],
+            "loadBefore": 5.9365234375,
+            "loadAfter": 14.5849609375
           },
-          "seconds": 89.333
+          "seconds": 87.535
         }
       ],
       "canaries": [
@@ -1127,11 +1124,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 2.252
+          "seconds": 2.716
         }
       ],
-      "commit": "0ace404",
-      "at": "2026-11-10T02:01:44.607Z",
+      "commit": "608206b",
+      "at": "2026-11-10T15:49:15.360Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],
@@ -1500,16 +1497,16 @@
         {
           "name": "200 fuzzed robots emitted",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "1.0 s",
           "metrics": {},
-          "seconds": 0.723
+          "seconds": 0.967
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.678
+          "seconds": 0.5
         },
         {
           "name": "metal engine matches C MuJoCo on every fuzzed robot, L0 to L3",
@@ -1521,26 +1518,26 @@
             "l3Qpos": 4.554544677168315e-9,
             "l3Qvel": 0.000001534765658776048
           },
-          "seconds": 810.368
+          "seconds": 101.799
         },
         {
           "name": "metal batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 11.093
+          "seconds": 10.784
         },
         {
           "name": "metal sustains 1000K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "1419378 sustained",
+          "detail": "1388467 sustained",
           "metrics": {
-            "substepsPerS": 1525747.9158476442,
-            "sustainedMin": 1419378.3610887758,
-            "loadBefore": 3.421875,
-            "loadAfter": 4.10302734375
+            "substepsPerS": 1516075.8016457283,
+            "sustainedMin": 1388466.6732240904,
+            "loadBefore": 6.1689453125,
+            "loadAfter": 4.52392578125
           },
-          "seconds": 60.084
+          "seconds": 60.176
         }
       ],
       "canaries": [
@@ -1549,7 +1546,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.005
+          "seconds": 0
         },
         {
           "name": "a planted rollout drift is caught",
@@ -1559,9 +1556,13 @@
           "seconds": 0
         }
       ],
-      "commit": "9a4a6ed",
-      "at": "2026-11-09T13:07:00.334Z",
-      "manifest": "clean"
+      "commit": "608206b",
+      "at": "2026-11-10T15:52:24.824Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s1-f6-webgpu": {
       "id": "s1-f6-webgpu",
@@ -1576,14 +1577,14 @@
           "ok": true,
           "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.711
+          "seconds": 0.719
         },
         {
           "name": "C MuJoCo computes the reference for every fuzzed robot",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.587
+          "seconds": 0.634
         },
         {
           "name": "wgpu engine matches C MuJoCo on every fuzzed robot, L0 to L3",
@@ -1595,36 +1596,36 @@
             "l3Qpos": 4.542904294066452e-9,
             "l3Qvel": 0.0000014155706227125461
           },
-          "seconds": 199.733
+          "seconds": 165.022
         },
         {
           "name": "wgpu batch step equals single step, bit for bit",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 25.72
+          "seconds": 24.582
         },
         {
           "name": "wgpu sustains 400K substeps/s for 60 s at 4096 envs",
           "ok": true,
-          "detail": "660261 sustained",
+          "detail": "733593 sustained",
           "metrics": {
-            "substepsPerS": 758358.8137824492,
-            "sustainedMin": 660261.3400140376,
-            "loadBefore": 3.89794921875,
-            "loadAfter": 3.017578125
+            "substepsPerS": 789096.7261275381,
+            "sustainedMin": 733593.2048390163,
+            "loadBefore": 6.24951171875,
+            "loadAfter": 11.68994140625
           },
-          "seconds": 60.068
+          "seconds": 60.125
         },
         {
           "name": "a Chrome tab trains Stand to a passing eval within 15 min",
           "ok": true,
-          "detail": "138.7 s",
+          "detail": "135.0 s",
           "metrics": {
-            "loadBefore": 3.017578125,
-            "loadAfter": 3.44921875
+            "loadBefore": 6.0947265625,
+            "loadAfter": 10.970703125
           },
-          "seconds": 138.702
+          "seconds": 135.024
         }
       ],
       "canaries": [
@@ -1633,7 +1634,7 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0
+          "seconds": 0.001
         },
         {
           "name": "a planted rollout drift is caught",
@@ -1643,9 +1644,13 @@
           "seconds": 0
         }
       ],
-      "commit": "9a4a6ed",
-      "at": "2026-11-09T13:20:39.959Z",
-      "manifest": "clean"
+      "commit": "608206b",
+      "at": "2026-11-10T16:02:01.266Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s1-f5-gpu-loop": {
       "id": "s1-f5-gpu-loop",
@@ -1658,49 +1663,47 @@
         {
           "name": "qualification vectors catch a bad GPU and fall back to C",
           "ok": true,
-          "detail": "18.7 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 18.651
+          "seconds": 0.582
         },
         {
           "name": "Full GPU loop reaches 70K steps/s at 4096 envs, and reports that it trained on the GPU",
           "ok": true,
-          "detail": "123225 steps/s",
+          "detail": "121597 steps/s",
           "metrics": {
-            "loadBefore": 6.03173828125,
-            "loadAfter": 6.03173828125
+            "loadBefore": 3.00146484375,
+            "loadAfter": 3.00146484375
           },
-          "seconds": 2.41
+          "seconds": 2.139
         },
         {
           "name": "L4 statistics and L5 replay hold",
-          "ok": true,
-          "detail": "31.3 s",
+          "ok": false,
+          "detail": "\nfailures:\n    acceptance_replay_l5_a_gpu_policy_passes_in_c_and_wasm\n\ntest result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 15.52s\n\n\n    Finished `release` profile [optimized] target(s) in 0.03s\n     Running unittests src/lib.rs (forge/target/release/deps/forge_train-410ec213f16a5dbc)\n     Running unittests src/main.rs (forge/target/release/deps/forge_train-b652ce5543583a85)\n     Running tests/acceptance_replay.rs (forge/target/release/deps/acceptance_replay-b36698df3a70e1d9)\nerror: test failed, to rerun pass `-p forge-train --test acceptance_replay`",
           "metrics": {},
-          "seconds": 31.276
+          "seconds": 15.594
         },
         {
           "name": "Forge reaches the walk skill at least 5x faster than the Python baseline on every robot, by wall clock, replayed in C MuJoCo, on the GPU loop",
-          "ok": false,
-          "detail": "quad-servo 3.51x, hexapod 12.10x, biped-servo 2.93x; below 5x: quad-servo 3.51x; below 5x: biped-servo 2.93x",
+          "ok": true,
+          "detail": "quad-servo 8.75x, hexapod 12.53x, biped-servo 6.25x",
           "metrics": {
             "ratios": {
-              "quad-servo": 3.5062479090161287,
-              "hexapod": 12.095299416775859,
-              "biped-servo": 2.932756390100277
+              "quad-servo": 8.751505499923987,
+              "hexapod": 12.528682907942851,
+              "biped-servo": 6.247345371010586
             },
             "forgeSeconds": {
-              "quad-servo": 13.331,
-              "hexapod": 28.591,
-              "biped-servo": 6.201
+              "quad-servo": 5.341,
+              "hexapod": 27.602,
+              "biped-servo": 2.911
             },
-            "missed": [
-              "quad-servo seed 4: replay passed 26 of 32 seeds"
-            ],
-            "loadBefore": 6.11962890625,
-            "loadAfter": 3.07666015625
+            "missed": [],
+            "loadBefore": 4.6630859375,
+            "loadAfter": 4.46826171875
           },
-          "seconds": 312.059
+          "seconds": 220.093
         }
       ],
       "canaries": [
@@ -1709,18 +1712,18 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 18.496
+          "seconds": 15.265
         },
         {
           "name": "GPU rollouts on planted bad physics fail the L4 statistics",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 11.387
+          "seconds": 8.522
         }
       ],
-      "commit": "0ace404",
-      "at": "2026-11-10T02:10:29.166Z",
+      "commit": "608206b",
+      "at": "2026-11-10T16:28:45.687Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

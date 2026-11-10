@@ -1055,33 +1055,33 @@
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.1 s",
           "metrics": {},
-          "seconds": 0.338
+          "seconds": 0.059
         },
         {
           "name": "Forge Adam matches torch to 1e-4 over 50 steps",
           "ok": true,
           "detail": "worst 1.19e-7",
           "metrics": {},
-          "seconds": 2.924
+          "seconds": 2.207
         },
         {
           "name": "Forge reaches 45K steps/s at 1024 envs",
           "ok": true,
-          "detail": "147647 steps/s",
+          "detail": "162306 steps/s",
           "metrics": {
-            "loadBefore": 6.2587890625,
-            "loadAfter": 8.15966796875
+            "loadBefore": 6.07275390625,
+            "loadAfter": 5.90673828125
           },
-          "seconds": 3.441
+          "seconds": 3.111
         },
         {
           "name": "FastSAC and FlashSAC run and report the same events",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.253
+          "seconds": 1.227
         },
         {
           "name": "Python time-to-skill baseline recorded for three robots",
@@ -1091,31 +1091,31 @@
             "quad-servo": 46.74179087509401,
             "hexapod": 345.8167056250386,
             "biped-servo": 18.186022375011817,
-            "loadBefore": 5.9365234375,
-            "loadAfter": 5.9365234375
+            "loadBefore": 5.90673828125,
+            "loadAfter": 5.90673828125
           },
-          "seconds": 0.001
+          "seconds": 0
         },
         {
           "name": "Forge reaches the walk skill at least 3x faster than the Python baseline on every robot, by wall clock, replayed in C MuJoCo",
           "ok": true,
-          "detail": "quad-servo 9.04x, hexapod 50.02x, biped-servo 5.17x",
+          "detail": "quad-servo 10.22x, hexapod 64.16x, biped-servo 6.16x",
           "metrics": {
             "ratios": {
-              "quad-servo": 9.03746923339018,
-              "hexapod": 50.01687961021675,
-              "biped-servo": 5.169420800173911
+              "quad-servo": 10.216784890730931,
+              "hexapod": 64.15894352969177,
+              "biped-servo": 6.160576685302106
             },
             "forgeSeconds": {
-              "quad-servo": 5.172,
-              "hexapod": 6.914,
-              "biped-servo": 3.518
+              "quad-servo": 4.575,
+              "hexapod": 5.39,
+              "biped-servo": 2.952
             },
             "missed": [],
-            "loadBefore": 5.9365234375,
-            "loadAfter": 14.5849609375
+            "loadBefore": 5.90673828125,
+            "loadAfter": 9.92578125
           },
-          "seconds": 87.535
+          "seconds": 74.639
         }
       ],
       "canaries": [
@@ -1124,11 +1124,11 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 2.716
+          "seconds": 1.594
         }
       ],
-      "commit": "608206b",
-      "at": "2026-11-10T15:49:15.360Z",
+      "commit": "710074f",
+      "at": "2026-11-10T16:50:44.626Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],
@@ -1657,53 +1657,53 @@
       "title": "F5: physics, policy and learner in one GPU buffer; acceptance replay in C",
       "stage": 1,
       "state": "required",
-      "ok": false,
+      "ok": true,
       "voided": false,
       "checks": [
         {
           "name": "qualification vectors catch a bad GPU and fall back to C",
           "ok": true,
-          "detail": "0.6 s",
+          "detail": "16.5 s",
           "metrics": {},
-          "seconds": 0.582
+          "seconds": 16.466
         },
         {
           "name": "Full GPU loop reaches 70K steps/s at 4096 envs, and reports that it trained on the GPU",
           "ok": true,
-          "detail": "121597 steps/s",
+          "detail": "120612 steps/s",
           "metrics": {
-            "loadBefore": 3.00146484375,
-            "loadAfter": 3.00146484375
+            "loadBefore": 5.53466796875,
+            "loadAfter": 5.53466796875
           },
-          "seconds": 2.139
+          "seconds": 1.664
         },
         {
           "name": "L4 statistics and L5 replay hold",
-          "ok": false,
-          "detail": "\nfailures:\n    acceptance_replay_l5_a_gpu_policy_passes_in_c_and_wasm\n\ntest result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 15.52s\n\n\n    Finished `release` profile [optimized] target(s) in 0.03s\n     Running unittests src/lib.rs (forge/target/release/deps/forge_train-410ec213f16a5dbc)\n     Running unittests src/main.rs (forge/target/release/deps/forge_train-b652ce5543583a85)\n     Running tests/acceptance_replay.rs (forge/target/release/deps/acceptance_replay-b36698df3a70e1d9)\nerror: test failed, to rerun pass `-p forge-train --test acceptance_replay`",
+          "ok": true,
+          "detail": "29.6 s",
           "metrics": {},
-          "seconds": 15.594
+          "seconds": 29.577
         },
         {
           "name": "Forge reaches the walk skill at least 5x faster than the Python baseline on every robot, by wall clock, replayed in C MuJoCo, on the GPU loop",
           "ok": true,
-          "detail": "quad-servo 8.75x, hexapod 12.53x, biped-servo 6.25x",
+          "detail": "quad-servo 8.66x, hexapod 12.59x, biped-servo 6.21x",
           "metrics": {
             "ratios": {
-              "quad-servo": 8.751505499923987,
-              "hexapod": 12.528682907942851,
-              "biped-servo": 6.247345371010586
+              "quad-servo": 8.659094271043722,
+              "hexapod": 12.592553551272253,
+              "biped-servo": 6.213195208408547
             },
             "forgeSeconds": {
-              "quad-servo": 5.341,
-              "hexapod": 27.602,
-              "biped-servo": 2.911
+              "quad-servo": 5.398,
+              "hexapod": 27.462,
+              "biped-servo": 2.927
             },
             "missed": [],
-            "loadBefore": 4.6630859375,
-            "loadAfter": 4.46826171875
+            "loadBefore": 6.08984375,
+            "loadAfter": 6.087890625
           },
-          "seconds": 220.093
+          "seconds": 219.882
         }
       ],
       "canaries": [
@@ -1712,18 +1712,18 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 15.265
+          "seconds": 15.204
         },
         {
           "name": "GPU rollouts on planted bad physics fail the L4 statistics",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 8.522
+          "seconds": 8.684
         }
       ],
-      "commit": "608206b",
-      "at": "2026-11-10T16:28:45.687Z",
+      "commit": "710074f",
+      "at": "2026-11-10T16:48:51.257Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

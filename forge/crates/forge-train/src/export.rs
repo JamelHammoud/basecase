@@ -13,7 +13,7 @@ const POLICY_FORMAT: &str = "basecase-policy";
 const POLICY_VERSION: u32 = 1;
 const ROUND_SCALE: f64 = 1e7;
 
-fn rounded(value: f32) -> f64 {
+pub fn rounded(value: f32) -> f64 {
     (value as f64 * ROUND_SCALE).round() / ROUND_SCALE
 }
 

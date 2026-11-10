@@ -22,7 +22,9 @@ const NOISE_STREAM: u64 = 2_000_000;
 const SHUFFLE_STREAM: u64 = 3_000_000;
 const NORM_COUNT: f32 = 1e-4;
 const LARGE_BATCH: usize = 2048;
-const LARGE_HORIZON: usize = 4;
+const SAMPLES_PER_ACTION: usize = 640;
+const SHORTEST_HORIZON: usize = 2;
+const LONGEST_HORIZON: usize = 4;
 const LARGE_EPOCHS: usize = 5;
 const LARGE_MINIBATCHES: usize = 16;
 const LARGE_KL: f32 = 0.1;
@@ -35,18 +37,24 @@ pub struct Start<'a> {
     pub math: Math,
 }
 
-pub fn hyper(envs: usize) -> Hyper {
+pub fn hyper(envs: usize, nact: usize) -> Hyper {
     if envs < LARGE_BATCH {
         return Hyper::for_envs(envs);
     }
 
     Hyper {
-        horizon: LARGE_HORIZON,
+        horizon: large_horizon(envs, nact),
         epochs: LARGE_EPOCHS,
         minibatches: LARGE_MINIBATCHES,
         desired_kl: LARGE_KL,
         ..HYPER
     }
+}
+
+fn large_horizon(envs: usize, nact: usize) -> usize {
+    (SAMPLES_PER_ACTION * nact)
+        .div_ceil(envs)
+        .clamp(SHORTEST_HORIZON, LONGEST_HORIZON)
 }
 
 pub(super) fn worlds(start: &Start, task: &forge_ir::task::Task) -> Result<(Gpu, Worlds, String), String> {
@@ -93,7 +101,7 @@ pub fn start(start: Start) -> Result<GpuPpo, String> {
     let robot = start.robot;
     let task = task::lower(robot)?;
     let (mut gpu, worlds, device) = worlds(&start, &task)?;
-    let hyper = hyper(start.envs);
+    let hyper = hyper(start.envs, robot.nact);
     let (nobs, nact) = (robot.nobs(), robot.nact);
     let total = hyper.horizon * start.envs;
     let mut learner = Learner::new(nobs, nact, 1, &mut Rng::new(start.seed, INIT_STREAM));

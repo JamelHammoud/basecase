@@ -3,7 +3,7 @@ use crate::envs::Envs;
 use crate::evaluate::{evaluate_clean, evaluate_seeds, Trained as EvalRun};
 use crate::events::{emit, status};
 use crate::export::{write_check, write_onnx, write_policy, Trained as ExportRun};
-use crate::gates;
+use crate::gates::{self, Checked, Passed};
 use crate::gpu_loop::{self, GpuPpo, Start};
 use crate::job::{self, Algo, Backend, Job};
 use crate::kernels::Math;
@@ -26,16 +26,24 @@ fn should_stop(folder: &Path) -> bool {
     stop_requested() || folder.join("stop").exists()
 }
 
-fn save_policy(folder: &Path, robot: &Robot, algo: &dyn Algorithm, steps: u64) -> Result<(), String> {
-    let policy = algo.deployed();
+fn checked_now(algo: &dyn Algorithm, steps: u64) -> Checked {
+    Checked {
+        policy: algo.deployed(),
+        norm: algo.norm().clone(),
+        snapshot: algo.snapshot(),
+        steps,
+    }
+}
+
+fn save_policy(folder: &Path, robot: &Robot, kept: &Checked) -> Result<(), String> {
     let run = ExportRun {
         robot,
-        policy: &policy,
-        norm: algo.norm(),
+        policy: &kept.policy,
+        norm: &kept.norm,
     };
 
-    write_resume(&folder.join("resume.json"), &algo.snapshot(), algo.norm(), steps)?;
-    write_policy(&folder.join("policy.json"), &run, steps)
+    write_resume(&folder.join("resume.json"), &kept.snapshot, &kept.norm, kept.steps)?;
+    write_policy(&folder.join("policy.json"), &run, kept.steps)
 }
 
 fn warm_start(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<(), String> {
@@ -99,7 +107,9 @@ fn progress(job: &Job, elapsed: f64, iteration: usize) -> f64 {
     by_time.max(by_count)
 }
 
-fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<u64, String> {
+type Ended = (u64, Option<Passed>);
+
+fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<Ended, String> {
     let job = &robot.job;
     let budget = job.minutes * 60.0;
     let mut clock = Clock {
@@ -121,14 +131,15 @@ fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<
             steps = emit_progress(robot, algo, iteration, &mut clock);
 
             if last_save.elapsed().as_secs_f64() > SAVE_EVERY_S {
-                save_policy(folder, robot, algo, steps)?;
+                save_policy(folder, robot, &checked_now(algo, steps))?;
                 last_save = Instant::now();
             }
 
             let due = gates::due(robot, iteration);
+            let ready = due || gates::is_finished(&pending);
 
-            if (due || gates::is_finished(&pending)) && pending.take().map(gates::finish).transpose()? == Some(true) {
-                return Ok(steps);
+            if let Some(passed) = pending.take_if(|_| ready).map(gates::finish).transpose()?.flatten() {
+                return Ok((steps, Some(passed)));
             }
 
             if due {
@@ -136,23 +147,24 @@ fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<
             }
         }
 
-        if let Some(last) = pending {
-            gates::finish(last)?;
-        }
-
-        Ok(steps)
+        Ok((steps, pending.map(gates::finish).transpose()?.flatten()))
     })
 }
 
-fn finish(robot: &Robot, algo: &dyn Algorithm, folder: &Path, steps: u64) -> Result<(), String> {
+fn finish(robot: &Robot, algo: &dyn Algorithm, folder: &Path, (steps, passed): Ended) -> Result<(), String> {
     status("Checking the policy");
-    save_policy(folder, robot, algo, steps)?;
 
-    let mut policy = algo.deployed();
+    let (mut kept, passed_gate) = match passed {
+        Some(passed) => (passed.checked, Some(passed.gate)),
+        None => (checked_now(algo, steps), None),
+    };
+
+    save_policy(folder, robot, &kept)?;
+
     let export = ExportRun {
         robot,
-        policy: &policy,
-        norm: algo.norm(),
+        policy: &kept.policy,
+        norm: &kept.norm,
     };
 
     if let Err(reason) = write_onnx(&folder.join("policy.onnx"), &export) {
@@ -161,22 +173,23 @@ fn finish(robot: &Robot, algo: &dyn Algorithm, folder: &Path, steps: u64) -> Res
 
     let mut eval_run = EvalRun {
         robot,
-        policy: &mut policy,
-        norm: algo.norm(),
+        policy: &mut kept.policy,
+        norm: &kept.norm,
         math: algo.math(),
         threads: None,
     };
     let (clean, samples) = evaluate_clean(&mut eval_run)?;
-    let gate = match robot.job.eval_seeds {
-        Some(seeds) => evaluate_seeds(&mut eval_run, seeds)?.to_json(),
-        None => Value::Null,
+    let gate = match (robot.job.eval_seeds, passed_gate) {
+        (Some(_), Some(gate)) => gate,
+        (Some(seeds), None) => evaluate_seeds(&mut eval_run, seeds)?.to_json(),
+        (None, _) => Value::Null,
     };
 
     write_check(&folder.join("policy-check.json"), &samples)?;
     emit(&json!({
         "type": "done",
         "policy": folder.join("policy.json").to_string_lossy(),
-        "steps": steps,
+        "steps": kept.steps,
         "stopped": should_stop(folder),
         "eval": clean,
         "gate": gate,
@@ -208,9 +221,9 @@ fn train_on_gpu(folder: &Path, robot: &Robot, mut algo: GpuPpo) -> Result<(), St
 
     status(&format!("Training on {} robots", replay.job.envs_on_gpu()));
 
-    let steps = train_loop(&replay, &mut algo, folder)?;
+    let ended = train_loop(&replay, &mut algo, folder)?;
 
-    finish(&replay, &algo, folder, steps)
+    finish(&replay, &algo, folder, ended)
 }
 
 fn train_shac(folder: &Path, robot: &Robot) -> Result<(), String> {
@@ -227,9 +240,9 @@ fn train_shac(folder: &Path, robot: &Robot) -> Result<(), String> {
     warm_start(&replay, &mut algo, folder)?;
     status(&format!("Training on {} robots", replay.job.envs));
 
-    let steps = train_loop(&replay, &mut algo, folder)?;
+    let ended = train_loop(&replay, &mut algo, folder)?;
 
-    finish(&replay, &algo, folder, steps)
+    finish(&replay, &algo, folder, ended)
 }
 
 fn try_gpu_loop(robot: &Robot) -> Option<GpuPpo> {
@@ -287,7 +300,7 @@ pub fn train(folder: &Path) -> Result<(), String> {
 
     status(&format!("Training on {envs_count} robots"));
 
-    let steps = train_loop(&robot, algo.as_mut(), folder)?;
+    let ended = train_loop(&robot, algo.as_mut(), folder)?;
 
-    finish(&robot, algo.as_ref(), folder, steps)
+    finish(&robot, algo.as_ref(), folder, ended)
 }

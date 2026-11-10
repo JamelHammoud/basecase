@@ -3,7 +3,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RouteLimits } from '../sim/route';
 import type { Environment } from './environment';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
-import { footCount, kitTopSpeed } from './kitModel';
+import { footCount, kitBackSpeed, kitTopSpeed } from './kitModel';
 import { kitSchedule, scheduledMinutes } from './kitSchedule';
 import { trainKitEntry } from './motorKit';
 import type { BodyFacts } from './anythingBody';
@@ -13,13 +13,11 @@ import type { TaskSpec } from './anythingTypes';
 const ARENA_MINUTES = 8;
 const TURN_RAD_S = 0.6;
 
-const BACK_SHARE = 0.5;
-
 export const walksBackward = (model: SimModel) => footCount(model) >= 4;
 
 export function walkLimits(model: SimModel): RouteLimits {
   const top = kitTopSpeed(model);
-  const back = walksBackward(model) ? -BACK_SHARE * top : 0;
+  const back = walksBackward(model) ? kitBackSpeed(model) : 0;
 
   return { forward: [back, top], left: [-0.25 * top, 0.25 * top], turn: TURN_RAD_S };
 }

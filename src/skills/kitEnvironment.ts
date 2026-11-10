@@ -75,11 +75,14 @@ function velocityFormula(height: number, speed: number): Formula {
 
   if (speed === 0) return { all: [steady, always(atom({ abs: travel }, '<', KIT_BARS.stillDriftM, 0.05))] };
 
+  const sign = Math.sign(speed);
+  const [ahead, behind]: [Cmp, Cmp] = sign > 0 ? ['>', '<'] : ['<', '>'];
+
   return {
     all: [
       steady,
-      { eventually: { window: end, state: atom(travel, '>', KIT_BARS.slowestShare * speed * (T - 1), 0.1) } },
-      { always: { window: end, state: atom(travel, '<', KIT_BARS.fastestShare * speed * T + 0.05, 0.1) } },
+      { eventually: { window: end, state: atom(travel, ahead, KIT_BARS.slowestShare * speed * (T - 1), 0.1) } },
+      { always: { window: end, state: atom(travel, behind, KIT_BARS.fastestShare * speed * T + sign * 0.05, 0.1) } },
     ],
   };
 }

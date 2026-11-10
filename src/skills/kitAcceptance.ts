@@ -5,9 +5,14 @@ import { runArena } from './arena';
 import type { ArenaEvidence } from './artifacts';
 import type { Environment } from './environment';
 import { kitSpeedContract, type TrainedEntry } from './kitEnvironment';
-import { kitRobot, kitTopSpeed } from './kitModel';
+import { kitBackSpeed, kitRobot, kitTopSpeed } from './kitModel';
 
 const SLOWER_SHARES = [0.5, 0];
+
+const slowerSpeeds = (model: SimModel, reverse: boolean) => [
+  ...SLOWER_SHARES.map((share) => share * kitTopSpeed(model)),
+  ...(reverse ? [kitBackSpeed(model)] : []),
+];
 
 export async function slowerSpeedEvidence(options: {
   mj: MainModule;
@@ -15,6 +20,7 @@ export async function slowerSpeedEvidence(options: {
   entry: TrainedEntry;
   environment: Environment;
   policy: PolicySpec;
+  reverse?: boolean;
 }): Promise<ArenaEvidence[]> {
   const { mj, model, entry, environment, policy } = options;
 
@@ -22,8 +28,7 @@ export async function slowerSpeedEvidence(options: {
 
   const evidence: ArenaEvidence[] = [];
 
-  for (const share of SLOWER_SHARES) {
-    const speed = share * kitTopSpeed(model);
+  for (const speed of slowerSpeeds(model, !!options.reverse)) {
     const contract = kitSpeedContract(model, speed);
     const controller = {
       kind: 'policy' as const,

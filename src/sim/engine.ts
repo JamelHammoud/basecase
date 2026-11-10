@@ -451,6 +451,10 @@ export class SimEngine {
     return [at.x, at.y, at.z];
   }
 
+  jointAddresses(): Int32Array {
+    return Int32Array.from(this.jointQpos);
+  }
+
   refreshKinematics() {
     this.mj.mj_kinematics(this.model, this.data);
   }

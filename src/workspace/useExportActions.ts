@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { jobSpec } from '../print/job';
 import { buildAIHandoffPayload, exportSceneToSTL } from '../utils/aiHandoff';
+import { downloadBytes as download } from '../utils/downloadBytes';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
 import { encodeSceneFile, SCENE_FILE_EXTENSION, sharedScene } from '../utils/sceneFile';
@@ -10,16 +11,6 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-
-function download(bytes: Uint8Array, name: string, type: string) {
-  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type }));
-  const a = document.createElement('a');
-
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export function useExportActions({
   parts,

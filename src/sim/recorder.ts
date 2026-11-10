@@ -16,6 +16,7 @@ export interface Recording {
   qpos: Float64Array;
   qvel: Float32Array;
   poses: Float32Array;
+  jointQpos?: Int32Array;
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -71,6 +72,8 @@ export class Recorder {
 
   private readonly poses: Growing<Float32Array>;
 
+  private readonly jointQpos: Int32Array;
+
   constructor(engine: SimEngine) {
     const { model } = engine;
 
@@ -81,6 +84,7 @@ export class Recorder {
     this.qpos = new Growing(f64, 512 * model.nq);
     this.qvel = new Growing(f32, 512 * model.nv);
     this.poses = new Growing(f32, 512 * engine.sim.bodies.length * 7);
+    this.jointQpos = engine.jointAddresses();
     this.sample();
   }
 
@@ -119,12 +123,13 @@ export class Recorder {
       qpos: this.qpos.done(),
       qvel: this.qvel.done(),
       poses: this.poses.done(),
+      jointQpos: this.jointQpos,
     };
   }
 }
 
 export const recordingTransfer = (r: Recording): Transferable[] =>
-  [r.t, r.ctrl, r.qpos, r.qvel, r.poses].map((a) => a.buffer);
+  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, ...(r.jointQpos ? [r.jointQpos] : [])].map((a) => a.buffer);
 
 export function framePoses(r: Recording, frame: number): Float64Array {
   const size = r.nbody * 7;

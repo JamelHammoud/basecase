@@ -10,10 +10,10 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Meta and section labels: 12–12.5px.
   - Panel or empty-state titles: 15–20px.
   - Weights 400/500/600 only.
-- **Control sizes:**
-  - Inputs, segmented controls, menu items: 32px (`h-8`).
-  - Small icon buttons: 28px (`xs`). Default: 32px (`sm`).
-  - Bottom toolbar buttons: 44px (`lg`) with 22px icons.
+- **Control sizes** (minimums, checked on every view by the Stage 7 rehearsal, §0k):
+  - Inputs, selects, segmented controls, tabs, menu items and any button with text: at least 32px. `Button` is 32px at `xs` and `sm`, 36px at `md`.
+  - Icon-only buttons: at least 28px (`IconButton` `xs`); 32px `sm` is the default, 36px `md`, 44px `lg` (the bottom toolbar, with 22px icons). A small visual (a switch track, a tab's ×) sits inside a 28px hit box.
+  - Write control heights in px (`h-[32px]`), never rem steps: the root font size is 14px, so Tailwind's `h-8` is only 28px and `h-7` 24.5px.
 - **Radius ladder (concentric):**
   - Inputs and buttons: 8px.
   - Menus and popovers: 14px.
@@ -23,7 +23,9 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - `#121212` window chrome (darkest; slightly translucent in Electron), `#1b1b1b` canvas card (also the 3D scene background), `#1f1f1f` sidebar and inspector cards, `#222222` modals and Settings, glass `rgba(32–36, …)`.
   - Separate levels with lightness steps, not borders or shadows. Panel cards have no outline, and card headers have no line under them. The one exception is the canvas card: a near-transparent white ring (`inset 0 0 0 1px white/[0.05]`) drawn over the 3D view, so the scene separates from the chrome.
   - **Dividers inside panels are fine** and give them structure: full-width `white/[0.06]` hairlines between inspector sections (`Section`), above panel footers, between part-page sections, in menus (`MenuDivider`) and in modals.
-- **Text tiers:** `white/90` primary, `white/60` secondary, `white/40` hints.
+- **Text tiers:** `white/90` primary, `white/60` secondary, `white/50` hints (meta lines, units, section labels, placeholders).
+  - Hints are `white/50`, not lower, for WCAG AA: on the lightest panel surface (`#282828`), `white/40` is about 3.7:1 and `white/45` about 4.2:1, both under 4.5:1, while `white/50` is about 4.8:1. Nothing that reads as text goes below `white/50` (tokens `--color-ink-3` and `THEME_COLORS.textMuted` match). Disabled controls are exempt, and icons and dividers may stay fainter.
+- **Text on the accent** sits on `figma-blue-fill` (`#0b78cc`, hover `figma-blue-fill-hover` `#0a6fbd`): the accent's hue, deep enough for white text at 4.5:1 (white on `#0d99ff` is 3:1). Primary buttons, the highlighted menu item, selected plate and comment numbers use it; icons, rings, progress bars and selection tints keep `#0d99ff`.
 - **Dividers are always full width.** A horizontal hairline runs edge to edge of its container (menu, popover, panel, section, card), never inset by the container's padding.
   - Use `Divider` (or `MenuDivider` in menus). It cancels the container's horizontal padding, which the container publishes as `--pad-x`. `.glass-menu` defaults to 6px; `Section` sets 12px and Settings 24px.
   - A new container that holds dividers sets `--pad-x` to its horizontal padding (e.g. `[--pad-x:8px] p-[var(--pad-x)]`) instead of a plain `p-2`.

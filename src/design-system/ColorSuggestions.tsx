@@ -8,7 +8,7 @@ interface ColorSuggestionsProps {
 
 export const ColorSuggestions: React.FC<ColorSuggestionsProps> = ({ colors, current, onPick }) => (
   <div>
-    <div className="text-[12px] text-white/40 mb-1.5">In this scene</div>
+    <div className="text-[12px] text-white/50 mb-1.5">In this scene</div>
     <div className="flex flex-wrap gap-1.5">
       {colors.map((c) => (
         <button

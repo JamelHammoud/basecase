@@ -122,13 +122,13 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, minWidth 
                 aria-haspopup="menu"
                 aria-expanded={open}
                 onClick={() => setOpenSub(open ? null : i)}
-                className={`w-full h-8 px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors ${
+                className={`w-full h-[32px] px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors ${
                   open ? 'bg-white/[0.09] text-white' : 'text-white/90 hover:bg-white/[0.09]'
                 }`}
               >
                 <span className="w-4 shrink-0 flex justify-center text-white/60">{item.icon}</span>
                 <span className="flex-1 truncate">{item.label}</span>
-                <ChevronRightIcon className="w-3.5 h-3.5 text-white/40" />
+                <ChevronRightIcon className="w-3.5 h-3.5 text-white/50" />
               </button>
               {open && (
                 <div

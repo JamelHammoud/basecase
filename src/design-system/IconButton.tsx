@@ -19,7 +19,7 @@ export interface IconButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLBut
 const variantStyles: Record<IconButtonVariant, string> = {
   default:
     'text-white/60 hover:text-white/95 hover:bg-white/[0.07] active:bg-white/[0.1] disabled:opacity-30 disabled:hover:bg-transparent',
-  ghost: 'text-white/45 hover:text-white/90 hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent',
+  ghost: 'text-white/50 hover:text-white/90 hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent',
   active: 'bg-[#0d99ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]',
   toggled: 'bg-white/[0.1] text-white',
   danger: 'text-white/50 hover:text-red-400 hover:bg-red-500/[0.12] disabled:opacity-30',
@@ -27,10 +27,10 @@ const variantStyles: Record<IconButtonVariant, string> = {
 };
 
 const sizeStyles: Record<IconButtonSize, string> = {
-  xs: 'w-7 h-7',
-  sm: 'w-8 h-8',
-  md: 'w-9 h-9',
-  lg: 'w-11 h-11',
+  xs: 'w-[28px] h-[28px]',
+  sm: 'w-[32px] h-[32px]',
+  md: 'w-[36px] h-[36px]',
+  lg: 'w-[44px] h-[44px]',
 };
 
 const radiusStyles: Record<IconButtonSize, string> = {

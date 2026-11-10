@@ -118,7 +118,7 @@ export const BuyList: React.FC<BuyListProps> = ({
         </>
       }
     >
-      {!hasRows && !bom.madeElsewhere.length && <span className="text-[13px] text-white/45">No parts</span>}
+      {!hasRows && !bom.madeElsewhere.length && <span className="text-[13px] text-white/50">No parts</span>}
       {hasRows && (
         <ul className="-mx-[7px]">
           {standIns > 0 && (

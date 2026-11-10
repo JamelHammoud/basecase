@@ -28,7 +28,7 @@ interface AnnotationLayerProps {
 }
 
 function pinColors(isActive: boolean, resolved: boolean | undefined) {
-  if (isActive) return 'bg-[#0d99ff] text-white';
+  if (isActive) return 'bg-figma-blue-fill text-white';
 
   return resolved ? 'bg-neutral-500 text-white' : 'bg-white text-black';
 }

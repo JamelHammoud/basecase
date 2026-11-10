@@ -11,9 +11,10 @@ import { confirmAction } from '../design-system/confirmStore';
 import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
-import type { Setter } from './types';
+import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
 import { useCaseTry } from './useCaseTry';
+import { useDatasetExport } from './useDatasetExport';
 
 interface CasesOptions {
   parts: ScenePart[];
@@ -21,6 +22,7 @@ interface CasesOptions {
   setProject: Setter<ProjectSettings>;
   rig: Rig;
   sim: Simulation;
+  showToast: ShowToast;
 }
 
 function readCases(raw: unknown[] | undefined): Case[] {
@@ -33,7 +35,7 @@ function readCases(raw: unknown[] | undefined): Case[] {
   });
 }
 
-export function useCases({ parts, project, setProject, rig, sim }: CasesOptions) {
+export function useCases({ parts, project, setProject, rig, sim, showToast }: CasesOptions) {
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
@@ -143,6 +145,7 @@ export function useCases({ parts, project, setProject, rig, sim }: CasesOptions)
   };
 
   const builder = useCaseBuilder({ rig, parts, add });
+  const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast });
   const attempt = useCaseTry({
     sim,
     rig,
@@ -157,6 +160,7 @@ export function useCases({ parts, project, setProject, rig, sim }: CasesOptions)
     templates,
     examples: fittingTemplates(templates),
     builder,
+    dataset,
     tries,
     hasRobot,
     fixedBase,

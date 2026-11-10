@@ -34,7 +34,7 @@ export const ContextStatus: React.FC<{ context: ContextUsage }> = ({ context }) 
         />
       </div>
       <MetaLine
-        className="mt-1.5 text-[12px] text-white/45"
+        className="mt-1.5 text-[12px] text-white/50"
         items={[tokens, context.costUsd !== undefined && formatCost(context.costUsd, money)]}
       />
     </div>

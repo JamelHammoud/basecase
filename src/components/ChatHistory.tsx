@@ -61,7 +61,7 @@ const ChatRow: React.FC<{
         <span className="truncate">{c.title}</span>
       </span>
       <span className="relative shrink-0 min-w-[40px] h-full mr-[4px] flex items-center justify-end">
-        <span className="pr-[6px] whitespace-nowrap text-[12px] tabular-nums text-white/35 transition-opacity duration-150 group-hover/chat:opacity-0 group-focus-within/chat:opacity-0">
+        <span className="pr-[6px] whitespace-nowrap text-[12px] tabular-nums text-white/50 transition-opacity duration-150 group-hover/chat:opacity-0 group-focus-within/chat:opacity-0">
           {running ? '' : timeAgo(c.updatedAt)}
         </span>
         <Tooltip label="Delete chat" side="right">
@@ -75,7 +75,7 @@ const ChatRow: React.FC<{
                 onConfirm: () => onDeleteChat(c.id),
               })
             }
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-[26px] h-[26px] rounded-[6px] flex items-center justify-center text-white/45 hover:text-red-400 hover:bg-red-500/15 cursor-default opacity-0 scale-90 transition-[opacity,scale,color,background-color] duration-150 group-hover/chat:opacity-100 group-hover/chat:scale-100 focus-visible:opacity-100 focus-visible:scale-100"
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-[26px] h-[26px] rounded-[6px] flex items-center justify-center text-white/50 hover:text-red-400 hover:bg-red-500/15 cursor-default opacity-0 scale-90 transition-[opacity,scale,color,background-color] duration-150 group-hover/chat:opacity-100 group-hover/chat:scale-100 focus-visible:opacity-100 focus-visible:scale-100"
           >
             <DeleteIcon className="w-3.5 h-3.5" />
           </button>
@@ -101,7 +101,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
 
   if (saved.length === 0 && running.length === 0) {
     return (
-      <div style={{ width }} className="px-4 py-5 text-center text-[13px] text-white/45">
+      <div style={{ width }} className="px-4 py-5 text-center text-[13px] text-white/50">
         No chats
       </div>
     );
@@ -120,7 +120,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
     >
       {groups.map((g, i) => (
         <section key={g.label} className={i > 0 ? 'mt-2' : ''}>
-          <h3 className="px-[10px] pt-[6px] pb-[4px] text-[12px] font-medium text-white/40 select-none">{g.label}</h3>
+          <h3 className="px-[10px] pt-[6px] pb-[4px] text-[12px] font-medium text-white/50 select-none">{g.label}</h3>
           {g.items.map((c) => (
             <ChatRow
               key={c.id}

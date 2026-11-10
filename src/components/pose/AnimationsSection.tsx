@@ -128,7 +128,7 @@ const AnimationRow: React.FC<{
             {a.name}
           </button>
         )}
-        <span className="text-[12px] text-white/40 tabular shrink-0">{fmtTime(a.duration)}</span>
+        <span className="text-[12px] text-white/50 tabular shrink-0">{fmtTime(a.duration)}</span>
       </div>
       {isCurrent && (
         <div className="flex items-center gap-2.5 pl-1">

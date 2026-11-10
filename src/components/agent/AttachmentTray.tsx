@@ -34,7 +34,7 @@ const FolderTile: React.FC<{ folder: FolderChip; onRemove: () => void }> = ({ fo
       </span>
       <span className="min-w-0">
         <span className="block text-[13px] text-white/90 truncate">{f.name}</span>
-        <MetaLine className="text-[12px] text-white/45 tabular" items={folderMeta(f)} />
+        <MetaLine className="text-[12px] text-white/50 tabular" items={folderMeta(f)} />
       </span>
     </div>
     <RemoveChip label={`Remove ${f.name}`} onClick={onRemove} />

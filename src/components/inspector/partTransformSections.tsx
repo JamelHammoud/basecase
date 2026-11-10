@@ -61,6 +61,7 @@ export const PositionSection: React.FC<
           <NumberInput
             key={axis}
             label={axis}
+            aria-label={`Position ${axis}`}
             value={part.position[idx]}
             step={snapStepMm || 1}
             onChange={(v, l) => setPos(idx, v, l)}
@@ -97,6 +98,7 @@ export const RotationSection: React.FC<PartSectionProps> = ({ part, onUpdate }) 
           <NumberInput
             key={axis}
             label={axis}
+            aria-label={`Rotation ${axis}`}
             unit="°"
             precision={0}
             step={15}

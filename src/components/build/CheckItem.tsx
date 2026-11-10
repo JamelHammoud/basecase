@@ -29,11 +29,11 @@ export const CheckItem: React.FC<{
         >
           {check.name}
         </span>
-        {count > 0 && <span className="text-[12px] leading-[18px] text-white/45 tabular">{count}</span>}
+        {count > 0 && <span className="text-[12px] leading-[18px] text-white/50 tabular">{count}</span>}
         {hasBody && (
           <span className="h-[18px] flex items-center shrink-0">
             <ChevronDownIcon
-              className={`w-3.5 h-3.5 text-white/40 transition-transform duration-150 ${open ? '' : '-rotate-90'}`}
+              className={`w-3.5 h-3.5 text-white/50 transition-transform duration-150 ${open ? '' : '-rotate-90'}`}
             />
           </span>
         )}

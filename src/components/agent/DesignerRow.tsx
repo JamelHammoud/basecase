@@ -10,7 +10,7 @@ import { useElapsed } from './useElapsed';
 
 const DETAIL_TONE: Record<DesignerDetail['tone'], string> = {
   live: SHIMMER_TEXT,
-  quiet: 'text-white/40',
+  quiet: 'text-white/50',
   failed: 'text-red-400/80',
 };
 
@@ -34,7 +34,7 @@ export const DesignerRow: React.FC<{ call: AcpToolCallEvent }> = ({ call }) => {
           {designerName(call)}
         </span>
         <span className={`min-w-0 flex-1 truncate ${DETAIL_TONE[detail.tone]}`}>{detail.text}</span>
-        {elapsed && <span className="shrink-0 text-[12px] text-white/40 tabular-nums">{elapsed}</span>}
+        {elapsed && <span className="shrink-0 text-[12px] text-white/50 tabular-nums">{elapsed}</span>}
         <ChevronRightIcon className="shrink-0 w-3.5 h-3.5 text-white/30 transition-[color,transform] duration-150 group-hover:text-white/70 group-hover:translate-x-0.5" />
       </button>
     </li>

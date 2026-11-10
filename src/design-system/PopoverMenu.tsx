@@ -206,7 +206,7 @@ export interface MenuItemProps {
 const toneClass = (tone: MenuItemProps['tone'], active: boolean) => {
   if (tone === 'danger') return 'text-red-400 hover:bg-red-500/15';
 
-  return active ? 'bg-[#0d99ff] text-white' : 'text-white/90 hover:bg-[#0d99ff] hover:text-white';
+  return active ? 'bg-figma-blue-fill text-white' : 'text-white/90 hover:bg-figma-blue-fill hover:text-white';
 };
 
 export const MenuItem: React.FC<MenuItemProps> = ({
@@ -226,7 +226,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     disabled={disabled}
     onClick={onSelect}
     data-active={active || undefined}
-    className={`w-full h-8 px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors disabled:opacity-35 ${toneClass(tone, active)} group/menuitem`}
+    className={`w-full h-[32px] px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors disabled:opacity-35 ${toneClass(tone, active)} group/menuitem`}
   >
     {checked !== undefined && (
       <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
@@ -237,7 +237,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     <span className="flex-1 truncate">{label}</span>
     {detail && (
       <span
-        className={`shrink-0 text-[12.5px] group-hover/menuitem:text-white/80 ${active ? 'text-white/80' : 'text-white/40'}`}
+        className={`shrink-0 text-[12.5px] group-hover/menuitem:text-white/80 ${active ? 'text-white/80' : 'text-white/50'}`}
       >
         {detail}
       </span>
@@ -248,7 +248,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   </button>
 );
 
-const menuLabelClass = 'px-2 pt-1.5 pb-1 text-[12px] font-medium text-white/40 select-none';
+const menuLabelClass = 'px-2 pt-1.5 pb-1 text-[12px] font-medium text-white/50 select-none';
 
 export const MenuLabel: React.FC<{ children: React.ReactNode; onSelect?: () => void }> = ({ children, onSelect }) => {
   if (!onSelect) return <div className={menuLabelClass}>{children}</div>;
@@ -270,7 +270,7 @@ export const MenuBack: React.FC<{ label: string; onBack: () => void }> = ({ labe
   <button
     type="button"
     onClick={onBack}
-    className="w-full h-8 px-1.5 rounded-lg flex items-center gap-1.5 text-[13.5px] font-medium text-white/90 text-left cursor-default transition-colors hover:bg-white/[0.08] group/menuback"
+    className="w-full h-[32px] px-1.5 rounded-lg flex items-center gap-1.5 text-[13.5px] font-medium text-white/90 text-left cursor-default transition-colors hover:bg-white/[0.08] group/menuback"
   >
     <ChevronLeftIcon className="w-4 h-4 shrink-0 text-white/60 group-hover/menuback:text-white" />
     <span className="flex-1 truncate">{label}</span>

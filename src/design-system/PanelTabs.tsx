@@ -111,10 +111,10 @@ export function PanelTabs<T extends string>({ tabs, value, onChange, label }: Pa
                 close();
                 onChange(tab.value);
               }}
-              className={`h-[28px] shrink-0 whitespace-nowrap rounded-[8px] flex items-center gap-1.5 text-[13px] font-medium cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
+              className={`h-[32px] shrink-0 whitespace-nowrap rounded-[8px] flex items-center gap-1.5 text-[13px] font-medium cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
                 tab.menu ? 'pl-[10px] pr-[11px]' : 'px-[10px]'
               } ${
-                selected ? 'bg-white/[0.08] text-white/90' : 'text-white/45 hover:text-white/75 hover:bg-white/[0.04]'
+                selected ? 'bg-white/[0.08] text-white/90' : 'text-white/50 hover:text-white/75 hover:bg-white/[0.04]'
               }`}
             >
               {tab.indicator}
@@ -162,7 +162,7 @@ function TabWithMenu<T extends string>({
           aria-haspopup="menu"
           aria-expanded={open}
           onClick={onToggle}
-          className={`h-[28px] pl-[10px] pr-[11px] group-hover/tab:pr-[7px] group-[.is-shown]/tab:pr-[7px] rounded-[8px] flex items-center text-[13px] font-medium text-white/90 cursor-default transition-[padding,background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.97] ${
+          className={`h-[32px] pl-[10px] pr-[11px] group-hover/tab:pr-[7px] group-[.is-shown]/tab:pr-[7px] rounded-[8px] flex items-center text-[13px] font-medium text-white/90 cursor-default transition-[padding,background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.97] ${
             open ? 'bg-white/[0.11]' : 'bg-white/[0.08] hover:bg-white/[0.1]'
           }`}
         >

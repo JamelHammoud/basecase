@@ -12,7 +12,7 @@ export interface CasesPanelProps {
 }
 
 const Heading: React.FC<{ children: string }> = ({ children }) => (
-  <div className="px-[4px] h-8 flex items-center text-[12px] font-medium text-white/45">{children}</div>
+  <div className="px-[4px] h-8 flex items-center text-[12px] font-medium text-white/50">{children}</div>
 );
 
 function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseRobots'>) {

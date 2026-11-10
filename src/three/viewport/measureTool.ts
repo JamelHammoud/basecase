@@ -116,7 +116,7 @@ function lengthSpans(part: LengthPart, spaced: boolean): HTMLSpanElement[] {
   value.textContent = `${spaced ? ' ' : ''}${part.value}`;
   value.className = 'text-white/90 font-medium';
   unit.textContent = `\u00a0${part.unit}`;
-  unit.className = 'text-white/45';
+  unit.className = 'text-white/50';
 
   return [value, unit];
 }

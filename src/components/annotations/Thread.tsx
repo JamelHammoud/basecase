@@ -35,11 +35,11 @@ const CommentItem: React.FC<{
   return (
     <div className="group relative px-4 py-2.5">
       <div className="flex items-center gap-2 mb-1">
-        <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#3aa8ff] to-[#0b6fd6] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
+        <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#3aa8ff] to-[#0b6fd6] text-white text-[12px] font-semibold flex items-center justify-center shrink-0">
           Y
         </span>
         <span className="text-[13px] font-semibold text-white/90">You</span>
-        <MetaLine className="text-[12px] text-white/40" items={[timeAgo(createdAt), edited && 'Edited']} />
+        <MetaLine className="text-[12px] text-white/50" items={[timeAgo(createdAt), edited && 'Edited']} />
       </div>
 
       {editing ? (
@@ -131,7 +131,7 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
     <>
       <div className="h-11 pl-4 pr-1.5 flex items-center gap-2 border-b border-white/[0.08]">
         <span className="text-[13px] font-semibold text-white/90 tabular">#{number}</span>
-        {partName && <span className="text-[13px] text-white/45 truncate">on {partName}</span>}
+        {partName && <span className="text-[13px] text-white/50 truncate">on {partName}</span>}
         <div className="flex-1" />
         <IconButton
           icon={<CircleCheckIcon className="w-4 h-4" />}

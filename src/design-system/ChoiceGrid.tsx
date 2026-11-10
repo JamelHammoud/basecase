@@ -43,7 +43,7 @@ export function ChoiceGrid<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(o.value)}
             className={`w-full min-w-0 flex items-center justify-center ${
-              stacked ? 'h-[56px] flex-col gap-[6px] text-[12px]' : 'h-8 gap-1.5 px-1.5 text-[13px]'
+              stacked ? 'h-[56px] flex-col gap-[6px] text-[12px]' : 'h-[32px] gap-1.5 px-1.5 text-[13px]'
             } ${choiceCellClass(selected)}`}
           >
             {o.icon && <span className="shrink-0 inline-flex">{o.icon}</span>}

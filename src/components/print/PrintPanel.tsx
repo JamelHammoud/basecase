@@ -105,7 +105,7 @@ const PlateDetail: React.FC<{
         <img src={sliced.thumbnail} alt="" className="preview w-full aspect-square object-contain" />
       )}
       <MetaLine
-        className="text-[12.5px] text-white/45 tabular-nums"
+        className="text-[12.5px] text-white/50 tabular-nums"
         items={[
           plate.material,
           `${exact ? '' : '≈ '}${hm(hours)}`,
@@ -186,7 +186,11 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
       </div>
       <div className="flex items-center justify-between gap-3">
         <span className="text-[13px] text-white/60">Don't print</span>
-        <Switch checked={!!part.print?.skip} onChange={(skip) => set({ skip: skip || undefined })} />
+        <Switch
+          aria-label="Don't print"
+          checked={!!part.print?.skip}
+          onChange={(skip) => set({ skip: skip || undefined })}
+        />
       </div>
     </Section>
   );

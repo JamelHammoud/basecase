@@ -23,7 +23,7 @@ export const PoliciesSection: React.FC<{
         >
           {p.name}
         </button>
-        <span className="text-[12px] text-white/40 tabular shrink-0">{fmtSteps(p.trainedSteps)} steps</span>
+        <span className="text-[12px] text-white/50 tabular shrink-0">{fmtSteps(p.trainedSteps)} steps</span>
         <IconButton
           icon={<DeleteIcon className="w-4 h-4" />}
           title="Delete policy"

@@ -18,7 +18,7 @@ const badgeVariants: Record<BadgeVariant, string> = {
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', className = '' }) => (
   <span
-    className={`inline-flex items-center h-4 px-1.5 rounded-[5px] text-[11px] font-medium tabular leading-none ${badgeVariants[variant]} ${className}`}
+    className={`inline-flex items-center h-[18px] px-1.5 rounded-[5px] text-[12px] font-medium tabular leading-none ${badgeVariants[variant]} ${className}`}
   >
     {children}
   </span>

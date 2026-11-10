@@ -53,7 +53,7 @@ const DownloadBanner: React.FC<{ download: NonNullable<AcpStatusInfo['download']
   <div className="mx-[8px] px-3 py-2.5 rounded-xl bg-white/[0.04] text-[13px] text-white/70 flex flex-col gap-2">
     <div className={ROW}>
       <span className="flex-1 min-w-0 truncate">Downloading {download.name}…</span>
-      <span className="text-[12.5px] text-white/40 tabular-nums">{download.percent}%</span>
+      <span className="text-[12.5px] text-white/50 tabular-nums">{download.percent}%</span>
     </div>
     <div className="h-[3px] rounded-full bg-white/[0.08] overflow-hidden">
       <div className="h-full rounded-full bg-white/60" style={{ width: `${download.percent}%` }} />

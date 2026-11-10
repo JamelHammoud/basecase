@@ -10,6 +10,8 @@ export const THEME_COLORS = {
 
   figmaBlue: '#0d99ff',
   figmaBlueHover: '#2ba5ff',
+  figmaBlueFill: '#0b78cc',
+  figmaBlueFillHover: '#0a6fbd',
   figmaBlueSubtle: 'rgba(13, 153, 255, 0.16)',
   cutoutRed: '#ef4444',
   cutoutRedSubtle: 'rgba(239, 68, 68, 0.15)',
@@ -26,7 +28,7 @@ export const THEME_COLORS = {
 
   textPrimary: 'rgba(255, 255, 255, 0.92)',
   textSecondary: 'rgba(255, 255, 255, 0.6)',
-  textMuted: 'rgba(255, 255, 255, 0.4)',
+  textMuted: 'rgba(255, 255, 255, 0.5)',
 } as const;
 
 export const LAYOUT = {

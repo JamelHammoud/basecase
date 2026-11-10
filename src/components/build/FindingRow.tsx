@@ -64,7 +64,7 @@ const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext
 }) => (
   <div className="min-w-0 flex-1">
     <p className={`text-[13px] leading-[18px] ${muted ? 'text-white/65' : 'text-white/85'}`}>{finding.text}</p>
-    {finding.detail && <p className="text-[12px] leading-[16px] text-white/45">{finding.detail}</p>}
+    {finding.detail && <p className="text-[12px] leading-[16px] text-white/50">{finding.detail}</p>}
     <PartLinks
       ids={finding.ids}
       parts={context.parts}
@@ -72,7 +72,7 @@ const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext
       onSelect={context.actions.onSelectParts}
     />
     {finding.dispute && (
-      <p className="mt-0.5 text-[12px] leading-[16px] text-white/45">The agent disagrees: {finding.dispute.reason}</p>
+      <p className="mt-0.5 text-[12px] leading-[16px] text-white/50">The agent disagrees: {finding.dispute.reason}</p>
     )}
   </div>
 );

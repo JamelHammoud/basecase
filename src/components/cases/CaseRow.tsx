@@ -22,7 +22,7 @@ export const CaseRow: React.FC<CaseRowProps> = ({ name, brief, selected, icon, o
     {icon && <span className="mt-0.5 shrink-0 text-white/55">{icon}</span>}
     <span className="min-w-0 flex-1">
       <span className="block text-[13px] font-medium text-white/90 truncate">{name}</span>
-      <span className="block text-[12px] text-white/45 leading-snug">{brief}</span>
+      <span className="block text-[12px] text-white/50 leading-snug">{brief}</span>
     </span>
   </button>
 );

@@ -85,7 +85,7 @@ export const HardwareConfigurator: React.FC<{
       {drives.length > 1 && (
         <Section
           title="Drive"
-          actions={recess && <span className="mr-1 text-[12.5px] text-white/45 tabular">{recessLabel(recess)}</span>}
+          actions={recess && <span className="mr-1 text-[12.5px] text-white/50 tabular">{recessLabel(recess)}</span>}
         >
           <ChoiceGrid
             label="Drive"
@@ -194,7 +194,7 @@ export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean
 };
 
 const Unit: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="text-white/40"> {children}</span>
+  <span className="text-white/50"> {children}</span>
 );
 
 const FINISH_ORDER = Object.keys(FINISHES) as Array<keyof typeof FINISHES>;

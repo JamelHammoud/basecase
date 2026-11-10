@@ -65,7 +65,7 @@ export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToa
     });
   };
 
-  const cases = useCases({ parts, project, setProject, rig: posing.rig, sim });
+  const cases = useCases({ parts, project, setProject, rig: posing.rig, sim, showToast });
   const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
 
   return { sim, training, policies, deletePolicy, cases, routines, skills };

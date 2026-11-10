@@ -15,7 +15,7 @@ export const RobotMessages: React.FC<{ messages: RobotMessage[] }> = ({ messages
       <SectionHeader title="From the daemon" />
       {messages.map((m) => (
         <div key={m.id} className="px-1 py-1.5">
-          <div className="text-[12px] text-white/45">{KIND[m.kind]}</div>
+          <div className="text-[12px] text-white/50">{KIND[m.kind]}</div>
           <p className="text-[13px] leading-snug text-white/90">{m.text}</p>
         </div>
       ))}

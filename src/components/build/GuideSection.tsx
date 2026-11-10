@@ -46,7 +46,9 @@ const CoverThumb: React.FC<CoverThumbProps> = ({ cover, page, sceneName, onOpen 
     onPointerLeave={(e) => settleTilt(e.currentTarget)}
     className="tilt-card relative w-[64px] h-[90px] shrink-0 rounded-[6px] bg-white overflow-hidden cursor-default"
   >
-    <span className="absolute left-[5px] right-[5px] top-[5px] text-[7px] leading-[7px] font-extrabold uppercase text-black text-left truncate">
+    <span
+      aria-hidden
+      className="absolute left-[5px] right-[5px] top-[5px] text-[7px] leading-[7px] font-extrabold uppercase text-black text-left truncate">
       {sceneName}
     </span>
     {cover && (
@@ -63,7 +65,7 @@ const CoverThumb: React.FC<CoverThumbProps> = ({ cover, page, sceneName, onOpen 
 const Progress: React.FC<{ progress: GuideRunProgress; onStop: () => void }> = ({ progress, onStop }) => (
   <>
     <div className="text-[13px] text-white/90 tabular-nums truncate">{progress.label}…</div>
-    <div className="text-[12.5px] mt-0.5 text-white/45 tabular-nums truncate">
+    <div className="text-[12.5px] mt-0.5 text-white/50 tabular-nums truncate">
       {timeLeft(progress.secondsLeft) || ' '}
     </div>
     <div className="mt-2 h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Guide progress">
@@ -92,7 +94,7 @@ const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord; canOpen: boo
       <div className="text-[13px] text-white/90 tabular-nums truncate">
         {plural(record.pages, '1 page', `${record.pages} pages`)}
       </div>
-      <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/45'}`}>
+      <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/50'}`}>
         {guide.stale ? 'Out of date' : `Made ${ago === 'now' ? 'just now' : `${ago} ago`}`}
       </div>
       <div className="flex gap-2 mt-2.5">

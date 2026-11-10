@@ -102,11 +102,11 @@ export const ShortcutsList: React.FC<{ sculptEnabled: boolean }> = ({ sculptEnab
             <span className="min-w-0 truncate">{label}</span>
             <span className="shrink-0 flex items-center gap-[4px]">
               {typeof keys === 'string' ? (
-                <span className="text-[12.5px] text-white/45">{keys}</span>
+                <span className="text-[12.5px] text-white/50">{keys}</span>
               ) : (
                 keys.map((k, i) =>
                   /^[a-z]+$/.test(k) ? (
-                    <span key={i} className="text-[12.5px] text-white/45">
+                    <span key={i} className="text-[12.5px] text-white/50">
                       {k}
                     </span>
                   ) : (

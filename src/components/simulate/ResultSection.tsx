@@ -22,7 +22,7 @@ const RobotResult: React.FC<{ result: SimStats['robots'][number]; model: SimMode
         </span>
       </div>
       <MetaLine
-        className="text-[12px] text-white/45 tabular"
+        className="text-[12px] text-white/50 tabular"
         items={[`Tilt ${Math.round(r.tilt)}°`, `Moved ${(r.travelled * 100).toFixed(0)} cm`]}
       />
     </div>
@@ -38,7 +38,7 @@ const PeakTorque: React.FC<{
 
   return (
     <div className="mt-2">
-      <div className="text-[12px] text-white/45 mb-1">Peak torque</div>
+      <div className="text-[12px] text-white/50 mb-1">Peak torque</div>
       {worst.map((j) => {
         const joint = rig.byId.get(j.id);
 
@@ -53,7 +53,7 @@ const PeakTorque: React.FC<{
               {prettyJointName(joint?.name ?? j.id)}
             </span>
             {j.saturatedS > 0.05 && (
-              <span className="text-[12px] text-white/40 tabular">{fmtTime(j.saturatedS)} at limit</span>
+              <span className="text-[12px] text-white/50 tabular">{fmtTime(j.saturatedS)} at limit</span>
             )}
             <span
               className={`w-10 text-right text-[13px] tabular ${j.peak >= 0.98 ? 'text-[#f87171]' : 'text-white/70'}`}

@@ -40,8 +40,8 @@ const MappingGrid: React.FC<{
   <div>
     <div className="grid grid-cols-[110px_1fr_1fr] gap-x-3 gap-y-1.5 items-center">
       <span />
-      <span className="text-[12px] font-medium text-white/45">Motion</span>
-      <span className="text-[12px] font-medium text-white/45">Robot</span>
+      <span className="text-[12px] font-medium text-white/50">Motion</span>
+      <span className="text-[12px] font-medium text-white/50">Robot</span>
       {SHOWN.map((k) => (
         <React.Fragment key={k}>
           <span className="text-[13px] text-white/70">{KEYPOINT_LABELS[k]}</span>
@@ -52,7 +52,7 @@ const MappingGrid: React.FC<{
             onChange={(e) => onBone(k, e.target.value)}
           />
           {k === 'head' ? (
-            <span className="text-[12.5px] text-white/40">Neck joints</span>
+            <span className="text-[12.5px] text-white/50">Neck joints</span>
           ) : (
             <Select
               aria-label={`${KEYPOINT_LABELS[k]} joint`}

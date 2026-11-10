@@ -5,7 +5,7 @@ import type { Printing } from '../../workspace/usePrinting';
 
 const plateCell = (active: boolean) =>
   `h-[36px] px-3 rounded-[12px] text-[13px] tabular-nums cursor-default transition-colors duration-150 ${
-    active ? 'bg-[#0d99ff] text-white' : 'text-white/70 hover:bg-white/[0.06] hover:text-white/90'
+    active ? 'bg-figma-blue-fill text-white' : 'text-white/70 hover:bg-white/[0.06] hover:text-white/90'
   }`;
 
 export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ printing, plates }) => {
@@ -28,7 +28,7 @@ export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ pr
             onClick={() => printing.setModePlate(p.number)}
           >
             {p.number}{' '}
-            <span className={p.number === plate?.number ? 'text-white/80' : 'text-white/40'}>{p.material}</span>
+            <span className={p.number === plate?.number ? 'text-white/80' : 'text-white/50'}>{p.material}</span>
           </button>
         ))}
       </div>

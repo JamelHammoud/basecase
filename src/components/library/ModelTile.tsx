@@ -26,7 +26,7 @@ export const ModelTile: React.FC<{
       meta={
         <>
           {fmt(d.width)} × {fmt(d.height)} × {fmt(d.depth)}
-          <span className="text-white/30"> mm</span>
+          <span className="text-white/50"> mm</span>
         </>
       }
       thumb={thumb}

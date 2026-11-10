@@ -37,6 +37,8 @@ function partSenses(part: ScenePart): Capability[] {
   return GROUP_SENSES[component.group] ?? [];
 }
 
+export const isCameraPart = (part: ScenePart) => partSenses(part).includes('camera');
+
 export const isNeck = (j: RobotJoint) => isMovable(j) && (j.limb === 'neck' || NECK.test(j.id) || NECK.test(j.name));
 
 function movers(scene: CapabilityScene): Capability[] {

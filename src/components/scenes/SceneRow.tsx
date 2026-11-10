@@ -68,11 +68,11 @@ export const SceneRow: React.FC<SceneRowProps> = ({
             {scene.name}
           </span>
         )}
-        <span className="block text-[12px] leading-[17px] text-white/40 tabular-nums truncate">
+        <span className="block text-[12px] leading-[17px] text-white/50 tabular-nums truncate">
           {count} {count === 1 ? 'part' : 'parts'}
         </span>
       </span>
-      <span className="relative pointer-events-none shrink-0 text-[12px] tabular-nums text-white/35">
+      <span className="relative pointer-events-none shrink-0 text-[12px] tabular-nums text-white/50">
         {timeAgo(scene.updatedAt)}
       </span>
     </div>

@@ -14,7 +14,11 @@ export interface NumberInputProps {
   className?: string;
   disabled?: boolean;
   title?: string;
+  'aria-label'?: string;
 }
+
+const accessibleName = ({ ariaLabel, title, label }: { ariaLabel?: string; title?: string; label?: React.ReactNode }) =>
+  ariaLabel ?? title ?? (typeof label === 'string' ? label : undefined);
 
 export const NumberInput: React.FC<NumberInputProps> = ({
   label,
@@ -28,6 +32,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   className = '',
   disabled = false,
   title,
+  'aria-label': ariaLabel,
 }) => {
   const [draft, setDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -82,14 +87,14 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   return (
     <div
       title={title}
-      className={`group relative flex items-center h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.07] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff] focus-within:bg-black/20 transition-colors ${
+      className={`group relative flex items-center h-[32px] rounded-lg bg-white/[0.05] hover:bg-white/[0.07] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff] focus-within:bg-black/20 transition-colors ${
         disabled ? 'opacity-40 pointer-events-none' : ''
       } ${scrubbing ? 'ring-white/[0.12]' : ''} ${className}`}
     >
       {label !== undefined && (
         <span
           {...handlers}
-          className="w-7 h-full shrink-0 flex items-center justify-center text-[12px] font-medium text-white/40 group-hover:text-white/60 cursor-ew-resize select-none touch-none"
+          className="w-7 h-full shrink-0 flex items-center justify-center text-[12px] font-medium text-white/50 group-hover:text-white/60 cursor-ew-resize select-none touch-none"
         >
           {label}
         </span>
@@ -100,6 +105,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         inputMode="decimal"
         spellCheck={false}
         disabled={disabled}
+        aria-label={accessibleName({ ariaLabel, title, label })}
         value={draft ?? format(value)}
         onFocus={(e) => {
           setDraft(format(value));
@@ -113,7 +119,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         } ${unit ? 'pr-7' : 'pr-2'}`}
       />
       {unit && (
-        <span className="absolute right-2 text-[12px] text-white/30 select-none pointer-events-none">{unit}</span>
+        <span className="absolute right-2 text-[12px] text-white/50 select-none pointer-events-none">{unit}</span>
       )}
     </div>
   );

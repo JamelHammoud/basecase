@@ -32,7 +32,7 @@ function stateText(status: PlateStatus, live?: PrinterStatus | null) {
 }
 
 const STATE_CLASS: Record<PlateStatus['state'], string> = {
-  new: 'text-white/40',
+  new: 'text-white/50',
   sent: 'text-white/60',
   printing: 'text-[#5cb8ff]',
   printed: 'text-white/60',
@@ -67,10 +67,10 @@ export const PlateRow: React.FC<PlateRowProps> = ({ plate, bed, sliced, status, 
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[13px] text-white/90 truncate">
-            Plate {plate.number} <span className="text-white/45">{plate.material}</span>
+            Plate {plate.number} <span className="text-white/50">{plate.material}</span>
           </div>
           <MetaLine
-            className="text-[12px] text-white/40 tabular-nums"
+            className="text-[12px] text-white/50 tabular-nums"
             items={[`${count} ${count === 1 ? 'part' : 'parts'}`, `${exact ? '' : '≈ '}${hm(hours)}`, `${Math.round(grams)} g`]}
           />
           {sliced?.warnings.length ? (

@@ -28,11 +28,11 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
     >
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-white/90 truncate">
-          {p.copies > 1 && <span className="text-white/45 tabular-nums">{p.copies} × </span>}
+          {p.copies > 1 && <span className="text-white/50 tabular-nums">{p.copies} × </span>}
           {p.name}
         </div>
         <MetaLine
-          className="text-[12px] text-white/40 tabular-nums"
+          className="text-[12px] text-white/50 tabular-nums"
           items={[
             `${fmtSize(p.check.size)} mm`,
             hm(p.hours),
@@ -46,7 +46,7 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
           </div>
         ))}
       </div>
-      <span className="text-[12px] text-white/40 tabular-nums pt-[1px]">{Math.round(p.grams + p.supportG)} g</span>
+      <span className="text-[12px] text-white/50 tabular-nums pt-[1px]">{Math.round(p.grams + p.supportG)} g</span>
     </button>
   </li>
 );

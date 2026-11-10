@@ -15,7 +15,7 @@ export const EmulatedRobotSection: React.FC = () => {
 
   return (
     <Section title="Emulated robot">
-      <MetaLine className="px-1 mb-1 text-[12.5px] text-white/45" items={[rungLabel(robot.mode), following]} />
+      <MetaLine className="px-1 mb-1 text-[12.5px] text-white/50" items={[rungLabel(robot.mode), following]} />
       {latest && <p className="px-1 mb-1 text-[13px] leading-snug text-white/90">{latest.text}</p>}
       <RobotJoints bare ids={robot.spec?.ids ?? []} joints={robot.status?.joints ?? []} />
     </Section>

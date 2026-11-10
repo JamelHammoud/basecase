@@ -29,9 +29,9 @@ const PrinterRow: React.FC<{
     label={
       <button type="button" onClick={onToggle} className="flex items-center gap-[6px] cursor-default text-left">
         {open ? (
-          <ChevronDownIcon className="w-3.5 h-3.5 text-white/40" />
+          <ChevronDownIcon className="w-3.5 h-3.5 text-white/50" />
         ) : (
-          <ChevronRightIcon className="w-3.5 h-3.5 text-white/40" />
+          <ChevronRightIcon className="w-3.5 h-3.5 text-white/50" />
         )}
         {printer.nickname}
       </button>
@@ -40,7 +40,7 @@ const PrinterRow: React.FC<{
   >
     <div className="flex items-center gap-[8px]">
       {printer.isDefault ? (
-        <span className="text-[12.5px] text-white/45">Default</span>
+        <span className="text-[12.5px] text-white/50">Default</span>
       ) : (
         <Button size="sm" variant="ghost" onClick={onDefault}>
           Make Default

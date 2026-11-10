@@ -37,9 +37,9 @@ export const PrinterLive: React.FC<{ printing: Printing }> = ({ printing }) => {
     <div className="flex flex-col gap-1.5">
       <div className="text-[13px] text-white/90">
         {STATE_TEXT[status.state]}
-        {status.job && <span className="text-white/45"> {status.job}</span>}
+        {status.job && <span className="text-white/50"> {status.job}</span>}
       </div>
-      <MetaLine className="text-[12.5px] text-white/45 tabular-nums" items={facts(status)} />
+      <MetaLine className="text-[12.5px] text-white/50 tabular-nums" items={facts(status)} />
       {status.progress !== undefined && running && (
         <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
           <div

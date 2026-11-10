@@ -10,11 +10,14 @@ import { createEventHandler } from './run-events.mjs';
 import { argOption, defaultRunName, here, openStudio, root, sceneRecordOf, writeShot } from './harness.mjs';
 import { readEvents, runMetrics } from './metrics.mjs';
 import { archiveRun, gitInfo } from './archive.mjs';
+import { modelFields } from './micro/once.mjs';
 
 const args = process.argv.slice(2);
 const robot = args[0];
 const port = Number(argOption(args, 'port', 5174));
 const runName = argOption(args, 'run', defaultRunName());
+const model = argOption(args, 'model', undefined);
+const effort = argOption(args, 'effort', undefined);
 
 if (!ROBOTS[robot]) {
   console.error(`Unknown robot. Choose: ${Object.keys(ROBOTS).join(', ')}`);
@@ -60,6 +63,8 @@ const result = await studio.post('/api/bridge/acp-prompt', {
   promptText: ROBOTS[robot].prompt,
   imageDataUrls,
   imageName: `${robot} photos`,
+  model,
+  effort,
 });
 const seconds = Math.round((Date.now() - started) / 1000);
 
@@ -142,6 +147,7 @@ const summary = {
   robot,
   seconds,
   stopReason: result.stopReason,
+  ...modelFields(result, { model, effort }),
   ...counts,
   parts: parts.length,
   cadParts: parts.filter((p) => p.kind === 'cad_part').length,

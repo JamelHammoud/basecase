@@ -39,6 +39,9 @@ app.setName('Basecase');
 
 if (DEV_MODE) app.setAboutPanelOptions({ applicationName: APP_DISPLAY_NAME });
 
+if (process.env.BASECASE_USER_DATA && process.env.STUDIO_AGENT_OFFLINE === '1')
+  app.commandLine.appendSwitch('use-mock-keychain');
+
 {
   const userData = process.env.BASECASE_USER_DATA || path.join(app.getPath('appData'), 'Basecase');
   const legacy = path.join(app.getPath('appData'), 'Robotics 3D Studio');

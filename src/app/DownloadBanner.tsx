@@ -16,7 +16,7 @@ function DownloadBannerFrame({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className={`relative w-full h-full overflow-hidden ${shown ? 'bg-[#0d99ff]' : ''}`}>
+    <div className={`relative w-full h-full overflow-hidden ${shown ? 'bg-figma-blue-fill' : ''}`}>
       {shown && (
         <div
           className={`absolute inset-x-0 top-0 flex items-center justify-center gap-[12px] px-[48px] transition-opacity duration-150 ${dismissed ? 'opacity-0' : ''}`}

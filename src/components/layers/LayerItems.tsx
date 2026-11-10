@@ -69,7 +69,7 @@ const RowToggle: React.FC<{
     aria-label={title}
     onClick={onClick}
     className={`w-7 h-7 rounded-md flex items-center justify-center cursor-default transition-opacity hover:bg-white/[0.08] ${
-      on ? 'text-white/60 opacity-100' : 'text-white/40 hover:text-white/80 opacity-0 group-hover:opacity-100'
+      on ? 'text-white/60 opacity-100' : 'text-white/50 hover:text-white/80 opacity-0 group-hover:opacity-100'
     }`}
   >
     {on ? icons[0] : icons[1]}
@@ -102,7 +102,7 @@ export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimme
       on.onContextMenu(part, e.clientX, e.clientY);
     }}
     className={`${ROW} ${inGroup ? 'pl-8' : 'pl-2.5'} pr-1 gap-2 ${rowTone(selected, 'text-white/80 hover:bg-white/[0.05]')} ${
-      dimmed ? 'text-white/35' : ''
+      dimmed ? 'text-white/50' : ''
     }`}
   >
     <PartGlyph part={part} />
@@ -170,7 +170,7 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
         e.stopPropagation();
         on.onToggleCollapsed(id);
       }}
-      className="w-5 h-5 rounded flex items-center justify-center text-white/40 hover:text-white/80 cursor-default"
+      className="w-5 h-5 rounded flex items-center justify-center text-white/50 hover:text-white/80 cursor-default"
     >
       <ChevronRightIcon className={`w-3.5 h-3.5 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
     </button>
@@ -187,6 +187,6 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
     ) : (
       <span className="flex-1 truncate">{name}</span>
     )}
-    <span className="text-[12px] text-white/35 tabular">{memberIds.length}</span>
+    <span className="text-[12px] text-white/50 tabular">{memberIds.length}</span>
   </li>
 );

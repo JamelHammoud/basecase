@@ -34,14 +34,14 @@ export const ColorField: React.FC<ColorFieldProps> = ({
   return (
     <div
       ref={setAnchorEl}
-      className={`group flex items-center h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.07] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff] transition-colors ${className}`}
+      className={`group flex items-center h-[32px] rounded-lg bg-white/[0.05] hover:bg-white/[0.07] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff] transition-colors ${className}`}
     >
       <button
         type="button"
         aria-label="Open color picker"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="w-8 h-8 shrink-0 flex items-center justify-center cursor-default"
+        className="w-[32px] h-[32px] shrink-0 flex items-center justify-center cursor-default"
       >
         <span
           className="w-[18px] h-[18px] rounded-[5px] ring-1 ring-inset ring-white/20"
@@ -253,8 +253,8 @@ const HexInput: React.FC<{ value: string; onCommit: (hex: string) => void }> = (
   const [draft, setDraft] = useState<string | null>(null);
 
   return (
-    <div className="flex-1 flex items-center h-8 rounded-lg bg-white/[0.06] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff]">
-      <span className="pl-2.5 text-[13px] text-white/35">#</span>
+    <div className="flex-1 flex items-center h-[32px] rounded-lg bg-white/[0.06] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff]">
+      <span className="pl-2.5 text-[13px] text-white/50">#</span>
       <input
         value={draft ?? value.replace('#', '').toUpperCase()}
         spellCheck={false}

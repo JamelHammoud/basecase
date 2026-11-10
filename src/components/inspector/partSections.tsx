@@ -60,7 +60,7 @@ export const PartHeader: React.FC<
         onClick={onDelete}
       />
     </div>
-    {isImage && <p className="text-[12.5px] text-white/45">Not printed or exported</p>}
+    {isImage && <p className="text-[12.5px] text-white/50">Not printed or exported</p>}
   </div>
 );
 
@@ -155,7 +155,7 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
 
 export const ProductSection: React.FC<{ part: ScenePart; comp: ComponentInfo }> = ({ part, comp }) => (
   <Section title="Product" collapsible defaultOpen={false}>
-    <MetaLine items={[comp.manufacturer, comp.mpn]} className="text-[12.5px] text-white/45 -mt-1" />
+    <MetaLine items={[comp.manufacturer, comp.mpn]} className="text-[12.5px] text-white/50 -mt-1" />
     <SpecList
       rows={[
         ['Size', <SizeLine key="s" w={part.dimensions.width} h={part.dimensions.height} d={part.dimensions.depth} />],

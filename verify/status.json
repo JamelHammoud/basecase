@@ -1155,96 +1155,96 @@
           "ok": true,
           "detail": "0.2 s",
           "metrics": {},
-          "seconds": 0.224
+          "seconds": 0.203
         },
         {
           "name": "Motor Kit: quad-servo learns Stand, Velocity tracking, Get-up and Settle through Forge; each passes Arena; the weak quad is refused",
           "ok": true,
-          "detail": "1625.2 s",
+          "detail": "1618.9 s",
           "metrics": {
-            "loadBefore": 4.1484375,
-            "loadAfter": 13.5849609375
+            "loadBefore": 1.57666015625,
+            "loadAfter": 13.8681640625
           },
-          "seconds": 1625.2
+          "seconds": 1618.883
         },
         {
           "name": "Motor Kit: hexapod learns Stand and Velocity tracking through Forge; each passes Arena",
           "ok": true,
-          "detail": "1363.5 s",
+          "detail": "1359.3 s",
           "metrics": {
-            "loadBefore": 6.11328125,
-            "loadAfter": 3.080078125
+            "loadBefore": 6.21923828125,
+            "loadAfter": 1.52783203125
           },
-          "seconds": 1363.457
+          "seconds": 1359.296
         },
         {
           "name": "Motor Kit: biped-servo learns Stand and Velocity tracking through Forge; each passes Arena",
           "ok": true,
-          "detail": "2442.1 s",
+          "detail": "2438.2 s",
           "metrics": {
-            "loadBefore": 3.080078125,
-            "loadAfter": 4.10302734375
+            "loadBefore": 1.52783203125,
+            "loadAfter": 1.68310546875
           },
-          "seconds": 2442.132
+          "seconds": 2438.159
         },
         {
           "name": "Train here, judge there: every Kit policy acts as Forge wrote it and passes a clean WASM replay",
           "ok": true,
-          "detail": "2.1 s",
+          "detail": "1.9 s",
           "metrics": {},
-          "seconds": 2.057
+          "seconds": 1.922
         },
         {
           "name": "Biped drive: forward, left and right on its Kit skill, with travel, heading of the commanded sign and no fall",
           "ok": true,
           "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.631
+          "seconds": 0.551
         },
         {
           "name": "Solver race: three tasks pass Arena, record method and cost, and the router is within 2× of the cheapest",
           "ok": true,
-          "detail": "1284.6 s",
+          "detail": "1283.6 s",
           "metrics": {
-            "loadBefore": 4.10302734375,
-            "loadAfter": 3.009765625
+            "loadBefore": 1.68310546875,
+            "loadAfter": 0.5615234375
           },
-          "seconds": 1284.593
+          "seconds": 1283.582
         },
         {
           "name": "Freshness: a mass edit reruns Arena, a topology edit needs training, a colour edit stays fresh",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.798
+          "seconds": 0.706
         },
         {
           "name": "Kit retraining debounces, latest design wins, and waits behind user training",
           "ok": true,
-          "detail": "0.3 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.337
+          "seconds": 0.355
         },
         {
           "name": "Cases judge with the one Rust contract, not a TypeScript copy",
           "ok": true,
-          "detail": "0.6 s",
+          "detail": "0.5 s",
           "metrics": {},
-          "seconds": 0.553
+          "seconds": 0.545
         },
         {
           "name": "Skills, Cases and sim unit tests pass",
           "ok": true,
-          "detail": "2.4 s",
+          "detail": "2.8 s",
           "metrics": {},
-          "seconds": 2.385
+          "seconds": 2.825
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "5.3 s",
+          "detail": "4.9 s",
           "metrics": {},
-          "seconds": 5.284
+          "seconds": 4.909
         }
       ],
       "canaries": [
@@ -1253,46 +1253,46 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 6.213
+          "seconds": 5.706
         },
         {
           "name": "a zero policy fails Velocity tracking",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 9.899
+          "seconds": 9.594
         },
         {
           "name": "a reward-hacked candidate is rejected by the race",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1270.745
+          "seconds": 1270.514
         },
         {
           "name": "must-fail-weak-quad is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.647
+          "seconds": 0.618
         },
         {
           "name": "a skill moved to another fixture needs training",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.425
+          "seconds": 0.405
         },
         {
           "name": "a biped that only walks straight fails steering",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.58
+          "seconds": 0.54
         }
       ],
-      "commit": "310ece4",
-      "at": "2026-11-10T00:02:53.623Z",
+      "commit": "a20953b",
+      "at": "2026-11-10T22:40:35.338Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

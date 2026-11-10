@@ -40,6 +40,7 @@ export function personaTools(h) {
       { where: z.string(), ...point, problem: z.string() },
       run(h.report),
     ),
+    tool('withdraw', 'Withdraw an earlier finding, by its exact where.', { where: z.string() }, run(h.withdraw)),
     tool('finish', 'End the session.', {}, run(h.finish)),
   ];
 }

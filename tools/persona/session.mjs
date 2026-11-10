@@ -29,6 +29,19 @@ export function addFinding(findings, raw) {
   return `Recorded ${findings.length}: ${where}.`;
 }
 
+export function withdrawFinding(findings, where) {
+  const name = String(where ?? '')
+    .trim()
+    .toLowerCase();
+  const index = findings.findIndex((f) => f.where.toLowerCase() === name);
+
+  if (index < 0) return `No finding named ${where}.`;
+
+  findings.splice(index, 1);
+
+  return `Withdrew ${where}.`;
+}
+
 export function createSession({ screen, minutes, devicePixelRatio, now = Date.now }) {
   const deadline = now() + minutes * 60000;
   const state = { toCss: 1, done: false, actions: 0 };
@@ -70,6 +83,7 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
 
       return { text: `${addFinding(findings, { where, problem, at })} ${clock()}` };
     },
+    withdraw: ({ where }) => ({ text: withdrawFinding(findings, where) }),
     finish: () => {
       state.done = true;
 

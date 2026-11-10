@@ -4,7 +4,7 @@ import { personaScore } from '../../verify/rehearsal/personaScore';
 import { cleanEnv, personaTools, toolNames } from './claudeDriver.mjs';
 import { devicePixelRatioOf, frameOf } from './frame.mjs';
 import { runPersona } from './personaLab.mjs';
-import { addFinding, createSession } from './session.mjs';
+import { addFinding, createSession, withdrawFinding } from './session.mjs';
 
 const png = (width, height) =>
   sharp({ create: { width, height, channels: 3, background: { r: 27, g: 27, b: 27 } } })
@@ -74,6 +74,16 @@ describe('PersonaLab offline parts', () => {
     expect(findings.map((f) => f.where)).toEqual(['Export']);
   });
 
+  it('withdraws a finding reported on the wrong control', () => {
+    const findings = [];
+
+    addFinding(findings, { where: 'Unitree Go1', problem: 'Blinks.', at: [127, 870] });
+    withdrawFinding(findings, 'unitree go1');
+    addFinding(findings, { where: 'Unitree Go2', problem: 'Blinks.', at: [127, 205] });
+
+    expect(findings.map((f) => f.where)).toEqual(['Unitree Go2']);
+  });
+
   it('counts down from the session length', () => {
     let t = 0;
     const session = createSession({ screen: fakeScreen(100, 100).screen, minutes: 2, now: () => t });
@@ -109,7 +119,9 @@ describe('PersonaLab offline parts', () => {
     const tools = personaTools({});
 
     expect(toolNames(tools)).toEqual(
-      ['look', 'tree', 'click', 'type', 'press', 'scroll', 'wait', 'report', 'finish'].map((n) => `mcp__persona__${n}`),
+      ['look', 'tree', 'click', 'type', 'press', 'scroll', 'wait', 'report', 'withdraw', 'finish'].map(
+        (n) => `mcp__persona__${n}`,
+      ),
     );
     expect(Object.keys(cleanEnv({ HOME: '/home/me', CLAUDE_CODE_SESSION_ID: 'x', ANTHROPIC_BASE_URL: 'y' }))).toEqual([
       'HOME',

@@ -93,7 +93,7 @@ export function RoutineNode({ data }: NodeProps<Node<RoutineNodeData>>) {
       className={`group/node relative w-[196px] min-h-[56px] rounded-[10px] px-3 py-2 flex flex-col gap-0.5 transition-colors duration-150 ${STATE_FILL[state]} ${ring}`}
     >
       <Handle type="target" position={Position.Top} className={HIDDEN_HANDLE} isConnectable={false} />
-      <div className="flex items-center justify-between text-[12px] text-white/45">
+      <div className="flex items-center justify-between text-[12px] text-white/50">
         <span>{label.kind}</span>
         {word && <span className="text-white/60">{word}</span>}
       </div>

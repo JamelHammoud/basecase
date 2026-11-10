@@ -26,7 +26,7 @@ export const TabPreviewCard: React.FC<{ tab: SceneTabInfo; spot: TabPreviewSpot;
       {image && <img src={image} alt="" className="block w-full aspect-[16/10] object-cover bg-[#1b1b1b]" />}
       <div className="px-3 py-2.5">
         <div className="text-[13px] font-medium text-white/90 truncate">{tab.name || 'Untitled'}</div>
-        <div className="text-[12px] text-white/45 tabular mt-0.5 flex items-center gap-1.5 min-w-0">
+        <div className="text-[12px] text-white/50 tabular mt-0.5 flex items-center gap-1.5 min-w-0">
           {tab.busy && <AgentSpinner />}
           <span className="truncate">{caption(tab)}</span>
         </div>

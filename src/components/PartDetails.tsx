@@ -29,7 +29,7 @@ const fmt = (v: number) => String(Math.round(v * 100) / 100);
 export const SizeLine: React.FC<{ w: number; h: number; d: number }> = ({ w, h, d }) => (
   <span className="tabular text-white/85">
     {fmt(w)} × {fmt(h)} × {fmt(d)}
-    <span className="text-white/40"> mm</span>
+    <span className="text-white/50"> mm</span>
   </span>
 );
 
@@ -47,7 +47,7 @@ export const LinkButton: React.FC<{
     aria-label={label}
     className={`inline-flex items-center justify-center gap-1.5 h-8 ${children ? 'px-3' : 'w-8'} rounded-lg text-[13px] font-medium whitespace-nowrap cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
       primary
-        ? 'bg-[#0d99ff] hover:bg-[#2ba5ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
+        ? 'bg-figma-blue-fill hover:bg-figma-blue-fill-hover text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
         : 'bg-white/[0.07] hover:bg-white/[0.11] text-white/90'
     }`}
   >
@@ -87,7 +87,7 @@ export const SpecList: React.FC<{ rows: Array<[string, React.ReactNode]> }> = ({
   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
     {rows.map(([label, value]) => (
       <React.Fragment key={label}>
-        <dt className="text-white/45 whitespace-nowrap">{label}</dt>
+        <dt className="text-white/50 whitespace-nowrap">{label}</dt>
         <dd className="text-white/85 tabular min-w-0 [overflow-wrap:anywhere]">{value}</dd>
       </React.Fragment>
     ))}
@@ -107,7 +107,7 @@ const modelSourceText = (c: ComponentInfo): string => {
 };
 
 export const ModelSource: React.FC<{ c: ComponentInfo }> = ({ c }) => (
-  <div className="flex items-start gap-1.5 text-[12px] text-white/45 leading-snug">
+  <div className="flex items-start gap-1.5 text-[12px] text-white/50 leading-snug">
     <ShapeIcon className="w-3.5 h-3.5 mt-px shrink-0" />
     <span>
       {modelSourceText(c)}
@@ -133,7 +133,7 @@ export const Stat: React.FC<{ label: string; children: React.ReactNode; wide?: b
   clamp = true,
 }) => (
   <div className={`min-w-0 rounded-[10px] bg-white/[0.045] px-2.5 py-2 ${wide ? 'col-span-2' : ''}`}>
-    <div className="text-[12px] text-white/40 truncate">{label}</div>
+    <div className="text-[12px] text-white/50 truncate">{label}</div>
     <div
       className={`mt-0.5 tabular text-white/90 leading-snug [overflow-wrap:anywhere] ${
         wide ? 'text-[14px] font-medium' : `text-[12.5px] ${clamp ? 'line-clamp-2' : ''}`
@@ -214,7 +214,7 @@ export const Header: React.FC<{
 }> = ({ title, subtitle, description, clamp = true }) => (
   <div className="px-4 pt-3">
     <div className="text-[15px] font-semibold text-white/95 leading-tight">{title}</div>
-    <MetaLine items={[subtitle].flat()} className={`text-[12.5px] text-white/45 mt-1 ${clamp ? '' : 'flex-wrap'}`} />
+    <MetaLine items={[subtitle].flat()} className={`text-[12.5px] text-white/50 mt-1 ${clamp ? '' : 'flex-wrap'}`} />
     {description && (
       <p className={`text-[13px] text-white/70 leading-relaxed mt-2 ${clamp ? 'line-clamp-2' : ''}`}>{description}</p>
     )}
@@ -228,7 +228,7 @@ export const CardSection: React.FC<{
   clamp?: boolean;
 }> = ({ icon, label, children, clamp = true }) => (
   <div className="mt-3 border-t border-white/[0.07] px-4 pt-3">
-    <div className="flex items-center gap-1.5 text-[12px] font-medium text-white/45">
+    <div className="flex items-center gap-1.5 text-[12px] font-medium text-white/50">
       {icon}
       {label}
     </div>

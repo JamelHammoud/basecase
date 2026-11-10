@@ -180,7 +180,7 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
                 Remove Price
               </Button>
             )}
-            <div className="flex-1 text-[12.5px] text-white/40 truncate">{linkError(form.url)}</div>
+            <div className="flex-1 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>

@@ -36,7 +36,7 @@ const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
     <div className="flex-1 min-w-0 pl-1 text-[13px] tabular text-white/80">
       {sim.status === 'loading' ? <span className="text-white/50">Loading</span> : fmtTime(sim.stats?.time ?? 0)}
       {sim.playing && sim.stats && sim.stats.rtf < 0.9 && (
-        <span className="ml-2 text-[12px] text-white/40">{sim.stats.rtf.toFixed(1)}× real time</span>
+        <span className="ml-2 text-[12px] text-white/50">{sim.stats.rtf.toFixed(1)}× real time</span>
       )}
     </div>
     <SegmentedControl size="sm" value={String(sim.speed)} onChange={(v) => sim.setSpeed(Number(v))} options={SPEEDS} />

@@ -22,7 +22,7 @@ const Total: React.FC<{ t: Totals }> = ({ t }) => {
   const money = useMoney();
   const total = (
     <div className="text-[20px] font-semibold tabular-nums text-white/90 leading-tight w-fit">
-      {hasEstimate(t) && <span className="text-white/45 font-normal mr-1">≈</span>}
+      {hasEstimate(t) && <span className="text-white/50 font-normal mr-1">≈</span>}
       {money.format(t.estimatedUsd)}
     </div>
   );
@@ -54,7 +54,7 @@ const BudgetLeft: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
   const money = useMoney();
 
   return (
-    <div className={`text-[12.5px] tabular-nums ${over ? 'text-red-400' : 'text-white/45'}`}>
+    <div className={`text-[12.5px] tabular-nums ${over ? 'text-red-400' : 'text-white/50'}`}>
       {over ? `${money.format(t.estimatedUsd - budget)} over budget` : `${money.format(budget - t.estimatedUsd)} left`}
     </div>
   );

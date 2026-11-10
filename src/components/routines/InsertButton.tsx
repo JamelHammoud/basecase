@@ -13,7 +13,7 @@ export function InsertButton({ point }: { point: InsertPoint }) {
 
   return (
     <span className="relative flex items-center gap-1 nodrag nopan pointer-events-auto">
-      {word && <span className="text-[12px] text-white/45 select-none">{word}</span>}
+      {word && <span className="text-[12px] text-white/50 select-none">{word}</span>}
       <IconButton
         size="xs"
         className="rounded-full bg-[#2a2a2a] hover:bg-[#333333]"

@@ -16,7 +16,7 @@ const TileThumb: React.FC<{ thumb: string | undefined; fallback?: string }> = ({
 
   if (thumb === '' || fallback) {
     return (
-      <span className="w-full h-full flex items-center justify-center text-[12px] text-white/30">
+      <span className="w-full h-full flex items-center justify-center text-[12px] text-white/50">
         {fallback ?? 'No preview'}
       </span>
     );
@@ -109,7 +109,7 @@ export const Tile: React.FC<{
             {name}
           </div>
         )}
-        <div className="text-[12px] text-white/40 tabular truncate">{meta}</div>
+        <div className="text-[12px] text-white/50 tabular truncate">{meta}</div>
         {!renaming && (
           <div
             className="absolute right-0 top-[2px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"

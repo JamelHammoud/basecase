@@ -15,7 +15,7 @@ export const Toast: React.FC<{ toast: ToastData; onDismiss: () => void }> = ({ t
     <div
       role="status"
       aria-live="polite"
-      className="glass-menu rounded-full h-10 pl-3.5 pr-1.5 flex items-center gap-2 text-[13.5px] text-white/90 animate-toast-in"
+      className="glass-menu rounded-full h-[40px] pl-3.5 pr-1.5 flex items-center gap-2 text-[13.5px] text-white/90 animate-toast-in"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       {tone === 'success' && <TickIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />}
@@ -29,7 +29,7 @@ export const Toast: React.FC<{ toast: ToastData; onDismiss: () => void }> = ({ t
             toast.action?.onClick();
             onDismiss();
           }}
-          className="h-7 px-3 rounded-full text-[13px] font-medium text-[#5cb8ff] hover:bg-white/[0.08] cursor-default transition-colors"
+          className="h-[32px] px-3 rounded-full text-[13px] font-medium text-[#5cb8ff] hover:bg-white/[0.08] cursor-default transition-colors"
         >
           {toast.action.label}
         </button>

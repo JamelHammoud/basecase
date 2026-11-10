@@ -37,7 +37,7 @@ const Tile: React.FC<{ item: CatalogItem; meta: string; onOpen: () => void; onAd
           </div>
           <div className="px-0.5 pt-2">
             <div className="text-[13px] font-medium text-white/90 truncate">{item.name}</div>
-            <div className="text-[12px] text-white/40 truncate">{meta}</div>
+            <div className="text-[12px] text-white/50 truncate">{meta}</div>
           </div>
         </button>
         <AddButton

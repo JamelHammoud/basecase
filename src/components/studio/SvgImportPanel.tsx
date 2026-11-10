@@ -61,7 +61,7 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
       >
         <FileImportIcon className="w-5 h-5 text-white/50" />
         <span className="text-[13.5px] text-white/85">Choose or drop an SVG</span>
-        <span className="text-[12px] text-white/40">Paths, curves and holes become 3D</span>
+        <span className="text-[12px] text-white/50">Paths, curves and holes become 3D</span>
       </button>
 
       {showPasteSvg && (
@@ -82,7 +82,7 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
 
       {!draft.parsedSvg && (
         <div>
-          <div className="text-[12px] text-white/40 mb-1.5">Samples</div>
+          <div className="text-[12px] text-white/50 mb-1.5">Samples</div>
           <div className="flex flex-wrap gap-1.5">
             {SAMPLE_ROBOTICS_SVGS.map((sample) => (
               <button
@@ -149,7 +149,7 @@ const SvgOutput: React.FC<{
         <div className="min-w-0 flex-1">
           <div className="text-[13px] text-white/90 truncate">{parsedSvg.name}</div>
           <MetaLine
-            className="text-[12px] text-white/45 tabular"
+            className="text-[12px] text-white/50 tabular"
             items={[
               `${parsedSvg.shapeCount} ${parsedSvg.shapeCount === 1 ? 'shape' : 'shapes'}`,
               `${parsedSvg.holeCount} ${parsedSvg.holeCount === 1 ? 'hole' : 'holes'}`,

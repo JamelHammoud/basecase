@@ -25,17 +25,17 @@ function JointRow({ joint, id }: { joint: JointStatus | undefined; id: number })
         <span className="flex items-baseline gap-[12px] tabular-nums text-white/90">
           <span>
             {degrees(position)}
-            <span className="text-white/45">°</span>
+            <span className="text-white/50">°</span>
           </span>
           {typeof joint.temp_c === 'number' && (
-            <span className="text-white/45">
+            <span className="text-white/50">
               {joint.temp_c.toFixed(0)}
               <span> °C</span>
             </span>
           )}
         </span>
       ) : (
-        <span className="text-white/45">{REPLIES[joint?.reply ?? 'missing'] ?? 'No reply'}</span>
+        <span className="text-white/50">{REPLIES[joint?.reply ?? 'missing'] ?? 'No reply'}</span>
       )}
     </div>
   );

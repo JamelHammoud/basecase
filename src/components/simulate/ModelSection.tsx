@@ -21,23 +21,23 @@ export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; v
         ]}
       />
       {estimated > 0 && (
-        <p className="mt-1 text-[12.5px] leading-snug text-white/45">
+        <p className="mt-1 text-[12.5px] leading-snug text-white/50">
           Torque for {estimated} {estimated === 1 ? 'joint is' : 'joints is'} estimated from weight. Assign servos for
           exact limits.
         </p>
       )}
       {guessed > 0 && (
-        <p className="mt-1 text-[12.5px] leading-snug text-white/45">
+        <p className="mt-1 text-[12.5px] leading-snug text-white/50">
           Servo response for {guessed} {guessed === 1 ? 'joint is' : 'joints is'} estimated. Measured fits cover the
           STS3215 (7.4 V) and XL330.
         </p>
       )}
       {model.warnings.map((w) => (
-        <p key={w} className="mt-1 text-[12.5px] leading-snug text-white/45">
+        <p key={w} className="mt-1 text-[12.5px] leading-snug text-white/50">
           {w}
         </p>
       ))}
-      {version && <p className="mt-1 text-[12px] text-white/35">MuJoCo {version}</p>}
+      {version && <p className="mt-1 text-[12px] text-white/50">MuJoCo {version}</p>}
     </Section>
   );
 };

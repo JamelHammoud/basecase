@@ -78,7 +78,7 @@ export const SceneTab: React.FC<{
     }}
     onContextMenu={h.onMenu}
   >
-    <div className="relative flex-1 min-w-0 flex items-center gap-2 pl-[10px] pr-[4px]">
+    <div className="relative flex-1 min-w-0 self-stretch flex items-center gap-2 pl-[10px]">
       {tab.busy && <AgentSpinner />}
       {renaming ? (
         <RenameField name={tab.name} onFinish={h.onFinishRename} />
@@ -92,18 +92,19 @@ export const SceneTab: React.FC<{
         </span>
       )}
       <Tooltip label="Close" shortcut={active ? '⌘W' : undefined} className="shrink-0 flex">
-        <button
-          type="button"
+        <span
           data-tab-close
-          aria-label={`Close ${tab.name}`}
+          aria-hidden
           onClick={(e) => {
             e.stopPropagation();
             h.onCloseTab();
           }}
-          className="w-[20px] h-[20px] grid place-items-center rounded-[6px] text-white/45 hover:text-white/90 hover:bg-white/[0.1] active:scale-[0.94] opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100 focus-visible:opacity-100 transition-[opacity,background-color,color,transform] duration-150"
+          className="group/close w-[28px] h-[28px] grid place-items-center text-white/50 hover:text-white/90 active:scale-[0.94] opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100 transition-[opacity,color,transform] duration-150"
         >
-          <CloseIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
-        </button>
+          <span className="w-[20px] h-[20px] grid place-items-center rounded-[6px] group-hover/close:bg-white/[0.1] transition-colors duration-150">
+            <CloseIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
+          </span>
+        </span>
       </Tooltip>
     </div>
   </div>

@@ -13,7 +13,7 @@ export const ThoughtBlock: React.FC<{ text: string; live: boolean }> = ({ text, 
         type="button"
         onClick={() => setOverride(!open)}
         aria-expanded={open}
-        className="group/thought h-7 -ml-1 pl-1 pr-2 rounded-md flex items-center gap-2 text-[13px] text-white/45 hover:text-white/80 hover:bg-white/[0.04] cursor-default transition-colors"
+        className="group/thought h-7 -ml-1 pl-1 pr-2 rounded-md flex items-center gap-2 text-[13px] text-white/50 hover:text-white/80 hover:bg-white/[0.04] cursor-default transition-colors"
       >
         <ThoughtIcon className="w-4 h-4" />
         {live ? <span className={SHIMMER_TEXT}>Thinking</span> : <span>Thought</span>}

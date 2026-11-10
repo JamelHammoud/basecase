@@ -3,7 +3,7 @@ import { Kbd } from '../design-system';
 
 export const SettingsGroup: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-[24px] last:mb-0">
-    <h4 className="mb-[8px] text-[12.5px] font-medium text-white/45">{title}</h4>
+    <h4 className="mb-[8px] text-[12.5px] font-medium text-white/50">{title}</h4>
     <div className="rounded-[12px] bg-white/[0.035] divide-y divide-white/[0.06]">{children}</div>
   </section>
 );
@@ -33,5 +33,5 @@ export const SettingsRow: React.FC<{
 );
 
 const Hint: React.FC<{ className?: string; children: React.ReactNode }> = ({ className = 'mt-[2px]', children }) => (
-  <div className={`text-[12.5px] leading-[1.4] text-white/45 ${className}`}>{children}</div>
+  <div className={`text-[12.5px] leading-[1.4] text-white/50 ${className}`}>{children}</div>
 );

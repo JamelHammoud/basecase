@@ -22,15 +22,15 @@ const CommentRow: React.FC<{ annotation: SceneAnnotation; n: number; active: boo
         } ${a.resolved ? 'opacity-50' : ''}`}
       >
         <span
-          className={`mt-0.5 w-6 h-6 shrink-0 rounded-[12px_12px_12px_3px] text-[11.5px] font-semibold tabular flex items-center justify-center ${
-            active ? 'bg-[#0d99ff] text-white' : 'bg-white text-black'
+          className={`mt-0.5 w-6 h-6 shrink-0 rounded-[12px_12px_12px_3px] text-[12px] font-semibold tabular flex items-center justify-center ${
+            active ? 'bg-figma-blue-fill text-white' : 'bg-white text-black'
           }`}
         >
           {n}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[13px] text-white/85 truncate">{first?.text}</span>
-          <span className="flex items-center gap-[12px] text-[12px] text-white/40">
+          <span className="flex items-center gap-[12px] text-[12px] text-white/50">
             {a.resolved ? 'Resolved' : timeAgo(first?.createdAt ?? a.createdAt)}
             {a.comments.length > 1 && (
               <span className="flex items-center gap-1">

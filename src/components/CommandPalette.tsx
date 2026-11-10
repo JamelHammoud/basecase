@@ -76,7 +76,7 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
     >
       <div className="glass-menu w-[600px] max-w-[calc(100vw-48px)] h-fit max-h-[62vh] rounded-[20px] flex flex-col overflow-hidden animate-sheet-in">
         <div className="flex items-center gap-3 px-5 h-14 border-b border-white/[0.08] shrink-0">
-          <SearchIcon className="w-5 h-5 text-white/40 shrink-0" />
+          <SearchIcon className="w-5 h-5 text-white/50 shrink-0" />
           <input
             autoFocus
             value={query}
@@ -100,20 +100,20 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
               }
             }}
             placeholder="e.g. servo, Top View, Group"
-            className="flex-1 bg-transparent text-[16px] text-white outline-none"
+            className="flex-1 h-full bg-transparent text-[16px] text-white outline-none"
           />
           <Kbd>Esc</Kbd>
         </div>
 
         <div ref={listRef} className="overflow-y-auto p-2">
-          {results.length === 0 && <div className="py-10 text-center text-[14px] text-white/45">No results</div>}
+          {results.length === 0 && <div className="py-10 text-center text-[14px] text-white/50">No results</div>}
           {results.map((c, idx) => {
             const header = idx === 0 || results[idx - 1].group !== c.group ? c.group : null;
             const isActive = idx === active;
 
             return (
               <React.Fragment key={c.id}>
-                {header && <div className="px-3 pt-3 pb-1.5 text-[12px] font-medium text-white/40">{header}</div>}
+                {header && <div className="px-3 pt-3 pb-1.5 text-[12px] font-medium text-white/50">{header}</div>}
                 <button
                   type="button"
                   data-idx={idx}
@@ -128,7 +128,7 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
                   </span>
                   <span className="flex-1 truncate">{c.label}</span>
                   {c.shortcut && <Kbd>{c.shortcut}</Kbd>}
-                  {isActive && !c.shortcut && <ReturnIcon className="w-3.5 h-3.5 text-white/40" />}
+                  {isActive && !c.shortcut && <ReturnIcon className="w-3.5 h-3.5 text-white/50" />}
                 </button>
               </React.Fragment>
             );

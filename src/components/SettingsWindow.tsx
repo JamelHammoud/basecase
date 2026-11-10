@@ -150,7 +150,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
               >
                 <span
                   className={`shrink-0 transition-colors duration-150 ${
-                    isCurrent ? 'text-white/90' : 'text-white/40 group-hover:text-white/70'
+                    isCurrent ? 'text-white/90' : 'text-white/50 group-hover:text-white/70'
                   }`}
                 >
                   {p.icon}
@@ -201,17 +201,17 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
 type PaneProps = Omit<SettingsWindowProps, 'open' | 'pane' | 'onPaneChange' | 'onClose'>;
 
 const Unit: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="text-white/40">{children}</span>
+  <span className="text-white/50">{children}</span>
 );
 
 const CanvasPane: React.FC<PaneProps> = (p) => (
   <>
     <Group title="Display">
       <Row label="Show grid">
-        <Switch checked={p.showGrid} onChange={p.onShowGrid} />
+        <Switch aria-label="Show grid" checked={p.showGrid} onChange={p.onShowGrid} />
       </Row>
       <Row label="Show reference images" shortcut="⇧I">
-        <Switch checked={p.showReferenceImages} onChange={p.onShowReferenceImages} />
+        <Switch aria-label="Show reference images" checked={p.showReferenceImages} onChange={p.onShowReferenceImages} />
       </Row>
     </Group>
     <Group title="Snapping">
@@ -251,7 +251,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
     </Group>
     <Group title="Experimental">
       <Row label="Sculpt tool" hint="Adds Sculpt (C) to the toolbar">
-        <Switch checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
+        <Switch aria-label="Sculpt tool" checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
       </Row>
     </Group>
   </>
@@ -279,7 +279,7 @@ const NavigationPane: React.FC<PaneProps> = (p) => (
         />
       </Row>
       <Row label="Pan" hint="Works in every mode">
-        <span className="flex items-center gap-[6px] text-[12.5px] text-white/45">
+        <span className="flex items-center gap-[6px] text-[12.5px] text-white/50">
           <Kbd>Space</Kbd> drag
         </span>
       </Row>
@@ -300,10 +300,10 @@ const NavigationPane: React.FC<PaneProps> = (p) => (
 const LayoutPane: React.FC<PaneProps> = (p) => (
   <Group title="Panels">
     <Row label="Show sidebar" shortcut="⌘B">
-      <Switch checked={p.isLeftOpen} onChange={p.onLeftOpen} />
+      <Switch aria-label="Show sidebar" checked={p.isLeftOpen} onChange={p.onLeftOpen} />
     </Row>
     <Row label="Show inspector" shortcut="⌘I">
-      <Switch checked={p.isRightOpen} onChange={p.onRightOpen} />
+      <Switch aria-label="Show inspector" checked={p.isRightOpen} onChange={p.onRightOpen} />
     </Row>
     <Row
       label="Panel widths"

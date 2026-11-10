@@ -71,7 +71,7 @@ export function RoutinesPanel({ routines, onTrain }: RoutinesPanelProps) {
       >
         <RoutineHeader routines={routines} />
         <div className="px-[12px] pb-2 flex flex-col gap-1">
-          {status && <div className="text-[12px] text-white/45">{status}</div>}
+          {status && <div className="text-[12px] text-white/50">{status}</div>}
           {[...general, ...failures.map((message) => ({ code: 'run', message }))].map((e) => (
             <div key={`${e.code}:${e.message}`} className="text-[12px] text-white/60">
               {e.message}

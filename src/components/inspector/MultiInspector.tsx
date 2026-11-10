@@ -109,11 +109,11 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
         />
       </div>
       <MetaLine
-        className="text-[12.5px] text-white/45 tabular mt-0.5"
+        className="text-[12.5px] text-white/50 tabular mt-0.5"
         items={[
           wholeGroup && `${selectedParts.length} parts`,
           <>
-            {fmt(size[0])} × {fmt(size[1])} × {fmt(size[2])} <span className="text-white/30">mm</span>
+            {fmt(size[0])} × {fmt(size[1])} × {fmt(size[2])} <span className="text-white/50">mm</span>
           </>,
         ]}
       />
@@ -174,7 +174,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
           <StripButton key={axis} title={`Rotate 90° around ${axis}`} onClick={() => onRotateSelection(idx as Axis)}>
             <RotateRightIcon className="w-3.5 h-3.5" />
             <span className="tabular">
-              {axis} <span className="text-white/45">90°</span>
+              {axis} <span className="text-white/50">90°</span>
             </span>
           </StripButton>
         ))}

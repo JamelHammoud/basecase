@@ -31,7 +31,7 @@ export const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) 
         className="absolute inset-0 w-full h-full object-contain p-3 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
       />
     ) : (
-      <div className="absolute inset-0 flex items-center justify-center text-[12.5px] text-white/30">No preview</div>
+      <div className="absolute inset-0 flex items-center justify-center text-[12.5px] text-white/50">No preview</div>
     )}
   </div>
 );

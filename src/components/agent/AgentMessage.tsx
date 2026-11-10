@@ -72,8 +72,8 @@ export const AgentMessage: React.FC<{
       {busy && (shownStatus || last?.type !== 'thought') && (
         <WorkingStatus status={shownStatus} started={segments.length > 0} />
       )}
-      {msg.failed && <div className="text-[12.5px] text-white/40">Couldn’t finish. {msg.failed}</div>}
-      {msg.stopped && !msg.failed && <div className="text-[12.5px] text-white/40">Stopped</div>}
+      {msg.failed && <div className="text-[12.5px] text-white/50">Couldn’t finish. {msg.failed}</div>}
+      {msg.stopped && !msg.failed && <div className="text-[12.5px] text-white/50">Stopped</div>}
     </div>
   );
 };

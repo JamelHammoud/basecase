@@ -19,7 +19,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
   onClose,
 }) => (
   <div className="absolute top-3 left-3 right-3 flex items-start justify-end gap-3 pointer-events-none">
-    <div className="glass rounded-[16px] h-10 px-1 flex items-center gap-0.5 pointer-events-auto">
+    <div className="glass rounded-[16px] h-[40px] px-1 flex items-center gap-0.5 pointer-events-auto">
       <IconButton
         icon={<MinusIcon className="w-4 h-4" />}
         title="Zoom out"
@@ -31,7 +31,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
       <button
         type="button"
         onClick={onFit}
-        className="h-8 min-w-14 px-1.5 rounded-lg text-[13px] text-white/80 tabular hover:bg-white/[0.07] cursor-default"
+        className="h-[32px] min-w-14 px-1.5 rounded-lg text-[13px] text-white/80 tabular hover:bg-white/[0.07] cursor-default"
         aria-label="Zoom to fit"
       >
         {percent}%

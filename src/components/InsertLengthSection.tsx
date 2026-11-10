@@ -13,7 +13,7 @@ export const InsertLengthSection: React.FC<{
     <Section
       title="Length"
       actions={
-        <MetaLine items={[insert.label, `Ø${insert.od} mm`]} className="mr-1 text-[12.5px] text-white/45 tabular" />
+        <MetaLine items={[insert.label, `Ø${insert.od} mm`]} className="mr-1 text-[12.5px] text-white/50 tabular" />
       }
     >
       <ChoiceGrid

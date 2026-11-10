@@ -62,7 +62,7 @@ function ConnectButton({ joints, onBrowseRobots }: OperatePanelProps) {
       <Button variant="primary" fullWidth onClick={() => void connect()}>
         Connect Emulated Robot
       </Button>
-      {refusal && <p className="px-1 mt-2 text-[12.5px] text-white/45">{refusal}</p>}
+      {refusal && <p className="px-1 mt-2 text-[12.5px] text-white/50">{refusal}</p>}
     </div>
   );
 }
@@ -100,7 +100,7 @@ function RobotHeader({ robot }: { robot: RobotState }) {
   return (
     <div className="mb-3">
       <div className="flex items-center justify-between gap-2 h-8 px-1">
-        <MetaLine className="text-[12.5px] text-white/45" items={[servoCount(robot)]} />
+        <MetaLine className="text-[12.5px] text-white/50" items={[servoCount(robot)]} />
         <Button size="xs" variant="ghost" onClick={() => void disconnectRobot()}>
           Disconnect
         </Button>
@@ -111,7 +111,7 @@ function RobotHeader({ robot }: { robot: RobotState }) {
         </div>
         <RobotAction robot={robot} />
       </div>
-      <div className="px-1 text-[12.5px] text-white/45">{RUN[run] ?? run}</div>
+      <div className="px-1 text-[12.5px] text-white/50">{RUN[run] ?? run}</div>
     </div>
   );
 }

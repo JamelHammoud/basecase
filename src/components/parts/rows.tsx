@@ -92,7 +92,7 @@ export const ResultRow: React.FC<{
         <Thumb url={thumb} className="w-12 h-9 shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="text-[13.5px] font-medium text-white/90 truncate">{item.name}</div>
-          <div className="text-[12px] text-white/40 truncate">{metaLine(item)}</div>
+          <div className="text-[12px] text-white/50 truncate">{metaLine(item)}</div>
         </div>
       </button>
       <AddButton
@@ -118,7 +118,7 @@ export const CategoryRow: React.FC<{ category: Category; onOpen: () => void }> =
       <Thumb url={thumb} empty={!category.items.length} className="w-12 h-9 shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="text-[13.5px] font-medium text-white/90 truncate">{category.title}</div>
-        <div className="text-[12px] text-white/40 truncate">{meta}</div>
+        <div className="text-[12px] text-white/50 truncate">{meta}</div>
       </div>
       <ChevronRightIcon className="w-4 h-4 text-white/25 group-hover:text-white/50 shrink-0 transition-colors" />
     </button>

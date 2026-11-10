@@ -4,7 +4,7 @@ import { SHIMMER_TEXT } from './shimmer';
 import { ToolIcon } from './toolRules';
 
 const tone = (failed: boolean) =>
-  failed ? 'text-red-400/80 enabled:hover:text-red-400' : 'text-white/45 enabled:hover:text-white/80';
+  failed ? 'text-red-400/80 enabled:hover:text-red-400' : 'text-white/50 enabled:hover:text-white/80';
 
 export const StepRow: React.FC<{
   icon: ToolIcon;

@@ -18,7 +18,7 @@ import { fmtTime } from './format';
 const FIT_TONE: Record<FitRow['state'], string> = {
   pass: 'text-white/70',
   fail: 'text-[#f87171]',
-  skip: 'text-white/45',
+  skip: 'text-white/50',
 };
 
 export const BriefSection: React.FC<{ cases: Cases }> = ({ cases }) => {

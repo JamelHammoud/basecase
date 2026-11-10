@@ -62,7 +62,7 @@ export function SegmentedControl<T extends string>({
             aria-label={opt.label ?? opt.title}
             onClick={() => onChange(opt.value)}
             className={`relative z-10 w-full flex items-center justify-center gap-1.5 font-medium cursor-default transition-colors duration-150 ${
-              size === 'sm' ? 'h-7 px-2 text-[12.5px]' : 'h-8 px-2.5 text-[13px]'
+              size === 'sm' ? 'h-[32px] px-2 text-[12.5px]' : 'h-[32px] px-2.5 text-[13px]'
             } ${
               isTabs
                 ? `rounded-md ${

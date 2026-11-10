@@ -35,7 +35,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
         target="_blank"
         rel="noreferrer"
         aria-label={linkLabel(l)}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white/90 hover:bg-white/[0.07] transition-colors duration-150 cursor-default"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/50 hover:text-white/90 hover:bg-white/[0.07] transition-colors duration-150 cursor-default"
       >
         <ExternalLinkIcon className="w-3.5 h-3.5" />
       </a>
@@ -66,7 +66,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
         label={`List price at ${l.estimate.store}, ${l.estimate.seen}. Add the price you see`}
         className="shrink-0 -my-[5px]"
       >
-        <button type="button" onClick={onCheck} className={`${PRICE_CLASS} text-white/45 hover:text-white/75`}>
+        <button type="button" onClick={onCheck} className={`${PRICE_CLASS} text-white/50 hover:text-white/75`}>
           ≈ {money.format(l.estUsd)}
         </button>
       </Tooltip>
@@ -86,7 +86,7 @@ const LineFacts: React.FC<{ line: BomLine; note?: string }> = ({ line: l, note }
     <>
       <span className="block text-[13px] leading-[18px] text-white/90">{l.name}</span>
       {(amount || l.detail || note) && (
-        <span className="flex flex-wrap gap-x-[12px] text-[12px] leading-[16px] text-white/45">
+        <span className="flex flex-wrap gap-x-[12px] text-[12px] leading-[16px] text-white/50">
           {amount && <span className="tabular-nums">{amount}</span>}
           {l.detail && <span>{l.detail}</span>}
           {note && <span>{note}</span>}

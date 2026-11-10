@@ -75,7 +75,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions }> =
         <li key={row.target} className="flex items-center gap-2 min-h-9" data-testid="skill-row">
           <div className="flex-1 min-w-0">
             <div className="text-[13px] text-white/85 truncate">{row.label}</div>
-            {line && <div className="text-[12px] text-white/45 tabular truncate">{line}</div>}
+            {line && <div className="text-[12px] text-white/50 tabular truncate">{line}</div>}
             {row.state.kind === 'training' && row.state.share !== null && <Progress share={row.state.share} />}
           </div>
           <RowAction row={row} actions={actions} />

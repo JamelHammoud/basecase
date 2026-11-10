@@ -58,18 +58,18 @@ const SkipPrinted: React.FC<{ printing: Printing }> = ({ printing }) => (
     <span className="text-[13px] text-white/60">
       Skip {printing.printedCount} printed {plural(printing.printedCount, 'part', 'parts')}
     </span>
-    <Switch checked={printing.skipPrinted} onChange={printing.setSkipPrinted} />
+    <Switch aria-label="Skip printed parts" checked={printing.skipPrinted} onChange={printing.setSkipPrinted} />
   </div>
 );
 
 const Totals: React.FC<{ plateCount: number; totals: PlateTotals }> = ({ plateCount, totals }) => (
   <div>
     <div className="text-[20px] font-semibold tabular-nums text-white/90 leading-tight">
-      {!totals.exact && <span className="text-white/45 font-normal mr-1">≈</span>}
+      {!totals.exact && <span className="text-white/50 font-normal mr-1">≈</span>}
       {hm(totals.hours)}
     </div>
     <MetaLine
-      className="mt-1 text-[12.5px] text-white/45 tabular-nums"
+      className="mt-1 text-[12.5px] text-white/50 tabular-nums"
       items={[
         `${plateCount} ${plural(plateCount, 'plate', 'plates')}`,
         `${Math.round(totals.grams).toLocaleString('en-US')} g`,

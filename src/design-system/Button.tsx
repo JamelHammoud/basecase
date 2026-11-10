@@ -20,20 +20,20 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-[#0d99ff] hover:bg-[#2ba5ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] disabled:bg-white/[0.06] disabled:text-white/30 disabled:shadow-none',
+    'bg-figma-blue-fill hover:bg-figma-blue-fill-hover text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] disabled:bg-white/[0.06] disabled:text-white/30 disabled:shadow-none',
   accent:
-    'bg-[#0d99ff] hover:bg-[#2ba5ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] disabled:bg-white/[0.06] disabled:text-white/30',
+    'bg-figma-blue-fill hover:bg-figma-blue-fill-hover text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] disabled:bg-white/[0.06] disabled:text-white/30',
   contrast: 'bg-white text-black hover:bg-white/90 disabled:bg-white/[0.08] disabled:text-white/30',
   secondary: 'bg-white/[0.07] hover:bg-white/[0.11] text-white/90 disabled:opacity-40',
   ghost: 'text-white/60 hover:text-white/90 hover:bg-white/[0.06] disabled:opacity-30',
   danger: 'bg-red-500/[0.12] text-red-400 hover:bg-red-500/[0.2] hover:text-red-300 disabled:opacity-30',
-  active: 'bg-[#0d99ff] text-white hover:bg-[#2ba5ff]',
+  active: 'bg-figma-blue-fill text-white hover:bg-figma-blue-fill-hover',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  xs: 'h-7 px-2.5 text-[12.5px] gap-1',
-  sm: 'h-8 px-3 text-[13px] gap-1.5',
-  md: 'h-9 px-3.5 text-[14px] gap-1.5',
+  xs: 'h-[32px] px-2.5 text-[12.5px] gap-1',
+  sm: 'h-[32px] px-3 text-[13px] gap-1.5',
+  md: 'h-[36px] px-3.5 text-[14px] gap-1.5',
 };
 
 const radiusClasses: Record<ButtonSize, string> = {

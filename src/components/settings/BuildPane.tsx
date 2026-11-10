@@ -13,7 +13,7 @@ export const BuildPane: React.FC<{ prefs: BuildPrefs }> = ({ prefs }) => (
   <>
     <Group title="Build guide">
       <Row label="Auto generate build guide" hint="Updates 15 s after the scene changes, once the agent is done">
-        <Switch checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
+        <Switch aria-label="Auto generate build guide" checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
       </Row>
     </Group>
     <Group title="Build check">
@@ -21,7 +21,11 @@ export const BuildPane: React.FC<{ prefs: BuildPrefs }> = ({ prefs }) => (
         label="Have the agent fix new blockers"
         hint="When a turn adds blockers, the agent gets up to 2 follow-ups to fix them"
       >
-        <Switch checked={prefs.autoFixBlockers} onChange={prefs.setAutoFixBlockers} />
+        <Switch
+          aria-label="Have the agent fix new blockers"
+          checked={prefs.autoFixBlockers}
+          onChange={prefs.setAutoFixBlockers}
+        />
       </Row>
     </Group>
   </>

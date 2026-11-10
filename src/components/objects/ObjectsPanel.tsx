@@ -13,7 +13,7 @@ const CategoryRow: React.FC<{ category: ObjectCategory; onOpen: () => void }> = 
   >
     <div className="min-w-0 flex-1">
       <div className="text-[13.5px] font-medium text-white/90 truncate">{category.title}</div>
-      <div className="text-[12px] text-white/40 truncate">{category.examples}</div>
+      <div className="text-[12px] text-white/50 truncate">{category.examples}</div>
     </div>
     <ChevronRightIcon className="w-4 h-4 text-white/25 group-hover:text-white/50 shrink-0 transition-colors" />
   </button>

@@ -79,7 +79,7 @@ export const AlignControls: React.FC<AlignControlsProps> = ({ count, onAlign, on
     <div className="space-y-1">
       {ROWS.map((row) => (
         <div key={row.axis} className="grid grid-cols-[20px_1fr_1fr_1fr] items-center gap-0.5">
-          <span className="text-[12px] font-medium text-white/40 text-center">{row.label}</span>
+          <span className="text-[12px] font-medium text-white/50 text-center">{row.label}</span>
           {row.options.map(([mode, label]) => (
             <Tooltip key={mode} className="w-full" label={alignTooltip({ single, axis: row.axis, mode, label })}>
               <button
@@ -101,7 +101,7 @@ export const AlignControls: React.FC<AlignControlsProps> = ({ count, onAlign, on
           <Divider className="mt-1 mb-1" />
           <div className="grid grid-cols-[20px_1fr_1fr_1fr] items-center gap-0.5">
             <span />
-            <span className="text-[12px] text-white/40 pl-1">Spread</span>
+            <span className="text-[12px] text-white/50 pl-1">Spread</span>
             {([0, 2] as Axis[]).map((axis) => (
               <Tooltip key={axis} className="w-full" label={`Even spacing along ${axis === 0 ? 'X' : 'Z'}`}>
                 <button
@@ -165,7 +165,7 @@ export const AlignBar: React.FC<Omit<AlignControlsProps, 'onDone'>> = ({ count, 
   <div className="space-y-1.5">
     {BAR_ROWS.map((row) => (
       <div key={row.axis} className="grid grid-cols-[14px_1fr_32px] items-center gap-2">
-        <span className="text-[12px] font-medium text-white/40 text-center select-none">{row.label}</span>
+        <span className="text-[12px] font-medium text-white/50 text-center select-none">{row.label}</span>
         <StripGroup>
           {row.options.map(([mode, label, Icon]) => (
             <StripButton key={mode} title={label} onClick={() => onAlign(row.axis, mode)}>

@@ -90,7 +90,7 @@ export const SimReadyTile: React.FC<{
       </div>
       <div className="px-0.5 pt-2">
         <div className="text-[13px] font-medium text-white/90 truncate">{asset.name}</div>
-        <div className="text-[12px] text-white/40 truncate">{asset.maker}</div>
+        <div className="text-[12px] text-white/50 truncate">{asset.maker}</div>
       </div>
     </button>
   </HoverCard>

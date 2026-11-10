@@ -15,7 +15,7 @@ export interface TextInputProps extends React.InputHTMLAttributes<HTMLInputEleme
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
   ({ icon, bare = false, className = '', ...props }, ref) => (
     <div className="relative flex items-center w-full">
-      {icon && <span className="absolute left-2.5 text-white/40 pointer-events-none flex">{icon}</span>}
+      {icon && <span className="absolute left-2.5 text-white/50 pointer-events-none flex">{icon}</span>}
       <input
         ref={ref}
         type="text"
@@ -24,7 +24,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
           bare
             ? 'w-full rounded-md bg-transparent hover:bg-white/[0.05] text-white/90 outline-none ring-1 ring-inset ring-transparent focus:ring-[#0d99ff] focus:bg-black/20 transition-colors'
             : fieldBase
-        } h-8 ${icon ? 'pl-8' : 'pl-2.5'} pr-2 ${className}`}
+        } h-[32px] ${icon ? 'pl-8' : 'pl-2.5'} pr-2 ${className}`}
         {...props}
       />
     </div>
@@ -79,7 +79,7 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
           </Tooltip>
         ) : (
           <SearchIcon
-            className="ml-[12px] w-[16px] h-[16px] shrink-0 text-white/40 group-has-[input:focus]:text-white/70 transition-colors duration-150 pointer-events-none"
+            className="ml-[12px] w-[16px] h-[16px] shrink-0 text-white/50 group-has-[input:focus]:text-white/70 transition-colors duration-150 pointer-events-none"
             strokeWidth={2}
           />
         )}
@@ -90,7 +90,7 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
           autoComplete="off"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`flex-1 min-w-0 h-full bg-transparent ${onBack ? 'pl-[2px]' : 'pl-[8px]'} pr-[8px] text-[14px] text-white/90 placeholder:text-white/35 outline-none focus-visible:outline-none`}
+          className={`flex-1 min-w-0 h-full bg-transparent ${onBack ? 'pl-[2px]' : 'pl-[8px]'} pr-[8px] text-[14px] text-white/90 placeholder:text-white/50 outline-none focus-visible:outline-none`}
           {...props}
         />
         {value ? (
@@ -140,13 +140,13 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 
 export const Select: React.FC<SelectProps> = ({ options, className = '', ...props }) => (
   <div className="relative w-full">
-    <select className={`${fieldBase} h-8 pl-2.5 pr-8 appearance-none cursor-default ${className}`} {...props}>
+    <select className={`${fieldBase} h-[32px] pl-2.5 pr-8 appearance-none cursor-default ${className}`} {...props}>
       {options.map((o) => (
         <option key={o.value} value={o.value} className="bg-[#1e1e22] text-white">
           {o.label}
         </option>
       ))}
     </select>
-    <ChevronDownIcon className="w-3.5 h-3.5 text-white/40 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+    <ChevronDownIcon className="w-3.5 h-3.5 text-white/50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
   </div>
 );

@@ -14,7 +14,7 @@ export function ColorSwatch({ name, fill, active = false, expanded, onClick }: C
       aria-pressed={active}
       aria-expanded={expanded}
       onClick={onClick}
-      className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full cursor-default"
+      className="w-[28px] h-[28px] shrink-0 flex items-center justify-center rounded-full cursor-default"
     >
       <span
         className={`w-[18px] h-[18px] rounded-full transition-[box-shadow,transform] duration-150 active:scale-95 ${

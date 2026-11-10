@@ -14,6 +14,8 @@
   /* One accent, one destructive */
   --color-figma-blue: #0d99ff;
   --color-figma-blue-hover: #2ba5ff;
+  --color-figma-blue-fill: #0b78cc;
+  --color-figma-blue-fill-hover: #0a6fbd;
   --color-cutout-red: #ef4444;
 
   /* Hairlines */
@@ -24,7 +26,7 @@
   /* Text tiers */
   --color-ink: rgba(255, 255, 255, 0.92);
   --color-ink-2: rgba(255, 255, 255, 0.6);
-  --color-ink-3: rgba(255, 255, 255, 0.4);
+  --color-ink-3: rgba(255, 255, 255, 0.5);
 
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
@@ -276,7 +278,7 @@
   }
 
   ::placeholder {
-    color: rgba(255, 255, 255, 0.32);
+    color: rgba(255, 255, 255, 0.5);
   }
 
   ::selection {

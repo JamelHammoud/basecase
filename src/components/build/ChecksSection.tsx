@@ -22,7 +22,7 @@ const bySeverity = (checks: CheckSummary[]) => [...checks].sort((a, b) => SEVERI
 const FIRST_RUN = [...READINESS_CHECKS, ...ENGINEERING_CHECKS];
 
 function verdict(readiness: Readiness | null, checking: boolean): { text: string; tone: string } {
-  if (!readiness || checking) return { text: 'Checking…', tone: 'text-white/45' };
+  if (!readiness || checking) return { text: 'Checking…', tone: 'text-white/50' };
 
   if (readiness.status === 'ready') return { text: 'Ready to build', tone: 'text-emerald-400' };
 

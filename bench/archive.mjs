@@ -44,7 +44,7 @@ export function indexEntry({ run, task, kind, summary, git, at = new Date() }) {
     score: orNull(summary.score?.total),
     drawingIoU: orNull(summary.drawing?.iou),
     ...judgeFields(summary.judge),
-    ...pick(summary, ['grade', 'seed', 'heldOut']),
+    ...pick(summary, ['grade', 'seed', 'heldOut', 'model', 'effort', 'servedBy']),
   };
 }
 
@@ -64,7 +64,7 @@ export function readIndex(runsDir) {
     try {
       const e = JSON.parse(line);
 
-      latest.set(`${e.run}\u0000${e.task}\u0000${e.seed ?? ''}`, e);
+      latest.set([e.run, e.task, e.seed ?? '', e.model ?? ''].join('\u0000'), e);
     } catch {}
   }
 

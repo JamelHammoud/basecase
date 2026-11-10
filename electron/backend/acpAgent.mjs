@@ -425,7 +425,15 @@ export class AcpAgent {
 
       this.endRun(key, { stopReason: res.stopReason });
 
-      return { stopReason: res.stopReason, sessionId, usage: res.usage ?? undefined, ...this.libraryState() };
+      return {
+        stopReason: res.stopReason,
+        sessionId,
+        usage: res.usage ?? undefined,
+        model: this.models.modelOf(sessionId),
+        effort: this.models.effortOf(sessionId),
+        modelUsage: res._meta?.quota?.model_usage,
+        ...this.libraryState(),
+      };
     } catch (err) {
       this.endRun(key, { error: String(err?.message ?? err) });
 

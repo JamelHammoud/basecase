@@ -113,6 +113,8 @@ export function indexReport(entries) {
       e.run,
       e.task,
       e.kind,
+      e.servedBy ?? e.model ?? 'agent default',
+      e.effort ?? '—',
       e.commit ? `${e.commit}${e.dirty ? '*' : ''}` : '—',
       e.score ?? e.grade ?? '—',
       e.judge ?? '—',
@@ -121,11 +123,9 @@ export function indexReport(entries) {
       kTokens(e.tokens),
       e.toolCalls ?? '—',
     ]);
+  const head = ['date', 'run', 'task', 'kind', 'model', 'effort', 'commit', 'score / grade', 'judge', 'time', 'cost'];
 
-  return table(
-    ['date', 'run', 'task', 'kind', 'commit', 'score / grade', 'judge', 'time', 'cost', 'tokens', 'tool calls'],
-    rows,
-  ).join('\n');
+  return table([...head, 'tokens', 'tool calls'], rows).join('\n');
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

@@ -35,9 +35,16 @@ async function nextPort(state) {
   return state.port++;
 }
 
+const passThrough = ['model', 'effort'].flatMap((name) => {
+  const value = argOption(args, name, undefined);
+
+  return value ? [`--${name}`, value] : [];
+});
+
 function runRobot(robot, port) {
   const logFile = path.join(runDir, `${robot}.log`);
-  const child = spawn(process.execPath, [path.join(here, 'run.mjs'), robot, '--port', String(port), '--run', runName], {
+  const runArgs = [path.join(here, 'run.mjs'), robot, '--port', String(port), '--run', runName, ...passThrough];
+  const child = spawn(process.execPath, runArgs, {
     stdio: ['ignore', fs.openSync(logFile, 'a'), fs.openSync(logFile, 'a')],
   });
 

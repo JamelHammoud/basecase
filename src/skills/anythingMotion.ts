@@ -6,7 +6,7 @@ import type { Environment } from './environment';
 import { cem } from './anythingCem';
 import type { Poser } from './anythingPoser';
 import { betterJudged, judgeOn, Trials, type Judged, type TrialCase } from './anythingSim';
-import { augmented, type Key } from './anythingAugment';
+import { augmented, LEAPS, leapsIn, type Key } from './anythingAugment';
 import { Statics, type JointValues } from './anythingStatics';
 import type { TaskSpec } from './anythingTypes';
 
@@ -148,6 +148,25 @@ async function refined(
   return best;
 }
 
+interface Planned {
+  keys: Key[];
+  lead: number;
+  judged: Judged;
+}
+
+async function planned(
+  trials: Trials,
+  options: { keys: Key[]; spec: TaskSpec; input: MotionInput; rest: JointValues; cases: TrialCase[] },
+): Promise<Planned> {
+  const { keys, spec, cases } = options;
+  const first = await bestLead(trials, { keys, spec, cases });
+  const settled = first.judged.passed === cases.length && first.judged.worst >= PASS_MARGIN;
+
+  if (settled) return { keys, lead: first.lead, judged: first.judged };
+
+  return refined(trials, { ...options, lead: first.lead, first });
+}
+
 export async function planMotion(input: MotionInput): Promise<MotionPlan> {
   const { mj, model, poser, spec, environment } = input;
   const statics = new Statics({ mj, model, poser });
@@ -155,17 +174,23 @@ export async function planMotion(input: MotionInput): Promise<MotionPlan> {
 
   try {
     const solved = statics.keyValues(spec.intent).map(({ t, values }) => ({ t, values }));
-    const keys = augmented(solved, { model, facts: poser.facts, spec, statics });
     const cases = trials.cases(CHECK_CASES - 1, `check|${spec.name}`);
-    const first = await bestLead(trials, { keys, spec, cases });
-    const settled = first.judged.passed === cases.length && first.judged.worst >= PASS_MARGIN;
-    const plan = settled
-      ? { keys, lead: first.lead, judged: first.judged }
-      : await refined(trials, { keys, spec, lead: first.lead, input, rest: statics.restValues, first, cases });
-    const controller = controllerOf(plan.keys, { lead: plan.lead, horizonS: spec.seconds });
-    const reason = `The plan passed ${plan.judged.passed} of ${cases.length} checks before Arena.`;
+    const leaps = leapsIn(spec.intent) ? LEAPS : LEAPS.slice(0, 1);
+    let plan: Planned | null = null;
 
-    return { controller: plan.judged.passed === cases.length ? controller : null, reason };
+    for (const leap of leaps) {
+      if (plan?.judged.passed === cases.length || input.stop()) break;
+
+      const keys = augmented(solved, { model, facts: poser.facts, spec, statics, leap });
+      const tried = await planned(trials, { keys, spec, input, rest: statics.restValues, cases });
+
+      if (!plan || better(tried.judged, plan.judged)) plan = tried;
+    }
+
+    const controller = controllerOf(plan!.keys, { lead: plan!.lead, horizonS: spec.seconds });
+    const reason = `The plan passed ${plan!.judged.passed} of ${cases.length} checks before Arena.`;
+
+    return { controller: plan!.judged.passed === cases.length ? controller : null, reason };
   } finally {
     statics.dispose();
     trials.dispose();

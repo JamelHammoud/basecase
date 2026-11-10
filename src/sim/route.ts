@@ -22,6 +22,7 @@ export interface RouteSpec {
   deadband: number;
   limits: RouteLimits;
   accel?: { forward: number; turn: number };
+  brisk?: { speed: number; band: number };
 }
 
 export type RouteDrive = { kind: 'rover'; wheels: WheelSetup[] } | { kind: 'policy'; policy: PolicySpec };
@@ -114,8 +115,24 @@ export function routeCommand(spec: RouteSpec, state: { t: number; at: Planar; ya
   if (share < MIN_SHARE) return steer(w, state.yaw, spec);
 
   const turn = clamp(-spec.headingGain * wrap(state.yaw), -spec.limits.turn, spec.limits.turn);
+  const lift = briskShare(spec, { speed: Math.hypot(u.forward, u.left) * share, distance });
 
-  return [u.forward * share, u.left * share, turn];
+  const { limits } = spec;
+
+  return [
+    clamp(u.forward * share * lift, limits.forward[0], limits.forward[1]),
+    clamp(u.left * share * lift, limits.left[0], limits.left[1]),
+    turn,
+  ];
+}
+
+function briskShare(spec: RouteSpec, options: { speed: number; distance: number }): number {
+  const { brisk } = spec;
+  const { speed, distance } = options;
+
+  if (!brisk || speed <= 1e-6 || speed >= brisk.speed) return 1;
+
+  return distance > brisk.band ? brisk.speed / speed : 0;
 }
 
 export function wheelSpeeds(wheels: WheelSetup[], command: V3): Record<string, number> {

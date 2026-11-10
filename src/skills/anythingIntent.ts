@@ -73,11 +73,29 @@ export interface IntentSession {
 
 const ATTEMPTS = 3;
 
+const CALLS = 3;
+const BACKOFF_MS = 5000;
+
+async function askAgain(session: IntentSession, prompt: string): Promise<string> {
+  let last: unknown = null;
+
+  for (let call = 0; call < CALLS && !session.signal?.aborted; call++) {
+    try {
+      return await session.ask({ system: INTENT_SYSTEM, prompt, signal: session.signal });
+    } catch (error) {
+      last = error;
+      await new Promise((resolve) => setTimeout(resolve, BACKOFF_MS * (call + 1)));
+    }
+  }
+
+  throw last instanceof Error ? last : new Error('Claude could not be reached.');
+}
+
 async function askVerdict(session: IntentSession, prompt: string): Promise<{ verdict: IntentVerdict; text: string }> {
   let note = '';
 
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
-    const text = await session.ask({ system: INTENT_SYSTEM, prompt: `${prompt}${note}`, signal: session.signal });
+    const text = await askAgain(session, `${prompt}${note}`);
 
     try {
       const verdict = parseVerdict(jsonIn(text));

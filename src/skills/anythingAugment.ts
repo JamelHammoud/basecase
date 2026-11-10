@@ -10,8 +10,16 @@ export interface Key {
   free?: boolean;
 }
 
-const CROUCH_SHARE = 0.2;
-const CROUCH_LEAD_S = 0.35;
+export interface Leap {
+  crouch: number;
+  leadS: number;
+}
+
+export const LEAPS: readonly Leap[] = Object.freeze([
+  { crouch: 0.2, leadS: 0.35 },
+  { crouch: 0.35, leadS: 0.25 },
+]);
+
 const RAMP_SHARES = [0.35, 0.7];
 const MAX_RAMP_S = 2;
 
@@ -44,17 +52,22 @@ function fromOffset(keys: Key[], options: { model: SimModel; facts: BodyFacts; s
   return [{ t: 0, values: start }, ...ramp, ...keys.filter((k) => k.t >= span)];
 }
 
-function beforeLeaps(keys: Key[], options: { intent: IntentKey[]; statics: Statics; facts: BodyFacts }): Key[] {
-  const { intent, statics, facts } = options;
-  const crouch = statics.solve({ base: { up: -CROUCH_SHARE * facts.heightM } }, facts.rest).values;
+export const leapsIn = (intent: IntentKey[]) => intent.some((k) => (k.base?.up ?? 0) > 0);
+
+function beforeLeaps(
+  keys: Key[],
+  options: { intent: IntentKey[]; statics: Statics; facts: BodyFacts; leap: Leap },
+): Key[] {
+  const { intent, statics, facts, leap } = options;
+  const crouch = statics.solve({ base: { up: -leap.crouch * facts.heightM } }, facts.rest).values;
 
   return keys.flatMap((k, i) => {
-    const leap = (intent[i]?.base?.up ?? 0) > 0 && k.t > CROUCH_LEAD_S;
+    const leaps = (intent[i]?.base?.up ?? 0) > 0 && k.t > leap.leadS;
 
-    if (!leap) return [k];
+    if (!leaps) return [k];
 
     return [
-      { t: k.t - CROUCH_LEAD_S, values: crouch, free: true },
+      { t: k.t - leap.leadS, values: crouch, free: true },
       { ...k, free: true },
     ];
   });
@@ -62,11 +75,10 @@ function beforeLeaps(keys: Key[], options: { intent: IntentKey[]; statics: Stati
 
 export function augmented(
   keys: Key[],
-  options: { model: SimModel; facts: BodyFacts; spec: TaskSpec; statics: Statics },
+  options: { model: SimModel; facts: BodyFacts; spec: TaskSpec; statics: Statics; leap: Leap },
 ): Key[] {
-  const leaps = options.facts.floating
-    ? beforeLeaps(keys, { intent: options.spec.intent, statics: options.statics, facts: options.facts })
-    : keys;
+  const { facts, spec, statics, leap } = options;
+  const leaps = facts.floating ? beforeLeaps(keys, { intent: spec.intent, statics, facts, leap }) : keys;
 
   return fromOffset(leaps, options).sort((a, b) => a.t - b.t);
 }

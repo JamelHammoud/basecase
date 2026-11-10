@@ -16,6 +16,7 @@ export interface RouteVariant {
   gain: number;
   limits: RouteLimits;
   accel?: { forward: number; turn: number };
+  brisk?: { speed: number; band: number };
 }
 
 const TIMINGS = [
@@ -92,7 +93,7 @@ export function routeController(options: {
   variant: RouteVariant;
 }): SkillController {
   const { facts, spec, drive, variant } = options;
-  const { lead, gain, limits, accel } = variant;
+  const { lead, gain, limits, accel, brisk } = variant;
 
   return {
     kind: 'route',
@@ -104,6 +105,7 @@ export function routeController(options: {
       deadband: 0.008,
       limits,
       ...(accel ? { accel } : {}),
+      ...(brisk ? { brisk } : {}),
     },
     drive,
   };

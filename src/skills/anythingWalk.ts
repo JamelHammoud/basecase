@@ -7,7 +7,7 @@ import { kitTopSpeed } from './kitModel';
 import { kitSchedule, scheduledMinutes } from './kitSchedule';
 import { trainKitEntry } from './motorKit';
 import type { BodyFacts } from './anythingBody';
-import { planRoute, timedVariants, type RoutePlan } from './anythingRoute';
+import { planRoute, timedVariants, type RoutePlan, type RouteVariant } from './anythingRoute';
 import type { TaskSpec } from './anythingTypes';
 
 const ARENA_MINUTES = 8;
@@ -17,6 +17,21 @@ export function walkLimits(model: SimModel): RouteLimits {
   const top = kitTopSpeed(model);
 
   return { forward: [0, top], left: [-0.25 * top, 0.25 * top], turn: TURN_RAD_S };
+}
+
+const ACCEL = { forward: 0.4, turn: 2 };
+
+export function walkVariants(model: SimModel): RouteVariant[] {
+  const limits = walkLimits(model);
+  const brisk = { speed: 0.5 * limits.forward[1], band: 0.03 };
+
+  const turning = { ...limits, left: [0, 0] as [number, number] };
+
+  return [
+    ...timedVariants(limits, ACCEL),
+    { lead: 0.4, gain: 2, limits, accel: ACCEL, brisk },
+    { lead: 0.4, gain: 2, limits: turning, accel: ACCEL },
+  ];
 }
 
 export const walkMinutes = (model: SimModel) =>
@@ -61,7 +76,7 @@ export async function planWalk(input: WalkInput): Promise<RoutePlan> {
     spec: input.spec,
     environment: input.environment,
     drive: { kind: 'policy', policy: kit.skill.controller.policy },
-    variants: timedVariants(walkLimits(model), { forward: 0.4, turn: 2 }),
+    variants: walkVariants(model),
     stop: () => !!input.signal?.aborted,
   });
 }

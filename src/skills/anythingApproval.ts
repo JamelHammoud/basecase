@@ -117,7 +117,7 @@ export async function selfProblems(spec: TaskSpec, poser: Poser, known: Labelled
   ];
   const problems: string[] =
     miss > 0.005
-      ? [`Your intent asks for a part position the arm can't reach (off by ${(miss * 1000).toFixed(0)} mm).`]
+      ? [`Your intent asks for a part position the robot can't reach (off by ${(miss * 1000).toFixed(0)} mm).`]
       : [];
 
   for (const rollout of [...own, ...known]) {

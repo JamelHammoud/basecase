@@ -27,6 +27,7 @@ export const LADDER: readonly Method[] = Object.freeze([
 ]);
 
 const SURE_PASSES = 31;
+const OVERTIME_S = 1.5;
 const SEARCH_MINUTES = 20;
 
 export interface Task {
@@ -130,7 +131,12 @@ const sure = (evidence: ArenaEvidence) => evidence.passed && evidence.variants.e
 async function confident(task: Task, controller: SkillController): Promise<boolean> {
   const strict = lowerSpec(tightenedSpec(task.spec), task.facts);
   const contract = strict.contract;
-  const environment = { ...task.environment, contract, signals: { ...task.environment.signals, ...strict.signals } };
+  const environment = {
+    ...task.environment,
+    horizonS: task.environment.horizonS + OVERTIME_S,
+    contract,
+    signals: { ...task.environment.signals, ...strict.signals },
+  };
   const evidence = await runArena({ mj: task.mj, model: task.model, contract, controller, environment });
 
   return evidence.passed;

@@ -21,7 +21,7 @@ export const QtyEditor: React.FC<{
           aria-haspopup="menu"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className={`-my-[5px] -mx-1 h-7 px-1 rounded-md text-[13px] leading-7 tabular-nums cursor-default transition-colors duration-150 hover:bg-white/[0.07] hover:text-white/90 ${open ? 'bg-white/[0.07] text-white/90' : 'text-white/50'}`}
+          className={`-my-[9px] -mx-1 h-[32px] px-1 rounded-md text-[13px] leading-[32px] tabular-nums cursor-default transition-colors duration-150 hover:bg-white/[0.07] hover:text-white/90 ${open ? 'bg-white/[0.07] text-white/90' : 'text-white/50'}`}
         >
           {lineCount(line)}
         </button>

@@ -1,8 +1,10 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { frameOf } from './frame.mjs';
+import { addScroll, scrollAt, scrolledBy } from './scrollShift.mjs';
 
 export const SESSION = Object.freeze({
   settleMs: 400,
+  scrollSettleMs: 700,
   maxWaitS: 10,
   treeChars: 40000,
   maxFindings: 12,
@@ -51,7 +53,7 @@ export function withdrawFinding(findings, where) {
 
 export function createSession({ screen, minutes, devicePixelRatio, now = Date.now }) {
   const deadline = now() + minutes * 60000;
-  const state = { toCss: 1, done: false, actions: 0 };
+  const state = { toCss: 1, done: false, actions: 0, pointer: [0, 0], scrolls: [] };
   const findings = [];
   const timeLeft = () => Math.max(0, deadline - now());
   const clock = () => {
@@ -63,8 +65,8 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
   };
   const css = (v) => Math.round(Number(v) * state.toCss);
 
-  const look = async () => {
-    const frame = await frameOf(await screen.screenshot(), devicePixelRatio);
+  const look = async (shot) => {
+    const frame = await frameOf(shot ?? (await screen.screenshot()), devicePixelRatio);
 
     state.toCss = frame.toCss;
 
@@ -81,20 +83,44 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
     return look();
   };
 
+  const scroll = async ({ dy }) => {
+    if (!timeLeft()) return { text: 'Time is up. Report what you found, then call finish.' };
+
+    const px = Number(dy) || 0;
+    const before = await screen.screenshot();
+
+    state.actions += 1;
+    await screen.scroll(0, px);
+    await sleep(SESSION.scrollSettleMs);
+
+    const shot = await screen.screenshot();
+    const x = state.pointer[0];
+    const moved = await scrolledBy({ before, after: shot, x, maxPx: Math.abs(px) + 40, devicePixelRatio });
+
+    addScroll(state.scrolls, { x, px: moved });
+
+    return look(shot);
+  };
+
   const handlers = {
-    look,
+    look: () => look(),
     tree: async () => ({ text: (await screen.accessibilityTree()).slice(0, SESSION.treeChars) }),
-    click: ({ x, y }) => after(() => screen.click(css(x), css(y))),
+    click: ({ x, y }) =>
+      after(() => {
+        state.pointer = [css(x), css(y)];
+
+        return screen.click(css(x), css(y));
+      }),
     type: ({ text }) => after(() => screen.type(String(text))),
     press: ({ key }) => after(() => screen.press(String(key))),
-    scroll: ({ dy }) => after(() => screen.scroll(0, Number(dy) || 0)),
+    scroll,
     wait: async ({ seconds }) => {
       await sleep(Math.min(SESSION.maxWaitS, Math.max(0, Number(seconds) || 0)) * 1000);
 
       return look();
     },
     report: ({ where, x, y, problem }) => {
-      const at = finite(x) && finite(y) ? [css(x), css(y)] : undefined;
+      const at = finite(x) && finite(y) ? [css(x), css(y) + scrollAt(state.scrolls, css(x))] : undefined;
 
       return { text: `${addFinding(findings, { where, problem, at })} ${clock()}` };
     },

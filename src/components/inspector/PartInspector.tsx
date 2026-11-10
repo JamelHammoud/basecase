@@ -62,6 +62,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
       <Section title="Notes" collapsible defaultOpen={false}>
         <TextArea
           rows={3}
+          aria-label="Notes"
           value={part.note}
           onChange={(e) => onUpdate({ note: e.target.value }, true)}
           onBlur={(e) => onUpdate({ note: e.target.value }, false)}

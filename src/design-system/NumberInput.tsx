@@ -14,7 +14,11 @@ export interface NumberInputProps {
   className?: string;
   disabled?: boolean;
   title?: string;
+  'aria-label'?: string;
 }
+
+const accessibleName = ({ ariaLabel, title, label }: { ariaLabel?: string; title?: string; label?: React.ReactNode }) =>
+  ariaLabel ?? title ?? (typeof label === 'string' ? label : undefined);
 
 export const NumberInput: React.FC<NumberInputProps> = ({
   label,
@@ -28,6 +32,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   className = '',
   disabled = false,
   title,
+  'aria-label': ariaLabel,
 }) => {
   const [draft, setDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -100,6 +105,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         inputMode="decimal"
         spellCheck={false}
         disabled={disabled}
+        aria-label={accessibleName({ ariaLabel, title, label })}
         value={draft ?? format(value)}
         onFocus={(e) => {
           setDraft(format(value));

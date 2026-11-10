@@ -3,7 +3,7 @@ import { createSdkMcpServer, query, tool } from '@anthropic-ai/claude-agent-sdk'
 import { z } from 'zod';
 
 export const PERSONA_MODEL = process.env.PERSONA_MODEL || 'claude-opus-5-5';
-export const PERSONA_EFFORT = process.env.PERSONA_EFFORT || 'medium';
+export const PERSONA_EFFORT = process.env.PERSONA_EFFORT || 'high';
 
 const SERVER = 'persona';
 const GRACE_MS = 30000;

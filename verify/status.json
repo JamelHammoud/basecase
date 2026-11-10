@@ -1122,7 +1122,7 @@
       "title": "Stage 3a: Motor Kit, biped steering and the solver race",
       "stage": 3,
       "state": "required",
-      "ok": false,
+      "ok": true,
       "voided": false,
       "checks": [
         {
@@ -1130,103 +1130,103 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.002
+          "seconds": 0.001
         },
         {
           "name": "forge-train builds",
           "ok": true,
           "detail": "0.2 s",
           "metrics": {},
-          "seconds": 0.209
+          "seconds": 0.224
         },
         {
           "name": "Motor Kit: quad-servo learns Stand, Velocity tracking, Get-up and Settle through Forge; each passes Arena; the weak quad is refused",
-          "ok": false,
-          "detail": "\n ❯ checkOwnArena verify/skills/kit.ts:94:35\n     92|   const own = await runArena({ mj, model, contract, controller: skill.…\n     93|\n     94|   expect(own.passed, own.summary).toBe(true);\n       |                                   ^\n     95|\n     96|   const limp = await runArena({ mj, model, contract, controller: { kin…\n ❯ trainAndJudge verify/skills/kit.ts:143:25\n ❯ verify/skills/kit-quad.test.ts:16:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
+          "ok": true,
+          "detail": "1625.2 s",
           "metrics": {
-            "loadBefore": 6.267578125,
-            "loadAfter": 13.880859375
+            "loadBefore": 4.1484375,
+            "loadAfter": 13.5849609375
           },
-          "seconds": 1210.295
+          "seconds": 1625.2
         },
         {
           "name": "Motor Kit: hexapod learns Stand and Velocity tracking through Forge; each passes Arena",
-          "ok": false,
-          "detail": "Received: \"refused\"\n\n ❯ trainAndJudge verify/skills/kit.ts:129:74\n    127|   writeJson(dir, 'outcome.json', { wallS, budgetS: plan.budgetMin * 60…\n    128|   writeJson(dir, 'forge-runs.json', forge.records);\n    129|   expect(outcome.kind, outcome.kind === 'refused' ? outcome.reason : '…\n       |                                                                          ^\n    130|\n    131|   if (outcome.kind !== 'skill') return null;\n ❯ verify/skills/kit-hexapod.test.ts:11:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
+          "ok": true,
+          "detail": "1363.5 s",
           "metrics": {
-            "loadBefore": 6.1201171875,
-            "loadAfter": 10.521484375
+            "loadBefore": 6.11328125,
+            "loadAfter": 3.080078125
           },
-          "seconds": 1678.716
+          "seconds": 1363.457
         },
         {
           "name": "Motor Kit: biped-servo learns Stand and Velocity tracking through Forge; each passes Arena",
-          "ok": false,
-          "detail": "Received: \"refused\"\n\n ❯ trainAndJudge verify/skills/kit.ts:129:74\n    127|   writeJson(dir, 'outcome.json', { wallS, budgetS: plan.budgetMin * 60…\n    128|   writeJson(dir, 'forge-runs.json', forge.records);\n    129|   expect(outcome.kind, outcome.kind === 'refused' ? outcome.reason : '…\n       |                                                                          ^\n    130|\n    131|   if (outcome.kind !== 'skill') return null;\n ❯ verify/skills/kit-biped.test.ts:11:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
+          "ok": true,
+          "detail": "2442.1 s",
           "metrics": {
-            "loadBefore": 6.2998046875,
-            "loadAfter": 11.63671875
+            "loadBefore": 3.080078125,
+            "loadAfter": 4.10302734375
           },
-          "seconds": 2949.055
+          "seconds": 2442.132
         },
         {
           "name": "Train here, judge there: every Kit policy acts as Forge wrote it and passes a clean WASM replay",
-          "ok": false,
-          "detail": "Error: ENOENT: no such file or directory, open 'verify/out/kit/biped-servo/velocity-tracking/skill.json'\n ❯ readJson verify/skills/plans.ts:44:66\n     42| };\n     43|\n     44| const readJson = <T>(dir: string, name: string) => JSON.parse(fs.readF…\n       |                                                                  ^\n     45|\n     46| export interface StoredKitSkill {\n ❯ loadKitSkill verify/skills/plans.ts:56:12\n ❯ verify/skills/replay.test.ts:46:31\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯",
+          "ok": true,
+          "detail": "2.1 s",
           "metrics": {},
-          "seconds": 1.573
+          "seconds": 2.057
         },
         {
           "name": "Biped drive: forward, left and right on its Kit skill, with travel, heading of the commanded sign and no fall",
-          "ok": false,
-          "detail": " ❯ readJson verify/skills/plans.ts:44:66\n     42| };\n     43|\n     44| const readJson = <T>(dir: string, name: string) => JSON.parse(fs.readF…\n       |                                                                  ^\n     45|\n     46| export interface StoredKitSkill {\n ❯ loadKitSkill verify/skills/plans.ts:56:12\n ❯ driveBiped verify/skills/steering.ts:156:21\n ❯ verify/skills/steering.test.ts:6:46\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
+          "ok": true,
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.472
+          "seconds": 0.631
         },
         {
           "name": "Solver race: three tasks pass Arena, record method and cost, and the router is within 2× of the cheapest",
           "ok": true,
-          "detail": "122.0 s",
+          "detail": "1284.6 s",
           "metrics": {
-            "loadBefore": 6.2109375,
-            "loadAfter": 12.5703125
+            "loadBefore": 4.10302734375,
+            "loadAfter": 3.009765625
           },
-          "seconds": 121.982
+          "seconds": 1284.593
         },
         {
           "name": "Freshness: a mass edit reruns Arena, a topology edit needs training, a colour edit stays fresh",
           "ok": true,
-          "detail": "0.6 s",
+          "detail": "0.8 s",
           "metrics": {},
-          "seconds": 0.64
+          "seconds": 0.798
         },
         {
           "name": "Kit retraining debounces, latest design wins, and waits behind user training",
           "ok": true,
-          "detail": "0.4 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.362
+          "seconds": 0.337
         },
         {
           "name": "Cases judge with the one Rust contract, not a TypeScript copy",
           "ok": true,
           "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.551
+          "seconds": 0.553
         },
         {
           "name": "Skills, Cases and sim unit tests pass",
           "ok": true,
-          "detail": "1.6 s",
+          "detail": "2.4 s",
           "metrics": {},
-          "seconds": 1.598
+          "seconds": 2.385
         },
         {
           "name": "Types hold",
           "ok": true,
-          "detail": "4.8 s",
+          "detail": "5.3 s",
           "metrics": {},
-          "seconds": 4.757
+          "seconds": 5.284
         }
       ],
       "canaries": [
@@ -1235,47 +1235,51 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 6.11
+          "seconds": 6.213
         },
         {
           "name": "a zero policy fails Velocity tracking",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 9.933
+          "seconds": 9.899
         },
         {
           "name": "a reward-hacked candidate is rejected by the race",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 228.79
+          "seconds": 1270.745
         },
         {
           "name": "must-fail-weak-quad is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.628
+          "seconds": 0.647
         },
         {
           "name": "a skill moved to another fixture needs training",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.432
+          "seconds": 0.425
         },
         {
           "name": "a biped that only walks straight fails steering",
-          "ok": false,
-          "detail": "Canary did not fire: the check passed a planted fault (It crashed instead: Error: ENOENT: no such file or directory, open 'verify/out/kit/biped-servo/velocity-tracking/skill.json')",
+          "ok": true,
+          "detail": "",
           "metrics": {},
-          "seconds": 0.435
+          "seconds": 0.58
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-09T00:42:18.344Z",
-      "manifest": "clean"
+      "commit": "310ece4",
+      "at": "2026-11-10T00:02:53.623Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s4b-routines-flow": {
       "id": "s4b-routines-flow",

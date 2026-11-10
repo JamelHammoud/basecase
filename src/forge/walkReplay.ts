@@ -1,6 +1,7 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import { act, observe, obsSize, type ObsSource, type PolicySpec } from '../sim/policy';
-import { rotateIntoFrame, settleStart, type StartJob } from './forgeStart';
+import { rotateIntoFrame, settleStart, type Start, type StartJob } from './forgeStart';
+import { gateStart, RESET_JOINT_NOISE } from './gateStarts';
 
 const EVAL_SECONDS = 8;
 const MIN_UPRIGHT = 0.5;
@@ -9,6 +10,8 @@ const MIN_HEIGHT_SHARE = 0.45;
 export interface ReplayJob extends StartJob {
   joints: Array<{ name: string }>;
   gateSpeed: number;
+  seed: number;
+  resetNoise?: number;
 }
 
 export interface ReplayResult {
@@ -59,12 +62,37 @@ function source(mj: MainModule, model: MjModel, job: ReplayJob, data: MjData): O
 
 const rootQuat = (src: ObsSource) => [3, 4, 5, 6].map((k) => src.qpos[src.rootQpos + k]);
 
-function turn(data: MjData, rootQpos: number, yaw: number) {
-  const [c, s] = [Math.cos(yaw / 2), Math.sin(yaw / 2)];
-  const qpos = data.qpos as Float64Array;
-  const q = Array.from(qpos.subarray(rootQpos + 3, rootQpos + 7));
+function ctrlLimits(mj: MainModule, model: MjModel, job: ReplayJob) {
+  const actuators = job.joints.map((j) => named(mj, model, 'ACTUATOR', j.name));
+  const limited = (a: number) => model.actuator_ctrllimited[a] !== 0;
 
-  qpos.set([c * q[0] - s * q[3], c * q[1] - s * q[2], c * q[2] + s * q[1], c * q[3] + s * q[0]], rootQpos + 3);
+  return {
+    ctrlLow: actuators.map((a) => (limited(a) ? model.actuator_ctrlrange[2 * a] : -Infinity)),
+    ctrlHigh: actuators.map((a) => (limited(a) ? model.actuator_ctrlrange[2 * a + 1] : Infinity)),
+  };
+}
+
+export function replayStarts(mj: MainModule, model: MjModel, replay: { job: ReplayJob; start: Start; seeds: number }) {
+  const { job, start, seeds } = replay;
+  const data = new mj.MjData(model);
+
+  try {
+    mj.mj_setState(model, data, Array.from(start.row), mj.mjtState.mjSTATE_INTEGRATION.value);
+
+    const src = source(mj, model, job, data);
+    const spec = {
+      qpos: Array.from(src.qpos),
+      rootQpos: src.rootQpos,
+      jointQpos: src.jointQpos,
+      ...ctrlLimits(mj, model, job),
+      noise: job.resetNoise ?? RESET_JOINT_NOISE,
+      seed: job.seed,
+    };
+
+    return Array.from({ length: seeds }, (_, robot) => gateStart(spec, robot));
+  } finally {
+    data.delete();
+  }
 }
 
 function fallen(src: ObsSource, z0: number) {
@@ -123,9 +151,10 @@ export function replayWalk(mj: MainModule, replay: Replay): ReplayResult {
       decimation: Math.max(1, Math.round(policy.controlDt / model.opt.timestep)),
       z0: start.z0,
     };
-    const results = Array.from({ length: seeds }, (_, seed) => {
+    const starts = replayStarts(mj, model, { job, start, seeds });
+    const results = starts.map((qpos) => {
       mj.mj_setState(model, data, Array.from(start.row), mj.mjtState.mjSTATE_INTEGRATION.value);
-      turn(data, robot.rootQpos, -Math.PI + (2 * Math.PI * (seed + 0.5)) / seeds);
+      (data.qpos as Float64Array).set(qpos);
       mj.mj_forward(model, data);
 
       return walk({ mj, model, data, policy, robot }, src, job.ctrlDefault);

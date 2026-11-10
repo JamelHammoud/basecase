@@ -44,6 +44,8 @@ const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x
 const MIN_SHARE = 0.4;
 const STEER_COS = 0.2;
 const STEER_DISTANCE = 0.06;
+const REVERSE_ANGLE = (2 * Math.PI) / 3;
+const HOLD_HEADING = 0.5;
 
 export function routeAt(keys: RouteKey[], t: number): { at: Planar; velocity: Planar } {
   const next = keys.findIndex((k) => k.t > t);
@@ -85,7 +87,7 @@ function boxShare(u: Planar, limits: RouteLimits): number {
 function steer(w: Planar, yaw: number, spec: RouteSpec): V3 {
   const { limits } = spec;
   const heading = Math.atan2(w.left, w.forward);
-  const behind = Math.abs(wrap(heading - yaw)) > Math.PI / 2;
+  const behind = Math.abs(wrap(heading - yaw)) > REVERSE_ANGLE;
   const reverse = limits.forward[1] <= 0 || (limits.forward[0] < 0 && behind);
   const error = wrap(heading + (reverse ? Math.PI : 0) - yaw);
   const speed = (Math.hypot(w.forward, w.left) * Math.max(0, Math.cos(error) - STEER_COS)) / (1 - STEER_COS);
@@ -114,7 +116,8 @@ export function routeCommand(spec: RouteSpec, state: { t: number; at: Planar; ya
 
   if (share < MIN_SHARE) return steer(w, state.yaw, spec);
 
-  const turn = clamp(-spec.headingGain * wrap(state.yaw), -spec.limits.turn, spec.limits.turn);
+  const drift = Math.abs(wrap(state.yaw)) < HOLD_HEADING ? wrap(state.yaw) : 0;
+  const turn = clamp(-spec.headingGain * drift, -spec.limits.turn, spec.limits.turn);
   const lift = briskShare(spec, { speed: Math.hypot(u.forward, u.left) * share, distance });
 
   const { limits } = spec;

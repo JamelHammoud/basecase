@@ -3,7 +3,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RouteLimits } from '../sim/route';
 import type { Environment } from './environment';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
-import { kitTopSpeed } from './kitModel';
+import { footCount, kitTopSpeed } from './kitModel';
 import { kitSchedule, scheduledMinutes } from './kitSchedule';
 import { trainKitEntry } from './motorKit';
 import type { BodyFacts } from './anythingBody';
@@ -13,10 +13,15 @@ import type { TaskSpec } from './anythingTypes';
 const ARENA_MINUTES = 8;
 const TURN_RAD_S = 0.6;
 
+const BACK_SHARE = 0.5;
+
+export const walksBackward = (model: SimModel) => footCount(model) >= 4;
+
 export function walkLimits(model: SimModel): RouteLimits {
   const top = kitTopSpeed(model);
+  const back = walksBackward(model) ? -BACK_SHARE * top : 0;
 
-  return { forward: [0, top], left: [-0.25 * top, 0.25 * top], turn: TURN_RAD_S };
+  return { forward: [back, top], left: [-0.25 * top, 0.25 * top], turn: TURN_RAD_S };
 }
 
 const ACCEL = { forward: 0.4, turn: 2 };
@@ -24,13 +29,14 @@ const ACCEL = { forward: 0.4, turn: 2 };
 export function walkVariants(model: SimModel): RouteVariant[] {
   const limits = walkLimits(model);
   const brisk = { speed: 0.5 * limits.forward[1], band: 0.03 };
-
   const turning = { ...limits, left: [0, 0] as [number, number] };
+  const timed = timedVariants(limits, ACCEL);
 
   return [
-    ...timedVariants(limits, ACCEL),
-    { lead: 0.4, gain: 2, limits, accel: ACCEL, brisk },
-    { lead: 0.4, gain: 2, limits: turning, accel: ACCEL },
+    ...timed.slice(0, 2),
+    ...timed.slice(0, 2).map((v) => ({ ...v, brisk })),
+    { lead: 0.4, gain: 2, limits: turning, accel: ACCEL, brisk },
+    ...timed.slice(2),
   ];
 }
 
@@ -64,6 +70,7 @@ export async function planWalk(input: WalkInput): Promise<RoutePlan> {
     forge: input.forge,
     save: input.save,
     signal: input.signal,
+    reverse: walksBackward(model),
   });
 
   if (kit.kind !== 'skill' || kit.skill.controller.kind !== 'policy')

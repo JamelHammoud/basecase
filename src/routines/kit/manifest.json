@@ -4,19 +4,19 @@
       "file": "quad-servo-velocity-tracking.skill.json",
       "robot": "quad-servo",
       "skill": "Velocity tracking",
-      "forge": "forge-train 0.1.0 at fe81d9e",
+      "forge": "forge-train 0.1.0 at 310ece4",
       "mujoco": "4.0.0",
-      "steps": 34114560,
-      "wallS": 749,
-      "arena": "Passed 32 of 32 with held-out random starts and physics, 32 of 32 at half the physics timestep, 30 of 32 with random servo delays, in simulation. With 95% confidence, the pass rate under these conditions is at least 81%."
+      "steps": 60260352,
+      "wallS": 1121,
+      "arena": "Passed 32 of 32 with held-out random starts and physics, 32 of 32 at half the physics timestep, 32 of 32 with random servo delays, in simulation. With 95% confidence, the pass rate under these conditions is at least 91%."
     },
     {
       "file": "quad-servo-settle-to-neutral.skill.json",
       "robot": "quad-servo",
       "skill": "Settle to neutral",
-      "forge": "forge-train 0.1.0 at fe81d9e",
+      "forge": "forge-train 0.1.0 at 310ece4",
       "mujoco": "4.0.0",
-      "steps": 5755392,
+      "steps": 6028800,
       "wallS": 125,
       "arena": "Passed 32 of 32 with held-out random starts and physics, 32 of 32 at half the physics timestep, 32 of 32 with random servo delays, in simulation. With 95% confidence, the pass rate under these conditions is at least 91%."
     }

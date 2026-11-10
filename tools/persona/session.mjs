@@ -1,7 +1,14 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { frameOf } from './frame.mjs';
 
-export const SESSION = Object.freeze({ settleMs: 400, maxWaitS: 10, treeChars: 40000, maxFindings: 12, nearPx: 12 });
+export const SESSION = Object.freeze({
+  settleMs: 400,
+  maxWaitS: 10,
+  treeChars: 40000,
+  maxFindings: 12,
+  nearPx: 12,
+  warnS: 60,
+});
 
 const finite = (v) => Number.isFinite(Number(v));
 
@@ -47,7 +54,13 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
   const state = { toCss: 1, done: false, actions: 0 };
   const findings = [];
   const timeLeft = () => Math.max(0, deadline - now());
-  const clock = () => `${Math.round(timeLeft() / 1000)} s left.`;
+  const clock = () => {
+    const left = Math.round(timeLeft() / 1000);
+
+    if (left <= SESSION.warnS) return `${left} s left. Time is nearly up: report what you found, then call finish.`;
+
+    return `${left} s left.`;
+  };
   const css = (v) => Math.round(Number(v) * state.toCss);
 
   const look = async () => {
@@ -59,6 +72,8 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
   };
 
   const after = async (action) => {
+    if (!timeLeft()) return { text: 'Time is up. Report what you found, then call finish.' };
+
     state.actions += 1;
     await action();
     await sleep(SESSION.settleMs);

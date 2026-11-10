@@ -53,10 +53,30 @@ function failure(message) {
   );
 }
 
+async function drain(run, session) {
+  for await (const message of run) {
+    if (message.type === 'result' && message.is_error && !session.findings.length && !session.state.actions)
+      throw failure(message.subtype);
+  }
+}
+
+export async function untilDone({ work, ms, stop }) {
+  let timer;
+  const deadline = new Promise((resolve) => {
+    timer = setTimeout(resolve, ms);
+  });
+
+  try {
+    await Promise.race([work, deadline]);
+  } finally {
+    clearTimeout(timer);
+    stop();
+  }
+}
+
 export async function claudeDriver({ session, system, prompt }) {
   const tools = personaTools(session.handlers);
   const abortController = new AbortController();
-  const timer = setTimeout(() => abortController.abort(), session.timeLeft() + GRACE_MS);
   const options = {
     model: PERSONA_MODEL,
     effort: PERSONA_EFFORT,
@@ -74,14 +94,19 @@ export async function claudeDriver({ session, system, prompt }) {
     abortController,
   };
 
-  try {
-    for await (const message of query({ prompt, options })) {
-      if (message.type === 'result' && message.is_error && !session.findings.length && !session.state.actions)
-        throw failure(message.subtype);
-    }
-  } catch (error) {
-    if (!abortController.signal.aborted) throw error.message?.startsWith('PersonaLab') ? error : failure(error.message);
-  } finally {
-    clearTimeout(timer);
-  }
+  const run = query({ prompt, options });
+  const work = drain(run, session).catch((error) => {
+    if (abortController.signal.aborted) return;
+
+    throw error.message?.startsWith('PersonaLab') ? error : failure(error.message);
+  });
+
+  await untilDone({
+    work,
+    ms: session.timeLeft() + GRACE_MS,
+    stop: () => {
+      abortController.abort();
+      run.close();
+    },
+  });
 }

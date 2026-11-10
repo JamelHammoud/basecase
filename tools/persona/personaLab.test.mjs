@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { personaScore } from '../../verify/rehearsal/personaScore';
-import { cleanEnv, personaTools, toolNames } from './claudeDriver.mjs';
+import { cleanEnv, personaTools, toolNames, untilDone } from './claudeDriver.mjs';
 import { devicePixelRatioOf, frameOf } from './frame.mjs';
 import { runPersona } from './personaLab.mjs';
 import { addFinding, createSession, withdrawFinding } from './session.mjs';
@@ -92,6 +92,26 @@ describe('PersonaLab offline parts', () => {
     expect(session.timeLeft()).toBe(90000);
     t = 200000;
     expect(session.timeLeft()).toBe(0);
+  });
+
+  it('stops acting once time is up and warns before it', async () => {
+    let t = 0;
+    const { screen, calls } = fakeScreen(100, 100);
+    const session = createSession({ screen, minutes: 1, now: () => t });
+
+    t = 30000;
+    expect(session.handlers.report({ where: 'A', problem: 'B' }).text).toMatch(/nearly up/);
+    t = 60000;
+    expect((await session.handlers.click({ x: 1, y: 1 })).text).toMatch(/Time is up/);
+    expect(calls).toEqual([]);
+  });
+
+  it('returns at the deadline even when the query never ends', async () => {
+    let stopped = false;
+
+    await untilDone({ work: new Promise(() => {}), ms: 20, stop: () => (stopped = true) });
+
+    expect(stopped).toBe(true);
   });
 
   it('runs a driver and returns its findings, which score against planted faults', async () => {

@@ -191,48 +191,48 @@
         {
           "name": "cargo test passes",
           "ok": true,
-          "detail": "45.0 s",
+          "detail": "187.5 s",
           "metrics": {},
-          "seconds": 45.041
+          "seconds": 187.518
         },
         {
           "name": "forge-train builds",
           "ok": true,
           "detail": "0.1 s",
           "metrics": {},
-          "seconds": 0.118
+          "seconds": 0.138
         },
         {
           "name": "forge-train links no Python",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.044
+          "seconds": 0.046
         },
         {
           "name": "Forge trains a real robot at 40K steps/s with the same events as train.py",
           "ok": true,
-          "detail": "50256 steps/s",
+          "detail": "53874 steps/s",
           "metrics": {
-            "fps": 50255.961557408926,
-            "loadBefore": 6.083984375,
-            "loadAfter": 6.083984375
+            "fps": 53874.10217882176,
+            "loadBefore": 6.20703125,
+            "loadAfter": 6.20703125
           },
-          "seconds": 2.162
+          "seconds": 1.959
         },
         {
           "name": "Forge exports a valid ONNX policy that matches its own actions",
           "ok": true,
           "detail": "worst 3.64e-6",
           "metrics": {},
-          "seconds": 0.37
+          "seconds": 0.447
         },
         {
           "name": "A Forge policy runs in the app with matching actions",
           "ok": true,
-          "detail": "0.6 s",
+          "detail": "0.7 s",
           "metrics": {},
-          "seconds": 0.62
+          "seconds": 0.661
         },
         {
           "name": "Forge reaches the walk skill within 20% of the samples train.py needs, over 10 seeds",
@@ -264,7 +264,7 @@
               691200
             ]
           },
-          "seconds": 6608.938
+          "seconds": 6610.079
         }
       ],
       "canaries": [
@@ -273,19 +273,23 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.001
+          "seconds": 0
         },
         {
           "name": "needing too many samples is rejected",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0
+          "seconds": 0.001
         }
       ],
-      "commit": "a2d6b99",
-      "at": "2026-11-09T07:44:28.588Z",
-      "manifest": "clean"
+      "commit": "0ace404",
+      "at": "2026-11-10T01:57:45.628Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s1-f1b-sysid-rewardlang": {
       "id": "s1-f1b-sysid-rewardlang",
@@ -364,7 +368,7 @@
           "ok": true,
           "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.299
+          "seconds": 0.305
         },
         {
           "name": "coordinator builds to WASM",
@@ -378,14 +382,14 @@
           "ok": true,
           "detail": "1.1 s",
           "metrics": {},
-          "seconds": 1.147
+          "seconds": 1.064
         },
         {
           "name": "Routine unit tests pass",
           "ok": true,
-          "detail": "1.2 s",
+          "detail": "1.1 s",
           "metrics": {},
-          "seconds": 1.199
+          "seconds": 1.05
         }
       ],
       "canaries": [
@@ -394,12 +398,16 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.358
+          "seconds": 0.345
         }
       ],
-      "commit": "26e7fa9",
-      "at": "2026-11-09T01:51:25.408Z",
-      "manifest": "clean"
+      "commit": "aba7dee",
+      "at": "2026-11-10T02:15:57.263Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s2-m1-first-case": {
       "id": "s2-m1-first-case",
@@ -1047,33 +1055,33 @@
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "0.2 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.214
+          "seconds": 0.253
         },
         {
           "name": "Forge Adam matches torch to 1e-4 over 50 steps",
           "ok": true,
           "detail": "worst 1.19e-7",
           "metrics": {},
-          "seconds": 2.639
+          "seconds": 2.223
         },
         {
           "name": "Forge reaches 45K steps/s at 1024 envs",
           "ok": true,
-          "detail": "155145 steps/s",
+          "detail": "155704 steps/s",
           "metrics": {
-            "loadBefore": 6.0009765625,
-            "loadAfter": 7.20166015625
+            "loadBefore": 6.28662109375,
+            "loadAfter": 6.28662109375
           },
-          "seconds": 3.248
+          "seconds": 3.256
         },
         {
           "name": "FastSAC and FlashSAC run and report the same events",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.24
+          "seconds": 1.232
         },
         {
           "name": "Python time-to-skill baseline recorded for three robots",
@@ -1083,25 +1091,34 @@
             "quad-servo": 46.74179087509401,
             "hexapod": 345.8167056250386,
             "biped-servo": 18.186022375011817,
-            "loadBefore": 6.04248046875,
-            "loadAfter": 6.04248046875
+            "loadBefore": 6.09912109375,
+            "loadAfter": 6.09912109375
           },
           "seconds": 0.003
         },
         {
-          "name": "Forge reaches the walk skill at least 3x faster than the Python baseline",
+          "name": "Forge reaches the walk skill at least 3x faster than the Python baseline on every robot, by wall clock, replayed in C MuJoCo",
           "ok": true,
-          "detail": "10.59x",
+          "detail": "quad-servo 9.52x, hexapod 44.06x, biped-servo 5.51x",
           "metrics": {
-            "ratios": [
-              10.587454766947372,
-              68.49173571205344,
-              6.6399108048843845
+            "ratios": {
+              "quad-servo": 9.517774562226434,
+              "hexapod": 44.06431009493356,
+              "biped-servo": 5.512586351928408
+            },
+            "forgeSeconds": {
+              "quad-servo": 4.911,
+              "hexapod": 7.848,
+              "biped-servo": 3.299
+            },
+            "missed": [
+              "hexapod seed 1: replay passed 20 of 32 seeds",
+              "biped-servo seed 1: replay passed 28 of 32 seeds"
             ],
-            "loadBefore": 6.04248046875,
-            "loadAfter": 13.1279296875
+            "loadBefore": 6.09912109375,
+            "loadAfter": 14.90185546875
           },
-          "seconds": 74.695
+          "seconds": 89.333
         }
       ],
       "canaries": [
@@ -1110,12 +1127,16 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 2.02
+          "seconds": 2.252
         }
       ],
-      "commit": "a2d6b99",
-      "at": "2026-11-09T07:46:47.942Z",
-      "manifest": "clean"
+      "commit": "0ace404",
+      "at": "2026-11-10T02:01:44.607Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s3a-motor-kit": {
       "id": "s3a-motor-kit",
@@ -1292,61 +1313,61 @@
         {
           "name": "the flow round-trips the schema and lights from trace events",
           "ok": true,
-          "detail": "0.5 s",
+          "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.486
+          "seconds": 0.359
         },
         {
           "name": "capabilities come from the scene",
           "ok": true,
           "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.401
+          "seconds": 0.36
         },
         {
           "name": "acceptance scenarios written from the sentence pass on mocks",
           "ok": true,
-          "detail": "0.4 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.361
+          "seconds": 0.33
         },
         {
           "name": "L1: the greeting walks, greets and turns in MuJoCo with Kit skills; untrained skills are refused",
           "ok": true,
-          "detail": "5.7 s",
+          "detail": "5.5 s",
           "metrics": {},
-          "seconds": 5.652
+          "seconds": 5.451
         },
         {
           "name": "in the app: one sentence to a passing Routine in under 8 actions, live trace, Add Camera, Needs Training",
           "ok": true,
-          "detail": "35.4 s",
+          "detail": "34.8 s",
           "metrics": {},
-          "seconds": 35.377
+          "seconds": 34.8
         },
         {
           "name": "the soak harness builds",
           "ok": true,
-          "detail": "4.1 s",
+          "detail": "0.1 s",
           "metrics": {},
-          "seconds": 4.071
+          "seconds": 0.134
         },
         {
           "name": "fake-bus soak with saturated workers and a hung LLM keeps p99.9 jitter under 2 ms",
           "ok": true,
           "detail": "75.8 s",
           "metrics": {
-            "loadBefore": 6.0107421875,
-            "loadAfter": 18.970703125
+            "loadBefore": 5.95556640625,
+            "loadAfter": 20.103515625
           },
-          "seconds": 75.814
+          "seconds": 75.833
         },
         {
           "name": "Routine unit tests pass",
           "ok": true,
-          "detail": "1.2 s",
+          "detail": "1.1 s",
           "metrics": {},
-          "seconds": 1.184
+          "seconds": 1.11
         }
       ],
       "canaries": [
@@ -1355,26 +1376,30 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.371
+          "seconds": 0.366
         },
         {
           "name": "a flow edit that drops a timeout path is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.355
+          "seconds": 0.33
         },
         {
           "name": "a trace event for a node not in the graph is rejected",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.356
+          "seconds": 0.337
         }
       ],
-      "commit": "fc01cb5",
-      "at": "2026-11-09T14:35:37.429Z",
-      "manifest": "clean"
+      "commit": "aba7dee",
+      "at": "2026-11-10T02:17:56.860Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s1-f3-simd-engine": {
       "id": "s1-f3-simd-engine",
@@ -1633,49 +1658,49 @@
         {
           "name": "qualification vectors catch a bad GPU and fall back to C",
           "ok": true,
-          "detail": "0.8 s",
+          "detail": "18.7 s",
           "metrics": {},
-          "seconds": 0.788
+          "seconds": 18.651
         },
         {
           "name": "Full GPU loop reaches 70K steps/s at 4096 envs, and reports that it trained on the GPU",
           "ok": true,
-          "detail": "122175 steps/s",
+          "detail": "123225 steps/s",
           "metrics": {
-            "loadBefore": 6.23974609375,
-            "loadAfter": 6.06005859375
+            "loadBefore": 6.03173828125,
+            "loadAfter": 6.03173828125
           },
-          "seconds": 2.554
+          "seconds": 2.41
         },
         {
           "name": "L4 statistics and L5 replay hold",
           "ok": true,
-          "detail": "41.6 s",
+          "detail": "31.3 s",
           "metrics": {},
-          "seconds": 41.576
+          "seconds": 31.276
         },
         {
           "name": "Forge reaches the walk skill at least 5x faster than the Python baseline on every robot, by wall clock, replayed in C MuJoCo, on the GPU loop",
           "ok": false,
-          "detail": "quad-servo 3.48x, hexapod 11.91x, biped-servo 2.97x; below 5x: quad-servo 3.48x; below 5x: biped-servo 2.97x",
+          "detail": "quad-servo 3.51x, hexapod 12.10x, biped-servo 2.93x; below 5x: quad-servo 3.51x; below 5x: biped-servo 2.93x",
           "metrics": {
             "ratios": {
-              "quad-servo": 3.4772943665447116,
-              "hexapod": 11.908698840353958,
-              "biped-servo": 2.9740020237141156
+              "quad-servo": 3.5062479090161287,
+              "hexapod": 12.095299416775859,
+              "biped-servo": 2.932756390100277
             },
             "forgeSeconds": {
-              "quad-servo": 13.442,
-              "hexapod": 29.039,
-              "biped-servo": 6.115
+              "quad-servo": 13.331,
+              "hexapod": 28.591,
+              "biped-servo": 6.201
             },
             "missed": [
               "quad-servo seed 4: replay passed 26 of 32 seeds"
             ],
-            "loadBefore": 6.16943359375,
-            "loadAfter": 3.49560546875
+            "loadBefore": 6.11962890625,
+            "loadAfter": 3.07666015625
           },
-          "seconds": 314.24
+          "seconds": 312.059
         }
       ],
       "canaries": [
@@ -1684,18 +1709,18 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 18.333
+          "seconds": 18.496
         },
         {
           "name": "GPU rollouts on planted bad physics fail the L4 statistics",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 11.41
+          "seconds": 11.387
         }
       ],
-      "commit": "2560392",
-      "at": "2026-11-09T17:15:24.561Z",
+      "commit": "0ace404",
+      "at": "2026-11-10T02:10:29.166Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

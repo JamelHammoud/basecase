@@ -2025,33 +2025,33 @@
         {
           "name": "the gate-side generator draws 30 tasks on 6 bodies, hidden judges no robot at rest or limp can meet, labelled rollouts both ways",
           "ok": true,
-          "detail": "10.8 s",
+          "detail": "11.2 s",
           "metrics": {},
-          "seconds": 10.845
+          "seconds": 11.225
         },
         {
           "name": "forge-train builds",
           "ok": true,
-          "detail": "0.2 s",
+          "detail": "0.3 s",
           "metrics": {},
-          "seconds": 0.226
+          "seconds": 0.255
         },
         {
           "name": "prompt to skill on 20 stratified pairs, approved by the stand-in, judged by hidden Arena, alternatives timed",
           "ok": true,
-          "detail": "4653 s",
+          "detail": "9378 s",
           "metrics": {
-            "loadBefore": 1.6357421875,
-            "loadAfter": 1.28369140625
+            "loadBefore": 5.16064453125,
+            "loadAfter": 6.81298828125
           },
-          "seconds": 4652.569
+          "seconds": 9378.003
         },
         {
           "name": "at least 70% of feasible non-deformable pairs pass hidden Arena in budget; no false pass claims; deformables unverifiable; router within 2x of the cheapest on 80%",
           "ok": true,
           "detail": "1 s",
           "metrics": {},
-          "seconds": 0.536
+          "seconds": 0.745
         }
       ],
       "canaries": [
@@ -2060,53 +2060,53 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 11.352
+          "seconds": 9.38
         },
         {
           "name": "a skill claimed for a deformable task is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.363
+          "seconds": 0.429
         },
         {
           "name": "the stand-in rejects a contract that passes everything",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.474
+          "seconds": 0.515
         },
         {
           "name": "giving up everywhere misses the 70% bar",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.363
+          "seconds": 0.39
         },
         {
           "name": "a slow router misses the 80% bar",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.364
+          "seconds": 0.392
         },
         {
           "name": "a log that prints a hidden contract is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.648
+          "seconds": 0.692
         },
         {
           "name": "a hidden judge met by standing still is refused",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.479
+          "seconds": 0.525
         }
       ],
-      "commit": "f2af2ca",
-      "at": "2026-11-11T06:57:59.566Z",
+      "commit": "0a2e47d",
+      "at": "2026-11-11T11:50:09.213Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

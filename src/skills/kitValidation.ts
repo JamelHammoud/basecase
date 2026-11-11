@@ -185,12 +185,16 @@ function summary(command: V3, trials: Trial[]): CheckResult {
 
 const mean = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / Math.max(values.length, 1);
 
-function scored(checks: CheckResult[]): number {
-  const speeds = checks.filter((c) => c.command[2] === 0);
+export function scoreChecks(checks: CheckResult[]): number {
+  const speeds = checks.filter((c) => c.command[2] === 0 && c.command[0] >= 0);
+  const backward = checks.filter((c) => c.command[0] < 0);
   const turns = checks.filter((c) => c.command[2] !== 0);
   const weakest = Math.min(...speeds.map((c) => c.passed));
+  const both = backward.length ? Math.min(weakest, ...backward.map((c) => c.passed)) : 0;
 
-  return weakest + TURN_WEIGHT * mean(turns.map((c) => c.passed)) + MARGIN_WEIGHT * mean(checks.map((c) => c.margin));
+  return (
+    weakest + both + TURN_WEIGHT * mean(turns.map((c) => c.passed)) + MARGIN_WEIGHT * mean(checks.map((c) => c.margin))
+  );
 }
 
 export async function validationReport(input: ValidationInput): Promise<ValidationReport> {
@@ -214,7 +218,7 @@ export async function validationReport(input: ValidationInput): Promise<Validati
     worlds.forEach((w) => w.dispose());
   }
 
-  return { checks, score: scored(checks) };
+  return { checks, score: scoreChecks(checks) };
 }
 
 export const validationScore = async (input: ValidationInput) => (await validationReport(input)).score;

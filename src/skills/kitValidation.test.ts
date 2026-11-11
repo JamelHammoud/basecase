@@ -5,7 +5,7 @@ import { fixtureModel } from './fixtureModels';
 import { evaluateContract } from './contract';
 import { kitEnvironment, kitSpeedContract } from './kitEnvironment';
 import { kitRobot, rootHeight } from './kitModel';
-import { validationChecks, validationScore } from './kitValidation';
+import { scoreChecks, validationChecks, validationScore } from './kitValidation';
 
 function standingPolicy(joints: string[]): PolicySpec {
   const n = joints.length;
@@ -53,6 +53,27 @@ describe('Kit validation', () => {
 
     expect(checks.map((c) => c.command)).toContainEqual([-0.1, 0, 0]);
     expect(checks.find((c) => c.command[0] < 0)?.contract).toEqual(kitSpeedContract(model, -0.1));
+  });
+
+  it('ranks a gait that also backs up first, and otherwise still ranks by the forward speeds', () => {
+    const check = (forward: number, passed: number, turn = 0) => ({
+      command: [forward, 0, turn] as [number, number, number],
+      passed,
+      margin: 0,
+    });
+    const gait = (forwardShare: number, backShare: number) =>
+      scoreChecks([
+        check(0.2, forwardShare),
+        check(0.1, 1),
+        check(0, 1),
+        check(-0.1, backShare),
+        check(0.1, 1, 0.5),
+        check(0.1, 1, -0.5),
+      ]);
+
+    expect(gait(0.9, 0.9)).toBeGreaterThan(gait(1, 0));
+    expect(gait(1, 0)).toBeGreaterThan(gait(0.5, 0));
+    expect(gait(0.5, 1)).toBeGreaterThan(gait(0.5, 0));
   });
 
   it('judges a backward speed as the mirror of the forward one', async () => {

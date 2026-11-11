@@ -144,7 +144,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
 
   if (refusal) return { kind: 'refused', ...refusal, cost: clock.cost() };
 
-  const environment = kitEnvironment(input.model, entry);
+  const environment = kitEnvironment(input.model, entry, { reverse: input.reverse });
   const start = entry === 'get-up' ? collapsedStart(input.mj, input.model) : null;
   const run: Attempt = { input, entry, environment, start, clock };
   const skill = await firstPassingTry({

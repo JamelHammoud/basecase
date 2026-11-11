@@ -31,14 +31,14 @@ const ROBUST = Object.freeze({
   actorLinvel: false,
 });
 
-const REVERSE_SHARE = 0.75;
+const REACH = 1.25;
 
 function commandRanges(model: SimModel, reverse: boolean) {
   const top = kitTopSpeed(model);
 
   return {
     ranges: [
-      [reverse ? -REVERSE_SHARE * top : 0, 1.25 * top],
+      [reverse ? -REACH * top : 0, REACH * top],
       [-0.25 * top, 0.25 * top],
       [-0.6, 0.6],
     ],
@@ -108,7 +108,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     actionScale: KIT_ACTION_SCALE,
     controlDt: 0.02,
     seed: options.seed,
-    reward: options.reward ?? kitReward(model, entry),
+    reward: options.reward ?? kitReward(model, entry, { reverse: options.reverse }),
     ...(options.maxIterations ? { maxIterations: options.maxIterations } : {}),
     ...fields,
     ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),

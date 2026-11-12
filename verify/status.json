@@ -627,14 +627,14 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.023
+          "seconds": 0.017
         },
         {
           "name": "BAM reference trajectories from plant-bam (STS3215 7.4 V, XL330 5 V)",
           "ok": true,
           "detail": "32 runs",
           "metrics": {},
-          "seconds": 0.275
+          "seconds": 0.949
         },
         {
           "name": "sim RMS <= 0.5 x teleport and <= fitted FOPD against BAM, per servo, load and profile",
@@ -802,63 +802,63 @@
               "fopd": 0.15674080353172357
             }
           },
-          "seconds": 1.818
+          "seconds": 1.735
         },
         {
           "name": "no kick at reset on any fixture robot (under 5% of force range for 50 ms)",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.658
+          "seconds": 0.642
         },
         {
           "name": "C MuJoCo reference computed for every servo-driven fixture",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.14
+          "seconds": 0.552
         },
         {
           "name": "WASM matches C MuJoCo with servo delays and fitted dynamics",
           "ok": true,
           "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.638
+          "seconds": 0.593
         },
         {
           "name": "old policies read as stale in isStalePolicy and the agent tools",
           "ok": true,
           "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.4
+          "seconds": 0.435
         },
         {
           "name": "fixture robots classify and emit (s0-foundation)",
           "ok": true,
           "detail": "0.4 s",
           "metrics": {},
-          "seconds": 0.393
+          "seconds": 0.377
         },
         {
           "name": "C MuJoCo reference computed for every fixture (s0-foundation)",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.153
+          "seconds": 0.144
         },
         {
           "name": "WASM matches C MuJoCo on every fixture (s0-foundation)",
           "ok": true,
-          "detail": "0.7 s",
+          "detail": "0.6 s",
           "metrics": {},
-          "seconds": 0.662
+          "seconds": 0.614
         },
         {
           "name": "sim regression tests pass",
           "ok": true,
-          "detail": "3.2 s",
+          "detail": "3.0 s",
           "metrics": {},
-          "seconds": 3.244
+          "seconds": 3.029
         }
       ],
       "canaries": [
@@ -867,26 +867,30 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.627
+          "seconds": 1.54
         },
         {
           "name": "removing the servo delay fails the BAM bar on the chirp",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.902
+          "seconds": 0.834
         },
         {
           "name": "an unprimed delay history kicks a robot at reset",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.676
+          "seconds": 0.625
         }
       ],
-      "commit": "fe81d9e",
-      "at": "2026-11-08T20:54:56.525Z",
-      "manifest": "clean"
+      "commit": "4e67866",
+      "at": "2026-11-12T01:55:35.639Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     },
     "s0-cadimport-sandbox": {
       "id": "s0-cadimport-sandbox",

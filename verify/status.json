@@ -2112,6 +2112,122 @@
       "uncommittedPinned": [],
       "uncommitted": [],
       "uncommittedCount": 0
+    },
+    "s7-rehearsal": {
+      "id": "s7-rehearsal",
+      "title": "Stage 7: dress rehearsal, PersonaLab recall, mechanised UI rules, every required gate from a clean checkout",
+      "stage": 7,
+      "state": "required",
+      "ok": false,
+      "voided": false,
+      "checks": [
+        {
+          "name": "mechanised UI rules on every view: 32px controls (28px icon-only), 12px type, neutral greys, copy lint, axe",
+          "ok": true,
+          "detail": "39.9 s",
+          "metrics": {},
+          "seconds": 39.887
+        },
+        {
+          "name": "the app bundles",
+          "ok": true,
+          "detail": "6.5 s",
+          "metrics": {},
+          "seconds": 6.46
+        },
+        {
+          "name": "an unsigned app packages",
+          "ok": true,
+          "detail": "3.9 s",
+          "metrics": {},
+          "seconds": 3.855
+        },
+        {
+          "name": "PersonaLab, with only the screen and accessibility tree, finds 80% of 30 planted usability faults, half its findings on target",
+          "ok": false,
+          "detail": "\n ❯ launchPackaged e2e/app/packagedApp.ts:74:15\n     72| export async function launchPackaged({ agentCommand = OFFLINE_AGENT } …\n     73|   const userData = freshUserData(agentCommand);\n     74|   const app = await electron.launch({\n       |               ^\n     75|     executablePath: packagedBinary(),\n     76|     args: ['--enable-unsafe-swiftshader'],\n ❯ session verify/rehearsal/persona.test.ts:33:15\n ❯ verify/rehearsal/persona.test.ts:73:24\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
+          "metrics": {
+            "loadBefore": 3.91748046875,
+            "loadAfter": 2.3466796875
+          },
+          "seconds": 120.584
+        },
+        {
+          "name": "every required gate passes again from a clean checkout of this commit, parked gates listed with reasons",
+          "ok": false,
+          "detail": "verify/servo/bam-reference/target/.rustc_info.json: changed without approval\nverify/servo/bam-reference/target/CACHEDIR.TAG: changed without approval\nverify/servo/bam-reference/target/release/.cargo-artifact-lock: changed without approval\nverify/servo/bam-reference/target/release/.cargo-build-lock: changed without approval\nverify/servo/bam-reference/target/release/.cargo-lock: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/bin-bam-reference: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/bin-bam-reference.json: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/dep-bin-bam-reference: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/invoked.timestamp: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/dep-lib-plant_bam: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/invoked.timestamp: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/lib-plant_bam: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/lib-plant_bam.json: changed without approval\nverify/servo/bam-reference/target/release/bam-reference: changed without approval\nverify/servo/bam-reference/target/release/bam-reference.d: changed without approval\nverify/servo/bam-reference/target/release/deps/bam_reference-cfc3b80ec94f08ce: changed without approval\nverify/servo/bam-reference/target/release/deps/bam_reference-cfc3b80ec94f08ce.d: changed without approval\nverify/servo/bam-reference/target/release/deps/libplant_bam-660bc5cfc82ac170.rlib: changed without approval\nverify/servo/bam-reference/target/release/deps/libplant_bam-660bc5cfc82ac170.rmeta: changed without approval\nverify/servo/bam-reference/target/release/deps/plant_bam-660bc5cfc82ac170.d: changed without approval",
+          "metrics": {
+            "loadBefore": 2.3466796875,
+            "loadAfter": 1.41748046875
+          },
+          "seconds": 22758.25
+        }
+      ],
+      "canaries": [
+        {
+          "name": "a 20px input is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 1.095
+        },
+        {
+          "name": "10px text is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.71
+        },
+        {
+          "name": "a blue-tinted grey is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.701
+        },
+        {
+          "name": "banned copy is caught",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.691
+        },
+        {
+          "name": "a silent persona misses the recall bar",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.692
+        },
+        {
+          "name": "a persona that flags everything misses the precision bar",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.693
+        },
+        {
+          "name": "a voided gate is not green",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.699
+        },
+        {
+          "name": "a parked gate needs a reason",
+          "ok": true,
+          "detail": "",
+          "metrics": {},
+          "seconds": 0.691
+        }
+      ],
+      "commit": "286da26",
+      "at": "2026-11-12T01:54:16.347Z",
+      "manifest": "clean",
+      "tree": "clean",
+      "uncommittedPinned": [],
+      "uncommitted": [],
+      "uncommittedCount": 0
     }
   }
 }

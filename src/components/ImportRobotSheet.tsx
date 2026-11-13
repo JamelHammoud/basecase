@@ -1,15 +1,46 @@
 import React, { useRef, useState } from 'react';
-import { Button, Modal, TextInput, FolderImportIcon } from '../design-system';
+import { Button, ChoiceGrid, Modal, TextInput, FolderImportIcon } from '../design-system';
+import { isRobotLink, pickedFiles } from '../utils/robotImport';
+import type { RobotChoice, RobotSource } from '../workspace/useRobotInsert';
+
+type ImportSource = Exclude<RobotSource, { kind: 'simready' }>;
+
+function commonDir(paths: string[]): string {
+  const dirs = paths.map((p) => p.split('/').slice(0, -1));
+  const first = dirs[0] ?? [];
+  let n = 0;
+
+  while (n < first.length && dirs.every((d) => d[n] === first[n])) n++;
+
+  return first.slice(0, n).join('/');
+}
+
+function choiceOptions(choices: string[]) {
+  const dir = commonDir(choices);
+
+  return choices.map((c) => ({ value: c, label: dir ? c.slice(dir.length + 1) : c }));
+}
 
 export const ImportRobotSheet: React.FC<{
   open: boolean;
+  choice: RobotChoice | null;
   onClose: () => void;
-  onImport: (source: { kind: 'url'; url: string } | { kind: 'files'; files: File[] }) => void;
-}> = ({ open, onClose, onImport }) => {
+  onImport: (source: ImportSource, at?: RobotChoice['at']) => void;
+}> = ({ open, choice, onClose, onImport }) => {
   const [url, setUrl] = useState('');
+  const [picked, setPicked] = useState<string | undefined>(undefined);
   const folderRef = useRef<HTMLInputElement | null>(null);
   const link = /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
-  const valid = /^https?:\/\/[^\s/]+\.[^\s/]+\/\S+\.(urdf|xml|mjcf)(\?\S*)?$/i.test(link);
+  const ready = choice ? !!picked && choice.choices.includes(picked) : isRobotLink(link);
+
+  const submit = () => {
+    if (!ready) return;
+
+    if (choice) onImport({ ...choice.source, entry: picked }, choice.at);
+    else onImport({ kind: 'url', url: link });
+
+    onClose();
+  };
 
   return (
     <Modal
@@ -20,46 +51,45 @@ export const ImportRobotSheet: React.FC<{
       maxWidth="max-w-[520px]"
       footer={
         <div className="flex items-center justify-between w-full">
-          <Button variant="secondary" size="sm" onClick={() => folderRef.current?.click()}>
-            Choose Folder
-          </Button>
+          {choice ? (
+            <span />
+          ) : (
+            <Button variant="secondary" size="sm" onClick={() => folderRef.current?.click()}>
+              Choose Folder
+            </Button>
+          )}
           <div className="flex gap-[8px]">
             <Button variant="ghost" size="sm" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!valid}
-              onClick={() => {
-                onImport({ kind: 'url', url: link });
-                onClose();
-              }}
-            >
+            <Button variant="primary" size="sm" disabled={!ready} onClick={submit}>
               Import
             </Button>
           </div>
         </div>
       }
     >
-      <div className="flex flex-col gap-[8px]">
-        <label htmlFor="import-robot-url" className="text-[12.5px] leading-[16px] font-medium text-white/60">
-          Link to a URDF or MJCF file
-        </label>
+      {choice ? (
+        <ChoiceGrid
+          label="Robots"
+          columns={1}
+          options={choiceOptions(choice.choices)}
+          value={picked}
+          onChange={setPicked}
+          className="max-h-[320px] overflow-y-auto"
+        />
+      ) : (
         <TextInput
-          id="import-robot-url"
+          aria-label="Robot link"
           autoFocus
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && valid) {
-              onImport({ kind: 'url', url: link });
-              onClose();
-            }
+            if (e.key === 'Enter') submit();
           }}
-          placeholder="e.g. github.com/…/g1_description/g1_29dof.urdf"
+          placeholder="GitHub, URDF, MJCF or zip link"
         />
-      </div>
+      )}
       <input
         ref={folderRef}
         type="file"
@@ -73,7 +103,7 @@ export const ImportRobotSheet: React.FC<{
 
           if (!files.length) return;
 
-          onImport({ kind: 'files', files });
+          onImport({ kind: 'files', files: pickedFiles(files) });
           onClose();
         }}
       />

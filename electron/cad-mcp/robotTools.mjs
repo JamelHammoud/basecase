@@ -253,7 +253,7 @@ export const importRobot = {
     title: 'Import a published robot',
     description:
       'Inserts a published robot from its URDF or MuJoCo MJCF with its meshes: every link becomes a part, every joint becomes a posable joint with its real axis and limits. ' +
-      'Presets: humanoids unitree-g1 (29 joints), unitree-h1, unitree-h1-2, apptronik-apollo, booster-t1, berkeley-humanoid; small bipeds robotis-op3, open-duck-mini; quadrupeds unitree-go2, unitree-go1, unitree-b2, anymal-c, spot; arms so101, franka-panda, ur5e. Or a raw/GitHub URL to a .urdf or .xml. ' +
+      'Presets: humanoids unitree-g1 (29 joints), unitree-h1, unitree-h1-2, apptronik-apollo, booster-t1, berkeley-humanoid; small bipeds robotis-op3, open-duck-mini; quadrupeds unitree-go2, unitree-go1, unitree-b2, anymal-c, spot; arms so101, franka-panda, ur5e. Or a raw/GitHub URL to a .urdf or .xml, a GitHub repo or folder, or a .zip (a Basecase Robot Package keeps its servos and calibration). When a repo holds several robots the reply lists them: call again with entry. ' +
       'Use it when the user wants an existing robot to pose or animate, or as a reference beside a design.',
     inputSchema: {
       preset: z
@@ -278,6 +278,7 @@ export const importRobot = {
         .optional(),
       url: z.string().url().optional(),
       name: z.string().max(40).optional(),
+      entry: z.string().max(400).optional(),
     },
   },
   handler: async (args) => {

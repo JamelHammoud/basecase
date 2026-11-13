@@ -23,7 +23,11 @@ type Payload = Record<string, unknown>;
 
 export interface PoseToolContext extends PoseContext {
   setAction: (action: string) => void;
-  importRobot: (source: RobotSource, at?: [number, number, number]) => Promise<ImportRobotResult>;
+  importRobot: (
+    source: RobotSource,
+    at?: [number, number, number],
+    opts?: { ask?: boolean },
+  ) => Promise<ImportRobotResult>;
 }
 
 export function withSavedPose(project: ProjectSettings, name: string, state: RobotPoseState): ProjectSettings {
@@ -47,7 +51,7 @@ function importedText(got: ImportRobotResult) {
 }
 
 async function importRobotTool(ctx: PoseToolContext, payload: Payload): Promise<PoseReply> {
-  const pl = payload as { url?: string; preset?: string; name?: string };
+  const pl = payload as { url?: string; preset?: string; name?: string; entry?: string };
   const preset = pl.preset ? ROBOT_PRESETS.find((r) => r.id === pl.preset) : undefined;
   const url = preset?.url ?? pl.url;
 
@@ -55,7 +59,9 @@ async function importRobotTool(ctx: PoseToolContext, payload: Payload): Promise<
 
   ctx.setAction(`Importing ${preset?.title ?? 'robot'}`);
 
-  return { text: importedText(await ctx.importRobot({ kind: 'url', url, name: pl.name ?? preset?.title })) };
+  const source = { kind: 'url' as const, url, name: pl.name ?? preset?.title, entry: pl.entry };
+
+  return { text: importedText(await ctx.importRobot(source, undefined, { ask: false })) };
 }
 
 const POSE_TOOLS: Record<string, (ctx: PoseToolContext, payload: Payload) => PoseReply | Promise<PoseReply>> = {

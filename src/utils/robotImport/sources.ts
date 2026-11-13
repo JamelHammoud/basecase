@@ -2,9 +2,14 @@ import type { ConvertedFiles, ConvertedModel } from './simready';
 
 export const RAW = 'https://raw.githubusercontent.com';
 
+export interface LocalFile {
+  path: string;
+  blob: Blob;
+}
+
 export type Source =
-  | { kind: 'url'; url: string }
-  | { kind: 'files'; files: File[] }
+  | { kind: 'url'; url: string; entry?: string }
+  | { kind: 'files'; files: LocalFile[]; entry?: string }
   | { kind: 'converted'; url: string; model: ConvertedModel; files: ConvertedFiles };
 
 export interface Resolver {
@@ -37,7 +42,7 @@ function assertWebUrl(url: string): string {
   return url;
 }
 
-async function fetchBytes(url: string): Promise<ArrayBuffer> {
+export async function fetchBytes(url: string): Promise<ArrayBuffer> {
   const res = await fetch(assertWebUrl(url));
 
   if (!res.ok) throw new Error(`${res.status}`);
@@ -47,7 +52,7 @@ async function fetchBytes(url: string): Promise<ArrayBuffer> {
   return buf.byteLength < 300 ? lfsBytes(url, buf) : buf;
 }
 
-const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/');
+export const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/');
 
 function joinPath(base: string, rel: string): string {
   const parts = base.split('/');
@@ -86,7 +91,7 @@ function packageCandidates(name: string, rest: string, entryPath: string): strin
   return out;
 }
 
-function candidates(ref: string, entryPath: string): string[] {
+export function candidates(ref: string, entryPath: string): string[] {
   let r = ref.trim();
 
   if (/^file:\/\//.test(r)) r = r.replace(/^file:\/\//, '');
@@ -137,41 +142,6 @@ export async function urlResolver(url: string): Promise<Resolver> {
       return null;
     },
   };
-}
-
-export function filesResolver(files: File[]): Resolver & { pickEntry: () => Promise<void> } {
-  const byPath = new Map(
-    files.map((f) => [norm((f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name), f]),
-  );
-  const entryFile =
-    [...byPath].find(([p]) => /\.urdf$/i.test(p)) ??
-    [...byPath].find(([p]) => /\.(xml|mjcf)$/i.test(p) && !/scene/i.test(p.split('/').pop()!)) ??
-    [...byPath].find(([p]) => /\.(xml|mjcf)$/i.test(p));
-
-  if (!entryFile) throw new Error('Choose a folder with a .urdf or MJCF .xml file.');
-
-  const resolver = {
-    entry: { name: entryFile[0], text: '' },
-    pickEntry: async () => {
-      resolver.entry.text = await entryFile[1].text();
-    },
-    read: async (ref: string, from?: string) => {
-      const base = from ?? entryFile[0];
-
-      for (const c of candidates(ref, base)) {
-        const f = byPath.get(norm(c).replace(/^\//, ''));
-
-        if (f) return { data: await f.arrayBuffer(), path: c };
-      }
-
-      const name = ref.split('/').pop()!.toLowerCase();
-      const hit = [...byPath].find(([p]) => p.toLowerCase().endsWith('/' + name) || p.toLowerCase() === name);
-
-      return hit ? { data: await hit[1].arrayBuffer(), path: hit[0] } : null;
-    },
-  };
-
-  return resolver;
 }
 
 export async function inlineIncludes(text: string, read: Resolver['read'], from: string, depth = 0): Promise<string> {

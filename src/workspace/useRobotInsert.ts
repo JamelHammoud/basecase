@@ -3,8 +3,14 @@ import { ARTICULATED_PARTS } from '../data/articulatedParts';
 import { loadSimReady, type SimReadyImport } from '../simready/loadAsset';
 import { prepareParts } from '../three/partMesh/prepare';
 import type { SimReadyAsset } from '../simready/search';
-import type { CatalogItem, RobotJoint, ScenePart } from '../types/robotics';
-import { importRobot, type ImportedRobot, type RobotPreset } from '../utils/robotImport';
+import type { CatalogItem, ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import {
+  importRobot,
+  RobotChoiceError,
+  type ImportedRobot,
+  type LocalFile,
+  type RobotPreset,
+} from '../utils/robotImport';
 import { rememberImportedRobot, robotPreviewImage } from '../utils/robotPreview';
 import { useLatestRef } from '../utils/useLatestRef';
 import { whenIdle } from '../utils/whenIdle';
@@ -14,8 +20,8 @@ import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 export type RobotSource =
-  | { kind: 'url'; url: string; name?: string }
-  | { kind: 'files'; files: File[] }
+  | { kind: 'url'; url: string; name?: string; entry?: string }
+  | { kind: 'files'; files: LocalFile[]; entry?: string }
   | { kind: 'simready'; asset: Pick<SimReadyAsset, 'url' | 'name' | 'maker' | 'license'> };
 
 export type ImportRobotResult = ImportedRobot | string;
@@ -23,6 +29,22 @@ export type ImportRobotResult = ImportedRobot | string;
 interface PlacedRig {
   parts: ScenePart[];
   joints: RobotJoint[];
+}
+
+export interface RobotChoice {
+  source: Exclude<RobotSource, { kind: 'simready' }>;
+  at?: Vec3;
+  choices: string[];
+}
+
+function calibrationsByPlacedId(robot: ImportedRobot, placed: RobotJoint[]) {
+  return Object.fromEntries(
+    robot.joints.flatMap((j, i) => {
+      const history = robot.servoCalibrations?.[j.id];
+
+      return history && placed[i] ? [[placed[i].id, history]] : [];
+    }),
+  );
 }
 
 function rememberPreview(robot: ImportedRobot, url: string) {
@@ -72,11 +94,12 @@ async function downloadArticulated(item: CatalogItem) {
 }
 
 export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
-  const { docs, viewportRef, setSelectedIds, showToast, parts } = core;
+  const { docs, viewportRef, setSelectedIds, showToast, toasts, parts } = core;
   const { partsRef, projectRef, commitParts, updateProjectNow } = docs;
   const openPoseRef = useLatestRef(openPose);
   const frameNextRef = useRef(false);
   const [importRobotOpen, setImportRobotOpen] = useState(false);
+  const [robotChoice, setRobotChoice] = useState<RobotChoice | null>(null);
 
   useEffect(() => {
     if (!frameNextRef.current) return;
@@ -90,9 +113,13 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
   const takenJointIds = () => (projectRef.current.joints ?? []).map((j) => j.id);
 
-  const insertRig = (placed: PlacedRig, frame: boolean) => {
+  const insertRig = (placed: PlacedRig, frame: boolean, calibrations: ProjectSettings['servoCalibrations'] = {}) => {
     commitParts((prev) => [...prev, ...placed.parts]);
-    updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...placed.joints] }));
+    updateProjectNow((p) => ({
+      ...p,
+      joints: [...(p.joints ?? []), ...placed.joints],
+      ...(Object.keys(calibrations).length ? { servoCalibrations: { ...p.servoCalibrations, ...calibrations } } : {}),
+    }));
     setSelectedIds(placed.parts.map((p) => p.id));
 
     if (frame) frameNextRef.current = true;
@@ -107,7 +134,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     const placed = placeRobot({ parts: robot.parts, joints: robot.joints, shift, takenJointIds: takenJointIds() });
 
     await prepareParts(placed.parts);
-    insertRig(placed, !at);
+    insertRig(placed, !at, calibrationsByPlacedId(robot, placed.joints));
 
     if (source.kind === 'url') rememberPreview(robot, source.url);
 
@@ -118,12 +145,29 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     return { ...robot, ...placed };
   };
 
-  const importRobotFrom = async (source: RobotSource, at?: Vec3): Promise<ImportRobotResult> => {
+  const askWhichRobot = (choice: RobotChoice, ask: boolean) => {
+    toasts.dismissToast();
+
+    if (!ask) return;
+
+    setRobotChoice(choice);
+    setImportRobotOpen(true);
+  };
+
+  const importRobotFrom = async (source: RobotSource, at?: Vec3, { ask = true } = {}): Promise<ImportRobotResult> => {
     const outcome = await attempt(() => loadAndPlace(source, at));
 
     if (outcome.ok) return outcome.value;
 
-    const message = outcome.error instanceof Error ? outcome.error.message : String(outcome.error);
+    const { error } = outcome;
+
+    if (error instanceof RobotChoiceError && source.kind !== 'simready') {
+      askWhichRobot({ source, at, choices: error.choices }, ask);
+
+      return `Several robots here. Pass one as entry: ${error.choices.join(', ')}`;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
 
     showToast(message, { tone: 'error' });
 
@@ -166,8 +210,12 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     addArticulated,
     pickRobot,
     importRobotOpen,
+    robotChoice,
     openImportRobot: () => setImportRobotOpen(true),
-    closeImportRobot: () => setImportRobotOpen(false),
+    closeImportRobot: () => {
+      setImportRobotOpen(false);
+      setRobotChoice(null);
+    },
   };
 }
 

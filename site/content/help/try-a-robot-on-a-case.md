@@ -25,6 +25,8 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 4. Click **Try It**. The clock counts down the Case's time, and the keys for your kind of robot appear under it.
 5. Click the canvas and drive with W A S D. R starts over and Esc stops.
 
+A humanoid or an arm can follow your own arms instead of the keys: press ⌘K and choose **Drive With Camera** before step 4. Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+
 ![A try running, with the clock, Stop Try and the keys](/help/try-a-robot-on-a-case/trying.png)
 
 6. Click **Stop Try**, or let the time run out.

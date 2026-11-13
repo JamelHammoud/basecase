@@ -17,6 +17,7 @@ import {
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
 import { protectedIn, protectedList } from '../lib/protected.mjs';
+import { landedIn } from '../lib/landed.mjs';
 import { kindOf, pullTitle, REVISED_FIELDS, revisedBody } from '../lib/pull.mjs';
 import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
@@ -112,7 +113,8 @@ function publishRevision(pull, { dir, output }) {
   git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
 
   const kind = kindOf(pull.title);
-  const restated = kind ? revisedBody(pull.body, { ...output, kind }, { branch: pull.headRefName }) : pull.body;
+  const landed = landedIn('origin/main...HEAD', dir);
+  const restated = kind ? revisedBody(pull.body, { ...output, kind }, { branch: pull.headRefName, landed }) : pull.body;
   const heading = restated.includes('\n## Revisions\n') ? '' : '\n\n## Revisions\n';
   const touched = protectedIn('HEAD~1..HEAD', dir);
   const line =

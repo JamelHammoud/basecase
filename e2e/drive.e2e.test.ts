@@ -3,9 +3,13 @@ import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { startFakeHub, type FakeHub } from './fakeHub';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
+const HUB_TOKEN = 'hf_e2eFakeHubToken';
+
 let app: App;
+let hub: FakeHub;
 
 interface SimState {
   status: string;
@@ -19,7 +23,7 @@ interface SimState {
   tries: Array<{ passed: boolean; margin: number }>;
 }
 
-type Studio = { simState: () => SimState; load: (r: unknown) => void };
+type Studio = { simState: () => SimState; load: (r: unknown) => void; passTries: () => void };
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -96,11 +100,15 @@ async function stopDriving() {
 }
 
 beforeAll(async () => {
-  app = await openApp();
+  hub = await startFakeHub({ token: HUB_TOKEN });
+  process.env.BASECASE_HUB_URL = hub.url;
+  app = await openApp({}, ['hub-']);
 }, 120000);
 
 afterAll(async () => {
   await app?.close();
+  await hub?.close();
+  delete process.env.BASECASE_HUB_URL;
 });
 
 describe('live drive', () => {
@@ -163,12 +171,33 @@ describe('live drive', () => {
   });
 });
 
+async function openTouchTheDots() {
+  await loadFixture('arm-3dof');
+  await openPlayTab(app.page, 'Cases');
+  await button('Touch the Dots').click();
+  await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
+}
+
+async function expectPublished(repo: string) {
+  const published = hub.repos.get(repo)!;
+  const paths = [...published.files.keys()];
+  const parquet = published.files.get('data/chunk-000/episode_000000.parquet')!;
+  const rows = await parquetReadObjects({ file: new Uint8Array(parquet).buffer });
+  const info = JSON.parse(published.files.get('meta/info.json')!.toString());
+
+  expect(published.kind).toBe('dataset');
+  expect(paths).toEqual(expect.arrayContaining(['meta/info.json', 'meta/modality.json', 'meta/episodes.jsonl']));
+  expect(paths.filter((p) => p.endsWith('.mp4'))).toEqual([
+    'videos/chunk-000/observation.images.scene/episode_000000.mp4',
+  ]);
+  expect(info.total_frames).toBe(rows.length);
+  expect(published.tags.get('v2.1')).toBe(1);
+  expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
+}
+
 describe('Cases', () => {
   it('starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it', async () => {
-    await loadFixture('arm-3dof');
-    await openPlayTab(app.page, 'Cases');
-    await button('Touch the Dots').click();
-    await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
+    await openTouchTheDots();
     await expect.poll(() => app.page.getByTestId('case-brief').count()).toBe(1);
     expect(await app.page.getByTestId('case-brief').innerText()).not.toContain('simulation only');
 
@@ -202,6 +231,39 @@ describe('Cases', () => {
     await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
     expect(app.errors).toEqual([]);
   });
+
+  it('publishes a passed try to Hugging Face after signing in from Settings', async () => {
+    const publish = () => button('Publish to Hugging Face');
+    const repo = 'tester/touch-the-dots-dataset';
+
+    await openTouchTheDots();
+    await button('Try It').click();
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    await button('End Try').click();
+    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
+    await expect.poll(() => publish().count()).toBe(1);
+
+    await publish().click();
+
+    const token = app.page.locator(visible('input[aria-label="Access token"]'));
+
+    await expect.poll(() => token.count()).toBe(1);
+    await token.fill(HUB_TOKEN);
+    await token.press('Enter');
+    await expect
+      .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings]')).innerText())
+      .toContain('tester');
+    await app.page.keyboard.press('Escape');
+
+    await publish().click();
+    await expect.poll(() => hub.repos.get(repo)?.commits.length ?? 0, { timeout: 120000 }).toBe(1);
+    await expectPublished(repo);
+    await expect.poll(() => app.page.getByRole('status').filter({ hasText: repo }).count()).toBeGreaterThan(0);
+    expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
+    expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
+    expect(app.errors).toEqual([]);
+  }, 180000);
 
   it('makes a Case with New Case, lists only the examples that fit, and opens it', async () => {
     await loadFixture('rover-diff');

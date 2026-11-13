@@ -188,6 +188,7 @@ declare global {
       shareFile?: (payload: { name: string; bytes: Uint8Array }) => Promise<'airdrop' | 'shared' | 'shown'>;
       onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       robotConnect?: (spec: RobotSpec) => Promise<ConnectReply>;
       robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
       robotDisconnect?: () => Promise<ConnectReply>;

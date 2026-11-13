@@ -2,14 +2,21 @@ import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { recordingTransfer } from '../sim/recorder';
 import { workerClient } from '../utils/workerRpc';
-import type { DatasetJob } from './buildDataset';
+import type { DatasetFiles, DatasetJob } from './buildDataset';
 
-type DatasetHandlers = { build: (job: DatasetJob) => Promise<{ result: Uint8Array }> };
+type DatasetHandlers = {
+  zip: (job: DatasetJob) => Promise<{ result: Uint8Array }>;
+  files: (job: DatasetJob) => Promise<{ result: DatasetFiles }>;
+};
 
 const localHandlers = async (): Promise<DatasetHandlers> => {
   const { buildDataset } = await import('./buildDataset');
+  const { zipDataset } = await import('./zipDataset');
 
-  return { build: async (job) => ({ result: await buildDataset(job) }) };
+  return {
+    zip: async (job) => ({ result: zipDataset(job.name, await buildDataset(job)) }),
+    files: async (job) => ({ result: await buildDataset(job) }),
+  };
 };
 
 const client = workerClient<DatasetHandlers>(
@@ -17,7 +24,9 @@ const client = workerClient<DatasetHandlers>(
   localHandlers,
 );
 
-export async function exportDatasetZip(job: Omit<DatasetJob, 'meshes'>): Promise<Uint8Array> {
+export type DatasetSpec = Omit<DatasetJob, 'meshes'>;
+
+async function build<K extends keyof DatasetHandlers>(output: K, job: DatasetSpec) {
   const all = [...job.parts, ...job.world];
   const packed = {
     ...job,
@@ -27,8 +36,12 @@ export async function exportDatasetZip(job: Omit<DatasetJob, 'meshes'>): Promise
   };
 
   return client.call(
-    'build',
+    output,
     packed,
     job.episodes.flatMap((e) => recordingTransfer(e.recording)),
   );
 }
+
+export const exportDatasetZip = (job: DatasetSpec): Promise<Uint8Array> => build('zip', job);
+
+export const exportDatasetFiles = (job: DatasetSpec): Promise<DatasetFiles> => build('files', job);

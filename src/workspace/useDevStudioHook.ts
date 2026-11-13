@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import type { AgentSession } from './useAgentSession';
@@ -46,12 +45,12 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       };
     },
     routineState: () => core.simTraining.routines.state(),
-    datasetFiles: async () => {
+    datasetFiles: () => {
       const { cases } = core.simTraining;
-      const made = await cases.dataset.build(cases.tries);
 
-      return made && unzipSync(made.zip);
+      return cases.dataset.files(cases.tries);
     },
+    passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     guide: async () => {
       const made = await core.guide.generate();
 

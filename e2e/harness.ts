@@ -44,12 +44,20 @@ export interface App {
   close: () => Promise<void>;
 }
 
-async function stubBackend(page: Page, posts: App['posts'], lists: Record<string, unknown>): Promise<void> {
+interface Backend {
+  posts: App['posts'];
+  lists: Record<string, unknown>;
+  live: string[];
+}
+
+async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise<void> {
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }),
   );
   await page.route('**/api/bridge/**', (route) => {
     const name = new URL(route.request().url()).pathname.split('/').pop() ?? '';
+
+    if (live.some((prefix) => name.startsWith(prefix))) return route.continue();
 
     if (route.request().method() === 'POST') posts.push({ route: name, body: route.request().postDataJSON() });
 
@@ -73,7 +81,7 @@ export const startServer = async (mode = 'development'): Promise<ViteDevServer> 
   return server.listen();
 };
 
-export async function openApp(lists: Record<string, unknown> = {}): Promise<App> {
+export async function openApp(lists: Record<string, unknown> = {}, live: string[] = []): Promise<App> {
   const server = await startServer();
   const browser: Browser = await chromium.launch({
     channel: 'chrome',
@@ -90,7 +98,7 @@ export async function openApp(lists: Record<string, unknown> = {}): Promise<App>
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
-  await stubBackend(page, posts, lists);
+  await stubBackend(page, { posts, lists, live });
   await page.goto(server.resolvedUrls!.local[0]);
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,

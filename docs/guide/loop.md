@@ -68,7 +68,8 @@ The review lane sees the diff, the pull request body, AGENTS.md, the guides of t
 - ships a feature with no entry point and no e2e test of it;
 - makes a change a user can see without a changelog entry (`site/content/changelog/`), or changes what a person does without a new or updated help article (`site/content/help/`) with screenshots (`site/public/help/`). Builders and refiners write these from `tools/loop/briefs/telling.md`, and an arc's big step also gets a short blog post;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or a loosened assertion;
-- changes a protected path (`.github/`, release and updater code, `guardBridge`, `trustedIpc`, `checkedFileId` and `publicFetch` callers, `verify/`, the CAD kernel sandbox, `hw/`) without saying why in the body.
+- changes a protected path (`.github/`, release and updater code, `guardBridge`, `trustedIpc`, `checkedFileId` and `publicFetch` callers, `verify/`, the CAD kernel sandbox, `hw/`) without saying why in the body. The runner lists every protected file a pull request touches under **Protected paths** in its body, and each revision's line names the ones it touched (`tools/loop/lib/protected.mjs`);
+- says in a guide, brief, prompt or the body that something exists which only another pull request adds.
 
 ### CI repair
 
@@ -96,7 +97,7 @@ docker exec bc-e2e npx vitest run --config vitest.e2e.config.ts e2e/<file>.e2e.t
 
 ### Releases
 
-`.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i).
+`.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i). basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
 
 ### Writing posts and help
 

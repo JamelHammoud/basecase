@@ -23,6 +23,7 @@ related:
 covers:
   - src/components/layers/
   - src/workspace/contextMenuItems.tsx
+  - src/workspace/partActions.tsx
   - src/three/viewport/picking.ts
   - src/readiness/buildChecks.ts
 ---
@@ -43,6 +44,6 @@ The header counts parts and cutouts, and the footer gives the **Overall size** o
 - **Hide** takes the part off the canvas. Checks leave hidden parts out of clash, fit and assembly checks and say how many they skipped.
 - **Lock** keeps the part from being clicked or dragged on the canvas, so you can work on what's behind it. [[⌘]]-click still selects a locked part, and so does its row.
 
-The eye or lock stays on the row while the part is hidden or locked. **Hide** and **Lock** are also in the part's right-click menu, as **Show** and **Unlock** once they're on.
+The eye or lock stays on the row while the part is hidden or locked. **Hide** and **Lock** are also in the part's right-click menu and [[⌘K]], as **Show** and **Unlock** once they're on.
 
 An empty scene leaves Layers empty. To bring robots, objects and saved models in, use **Robots**, **Objects** and **Library** in the same view rail.

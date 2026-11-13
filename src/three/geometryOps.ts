@@ -7,7 +7,8 @@ import { loadMesh } from '../utils/robotImport/meshes';
 import { componentArrays, componentTransfers } from './componentGeometry';
 import { creasedGeometry } from './partMesh/creased';
 import { creaseEdgesOnly } from './partMesh/creaseEdges';
-import { roundFaceAt, sharedAxis } from '../joints/axisFinder';
+import { roundFaceAt } from '../joints/axisFinder';
+import { placeJoint, type PlaceJointJob } from '../joints/placeJoint';
 
 type Vec3 = [number, number, number];
 
@@ -163,14 +164,9 @@ export interface RoundFaceJob {
   point: Vec3;
 }
 
-export interface SharedAxisJob {
-  parent: Float32Array;
-  child: Float32Array;
-}
-
 export const geometryHandlers = {
   roundFace: (job: RoundFaceJob) => reply(roundFaceAt(job.soup, job.point)),
-  sharedAxis: (job: SharedAxisJob) => reply(sharedAxis(job.parent, job.child)),
+  placeJoint: (job: PlaceJointJob) => reply(placeJoint(job)),
   linkMesh: async (job: LinkMeshJob) => reply(await linkMesh(job)),
   linkSoup: (pieces: SoupPiece[]) => {
     const result = linkSoup(pieces);

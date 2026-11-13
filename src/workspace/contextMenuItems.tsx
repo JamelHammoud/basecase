@@ -108,19 +108,12 @@ function sharedEntries({ core, actions }: ContextInputs) {
 }
 
 function jointItems({ joints }: WorkspaceActions): ContextMenuEntry[] {
+  if (!joints.canJoin) return [];
+
   return [
-    {
-      label: 'Add Hinge',
-      icon: <JointsIcon className={ic} />,
-      disabled: !joints.canJoin,
-      onSelect: () => joints.start('revolute'),
-    },
-    {
-      label: 'Add Slider',
-      icon: <MoveIcon className={ic} />,
-      disabled: !joints.canJoin,
-      onSelect: () => joints.start('prismatic'),
-    },
+    { label: 'Add Hinge', icon: <JointsIcon className={ic} />, onSelect: () => joints.start('revolute') },
+    { label: 'Add Slider', icon: <MoveIcon className={ic} />, onSelect: () => joints.start('prismatic') },
+    { divider: true },
   ];
 }
 
@@ -142,7 +135,6 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     { label: 'Intersect', icon: <IntersectIcon className={ic} />, onSelect: () => ops.runBoolean('intersect') },
     { divider: true },
     ...jointItems(actions),
-    { divider: true },
     shared.align,
     shared.drop,
     { divider: true },

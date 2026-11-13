@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import * as THREE from 'three';
-import { slideTravel, type RoundFace } from '../joints/axisFinder';
+import type { RoundFace } from '../joints/axisFinder';
 import type { SceneAxis } from '../joints/declareJoints';
 import { addHandJoint, HINGE_RANGE, withJointRange, withoutJoint, type HandJointType } from '../joints/handJoint';
+import type { PlacedSoup } from '../joints/placeJoint';
 import { geometryWorker } from '../three/geometryWorker';
 import type { ScenePart } from '../types/robotics';
 import { prettyJointName } from '../utils/kinematics';
@@ -16,15 +17,7 @@ interface Pick {
   child: string;
 }
 
-function worldSoup(local: Float32Array, part: ScenePart): Float32Array {
-  const m = partMatrix(part);
-  const v = new THREE.Vector3();
-  const out = new Float32Array(local.length);
-
-  for (let i = 0; i < local.length; i += 3) v.fromArray(local, i).applyMatrix4(m).toArray(out, i);
-
-  return out;
-}
+const SLIDE_FALLBACK: [number, number] = [-50, 50];
 
 function worldAxis(face: RoundFace, part: ScenePart): SceneAxis {
   const m = partMatrix(part);
@@ -42,24 +35,26 @@ export function useHandJoints(core: WorkspaceCore) {
   const busyRef = useRef(false);
   const canJoin = core.selectedIds.length === 2;
 
-  const soupOf = (id: string) => {
+  const placedSoup = (id: string): PlacedSoup | null => {
     const part = partsRef.current.find((p) => p.id === id);
-    const local = part && viewportRef.current?.partTriangles(id);
+    const soup = part && viewportRef.current?.partTriangles(id);
 
-    return part && local ? worldSoup(local, part) : null;
+    return part && soup ? { soup, matrix: partMatrix(part).elements } : null;
   };
 
-  const rangeFor = (pick: Pick, at: SceneAxis): [number, number] => {
-    if (pick.type === 'revolute') return HINGE_RANGE;
+  const placement = async (pick: Pick, at?: SceneAxis) => {
+    const parent = placedSoup(pick.parent);
+    const child = placedSoup(pick.child);
+    const slide = pick.type === 'prismatic';
 
-    const parent = soupOf(pick.parent);
-    const child = soupOf(pick.child);
+    if (!parent || !child) return at ? { at, travel: null } : null;
 
-    return parent && child ? slideTravel(parent, child, at) : [-50, 50];
+    return geometryWorker.call('placeJoint', { parent, child, at, slide }, [parent.soup.buffer, child.soup.buffer]);
   };
 
-  const place = (pick: Pick, at: SceneAxis) => {
-    const made = addHandJoint({ ...pick, at, range: rangeFor(pick, at) }, partsRef.current, projectRef.current);
+  const place = (pick: Pick, { at, travel }: { at: SceneAxis; travel: [number, number] | null }) => {
+    const range = pick.type === 'revolute' ? HINGE_RANGE : (travel ?? SLIDE_FALLBACK);
+    const made = addHandJoint({ ...pick, at, range }, partsRef.current, projectRef.current);
 
     if (typeof made === 'string') return;
 
@@ -75,10 +70,7 @@ export function useHandJoints(core: WorkspaceCore) {
     if (!canJoin) return;
 
     const pick = { type, parent, child };
-    const a = soupOf(parent);
-    const b = soupOf(child);
-    const shared =
-      a && b ? await geometryWorker.call('sharedAxis', { parent: a, child: b }, [a.buffer, b.buffer]) : null;
+    const shared = await placement(pick);
 
     if (shared) place(pick, shared);
     else setPicking(pick);
@@ -101,14 +93,16 @@ export function useHandJoints(core: WorkspaceCore) {
 
     busyRef.current = true;
 
-    const at = await faceAt(clientX, clientY).finally(() => {
-      busyRef.current = false;
-    });
+    const placed = await faceAt(clientX, clientY)
+      .then((at) => at && placement(picking, at))
+      .finally(() => {
+        busyRef.current = false;
+      });
 
-    if (!at) return;
+    if (!placed) return;
 
     setPicking(null);
-    place(picking, at);
+    place(picking, placed);
   };
 
   const remove = (id: string) => {

@@ -35,6 +35,24 @@ const movedParts = () =>
 
 const PIN_CENTER: V3 = [-60, 25, 0];
 
+async function addHingeOnPin() {
+  await studio((s) => s.select(['base', 'arm']));
+  await app.page.keyboard.press('ControlOrMeta+k');
+  await app.page.keyboard.type('Add Hinge');
+  await app.page.keyboard.press('Enter');
+  await expect.poll(cursor).toContain('crosshair');
+  await clickScenePoint(PIN_CENTER);
+  await expect.poll(async () => (await joints()).length).toBe(1);
+
+  return (await joints())[0];
+}
+
+async function jointMenuItem(id: string, name: string) {
+  await app.page.locator(visible(`[data-joint="${id}"]`)).click({ button: 'right' });
+
+  return app.page.getByRole('menuitem', { name, exact: true });
+}
+
 async function clickScenePoint(point: V3) {
   const [screen] = await studio((s, p) => s.screenPoints([p as V3]), point);
   const box = (await app.page.locator(visible('.canvas-cursor')).boundingBox())!;
@@ -105,5 +123,28 @@ describe('joining two parts by hand', () => {
     await expect.poll(async () => (await joints()).length).toBe(0);
     expect(await partCount(app.page)).toBe(3);
     expect(await cursor()).not.toContain('crosshair');
+  });
+
+  it('edits the range from the joint row menu, and deletes the joint with Undo', async () => {
+    const hinge = await addHingeOnPin();
+
+    await (await jointMenuItem(hinge.id, 'Range')).click();
+
+    const upper = app.page.getByRole('textbox', { name: 'Upper limit' });
+
+    await upper.click();
+    await upper.fill('30');
+    await upper.press('Enter');
+    await expect.poll(async () => (await joints())[0]?.range).toEqual([-90, 30]);
+    await app.page.keyboard.press('Escape');
+
+    await (await jointMenuItem(hinge.id, 'Delete')).click();
+    await expect.poll(async () => (await joints()).length).toBe(0);
+    expect(await partCount(app.page)).toBe(3);
+
+    const toast = app.page.getByRole('status').filter({ hasText: 'Deleted Arm' });
+
+    await toast.getByRole('button', { name: 'Undo' }).click();
+    await expect.poll(async () => (await joints()).map((j) => [j.id, j.range])).toEqual([[hinge.id, [-90, 30]]]);
   });
 });

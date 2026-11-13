@@ -42,7 +42,7 @@ export function SegmentedControl<T extends string>({
       {!isTabs && selected && (
         <span
           aria-hidden
-          className={`absolute top-0.5 bottom-0.5 left-0.5 rounded-md transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] shadow-[0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)] ${
+          className={`absolute top-0.5 bottom-0.5 left-0.5 rounded-md transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] shadow-[0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)] ${
             selected?.tone === 'danger' ? 'bg-red-500/80' : 'bg-white/[0.12]'
           }`}
           style={{

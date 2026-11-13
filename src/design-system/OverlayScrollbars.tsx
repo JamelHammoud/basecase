@@ -163,7 +163,7 @@ export const OverlayScrollbars: React.FC = () => {
             hovering.current = false;
             scheduleHide();
           }}
-          className={`fixed z-[200] rounded-full bg-white/25 hover:bg-white/40 transition-[opacity,background-color] duration-200 ${
+          className={`fixed z-[200] rounded-full bg-white/25 hover:bg-white/40 transition-[opacity,background-color] duration-150 ${
             visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{ left: t.left, top: t.top, width: t.width, height: t.height }}

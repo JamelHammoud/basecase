@@ -1,4 +1,5 @@
 import { cameraInputSource } from '../cameras/operator/cameraSource';
+import { codeDriveReading } from '../cases/console/codeDrive';
 import { phoneCommand } from '../phone/phoneDrive';
 import { phoneReading } from '../phone/phoneStore';
 import { commandFromPad, isIdle } from './driveKeys';
@@ -55,6 +56,7 @@ function firstPad(): Gamepad | null {
 }
 
 registerInputSource({ id: 'keys', read: ({ keys }) => keys });
+registerInputSource({ id: 'code', read: codeDriveReading });
 registerInputSource(cameraInputSource);
 registerInputSource({
   id: 'phone',

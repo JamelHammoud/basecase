@@ -33,12 +33,20 @@ The scene must have a robot with joints. [Cases](/help/cases) explains what a Ca
 
 1. Click **Play** in the view rail on the left.
 2. Click **Cases** at the top of the panel.
+
+![The Cases tab with New Case and Ask the Agent](/help/make-a-case/cases.png)
+
 3. Click **New Case**.
 4. Under **Goal**, choose what the robot must do. It lists only the goals this robot can try, and is hidden when there's one.
 5. Under **World**, choose **Open Floor**, or a world with something in the way.
-6. Set the goal's numbers, such as **Distance**, **Radius** and **Time**.
+6. Set the goal's numbers, such as **Distance**, **Radius** and **Time**. For **Touch a Point**, set **Dots** to 2 or 3 to touch that many dots in order; the Case is then called Touch the Dots.
 7. Read the line under the fields. It's the Case's brief, or what to change when the numbers can't work.
+
+![New Case on an arm with Dots set to 3](/help/make-a-case/new-case.png)
+
 8. Click **Create**.
+
+![Touch the Dots open in the Simulate tab](/help/make-a-case/opened.png)
 
 The Case opens in the **Simulate** tab, and its world appears on the canvas. Next, [try the Case](/help/try-a-case).
 
@@ -48,7 +56,7 @@ The Case opens in the **Simulate** tab, and its world appears on the canvas. Nex
 
 **Ask the Agent**, under **New Case**, puts `/case` in the agent's box. Write the goal after it, such as "push the box to the wall in under 10 seconds", and send it. The agent builds the Case through the same builder and opens it. **Ask the Agent** is in the desktop app only.
 
-You can also tell the agent what you want to do with a robot, such as "drive this rover with a gamepad while I watch its front camera". It imports the robot you name when the scene has none. It makes a Case with the input and camera panels you asked for, and opens it running, as in [Run a Case](/help/run-a-case). Inputs are keys, a gamepad and a phone for now. When you name another, such as the Mac's camera or MIDI, the agent says so and uses keys.
+You can also tell the agent what you want to do with a robot, such as "drive this rover with a gamepad while I watch its front camera". It imports the robot you name when the scene has none. It makes a Case with the input and camera panels you asked for, and opens it running, as in [Run a Case](/help/run-a-case). Inputs are keys, a gamepad, a phone and the computer's camera. When you name another, such as MIDI, the agent says so and uses keys. A control the panels don't have, such as a joystick or a piano, the agent draws as a code panel.
 
 ## Name or delete a Case
 

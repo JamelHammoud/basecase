@@ -43,6 +43,11 @@ export const GLOSSARY = [
   { word: 'Run', action: 'Start a Case, Routine, Checks or a policy', synonyms: ['launch', 'execute'] },
   { word: 'Add', action: 'Put a part in the scene', synonyms: ['insert (?:a )?parts?'] },
   { word: 'Insert', action: 'Put a model or robot in the scene', synonyms: ['add (?:a |an )?(?:models?|robots?)'] },
+  {
+    word: 'Make',
+    action: 'Bring a new build guide, Case or Routine into being',
+    synonyms: ['creat(?:e|es|ed|ing)', '(?:auto-)?generat(?:e|es|ed|ing)'],
+  },
   { word: 'Update', action: 'Make an out-of-date build guide again', synonyms: ['regenerate'] },
 ];
 

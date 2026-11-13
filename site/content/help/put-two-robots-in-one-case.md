@@ -16,7 +16,7 @@ Run two arms in one simulation, where one touches a point and the other takes ov
 
 1. Open each arm's scene in its own tab. The second arm can be a copy of the first: right-click its tab and choose **Duplicate**.
 2. In the first arm's tab, open Play ▸ **Cases** and click **New Case**.
-3. Choose **Hand Off to a Spot**. Set how far ahead and how high the point sits, and how close counts, then click **Create**.
+3. Choose **Hand Off to a Spot**. Set how far ahead and how high the point sits, and how close counts, then click **Make Case**.
 
 ![The New Case card with Hand Off to a Spot chosen](/help/put-two-robots-in-one-case/new-case.png)
 

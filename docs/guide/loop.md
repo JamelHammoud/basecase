@@ -47,6 +47,8 @@ Jamel steers; nothing waits for Jamel.
 - **Feedback on a pull request:** comment on it. The learn lane turns Jamel's comments into lessons.
 - **Stop something:** close its pull request or issue, or set `LOOP_PAUSED` to `true` to stop merges and releases.
 
+**How arcs are kept.** The lead keeps 3 to 6 open `loop:arc` issues; an arc opened from a big bet also carries `loop:big-bet`. Its plan can retire arcs (`retireArcs`: number, reason, and optionally `into`, the arc that carries on). The runner (`lib/leadPlan.mjs`, rules in `lib/arcs.mjs`) closes each with the reason; with `into` it rewrites the `Arc:` line of each open step to the other arc, adds them to that arc's task list and comments on it, so both issues link. It keeps an arc instead when retiring it would leave fewer than 3 open or no big bet, and after retirements it refuses new arcs beyond 6, logging why and filing the plan's other steps. A step names its arc as `Arc: #N`, and each arc's body ends with a `## Steps` task list of its steps, so GitHub shows its progress. A step that still names its arc by title is matched once by title and rewritten to the number. In the lead's prompt each arc lists its open steps and the steps that merged in the last 14 days (closed as completed, read through `lib/cache.mjs`).
+
 ### Pull request kinds
 
 Every pull request has one kind, shown three ways: a title prefix, a `loop:` label and a template in `.github/PULL_REQUEST_TEMPLATE/`. The loop fills the template from the agent's answer, so pull requests of a kind read alike.

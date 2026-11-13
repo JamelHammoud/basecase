@@ -314,11 +314,35 @@ export const hasLabel = (item, name) => (item.labels ?? []).some((label) => labe
 export const closePull = (number, comment) =>
   run('gh', ['pr', 'close', String(number), '--delete-branch', '--comment', withMark(comment)], { allowFail: true });
 
+export const setIssueBody = (number, body) =>
+  run('gh', ['issue', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });
+
 export function appendToIssue(number, text) {
   const body = run('gh', ['issue', 'view', String(number), '--json', 'body', '--jq', '.body']).out;
 
-  run('gh', ['issue', 'edit', String(number), '--body-file', '-'], { input: `${body}\n\n${text}`, allowFail: true });
+  setIssueBody(number, `${body}\n\n${text}`);
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const closedIssues = (days, now = Date.now()) =>
+  cached(
+    `closed-issues-${days}d`,
+    { ttlMs: 10 * 60_000 },
+    () =>
+      json('gh', [
+        'issue',
+        'list',
+        '--state',
+        'closed',
+        '--search',
+        `closed:>=${new Date(now - days * DAY_MS).toISOString().slice(0, 10)}`,
+        '--limit',
+        '300',
+        '--json',
+        'number,title,body,author,labels,stateReason,closedAt',
+      ]) ?? [],
+  );
 
 export const issueIsOpen = (number) =>
   run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===

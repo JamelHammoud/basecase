@@ -133,10 +133,10 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
     {
       id: 'lay-out-plates',
       group: 'Scene',
-      label: 'Lay Out Plates',
+      label: 'Print',
       shortcut: '⌘P',
       icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates bed printer slice',
+      keywords: 'lay out plates bed printer slice',
       run: () => core.printing.openMode(1),
     },
     {

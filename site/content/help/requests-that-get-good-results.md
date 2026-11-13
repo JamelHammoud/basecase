@@ -14,6 +14,7 @@ keywords:
 related:
   - design-a-robot-with-the-agent
   - attach-photos-files-and-sketches
+  - make-a-case-pass-with-the-agent
 covers:
   - electron/cad-agent-prompt.mjs
   - electron/backend/promptBlocks.mjs
@@ -42,6 +43,6 @@ After the first design, short follow-ups work best: “Longer legs”, “Thicke
 
 ## Ask about Checks instead of hiding them
 
-When a Check fails, ask the agent to fix it, or why it matters. It won't narrow a range or hide a part to pass a check, and it tells you when a check looks wrong.
+When a Check fails, ask the agent to fix it, or why it matters. It won't narrow a range or hide a part to pass a check, and it tells you when a check looks wrong. When the scene has Cases, it runs them before it calls a design done. It never edits a Case to pass one.
 
 For what the agent won't do however you ask, see [Agent limits](/help/agent-limits).

@@ -10,7 +10,13 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 
 export type { BooleanOp } from '../types/robotics';
 
-const BOOLEAN_DONE: Record<BooleanOp, string> = { subtract: 'Subtracted', union: 'Merged', intersect: 'Intersected' };
+function booleanDone(op: BooleanOp, base: ScenePart, tools: ScenePart[]): string {
+  const others = partLabel(tools);
+
+  if (op === 'subtract') return `Subtracted ${others} from ${base.name}`;
+
+  return op === 'union' ? `Merged ${others} into ${base.name}` : `Intersected ${base.name} with ${others}`;
+}
 
 const DUPLICATE_STEP = 15;
 
@@ -105,11 +111,7 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
     const solids = selectedParts.filter((p) => p.kind !== 'image_plane');
     const base = solids[0];
 
-    if (!base) {
-      showToast('Select a part first', { tone: 'error' });
-
-      return;
-    }
+    if (!base) return;
 
     const { operands: tools, error } = booleanOperands(base, solids, op, parts);
 
@@ -135,7 +137,7 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
 
     commitParts((prev) => prev.filter((p) => !toolIds.has(p.id)).map((p) => (p.id === base.id ? result : p)));
     setSelectedIds([result.id]);
-    showToast(BOOLEAN_DONE[op], { action: undoAction });
+    showToast(booleanDone(op, base, tools), { action: undoAction });
   };
 
   const runBoolean = (op: BooleanOp) => {

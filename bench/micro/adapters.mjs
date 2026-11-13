@@ -30,6 +30,16 @@ export function parseCheckRows(text) {
     .map(([, status, check, detail]) => ({ check, status: STATUS[status], detail }));
 }
 
+export async function runCase(ctx, id) {
+  const reply = await needApp(ctx, 'runCase', 'run_case').call('run_case', { id });
+
+  if (reply?.data) return reply.data;
+
+  if (reply?.ok === false) return { problem: reply.problem ?? `No Case ${id}` };
+
+  throw new AdapterMissing('runCase', `run_case data from the running app (${reply?.error ?? 'no data'})`);
+}
+
 export const STS3215_OUTPUT = { point: [-12.66, 18.9, -0.16], axis: [0, 1, 0] };
 
 export const DEFAULT_ADAPTERS = {
@@ -46,6 +56,7 @@ export const DEFAULT_ADAPTERS = {
 
     return res.data ?? parseBomTotal(res.text);
   },
+  runCase,
   checkRows: async (ctx) =>
     parseCheckRows((await needApp(ctx, 'checkRows', 'the engineering checks').call('verify')).text),
 };

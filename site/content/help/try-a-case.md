@@ -60,6 +60,8 @@ When the robot doesn't fit, **New Case** under the rows builds one it does.
 
 The **Results** header counts passed tries out of all of them. Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
 
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries.
+
 When the robot can't drive, **Teach It to Move** shows under **Try It**. It trains a **Walk** skill; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
 Tries are kept on this computer, not in shared `.basecase` files. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).

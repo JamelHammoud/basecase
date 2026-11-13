@@ -88,6 +88,22 @@ function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
   ];
 }
 
+function compareCommands(core: WorkspaceCore): Command[] {
+  const { caseCompare, tool } = core;
+
+  return caseCompare.choices.map((choice) => ({
+    id: `case-compare-${choice.tabId}`,
+    group: 'Simulate',
+    label: `Compare With ${choice.name}`,
+    icon: <CasesIcon className={ic} />,
+    keywords: 'case versus pass rate which better robot scene tab',
+    run: () => {
+      caseCompare.start(choice.tabId);
+      tool.setRightTab('sim');
+    },
+  }));
+}
+
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim, cases } = simTraining;
@@ -172,6 +188,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...caseRun,
+    ...(cases.active ? compareCommands(core) : []),
     ...datasetCommands(cases),
     ...shareCommands(simTraining),
   ];

@@ -237,15 +237,36 @@ describe('a ready Walk drives every robot that moves around, as Drive picks it',
 });
 
 describe('summarizing runs', () => {
-  const run = (passed: boolean, margin: number, failed: string[] = []) => ({ passed, margin, failed });
+  let seed = 0;
+  const run = (passed: boolean, margin: number, failed: string[] = []) => ({ seed: ++seed, passed, margin, failed });
 
-  it('counts passes across batches, takes the median margin and the most common failure', () => {
+  it('counts passes across batches, takes the median margin, ranks failures and finds the worst run', () => {
+    seed = 0;
+
     const runs = summarizeRuns([
-      { outcomes: [run(true, 0.4), run(false, -0.2, ['fell']), run(false, -0.6)] },
-      { outcomes: [run(false, -0.1, ['fell']), run(true, 0.8)] },
+      { outcomes: [run(true, 0.4), run(false, -0.2, ['fell', 'fell']), run(false, -0.6)] },
+      { outcomes: [run(false, -0.1, ['fell', 'stopped']), run(true, 0.8)] },
     ]);
 
-    expect(runs).toEqual({ runs: 5, passes: 2, medianMargin: -0.1, commonFailure: 'fell', refusal: null });
+    expect(runs).toEqual({
+      runs: 5,
+      passes: 2,
+      medianMargin: -0.1,
+      commonFailure: 'fell',
+      failures: [
+        { label: 'fell', runs: 2 },
+        { label: 'missed', runs: 1 },
+        { label: 'stopped', runs: 1 },
+      ],
+      worstSeed: 3,
+      refusal: null,
+    });
+  });
+
+  it('takes the lowest margin as the worst run when every run passes', () => {
+    seed = 0;
+
+    expect(summarizeRuns([{ outcomes: [run(true, 0.4), run(true, 0.1), run(true, 0.9)] }]).worstSeed).toBe(2);
   });
 
   it('reads a refusal from any batch', () => {

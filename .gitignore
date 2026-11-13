@@ -29,7 +29,7 @@ dist-web
 
 # Benchmark downloads and run outputs
 bench/data/
-bench/runs/
+bench/runs
 
 # Copies of folders attached to the agent (can be large)
 /library/evidence/

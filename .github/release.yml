@@ -14,6 +14,7 @@ changelog:
     - title: Better
       labels:
         - loop:refine
+        - loop:harness
     - title: Fixed
       labels:
         - loop:fix

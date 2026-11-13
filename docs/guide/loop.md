@@ -92,3 +92,11 @@ docker exec bc-e2e npx vitest run --config vitest.e2e.config.ts e2e/<file>.e2e.t
 ### Releases
 
 `.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i).
+
+### What Check runs
+
+Check is built for fast pull requests, with `main` as the safety net:
+
+- **On every pull request:** lint, types and unit tests (`npm run check`) on Linux and Windows; e2e on Linux in three parallel shards; the commit-credit check. The packaged-app builds (macOS and Windows) run only when the pull request touches what they build: `electron/`, `forge/`, `hw/`, packaging and native-build tooling, `e2e/app/`, workflows, or `package.json` and the lockfile.
+- **On every push to `main`:** all of that, plus e2e on Windows and both packaged-app builds, whatever changed. A failure there goes to the repair lane.
+- **Speed:** a pull request's superseded runs are cancelled, and the Forge and daemon Rust builds are cached.

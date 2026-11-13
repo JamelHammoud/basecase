@@ -107,6 +107,10 @@ class ArmDrive implements DriveLoop {
     this.aim = [...this.goal];
   }
 
+  aimOf(): V3 {
+    return [...this.aim];
+  }
+
   private speed() {
     return this.setup.reachMm * REACH_PER_SECOND;
   }
@@ -232,6 +236,10 @@ class TeamDrive implements DriveLoop {
 
   command(c: DriveCommand, measured?: JointValues) {
     this.members.find((m) => m.slot === (c.slot ?? 0))?.drive.command(c, measured);
+  }
+
+  aimOf(slot: number): V3 | null {
+    return this.members.find((m) => m.slot === slot)?.drive.aimOf?.(0) ?? null;
   }
 
   tick(time: number): DriveOutput {

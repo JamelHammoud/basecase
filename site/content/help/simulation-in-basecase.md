@@ -57,6 +57,7 @@ Simulating never changes your parts. The canvas shows the simulated pose, and en
 
 - **Drive** steers the robot live with the keyboard or a gamepad.
 - **Cases** record tries and judge each one pass or miss.
+- **Multiply** replays a passed try in slightly moved worlds.
 - **Training** teaches skills on Forge, Basecase's own trainer, built on the same MuJoCo formulation. A trained skill counts only after Arena replays it on MuJoCo itself.
 - **Routines** run step by step on the live simulation.
 - **The emulated robot** follows the simulation once it reaches Test.

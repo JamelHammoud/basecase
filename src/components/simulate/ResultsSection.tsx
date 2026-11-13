@@ -4,6 +4,7 @@ import {
   Button,
   ContextMenu,
   DownloadIcon,
+  DuplicateIcon,
   IconButton,
   RunIcon,
   Section,
@@ -11,7 +12,7 @@ import {
   Tooltip,
   type ContextMenuEntry,
 } from '../../design-system';
-import type { TryRecord } from '../../cases/tries';
+import { canMultiply, drivenTries, generatedFrom, type TryRecord } from '../../cases/tries';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
@@ -25,6 +26,7 @@ import { useFilmstrip } from './useFilmstrip';
 
 interface TryRowProps {
   record: TryRecord;
+  generated: number;
   rig: Rig;
   model: SimModel | null;
   parts: ScenePart[];
@@ -47,7 +49,7 @@ const Faults: React.FC<{ record: TryRecord; rig: Rig }> = ({ record, rig }) =>
     </Tooltip>
   ));
 
-const TryRow: React.FC<TryRowProps> = ({ record, rig, model, parts, world, onReplay, onMenu }) => {
+const TryRow: React.FC<TryRowProps> = ({ record, generated, rig, model, parts, world, onReplay, onMenu }) => {
   const film = useFilmstrip(record, model, parts, world);
 
   return (
@@ -55,6 +57,11 @@ const TryRow: React.FC<TryRowProps> = ({ record, rig, model, parts, world, onRep
       <div className="flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
         <span className="flex-1 text-white/50 tabular">{fmtTime(record.seconds)}</span>
+        {generated > 0 && (
+          <span className="text-white/50 tabular" data-testid="try-generated">
+            {generated} generated
+          </span>
+        )}
         <Faults record={record} rig={rig} />
         <IconButton icon={<RunIcon className="w-4 h-4" />} title="Replay" size="xs" onClick={onReplay} />
       </div>
@@ -112,28 +119,41 @@ const DatasetActions: React.FC<{ cases: Cases }> = ({ cases }) => (
 export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, model, parts, world, run }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const tries = cases.active ? cases.tries : [];
+  const rows = drivenTries(tries);
   const showRun = !!run && hasRunResult(run.stats, run.model);
 
   if (!tries.length && !showRun && !share?.canShare) return null;
 
   const openMenu = (e: React.MouseEvent, record: TryRecord) => {
+    const multiply: ContextMenuEntry[] =
+      canMultiply(record) && !cases.multiply.running
+        ? [
+            {
+              label: 'Multiply',
+              icon: <DuplicateIcon className="w-4 h-4" />,
+              onSelect: () => cases.multiply.multiply(record),
+            },
+          ]
+        : [];
+
     e.preventDefault();
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [{ label: 'Delete', tone: 'danger', onSelect: () => cases.removeTry(record) }],
+      items: [...multiply, { label: 'Delete', tone: 'danger', onSelect: () => cases.removeTry(record) }],
     });
   };
 
   return (
     <Section title="Results">
       {run && showRun && <RunResult {...run} />}
-      {tries.length > 0 && (
+      {rows.length > 0 && (
         <div className="flex flex-col">
-          {tries.map((t) => (
+          {rows.map((t) => (
             <TryRow
               key={t.id}
               record={t}
+              generated={generatedFrom(tries, t.id).length}
               rig={rig}
               model={model}
               parts={parts}

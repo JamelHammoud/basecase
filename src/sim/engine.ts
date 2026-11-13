@@ -4,6 +4,7 @@ import { controlValues } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import * as THREE from 'three';
 import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
+import { COMMAND_WIDTH, writeCommand } from './recordedCommands';
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
@@ -48,6 +49,7 @@ export class SimEngine {
     startXY: [number, number];
   }>;
   private controller: Controller = { kind: 'hold' };
+  private sent: DriveCommand[] = [];
   private drive: DriveLoop | null = null;
   private route: RouteRunner | null = null;
   stepHook: (() => void) | null = null;
@@ -187,6 +189,7 @@ export class SimEngine {
 
   setController(c: Controller) {
     this.controller = c;
+    this.sent = [];
     this.policyState?.eyes?.dispose();
     this.policyState = null;
     this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
@@ -228,7 +231,17 @@ export class SimEngine {
     return new RouteRunner(c, { rootQpos: r?.rootQpos ?? 0, joints: this.sim.joints });
   }
 
+  get driveSetup(): DriveSetup | null {
+    return this.controller.kind === 'drive' ? this.controller.setup : null;
+  }
+
+  readCommands(out: Float32Array) {
+    for (let slot = 0; slot * COMMAND_WIDTH < out.length; slot++)
+      writeCommand(out, slot * COMMAND_WIDTH, { command: this.sent[slot], aim: this.drive?.aimOf?.(slot) ?? null });
+  }
+
   command(c: DriveCommand) {
+    this.sent[c.slot ?? 0] = c;
     this.drive?.command(c, this.drive.hand ? this.holdValues() : undefined);
 
     if (this.policyState) this.policyState.command = [c.v[0], c.v[1], c.v[2]];

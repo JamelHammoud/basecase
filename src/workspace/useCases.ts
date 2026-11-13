@@ -5,7 +5,7 @@ import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { worstFirst, type TryRecord } from '../cases/tries';
+import { generatedFrom, worstFirst, type TryRecord } from '../cases/tries';
 import { deleteRecording } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
 import type { Simulation } from '../sim/useSimulation';
@@ -15,6 +15,7 @@ import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
 import { useCaseTry } from './useCaseTry';
 import { useDatasetExport } from './useDatasetExport';
+import { useMultiply } from './useMultiply';
 import { useTryTimeline } from './useTryTimeline';
 
 interface CasesOptions {
@@ -109,10 +110,12 @@ export function useCases(options: CasesOptions) {
     confirmAction({
       title: `Delete this try?`,
       onConfirm: () => {
-        if (timeline.record?.id === record.id) timeline.close();
+        const gone = new Set([record.id, ...generatedFrom(project.tries ?? [], record.id).map((t) => t.id)]);
 
-        void deleteRecording(record.id);
-        setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => t.id !== record.id) }));
+        if (timeline.record && gone.has(timeline.record.id)) timeline.close();
+
+        gone.forEach((id) => void deleteRecording(id));
+        setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => !gone.has(t.id)) }));
       },
     });
 
@@ -134,6 +137,7 @@ export function useCases(options: CasesOptions) {
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
+  const multiply = useMultiply({ sim, rig, parts, active, partners, tries, setProject, showToast });
   const attempt = useCaseTry({
     sim,
     rig,
@@ -150,6 +154,7 @@ export function useCases(options: CasesOptions) {
     active,
     builder,
     dataset,
+    multiply,
     tries,
     hasRobot,
     fixedBase,

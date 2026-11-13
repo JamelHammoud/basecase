@@ -53,6 +53,7 @@ export interface DevActions {
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  multiplyCount: (count: number) => void;
   addCase: (raw: unknown) => string;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
@@ -226,6 +227,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    multiplyCount: (count: number) => devRef.current.multiplyCount(count),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),

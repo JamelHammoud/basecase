@@ -49,12 +49,21 @@ async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) 
     episodes.push({
       recording,
       task: kase.brief.trim() || kase.name,
-      source: { try: record.id, at: record.at, margin: record.margin, case_hash: record.manifest.caseHash },
+      source: {
+        try: record.id,
+        at: record.at,
+        margin: record.margin,
+        case_hash: record.manifest.caseHash,
+        seed: record.manifest.seed,
+        source: record.manifest.source ?? null,
+      },
     });
   }
 
   return { episodes, modelHash };
 }
+
+export const EARLIER_DESIGN = 'These tries are from an earlier design. Try It again to record new ones.';
 
 const triesText = (n: number) => (n === 1 ? '1 try' : `${n} tries`);
 
@@ -159,7 +168,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
       const made = await prepare(kase, passed);
 
       if (!made) {
-        showToast('These tries are from an earlier design. Try It again to record new ones.', { tone: 'error' });
+        showToast(EARLIER_DESIGN, { tone: 'error' });
 
         return;
       }

@@ -58,7 +58,9 @@ When the robot doesn't fit, **New Case** under the rows builds one it does.
 
 ## Results
 
-The **Results** header counts passed tries out of all of them. Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+
+Right-click a passed try and choose **Multiply** to replay it in 50 slightly moved worlds. The runs that pass show as a count on its row, such as "50 generated", and deleting the try deletes them too. Steps are in [Multiply a try into varied demonstrations](/help/multiply-a-try-into-varied-demonstrations).
 
 When the robot can't drive, **Teach It to Move** shows under **Try It**. It trains a **Walk** skill; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 

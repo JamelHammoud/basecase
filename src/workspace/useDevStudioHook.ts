@@ -80,6 +80,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     },
     addCase: (raw) => core.simTraining.cases.add(parseCase(raw)).id,
     referenceTry: () => core.simTraining.cases.attempt.reference(),
+    multiplyCount: (count) => core.simTraining.cases.multiply.setCount(count),
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     sharedLink: () => core.simTraining.share.link,
     stubTrainer: (policy) => {

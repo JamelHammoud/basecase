@@ -13,7 +13,7 @@ import type { Randomization } from '../skills/environment';
 import { NO_BODY } from '../routines/physicsBody';
 import { caseFactReader, type CaseFacts } from './caseFacts';
 import { judgeSoFar, usesBodySkills, type CaseLogicResult, type CaseLogicRun } from './caseLogic';
-import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld } from './caseRandom';
+import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld, worldRandom } from './caseRandom';
 import { GroundSteer } from './groundSteer';
 import { probeReader } from './probes';
 import { castRobot, castSlots, guestsOf, type CaseRobot, type CastSlot } from './caseCast';
@@ -167,12 +167,16 @@ function limpen(engine: SimEngine, model: SimModel, keys: Set<string>) {
 const ownFacts = (robot: CaseRobot | undefined) =>
   robot ? robotFacts(buildRig(robot.joints, robot.parts), robot.parts) : null;
 
-interface Started {
+export interface Started {
   engine: SimEngine;
   dispose: () => void;
 }
 
-function startEngine(mj: MainModule, model: SimModel, run: { controller: Controller; options: RunOptions }): Started {
+export function startEngine(
+  mj: MainModule,
+  model: SimModel,
+  run: { controller: Controller; options: Pick<RunOptions, 'seed' | 'randomization'> },
+): Started {
   const { controller, options } = run;
   const random = options.seed === undefined ? null : caseRandom(options.seed);
 
@@ -195,8 +199,6 @@ function startEngine(mj: MainModule, model: SimModel, run: { controller: Control
 
   return { engine: arena.engine, dispose: () => arena.dispose() };
 }
-
-const worldRandom = (seed: number | undefined) => (seed === undefined ? null : caseRandom(-seed - 1));
 
 function refused(authored: Case, refusal: string, model: SimModel): CaseResult {
   return {
@@ -274,7 +276,7 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
 }
 
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
-  const jitter = worldRandom(options.seed);
+  const jitter = options.seed === undefined ? null : worldRandom(options.seed);
   const kase = jitter ? jitteredWorld(fit.scaled, jitter) : fit.scaled;
   const world = kase.world.objects.map(worldItem);
   const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) });

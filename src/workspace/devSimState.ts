@@ -15,11 +15,14 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
   return {
     activeCase: cases.active?.id ?? null,
     caseSeconds: cases.active?.task.seconds ?? null,
+    multiplying: cases.multiply.running,
     tries: cases.tries.map((t) => ({
       passed: t.passed,
       margin: t.margin,
       seconds: t.seconds,
       faults: t.manifest.faults ?? [],
+      source: t.manifest.source ?? null,
+      seed: t.manifest.seed,
     })),
   };
 }

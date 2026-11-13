@@ -49,13 +49,13 @@ The **Cases** list shows only Cases the robot in this scene can try. One that do
 
 ## Tries
 
-You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
+You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay. Multiply replays a passed try in 50 slightly moved worlds and keeps the runs that pass, shown as a count on its row.
 
 Tries stay on this computer. A `.basecase` file you share carries the Case but not its tries.
 
 ## A Case is the test, a skill is the answer
 
-Cases measure. Skills you train in the **Train** section are judged by the same contract code, in [Arena](/help/arena). Passed tries become demonstration data: [Export a LeRobot dataset](/help/export-a-lerobot-dataset) turns them into a dataset for training other models.
+Cases measure. Skills you train in the **Train** section are judged by the same contract code, in [Arena](/help/arena). Passed tries become demonstration data: [Export a LeRobot dataset](/help/export-a-lerobot-dataset) turns them into a dataset for training other models. [Multiply a try into varied demonstrations](/help/multiply-a-try-into-varied-demonstrations) adds more of them.
 
 ## Where Cases come from
 

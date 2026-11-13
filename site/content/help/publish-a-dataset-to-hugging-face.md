@@ -46,7 +46,7 @@ Publishing works in the desktop app. The dataset is always public.
 
 ## What gets published
 
-The files are the ones **Export Dataset** makes; [LeRobot dataset contents](/help/lerobot-dataset-contents) lists them. They go to a dataset repo on your account, named after the Case plus a 6-character code for the scene, such as `touch-the-dots-1a2b3c`. Each scene gets its own code, so publishing Touch the Dots from two scenes makes two datasets. Basecase tags the dataset v2.1, the version LeRobot loads it by.
+The files are the ones **Export Dataset** makes; [LeRobot dataset contents](/help/lerobot-dataset-contents) lists them. Tries that Multiply generated go too. They go to a dataset repo on your account, named after the Case plus a 6-character code for the scene, such as `touch-the-dots-1a2b3c`. Each scene gets its own code, so publishing Touch the Dots from two scenes makes two datasets. Basecase tags the dataset v2.1, the version LeRobot loads it by.
 
 ## Publishing again
 

@@ -16,6 +16,7 @@ keywords:
   - imitation learning
 related:
   - try-a-case
+  - multiply-a-try-into-varied-demonstrations
   - publish-a-dataset-to-hugging-face
 covers:
   - src/components/simulate/ResultsSection.tsx
@@ -39,7 +40,7 @@ A toast shows "Exporting dataset…", then names how many tries went in. Basecas
 
 ## Which tries go in
 
-Only passed tries go in: a dataset holds the task done right. Each try must also match the robot as it is now. Tries recorded before the robot's last change are left out. The toast counts them: "Exported 3 tries as a dataset, left out 2 from an earlier design".
+Only passed tries go in: a dataset holds the task done right. Tries made with [Multiply a try into varied demonstrations](/help/multiply-a-try-into-varied-demonstrations) go in too, one episode each. Each try must also match the robot as it is now. Tries recorded before the robot's last change are left out. The toast counts them: "Exported 3 tries as a dataset, left out 2 from an earlier design".
 
 When every passed try is from an earlier design, the toast says "These tries are from an earlier design. Try It again to record new ones."
 

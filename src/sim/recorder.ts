@@ -1,5 +1,7 @@
+import type { DriveSetup } from './drive';
 import type { SimEngine } from './engine';
 import type { FaultKind, RecordedFault } from './faults';
+import { COMMAND_WIDTH, commandSlotsOf } from './recordedCommands';
 
 export const RECORD_HZ = 50;
 
@@ -21,6 +23,9 @@ export interface Recording {
   scan?: Float32Array;
   scanWidth?: number;
   faults?: RecordedFault[];
+  drive?: DriveSetup;
+  commands?: Float32Array;
+  commandSlots?: number;
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -80,6 +85,9 @@ export class Recorder {
 
   private readonly scan: Growing<Float32Array> | null;
   private readonly faults: RecordedFault[] = [];
+  private readonly drive: DriveSetup | null;
+  private readonly commands: Growing<Float32Array> | null;
+  private readonly commandRow: Float32Array;
 
   constructor(engine: SimEngine) {
     const { model } = engine;
@@ -93,10 +101,17 @@ export class Recorder {
     this.poses = new Growing(f32, 512 * engine.sim.bodies.length * 7);
     this.jointQpos = engine.jointAddresses();
     this.scan = engine.scanner ? new Growing(f32, 512 * engine.scanner.values.length) : null;
+    this.drive = engine.driveSetup;
+    this.commandRow = new Float32Array(this.drive ? commandSlotsOf(this.drive) * COMMAND_WIDTH : 0);
+    this.commands = this.drive ? new Growing(f32, 512 * this.commandRow.length) : null;
 
     for (const j of engine.stats().joints) if (j.fault) this.faults.push({ joint: j.id, kind: j.fault, at: 0 });
 
     this.sample();
+  }
+
+  get count() {
+    return this.frames;
   }
 
   fault(joint: string, kind: FaultKind | null) {
@@ -124,6 +139,11 @@ export class Recorder {
     this.qpos.push(data.qpos);
     this.qvel.push(data.qvel);
     this.poses.push(this.engine.poses());
+
+    if (this.commands) {
+      this.engine.readCommands(this.commandRow);
+      this.commands.push(this.commandRow);
+    }
 
     if (this.scan && this.engine.scanner) {
       this.engine.scanner.tick();
@@ -154,12 +174,15 @@ export class Recorder {
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
       faults: this.faults,
+      ...(this.drive && this.commands
+        ? { drive: this.drive, commands: this.commands.done(), commandSlots: this.commandRow.length / COMMAND_WIDTH }
+        : {}),
     };
   }
 }
 
 export const recordingTransfer = (r: Recording): Transferable[] =>
-  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.jointQpos, r.scan].flatMap((a) => (a ? [a.buffer] : []));
+  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.jointQpos, r.scan, r.commands].flatMap((a) => (a ? [a.buffer] : []));
 
 export function framePoses(r: Recording, frame: number): Float64Array {
   const size = r.nbody * 7;

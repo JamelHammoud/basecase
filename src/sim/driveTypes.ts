@@ -25,5 +25,7 @@ export interface DriveLoop {
 
   command(c: DriveCommand, measured?: JointValues): void;
 
+  aimOf?(slot: number): V3 | null;
+
   tick(time: number): DriveOutput;
 }

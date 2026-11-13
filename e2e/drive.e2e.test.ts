@@ -25,13 +25,15 @@ interface SimState {
   activeCase: string | null;
   effector: number[] | null;
   scanPoints: number;
-  tries: Array<{ passed: boolean; margin: number }>;
+  tries: Array<{ passed: boolean; margin: number; source: string | null; seed: number }>;
+  multiplying: string | null;
 }
 
 type Studio = {
   simState: () => SimState;
   load: (r: unknown) => void;
   passTries: () => void;
+  multiplyCount: (count: number) => void;
   drive: (c: DriveCommand) => void;
   worldAt: () => Record<string, number[]>;
 };
@@ -183,6 +185,19 @@ async function handAt(c: ReferenceCommand) {
       { timeout: 30000 },
     )
     .toBeLessThan(25);
+}
+
+async function multiplyFromPalette(count: number) {
+  await app.page.evaluate((n) => (window as unknown as { __studio: Studio }).__studio.multiplyCount(n), count);
+  await app.page.keyboard.press('Meta+k');
+  await app.page.keyboard.type('Multiply');
+  await app.page.keyboard.press('Enter');
+  await app.page
+    .getByRole('status')
+    .filter({ hasText: /generated/ })
+    .first()
+    .waitFor({ timeout: 30000 });
+  await expect.poll(async () => (await simState()).multiplying, { timeout: 120000 }).toBeNull();
 }
 
 async function waitSim(seconds: number) {
@@ -407,8 +422,23 @@ describe('a gripper', () => {
     await button('End Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].passed).toBe(true);
+
+    await multiplyFromPalette(5);
+
+    const generated = (await simState()).tries.filter((t) => t.source !== null);
+    const files = await datasetFiles();
+    const meta = (end: string) => JSON.parse(files[Object.keys(files).find((p) => p.endsWith(end))!].toString());
+    const episodes: Array<{ seed: number; source: string | null }> = meta('meta/basecase.json').episodes;
+
+    expect(generated.length).toBeGreaterThan(0);
+    expect(generated.every((t) => t.passed && t.seed > 0 && t.seed <= 5)).toBe(true);
+    expect(await app.page.getByTestId('try-row').count()).toBe(1);
+    expect(await app.page.getByTestId('try-generated').innerText()).toBe(`${generated.length} generated`);
+    expect(meta('meta/info.json').total_episodes).toBe(1 + generated.length);
+    expect(episodes.filter((e) => e.source === null)).toHaveLength(1);
+    expect(new Set(episodes.flatMap((e) => (e.source ? [e.seed] : [])))).toEqual(new Set(generated.map((t) => t.seed)));
     expect(app.errors).toEqual([]);
-  }, 180000);
+  }, 240000);
 });
 
 describe('LiDAR', () => {

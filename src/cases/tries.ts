@@ -17,6 +17,8 @@ export interface TryManifest {
   frames: number;
   dt: number;
   faults?: RecordedFault[];
+  commands?: boolean;
+  source?: string;
 }
 
 export interface TryRecord {
@@ -92,7 +94,44 @@ export async function tryManifest(kase: Case, model: SimModel, recording: Record
     frames: recording.frames,
     dt: recording.dt,
     faults: recording.faults ?? [],
+    ...(recording.commands ? { commands: true } : {}),
   };
 }
+
+export const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+export interface GeneratedRun {
+  seed: number;
+  margin: number;
+  recording: Recording;
+}
+
+export function generatedTry(source: TryRecord, run: GeneratedRun, id = newTryId()): TryRecord {
+  const { recording } = run;
+
+  return {
+    id,
+    caseId: source.caseId,
+    robot: source.robot,
+    at: new Date().toISOString(),
+    passed: true,
+    margin: run.margin,
+    seconds: recording.frames * recording.dt,
+    manifest: {
+      ...source.manifest,
+      seed: run.seed,
+      frames: recording.frames,
+      faults: recording.faults ?? [],
+      source: source.id,
+    },
+  };
+}
+
+export const canMultiply = (record: TryRecord) =>
+  record.passed && !!record.manifest.commands && !record.manifest.source;
+
+export const drivenTries = (tries: TryRecord[]) => tries.filter((t) => !t.manifest.source);
+
+export const generatedFrom = (tries: TryRecord[], source: string) => tries.filter((t) => t.manifest.source === source);
 
 export const worstFirst = (tries: TryRecord[]) => [...tries].sort((a, b) => a.margin - b.margin);

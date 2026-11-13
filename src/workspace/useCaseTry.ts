@@ -3,7 +3,7 @@ import { castOf, stageCase, stagedEffectors, type StagedCase } from '../cases/ca
 import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
 import { worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
+import { newTryId, scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import { saveRecording } from '../cases/tryStore';
 import type { RobotDrive } from '../sim/drive';
 import type { DriveTeam } from '../sim/useDrive';
@@ -32,8 +32,6 @@ export interface CaseTry {
   reference: () => Promise<void>;
   end: () => void;
 }
-
-const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 function teamFor(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }, all: boolean): DriveTeam {
   const { rig, parts, slots } = castOf(staged, scene);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { anchors, freshIdeas, ideaBody, outsideMarket } from './market.mjs';
+import { sandboxArgs } from '../lib/agent.mjs';
+import { SANDBOX, anchors, freshIdeas, ideaBody, outsideMarket } from './market.mjs';
 
 const idea = (title, entries = ['docs/market/competitors.md#onshape']) => ({ title, kind: 'integration', entries });
 const known = new Set(['docs/market/competitors.md#onshape']);
@@ -61,5 +62,25 @@ describe('outsideMarket', () => {
 
   it('flags a path that climbs out of docs/market/', () => {
     expect(outsideMarket(['docs/market/../guide/loop.md'])).toEqual(['docs/market/../guide/loop.md']);
+  });
+});
+
+describe('the market session', () => {
+  const args = sandboxArgs(SANDBOX);
+  const after = (flag) => args[args.indexOf(flag) + 1];
+
+  it('runs restricted, without a shell, asking nobody', () => {
+    expect(args).toContain('--restricted');
+    expect(args).not.toContain('--dangerously-skip-permissions');
+    expect(after('--permission-mode')).toBe('dontAsk');
+    expect(after('--tools').split(',')).not.toContain('Bash');
+  });
+
+  it('may edit only docs/market/', () => {
+    const edits = after('--allowedTools')
+      .split(',')
+      .filter((rule) => /^(Edit|Write)/.test(rule));
+
+    expect(edits).toEqual(['Edit(docs/market/**)']);
   });
 });

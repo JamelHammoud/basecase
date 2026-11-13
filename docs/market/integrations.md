@@ -9,7 +9,9 @@ Imports, exports and services Basecase connects to, and how far each goes. Entry
 - Onshape
 - Fusion
 
-## LeRobot dataset export
+## Dataset export
+
+### LeRobot
 
 - **Link:** https://huggingface.co/docs/lerobot/lerobot-dataset-v3
 - **Checked:** 2026-11-12

@@ -1,6 +1,6 @@
 # Accounts
 
-Every account the market lane holds. Passwords are in the macOS keychain under `basecase-market-<partner>`, never here. Rules: [README](README.md).
+Accounts worth opening, for Jamel to decide: the market lane reads public pages only and signs up for nothing. Rules: [README](README.md).
 
-| Service | Email | Plan | Signed up | Status |
-|---|---|---|---|---|
+| Service | Plan | What it would teach | Proposed |
+|---|---|---|---|

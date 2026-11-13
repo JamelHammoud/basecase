@@ -79,16 +79,27 @@ export const anchors = (markdown) => {
   });
 };
 
-const knownEntries = (dir) => {
-  const folder = path.join(dir, MARKET);
-  const files = fs.readdirSync(folder).filter((file) => file.endsWith('.md'));
+const entriesOf = (files, read) =>
+  files
+    .filter((file) => file.endsWith('.md'))
+    .flatMap((file) => anchors(read(file)).map((anchor) => `${MARKET}${file}#${anchor}`));
 
-  return new Set(
-    files.flatMap((file) =>
-      anchors(fs.readFileSync(path.join(folder, file), 'utf8')).map((anchor) => `${MARKET}${file}#${anchor}`),
-    ),
-  );
+const entriesAt = (dir, rev) => {
+  const listed = run('git', ['ls-tree', '--name-only', `${rev}:${MARKET}`], { cwd: dir, allowFail: true });
+
+  if (!listed.ok) return [];
+
+  return entriesOf(listed.out.split('\n'), (file) => run('git', ['show', `${rev}:${MARKET}${file}`], { cwd: dir }).out);
 };
+
+const entriesIn = (dir) => {
+  const folder = path.join(dir, MARKET);
+
+  return entriesOf(fs.readdirSync(folder), (file) => fs.readFileSync(path.join(folder, file), 'utf8'));
+};
+
+const knownEntries = (dir, { base, published }) =>
+  new Set([...entriesAt(dir, base), ...(published ? entriesIn(dir) : [])]);
 
 export const outsideMarket = (paths) => paths.filter((file) => !file.startsWith(MARKET) || file.includes('..'));
 
@@ -108,8 +119,17 @@ const prompt = (taken) =>
     `## Steps already open\n\n${taken.map((title) => `- ${title}`).join('\n') || 'None.'}`,
   ].join('\n\n');
 
-const withNotes = (change) =>
-  change.notes ? { ...change, summary: `${change.summary}\n\n**For Jamel:** ${change.notes}` } : change;
+export const SANDBOX = {
+  tools: ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'WebFetch', 'WebSearch'],
+  allow: ['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch', `Edit(${MARKET}**)`],
+};
+
+const formatDocs = (dir, files) => {
+  const present = files.filter((file) => file.endsWith('.md') && fs.existsSync(path.join(dir, file)));
+
+  if (present.length > 0)
+    run('npx', ['--no-install', 'prettier', '--write', ...present], { cwd: dir, allowFail: true });
+};
 
 export default function market({ log }) {
   const taken = takenTitles();
@@ -117,7 +137,14 @@ export default function market({ log }) {
   const base = run('git', ['rev-parse', 'HEAD'], { cwd: worktree.dir }).out;
 
   try {
-    const result = runAgent({ cwd: worktree.dir, name: 'market', prompt: prompt(taken), schema: SCHEMA, hours: 3 });
+    const result = runAgent({
+      cwd: worktree.dir,
+      name: 'market',
+      prompt: prompt(taken),
+      schema: SCHEMA,
+      hours: 3,
+      sandbox: SANDBOX,
+    });
 
     if (!result.ok) {
       log(`market session failed: ${String(result.error).slice(0, 500)}`);
@@ -125,7 +152,8 @@ export default function market({ log }) {
       return;
     }
 
-    const stray = outsideMarket(changedPaths(worktree.dir, base));
+    const changed = changedPaths(worktree.dir, base);
+    const stray = outsideMarket(changed);
 
     if (stray.length > 0) {
       log(`market session changed files outside ${MARKET}, nothing published: ${stray.slice(0, 20).join(', ')}`);
@@ -133,12 +161,17 @@ export default function market({ log }) {
       return;
     }
 
-    const { ideas = [], ...change } = result.output;
-    const url = publish(withNotes({ ...change, kind: 'market' }), worktree);
+    const { ideas = [], notes, ...change } = result.output;
 
-    log(url ? `opened ${url}` : `no doc change: ${change.notes}`);
+    formatDocs(worktree.dir, changed);
 
-    for (const candidate of freshIdeas(ideas, taken, knownEntries(worktree.dir))) {
+    const url = publish({ ...change, kind: 'market' }, worktree);
+
+    log(url ? `opened ${url}` : 'no doc change');
+
+    if (notes) log(`notes: ${notes}`);
+
+    for (const candidate of freshIdeas(ideas, taken, knownEntries(worktree.dir, { base, published: Boolean(url) }))) {
       log(`idea ${createIssue({ title: candidate.title, body: ideaBody(candidate), labels: [IDEA] })}`);
     }
   } finally {

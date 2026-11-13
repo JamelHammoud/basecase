@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { BRIEFS } from './paths.mjs';
 import { run } from './sh.mjs';
@@ -16,24 +17,45 @@ const lastResult = (out) => {
   return list.filter((event) => event?.type === 'result').at(-1) ?? null;
 };
 
-export function runAgent({ cwd, name, prompt, schema, hours = 6 }) {
+export const sandboxArgs = ({ tools, allow }) => [
+  '--restricted',
+  '--strict-mcp-config',
+  '--tools',
+  tools.join(','),
+  '--permission-mode',
+  'dontAsk',
+  '--allowedTools',
+  allow.join(','),
+];
+
+const permissionArgs = (sandbox) => (sandbox ? sandboxArgs(sandbox) : ['--dangerously-skip-permissions']);
+
+const withoutGithub = (fn) => {
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-nogh-'));
+
+  try {
+    return fn({ GH_TOKEN: '', GITHUB_TOKEN: '', GH_ENTERPRISE_TOKEN: '', GH_CONFIG_DIR: empty });
+  } finally {
+    fs.rmSync(empty, { recursive: true, force: true });
+  }
+};
+
+export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
   const args = [
     '-p',
     prompt,
     '--append-system-prompt',
     brief(name),
-    '--dangerously-skip-permissions',
+    ...permissionArgs(sandbox),
     '--output-format',
     'json',
     '--json-schema',
     JSON.stringify(schema),
     '--no-session-persistence',
   ];
-  const { out, err } = run(process.env.CLAUDE_BIN || 'claude', args, {
-    cwd,
-    timeout: hours * 60 * 60 * 1000,
-    allowFail: true,
-  });
+  const launch = (env) =>
+    run(process.env.CLAUDE_BIN || 'claude', args, { cwd, env, timeout: hours * 60 * 60 * 1000, allowFail: true });
+  const { out, err } = sandbox ? withoutGithub(launch) : launch();
 
   try {
     const result = lastResult(out);

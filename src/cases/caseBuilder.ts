@@ -1,3 +1,4 @@
+import { roverForward } from '../sim/driveSetup';
 import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import {
@@ -52,6 +53,20 @@ function armSpots(rig: Rig, facts: RobotFacts): V3[] {
   return dotSpots(rig, effector, arm, touchRadius(facts.reachMm));
 }
 
+const LEGS_FORWARD: V3 = [0, 0, 1];
+
+function driveForward(rig: Rig, facts: RobotFacts): V3 {
+  if (facts.morphology === 'legged') return LEGS_FORWARD;
+
+  const wheelAxes = facts.wheels.flatMap((id): V3[] => {
+    const axis = rig.byId.get(id)?.axis;
+
+    return axis ? [axis] : [];
+  });
+
+  return roverForward(wheelAxes).toArray() as V3;
+}
+
 export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   const robot = rig.robots[0];
   const facts = robotFacts(rig, parts);
@@ -64,6 +79,7 @@ export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   return {
     facts,
     pivot: robot?.pivot ?? ([0, 0, 0] as V3),
+    forward: driveForward(rig, facts),
     footprint: { width: span(xs), depth: span(zs) },
     heightMm: tops.length ? Math.max(...tops) : 0,
     armSpots: armSpots(rig, facts),

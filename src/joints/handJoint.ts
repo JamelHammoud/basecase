@@ -49,14 +49,19 @@ export function withoutJoint(project: ProjectSettings, id: string): ProjectSetti
   const joints = (project.joints ?? [])
     .filter((j) => j.id !== id)
     .map((j) => (j.parentJoint === id ? { ...j, parentJoint: undefined } : j));
+  const firstRanges = Object.fromEntries(Object.entries(project.firstRanges ?? {}).filter(([j]) => j !== id));
 
-  return { ...project, joints };
+  return { ...project, joints, firstRanges };
 }
 
 export function withJointRange(project: ProjectSettings, id: string, range: [number, number]): ProjectSettings {
   const sorted: [number, number] = [Math.min(...range), Math.max(...range)];
 
-  return { ...project, joints: (project.joints ?? []).map((j) => (j.id === id ? { ...j, range: sorted } : j)) };
+  return {
+    ...project,
+    joints: (project.joints ?? []).map((j) => (j.id === id ? { ...j, range: sorted } : j)),
+    firstRanges: { ...project.firstRanges, [id]: sorted },
+  };
 }
 
 export function shownRange(joint: RobotJoint): [number, number] {

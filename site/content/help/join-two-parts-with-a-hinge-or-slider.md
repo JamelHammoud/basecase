@@ -8,6 +8,7 @@ covers:
   - src/workspace/contextMenuItems.tsx
   - src/workspace/editCommands.tsx
   - src/components/PosePanel.tsx
+  - src/components/pose/JointRangeFields.tsx
 ---
 
 Turn separate parts, like the bodies of an imported STEP file, into something you can pose: a hinge turns one part about an axis, a slider moves it along one.

@@ -17,6 +17,10 @@ interface Pick {
   child: string;
 }
 
+interface Picking extends Pick {
+  context: string;
+}
+
 const SLIDE_FALLBACK: [number, number] = [-50, 50];
 
 function worldAxis(face: RoundFace, part: ScenePart): SceneAxis {
@@ -28,12 +32,30 @@ function worldAxis(face: RoundFace, part: ScenePart): SceneAxis {
   };
 }
 
-export function useHandJoints(core: WorkspaceCore) {
+function pickContext(core: WorkspaceCore, active: boolean): string {
+  const { tool, annotations, selectedIds } = core;
+
+  return JSON.stringify([
+    active,
+    selectedIds,
+    tool.transformMode,
+    tool.measuring,
+    tool.marking,
+    annotations.commentMode,
+    tool.leftTab,
+    tool.rightTab,
+  ]);
+}
+
+export function useHandJoints(core: WorkspaceCore, active: boolean) {
   const { docs, viewportRef, setSelectedIds, tool, posing, showToast, undo } = core;
   const { partsRef, projectRef, commitJointEdit } = docs;
-  const [picking, setPicking] = useState<Pick | null>(null);
+  const [picking, setPicking] = useState<Picking | null>(null);
   const busyRef = useRef(false);
   const canJoin = core.selectedIds.length === 2;
+  const context = pickContext(core, active);
+
+  if (picking && picking.context !== context) setPicking(null);
 
   const placedSoup = (id: string): PlacedSoup | null => {
     const part = partsRef.current.find((p) => p.id === id);
@@ -73,7 +95,7 @@ export function useHandJoints(core: WorkspaceCore) {
     const shared = await placement(pick);
 
     if (shared) place(pick, shared);
-    else setPicking(pick);
+    else setPicking({ ...pick, context });
   };
 
   const faceAt = async (clientX: number, clientY: number) => {

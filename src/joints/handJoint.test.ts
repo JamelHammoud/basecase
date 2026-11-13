@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { toScene } from '../agent/agentFrame';
 import { printed } from '../assembly/assembly.fixtures';
 import type { ProjectSettings } from '../types/robotics';
+import { runEngineering } from '../utils/engineering';
 import { buildRig, forwardKinematics } from '../utils/kinematics';
 import { declareJoints } from './declareJoints';
 import { addHandJoint, HINGE_RANGE, uniqueJointId, withJointRange, withoutJoint } from './handJoint';
@@ -141,5 +142,45 @@ describe('joints added by hand', () => {
 
     expect(left.map((j) => j.id)).toEqual(['wrist']);
     expect(left[0].parentJoint).toBeUndefined();
+  });
+
+  const rangeRow = (project: ProjectSettings) =>
+    runEngineering({ parts, project, measures: {}, servoOutputs: {} }).rows.find((r) => r.check === 'Range changes');
+
+  const hinge = () => {
+    const made = addHandJoint(
+      { type: 'revolute', parent: 'base', child: 'link', at, range: HINGE_RANGE },
+      parts,
+      PROJECT,
+    );
+
+    if (typeof made === 'string') throw new Error(made);
+
+    return made.next;
+  };
+
+  it('takes a range set by hand as the one to keep', () => {
+    const edited = withJointRange(hinge(), 'upper_arm', [-90, 30]);
+
+    expect(edited.firstRanges).toEqual({ upper_arm: [-90, 30] });
+    expect(rangeRow(edited)?.status).toBe('pass');
+  });
+
+  it('forgets a deleted joint, so a new one on the same part starts fresh', () => {
+    const gone = withoutJoint(hinge(), 'upper_arm');
+
+    expect(gone.firstRanges).toEqual({});
+
+    const slider = addHandJoint(
+      { type: 'prismatic', parent: 'base', child: 'link', at, range: [-10, 70] },
+      parts,
+      gone,
+    );
+
+    if (typeof slider === 'string') throw new Error(slider);
+
+    expect(slider.joint.id).toBe('upper_arm');
+    expect(slider.next.firstRanges).toEqual({ upper_arm: [-10, 70] });
+    expect(rangeRow(slider.next)?.status).toBe('pass');
   });
 });

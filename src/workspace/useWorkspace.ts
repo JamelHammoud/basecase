@@ -14,7 +14,7 @@ import { useWorkspaceUi } from './useWorkspaceUi';
 
 export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
   const core = useWorkspaceCore({ workspaceId, seed, studio });
-  const actions = useWorkspaceActions(core);
+  const actions = useWorkspaceActions(core, active);
   const ui = useWorkspaceUi(core);
   const clipboard = useClipboard({
     core,

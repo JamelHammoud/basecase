@@ -9,7 +9,7 @@ import { useRobotInsert } from './useRobotInsert';
 import { useSelectionOps } from './useSelectionOps';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-export function useWorkspaceActions(core: WorkspaceCore) {
+export function useWorkspaceActions(core: WorkspaceCore, active: boolean) {
   const pose = usePoseActions(core);
   const robots = useRobotInsert(core, pose.openPose);
   const creation = usePartCreation(core, robots);
@@ -17,7 +17,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const ops = useSelectionOps(core);
   const library = useLibraryActions(core);
   const exports = useExportActions(core);
-  const joints = useHandJoints(core);
+  const joints = useHandJoints(core, active);
   const cameras = useFixedCameras({
     project: core.project,
     updateProjectNow: core.docs.updateProjectNow,

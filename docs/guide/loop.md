@@ -20,6 +20,8 @@ Each lane is one file in `tools/loop/lanes/`. It exports `schedule` (its `slots`
 
 Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. What's being worked on shows on GitHub: a step being built carries `loop:building`, and a pull request being revised carries `loop:revising`. No pull request or issue is opened when one with the same title is open; a step whose pull request already exists gets a comment linking it. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone. A lane clears a worktree path left behind by a crashed run before reusing it.
 
+**Nothing waits on Jamel.** The revise lane answers a failed review, a pull request's own Check failure, or a new comment from Jamel, and never revises the same commit twice without new input. After four attempts on a pull request that still fails, a fresh agent reads its whole history and either rebuilds the change cleanly from `main` as a new pull request, closing the old one with a link, or decides the change shouldn't be made: then it closes the pull request with its reason and puts the step back in the queue with that reason added. Lanes read GitHub through a shared cache (`tools/loop/lib/cache.mjs`; pull requests with their checks in one call), so idle lanes don't spend the API rate limit.
+
 Comments the loop posts end with `<!-- loop -->`, which is how the learn lane tells them from Jamel's own comments, since both come from Jamel's account. Learn and digest count only what the loop made: reviews from Jamel's account that carry the mark, and closed or repair pull requests from Jamel's account on a `loop/` branch in this repo. An outsider's comment or pull request never becomes a lesson or a number. Tidy never deletes the branch the loop's home follows (`BASECASE_LOOP_REF`). Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions` (except `market`, sandboxed because it reads the web; see Review), so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
 
 ### Giving direction
@@ -51,7 +53,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 
 1. The lane makes a worktree from `origin/main` under `~/.basecase-loop/worktrees/` and a branch `loop/<lane>/<slug>`. The shared checkout is never touched.
 2. An agent session does the work there, following AGENTS.md and the area's guide, and runs `npm run check:changed -- <files>`.
-3. The lane commits, pushes and opens the pull request. Its body says what changed and why, and carries a one-line changelog entry when users can see the change.
+3. The lane commits, pushes and opens the pull request. Its body says what changed and why, and carries a one-line changelog entry when the change is worth announcing.
 4. The review lane reviews it in a fresh session (below) and sets the `agent-review` status.
 5. The merge lane rebases it if it's behind, and squash-merges it once `check` and `agent-review` pass on its head. One pull request at a time.
 6. The worktree and the branch are deleted.
@@ -66,7 +68,7 @@ The review lane sees the diff, the pull request body, AGENTS.md, the guides of t
 - adds user-facing copy that the §3d checklist would cut. Its default for a new string is "delete it";
 - adds copy without a reason Check's `copy` job accepts (`tools/check-copy-budget.mjs`): when a pull request adds more strings than it removes, each new string needs a `copy: "<string>" — <why>` line in the body;
 - ships a feature with no entry point and no e2e test of it;
-- makes a change a user can see without a changelog entry (`site/content/changelog/`), or changes what a person does without a new or updated help article (`site/content/help/`) with screenshots (`site/public/help/`). Builders and refiners write these from `tools/loop/briefs/telling.md`, and an arc's big step also gets a short blog post;
+- changes what a person does without a new or updated help article (`site/content/help/`) with screenshots (`site/public/help/`), or gets the changelog wrong either way: a capability worth announcing without an entry, or an entry for a fix, polish or a small option. Builders and refiners write these from `tools/loop/briefs/telling.md`, and an arc's big step also gets a short blog post;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or a loosened assertion;
 - changes a protected path (`.github/`, release and updater code, `guardBridge`, `trustedIpc`, `checkedFileId` and `publicFetch` callers, `verify/`, the CAD kernel sandbox, `hw/`) without saying why in the body. The runner lists every protected file a pull request touches under **Protected paths** in its body, and each revision's line names the ones it touched (`tools/loop/lib/protected.mjs`);
 - says in a guide, brief, prompt or the body that something exists which only another pull request adds.
@@ -113,7 +115,7 @@ Bring a model from another app into the scene as a printable part.
 ```
 
 - **Titles are in sentence case**, in every folder: capitals only for proper nouns. Menu labels quoted in the body keep theirs.
-- **A changelog entry** is a title and two sentences, Chronicle-style. The page lists entries newest first and feeds them to `/changelog/rss.xml` and `/changelog.json`.
+- **A changelog entry** is a title and two sentences, Chronicle-style, and only for a change worth announcing: a new capability, a new way of working, or a real change in how the product behaves. Fixes and polish reach people through the release notes, which list every merged pull request. The page lists entries newest first and feeds them to `/changelog/rss.xml` and `/changelog.json`.
 - **A help article** has an imperative title, one sentence on what it's for and numbered steps. Write only steps you've checked in the code; the `covers` paths are what to recheck when that code changes.
 - **Drafts and future dates stay out.** The build skips `draft: true` and any date after the day it runs, in every folder. Nothing rebuilds the site on a schedule, so a future-dated file publishes with the first deploy on or after its date.
 - **The blog appears with its first post.** Until then the build writes no `/blog` page, and the nav and sitemap leave it out. The landing's footer links Changelog and Help (`SECTIONS` in `src/landing/pages/sections.ts`).
@@ -127,4 +129,4 @@ Check is built for fast pull requests, with `main` as the safety net:
 
 - **On every pull request:** lint, types and unit tests (`npm run check`) on Linux and Windows; e2e on Linux in three parallel shards; the commit-credit and copy checks. The packaged-app builds (macOS and Windows) run only when the pull request touches what they build: `electron/`, `forge/`, `hw/`, packaging and native-build tooling, `e2e/app/`, workflows, or `package.json` and the lockfile.
 - **On every push to `main`:** all of that, plus e2e on Windows and both packaged-app builds, whatever changed. A failure there goes to the repair lane.
-- **Speed:** a pull request's superseded runs are cancelled, and the Forge and daemon Rust builds are cached.
+- **No stale runs:** a push to a pull request cancels its running Check, and closing or merging it cancels it too (`closed.yml` joins the same concurrency group). On `main` one Check runs at a time and only the newest push waits, so a burst of merges checks the last one instead of queueing every commit. The Forge and daemon Rust builds are cached.

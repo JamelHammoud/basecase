@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { runAgent } from '../lib/agent.mjs';
-import { checkConclusion, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
+import { lastFinishedMainCheck, openPulls, pullCheck } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
 import { claim } from '../lib/claim.mjs';
@@ -86,8 +86,7 @@ const behindMain = (pull) => {
   }).ok;
 };
 
-const failedOnOldMain = (pull, mainGreen) =>
-  mainGreen && checkConclusion(pull.headRefOid) === 'failure' && behindMain(pull);
+const failedOnOldMain = (pull, mainGreen) => mainGreen && pullCheck(pull) === 'failure' && behindMain(pull);
 
 export default function rebase({ log }) {
   const pulls = openPulls().filter(isLoop);

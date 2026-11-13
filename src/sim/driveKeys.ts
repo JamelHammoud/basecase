@@ -1,3 +1,4 @@
+import type { JointValues } from '../types/robotics';
 import type { V3 } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 
@@ -52,10 +53,21 @@ export function commandFromPad(pad: PadState, cls: DriveClass): DriveCommand {
   return { v: [forward, side, right] };
 }
 
-export const isIdle = (c: DriveCommand) => c.v.every((x) => x === 0) && (c.aux ?? []).every((x) => x === 0);
+export const isIdle = (c: DriveCommand) =>
+  !c.joints && c.v.every((x) => x === 0) && (c.aux ?? []).every((x) => x === 0);
 
 export const mergeCommands = (keys: DriveCommand, pad: DriveCommand | null): DriveCommand =>
   pad && !isIdle(pad) ? pad : keys;
+
+function sameValues(a: JointValues | undefined, b: JointValues | undefined) {
+  if (a === b) return true;
+
+  if (!a || !b) return false;
+
+  const keys = Object.keys(a);
+
+  return keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k]);
+}
 
 export const sameCommand = (a: DriveCommand, b: DriveCommand) => {
   const sameV = (a.v as V3).every((x, i) => x === b.v[i]);
@@ -63,5 +75,5 @@ export const sameCommand = (a: DriveCommand, b: DriveCommand) => {
   const sameTarget =
     a.target === b.target || (!!a.target && !!b.target && a.target.every((x, i) => x === b.target?.[i]));
 
-  return sameV && sameAux && sameTarget;
+  return sameV && sameAux && sameTarget && sameValues(a.joints, b.joints);
 };

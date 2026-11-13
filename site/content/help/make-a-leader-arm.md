@@ -33,3 +33,5 @@ Every joint gets a Dynamixel XL330-M288, used only to read its angle, so the bil
 The leader is about half the arm's reach, but no link is shorter than 56 mm, the closest two XL330s can sit. A small arm like the SO-101 comes out nearer 0.6×.
 
 The leader's joints keep the arm's joint ids, and its scene remembers which scene and arm it leads, so its readings can map onto the arm without an offset script. It works on arms whose joints form a single chain, so an arm whose gripper has two finger joints, like the Franka, isn't offered one. The agent can make one too: ask it for a leader for the arm.
+
+The next step is [Drive an arm from its leader](/help/drive-an-arm-from-its-leader).

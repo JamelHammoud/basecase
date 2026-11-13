@@ -19,7 +19,7 @@ import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
 import { RobotLink } from './robot/robotLink.mjs';
-import { registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { registerLeaderHandlers, registerRobotHandlers } from './robot/robotRoutes.mjs';
 import { checkedRobotSpec } from './robot/robotSpec.mjs';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -426,5 +426,22 @@ describe('robot daemon', () => {
     }
 
     expect(link.connect).not.toHaveBeenCalled();
+  });
+
+  it('gives a leader no command channel, so it reads in Look and never runs its motors', () => {
+    const handlers = new Map();
+    const ipcMain = { handle: (channel, fn) => handlers.set(channel, fn), on: () => {} };
+    const link = { connect: vi.fn(), command: vi.fn(), disconnect: vi.fn(), state: vi.fn() };
+    const app = { senderFrame: { parent: null, url: 'app://basecase/' } };
+    const evil = { senderFrame: { parent: null, url: 'https://example.com/' } };
+
+    registerLeaderHandlers(trustedIpc(ipcMain, 'app://basecase'), link);
+
+    expect([...handlers.keys()]).toEqual(['leader:connect', 'leader:disconnect', 'leader:state']);
+    expect(() => handlers.get('leader:connect')(evil, ARM)).toThrow('Refused');
+    expect(link.connect).not.toHaveBeenCalled();
+    handlers.get('leader:connect')(app, ARM);
+    expect(link.connect).toHaveBeenCalledWith(ARM);
+    expect(link.command).not.toHaveBeenCalled();
   });
 });

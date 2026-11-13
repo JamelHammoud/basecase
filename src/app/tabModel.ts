@@ -1,4 +1,5 @@
 import type { WorkspaceMeta, WorkspaceSeed } from '../SceneWorkspace';
+import type { LeaderLink } from '../types/projectRecords';
 import type { RobotJoint, SavedSceneRecord, ScenePart } from '../types/robotics';
 import { newSceneId } from '../utils/sceneIds';
 import { moveItem } from '../utils/moveItem';
@@ -31,6 +32,7 @@ export interface SceneRobot {
   name: string;
   parts: ScenePart[];
   joints: RobotJoint[];
+  leads?: LeaderLink;
 }
 
 export const newTabId = () => `tab-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -166,6 +168,10 @@ export function sceneRobots(
     const seed = tab.id === except ? undefined : snapshotOf(tab);
     const joints = seed?.project?.joints ?? [];
 
-    return seed && joints.length ? [{ tabId: tab.id, name: seed.sceneName, parts: seed.parts, joints }] : [];
+    const leads = seed?.project?.leads;
+
+    return seed && joints.length
+      ? [{ tabId: tab.id, name: seed.sceneName, parts: seed.parts, joints, ...(leads ? { leads } : {}) }]
+      : [];
   });
 }

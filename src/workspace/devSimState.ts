@@ -44,6 +44,12 @@ function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
   };
 }
 
+function jointPositions(sim: Simulation): Record<string, number> {
+  const joints = sim.latestJoints();
+
+  return Object.fromEntries(sim.model?.joints.map((j, i) => [j.id, joints?.[i * 3 + 1] ?? 0]) ?? []);
+}
+
 export function devSimState(core: WorkspaceCore) {
   const { sim, skills } = core.simTraining;
   const stats = sim.latestStats() ?? sim.stats;
@@ -57,6 +63,7 @@ export function devSimState(core: WorkspaceCore) {
     stats,
     effector: stats?.effector ?? null,
     effectors: stats?.effectors ?? null,
+    positions: jointPositions(sim),
     robots: sim.model?.robots.map((r) => r.key) ?? [],
     guests: sim.guestParts.map((p) => p.id),
     world: sim.worldParts.map((p) => p.id),

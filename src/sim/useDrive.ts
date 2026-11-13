@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
-import type { RobotPoseState, ScenePart } from '../types/robotics';
+import type { JointValues, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import {
   driveAccess,
@@ -15,6 +15,7 @@ import {
   type VelocityDrive,
 } from './driveAccess';
 import type { DriveSetup, RobotDrive } from './drive';
+import { onPhonePress } from '../phone/phoneStore';
 import { isIdle, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
@@ -135,6 +136,7 @@ function useDriveCommand(send: DriveInputs['send']) {
   const topSpeed = useRef<number | null>(null);
   const inputIds = useRef<readonly string[]>(STUDIO_INPUTS);
   const readings = useRef<Record<string, DriveCommand | null>>({});
+  const rest = useRef<JointValues>({});
   const autopilot = useRef<Autopilot | null>(null);
 
   const push = useCallback(
@@ -143,7 +145,7 @@ function useDriveCommand(send: DriveInputs['send']) {
 
       if (!current) return;
 
-      const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current });
+      const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current, rest: rest.current });
       const merged = steered(autopilot, read.command, frame);
 
       readings.current = read.readings;
@@ -156,8 +158,9 @@ function useDriveCommand(send: DriveInputs['send']) {
     [send],
   );
 
-  const reset = useCallback((cls: DriveClass | null, speed: number | null) => {
+  const reset = useCallback((cls: DriveClass | null, speed: number | null, restPose?: JointValues) => {
     clsRef.current = cls;
+    rest.current = { ...restPose };
     topSpeed.current = speed;
     autopilot.current = null;
     keysCommand.current = IDLE;
@@ -213,6 +216,8 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     };
   }, [active, frameHookRef, push]);
 
+  useEffect(() => onPhonePress((button) => send({ type: 'input', name: 'phone', value: button })), [send]);
+
   useEffect(() => {
     if (simStatus !== 'off') return;
 
@@ -224,7 +229,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam) => {
       const controller = controllerFor(access, team);
 
-      reset(access.cls, access.kind === 'policy' ? access.velocity.topSpeed : null);
+      reset(access.cls, access.kind === 'policy' ? access.velocity.topSpeed : null, latest.current.pose?.values);
       setCls(access.cls);
       latest.current.setController(controller);
       latest.current.send({ type: 'respawn', robot: robotKey });

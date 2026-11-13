@@ -13,166 +13,185 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
   const G1_STANDING = [-0.1, 0, 0, 0.3, -0.2, 0, -0.1, 0, 0, 0.3, -0.2, 0];
   const G1_SPEC = { family: 'unitree-g1', ids: Array.from({ length: 17 }, (_, k) => k + 13), class: 'legged', emulated: true };
   const counts = (rad) => Math.round(2048 + (rad * 4096) / (2 * Math.PI));
-  const listeners = new Set();
-  const emit = (event) => listeners.forEach((l) => l(event));
-  let robot = null;
+  const radians = (c) => ((c - 2048) * 2 * Math.PI) / 4096;
 
-  const isG1Ask = (spec) => spec && spec.family === 'unitree-g1' && spec.emulated === true && Object.keys(spec).length === 2;
+  const makeLink = () => {
+    const listeners = new Set();
+    const emit = (event) => listeners.forEach((l) => l(event));
+    let robot = null;
 
-  const layout = (spec) => {
-    if (!isG1Ask(spec)) return { spec, ids: spec.ids, start: spec.ids.map(() => 0), writable: spec.ids.map((_, k) => k), lastRung: 'longer_runs' };
-    const ids = Array.from({ length: 29 }, (_, k) => k + 1);
-    const start = ids.map((id) => G1_STANDING[id - 1] ?? 0);
-    return { spec: G1_SPEC, ids, start, writable: G1_SPEC.ids.map((id) => id - 1), lastRung: 'test' };
-  };
+    const isG1Ask = (spec) => spec && spec.family === 'unitree-g1' && spec.emulated === true && Object.keys(spec).length === 2;
 
-  const wallUs = () => Math.round((performance.now() - robot.startedAt) * 1000);
-  const driven = () => robot.quietCalls < QUIET_CALLS;
-  const mix = (a, b, f) => a.map((v, k) => v + (b[k] - v) * f);
+    const layout = (spec) => {
+      if (!isG1Ask(spec)) return { spec, ids: spec.ids, start: spec.ids.map(() => 0), writable: spec.ids.map((_, k) => k), lastRung: 'longer_runs' };
+      const ids = Array.from({ length: 29 }, (_, k) => k + 1);
+      const start = ids.map((id) => G1_STANDING[id - 1] ?? 0);
+      return { spec: G1_SPEC, ids, start, writable: G1_SPEC.ids.map((id) => id - 1), lastRung: 'test' };
+    };
 
-  const status = () => ({
-    event: 'status',
-    at_us: robot.atUs,
-    mode: robot.mode,
-    run: robot.run,
-    sealed: false,
-    fault_latched: false,
-    joints: robot.ids.map((id, k) =>
-      holds(id)
-        ? { id, position: counts(robot.position[k]), temp_c: 30, volts: 7.4, torque_on: robot.run === 'running' && robot.writable.includes(k), reply: 'ok' }
-        : { id, position: null, temp_c: null, volts: null, torque_on: null, reply: 'missing' },
-    ),
-  });
+    const wallUs = () => Math.round((performance.now() - robot.startedAt) * 1000);
+    const driven = () => robot.quietCalls < QUIET_CALLS;
+    const mix = (a, b, f) => a.map((v, k) => v + (b[k] - v) * f);
 
-  const holds = (id) => robot.bus.some((servo) => servo.id === id);
-  const isNew = (servo) => servo.id === 1 || !robot.ids.includes(servo.id);
-  const refuse = (message) => emit({ event: 'refused', message });
-
-  const assignId = (id) => {
-    if (robot.mode !== 'set_up') return refuse('Enter Set Up first.');
-    const fresh = robot.bus.filter(isNew);
-    if (fresh.length === 0) return refuse('No new servo answers.');
-    if (fresh.length > 1) return refuse('More than one new servo answers.');
-    if (robot.bus.some((servo) => servo.id === id && servo !== fresh[0])) return refuse('ID ' + id + ' is already taken.');
-    fresh[0].id = id;
-    emit({ event: 'assigned', at_us: robot.atUs, id });
-  };
-
-  const plugIn = () => {
-    if (!robot?.plugRequested) return false;
-    robot.plugRequested = false;
-    robot.bus.push({ id: 1 });
-    return true;
-  };
-
-  const goalAt = (atUs) => {
-    while (robot.queue.length && robot.queue[0].atUs <= atUs) {
-      robot.prior = robot.held;
-      robot.held = robot.queue.shift();
-    }
-    const { held, prior } = robot;
-    const next = robot.queue[0];
-    if (next?.joined) return mix(held.joints, next.joints, (atUs - held.atUs) / (next.atUs - held.atUs));
-    if (next || !prior || !held.joined || !driven() || held.atUs === prior.atUs) return held.joints;
-    return mix(prior.joints, held.joints, (atUs - prior.atUs) / (held.atUs - prior.atUs));
-  };
-
-  const tick = () => {
-    robot.atUs += TICK_US;
-    robot.ticks += 1;
-    if (robot.run === 'soft_start' && robot.atUs >= robot.runningAtUs) robot.run = 'running';
-    if (robot.run === 'running') {
-      const held = goalAt(robot.atUs);
-      robot.goal = robot.goal.map((g, k) => g + Math.max(-REACH, Math.min(REACH, held[k] - g)));
-      robot.position = mix(robot.position, robot.goal, LAG);
-    }
-    if (robot.ticks % STATUS_TICKS === 0) emit(status());
-  };
-
-  const step = () => {
-    robot.quietCalls += 1;
-    const newest = robot.queue.at(-1) ?? robot.held;
-    const until = driven() ? Math.min(wallUs(), newest.atUs + LEAD_US) : wallUs();
-    while (robot.atUs + TICK_US <= until) tick();
-  };
-
-  const hold = (joints) => {
-    robot.held = { atUs: robot.atUs, joints };
-    robot.prior = null;
-    robot.queue = [];
-  };
-
-  const intend = (joints) => {
-    const atUs = Math.max(wallUs(), robot.atUs);
-    robot.queue.push({ atUs, joints, joined: driven() });
-    robot.quietCalls = 0;
-  };
-
-  const intent = (joints) => {
-    if (!Array.isArray(joints) || joints.length !== robot.writable.length) return { ok: false, message: 'The robot only takes the documented commands.' };
-    if (robot.run !== 'running') return { ok: true };
-    const full = [...(robot.queue.at(-1) ?? robot.held).joints];
-    robot.writable.forEach((k, i) => {
-      if (typeof joints[i] !== 'number') return;
-      full[k] = joints[i];
-      robot.writes[robot.ids[k]] = (robot.writes[robot.ids[k]] ?? 0) + 1;
+    const status = () => ({
+      event: 'status',
+      at_us: robot.atUs,
+      mode: robot.mode,
+      run: robot.run,
+      sealed: false,
+      fault_latched: false,
+      joints: robot.ids.map((id, k) =>
+        holds(id)
+          ? { id, position: counts(robot.position[k]), temp_c: 30, volts: 7.4, torque_on: robot.run === 'running' && robot.writable.includes(k), reply: 'ok' }
+          : { id, position: null, temp_c: null, volts: null, torque_on: null, reply: 'missing' },
+      ),
     });
-    intend(full);
-    return { ok: true };
-  };
 
-  const enter = (mode) => {
-    const next = LADDER.indexOf(mode);
-    if (next > LADDER.indexOf(robot.lastRung)) return refuse('This robot stops at Test.');
-    if (mode !== 'look' && next !== LADDER.indexOf(robot.mode) + 1) return refuse('One rung at a time.');
-    const silent = robot.ids.find((id) => !holds(id));
-    if (mode === 'test' && silent !== undefined) return refuse('Servo ' + silent + " doesn't answer.");
-    robot.mode = mode;
-    robot.run = 'idle';
-    emit({ event: 'mode', at_us: robot.atUs, mode });
-    if (mode !== 'test') return;
-    hold([...robot.position]);
-    robot.goal = [...robot.position];
-    robot.run = 'soft_start';
-    robot.runningAtUs = robot.atUs + SOFT_START_US;
-  };
+    const holds = (id) => robot.bus.some((servo) => servo.id === id);
+    const isNew = (servo) => servo.id === 1 || !robot.ids.includes(servo.id);
+    const refuse = (message) => emit({ event: 'refused', message });
 
-  const link = (window.__fakeRobotLink = {
-    factory: false,
-    plugIn,
-    onRobotEvent: (callback) => {
-      listeners.add(callback);
-      return () => listeners.delete(callback);
-    },
-    robotState: async () => ({ connected: false, spec: null, hello: null, status: null }),
-    robotConnect: async (ask) => {
-      const { spec, ids, start, writable, lastRung } = layout(ask);
-      robot = { ids, writable, lastRung, mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0 };
-      const factory = ask.factory === true || link.factory === true;
-      robot.bus = factory ? [] : ids.map((id) => ({ id }));
+    const assignId = (id) => {
+      if (robot.mode !== 'set_up') return refuse('Enter Set Up first.');
+      const fresh = robot.bus.filter(isNew);
+      if (fresh.length === 0) return refuse('No new servo answers.');
+      if (fresh.length > 1) return refuse('More than one new servo answers.');
+      if (robot.bus.some((servo) => servo.id === id && servo !== fresh[0])) return refuse('ID ' + id + ' is already taken.');
+      fresh[0].id = id;
+      emit({ event: 'assigned', at_us: robot.atUs, id });
+    };
+
+    const plugIn = () => {
+      if (!robot?.plugRequested) return false;
       robot.plugRequested = false;
-      Object.assign(robot, { position: start, goal: start, quietCalls: QUIET_CALLS, writes: Object.fromEntries(ids.map((id) => [id, 0])) });
-      hold(start);
-      robot.timer = setInterval(step, TICK_US / 1000);
-      emit({ event: 'link', state: 'connected', spec });
-      emit({ event: 'hello', family: spec.family, emulated: true, real_transport: false, lost_message: 'Lost the emulated robot.' });
+      robot.bus.push({ id: 1 });
+      return true;
+    };
+
+    const goalAt = (atUs) => {
+      while (robot.queue.length && robot.queue[0].atUs <= atUs) {
+        robot.prior = robot.held;
+        robot.held = robot.queue.shift();
+      }
+      const { held, prior } = robot;
+      const next = robot.queue[0];
+      if (next?.joined) return mix(held.joints, next.joints, (atUs - held.atUs) / (next.atUs - held.atUs));
+      if (next || !prior || !held.joined || !driven() || held.atUs === prior.atUs) return held.joints;
+      return mix(prior.joints, held.joints, (atUs - prior.atUs) / (held.atUs - prior.atUs));
+    };
+
+    const replayed = () => {
+      const { frames, fromUs } = robot.replay;
+      const at = robot.atUs - fromUs;
+      const frame = [...frames].reverse().find((f) => f.at_us <= at) ?? frames[0];
+      return frame.positions.map(radians);
+    };
+
+    const tick = () => {
+      robot.atUs += TICK_US;
+      robot.ticks += 1;
+      if (robot.replay && robot.run === 'idle') robot.position = replayed();
+      if (robot.run === 'soft_start' && robot.atUs >= robot.runningAtUs) robot.run = 'running';
+      if (robot.run === 'running') {
+        const held = goalAt(robot.atUs);
+        robot.goal = robot.goal.map((g, k) => g + Math.max(-REACH, Math.min(REACH, held[k] - g)));
+        robot.position = mix(robot.position, robot.goal, LAG);
+      }
+      if (robot.ticks % STATUS_TICKS === 0) emit(status());
+    };
+
+    const step = () => {
+      robot.quietCalls += 1;
+      const newest = robot.queue.at(-1) ?? robot.held;
+      const until = driven() ? Math.min(wallUs(), newest.atUs + LEAD_US) : wallUs();
+      while (robot.atUs + TICK_US <= until) tick();
+    };
+
+    const hold = (joints) => {
+      robot.held = { atUs: robot.atUs, joints };
+      robot.prior = null;
+      robot.queue = [];
+    };
+
+    const intend = (joints) => {
+      const atUs = Math.max(wallUs(), robot.atUs);
+      robot.queue.push({ atUs, joints, joined: driven() });
+      robot.quietCalls = 0;
+    };
+
+    const intent = (joints) => {
+      if (!Array.isArray(joints) || joints.length !== robot.writable.length) return { ok: false, message: 'The robot only takes the documented commands.' };
+      if (robot.run !== 'running') return { ok: true };
+      const full = [...(robot.queue.at(-1) ?? robot.held).joints];
+      robot.writable.forEach((k, i) => {
+        if (typeof joints[i] !== 'number') return;
+        full[k] = joints[i];
+        robot.writes[robot.ids[k]] = (robot.writes[robot.ids[k]] ?? 0) + 1;
+      });
+      intend(full);
       return { ok: true };
-    },
-    robotCommand: async (command) => {
-      if (!robot) return { ok: false, message: 'Connect an emulated robot first.' };
-      if (command.cmd === 'enter') enter(command.mode);
-      if (command.cmd === 'assign_id') assignId(command.id);
-      if (command.cmd === 'plug_in' && robot.bus.length < robot.ids.length) robot.plugRequested = true;
-      if (command.cmd === 'intent') return intent(command.joints);
-      return { ok: true };
-    },
-    robotDisconnect: async () => {
-      clearInterval(robot?.timer);
-      robot = null;
-      emit({ event: 'link', state: 'closed' });
-      return { ok: true };
-    },
-    writes: () => ({ ...(robot?.writes ?? {}) }),
-  });
+    };
+
+    const enter = (mode) => {
+      const next = LADDER.indexOf(mode);
+      if (next > LADDER.indexOf(robot.lastRung)) return refuse('This robot stops at Test.');
+      if (mode !== 'look' && next !== LADDER.indexOf(robot.mode) + 1) return refuse('One rung at a time.');
+      const silent = robot.ids.find((id) => !holds(id));
+      if (mode === 'test' && silent !== undefined) return refuse('Servo ' + silent + " doesn't answer.");
+      robot.mode = mode;
+      robot.run = 'idle';
+      emit({ event: 'mode', at_us: robot.atUs, mode });
+      if (mode !== 'test') return;
+      hold([...robot.position]);
+      robot.goal = [...robot.position];
+      robot.run = 'soft_start';
+      robot.runningAtUs = robot.atUs + SOFT_START_US;
+    };
+
+    const link = {
+      factory: false,
+      replay: (frames) => {
+        if (robot) robot.replay = { frames, fromUs: robot.atUs };
+      },
+      plugIn,
+      onRobotEvent: (callback) => {
+        listeners.add(callback);
+        return () => listeners.delete(callback);
+      },
+      robotState: async () => ({ connected: false, spec: null, hello: null, status: null }),
+      robotConnect: async (ask) => {
+        const { spec, ids, start, writable, lastRung } = layout(ask);
+        robot = { ids, writable, lastRung, mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0 };
+        const factory = ask.factory === true || link.factory === true;
+        robot.bus = factory ? [] : ids.map((id) => ({ id }));
+        robot.plugRequested = false;
+        Object.assign(robot, { position: start, goal: start, quietCalls: QUIET_CALLS, writes: Object.fromEntries(ids.map((id) => [id, 0])) });
+        hold(start);
+        robot.timer = setInterval(step, TICK_US / 1000);
+        emit({ event: 'link', state: 'connected', spec });
+        emit({ event: 'hello', family: spec.family, emulated: true, real_transport: false, lost_message: 'Lost the emulated robot.' });
+        return { ok: true };
+      },
+      robotCommand: async (command) => {
+        if (!robot) return { ok: false, message: 'Connect an emulated robot first.' };
+        if (command.cmd === 'enter') enter(command.mode);
+        if (command.cmd === 'assign_id') assignId(command.id);
+        if (command.cmd === 'plug_in' && robot.bus.length < robot.ids.length) robot.plugRequested = true;
+        if (command.cmd === 'intent') return intent(command.joints);
+        return { ok: true };
+      },
+      robotDisconnect: async () => {
+        clearInterval(robot?.timer);
+        robot = null;
+        emit({ event: 'link', state: 'closed' });
+        return { ok: true };
+      },
+      writes: () => ({ ...(robot?.writes ?? {}) }),
+    };
+    return link;
+  };
+
+  window.__fakeRobotLink = makeLink();
+  window.__fakeLeaderLink = makeLink();
 })();
 `;

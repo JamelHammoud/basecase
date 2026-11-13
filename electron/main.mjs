@@ -15,7 +15,9 @@ import { registerHubHandlers } from './hub/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
-import { registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { registerLeaderHandlers, registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { PhonePairing } from './phone/phonePairing.mjs';
+import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { registerShareHandlers } from './shareFile.mjs';
 import { adoptShellPath } from './shellPath.mjs';
 import { storageMigration } from './storageMigration.mjs';
@@ -223,14 +225,21 @@ registerHubHandlers(ipcMain, backend.hub);
 registerOnshapeHandlers(ipcMain, backend.onshape);
 registerShareHandlers(ipcMain);
 
-const robot = new RobotLink({
-  binary: daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot }),
-  emit: (event) => {
-    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('robot:event', event);
-  },
-});
+const robotBinary = daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot });
+
+const sendTo = (channel) => (event) => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, event);
+};
+
+const robot = new RobotLink({ binary: robotBinary, emit: sendTo('robot:event') });
+const leader = new RobotLink({ binary: robotBinary, emit: sendTo('leader:event') });
 
 registerRobotHandlers(ipcMain, robot);
+registerLeaderHandlers(ipcMain, leader);
+
+const phone = new PhonePairing({ emit: sendTo('phone:event') });
+
+registerPhoneHandlers(ipcMain, phone);
 
 const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write', 'fullscreen']);
 
@@ -293,6 +302,8 @@ app.whenReady().then(async () => {
 
 app.on('before-quit', () => {
   robot.dispose();
+  leader.dispose();
+  phone.dispose();
   kernel.stop();
   updates.dispose();
   backend.kit.dispose();

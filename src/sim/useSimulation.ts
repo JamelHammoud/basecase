@@ -43,6 +43,7 @@ export interface Simulation {
   stats: SimStats | null;
   latestStats: () => SimStats | null;
   latestScan: () => Scan | null;
+  latestJoints: () => Float64Array | null;
   error: string | null;
   model: SimModel | null;
   modelNow: () => SimModel | null;
@@ -364,6 +365,7 @@ export function useSimulation(props: Inputs): Simulation {
     stats,
     latestStats: sw.latestStats,
     latestScan: sw.latestScan,
+    latestJoints: sw.latestJoints,
     error,
     model,
     modelNow: () => modelRef.current,

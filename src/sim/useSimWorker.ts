@@ -16,12 +16,14 @@ interface LatestFrame {
   stats: SimStats | null;
   facts: CaseFacts | null;
   scan: Scan | null;
+  joints: Float64Array | null;
 }
 
 function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame' }>) {
   latest.stats = msg.stats;
   latest.facts = msg.facts ?? null;
   latest.scan = msg.scan ?? latest.scan;
+  latest.joints = msg.joints;
 }
 
 export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
@@ -35,7 +37,7 @@ export function useSimWorker(
   const [playing, setPlaying] = useState(false);
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null });
+  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null, joints: null });
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
@@ -150,6 +152,7 @@ export function useSimWorker(
     latestStats: () => (status === 'off' ? null : ui.current.stats),
     latestFacts: () => (status === 'off' ? null : ui.current.facts),
     latestScan: () => (status === 'off' ? null : ui.current.scan),
+    latestJoints: () => (status === 'off' ? null : ui.current.joints),
     setStats,
     error,
     setError,

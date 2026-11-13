@@ -52,11 +52,11 @@ function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId'
   return { runtime, platform, jobs };
 }
 
-function useTabTraining() {
+function useTabTraining(hasJoints: boolean) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!IS_WEB_DEMO) return;
+    if (!IS_WEB_DEMO || !hasJoints) return;
 
     let live = true;
 
@@ -65,7 +65,7 @@ function useTabTraining() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [hasJoints]);
 
   return !IS_WEB_DEMO || ready;
 }
@@ -115,7 +115,8 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
 
 export function useSkills(input: SkillsInput) {
   const { sim, project, rig, parts } = input;
-  const available = useTabTraining() && rig.joints.length > 0;
+  const hasJoints = rig.joints.length > 0;
+  const available = useTabTraining(hasJoints) && hasJoints;
   const { runtime, platform, jobs } = useRuntime(input);
   const records = project.skills ?? [];
   const facts = robotFacts(rig, parts);

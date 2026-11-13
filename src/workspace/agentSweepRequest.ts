@@ -23,6 +23,7 @@ import { buildRig } from '../utils/kinematicsRig';
 import type { V3 } from '../utils/kinematics';
 import { yieldToMain } from '../utils/yieldToMain';
 import { engineeringInputs } from './engineeringNow';
+import { errorMessage } from '../utils/errorMessage';
 
 export const SWEEP_SECONDS = 4.5;
 export const SWEEP_SHOVE_SHARE = 0.3;
@@ -141,9 +142,7 @@ async function measure(ctx: SweepRun, scene: Scene): Promise<SweepMetrics> {
     servosUsd: servosUsd(scene.input.parts, joints),
     sizedUsd: cheapestUsd(report, scene.input),
   });
-  const sim = await holdAndShove(ctx, scene, report).catch((e: unknown) =>
-    e instanceof Error ? e.message : String(e),
-  );
+  const sim = await holdAndShove(ctx, scene, report).catch((e: unknown) => errorMessage(e));
 
   return { ...metrics, sim };
 }

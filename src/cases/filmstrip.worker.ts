@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { filmFrames, frameBounds, type FilmstripInput } from './filmstrip';
+import { errorMessage } from '../utils/errorMessage';
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -46,6 +47,6 @@ ctx.onmessage = (ev: MessageEvent<{ id: number; input: FilmstripInput }>) => {
 
     ctx.postMessage({ id: ev.data.id, bitmap }, [bitmap]);
   } catch (e) {
-    ctx.postMessage({ id: ev.data.id, error: e instanceof Error ? e.message : String(e) });
+    ctx.postMessage({ id: ev.data.id, error: errorMessage(e) });
   }
 };

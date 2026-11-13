@@ -165,6 +165,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       buildGuide: core.guide.generate,
       routines: core.simTraining.routines,
       cases: core.simTraining.cases,
+      caseCompare: core.caseCompare,
       skills: core.simTraining.skills,
     };
 

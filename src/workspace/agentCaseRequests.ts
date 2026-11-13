@@ -4,12 +4,16 @@ import type { GoalKind, GoalValues, ParamKey } from '../cases/caseGoals';
 import type { WorldKind } from '../cases/caseWorlds';
 import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
+import { comparable, type Comparison } from '../cases/caseCompare';
+import type { Case } from '../cases/schema';
 import type { Cases } from './useCases';
+import type { CaseCompare } from './useCaseCompare';
 
 type Payload = Record<string, unknown>;
 
 interface CaseContext {
   cases: Cases;
+  caseCompare: Pick<CaseCompare, 'choicesFor' | 'compareNow' | 'start'>;
   routines: { checkLogic: (logic: unknown) => Promise<CompileResult> };
   setAction: (action: string) => void;
 }
@@ -89,6 +93,58 @@ async function createCase(payload: Payload, ctx: CaseContext) {
   return { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
 }
 
+const named = (wanted: string) => (c: { id: string; name: string }) =>
+  c.id === wanted || c.name.toLowerCase() === wanted.toLowerCase();
+
+function caseToCompare(payload: Payload, cases: Cases): Case | string {
+  const wanted = text(payload.case);
+  const kase = wanted ? cases.cases.find(named(wanted)) : cases.active;
+
+  if (!kase) return wanted ? `This scene has no Case named ${wanted}.` : 'No Case is open. Name one with case.';
+
+  return comparable(kase) ? kase : `${kase.name} has more than one robot slot, so it can't compare two robots.`;
+}
+
+function comparisonReply(kase: Case, comparison: Comparison) {
+  const sceneOf = (tabId: string | null) => comparison.robots.find((r) => r.tabId === tabId)?.name ?? null;
+
+  return {
+    ok: true,
+    case: kase.name,
+    robots: comparison.robots.map(({ name, runs, costUsd, massG }) => ({
+      scene: name,
+      passes: runs.passes,
+      runs: runs.runs,
+      median_margin: Number(runs.medianMargin.toFixed(3)),
+      cost_usd: costUsd,
+      mass_g: Math.round(massG),
+      ...(runs.refusal ? { refusal: runs.refusal } : {}),
+    })),
+    better: sceneOf(comparison.better),
+  };
+}
+
+async function compareCaseRequest(payload: Payload, ctx: CaseContext) {
+  const kase = caseToCompare(payload, ctx.cases);
+
+  if (typeof kase === 'string') return { ok: false, problem: kase };
+
+  const choices = ctx.caseCompare.choicesFor(kase);
+  const scene = text(payload.scene);
+  const choice = scene ? choices.find((c) => c.name.toLowerCase() === scene.toLowerCase()) : choices[0];
+  const scenes = choices.map((c) => c.name);
+
+  if (!choice && !choices.length)
+    return { ok: false, problem: `No other open scene tab has a robot that fits ${kase.name}.`, scenes };
+
+  if (!choice) return { ok: false, problem: `No open scene tab named ${scene} has a robot that fits.`, scenes };
+
+  if (ctx.cases.active?.id === kase.id) ctx.caseCompare.start(choice.tabId);
+
+  return comparisonReply(kase, await ctx.caseCompare.compareNow(kase, choice.tabId));
+}
+
 export const CASE_HANDLERS: Record<string, (payload: Payload, ctx: CaseContext) => Promise<unknown>> = {
   create_case: createCase,
+  compare_case: compareCaseRequest,
 };

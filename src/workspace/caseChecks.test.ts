@@ -7,9 +7,10 @@ import { CASE_STOPPED, caseFindings } from '../readiness/caseChecks';
 import { readinessOf } from '../readiness/readiness';
 import { ruleFinding } from '../readiness/wording';
 import { fixtureRobots } from '../sim/fixtures/robots';
+import type { Case } from '../cases/schema';
 import type { ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { caseCheckRows, nextCaseTurn } from './caseChecks';
+import { caseCheckRows, caseRunsOf, nextCaseTurn } from './caseChecks';
 
 vi.mock('../cases/caseChecksClient', () => ({
   caseCheckPool: { size: 2, run: vi.fn(), keepOnly: vi.fn() },
@@ -91,7 +92,7 @@ describe('Case rows in Checks', () => {
         : (answered.then(() => ({ type: 'runs', result: { outcomes } })) as never),
     );
 
-    const scene = sceneWith('rover-diff', 'reach-the-flag');
+    const scene = sceneWith('quad-servo', 'reach-the-flag');
     const older = nextCaseTurn();
     const newest = caseCheckRows({ ...scene, turn: nextCaseTurn() });
 
@@ -139,5 +140,29 @@ describe('Case rows in Checks', () => {
     expect(job).toMatchObject({ type: 'model', walks: walks.slice(0, 2) });
     expect(keepOnly.mock.calls[0]).toEqual([new Set()]);
     expect(keepOnly.mock.invocationCallOrder[0]).toBeLessThan(run.mock.invocationCallOrder[0]);
+  });
+
+  it('run another robot for a comparison without tags, and share its verdict with that robot’s Checks row', async () => {
+    const outcomes = Array.from({ length: 10 }, () => ({ passed: true, margin: 1, failed: [] }));
+
+    run.mockImplementation((_index, job: CaseCheckJob) =>
+      job.type === 'model'
+        ? Promise.resolve({ ...modelReply, modelHash: 'compared' })
+        : (Promise.resolve({ type: 'runs', result: { outcomes } }) as never),
+    );
+
+    const scene = sceneWith('quad-big', 'reach-the-flag');
+    const [kase] = scene.project.cases as Case[];
+    const compared = await caseRunsOf(scene, kase);
+    const calls = run.mock.calls.length;
+
+    expect(compared).toMatchObject({ runs: 20, passes: 20 });
+    expect(run.mock.calls.filter(([, job]) => job.type === 'runs').map(([, , options]) => options?.tag)).toEqual([
+      undefined,
+      undefined,
+    ]);
+    expect(keepOnly).not.toHaveBeenCalled();
+    expect((await caseCheckRows({ ...scene, turn: nextCaseTurn() }))[0]).toMatchObject({ detail: '20 of 20' });
+    expect(run.mock.calls).toHaveLength(calls);
   });
 });

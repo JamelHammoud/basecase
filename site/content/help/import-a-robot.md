@@ -1,6 +1,9 @@
 ---
 title: Import a robot
 date: 2026-11-12
+collection: design
+type: task
+popular: true
 covers:
   - src/components/ImportRobotSheet.tsx
   - src/workspace/useCanvasDrop.ts

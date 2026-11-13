@@ -1,6 +1,9 @@
 ---
 title: Save a model to the Library
 date: 2026-11-12
+collection: files-and-sharing
+type: task
+popular: true
 covers:
   - src/components/LeftSidebar.tsx
   - src/components/LibraryPanel.tsx

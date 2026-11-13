@@ -1,6 +1,10 @@
 ---
 title: Open a shared scene
 date: 2026-11-12
+collection: files-and-sharing
+type: task
+related:
+  - share-a-scene
 covers:
   - src/utils/sceneFile.ts
   - src/app/useSceneLibrary.ts

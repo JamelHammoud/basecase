@@ -1,6 +1,9 @@
 ---
 title: Export a robot package
 date: 2026-11-12
+collection: files-and-sharing
+type: task
+popular: true
 covers:
   - src/workspace/robotPackageExport.ts
   - src/workspace/useExportActions.ts

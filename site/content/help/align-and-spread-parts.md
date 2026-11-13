@@ -1,6 +1,8 @@
 ---
 title: Align and spread parts
 date: 2026-11-12
+collection: design
+type: task
 covers:
   - src/components/AlignBar.tsx
   - src/workspace/contextMenuItems.tsx

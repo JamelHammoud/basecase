@@ -1,6 +1,8 @@
 ---
 title: Measure a part
 date: 2026-11-12
+collection: design
+type: task
 covers:
   - src/components/MeasureToolbar.tsx
   - src/workspace/useMeasure.ts

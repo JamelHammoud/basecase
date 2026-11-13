@@ -1,6 +1,9 @@
 ---
 title: Import a mesh
 date: 2026-11-12
+collection: design
+type: task
+popular: true
 covers:
   - src/workspace/meshImport.ts
   - src/workspace/usePartCreation.ts

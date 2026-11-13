@@ -1,6 +1,9 @@
 ---
 title: Choose the agent
 date: 2026-11-12
+collection: agent
+type: task
+popular: true
 covers:
   - src/components/SettingsWindow.tsx
   - src/agent/agentKinds.ts

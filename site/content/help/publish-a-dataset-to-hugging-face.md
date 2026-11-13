@@ -1,6 +1,8 @@
 ---
 title: Publish a dataset to Hugging Face
 date: 2026-11-12
+collection: simulate-and-train
+type: task
 covers:
   - src/components/settings/AccountsPane.tsx
   - src/components/simulate/ResultsSection.tsx

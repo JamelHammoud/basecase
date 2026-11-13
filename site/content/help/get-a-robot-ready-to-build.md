@@ -1,6 +1,9 @@
 ---
 title: Get a robot ready to build
 date: 2026-11-12
+collection: build-and-print
+type: task
+popular: true
 covers:
   - src/components/BuildPanel.tsx
   - src/components/build/ChecksSection.tsx

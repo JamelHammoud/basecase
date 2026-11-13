@@ -1,6 +1,8 @@
 ---
 title: Calibrate an emulated robot
 date: 2026-11-12
+collection: operate
+type: task
 covers:
   - src/components/operate/RobotCalibration.tsx
   - src/components/operate/CalibrationRow.tsx

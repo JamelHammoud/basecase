@@ -73,7 +73,7 @@ export interface Simulation {
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[], guests?: SimGuests) => void;
-  buildModel: () => Promise<SimModel>;
+  buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
   input: (name: string, value: FactValue) => void;
@@ -190,32 +190,35 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     inputs.current = { parts, project, rig, pose, restDeltas };
   });
 
-  const buildModel = useCallback(async (): Promise<SimModel> => {
-    const vp = viewportRef.current;
+  const buildModel = useCallback(
+    async (options?: { alone?: boolean }): Promise<SimModel> => {
+      const vp = viewportRef.current;
 
-    if (!vp) throw new Error('The canvas isn’t ready.');
+      if (!vp) throw new Error('The canvas isn’t ready.');
 
-    await vp.meshesReady();
+      await vp.meshesReady();
 
-    const current = inputs.current;
-    const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
+      const current = inputs.current;
+      const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
-    const input = withGuests(
-      {
-        parts: current.parts,
-        rig: current.rig,
-        project: current.project,
-        pose: current.pose,
-        measures,
-        partTriangles: vp.partTriangles,
-        posedFloor,
-        world: worldRef.current,
-      },
-      guestsRef.current,
-    );
+      const input = withGuests(
+        {
+          parts: current.parts,
+          rig: current.rig,
+          project: current.project,
+          pose: current.pose,
+          measures,
+          partTriangles: vp.partTriangles,
+          posedFloor,
+          world: options?.alone ? [] : worldRef.current,
+        },
+        options?.alone ? NO_GUESTS : guestsRef.current,
+      );
 
-    return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
-  }, [viewportRef]);
+      return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
+    },
+    [viewportRef],
+  );
 
   const setWorldItems = (items: WorldItem[], cast: SimGuests) => {
     worldRef.current = items;

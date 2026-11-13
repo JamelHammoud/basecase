@@ -58,7 +58,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
     title: 'Scenes',
     rows: [
       ['New scene', ['⌘T']],
-      ['Open scene', ['⌘O']],
+      ['Show scenes', ['⌘O']],
       ['Close scene', ['⌘W']],
       ['Reopen closed scene', ['⇧⌘T']],
       ['Next scene', ['⌃Tab']],

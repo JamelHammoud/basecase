@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
-import loadMujoco, { type MainModule } from '@mujoco/mujoco';
+import { type MainModule } from '@mujoco/mujoco';
+import { loadMujoco } from '../sim/loadMujoco';
 import type { Skill } from '../skills/artifacts';
 import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';

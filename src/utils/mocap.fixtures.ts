@@ -143,7 +143,33 @@ function chain(links: Link[], from: string, prefix: string, out: { parts: SceneP
   return parent;
 }
 
-export function humanoid(): { parts: ScenePart[]; joints: RobotJoint[]; rig: Rig; pointOf: PointOf } {
+const JAW: V3 = [10, 40, 20];
+
+const jaw = (id: string, x: number, range: [number, number]): RobotJoint => ({
+  id,
+  name: id,
+  type: 'prismatic',
+  parent: ['right_wrist_yaw_link'],
+  child: [`${id}_link`],
+  origin: [x, 630, 0],
+  axis: [1, 0, 0],
+  range,
+});
+
+function addHand(out: { parts: ScenePart[]; joints: RobotJoint[] }) {
+  out.parts.push(
+    box('right_jaw_a_joint_link', [-225, 610, 0], JAW),
+    box('right_jaw_b_joint_link', [-175, 610, 0], JAW),
+  );
+  out.joints.push(jaw('right_jaw_a_joint', -225, [0, 20]), jaw('right_jaw_b_joint', -175, [-20, 0]));
+}
+
+export function humanoid(options: { hand?: boolean } = {}): {
+  parts: ScenePart[];
+  joints: RobotJoint[];
+  rig: Rig;
+  pointOf: PointOf;
+} {
   const out = { parts: [box('pelvis', [0, 800, 0], [260, 120, 160])], joints: [] as RobotJoint[] };
   const torso = chain(WAIST, 'pelvis', '', out);
 
@@ -154,6 +180,8 @@ export function humanoid(): { parts: ScenePart[]; joints: RobotJoint[]; rig: Rig
     chain(legLinks(s), 'pelvis', `${side}_`, out);
     chain(armLinks(s), torso, `${side}_`, out);
   }
+
+  if (options.hand) addHand(out);
 
   const rig = buildRig(out.joints, out.parts);
   const byId = new Map(out.parts.map((p) => [p.id, p]));

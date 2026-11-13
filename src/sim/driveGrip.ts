@@ -14,7 +14,7 @@ const MIN_REACH_MM = 1;
 
 const along = (from: V3, dir: V3, length: number): V3 => from.map((x, i) => x + dir[i] * length) as V3;
 
-export function gripValues(grip: ArmGrip, amount: number, start: JointValues): JointValues {
+export function gripValues(grip: Pick<ArmGrip, 'jaws'>, amount: number, start: JointValues): JointValues {
   const share = Math.max(0, Math.min(1, amount));
 
   return Object.fromEntries(

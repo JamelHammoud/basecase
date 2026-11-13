@@ -18,7 +18,7 @@ import type { DriveSetup, RobotDrive } from './drive';
 import { isIdle, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
-import { bodyAccess, bodyOffer } from './driveBody';
+import { bodyAccess, bodyOffer, bodyPin } from './driveBody';
 import { drivesBody, readInputs, STUDIO_INPUTS } from './inputSources';
 import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
@@ -72,6 +72,9 @@ interface DriveInputs {
 }
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
+
+const readyVelocity = async (velocity?: React.RefObject<VelocitySource | null>) =>
+  (await velocity?.current?.()) ?? null;
 
 function steered(
   autopilot: React.RefObject<Autopilot | null>,
@@ -256,15 +259,18 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     async (team?: DriveTeam) => {
       const { parts, rig, pose, startSim, runOn, velocity } = latest.current;
 
-      if (!modelRef.current) await startSim();
+      const ready = await readyVelocity(velocity);
+      const using = ids();
+      const body = drivesBody(using);
+
+      if (!modelRef.current)
+        await (body ? sources.load(bodyPin({ rig, parts, robotKey, velocity: ready })) : startSim());
 
       const model = modelRef.current;
 
       if (!model) return false;
 
-      const ready = (await velocity?.current?.()) ?? null;
-      const using = ids();
-      const access = (drivesBody(using) ? bodyAccess : driveAccess)({
+      const access = (body ? bodyAccess : driveAccess)({
         rig,
         parts,
         model,

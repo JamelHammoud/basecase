@@ -14,6 +14,7 @@ interface SourceInputs {
 }
 
 export interface DriveSources {
+  load: (pin: string | null) => Promise<void>;
   pin: (access: Ready) => Promise<void>;
   open: (access: Ready, ids: readonly string[]) => Promise<boolean>;
   close: (ids: readonly string[]) => void;
@@ -27,16 +28,21 @@ export function useDriveSources(
 ): DriveSources {
   const pinned = useRef<string | null>(null);
 
-  const pin = useCallback(
-    async (access: Ready) => {
-      const want = (access.kind === 'ready' && access.pin) || null;
-
-      if (want === pinned.current) return;
-
+  const load = useCallback(
+    async (want: string | null) => {
       pinned.current = want;
       await latest.current.startSim(want ? { pin: want } : {});
     },
     [latest],
+  );
+
+  const pin = useCallback(
+    async (access: Ready) => {
+      const want = (access.kind === 'ready' && access.pin) || null;
+
+      if (want !== pinned.current) await load(want);
+    },
+    [load],
   );
 
   const open = useCallback(
@@ -67,5 +73,5 @@ export function useDriveSources(
     pinned.current = null;
   }, []);
 
-  return { pin, open, close, forget };
+  return { load, pin, open, close, forget };
 }

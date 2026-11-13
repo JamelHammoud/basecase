@@ -1,3 +1,4 @@
+import { findGripper, type Gripper } from '../cases/gripper';
 import { robotFacts } from '../cases/robotFit';
 import type { JointValues, RobotJoint, ScenePart } from '../types/robotics';
 import { isMovable, jointRange, robotRig, type Rig } from '../utils/kinematics';
@@ -29,6 +30,21 @@ export const hasArms = (rig: Rig) => {
   return !!(map.leftShoulder || map.rightShoulder) && !!(map.leftElbow || map.rightElbow);
 };
 
+function grippers(rig: Rig, joints: RobotJoint[]): Gripper[] {
+  const byId = new Map(rig.parts.map((p) => [p.id, p]));
+  const found: Gripper[] = [];
+  let left = joints;
+
+  for (let next = findGripper(rig, left, byId); next; next = findGripper(rig, left, byId)) {
+    const palm = next.palm;
+
+    found.push(next);
+    left = left.filter((j) => rig.parentOf.get(j.id) !== palm);
+  }
+
+  return found;
+}
+
 export interface PoseSetupInput {
   rig: Rig;
   robot: string;
@@ -37,13 +53,15 @@ export interface PoseSetupInput {
 }
 
 export function poseSetup({ rig, robot, start = {}, under }: PoseSetupInput): PoseSetup {
-  const joints = upperJoints(rig).map((j) => ({
+  const upper = upperJoints(rig);
+  const joints = upper.map((j) => ({
     id: j.id,
     range: jointRange(j),
     ...(j.type === 'prismatic' ? { prismatic: true } : {}),
   }));
+  const jaws = grippers(rig, upper).flatMap((g) => g.jaws);
 
-  return { kind: 'pose', robot, joints, start, ...(under ? { under } : {}) };
+  return { kind: 'pose', robot, joints, start, ...(jaws.length ? { jaws } : {}), ...(under ? { under } : {}) };
 }
 
 export interface BodyInput {
@@ -65,6 +83,25 @@ export function bodyOffer(rig: Rig, parts: ScenePart[], robotKey?: string): bool
   const facts = robotFacts(rig, parts, key);
 
   return facts.morphology === 'fixed' && facts.endEffector !== null;
+}
+
+export interface PinInput {
+  rig: Rig;
+  parts: ScenePart[];
+  robotKey?: string;
+  velocity?: VelocityDrive | null;
+}
+
+export function bodyPin({ rig, parts, robotKey, velocity }: PinInput): string | null {
+  const key = robotKey ?? rig.robots[0]?.key;
+
+  if (!key || velocity) return null;
+
+  const own = robotRig(rig, key);
+
+  if (!hasArms(own.joints.length ? own : rig)) return null;
+
+  return robotFacts(rig, parts, key).morphology === 'fixed' ? null : key;
 }
 
 const armOnly = (access: DriveAccess): DriveAccess =>

@@ -44,8 +44,7 @@ Move your arms in front of the Mac's camera, and a humanoid or a fixed arm in th
 
 ![A humanoid with its right arm raised, beside the camera tile and the Scene view](/help/drive-a-robot-with-your-camera/driving.png)
 
-6. Pinch your left thumb and index finger together to close the robot's gripper.
-7. Press [[Esc]] to stop. The camera turns off.
+6. Press [[Esc]] to stop. The camera turns off.
 
 **Drive With Camera** is also in [[⌘K]].
 
@@ -54,6 +53,8 @@ Move your arms in front of the Mac's camera, and a humanoid or a fixed arm in th
 On a humanoid, every joint above the hips follows your upper body: shoulders, elbows, wrists, waist and head. Your forward is the robot's forward, so raise your right arm and the robot raises its right arm. Each joint stays inside its limits and turns at up to 240° a second.
 
 On a fixed arm, the hand follows your right wrist. How far your hand is from your shoulder, as a share of your arm's length, sets how far the robot's hand is from its base, as a share of its reach.
+
+On a robot with a gripper, pinch your left thumb and index finger together to close it. On a humanoid, that closes the gripper on each of its hands.
 
 A robot with legs stands on its **Walk** skill when it has a ready one. Without one, its base is held in place, so it can't fall while you try the arms.
 

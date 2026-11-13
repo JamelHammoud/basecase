@@ -4,6 +4,7 @@ import { fixtureModel, modelOf } from '../skills/fixtureModels';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { humanoid } from '../utils/mocap.fixtures';
 import { buildRig } from '../utils/kinematics';
+import { poseSetup as bodySetup } from './driveBody';
 import { fixtureMeasures, fixtureTriangles } from './fixtures/parts';
 import type { PoseSetup } from './drivePose';
 import { SimEngine } from './engine';
@@ -111,10 +112,10 @@ function swingArms(model: SimModel) {
   return { robot, arms };
 }
 
-describe('a pinned base', () => {
-  const body = humanoid();
+function pinnedModel(body: ReturnType<typeof humanoid>) {
   const rig = buildRig(body.joints, body.parts);
-  const pinned = buildMjcf({
+
+  return buildMjcf({
     parts: body.parts,
     rig,
     project: { ...DEFAULT_PROJECT, joints: body.joints },
@@ -122,6 +123,11 @@ describe('a pinned base', () => {
     partTriangles: fixtureTriangles(body.parts),
     fixedBase: { [rig.robots[0].key]: true },
   });
+}
+
+describe('a pinned base', () => {
+  const body = humanoid();
+  const pinned = pinnedModel(body);
 
   it('keeps a floating humanoid’s root still while its arms follow a pose', () => {
     const floating = modelOf(body);
@@ -137,5 +143,25 @@ describe('a pinned base', () => {
     expect(robot.fellAt).toBeNull();
     expect(arms[0]).toBeLessThan(-40);
     expect(arms[1]).toBeGreaterThan(40);
+  });
+});
+
+describe('a humanoid’s grip', () => {
+  it('closes the hand’s jaws in the sim when the left hand pinches', () => {
+    const body = humanoid({ hand: true });
+    const model = pinnedModel(body);
+    const engine = new SimEngine(mj, model);
+    const setup = bodySetup({ rig: body.rig, robot: model.robots[0].key });
+
+    engine.setController({ kind: 'drive', setup });
+    engine.command({ v: [0, 0, 0], joints: { right_jaw_a_joint: 0, right_jaw_b_joint: 0 }, aux: [0, 1] });
+    engine.step(1);
+
+    const jawsMm = ['right_jaw_a_joint', 'right_jaw_b_joint'].map((id) => qposOf(engine, id) * 1000);
+
+    engine.dispose();
+
+    expect(jawsMm[0]).toBeGreaterThan(15);
+    expect(jawsMm[1]).toBeLessThan(-15);
   });
 });

@@ -1,4 +1,5 @@
 import type { JointValues } from '../types/robotics';
+import { gripValues, type ArmGrip } from './driveGrip';
 import type { PolicySpec } from './policy';
 import type { DriveCommand, DriveLoop, DriveOutput } from './driveTypes';
 
@@ -13,6 +14,7 @@ export interface PoseSetup {
   robot: string;
   joints: PoseJoint[];
   start: JointValues;
+  jaws?: ArmGrip['jaws'];
   under?: { policy: PolicySpec; robot: string };
 }
 
@@ -29,6 +31,10 @@ export class PoseDrive implements DriveLoop {
 
   private readonly values: JointValues;
 
+  private readonly rest: JointValues;
+
+  private readonly jaws: Set<string>;
+
   private goal: JointValues;
 
   private nextAt = 0;
@@ -36,14 +42,18 @@ export class PoseDrive implements DriveLoop {
   constructor(setup: PoseSetup) {
     this.setup = setup;
     this.values = Object.fromEntries(setup.joints.map((j) => [j.id, clamp(setup.start[j.id] ?? 0, j.range)]));
+    this.rest = { ...this.values };
+    this.jaws = new Set(setup.jaws?.map((j) => j.joint));
     this.goal = { ...this.values };
   }
 
   command(c: DriveCommand) {
-    if (!c.joints) return;
+    const grip = c.aux?.[1];
+    const { jaws } = this.setup;
+    const jawGoals = grip !== undefined && jaws ? gripValues({ jaws }, grip, this.rest) : {};
 
     for (const j of this.setup.joints) {
-      const want = c.joints[j.id];
+      const want = this.jaws.has(j.id) ? jawGoals[j.id] : c.joints?.[j.id];
 
       if (want !== undefined && Number.isFinite(want)) this.goal[j.id] = clamp(want, j.range);
     }

@@ -80,6 +80,23 @@ describe('pose drive', () => {
     expect(drive.tick(1 + POSE_DT / 2).values).toEqual(first);
     expect(drive.tick(1 + POSE_DT).values?.shoulder).toBeGreaterThan(first?.shoulder ?? 0);
   });
+
+  it('closes the jaws from the pinch and ignores retargeted values for them', () => {
+    const drive = new PoseDrive({
+      ...setup(),
+      joints: [...setup().joints, { id: 'jawA', range: [0, 20], prismatic: true }],
+      jaws: [{ joint: 'jawA', open: 0, closed: 20 }],
+    });
+
+    drive.command({ v: STILL, joints: { jawA: 0 }, aux: [0, 0.5] });
+    expect(ticks(drive, { from: 0, count: 20 }).jawA).toBe(10);
+
+    drive.command({ v: STILL, joints: { jawA: 0 } });
+    expect(ticks(drive, { from: 1, count: 20 }).jawA).toBe(10);
+
+    drive.command({ v: STILL, aux: [0, 1] });
+    expect(ticks(drive, { from: 2, count: 20 }).jawA).toBe(20);
+  });
 });
 
 describe('pose commands', () => {

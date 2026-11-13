@@ -24,6 +24,8 @@ interface Session {
 const LATENCY_SAMPLES = 300;
 const VIDEO: MediaTrackConstraints = { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } };
 
+const REFUSED = 'Camera access is off in System Settings.';
+
 let session: Session | null = null;
 let lastTracks: MediaStreamTrack[] = [];
 const canvases = new WeakSet<HTMLCanvasElement>();
@@ -35,12 +37,13 @@ function targetFor({ setup, rig, pointOf }: InputRobot): OperatorTarget | null {
 
   const own = robotRig(rig, setup.robot);
   const body = own.joints.length ? own : rig;
+  const jaws = new Set(setup.jaws?.map((j) => j.joint));
 
   return {
     kind: 'pose',
     rig: rigForWorker(body),
     points: tabulatePoints(body, pointOf),
-    joints: setup.joints.map((j) => j.id),
+    joints: setup.joints.filter((j) => !jaws.has(j.id)).map((j) => j.id),
   };
 }
 
@@ -100,7 +103,8 @@ async function open(robot: InputRobot) {
   let stream: MediaStream | null = null;
 
   try {
-    await window.electronAPI?.askCameraAccess?.();
+    if ((await window.electronAPI?.askCameraAccess?.()) === false) throw new Error(REFUSED);
+
     stream = await navigator.mediaDevices.getUserMedia({ video: VIDEO, audio: false });
     begin(stream, target, robot.changed);
   } catch (err) {

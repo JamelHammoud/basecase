@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ARTICULATED_PARTS } from '../data/articulatedParts';
+import { loadOnshape } from '../onshape/loadOnshape';
+import { isOnshapeLink } from '../onshape/onshapeLink';
 import { loadSimReady, type SimReadyImport } from '../simready/loadAsset';
 import { prepareParts } from '../three/partMesh/prepare';
 import type { SimReadyAsset } from '../simready/search';
@@ -71,6 +73,9 @@ const sourceName = (source: RobotSource) => {
 
 async function loadRobot(source: RobotSource, say: (m: string) => void): Promise<SimReadyImport> {
   if (source.kind === 'simready') return loadSimReady(source.asset, say);
+
+  if (source.kind === 'url' && isOnshapeLink(source.url))
+    return { robot: await loadOnshape(source.url, say), isObject: false };
 
   const robot = await importRobot(source, { name: source.kind === 'url' ? source.name : undefined, onProgress: say });
 

@@ -2,6 +2,7 @@ import type { Command } from '../components/CommandPalette';
 import {
   ClipboardIcon,
   DownloadIcon,
+  FileIcon,
   FileImportIcon,
   FolderOpenIcon,
   PhotoIcon,
@@ -38,7 +39,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'export-scene',
       group: 'Scene',
       label: 'Export Scene',
-      icon: <DownloadIcon className={ic} />,
+      icon: <FileIcon className={ic} />,
       keywords: 'share send friend basecase file download save',
       run: () => void exports.exportScene(),
     },

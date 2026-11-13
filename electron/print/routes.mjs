@@ -1,3 +1,5 @@
+import { postRoutesOf, registerCalls } from '../callRoutes.mjs';
+
 const withBytes = (payload) => ({
   ...payload,
   groups: (payload.groups ?? []).map((g) => ({
@@ -24,13 +26,6 @@ export const PRINT_CALLS = {
   'print:open-link': (p, url) => p.openLink(url),
 };
 
-export function registerPrintHandlers(ipcMain, printing) {
-  for (const [channel, call] of Object.entries(PRINT_CALLS))
-    ipcMain.handle(channel, (_e, payload) => call(printing, payload));
-}
+export const registerPrintHandlers = (ipcMain, printing) => registerCalls(ipcMain, PRINT_CALLS, printing);
 
-export const printPostRoutes = (printing) =>
-  Object.entries(PRINT_CALLS).map(([channel, call]) => [
-    `/${channel.replace(':', '-')}`,
-    (body) => call(printing, body?.arg),
-  ]);
+export const printPostRoutes = (printing) => postRoutesOf(PRINT_CALLS, printing);

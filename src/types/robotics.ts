@@ -11,6 +11,7 @@ import type { CalibrationHistory } from '../reality/history';
 import type { StoredWalk } from '../utils/engineeringTypes';
 import type { BooleanFields } from './booleans';
 import type { SculptMeshData } from './sculpt';
+import type { LoopClosure } from './loopClosure';
 
 export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
 
@@ -210,6 +211,7 @@ export interface RobotJoint {
   published?: string;
   limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
   onshape?: OnshapeMate;
+  loop?: LoopClosure;
 }
 
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';

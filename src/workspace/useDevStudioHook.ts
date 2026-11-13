@@ -47,6 +47,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     dropFiles: routeFiles,
     selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,
+    sketchPath: core.sketching.setPath,
     simState: () => devSimState(core),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
     worldAt: () => {

@@ -150,6 +150,10 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     slice: (report) => core.printing.job.sliceReport(report),
     viewport: () => viewportRef.current,
     setProjectNow,
+    insertParts: (parts, joints) => {
+      commitParts((prev) => [...prev, ...parts]);
+      updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
+    },
     setAction: author.setAction,
     setCursor: author.setCursor,
     poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),

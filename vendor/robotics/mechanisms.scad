@@ -86,6 +86,9 @@ function four_bar_pose(ground, crank, coupler, rocker, theta) =
 // Grashof: true when the shortest link can turn fully.
 function four_bar_grashof(ground, crank, coupler, rocker) =
   let(l = sort([ground, crank, coupler, rocker])) l[0] + l[3] <= l[1] + l[2];
+// The coupler point [px, py] in the coupler's frame (along B→C, then to its left), at crank angle theta.
+function four_bar_point(B, C, coupler, px, py) =
+  let(u = (C - B) / coupler, n = [-u.y, u.x]) B + px * u + py * n;
 
 module _rcp_bar(p, q, w, t, pin) {
   difference() {
@@ -94,23 +97,35 @@ module _rcp_bar(p, q, w, t, pin) {
   }
 }
 
+module _rcp_plate(pts, w, t, pin) {
+  difference() {
+    hull() for (c = pts) translate([c.x, c.y, 0]) cyl(d = w, h = t, anchor = BOT, chamfer = 0.4);
+    for (c = pts) translate([c.x, c.y, 0]) cyl(d = pin + 0.3, h = 3 * t);
+  }
+}
+
 // Four-bar linkage as flat bars with pin holes (pin + 0.3 mm clearance, for M3 shoulder screws or
 // 3 mm pins), posed at crank angle theta. Layers: ground and crank-rocker at z = 0 and t, coupler
-// on top. part = "all" | "ground" | "crank" | "coupler" | "rocker".
-module four_bar(ground = 60, crank = 20, coupler = 60, rocker = 45, theta = 60, w = 8, t = 4, pin = 3, part = "all") {
+// on top; with a coupler point [px, py] off the B–C line, the coupler is a plate through B, C and P.
+// part = "all" | "ground" | "crank" | "coupler" | "rocker", and each part reports its own pivots.
+module four_bar(ground = 60, crank = 20, coupler = 60, rocker = 45, theta = 60, px = 0, py = 0, w = 8, t = 4, pin = 3, part = "all") {
   pose = four_bar_pose(ground, crank, coupler, rocker, theta);
   assert(!is_undef(pose), "four_bar: the links can't close at this crank angle");
   B = pose[0];
   C = pose[1];
   D = [ground, 0];
-  if (part == "all" || part == "ground") _rcp_bar([0, 0], D, w, t, pin);
-  if (part == "all" || part == "crank") up(t + 0.2) _rcp_bar([0, 0], B, w, t, pin);
-  if (part == "all" || part == "rocker") up(t + 0.2) _rcp_bar(D, C, w, t, pin);
-  if (part == "all" || part == "coupler") up(2 * t + 0.4) _rcp_bar(B, C, w, t, pin);
-  port("A", [0, 0, 0], [0, 0, -1], "bore", pin);
-  port("D", [D.x, D.y, 0], [0, 0, -1], "bore", pin);
-  port("B", [B.x, B.y, 3 * t + 0.4], [0, 0, 1], "bore", pin);
-  port("C", [C.x, C.y, 3 * t + 0.4], [0, 0, 1], "bore", pin);
+  P = four_bar_point(B, C, coupler, px, py);
+  point = px != 0 || py != 0;
+  all = part == "all";
+  if (all || part == "ground") _rcp_bar([0, 0], D, w, t, pin);
+  if (all || part == "crank") up(t + 0.2) _rcp_bar([0, 0], B, w, t, pin);
+  if (all || part == "rocker") up(t + 0.2) _rcp_bar(D, C, w, t, pin);
+  if (all || part == "coupler") up(2 * t + 0.4) _rcp_plate(point ? [B, C, P] : [B, C], w, t, pin);
+  if (all || part == "ground" || part == "crank") port("A", [0, 0, 0], [0, 0, -1], "bore", pin);
+  if (all || part == "ground" || part == "rocker") port("D", [D.x, D.y, 0], [0, 0, -1], "bore", pin);
+  if (all || part == "crank" || part == "coupler") port("B", [B.x, B.y, 3 * t + 0.4], [0, 0, 1], "bore", pin);
+  if (all || part == "rocker" || part == "coupler") port("C", [C.x, C.y, 3 * t + 0.4], [0, 0, 1], "bore", pin);
+  if (point && (all || part == "coupler")) port("P", [P.x, P.y, 3 * t + 0.4], [0, 0, 1], "bore", pin);
 }
 
 // ---------------------------------------------------------------- snap pins

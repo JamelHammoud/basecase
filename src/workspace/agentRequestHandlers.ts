@@ -4,7 +4,7 @@ import { partCode, partRecord, partSource } from '../agent/agentPartRecord';
 import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
-import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
 import { downscaleDataUrl } from '../utils/imageFile';
@@ -46,6 +46,9 @@ import { SKILL_HANDLERS } from './agentSkillRequests';
 import type { Cases } from './useCases';
 import type { Routines } from './useRoutines';
 import type { SceneSkills } from './useSkills';
+import { synthesizeLinkageRequest, type LinkagePayload } from '../linkage/agentLinkage';
+import { synthesizeInWorker } from '../linkage/linkageClient';
+import { newId } from './helpers';
 
 type Payload = Record<string, unknown>;
 
@@ -56,6 +59,7 @@ export interface RequestContext {
   slice: (report: PrintReport) => Promise<SliceRecord>;
   viewport: () => Viewport3DHandle | null;
   setProjectNow: (next: ProjectSettings) => void;
+  insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
@@ -315,6 +319,12 @@ const HANDLERS: Record<string, Handler> = {
     dataUrl: await downscaleDataUrl(String(payload.dataUrl), Number(payload.maxSide) || EVIDENCE_IMAGE_SIDE, 0.88),
   }),
   apply: applyWithCost,
+  synthesize_linkage: (payload, ctx) =>
+    synthesizeLinkageRequest(payload as LinkagePayload, {
+      solve: synthesizeInWorker,
+      insert: ctx.insertParts,
+      newBase: () => newId('linkage'),
+    }),
   ...PORT_HANDLERS,
   ...PLAN_HANDLERS,
   ...ROUTINE_HANDLERS,

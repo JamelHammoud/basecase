@@ -9,19 +9,19 @@ function filmWorker(): Worker {
   return worker;
 }
 
-export function drawFilmstrip(input: FilmstripInput): Promise<ImageBitmap | null> {
+export function drawFilmstrip(input: FilmstripInput, image: ImageEncodeOptions): Promise<Blob | null> {
   const id = ++seq;
   const w = filmWorker();
 
   return new Promise((resolve) => {
-    const onMessage = (ev: MessageEvent<{ id: number; bitmap?: ImageBitmap }>) => {
+    const onMessage = (ev: MessageEvent<{ id: number; blob?: Blob }>) => {
       if (ev.data.id !== id) return;
 
       w.removeEventListener('message', onMessage);
-      resolve(ev.data.bitmap ?? null);
+      resolve(ev.data.blob ?? null);
     };
 
     w.addEventListener('message', onMessage);
-    w.postMessage({ id, input });
+    w.postMessage({ id, input, image });
   });
 }

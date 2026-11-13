@@ -36,10 +36,12 @@ function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
 }
 
 function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
+  const driven = movable.filter((j) => j.type === 'revolute' && servoParts(ctx, j).length > 0);
+
+  if (!driven.length) return [];
+
   const rig = buildRig(ctx.joints, ctx.parts);
-  const modelled = movable.filter(
-    (j) => j.type === 'revolute' && servoParts(ctx, j).length > 0 && !isWheelJoint(j, ctx.byPart, rig),
-  );
+  const modelled = driven.filter((j) => !isWheelJoint(j, ctx.byPart, rig));
 
   if (!modelled.length) return [];
 

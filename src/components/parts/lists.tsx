@@ -2,7 +2,7 @@ import React from 'react';
 import { catalogRef } from '../../data/catalog';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { Button, EmptyState, HoverCard, SectionHeader } from '../../design-system';
+import { Button, EmptyState, HoverCard, REVEAL_ON_HOVER, SectionHeader } from '../../design-system';
 import { CatalogDetails } from '../PartDetails';
 import type { Category } from './partsViews';
 import { AddButton, CategoryRow, ResultRow, dragProps, metaLine } from './rows';
@@ -40,10 +40,7 @@ const Tile: React.FC<{ item: CatalogItem; meta: string; onOpen: () => void; onAd
             <div className="text-[12px] text-white/50 truncate">{meta}</div>
           </div>
         </button>
-        <AddButton
-          onAdd={onAdd}
-          className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
-        />
+        <AddButton onAdd={onAdd} className={`absolute top-[8px] right-[8px] transition-opacity ${REVEAL_ON_HOVER}`} />
       </div>
     </HoverCard>
   );

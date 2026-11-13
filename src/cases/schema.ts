@@ -19,7 +19,7 @@ import {
 export const CASE_FORMAT_VERSION = 1;
 
 const WORLD_KINDS = ['box', 'cube', 'sphere', 'cylinder', 'wedge', 'cone', 'custom_model'] as const;
-const CAPABILITIES = ['arm', 'wheels', 'legs'] as const;
+const CAPABILITIES = ['arm', 'gripper', 'wheels', 'legs'] as const;
 const BEHAVIORS = ['static', 'dynamic', 'marker'] as const;
 const CONTROL_INPUTS = ['move', 'turn', 'lift', 'grip'] as const;
 const MAX_OBJECTS = 256;

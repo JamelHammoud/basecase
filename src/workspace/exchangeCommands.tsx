@@ -2,12 +2,15 @@ import type { Command } from '../components/CommandPalette';
 import {
   ClipboardIcon,
   DownloadIcon,
+  FileIcon,
   FileImportIcon,
   FolderOpenIcon,
   PhotoIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { SHARE_LABEL } from '../utils/os';
 import type { CommandInputs } from './sceneCommands';
 
@@ -38,7 +41,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'export-scene',
       group: 'Scene',
       label: 'Export Scene',
-      icon: <DownloadIcon className={ic} />,
+      icon: <FileIcon className={ic} />,
       keywords: 'share send friend basecase file download save',
       run: () => void exports.exportScene(),
     },
@@ -59,6 +62,18 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'print download',
       run: exports.exportStl,
     },
+    ...(IS_WEB_DEMO || !exports.canExportStep
+      ? []
+      : [
+          {
+            id: 'export-step',
+            group: 'Scene',
+            label: 'Export STEP',
+            icon: <ShapeIcon className={ic} />,
+            keywords: 'stp cad assembly fusion onshape solidworks freecad download',
+            run: () => void exports.exportStep(),
+          },
+        ]),
     {
       id: 'airdrop',
       group: 'Scene',

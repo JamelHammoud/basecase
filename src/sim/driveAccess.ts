@@ -73,6 +73,7 @@ function armAccess(input: DriveInput, robot: string): DriveAccess {
     anchor: facts.anchor,
     reachMm: facts.reachMm,
     start: input.start,
+    grip: facts.gripper,
   });
 
   return { kind: 'ready', cls: 'arm', setup, needsFallCheck: false, followPart: null };

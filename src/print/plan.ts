@@ -225,3 +225,13 @@ export function buildPrintPlan(inputs: PlanInput[], setup: PrinterSetup, bed: Be
     plateOf,
   };
 }
+
+export function turnedPrint(plates: Plate[], id: string): PartPrint | null {
+  for (const plate of plates) {
+    const item = plate.items.find((it) => it.id === id && it.copy === 0);
+
+    if (item) return { turned: item.yaw !== 90, at: [item.x, item.y], plate: plate.local };
+  }
+
+  return null;
+}

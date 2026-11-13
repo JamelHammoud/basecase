@@ -1,29 +1,57 @@
 ---
 title: Publish a dataset to Hugging Face
 date: 2026-11-12
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
+order: 6
+popular: true
+keywords:
+  - hf
+  - hub
+  - upload
+  - share dataset
+  - access token
+  - sign in
+related:
+  - export-a-lerobot-dataset
+  - lerobot-dataset-contents
 covers:
   - src/components/settings/AccountsPane.tsx
   - src/components/simulate/ResultsSection.tsx
   - src/workspace/useDatasetExport.ts
   - src/workspace/caseCommands.tsx
+  - src/hub/hubBridge.ts
   - electron/hub/
 ---
 
-Put a Case's passed tries on the Hugging Face Hub as a LeRobot dataset, where LeRobot and GR00T fine-tunes can load it. It works in the desktop app.
+Put a Case's passed tries on the Hugging Face Hub as a LeRobot dataset, so LeRobot and GR00T training can load it by name.
 
-1. Make an access token with write access on huggingface.co, under Settings ▸ Access Tokens.
-2. In Basecase, press ⌘, and choose **Accounts**.
-3. Paste the token into **Access token** and press Enter. Your account name shows under it once the Hub accepts the token.
+Publishing works in the desktop app. The dataset is always public.
+
+1. On huggingface.co, make an access token with write access, under Settings ▸ Access Tokens.
+2. In Basecase, press [[⌘,]] and choose **Accounts**.
+3. Paste the token into **Access token** and press Enter. The account name shows under it once the Hub accepts the token.
 
 ![The Accounts pane with a token saved](/help/publish-a-dataset-to-hugging-face/accounts.png)
 
-4. Open a Case and record tries with **Try It** in the Simulate tab.
-5. Once a try passes, click **Publish to Hugging Face** under Export Dataset in Results. It's also in ⌘K.
+4. Open a Case and record tries with **Try It** until at least one passes. Steps are in [Try a Case](/help/try-a-case).
+5. Under **Results**, click **Publish to Hugging Face**.
 
-![Publish to Hugging Face in Results](/help/publish-a-dataset-to-hugging-face/results.png)
+![Publish to Hugging Face under Export Dataset in Results](/help/publish-a-dataset-to-hugging-face/results.png)
 
-6. When the toast says the dataset is published, click **Open** to see the repo.
+6. When the toast says "Published to" and the dataset's name, click **Open** to see it on the Hub.
 
-The dataset is public, named after the Case with a short code for the scene, and tagged v2.1 so LeRobot can load it. Publishing the same Case from the same scene again replaces that dataset with the tries that pass now. Tries recorded before the robot last changed are left out, and the toast says how many.
+**Publish to Hugging Face** is also in [[⌘K]]. Signed out, it opens **Accounts** instead.
+
+## What gets published
+
+The files are the ones **Export Dataset** makes; [LeRobot dataset contents](/help/lerobot-dataset-contents) lists them. They go to a dataset repo on your account, named after the Case plus a 6-character code for the scene, such as `touch-the-dots-1a2b3c`. Each scene gets its own code, so publishing Touch the Dots from two scenes makes two datasets. Basecase tags the dataset v2.1, the version LeRobot loads it by.
+
+## Publishing again
+
+Publishing the same Case from the same scene replaces the dataset with the tries that pass now. Basecase rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone. Tries recorded before the robot last changed are left out, and the toast says how many.
+
+## Where the token lives
+
+The token stays in the app's main process, sealed on disk. The page you work in never sees it; it learns only whether you're signed in and your account name.

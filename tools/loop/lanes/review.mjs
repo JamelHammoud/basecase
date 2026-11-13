@@ -2,13 +2,22 @@ import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
 import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
-import { commentOnPull, openPulls, pullComments, pullReview, reviewState, setReview } from '../lib/github.mjs';
+import {
+  commentOnPull,
+  openPulls,
+  pullCheck,
+  pullComments,
+  pullReview,
+  reviewState,
+  setReview,
+} from '../lib/github.mjs';
+import { byRank } from '../lib/rank.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 export const schedule = {
   agent: true,
-  slots: 4,
+  slots: 8,
   everySeconds: 60,
   does: 'Reviews each pull request whose head has no agent-review status',
 };
@@ -121,11 +130,13 @@ function carryOver(pull, log) {
 export default function review({ log }) {
   fetchAll();
 
-  const waiting = openPulls().filter((pull) => {
-    const state = pullReview(pull);
+  const waiting = openPulls()
+    .filter((pull) => {
+      const state = pullReview(pull);
 
-    return state === null || state === 'error';
-  });
+      return (state === null || state === 'error') && pull.mergeable !== 'CONFLICTING' && pullCheck(pull) !== 'failure';
+    })
+    .sort((a, b) => Number(pullCheck(b) === 'success') - Number(pullCheck(a) === 'success') || byRank(a, b));
 
   for (const pull of waiting) {
     const release = claim(`review-${pull.number}`);

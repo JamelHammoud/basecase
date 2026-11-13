@@ -10,16 +10,19 @@ import {
   PhotoIcon,
   PrinterIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
 import { SHARE_LABEL } from '../utils/os';
 
 interface ExportMenuProps {
   canExportStl: boolean;
+  canExportStep: boolean;
   canExportRobot: boolean;
   onExportImage: () => void;
   onExportStl: () => void;
   onExport3mf: () => void;
+  onExportStep?: () => void;
   onExportScene: () => void;
   onExportRobot: () => void;
   onAirDrop: () => void;
@@ -28,10 +31,12 @@ interface ExportMenuProps {
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({
   canExportStl,
+  canExportStep,
   canExportRobot,
   onExportImage,
   onExportStl,
   onExport3mf,
+  onExportStep,
   onExportScene,
   onExportRobot,
   onAirDrop,
@@ -57,10 +62,10 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         align="end"
         className="w-56"
       >
-        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="PNG Image" onSelect={run(onExportImage)} />
+        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="Image" onSelect={run(onExportImage)} />
         <MenuItem
           icon={<DownloadIcon className="w-4 h-4" />}
-          label="STL Mesh"
+          label="STL"
           disabled={!canExportStl}
           onSelect={run(onExportStl)}
         />
@@ -70,7 +75,15 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           disabled={!canExportStl}
           onSelect={run(onExport3mf)}
         />
-        <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Basecase Scene" onSelect={run(onExportScene)} />
+        {onExportStep && (
+          <MenuItem
+            icon={<ShapeIcon className="w-4 h-4" />}
+            label="STEP"
+            disabled={!canExportStep}
+            onSelect={run(onExportStep)}
+          />
+        )}
+        <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Scene" onSelect={run(onExportScene)} />
         <MenuItem
           icon={<RobotsIcon className="w-4 h-4" />}
           label="Robot Package"

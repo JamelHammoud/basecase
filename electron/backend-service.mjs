@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { HubAccount } from './hub/index.mjs';
+import { OnshapeAccount } from './onshape/index.mjs';
 import { Printing } from './print/index.mjs';
 import { SimReady } from './simready/index.mjs';
 import { KitScheduler } from './kitScheduler.mjs';
@@ -23,6 +24,7 @@ import * as skillStore from './backend/skillStore.mjs';
 import * as sourced from './backend/sourced.mjs';
 import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { openCadFile } from './cadImport/openCadFile.mjs';
+import { exportStepFile } from './cad-kernel/stepExport.mjs';
 import { ReferenceImages } from './backend/referenceImages.mjs';
 import * as uploads from './backend/uploads.mjs';
 
@@ -58,6 +60,7 @@ export class BasecaseBackendService {
     this.bridge.serve('references', (_payload, workspaceId) => ({ names: this.references.ofLane(workspaceId) }));
     serveKernel(this.bridge, kernel);
     this.converter = typeof kernel?.convert === 'function' ? kernel : null;
+    this.kernel = kernel;
     this.bridgeReady = this.startAgentBridge();
 
     this.setupFileWatchers();
@@ -67,6 +70,12 @@ export class BasecaseBackendService {
     this.simready = new SimReady(this.libraryDir, (event) => this.emitEvent(event));
     this.printing = new Printing({ libraryDir: this.libraryDir, emit: (event) => this.emitEvent(event), secrets });
     this.hub = new HubAccount({ libraryDir: this.libraryDir, secrets });
+    this.onshape = new OnshapeAccount({
+      libraryDir: this.libraryDir,
+      secrets,
+      converter: this.converter,
+      emit: (event) => this.emitEvent(event),
+    });
   }
 
   simreadyStatus() {
@@ -302,6 +311,10 @@ export class BasecaseBackendService {
 
   openCadFile(payload) {
     return openCadFile(this.converter, payload);
+  }
+
+  exportStep(payload) {
+    return exportStepFile(this.kernel, payload);
   }
 
   saveEvidenceFile(payload) {

@@ -101,7 +101,7 @@ export function useCaseTry({ sim, rig, parts, active, onTry }: TryOptions): Case
       return;
     }
 
-    setStartedAt(sim.stats?.time ?? 0);
+    setStartedAt(sim.latestStats()?.time ?? 0);
     sim.record();
     setPhase('running');
   };

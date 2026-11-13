@@ -77,9 +77,9 @@ function driveFor({ kase, rig, robot, facts, effector }: DriveFor): DriveSetup |
   const key = rig.robots[0]?.key ?? '';
 
   if (kase.slot.needs.includes('arm') && effector && facts.armJoints.length) {
-    const { armJoints: joints, anchor, reachMm } = facts;
+    const { armJoints: joints, anchor, reachMm, gripper } = facts;
 
-    return armSetup({ rig, robot: key, effector, joints, anchor, reachMm });
+    return armSetup({ rig, robot: key, effector, joints, anchor, reachMm, grip: gripper });
   }
 
   return groundDrive(rig, robot, facts, key);

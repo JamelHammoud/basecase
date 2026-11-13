@@ -132,7 +132,7 @@ const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.reso
 try {
   if (runsFromHome && lane === 'merge') {
     updateHome();
-    spawn(process.execPath, [path.join(HOME_CHECKOUT, 'tools', 'loop', 'install.mjs'), 'sync'], {
+    spawn(process.execPath, [path.join(HOME_CHECKOUT, 'tools', 'loop', 'install.mjs'), 'sync', String(process.pid)], {
       detached: true,
       stdio: 'ignore',
     }).unref();

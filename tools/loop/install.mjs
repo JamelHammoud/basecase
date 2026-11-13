@@ -4,6 +4,7 @@ import path from 'node:path';
 import { laneModule, laneNames } from './lib/lanes.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOGS } from './lib/paths.mjs';
 import { syncPlan } from './lib/flow.mjs';
+import { heldLocks, isAlive } from './lib/locks.mjs';
 import { run } from './lib/sh.mjs';
 
 const LANES = await Promise.all(laneNames().map(async (name) => ({ name, ...(await laneModule(name)).schedule })));
@@ -14,8 +15,9 @@ const JOBS = LANES.flatMap(({ name, slots, everySeconds }) =>
 
 const AGENTS_DIR = path.join(os.homedir(), 'Library', 'LaunchAgents');
 const DOMAIN = `gui/${os.userInfo().uid}`;
-const label = ({ lane, slot }) => `so.basecase.loop.${lane}-${slot}`;
-const KEEP_AWAKE = 'so.basecase.loop.awake';
+const PREFIX = 'so.basecase.loop.';
+const label = ({ lane, slot }) => `${PREFIX}${lane}-${slot}`;
+const KEEP_AWAKE = `${PREFIX}awake`;
 
 const where = (tool) => path.dirname(run('which', [tool]).out);
 
@@ -153,7 +155,7 @@ const installedNames = () =>
   fs.existsSync(AGENTS_DIR)
     ? fs
         .readdirSync(AGENTS_DIR)
-        .filter((file) => file.startsWith('so.basecase.loop.') && file.endsWith('.plist'))
+        .filter((file) => file.startsWith(PREFIX) && file.endsWith('.plist'))
         .map((file) => file.slice(0, -'.plist'.length))
     : [];
 
@@ -164,7 +166,12 @@ function removeAll() {
   }
 }
 
-function sync() {
+function waitForExit(pid) {
+  for (let second = 0; pid && isAlive(pid) && second < 300; second++) run('sleep', ['1']);
+}
+
+function sync(afterPid) {
+  waitForExit(afterPid);
   fs.mkdirSync(AGENTS_DIR, { recursive: true });
   fs.mkdirSync(LOGS, { recursive: true });
 
@@ -174,7 +181,8 @@ function sync() {
   const installed = installedNames()
     .filter((name) => name !== KEEP_AWAKE)
     .map((name) => ({ name, contents: fs.readFileSync(path.join(AGENTS_DIR, `${name}.plist`), 'utf8') }));
-  const plan = syncPlan(wanted, installed);
+  const busy = new Set(heldLocks().map((id) => `${PREFIX}${id}`));
+  const plan = syncPlan(wanted, installed, busy);
 
   if (plan.add.length > 0) ensureLabels();
 
@@ -185,8 +193,10 @@ function sync() {
     fs.rmSync(path.join(AGENTS_DIR, `${name}.plist`), { force: true });
   }
 
+  const names = (list) => list.join(', ') || 'none';
+
   console.log(
-    `added ${plan.add.join(', ') || 'none'}; reloaded ${plan.change.join(', ') || 'none'}; removed ${plan.remove.join(', ') || 'none'}`,
+    `added ${names(plan.add)}; reloaded ${names(plan.change)}; removed ${names(plan.remove)}; left running ${names(plan.busy)}`,
   );
 }
 
@@ -200,7 +210,7 @@ const command = process.argv[2];
 
 if (command === 'install') install();
 else if (command === 'uninstall') uninstall();
-else if (command === 'sync') sync();
+else if (command === 'sync') sync(Number(process.argv[3]) || 0);
 else if (command === 'list') {
   for (const { name, slots, everySeconds, does } of LANES) {
     const minutes = everySeconds / 60;

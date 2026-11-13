@@ -140,9 +140,9 @@ Bring a model from another app into the scene as a printable part.
 
 Three guards keep work moving without anyone watching:
 
-- **Backpressure.** Lanes that open pull requests (build, refine, market, learn, update, harness, retro) wait while 30 pull requests are waiting to land or 20 CI runs are queued (`tools/loop/lib/flow.mjs`). The lanes that drain the queue (review, revise, rebase, batch, merge, repair) never wait.
-- **New lanes start themselves.** After each update of the home checkout, the merge lane runs `install.mjs sync`, detached. It loads new lanes, reloads changed ones and removes deleted ones, leaving running lanes alone.
-- **Health.** The health lane checks every 10 minutes how long `main` has been red, how long since the last merge, the oldest reviewed and green pull request, and the CI queue. While any of them is over its limit, it keeps one `Loop health` issue up to date, and it closes that issue once the loop flows again.
+- **Backpressure.** Lanes that open pull requests (build, refine, market, learn and update) wait while 30 pull requests are waiting to land or 20 CI runs are queued (`tools/loop/lib/flow.mjs`). The lanes that drain the queue (review, revise, rebase, batch, merge, repair) never wait.
+- **New lanes start themselves.** After each update of the home checkout, the merge lane runs `install.mjs sync`, detached. Once that merge run ends, it loads new lanes, then reloads changed ones and removes deleted ones that aren't mid-run (reloading a lane stops its running job, so a busy slot waits for a later sync).
+- **Health.** The health lane checks every 10 minutes how long `main` has been red, how long since the last merge, the oldest reviewed and green pull request (timed from its passing Check or review, whichever came last), and the CI queue. While any of them is over its limit, it keeps one `Loop health` issue up to date, and it closes that issue once the loop flows again.
 
 ### What Check runs
 

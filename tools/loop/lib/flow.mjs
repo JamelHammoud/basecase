@@ -7,7 +7,7 @@ export const LIMITS = {
   oldestQueuedMinutes: 60,
 };
 
-export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'harness', 'retro']);
+export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update']);
 
 const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : null);
 
@@ -42,13 +42,37 @@ export function breaches(m, now = Date.now()) {
   return found;
 }
 
-export function syncPlan(wanted, installed) {
+export const redSince = (runs) => {
+  const finished = runs.filter((r) => r.conclusion !== 'cancelled' && r.conclusion !== 'skipped');
+  const firstGreen = finished.findIndex((r) => r.conclusion === 'success');
+  const red = firstGreen === -1 ? finished : finished.slice(0, firstGreen);
+
+  return red.length > 0 ? red.at(-1).createdAt : null;
+};
+
+const latest = (times) => times.filter(Boolean).sort().at(-1) ?? null;
+
+export const readySince = (pull) => {
+  const rollup = pull.statusCheckRollup ?? [];
+  const check = rollup.find((entry) => entry.__typename === 'CheckRun' && entry.name === 'check');
+  const review = rollup.find((entry) => entry.__typename === 'StatusContext' && entry.context === 'agent-review');
+
+  return latest([check?.completedAt, review?.startedAt]);
+};
+
+export const lastMergeAt = (merged) => latest(merged.map((pull) => pull.mergedAt));
+
+export function syncPlan(wanted, installed, busy = new Set()) {
   const want = new Map(wanted.map((job) => [job.name, job.contents]));
   const have = new Map(installed.map((job) => [job.name, job.contents]));
+  const change = [...want.keys()].filter((name) => have.has(name) && have.get(name) !== want.get(name));
+  const remove = [...have.keys()].filter((name) => !want.has(name));
+  const idle = (name) => !busy.has(name);
 
   return {
     add: [...want.keys()].filter((name) => !have.has(name)),
-    change: [...want.keys()].filter((name) => have.has(name) && have.get(name) !== want.get(name)),
-    remove: [...have.keys()].filter((name) => !want.has(name)),
+    change: change.filter(idle),
+    remove: remove.filter(idle),
+    busy: [...change, ...remove].filter((name) => busy.has(name)),
   };
 }

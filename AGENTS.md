@@ -85,6 +85,7 @@ These rules hold for every human and agent, on every machine. They're enforced b
 | Rule | Limit | How to comply |
 |---|---|---|
 | No comments (`basecase/no-comments`) | none, except `@vite-ignore` / `#__PURE__` pragmas | Name things so the code reads on its own. Lasting context (why a value is what it is, platform quirks, bugs avoided) goes in the area's guide (`docs/guide/`) or `docs/notes/` (`ui.md`, `core.md`, `node.md`) |
+| Banned copy (`basecase/copy`) | none in user-facing strings in `src/` and the app menu | Cut the word or the line (§3c); the list is `tools/eslint/copy-banned.mjs` |
 | No nested `if` in one function (`basecase/no-nested-if`) | 0 | Guard clauses and early returns, combined conditions, lookup tables, or extract a named predicate / function |
 | Blank line between statements of different kinds (`@stylistic/padding-line-between-statements`) | — | Auto-fixed. Consecutive declarations or expression statements may group; every `if`, loop, block and `return` is set off by blank lines |
 | `max-lines` per file | 400 (blank lines not counted) | Split by responsibility into sibling modules. Data catalogs (`src/data/`) and the agent prompt are exempt |
@@ -173,8 +174,7 @@ Run it on every string you add or change:
 - [ ] If it asks for work, does it start with the verb, and does clicking it help do the work?
 - [ ] Is the most important word first?
 - [ ] Same word as everywhere else for this thing? Right casing for this element (Title Case buttons and menu items, sentence case for the rest)?
-- [ ] No banned words (“yet”, “please”, “simply”, “successfully”, “Oops”, “Invalid…”; the full list is §3c)?
-- [ ] No `·` (or a stand-in glyph) between items? Use layout instead (§3b-16).
+- [ ] No banned words (“yet”, “please”, “Oops”, “Invalid…”; §3c) and no `·` or stand-in glyph between items (§3b-16)? `basecase/copy` lints both; the rest of §3c is yours to catch.
 
 ## 13. Functional Invariants (never break these)
 

@@ -61,6 +61,8 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 
 ### 3c. Words and patterns to avoid
 
+The single words and separators below are linted: `basecase/copy` (`tools/eslint/copy.mjs`) checks JSX text, rendered attributes and properties (`label`, `title`, `placeholder`, `aria-label`, `description`, `message`, `text`…), toasts and confirms in `src/` and the app menu, against the list in [`tools/eslint/copy-banned.mjs`](../../tools/eslint/copy-banned.mjs). Add a banned word there, not here alone. The rest of the table still needs a reader.
+
 | Avoid | Why | Use instead |
 |---|---|---|
 | “yet” (“No parts yet”) | Filler; the person knows they can add more | “No parts” |

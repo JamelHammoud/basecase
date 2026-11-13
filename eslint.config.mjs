@@ -91,6 +91,11 @@ export default tseslint.config(
     rules: { ...reactHooks.configs['recommended-latest'].rules },
   },
   {
+    files: ['src/**/*.{ts,tsx}', 'electron/app-menu.mjs'],
+    ignores: ['src/**/*.test.{ts,tsx}'],
+    rules: { 'basecase/copy': 'error' },
+  },
+  {
     files: ['**/*.cjs'],
     languageOptions: { sourceType: 'commonjs' },
     rules: { '@typescript-eslint/no-require-imports': 'off' },

@@ -1,6 +1,6 @@
 import type { PoseReply } from '../agent/agentPose';
 import { describeMarks } from '../agent/agentMarks';
-import { partCode, partRecord } from '../agent/agentPartRecord';
+import { partCode, partRecord, partSource } from '../agent/agentPartRecord';
 import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
@@ -261,6 +261,7 @@ const HANDLERS: Record<string, Handler> = {
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),
   part_record: (payload, ctx) => partRecord(ctx.parts(), String(payload.id)),
+  part_source: (payload, ctx) => partSource(ctx.parts(), String(payload.id)),
   part_meshes: (payload, ctx) => partMeshes((payload.ids as string[] | undefined) ?? [], ctx.parts()),
   craft: (_payload, ctx) => craftScene(ctx),
   visible_share: (payload, ctx) => visibleShare(String(payload.id), ctx.viewport()),

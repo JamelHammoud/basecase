@@ -15,7 +15,8 @@ import { DEFAULT_WORKSPACE, safeWorkspace } from './backend/constants.mjs';
 import { EventHub } from './backend/eventHub.mjs';
 import * as evidence from './backend/evidence.mjs';
 import { watchLibrary } from './backend/fileWatchers.mjs';
-import { serveKernel } from './backend/kernelRoutes.mjs';
+import { serveKernel, UNAVAILABLE } from './backend/kernelRoutes.mjs';
+import { PART_SOURCE_MS, tuneCadPart } from './backend/cadTune.mjs';
 import { ensureDirectories, libraryPaths } from './backend/libraryPaths.mjs';
 import * as models from './backend/models.mjs';
 import { buildPromptBlocks } from './backend/promptBlocks.mjs';
@@ -59,6 +60,7 @@ export class BasecaseBackendService {
     });
     this.bridge.serve('references', (_payload, workspaceId) => ({ names: this.references.ofLane(workspaceId) }));
     serveKernel(this.bridge, kernel);
+    this.kernel = kernel ?? UNAVAILABLE;
     this.converter = typeof kernel?.convert === 'function' ? kernel : null;
     this.kernel = kernel;
     this.bridgeReady = this.startAgentBridge();
@@ -315,6 +317,12 @@ export class BasecaseBackendService {
 
   exportStep(payload) {
     return exportStepFile(this.kernel, payload);
+  }
+
+  tuneCadPart(payload) {
+    const source = (id, workspaceId) => this.requestRenderer('part_source', { id }, PART_SOURCE_MS, workspaceId);
+
+    return tuneCadPart({ kernel: this.kernel, source }, payload);
   }
 
   saveEvidenceFile(payload) {

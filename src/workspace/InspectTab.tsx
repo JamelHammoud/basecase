@@ -34,7 +34,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
 
 function SceneInspector({ core, actions }: InspectTabProps) {
   const { scene, parts, studio, selection, annotations } = core;
-  const { edits, ops, library } = actions;
+  const { edits, ops, library, tuning } = actions;
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
 
@@ -68,6 +68,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onRenameGroup={edits.renameGroup}
       onChangeHardware={edits.changeHardware}
       onAddClearanceHole={ops.addClearanceHole}
+      onTuneDimensions={tuning.tune}
     />
   );
 }

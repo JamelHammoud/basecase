@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ScenePart } from '../types/robotics';
 import { twinHints } from '../workspace/mirrorHints';
 import { addHoles, HOLES_MARK, mirrorCode, mirroredAxis } from './cadCode';
-import { scadStatements } from './scadStatements';
+import { scadStatements } from '../../electron/cad-kernel/scadStatements.mjs';
 
 const SCAD = `include <robotics.scad>
 w = 20; // width
@@ -23,8 +23,8 @@ describe('OpenSCAD statements', () => {
   it('splits top-level statements, keeping if/else, strings and comments whole', () => {
     expect(scadStatements(SCAD).map((s) => s.trim())).toEqual([
       'include <robotics.scad>',
-      'w = 20;',
-      '// width\nmodule lug(h) { cuboid([w, 8, h], rounding=1); }',
+      'w = 20; // width',
+      'module lug(h) { cuboid([w, 8, h], rounding=1); }',
       'function half(x) = x / 2;',
       'if (w > 10) { lug(10); } else { cube(1); }',
       'echo("a;b");',

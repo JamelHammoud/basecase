@@ -4,7 +4,10 @@ import { COMPONENT_BY_ID } from '../../data/components';
 import type { HardwareSpec } from '../../data/hardware';
 import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
 import { IconButton, useScrollFade, PlusIcon } from '../../design-system';
+import { isTunable } from '../../agent/cadTune';
+import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import { CommentsSection } from './CommentsSection';
+import { DimensionsSection } from './DimensionsSection';
 import { NotesSection } from './NotesSection';
 import { ImageSection, PartHeader, ProductSection, SizeSection } from './partSections';
 import { AppearanceSection, PositionSection, RotationSection, ShapeSection } from './partTransformSections';
@@ -29,6 +32,8 @@ const HardwareHoles: React.FC<{ hw: HardwareSpec; onAddClearanceHole: () => void
   />
 );
 
+const canTune = (part: ScenePart) => !IS_WEB_DEMO && isTunable(part);
+
 const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnnotation[] }> = (props) => {
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const { part, onUpdate, partComments } = props;
@@ -37,6 +42,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
   const comp = part.componentId ? COMPONENT_BY_ID[part.componentId] : undefined;
   const sized = !hw && !comp;
   const styled = !isImage && !comp;
+  const tunable = canTune(part);
 
   return (
     <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
@@ -47,6 +53,8 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
       {hw && <HardwareConfigurator spec={hw} onChange={props.onChangeHardware} />}
 
       {sized && <SizeSection part={part} onUpdate={onUpdate} isImage={isImage} />}
+
+      {tunable && <DimensionsSection key={part.id} part={part} code={part.cad!.code} onTune={props.onTuneDimensions} />}
 
       <PositionSection {...props} />
 

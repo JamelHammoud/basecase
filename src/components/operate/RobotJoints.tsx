@@ -13,6 +13,7 @@ export interface JointCalibrate {
 interface RobotJointsProps {
   rows: JointRowModel[];
   live: boolean;
+  measured?: ReadonlySet<string>;
   onRollBack?: (jointId: string) => void;
   calibrate?: JointCalibrate;
 }
@@ -23,7 +24,7 @@ function twinGap(twin: RobotTwin | null, row: JointRowModel, index: number) {
   return { gap: twin?.gaps[k] ?? null, lagging: Boolean(row.joint && twin?.lagging.has(row.joint.id)) };
 }
 
-export const RobotJoints: React.FC<RobotJointsProps> = ({ rows, live, onRollBack, calibrate }) => {
+export const RobotJoints: React.FC<RobotJointsProps> = ({ rows, live, measured, onRollBack, calibrate }) => {
   const [replay, setReplay] = useState<ReplayChoice | null>(null);
   const twin = useRobotTwin();
 
@@ -37,6 +38,7 @@ export const RobotJoints: React.FC<RobotJointsProps> = ({ rows, live, onRollBack
           key={row.busId}
           row={row}
           live={live}
+          measured={Boolean(row.joint && measured?.has(row.joint.id))}
           replay={replay}
           onReplay={setReplay}
           onRollBack={onRollBack}

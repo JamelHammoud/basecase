@@ -8,8 +8,22 @@ import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { calibrateConnectedRobot } from './calibrationActions';
 import type { CommandInputs } from './sceneCommands';
+import type { WorkspaceCore } from './useWorkspaceCore';
 
 const ic = 'w-4 h-4';
+
+const showOperateOf = (core: WorkspaceCore) => () => {
+  core.tool.setLeftTab('operate');
+  core.studio.setIsLeftOpen(true);
+};
+
+export function calibrateJoints(core: WorkspaceCore, only?: readonly string[]) {
+  const joints = core.project.joints ?? [];
+
+  showOperateOf(core)();
+
+  if (canCalibrate(joints)) void calibrateConnectedRobot(core.docs.updateProjectNow, joints, only);
+}
 
 function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): Command[] {
   const joints = core.project.joints ?? [];
@@ -36,10 +50,7 @@ export function operateCommands(inputs: CommandInputs): Command[] {
 
   if (IS_WEB_DEMO) return [];
 
-  const showOperate = () => {
-    core.tool.setLeftTab('operate');
-    core.studio.setIsLeftOpen(true);
-  };
+  const showOperate = showOperateOf(core);
   const joints = core.project.joints ?? [];
   const robot = sceneRobot(joints);
 
@@ -76,11 +87,7 @@ export function operateCommands(inputs: CommandInputs): Command[] {
             label: 'Calibrate Servos',
             icon: <OperateIcon className={ic} />,
             keywords: 'calibration fit servos emulated robot sim twin',
-            run: () => {
-              showOperate();
-
-              if (canCalibrate(joints)) void calibrateConnectedRobot(core.docs.updateProjectNow, joints);
-            },
+            run: () => calibrateJoints(core),
           },
         ]
       : []),

@@ -30,6 +30,9 @@ covers:
   - src/reality/benchSequence.ts
   - src/reality/history.ts
   - src/reality/calibratedInput.ts
+  - src/reality/measuredJoints.ts
+  - src/components/pose/JointRow.tsx
+  - src/utils/engineeringSimModel.ts
 ---
 
 Fit each emulated servo's model from an 18-second bench run, so the simulation, Cases and training move the way the servos do.
@@ -45,9 +48,11 @@ Calibration works on the emulated robot; no real servo has been logged with it. 
 
 Every joint moves slowly through a bench sequence at once, for about 18 seconds. Then each servo is fitted, one joint at a time.
 
-5. Read each joint's row under **Emulated servos**: its name and bus ID, its position and temperature, and under the name its verdict and the version now in use.
+5. Read each joint's row under **Emulated servos**: its name, bus ID, position and temperature. **Measured** beside the name means the simulation now runs on the fit. Under the name is the version in use, after any other verdict.
 
-![Shoulder 1 and Elbow 2, each Measured at v1 under its name, beside its position and temperature](/help/calibrate-an-emulated-robot/verdicts.png)
+The **Pose** tab marks the same joints **Measured**.
+
+![Shoulder 1 and Elbow 2 marked Measured at v1 in Operate, and Shoulder and Elbow marked Measured in the Pose tab](/help/calibrate-an-emulated-robot/verdicts.png)
 
 6. Click a joint's row to open its replay.
 
@@ -68,11 +73,11 @@ To see what an older version would do before rolling back, choose it in the same
 
 | Verdict | What it means |
 |---|---|
-| **Measured** | The fit predicts the servo better than its catalog model, and is now in use, shown as its version: v1, v2 and up |
+| **Measured** | The fit predicts the servo better than its catalog model, and is now in use, shown as its version: v1, v2 and up. The joint is marked **Measured** in Operate and the Pose tab |
 | **Consistent with preset** | The catalog model already matches the servo; nothing changes |
 | **Can’t tell** | The recording couldn't settle it; the joint keeps what it had |
 
-A joint with no version in use shows **Preset**. **Roll Back** steps back one measured version at a time, then to the preset.
+A joint with no version in use shows **Preset**. **Roll Back** steps back one measured version at a time, then to the preset. A joint rolled back to the preset loses its **Measured** mark.
 
 ## What the bench sequence does
 
@@ -86,4 +91,17 @@ Replays use the latest bench run, which Basecase keeps until it reloads. After a
 
 ## Where the fit is used
 
-The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos. **Export** ▸ **Robot Package** carries each joint's active calibration in `joint_map.json`; see [Export a robot package](/help/export-a-robot-package).
+The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos.
+
+**Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints that aren't **Measured**.
+
+To calibrate only those joints, the robot must be in **Test**, connected from this scene.
+
+1. In **Build** ▸ **Checks**, expand **Servo models**.
+2. Hover the note and click **Fix**.
+
+Basecase selects those servos and calibrates their joints alone.
+
+![Servo models after Elbow was rolled back, naming the Elbow servo with Fix on its note](/help/calibrate-an-emulated-robot/checks-rolled-back.png)
+
+**Export** ▸ **Robot Package** carries each joint's active calibration in `joint_map.json`; see [Export a robot package](/help/export-a-robot-package).

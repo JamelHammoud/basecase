@@ -13,6 +13,9 @@ const D2R = Math.PI / 180;
 
 export const TRACE_DT = 0.02;
 
+const REST_SLACK_MM = 3;
+const GOAL_AXES = ['right', 'forward', 'up', 'height'] as const;
+
 interface BaseFields {
   forward: number;
   left: number;
@@ -120,7 +123,20 @@ export class Poser {
     });
   }
 
-  keyQpos(pose: IntentPose, start: number[] = this.facts.rest): { q: number[]; miss: number } {
+  private restsFoot(part: string, goal: PartGoal): boolean {
+    const rest = this.feet.some((f) => f.part === part) ? this.facts.parts.find((p) => p.id === part) : undefined;
+
+    return !!rest && GOAL_AXES.every((a) => goal[a] === undefined || Math.abs(goal[a] - rest[a]) <= REST_SLACK_MM);
+  }
+
+  private movedParts(parts: Record<string, PartGoal> | undefined): Record<string, PartGoal> | undefined {
+    if (!parts) return parts;
+
+    return Object.fromEntries(Object.entries(parts).filter(([part, goal]) => !this.restsFoot(part, goal)));
+  }
+
+  keyQpos(key: IntentPose, start: number[] = this.facts.rest): { q: number[]; miss: number } {
+    const pose: IntentPose = { ...key, parts: this.movedParts(key.parts) };
     const base = baseOf(pose);
     const q = this.withBase([...this.facts.rest], base);
 

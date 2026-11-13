@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { convertFile } from './convertClient.mjs';
+import { openCadFile } from './openCadFile.mjs';
 import { decodeReply } from './reply.mjs';
 
 const REACH_MS = 300_000;
@@ -20,6 +21,17 @@ async function importFixture(converter, { spec, fixture, work }) {
     const result = await convertFile(converter, { id: spec.partId, url: spec.url, file, out, ext: fixture.ext });
 
     return { sha256: sha256(fs.readFileSync(out)), result };
+  } catch (err) {
+    return { error: String(err?.message ?? err) };
+  }
+}
+
+async function openFixture(converter, fixture) {
+  try {
+    const bytes = new Uint8Array(fs.readFileSync(fixture.file));
+    const { bodies } = await openCadFile(converter, { name: fixture.name, bytes });
+
+    return { bodies };
   } catch (err) {
     return { error: String(err?.message ?? err) };
   }
@@ -43,7 +55,7 @@ async function recovery(converter, { spec, kind, timeoutMs, work }) {
 
 export async function runCadImportSelfTest(converter, spec, onStage = () => {}) {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-cadimport-'));
-  const report = { imports: {}, reach: null, hang: null, memory: null };
+  const report = { imports: {}, opens: {}, reach: null, hang: null, memory: null };
   const stage = (running, run) => {
     onStage({ ...report, running });
 
@@ -53,6 +65,10 @@ export async function runCadImportSelfTest(converter, spec, onStage = () => {}) 
   try {
     for (const fixture of spec.imports) {
       report.imports[fixture.name] = await stage(fixture.name, () => importFixture(converter, { spec, fixture, work }));
+    }
+
+    for (const fixture of spec.opens ?? []) {
+      report.opens[fixture.name] = await stage(fixture.name, () => openFixture(converter, fixture));
     }
 
     report.reach = await stage('reach', () =>

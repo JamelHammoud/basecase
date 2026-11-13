@@ -9,12 +9,14 @@ import type {
   SavedSceneRecord,
   SavedSceneSummary,
 } from '../types/robotics';
+import { base64ToBytes, bytesToBase64 } from './base64';
 import { electron, get, post, postJson, postOrThrow, query, quietly } from './platform/transport';
 import type {
   AcpPromptPayload,
   AppMenuState,
   EvidenceFilePayload,
   LiveRun,
+  OpenedCad,
   ScenePreviewPayload,
   SimReadyFetched,
   SimReadyStatus,
@@ -148,6 +150,19 @@ const libraryBridge = {
   },
   importMakerCad: (payload: unknown): Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }> =>
     electron()?.importMakerCad(payload) ?? post('/sourced-import-cad', payload),
+  openCadFile: async (name: string, bytes: Uint8Array): Promise<OpenedCad> => {
+    const api = electron();
+
+    if (api) return api.openCadFile({ name, bytes });
+
+    const opened = await postOrThrow<{ bodies: OpenedCad['bodies']; data: string }>(
+      '/cad-open',
+      { name, data: bytesToBase64(bytes) },
+      (body, res) => (res.ok ? null : String(body.error ?? 'The converter failed.')),
+    );
+
+    return { bodies: opened.bodies, data: base64ToBytes(opened.data) };
+  },
 
   uploadImage: (payload: ImageUpload): Promise<ReferenceImageRecord> =>
     electron()?.uploadImage(payload) ?? post('/upload-image', payload),

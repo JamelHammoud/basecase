@@ -28,7 +28,7 @@ function checkedRotation(rotate = []) {
   return rotate.map(([axis, deg]) => [axis, deg]);
 }
 
-export function checkedConvertJob({ id, url, name, ext, member, rotate, bytes }) {
+export function checkedConvertJob({ id, url, name, ext, member, rotate, bytes, bodies }) {
   if (!(bytes instanceof Uint8Array) || bytes.length > MAX_SOURCE_BYTES) throw new Error('The CAD file is too big.');
 
   return {
@@ -39,6 +39,7 @@ export function checkedConvertJob({ id, url, name, ext, member, rotate, bytes })
     ext: shortText(ext ?? '', 'extension').toLowerCase(),
     member: member === undefined ? undefined : shortText(member, 'zip member'),
     rotate: checkedRotation(rotate),
+    bodies: bodies === true ? true : undefined,
     bytes,
   };
 }

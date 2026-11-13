@@ -1,4 +1,5 @@
 import { maskArea, maskBounds, thresholdMask, type Mask, type MaskBox } from './silhouetteProfile';
+import { base64ToBytes } from './base64';
 
 export interface VisionMasks {
   width: number;
@@ -14,17 +15,8 @@ const CUT_EDGE_SHARE = 0.05;
 const TRIM_SLACK = 1.3;
 const THIN_COLUMN = 0.3;
 
-function decodeBase64(text: string): Uint8Array {
-  const bin = atob(text);
-  const out = new Uint8Array(bin.length);
-
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-
-  return out;
-}
-
 export function decodeVisionMasks(found: VisionMasks): Mask[] {
-  return found.instances.map((m) => thresholdMask(decodeBase64(m), found.width, found.height));
+  return found.instances.map((m) => thresholdMask(base64ToBytes(m), found.width, found.height));
 }
 
 const boxArea = (b: MaskBox) => Math.max(0, b.x1 - b.x0 + 1) * Math.max(0, b.y1 - b.y0 + 1);

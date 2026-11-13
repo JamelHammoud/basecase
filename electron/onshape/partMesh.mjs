@@ -89,7 +89,10 @@ export function partMesh(opened, maxTriangles) {
   const bodies = bodyArrays(opened);
   const triangles = bodies.reduce((n, b) => n + b.indices.length / 3, 0);
   const kept = bodies.map((b) => simplified(b, maxTriangles / triangles)).filter((b) => b.indices.length > 0);
+
+  if (!kept.length) return null;
+
   const biggest = kept.reduce((a, b) => (b.indices.length > a.indices.length ? b : a), kept[0]);
 
-  return { glb: glbOf(kept), color: biggest?.color ?? null };
+  return { glb: glbOf(kept), color: biggest.color ?? null };
 }

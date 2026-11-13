@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { MeshoptSimplifier } from 'meshoptimizer';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeAccount, fakeArm, fakeOnshapeFetch, KEYS, ONSHAPE_LINK, signedIn } from '../../e2e/fakeOnshape.ts';
 import { fixedMateFindings } from '../../src/readiness/buildChecks.ts';
@@ -8,6 +9,7 @@ import { importRobot } from '../../src/utils/robotImport/importRobot.ts';
 import { OFF_SITE } from './client.mjs';
 import { NOT_AN_ASSEMBLY_LINK } from './link.mjs';
 import { OnshapeAccount } from './index.mjs';
+import { partMesh } from './partMesh.mjs';
 
 const BASIC = Buffer.from(`${KEYS.access}:${KEYS.secret}`).toString('base64');
 
@@ -90,6 +92,19 @@ describe('mates to joints', () => {
 
     expect(robot.parts.find((p) => p.name === 'Base').massG).toBe(500);
     expect(robot.parts.find((p) => p.name === 'Arm').massG).toBeUndefined();
+  });
+
+  it('sends no mesh for a part whose bodies simplify away', () => {
+    const positions = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
+    const indices = new Uint32Array(300).map((_, i) => i % 3);
+    const data = new Uint8Array(positions.byteLength + indices.byteLength);
+    const body = { name: 'Body', color: '#808080', center: [0, 0, 0], size: [1, 1, 0], vertices: 3, triangles: 100 };
+
+    data.set(new Uint8Array(positions.buffer));
+    data.set(new Uint8Array(indices.buffer), positions.byteLength);
+    vi.spyOn(MeshoptSimplifier, 'simplify').mockReturnValue([new Uint32Array(0), 0]);
+
+    expect(partMesh({ bodies: [body], data }, 12)).toBeNull();
   });
 });
 

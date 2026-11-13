@@ -87,11 +87,14 @@ async function partData(job, unique) {
   await pool(unique, async (part, i) => {
     const key = partKey(part.instance);
     const [step, mass] = await Promise.all([exportStep(job, part), massOf(job.client, part)]);
-    const { glb, color } = partMesh(await job.convertStep(step), budget);
-    const file = `parts/${i}.glb`;
+    const mesh = partMesh(await job.convertStep(step), budget);
 
-    files[file] = glb;
-    meshes.set(key, { file, color });
+    if (mesh) {
+      const file = `parts/${i}.glb`;
+
+      files[file] = mesh.glb;
+      meshes.set(key, { file, color: mesh.color });
+    }
 
     if (mass) masses.set(key, mass);
 

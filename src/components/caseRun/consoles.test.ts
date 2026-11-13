@@ -13,6 +13,7 @@ import type { Simulation } from '../../sim/useSimulation';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
 import { CaseRunArea } from './CaseRunArea';
+import { CodeOverlays } from './code/CodeOverlays';
 import type { PanelContext } from './panelContext';
 
 const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
@@ -47,6 +48,8 @@ function context(caseConsole: CaseConsole): PanelContext {
   return {
     bus,
     signals: caseConsole.signals ?? [],
+    scope: { declared: new Set(), probes: new Set(), inputs: new Set(caseConsole.input) },
+    inputs: caseConsole.input,
     cases: {
       active: kase,
       attempt: { phase: 'idle', elapsed: 0, start: async () => undefined, end: () => undefined },
@@ -138,6 +141,45 @@ describe('a running Case renders any console', () => {
     expect(game).toMatch(/data-signal="score">60</);
     expect(game).toContain('Reset');
     expect(midi).toContain(`data-lines="${arm.joints.length}"`);
+  });
+});
+
+describe('a running Case renders code panels', () => {
+  const source = '<canvas></canvas><script>basecase.drive({ v: [0, 0, 0] })</script>';
+  const coded = parseCase({
+    ...JSON.parse(JSON.stringify(kase)),
+    console: {
+      input: ['code', 'keys'],
+      panels: [
+        { id: 'stick', kind: 'code', title: 'Stick', height: 240, source },
+        { id: 'hud', kind: 'code', source },
+      ],
+      layout: {
+        areas: [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'bottom', height: 64 }] },
+          { size: 320, panels: ['stick'] },
+        ],
+      },
+    },
+  }).console!;
+
+  it('as a sandboxed frame in its area, and as an overlay that lets clicks through', () => {
+    const { after } = render(coded);
+    const overlays = renderToStaticMarkup(
+      createElement(CodeOverlays, {
+        overlays: consoleLayout(coded, { desktop: true }).overlays,
+        ctx: context(coded),
+      }),
+    );
+
+    expect(panelsIn(after)).toEqual(['stick:code']);
+    expect(after).toContain('sandbox="allow-scripts"');
+    expect(after).not.toContain('allow-same-origin');
+    expect(after).toContain('height:240px');
+    expect(after).toContain('pointer-events:auto');
+    expect(overlays).toContain('data-panel="hud"');
+    expect(overlays).toMatch(/style="bottom:12px;left:12px;right:12px;height:64px"/);
+    expect(overlays).toContain('pointer-events:none');
   });
 });
 

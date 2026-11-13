@@ -26,6 +26,7 @@ export * from './confirmStore';
 export * from './Badge';
 export * from './SectionHeader';
 export * from './BrowseRow';
+export * from './DisclosureRow';
 export * from './Toast';
 export * from './EmptyState';
 export * from './MetaLine';

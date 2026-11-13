@@ -53,6 +53,8 @@ app.setName('Basecase');
 
 if (DEV_MODE) app.setAboutPanelOptions({ applicationName: APP_DISPLAY_NAME });
 
+app.commandLine.appendSwitch('enable-features', 'IsolateSandboxedIframes');
+
 if (process.env.BASECASE_USER_DATA && process.env.STUDIO_AGENT_OFFLINE === '1')
   app.commandLine.appendSwitch('use-mock-keychain');
 

@@ -63,6 +63,9 @@ function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams, carriedG }:
   return Math.abs(tGrf + tDistal) / 1000;
 }
 
+const slowest = (rpms: Array<number | undefined>) =>
+  rpms.every((rpm) => rpm !== undefined) ? Math.min(...(rpms as number[])) : undefined;
+
 export function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): Rating | undefined {
   const specs = jointServos(j, ctx.byPart);
 
@@ -70,16 +73,18 @@ export function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): R
 
   const total: Rating = { stallNm: 0, ratedNm: 0, ratedEstimated: false, volts: volts ?? 0 };
 
-  for (const act of specs) {
-    const r = ratingAt(act, volts);
+  const ratings = specs.map((act) => ratingAt(act, volts));
 
+  for (const r of ratings) {
     total.stallNm += r.stallNm;
     total.ratedNm += r.ratedNm;
     total.ratedEstimated ||= r.ratedEstimated;
     total.volts = r.volts;
   }
 
-  return total;
+  const rpm = slowest(ratings.map((r) => r.rpm));
+
+  return rpm === undefined ? total : { ...total, rpm };
 }
 
 function publishedStatus(loadNm: number, effortNm: number): CheckRow['status'] {
@@ -129,6 +134,14 @@ function carriedGrams(ctx: CheckContext, j: RobotJoint, env: LoadEnv): number {
   return robotG * (env.crouch.shares.get(j.id) ?? 1);
 }
 
+const ratingFields = (j: RobotJoint, rating: Rating | undefined) => ({
+  stallNm: rating?.stallNm ?? j.effortNm,
+  ratedNm: rating?.ratedNm,
+  ratedEstimated: rating?.ratedEstimated,
+  volts: rating?.volts,
+  noLoadRpm: rating?.rpm,
+});
+
 export function jointLoad(ctx: CheckContext, j: RobotJoint, env: LoadEnv): JointLoad {
   const a = norm(j.axis);
   const down = downstreamOf(j, ctx.joints);
@@ -155,10 +168,7 @@ export function jointLoad(ctx: CheckContext, j: RobotJoint, env: LoadEnv): Joint
     leverMm: lever,
     loadNm: verdict.loadNm,
     kind: verdict.kind,
-    stallNm: rating?.stallNm ?? j.effortNm,
-    ratedNm: rating?.ratedNm,
-    ratedEstimated: rating?.ratedEstimated,
-    volts: rating?.volts,
+    ...ratingFields(j, rating),
     stallShare: verdict.stallShare,
     heatShare: 'heatShare' in verdict ? verdict.heatShare : undefined,
     simRmsNm: verdict.kind === 'stance' ? simRms : undefined,

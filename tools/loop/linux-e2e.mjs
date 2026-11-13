@@ -8,6 +8,10 @@ const IMAGE = 'node:26.13.0-bookworm';
 const ROOT = path.resolve(import.meta.dirname, '..', '..');
 const SETUP_TIMEOUT = 40 * 60 * 1000;
 const RUN_TIMEOUT = 30 * 60 * 1000;
+const BUILDS = [
+  ['vite', 'build'],
+  ['vite', 'build', '--mode', 'web', '--outDir', 'dist-web'],
+];
 const USAGE = 'node tools/loop/linux-e2e.mjs <e2e file> [--runs N] [--cpus C] [--ref <git ref>]';
 
 function options() {
@@ -43,7 +47,12 @@ function openWorktree(ref, state) {
 
 function startContainer(state, cpus) {
   const name = `bc-e2e-${process.pid}`;
-  const env = ['ELECTRON_SKIP_BINARY_DOWNLOAD=1', 'PLAYWRIGHT_BROWSERS_PATH=/opt/pw', 'BASECASE_QUARANTINE=off'];
+  const env = [
+    'CI=true',
+    'ELECTRON_SKIP_BINARY_DOWNLOAD=1',
+    'PLAYWRIGHT_BROWSERS_PATH=/opt/pw',
+    'BASECASE_QUARANTINE=off',
+  ];
 
   state.name = name;
   docker([
@@ -73,6 +82,9 @@ function setUp(name) {
   docker(['exec', name, 'npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund'], { timeout: SETUP_TIMEOUT });
   console.log('Installing Google Chrome in the container…');
   docker(['exec', name, 'npx', 'playwright-core', 'install', '--with-deps', 'chrome'], { timeout: SETUP_TIMEOUT });
+  console.log('Building the app and web bundles…');
+
+  for (const build of BUILDS) docker(['exec', name, 'npx', ...build], { timeout: SETUP_TIMEOUT });
 }
 
 function failedTests(dir, results) {

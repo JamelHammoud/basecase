@@ -51,10 +51,10 @@ Sending to Bambu (Studio, Connect and LAN), Moonraker, PrusaLink and OctoPrint p
 
 - **Link:** https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608
 - **Checked:** 2026-11-13
-- **Basecase today:** sends G-code to Prusa printers through PrusaLink on the local network, pulled from the sliced 3MF ([Printing](../guide/printing.md)).
+- **Basecase today:** sends G-code, pulled from the sliced 3MF, to PrusaLink on the local network with the printer's API key, and reads status, pauses, resumes and cancels (`electron/print/connectors/prusalink.mjs`, [Printing](../guide/printing.md)). The printer catalog has two Prusa printers, the MINI and the MK3S (`src/data/printerCatalog.ts`).
 - **Better than Basecase:** Prusa Connect is a cloud service, free for Prusa owners with 1 GB of storage, that works "from anywhere" through the web, PrusaSlicer or the Prusa app, and tracks every printer in a farm with production statistics; PrusaLink works only on the local network. CORE One, MK4/S, MK3.9/S, MK3.5/S and XL have both built in ([Prusa](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)).
 - **Worse than Basecase:** the page says PrusaSlicer reaches Connect but doesn't describe an upload API for other apps, and xBuddy firmware older than 6.4.0 can't connect ([Prusa](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)). Basecase lays out and slices its own plates and sends the G-code to PrusaLink from Print Plate N in the Print panel, with no cloud account ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate once Prusa documents uploads to Connect, so a print reaches a printer that isn't on the same network; until then, PrusaLink covers one that is.
+- **Basecase should:** integrate once Prusa documents uploads to Connect, so a print reaches a printer that isn't on the same network; until then, PrusaLink covers one that is. First add the Prusa printers with PrusaLink built in to the catalog, from OrcaSlicer's profiles ([OrcaSlicer](competitors.md#orcaslicer)).
 
 ### To check
 

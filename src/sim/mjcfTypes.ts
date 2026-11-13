@@ -44,6 +44,7 @@ export interface SimRobot {
   floating: boolean;
   morphology: RobotMorphology;
   joints: string[];
+  fingerprint: string;
 }
 
 export interface SimModel {

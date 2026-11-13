@@ -21,6 +21,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
+      'dist-web/**',
       'site/dist/**',
       'release/**',
       'build/**',
@@ -89,6 +90,11 @@ export default tseslint.config(
   {
     files: ['src/**/*.{ts,tsx}'],
     rules: { ...reactHooks.configs['recommended-latest'].rules },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}', 'electron/app-menu.mjs'],
+    ignores: ['src/**/*.test.{ts,tsx}'],
+    rules: { 'basecase/copy': 'error' },
   },
   {
     files: ['**/*.cjs'],

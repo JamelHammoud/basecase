@@ -91,12 +91,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         )}
         {sim.model && <ModelSection model={sim.model} version={sim.version} />}
         {policies.length > 0 && (
-          <PoliciesSection
-            policies={policies}
-            onChoose={(id) => void choose(`policy:${id}`)}
-            onDelete={onDeletePolicy}
-            onMenu={openPolicyMenu}
-          />
+          <PoliciesSection policies={policies} onChoose={(id) => void choose(`policy:${id}`)} onMenu={openPolicyMenu} />
         )}
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}

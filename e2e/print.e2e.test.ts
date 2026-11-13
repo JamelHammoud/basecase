@@ -45,6 +45,9 @@ describe('print layout', () => {
     await app.page.keyboard.press('Meta+p');
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
     await expect.poll(() => app.page.locator(visible('canvas')).count()).toBeGreaterThan(0);
+    await expect.poll(() => app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);
+    expect(await app.page.locator(visible('h3'), { hasText: /^Plates$/ }).count()).toBe(0);
+    expect(await app.page.getByRole('button', { name: 'Close plates' }).count()).toBe(0);
 
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);

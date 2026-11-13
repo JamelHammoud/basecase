@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ScenePart } from '../../types/robotics';
-import { AlignBar, StripButton, StripGroup } from '../AlignControls';
+import { AlignBar, StripButton, StripGroup } from '../AlignBar';
 import { selectionBounds, type Axis } from '../../utils/selection';
 import {
   ColorField,

@@ -1,8 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { openPulls } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
+
+export const schedule = {
+  slots: 1,
+  everySeconds: 24 * 60 * 60,
+  does: 'Moves the agent adapters to their latest releases',
+};
 
 const ADAPTERS = ['@agentclientprotocol/claude-agent-acp', '@agentclientprotocol/codex-acp', '@google/gemini-cli'];
 
@@ -13,6 +20,14 @@ const versions = (dir) => {
 };
 
 export default function update({ log }) {
+  const open = openPulls().find((pull) => pull.headRefName.startsWith('loop/update/'));
+
+  if (open) {
+    log(`#${open.number} is already open`);
+
+    return;
+  }
+
   const worktree = openBranch('update', 'agent-adapters');
 
   try {

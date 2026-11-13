@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ScenePart } from '../../types/robotics';
 import type { ComponentInfo } from '../../data/components';
-import { ComponentLinks, ModelSource, SizeLine, SpecList, SpecText } from '../PartDetails';
+import { ComponentLinks, DetailBlock, ModelOrigin, SpecRows } from '../PartDetails';
 import {
   IconButton,
   MetaLine,
@@ -156,17 +156,9 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
 export const ProductSection: React.FC<{ part: ScenePart; comp: ComponentInfo }> = ({ part, comp }) => (
   <Section title="Product" collapsible defaultOpen={false}>
     <MetaLine items={[comp.manufacturer, comp.mpn]} className="text-[12.5px] text-white/50 -mt-1" />
-    <SpecList
-      rows={[
-        ['Size', <SizeLine key="s" w={part.dimensions.width} h={part.dimensions.height} d={part.dimensions.depth} />],
-        ...comp.specs.map(([label, value]): [string, React.ReactNode] => [
-          label,
-          <SpecText key={label} value={value} />,
-        ]),
-      ]}
-    />
-    <p className="text-[12.5px] text-white/55 leading-relaxed">{comp.mounting}</p>
-    <ModelSource c={comp} />
+    <SpecRows c={comp} d={part.dimensions} />
+    <DetailBlock label="Mounting">{comp.mounting}</DetailBlock>
+    <ModelOrigin c={comp} />
     <ComponentLinks c={comp} />
   </Section>
 );

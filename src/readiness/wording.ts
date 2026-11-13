@@ -73,8 +73,8 @@ export const RULES = {
   unprintable: printing('Clear Parts', 'This part is meant to be clear, which a printer can’t make.'),
   'stand-in': sourcing('Placeholders', 'This is a placeholder, not a real part.'),
   'no-source': sourcing('Parts Without a Source', 'Nothing says where to get this part.'),
-  unreferenced: sourcing('Unconfirmed Parts', 'Nothing confirms this part yet: its link or numbers aren’t checked.'),
-  'no-price': sourcing('Missing Prices', 'These parts have no price yet.'),
+  unreferenced: sourcing('Unconfirmed Parts', 'Its link and numbers aren’t checked.'),
+  'no-price': sourcing('Missing Prices', 'These parts have no price.'),
   unfinished: assembly('Unfinished Checks', 'Some checks didn’t finish, so this answer isn’t complete.'),
   hidden: fit(FIT, 'Hidden Parts', 'These hidden parts weren’t checked.'),
 } satisfies Record<string, Rule>;

@@ -52,10 +52,12 @@ export function TitleBarActions({
         </div>
         <ExportMenu
           canExportStl={exports.canExportStl}
+          canExportRobot={exports.canExportRobot}
           onExportImage={exports.exportImage}
           onExportStl={exports.exportStl}
           onExport3mf={() => void exports.export3mf()}
           onExportScene={() => void exports.exportScene()}
+          onExportRobot={() => void exports.exportRobotPackage()}
           onAirDrop={() => void exports.airDrop()}
           onCopyMarkdown={exports.copyBrief}
         />

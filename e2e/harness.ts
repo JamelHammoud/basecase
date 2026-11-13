@@ -100,7 +100,7 @@ export async function openApp(lists: Record<string, unknown> = {}): Promise<App>
 export const partCount = (page: Page) =>
   page.evaluate(() => (window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts().length);
 
-const shown = (selector: string) => `${selector}:not([inert] *):visible`;
+export const shown = (selector: string) => `${selector}:not([inert] *):visible`;
 
 export type PlayTabName = 'Cases' | 'Routines' | 'Operate';
 

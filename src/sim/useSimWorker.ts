@@ -19,7 +19,6 @@ export function useSimWorker(
   const [playing, setPlaying] = useState(false);
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [version, setVersion] = useState<string | null>(null);
   const ui = useRef<{ at: number; stats: SimStats | null }>({ at: 0, stats: null });
   const frameHookRef = useRef<(() => void) | null>(null);
   const poseListeners = usePoseListeners();
@@ -35,7 +34,6 @@ export function useSimWorker(
       const msg = ev.data;
 
       if (msg.type === 'ready') {
-        setVersion(msg.version);
         setStatus('ready');
         loadWaiter.current?.resolve();
         loadWaiter.current = null;
@@ -149,7 +147,6 @@ export function useSimWorker(
     setStats,
     error,
     setError,
-    version,
     send,
     worker,
     load,

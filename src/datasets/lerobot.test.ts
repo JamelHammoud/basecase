@@ -9,7 +9,7 @@ import { buildMjcf } from '../sim/mjcf';
 import { Recorder, RECORD_HZ, type Recording } from '../sim/recorder';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
-import { zipDataset } from './zipDataset';
+import { zipFolder } from '../utils/zipFolder';
 import { canExport, columnStats, DATASET_FPS, episodeData, robotJoints, sampledFrames } from './episodes';
 import { dataPath, lerobotFiles, TASK_ANNOTATION, videoPath, type DatasetEpisode } from './lerobot';
 
@@ -133,7 +133,7 @@ describe('LeRobot datasets from tries', () => {
   });
 
   it('zips under one folder, keeping media uncompressed', () => {
-    const zip = zipDataset('touch-dataset', { 'meta/info.json': new Uint8Array([123, 125]), 'a.mp4': fakeVideo });
+    const zip = zipFolder('touch-dataset', { 'meta/info.json': new Uint8Array([123, 125]), 'a.mp4': fakeVideo });
     const back = unzipSync(zip);
 
     expect(Object.keys(back).sort()).toEqual(['touch-dataset/a.mp4', 'touch-dataset/meta/info.json']);

@@ -23,6 +23,7 @@ covers:
   - src/components/operate/RobotHeader.tsx
   - src/components/operate/RobotJoints.tsx
   - src/components/operate/RobotMessages.tsx
+  - src/robot/intentMirror.ts
   - src/components/operate/JointRow.tsx
   - src/robot/jointRows.ts
   - src/robot/robotState.ts
@@ -90,6 +91,8 @@ When a fault stops the robot, the message names the servo or joint, such as:
 | "The servo 2 joint is outside its calibrated range, so the motors stay off. Move it back by hand, then start again." | Every motor |
 | "The app stopped talking to the robot, so the robot is holding still." | The robot holds |
 | "Commands stopped arriving, so the robot is holding still." | The robot holds |
+
+On an arm, a fault that stops the robot has **Replay in Sim** under it, which plays the 20 seconds before it in the simulation: [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation). From a fault until you climb the **Ladder** again, the simulation sends the robot no commands.
 
 When the daemon itself exits without being asked, **Daemon lost** shows "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
 

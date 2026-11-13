@@ -73,7 +73,7 @@ export const Slider: React.FC<SliderProps> = ({
     );
 
   return (
-    <div className={`grid grid-cols-[64px_1fr_48px] items-center gap-3 h-8 ${className}`}>
+    <div className={`grid grid-cols-[64px_1fr_48px] items-center gap-3 h-[28px] ${className}`}>
       {labelText}
       {track}
       {valueText}

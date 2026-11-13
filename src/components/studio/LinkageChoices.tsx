@@ -19,7 +19,7 @@ export const LinkageChoices: React.FC<LinkageChoicesProps> = ({ solutions, highl
         onPointerEnter={() => onHighlight(i)}
         onFocus={() => onHighlight(i)}
         onClick={() => onPick(s)}
-        className="h-8 px-2.5 flex items-center gap-2.5 rounded-lg text-left text-[13px] tabular text-white/90 cursor-default hover:bg-white/[0.05] active:scale-[0.99] transition-[background-color,transform] duration-150"
+        className="h-[32px] px-2.5 flex items-center gap-2.5 rounded-lg text-left text-[13px] tabular text-white/90 cursor-default hover:bg-white/[0.05] active:scale-[0.99] transition-[background-color,transform] duration-150"
       >
         <span
           className="w-4 h-0.5 rounded-full shrink-0"

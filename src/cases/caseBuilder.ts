@@ -128,7 +128,7 @@ export function caseName(goal: GoalKind, world: WorldKind, values?: GoalValues, 
   return [title ?? kind?.name ?? 'Case', suffix].filter(Boolean).join(' ');
 }
 
-const slug = (name: string) =>
+export const caseSlug = (name: string) =>
   name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -221,7 +221,7 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
 
   return {
     formatVersion: CASE_FORMAT_VERSION,
-    id: slug(name),
+    id: caseSlug(name),
     name,
     brief: spec.brief?.trim() || plan.brief,
     ...(plan.slots
@@ -256,8 +256,12 @@ export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
 
   if (problem) return { ok: false, problem };
 
+  return builtCase(caseJson({ spec, goal, world, values, plan, scenery, robot }));
+}
+
+export function builtCase(json: unknown): BuiltCase {
   try {
-    return { ok: true, kase: parseCase(caseJson({ spec, goal, world, values, plan, scenery, robot })) };
+    return { ok: true, kase: parseCase(json) };
   } catch (e) {
     if (e instanceof CaseFileError) return { ok: false, problem: e.message };
 

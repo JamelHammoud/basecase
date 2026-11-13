@@ -127,7 +127,7 @@ const SheetFields: React.FC<{
         type="button"
         aria-expanded={showListing}
         onClick={() => setShowListing((v) => !v)}
-        className="flex items-center gap-1 h-7 -ml-1 px-1 rounded-md text-[13px] text-white/60 hover:text-white/90 cursor-default"
+        className="flex items-center gap-1 h-[32px] -ml-1 px-1 rounded-md text-[13px] text-white/60 hover:text-white/90 cursor-default"
       >
         Listing
         <ChevronDownIcon
@@ -154,24 +154,18 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
       subtitle={<MetaLine items={[`Need ${needed(line)}`, line.detail]} />}
       headerActions={<ListingLink line={line} />}
       maxWidth="max-w-[440px]"
-      footer={
+      action={{ label: 'Save', form: formId, disabled: !valid }}
+      footerStart={
         <>
           {line.record && (
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => confirmAction({ title: `Delete price for ${line.name}?`, onConfirm: () => onSave(null) })}
             >
               Delete Price
             </Button>
           )}
-          <div className="flex-1 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>
-          <Button variant="secondary" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" form={formId} variant="primary" size="sm" disabled={!valid}>
-            Save
-          </Button>
+          <div className="flex-1 min-w-0 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>
         </>
       }
     >

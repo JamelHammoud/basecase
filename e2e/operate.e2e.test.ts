@@ -12,6 +12,8 @@ const ARM_JOINTS = ARM.project.joints.map((joint) => joint.id);
 
 interface FakeLink {
   factory: boolean;
+  intents: number[][];
+  plantStall: (id: number) => boolean;
   policy: { kind: string; id?: string; hash?: string }[];
   plugIn: () => boolean;
   robotDisconnect: () => Promise<unknown>;
@@ -403,4 +405,58 @@ describe('Operate policy', () => {
     expect(await mode()).toBe('test');
     await app.page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.robotDisconnect());
   }, 60000);
+});
+
+describe('Operate replay', () => {
+  interface Replayed {
+    activeCase: string | null;
+    tries: unknown[];
+    joints: Record<string, { target: number; position: number }>;
+  }
+
+  const link = () => app.page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.intents.length);
+  const replayed = () =>
+    app.page.evaluate(() => (window as unknown as { __studio: { simState: () => Replayed } }).__studio.simState());
+
+  it.skipIf(process.platform === 'win32')(
+    'replays a run whose elbow stalled as a Case in the sim, with the elbow selected',
+    async () => {
+      const { page } = app;
+
+      await loadRecord(ARM);
+      await climbToTest();
+      await page.locator(visible('[role=tab]'), { hasText: 'Simulate' }).first().click();
+      await button(/^Drive$/).click();
+      await expect.poll(simDrive, { timeout: 60000 }).toBe('on');
+      await page.mouse.click(720, 450);
+      await page.keyboard.down('w');
+      await expect.poll(link, { timeout: 20000 }).toBeGreaterThan(20);
+      await page.keyboard.up('w');
+
+      const moved = await link();
+
+      await expect.poll(link, { timeout: 20000 }).toBeGreaterThan(moved + 10);
+      expect(await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.plantStall(2))).toBe(true);
+
+      const sent = await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.intents.at(-1)!);
+
+      await openPlayTab(page, 'Operate');
+      await page.locator(visible('[data-robot-message="fault"] button'), { hasText: 'Replay in Sim' }).first().click();
+      await expect.poll(async () => (await replayed()).activeCase).toMatch(/^fault-at-/);
+      expect(await page.evaluate(() => (window as unknown as StudioWindow).__studio.selection())).toEqual(['fore']);
+
+      const gap = async () => {
+        const { joints } = await replayed();
+
+        return Math.max(...ARM_JOINTS.map((id, k) => Math.abs(((joints[id]?.target ?? 0) * Math.PI) / 180 - sent[k])));
+      };
+
+      await expect.poll(gap, { timeout: 60000, interval: 100 }).toBeLessThan(0.02);
+      await expect.poll(async () => (await replayed()).tries.length, { timeout: 60000 }).toBe(1);
+      expect(await page.locator(visible('[data-testid="peak-row"]')).count()).toBeGreaterThan(0);
+      expect(app.errors).toEqual([]);
+      await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.robotDisconnect());
+    },
+    150000,
+  );
 });

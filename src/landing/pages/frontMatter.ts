@@ -7,16 +7,18 @@ export interface FrontMatter {
 
 const FENCE = '---';
 const KEY_LINE = /^([a-z][a-z0-9_]*):\s*(.*)$/i;
-const LIST_ITEM = /^\s+-\s+(.+)$/;
+const LIST_ITEM = /^\s*-\s+(.+)$/;
 
 const unquote = (value: string) => value.replace(/^(['"])(.*)\1$/, '$2');
 
 function scalar(raw: string): FrontMatterValue {
-  if (raw === 'true') return true;
+  const value = unquote(raw);
 
-  if (raw === 'false') return false;
+  if (value === 'true') return true;
 
-  return unquote(raw);
+  if (value === 'false') return false;
+
+  return value;
 }
 
 function parseLines(lines: string[], path: string): Record<string, FrontMatterValue> {

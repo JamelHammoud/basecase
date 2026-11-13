@@ -4,15 +4,9 @@ import { PageTitle } from './PageTitle';
 import type { Entry } from './siteContent';
 import { SiteMarkdown } from './SiteMarkdown';
 
-const RSS_LINK = (
-  <a href="/changelog/rss.xml" className="text-[15px] font-medium text-white/60 hover:text-white/90 transition-colors">
-    RSS
-  </a>
-);
-
 export const ChangelogPage: React.FC<{ entries: Entry[] }> = ({ entries }) => (
   <>
-    <PageTitle action={RSS_LINK}>Changelog</PageTitle>
+    <PageTitle>Changelog</PageTitle>
     <ol className="mt-[40px] list-none m-0 p-0 flex flex-col">
       {entries.map((entry) => (
         <li

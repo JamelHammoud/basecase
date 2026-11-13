@@ -1,5 +1,5 @@
 ---
-title: Share Scenes as Files
+title: Share scenes as files
 date: 2026-11-01
 version: 0.1.1
 ---

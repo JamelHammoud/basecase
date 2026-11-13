@@ -1,5 +1,5 @@
 ---
-title: Queue Messages for the Agent
+title: Queue messages for the agent
 date: 2026-11-02
 version: 0.1.2
 ---

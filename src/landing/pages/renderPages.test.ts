@@ -96,6 +96,10 @@ describe('site pages', () => {
       'src/workspace/meshImport.ts',
       'src/workspace/usePartCreation.ts',
     ]);
+    expect(parseFrontMatter(post('covers:\n- src/x.ts\ndraft: "true"'), 'x.md').data).toEqual({
+      covers: ['src/x.ts'],
+      draft: true,
+    });
     expect(() => readContent({ '/site/content/blog/no-title.md': post('date: 2026-11-01') }, NOW)).toThrow(/title/);
   });
 

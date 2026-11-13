@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/dimensioned-sketches/cover.png
 ---
 
-Sketch now takes typed lengths and keeps constraints, opens on a part's face, and stays editable after you extrude it, so a sketched bracket comes out at the size you meant.
+Sketch now takes typed lengths, keeps constraints and opens on a part's face. It stays editable after you extrude it, so a sketched bracket comes out at the size you meant.
 
 ## On a face
 
@@ -20,13 +20,15 @@ Pick Line, Rectangle, Circle or Arc and click to start. Type a number and it bec
 
 ## Constraints
 
-As you draw, points snap onto points and lines snap level or upright, the way Figma and Shapr3D do it, and each snap is kept as a constraint. Small glyphs beside the lines show them. Select two lines and a strip offers parallel, perpendicular and equal; a line and a circle offer tangent. Dimensions sit beside their lines as plain numbers. An edit that conflicts with the rest is refused and the sketch keeps its last shape.
+As you draw, points snap onto points and lines snap level or upright, the way Figma and Shapr3D do it. Each snap is kept as a constraint, shown as a small glyph beside its line. Select two lines and a strip offers parallel, perpendicular and equal; a line and a circle offer tangent. Dimensions sit beside their lines as plain numbers. An edit that conflicts with the rest is refused and the sketch keeps its last shape.
 
 ![A dimensioned rectangle with its constraint glyphs](/changelog/dimensioned-sketches/dimensioned.png)
 
 ## Editable afterwards
 
-The sketch is saved on the part it made. Double-click the part to reopen it, click a dimension and type a new one: the part re-extrudes in place, even if you've moved it, and ⌘Z undoes each change in one step.
+The sketch is saved on the part it made. Double-click the part to reopen it, click a dimension and type a new one. The part re-extrudes in place, even if you've moved it, and ⌘Z undoes each change in one step.
+
+Steps are in [Sketch a part to exact dimensions](/help/sketch-a-part-to-exact-dimensions).
 
 ## What it doesn't do yet
 

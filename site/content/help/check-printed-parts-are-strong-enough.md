@@ -1,6 +1,8 @@
 ---
 title: Check printed parts are strong enough
 date: 2026-11-13
+collection: engineer
+type: task
 covers:
   - src/utils/engineeringStrength.ts
   - src/strength/solve.ts

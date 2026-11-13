@@ -1,6 +1,8 @@
 ---
 title: Sketch a part to exact dimensions
 date: 2026-11-13
+collection: design
+type: task
 covers:
   - src/components/studio/SketchPanel.tsx
   - src/components/studio/SketchCanvas.tsx

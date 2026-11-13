@@ -26,12 +26,8 @@ const asPreset = (r: ImportedRobot): RobotPreset => ({
   url: r.url,
 });
 
-const confirmForget = (r: ImportedRobot) =>
-  confirmAction({
-    title: `Remove ${r.name} from Imported?`,
-    confirmLabel: 'Remove',
-    onConfirm: () => forgetImportedRobot(r.url),
-  });
+const confirmDelete = (r: ImportedRobot) =>
+  confirmAction({ title: `Delete ${r.name}?`, onConfirm: () => forgetImportedRobot(r.url) });
 
 export const RobotsPanel: React.FC<{
   onInsert: (preset: RobotPreset) => Promise<unknown> | void;
@@ -81,7 +77,7 @@ export const RobotsPanel: React.FC<{
       entries: [
         { label: 'Insert', onSelect: () => void insert(r.url, asPreset(r)) },
         { divider: true },
-        { label: 'Remove from Imported', tone: 'danger', onSelect: () => confirmForget(r) },
+        { label: 'Delete', tone: 'danger', onSelect: () => confirmDelete(r) },
       ],
     });
   };

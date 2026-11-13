@@ -277,6 +277,10 @@ describe('Operate calibration', () => {
     );
     await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
 
+    const verdict = await row(jointId).getAttribute('data-verdict');
+
+    expect(await row(jointId).getAttribute('data-measured')).toBe(String(verdict === 'measured'));
+
     const again = await measuredRows();
 
     expect(again.filter((id) => id !== jointId)).toEqual(rest);

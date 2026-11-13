@@ -55,7 +55,7 @@ function Reading({ reading, gap, showTemp }: { reading: JointStatus | null; gap:
   );
 }
 
-function Calibration({ history }: { history: CalibrationHistory }) {
+function Calibration({ history, measured }: { history: CalibrationHistory; measured: boolean }) {
   const verdict = history.versions.at(-1)?.verdict;
   const version = versionLabel(history, verdict);
 
@@ -63,7 +63,7 @@ function Calibration({ history }: { history: CalibrationHistory }) {
     <MetaLine
       className="text-[12px] text-white/50"
       items={[
-        verdict !== 'measured' && verdict && VERDICTS[verdict],
+        !(measured && verdict === 'measured') && verdict && VERDICTS[verdict],
         version && <span className="tabular-nums text-white/90">{version}</span>,
       ]}
     />
@@ -94,7 +94,7 @@ function JointLabel({ row: { busId, joint, history }, measured }: { row: JointRo
         <span className="shrink-0 tabular-nums text-white/50">{busId}</span>
         {measured && <MeasuredBadge />}
       </span>
-      {history && <Calibration history={history} />}
+      {history && <Calibration history={history} measured={measured} />}
     </span>
   );
 }

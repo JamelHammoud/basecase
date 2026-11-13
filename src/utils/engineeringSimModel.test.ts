@@ -227,7 +227,7 @@ describe('Servo models', () => {
     expect(notes).toHaveLength(1);
     expect(notes[0]).toMatchObject({
       level: 'note',
-      text: 'These servos aren’t calibrated on this robot, so the simulation uses their catalog model.',
+      text: 'These servos aren’t calibrated on this robot.',
     });
     expect(notes[0].ids).toHaveLength(6);
   });

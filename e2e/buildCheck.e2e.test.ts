@@ -216,7 +216,7 @@ describe('Checks', () => {
     await models.click();
     await expect
       .poll(() => checks().innerText(), { timeout: 45000 })
-      .toContain('These servos aren’t calibrated on this robot, so the simulation uses their catalog model.');
+      .toContain('These servos aren’t calibrated on this robot.');
     expect(await checks().innerText()).toContain('MG996R on Arm1');
     expect(app.errors).toEqual([]);
   }, 90000);

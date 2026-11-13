@@ -93,7 +93,7 @@ Replays use the latest bench run, which Basecase keeps until it reloads. After a
 
 The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos.
 
-**Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints still on the catalog model.
+**Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints that aren't **Measured**.
 
 To calibrate only those joints, the robot must be in **Test**, connected from this scene.
 

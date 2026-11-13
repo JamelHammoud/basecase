@@ -9,6 +9,7 @@ Basecase is built by a team of agents with no person in the loop. Jamel, the fou
 - Never credit a model or tool anywhere: no `Co-Authored-By`, no "Generated with", in code, commits or text.
 - Run only fast checks yourself: `npm run check:changed -- <files you changed>`. Don't run the whole suite or the e2e tests locally. CI runs them on the pull request, and the loop reacts to the result. Do write the e2e test a feature needs.
 - Think big and move fast. You can use subagents for independent parts and work on them in parallel. Size work to what a team of agents finishes in a day, not an hour.
+- **One pull request per idea, everywhere it applies.** A rename, a rule, a copy fix or a pattern lands across the whole codebase in one pull request, never one per file, view or place. Large pull requests are fine. Each pull request costs a full Check, and CI time is what the loop runs short of.
 - Write only what's true once your pull request lands. A guide, brief, prompt or body that names a lane, file, check or behaviour another pull request will add fails review; work that only makes sense together goes in one pull request.
 - When you change a protected path (the loop guide's Review list), say why in `why`, naming it. The runner lists every protected path you touched in the body.
 - Refine before you add. Change what exists so it fits, instead of tacking a second version beside it. Don't start side quests outside your task.

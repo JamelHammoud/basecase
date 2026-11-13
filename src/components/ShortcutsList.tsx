@@ -72,7 +72,6 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
     rows: [
       ['Command menu', ['⌘K']],
       ['Find parts', ['⌘F']],
-      ['Save scene', ['⌘S']],
       ['Show or hide sidebar', ['⌘B']],
       ['Show or hide inspector', ['⌘I']],
       ['Show or hide reference images', ['⇧I']],

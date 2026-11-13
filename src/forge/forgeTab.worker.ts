@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
-import loadMujoco, { type MainModule, type MjModel } from '@mujoco/mujoco';
+import { type MainModule, type MjModel } from '@mujoco/mujoco';
+import { loadMujoco } from '../sim/loadMujoco';
 import { answer, integrationField } from './forgeFields';
 import { ForgeGpu } from './forgeGpu';
 import { settleStart, type StartJob } from './forgeStart';

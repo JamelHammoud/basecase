@@ -6,6 +6,7 @@ covers:
   - src/components/LibraryPanel.tsx
   - src/components/library/NewModelMenu.tsx
   - src/components/library/Tile.tsx
+  - src/components/studio/SvgImportPanel.tsx
   - src/workspace/useLibraryActions.ts
 ---
 
@@ -19,6 +20,10 @@ Keep a part or a whole design in the Library so you can drop it into any scene l
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-The same menu has **Import**, which brings in a file (an SVG opens a panel that extrudes it into a model), and **From Image**, which builds one from a picture. Hover a model to see where it came from, its size and how many parts it has. Right-click it to rename, duplicate or delete it.
+The same menu has **Import**, which brings in a file (an SVG opens a panel that extrudes it into a part when you click **Add**), and **From Image**, which builds a model from a picture. Keep an SVG part here with **Save to Library**, the bookmark in its Inspector header.
+
+![The Import SVG panel with a drawing loaded and one Add button under Output](/help/save-a-model-to-the-library/import-svg.png)
+
+Hover a model to see where it came from, its size and how many parts it has. Right-click it to rename, duplicate or delete it.
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)

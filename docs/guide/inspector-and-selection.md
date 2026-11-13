@@ -85,4 +85,5 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 - **Sketch:** opened from Shapes ▾ → Sketch, ⌘K or right-click. Extrude / Revolve, Points / Freehand / Hole tools, snap, undo point, clear, then Output fields.
 - **Import SVG:** opened from Shapes ▾, or by Import or a drop with an SVG, which loads it. Drop zone, samples, paste code, preview, then Output fields. “Edit in Sketch”, beside the preview, hands the outline to Sketch.
 - Adding a part from Sketch or SVG closes the panel and shows the new part in the Inspector.
+- Both end in one Add button. To keep the result, use Save to Library on the new part (the bookmark in its Inspector header, or right-click); the model it saves inserts that same part again.
 - Combine lives in the selection bar, the right-click menu and the multi-selection Inspector.

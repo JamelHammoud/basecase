@@ -31,7 +31,6 @@ interface SculptAndDrawStudioProps {
     bevel: boolean;
     nodes: CustomModelSubNode[];
     svgDataUrl?: string;
-    saveToLibrary: boolean;
   }) => void;
 }
 

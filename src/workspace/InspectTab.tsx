@@ -24,8 +24,8 @@ function ModePanel({ core, actions }: InspectTabProps) {
       onUpdateSculptSettings={tool.updateSculptSettings}
       onAddClayPreset={creation.addClayPreset}
       onSubdivideSelectedClay={creation.subdivideSelectedClay}
-      onCreateFrom2DDrawing={async (params) => {
-        await creation.createFromSketch(params);
+      onCreateFrom2DDrawing={(params) => {
+        creation.createFromSketch(params);
         tool.setCreator(null);
       }}
     />

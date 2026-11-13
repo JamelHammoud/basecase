@@ -12,17 +12,13 @@ import { cadPartsFromFile } from './cadImport';
 import { couldntImport, isCadFileName } from './importRoute';
 import { meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
-import { platformBridge } from '../utils/platformBridge';
-import { modelId, newId, stamp } from './helpers';
+import { newId } from './helpers';
 import {
   CLAY_LABELS,
-  PRINTED_TAG,
   catalogItemLabel,
   catalogPart,
   clayPart,
   imagePlanePart,
-  sketchDescription,
-  sketchDimensions,
   sketchPart,
   type ClayPreset,
   type SketchParams,
@@ -161,9 +157,8 @@ function useMeshImport(core: WorkspaceCore) {
 }
 
 export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
-  const { docs, setSelectedIds, showToast, studio, viewportRef } = core;
+  const { docs, setSelectedIds, showToast } = core;
   const { commitParts } = docs;
-  const { setCustomModels } = studio;
   const { addArticulated } = robots;
   const images = useReferenceImages(core);
   const sculpt = useSculptCreation(core);
@@ -203,32 +198,12 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
     );
   };
 
-  const createFromSketch = async (params: SketchParams) => {
+  const createFromSketch = (params: SketchParams) => {
     const id = newId();
 
     commitParts((prev) => [...prev, sketchPart(params, id)]);
     setSelectedIds([id]);
-
-    if (!params.saveToLibrary) {
-      showToast(`Added ${params.name}`);
-
-      return;
-    }
-
-    await platformBridge.saveModel({
-      id: modelId(),
-      name: params.name,
-      description: sketchDescription(params),
-      createdAt: stamp(),
-      sourceType: 'scene-selection',
-      sourceImageDataUrl: params.svgDataUrl || viewportRef.current?.captureScreenshot(),
-      defaultDimensions: sketchDimensions(params),
-      defaultColor: params.color,
-      mechanicalTag: PRINTED_TAG,
-      nodes: params.nodes,
-    });
-    setCustomModels(await platformBridge.listModels());
-    showToast(`Added ${params.name} and saved to Library`);
+    showToast(`Added ${params.name}`);
   };
 
   return { ...images, ...sculpt, ...meshes, addCatalogItem, placeCustomModel, createFromSketch };

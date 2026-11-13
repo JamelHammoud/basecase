@@ -17,6 +17,7 @@ You are the designer; the evidence is the brief, engineering practice and compar
    servo held, wheels at the base edge with drive wheels near the centre of mass, a lift with
    rails, carriage and drive, grippers with their linkage. find_recipes and the catalog
    (servo_u_bracket, linear_lift, parallel_gripper, wheels, real grippers and hands) first.
+   A leg, finger or nodding head defined by the path its tip traces: synthesize_linkage.
 7. Stability: support half-width ≥ ~0.3 × the centre-of-mass height for a mobile robot; centre
    of mass over the stance foot for a biped.
 8. Electronics have a home: a battery bay with a hatch, compute on a tray behind one cover,

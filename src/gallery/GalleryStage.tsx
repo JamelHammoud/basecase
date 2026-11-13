@@ -10,7 +10,7 @@ import { DEFAULT_PROJECT, type ProjectSettings, type SculptSettings } from '../t
 import { buildRig } from '../utils/kinematics';
 import { GalleryCard } from './GalleryCard';
 import type { GalleryBundle } from './galleryBundle';
-import { seeInside } from './seeInside';
+import { openGalleryScene } from './openGalleryScene';
 import { useGalleryTraining } from './useGalleryTraining';
 
 const SCULPT: SculptSettings = { brush: 'inflate', radiusMm: 10, strength: 0.5, symmetryX: false, symmetryZ: false };
@@ -78,7 +78,9 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
         kase={kase}
         sim={sim}
         training={training}
-        onSeeInside={() => void training.carried().then((trained) => seeInside(bundle, trained ?? bundle.trained))}
+        onOpenScene={() =>
+          void training.carried().then((trained) => openGalleryScene(bundle, trained ?? bundle.trained))
+        }
       />
     </div>
   );

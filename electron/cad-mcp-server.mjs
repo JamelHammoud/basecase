@@ -23,7 +23,7 @@ import { listEvidence, readEvidence } from './cad-mcp/evidenceTools.mjs';
 import { createGuidePusher, getGuide } from './cad-mcp/guideTools.mjs';
 import { checkScene, look } from './cad-mcp/inspectTools.mjs';
 import { fasten, getPorts, mate } from './cad-mcp/portTools.mjs';
-import { findRecipes } from './cad-mcp/recipeTools.mjs';
+import { findRecipes, synthesizeLinkage } from './cad-mcp/recipeTools.mjs';
 import {
   animate,
   defineJoints,
@@ -82,6 +82,7 @@ const TOOLS = [
   look,
   findParts,
   findRecipes,
+  synthesizeLinkage,
   compare,
   fitView,
   traceOutline,
@@ -152,7 +153,7 @@ for (const tool of TOOLS.filter((t) => !(NO_WEB && t.web))) {
     pushGuides(
       tool.name,
       args,
-      await withBuildCheck(tool.name, await withToolCall(extra, () => tool.handler(args, extra))),
+      await withBuildCheck({ name: tool.name, args }, await withToolCall(extra, () => tool.handler(args, extra))),
     ),
   );
 }

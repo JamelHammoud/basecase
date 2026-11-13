@@ -48,6 +48,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     dropFiles: routeFiles,
     selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,
+    sketchPath: core.sketching.setPath,
     simState: () => devSimState(core, jointsRef.current),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
     worldAt: () => {

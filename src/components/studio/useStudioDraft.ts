@@ -6,6 +6,8 @@ import { errorMessage } from '../../utils/errorMessage';
 
 export type SketchTool = 'line' | 'rect' | 'circle' | 'arc';
 
+export type SketchPanelMode = SketchMode | 'path';
+
 interface SketchHistory {
   past: Sketch[];
   now: Sketch;
@@ -38,7 +40,7 @@ function useSketchHistory(initial: Sketch) {
 
 export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | null) {
   const history = useSketchHistory(initialSketch);
-  const [drawMode, setDrawMode] = useState<SketchMode>('extrude');
+  const [drawMode, setDrawMode] = useState<SketchPanelMode>('extrude');
   const [drawTool, setDrawTool] = useState<SketchTool | null>(initialTool);
   const [snap2D, setSnap2D] = useState(true);
   const [drawName, setDrawName] = useState('Sketch');

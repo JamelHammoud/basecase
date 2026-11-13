@@ -54,7 +54,7 @@ const Pin: React.FC<{
       >
         <span className="w-8 shrink-0 text-center text-[13px] font-semibold tabular">{number}</span>
         {!isActive && first && (
-          <span className="max-w-0 group-hover:max-w-[220px] overflow-hidden transition-[max-width] duration-200 ease-[cubic-bezier(0.2,0,0,1)]">
+          <span className="max-w-0 group-hover:max-w-[220px] overflow-hidden transition-[max-width] duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
             <span className="flex items-center gap-2 pr-3 whitespace-nowrap text-[13px]">
               <span className="truncate max-w-[170px]">{first}</span>
               {replies > 0 && <span className="opacity-50 tabular">{replies}</span>}

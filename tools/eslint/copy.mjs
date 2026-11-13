@@ -47,8 +47,11 @@ const JSX_PARENTS = new Set(['JSXElement', 'JSXFragment']);
 export default {
   meta: {
     type: 'suggestion',
-    docs: { description: 'Disallow words and separators the copy guide bans (§3c) in user-facing strings' },
-    messages: { banned: 'Copy (§3c): “{{word}}” is banned. {{fix}}' },
+    docs: {
+      description:
+        'Disallow words and separators the copy guide bans (§3c), and synonyms of its glossary (§3b-17), in user-facing strings',
+    },
+    messages: { banned: 'Copy ({{section}}): “{{word}}” is banned. {{fix}}' },
     schema: [],
   },
   create(context) {
@@ -61,7 +64,7 @@ export default {
         if (!hit) continue;
 
         reported.add(node);
-        context.report({ node, messageId: 'banned', data: { word: hit.word, fix: hit.fix } });
+        context.report({ node, messageId: 'banned', data: { word: hit.word, fix: hit.fix, section: hit.section } });
       }
     };
 

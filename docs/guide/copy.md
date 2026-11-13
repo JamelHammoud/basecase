@@ -57,13 +57,30 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 17. **Same word everywhere for the same thing:**
     - Parts are added, models are inserted, scenes are opened (in a tab) and closed, comments are posted, prices are added and checked.
     - Part types are **Solid / Cutout / Guide**.
+    - One verb per action, in buttons, menu items, ⌘K, the app menu, confirmations, toasts and help articles. A toast uses its past tense (Deleted, Stopped). `basecase/copy` fails a label that starts with a synonym listed in [`tools/copy/glossary.mjs`](../../tools/copy/glossary.mjs) and names the word to use, so a new row goes there and here together. Train stays right elsewhere, so the Teach row needs a reader.
+
+      | Action | Word | Not |
+      |---|---|---|
+      | Destroy something a person made (a mark, comment, price, scene, chat, pose, policy, Case, try, step…), one or all of them | Delete | Erase, Discard, Trash, Destroy; Remove or Clear before one of those things |
+      | Take something out of a list or a draft without destroying it (an attachment, a quote) | Remove | Detach |
+      | Empty a field, a drawing in progress or a state (a search, a sketch, a fault) | Clear | Wipe |
+      | Halt something running (the sim, a try, driving, a print, training, the agent) | Stop | End (End effector and the End key stay), Halt, Abort, Terminate, Kill |
+      | Open a scene, file, image or page | Open | View (a menu named View stays), See Inside |
+      | Put away a tab, window, sheet or Case | Close | Dismiss |
+      | Bring a panel, view or layer into sight; Hide puts it away | Show | Reveal, Toggle |
+      | Make a second one beside the first | Duplicate | Clone |
+      | Start a Case, Routine, Checks or a policy | Run | Launch, Execute |
+      | Put a part in the scene | Add | Insert Part |
+      | Put a model or robot in the scene | Insert | Add Model, Add Robot |
+      | Make an out-of-date build guide again | Update | Regenerate |
+      | Describe a new skill for the agent to train; Train runs training on a skill row | Teach | — |
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.
     - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.agents/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbours before shipping.
 19. **No status dots** unless they report an error or a live background process. The agent panel shows connection state only when disconnected. A tab's dot is its `status` in `PanelTabs`, whose only tones are `live` (blue) and `problem` (red), named in the app's own tooltip: the Build tab shows red while something is left to fix and nothing once it's Ready to build.
 
 ### 3c. Words and patterns to avoid
 
-One list holds the banned words and separators: `BANNED_COPY` in [`verify/rehearsal/uiRules.ts`](../../verify/rehearsal/uiRules.ts), which the copy budget below, the Stage 7 rehearsal's screen scan and the lint all read. `basecase/copy` (`tools/eslint/copy.mjs`) lints the entries that [`tools/copy/banned.mjs`](../../tools/copy/banned.mjs) gives a fix, in JSX text, toasts and confirms in `src/` and the app menu, and in the props and properties listed in [`tools/copy/surfaces.mjs`](../../tools/copy/surfaces.mjs) (`label`, `title`, `placeholder`, `aria-label`, `alt`, `heading`, `message`…). The list is under `verify/`, so a new word needs a maintainer's OK (§0k); give it a fix in `tools/copy/banned.mjs` to lint it too. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
+One list holds the banned words and separators: `BANNED_COPY` in [`verify/rehearsal/uiRules.ts`](../../verify/rehearsal/uiRules.ts), which the copy budget below, the Stage 7 rehearsal's screen scan and the lint all read. `basecase/copy` (`tools/eslint/copy.mjs`) lints the entries that [`tools/copy/banned.mjs`](../../tools/copy/banned.mjs) gives a fix, in JSX text, toasts and confirms in `src/` and the app menu, and in the props and properties listed in [`tools/copy/surfaces.mjs`](../../tools/copy/surfaces.mjs) (`label`, `title`, `placeholder`, `aria-label`, `alt`, `heading`, `message`…). The list is under `verify/`, so a new word needs a maintainer's OK (§0k); give it a fix in `tools/copy/banned.mjs` to lint it too. The same rule fails a label that starts with a synonym from the glossary (§3b-17, `tools/copy/glossary.mjs`), which lives under `tools/` and needs no OK beyond this guide. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
 
 | Avoid | Why | Use instead |
 |---|---|---|

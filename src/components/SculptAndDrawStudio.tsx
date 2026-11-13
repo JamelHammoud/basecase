@@ -6,7 +6,7 @@ import type { Sketch } from '../utils/sketch/types';
 import type { SketchParams } from '../workspace/partFactories';
 import type { TextFile } from '../workspace/types';
 import { SculptPanel } from './studio/SculptPanel';
-import { SketchPanel, type BoundSketch, type SketchOutput } from './studio/SketchPanel';
+import { SketchPanel, type BoundSketch, type SketchLinkage, type SketchOutput } from './studio/SketchPanel';
 import { SvgImportPanel } from './studio/SvgImportPanel';
 import { useStudioDraft } from './studio/useStudioDraft';
 
@@ -27,6 +27,7 @@ interface SculptAndDrawStudioProps {
   onCreateFrom2DDrawing: (params: SketchParams) => void;
   sketchStart: Sketch;
   boundSketch: BoundSketch | null;
+  linkage?: SketchLinkage;
   onCreateSketch: (shape: SketchShape, output: SketchOutput) => void;
 }
 
@@ -43,6 +44,7 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
   onCreateFrom2DDrawing,
   sketchStart,
   boundSketch,
+  linkage,
   onCreateSketch,
 }) => {
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
@@ -73,7 +75,9 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
             onSubdivideSelectedClay={onSubdivideSelectedClay}
           />
         )}
-        {subTab === 'draw2d' && <SketchPanel draft={draft} bound={boundSketch} onCreate={onCreateSketch} />}
+        {subTab === 'draw2d' && (
+          <SketchPanel draft={draft} bound={boundSketch} linkage={linkage} onCreate={onCreateSketch} />
+        )}
         {subTab === 'svg' && (
           <SvgImportPanel
             draft={draft}

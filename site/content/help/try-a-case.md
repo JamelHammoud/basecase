@@ -34,7 +34,7 @@ Drive the robot through an open Case while Basecase records it, then see whether
 2. Click a Case under **New Case**. It opens in the **Simulate** tab.
 3. Under **Try**, click **Try It**. Recording starts and the robot is yours to drive.
 4. Drive the robot to the goal with the keys listed under **Try**.
-5. Click **End Try**, or let the clock run out.
+5. Click **Stop Try**, or let the clock run out.
 6. Read the new try under **Results**: **Passed** or **Missed**, how long it took, and four frames from it.
 7. Click **Replay** (▷) on a try to watch it again.
 

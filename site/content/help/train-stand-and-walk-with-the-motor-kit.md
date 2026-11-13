@@ -63,7 +63,7 @@ To stop training, click **Stop training** (■) on the row. **Teach It to Move**
 
 The **Train** section shows only when the browser can train on the GPU. A skill trained there is saved with the scene in that browser, so it's still there after a reload. The browser trains only when you click **Train**.
 
-A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand, and the robot stands on the skill once Arena passes it. **See Inside** opens the robot in the studio with Stand ready.
+A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand, and the robot stands on the skill once Arena passes it. **Open Scene** opens the robot in the studio with Stand ready.
 
 ![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 

@@ -41,10 +41,10 @@ It worked when **Simulate** appears beside **Inspect**.
 
 The simulation crashed in the background. Your scene is safe; only the running simulation stopped.
 
-1. Click × beside the speed buttons to end the simulation.
+1. Click × beside the speed buttons to stop the simulation.
 2. Click **Simulate** to start it again.
 
-Any other red text under **Simulate** is MuJoCo's own message about a model it couldn't load. End the simulation, change the part it names, and start again.
+Any other red text under **Simulate** is MuJoCo's own message about a model it couldn't load. Stop the simulation, change the part it names, and start again.
 
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 

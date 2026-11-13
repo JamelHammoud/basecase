@@ -67,7 +67,7 @@ Knowledge preserved from code comments. Complements AGENTS.md; nothing here repe
 
 ## electron/cad-kernel
 ### sandbox/
-- A job over the timeout (default 90 s) or a window over 4 GB kills that window (`forcefullyCrashRenderer`, then `destroy`): a spinning worker can't stop it. A fresh one starts on demand. `kernel_warm` starts one early to hide startup cost.
+- A job over the timeout (default 90 s) or a window over 4 GB kills that window: `process.kill` on its renderer's pid (TerminateProcess on Windows), then `destroy`; a spinning worker can't stop it. Never `forcefullyCrashRenderer`: on Windows it asks crashpad to dump the hung renderer, and with no crash reporter started that ends the whole app with exit code 0xFFFF7003 (crashpad's "not connected"). That code is what the packaged Windows app exited with in the converter self-test, about when its hang probe's window is killed (#54). A fresh one starts on demand. `kernel_warm` starts one early to hide startup cost.
 - Each pool slot is its own window, so each has its own renderer process: a killed slot never takes another lane's job with it, and memory is measured per process (`app.getAppMetrics`, polled every 500 ms only while a job runs).
 - The main process never closes the app over kernel windows: they're stopped when the main window closes, so `window-all-closed` still fires, and `activate` checks for the main window, not for any window.
 - The worker can't fetch, so the page compiles the WASM modules (`compileStreaming`) and posts them; the worker instantiates them through Emscripten's `instantiateWasm`. OpenSCAD's WASM is inlined in its chunk.

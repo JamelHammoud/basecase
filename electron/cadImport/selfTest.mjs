@@ -53,31 +53,47 @@ async function recovery(converter, { spec, kind, timeoutMs, work }) {
   return { stopped, next };
 }
 
-export async function runCadImportSelfTest(converter, spec) {
+export async function runCadImportSelfTest(converter, spec, onStage = () => {}) {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-cadimport-'));
-  const imports = {};
-  const opens = {};
+  const report = { imports: {}, opens: {}, reach: null, hang: null, memory: null };
+  const stage = (running, run) => {
+    onStage({ ...report, running });
+
+    return run();
+  };
 
   try {
-    for (const fixture of spec.imports) imports[fixture.name] = await importFixture(converter, { spec, fixture, work });
+    for (const fixture of spec.imports) {
+      report.imports[fixture.name] = await stage(fixture.name, () => importFixture(converter, { spec, fixture, work }));
+    }
 
-    for (const fixture of spec.opens ?? []) opens[fixture.name] = await openFixture(converter, fixture);
+    for (const fixture of spec.opens ?? []) {
+      report.opens[fixture.name] = await stage(fixture.name, () => openFixture(converter, fixture));
+    }
 
-    const reach = await probe(converter, { kind: 'reach', targets: spec.targets, timeoutMs: REACH_MS });
-    const hang = await recovery(converter, { spec, kind: 'hang', timeoutMs: spec.hangMs, work });
-    const memory = await recovery(converter, { spec, kind: 'eatMemory', timeoutMs: spec.memoryMs, work });
+    report.reach = await stage('reach', () =>
+      probe(converter, { kind: 'reach', targets: spec.targets, timeoutMs: REACH_MS }),
+    );
+    report.hang = await stage('hang', () => recovery(converter, { spec, kind: 'hang', timeoutMs: spec.hangMs, work }));
+    report.memory = await stage('memory', () =>
+      recovery(converter, { spec, kind: 'eatMemory', timeoutMs: spec.memoryMs, work }),
+    );
 
-    return { imports, opens, reach, hang, memory };
+    return report;
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
 }
 
+const writeReport = (file, report) => fs.writeFileSync(file, JSON.stringify(report, null, 2));
+
 export async function cadImportSelfTest(kernel, specFile) {
   const spec = JSON.parse(fs.readFileSync(specFile, 'utf8'));
 
   try {
-    fs.writeFileSync(spec.out, JSON.stringify(await runCadImportSelfTest(kernel, spec), null, 2));
+    const report = await runCadImportSelfTest(kernel, spec, (partial) => writeReport(spec.out, partial));
+
+    writeReport(spec.out, report);
   } finally {
     kernel.stop();
   }

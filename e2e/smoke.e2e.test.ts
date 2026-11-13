@@ -168,8 +168,8 @@ describe('command menu', () => {
       await app.page.keyboard.press('Enter');
     };
 
-    await clickRail('Layers');
-    await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click();
+    await app.page.keyboard.press('a');
+    await app.page.getByRole('button', { name: /^Cube/ }).first().click();
 
     const before = await partCount(app.page);
 

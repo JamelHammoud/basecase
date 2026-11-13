@@ -15,7 +15,7 @@ const ic = 'w-4 h-4';
 
 export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
   const { studio } = core;
-  const { exports, creation } = actions;
+  const { exports, files } = actions;
   const robotPackage: Command = {
     id: 'export-robot-package',
     group: 'Scene',
@@ -76,12 +76,13 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       run: exports.exportImage,
     },
     {
-      id: 'import-mesh',
+      id: 'import',
       group: 'Scene',
-      label: 'Import Mesh',
+      label: 'Import',
       icon: <FileImportIcon className={ic} />,
-      keywords: 'stl 3mf obj ply fbx glb gltf dae step stp iges igs cad model file print',
-      run: () => void creation.pickMeshes(),
+      keywords:
+        'file mesh stl 3mf obj ply fbx glb gltf dae step stp iges igs cad model print svg extrude urdf mjcf zip robot bvh mocap motion image png jpg',
+      run: () => void files.pickImports(),
     },
   ];
 }

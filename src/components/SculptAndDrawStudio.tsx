@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, useScrollFade } from '../design-system';
 import { CustomModelSubNode, ScenePart, SculptSettings } from '../types/robotics';
+import type { TextFile } from '../workspace/types';
 import { SculptPanel } from './studio/SculptPanel';
 import { SketchPanel } from './studio/SketchPanel';
 import { SvgImportPanel } from './studio/SvgImportPanel';
@@ -14,6 +15,7 @@ interface SculptAndDrawStudioProps {
   selectedPart: ScenePart | null;
   sculptSettings: SculptSettings;
   mode: StudioSubTab;
+  svgFile?: TextFile | null;
   onChangeMode: (mode: StudioSubTab) => void;
   onDone: () => void;
   onUpdateSculptSettings: (patch: Partial<SculptSettings>) => void;
@@ -37,6 +39,7 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
   selectedPart,
   sculptSettings,
   mode: subTab,
+  svgFile = null,
   onChangeMode: setSubTab,
   onDone,
   onUpdateSculptSettings,
@@ -46,6 +49,12 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
 }) => {
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const draft = useStudioDraft();
+  const [loadedSvg, setLoadedSvg] = useState<TextFile | null>(null);
+
+  if (svgFile && svgFile !== loadedSvg) {
+    setLoadedSvg(svgFile);
+    draft.processSvgString(svgFile.text, svgFile.name);
+  }
 
   return (
     <div className="flex flex-col h-full min-h-0">

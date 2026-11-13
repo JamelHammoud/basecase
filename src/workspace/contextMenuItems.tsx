@@ -255,11 +255,10 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       ? [{ label: 'Clear Marks', icon: <DeleteIcon className={ic} />, onSelect: core.marks.clear }]
       : []),
     {
-      label: 'Import Mesh',
+      label: 'Import',
       icon: <FileImportIcon className={ic} />,
-      onSelect: () => void actions.creation.pickMeshes(menu.point),
+      onSelect: () => void actions.files.pickImports(menu.point),
     },
-    { label: 'Import SVG', icon: <FileImportIcon className={ic} />, onSelect: () => tool.openCreator('svg') },
     { divider: true },
     shared.selectAll,
     { divider: true },

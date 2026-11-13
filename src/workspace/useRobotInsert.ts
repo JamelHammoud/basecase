@@ -31,6 +31,12 @@ interface PlacedRig {
   joints: RobotJoint[];
 }
 
+export interface RobotFiles {
+  name: string;
+  files: LocalFile[];
+  at?: Vec3;
+}
+
 export interface RobotChoice {
   source: Exclude<RobotSource, { kind: 'simready' }>;
   at?: Vec3;
@@ -90,6 +96,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
   const frameNextRef = useRef(false);
   const [importRobotOpen, setImportRobotOpen] = useState(false);
   const [robotChoice, setRobotChoice] = useState<RobotChoice | null>(null);
+  const [robotFiles, setRobotFiles] = useState<RobotFiles | null>(null);
 
   useEffect(() => {
     if (!frameNextRef.current) return;
@@ -136,6 +143,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
     if (!ask) return;
 
+    setRobotFiles(null);
     setRobotChoice(choice);
     setImportRobotOpen(true);
   };
@@ -197,10 +205,17 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     pickRobot,
     importRobotOpen,
     robotChoice,
+    robotFiles,
     openImportRobot: () => setImportRobotOpen(true),
+    openRobotFiles: (loaded: RobotFiles) => {
+      setRobotChoice(null);
+      setRobotFiles(loaded);
+      setImportRobotOpen(true);
+    },
     closeImportRobot: () => {
       setImportRobotOpen(false);
       setRobotChoice(null);
+      setRobotFiles(null);
     },
   };
 }

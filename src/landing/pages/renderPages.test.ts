@@ -18,9 +18,9 @@ const FIXTURES: Record<string, string> = {
   '/site/content/blog/launch.md': post('title: Launch\ndate: 2026-11-10\ndraft: false\nline: "Built on a Sunday."'),
   '/site/content/blog/unfinished.md': post('title: Unfinished\ndate: 2026-11-10\ndraft: true'),
   '/site/content/blog/tomorrow.md': post('title: Tomorrow\ndate: 2026-11-13'),
-  '/site/content/help/import-a-mesh.md': post(
-    'title: Import a mesh\ndate: 2026-11-12\ncovers:\n  - src/workspace/meshImport.ts\n  - src/workspace/usePartCreation.ts',
-    'Bring a model in.\n\n1. Right-click the canvas.\n2. Choose **Import Mesh**.\n\n<script>alert(1)</script>\n\n[Mail](mailto:hi@example.com) [Source](https://github.com)',
+  '/site/content/help/import-a-file.md': post(
+    'title: Import a file\ndate: 2026-11-12\ncovers:\n  - src/workspace/importRoute.ts\n  - src/workspace/useFileImport.ts',
+    'Bring a file in.\n\n1. Right-click the canvas.\n2. Choose **Import**.\n\n<script>alert(1)</script>\n\n[Mail](mailto:hi@example.com) [Source](https://github.com)',
   ),
 };
 
@@ -43,10 +43,10 @@ describe('site pages', () => {
       'changelog/2026-11-02-newer.html',
       'changelog/rss.xml',
       'help.html',
-      'help/import-a-mesh.html',
+      'help/import-a-file.html',
       'sitemap.xml',
     ]);
-    expect(files.get('sitemap.xml')).toContain('<loc>https://basecase.so/help/import-a-mesh</loc>');
+    expect(files.get('sitemap.xml')).toContain('<loc>https://basecase.so/help/import-a-file</loc>');
     expect(files.get('changelog.html')).toContain('<link rel="stylesheet" href="/assets/index-abc.css"/>');
   });
 
@@ -98,10 +98,10 @@ describe('site pages', () => {
   });
 
   it('renders markdown as elements and drops raw HTML', () => {
-    const article = files.get('help/import-a-mesh.html')!;
+    const article = files.get('help/import-a-file.html')!;
 
     expect(article).toContain('<ol');
-    expect(article).toContain('<strong class="font-semibold text-white/90">Import Mesh</strong>');
+    expect(article).toContain('<strong class="font-semibold text-white/90">Import</strong>');
     expect(article).not.toContain('<script');
     expect(article).not.toContain('alert(1)');
     expect(article).toContain('<a href="mailto:hi@example.com" class=');
@@ -120,9 +120,9 @@ describe('site pages', () => {
   });
 
   it('reads lists in front matter and rejects files without a title', () => {
-    expect(parseFrontMatter(FIXTURES['/site/content/help/import-a-mesh.md'], 'x.md').data.covers).toEqual([
-      'src/workspace/meshImport.ts',
-      'src/workspace/usePartCreation.ts',
+    expect(parseFrontMatter(FIXTURES['/site/content/help/import-a-file.md'], 'x.md').data.covers).toEqual([
+      'src/workspace/importRoute.ts',
+      'src/workspace/useFileImport.ts',
     ]);
     expect(parseFrontMatter(post('covers:\n- src/x.ts\ndraft: "true"'), 'x.md').data).toEqual({
       covers: ['src/x.ts'],

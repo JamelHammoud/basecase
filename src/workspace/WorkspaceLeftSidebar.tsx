@@ -15,9 +15,8 @@ interface WorkspaceLeftSidebarProps {
 
 export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: WorkspaceLeftSidebarProps) {
   const { studio, tool, parts, selectedIds, selection } = core;
-  const { library, creation, edits, robots } = actions;
+  const { library, creation, edits, robots, files } = actions;
   const { panelWidths } = studio;
-  const { openCreator } = tool;
   const browseRobots = () => tool.setLeftTab('robots');
   const libraryProps = {
     customModels: studio.customModels,
@@ -26,7 +25,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
     onDuplicateModel: library.duplicateModel,
     onDeleteModel: library.deleteModel,
     onSaveModel: library.saveAsModel,
-    onImportSvg: () => openCreator('svg'),
+    onImport: () => void files.pickImports(),
     onImageToModel: tool.requestAttach,
   };
 

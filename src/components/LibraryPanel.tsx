@@ -12,7 +12,7 @@ export interface LibraryPanelProps {
   onDuplicateModel: (model: CustomModelDefinition) => void;
   onDeleteModel: (model: CustomModelDefinition) => void;
   onSaveModel: (mode: 'selected' | 'all') => void;
-  onImportSvg: () => void;
+  onImport: () => void;
   onImageToModel: () => void;
 }
 

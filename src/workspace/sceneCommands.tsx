@@ -8,7 +8,6 @@ import {
   DeleteIcon,
   DuplicateIcon,
   EraserIcon,
-  FileImportIcon,
   FolderOpenIcon,
   HistoryIcon,
   MarkerIcon,
@@ -177,13 +176,6 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       run: () => actions.creation.pickReferenceImage(),
     },
     {
-      id: 'import-svg',
-      group: 'Scene',
-      label: 'Import SVG',
-      icon: <FileImportIcon className={ic} />,
-      run: () => tool.openCreator('svg'),
-    },
-    {
       id: 'sketch',
       group: 'Scene',
       label: 'Sketch',
@@ -292,14 +284,6 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
       run: () => posing.setRobotPose({ values: {} }),
     },
     ...walk,
-    {
-      id: 'import-bvh',
-      group: 'Pose',
-      label: 'Import BVH',
-      icon: <FileImportIcon className={ic} />,
-      keywords: 'mocap motion capture retarget animation',
-      run: pose.importMotion,
-    },
     ...posing.animations.map((a) => ({
       id: `play-${a.id}`,
       group: 'Pose',

@@ -115,16 +115,16 @@ basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site
 
 ```md
 ---
-title: Import a mesh
+title: Import a file
 date: 2026-11-12
 covers:
-  - src/workspace/meshImport.ts
+  - src/workspace/importRoute.ts
 ---
 
-Bring a model from another app into the scene as a printable part.
+Bring a file from another app into the scene.
 
 1. Right-click an empty spot on the canvas.
-2. Choose **Import Mesh**.
+2. Choose **Import**.
 ```
 
 - **Titles are in sentence case**, in every folder: capitals only for proper nouns. Menu labels quoted in the body keep theirs.

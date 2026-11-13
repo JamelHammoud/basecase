@@ -21,9 +21,11 @@ interface CommandPaletteProps {
 function matchScore(label: string, q: string) {
   const l = label.toLowerCase();
 
-  if (l.startsWith(q)) return 0;
+  if (l === q) return 0;
 
-  return l.includes(q) ? 1 : 2;
+  if (l.startsWith(q)) return 1;
+
+  return l.includes(q) ? 2 : 3;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, commands }) => {

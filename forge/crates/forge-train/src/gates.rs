@@ -24,12 +24,18 @@ pub struct Passed {
     pub gate: Value,
 }
 
+pub trait Keep: Sync {
+    fn keep(&self, policy: &Deployed, norm: &Normalizer, at: (usize, u64)) -> Result<String, String>;
+}
+
+type Judged = (GateResult, Deployed, String);
+
 pub struct Pending<'scope> {
     iteration: usize,
     steps: u64,
     norm: Normalizer,
     snapshot: Snapshot,
-    handle: ScopedJoinHandle<'scope, Result<(GateResult, Deployed), String>>,
+    handle: ScopedJoinHandle<'scope, Result<Judged, String>>,
 }
 
 pub fn due(robot: &Robot, iteration: usize) -> bool {
@@ -44,6 +50,7 @@ pub fn start<'scope, 'env>(
     robot: &'env Robot,
     algo: &dyn Algorithm,
     at: (usize, u64),
+    keeper: &'env dyn Keep,
 ) -> Pending<'scope> {
     let mut policy = algo.deployed().as_exported();
     let norm = algo.norm().clone();
@@ -55,6 +62,7 @@ pub fn start<'scope, 'env>(
         GATE_THREADS
     };
     let handle = scope.spawn(move || {
+        let file = keeper.keep(&policy, &gate_norm, at)?;
         let math = Math::native(1);
         let mut run = Trained {
             robot,
@@ -65,7 +73,7 @@ pub fn start<'scope, 'env>(
         };
         let result = evaluate_seeds(&mut run, seeds)?;
 
-        Ok((result, policy))
+        Ok((result, policy, file))
     });
 
     Pending {
@@ -78,11 +86,11 @@ pub fn start<'scope, 'env>(
 }
 
 pub fn finish(pending: Pending) -> Result<Option<Passed>, String> {
-    let (result, policy) = pending
+    let (result, policy, file) = pending
         .handle
         .join()
         .map_err(|_| "The gate check panicked".to_owned())??;
-    let mut event = json!({ "type": "gate", "iteration": pending.iteration, "steps": pending.steps });
+    let mut event = json!({ "type": "gate", "iteration": pending.iteration, "steps": pending.steps, "snapshot": file });
 
     if let (Value::Object(target), Value::Object(fields)) = (&mut event, result.to_json()) {
         target.extend(fields);

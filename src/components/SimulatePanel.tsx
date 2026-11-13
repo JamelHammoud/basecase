@@ -4,12 +4,15 @@ import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics'
 import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
 import type { SkillRow } from '../skills/skillRows';
+import type { SnapshotRef } from '../skills/snapshots';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
 import type { CaseCheck } from '../readiness/caseChecks';
 import type { ShareRobot } from '../workspace/useShareRobot';
 import type { SceneSkills } from '../workspace/useSkills';
+import { useTrainingWatch } from '../workspace/useTrainingWatch';
+import { watchSubject } from '../workspace/watchSubject';
 import { CaseSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
 import { ResultsSection } from './simulate/ResultsSection';
@@ -48,12 +51,15 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy } = props;
   const { skills, onTeach, share } = props;
   const walk = useWalkTeaching(skills, onTeach);
+  const subject = watchSubject(skills, training);
+  const margin = useTrainingWatch(sim, subject);
   const skillActions = {
     onTrain: (row: SkillRow) =>
       row.kit || row.move ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label),
     onTry: (row: SkillRow) => void skills.tryRow(row),
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
+    onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
   };
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const on = sim.status !== 'off';
@@ -104,6 +110,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         <TrainSection
           skills={skills}
           actions={skillActions}
+          margin={subject?.key.startsWith('skill:') ? margin : null}
           onTeach={onTeach}
           policies={policies}
           training={training}

@@ -2,6 +2,8 @@ import type { Controller } from '../../sim/engine';
 
 export const fmtTime = (t: number) => `${t.toFixed(1)} s`;
 
+export const fmtMargin = (m: number) => `${m < 0 ? '−' : '+'}${Math.abs(m).toFixed(2)}`;
+
 export const pct = (u: number) => `${Math.round(Math.min(u, 1) * 100)}%`;
 
 export const fmtSteps = (n: number): string => {

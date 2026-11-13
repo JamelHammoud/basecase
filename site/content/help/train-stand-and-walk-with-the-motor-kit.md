@@ -38,11 +38,11 @@ The Motor Kit is for robots that stand on their own legs. Training runs in the d
 1. Click **Simulate** at the top of the right panel.
 2. Under **Train**, find **Stand**, **Walk**, **Get up** and **Settle**.
 3. Click **Train** on the skill you want.
-4. Wait while the row shows the trainer's message and a progress bar.
+4. Wait while the row shows the trainer's message and a progress bar. The robot on the canvas runs the newest snapshot of the skill.
 5. When the row shows its Arena line, such as "32 of 32 tries, at least 91%", click **Try** to run it in the simulation.
 6. For **Walk**, click **Drive** instead, and steer with [[W A S D]].
 
-To stop training, click **Stop training** (■) on the row. **Teach It to Move**, under **Control**, trains **Walk** too.
+To stop training, click **Stop training** (■) on the row. [Watch a skill learn while it trains](/help/watch-a-skill-learn) explains the snapshots. **Teach It to Move**, under **Control**, trains **Walk** too.
 
 ## How long it takes
 

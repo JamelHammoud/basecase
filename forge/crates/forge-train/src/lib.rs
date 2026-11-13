@@ -48,6 +48,8 @@ mod robot_load;
 pub mod sac;
 #[cfg(feature = "native")]
 pub mod shac;
+#[cfg(feature = "native")]
+pub mod snapshots;
 pub mod start_states;
 pub mod threads;
 #[cfg(feature = "native")]

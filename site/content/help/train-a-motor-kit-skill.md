@@ -1,6 +1,7 @@
 ---
 title: Train a Motor Kit skill
 date: 2026-11-12
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 covers:
@@ -33,4 +34,4 @@ A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/
 
 ![The hexapod's Case card with Stand ready](/help/train-a-motor-kit-skill/gallery.png)
 
-A skill that doesn't pass isn't kept, and its row offers Train again. In the browser, the trained skill is saved with the scene in that browser, so it's still there after a reload. If the browser can't train (no WebGPU), the Train section doesn't appear. The desktop app also retrains skills on its own after you change the robot, and lets you teach new ones by typing a goal; the browser trains only when you press Train.
+A skill that doesn't pass isn't kept, and its row offers Train again. In the desktop app, the canvas also runs each snapshot of the skill while it trains; see [Watch a skill learn while it trains](/help/watch-a-skill-learn). In the browser, the trained skill is saved with the scene in that browser, so it's still there after a reload. If the browser can't train (no WebGPU), the Train section doesn't appear. The desktop app also retrains skills on its own after you change the robot, and lets you teach new ones by typing a goal; the browser trains only when you press Train.

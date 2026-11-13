@@ -9,6 +9,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 const controllerState = (c: Controller) => ({
   kind: c.kind,
   clock: c.kind === 'policy' ? (c.policy.clock ?? null) : null,
+  trainedSteps: c.kind === 'policy' ? c.policy.trainedSteps : null,
 });
 
 function caseState({ cases }: WorkspaceCore['simTraining']) {

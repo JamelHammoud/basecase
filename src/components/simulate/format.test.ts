@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { controllerValue, fmtSteps } from './format';
+import { controllerValue, fmtMargin, fmtSteps } from './format';
 import type { RobotAnimation } from '../../types/robotics';
 
 describe('simulate format', () => {
   it('abbreviates step counts', () => {
     expect([999, 1500, 2_500_000, 25_000_000].map(fmtSteps)).toEqual(['999', '2K', '2.5M', '25M']);
+  });
+
+  it('signs a contract margin', () => {
+    expect([0.123, -0.5, 0].map(fmtMargin)).toEqual(['+0.12', '−0.50', '+0.00']);
   });
 
   it('maps the running controller to its select value', () => {

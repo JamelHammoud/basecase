@@ -128,6 +128,16 @@ export class BasecaseBackendService {
     return this.trainer.getPolicy(id);
   }
 
+  getSnapshot({ run, iteration, skill } = {}) {
+    if (skill === undefined || skill === null) return this.trainer.getSnapshot({ run, iteration });
+
+    return skillStore.getKeptSnapshot(this.libraryDir, { skill, run, iteration });
+  }
+
+  keepSnapshots(payload) {
+    return skillStore.keepSnapshots(this.libraryDir, this.trainer.jobsDir, payload ?? {});
+  }
+
   deletePolicy(id) {
     return this.trainer.deletePolicy(id);
   }

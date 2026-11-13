@@ -14,6 +14,7 @@ import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import type { LiveCaseInput } from '../cases/liveCase';
+import type { WatchPlan } from '../skills/liveWatch';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
@@ -77,6 +78,8 @@ export interface Simulation {
   buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
+  watch: (plan: WatchPlan | null) => void;
+  watchMargin: number | null;
   input: (name: string, value: FactValue) => void;
   latestFacts: () => CaseFacts | null;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
@@ -269,6 +272,21 @@ function useController(send: (msg: SimRequest) => void) {
   return [controller, setController] as const;
 }
 
+function useWatch(send: (msg: SimRequest) => void, watched: { id: number; margin: number } | null) {
+  const seq = useRef(0);
+  const [id, setId] = useState<number | null>(null);
+
+  return {
+    watch: (plan: WatchPlan | null) => {
+      const next = plan ? ++seq.current : null;
+
+      setId(next);
+      send({ type: 'watch', watch: plan && next ? { ...plan, id: next } : null });
+    },
+    watchMargin: watched && watched.id === id ? watched.margin : null,
+  };
+}
+
 function useSimTouches(
   modelRef: React.RefObject<SimModel | null>,
   send: (msg: SimRequest) => void,
@@ -302,6 +320,7 @@ export function useSimulation(props: Inputs): Simulation {
   const { worker, load, frameHookRef } = sw;
   const [controller, setController] = useController(send);
   const touch = useSimTouches(modelRef, send);
+  const watching = useWatch(send, sw.watched);
 
   const start = useCallback(async () => {
     setError(null);
@@ -413,6 +432,7 @@ export function useSimulation(props: Inputs): Simulation {
       return sw.startRoutine(input, onUpdate);
     },
     runCase: (input) => send(input ? { type: 'case', ...input } : { type: 'caseEnd' }),
+    ...watching,
     input: (name, value) => send({ type: 'input', name, value }),
     latestFacts: sw.latestFacts,
     runOn,

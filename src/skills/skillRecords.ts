@@ -14,6 +14,7 @@ import type { Environment } from './environment';
 import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
+import type { SnapshotRef } from './snapshots';
 
 export interface MoveTag {
   animation: string;
@@ -35,6 +36,7 @@ export interface SkillRecord {
   evidence: ArenaEvidence | null;
   origin: SkillOrigin | null;
   environment: Environment | null;
+  snapshots?: SnapshotRef[];
   createdAt: string;
 }
 

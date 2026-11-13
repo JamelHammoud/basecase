@@ -40,15 +40,31 @@ pub fn install_stop_handlers() {
 }
 
 #[cfg(target_os = "macos")]
-pub fn raise_thread_priority() {
-    const QOS_CLASS_USER_INTERACTIVE: u32 = 0x21;
+mod qos {
+    pub const USER_INTERACTIVE: u32 = 0x21;
+    pub const UTILITY: u32 = 0x11;
 
     extern "C" {
         fn pthread_set_qos_class_self_np(qos: u32, relative: i32) -> i32;
     }
 
-    unsafe { pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0) };
+    pub fn set(class: u32) {
+        unsafe { pthread_set_qos_class_self_np(class, 0) };
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn raise_thread_priority() {
+    qos::set(qos::USER_INTERACTIVE);
+}
+
+#[cfg(target_os = "macos")]
+pub fn lower_thread_priority() {
+    qos::set(qos::UTILITY);
 }
 
 #[cfg(not(target_os = "macos"))]
 pub fn raise_thread_priority() {}
+
+#[cfg(not(target_os = "macos"))]
+pub fn lower_thread_priority() {}

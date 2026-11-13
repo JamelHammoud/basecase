@@ -309,3 +309,61 @@ describe('continuing from an earlier run', () => {
     expect(left).not.toContain(path.basename(children[0].dir));
   });
 });
+
+describe('snapshots while training', () => {
+  const writeSnapshot = (dir, iteration, body) => {
+    fs.mkdirSync(path.join(dir, 'snapshots'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'snapshots', `${iteration}.json`), JSON.stringify(body));
+  };
+
+  it('forwards each snapshot line with the run id', () => {
+    const { t, events, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Walk') });
+    const lines = [
+      { type: 'snapshot', iteration: 40, steps: 98304, file: 'snapshots/40.json' },
+      { type: 'snapshot', iteration: 1.5, steps: 10 },
+      { type: 'snapshot', iteration: '../x', steps: 10 },
+      { type: 'snapshot', iteration: 41 },
+    ];
+
+    children[0].stdout.emit('data', Buffer.from(lines.map((l) => JSON.stringify(l)).join('\n') + '\n'));
+
+    const snapshots = events.filter((e) => e.kind === 'snapshot');
+
+    expect(snapshots).toEqual([
+      { type: 'train-progress', workspaceId: 'a', jobId, kind: 'snapshot', iteration: 40, steps: 98304 },
+    ]);
+  });
+
+  it('reads a snapshot of a run', () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Walk') });
+
+    writeSnapshot(children[0].dir, 40, { format: 'basecase-policy', layers: [] });
+    expect(t.getSnapshot({ run: jobId, iteration: 40 })).toEqual({ format: 'basecase-policy', layers: [] });
+    expect(t.getSnapshot({ run: jobId, iteration: 41 })).toBeNull();
+  });
+
+  it('refuses a snapshot that is a path rather than a run and an iteration', () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Walk') });
+
+    writeSnapshot(children[0].dir, 40, { layers: [] });
+    fs.writeFileSync(path.join(t.jobsDir, 'secret.json'), '{"secret":true}');
+
+    const bad = [
+      { run: '..', iteration: 40 },
+      { run: `${jobId}/..`, iteration: 40 },
+      { run: '../training', iteration: 40 },
+      { run: jobId, iteration: '40' },
+      { run: jobId, iteration: 40.5 },
+      { run: jobId, iteration: -1 },
+      { run: jobId, iteration: '../../secret' },
+      { run: 'policy-unknown', iteration: 40 },
+      null,
+      undefined,
+    ];
+
+    bad.forEach((ref) => expect(t.getSnapshot(ref)).toBeNull());
+  });
+});

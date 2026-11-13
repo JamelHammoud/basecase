@@ -11,6 +11,7 @@ use crate::physics::Engine;
 use crate::platform::{install_stop_handlers, raise_thread_priority, stop_requested};
 use crate::robot::Robot;
 use crate::shac::{Hyper, Shac};
+use crate::snapshots::{Moment, Snapshots, Timed};
 use crate::warm::{self, write_resume};
 use forge_mujoco::Model;
 use serde_json::{json, Value};
@@ -119,9 +120,11 @@ fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<
     let mut last_save = Instant::now();
     let mut iteration = 0usize;
     let mut steps = 0u64;
+    let snapshots = Snapshots::new(folder, robot);
 
     std::thread::scope(|scope| {
         let mut pending: Option<gates::Pending> = None;
+        let mut timed = Timed::new(job.snapshot_every_s);
 
         while !should_stop(folder) && clock.elapsed < budget && job.max_iterations.is_none_or(|limit| iteration < limit)
         {
@@ -139,13 +142,26 @@ fn train_loop(robot: &Robot, algo: &mut dyn Algorithm, folder: &Path) -> Result<
             let ready = due || gates::is_finished(&pending);
 
             if let Some(passed) = pending.take_if(|_| ready).map(gates::finish).transpose()?.flatten() {
+                timed.finish()?;
+
                 return Ok((steps, Some(passed)));
             }
 
             if due {
-                pending = Some(gates::start(scope, robot, algo, (iteration, steps)));
+                pending = Some(gates::start(scope, robot, algo, (iteration, steps), &snapshots));
             }
+
+            let now = Moment {
+                iteration,
+                steps,
+                elapsed: clock.elapsed,
+                gate_starts: due,
+            };
+
+            timed.tick(scope, &snapshots, algo, now)?;
         }
+
+        timed.finish()?;
 
         Ok((steps, pending.map(gates::finish).transpose()?.flatten()))
     })

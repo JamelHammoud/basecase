@@ -51,6 +51,16 @@ describe('print layout', () => {
     expect(app.errors).toEqual([]);
   });
 
+  it('closes the plates from the plate bar, the Print panel having no Done button', async () => {
+    await app.page.keyboard.press('Meta+p');
+    await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
+    expect(await app.page.locator(visible('button'), { hasText: /^Done$/ }).count()).toBe(0);
+
+    await app.page.locator(visible('button[aria-label="Close plates"]')).click();
+    await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  });
+
   it('asks the backend for nothing it cannot answer', () => {
     expect(
       app.posts.filter((p) => p.route.startsWith('print-') && !/status|printers|last-slice/.test(p.route)),

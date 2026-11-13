@@ -20,7 +20,6 @@ interface PrintPanelProps {
   tools: PrintToolsStatus | null;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   onAddPrinter: () => void;
-  onDone: () => void;
 }
 
 const throughStudio = (printing: Printing) =>
@@ -209,7 +208,7 @@ function usePlateSend(printing: Printing) {
 }
 
 export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
-  const { printing, parts, onDone } = props;
+  const { printing, parts } = props;
   const { ref, style } = useScrollFade();
   const plan = printing.report?.plan;
   const plates = plan?.plates ?? [];
@@ -219,11 +218,8 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <div className="h-[44px] shrink-0 pl-[12px] pr-[8px] flex items-center justify-between">
+      <div className="h-[44px] shrink-0 px-[12px] flex items-center">
         <h2 className="text-[15px] font-semibold text-white/90">Print</h2>
-        <Button variant="primary" size="sm" onClick={onDone}>
-          Done
-        </Button>
       </div>
       <div ref={ref} style={style} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <Section title="Printer">

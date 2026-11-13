@@ -50,7 +50,6 @@ export function RightPanel({ core, actions, ui, agent }: RightPanelProps) {
             tools={core.studio.printers.printTools}
             onChangeProject={(patch) => core.docs.setProject((p) => ({ ...p, ...patch }))}
             onAddPrinter={() => core.studio.openSettings('printers')}
-            onDone={core.printing.closeMode}
           />
         ) : (
           <>

@@ -1,6 +1,7 @@
 import { parquetReadObjects } from 'hyparquet';
 import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { startFakeHub, type FakeHub } from './fakeHub';
@@ -21,6 +22,7 @@ interface SimState {
   bodies: Array<{ parts: string[]; world: string[] }>;
   activeCase: string | null;
   tries: Array<{ passed: boolean; margin: number }>;
+  scanPoints: number;
 }
 
 type Studio = { simState: () => SimState; load: (r: unknown) => void; passTries: () => void };
@@ -30,11 +32,11 @@ const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 const simState = () =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState() as SimState);
 
-async function loadFixture(id: string) {
-  const robot = fixtureRobots().find((r) => r.id === id)!;
+async function loadFixture(id: string | FixtureRobot) {
+  const robot = typeof id === 'string' ? fixtureRobots().find((r) => r.id === id)! : id;
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-    name: id,
+    name: robot.id,
     parts: robot.parts,
     project: { ...DEFAULT_PROJECT, joints: robot.joints },
   });
@@ -328,4 +330,41 @@ describe('Cases', () => {
       .toBe('/case ');
     expect(app.errors).toEqual([]);
   });
+});
+
+describe('LiDAR', () => {
+  itUnlessWindows(
+    'scans a corridor with a rover’s LiDAR, draws the hits and exports them as observation.scan',
+    async () => {
+      await loadFixture(withLidar(fixtureRobots().find((r) => r.id === 'rover-diff')!));
+      await openPlayTab(app.page, 'Cases');
+      await button('New Case').click();
+
+      const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+      await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
+      await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
+      await card.locator('button', { hasText: 'Create' }).click();
+      await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-a-corridor');
+
+      await button('Try It').click();
+      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+      await holdKey('w', 1000);
+      await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
+      await button('End Try').click();
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+
+      const files = await datasetFiles();
+      const at = (end: string) => files[Object.keys(files).find((p) => p.endsWith(end))!];
+      const rows = await parquetReadObjects({
+        file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer,
+      });
+      const info = JSON.parse(at('meta/info.json').toString());
+
+      expect(info.features['observation.scan'].shape).toEqual([500]);
+      expect(rows[0]['observation.scan']).toHaveLength(500);
+      expect(JSON.parse(at('meta/modality.json').toString()).state.scan.original_key).toBe('observation.scan');
+      expect(app.errors).toEqual([]);
+    },
+  );
 });

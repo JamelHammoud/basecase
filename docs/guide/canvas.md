@@ -8,6 +8,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Lighting:** a `RoomEnvironment` environment map (intensity 0.5, like the Parts thumbnails), a hemisphere light, the shadow-casting key light, a cool rim light, and a soft fill that follows the camera. Dark plastic reads through its reflections, so don't remove the environment map.
   - Near-black part colors render no darker than HSL lightness 0.13 (about `#212121`; `displayColor` in `three/buildPartMesh.ts`). Maker CAD often paints black plastic `#020202` (the STS3215), which no light can show.
 - **Stationary camera views** (§8l) draw as small frustums (`three/viewport/cameraGlyphs.ts`) on `stage.overlays`, so captures never show them; `currentView` and `lookThrough` on the handle read and set the framing.
+- **LiDAR hits** (§8l) draw as 3 px accent points (`three/viewport/scanPoints.ts`) on `stage.overlays` while a simulation is loaded: one buffer, rewritten once per scan through `setScan` on the handle.
 - **Infinite grid** (`three/infiniteGrid.ts`): a camera-following shader plane on y = 0, not a fixed `GridHelper`.
   - 1 / 10 / 100 / 1000 mm lines fade in and out by on-screen density, so there's no moiré when zoomed out or at grazing angles.
   - The red X and blue Z axes run forever, and the grid fades into the distance (the fade distance scales with zoom).

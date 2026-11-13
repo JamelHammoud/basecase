@@ -15,6 +15,7 @@ export interface Eye {
   cols: number;
   rows: number;
   rangeM: number;
+  scan?: { rateHz: number; fovDeg: number };
 }
 
 export interface EyeRequest {
@@ -99,7 +100,7 @@ export interface EyeCaster {
   dispose: () => void;
 }
 
-interface Compact {
+export interface Compact {
   body: number;
   pos: V3;
   index: number[];
@@ -108,7 +109,7 @@ interface Compact {
   rays: number;
 }
 
-function compact(eye: Eye, body: number): Compact {
+export function compactEye(eye: Eye, body: number): Compact {
   const index: number[] = [];
   const dirs: number[] = [];
 
@@ -124,7 +125,12 @@ function compact(eye: Eye, body: number): Compact {
   return { body, pos: eye.pos, index, dirs, rangeM: eye.rangeM, rays: eyeRays(eye) };
 }
 
-function toWorld(data: MjData, c: Compact): { origin: number[]; dirs: number[] } {
+export interface WorldRays {
+  origin: number[];
+  dirs: number[];
+}
+
+function toWorld(data: MjData, c: Compact): WorldRays {
   const p = data.xpos as Float64Array;
   const r = data.xmat as Float64Array;
   const b = c.body;
@@ -140,16 +146,57 @@ function toWorld(data: MjData, c: Compact): { origin: number[]; dirs: number[] }
   return { origin, dirs };
 }
 
+export interface RayCast {
+  mj: MainModule;
+  model: MjModel;
+  data: MjData;
+  geomid: InstanceType<MainModule['IntBuffer']>;
+  dist: InstanceType<MainModule['DoubleBuffer']>;
+}
+
+export function rayCast(mj: MainModule, model: MjModel, data: MjData, most: number): RayCast {
+  return { mj, model, data, geomid: new mj.IntBuffer(Math.max(1, most)), dist: new mj.DoubleBuffer(Math.max(1, most)) };
+}
+
+export function castEye(run: RayCast, c: Compact, hit: (ray: number, d: number, k: number) => void): WorldRays | null {
+  if (!c.index.length) return null;
+
+  const world = toWorld(run.data, c);
+
+  run.mj.mj_multiRay(
+    run.model,
+    run.data,
+    world.origin,
+    world.dirs,
+    EYE_GEOM_GROUPS,
+    true,
+    c.body,
+    run.geomid,
+    run.dist,
+    null,
+    c.index.length,
+    c.rangeM,
+  );
+
+  const seen = run.dist.GetView() as Float64Array;
+
+  c.index.forEach((ray, k) => {
+    const d = seen[k];
+
+    if (d >= 0 && d <= c.rangeM) hit(ray, d, k);
+  });
+
+  return world;
+}
+
 export function eyeCaster(mj: MainModule, model: MjModel, data: MjData, eyes: Eye[]): EyeCaster | string {
   const bodies = eyes.map((e) => mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY.value, e.body));
   const missing = eyes.find((_, i) => bodies[i] < 0);
 
   if (missing) return `The eye's body ${missing.body} isn't in this model.`;
 
-  const compacts = eyes.map((e, i) => compact(e, bodies[i]));
-  const most = Math.max(1, ...compacts.map((c) => c.index.length));
-  const geomid = new mj.IntBuffer(most);
-  const dist = new mj.DoubleBuffer(most);
+  const compacts = eyes.map((e, i) => compactEye(e, bodies[i]));
+  const run = rayCast(mj, model, data, Math.max(...compacts.map((c) => c.index.length)));
 
   return {
     cast: (out, offset) => {
@@ -158,41 +205,18 @@ export function eyeCaster(mj: MainModule, model: MjModel, data: MjData, eyes: Ey
       let at = offset;
 
       for (const c of compacts) {
-        out.fill(1, at, at + c.rays);
+        const base = at;
 
-        if (c.index.length) {
-          const { origin, dirs } = toWorld(data, c);
-
-          mj.mj_multiRay(
-            model,
-            data,
-            origin,
-            dirs,
-            EYE_GEOM_GROUPS,
-            true,
-            c.body,
-            geomid,
-            dist,
-            null,
-            c.index.length,
-            c.rangeM,
-          );
-
-          const seen = dist.GetView() as Float64Array;
-
-          c.index.forEach((ray, k) => {
-            const d = seen[k];
-
-            if (d >= 0 && d <= c.rangeM) out[at + ray] = d / c.rangeM;
-          });
-        }
-
+        out.fill(1, base, base + c.rays);
+        castEye(run, c, (ray, d) => {
+          out[base + ray] = d / c.rangeM;
+        });
         at += c.rays;
       }
     },
     dispose: () => {
-      geomid.delete();
-      dist.delete();
+      run.geomid.delete();
+      run.dist.delete();
     },
   };
 }

@@ -161,6 +161,8 @@ export interface Viewport3DHandle {
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
+  setScan: (points: Float32Array | null) => void;
+  scanPointCount: () => number;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];

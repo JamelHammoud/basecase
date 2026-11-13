@@ -5,6 +5,7 @@ import { robotFacts } from '../cases/robotFit';
 import { isCameraPart } from '../routines/capabilities';
 import { simDeltas } from '../sim/mjcfFrames';
 import type { DriveCommand } from '../sim/driveTypes';
+import { scanSummary } from '../sim/scanSummary';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
@@ -97,6 +98,8 @@ function stateLine(ctx: OperateContext, poses: Float64Array | null): string {
         .join(', ')}] mm.`,
     );
   }
+
+  lines.push(...scanSummary(model, ctx.sim.latestScan(), ctx.parts));
 
   return lines.join(' ');
 }

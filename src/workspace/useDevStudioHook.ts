@@ -45,6 +45,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
         activeCase: cases.active?.id ?? null,
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
+        scanPoints: viewportRef.current?.scanPointCount() ?? 0,
       };
     },
     routineState: () => core.simTraining.routines.state(),

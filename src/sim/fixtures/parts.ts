@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { measureTriangles, type MeshMeasure } from '../../three/meshMeasure';
+import { COMPONENT_BY_ID, componentSize } from '../../data/components';
+import { LIDAR_SCAN } from '../../data/lidarScan';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 
 export type P3 = [number, number, number];
@@ -79,5 +81,33 @@ export function fixtureTriangles(parts: ScenePart[]): (id: string) => Float32Arr
     const p = byId.get(id);
 
     return p ? boxTriangles(p) : null;
+  };
+}
+
+export function withLidar(robot: FixtureRobot, componentId = 'slamtec-rplidar-c1', on = 'chassis'): FixtureRobot {
+  const base = robot.parts.find((p) => p.id === on)!;
+  const size = componentSize(componentId);
+  const head = LIDAR_SCAN[componentId]?.origin ?? [0, 0, 0];
+  const group = { id: `${robot.id}-body`, name: robot.id };
+  const top = base.position[1] + base.dimensions.height / 2;
+  const lidar: ScenePart = {
+    ...box(
+      'lidar',
+      [base.position[0] - head[0], top + size.height / 2 - 3, base.position[2] - head[2]],
+      [0, 0, 0],
+      110,
+    ),
+    name: COMPONENT_BY_ID[componentId].name,
+    kind: 'component',
+    category: 'perception',
+    componentId,
+    dimensions: size,
+    group,
+  };
+
+  return {
+    ...robot,
+    id: `${robot.id}-lidar`,
+    parts: [...robot.parts.map((p) => (p.id === on ? { ...p, group } : p)), lidar],
   };
 }

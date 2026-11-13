@@ -19,13 +19,27 @@ export interface DatasetEpisode extends EpisodeData {
   source: Record<string, unknown>;
 }
 
+export interface ScanSensor {
+  part: string;
+  name: string;
+  rays: number;
+  rangeM: number;
+  rateHz: number;
+  fovDeg: number;
+}
+
 export interface DatasetSpec {
   robotType: string;
   jointNames: string[];
   videos: VideoFeature[];
   episodes: DatasetEpisode[];
   source: Record<string, unknown>;
+  scans?: ScanSensor[];
 }
+
+export const SCAN_KEY = 'observation.scan';
+
+const scanWidthOf = (spec: Pick<DatasetSpec, 'scans'>) => (spec.scans ?? []).reduce((n, s) => n + s.rays, 0);
 
 type SchemaElement = Record<string, unknown>;
 
@@ -50,9 +64,10 @@ const scalar = (name: string, type: string): SchemaElement => ({ name, type, rep
 
 const INT_COLUMNS = ['frame_index', 'episode_index', 'index', 'task_index', TASK_ANNOTATION];
 
-const SCHEMA: SchemaElement[] = [
-  { name: 'root', num_children: 10 },
+const schemaOf = (scan: boolean): SchemaElement[] => [
+  { name: 'root', num_children: scan ? 11 : 10 },
   ...listColumn('observation.state'),
+  ...(scan ? listColumn(SCAN_KEY) : []),
   ...listColumn('action'),
   scalar('timestamp', 'FLOAT'),
   ...INT_COLUMNS.map((name) => scalar(name, 'INT64')),
@@ -72,7 +87,12 @@ interface EpisodeIndex {
   start: number;
 }
 
-function episodeParquet(e: EpisodeData, width: number, at: EpisodeIndex): Uint8Array {
+interface Widths {
+  joints: number;
+  scan: number;
+}
+
+function episodeParquet(e: EpisodeData, widths: Widths, at: EpisodeIndex): Uint8Array {
   const length = e.frames.length;
   const ints = (f: (i: number) => number) => Array.from({ length }, (_, i) => BigInt(f(i)));
   const intData: Record<string, bigint[]> = {
@@ -82,11 +102,13 @@ function episodeParquet(e: EpisodeData, width: number, at: EpisodeIndex): Uint8A
     task_index: ints(() => at.task),
     [TASK_ANNOTATION]: ints(() => at.task),
   };
+  const scan = widths.scan && e.scan ? [{ name: SCAN_KEY, data: rowsOf(e.scan, widths.scan) }] : [];
   const buffer = parquetWriteBuffer({
-    schema: SCHEMA as never,
+    schema: schemaOf(scan.length > 0) as never,
     columnData: [
-      { name: 'observation.state', data: rowsOf(e.state, width) },
-      { name: 'action', data: rowsOf(e.action, width) },
+      { name: 'observation.state', data: rowsOf(e.state, widths.joints) },
+      ...scan,
+      { name: 'action', data: rowsOf(e.action, widths.joints) },
       { name: 'timestamp', data: e.timestamps },
       ...INT_COLUMNS.map((name) => ({ name, data: intData[name] })),
       { name: 'next.reward', data: Float32Array.from({ length }, (_, i) => (i === length - 1 ? 1 : 0)) },
@@ -122,8 +144,11 @@ function features(spec: DatasetSpec) {
     ]),
   );
 
+  const scan = scanWidthOf(spec);
+
   return {
     'observation.state': { dtype: 'float32', ...joints },
+    ...(scan ? { [SCAN_KEY]: { dtype: 'float32', shape: [scan], names: null } } : {}),
     action: { dtype: 'float32', ...joints },
     ...videos,
     timestamp: scalarFeature('float32'),
@@ -156,9 +181,10 @@ function info(spec: DatasetSpec) {
 
 function modality(spec: DatasetSpec) {
   const joints = { joints: { start: 0, end: spec.jointNames.length } };
+  const scan = scanWidthOf(spec);
 
   return {
-    state: joints,
+    state: { ...joints, ...(scan ? { scan: { start: 0, end: scan, original_key: SCAN_KEY } } : {}) },
     action: joints,
     video: Object.fromEntries(spec.videos.map((v) => [v.key, { original_key: `observation.images.${v.key}` }])),
     annotation: { [TASK_ANNOTATION.replace(/^annotation\./, '')]: {} },
@@ -175,13 +201,14 @@ const perChannel = (s: FeatureStats) => ({
   count: s.count,
 });
 
-function episodeStats(e: DatasetEpisode, width: number, at: EpisodeIndex) {
+function episodeStats(e: DatasetEpisode, widths: Widths, at: EpisodeIndex) {
   const length = e.frames.length;
   const constant = (v: number) => columnStats(Array<number>(length).fill(v), 1);
 
   return {
-    'observation.state': columnStats(e.state, width),
-    action: columnStats(e.action, width),
+    'observation.state': columnStats(e.state, widths.joints),
+    ...(widths.scan && e.scan ? { [SCAN_KEY]: columnStats(e.scan, widths.scan) } : {}),
+    action: columnStats(e.action, widths.joints),
     timestamp: columnStats(e.timestamps, 1),
     frame_index: columnStats(
       Array.from({ length }, (_, i) => i),
@@ -198,7 +225,7 @@ function episodeStats(e: DatasetEpisode, width: number, at: EpisodeIndex) {
 }
 
 export function lerobotFiles(spec: DatasetSpec): Record<string, Uint8Array> {
-  const width = spec.jointNames.length;
+  const widths = { joints: spec.jointNames.length, scan: scanWidthOf(spec) };
   const taskList = [...new Set(spec.episodes.map((e) => e.task))];
   const files: Record<string, Uint8Array> = {};
   const episodesMeta: unknown[] = [];
@@ -208,12 +235,12 @@ export function lerobotFiles(spec: DatasetSpec): Record<string, Uint8Array> {
   spec.episodes.forEach((e, episode) => {
     const at = { episode, task: taskList.indexOf(e.task), start };
 
-    files[dataPath(episode)] = episodeParquet(e, width, at);
+    files[dataPath(episode)] = episodeParquet(e, widths, at);
 
     for (const [key, bytes] of Object.entries(e.videos)) files[videoPath(episode, key)] = bytes;
 
     episodesMeta.push({ episode_index: episode, tasks: [e.task], length: e.frames.length });
-    statsMeta.push({ episode_index: episode, stats: episodeStats(e, width, at) });
+    statsMeta.push({ episode_index: episode, stats: episodeStats(e, widths, at) });
     start += e.frames.length;
   });
 
@@ -224,6 +251,7 @@ export function lerobotFiles(spec: DatasetSpec): Record<string, Uint8Array> {
   files['meta/modality.json'] = json(modality(spec));
   files['meta/basecase.json'] = json({
     ...spec.source,
+    ...(spec.scans?.length ? { scans: spec.scans } : {}),
     episodes: spec.episodes.map((e, i) => ({ episode_index: i, ...e.source })),
   });
 

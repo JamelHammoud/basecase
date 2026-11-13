@@ -18,6 +18,7 @@ import {
 } from './mjcfTypes';
 import { adoptEmbeddedParts, isSolidPart } from './mjcfEmbedded';
 import { emitWorld } from './mjcfWorld';
+import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
 
 export { fromMj, quatFromMj, quatToMj, simDeltas, toMj, worldDeltas } from './mjcfFrames';
@@ -399,6 +400,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
   st.bodies.push(...world.bodies);
 
   const xml = mujocoXml(st, input.timestep ?? DEFAULT_TIMESTEP);
+  const scans = robotScans(st.bodies, parts);
 
   return {
     version: SIM_MODEL_VERSION,
@@ -409,5 +411,6 @@ export function buildMjcf(given: MjcfInput): SimModel {
     initial: { values: st.initialValues, roots: st.roots },
     massKg: st.massKg,
     warnings: st.warnings,
+    ...(scans.length ? { scans } : {}),
   };
 }

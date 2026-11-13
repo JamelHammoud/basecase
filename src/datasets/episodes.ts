@@ -1,3 +1,4 @@
+import { eyeSize } from '../sim/eyes';
 import type { SimJoint, SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 
@@ -17,6 +18,7 @@ export interface EpisodeData {
   timestamps: Float32Array;
   state: Float32Array;
   action: Float32Array;
+  scan?: Float32Array;
 }
 
 export const datasetStride = (dt: number) => Math.max(1, Math.round(1 / (dt * DATASET_FPS)));
@@ -33,13 +35,31 @@ export function robotJoints(model: SimModel, robotIndex = 0): SimJoint[] {
   return model.joints.filter((j) => ids.has(j.id));
 }
 
+export const scanWidth = (model: SimModel) => eyeSize(model.scans);
+
 export function canExport(recording: Recording, model: SimModel): boolean {
+  const scan = scanWidth(model);
+
   return (
     !!recording.jointQpos &&
     recording.jointQpos.length === model.joints.length &&
     recording.nbody === model.bodies.length &&
-    recording.frames > 1
+    recording.frames > 1 &&
+    (!scan || (recording.scanWidth === scan && !!recording.scan))
   );
+}
+
+function scanRows(recording: Recording, frames: number[]): Float32Array | undefined {
+  const width = recording.scanWidth ?? 0;
+  const source = recording.scan;
+
+  if (!width || !source) return undefined;
+
+  const out = new Float32Array(frames.length * width);
+
+  frames.forEach((f, row) => out.set(source.subarray(f * width, (f + 1) * width), row * width));
+
+  return out;
 }
 
 export function episodeData(recording: Recording, model: SimModel, task: string): EpisodeData {
@@ -60,7 +80,9 @@ export function episodeData(recording: Recording, model: SimModel, task: string)
     });
   });
 
-  return { task, frames, timestamps, state, action };
+  const scan = scanRows(recording, frames);
+
+  return { task, frames, timestamps, state, action, ...(scan ? { scan } : {}) };
 }
 
 export function columnStats(values: ArrayLike<number>, width: number): FeatureStats {

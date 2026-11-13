@@ -3,6 +3,7 @@ import { Button } from '../../design-system';
 import { disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
 import { FAMILY_NAMES } from '../../robot/robotFamilies';
 import type { RobotState } from '../../robot/robotState';
+import { plural } from '../../../electron/plural.mjs';
 
 const RUN: Record<string, string> = {
   idle: 'Motors off',
@@ -17,7 +18,7 @@ function servoCount(robot: RobotState) {
   const n = robot.spec?.ids.length ?? 0;
   const family = FAMILY_NAMES[robot.spec?.family ?? 'feetech'];
 
-  return `${n} emulated ${family} ${n === 1 ? 'servo' : 'servos'}`;
+  return plural(n, `emulated ${family} servo`);
 }
 
 function RobotAction({ robot }: { robot: RobotState }) {

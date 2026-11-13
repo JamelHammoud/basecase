@@ -7,6 +7,7 @@ import type { MeshGeometry, Model, ModelJoint } from './model';
 import { catalogFrame, limbOf, publishedData, round, S, type PublishedData } from './published';
 import { readModel } from './readModel';
 import type { Resolver, Source } from './sources';
+import { plural } from '../../../electron/plural.mjs';
 
 export interface ImportOptions {
   onProgress?: (message: string) => void;
@@ -189,7 +190,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   if (!linkGeo.size)
     throw new Error(
       notes.length
-        ? `Couldn’t load any of its ${notes.length} meshes. Choose the folder that has them.`
+        ? `Couldn’t load its ${plural(notes.length, 'mesh', 'meshes')}. Choose the folder with the robot’s mesh files.`
         : 'Nothing to show: the description has no meshes or shapes.',
     );
 

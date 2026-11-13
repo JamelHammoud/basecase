@@ -1,3 +1,5 @@
+import { plural } from '../plural.mjs';
+
 const HULL_COLLAPSE = 0.5;
 const FUSE_FIX = 'Fuse them with at least 0.2 mm overlap';
 
@@ -113,7 +115,7 @@ function craftLines(craft, size, share) {
 function summaryLine(audit) {
   const c = audit.craft;
   const facts = [
-    `${audit.bodies} ${audit.bodies === 1 ? 'body' : 'bodies'}`,
+    plural(audit.bodies, 'body', 'bodies'),
     audit.genus != null && `genus ${audit.genus}`,
     c?.solidity != null && `solidity ${c.solidity}`,
     c?.envelopeSharp != null && `envelope sharp ${c.envelopeSharp}`,

@@ -50,6 +50,7 @@ import type { SceneSkills } from './useSkills';
 import { synthesizeLinkageRequest, type LinkagePayload } from '../linkage/agentLinkage';
 import { synthesizeInWorker } from '../linkage/linkageClient';
 import { newId } from './helpers';
+import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
@@ -240,7 +241,7 @@ async function buildGuide(_payload: Payload, ctx: RequestContext) {
 
   return {
     text:
-      `${where}: ${record.pages} pages, ${record.steps} steps, ${plan.items.length} kinds of parts, ${plan.tools.length} tools.` +
+      `${where}: ${plural(record.pages, 'page')}, ${plural(record.steps, 'step')}, ${plural(plan.items.length, 'kind of part', 'kinds of parts')}, ${plural(plan.tools.length, 'tool')}.` +
       (subs.length ? ` Sub-assemblies: ${subs.join(', ')}.` : '') +
       ' Tell the user and link it as [build guide](#build-guide).',
   };

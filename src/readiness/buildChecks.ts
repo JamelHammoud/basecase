@@ -8,6 +8,7 @@ import type { Bom } from '../utils/bomTypes';
 import { isPrinted } from '../utils/bom';
 import type { Finding } from './types';
 import { ruleFinding } from './wording';
+import { plural } from '../../electron/plural.mjs';
 
 const MIN_INSERT_WALL_MM = 0.8;
 const MIN_LEAD_ROOM_MM = 10;
@@ -60,7 +61,7 @@ export function hiddenFindings(parts: ScenePart[]): Finding[] {
 
   return [
     ruleFinding('hidden', 'note', {
-      agentText: `${hidden.length} hidden part${hidden.length === 1 ? '' : 's'} left out of the clash, fit and assembly checks: ${hidden.map((p) => p.id).join(', ')}. Show them to check them.`,
+      agentText: `${plural(hidden.length, 'hidden part')} left out of the clash, fit and assembly checks: ${hidden.map((p) => p.id).join(', ')}. Show them to check them.`,
       ids: hidden.map((p) => p.id),
       subject: 'parts',
     }),

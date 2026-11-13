@@ -6,7 +6,7 @@ import { platformBridge } from '../../utils/platformBridge';
 import { timeAgo } from '../../utils/timeAgo';
 import { REVEAL_LABEL } from '../../utils/os';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
-import { plural } from './format';
+import { plural } from '../../../electron/plural.mjs';
 import { GuideCoverPage } from './GuideCoverPage';
 import { useGuidePages } from './useGuidePages';
 
@@ -88,7 +88,7 @@ const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord }> = ({ guide
   return (
     <>
       <div className="text-[13px] text-white/90 tabular-nums truncate">
-        {plural(record.pages, '1 page', `${record.pages} pages`)}
+        {plural(record.pages, 'page')}
       </div>
       <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/50'}`}>
         {guide.stale ? 'Out of date' : `Made ${ago === 'now' ? 'just now' : `${ago} ago`}`}

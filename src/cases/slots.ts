@@ -4,6 +4,7 @@ import { buildRig, partMatrix, type V3 } from '../utils/kinematics';
 import type { EndEffector, RobotFacts } from './robotFit';
 import { slotRefusal } from './robotFit';
 import type { RobotSlot } from './schema';
+import { plural } from '../../electron/plural.mjs';
 
 export interface SlotRobot {
   parts: ScenePart[];
@@ -96,7 +97,7 @@ export function slotRefusals(slots: RobotSlot[], facts: Array<RobotFacts | null>
   return slots.map((slot, i) => {
     const own = facts[i];
 
-    if (!own) return `This Case needs ${slots.length} robots. Open the others in tabs.`;
+    if (!own) return `This Case needs ${plural(slots.length, 'robot')}. Open the others in tabs.`;
 
     return slotRefusal(slot, own);
   });

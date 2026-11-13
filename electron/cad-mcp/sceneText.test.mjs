@@ -93,7 +93,7 @@ describe('sceneText with booleans', () => {
   it('lists a boolean with its operation and operand ids, then each operand indented, base first', () => {
     const lines = sceneText({ ...scene(0), parts: [cut] }).split('\n');
 
-    expect(lines[2]).toBe('1 parts:');
+    expect(lines[2]).toBe('1 part:');
     expect(lines[3]).toMatch(
       /^cut "cut" boolean\(subtract\) group="Base" pos=\[0,0,2\] size=\[40,30,4\] .*operands=\[plate,hole\]/,
     );
@@ -129,9 +129,9 @@ describe('sceneText with booleans', () => {
 
 describe('findInScene', () => {
   it('matches words, group and a region, and sorts by distance with near', () => {
-    expect(findInScene(scene(30), { query: 'part 7' })).toContain('1 of 30 parts match');
+    expect(findInScene(scene(30), { query: 'part 7' })).toContain('1 of 30 parts matched');
     expect(findInScene(scene(30), { group: 'head', region: { min: [0, -2, 0], max: [3, 2, 20] } })).toMatch(
-      /^2 of 30 parts match:\np1 .*\np3 /,
+      /^2 of 30 parts matched:\np1 .*\np3 /,
     );
 
     const near = findInScene(scene(30), { near: { point: [20, 0, 10], radius: 0.1 } }).split('\n');

@@ -9,6 +9,7 @@ import { partBoundsCad, type PartBoxes } from './agentScene';
 import { contractOf } from './interfaces';
 import { portsOf, worldPort } from './ports';
 import type { ZUpFrame } from './skeletonFrames';
+import { plural } from '../../electron/plural.mjs';
 
 export const DATUM_MM = 0.2;
 export const ENVELOPE_MM = 0.5;
@@ -79,7 +80,7 @@ function envelopeLines(
   });
 
   if (outside.length) out.problems.push(...outside.map((l) => `Envelope: ${l}.`));
-  else out.passed.push(`envelope (${solids.length} parts)`);
+  else out.passed.push(`envelope (${plural(solids.length, 'part')})`);
 }
 
 function worldPorts(parts: ScenePart[]): WorldPortZ[] {
@@ -150,8 +151,8 @@ function boltLines(contract: InterfaceContract, ports: WorldPortZ[], chains: Fas
     if (!missing.length) out.passed.push(`bolt pattern ${pattern.name} (${pattern.points.length} ${pattern.size})`);
     else
       out.problems.push(
-        `Bolt pattern ${pattern.name}: ${pattern.points.length - missing.length} of ${pattern.points.length} ` +
-          `${pattern.size} holes found; none at ${missing.map(fmt).join(', ')}.`,
+        `Bolt pattern ${pattern.name}: ${pattern.points.length - missing.length} of ${plural(pattern.points.length, `${pattern.size} hole`)} ` +
+          `found; none at ${missing.map(fmt).join(', ')}.`,
       );
   }
 }
@@ -170,7 +171,7 @@ function seamLines(contract: InterfaceContract, input: InterfaceCheckInput, out:
     if (crossing.length >= seam.count) out.passed.push(`seam with ${seam.with} (${crossing.length} ${seam.size})`);
     else
       out.problems.push(
-        `Seam with ${seam.with}: ${crossing.length} of ${seam.count} ${seam.size} screws cross it. Use fasten through both sides.`,
+        `Seam with ${seam.with} needs ${plural(seam.count, `${seam.size} screw`)} across it, and ${crossing.length} found. Use fasten through both sides.`,
       );
   }
 }

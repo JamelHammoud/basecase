@@ -10,6 +10,7 @@ import {
 } from '../utils/linkage';
 import type { SketchPlane } from '../utils/sketch/placement';
 import { linkageParts } from './linkageParts';
+import { plural } from '../../electron/plural.mjs';
 
 export type CadPlane = 'XY' | 'XZ' | 'YZ';
 
@@ -118,7 +119,7 @@ export async function synthesizeLinkageRequest(payload: LinkagePayload, ctx: Lin
 
   const frame = { plane: planeOf(payload.plane), origin: originOf(payload.origin) };
   const lines = solutions.map((s, i) => solutionLine(s, i, frame));
-  const head = `${solutions.length} crank-rocker four-bar${solutions.length === 1 ? '' : 's'} through ${points.length} points in CAD ${frame.plane}, best first:`;
+  const head = `${plural(solutions.length, 'crank-rocker four-bar')} through ${points.length} points in CAD ${frame.plane}, best first:`;
   const tail = payload.insert
     ? insertedText(solutions, payload.insert, ctx, scenePlane(frame.plane, frame.origin))
     : `\nInsert one with insert: ${choices(solutions)}.`;

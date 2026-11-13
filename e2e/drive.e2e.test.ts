@@ -244,6 +244,25 @@ async function openTouchTheDots() {
   await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
 }
 
+const SHORT_TRY_SECONDS = 0.4;
+
+async function endTryAt(seconds: number) {
+  await app.page.evaluate(async (at) => {
+    const clock = () =>
+      [...document.querySelectorAll('[data-testid="try-clock"]')].find((el) => !el.closest('[inert]'));
+    const elapsed = () => Number.parseFloat(clock()?.textContent ?? '') || 0;
+    const deadline = Date.now() + 30000;
+
+    while (elapsed() < at) {
+      if (Date.now() > deadline) throw new Error(`The try clock never reached ${at} s`);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    clock()?.parentElement?.querySelector('button')?.click();
+  }, seconds);
+}
+
 async function expectPublished(repo: string) {
   const published = hub.repos.get(repo)!;
   const paths = [...published.files.keys()];
@@ -282,6 +301,10 @@ describe('Cases', () => {
       expect(state.bodies.flatMap((b) => b.world)).toContain('dot0');
       expect(await partCount(app.page)).toBe(partsBefore);
 
+      await endTryAt(SHORT_TRY_SECONDS);
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+      expect((await simState()).tries[0].passed).toBe(false);
+
       const clashes = await app.page.evaluate(async () =>
         JSON.stringify(
           await (window as unknown as { __studio: { interference: () => Promise<unknown> } }).__studio.interference(),
@@ -289,10 +312,6 @@ describe('Cases', () => {
       );
 
       expect(clashes).not.toContain('dot0');
-
-      await button('End Try').click();
-      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-      expect((await simState()).tries[0].passed).toBe(false);
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
       await expectDataset();
 
@@ -321,23 +340,26 @@ describe('Cases', () => {
       const before = new Map(ours().map((name) => [name, commitsOf(name)]));
       const published = () => ours().filter((name) => commitsOf(name) > (before.get(name) ?? 0));
 
+      const token = app.page.locator(visible('input[aria-label="Access token"]'));
+      const toast = (text: RegExp) => app.page.getByRole('status').filter({ hasText: text });
+      const outcome = toast(/Published to|Couldn’t publish|earlier design/);
+
       await openTouchTheDots();
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await button('End Try').click();
+      await endTryAt(SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
       await expect.poll(() => publish().count()).toBe(1);
 
       await publish().click();
+      await token
+        .or(toast(/Publishing dataset/))
+        .or(outcome)
+        .first()
+        .waitFor({ timeout: 10000 });
 
-      const token = app.page.locator(visible('input[aria-label="Access token"]'));
-      const signedOut = await token.waitFor({ timeout: 10000 }).then(
-        () => true,
-        () => false,
-      );
-
-      if (signedOut) {
+      if (await token.isVisible()) {
         await token.fill(HUB_TOKEN);
         await token.press('Enter');
         await expect
@@ -347,13 +369,16 @@ describe('Cases', () => {
         await publish().dblclick();
       }
 
-      await expect.poll(() => published().length, { timeout: 120000 }).toBe(1);
+      await outcome.first().waitFor({ timeout: 120000 });
 
+      const said = await outcome.first().innerText();
       const [repo] = published();
 
-      await expect.poll(() => commitsOf(repo), { timeout: 120000 }).toBe((before.get(repo) ?? 0) + 1);
+      expect(said).toMatch(/^Published to /);
+      expect(published()).toHaveLength(1);
+      expect(said).toContain(repo);
+      expect(commitsOf(repo)).toBe((before.get(repo) ?? 0) + 1);
       await expectPublished(repo);
-      await expect.poll(() => app.page.getByRole('status').filter({ hasText: repo }).count()).toBeGreaterThan(0);
       expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
       expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
       expect(app.errors).toEqual([]);

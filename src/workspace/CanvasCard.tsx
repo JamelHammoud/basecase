@@ -3,6 +3,7 @@ import { PlateBar } from '../components/print/PlateBar';
 import { TryTimeline } from '../components/simulate/TryTimeline';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { FileImportIcon, PhotoIcon, Toast } from '../design-system';
+import { CaseRunOverlays } from './CaseRunProvider';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
@@ -131,6 +132,7 @@ export function CanvasCard(props: CanvasCardProps) {
         <PlateCanvas active={active} printing={core.printing} parts={core.printing.fitTest?.parts ?? core.parts} />
       )}
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
+      <CaseRunOverlays />
       <div
         aria-hidden
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"

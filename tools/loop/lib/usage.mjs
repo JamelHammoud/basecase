@@ -35,12 +35,28 @@ const parsed = (out) => {
   }
 };
 
+const eventsIn = (value) => {
+  if (Array.isArray(value)) return value;
+
+  return value ? [value] : [];
+};
+
 export function limitIn({ out = '', err = '' }, now = Date.now()) {
-  const resets = rejectedResets(parsed(out)).filter((at) => at > now);
+  const json = parsed(out);
+  const events = eventsIn(json);
+  const result = events.findLast((event) => event?.type === 'result');
+
+  if (result && !result.is_error) return null;
+
+  const judged = [...events.filter((event) => event?.type === 'rate_limit_event'), ...(result ? [result] : [])];
+  const resets = judged.flatMap((event) => rejectedResets(event)).filter((at) => at > now);
 
   if (resets.length > 0) return { until: Math.max(...resets) };
 
-  return LIMIT_TEXT.test(`${out}\n${err}`) ? { until: now + UNKNOWN_RESET_MS } : null;
+  const said = typeof result?.result === 'string' ? result.result : '';
+  const text = `${json ? said : out}\n${err}`;
+
+  return LIMIT_TEXT.test(text) ? { until: now + UNKNOWN_RESET_MS } : null;
 }
 
 const read = () => {

@@ -4,17 +4,17 @@ date: 2026-11-13
 image: /changelog/hinges-and-sliders/cover.png
 ---
 
-Select two parts and choose Add Hinge or Add Slider, and the second part turns or slides on the first, ready to pose in the Pose tab and to simulate.
+Select two parts and choose Add Hinge or Add Slider, and the second part turns or slides on the first, ready to pose and simulate.
 
 ## Where it is
 
-Select the part that stays put, then Shift-click the part that moves. Add Hinge and Add Slider appear in the right-click menu for the selection and in ⌘K whenever exactly two parts are selected.
+Select the part that stays put, then Shift-click the part that moves. Add Hinge and Add Slider appear in the right-click menu for the selection and in ⌘K whenever exactly two parts are selected. Steps are in [Join two parts with a hinge or slider](/help/join-two-parts-with-a-hinge).
 
 ![Add Hinge and Add Slider in the right-click menu](/help/join-two-parts-with-a-hinge/menu.png)
 
 ## How the axis is found
 
-If one part has a shaft in a bore on the other, the joint goes straight onto that axis with no click. Otherwise you click a round face on either part, and Basecase fits a cylinder to it: its axis becomes the joint's axis and its centre the pivot. It works the same on a cylinder from Shapes, a catalog part, an imported mesh or a STEP body. Flat faces don't give an axis, so the cursor turns into a no-entry sign over them and a click does nothing.
+If one part has a shaft in a bore on the other, the joint goes straight onto that axis with no click. Otherwise you click a round face on either part, and Basecase fits a cylinder to it. Its axis becomes the joint's axis, and its centre the pivot. It works the same on a cylinder from Shapes, a catalog part, an imported mesh or a STEP body. Flat faces don't give an axis, so the cursor turns into a no-entry sign over them and a click does nothing.
 
 ## What you get
 

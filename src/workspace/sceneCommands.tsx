@@ -66,10 +66,10 @@ function fileCommands({ core }: CommandInputs): Command[] {
     {
       id: 'open-scenes',
       group: 'Scene',
-      label: 'Open Scene…',
+      label: 'Show Scenes',
       shortcut: '⌘O',
       icon: <FolderOpenIcon className={ic} />,
-      keywords: 'scenes files browse recent history delete rename',
+      keywords: 'open saved files browse recent history delete rename',
       run: studio.openSceneList,
     },
     {
@@ -386,12 +386,12 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
             },
           },
           {
-            id: 'tool-clear-marks',
+            id: 'tool-delete-marks',
             group: 'Tools',
-            label: 'Clear Marks',
+            label: 'Delete Marks',
             icon: <DeleteIcon className={ic} />,
-            keywords: 'annotate erase remove red lines',
-            run: core.marks.clear,
+            keywords: 'annotate erase remove clear red lines',
+            run: core.marks.deleteAll,
           },
         ]
       : []),

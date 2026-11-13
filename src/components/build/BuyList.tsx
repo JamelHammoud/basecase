@@ -103,10 +103,9 @@ export const BuyList: React.FC<BuyListProps> = ({
     onSelectParts,
     extraOf: (key) => extras.find((x) => x.key === key),
     onExtraQty: (key, qty) => onChangeExtras(withQty(extras, key, qty)),
-    onRemoveExtra: (line) =>
+    onDeleteExtra: (line) =>
       confirmAction({
-        title: `Remove ${line.name}?`,
-        confirmLabel: 'Remove',
+        title: `Delete ${line.name}?`,
         onConfirm: () => onChangeExtras(without(extras, line.key)),
       }),
   };

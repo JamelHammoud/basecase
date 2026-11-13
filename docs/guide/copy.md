@@ -93,10 +93,10 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 
 **The copy budget.** On every pull request, Check's `copy` job (`tools/check-copy-budget.mjs`, logic in `tools/copy/`) collects the user-facing strings in each changed `src/` file before and after: JSX text, labelling props (`aria-label`, `title`, `placeholder`, `label`, `alt`, `tooltip`, `hint`…), `showToast` / `toastInFront` / `notify` / `confirmAction` arguments, and `label` / `title` / `hint` properties of command and menu objects. Tests, `src/data/` and strings that are only symbols, numbers, units, ids or paths are skipped. It prints `Copy: +N −M` and fails when:
 
-- the change adds more strings than it removes and a new one has no line `copy: "<string>" — <why the screen needs it>` in the body's Copy section (the loop fills it from its answer's `copy` field). Removing strings never needs a reason, and repeating a string the file already has doesn't either;
+- the change adds more strings than it removes and a new one has no line `copy: "<string>" — <why the screen needs it>` in the body's Copy section (the loop fills it from its answer's `copy` field, for every kind of pull request; a template without a Copy section gets one appended). Removing strings never needs a reason, and repeating a string the file already has doesn't either;
 - an added string uses a word §3c bans (`BANNED_COPY` in `verify/rehearsal/uiRules.ts`), whatever the net.
 
-Run it locally with `node tools/check-copy-budget.mjs origin/main..HEAD` (`PR_BODY` holds the body).
+Run it locally with `node tools/check-copy-budget.mjs origin/main..HEAD` (`PR_BODY` holds the body). Check runs on pushes, not on body edits, so a `copy:` line added to the body afterwards counts only once another commit is pushed; a reason belongs in the answer's `copy` field from the start.
 
 ### 3e. Reference examples
 

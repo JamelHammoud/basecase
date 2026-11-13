@@ -19,7 +19,7 @@ export const DraftQuotes: React.FC<{ quotes: MessageQuote[]; onRemove: (id: stri
             </div>
             <IconButton
               icon={<CloseIcon className="w-3.5 h-3.5" />}
-              title="Remove Quote"
+              title="Remove quote"
               tooltipSide="top"
               size="xs"
               className="rounded-full shrink-0"

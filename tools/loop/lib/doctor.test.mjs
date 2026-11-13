@@ -30,8 +30,8 @@ describe('calling the doctor', () => {
     const quiet = { breaches: [], failing: [], stalledSince: null, lastCallAt: null, now };
 
     expect(shouldCall(quiet)).toBe(false);
-    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(30) })).toBe(false);
-    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(50) })).toBe(true);
+    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(10) })).toBe(false);
+    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(20) })).toBe(true);
     expect(shouldCall({ ...quiet, failing: ['merge'] })).toBe(true);
     expect(shouldCall({ ...quiet, failing: ['merge'], lastCallAt: minutesAgo(60) })).toBe(false);
     expect(shouldCall({ ...quiet, failing: ['merge'], lastCallAt: minutesAgo(130) })).toBe(true);

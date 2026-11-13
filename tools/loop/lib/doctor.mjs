@@ -1,4 +1,4 @@
-export const STALL_MINUTES = 45;
+export const STALL_MINUTES = 15;
 export const COOLDOWN_MINUTES = 120;
 
 const FAILED = /\] failed: /;

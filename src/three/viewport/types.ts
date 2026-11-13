@@ -66,6 +66,13 @@ export interface AxisPickHit {
   point: Vec3;
 }
 
+export interface BuildStepView {
+  shown: string[];
+  moves: Array<{ partId: string; offset: Vec3 }>;
+  arrows: Array<{ from: Vec3; to: Vec3 }>;
+  labels: Array<{ partId: string; text: string }>;
+}
+
 export interface ViewportProps {
   sceneKey?: string;
   parts: ScenePart[];
@@ -109,6 +116,7 @@ export interface ViewportProps {
   onGrab?: GrabHandler | null;
   axisPick?: { parts: string[]; ready: boolean } | null;
   onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
+  buildStep?: BuildStepView | null;
 }
 
 export type MarkTool = 'marker' | 'eraser';
@@ -180,6 +188,7 @@ export interface Viewport3DHandle {
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;
+  shownPartIds: () => string[];
 }
 
 export const MIN_DIST = 25;

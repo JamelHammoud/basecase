@@ -1,5 +1,6 @@
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
+import { BuildAlongBar } from '../components/build/BuildAlongBar';
 import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
@@ -15,6 +16,23 @@ interface SceneViewportProps {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
+}
+
+function markFieldFor(marks: WorkspaceCore['marks']) {
+  const editingMark = marks.selected;
+
+  if (!editingMark) return null;
+
+  return (
+    <MarkLabelField
+      key={editingMark.id}
+      label={editingMark.label ?? ''}
+      color={marks.color}
+      autoFocus={marks.freshId === editingMark.id}
+      onCommit={(label) => marks.setLabel(editingMark.id, label)}
+      onClose={() => marks.select(null)}
+    />
+  );
 }
 
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
@@ -37,7 +55,6 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   const { sim } = simTraining;
   const { cursors, lanes } = agent;
   const { setDraft } = annotations;
-  const editingMark = marks.selected;
   const shownParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
 
   return (
@@ -76,18 +93,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onSelectMark={marks.select}
         onEraseMarks={marks.erase}
         onMoveMark={marks.move}
-        markField={
-          editingMark && (
-            <MarkLabelField
-              key={editingMark.id}
-              label={editingMark.label ?? ''}
-              color={marks.color}
-              autoFocus={marks.freshId === editingMark.id}
-              onCommit={(label) => marks.setLabel(editingMark.id, label)}
-              onClose={() => marks.select(null)}
-            />
-          )
-        }
+        markField={markFieldFor(marks)}
         agentFrames={agent.frames}
         fixedCameras={project.cameras}
         paused={!active || !!core.printing.mode}
@@ -103,8 +109,10 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
           }
         }
         onAxisPick={actions.joints.onAxisPick}
+        buildStep={core.buildAlong.view}
       />
       <DriveOverlay sim={sim} />
+      <BuildAlongBar buildAlong={core.buildAlong} active={active} />
       {!core.commandCenter.open && (
         <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       )}

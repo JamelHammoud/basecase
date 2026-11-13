@@ -15,8 +15,8 @@ import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
-import { useBuildGuide } from './useBuildGuide';
 import { useCommandCenter } from './useCommandCenter';
+import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
@@ -30,6 +30,7 @@ function useSceneMeta(seed?: WorkspaceSeed) {
 
 interface SeedTargets {
   guide: { cancel: () => void };
+  buildAlong: { close: () => void };
   scene: Pick<ReturnType<typeof useSceneMeta>, 'setSceneId' | 'setSceneName' | 'setGlobalGoal'>;
   docs: Pick<ReturnType<typeof useSceneDocument>, 'setProject' | 'resetDoc'>;
   annotations: { reset: (annotations: NonNullable<WorkspaceSeed['annotations']>) => void };
@@ -40,6 +41,7 @@ interface SeedTargets {
 
 const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) => {
   to.guide.cancel();
+  to.buildAlong.close();
   to.scene.setSceneId(next.sceneId);
   to.scene.setSceneName(next.sceneName);
   to.scene.setGlobalGoal(next.globalGoal || '');
@@ -111,16 +113,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   });
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
-  const guide = useBuildGuide({
-    sceneName: scene.sceneName,
-    parts,
-    project,
-    partsRef: docs.partsRef,
-    projectRef,
-    updateProjectNow: docs.updateProjectNow,
-    showToast,
-    viewportRef,
-  });
+  const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
     parts,
     selectedIds,
@@ -134,7 +127,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
 
   const { travel } = docs;
   const { restorePose } = posing;
-  const loadSeed = seedLoader({ guide, scene, docs, annotations, setSelectedIds, tool, showToast });
+  const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
 
@@ -165,6 +158,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     simTraining,
     commandCenter,
     guide,
+    buildAlong,
     undo: () => travel('undo', restorePose),
     redo: () => travel('redo', restorePose),
     loadSeed,

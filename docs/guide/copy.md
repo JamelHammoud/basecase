@@ -4,7 +4,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 3. Copy & Labeling Rules
 
-Every word in the UI is product copy. Write it to the standard below, and check it against the checklist (§3d) before shipping. These rules distil Apple's HIG “Writing”, the Microsoft Writing Style Guide, NN/g's error-message and empty-state guidelines, Mailchimp's Voice & Tone guide, and Monzo's tone of voice. They're tested against product copy those sources and the wider industry celebrate (§3e).
+Every word in the UI is product copy. Write it to the standard below, and check it against the checklist (§3d) before shipping. These rules distil Apple's HIG “Writing”, the Microsoft Writing Style Guide, NN/g's error-message and empty-state guidelines, Mailchimp's Voice & Tone guide, and Monzo's tone of voice. They're tested against product copy those sources and the wider industry celebrate (§3e). The changelog, blog and help center follow §3f as well.
 
 ### 3a. Principles
 
@@ -132,3 +132,66 @@ Before → after in this app:
 | “Saved with today's date. Recheck after 60 days.” (under the price form) | No footnote; a stale price turns amber and its tooltip says why | Don't explain what the app handles for you |
 
 Sources: [Apple HIG: Writing](https://developer.apple.com/design/human-interface-guidelines/writing), [Microsoft: Top 10 tips for style and voice](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice), [NN/g: Error-message guidelines](https://www.nngroup.com/articles/error-message-guidelines/), [NN/g: Designing empty states](https://www.nngroup.com/articles/empty-state-interface-design/), [Mailchimp Voice & Tone](https://styleguide.mailchimp.com/voice-and-tone/), [Monzo tone of voice](https://monzo.com/tone-of-voice), [Econsultancy: 15 microcopy examples](https://econsultancy.com/15-marvellous-microcopy-examples-and-how-they-improve-ux/).
+
+### 3f. Changelog, blog and help center
+
+The rules for long-form copy on basecase.so: `site/content/changelog/`, `site/content/blog/` and `site/content/help/` (Loop, §0l, has the folders and front matter). §3a–§3c hold here too, with three changes: posts may say “we” (below), a changelog entry may open with “You can now”, and UI labels quoted in prose keep their app casing. Each rule cites the research behind it: **B** is [Blogs and changelogs](../research/Writing/blogs-and-changelogs.md) (B1–B9 are its “What the best ones share”, B-gap its “Where Basecase falls short”), **G** is [Writing guides](../research/Writing/writing-guides.md) (G1–G27 are its synthesis rules). Rules marked **(checked)** fail `npm run check:site`; review fails a page that breaks any of the rest.
+
+#### Every page
+
+1. **The first sentence is the news or the task**: what the reader can do now, or what the page helps them do. Never a definition (“A Case is…”), “Until now”, or a menu label as the subject (“Calibrate Servos moves…”); the person or the problem comes first, where it lives second. (B1, B-gap 2, G1)
+2. **Sentences of 25 words or fewer, paragraphs of 5 sentences or fewer** (checked in changelog and blog). Vary the rhythm: a run of equal sentences reads generated; a short one turns the point. (G2, B7)
+3. **One claim per sentence.** The fact, its reason and its limit each get their own; never three clauses joined by commas and “and”. Never inventory the UI in one breath (“X, next to Y in Z and in ⌘K, sends…”). (B-gap 1)
+4. **The why is one concrete case**, next to the what: the person, the input or the failure that made it worth building (“a template Case published from a second scene replaced the first scene's dataset”). Never a mission statement. (B2, B-gap 3)
+5. **Real numbers, true in the code or measured.** Durations, sizes, limits, counts, versions: “18 seconds”, “200 MB”, “25 frames a second”. Where nothing was measured, give no number and no comparative (“faster”, “smaller”). (B3, B-gap 4)
+6. **Show the real thing**: a screenshot of each state, a real link, file name or output. Alt text says what's on screen, never “screenshot” (checked). Every image the page names exists in `site/public/` (checked). (B4, G22)
+7. **Limits get their own plain sentence**: in the first paragraph when they decide whether the page is for you (desktop only, emulated only), otherwise before the ending (public repos only, what isn't in it). Never an adjective mid-sentence, the last line, or “experimental”. (B5, B-gap 6)
+8. **Plain words.** Keep the terms experts search for (URDF, MJCF, LeRobot) and explain or link each the first time on a page. (G3)
+9. **Describe, don't sell** (checked): no “powerful”, “seamless”, “effortless”, “game-changing”, “revolutionary”, “magic”, “cutting-edge”, “supercharge”, “excited to”, “Try it today” and the rest of `SITE_BANNED` in `tools/site/banned.mjs`, which also holds §3c's please, simply, just, easily, successfully, Oops and Invalid. (G4, G7, B “specific nouns”)
+10. **Link text names the destination** (checked): never “here”, “click here”, “more”, “Learn more”, “Read more”. Link at the point the link helps, not in a closing list. Every link to `/help/`, `/changelog/` or `/blog/` resolves (checked). (G6)
+11. **Titles**: sentence case, 65 characters or fewer, no closing `.`, `?`, `!` or `:` (checked). Unique across the site, and true without the page around them. (G17, G5)
+12. **The first paragraph is the summary.** Lists, feeds and the meta description show it alone, so it stands alone and doesn't repeat the title. (G19, G9)
+13. **End on something the reader can use**: the help article, the next step, what's coming without a promise. Never a slogan, “Try it”, or a precondition (“…once the scene has a movable joint.”). (B9, B-gap 11)
+14. **Voice.** A changelog entry or post may say “we” for the people who build Basecase, once Basecase is named, and speak first-hand: what was hard, what we chose and why, what we got wrong. Help says “you” only. No jokes about failure, no exclamation marks. (B6, G15, G “Humor and warmth”)
+15. **Never write**: “Updated…”, “Improved…”, “Various fixes”, “In today's…”, “Whether you're a… or a…”, “We're excited to announce”, headings like “Introduction” or “Overview”, or a claim you didn't check in the code. (B “templated scaffolding”, G9)
+
+#### Changelog entry
+
+- **When.** Only when a person can do something new, or must know something new: a new capability, a new way of working, or a real change in behaviour. Never for a fix, polish, a rename, a moved control, one more option or a faster load; the release notes list those. Two features are two entries; several steps of one arc are one entry, written by the step that makes it usable. Same feature again: update its entry. (G8, B-gap 7)
+- **Title**: what you can now do, in the feature's words, a few words long (“Calibrate servos”). (B “Linear changelog”)
+- **First paragraph**: one or two sentences (checked), usually “You can now…” or the problem it solves. (B “Linear changelog”, G9)
+- **Length**: 60 to 250 words. Up to 500 only when the entry carries news a help article can't: a decision, a cost, a reversal. `##` headings only past 250 words. (B “Linear changelog”, B “Amp's Chronicle”)
+- **Order**: what you can do and where → the one case that's why → how it behaves, with numbers → limits → the help link.
+- **No steps.** Steps belong in the help article; an entry that walks the UI section by section is a manual. (B-gap 9)
+- **Images**: `image:` is a cover screenshot of the feature in use whenever it has a screen; add a body image only for a state the cover doesn't show. Images live in `site/public/changelog/<file name without the date>/`. An entry with nothing on screen (a release, a file format) has none. (B4, B-gap 5)
+- **The help link**: from 2026-11-12, when the help center opened, every entry links its help article by its title (checked), usually in the last sentence: “Steps are in Calibrate an emulated robot.”, with the title as the link text to `/help/calibrate-an-emulated-robot` (G10, B-gap 11)
+- `version:` when it shipped in a release.
+
+#### Launch blog post
+
+- **When**: only for an arc's big step (a new integration, a new app, a rebuilt subsystem), and only when there's a story the changelog can't hold: a decision, the alternatives, a cost, a number. Otherwise the changelog entry is enough. (B-gap 10)
+- **Not the changelog again**: link the entry and the help article; never copy their sentences (checked: a sentence of 8 words or more that also appears in a changelog entry fails). (B-gap 10)
+- **Structure**: the news and who it's for in the first paragraph → the problem as one concrete case → each choice with the alternative it beat and why → numbers → limits and what's next → the help article. (G12, G13, B1–B5)
+- **Length**: 400 to 1,500 words, under `##` headings that name what's below them, front-loaded and parallel. (G14, B8)
+- **Admit the cost.** Every post says at least one thing that's worse, missing or reversed. (B5, B “Admissions”)
+
+#### Help article
+
+- **One type per article** (Diátaxis): a **task** (how to do one thing), a **tutorial** (a first project that always works), a **concept** (why and how something works), a **reference** (everything of one kind: shortcuts, formats, the files in a package) or **troubleshooting** (one problem, from its symptom). A task holds action only and links the concept for the why; a list of a zip's files is reference. No FAQ pages. (G16, G24, G “FAQs”)
+- **Titles by type**: a task starts with its verb and names the goal, not the tool (“Import a mesh”), never “How to…” or an “-ing” word (checked); a concept is a noun phrase that reads after “About” (“Checks and blockers”); a reference names what it lists (“Keyboard shortcuts”); troubleshooting states the symptom (“Agent shows Sign In after connecting”). No questions (checked), no content type (“guide”, “FAQ”). (G17)
+- **Summary**: the first paragraph, one sentence, 160 characters or fewer, ending in a full stop and adding words the title lacks. (G19)
+- **Steps**: numbered, one action each, where before what (“In Results, click **Publish to Hugging Face**.”), full sentences ending in a full stop, ten at most, the last one finishing the task. Alternatives (⌘K, a drop on the canvas) go after the steps in one line, never inside a step. (G20)
+- **UI labels are bold and spelled as in the app**, Title Case kept, trailing ellipsis dropped; each label in a menu path is bold (**File** ▸ **Import Robot**). Keys are not bold (⌘K). Verbs: click, right-click, press, drag, and choose for menu items. (G21, G “Click or select”)
+- **Requirements say “must”, options “can”.** A warning about real hardware comes before its step and says “do not”. (G26)
+- **Screenshots** follow the step they show, cropped to the action, in `site/public/help/<slug>/`. The steps work without them. (G22)
+- **Links**: the concept from the task, the next task from the last step. End with at most two related articles: one simpler, one more advanced. Every article is linked from another article or its collection. (G25)
+- **Collections follow the robotics loop**, not the code: Get started, Design, Engineer, Simulate and train, Build and print, Operate, Fix a problem. Each article sits in one. (G23)
+- `covers` lists the code the article describes; recheck the article when that code changes.
+
+**Before → after** (`2026-11-12-calibrate-servos.md`):
+
+| Before | After |
+|---|---|
+| “Calibrate Servos moves each joint of a connected emulated robot through a slow bench run and fits its servo, so the Simulate tab, Cases and training run on the fit.” (30 words, a menu label as subject, the limit hidden in “emulated”) | “You can now fit each servo's model from an 18-second bench run, so simulation moves the way your servos do. It works on the emulated robot; real servos stay locked.” |
+
+**What `npm run check:site` checks** (`tools/check-site.mjs`, logic in `tools/site/`; part of `npm run check`, and `check:changed` runs it when a file under `site/` changes): sentence and paragraph length and a changelog's first paragraph (changelog and blog); banned and marketing words, link text, links to site pages, image files and alt text, and title length and punctuation (every page); the help link (changelog from 2026-11-12); copied changelog sentences (blog); question, “How to” and “-ing” titles (help).

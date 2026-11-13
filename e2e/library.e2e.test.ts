@@ -82,4 +82,19 @@ describe('Library', () => {
     await expect.poll(() => partCount(app.page)).toBeGreaterThan(before);
     expect(app.errors).toEqual([]);
   });
+
+  it('opens each sidebar view from its Show command in ⌘K', async () => {
+    for (const view of ['Robots', 'Objects', 'Layers', 'Library']) {
+      await app.page.keyboard.press('Meta+k');
+      await app.page.keyboard.type(`Show ${view}`);
+      await app.page.locator(shown('button[data-idx="0"]'), { hasText: `Show ${view}` }).waitFor();
+      await app.page.keyboard.press('Enter');
+
+      const rail = app.page.locator(shown(`nav[aria-label="Sidebar views"] button[aria-label="${view}"]`));
+
+      await expect.poll(() => rail.getAttribute('aria-pressed')).toBe('true');
+    }
+
+    expect(app.errors).toEqual([]);
+  });
 });

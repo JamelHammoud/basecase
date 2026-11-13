@@ -20,6 +20,7 @@ covers:
   - src/workspace/sceneCommands.tsx
   - src/workspace/editCommands.tsx
   - src/workspace/viewCommands.tsx
+  - src/workspace/showView.ts
   - src/workspace/selectionNeeds.ts
 ---
 
@@ -33,6 +34,8 @@ Search every command, catalog part and saved model by name with ⌘K, without hu
 Every word you type must match, and results whose name starts with your words come first. A result's shortcut shows at its right, so the next time you can press it directly.
 
 The command menu holds the commands from every menu, each catalog part and hardware size, your Library models, and your other open scenes. It doesn't list saved scenes; **Show Scenes** ([[⌘O]]) opens them.
+
+Commands named **Show** open a sidebar view or a right-panel tab, such as **Show Layers**, **Show Library** or **Show Simulate**.
 
 Commands that act on parts are listed only while they can run. **Copy** needs a selected part, **Group** and **Union** two, and **Spread Along X** three.
 

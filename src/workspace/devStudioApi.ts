@@ -31,6 +31,7 @@ export interface DevActions {
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  sharedLink: () => string | null;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -141,6 +142,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
+    sharedLink: () => devRef.current.sharedLink(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();

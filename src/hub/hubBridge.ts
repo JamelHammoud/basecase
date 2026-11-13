@@ -33,8 +33,15 @@ function asAccount(value: unknown): HubAccountState {
   return { signedIn: !!v.signedIn, name: typeof v.name === 'string' ? v.name : null };
 }
 
+const account = async () => asAccount(await call('hub:account'));
+
 export const hubBridge = {
-  account: async () => asAccount(await call('hub:account')),
+  account,
+  signedIn: () =>
+    account().then(
+      (a) => a.signedIn,
+      () => false,
+    ),
   signIn: async (token: string) => asAccount(await call('hub:sign-in', token)),
   publish: (payload: HubPublish) => call<HubPublished>('hub:publish', payload),
 };

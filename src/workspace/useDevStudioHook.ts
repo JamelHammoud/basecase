@@ -59,6 +59,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       return zip && unzipSync(zip);
     },
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
+    sharedLink: () => core.simTraining.share.link,
     robotPackage: async () => {
       const made = await robotPackageZip(core);
 

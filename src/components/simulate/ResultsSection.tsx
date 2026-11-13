@@ -13,6 +13,7 @@ import type { TryRecord } from '../../cases/tries';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import type { Cases } from '../../workspace/useCases';
+import type { ShareRobot } from '../../workspace/useShareRobot';
 import { fmtTime } from './format';
 import { useFilmstrip } from './useFilmstrip';
 
@@ -44,15 +45,17 @@ const TryRow: React.FC<TryRowProps> = ({ record, model, parts, world, onReplay, 
 
 interface ResultsProps {
   cases: Cases;
+  share: ShareRobot;
   model: SimModel | null;
   parts: ScenePart[];
   world: ScenePart[];
 }
 
-export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, world }) => {
+export const ResultsSection: React.FC<ResultsProps> = ({ cases, share, model, parts, world }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
+  const tried = cases.tries.length > 0;
 
-  if (!cases.tries.length) return null;
+  if (!tried && !share.canShare) return null;
 
   const openMenu = (e: React.MouseEvent, record: TryRecord) => {
     e.preventDefault();
@@ -64,7 +67,10 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, wo
   };
 
   return (
-    <Section title="Results" summary={`${cases.tries.filter((t) => t.passed).length} of ${cases.tries.length}`}>
+    <Section
+      title="Results"
+      summary={tried ? `${cases.tries.filter((t) => t.passed).length} of ${cases.tries.length}` : undefined}
+    >
       <div className="flex flex-col">
         {cases.tries.map((t) => (
           <TryRow
@@ -101,6 +107,18 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, wo
           onClick={cases.dataset.publishDataset}
         >
           Publish to Hugging Face
+        </Button>
+      )}
+      {share.canShare && (
+        <Button
+          size="sm"
+          fullWidth
+          className={tried ? 'mt-1.5' : undefined}
+          disabled={share.sharing}
+          icon={<ShareIcon className="w-4 h-4" />}
+          onClick={share.share}
+        >
+          Share Robot
         </Button>
       )}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}

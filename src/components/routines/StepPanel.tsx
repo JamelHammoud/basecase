@@ -26,7 +26,7 @@ export function StepPanel({ flow }: { flow: Flow }) {
       data-testid="routine-step"
       className="shrink-0 max-h-[45%] overflow-y-auto border-t border-white/[0.06] px-[12px] [--pad-x:12px] py-3 flex flex-col gap-2"
     >
-      <div className="h-7 flex items-center justify-between gap-2">
+      <div className="h-[28px] flex items-center justify-between gap-2">
         <span className="text-[13px] font-semibold text-white/90 truncate">{stepTitle(node)}</span>
         {node.kind !== 'base' && (
           <IconButton

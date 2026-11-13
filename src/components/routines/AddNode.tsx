@@ -4,7 +4,7 @@ import { InsertButton } from './InsertButton';
 
 export function AddNode({ data }: NodeProps<Node<AddNodeData>>) {
   return (
-    <div className="h-7 flex items-center justify-center">
+    <div className="h-[28px] flex items-center justify-center">
       <Handle type="target" position={Position.Top} className="opacity-0! pointer-events-none!" isConnectable={false} />
       <InsertButton point={data.point} />
     </div>

@@ -31,7 +31,7 @@ export const JointRow: React.FC<{
     <div
       data-joint={joint.id}
       onContextMenu={onContextMenu}
-      className={`-mx-[6px] px-[6px] rounded-lg col-span-3 grid grid-cols-subgrid items-center h-8 scroll-my-3 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}
+      className={`-mx-[6px] px-[6px] rounded-lg col-span-3 grid grid-cols-subgrid items-center h-[32px] scroll-my-3 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}
     >
       <span className="min-w-0 flex items-center gap-1.5">
         <button
@@ -73,7 +73,7 @@ export const JointRow: React.FC<{
           }
         }}
         aria-label={`${label} ${unit === '°' ? 'degrees' : 'mm'}`}
-        className="h-7 w-full rounded-md bg-white/[0.05] hover:bg-white/[0.07] focus:bg-black/20 px-1.5 text-right text-[13px] text-white/90 tabular outline-none ring-1 ring-inset ring-transparent focus:ring-[#0d99ff]"
+        className="h-[32px] w-full rounded-md bg-white/[0.05] hover:bg-white/[0.07] focus:bg-black/20 px-1.5 text-right text-[13px] text-white/90 tabular outline-none ring-1 ring-inset ring-transparent focus:ring-[#0d99ff]"
       />
     </div>
   );

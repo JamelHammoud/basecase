@@ -169,7 +169,7 @@ export const JointRow: React.FC<JointRowProps> = ({
           disabled={!replayable}
           aria-expanded={replayable ? open : undefined}
           onClick={() => onReplay(open ? null : { jointId, version: null })}
-          className="flex-1 min-w-0 min-h-8 px-1 py-1.5 flex items-center justify-between gap-3 text-left cursor-default"
+          className="flex-1 min-w-0 min-h-[32px] px-1 py-1.5 flex items-center justify-between gap-3 text-left cursor-default"
         >
           <JointLabel row={row} measured={measured} />
           {live && <Reading reading={reading} gap={gap} showTemp={!lagging} />}

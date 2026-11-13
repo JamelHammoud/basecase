@@ -49,7 +49,7 @@ export const PosesSection: React.FC<{
       {posing.poses.map((p) => (
         <div
           key={p.id}
-          className="-mx-[6px] px-[6px] h-8 rounded-lg flex items-center hover:bg-white/[0.04]"
+          className="-mx-[6px] px-[6px] h-[32px] rounded-lg flex items-center hover:bg-white/[0.04]"
           onContextMenu={(e) =>
             openMenu(e, [
               { label: 'Apply', onSelect: () => posing.applySavedPose(p.id) },
@@ -73,7 +73,7 @@ export const PosesSection: React.FC<{
           ) : (
             <button
               type="button"
-              className="flex-1 min-w-0 h-8 text-left text-[13px] text-white/85 truncate cursor-default"
+              className="flex-1 min-w-0 h-[32px] text-left text-[13px] text-white/85 truncate cursor-default"
               onClick={() => posing.applySavedPose(p.id)}
             >
               {p.name}

@@ -29,10 +29,11 @@ Turn the design into a step-by-step assembly PDF, in an order Basecase checked t
 1. In the **Build** tab, find **Build guide**.
 2. Click **Generate Guide**. The card shows the step it's drawing and the time left, and you can keep working.
 3. When the toast says the guide is made, click **Open**.
+
+   ![The Build guide card with an 8-page guide made just now and an Open button](/help/make-a-build-guide/current.png)
+
 4. Press → or ← to turn the pages.
 5. Press Esc to close the guide.
-
-![The Build guide card with an 8-page guide made just now and an Open button](/help/make-a-build-guide/current.png)
 
 Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the file and **Show in Finder** shows where it's saved. If the PDF was moved or deleted, either one makes it again first.
 
@@ -40,7 +41,9 @@ Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the f
 
 When the design changes, the card reads **Out of date** in amber, and **Update** appears beside **Open**.
 
-![The Build guide card reading Out of date, with Open and Update buttons](/help/make-a-build-guide/out-of-date.png) Basecase also updates the guide on its own, 15 seconds after the last change, once the agent is done. An update redraws only the steps that show the parts you changed.
+![The Build guide card reading Out of date, with Open and Update buttons](/help/make-a-build-guide/out-of-date.png)
+
+Basecase also updates the guide on its own, 15 seconds after the last change, once the agent is done. An update redraws only the steps that show the parts you changed.
 
 To stop the automatic updates, press ⌘, (Ctrl+, on Windows), choose **Build** and turn off **Update automatically**.
 

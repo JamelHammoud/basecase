@@ -68,10 +68,14 @@ function servoChain({ prefix, label, start, holder, links, tip, joints }) {
   return { parts, servos, joints: specs };
 }
 
-function finish({ parts, servos, joints }) {
+function finish({ parts, servos, joints }, catalogOf = () => SERVO_KEY) {
   return {
     parts: parts.map((p) => ({ ...p, ...poseOf(p.frame) })),
-    servos: servos.map((s) => ({ ...s, catalog: SERVO_KEY, ...poseOf(s.frame.clone().multiply(SERVO_FROM_MESH)) })),
+    servos: servos.map((s) => ({
+      ...s,
+      catalog: catalogOf(s.id),
+      ...poseOf(s.frame.clone().multiply(SERVO_FROM_MESH)),
+    })),
     joints: joints.map(({ servo, parent, child, ...j }) => ({
       ...j,
       parent: [parent, servo],
@@ -83,17 +87,24 @@ function finish({ parts, servos, joints }) {
 
 export const CATALOG_HORN = new THREE.Vector3(-12.5, 0, 18.9);
 
-export function armTemplate() {
-  const start = frame([0, 0, 47.4], [0, 0, -90]);
+export const ARM_SHOULDER_MM = 80;
+export const ARM_FLANGE = new THREE.Vector3(36, 0, -8);
+
+const BASE_Z = 47.4;
+const BASE_PLATE = [120, 90, 6];
+
+export function armTemplate({ upperArm = 116, forearm = 116, riser = 0, at = [0, 0, 0], heading = 0, servos } = {}) {
+  const start = frame([at[0], at[1], at[2] + BASE_Z + riser], [0, 0, heading - 90]);
+  const plate = [BASE_PLATE[0], BASE_PLATE[1], r2(BASE_PLATE[2] + riser)];
   const chain = servoChain({
     prefix: '',
     label: '',
     start,
     holder: 'arm-base',
     links: [
-      { id: 'shoulder-bracket', name: 'Shoulder Bracket', length: 80, twist: 90 },
-      { id: 'upper-arm', name: 'Upper Arm', length: 116, twist: 0 },
-      { id: 'forearm', name: 'Forearm', length: 116, twist: 0 },
+      { id: 'shoulder-bracket', name: 'Shoulder Bracket', length: ARM_SHOULDER_MM, twist: 90 },
+      { id: 'upper-arm', name: 'Upper Arm', length: upperArm, twist: 0 },
+      { id: 'forearm', name: 'Forearm', length: forearm, twist: 0 },
     ],
     tip: { id: 'wrist-flange', name: 'Wrist Flange', code: 'servo_u_link(reach = 28, mount = true);' },
     joints: [
@@ -104,12 +115,15 @@ export function armTemplate() {
     ],
   });
 
-  chain.parts.unshift({ id: 'arm-base', name: 'Arm Base', code: `${INC}servo_base();`, frame: start.clone() });
+  const base = riser ? `servo_base(plate = ${JSON.stringify(plate)});` : 'servo_base();';
 
-  return finish(chain);
+  chain.parts.unshift({ id: 'arm-base', name: 'Arm Base', code: `${INC}${base}`, frame: start.clone() });
+
+  return finish(chain, (id) => servos?.[id.replace(/-servo$/, '')] ?? SERVO_KEY);
 }
 
-const ARM_MASS_G = 900;
+export const ARM_MASS_G = 900;
+
 const BIPED_MASS_G = 1600;
 
 const toZUp = (v) => [v.x, v.y, v.z].map(r2);

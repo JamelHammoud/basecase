@@ -27,6 +27,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CanvasMenuState } from './useCanvasMenu';
 import { handJointMenuItems } from './jointCommands';
 import { leaderMenuItems } from './leaderCommands';
+import { sizeArmMenuItems } from './skeletonCommands';
 import { mirrorMenuEntry } from './mirrorCommands';
 import { isRotated, menuEntry, onePartActions, selectionActions } from './partActions';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -115,6 +116,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     menuEntry(act.intersect),
     { divider: true },
     ...handJointMenuItems(actions.joints),
+    ...sizeArmMenuItems(actions),
     shared.align,
     shared.drop,
     { divider: true },
@@ -170,6 +172,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.saveToLibrary,
     ...(one.quote ? [menuEntry(one.quote)] : []),
     ...leaderMenuItems(actions, part.id),
+    ...sizeArmMenuItems(actions),
     ...commentHere,
     { divider: true },
     shared.align,

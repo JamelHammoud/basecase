@@ -23,6 +23,7 @@ keywords:
 related:
   - build-checks
   - weight-and-center-of-mass
+  - size-an-arm-to-targets
 covers:
   - src/utils/actuatorRules.ts
   - src/utils/engineeringTorque.ts

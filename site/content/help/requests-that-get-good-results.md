@@ -35,7 +35,7 @@ For anything else, attach photos from a few sides, or a sketch. The agent compar
 
 ## Say what it must do and what it must use
 
-Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one.
+Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one. For an arm, give the points it must reach and the grams it carries, and the agent sizes its links and servos before modeling.
 
 ## Change one thing at a time
 

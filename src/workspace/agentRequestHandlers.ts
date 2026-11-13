@@ -30,6 +30,7 @@ import { PORT_HANDLERS } from './agentPortRequests';
 import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';
 import { costByClass } from '../utils/budget';
 import { budgetPlanNote, catalogRequest, costNotes, sizeActuatorsRequest } from './agentCostRequests';
+import { sizeArmRequest } from './agentArmRequest';
 import { POSE_TOOL_KINDS, SIM_TOOL_KINDS } from './agentRobotTools';
 import type { SweepPayload } from './agentSweepRequest';
 import type { Vec3 } from './types';
@@ -313,6 +314,7 @@ const HANDLERS: Record<string, Handler> = {
   build_guide: buildGuide,
   catalog: catalogRequest,
   size_actuators: sizeActuatorsRequest,
+  size_arm: sizeArmRequest,
   sweep_design: (payload, ctx) => {
     ctx.setAction('Comparing design options');
 

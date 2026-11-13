@@ -2,6 +2,7 @@ import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
+import { SizeArmSheet } from '../components/SizeArmSheet';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -46,6 +47,15 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           pointOf={posing.pointOf}
           onClose={pose.closeMotion}
           onCreate={pose.createAnimation}
+        />
+      )}
+      {actions.arm.sheet && (
+        <SizeArmSheet
+          targets={actions.arm.sheet}
+          error={actions.arm.error}
+          busy={actions.arm.busy}
+          onClose={actions.arm.close}
+          onSize={(grams) => void actions.arm.size(grams)}
         />
       )}
       <input

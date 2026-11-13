@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { box, corners, placeholder } from '../agent/cadPlaceholder';
 import type { AgentCadPayload } from '../agent/cadMesh';
 import { LINK_REACH, LINK_WEB, type LinkStep } from './leaderFrames';
 
@@ -12,13 +13,6 @@ const LEVER = { length: 40, width: 18, thick: 6 };
 
 export const TRIGGER_AT = new THREE.Vector3(100, 0, U_LINK_MID_Z);
 export const TRIGGER_RISE = 13;
-
-type Box = [THREE.Vector3, THREE.Vector3];
-
-const box = (min: [number, number, number], max: [number, number, number]): Box => [
-  new THREE.Vector3(...min),
-  new THREE.Vector3(...max),
-];
 
 const U_LINK_BOX = box([-13, -13, -29], [LINK_REACH + LINK_WEB, 13, 6]);
 const HORN_LINK_BOX = box([-13, -13, -16.6], [LINK_REACH + LINK_WEB, 13, 6]);
@@ -51,30 +45,6 @@ function scadRotation(m: THREE.Matrix4): string {
   const e = new THREE.Euler().setFromRotationMatrix(m, 'ZYX');
 
   return vec(new THREE.Vector3(e.x * DEG, e.y * DEG, e.z * DEG));
-}
-
-function corners([min, max]: Box, m?: THREE.Matrix4): THREE.Vector3[] {
-  return [0, 1, 2, 3, 4, 5, 6, 7].map((k) => {
-    const p = new THREE.Vector3(k & 1 ? max.x : min.x, k & 2 ? max.y : min.y, k & 4 ? max.z : min.z);
-
-    return m ? p.applyMatrix4(m) : p;
-  });
-}
-
-const BOX_TRIANGLES = [
-  0, 2, 1, 1, 2, 3, 4, 5, 6, 5, 7, 6, 0, 1, 4, 1, 5, 4, 2, 6, 3, 3, 6, 7, 0, 4, 2, 2, 4, 6, 1, 3, 5, 3, 7, 5,
-];
-
-function placeholder(code: string, points: THREE.Vector3[]): AgentCadPayload {
-  const bounds = new THREE.Box3().setFromPoints(points);
-  const hull = corners([bounds.min, bounds.max]);
-
-  return {
-    language: 'openscad',
-    code,
-    positions: hull.flatMap((p) => [r2(p.x), r2(p.y), r2(p.z)]),
-    indices: BOX_TRIANGLES,
-  };
 }
 
 export const baseCad = () => placeholder(`${INC}servo_base(XL330, plate = [80, 60, 5], m = 2);`, corners(BASE_BOX));

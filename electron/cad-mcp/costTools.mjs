@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { vec3 } from './schemas.mjs';
 import { bridge, fail, text } from './shared.mjs';
 
 export const sizeActuators = {
@@ -18,6 +19,32 @@ export const sizeActuators = {
       const res = await bridge('size_actuators', source ? { source } : {}, 120000);
 
       return text(res?.text || 'No joints to size.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const sizeArm = {
+  name: 'size_arm',
+  config: {
+    title: 'Size an arm',
+    description:
+      'Sizes an SO-101-like 4-joint arm (base yaw, shoulder, elbow and wrist pitch on STS3215-case servos, arm_template links) from the points its wrist flange must reach and the payload it carries there. ' +
+      'It finds the shortest upper arm and forearm (75–300 mm, 5 mm steps) plus a base riser (0–300 mm) where IK reaches every target within 2 mm with every joint at least 10% inside its range, turns the base to face the targets, then picks the cheapest servo per joint that passes at the supply voltage with the payload at the wrist. ' +
+      'It replaces the skeleton and adds the servos (and, on desktop, the printed links) to the scene in one undo step, and returns the link lengths, the servo per joint, the rail, list prices and the reach error per target. ' +
+      'Unreachable targets give no arm and name the farthest one. Run it first when a person says where an arm must reach and what it carries; then define_joints and verify_design.',
+    inputSchema: {
+      targets: z.array(vec3).min(1).max(8).describe('Points the wrist flange must reach, mm, z up'),
+      payload_g: z.number().positive().max(5000).describe('What the arm carries at the wrist flange, g'),
+      base: vec3.optional().describe('Where the arm base sits, mm, z up; default [0, 0, 0]'),
+    },
+  },
+  handler: async ({ targets, payload_g, base }) => {
+    try {
+      const res = await bridge('size_arm', { targets, payload_g, base }, 120000);
+
+      return text(res?.text || 'No arm placed.');
     } catch (err) {
       return fail(err);
     }

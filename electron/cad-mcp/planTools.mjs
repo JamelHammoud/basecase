@@ -25,6 +25,7 @@ const skeletonJoint = z.object({
     .describe('Catalog key of the planned actuator, e.g. "component:feetech-sts3215|c018"'),
   tip: vec3.optional().describe('End of the link for joints with no joint further out: the sole, a fingertip'),
   link_mass_g: z.number().positive().optional().describe('Mass of the link this joint turns, when you know it'),
+  payload_g: z.number().positive().optional().describe('What the link carries at its tip, g: an arm’s payload'),
 });
 
 export const defineSkeleton = {

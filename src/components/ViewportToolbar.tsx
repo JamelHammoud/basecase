@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { PART_CATALOG } from '../data/catalog';
 import { useCatalogThumbnails } from '../three/useCatalogThumbnails';
-import { PART_DRAG_TYPE } from '../data/dnd';
+import { PART_DRAG_TYPE, setSceneDrag } from '../data/dnd';
 import { CatalogItem, TransformMode } from '../types/robotics';
 import {
   FloatingIsland,
@@ -179,7 +179,7 @@ const ShapeGrid: React.FC<{
           onClick={() => onPick(item)}
           draggable
           onDragStart={(e) => {
-            e.dataTransfer.setData(PART_DRAG_TYPE, item.kind);
+            setSceneDrag(e.dataTransfer, PART_DRAG_TYPE, item.kind);
             e.dataTransfer.effectAllowed = 'copy';
 
             const img = e.currentTarget.querySelector('img');

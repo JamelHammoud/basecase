@@ -9,6 +9,7 @@ import {
   ShareIcon,
   StopIcon,
 } from '../design-system';
+import type { Room } from '../cases/roomPlan';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -32,6 +33,11 @@ export const STAYS_IN_CENTER = new Set([
   'case-export-dataset',
   'case-publish-dataset',
 ]);
+
+export const showRoomCase = (core: WorkspaceCore, room: Room) => {
+  showCases(core);
+  core.simTraining.cases.builder.startInRoom(room);
+};
 
 const openCommandCenter = (core: WorkspaceCore): Command => ({
   id: 'case-command-center',

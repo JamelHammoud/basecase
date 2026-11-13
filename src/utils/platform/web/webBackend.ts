@@ -75,6 +75,7 @@ const ROUTES: Record<string, Route> = {
   'acp-cancel': () => OK,
   'acp-close-workspace': () => OK,
   'acp-forget-run': () => OK,
+  'cad-render': () => ({ ok: false, error: 'Download Basecase to compile parts.' }),
   'agent-respond': () => OK,
   chats: () => [],
   chat: () => null,

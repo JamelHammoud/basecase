@@ -12,14 +12,17 @@ import type {
 import type { ExportedStep, StepJob } from '../types/step';
 import { base64ToBytes, bytesToBase64 } from './base64';
 import { electron, get, post, postJson, postOrThrow, query, quietly } from './platform/transport';
+import { checkedRender, parsedReply } from './platform/renderedCad';
 import type {
   AcpPromptPayload,
   AppMenuState,
+  CadLanguage,
   CadTuneAnswer,
   CadTuneRequest,
   EvidenceFilePayload,
   LiveRun,
   OpenedCad,
+  RenderedCad,
   ScenePreviewPayload,
   SimReadyFetched,
   SimReadyStatus,
@@ -188,6 +191,15 @@ const libraryBridge = {
       throw new Error(ipcMessage(e), { cause: e });
     }
   },
+  renderCad: (language: CadLanguage, code: string): Promise<RenderedCad> =>
+    quietly(async () => {
+      const api = electron();
+      const raw = api
+        ? parsedReply(await api.renderCad({ language, code }))
+        : await post('/cad-render', { language, code });
+
+      return checkedRender(raw);
+    }, checkedRender(null)),
 
   tuneCadPart: (payload: CadTuneRequest): Promise<CadTuneAnswer> =>
     electron()?.tuneCadPart(payload) ??

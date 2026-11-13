@@ -9,6 +9,8 @@ use std::sync::{Arc, Mutex};
 pub type SharedBus = Arc<Mutex<ServoBus>>;
 
 const STEP_US: u64 = 1000;
+
+pub const FACTORY_ID: u8 = 1;
 const STALE_INBOX_US: u64 = 50_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -94,6 +96,14 @@ impl ServoBus {
         }
 
         bus
+    }
+
+    pub fn factory(family: Family, options: BusOptions) -> Self {
+        Self::new(family, &[], options)
+    }
+
+    pub fn plug_in_new_servo(&mut self) {
+        self.add_servo(FACTORY_ID);
     }
 
     pub fn shared(self) -> SharedBus {

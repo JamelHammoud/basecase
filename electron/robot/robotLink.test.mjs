@@ -78,6 +78,126 @@ describe('robot link', () => {
     link.disconnect();
   });
 
+  it('starts a factory bus only when the spec asks for one, and still writes the calibration', () => {
+    const { link, spawned } = linkWithFake();
+
+    expect(link.connect({ ...ARM, factory: true })).toEqual({ ok: true });
+
+    const [{ args }] = spawned;
+    const artefacts = args[args.indexOf('--artefacts') + 1];
+
+    expect(args.at(-1)).toBe('--factory');
+    expect(link.state().spec).toEqual({ ...ARM, factory: true });
+    expect(JSON.parse(fs.readFileSync(path.join(artefacts, 'calibration.json'), 'utf8'))).toEqual(
+      emulatedCalibration(ARM),
+    );
+    link.disconnect();
+
+    const plain = linkWithFake();
+
+    plain.link.connect(ARM);
+    expect(plain.spawned[0].args).not.toContain('--factory');
+    plain.link.disconnect();
+  });
+
+  it('refuses a factory flag that is anything but true', () => {
+    for (const factory of ['yes', 1, false, null, 'true'])
+      expect(checkedRobotSpec({ ...ARM, factory }).ok, String(factory)).toBe(false);
+
+    expect(checkedRobotSpec(ARM)).toEqual({ ok: true, spec: ARM });
+  });
+
+  it('beats while idle, holds the measured pose from Test on, and forwards the latest intent', async () => {
+    const { link, spawned } = linkWithFake();
+
+    link.connect(ARM);
+
+    const { child } = spawned[0];
+
+    child.say(HELLO);
+    child.say({ event: 'status', mode: 'look', run: 'idle', joints: [{ id: 1, position: 2048 }] });
+    await settle(80);
+    expect(child.sent.every((c) => c.cmd === 'heartbeat')).toBe(true);
+    expect(child.sent.length).toBeGreaterThan(1);
+
+    child.say({ event: 'mode', mode: 'test' });
+    await settle(80);
+    expect(child.sent.at(-1)).toEqual({ cmd: 'intent', joints: [0, 0] });
+
+    expect(link.command({ cmd: 'intent', joints: [0.25, -0.5] })).toEqual({ ok: true });
+    await settle(80);
+    expect(child.sent.at(-1)).toEqual({ cmd: 'intent', joints: [0.25, -0.5] });
+    link.disconnect();
+  });
+
+  it('says the daemon is lost in its own words when it exits unasked, and closed when asked', async () => {
+    const { link, spawned, events } = linkWithFake();
+
+    link.connect(ARM);
+    spawned[0].child.say(HELLO);
+    await settle();
+    spawned[0].child.emit('exit', 1, null);
+    expect(events.at(-1)).toEqual({ event: 'link', state: 'lost', message: HELLO.lost_message });
+
+    link.connect(ARM);
+    link.disconnect();
+    spawned[1].child.emit('exit', 0, null);
+    expect(events.at(-1)).toEqual({ event: 'link', state: 'closed' });
+    expect(link.state().connected).toBe(false);
+  });
+
+  it('forwards only documented commands, rebuilt without extra fields', () => {
+    expect(checkedCommand({ cmd: 'enter', mode: 'test' }, 2)).toEqual({ cmd: 'enter', mode: 'test' });
+    expect(checkedCommand({ cmd: 'enter', mode: 'god_mode' }, 2)).toBeNull();
+    expect(checkedCommand({ cmd: 'stop', port: '/dev/ttyUSB0' }, 2)).toBeNull();
+    expect(checkedCommand({ cmd: 'write_register', address: 40 }, 2)).toBeNull();
+    expect(checkedCommand({ cmd: 'intent', joints: [0.1, null] }, 2)).toEqual({ cmd: 'intent', joints: [0.1, null] });
+    expect(checkedCommand({ cmd: 'intent', joints: [0.1] }, 2)).toBeNull();
+    expect(checkedCommand({ cmd: 'intent', joints: [0.1, Infinity] }, 2)).toBeNull();
+  });
+
+  it('forwards assign_id and plug_in only in their documented shape', () => {
+    expect(checkedCommand({ cmd: 'assign_id', id: 3, model: 777 }, 2)).toEqual({ cmd: 'assign_id', id: 3, model: 777 });
+    expect(checkedCommand({ cmd: 'plug_in' }, 2)).toEqual({ cmd: 'plug_in' });
+    expect(checkedCommand({ cmd: 'plug_in', id: 1 }, 2)).toBeNull();
+
+    const refused = [
+      { cmd: 'assign_id', id: 3, model: 777, port: '/dev/ttyUSB0' },
+      { cmd: 'assign_id', id: 0, model: 777 },
+      { cmd: 'assign_id', id: 254, model: 777 },
+      { cmd: 'assign_id', id: 2.5, model: 777 },
+      { cmd: 'assign_id', id: '3', model: 777 },
+      { cmd: 'assign_id', id: 3, model: 65536 },
+      { cmd: 'assign_id', id: 3, model: -1 },
+      { cmd: 'assign_id', id: 3 },
+    ];
+
+    for (const command of refused) expect(checkedCommand(command, 2), JSON.stringify(command)).toBeNull();
+  });
+
+  it('reads measured positions in calibration order', () => {
+    const status = {
+      joints: [
+        { id: 2, position: 3072 },
+        { id: 1, position: 2048 },
+      ],
+    };
+
+    expect(measuredRadians(status, [1, 2])).toEqual([0, Math.PI / 2]);
+    expect(measuredRadians(null, [1])).toEqual([0]);
+  });
+
+  it('finds the bundled daemon, or the override for tests', () => {
+    const resources = path.join('Basecase.app', 'Contents', 'Resources');
+
+    expect(daemonBinary({ env: {}, resources, fromSource: false, repo: 'repo' })).toBe(
+      path.join(resources, 'hw', process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon'),
+    );
+    expect(daemonBinary({ env: { BASECASE_ROBOT_DAEMON: 'relay' }, resources, fromSource: false })).toBe('relay');
+  });
+});
+
+describe('robot link for the emulated G1', () => {
   it('normalizes the emulated G1 to its 17 writable joints and spawns it with no ids, class or port', () => {
     const { link, spawned, events } = linkWithFake();
     const spec = { family: 'unitree-g1', ids: G1_IDS, class: 'legged', emulated: true };
@@ -132,75 +252,5 @@ describe('robot link', () => {
     }
 
     expect(spawned).toEqual([]);
-  });
-
-  it('beats while idle, holds the measured pose from Test on, and forwards the latest intent', async () => {
-    const { link, spawned } = linkWithFake();
-
-    link.connect(ARM);
-
-    const { child } = spawned[0];
-
-    child.say(HELLO);
-    child.say({ event: 'status', mode: 'look', run: 'idle', joints: [{ id: 1, position: 2048 }] });
-    await settle(80);
-    expect(child.sent.every((c) => c.cmd === 'heartbeat')).toBe(true);
-    expect(child.sent.length).toBeGreaterThan(1);
-
-    child.say({ event: 'mode', mode: 'test' });
-    await settle(80);
-    expect(child.sent.at(-1)).toEqual({ cmd: 'intent', joints: [0, 0] });
-
-    expect(link.command({ cmd: 'intent', joints: [0.25, -0.5] })).toEqual({ ok: true });
-    await settle(80);
-    expect(child.sent.at(-1)).toEqual({ cmd: 'intent', joints: [0.25, -0.5] });
-    link.disconnect();
-  });
-
-  it('says the daemon is lost in its own words when it exits unasked, and closed when asked', async () => {
-    const { link, spawned, events } = linkWithFake();
-
-    link.connect(ARM);
-    spawned[0].child.say(HELLO);
-    await settle();
-    spawned[0].child.emit('exit', 1, null);
-    expect(events.at(-1)).toEqual({ event: 'link', state: 'lost', message: HELLO.lost_message });
-
-    link.connect(ARM);
-    link.disconnect();
-    spawned[1].child.emit('exit', 0, null);
-    expect(events.at(-1)).toEqual({ event: 'link', state: 'closed' });
-    expect(link.state().connected).toBe(false);
-  });
-
-  it('forwards only documented commands, rebuilt without extra fields', () => {
-    expect(checkedCommand({ cmd: 'enter', mode: 'test' }, 2)).toEqual({ cmd: 'enter', mode: 'test' });
-    expect(checkedCommand({ cmd: 'enter', mode: 'god_mode' }, 2)).toBeNull();
-    expect(checkedCommand({ cmd: 'stop', port: '/dev/ttyUSB0' }, 2)).toBeNull();
-    expect(checkedCommand({ cmd: 'write_register', address: 40 }, 2)).toBeNull();
-    expect(checkedCommand({ cmd: 'intent', joints: [0.1, null] }, 2)).toEqual({ cmd: 'intent', joints: [0.1, null] });
-    expect(checkedCommand({ cmd: 'intent', joints: [0.1] }, 2)).toBeNull();
-    expect(checkedCommand({ cmd: 'intent', joints: [0.1, Infinity] }, 2)).toBeNull();
-  });
-
-  it('reads measured positions in calibration order', () => {
-    const status = {
-      joints: [
-        { id: 2, position: 3072 },
-        { id: 1, position: 2048 },
-      ],
-    };
-
-    expect(measuredRadians(status, [1, 2])).toEqual([0, Math.PI / 2]);
-    expect(measuredRadians(null, [1])).toEqual([0]);
-  });
-
-  it('finds the bundled daemon, or the override for tests', () => {
-    const resources = path.join('Basecase.app', 'Contents', 'Resources');
-
-    expect(daemonBinary({ env: {}, resources, fromSource: false, repo: 'repo' })).toBe(
-      path.join(resources, 'hw', process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon'),
-    );
-    expect(daemonBinary({ env: { BASECASE_ROBOT_DAEMON: 'relay' }, resources, fromSource: false })).toBe('relay');
   });
 });

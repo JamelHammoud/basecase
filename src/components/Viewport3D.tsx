@@ -15,6 +15,8 @@ const DETACHED: Viewport3DHandle = {
   focusSelected: () => {},
   zoomBy: () => {},
   pickAt: () => null,
+  dragPart: () => false,
+  previewSnap: () => null,
   captureViews: async () => [],
   interference: async () => ({ interferences: [], coplanar: [] }),
   fastenerChains: async () => ({ screws: [], sleeves: [] }),
@@ -43,6 +45,10 @@ const DETACHED: Viewport3DHandle = {
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},
+  setScan: () => {},
+  scanPointCount: () => 0,
+  setGhost: () => {},
+  ghostState: () => null,
   followPart: () => {},
   restBounds: () => null,
   restShapes: () => ({ instances: [], shapes: new Map(), geometries: new Map() }),
@@ -54,6 +60,7 @@ const DETACHED: Viewport3DHandle = {
   measureFrom: () => {},
   cancelMeasure: () => false,
   shownPartIds: () => [],
+  checkDotCount: () => 0,
 };
 
 const canvasCursor = (props: ViewportProps) => {
@@ -84,6 +91,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
   const measureLabelRef = useRef<HTMLDivElement | null>(null);
   const markFieldRef = useRef<HTMLDivElement | null>(null);
   const buildLabelsRef = useRef<HTMLDivElement | null>(null);
+  const ghostLabelRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<ViewportEngine | null>(null);
   const [spacePressed, setSpacePressed] = useState(false);
   const [snapBypassed, setSnapBypassed] = useState(false);
@@ -102,6 +110,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
       measureLabel: () => measureLabelRef.current,
       markField: () => markFieldRef.current,
       buildLabels: () => buildLabelsRef.current,
+      ghostLabel: () => ghostLabelRef.current,
       ui: { setSnapBypassed, setSpacePressed },
       ...currentInput(),
     });
@@ -146,6 +155,12 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
         style={{ display: 'none' }}
       />
       <div ref={buildLabelsRef} className="absolute left-0 top-0" />
+      <div
+        ref={ghostLabelRef}
+        data-testid="ghost-gap"
+        className="absolute left-0 top-0 glass rounded-full h-8 px-3.5 items-center text-[13px] tabular-nums text-[#0d99ff] pointer-events-none"
+        style={{ display: 'none' }}
+      />
       <div ref={markFieldRef} className="absolute left-0 top-0">
         {markField}
       </div>

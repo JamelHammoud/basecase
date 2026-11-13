@@ -20,6 +20,7 @@ import { attempt, plural } from './helpers';
 import { articulatedShift, importOffset, palmOf, placeRobot } from './robotPlacement';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { useLeader } from './useLeader';
 
 export type RobotSource =
   | { kind: 'url'; url: string; name?: string; entry?: string }
@@ -99,6 +100,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
   const { partsRef, projectRef, commitParts, updateProjectNow } = docs;
   const openPoseRef = useLatestRef(openPose);
   const frameNextRef = useRef(false);
+  const leader = useLeader(core);
   const [importRobotOpen, setImportRobotOpen] = useState(false);
   const [robotChoice, setRobotChoice] = useState<RobotChoice | null>(null);
   const [robotFiles, setRobotFiles] = useState<RobotFiles | null>(null);
@@ -205,6 +207,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     preset ? importRobotFrom({ kind: 'url', url: preset.url, name: preset.title }) : setImportRobotOpen(true);
 
   return {
+    ...leader,
     importRobotFrom,
     addArticulated,
     pickRobot,

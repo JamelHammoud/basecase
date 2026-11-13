@@ -1,3 +1,4 @@
+mod assign;
 mod entry;
 pub(crate) mod running;
 mod scan;
@@ -17,7 +18,9 @@ use crate::watchdog::Watchdog;
 use servo_wire::{ByteTransport, Clock, Family};
 use std::sync::Arc;
 
+pub use assign::{CENSUS_WINDOW_US, FACTORY_ID};
 pub use entry::Command;
+pub use scan::expected_model;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DaemonConfig {
@@ -42,6 +45,7 @@ pub enum DaemonEvent {
     Stopped { at_us: u64, message: String },
     Completed { at_us: u64, mode: Mode },
     Refused { message: String },
+    Assigned { at_us: u64, id: u8 },
 }
 
 #[derive(Debug, Clone, PartialEq)]

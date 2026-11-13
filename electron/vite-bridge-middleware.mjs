@@ -22,6 +22,10 @@ async function tuneCadPart(backend, payload) {
   return { code, result: result instanceof Uint8Array ? JSON.parse(Buffer.from(result).toString('utf8')) : result };
 }
 
+async function renderCad(backend, payload) {
+  return JSON.parse(Buffer.from(await backend.renderCad(payload)).toString());
+}
+
 const searchParam = (url, name) => new URL(url, 'http://x').searchParams.get(name);
 
 function getRoutes(backend) {
@@ -66,6 +70,7 @@ function postRoutes(backend) {
     ['/cad-open', (p) => openCadFile(backend, p)],
     ['/cad-export-step', (p) => backend.exportStep(p)],
     ['/cad-tune', (p) => tuneCadPart(backend, p)],
+    ['/cad-render', (p) => renderCad(backend, p)],
     ['/chat-save', (p) => backend.saveConversation(p)],
     ['/chat-delete', (p) => backend.deleteConversation(p.id)],
     ['/acp-cancel', (p) => backend.cancelAcpPrompt(p.workspaceId)],

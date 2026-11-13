@@ -1,4 +1,4 @@
-const NO_KERNEL_ERROR = 'The CAD kernel runs in the desktop app. Open this scene there to compile parts.';
+export const NO_KERNEL_ERROR = 'The CAD kernel runs in the desktop app. Open this scene there to compile parts.';
 
 const noKernel = () => Buffer.from(JSON.stringify({ ok: false, error: NO_KERNEL_ERROR }));
 

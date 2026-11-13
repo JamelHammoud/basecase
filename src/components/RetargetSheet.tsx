@@ -77,7 +77,6 @@ export const RetargetSheet: React.FC<{
   const [bones, setBones] = useState<KeypointMap>({});
   const [joints, setJoints] = useState<KeypointMap>({});
   const [inPlace, setInPlace] = useState(false);
-  const [loop, setLoop] = useState(false);
   const [fps, setFps] = useState('30');
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +93,6 @@ export const RetargetSheet: React.FC<{
       joints: { ...autoJoints, ...joints },
       fps: Number(fps),
       inPlace,
-      loop,
       name: motion.name,
     });
 
@@ -139,7 +137,6 @@ export const RetargetSheet: React.FC<{
         />
         <div className="grid grid-cols-2 gap-x-6 gap-y-1">
           <Switch label="In place" checked={inPlace} onChange={setInPlace} />
-          <Switch label="Loop" checked={loop} onChange={setLoop} />
           <div className="col-span-2 grid grid-cols-[110px_1fr] items-center gap-3 pt-1">
             <span className="text-[13px] text-white/70">Frame rate</span>
             <Select

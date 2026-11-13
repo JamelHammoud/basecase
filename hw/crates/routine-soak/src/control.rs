@@ -31,8 +31,12 @@ pub struct ControlReport {
 
 fn daemon() -> Result<Daemon, String> {
     let clock: Arc<dyn Clock> = Arc::new(SystemClock::new());
-    let target = Target::Emulated { latency_us: 0, seed: 1 };
-    let transport = open(&target, Family::Feetech, &SERVO_IDS, clock.clone())?;
+    let target = Target::Emulated {
+        latency_us: 0,
+        seed: 1,
+        factory: false,
+    };
+    let transport = open(&target, Family::Feetech, &SERVO_IDS, clock.clone())?.transport;
     let config = DaemonConfig {
         family: Family::Feetech,
         ids: SERVO_IDS.to_vec(),

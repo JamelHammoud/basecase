@@ -48,6 +48,7 @@ export interface CheckSummary {
   detail: string;
   ids: string[];
   caseId?: string;
+  hasDots?: boolean;
 }
 
 export interface ReadinessFinding extends Finding {

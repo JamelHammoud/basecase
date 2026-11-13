@@ -59,18 +59,22 @@ export function benchSeconds(heard: HeardStatus[]): number[] {
   return heard.map((h) => secondsOf(h, lead));
 }
 
-export function playBench(): Promise<BenchRecording | null> {
+export function playBench(moving?: readonly number[]): Promise<BenchRecording | null> {
   const begun = robotSnapshot();
   const family = servoFamily(begun.spec);
 
   if (!canRunBench(begun) || !begun.spec || !family) return Promise.resolve(null);
 
-  const { ids } = begun.spec;
-  const starts = measuredStarts(begun);
+  const { ids: servos } = begun.spec;
+  const subset = moving ?? servos.map((_, k) => k);
+  const ids = subset.map((k) => servos[k]);
+  const holds = measuredStarts(begun);
+  const starts = subset.map((k) => holds[k]);
   const heard: HeardStatus[] = [];
   const startedAt = performance.now();
   const elapsed = () => (performance.now() - startedAt) / 1000;
-  const intent = (offset: number) => void sendRobotCommand({ cmd: 'intent', joints: starts.map((s) => s + offset) });
+  const intent = (offset: number) =>
+    void sendRobotCommand({ cmd: 'intent', joints: holds.map((s, k) => (subset.includes(k) ? s + offset : s)) });
   const recording = (): BenchRecording => {
     const seconds = benchSeconds(heard);
 

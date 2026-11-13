@@ -102,6 +102,7 @@ impl G1Daemon {
 
                 Ok(())
             }
+            Command::AssignId { .. } => Err("The G1 numbers its own motors.".into()),
         };
 
         if let Err(message) = &outcome {

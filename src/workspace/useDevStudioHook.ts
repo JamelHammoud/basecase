@@ -19,9 +19,10 @@ interface DevHookOptions {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
+  routeFiles: (files: File[]) => void;
 }
 
-export function useDevStudioHook({ active, core, actions, agent }: DevHookOptions) {
+export function useDevStudioHook({ active, core, actions, agent, routeFiles }: DevHookOptions) {
   const { docs, viewportRef, setSelectedIds, posing, loadSeed } = core;
   const { partsRef, projectRef } = docs;
   const { subscribePoses } = core.simTraining.sim;
@@ -42,6 +43,8 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       core.skeleton.drag({ ...step, phase: 'move' });
       core.skeleton.drag({ ...step, phase: 'end' });
     },
+    dropFiles: routeFiles,
+    selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,
     simState: () => devSimState(core),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),

@@ -1,5 +1,6 @@
 import type { SourcedItem } from '../../data/sourcedItems';
 import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState } from '../../robot/robotState';
+import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
   AcpStatusInfo,
@@ -37,6 +38,19 @@ export interface CadTuneRequest {
 export interface CadTuneAnswer {
   code: string;
   result: Uint8Array | Record<string, unknown>;
+}
+
+export type CadLanguage = 'openscad' | 'replicad';
+
+export interface RenderedCad {
+  ok: boolean;
+  positions?: number[];
+  indices?: number[];
+  edges?: number[] | null;
+  stats?: { volume?: number };
+  audit?: CadAudit;
+  ports?: CadPort[];
+  error?: string;
 }
 
 export interface AcpPromptPayload {
@@ -178,6 +192,7 @@ declare global {
       openCadFile: (payload: { name: string; bytes: Uint8Array }) => Promise<OpenedCad>;
       exportStep: (job: StepJob) => Promise<ExportedStep>;
       tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
+      renderCad: (payload: { language: CadLanguage; code: string }) => Promise<Uint8Array>;
       savePurchase: (payload: {
         key: string;
         record: PurchaseRecord | null;

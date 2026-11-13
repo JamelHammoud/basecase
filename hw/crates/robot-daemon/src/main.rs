@@ -2,15 +2,15 @@ use robot_daemon::artefacts::DirectoryArtefacts;
 use robot_daemon::calibration::RobotClass;
 use robot_daemon::g1::G1Daemon;
 use robot_daemon::intent::IntentWriter;
-use robot_daemon::protocol::{g1_hello_line, hello_line, parse_line, Routed, G1_FAMILY};
+use robot_daemon::protocol::{g1_hello_line, hello_line, parse_line, refused_line, Routed, G1_FAMILY};
 use robot_daemon::runner::{Controller, Runner};
-use robot_daemon::transport::{open, open_g1, Target};
+use robot_daemon::transport::{open, open_g1, NewServos, Target, NO_MORE_SERVOS};
 use robot_daemon::{Command, Daemon, DaemonConfig, Inputs};
 use servo_wire::{Clock, Family, SystemClock};
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{channel, sync_channel, Sender};
+use std::sync::mpsc::{channel, sync_channel, Sender, SyncSender};
 use std::sync::Arc;
 
 enum Robot {
@@ -41,17 +41,16 @@ fn main() {
             let daemon = G1Daemon::new(transport, clock.clone(), artefacts);
 
             say_hello(&g1_hello_line(emulated));
-            serve(daemon.inputs(), daemon, clock);
+            serve(daemon.inputs(), daemon, clock, None);
         }
         Robot::Servos { family, ids, class } => {
-            let transport =
-                open(&options.target, family, &ids, clock.clone()).unwrap_or_else(|message| quit(3, &message));
+            let opened = open(&options.target, family, &ids, clock.clone()).unwrap_or_else(|message| quit(3, &message));
             let config = DaemonConfig { family, ids, class };
-            let mut daemon = Daemon::new(config, transport, clock.clone(), artefacts);
+            let mut daemon = Daemon::new(config, opened.transport, clock.clone(), artefacts);
             let _policy = attach_policy(&mut daemon, &options.artefacts);
 
             say_hello(&hello_line(family, emulated));
-            serve(daemon.inputs(), daemon, clock);
+            serve(daemon.inputs(), daemon, clock, opened.new_servos);
         }
     }
 }
@@ -61,13 +60,21 @@ fn quit(code: i32, message: &str) -> ! {
     std::process::exit(code);
 }
 
-fn serve<C: Controller>(inputs: Inputs, daemon: C, clock: Arc<dyn Clock>) {
+fn serve<C: Controller>(inputs: Inputs, daemon: C, clock: Arc<dyn Clock>, new_servos: Option<NewServos>) {
     let writer = IntentWriter::new(inputs.intents.clone(), inputs.heartbeat.clone());
     let (command_tx, commands) = channel();
     let (lines, line_rx) = sync_channel::<String>(256);
     let client_gone = Arc::new(AtomicBool::new(false));
 
-    spawn_reader(writer, command_tx, client_gone.clone());
+    spawn_reader(
+        Reader {
+            writer,
+            commands: command_tx,
+            lines: lines.clone(),
+            new_servos,
+        },
+        client_gone.clone(),
+    );
     std::thread::spawn(move || {
         let mut stdout = std::io::stdout();
 
@@ -115,18 +122,39 @@ fn say_hello(line: &str) {
     let _ = writeln!(stdout, "{line}").and_then(|()| stdout.flush());
 }
 
-fn spawn_reader(writer: IntentWriter, commands: Sender<Command>, client_gone: Arc<AtomicBool>) {
+struct Reader {
+    writer: IntentWriter,
+    commands: Sender<Command>,
+    lines: SyncSender<String>,
+    new_servos: Option<NewServos>,
+}
+
+impl Reader {
+    fn plug_in(&mut self) {
+        let plugged = self
+            .new_servos
+            .as_mut()
+            .map_or(Err(NO_MORE_SERVOS.to_string()), NewServos::plug_in);
+
+        if let Err(message) = plugged {
+            let _ = self.lines.try_send(refused_line(&message));
+        }
+    }
+}
+
+fn spawn_reader(mut reader: Reader, client_gone: Arc<AtomicBool>) {
     std::thread::spawn(move || {
         let stdin = std::io::stdin();
 
         for line in stdin.lock().lines().map_while(Result::ok) {
             match parse_line(&line) {
                 Ok(Routed::Intent(values)) => {
-                    writer.write_intent(&values);
+                    reader.writer.write_intent(&values);
                 }
-                Ok(Routed::Heartbeat) => writer.heartbeat(),
+                Ok(Routed::Heartbeat) => reader.writer.heartbeat(),
+                Ok(Routed::PlugIn) => reader.plug_in(),
                 Ok(Routed::Command(command)) => {
-                    let _ = commands.send(command);
+                    let _ = reader.commands.send(command);
                 }
                 Err(message) => eprintln!("{message}"),
             }
@@ -143,6 +171,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
     let mut artefacts = PathBuf::from(".");
     let mut target = None;
     let mut latency_us = 0;
+    let mut factory = false;
     let mut rest = args.iter();
 
     while let Some(flag) = rest.next() {
@@ -154,7 +183,14 @@ fn parse(args: &[String]) -> Result<Options, String> {
             "--class" => class = Some(parse_class(&value()?)?),
             "--artefacts" => artefacts = PathBuf::from(value()?),
             "--latency-ms" => latency_us = value()?.parse::<u64>().map_err(|_| "Bad latency")? * 1000,
-            "--emulated" => target = Some(Target::Emulated { latency_us: 0, seed: 1 }),
+            "--emulated" => {
+                target = Some(Target::Emulated {
+                    latency_us: 0,
+                    seed: 1,
+                    factory: false,
+                })
+            }
+            "--factory" => factory = true,
             "--port" => {
                 target = Some(Target::SerialPort {
                     path: value()?,
@@ -167,7 +203,12 @@ fn parse(args: &[String]) -> Result<Options, String> {
     }
 
     let target = match target.ok_or("Choose --emulated, --port or --interface")? {
-        Target::Emulated { seed, .. } => Target::Emulated { latency_us, seed },
+        Target::Emulated { seed, .. } => Target::Emulated {
+            latency_us,
+            seed,
+            factory,
+        },
+        _ if factory => Err("--factory needs --emulated")?,
         real => real,
     };
     let family = family.ok_or("--family is required: feetech, dynamixel or unitree-g1")?;

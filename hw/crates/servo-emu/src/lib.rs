@@ -11,6 +11,6 @@ pub mod pty;
 pub mod registers;
 pub mod serve;
 
-pub use bus::{BusOptions, CliFault, ServoBus, SharedBus, Timed};
+pub use bus::{BusOptions, CliFault, ServoBus, SharedBus, Timed, FACTORY_ID};
 pub use firmware::Firmware;
 pub use inprocess::InProcessBus;

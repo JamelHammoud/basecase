@@ -43,7 +43,7 @@ Operate shows "No robot" when the scene has no joint that moves. With more than 
 
 The daemon says "A fault is still active. Go back to Look and clear it first." A fault stopped the motors, and it stays until you clear it.
 
-1. Read the fault under **From the daemon**, and fix what it names.
+1. Read the fault under the servo count, and fix what it names.
 2. Click **Look** under **Ladder**.
 3. Click **Clear Fault**.
 4. Click **Set Up**.

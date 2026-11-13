@@ -1,10 +1,15 @@
 import * as THREE from 'three';
+import { IS_MAC } from '../../utils/os';
 import type { ViewportContext } from './viewportContext';
 
 const typingInField = () =>
   document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
 
-const MODIFIERS: Record<string, 'shiftHeld' | 'altHeld'> = { Shift: 'shiftHeld', Alt: 'altHeld' };
+const MODIFIERS: Record<string, 'shiftHeld' | 'altHeld' | 'freeHeld'> = {
+  Shift: 'shiftHeld',
+  Alt: 'altHeld',
+  [IS_MAC ? 'Meta' : 'Control']: 'freeHeld',
+};
 
 export function installKeys(ctx: ViewportContext, onModifiers: () => void): () => void {
   const { orbit } = ctx.stage;

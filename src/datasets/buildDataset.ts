@@ -4,7 +4,7 @@ import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
 import { datasetJoints, episodeData, type DatasetSlot } from './episodes';
-import { lerobotFiles, type DatasetEpisode } from './lerobot';
+import { lerobotFiles, type DatasetEpisode, type ScanSensor } from './lerobot';
 import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
 
 export interface DatasetJobEpisode {
@@ -27,6 +27,16 @@ export interface DatasetJob {
 }
 
 export type DatasetFiles = Record<string, Uint8Array>;
+
+export const scanSensors = (model: SimModel, parts: ScenePart[]): ScanSensor[] =>
+  (model.scans ?? []).map((eye) => ({
+    part: eye.part,
+    name: parts.find((p) => p.id === eye.part)?.name ?? eye.part,
+    rays: eye.cols,
+    rangeM: eye.rangeM,
+    rateHz: eye.scan?.rateHz ?? 0,
+    fovDeg: eye.scan?.fovDeg ?? 0,
+  }));
 
 export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
   const codec = await videoCodec();
@@ -59,5 +69,6 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
     videos: job.cameras.map((c) => ({ key: c.key, width: FRAME_WIDTH, height: FRAME_HEIGHT, codec: codecName(codec) })),
     episodes,
     source: job.source,
+    scans: scanSensors(job.model, job.parts),
   });
 }

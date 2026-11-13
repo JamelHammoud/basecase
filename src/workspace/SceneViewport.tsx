@@ -51,12 +51,10 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     marks,
     measure,
     posing,
-    simTraining,
+    simTraining: { sim },
   } = core;
   const { edits } = actions;
-  const { sim } = simTraining;
   const { cursors, lanes } = agent;
-  const { setDraft } = annotations;
   const topParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
   const shownParts = [...topParts, ...drilledOperands(parts, selectedIds)];
 
@@ -79,6 +77,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onOpenPart={core.sketching.edit}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
+        onPlacePart={edits.placePart}
         onMarqueeSelect={selection.marqueeSelect}
         onCommitSculptMesh={edits.commitSculptMesh}
         annotateMode={annotations.commentMode}
@@ -101,6 +100,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         markField={markFieldFor(marks)}
         agentFrames={agent.frames}
         fixedCameras={project.cameras}
+        checkDots={core.readiness.dots}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
         worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}
@@ -132,7 +132,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         activeId={annotations.activeId}
         draft={annotations.draft}
         onOpen={annotations.setActiveId}
-        onCancelDraft={() => setDraft(null)}
+        onCancelDraft={() => annotations.setDraft(null)}
         onCreate={annotations.create}
         onReply={annotations.reply}
         onEditComment={annotations.editComment}

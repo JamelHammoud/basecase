@@ -2,6 +2,7 @@ import { toggleCameraViews } from '../cameras/cameraViewsStore';
 import { useEffect, useEffectEvent } from 'react';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { isModalOpen } from '../design-system';
+import { endServoSetup, servoSetup } from '../robot/servoSetup';
 import { isTextEntry } from './helpers';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -41,7 +42,8 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   };
 
   const escape = () => {
-    if (annotations.draft) annotations.setDraft(null);
+    if (servoSetup()) endServoSetup();
+    else if (annotations.draft) annotations.setDraft(null);
     else if (annotations.activeId) annotations.setActiveId(null);
     else if (annotations.commentMode) annotations.toggleCommentMode(false);
     else if (tool.measuring) leaveMeasure();

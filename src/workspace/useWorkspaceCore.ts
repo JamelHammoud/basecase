@@ -9,6 +9,7 @@ import { useAnnotations } from './useAnnotations';
 import { useMarks, useMarkState } from './useMarks';
 import { useMeasure } from './useMeasure';
 import { usePoseScope } from './usePoseScope';
+import { useCadCompile } from './useCadCompile';
 import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
@@ -64,6 +65,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { showToast } = toasts;
 
   useRobotUpgrade(docs, showToast);
+  useCadCompile(docs);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const measure = useMeasure();
@@ -86,12 +88,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     measure,
     mark: { marking: markState.marking, setMarking },
   });
-  const marks = useMarks({
-    docs,
-    showToast,
-    selection: markState.selection,
-    tool: markState.tool,
-  });
+  const marks = useMarks({ docs, showToast, selection: markState.selection, tool: markState.tool });
   const posing = usePosing({
     parts,
     project,

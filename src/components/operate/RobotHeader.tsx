@@ -1,8 +1,7 @@
 import React from 'react';
-import { Button, MetaLine } from '../../design-system';
+import { Button } from '../../design-system';
 import { disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
 import type { RobotFamily, RobotState } from '../../robot/robotState';
-import { rungLabel } from './RobotLadder';
 
 const RUN: Record<string, string> = {
   idle: 'Motors off',
@@ -46,20 +45,17 @@ export const RobotHeader: React.FC<{ robot: RobotState }> = ({ robot }) => {
   const run = robot.status?.run ?? 'idle';
 
   return (
-    <div className="mb-3">
-      <div className="flex items-center justify-between gap-2 h-8 px-1">
-        <MetaLine className="text-[12.5px] text-white/50" items={[servoCount(robot)]} />
+    <div className="flex items-center justify-between gap-2 min-h-8 px-1 py-1 mb-1">
+      <span className="min-w-0 flex flex-wrap gap-x-[12px] text-[12.5px] text-white/50">
+        <span>{servoCount(robot)}</span>
+        <span>{RUN[run] ?? run}</span>
+      </span>
+      <span className="shrink-0 flex items-center gap-1">
+        <RobotAction robot={robot} />
         <Button size="xs" variant="ghost" onClick={() => void disconnectRobot()}>
           Disconnect
         </Button>
-      </div>
-      <div className="flex items-center justify-between gap-2 px-1">
-        <div data-testid="robot-mode" data-mode={robot.mode} className="text-[17px] font-semibold text-white/90">
-          {rungLabel(robot.mode)}
-        </div>
-        <RobotAction robot={robot} />
-      </div>
-      <div className="px-1 text-[12.5px] text-white/50">{RUN[run] ?? run}</div>
+      </span>
     </div>
   );
 };

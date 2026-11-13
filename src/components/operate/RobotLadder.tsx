@@ -16,7 +16,7 @@ const RUNGS: Record<RobotMode, { label: string; hint: string }> = {
 export const rungLabel = (mode: RobotMode) => RUNGS[mode].label;
 
 export const RobotLadder: React.FC<{ robot: RobotState }> = ({ robot }) => (
-  <div className="mb-3">
+  <div className="mb-3" data-testid="robot-mode" data-mode={robot.mode}>
     <SectionHeader title="Ladder" />
     {ladderFor(robot.spec).map((rung) => {
       const current = robot.mode === rung;

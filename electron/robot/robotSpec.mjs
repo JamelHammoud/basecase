@@ -7,9 +7,11 @@ export const MAX_SERVOS = 32;
 
 const SPEC_KEYS = ['class', 'emulated', 'family', 'ids'];
 const G1_KEYS = ['emulated', 'family'];
+const FACTORY_SPEC_KEYS = ['class', 'emulated', 'factory', 'family', 'ids'];
 const ONLY_EMULATED = 'Only an emulated robot can connect: family, servo IDs, class and emulated, nothing else.';
 const MOTORS_LOCKED = 'Real motors are locked in this build. Connect an emulated robot instead.';
-const BARE_COMMANDS = new Set(['heartbeat', 'stop', 'fall', 'release', 'clear_fault', 'recheck']);
+const BARE_COMMANDS = new Set(['heartbeat', 'stop', 'fall', 'release', 'clear_fault', 'recheck', 'plug_in']);
+const MAX_MODEL = 65535;
 
 const isPlainObject = (value) =>
   value !== null && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype;
@@ -34,8 +36,11 @@ function idsProblem(ids) {
   return null;
 }
 
+const knownSpecKeys = (spec) =>
+  sameKeys(spec, SPEC_KEYS) || (sameKeys(spec, FACTORY_SPEC_KEYS) && spec.factory === true);
+
 function specProblem(spec) {
-  if (!isPlainObject(spec) || !sameKeys(spec, SPEC_KEYS)) return ONLY_EMULATED;
+  if (!isPlainObject(spec) || !knownSpecKeys(spec)) return ONLY_EMULATED;
 
   if (spec.emulated !== true) return MOTORS_LOCKED;
 
@@ -63,8 +68,9 @@ export function checkedRobotSpec(spec) {
   if (problem) return { ok: false, message: problem };
 
   const { family, ids, class: robotClass } = g1 ? G1_SPEC : spec;
+  const checked = { family, ids: [...ids], class: robotClass, emulated: true };
 
-  return { ok: true, spec: { family, ids: [...ids], class: robotClass, emulated: true } };
+  return { ok: true, spec: !g1 && spec.factory === true ? { ...checked, factory: true } : checked };
 }
 
 const g1Args = (artefacts) => ['--family', UNITREE_G1, '--emulated', '--artefacts', artefacts];
@@ -79,6 +85,7 @@ const servoArgs = (spec, artefacts) => [
   '--emulated',
   '--artefacts',
   artefacts,
+  ...(spec.factory === true ? ['--factory'] : []),
 ];
 
 export const daemonArgs = (spec, artefacts) =>
@@ -92,10 +99,20 @@ function checkedIntent(command, joints) {
   return fits && sameKeys(command, ['cmd', 'joints']) ? { cmd: 'intent', joints: [...command.joints] } : null;
 }
 
+const isModel = (model) => Number.isInteger(model) && model >= 0 && model <= MAX_MODEL;
+
+function checkedAssignId(command) {
+  const fits = sameKeys(command, ['cmd', 'id', 'model']) && isServoId(command.id) && isModel(command.model);
+
+  return fits ? { cmd: 'assign_id', id: command.id, model: command.model } : null;
+}
+
 export function checkedCommand(command, joints) {
   if (!isPlainObject(command) || typeof command.cmd !== 'string') return null;
 
   if (command.cmd === 'intent') return checkedIntent(command, joints);
+
+  if (command.cmd === 'assign_id') return checkedAssignId(command);
 
   if (command.cmd === 'enter')
     return LADDER.includes(command.mode) && sameKeys(command, ['cmd', 'mode'])

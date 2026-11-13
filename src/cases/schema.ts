@@ -24,7 +24,9 @@ const WORLD_KINDS = ['box', 'cube', 'sphere', 'cylinder', 'wedge', 'cone', 'cust
 const CAPABILITIES = ['arm', 'gripper', 'wheels', 'legs'] as const;
 const BEHAVIORS = ['static', 'dynamic', 'marker'] as const;
 const CONTROL_INPUTS = ['move', 'turn', 'lift', 'grip'] as const;
-const MAX_OBJECTS = 256;
+
+export const MAX_OBJECTS = 256;
+
 const MAX_COMMANDS = 4096;
 const MAX_SECONDS = 600;
 const SCORE_COUNTS = ['in', 'out'] as const;

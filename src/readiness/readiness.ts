@@ -146,6 +146,7 @@ function checkSummaries(open: Finding[], rows: CheckRow[]): CheckSummary[] {
       detail: row.detail,
       ids: idsOf(ownerOf(row)),
       ...(row.caseId ? { caseId: row.caseId } : {}),
+      ...(row.dots?.length ? { hasDots: true } : {}),
     })),
   ];
 }

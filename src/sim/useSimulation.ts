@@ -10,6 +10,7 @@ import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } f
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
+import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import type { LiveCaseInput } from '../cases/liveCase';
@@ -40,6 +41,7 @@ export interface Simulation {
   playing: boolean;
   stats: SimStats | null;
   latestStats: () => SimStats | null;
+  latestScan: () => Scan | null;
   error: string | null;
   model: SimModel | null;
   modelNow: () => SimModel | null;
@@ -326,6 +328,7 @@ export function useSimulation(props: Inputs): Simulation {
     setStatus('off');
     setPlaying(false);
     setStats(null);
+    viewportRef.current?.setScan(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
   }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
 
@@ -357,6 +360,7 @@ export function useSimulation(props: Inputs): Simulation {
     playing,
     stats,
     latestStats: sw.latestStats,
+    latestScan: sw.latestScan,
     error,
     model,
     modelNow: () => modelRef.current,

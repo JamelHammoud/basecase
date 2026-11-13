@@ -11,6 +11,7 @@ export interface RobotSpec {
   ids: number[];
   class: 'arm' | 'legged';
   emulated: true;
+  factory?: true;
 }
 
 export type ServoRobotSpec = RobotSpec & { family: ServoFamily };

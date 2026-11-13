@@ -18,6 +18,8 @@ import { CASE_WORLDS, type CaseWorld, type WorldKind } from './caseWorlds';
 import { handoffGoal } from './handoffGoal';
 import { robotFacts, type RobotFacts } from './robotFit';
 import { groundRoute } from './groundRoute';
+import type { Room } from './roomPlan';
+import { roomWorld } from './roomWorld';
 import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
 import { dotSpots } from './dotSpots';
 import { CaseFileError } from './validate';
@@ -31,6 +33,7 @@ export interface CaseSpec {
   objects?: WorldObject[];
   logic?: unknown;
   score?: unknown;
+  room?: Room;
 }
 
 export type BuiltCase = { ok: true; kase: Case } | { ok: false; problem: string };
@@ -55,11 +58,13 @@ export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   const xs = own.flatMap((p) => [p.position[0] - p.dimensions.width / 2, p.position[0] + p.dimensions.width / 2]);
   const zs = own.flatMap((p) => [p.position[2] - p.dimensions.depth / 2, p.position[2] + p.dimensions.depth / 2]);
   const span = (values: number[]) => (values.length ? Math.max(...values) - Math.min(...values) : 0);
+  const tops = own.map((p) => p.position[1] + p.dimensions.height / 2);
 
   return {
     facts,
     pivot: robot?.pivot ?? ([0, 0, 0] as V3),
     footprint: { width: span(xs), depth: span(zs) },
+    heightMm: tops.length ? Math.max(...tops) : 0,
     armSpots: armSpots(rig, facts),
   };
 }
@@ -68,7 +73,10 @@ const GOALS: CaseGoal[] = [...CASE_GOALS, handoffGoal];
 
 export const goalOf = (kind: GoalKind): CaseGoal | undefined => GOALS.find((g) => g.kind === kind);
 
-export const worldOf = (kind: WorldKind): CaseWorld | undefined => CASE_WORLDS.find((w) => w.kind === kind);
+const worldsWith = (room?: Room): CaseWorld[] => (room ? [...CASE_WORLDS, roomWorld(room)] : CASE_WORLDS);
+
+export const worldOf = (kind: WorldKind, room?: Room): CaseWorld | undefined =>
+  worldsWith(room).find((w) => w.kind === kind);
 
 const able = (needs: CaseGoal['needs'], robot: BuilderRobot | undefined) =>
   !!robot && needs.some((n) => robot.facts.capabilities.includes(n));
@@ -78,7 +86,8 @@ const canDo = (goal: CaseGoal, robot: BuilderRobot) =>
 
 export const goalsFor = (robot: BuilderRobot): CaseGoal[] => GOALS.filter((g) => canDo(g, robot));
 
-export const worldsFor = (goal: GoalKind): CaseWorld[] => CASE_WORLDS.filter((w) => w.fits(goal));
+export const worldsFor = (goal: GoalKind, robot?: BuilderRobot, room?: Room): CaseWorld[] =>
+  worldsWith(room).filter((w) => w.fits(goal, robot));
 
 export const CASE_PRESETS = {
   'touch-the-dots': { goal: 'touch', world: 'floor', values: { dots: 3 } },
@@ -94,8 +103,8 @@ export const presetsFor = (robot: BuilderRobot): PresetId[] =>
 
 export const goalFields = (goal: CaseGoal, values: GoalValues): ParamKey[] => goal.fields?.(values) ?? goal.params;
 
-export function caseName(goal: GoalKind, world: WorldKind, values?: GoalValues): string {
-  const suffix = worldOf(world)?.suffix;
+export function caseName(goal: GoalKind, world: WorldKind, values?: GoalValues, room?: Room): string {
+  const suffix = worldOf(world, room)?.suffix;
   const kind = goalOf(goal);
   const title = kind && values ? kind.title?.(values) : undefined;
 
@@ -144,7 +153,7 @@ const footprintHits = (o: WorldObject, robot: BuilderRobot) =>
 
 function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: CaseWorld } | string {
   const goal = goalOf(spec.goal);
-  const world = worldOf(spec.world);
+  const world = worldOf(spec.world, spec.room);
 
   if (!goal || !canDo(goal, robot)) {
     const fits = goalsFor(robot).map((g) => g.kind);
@@ -152,8 +161,8 @@ function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: C
     return `Pick a goal this robot can try: ${fits.join(', ') || 'none until it has an arm, wheels or legs'}.`;
   }
 
-  if (!world || !world.fits(goal.kind))
-    return `Pick a world for ${goal.name}: ${worldsFor(goal.kind)
+  if (!world || !world.fits(goal.kind, robot))
+    return `Pick a world for ${goal.name}: ${worldsFor(goal.kind, robot, spec.room)
       .map((w) => w.kind)
       .join(', ')}.`;
 
@@ -168,6 +177,7 @@ function referenceOf(plan: GoalPlan, scenery: WorldObject[], robot: BuilderRobot
   const route = groundRoute(plan.waypoints, [...plan.objects, ...scenery], {
     start: robot.pivot,
     clearanceMm: routeClearance(robot),
+    headroomMm: robot.heightMm || undefined,
   });
 
   return route.map(({ at, speed, push }) => ({
@@ -189,7 +199,7 @@ interface Draft {
 }
 
 function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): unknown {
-  const name = spec.name?.trim().slice(0, MAX_NAME) || caseName(goal.kind, world.kind, values);
+  const name = spec.name?.trim().slice(0, MAX_NAME) || caseName(goal.kind, world.kind, values, spec.room);
   const guard = plan.slot.needs.includes('legs') ? fallGuard(robot) : null;
 
   return {
@@ -197,7 +207,9 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
     id: slug(name),
     name,
     brief: spec.brief?.trim() || plan.brief,
-    ...(plan.slots ? { slots: plan.slots } : { slot: plan.slot }),
+    ...(plan.slots
+      ? { slots: plan.slots }
+      : { slot: world.trueSize ? { ...plan.slot, reachMm: undefined, anchor: undefined } : plan.slot }),
     world: { objects: [...plan.objects, ...scenery, ...(spec.objects ?? [])] },
     controls: plan.controls,
     reference: { timeline: referenceOf(plan, scenery, robot) },

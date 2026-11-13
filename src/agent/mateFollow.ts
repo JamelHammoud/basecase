@@ -2,6 +2,8 @@ import type { PartMate } from '../types/ports';
 import type { ScenePart } from '../types/robotics';
 import { applySpec } from './agentScene';
 import { planMate } from './mate';
+import { findPort, worldPort } from './ports';
+import { distanceMm, SNAP_MM } from './snap';
 
 export interface MateFollowInput {
   before: ScenePart[];
@@ -128,4 +130,31 @@ export function followedText(result: MateFollowResult): string[] {
   const ids = result.followed;
 
   return ids.length ? [`Moved with their mates: ${ids.join(', ')}.`, ...result.notes] : result.notes;
+}
+
+function movedAway(part: ScenePart, parts: ScenePart[], reachMm: number): boolean {
+  const mate = placing(part);
+  const target = mate && parts.find((p) => p.id === mate.target);
+  const port = mate && findPort(part, mate.port);
+  const targetPort = mate && target && findPort(target, mate.targetPort);
+
+  if (!port || !target || !targetPort) return false;
+
+  return distanceMm(worldPort(part, port).position, worldPort(target, targetPort).position) > reachMm;
+}
+
+export function followHandEdit(before: ScenePart[], after: ScenePart[], reachMm = SNAP_MM): ScenePart[] {
+  if (before === after || !after.some((p) => p.mates?.length)) return after;
+
+  const was = new Map(before.map((p) => [p.id, p]));
+  const handMoved = (p: ScenePart) => {
+    const prev = was.get(p.id);
+
+    return !!prev && prev !== p && !samePose(prev, p) && movedAway(p, after, reachMm);
+  };
+  const released = after.map((p) => (handMoved(p) ? { ...p, mates: undefined } : p));
+  const { updated } = followMates({ before, after: released, placed: new Set() });
+  const moved = new Map(updated.map((p) => [p.id, p]));
+
+  return moved.size ? released.map((p) => moved.get(p.id) ?? p) : released;
 }

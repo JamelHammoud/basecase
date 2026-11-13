@@ -6,6 +6,7 @@ import type { PrinterSetup } from '../data/printers';
 import { failedReadiness, readinessDelta, withDecisions } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { CheckDot } from '../utils/engineeringTypes';
 import { currentMoney } from '../utils/currencyStore';
 import { useMoney } from '../utils/useMoney';
 import { newestRuns } from './newestRuns';
@@ -30,6 +31,8 @@ export interface ReadinessHandle {
   deltaSince: (before: Readiness | null) => string;
   startTurn: () => void;
   turnStart: () => Readiness | null;
+  dots: CheckDot[] | null;
+  showDots: (check: string | null) => void;
 }
 
 export function useReadiness({
@@ -44,6 +47,7 @@ export function useReadiness({
 
   const [measured, setMeasured] = useState<Readiness | null>(null);
   const [checking, setChecking] = useState(false);
+  const [dotsCheck, setDotsCheck] = useState<string | null>(null);
   const latestRef = useRef<Readiness | null>(null);
   const turnRef = useRef<Readiness | null>(null);
   const runRef = useRef<{ fingerprint: string; promise: Promise<Readiness | null> } | null>(null);
@@ -130,5 +134,7 @@ export function useReadiness({
       turnRef.current = latest();
     },
     turnStart: () => turnRef.current,
+    dots: (dotsCheck && measured?.rows.find((r) => r.check === dotsCheck)?.dots) || null,
+    showDots: setDotsCheck,
   };
 }

@@ -40,6 +40,7 @@ export function devSimState(core: WorkspaceCore) {
     ...caseState(core.simTraining),
     faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
     facts: sim.latestFacts(),
+    scanPoints: core.viewportRef.current?.scanPointCount() ?? 0,
     fingerprints: modelFingerprints(skills.model),
     controller: controllerState(sim.controller),
   };

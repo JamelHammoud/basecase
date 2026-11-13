@@ -19,11 +19,14 @@ pub enum Inbound {
     Release,
     ClearFault,
     Recheck,
+    AssignId { id: u8, model: u16 },
+    PlugIn,
 }
 
 pub enum Routed {
     Intent(Vec<f32>),
     Heartbeat,
+    PlugIn,
     Command(Command),
 }
 
@@ -35,6 +38,8 @@ pub fn parse_line(line: &str) -> Result<Routed, String> {
             Routed::Intent(joints.into_iter().map(|value| value.unwrap_or(f32::NAN)).collect())
         }
         Inbound::Heartbeat => Routed::Heartbeat,
+        Inbound::PlugIn => Routed::PlugIn,
+        Inbound::AssignId { id, model } => Routed::Command(Command::AssignId { id, model }),
         Inbound::Enter { mode } => Routed::Command(Command::Enter(mode)),
         Inbound::Stop => Routed::Command(Command::Stop),
         Inbound::Fall => Routed::Command(Command::Fall),
@@ -66,6 +71,10 @@ enum Outbound<'a> {
     },
     Refused {
         message: &'a str,
+    },
+    Assigned {
+        at_us: u64,
+        id: u8,
     },
     Status {
         at_us: u64,
@@ -142,9 +151,14 @@ pub fn event_line(event: &DaemonEvent) -> String {
             mode: *mode,
         },
         DaemonEvent::Refused { message } => Outbound::Refused { message },
+        DaemonEvent::Assigned { at_us, id } => Outbound::Assigned { at_us: *at_us, id: *id },
     };
 
     serde_json::to_string(&outbound).unwrap_or_default()
+}
+
+pub fn refused_line(message: &str) -> String {
+    serde_json::to_string(&Outbound::Refused { message }).unwrap_or_default()
 }
 
 pub fn status_line(daemon: &Daemon) -> String {
@@ -253,6 +267,18 @@ mod tests {
             parse_line(r#"{"cmd":"release"}"#),
             Ok(Routed::Command(Command::Release))
         ));
+        assert!(matches!(
+            parse_line(r#"{"cmd":"assign_id","id":3,"model":777}"#),
+            Ok(Routed::Command(Command::AssignId { id: 3, model: 777 }))
+        ));
+        assert!(matches!(parse_line(r#"{"cmd":"plug_in"}"#), Ok(Routed::PlugIn)));
+    }
+
+    #[test]
+    fn an_assign_id_outside_a_servo_id_is_unreadable() {
+        assert!(parse_line(r#"{"cmd":"assign_id","id":300,"model":777}"#).is_err());
+        assert!(parse_line(r#"{"cmd":"assign_id","id":-1,"model":777}"#).is_err());
+        assert!(parse_line(r#"{"cmd":"assign_id","id":2}"#).is_err());
     }
 
     #[test]

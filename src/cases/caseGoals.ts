@@ -22,6 +22,7 @@ export interface BuilderRobot {
   footprint: { width: number; depth: number };
   armSpots: V3[];
   partner?: BuilderRobot;
+  heightMm: number;
 }
 
 export interface GoalParam {

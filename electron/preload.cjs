@@ -54,6 +54,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openCadFile: (payload) => ipcRenderer.invoke('cad:open', payload),
   exportStep: (payload) => ipcRenderer.invoke('cad:export-step', payload),
   tuneCadPart: (payload) => ipcRenderer.invoke('cad:tune', payload),
+  renderCad: (payload) => ipcRenderer.invoke('cad:render', payload),
   getChat: (id) => ipcRenderer.invoke('chat:get', id),
   saveChat: (conv) => ipcRenderer.invoke('chat:save', conv),
   deleteChat: (id) => ipcRenderer.invoke('chat:delete', id),

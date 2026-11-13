@@ -12,6 +12,8 @@ import { Recorder, RECORD_HZ, type Recording } from '../sim/recorder';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { zipFolder } from '../utils/zipFolder';
+import { withLidar } from '../sim/fixtures/parts';
+import { scanSensors } from './buildDataset';
 import {
   canExport,
   columnStats,
@@ -21,15 +23,14 @@ import {
   robotJoints,
   sampledFrames,
 } from './episodes';
-import { dataPath, lerobotFiles, TASK_ANNOTATION, videoPath, type DatasetEpisode } from './lerobot';
+import { dataPath, lerobotFiles, SCAN_KEY, TASK_ANNOTATION, videoPath, type DatasetEpisode } from './lerobot';
 
 const TASK = 'Touch the point with the end effector.';
 
-async function armTry() {
+async function armTry(robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!) {
   const mj = await loadMujoco();
-  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
-  const rig = buildRig(arm.joints, arm.parts);
-  const model = buildMjcf({ ...caseRobot(arm), rig, project: DEFAULT_PROJECT });
+  const rig = buildRig(robot.joints, robot.parts);
+  const model = buildMjcf({ ...caseRobot(robot), rig, project: DEFAULT_PROJECT });
   const engine = new SimEngine(mj, model);
   const recorder = new Recorder(engine);
 
@@ -174,6 +175,16 @@ describe('LeRobot datasets from tries', () => {
     });
   });
 
+  it('zips under one folder, keeping media uncompressed', () => {
+    const zip = zipFolder('touch-dataset', { 'meta/info.json': new Uint8Array([123, 125]), 'a.mp4': fakeVideo });
+    const back = unzipSync(zip);
+
+    expect(Object.keys(back).sort()).toEqual(['touch-dataset/a.mp4', 'touch-dataset/meta/info.json']);
+    expect(back['touch-dataset/a.mp4']).toEqual(fakeVideo);
+  });
+});
+
+describe('a LeRobot dataset with more than joints', () => {
   it('writes every slot’s joints into one state and action, prefixed and grouped by slot', async () => {
     const { model, recording, slots } = await twoArmTry();
     const { names, groups } = datasetJoints(model, slots);
@@ -200,11 +211,34 @@ describe('LeRobot datasets from tries', () => {
     expect(rows[0]['observation.state']).toHaveLength(6);
   });
 
-  it('zips under one folder, keeping media uncompressed', () => {
-    const zip = zipFolder('touch-dataset', { 'meta/info.json': new Uint8Array([123, 125]), 'a.mp4': fakeVideo });
-    const back = unzipSync(zip);
+  it('adds each LiDAR scan as observation.scan, read back with the right shape', async () => {
+    const rover = withLidar(fixtureRobots().find((r) => r.id === 'rover-diff')!);
+    const { model, recording } = await armTry(rover);
+    const data = episodeData(recording, model, TASK);
+    const files = lerobotFiles({
+      robotType: 'rover',
+      jointNames: robotJoints(model).map((j) => j.name),
+      videos: [{ key: 'scene', width: 640, height: 480, codec: 'h264' }],
+      episodes: [asEpisode(data, 0)],
+      source: { case: 'reach' },
+      scans: scanSensors(model, rover.parts),
+    });
+    const rows = await parquetReadObjects({ file: files[dataPath(0)].slice().buffer });
+    const info = JSON.parse(text(files, 'meta/info.json'));
+    const modality = JSON.parse(text(files, 'meta/modality.json'));
+    const scan = rows[rows.length - 1][SCAN_KEY] as number[];
 
-    expect(Object.keys(back).sort()).toEqual(['touch-dataset/a.mp4', 'touch-dataset/meta/info.json']);
-    expect(back['touch-dataset/a.mp4']).toEqual(fakeVideo);
+    expect(recording.scanWidth).toBe(500);
+    expect(canExport(recording, model)).toBe(true);
+    expect(canExport({ ...recording, scan: undefined, scanWidth: undefined }, model)).toBe(false);
+    expect(rows).toHaveLength(data.frames.length);
+    expect(scan).toHaveLength(500);
+    expect(scan.every((v) => v > 0 && v <= 1)).toBe(true);
+    expect(info.features[SCAN_KEY]).toEqual({ dtype: 'float32', shape: [500], names: null });
+    expect(modality.state.scan).toEqual({ start: 0, end: 500, original_key: SCAN_KEY });
+    expect(JSON.parse(text(files, 'meta/basecase.json')).scans).toEqual([
+      { part: 'lidar', name: 'Slamtec RPLIDAR C1', rays: 500, rangeM: 12, rateHz: 10, fovDeg: 360 },
+    ]);
+    expect(lines(files, 'meta/episodes_stats.jsonl')[0].stats).toHaveProperty([SCAN_KEY, 'count'], [rows.length]);
   });
 });

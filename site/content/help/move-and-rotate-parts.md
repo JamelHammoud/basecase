@@ -30,6 +30,7 @@ covers:
   - src/components/SettingsWindow.tsx
   - src/workspace/usePartEdits.ts
   - src/workspace/contextMenuItems.tsx
+  - src/workspace/partActions.tsx
 ---
 
 Drag a part with the gizmo, or type its exact position in millimeters and its angle in degrees in the Inspector.
@@ -52,7 +53,7 @@ With several parts selected, the gizmo sits at their shared center and moves the
 
 Position is the part's center in millimeters, with Y pointing up. Fields take math, so `40/2` or `12+3.5` work. [[↑]] and [[↓]] step the value; hold [[⇧]] for 10 times the step, or [[⌥]] for a tenth. You can also drag a field's label left or right to scrub it, and [[Esc]] puts back what you had. Hover a letter elsewhere, such as **W** under **Size**, to see what it stands for.
 
-The **90°** buttons under **Rotation** turn the part a quarter turn around X, Y or Z. **Reset rotation**, in the section's header, sets all three back to 0.
+The **90°** buttons under **Rotation** turn the part a quarter turn around X, Y or Z. **Reset rotation**, in the section's header, sets all three back to 0. The part's right-click menu and [[⌘K]] have it too, as **Reset Rotation**.
 
 ## Place a part against the floor or another part
 
@@ -60,6 +61,6 @@ The **90°** buttons under **Rotation** turn the part a quarter turn around X, Y
 - **Stack on part below** ([[S]]) sets it on top of the part underneath.
 - **Center on origin** puts its X and Z at 0.
 
-The three are in the header of **Position**, and the first two are in the part's right-click menu.
+The three are in the header of **Position**. The first two are also in the part's right-click menu and [[⌘K]].
 
 To line up several parts with each other, follow [Align and spread parts](/help/align-and-spread-parts).

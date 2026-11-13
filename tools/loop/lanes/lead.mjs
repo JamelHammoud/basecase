@@ -73,12 +73,15 @@ export default function lead({ log }) {
       return;
     }
 
-    for (const arc of result.output.newArcs) log(`arc ${createIssue({ ...arc, labels: ['loop:arc'] })}`);
+    for (const arc of result.output.newArcs)
+      log(`arc ${createIssue({ ...arc, labels: ['loop:arc'] }) ?? `skipped, already open: ${arc.title}`}`);
 
     for (const s of result.output.steps) {
       const body = `Arc: ${s.arc}\nKind: ${s.kind}\n\n${s.body}`;
 
-      log(`step ${createIssue({ title: s.title, body, labels: ['loop:next', `loop:${s.kind}`] })}`);
+      const url = createIssue({ title: s.title, body, labels: ['loop:next', `loop:${s.kind}`] });
+
+      log(url ? `step ${url}` : `skipped, already open: ${s.title}`);
     }
   } finally {
     close(worktree);

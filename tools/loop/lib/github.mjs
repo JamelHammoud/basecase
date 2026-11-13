@@ -9,7 +9,18 @@ export const repo = () => {
   return slug;
 };
 
-const PULL_FIELDS = 'number,title,body,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable';
+const PULL_FIELDS = 'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable';
+
+export const sameTitle = (a, b) => {
+  const norm = (t) =>
+    t
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/[.\s]+$/, '')
+      .trim();
+
+  return norm(a) === norm(b);
+};
 
 export const openPulls = () =>
   (json('gh', ['pr', 'list', '--state', 'open', '--limit', '100', '--json', PULL_FIELDS]) ?? [])
@@ -117,10 +128,20 @@ export const editIssueLabels = (number, { add = [], remove = [] }) =>
     ...remove.flatMap((label) => ['--remove-label', label]),
   ]);
 
-export const createIssue = ({ title, body, labels }) =>
-  run('gh', ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])], {
-    input: body,
-  }).out;
+const openIssueTitles = () =>
+  json('gh', ['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'title', '--jq', '[.[].title]']) ?? [];
+
+export const createIssue = ({ title, body, labels }) => {
+  if (openIssueTitles().some((open) => sameTitle(open, title))) return null;
+
+  return run(
+    'gh',
+    ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],
+    {
+      input: body,
+    },
+  ).out;
+};
 
 export const ownerComments = (number, owner) =>
   json('gh', [

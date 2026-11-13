@@ -1,5 +1,13 @@
 import type { Command } from '../components/CommandPalette';
-import { ClipboardIcon, DownloadIcon, FileImportIcon, FolderOpenIcon, PhotoIcon, ShareIcon } from '../design-system';
+import {
+  ClipboardIcon,
+  DownloadIcon,
+  FileImportIcon,
+  FolderOpenIcon,
+  PhotoIcon,
+  RobotsIcon,
+  ShareIcon,
+} from '../design-system';
 import { SHARE_LABEL } from '../utils/os';
 import type { CommandInputs } from './sceneCommands';
 
@@ -8,6 +16,14 @@ const ic = 'w-4 h-4';
 export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
   const { studio } = core;
   const { exports, creation } = actions;
+  const robotPackage: Command = {
+    id: 'export-robot-package',
+    group: 'Scene',
+    label: 'Export Robot Package',
+    icon: <RobotsIcon className={ic} />,
+    keywords: 'mujoco mjcf urdf ros lerobot joint map policy zip download',
+    run: () => void exports.exportRobotPackage(),
+  };
 
   return [
     {
@@ -26,6 +42,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'share send friend basecase file download save',
       run: () => void exports.exportScene(),
     },
+    ...(exports.canExportRobot ? [robotPackage] : []),
     {
       id: 'copy-brief',
       group: 'Scene',

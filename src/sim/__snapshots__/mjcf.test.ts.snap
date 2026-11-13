@@ -48,28 +48,35 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
       "parts": [
         "pelvis",
       ],
+      "robot": "hip",
     },
     {
+      "joint": "hip",
       "name": "b_j0_hip",
       "origin": [
         0,
         80,
         0,
       ],
+      "parent": "root_0",
       "parts": [
         "thigh",
       ],
+      "robot": "hip",
     },
     {
+      "joint": "knee",
       "name": "b_j1_knee",
       "origin": [
         0,
         40,
         0,
       ],
+      "parent": "b_j0_hip",
       "parts": [
         "shin",
       ],
+      "robot": "hip",
     },
   ],
   "initial": {

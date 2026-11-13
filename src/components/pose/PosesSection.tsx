@@ -1,8 +1,7 @@
 import React from 'react';
-import { IconButton, Section, BookmarkAddIcon, RotateLeftIcon, confirmAction } from '../../design-system';
+import { IconButton, Section, BookmarkAddIcon, RotateLeftIcon, RenameField, confirmAction } from '../../design-system';
 import { isRestPose } from '../../utils/kinematics';
 import type { Posing } from '../../utils/usePosing';
-import { RenameField } from './RenameField';
 import type { OpenMenu } from './AnimationsSection';
 
 export const PosesSection: React.FC<{
@@ -61,7 +60,7 @@ export const PosesSection: React.FC<{
               onDone={(name) => {
                 setRenaming(null);
 
-                if (name && name !== p.name) posing.renamePose(p.id, name);
+                if (name) posing.renamePose(p.id, name);
               }}
             />
           ) : (

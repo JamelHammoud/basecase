@@ -118,7 +118,7 @@ export const SceneTabs: React.FC<SceneTabsProps> = ({
     onPointerLeave: hidePreview,
     onStartRename: () => setRenaming(tab.id),
     onFinishRename: (name) => {
-      if (name && name !== tab.name) onRename(tab.id, name);
+      if (name) onRename(tab.id, name);
 
       setRenaming(null);
     },

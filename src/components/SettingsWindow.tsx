@@ -241,7 +241,6 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
             Move <Unit>mm</Unit>
           </>
         }
-        hint={`Hold ${modifierName('⇧')} while dragging to move freely`}
       >
         <SegmentedControl
           className="w-[240px]"
@@ -250,7 +249,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
           options={MOVE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : v }))}
         />
       </Row>
-      <Row label="Rotate" hint={`Hold ${modifierName('⇧')} while dragging to rotate freely`}>
+      <Row label="Rotate">
         <SegmentedControl
           className="w-[240px]"
           value={String(p.snapAngleDeg)}
@@ -260,7 +259,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
       </Row>
     </Group>
     <Group title="Measure">
-      <Row label="Units" hint={`Hold ${modifierName('⌥')} to measure vertically`}>
+      <Row label="Units">
         <SegmentedControl<MeasureUnit>
           className="w-[240px]"
           value={p.measureUnit}

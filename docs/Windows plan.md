@@ -54,7 +54,7 @@ Runners have no GPU, so CI proves the app works, not that it's fast or that it r
 - [ ] First launch: the boot ring, then the app; the caption buttons sit in the title bar with nothing under them; the window drags by the title bar and snaps (Win+arrows, snap layouts on hover over maximize).
 - [ ] Menu button: every menu opens; Help → Check for Updates answers; About shows the version.
 - [ ] Tooltips and Settings → Shortcuts show `Ctrl`, `Shift`, `Alt`, never ⌘.
-- [ ] Mouse: drag orbits, wheel zooms, right-drag and middle-drag pan, right-click opens the menu without panning. Touchpad: pinch zooms; two-finger scroll follows Settings → Navigation.
+- [ ] Mouse: drag orbits, wheel zooms, right-drag and middle-drag pan, right-click opens the menu without panning. Touchpad: pinch zooms; two-finger scroll follows Settings → Canvas.
 - [ ] Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z, Ctrl+D, Ctrl+click in Layers and on the canvas, Ctrl+T / Ctrl+W / Ctrl+Tab.
 - [ ] Sign in to Claude in the Agent tab (the CLI downloads first); a short build runs, with parts compiling.
 - [ ] Codex signs in from an existing `~/.codex` login.

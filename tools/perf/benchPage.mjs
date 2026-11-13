@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -95,7 +96,20 @@ async function stubBackend(page, { sceneText, responses }) {
 const GPU_ARGS = ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'];
 const CPU_ARGS = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'];
 
-export async function openBenchPage({ url, scene, gpu, probes }) {
+export function buildBenchApp({ root, outDir, reuse }) {
+  if (reuse && fs.existsSync(outDir)) return;
+
+  const built = spawnSync('npx', ['vite', 'build', '--outDir', outDir, '--emptyOutDir', '--logLevel', 'warn'], {
+    cwd: root,
+    stdio: 'inherit',
+  });
+
+  if (built.status !== 0) process.exit(built.status ?? 1);
+}
+
+const exposeTestHooks = () => Object.assign(window, { __basecaseTestHooks: true });
+
+export async function openBenchPage({ url, scene, gpu, probes, testHooks }) {
   const browser = await chromium.launch({ channel: 'chrome', headless: true, args: gpu ? GPU_ARGS : CPU_ARGS });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
@@ -106,6 +120,8 @@ export async function openBenchPage({ url, scene, gpu, probes }) {
   await page.addInitScript(installProbes, scene.id);
 
   if (probes) await page.addInitScript(probes);
+
+  if (testHooks) await page.addInitScript(exposeTestHooks);
 
   await page.goto(url);
   await page.waitForSelector('nav[aria-label="Sidebar views"]', { timeout: 60000 });

@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { benchClient, openBenchPage, serveStatic, waitQuiet } from './benchPage.mjs';
+import { benchClient, buildBenchApp, openBenchPage, serveStatic, waitQuiet } from './benchPage.mjs';
 import { transcriptUpdates } from './benchTranscript.mjs';
 import { cadParts, cadSpec, fixtureScene } from './fixtureScene.mjs';
 
@@ -16,18 +15,7 @@ const budget = Number(option('budget', 0));
 const only = option('only', '')?.split(',').filter(Boolean);
 const gpu = !flag('cpu') && process.platform === 'darwin';
 
-function buildApp() {
-  if ((flag('no-build') || flag('dist')) && fs.existsSync(outDir)) return;
-
-  const built = spawnSync('npx', ['vite', 'build', '--outDir', outDir, '--emptyOutDir', '--logLevel', 'warn'], {
-    cwd: root,
-    stdio: 'inherit',
-  });
-
-  if (built.status !== 0) process.exit(built.status ?? 1);
-}
-
-buildApp();
+buildBenchApp({ root, outDir, reuse: flag('no-build') || flag('dist') });
 
 const scene = fixtureScene();
 const { joints, ...record } = scene;

@@ -1,22 +1,44 @@
 import { useState } from 'react';
+import { polylineSketch } from '../../utils/sketch/edit';
+import type { Sketch, SketchMode, Vec2 } from '../../utils/sketch/types';
 import { ParsedSvg3DResult, parseSvgTo3DNodes } from '../../utils/svgTo3DParser';
-import type { SketchMode, SketchPoint, SketchTool } from './sketchGeometry';
 
-const INITIAL_OUTLINE: SketchPoint[] = [
-  [-0.35, -0.25],
-  [0.35, -0.25],
-  [0.42, 0.0],
-  [0.25, 0.32],
-  [-0.25, 0.32],
-  [-0.42, 0.0],
-];
+export type SketchTool = 'line' | 'rect' | 'circle' | 'arc';
 
-export function useStudioDraft() {
+interface SketchHistory {
+  past: Sketch[];
+  now: Sketch;
+  future: Sketch[];
+}
+
+const HISTORY_LIMIT = 100;
+
+const svgLoops = (outer: Array<[number, number]>, holes: Array<Array<[number, number]>>, span: number): Vec2[][] =>
+  [outer, ...holes].map((loop) => loop.map(([x, z]): Vec2 => [x * span, -z * span]));
+
+function useSketchHistory(initial: Sketch) {
+  const [history, setHistory] = useState<SketchHistory>({ past: [], now: initial, future: [] });
+
+  return {
+    sketch: history.now,
+    canUndo: history.past.length > 0,
+    apply: (next: Sketch) =>
+      setHistory((h) => ({ past: [...h.past, h.now].slice(-HISTORY_LIMIT), now: next, future: [] })),
+    undo: () =>
+      setHistory((h) =>
+        h.past.length ? { past: h.past.slice(0, -1), now: h.past[h.past.length - 1], future: [h.now, ...h.future] } : h,
+      ),
+    redo: () =>
+      setHistory((h) =>
+        h.future.length ? { past: [...h.past, h.now], now: h.future[0], future: h.future.slice(1) } : h,
+      ),
+  };
+}
+
+export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | null) {
+  const history = useSketchHistory(initialSketch);
   const [drawMode, setDrawMode] = useState<SketchMode>('extrude');
-  const [drawTool, setDrawTool] = useState<SketchTool>('polygon');
-  const [outerPoints, setOuterPoints] = useState<SketchPoint[]>(INITIAL_OUTLINE);
-  const [holes, setHoles] = useState<SketchPoint[][]>([]);
-  const [isDrawingFreehand, setIsDrawingFreehand] = useState(false);
+  const [drawTool, setDrawTool] = useState<SketchTool | null>(initialTool);
   const [snap2D, setSnap2D] = useState(true);
   const [drawName, setDrawName] = useState('Sketch');
   const [drawSpanMm, setDrawSpanMm] = useState(64);
@@ -49,8 +71,7 @@ export function useStudioDraft() {
 
       if (!contour) return;
 
-      setOuterPoints(contour.outerLoop.map(([x, z]) => [x, -z]));
-      setHoles((contour.holes || []).map((h) => h.map(([x, z]) => [x, -z])));
+      history.apply(polylineSketch(svgLoops(contour.outerLoop, contour.holes ?? [], drawSpanMm)));
     } catch (err) {
       setSvgError(String(err));
       setParsedSvg(null);
@@ -58,16 +79,11 @@ export function useStudioDraft() {
   };
 
   return {
+    ...history,
     drawMode,
     setDrawMode,
     drawTool,
     setDrawTool,
-    outerPoints,
-    setOuterPoints,
-    holes,
-    setHoles,
-    isDrawingFreehand,
-    setIsDrawingFreehand,
     snap2D,
     setSnap2D,
     drawName,

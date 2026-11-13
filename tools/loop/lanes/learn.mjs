@@ -1,8 +1,9 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import { evidenceCount, evidenceText, gatherEvidence, isLoopPull } from '../lib/evidence.mjs';
-import { issueComments, lineComments, mainCommits, pullsSince, windowStart } from '../lib/history.mjs';
+import { digestWorst, issueComments, lineComments, mainCommits, pullsSince, windowStart } from '../lib/history.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
+import { worstSection } from '../lib/stats.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -25,12 +26,13 @@ function weekOfEvidence() {
   const comments = [...issueComments(since), ...lineComments(since)];
   const evidence = gatherEvidence({ comments, pulls, commits: mainCommits(since), since, owner: OWNER_LOGIN });
 
-  return { since, pulls, evidence };
+  return { since, pulls, evidence, worst: digestWorst() };
 }
 
-const promptFor = ({ since, pulls, evidence }) =>
+const promptFor = ({ since, pulls, evidence, worst }) =>
   [
     `What went wrong in Basecase's loop since ${since}. Find each mistake that happened at least twice, or that Jamel pointed out once, and turn it into the strongest fix that fits, following your brief.`,
+    ...worstSection(worst, 'Propose one lesson aimed at it, traced to the evidence below that explains it.'),
     `## Lessons already open, don't repeat them\n\n${openLessons(pulls).join('\n\n') || 'None.'}`,
     evidenceText(evidence, pulls).slice(0, MAX_EVIDENCE),
   ].join('\n\n');
@@ -38,7 +40,7 @@ const promptFor = ({ since, pulls, evidence }) =>
 export default function learn({ log }) {
   const week = weekOfEvidence();
 
-  if (evidenceCount(week.evidence) === 0) {
+  if (evidenceCount(week.evidence) === 0 && !week.worst) {
     log('nothing to learn from this week');
 
     return;

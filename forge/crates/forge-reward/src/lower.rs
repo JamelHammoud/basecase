@@ -93,6 +93,7 @@ impl Lowering<'_> {
             StateField::JointVel => each(self, Input::JointVel),
             StateField::Action => each(self, Input::Action),
             StateField::LastAction => each(self, Input::LastAction),
+            StateField::Reference => Sym::Vector((0..joints + 2).map(|k| self.read(Input::Reference(k))).collect()),
         }
     }
 

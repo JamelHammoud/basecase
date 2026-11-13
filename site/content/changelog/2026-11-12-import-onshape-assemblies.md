@@ -20,6 +20,16 @@ A joint turns or slides along its mate connector's Z axis, within the mate's lim
 
 Only revolute and slider mates move. A cylindrical, ball, pin slot or planar mate is held fixed. The Build tab's Checks list each one under Fixed Mates, on the part it holds. A mate that closes a loop, like the last pin of a four-bar linkage, is left out. Each part hangs off exactly one joint.
 
-An import reads the assembly once, so a change in Onshape needs another import. An assembly can have up to 300 different parts. A part linked from another document comes in only when the link points at a version.
+The robot stays linked to its assembly. After a change in Onshape, right-click the robot's group in Layers, or any of its parts, and choose Update from Onshape. It's in ⌘K too.
+
+Basecase fetches the assembly again and matches it to the robot by Onshape's own ids. A part you lengthened is replaced where it sits. A new link and its mate come in as a part and a joint, and a part you deleted goes. Joint axes and limits follow their mates.
+
+![The right-click menu of the Desk Arm group with Update from Onshape](/changelog/import-onshape-assemblies/update.png)
+
+What you did in Basecase stays: the servo you gave a joint, colours, screws and cameras you added, poses and calibrations. If you delete a mate in Onshape, its joint stays, and Checks lists it under Missing Mates. One message says how many changes came in, and one ⌘Z undoes the whole update.
+
+![The arm after the update, longer and with a new Wrist part, and the message 3 changes from Onshape](/changelog/import-onshape-assemblies/updated.png)
+
+A link to a version always brings that version, so import from the workspace link to keep up with your edits. An assembly can have up to 300 different parts. A part linked from another document comes in only when the link points at a version.
 
 Steps are in [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly).

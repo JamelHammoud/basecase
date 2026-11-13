@@ -42,7 +42,8 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { skills, onTeach } = props;
   const walk = useWalkTeaching(skills, onTeach);
   const skillActions = {
-    onTrain: (row: SkillRow) => (row.kit ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label)),
+    onTrain: (row: SkillRow) =>
+      row.kit || row.move ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label),
     onTry: (row: SkillRow) => void skills.tryRow(row),
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,

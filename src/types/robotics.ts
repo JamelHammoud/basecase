@@ -9,6 +9,7 @@ import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
 import type { BooleanRecipe } from './step';
+import type { SculptMeshData } from './sculpt';
 
 export type PartCategory =
   | 'custom_models'
@@ -76,20 +77,7 @@ export interface PartDeformers {
   roundness?: number;
 }
 
-export interface SculptMeshData {
-  positions: number[];
-  indices?: number[];
-}
-
-export type SculptBrushKind = 'inflate' | 'carve' | 'flatten' | 'smooth' | 'pinch' | 'grab';
-
-export interface SculptSettings {
-  brush: SculptBrushKind;
-  radiusMm: number;
-  strength: number;
-  symmetryX: boolean;
-  symmetryZ: boolean;
-}
+export type { SculptBrushKind, SculptMeshData, SculptSettings } from './sculpt';
 
 export interface ContourExtrudeData {
   outerLoop: Array<[number, number]>;
@@ -182,19 +170,21 @@ export interface ScenePart extends PartRelations {
   robotLink?: RobotLinkRef;
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
-  group?: { id: string; name: string };
+  group?: PartGroup;
   csg?: BooleanRecipe;
   printMaterial?: PrintMaterial;
   print?: PartPrint;
   jointId?: string;
   cameraLens?: Lens;
+  sketch?: PartSketch;
 }
 
 export type { PartPrint, PrintRecord } from './print';
 
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
-import type { RobotLinkRef } from './robotLink';
+import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
+import type { PartSketch } from '../utils/sketch/types';
 
 import type { PartPrint, PrintRecord } from './print';
 
@@ -216,6 +206,7 @@ export interface RobotJoint {
   velocity?: number;
   published?: string;
   limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
+  onshape?: OnshapeMate;
 }
 
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';

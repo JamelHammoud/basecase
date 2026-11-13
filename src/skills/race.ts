@@ -1,6 +1,7 @@
 import { proveSkill } from './prove';
 import { planReach } from './raceIk';
 import { rewardSearch } from './raceRewardSearch';
+import { playMove, trackMotion } from './raceTracking';
 import {
   elapsedOf,
   type RaceAttempt,
@@ -34,6 +35,8 @@ async function ikPlan(input: RaceInput, clock: RaceClock): Promise<SolveResult> 
     attempt: { method: 'ik-or-motion-plan', passed: false, cost: elapsedOf(clock), reason, candidates: [] },
   });
 
+  if (task.goal.kind === 'track') return playMove(input, clock);
+
   if (task.goal.kind === 'velocity')
     return fail('IK plans poses for reach goals, and this task moves the whole robot.');
 
@@ -60,6 +63,8 @@ async function ikPlan(input: RaceInput, clock: RaceClock): Promise<SolveResult> 
 
 function solve(input: RaceInput, method: Method, clock: RaceClock): Promise<SolveResult> {
   if (method === 'ik-or-motion-plan') return ikPlan(input, clock);
+
+  if (method === 'tracking') return trackMotion(input, clock);
 
   if (method === 'reward-search') return rewardSearch(input, clock);
 

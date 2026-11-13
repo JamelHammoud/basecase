@@ -1,147 +1,134 @@
-import React, { useRef } from 'react';
-import { MetaLine } from '../../design-system';
-import { appendFreehandPoint, holeLoopAt, snapSketchPoint, type SketchPoint, type SketchTool } from './sketchGeometry';
-import type { StudioDraft } from './useStudioDraft';
+import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { Vec2 } from '../../utils/sketch/types';
+import { SketchOverlay } from './SketchOverlay';
+import { previewShape, typedAnchor } from './sketchPreview';
+import { SketchEntities, SketchGrid, SketchPreview } from './SketchShapes';
+import { fitView, panned, snapStep, snapTolerance, toMm, viewBox, zoomed, type Box } from './sketchView';
+import { useSketchDrawing, type SketchEditor } from './useSketchDrawing';
+import { useSketchKeys } from './useSketchKeys';
+import { useSketchSelection } from './useSketchSelection';
+import type { SketchTool } from './useStudioDraft';
 
-const GRID_LINES = [-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4];
+const REFUSE_MS = 700;
+const ZOOM_SPEED = 0.01;
 
-const TOOL_HINTS: Record<SketchTool, string> = {
-  polygon: 'Click to add corners',
-  freehand: 'Drag to draw',
-  hole: 'Click to add a hole',
-};
+interface SketchCanvasProps {
+  editor: SketchEditor;
+  tool: SketchTool | null;
+  onTool: (tool: SketchTool | null) => void;
+  snap: boolean;
+}
 
-const SketchGrid: React.FC = () => (
-  <>
-    {GRID_LINES.map((g) => (
-      <React.Fragment key={g}>
-        <line
-          x1={g}
-          y1={-0.5}
-          x2={g}
-          y2={0.5}
-          stroke={g === 0 ? '#3f3f46' : '#262626'}
-          strokeWidth={g === 0 ? '0.004' : '0.0025'}
-        />
-        <line
-          x1={-0.5}
-          y1={g}
-          x2={0.5}
-          y2={g}
-          stroke={g === 0 ? '#3f3f46' : '#262626'}
-          strokeWidth={g === 0 ? '0.004' : '0.0025'}
-        />
-      </React.Fragment>
-    ))}
-  </>
-);
+function useWheelView(ref: React.RefObject<HTMLDivElement | null>, onWheel: (e: WheelEvent) => void) {
+  const handle = useEffectEvent(onWheel);
 
-const SketchShapes: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
-  const { drawMode, outerPoints, holes } = draft;
+  useEffect(() => {
+    const el = ref.current;
 
-  return (
-    <>
-      {drawMode === 'revolve' && (
-        <line x1={0} y1={-0.5} x2={0} y2={0.5} stroke="#0d99ff" strokeDasharray="0.02 0.015" strokeWidth="0.006" />
-      )}
-      {outerPoints.length >= 2 && (
-        <polygon
-          points={outerPoints.map(([x, z]) => `${x},${z}`).join(' ')}
-          fill="#0d99ff"
-          fillOpacity={0.18}
-          stroke="#0d99ff"
-          strokeWidth="0.008"
-          strokeLinejoin="round"
-        />
-      )}
-      {holes.map((hole, hIdx) => (
-        <polygon
-          key={hIdx}
-          points={hole.map(([x, z]) => `${x},${z}`).join(' ')}
-          fill="#1b1b1b"
-          stroke="#ef4444"
-          strokeWidth="0.007"
-        />
-      ))}
-      {outerPoints.map(([x, z], idx) => (
-        <circle key={idx} cx={x} cy={z} r={0.013} fill="#ffffff" stroke="#0d99ff" strokeWidth="0.006" />
-      ))}
-    </>
-  );
-};
+    if (!el) return;
 
-export const SketchCanvas: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
+    const listener = (e: WheelEvent) => handle(e);
+
+    el.addEventListener('wheel', listener, { passive: false });
+
+    return () => el.removeEventListener('wheel', listener);
+  }, [ref]);
+}
+
+function useRefusal() {
+  const [refused, setRefused] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const refuse = () => {
+    setRefused(true);
+
+    if (timer.current) clearTimeout(timer.current);
+
+    timer.current = setTimeout(() => setRefused(false), REFUSE_MS);
+  };
+
+  return { refused, refuse };
+}
+
+export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool, snap }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const { drawTool, outerPoints, holes, snap2D, isDrawingFreehand } = draft;
+  const [view, setView] = useState(() => fitView(editor.sketch));
+  const { refused, refuse } = useRefusal();
+  const grid = snap ? snapStep(view) : null;
+  const drawing = useSketchDrawing({ editor, tool, grid, onRefuse: refuse });
+  const selection = useSketchSelection({ editor, grid, onRefuse: refuse });
+  const shown = selection.preview ?? editor.sketch;
 
-  const getNormalizedSvgCoords = (e: React.PointerEvent<SVGSVGElement>): SketchPoint => {
-    const svg = svgRef.current;
+  const box = (): Box => svgRef.current!.getBoundingClientRect();
 
-    if (!svg) return [0, 0];
+  const pointer = (e: React.PointerEvent | WheelEvent): { at: Vec2; tolerance: number } => {
+    const b = box();
 
-    const rect = svg.getBoundingClientRect();
-    const raw: SketchPoint = [(e.clientX - rect.left) / rect.width - 0.5, (e.clientY - rect.top) / rect.height - 0.5];
-
-    return snapSketchPoint(raw, snap2D && drawTool !== 'freehand');
+    return { at: toMm(view, b, e.clientX, e.clientY), tolerance: snapTolerance(view, b) };
   };
 
-  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    const point = getNormalizedSvgCoords(e);
+  useWheelView(containerRef, (e) => {
+    e.preventDefault();
 
-    if (drawTool === 'hole') {
-      draft.setHoles((prev) => [...prev, holeLoopAt(point)]);
+    if (e.ctrlKey) setView(zoomed(view, pointer(e).at, Math.exp(e.deltaY * ZOOM_SPEED)));
+    else setView(panned(view, box(), e.deltaX, e.deltaY));
+  });
 
-      return;
-    }
+  const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.button !== 0) return;
 
-    if (drawTool === 'polygon') {
-      draft.setOuterPoints((prev) => [...prev, point]);
+    containerRef.current?.focus({ preventScroll: true });
 
-      return;
-    }
+    const { at, tolerance } = pointer(e);
 
-    draft.setIsDrawingFreehand(true);
-    draft.setOuterPoints([point]);
+    if (tool) drawing.press(at, tolerance);
+    else selection.press(at, tolerance, e.shiftKey);
+
+    if (!tool) e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!isDrawingFreehand || drawTool !== 'freehand') return;
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const { at, tolerance } = pointer(e);
 
-    const point = getNormalizedSvgCoords(e);
-
-    draft.setOuterPoints((prev) => appendFreehandPoint(prev, point));
+    if (selection.dragging) selection.move(at);
+    else drawing.move(at, tolerance);
   };
 
-  const handlePointerUp = () => {
-    if (isDrawingFreehand) draft.setIsDrawingFreehand(false);
-  };
+  const onKeyDown = useSketchKeys({ editor, drawing, selection, tool, onTool, rootRef: containerRef });
 
   return (
-    <div className="relative rounded-xl bg-black/30 ring-1 ring-inset ring-white/[0.06] aspect-square overflow-hidden">
+    <div
+      ref={containerRef}
+      tabIndex={0}
+      data-testid="sketch-plane"
+      data-own-edits
+      onKeyDown={onKeyDown}
+      className={`relative rounded-xl bg-black/30 ring-1 ring-inset aspect-square overflow-hidden outline-none transition-shadow ${
+        refused ? 'ring-red-500' : 'ring-white/[0.06] focus-visible:ring-white/20'
+      }`}
+    >
       <svg
         ref={svgRef}
-        viewBox="-0.5 -0.5 1 1"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        className="w-full h-full cursor-crosshair touch-none"
+        viewBox={viewBox(view)}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={selection.release}
+        onPointerLeave={drawing.leave}
+        className={`w-full h-full touch-none ${tool ? 'cursor-crosshair' : 'cursor-default'}`}
       >
-        <SketchGrid />
-        <SketchShapes draft={draft} />
+        <SketchGrid view={view} />
+        <SketchEntities sketch={shown} selected={selection.selected} view={view} />
+        <SketchPreview preview={previewShape(drawing.pending, drawing.hover, drawing.typed)} />
       </svg>
-      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none">
-        <span className="glass-menu rounded-full px-2.5 h-6 flex items-center text-[12px] text-white/70">
-          {TOOL_HINTS[drawTool]}
-        </span>
-        <span className="glass-menu rounded-full px-2.5 h-6 flex items-center text-[12px] text-white/50 tabular">
-          <MetaLine
-            items={[
-              `${outerPoints.length} points`,
-              holes.length > 0 && `${holes.length} ${holes.length === 1 ? 'hole' : 'holes'}`,
-            ]}
-          />
-        </span>
-      </div>
+      <SketchOverlay
+        sketch={shown}
+        view={view}
+        drawing={drawing}
+        selection={selection}
+        typedAt={typedAnchor(drawing.pending, drawing.hover, drawing.typed)}
+        refused={refused}
+      />
     </div>
   );
 };

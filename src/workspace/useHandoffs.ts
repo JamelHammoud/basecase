@@ -5,11 +5,14 @@ import { scriptedDrive } from '../routines/physicsDrive';
 import { PROOF_SEEDS } from '../routines/physicsProver';
 import { inRoutinesWorker } from '../routines/routinesClient';
 import type { Handoff, TransitionProof } from '../routines/schema';
+import { pairStamp } from '../routines/skillStamps';
+import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
-import { modelHashes } from '../skills/artifacts';
+import { modelHashes, type Skill } from '../skills/artifacts';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { stubbedPorts, type HandoffPorts, type HandoffStub } from './handoffStub';
-import { sceneSkills, type RoutineSkills } from './routineCheck';
+import { sceneSkills, type OwnSkill, type RoutineSkills } from './routineCheck';
+import type { ShowToast } from './types';
 import type { HandoffJob, HandoffTraining, SceneRoutineSkills } from './useRoutineSkills';
 
 interface HandoffsInput {
@@ -18,7 +21,10 @@ interface HandoffsInput {
   scene: RefObject<{ parts: ScenePart[]; joints: RobotJoint[] }>;
   buildModel: () => Promise<SimModel>;
   updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
+  showToast: ShowToast;
 }
+
+type Trained = { skill: Skill; proof: TransitionProof; target: OwnSkill } | { reason: string };
 
 export function useHandoffs(input: HandoffsInput) {
   const [busy, setBusy] = useState<string | null>(null);
@@ -45,25 +51,35 @@ export function useHandoffs(input: HandoffsInput) {
     return { model, joints, drive: scriptedDrive(model, joints, parts) };
   };
 
+  const stamped = async (pair: Handoff, drive: DriveSetup | null) =>
+    pairStamp({ skills: await sceneSkills(await skills.own()), drive }, pair);
+
   const proved = async (pair: Handoff): Promise<TransitionProof | null> => {
     const scene = await setup();
 
-    if (stub) return stub.prove(modelHashes(scene.model).physics);
+    if (stub) return { ...stub.prove(modelHashes(scene.model).physics), skills: await stamped(pair, scene.drive) };
 
     const all = await sceneSkills(await skills.own());
 
     return (await inRoutinesWorker({ type: 'prove', ...scene, skills: all, pair })).proof;
   };
 
-  const trained = async (pair: Handoff) => {
+  const trained = async (pair: Handoff): Promise<Trained | null> => {
     const scene = await setup();
 
-    if (stub) return stub.train(pair.to, modelHashes(scene.model).physics);
+    if (stub) {
+      const done = await stub.train(pair.to, modelHashes(scene.model).physics);
+
+      return done && { ...done, proof: { ...done.proof, skills: await stamped(pair, scene.drive) } };
+    }
 
     const found = await input.train({ pair, ...scene });
-    const { skill, proof } = found?.result ?? {};
 
-    return found && skill && proof ? { skill, proof, target: found.target } : null;
+    if (!found) return null;
+
+    const { skill, proof, reason } = found.result;
+
+    return skill && proof ? { skill, proof, target: found.target } : { reason };
   };
 
   const prove = async (pair: Handoff, node: string): Promise<TransitionProof | null> => {
@@ -101,12 +117,22 @@ export function useHandoffs(input: HandoffsInput) {
 
       if (!done) return;
 
+      if ('reason' in done) {
+        input.showToast(done.reason);
+
+        return;
+      }
+
       skills.replace(done.target, done.skill);
       store(pair, done.proof);
     });
 
-  const plant = async (pair: Handoff, falls: number) =>
-    store(pair, { seeds: PROOF_SEEDS, falls, modelHash: modelHashes(await input.buildModel()).physics });
+  const plant = async (pair: Handoff, falls: number) => {
+    const scene = await setup();
+    const stamp = await stamped(pair, scene.drive);
+
+    store(pair, { seeds: PROOF_SEEDS, falls, modelHash: modelHashes(scene.model).physics, skills: stamp });
+  };
 
   return {
     busy,

@@ -1,6 +1,5 @@
 import type { MainModule } from '@mujoco/mujoco';
 import { modelHashes, type Skill } from '../skills/artifacts';
-import { hashOf } from '../skills/hash';
 import type { SkillStates } from '../skills/environment';
 import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -8,6 +7,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import { LOOK_DEG, routineBody, type RoutineBody } from './physicsBody';
 import { atKitPhase, atRandomPhase, PROOF_SEEDS, Prover, type Sampled } from './physicsProver';
 import type { Resource, SkillContract, TransitionProof } from './schema';
+import { controllerStamp, pairStamp, type StampScene } from './skillStamps';
 
 export interface KitRobot {
   id: string;
@@ -116,18 +116,26 @@ const ownContracts = (body: RoutineBody | null): SkillContract[] =>
     .filter((id) => !KIT_IDS.has(id))
     .map((id) => contract(id, ['body'], { status: 'ready' }));
 
-function kitContracts(
-  body: RoutineBody | null,
-  proof: KitProof | null,
-  modelHash: string,
-): Omit<RoutineKit, 'policies' | 'drive'> {
+interface KitFacts {
+  body: RoutineBody | null;
+  proof: KitProof | null;
+  modelHash: string;
+  stamped: StampScene;
+}
+
+function kitContracts({ body, proof, modelHash, stamped }: KitFacts): Omit<RoutineKit, 'policies' | 'drive'> {
   const problems: Record<string, string> = {};
   const skills = [...BODY_SKILLS, 'look-at'].map((id) => {
     const reason = body ? reasonFor(body, id, proof) : 'Only a robot that walks on legs runs the Motor Kit.';
     const proofs: Record<string, TransitionProof> = Object.fromEntries(
       PAIRS.filter(([from]) => from === id && !reason).map(([, to]) => [
         to,
-        { seeds: PROOF_SEEDS, falls: proof?.falls.get(`${id}->${to}`) ?? 0, modelHash },
+        {
+          seeds: PROOF_SEEDS,
+          falls: proof?.falls.get(`${id}->${to}`) ?? 0,
+          modelHash,
+          skills: pairStamp(stamped, { from: id, to }),
+        },
       ]),
     );
 
@@ -182,9 +190,7 @@ function proveKit(mj: MainModule, body: RoutineBody): KitProof | null {
 const cache = new Map<string, RoutineKit>();
 
 const libraryKey = (skills: readonly Skill[]) =>
-  skills
-    .map((s) => `${s.name}:${s.controller.kind === 'policy' ? s.controller.policy.createdAt : hashOf(s.controller)}`)
-    .join('|');
+  skills.map((s) => `${s.name}:${controllerStamp(s.controller)}`).join('|');
 
 export function kitForModel(options: KitScene): RoutineKit {
   const { mj, model, joints, skills } = options;
@@ -196,7 +202,8 @@ export function kitForModel(options: KitScene): RoutineKit {
   if (known) return known;
 
   const body = routineBody(model, joints, { skills, drive });
-  const kit = { ...kitContracts(body, body && proveKit(mj, body), modelHash), policies: [...skills], drive };
+  const proof = body && proveKit(mj, body);
+  const kit = { ...kitContracts({ body, proof, modelHash, stamped: { skills, drive } }), policies: [...skills], drive };
 
   cache.set(key, kit);
 
@@ -222,7 +229,12 @@ export function proveHandoff(scene: KitScene, pair: { from: string; to: string }
   try {
     const run = prover.run(pair.from, pair.to, isKitPair(pair.from, pair.to) ? atKitPhase : atRandomPhase);
 
-    return { seeds: PROOF_SEEDS, falls: run.falls, modelHash: modelHashes(scene.model).physics };
+    return {
+      seeds: PROOF_SEEDS,
+      falls: run.falls,
+      modelHash: modelHashes(scene.model).physics,
+      skills: pairStamp(scene, pair),
+    };
   } finally {
     prover.dispose();
   }

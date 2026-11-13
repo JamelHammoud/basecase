@@ -27,7 +27,7 @@ export async function caseLogicPlan(kase: Case, scene: CaseLogicScene): Promise<
   const skills = scene.skills ?? NO_ROUTINE_SKILLS;
   const [model, own] = await Promise.all([scene.buildModel(), skills.own()]);
   const kit = await sceneKit(model, { joints, parts, own });
-  const contracts = withHandoffs(kit.skills, skills.handoffs());
+  const contracts = withHandoffs(kit, skills.handoffs());
   const compiled = compileCaseLogic(kase.logic, { skills: contracts, modelHash: kit.modelHash, capabilities });
 
   if (!compiled.ok) return { plan: null, kit, refusal: compiled.errors[0].message };

@@ -39,11 +39,13 @@ export async function trainHandoff(input: HandoffTrainInput): Promise<HandoffRes
   const skills = scene.skills.map((s) => (s === target ? trained : s));
   const proof = proveHandoff({ ...scene, skills }, pair);
 
-  if (!proof || proof.falls > 0)
+  if (!proof) return { skill: null, proof: null, reason: `${pair.to} doesn’t run on this robot.` };
+
+  if (proof.falls > 0)
     return {
       skill: null,
       proof: null,
-      reason: `${pair.from} to ${pair.to} still fell in ${proof?.falls ?? '?'} tries.`,
+      reason: `${pair.from} to ${pair.to} still fell in ${proof.falls} of ${proof.seeds} tries in simulation.`,
     };
 
   return { skill: trained, proof, reason: candidate.reason };

@@ -77,7 +77,7 @@ export async function checkRoutine(
   const [model, own] = await Promise.all([options.buildModel(), skills.own()]);
   const kit = await sceneKit(model, { joints, parts, own });
   const scene = {
-    skills: withHandoffs(kit.skills, skills.handoffs()),
+    skills: withHandoffs(kit, skills.handoffs()),
     modelHash: kit.modelHash,
     capabilities: sceneCapabilities({ parts, joints }),
   };

@@ -59,6 +59,7 @@ export function useRoutines(options: RoutineOptions) {
     scene: sceneRef,
     buildModel: sim.buildModel,
     updateProjectNow,
+    showToast,
   });
   const routineScene = (skills: RoutineSkills = handoffs.skills) => ({
     ...sceneRef.current,

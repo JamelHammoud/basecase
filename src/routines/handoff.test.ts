@@ -13,9 +13,11 @@ import { applyEdits, newRoutine, type StepAt } from './edit';
 import { withHandoffs, type HandoffProofs } from './handoffs';
 import { trainHandoff } from './handoffTraining';
 import { loadKitLibrary } from './kitLibrary';
+import { KIT_SKILL_NAMES } from './physicsBody';
 import { scriptedDrive } from './physicsDrive';
 import { handoffStates, kitForModel, proveHandoff, type KitScene, type RoutineKit } from './physicsKit';
 import type { Routine } from './schema';
+import { pairStamp } from './skillStamps';
 import { skillChoice, stepChoices } from './stepMenu';
 
 const MAIN = { parent: 'start', key: 'onTimeout' } as const;
@@ -59,7 +61,7 @@ function thenSkill(skill: string, kit: RoutineKit): Routine {
 
 function compileWith(routine: Routine, kit: RoutineKit, proofs?: HandoffProofs, modelHash = kit.modelHash) {
   return compileRoutine(routine, {
-    skills: withHandoffs(kit.skills, proofs),
+    skills: withHandoffs(kit, proofs),
     modelHash,
     capabilities: sceneCapabilities(quadRobot),
   });
@@ -78,7 +80,12 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
 
     const proof = proveHandoff(scene, { from: 'walk', to: 'wave' });
 
-    expect(proof).toEqual({ seeds: 8, falls: 0, modelHash: kit.modelHash });
+    expect(proof).toEqual({
+      seeds: 8,
+      falls: 0,
+      modelHash: kit.modelHash,
+      skills: pairStamp(scene, { from: 'walk', to: 'wave' }),
+    });
     expect(compileWith(routine, kit, { 'walk->wave': proof! }).ok).toBe(true);
   });
 
@@ -109,6 +116,12 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
   it('gives the Kit’s own pairs the proofs the Kit records', () => {
     const scene = sceneOf('quad-servo', quad, []);
     const kit = kitForModel(scene);
+    const kitProof = (from: string, to: string) => ({
+      seeds: 8,
+      falls: 0,
+      modelHash: kit.modelHash,
+      skills: pairStamp(scene, { from, to }),
+    });
 
     for (const skill of kit.skills.filter((s) => s.status === 'ready')) {
       for (const [to, proof] of Object.entries(skill.transitions))
@@ -116,21 +129,9 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
     }
 
     expect(kit.skills.map((s) => [s.id, s.transitions])).toEqual([
-      ['walk', { settle: { seeds: 8, falls: 0, modelHash: kit.modelHash } }],
-      [
-        'settle',
-        {
-          walk: { seeds: 8, falls: 0, modelHash: kit.modelHash },
-          'turn-away': { seeds: 8, falls: 0, modelHash: kit.modelHash },
-        },
-      ],
-      [
-        'turn-away',
-        {
-          walk: { seeds: 8, falls: 0, modelHash: kit.modelHash },
-          settle: { seeds: 8, falls: 0, modelHash: kit.modelHash },
-        },
-      ],
+      ['walk', { settle: kitProof('walk', 'settle') }],
+      ['settle', { walk: kitProof('settle', 'walk'), 'turn-away': kitProof('settle', 'turn-away') }],
+      ['turn-away', { walk: kitProof('turn-away', 'walk'), settle: kitProof('turn-away', 'settle') }],
       ['look-at', {}],
     ]);
   });
@@ -145,6 +146,36 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
     expect(refusals(compileWith(thenSkill('wave', moved), moved, { 'walk->wave': proof }))).toEqual([
       { from: 'walk', to: 'wave', falls: null },
     ]);
+  });
+
+  it('makes a proof stale when either skill is retrained', () => {
+    const wave = clockSkill(quad, quadWave());
+    const scene = sceneOf('quad-servo', quad, [wave]);
+    const proof = proveHandoff(scene, { from: 'walk', to: 'wave' })!;
+    const retrained = (skill: Skill): Skill =>
+      skill.controller.kind === 'policy'
+        ? {
+            ...skill,
+            controller: {
+              ...skill.controller,
+              policy: { ...skill.controller.policy, trainedSteps: skill.controller.policy.trainedSteps + 1 },
+            },
+          }
+        : skill;
+    const newWave = kitForModel(sceneOf('quad-servo', quad, [retrained(wave)]));
+    const newWalk = kitForModel({
+      ...scene,
+      skills: [...library.map((s) => (s.name === KIT_SKILL_NAMES.velocity ? retrained(s) : s)), wave],
+    });
+
+    const kit = kitForModel(scene);
+
+    expect(compileWith(thenSkill('wave', kit), kit, { 'walk->wave': proof }).ok).toBe(true);
+
+    for (const changed of [newWave, newWalk])
+      expect(refusals(compileWith(thenSkill('wave', changed), changed, { 'walk->wave': proof }))).toEqual([
+        { from: 'walk', to: 'wave', falls: null },
+      ]);
   });
 
   it('gives the same proof and the same start states for the same seeds', () => {
@@ -208,7 +239,12 @@ describe('Train Hand-off', { timeout: 300_000 }, () => {
     expect(job.startStates?.length).toBeGreaterThan(0);
     expect(job.warmPolicy).toEqual(target.controller.kind === 'policy' && target.controller.policy);
     expect(job.backend).toBeUndefined();
-    expect(result.proof).toEqual({ seeds: 8, falls: 0, modelHash: before.modelHash });
+    expect(result.proof).toEqual({
+      seeds: 8,
+      falls: 0,
+      modelHash: before.modelHash,
+      skills: pairStamp({ ...scene, skills: [...library, result.skill!] }, { from: 'walk', to: 'sit' }),
+    });
     expect(result.skill?.binding.contract).toBe(target.binding.contract);
     expect(result.skill?.binding.contract).toBe(contractHash(moveEnvironment(quad, quadSit()).contract));
     expect(result.skill?.warmStartFrom).toBe(skillHash(target));

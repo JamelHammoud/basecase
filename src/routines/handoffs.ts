@@ -1,4 +1,5 @@
 import type { Handoff, RoutineError, SkillContract, TransitionProof } from './schema';
+import { pairStamp, type StampScene } from './skillStamps';
 
 export type HandoffProofs = Record<string, TransitionProof>;
 
@@ -9,12 +10,21 @@ export interface RefusedHandoff extends Handoff {
 
 export const handoffKey = (h: Handoff) => `${h.from}->${h.to}`;
 
-export function withHandoffs(skills: readonly SkillContract[], proofs: HandoffProofs | undefined): SkillContract[] {
-  const entries = Object.entries(proofs ?? {}).map(([key, proof]) => ({ pair: key.split('->'), proof }));
+export interface HandoffKit {
+  skills: readonly SkillContract[];
+  policies: StampScene['skills'];
+  drive: StampScene['drive'];
+}
 
-  if (!entries.length) return [...skills];
+export function withHandoffs(kit: HandoffKit, proofs: HandoffProofs | undefined): SkillContract[] {
+  const scene = { skills: kit.policies, drive: kit.drive };
+  const entries = Object.entries(proofs ?? {})
+    .map(([key, proof]) => ({ pair: key.split('->'), proof }))
+    .filter(({ pair: [from, to], proof }) => to !== undefined && proof.skills === pairStamp(scene, { from, to }));
 
-  return skills.map((skill) => {
+  if (!entries.length) return [...kit.skills];
+
+  return kit.skills.map((skill) => {
     const own = entries.filter((e) => e.pair.length === 2 && e.pair[0] === skill.id);
 
     if (!own.length) return skill;

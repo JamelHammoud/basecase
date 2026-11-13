@@ -45,12 +45,12 @@ The step then says how many of the 8 tries fell, such as “walk to wave fell in
 
 ![The Wave step with its fall count, Train Hand-off and Stop First](/help/prove-a-hand-off-between-skills/fell.png)
 
-Training starts from your trained move and from states the first skill really passes through. Arena then checks the move against its own animation. The new move replaces the old one only if Arena passes it and the switch runs 8 times with no falls. Otherwise your move stays as it was, and the step keeps its fall count.
+Training starts from your trained move and from states the first skill really passes through. Arena then checks the move against its own animation. The new move replaces the old one only if Arena passes it and the switch runs 8 times with no falls. Otherwise your move stays as it was, the step keeps its fall count, and a message says why.
 
 To avoid the switch instead, click **Stop First**. The robot settles before the step.
 
 ## Limits
 
-A proof belongs to the robot as it is. Changing its parts or joints makes the switch unproven again. **Train Hand-off** retrains moves only, not skills taught from a sentence, and it needs the desktop app.
+A proof belongs to the robot and the two skills as they are. A change to a mass, size or joint makes the switch unproven again. So does retraining either skill. **Train Hand-off** retrains moves only, not skills taught from a sentence, and it needs the desktop app.
 
 Case logic shows in the same Routines tab, so its steps get **Prove** too. When the agent builds a Routine or Case logic, it proves each switch itself and tells you about any that fell.

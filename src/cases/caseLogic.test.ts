@@ -162,7 +162,7 @@ describe('Case logic', { timeout: 60_000 }, () => {
     const inputs = [{ at: 0.5, name: 'voice', value: 'sit' }];
     const refused = await runCase(mj, kase, quad, { controller: 'reference', kit, inputs });
     const proof = proveHandoff(scene, { from: 'walk', to: 'sit' })!;
-    const proved = withHandoffs(kit.skills, { 'walk->sit': proof });
+    const proved = withHandoffs(kit, { 'walk->sit': proof });
     const result = await runCase(mj, kase, quad, { controller: 'reference', kit, skills: proved, inputs });
     const controls = (result.logic?.trace ?? []).flatMap((e) => (e.kind === 'control' ? [e.skill] : []));
     const done = (result.logic?.trace ?? []).flatMap((e) => (e.kind === 'opDone' ? [e.node] : []));

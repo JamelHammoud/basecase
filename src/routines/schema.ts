@@ -74,6 +74,7 @@ export interface TransitionProof {
   seeds: number;
   falls: number;
   modelHash: string;
+  skills?: string;
 }
 
 export interface SkillContract {

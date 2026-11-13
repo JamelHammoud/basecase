@@ -11,7 +11,7 @@ export interface HandoffStub {
 
 export interface HandoffPorts {
   skills: SceneRoutineSkills;
-  prove: (modelHash: string) => TransitionProof | null;
+  prove: (modelHash: string) => TransitionProof;
   train: (to: string, modelHash: string) => Promise<{ skill: Skill; proof: TransitionProof; target: OwnSkill } | null>;
 }
 

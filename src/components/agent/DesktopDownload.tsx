@@ -1,6 +1,7 @@
 import React from 'react';
 import { BotIcon, Button, DownloadIcon, EmptyState } from '../../design-system';
 import { DESKTOP_AGENT_LINE, DESKTOP_DOWNLOAD } from '../../utils/platform/webDemo';
+import { openLink } from '../../utils/openLink';
 
 export const DesktopDownload: React.FC = () => (
   <EmptyState
@@ -12,7 +13,7 @@ export const DesktopDownload: React.FC = () => (
         variant="primary"
         size="sm"
         icon={<DownloadIcon className="w-4 h-4" />}
-        onClick={() => window.open(DESKTOP_DOWNLOAD.url, '_blank', 'noopener')}
+        onClick={() => openLink(DESKTOP_DOWNLOAD.url)}
       >
         {DESKTOP_DOWNLOAD.label}
       </Button>

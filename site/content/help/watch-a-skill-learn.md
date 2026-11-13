@@ -27,7 +27,7 @@ Snapshots need the desktop app. Training in the browser shows its progress only.
 
 ![Stand training at 33%, with +1.55 beside it and the quadruped on the canvas](/help/watch-a-skill-learn/training.png)
 
-6. Wait for the row's Arena line. The snapshots stay under it, labelled with their training iteration.
+6. Wait for the row's Arena line. The snapshots stay under it, labeled with their training iteration.
 7. Click a snapshot to run it in the simulation.
 
 ![Stand ready, with six snapshots from 50 to 300 under its Arena line](/help/watch-a-skill-learn/snapshots.png)

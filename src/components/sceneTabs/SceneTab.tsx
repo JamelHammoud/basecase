@@ -1,6 +1,7 @@
 import React from 'react';
 import { AGENT_WORKING, RenameField, Spinner, Tooltip, CloseIcon } from '../../design-system';
 import type { SceneTabInfo } from '../SceneTabs';
+import { keyFor } from '../../app/shortcuts';
 
 export interface SceneTabHandlers {
   onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
@@ -77,7 +78,7 @@ export const SceneTab: React.FC<{
       )}
       <Tooltip
         label="Close"
-        shortcut={active ? '⌘W' : undefined}
+        shortcut={active ? keyFor('close-tab') : undefined}
         className={`absolute inset-y-0 right-0 items-center ${active ? '' : CLOSE_ON_HOVER}`}
       >
         <span

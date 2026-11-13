@@ -31,7 +31,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
 import { skeletonCommands } from './skeletonCommands';
-import { fitTestCommands } from './fitTestCommands';
+import { fitTestCommands, mergeCommands } from './printCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
@@ -40,6 +40,8 @@ import { operateCommands } from './operateCommands';
 import { buildCommands } from './buildCommands';
 import { leaderCommands } from './leaderCommands';
 import { onshapeCommands } from './onshapeCommands';
+import { keyFor } from '../app/shortcuts';
+import { tabChord } from '../../electron/shortcutKeys.mjs';
 
 export interface CommandInputs {
   core: WorkspaceCore;
@@ -58,7 +60,7 @@ function fileCommands({ core }: CommandInputs): Command[] {
           id: 'reopen-scene',
           group: 'Scene',
           label: 'Reopen Closed Scene',
-          shortcut: '⇧⌘T',
+          shortcut: keyFor('reopen-tab'),
           icon: <HistoryIcon className={ic} />,
           keywords: 'tab undo restore',
           run: studio.reopenTab,
@@ -71,7 +73,7 @@ function fileCommands({ core }: CommandInputs): Command[] {
       id: 'open-scenes',
       group: 'Scene',
       label: 'Show Scenes',
-      shortcut: '⌘O',
+      shortcut: keyFor('open-scenes'),
       icon: <FolderOpenIcon className={ic} />,
       keywords: 'open saved files browse recent history delete rename',
       run: studio.openSceneList,
@@ -80,7 +82,7 @@ function fileCommands({ core }: CommandInputs): Command[] {
       id: 'new',
       group: 'Scene',
       label: 'New Scene',
-      shortcut: '⌘T',
+      shortcut: keyFor('new-scene'),
       icon: <ComposeIcon className={ic} />,
       keywords: 'tab open',
       run: () => studio.newScene(),
@@ -97,7 +99,7 @@ function fileCommands({ core }: CommandInputs): Command[] {
       id: 'close-scene',
       group: 'Scene',
       label: 'Close Scene',
-      shortcut: '⌘W',
+      shortcut: keyFor('close-tab'),
       icon: <CloseIcon className={ic} />,
       keywords: 'tab',
       run: () => studio.closeTab(workspaceId),
@@ -109,7 +111,7 @@ function fileCommands({ core }: CommandInputs): Command[] {
         id: `tab-${t.id}`,
         group: 'Open Scenes',
         label: t.name || 'Untitled',
-        shortcut: studio.tabs.indexOf(t) < 9 ? `⌘${studio.tabs.indexOf(t) + 1}` : undefined,
+        shortcut: tabChord(studio.tabs.indexOf(t), studio.tabs.length),
         icon: <SwapIcon className={ic} />,
         keywords: 'tab switch go to',
         run: () => studio.selectTab(t.id),
@@ -134,7 +136,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
       id: 'lay-out-plates',
       group: 'Scene',
       label: 'Print',
-      shortcut: '⌘P',
+      shortcut: keyFor('print'),
       icon: <PrinterIcon className={ic} />,
       keywords: 'lay out plates bed printer slice',
       run: () => core.printing.openMode(1),
@@ -151,6 +153,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
       },
     },
     ...fitTestCommands({ core }),
+    ...mergeCommands({ core }),
     {
       id: 'slice-plates',
       group: 'Scene',
@@ -170,7 +173,7 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       id: 'toggle-ref-images',
       group: 'View',
       label: studio.showReferenceImages ? 'Hide Reference Images' : 'Show Reference Images',
-      shortcut: '⇧I',
+      shortcut: keyFor('toggle-reference-images'),
       icon: <PhotoIcon className={ic} />,
       keywords: 'photo picture',
       run: ui.toggleReferenceImages,
@@ -218,7 +221,7 @@ function toolCommands({ core }: CommandInputs): Command[] {
           id: 'tool-sculpt',
           group: 'Tools',
           label: 'Sculpt',
-          shortcut: 'C',
+          shortcut: keyFor('sculpt'),
           icon: <BrushIcon className={ic} />,
           run: () => tool.setMode('sculpt'),
         },
@@ -230,7 +233,7 @@ function toolCommands({ core }: CommandInputs): Command[] {
       id: 'tool-move',
       group: 'Tools',
       label: 'Move',
-      shortcut: 'V',
+      shortcut: keyFor('move'),
       icon: <MoveIcon className={ic} />,
       run: () => tool.setMode('translate'),
     },
@@ -238,7 +241,7 @@ function toolCommands({ core }: CommandInputs): Command[] {
       id: 'tool-rotate',
       group: 'Tools',
       label: 'Rotate',
-      shortcut: 'E',
+      shortcut: keyFor('rotate'),
       icon: <RotateIcon className={ic} />,
       run: () => tool.setMode('rotate'),
     },
@@ -246,7 +249,7 @@ function toolCommands({ core }: CommandInputs): Command[] {
       id: 'tool-scale',
       group: 'Tools',
       label: 'Scale',
-      shortcut: 'R',
+      shortcut: keyFor('scale'),
       icon: <ScaleIcon className={ic} />,
       run: () => tool.setMode('scale'),
     },
@@ -278,7 +281,7 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-pose',
       group: 'Panels',
       label: 'Show Pose',
-      shortcut: 'P',
+      shortcut: keyFor('show-pose'),
       icon: <PoseIcon className={ic} />,
       keywords: 'joints posing animate dof tab',
       run: pose.openPose,
@@ -338,7 +341,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-comment',
       group: 'Tools',
       label: 'Comment',
-      shortcut: 'M',
+      shortcut: keyFor('comment'),
       icon: <CommentIcon className={ic} />,
       keywords: 'annotation note pin',
       run: () => core.annotations.toggleCommentMode(true),
@@ -347,7 +350,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-measure',
       group: 'Tools',
       label: 'Measure',
-      shortcut: 'D',
+      shortcut: keyFor('measure'),
       icon: <RulerIcon className={ic} />,
       keywords: 'distance ruler dimension tape length',
       run: () => core.tool.toggleMeasure(true),
@@ -356,7 +359,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-annotate',
       group: 'Tools',
       label: 'Annotate',
-      shortcut: 'N',
+      shortcut: keyFor('annotate'),
       icon: <MarkerIcon className={ic} />,
       keywords: 'mark draw circle pen markup highlight red line',
       run: () => core.tool.toggleMarking(true),
@@ -367,7 +370,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
             id: 'tool-erase-marks',
             group: 'Tools',
             label: 'Eraser',
-            shortcut: 'E',
+            shortcut: keyFor('eraser'),
             icon: <EraserIcon className={ic} />,
             keywords: 'annotate erase marks remove delete one mark rub out',
             run: () => {

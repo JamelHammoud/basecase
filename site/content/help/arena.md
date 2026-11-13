@@ -58,7 +58,7 @@ A skill is tied to the design it passed on. For Motor Kit skills, **Recheck** ru
 
 | Change | What happens |
 |---|---|
-| A colour or a name | Nothing; the skill stays ready |
+| A color or a name | Nothing; the skill stays ready |
 | A mass, a size or a joint's range | The row shows **Recheck** |
 | A joint added or removed, or its type or axis changed | The row shows **Train**: the skill must be trained again |
 

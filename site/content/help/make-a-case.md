@@ -44,13 +44,13 @@ The scene must have a robot with joints. [Cases](/help/cases) explains what a Ca
 
 ![New Case on an arm with Dots set to 3](/help/make-a-case/new-case.png)
 
-8. Click **Create**.
+8. Click **Make Case**.
 
 ![Touch the Dots open in the Simulate tab](/help/make-a-case/opened.png)
 
 The Case opens in the **Simulate** tab, and its world appears on the canvas. Next, [try the Case](/help/try-a-case).
 
-**New Case** is also in [[⌘K]], and [[↩]] creates the Case from the **Name** field. To start from a ready-made Case instead, click one under **Examples**.
+**New Case** is also in [[⌘K]], and [[↩]] makes the Case from the **Name** field. To start from a ready-made Case instead, click one under **Examples**.
 
 ## Describe a Case in words
 
@@ -60,7 +60,7 @@ You can also tell the agent what you want to do with a robot, such as "drive thi
 
 ## Name or delete a Case
 
-The **Name** field sets the name before you click **Create**. To delete a Case, right-click it in the **Cases** tab and choose **Delete**. Its tries go with it, so Basecase asks first.
+The **Name** field sets the name before you click **Make Case**. To delete a Case, right-click it in the **Cases** tab and choose **Delete**. Its tries go with it, so Basecase asks first.
 
 The open Case's menu also has **Compare With**, which runs it on another open scene's robot. See [Compare two robots on a Case](/help/compare-two-robots-on-a-case).
 

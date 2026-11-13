@@ -24,7 +24,7 @@ covers:
   - src/workspace/useOnshapeUpdate.ts
 ---
 
-Bring a robot you modelled in Onshape into Basecase, with its revolute and slider mates as joints you can pose.
+Bring a robot you modeled in Onshape into Basecase, with its revolute and slider mates as joints you can pose.
 
 1. In Onshape's developer portal, create an API key that can read your documents, and copy its access key and secret key.
 2. Open Settings with ⌘, and choose **Accounts**.
@@ -51,7 +51,7 @@ When the assembly changes in Onshape, bring the changes in without importing it 
 
 ![The right-click menu of the Desk Arm group with Update from Onshape](/help/import-an-onshape-assembly/update.png)
 
-Parts you changed in Onshape are replaced where they sit, new parts and mates come in as parts and joints, and parts you deleted there are removed. The servo on each joint, colours, parts you added like screws or cameras, poses and calibrations stay. A message counts the changes, and ⌘Z undoes the whole update.
+Parts you changed in Onshape are replaced where they sit, new parts and mates come in as parts and joints, and parts you deleted there are removed. The servo on each joint, colors, parts you added like screws or cameras, poses and calibrations stay. A message counts the changes, and ⌘Z undoes the whole update.
 
 ![The arm after the update, longer and with a new Wrist part, and the message 3 changes from Onshape](/help/import-an-onshape-assembly/updated.png)
 

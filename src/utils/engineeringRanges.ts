@@ -39,9 +39,8 @@ export function rangeChangeRows(ctx: CheckContext): CheckRow[] {
     {
       check: 'Range changes',
       status: items.length ? 'warn' : 'pass',
-      detail: items.length
-        ? `${plural(items.length, 'joint')} narrower than first defined`
-        : 'Every joint keeps the range it was first defined with',
+      detail: items.length ? `${plural(items.length, 'joint')} narrower than first defined` : '',
+      detailInItems: true,
       items,
     },
   ];

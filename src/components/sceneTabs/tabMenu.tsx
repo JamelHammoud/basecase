@@ -1,4 +1,5 @@
 import { ContextMenuEntry, CloseIcon, DuplicateIcon, EditIcon, HistoryIcon, PlusIcon } from '../../design-system';
+import { keyFor } from '../../app/shortcuts';
 
 export interface TabMenuActions {
   tabIds: string[];
@@ -22,10 +23,10 @@ export function tabMenuItems(id: string, a: TabMenuActions): ContextMenuEntry[] 
     { label: 'Rename', icon: <EditIcon className={ic} />, onSelect: () => a.onRename(id) },
     { label: 'Duplicate', icon: <DuplicateIcon className={ic} />, onSelect: () => a.onDuplicate(id) },
     { divider: true },
-    { label: 'New Scene', shortcut: '⌘T', icon: <PlusIcon className={ic} />, onSelect: a.onNew },
+    { label: 'New Scene', shortcut: keyFor('new-scene'), icon: <PlusIcon className={ic} />, onSelect: a.onNew },
     {
       label: 'Reopen Closed Scene',
-      shortcut: '⇧⌘T',
+      shortcut: keyFor('reopen-tab'),
       icon: <HistoryIcon className={ic} />,
       disabled: !a.canReopen,
       onSelect: a.onReopen,
@@ -33,7 +34,7 @@ export function tabMenuItems(id: string, a: TabMenuActions): ContextMenuEntry[] 
     { divider: true },
     {
       label: 'Close',
-      shortcut: id === a.activeId ? '⌘W' : undefined,
+      shortcut: id === a.activeId ? keyFor('close-tab') : undefined,
       icon: <CloseIcon className={ic} />,
       onSelect: () => a.onClose(id),
     },

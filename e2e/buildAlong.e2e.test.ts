@@ -140,3 +140,37 @@ describe('Build Along', () => {
     expect(await app.page.locator('[data-build-label]').count()).toBe(0);
   }, 300000);
 });
+
+describe('Buy All', () => {
+  const opened = () => app.page.evaluate(() => (window as unknown as { opened: string[] }).opened);
+
+  it('fills the Amazon cart from the bill of materials, from ⌘K and the list’s menu', async () => {
+    const arm = Array.from({ length: 6 }, (_, i) => ({ ...servo(`buy${i}`, i * 40), componentVariant: undefined }));
+
+    await app.page.evaluate((list) => {
+      const s = (window as unknown as { __studio: BuildAlongStudio }).__studio;
+      const urls: string[] = [];
+
+      s.load({ name: 'Arm', parts: list, project: s.sceneRecord().project });
+      (window as unknown as { opened: string[] }).opened = urls;
+      window.open = (url) => (urls.push(String(url)), null);
+    }, arm);
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('Buy All');
+    await expect.poll(() => app.page.getByText(/^Buy All$/).count(), { timeout: 15000 }).toBe(1);
+    await app.page.keyboard.press('Enter');
+    await expect.poll(async () => (await opened()).length).toBe(1);
+
+    const cart = new URL((await opened())[0]);
+
+    expect(`${cart.origin}${cart.pathname}`).toBe('https://www.amazon.com/gp/aws/cart/add.html');
+    expect(cart.searchParams.get('ASIN.1')).toBe('B0G39SM9HZ');
+    expect(cart.searchParams.get('Quantity.1')).toBe('6');
+
+    await app.page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
+    await app.page.locator(shown('button[aria-label="Export bill of materials"]')).click();
+    await app.page.getByRole('menuitem', { name: /^Buy All/ }).click();
+    await expect.poll(opened).toEqual([cart.href, cart.href]);
+    expect(app.errors).toEqual([]);
+  }, 90000);
+});

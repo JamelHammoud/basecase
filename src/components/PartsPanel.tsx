@@ -11,6 +11,7 @@ import { HardwarePage, ItemPage, PageFooter } from './parts/pages';
 import { ADDED_BY_AGENT, type Category, type View, partCategories, searchScope } from './parts/partsViews';
 import { useSourcedItems } from './parts/useSourcedItems';
 import { hasPrimaryModifier } from '../utils/os';
+import { keyFor } from '../app/shortcuts';
 
 const lastSpecByFamily = new Map<string, HardwareSpec>();
 
@@ -143,7 +144,7 @@ export const PartsPanel: React.FC<{
           onKeyDown={onSearchKey}
           placeholder={scope ? `Search ${scope.label}` : 'Search parts'}
           aria-label={scope ? `Search ${scope.label}` : 'Search parts'}
-          shortcut="⌘F"
+          shortcut={keyFor('find-parts')}
           onBack={stack.length > 1 ? back : undefined}
         />
       </div>

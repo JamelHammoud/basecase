@@ -48,7 +48,7 @@ GR00T works out its own `stats.json` from these.
 
 | Column | What it holds |
 |---|---|
-| `observation.state` | Each joint's position, in radians, or metres for a sliding joint |
+| `observation.state` | Each joint's position, in radians, or meters for a sliding joint |
 | `action` | Each joint's command at the same frame: the position target, or the speed for a wheel |
 | `timestamp` | Seconds since the episode began |
 | `frame_index`, `episode_index`, `index` | The frame within its episode, the episode, and the frame across the whole dataset |

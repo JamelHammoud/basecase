@@ -16,9 +16,9 @@ Steps are in [Wrap a robot in a character shell](/help/wrap-a-robot-in-a-shell).
 
 ## What it does
 
-The mesh is scaled evenly and centred on the robot until it covers it with 6 mm to spare. Then it's hollowed to a 2 mm wall. It's cut at every joint, through the joint's pivot and square to the line between the two links, into one shell per link. Then everything that would collide is cut away. That's the robot's own parts at rest, and whatever a servo, a link or a neighbouring shell sweeps through across each joint's full range.
+The mesh is scaled evenly and centered on the robot until it covers it with 6 mm to spare. Then it's hollowed to a 2 mm wall. It's cut at every joint, through the joint's pivot and square to the line between the two links, into one shell per link. Then everything that would collide is cut away. That's the robot's own parts at rest, and whatever a servo, a link or a neighboring shell sweeps through across each joint's full range.
 
-Neighbouring shells split the clearance around a joint between them, so both keep material.
+Neighboring shells split the clearance around a joint between them, so both keep material.
 
 ![Seven owl shells around the SO-101, one per link](/changelog/wrap-a-robot-in-a-character-shell/shells.png)
 

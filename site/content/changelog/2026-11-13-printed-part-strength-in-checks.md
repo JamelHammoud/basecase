@@ -16,7 +16,7 @@ Strength sits in Checks in the Build tab, with the other engineering checks. Eac
 
 Checks already knew the loads: the crouch or hold torque from Servo torque, or the walking peak once Peak torque has run. It also knew which screws hold each part, and how each part will lie on the plate. Strength follows the screws from each servo horn to the next joint and turns every printed part on that path into about 1.5 mm cubes. It holds the part at the horn, pushes on the screws that carry the next link, and solves for the stress in a background worker. A 3 mm bracket takes about half a second.
 
-The plastic is modelled the way a printer lays it down. PLA holds about 50 MPa along a layer but only 25 MPa pulling layers apart, and PETG 45 and 30. Your infill and the walls the slicer lays down decide how much of each part is solid. Strength grades the part on the face Printing picked for it, and on every other face it could lie on.
+The plastic is modeled the way a printer lays it down. PLA holds about 50 MPa along a layer but only 25 MPa pulling layers apart, and PETG 45 and 30. Your infill and the walls the slicer lays down decide how much of each part is solid. Strength grades the part on the face Printing picked for it, and on every other face it could lie on.
 
 ## Fix
 

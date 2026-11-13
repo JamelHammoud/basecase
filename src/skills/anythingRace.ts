@@ -88,7 +88,7 @@ function motionPlan(task: Task): Promise<Plan> {
   }
 
   if (facts.cls === 'legs' && travels(spec))
-    return Promise.resolve({ controller: null, reason: 'Travelling on legs needs a learned gait, not a pose plan.' });
+    return Promise.resolve({ controller: null, reason: 'Traveling on legs needs a learned gait, not a pose plan.' });
 
   return planMotion({ mj, model, poser: task.poser, spec, environment, stop });
 }

@@ -23,6 +23,7 @@ import {
   ScaleIcon,
   ShapesIcon,
 } from '../design-system';
+import { keyFor } from '../app/shortcuts';
 
 const BASIC_SHAPES = PART_CATALOG.filter((c) => c.category === 'primitives');
 const ICON = 'w-[22px] h-[22px]';
@@ -62,11 +63,11 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   const [draggingShape, setDraggingShape] = useState(false);
 
   const tools: Array<{ mode: TransformMode; icon: React.ReactNode; label: string; key: string }> = [
-    { mode: 'translate', icon: <MoveIcon className={ICON} />, label: 'Move', key: 'V' },
-    { mode: 'rotate', icon: <RotateIcon className={ICON} />, label: 'Rotate', key: 'E' },
-    { mode: 'scale', icon: <ScaleIcon className={ICON} />, label: 'Scale', key: 'R' },
+    { mode: 'translate', icon: <MoveIcon className={ICON} />, label: 'Move', key: keyFor('move') },
+    { mode: 'rotate', icon: <RotateIcon className={ICON} />, label: 'Rotate', key: keyFor('rotate') },
+    { mode: 'scale', icon: <ScaleIcon className={ICON} />, label: 'Scale', key: keyFor('scale') },
     ...(showSculpt
-      ? [{ mode: 'sculpt' as const, icon: <BrushIcon className={ICON} />, label: 'Sculpt', key: 'C' }]
+      ? [{ mode: 'sculpt' as const, icon: <BrushIcon className={ICON} />, label: 'Sculpt', key: keyFor('sculpt') }]
       : []),
   ];
 
@@ -87,7 +88,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
       <IconButton
         icon={<CommentIcon className={ICON} />}
         title="Comment"
-        shortcut="M"
+        shortcut={keyFor('comment')}
         tooltipSide="top"
         size="lg"
         isActive={commentMode}
@@ -99,7 +100,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
       <div className="relative" ref={shapesRef}>
         <MenuTrigger
           title="Shapes"
-          shortcut="A"
+          shortcut={keyFor('shapes')}
           open={shapesOpen}
           onClick={() => onShapesOpenChange(!shapesOpen)}
           icon={<ShapesIcon className={ICON} />}
@@ -134,7 +135,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           <MenuItem
             icon={<RulerIcon className="w-4 h-4" />}
             label="Measure"
-            shortcut="D"
+            shortcut={keyFor('measure')}
             onSelect={() => {
               onShapesOpenChange(false);
               onMeasure();
@@ -143,7 +144,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           <MenuItem
             icon={<MarkerIcon className="w-4 h-4" />}
             label="Annotate"
-            shortcut="N"
+            shortcut={keyFor('annotate')}
             onSelect={() => {
               onShapesOpenChange(false);
               onAnnotate();

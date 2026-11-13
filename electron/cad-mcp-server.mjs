@@ -11,7 +11,7 @@ import {
   trainingStatus,
   verifyDesign,
 } from './cad-mcp/buildTools.mjs';
-import { checkAssembly } from './cad-mcp/assemblyTools.mjs';
+import { checkAssembly, mergeParts } from './cad-mcp/assemblyTools.mjs';
 import { compare } from './cad-mcp/compareTool.mjs';
 import { craftReview } from './cad-mcp/craftReview.mjs';
 import { fitView } from './cad-mcp/fitViewTool.mjs';
@@ -98,6 +98,7 @@ const TOOLS = [
   checkScene,
   craftReview,
   checkAssembly,
+  mergeParts,
   findJointAxes,
   defineJoints,
   getRig,

@@ -126,9 +126,7 @@ function alignmentRow(ctx: CheckContext, joints: RobotJoint[]): CheckRow {
   return {
     check: 'Servo alignment',
     status: 'pass',
-    detail: unmeasured.length
-      ? `Every measured servo output lies on its joint axis; no output known for ${unmeasured.length}`
-      : 'Every servo output lies on its joint axis',
+    detail: unmeasured.length ? `No output known for ${plural(unmeasured.length, 'servo')}` : '',
   };
 }
 
@@ -146,7 +144,7 @@ export function servoMountRows(ctx: CheckContext): CheckRow[] {
       status: unsupported.length ? 'warn' : 'pass',
       detail: unsupported.length
         ? `Link held on one side only (the output shaft takes the bending load). Clamp both horns of a dual-shaft servo, or add a bearing on the axis: ${unsupported.join(', ')}`
-        : 'Every servo joint is held on both sides (both horns, a bearing on the axis, or a second servo)',
+        : '',
     },
   ];
 }

@@ -38,7 +38,7 @@ function jointTextLine(l: EngineeringReport['joints'][number], toAgent: (v: V3) 
 
 export function engineeringText(r: EngineeringReport, toAgent: (v: V3) => V3): string {
   const lines = r.rows.flatMap((row) => [
-    `${MARK[row.status]} · ${row.check}: ${row.detail}`,
+    `${MARK[row.status]} · ${row.check}${row.detail ? `: ${row.detail}` : ''}`,
     ...(row.items ?? []).map((i) => `    - ${i.text} [${(i.ids ?? []).join(', ')}]`),
   ]);
 

@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { showStress } from '../../strength/fields';
 import { DisclosureRow } from '../../design-system';
+import { shownDetail } from '../../readiness/shownDetail';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
 import { EnvelopeRows, FindingPlot, unlisted } from './EnvelopeRows';
 import { BlockerRow, NoteRow, type FindingContext } from './FindingRow';
 import { TetherFields } from './TetherFields';
 import { tetherFieldsFor } from './tetherRows';
-
-const hasOwnBody = (check: CheckSummary) => !!check.detail || !!check.envelopes?.length;
 
 export const CheckItem: React.FC<{
   check: CheckSummary;
@@ -22,8 +21,9 @@ export const CheckItem: React.FC<{
   useEffect(() => (open && stressIds?.length ? showStress(stressIds) : undefined), [open, stressIds]);
 
   const count = blockers.length + notes.length;
+  const detail = shownDetail(check, [...blockers, ...notes]);
   const fields = tetherFieldsFor(check.name, context.tether?.tether);
-  const hasBody = count > 0 || fields.length > 0 || hasOwnBody(check);
+  const hasBody = count > 0 || fields.length > 0 || !!detail || !!check.envelopes?.length;
   const showDots = context.showDots;
 
   useEffect(() => {
@@ -47,9 +47,7 @@ export const CheckItem: React.FC<{
       </DisclosureRow>
       {open && hasBody && (
         <div className="pb-1">
-          {check.detail && (
-            <p className="pl-[31px] pr-[7px] pb-0.5 text-[12.5px] leading-[17px] text-white/50">{check.detail}</p>
-          )}
+          {detail && <p className="pl-[31px] pr-[7px] pb-0.5 text-[12.5px] leading-[17px] text-white/50">{detail}</p>}
           {context.tether && fields.length > 0 && <TetherFields fields={fields} control={context.tether} />}
           <ul>
             {blockers.map((finding) => (

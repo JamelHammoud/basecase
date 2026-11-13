@@ -333,7 +333,7 @@ export const wrapRobot = {
   config: {
     title: 'Wrap a robot in a mesh',
     description:
-      'Wraps a jointed robot in a character mesh the user imported (an owl, a droid body): fits the mesh around the robot by uniform scale and centring, hollows it to a 2 mm wall, cuts it at each joint into one shell per link, and cuts away whatever a servo, a link or another shell would hit across each joint’s range. ' +
+      'Wraps a jointed robot in a character mesh the user imported (an owl, a droid body): fits the mesh around the robot by uniform scale and centering, hollows it to a 2 mm wall, cuts it at each joint into one shell per link, and cuts away whatever a servo, a link or another shell would hit across each joint’s range. ' +
       'Each shell is a printed part attached to its link, so it poses, animates and simulates with it; the mesh is hidden, and one undo restores everything. Takes a few seconds to a minute. ' +
       'mesh = the imported mesh part (default: the only one); robot = its name or key from get_rig (default: the selected robot, or the only one).',
     inputSchema: {

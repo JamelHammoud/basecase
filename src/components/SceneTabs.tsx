@@ -7,6 +7,7 @@ import { tabMenuItems } from './sceneTabs/tabMenu';
 import { useTabDrag } from './sceneTabs/useTabDrag';
 import { useTabPreview } from './sceneTabs/useTabPreview';
 import { useTabsFade } from './sceneTabs/useTabsFade';
+import { keyFor } from '../app/shortcuts';
 
 export interface SceneTabInfo {
   id: string;
@@ -49,7 +50,7 @@ const NewSceneButton: React.FC<{ onNew: () => void }> = ({ onNew }) => (
     <IconButton
       icon={<PlusIcon className="w-4 h-4" />}
       title="New scene"
-      shortcut="⌘T"
+      shortcut={keyFor('new-scene')}
       className="w-[28px]! h-[28px]!"
       onClick={onNew}
     />

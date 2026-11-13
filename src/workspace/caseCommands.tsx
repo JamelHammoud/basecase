@@ -8,6 +8,7 @@ import {
   RunIcon,
   ShareIcon,
   StopIcon,
+  TrainIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
@@ -33,6 +34,7 @@ export const STAYS_IN_RUN = new Set([
   'case-try',
   'case-export-dataset',
   'case-publish-dataset',
+  'case-train-from-tries',
   ...INPUT_COMMANDS,
 ]);
 
@@ -71,6 +73,21 @@ function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Co
   };
 
   return [...(dataset.canExport ? [exportDataset] : []), ...(dataset.canPublish ? [publishDataset] : [])];
+}
+
+function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases']): Command[] {
+  if (!fromTries.ready) return [];
+
+  return [
+    {
+      id: 'case-train-from-tries',
+      group: 'Simulate',
+      label: 'Train From Tries',
+      icon: <TrainIcon className={ic} />,
+      keywords: 'policy imitation behaviour behavior cloning learn demonstrations demos act lerobot skill',
+      run: fromTries.train,
+    },
+  ];
 }
 
 function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
@@ -190,6 +207,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...caseRun,
     ...(cases.active ? compareCommands(core) : []),
     ...datasetCommands(cases),
+    ...fromTriesCommands(cases),
     ...shareCommands(simTraining),
   ];
 }

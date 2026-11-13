@@ -16,6 +16,9 @@ import { useCaseBuilder } from './useCaseBuilder';
 import { useCaseTry } from './useCaseTry';
 import { useDatasetExport } from './useDatasetExport';
 import { useTryTimeline } from './useTryTimeline';
+import { useTriesTraining, type TriesTraining } from './useTriesTraining';
+import type { SkillsRuntime } from '../skills/skillsRuntime';
+import type { CaseRobotInput } from './caseChecks';
 
 interface CasesOptions {
   parts: ScenePart[];
@@ -27,10 +30,13 @@ interface CasesOptions {
   openAccounts: () => void;
   sceneId: string;
   partners: () => SlotRobot[];
+  skills: { runtime: SkillsRuntime; busy: boolean };
+  caseRobot: () => Promise<CaseRobotInput | null>;
 }
 
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
+  const { skills, caseRobot } = options;
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
@@ -134,6 +140,7 @@ export function useCases(options: CasesOptions) {
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
+  const fromTries: TriesTraining = useTriesTraining({ sim, active, tries, skills, caseRobot, showToast });
   const attempt = useCaseTry({
     sim,
     rig,
@@ -150,6 +157,7 @@ export function useCases(options: CasesOptions) {
     active,
     builder,
     dataset,
+    fromTries,
     tries,
     hasRobot,
     fixedBase,

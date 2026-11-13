@@ -67,6 +67,7 @@ function spawnTrainer({ uv, dir, envDir, forge }) {
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 const RUN_ID = /^policy-[a-z0-9-]+$/;
+const DEMOS_FILE = 'demos.json';
 const RUNS_KEPT = 8;
 const WARM_DIR = 'warm';
 const WARM_FILES = ['resume.json', 'policy.json'];
@@ -80,6 +81,20 @@ function copyWarmStart(from, dir) {
   files.forEach((name) => fs.copyFileSync(path.join(from, name), path.join(dir, WARM_DIR, name)));
 
   return WARM_DIR;
+}
+
+export function writeJobFolder(dir, { xml, job }) {
+  const { demos, ...rest } = job;
+  const runJob = demos === undefined ? rest : { ...rest, demos: DEMOS_FILE };
+
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'model.xml'), xml);
+
+  if (demos !== undefined) fs.writeFileSync(path.join(dir, DEMOS_FILE), JSON.stringify(demos));
+
+  fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(runJob, null, 2));
+
+  return runJob;
 }
 
 export const PRIORITY = { user: 0, kit: 1 };
@@ -133,16 +148,16 @@ export class Trainer {
 
     if (!this.forge && !uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
 
+    if (!this.forge && job.demos !== undefined) throw new Error('Training from tries needs Forge.');
+
     const warmFrom = this.warmSource(job.warmStart);
     const id = newId();
     const dir = path.join(this.jobsDir, id);
 
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'model.xml'), xml);
 
-    const runJob = { ...job, warmStart: warmFrom ? copyWarmStart(warmFrom, dir) : undefined };
-
-    fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(runJob, null, 2));
+    const warmStart = warmFrom ? copyWarmStart(warmFrom, dir) : undefined;
+    const runJob = writeJobFolder(dir, { xml, job: { ...job, warmStart } });
 
     const entry = { workspaceId, job: runJob, id, dir, priority, uv };
     const send = this.sender(entry);

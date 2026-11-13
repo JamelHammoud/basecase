@@ -65,6 +65,8 @@ To set a problem aside, click ⋯ on its row and choose **Ignore**. The **Ignore
 
 Each Case runs 20 times, with friction, weight, servo strength and servo delay changed a little every time. A box or anything else that moves starts up to 15 mm from where it was placed. A Case is green at 18 of 20 or better, amber from 10 to 17 and red below 10. Its most common failure shows under it, such as Fell or Missed.
 
+A Case with a skill kept by **Train From Tries** runs that skill instead of its scripted motion; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+
 A robot that can't enter a Case gets a red row that says why. Cases never count toward Ready to build, and you can ignore one from its ⋯ menu like any other note. They run again only when the robot or the Case changes. To have the agent change the robot until a red or amber Case passes, follow [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 
 ![Checks with Reach the Flag and Follow a Path past a Block, each passing 20 of 20](/help/get-a-robot-ready-to-build/cases-in-checks.png)

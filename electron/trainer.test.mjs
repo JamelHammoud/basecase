@@ -59,6 +59,31 @@ const leaseFile = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'lease-'
 const job = (name) => ({ name, task: 'walk' });
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+describe('a job with demonstrations', () => {
+  it('writes them to their own file beside job.json, which names it', () => {
+    const { t, children } = trainer();
+    const demos = { episodes: [{ obs: [[0.1]], actions: [[0.2]] }] };
+
+    t.forge = '/fake/forge-train';
+    t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Touch a Point'), algo: 'bc', demos } });
+
+    const { dir } = children[0];
+    const written = JSON.parse(fs.readFileSync(path.join(dir, 'job.json'), 'utf8'));
+
+    expect(written).toMatchObject({ name: 'Touch a Point', algo: 'bc', demos: 'demos.json' });
+    expect(JSON.parse(fs.readFileSync(path.join(dir, 'demos.json'), 'utf8'))).toEqual(demos);
+  });
+
+  it('refuses them without Forge, since train.py would train something else', () => {
+    const { t, children } = trainer();
+
+    expect(() => t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Touch'), demos: { episodes: [] } } })).toThrow(
+      /Forge/,
+    );
+    expect(children).toHaveLength(0);
+  });
+});
+
 describe('the training queue', () => {
   it('runs one job at a time and starts the next when it ends', async () => {
     const { t, events, children } = trainer();

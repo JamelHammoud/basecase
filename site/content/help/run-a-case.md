@@ -46,7 +46,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![A try running, with the clock and End Try](/help/run-a-case/trying.png)
 
-6. Click **End Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes.
+6. Click **End Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train From Tries joins them once five pass.
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 

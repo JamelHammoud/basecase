@@ -89,6 +89,21 @@ export function useSimTraining(options: SimTrainingOptions) {
     openAccounts: () => studio.openSettings('accounts'),
     sceneId: scene.sceneId,
     partners: () => studio.robotsBeside(workspaceId),
+    skills,
+    caseRobot: async () => {
+      const viewport = viewportRef.current;
+
+      if (!viewport) return null;
+
+      await viewport.meshesReady();
+
+      return {
+        parts: docs.partsRef.current,
+        project: docs.projectRef.current,
+        measures: await viewport.measureParts(),
+        partTriangles: viewport.partTriangles,
+      };
+    },
   });
   const share = useShareRobot({
     scene: { sceneId: scene.sceneId, sceneName: scene.sceneName },

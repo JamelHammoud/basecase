@@ -20,6 +20,7 @@ import type { Cases } from '../../workspace/useCases';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
 import { CompareRows } from './CompareRows';
 import { FAULT_LABEL } from './faultMenu';
+import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
 import { fmtTime } from './format';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
@@ -112,6 +113,13 @@ const DatasetActions: React.FC<{ cases: Cases }> = ({ cases }) => (
   </>
 );
 
+const TryActions: React.FC<{ cases: Cases }> = ({ cases }) => (
+  <>
+    {cases.dataset.canExport && <DatasetActions cases={cases} />}
+    {cases.fromTries.shown && <FromTries fromTries={cases.fromTries} />}
+  </>
+);
+
 const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
   cases.active && compare && (compare.comparison || compare.running) ? compare : null;
 
@@ -153,7 +161,7 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, mode
           ))}
         </div>
       )}
-      {cases.active && cases.dataset.canExport && <DatasetActions cases={cases} />}
+      {cases.active && <TryActions cases={cases} />}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </Section>
   );

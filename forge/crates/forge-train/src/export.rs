@@ -1,9 +1,9 @@
 use crate::deployed::Deployed;
 use crate::evaluate::CheckSample;
+use crate::job::Job;
 use crate::mlp::Mlp;
 use crate::normalizer::Normalizer;
 use crate::onnx;
-use crate::robot::Robot;
 use serde_json::{json, Value};
 use std::fs;
 use std::path::Path;
@@ -80,7 +80,8 @@ pub fn write_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
 }
 
 pub struct Trained<'a> {
-    pub robot: &'a Robot,
+    pub job: &'a Job,
+    pub mujoco: &'a str,
     pub policy: &'a Deployed,
     pub norm: &'a Normalizer,
 }
@@ -92,7 +93,7 @@ pub fn write_policy(path: &Path, run: &Trained, steps: u64) -> Result<(), String
 }
 
 pub fn policy_json(run: &Trained, steps: u64, created_at: String) -> Value {
-    let job = &run.robot.job;
+    let job = run.job;
     let mut spec = json!({
         "format": POLICY_FORMAT,
         "version": POLICY_VERSION,
@@ -108,7 +109,7 @@ pub fn policy_json(run: &Trained, steps: u64, created_at: String) -> Value {
         "layers": layer_json(&run.policy.net, &run.policy.params),
         "activation": "elu",
         "trainedSteps": steps,
-        "mujoco": run.robot.mujoco,
+        "mujoco": run.mujoco,
         "createdAt": created_at,
     });
 

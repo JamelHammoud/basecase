@@ -49,4 +49,4 @@ Each try becomes one episode at 25 frames a second: the joint positions, the joi
 
 GR00T reads LeRobot v2.1. LeRobot 0.4 and later read v3, and convert v2.1 with their own script.
 
-Camera views you add to the scene aren't recorded; camera parts are. To put the dataset on the Hugging Face Hub instead of a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
+Camera views you add to the scene aren't recorded; camera parts are. To put the dataset on the Hugging Face Hub instead of a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face). To train on the same tries inside Basecase, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

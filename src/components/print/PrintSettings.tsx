@@ -87,7 +87,7 @@ export const PrintSettings: React.FC<PrintSettingsProps> = ({
           step={5}
           precision={0}
           unit="%"
-          title="Infill"
+          aria-label="Infill"
           onChange={(v, live) => !live && onChangeProject({ infillPct: v })}
         />
       </Row>

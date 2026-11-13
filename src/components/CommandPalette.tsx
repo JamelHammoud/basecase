@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { EmptyState, Kbd, ReturnIcon, SearchIcon } from '../design-system';
+import { NoMatches, Kbd, ReturnIcon, SearchIcon } from '../design-system';
 
 export interface Command {
   id: string;
@@ -111,7 +111,7 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
         </div>
 
         <div ref={listRef} className="overflow-y-auto p-2">
-          {results.length === 0 && <EmptyState title={`No matches for “${query.trim()}”`} />}
+          {results.length === 0 && <NoMatches query={query} />}
           {results.map((c, idx) => {
             const header = idx === 0 || results[idx - 1].group !== c.group ? c.group : null;
             const isActive = idx === active;

@@ -28,6 +28,11 @@ export function cameraViews(robot: ScenePart[], world: ScenePart[], fixed: Fixed
   return [...stationary, ...partCameras(robot, taken)];
 }
 
+export const stripParts = (parts: ScenePart[]) => parts.filter((p) => p.visible && p.role === 'solid');
+
+export const hasCameraViews = (parts: ScenePart[], fixed: FixedCamera[], simulating: boolean) =>
+  simulating || fixed.length > 0 || partCameras(stripParts(parts)).length > 0;
+
 export const findView = (views: CameraView[], name: string): CameraView | undefined => {
   const key = snakeKey(name);
 

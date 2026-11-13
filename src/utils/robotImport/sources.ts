@@ -2,9 +2,14 @@ import type { ConvertedFiles, ConvertedModel } from './simready';
 
 export const RAW = 'https://raw.githubusercontent.com';
 
+export interface LocalFile {
+  path: string;
+  blob: Blob;
+}
+
 export type Source =
-  | { kind: 'url'; url: string }
-  | { kind: 'files'; files: File[] }
+  | { kind: 'url'; url: string; entry?: string }
+  | { kind: 'files'; files: LocalFile[]; entry?: string }
   | { kind: 'converted'; url: string; model: ConvertedModel; files: ConvertedFiles };
 
 export interface Resolver {
@@ -18,7 +23,41 @@ export function rawUrl(url: string): string {
   return m ? `${RAW}/${m[1]}/${m[2]}/${m[3]}` : url.trim();
 }
 
-async function lfsBytes(url: string, buf: ArrayBuffer): Promise<ArrayBuffer> {
+export class TooLargeError extends Error {}
+
+async function readCapped(res: Response, maxBytes: number): Promise<ArrayBuffer> {
+  if (Number(res.headers.get('content-length')) > maxBytes) throw new TooLargeError();
+
+  if (!res.body || maxBytes === Infinity) return res.arrayBuffer();
+
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  for (let next = await reader.read(); !next.done; next = await reader.read()) {
+    total += next.value.byteLength;
+
+    if (total > maxBytes) {
+      await reader.cancel();
+
+      throw new TooLargeError();
+    }
+
+    chunks.push(next.value);
+  }
+
+  const out = new Uint8Array(total);
+  let at = 0;
+
+  for (const chunk of chunks) {
+    out.set(chunk, at);
+    at += chunk.byteLength;
+  }
+
+  return out.buffer;
+}
+
+async function lfsBytes(url: string, buf: ArrayBuffer, maxBytes: number): Promise<ArrayBuffer> {
   const head = new TextDecoder().decode(buf);
   const m = /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/(.+)$/.exec(url);
 
@@ -28,7 +67,7 @@ async function lfsBytes(url: string, buf: ArrayBuffer): Promise<ArrayBuffer> {
 
   if (!lfs.ok) throw new Error(`LFS ${lfs.status}`);
 
-  return lfs.arrayBuffer();
+  return readCapped(lfs, maxBytes);
 }
 
 function assertWebUrl(url: string): string {
@@ -37,17 +76,17 @@ function assertWebUrl(url: string): string {
   return url;
 }
 
-async function fetchBytes(url: string): Promise<ArrayBuffer> {
+export async function fetchBytes(url: string, maxBytes = Infinity): Promise<ArrayBuffer> {
   const res = await fetch(assertWebUrl(url));
 
   if (!res.ok) throw new Error(`${res.status}`);
 
-  const buf = await res.arrayBuffer();
+  const buf = await readCapped(res, maxBytes);
 
-  return buf.byteLength < 300 ? lfsBytes(url, buf) : buf;
+  return buf.byteLength < 300 ? lfsBytes(url, buf, maxBytes) : buf;
 }
 
-const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/');
+export const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/');
 
 function joinPath(base: string, rel: string): string {
   const parts = base.split('/');
@@ -86,7 +125,7 @@ function packageCandidates(name: string, rest: string, entryPath: string): strin
   return out;
 }
 
-function candidates(ref: string, entryPath: string): string[] {
+export function candidates(ref: string, entryPath: string): string[] {
   let r = ref.trim();
 
   if (/^file:\/\//.test(r)) r = r.replace(/^file:\/\//, '');
@@ -137,41 +176,6 @@ export async function urlResolver(url: string): Promise<Resolver> {
       return null;
     },
   };
-}
-
-export function filesResolver(files: File[]): Resolver & { pickEntry: () => Promise<void> } {
-  const byPath = new Map(
-    files.map((f) => [norm((f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name), f]),
-  );
-  const entryFile =
-    [...byPath].find(([p]) => /\.urdf$/i.test(p)) ??
-    [...byPath].find(([p]) => /\.(xml|mjcf)$/i.test(p) && !/scene/i.test(p.split('/').pop()!)) ??
-    [...byPath].find(([p]) => /\.(xml|mjcf)$/i.test(p));
-
-  if (!entryFile) throw new Error('Choose a folder with a .urdf or MJCF .xml file.');
-
-  const resolver = {
-    entry: { name: entryFile[0], text: '' },
-    pickEntry: async () => {
-      resolver.entry.text = await entryFile[1].text();
-    },
-    read: async (ref: string, from?: string) => {
-      const base = from ?? entryFile[0];
-
-      for (const c of candidates(ref, base)) {
-        const f = byPath.get(norm(c).replace(/^\//, ''));
-
-        if (f) return { data: await f.arrayBuffer(), path: c };
-      }
-
-      const name = ref.split('/').pop()!.toLowerCase();
-      const hit = [...byPath].find(([p]) => p.toLowerCase().endsWith('/' + name) || p.toLowerCase() === name);
-
-      return hit ? { data: await hit[1].arrayBuffer(), path: hit[0] } : null;
-    },
-  };
-
-  return resolver;
 }
 
 export async function inlineIncludes(text: string, read: Resolver['read'], from: string, depth = 0): Promise<string> {

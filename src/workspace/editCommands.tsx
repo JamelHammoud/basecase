@@ -29,9 +29,10 @@ const ALIGNS: Array<{ id: string; label: string; keywords: string; axis: Axis; m
   { id: 'align-back', label: 'Align Back', keywords: 'align z', axis: 2, mode: 'min' },
 ];
 
-const DISTRIBUTES: Array<{ id: string; label: string; axis: Axis }> = [
-  { id: 'distribute-x', label: 'Distribute Along X', axis: 0 },
-  { id: 'distribute-z', label: 'Distribute Along Z', axis: 2 },
+const SPREADS: Array<{ id: string; label: string; axis: Axis }> = [
+  { id: 'spread-x', label: 'Spread Along X', axis: 0 },
+  { id: 'spread-y', label: 'Spread Along Y', axis: 1 },
+  { id: 'spread-z', label: 'Spread Along Z', axis: 2 },
 ];
 
 function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command[] {
@@ -125,12 +126,12 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       keywords: a.keywords,
       run: () => edits.align(a.axis, a.mode),
     })),
-    ...DISTRIBUTES.map((d) => ({
+    ...SPREADS.map((d) => ({
       id: d.id,
       group: 'Selection',
       label: d.label,
       icon: <AlignCenterXIcon className={ic} />,
-      keywords: 'spread space',
+      keywords: 'distribute space evenly',
       run: () => edits.distribute(d.axis),
     })),
     {

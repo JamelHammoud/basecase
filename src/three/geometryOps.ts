@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptSimplifier } from 'meshoptimizer/simplifier';
 import { reply } from '../utils/workerRpc';
+import { unzipEntries } from '../utils/robotImport/archive';
 import { loadMesh } from '../utils/robotImport/meshes';
 import { componentArrays, componentTransfers } from './componentGeometry';
 import { creasedGeometry } from './partMesh/creased';
@@ -193,6 +194,14 @@ export const geometryHandlers = {
     const positions = await parseMesh(job);
 
     return reply(positions, positions ? [positions.buffer] : []);
+  },
+  unzip: (data: ArrayBuffer) => {
+    const entries = unzipEntries(new Uint8Array(data));
+
+    return reply(
+      entries,
+      entries.map((e) => e.data.buffer),
+    );
   },
   creaseEdges: (job: CreaseEdgesJob) =>
     transferLines(new Float32Array(creaseEdgesOnly(job.edges, job.positions as number[], job.indices as number[]))),

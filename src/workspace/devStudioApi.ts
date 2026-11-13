@@ -5,6 +5,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
+import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
@@ -26,6 +27,7 @@ export interface DevActions {
   simState: () => unknown;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
+  robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
 export interface DevStudioDeps {
@@ -145,10 +147,21 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     guide: () => devRef.current.guide(),
     simState: () => devRef.current.simState(),
     routineState: () => devRef.current.routineState(),
+    attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 
       return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, base64Of(bytes)]));
+    },
+    robotPackage: async () => {
+      const made = await devRef.current.robotPackage();
+
+      return (
+        made && {
+          files: Object.fromEntries(Object.entries(made.files).map(([path, bytes]) => [path, base64Of(bytes)])),
+          simXml: made.simXml,
+        }
+      );
     },
   };
 }

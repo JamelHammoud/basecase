@@ -22,7 +22,7 @@ function statusOf(view: RoutineView, nodeErrors: number): string {
 
   if (view.run && !view.run.done) return 'Running in simulation';
 
-  if (view.compiled?.ok) return view.tests?.passed ? 'Ready, every scenario passes' : 'Ready to run';
+  if (view.compiled?.ok) return view.tests?.passed ? 'Every scenario passes' : '';
 
   if (nodeErrors > 0) return `Fix ${nodeErrors} ${nodeErrors === 1 ? 'step' : 'steps'} to run`;
 

@@ -1,5 +1,5 @@
 import { cameraViewsExpanded, toggleCameraViews } from '../cameras/cameraViewsStore';
-import { AlignControls } from '../components/AlignControls';
+import { AlignBar } from '../components/AlignBar';
 import {
   CameraAddIcon,
   AlignCenterXIcon,
@@ -65,7 +65,7 @@ function sharedEntries({ core, actions }: ContextInputs) {
       label: 'Align',
       icon: <AlignCenterXIcon className={ic} />,
       submenu: (close: () => void) => (
-        <AlignControls
+        <AlignBar
           count={Math.max(1, core.selectedIds.length)}
           onAlign={edits.align}
           onDistribute={edits.distribute}

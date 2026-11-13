@@ -12,15 +12,12 @@ export interface BuildPrefs {
 export const BuildPane: React.FC<{ prefs: BuildPrefs }> = ({ prefs }) => (
   <>
     <Group title="Build guide">
-      <Row label="Auto generate build guide" hint="Updates 15 s after the scene changes, once the agent is done">
-        <Switch aria-label="Auto generate build guide" checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
+      <Row label="Update automatically" hint="15 s after the scene changes, once the agent is done">
+        <Switch aria-label="Update automatically" checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
       </Row>
     </Group>
-    <Group title="Build check">
-      <Row
-        label="Have the agent fix new blockers"
-        hint="When a turn adds blockers, the agent gets up to 2 follow-ups to fix them"
-      >
+    <Group title="Checks">
+      <Row label="Have the agent fix new blockers" hint="Up to 2 follow-ups per message">
         <Switch
           aria-label="Have the agent fix new blockers"
           checked={prefs.autoFixBlockers}

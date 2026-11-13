@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
+import { conflictsWithMain, fetchAll } from '../lib/branches.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
@@ -16,7 +17,7 @@ import {
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
 import { protectedIn, protectedList } from '../lib/protected.mjs';
-import { entryFor, markLooked, recordAttempt } from '../lib/reviseState.mjs';
+import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
@@ -61,7 +62,8 @@ function needFor(pull, mainGreen) {
     ((mainGreen || pull.headRefName.startsWith('loop/repair/')) && pullCheck(pull) === 'failure');
   const newHead = !entry.heads.includes(pull.headRefOid);
 
-  if (failing && newHead) return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
+  if (failing && newHead && !conflictsWithMain(pull))
+    return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
 
   return pull.updatedAt > entry.lastLook ? { entry, reason: 'maybe-jamel' } : null;
 }
@@ -154,7 +156,7 @@ function handle(pull, need, log) {
 
   try {
     if (need.entry.attempts >= MAX_ATTEMPTS && !need.entry.rebuilt && reason !== 'jamel') {
-      rebuild(pull, { comments, log });
+      rebuild(pull, { comments, stuck: 'went four rounds without passing review', log });
 
       return;
     }
@@ -167,6 +169,8 @@ function handle(pull, need, log) {
 
 export default function revise({ log }) {
   const mainGreen = lastFinishedMainCheck()?.conclusion === 'success';
+
+  fetchAll();
 
   for (const pull of openPulls()) {
     const need = needFor(pull, mainGreen);

@@ -5,7 +5,6 @@ import { geometryWorker } from '../../three/geometryWorker';
 import { primitive } from './meshes';
 import type { Model, ModelLink, Visual } from './model';
 import { hex, linkLabel, round, ROBOT_DATA_VERSION, type PublishedData } from './published';
-import type { Source } from './sources';
 
 export type MeshFiles = Map<string, THREE.BufferGeometry | null>;
 
@@ -18,7 +17,7 @@ export interface LinkGeometry {
 export interface PartsSpec {
   name: string;
   groupId: string;
-  source: Source;
+  url?: string;
   rotate?: Array<[string, number]>;
   maxTriangles?: number;
 }
@@ -109,7 +108,7 @@ interface PartBuild {
 }
 
 async function linkPart(b: PartBuild, link: string, { soup, color }: LinkGeometry) {
-  const { name, groupId, source, rotate } = b.spec;
+  const { name, groupId, url, rotate } = b.spec;
   const tris = soup.length / 9;
   const target = b.total > b.budget ? Math.max(1500, Math.round((b.budget * tris) / b.total)) : tris;
   const mesh = await geometryWorker.call('linkMesh', { soup, target }, [soup.buffer]);
@@ -137,7 +136,7 @@ async function linkPart(b: PartBuild, link: string, { soup, color }: LinkGeometr
     robotLink: {
       robot: groupId,
       link,
-      url: source.kind === 'url' ? source.url : undefined,
+      url,
       rotate,
       version: ROBOT_DATA_VERSION,
     },

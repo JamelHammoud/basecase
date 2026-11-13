@@ -40,7 +40,7 @@ export type SimRequest =
 
 export type SimResponse =
   | ({ type: 'routine' } & LiveUpdate)
-  | { type: 'ready'; version: string; nq: number; nu: number; nbody: number }
+  | { type: 'ready'; nq: number; nu: number; nbody: number }
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
   | { type: 'replayed' }
@@ -149,7 +149,7 @@ async function load(msg: Msg<'load'>) {
 
   const m = engine.model;
 
-  post({ type: 'ready', version: mj.mj_versionString(), nq: m.nq, nu: m.nu, nbody: m.nbody });
+  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody });
   frame();
 }
 

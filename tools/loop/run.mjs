@@ -6,7 +6,20 @@ import { heldLocks, isAlive, lockHolder } from './lib/locks.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
-const LANES = ['review', 'merge', 'rebase', 'repair', 'build', 'refine', 'lead', 'update', 'learn', 'digest', 'tidy'];
+const LANES = [
+  'review',
+  'merge',
+  'rebase',
+  'repair',
+  'build',
+  'refine',
+  'lead',
+  'update',
+  'market',
+  'learn',
+  'digest',
+  'tidy',
+];
 const [lane, slot = '1'] = process.argv.slice(2);
 
 if (!LANES.includes(lane)) {

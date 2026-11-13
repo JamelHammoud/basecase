@@ -214,6 +214,9 @@ jobs:
     if: ${{ !cancelled() && inputs.release && needs.mac.result == 'success' && needs.windows.result == 'success' }}
     needs: [mac, windows]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
     defaults:
       run:
         shell: bash
@@ -228,6 +231,7 @@ jobs:
           merge-multiple: true
 
       - name: Put the build on a release
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
@@ -246,3 +250,13 @@ jobs:
           else
             gh release create "$tag" --target "$GITHUB_SHA" --title "Basecase $version" --generate-notes "${beta[@]}" "${assets[@]}"
           fi
+          stable=true
+          [ ${#beta[@]} -eq 0 ] || stable=false
+          { echo "tag=$tag"; echo "stable=$stable"; } >> "$GITHUB_OUTPUT"
+
+      - name: Deploy the web app at this release
+        if: steps.release.outputs.stable == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: gh workflow run deploy.yml -R "$GITHUB_REPOSITORY" --ref "$TAG" -f target=app

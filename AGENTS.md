@@ -20,7 +20,7 @@
 
 | § | Guide | Read it before you touch |
 |---|---|---|
-| 0d, 0e | [Running and testing](docs/guide/running-and-testing.md) | `npm start` / `electron:dev`, the app origin, the web demo and landing, tests, perf benches, e2e |
+| 0d, 0e | [Running and testing](docs/guide/running-and-testing.md) | `npm start` / `electron:dev`, the app origin, the web demo and landing, web deploys, tests, perf benches, e2e |
 | 0f | [Performance](docs/guide/performance.md) | the viewport, part meshes, batching, workers, captures, autosave, boot |
 | 0h | [Security](docs/guide/security.md) | IPC, the HTTP bridge, file ids, outbound fetches, the CAD kernel sandbox, generated HTML |
 | 0i | [Releases and updates](docs/guide/releases.md) | the release workflow, signing, betas, the updater, packaging, agent CLI downloads |

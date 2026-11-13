@@ -12,7 +12,7 @@ const verdict = (bad, okText, badText) => ({
 const screwsOf = (ctx, ids) => probeOf(ctx).screws.filter((s) => !ids || ids.includes(s.id));
 
 export function check(name, fn) {
-  return async (ctx) => {
+  const run = async (ctx) => {
     try {
       return { name, ...(await fn(ctx)) };
     } catch (err) {
@@ -21,7 +21,12 @@ export function check(name, fn) {
       throw err;
     }
   };
+
+  return Object.assign(run, { checkName: name });
 }
+
+export const neededEngagementMm = (screw) =>
+  Math.min(1.5 * Number(screw.size.slice(1)), screw.engaged?.lengthMm ?? Infinity) - 0.2;
 
 export function allOf(...checks) {
   return async (ctx) => {
@@ -52,11 +57,7 @@ export const screwsEngaged = (ids) =>
 
 export const engagementDepth = (ids) =>
   check('Thread engagement ≥ 1.5 × D or the insert length', (ctx) => {
-    const short = screwsOf(ctx, ids).filter((s) => {
-      const need = Math.min(1.5 * Number(s.size.slice(1)), s.engaged?.lengthMm ?? Infinity) - 0.2;
-
-      return s.engagementMm < need;
-    });
+    const short = screwsOf(ctx, ids).filter((s) => s.engagementMm < neededEngagementMm(s));
 
     return verdict(
       short.map((s) => `${s.id} (${s.engagementMm} mm)`),

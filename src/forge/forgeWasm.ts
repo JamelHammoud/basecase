@@ -1,5 +1,6 @@
 import type { ForgeGpu } from './forgeGpu';
 import type { FieldValue } from './forgeFields';
+import { errorMessage } from '../utils/errorMessage';
 
 interface Exports {
   memory: WebAssembly.Memory;
@@ -72,7 +73,7 @@ function gpuImports(gpu: ForgeGpu, mem: Memory, failures: { last: string }) {
 
         return 0;
       } catch (e) {
-        failures.last = e instanceof Error ? e.message : String(e);
+        failures.last = errorMessage(e);
 
         return 1;
       }

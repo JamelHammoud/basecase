@@ -8,6 +8,7 @@ import {
   gapsIn,
   interferenceIn,
   jointAxisIn,
+  jointAxesIn,
   measuresIn,
   visibilityIn,
   printMeshesIn,
@@ -338,6 +339,7 @@ export class ViewportEngine {
             ? { ...query, pick: { ...query.pick, point: ctx.layer.pointAtRest(query.pick.part, query.pick.point) } }
             : query,
         ),
+      jointAxes: (ids) => jointAxesIn(restShapes(ids), ids),
       meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
       sweepClashes: (sweeps) => sweepsIn(restSolids(false), sweeps),
       strength: (jobs) => strengthIn(restShapes([...new Set(jobs.map((j) => j.part))]), jobs),

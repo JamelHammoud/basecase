@@ -25,8 +25,6 @@ interface SceneFile {
   scene: SharedScene;
 }
 
-export class SceneFileError extends Error {}
-
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -99,11 +97,11 @@ async function readJson(bytes: Uint8Array): Promise<unknown> {
 
 function checkedFile(file: unknown): Record<string, unknown> {
   if (!isObject(file) || file.format !== FORMAT || !isObject(file.scene)) {
-    throw new SceneFileError('Not a Basecase scene.');
+    throw new Error('Not a Basecase scene.');
   }
 
   if (typeof file.version !== 'number' || file.version > VERSION) {
-    throw new SceneFileError('Made with a newer Basecase. Update to open it.');
+    throw new Error('Made with a newer Basecase. Update to open it.');
   }
 
   return file.scene;
@@ -113,7 +111,7 @@ export async function decodeSceneFile(bytes: Uint8Array): Promise<SharedScene> {
   const scene = checkedFile(await readJson(bytes));
 
   if (!Array.isArray(scene.parts) || !scene.parts.every(isPart)) {
-    throw new SceneFileError('The scene’s parts are damaged.');
+    throw new Error('The scene’s parts are damaged.');
   }
 
   return {

@@ -28,6 +28,7 @@ import {
 import type { Vec3 } from './types';
 import type { RobotInsert } from './useRobotInsert';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { errorMessage } from '../utils/errorMessage';
 
 const IMAGE_STEP = 16;
 
@@ -52,7 +53,7 @@ function useReferenceImages(core: WorkspaceCore) {
       setTransformMode('translate');
       showToast('Added reference image');
     } catch (err) {
-      showToast(`Couldn’t add image. ${String((err as Error).message ?? err)}`, { tone: 'error' });
+      showToast(`Couldn’t add image. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 

@@ -95,11 +95,14 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_interfaces` | Sets what each part designer must connect to |
 | `check_interfaces` | Checks a subassembly against those connections |
 | `define_joints` | Declares the robot's joints |
+| `find_joint_axes` | Finds the hinges in imported parts: each shaft or pin in a bore |
 | `get_rig` | Lists joints, poses and animations |
 | `pose` | Poses the robot without changing parts |
 | `animate` | Makes keyframes or a walking gait |
 | `retarget_motion` | Turns BVH motion capture into an animation |
 | `import_robot` | Inserts a published URDF or MJCF robot |
+| `make_leader` | Makes a leader arm you move by hand, in a new scene tab |
+| `wrap_robot` | Wraps a robot in an imported mesh, cut into printed shells |
 
 ## Simulation, Cases, Routines and skills
 

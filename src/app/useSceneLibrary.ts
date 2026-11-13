@@ -1,7 +1,8 @@
 import type { SavedSceneRecord, SavedSceneSummary } from '../types/robotics';
 import { pickFiles } from '../utils/pickFiles';
 import { platformBridge } from '../utils/platformBridge';
-import { decodeSceneFile, SCENE_FILE_EXTENSION, SceneFileError } from '../utils/sceneFile';
+import { errorMessage } from '../utils/errorMessage';
+import { decodeSceneFile, SCENE_FILE_EXTENSION } from '../utils/sceneFile';
 import { newSceneId } from '../utils/sceneIds';
 import { sceneStore } from '../utils/sceneStore';
 import { findSceneTab, sceneCopyName } from './tabModel';
@@ -76,9 +77,7 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
       sceneStore.upsert(summary);
       openScene(summary);
     } catch (err) {
-      const reason = err instanceof SceneFileError ? err.message : String(err);
-
-      toastInFront(`Couldn’t open ${file.name}. ${reason}`, { tone: 'error' });
+      toastInFront(`Couldn’t open ${file.name}. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 

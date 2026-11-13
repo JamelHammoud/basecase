@@ -123,7 +123,6 @@ function recordLesson({ worktree, weakness, change, decision, runs, log }) {
       why: `The harness lane tried it against ${weakness.category}, the agent's weakest micro-eval category, and the bench didn't keep it.`,
       cause: '',
       checked: `Measured by the harness lane on the micro-eval tune set; runs: ${runs.join(', ')}.`,
-      changelog: '',
       screenshots: [],
     },
     worktree,

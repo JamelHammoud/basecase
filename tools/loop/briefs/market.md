@@ -31,4 +31,4 @@ Your tools are Read, Grep, Glob, WebFetch, WebSearch, and Edit and Write under `
 
 ## Your answer
 
-Set `kind` to `market`, `changelog` empty and `screenshots` empty. `summary` lists the entries added or changed; `checked` says how many pages you fetched and which claims you dropped. `notes` goes to the runner's log only. If nothing changed, set `changed` to false and still propose ideas when you have them.
+Set `kind` to `market` and `screenshots` empty. `summary` lists the entries added or changed; `checked` says how many pages you fetched and which claims you dropped. `notes` goes to the runner's log only. If nothing changed, set `changed` to false and still propose ideas when you have them.

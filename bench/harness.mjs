@@ -99,7 +99,7 @@ export const viteCacheOf = (app) => path.join(app, '.vite-cache');
 function linkNodeModules(app) {
   const deps = path.join(root, 'node_modules', '.vite', 'deps');
 
-  fs.symlinkSync(path.join(root, 'node_modules'), path.join(app, 'node_modules'), 'dir');
+  fs.symlinkSync(fs.realpathSync(path.join(root, 'node_modules')), path.join(app, 'node_modules'), 'dir');
 
   if (fs.existsSync(deps)) fs.cpSync(deps, path.join(viteCacheOf(app), 'deps'), { recursive: true });
 }

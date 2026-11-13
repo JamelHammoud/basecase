@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "file": "e2e/caseRun.e2e.test.ts",
+    "test": "",
+    "issue": 465,
+    "until": "2026-11-27",
+    "reason": "Skips the whole file: on Linux the default-layout test fails 2 of 6 at End Try and starves the page's main thread for the next test, and on Windows both tests' End Try detaches until the click times out"
+  }
+]

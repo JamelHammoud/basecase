@@ -6,7 +6,7 @@ import { fakeAccount, fakeArm, fakeOnshapeFetch, KEYS, ONSHAPE_LINK, signedIn } 
 import { fixedMateFindings } from '../../src/readiness/buildChecks.ts';
 import { withFixedMates } from '../../src/onshape/fixedMates.ts';
 import { importRobot } from '../../src/utils/robotImport/importRobot.ts';
-import { OFF_SITE } from './client.mjs';
+import { KEYS_REFUSED, OFF_SITE } from './client.mjs';
 import { NOT_AN_ASSEMBLY_LINK } from './link.mjs';
 import { OnshapeAccount } from './index.mjs';
 import { partMesh } from './partMesh.mjs';
@@ -113,7 +113,7 @@ describe('Onshape account', () => {
     const account = await signedIn(fakeArm());
     const file = fs.readFileSync(path.join(account.keys.file), 'utf8');
 
-    expect(account.account()).toEqual({ access: true, secret: true, name: 'Test Account' });
+    expect(account.account()).toEqual({ access: true, secret: true, name: 'Test Account', error: null });
     expect(file).not.toContain(KEYS.access);
     expect(file).not.toContain(KEYS.secret);
   });
@@ -153,6 +153,17 @@ describe('exploits', () => {
 
     await expect(account.importAssembly({ link: ONSHAPE_LINK })).rejects.toThrow(OFF_SITE);
     expect(seen.every((s) => s.url.startsWith('https://cad.onshape.com/api/'))).toBe(true);
+  });
+
+  it('remembers that Onshape refused the keys until a pair it accepts is saved', async () => {
+    const account = fakeAccount(fakeArm());
+
+    await account.setKey({ kind: 'access', value: KEYS.access });
+    await expect(account.setKey({ kind: 'secret', value: `${KEYS.secret}x` })).rejects.toThrow(KEYS_REFUSED);
+    expect(account.account()).toEqual({ access: true, secret: true, name: null, error: KEYS_REFUSED });
+
+    await account.setKey({ kind: 'secret', value: KEYS.secret });
+    expect(account.account()).toEqual({ access: true, secret: true, name: 'Test Account', error: null });
   });
 
   it('keeps the keys out of errors, logs and what reaches the scene', async () => {

@@ -22,7 +22,7 @@ Bring a robot you modelled in Onshape into Basecase, with its revolute and slide
 
 ![Import Robot with an Onshape assembly link](/help/import-an-onshape-assembly/link.png)
 
-Each part comes in as its own mesh, except parts held together by a fastened mate or a mate group, which become one part. Revolute mates become hinges and slider mates become slides, with the mate's limits as the joint's range, and 0 is where the assembly sat when you imported it. The fixed part in Onshape is the robot's base. Parts with a material in Onshape bring their mass.
+Each part comes in as its own mesh, except parts held together by a fastened mate or a mate group, which become one part. Revolute mates become hinges and slider mates become slides, with the mate's limits as the joint's range, and 0 is where the assembly sat when you imported it. A revolute or slider mate inside a subassembly becomes a joint too, but without its limits. The fixed part in Onshape is the robot's base. Parts with a material in Onshape bring their mass.
 
 6. Click **Pose** in the message that says the robot was inserted, and drag a joint's slider.
 

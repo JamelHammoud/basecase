@@ -6,6 +6,7 @@ export interface OnshapeAccountState {
   access: boolean;
   secret: boolean;
   name: string | null;
+  error: string | null;
 }
 
 export type OnshapeKey = 'access' | 'secret';
@@ -20,7 +21,12 @@ const call = <T>(channel: string, payload?: unknown) => channelCall<T>(electron(
 function asAccount(value: unknown): OnshapeAccountState {
   const v = (value ?? {}) as Partial<OnshapeAccountState>;
 
-  return { access: !!v.access, secret: !!v.secret, name: typeof v.name === 'string' ? v.name : null };
+  return {
+    access: !!v.access,
+    secret: !!v.secret,
+    name: typeof v.name === 'string' ? v.name : null,
+    error: typeof v.error === 'string' ? v.error : null,
+  };
 }
 
 export const onshapeBridge = {

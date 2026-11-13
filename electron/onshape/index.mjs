@@ -2,12 +2,13 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { AgentKeys } from '../backend/agentKeys.mjs';
 import { openCadFile } from '../cadImport/openCadFile.mjs';
-import { OnshapeClient } from './client.mjs';
+import { KEYS_REFUSED, OnshapeClient } from './client.mjs';
 import { fetchAssembly } from './fetchAssembly.mjs';
 import { documentOfLink } from './link.mjs';
 
 const KINDS = ['access', 'secret'];
 const NAME = 'name';
+const REFUSED = 'refused';
 const KEY = /^[A-Za-z0-9]{8,128}$/;
 const REQUEST_ID = /^[\w-]{1,80}$/;
 
@@ -31,8 +32,14 @@ export class OnshapeAccount {
 
   account() {
     const [access, secret] = KINDS.map((kind) => !!this.keys.get(kind));
+    const both = access && secret;
 
-    return { access, secret, name: (access && secret && this.keys.get(NAME)) || null };
+    return {
+      access,
+      secret,
+      name: (both && this.keys.get(NAME)) || null,
+      error: both && this.keys.get(REFUSED) ? KEYS_REFUSED : null,
+    };
   }
 
   client(keys) {
@@ -48,12 +55,19 @@ export class OnshapeAccount {
 
     this.keys.set(kind, key);
     this.keys.set(NAME, '');
+    this.keys.set(REFUSED, '');
 
     const keys = this.stored();
 
     if (!keys) return this.account();
 
-    const who = await this.client(keys).json('/api/v10/users/sessioninfo');
+    const who = await this.client(keys)
+      .json('/api/v10/users/sessioninfo')
+      .catch((error) => {
+        if (error.message === KEYS_REFUSED) this.keys.set(REFUSED, '1');
+
+        throw error;
+      });
 
     this.keys.set(NAME, String(who?.name ?? who?.email ?? '').slice(0, 120));
 

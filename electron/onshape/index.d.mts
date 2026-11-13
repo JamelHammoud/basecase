@@ -22,7 +22,7 @@ export class OnshapeAccount {
   constructor(options: OnshapeAccountOptions);
   keys: { file: string };
   fetchImpl: OnshapeAccountOptions['fetchImpl'];
-  account(): { access: boolean; secret: boolean; name: string | null };
+  account(): { access: boolean; secret: boolean; name: string | null; error: string | null };
   setKey(payload: { kind: 'access' | 'secret'; value: string }): Promise<ReturnType<OnshapeAccount['account']>>;
   importAssembly(payload: {
     link: string;

@@ -5,7 +5,7 @@ import { SettingsGroup as Group } from '../SettingsRows';
 import { SecretField } from './SecretField';
 
 const HUB_SIGNED_OUT: HubAccountState = { signedIn: false, name: null };
-const ONSHAPE_SIGNED_OUT: OnshapeAccountState = { access: false, secret: false, name: null };
+const ONSHAPE_SIGNED_OUT: OnshapeAccountState = { access: false, secret: false, name: null, error: null };
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -71,7 +71,7 @@ export const AccountsPane: React.FC = () => {
           label="Secret key"
           saved={onshape.secret}
           savedHint={onshape.name ?? undefined}
-          error={onshapeErrors.secret}
+          error={onshapeErrors.secret ?? (onshapeErrors.access ? undefined : onshape.error)}
           onSecret={saveOnshape('secret')}
         />
       </Group>

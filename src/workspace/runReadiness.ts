@@ -17,6 +17,7 @@ import {
   unprintableFindings,
 } from '../readiness/buildChecks';
 import { assemblyFindings, bomFindings, engineeringFindings, fitFindings, printFindings } from '../readiness/findings';
+import { activeVersions } from '../reality/measuredJoints';
 import { readinessFingerprint, readinessOf, UNSETTLED_FINGERPRINT } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
@@ -74,6 +75,7 @@ export const projectFingerprint = (
     walks: (project.skills ?? []).map((s) => s.hash),
     walk: jsonHash(project.walk),
     firstRanges: project.firstRanges,
+    calibrations: activeVersions(project.servoCalibrations),
     goneMates: goneMateIds(project.joints),
     printerId,
     purchases: jsonHash(world.purchases ?? {}),

@@ -162,7 +162,7 @@ describe('print layout', () => {
     expect(await sceneParts()).toEqual(before);
 
     await app.page.keyboard.press('Escape');
-    await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
+    await expect.poll(async () => (await printPlates()).open).toBe(false);
     expect(app.errors).toEqual([]);
   }, 120000);
 

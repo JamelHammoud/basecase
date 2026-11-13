@@ -8,9 +8,11 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { BuildPanel } from '../components/BuildPanel';
 import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
+import { measuredJoints } from '../reality/measuredJoints';
 import type { ProjectSettings } from '../types/robotics';
 import { findingQuote, fixPrompt } from '../readiness/readiness';
 import { showNewCase } from './caseCommands';
+import { calibrateJoints } from './operateCommands';
 import { InspectTab } from './InspectTab';
 import type { RightTab } from './types';
 import type { AgentSession } from './useAgentSession';
@@ -69,6 +71,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
         simTraining.cases.open(id);
         tool.setRightTab('sim');
       }}
+      onCalibrate={IS_WEB_DEMO ? undefined : (jointIds) => calibrateJoints(core, jointIds)}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={(m) => showToast(m)}
@@ -172,6 +175,11 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onImportMotion={pose.importMotion}
           onWalkCycle={pose.walkCycle}
           canWalk={pose.canWalk}
+          measured={measuredJoints({
+            joints: project.joints ?? [],
+            parts: core.parts,
+            calibrations: project.servoCalibrations,
+          })}
         />
       </TabActivity>
       <TabActivity tab="sim" current={current} visited={visited} available={posing.hasRig}>

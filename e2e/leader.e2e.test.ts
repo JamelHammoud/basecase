@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots, withoutGripper } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ProjectSettings, type RobotJoint } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
@@ -29,7 +29,6 @@ beforeAll(async () => {
     parts: arm.parts,
     project: { ...DEFAULT_PROJECT, joints: arm.joints },
   });
-  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(arm.parts.length), { timeout: 10000 });
 }, 120000);
 
 afterAll(async () => {
@@ -38,6 +37,8 @@ afterAll(async () => {
 
 describe('Make a Leader', () => {
   it('opens the leader in a new tab from ⌘K, with the same joints and plates in Build', async () => {
+    await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+
     const before = await tabs();
 
     await app.page.keyboard.press('Meta+k');

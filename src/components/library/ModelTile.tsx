@@ -15,7 +15,8 @@ export const ModelTile: React.FC<{
   onRename: (name: string) => void;
   onMenu: (e: React.MouseEvent) => void;
 }> = ({ model, renaming, onInsert, onRename, onMenu }) => {
-  const thumb = usePartsThumbnail(modelKey(model), () => modelParts(model)) || model.sourceImageDataUrl;
+  const rendered = usePartsThumbnail(modelKey(model), () => modelParts(model));
+  const thumb = rendered || (model.sourceImageDataUrl ?? rendered);
   const d = model.defaultDimensions;
 
   return (

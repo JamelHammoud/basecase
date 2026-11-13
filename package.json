@@ -39,6 +39,7 @@
     "perf:agent": "node tools/perf/agentBench.mjs",
     "perf:viewport": "node tools/perf/viewportBench.mjs",
     "perf:gallery": "node tools/perf/galleryBench.mjs",
+    "perf:booleans": "vitest run --config vitest.perf.config.ts",
     "gallery": "node tools/gallery/build.mjs",
     "basecase": "node tools/cli/basecase.mjs",
     "icon": "xcrun actool \"$PWD/build/icon/Basecase.icon\" --compile \"$PWD/build/icon/compiled\" --platform macosx --minimum-deployment-target 26.0 --app-icon Basecase --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled/partial.plist\" --output-format human-readable-text",
@@ -212,6 +213,7 @@
     "replicad-opencascadejs": "^1.1.0",
     "three": "^0.187.0",
     "three-mesh-bvh": "^0.9.16",
+    "uqr": "^0.1.3",
     "zod": "^4.6.7"
   },
   "devDependencies": {

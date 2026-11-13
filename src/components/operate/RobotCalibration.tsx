@@ -8,6 +8,7 @@ import type { RobotJoint } from '../../types/robotics';
 
 export interface CalibrationProps {
   calibrations: Record<string, CalibrationHistory> | undefined;
+  measured: ReadonlySet<string>;
   onCalibrate: () => void;
   onCalibrateJoint: (jointId: string) => void;
   onRollBack: (jointId: string) => void;

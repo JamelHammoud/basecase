@@ -3,14 +3,10 @@ import { fixtureMeasures, fixtureTriangles } from '../sim/fixtures/parts';
 import type { MjcfInput } from '../sim/mjcfTypes';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
+import { BENCH_SERVOS } from './measuredJoints';
 import type { BenchPayload, ServoFamily } from './types';
 
 export const BENCH_JOINT = 'servo_joint';
-
-export const BENCH_SERVOS: Record<ServoFamily, { componentId: string; variant?: string }> = {
-  sts3215: { componentId: 'feetech-sts3215', variant: 'c001' },
-  xl330: { componentId: 'dynamixel-xl330-m288' },
-};
 
 const PIVOT_MM = 800;
 const BOB_SIDE_MM = 20;

@@ -1,13 +1,13 @@
 import { listIds } from '../assembly/reportText';
 import { COMPONENT_BY_ID } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
+import { measuredJoints, servoFamilyOf } from '../reality/measuredJoints';
 import { jointServos } from '../sim/mjcfEffort';
 import { isWheelJoint } from '../sim/morphology';
-import { measuredServos } from '../sim/servoModel';
 import { count, jointLabel } from './engineeringFormat';
 import { isMovable } from './kinematics';
 import { buildRig } from './kinematicsRig';
-import type { CheckContext, CheckRow } from './engineeringTypes';
+import type { CheckContext, CheckRow, FindingFix } from './engineeringTypes';
 
 const NAMED = 3;
 
@@ -35,6 +35,12 @@ function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
   };
 }
 
+function calibrateFix(ctx: CheckContext, guessed: RobotJoint[]): FindingFix | undefined {
+  const joints = guessed.filter((j) => servoFamilyOf(j, ctx.parts)).map((j) => j.id);
+
+  return joints.length ? { kind: 'calibrate', joints } : undefined;
+}
+
 function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
   const driven = movable.filter((j) => j.type === 'revolute' && servoParts(ctx, j).length > 0);
 
@@ -45,19 +51,28 @@ function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
 
   if (!modelled.length) return [];
 
-  const guessed = modelled.filter((j) => !measuredServos(jointServos(j, ctx.byPart)));
+  const measured = measuredJoints({ joints: modelled, parts: ctx.parts, calibrations: ctx.project.servoCalibrations });
+  const guessed = modelled.filter((j) => !measured.has(j.id));
 
   if (!guessed.length) return [{ check: 'Servo models', status: 'pass', detail: 'Every servo has a measured model' }];
 
   const servos = guessed.flatMap((j) => servoParts(ctx, j));
   const names = listIds([...new Set(servos.map((p) => p.name))], NAMED);
+  const fix = calibrateFix(ctx, guessed);
 
   return [
     {
       check: 'Servo models',
       status: 'warn',
       detail: `${count(guessed.length, 'joint')} without a measured model`,
-      items: [{ text: `${names} on ${labels(guessed)}`, ids: servos.map((p) => p.id), status: 'warn' }],
+      items: [
+        {
+          text: `${names} on ${labels(guessed)}`,
+          ids: servos.map((p) => p.id),
+          status: 'warn',
+          ...(fix ? { fix } : {}),
+        },
+      ],
     },
   ];
 }

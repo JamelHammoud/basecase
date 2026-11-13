@@ -45,11 +45,7 @@ export const RobotHeader: React.FC<{ robot: RobotState }> = ({ robot }) => {
   const run = robot.status?.run ?? 'idle';
 
   return (
-    <div
-      className="flex items-center justify-between gap-2 min-h-8 px-1 py-1 mb-1"
-      data-testid="robot-header"
-      data-mode={robot.mode}
-    >
+    <div className="flex items-center justify-between gap-2 min-h-8 px-1 py-1 mb-1">
       <span className="min-w-0 flex flex-wrap gap-x-[12px] text-[12.5px] text-white/50">
         <span>{servoCount(robot)}</span>
         <span>{RUN[run] ?? run}</span>

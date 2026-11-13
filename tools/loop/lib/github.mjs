@@ -24,10 +24,29 @@ export const openPulls = ({ fresh = false } = {}) =>
 
 const rollup = (pull) => pull.statusCheckRollup ?? [];
 
-export const pullCheck = (pull) => {
-  const check = rollup(pull).find((entry) => entry.__typename === 'CheckRun' && entry.name === 'check');
+const checkNamed = (pull, name) => {
+  const runs = rollup(pull)
+    .filter((entry) => entry.__typename === 'CheckRun' && entry.name === name)
+    .sort((a, b) => String(b.startedAt ?? '').localeCompare(String(a.startedAt ?? '')));
+  const latest = runs[0];
 
-  return check?.status === 'COMPLETED' ? check.conclusion.toLowerCase() : null;
+  if (!latest) return null;
+
+  return latest.status === 'COMPLETED' ? latest.conclusion.toLowerCase() : 'pending';
+};
+
+export const quickCheck = (pull) => checkNamed(pull, 'check');
+
+export const fullCheck = (pull) => checkNamed(pull, 'check (full)');
+
+export const pullCheck = (pull) => {
+  const full = fullCheck(pull);
+
+  if (full && full !== 'pending') return full;
+
+  const quick = quickCheck(pull);
+
+  return quick === 'pending' ? null : quick;
 };
 
 export const pullReview = (pull) => {
@@ -76,7 +95,7 @@ export const commentOnPull = (number, body) =>
   run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: withMark(body) });
 
 export const mergePull = (number, method = 'squash') =>
-  run('gh', ['pr', 'merge', String(number), `--${method}`, '--delete-branch'], { allowFail: true });
+  run('gh', ['pr', 'merge', String(number), `--${method}`, '-R', repo()], { allowFail: true });
 
 const MISSING_LABEL = /'(loop:[a-z-]+)' not found/;
 
@@ -154,8 +173,6 @@ export const lastFinishedMainCheck = () =>
         'check.yml',
         '--branch',
         'main',
-        '--event',
-        'push',
         '--limit',
         '100',
         '--json',
@@ -351,7 +368,7 @@ export const issueIsOpen = (number) =>
   run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===
   'OPEN';
 
-const STUCK_AFTER_MS = 60 * 60 * 1000;
+const STUCK_AFTER_MS = 30 * 60 * 1000;
 
 export const stuckRuns = (runs, now) =>
   runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STUCK_AFTER_MS);
@@ -377,7 +394,7 @@ export function unstickMainChecks(log, now = Date.now()) {
     }).ok;
 
     log(
-      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, unfinished after an hour`,
+      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, unfinished after 30 minutes`,
     );
   }
 }

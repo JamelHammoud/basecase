@@ -2,7 +2,7 @@ import React from 'react';
 import { catalogRef } from '../../data/catalog';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { Button, EmptyState, HoverCard, REVEAL_ON_HOVER, SectionHeader } from '../../design-system';
+import { Button, EmptyState, HoverCard, PreviewImage, REVEAL_ON_HOVER, SectionHeader } from '../../design-system';
 import { CatalogDetails } from '../PartDetails';
 import type { Category } from './partsViews';
 import { AddButton, CategoryRow, ResultRow, dragProps, metaLine } from './rows';
@@ -24,16 +24,10 @@ const Tile: React.FC<{ item: CatalogItem; meta: string; onOpen: () => void; onAd
           className="w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"
         >
           <div className="preview aspect-[4/3]">
-            {thumb ? (
-              <img
-                src={thumb}
-                alt=""
-                draggable={false}
-                className="w-full h-full object-contain p-1.5 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-              />
-            ) : (
-              <div className="w-full h-full shimmer" />
-            )}
+            <PreviewImage
+              src={thumb}
+              className="p-1.5 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
+            />
           </div>
           <div className="px-0.5 pt-2">
             <div className="text-[13px] font-medium text-white/90 truncate">{item.name}</div>
@@ -105,8 +99,7 @@ export const SearchResults: React.FC<{
       }
     />
   ) : (
-    <div className="px-[8px] pb-4">
-      <SectionHeader title={`${results.length} ${results.length === 1 ? 'result' : 'results'}`} />
+    <div className="px-[8px] pt-1 pb-4">
       {results.map((item, i) => (
         <ResultRow
           key={catalogRef(item)}

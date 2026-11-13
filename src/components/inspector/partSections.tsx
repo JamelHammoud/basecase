@@ -137,7 +137,7 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
           <span className="col-span-2 text-[13px] text-white/50">Wall thickness</span>
           <NumberInput
             label="T"
-            title="Wall thickness"
+            aria-label="Wall thickness"
             value={part.dimensions.thickness}
             min={1}
             max={50}

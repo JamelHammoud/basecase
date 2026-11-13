@@ -28,11 +28,7 @@ export interface CheckDot {
   shade: number;
 }
 
-export interface FindingFix {
-  kind: 'print-face';
-  part: string;
-  down: V3;
-}
+export type FindingFix = { kind: 'print-face'; part: string; down: V3 } | { kind: 'calibrate'; joints: string[] };
 
 export interface CheckRow {
   check: string;

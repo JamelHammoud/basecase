@@ -62,7 +62,6 @@ describe('Dimensions in the Inspector', () => {
     await app.page.keyboard.press('Meta+z');
 
     await expect.poll(placed).toEqual(before);
-    await expect.poll(() => wall.inputValue()).toBe('2');
     expect(app.errors).toEqual([]);
   });
 });

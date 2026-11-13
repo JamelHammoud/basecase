@@ -1,11 +1,7 @@
+import { ipcErrorText } from '../ipcError';
 import { post } from './transport';
 
 type Invoke = ((channel: string, payload?: unknown) => Promise<unknown>) | undefined;
-
-const errorText = (e: unknown) =>
-  (e instanceof Error ? e.message : String(e))
-    .replace(/^Error invoking remote method '[^']+':\s*/, '')
-    .replace(/^Error:\s*/, '');
 
 export async function channelCall<T>(
   invoke: Invoke,
@@ -22,6 +18,6 @@ export async function channelCall<T>(
 
     return res;
   } catch (e) {
-    throw new Error(errorText(e), { cause: e });
+    throw new Error(ipcErrorText(e), { cause: e });
   }
 }

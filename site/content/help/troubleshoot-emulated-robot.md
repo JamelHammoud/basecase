@@ -24,6 +24,7 @@ covers:
   - src/robot/sceneRobot.ts
   - hw/crates/robot-daemon/src/ladder/mod.rs
   - hw/crates/robot-daemon/src/fault.rs
+  - electron/robot/robotLink.mjs
 ---
 
 Fixes for Operate when Connect is missing, a rung is refused, a fault stops the motors, or Calibrate Servos doesn't show.
@@ -34,6 +35,14 @@ Operate shows "No robot" when the scene has no joint that moves. With more than 
 
 1. Click **Browse Robots** under "No robot" to insert a robot.
 2. Click **Operate** again.
+
+## "This copy of Basecase can’t run robots"
+
+Your copy of Basecase lacks the robot daemon, the program that drives the emulated servos. Connect can't start without it.
+
+1. Quit Basecase.
+2. Download Basecase again from [Install Basecase](/help/install-basecase), and replace the copy you have.
+3. Open Basecase and click **Connect Emulated Robot** again.
 
 ## "Load a policy first"
 

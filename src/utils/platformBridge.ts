@@ -13,6 +13,7 @@ import type { ExportedStep, StepJob } from '../types/step';
 import { base64ToBytes, bytesToBase64 } from './base64';
 import { electron, get, post, postJson, postOrThrow, query, quietly } from './platform/transport';
 import { checkedRender, parsedReply } from './platform/renderedCad';
+import { ipcErrorText } from './ipcError';
 import type {
   AcpPromptPayload,
   AppMenuState,
@@ -67,7 +68,7 @@ const acpBridge = {
   sendAcpPrompt: (payload: AcpPromptPayload): Promise<PromptResult> =>
     electron()?.sendAcpPrompt(payload) ??
     postOrThrow('/acp-prompt', payload, (body, res) =>
-      !res.ok || body.error ? String(body.error || `Agent error ${res.status}`) : null,
+      !res.ok || body.error ? String(body.error || 'The agent stopped responding.') : null,
     ),
 
   steerAcp: (payload: AcpPromptPayload): Promise<SteerOutcome> =>
@@ -114,11 +115,6 @@ const acpBridge = {
 
 const plainJson = (value: unknown) =>
   JSON.parse(JSON.stringify(value, (_key, v: unknown) => (v instanceof Float32Array ? Array.from(v) : v)));
-
-const ipcMessage = (e: unknown) =>
-  (e instanceof Error ? e.message : String(e))
-    .replace(/^Error invoking remote method '[^']+':\s*/, '')
-    .replace(/^Error:\s*/, '');
 
 const libraryBridge = {
   async saveEvidenceFile(payload: EvidenceFilePayload): Promise<void> {
@@ -188,7 +184,7 @@ const libraryBridge = {
     try {
       return await api.exportStep(job);
     } catch (e) {
-      throw new Error(ipcMessage(e), { cause: e });
+      throw new Error(ipcErrorText(e), { cause: e });
     }
   },
   renderCad: (language: CadLanguage, code: string): Promise<RenderedCad> =>
@@ -290,13 +286,13 @@ const simreadyBridge = {
 
     if (!api)
       return postOrThrow('/simready-fetch', payload, (body, res) =>
-        res.ok ? null : ipcMessage(String(body.error ?? 'Couldn’t download the asset.')),
+        res.ok ? null : ipcErrorText(String(body.error ?? 'Couldn’t download the asset.')),
       );
 
     try {
       return await api.simreadyFetch(payload);
     } catch (e) {
-      throw new Error(ipcMessage(e), { cause: e });
+      throw new Error(ipcErrorText(e), { cause: e });
     }
   },
 };

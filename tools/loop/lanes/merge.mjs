@@ -1,10 +1,10 @@
 import { byRank, isRepair } from '../lib/rank.mjs';
-import { isBatch } from './batch.mjs';
+import { isBatch, ready } from '../lib/landing.mjs';
 import {
   closeIssue,
+  hasLabel,
   isPaused,
   issueIsOpen,
-  lastFinishedMainCheck,
   mergePull,
   openPulls,
   pullCheck,
@@ -14,11 +14,8 @@ import {
 export const schedule = {
   slots: 1,
   everySeconds: 60,
-  does: 'Lands what the full Check passed: repairs first, squashed, then batches with a merge commit so every pull request in them is marked merged; only repairs while main is red',
+  does: "Squash-merges every reviewed pull request whose Check passed, repairs first; main's state never holds a merge",
 };
-
-const ready = (pull) =>
-  pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';
 
 const builtStep = (pull) => Number(/^loop\/build\/(\d+)-/.exec(pull.headRefName)?.[1]) || null;
 
@@ -31,28 +28,29 @@ function closeBuiltStep(pull, log) {
   log(`closed step #${step}, built in #${pull.number}`);
 }
 
+const landable = (pull) =>
+  !isBatch(pull) &&
+  ready({
+    conflicting: pull.mergeable === 'CONFLICTING',
+    revising: hasLabel(pull, 'loop:revising'),
+    review: pullReview(pull),
+    check: pullCheck(pull),
+  });
+
 export default function merge({ log }) {
-  if (isPaused()) {
-    log('paused (LOOP_PAUSED)');
+  if (isPaused()) return log('paused (LOOP_PAUSED)');
 
-    return;
+  const pulls = openPulls({ fresh: true })
+    .filter(landable)
+    .sort((a, b) => Number(isRepair(b)) - Number(isRepair(a)) || byRank(a, b));
+
+  if (pulls.length === 0) return log('nothing ready to land');
+
+  for (const pull of pulls) {
+    const result = mergePull(pull.number, 'squash');
+
+    log(result.ok ? `merged #${pull.number}: ${pull.title}` : `merge of #${pull.number} failed: ${result.err}`);
+
+    if (result.ok) closeBuiltStep(pull, log);
   }
-
-  const mainRed = lastFinishedMainCheck()?.conclusion === 'failure';
-  const candidates = openPulls({ fresh: true })
-    .filter((pull) => isRepair(pull) || (!mainRed && isBatch(pull)))
-    .sort(byRank);
-  const pull = candidates.find(ready);
-
-  if (!pull) {
-    log(mainRed ? 'main is red; waiting for a repair that turns Check green' : 'nothing ready to merge');
-
-    return;
-  }
-
-  const result = mergePull(pull.number, isBatch(pull) ? 'merge' : 'squash');
-
-  log(result.ok ? `merged #${pull.number}: ${pull.title}` : `merge of #${pull.number} failed: ${result.err}`);
-
-  if (result.ok) closeBuiltStep(pull, log);
 }

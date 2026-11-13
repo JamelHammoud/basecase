@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { Button, IconButton, MenuItem, MoreIcon, PopoverMenu, RowActions } from '../../design-system';
-import type { ReadinessFinding } from '../../readiness/types';
+import type { FindingFix, ReadinessFinding } from '../../readiness/types';
 import type { ScenePart } from '../../types/robotics';
 import { PartLinks } from './PartLinks';
 import type { TetherControl } from './TetherFields';
 
 export interface FindingActions {
   onFix?: (finding: ReadinessFinding) => void;
-  onApplyFix?: (finding: ReadinessFinding) => void;
+  onApplyFix?: Partial<Record<FindingFix['kind'], (finding: ReadinessFinding) => void>>;
   onQuote?: (finding: ReadinessFinding) => void;
   onIgnore: (finding: ReadinessFinding) => void;
   onIgnoreRule: (finding: ReadinessFinding) => void;
@@ -52,7 +52,7 @@ const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }>
 };
 
 const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
-  const fix = finding.fix ? actions.onApplyFix : actions.onFix;
+  const fix = finding.fix ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
 
   return (
     <>

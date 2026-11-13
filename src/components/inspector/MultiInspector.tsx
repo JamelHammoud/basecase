@@ -160,7 +160,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
           <NumberInput
             key={axis}
             label={axis}
-            title={`Center ${axis}`}
+            aria-label={`Center ${axis}`}
             value={center[idx]}
             onChange={(v, l) => onMoveSelection({ [idx]: v }, l)}
           />

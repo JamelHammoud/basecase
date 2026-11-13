@@ -1,6 +1,7 @@
 import { useExportActions } from './useExportActions';
 import { useFixedCameras } from './useFixedCameras';
 import { useLibraryActions } from './useLibraryActions';
+import { useOnshapeUpdate } from './useOnshapeUpdate';
 import { usePartCreation } from './usePartCreation';
 import { usePartEdits } from './usePartEdits';
 import { usePoseActions } from './usePoseActions';
@@ -16,6 +17,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const ops = useSelectionOps(core);
   const library = useLibraryActions(core);
   const exports = useExportActions(core);
+  const onshape = useOnshapeUpdate(core);
   const cameras = useFixedCameras({
     project: core.project,
     updateProjectNow: core.docs.updateProjectNow,
@@ -23,7 +25,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     showToast: core.showToast,
   });
 
-  return { pose, robots, creation, edits, ops, library, exports, cameras };
+  return { pose, robots, creation, edits, ops, library, exports, cameras, onshape };
 }
 
 export type WorkspaceActions = ReturnType<typeof useWorkspaceActions>;

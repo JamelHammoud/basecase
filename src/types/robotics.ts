@@ -181,7 +181,7 @@ export interface ScenePart extends PartRelations {
   robotLink?: RobotLinkRef;
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
-  group?: { id: string; name: string };
+  group?: PartGroup;
   printMaterial?: PrintMaterial;
   print?: PartPrint;
   jointId?: string;
@@ -192,7 +192,7 @@ export type { PartPrint, PrintRecord } from './print';
 
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
-import type { RobotLinkRef } from './robotLink';
+import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
 
 import type { PartPrint, PrintRecord } from './print';
 
@@ -214,6 +214,7 @@ export interface RobotJoint {
   velocity?: number;
   published?: string;
   limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
+  onshape?: OnshapeMate;
 }
 
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';

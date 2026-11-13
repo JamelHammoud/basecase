@@ -7,6 +7,7 @@ covers:
   - src/onshape/
   - electron/onshape/
   - src/readiness/buildChecks.ts
+  - src/workspace/useOnshapeUpdate.ts
 ---
 
 Bring a robot you modelled in Onshape into Basecase, with its revolute and slider mates as joints you can pose.
@@ -29,3 +30,15 @@ Each part comes in as its own mesh, except parts held together by a fastened mat
 ![The Pose tab turning the imported Elbow hinge](/help/import-an-onshape-assembly/pose.png)
 
 Any other mate, like a cylindrical, ball or pin slot mate, is held fixed. The Build tab's Checks list each one under Fixed Mates, on the part it holds, so you can add the joint by hand. A mate that closes a loop, like the last pin of a four-bar linkage, is left out, because each part hangs off exactly one joint.
+
+When the assembly changes in Onshape, bring the changes in without importing it again:
+
+7. Right-click the robot's group in Layers, or any of its parts, and choose **Update from Onshape**. It's in ⌘K too.
+
+![The right-click menu of the Desk Arm group with Update from Onshape](/help/import-an-onshape-assembly/update.png)
+
+Parts you changed in Onshape are replaced where they sit, new parts and mates come in as parts and joints, and parts you deleted there are removed. The servo on each joint, colours, parts you added like screws or cameras, poses and calibrations stay. A message counts the changes, and ⌘Z undoes the whole update.
+
+![The arm after the update, longer and with a new Wrist part, and the message 3 changes from Onshape](/help/import-an-onshape-assembly/updated.png)
+
+If you delete a mate in Onshape, its joint stays, and Checks lists it under Missing Mates so you can remove it or add the mate back. A link to a version always brings that version, so import from the workspace link to keep up with your edits.

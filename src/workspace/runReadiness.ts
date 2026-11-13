@@ -9,6 +9,8 @@ import { registerSourced } from '../data/sourcedItems';
 import {
   fitProbeFindings,
   fixedMateFindings,
+  goneMateFindings,
+  goneMateIds,
   hiddenFindings,
   sourcingFindings,
   threadFindings,
@@ -66,6 +68,7 @@ export const projectFingerprint = (
     printProcess: project.printProcess,
     animations: jsonHash(project.animations),
     firstRanges: project.firstRanges,
+    goneMates: goneMateIds(project.joints),
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
@@ -120,6 +123,7 @@ export async function runReadiness({
       ...threadFindings(geometry, parts),
       ...hiddenFindings(parts),
       ...fixedMateFindings(parts),
+      ...goneMateFindings(project.joints),
     ],
     {
       parts,

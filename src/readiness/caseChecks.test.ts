@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CaseRuns } from '../cases/caseRuns';
 import type { ScenePart } from '../types/robotics';
 import { caseFindings, caseRow, caseStatus } from './caseChecks';
-import { ignoreFinding, ignoreRule, readinessOf, withDecisions } from './readiness';
+import { ignoreFinding, ignoreRule, ownedBy, readinessOf, withDecisions } from './readiness';
 
 const runs = (passes: number, extra: Partial<CaseRuns> = {}): CaseRuns => ({
   runs: 20,
@@ -76,5 +76,23 @@ describe('the Cases check', () => {
     expect(finding.ruleName).toBe('Cases');
     expect(one.checks.find((c) => c.caseId === 'walk')?.status).toBe('pass');
     expect(all.ignoredRules).toEqual([{ rule: 'case', name: 'Cases', count: 1 }]);
+  });
+
+  it('keeps each Case to its own row when two share a name, or a Case shares a check’s name', () => {
+    const passing = caseRow({ id: 'reach', name: 'Reach the Flag' }, runs(20));
+    const failing = caseRow({ id: 'reach-2', name: 'Reach the Flag' }, runs(4, { commonFailure: 'missed' }));
+    const named = caseRow({ id: 'torque', name: 'Torque' }, runs(20));
+    const torque = { check: 'Torque', status: 'warn' as const, detail: '' };
+    const torqueNote = { ...caseFindings([failing])[0], key: 'design:torque', caseId: undefined, check: 'Torque' };
+    const rows = [passing, failing, named, torque];
+    const r = readinessOf([...caseFindings(rows), torqueNote], { parts: [part], fingerprint: 'f', rows });
+    const summary = (caseId: string) => r.checks.find((c) => c.caseId === caseId);
+
+    expect(summary('reach')?.status).toBe('pass');
+    expect(summary('reach-2')).toMatchObject({ status: 'fail', detail: '4 of 20' });
+    expect(summary('torque')?.status).toBe('pass');
+    expect(r.checks.find((c) => c.name === 'Torque' && !c.caseId)?.status).toBe('warn');
+    expect(r.notes.filter(ownedBy(summary('reach')!))).toEqual([]);
+    expect(r.notes.filter(ownedBy(summary('reach-2')!)).map((f) => f.text)).toEqual(['Missed']);
   });
 });

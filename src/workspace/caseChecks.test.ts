@@ -61,7 +61,7 @@ describe('Case rows in Checks', () => {
     expect(rows).toEqual([expect.objectContaining({ check: 'Touch the Dots', status: 'fail' })]);
   });
 
-  it('leave queued runs alone when a newer check has started', async () => {
+  it('leave queued runs alone when a newer check has started, and say the check was replaced', async () => {
     run.mockResolvedValue(modelReply);
 
     const turn = nextCaseTurn();
@@ -69,8 +69,38 @@ describe('Case rows in Checks', () => {
     nextCaseTurn();
 
     const rows = await caseCheckRows({ ...sceneWith('rover-four', 'reach-the-flag'), turn });
+    const [note] = caseFindings(rows);
 
     expect(keepOnly).not.toHaveBeenCalled();
-    expect(rows[0].items?.[0]?.text).toBe(CASE_STOPPED);
+    expect(rows[0].status).toBe('not run');
+    expect(note.agentText).toContain('a newer check replaced this one');
+  });
+
+  it('give an overtaken check the newest check’s verdict for the same Case', async () => {
+    const outcomes = Array.from({ length: 10 }, () => ({ passed: true, margin: 1, failed: [] }));
+    const gate: { open?: () => void } = {};
+    const answered = new Promise<void>((resolve) => {
+      gate.open = resolve;
+    });
+
+    run.mockImplementation((_index, job: CaseCheckJob) =>
+      job.type === 'model'
+        ? Promise.resolve({ ...modelReply, modelHash: 'shared' })
+        : (answered.then(() => ({ type: 'runs', result: { outcomes } })) as never),
+    );
+
+    const scene = sceneWith('rover-diff', 'reach-the-flag');
+    const older = nextCaseTurn();
+    const newest = caseCheckRows({ ...scene, turn: nextCaseTurn() });
+
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(3));
+
+    const overtaken = caseCheckRows({ ...scene, turn: older });
+
+    gate.open?.();
+
+    expect((await overtaken)[0]).toMatchObject({ status: 'pass', detail: '20 of 20' });
+    expect((await newest)[0]).toMatchObject({ status: 'pass', detail: '20 of 20' });
+    expect(run).toHaveBeenCalledTimes(3);
   });
 });

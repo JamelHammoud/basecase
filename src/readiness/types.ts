@@ -15,6 +15,7 @@ export interface Finding {
   agentText: string;
   detail?: string;
   ids: string[];
+  caseId?: string;
 }
 
 export interface FindingDispute {

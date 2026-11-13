@@ -4,7 +4,7 @@ import type { Finding } from './types';
 
 export const CASE_RULE = 'case';
 export const CASES = 'Cases';
-export const CASE_STOPPED = 'The runs stopped with an error.';
+export const CASE_STOPPED = 'The runs stopped.';
 
 const PASS_SHARE = 0.9;
 const WARN_SHARE = 0.5;
@@ -36,7 +36,15 @@ export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): Che
 export const stoppedRow = (kase: { id: string; name: string }): CheckRow =>
   caseRow(kase, { runs: 0, passes: 0, medianMargin: -1, commonFailure: null, refusal: CASE_STOPPED });
 
+export const replacedRow = (kase: { id: string; name: string }): CheckRow => ({
+  ...stoppedRow(kase),
+  status: 'not run',
+});
+
 function agentTextOf(row: CheckRow, failure: string): string {
+  if (row.status === 'not run')
+    return `Case ${row.check}: a newer check replaced this one before its runs finished, so it isn't judged here. Run get_readiness again.`;
+
   if (failure === CASE_STOPPED)
     return `Case ${row.check}: its runs stopped with an error, so it isn't judged. Run get_readiness again.`;
 
@@ -59,6 +67,7 @@ export function caseFindings(rows: CheckRow[]): Finding[] {
         check: row.check,
         rule: CASE_RULE,
         ruleName: CASES,
+        caseId: row.caseId,
         text: item.text,
         agentText: agentTextOf(row, item.text),
         ids: [],

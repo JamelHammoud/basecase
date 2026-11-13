@@ -1,5 +1,6 @@
 import React from 'react';
 import { Section } from '../../design-system';
+import { ownedBy } from '../../readiness/readiness';
 import type { CheckStatus, CheckSummary, Readiness } from '../../readiness/types';
 import { READINESS_CHECKS } from '../../readiness/wording';
 import { ENGINEERING_CHECKS } from '../../utils/engineering';
@@ -44,11 +45,11 @@ const Entry: React.FC<{ check: CheckSummary; readiness: Readiness; context: Find
   readiness,
   context,
 }) => {
-  const notes = readiness.notes.filter((f) => f.check === check.name);
+  const notes = readiness.notes.filter(ownedBy(check));
 
   if (check.caseId) return <CaseCheckItem check={{ ...check, caseId: check.caseId }} notes={notes} context={context} />;
 
-  const blockers = readiness.blockers.filter((f) => f.check === check.name);
+  const blockers = readiness.blockers.filter(ownedBy(check));
 
   return <CheckItem check={check} blockers={blockers} notes={notes} context={context} />;
 };

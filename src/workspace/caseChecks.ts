@@ -3,7 +3,7 @@ import { caseCheckPool } from '../cases/caseChecksClient';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { readCases, type Case } from '../cases/schema';
 import { readinessFingerprint } from '../readiness/readiness';
-import { caseRow, stoppedRow } from '../readiness/caseChecks';
+import { caseRow, replacedRow, stoppedRow } from '../readiness/caseChecks';
 import type { VelocityDrive } from '../sim/driveAccess';
 import type { Skill } from '../skills/artifacts';
 import type { SkillRecord } from '../skills/skillRecords';
@@ -136,43 +136,44 @@ function verdictOf(kase: Case, key: string, reading: RobotReading, robot: () => 
 const verdictKey = (kase: Case, reading: RobotReading) =>
   `${hashOf(kase)}|${reading.modelHash}|${reading.walk ? reading.offer : ''}`;
 
-function supersedes(turn: number, keys: string[]): boolean {
-  if (turn !== turns) return false;
+const isNewest = (turn: number) => turn === turns;
 
-  caseCheckPool.keepOnly(new Set(keys));
+function sharedVerdict(kase: Case, key: string): Promise<CheckRow> {
+  const shared = verdicts.get(key) ?? inFlight.get(key);
 
-  return true;
+  if (!shared) return Promise.resolve(replacedRow(kase));
+
+  return Promise.resolve(shared).then(
+    (runs) => caseRow(kase, runs),
+    () => replacedRow(kase),
+  );
+}
+
+function rowOf(input: CaseChecksInput, kase: Case, verdict: Promise<CaseRuns>): Promise<CheckRow> {
+  return verdict.then(
+    (runs) => caseRow(kase, runs),
+    () => (isNewest(input.turn) ? stoppedRow(kase) : replacedRow(kase)),
+  );
 }
 
 export async function caseCheckRows(input: CaseChecksInput): Promise<CheckRow[]> {
   const cases = readCases(input.project.cases);
 
-  if (!cases.length) {
-    supersedes(input.turn, []);
+  if (!cases.length && isNewest(input.turn)) caseCheckPool.keepOnly(new Set());
 
-    return [];
-  }
+  if (!cases.length) return [];
 
   let wired: WireRobot | null = null;
   const robot = () => (wired ??= wireRobot(input));
   const reading = await readRobot(input, robot).catch(() => null);
-  const keyed = reading ? cases.map((kase) => ({ kase, key: verdictKey(kase, reading) })) : [];
 
-  if (
-    !reading ||
-    !supersedes(
-      input.turn,
-      keyed.map((k) => k.key),
-    )
-  )
-    return cases.map(stoppedRow);
+  if (!reading) return cases.map(isNewest(input.turn) ? stoppedRow : replacedRow);
 
-  return Promise.all(
-    keyed.map(({ kase, key }) =>
-      verdictOf(kase, key, reading, robot).then(
-        (runs) => caseRow(kase, runs),
-        () => stoppedRow(kase),
-      ),
-    ),
-  );
+  const keyed = cases.map((kase) => ({ kase, key: verdictKey(kase, reading) }));
+
+  if (!isNewest(input.turn)) return Promise.all(keyed.map(({ kase, key }) => sharedVerdict(kase, key)));
+
+  caseCheckPool.keepOnly(new Set(keyed.map((k) => k.key)));
+
+  return Promise.all(keyed.map(({ kase, key }) => rowOf(input, kase, verdictOf(kase, key, reading, robot))));
 }

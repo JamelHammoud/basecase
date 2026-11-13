@@ -112,9 +112,9 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     ...Object.fromEntries(CAMERA_VIEWS.map((v, i) => [String(i + 1), () => ui.setCameraView(v.id)])),
   };
 
-  const center: KeyMap = { escape: core.commandCenter.leave };
+  const running: KeyMap = { escape: core.caseRun.leave };
 
-  return { global, withMod, plain, center };
+  return { global, withMod, plain, running };
 }
 
 export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
@@ -147,11 +147,11 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
   };
 
   const runScoped = (e: KeyboardEvent, key: string, mod: boolean) => {
-    const center = core.commandCenter.open;
+    const running = core.caseRun.open;
 
-    if (center && !mod) runKey(maps.center, key, e, true);
-    else if (!center && mod) runKey(maps.withMod, key, e, true);
-    else if (!center && !e.altKey && !core.printing.mode) runPlain(e, key);
+    if (running && !mod) runKey(maps.running, key, e, true);
+    else if (!running && mod) runKey(maps.withMod, key, e, true);
+    else if (!running && !e.altKey && !core.printing.mode) runPlain(e, key);
   };
 
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
@@ -160,7 +160,7 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
 
     if (mod && runKey(maps.global, key, e, true)) return;
 
-    if (mod && !e.shiftKey && key === 'f' && !blocked && !core.commandCenter.open) {
+    if (mod && !e.shiftKey && key === 'f' && !blocked && !core.caseRun.open) {
       e.preventDefault();
       ui.findParts();
 

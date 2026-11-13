@@ -46,7 +46,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         ref={viewportRef}
         sceneKey={scene.sceneId}
         parts={shownParts}
-        selectedPartIds={core.commandCenter.open ? NO_SELECTION : selectedIds}
+        selectedPartIds={core.caseRun.open ? NO_SELECTION : selectedIds}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
         snapStepMm={studio.snapStepMm}
@@ -105,7 +105,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onAxisPick={actions.joints.onAxisPick}
       />
       <DriveOverlay sim={sim} />
-      {!core.commandCenter.open && (
+      {!core.caseRun.open && (
         <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       )}
       <AnnotationLayer

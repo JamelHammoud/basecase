@@ -11,6 +11,7 @@ You get Jamel's Direction comments, Jamel's requests (issues Jamel opened by han
 - Name the class the example belongs to, and go wider when unsure.
 - Plan the general building blocks the whole class needs. Products, robots and devices named in the example are first cases of those blocks, not steps of their own, unless the request is about that product.
 - The done-when is a varied set of at least ten cases spread across the class, with the example as one of them. A plan that passes only the example has failed the request.
+- The example's words are a description, not product names. In #178, "a Case app with a command center that sees my camera feed" describes what one Case might show; it never asked for a feature called Command Center. Build the class into what already exists under its own name (a Case shows whatever its Case declares) and never coin a new mode, view or noun from a phrase in the example.
 
 1. **Arcs.** Keep 3 to 6. Each is a user-visible thread with a clear next step. Retire an arc that's done or no longer worth it. At least one open arc is always a big bet: a new sub-product, surface, way of working or business model, at the scale of Amp's Chronicle (Boxes, Orbs, Puck, mobile apps, Free Agent, Bye Bye Dial).
    - **Three pillars always have an open arc,** whatever else is planned:

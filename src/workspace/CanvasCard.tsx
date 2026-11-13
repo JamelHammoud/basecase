@@ -96,7 +96,7 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
           onUngroup={edits.ungroup}
         />
       )}
-      {!core.commandCenter.open && (
+      {!core.caseRun.open && (
         <div className="pointer-events-auto">
           <CanvasToolbar core={core} actions={actions} ui={ui} />
         </div>
@@ -115,7 +115,7 @@ export function CanvasCard(props: CanvasCardProps) {
     tool.transformMode !== 'pose' &&
     !tool.marking &&
     !tool.measuring &&
-    !core.commandCenter.open;
+    !core.caseRun.open;
 
   return (
     <main

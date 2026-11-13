@@ -5,7 +5,7 @@ import { LAYOUT, ModeHeader, useScrollFade } from '../../design-system';
 import type { PanelContext } from './panelContext';
 import { PANEL_VIEWS } from './panelViews';
 
-interface CommandCenterAreaProps {
+interface CaseRunAreaProps {
   area: PlacedArea;
   side: 'before' | 'after';
   ctx: PanelContext;
@@ -18,7 +18,7 @@ function Panel({ panel, ctx }: { panel: PanelSpec; ctx: PanelContext }) {
 
   return (
     <div
-      data-testid="command-center-panel"
+      data-testid="case-run-panel"
       data-panel={panel.id}
       data-kind={panel.kind}
       className="border-b border-white/[0.06] last:border-b-0 empty:hidden"
@@ -28,12 +28,12 @@ function Panel({ panel, ctx }: { panel: PanelSpec; ctx: PanelContext }) {
   );
 }
 
-export const CommandCenterArea: React.FC<CommandCenterAreaProps> = ({ area, side, ctx, title, onDone }) => {
+export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, title, onDone }) => {
   const { ref, style } = useScrollFade();
 
   return (
     <aside
-      data-testid="command-center-area"
+      data-testid="case-run-area"
       className="relative h-full shrink-0 overflow-hidden"
       style={{ width: area.size + LAYOUT.panelGap }}
     >

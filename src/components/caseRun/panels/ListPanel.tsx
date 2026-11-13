@@ -31,7 +31,7 @@ export const ListPanel: React.FC<PanelViewProps<'list'>> = (props) => {
   const tries = (
     <>
       <TrySection cases={ctx.cases} teachWalk={null} cls={ctx.sim.drive.cls} />
-      <ResultsSection cases={ctx.cases} model={ctx.sim.model} parts={ctx.parts} world={ctx.sim.worldParts} />
+      <ResultsSection cases={ctx.cases} model={ctx.sim.model} parts={ctx.parts} world={ctx.sim.worldParts} run={null} />
     </>
   );
 

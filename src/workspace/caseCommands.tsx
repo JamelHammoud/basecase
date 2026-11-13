@@ -24,7 +24,7 @@ export const showNewCase = (core: WorkspaceCore) => {
   core.simTraining.cases.builder.start();
 };
 
-export const STAYS_IN_CENTER = new Set([
+export const STAYS_IN_RUN = new Set([
   'drive-start',
   'drive-stop',
   'drive-respawn',
@@ -33,13 +33,13 @@ export const STAYS_IN_CENTER = new Set([
   'case-publish-dataset',
 ]);
 
-const openCommandCenter = (core: WorkspaceCore): Command => ({
-  id: 'case-command-center',
+const runCaseCommand = (core: WorkspaceCore): Command => ({
+  id: 'case-run',
   group: 'Simulate',
-  label: 'Open Command Center',
+  label: 'Run Case',
   icon: <ExpandIcon className={ic} />,
   keywords: 'case app console teleop cameras joints tries operator dashboard',
-  run: core.commandCenter.enter,
+  run: core.caseRun.enter,
 });
 
 function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Command[] {
@@ -120,8 +120,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       ]
     : [];
 
-  const commandCenter: Command[] =
-    cases.active && !core.commandCenter.open && !core.printing.mode ? [openCommandCenter(core)] : [];
+  const caseRun: Command[] = cases.active && !core.caseRun.open && !core.printing.mode ? [runCaseCommand(core)] : [];
 
   const newCase: Command[] = cases.builder.goals.length
     ? [
@@ -149,7 +148,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     drive,
     ...respawn,
     ...tryIt,
-    ...commandCenter,
+    ...caseRun,
     ...datasetCommands(cases),
   ];
 }

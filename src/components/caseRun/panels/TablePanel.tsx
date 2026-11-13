@@ -1,6 +1,6 @@
 import React from 'react';
 import type { JointField } from '../../../cases/console/signalNames';
-import { CommandCenterJoints } from '../CommandCenterJoints';
+import { CaseRunJoints } from '../CaseRunJoints';
 import { useBus, type PanelViewProps } from '../panelContext';
 import { Titled } from './PanelTitle';
 import { signalText } from './signalText';
@@ -65,7 +65,7 @@ const SignalsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
 export const TablePanel: React.FC<PanelViewProps<'table'>> = (props) => {
   const { panel, ctx } = props;
 
-  if (panel.of === 'servos') return <CommandCenterJoints joints={ctx.joints} onBrowseRobots={ctx.onBrowseRobots} />;
+  if (panel.of === 'servos') return <CaseRunJoints joints={ctx.joints} onBrowseRobots={ctx.onBrowseRobots} />;
 
   return panel.of === 'joints' ? <JointsTable {...props} /> : <SignalsTable {...props} />;
 };

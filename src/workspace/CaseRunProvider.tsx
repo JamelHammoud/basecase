@@ -2,8 +2,8 @@ import React, { createContext, use } from 'react';
 import type { PlacedArea } from '../cases/console/layout';
 import type { CaseAction } from '../cases/console/panelKinds';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
-import { CommandCenterArea } from '../components/commandCenter/CommandCenterArea';
-import type { PanelContext } from '../components/commandCenter/panelContext';
+import { CaseRunArea } from '../components/caseRun/CaseRunArea';
+import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useConsoleSignals } from './useConsoleSignals';
@@ -15,7 +15,7 @@ interface CenterValue {
   onDone: () => void;
 }
 
-const CenterContext = createContext<CenterValue | null>(null);
+const CaseRunContext = createContext<CenterValue | null>(null);
 
 function useActions(core: WorkspaceCore) {
   const { sim, cases } = core.simTraining;
@@ -41,10 +41,10 @@ interface ProviderProps {
   children: React.ReactNode;
 }
 
-export function CommandCenterProvider({ core, actions, children }: ProviderProps) {
-  const { commandCenter, simTraining, posing, parts, tool, studio } = core;
+export function CaseRunProvider({ core, actions, children }: ProviderProps) {
+  const { caseRun, simTraining, posing, parts, tool, studio } = core;
   const { sim, cases } = simTraining;
-  const { open, caseConsole, layout } = commandCenter;
+  const { open, caseConsole, layout } = caseRun;
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
   const cameras = useCameraTiles({
     parts,
@@ -92,38 +92,38 @@ export function CommandCenterProvider({ core, actions, children }: ProviderProps
           fire,
           can,
           onBrowseRobots: () => {
-            commandCenter.leave();
+            caseRun.leave();
             tool.setLeftTab('robots');
             studio.setIsLeftOpen(true);
           },
         },
         areas: layout,
         title: cases.active?.name ?? '',
-        onDone: commandCenter.leave,
+        onDone: caseRun.leave,
       }
     : null;
 
   return (
-    <CenterContext value={value}>
+    <CaseRunContext value={value}>
       {children}
       {open && cameras.menu}
-    </CenterContext>
+    </CaseRunContext>
   );
 }
 
-export function CommandCenterAreas({ side }: { side: 'before' | 'after' }) {
-  const center = use(CenterContext);
+export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
+  const running = use(CaseRunContext);
 
-  if (!center) return null;
+  if (!running) return null;
 
-  return center.areas[side].map((area) => (
-    <CommandCenterArea
+  return running.areas[side].map((area) => (
+    <CaseRunArea
       key={area.key}
       area={area}
       side={side}
-      ctx={center.ctx}
-      title={center.title}
-      onDone={center.onDone}
+      ctx={running.ctx}
+      title={running.title}
+      onDone={running.onDone}
     />
   ));
 }

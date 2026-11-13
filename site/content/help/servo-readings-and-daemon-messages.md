@@ -59,7 +59,7 @@ Under **Emulated servos**, each joint has one row with its name and bus ID. IDs 
 |---|---|
 | An angle, such as 12.5° | The servo's position; 0° is its centre, count 2048 of 4096 |
 | A temperature, such as 30 °C | The servo's temperature; it's switched off at 50 °C |
-| No reply | The servo didn't answer this reading, or it's a PWM servo such as the DS3218, which the daemon can't read |
+| No reply | The servo didn't answer this reading, or its motor isn't a Feetech or Dynamixel servo, such as the DS3218, so the daemon can't read it |
 | Garbled reply | The servo's answer was corrupted |
 | Wrong ID answered | Another servo answered for this one |
 

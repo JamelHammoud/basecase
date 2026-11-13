@@ -25,7 +25,7 @@ const NONE = '_None._';
 
 const oneLine = (text) => text.replace(/\s+/g, ' ').trim();
 
-const copyLines = (copy = []) =>
+export const copyLines = (copy = []) =>
   copy.length === 0 ? NONE : copy.map(({ string, why }) => `copy: "${oneLine(string)}" — ${oneLine(why)}`).join('\n');
 
 const screenshotLines = (paths, { branch, slug }) =>
@@ -44,6 +44,8 @@ const entryLines = (entries) => (entries.length === 0 ? NONE : entries.join('\n\
 export const pullTitle = (change) => `${KINDS[change.kind].prefix}: ${change.title}`;
 
 export const kindOf = (title) => Object.keys(KINDS).find((kind) => title.startsWith(`${KINDS[kind].prefix}: `)) ?? null;
+
+export const ANNOUNCED = new Set(['feature', 'integration']);
 
 const withProtected = (body, files = []) =>
   files.length === 0

@@ -80,18 +80,19 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 
 1. The lane makes a worktree from `origin/main` under `~/.basecase-loop/worktrees/` and a branch `loop/<lane>/<slug>`. The shared checkout is never touched.
 2. An agent session does the work there, following AGENTS.md and the area's guide, and runs `npm run check:changed -- <files>`.
-3. The lane commits, pushes and opens the pull request. Its body says what changed and why (`tools/loop/lib/pull.mjs`), and its Changelog and Screenshots come from the diff, whatever the kind (see Pull request kinds).
-4. The review lane reviews it in a fresh session (below) and sets the `agent-review` status.
-5. The merge lane squash-merges it the moment review and its Check pass, repairs first. Nothing about `main` holds a merge.
+3. Before it publishes, the runner checks the worktree for the blockers review raised most (`tools/loop/lib/preflight.mjs`; build, refine, revise and rebuild): every string the change adds needs a reason in the answer's `copy` when it adds more than it removes, the same rule as Check's `copy` job, and no banned words; only `feature` and `integration` changes add a changelog entry; a help article whose `covers:` path the change deletes or renames, or edits while leaving the article untouched, gets read again. Anything it finds goes back to a second session in the same worktree, once, whose answer replaces the first; review still judges the rest. In the first day of the loop, copy and changelog or help findings were 153 of 257 review blockers, and each one cost a review, a revision and another Check.
+4. The lane commits, pushes and opens the pull request. Its body says what changed and why (`tools/loop/lib/pull.mjs`), and its Changelog and Screenshots come from the diff, whatever the kind (see Pull request kinds).
+5. The review lane reviews it in a fresh session (below) and sets the `agent-review` status.
+6. The merge lane squash-merges it the moment review and its Check pass, repairs first. Nothing about `main` holds a merge.
 
 Each pull request lands on its own, on a Check of what it changed (`tools/loop/lanes/merge.mjs`, `tools/loop/lib/landing.mjs`; checked every minute). The full suite runs once a night on `main` instead of on every pull request and every merge: speed matters more than catching every bug before it lands, and a bug the suite finds is fixed within a day. Batches, and then a full Check per pull request, made each merge wait 11 minutes or more, and a red `main` held every merge until a repair landed.
 
 - **The nightly suite finds what the pull requests didn't.** It runs at 06:17 UTC (Linux and Windows, unit, e2e, the packaged app and ROS). When it fails, the repair lane fixes every failure in its log in one priority repair, and the Mac's `nightly` lane runs the suite again once commits have landed since, at most hourly, until it passes (`tools/loop/lib/nightly.mjs`). e2e tests retry once in CI (`vitest.e2e.config.ts`).
 - **A flaky test becomes work.** The flakes lane (every 10 minutes) reads each Check run on `main` that passed only when its failed jobs ran again, takes the tests that failed the first time from its log, and files a `loop:priority` fix step for each, so a builder makes it deterministic or deletes it (`tools/loop/lib/flakes.mjs`). The step forbids a longer timeout, a retry or a skip. Timing budgets run on demand (`npm run perf:booleans`), never in Check.
 - **Review goes where it lands.** Eight review slots take pull requests whose quick Check passed first, and skip those with conflicts or a failed Check until the rebase or revise lane has fixed them.
-6. The worktree and the branch are deleted.
+7. The worktree and the branch are deleted.
 
-`main`'s ruleset requires `check` and `agent-review` and no approvals: GitHub doesn't let an account approve its own pull request, and every pull request is Jamel's.
+`main`'s ruleset requires a pull request and no approvals: GitHub doesn't let an account approve its own pull request, and every pull request is Jamel's. It doesn't require status checks, so the merge lane is what waits for `check` and `agent-review`; a pull request merged by hand skips both.
 
 ### Review
 
@@ -187,7 +188,7 @@ Bring a file from another app into the scene.
 
 Three guards keep work moving without anyone watching:
 
-- **Backpressure.** Lanes that open pull requests or plan work for them (build, refine, market, learn, update, lead and ideas) wait while 12 pull requests are waiting to land or 20 CI runs are queued (`tools/loop/lib/flow.mjs`). The lanes that drain the queue (review, revise, rebase, batch, merge, repair) never wait. Little open work keeps each pull request's wait short and its conflicts few.
+- **Backpressure.** Lanes that open pull requests or plan work for them (build, refine, market, learn, update, lead and ideas) wait while 12 pull requests are waiting to land or 20 CI runs are queued (`tools/loop/lib/flow.mjs`). Refine also waits while 3 of its own are waiting (`LANE_SHARE`), so the steps of Jamel's arcs keep most of the queue: refine's short sessions filled it faster than builders could, and it landed 82 pull requests to build's 63 on the loop's first day. Each refinement carries one idea to every place it holds, so fewer, larger refinements land the same polish. The lanes that drain the queue (review, revise, rebase, batch, merge, repair) never wait. Little open work keeps each pull request's wait short and its conflicts few.
 - **Nothing stays open long.** The health lane closes a pull request open over 6 hours (repairs excepted). A step's pull request goes back to the builders and is rebuilt from current `main`, which costs less than chasing conflicts (`expired` in `tools/loop/lib/flow.mjs`).
 - **New lanes start themselves.** After each update of the home checkout, the merge lane runs `install.mjs sync`, detached. Once that merge run ends, it loads new lanes, then reloads changed ones and removes deleted ones that aren't mid-run (reloading a lane stops its running job, so a busy slot waits for a later sync).
 - **Health.** The health lane checks every 10 minutes how long `main` has been red, how long since the last merge, the oldest reviewed and green pull request (timed from its passing Check or review, whichever came last), and the CI queue. While any of them is over its limit, it keeps one `Loop health` issue up to date, and it closes that issue once the loop flows again.

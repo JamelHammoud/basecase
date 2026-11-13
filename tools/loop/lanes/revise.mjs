@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
 import { conflictsWithMain, fetchAll } from '../lib/branches.mjs';
-import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
+import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
   checkRunFor,
@@ -16,6 +16,7 @@ import {
   pullReview,
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
+import { checkedRun } from '../lib/preflight.mjs';
 import { protectedIn, protectedList } from '../lib/protected.mjs';
 import { landedIn } from '../lib/landed.mjs';
 import { kindOf, pullTitle, REVISED_FIELDS, revisedBody } from '../lib/pull.mjs';
@@ -138,7 +139,15 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
     }
 
     const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, comments)}`;
-    const result = runAgent({ cwd: worktree.dir, name: 'revise', prompt, schema: SCHEMA, hours: 4 });
+    const result = checkedRun({
+      cwd: worktree.dir,
+      name: 'revise',
+      prompt,
+      schema: SCHEMA,
+      hours: 4,
+      kind: kindOf(pull.title),
+      log,
+    });
 
     recordAttempt(pull.number, { head: pull.headRefOid, jamelAt });
 

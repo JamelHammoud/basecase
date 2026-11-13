@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backpressure, expired, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
+import { backpressure, expired, laneOf, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
 
 const now = Date.parse('2026-11-13T12:00:00Z');
 const hoursAgo = (h) => new Date(now - h * 3_600_000).toISOString();
@@ -9,6 +9,20 @@ describe('backpressure', () => {
     expect(backpressure({ openWaiting: 12, queuedRuns: 0 })).toMatch(/12 pull requests/);
     expect(backpressure({ openWaiting: 5, queuedRuns: 20 })).toMatch(/20 CI runs/);
     expect(backpressure({ openWaiting: 11, queuedRuns: 19 })).toBeNull();
+  });
+
+  it('holds a lane back once its own share of the queue is waiting', () => {
+    const counts = { openWaiting: 5, queuedRuns: 0, byLane: { refine: 3, build: 2 } };
+
+    expect(backpressure(counts, 'refine')).toMatch(/3 of its own/);
+    expect(backpressure({ ...counts, byLane: { refine: 2 } }, 'refine')).toBeNull();
+    expect(backpressure({ ...counts, byLane: { build: 9 } }, 'build')).toBeNull();
+    expect(backpressure(counts)).toBeNull();
+  });
+
+  it('reads the lane from a loop branch', () => {
+    expect(laneOf('loop/refine/fit-20261113-1')).toBe('refine');
+    expect(laneOf('feature/x')).toBeNull();
   });
 });
 

@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { diffStrings, isScanned } from './copy/budget.mjs';
 import { extractStrings } from './copy/extract.mjs';
 
-const stringsOf = (file, source) =>
+export const stringsOf = (file, source) =>
   source === null || !isScanned(file) ? [] : extractStrings(source, file).map((entry) => ({ ...entry, file }));
 
 function pairByKind(removed, added) {
@@ -90,22 +90,28 @@ const untracked = (cwd) =>
 
 const readTree = (cwd, file) => fs.readFileSync(path.join(cwd, file), 'utf8');
 
-export function copyDiffOfRange({ cwd = process.cwd(), base = 'origin/main', head = null } = {}) {
+export function changedFiles({ cwd = process.cwd(), base = 'origin/main', head = null } = {}) {
   const fork = git(cwd, ['merge-base', base, head ?? 'HEAD']).trim();
   const changes = head ? nameStatus(cwd, [fork, head]) : [...nameStatus(cwd, [fork]), ...untracked(cwd)];
+
+  return { fork, changes };
+}
+
+export function scannedSources({ cwd = process.cwd(), base = 'origin/main', head = null } = {}) {
+  const { fork, changes } = changedFiles({ cwd, base, head });
   const after = (file) => (head ? git(cwd, ['show', `${head}:${file}`]) : readTree(cwd, file));
 
-  return diffCopy(
-    changes
-      .filter(({ from, to }) => isScanned(from) || isScanned(to))
-      .map(({ status, from, to }) => ({
-        file: to,
-        renamedFrom: from,
-        before: status === 'A' ? null : git(cwd, ['show', `${fork}:${from}`], { allowFail: true }),
-        after: status === 'D' ? null : after(to),
-      })),
-  );
+  return changes
+    .filter(({ from, to }) => isScanned(from) || isScanned(to))
+    .map(({ status, from, to }) => ({
+      file: to,
+      renamedFrom: from,
+      before: status === 'A' ? null : git(cwd, ['show', `${fork}:${from}`], { allowFail: true }),
+      after: status === 'D' ? null : after(to),
+    }));
 }
+
+export const copyDiffOfRange = (range = {}) => diffCopy(scannedSources(range));
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 

@@ -2,6 +2,7 @@ import type { AcpStatusInfo, CustomModelDefinition, PurchaseRecord } from '../..
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
+import { getSkill, saveSkill } from './webSkills';
 
 type Body = Record<string, unknown>;
 
@@ -93,7 +94,8 @@ const ROUTES: Record<string, Route> = {
   'train-status': () => TRAINER,
   policy: () => null,
   'policy-delete': () => false,
-  skill: () => null,
+  skill: (_, params) => getSkill(params.get('hash')),
+  'skill-save': (b) => saveSkill(b),
   'simready-status': () => ({ uv: false, ready: false }),
   'simready-file': () => ({ data: null }),
   'print-status': () => ({ slicers: [], downloads: {}, bambuConnect: false }),

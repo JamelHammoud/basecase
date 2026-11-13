@@ -8,7 +8,6 @@ interface Exports {
   forge_reset: () => void;
   forge_field: (kind: number, at: number, nameLen: number, dataLen: number) => void;
   forge_prepare: () => bigint;
-  forge_stop: () => void;
   forge_train: (header: number, headerLen: number, row: number, rowLen: number) => bigint;
 }
 
@@ -24,14 +23,11 @@ export interface ForgeWasm {
   field: (value: FieldValue) => void;
   prepare: () => Record<string, unknown>;
   train: (header: object, row: Float64Array) => Promise<Record<string, unknown>>;
-  stop: () => void;
 }
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const jspi = () => WebAssembly as unknown as Jspi;
-
-export const hasJspi = () => typeof jspi().Suspending === 'function' && typeof jspi().promising === 'function';
 
 class Memory {
   exports!: Exports;
@@ -164,6 +160,5 @@ export async function loadForgeWasm(bytes: BufferSource, gpu: ForgeGpu, onEvent:
 
       return mem.reply(packed);
     },
-    stop: () => exports.forge_stop(),
   } satisfies ForgeWasm;
 }

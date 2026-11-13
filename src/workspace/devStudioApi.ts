@@ -10,6 +10,7 @@ import { lastDownload } from '../utils/downloadBytes';
 import { replayErrors } from '../reality/jointReplay';
 import { bytesToBase64 } from '../utils/base64';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { stubTabEngine } from '../skills/skillsPlatform';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
@@ -157,6 +158,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    stubTabEngine,
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();

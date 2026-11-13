@@ -1,5 +1,5 @@
 import React from 'react';
-import { CatalogItem } from '../types/robotics';
+import type { CatalogItem, PartDimensions } from '../types/robotics';
 import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/components';
 import { isSourcedId } from '../data/sourcedItems';
 import {
@@ -13,16 +13,7 @@ import {
   motionOf,
 } from '../data/hardware';
 import { usePartThumbnail } from '../three/partThumbnails';
-import {
-  MetaLine,
-  Tooltip,
-  ArrowUpRightIcon,
-  CartIcon,
-  DrawingIcon,
-  FileIcon,
-  ShapeIcon,
-  VerifiedIcon,
-} from '../design-system';
+import { MetaLine, Tooltip, ArrowUpRightIcon, CartIcon, DrawingIcon, FileIcon, VerifiedIcon } from '../design-system';
 
 const fmt = (v: number) => String(Math.round(v * 100) / 100);
 
@@ -56,25 +47,31 @@ export const LinkButton: React.FC<{
   </a>
 );
 
-export const ComponentLinks: React.FC<{ c: ComponentInfo }> = ({ c }) => (
-  <div className="flex flex-wrap gap-1.5">
-    {c.links.amazon && (
-      <LinkButton href={c.links.amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
-        {c.links.amazon.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon'}
-      </LinkButton>
-    )}
-    {c.links.datasheet && (
-      <LinkButton href={c.links.datasheet} icon={<FileIcon className="w-3.5 h-3.5" />}>
-        Datasheet
-      </LinkButton>
-    )}
-    {c.links.product && (
-      <LinkButton href={c.links.product} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />}>
-        Product Page
-      </LinkButton>
-    )}
-  </div>
-);
+export const ComponentLinks: React.FC<{ c: ComponentInfo; shop?: boolean }> = ({ c, shop = true }) => {
+  const amazon = shop ? c.links.amazon : undefined;
+
+  if (!amazon && !c.links.datasheet && !c.links.product) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {amazon && (
+        <LinkButton href={amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
+          {amazon.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon'}
+        </LinkButton>
+      )}
+      {c.links.datasheet && (
+        <LinkButton href={c.links.datasheet} icon={<FileIcon className="w-3.5 h-3.5" />}>
+          Datasheet
+        </LinkButton>
+      )}
+      {c.links.product && (
+        <LinkButton href={c.links.product} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />}>
+          Product Page
+        </LinkButton>
+      )}
+    </div>
+  );
+};
 
 export const SpecRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="flex items-baseline justify-between gap-4 py-[5px] text-[13px] leading-snug">
@@ -83,37 +80,26 @@ export const SpecRow: React.FC<{ label: string; children: React.ReactNode }> = (
   </div>
 );
 
-export const SpecList: React.FC<{ rows: Array<[string, React.ReactNode]> }> = ({ rows }) => (
-  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
-    {rows.map(([label, value]) => (
-      <React.Fragment key={label}>
-        <dt className="text-white/50 whitespace-nowrap">{label}</dt>
-        <dd className="text-white/85 tabular min-w-0 [overflow-wrap:anywhere]">{value}</dd>
-      </React.Fragment>
-    ))}
-  </dl>
+export const DetailBlock: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="text-[13px] leading-relaxed">
+    <div className="text-white/50">{label}</div>
+    <div className="mt-0.5 text-white/80">{children}</div>
+  </div>
 );
 
-const modelSourceText = (c: ComponentInfo): string => {
-  if (c.model.source === 'manufacturer') {
-    return `3D model from ${c.model.by}`;
-  }
+const modelOrigin = (c: ComponentInfo): string => {
+  if (c.model.source === 'manufacturer') return `From ${c.model.by}'s CAD files`;
 
-  if (c.model.source === 'checked') {
-    return `3D model by ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`;
-  }
+  if (c.model.source === 'checked') return `By ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`;
 
   return `Modeled from the ${c.model.by} drawing`;
 };
 
-export const ModelSource: React.FC<{ c: ComponentInfo }> = ({ c }) => (
-  <div className="flex items-start gap-1.5 text-[12px] text-white/50 leading-snug">
-    <ShapeIcon className="w-3.5 h-3.5 mt-px shrink-0" />
-    <span>
-      {modelSourceText(c)}
-      {c.model.license && <span className="block">{c.model.license}</span>}
-    </span>
-  </div>
+export const ModelOrigin: React.FC<{ c: ComponentInfo }> = ({ c }) => (
+  <DetailBlock label="3D model">
+    {modelOrigin(c)}
+    {c.model.license && <span className="block text-white/50">{c.model.license}</span>}
+  </DetailBlock>
 );
 
 export const SpecText: React.FC<{ value: SpecValue }> = ({ value }) => (
@@ -124,6 +110,23 @@ export const SpecText: React.FC<{ value: SpecValue }> = ({ value }) => (
       </span>
     ))}
   </>
+);
+
+export const SizeSpecRow: React.FC<{ d: PartDimensions }> = ({ d }) => (
+  <SpecRow label="Size">
+    <SizeLine w={d.width} h={d.height} d={d.depth} />
+  </SpecRow>
+);
+
+export const SpecRows: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, d }) => (
+  <dl className="-my-[5px]">
+    <SizeSpecRow d={d} />
+    {c.specs.map(([label, value]) => (
+      <SpecRow key={label} label={label}>
+        <SpecText value={value} />
+      </SpecRow>
+    ))}
+  </dl>
 );
 
 export const Stat: React.FC<{ label: string; children: React.ReactNode; wide?: boolean; clamp?: boolean }> = ({
@@ -221,26 +224,17 @@ export const Header: React.FC<{
   </div>
 );
 
-export const CardSection: React.FC<{
-  icon: React.ReactNode;
-  label: string;
-  children: React.ReactNode;
-  clamp?: boolean;
-}> = ({ icon, label, children, clamp = true }) => (
-  <div className="mt-3 border-t border-white/[0.07] px-4 pt-3">
-    <div className="flex items-center gap-1.5 text-[12px] font-medium text-white/50">
-      {icon}
-      {label}
-    </div>
-    <div className={`mt-1 text-[12.5px] text-white/65 leading-relaxed ${clamp ? 'line-clamp-3' : ''}`}>{children}</div>
-  </div>
+const IconLink: React.FC<{ href: string; icon: React.ReactNode; label: string }> = ({ href, icon, label }) => (
+  <Tooltip label={label} side="bottom">
+    <LinkButton href={href} icon={icon} label={label} />
+  </Tooltip>
 );
 
-export const BuyLinks: React.FC<{ c: ComponentInfo; primary?: boolean }> = ({ c, primary = true }) => (
+const BuyLinks: React.FC<{ c: ComponentInfo }> = ({ c }) => (
   <>
     {c.links.amazon && (
       <div className="flex-1 min-w-0 [&>a]:w-full">
-        <LinkButton href={c.links.amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary={primary}>
+        <LinkButton href={c.links.amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
           {c.links.amazon.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon'}
         </LinkButton>
       </div>
@@ -252,12 +246,6 @@ export const BuyLinks: React.FC<{ c: ComponentInfo; primary?: boolean }> = ({ c,
       <IconLink href={c.links.product} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />} label="Product page" />
     )}
   </>
-);
-
-const IconLink: React.FC<{ href: string; icon: React.ReactNode; label: string }> = ({ href, icon, label }) => (
-  <Tooltip label={label} side="bottom">
-    <LinkButton href={href} icon={icon} label={label} />
-  </Tooltip>
 );
 
 const Footer: React.FC<{ children: React.ReactNode }> = ({ children }) => (

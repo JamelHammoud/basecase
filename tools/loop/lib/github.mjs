@@ -1,6 +1,7 @@
 import { cached } from './cache.mjs';
 import { LOOP_MARK, withMark } from './mark.mjs';
 import { json, run } from './sh.mjs';
+import { openMatch } from './titles.mjs';
 
 const REVIEW_CONTEXT = 'agent-review';
 let slug;
@@ -14,20 +15,9 @@ export const repo = () => {
 const PULL_FIELDS =
   'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable,labels,updatedAt,statusCheckRollup';
 
-export const sameTitle = (a, b) => {
-  const norm = (t) =>
-    t
-      .toLowerCase()
-      .replace(/\s+/g, ' ')
-      .replace(/[.\s]+$/, '')
-      .trim();
-
-  return norm(a) === norm(b);
-};
-
 export const openPulls = ({ fresh = false } = {}) =>
   cached('open-pulls', { ttlMs: 20_000, refresh: fresh }, () =>
-    (json('gh', ['pr', 'list', '--state', 'open', '--limit', '100', '--json', PULL_FIELDS]) ?? [])
+    (json('gh', ['pr', 'list', '--state', 'open', '--limit', '200', '--json', PULL_FIELDS]) ?? [])
       .filter((pull) => !pull.isDraft && !pull.isCrossRepository)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   );
@@ -226,11 +216,24 @@ const labelArgs = ({ add = [], remove = [] }) => [
 export const editIssueLabels = (number, change) =>
   ghCreating(['issue', 'edit', String(number), ...labelArgs(change)], {});
 
-const openIssueTitles = () =>
-  json('gh', ['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'title', '--jq', '[.[].title]']) ?? [];
+const openIssueSummaries = () =>
+  json('gh', [
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--limit',
+    '500',
+    '--json',
+    'number,title,url,labels',
+    '--jq',
+    '[.[] | {number, title, url, labels: [.labels[].name]}]',
+  ]) ?? [];
 
-export const createIssue = ({ title, body, labels }) => {
-  if (openIssueTitles().some((open) => sameTitle(open, title))) return null;
+export const findOpenIssue = ({ title, similarAmong }) => openMatch(title, openIssueSummaries(), similarAmong);
+
+export const createIssue = ({ title, body, labels, similarAmong }) => {
+  if (findOpenIssue({ title, similarAmong })) return null;
 
   return ghCreating(
     ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],
@@ -314,11 +317,35 @@ export const hasLabel = (item, name) => (item.labels ?? []).some((label) => labe
 export const closePull = (number, comment) =>
   run('gh', ['pr', 'close', String(number), '--delete-branch', '--comment', withMark(comment)], { allowFail: true });
 
+export const setIssueBody = (number, body) =>
+  run('gh', ['issue', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });
+
 export function appendToIssue(number, text) {
   const body = run('gh', ['issue', 'view', String(number), '--json', 'body', '--jq', '.body']).out;
 
-  run('gh', ['issue', 'edit', String(number), '--body-file', '-'], { input: `${body}\n\n${text}`, allowFail: true });
+  setIssueBody(number, `${body}\n\n${text}`);
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const closedIssues = (days, now = Date.now()) =>
+  cached(
+    `closed-issues-${days}d`,
+    { ttlMs: 10 * 60_000 },
+    () =>
+      json('gh', [
+        'issue',
+        'list',
+        '--state',
+        'closed',
+        '--search',
+        `closed:>=${new Date(now - days * DAY_MS).toISOString().slice(0, 10)}`,
+        '--limit',
+        '300',
+        '--json',
+        'number,title,body,author,labels,stateReason,closedAt',
+      ]) ?? [],
+  );
 
 export const issueIsOpen = (number) =>
   run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===

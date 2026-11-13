@@ -25,13 +25,12 @@ jobs:
           PAUSED: ${{ vars.LOOP_PAUSED }}
         run: |
           [ "$PAUSED" = true ] && { echo "The loop is paused (LOOP_PAUSED)."; exit 0; }
-          head=$(gh api "repos/$REPO/commits/main" --jq .sha)
           last=$(gh release list -R "$REPO" --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
-          last_sha=$(gh api "repos/$REPO/commits/$last" --jq .sha)
-          if [ "$head" = "$last_sha" ]; then echo "Nothing merged since $last."; exit 0; fi
-          check=$(gh api "repos/$REPO/commits/$head/check-runs?check_name=check" --jq '.check_runs[0].conclusion // "missing"')
-          if [ "$check" != success ]; then echo "Check is $check on main ($head), so no release tonight."; exit 0; fi
+          green=$(gh run list -R "$REPO" --workflow check.yml --branch main --event push --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
+          if [ -z "$green" ]; then echo "No push to main has passed Check, so no release tonight."; exit 0; fi
+          ahead=$(gh api "repos/$REPO/compare/$last...$green" --jq .status)
+          if [ "$ahead" != ahead ]; then echo "Nothing that passed Check has merged since $last."; exit 0; fi
           IFS=. read -r major minor patch <<< "${last#v}"
           next="$major.$minor.$((patch + 1))"
-          echo "Releasing $next ($head, after $last)."
-          gh workflow run release.yml -R "$REPO" --ref main -f version="$next" -f release=true
+          echo "Releasing $next ($green, the newest commit on main that passed Check, after $last)."
+          gh workflow run release.yml -R "$REPO" --ref main -f version="$next" -f ref="$green" -f release=true

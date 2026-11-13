@@ -1,3 +1,5 @@
+import { readHelpArticle, type HelpArticle } from '../help/helpArticle';
+import { buildHelpCenter, checkHelpSources, type HelpCenter } from '../help/helpCenter';
 import { parseFrontMatter, type FrontMatterValue } from './frontMatter';
 import type { ContentKind } from './sections';
 
@@ -14,11 +16,17 @@ export interface Entry {
   image?: string;
 }
 
-export type SiteContent = Record<ContentKind, Entry[]>;
+export interface SiteContent {
+  changelog: Entry[];
+  blog: Entry[];
+  help: HelpCenter;
+}
 
 interface Draft {
   entry: Entry;
   draft: boolean;
+  help?: HelpArticle;
+  path: string;
 }
 
 const CONTENT_PATH = /(?:^|\/)(blog|help|changelog)\/([^/]+)\.md$/;
@@ -72,27 +80,29 @@ function entryFrom(path: string, source: string): Draft {
     image: text(data.image),
   };
 
-  return { entry, draft: data.draft === true };
+  const help = entry.kind === 'help' ? readHelpArticle(entry, data, path) : undefined;
+
+  return { entry, draft: data.draft === true, help, path };
 }
 
 const newestFirst = (a: Entry, b: Entry) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug);
 
-const byTitle = (a: Entry, b: Entry) => a.title.localeCompare(b.title);
-
 export const isoDay = (now: Date) => now.toISOString().slice(0, 10);
+
+const helpSources = (drafts: Draft[]) => drafts.flatMap(({ help, path }) => (help ? [{ article: help, path }] : []));
 
 export function readContent(files: Record<string, string>, now: Date): SiteContent {
   const today = isoDay(now);
-  const published = Object.entries(files)
-    .map(([path, source]) => entryFrom(path, source))
-    .filter(({ entry, draft }) => !draft && entry.date <= today)
-    .map(({ entry }) => entry);
-  const ofKind = (kind: ContentKind) => published.filter((entry) => entry.kind === kind);
+  const drafts = Object.entries(files).map(([path, source]) => entryFrom(path, source));
+  const published = drafts.filter(({ entry, draft }) => !draft && entry.date <= today);
+  const ofKind = (kind: ContentKind) => published.map(({ entry }) => entry).filter((entry) => entry.kind === kind);
+
+  checkHelpSources(helpSources(drafts));
 
   return {
     changelog: ofKind('changelog').sort(newestFirst),
     blog: ofKind('blog').sort(newestFirst),
-    help: ofKind('help').sort(byTitle),
+    help: buildHelpCenter(helpSources(published).map(({ article }) => article)),
   };
 }
 

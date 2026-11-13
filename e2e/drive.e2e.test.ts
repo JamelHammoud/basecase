@@ -1,9 +1,12 @@
 import { parquetReadObjects } from 'hyparquet';
-import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import type { ReferenceCommand } from '../src/cases/schema';
+import type { DriveCommand } from '../src/sim/driveTypes';
+import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { startFakeHub, type FakeHub } from './fakeHub';
+import { expectDataset, expectPublished, pickTimeline } from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
@@ -20,30 +23,29 @@ interface SimState {
   world: string[];
   bodies: Array<{ parts: string[]; world: string[] }>;
   activeCase: string | null;
+  effector: number[] | null;
+  scanPoints: number;
   tries: Array<{ passed: boolean; margin: number }>;
-  selected: string[];
-  timeline: {
-    frame: number;
-    frames: number;
-    qpos: number[] | null;
-    sought: number | null;
-    lastQpos: number[];
-    lanes: Array<{ joint: string; link: string[] }>;
-  } | null;
 }
 
-type Studio = { simState: () => SimState; load: (r: unknown) => void; passTries: () => void };
+type Studio = {
+  simState: () => SimState;
+  load: (r: unknown) => void;
+  passTries: () => void;
+  drive: (c: DriveCommand) => void;
+  worldAt: () => Record<string, number[]>;
+};
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 const simState = () =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState() as SimState);
 
-async function loadFixture(id: string) {
-  const robot = fixtureRobots().find((r) => r.id === id)!;
+async function loadFixture(id: string | FixtureRobot) {
+  const robot = typeof id === 'string' ? fixtureRobots().find((r) => r.id === id)! : id;
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-    name: id,
+    name: robot.id,
     parts: robot.parts,
     project: { ...DEFAULT_PROJECT, joints: robot.joints },
   });
@@ -53,6 +55,13 @@ async function loadFixture(id: string) {
 const clickTab = (name: string) => app.page.locator(visible('[role=tab]'), { hasText: name }).first().click();
 
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
+
+const simHeadings = () =>
+  app.page
+    .getByTestId('case-brief')
+    .locator('xpath=ancestor::section/..')
+    .locator(':scope > section > header h3')
+    .allInnerTexts();
 
 async function startDriving(id: string) {
   await loadFixture(id);
@@ -86,30 +95,6 @@ async function datasetFiles() {
   );
 
   return Object.fromEntries(Object.entries(files ?? {}).map(([path, b64]) => [path, Buffer.from(b64, 'base64')]));
-}
-
-async function expectDataset() {
-  const files = await datasetFiles();
-  const paths = Object.keys(files);
-  const at = (end: string) => files[paths.find((p) => p.endsWith(end))!];
-  const rows = await parquetReadObjects({ file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer });
-  const info = JSON.parse(at('meta/info.json').toString());
-  const videos = paths.filter((p) => p.endsWith('.mp4'));
-
-  expect(paths.some((p) => p.endsWith('meta/modality.json'))).toBe(true);
-  expect(info.total_frames).toBe(rows.length);
-  expect(rows[0]['observation.state']).toHaveLength(3);
-  expect(videos.map((p) => p.split('/').at(-2))).toEqual(['observation.images.scene']);
-
-  for (const path of videos) {
-    const input = new Input({ source: new BufferSource(new Uint8Array(files[path])), formats: ALL_FORMATS });
-    const track = (await input.getPrimaryVideoTrack())!;
-    const stats = await track.computePacketStats();
-
-    expect([track.displayWidth, track.displayHeight]).toEqual([640, 480]);
-    expect(stats.packetCount).toBe(rows.length);
-    expect(info.features['observation.images.scene'].info['video.codec']).toMatch(/h264|vp9|av1/);
-  }
 }
 
 async function stopDriving() {
@@ -188,82 +173,73 @@ describe('live drive', () => {
   });
 });
 
+const simTime = async () => (await simState()).stats?.time ?? 0;
+
+const blockHeight = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.worldAt().block[1]);
+
+const sendDrive = (c: ReferenceCommand) =>
+  app.page.evaluate((command) => (window as unknown as { __studio: Studio }).__studio.drive(command), {
+    ...c,
+    v: [0, 0, 0],
+  } as DriveCommand);
+
+async function handAt(c: ReferenceCommand) {
+  await sendDrive(c);
+  await expect
+    .poll(
+      async () => {
+        const hand = (await simState()).effector ?? [Infinity, 0, 0];
+
+        return Math.hypot(...hand.map((x, i) => x - c.target![i]));
+      },
+      { timeout: 30000 },
+    )
+    .toBeLessThan(25);
+}
+
+async function waitSim(seconds: number) {
+  const from = await simTime();
+
+  await expect.poll(simTime, { timeout: 30000 }).toBeGreaterThan(from + seconds);
+}
+
 async function openTouchTheDots() {
   await loadFixture('arm-3dof');
   await openPlayTab(app.page, 'Cases');
-  await button('Touch the Dots').click();
+  await button('New Case').click();
+
+  const card = app.page.locator(visible('[data-testid="new-case"]'));
+  const dots = card.getByLabel('Dots');
+
+  await dots.fill('3');
+  await dots.press('Enter');
+  await expect
+    .poll(() => card.getByTestId('new-case-brief').innerText())
+    .toBe('Touch each dot in order with the end effector.');
+  expect(await card.getByLabel('Distance').count()).toBe(0);
+  await card.locator('button', { hasText: 'Create' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
 }
 
-async function expectPublished(repo: string) {
-  const published = hub.repos.get(repo)!;
-  const paths = [...published.files.keys()];
-  const parquet = published.files.get('data/chunk-000/episode_000000.parquet')!;
-  const rows = await parquetReadObjects({ file: new Uint8Array(parquet).buffer });
-  const info = JSON.parse(published.files.get('meta/info.json')!.toString());
+const SHORT_TRY_SECONDS = 0.4;
 
-  expect(published.kind).toBe('dataset');
-  expect(paths).toEqual(expect.arrayContaining(['meta/info.json', 'meta/modality.json', 'meta/episodes.jsonl']));
-  expect(paths.filter((p) => p.endsWith('.mp4'))).toEqual([
-    'videos/chunk-000/observation.images.scene/episode_000000.mp4',
-  ]);
-  expect(info.total_frames).toBe(rows.length);
-  expect(published.tags.get('v2.1')).toBe(published.commits.length);
-  expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
+async function endTryAt(seconds: number) {
+  await app.page.evaluate(async (at) => {
+    const clock = () =>
+      [...document.querySelectorAll('[data-testid="try-clock"]')].find((el) => !el.closest('[inert]'));
+    const elapsed = () => Number.parseFloat(clock()?.textContent ?? '') || 0;
+    const deadline = Date.now() + 30000;
+
+    while (elapsed() < at) {
+      if (Date.now() > deadline) throw new Error(`The try clock never reached ${at} s`);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    clock()?.parentElement?.querySelector('button')?.click();
+  }, seconds);
 }
-
-describe('Try timeline', () => {
-  itUnlessWindows('scrubs a try on the timeline under the canvas and selects a joint from its lane', async () => {
-    const timeline = async () => (await simState()).timeline;
-
-    await openTouchTheDots();
-    await button('Try It').click();
-    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await holdKey('w', 800);
-    await button('End Try').click();
-    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-
-    const scene = await app.page.evaluate(() =>
-      JSON.stringify((window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts()),
-    );
-
-    await app.page.getByTestId('try-row').first().locator('button[aria-label="Replay"]').click();
-    await expect.poll(() => app.page.getByTestId('timeline-lane').count(), { timeout: 30000 }).toBeGreaterThan(0);
-    await expect.poll(async () => (await timeline())?.sought).toBe(0);
-
-    const opened = (await timeline())!;
-
-    expect(opened.frames).toBeGreaterThan(40);
-    await app.page.keyboard.press('ArrowRight');
-    await expect.poll(async () => (await timeline())?.sought).toBe(1);
-    await app.page.keyboard.press('End');
-    await expect.poll(async () => (await timeline())?.sought).toBe(opened.frames - 1);
-
-    const end = (await timeline())!;
-
-    expect(end.qpos).toEqual(end.lastQpos);
-
-    const lane = end.lanes[end.lanes.length - 1];
-
-    expect(lane.link.length).toBeGreaterThan(0);
-    await app.page
-      .locator(`[data-testid="timeline-lane"][data-joint="${lane.joint}"] svg`)
-      .nth(1)
-      .click({ position: { x: 1, y: 10 } });
-    await expect.poll(async () => (await simState()).selected).toEqual(lane.link);
-    await expect.poll(async () => (await timeline())?.sought).toBe(0);
-
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => app.page.getByTestId('try-timeline').count()).toBe(0);
-    expect((await simState()).selected).toEqual(lane.link);
-    expect(
-      await app.page.evaluate(() =>
-        JSON.stringify((window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts()),
-      ),
-    ).toBe(scene);
-    expect(app.errors).toEqual([]);
-  });
-});
 
 describe('Cases', () => {
   itUnlessWindows(
@@ -272,6 +248,7 @@ describe('Cases', () => {
       await openTouchTheDots();
       await expect.poll(() => app.page.getByTestId('case-brief').count()).toBe(1);
       expect(await app.page.getByTestId('case-brief').innerText()).not.toContain('simulation only');
+      expect((await simHeadings())[0]).toBe('Touch the Dots');
 
       const partsBefore = await partCount(app.page);
 
@@ -285,6 +262,10 @@ describe('Cases', () => {
       expect(state.bodies.flatMap((b) => b.world)).toContain('dot0');
       expect(await partCount(app.page)).toBe(partsBefore);
 
+      await endTryAt(SHORT_TRY_SECONDS);
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+      expect((await simState()).tries[0].passed).toBe(false);
+
       const clashes = await app.page.evaluate(async () =>
         JSON.stringify(
           await (window as unknown as { __studio: { interference: () => Promise<unknown> } }).__studio.interference(),
@@ -292,12 +273,18 @@ describe('Cases', () => {
       );
 
       expect(clashes).not.toContain('dot0');
-
-      await button('End Try').click();
-      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-      expect((await simState()).tries[0].passed).toBe(false);
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
-      await expectDataset();
+      await expectDataset(await datasetFiles());
+
+      const headings = await simHeadings();
+
+      expect(headings.filter((h) => ['Try', 'Control', 'Train', 'Results'].includes(h))).toEqual(
+        headings.includes('Train') ? ['Try', 'Control', 'Train', 'Results'] : ['Try', 'Control', 'Results'],
+      );
+      expect(headings.indexOf('Try')).toBe(1);
+      expect(
+        headings.filter((h) => ['Brief', 'Robot fit', 'Result', 'Model', 'Emulated robot', 'Policies'].includes(h)),
+      ).toEqual([]);
 
       await button('Check Fit').click();
       await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
@@ -314,23 +301,26 @@ describe('Cases', () => {
       const before = new Map(ours().map((name) => [name, commitsOf(name)]));
       const published = () => ours().filter((name) => commitsOf(name) > (before.get(name) ?? 0));
 
+      const token = app.page.locator(visible('input[aria-label="Access token"]'));
+      const toast = (text: RegExp) => app.page.getByRole('status').filter({ hasText: text });
+      const outcome = toast(/Published to|Couldn’t publish|earlier design/);
+
       await openTouchTheDots();
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await button('End Try').click();
+      await endTryAt(SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
       await expect.poll(() => publish().count()).toBe(1);
 
       await publish().click();
+      await token
+        .or(toast(/Publishing dataset/))
+        .or(outcome)
+        .first()
+        .waitFor({ timeout: 10000 });
 
-      const token = app.page.locator(visible('input[aria-label="Access token"]'));
-      const signedOut = await token.waitFor({ timeout: 10000 }).then(
-        () => true,
-        () => false,
-      );
-
-      if (signedOut) {
+      if (await token.isVisible()) {
         await token.fill(HUB_TOKEN);
         await token.press('Enter');
         await expect
@@ -340,13 +330,16 @@ describe('Cases', () => {
         await publish().dblclick();
       }
 
-      await expect.poll(() => published().length, { timeout: 120000 }).toBe(1);
+      await outcome.first().waitFor({ timeout: 120000 });
 
+      const said = await outcome.first().innerText();
       const [repo] = published();
 
-      await expect.poll(() => commitsOf(repo), { timeout: 120000 }).toBe((before.get(repo) ?? 0) + 1);
-      await expectPublished(repo);
-      await expect.poll(() => app.page.getByRole('status').filter({ hasText: repo }).count()).toBeGreaterThan(0);
+      expect(said).toMatch(/^Published to /);
+      expect(published()).toHaveLength(1);
+      expect(said).toContain(repo);
+      expect(commitsOf(repo)).toBe((before.get(repo) ?? 0) + 1);
+      await expectPublished(hub, repo);
       expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
       expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
       expect(app.errors).toEqual([]);
@@ -354,14 +347,14 @@ describe('Cases', () => {
     180000,
   );
 
-  itUnlessWindows('makes a Case with New Case, lists only the examples that fit, and opens it', async () => {
+  itUnlessWindows('makes a Case with New Case, the only way to start one besides the agent, and opens it', async () => {
     await loadFixture('rover-diff');
     await openPlayTab(app.page, 'Cases');
 
     const panel = app.page.locator(visible('[data-testid="cases-panel"]'));
 
-    await expect.poll(() => panel.innerText()).toContain('Reach the Flag');
-    expect(await panel.innerText()).not.toContain('Touch the Dots');
+    await expect.poll(() => button('New Case').count()).toBe(1);
+    expect(await panel.innerText()).not.toMatch(/Examples|Touch the Dots|Reach the Flag/);
 
     await button('New Case').click();
 
@@ -373,7 +366,7 @@ describe('Cases', () => {
     await card.locator('button', { hasText: 'Create' }).click();
 
     await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
-    await expect.poll(() => app.page.getByTestId('case-brief').innerText()).toContain('Push a Box in a Corridor');
+    await expect.poll(async () => (await simHeadings())[0]).toBe('Push a Box in a Corridor');
     expect((await simState()).world).toEqual(['box', 'goal', 'wall-left', 'wall-right']);
     expect(await panel.innerText()).toContain('In this scene');
 
@@ -390,4 +383,80 @@ describe('Cases', () => {
       .toBe('/case ');
     expect(app.errors).toEqual([]);
   });
+});
+
+describe('a gripper', () => {
+  it('makes Pick Up a Block with New Case, carries the block with Space closing the gripper, and passes', async () => {
+    await loadFixture('arm-6dof');
+    await openPlayTab(app.page, 'Cases');
+    await button('New Case').click();
+
+    const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+    await card.locator('[role=radio]', { hasText: 'Pick Up a Block' }).click();
+    await card.locator('label', { hasText: 'Time' }).locator('input').fill('40');
+    await card.locator('label', { hasText: 'Time' }).locator('input').press('Tab');
+    await card.locator('button', { hasText: 'Create' }).click();
+    await expect.poll(async () => (await simState()).activeCase).toBe('pick-up-a-block');
+    await button('Try It').click();
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    expect((await simState()).world).toEqual(['block', 'spot']);
+
+    const resting = await blockHeight();
+    const [above, down, , lift, carry, lower, , away] = pickTimeline();
+
+    await app.page.mouse.click(720, 450);
+    await handAt(above);
+    await handAt(down);
+    await app.page.keyboard.down(' ');
+    await waitSim(1);
+    await sendDrive(lift);
+    await expect.poll(blockHeight, { timeout: 30000 }).toBeGreaterThan(resting + 30);
+    await handAt(carry);
+    await handAt(lower);
+    await app.page.keyboard.up(' ');
+    await waitSim(1);
+    await handAt(away);
+    await button('End Try').click();
+    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+    expect((await simState()).tries[0].passed).toBe(true);
+    expect(app.errors).toEqual([]);
+  }, 180000);
+});
+
+describe('LiDAR', () => {
+  itUnlessWindows(
+    'scans a corridor with a rover’s LiDAR, draws the hits and exports them as observation.scan',
+    async () => {
+      await loadFixture(withLidar(fixtureRobots().find((r) => r.id === 'rover-diff')!));
+      await openPlayTab(app.page, 'Cases');
+      await button('New Case').click();
+
+      const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+      await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
+      await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
+      await card.locator('button', { hasText: 'Create' }).click();
+      await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-a-corridor');
+
+      await button('Try It').click();
+      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+      await holdKey('w', 1000);
+      await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
+      await button('End Try').click();
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+
+      const files = await datasetFiles();
+      const at = (end: string) => files[Object.keys(files).find((p) => p.endsWith(end))!];
+      const rows = await parquetReadObjects({
+        file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer,
+      });
+      const info = JSON.parse(at('meta/info.json').toString());
+
+      expect(info.features['observation.scan'].shape).toEqual([500]);
+      expect(rows[0]['observation.scan']).toHaveLength(500);
+      expect(JSON.parse(at('meta/modality.json').toString()).state.scan.original_key).toBe('observation.scan');
+      expect(app.errors).toEqual([]);
+    },
+  );
 });

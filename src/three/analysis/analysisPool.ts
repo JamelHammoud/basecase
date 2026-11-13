@@ -5,19 +5,17 @@ import type { MeshData } from '../../print/threeMf';
 import type { ShapeReport } from './shapeReports';
 import type { CollideOptions } from './collide';
 import type { OutputRiders } from './outputRiders';
-import {
-  analysisHandlers,
-  MISSING_SHAPE,
-  type AnalysisTask,
-  type GeometryPayload,
-  type Instance,
-  type ThreeMfFileSpec,
-} from './analysisOps';
-import { geometryPayload, type SceneShapes } from './sceneShapes';
+import { analysisHandlers, MISSING_SHAPE, type AnalysisTask, type Instance, type ThreeMfFileSpec } from './analysisOps';
+import { copyGeometries, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
+import type { FitCoupon, FitCouponTask } from './fitCoupons';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
+import type { FoundAxis } from '../../joints/axisFinder';
+import type { JointAxisQuery } from './jointAxis';
+import type { ArmModel, PayloadMap } from '../../utils/payload';
+import type { StrengthJob, StrengthReading } from '../../strength/types';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -44,25 +42,6 @@ function pool(): Client[] {
   }));
 
   return clients;
-}
-
-const SLICE_MS = 8;
-const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-async function copyGeometries(scene: SceneShapes, ids: string[]) {
-  const out: GeometryPayload[] = [];
-  let sliceStart = performance.now();
-
-  for (const id of ids) {
-    out.push(geometryPayload(id, scene.geometries.get(id)!));
-
-    if (performance.now() - sliceStart < SLICE_MS) continue;
-
-    await yieldToMain();
-    sliceStart = performance.now();
-  }
-
-  return out;
 }
 
 async function payloadFor(client: Client, scene: SceneShapes, instances: Instance[]) {
@@ -193,10 +172,55 @@ export async function sweepsIn(scene: SceneShapes, sweeps: SweepSpec[]): Promise
   return out;
 }
 
+export async function payloadMapsIn(arms: ArmModel[]): Promise<Array<PayloadMap | null>> {
+  if (!arms.length) return [];
+
+  const client = leastBusy();
+
+  client.busy++;
+
+  try {
+    return await client.rpc.call('payloadMaps', arms);
+  } finally {
+    client.busy--;
+  }
+}
+
+export async function strengthIn(scene: SceneShapes, jobs: StrengthJob[]): Promise<Array<StrengthReading | null>> {
+  if (!jobs.length) return [];
+
+  const workers = pool().slice(0, jobs.length);
+  const chunks = workers.map((_, w) => jobs.map((job, i) => ({ job, i })).filter(({ i }) => i % workers.length === w));
+  const results = await Promise.all(
+    chunks.map((chunk, w) =>
+      analyze<Array<StrengthReading | null>>(workers[w], scene, {
+        kind: 'strength',
+        instances: scene.instances,
+        jobs: chunk.map((c) => c.job),
+      }),
+    ),
+  );
+  const out: Array<StrengthReading | null> = new Array(jobs.length).fill(null);
+
+  chunks.forEach((chunk, w) => chunk.forEach((c, k) => (out[c.i] = results[w][k])));
+
+  return out;
+}
+
 export function fastenersIn(scene: SceneShapes, input: FastenerInput): Promise<ChainResult> {
   return analyze(leastBusy(), scene, { kind: 'fasteners', instances: scene.instances, ...input });
 }
 
 export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Promise<AssemblyGeometry> {
   return analyze(leastBusy(), scene, { kind: 'assembly', instances: scene.instances, ...input });
+}
+
+export function jointAxisIn(scene: SceneShapes, query: JointAxisQuery): Promise<FoundAxis | null> {
+  return analyze(pool()[0], scene, { kind: 'jointAxis', instances: scene.instances, ...query });
+}
+
+export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<FitCoupon[]> {
+  if (!task.fits.length || !task.hosts.length) return Promise.resolve([]);
+
+  return analyze(leastBusy(), scene, { kind: 'fitCoupons', instances: scene.instances, ...task });
 }

@@ -1,9 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openApp, type App } from './harness';
+import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { presetCase } from '../src/cases/caseBuilder';
+import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
+import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
+import type { WalkSim } from '../src/utils/engineeringTypes';
+import { buildRig } from '../src/utils/kinematics';
+import { walkKey } from '../src/workspace/storedWalk';
+import { openApp, partCount, type App } from './harness';
 
 interface StudioHook {
   load: (record: { parts: unknown[]; project: unknown }) => void;
-  sceneRecord: () => { project: unknown };
+  sceneRecord: () => { parts: ScenePart[]; project: ProjectSettings };
+  simState: () => { activeCase: string | null };
 }
 
 let app: App;
@@ -45,6 +53,18 @@ const servo = {
   kind: 'component',
   componentId: 'feetech-sts3215',
   componentVariant: 'c001',
+};
+
+const armWithEstimates = () => {
+  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const servo = { ...standIn('mg996r', 0), name: 'MG996R', kind: 'component', componentId: 'towerpro-mg996r' };
+  const joints = arm.joints.map((j) => {
+    if (j.id === 'arm0') return { ...j, effortNm: undefined };
+
+    return j.id === 'arm1' ? { ...j, actuators: ['mg996r'] } : j;
+  });
+
+  return { name: 'arm', parts: [...arm.parts, servo], project: { ...DEFAULT_PROJECT, joints } };
 };
 
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
@@ -173,6 +193,33 @@ describe('Checks', () => {
       .poll(() => app.page.locator(visible('p')).filter({ hasText: exactly }).count(), { timeout: 5000 })
       .toBeGreaterThan(0);
   }, 30000);
+
+  it('say which joints the simulation estimates, and select their parts', async () => {
+    await app.page.evaluate(
+      (record) => (window as unknown as { __studio: StudioHook }).__studio.load(record),
+      armWithEstimates(),
+    );
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const estimates = checks().getByRole('button', { name: /^Torque estimates/ });
+
+    await expect.poll(() => estimates.count(), { timeout: 45000 }).toBe(1);
+    await estimates.click();
+    await expect
+      .poll(() => checks().innerText(), { timeout: 45000 })
+      .toContain('These joints have no servo, so the simulation guesses their torque from weight.');
+    expect(await checks().innerText()).toContain('No servo on Arm0');
+    await checks().getByRole('button', { name: 'link0', exact: true }).first().click();
+
+    const models = checks().getByRole('button', { name: /^Servo models/ });
+
+    await models.click();
+    await expect
+      .poll(() => checks().innerText(), { timeout: 45000 })
+      .toContain('These servos have no measured model, so the simulation guesses how they respond.');
+    expect(await checks().innerText()).toContain('MG996R on Arm1');
+    expect(app.errors).toEqual([]);
+  }, 90000);
 });
 
 describe('Build tab fields', () => {
@@ -196,6 +243,56 @@ describe('Build tab fields', () => {
     expect(await row.locator('svg.text-red-400').count()).toBeGreaterThan(0);
   }, 90000);
 
+  it('read current and runtime from a stored walk, naming the hungriest joint', async () => {
+    const knee = (id: string, x: number) => ({ ...servo, id, name: `Servo ${id}`, position: [x, 20, 0] });
+    const pack = { ...standIn('pack', 0), name: 'Pack', kind: 'component', componentId: 'ovonic-2s-2200-50c' };
+    const rail = { ...standIn('rail', 120), name: 'Rail', kind: 'component', componentId: 'pololu-d36v50f6' };
+    const joints = [
+      { id: 'ja', name: 'Left knee', limb: 'leg', parent: ['pack'], child: ['a'], actuators: ['a'] },
+      { id: 'jb', name: 'Right knee', limb: 'leg', parent: ['pack'], child: ['b'], actuators: ['b'] },
+    ].map((j) => ({ ...j, type: 'revolute', origin: [0, 20, 0], axis: [1, 0, 0] }));
+    const walk: WalkSim = {
+      policy: 'Walk',
+      seconds: 14,
+      fellAt: null,
+      joints: {},
+      power: { avgA: 1.6, peakA: 3.4, joints: { ja: { avgA: 1, peakA: 2 }, jb: { avgA: 0.6, peakA: 1.4 } } },
+    };
+    const load = (record: { parts: unknown[]; project: unknown }) =>
+      app.page.evaluate((r) => (window as unknown as { __studio: StudioHook }).__studio.load(r), record);
+    const record = () =>
+      app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.sceneRecord());
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Current and runtime/ }) })
+      .first();
+    const detail = async () => {
+      const button = row.getByRole('button', { name: /^Current and runtime/ });
+
+      if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+
+      return (await row.locator('p').first().textContent()) ?? '';
+    };
+
+    await load({
+      parts: [knee('a', -60), knee('b', 60), pack, rail],
+      project: { ...(await record()).project, joints },
+    });
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
+    await expect.poll(detail, { timeout: 45000 }).toContain('(estimate)');
+
+    const estimate = await detail();
+    const scene = await record();
+
+    await load({
+      parts: scene.parts,
+      project: { ...scene.project, walk: { ...walk, key: walkKey(scene.parts, scene.project) } },
+    });
+    await expect.poll(detail, { timeout: 45000 }).not.toBe(estimate);
+    expect(await detail()).toMatch(/A average walking .*Left knee: 1\.0 A average/);
+  }, 120000);
+
   it('set a budget beside the bill of materials total', async () => {
     const bom = section(/^Bill of materials/);
     const budget = bom.getByRole('textbox', { name: /^Budget in / });
@@ -204,4 +301,63 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+});
+
+describe('Cases in Checks', () => {
+  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const flag = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
+  const activeCase = () =>
+    app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().activeCase);
+
+  it('judge each Case as a row with its count, and open it in Simulate', async () => {
+    await app.page.evaluate(
+      ({ parts, joints, kase }) => {
+        const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
+      },
+      { parts: rover.parts, joints: rover.joints, kase: flag },
+    );
+    await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks().getByRole('button', { name: /^Reach a Spot/ });
+
+    await expect.poll(() => row.count(), { timeout: 90000 }).toBe(1);
+    await expect.poll(async () => (await row.textContent()) ?? '', { timeout: 90000 }).toMatch(/\d+ of 20$/);
+    expect(await activeCase()).toBeNull();
+
+    await row.click();
+    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
+    await expect
+      .poll(() => app.page.locator(visible('[data-testid="case-brief"]')).innerText(), { timeout: 10000 })
+      .toContain('Reach a Spot');
+    expect(app.errors).toEqual([]);
+  }, 150000);
+});
+
+describe('Strength', () => {
+  it('fails an L-bracket printed with its layers across the bend, and Fix turns it on its side', async () => {
+    const scene = lBracketScene();
+
+    await app.page.evaluate((record) => {
+      const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+      studio.load({ parts: record.parts, project: { ...(studio.sceneRecord().project as object), ...record.project } });
+    }, scene);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Strength/ }) })
+      .first();
+
+    await expect.poll(() => row.locator('svg.text-red-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
+    await row.getByRole('button', { name: /^Strength/ }).click();
+    expect(await row.textContent()).toContain(L_BRACKET_NAME);
+
+    await row.getByRole('button', { name: 'Fix' }).first().click();
+    await expect.poll(() => row.locator('svg.text-emerald-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
+    expect(await row.locator('svg.text-red-400').count()).toBe(0);
+  }, 200000);
 });

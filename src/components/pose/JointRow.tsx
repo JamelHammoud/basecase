@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 import type { RobotJoint } from '../../types/robotics';
-import { jointUnit } from '../../utils/kinematics';
-
-const jointRange = (joint: RobotJoint): [number, number] => {
-  if (joint.range) return [Math.min(...joint.range), Math.max(...joint.range)];
-
-  return joint.type === 'prismatic' ? [-100, 100] : [-180, 180];
-};
+import { jointRange, jointUnit } from '../../utils/kinematics';
 
 export const JointRow: React.FC<{
   joint: RobotJoint;
@@ -15,7 +9,8 @@ export const JointRow: React.FC<{
   active: boolean;
   onSelect: () => void;
   onChange: (v: number) => void;
-}> = ({ joint, label, value, active, onSelect, onChange }) => {
+  onContextMenu: (e: React.MouseEvent) => void;
+}> = ({ joint, label, value, active, onSelect, onChange, onContextMenu }) => {
   const unit = jointUnit(joint);
   const [lo, hi] = jointRange(joint);
   const fill = ((value - lo) / Math.max(hi - lo, 1e-6)) * 100;
@@ -33,6 +28,7 @@ export const JointRow: React.FC<{
   return (
     <div
       data-joint={joint.id}
+      onContextMenu={onContextMenu}
       className={`-mx-[6px] px-[6px] rounded-lg grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_52px] items-center gap-2.5 h-8 scroll-my-3 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}
     >
       <button

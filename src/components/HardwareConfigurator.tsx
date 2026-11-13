@@ -18,7 +18,6 @@ import {
   lengthRange,
   makeSpec,
   motionOf,
-  nearestStockLengths,
   recessLabel,
   screwHead,
   screwStandard,
@@ -27,17 +26,7 @@ import {
 } from '../data/hardware';
 import { PART_CATALOG, hardwareVariant } from '../data/catalog';
 import { usePartThumbnail } from '../three/partThumbnails';
-import {
-  CHOICE_TRACK,
-  ChoiceGrid,
-  DriveIcon,
-  IconButton,
-  NumberInput,
-  Section,
-  choiceCellClass,
-  MinusIcon,
-  PlusIcon,
-} from '../design-system';
+import { CHOICE_TRACK, ChoiceGrid, DriveIcon, NumberInput, Section, choiceCellClass } from '../design-system';
 import { SizeLine, SpecRow } from './PartDetails';
 import { InsertLengthSection } from './InsertLengthSection';
 
@@ -264,63 +253,26 @@ const LengthSection: React.FC<{
 }> = ({ spec, min, max, set }) => {
   const length = spec.length!;
   const stock = stockLengths(spec);
-  const shorter = [...stock].reverse().find((l) => l < length);
-  const longer = stock.find((l) => l > length);
-  const near = nearestStockLengths(spec);
 
   return (
     <Section title="Length">
-      <div className="flex items-center gap-1">
-        <IconButton
-          icon={<MinusIcon className="w-3.5 h-3.5" />}
-          title="Shorter stock length"
-          size="sm"
-          disabled={shorter === undefined}
-          onClick={() => shorter !== undefined && set({ length: shorter })}
-        />
-        <NumberInput
-          className="flex-1"
-          label="L"
-          title="Length under the head"
-          unit="mm"
-          value={length}
-          min={min}
-          max={max}
-          step={LENGTH_STEP}
-          precision={1}
-          onChange={(v, live) => set({ length: v }, live)}
-        />
-        <IconButton
-          icon={<PlusIcon className="w-3.5 h-3.5" />}
-          title="Longer stock length"
-          size="sm"
-          disabled={longer === undefined}
-          onClick={() => longer !== undefined && set({ length: longer })}
-        />
-      </div>
+      <NumberInput
+        label="L"
+        title="Length under the head"
+        unit="mm"
+        value={length}
+        min={min}
+        max={max}
+        step={LENGTH_STEP}
+        precision={1}
+        onChange={(v, live) => set({ length: v }, live)}
+      />
       {stock.length > 0 && <StockStrip lengths={stock} value={length} onPick={(l) => set({ length: l })} />}
       {!isStockLength(spec) && !motionOf(spec.type)?.cutToLength && (
         <p className="text-[12.5px] text-amber-300/80 leading-relaxed">
-          {length > stock[stock.length - 1] ? (
-            `Longer than stock ${spec.size} (${stock[stock.length - 1]} mm). Cut threaded rod to length.`
-          ) : (
-            <>
-              Not a stock length. Nearest:{' '}
-              {near.map((l, i) => (
-                <React.Fragment key={l}>
-                  {i > 0 && ' or '}
-                  <button
-                    type="button"
-                    onClick={() => set({ length: l })}
-                    className="underline decoration-amber-300/40 underline-offset-2 hover:text-amber-200 cursor-default"
-                  >
-                    {l}
-                  </button>
-                </React.Fragment>
-              ))}{' '}
-              mm.
-            </>
-          )}
+          {length > stock[stock.length - 1]
+            ? `Longer than stock ${spec.size} (${stock[stock.length - 1]} mm). Cut threaded rod to length.`
+            : 'Not a stock length.'}
         </p>
       )}
     </Section>

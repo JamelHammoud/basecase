@@ -132,12 +132,17 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - Cached per part shape (`shapeKey`), not position: checks run in the part's own frame.
 - `SUPPORT_FILL = 0.2`: share of support volume that becomes filament.
 
-## three/sculptAndBooleanEngine
+## three/sculptEngine
 
 - Sculpt data positions are normalized to [−0.5, 0.5] and scaled by dimensions. Welding strips UV/normals first so UV seams can't prevent welding; brushes then never split seams.
 - Brush falloff is smooth cosine `0.5(1 + cos(π d / r))`. Smooth/flatten use the average position of affected vertices.
 - Deformers apply in order: roundness (spherify), taper (scales X/Z from bottom to top), twist about Y, bend along Y into an X arc, using normalized height t in [−0.5, 0.5].
-- CSG brush from a part group needs UV and normal attributes present or three-bvh-csg fails.
+
+## booleans
+
+- `manifold-3d` needs a closed, consistently wound mesh. Operands are welded by position alone (normals and UVs dropped, 1e-4 mm) before `new Mesh`, so the seams three.js primitives split for UVs close again. A mesh Manifold refuses (open component pieces, image planes) sends the whole evaluation to three-bvh-csg in the same worker.
+- three-bvh-csg needs UV and normal attributes present on every brush or it fails.
+- The hash a result is cached by takes operand positions relative to the base operand's position, so moving the whole result never re-evaluates it. Rotation and size go into the hash, so turning or resizing it does.
 
 ## data/hardware (sources and standards)
 

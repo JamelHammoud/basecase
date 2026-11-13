@@ -85,6 +85,7 @@ impl Owned {
             Input::JointVel(j) => self.joints[1][j],
             Input::Action(j) => self.joints[2][j],
             Input::LastAction(j) => self.joints[3][j],
+            Input::Reference(_) => 0.0,
         }
     }
 }

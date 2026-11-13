@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/printers';
-import type { Plate } from '../print/plan';
+import { turnedPrint, type Plate } from '../print/plan';
 import { printBridge, type PrinterStatus } from '../print/printBridge';
 import { printRecordFor, splitPrinted, updateRecord, withRecord } from '../print/tracker';
 import type { Viewport3DHandle } from '../three/viewport/types';
@@ -8,6 +8,7 @@ import type { PartPrint, PrintRecord, ProjectSettings, ScenePart } from '../type
 import { useBuildReport } from '../components/build/useBuildReport';
 import { shapeKey } from '../utils/printReport';
 import type { CommitParts, Setter, ShowToast } from './types';
+import { useFitTest } from './useFitTest';
 import { usePrintJob } from './usePrintJob';
 import { usePrintStatus } from './usePrintStatus';
 
@@ -60,27 +61,39 @@ export function usePrinting(options: PrintingOptions) {
     printShapes: async (ids, faces) => (await viewport()?.printShapes(ids, faces)) ?? {},
     enabled: options.buildOpen || !!mode,
   });
-  const job = usePrintJob({ ...options, report });
+  const fit = useFitTest({ parts, project, printer, viewport });
+  const shown = fit.active ? fit.report : report;
+  const job = usePrintJob({
+    ...options,
+    report: shown,
+    jobId: fit.active ? `${options.jobId}-fit-test` : options.jobId,
+    threeMf: fit.active ? fit.threeMf : undefined,
+  });
   const [sending, setSending] = useState<number | null>(null);
   const records = project.prints ?? [];
   const setRecords = (update: (prev: PrintRecord[]) => PrintRecord[]) =>
     setProject((p) => ({ ...p, prints: update(p.prints ?? []) }));
   const status = usePrintStatus({ printer, records, setRecords, active: !!mode || sending !== null });
 
-  const setPartPrint = (ids: string[], patch: Partial<PartPrint>) =>
+  const setPartPrint = (ids: string[], patch: Partial<PartPrint>) => {
+    if (fit.active) return;
+
     commitParts((prev) =>
       prev.map((p) => (ids.includes(p.id) ? { ...p, print: cleanPrint({ ...p.print, ...patch }) } : p)),
     );
+  };
+
+  const turnPart = (id: string) => {
+    const turned = turnedPrint(report?.plan.plates ?? [], id);
+
+    if (turned) setPartPrint([id], turned);
+  };
 
   const freshSlice = (plate: Plate) =>
     job.slice?.plates.find((p) => p.number === plate.number && p.hash === plate.hash);
 
   const sendPlate = async (plate: Plate) => {
-    if (!printer.mine) {
-      showToast('Add your printer in Settings → Printers to send plates', { tone: 'error' });
-
-      return;
-    }
+    if (!printer.mine) return;
 
     setSending(plate.number);
 
@@ -93,9 +106,12 @@ export function usePrinting(options: PrintingOptions) {
         printerId: printer.mine.id,
         ...amsFor(plate, status),
       });
-      const record = printRecordFor(plate, { parts, keyOf: shapeKey, printer: printer.label, now: new Date() });
 
-      setRecords((prev) => withRecord(prev, record));
+      if (!fit.active)
+        setRecords((prev) =>
+          withRecord(prev, printRecordFor(plate, { parts, keyOf: shapeKey, printer: printer.label, now: new Date() })),
+        );
+
       showToast(sent.started ? `Sent plate ${plate.number} to ${printer.label}` : sent.message);
     } catch (e) {
       showToast(message(e), { tone: 'error' });
@@ -118,8 +134,19 @@ export function usePrinting(options: PrintingOptions) {
     setRecords((prev) => withRecord(prev, { ...record, state }));
   };
 
+  const startFitTest = async () => {
+    if (await fit.start()) setMode({ plate: 1, selected: null, face: false });
+  };
+
+  const closeMode = () => {
+    if (!fit.active) return setMode(null);
+
+    fit.leave();
+    setMode({ plate: 1, selected: null, face: false });
+  };
+
   return {
-    report,
+    report: shown,
     measures,
     printedCount: split.printed.length,
     skipPrinted,
@@ -133,11 +160,16 @@ export function usePrinting(options: PrintingOptions) {
     setModePlate: (plate: number) => setMode({ plate, selected: null, face: false }),
     selectPart: (selected: string | null) => setMode((m) => m && { ...m, selected, face: false }),
     setFaceMode: (face: boolean) => setMode((m) => m && { ...m, face }),
-    closeMode: () => setMode(null),
+    closeMode,
+    fitTest: fit.parts && { parts: fit.parts },
+    canFitTest: fit.available,
+    fitCutting: fit.cutting,
+    startFitTest,
     sending,
     sendPlate,
     markPlate,
     setPartPrint,
+    turnPart,
     freshSlice,
   };
 }

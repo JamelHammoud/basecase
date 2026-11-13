@@ -1,13 +1,14 @@
 import React from 'react';
 import { NumberInput, Switch, TextInput } from '../../design-system';
+import { ThicknessField } from './ThicknessField';
 import type { StudioDraft } from './useStudioDraft';
 
 const DRAW_COLORS = ['#e4e4e7', '#3f3f46', '#f97316', '#0d99ff', '#22c55e'];
 
-export const OutputFields: React.FC<{ draft: StudioDraft; spanLabel: string; revolve: boolean }> = ({
+export const OutputFields: React.FC<{ draft: StudioDraft; depth: boolean; svg?: boolean }> = ({
   draft,
-  spanLabel,
-  revolve,
+  depth,
+  svg = false,
 }) => (
   <>
     <TextInput
@@ -17,24 +18,18 @@ export const OutputFields: React.FC<{ draft: StudioDraft; spanLabel: string; rev
       aria-label="Name"
     />
     <div className="grid grid-cols-2 gap-2">
-      <NumberInput
-        label="W"
-        title={spanLabel}
-        value={draft.drawSpanMm}
-        min={5}
-        max={500}
-        precision={0}
-        onChange={(v) => draft.setDrawSpanMm(v)}
-      />
-      <NumberInput
-        label="T"
-        title={revolve ? 'Height' : 'Thickness'}
-        value={draft.drawHeightMm}
-        min={1}
-        max={250}
-        precision={1}
-        onChange={(v) => draft.setDrawHeightMm(v)}
-      />
+      {svg && (
+        <NumberInput
+          label="W"
+          title="Width"
+          value={draft.drawSpanMm}
+          min={5}
+          max={500}
+          precision={0}
+          onChange={(v) => draft.setDrawSpanMm(v)}
+        />
+      )}
+      {depth && <ThicknessField value={draft.drawHeightMm} min={svg ? 1 : -250} onChange={draft.setDrawHeightMm} />}
     </div>
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-1.5">
@@ -51,7 +46,7 @@ export const OutputFields: React.FC<{ draft: StudioDraft; spanLabel: string; rev
           />
         ))}
       </div>
-      {!revolve && <Switch label="Bevel" checked={draft.drawBevel} onChange={draft.setDrawBevel} />}
+      {svg && <Switch label="Bevel" checked={draft.drawBevel} onChange={draft.setDrawBevel} />}
     </div>
   </>
 );

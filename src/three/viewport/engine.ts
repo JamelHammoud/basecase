@@ -3,22 +3,25 @@ import { fastenerInput } from '../../assembly/fastenerSpec';
 import {
   assemblyIn,
   fastenersIn,
+  fitCouponsIn,
   floorIn,
   gapsIn,
   interferenceIn,
+  jointAxisIn,
   measuresIn,
   visibilityIn,
   printMeshesIn,
   printReportsIn,
+  strengthIn,
   sweepsIn,
   threeMfIn,
 } from '../analysis/analysisPool';
 import { snapshotShapes } from '../analysis/sceneShapes';
 import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
-import { AgentFrames } from './agentFrames';
+import { SkeletonOverlay } from './skeletonOverlay';
 import { BlueprintUnderlay } from './blueprint';
-import { CameraGlyphs } from './cameraGlyphs';
+import { BuildStepLayer } from './buildStep';
 import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
@@ -37,64 +40,27 @@ import { PartLayer } from './partLayer';
 import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
 import { ScaleFigures } from './scaleFigures';
+import { StageOverlays } from './stageOverlays';
 import { SelectionOutline } from './selectionOutline';
+import { StressOverlay } from './stressOverlay';
 import { warmShaders } from './shaderWarmup';
+import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE } from './engineKeys';
 import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
 import type { ViewportContext, ViewportUi } from './viewportContext';
 import { installWheel, zoomCamera } from './wheel';
 
-const GIZMO_KEYS: Array<keyof ViewportProps> = [
-  'transformMode',
-  'snapStepMm',
-  'snapAngleDeg',
-  'selectedPartIds',
-  'parts',
-  'poseJoint',
-  'pose',
-  'measureMode',
-  'markMode',
-];
-
-const FIGURE_KEYS: Array<keyof ViewportProps> = ['figures', 'humanHeightMm', 'measureKind', 'measureMode'];
-
 const FRAME_BUDGET_MS = 6;
 
 const interferenceOptions = (focus?: string[]) => ({ toleranceMm: 0.3, maxSamples: 400, focus });
-
-const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
-  'captureScreenshot',
-  'captureViews',
-  'interference',
-  'fastenerChains',
-  'assembly',
-  'posedInterference',
-  'posedFloor',
-  'meshGaps',
-  'restBounds',
-  'silhouetteShots',
-  'measureParts',
-  'visibleShares',
-  'printShapes',
-  'printMeshes',
-  'printThreeMf',
-  'exportUsdz',
-  'partTriangles',
-  'servoOutput',
-  'sweepClashes',
-  'pickAt',
-  'focusSelected',
-  'measureFrom',
-];
-
-const changed = (a: ViewportProps, b: ViewportProps, keys: Array<keyof ViewportProps>) =>
-  keys.some((k) => a[k] !== b[k]);
 
 export interface EngineOptions {
   container: HTMLElement;
   marquee: () => HTMLElement | null;
   measureLabel: () => HTMLElement | null;
   markField: () => HTMLElement | null;
+  buildLabels: () => HTMLElement | null;
+  ghostLabel: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -125,11 +91,14 @@ export class ViewportEngine {
 
   private readonly markField: MarkFieldAnchor;
 
-  private readonly agentFrames: AgentFrames;
+  private readonly overlays: StageOverlays;
 
-  private readonly cameraGlyphs: CameraGlyphs;
+  private readonly skeleton: SkeletonOverlay;
+  private readonly stress: StressOverlay;
 
   private readonly follow: FollowCamera;
+
+  private readonly buildStep: BuildStepLayer;
 
   private readonly cleanups: Array<() => void>;
 
@@ -156,7 +125,7 @@ export class ViewportEngine {
       batches,
       loop,
       ui: options.ui,
-      runtime: { shiftHeld: false, altHeld: false, draggingGizmo: false },
+      runtime: { shiftHeld: false, altHeld: false, freeHeld: false, draggingGizmo: false },
       props: () => this.props,
       applyPose: () => this.applyPose(),
     };
@@ -167,20 +136,23 @@ export class ViewportEngine {
     this.markLayer.sync(options.props.marks, options.props.selectedMarkId);
     this.markInput = new MarkInput(this.ctx, this.markLayer);
     this.markField = new MarkFieldAnchor(this.ctx, this.markLayer, options.markField);
-    this.agentFrames = new AgentFrames(this.ctx);
-    this.agentFrames.sync(options.props.agentFrames ?? []);
-    this.cameraGlyphs = new CameraGlyphs(stage.overlays);
-    this.cameraGlyphs.sync(options.props.fixedCameras);
+    this.skeleton = new SkeletonOverlay(this.ctx);
+    this.skeleton.sync(options.props.skeleton);
+    this.overlays = new StageOverlays(this.ctx, options.props, options.ghostLabel);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
+    this.buildStep = new BuildStepLayer(this.ctx, options.buildLabels);
+    this.stress = new StressOverlay(this.ctx);
 
     const outline = new SelectionOutline(stage);
 
     loop.beforeRender.add(() => this.follow.update());
-    loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
+    loop.beforeRender.add(() => this.stress.place());
+    loop.beforeRender.add(() => outline.prepare(this.buildStep.outlined(this.props.selectedPartIds)));
     loop.afterRender.add(() => this.measureTool.updateLabel());
     loop.afterRender.add(() => this.markField.place());
+    loop.afterRender.add(() => this.overlays.ghost.placeLabel());
     loop.afterRender.add(() => {
-      if (this.agentFrames.refresh()) loop.invalidate();
+      if (this.overlays.agentFrames.refresh()) loop.invalidate();
     });
 
     const gizmoState = {
@@ -199,10 +171,12 @@ export class ViewportEngine {
       new PointerInput(this.ctx, gizmoState, { measure: this.measureTool, figures: this.figures }).install(),
       installKeys(this.ctx, () => {
         this.gizmo.applySnaps();
+        this.gizmo.resnap();
         this.measureTool.refresh();
       }),
       () => outline.dispose(),
     ];
+    this.cleanups.push(this.skeleton.install());
     this.api = this.completing(this.handle());
     this.syncWorld();
     this.syncScene();
@@ -223,7 +197,9 @@ export class ViewportEngine {
 
     if (props.sceneKey !== previous.sceneKey) frameScene(this.ctx.stage, props.parts);
 
-    if (props.pose !== previous.pose) this.ctx.layer.pose = props.pose ?? new Map();
+    if (props.pose !== previous.pose && !props.buildStep) this.ctx.layer.pose = props.pose ?? new Map();
+
+    if (props.buildStep !== previous.buildStep) this.buildStep.show(props.buildStep ?? null);
 
     this.syncTools(previous, props);
 
@@ -249,9 +225,9 @@ export class ViewportEngine {
 
     if ((previous.markMode && !props.markMode) || previous.markTool !== props.markTool) this.markInput.cancel();
 
-    if (previous.agentFrames !== props.agentFrames) this.agentFrames.sync(props.agentFrames ?? []);
+    this.overlays.sync(previous, props);
 
-    if (previous.fixedCameras !== props.fixedCameras) this.cameraGlyphs.sync(props.fixedCameras);
+    if (previous.skeleton !== props.skeleton) this.skeleton.sync(props.skeleton);
 
     if (!changed(previous, props, ['marks', 'selectedMarkId'])) return;
 
@@ -269,8 +245,10 @@ export class ViewportEngine {
     this.measureTool.dispose();
     this.figures.dispose();
     this.markLayer.dispose();
-    this.agentFrames.dispose();
-    this.cameraGlyphs.dispose();
+    this.buildStep.dispose();
+    this.skeleton.dispose();
+    this.overlays.dispose();
+    this.stress.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -282,7 +260,11 @@ export class ViewportEngine {
     const withRest = <T>(run: () => T) => ctx.layer.withRest(run, () => this.applyPose());
     const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
     const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
+    const restSolids = (visibleOnly: boolean) => withRest(() => solidShapes(visibleOnly));
+    const restShapes = (ids?: string[]) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids)));
     const camera = <T>(run: () => T) => {
+      ctx.loop.frameAnimation = null;
+
       const result = run();
 
       ctx.loop.invalidate();
@@ -315,39 +297,24 @@ export class ViewportEngine {
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
+      ...this.overlays.handle(camera),
       followPart: (partId) => {
         this.follow.follow(partId);
         ctx.loop.following = this.follow.active;
       },
-      interference: (onlyIds) =>
-        interferenceIn(
-          withRest(() => solidShapes(true)),
-          interferenceOptions(onlyIds),
-        ),
-      fastenerChains: () =>
-        fastenersIn(
-          withRest(() => solidShapes(false)),
-          fastenerInput(this.props.parts),
-        ),
-      assembly: (options) =>
-        assemblyIn(
-          withRest(() => solidShapes(false)),
-          { ...fastenerInput(this.props.parts), ...options },
-        ),
+      interference: (onlyIds) => interferenceIn(restSolids(true), interferenceOptions(onlyIds)),
+      fastenerChains: () => fastenersIn(restSolids(false), fastenerInput(this.props.parts)),
+      assembly: (options) => assemblyIn(restSolids(false), { ...fastenerInput(this.props.parts), ...options }),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
       posedFloor: (ids) => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
-      meshGaps: (pairs, withinMm) =>
-        gapsIn(
-          withRest(() => snapshotShapes(measure.partObjects(ctx, [...new Set(pairs.flat())]))),
-          pairs,
-          withinMm,
-        ),
+      meshGaps: (pairs, withinMm) => gapsIn(restShapes([...new Set(pairs.flat())]), pairs, withinMm),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
+      restShapes: (ids) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids))),
       silhouetteShots: (specs, opts) =>
         unbatched(() => silhouetteShots(ctx, { specs, ...opts, helper: this.gizmo.controls.getHelper() })),
-      measureParts: (ids) => measuresIn(withRest(() => snapshotShapes(measure.partObjects(ctx, ids)))),
-      visibleShares: () => visibilityIn(withRest(() => solidShapes(true))),
+      measureParts: (ids) => measuresIn(restShapes(ids)),
+      visibleShares: () => visibilityIn(restSolids(true)),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
       printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
       printThreeMf: (files, plateSize) =>
@@ -356,24 +323,37 @@ export class ViewportEngine {
           files,
           plateSize,
         ),
+      fitCoupons: (task) =>
+        fitCouponsIn(
+          withRest(() => snapshotShapes(measure.partObjects(ctx, [...task.hosts, ...task.fits.map((f) => f.id)]))),
+          task,
+        ),
       exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),
-      meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
-      sweepClashes: (sweeps) =>
-        sweepsIn(
-          withRest(() => solidShapes(false)),
-          sweeps,
+      jointAxis: (query) =>
+        jointAxisIn(
+          restShapes([query.parent, query.child]),
+          query.pick
+            ? { ...query, pick: { ...query.pick, point: ctx.layer.pointAtRest(query.pick.part, query.pick.point) } }
+            : query,
         ),
+      meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
+      sweepClashes: (sweeps) => sweepsIn(restSolids(false), sweeps),
+      strength: (jobs) => strengthIn(restShapes([...new Set(jobs.map((j) => j.part))]), jobs),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
+      dragPart: (id, to, free) => this.gizmo.dragTo(id, to, free),
+      previewSnap: (part, free) => this.gizmo.snap.preview(part, free),
       projectPoints: (points) => measure.projectPoints(ctx, points),
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
       cancelMeasure: () => this.measureTool.clear(),
+      shownPartIds: () => this.buildStep.shownIds(),
     };
   }
 
   private applyPose(): void {
     this.ctx.layer.applyPose(this.gizmo.draggedObject);
+    this.buildStep.reapply();
     this.ctx.loop.invalidate();
   }
 
@@ -406,6 +386,7 @@ export class ViewportEngine {
 
   private afterBuild(): void {
     this.applyPose();
+    this.overlays.ghost.sync();
     this.gizmo.refresh();
 
     if (this.frameWhenBuilt && !this.ctx.layer.hasPending) this.frameAll();

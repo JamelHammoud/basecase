@@ -31,12 +31,35 @@ export interface PolicySpec {
   mujoco: string;
   createdAt: string;
   eyes?: Eye[];
+  clock?: PolicyClock;
 }
+
+export interface PolicyClock {
+  frames: number;
+  loop: boolean;
+}
+
+export const CLOCK_SIZE = 2;
 
 export const obsSize = (joints: number) => 12 + 3 * joints;
 
-export const policyObsSize = (spec: Pick<PolicySpec, 'joints' | 'eyes'>) =>
-  obsSize(spec.joints.length) + eyeSize(spec.eyes);
+export const policyObsSize = (spec: Pick<PolicySpec, 'joints' | 'eyes' | 'clock'>) =>
+  obsSize(spec.joints.length) + eyeSize(spec.eyes) + (spec.clock ? CLOCK_SIZE : 0);
+
+export function clockAngle(clock: PolicyClock, step: number): number {
+  const n = Math.max(2, clock.frames);
+
+  if (clock.loop) return (2 * Math.PI * (((step % n) + n) % n)) / n;
+
+  return (Math.PI * Math.min(Math.max(step, 0), n - 1)) / (n - 1);
+}
+
+export function observeClock(clock: PolicyClock, step: number, out: Float32Array, at: number) {
+  const angle = clockAngle(clock, step);
+
+  out[at] = Math.sin(angle);
+  out[at + 1] = Math.cos(angle);
+}
 
 export function toBodyFrame(q: ArrayLike<number>, qo: number, v: [number, number, number]): [number, number, number] {
   const w = q[qo],
@@ -135,6 +158,7 @@ export function isPolicySpec(v: unknown): v is PolicySpec {
     Array.isArray(p.layers) &&
     Array.isArray(p.joints) &&
     (p.eyes === undefined || Array.isArray(p.eyes)) &&
+    (p.clock === undefined || (Number.isInteger(p.clock.frames) && p.clock.frames >= 2)) &&
     (!Array.isArray(p.obsMean) || p.obsMean.length === policyObsSize(p))
   );
 }

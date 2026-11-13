@@ -7,13 +7,10 @@ import type { SkillRow } from '../skills/skillRows';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
+import type { ShareRobot } from '../workspace/useShareRobot';
 import type { SceneSkills } from '../workspace/useSkills';
-import { BriefSection, RobotFitSection, TrySection } from './simulate/CaseSections';
+import { CaseSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
-import { EmulatedRobotSection } from './simulate/EmulatedRobotSection';
-import { ModelSection } from './simulate/ModelSection';
-import { PoliciesSection } from './simulate/PoliciesSection';
-import { ResultSection } from './simulate/ResultSection';
 import { ResultsSection } from './simulate/ResultsSection';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection } from './simulate/TrainSection';
@@ -22,6 +19,7 @@ interface SimulatePanelProps {
   sim: Simulation;
   training: Training;
   cases: Cases;
+  share: ShareRobot;
   rig: Rig;
   parts: ScenePart[];
   animations: RobotAnimation[];
@@ -31,6 +29,7 @@ interface SimulatePanelProps {
   onNewCase: () => void;
   skills: SceneSkills;
   onTeach: ((goal: string) => void) | null;
+  onOpenCommandCenter: () => void;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -43,10 +42,11 @@ function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTea
 
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy, onNewCase } = props;
-  const { skills, onTeach } = props;
+  const { skills, onTeach, share } = props;
   const walk = useWalkTeaching(skills, onTeach);
   const skillActions = {
-    onTrain: (row: SkillRow) => (row.kit ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label)),
+    onTrain: (row: SkillRow) =>
+      row.kit || row.move ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label),
     onTry: (row: SkillRow) => void skills.tryRow(row),
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
@@ -81,8 +81,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       <SimControls sim={sim} on={on} />
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {kase && <BriefSection cases={cases} />}
-        {kase && <RobotFitSection cases={cases} onNewCase={onNewCase} />}
+        {kase && <CaseSection cases={cases} onNewCase={onNewCase} onOpenCommandCenter={props.onOpenCommandCenter} />}
         {kase && (
           <TrySection
             cases={cases}
@@ -90,23 +89,28 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             cls={sim.drive.cls}
           />
         )}
-        <EmulatedRobotSection />
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} />
-        <TrainSection skills={skills} actions={skillActions} onTeach={onTeach} />
-        {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}
-
-        {on && sim.stats && sim.model && (
-          <ResultSection stats={sim.stats} model={sim.model} rig={rig} onSelectParts={onSelectParts} />
-        )}
-        {sim.model && <ModelSection model={sim.model} />}
-        {policies.length > 0 && (
-          <PoliciesSection
-            policies={policies}
-            training={training}
-            onChoose={(id) => void choose(`policy:${id}`)}
-            onMenu={openPolicyMenu}
-          />
-        )}
+        <TrainSection
+          skills={skills}
+          actions={skillActions}
+          onTeach={onTeach}
+          policies={policies}
+          training={training}
+          policyActions={{ onChoose: (id) => void choose(`policy:${id}`), onMenu: openPolicyMenu }}
+        />
+        <ResultsSection
+          cases={cases}
+          rig={rig}
+          share={share}
+          model={sim.model}
+          parts={parts}
+          world={sim.worldParts}
+          run={
+            on && sim.stats && sim.model
+              ? { stats: sim.stats, model: sim.model, rig, onSelectParts, onFault: sim.setFault }
+              : null
+          }
+        />
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </div>

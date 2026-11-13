@@ -7,8 +7,10 @@ import {
   FolderOpenIcon,
   PhotoIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { SHARE_LABEL } from '../utils/os';
 import type { CommandInputs } from './sceneCommands';
 
@@ -16,7 +18,7 @@ const ic = 'w-4 h-4';
 
 export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
   const { studio } = core;
-  const { exports, creation } = actions;
+  const { exports, files } = actions;
   const robotPackage: Command = {
     id: 'export-robot-package',
     group: 'Scene',
@@ -25,6 +27,32 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     keywords: 'mujoco mjcf urdf ros lerobot joint map policy zip download',
     run: () => void exports.exportRobotPackage(),
   };
+  const stepExport: Command = {
+    id: 'export-step',
+    group: 'Scene',
+    label: 'Export STEP',
+    icon: <ShapeIcon className={ic} />,
+    keywords: 'stp cad assembly fusion onshape solidworks freecad download',
+    run: () => void exports.exportStep(),
+  };
+  const partExports: Command[] = [
+    {
+      id: 'export',
+      group: 'Scene',
+      label: 'Export STL',
+      icon: <DownloadIcon className={ic} />,
+      keywords: 'print download',
+      run: exports.exportStl,
+    },
+    {
+      id: 'airdrop',
+      group: 'Scene',
+      label: SHARE_LABEL,
+      icon: <ShareIcon className={ic} />,
+      keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
+      run: () => void exports.airDrop(),
+    },
+  ];
 
   return [
     {
@@ -52,22 +80,8 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'markdown clipboard export brief spec',
       run: exports.copyBrief,
     },
-    {
-      id: 'export',
-      group: 'Scene',
-      label: 'Export STL',
-      icon: <DownloadIcon className={ic} />,
-      keywords: 'print download',
-      run: exports.exportStl,
-    },
-    {
-      id: 'airdrop',
-      group: 'Scene',
-      label: SHARE_LABEL,
-      icon: <ShareIcon className={ic} />,
-      keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
-      run: () => void exports.airDrop(),
-    },
+    ...(exports.canExportParts ? partExports : []),
+    ...(IS_WEB_DEMO || !exports.canExportStep ? [] : [stepExport]),
     {
       id: 'export-image',
       group: 'Scene',
@@ -77,12 +91,13 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       run: exports.exportImage,
     },
     {
-      id: 'import-mesh',
+      id: 'import',
       group: 'Scene',
-      label: 'Import Mesh',
+      label: 'Import',
       icon: <FileImportIcon className={ic} />,
-      keywords: 'stl 3mf obj ply fbx glb gltf dae step stp iges igs cad model file print',
-      run: () => void creation.pickMeshes(),
+      keywords:
+        'file mesh stl 3mf obj ply fbx glb gltf dae step stp iges igs cad model print svg extrude urdf mjcf zip robot bvh mocap motion image png jpg',
+      run: () => void files.pickImports(),
     },
   ];
 }

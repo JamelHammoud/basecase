@@ -17,7 +17,7 @@ import {
   policyCommand,
   withVelocity,
 } from './driveAccess';
-import { commandFromKeys, commandFromPad, mergeCommands } from './driveKeys';
+import { commandFromKeys, commandFromPad, mergeCommands, sameCommand } from './driveKeys';
 import { footPoints } from './driveLegs';
 import { SimEngine } from './engine';
 import { box } from './fixtures/parts';
@@ -281,5 +281,13 @@ describe('drive keys', () => {
 
     expect(mergeCommands(keys, rest)).toBe(keys);
     expect(mergeCommands(keys, pushed).v[0]).toBe(1);
+  });
+
+  it('counts a new arm target as a new command', () => {
+    const still: [number, number, number] = [0, 0, 0];
+
+    expect(sameCommand({ v: still, target: [0, 40, 120] }, { v: still, target: [0, 40, 400] })).toBe(false);
+    expect(sameCommand({ v: still, target: [0, 40, 120] }, { v: still, target: [0, 40, 120] })).toBe(true);
+    expect(sameCommand({ v: still }, { v: still, target: [0, 40, 120] })).toBe(false);
   });
 });

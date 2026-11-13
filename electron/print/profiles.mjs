@@ -11,17 +11,17 @@ function readJson(file) {
   }
 }
 
-function indexKind(dir) {
-  const byName = new Map();
-
+function indexKind(dir, byName = new Map()) {
   if (!fs.existsSync(dir)) return byName;
 
-  for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith('.json')) continue;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const file = path.join(dir, entry.name);
 
-    const data = readJson(path.join(dir, file));
+    if (entry.isDirectory()) indexKind(file, byName);
 
-    if (data?.name) byName.set(data.name, { file: path.join(dir, file), data });
+    const data = entry.isFile() && entry.name.endsWith('.json') ? readJson(file) : null;
+
+    if (data?.name && !byName.has(data.name)) byName.set(data.name, { file, data });
   }
 
   return byName;

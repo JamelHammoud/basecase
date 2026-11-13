@@ -4,6 +4,7 @@ import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPa
 import { getComponentMesh } from '../componentMeshes';
 import { preparePart } from '../partMesh/prepare';
 import type { PartBatches } from './partBatches';
+import type { Vec3 } from './types';
 
 interface Entry {
   part: ScenePart;
@@ -21,6 +22,10 @@ export function onlyTransformChanged(a: ScenePart, b: ScenePart): boolean {
 }
 
 const UNIT = new THREE.Vector3(1, 1, 1);
+
+const POSED = new THREE.Matrix4();
+
+const SCALE = new THREE.Vector3();
 
 const FRAME_BUDGET_MS = 6;
 
@@ -138,25 +143,16 @@ export class PartLayer {
   }
 
   applyPose(skip?: THREE.Object3D | null): void {
-    const matrix = new THREE.Matrix4();
-    const scale = new THREE.Vector3();
-
     for (const [id, { group }] of this.entries) {
-      const rest = this.restOf(group);
+      if (group !== skip) this.poseGroup(id, group);
+    }
+  }
 
-      if (!rest || group === skip) continue;
+  applyPoseTo(ids: Iterable<string>): void {
+    for (const id of ids) {
+      const group = this.entries.get(id)?.group;
 
-      const delta = this.pose.get(id);
-
-      if (delta) {
-        matrix.compose(rest.position, rest.quaternion, UNIT).premultiply(delta);
-        matrix.decompose(group.position, group.quaternion, scale);
-      } else {
-        group.position.copy(rest.position);
-        group.quaternion.copy(rest.quaternion);
-      }
-
-      group.updateMatrixWorld(true);
+      if (group) this.poseGroup(id, group);
     }
   }
 
@@ -176,6 +172,12 @@ export class PartLayer {
       .decompose(restPosition, restQuaternion, new THREE.Vector3());
 
     return { position: restPosition, quaternion: restQuaternion };
+  }
+
+  pointAtRest(id: string, point: Vec3): Vec3 {
+    const delta = this.pose.get(id);
+
+    return delta ? (new THREE.Vector3(...point).applyMatrix4(delta.clone().invert()).toArray() as Vec3) : point;
   }
 
   withRest<T>(run: () => T, reapply: () => void): T {
@@ -212,6 +214,24 @@ export class PartLayer {
 
   dispose(): void {
     for (const [id, entry] of this.entries) this.remove(id, entry);
+  }
+
+  private poseGroup(id: string, group: THREE.Group): void {
+    const rest = this.restOf(group);
+
+    if (!rest) return;
+
+    const delta = this.pose.get(id);
+
+    if (delta) {
+      POSED.compose(rest.position, rest.quaternion, UNIT).premultiply(delta);
+      POSED.decompose(group.position, group.quaternion, SCALE);
+    } else {
+      group.position.copy(rest.position);
+      group.quaternion.copy(rest.quaternion);
+    }
+
+    group.updateMatrixWorld(true);
   }
 
   private restOf(group: THREE.Group) {

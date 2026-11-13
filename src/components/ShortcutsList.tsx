@@ -27,6 +27,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       ['Comment', ['M']],
       ['Measure', ['D']],
       ['Measure without snapping', ['⇧', 'click']],
+      ['Measure vertically', ['⌥', 'click']],
       ['Annotate', ['N']],
       ['Marker while annotating', ['P']],
       ['Eraser while annotating', ['E']],
@@ -58,7 +59,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
     title: 'Scenes',
     rows: [
       ['New scene', ['⌘T']],
-      ['Open scene', ['⌘O']],
+      ['Show scenes', ['⌘O']],
       ['Close scene', ['⌘W']],
       ['Reopen closed scene', ['⇧⌘T']],
       ['Next scene', ['⌃Tab']],
@@ -72,7 +73,6 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
     rows: [
       ['Command menu', ['⌘K']],
       ['Find parts', ['⌘F']],
-      ['Save scene', ['⌘S']],
       ['Show or hide sidebar', ['⌘B']],
       ['Show or hide inspector', ['⌘I']],
       ['Show or hide reference images', ['⇧I']],

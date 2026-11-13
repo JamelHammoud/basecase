@@ -1,6 +1,7 @@
-export type WebStore = 'scenes' | 'models' | 'guides' | 'settings';
+export type WebStore = 'scenes' | 'models' | 'guides' | 'settings' | 'skills' | 'trained';
 
-const STORES: WebStore[] = ['scenes', 'models', 'guides', 'settings'];
+const STORES: WebStore[] = ['scenes', 'models', 'guides', 'settings', 'skills', 'trained'];
+const VERSION = 3;
 
 let opening: Promise<IDBDatabase> | null = null;
 
@@ -12,14 +13,26 @@ const done = <T>(request: IDBRequest<T>) =>
 
 function openDb(): Promise<IDBDatabase> {
   opening ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open('basecase', 1);
+    const request = indexedDB.open('basecase', VERSION);
 
     request.onupgradeneeded = () => {
       for (const name of STORES) {
         if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name);
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+
+      db.onversionchange = () => {
+        db.close();
+        opening = null;
+      };
+      resolve(db);
+    };
+    request.onblocked = () => {
+      opening = null;
+      reject(new Error('Close Basecase’s other tabs, then reload this one.'));
+    };
     request.onerror = () => {
       opening = null;
       reject(request.error);

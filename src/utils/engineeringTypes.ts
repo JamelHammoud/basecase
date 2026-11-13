@@ -3,6 +3,9 @@ import type { ProjectSettings, PurchaseRecord, RobotJoint, ScenePart } from '../
 import type { BomInput } from './bom';
 import type { RobotBody } from './engineeringBody';
 import type { V3 } from './engineeringMath';
+import type { ArmModel, PayloadMap } from './payload';
+import type { ChainResult } from '../assembly/assemblyTypes';
+import type { StrengthJob, StrengthReading } from '../strength/types';
 
 export interface PartMass {
   id: string;
@@ -20,13 +23,26 @@ export interface ServoOutput extends ServoLine {
   alternates?: ServoLine[];
 }
 
+export interface CheckDot {
+  at: V3;
+  shade: number;
+}
+
+export interface FindingFix {
+  kind: 'print-face';
+  part: string;
+  down: V3;
+}
+
 export interface CheckRow {
   check: string;
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail' }>;
+  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix }>;
   itemsAreContext?: boolean;
+  caseId?: string;
+  dots?: CheckDot[];
 }
 
 export interface JointLoad {
@@ -55,11 +71,25 @@ export interface WalkJoint {
   overS: number;
 }
 
+export interface WalkAmps {
+  avgA: number;
+  peakA: number;
+}
+
+export interface WalkPower extends WalkAmps {
+  joints: Record<string, WalkAmps>;
+}
+
 export interface WalkSim {
   policy: string;
   seconds: number;
   fellAt: number | null;
   joints: Record<string, WalkJoint>;
+  power?: WalkPower;
+}
+
+export interface StoredWalk extends WalkSim {
+  key: string;
 }
 
 export interface EngineeringInputs {
@@ -72,6 +102,10 @@ export interface EngineeringInputs {
   sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
   walk?: WalkSim | string;
   servoTouches?: string[];
+  payload?: (arm: ArmModel) => PayloadMap | null;
+  chains?: ChainResult | null;
+  printDowns?: Record<string, V3>;
+  strength?: (jobs: StrengthJob[]) => Array<StrengthReading | null>;
 }
 
 export interface SweepRequest {

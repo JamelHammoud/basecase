@@ -1,4 +1,4 @@
-import type { Finding, FindingArea, FindingLevel } from './types';
+import type { Finding, FindingArea, FindingFix, FindingLevel } from './types';
 
 interface Rule {
   area: FindingArea;
@@ -59,6 +59,7 @@ export const RULES = {
   split: assembly('Parts That Wrap Others', 'This part wraps around others and can’t come off in one piece.'),
   lip: assembly('Snug Parts', 'This part only comes off with a tilt or a bit of flex.'),
   'fixed-mate': assembly('Fixed Mates', 'This mate imports as fixed; only revolute and slider mates move.'),
+  'gone-mate': assembly('Missing Mates', 'These joints have no mate in Onshape.'),
   service: {
     area: 'assembly',
     check: REPAIRS,
@@ -118,6 +119,8 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
     blocker: 'This servo gets pushed past its limit while walking.',
     note: 'This servo has little to spare while walking.',
   },
+  'Torque estimates': { note: 'These joints have no servo, so the simulation guesses their torque from weight.' },
+  'Servo models': { note: 'These servos have no measured model, so the simulation guesses how they respond.' },
   'Servo alignment': { blocker: 'These servos don’t line up with their joints.' },
   'Joint support': { note: 'These joints are held on one side only, which strains the servo.' },
   'Range of motion': {
@@ -136,7 +139,11 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
 
 const titleCase = (text: string) => text.replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
-export function engineeringFinding(check: string, level: FindingLevel, f: { detail: string; ids?: string[] }): Finding {
+export function engineeringFinding(
+  check: string,
+  level: FindingLevel,
+  f: { detail: string; ids?: string[]; fix?: FindingFix },
+): Finding {
   const code = slug(check);
   const plain = PLAIN_ENGINEERING[check]?.[level];
   const agentText = `${check}: ${f.detail}`;
@@ -153,5 +160,6 @@ export function engineeringFinding(check: string, level: FindingLevel, f: { deta
     agentText,
     detail: plain ? f.detail : undefined,
     ids,
+    ...(f.fix ? { fix: f.fix } : {}),
   };
 }

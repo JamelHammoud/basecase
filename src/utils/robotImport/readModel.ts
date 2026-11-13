@@ -1,5 +1,5 @@
 import { ZIP_TOO_LARGE } from './archive';
-import { chooseEntry, descriptionKind, inScope, RobotChoiceError } from './entry';
+import { chooseEntry, inScope, RobotChoiceError } from './entry';
 import { githubTree, repoLink } from './github';
 import { hubFileUrl, hubLink, hubTree } from './hub';
 import { parseMjcf } from './mjcf';
@@ -17,6 +17,7 @@ import {
 } from './sources';
 import { localTree, treeResolver, type Tree } from './tree';
 import { parseUrdf } from './urdf';
+import { expandXacro, isXacro } from './xacro';
 
 export interface ReadModel {
   model: Model;
@@ -38,7 +39,7 @@ export const isZipLink = (url: string) => /\.zip(?:[?#]|$)/i.test(url.trim());
 export const isRobotLink = (url: string) =>
   !!repoLink(url) ||
   !!hubLink(url) ||
-  /^https:\/\/[^\s/]+\.[^\s/]+\/\S+\.(urdf|xml|mjcf|zip)(?:[?#]\S*)?$/i.test(url.trim());
+  /^https:\/\/[^\s/]+\.[^\s/]+\/\S+\.(urdf|xml|mjcf|xacro|zip)(?:[?#]\S*)?$/i.test(url.trim());
 
 async function zipTree(url: string): Promise<Tree> {
   const bytes = await fetchBytes(url, MAX_ZIP_BYTES).catch((error: unknown) => {
@@ -73,7 +74,7 @@ async function treeEntry({ tree, scope }: Located, picked?: string, link?: strin
 
   if (picked && paths.includes(picked)) return picked;
 
-  const choice = await chooseEntry(paths, async (p) => descriptionKind(decode(await tree.read(p))));
+  const choice = await chooseEntry(paths, async (p) => decode(await tree.read(p)));
 
   if (!choice) throw link ? noRobotAt(link) : new Error(NO_ROBOT);
 
@@ -88,7 +89,7 @@ async function sourceResolver(source: Exclude<Source, { kind: 'converted' }>) {
   if (!located && source.kind === 'url') {
     const resolver = await urlResolver(source.url);
 
-    return { resolver, from: new URL(rawUrl(source.url)).pathname, origin: source.url };
+    return { resolver, from: decodeURIComponent(new URL(rawUrl(source.url)).pathname), origin: source.url };
   }
 
   if (!located) throw new Error(NO_ROBOT);
@@ -108,6 +109,7 @@ export async function readModel(source: Source): Promise<ReadModel> {
   let text = resolver.entry.text;
 
   if (/<mujoco\b/.test(text)) text = await inlineIncludes(text, resolver.read, from);
+  else if (isXacro(from, text)) text = await expandXacro(text, { read: resolver.read, from });
 
   const doc = new DOMParser().parseFromString(text.replace(/<!--[\s\S]*?-->/g, ''), 'application/xml');
 

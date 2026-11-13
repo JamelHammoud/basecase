@@ -75,7 +75,7 @@ describe('gallery links', () => {
       .poll(() =>
         page.evaluate(() => (window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts().length),
       )
-      .toBe(7);
+      .toBe(10);
     await page.close();
   }, 180000);
 

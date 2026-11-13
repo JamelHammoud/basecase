@@ -6,6 +6,7 @@ import { SculptInput } from './sculptInput';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
 import { hasPrimaryModifier } from '../../utils/os';
+import { drillTarget } from '../../booleans/picking';
 
 const CLICK_SLOP = 5;
 
@@ -75,16 +76,30 @@ export class PointerInput {
   }
 
   private onDown(e: PointerEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode } = this.ctx.props();
+    const { annotateMode, measureMode, markMode, transformMode, buildStep } = this.ctx.props();
+    const otherTool = annotateMode || measureMode || markMode || buildStep;
 
     this.down = { x: e.clientX, y: e.clientY };
 
-    if (!annotateMode && !measureMode && !markMode && transformMode === 'sculpt' && e.button === 0)
-      this.sculpt.begin(e);
+    if (!otherTool && transformMode === 'sculpt' && e.button === 0) this.sculpt.begin(e);
+  }
+
+  private axisAt(e: PointerEvent, click: boolean): void {
+    const { axisPick, onAxisPick } = this.ctx.props();
+    const hit = raycastParts(this.ctx.stage, e.clientX, e.clientY);
+    const part = hitPartId(hit);
+
+    onAxisPick?.(hit && part && axisPick?.parts.includes(part) ? { part, point: toVec3(hit.point) } : null, click);
   }
 
   private onMove(e: PointerEvent): void {
     const cursor = this.ctx.stage.brushCursor;
+
+    if (this.ctx.props().axisPick) {
+      this.axisAt(e, false);
+
+      return;
+    }
 
     if (this.placingFigure()) {
       this.figures.hoverAt(e.clientX, e.clientY);
@@ -119,7 +134,15 @@ export class PointerInput {
       return;
     }
 
-    if (this.gizmo.dragging() || e.button !== 0 || this.moved(e) || this.ctx.props().markMode) {
+    const { markMode, buildStep } = this.ctx.props();
+
+    if (this.gizmo.dragging() || e.button !== 0 || this.moved(e) || markMode || buildStep) {
+      return;
+    }
+
+    if (this.ctx.props().axisPick) {
+      this.axisAt(e, true);
+
       return;
     }
 
@@ -161,16 +184,32 @@ export class PointerInput {
     if (floor) place?.([floor.x, 0, floor.z], null);
   }
 
+  private pickedId(e: MouseEvent, hit: THREE.Intersection | null, drill: boolean): string | null {
+    const partId = hitPartId(hit);
+    const part = partId ? this.ctx.layer.part(partId) : undefined;
+
+    if (!hit || !part) return partId;
+
+    return drillTarget({
+      part,
+      raycaster: rayAt(this.ctx.stage, e.clientX, e.clientY),
+      distance: hit.distance,
+      selected: new Set(this.ctx.props().selectedPartIds),
+      drill,
+    });
+  }
+
   private select(e: PointerEvent): void {
-    const { onSelectPart } = this.ctx.props();
+    const { onSelectPart, onPickPoint } = this.ctx.props();
     const deep = hasPrimaryModifier(e);
     const hit = deep
       ? raycastParts(this.ctx.stage, e.clientX, e.clientY)
       : raycastUnlocked(this.ctx, e.clientX, e.clientY);
-    const partId = hitPartId(hit);
+    const partId = this.pickedId(e, hit, deep);
 
-    if (partId) {
-      onSelectPart(partId, e.shiftKey, deep);
+    if (partId && hit) {
+      onPickPoint?.(partId, toVec3(hit.point));
+      onSelectPart(partId, e.shiftKey, deep || partId !== hitPartId(hit));
 
       return;
     }
@@ -179,15 +218,26 @@ export class PointerInput {
   }
 
   private onDoubleClick(e: MouseEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode, onSelectPart } = this.ctx.props();
-    const blocked = annotateMode || measureMode || markMode || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
+    const { annotateMode, measureMode, markMode, transformMode, onSelectPart, onOpenPart, axisPick, buildStep } =
+      this.ctx.props();
+    const blocked =
+      annotateMode ||
+      measureMode ||
+      markMode ||
+      axisPick ||
+      buildStep ||
+      transformMode === 'sculpt' ||
+      this.gizmo.hoveringAxis();
 
     if (e.button !== 0 || additive(e) || blocked || this.moved(e)) {
       return;
     }
 
-    const partId = hitPartId(raycastUnlocked(this.ctx, e.clientX, e.clientY));
+    const partId = this.pickedId(e, raycastUnlocked(this.ctx, e.clientX, e.clientY), true);
 
-    if (partId) onSelectPart(partId, false, true);
+    if (!partId) return;
+
+    onSelectPart(partId, false, true);
+    onOpenPart?.(partId);
   }
 }

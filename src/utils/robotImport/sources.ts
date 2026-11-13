@@ -27,6 +27,8 @@ export class TooLargeError extends Error {}
 
 export const unopenedRepo = (url: string) => new Error(`Couldn’t open ${url}. Link to a public repo or folder.`);
 
+export const couldntRead = (path: string) => new Error(`Couldn’t read ${path}`);
+
 export const noRobotAt = (url: string) => new Error(`Couldn’t find a .urdf or MJCF .xml file in ${url}.`);
 
 async function readCapped(res: Response, maxBytes: number): Promise<ArrayBuffer> {
@@ -143,6 +145,15 @@ export function candidates(ref: string, entryPath: string): string[] {
   return [joinPath(entryPath, r)];
 }
 
+const inRoot = (path: string, root: string) => path.startsWith(root) && !/\/\.\.?(\/|$)/.test(path);
+
+function rawRoot(entryPath: string): string {
+  const parts = entryPath.split('/').slice(1);
+  const refParts = parts[2] === 'refs' && /^(heads|tags)$/.test(parts[3] ?? '') ? 3 : 1;
+
+  return `/${parts.slice(0, 2 + refParts).join('/')}/`;
+}
+
 export async function urlResolver(url: string): Promise<Resolver> {
   const entryUrl = rawUrl(url);
   const text = new TextDecoder().decode(
@@ -153,13 +164,23 @@ export async function urlResolver(url: string): Promise<Resolver> {
   const u = new URL(entryUrl);
   const origin = u.origin;
   const entryPath = decodeURIComponent(u.pathname);
+  const root = u.host === new URL(RAW).host ? rawRoot(entryPath) : '/';
+  const inside = (path: string) => {
+    if (!/^https?:/.test(path)) return inRoot(path, root);
+
+    if (root === '/') return true;
+
+    const target = URL.parse(path);
+
+    return target?.origin === origin && inRoot(decodeURIComponent(target.pathname), root);
+  };
   let winning: number | null = null;
 
   return {
     entry: { name: entryPath.split('/').pop() ?? 'robot', text },
     read: async (ref, from) => {
       const base = from ?? entryPath;
-      const list = candidates(ref, base);
+      const list = candidates(ref, base).filter(inside);
       const order =
         winning !== null && winning < list.length
           ? [winning, ...list.keys()].filter((v, i, a) => a.indexOf(v) === i)

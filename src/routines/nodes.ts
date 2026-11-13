@@ -1,7 +1,7 @@
 import type { DataType } from './schema';
 
 export type NodeInput = DataType | 'audio';
-export type NodeTier = 'perception' | 'remote';
+export type NodeTier = 'perception' | 'remote' | 'case';
 export type Device = 'mac' | 'pi5' | 'browser' | 'cloud';
 
 export interface ModelNode {
@@ -194,6 +194,30 @@ export const MODEL_NODES: readonly ModelNode[] = [
     model: 'The model in your agent profile',
     licence: 'Provider terms',
     source: 'Agent settings',
+    measuredMs: {},
+  },
+  {
+    id: 'case-fact',
+    label: 'Case Fact',
+    inputs: [],
+    outputs: ['number', 'boolean', 'text'],
+    tier: 'case',
+    runsOn: ['mac', 'browser'],
+    model: 'The Case’s world in the sim',
+    licence: 'Basecase',
+    source: 'src/cases/caseFacts.ts',
+    measuredMs: {},
+  },
+  {
+    id: 'live-input',
+    label: 'Live Input',
+    inputs: [],
+    outputs: ['text', 'number', 'boolean'],
+    tier: 'case',
+    runsOn: ['mac', 'browser'],
+    model: 'A live input’s named events',
+    licence: 'Basecase',
+    source: 'src/cases/caseLogic.ts',
     measuredMs: {},
   },
 ];

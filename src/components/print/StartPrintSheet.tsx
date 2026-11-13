@@ -57,7 +57,7 @@ export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced,
         <div className="min-w-0 flex flex-col gap-2 text-[13px] text-white/80">
           <MetaLine
             className="text-[12.5px] text-white/50 tabular-nums"
-            items={[plate.material, `${exact ? '' : '≈ '}${hm(hours)}`, `${Math.round(grams)} g`]}
+            items={[`${exact ? '' : '≈ '}${hm(hours)}`, `${Math.round(grams)} g`]}
           />
           <p>{trayNote(plate, live)}</p>
           <p>

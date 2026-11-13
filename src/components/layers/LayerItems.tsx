@@ -125,9 +125,30 @@ const RowActions: React.FC<{ part: ScenePart; onToggle: PartRowProps['onToggle']
   );
 };
 
+const Chevron: React.FC<{ collapsed: boolean; onToggle: () => void }> = ({ collapsed, onToggle }) => (
+  <button
+    type="button"
+    aria-label={collapsed ? 'Expand' : 'Collapse'}
+    aria-expanded={!collapsed}
+    onClick={(e) => {
+      e.stopPropagation();
+      onToggle();
+    }}
+    className="w-5 h-5 shrink-0 rounded flex items-center justify-center text-white/50 hover:text-white/80 cursor-default"
+  >
+    <ChevronRightIcon className={`w-3.5 h-3.5 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
+  </button>
+);
+
+const INDENT_STEP = 22;
+
+const rowIndent = (depth: number, withChevron: boolean) => (withChevron ? 4 : 10) + depth * INDENT_STEP;
+
 export interface PartRowProps {
   part: ScenePart;
-  inGroup: boolean;
+  depth: number;
+  operandOf?: string;
+  collapsed?: boolean;
   selected: boolean;
   dimmed: boolean;
   editing: boolean;
@@ -136,40 +157,57 @@ export interface PartRowProps {
   onRename: (id: string, name: string) => void;
   onContextMenu: (part: ScenePart, x: number, y: number) => void;
   onToggle: (id: string, flag: 'visible' | 'locked') => void;
+  onToggleCollapsed: (id: string) => void;
 }
 
-export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimmed, editing, ...on }) => (
-  <li
-    data-layer-row={`part:${part.id}`}
-    onClick={(e) => {
-      e.stopPropagation();
-      on.onClick(part, e.shiftKey || hasPrimaryModifier(e));
-    }}
-    onDoubleClick={() => on.onEdit(part.id)}
-    onContextMenu={(e) => {
-      e.preventDefault();
-      on.onContextMenu(part, e.clientX, e.clientY);
-    }}
-    className={`${ROW} ${inGroup ? 'pl-8' : 'pl-2.5'} pr-2.5 gap-2 ${rowTone(selected, 'text-white/80')} ${
-      dimmed ? 'text-white/50' : ''
-    }`}
-  >
-    <PartGlyph part={part} />
-    {editing ? (
-      <RenameInput
-        current={part.name}
-        onCommit={(name) => {
-          on.onRename(part.id, name);
-          on.onEdit(null);
-        }}
-        onCancel={() => on.onEdit(null)}
-      />
-    ) : (
-      <span className="flex-1 truncate">{part.name}</span>
-    )}
-    {!editing && <RowActions part={part} onToggle={on.onToggle} />}
-  </li>
-);
+export const PartRow: React.FC<PartRowProps> = ({
+  part,
+  depth,
+  operandOf,
+  collapsed,
+  selected,
+  dimmed,
+  editing,
+  ...on
+}) => {
+  const topLevel = !operandOf;
+  const renaming = topLevel && editing;
+
+  return (
+    <li
+      data-layer-row={`part:${part.id}`}
+      data-operand-of={operandOf}
+      onClick={(e) => {
+        e.stopPropagation();
+        on.onClick(part, e.shiftKey || hasPrimaryModifier(e));
+      }}
+      onDoubleClick={topLevel ? () => on.onEdit(part.id) : undefined}
+      onContextMenu={(e) => {
+        e.preventDefault();
+
+        if (topLevel) on.onContextMenu(part, e.clientX, e.clientY);
+      }}
+      style={{ paddingLeft: rowIndent(depth, collapsed !== undefined) }}
+      className={`${ROW} pr-2.5 gap-2 ${rowTone(selected, 'text-white/80')} ${dimmed ? 'text-white/50' : ''}`}
+    >
+      {collapsed !== undefined && <Chevron collapsed={collapsed} onToggle={() => on.onToggleCollapsed(part.id)} />}
+      <PartGlyph part={part} />
+      {renaming ? (
+        <RenameInput
+          current={part.name}
+          onCommit={(name) => {
+            on.onRename(part.id, name);
+            on.onEdit(null);
+          }}
+          onCancel={() => on.onEdit(null)}
+        />
+      ) : (
+        <span className="flex-1 truncate">{part.name}</span>
+      )}
+      {topLevel && !editing && <RowActions part={part} onToggle={on.onToggle} />}
+    </li>
+  );
+};
 
 export interface GroupRowProps {
   id: string;
@@ -199,17 +237,7 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
     }}
     className={`${ROW} pl-1 pr-2 gap-1.5 font-medium ${rowTone(selected, 'text-white/85')}`}
   >
-    <button
-      type="button"
-      aria-label={collapsed ? 'Expand group' : 'Collapse group'}
-      onClick={(e) => {
-        e.stopPropagation();
-        on.onToggleCollapsed(id);
-      }}
-      className="w-5 h-5 rounded flex items-center justify-center text-white/50 hover:text-white/80 cursor-default"
-    >
-      <ChevronRightIcon className={`w-3.5 h-3.5 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
-    </button>
+    <Chevron collapsed={collapsed} onToggle={() => on.onToggleCollapsed(id)} />
     <GroupIcon className="w-3.5 h-3.5 text-white/50 shrink-0" />
     {editing ? (
       <RenameInput

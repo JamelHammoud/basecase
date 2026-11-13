@@ -4,12 +4,17 @@ import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
 import { Recorder, recordingTransfer, type Recording } from './recorder';
 import { fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
+import type { Scan } from './scanner';
 import { SimEngine, type Controller } from './engine';
+import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
+import type { AmpModel } from '../utils/servoAmps';
 import { demandedTorques, jointForces, limitForces } from './simForces';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
+import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
+import type { CaseFacts, FactValue } from '../cases/caseFacts';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -20,7 +25,9 @@ export type SimRequest =
   | { type: 'controller'; controller: Controller }
   | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number }
   | ({ type: 'command' } & DriveCommand)
+  | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
+  | { type: 'fault'; joint: string; kind: FaultKind | null }
   | { type: 'record'; on: boolean }
   | { type: 'scrub'; recording: Recording | null }
   | { type: 'seek'; frame: number }
@@ -35,9 +42,13 @@ export type SimRequest =
       frames?: number[];
       forceLimits?: Record<string, number>;
       trace?: boolean;
+      currents?: Record<string, AmpModel>;
       commands?: Array<{ at: number; command: DriveCommand }>;
     }
   | ({ type: 'routine' } & LiveRoutineInput)
+  | ({ type: 'case' } & LiveCaseInput)
+  | { type: 'caseEnd' }
+  | { type: 'input'; name: string; value: FactValue }
   | { type: 'cameras'; port: MessagePort | null }
   | { type: 'dispose' };
 
@@ -51,9 +62,11 @@ export type SimResponse =
   | {
       type: 'frame';
       poses: Float64Array;
-      targets: Float64Array;
+      joints: Float64Array;
       stats: ReturnType<SimEngine['stats']>;
       playing: boolean;
+      facts?: CaseFacts;
+      scan?: Scan;
     }
   | {
       type: 'ran';
@@ -74,14 +87,18 @@ let rtf = 1;
 let recorder: Recorder | null = null;
 let scrubbed: Recording | null = null;
 let live: LiveRoutine | null = null;
+let liveCase: LiveCase | null = null;
+let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
+let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
+let scanShown = -1;
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
 const frame = () => {
   if (!engine) return;
 
   const poses = engine.poses();
-  const targets = engine.jointTargets();
+  const joints = engine.jointStates();
 
   if (cameraPort) {
     const copy = poses.slice();
@@ -89,7 +106,16 @@ const frame = () => {
     cameraPort.postMessage(copy, [copy.buffer]);
   }
 
-  post({ type: 'frame', poses, targets, stats: engine.stats(rtf), playing }, [poses.buffer, targets.buffer]);
+  const facts = liveCase?.facts;
+  const scanner = engine.scanner;
+  const scan = scanner && scanner.version !== scanShown ? scanner.latest() : undefined;
+
+  scanShown = scanner?.version ?? -1;
+  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, ...(scan ? { scan } : {}) }, [
+    poses.buffer,
+    joints.buffer,
+    ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
+  ]);
 };
 
 function loop() {
@@ -102,7 +128,10 @@ function loop() {
 
   const t0 = performance.now();
 
+  if (script) applyDueCommands(engine, script.commands, engine.data.time - script.start);
+
   if (live) advanceRoutine(live, wall * speed);
+  else if (liveCase) liveCase.advance(wall * speed);
   else engine.step(wall * speed);
 
   const cost = (performance.now() - t0) / 1000;
@@ -133,6 +162,20 @@ async function startRoutine(msg: Msg<'routine'>) {
   play();
 }
 
+async function startCase(msg: Msg<'case'>) {
+  if (!engine) throw new Error('Nothing loaded');
+
+  liveCase = await LiveCase.start(engine, msg, () => driveController);
+}
+
+function setController(c: Controller) {
+  driveController = c;
+
+  if (liveCase && !liveCase.driving) return;
+
+  engine?.setController(c);
+}
+
 function errorText(e: unknown): string {
   const s = e instanceof Error ? e.message : String(e);
 
@@ -147,10 +190,13 @@ async function load(msg: Msg<'load'>) {
   engine = null;
   live = null;
   scrubbed = null;
+  liveCase = null;
+  script = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
+  scanShown = -1;
 
-  if (msg.controller) engine.setController(msg.controller);
+  if (msg.controller) setController(msg.controller);
 
   const m = engine.model;
 
@@ -228,9 +274,9 @@ function applyDueCommands(sim: SimEngine, commands: NonNullable<Msg<'run'>['comm
   while (commands.length && commands[0].at <= t + 1e-9) sim.command(commands.shift()!.command);
 }
 
-function tracer(sim: SimEngine) {
+function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
   const n = sim.sim.joints.length;
-  const recorder = new TorqueRecorder(n, sim.dt);
+  const recorder = new TorqueRecorder(n, sim.dt, { amps: sim.sim.joints.map((j) => currents[j.id] ?? null) });
   const demand = new Float64Array(n);
   const actual = new Float64Array(n);
 
@@ -257,7 +303,7 @@ function run(msg: Msg<'run'>) {
 
   if (msg.forceLimits) limitForces(sim.model, sim.sim, msg.forceLimits);
 
-  const trace = msg.trace ? tracer(sim) : null;
+  const trace = msg.trace ? tracer(sim, msg.currents) : null;
 
   while (sim.data.time < end - 1e-9) {
     const t = sim.data.time - start;
@@ -290,17 +336,26 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     speed = msg.value;
   },
   controller: (msg) => {
-    engine?.setController(msg.controller);
+    script = null;
+    setController(msg.controller);
   },
   grab,
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, msg.seconds);
   },
-  command: ({ v, target, aux }) => {
-    engine?.command({ v, target, aux });
+  command: ({ slot, v, target, aux }) => {
+    if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux });
+  },
+  script: (msg) => {
+    script = engine ? { start: engine.data.time, commands: [...msg.commands].sort((a, b) => a.at - b.at) } : null;
   },
   respawn: (msg) => {
     engine?.respawn(msg.robot);
+    frame();
+  },
+  fault: (msg) => {
+    engine?.setFault(msg.joint, msg.kind);
+    recorder?.fault(msg.joint, msg.kind);
     frame();
   },
   record,
@@ -308,6 +363,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   seek,
   run,
   routine: startRoutine,
+  case: startCase,
+  caseEnd: () => {
+    liveCase = null;
+  },
+  input: (msg) => liveCase?.input(msg.name, msg.value),
   cameras: (msg) => {
     cameraPort?.close();
     cameraPort = msg.port;
@@ -316,6 +376,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   dispose: () => {
     playing = false;
     live = null;
+    liveCase = null;
     recorder = null;
     scrubbed = null;
     clearTimeout(timer);

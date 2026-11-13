@@ -27,6 +27,12 @@ struct Collect {
     stale: usize,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Census {
+    pub ids: Vec<u8>,
+    pub clashed: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exchange {
     pub replies: Vec<Reply>,
@@ -64,6 +70,56 @@ impl ReadBus {
         let request = self.family.sync_read_request(address, length, ids);
 
         self.exchange(&request, ids, budget_us, Some(usize::from(length)))
+    }
+
+    pub fn census(&mut self, window_us: u64) -> Result<Census, BusGone> {
+        let request = self.family.ping_request(self.family.broadcast_id());
+        let deadline = self.clock.now_micros() + window_us;
+        let mut census = Census::default();
+        let mut buffer = [0u8; 512];
+
+        self.drain_late()?;
+        self.send(&request)?;
+
+        loop {
+            let now = self.clock.now_micros();
+
+            if now >= deadline {
+                return Ok(census);
+            }
+
+            let count = self
+                .transport
+                .read_bytes(&mut buffer, deadline - now)
+                .map_err(|_| BusGone)?;
+
+            self.pending.extend_from_slice(&buffer[..count]);
+            self.count_pending(&mut census);
+        }
+    }
+
+    fn count_pending(&mut self, census: &mut Census) {
+        loop {
+            match self.family.scan(&self.pending) {
+                Scan::NeedMore => return,
+                Scan::Skip(count) => {
+                    self.pending.drain(..count);
+                }
+                Scan::Corrupt { consumed } => {
+                    self.pending.drain(..consumed);
+                    census.clashed = true;
+                }
+                Scan::Frame(frame) => {
+                    self.pending.drain(..frame.consumed);
+
+                    match self.family.status_of(&frame) {
+                        Some(status) if census.ids.contains(&status.id) => census.clashed = true,
+                        Some(status) => census.ids.push(status.id),
+                        None => census.clashed = true,
+                    }
+                }
+            }
+        }
     }
 
     pub fn drain_late(&mut self) -> Result<usize, BusGone> {
@@ -263,6 +319,58 @@ mod tests {
 
         assert_eq!(second.replies, vec![Reply::Missing]);
         assert_eq!(second.stale_frames, 1);
+    }
+
+    #[test]
+    fn a_census_finds_every_id_once_even_when_two_servos_share_one() {
+        for family in [Family::Feetech, Family::Dynamixel] {
+            let (mut lone, clock) = bus_with_clock(family, &[3, 1, 7], 0);
+            let mut shared = bus(family, &[2, 1, 1]);
+            let started = clock.now_micros();
+
+            assert_eq!(
+                lone.census(800_000).unwrap(),
+                Census {
+                    ids: vec![1, 3, 7],
+                    clashed: false
+                }
+            );
+            assert_eq!(
+                clock.now_micros() - started,
+                800_000,
+                "a census waits out its window, no longer"
+            );
+            assert_eq!(shared.census(800_000).unwrap().ids, vec![1, 2]);
+        }
+    }
+
+    fn census_of(bytes: Vec<u8>) -> Census {
+        let mut bus = bus(Family::Feetech, &[]);
+        let mut census = Census::default();
+
+        bus.pending = bytes;
+        bus.count_pending(&mut census);
+
+        census
+    }
+
+    #[test]
+    fn a_census_counts_a_second_answer_from_one_id_or_a_garbled_one_as_a_clash() {
+        let one = Family::Feetech.status_frame(1, 0, &[]);
+        let mut garbled = Family::Feetech.status_frame(4, 0, &[]);
+        let last = garbled.len() - 1;
+
+        garbled[last] ^= 0xFF;
+
+        assert_eq!(
+            census_of([one.clone(), Family::Feetech.status_frame(3, 0, &[])].concat()),
+            Census {
+                ids: vec![1, 3],
+                clashed: false
+            }
+        );
+        assert!(census_of([one.clone(), one.clone()].concat()).clashed);
+        assert!(census_of([garbled, one].concat()).clashed);
     }
 
     #[test]

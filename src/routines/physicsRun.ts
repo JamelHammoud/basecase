@@ -8,6 +8,7 @@ import {
   type BodyPose,
   BodyProbe,
   controlFor,
+  NO_BODY,
   routineBody,
   type RoutineBody,
   SKILL_SECONDS,
@@ -98,7 +99,7 @@ export class PhysicsRun {
     const { kit } = input;
     const body = routineBody(input.model, input.joints, { skills: kit.policies, drive: kit.drive });
 
-    if (!body) throw new Error('Only a robot that walks on legs runs a Routine in physics.');
+    if (!body) throw new Error(NO_BODY);
 
     return new PhysicsRun(input, await startScenario(input.plan, input.scenario), body);
   }

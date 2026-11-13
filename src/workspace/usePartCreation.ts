@@ -5,24 +5,22 @@ import {
   createSculptClayPreset,
   extractSculptDataFromGeometry,
   tessellateGeometryForSculpting,
-} from '../three/sculptAndBooleanEngine';
+} from '../three/sculptEngine';
 import type { CatalogItem, CustomModelDefinition, ScenePart } from '../types/robotics';
 import { readImageFile } from '../utils/imageFile';
-import { pickFiles } from '../utils/pickFiles';
 import { cadPartsFromFile } from './cadImport';
-import { MESH_ACCEPT, isCadFileName, meshPartFromFile } from './meshImport';
+import { couldntImport, isCadFileName } from './importRoute';
+import { meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
-import { platformBridge } from '../utils/platformBridge';
-import { modelId, newId, stamp } from './helpers';
+import type { SnapPlacement } from '../agent/snap';
+import { modelBase, withPlacement } from './dropPreview';
+import { newId } from './helpers';
 import {
   CLAY_LABELS,
-  PRINTED_TAG,
   catalogItemLabel,
   catalogPart,
   clayPart,
   imagePlanePart,
-  sketchDescription,
-  sketchDimensions,
   sketchPart,
   type ClayPreset,
   type SketchParams,
@@ -87,21 +85,16 @@ function useSculptCreation(core: WorkspaceCore) {
     commitParts((prev) => [...prev, clayPart(preset, id, createSculptClayPreset(preset))]);
     setSelectedIds([id]);
     setTransformMode('sculpt');
-    showToast(`Added ${CLAY_LABELS[preset]}. Drag on it to sculpt.`);
+    showToast(`Added ${CLAY_LABELS[preset]}`);
   };
 
   const subdivideSelectedClay = () => {
     const part = selection.selectedPart;
 
-    if (!part) return;
+    if (!part?.sculptMesh) return;
 
     const { width, height, depth } = part.dimensions;
-    const geom = buildBufferGeometryFromSculptData(
-      part.sculptMesh || createSculptClayPreset('clay_sphere'),
-      width,
-      height,
-      depth,
-    );
+    const geom = buildBufferGeometryFromSculptData(part.sculptMesh, width, height, depth);
     const subdivided = extractSculptDataFromGeometry(tessellateGeometryForSculpting(geom), width, height, depth);
     const selectedId = selection.selectedPartId;
 
@@ -149,9 +142,7 @@ function useMeshImport(core: WorkspaceCore) {
     }
 
     if (failed.length > 0) {
-      showToast(`Couldn’t import ${failed.map((f) => f.name).join(', ')}. Try STL, 3MF, OBJ, PLY, FBX or GLB.`, {
-        tone: 'error',
-      });
+      showToast(couldntImport(failed), { tone: 'error' });
 
       return;
     }
@@ -159,43 +150,39 @@ function useMeshImport(core: WorkspaceCore) {
     showToast(imported.length === 1 ? `Inserted ${importedName(imported[0])}` : `Inserted ${imported.length} meshes`);
   };
 
-  const pickMeshes = async (at?: Vec3 | null) => importMeshes(await pickFiles(MESH_ACCEPT, true), at);
-
-  return { importMeshes, pickMeshes };
+  return { importMeshes };
 }
 
 export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
-  const { docs, setSelectedIds, showToast, studio, viewportRef } = core;
+  const { docs, setSelectedIds, showToast } = core;
   const { commitParts } = docs;
-  const { setCustomModels } = studio;
   const { addArticulated } = robots;
   const images = useReferenceImages(core);
   const sculpt = useSculptCreation(core);
   const meshes = useMeshImport(core);
 
-  const addCatalogPart = (item: CatalogItem, at?: Vec3) => {
+  const addCatalogPart = (item: CatalogItem, at?: Vec3, place?: SnapPlacement) => {
     const id = newId();
 
-    commitParts((prev) => [...prev, catalogPart(item, id, prev, at)]);
+    commitParts((prev) => [...prev, withPlacement(catalogPart(item, id, prev, at), place)]);
     setSelectedIds([id]);
     showToast(`Added ${catalogItemLabel(item)}`);
   };
 
-  const addCatalogItem = (item: CatalogItem, at?: Vec3) => {
+  const addCatalogItem = (item: CatalogItem, at?: Vec3, place?: SnapPlacement) => {
     if (item.componentId && ARTICULATED_PARTS[item.componentId]) {
       void addArticulated(item, at, () => addCatalogPart(item, at));
 
       return;
     }
 
-    addCatalogPart(item, at);
+    addCatalogPart(item, at, place);
   };
 
-  const placeCustomModel = (model: CustomModelDefinition, at?: Vec3) => {
-    const base: Vec3 = at
-      ? [at[0], Math.round((at[1] + model.defaultDimensions.height / 2) * 10) / 10, at[2]]
-      : [0, Math.round(model.defaultDimensions.height / 2), 0];
-    const { parts: inserted, missingShapes } = modelToParts(model, base, newId);
+  const placeCustomModel = (model: CustomModelDefinition, at?: Vec3, place?: SnapPlacement) => {
+    const made = modelToParts(model, modelBase(model, at), newId);
+    const { missingShapes } = made;
+    const inserted = made.parts.length === 1 ? [withPlacement(made.parts[0], place)] : made.parts;
 
     commitParts((prev) => [...prev, ...inserted]);
     setSelectedIds(inserted.map((p) => p.id));
@@ -207,32 +194,12 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
     );
   };
 
-  const createFromSketch = async (params: SketchParams) => {
+  const createFromSketch = (params: SketchParams) => {
     const id = newId();
 
     commitParts((prev) => [...prev, sketchPart(params, id)]);
     setSelectedIds([id]);
-
-    if (!params.saveToLibrary) {
-      showToast(`Added ${params.name}`);
-
-      return;
-    }
-
-    await platformBridge.saveModel({
-      id: modelId(),
-      name: params.name,
-      description: sketchDescription(params),
-      createdAt: stamp(),
-      sourceType: 'scene-selection',
-      sourceImageDataUrl: params.svgDataUrl || viewportRef.current?.captureScreenshot(),
-      defaultDimensions: sketchDimensions(params),
-      defaultColor: params.color,
-      mechanicalTag: PRINTED_TAG,
-      nodes: params.nodes,
-    });
-    setCustomModels(await platformBridge.listModels());
-    showToast(`Added ${params.name} and saved to Library`);
+    showToast(`Added ${params.name}`);
   };
 
   return { ...images, ...sculpt, ...meshes, addCatalogItem, placeCustomModel, createFromSketch };

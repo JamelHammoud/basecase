@@ -11,17 +11,18 @@ import type { Posing } from '../utils/usePosing';
 import type { ShowToast, StudioShared } from './types';
 import { useCases } from './useCases';
 import { useRoutines } from './useRoutines';
+import { useShareRobot } from './useShareRobot';
 import { useSkills } from './useSkills';
 import type { SceneDocument } from './useSceneDocument';
 
 interface SimTrainingOptions {
   workspaceId: string;
-  scene: { sceneId: string };
+  scene: { sceneId: string; sceneName: string };
   docs: SceneDocument;
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
-  studio: Pick<StudioShared, 'openSettings'>;
+  studio: Pick<StudioShared, 'openSettings' | 'robotsBeside'>;
 }
 
 function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: string | null): PolicyRecord[] {
@@ -75,11 +76,7 @@ export function useSimTraining(options: SimTrainingOptions) {
 
     if (!policy) return;
 
-    confirmAction({
-      title: `Delete ${policy.name}?`,
-      body: 'You can’t undo this.',
-      onConfirm: () => removePolicy(id),
-    });
+    confirmAction({ title: `Delete ${policy.name}?`, onConfirm: () => removePolicy(id) });
   };
 
   const cases = useCases({
@@ -91,10 +88,24 @@ export function useSimTraining(options: SimTrainingOptions) {
     showToast,
     openAccounts: () => studio.openSettings('accounts'),
     sceneId: scene.sceneId,
+    partners: () => studio.robotsBeside(workspaceId),
+  });
+  const share = useShareRobot({
+    scene: { sceneId: scene.sceneId, sceneName: scene.sceneName },
+    parts,
+    project,
+    kase: cases.active,
+    hasRobot: cases.hasRobot,
+    sim,
+    training,
+    skills,
+    viewportRef,
+    showToast,
+    openAccounts: () => studio.openSettings('accounts'),
   });
   const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
 
-  return { sim, training, policies, deletePolicy, cases, routines, skills };
+  return { sim, training, policies, deletePolicy, cases, routines, skills, share };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

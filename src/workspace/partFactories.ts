@@ -1,6 +1,7 @@
 import { catalogNote } from '../data/catalog';
 import { hardwareName, hardwareNote } from '../data/hardware';
 import type { CatalogItem, CustomModelSubNode, ScenePart, SculptMeshData } from '../types/robotics';
+import type { SketchSolid } from '../utils/sketch/placement';
 import type { Vec3 } from './types';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
@@ -15,7 +16,7 @@ export interface SketchParams {
   bevel: boolean;
   nodes: CustomModelSubNode[];
   svgDataUrl?: string;
-  saveToLibrary: boolean;
+  solid?: SketchSolid;
 }
 
 const PRINTED_TAG = '3D Printed PLA/PETG';
@@ -138,7 +139,7 @@ export function clayPart(preset: ClayPreset, id: string, sculptMesh: SculptMeshD
   };
 }
 
-export function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) {
+function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) {
   if (params.mode === 'svg') {
     return `Imported SVG (${params.nodes.length} path${params.nodes.length === 1 ? '' : 's'})`;
   }
@@ -146,7 +147,7 @@ export function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) 
   return params.mode === 'extrude' ? 'Sketch extrusion' : 'Sketch revolve';
 }
 
-export const sketchDimensions = (params: SketchParams) => ({
+const sketchDimensions = (params: SketchParams) => ({
   width: params.widthMm,
   height: params.heightMm,
   depth: params.depthMm,
@@ -154,6 +155,15 @@ export const sketchDimensions = (params: SketchParams) => ({
 });
 
 export function sketchPart(params: SketchParams, id: string): ScenePart {
+  const { solid } = params;
+  const base = flatSketchPart(params, id);
+
+  return solid
+    ? { ...base, position: solid.position, rotation: solid.rotation, role: solid.role, sketch: solid.record }
+    : base;
+}
+
+function flatSketchPart(params: SketchParams, id: string): ScenePart {
   return {
     id,
     name: params.name,
@@ -174,3 +184,15 @@ export function sketchPart(params: SketchParams, id: string): ScenePart {
 }
 
 export { PRINTED_TAG };
+
+export const solidSketchParams = (solid: SketchSolid, output: { name: string; color: string }): SketchParams => ({
+  name: output.name,
+  mode: solid.record.mode,
+  widthMm: solid.dimensions.width,
+  heightMm: solid.dimensions.height,
+  depthMm: solid.dimensions.depth,
+  color: output.color,
+  bevel: false,
+  nodes: [solid.node],
+  solid,
+});

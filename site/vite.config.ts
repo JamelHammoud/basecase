@@ -30,7 +30,7 @@ const siteAssetsPlugin = (): Plugin => ({
 
 interface Prerender {
   renderSite: () => string;
-  renderSitePages: (stylesheets: string[]) => { fileName: string; source: string }[];
+  renderSitePages: (assets: { stylesheets: string[]; helpScript?: string }) => { fileName: string; source: string }[];
 }
 
 const loadPrerender = async () => {
@@ -56,23 +56,35 @@ const prerenderPlugin = (): Plugin => ({
   },
 });
 
-const sitePagesPlugin = (): Plugin => ({
-  name: 'basecase-site-pages',
-  apply: 'build',
-  generateBundle: {
-    order: 'post',
-    async handler(_options, bundle) {
-      const stylesheets = Object.keys(bundle)
-        .filter((fileName) => fileName.endsWith('.css'))
-        .map((fileName) => `/${fileName}`);
-      const { renderSitePages } = await loadPrerender();
+const HELP_SEARCH_SCRIPT = path.join(repoDir, 'src/landing/help/search/helpSearchMain.ts');
 
-      for (const { fileName, source } of renderSitePages(stylesheets)) {
-        this.emitFile({ type: 'asset', fileName, source });
-      }
+const sitePagesPlugin = (): Plugin => {
+  let helpSearch = '';
+
+  return {
+    name: 'basecase-site-pages',
+    apply: 'build',
+    buildStart() {
+      helpSearch = this.emitFile({ type: 'chunk', id: HELP_SEARCH_SCRIPT, name: 'help-search' });
     },
-  },
-});
+    generateBundle: {
+      order: 'post',
+      async handler(_options, bundle) {
+        const stylesheets = Object.keys(bundle)
+          .filter((fileName) => fileName.endsWith('.css'))
+          .map((fileName) => `/${fileName}`);
+        const { renderSitePages } = await loadPrerender();
+
+        for (const { fileName, source } of renderSitePages({
+          stylesheets,
+          helpScript: `/${this.getFileName(helpSearch)}`,
+        })) {
+          this.emitFile({ type: 'asset', fileName, source });
+        }
+      },
+    },
+  };
+};
 
 export default defineConfig(({ command }) => ({
   root: siteDir,

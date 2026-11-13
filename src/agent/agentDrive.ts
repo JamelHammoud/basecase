@@ -46,6 +46,7 @@ interface AgentCommand {
   turn?: number;
   lift?: number;
   target?: V3;
+  grip?: number;
 }
 
 const slug = (name: string, i: number) =>
@@ -88,7 +89,7 @@ export function setWorldRequest(ctx: DriveToolContext, payload: { objects?: Agen
 const toCommand = (c: AgentCommand): DriveCommand => ({
   v: [c.forward ?? 0, c.left ?? 0, c.turn ?? 0],
   target: c.target ? toScene(c.target) : undefined,
-  aux: [c.lift ?? 0, 0],
+  aux: [c.lift ?? 0, c.grip ?? 0],
 });
 
 function liveDrive(ctx: DriveToolContext, commands: AgentCommand[]) {

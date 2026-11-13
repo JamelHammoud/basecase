@@ -23,10 +23,7 @@ export const ContextStatus: React.FC<{ context: ContextUsage }> = ({ context }) 
 
   return (
     <div className="px-2.5 pt-1.5 pb-2 tabular-nums select-none">
-      <div className="flex items-baseline justify-between text-[13px]">
-        <span className="text-white/90">Context</span>
-        <span className="text-white/50">{Math.round(share * 100)}%</span>
-      </div>
+      <div className="text-[13px] text-white/90">Context</div>
       <div className="mt-2 h-[4px] rounded-full bg-white/[0.08] overflow-hidden">
         <div
           className={`h-full rounded-full ${share >= NEARLY_FULL ? 'bg-amber-400' : 'bg-white/55'}`}

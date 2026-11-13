@@ -28,8 +28,8 @@ const EmptyModelsAction: React.FC<{ props: LibraryPanelProps }> = ({ props }) =>
       Save Selection
     </Button>
   ) : (
-    <Button size="sm" onClick={props.onImportSvg}>
-      Import SVG
+    <Button size="sm" onClick={props.onImport}>
+      Import
     </Button>
   );
 
@@ -45,7 +45,6 @@ export const ModelsSection: React.FC<{
       renaming={state.renaming === m.id}
       onInsert={() => props.onInsertModel(m)}
       onRename={finishRename(state, m.name, (name) => props.onRenameModel(m, name))}
-      onStartRename={() => state.setRenaming(m.id)}
       onMenu={state.showMenu(
         modelMenu({
           model: m,

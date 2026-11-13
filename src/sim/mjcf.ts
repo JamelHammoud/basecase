@@ -19,6 +19,7 @@ import {
 } from './mjcfTypes';
 import { adoptEmbeddedParts, isSolidPart } from './mjcfEmbedded';
 import { emitWorld } from './mjcfWorld';
+import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
 
 export { fromMj, quatFromMj, quatToMj, simDeltas, toMj, worldDeltas } from './mjcfFrames';
@@ -40,7 +41,6 @@ interface BuildState {
   roots: Record<string, { position?: V3; rotation?: V3 }>;
   worldXml: string[];
   actuatorXml: string[];
-  warnings: string[];
   lift: number;
 }
 
@@ -311,8 +311,6 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
   st.massKg[robot.key] = rb.grams / 1000;
 
   if (floating) st.roots[robot.key] = rootState(rb.local, rootOrigin, st.lift);
-
-  if (!rb.grams) st.warnings.push(`${robot.name} has no weighed parts. Its weight is an estimate.`);
 }
 
 function objectGroups(parts: ScenePart[]): string[][] {
@@ -383,7 +381,6 @@ export function buildMjcf(given: MjcfInput): SimModel {
     roots: {},
     worldXml: [],
     actuatorXml: [],
-    warnings: [],
     lift: input.posedFloor != null ? Math.max(0, -input.posedFloor) + 2 : 0,
   };
 
@@ -407,6 +404,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
   st.bodies.push(...world.bodies);
 
   const xml = mujocoXml(st, input.timestep ?? DEFAULT_TIMESTEP);
+  const scans = robotScans(st.bodies, parts);
 
   return {
     version: SIM_MODEL_VERSION,
@@ -416,6 +414,6 @@ export function buildMjcf(given: MjcfInput): SimModel {
     robots: st.robots,
     initial: { values: st.initialValues, roots: st.roots },
     massKg: st.massKg,
-    warnings: st.warnings,
+    ...(scans.length ? { scans } : {}),
   };
 }

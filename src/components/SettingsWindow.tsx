@@ -23,23 +23,20 @@ import {
   PanelsIcon,
   PrinterIcon,
   RefreshIcon,
-  WebIcon,
 } from '../design-system';
 import type { PrintersState } from '../app/usePrinters';
 import { AccountsPane } from './settings/AccountsPane';
 import { BuildPane, type BuildPrefs } from './settings/BuildPane';
 import { PrintersPane } from './settings/PrintersPane';
-import { RegionPane } from './settings/RegionPane';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
-export type SettingsPane = 'canvas' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'layout' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
   { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
   { id: 'layout', label: 'Layout', icon: <PanelsIcon className="w-4 h-4" /> },
-  { id: 'region', label: 'Region', icon: <WebIcon className="w-4 h-4" /> },
   { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
   { id: 'build', label: 'Build', icon: <PackageIcon className="w-4 h-4" /> },
   { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
@@ -182,11 +179,10 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
           >
             {current.id === 'canvas' && <CanvasPane {...props} />}
             {current.id === 'layout' && <LayoutPane {...props} />}
-            {current.id === 'region' && <RegionPane />}
             {current.id === 'agent' && <AgentPane {...props} />}
             {current.id === 'build' && <BuildPane prefs={props.buildPrefs} />}
             {current.id === 'printers' && (
-              <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
+              <PrintersPane key={props.printers.loaded ? 'loaded' : 'loading'} state={props.printers} />
             )}
             {current.id === 'accounts' && <AccountsPane />}
             {current.id === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
@@ -241,7 +237,6 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
             Move <Unit>mm</Unit>
           </>
         }
-        hint={`Hold ${modifierName('⇧')} while dragging to move freely`}
       >
         <SegmentedControl
           className="w-[240px]"
@@ -250,7 +245,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
           options={MOVE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : v }))}
         />
       </Row>
-      <Row label="Rotate" hint={`Hold ${modifierName('⇧')} while dragging to rotate freely`}>
+      <Row label="Rotate">
         <SegmentedControl
           className="w-[240px]"
           value={String(p.snapAngleDeg)}
@@ -260,7 +255,7 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
       </Row>
     </Group>
     <Group title="Measure">
-      <Row label="Units" hint={`Hold ${modifierName('⌥')} to measure vertically`}>
+      <Row label="Units">
         <SegmentedControl<MeasureUnit>
           className="w-[240px]"
           value={p.measureUnit}

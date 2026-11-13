@@ -1,5 +1,6 @@
 import { repo } from './github.mjs';
 import { json, run } from './sh.mjs';
+import { parseDigest } from './stats.mjs';
 
 export const HOUR_MS = 60 * 60 * 1000;
 export const DAY_MS = 24 * HOUR_MS;
@@ -39,7 +40,7 @@ export const lineComments = (since) =>
 const PULL_FIELDS =
   'number,title,body,author,isCrossRepository,state,headRefName,labels,createdAt,mergedAt,closedAt,reviews';
 
-export const pullsSince = (since) =>
+export const pullsSince = (since, extraFields = []) =>
   json('gh', [
     'pr',
     'list',
@@ -50,7 +51,7 @@ export const pullsSince = (since) =>
     '--search',
     `updated:>=${since.slice(0, 10)}`,
     '--json',
-    PULL_FIELDS,
+    [PULL_FIELDS, ...extraFields].join(','),
   ]) ?? [];
 
 export const mainCommits = (since) =>
@@ -92,6 +93,22 @@ export const openHeads = () =>
     '[.[].headRefName]',
   ]) ?? [];
 
-export const latestIssueAt = (label) =>
-  (json('gh', ['issue', 'list', '--state', 'all', '--label', label, '--limit', '1', '--json', 'createdAt']) ?? [])[0]
-    ?.createdAt ?? null;
+export const latestIssue = (label) =>
+  (json('gh', ['issue', 'list', '--state', 'all', '--label', label, '--limit', '1', '--json', 'createdAt,body']) ??
+    [])[0] ?? null;
+
+export const issuesSince = (since) =>
+  json('gh', [
+    'issue',
+    'list',
+    '--state',
+    'all',
+    '--limit',
+    '500',
+    '--search',
+    `updated:>=${since.slice(0, 10)}`,
+    '--json',
+    'number,labels,createdAt,closedAt,stateReason',
+  ]) ?? [];
+
+export const digestWorst = () => parseDigest(latestIssue('loop:digest')?.body)?.worst ?? null;

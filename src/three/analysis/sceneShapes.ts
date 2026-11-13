@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { rigidFrame } from '../meshMeasure';
 import type { GeometryPayload, Instance, ShapeSpec } from './analysisOps';
 
 export interface SceneShapes {
@@ -7,7 +8,6 @@ export interface SceneShapes {
   geometries: Map<string, THREE.BufferGeometry>;
 }
 
-const UNIT = new THREE.Vector3(1, 1, 1);
 const round = (v: number) => Math.round(v * 1e4) / 1e4;
 
 function geometryId(g: THREE.BufferGeometry) {
@@ -15,15 +15,6 @@ function geometryId(g: THREE.BufferGeometry) {
   const version = attr instanceof THREE.InterleavedBufferAttribute ? attr.data.version : attr.version;
 
   return `${g.uuid}@${version}`;
-}
-
-function rigidFrame(object: THREE.Object3D) {
-  const t = new THREE.Vector3();
-  const q = new THREE.Quaternion();
-
-  object.matrixWorld.decompose(t, q, new THREE.Vector3());
-
-  return new THREE.Matrix4().compose(t, q, UNIT);
 }
 
 function meshesOf(object: THREE.Object3D, frameInverse: THREE.Matrix4) {
@@ -51,7 +42,7 @@ export function snapshotShapes(objects: Array<{ id: string; object: THREE.Object
   for (const { id, object } of objects) {
     object.updateWorldMatrix(true, true);
 
-    const frame = rigidFrame(object);
+    const frame = rigidFrame(object).matrix;
     const meshes = meshesOf(object, frame.clone().invert());
 
     if (!meshes.length) continue;
@@ -91,4 +82,23 @@ export function geometryPayload(id: string, geometry: THREE.BufferGeometry): Geo
     positions: plainVec3(geometry.attributes.position),
     index: index ? new Uint32Array(index.array as Uint16Array | Uint32Array) : null,
   };
+}
+
+const SLICE_MS = 8;
+const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+export async function copyGeometries(scene: SceneShapes, ids: string[]): Promise<GeometryPayload[]> {
+  const out: GeometryPayload[] = [];
+  let sliceStart = performance.now();
+
+  for (const id of ids) {
+    out.push(geometryPayload(id, scene.geometries.get(id)!));
+
+    if (performance.now() - sliceStart < SLICE_MS) continue;
+
+    await yieldToMain();
+    sliceStart = performance.now();
+  }
+
+  return out;
 }

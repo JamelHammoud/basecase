@@ -1,6 +1,6 @@
 # src/onshape/
 
-The page's side of Onshape: the bridge to the main process, the link check Import Robot uses, and loading an assembly as a rig. Before editing here, read:
+The page's side of Onshape: the bridge to the main process, the link check Import Robot uses, loading an assembly as a rig with its Onshape ids, and Update from Onshape's diff. Before editing here, read:
 
 - [Joints and motion](../../docs/guide/joints-and-motion.md) (§8c)
 - [Security](../../docs/guide/security.md) (§0h)

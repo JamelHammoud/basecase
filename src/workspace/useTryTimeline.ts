@@ -1,7 +1,9 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { stageCase, stagedEffectors } from '../cases/caseCast';
 import type { Case } from '../cases/schema';
+import type { SlotRobot } from '../cases/slots';
 import { timelineLanes } from '../cases/timelineLanes';
-import { liveScoring, trySignals, type TryRecord } from '../cases/tries';
+import { trySignals, type TryRecord } from '../cases/tries';
 import { tripFrames, type Trip } from '../cases/tripFrames';
 import { loadRecording } from '../cases/tryStore';
 import type { Recording } from '../sim/recorder';
@@ -15,6 +17,7 @@ interface TimelineOptions {
   rig: Rig;
   parts: ScenePart[];
   active: Case | null;
+  partners: () => SlotRobot[];
 }
 
 interface Opened {
@@ -26,14 +29,15 @@ interface Opened {
 }
 
 async function tripsOf(options: TimelineOptions, recording: Recording): Promise<Trip[]> {
-  const { sim, rig, parts, active } = options;
-  const model = sim.latestModel();
+  const { sim, rig, parts, active, partners } = options;
+  const model = sim.modelNow();
 
   if (!active || !model) return [];
 
-  const scoring = liveScoring({ kase: active, model, recording, rig, parts });
+  const staged = stageCase(active, { rig, parts }, partners());
+  const scoring = { kase: staged.kase, model, recording, rig, ...stagedEffectors(staged, { rig, parts }) };
 
-  return tripFrames(scoring.kase.task.contract, trySignals(scoring)).catch(() => []);
+  return tripFrames(staged.kase.task.contract, trySignals(scoring)).catch(() => []);
 }
 
 function simBefore(sim: Simulation): Opened['before'] {
@@ -72,7 +76,7 @@ export function useTryTimeline(options: TimelineOptions) {
 
     if (sim.drive.active) sim.drive.stop();
 
-    if (!sim.latestModel()) await sim.start();
+    if (!sim.modelNow()) await sim.start();
 
     const efforts = await sim.scrub(recording);
 

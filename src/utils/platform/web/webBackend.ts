@@ -1,7 +1,9 @@
 import type { AcpStatusInfo, CustomModelDefinition, PurchaseRecord } from '../../../types/robotics';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
+import { trainedPolicy, trainedSkill } from './webTrained';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
+import { getSkill, saveSkill } from './webSkills';
 
 type Body = Record<string, unknown>;
 
@@ -73,6 +75,7 @@ const ROUTES: Record<string, Route> = {
   'acp-cancel': () => OK,
   'acp-close-workspace': () => OK,
   'acp-forget-run': () => OK,
+  'cad-render': () => ({ ok: false, error: 'Download Basecase to compile parts.' }),
   'agent-respond': () => OK,
   chats: () => [],
   chat: () => null,
@@ -91,9 +94,10 @@ const ROUTES: Record<string, Route> = {
   'save-scene-preview': (b) => saveScenePreview(b as { id: string }),
   'delete-scene': (b) => deleteScene(String(b.sceneId)),
   'train-status': () => TRAINER,
-  policy: () => null,
+  policy: (_, params) => trainedPolicy(params.get('id') ?? ''),
   'policy-delete': () => false,
-  skill: () => null,
+  skill: async (_, params) => (await getSkill(params.get('hash'))) ?? trainedSkill(params.get('hash') ?? ''),
+  'skill-save': (b) => saveSkill(b),
   'simready-status': () => ({ uv: false, ready: false }),
   'simready-file': () => ({ data: null }),
   'print-status': () => ({ slicers: [], downloads: {}, bambuConnect: false }),

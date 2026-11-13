@@ -1,4 +1,4 @@
-import { isScadDefinition, scadStatements } from './scadStatements';
+import { isScadDefinition, scadStatements } from '../../electron/cad-kernel/scadStatements.mjs';
 import type { V3 } from './agentFrame';
 
 export type CadLanguage = 'openscad' | 'replicad';

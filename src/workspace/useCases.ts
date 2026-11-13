@@ -1,10 +1,10 @@
 import { useEffect, useEffectEvent, useState } from 'react';
-import { fittingTemplates } from '../cases/caseBuilder';
+import { uniqueCaseId } from '../cases/caseBuilder';
+import { stageCase } from '../cases/caseCast';
 import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
-import { scaledToReach } from '../cases/scale';
-import { parseCase, worldItem, type Case } from '../cases/schema';
-import { caseTemplates, uniqueCaseId } from '../cases/templates';
+import { readCases, worldItem, type Case } from '../cases/schema';
+import type { SlotRobot } from '../cases/slots';
 import { worstFirst, type TryRecord } from '../cases/tries';
 import { deleteRecording } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
@@ -26,35 +26,30 @@ interface CasesOptions {
   showToast: ShowToast;
   openAccounts: () => void;
   sceneId: string;
-}
-
-function readCases(raw: unknown[] | undefined): Case[] {
-  return (raw ?? []).flatMap((c) => {
-    try {
-      return [parseCase(c)];
-    } catch {
-      return [];
-    }
-  });
+  partners: () => SlotRobot[];
 }
 
 export function useCases(options: CasesOptions) {
-  const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId } = options;
+  const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
-  const templates = caseTemplates(rig, parts);
   const tries = worstFirst((project.tries ?? []).filter((t) => t.caseId === activeId));
   const hasRobot = rig.robots.length > 0;
   const fixedBase = hasRobot && robotFacts(rig, parts).morphology === 'fixed';
 
+  const stage = (kase: Case | null) => {
+    const staged = kase && stageCase(kase, { rig, parts }, partners());
+
+    sim.setWorld(staged?.kase.world.objects.map(worldItem) ?? [], staged?.joined);
+  };
+
   const open = (id: string | null) => {
     const kase = cases.find((c) => c.id === id) ?? null;
-    const facts = robotFacts(rig, parts);
 
     setActiveId(kase?.id ?? null);
-    sim.setWorld(kase ? scaledToReach(kase, facts.reachMm, facts.anchor).world.objects.map(worldItem) : []);
+    stage(kase);
   };
 
   const orphaned = activeId !== null && !active;
@@ -80,18 +75,9 @@ export function useCases(options: CasesOptions) {
 
     setProject((p) => ({ ...p, cases: [...(p.cases ?? []), named] }));
     setActiveId(id);
-
-    const facts = robotFacts(rig, parts);
-
-    sim.setWorld(scaledToReach(named, facts.reachMm, facts.anchor).world.objects.map(worldItem));
+    stage(named);
 
     return named;
-  };
-
-  const addTemplate = (templateId: string) => {
-    const template = templates.find((t) => t.id === templateId);
-
-    return template && !template.refusal ? add(template.build()) : null;
   };
 
   const remove = (id: string) => {
@@ -101,7 +87,7 @@ export function useCases(options: CasesOptions) {
 
     confirmAction({
       title: `Delete ${kase.name}?`,
-      body: 'Its tries go with it. You can’t undo this.',
+      body: 'Its tries go with it.',
       onConfirm: () => {
         const gone = (project.tries ?? []).filter((t) => t.caseId === id);
 
@@ -117,12 +103,11 @@ export function useCases(options: CasesOptions) {
     });
   };
 
-  const timeline = useTryTimeline({ sim, rig, parts, active });
+  const timeline = useTryTimeline({ sim, rig, parts, active, partners });
 
   const removeTry = (record: TryRecord) =>
     confirmAction({
       title: `Delete this try?`,
-      body: 'You can’t undo this.',
       onConfirm: () => {
         if (timeline.record?.id === record.id) timeline.close();
 
@@ -138,6 +123,7 @@ export function useCases(options: CasesOptions) {
       kase: active,
       rig,
       parts,
+      partners: active ? stageCase(active, { rig, parts }, partners()).partners.flatMap((r) => r ?? []) : [],
       build: sim.buildModel,
       run: async ({ model, controller, seconds, commands }) =>
         (await sim.runOn(model, { seconds, controller, commands })).stats,
@@ -146,21 +132,22 @@ export function useCases(options: CasesOptions) {
     setFit({ caseId: activeId, rows, checking: false });
   };
 
-  const builder = useCaseBuilder({ rig, parts, add });
+  const builder = useCaseBuilder({ rig, parts, add, partners });
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
   const attempt = useCaseTry({
     sim,
     rig,
     parts,
+    joints: project.joints ?? [],
     active,
+    partners,
     onTry: (record) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), record] })),
+    onRefuse: (message) => showToast(message),
   });
 
   return {
     cases,
     active,
-    templates,
-    examples: fittingTemplates(templates),
     builder,
     dataset,
     tries,
@@ -169,7 +156,6 @@ export function useCases(options: CasesOptions) {
     fit: fit && fit.caseId === activeId ? fit : null,
     open,
     add,
-    addTemplate,
     remove,
     removeTry,
     timeline,

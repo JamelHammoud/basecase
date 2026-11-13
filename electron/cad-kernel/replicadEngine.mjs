@@ -1,6 +1,7 @@
 import { measure } from './kernelMesh.mjs';
 import { portsFromObjects } from './ports.mjs';
 import { occMessage, replicadScope, unwrapResult, wrapCode } from './replicadSupport.mjs';
+import { exportStepAssembly } from './stepAssembly.mjs';
 
 function replicadHints(msg) {
   if (/has been deleted/i.test(msg)) {
@@ -36,6 +37,16 @@ async function runAgentCode(api, code) {
 
     throw new Error([message, ...replicadHints(message)].join('\n'), { cause: err });
   }
+}
+
+const NOT_A_SHAPE = 'The code must `return` a replicad 3D shape (e.g. return sketch.extrude(10)), or { shape, ports }.';
+
+async function shapeOfCode(api, code) {
+  const { shape } = unwrapResult(await runAgentCode(api, code));
+
+  if (!shape || typeof shape.mesh !== 'function') throw new Error(NOT_A_SHAPE);
+
+  return shape;
 }
 
 function meshOf(api, shape) {
@@ -77,16 +88,17 @@ export function createReplicadEngine({ replicad }) {
 
       const { shape, ports: declared, notes } = unwrapResult(await runAgentCode(api, code));
 
-      if (!shape || typeof shape.mesh !== 'function') {
-        throw new Error(
-          'The code must `return` a replicad 3D shape (e.g. return sketch.extrude(10)), or { shape, ports }.',
-        );
-      }
+      if (!shape || typeof shape.mesh !== 'function') throw new Error(NOT_A_SHAPE);
 
       const mesh = meshOf(api, shape);
       const { ports, problems } = portsFromObjects(declared);
 
       return { ...mesh, warnings: [...notes, ...problems], ports };
+    },
+    async exportStep(job) {
+      const api = await load();
+
+      return exportStepAssembly(api, { job, shapeOfCode: (code) => shapeOfCode(api, code) });
     },
     prewarm() {
       load().catch(() => {});

@@ -23,7 +23,8 @@ export function useSlashMenu({ text, setText, promptRef }: SlashInputs) {
     const next = withSlash(text, command.name);
 
     setText(next);
-    focusPromptSoon(promptRef, next.length);
+
+    if (document.activeElement !== promptRef.current) focusPromptSoon(promptRef, next.length);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>): boolean => {

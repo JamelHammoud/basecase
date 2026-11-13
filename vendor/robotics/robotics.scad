@@ -18,7 +18,9 @@ STS3215 = [[45.2, 24.7, 35.0], 10.1, 0,    0,   0,    5.9, 3.4, 0, 1.4, 1.4, 14,
 MG996R  = [[40.7, 19.7, 37.2], 10.2, 54.5, 2.5, 9.5,  5.9, 4.0, 49.5];// standard size servo
 SG90    = [[22.5, 12.2, 22.7],  5.9, 32.2, 2.5, 4.5,  4.8, 3.2, 27.5];// 9 g micro servo
 XL430   = [[46.5, 28.5, 34.0], 11.3, 0,    0,   0,    9.0, 1.5, 0];   // Dynamixel XL430 / XM430 (horn flange)
-XL330   = [[34.0, 20.0, 26.0],  8.5, 0,    0,   0,    6.5, 1.5, 0];   // Dynamixel XL330
+// Dynamixel XL330-M288 (ROBOTIS mesh): axis 9.5 mm from the case end, Ø16 horn 3 mm proud with 4 × M2 on Ø12,
+// rear boss 3 mm proud; pass m = 2 to the joint modules
+XL330   = [[34.0, 20.0, 23.0],  9.5, 0,    0,   0,    6.5, 1.5, 0, 3.0, 3.0, 12, 16];
 
 function servo_case(s)        = s[0];
 function servo_shaft_offset(s)= s[1];

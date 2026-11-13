@@ -7,7 +7,6 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   DeleteIcon,
-  EditIcon,
   GripIcon,
 } from '../../../design-system';
 import { QueueControls, QueuedItem } from '../types';
@@ -21,11 +20,7 @@ const BANNER = '#222222';
 const ROW_HOVER = '#2a2a2a';
 const ACTIONS_FADE = `linear-gradient(to right, transparent, ${ROW_HOVER} 32px)`;
 
-const RowActions: React.FC<{ item: QueuedItem; queue: QueueControls; onEdit: (id: string) => void }> = ({
-  item,
-  queue,
-  onEdit,
-}) => (
+const RowActions: React.FC<{ item: QueuedItem; queue: QueueControls }> = ({ item, queue }) => (
   <div
     className="absolute inset-y-0 right-0 flex items-center pl-10 pr-1 rounded-r-[10px] opacity-0 pointer-events-none group-hover/queued:opacity-100 group-hover/queued:pointer-events-auto group-focus-within/queued:opacity-100 group-focus-within/queued:pointer-events-auto transition-opacity duration-150"
     style={{ backgroundImage: ACTIONS_FADE }}
@@ -36,13 +31,6 @@ const RowActions: React.FC<{ item: QueuedItem; queue: QueueControls; onEdit: (id
       tooltipSide="top"
       size="xs"
       onClick={() => void queue.sendNow(item.id)}
-    />
-    <IconButton
-      icon={<EditIcon className="w-4 h-4" />}
-      title="Edit"
-      tooltipSide="top"
-      size="xs"
-      onClick={() => onEdit(item.id)}
     />
     <IconButton
       icon={<DeleteIcon className="w-4 h-4" />}
@@ -160,7 +148,7 @@ export const QueuedMessages: React.FC<{ queue: QueueControls; onEdit: (id: strin
                 style={{ height: QUEUE_ROW_PX }}
               >
                 <QueuedRowBody params={item.params} />
-                {!drag && <RowActions item={item} queue={queue} onEdit={onEdit} />}
+                {!drag && <RowActions item={item} queue={queue} />}
               </div>
             ))}
             {drag && <DropLine drag={drag} />}

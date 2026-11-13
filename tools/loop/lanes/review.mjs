@@ -2,13 +2,24 @@ import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
 import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
-import { commentOnPull, openPulls, pullComments, pullReview, reviewState, setReview } from '../lib/github.mjs';
+import {
+  closePull,
+  commentOnPull,
+  openPulls,
+  pullCheck,
+  pullComments,
+  pullReview,
+  reviewState,
+  setReview,
+} from '../lib/github.mjs';
+import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
+import { byRank } from '../lib/rank.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 export const schedule = {
   agent: true,
-  slots: 4,
+  slots: 8,
   everySeconds: 60,
   does: 'Reviews each pull request whose head has no agent-review status',
 };
@@ -20,6 +31,7 @@ const SCHEMA = {
   properties: {
     verdict: { type: 'string', enum: ['pass', 'fail'] },
     summary: { type: 'string' },
+    duplicateOf: { type: 'integer' },
     findings: {
       type: 'array',
       items: {
@@ -69,12 +81,23 @@ function reviewPull(pull, log) {
       ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
       : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
     const counted = `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n${fenced(copy.text)}\n\n${copyReviewNote(copy)}`;
-    const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\nIts diff against main:\n\n${diff}`;
+    const others = inFlight();
+    const duplicates = `Other pull requests, open or merged in the last day:\n\n${inFlightText({ ...others, except: pull.number })}\n\nIf one of them makes this same change (the same strings or the same behaviour, not merely the same area), set duplicateOf to its number.`;
+    const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\n${duplicates}\n\nIts diff against main:\n\n${diff}`;
     const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
 
     if (!result.ok) {
       setReview(sha, 'error', 'The review session failed; it will run again');
       log(`#${pull.number}: review session failed: ${String(result.error).slice(0, 500)}`);
+
+      return;
+    }
+
+    const original = duplicateTarget({ duplicateOf: result.output.duplicateOf, pull, ...others });
+
+    if (original) {
+      closePull(pull.number, `Closing as a duplicate of #${original}, which makes the same change.`);
+      log(`#${pull.number}: duplicate of #${original}; closed`);
 
       return;
     }
@@ -121,11 +144,13 @@ function carryOver(pull, log) {
 export default function review({ log }) {
   fetchAll();
 
-  const waiting = openPulls().filter((pull) => {
-    const state = pullReview(pull);
+  const waiting = openPulls()
+    .filter((pull) => {
+      const state = pullReview(pull);
 
-    return state === null || state === 'error';
-  });
+      return (state === null || state === 'error') && pull.mergeable !== 'CONFLICTING' && pullCheck(pull) !== 'failure';
+    })
+    .sort((a, b) => Number(pullCheck(b) === 'success') - Number(pullCheck(a) === 'success') || byRank(a, b));
 
   for (const pull of waiting) {
     const release = claim(`review-${pull.number}`);

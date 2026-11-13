@@ -39,6 +39,7 @@ fn input(i: Input) -> String {
         Input::JointVel(j) => format!("s.jv[{j}]"),
         Input::Action(j) => format!("s.a[{j}]"),
         Input::LastAction(j) => format!("s.la[{j}]"),
+        Input::Reference(k) => format!("s.ref[{k}]"),
     }
 }
 
@@ -119,6 +120,7 @@ fn observe(task: &Task) -> String {
             Observed::JointOffsets => ("jp", task.nact()),
             Observed::JointVel => ("jv", task.nact()),
             Observed::LastAction => ("la", task.nact()),
+            Observed::Clock => ("clock", 2),
         };
 
         let _ = writeln!(out, "    for (int k = 0; k < {len}; k++) o[{at} + k] = s.{field}[k];");
@@ -161,6 +163,13 @@ fn constants(e: &mut Emitter, task: &Task) {
         ("DELAY_HI", conditions.delay_steps[1] as i64),
         ("TASK_RESAMPLE", i64::from(draws.is_some())),
         ("TASK_DELAY_RAMP", i64::from(conditions.delay_ramp)),
+        ("TASK_REF", i64::from(task.reference.is_some())),
+        (
+            "REF_LOOP",
+            i64::from(task.reference.as_ref().is_some_and(|r| r.looping)),
+        ),
+        ("REF_WIDTH", task.reference.as_ref().map_or(1, |r| r.width) as i64),
+        ("REF_FRAMES", task.reference.as_ref().map_or(2, |r| r.count()) as i64),
     ] {
         e.define(name, value);
     }
@@ -216,8 +225,18 @@ const STATE: &str = "struct TaskState {
     float jv[NACT];
     float a[NACT];
     float la[NACT];
+    float ref[REF_WIDTH];
+    float clock[2];
 };
 ";
+
+pub fn knobs(task: &Task) -> Vec<f32> {
+    let frames = task.reference.as_ref().map_or(&[][..], |r| &r.frames[..]);
+
+    std::iter::once(task.conditions.delay_steps[1] as f32)
+        .chain(frames.iter().map(|v| *v as f32))
+        .collect()
+}
 
 pub fn source(task: &Task) -> String {
     let mut e = Emitter::default();

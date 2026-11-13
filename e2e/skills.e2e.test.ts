@@ -4,6 +4,9 @@ import type { ServoCalibration } from '../src/reality/types';
 import { box } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
+import { fixtureModel } from '../src/skills/fixtureModels';
+import { moveEnvironment } from '../src/skills/moveEnvironment';
+import { clockPolicy, quadSit } from '../src/skills/moveFixtures';
 import { DEFAULT_PROJECT, type PolicyRecord, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematicsRig';
 import { openApp, partCount, type App } from './harness';
@@ -12,8 +15,9 @@ let app: App;
 
 type Studio = {
   load: (r: unknown) => void;
-  simState: () => { fingerprints: Record<string, string> };
+  simState: () => { fingerprints: Record<string, string>; controller: { kind: string; clock: unknown } };
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
+  stubTrainer: (policy: unknown) => void;
 };
 
 const fingerprints = () =>
@@ -36,13 +40,13 @@ const focusedValue = () =>
     return el instanceof HTMLTextAreaElement ? el.value : el?.tagName;
   });
 
-async function loadFixture(id: string) {
+async function loadFixture(id: string, policies: PolicyRecord[] = []) {
   const robot = fixtureRobots().find((r) => r.id === id)!;
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: id,
     parts: robot.parts,
-    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+    project: { ...DEFAULT_PROJECT, joints: robot.joints, policies },
   });
   await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
 }
@@ -123,6 +127,33 @@ describe('the Train section', () => {
       .poll(() => app.page.locator(visible('main, body')).first().innerText())
       .toContain('/train wave a front leg');
     expect(await button(/^Stand$|^Walk$/).count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('lists trained policies in Train, with Delete on right-click', async () => {
+    const policy: PolicyRecord = {
+      id: 'walk-e2e',
+      name: 'Walk forward',
+      task: 'walk',
+      robot: 'robot',
+      robotName: 'Biped',
+      command: [0.2, 0, 0],
+      trainedSteps: 2_000_000,
+      createdAt: '2026-11-12T00:00:00.000Z',
+    };
+
+    await loadFixture('biped-servo', [policy]);
+    await clickTab('Simulate');
+
+    const train = app.page.locator(visible('section'), { has: app.page.locator('h3', { hasText: /^Train$/ }) });
+    const row = train.getByTestId('policy-list').locator('li', { hasText: 'Walk forward' });
+
+    await expect.poll(() => row.count()).toBe(1);
+    expect(await row.innerText()).toContain('2.0M steps');
+    expect(await app.page.locator(visible('h3'), { hasText: /^Policies$/ }).count()).toBe(0);
+    await row.click({ button: 'right' });
+    await expect.poll(() => app.page.getByRole('menuitem', { name: 'Delete' }).count()).toBe(1);
+    await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);
   });
 });
@@ -210,4 +241,42 @@ describe('a policy trained before a calibration', () => {
     await expect.poll(() => row.getAttribute('data-retraining')).toBe('true');
     expect(app.errors).toEqual([]);
   }, 180000);
+});
+
+describe('a move from a Pose-tab animation', () => {
+  it('lists Sit in the Train section, trains it to a passing run, and Try plays it in the live sim', async () => {
+    const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+    const sit = quadSit();
+    const environment = moveEnvironment(fixtureModel('quad-servo'), sit);
+
+    await loadScene({
+      name: 'quad',
+      parts: robot.parts,
+      project: { ...DEFAULT_PROJECT, joints: robot.joints, animations: [sit] },
+    });
+    await clickTab('Simulate');
+
+    const row = app.page.locator(visible('[data-testid="skill-row"]'), { hasText: 'Sit' }).first();
+
+    await expect.poll(() => row.count(), { timeout: 60000 }).toBe(1);
+    await app.page.evaluate(
+      (policy) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(policy),
+      clockPolicy(environment),
+    );
+    await app.page.route(
+      (url) => url.pathname === '/api/bridge/skill',
+      (route) => {
+        const saved = app.posts.filter((p) => p.route === 'skill-save').at(-1)?.body as { text?: string } | undefined;
+
+        return route.fulfill({ status: 200, contentType: 'application/json', body: saved?.text ?? '{}' });
+      },
+    );
+    await row.locator('button', { hasText: 'Train' }).click();
+    await expect.poll(() => row.innerText(), { timeout: 150000 }).toContain('of 32 tries');
+    await row.locator('button', { hasText: 'Try' }).click();
+    await expect
+      .poll(() => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().controller))
+      .toEqual({ kind: 'policy', clock: { frames: 51, loop: false } });
+    expect(app.errors).toEqual([]);
+  }, 240000);
 });

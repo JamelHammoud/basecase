@@ -1,9 +1,10 @@
 import type { RobotJoint } from '../types/robotics';
-import type { RobotSpec } from './robotState';
+import type { ConnectSpec, RobotSpec } from './robotState';
+import { g1WritableSceneJoints, isUnitreeG1, UNITREE_G1_ASK } from './unitreeG1';
 
 export const MAX_SERVOS = 32;
 
-export type SceneRobot = { ok: true; spec: RobotSpec; joints: string[] } | { ok: false; reason: string };
+export type SceneRobot = { ok: true; spec: ConnectSpec; joints: string[] } | { ok: false; reason: string };
 
 export interface ServoLayout {
   movable: RobotJoint[];
@@ -28,6 +29,8 @@ export function sceneRobot(joints: readonly RobotJoint[]): SceneRobot {
 
   if (movable.length > MAX_SERVOS)
     return { ok: false, reason: `Emulated robots take at most ${MAX_SERVOS} servos. This one has ${movable.length}.` };
+
+  if (isUnitreeG1(movable)) return { ok: true, spec: UNITREE_G1_ASK, joints: g1WritableSceneJoints(movable) };
 
   return {
     ok: true,

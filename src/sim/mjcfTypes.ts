@@ -2,6 +2,7 @@ import type { ServoFit } from '../data/components';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
+import type { Eye } from './eyes';
 import type { RobotMorphology } from './morphology';
 
 export const SIM_MODEL_VERSION = 1;
@@ -55,7 +56,7 @@ export interface SimModel {
   robots: SimRobot[];
   initial: RobotPoseState;
   massKg: Record<string, number>;
-  warnings: string[];
+  scans?: Eye[];
 }
 
 export interface MjcfInput {

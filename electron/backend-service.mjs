@@ -15,7 +15,8 @@ import { DEFAULT_WORKSPACE, safeWorkspace } from './backend/constants.mjs';
 import { EventHub } from './backend/eventHub.mjs';
 import * as evidence from './backend/evidence.mjs';
 import { watchLibrary } from './backend/fileWatchers.mjs';
-import { serveKernel } from './backend/kernelRoutes.mjs';
+import { serveKernel, UNAVAILABLE } from './backend/kernelRoutes.mjs';
+import { PART_SOURCE_MS, tuneCadPart } from './backend/cadTune.mjs';
 import { ensureDirectories, libraryPaths } from './backend/libraryPaths.mjs';
 import * as models from './backend/models.mjs';
 import { buildPromptBlocks } from './backend/promptBlocks.mjs';
@@ -24,6 +25,8 @@ import * as skillStore from './backend/skillStore.mjs';
 import * as sourced from './backend/sourced.mjs';
 import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { openCadFile } from './cadImport/openCadFile.mjs';
+import { exportStepFile } from './cad-kernel/stepExport.mjs';
+import { renderCad } from './backend/cadRender.mjs';
 import { ReferenceImages } from './backend/referenceImages.mjs';
 import * as uploads from './backend/uploads.mjs';
 
@@ -57,7 +60,9 @@ export class BasecaseBackendService {
       secrets,
     });
     this.bridge.serve('references', (_payload, workspaceId) => ({ names: this.references.ofLane(workspaceId) }));
+    this.kernel = kernel;
     serveKernel(this.bridge, kernel);
+    this.kernel = kernel ?? UNAVAILABLE;
     this.converter = typeof kernel?.convert === 'function' ? kernel : null;
     this.bridgeReady = this.startAgentBridge();
 
@@ -309,6 +314,20 @@ export class BasecaseBackendService {
 
   openCadFile(payload) {
     return openCadFile(this.converter, payload);
+  }
+
+  exportStep(payload) {
+    return exportStepFile(this.kernel, payload);
+  }
+
+  tuneCadPart(payload) {
+    const source = (id, workspaceId) => this.requestRenderer('part_source', { id }, PART_SOURCE_MS, workspaceId);
+
+    return tuneCadPart({ kernel: this.kernel, source }, payload);
+  }
+
+  renderCad(payload) {
+    return renderCad(this.kernel, payload);
   }
 
   saveEvidenceFile(payload) {

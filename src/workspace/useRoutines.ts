@@ -10,7 +10,8 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { useLatestRef } from '../utils/useLatestRef';
 import { newId } from './helpers';
-import { checkRoutine, type SceneCheck } from './routineCheck';
+import { isCaseLogic, routinesView } from './caseLogicRoutines';
+import { checkLogic, checkRoutine, type SceneCheck } from './routineCheck';
 import { addItemFor, canAdd, mountPart } from './routineMount';
 import { EMPTY_VIEW, type RoutineRun, type RoutineTests, type RoutineView, snapshotOf } from './routineTypes';
 import type { CommitParts, ShowToast } from './types';
@@ -62,7 +63,8 @@ export function useRoutines(options: RoutineOptions) {
   const check = (routine: Routine) => {
     const id = ++seq.current;
     const scene = sceneRef.current;
-    const job = checkRoutine({ routine, ...scene, buildModel: sim.buildModel }).then((result) => {
+    const caseLogic = isCaseLogic(options.projectRef.current, routine.id);
+    const job = checkRoutine({ routine, ...scene, caseLogic, buildModel: sim.buildModel }).then((result) => {
       if (id !== seq.current) return result;
 
       setView((v) => {
@@ -112,7 +114,7 @@ export function useRoutines(options: RoutineOptions) {
   const editNow = async (edits: readonly RoutineEdit[], id?: string) => {
     const target = id ?? activeRef.current?.id;
     const result = store.edit(edits, target);
-    const routine = (options.projectRef.current.routines ?? []).find((r) => r.id === target);
+    const routine = routinesView(options.projectRef.current).find((r) => r.id === target);
 
     if (result.errors) return { ok: false, changed: false, errors: result.errors, routine };
 
@@ -199,6 +201,7 @@ export function useRoutines(options: RoutineOptions) {
     make,
     edit: (edits: readonly RoutineEdit[], id?: string) => store.edit(edits, id),
     editNow,
+    checkLogic: (logic: unknown) => checkLogic(logic, { ...sceneRef.current, buildModel: sim.buildModel }),
     test,
     run: () => (active ? runLive(plainRun(active)) : Promise.resolve({ started: false, message: NOT_COMPILED })),
     runLive,

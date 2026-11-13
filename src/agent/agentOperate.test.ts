@@ -20,6 +20,7 @@ function fakeSim(started: boolean) {
       return () => listeners.delete(l);
     },
     latestStats: () => ({ robots: [{ fellAt: null, tilt: 3 }], joints: [] }),
+    latestScan: () => null,
     model: null,
     worldParts: [],
   };

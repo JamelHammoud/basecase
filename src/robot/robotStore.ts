@@ -1,12 +1,13 @@
 import type { ElectronApi } from '../utils/platform/types';
+import type { RobotConnection } from './jointRows';
 import {
   applyRobotEvent,
   INITIAL_ROBOT,
   type ConnectReply,
+  type ConnectSpec,
   type RobotEvent,
   type RobotLinkState,
   type RobotMode,
-  type RobotSpec,
   type RobotState,
 } from './robotState';
 
@@ -47,6 +48,7 @@ export type RobotLinkApi = Pick<
 let api: RobotLinkApi | null = null;
 let benchDriving = false;
 const listeners = new Set<() => void>();
+const eventListeners = new Set<(event: RobotEvent) => void>();
 
 function set(next: RobotState) {
   if (next === state) return;
@@ -59,6 +61,12 @@ function set(next: RobotState) {
 export const robotSnapshot = () => state;
 
 export const robotSceneJoints = () => sceneJoints;
+
+export function robotConnection(robot: RobotState): RobotConnection | null {
+  if (robot.link !== 'connected') return null;
+
+  return { ids: robot.spec?.ids ?? [], jointIds: sceneJoints, readings: robot.status?.joints ?? [] };
+}
 
 export const robotBenchDriving = () => benchDriving;
 
@@ -74,10 +82,20 @@ export function subscribeRobot(listener: () => void) {
   };
 }
 
+export function subscribeRobotEvents(listener: (event: RobotEvent) => void) {
+  eventListeners.add(listener);
+
+  return () => {
+    eventListeners.delete(listener);
+  };
+}
+
 export function receiveRobotEvent(event: RobotEvent) {
   if (event.event === 'link' && event.state !== 'connected') setSceneJoints(null);
 
   set(applyRobotEvent(state, event));
+
+  for (const listener of eventListeners) listener(event);
 }
 
 function adopt(link: RobotLinkState) {
@@ -99,7 +117,7 @@ export function startRobotStore(link: RobotLinkApi) {
 
 const unavailable: ConnectReply = { ok: false, message: 'Emulated robots run in the desktop app.' };
 
-export async function connectRobot(spec: RobotSpec, joints: string[]): Promise<ConnectReply> {
+export async function connectRobot(spec: ConnectSpec, joints: string[]): Promise<ConnectReply> {
   const reply = (await api?.robotConnect?.(spec)) ?? unavailable;
 
   if (reply.ok) setSceneJoints(joints);

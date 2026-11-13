@@ -1,27 +1,23 @@
 import { useRef, useState } from 'react';
 import type { RobotAnimation } from '../types/robotics';
 import { buildGait } from '../utils/animation';
+import { parseBvh, type Mocap } from '../utils/mocap';
 import { detectFeet } from '../utils/usePosing';
 import { robotPartIds } from './selection';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 const LEG_JOINT = /hip|knee|ankle|leg|haa|kfe/i;
 
-export interface MotionSource {
-  name: string;
-  text: string;
-}
-
-export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast }: WorkspaceCore) {
+export function usePoseActions({ posing, parts, project, setSelectedIds, tool, showToast }: WorkspaceCore) {
   const { setMode } = tool;
   const { addAnimation, play } = posing;
   const motionInputRef = useRef<HTMLInputElement | null>(null);
-  const [motionSource, setMotionSource] = useState<MotionSource | null>(null);
+  const [motion, setMotion] = useState<Mocap | null>(null);
   const robotRig = posing.robot?.rig ?? null;
   const canWalk = !!robotRig && robotRig.joints.some((j) => j.limb === 'leg' || LEG_JOINT.test(j.name));
 
   const openPose = () => {
-    if (!posing.hasRig) return;
+    if (!posing.hasRig && !project.skeleton) return;
 
     const first = posing.rig.robots[0];
 
@@ -66,11 +62,24 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
   const importMotion = () => motionInputRef.current?.click();
 
   const readMotionFile = async (file: File | undefined) => {
-    if (file) setMotionSource({ name: file.name, text: await file.text() });
+    if (!file) return;
+
+    const text = await file.text();
+
+    try {
+      setMotion(parseBvh(text, file.name.replace(/\.bvh$/i, '')));
+    } catch (err) {
+      showToast(`Couldn’t read ${file.name}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
+  const importMotionFile = (file: File) => {
+    if (posing.hasRig) void readMotionFile(file);
+    else showToast('Add joints to retarget motion onto');
   };
 
   const createAnimation = (anim: RobotAnimation, summary: string) => {
-    setMotionSource(null);
+    setMotion(null);
 
     const made = addAnimation({ ...anim, robot: posing.robot?.group.key });
 
@@ -84,10 +93,11 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
     canWalk,
     walkCycle,
     motionInputRef,
-    motionSource,
-    closeMotion: () => setMotionSource(null),
+    motion,
+    closeMotion: () => setMotion(null),
     importMotion,
     readMotionFile,
+    importMotionFile,
     createAnimation,
   };
 }

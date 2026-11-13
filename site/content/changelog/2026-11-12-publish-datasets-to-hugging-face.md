@@ -4,32 +4,16 @@ date: 2026-11-12
 image: /changelog/publish-datasets-to-hugging-face/cover.png
 ---
 
-Publish to Hugging Face, next to Export Dataset in Results and in ⌘K, sends a Case's passed tries to a public dataset repo on your account, tagged so LeRobot can load it. Add an access token with write access once in Settings ▸ Accounts.
+You can now publish a Case's passed tries to the Hugging Face Hub as a LeRobot dataset, from Results or ⌘K. It needs the desktop app and a Hugging Face token with write access.
 
-## Where it is
+A dataset in a zip on your disk can't feed a fine-tune on a rented GPU. On the Hub, a training script loads it by its repo name.
 
-Run a Case in the Simulate tab with Try It. Once a try passes, Results shows Publish to Hugging Face under Export Dataset. The same command is in ⌘K.
+![Publish to Hugging Face under Export Dataset in Results](/changelog/publish-datasets-to-hugging-face/results.png)
 
-![Results with two passed tries, and Publish to Hugging Face under Export Dataset](/changelog/publish-datasets-to-hugging-face/results.png)
+Each passed try becomes one episode of joint positions and actuator targets at 25 frames a second. It comes with a 640 × 480 video from the scene camera and from each camera on the robot. The dataset is LeRobot v2.1 with a GR00T modality file, tagged v2.1. GR00T and LeRobot before 0.4 load it as it is; LeRobot 0.4 and later convert it with their own script.
 
-## Signing in
+Publishing again from the same scene replaces the episodes with the tries that pass now. Tries from an earlier design of the robot are left out, and the toast says how many.
 
-The first time you click it, Settings opens on the new Accounts pane. Make a token with write access on huggingface.co under Settings ▸ Access Tokens, paste it into Access token and press Enter. Your account name shows under the field once the Hub accepts it. A token that can only read is turned away.
+Datasets are public and go on your own account. Basecase writes no dataset card.
 
-![The Accounts pane with a token saved and the account name under it](/changelog/publish-datasets-to-hugging-face/accounts.png)
-
-## What gets sent
-
-The same LeRobot v2.1 dataset Export Dataset zips: one parquet file and one video per camera for each passed try, plus the metadata LeRobot and GR00T read. Videos and parquet files go up through the Hub's large-file storage. The repo is tagged v2.1, because LeRobot loads a dataset at its version tag.
-
-When it's done, the toast names the repo and its Open button takes you there.
-
-![The toast saying Published to your-name/touch-the-dots-e09403, with Open](/changelog/publish-datasets-to-hugging-face/cover.png)
-
-## Publishing again
-
-Each Case gets one repo per scene, named after the Case with a short code for the scene. Publishing it again from the same scene replaces that repo's episodes with the tries that pass now and moves the tag. Tries recorded before the robot last changed are left out, and the toast says how many.
-
-## Your token
-
-The token stays in the app's main process, encrypted on disk. The page only learns whether you're signed in and your account name. It works in the desktop app.
+Steps are in [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face). Why it works this way is in [From a passed try to a Hugging Face dataset](/blog/datasets-on-hugging-face).

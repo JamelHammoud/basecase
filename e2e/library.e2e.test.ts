@@ -56,11 +56,16 @@ describe('Library', () => {
     expect(app.errors).toEqual([]);
   });
 
-  it('shows only Insert on a hovered tile', async () => {
-    await tile().hover();
+  it('inserts a model once when its tile is clicked, with no controls on the tile', async () => {
+    const before = await partCount(app.page);
 
-    await expect.poll(() => tile().getByRole('button', { name: 'Insert Bracket' }).isVisible()).toBe(true);
-    expect(await tile().getByRole('button', { name: 'More' }).count()).toBe(0);
+    expect(await tile().evaluate((el) => el.tagName)).toBe('BUTTON');
+    expect(await tile().locator('button').count()).toBe(0);
+
+    await tile().click();
+
+    await expect.poll(() => partCount(app.page)).toBe(before + 1);
+    expect(app.errors).toEqual([]);
   });
 
   it('opens the model menu on right-click and inserts from it', async () => {

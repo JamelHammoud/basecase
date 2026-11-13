@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { printerModel } from '../data/printers';
 import { checkPrintability } from '../three/printability';
 import { bedOf } from './bed';
-import { choosePose, itemMatrix } from './plan';
+import { packPlates } from './pack';
+import { choosePose, itemMatrix, turnedPrint } from './plan';
 import { weld, writeThreeMf } from './threeMf';
 
 const bed = bedOf(printerModel('bambu-lab-p1s')!);
@@ -78,5 +79,29 @@ describe('plate transforms', () => {
 
     expect(model).toContain('name="L &amp; bracket"');
     expect(offsets[1] - offsets[0]).toBeCloseTo(256 * 1.2, 3);
+  });
+});
+
+describe('turning a part on its plate', () => {
+  const item = { id: 'arm', copy: 0, name: 'Arm', x: 20, y: 30, w: 100, d: 40, yaw: 0, matrix: [] };
+  const plate = { number: 2, local: 1, material: 'PLA' as const, items: [item], grams: 0, hours: 0, hash: '' };
+
+  it('keeps the part where it sits and turns it a quarter', () => {
+    const turned = turnedPrint([plate], 'arm')!;
+    const { placements } = packPlates(
+      [{ id: 'arm', w: 100, d: 40, fixed: { plate: turned.plate!, x: 20, y: 30, turned: !!turned.turned } }],
+      bed,
+    );
+
+    expect(turned).toEqual({ turned: true, at: [20, 30], plate: 1 });
+    expect(placements.arm).toMatchObject({ plate: 1, x: 20, y: 30, w: 40, d: 100, yaw: 90 });
+  });
+
+  it('turns a turned part back', () => {
+    expect(turnedPrint([{ ...plate, items: [{ ...item, yaw: 90 }] }], 'arm')?.turned).toBe(false);
+  });
+
+  it('leaves a part that is not on a plate alone', () => {
+    expect(turnedPrint([plate], 'missing')).toBeNull();
   });
 });

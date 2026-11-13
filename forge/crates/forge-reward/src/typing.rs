@@ -7,6 +7,8 @@ const MAX_POWER: f64 = 8.0;
 
 pub(crate) type Typed = (Node, Type);
 
+const REFERENCE_REFUSAL: &str = "state.reference needs a job with a reference";
+
 fn state_field(name: &str, joints: usize) -> Option<(Node, Type)> {
     let (field, kind) = match name {
         "gravity" => (StateField::Gravity, Type::Vector(3)),
@@ -20,6 +22,7 @@ fn state_field(name: &str, joints: usize) -> Option<(Node, Type)> {
         "joint_vel" => (StateField::JointVel, Type::Vector(joints)),
         "action" => (StateField::Action, Type::Vector(joints)),
         "last_action" => (StateField::LastAction, Type::Vector(joints)),
+        "reference" => (StateField::Reference, Type::Vector(joints + 2)),
         "bodies" => return Some((Node::Bodies, Type::Bodies)),
         _ => return None,
     };
@@ -126,6 +129,11 @@ impl Compiler<'_> {
         check_name(field, line)?;
 
         let (node, kind) = self.expr(scope, target)?;
+
+        if kind == Type::State && field == "reference" && !self.reference {
+            return fail(line, REFERENCE_REFUSAL);
+        }
+
         let found = match (kind, &node) {
             (Type::State, _) => state_field(field, self.schema.joints),
             (Type::Body, Node::Local(slot)) => body_field(*slot, field),

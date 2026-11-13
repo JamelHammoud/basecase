@@ -2,6 +2,7 @@ import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import type { BuildGuideRecord, ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { fullDate } from '../utils/timeAgo';
 import { workerClient, type Reply } from '../utils/workerRpc';
 import { guideFingerprint } from './guideFingerprint';
 import { isBuilt } from './guidePlan';
@@ -72,8 +73,6 @@ async function brandMark(): Promise<string> {
 
 const newId = () => `guide-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
-const today = () => new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
 function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide | null> {
   const { port1, port2 } = new MessageChannel();
   const cancel = () => port1.postMessage({ type: 'cancel' } satisfies GuidePortMessage);
@@ -128,7 +127,7 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
     parts: packParts(parts),
     partKeys: Object.fromEntries(parts.map((p) => [p.id, identityOf(p)])),
     project,
-    date: today(),
+    date: fullDate(),
     mark: await brandMark(),
     order: order && { assembly: order.assembly, unproven: order.unproven },
     meshes: await sourcedMeshFiles(parts),

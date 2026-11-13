@@ -4,37 +4,20 @@ import {
   CameraAddIcon,
   CameraIcon,
   AlignCenterXIcon,
-  BookmarkAddIcon,
-  BotIcon,
   CommentIcon,
-  CopyIcon,
-  CrosshairIcon,
   DeleteIcon,
   DownloadIcon,
   FileImportIcon,
-  FloorIcon,
-  GroupIcon,
-  HiddenIcon,
-  IntersectIcon,
-  LayersIcon,
-  LockIcon,
-  LookIcon,
   MarkerIcon,
   PenIcon,
   PhotoIcon,
   PlusIcon,
   RefreshIcon,
-  RotateLeftIcon,
   RulerIcon,
-  SparklesIcon,
-  SelectAllIcon,
   ShapeIcon,
   SubtractIcon,
   UngroupIcon,
-  UnionIcon,
-  UnlockIcon,
 } from '../design-system';
-import { partQuote } from '../agent/partQuote';
 import { faultSubmenu } from '../components/simulate/faultMenu';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { partTarget, selectedTarget, type OnshapeTarget } from '../onshape/onshapeTarget';
@@ -45,6 +28,7 @@ import type { CanvasMenuState } from './useCanvasMenu';
 import { handJointMenuItems } from './jointCommands';
 import { leaderMenuItems } from './leaderCommands';
 import { mirrorMenuEntry } from './mirrorCommands';
+import { isRotated, menuEntry, onePartActions, selectionActions } from './partActions';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -66,8 +50,10 @@ const ROLE_ENTRIES: Array<{ label: string; role: PartRole }> = [
   { label: 'Guide', role: 'reference' },
 ];
 
-function sharedEntries({ core, actions }: ContextInputs) {
-  const { ops, edits, library } = actions;
+function sharedEntries(inputs: ContextInputs) {
+  const { core, actions } = inputs;
+  const { edits } = actions;
+  const act = selectionActions(inputs);
 
   return {
     align: {
@@ -82,48 +68,19 @@ function sharedEntries({ core, actions }: ContextInputs) {
         />
       ),
     } satisfies ContextMenuEntry,
-    drop: {
-      label: 'Drop to Floor',
-      shortcut: keyFor('drop-to-floor'),
-      icon: <FloorIcon className={ic} />,
-      onSelect: edits.dropToGround,
-    } satisfies ContextMenuEntry,
-    duplicate: {
-      label: 'Duplicate',
-      shortcut: keyFor('duplicate'),
-      icon: <CopyIcon className={ic} />,
-      onSelect: ops.duplicateSelected,
-    } satisfies ContextMenuEntry,
+    drop: menuEntry(act.floor),
+    duplicate: menuEntry(act.duplicate),
     mirror: mirrorMenuEntry(actions.mirror),
-    selectAll: {
-      label: 'Select All',
-      shortcut: keyFor('select-all'),
-      icon: <SelectAllIcon className={ic} />,
-      disabled: core.parts.length === 0,
-      onSelect: core.selection.selectAll,
-    } satisfies ContextMenuEntry,
-    saveToLibrary: {
-      label: 'Save to Library',
-      icon: <BookmarkAddIcon className={ic} />,
-      onSelect: () => void library.saveAsModel('selected'),
-    } satisfies ContextMenuEntry,
-    remove: {
-      label: 'Delete',
-      shortcut: keyFor('delete'),
-      icon: <DeleteIcon className={ic} />,
-      tone: 'danger',
-      onSelect: ops.deleteSelected,
-    } satisfies ContextMenuEntry,
+    selectAll: menuEntry(act.selectAll, { disabled: core.parts.length === 0 }),
+    saveToLibrary: menuEntry(act.saveToLibrary),
+    remove: menuEntry(act.remove),
   };
 }
 
-function wrapItems({ actions }: ContextInputs): ContextMenuEntry[] {
-  if (!actions.wrap.canWrap()) return [];
+function wrapItems(inputs: ContextInputs): ContextMenuEntry[] {
+  if (!inputs.actions.wrap.canWrap()) return [];
 
-  return [
-    { label: 'Wrap Robot', icon: <BotIcon className={ic} />, onSelect: actions.wrap.wrapSelected },
-    { divider: true },
-  ];
+  return [menuEntry(selectionActions(inputs).wrap), { divider: true }];
 }
 
 function onshapeItems({ actions }: ContextInputs, target: OnshapeTarget | null): ContextMenuEntry[] {
@@ -143,18 +100,19 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   const { ops, edits } = actions;
   const { selectedParts } = core.selection;
   const shared = sharedEntries(inputs);
+  const act = selectionActions(inputs);
   const roles = new Set(selectedParts.map((p) => p.role));
 
   return [
     { heading: plural(core.selectedIds.length, 'part') },
     ...wrapItems(inputs),
-    { label: 'Union', icon: <UnionIcon className={ic} />, onSelect: () => ops.runBoolean('union') },
+    menuEntry(act.union),
     {
       label: `Subtract from ${selectedParts[0]?.name ?? 'First'}`,
       icon: <SubtractIcon className={ic} />,
       onSelect: () => ops.runBoolean('subtract'),
     },
-    { label: 'Intersect', icon: <IntersectIcon className={ic} />, onSelect: () => ops.runBoolean('intersect') },
+    menuEntry(act.intersect),
     { divider: true },
     ...handJointMenuItems(actions.joints),
     shared.align,
@@ -166,20 +124,9 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
       onSelect: () => edits.setSelectedRoles(role),
     })),
     { divider: true },
-    ...(selectedParts.some((p) => p.hardware)
-      ? [{ label: 'Add Clearance Holes', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
-      : []),
-    { label: 'Group', shortcut: keyFor('group'), icon: <GroupIcon className={ic} />, onSelect: edits.group },
-    ...(selectedParts.some((p) => p.group)
-      ? [
-          {
-            label: 'Ungroup',
-            shortcut: keyFor('ungroup'),
-            icon: <UngroupIcon className={ic} />,
-            onSelect: edits.ungroup,
-          },
-        ]
-      : []),
+    ...(selectedParts.some((p) => p.hardware) ? [menuEntry(act.clearanceHole)] : []),
+    menuEntry(act.group),
+    ...(selectedParts.some((p) => p.group) ? [menuEntry(act.ungroup)] : []),
     ...onshapeItems(inputs, selectedTarget(core.parts, core.selectedIds)),
     shared.duplicate,
     shared.mirror,
@@ -192,33 +139,6 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
 
 function copyPartName({ core }: ContextInputs, name: string) {
   void navigator.clipboard.writeText(name).then(() => core.showToast(`Copied ${name}`));
-}
-
-function partFlagItems(part: ScenePart, setFlag: (patch: Partial<ScenePart>) => void): ContextMenuEntry[] {
-  return [
-    {
-      label: part.locked ? 'Unlock' : 'Lock',
-      icon: part.locked ? <UnlockIcon className={ic} /> : <LockIcon className={ic} />,
-      onSelect: () => setFlag({ locked: !part.locked }),
-    },
-    {
-      label: part.visible ? 'Hide' : 'Show',
-      icon: part.visible ? <HiddenIcon className={ic} /> : <LookIcon className={ic} />,
-      onSelect: () => setFlag({ visible: !part.visible }),
-    },
-  ];
-}
-
-function quotePart({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
-  if (IS_WEB_DEMO) return [];
-
-  return [
-    {
-      label: 'Quote Part',
-      icon: <SparklesIcon className={ic} />,
-      onSelect: () => core.tool.requestQuote(partQuote(part)),
-    },
-  ];
 }
 
 function faultItems({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
@@ -234,50 +154,34 @@ function faultItems({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[
 }
 
 function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextMenuEntry[]): ContextMenuEntry[] {
-  const { actions, ui } = inputs;
+  const { actions } = inputs;
   const { ops, edits } = actions;
   const shared = sharedEntries(inputs);
-  const setFlag = (patch: Partial<ScenePart>) => edits.patchPart(part.id, patch);
+  const act = selectionActions(inputs);
+  const one = onePartActions(inputs, part);
 
   return [
     { heading: part.name, onSelect: () => copyPartName(inputs, part.name) },
     ...faultItems(inputs, part),
-    ...(part.hardware
-      ? [{ label: 'Add Clearance Hole', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
-      : []),
+    ...(part.hardware ? [menuEntry(act.clearanceHole)] : []),
     shared.duplicate,
     shared.mirror,
     shared.selectAll,
     shared.saveToLibrary,
-    ...quotePart(inputs, part),
+    ...(one.quote ? [menuEntry(one.quote)] : []),
     ...leaderMenuItems(actions, part.id),
     ...commentHere,
     { divider: true },
     shared.align,
     shared.drop,
-    {
-      label: 'Stack on Part Below',
-      shortcut: keyFor('stack'),
-      icon: <LayersIcon className={ic} />,
-      onSelect: edits.stackOnBelow,
-    },
-    {
-      label: 'Reset Rotation',
-      icon: <RotateLeftIcon className={ic} />,
-      disabled: part.rotation.every((r) => r === 0),
-      onSelect: () => setFlag({ rotation: [0, 0, 0] }),
-    },
-    {
-      label: 'Zoom to Selection',
-      shortcut: keyFor('zoom-selection'),
-      icon: <CrosshairIcon className={ic} />,
-      onSelect: ui.focusSelected,
-    },
+    menuEntry(act.stack),
+    menuEntry(one.resetRotation, { disabled: !isRotated(part) }),
+    menuEntry(act.zoom),
     { divider: true },
     ...ROLE_ENTRIES.map(({ label, role }) => ({
       label,
       checked: part.role === role,
-      onSelect: () => setFlag({ role }),
+      onSelect: () => edits.patchPart(part.id, { role }),
     })),
     { divider: true },
     {
@@ -297,7 +201,8 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
       : []),
     ...onshapeItems(inputs, partTarget(inputs.core.parts, part)),
     { divider: true },
-    ...partFlagItems(part, setFlag),
+    menuEntry(one.lock),
+    menuEntry(one.hide),
     shared.remove,
   ];
 }
@@ -343,7 +248,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       icon: <ShapeIcon className={ic} />,
       onSelect: () => ui.setCameraView(v.id),
     })),
-    { label: 'Reset View', icon: <CrosshairIcon className={ic} />, onSelect: ui.resetView },
+    menuEntry(selectionActions(inputs).resetView),
     { label: 'Add Camera View', icon: <CameraAddIcon className={ic} />, onSelect: actions.cameras.add },
     ...(sceneHasCameraViews(inputs)
       ? [

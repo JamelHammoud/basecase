@@ -46,7 +46,10 @@ const PRICE = z.object({
   per: z.number().int().min(1).describe('Units the price buys'),
   store: z.string().max(80),
   url: z.string().url(),
-  seen: z.string().describe('The date you saw it, YYYY-MM-DD'),
+  seen: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .describe('The date you saw it, YYYY-MM-DD'),
 });
 
 export const addSourcedItem = {

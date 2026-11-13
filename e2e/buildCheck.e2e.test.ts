@@ -156,6 +156,7 @@ describe('Checks', () => {
       .poll(() => checks().innerText(), { timeout: 45000 })
       .toContain('These joints have no servo, so the simulation guesses their torque from weight.');
     expect(await checks().innerText()).toContain('No servo on Arm0');
+    expect(await checks().innerText()).not.toContain('without a servo');
     await checks().getByRole('button', { name: 'link0', exact: true }).first().click();
 
     const models = checks().getByRole('button', { name: /^Servo models/ });

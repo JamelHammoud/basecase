@@ -36,8 +36,8 @@ Bambu Lab printers are integrated already ([Printing](../guide/printing.md)).
 - **Link:** https://huggingface.co
 - **Checked:** 2026-11-13
 - **Better than Basecase:** hosts the datasets and policies LeRobot trains on ([LeRobot docs](https://huggingface.co/docs/lerobot/index)). PRO is $9 a month with 10× private storage, and storage past that costs $12 per TB a month for public repositories and $18 for private ones, with egress included ([pricing](https://huggingface.co/pricing)).
-- **Worse than Basecase:** Basecase records demonstrations from a robot designed in it and exports the passed tries as a LeRobot dataset ([Cases](../guide/cases.md)).
-- **Basecase should:** integrate. Basecase writes LeRobot datasets already ([Cases](../guide/cases.md)); publishing them to the Hub puts them where LeRobot looks.
+- **Worse than Basecase:** LeRobot's recording tutorial records a real robot driven by a teleoperation device "such as a leader arm or keyboard", and the person keeps or re-records each episode by hand with the arrow keys ([recording](https://huggingface.co/docs/lerobot/il_robots)). Basecase records tries in simulation, driven with the keyboard or a gamepad, and Export Dataset keeps only the tries the Case's contract passed ([Cases](../guide/cases.md)).
+- **Basecase should:** integrate. Basecase writes LeRobot v2.1 datasets ([Cases](../guide/cases.md)), which LeRobot 0.4 and later convert to v3 before reading ([integrations](integrations.md#lerobot)). Write v3 and publish it to the Hub, where `lerobot-train` takes a dataset by its repo id ([recording](https://huggingface.co/docs/lerobot/il_robots)).
 
 ## Kit makers
 
@@ -46,7 +46,7 @@ Bambu Lab printers are integrated already ([Printing](../guide/printing.md)).
 - **Link:** https://github.com/TheRobotStudio/SO-ARM100
 - **Checked:** 2026-11-13
 - **Better than Basecase:** The Robot Studio publishes the SO-101's STL files and a sourcing table: $121.94 for one follower arm and $229.88 for a leader and follower in the US, with EU, RMB and JPY tables too. Kits come from Seeed Studio, WowRobo, RobotEd, Robonine, PartaBot, ForgeMotion Labs and others, some printed and some assembled ([repository](https://github.com/TheRobotStudio/SO-ARM100)). The follower uses six Feetech STS3215 servos at 1/345 and the leader mixes 1/191, 1/345 and 1/147 gearing ([LeRobot SO-101](https://huggingface.co/docs/lerobot/so101)).
-- **Worse than Basecase:** the SO-101 is a Basecase preset that imports with its joints, ready to pose and animate in the Pose tab ([Joints and motion](../guide/joints-and-motion.md)), and the catalog lists the STS3215 ([`src/data/components.ts`](../../src/data/components.ts)).
+- **Worse than Basecase:** LeRobot's SO-101 guide starts from bought parts, then assembles, wires and calibrates both arms before either moves ([LeRobot SO-101](https://huggingface.co/docs/lerobot/so101)). In Basecase the SO-101 is a preset that imports with its joints, ready to pose and animate in the Pose tab ([Joints and motion](../guide/joints-and-motion.md)), and the catalog lists the STS3215 ([`src/data/components.ts`](../../src/data/components.ts)).
 - **Basecase should:** integrate. When the SO-101 preset is in a scene, the Build tab should show its published bill of materials and these kit sellers next to it, so someone can buy the arm they just simulated.
 
 ### To check

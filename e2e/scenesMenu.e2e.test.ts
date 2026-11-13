@@ -48,4 +48,21 @@ describe('scenes menu', () => {
     expect(await search.count()).toBe(1);
     expect(app.errors).toEqual([]);
   });
+
+  it('lines up every label in a menu whose other items lead with an icon', async () => {
+    const { page } = app;
+    const tab = page.locator('[role="tab"]:has([data-tab-close])').first();
+
+    await tab.click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Close Other Scenes' }).waitFor();
+
+    const lefts = await page
+      .getByRole('menu')
+      .getByRole('menuitem')
+      .evaluateAll((items) => items.map((item) => item.querySelector('.flex-1')?.getBoundingClientRect().left));
+
+    expect(lefts.length).toBeGreaterThan(4);
+    expect(new Set(lefts).size).toBe(1);
+    await page.keyboard.press('Escape');
+  });
 });

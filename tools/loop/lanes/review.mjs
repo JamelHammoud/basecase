@@ -7,6 +7,7 @@ import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 4,
   everySeconds: 60,
   does: 'Reviews each pull request whose head has no agent-review status',
@@ -133,6 +134,10 @@ export default function review({ log }) {
 
     try {
       if (!carryOver(pull, log)) reviewPull(pull, log);
+    } catch (error) {
+      setReview(pull.headRefOid, 'error', 'The review stopped before it finished; it will run again');
+
+      throw error;
     } finally {
       release();
     }

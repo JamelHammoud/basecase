@@ -42,6 +42,7 @@ export interface SimStats {
   joints: JointStat[];
   rtf: number;
   effector?: [number, number, number];
+  effectors?: Array<[number, number, number]>;
 }
 
 const D2R = Math.PI / 180;
@@ -422,6 +423,7 @@ export class SimEngine {
       }),
       joints: this.sim.joints.map((j, i) => ({ id: j.id, peak: this.peaks[i], saturatedS: this.saturated[i] })),
       ...(this.drive?.hand ? { effector: this.handAt(this.drive.hand) } : {}),
+      ...(this.drive?.hands ? { effectors: this.drive.hands.map((h) => this.handAt(h)) } : {}),
     };
   }
 

@@ -1,9 +1,10 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import { uniqueCaseId } from '../cases/caseBuilder';
+import { stageCase } from '../cases/caseCast';
 import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
-import { scaledToReach } from '../cases/scale';
 import { readCases, worldItem, type Case } from '../cases/schema';
+import type { SlotRobot } from '../cases/slots';
 import { worstFirst, type TryRecord } from '../cases/tries';
 import { deleteRecording, loadRecording } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
@@ -24,10 +25,11 @@ interface CasesOptions {
   showToast: ShowToast;
   openAccounts: () => void;
   sceneId: string;
+  partners: () => SlotRobot[];
 }
 
 export function useCases(options: CasesOptions) {
-  const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId } = options;
+  const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
@@ -36,12 +38,17 @@ export function useCases(options: CasesOptions) {
   const hasRobot = rig.robots.length > 0;
   const fixedBase = hasRobot && robotFacts(rig, parts).morphology === 'fixed';
 
+  const stage = (kase: Case | null) => {
+    const staged = kase && stageCase(kase, { rig, parts }, partners());
+
+    sim.setWorld(staged?.kase.world.objects.map(worldItem) ?? [], staged?.joined);
+  };
+
   const open = (id: string | null) => {
     const kase = cases.find((c) => c.id === id) ?? null;
-    const facts = robotFacts(rig, parts);
 
     setActiveId(kase?.id ?? null);
-    sim.setWorld(kase ? scaledToReach(kase, facts.reachMm, facts.anchor).world.objects.map(worldItem) : []);
+    stage(kase);
   };
 
   const orphaned = activeId !== null && !active;
@@ -67,10 +74,7 @@ export function useCases(options: CasesOptions) {
 
     setProject((p) => ({ ...p, cases: [...(p.cases ?? []), named] }));
     setActiveId(id);
-
-    const facts = robotFacts(rig, parts);
-
-    sim.setWorld(scaledToReach(named, facts.reachMm, facts.anchor).world.objects.map(worldItem));
+    stage(named);
 
     return named;
   };
@@ -120,6 +124,7 @@ export function useCases(options: CasesOptions) {
       kase: active,
       rig,
       parts,
+      partners: active ? stageCase(active, { rig, parts }, partners()).partners.flatMap((r) => r ?? []) : [],
       build: sim.buildModel,
       run: async ({ model, controller, seconds, commands }) =>
         (await sim.runOn(model, { seconds, controller, commands })).stats,
@@ -128,7 +133,7 @@ export function useCases(options: CasesOptions) {
     setFit({ caseId: activeId, rows, checking: false });
   };
 
-  const builder = useCaseBuilder({ rig, parts, add });
+  const builder = useCaseBuilder({ rig, parts, add, partners });
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
   const attempt = useCaseTry({
     sim,
@@ -136,6 +141,7 @@ export function useCases(options: CasesOptions) {
     parts,
     joints: project.joints ?? [],
     active,
+    partners,
     onTry: (record) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), record] })),
     onRefuse: (message) => showToast(message),
   });

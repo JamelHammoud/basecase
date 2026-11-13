@@ -21,6 +21,7 @@ export type SimRequest =
   | { type: 'controller'; controller: Controller }
   | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number }
   | ({ type: 'command' } & DriveCommand)
+  | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
   | { type: 'record'; on: boolean }
   | { type: 'replay'; qpos: Float64Array; nq: number; dt: number }
@@ -80,6 +81,7 @@ let live: LiveRoutine | null = null;
 let liveCase: LiveCase | null = null;
 let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
+let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
 const frame = () => {
@@ -108,6 +110,8 @@ function loop() {
   last = now;
 
   const t0 = performance.now();
+
+  if (script) applyDueCommands(engine, script.commands, engine.data.time - script.start);
 
   if (live) advanceRoutine(live, wall * speed);
   else if (liveCase) liveCase.advance(wall * speed);
@@ -169,6 +173,7 @@ async function load(msg: Msg<'load'>) {
   engine = null;
   live = null;
   liveCase = null;
+  script = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
 
@@ -314,13 +319,19 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   speed: (msg) => {
     speed = msg.value;
   },
-  controller: (msg) => setController(msg.controller),
+  controller: (msg) => {
+    script = null;
+    setController(msg.controller);
+  },
   grab,
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, msg.seconds);
   },
-  command: ({ v, target, aux }) => {
-    if (!liveCase || liveCase.driving) engine?.command({ v, target, aux });
+  command: ({ slot, v, target, aux }) => {
+    if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux });
+  },
+  script: (msg) => {
+    script = engine ? { start: engine.data.time, commands: [...msg.commands].sort((a, b) => a.at - b.at) } : null;
   },
   respawn: (msg) => {
     engine?.respawn(msg.robot);

@@ -2,6 +2,8 @@ import loadMujoco from '@mujoco/mujoco';
 import { parquetReadObjects } from 'hyparquet';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { describe, expect, it } from 'vitest';
+import { castRobot, guestsOf } from '../cases/caseCast';
+import { caseSlots } from '../cases/schema';
 import { caseRobot } from '../cases/testing';
 import { SimEngine } from '../sim/engine';
 import { fixtureRobots } from '../sim/fixtures/robots';
@@ -10,7 +12,15 @@ import { Recorder, RECORD_HZ, type Recording } from '../sim/recorder';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { zipFolder } from '../utils/zipFolder';
-import { canExport, columnStats, DATASET_FPS, episodeData, robotJoints, sampledFrames } from './episodes';
+import {
+  canExport,
+  columnStats,
+  DATASET_FPS,
+  datasetJoints,
+  episodeData,
+  robotJoints,
+  sampledFrames,
+} from './episodes';
 import { dataPath, lerobotFiles, TASK_ANNOTATION, videoPath, type DatasetEpisode } from './lerobot';
 
 const TASK = 'Touch the point with the end effector.';
@@ -31,6 +41,38 @@ async function armTry() {
   engine.dispose();
 
   return { mj, model, recording };
+}
+
+async function twoArmTry() {
+  const mj = await loadMujoco();
+  const arm = caseRobot(fixtureRobots().find((r) => r.id === 'arm-3dof')!);
+  const pose = { position: [0, 50, 600] as [number, number, number], yawDeg: 180 };
+  const slots = caseSlots({
+    slots: [
+      { id: 'a', needs: ['arm'], binding: {} },
+      { id: 'b', needs: ['arm'], binding: {}, pose },
+    ],
+  });
+  const team = castRobot(
+    arm,
+    guestsOf(slots, [arm]).map((g) => ({ ...g, robot: arm })),
+  );
+  const model = buildMjcf({ ...team, rig: buildRig(team.joints, team.parts), project: DEFAULT_PROJECT });
+  const engine = new SimEngine(mj, model);
+  const recorder = new Recorder(engine);
+
+  engine.stepHook = recorder.hook;
+  engine.step(0.5);
+
+  const recording = recorder.finish();
+
+  engine.dispose();
+
+  return {
+    model,
+    recording,
+    slots: model.robots.map((r) => ({ id: r.key.startsWith('b.') ? 'b' : 'a', robot: r.key })),
+  };
 }
 
 const fakeVideo = new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112]);
@@ -130,6 +172,32 @@ describe('LeRobot datasets from tries', () => {
     expect(lines(files, 'meta/episodes_stats.jsonl')[0].stats).toMatchObject({
       'observation.images.scene': { mean: [[[0.3]], [[0.4]], [[0.5]]] },
     });
+  });
+
+  it('writes every slot’s joints into one state and action, prefixed and grouped by slot', async () => {
+    const { model, recording, slots } = await twoArmTry();
+    const { names, groups } = datasetJoints(model, slots);
+    const data = episodeData(recording, model, TASK, slots);
+    const files = lerobotFiles({
+      robotType: 'arm',
+      jointNames: names,
+      jointGroups: groups,
+      videos: [],
+      episodes: [asEpisode(data, 0)],
+      source: {},
+    });
+    const info = JSON.parse(text(files, 'meta/info.json'));
+    const modality = JSON.parse(text(files, 'meta/modality.json'));
+    const rows = await parquetReadObjects({ file: files[dataPath(0)].slice().buffer });
+
+    expect(names).toHaveLength(6);
+    expect(names.filter((n) => n.startsWith('a.'))).toHaveLength(3);
+    expect(names.filter((n) => n.startsWith('b.'))).toHaveLength(3);
+    expect(info.features['observation.state'].names).toEqual(names);
+    expect(info.features.action.names).toEqual(names);
+    expect(modality.state).toEqual({ a: { start: 0, end: 3 }, b: { start: 3, end: 6 } });
+    expect(modality.action).toEqual(modality.state);
+    expect(rows[0]['observation.state']).toHaveLength(6);
   });
 
   it('zips under one folder, keeping media uncompressed', () => {

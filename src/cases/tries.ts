@@ -40,12 +40,20 @@ export interface TryScoring {
   model: SimModel;
   recording: Recording;
   effector: EndEffector | null;
+  effectors?: Record<string, EndEffector | null>;
   rig: Rig;
 }
 
-export const caseProbeWorld = ({ kase, model, effector, rig }: Omit<TryScoring, 'recording'>): ProbeWorld => ({
+export const caseProbeWorld = ({
+  kase,
   model,
   effector,
+  effectors,
+  rig,
+}: Omit<TryScoring, 'recording'>): ProbeWorld => ({
+  model,
+  effector,
+  effectors,
   basePart: [...(rig.robots[0]?.parts ?? [])].find((id) => !rig.ownerOf.has(id)) ?? null,
   basePoint: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
   objectAt: new Map(kase.world.objects.map((o) => [o.id, o.position])),

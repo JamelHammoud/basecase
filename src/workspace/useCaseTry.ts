@@ -1,12 +1,15 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { boundEffector, robotFacts } from '../cases/robotFit';
-import { scaledToReach } from '../cases/scale';
-import type { Case } from '../cases/schema';
+import { castSlots, stageCase, type StagedCase } from '../cases/caseCast';
+import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
+import { worldItem, type Case } from '../cases/schema';
+import type { SlotRobot } from '../cases/slots';
 import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import { saveRecording } from '../cases/tryStore';
+import type { RobotDrive } from '../sim/drive';
+import type { DriveTeam } from '../sim/useDrive';
 import type { Simulation } from '../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../types/robotics';
-import type { Rig } from '../utils/kinematics';
+import { buildRig, type Rig } from '../utils/kinematics';
 import { caseLogicPlan } from './caseLogicPlan';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
@@ -17,6 +20,7 @@ interface TryOptions {
   parts: ScenePart[];
   joints: RobotJoint[];
   active: Case | null;
+  partners: () => SlotRobot[];
   onTry: (record: TryRecord) => void;
   onRefuse: (message: string) => void;
 }
@@ -25,18 +29,37 @@ export interface CaseTry {
   phase: TryPhase;
   elapsed: number;
   start: () => Promise<void>;
+  reference: () => Promise<void>;
   end: () => void;
 }
 
 const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-const scaledCase = (kase: Case, rig: Rig, parts: ScenePart[]) => {
-  const facts = robotFacts(rig, parts);
+function castOf(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }) {
+  const parts = [...scene.parts, ...staged.joined.parts];
+  const rig = staged.guests.length ? buildRig([...scene.rig.joints, ...staged.joined.joints], parts) : scene.rig;
 
-  return scaledToReach(kase, facts.reachMm, facts.anchor);
-};
+  return { rig, parts, slots: castSlots(staged.slots, { rig, parts, guests: staged.guests }) };
+}
 
-export function useCaseTry({ sim, rig, parts, joints, active, onTry, onRefuse }: TryOptions): CaseTry {
+function teamFor(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }, all: boolean): DriveTeam {
+  const { rig, parts, slots } = castOf(staged, scene);
+  const members = staged.slots.flatMap((slot, i) => {
+    const setup: RobotDrive | null = i ? driveFor({ slot, cast: slots[i], rig, parts }) : null;
+
+    return setup ? [{ slot: i, setup }] : [];
+  });
+  const driven = new Set([...(all ? [0] : []), ...members.map((m) => m.slot)]);
+  const script = staged.kase.reference.timeline.flatMap((c) => {
+    const slot = slotIndexOf(staged.kase, c);
+
+    return driven.has(slot) ? [{ at: c.at, command: toCommand(c, slot) }] : [];
+  });
+
+  return { members, script };
+}
+
+export function useCaseTry({ sim, rig, parts, joints, active, partners, onTry, onRefuse }: TryOptions): CaseTry {
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
@@ -62,10 +85,11 @@ export function useCaseTry({ sim, rig, parts, joints, active, onTry, onRefuse }:
       return;
     }
 
-    const facts = robotFacts(rig, parts);
-    const scaled = scaledCase(kase, rig, parts);
-    const effector = boundEffector(scaled.slot.binding, facts, rig);
-    const verdict = await scoreTry({ kase: scaled, model, recording, effector, rig });
+    const staged = stageCase(kase, { rig, parts }, partners());
+    const cast = castOf(staged, { rig, parts });
+    const effectors = Object.fromEntries(cast.slots.map((s) => [s.id, s.effector]));
+    const scoring = { kase: staged.kase, model, recording, rig, effectors };
+    const verdict = await scoreTry({ ...scoring, effector: cast.slots[0].effector });
     const id = newTryId();
 
     await saveRecording(id, recording);
@@ -77,7 +101,7 @@ export function useCaseTry({ sim, rig, parts, joints, active, onTry, onRefuse }:
       passed: verdict.passed,
       margin: verdict.margin,
       seconds: recording.frames * recording.dt,
-      manifest: await tryManifest(scaled, model, recording),
+      manifest: await tryManifest(staged.kase, model, recording),
     });
     sim.drive.stop();
     setPhase('idle');
@@ -100,17 +124,21 @@ export function useCaseTry({ sim, rig, parts, joints, active, onTry, onRefuse }:
     return () => clearTimeout(soon);
   }, [outOfTime, leftDrive]);
 
-  const start = async () => {
+  const begin = async (all: boolean) => {
     if (!active || phase !== 'idle') return;
 
     setPhase('starting');
 
-    const kase = scaledCase(active, rig, parts);
+    const staged = stageCase(active, { rig, parts }, partners());
+    const kase = staged.kase;
     const logic = await caseLogicPlan(kase, { parts, joints, buildModel: sim.buildModel });
 
     if (logic.refusal) onRefuse(logic.refusal);
 
-    if (logic.refusal || !(await sim.drive.start())) {
+    if (!logic.refusal && staged.slots.length > 1)
+      sim.setWorld(staged.kase.world.objects.map(worldItem), staged.joined);
+
+    if (logic.refusal || !(await sim.drive.start(teamFor(staged, { rig, parts }, all)))) {
       setPhase('idle');
 
       return;
@@ -122,5 +150,5 @@ export function useCaseTry({ sim, rig, parts, joints, active, onTry, onRefuse }:
     setPhase('running');
   };
 
-  return { phase, elapsed, start, end: () => void finish() };
+  return { phase, elapsed, start: () => begin(false), reference: () => begin(true), end: () => void finish() };
 }

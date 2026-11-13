@@ -48,6 +48,9 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         offer: sim.drive.offer,
         stats,
         effector: stats?.effector ?? null,
+        effectors: stats?.effectors ?? null,
+        robots: sim.model?.robots.map((r) => r.key) ?? [],
+        guests: sim.guestParts.map((p) => p.id),
         world: sim.worldParts.map((p) => p.id),
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
         activeCase: cases.active?.id ?? null,
@@ -84,6 +87,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       return zip && unzipSync(zip);
     },
     addCase: (raw) => core.simTraining.cases.add(parseCase(raw)).id,
+    referenceTry: () => core.simTraining.cases.attempt.reference(),
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     robotPackage: async () => {
       const made = await robotPackageZip(core);

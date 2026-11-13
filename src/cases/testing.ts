@@ -20,6 +20,11 @@ export const presetCase = (robot: FixtureRobot, id: PresetId): Case =>
 
 export const touchTheDots = (robot: FixtureRobot): Case => presetCase(robot, 'touch-the-dots');
 
-export function runCase(mj: MainModule, kase: Case, robot: FixtureRobot, options: RunOptions) {
-  return runCaseOn(mj, parseCaseFile(kase), caseRobot(robot), options);
+type FixtureRun = Omit<RunOptions, 'partners'> & { partners?: FixtureRobot[] };
+
+export function runCase(mj: MainModule, kase: Case, robot: FixtureRobot, options: FixtureRun) {
+  return runCaseOn(mj, parseCaseFile(kase), caseRobot(robot), {
+    ...options,
+    partners: options.partners?.map(caseRobot),
+  });
 }

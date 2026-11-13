@@ -1,9 +1,7 @@
 import type { MainModule } from '@mujoco/mujoco';
-import type { DriveCommand, DriveSetup } from '../sim/drive';
-import { rigForWorker } from '../sim/drive';
+import type { DriveCommand, RobotDrive } from '../sim/drive';
 import { policyCommand, type VelocityDrive } from '../sim/driveAccess';
-import { footPoints } from '../sim/driveLegs';
-import { armSetup, roverForward, roverSetup } from '../sim/driveSetup';
+import { roverForward } from '../sim/driveSetup';
 import { SimEngine, type Controller } from '../sim/engine';
 import { buildMjcf } from '../sim/mjcf';
 import type { MjcfInput, SimModel } from '../sim/mjcfTypes';
@@ -18,20 +16,17 @@ import { judgeSoFar, usesBodySkills, type CaseLogicResult, type CaseLogicRun } f
 import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld } from './caseRandom';
 import { GroundSteer } from './groundSteer';
 import { probeReader } from './probes';
-import { boundEffector, robotFacts, slotRefusal, type EndEffector, type RobotFacts } from './robotFit';
+import { castRobot, castSlots, guestsOf, type CaseRobot, type CastSlot } from './caseCast';
+import { driveFor, slotIndexOf, teamDrive, toCommand } from './caseDrives';
+import { robotFacts, type EndEffector, type RobotFacts } from './robotFit';
 import { bodyFor, factSampler, logicPlan, startLogic, type LogicOptions, type Signals } from './runCaseLogic';
 import { scaledToReach } from './scale';
-import { worldItem, type Case, type ReferenceCommand } from './schema';
+import { caseSlots, worldItem, type Case, type ReferenceCommand } from './schema';
+import { slotRefusals } from './slots';
+
+export type { CaseRobot } from './caseCast';
 
 export const RECORD_DT = 0.02;
-
-export interface CaseRobot {
-  id: string;
-  parts: MjcfInput['parts'];
-  joints: Parameters<typeof buildRig>[0];
-  measures: MjcfInput['measures'];
-  partTriangles: MjcfInput['partTriangles'];
-}
 
 export interface CaseFrame {
   t: number;
@@ -61,42 +56,11 @@ export interface RunOptions extends LogicOptions {
   seed?: number;
   randomization?: Randomization;
   walk?: VelocityDrive | null;
+  partners?: CaseRobot[];
+  limp?: string[];
 }
 
-interface DriveFor {
-  kase: Case;
-  rig: Rig;
-  robot: CaseRobot;
-  facts: RobotFacts;
-  effector: EndEffector | null;
-}
-
-const MIN_DRIVEN_FEET = 4;
 const JUDGE_EVERY_TICKS = 12;
-
-function groundDrive(rig: Rig, robot: CaseRobot, facts: RobotFacts, key: string): DriveSetup | null {
-  if (facts.morphology === 'legged') {
-    const feet = footPoints(rig, robot.parts, key);
-
-    return feet.length >= MIN_DRIVEN_FEET
-      ? { kind: 'legs', robot: key, rig: rigForWorker(rig), feet, start: {} }
-      : null;
-  }
-
-  return facts.wheels.length ? roverSetup(rig, robot.parts, key) : null;
-}
-
-function driveFor({ kase, rig, robot, facts, effector }: DriveFor): DriveSetup | null {
-  const key = rig.robots[0]?.key ?? '';
-
-  if (kase.slot.needs.includes('arm') && effector && facts.armJoints.length) {
-    const { armJoints: joints, anchor, reachMm, gripper } = facts;
-
-    return armSetup({ rig, robot: key, effector, joints, anchor, reachMm, grip: gripper });
-  }
-
-  return groundDrive(rig, robot, facts, key);
-}
 
 const LEGS_FORWARD: V3 = [0, 0, 1];
 
@@ -119,15 +83,15 @@ function steerFor({ fit, model, objectAt }: SteerFor): GroundSteer | null {
   return way && part ? new GroundSteer({ model, part, point, objectAt, ...way }) : null;
 }
 
-const toCommand = (c: ReferenceCommand): DriveCommand => ({ v: c.v ?? [0, 0, 0], target: c.target, aux: c.aux });
-
-function chooseController({ setup, walk, rig }: Fitted): Controller {
+function chooseController({ setups, walk, rig }: Fitted): Controller {
   if (walk) return { kind: 'policy', policy: walk.policy, robot: rig.robots[0]?.key ?? '' };
 
-  return setup ? { kind: 'drive', setup } : { kind: 'limp' };
+  const team = teamDrive(setups);
+
+  return team ? { kind: 'drive', setup: team } : { kind: 'limp' };
 }
 
-function walkFor(setup: DriveSetup | null, facts: RobotFacts, options: RunOptions): VelocityDrive | null {
+function walkFor(setup: RobotDrive | null, facts: RobotFacts, options: RunOptions): VelocityDrive | null {
   const floating = facts.morphology !== 'fixed';
 
   return options.controller === 'reference' && floating && setup?.kind !== 'arm' ? (options.walk ?? null) : null;
@@ -143,7 +107,9 @@ interface Rollout {
   judge: () => Promise<CaseFacts>;
 }
 
-function follow({ steer, send }: Rollout, c: ReferenceCommand) {
+function follow({ engine, steer, send }: Rollout, c: ReferenceCommand, slot: number) {
+  if (slot) return engine.command(toCommand(c, slot));
+
   if (!steer) return send(toCommand(c));
 
   if (c.target) return steer.add(c.target, { speed: c.v?.[0], push: c.push });
@@ -161,7 +127,11 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
   for (let tick = 0; tick < ticks; tick++) {
     const t = tick * RECORD_DT;
 
-    while (timeline.length && timeline[0].at <= t + 1e-9) follow(rollout, timeline.shift()!);
+    while (timeline.length && timeline[0].at <= t + 1e-9) {
+      const c = timeline.shift()!;
+
+      follow(rollout, c, slotIndexOf(kase, c));
+    }
 
     const poses = engine.poses();
     const driving = logic?.driving ?? true;
@@ -181,11 +151,21 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
   return frames;
 }
 
-function fixedBaseFor(rig: Rig, facts: RobotFacts): Record<string, boolean> | undefined {
-  const key = rig.robots[0]?.key;
+function fixedBaseFor(slots: CastSlot[]): Record<string, boolean> | undefined {
+  const fixed = slots.flatMap((s) => (s.key && s.facts.morphology === 'fixed' ? [[s.key, true] as const] : []));
 
-  return key && facts.morphology === 'fixed' ? { [key]: true } : undefined;
+  return fixed.length ? Object.fromEntries(fixed) : undefined;
 }
+
+function limpen(engine: SimEngine, model: SimModel, keys: Set<string>) {
+  const range = engine.model.actuator_forcerange;
+
+  for (const j of model.joints)
+    if (keys.has(j.robot) && j.actuator >= 0) range.fill(0, j.actuator * 2, j.actuator * 2 + 2);
+}
+
+const ownFacts = (robot: CaseRobot | undefined) =>
+  robot ? robotFacts(buildRig(robot.joints, robot.parts), robot.parts) : null;
 
 interface Started {
   engine: SimEngine;
@@ -238,30 +218,47 @@ interface Fitted {
   rig: Rig;
   facts: RobotFacts;
   scaled: Case;
+  cast: CastSlot[];
   effector: EndEffector | null;
   probeBase: ProbeBase;
-  setup: DriveSetup | null;
+  setup: RobotDrive | null;
+  setups: Array<RobotDrive | null>;
   walk: VelocityDrive | null;
   wheelAxes: V3[];
 }
 
-function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted | { refusal: string; input: MjcfInput } {
+function ownInput(robot: CaseRobot): MjcfInput {
   const rig = buildRig(robot.joints, robot.parts);
-  const facts = robotFacts(rig, robot.parts);
-  const refusal = slotRefusal(authored.slot, facts);
-  const input: MjcfInput = {
+
+  return {
     parts: robot.parts,
     rig,
     project: DEFAULT_PROJECT,
     measures: robot.measures,
     partTriangles: robot.partTriangles,
   };
+}
 
-  if (refusal) return { refusal, input };
+function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted | { refusal: string; input: MjcfInput } {
+  const partners = options.partners ?? [];
+  const lead = ownFacts(robot)!;
+  const refusal = slotRefusals(caseSlots(authored), [lead, ...partners.map(ownFacts)]).find(Boolean);
 
-  const scaled = scaledToReach(authored, facts.reachMm, facts.anchor);
-  const effector = boundEffector(scaled.slot.binding, facts, rig);
-  const setup = options.controller === 'reference' ? driveFor({ kase: scaled, rig, robot, facts, effector }) : null;
+  if (refusal) return { refusal, input: ownInput(robot) };
+
+  const scaled = scaledToReach(authored, lead.reachMm, lead.anchor);
+  const slots = caseSlots(scaled);
+  const guests = guestsOf(slots, partners).map((g, i) => ({ ...g, robot: partners[i] }));
+  const team = castRobot(robot, guests);
+  const rig = buildRig(team.joints, team.parts);
+  const cast = castSlots(slots, { rig, parts: team.parts, guests });
+  const input: MjcfInput = { ...ownInput(team), rig };
+  const { facts, effector } = cast[0];
+  const setups =
+    options.controller === 'reference'
+      ? slots.map((slot, i) => driveFor({ slot, cast: cast[i], rig, parts: team.parts }))
+      : [];
+  const setup = setups[0] ?? null;
   const wheelAxes = facts.wheels.flatMap((id): V3[] => {
     const axis = rig.byId.get(id)?.axis;
 
@@ -269,19 +266,18 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
   });
   const probeBase: ProbeBase = {
     part: robot.parts.find((p) => !rig.ownerOf.has(p.id))?.id ?? null,
-    point: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
+    point: rig.robots.find((r) => r.key === cast[0].key)?.pivot ?? ([0, 0, 0] as V3),
   };
-
   const walk = walkFor(setup, facts, options);
 
-  return { robot, input, rig, facts, scaled, effector, probeBase, setup, walk, wheelAxes };
+  return { robot, input, rig, facts, scaled, cast, effector, probeBase, setup, setups, walk, wheelAxes };
 }
 
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
   const jitter = worldRandom(options.seed);
   const kase = jitter ? jitteredWorld(fit.scaled, jitter) : fit.scaled;
   const world = kase.world.objects.map(worldItem);
-  const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.rig, fit.facts) });
+  const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) });
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
 
   if (logicRefusal) return refused(fit.scaled, logicRefusal, model);
@@ -296,6 +292,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   const reader = probeReader(kase.task.probes, {
     model,
     effector: fit.effector,
+    effectors: Object.fromEntries(fit.cast.map((c) => [c.id, c.effector])),
     basePart: probeBase.part,
     basePoint: probeBase.point,
     objectAt,
@@ -304,6 +301,9 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   const controller = chooseController(fit);
   const { engine, dispose } = startEngine(mj, model, { controller, options });
   const send = (c: DriveCommand) => engine.command(walk ? policyCommand(c, walk.topSpeed) : c);
+  const limp = new Set(fit.cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : [])));
+
+  limpen(engine, model, limp);
 
   const handBack = () => engine.setController(controller);
 

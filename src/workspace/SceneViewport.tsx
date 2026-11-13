@@ -98,7 +98,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         fixedCameras={project.cameras}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
-        worldParts={sim.worldParts}
+        worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}

@@ -16,6 +16,7 @@ import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
+import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 
 export { simDeltas } from './mjcf';
 
@@ -59,9 +60,10 @@ export interface Simulation {
   stopRecording: () => Promise<Recording | null>;
   replay: (r: Recording) => void;
   worldParts: ScenePart[];
+  guestParts: ScenePart[];
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
-  setWorld: (items: WorldItem[]) => void;
+  setWorld: (items: WorldItem[], guests?: SimGuests) => void;
   buildModel: () => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
@@ -170,6 +172,8 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
   const inputs = useRef({ parts, project, rig, pose, restDeltas });
   const [worldParts, setWorldParts] = useState<WorldItem[]>([]);
   const worldRef = useRef<WorldItem[]>(worldParts);
+  const [guests, setGuests] = useState<SimGuests>(NO_GUESTS);
+  const guestsRef = useRef<SimGuests>(guests);
 
   useLayoutEffect(() => {
     inputs.current = { parts, project, rig, pose, restDeltas };
@@ -185,26 +189,31 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     const current = inputs.current;
     const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
-    const input = {
-      parts: current.parts,
-      rig: current.rig,
-      project: current.project,
-      pose: current.pose,
-      measures,
-      partTriangles: vp.partTriangles,
-      posedFloor,
-      world: worldRef.current,
-    };
+    const input = withGuests(
+      {
+        parts: current.parts,
+        rig: current.rig,
+        project: current.project,
+        pose: current.pose,
+        measures,
+        partTriangles: vp.partTriangles,
+        posedFloor,
+        world: worldRef.current,
+      },
+      guestsRef.current,
+    );
 
     return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
   }, [viewportRef]);
 
-  const setWorldItems = (items: WorldItem[]) => {
+  const setWorldItems = (items: WorldItem[], cast: SimGuests) => {
     worldRef.current = items;
+    guestsRef.current = cast;
     setWorldParts(items);
+    setGuests(cast);
   };
 
-  return { inputs, buildModel, worldParts, setWorldItems };
+  return { inputs, buildModel, worldParts, guestParts: guests.parts, setWorldItems };
 }
 
 function useStopOnEdit({
@@ -247,7 +256,7 @@ export function useSimulation(props: Inputs): Simulation {
   const [model, setModel] = useState<SimModel | null>(null);
   const [speed, setSpeedState] = useState(1);
   const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel(props);
+  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
@@ -310,8 +319,8 @@ export function useSimulation(props: Inputs): Simulation {
     runOn,
     velocity: props.velocity,
   });
-  const setWorld = (items: WorldItem[]) => {
-    setWorldItems(items);
+  const setWorld = (items: WorldItem[], cast: SimGuests = NO_GUESTS) => {
+    setWorldItems(items, cast);
     stop();
   };
 
@@ -357,6 +366,7 @@ export function useSimulation(props: Inputs): Simulation {
       send({ type: 'replay', qpos: r.qpos, nq: r.nq, dt: r.dt });
     },
     worldParts,
+    guestParts,
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,
     setWorld,

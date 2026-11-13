@@ -1,25 +1,19 @@
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ArticlePage } from './ArticlePage';
 import { ChangelogPage } from './ChangelogPage';
 import { EntryList } from './EntryList';
+import { helpFiles, helpSpecs } from '../help/helpPages';
 import { changelogJson, changelogRss, sitemap } from './feeds';
-import { sectionsWithBlog, type ContentKind, type Section } from './sections';
+import type { PageSpec, SiteFile } from './pageSpec';
+import { sectionsWithBlog, type Section } from './sections';
 import { absoluteUrl, entryPath, type Entry, type SiteContent } from './siteContent';
-import { SitePage, type PageHead } from './SitePage';
+import { SitePage } from './SitePage';
 
-export interface SiteFile {
-  fileName: string;
-  source: string;
-}
-
-interface PageSpec {
-  fileName: string;
-  head: PageHead;
-  section: ContentKind;
-  body: React.ReactNode;
+export interface SiteAssets {
+  stylesheets: string[];
+  helpScript?: string;
 }
 
 const CHANGELOG_FEEDS = [
@@ -54,29 +48,29 @@ function pageSpecs(content: SiteContent): PageSpec[] {
       section: 'changelog',
       body: <ChangelogPage entries={content.changelog} />,
     },
-    {
-      fileName: 'help.html',
-      head: { title: 'Basecase Help', description: 'How to do things in Basecase.', path: '/help' },
-      section: 'help',
-      body: <EntryList title="Help" entries={content.help} />,
-    },
     ...(content.blog.length > 0 ? [blogSpec(content.blog)] : []),
     ...content.changelog.map(articleSpec),
     ...content.blog.map(articleSpec),
-    ...content.help.map(articleSpec),
+    ...helpSpecs(content.help),
   ];
 }
 
-const renderSpec = (spec: PageSpec, sections: Section[], stylesheets: string[]): SiteFile => ({
+const renderSpec = (spec: PageSpec, sections: Section[], assets: SiteAssets): SiteFile => ({
   fileName: spec.fileName,
   source: `<!doctype html>\n${renderToStaticMarkup(
-    <SitePage head={spec.head} section={spec.section} sections={sections} stylesheets={stylesheets}>
+    <SitePage
+      head={spec.head}
+      section={spec.section}
+      sections={sections}
+      stylesheets={assets.stylesheets}
+      script={spec.script ? assets.helpScript : undefined}
+    >
       {spec.body}
     </SitePage>,
   )}\n`,
 });
 
-export function renderPages(content: SiteContent, stylesheets: string[]): SiteFile[] {
+export function renderPages(content: SiteContent, assets: SiteAssets): SiteFile[] {
   const specs = pageSpecs(content);
   const sections = sectionsWithBlog(content.blog.length > 0);
   const items = content.changelog.map((entry) => ({
@@ -96,7 +90,8 @@ export function renderPages(content: SiteContent, stylesheets: string[]): SiteFi
   }));
 
   return [
-    ...specs.map((spec) => renderSpec(spec, sections, stylesheets)),
+    ...specs.map((spec) => renderSpec(spec, sections, assets)),
+    ...helpFiles(content.help),
     { fileName: 'changelog/rss.xml', source: changelogRss(items) },
     { fileName: 'changelog.json', source: changelogJson(items) },
     { fileName: 'sitemap.xml', source: sitemap(['/', ...specs.map((spec) => spec.head.path)]) },

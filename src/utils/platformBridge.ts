@@ -9,6 +9,7 @@ import type {
   SavedSceneRecord,
   SavedSceneSummary,
 } from '../types/robotics';
+import type { ExportedStep, StepJob } from '../types/step';
 import { base64ToBytes, bytesToBase64 } from './base64';
 import { electron, get, post, postJson, postOrThrow, query, quietly } from './platform/transport';
 import type {
@@ -106,6 +107,14 @@ const acpBridge = {
   },
 };
 
+const plainJson = (value: unknown) =>
+  JSON.parse(JSON.stringify(value, (_key, v: unknown) => (v instanceof Float32Array ? Array.from(v) : v)));
+
+const ipcMessage = (e: unknown) =>
+  (e instanceof Error ? e.message : String(e))
+    .replace(/^Error invoking remote method '[^']+':\s*/, '')
+    .replace(/^Error:\s*/, '');
+
 const libraryBridge = {
   async saveEvidenceFile(payload: EvidenceFilePayload): Promise<void> {
     const api = electron();
@@ -162,6 +171,20 @@ const libraryBridge = {
     );
 
     return { bodies: opened.bodies, data: base64ToBytes(opened.data) };
+  },
+  exportStep: async (job: StepJob): Promise<ExportedStep> => {
+    const api = electron();
+
+    if (!api)
+      return postOrThrow<ExportedStep>('/cad-export-step', plainJson(job), (body, res) =>
+        res.ok ? null : String(body.error ?? 'The CAD kernel failed.'),
+      );
+
+    try {
+      return await api.exportStep(job);
+    } catch (e) {
+      throw new Error(ipcMessage(e), { cause: e });
+    }
   },
 
   uploadImage: (payload: ImageUpload): Promise<ReferenceImageRecord> =>
@@ -240,11 +263,6 @@ const trainingBridge = {
   getPolicy: (id: string): Promise<unknown> => electron()?.getPolicy(id) ?? get(`/policy${query('id', id)}`),
   deletePolicy: (id: string): Promise<boolean> => electron()?.deletePolicy(id) ?? post('/policy-delete', { id }),
 };
-
-const ipcMessage = (e: unknown) =>
-  (e instanceof Error ? e.message : String(e))
-    .replace(/^Error invoking remote method '[^']+':\s*/, '')
-    .replace(/^Error:\s*/, '');
 
 const simreadyBridge = {
   simreadyStatus: (): Promise<SimReadyStatus> => electron()?.simreadyStatus() ?? get('/simready-status'),

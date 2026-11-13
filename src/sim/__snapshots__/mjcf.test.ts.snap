@@ -131,6 +131,7 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
   },
   "robots": [
     {
+      "fingerprint": "1h2dmvp",
       "floating": true,
       "joints": [
         "hip",
@@ -143,7 +144,6 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
     },
   ],
   "version": 1,
-  "warnings": [],
   "xml": undefined,
 }
 `;

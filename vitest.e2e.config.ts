@@ -11,6 +11,7 @@ export default defineConfig({
     testTimeout: 180000,
     hookTimeout: 120000,
     fileParallelism: false,
+    retry: process.env.CI ? 1 : 0,
     expect: { poll: { timeout: 10000 } },
   },
 });

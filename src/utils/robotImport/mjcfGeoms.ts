@@ -2,10 +2,7 @@ import * as THREE from 'three';
 import { placement, type Attrs, type MjAngles } from './mjcfFrames';
 import { displayRgb, nums, unitScale, type Geometry, type Visual } from './model';
 
-export interface MjMesh {
-  file: string;
-  scale: THREE.Vector3;
-}
+export type MjMesh = { file: string; scale: THREE.Vector3 } | { points: number[] };
 
 export interface MjGeom {
   link: string;
@@ -57,7 +54,9 @@ const GEOM_SHAPES = new Map<string, ShapeMaker>([
     (_size, a, ctx) => {
       const m = ctx.meshes.get(a('mesh') ?? '');
 
-      return m ? { geometry: { type: 'mesh', file: m.file, scale: m.scale } } : null;
+      if (!m) return null;
+
+      return { geometry: 'points' in m ? { type: 'hull', points: m.points } : { type: 'mesh', ...m } };
     },
   ],
   [

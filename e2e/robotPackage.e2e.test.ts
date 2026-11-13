@@ -36,7 +36,7 @@ describe('robot package export', () => {
     await expect.poll(() => robotPackageItem().count()).toBe(0);
   });
 
-  it('exports a preset arm from the Export menu as MJCF, URDF, meshes and a joint map', async () => {
+  it('exports a preset arm from the Export menu as MJCF, a ROS 2 description package and a joint map', async () => {
     const arm = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
 
     await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
@@ -58,14 +58,32 @@ describe('robot package export', () => {
     const jointMap = JSON.parse(text(at('joint_map.json')));
 
     expect(paths.filter((p) => !p.includes('/meshes/'))).toEqual([
+      'arm-robot/CMakeLists.txt',
       'arm-robot/joint_map.json',
-      'arm-robot/robot.urdf',
+      'arm-robot/launch/display.launch.py',
+      'arm-robot/package.xml',
       'arm-robot/robot.xml',
+      'arm-robot/rviz/display.rviz',
+      'arm-robot/urdf/robot.urdf',
     ]);
     expect(paths.filter((p) => p.endsWith('.stl'))).toHaveLength(arm.parts.length);
     expect(text(at('robot.xml'))).toBe(made.simXml);
-    expect(jointMap.joints).toHaveLength(6);
-    expect(text(at('robot.urdf')).match(/<joint name="[^"]+" type="revolute">/g)).toHaveLength(6);
+    expect(jointMap.joints).toHaveLength(arm.joints.length);
+    expect(text(at('package.xml'))).toContain('<package format="3">');
+    expect(text(at('launch/display.launch.py'))).toContain('robot_state_publisher');
+
+    const urdf = text(at('urdf/robot.urdf'));
+    const packageName = /<name>([^<]+)<\/name>/.exec(text(at('package.xml')))![1];
+
+    expect(urdf.match(/<joint name="[^"]+" type="revolute">/g)).toHaveLength(6);
+    expect(urdf.match(/<joint name="[^"]+" type="prismatic">/g)).toHaveLength(2);
+    expect(urdf.match(/<command_interface name="position">/g)).toHaveLength(arm.joints.length);
+
+    for (const [, mesh] of urdf.matchAll(/filename="package:\/\/[^/]+\/([^"]+)"/g)) {
+      expect(made.files[`arm-robot/${mesh}`], mesh).toBeDefined();
+    }
+
+    expect(urdf).toContain(`package://${packageName}/meshes/`);
     expect(app.errors).toEqual([]);
   });
 });

@@ -57,29 +57,18 @@ function torqueDetail({ loads, fails, warns, unknown, legs }: TorqueSummary): st
   return `Worst: ${jointLabel(worst.joint)}, ${share(worst.stallShare)} of stall ${where}`;
 }
 
-function torqueStatus({ fails, warns, unknown }: TorqueSummary): CheckRow['status'] {
+function torqueStatus({ loads, fails, warns, unknown }: TorqueSummary): CheckRow['status'] {
   if (fails.length) return 'fail';
 
-  return unknown.length || warns.length ? 'warn' : 'pass';
+  if (warns.length) return 'warn';
+
+  return unknown.length === loads.length ? 'not run' : 'pass';
 }
 
 function torqueItems(s: TorqueSummary): NonNullable<CheckRow['items']> {
   const line = (l: JointLoad, status: 'warn' | 'fail') => ({ text: loadText(l, s.legs), ids: loadIds(l), status });
-  const partlyUnknown = s.unknown.length && s.unknown.length < s.loads.length;
 
-  return [
-    ...s.fails.map((l) => line(l, 'fail')),
-    ...s.warns.map((l) => line(l, 'warn')),
-    ...(partlyUnknown
-      ? [
-          {
-            text: `No torque data for ${count(s.unknown.length, 'joint')}: give them servos`,
-            status: 'warn' as const,
-            ids: s.unknown.flatMap((l) => l.joint.child),
-          },
-        ]
-      : []),
-  ];
+  return [...s.fails.map((l) => line(l, 'fail')), ...s.warns.map((l) => line(l, 'warn'))];
 }
 
 export function torqueRow(loads: JointLoad[], legShare = 1): CheckRow {

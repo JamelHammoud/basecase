@@ -1,6 +1,28 @@
 ---
 title: Import a robot
 date: 2026-11-12
+updated: 2026-11-13
+collection: design
+type: task
+order: 16
+popular: true
+keywords:
+  - urdf
+  - mjcf
+  - mujoco xml
+  - github
+  - hugging face
+  - ros
+  - zip
+  - unitree
+  - so-101
+  - humanoid
+  - quadruped
+  - arm
+  - preset
+related:
+  - joints-and-kinematics
+  - export-a-robot-package
 covers:
   - src/components/ImportRobotSheet.tsx
   - src/components/RobotsPanel.tsx
@@ -10,24 +32,26 @@ covers:
   - src/utils/robotImport/
 ---
 
-Bring in a published robot with its joints, limits and masses, from a link or from files on your computer.
+Bring in a published robot with its joints, limits and masses, from a GitHub or Hugging Face link, a zip, or files on your computer.
 
-1. Press ⌘K and choose **Import Robot**. It's also in File ▸ Import Robot and the + at the top of the Robots view.
-2. Paste a link to a GitHub or Hugging Face repo or folder, a URDF or MJCF file, or a zip.
-3. Press Enter.
+1. Click **Robots** in the view rail on the left.
+2. Click **+** at the top of the view.
+3. Paste a link to a GitHub or Hugging Face repo or folder, a URDF or MJCF file, or a zip.
+4. Click **Import**.
 
 ![Import Robot with a GitHub repo link](/help/import-a-robot/link.png)
 
-Basecase finds the robot's description in the repo or zip, preferring MJCF, and inserts it. When a repo holds several robots, it lists them:
-
-1. Click the robot you want.
-2. Click **Import**.
+Basecase finds the robot's description in the repo or zip, preferring MJCF, and inserts it with its joints ready to pose. If the repo holds several robots, the sheet lists them: click the one you want, then **Import**.
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-To import from files instead, drag a robot's folder, zip, URDF or MJCF file onto the canvas. The robot stands where you drop it. **Choose Folder** in Import Robot does the same for a folder.
+**Import Robot** is also in **File** and [[⌘K]]. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF or MJCF file onto the canvas, where it stands at the drop point.
 
-Robots you import from a link stay under Imported at the top of the Robots view, so you can insert them again with one click. To take one off that list:
+## Insert a robot from the shelf
+
+**Robots** lists ready robots by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**, such as the Unitree G1, Go2 and SO-101. Click one to insert it, or drag it onto the canvas. Robots you imported from a link come first, under **Imported**.
+
+To take a robot off the Imported list:
 
 1. Right-click it and choose **Delete**.
 2. Click **Delete** to confirm.
@@ -37,3 +61,13 @@ Robots already in your scenes stay where they are.
 ![The right-click menu on an imported robot](/help/import-a-robot/imported.png)
 
 ![Delete Koch v1.1? with Cancel and Delete](/help/import-a-robot/delete.png)
+
+## What comes in
+
+- Every link with geometry becomes its own part, with its mass and center of mass.
+- Every revolute and prismatic joint keeps its axis, limits and torque limit.
+- Robot parts are never printed or resized.
+
+Links must be https. A zip link downloads up to 200 MB, and a zip unpacks up to 600 MB and 20,000 files. A link with no robot description shows one toast naming the link.
+
+To see how the joints work once the robot is in, read [Joints and kinematics](/help/joints-and-kinematics).

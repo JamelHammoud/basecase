@@ -44,6 +44,7 @@ export interface SimRobot {
   floating: boolean;
   morphology: RobotMorphology;
   joints: string[];
+  fingerprint: string;
 }
 
 export interface SimModel {
@@ -54,7 +55,6 @@ export interface SimModel {
   robots: SimRobot[];
   initial: RobotPoseState;
   massKg: Record<string, number>;
-  warnings: string[];
 }
 
 export interface MjcfInput {

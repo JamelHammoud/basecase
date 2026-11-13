@@ -1,21 +1,49 @@
 ---
 title: Align and spread parts
 date: 2026-11-12
+updated: 2026-11-13
+collection: design
+type: task
+order: 3
+keywords:
+  - align
+  - distribute
+  - spread evenly
+  - line up
+  - center
+  - origin
+  - floor
+  - spacing
+related:
+  - move-and-rotate-parts
+  - group-parts
 covers:
   - src/components/AlignBar.tsx
+  - src/components/inspector/MultiInspector.tsx
   - src/workspace/contextMenuItems.tsx
   - src/workspace/editCommands.tsx
+  - src/utils/selection.ts
 ---
 
-Line parts up against each other, or put one part's edge on the origin, without typing positions.
+Line parts up on their edges or centers, or space three or more evenly, without typing a single position.
 
-1. Select the parts in Layers or on the canvas. Shift-click adds one more.
-2. Right-click the selection and point at Align ▸, or look at Align in the Inspector when two or more parts are selected.
-3. Click an icon in the X, Y or Z row. Left, center and right line the parts up on their shared bounds. With one part selected, the part's edge goes to the origin instead, and Bottom puts it on the floor.
-4. To space three or more parts evenly, click the Spread icon at the end of the row.
-
-![The Align strip in a part's right-click menu](/help/align-and-spread-parts/menu.png)
+1. Select two or more parts on the canvas. Shift-click adds each one after the first.
+2. In the Inspector, find **Align**.
+3. Click an icon in the **X**, **Y** or **Z** row to line the parts up on their shared bounds.
+4. To space three or more parts evenly, click the **Spread** icon at the end of a row.
 
 ![Align in the Inspector with three parts selected](/help/align-and-spread-parts/inspector.png)
 
-Every action is also in ⌘K: type Align or Spread.
+The same strip is under **Align** in the right-click menu. [[⌘K]] has each one by name: **Align Left**, **Align Top**, **Spread Along X** and the rest.
+
+![The Align strip in a part's right-click menu](/help/align-and-spread-parts/menu.png)
+
+## What each row does
+
+| Row | Icons | With one part, from the right-click menu |
+|---|---|---|
+| X | Left, Center, Right | Puts that side or the center on the origin |
+| Y | Bottom, Middle, Top | Bottom puts the part on the floor |
+| Z | Back, Center, Front | Puts that side or the center on the origin |
+
+The bounds count each part's rotation, so turned parts line up by what you see. Spread stays off until three parts are selected.

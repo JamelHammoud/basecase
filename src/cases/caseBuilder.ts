@@ -3,7 +3,7 @@ import type { Rig, V3 } from '../utils/kinematics';
 import {
   CASE_GOALS,
   fallGuard,
-  GOAL_PARAMS,
+  goalParam,
   goalDefaults,
   routeClearance,
   touchRadius,
@@ -99,7 +99,7 @@ export function goalValues(
 
   for (const key of goal.params) {
     const v = given[key];
-    const { min, max } = GOAL_PARAMS[key];
+    const { min, max } = goalParam(goal, key);
 
     if (typeof v === 'number' && Number.isFinite(v)) values[key] = Math.min(max, Math.max(min, v));
   }

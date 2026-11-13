@@ -33,6 +33,7 @@ export interface CaseSpec {
   objects?: WorldObject[];
   logic?: unknown;
   score?: unknown;
+  console?: unknown;
   room?: Room;
 }
 
@@ -220,6 +221,7 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
       ...(spec.score !== undefined ? { score: spec.score } : {}),
     },
     ...(spec.logic !== undefined ? { logic: spec.logic } : {}),
+    ...(spec.console !== undefined ? { console: spec.console } : {}),
   };
 }
 

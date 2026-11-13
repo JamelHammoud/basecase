@@ -1,13 +1,18 @@
 const MONTH_DAY = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
 const MONTH_DAY_YEAR = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const FULL_DATE = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
 const parseWhen = (when: string) => new Date(/^\d{4}-\d{2}-\d{2}$/.test(when) ? `${when}T12:00:00` : when);
 
 export function dayLabel(when: string, now = new Date()): string {
   const d = parseWhen(when);
 
+  if (Number.isNaN(d.getTime())) return when;
+
   return (d.getFullYear() === now.getFullYear() ? MONTH_DAY : MONTH_DAY_YEAR).format(d);
 }
+
+export const fullDate = (when = new Date()) => FULL_DATE.format(when);
 
 export function timeAgo(iso: string, now = new Date()): string {
   const s = (now.getTime() - Date.parse(iso)) / 1000;

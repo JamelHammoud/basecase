@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agoPhrase, dayLabel, timeAgo } from './timeAgo';
+import { agoPhrase, dayLabel, fullDate, timeAgo } from './timeAgo';
 
 const now = new Date('2026-11-13T15:00:00');
 const before = (s: number) => new Date(now.getTime() - s * 1000).toISOString();
@@ -30,5 +30,17 @@ describe('dayLabel', () => {
   it('reads a local date without shifting the day', () => {
     expect(dayLabel('2026-10-29', now)).toBe('Oct 29');
     expect(dayLabel('2025-12-31', now)).toBe('Dec 31, 2025');
+  });
+
+  it('shows text it cannot read as written', () => {
+    expect(dayLabel('today', now)).toBe('today');
+    expect(timeAgo('', now)).toBe('');
+    expect(agoPhrase('soon', now)).toBe('soon');
+  });
+});
+
+describe('fullDate', () => {
+  it('spells out the month and always keeps the year', () => {
+    expect(fullDate(now)).toBe('November 13, 2026');
   });
 });

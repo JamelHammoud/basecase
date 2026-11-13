@@ -12,6 +12,13 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
+import {
+  feedOperatorPose,
+  operatorCameraSnapshot,
+  operatorLatency,
+  operatorTrackState,
+} from '../cameras/operator/operatorCamera';
+import type { PoseSample } from '../cameras/operator/poseFollow';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
@@ -164,6 +171,21 @@ async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewpo
   return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
 }
 
+function operatorCameraState() {
+  const { open, label, estimator, error } = operatorCameraSnapshot();
+  const track = operatorTrackState();
+
+  return {
+    open,
+    live: open && track === 'live',
+    ended: track === 'ended',
+    label,
+    estimator,
+    error,
+    latency: operatorLatency(),
+  };
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
     rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
@@ -232,6 +254,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
+    feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
+    operatorCamera: () => operatorCameraState(),
     stubTabEngine,
     pickFiles: (files: { name: string; base64: string }[]) =>
       pickNextFiles(

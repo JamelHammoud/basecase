@@ -191,32 +191,36 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     inputs.current = { parts, project, rig, pose, restDeltas };
   });
 
-  const buildModel = useCallback(async (): Promise<SimModel> => {
-    const vp = viewportRef.current;
+  const buildModel = useCallback(
+    async (pin: string | null = null): Promise<SimModel> => {
+      const vp = viewportRef.current;
 
-    if (!vp) throw new Error('The canvas isn’t ready.');
+      if (!vp) throw new Error('The canvas isn’t ready.');
 
-    await vp.meshesReady();
+      await vp.meshesReady();
 
-    const current = inputs.current;
-    const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
+      const current = inputs.current;
+      const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
-    const input = withGuests(
-      {
-        parts: current.parts,
-        rig: current.rig,
-        project: current.project,
-        pose: current.pose,
-        measures,
-        partTriangles: vp.partTriangles,
-        posedFloor,
-        world: worldRef.current,
-      },
-      guestsRef.current,
-    );
+      const input = withGuests(
+        {
+          parts: current.parts,
+          rig: current.rig,
+          project: current.project,
+          pose: current.pose,
+          measures,
+          partTriangles: vp.partTriangles,
+          posedFloor,
+          world: worldRef.current,
+          ...(pin ? { fixedBase: { [pin]: true } } : {}),
+        },
+        guestsRef.current,
+      );
 
-    return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
-  }, [viewportRef]);
+      return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
+    },
+    [viewportRef],
+  );
 
   const setWorldItems = (items: WorldItem[], cast: SimGuests) => {
     worldRef.current = items;
@@ -284,27 +288,27 @@ function useSimTouches(
   };
 }
 
-export function useSimulation(props: Inputs): Simulation {
-  const { parts, project, rig, pose, viewportRef } = props;
-  const [model, setModel] = useState<SimModel | null>(null);
-  const [speed, setSpeedState] = useState(1);
-  const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
-  const runSeq = useRef(0);
-  const sw = useSimWorker(viewportRef, modelRef);
-  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
-  const { worker, load, frameHookRef } = sw;
-  const [controller, setController] = useController(send);
-  const touch = useSimTouches(modelRef, send);
+interface SimStartInputs {
+  sw: ReturnType<typeof useSimWorker>;
+  buildModel: (pin: string | null) => Promise<SimModel>;
+  modelRef: React.RefObject<SimModel | null>;
+  setModel: (m: SimModel) => void;
+  controller: Controller;
+  speed: number;
+}
 
-  const start = useCallback(async () => {
+function useSimStart({ sw, buildModel, modelRef, setModel, controller, speed }: SimStartInputs) {
+  const { setError, setStatus, worker, load, setPlaying } = sw;
+  const pinned = useRef<string | null>(null);
+
+  const startModel = useCallback(async () => {
     setError(null);
     setStatus('loading');
 
     let m: SimModel;
 
     try {
-      m = await buildModel();
+      m = await buildModel(pinned.current);
     } catch (e) {
       setError(errorMessage(e));
       setStatus('error');
@@ -323,7 +327,39 @@ export function useSimulation(props: Inputs): Simulation {
     w.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
     w.postMessage({ type: 'play' } satisfies SimRequest);
     setPlaying(true);
-  }, [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying]);
+  }, [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying, modelRef, setModel]);
+
+  const start = useCallback(() => {
+    pinned.current = null;
+
+    return startModel();
+  }, [startModel]);
+
+  const startPinned = useCallback(
+    (pin: string | null) => {
+      pinned.current = pin;
+
+      return startModel();
+    },
+    [startModel],
+  );
+
+  return { start, startPinned, pinned: () => (modelRef.current ? pinned.current : null) };
+}
+
+export function useSimulation(props: Inputs): Simulation {
+  const { parts, project, rig, pose, viewportRef } = props;
+  const [model, setModel] = useState<SimModel | null>(null);
+  const [speed, setSpeedState] = useState(1);
+  const modelRef = useRef<SimModel | null>(null);
+  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
+  const runSeq = useRef(0);
+  const sw = useSimWorker(viewportRef, modelRef);
+  const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef } = sw;
+  const [controller, setController] = useController(send);
+  const touch = useSimTouches(modelRef, send);
+
+  const { start, startPinned, pinned } = useSimStart({ sw, buildModel, modelRef, setModel, controller, speed });
 
   const stop = useCallback(() => {
     send({ type: 'dispose' });
@@ -349,7 +385,8 @@ export function useSimulation(props: Inputs): Simulation {
     viewportRef,
     modelRef,
     frameHookRef,
-    startSim: start,
+    startSim: startPinned,
+    pinned,
     setController,
     runOn,
     velocity: props.velocity,
@@ -383,7 +420,7 @@ export function useSimulation(props: Inputs): Simulation {
       send({ type: 'speed', value: s });
     },
     setController,
-    buildModel,
+    buildModel: () => buildModel(),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     drive,

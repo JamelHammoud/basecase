@@ -52,6 +52,10 @@ function teamFor(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }, al
   return { members, script };
 }
 
+function refuseDrive(refusal: string | null | false, onRefuse: (message: string) => void) {
+  if (refusal) onRefuse(refusal);
+}
+
 export function useCaseTry({ sim, rig, parts, joints, active, partners, onTry, onRefuse }: TryOptions): CaseTry {
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
@@ -135,6 +139,7 @@ export function useCaseTry({ sim, rig, parts, joints, active, partners, onTry, o
       sim.setWorld(staged.kase.world.objects.map(worldItem), staged.joined);
 
     if (logic.refusal || !(await sim.drive.start(teamFor(staged, { rig, parts }, all)))) {
+      refuseDrive(!logic.refusal && sim.drive.refusal(), onRefuse);
       setPhase('idle');
 
       return;

@@ -5,6 +5,7 @@ import type { Rig } from '../utils/kinematics';
 import {
   driveAccess,
   driveOffer,
+  poseOffer,
   FALL_CHECK_SECONDS,
   FALL_CHECK_SETTLE_SECONDS,
   fallCheckCommands,
@@ -19,7 +20,8 @@ import { onPhonePress } from '../phone/phoneStore';
 import { isIdle, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
-import { readInputs, STUDIO_INPUTS } from './inputSources';
+import { closeInputs, openInputs, posesInputs, readInputs, STUDIO_INPUTS } from './inputSources';
+import { inputRobot, pinFor } from './driveSession';
 import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
 import type { RunOptions, SimRun, SimStatus } from './useSimulation';
@@ -36,13 +38,19 @@ export interface DriveTeam {
 
 export type Autopilot = (frame: SimFrame) => DriveCommand;
 
+export interface DriveStartOptions {
+  inputs?: readonly string[];
+}
+
 export interface SimDrive {
   status: DriveStatus;
   active: boolean;
   cls: DriveClass | null;
   offer: DriveOffer;
+  offersPose: boolean;
   fell: boolean;
-  start: (team?: DriveTeam) => Promise<boolean>;
+  start: (team?: DriveTeam, options?: DriveStartOptions) => Promise<boolean>;
+  refusal: () => string | null;
   stop: () => void;
   respawn: () => void;
   setKeys: (command: DriveCommand) => void;
@@ -62,7 +70,8 @@ interface DriveInputs {
   viewportRef: React.RefObject<Viewport3DHandle | null>;
   modelRef: React.RefObject<SimModel | null>;
   frameHookRef: React.RefObject<FrameHook | null>;
-  startSim: () => Promise<void>;
+  startSim: (pin: string | null) => Promise<void>;
+  pinned: () => string | null;
   setController: (c: Controller) => void;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
   velocity?: React.RefObject<VelocitySource | null>;
@@ -124,12 +133,16 @@ function teamSetup(own: RobotDrive, team: DriveTeam | undefined): DriveSetup {
 }
 
 function controllerFor(access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam): Controller {
-  if (access.kind === 'policy') return { kind: 'policy', policy: access.velocity.policy, robot: access.robot };
+  if (access.kind === 'policy') {
+    const pose = access.pose ? { pose: access.pose } : {};
+
+    return { kind: 'policy', policy: access.velocity.policy, robot: access.robot, ...pose };
+  }
 
   return { kind: 'drive', setup: teamSetup(access.setup, team) };
 }
 
-function useDriveCommand(send: DriveInputs['send']) {
+function useDriveCommand(send: DriveInputs['send'], session: React.RefObject<readonly string[] | null>) {
   const keysCommand = useRef<DriveCommand>(IDLE);
   const sent = useRef<DriveCommand>(IDLE);
   const clsRef = useRef<DriveClass | null>(null);
@@ -144,7 +157,7 @@ function useDriveCommand(send: DriveInputs['send']) {
 
       if (!current) return;
 
-      const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current });
+      const read = readInputs(session.current ?? inputIds.current, { cls: current, keys: keysCommand.current });
       const merged = steered(autopilot, read.command, frame);
 
       readings.current = read.readings;
@@ -154,7 +167,7 @@ function useDriveCommand(send: DriveInputs['send']) {
       sent.current = merged;
       send({ type: 'command', ...(topSpeed.current === null ? merged : policyCommand(merged, topSpeed.current)) });
     },
-    [send],
+    [send, session],
   );
 
   const reset = useCallback((cls: DriveClass | null, speed: number | null) => {
@@ -184,7 +197,33 @@ function useDriveCommand(send: DriveInputs['send']) {
 
   const inputs = useCallback(() => readings.current, []);
 
-  return { push, reset, setKeys, follow, setInputs, inputs };
+  return { push, reset, setKeys, follow, setInputs, inputs, inputIds };
+}
+
+function closeSession(session: React.RefObject<readonly string[] | null>) {
+  closeInputs(session.current ?? []);
+  session.current = null;
+}
+
+async function grantedModel(
+  inputs: DriveInputs,
+  modelRef: React.RefObject<SimModel | null>,
+  want: { pose: boolean; velocity: VelocityDrive | null },
+): Promise<DriveAccess | null> {
+  const { rig, parts, pose, robotKey, startSim, pinned } = inputs;
+
+  if (!modelRef.current || (!want.pose && pinned())) await startSim(null);
+
+  const access = (model: SimModel) =>
+    driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: want.velocity, pose: want.pose });
+  const first = modelRef.current && access(modelRef.current);
+  const pin = first && pinFor(first);
+
+  if (!first || !pin) return first;
+
+  await startSim(pin);
+
+  return modelRef.current && access(modelRef.current);
 }
 
 export function useDrive(inputs: DriveInputs): SimDrive {
@@ -192,7 +231,9 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   const [driveStatus, setDriveStatus] = useState<DriveStatus>('off');
   const [cls, setCls] = useState<DriveClass | null>(null);
   const latest = useRef(inputs);
-  const { push, reset, setKeys, follow, setInputs, inputs: readInputsNow } = useDriveCommand(send);
+  const session = useRef<readonly string[] | null>(null);
+  const { push, reset, setKeys, follow, setInputs, inputs: readInputsNow, inputIds } = useDriveCommand(send, session);
+  const refused = useRef<string | null>(null);
   const [seenSimStatus, setSeenSimStatus] = useState(simStatus);
 
   if (seenSimStatus !== simStatus) {
@@ -220,8 +261,11 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     if (simStatus !== 'off') return;
 
     reset(null, null);
+    closeSession(session);
     viewportRef.current?.followPart(null);
-  }, [simStatus, viewportRef, reset]);
+  }, [simStatus, viewportRef, reset, session]);
+
+  useEffect(() => () => closeSession(session), [session]);
 
   const begin = useCallback(
     (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam) => {
@@ -241,18 +285,34 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     [robotKey, viewportRef, reset],
   );
 
+  const openSession = useCallback(
+    async (ids: readonly string[], access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>) => {
+      if (session.current === ids) return true;
+
+      closeSession(session);
+
+      const robot = inputRobot(access, { rig: latest.current.rig, viewport: viewportRef.current });
+      const refusal = robot && posesInputs(ids) ? await openInputs(ids, robot) : null;
+
+      refused.current = refusal;
+      session.current = refusal ? null : ids;
+
+      return !refusal;
+    },
+    [session, viewportRef],
+  );
+
   const start = useCallback(
-    async (team?: DriveTeam) => {
-      const { parts, rig, pose, startSim, runOn, velocity } = latest.current;
-
-      if (!modelRef.current) await startSim();
-
+    async (team?: DriveTeam, options?: DriveStartOptions) => {
+      const { runOn, velocity } = latest.current;
+      const ids = options?.inputs ?? session.current ?? inputIds.current;
+      const ready = (await velocity?.current?.()) ?? null;
+      const access = await grantedModel(latest.current, modelRef, { pose: posesInputs(ids), velocity: ready });
       const model = modelRef.current;
 
-      if (!model) return false;
+      refused.current = null;
 
-      const ready = (await velocity?.current?.()) ?? null;
-      const access = driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: ready });
+      if (!access || !model) return false;
 
       if (access.kind === 'teach' || access.kind === 'none') {
         setDriveStatus(access.kind);
@@ -268,19 +328,26 @@ export function useDrive(inputs: DriveInputs): SimDrive {
         return false;
       }
 
+      if (!(await openSession(ids, access))) {
+        setDriveStatus('off');
+
+        return false;
+      }
+
       begin(access, team);
 
       return true;
     },
-    [modelRef, robotKey, begin],
+    [modelRef, robotKey, begin, inputIds, session, openSession],
   );
 
   const stop = useCallback(() => {
     reset(null, null);
+    closeSession(session);
     viewportRef.current?.followPart(null);
     latest.current.setController({ kind: 'hold' });
     setDriveStatus('off');
-  }, [viewportRef, reset]);
+  }, [viewportRef, reset, session]);
 
   const respawn = useCallback(() => send({ type: 'respawn', robot: robotKey }), [send, robotKey]);
 
@@ -292,8 +359,10 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     active,
     cls,
     offer: driveStatus === 'teach' && offered === 'drive' ? 'teach' : offered,
+    offersPose: poseOffer({ rig: inputs.rig, parts: inputs.parts, robotKey }),
     fell: active && !!robotStat && robotStat.fellAt !== null,
     start,
+    refusal: () => refused.current,
     stop,
     respawn,
     setKeys,

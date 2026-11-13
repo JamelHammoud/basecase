@@ -32,6 +32,7 @@ interface SimulatePanelProps {
   onTeach: ((goal: string) => void) | null;
   onRunCase: () => void;
   compare: CaseCompare;
+  onToast: (message: string) => void;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -91,7 +92,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             cls={sim.drive.cls}
           />
         )}
-        <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} />
+        <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} onToast={props.onToast} />
         <TrainSection
           skills={skills}
           actions={skillActions}

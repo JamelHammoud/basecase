@@ -54,6 +54,8 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. For now you add a console by editing that file; New Case, the templates and the agent make Cases without one. It says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
 
+A console that lists `camera` among its inputs opens the computer's camera when you click **Try It**. Your arms then drive a humanoid or an arm, as in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
 Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.

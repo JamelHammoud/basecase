@@ -5,6 +5,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
+import { lastDownload } from '../utils/downloadBytes';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
@@ -118,6 +119,11 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
+    lastDownload: () => {
+      const file = lastDownload();
+
+      return file && { name: file.name, base64: base64Of(file.bytes) };
+    },
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
     cadSources: () => cadSources(partsRef.current),

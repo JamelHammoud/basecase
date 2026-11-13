@@ -6,6 +6,7 @@ import { CONVERT_MESSAGES, CONVERT_MS, checkedConvertJob } from '../../cadImport
 import { bundleEntry, openKernelSession } from './kernelSession.mjs';
 import { openKernelWindow } from './kernelWindow.mjs';
 import { checkedRenderJob, renderTimeout } from './policy.mjs';
+import { STEP_EXPORT_MS } from '../stepPolicy.mjs';
 import { KernelPool } from './pool.mjs';
 
 const POOL_SIZE = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
@@ -56,6 +57,10 @@ export class SandboxKernel {
 
   audit(body) {
     return this.pool.submit({ json: body }, AUDIT_TIMEOUT_MS);
+  }
+
+  exportStep(job) {
+    return this.pool.submit({ step: job, language: 'replicad' }, STEP_EXPORT_MS);
   }
 
   convert(job) {

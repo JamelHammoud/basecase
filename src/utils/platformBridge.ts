@@ -9,6 +9,7 @@ import type {
   SavedSceneRecord,
   SavedSceneSummary,
 } from '../types/robotics';
+import type { ExportedStep, StepJob } from '../types/step';
 import { base64ToBytes, bytesToBase64 } from './base64';
 import { electron, get, post, postJson, postOrThrow, query, quietly } from './platform/transport';
 import type {
@@ -106,6 +107,9 @@ const acpBridge = {
   },
 };
 
+const plainJson = (value: unknown) =>
+  JSON.parse(JSON.stringify(value, (_key, v: unknown) => (v instanceof Float32Array ? Array.from(v) : v)));
+
 const libraryBridge = {
   async saveEvidenceFile(payload: EvidenceFilePayload): Promise<void> {
     const api = electron();
@@ -163,6 +167,11 @@ const libraryBridge = {
 
     return { bodies: opened.bodies, data: base64ToBytes(opened.data) };
   },
+  exportStep: (job: StepJob): Promise<ExportedStep> =>
+    electron()?.exportStep(job) ??
+    postOrThrow<ExportedStep>('/cad-export-step', plainJson(job), (body, res) =>
+      res.ok ? null : String(body.error ?? 'The CAD kernel failed.'),
+    ),
 
   uploadImage: (payload: ImageUpload): Promise<ReferenceImageRecord> =>
     electron()?.uploadImage(payload) ?? post('/upload-image', payload),

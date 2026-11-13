@@ -11,6 +11,7 @@ import {
   SavedSceneRecord,
   SavedSceneSummary,
 } from '../../types/robotics';
+import type { ExportedStep, StepJob } from '../../types/step';
 import type { ConvertedFiles, ConvertedModel } from '../robotImport/simready';
 
 export interface CadBody {
@@ -164,6 +165,7 @@ declare global {
       sourcedMesh: (id: string) => Promise<Uint8Array | null>;
       importMakerCad: (payload: unknown) => Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }>;
       openCadFile: (payload: { name: string; bytes: Uint8Array }) => Promise<OpenedCad>;
+      exportStep: (job: StepJob) => Promise<ExportedStep>;
       savePurchase: (payload: {
         key: string;
         record: PurchaseRecord | null;

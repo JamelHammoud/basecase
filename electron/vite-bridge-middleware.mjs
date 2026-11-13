@@ -56,6 +56,7 @@ function postRoutes(backend) {
     ['/sourced-remove', (p) => backend.removeSourced(p.id)],
     ['/sourced-import-cad', (p) => backend.importMakerCad(p)],
     ['/cad-open', (p) => openCadFile(backend, p)],
+    ['/cad-export-step', (p) => backend.exportStep(p)],
     ['/chat-save', (p) => backend.saveConversation(p)],
     ['/chat-delete', (p) => backend.deleteConversation(p.id)],
     ['/acp-cancel', (p) => backend.cancelAcpPrompt(p.workspaceId)],

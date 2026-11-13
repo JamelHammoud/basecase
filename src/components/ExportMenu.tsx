@@ -7,6 +7,7 @@ import {
   ClipboardIcon,
   DownloadIcon,
   FileIcon,
+  PackageIcon,
   PhotoIcon,
   PrinterIcon,
   ShareIcon,
@@ -18,6 +19,7 @@ interface ExportMenuProps {
   onExportImage: () => void;
   onExportStl: () => void;
   onExport3mf: () => void;
+  onExportStep?: () => void;
   onExportScene: () => void;
   onAirDrop: () => void;
   onCopyMarkdown: () => void;
@@ -28,6 +30,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   onExportImage,
   onExportStl,
   onExport3mf,
+  onExportStep,
   onExportScene,
   onAirDrop,
   onCopyMarkdown,
@@ -65,6 +68,14 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           disabled={!canExportStl}
           onSelect={run(onExport3mf)}
         />
+        {onExportStep && (
+          <MenuItem
+            icon={<PackageIcon className="w-4 h-4" />}
+            label="STEP Assembly"
+            disabled={!canExportStl}
+            onSelect={run(onExportStep)}
+          />
+        )}
         <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Basecase Scene" onSelect={run(onExportScene)} />
         <MenuDivider />
         <MenuItem

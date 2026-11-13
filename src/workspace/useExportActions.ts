@@ -7,6 +7,7 @@ import { printReportOf } from '../utils/printReport';
 import { encodeSceneFile, SCENE_FILE_EXTENSION, sharedScene } from '../utils/sceneFile';
 import { scenePreview } from '../three/scenePreview';
 import { fileSafe } from './helpers';
+import { useStepExport } from './useStepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 
@@ -25,6 +26,7 @@ export function useExportActions({
   'use memo';
 
   const sharingRef = useRef(false);
+  const exportStep = useStepExport({ parts, scene, showToast });
 
   const exportStl = () => {
     if (parts.length === 0) return;
@@ -143,7 +145,16 @@ export function useExportActions({
     }
   };
 
-  return { exportStl, exportImage, export3mf, exportScene, airDrop, copyBrief, canExportStl: parts.length > 0 };
+  return {
+    exportStl,
+    exportStep,
+    exportImage,
+    export3mf,
+    exportScene,
+    airDrop,
+    copyBrief,
+    canExportStl: parts.length > 0,
+  };
 }
 
 export type ExportActions = ReturnType<typeof useExportActions>;

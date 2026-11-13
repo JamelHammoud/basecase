@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import { ExportMenu } from '../components/ExportMenu';
 import { DRAG_REGION, IconButton, NO_DRAG_REGION, PanelRightIcon, RedoIcon, UndoIcon } from '../design-system';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { useCaptionInset } from '../utils/useCaptionInset';
 import type { ExportActions } from './useExportActions';
 
@@ -55,6 +56,7 @@ export function TitleBarActions({
           onExportImage={exports.exportImage}
           onExportStl={exports.exportStl}
           onExport3mf={() => void exports.export3mf()}
+          onExportStep={IS_WEB_DEMO ? undefined : () => void exports.exportStep()}
           onExportScene={() => void exports.exportScene()}
           onAirDrop={() => void exports.airDrop()}
           onCopyMarkdown={exports.copyBrief}

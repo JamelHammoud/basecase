@@ -3,10 +3,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { STEP_EXPORT_MS } from '../stepPolicy.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const kernelDir = path.resolve(here, '..');
 const root = path.resolve(kernelDir, '..', '..');
+const cadImportDir = path.resolve(kernelDir, '..', 'cadImport');
 const POOL_SIZE = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
 const NETWORK_PERMISSION_NODE = 25;
 const STOPPED_ERROR = 'The CAD kernel stopped (time or memory limit). Simplify the part and try again.';
@@ -24,11 +26,24 @@ function permissionArgs() {
 
   return [
     '--permission',
-    ...[path.join(root, 'node_modules'), path.join(root, 'vendor'), kernelDir].flatMap((dir) =>
+    ...[path.join(root, 'node_modules'), path.join(root, 'vendor'), kernelDir, cadImportDir].flatMap((dir) =>
       Array.from(new Set([dir, realDir(dir)])).map((d) => `--allow-fs-read=${path.join(d, '*')}`),
     ),
   ];
 }
+
+const plainSolid = (solid) => {
+  if (solid.type === 'mesh') return { ...solid, positions: Array.from(solid.positions) };
+
+  if (solid.type === 'moved') return { ...solid, solid: plainSolid(solid.solid) };
+
+  return solid.type === 'boolean' ? { ...solid, solids: solid.solids.map(plainSolid) } : solid;
+};
+
+const plainStepJob = (job) => ({
+  ...job,
+  bodies: job.bodies.map((b) => ({ ...b, solid: plainSolid(b.solid), fallback: b.fallback && plainSolid(b.fallback) })),
+});
 
 const timeoutError = (timeoutMs) =>
   `Rendering took longer than ${Math.round(timeoutMs / 1000)} s. Simplify the part (fewer booleans, lower $fn, fewer hull() pieces).`;
@@ -102,7 +117,14 @@ export function createNodeKernel({ permissionModel = true } = {}) {
       finish(k, { id: job.id, ok: false, error: timeoutError(job.timeoutMs) }, true);
       k.proc.kill();
     }, job.timeoutMs);
-    k.proc.send({ id: job.id, language: job.language, code: job.code, expect: job.expect, mesh: job.mesh });
+    k.proc.send({
+      id: job.id,
+      language: job.language,
+      code: job.code,
+      expect: job.expect,
+      mesh: job.mesh,
+      step: job.step,
+    });
   }
 
   async function pump() {
@@ -136,6 +158,8 @@ export function createNodeKernel({ permissionModel = true } = {}) {
       return submit({ language, code, expect, timeoutMs });
     },
     auditPart: (mesh, timeoutMs = 60000) => submit({ mesh, timeoutMs }),
+    exportStep: (job, timeoutMs = STEP_EXPORT_MS) =>
+      submit({ step: plainStepJob(job), language: 'replicad', timeoutMs }),
     warmUp() {
       if (kernels.length === 0) spawnKernel();
     },
@@ -145,11 +169,12 @@ export function createNodeKernel({ permissionModel = true } = {}) {
   };
 }
 
-export const { renderPart, auditPart, warmUp, stopKernels } = createNodeKernel();
+export const { renderPart, auditPart, exportStep, warmUp, stopKernels } = createNodeKernel();
 
 export const nodeKernelService = {
   render: ({ language, code, expect, timeoutMs }) => renderPart(language, code, { expect, timeoutMs }),
   audit: (body) => auditPart(JSON.parse(body).mesh),
+  exportStep: (job) => exportStep(job),
   warm: warmUp,
   stop: stopKernels,
 };

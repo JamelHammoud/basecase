@@ -4,10 +4,13 @@ import path from 'node:path';
 import { BRIEFS } from './paths.mjs';
 import { run } from './sh.mjs';
 
+const TELLING = new Set(['build', 'refine']);
+
 export const brief = (name) =>
   [
     fs.readFileSync(path.join(BRIEFS, 'shared.md'), 'utf8'),
     fs.readFileSync(path.join(BRIEFS, `${name}.md`), 'utf8'),
+    ...(TELLING.has(name) ? [fs.readFileSync(path.join(BRIEFS, 'telling.md'), 'utf8')] : []),
   ].join('\n\n');
 
 const lastResult = (out) => {

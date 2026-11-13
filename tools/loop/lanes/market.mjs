@@ -6,6 +6,13 @@ import { publish } from '../lib/pull.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 1,
+  everySeconds: 60,
+  labels: ['loop:market', 'loop:idea'],
+  does: 'Researches competitors, partners and integrations into docs/market/ and files loop:idea issues for the lead',
+};
+
 const IDEA = 'loop:idea';
 const TAKEN_LABELS = [IDEA, 'loop:next', 'loop:building'];
 const MARKET = 'docs/market/';

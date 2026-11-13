@@ -12,6 +12,13 @@ import {
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { digestTable, digestTitle, weekStats } from '../lib/stats.mjs';
 
+export const schedule = {
+  slots: 1,
+  everySeconds: 24 * 60 * 60,
+  labels: ['loop:digest'],
+  does: "Posts the week's numbers as a loop:digest issue, once a week",
+};
+
 const DIGEST = 'loop:digest';
 const EVERY_MS = 7 * DAY_MS - 2 * HOUR_MS;
 

@@ -59,11 +59,30 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
       };
       const swallow = (el: HTMLElement) =>
         el.addEventListener('click', (e) => (e.stopImmediatePropagation(), e.preventDefault()), true);
+      const texts = (el: HTMLElement) => {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        const found: Text[] = [];
+
+        while (walker.nextNode()) found.push(walker.currentNode as Text);
+
+        return found.filter((t) => t.data.trim());
+      };
+      const retext = (el: HTMLElement, text: string) =>
+        texts(el).forEach((t, i) => {
+          const want = i === 0 ? text : '';
+
+          if (t.data !== want) t.data = want;
+        });
+      const unlabel = (el: HTMLElement) => {
+        retext(el, '');
+        el.setAttribute('aria-label', '');
+        el.querySelectorAll<HTMLElement>('svg, img').forEach((icon) => (icon.style.visibility = 'hidden'));
+      };
       const apply: Record<string, (el: HTMLElement) => void> = {
-        'label-removed': (el) => ((el.textContent = ''), el.setAttribute('aria-label', '')),
+        'label-removed': unlabel,
         tiny: (el) => Object.assign(el.style, { height: '14px', fontSize: '9px', minHeight: '0' }),
         'dead-click': swallow,
-        'misleading-label': (el) => (el.textContent = 'Delete Everything'),
+        'misleading-label': (el) => retext(el, 'Delete Everything'),
         'low-contrast': (el) => Object.assign(el.style, { color: '#262626', background: '#222222' }),
         'slow-response': (el) => {
           el.addEventListener(
@@ -110,6 +129,7 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         flicker: (el) =>
           setInterval(() => (el.style.visibility = el.style.visibility === 'hidden' ? '' : 'hidden'), 700),
       };
+      const RELABELLED = new Set(['label-removed', 'misleading-label']);
       const held = new Map<string, HTMLElement>();
       const locate = (name: string) => {
         const known = held.get(name);
@@ -125,6 +145,8 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
           if (!el) continue;
 
           remember(spec.name, el.getBoundingClientRect());
+
+          if (done.has(el) && RELABELLED.has(spec.kind)) apply[spec.kind](el);
 
           if (!done.has(el)) {
             done.add(el);

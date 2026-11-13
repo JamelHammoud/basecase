@@ -23,6 +23,10 @@ export default {
       UNSIGNED,
     ),
     vitestCheck(
+      'planted label faults relabel a control React redraws without unmounting the app',
+      'verify/rehearsal/faults.test.ts',
+    ),
+    vitestCheck(
       'PersonaLab scoring matches a moved control and a name read with spaces, and nothing else',
       'verify/rehearsal/personaScore.test.ts',
     ),

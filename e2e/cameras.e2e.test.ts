@@ -49,6 +49,7 @@ describe('camera views', () => {
       .first()
       .click();
     await expect.poll(drive, { timeout: 60000 }).toBe('on');
+    await expect.poll(frames, { timeout: 60000 }).toBeGreaterThan(0);
 
     await app.page.mouse.click(720, 450);
     await app.page.keyboard.down('w');

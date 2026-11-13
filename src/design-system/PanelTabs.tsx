@@ -31,6 +31,9 @@ export function PanelTabs<T extends string>({ tabs, value, onChange, label }: Pa
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const fade = useScrollFade(FADE_PX, 'x');
   const menu = tabs.find((t) => t.value === value)?.menu;
+
+  if (menuOpen && !menu) setMenuOpen(false);
+
   const open = menuOpen && !!menu;
   const close = () => setMenuOpen(false);
 

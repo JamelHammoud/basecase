@@ -93,22 +93,24 @@ export const latestMainCheck = () =>
   ]) ?? [])[0] ?? null;
 
 export const lastFinishedMainCheck = () =>
-  (json('gh', [
-    'run',
-    'list',
-    '--workflow',
-    'check.yml',
-    '--branch',
-    'main',
-    '--event',
-    'push',
-    '--status',
-    'completed',
-    '--limit',
-    '1',
-    '--json',
-    'databaseId,conclusion,status,headSha,createdAt',
-  ]) ?? [])[0] ?? null;
+  (
+    json('gh', [
+      'run',
+      'list',
+      '--workflow',
+      'check.yml',
+      '--branch',
+      'main',
+      '--event',
+      'push',
+      '--status',
+      'completed',
+      '--limit',
+      '10',
+      '--json',
+      'databaseId,conclusion,status,headSha,createdAt',
+    ]) ?? []
+  ).find((run) => run.conclusion !== 'cancelled' && run.conclusion !== 'skipped') ?? null;
 
 export const failedLog = (runId) => run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out;
 

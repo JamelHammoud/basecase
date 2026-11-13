@@ -5,6 +5,7 @@ import { OutputFields } from './OutputFields';
 import { SAMPLE_ROBOTICS_SVGS } from './samples';
 import type { SketchParams as CreateFrom2DDrawingParams } from '../../workspace/partFactories';
 import type { StudioDraft } from './useStudioDraft';
+import { errorMessage } from '../../utils/errorMessage';
 
 const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
   const svgFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -123,7 +124,7 @@ const SvgOutput: React.FC<{
         svgDataUrl: freshParsed.svgDataUrl,
       });
     } catch (err) {
-      draft.setSvgError(String(err));
+      draft.setSvgError(errorMessage(err));
     }
   };
 

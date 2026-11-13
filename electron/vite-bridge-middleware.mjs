@@ -128,7 +128,7 @@ async function respondToPost({ routes, url, body, res }) {
     res.end(JSON.stringify(await route(payload)));
   } catch (err) {
     res.statusCode = 500;
-    res.end(JSON.stringify({ error: String(err) }));
+    res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
   }
 }
 

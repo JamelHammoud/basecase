@@ -38,6 +38,7 @@ import { PartLayer } from './partLayer';
 import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
 import { ScaleFigures } from './scaleFigures';
+import { ScanPoints } from './scanPoints';
 import { SelectionOutline } from './selectionOutline';
 import { warmShaders } from './shaderWarmup';
 import { createStage, disposeStage } from './stage';
@@ -132,6 +133,8 @@ export class ViewportEngine {
 
   private readonly cameraGlyphs: CameraGlyphs;
 
+  private readonly scanPoints: ScanPoints;
+
   private readonly follow: FollowCamera;
 
   private readonly cleanups: Array<() => void>;
@@ -174,6 +177,7 @@ export class ViewportEngine {
     this.agentFrames.sync(options.props.agentFrames ?? []);
     this.cameraGlyphs = new CameraGlyphs(stage.overlays);
     this.cameraGlyphs.sync(options.props.fixedCameras);
+    this.scanPoints = new ScanPoints(stage.overlays);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
 
     const outline = new SelectionOutline(stage);
@@ -274,6 +278,7 @@ export class ViewportEngine {
     this.markLayer.dispose();
     this.agentFrames.dispose();
     this.cameraGlyphs.dispose();
+    this.scanPoints.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -318,6 +323,8 @@ export class ViewportEngine {
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
+      setScan: (points) => camera(() => this.scanPoints.set(points)),
+      scanPointCount: () => this.scanPoints.size,
       followPart: (partId) => {
         this.follow.follow(partId);
         ctx.loop.following = this.follow.active;

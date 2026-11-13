@@ -3,6 +3,7 @@ import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
 import { Recorder, recordingTransfer, type Recording } from './recorder';
+import type { Scan } from './scanner';
 import { SimEngine, type Controller } from './engine';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
@@ -51,6 +52,7 @@ export type SimResponse =
       targets: Float64Array;
       stats: ReturnType<SimEngine['stats']>;
       playing: boolean;
+      scan?: Scan;
     }
   | {
       type: 'ran';
@@ -72,6 +74,7 @@ let recorder: Recorder | null = null;
 let replayTimer = 0;
 let live: LiveRoutine | null = null;
 let cameraPort: MessagePort | null = null;
+let scanShown = -1;
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
 const frame = () => {
@@ -86,7 +89,15 @@ const frame = () => {
     cameraPort.postMessage(copy, [copy.buffer]);
   }
 
-  post({ type: 'frame', poses, targets, stats: engine.stats(rtf), playing }, [poses.buffer, targets.buffer]);
+  const scanner = engine.scanner;
+  const scan = scanner && scanner.version !== scanShown ? scanner.latest() : undefined;
+
+  scanShown = scanner?.version ?? -1;
+  post({ type: 'frame', poses, targets, stats: engine.stats(rtf), playing, ...(scan ? { scan } : {}) }, [
+    poses.buffer,
+    targets.buffer,
+    ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
+  ]);
 };
 
 function loop() {
@@ -145,6 +156,7 @@ async function load(msg: Msg<'load'>) {
   live = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
+  scanShown = -1;
 
   if (msg.controller) engine.setController(msg.controller);
 

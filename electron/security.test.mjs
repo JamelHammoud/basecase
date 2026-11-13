@@ -13,6 +13,7 @@ import { bundleFile, cspFor, isKernelUrl, KERNEL_ORIGIN, PAGE_CSP, WORKER_CSP } 
 import { NO_CONVERTER_ERROR } from './cadImport/convertClient.mjs';
 import { checkedConversion, checkedConvertJob } from './cadImport/convertPolicy.mjs';
 import { importMakerCad } from './cadImport/importMakerCad.mjs';
+import { openCadFile } from './cadImport/openCadFile.mjs';
 import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
@@ -280,6 +281,47 @@ describe('CAD import sandbox', () => {
     ]) {
       expect(() => checkedConvertJob(bad)).toThrow();
     }
+  });
+
+  it('hands a dropped CAD file only to the converter, and drops a forged reply', async () => {
+    const bytes = new TextEncoder().encode('ISO-10303-21;');
+    const jobs = [];
+    const body = { name: 'Plate', color: '#cc3333', center: [0, 0, 0], size: [1, 1, 1], vertices: 3, triangles: 1 };
+    const mesh = (positions, indices) =>
+      new Uint8Array([
+        ...new Uint8Array(new Float32Array(positions).buffer),
+        ...new Uint8Array(new Uint32Array(indices).buffer),
+      ]);
+    const replying = (head, data) => ({
+      convert: async (job) => {
+        jobs.push(job);
+
+        return encodeReply(head, data);
+      },
+    });
+    const ok = { ok: true, bodies: [body] };
+    const good = mesh([0, 0, 0, 1, 0, 0, 0, 1, 0], [0, 1, 2]);
+
+    await expect(openCadFile(replying(ok, good), { name: 'plate.step', bytes })).resolves.toMatchObject({
+      bodies: [body],
+    });
+    expect(jobs[0]).toMatchObject({ bodies: true, ext: '.step', name: 'plate.step' });
+    expect(jobs[0].bytes).toBe(bytes);
+
+    for (const [head, data] of [
+      [ok, mesh([0, 0, 0, 1, 0, 0, 0, 1, 0], [0, 1, 9])],
+      [ok, mesh([0, 0, Number.NaN, 1, 0, 0, 0, 1, 0], [0, 1, 2])],
+      [ok, good.subarray(0, 40)],
+      [{ ok: true, bodies: [{ ...body, color: 'red; url(x)' }] }, good],
+      [{ ok: true, bodies: [{ ...body, vertices: -3 }] }, good],
+      [{ ok: true, bodies: Array.from({ length: 1001 }, () => body) }, good],
+      [{ ok: true, bodies: [] }, new Uint8Array(0)],
+    ]) {
+      await expect(openCadFile(replying(head, data), { name: 'plate.step', bytes })).rejects.toThrow('malformed');
+    }
+
+    await expect(openCadFile(replying(ok, good), { name: '../../etc/passwd', bytes })).rejects.toThrow(/STEP/);
+    expect(jobs).toHaveLength(8);
   });
 
   it('runs the converter under the worker policy: no network, no nested workers', () => {

@@ -1,6 +1,7 @@
 import type { ConnectionKind, MyPrinter } from '../data/printers';
 import type { PrintMaterial } from '../types/robotics';
 import { electron, post } from '../utils/platform/transport';
+import { bytesToBase64 } from '../utils/base64';
 
 export interface PrintToolsStatus {
   slicers: Array<{ kind: 'bambu' | 'orca' | 'prusa'; name: string; version: string | null }>;
@@ -79,20 +80,12 @@ const errorText = (e: unknown) =>
     .replace(/^Error invoking remote method '[^']+':\s*/, '')
     .replace(/^Error:\s*/, '');
 
-function toBase64(bytes: Uint8Array): string {
-  let text = '';
-
-  for (let i = 0; i < bytes.length; i += 0x8000) text += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-
-  return btoa(text);
-}
-
 const forHttp = (payload: unknown) => {
   const job = payload as Partial<JobPayload> | undefined;
 
   if (!job?.groups) return payload;
 
-  return { ...job, groups: job.groups.map((g) => ({ ...g, bytes: toBase64(g.bytes) })) };
+  return { ...job, groups: job.groups.map((g) => ({ ...g, bytes: bytesToBase64(g.bytes) })) };
 };
 
 async function call<T>(channel: string, payload?: unknown): Promise<T> {

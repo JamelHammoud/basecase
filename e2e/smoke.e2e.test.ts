@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { openApp, partCount, type App } from './harness';
 
@@ -197,6 +200,67 @@ describe('studio commands', () => {
     await expect
       .poll(() => app.page.evaluate(() => localStorage.getItem('agent-choices')))
       .toBe(JSON.stringify({ claude: { model: 'sonnet', effort: 'high' } }));
+    expect(app.errors).toEqual([]);
+  });
+});
+
+const STEP_FIXTURE = path.resolve('verify', 'fixtures', 'cadimport', 'two-bodies-inch.step');
+
+const cadModule = (...parts: string[]) => import(pathToFileURL(path.resolve('electron', 'cadImport', ...parts)).href);
+
+async function convertInNodeHost(name: string, base64: string) {
+  const [{ createNodeConverter }, { openCadFile }] = await Promise.all([
+    cadModule('nodeHost', 'client.mjs'),
+    cadModule('openCadFile.mjs'),
+  ]);
+  const opened = await openCadFile(createNodeConverter(), {
+    name,
+    bytes: new Uint8Array(Buffer.from(base64, 'base64')),
+  });
+
+  return { bodies: opened.bodies, data: Buffer.from(opened.data).toString('base64') };
+}
+
+function dropFile(page: App['page'], name: string, base64: string) {
+  return page.evaluate(
+    ({ name, base64 }) => {
+      const transfer = new DataTransfer();
+      const target = [...document.querySelectorAll('.canvas-cursor canvas')].find((c) => !c.closest('[inert]'))!;
+      const { x, y, width, height } = target.getBoundingClientRect();
+      const at = { clientX: x + width / 2, clientY: y + height / 2 };
+
+      transfer.items.add(new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name));
+
+      for (const type of ['dragenter', 'dragover', 'drop'])
+        target.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: transfer, ...at }));
+    },
+    { name, base64 },
+  );
+}
+
+describe('studio import', () => {
+  it('opens a two-body STEP dropped on the canvas as two parts in one group', async () => {
+    const summaries = () =>
+      app.page.evaluate(() =>
+        (
+          window as unknown as { __studio: { parts: () => Array<{ name: string; kind: string; group?: string }> } }
+        ).__studio.parts(),
+      );
+
+    await app.page.route('**/api/bridge/cad-open', async (route) => {
+      const { name, data } = route.request().postDataJSON() as { name: string; data: string };
+
+      await route.fulfill({ json: await convertInNodeHost(name, data) });
+    });
+    await dropFile(app.page, 'two-bodies-inch.step', fs.readFileSync(STEP_FIXTURE).toString('base64'));
+
+    const imported = async () => (await summaries()).filter((p) => p.group === 'two-bodies-inch');
+
+    await expect.poll(async () => (await imported()).length, { timeout: 60000 }).toBe(2);
+    expect((await imported()).map(({ name, kind }) => [name, kind])).toEqual([
+      ['Base Plate', 'mesh'],
+      ['Post', 'mesh'],
+    ]);
     expect(app.errors).toEqual([]);
   });
 });

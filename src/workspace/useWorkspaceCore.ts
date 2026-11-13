@@ -85,7 +85,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     hasRig: posing.hasRig,
   });
 
-  const simTraining = useSimTraining({ workspaceId, docs, posing, viewportRef, showToast });
+  const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
   const guide = useBuildGuide({
     sceneName: scene.sceneName,
     parts,

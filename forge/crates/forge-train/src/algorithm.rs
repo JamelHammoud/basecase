@@ -24,6 +24,9 @@ pub trait Algorithm {
     fn snapshot(&self) -> Snapshot;
     fn warm_start(&mut self, source: &WarmStart) -> Result<Vec<String>, String>;
     fn follow_progress(&mut self, _progress: f64) {}
+    fn leaves_the_cpu_free(&self) -> bool {
+        false
+    }
 }
 
 pub fn build<'a>(algo: Algo, envs: Envs<'a>, seed: u64, math: Math) -> Result<Box<dyn Algorithm + 'a>, String> {

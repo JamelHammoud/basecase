@@ -14,6 +14,7 @@ import type { SceneDocument } from './useSceneDocument';
 
 interface SimTrainingOptions {
   workspaceId: string;
+  scene: { sceneId: string };
   docs: SceneDocument;
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
@@ -22,7 +23,7 @@ interface SimTrainingOptions {
 }
 
 export function useSimTraining(options: SimTrainingOptions) {
-  const { workspaceId, docs, posing, viewportRef, showToast, studio } = options;
+  const { workspaceId, scene, docs, posing, viewportRef, showToast, studio } = options;
   const { parts, project, projectRef, setProject, commitParts, updateProjectNow } = docs;
   const velocity = useRef<VelocitySource | null>(null);
   const sim = useSimulation({
@@ -75,6 +76,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     sim,
     showToast,
     openAccounts: () => studio.openSettings('accounts'),
+    sceneId: scene.sceneId,
   });
   const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
 

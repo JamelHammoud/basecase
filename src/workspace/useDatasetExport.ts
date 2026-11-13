@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Case } from '../cases/schema';
 import { sha256, type TryRecord } from '../cases/tries';
 import { loadRecording } from '../cases/tryStore';
-import type { DatasetFiles, DatasetJobEpisode } from '../datasets/buildDataset';
+import type { DatasetJobEpisode } from '../datasets/buildDataset';
 import { datasetCameras, snakeKey } from '../datasets/cameras';
 import { exportDatasetFiles, exportDatasetZip, type DatasetSpec } from '../datasets/datasetClient';
 import { canExport } from '../datasets/episodes';
@@ -24,6 +24,7 @@ interface DatasetExportOptions {
   tries: TryRecord[];
   showToast: ShowToast;
   openAccounts: () => void;
+  sceneId: string;
 }
 
 export interface DatasetExport {
@@ -32,7 +33,7 @@ export interface DatasetExport {
   exporting: boolean;
   exportDataset: () => void;
   publishDataset: () => void;
-  files: (tries: TryRecord[]) => Promise<DatasetFiles | null>;
+  zip: (tries: TryRecord[]) => Promise<Uint8Array | null>;
 }
 
 async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) {
@@ -59,13 +60,26 @@ const triesText = (n: number) => (n === 1 ? '1 try' : `${n} tries`);
 interface PreparedDataset {
   job: DatasetSpec;
   name: string;
+  repo: string;
   used: number;
   left: number;
 }
 
-type PrepareInput = Pick<DatasetExportOptions, 'sim' | 'rig' | 'parts'> & { kase: Case; tries: TryRecord[] };
+type PrepareInput = Pick<DatasetExportOptions, 'sim' | 'rig' | 'parts' | 'sceneId'> & {
+  kase: Case;
+  tries: TryRecord[];
+};
 
-async function prepareDataset({ sim, rig, parts, kase, tries }: PrepareInput): Promise<PreparedDataset | null> {
+const REPO_STEM_MAX = 80;
+
+async function repoName(sceneId: string, kase: Case) {
+  const stem = fileSafe(kase.name).slice(0, REPO_STEM_MAX).replace(/-$/, '');
+
+  return `${stem}-${(await sha256(`${sceneId}/${kase.id}`)).slice(0, 6)}`;
+}
+
+async function prepareDataset(input: PrepareInput): Promise<PreparedDataset | null> {
+  const { sim, rig, parts, kase, tries } = input;
   const model = sim.model ?? (await sim.buildModel());
   const { episodes, modelHash } = await usableEpisodes(kase, tries, model);
 
@@ -84,7 +98,13 @@ async function prepareDataset({ sim, rig, parts, kase, tries }: PrepareInput): P
     source: { app: 'basecase', case: kase.id, case_name: kase.name, model_hash: modelHash },
   };
 
-  return { job, name, used: episodes.length, left: tries.length - episodes.length };
+  return {
+    job,
+    name,
+    repo: await repoName(input.sceneId, kase),
+    used: episodes.length,
+    left: tries.length - episodes.length,
+  };
 }
 
 interface Delivery {
@@ -110,10 +130,10 @@ const PUBLISH: Delivery = {
   failed: 'Couldn’t publish the dataset.',
   deliver: async (made) => {
     const files = await exportDatasetFiles(made.job);
-    const published = await hubBridge.publish({ kind: 'dataset', name: made.name, files });
+    const published = await hubBridge.publish({ name: made.repo, files });
 
     return {
-      message: `Published ${triesText(made.used)} to ${published.repo}${leftOut(made)}`,
+      message: `Published to ${published.repo}${leftOut(made)}`,
       options: { action: { label: 'Open', onClick: () => window.open(published.url, '_blank', 'noopener') } },
     };
   },
@@ -126,17 +146,19 @@ const signedIn = () =>
   );
 
 export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
-  const { sim, rig, parts, active, tries, showToast, openAccounts } = options;
+  const { sim, rig, parts, active, tries, showToast, openAccounts, sceneId } = options;
   const [exporting, setExporting] = useState(false);
+  const busy = useRef(false);
   const passed = tries.filter((t) => t.passed);
   const ready = !!active && passed.length > 0;
+  const prepare = (kase: Case, from: TryRecord[]) => prepareDataset({ sim, rig, parts, sceneId, kase, tries: from });
 
   const run = async (kase: Case, delivery: Delivery) => {
     setExporting(true);
     showToast(delivery.busy, { tone: 'progress' });
 
     try {
-      const made = await prepareDataset({ sim, rig, parts, kase, tries: passed });
+      const made = await prepare(kase, passed);
 
       if (!made) {
         showToast('These tries are from an earlier design. Try It again to record new ones.', { tone: 'error' });
@@ -154,6 +176,18 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
     }
   };
 
+  const once = async (work: () => Promise<void>) => {
+    if (busy.current) return;
+
+    busy.current = true;
+
+    try {
+      await work();
+    } finally {
+      busy.current = false;
+    }
+  };
+
   const publish = async (kase: Case) => {
     if (await signedIn()) await run(kase, PUBLISH);
     else openAccounts();
@@ -164,15 +198,15 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
     canPublish: ready && !IS_WEB_DEMO,
     exporting,
     exportDataset: () => {
-      if (active && ready && !exporting) void run(active, EXPORT);
+      if (active && ready) void once(() => run(active, EXPORT));
     },
     publishDataset: () => {
-      if (active && ready && !exporting && !IS_WEB_DEMO) void publish(active);
+      if (active && ready && !IS_WEB_DEMO) void once(() => publish(active));
     },
-    files: async (all) => {
-      const made = active && (await prepareDataset({ sim, rig, parts, kase: active, tries: all }));
+    zip: async (all) => {
+      const made = active && (await prepare(active, all));
 
-      return made ? exportDatasetFiles(made.job) : null;
+      return made ? exportDatasetZip(made.job) : null;
     },
   };
 }

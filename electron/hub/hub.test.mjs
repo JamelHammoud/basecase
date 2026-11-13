@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { startFakeHub } from '../../e2e/fakeHub.ts';
 import { HubClient } from './hubClient.mjs';
 import { HUB_CALLS } from './routes.mjs';
-import { HubAccount } from './index.mjs';
+import { HubAccount, hubEndpoint } from './index.mjs';
 
 const TOKEN = 'hf_testTokenThatMustNeverLeak0123456789';
 
@@ -56,6 +56,16 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
+describe('Hub endpoint', () => {
+  it('is huggingface.co unless overridden with https or a loopback http address', () => {
+    expect(hubEndpoint('')).toBe('https://huggingface.co');
+    expect(hubEndpoint('https://hub.example.com/x')).toBe('https://hub.example.com');
+    expect(hubEndpoint('http://127.0.0.1:4321')).toBe('http://127.0.0.1:4321');
+    expect(() => hubEndpoint('http://hub.example.com')).toThrow(/https/);
+    expect(() => hubEndpoint('http://10.0.0.5:80')).toThrow(/https/);
+  });
+});
+
 describe('Hugging Face account', () => {
   it('signs in with a write token, keeps it sealed on disk and never hands it back', async () => {
     hub = await startFakeHub({ token: TOKEN });
@@ -68,7 +78,8 @@ describe('Hugging Face account', () => {
 
     for (const file of filesOnDisk(dir)) expect(fs.readFileSync(path.join(dir, file), 'utf-8')).not.toContain(TOKEN);
 
-    expect(await account().signIn('')).toEqual({ signedIn: false, name: null });
+    await expect(account().signIn('')).rejects.toThrow(/isn’t a Hugging Face token/);
+    expect(account().account()).toEqual({ signedIn: true, name: 'tester' });
   });
 
   it('refuses a token the Hub rejects or one that can only read, and stores nothing', async () => {
@@ -91,7 +102,7 @@ describe('publishing to the Hub', () => {
 
     await hubAccount.signIn(TOKEN);
 
-    const published = await hubAccount.publish({ kind: 'dataset', name: 'touch-the-dots-dataset', files });
+    const published = await hubAccount.publish({ name: 'touch-the-dots-dataset', files });
     const repo = hub.repos.get('tester/touch-the-dots-dataset');
     const [commit] = repo.commits;
 
@@ -120,9 +131,9 @@ describe('publishing to the Hub', () => {
     const hubAccount = account();
 
     await hubAccount.signIn(TOKEN);
-    await hubAccount.publish({ kind: 'dataset', name: 'arm', files: dataset(3) });
+    await hubAccount.publish({ name: 'arm', files: dataset(3) });
     hub.repos.get('tester/arm').files.set('README.md', Buffer.from('# Arm'));
-    await hubAccount.publish({ kind: 'dataset', name: 'arm', files: dataset(1) });
+    await hubAccount.publish({ name: 'arm', files: dataset(1) });
 
     const repo = hub.repos.get('tester/arm');
 
@@ -141,7 +152,7 @@ describe('publishing to the Hub', () => {
     expect(hub.requests.filter((r) => r.method === 'PUT')).toHaveLength(6);
   });
 
-  it('uploads large files in parts and publishes models without a tag', async () => {
+  it('uploads large files in parts and tags only a dataset with a codebase version', async () => {
     hub = await startFakeHub({ token: TOKEN, multipartOver: 2048 });
 
     const hubAccount = account();
@@ -149,16 +160,16 @@ describe('publishing to the Hub', () => {
 
     await hubAccount.signIn(TOKEN);
 
+    const parquet = 'data/chunk-000/episode_000000.parquet';
     const published = await hubAccount.publish({
-      kind: 'model',
-      name: 'arm-policy',
-      files: { 'model.safetensors': weights, 'config.json': text('{}') },
+      name: 'arm-big',
+      files: { [parquet]: weights, 'meta/tasks.jsonl': text('{}') },
     });
 
-    expect(published.url).toBe(`${hub.url}/tester/arm-policy`);
-    expect(new Uint8Array(hub.repos.get('tester/arm-policy').files.get('model.safetensors'))).toEqual(weights);
+    expect(published.url).toBe(`${hub.url}/datasets/tester/arm-big`);
+    expect(new Uint8Array(hub.repos.get('tester/arm-big').files.get(parquet))).toEqual(weights);
     expect(hub.requests.filter((r) => r.path.includes('/part/'))).toHaveLength(5);
-    expect(hub.repos.get('tester/arm-policy').tags.size).toBe(0);
+    expect(hub.repos.get('tester/arm-big').tags.size).toBe(0);
   });
 
   it('accepts the base64 files the HTTP bridge sends', async () => {
@@ -168,7 +179,6 @@ describe('publishing to the Hub', () => {
 
     await hubAccount.signIn(TOKEN);
     await HUB_CALLS['hub:publish'](hubAccount, {
-      kind: 'dataset',
       name: 'over-http',
       files: { 'meta/info.json': Buffer.from('{}').toString('base64') },
     });
@@ -189,7 +199,7 @@ describe('publishing to the Hub', () => {
 
     await hubAccount.signIn(TOKEN);
 
-    const failure = await hubAccount.publish({ kind: 'dataset', name: 'echo', files: dataset(1) }).catch((e) => e);
+    const failure = await hubAccount.publish({ name: 'echo', files: dataset(1) }).catch((e) => e);
 
     expect(failure.message).toMatch(/500/);
     expect(failure.message).not.toContain(TOKEN);
@@ -222,7 +232,7 @@ describe('publishing refuses crafted names and addresses', () => {
 
     const before = hub.requests.length;
 
-    await expect(hubAccount.publish({ kind: 'dataset', name, files: dataset(1) })).rejects.toThrow(/repo/);
+    await expect(hubAccount.publish({ name, files: dataset(1) })).rejects.toThrow(/repo/);
     expect(hub.requests).toHaveLength(before);
   });
 
@@ -240,9 +250,7 @@ describe('publishing refuses crafted names and addresses', () => {
     await hubAccount.signIn(TOKEN);
 
     for (const bad of ['../x', '/abs', 'a//b', 'a/./b', 'a\\b']) {
-      await expect(hubAccount.publish({ kind: 'dataset', name: 'ok', files: { [bad]: text('x') } })).rejects.toThrow(
-        /published/,
-      );
+      await expect(hubAccount.publish({ name: 'ok', files: { [bad]: text('x') } })).rejects.toThrow(/published/);
     }
   });
 
@@ -252,9 +260,7 @@ describe('publishing refuses crafted names and addresses', () => {
     const hubAccount = account();
 
     await hubAccount.signIn(TOKEN);
-    await expect(hubAccount.publish({ kind: 'dataset', name: 'plain-http', files: dataset(1) })).rejects.toThrow(
-      /https/,
-    );
+    await expect(hubAccount.publish({ name: 'plain-http', files: dataset(1) })).rejects.toThrow(/https/);
     expect(hub.requests.filter((r) => r.method === 'PUT')).toEqual([]);
 
     const seen = [];

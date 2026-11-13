@@ -8,10 +8,20 @@ const TOKEN = 'huggingface';
 const NAME = 'huggingface-name';
 const TOKEN_MAX = 512;
 
-const hubEndpoint = () => process.env.BASECASE_HUB_URL || HUB_ENDPOINT;
+const LOOPBACK = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+export function hubEndpoint(override = process.env.BASECASE_HUB_URL) {
+  if (!override) return HUB_ENDPOINT;
+
+  const url = new URL(override);
+
+  if (url.protocol === 'https:' || (url.protocol === 'http:' && LOOPBACK.has(url.hostname))) return url.origin;
+
+  throw new Error('BASECASE_HUB_URL must be https, or http on this computer.');
+}
 
 export class HubAccount {
-  constructor({ libraryDir, secrets, endpoint = hubEndpoint, outbound = publicFetch }) {
+  constructor({ libraryDir, secrets, endpoint = () => hubEndpoint(), outbound = publicFetch }) {
     this.keys = new AgentKeys({ dir: path.join(libraryDir, 'agent-config'), secrets, file: 'hub-keys.json' });
     this.endpoint = endpoint;
     this.outbound = outbound;
@@ -30,14 +40,7 @@ export class HubAccount {
   async signIn(token) {
     const value = String(token ?? '').trim();
 
-    if (!value) {
-      this.keys.set(TOKEN, '');
-      this.keys.set(NAME, '');
-
-      return this.account();
-    }
-
-    if (value.length > TOKEN_MAX || /\s/.test(value)) throw new Error('That isn’t a Hugging Face token.');
+    if (!value || value.length > TOKEN_MAX || /\s/.test(value)) throw new Error('That isn’t a Hugging Face token.');
 
     const who = await this.client(value).whoami();
 
@@ -51,7 +54,7 @@ export class HubAccount {
     return this.account();
   }
 
-  async publish({ kind, name, files } = {}) {
+  async publish({ name, files } = {}) {
     const token = this.keys.get(TOKEN);
 
     if (!token) throw new Error('Sign in to Hugging Face in Settings first.');
@@ -59,6 +62,6 @@ export class HubAccount {
     const client = this.client(token);
     const namespace = this.keys.get(NAME) ?? (await client.whoami()).name;
 
-    return publishRepo(client, { kind, namespace, name, files });
+    return publishRepo(client, { namespace, name, files });
   }
 }

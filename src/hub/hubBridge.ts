@@ -8,7 +8,6 @@ export interface HubAccountState {
 }
 
 export interface HubPublish {
-  kind: 'dataset' | 'model';
   name: string;
   files: Record<string, Uint8Array>;
 }

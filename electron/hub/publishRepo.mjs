@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { HUB_ENDPOINT, repoRoots } from './hubClient.mjs';
+import { DATASETS, HUB_ENDPOINT } from './hubClient.mjs';
 
 const NAME = /^(?!.*(?:--|\.\.))[A-Za-z0-9](?:[A-Za-z0-9._-]{0,94}[A-Za-z0-9])?$/;
 const SEGMENT = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/;
@@ -109,12 +109,11 @@ async function uploadObject(client, file, actions) {
   }
 }
 
-async function uploadLfs(client, { kind, repo, files }) {
+async function uploadLfs(client, { repo, files }) {
   const byOid = new Map(files.map((f) => [f.oid, f]));
 
   for (const batch of chunks(files, BATCH)) {
     const objects = await client.lfsBatch(
-      kind,
       repo,
       batch.map((f) => ({ oid: f.oid, size: f.bytes.byteLength })),
     );
@@ -129,11 +128,11 @@ async function uploadLfs(client, { kind, repo, files }) {
   }
 }
 
-async function uploadModes(client, { kind, repo, entries }) {
+async function uploadModes(client, { repo, entries }) {
   const modes = new Map();
 
   for (const batch of chunks(entries, BATCH)) {
-    for (const answer of await client.preupload(kind, repo, batch)) modes.set(answer.path, answer);
+    for (const answer of await client.preupload(repo, batch)) modes.set(answer.path, answer);
   }
 
   return modes;
@@ -164,30 +163,28 @@ function commitLines({ entries, modes, lfs, stale }) {
   ];
 }
 
-export function repoUrl(endpoint, kind, repo) {
-  return `${new URL(endpoint ?? HUB_ENDPOINT).origin}${repoRoots(kind).page}/${repo}`;
+export function repoUrl(endpoint, repo) {
+  return `${new URL(endpoint ?? HUB_ENDPOINT).origin}${DATASETS}/${repo}`;
 }
 
-export async function publishRepo(client, { kind, namespace, name, files }) {
-  repoRoots(kind);
-
+export async function publishRepo(client, { namespace, name, files }) {
   const repo = `${checkedName(namespace)}/${checkedName(name)}`;
   const entries = checkedFiles(files);
 
-  await client.createRepo(kind, name);
+  await client.createRepo(name);
 
-  const existing = await client.listFiles(kind, repo);
-  const modes = await uploadModes(client, { kind, repo, entries });
+  const existing = await client.listFiles(repo);
+  const modes = await uploadModes(client, { repo, entries });
   const lfs = entries
     .filter((e) => modes.get(e.path)?.uploadMode === 'lfs' && !modes.get(e.path)?.shouldIgnore)
     .map((e) => ({ ...e, oid: sha256(e.bytes) }));
 
-  await uploadLfs(client, { kind, repo, files: lfs });
-  await client.commit(kind, repo, commitLines({ entries, modes, lfs, stale: staleFiles(existing, entries) }));
+  await uploadLfs(client, { repo, files: lfs });
+  await client.commit(repo, commitLines({ entries, modes, lfs, stale: staleFiles(existing, entries) }));
 
   const version = codebaseVersion(entries);
 
-  if (version) await client.retag(kind, repo, version);
+  if (version) await client.retag(repo, version);
 
-  return { repo, url: repoUrl(client.origin, kind, repo) };
+  return { repo, url: repoUrl(client.origin, repo) };
 }

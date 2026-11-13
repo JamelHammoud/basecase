@@ -232,7 +232,7 @@ describe('Cases', () => {
 
   it('publishes a passed try to Hugging Face after signing in from Settings', async () => {
     const publish = () => button('Publish to Hugging Face');
-    const repo = 'tester/touch-the-dots-dataset';
+    const published = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-the-dots-[0-9a-f]{6}$/.test(name));
 
     await openTouchTheDots();
     await button('Try It').click();
@@ -254,8 +254,12 @@ describe('Cases', () => {
       .toContain('tester');
     await app.page.keyboard.press('Escape');
 
-    await publish().click();
-    await expect.poll(() => hub.repos.get(repo)?.commits.length ?? 0, { timeout: 120000 }).toBe(1);
+    await publish().dblclick();
+    await expect.poll(() => published().length, { timeout: 120000 }).toBe(1);
+
+    const [repo] = published();
+
+    await expect.poll(() => hub.repos.get(repo)!.commits.length, { timeout: 120000 }).toBe(1);
     await expectPublished(repo);
     await expect.poll(() => app.page.getByRole('status').filter({ hasText: repo }).count()).toBeGreaterThan(0);
     expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);

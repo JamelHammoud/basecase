@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
@@ -46,10 +47,11 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       };
     },
     routineState: () => core.simTraining.routines.state(),
-    datasetFiles: () => {
+    datasetFiles: async () => {
       const { cases } = core.simTraining;
+      const zip = await cases.dataset.zip(cases.tries);
 
-      return cases.dataset.files(cases.tries);
+      return zip && unzipSync(zip);
     },
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     guide: async () => {

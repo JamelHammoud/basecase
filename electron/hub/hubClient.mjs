@@ -7,18 +7,9 @@ const ERROR_TEXT_MAX = 300;
 const TREE_PAGES_MAX = 50;
 const LFS_JSON = 'application/vnd.git-lfs+json';
 
-const REPO_ROOTS = {
-  dataset: { api: '/api/datasets', page: '/datasets', git: '/datasets' },
-  model: { api: '/api/models', page: '', git: '' },
-};
+export const DATASETS = '/datasets';
 
-export function repoRoots(kind) {
-  const roots = REPO_ROOTS[kind];
-
-  if (!roots) throw new Error('Hugging Face repos are datasets or models.');
-
-  return roots;
-}
+const DATASETS_API = `/api${DATASETS}`;
 
 function errorDetail(text) {
   try {
@@ -79,19 +70,17 @@ export class HubClient {
     return { name: String(who?.name ?? ''), role: who?.auth?.accessToken?.role ?? null };
   }
 
-  createRepo(kind, name) {
-    repoRoots(kind);
-
+  createRepo(name) {
     return this.api('/api/repos/create', {
       method: 'POST',
-      json: { name, private: false, ...(kind === 'model' ? {} : { type: kind }) },
+      json: { name, private: false, type: 'dataset' },
       allow: [409],
     });
   }
 
-  async listFiles(kind, repo) {
+  async listFiles(repo) {
     const paths = [];
-    let next = `${repoRoots(kind).api}/${repo}/tree/main?recursive=true`;
+    let next = `${DATASETS_API}/${repo}/tree/main?recursive=true`;
 
     for (let page = 0; next && page < TREE_PAGES_MAX; page += 1) {
       const res = await this.api(next, { allow: [404] });
@@ -106,8 +95,8 @@ export class HubClient {
     return paths;
   }
 
-  async preupload(kind, repo, files) {
-    const res = await this.api(`${repoRoots(kind).api}/${repo}/preupload/main`, {
+  async preupload(repo, files) {
+    const res = await this.api(`${DATASETS_API}/${repo}/preupload/main`, {
       method: 'POST',
       json: {
         files: files.map(({ path, bytes }) => ({
@@ -121,8 +110,8 @@ export class HubClient {
     return (await res.json()).files ?? [];
   }
 
-  async lfsBatch(kind, repo, objects) {
-    const res = await this.api(`${repoRoots(kind).git}/${repo}.git/info/lfs/objects/batch`, {
+  async lfsBatch(repo, objects) {
+    const res = await this.api(`${DATASETS}/${repo}.git/info/lfs/objects/batch`, {
       method: 'POST',
       body: JSON.stringify({
         operation: 'upload',
@@ -159,8 +148,8 @@ export class HubClient {
     return { 'Content-Type': LFS_JSON, Accept: LFS_JSON, ...(own ? { Authorization: `Bearer ${this.token}` } : {}) };
   }
 
-  async commit(kind, repo, lines) {
-    const res = await this.api(`${repoRoots(kind).api}/${repo}/commit/main`, {
+  async commit(repo, lines) {
+    const res = await this.api(`${DATASETS_API}/${repo}/commit/main`, {
       method: 'POST',
       body: lines.map((line) => JSON.stringify(line)).join('\n'),
       headers: { 'Content-Type': 'application/x-ndjson' },
@@ -169,8 +158,8 @@ export class HubClient {
     return res.json();
   }
 
-  async retag(kind, repo, tag) {
-    const api = `${repoRoots(kind).api}/${repo}/tag`;
+  async retag(repo, tag) {
+    const api = `${DATASETS_API}/${repo}/tag`;
 
     await this.api(`${api}/${tag}`, { method: 'DELETE', allow: [404] });
     await this.api(`${api}/main`, { method: 'POST', json: { tag } });

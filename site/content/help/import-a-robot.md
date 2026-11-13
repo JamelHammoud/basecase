@@ -7,6 +7,7 @@ covers:
   - src/workspace/droppedRobot.ts
   - src/workspace/useRobotInsert.ts
   - src/utils/robotImport/
+  - src/components/RobotsPanel.tsx
 ---
 
 Bring in a published robot with its joints, limits and masses, from a link or from files on your computer.
@@ -25,3 +26,7 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
 To import from files instead, drag a robot's folder, zip, URDF or MJCF file onto the canvas. The robot stands where you drop it. **Choose Folder** in Import Robot does the same for a folder.
+
+Robots you import stay under Imported at the top of the Robots view, so you can insert them again with a click. To take one off the list, right-click it and choose **Delete**. Scenes that already use it keep it.
+
+![An imported robot's right-click menu with Insert and Delete](/help/import-a-robot/imported.png)

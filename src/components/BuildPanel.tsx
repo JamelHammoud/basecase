@@ -100,6 +100,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
               onSelectParts,
             },
             tether: tether && { tether, onChange: (next) => onChangeProject({ tether: next }) },
+            showDots: readiness.showDots,
           }}
           restore={{
             onRestore: (finding) => onChangeProject({ readiness: restoreFinding(project.readiness, finding) }),

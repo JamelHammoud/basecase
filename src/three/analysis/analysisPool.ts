@@ -18,6 +18,7 @@ import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
+import type { ArmModel, PayloadMap } from '../../utils/payload';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -191,6 +192,20 @@ export async function sweepsIn(scene: SceneShapes, sweeps: SweepSpec[]): Promise
   chunks.forEach((chunk, w) => chunk.forEach((c, k) => (out[c.i] = results[w][k])));
 
   return out;
+}
+
+export async function payloadMapsIn(arms: ArmModel[]): Promise<Array<PayloadMap | null>> {
+  if (!arms.length) return [];
+
+  const client = leastBusy();
+
+  client.busy++;
+
+  try {
+    return await client.rpc.call('payloadMaps', arms);
+  } finally {
+    client.busy--;
+  }
 }
 
 export function fastenersIn(scene: SceneShapes, input: FastenerInput): Promise<ChainResult> {

@@ -8,6 +8,8 @@ import { SERVO_TOUCH_MM, servoTouchPairs } from '../utils/engineeringHeat';
 import type { EngineeringInputs, ServoLine, WalkSim } from '../utils/engineeringTypes';
 import { jointsWithChains } from '../assembly/rigJoints';
 import { platformBridge } from '../utils/platformBridge';
+import { payloadMapsIn } from '../three/analysis/analysisPool';
+import type { ArmModel } from '../utils/payload';
 
 const isServo = (p: ScenePart) =>
   p.kind === 'component' && !!p.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';
@@ -50,6 +52,7 @@ const sweepKey = (spec: SweepSpec) =>
 
 async function withSweeps(viewport: Viewport3DHandle, input: EngineeringInputs) {
   const requests = new Map<string, SweepSpec>();
+  const arms = new Map<string, ArmModel>();
 
   runEngineering({
     ...input,
@@ -58,15 +61,25 @@ async function withSweeps(viewport: Viewport3DHandle, input: EngineeringInputs) 
 
       return [];
     },
+    payload: (arm) => {
+      arms.set(JSON.stringify(arm), arm);
+
+      return null;
+    },
   });
 
   const keys = [...requests.keys()];
-  const results = await viewport.sweepClashes([...requests.values()]);
+  const [results, maps] = await Promise.all([
+    viewport.sweepClashes([...requests.values()]),
+    payloadMapsIn([...arms.values()]),
+  ]);
   const byKey = new Map(keys.map((k, i) => [k, results[i] ?? []]));
+  const mapByArm = new Map([...arms.keys()].map((k, i) => [k, maps[i] ?? null]));
 
   return runEngineering({
     ...input,
     sweep: (spec) => byKey.get(sweepKey(spec)) ?? [],
+    payload: (arm) => mapByArm.get(JSON.stringify(arm)) ?? null,
   });
 }
 

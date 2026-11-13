@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronDownIcon } from '../../design-system';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
@@ -16,6 +16,15 @@ export const CheckItem: React.FC<{
   const count = blockers.length + notes.length;
   const fields = tetherFieldsFor(check.name, context.tether?.tether);
   const hasBody = count > 0 || !!check.detail || fields.length > 0;
+  const showDots = context.showDots;
+
+  useEffect(() => {
+    if (!open || !check.hasDots || !showDots) return;
+
+    showDots(check.name);
+
+    return () => showDots(null);
+  }, [open, check.hasDots, check.name, showDots]);
 
   return (
     <li>

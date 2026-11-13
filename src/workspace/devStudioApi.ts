@@ -110,6 +110,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
   return {
     parts: () => partSummaries(partsRef.current),
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
+    checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],

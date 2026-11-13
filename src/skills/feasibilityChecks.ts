@@ -5,6 +5,7 @@ import {
   bodyPoint,
   chainOf,
   clampJoint,
+  isUnder,
   norm,
   reachPoint,
   refresh,
@@ -23,7 +24,8 @@ import {
   supportMargin,
   type PointLoad,
 } from './feasibilityStance';
-import { seededRandom } from './arenaWorld';
+import { seededRandom } from '../utils/seededRandom';
+import { HOLD_LIMIT, holdTorque } from '../utils/holdingTorque';
 
 export type Basis = 'exact' | 'estimate' | 'sampled';
 
@@ -57,13 +59,10 @@ export interface GripRequirement {
 }
 
 const D2R = Math.PI / 180;
-const FD_STEP = 1e-6;
 const SAMPLES = 2048;
 const REFINED = 6;
 const GRIP_CLEARANCE_MM = 2;
 const CROUCH_SLOP = 0.002;
-
-export const HOLD_LIMIT = 0.6;
 
 const nm = (v: number) => v.toFixed(2);
 const mm = (metres: number) => Math.round(metres * 1000);
@@ -105,24 +104,19 @@ export function gravityTorques(kin: Kin): number[] {
   return kin.joints.map((j) => data.qfrc_inverse[j.dof]);
 }
 
-const loadPotential = (kin: Kin, loads: PointLoad[]) =>
-  loads.reduce((total, load) => total - load.force * bodyPoint(kin, load.body, load.local)[2], 0);
+const jointAxis = (kin: Kin, j: JointInfo) => ({
+  anchor: [0, 1, 2].map((k) => kin.data.xanchor[j.jid * 3 + k]) as V3,
+  axis: [0, 1, 2].map((k) => kin.data.xaxis[j.jid * 3 + k]) as V3,
+  revolute: j.revolute,
+});
 
 function loadTorques(kin: Kin, loads: PointLoad[]): number[] {
-  const base = loadPotential(kin, loads);
-
   return kin.joints.map((j) => {
-    const keep = kin.data.qpos[j.qpos];
+    const axis = jointAxis(kin, j);
 
-    kin.data.qpos[j.qpos] = keep + FD_STEP;
-    refresh(kin);
-
-    const torque = (loadPotential(kin, loads) - base) / FD_STEP;
-
-    kin.data.qpos[j.qpos] = keep;
-    refresh(kin);
-
-    return torque;
+    return loads
+      .filter((load) => isUnder({ model: kin.model, root: j.body }, load.body))
+      .reduce((total, load) => total + holdTorque(axis, bodyPoint(kin, load.body, load.local), [0, 0, load.force]), 0);
   });
 }
 

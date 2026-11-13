@@ -41,9 +41,9 @@ function draw(input: FilmstripInput): OffscreenCanvas {
   return canvas;
 }
 
-ctx.onmessage = async (ev: MessageEvent<{ id: number; input: FilmstripInput }>) => {
+ctx.onmessage = async (ev: MessageEvent<{ id: number; input: FilmstripInput; image: ImageEncodeOptions }>) => {
   try {
-    const blob = await draw(ev.data.input).convertToBlob({ type: 'image/webp', quality: 0.8 });
+    const blob = await draw(ev.data.input).convertToBlob(ev.data.image);
 
     ctx.postMessage({ id: ev.data.id, blob });
   } catch (e) {

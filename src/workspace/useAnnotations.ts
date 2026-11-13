@@ -140,7 +140,7 @@ export function useAnnotations({ initial, parts, showToast, setSelectedIds, stop
     if (wasResolved) return;
 
     setActiveId(null);
-    showToast('Resolved', {
+    showToast('Resolved comment', {
       tone: 'success',
       action: { label: 'Undo', onClick: () => edits.updateAnnotation(id, (a) => ({ ...a, resolved: false })) },
     });

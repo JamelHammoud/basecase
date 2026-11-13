@@ -204,11 +204,11 @@ def joint_record(j) -> dict:
 
 
 def convert(root_usd: str, out_dir: str) -> dict:
-    emit(type="status", message="Reading the asset")
+    emit(type="status", message="Reading the asset…")
     stage = open_stage(root_usd)
     frame = StageFrame.of(stage)
     phys = read_physics(stage, frame, UsdGeom.XformCache())
-    emit(type="status", message="Reading meshes")
+    emit(type="status", message="Reading meshes…")
     meshes = collect_meshes(stage, frame, package_root(root_usd))
 
     if not meshes:
@@ -222,7 +222,7 @@ def convert(root_usd: str, out_dir: str) -> dict:
         if b.name in by_body
     }
     links = [body_record(b, bodies.get(b.name), out_dir, i) for i, b in enumerate(phys.bodies.values())]
-    emit(type="status", message="Packing textures")
+    emit(type="status", message="Packing textures…")
     visual = GlbBuilder()
 
     for bm in bodies.values():

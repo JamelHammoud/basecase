@@ -4,6 +4,7 @@ import { compileCaseLogic } from '../cases/caseLogic';
 import type { Case } from '../cases/schema';
 import type { Routine } from '../routines/schema';
 import { fixtureRobots } from '../sim/fixtures/robots';
+import type { ProjectSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { CASE_HANDLERS, caseValues } from './agentCaseRequests';
 import type { Cases } from './useCases';
@@ -26,7 +27,9 @@ function contextFor(id: string) {
   } as unknown as Cases;
   const routines = { checkLogic: async (logic: unknown) => compileCaseLogic(logic as Routine, { skills: [] }) };
 
-  return { ctx: { cases, routines, setAction: () => {} }, added };
+  const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
+
+  return { ctx: { cases, routines, setAction: () => {}, ...scene }, added };
 }
 
 const create = (payload: Record<string, unknown>, id = 'rover-diff') => {

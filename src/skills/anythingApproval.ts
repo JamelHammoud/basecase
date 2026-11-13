@@ -27,7 +27,7 @@ export interface ApprovalRun {
   key: string;
 }
 
-function stateSignals(s: SpecState): string[] {
+export function stateSignals(s: SpecState): string[] {
   if ('atom' in s) return [s.atom.sig];
 
   if ('within' in s) return [s.within.sig];

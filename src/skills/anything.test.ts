@@ -112,4 +112,30 @@ describe('trainAnything', () => {
     expect(outcome.skill.evidence?.passed).toBe(true);
     expect(saved).toHaveLength(1);
   }, 120_000);
+
+  it('keeps feet planted when the intent restates where they rest, so a biped crouch plans', async () => {
+    const crouch = {
+      kind: 'task',
+      name: 'crouch and hold',
+      seconds: 6,
+      startOffsetDeg: 0,
+      restIsGoal: false,
+      success: {
+        hold_for: { seconds: 2, state: { within: { sig: 'height', center: 0.114, tol: 0.015 } }, within: 'whole' },
+      },
+      failures: [],
+      intent: [
+        { t: 0 },
+        { t: 1.5, base: { up: -0.038 }, parts: { l_sole: { height: 12 }, r_sole: { height: 12 } } },
+        { t: 4.5, base: { up: -0.038 }, parts: { l_sole: { height: 12 }, r_sole: { height: 12 } } },
+      ],
+    };
+    const { run } = input(async () => ({ approved: true }), 'Crouch to about 75% of your height and hold it.');
+    const outcome = await trainAnything(
+      { ...run, model: fixtureModel('biped-servo'), design: 'test-biped', method: 'ik-or-motion-plan' },
+      scripted(crouch),
+    );
+
+    expect(outcome.kind).toBe('skill');
+  }, 300_000);
 });

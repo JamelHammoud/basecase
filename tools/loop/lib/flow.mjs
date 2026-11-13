@@ -7,7 +7,7 @@ export const LIMITS = {
   oldestQueuedMinutes: 60,
 };
 
-export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update']);
+export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'lead', 'ideas']);
 
 const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : null);
 

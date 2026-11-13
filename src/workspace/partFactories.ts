@@ -15,7 +15,6 @@ export interface SketchParams {
   bevel: boolean;
   nodes: CustomModelSubNode[];
   svgDataUrl?: string;
-  saveToLibrary: boolean;
 }
 
 const PRINTED_TAG = '3D Printed PLA/PETG';
@@ -138,7 +137,7 @@ export function clayPart(preset: ClayPreset, id: string, sculptMesh: SculptMeshD
   };
 }
 
-export function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) {
+function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) {
   if (params.mode === 'svg') {
     return `Imported SVG (${params.nodes.length} path${params.nodes.length === 1 ? '' : 's'})`;
   }
@@ -146,7 +145,7 @@ export function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) 
   return params.mode === 'extrude' ? 'Sketch extrusion' : 'Sketch revolve';
 }
 
-export const sketchDimensions = (params: SketchParams) => ({
+const sketchDimensions = (params: SketchParams) => ({
   width: params.widthMm,
   height: params.heightMm,
   depth: params.depthMm,

@@ -81,7 +81,7 @@ export const SketchPanel: React.FC<{
 }> = ({ draft, onCreateFrom2DDrawing }) => {
   const { drawMode, drawTool, outerPoints } = draft;
 
-  const build = (saveToLibrary: boolean) => {
+  const build = () => {
     if (outerPoints.length < 3 && drawMode === 'extrude') return;
 
     onCreateFrom2DDrawing(
@@ -96,7 +96,6 @@ export const SketchPanel: React.FC<{
           bevel: draft.drawBevel,
           color: draft.drawColor,
         },
-        saveToLibrary,
         now: Date.now(),
       }),
     );
@@ -130,19 +129,16 @@ export const SketchPanel: React.FC<{
           spanLabel={drawMode === 'revolve' ? 'Diameter' : 'Width'}
           revolve={drawMode === 'revolve'}
         />
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <Button
-            size="md"
-            disabled={outerPoints.length < 3}
-            onClick={() => build(false)}
-            icon={<PlusIcon className="w-4 h-4" />}
-          >
-            Add
-          </Button>
-          <Button size="md" variant="primary" disabled={outerPoints.length < 3} onClick={() => build(true)}>
-            Add & Save
-          </Button>
-        </div>
+        <Button
+          size="md"
+          variant="primary"
+          fullWidth
+          disabled={outerPoints.length < 3}
+          onClick={build}
+          icon={<PlusIcon className="w-4 h-4" />}
+        >
+          Add
+        </Button>
       </Section>
     </>
   );

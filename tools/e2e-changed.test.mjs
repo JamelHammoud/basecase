@@ -10,6 +10,13 @@ const source = [
   "  it('ask before deleting a saved price (then fall back)', async () => {",
   '    await two();',
   '  });',
+  '',
+  '  itUnlessWindows(',
+  "    'scans a corridor with a rover’s LiDAR, a name too long for one line',",
+  '    async () => {',
+  '      await three();',
+  '    },',
+  '  );',
   '});',
 ].join('\n');
 
@@ -22,6 +29,12 @@ describe('the e2e tests a pull request touches', () => {
   it('names only the tests whose lines changed, not the rest of the file', () => {
     expect(testsAt(source, new Set([7]))).toEqual(['ask before deleting a saved price (then fall back)']);
     expect(testsAt(source, new Set([1]))).toEqual([]);
+  });
+
+  it('names a test whose name wraps onto the line after its call', () => {
+    expect(testsAt(source, new Set([13, 15]))).toEqual([
+      'scans a corridor with a rover’s LiDAR, a name too long for one line',
+    ]);
   });
 
   it('escapes names into one pattern for -t', () => {

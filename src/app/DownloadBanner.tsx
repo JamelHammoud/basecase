@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Button, CloseIcon, DownloadIcon, IconButton, LAYOUT } from '../design-system';
 import { DESKTOP_AGENT_LINE, DESKTOP_DOWNLOAD, IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { openLink } from '../utils/openLink';
 import { readStored, writeStored } from './storedSettings';
 
 const DISMISSED_KEY = 'download-banner-dismissed';
@@ -29,7 +30,7 @@ function DownloadBannerFrame({ children }: { children: ReactNode }) {
             variant="contrast"
             size="xs"
             icon={<DownloadIcon className="w-[14px] h-[14px]" />}
-            onClick={() => window.open(DESKTOP_DOWNLOAD.url, '_blank', 'noopener')}
+            onClick={() => openLink(DESKTOP_DOWNLOAD.url)}
           >
             {DESKTOP_DOWNLOAD.label}
           </Button>

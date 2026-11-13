@@ -8,7 +8,7 @@ import type { Printing } from '../workspace/usePrinting';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
 import { BuyList } from './build/BuyList';
-import { CheckSheet } from './build/CheckSheet';
+import { PriceSheet } from './build/PriceSheet';
 import { ChecksSection } from './build/ChecksSection';
 import { GuideSection } from './build/GuideSection';
 import { download } from './build/format';
@@ -80,7 +80,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {
     await savePurchase(line.key, record);
     setChecking(null);
-    onToast(record ? `Saved price for ${line.name}` : `Removed price for ${line.name}`);
+    onToast(record ? `Saved price for ${line.name}` : `Deleted price for ${line.name}`);
   };
 
   return (
@@ -121,7 +121,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
         <PlatesSection printing={printing} />
       </div>
       {checking && (
-        <CheckSheet
+        <PriceSheet
           line={checking}
           onClose={() => setChecking(null)}
           onSave={(record) => savePrice(checking, record)}

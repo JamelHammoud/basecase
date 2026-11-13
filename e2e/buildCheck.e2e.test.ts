@@ -204,4 +204,48 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+
+  it('save a price with Enter, and ask before deleting it', async () => {
+    const saved: Array<{ key: string; record: { priceUsd: number } | null }> = [];
+
+    await app.page.route('**/api/bridge/purchase-save', (route) => {
+      const body = route.request().postDataJSON() as (typeof saved)[number];
+
+      saved.push(body);
+
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(body.record ? { [body.key]: body.record } : {}),
+      });
+    });
+
+    const bom = section(/^Bill of materials/);
+    const priceField = () => app.page.getByRole('textbox', { name: 'Price', exact: true });
+    const priceSheet = app.page.getByRole('dialog').filter({ has: priceField() });
+
+    await bom
+      .getByRole('button', { name: /^(≈ |Add Price)/ })
+      .first()
+      .click();
+    await priceField().fill('19.99');
+    await priceField().press('Enter');
+    await expect.poll(() => saved.at(-1)?.record?.priceUsd, { timeout: 10000 }).toBe(19.99);
+    await expect.poll(() => priceSheet.count(), { timeout: 5000 }).toBe(0);
+
+    await bom
+      .getByRole('button', { name: /19\.99/ })
+      .first()
+      .click();
+    await priceSheet.getByRole('button', { name: 'Delete Price' }).click();
+
+    const confirm = app.page.getByRole('dialog', { name: /^Delete price for / });
+
+    await expect.poll(() => confirm.count(), { timeout: 5000 }).toBe(1);
+    expect(await priceSheet.count()).toBe(0);
+    expect(saved).toHaveLength(1);
+
+    await confirm.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect.poll(() => saved.at(-1)?.record, { timeout: 10000 }).toBeNull();
+  }, 60000);
 });

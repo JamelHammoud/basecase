@@ -6,8 +6,13 @@ type Thunk = () => XacroValue;
 
 type Lookup = (name: string) => XacroValue | undefined;
 
+export interface Spent {
+  computed: number;
+}
+
 const MAX_EXPRESSION = 4000;
 const MAX_TEXT = 1_000_000;
+const MAX_COMPUTED = 16_000_000;
 const TOKEN =
   /\s*(?:(\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)|'([^']*)'|"([^"]*)"|([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)|(\*\*|\/\/|==|!=|<=|>=|[-+*/%<>(),]))/y;
 
@@ -95,21 +100,25 @@ export function truthy(v: XacroValue): boolean {
   throw new XacroError(`Not a boolean: ${v}`);
 }
 
-export function capped(text: string): string {
+export function capped(text: string, spent: Spent): string {
   if (text.length > MAX_TEXT) throw new XacroError('Text too long');
+
+  spent.computed += text.length;
+
+  if (spent.computed > MAX_COMPUTED) throw new XacroError('Computes too much text');
 
   return text;
 }
 
-function add(a: XacroValue, b: XacroValue): XacroValue {
-  if (typeof a === 'string' && typeof b === 'string') return capped(a + b);
+function add(a: XacroValue, b: XacroValue, spent: Spent): XacroValue {
+  if (typeof a === 'string' && typeof b === 'string') return capped(a + b, spent);
 
   return num(a) + num(b);
 }
 
 const pyMod = (a: number, b: number) => ((a % b) + b) % b;
 
-const BINARY = new Map<string, (a: XacroValue, b: XacroValue) => XacroValue>([
+const BINARY = new Map<string, (a: XacroValue, b: XacroValue, spent: Spent) => XacroValue>([
   ['+', add],
   ['-', (a, b) => num(a) - num(b)],
   ['*', (a, b) => num(a) * num(b)],
@@ -129,10 +138,12 @@ class Parser {
   private at = 0;
   private readonly tokens: Token[];
   private readonly lookup: Lookup;
+  private readonly spent: Spent;
 
-  constructor(tokens: Token[], lookup: Lookup) {
+  constructor(tokens: Token[], lookup: Lookup, spent: Spent) {
     this.tokens = tokens;
     this.lookup = lookup;
+    this.spent = spent;
   }
 
   private peek(value: string): boolean {
@@ -215,7 +226,7 @@ class Parser {
 
       const [a, b, f] = [left, next(), BINARY.get(op)!];
 
-      left = () => f(a(), b());
+      left = () => f(a(), b(), this.spent);
     }
 
     return left;
@@ -296,8 +307,8 @@ class Parser {
   }
 }
 
-export function evaluate(text: string, lookup: Lookup): XacroValue {
+export function evaluate(text: string, lookup: Lookup, spent: Spent): XacroValue {
   if (text.length > MAX_EXPRESSION) throw new XacroError('Expression too long');
 
-  return new Parser(tokenize(text), lookup).parse()();
+  return new Parser(tokenize(text), lookup, spent).parse()();
 }

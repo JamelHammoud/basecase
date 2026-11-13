@@ -147,6 +147,13 @@ export function candidates(ref: string, entryPath: string): string[] {
 
 const inRoot = (path: string, root: string) => path.startsWith(root) && !/\/\.\.?(\/|$)/.test(path);
 
+function rawRoot(entryPath: string): string {
+  const parts = entryPath.split('/').slice(1);
+  const refParts = parts[2] === 'refs' && /^(heads|tags)$/.test(parts[3] ?? '') ? 3 : 1;
+
+  return `/${parts.slice(0, 2 + refParts).join('/')}/`;
+}
+
 export async function urlResolver(url: string): Promise<Resolver> {
   const entryUrl = rawUrl(url);
   const text = new TextDecoder().decode(
@@ -157,7 +164,7 @@ export async function urlResolver(url: string): Promise<Resolver> {
   const u = new URL(entryUrl);
   const origin = u.origin;
   const entryPath = decodeURIComponent(u.pathname);
-  const root = u.host === new URL(RAW).host ? `/${entryPath.split('/').slice(1, 4).join('/')}/` : '/';
+  const root = u.host === new URL(RAW).host ? rawRoot(entryPath) : '/';
   const inside = (path: string) => {
     if (!/^https?:/.test(path)) return inRoot(path, root);
 

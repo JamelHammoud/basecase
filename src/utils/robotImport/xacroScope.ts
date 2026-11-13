@@ -1,5 +1,5 @@
 import type { XmlChild } from './xml';
-import { capped, evaluate, formatValue, XacroError, type XacroValue } from './xacroExpr';
+import { capped, evaluate, formatValue, XacroError, type Spent, type XacroValue } from './xacroExpr';
 
 export interface Macro {
   params: string[];
@@ -12,6 +12,7 @@ export type Prop =
 export interface TextContext {
   args: Map<string, string>;
   file: string;
+  spent: Spent;
 }
 
 export class Scope {
@@ -86,7 +87,7 @@ function command(text: string, scope: Scope, ctx: TextContext): string {
 
   if (name === 'optenv' && rest.length > 1) return rest.slice(1).join(' ');
 
-  if (name === 'eval') return formatValue(evaluate(text.trim().slice(4), lookupIn(scope, ctx)));
+  if (name === 'eval') return formatValue(evaluate(text.trim().slice(4), lookupIn(scope, ctx), ctx.spent));
 
   throw new XacroError(`Can’t evaluate $(${text})`);
 }
@@ -140,7 +141,7 @@ export function evalText(text: string, scope: Scope, ctx: TextContext): XacroVal
     const end = closing(text, at + 1, kind, kind === '{' ? '}' : ')');
     const inner = text.slice(at + 2, end);
 
-    pieces.push(kind === '{' ? evaluate(inner, lookupIn(scope, ctx)) : command(inner, scope, ctx));
+    pieces.push(kind === '{' ? evaluate(inner, lookupIn(scope, ctx), ctx.spent) : command(inner, scope, ctx));
     i = end + 1;
   }
 
@@ -148,7 +149,7 @@ export function evalText(text: string, scope: Scope, ctx: TextContext): XacroVal
 
   if (kept.length === 1) return kept[0];
 
-  return capped(kept.map(formatValue).join(''));
+  return capped(kept.map(formatValue).join(''), ctx.spent);
 }
 
 export const evalString = (text: string, scope: Scope, ctx: TextContext) => formatValue(evalText(text, scope, ctx));

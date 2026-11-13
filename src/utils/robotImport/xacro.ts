@@ -23,7 +23,7 @@ const OUTSIDE_SOURCE = /^(?!package:\/\/)[a-z][\w+.-]*:/i;
 
 interface Ctx extends TextContext {
   read: Resolver['read'];
-  spent: { nodes: number; includes: number; chars: number };
+  spent: { nodes: number; includes: number; chars: number; computed: number };
   includeDepth: number;
   macroDepth: number;
 }
@@ -269,7 +269,7 @@ export async function expandXacro(text: string, { read, from }: { read: Resolver
     read,
     file: from,
     args: new Map(),
-    spent: { nodes: 0, includes: 0, chars: 0 },
+    spent: { nodes: 0, includes: 0, chars: 0, computed: 0 },
     includeDepth: 0,
     macroDepth: 0,
   };

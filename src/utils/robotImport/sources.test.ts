@@ -39,4 +39,15 @@ describe('urlResolver on a GitHub file link', () => {
 
     expect(got?.path).toBe(`${RAW}me/arm/main/meshes/base.stl`);
   });
+
+  it('keeps a refs/heads link to its own branch', async () => {
+    const from = '/me/arm/refs/heads/main/urdf/arm.urdf';
+    const resolver = await urlResolver(`${RAW}me/arm/refs/heads/main/urdf/arm.urdf`);
+
+    expect(await resolver.read(`${RAW}me/arm/refs/heads/dev/x.stl`, from)).toBeNull();
+    expect(await resolver.read(`${RAW}me/arm/refs/tags/v1/x.stl`, from)).toBeNull();
+    expect((await resolver.read(`${RAW}me/arm/refs/heads/main/x.stl`, from))?.path).toBe(
+      `${RAW}me/arm/refs/heads/main/x.stl`,
+    );
+  });
 });

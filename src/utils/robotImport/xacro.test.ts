@@ -178,6 +178,19 @@ describe('expandXacro fails closed', () => {
     await expect(expand(big + links)).rejects.toThrow(REFUSED);
   });
 
+  it('stops many large values that are computed and never output', async () => {
+    const props = Array.from({ length: 18 }, (_, i) => `<xacro:property name="p${i + 1}" value="\${p${i}}\${p${i}}"/>`);
+    const big = `<xacro:property name="p0" value="ab"/>${props.join('')}`;
+    const kept = Array.from(
+      { length: 2000 },
+      (_, k) => `<xacro:property name="q${k}" value="\${p18}${k}"/><xacro:if value="\${q${k} == 'x'}"/>`,
+    ).join('');
+    const passing = Array.from({ length: 2000 }, () => `<xacro:if value="\${p18 + 'x' == 'x'}"/>`).join('');
+
+    await expect(expand(big + kept)).rejects.toThrow(REFUSED);
+    await expect(expand(big + passing)).rejects.toThrow(REFUSED);
+  });
+
   it('refuses expressions that call functions, and what it can’t evaluate', async () => {
     await expect(expand(`<link name="\${__import__('os').system('ls')}"/>`)).rejects.toThrow(REFUSED);
     await expect(expand(`<link name="\${constructor.constructor('return process')()}"/>`)).rejects.toThrow(REFUSED);

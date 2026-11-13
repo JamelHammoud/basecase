@@ -7,7 +7,7 @@ const props = new Map<string, XacroValue>([
   ['side', 'left'],
   ['reflect', -1],
 ]);
-const run = (text: string) => evaluate(text, (name) => props.get(name));
+const run = (text: string) => evaluate(text, (name) => props.get(name), { computed: 0 });
 
 describe('xacro expressions', () => {
   it('does arithmetic the way Python does', () => {

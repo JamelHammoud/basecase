@@ -4,7 +4,7 @@ date: 2026-11-12
 image: /changelog/import-robot-repos-and-zips/import-robot.png
 ---
 
-Import Robot now takes a GitHub or Hugging Face repo or folder link and a zip link, finds the URDF or MJCF inside, and lists the robots when a repo holds several. You can also drop a robot's folder, zip, URDF or MJCF file on the canvas.
+Import Robot now takes a GitHub or Hugging Face repo or folder link and a zip link, finds the URDF, xacro or MJCF inside, and lists the robots when a repo holds several. You can also drop a robot's folder, zip, URDF, xacro or MJCF file on the canvas.
 
 ## Xacro packages
 

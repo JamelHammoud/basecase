@@ -116,7 +116,7 @@
   "verify/routines/canaryTrace.test.ts": "85385c0615252046ff970723e8ede08396a9d33f9fdf9268d87248bcd296daf2",
   "verify/routines/canaryWatcher.test.ts": "3d1a951ac266d625d7b54cf8c4c173c5d4c4d907b43ec8833016c84d49f993cc",
   "verify/routines/capabilities.test.ts": "75ae1b42ab94411d6d86546652665036073d674d1956e0fa3b678533b30f87a9",
-  "verify/routines/flow.e2e.test.ts": "ad7542f9ee4f1059c2296709fab4a1ed046bee5cea5f71d09f39c26597b86ad0",
+  "verify/routines/flow.e2e.test.ts": "9b97317b42372940186316ab565ff2407e2541be268079fefc38692e8782c4a1",
   "verify/routines/flow.test.ts": "62d06b806184be31c976130b272737174f6cbd8385242171fd0d604891a8b9c6",
   "verify/routines/greeter.ts": "e221bfabcba3b8db756fae0287c01a13606370a11f4d19efabb32886dc960587",
   "verify/routines/interfaces.ts": "0c5887053ca95eb9dd2111b1ec912de6718ae2de3ef82f637dc9800f506f8332",

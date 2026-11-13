@@ -10,6 +10,7 @@ import {
   pullReview,
   setReview,
 } from '../lib/github.mjs';
+import { membersOf } from '../lib/evidence.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
 import { byRank, isRepair } from '../lib/rank.mjs';
 import { json, run } from '../lib/sh.mjs';
@@ -35,8 +36,6 @@ export const eligible = (pull) =>
   !hasLabel(pull, 'loop:revising') &&
   pullCheck(pull) === 'success' &&
   pullReview(pull) === 'success';
-
-export const membersOf = (body) => [...(body ?? '').matchAll(/^- #(\d+) /gm)].map((match) => Number(match[1]));
 
 const git = (args, cwd, opts = {}) => run('git', args, { cwd, ...opts });
 

@@ -14,7 +14,7 @@ Click Export at the top right and choose STEP, between 3MF Plates and Scene. It'
 
 ![⌘K with Export STEP typed and the command highlighted](/changelog/export-step-assemblies/command.png)
 
-While the file is built, a toast says Exporting STEP…. A three-part scene takes about 3 seconds. The CAD kernel builds it in its sandbox, off the main thread.
+While the file is built, Exporting STEP… shows in a toast. A three-part scene takes about 3 seconds. The CAD kernel builds it in its sandbox, off the main thread.
 
 ![The Exporting STEP… toast above the toolbar](/changelog/export-step-assemblies/exporting.png)
 

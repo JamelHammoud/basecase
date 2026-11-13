@@ -1,9 +1,10 @@
-import { chooseEntry, inScope, looksLikeRobotMjcf, RobotChoiceError } from './entry';
+import { ZIP_TOO_LARGE } from './archive';
+import { chooseEntry, descriptionKind, inScope, RobotChoiceError } from './entry';
 import { githubTree, repoLink } from './github';
 import { parseMjcf } from './mjcf';
 import type { Model } from './model';
 import { convertedResolver, parseConverted } from './simready';
-import { fetchBytes, inlineIncludes, rawUrl, urlResolver, type Resolver, type Source } from './sources';
+import { fetchBytes, inlineIncludes, rawUrl, TooLargeError, urlResolver, type Resolver, type Source } from './sources';
 import { localTree, treeResolver, type Tree } from './tree';
 import { parseUrdf } from './urdf';
 
@@ -27,11 +28,11 @@ export const isRobotLink = (url: string) =>
   !!repoLink(url) || /^https:\/\/[^\s/]+\.[^\s/]+\/\S+\.(urdf|xml|mjcf|zip)(?:[?#]\S*)?$/i.test(url.trim());
 
 async function zipTree(url: string): Promise<Tree> {
-  const bytes = await fetchBytes(url).catch(() => {
-    throw new Error('Couldn’t download that zip.');
+  const bytes = await fetchBytes(rawUrl(url), MAX_ZIP_BYTES).catch((error: unknown) => {
+    throw new Error(
+      error instanceof TooLargeError ? ZIP_TOO_LARGE : 'Couldn’t download that zip. Link to a public zip file.',
+    );
   });
-
-  if (bytes.byteLength > MAX_ZIP_BYTES) throw new Error('That zip is too large to import.');
 
   return localTree([{ path: 'download.zip', blob: new Blob([bytes]) }]);
 }
@@ -53,7 +54,7 @@ async function treeEntry({ tree, scope }: Located, picked?: string): Promise<str
 
   if (picked && paths.includes(picked)) return picked;
 
-  const choice = await chooseEntry(paths, async (p) => looksLikeRobotMjcf(decode(await tree.read(p))));
+  const choice = await chooseEntry(paths, async (p) => descriptionKind(decode(await tree.read(p))));
 
   if (!choice) throw new Error(NO_ROBOT);
 

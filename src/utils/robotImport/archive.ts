@@ -2,6 +2,7 @@ import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 
 export const MAX_UNPACKED_BYTES = 600 * 1024 * 1024;
 export const MAX_ENTRIES = 20_000;
+export const ZIP_TOO_LARGE = 'That zip is too large. Unzip it and choose the folder.';
 
 export interface ZipEntry {
   path: string;
@@ -30,7 +31,7 @@ export function unzipEntries(bytes: Uint8Array): ZipEntry[] {
       unpacked += file.originalSize;
       count++;
 
-      if (unpacked > MAX_UNPACKED_BYTES || count > MAX_ENTRIES) throw new Error('That zip is too large to import.');
+      if (unpacked > MAX_UNPACKED_BYTES || count > MAX_ENTRIES) throw new Error(ZIP_TOO_LARGE);
 
       return true;
     },

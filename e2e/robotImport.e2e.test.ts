@@ -65,7 +65,7 @@ describe('robot import', () => {
     await app.page.keyboard.press('Meta+k');
     await app.page.keyboard.type('Import Robot');
     await app.page.keyboard.press('Enter');
-    await app.page.getByPlaceholder('GitHub, URDF, MJCF or zip link').fill('github.com/me/arms');
+    await app.page.getByLabel('Robot link').fill('github.com/me/arms');
     await app.page.keyboard.press('Enter');
     await app.page.getByRole('radio', { name: 'b/urdf/desk_arm.urdf' }).click({ timeout: 30000 });
     await app.page.getByRole('button', { name: 'Import', exact: true }).click();

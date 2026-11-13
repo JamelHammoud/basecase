@@ -10,8 +10,12 @@ export interface RepoLink {
 const API = 'https://api.github.com';
 const NAME = /^[\w.-]+$/;
 
+const TREE_LINK = /^https:\/\/github\.com\/([^/?#]+)\/([^/?#]+)(?:\/tree\/([^?#]+))?\/?(?:[?#].*)?$/;
+const ARCHIVE_LINK =
+  /^https:\/\/github\.com\/([^/?#]+)\/([^/?#]+)\/archive\/(?:refs\/(?:heads|tags)\/)?([^?#]+)\.zip(?:[?#].*)?$/i;
+
 export function repoLink(url: string): RepoLink | null {
-  const m = /^https:\/\/github\.com\/([^/?#]+)\/([^/?#]+)(?:\/tree\/([^?#]+))?\/?(?:[?#].*)?$/.exec(url.trim());
+  const m = TREE_LINK.exec(url.trim()) ?? ARCHIVE_LINK.exec(url.trim());
 
   if (!m || !NAME.test(m[1]) || !NAME.test(m[2])) return null;
 

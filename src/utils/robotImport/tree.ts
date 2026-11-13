@@ -1,5 +1,5 @@
 import { geometryWorker } from '../../three/geometryWorker';
-import { safeEntryPath } from './archive';
+import { safeEntryPath, ZIP_TOO_LARGE } from './archive';
 import { candidates, norm, type LocalFile, type Resolver } from './sources';
 
 export interface Tree {
@@ -13,7 +13,11 @@ const isZip = (path: string) => /\.zip$/i.test(path);
 async function unzipped(file: LocalFile): Promise<LocalFile[]> {
   const stem = file.path.replace(/\.zip$/i, '');
   const data = await file.blob.arrayBuffer();
-  const entries = await geometryWorker.call('unzip', data, [data]);
+  const entries = await geometryWorker.call('unzip', data, [data]).catch((error: unknown) => {
+    const tooLarge = error instanceof Error && error.message === ZIP_TOO_LARGE;
+
+    throw new Error(tooLarge ? ZIP_TOO_LARGE : 'Couldn’t open that zip. Unzip it and choose the folder.');
+  });
 
   return entries.map((e) => ({ path: `${stem}/${e.path}`, blob: new Blob([e.data as Uint8Array<ArrayBuffer>]) }));
 }

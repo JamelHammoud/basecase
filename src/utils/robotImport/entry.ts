@@ -33,13 +33,29 @@ function shallowest(paths: string[]): string[] {
 
 const descriptions = (paths: string[]) => paths.filter((p) => !NOT_ROBOTS.test(p) && !NOT_ROBOT_DIRS.test(p));
 
-export const isMjcfCandidate = (path: string) => /\.(xml|mjcf)$/i.test(path);
+export type DescriptionKind = 'mjcf' | 'mjcf-includes' | 'urdf';
 
-async function mjcfRobots(paths: string[], isRobotMjcf: (path: string) => Promise<boolean>): Promise<string[]> {
-  const xml = descriptions(paths).filter(isMjcfCandidate).sort(byDepth).slice(0, MAX_PEEKS);
-  const checked = await Promise.all(xml.map(async (p) => ((await isRobotMjcf(p).catch(() => false)) ? p : null)));
+const URDF_ROOT = /^\s*(?:(?:<\?[\s\S]*?\?>|<!--[\s\S]*?-->)\s*)*<robot\b/;
+const isXml = (path: string) => /\.(xml|mjcf)$/i.test(path);
+const isUrdf = (path: string) => /\.urdf$/i.test(path);
 
-  return checked.filter((p): p is string => !!p);
+export function descriptionKind(text: string): DescriptionKind | null {
+  if (URDF_ROOT.test(text)) return 'urdf';
+
+  if (!/<mujoco\b/.test(text)) return null;
+
+  if (/<worldbody\b/.test(text)) return 'mjcf';
+
+  return /<include\b/.test(text) ? 'mjcf-includes' : null;
+}
+
+type Classify = (path: string) => Promise<DescriptionKind | null>;
+
+async function peekXml(paths: string[], classify: Classify): Promise<Array<[string, DescriptionKind | null]>> {
+  const xml = descriptions(paths).filter(isXml).sort(byDepth).slice(0, MAX_PEEKS);
+  const kinds = await Promise.all(xml.map((p) => classify(p).catch(() => null)));
+
+  return xml.map((p, i) => [p, kinds[i]]);
 }
 
 function decide(paths: string[]): EntryChoice | null {
@@ -50,19 +66,16 @@ function decide(paths: string[]): EntryChoice | null {
   return top.length === 1 ? { entry: top[0] } : { choices: top };
 }
 
-export async function chooseEntry(
-  paths: string[],
-  isRobotMjcf: (path: string) => Promise<boolean>,
-): Promise<EntryChoice | null> {
-  const mjcf = await mjcfRobots(paths, isRobotMjcf);
-  const robots = mjcf.filter((p) => !SCENE.test(p));
+export async function chooseEntry(paths: string[], classify: Classify): Promise<EntryChoice | null> {
+  const peeked = await peekXml(paths, classify);
+  const ofKind = (kind: DescriptionKind) => peeked.filter(([, k]) => k === kind).map(([p]) => p);
+  const mjcf = ofKind('mjcf');
 
   return (
-    decide(robots) ??
-    decide(descriptions(paths).filter((p) => /\.urdf$/i.test(p))) ??
+    decide(mjcf.filter((p) => !SCENE.test(p))) ??
+    decide([...descriptions(paths).filter(isUrdf), ...ofKind('urdf')]) ??
     decide(mjcf) ??
-    decide(paths.filter((p) => /\.urdf$/i.test(p)))
+    decide(paths.filter(isUrdf)) ??
+    decide(ofKind('mjcf-includes'))
   );
 }
-
-export const looksLikeRobotMjcf = (head: string) => /<mujoco\b/.test(head) && /<worldbody\b/.test(head);

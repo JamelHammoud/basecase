@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { chooseEntry, inScope } from './entry';
+import { chooseEntry, descriptionKind, inScope, type DescriptionKind } from './entry';
 import { repoLink } from './github';
 
-const mjcfIn = (robots: string[]) => async (path: string) => robots.includes(path);
+const kinds =
+  (known: Record<string, DescriptionKind> = {}) =>
+  async (path: string) =>
+    known[path] ?? null;
+const mjcfIn = (robots: string[]) => kinds(Object.fromEntries(robots.map((p) => [p, 'mjcf' as const])));
 
 const GO2_REPO = [
   'README.md',
@@ -50,8 +54,32 @@ describe('chooseEntry', () => {
     expect(await chooseEntry(scoped, mjcfIn([]))).toEqual({ entry: 'robots/go1_description/urdf/go1.urdf' });
   });
 
+  it('takes a URDF saved as .xml', async () => {
+    const paths = ['arm/arm.xml', 'arm/meshes/base.stl'];
+
+    expect(await chooseEntry(paths, kinds({ 'arm/arm.xml': 'urdf' }))).toEqual({ entry: 'arm/arm.xml' });
+  });
+
+  it('falls back to an MJCF whose bodies sit in an included file', async () => {
+    const paths = ['arm/arm.xml', 'arm/parts/body.xml'];
+
+    expect(await chooseEntry(paths, kinds({ 'arm/arm.xml': 'mjcf-includes' }))).toEqual({ entry: 'arm/arm.xml' });
+  });
+
   it('finds nothing in a folder without a description', async () => {
     expect(await chooseEntry(['notes/readme.md', 'pkg/package.xml'], mjcfIn([]))).toBeNull();
+  });
+});
+
+describe('descriptionKind', () => {
+  it('reads the root element', () => {
+    expect(descriptionKind('<?xml version="1.0"?>\n<!-- arm -->\n<robot name="arm"><link name="base"/></robot>')).toBe(
+      'urdf',
+    );
+    expect(descriptionKind('<mujoco model="go2"><worldbody/></mujoco>')).toBe('mjcf');
+    expect(descriptionKind('<mujoco model="go2"><include file="body.xml"/></mujoco>')).toBe('mjcf-includes');
+    expect(descriptionKind('<mujoco><default/></mujoco>')).toBeNull();
+    expect(descriptionKind('<launch><node pkg="robot"/></launch>')).toBeNull();
   });
 });
 
@@ -68,6 +96,15 @@ describe('repoLink', () => {
       repo: 'arm',
       rest: ['main', 'robots', 'go1_description'],
     });
+  });
+
+  it('reads a GitHub Download ZIP link as the repo at that ref', () => {
+    expect(repoLink('https://github.com/me/arm/archive/refs/heads/main.zip')).toEqual({
+      owner: 'me',
+      repo: 'arm',
+      rest: ['main'],
+    });
+    expect(repoLink('https://github.com/me/arm/archive/v1.2.zip')).toMatchObject({ rest: ['v1.2'] });
   });
 
   it('leaves file links and other hosts to the file importer', () => {

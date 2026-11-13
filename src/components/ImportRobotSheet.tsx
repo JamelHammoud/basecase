@@ -86,7 +86,8 @@ export const ImportRobotSheet: React.FC<{
           onKeyDown={(e) => {
             if (e.key === 'Enter') submit();
           }}
-          placeholder="GitHub, URDF, MJCF or zip link"
+          aria-label="Robot link"
+          placeholder="e.g. github.com/unitreerobotics/unitree_ros"
         />
       )}
       <input

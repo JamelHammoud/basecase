@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { importRobot } from '../robotImport';
+import { ZIP_TOO_LARGE } from './archive';
 import { RobotChoiceError } from './entry';
-import { deskArmFiles, TinyDomParser } from './robotImport.fixtures';
+import { fetchBytes, TooLargeError } from './sources';
+import { deskArmFiles, deskArmZip, TinyDomParser } from './robotImport.fixtures';
 
 const raw = 'https://raw.githubusercontent.com/me/arm/HEAD/';
 const files = deskArmFiles('arm_description');
 const tree = ['README.md', ...Object.keys(files)];
 const listing = (paths: string[]) => JSON.stringify({ tree: paths.map((path) => ({ path, type: 'blob' })) });
-const served = new Map<string, string | Uint8Array<ArrayBuffer>>([
+const served = new Map<string, BodyInit | Response>([
   ['https://api.github.com/repos/me/arm/git/trees/HEAD?recursive=1', listing(tree)],
   ...Object.entries(files).map(([path, bytes]) => [raw + path, bytes as Uint8Array<ArrayBuffer>] as const),
 ]);
@@ -19,6 +21,8 @@ beforeEach(() => {
     fetched.push(url);
 
     const body = served.get(url);
+
+    if (body instanceof Response) return body;
 
     return body === undefined ? new Response('', { status: 404 }) : new Response(body);
   });
@@ -57,5 +61,46 @@ describe('GitHub repository links', () => {
 
     expect(picked.joints).toHaveLength(2);
     expect(picked.parts[0].robotLink?.url).toBe(`${at}b/urdf/desk_arm.urdf`);
+  });
+});
+
+describe('zip links', () => {
+  it('downloads a GitHub file link to a zip from raw.githubusercontent.com', async () => {
+    served.set('https://raw.githubusercontent.com/me/arm/main/desk_arm.zip', deskArmZip() as Uint8Array<ArrayBuffer>);
+
+    const robot = await importRobot({ kind: 'url', url: 'https://github.com/me/arm/blob/main/desk_arm.zip' });
+
+    expect(robot.joints.map((j) => j.name)).toEqual(['Shoulder', 'Elbow']);
+  });
+
+  it('opens a GitHub Download ZIP link as the repo at that ref', async () => {
+    const at = 'https://raw.githubusercontent.com/me/arm/main/';
+
+    served.set('https://api.github.com/repos/me/arm/git/trees/main?recursive=1', listing(tree));
+
+    for (const [path, bytes] of Object.entries(files)) served.set(at + path, bytes as Uint8Array<ArrayBuffer>);
+
+    const robot = await importRobot({ kind: 'url', url: 'https://github.com/me/arm/archive/refs/heads/main.zip' });
+
+    expect(robot.parts[0].robotLink?.url).toBe(`${at}arm_description/urdf/desk_arm.urdf`);
+  });
+
+  it('stops a zip link past the size cap before reading it', async () => {
+    const huge = new Response('PK', { headers: { 'content-length': String(300 * 1024 * 1024) } });
+
+    served.set('https://example.com/huge.zip', huge);
+
+    await expect(importRobot({ kind: 'url', url: 'https://example.com/huge.zip' })).rejects.toThrow(ZIP_TOO_LARGE);
+  });
+
+  it('stops a capped download once the stream passes the cap', async () => {
+    const chunk = new Uint8Array(8);
+    const stream = new ReadableStream<Uint8Array>({
+      pull: (controller) => controller.enqueue(chunk),
+    });
+
+    served.set('https://example.com/endless', new Response(stream));
+
+    await expect(fetchBytes('https://example.com/endless', 64)).rejects.toBeInstanceOf(TooLargeError);
   });
 });

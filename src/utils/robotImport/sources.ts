@@ -23,7 +23,41 @@ export function rawUrl(url: string): string {
   return m ? `${RAW}/${m[1]}/${m[2]}/${m[3]}` : url.trim();
 }
 
-async function lfsBytes(url: string, buf: ArrayBuffer): Promise<ArrayBuffer> {
+export class TooLargeError extends Error {}
+
+async function readCapped(res: Response, maxBytes: number): Promise<ArrayBuffer> {
+  if (Number(res.headers.get('content-length')) > maxBytes) throw new TooLargeError();
+
+  if (!res.body || maxBytes === Infinity) return res.arrayBuffer();
+
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  for (let next = await reader.read(); !next.done; next = await reader.read()) {
+    total += next.value.byteLength;
+
+    if (total > maxBytes) {
+      await reader.cancel();
+
+      throw new TooLargeError();
+    }
+
+    chunks.push(next.value);
+  }
+
+  const out = new Uint8Array(total);
+  let at = 0;
+
+  for (const chunk of chunks) {
+    out.set(chunk, at);
+    at += chunk.byteLength;
+  }
+
+  return out.buffer;
+}
+
+async function lfsBytes(url: string, buf: ArrayBuffer, maxBytes: number): Promise<ArrayBuffer> {
   const head = new TextDecoder().decode(buf);
   const m = /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/(.+)$/.exec(url);
 
@@ -33,7 +67,7 @@ async function lfsBytes(url: string, buf: ArrayBuffer): Promise<ArrayBuffer> {
 
   if (!lfs.ok) throw new Error(`LFS ${lfs.status}`);
 
-  return lfs.arrayBuffer();
+  return readCapped(lfs, maxBytes);
 }
 
 function assertWebUrl(url: string): string {
@@ -42,14 +76,14 @@ function assertWebUrl(url: string): string {
   return url;
 }
 
-export async function fetchBytes(url: string): Promise<ArrayBuffer> {
+export async function fetchBytes(url: string, maxBytes = Infinity): Promise<ArrayBuffer> {
   const res = await fetch(assertWebUrl(url));
 
   if (!res.ok) throw new Error(`${res.status}`);
 
-  const buf = await res.arrayBuffer();
+  const buf = await readCapped(res, maxBytes);
 
-  return buf.byteLength < 300 ? lfsBytes(url, buf) : buf;
+  return buf.byteLength < 300 ? lfsBytes(url, buf, maxBytes) : buf;
 }
 
 export const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/');

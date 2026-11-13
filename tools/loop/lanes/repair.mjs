@@ -1,5 +1,5 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { failedLog, latestMainCheck, openPulls, repo } from '../lib/github.mjs';
+import { failedLog, lastFinishedMainCheck, openPulls, repo } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
@@ -12,10 +12,10 @@ const beingRepaired = () =>
   );
 
 export default function repair({ log }) {
-  const latest = latestMainCheck();
+  const latest = lastFinishedMainCheck();
 
-  if (!latest || latest.status !== 'completed' || latest.conclusion !== 'failure') {
-    log('main is green, or Check is still running');
+  if (!latest || latest.conclusion !== 'failure') {
+    log('main is green');
 
     return;
   }

@@ -19,6 +19,7 @@ related:
   - printability-estimates
   - troubleshoot-build-slicing-fails
   - export-plates-as-3mf
+  - merge-printed-parts-into-one-print
 covers:
   - src/components/print/PrintPanel.tsx
   - src/components/print/PrintSettings.tsx
@@ -63,6 +64,7 @@ Print mode also opens from **File** ▸ **Print**, from **Print** in the Build t
 - **Copies** prints more than one of the selected part. **Don't print** leaves it off the plates.
 - **Auto Arrange** in the bottom bar packs the plates of that material again.
 - **Parts** lists every part with its size, time and plate. Parts with problems come first.
+- **Merge** lists printed parts bolted together on one link that could print as one. [Merge printed parts into one print](/help/merge-printed-parts-into-one-print) has the steps.
 
 After a print, a switch under **Printer**, such as Skip 3 printed parts, leaves the parts you printed off the plates. It starts on. Edit one bracket, and the next plate holds only that bracket.
 

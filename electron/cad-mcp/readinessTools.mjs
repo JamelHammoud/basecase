@@ -112,6 +112,7 @@ const EDITS = new Set([
   'update_parts',
   'delete_parts',
   'mirror_parts',
+  'merge_parts',
   'model_part',
   'fasten',
   'mate',

@@ -15,7 +15,7 @@ const WEB = { cad: false };
 const EXPECTED: Record<ImportKind, string[]> = {
   parts: ['stl', '3mf', 'obj', 'ply', 'fbx', 'glb', 'gltf', 'dae', 'step', 'stp', 'iges', 'igs'],
   svg: ['svg'],
-  robot: ['urdf', 'mjcf', 'xml', 'zip'],
+  robot: ['urdf', 'xacro', 'mjcf', 'xml', 'zip'],
   motion: ['bvh'],
   scene: ['basecase'],
   image: ['png', 'jpg', 'jpeg', 'webp', 'gif'],

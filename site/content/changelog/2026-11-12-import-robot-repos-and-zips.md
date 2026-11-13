@@ -14,7 +14,7 @@ Press ⌘K and choose Import Robot. It's also in File ▸ Import Robot and behin
 
 - a GitHub repo, a folder in one, or its Download ZIP link, like `github.com/TheRobotStudio/SO-ARM100`
 - a Hugging Face model or dataset repo, a folder, or a single file in one
-- a direct link to a `.urdf`, `.xml` or `.zip`
+- a direct link to a `.urdf`, `.xacro`, `.xml` or `.zip`
 
 Press Enter and Basecase reads the repo's file list and fetches only the files it needs. It inserts the robot with its joints, limits and masses, already selected. A toast says how many joints it found, with a Pose button to move them.
 
@@ -26,11 +26,17 @@ Basecase looks for the robot's description itself. It prefers an MJCF model, the
 
 ![The three SO-101 models in SO-ARM100, with so101_new_calib.xml picked](/changelog/import-robot-repos-and-zips/choose.png)
 
-A link to a single file in a Hugging Face repo imports that file and nothing else. A link with no robot in it, or a repo that's private or missing, fails with one toast saying so. Repos must be public, and a zip link can be up to 200 MB. Xacro files aren't expanded, so a robot published only as xacro won't import.
+A link to a single file in a Hugging Face repo imports that file and nothing else. A link with no robot in it, or a repo that's private or missing, fails with one toast saying so. Repos must be public, and a zip link can be up to 200 MB.
+
+## Xacro packages
+
+Import Robot also opens xacro, so a robot exported from Fusion 360 with fusion2urdf comes in with its joints and limits. So does a ROS description package built from xacro macros. Choose the package folder or paste the repo link. Includes, properties, macros, `xacro:if` and `xacro:arg` defaults are expanded in the app; a plain `.urdf` beside the xacro still wins.
+
+![A desk arm exported with fusion2urdf, inserted with its 2 joints and selected in the scene](/changelog/import-robot-repos-and-zips/fusion-arm.png)
 
 ## From your computer
 
-Drag a robot's folder, zip, URDF or MJCF file onto the canvas and the robot stands where you drop it. Dropped folders are searched the same way as repos, skipping `.git` and `node_modules`. Choose Folder in the Import Robot sheet imports a robot's folder from a file picker instead.
+Drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas and the robot stands where you drop it. Dropped folders are searched the same way as repos, skipping `.git` and `node_modules`. Choose Folder in the Import Robot sheet imports a robot's folder from a file picker instead.
 
 ## After it's in
 

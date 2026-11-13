@@ -46,7 +46,7 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-**Import Robot** is also in **File** and [[⌘K]]. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF or MJCF file onto the canvas, or pick the file with **Import** in the canvas menu. Import Robot opens with it loaded; click **Import** and the robot stands where you dropped it.
+**Import Robot** is also in **File** and [[⌘K]]. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas, or pick the file with **Import** in the canvas menu. Import Robot opens with it loaded; click **Import** and the robot stands where you dropped it.
 
 ## Insert a robot from the shelf
 
@@ -59,6 +59,8 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 - Every link with geometry becomes its own part, with its mass and center of mass.
 - Every revolute and prismatic joint keeps its axis, limits and torque limit.
 - Robot parts are never printed or resized.
+
+Robots exported from Fusion 360 with fusion2urdf, and ROS description packages written in xacro, import the same way. Choose the package folder, drop it on the canvas, or paste its repo link. Basecase reads the top-level `.xacro` or `.urdf.xacro` file, follows its includes inside the package, and fills in its properties, macros and `xacro:arg` defaults. When the package also has a plain `.urdf`, that file is used instead. If a xacro needs something Basecase can't fill in, like a YAML file or an environment variable, the import stops and names the file.
 
 Links must be https. A zip link downloads up to 200 MB, and a zip unpacks up to 600 MB and 20,000 files. A link with no robot description shows one toast naming the link.
 

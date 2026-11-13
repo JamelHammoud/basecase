@@ -9,7 +9,7 @@ export type ImportKind = 'parts' | 'svg' | 'robot' | 'motion' | 'scene' | 'image
 const KIND_EXTENSIONS: Record<ImportKind, string[]> = {
   parts: [...MESH_FILE_EXTENSIONS, ...CAD_FILE_EXTENSIONS],
   svg: ['svg'],
-  robot: ['urdf', 'mjcf', 'xml', 'zip'],
+  robot: ['urdf', 'xacro', 'mjcf', 'xml', 'zip'],
   motion: ['bvh'],
   scene: [SCENE_FILE_EXTENSION],
   image: ['png', 'jpg', 'jpeg', 'webp', 'gif'],

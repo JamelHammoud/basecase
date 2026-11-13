@@ -39,7 +39,7 @@ export default function build({ log }) {
     const change = { ...result.output, why: `${result.output.why}\n\nCloses #${step.number}.` };
     const url = publish(change, worktree);
 
-    log(`#${step.number}: opened ${url}`);
+    log(url ? `#${step.number}: opened ${url}` : `#${step.number}: a pull request with this title is already open`);
   } catch (error) {
     editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
 

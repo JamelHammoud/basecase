@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { openPulls } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
@@ -13,6 +14,14 @@ const versions = (dir) => {
 };
 
 export default function update({ log }) {
+  const open = openPulls().find((pull) => pull.headRefName.startsWith('loop/update/'));
+
+  if (open) {
+    log(`#${open.number} is already open`);
+
+    return;
+  }
+
   const worktree = openBranch('update', 'agent-adapters');
 
   try {

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
-import { createPull, repo } from './github.mjs';
+import { createPull, openPulls, repo, sameTitle } from './github.mjs';
 import { CODE_ROOT } from './paths.mjs';
 import { run } from './sh.mjs';
 
@@ -54,6 +54,10 @@ const hasWork = (dir) =>
 
 export function publish(change, { dir, branch, extra }) {
   if (!change.changed || !hasWork(dir)) return null;
+
+  const duplicate = openPulls().find((pull) => sameTitle(pull.title, pullTitle(change)));
+
+  if (duplicate) return null;
 
   const message = change.commitMessage || pullTitle(change);
   const problems = creditProblems(message);

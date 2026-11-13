@@ -98,6 +98,7 @@
       "en_GB",
       "en-GB"
     ],
+    "beforePack": "tools/release/beforePack.mjs",
     "afterPack": "tools/release/afterPack.mjs",
     "publish": [
       {

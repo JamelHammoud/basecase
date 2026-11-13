@@ -195,6 +195,19 @@ describe('robot link', () => {
     );
     expect(daemonBinary({ env: { BASECASE_ROBOT_DAEMON: 'relay' }, resources, fromSource: false })).toBe('relay');
   });
+
+  it('tells the user how to get a copy that can run robots when the daemon is missing, in plain words', () => {
+    const binary = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-robot-test-')), 'robot-daemon');
+    const spawnFn = vi.fn();
+    const result = new RobotLink({ binary, emit: () => {}, spawnFn }).connect(ARM);
+
+    expect(result).toEqual({
+      ok: false,
+      message: 'This copy of Basecase can’t run robots. Download Basecase again from basecase.so.',
+    });
+    expect(result.message).not.toMatch(/daemon|build/i);
+    expect(spawnFn).not.toHaveBeenCalled();
+  });
 });
 
 describe('robot link for the emulated G1', () => {

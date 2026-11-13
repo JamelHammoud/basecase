@@ -1,4 +1,5 @@
 import type { AcpChatMessage, CustomModelDefinition } from '../types/robotics';
+import { ipcErrorText } from '../utils/ipcError';
 import { platformBridge, type AcpPromptPayload } from '../utils/platformBridge';
 import { clearFailedReply, emptyAgentMessage, markLastAgentFailed, markLastAgentStopped } from './acpTranscript';
 import { marksNote } from '../agent/agentMarks';
@@ -31,11 +32,7 @@ type PromptResult = Awaited<ReturnType<typeof platformBridge.sendAcpPrompt>>;
 
 export type SendMode = 'now' | 'queue';
 
-const failureReason = (err: unknown) =>
-  String((err as Error)?.message ?? err ?? '')
-    .replace(/^Error invoking remote method '[^']+': /, '')
-    .replace(/^(Error: )+/, '')
-    .trim() || 'The agent stopped responding.';
+const failureReason = (err: unknown) => ipcErrorText(err) || 'The agent stopped responding.';
 
 export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {
   const { docs, showToast } = core;
@@ -95,7 +92,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
       const reason = failureReason(err);
 
       setMessages(id, markLastAgentFailed(reason));
-      showToast(`Agent error. ${reason}`, { tone: 'error' });
+      showToast(reason, { tone: 'error' });
 
       return false;
     }

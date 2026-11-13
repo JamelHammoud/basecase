@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createInfiniteGrid } from '../infiniteGrid';
+import { softwareGl } from '../softwareGl';
 import { FAR_PLANE, MAX_DIST, MAX_POLAR, MIN_DIST, MIN_POLAR } from './types';
 
 export interface Stage {
@@ -23,7 +24,7 @@ export interface Stage {
 
 const createRenderer = (container: HTMLElement) => {
   const renderer = new THREE.WebGLRenderer({
-    antialias: true,
+    antialias: !softwareGl(),
     powerPreference: 'high-performance',
   });
 

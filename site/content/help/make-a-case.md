@@ -33,12 +33,20 @@ The scene must have a robot with joints. [Cases](/help/cases) explains what a Ca
 
 1. Click **Play** in the view rail on the left.
 2. Click **Cases** at the top of the panel.
+
+![The Cases tab with New Case and Ask the Agent](/help/make-a-case/cases.png)
+
 3. Click **New Case**.
 4. Under **Goal**, choose what the robot must do. It lists only the goals this robot can try, and is hidden when there's one.
 5. Under **World**, choose **Open Floor**, or a world with something in the way.
-6. Set the goal's numbers, such as **Distance**, **Radius** and **Time**.
+6. Set the goal's numbers, such as **Distance**, **Radius** and **Time**. For **Touch a Point**, set **Dots** to 2 or 3 to touch that many dots in order; the Case is then called Touch the Dots.
 7. Read the line under the fields. It's the Case's brief, or what to change when the numbers can't work.
+
+![New Case on an arm with Dots set to 3](/help/make-a-case/new-case.png)
+
 8. Click **Create**.
+
+![Touch the Dots open in the Simulate tab](/help/make-a-case/opened.png)
 
 The Case opens in the **Simulate** tab, and its world appears on the canvas. Next, [try the Case](/help/try-a-case).
 

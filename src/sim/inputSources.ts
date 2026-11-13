@@ -1,20 +1,15 @@
+import { cameraInputSource } from '../cameras/operator/cameraSource';
 import { phoneCommand } from '../phone/phoneDrive';
 import { phoneReading } from '../phone/phoneStore';
-import { commandFromPad, isIdle, type DriveClass } from './driveKeys';
+import { commandFromPad, isIdle } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
+import type { InputMoment, InputRobot, InputSource } from './inputTypes';
 
-export interface InputMoment {
-  cls: DriveClass;
-  keys: DriveCommand;
-}
-
-export interface InputSource {
-  id: string;
-  read: (at: InputMoment) => DriveCommand | null;
-}
+export type { InputMoment, InputRobot, InputSource, PointTable } from './inputTypes';
 
 export const NAMED_INPUTS = ['camera', 'phone', 'midi', 'leader-arm', 'voice', 'policy', 'script'] as const;
 export const STUDIO_INPUTS = ['phone', 'gamepad', 'keys'];
+export const CAMERA_INPUTS = ['camera', ...STUDIO_INPUTS];
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
 const sources = new Map<string, InputSource>();
@@ -27,6 +22,32 @@ export const inputSourceIds = () => [...sources.keys()];
 
 export const hasInputSource = (id: string) => sources.has(id);
 
+export async function openInputs(ids: readonly string[], robot: InputRobot): Promise<string | null> {
+  const opened: InputSource[] = [];
+
+  for (const source of ids.flatMap((id) => sources.get(id) ?? [])) {
+    if (!source.open) continue;
+
+    const refusal = await source.open(robot);
+
+    if (refusal) {
+      opened.forEach((s) => s.close?.());
+
+      return refusal;
+    }
+
+    opened.push(source);
+  }
+
+  return null;
+}
+
+export function closeInputs(ids: readonly string[]) {
+  for (const id of ids) sources.get(id)?.close?.();
+}
+
+export const posesInputs = (ids: readonly string[]) => ids.some((id) => !!sources.get(id)?.pose);
+
 function firstPad(): Gamepad | null {
   if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
 
@@ -34,6 +55,7 @@ function firstPad(): Gamepad | null {
 }
 
 registerInputSource({ id: 'keys', read: ({ keys }) => keys });
+registerInputSource(cameraInputSource);
 registerInputSource({
   id: 'phone',
   read: ({ cls }) => {

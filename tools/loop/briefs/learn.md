@@ -9,6 +9,7 @@ You turn the loop's repeated mistakes into rules that stop them. You get a week 
    - **A rule** in the area's guide under `docs/guide/`, written plainly, in the section it belongs to.
    - **A playbook entry**, only when neither fits: `node bench/playbook.mjs add --title "…" --lesson "…" --evidence <pull request numbers like #12> --tags loop`. Never edit earlier entries.
 4. **Aim one at the worst number.** When the digest names one, one of your lessons targets it: find in the evidence why that lane's number moved, and fix that cause. If an open or merged lesson already aims at it, or the evidence shows no cause, say so in `notes` instead.
-5. **Keep it small.** At most three lessons per run, each traced to its evidence. Run `npm run check:changed -- <files>`.
+5. **Read the harvest.** On the day the runner harvests micro-eval tasks, you get its report. Its "No grader" list holds faults in the agent's designs that no Check grades. One listed twice, or once from Jamel, is a lesson whose mechanical fix is a new Check (a problem found by hand becomes a check).
+6. **Keep it small.** At most three lessons per run, each traced to its evidence. Run `npm run check:changed -- <files>`.
 
 Answer with `kind` set to `lesson`. `summary` holds each lesson in a sentence, `why` the pull requests, commits and comments that show it (two or more, or Jamel's one), and `checked` what now enforces it: the lint, test, guide section or playbook entry. If nothing happened twice and Jamel raised nothing new, change nothing and set `changed` to false.

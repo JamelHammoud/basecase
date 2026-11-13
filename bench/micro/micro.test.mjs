@@ -11,7 +11,7 @@ import { robotsIn } from './caseAppChecks.mjs';
 import { gradeTask, startFacts } from './grade.mjs';
 import { keepStartCases, recordFromFixture } from './materialize.mjs';
 import { passHatK, suiteStats, statsMarkdown } from './stats.mjs';
-import { SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
+import { ALL_TASKS, HARVESTED_TASKS, SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
 
 const build = (fixture) => recordFromFixture(fixture, specToPart, { buildCase, builderRobot, buildRig });
 const APP_GRADED = new Set(['D1', ...SEED_TASKS.filter((t) => t.category === 'case-apps').map((t) => t.id)]);
@@ -25,8 +25,15 @@ describe('seed tasks', () => {
     expect(selectTasks({ split: 'tune' }).some((t) => t.heldOut)).toBe(false);
   });
 
+  it('keeps harvested tasks valid: unique ids, numbered H1 to Hn, each a planted fault', () => {
+    expect(new Set(ALL_TASKS.map((t) => t.id)).size).toBe(ALL_TASKS.length);
+    expect(selectTasks()).toHaveLength(ALL_TASKS.length);
+    expect(HARVESTED_TASKS.map((t) => t.id)).toEqual(HARVESTED_TASKS.map((_, i) => `H${i + 1}`));
+    expect(HARVESTED_TASKS.every((t) => t.fixture && t.solution && t.harvested)).toBe(true);
+  });
+
   it('never passes a broken start scene, and passes every known fix', async () => {
-    for (const t of SEED_TASKS.filter((x) => x.fixture)) {
+    for (const t of ALL_TASKS.filter((x) => x.fixture)) {
       const start = await build(t.fixture());
       const atStart = await gradeTask(t, { before: start, after: start });
 

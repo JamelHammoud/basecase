@@ -13,12 +13,12 @@ export interface ReplayRequest {
 
 export interface ReplayTrace {
   positionRad: number[];
-  medianErrorRad: number;
+  medianErrorRad: number | null;
 }
 
 export const loggedTrace = (logs: ServoLog[]) => logs.flatMap((log) => log.positionRad);
 
-export function medianError(predicted: ArrayLike<number>[], logs: ServoLog[]): number {
+export function medianError(predicted: ArrayLike<number>[], logs: ServoLog[]): number | null {
   const errors = logs.flatMap((log, k) => {
     const [from, to] = windowOf(log, 'all');
 
@@ -28,7 +28,7 @@ export function medianError(predicted: ArrayLike<number>[], logs: ServoLog[]): n
       .filter(Number.isFinite);
   });
 
-  return errors.length ? median(errors) : Number.NaN;
+  return errors.length ? median(errors) : null;
 }
 
 export function replayTrace(mj: MainModule, request: ReplayRequest): ReplayTrace {

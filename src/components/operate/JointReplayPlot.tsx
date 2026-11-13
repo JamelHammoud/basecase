@@ -30,14 +30,16 @@ export const JointReplayPlot: React.FC<JointReplayPlotProps> = ({ history, versi
       <TracePlot traces={traces} loading={!replay} />
       {replay && (
         <div className="mt-2 flex items-baseline gap-[12px] text-[13px] tabular-nums">
-          <span
-            className="text-white/50"
-            data-testid="replay-error-preset"
-            data-error-rad={replay.preset.medianErrorRad}
-          >
-            {degrees(replay.preset.medianErrorRad)}
-          </span>
-          {replay.calibration && (
+          {replay.preset.medianErrorRad !== null && (
+            <span
+              className="text-white/50"
+              data-testid="replay-error-preset"
+              data-error-rad={replay.preset.medianErrorRad}
+            >
+              {degrees(replay.preset.medianErrorRad)}
+            </span>
+          )}
+          {replay.calibration?.medianErrorRad != null && (
             <span
               className="text-figma-blue"
               data-testid="replay-error-calibration"

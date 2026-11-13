@@ -57,7 +57,7 @@ export interface ReplayErrors {
 export async function replayErrors(history: CalibrationHistory | undefined): Promise<ReplayErrors | null> {
   const replay = history ? await jointReplay(history) : null;
 
-  if (!replay) return null;
+  if (replay?.preset.medianErrorRad == null) return null;
 
   return {
     version: replay.version,

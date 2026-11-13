@@ -151,7 +151,7 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
     ? ` No camera ${seen.missing.join(', ')}; cameras: ${seen.available.join(', ')}.`
     : '';
 
-  const calibration = (await ctx.calibrationErrors?.()) ?? '';
+  const calibration = (await ctx.calibrationErrors?.().catch(() => '')) ?? '';
 
   return {
     text: [`Ran ${seconds.toFixed(1)} s.`, stateLine(ctx, poses), missing.trim(), calibration]

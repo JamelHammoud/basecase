@@ -11,7 +11,7 @@ import { activeCalibrations } from './history';
 import { keepBenchLogs } from './benchLogStore';
 import { jointReplay } from './jointReplay';
 import { LADDER } from './ladder';
-import { replayTrace } from './replayTrace';
+import { medianError, replayTrace } from './replayTrace';
 import { withCalibration, withRollBack } from './projectCalibrations';
 import { scaledFit, type ServoScales } from './servoParams';
 import type { ServoLog } from './types';
@@ -151,7 +151,7 @@ describe('replaying the bench log', () => {
     expect(replay?.preset.positionRad).toHaveLength(samples);
     expect(replay?.calibration?.positionRad).toHaveLength(samples);
     expect(replay!.calibration!.medianErrorRad).toBeLessThanOrEqual(
-      replay!.preset.medianErrorRad * (1 - LADDER.passGain),
+      replay!.preset.medianErrorRad! * (1 - LADDER.passGain),
     );
     expect((await jointReplay(history, 1))?.calibration).toBe(replay?.calibration);
   }, 90_000);
@@ -167,7 +167,7 @@ describe('replaying the bench log', () => {
     expect(calibration.verdict).toBe('cant-tell');
     expect(history.active).toBeNull();
     expect(replay?.calibration).toBeNull();
-    expect(asFitted.medianErrorRad).toBeCloseTo(replay!.preset.medianErrorRad, 9);
+    expect(asFitted.medianErrorRad).toBeCloseTo(replay!.preset.medianErrorRad!, 9);
   }, 90_000);
 
   it('skips samples a status missed, including the first', () => {
@@ -184,6 +184,13 @@ describe('replaying the bench log', () => {
 
     expect(gapped.positionRad.every(Number.isFinite)).toBe(true);
     expect(Number.isFinite(gapped.medianErrorRad)).toBe(true);
-    expect(gapped.medianErrorRad).toBeLessThan(whole.medianErrorRad + COUNT);
+    expect(gapped.medianErrorRad).toBeLessThan(whole.medianErrorRad! + COUNT);
   }, 60_000);
+
+  it('has no median error when every sample was missed', () => {
+    const [log] = benchLogs(recording({}), 0);
+    const missed = { ...log, positionRad: log.positionRad.map(() => Number.NaN) };
+
+    expect(medianError([log.positionRad], [missed])).toBeNull();
+  });
 });

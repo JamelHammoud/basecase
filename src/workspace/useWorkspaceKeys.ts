@@ -34,7 +34,7 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   'use memo';
 
   const { tool, annotations, studio, undo, redo, selection, setSelectedIds, viewportRef, marks } = core;
-  const { edits, ops, pose } = actions;
+  const { edits, ops, pose, joints } = actions;
 
   const leaveMeasure = () => {
     if (!viewportRef.current?.cancelMeasure()) tool.toggleMeasure(false);
@@ -47,6 +47,7 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     else if (tool.measuring) leaveMeasure();
     else if (tool.marking && marks.selected) marks.select(null);
     else if (tool.marking) tool.toggleMarking(false);
+    else if (joints.picking) joints.cancel();
     else setSelectedIds([]);
   };
 

@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { openApp, type App } from './harness';
 
 interface StudioHook {
@@ -45,6 +47,18 @@ const servo = {
   kind: 'component',
   componentId: 'feetech-sts3215',
   componentVariant: 'c001',
+};
+
+const armWithEstimates = () => {
+  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const servo = { ...standIn('mg996r', 0), name: 'MG996R', kind: 'component', componentId: 'towerpro-mg996r' };
+  const joints = arm.joints.map((j) => {
+    if (j.id === 'arm0') return { ...j, effortNm: undefined };
+
+    return j.id === 'arm1' ? { ...j, actuators: ['mg996r'] } : j;
+  });
+
+  return { name: 'arm', parts: [...arm.parts, servo], project: { ...DEFAULT_PROJECT, joints } };
 };
 
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
@@ -173,6 +187,33 @@ describe('Checks', () => {
       .poll(() => app.page.locator(visible('p')).filter({ hasText: exactly }).count(), { timeout: 5000 })
       .toBeGreaterThan(0);
   }, 30000);
+
+  it('say which joints the simulation estimates, and select their parts', async () => {
+    await app.page.evaluate(
+      (record) => (window as unknown as { __studio: StudioHook }).__studio.load(record),
+      armWithEstimates(),
+    );
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const estimates = checks().getByRole('button', { name: /^Torque estimates/ });
+
+    await expect.poll(() => estimates.count(), { timeout: 45000 }).toBe(1);
+    await estimates.click();
+    await expect
+      .poll(() => checks().innerText(), { timeout: 45000 })
+      .toContain('These joints have no servo, so the simulation guesses their torque from weight.');
+    expect(await checks().innerText()).toContain('No servo on Arm0');
+    await checks().getByRole('button', { name: 'link0', exact: true }).first().click();
+
+    const models = checks().getByRole('button', { name: /^Servo models/ });
+
+    await models.click();
+    await expect
+      .poll(() => checks().innerText(), { timeout: 45000 })
+      .toContain('These servos have no measured model, so the simulation guesses how they respond.');
+    expect(await checks().innerText()).toContain('MG996R on Arm1');
+    expect(app.errors).toEqual([]);
+  }, 90000);
 });
 
 describe('Build tab fields', () => {

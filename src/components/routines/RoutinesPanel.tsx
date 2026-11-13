@@ -80,13 +80,7 @@ export function RoutinesPanel({ routines, onTrain }: RoutinesPanelProps) {
           {missing.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-1">
               {missing.map((c) => (
-                <Button
-                  key={c}
-                  size="sm"
-                  variant="primary"
-                  title={`Put a ${c === 'depth' ? 'depth camera' : c} on the robot`}
-                  onClick={() => routines.addCapability(c)}
-                >
+                <Button key={c} size="sm" variant="primary" onClick={() => routines.addCapability(c)}>
                   {ADD_LABELS[c]}
                 </Button>
               ))}

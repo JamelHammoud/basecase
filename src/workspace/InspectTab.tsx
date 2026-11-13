@@ -15,7 +15,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
 
   return (
     <SculptAndDrawStudio
-      selectedPart={selection.selectedParts[0] ?? null}
+      selectedPart={selection.selectedPart}
       sculptSettings={tool.sculptSettings}
       mode={studioMode}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}
@@ -23,8 +23,8 @@ function ModePanel({ core, actions }: InspectTabProps) {
       onUpdateSculptSettings={tool.updateSculptSettings}
       onAddClayPreset={creation.addClayPreset}
       onSubdivideSelectedClay={creation.subdivideSelectedClay}
-      onCreateFrom2DDrawing={async (params) => {
-        await creation.createFromSketch(params);
+      onCreateFrom2DDrawing={(params) => {
+        creation.createFromSketch(params);
         tool.setCreator(null);
       }}
     />
@@ -39,6 +39,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
 
   return (
     <Inspector
+      key={scene.sceneId}
       part={selection.selectedPart}
       parts={parts}
       globalGoal={scene.globalGoal}

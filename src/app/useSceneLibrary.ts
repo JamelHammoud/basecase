@@ -4,8 +4,7 @@ import { platformBridge } from '../utils/platformBridge';
 import { decodeSceneFile, SCENE_FILE_EXTENSION, SceneFileError } from '../utils/sceneFile';
 import { newSceneId } from '../utils/sceneIds';
 import { sceneStore } from '../utils/sceneStore';
-import { copyName } from '../workspace/helpers';
-import { findSceneTab } from './tabModel';
+import { findSceneTab, sceneCopyName } from './tabModel';
 import type { useTabActions } from './useTabActions';
 import type { TabsCore } from './useTabs';
 
@@ -48,8 +47,9 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
 
     if (tab) await handles.current.get(tab.id)?.flush();
 
-    const name = copyName(
+    const name = sceneCopyName(
       scene.name,
+      latestRef.current.metas,
       sceneStore.get().map((s) => s.name),
     );
 

@@ -1,4 +1,4 @@
-import type { PrinterSetup } from '../data/printers';
+import { slicerOrder, type PrinterSetup } from '../data/printers';
 import type { ThreeMfFileSpec } from '../three/analysis/analysisOps';
 import type { PrintMaterial, ProjectSettings } from '../types/robotics';
 import type { JobGroup, JobPrinter } from './printBridge';
@@ -24,6 +24,7 @@ export function jobPrinter(setup: PrinterSetup, project: ProjectSettings): JobPr
 
   return {
     vendor: setup.model.vendor,
+    slicers: slicerOrder(setup.model),
     machine: presets.machine,
     process,
     bedType: setup.model.bedType,

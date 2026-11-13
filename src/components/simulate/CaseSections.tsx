@@ -22,77 +22,64 @@ const FIT_TONE: Record<FitRow['state'], string> = {
   skip: 'text-white/50',
 };
 
-interface BriefProps {
+const FitRows: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
+  const fit = cases.fit;
+
+  if (!fit) return null;
+
+  if (fit.checking) return <p className="mt-2 text-[13px] text-white/50">Checking</p>;
+
+  const rows = fit.rows.filter((row) => row.state !== 'skip');
+  const misfit = rows.some((row) => row.id === 'slot' && row.state === 'fail') && cases.builder.goals.length > 0;
+
+  return (
+    <div className="mt-2 flex flex-col" data-testid="robot-fit">
+      {rows.map((row) => (
+        <div key={row.id} className="min-h-8 py-1 flex items-baseline justify-between gap-3 text-[13px]">
+          <span className="text-white/85 shrink-0">{row.label}</span>
+          <span className={`text-right ${FIT_TONE[row.state]}`}>{row.detail}</span>
+        </div>
+      ))}
+      {misfit && (
+        <Button variant="secondary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={onNewCase}>
+          New Case
+        </Button>
+      )}
+    </div>
+  );
+};
+
+interface CaseSectionProps {
   cases: Cases;
-  onOpenCommandCenter?: () => void;
-  inCenter?: boolean;
+  onNewCase: () => void;
+  onRun: () => void;
 }
 
-const BriefActions: React.FC<{ cases: Cases; onOpenCommandCenter?: () => void }> = ({ cases, onOpenCommandCenter }) => (
-  <>
-    {onOpenCommandCenter && (
-      <IconButton
-        icon={<ExpandIcon className="w-4 h-4" />}
-        title="Open Command Center"
-        size="xs"
-        onClick={onOpenCommandCenter}
-      />
-    )}
-    <IconButton
-      icon={<CloseIcon className="w-4 h-4" />}
-      title="Close Case"
-      size="xs"
-      onClick={() => cases.open(null)}
-    />
-  </>
-);
-
-export const BriefSection: React.FC<BriefProps> = ({ cases, onOpenCommandCenter, inCenter = false }) => {
+export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRun }) => {
   const kase = cases.active!;
 
   return (
     <Section
-      title="Brief"
-      actions={!inCenter && <BriefActions cases={cases} onOpenCommandCenter={onOpenCommandCenter} />}
-    >
-      <div className="flex flex-col gap-1" data-testid="case-brief">
-        {!inCenter && <div className="text-[14px] font-medium text-white/90">{kase.name}</div>}
-        <p className="text-[13px] leading-snug text-white/70">{kase.brief}</p>
-      </div>
-    </Section>
-  );
-};
-
-export const RobotFitSection: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
-  const fit = cases.fit;
-  const rows = fit?.rows.filter((row) => row.state !== 'skip') ?? [];
-  const misfit = rows.some((row) => row.id === 'slot' && row.state === 'fail') && cases.builder.goals.length > 0;
-
-  return (
-    <Section
-      title="Robot fit"
+      title={kase.name}
       actions={
-        <Button variant="ghost" size="sm" disabled={fit?.checking} onClick={() => void cases.runFit()}>
-          Check Fit
-        </Button>
+        <>
+          <Button variant="ghost" size="sm" disabled={cases.fit?.checking} onClick={() => void cases.runFit()}>
+            Check Fit
+          </Button>
+          <IconButton icon={<ExpandIcon className="w-4 h-4" />} title="Run Case" size="xs" onClick={onRun} />
+          <IconButton
+            icon={<CloseIcon className="w-4 h-4" />}
+            title="Close Case"
+            size="xs"
+            onClick={() => cases.open(null)}
+          />
+        </>
       }
     >
-      {fit?.checking && <p className="text-[13px] text-white/50">Checking</p>}
-      {fit && !fit.checking && (
-        <div className="flex flex-col" data-testid="robot-fit">
-          {rows.map((row) => (
-            <div key={row.id} className="min-h-8 py-1 flex items-baseline justify-between gap-3 text-[13px]">
-              <span className="text-white/85 shrink-0">{row.label}</span>
-              <span className={`text-right ${FIT_TONE[row.state]}`}>{row.detail}</span>
-            </div>
-          ))}
-          {misfit && (
-            <Button variant="secondary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={onNewCase}>
-              New Case
-            </Button>
-          )}
-        </div>
-      )}
+      <p className="text-[13px] leading-snug text-white/70" data-testid="case-brief">
+        {kase.brief}
+      </p>
+      <FitRows cases={cases} onNewCase={onNewCase} />
     </Section>
   );
 };

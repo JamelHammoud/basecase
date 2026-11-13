@@ -35,6 +35,7 @@ const DETACHED: Viewport3DHandle = {
   exportUsdz: async () => new Uint8Array(),
   partTriangles: () => null,
   servoOutput: () => null,
+  jointAxis: async () => null,
   meshesReady: async () => [],
   sweepClashes: async () => [],
   frameAll: () => {},
@@ -52,6 +53,10 @@ const DETACHED: Viewport3DHandle = {
 };
 
 const canvasCursor = (props: ViewportProps) => {
+  if (props.axisPick) {
+    return props.axisPick.ready ? CURSORS.crosshair : 'not-allowed';
+  }
+
   if (props.annotateMode) {
     return CURSORS.comment;
   }

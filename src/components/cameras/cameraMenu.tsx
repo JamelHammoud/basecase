@@ -24,12 +24,7 @@ export interface CameraMenuActions {
   setPartLens: (partId: string, lens: Lens | undefined) => void;
 }
 
-function lensSubmenu(view: CameraView, actions: CameraMenuActions): ContextMenuEntry {
-  const choose = (lens: Lens | undefined) => {
-    if (view.fixed) actions.setLens(view.fixed, lens ?? view.lens);
-    else if (view.part) actions.setPartLens(view.part, lens);
-  };
-
+function lensSubmenu(choose: (lens: Lens | undefined) => void, view: CameraView): ContextMenuEntry {
   return {
     label: 'Lens',
     submenu: (close) => (
@@ -52,20 +47,25 @@ function lensSubmenu(view: CameraView, actions: CameraMenuActions): ContextMenuE
 }
 
 export function cameraMenu(view: CameraView, actions: CameraMenuActions): ContextMenuEntry[] {
-  const fixed = view.fixed;
-  const entries: ContextMenuEntry[] = [
+  const { fixed, part } = view;
+  const lookThrough: ContextMenuEntry[] = [
     { heading: view.label },
     { label: 'Look Through', onSelect: () => actions.lookThrough(view) },
-    { label: 'Rename', onSelect: () => actions.startRename(view) },
-    lensSubmenu(view, actions),
   ];
+  const rename: ContextMenuEntry = { label: 'Rename', onSelect: () => actions.startRename(view) };
 
-  if (!fixed) return entries;
+  if (fixed) {
+    return [
+      ...lookThrough,
+      rename,
+      lensSubmenu((lens) => actions.setLens(fixed, lens ?? view.lens), view),
+      { label: 'Use Current View', onSelect: () => actions.reframe(fixed) },
+      { divider: true },
+      { label: 'Delete', tone: 'danger', onSelect: () => actions.remove(fixed) },
+    ];
+  }
 
-  return [
-    ...entries,
-    { label: 'Use Current View', onSelect: () => actions.reframe(fixed) },
-    { divider: true },
-    { label: 'Delete', tone: 'danger', onSelect: () => actions.remove(fixed) },
-  ];
+  if (!part) return lookThrough;
+
+  return [...lookThrough, rename, lensSubmenu((lens) => actions.setPartLens(part, lens), view)];
 }

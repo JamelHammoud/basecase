@@ -5,6 +5,8 @@ import type { V3 } from '../utils/kinematics';
 import type { EndEffector } from './robotFit';
 import type { CaseProbe, ProbeEnd } from './schema';
 
+export const FLOOR_PROBE_DEPTH_MM = 1_000_000;
+
 export interface ProbeWorld {
   model: SimModel;
   effector: EndEffector | null;

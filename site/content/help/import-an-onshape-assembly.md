@@ -1,6 +1,20 @@
 ---
 title: Import an Onshape assembly as a robot
 date: 2026-11-12
+updated: 2026-11-13
+collection: design
+type: task
+order: 17
+keywords:
+  - onshape
+  - cad
+  - assembly
+  - mates
+  - api key
+  - accounts
+related:
+  - import-a-robot
+  - pose-a-robot
 covers:
   - src/components/settings/AccountsPane.tsx
   - src/components/ImportRobotSheet.tsx

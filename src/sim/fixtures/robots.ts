@@ -241,6 +241,46 @@ function arm(id: string, links: number, effort: number): FixtureRobot {
   return { id, parts, joints, expect: { morphology: 'fixed', stand: 'n/a', walk: 'n/a' } };
 }
 
+const FINGER: P3 = [8, 26, 20];
+const FINGER_GAP_MM = 50;
+const FINGER_TRAVEL_MM = 25;
+
+function withGripper(robot: FixtureRobot): FixtureRobot {
+  const wrist = robot.joints.at(-1)!;
+  const top = Math.max(...robot.parts.map((p) => p.position[1] + p.dimensions.height / 2));
+  const palm = box('palm', [0, top + 6, 0], [FINGER_GAP_MM + FINGER[0] * 2, 12, FINGER[2]], 20);
+  const y = top + 12 + FINGER[1] / 2;
+  const x = (FINGER_GAP_MM + FINGER[0]) / 2;
+  const fingers = (
+    [
+      ['left', -1],
+      ['right', 1],
+    ] as const
+  ).map(([side, sign]) => ({
+    part: box(`finger_${side}`, [sign * x, y, 0], FINGER, 15),
+    joint: joint({
+      id: `finger_${side}`,
+      link: [wrist.child[0], `finger_${side}`],
+      origin: [sign * x, y, 0],
+      axis: X,
+      effortNm: 5,
+      type: 'prismatic',
+      range: sign < 0 ? [0, FINGER_TRAVEL_MM] : [-FINGER_TRAVEL_MM, 0],
+      parentJoint: wrist.id,
+    }),
+  }));
+
+  return {
+    ...robot,
+    parts: [...robot.parts, palm, ...fingers.map((f) => f.part)],
+    joints: [
+      ...robot.joints.slice(0, -1),
+      { ...wrist, child: [...wrist.child, 'palm'] },
+      ...fingers.map((f) => f.joint),
+    ],
+  };
+}
+
 function wheel(side: string, x: number, z: number, radius: number) {
   return {
     part: box(`${side}_wheel_disc`, [x, radius, z], [20, radius * 2, radius * 2], 80),
@@ -326,7 +366,7 @@ export function fixtureRobots(): FixtureRobot[] {
     biped('biped-servo', 1, 1.9),
     biped('biped-tiny', 0.5, 0.6),
     arm('arm-3dof', 3, 3),
-    arm('arm-6dof', 6, 4),
+    withGripper(arm('arm-6dof', 6, 4)),
     rover('rover-diff', [
       ['left', -85, 0],
       ['right', 85, 0],

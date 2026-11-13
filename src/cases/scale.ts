@@ -3,14 +3,17 @@ import { scaledFormula } from './contract';
 import type { Case, WorldObject } from './schema';
 
 const SAME_SCALE = 1e-3;
+const UP = 1;
 
 export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   const authored = kase.slot.reachMm;
   const from = kase.slot.anchor ?? anchor;
   const s = authored && reachMm > 0 ? reachMm / authored : 1;
-  const place = (p: V3): V3 => p.map((x, i) => anchor[i] + (x - from[i]) * s) as V3;
+  const fromFloor = kase.slot.needs.includes('gripper');
+  const pinned = (i: number) => fromFloor && i === UP;
+  const place = (p: V3): V3 => p.map((x, i) => (pinned(i) ? x * s : anchor[i] + (x - from[i]) * s)) as V3;
   const sameScale = Math.abs(s - 1) < SAME_SCALE;
-  const sameAnchor = from.every((x, i) => x === anchor[i]);
+  const sameAnchor = from.every((x, i) => pinned(i) || x === anchor[i]);
 
   if (sameScale && sameAnchor) return kase;
 

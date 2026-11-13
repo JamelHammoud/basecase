@@ -4,9 +4,11 @@ import type { Formula as ContractFormula, State as ContractState } from '../skil
 import type { RobotFacts } from './robotFit';
 import type { WorldKind } from './caseWorlds';
 import type { RoutePoint } from './groundRoute';
+import { pickDefaults, pickGoalWith } from './pickGoal';
+import { FLOOR_PROBE_DEPTH_MM } from './probes';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
-export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk';
+export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick';
 
 export type ParamKey =
   'distanceMm' | 'heightMm' | 'sideMm' | 'radiusMm' | 'pushMm' | 'boxMm' | 'stops' | 'spacingMm' | 'seconds';
@@ -56,9 +58,10 @@ export interface CaseGoal {
   params: ParamKey[];
   plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind) => GoalPlan;
   problem?: (robot: BuilderRobot, values: GoalValues) => string | null;
+  bounds?: Partial<Record<ParamKey, Pick<GoalParam, 'min'>>>;
 }
 
-export const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
+const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
   distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
   heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
   sideMm: { key: 'sideMm', label: 'Side', unit: 'mm', min: -2000, max: 2000, step: 10 },
@@ -70,6 +73,8 @@ export const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
   seconds: { key: 'seconds', label: 'Time', unit: 's', min: 2, max: 120, step: 1 },
 };
 
+export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({ ...GOAL_PARAMS[key], ...goal.bounds?.[key] });
+
 const GOAL_BLUE = '#0d99ff';
 const BOX_GREY = '#c8a26a';
 const BOX_DENSITY_G_PER_CM3 = 0.05;
@@ -80,8 +85,6 @@ const GROUND_HOLD_SECONDS = 0.3;
 const SPOT_HOLD_SECONDS = 0.2;
 const STAND_SHARE = 0.5;
 const MIN_WALK_MM = 100;
-
-export const FLOOR_PROBE_DEPTH_MM = 1_000_000;
 
 const ROLL: CaseControl[] = [
   { id: 'move', label: 'Move', input: 'move' },
@@ -349,7 +352,9 @@ export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Con
   };
 }
 
-export const CASE_GOALS: CaseGoal[] = [reachGoal, pushGoal, pathGoal, walkGoal, touchGoal];
+const pickGoal = pickGoalWith([...REACH, { id: 'grip', label: 'Grip', input: 'grip' }]);
+
+export const CASE_GOALS: CaseGoal[] = [reachGoal, pushGoal, pathGoal, walkGoal, touchGoal, pickGoal];
 
 export const touchRadius = (reachMm: number) => Math.max(12, reachMm * 0.08);
 
@@ -399,6 +404,7 @@ export function goalDefaults(kind: GoalKind, robot: BuilderRobot, world: WorldKi
     path: { seconds: legs ? 22 : 13 },
     walk: { distanceMm: 500 },
     touch: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: 4 },
+    pick: pickDefaults(robot),
   };
 
   const values = { ...base, ...byKind[kind] };

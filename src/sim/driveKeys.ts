@@ -60,6 +60,8 @@ export const mergeCommands = (keys: DriveCommand, pad: DriveCommand | null): Dri
 export const sameCommand = (a: DriveCommand, b: DriveCommand) => {
   const sameV = (a.v as V3).every((x, i) => x === b.v[i]);
   const sameAux = (a.aux ?? []).every((x, i) => x === b.aux?.[i]) && (a.aux?.length ?? 0) === (b.aux?.length ?? 0);
+  const sameTarget =
+    a.target === b.target || (!!a.target && !!b.target && a.target.every((x, i) => x === b.target?.[i]));
 
-  return sameV && sameAux;
+  return sameV && sameAux && sameTarget;
 };

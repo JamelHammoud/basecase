@@ -27,6 +27,8 @@ const ReadinessDot = ({ readiness }: { readiness: Readiness | null }) => {
 export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
   const { studio, tool, onRobot, posing } = core;
   const { chat, current, lanes } = agent;
+  const running = runningChats(lanes.lanes, new Date());
+  const hasChats = studio.chatList.length > 0 || running.length > 0;
   const tabs: PanelTab<RightTab>[] = [
     { value: 'inspector', label: 'Inspect' },
     ...(onRobot ? [{ value: 'pose' as const, label: 'Pose' }] : []),
@@ -36,21 +38,23 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
       value: 'acp',
       label: 'Agent',
       indicator: agent.busy ? <AgentSpinner /> : undefined,
-      menu: {
-        title: 'History',
-        className: '!p-0 overflow-hidden',
-        content: (close) => (
-          <ChatHistory
-            chats={studio.chatList}
-            running={runningChats(lanes.lanes, new Date())}
-            currentChatId={current.chatId}
-            onOpenChat={chat.openChat}
-            onDeleteChat={chat.deleteChat}
-            onClose={close}
-            width={studio.panelWidths.right - HISTORY_INSET}
-          />
-        ),
-      },
+      menu: hasChats
+        ? {
+            title: 'History',
+            className: '!p-0 overflow-hidden',
+            content: (close) => (
+              <ChatHistory
+                chats={studio.chatList}
+                running={running}
+                currentChatId={current.chatId}
+                onOpenChat={chat.openChat}
+                onDeleteChat={chat.deleteChat}
+                onClose={close}
+                width={studio.panelWidths.right - HISTORY_INSET}
+              />
+            ),
+          }
+        : undefined,
     },
   ];
 

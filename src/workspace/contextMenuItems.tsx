@@ -38,6 +38,7 @@ import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CanvasMenuState } from './useCanvasMenu';
+import { handJointMenuItems } from './jointCommands';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -124,6 +125,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     },
     { label: 'Intersect', icon: <IntersectIcon className={ic} />, onSelect: () => ops.runBoolean('intersect') },
     { divider: true },
+    ...handJointMenuItems(actions.joints),
     shared.align,
     shared.drop,
     { divider: true },
@@ -254,7 +256,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       onSelect: () => tool.toggleMarking(true),
     },
     ...(core.marks.marks.length
-      ? [{ label: 'Clear Marks', icon: <DeleteIcon className={ic} />, onSelect: core.marks.clear }]
+      ? [{ label: 'Delete Marks', icon: <DeleteIcon className={ic} />, onSelect: core.marks.deleteAll }]
       : []),
     {
       label: 'Import Mesh',

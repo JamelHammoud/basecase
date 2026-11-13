@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sourcedMesh: (id) => ipcRenderer.invoke('sourced:mesh', id),
   importMakerCad: (payload) => ipcRenderer.invoke('sourced:import-cad', payload),
   openCadFile: (payload) => ipcRenderer.invoke('cad:open', payload),
+  exportStep: (payload) => ipcRenderer.invoke('cad:export-step', payload),
   getChat: (id) => ipcRenderer.invoke('chat:get', id),
   saveChat: (conv) => ipcRenderer.invoke('chat:save', conv),
   deleteChat: (id) => ipcRenderer.invoke('chat:delete', id),

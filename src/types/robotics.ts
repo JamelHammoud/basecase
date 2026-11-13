@@ -8,6 +8,7 @@ import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
+import type { BooleanRecipe } from './step';
 
 export type PartCategory =
   | 'custom_models'
@@ -182,6 +183,7 @@ export interface ScenePart extends PartRelations {
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
   group?: { id: string; name: string };
+  csg?: BooleanRecipe;
   printMaterial?: PrintMaterial;
   print?: PartPrint;
   jointId?: string;

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { safeFileId } from '../backend/constants.mjs';
 import { flattenPresets, readSliced, runSlicer } from './slice.mjs';
-import { findSlicerApp } from './slicers.mjs';
+import { SLICERS, slicerFor, slicerOrder } from './slicers.mjs';
 
 export const fileStem = (name) =>
   String(name ?? 'robot')
@@ -39,18 +39,12 @@ export function openFile(file, app = null, platform = process.platform) {
   return app ? launch(app.binary, [file]) : run('xdg-open', [file]);
 }
 
-const SLICER_ORDER = { BBL: ['bambu', 'orca'] };
+function needsSlicer(printer) {
+  const names = slicerOrder(printer).map((kind) => SLICERS[kind].name);
 
-export function slicerFor(vendor, wanted) {
-  const order = wanted ? [wanted] : (SLICER_ORDER[vendor] ?? ['orca', 'bambu']);
-
-  for (const kind of order) {
-    const app = findSlicerApp(kind);
-
-    if (app) return app;
-  }
-
-  return null;
+  return new Error(
+    `Slicing needs ${names.join(' or ')}. Install ${names.length > 1 ? 'one' : 'it'}, then slice again.`,
+  );
 }
 
 const groupHash = (job, group) =>
@@ -122,7 +116,7 @@ export async function openJob({ dir, job }, { material, slicer: wanted }) {
 
   if (!group) throw new Error('No printed parts to open.');
 
-  const slicer = slicerFor(job.printer?.vendor, wanted);
+  const slicer = slicerFor(job.printer, { wanted });
 
   if (!slicer || !job.printer?.machine) {
     await openFile(group.layout);
@@ -179,9 +173,9 @@ async function sliceGroup({ dir, job, group, slicer, signal }) {
 }
 
 export async function sliceJob({ dir, job }, { signal, progress, wanted }) {
-  const slicer = slicerFor(job.printer?.vendor, wanted);
+  const slicer = slicerFor(job.printer, { wanted });
 
-  if (!slicer) throw new Error('Slicing needs Bambu Studio or OrcaSlicer. Install one, then slice again.');
+  if (!slicer) throw needsSlicer(job.printer);
 
   const records = [];
 

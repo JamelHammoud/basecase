@@ -37,14 +37,15 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         onClose={robots.closeImportRobot}
         onImport={(src, at) => void importRobotFrom(src, at)}
       />
-      <RetargetSheet
-        key={pose.motionSource?.name}
-        source={pose.motionSource}
-        rig={posing.robot?.rig ?? posing.rig}
-        pointOf={posing.pointOf}
-        onClose={pose.closeMotion}
-        onCreate={pose.createAnimation}
-      />
+      {pose.motion && (
+        <RetargetSheet
+          motion={pose.motion}
+          rig={posing.robot?.rig ?? posing.rig}
+          pointOf={posing.pointOf}
+          onClose={pose.closeMotion}
+          onCreate={pose.createAnimation}
+        />
+      )}
       <input
         ref={motionInputRef}
         type="file"

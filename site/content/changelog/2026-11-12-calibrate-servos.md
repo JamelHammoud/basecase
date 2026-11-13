@@ -1,35 +1,31 @@
 ---
 title: Calibrate servos
 date: 2026-11-12
-image: /changelog/calibrate-servos/replay.png
+image: /changelog/calibrate-servos/cover.png
 ---
 
-Calibrate Servos moves each joint of a connected emulated robot through a slow bench run and fits its servo, so the Simulate tab, Cases and training run on the fit. Then you can watch the replay of each joint to see how much closer the sim gets.
+You can now fit each servo's model from an 18-second bench run, so simulation moves the way your servos do. It works on the emulated robot; real servos stay locked.
 
-## Where it is
+Every servo starts from its catalog preset. A real unit lags, sticks and sags in its own way, and a policy trained on the preset meets a different arm when it runs.
 
-It's in Operate once the robot reaches Test, and in ⌘K. Every joint moves through the bench sequence for about 18 seconds, then each row shows its verdict: Measured with its version (v1) when the fit beat the catalog's preset and is now in use, Consistent with preset when the preset already matches, and Can’t tell when the run couldn't settle it.
+In Operate, connect the emulated robot, climb the Ladder to Test and click Calibrate Servos. Every joint moves through 9 seconds of slow ramps and 9 of a slow sine. Then each servo is fitted, one at a time, in about 2 seconds each.
 
-## The replay
+The fit adjusts seven terms of the servo model: position gain, delay, damping, armature, friction, load friction and torque limit. It's kept only if it predicts the held-back half of the run at least 5% better than the preset. On three emulated STS3215 servos, the fits came out 7 to 10% better.
 
-Clicking a joint opens its replay. The bench log goes back through the sim twice, once with the preset and once with the calibration, and both are drawn over what the servo really did: the light line is the servo, grey is the preset and blue is the calibration. Under the plot are each one's median error in degrees, 0.71° for the preset and 0.12° for the calibration in the run below.
+Each joint then shows Measured, Consistent with preset or Can't tell, and the version in use. The Simulate tab, Cases, Skills and training use the fit on joints driven by a catalog STS3215 or XL330.
+
+Click a joint to see its replay. The bench run goes back through the sim on the preset and on the fit, drawn over what the servo did. On this Shoulder joint, the median error fell from 0.71° to 0.12°.
 
 ![The Shoulder joint's replay in Operate, with the servo's path, the preset in grey, the calibration in blue and 0.71° and 0.12° under it](/changelog/calibrate-servos/replay.png)
 
-## Older versions and rolling back
-
-The row's More menu lists every measured version. Choosing an older one redraws the blue line against it, so you see what rolling back would change before you do it. Roll Back in the same menu returns to the version before, after you confirm.
+The row's More menu lists every measured version. Choosing an older one redraws the fit against it, so you see what Roll Back would change before you confirm.
 
 ![The Shoulder row's More menu open over the replay, with v1 checked and Roll Back under it](/changelog/calibrate-servos/menu.png)
 
-The agent's `operate` reply ends with the same median errors for each joint.
-
-## Policies trained on an older fit
-
-A policy trained before a calibration shows Out of date in the Simulate tab's Policies, because the servos it learned on aren't the ones the sim runs now. Right-click it and choose Retrain to train it again on the fit, with the same task, speed and training time; the old policy keeps running until the new one replaces it. Rolling the calibration back makes it current again.
+A policy trained before a calibration shows Out of date in the Simulate tab's Policies. The servos it learned on aren't the ones the sim runs now. Right-click it and choose Retrain to train it again on the fit, with the same task, speed and training time. The old policy keeps running until the new one replaces it, and rolling the calibration back makes it current again.
 
 ![Policies with Walk 1 and Stand 1 marked Out of date, and Retrain in the right-click menu](/changelog/calibrate-servos/retrain.png)
 
-## What it doesn't do
+No real servo has been calibrated yet. Backlash and supply sag aren't in the model, so the fit absorbs what it can of them. Replays use the latest bench run, which the app keeps until it reloads.
 
-Replays use the latest bench run, which the app keeps until it reloads. After a reload the verdicts and versions stay, and the replays come back with the next Calibrate Servos.
+Steps are in [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) and [Retrain an out-of-date policy](/help/retrain-an-out-of-date-policy).

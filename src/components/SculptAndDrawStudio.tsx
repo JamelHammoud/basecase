@@ -29,7 +29,6 @@ interface SculptAndDrawStudioProps {
     bevel: boolean;
     nodes: CustomModelSubNode[];
     svgDataUrl?: string;
-    saveToLibrary: boolean;
   }) => void;
 }
 
@@ -60,7 +59,7 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
         {subTab === 'clay' && (
           <SculptPanel
             sculptSettings={sculptSettings}
-            hasSelection={!!selectedPart}
+            canSubdivide={!!selectedPart?.sculptMesh}
             onUpdateSculptSettings={onUpdateSculptSettings}
             onAddClayPreset={onAddClayPreset}
             onSubdivideSelectedClay={onSubdivideSelectedClay}

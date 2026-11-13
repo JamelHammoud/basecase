@@ -38,8 +38,6 @@ export interface AcpChatMessage {
   imageAttachments?: string[];
   folderAttachments?: Array<{ id: string; name: string; fileCount: number }>;
   quotes?: MessageQuote[];
-  queued?: boolean;
-  notSent?: boolean;
   toolCalls?: AcpToolCallEvent[];
   segments?: TranscriptSegment[];
   plan?: AcpPlanEntry[];

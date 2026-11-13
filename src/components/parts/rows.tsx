@@ -6,7 +6,7 @@ import { isSourcedId } from '../../data/sourcedItems';
 import { PART_DRAG_TYPE } from '../../data/dnd';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { BrowseRow, Tooltip, PlusIcon } from '../../design-system';
+import { BrowseRow, RowActions, Tooltip, PlusIcon } from '../../design-system';
 import type { Category } from './partsViews';
 
 export const Thumb: React.FC<{ url?: string; className?: string; empty?: boolean }> = ({
@@ -57,6 +57,10 @@ export const AddButton: React.FC<{ onAdd: () => void; className?: string }> = ({
   </Tooltip>
 );
 
+const ACTIVE_FILL = '[--result-row-fill:color-mix(in_srgb,white_7%,var(--color-panel-bg))]';
+const RESTING_FILL =
+  '[--result-row-fill:var(--color-panel-bg)] hover:[--result-row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
+
 export const ResultRow: React.FC<{
   item: CatalogItem;
   onOpen: () => void;
@@ -71,13 +75,13 @@ export const ResultRow: React.FC<{
     <div
       data-result={index}
       onPointerEnter={onHover}
-      className={`group relative rounded-xl transition-colors ${active ? 'bg-white/[0.07]' : 'hover:bg-white/[0.05]'}`}
+      className={`group relative rounded-xl bg-[var(--result-row-fill)] transition-colors ${active ? ACTIVE_FILL : RESTING_FILL}`}
       {...dragProps(item)}
     >
       <button
         type="button"
         onClick={onOpen}
-        className="w-full flex items-center gap-3 h-[52px] px-1.5 pr-11 text-left cursor-default"
+        className="w-full flex items-center gap-3 h-[52px] px-1.5 text-left cursor-default"
       >
         <Thumb url={thumb} className="w-12 h-9 shrink-0" />
         <div className="min-w-0 flex-1">
@@ -85,10 +89,9 @@ export const ResultRow: React.FC<{
           <div className="text-[12px] text-white/50 truncate">{metaLine(item)}</div>
         </div>
       </button>
-      <AddButton
-        onAdd={onAdd}
-        className={`absolute right-2 top-1/2 -translate-y-1/2 transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-      />
+      <RowActions fill="var(--result-row-fill)" shown={active} className="inset-y-0 right-0 pr-2 rounded-r-xl">
+        <AddButton onAdd={onAdd} />
+      </RowActions>
     </div>
   );
 };

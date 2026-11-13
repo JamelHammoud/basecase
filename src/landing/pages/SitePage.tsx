@@ -16,10 +16,11 @@ interface SitePageProps {
   section: ContentKind;
   sections: Section[];
   stylesheets: string[];
+  script?: string;
   children: React.ReactNode;
 }
 
-export const SitePage: React.FC<SitePageProps> = ({ head, section, sections, stylesheets, children }) => (
+export const SitePage: React.FC<SitePageProps> = ({ head, section, sections, stylesheets, script, children }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
@@ -43,6 +44,7 @@ export const SitePage: React.FC<SitePageProps> = ({ head, section, sections, sty
       {stylesheets.map((href) => (
         <link key={href} rel="stylesheet" href={href} />
       ))}
+      {script && <script type="module" src={script} />}
     </head>
     <body>
       <main className="min-h-dvh px-[24px] pt-[max(40px,env(safe-area-inset-top))] pb-[max(56px,env(safe-area-inset-bottom))] sm:pt-[56px] sm:pb-[96px]">

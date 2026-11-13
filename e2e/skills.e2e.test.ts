@@ -36,13 +36,13 @@ const focusedValue = () =>
     return el instanceof HTMLTextAreaElement ? el.value : el?.tagName;
   });
 
-async function loadFixture(id: string) {
+async function loadFixture(id: string, policies: PolicyRecord[] = []) {
   const robot = fixtureRobots().find((r) => r.id === id)!;
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: id,
     parts: robot.parts,
-    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+    project: { ...DEFAULT_PROJECT, joints: robot.joints, policies },
   });
   await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
 }
@@ -123,6 +123,33 @@ describe('the Train section', () => {
       .poll(() => app.page.locator(visible('main, body')).first().innerText())
       .toContain('/train wave a front leg');
     expect(await button(/^Stand$|^Walk$/).count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('lists trained policies in Train, with Delete on right-click', async () => {
+    const policy: PolicyRecord = {
+      id: 'walk-e2e',
+      name: 'Walk forward',
+      task: 'walk',
+      robot: 'robot',
+      robotName: 'Biped',
+      command: [0.2, 0, 0],
+      trainedSteps: 2_000_000,
+      createdAt: '2026-11-12T00:00:00.000Z',
+    };
+
+    await loadFixture('biped-servo', [policy]);
+    await clickTab('Simulate');
+
+    const train = app.page.locator(visible('section'), { has: app.page.locator('h3', { hasText: /^Train$/ }) });
+    const row = train.getByTestId('policy-list').locator('li', { hasText: 'Walk forward' });
+
+    await expect.poll(() => row.count()).toBe(1);
+    expect(await row.innerText()).toContain('2.0M steps');
+    expect(await app.page.locator(visible('h3'), { hasText: /^Policies$/ }).count()).toBe(0);
+    await row.click({ button: 'right' });
+    await expect.poll(() => app.page.getByRole('menuitem', { name: 'Delete' }).count()).toBe(1);
+    await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);
   });
 });

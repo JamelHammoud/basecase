@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { classifyRobot, isWheelJoint, type RobotMorphology } from '../sim/morphology';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isMovable, type Rig, type V3 } from '../utils/kinematics';
+import { findGripper, type Gripper } from './gripper';
 import type { Capability, RobotSlot, SlotBinding } from './schema';
 
 export interface EndEffector {
@@ -18,6 +19,7 @@ export interface RobotFacts {
   reachMm: number;
   anchor: V3;
   wheels: string[];
+  gripper: Gripper | null;
 }
 
 const MIN_ARM_JOINTS = 2;
@@ -100,27 +102,46 @@ function chainReach(chain: RobotJoint[], tip: V3): number {
     .reduce((sum, p, i) => sum + new THREE.Vector3(...p).distanceTo(new THREE.Vector3(...stops[i])), 0);
 }
 
-function armFacts(
-  joints: RobotJoint[],
-  rig: Rig,
-  byId: Map<string, ScenePart>,
-  morphology: RobotMorphology,
-): Pick<RobotFacts, 'endEffector' | 'armJoints' | 'reachMm' | 'anchor'> {
-  const hasTaggedArm = joints.some((j) => j.limb === 'arm');
-  const leaf = morphology === 'fixed' || hasTaggedArm ? armLeaf(joints, rig, byId) : null;
-  const part = leaf ? ownedParts(rig, leaf.id, byId)[0] : null;
+type ArmFacts = Pick<RobotFacts, 'endEffector' | 'armJoints' | 'reachMm' | 'anchor' | 'gripper'>;
 
-  if (!leaf || !part) return { endEffector: null, armJoints: [], reachMm: 0, anchor: [0, 0, 0] };
+const NO_ARM: ArmFacts = { endEffector: null, armJoints: [], reachMm: 0, anchor: [0, 0, 0], gripper: null };
+
+function handOf(rig: Rig, leaf: RobotJoint, byId: Map<string, ScenePart>, gripper: Gripper | null): EndEffector | null {
+  const part = ownedParts(rig, leaf.id, byId)[0];
+
+  if (!part) return null;
+
+  if (gripper?.palm === leaf.id) return { part: part.id, point: gripper.centre };
+
+  return { part: part.id, point: farthestCorner(part, leaf.origin) };
+}
+
+function armFacts(joints: RobotJoint[], rig: Rig, byId: Map<string, ScenePart>, morphology: RobotMorphology): ArmFacts {
+  const hasTaggedArm = joints.some((j) => j.limb === 'arm');
+
+  if (morphology !== 'fixed' && !hasTaggedArm) return NO_ARM;
+
+  const found = findGripper(rig, joints, byId);
+  const jaws = new Set(found?.jaws.map((j) => j.joint));
+  const leaf = armLeaf(
+    joints.filter((j) => !jaws.has(j.id)),
+    rig,
+    byId,
+  );
+  const gripper = found && leaf?.id === found.palm ? found : null;
+  const hand = leaf && handOf(rig, leaf, byId, gripper);
+
+  if (!leaf || !hand) return NO_ARM;
 
   const chain = chainOf(rig, leaf);
-  const point = farthestCorner(part, leaf.origin);
-  const swing = fromShoulder(chain, point);
+  const swing = fromShoulder(chain, hand.point);
 
   return {
-    endEffector: { part: part.id, point },
+    endEffector: hand,
     armJoints: chain.map((j) => j.id),
-    reachMm: chainReach(swing, point),
+    reachMm: chainReach(swing, hand.point),
     anchor: swing[0].origin,
+    gripper,
   };
 }
 
@@ -133,6 +154,7 @@ export function robotFacts(rig: Rig, parts: ScenePart[], robotKey?: string): Rob
   const arm = armFacts(joints, rig, byId, morphology);
   const capabilities: Capability[] = [
     ...(arm.endEffector ? (['arm'] as const) : []),
+    ...(arm.gripper ? (['gripper'] as const) : []),
     ...(wheels.length ? (['wheels'] as const) : []),
     ...(morphology === 'legged' || morphology === 'wheel-legged' ? (['legs'] as const) : []),
   ];
@@ -142,6 +164,7 @@ export function robotFacts(rig: Rig, parts: ScenePart[], robotKey?: string): Rob
 
 const NEED_WORDS: Record<Capability, string> = {
   arm: 'an arm with an end effector',
+  gripper: 'a gripper',
   wheels: 'driven wheels',
   legs: 'legs',
 };
@@ -179,7 +202,8 @@ function onPart(point: V3, part: ScenePart | undefined): boolean {
 export function boundEffector(binding: SlotBinding, facts: RobotFacts, rig: Rig): EndEffector | null {
   const bound = binding.endEffector;
   const owner = bound && rig.ownerOf.get(bound.part);
-  const isLeaf = owner && !rig.joints.some((j) => rig.parentOf.get(j.id) === owner);
+  const jaws = new Set(facts.gripper?.jaws.map((j) => j.joint));
+  const isLeaf = owner && !rig.joints.some((j) => rig.parentOf.get(j.id) === owner && !jaws.has(j.id));
   const fits =
     bound &&
     isLeaf &&

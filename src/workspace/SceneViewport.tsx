@@ -96,6 +96,13 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}
+        axisPick={
+          actions.joints.picking && {
+            parts: [actions.joints.picking.parent, actions.joints.picking.child],
+            ready: actions.joints.picking.ready,
+          }
+        }
+        onAxisPick={actions.joints.onAxisPick}
       />
       <DriveOverlay sim={sim} />
       {!core.commandCenter.open && (

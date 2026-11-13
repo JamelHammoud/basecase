@@ -36,6 +36,14 @@ interface CasesOptions {
   caseRobot: () => Promise<CaseRobotInput | null>;
 }
 
+const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boolean) => {
+  const all = tries ?? [];
+
+  all.filter(goes).forEach((t) => void deleteRecording(t.id));
+
+  return all.filter((t) => !goes(t));
+};
+
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
   const { skillTraining, caseRobot } = options;
@@ -96,15 +104,14 @@ export function useCases(options: CasesOptions) {
       title: `Delete ${kase.name}?`,
       body: 'Its tries go with it.',
       onConfirm: () => {
-        const gone = (project.tries ?? []).filter((t) => t.caseId === id);
+        const goes = (t: TryRecord) => t.caseId === id;
 
-        if (gone.some((t) => t.id === multiply.running?.source)) multiply.stop();
+        if ((project.tries ?? []).some((t) => goes(t) && t.id === multiply.running?.source)) multiply.stop();
 
-        gone.forEach((t) => void deleteRecording(t.id));
         setProject((p) => ({
           ...p,
           cases: (p.cases ?? []).filter((c) => c.id !== id),
-          tries: (p.tries ?? []).filter((t) => t.caseId !== id),
+          tries: dropTries(p.tries, goes),
         }));
 
         if (activeId === id) open(null);
@@ -119,20 +126,20 @@ export function useCases(options: CasesOptions) {
   const addTries = (records: TryRecord[]) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...records] }));
   const multiply = useTryMultiply({ sim, rig, parts, active, tries, partners, onTries: addTries, showToast });
   const removeTry = (record: TryRecord) => {
-    const generated = generatedFrom(tries, record);
-    const known = [record.id, ...generated.map((t) => t.id)];
-    const goes = (t: TryRecord) => t.id === record.id || (t.generated && t.manifest.source === record.id);
+    const generated = generatedFrom(tries, record).length;
+    const goes = (t: TryRecord) => t.id === record.id || (t.generated === true && t.manifest.source === record.id);
 
     confirmAction({
       title: `Delete this try?`,
-      ...(generated.length ? { body: `Its ${generated.length} generated tries go with it.` } : {}),
+      ...(generated
+        ? { body: `Its ${generated} generated ${generated === 1 ? 'try goes' : 'tries go'} with it.` }
+        : {}),
       onConfirm: () => {
         if (multiply.running?.source === record.id) multiply.stop();
 
         if (timeline.record && goes(timeline.record)) timeline.close();
 
-        known.forEach((id) => void deleteRecording(id));
-        setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => !goes(t)) }));
+        setProject((p) => ({ ...p, tries: dropTries(p.tries, goes) }));
       },
     });
   };

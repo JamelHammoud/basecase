@@ -365,7 +365,7 @@ describe('Multiply', () => {
       await expect.poll(() => app.page.getByText(/^Multiply$/).count(), { timeout: 15000 }).toBe(1);
       await app.page.keyboard.press('Enter');
 
-      const done = app.page.getByRole('status').filter({ hasText: /^Kept \d+ of 5 variations/ });
+      const done = app.page.getByRole('status').filter({ hasText: /^Kept \d+ of 5\b/ });
 
       await done.first().waitFor({ timeout: 120000 });
 

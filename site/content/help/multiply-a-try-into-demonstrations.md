@@ -36,7 +36,7 @@ Turn one passed try into up to 50 varied passing tries, so a dataset holds many 
 
 ![The toast shows Multiplying… with Stop, and a progress bar runs under the try](/help/multiply-a-try-into-demonstrations/multiplying.png)
 
-When it's done, the toast says how many it kept: "Kept 50 of 50 variations". The try's row counts them, as in **50 generated**.
+When it's done, the toast says how many it kept: "Kept 50 of 50". The try's row counts them, as in **50 generated**.
 
 ![The passed try's row reads 50 generated, above Export Dataset](/help/multiply-a-try-into-demonstrations/results.png)
 

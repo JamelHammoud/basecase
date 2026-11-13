@@ -50,7 +50,7 @@ With several parts selected, the gizmo sits at their shared center and moves the
 2. In the Inspector, click the **X**, **Y** or **Z** field under **Position** or **Rotation**.
 3. Type the value and press [[↩]].
 
-Position is the part's center in millimeters, with Y pointing up. Fields take math, so `40/2` or `12+3.5` work. [[↑]] and [[↓]] step the value; hold [[⇧]] for 10 times the step, or [[⌥]] for a tenth. You can also drag a field's label left or right to scrub it, and [[Esc]] puts back what you had.
+Position is the part's center in millimeters, with Y pointing up. Fields take math, so `40/2` or `12+3.5` work. [[↑]] and [[↓]] step the value; hold [[⇧]] for 10 times the step, or [[⌥]] for a tenth. You can also drag a field's label left or right to scrub it, and [[Esc]] puts back what you had. Hover a letter elsewhere, such as **W** under **Size**, to see what it stands for.
 
 The **90°** buttons under **Rotation** turn the part a quarter turn around X, Y or Z. **Reset rotation**, in the section's header, sets all three back to 0.
 

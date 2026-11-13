@@ -44,7 +44,7 @@ export const QtyEditor: React.FC<{
                 step={1}
                 precision={0}
                 unit=""
-                title="Quantity"
+                aria-label="Quantity"
                 onChange={(v, live) => !live && onQty(v)}
               />
             </div>

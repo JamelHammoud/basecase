@@ -89,6 +89,8 @@ function useThumbnail(key: string, render: () => Promise<string>): string | unde
     };
   }, [key]);
 
+  if (!key) return '';
+
   return state.key === key ? state.url : getCachedThumbnail(key);
 }
 

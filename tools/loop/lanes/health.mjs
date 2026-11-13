@@ -24,8 +24,6 @@ const mainRuns = () =>
     'check.yml',
     '--branch',
     'main',
-    '--event',
-    'push',
     '--status',
     'completed',
     '--limit',

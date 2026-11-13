@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import type { CustomModelDefinition, ScenePart } from '../../types/robotics';
 import { modelToParts } from '../../utils/libraryParts';
 import { timeAgo } from '../../utils/timeAgo';
-import { Header, SizeLine, Stat } from '../PartDetails';
+import { Header, HeroImage, SizeLine, Stat } from '../PartDetails';
 
 function savedAgo(iso: string | undefined): string {
   if (!iso) return '';
@@ -20,21 +20,6 @@ export function modelParts(m: CustomModelDefinition): ScenePart[] {
   return modelToParts(m, [0, 0, 0], () => `preview-${n++}`).parts;
 }
 
-const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) => (
-  <div className="relative h-[168px] bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)]">
-    {thumb ? (
-      <img
-        src={thumb}
-        alt=""
-        draggable={false}
-        className="absolute inset-0 w-full h-full object-contain p-3 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
-      />
-    ) : (
-      <div className="absolute inset-0 flex items-center justify-center text-[12.5px] text-white/50">No preview</div>
-    )}
-  </div>
-);
-
 const fromCatalog = (parts: ScenePart[]) => parts.filter((p) => p.kind === 'component' || p.hardware).length;
 
 const MODEL_SOURCE: Record<CustomModelDefinition['sourceType'], string> = {
@@ -50,7 +35,7 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
 
   return (
     <div>
-      <DetailsHero thumb={thumb} />
+      <HeroImage src={thumb} className="h-[168px]" />
       <Header
         title={model.name}
         subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedAgo(model.createdAt)]}

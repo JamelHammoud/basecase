@@ -26,7 +26,15 @@ import {
 } from '../data/hardware';
 import { PART_CATALOG, hardwareVariant } from '../data/catalog';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { CHOICE_TRACK, ChoiceGrid, DriveIcon, NumberInput, Section, choiceCellClass } from '../design-system';
+import {
+  CHOICE_TRACK,
+  ChoiceGrid,
+  DriveIcon,
+  NumberInput,
+  PreviewImage,
+  Section,
+  choiceCellClass,
+} from '../design-system';
 import { SizeLine, SpecRow } from './PartDetails';
 import { InsertLengthSection } from './InsertLengthSection';
 
@@ -213,16 +221,10 @@ const TypeTile: React.FC<{
           selected ? 'ring-[1.5px] ring-inset ring-[#0d99ff]/70' : ''
         }`}
       >
-        {thumb ? (
-          <img
-            src={thumb}
-            alt=""
-            draggable={false}
-            className="w-full h-full object-contain p-1 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-          />
-        ) : (
-          <span className="block w-full h-full shimmer" />
-        )}
+        <PreviewImage
+          src={thumb}
+          className="p-1 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
+        />
       </span>
       <span
         className={`block mt-[6px] text-center text-[12.5px] font-medium truncate transition-colors duration-150 ${

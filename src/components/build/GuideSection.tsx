@@ -139,7 +139,7 @@ export const GuideSection: React.FC<GuideSectionProps> = ({ guide, sceneName, ca
         {(progress || record) && <GuideCard guide={guide} sceneName={sceneName} />}
         {!progress && !record && (
           <Button variant="primary" fullWidth disabled={!canGenerate} onClick={() => void guide.generate()}>
-            Generate Guide
+            Make Guide
           </Button>
         )}
       </div>

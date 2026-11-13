@@ -7,7 +7,7 @@ const mm = (what) => z.number().finite().optional().describe(what);
 export const createCase = {
   name: 'create_case',
   config: {
-    title: 'Create a Case',
+    title: 'Make a Case',
     description:
       'Adds a Case to the scene and opens it in the Simulate tab: a world and a goal the robot tries in simulation, scored by the app (the user presses Try It and drives). ' +
       'Use it when the user describes something for the robot to try, or sends /case followed by a description. Pick the goal and world closest to their words and set the numbers from them; never change the design for a Case. ' +

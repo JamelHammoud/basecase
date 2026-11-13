@@ -61,7 +61,7 @@ async function openTouchAPoint() {
   await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
   await openPlayTab(app.page, 'Cases');
   await button('New Case').click();
-  await app.page.locator(visible('[data-testid="new-case"] button'), { hasText: 'Create' }).click();
+  await app.page.locator(visible('[data-testid="new-case"] button'), { hasText: 'Make Case' }).click();
   await expect.poll(async () => (await simState()).activeCase).toMatch(/^touch-a-point/);
 }
 

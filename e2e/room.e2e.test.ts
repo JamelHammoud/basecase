@@ -100,7 +100,7 @@ describe('a scanned room', () => {
       expect(await card.locator('label', { hasText: 'Name' }).locator('input').inputValue()).toBe(
         'Reach a Spot in Fixture Flat',
       );
-      await card.locator('button', { hasText: 'Create' }).click();
+      await card.locator('button', { hasText: 'Make Case' }).click();
 
       await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-fixture-flat');
       expect((await simState()).world).toEqual(expect.arrayContaining(['spot', 'table-1', 'sofa-1', 'chair-1']));
@@ -139,7 +139,7 @@ describe('a scanned room', () => {
     await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
     await fill(card, 'Distance', 600);
     await fill(card, 'Radius', 150);
-    await card.locator('button', { hasText: 'Create' }).click();
+    await card.locator('button', { hasText: 'Make Case' }).click();
     await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-scanned-room');
 
     const table = await app.page.evaluate(

@@ -167,7 +167,7 @@ class Robotics3DAcpAgent {
     });
 
     const summaryMsg =
-      `Created 3D model **${modelDef.name}** (\`${modelDef.defaultDimensions.width} × ${modelDef.defaultDimensions.height} × ${modelDef.defaultDimensions.depth} mm\`, ${modelDef.nodes.length} geometry node${modelDef.nodes.length > 1 ? 's' : ''}) and saved it to your Individual Models Library (\`${modelRelPath}\`).\n\n` +
+      `Made 3D model **${modelDef.name}** (\`${modelDef.defaultDimensions.width} × ${modelDef.defaultDimensions.height} × ${modelDef.defaultDimensions.depth} mm\`, ${modelDef.nodes.length} geometry node${modelDef.nodes.length > 1 ? 's' : ''}) and saved it to your Individual Models Library (\`${modelRelPath}\`).\n\n` +
       `[MODEL_CREATED:${modelDef.id}]`;
 
     await this.conn.sessionUpdate({

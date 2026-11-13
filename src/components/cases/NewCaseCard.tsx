@@ -94,8 +94,8 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         <Button variant="ghost" size="sm" title="Cancel" shortcut="Esc" onClick={builder.cancel}>
           Cancel
         </Button>
-        <Button variant="primary" size="sm" title="Create" shortcut="↩" disabled={!preview.ok} onClick={create}>
-          Create
+        <Button variant="primary" size="sm" title="Make Case" shortcut="↩" disabled={!preview.ok} onClick={create}>
+          Make Case
         </Button>
       </div>
     </div>

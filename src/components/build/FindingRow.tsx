@@ -3,6 +3,7 @@ import { Button, IconButton, MenuItem, MoreIcon, PopoverMenu, RowActions } from 
 import type { ReadinessFinding } from '../../readiness/types';
 import type { ScenePart } from '../../types/robotics';
 import { PartLinks } from './PartLinks';
+import type { TetherControl } from './TetherFields';
 
 export interface FindingActions {
   onFix?: (finding: ReadinessFinding) => void;
@@ -16,6 +17,7 @@ export interface FindingContext {
   parts: ScenePart[];
   panScroll: boolean;
   actions: FindingActions;
+  tether?: TetherControl;
 }
 
 const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {

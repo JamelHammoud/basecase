@@ -2,9 +2,10 @@ import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../sim/policy';
 import { fixtureModel } from './fixtureModels';
-import { kitEnvironment } from './kitEnvironment';
-import { kitRobot } from './kitModel';
-import { validationChecks, validationScore } from './kitValidation';
+import { evaluateContract } from './contract';
+import { kitEnvironment, kitSpeedContract } from './kitEnvironment';
+import { kitRobot, rootHeight } from './kitModel';
+import { scoreChecks, validationChecks, validationScore } from './kitValidation';
 
 function standingPolicy(joints: string[]): PolicySpec {
   const n = joints.length;
@@ -43,6 +44,55 @@ describe('Kit validation', () => {
       [0.1, 0, 0.5],
       [0.1, 0, -0.5],
     ]);
+  });
+
+  it('also checks half the top speed backwards when the gait was trained to reverse', () => {
+    const model = fixtureModel('hexapod');
+    const environment = kitEnvironment(model, 'velocity-tracking');
+    const checks = validationChecks({ model, entry: 'velocity-tracking', environment, reverse: true });
+
+    expect(checks.map((c) => c.command)).toContainEqual([-0.1, 0, 0]);
+    expect(checks.find((c) => c.command[0] < 0)?.contract).toEqual(kitSpeedContract(model, -0.1));
+  });
+
+  it('ranks a gait that also backs up first, and otherwise still ranks by the forward speeds', () => {
+    const check = (forward: number, passed: number, turn = 0) => ({
+      command: [forward, 0, turn] as [number, number, number],
+      passed,
+      margin: 0,
+    });
+    const gait = (forwardShare: number, backShare: number) =>
+      scoreChecks([
+        check(0.2, forwardShare),
+        check(0.1, 1),
+        check(0, 1),
+        check(-0.1, backShare),
+        check(0.1, 1, 0.5),
+        check(0.1, 1, -0.5),
+      ]);
+
+    expect(gait(0.9, 0.9)).toBeGreaterThan(gait(1, 0));
+    expect(gait(1, 0)).toBeGreaterThan(gait(0.5, 0));
+    expect(gait(0.5, 1)).toBeGreaterThan(gait(0.5, 0));
+  });
+
+  it('judges a backward speed as the mirror of the forward one', async () => {
+    const model = fixtureModel('hexapod');
+    const ticks = 401;
+    const walked = (speed: number) => ({
+      dt: 0.02,
+      signals: {
+        forward: Array.from({ length: ticks }, (_, i) => speed * i * 0.02),
+        height: Array(ticks).fill(rootHeight(model)),
+        tilt: Array(ticks).fill(0),
+      },
+    });
+    const backward = kitSpeedContract(model, -0.1);
+
+    expect((await evaluateContract(backward, walked(-0.1))).passed).toBe(true);
+    expect((await evaluateContract(backward, walked(0.1))).passed).toBe(false);
+    expect((await evaluateContract(backward, walked(0))).passed).toBe(false);
+    expect((await evaluateContract(backward, walked(-0.25))).passed).toBe(false);
   });
 
   it('checks Stand against its own contract, with as many draws as all the walking checks together', () => {

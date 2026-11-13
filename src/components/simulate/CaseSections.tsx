@@ -92,18 +92,16 @@ const KEYS: Record<DriveClass, Array<[string, string]>> = {
 
 export const DriveKeys: React.FC<{ cls: DriveClass }> = ({ cls }) => (
   <div className="flex flex-col">
-    {[...KEYS[cls], ['Start over', 'R'] as [string, string], ['Stop driving', 'Esc'] as [string, string]].map(
-      ([label, keys]) => (
-        <div key={label} className="h-8 flex items-center justify-between text-[13px] text-white/70">
-          <span>{label}</span>
-          <span className="flex gap-1">
-            {keys.split(' ').map((k) => (
-              <Kbd key={k}>{k}</Kbd>
-            ))}
-          </span>
-        </div>
-      ),
-    )}
+    {[...KEYS[cls], ['Start over', 'R'] as [string, string]].map(([label, keys]) => (
+      <div key={label} className="h-8 flex items-center justify-between text-[13px] text-white/70">
+        <span>{label}</span>
+        <span className="flex gap-1">
+          {keys.split(' ').map((k) => (
+            <Kbd key={k}>{k}</Kbd>
+          ))}
+        </span>
+      </div>
+    ))}
   </div>
 );
 

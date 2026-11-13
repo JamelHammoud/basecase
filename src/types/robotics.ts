@@ -274,7 +274,9 @@ export interface PolicyRecord {
   robotName: string;
   command: [number, number, number];
   trainedSteps: number;
+  minutes?: number;
   modelVersion?: number;
+  fingerprint?: string;
   createdAt: string;
   eval?: { fellAt: number | null; seconds: number; forward: number; travelled: number };
 }

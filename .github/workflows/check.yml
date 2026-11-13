@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON((github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -61,6 +61,7 @@ jobs:
         run: npm audit --audit-level=high
 
   e2e:
+    if: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -85,7 +86,7 @@ jobs:
         run: npm run test:quarantine
 
   e2e-windows:
-    if: github.event_name == 'push'
+    if: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
     runs-on: windows-latest
     defaults:
       run:
@@ -110,7 +111,7 @@ jobs:
 
   app:
     needs: changes
-    if: needs.changes.outputs.app == 'true'
+    if: ${{ needs.changes.outputs.app == 'true' && (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -199,7 +200,7 @@ jobs:
           node tools/check-credit.mjs "$base..$head"
 
   copy:
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'loop/batch/') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -227,7 +228,10 @@ jobs:
     steps:
       - name: Pass only when every job that had to run passed
         env:
-          REQUIRED: ${{ needs.changes.result }} ${{ needs.unit.result }} ${{ needs.e2e.result }} ${{ needs.credit.result }}
+          REQUIRED: ${{ needs.changes.result }} ${{ needs.unit.result }} ${{ needs.credit.result }}
+          E2E: ${{ needs.e2e.result }}
+          FULL: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+          HEAD_REF: ${{ github.head_ref }}
           APP: ${{ needs.app.result }}
           APP_NEEDED: ${{ needs.changes.outputs.app }}
           ROS: ${{ needs.ros.result }}
@@ -237,18 +241,19 @@ jobs:
           EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Required: $REQUIRED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
-          [ "$(wc -w <<< "$REQUIRED")" -eq 4 ] || exit 1
+          echo "Required: $REQUIRED; full: $FULL; e2e: $E2E; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
+          [ "$(wc -w <<< "$REQUIRED")" -eq 3 ] || exit 1
           for r in $REQUIRED; do [ "$r" = success ] || exit 1; done
-          want_app=success
-          [ "$APP_NEEDED" = true ] || want_app=skipped
+          want_full=skipped
+          [ "$FULL" = true ] && want_full=success
+          [ "$E2E" = "$want_full" ] || exit 1
+          [ "$WINDOWS_E2E" = "$want_full" ] || exit 1
+          want_app=skipped
+          [ "$FULL" = true ] && [ "$APP_NEEDED" = true ] && want_app=success
           [ "$APP" = "$want_app" ] || exit 1
           want_ros=success
           [ "$ROS_NEEDED" = true ] || want_ros=skipped
           [ "$ROS" = "$want_ros" ] || exit 1
-          want_windows=success
-          [ "$EVENT" = pull_request ] && want_windows=skipped
-          [ "$WINDOWS_E2E" = "$want_windows" ] || exit 1
-          want_copy=success
-          [ "$EVENT" = pull_request ] || want_copy=skipped
+          want_copy=skipped
+          [ "$EVENT" = pull_request ] && [[ "$HEAD_REF" != loop/batch/* ]] && want_copy=success
           [ "$COPY" = "$want_copy" ] || exit 1

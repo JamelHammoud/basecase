@@ -333,10 +333,10 @@ export class Trainer {
     child.stderr.on('data', (chunk) => {
       err = (err + chunk.toString()).slice(-8000);
     });
-    child.on('close', (code, signal) => this.closed(running, { code, signal, done, err }));
+    child.on('close', (code) => this.closed(running, { code, done, err }));
   }
 
-  closed(running, { code, signal, done, err }) {
+  closed(running, { code, done, err }) {
     const { entry } = running;
     const send = this.sender(entry);
 
@@ -352,11 +352,11 @@ export class Trainer {
 
     this.wake(entry.workspaceId);
     queueMicrotask(() => this.launchNext());
-    send(this.outcome(running, { code, signal, done, err }));
+    send(this.outcome(running, { code, done, err }));
     this.pruneRuns();
   }
 
-  outcome(running, { code, signal, done, err }) {
+  outcome(running, { code, done, err }) {
     const { id, dir, job } = running;
 
     if (done) {
@@ -369,14 +369,14 @@ export class Trainer {
 
     if (running.stopping) return { kind: 'error', message: 'Training stopped.' };
 
-    if (code === null) return { kind: 'error', message: `The trainer crashed (${signal ?? 'killed'}).` };
+    if (code === null) return { kind: 'error', message: 'The trainer crashed. Train again.' };
 
     const lines = err
       .trim()
       .split('\n')
       .filter((l) => l.trim() && !l.startsWith(' '));
 
-    return { kind: 'error', message: lines.at(-1) || `The trainer exited with code ${code}.` };
+    return { kind: 'error', message: lines.at(-1) || 'The trainer stopped without saying why. Train again.' };
   }
 
   stop(workspaceId = 'main') {

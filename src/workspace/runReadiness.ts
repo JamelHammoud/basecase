@@ -8,6 +8,7 @@ import type { PrinterSetup } from '../data/printers';
 import { registerSourced } from '../data/sourcedItems';
 import {
   fitProbeFindings,
+  fixedMateFindings,
   hiddenFindings,
   sourcingFindings,
   threadFindings,
@@ -118,6 +119,7 @@ export async function runReadiness({
       ...fitProbeFindings(geometry, parts),
       ...threadFindings(geometry, parts),
       ...hiddenFindings(parts),
+      ...fixedMateFindings(parts),
     ],
     {
       parts,

@@ -20,7 +20,7 @@ function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseR
 
   return (
     <div className="mb-3 flex flex-col gap-1">
-      {builder.open && <NewCaseCard builder={builder} onCreated={onOpen} />}
+      {builder.open && <NewCaseCard key={builder.roomKey} builder={builder} onCreated={onOpen} />}
       {!builder.open && builder.goals.length > 0 && (
         <Button
           variant="primary"

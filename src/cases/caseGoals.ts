@@ -17,6 +17,7 @@ export interface BuilderRobot {
   facts: RobotFacts;
   pivot: V3;
   footprint: { width: number; depth: number };
+  heightMm: number;
   armSpot: V3 | null;
 }
 

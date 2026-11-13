@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useEffectEvent, useState, type RefObject } from 'react';
 import { consoleLayout, DEFAULT_CONSOLE } from '../cases/console/layout';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
@@ -32,16 +32,31 @@ export function useCommandCenter({ viewportRef, selectedIds, setSelectedIds, sim
     setBack({ caseId: cases.active.id, view: viewportRef.current?.currentView() ?? null, selection: selectedIds });
   };
 
-  const leave = () => {
-    if (!open || !back) return;
-
+  const restore = (saved: Return) => {
     if (sim.drive.active) sim.drive.stop();
 
     setBack(null);
-    setSelectedIds(back.selection);
+    setSelectedIds(saved.selection);
 
-    if (back.view) viewportRef.current?.lookThrough(back.view);
+    if (saved.view) viewportRef.current?.lookThrough(saved.view);
   };
+
+  const leave = () => {
+    if (open && back) restore(back);
+  };
+
+  const stale = back !== null && !open;
+  const leaveStale = useEffectEvent(() => {
+    if (back) restore(back);
+  });
+
+  useEffect(() => {
+    if (!stale) return;
+
+    const soon = setTimeout(leaveStale, 0);
+
+    return () => clearTimeout(soon);
+  }, [stale]);
 
   const inputs = open ? caseConsole.input : null;
   const { setInputs } = sim.drive;

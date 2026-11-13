@@ -1,4 +1,5 @@
 import React from 'react';
+import { Section } from '../../../design-system';
 import { ResultsSection } from '../../simulate/ResultsSection';
 import { TrySection } from '../../simulate/CaseSections';
 import { useBus, type PanelViewProps } from '../panelContext';
@@ -27,10 +28,12 @@ export const ListPanel: React.FC<PanelViewProps<'list'>> = (props) => {
 
   if (panel.of === 'failures') return <Failures {...props} />;
 
-  return (
+  const tries = (
     <>
       <TrySection cases={ctx.cases} teachWalk={null} cls={ctx.sim.drive.cls} />
       <ResultsSection cases={ctx.cases} model={ctx.sim.model} parts={ctx.parts} world={ctx.sim.worldParts} />
     </>
   );
+
+  return panel.title ? <Section title={panel.title}>{tries}</Section> : tries;
 };

@@ -36,6 +36,10 @@ const panelIds = () =>
 
 const areaCount = () => app.page.locator(shown('[data-testid="command-center-area"]')).count();
 
+const canvas = () => app.page.locator(shown('main:has(canvas)')).first();
+const menuCount = () => app.page.locator(shown('[role=menu]')).count();
+const nextFrame = () => app.page.evaluate(() => new Promise((done) => requestAnimationFrame(() => done(null))));
+
 async function openCenter() {
   await app.page.keyboard.press('Meta+k');
   await app.page.keyboard.type('Open Command Center');
@@ -97,6 +101,11 @@ describe('Command Center', () => {
 
     const partsBefore = await sceneParts();
 
+    await canvas().click({ button: 'right' });
+    await expect.poll(menuCount).toBe(1);
+    await page.keyboard.press('Escape');
+    await expect.poll(menuCount).toBe(0);
+
     await openCenter();
 
     await expect.poll(panelIds).toEqual(['cameras', 'brief', 'servos', 'tries']);
@@ -104,6 +113,10 @@ describe('Command Center', () => {
     await expect.poll(() => panel('cameras').locator('[data-testid="camera-tile"]').count()).toBe(2);
     expect(await page.locator('[data-camera="wrist_camera"]').count()).toBe(1);
     expect(await page.locator(shown('[data-testid="camera-strip"]')).count()).toBe(0);
+
+    await canvas().click({ button: 'right' });
+    await nextFrame();
+    expect(await menuCount()).toBe(0);
 
     await page.evaluate(() => {
       const w = window as unknown as { __studio: Studio; __fakeRobotLink: unknown };

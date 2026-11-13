@@ -12,6 +12,12 @@
 
 {{screenshots}}
 
+## Copy
+
+<!-- One line per new user-facing string: copy: "<string>" — <why the screen needs it>. Check's copy job reads them. -->
+
+{{copy}}
+
 ## How it was checked
 
 {{checked}}

@@ -5,6 +5,7 @@ changelog:
       - loop:lesson
       - loop:loop
       - loop:update
+      - loop:market
   categories:
     - title: New
       labels:

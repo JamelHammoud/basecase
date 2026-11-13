@@ -142,5 +142,11 @@ export function publish(change, { dir, branch, extra, onDuplicate }) {
   const title = pullTitle(change);
   const body = pullBody(change, { branch, extra, protectedPaths: protectedIn('origin/main...HEAD', dir) });
 
-  return createPull({ branch, title, body, label: `loop:${change.kind}` });
+  try {
+    return createPull({ branch, title, body, label: `loop:${change.kind}` });
+  } catch (error) {
+    git(['push', '-q', 'origin', '--delete', branch], dir, { allowFail: true });
+
+    throw error;
+  }
 }

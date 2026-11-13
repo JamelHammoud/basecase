@@ -3,23 +3,21 @@ import { useScrollFade } from '../design-system';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
-import type { PrintToolsStatus, SavedPrinter } from '../print/printBridge';
 import type { PrintReport } from '../utils/printReport';
 import type { Printing } from '../workspace/usePrinting';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
-import { BudgetSection } from './build/BudgetSection';
 import { BuyList } from './build/BuyList';
 import { CheckSheet } from './build/CheckSheet';
 import { ChecksSection } from './build/ChecksSection';
 import { GuideSection } from './build/GuideSection';
 import { download } from './build/format';
 import { PlatesSection } from './build/PlatesSection';
-import { PowerSection } from './build/PowerSection';
 import type { ReadinessFinding } from '../readiness/types';
 import { ignoreFinding, ignoreRule, restoreFinding, restoreRule } from '../readiness/readiness';
 import type { ReadinessHandle } from '../workspace/useReadiness';
 import { usePurchases } from './build/usePurchases';
+import { sceneTether } from '../utils/powerSources';
 
 interface BuildPanelProps {
   parts: ScenePart[];
@@ -27,9 +25,6 @@ interface BuildPanelProps {
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   printing: Printing;
-  printers: SavedPrinter[];
-  printTools: PrintToolsStatus | null;
-  onAddPrinter: () => void;
   onSelectParts: (ids: string[]) => void;
   onToast: (message: string) => void;
   onFixFinding?: (finding: ReadinessFinding) => void;
@@ -55,9 +50,6 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   project,
   onChangeProject,
   printing,
-  printers,
-  printTools,
-  onAddPrinter,
   onSelectParts,
   onToast,
   onFixFinding,
@@ -73,6 +65,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print) });
   const file = fileStem(sceneName);
   const money = useMoney();
+  const tether = sceneTether({ parts, project });
 
   const exportCsv = () => {
     const names = Object.fromEntries(parts.map((p) => [p.id, p.name]));
@@ -93,9 +86,6 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div ref={setScroller} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        <BudgetSection bom={bom} project={project} onChangeProject={onChangeProject} />
-        <PowerSection parts={parts} project={project} onChangeProject={onChangeProject} />
-        <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
         <ChecksSection
           readiness={readiness.current}
           checking={readiness.checking}
@@ -109,6 +99,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
               onIgnoreRule: (finding) => onChangeProject({ readiness: ignoreRule(project.readiness, finding) }),
               onSelectParts,
             },
+            tether: tether && { tether, onChange: (next) => onChangeProject({ tether: next }) },
           }}
           restore={{
             onRestore: (finding) => onChangeProject({ readiness: restoreFinding(project.readiness, finding) }),
@@ -119,22 +110,15 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           bom={bom}
           parts={parts}
           panScroll={panScroll}
-          extras={project.extras ?? []}
-          onChangeExtras={(extras) => onChangeProject({ extras })}
+          project={project}
+          onChangeProject={onChangeProject}
           onCheck={setChecking}
           onSelectParts={onSelectParts}
           onExportCsv={exportCsv}
           onExportMarkdown={exportMarkdown}
         />
-        <PlatesSection
-          printing={printing}
-          project={project}
-          tools={printTools}
-          printers={printers}
-          onChangeProject={onChangeProject}
-          onAddPrinter={onAddPrinter}
-          onSelectParts={onSelectParts}
-        />
+        <GuideSection guide={guide} sceneName={sceneName} canGenerate={parts.some(isBuilt)} />
+        <PlatesSection printing={printing} />
       </div>
       {checking && (
         <CheckSheet

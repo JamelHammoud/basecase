@@ -122,6 +122,9 @@ export const createIssue = ({ title, body, labels }) =>
     input: body,
   }).out;
 
+export const closeIssue = (number, comment) =>
+  run('gh', ['issue', 'close', String(number), '--reason', 'completed', '--comment', comment], { allowFail: true });
+
 export const ownerComments = (number, owner) =>
   json('gh', [
     'api',

@@ -26,8 +26,9 @@ Basecase is built by a team of agents that runs on Jamel's Mac (`tools/loop/`, s
 | `refine` | 6 h | Makes one existing feature or view fit better |
 | `lead` | 4 h | Reads the Direction issue and plans arcs and steps as issues |
 | `update` | 24 h | Moves the agent adapters to their latest releases |
+| `market` | 24 h | Checks competitors, partners and integrations in `docs/market/` and files `loop:idea` issues (a title and the entries behind it, each one present in `docs/market/`); a run that changes anything outside `docs/market/` publishes nothing; the lead closes an idea when it promotes it to a step |
 
-Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions`, so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
+Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions` (except `market`, sandboxed because it reads the web; see Review), so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
 
 ### Pull request kinds
 
@@ -40,7 +41,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 | `fix` | `Fix: …` | `fix.md` | Fixed |
 | `repair` | `Repair: …` | `repair.md` | left out |
 | `lesson` | `Lesson: …` | `lesson.md` | left out |
-| `loop`, `update` | `Loop: …`, `Update: …` | `loop.md` | left out |
+| `loop`, `update`, `market` | `Loop: …`, `Update: …`, `Market: …` | `loop.md` | left out |
 
 `.github/release.yml` groups the release notes by those labels.
 
@@ -57,7 +58,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 
 ### Review
 
-The review lane sees the diff, the pull request body, AGENTS.md, the guides of the areas the diff touches and their lessons. It never sees issue or web text, so nothing outside can steer it. It fails a pull request that:
+The review lane sees the diff, the pull request body, AGENTS.md, the guides of the areas the diff touches and their lessons. It never sees issue text. A `market` pull request is the one place web text reaches it: its title, body and diff come from pages the market session read. That session is sandboxed (`runAgent`'s `sandbox` option, `--restricted` in `dontAsk` mode): it has Read, Grep, Glob, WebFetch and WebSearch, and Edit and Write only under `docs/market/`. It has no shell, no subagents, no MCP servers and no GitHub credentials (`GH_TOKEN` empty, `GH_CONFIG_DIR` an empty folder), and its file tools can't leave the worktree, so it can't reach `.git`, the home checkout or the keychain. The runner still publishes nothing if a path outside `docs/market/` changed (`outsideMarket`), and logs the session's `notes` instead of putting them in the body. An injected page can still write misleading entries and idea titles, which review and the lead read as data. It fails a pull request that:
 
 - breaks a rule in AGENTS.md or the area's guide;
 - adds user-facing copy that the §3d checklist would cut. Its default for a new string is "delete it";

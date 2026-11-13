@@ -1,6 +1,9 @@
 import React, { useId, useState } from 'react';
 import { Button, Section, TextInput } from '../../design-system';
+import type { Training } from '../../sim/useTraining';
+import type { PolicyRecord } from '../../types/robotics';
 import type { SceneSkills } from '../../workspace/useSkills';
+import { PolicyList } from './PolicyList';
 import { SkillsList, type SkillActions } from './SkillsList';
 
 const TeachField: React.FC<{ examples: string[]; onTeach: (goal: string) => void }> = ({ examples, onTeach }) => {
@@ -40,18 +43,29 @@ const TeachField: React.FC<{ examples: string[]; onTeach: (goal: string) => void
   );
 };
 
+export interface TrainedPolicies {
+  policies: PolicyRecord[];
+  training: Training;
+  onChoose: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
 export const TrainSection: React.FC<{
   skills: SceneSkills;
   actions: SkillActions;
   onTeach: ((goal: string) => void) | null;
-}> = ({ skills, actions, onTeach }) => {
-  if (!skills.available) return null;
+  trained: TrainedPolicies;
+}> = ({ skills, actions, onTeach, trained }) => {
+  const teaching = skills.available;
+
+  if (!teaching && !trained.policies.length) return null;
 
   return (
     <Section title="Train">
       <div className="flex flex-col gap-3">
-        {onTeach && <TeachField examples={skills.examples} onTeach={onTeach} />}
-        {skills.rows.length > 0 && <SkillsList rows={skills.rows} actions={actions} />}
+        {teaching && onTeach && <TeachField examples={skills.examples} onTeach={onTeach} />}
+        {teaching && skills.rows.length > 0 && <SkillsList rows={skills.rows} actions={actions} />}
+        {trained.policies.length > 0 && <PolicyList {...trained} />}
       </div>
     </Section>
   );

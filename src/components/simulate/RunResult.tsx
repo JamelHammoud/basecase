@@ -1,12 +1,8 @@
-import React, { useMemo } from 'react';
-import { MetaLine, Section } from '../../design-system';
-import type { Simulation } from '../../sim/useSimulation';
+import React from 'react';
+import { MetaLine } from '../../design-system';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import { fmtTime, pct } from './format';
-
-type SimStats = NonNullable<Simulation['stats']>;
-
-type SimModel = NonNullable<Simulation['model']>;
+import { floatingResults, worstJoints, type SimModel, type SimStats } from './resultRows';
 
 const RobotResult: React.FC<{ result: SimStats['robots'][number]; model: SimModel }> = ({ result: r, model }) => {
   const robot = model.robots.find((x) => x.key === r.key);
@@ -67,27 +63,20 @@ const PeakTorque: React.FC<{
   );
 };
 
-export const ResultSection: React.FC<{
+export const RunResult: React.FC<{
   stats: SimStats;
   model: SimModel;
   rig: Rig;
   onSelectParts: (ids: string[]) => void;
 }> = ({ stats, model, rig, onSelectParts }) => {
-  const worst = useMemo(
-    () =>
-      stats.joints
-        .filter((j) => j.peak > 0.05)
-        .sort((a, b) => b.peak - a.peak || b.saturatedS - a.saturatedS)
-        .slice(0, 6),
-    [stats],
-  );
+  const worst = worstJoints(stats);
 
   return (
-    <Section title="Result">
-      {stats.robots.map((r) => (
+    <div data-testid="run-result">
+      {floatingResults(stats, model).map((r) => (
         <RobotResult key={r.key} result={r} model={model} />
       ))}
       {worst.length > 0 && <PeakTorque worst={worst} rig={rig} onSelectParts={onSelectParts} />}
-    </Section>
+    </div>
   );
 };

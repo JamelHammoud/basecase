@@ -30,12 +30,16 @@ const standIn = (id: string, x: number) => ({
   locked: false,
 });
 
-const loadParts = (parts: unknown[]) =>
-  app.page.evaluate((list) => {
-    const studio = (window as unknown as { __studio: StudioHook }).__studio;
+const loadParts = (parts: unknown[], joints?: unknown[]) =>
+  app.page.evaluate(
+    ({ list, joints }) => {
+      const studio = (window as unknown as { __studio: StudioHook }).__studio;
+      const project = studio.sceneRecord().project as Record<string, unknown>;
 
-    studio.load({ parts: list, project: studio.sceneRecord().project });
-  }, parts);
+      studio.load({ parts: list, project: joints ? { ...project, joints } : project });
+    },
+    { list: parts, joints },
+  );
 
 const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
 
@@ -173,6 +177,55 @@ describe('Checks', () => {
       .poll(() => app.page.locator(visible('p')).filter({ hasText: exactly }).count(), { timeout: 5000 })
       .toBeGreaterThan(0);
   }, 30000);
+});
+
+const link = (id: string, name: string, y: number) => ({
+  ...standIn(id, 0),
+  name,
+  kind: 'box',
+  category: 'structure',
+  position: [0, y, 0],
+  dimensions: { width: 20, height: 40, depth: 20 },
+});
+
+const unassignedServoArm = () => {
+  const parts = [link('base', 'Base', 20), link('arm', 'Upper Arm', 60), { ...servo, position: [80, 20, 0] }];
+  const joints = [
+    {
+      id: 'shoulder',
+      name: 'Shoulder',
+      type: 'revolute',
+      parent: ['base'],
+      child: ['arm'],
+      origin: [0, 40, 0],
+      axis: [1, 0, 0],
+      range: [-90, 90],
+    },
+  ];
+
+  return { parts, joints };
+};
+
+describe('Simulation model check', () => {
+  it('notes a joint whose servo isn’t assigned, and links to its part', async () => {
+    const { parts, joints } = unassignedServoArm();
+
+    await loadParts(parts, joints);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Simulation model/ }) })
+      .first();
+
+    await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
+    await row.getByRole('button', { name: /^Simulation model/ }).click();
+    await expect
+      .poll(async () => (await row.textContent()) ?? '', { timeout: 45000 })
+      .toContain('Torque for 1 joint is estimated from weight. Assign servos for exact limits.');
+    expect(await row.getByRole('button', { name: 'Upper Arm' }).count()).toBe(1);
+    expect(app.errors).toEqual([]);
+  }, 90000);
 });
 
 describe('Build tab fields', () => {

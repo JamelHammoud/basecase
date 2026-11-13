@@ -45,6 +45,9 @@ const clickTab = (name: string) => app.page.locator(visible('[role=tab]'), { has
 
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
 
+const simulateSections = () =>
+  app.page.locator(visible('[data-testid="simulate-panel"] section > header h3')).allInnerTexts();
+
 async function startDriving(id: string) {
   await loadFixture(id);
   await clickTab('Simulate');
@@ -235,6 +238,11 @@ describe('Cases', () => {
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       expect((await simState()).tries[0].passed).toBe(false);
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
+      await expect.poll(simulateSections).toEqual(['Touch the Dots', 'Try', 'Control', 'Train', 'Results']);
+
+      const results = app.page.locator(visible('[data-testid="simulate-panel"] section'), { hasText: /^Results/ });
+
+      expect(await results.getByTestId('try-row').count()).toBe(1);
       await expectDataset();
 
       await button('Check Fit').click();
@@ -311,7 +319,8 @@ describe('Cases', () => {
     await card.locator('button', { hasText: 'Create' }).click();
 
     await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
-    await expect.poll(() => app.page.getByTestId('case-brief').innerText()).toContain('Push a Box in a Corridor');
+    await expect.poll(simulateSections).toContain('Push a Box in a Corridor');
+    expect(await app.page.getByTestId('case-brief').innerText()).toBe('Push the box 500 mm onto the spot.');
     expect((await simState()).world).toEqual(['box', 'goal', 'wall-left', 'wall-right']);
     expect(await panel.innerText()).toContain('In this scene');
 

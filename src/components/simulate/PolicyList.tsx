@@ -1,5 +1,5 @@
-import React from 'react';
-import { Badge, IconButton, Section, StopIcon } from '../../design-system';
+import React, { useState } from 'react';
+import { Badge, ContextMenu, IconButton, StopIcon, type ContextMenuEntry } from '../../design-system';
 import type { Training } from '../../sim/useTraining';
 import type { PolicyRecord } from '../../types/robotics';
 import { fmtSteps, pct } from './format';
@@ -29,7 +29,7 @@ const PolicyRow: React.FC<{
   policy: PolicyRecord;
   training: Training;
   onChoose: (id: string) => void;
-  onMenu: (e: React.MouseEvent, id: string) => void;
+  onMenu: (e: React.MouseEvent) => void;
 }> = ({ policy, training, onChoose, onMenu }) => {
   const retraining = training.retraining === policy.id;
   const running = retraining && training.status !== 'error';
@@ -41,7 +41,7 @@ const PolicyRow: React.FC<{
       data-policy={policy.id}
       data-stale={stale}
       data-retraining={running}
-      onContextMenu={(e) => onMenu(e, policy.id)}
+      onContextMenu={onMenu}
     >
       <div className="flex-1 min-w-0">
         <button
@@ -68,15 +68,32 @@ const PolicyRow: React.FC<{
   );
 };
 
-export const PoliciesSection: React.FC<{
+export const PolicyList: React.FC<{
   policies: PolicyRecord[];
   training: Training;
   onChoose: (id: string) => void;
-  onMenu: (e: React.MouseEvent, id: string) => void;
-}> = ({ policies, training, onChoose, onMenu }) => (
-  <Section title="Policies">
-    {policies.map((p) => (
-      <PolicyRow key={p.id} policy={p} training={training} onChoose={onChoose} onMenu={onMenu} />
-    ))}
-  </Section>
-);
+  onDelete: (id: string) => void;
+}> = ({ policies, training, onChoose, onDelete }) => {
+  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
+  const openMenu = (e: React.MouseEvent, policy: PolicyRecord) => {
+    e.preventDefault();
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { label: 'Retrain', disabled: !training.canTrain, onSelect: () => void training.retrain(policy) },
+        { divider: true },
+        { label: 'Delete', tone: 'danger', onSelect: () => onDelete(policy.id) },
+      ],
+    });
+  };
+
+  return (
+    <div className="flex flex-col" data-testid="policy-list">
+      {policies.map((p) => (
+        <PolicyRow key={p.id} policy={p} training={training} onChoose={onChoose} onMenu={(e) => openMenu(e, p)} />
+      ))}
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
+    </div>
+  );
+};

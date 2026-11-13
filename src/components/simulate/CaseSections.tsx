@@ -21,59 +21,53 @@ const FIT_TONE: Record<FitRow['state'], string> = {
   skip: 'text-white/50',
 };
 
-export const BriefSection: React.FC<{ cases: Cases }> = ({ cases }) => {
-  const kase = cases.active!;
-
-  return (
-    <Section
-      title="Brief"
-      actions={
-        <IconButton
-          icon={<CloseIcon className="w-4 h-4" />}
-          title="Close Case"
-          size="xs"
-          onClick={() => cases.open(null)}
-        />
-      }
-    >
-      <div className="flex flex-col gap-1" data-testid="case-brief">
-        <div className="text-[14px] font-medium text-white/90">{kase.name}</div>
-        <p className="text-[13px] leading-snug text-white/70">{kase.brief}</p>
-      </div>
-    </Section>
-  );
-};
-
-export const RobotFitSection: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
-  const fit = cases.fit;
-  const rows = fit?.rows.filter((row) => row.state !== 'skip') ?? [];
+const FitRows: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
+  const rows = cases.fit?.rows.filter((row) => row.state !== 'skip') ?? [];
   const misfit = rows.some((row) => row.id === 'slot' && row.state === 'fail') && cases.builder.goals.length > 0;
 
   return (
-    <Section
-      title="Robot fit"
-      actions={
-        <Button variant="ghost" size="sm" disabled={fit?.checking} onClick={() => void cases.runFit()}>
-          Check Fit
+    <div className="mt-2 flex flex-col" data-testid="robot-fit">
+      {rows.map((row) => (
+        <div key={row.id} className="min-h-8 py-1 flex items-baseline justify-between gap-3 text-[13px]">
+          <span className="text-white/85 shrink-0">{row.label}</span>
+          <span className={`text-right ${FIT_TONE[row.state]}`}>{row.detail}</span>
+        </div>
+      ))}
+      {misfit && (
+        <Button variant="secondary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={onNewCase}>
+          New Case
         </Button>
+      )}
+    </div>
+  );
+};
+
+export const CaseSection: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
+  const kase = cases.active!;
+  const fit = cases.fit;
+
+  return (
+    <Section
+      title={kase.name}
+      actions={
+        <>
+          <Button variant="ghost" size="sm" disabled={fit?.checking} onClick={() => void cases.runFit()}>
+            Check Fit
+          </Button>
+          <IconButton
+            icon={<CloseIcon className="w-4 h-4" />}
+            title="Close Case"
+            size="xs"
+            onClick={() => cases.open(null)}
+          />
+        </>
       }
     >
-      {fit?.checking && <p className="text-[13px] text-white/50">Checking</p>}
-      {fit && !fit.checking && (
-        <div className="flex flex-col" data-testid="robot-fit">
-          {rows.map((row) => (
-            <div key={row.id} className="min-h-8 py-1 flex items-baseline justify-between gap-3 text-[13px]">
-              <span className="text-white/85 shrink-0">{row.label}</span>
-              <span className={`text-right ${FIT_TONE[row.state]}`}>{row.detail}</span>
-            </div>
-          ))}
-          {misfit && (
-            <Button variant="secondary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={onNewCase}>
-              New Case
-            </Button>
-          )}
-        </div>
-      )}
+      <p className="text-[13px] leading-snug text-white/70" data-testid="case-brief">
+        {kase.brief}
+      </p>
+      {fit?.checking && <p className="mt-2 text-[13px] text-white/50">Checking</p>}
+      {fit && !fit.checking && <FitRows cases={cases} onNewCase={onNewCase} />}
     </Section>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuEntry, useScrollFade } from '../design-system';
+import { useScrollFade } from '../design-system';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
@@ -8,12 +8,8 @@ import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
 import type { SceneSkills } from '../workspace/useSkills';
-import { BriefSection, RobotFitSection, TrySection } from './simulate/CaseSections';
+import { CaseSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
-import { EmulatedRobotSection } from './simulate/EmulatedRobotSection';
-import { ModelSection } from './simulate/ModelSection';
-import { PoliciesSection } from './simulate/PoliciesSection';
-import { ResultSection } from './simulate/ResultSection';
 import { ResultsSection } from './simulate/ResultsSection';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection } from './simulate/TrainSection';
@@ -52,37 +48,23 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onStop: skills.stop,
   };
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
-  const on = sim.status !== 'off';
-  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [policyKey, setPolicyKey] = useState<string | null>(null);
   const kase = cases.active;
-  const openPolicyMenu = (e: React.MouseEvent, id: string) => {
-    const policy = policies.find((p) => p.id === id);
-
-    e.preventDefault();
-
-    if (!policy) return;
-
-    setMenu({
-      x: e.clientX,
-      y: e.clientY,
-      items: [
-        { label: 'Retrain', disabled: !training.canTrain, onSelect: () => void training.retrain(policy) },
-        { divider: true },
-        { label: 'Delete', tone: 'danger', onSelect: () => onDeletePolicy(id) },
-      ],
-    });
-  };
   const control = { sim, training, animations, policies, policyKey, setPolicyKey };
   const choose = useChooseController(control);
+  const trained = {
+    policies,
+    training,
+    onChoose: (id: string) => void choose(`policy:${id}`),
+    onDelete: onDeletePolicy,
+  };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <SimControls sim={sim} on={on} />
+    <div className="flex flex-col h-full min-h-0" data-testid="simulate-panel">
+      <SimControls sim={sim} on={sim.status !== 'off'} />
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {kase && <BriefSection cases={cases} />}
-        {kase && <RobotFitSection cases={cases} onNewCase={onNewCase} />}
+        {kase && <CaseSection cases={cases} onNewCase={onNewCase} />}
         {kase && (
           <TrySection
             cases={cases}
@@ -90,25 +72,10 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             cls={sim.drive.cls}
           />
         )}
-        <EmulatedRobotSection />
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} />
-        <TrainSection skills={skills} actions={skillActions} onTeach={onTeach} />
-        {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}
-
-        {on && sim.stats && sim.model && (
-          <ResultSection stats={sim.stats} model={sim.model} rig={rig} onSelectParts={onSelectParts} />
-        )}
-        {sim.model && <ModelSection model={sim.model} />}
-        {policies.length > 0 && (
-          <PoliciesSection
-            policies={policies}
-            training={training}
-            onChoose={(id) => void choose(`policy:${id}`)}
-            onMenu={openPolicyMenu}
-          />
-        )}
+        <TrainSection skills={skills} actions={skillActions} onTeach={onTeach} trained={trained} />
+        <ResultsSection cases={cases} sim={sim} rig={rig} parts={parts} onSelectParts={onSelectParts} />
       </div>
-      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </div>
   );
 };

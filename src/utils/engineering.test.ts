@@ -98,6 +98,7 @@ describe('runEngineering on a two-joint leg', () => {
       ['Peak torque', 'not run'],
       ['Servo alignment', 'pass'],
       ['Joint support', 'pass'],
+      ['Simulation model', 'warn'],
       ['Servo voltage', 'pass'],
       ['Current and runtime', 'pass'],
       ['Standing stability', 'pass'],

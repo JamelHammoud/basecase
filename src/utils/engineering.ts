@@ -9,6 +9,7 @@ import { heatRows } from './engineeringHeat';
 import { powerRows, servoParts, servoSupplyVolts } from './engineeringPower';
 import { stabilityOf, stabilityRows } from './engineeringStability';
 import { rangeChangeRows } from './engineeringRanges';
+import { SIM_MODEL_CHECK, simModelRows } from './engineeringSimModel';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
 
@@ -28,6 +29,7 @@ export const ENGINEERING_CHECKS = [
   'Weight',
   'Servo torque',
   'Peak torque',
+  SIM_MODEL_CHECK,
   'Servo alignment',
   'Joint support',
   'Range of motion',
@@ -126,6 +128,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...servoMountRows(ctx),
     ...rangeOfMotionRows(ctx),
     ...rangeChangeRows(ctx),
+    ...simModelRows(ctx),
     ...powerRows(ctx),
     ...stabilityRows(ctx),
     ...heatRows(ctx),

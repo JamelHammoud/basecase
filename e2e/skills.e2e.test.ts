@@ -185,7 +185,8 @@ describe('a policy trained before a calibration', () => {
     await loadScene({ ...scene, project: { ...scene.project, policies: [policy] } });
     await clickTab('Simulate');
 
-    const row = app.page.locator(visible(`[data-policy="${policy.id}"]`)).first();
+    const train = app.page.locator(visible('[data-testid="simulate-panel"] section'), { hasText: /^Train/ });
+    const row = train.locator(`[data-policy="${policy.id}"]`).first();
 
     await expect.poll(() => row.getAttribute('data-stale'), { timeout: 60000 }).toBe('false');
     await app.page.evaluate(

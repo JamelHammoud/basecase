@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
-import loadMujoco, { type MainModule } from '@mujoco/mujoco';
+import { type MainModule } from '@mujoco/mujoco';
+import { loadMujoco } from '../sim/loadMujoco';
 import type { ForgeJob, ForgeOutcome } from './forgeRunner';
 import { runSkillsJob, type SkillsJob, type SkillsReply } from './skillsJob';
 

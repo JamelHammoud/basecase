@@ -43,7 +43,7 @@ After the first design, short follow-ups work best: “Longer legs”, “Thicke
 
 ## Say how you want to drive it
 
-To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad and a phone for now.
+To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone and the computer's camera. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel.
 
 ## Ask about Checks instead of hiding them
 

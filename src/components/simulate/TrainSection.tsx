@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { Button, Section, TextInput } from '../../design-system';
 import type { SceneSkills } from '../../workspace/useSkills';
+import type { Training } from '../../sim/useTraining';
 import type { PolicyRecord } from '../../types/robotics';
 import { PolicyList, type PolicyActions } from './PolicyList';
 import { SkillsList, type SkillActions } from './SkillsList';
@@ -47,8 +48,9 @@ export const TrainSection: React.FC<{
   actions: SkillActions;
   onTeach: ((goal: string) => void) | null;
   policies: PolicyRecord[];
+  training: Training;
   policyActions: PolicyActions;
-}> = ({ skills, actions, onTeach, policies, policyActions }) => {
+}> = ({ skills, actions, onTeach, policies, training, policyActions }) => {
   if (!skills.available && !policies.length) return null;
 
   return (
@@ -56,7 +58,7 @@ export const TrainSection: React.FC<{
       <div className="flex flex-col gap-3">
         {skills.available && onTeach && <TeachField examples={skills.examples} onTeach={onTeach} />}
         {skills.available && skills.rows.length > 0 && <SkillsList rows={skills.rows} actions={actions} />}
-        {policies.length > 0 && <PolicyList policies={policies} actions={policyActions} />}
+        {policies.length > 0 && <PolicyList policies={policies} training={training} actions={policyActions} />}
       </div>
     </Section>
   );

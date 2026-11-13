@@ -53,11 +53,20 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const [policyKey, setPolicyKey] = useState<string | null>(null);
   const kase = cases.active;
   const openPolicyMenu = (e: React.MouseEvent, id: string) => {
+    const policy = policies.find((p) => p.id === id);
+
     e.preventDefault();
+
+    if (!policy) return;
+
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [{ label: 'Delete', tone: 'danger', onSelect: () => onDeletePolicy(id) }],
+      items: [
+        { label: 'Retrain', disabled: !training.canTrain, onSelect: () => void training.retrain(policy) },
+        { divider: true },
+        { label: 'Delete', tone: 'danger', onSelect: () => onDeletePolicy(id) },
+      ],
     });
   };
   const control = { sim, training, animations, policies, policyKey, setPolicyKey };
@@ -82,6 +91,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
           actions={skillActions}
           onTeach={onTeach}
           policies={policies}
+          training={training}
           policyActions={{ onChoose: (id) => void choose(`policy:${id}`), onMenu: openPolicyMenu }}
         />
         <ResultsSection

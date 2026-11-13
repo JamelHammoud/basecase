@@ -113,4 +113,20 @@ describe('agent runtimes', () => {
       }
     }
   });
+
+  it('pins the same CLI each adapter runs from source', () => {
+    const lock = JSON.parse(fs.readFileSync(new URL('../../package-lock.json', import.meta.url), 'utf8'));
+    const adapters = {
+      '@agentclientprotocol/claude-agent-acp': '@anthropic-ai/claude-agent-sdk',
+      '@agentclientprotocol/codex-acp': '@openai/codex',
+    };
+
+    for (const [adapter, cli] of Object.entries(adapters)) {
+      const nested = Object.keys(lock.packages).filter((key) =>
+        key.startsWith(`node_modules/${adapter}/node_modules/${cli}`),
+      );
+
+      expect(nested).toEqual([]);
+    }
+  });
 });

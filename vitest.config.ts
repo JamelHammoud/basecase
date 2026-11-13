@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { quarantineExclude } from './tools/quarantine.mjs';
 
 export default defineConfig({
   test: {
@@ -9,7 +10,8 @@ export default defineConfig({
       'bench/**/*.test.mjs',
       'verify/lib/*.test.mjs',
     ],
-    exclude: ['bench/data/**', 'bench/runs/**', '**/node_modules/**'],
+    exclude: ['bench/data/**', 'bench/runs/**', '**/node_modules/**', ...quarantineExclude()],
+    setupFiles: ['tools/quarantine-setup.mjs'],
     environment: 'node',
   },
 });

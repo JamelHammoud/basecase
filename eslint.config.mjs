@@ -21,6 +21,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
+      'dist-web/**',
       'site/dist/**',
       'release/**',
       'build/**',

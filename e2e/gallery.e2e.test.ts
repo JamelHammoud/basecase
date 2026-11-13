@@ -1,11 +1,9 @@
-import { chromium, type Browser, type Page } from 'playwright-core';
-import type { ViteDevServer } from 'vite';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { startServer } from './harness';
+import type { Browser, Page } from 'playwright-core';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { exposeTestHooks, launchChrome } from './harness';
 
-let server: ViteDevServer;
 let browser: Browser;
-let base: string;
+const base = inject('webUrl');
 
 interface GalleryState {
   status: string;
@@ -21,6 +19,7 @@ async function open(path: string, viewport = { width: 1440, height: 900 }) {
   const page = await browser.newPage({ viewport });
   const errors: string[] = [];
 
+  await exposeTestHooks(page);
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
@@ -31,18 +30,11 @@ async function open(path: string, viewport = { width: 1440, height: 900 }) {
 }
 
 beforeAll(async () => {
-  server = await startServer('web');
-  base = server.resolvedUrls!.local[0].replace(/\/$/, '');
-  browser = await chromium.launch({
-    channel: 'chrome',
-    headless: true,
-    args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
-  });
+  browser = await launchChrome();
 }, 120000);
 
 afterAll(async () => {
   await browser?.close();
-  await server?.close();
 });
 
 describe('gallery links', () => {

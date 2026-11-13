@@ -20,7 +20,7 @@ const REPORT_WAIT_MS = 4000;
 const FTP_MESSAGES = {
   auth: ACCESS_CODE_MESSAGE,
   storage: 'The printer couldn’t save the file. Check its SD card is in and has space.',
-  protocol: 'The upload to the printer stopped. Try again.',
+  protocol: 'The upload to the printer stopped. Print the plate again.',
 };
 
 export function jobTitle(name) {
@@ -53,7 +53,7 @@ function mqttMessage(error, host) {
   if (error.returnCode === 4 || error.returnCode === 5) return ACCESS_CODE_MESSAGE;
 
   if (error.reason === 'refused') {
-    return 'The printer refused the connection. Turn on LAN Only and Developer Mode on the printer, then try again.';
+    return 'The printer refused the connection. Turn on LAN Only and Developer Mode on the printer.';
   }
 
   return unreachableMessage(host);

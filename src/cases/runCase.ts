@@ -16,7 +16,7 @@ import { NO_BODY } from '../routines/physicsBody';
 import { caseFactReader, type CaseFacts } from './caseFacts';
 import { caseCommand } from './caseTarget';
 import { judgeSoFar, usesBodySkills, type CaseLogicResult, type CaseLogicRun } from './caseLogic';
-import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld } from './caseRandom';
+import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld, worldRandom } from './caseRandom';
 import { GroundSteer } from './groundSteer';
 import { probeReader } from './probes';
 import { castRobot, castSlots, guestsOf, type CaseRobot, type CastSlot } from './caseCast';
@@ -186,13 +186,20 @@ function limpen(engine: SimEngine, model: SimModel, keys: Set<string>) {
 const ownFacts = (robot: CaseRobot | undefined) =>
   robot ? robotFacts(buildRig(robot.joints, robot.parts), robot.parts) : null;
 
-interface Started {
+export interface Started {
   engine: SimEngine;
   dispose: () => void;
 }
 
-function startEngine(mj: MainModule, model: SimModel, run: { controller: Controller; options: RunOptions }): Started {
-  const { controller, options } = run;
+export interface EngineStart {
+  controller: Controller;
+  seed?: number;
+  randomization?: Randomization;
+  jointNoiseDeg?: number;
+}
+
+export function startEngine(mj: MainModule, model: SimModel, options: EngineStart): Started {
+  const { controller } = options;
   const random = options.seed === undefined ? null : caseRandom(options.seed);
 
   if (!random) {
@@ -216,8 +223,6 @@ function startEngine(mj: MainModule, model: SimModel, run: { controller: Control
 
   return { engine: arena.engine, dispose: () => arena.dispose() };
 }
-
-const worldRandom = (seed: number | undefined) => (seed === undefined ? null : caseRandom(-seed - 1));
 
 function refused(authored: Case, refusal: string, model: SimModel): CaseResult {
   return {
@@ -295,7 +300,7 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
 }
 
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
-  const jitter = worldRandom(options.seed);
+  const jitter = options.seed === undefined ? null : worldRandom(options.seed);
   const kase = jitter ? jitteredWorld(fit.scaled, jitter) : fit.scaled;
   const world = kase.world.objects.map(worldItem);
   const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) });
@@ -320,7 +325,12 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   });
   const steer = steerFor({ fit, model, objectAt });
   const controller = runController(fit, kase, options);
-  const { engine, dispose } = startEngine(mj, model, { controller, options });
+  const { engine, dispose } = startEngine(mj, model, {
+    controller,
+    seed: options.seed,
+    randomization: options.randomization,
+    jointNoiseDeg: options.jointNoiseDeg,
+  });
   const recorder = options.record ? new Recorder(engine) : null;
   const send = (c: DriveCommand) => engine.command(walk ? policyCommand(c, walk.topSpeed) : c);
   const limp = new Set(fit.cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : [])));

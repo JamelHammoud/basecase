@@ -42,7 +42,7 @@ Drive the robot through an open Case while Basecase records it, then see whether
 
 **Try ⟨Case⟩** is also in [[⌘K]]. Pressing [[Esc]] stops driving, which ends the try too.
 
-To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive With Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ## Whether the robot can do it
 
@@ -63,7 +63,9 @@ When the robot lacks what the Case needs, point at the row's note and click **Ne
 
 ## Results
 
-The **Results** header counts passed tries out of all of them. Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+
+A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from it. Its row counts them, such as **50 generated**, and deleting the try deletes them too. Steps are in [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
 While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries.
 

@@ -154,11 +154,11 @@ function checkSummaries(open: Finding[], rows: CheckRow[]): CheckSummary[] {
 }
 
 function ignoredRuleSummaries(findings: Finding[], rules: NonNullable<ReadinessDecisions['ignoredRules']>) {
-  return Object.entries(rules).map(([rule, { name }]) => ({
-    rule,
-    name,
-    count: findings.filter((f) => f.rule === rule).length,
-  }));
+  return Object.entries(rules).map(([rule, { name }]) => {
+    const current = findings.filter((f) => f.rule === rule);
+
+    return { rule, name: current[0]?.ruleName ?? name, count: current.length };
+  });
 }
 
 export function readinessOf(

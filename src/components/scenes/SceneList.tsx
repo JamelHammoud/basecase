@@ -11,7 +11,7 @@ export interface SceneListProps {
   currentSceneId: string;
   renaming: string | null;
   onOpen: (scene: SavedSceneSummary) => void;
-  onRename: (scene: SavedSceneSummary, name: string) => void;
+  onRename: (scene: SavedSceneSummary, name: string | null) => void;
   onMenu: (scene: SavedSceneSummary, e: React.MouseEvent) => void;
 }
 

@@ -109,7 +109,7 @@ fn read_back(bus: &mut ReadBus, id: u8) -> Result<(), String> {
         Ok(Reply::Status(status)) if status.data == [id] => Ok(()),
         Err(_) => Err(Fault::BusGone.message()),
         Ok(_) => Err(format!(
-            "Servo {id} didn't keep its new ID. Unplug it and plug it back in, then try again."
+            "Servo {id} didn't keep its new ID. Unplug it and plug it back in, then click Set Up Servos again."
         )),
     }
 }

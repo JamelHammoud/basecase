@@ -25,7 +25,7 @@ export const FromTries: React.FC<{ fromTries: TriesTraining }> = ({ fromTries })
       icon={<TrainIcon className="w-4 h-4" />}
       onClick={fromTries.train}
     >
-      Train From Tries
+      Train from Tries
     </Button>
   </div>
 );

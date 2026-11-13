@@ -50,7 +50,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![A try running, with the clock and End Try](/help/run-a-case/trying.png)
 
-6. Click **End Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train From Tries joins them once five pass.
+6. Click **End Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass.
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 
@@ -70,4 +70,4 @@ A console can also hold the Case's own code: up to 4 panels, each a small web pa
 
 A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
 
-Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.
+Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

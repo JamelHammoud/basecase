@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { controllerValue, fmtSteps } from './format';
+import { controllerValue, fmtSteps, trainingLine } from './format';
 import type { RobotAnimation } from '../../types/robotics';
 
 describe('simulate format', () => {
   it('abbreviates step counts', () => {
     expect([999, 1500, 2_500_000, 25_000_000].map(fmtSteps)).toEqual(['999', '2K', '2.5M', '25M']);
+  });
+
+  it('ends a training line in its percentage, or an ellipsis when the message has no end of its own', () => {
+    expect(trainingLine('Training on 64 robots', 0.45)).toBe('Training on 64 robots 45%');
+    expect(trainingLine('Building environments', null)).toBe('Building environments…');
+    expect(trainingLine('Training from a fall.', null)).toBe('Training from a fall.');
   });
 
   it('maps the running controller to its select value', () => {

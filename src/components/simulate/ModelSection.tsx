@@ -2,10 +2,7 @@ import React from 'react';
 import { MetaLine, Section } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 
-export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; version: Simulation['version'] }> = ({
-  model,
-  version,
-}) => {
+export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']> }> = ({ model }) => {
   const estimated = model.joints.filter((j) => j.effortSource === 'estimate').length;
   const guessed = model.joints.filter((j) => j.dynamics === 'estimated' && j.effortSource !== 'estimate').length;
 
@@ -28,8 +25,7 @@ export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; v
       )}
       {guessed > 0 && (
         <p className="mt-1 text-[12.5px] leading-snug text-white/50">
-          Servo response for {guessed} {guessed === 1 ? 'joint is' : 'joints is'} estimated. Measured fits cover the
-          STS3215 (7.4 V) and XL330.
+          Servo response for {guessed} {guessed === 1 ? 'joint is' : 'joints is'} estimated.
         </p>
       )}
       {model.warnings.map((w) => (
@@ -37,7 +33,6 @@ export const ModelSection: React.FC<{ model: NonNullable<Simulation['model']>; v
           {w}
         </p>
       ))}
-      {version && <p className="mt-1 text-[12px] text-white/50">MuJoCo {version}</p>}
     </Section>
   );
 };

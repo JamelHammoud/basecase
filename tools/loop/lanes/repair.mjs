@@ -4,7 +4,12 @@ import { publish } from '../lib/pull.mjs';
 import { json } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
-export const schedule = { slots: 1, everySeconds: 60, does: "Opens a repair when main's last finished Check failed" };
+export const schedule = {
+  agent: true,
+  slots: 1,
+  everySeconds: 60,
+  does: "Opens a repair when main's last finished Check failed",
+};
 
 const MAX_LOG = 80_000;
 const HANDLED_FOR_MS = 6 * 60 * 60 * 1000;

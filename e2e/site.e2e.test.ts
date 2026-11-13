@@ -92,6 +92,16 @@ describe('basecase.so', () => {
     expect(await fontWeight(page, 'h1')).toBe('600');
     expect(await page.locator('nav a[aria-current="page"]').innerText()).toBe('Changelog');
     expect(await page.locator('nav a[href="/blog"]').count()).toBe(0);
+
+    const entry = page.locator('main ol > li a').first();
+    const title = await entry.locator('h2').innerText();
+
+    await entry.click();
+    await page.waitForURL(/\/changelog\/[a-z0-9-]+$/);
+    expect(await page.locator('h1').innerText()).toBe(title);
+
+    await page.getByRole('link', { name: 'Changelog', exact: true }).last().click();
+    await page.waitForURL(`${base}/changelog`);
     expect(errors).toEqual([]);
     await page.close();
   });

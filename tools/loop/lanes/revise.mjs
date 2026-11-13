@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
+import { conflictsWithMain, fetchAll } from '../lib/branches.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
@@ -22,6 +23,7 @@ import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 4,
   everySeconds: 60,
   labels: ['loop:revising'],
@@ -61,7 +63,8 @@ function needFor(pull, mainGreen) {
     ((mainGreen || pull.headRefName.startsWith('loop/repair/')) && pullCheck(pull) === 'failure');
   const newHead = !entry.heads.includes(pull.headRefOid);
 
-  if (failing && newHead) return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
+  if (failing && newHead && !conflictsWithMain(pull))
+    return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
 
   return pull.updatedAt > entry.lastLook ? { entry, reason: 'maybe-jamel' } : null;
 }
@@ -123,10 +126,10 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
       return;
     }
 
-    recordAttempt(pull.number, { head: pull.headRefOid, jamelAt });
-
     const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, comments)}`;
     const result = runAgent({ cwd: worktree.dir, name: 'revise', prompt, schema: SCHEMA, hours: 4 });
+
+    recordAttempt(pull.number, { head: pull.headRefOid, jamelAt });
 
     if (!result.ok || !result.output.changed) {
       log(`#${pull.number}: nothing to change: ${String(result.error ?? result.output.notes).slice(0, 400)}`);
@@ -167,6 +170,8 @@ function handle(pull, need, log) {
 
 export default function revise({ log }) {
   const mainGreen = lastFinishedMainCheck()?.conclusion === 'success';
+
+  fetchAll();
 
   for (const pull of openPulls()) {
     const need = needFor(pull, mainGreen);

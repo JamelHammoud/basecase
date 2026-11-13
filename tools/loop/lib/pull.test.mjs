@@ -28,6 +28,12 @@ describe('pullBody', () => {
     expect(body.match(/^## Copy$/gm)).toHaveLength(1);
   });
 
+  it.each(Object.keys(KINDS))('ends a %s body with its closing line, whatever its template holds', (kind) => {
+    const body = pullBody({ ...change(kind, []), links: ['Closes #54.'] }, { branch: 'loop/test' });
+
+    expect(body.trimEnd().endsWith('Closes #54.')).toBe(true);
+  });
+
   it('leaves the Copy section out of a body whose template lacks it when nothing was added', () => {
     expect(pullBody(change('fix', []), { branch: 'loop/test' })).not.toContain('## Copy');
   });

@@ -80,12 +80,19 @@ async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise
 export const exposeTestHooks = (page: Page) =>
   page.addInitScript((flag) => Object.assign(window, { [flag]: true }), TEST_HOOKS_FLAG);
 
-export const launchChrome = (args = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader']) =>
-  chromium.launch({ channel: 'chrome', headless: true, args });
+const GL_ARGS = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'];
 
-export async function openApp(lists: Record<string, unknown> = {}, live: string[] = []): Promise<App> {
+export const FAKE_CAMERA_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'];
+
+export const launchChrome = (args = GL_ARGS) => chromium.launch({ channel: 'chrome', headless: true, args });
+
+export async function openApp(
+  lists: Record<string, unknown> = {},
+  live: string[] = [],
+  chromeArgs: string[] = [],
+): Promise<App> {
   const started = Date.now();
-  const browser: Browser = await launchChrome();
+  const browser: Browser = await launchChrome([...GL_ARGS, ...chromeArgs]);
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors: string[] = [];
   const posts: App['posts'] = [];

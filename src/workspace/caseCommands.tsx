@@ -1,5 +1,6 @@
 import type { Command } from '../components/CommandPalette';
 import {
+  CameraIcon,
   CasesIcon,
   DownloadIcon,
   ExpandIcon,
@@ -10,6 +11,7 @@ import {
   StopIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
+import { CAMERA_INPUTS } from '../sim/inputSources';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -112,6 +114,22 @@ export function caseCommands({ core }: CommandInputs): Command[] {
           void sim.drive.start();
         },
       };
+  const withCamera: Command[] =
+    !sim.drive.active && sim.drive.canPose
+      ? [
+          {
+            id: 'drive-camera',
+            group: 'Simulate',
+            label: 'Drive With Camera',
+            icon: <CameraIcon className={ic} />,
+            keywords: 'webcam pose body arms mirror teleop puppet',
+            run: () => {
+              tool.setRightTab('sim');
+              void sim.drive.startWith(CAMERA_INPUTS);
+            },
+          },
+        ]
+      : [];
   const respawn: Command[] = sim.drive.active
     ? [
         {
@@ -167,6 +185,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     },
     ...newCase,
     drive,
+    ...withCamera,
     ...respawn,
     ...tryIt,
     ...caseRun,

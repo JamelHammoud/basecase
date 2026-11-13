@@ -230,6 +230,7 @@ declare global {
       guideExists: (id: string) => Promise<boolean>;
       guideHtml: (id: string) => Promise<string | null>;
       shareFile?: (payload: { name: string; bytes: Uint8Array }) => Promise<'airdrop' | 'shared' | 'shown'>;
+      askCameraAccess?: () => Promise<boolean>;
       onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;

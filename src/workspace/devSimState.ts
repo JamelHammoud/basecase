@@ -44,6 +44,16 @@ function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
   };
 }
 
+const DEG = 180 / Math.PI;
+
+export function jointPositions(model: Simulation['model'], joints: Float64Array | null): Record<string, number> {
+  if (!model || !joints) return {};
+
+  return Object.fromEntries(
+    model.joints.map((j, i) => [j.id, joints[i * 3 + 1] * (j.type === 'revolute' ? DEG : 1000)]),
+  );
+}
+
 export function devSimState(core: WorkspaceCore) {
   const { sim, skills } = core.simTraining;
   const stats = sim.latestStats() ?? sim.stats;

@@ -78,6 +78,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   guideExists: (id) => ipcRenderer.invoke('guide:exists', id),
   guideHtml: (id) => ipcRenderer.invoke('guide:html', id),
   shareFile: (payload) => ipcRenderer.invoke('share:file', payload),
+  askCameraAccess: () => ipcRenderer.invoke('camera:access'),
   printCall: (channel, payload) =>
     String(channel).startsWith('print:')
       ? ipcRenderer.invoke(channel, payload)

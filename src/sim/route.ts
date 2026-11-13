@@ -220,10 +220,20 @@ export class RouteRunner {
   }
 }
 
-type AnyController = { kind: string; drive?: RouteDrive; policy?: PolicySpec; robot?: string };
+type UnderPolicy = { policy: PolicySpec; robot: string };
 
-export function routePolicy(c: AnyController): { policy: PolicySpec; robot: string } | null {
+type AnyController = {
+  kind: string;
+  drive?: RouteDrive;
+  policy?: PolicySpec;
+  robot?: string;
+  setup?: { kind: string; under?: UnderPolicy };
+};
+
+export function routePolicy(c: AnyController): UnderPolicy | null {
   if (c.kind === 'policy' && c.policy && c.robot) return { policy: c.policy, robot: c.robot };
+
+  if (c.kind === 'drive' && c.setup?.kind === 'pose' && c.setup.under) return c.setup.under;
 
   return c.kind === 'route' && c.drive?.kind === 'policy' && c.robot
     ? { policy: c.drive.policy, robot: c.robot }

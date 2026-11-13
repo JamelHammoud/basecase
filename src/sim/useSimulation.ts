@@ -30,6 +30,10 @@ export interface SimFrame {
 
 export type SimStatus = 'off' | 'loading' | 'ready' | 'error';
 
+export interface SimStart {
+  pin?: string;
+}
+
 export interface SimRun {
   stats: SimStats;
   frames: Array<{ t: number; deltas: Map<string, THREE.Matrix4>; poses: Float64Array }>;
@@ -48,7 +52,7 @@ export interface Simulation {
   modelNow: () => SimModel | null;
   speed: number;
   controller: Controller;
-  start: () => Promise<void>;
+  start: (options?: SimStart) => Promise<void>;
   play: () => void;
   pause: () => void;
   reset: () => void;
@@ -190,32 +194,49 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     inputs.current = { parts, project, rig, pose, restDeltas };
   });
 
-  const buildModel = useCallback(async (): Promise<SimModel> => {
-    const vp = viewportRef.current;
+  const build = useCallback(
+    async (pin?: string): Promise<SimModel> => {
+      const vp = viewportRef.current;
 
-    if (!vp) throw new Error('The canvas isn’t ready.');
+      if (!vp) throw new Error('The canvas isn’t ready.');
 
-    await vp.meshesReady();
+      await vp.meshesReady();
 
-    const current = inputs.current;
-    const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
+      const current = inputs.current;
+      const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
-    const input = withGuests(
-      {
-        parts: current.parts,
-        rig: current.rig,
-        project: current.project,
-        pose: current.pose,
-        measures,
-        partTriangles: vp.partTriangles,
-        posedFloor,
-        world: worldRef.current,
-      },
-      guestsRef.current,
-    );
+      const input = withGuests(
+        {
+          parts: current.parts,
+          rig: current.rig,
+          project: current.project,
+          pose: current.pose,
+          measures,
+          partTriangles: vp.partTriangles,
+          posedFloor,
+          world: worldRef.current,
+          fixedBase: pin ? { [pin]: true } : undefined,
+        },
+        guestsRef.current,
+      );
 
-    return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
-  }, [viewportRef]);
+      return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
+    },
+    [viewportRef],
+  );
+  const buildModel = useCallback(() => build(), [build]);
+  const pin = useRef<string | undefined>(undefined);
+  const buildLive = useCallback(
+    (options?: SimStart) => {
+      if (options) pin.current = options.pin;
+
+      return build(pin.current);
+    },
+    [build],
+  );
+  const unpin = useCallback(() => {
+    pin.current = undefined;
+  }, []);
 
   const setWorldItems = (items: WorldItem[], cast: SimGuests) => {
     worldRef.current = items;
@@ -224,7 +245,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     setGuests(cast);
   };
 
-  return { inputs, buildModel, worldParts, guestParts: guests.parts, setWorldItems };
+  return { inputs, buildLive, unpin, buildModel, worldParts, guestParts: guests.parts, setWorldItems };
 }
 
 function useStopOnEdit({
@@ -288,7 +309,7 @@ export function useSimulation(props: Inputs): Simulation {
   const [model, setModel] = useState<SimModel | null>(null);
   const [speed, setSpeedState] = useState(1);
   const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
+  const { inputs, buildLive, unpin, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
@@ -296,36 +317,40 @@ export function useSimulation(props: Inputs): Simulation {
   const [controller, setController] = useController(send);
   const touch = useSimTouches(modelRef, send);
 
-  const start = useCallback(async () => {
-    setError(null);
-    setStatus('loading');
+  const start = useCallback(
+    async (options?: SimStart) => {
+      setError(null);
+      setStatus('loading');
 
-    let m: SimModel;
+      let m: SimModel;
 
-    try {
-      m = await buildModel();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setStatus('error');
+      try {
+        m = await buildLive(options);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+        setStatus('error');
 
-      return;
-    }
+        return;
+      }
 
-    modelRef.current = m;
-    setModel(m);
+      modelRef.current = m;
+      setModel(m);
 
-    const w = worker();
-    const loaded = await load(w, m, controller);
+      const w = worker();
+      const loaded = await load(w, m, controller);
 
-    if (!loaded) return;
+      if (!loaded) return;
 
-    w.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
-    w.postMessage({ type: 'play' } satisfies SimRequest);
-    setPlaying(true);
-  }, [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying]);
+      w.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
+      w.postMessage({ type: 'play' } satisfies SimRequest);
+      setPlaying(true);
+    },
+    [buildLive, worker, load, controller, speed, setError, setStatus, setPlaying],
+  );
 
   const stop = useCallback(() => {
     send({ type: 'dispose' });
+    unpin();
     modelRef.current = null;
     setModel(null);
     setStatus('off');
@@ -333,7 +358,7 @@ export function useSimulation(props: Inputs): Simulation {
     setStats(null);
     viewportRef.current?.setScan(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
-  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
+  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs, unpin]);
 
   useStopOnEdit({ parts, joints: project.joints, modelRef, stop });
 
@@ -409,10 +434,6 @@ export function useSimulation(props: Inputs): Simulation {
     input: (name, value) => send({ type: 'input', name, value }),
     latestFacts: sw.latestFacts,
     runOn,
-    run: async (opts) => {
-      const m = await buildModel();
-
-      return runModel(m, opts, ++runSeq.current);
-    },
+    run: async (opts) => runModel(await buildModel(), opts, ++runSeq.current),
   };
 }

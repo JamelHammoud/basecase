@@ -14,6 +14,7 @@ import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
+import { useCameraToast } from './useCameraToast';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useCaseRun } from './useCaseRun';
@@ -65,6 +66,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { showToast } = toasts;
 
   useRobotUpgrade(docs, showToast);
+  useCameraToast(showToast);
   useCadCompile(docs);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

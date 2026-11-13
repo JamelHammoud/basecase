@@ -9,6 +9,7 @@ import { createSignalBus } from '../../cases/console/signalBus';
 import { parseCase, touchTheDots } from '../../cases/testing';
 import { box } from '../../sim/fixtures/parts';
 import { fixtureRobots } from '../../sim/fixtures/robots';
+import { hasInputSource } from '../../sim/inputSources';
 import type { Simulation } from '../../sim/useSimulation';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
@@ -18,15 +19,9 @@ import type { PanelContext } from './panelContext';
 const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
 const kase = touchTheDots(arm);
 const runnable = (raw: Record<string, unknown>) => {
-  const drop = (id: string) => id !== 'operator';
-  const areas = (raw.layout as { areas: Array<{ panels?: string[] }> }).areas;
+  const input = (raw.input as string[]).filter((id) => hasInputSource(id));
 
-  return {
-    ...raw,
-    input: ['keys'],
-    panels: (raw.panels as Array<{ id: string }>).filter((p) => drop(p.id)),
-    layout: { areas: areas.map((a) => (a.panels ? { ...a, panels: a.panels.filter(drop) } : a)) },
-  };
+  return { ...raw, input: input.length ? input : ['keys'] };
 };
 
 function context(caseConsole: CaseConsole): PanelContext {
@@ -118,7 +113,7 @@ describe('a running Case renders any console', () => {
     });
 
     expect(drawn.map(({ name, before, after }) => [name, before, after])).toEqual([
-      ['G1 arm teleop', ['robot-eye:camera'], ['joints:table', 'arms:plot']],
+      ['G1 arm teleop', ['operator:camera', 'robot-eye:camera'], ['joints:table', 'arms:plot']],
       ['Rover', ['front:camera'], ['map:map', 'speed:value']],
       ['Sorting cell', [], ['count:value', 'failures:list', 'go:button', 'overhead:camera']],
       ['Block game', ['clock:value', 'score:value'], ['go:button', 'reset:button', 'tries:list']],

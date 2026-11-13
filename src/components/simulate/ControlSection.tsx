@@ -1,6 +1,7 @@
 import React from 'react';
-import { Button, HandIcon, RunIcon, Section, Select, StopIcon, TrainIcon } from '../../design-system';
+import { Button, CameraIcon, HandIcon, RunIcon, Section, Select, StopIcon, TrainIcon } from '../../design-system';
 import { withVelocity } from '../../sim/driveAccess';
+import { CAMERA_INPUTS } from '../../sim/inputSources';
 import type { PolicyRecord, RobotAnimation } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
 import type { Training } from '../../sim/useTraining';
@@ -74,6 +75,19 @@ const DriveButton: React.FC<{ sim: Simulation }> = ({ sim }) => {
   );
 };
 
+const CameraButton: React.FC<{ sim: Simulation }> = ({ sim }) => (
+  <Button
+    variant="secondary"
+    size="md"
+    fullWidth
+    icon={<CameraIcon className="w-4 h-4" />}
+    disabled={sim.drive.status === 'checking'}
+    onClick={() => void sim.drive.startWith(CAMERA_INPUTS)}
+  >
+    Drive With Camera
+  </Button>
+);
+
 const DriveControl: React.FC<{ sim: Simulation; walk: WalkTeaching }> = ({ sim, walk }) => {
   const offer = withVelocity(sim.drive.offer, walk.velocityReady);
 
@@ -129,6 +143,7 @@ export const ControlSection: React.FC<
           </Button>
         </div>
         {showDrive && <DriveControl sim={sim} walk={walk} />}
+        {showDrive && !drive.active && drive.canPose && <CameraButton sim={sim} />}
         {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
         {showDrive && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       </div>

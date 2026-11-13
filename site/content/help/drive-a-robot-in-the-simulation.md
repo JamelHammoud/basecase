@@ -39,7 +39,7 @@ Steer an arm, a rover or a walking robot live in MuJoCo with the keyboard or a g
 5. Press [[R]] to put the robot back where it started.
 6. Press [[Esc]] to stop driving.
 
-**Stop Driving** under **Control** stops too, and **Drive** is also in [[⌘K]]. With a Case open, **Try It** starts driving instead; see [Try a Case](/help/try-a-case).
+**Stop Driving** under **Control** stops too, and **Drive** is also in [[⌘K]]. With a Case open, **Try It** starts driving instead; see [Try a Case](/help/try-a-case). To drive a humanoid or an arm by moving your own arms, see [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ## Keys
 

@@ -1,7 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { app, BrowserWindow, ipcMain as electronIpc, nativeTheme, safeStorage, session, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain as electronIpc,
+  nativeTheme,
+  safeStorage,
+  session,
+  shell,
+  systemPreferences,
+} from 'electron';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { SandboxKernel } from './cad-kernel/sandbox/sandboxKernel.mjs';
@@ -13,6 +22,7 @@ import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
+import { limitPermissions, registerCameraHandlers } from './permissions.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
@@ -222,6 +232,7 @@ registerPrintHandlers(ipcMain, backend.printing);
 registerHubHandlers(ipcMain, backend.hub);
 registerOnshapeHandlers(ipcMain, backend.onshape);
 registerShareHandlers(ipcMain);
+registerCameraHandlers(ipcMain, { platform: process.platform, systemPreferences });
 
 const robot = new RobotLink({
   binary: daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot }),
@@ -231,17 +242,6 @@ const robot = new RobotLink({
 });
 
 registerRobotHandlers(ipcMain, robot);
-
-const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write', 'fullscreen']);
-
-function limitPermissions() {
-  const allowed = (permission, origin) => ALLOWED_PERMISSIONS.has(permission) && isAppUrl(origin ?? '', APP_ORIGIN);
-
-  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) =>
-    callback(allowed(permission, details.requestingUrl)),
-  );
-  session.defaultSession.setPermissionCheckHandler((_contents, permission, origin) => allowed(permission, origin));
-}
 
 const selfTestFile = process.env.BASECASE_KERNEL_SELFTEST;
 const cadImportSelfTestSpec = process.env.BASECASE_CADIMPORT_SELFTEST;
@@ -268,7 +268,7 @@ app.whenReady().then(async () => {
   }
 
   nativeTheme.themeSource = 'dark';
-  limitPermissions();
+  limitPermissions(session.defaultSession, APP_ORIGIN);
   installAppMenu(() => mainWindow, {
     onCheckForUpdates: fromSource ? null : () => updates.checkNow(),
     betaUpdates: fromSource ? null : { get: () => updates.wantsBeta(), set: (beta) => updates.setBeta(beta) },

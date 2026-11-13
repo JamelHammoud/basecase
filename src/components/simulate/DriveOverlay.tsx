@@ -28,7 +28,7 @@ export const DriveOverlay: React.FC<{ sim: Simulation }> = ({ sim }) => {
       {drive.fell && <Banner tone="danger">Fell. Press R.</Banner>}
       {away && <Banner>Click the canvas to drive</Banner>}
       <div className="flex items-center gap-2">
-        {speed !== undefined && drive.cls !== 'arm' && (
+        {speed !== undefined && (drive.cls === 'rover' || drive.cls === 'legs') && (
           <Banner>
             <span data-testid="drive-speed" className="tabular">
               {speed.toFixed(1)} m/s

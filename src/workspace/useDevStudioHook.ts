@@ -7,7 +7,7 @@ import { withCalibration } from '../reality/projectCalibrations';
 import { isPolicySpec } from '../sim/policy';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
-import { devSimState } from './devSimState';
+import { devSimState, jointPositions } from './devSimState';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import { robotPackageZip } from './robotPackageExport';
 import type { AgentSession } from './useAgentSession';
@@ -27,6 +27,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
   const { partsRef, projectRef } = docs;
   const { subscribePoses } = core.simTraining.sim;
   const posesRef = useRef<Float64Array | null>(null);
+  const jointsRef = useRef<Float64Array | null>(null);
   const devRef = useLatestRef<DevActions>({
     importRobot: actions.robots.importRobotFrom,
     posing,
@@ -46,7 +47,10 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     dropFiles: routeFiles,
     selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,
-    simState: () => devSimState(core),
+    simState: () => ({
+      ...devSimState(core),
+      positions: jointPositions(core.simTraining.sim.model, jointsRef.current),
+    }),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
     worldAt: () => {
       const { model, worldParts } = core.simTraining.sim;
@@ -105,8 +109,9 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
   useEffect(() => {
     if (!exposesTestHooks() || !active) return;
 
-    return subscribePoses((poses) => {
+    return subscribePoses((poses, frame) => {
       posesRef.current = poses;
+      jointsRef.current = frame.joints;
     });
   }, [active, subscribePoses]);
 

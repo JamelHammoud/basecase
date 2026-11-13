@@ -27,6 +27,9 @@ import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
 
+import { feedLandmarks, operatorCameraState } from '../cameras/operator/cameraInput';
+import type { LandmarkRow } from '../cameras/operator/landmarks';
+
 type Payload = Record<string, unknown>;
 
 export interface DevActions {
@@ -218,6 +221,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     buildAlongSteps: () => devRef.current.buildAlongSteps(),
     shownParts: () => viewportRef.current?.shownPartIds() ?? [],
     simState: () => devRef.current.simState(),
+    operatorCamera: operatorCameraState,
+    feedLandmarks: (frames: LandmarkRow[][], fps = 30) => feedLandmarks(frames, fps),
     drive: (command: DriveCommand) => devRef.current.drive(command),
     worldAt: () => devRef.current.worldAt(),
     printPlates: () => devRef.current.printPlates(),

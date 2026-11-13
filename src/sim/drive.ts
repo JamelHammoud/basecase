@@ -3,6 +3,7 @@ import type { JointValues } from '../types/robotics';
 import { forwardKinematics, solveIK, type IkTarget, type Rig, type V3 } from '../utils/kinematics';
 import { gripValues, restSide, sideFor, topDownTargets, type ArmGrip } from './driveGrip';
 import { LegsDrive, type LegsSetup } from './driveLegs';
+import { PoseDrive, type PoseSetup } from './drivePose';
 import type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 
 export type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
@@ -35,7 +36,7 @@ export interface RoverSetup {
   maxTurnRadS: number;
 }
 
-export type RobotDrive = ArmSetup | RoverSetup | LegsSetup;
+export type RobotDrive = ArmSetup | RoverSetup | LegsSetup | PoseSetup;
 
 export interface TeamSetup {
   kind: 'team';
@@ -252,6 +253,8 @@ export function createDrive(setup: DriveSetup): DriveLoop {
   if (setup.kind === 'team') return new TeamDrive(setup);
 
   if (setup.kind === 'arm') return new ArmDrive(setup);
+
+  if (setup.kind === 'pose') return new PoseDrive(setup);
 
   return setup.kind === 'rover' ? new RoverDrive(setup) : new LegsDrive(setup);
 }

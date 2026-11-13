@@ -27,7 +27,14 @@ export interface VelocityDrive {
 }
 
 export type DriveAccess =
-  | { kind: 'ready'; cls: DriveClass; setup: RobotDrive; needsFallCheck: boolean; followPart: string | null }
+  | {
+      kind: 'ready';
+      cls: DriveClass;
+      setup: RobotDrive;
+      needsFallCheck: boolean;
+      followPart: string | null;
+      pin?: string;
+    }
   | { kind: 'policy'; cls: 'legs'; velocity: VelocityDrive; robot: string; followPart: string | null }
   | { kind: 'teach' }
   | { kind: 'none' };

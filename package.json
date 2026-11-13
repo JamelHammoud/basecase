@@ -143,6 +143,7 @@
       "extendInfo": {
         "CFBundleIconName": "Basecase",
         "NSLocalNetworkUsageDescription": "So Basecase can find your printers and send them prints.",
+        "NSCameraUsageDescription": "So Basecase can drive a robot from your arm pose. Frames stay on this Mac.",
         "NSBonjourServices": [
           "_octoprint._tcp",
           "_moonraker._tcp"
@@ -219,6 +220,7 @@
     "@babel/core": "^7.29.7",
     "@dagrejs/dagre": "^3.1.3",
     "@eslint/js": "^10.0.1",
+    "@mediapipe/tasks-vision": "^1.2.3",
     "@mujoco/mujoco": "4.0.0",
     "@rolldown/plugin-babel": "^0.2.4",
     "@stylistic/eslint-plugin": "^5.10.0",

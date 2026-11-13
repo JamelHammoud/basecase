@@ -343,8 +343,8 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, msg.seconds);
   },
-  command: ({ slot, v, target, aux }) => {
-    if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux });
+  command: ({ slot, v, target, aux, joints }) => {
+    if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux, joints });
   },
   script: (msg) => {
     script = engine ? { start: engine.data.time, commands: [...msg.commands].sort((a, b) => a.at - b.at) } : null;

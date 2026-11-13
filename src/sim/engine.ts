@@ -317,6 +317,20 @@ export class SimEngine {
 
       this.data.ctrl[j.actuator] = j.drive === 'velocity' ? (wheels?.[j.id] ?? 0) : this.targetFor(i, values);
     });
+
+    const under = routePolicy(this.controller);
+
+    if (!under || !this.policyState) return;
+
+    this.applyPolicy(under.policy, this.policyState);
+    this.overlayValues(values ?? {});
+  }
+
+  private overlayValues(values: Record<string, number>) {
+    this.sim.joints.forEach((j, i) => {
+      if (j.actuator >= 0 && j.drive !== 'velocity' && values[j.id] !== undefined)
+        this.data.ctrl[j.actuator] = this.targetFor(i, values);
+    });
   }
 
   private applyPolicy(policy: PolicySpec, ps: PolicyState) {

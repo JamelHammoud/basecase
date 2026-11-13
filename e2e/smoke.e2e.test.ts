@@ -17,6 +17,21 @@ const sidebarShows = (name: string) =>
     return aside?.style.width !== '0px' && aside?.querySelector('h2')?.textContent === title;
   }, name);
 
+const blurFocus = () => (document.activeElement as HTMLElement | null)?.blur();
+
+const fillDiffersFromPanel = (row: Element) => {
+  const probe = document.createElement('div');
+
+  probe.style.background = 'var(--color-panel-bg)';
+  row.after(probe);
+
+  const panel = getComputedStyle(probe).backgroundColor;
+
+  probe.remove();
+
+  return getComputedStyle(row).backgroundColor !== panel;
+};
+
 const clickRail = async (name: string) => {
   if (await sidebarShows(name)) return;
 
@@ -78,6 +93,38 @@ describe('studio smoke test', () => {
     await app.page.waitForTimeout(400);
 
     expect(app.errors).toEqual([]);
+  });
+});
+
+describe('Layers rows', () => {
+  it('runs a Layers name under its row toggles and keeps Show while the part is hidden', async () => {
+    await clickRail('Layers');
+
+    const row = app.page.locator(visible('[data-layer-row^="part:"]'), { hasText: 'Cube' }).first();
+    const nameRight = () => row.locator('span.truncate').evaluate((el) => el.getBoundingClientRect().right);
+    const rowRight = () => row.evaluate((el) => el.getBoundingClientRect().right);
+
+    await row.locator('span.truncate').click({ position: { x: 4, y: 4 } });
+    await app.page.mouse.move(0, 0);
+    await expect.poll(() => row.evaluate(fillDiffersFromPanel)).toBe(true);
+    expect((await rowRight()) - (await nameRight())).toBeLessThan(16);
+
+    await row.hover();
+    await row.getByRole('button', { name: 'Hide' }).click();
+    await app.page.mouse.move(0, 0);
+    await app.page.evaluate(blurFocus);
+
+    const show = row.getByRole('button', { name: 'Show' });
+
+    await expect.poll(() => show.evaluate((el) => el.checkVisibility({ opacityProperty: true }))).toBe(true);
+
+    await row.hover();
+    await show.click();
+    await app.page.mouse.move(0, 0);
+
+    const hide = row.getByRole('button', { name: 'Hide' });
+
+    await expect.poll(() => hide.evaluate((el) => el.checkVisibility({ opacityProperty: true }))).toBe(false);
   });
 });
 

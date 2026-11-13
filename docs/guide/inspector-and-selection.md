@@ -6,7 +6,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 - Sections are separated by full-width hairline dividers, never boxed cards. Section titles are sentence case and 13px semibold.
 - Every Inspect view and mode panel scrolls with `useScrollFade`, like Parts: an edge fades only while there's more to scroll past it.
-- **No selection:** Project description (collapsed by default; saved with the scene to `ai-reference/`; no placeholder, like Notes) and Comments (just the title and + when there are none). Scene stats live in Layers: the header shows parts and cutouts, and a footer shows the overall size.
+- **No selection:** Description, the scene's (collapsed by default; saved with the scene to `ai-reference/` and matched by Search scenes; no placeholder, like Notes; Copy as Markdown puts it under Design Intent and leaves that line out when it's empty) and Comments (just the title and + when there are none). Scene stats live in Layers: the header shows parts and cutouts, and a footer shows the overall size.
 - **Part selected:**
   - Inline-renamable name, then Duplicate / Save to Library / Delete.
   - Hardware shows the same `HardwareConfigurator` sections as Parts (type tiles, drive, size, length, finish) in place of Size and Shape. Specs and Holes come before Notes, collapsed; Holes carries + (Add clearance hole) in its header. Length typing and scrubbing are live; release commits one undo step. The color follows the finish unless it was set by hand.

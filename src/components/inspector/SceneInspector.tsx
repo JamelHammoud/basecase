@@ -9,7 +9,7 @@ export const SceneInspector: React.FC<InspectorProps> = (props) => {
 
   return (
     <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-      <Section title="Project description" collapsible defaultOpen={false}>
+      <Section title="Description" collapsible defaultOpen={false}>
         <TextArea
           rows={6}
           value={globalGoal}

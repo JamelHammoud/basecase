@@ -134,8 +134,10 @@ export function useCases(options: CasesOptions) {
     sim,
     rig,
     parts,
+    joints: project.joints ?? [],
     active,
     onTry: (record) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), record] })),
+    onRefuse: (message) => showToast(message),
   });
 
   return {

@@ -1,4 +1,5 @@
 import type { V3 } from '../utils/kinematics';
+import { caseSignalNames } from './caseFacts';
 import { scaledFormula } from './contract';
 import type { Case, WorldObject } from './schema';
 
@@ -16,6 +17,8 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   const sameAnchor = from.every((x, i) => pinned(i) || x === anchor[i]);
 
   if (sameScale && sameAnchor) return kase;
+
+  const unitless = caseSignalNames(kase);
 
   const object = (o: WorldObject): WorldObject => ({
     ...o,
@@ -35,8 +38,8 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
       ...kase.task,
       contract: {
         ...kase.task.contract,
-        success: scaledFormula(kase.task.contract.success, s),
-        failures: kase.task.contract.failures.map((f) => ({ ...f, formula: scaledFormula(f.formula, s) })),
+        success: scaledFormula(kase.task.contract.success, s, unitless),
+        failures: kase.task.contract.failures.map((f) => ({ ...f, formula: scaledFormula(f.formula, s, unitless) })),
       },
     },
   };

@@ -3,6 +3,7 @@ import { framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
 import { evaluateContract } from '../skills/contract';
+import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
 import { probeReader, type ProbeWorld } from './probes';
 import type { EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, type Case } from './schema';
@@ -57,7 +58,15 @@ export async function scoreTry({ recording, ...scoring }: TryScoring) {
   const signals: Record<string, number[]> = {};
   const reader = caseProbeReader(scoring);
 
-  for (let i = 0; i < recording.frames; i++) reader.sample(framePoses(recording, i), signals);
+  const facts = caseFactReader(scoring.kase, scoring.model);
+  const names = caseSignalNames(scoring.kase);
+
+  for (let i = 0; i < recording.frames; i++) {
+    const poses = framePoses(recording, i);
+
+    reader.sample(poses, signals);
+    sampleSignals(facts.read(poses, i * recording.dt), names, signals);
+  }
 
   return evaluateContract(scoring.kase.task.contract, { dt: recording.dt, signals });
 }

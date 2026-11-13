@@ -2,6 +2,7 @@ import type { PartKind, ScenePart } from '../types/robotics';
 import type { WorldBehavior, WorldItem } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
+import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
 import {
   asId,
@@ -26,6 +27,7 @@ const CONTROL_INPUTS = ['move', 'turn', 'lift', 'grip'] as const;
 const MAX_OBJECTS = 256;
 const MAX_COMMANDS = 4096;
 const MAX_SECONDS = 600;
+const SCORE_COUNTS = ['in', 'out'] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -79,10 +81,16 @@ export interface CaseProbe {
   to: ProbeEnd;
 }
 
+export interface ScoreRule {
+  spot: string;
+  counts: (typeof SCORE_COUNTS)[number];
+}
+
 export interface CaseTask {
   seconds: number;
   probes: CaseProbe[];
   contract: Contract;
+  score?: ScoreRule;
 }
 
 export interface Case {
@@ -96,6 +104,7 @@ export interface Case {
   reference: { timeline: ReferenceCommand[] };
   task: CaseTask;
   console?: CaseConsole;
+  logic?: Routine;
 }
 
 const v3 = vector(3) as unknown as Reader<V3>;
@@ -179,6 +188,12 @@ const readProbeEnd: Reader<ProbeEnd> = (value, where) => {
   return v.object !== undefined ? { object: asId(v.object, `${where}.object`) } : { point: v3(v.point, where) };
 };
 
+const readScore: Reader<ScoreRule> = (value, where) => {
+  const v = asRecord(value, where);
+
+  return { spot: asId(v.spot, `${where}.spot`), counts: oneOf(SCORE_COUNTS)(v.counts, `${where}.counts`) };
+};
+
 const readTask: Reader<CaseTask> = (value, where) => {
   const v = asRecord(value, where);
   const seconds = asNumber(v.seconds, `${where}.seconds`);
@@ -197,8 +212,22 @@ const readTask: Reader<CaseTask> = (value, where) => {
       };
     }, 64)(v.probes, `${where}.probes`),
     contract: readContract(v.contract, `${where}.contract`),
+    ...(v.score !== undefined ? { score: readScore(v.score, `${where}.score`) } : {}),
   };
 };
+
+const readLogic: Reader<Routine> = (value, where) => {
+  const valid = validateRoutine(value);
+
+  return valid.ok ? valid.routine : refuse(where, `is a Routine that doesn’t validate: ${valid.errors[0].message}`);
+};
+
+function checkScore(task: CaseTask, objects: WorldObject[]) {
+  const spot = task.score?.spot;
+
+  if (spot !== undefined && !objects.some((o) => o.id === spot && o.behavior === 'marker'))
+    refuse('task.score.spot', 'must name a marker in the world');
+}
 
 export function parseCase(input: unknown): Case {
   const v = asRecord(input, 'A Case file');
@@ -209,8 +238,10 @@ export function parseCase(input: unknown): Case {
   const world = asRecord(v.world, 'world');
   const reference = asRecord(v.reference, 'reference');
   const objects = readWorldObjects(world.objects);
-
   const task = readTask(v.task, 'task');
+
+  checkScore(task, objects);
+
   const caseConsole = optional(consoleReader(task.probes.map((p) => p.signal)), v.console, 'console');
 
   return {
@@ -224,6 +255,7 @@ export function parseCase(input: unknown): Case {
     reference: { timeline: listOf(readCommand, MAX_COMMANDS)(reference.timeline, 'reference.timeline') },
     task,
     ...(caseConsole ? { console: caseConsole } : {}),
+    ...(v.logic !== undefined ? { logic: readLogic(v.logic, 'logic') } : {}),
   };
 }
 

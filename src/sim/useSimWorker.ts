@@ -5,8 +5,15 @@ import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { Recording } from './recorder';
+import type { CaseFacts } from '../cases/caseFacts';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
+
+interface LatestFrame {
+  at: number;
+  stats: SimStats | null;
+  facts: CaseFacts | null;
+}
 
 export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
 
@@ -19,7 +26,7 @@ export function useSimWorker(
   const [playing, setPlaying] = useState(false);
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ui = useRef<{ at: number; stats: SimStats | null }>({ at: 0, stats: null });
+  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null });
   const frameHookRef = useRef<(() => void) | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
@@ -69,6 +76,7 @@ export function useSimWorker(
       if (msg.type !== 'frame' || !m) return;
 
       ui.current.stats = msg.stats;
+      ui.current.facts = msg.facts ?? null;
       showFrame(m, msg, { viewport: viewportRef.current, listeners: poseListeners.listeners.current });
       frameHookRef.current?.();
 
@@ -144,6 +152,7 @@ export function useSimWorker(
     setPlaying,
     stats,
     latestStats: () => (status === 'off' ? null : ui.current.stats),
+    latestFacts: () => (status === 'off' ? null : ui.current.facts),
     setStats,
     error,
     setError,

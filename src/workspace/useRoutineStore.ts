@@ -5,6 +5,7 @@ import { moverFor } from '../routines/routineNeeds';
 import { editInSet, putInSet } from '../routines/routineSet';
 import type { Capability, Routine, RoutineError } from '../routines/schema';
 import type { ProjectSettings } from '../types/robotics';
+import { routinesView, writeRoutines } from './caseLogicRoutines';
 import { newId } from './helpers';
 
 interface StoreOptions {
@@ -21,8 +22,6 @@ export interface EditResult {
   errors?: RoutineError[];
 }
 
-const NO_ROUTINES: Routine[] = [];
-
 export function nextRoutineName(routines: readonly Routine[]): string {
   const taken = new Set(routines.map((r) => r.name));
   let n = routines.length + 1;
@@ -33,16 +32,16 @@ export function nextRoutineName(routines: readonly Routine[]): string {
 }
 
 export function useRoutineStore({ project, projectRef, updateProjectNow, capabilities }: StoreOptions) {
-  const routines = project.routines ?? NO_ROUTINES;
+  const routines = routinesView(project);
   const [chosen, setChosen] = useState<string | null>(null);
   const stacks = useRef<Stacks>({ past: [], future: [] });
   const active = routines.find((r) => r.id === chosen) ?? routines[0] ?? null;
 
-  const current = () => projectRef.current.routines ?? NO_ROUTINES;
+  const current = () => routinesView(projectRef.current);
 
   const write = (history: History<Routine[]>) => {
     stacks.current = { past: history.past, future: history.future };
-    updateProjectNow((p) => ({ ...p, routines: history.present.length ? history.present : undefined }));
+    updateProjectNow((p) => writeRoutines(p, history.present));
   };
 
   const change = (next: (routines: Routine[]) => Routine[]): boolean => {

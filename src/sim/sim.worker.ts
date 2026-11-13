@@ -9,6 +9,8 @@ import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
 import { demandedTorques, jointForces, limitForces } from './simForces';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
+import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
+import type { CaseFacts, FactValue } from '../cases/caseFacts';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -36,6 +38,9 @@ export type SimRequest =
       commands?: Array<{ at: number; command: DriveCommand }>;
     }
   | ({ type: 'routine' } & LiveRoutineInput)
+  | ({ type: 'case' } & LiveCaseInput)
+  | { type: 'caseEnd' }
+  | { type: 'input'; name: string; value: FactValue }
   | { type: 'cameras'; port: MessagePort | null }
   | { type: 'dispose' };
 
@@ -51,6 +56,7 @@ export type SimResponse =
       joints: Float64Array;
       stats: ReturnType<SimEngine['stats']>;
       playing: boolean;
+      facts?: CaseFacts;
     }
   | {
       type: 'ran';
@@ -71,6 +77,8 @@ let rtf = 1;
 let recorder: Recorder | null = null;
 let replayTimer = 0;
 let live: LiveRoutine | null = null;
+let liveCase: LiveCase | null = null;
+let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
@@ -86,7 +94,9 @@ const frame = () => {
     cameraPort.postMessage(copy, [copy.buffer]);
   }
 
-  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing }, [poses.buffer, joints.buffer]);
+  const facts = liveCase?.facts;
+
+  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts }, [poses.buffer, joints.buffer]);
 };
 
 function loop() {
@@ -100,6 +110,7 @@ function loop() {
   const t0 = performance.now();
 
   if (live) advanceRoutine(live, wall * speed);
+  else if (liveCase) liveCase.advance(wall * speed);
   else engine.step(wall * speed);
 
   const cost = (performance.now() - t0) / 1000;
@@ -130,6 +141,20 @@ async function startRoutine(msg: Msg<'routine'>) {
   play();
 }
 
+async function startCase(msg: Msg<'case'>) {
+  if (!engine) throw new Error('Nothing loaded');
+
+  liveCase = await LiveCase.start(engine, msg, () => driveController);
+}
+
+function setController(c: Controller) {
+  driveController = c;
+
+  if (liveCase && !liveCase.driving) return;
+
+  engine?.setController(c);
+}
+
 function errorText(e: unknown): string {
   const s = e instanceof Error ? e.message : String(e);
 
@@ -143,10 +168,11 @@ async function load(msg: Msg<'load'>) {
   engine?.dispose();
   engine = null;
   live = null;
+  liveCase = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
 
-  if (msg.controller) engine.setController(msg.controller);
+  if (msg.controller) setController(msg.controller);
 
   const m = engine.model;
 
@@ -288,15 +314,13 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   speed: (msg) => {
     speed = msg.value;
   },
-  controller: (msg) => {
-    engine?.setController(msg.controller);
-  },
+  controller: (msg) => setController(msg.controller),
   grab,
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, msg.seconds);
   },
   command: ({ v, target, aux }) => {
-    engine?.command({ v, target, aux });
+    if (!liveCase || liveCase.driving) engine?.command({ v, target, aux });
   },
   respawn: (msg) => {
     engine?.respawn(msg.robot);
@@ -306,6 +330,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   replay,
   run,
   routine: startRoutine,
+  case: startCase,
+  caseEnd: () => {
+    liveCase = null;
+  },
+  input: (msg) => liveCase?.input(msg.name, msg.value),
   cameras: (msg) => {
     cameraPort?.close();
     cameraPort = msg.port;
@@ -314,6 +343,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   dispose: () => {
     playing = false;
     live = null;
+    liveCase = null;
     recorder = null;
     clearTimeout(timer);
     clearTimeout(replayTimer);

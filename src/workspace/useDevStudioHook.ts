@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { worldDeltas } from '../sim/mjcf';
+import { parseCase } from '../cases/schema';
 import { withCalibration } from '../reality/projectCalibrations';
 import { modelFingerprints } from '../sim/policyFreshness';
 import { exposesTestHooks } from '../utils/platform/testHooks';
@@ -52,6 +53,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         activeCase: cases.active?.id ?? null,
         caseSeconds: cases.active?.task.seconds ?? null,
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin, seconds: t.seconds })),
+        facts: sim.latestFacts(),
         fingerprints: modelFingerprints(core.simTraining.skills.model),
       };
     },
@@ -81,6 +83,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
 
       return zip && unzipSync(zip);
     },
+    addCase: (raw) => core.simTraining.cases.add(parseCase(raw)).id,
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     robotPackage: async () => {
       const made = await robotPackageZip(core);

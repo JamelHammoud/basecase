@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ARC_CONSOLES } from '../src/cases/console/fixtures/arcConsoles';
-import { touchTheDots } from '../src/cases/testing';
+import { presetCase } from '../src/cases/caseBuilder';
+import { buildRig } from '../src/utils/kinematics';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ScenePart } from '../src/types/robotics';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
@@ -159,7 +160,12 @@ describe('Command Center', () => {
     const { page } = app;
     const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
     const game = ARC_CONSOLES.find((c) => c.name === 'Block game')!.console;
-    const kase = { ...touchTheDots(arm), id: 'block-game', name: 'Knock the Dots', console: game };
+    const kase = {
+      ...presetCase('touch-the-dots', buildRig(arm.joints, arm.parts), arm.parts),
+      id: 'block-game',
+      name: 'Knock the Dots',
+      console: game,
+    };
     const scene = {
       name: 'block-game',
       parts: arm.parts,

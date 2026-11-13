@@ -39,6 +39,7 @@ export interface DevActions {
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  addCase: (raw: unknown) => string;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -158,6 +159,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    addCase: (raw: unknown) => devRef.current.addCase(raw),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     stubTabEngine,
     pickFiles: (files: { name: string; base64: string }[]) =>

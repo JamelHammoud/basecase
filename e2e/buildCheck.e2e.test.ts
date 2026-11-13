@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
-import { presetCase } from '../src/cases/testing';
+import { presetCase } from '../src/cases/caseBuilder';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { buildRig } from '../src/utils/kinematics';
 import { openApp, partCount, type App } from './harness';
 
 interface StudioHook {
@@ -251,7 +252,7 @@ describe('Build tab fields', () => {
 
 describe('Cases in Checks', () => {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
-  const flag = presetCase(rover, 'reach-the-flag');
+  const flag = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
   const activeCase = () =>
     app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().activeCase);
 

@@ -23,7 +23,7 @@ The loop is a team that never stops. `node tools/loop/install.mjs install` creat
 | `revise` | 4 | Answers a failed review, a Check failure that's the pull request's own, or any Check failure on a repair, on its branch; after four failed reviews it labels the pull request `loop:stuck` and stops |
 | `refine` | 2 | Makes one existing feature or view fit better |
 | `merge` | 1 | Squash-merges a pull request with `check` and `agent-review` green: repairs first, then the loop's own improvements, then `loop:priority` work, then the oldest; while `main` is red it takes only repairs, which must turn Check fully green |
-| `rebase` | 1 | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts |
+| `rebase` | 1 | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts; once `main` is green, also brings a loop pull request whose Check failed on an older `main` up to date, so its Check runs again with the fix |
 | `repair` | 1 | Opens a repair when `main`'s last finished Check failed |
 | `lead` | 1 | Plans when there's a reason: a new request or Direction comment from Jamel, or fewer waiting steps than builders |
 | `update` | daily | Moves the agent adapters to their latest releases |

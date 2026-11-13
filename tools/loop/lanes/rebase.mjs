@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { runAgent } from '../lib/agent.mjs';
-import { openPulls } from '../lib/github.mjs';
+import { checkConclusion, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
 import { close } from '../lib/worktree.mjs';
@@ -50,14 +50,38 @@ function bringUpToDate(pull, log) {
   }
 }
 
-export default function rebase({ log }) {
-  const pull = openPulls().find((p) => p.headRefName.startsWith('loop/') && p.mergeable === 'CONFLICTING');
+const isLoop = (pull) => pull.headRefName.startsWith('loop/');
 
-  if (!pull) {
-    log('no conflicts');
+const behindMain = (pull) => {
+  run('git', ['fetch', '-q', 'origin', 'main', pull.headRefName], { cwd: HOME_CHECKOUT });
+
+  return !run('git', ['merge-base', '--is-ancestor', 'origin/main', `origin/${pull.headRefName}`], {
+    cwd: HOME_CHECKOUT,
+    allowFail: true,
+  }).ok;
+};
+
+const failedOnOldMain = (pull, mainGreen) =>
+  mainGreen && checkConclusion(pull.headRefOid) === 'failure' && behindMain(pull);
+
+export default function rebase({ log }) {
+  const pulls = openPulls().filter(isLoop);
+  const conflicting = pulls.find((p) => p.mergeable === 'CONFLICTING');
+
+  if (conflicting) {
+    bringUpToDate(conflicting, log);
 
     return;
   }
 
-  bringUpToDate(pull, log);
+  const mainGreen = lastFinishedMainCheck()?.conclusion === 'success';
+  const stale = pulls.find((p) => failedOnOldMain(p, mainGreen));
+
+  if (!stale) {
+    log('nothing to bring up to date');
+
+    return;
+  }
+
+  bringUpToDate(stale, log);
 }

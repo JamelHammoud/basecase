@@ -38,11 +38,10 @@ describe('sketch geometry', () => {
       outerPoints: square,
       holes: [[[0, 0.1]]],
       output,
-      saveToLibrary: true,
       now: 7,
     });
 
-    expect(drawing).toMatchObject({ mode: 'extrude', bevel: true, widthMm: 64, depthMm: 64, saveToLibrary: true });
+    expect(drawing).toMatchObject({ mode: 'extrude', bevel: true, widthMm: 64, depthMm: 64 });
     expect(drawing.nodes[0]).toMatchObject({
       id: 'node-extrude-7',
       nodeType: 'contour_extrude',
@@ -64,7 +63,6 @@ describe('sketch geometry', () => {
       outerPoints: square,
       holes: [],
       output,
-      saveToLibrary: false,
       now: 7,
     });
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowUpIcon } from '../../design-system';
+import { ArrowUpIcon, IconButton } from '../../design-system';
 
 export const AutoTextarea: React.FC<{
   value: string;
@@ -83,15 +83,16 @@ export const CommentComposer: React.FC<{
         }}
         className="flex-1 bg-transparent py-1.5 text-[13.5px] leading-relaxed text-white outline-none resize-none"
       />
-      <button
-        type="button"
-        aria-label="Post"
+      <IconButton
+        icon={<ArrowUpIcon className="w-[18px] h-[18px]" strokeWidth={2.25} />}
+        title="Post"
+        shortcut="↩︎"
+        tooltipSide="top"
+        variant="send"
+        className="rounded-full"
         disabled={!value.trim()}
         onClick={send}
-        className="w-7 h-7 mb-0.5 rounded-full bg-[#0d99ff] text-white flex items-center justify-center shrink-0 cursor-default transition-[transform,background-color] active:scale-[0.92] disabled:bg-white/10 disabled:text-white/35"
-      >
-        <ArrowUpIcon className="w-4 h-4" strokeWidth={2.5} />
-      </button>
+      />
     </div>
   );
 };

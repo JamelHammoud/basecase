@@ -2,7 +2,7 @@ import React from 'react';
 import { sizeRadius } from './sizeRadius';
 import { Tooltip, TooltipSide } from './Tooltip';
 
-export type IconButtonVariant = 'default' | 'active' | 'ghost' | 'danger' | 'primary' | 'toggled';
+export type IconButtonVariant = 'default' | 'active' | 'ghost' | 'danger' | 'primary' | 'toggled' | 'send';
 export type IconButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 export interface IconButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'title'> {
@@ -24,6 +24,7 @@ const variantStyles: Record<IconButtonVariant, string> = {
   toggled: 'bg-white/[0.1] text-white',
   danger: 'text-white/50 hover:text-red-400 hover:bg-red-500/[0.12] disabled:opacity-30',
   primary: 'bg-[#0d99ff] hover:bg-[#2ba5ff] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]',
+  send: 'bg-white text-black hover:bg-white/90 disabled:bg-white/15 disabled:text-white/40',
 };
 
 const sizeStyles: Record<IconButtonSize, string> = {

@@ -54,7 +54,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
             name={routine.name}
             label="Routine name"
             onDone={rename}
-            className="w-full h-8! text-[14px]! font-medium"
+            className="w-full h-[32px]! text-[14px]! font-medium"
           />
         ) : (
           <Button

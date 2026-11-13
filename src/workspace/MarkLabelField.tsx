@@ -41,7 +41,7 @@ export function MarkLabelField({ label, color, autoFocus, onCommit, onClose }: M
         onClose();
       }}
       style={{ background: color, color: readableTextOn(color) }}
-      className="block h-8 min-w-[120px] max-w-[320px] px-3.5 rounded-full [field-sizing:content] text-center text-[13px] font-semibold placeholder:text-current placeholder:opacity-60 outline-none shadow-[0_4px_16px_rgba(0,0,0,0.35)] ring-2 ring-transparent focus:ring-[#0d99ff] transition-shadow"
+      className="block h-[32px] min-w-[120px] max-w-[320px] px-3.5 rounded-full [field-sizing:content] text-center text-[13px] font-semibold placeholder:text-current placeholder:opacity-60 outline-none shadow-[0_4px_16px_rgba(0,0,0,0.35)] ring-2 ring-transparent focus:ring-[#0d99ff] transition-shadow"
     />
   );
 }

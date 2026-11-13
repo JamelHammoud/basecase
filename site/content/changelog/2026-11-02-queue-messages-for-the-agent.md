@@ -19,7 +19,7 @@ Hover a queued message and four controls float over its right end: Send now, Edi
 
 ![A queued message on hover, with Send now, Edit and Delete](/changelog/queue-messages-for-the-agent/row.png)
 
-Edit, or a click on the message, opens it in the composer with its images, under an "Editing queued message" bar. Whatever you'd been typing is set aside and comes back after. While you edit, the Send button turns into a tick: press Enter to put the message back in its place, or Esc to leave it as it was.
+Edit, or a click on the message, opens it in the composer with its images, under an "Editing queued message" bar. Whatever you'd been typing is set aside and comes back after. While you edit and the agent is still working, the Send button turns into a tick: press Enter to put the message back in its place, or Esc to leave it as it was.
 
 ![Editing a queued message in the composer](/changelog/queue-messages-for-the-agent/edit.png)
 

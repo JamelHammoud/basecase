@@ -16,11 +16,11 @@ Click Export at the top right and choose Robot Package. It's greyed out until th
 
 `robot.xml` is the MuJoCo model Simulate runs, byte for byte, with every collision hull written inline, so it loads in MuJoCo with no other file.
 
-`urdf/robot.urdf` is for ROS and anything else that reads URDF. It has one link per body of the robot and one joint per movable joint, named the same as in `robot.xml`, with axes and limits, plus each link's mass, centre of mass and inertia. The masses add up to the Build tab's Weight check. Every part is a binary STL in `meshes/`, already placed in its link's frame, and shared between visual and collision.
+`urdf/robot.urdf` is for ROS and anything else that reads URDF. It has one link per body of the robot and one joint per movable joint, named the same as in `robot.xml`, with axes and limits, plus each link's mass, centre of mass and inertia. Every part is a binary STL in `meshes/`, already placed in its link's frame, and shared between visual and collision.
 
 `joint_map.json` lists each movable joint in order with a servo id from 1, the joint's names in the model and in your scene, its servo family (STS3215, XL330 or none), zero offset, direction, limits and the active calibration from Calibrate Servos. Its keys are the ones Basecase's robot daemon reads, so for a robot whose joints are all revolute with limits, the file works as that daemon's calibration file as is.
 
-`policies/` holds one folder per policy you trained, each with the policy and a `spec.json` that lists its observations and actions by joint name, its default pose, scale and control rate.
+`policies/` holds one folder per policy you trained, each with the policy and a `spec.json` that names the joints its actions drive and gives its default pose, action scale, observations and control step.
 
 ## In ROS 2
 

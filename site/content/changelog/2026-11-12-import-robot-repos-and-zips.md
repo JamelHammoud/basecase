@@ -24,12 +24,12 @@ Basecase looks for the robot's description itself. It prefers an MJCF model, the
 
 ![The three SO-101 models in SO-ARM100, with so101_new_calib.xml picked](/changelog/import-robot-repos-and-zips/choose.png)
 
-A link to a single file in a Hugging Face repo imports that file and nothing else. A link with no robot in it, or a repo that's private or missing, fails with one toast that names the link.
+A link to a single file in a Hugging Face repo imports that file and nothing else. A link with no robot in it, or a repo that's private or missing, fails with one toast saying so.
 
 ## From your computer
 
-Drag a robot's folder, zip, URDF or MJCF file onto the canvas and the robot stands where you drop it. Folders are searched the same way as repos, skipping `.git` and `node_modules`. Choose Folder in the Import Robot sheet does the same as a drop.
+Drag a robot's folder, zip, URDF or MJCF file onto the canvas and the robot stands where you drop it. Dropped folders are searched the same way as repos, skipping `.git` and `node_modules`. Choose Folder in the Import Robot sheet imports a robot's folder from a file picker instead.
 
 ## After it's in
 
-Each piece of the robot with a shape becomes a mesh part, and each revolute or prismatic joint keeps its axis and limits, ready for the Pose tab, Simulate and Operate. Robots ▸ Imported remembers the file it read with a preview, so the robot is one click away next time, in any scene.
+Each piece of the robot with a shape becomes a mesh part, and each revolute or prismatic joint keeps its axis and limits, ready for the Pose tab, Simulate and Operate. Robots imported from a link are remembered in Robots ▸ Imported with a preview, so they're one click away next time, in any scene.

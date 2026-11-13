@@ -32,6 +32,7 @@ import type {
 } from './platform/types';
 import { webGuides } from './platform/web/webBackend';
 import { IS_WEB_DEMO } from './platform/webDemo';
+import { errorMessage } from './errorMessage';
 
 export type * from './platform/types';
 
@@ -115,11 +116,6 @@ const acpBridge = {
 const plainJson = (value: unknown) =>
   JSON.parse(JSON.stringify(value, (_key, v: unknown) => (v instanceof Float32Array ? Array.from(v) : v)));
 
-const ipcMessage = (e: unknown) =>
-  (e instanceof Error ? e.message : String(e))
-    .replace(/^Error invoking remote method '[^']+':\s*/, '')
-    .replace(/^Error:\s*/, '');
-
 const libraryBridge = {
   async saveEvidenceFile(payload: EvidenceFilePayload): Promise<void> {
     const api = electron();
@@ -188,7 +184,7 @@ const libraryBridge = {
     try {
       return await api.exportStep(job);
     } catch (e) {
-      throw new Error(ipcMessage(e), { cause: e });
+      throw new Error(errorMessage(e), { cause: e });
     }
   },
   renderCad: (language: CadLanguage, code: string): Promise<RenderedCad> =>
@@ -290,13 +286,13 @@ const simreadyBridge = {
 
     if (!api)
       return postOrThrow('/simready-fetch', payload, (body, res) =>
-        res.ok ? null : ipcMessage(String(body.error ?? 'Couldn’t download the asset.')),
+        res.ok ? null : errorMessage(body.error ?? 'Couldn’t download the asset.'),
       );
 
     try {
       return await api.simreadyFetch(payload);
     } catch (e) {
-      throw new Error(ipcMessage(e), { cause: e });
+      throw new Error(errorMessage(e), { cause: e });
     }
   },
 };

@@ -16,6 +16,7 @@ import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from './jointAxis';
 import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
+import { errorMessage } from '../../utils/errorMessage';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -95,7 +96,7 @@ async function analyze<R>(client: Client, scene: SceneShapes, task: AnalysisTask
       client.shapes.clear();
       client.geometries.clear();
 
-      if (!String((error as Error)?.message ?? error).includes(MISSING_SHAPE)) throw error;
+      if (!errorMessage(error).includes(MISSING_SHAPE)) throw error;
 
       return send();
     });

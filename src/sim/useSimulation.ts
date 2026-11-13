@@ -21,6 +21,7 @@ import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
 import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { AmpModel } from '../utils/servoAmps';
+import { errorMessage } from '../utils/errorMessage';
 
 export { simDeltas } from './mjcf';
 
@@ -305,7 +306,7 @@ export function useSimulation(props: Inputs): Simulation {
     try {
       m = await buildModel();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorMessage(e));
       setStatus('error');
 
       return;

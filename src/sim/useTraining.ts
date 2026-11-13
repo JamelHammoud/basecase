@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PolicyRecord } from '../types/robotics';
+import { errorMessage } from '../utils/errorMessage';
 import { platformBridge, type TrainerStatus } from '../utils/platformBridge';
 import type { SimModel } from './mjcf';
 import { isPolicySpec, type PolicySpec } from './policy';
@@ -36,9 +37,6 @@ export interface Training {
   loadPolicy: (id: string) => Promise<PolicySpec | null>;
   isStale: (record: PolicyRecord) => boolean;
 }
-
-const errorText = (e: unknown) =>
-  e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e);
 
 const nextName = (policies: PolicyRecord[], task: TrainOptions['task'], robotKey: string) =>
   `${task === 'walk' ? 'Walk' : 'Stand'} ${policies.filter((p) => p.task === task && p.robot === robotKey).length + 1}`;
@@ -130,10 +128,10 @@ export function useTraining({
         return null;
       } catch (e) {
         job.current = null;
-        setError(errorText(e));
+        setError(errorMessage(e));
         setStatus('error');
 
-        return errorText(e);
+        return errorMessage(e);
       }
     },
     [buildModel, robotKey, policies, workspaceId],

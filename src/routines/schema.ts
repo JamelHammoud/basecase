@@ -88,10 +88,16 @@ export interface SkillContract {
   transitions: Record<string, TransitionProof>;
 }
 
+export interface Handoff {
+  from: string;
+  to: string;
+}
+
 export interface RoutineError {
   code: string;
   message: string;
   path?: string;
+  handoff?: Handoff & { falls: number | null };
 }
 
 export const isGuarded = (step: Step): step is GuardedStep => step.kind !== 'if' && step.kind !== 'together';

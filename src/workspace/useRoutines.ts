@@ -1,21 +1,22 @@
 import { type RefObject, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { sceneCapabilities } from '../routines/capabilities';
+import { NOT_COMPILED, useRoutineRuns } from './useRoutineRuns';
 import type { RoutineEdit } from '../routines/edit';
-import type { LiveUpdate } from '../routines/routineLive';
 import { runSeconds } from '../routines/routineRun';
 import { inRoutinesWorker } from '../routines/routinesClient';
 import type { Scenario } from '../routines/scenarioTypes';
-import { type Capability, type Routine, type RoutineError, validateRoutine } from '../routines/schema';
+import { type Routine, type RoutineError, validateRoutine } from '../routines/schema';
 import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { useLatestRef } from '../utils/useLatestRef';
-import { newId } from './helpers';
 import { isCaseLogic, routinesView } from './caseLogicRoutines';
-import { checkLogic, checkRoutine, type SceneCheck } from './routineCheck';
-import { addItemFor, canAdd, mountPart } from './routineMount';
-import { EMPTY_VIEW, type RoutineRun, type RoutineTests, type RoutineView, snapshotOf } from './routineTypes';
+import { checkLogic, checkRoutine, type RoutineSkills, type SceneCheck } from './routineCheck';
+import { useHandoffs } from './useHandoffs';
+import type { HandoffJob, HandoffTraining, SceneRoutineSkills } from './useRoutineSkills';
+import { EMPTY_VIEW, type RoutineTests, type RoutineView, snapshotOf } from './routineTypes';
 import type { CommitParts, ShowToast } from './types';
 import { useRoutineEditor } from './useRoutineEditor';
+import { useRoutineMounts } from './useRoutineMounts';
 import { useRoutineStore } from './useRoutineStore';
 
 interface RoutineOptions {
@@ -26,18 +27,11 @@ interface RoutineOptions {
   commitParts: CommitParts;
   updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
   showToast: ShowToast;
+  skills: SceneRoutineSkills;
+  trainHandoff: (job: HandoffJob) => Promise<HandoffTraining | null>;
 }
 
-const NOT_COMPILED = 'Make a Routine that compiles first.';
 const NO_ROUTINE: RoutineError = { code: 'not-a-routine', message: 'Make a Routine first.' };
-
-const appendUpdate = (run: RoutineRun | null, u: LiveUpdate): RoutineRun => ({
-  live: true,
-  done: u.done,
-  trace: [...(run?.trace ?? []), ...u.events],
-  said: [...(run?.said ?? []), ...u.said],
-  failures: u.failures,
-});
 
 export const plainRun = (routine: Routine): Scenario => ({
   covers: 'run',
@@ -59,12 +53,23 @@ export function useRoutines(options: RoutineOptions) {
   const activeRef = useLatestRef(active);
   const pending = useRef<Promise<SceneCheck | null>>(Promise.resolve(null));
   const seq = useRef(0);
+  const handoffs = useHandoffs({
+    skills: options.skills,
+    train: options.trainHandoff,
+    scene: sceneRef,
+    buildModel: sim.buildModel,
+    updateProjectNow,
+  });
+  const routineScene = (skills: RoutineSkills = handoffs.skills) => ({
+    ...sceneRef.current,
+    buildModel: sim.buildModel,
+    skills,
+  });
 
-  const check = (routine: Routine) => {
+  const check = (routine: Routine, skills?: RoutineSkills) => {
     const id = ++seq.current;
-    const scene = sceneRef.current;
     const caseLogic = isCaseLogic(options.projectRef.current, routine.id);
-    const job = checkRoutine({ routine, ...scene, caseLogic, buildModel: sim.buildModel }).then((result) => {
+    const job = checkRoutine({ routine, ...routineScene(skills), caseLogic }).then((result) => {
       if (id !== seq.current) return result;
 
       setView((v) => {
@@ -97,7 +102,7 @@ export function useRoutines(options: RoutineOptions) {
 
   useEffect(() => {
     recheck();
-  }, [parts, project.joints, active]);
+  }, [parts, project.joints, project.skills, project.handoffs, handoffs.skills, active]);
 
   const make = async (input: unknown) => {
     const valid = validateRoutine(input);
@@ -106,7 +111,7 @@ export function useRoutines(options: RoutineOptions) {
 
     store.put(valid.routine);
 
-    return (await check(valid.routine)).compiled;
+    return handoffs.proveRefused(async (skills) => (await check(valid.routine, skills)).compiled);
   };
 
   const current = async () => (await pending.current) ?? null;
@@ -122,7 +127,7 @@ export function useRoutines(options: RoutineOptions) {
 
     store.select(routine.id);
 
-    const { compiled } = await check(routine);
+    const compiled = await handoffs.proveRefused(async (skills) => (await check(routine, skills)).compiled);
 
     return { ok: compiled.ok, changed: result.changed, routine, ...(compiled.ok ? {} : { errors: compiled.errors }) };
   };
@@ -141,55 +146,20 @@ export function useRoutines(options: RoutineOptions) {
     return tests;
   };
 
-  const runLive = async (scenario: Scenario) => {
-    const found = await current();
-
-    if (!found?.compiled.ok) return { started: false, message: NOT_COMPILED, errors: found?.compiled.errors };
-
-    setView((v) => ({ ...v, run: { live: true, done: false, trace: [], said: [], failures: [] } }));
-
-    const input = { plan: found.compiled.plan, scenario, joints: sceneRef.current.joints, kit: found.kit };
-    const started = await sim.runRoutine(input, (u) => setView((v) => ({ ...v, run: appendUpdate(v.run, u) })));
-
-    return started ? { started: true } : { started: false, message: sim.error ?? 'The simulator didn’t start.' };
-  };
-
-  const runHeadless = async (scenario: Scenario) => {
-    const found = await current();
-
-    if (!found?.compiled.ok) return { started: false, message: NOT_COMPILED, errors: found?.compiled.errors };
-
-    const model = await sim.buildModel();
-    const { plan } = found.compiled;
-    const { result } = await inRoutinesWorker({
-      type: 'physics',
-      plan,
-      scenario,
-      model,
-      joints: sceneRef.current.joints,
-      kit: found.kit,
-    });
-    const { trace, said, failures, passed, physics } = result;
-
-    setView((v) => ({ ...v, run: { live: false, done: true, trace, said, failures } }));
-
-    return { started: true, passed, said, failures, fellAt: physics.fellAt };
-  };
-
-  const addCapability = (capability: Capability) => {
-    const item = addItemFor(capability);
-
-    if (!item) return;
-
-    const mounted = mountPart({ parts: sceneRef.current.parts, joints: sceneRef.current.joints, item, id: newId() });
-
-    commitParts((prev) => [...prev, mounted.part]);
-    updateProjectNow((p) => ({ ...p, joints: mounted.joints }));
-    showToast(`Added ${item.name}`);
-  };
-
-  const has = new Set(active ? sceneCapabilities({ parts, joints: project.joints ?? [] }) : []);
-  const missing = (active?.requires ?? []).filter((c) => !has.has(c) && canAdd(c));
+  const { runLive, runHeadless } = useRoutineRuns({
+    pending,
+    sim,
+    sceneRef,
+    setRun: (run) => setView((v) => ({ ...v, run: run(v.run) })),
+  });
+  const { addCapability, missing } = useRoutineMounts({
+    active,
+    parts,
+    project,
+    commitParts,
+    updateProjectNow,
+    showToast,
+  });
   const shownFor = (routine: Routine | null): RoutineView =>
     view.routine?.id === routine?.id ? { ...view, routine } : { ...EMPTY_VIEW, routine, checking: !!routine };
 
@@ -201,7 +171,8 @@ export function useRoutines(options: RoutineOptions) {
     make,
     edit: (edits: readonly RoutineEdit[], id?: string) => store.edit(edits, id),
     editNow,
-    checkLogic: (logic: unknown) => checkLogic(logic, { ...sceneRef.current, buildModel: sim.buildModel }),
+    checkLogic: (logic: unknown) => handoffs.proveRefused((skills) => checkLogic(logic, routineScene(skills))),
+    handoffs,
     test,
     run: () => (active ? runLive(plainRun(active)) : Promise.resolve({ started: false, message: NOT_COMPILED })),
     runLive,

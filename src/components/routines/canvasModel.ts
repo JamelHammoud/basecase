@@ -1,8 +1,9 @@
 import { type Edge, type Node, type NodeHandle, Position } from '@xyflow/react';
 import type { InsertPoint } from '../../routines/edit';
 import type { Flow, FlowEdge, FlowNode, NodeState } from '../../routines/flowTypes';
+import { nodeHandoff } from '../../routines/handoffs';
 import type { RoutineError } from '../../routines/schema';
-import { addNodeId, attachedPoints, type Placed } from './flowLayout';
+import { addNodeId, attachedPoints, NODE_HEIGHT, type Placed } from './flowLayout';
 import type { RoutineEdgeData } from './RoutineEdge';
 import type { RoutineNodeData } from './RoutineNode';
 
@@ -32,7 +33,11 @@ function handlesFor(place: Placed, kind: string): NodeHandle[] {
   ];
 }
 
-function nodeErrors(node: FlowNode, errors: readonly RoutineError[]) {
+const LINE_PX = 16;
+const LINE_CHARS = 28;
+const FIX_ROW_PX = 36;
+
+export function nodeErrors(node: FlowNode, errors: readonly RoutineError[]) {
   const own = errors.filter((e) => e.path === node.id);
   const training = (e: RoutineError) =>
     TRAINING.has(e.code) || (e.code === 'unknown-skill' && (node.kind === 'do' || node.kind === 'base'));
@@ -40,8 +45,21 @@ function nodeErrors(node: FlowNode, errors: readonly RoutineError[]) {
   return {
     problems: own.filter((e) => !training(e)).map((e) => e.message),
     needsTraining: own.some(training),
-    unproven: own.some((e) => e.code === 'unproven-transition'),
+    handoff: nodeHandoff(own, node.id),
   };
+}
+
+export function nodeHeights(flow: Flow, errors: readonly RoutineError[], trainable: ReadonlySet<string>) {
+  return new Map(
+    flow.nodes.map((node) => {
+      const { problems, needsTraining, handoff } = nodeErrors(node, errors);
+      const lines = problems.reduce((n, p) => n + Math.ceil(p.length / LINE_CHARS), 0);
+      const handoffRows = handoff ? 1 + Number(handoff.falls !== null && trainable.has(handoff.to)) : 0;
+      const rows = Number(needsTraining) + handoffRows;
+
+      return [node.id, NODE_HEIGHT + lines * LINE_PX + rows * FIX_ROW_PX];
+    }),
+  );
 }
 
 export function canvasNodes(options: {

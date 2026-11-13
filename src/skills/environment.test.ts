@@ -89,6 +89,34 @@ describe('the environment interface', () => {
     expect((await validateEnvironment(env as Environment, model)).join(' ')).toMatch(/contract is refused/);
   });
 
+  it('starts from another skill’s states only when each state fits the robot', async () => {
+    const state = {
+      joints: joints.map(() => 0.1),
+      jointVels: joints.map(() => 0),
+      height: 0.12,
+      quat: [1, 0, 0, 0] as [number, number, number, number],
+      linear: [0.2, 0, 0] as [number, number, number],
+      angular: [0, 0, 0] as [number, number, number],
+    };
+    const from = (states: NonNullable<Environment['reset']['states']>): Environment => ({
+      ...stand(),
+      reset: { ...stand().reset, states },
+    });
+
+    expect(await validateEnvironment(from({ skill: 'walk', joints, samples: [state] }), model)).toEqual([]);
+    expect(await validateEnvironment(from({ skill: 'walk', joints, samples: [] }), model)).toEqual([
+      'Start states hold 1 to 256 states.',
+    ]);
+    expect(await validateEnvironment(from({ skill: 'walk', joints: ['tail'], samples: [state] }), model)).toEqual([
+      'A start state names tail, which this robot lacks.',
+    ]);
+    expect(
+      await validateEnvironment(from({ skill: 'walk', joints, samples: [{ ...state, quat: [2, 0, 0, 0] }] }), model),
+    ).toEqual([
+      `Each start state has a finite position and speed for each of its ${joints.length} joints, a height above 0 and a unit quaternion.`,
+    ]);
+  });
+
   it('hashes by content', () => {
     expect(environmentHash(stand())).toBe(environmentHash(stand()));
     expect(environmentHash({ ...stand(), horizonS: 9 })).not.toBe(environmentHash(stand()));

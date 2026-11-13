@@ -1,7 +1,13 @@
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
+import { withHandoffs } from '../routines/handoffs';
+import { loadKitLibrary } from '../routines/kitLibrary';
+import { scriptedDrive } from '../routines/physicsDrive';
+import { kitForModel, proveHandoff } from '../routines/physicsKit';
 import type { Routine, SkillContract, TransitionProof } from '../routines/schema';
 import { fixtureRobots } from '../sim/fixtures/robots';
+import { modelOf } from '../skills/fixtureModels';
+import { clockSkill, quadSit } from '../skills/moveFixtures';
 import { compileCaseLogic } from './caseLogic';
 import { gameLogic, KNOCK_COMMANDS, knockGame } from './fixtureGames';
 import { CASE_FORMAT_VERSION, type Case, type WorldObject } from './schema';
@@ -42,6 +48,14 @@ const sitOnVoice = (sit = 'sit'): Routine => ({
   ],
   safeStop: 'settle',
 });
+
+const walkThenSit = (): Routine => {
+  const logic = sitOnVoice();
+  const sit = logic.reactions[0].steps[0];
+  const walk = { ...sit, id: 'walk', skill: 'walk', move: { distance: 0.15, speed: 0.2, heading: 0 } };
+
+  return { ...logic, reactions: [{ ...logic.reactions[0], steps: [walk, { ...sit, id: 'sit' }] }] };
+};
 
 function dogCase(logic: Routine): Case {
   return {
@@ -135,6 +149,29 @@ describe('Case logic', { timeout: 60_000 }, () => {
     expect(result.logic?.facts['c-spot']).toBe('');
     expect(result.logic?.facts['a-spot']).toBe('bin');
     expect(result.trace.signals.score.every((s) => s === 2)).toBe(true);
+  });
+
+  it('walks then sits on a voice event once that hand-off is proved', async () => {
+    const mj = await loadMujoco();
+    const quad = robot('quad-servo');
+    const model = modelOf(quad);
+    const skills = [...(await loadKitLibrary()), clockSkill(model, quadSit())];
+    const scene = { mj, model, joints: quad.joints, skills, drive: scriptedDrive(model, quad.joints, quad.parts) };
+    const kit = kitForModel(scene);
+    const kase = { ...dogCase(walkThenSit()), task: { ...dogCase(walkThenSit()).task, seconds: 5 } };
+    const inputs = [{ at: 0.5, name: 'voice', value: 'sit' }];
+    const refused = await runCase(mj, kase, quad, { controller: 'reference', kit, inputs });
+    const proof = proveHandoff(scene, { from: 'walk', to: 'sit' })!;
+    const proved = withHandoffs(kit.skills, { 'walk->sit': proof });
+    const result = await runCase(mj, kase, quad, { controller: 'reference', kit, skills: proved, inputs });
+    const controls = (result.logic?.trace ?? []).flatMap((e) => (e.kind === 'control' ? [e.skill] : []));
+    const done = (result.logic?.trace ?? []).flatMap((e) => (e.kind === 'opDone' ? [e.node] : []));
+
+    expect(refused.refusal).toBe("walk to sit isn't proven in simulation. Prove it, or stop first.");
+    expect(proof.falls).toBe(0);
+    expect(result.refusal).toBeUndefined();
+    expect(controls.indexOf('sit')).toBeGreaterThan(controls.indexOf('walk'));
+    expect(done).toEqual(expect.arrayContaining(['walk', 'sit']));
   });
 
   it('refuses to run a Case whose logic the compiler refuses, with the compiler’s message', async () => {

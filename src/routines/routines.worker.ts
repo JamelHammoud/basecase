@@ -6,9 +6,10 @@ import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotJoint } from '../types/robotics';
 import { generateScenarios } from './generate';
-import { kitForModel, type RoutineKit } from './physicsKit';
+import { kitForModel, proveHandoff, type RoutineKit } from './physicsKit';
 import { runPhysics, type PhysicsScenarioResult } from './physicsRun';
 import type { Plan } from './planTypes';
+import type { Handoff, TransitionProof } from './schema';
 import { runScenario } from './scenario';
 import type { Scenario } from './scenarioTypes';
 import { errorMessage } from '../utils/errorMessage';
@@ -19,13 +20,22 @@ export interface ScenarioOutcome {
   failures: string[];
 }
 
+interface SceneRequest {
+  model: SimModel;
+  joints: RobotJoint[];
+  skills: Skill[];
+  drive: DriveSetup | null;
+}
+
 export type RoutinesRequest =
-  | { type: 'kit'; model: SimModel; joints: RobotJoint[]; skills: Skill[]; drive: DriveSetup | null }
+  | ({ type: 'kit' } & SceneRequest)
+  | ({ type: 'prove'; pair: Handoff } & SceneRequest)
   | { type: 'test'; plan: Plan }
   | { type: 'physics'; plan: Plan; scenario: Scenario; model: SimModel; joints: RobotJoint[]; kit: RoutineKit };
 
 export type RoutinesResponse =
   | { type: 'kit'; kit: RoutineKit }
+  | { type: 'prove'; proof: TransitionProof | null }
   | { type: 'test'; scenarios: ScenarioOutcome[] }
   | { type: 'physics'; result: PhysicsScenarioResult }
   | { type: 'error'; message: string };
@@ -51,6 +61,8 @@ async function handle(msg: RoutinesRequest): Promise<RoutinesResponse> {
   mj ??= await loadMujoco();
 
   if (msg.type === 'kit') return { type: 'kit', kit: kitForModel({ mj, ...msg }) };
+
+  if (msg.type === 'prove') return { type: 'prove', proof: proveHandoff({ mj, ...msg }, msg.pair) };
 
   return { type: 'physics', result: await runPhysics({ mj, ...msg }) };
 }

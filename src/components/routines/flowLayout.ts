@@ -26,10 +26,10 @@ export const addNodeId = (point: InsertPoint) => `add:${point.key}`;
 
 export const attachedPoints = (points: readonly InsertPoint[]) => points.filter((p) => p.to === null);
 
-export function nodeSize(flow: Flow, id: string): Sized {
+export function nodeSize(flow: Flow, id: string, height = NODE_HEIGHT): Sized {
   const end = flow.nodes.find((n) => n.id === id)?.kind === 'end';
 
-  return { id, width: end ? END_SIZE : NODE_WIDTH, height: end ? END_SIZE : NODE_HEIGHT };
+  return { id, width: end ? END_SIZE : NODE_WIDTH, height: end ? END_SIZE : height };
 }
 
 export function addSize(point: InsertPoint): Sized {
@@ -38,14 +38,18 @@ export function addSize(point: InsertPoint): Sized {
   return { id: addNodeId(point), width: labelled ? ADD_LABELLED_WIDTH : ADD_SIZE, height: ADD_SIZE };
 }
 
-export function layoutFlow(flow: Flow, points: readonly InsertPoint[] = []): Map<string, Placed> {
+export function layoutFlow(
+  flow: Flow,
+  points: readonly InsertPoint[] = [],
+  heights: ReadonlyMap<string, number> = new Map(),
+): Map<string, Placed> {
   const g = new dagre.graphlib.Graph();
   const attached = attachedPoints(points);
 
   g.setGraph({ rankdir: 'TB', nodesep: 28, ranksep: 44, marginx: 16, marginy: 16 });
   g.setDefaultEdgeLabel(() => ({}));
 
-  for (const n of flow.nodes) g.setNode(n.id, nodeSize(flow, n.id));
+  for (const n of flow.nodes) g.setNode(n.id, nodeSize(flow, n.id, heights.get(n.id)));
 
   for (const p of attached) g.setNode(addNodeId(p), addSize(p));
 

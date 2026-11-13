@@ -5,7 +5,7 @@ import { ContextMenu, type ContextMenuEntry, DeleteIcon, PlusIcon } from '../../
 import type { Flow, NodeState } from '../../routines/flowTypes';
 import type { RoutineError } from '../../routines/schema';
 import { AddNode } from './AddNode';
-import { canvasEdges, canvasNodes } from './canvasModel';
+import { canvasEdges, canvasNodes, nodeHeights } from './canvasModel';
 import { useEditorContext } from './editorContext';
 import { layoutFlow, nearestSpot, pointSpots } from './flowLayout';
 import { RoutineEdge } from './RoutineEdge';
@@ -29,11 +29,11 @@ interface Dragged {
 }
 
 export function RoutineFlow({ flow, states, errors }: RoutineFlowProps) {
-  const { editor, points } = useEditorContext();
+  const { editor, points, trainable } = useEditorContext();
   const [dragged, setDragged] = useState<Dragged | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const list = [...points.values()];
-  const placed = layoutFlow(flow, list);
+  const placed = layoutFlow(flow, list, nodeHeights(flow, errors, trainable));
   const baseId = flow.nodes.find((n) => n.kind === 'base')?.id ?? '';
   const kindOf = (id: string) => flow.nodes.find((n) => n.id === id)?.kind ?? '';
   const nodes = canvasNodes({ flow, placed, points: list, states, errors }).map((n) =>

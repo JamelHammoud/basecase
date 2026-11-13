@@ -23,6 +23,6 @@ Editing the animation puts its row back to Train, since the policy learned the o
 
 ## What it doesn't do
 
-Routines and the Robot Package don't call moves, and a move doesn't blend into Walk. Filming yourself and turning the clip into an animation is the next step.
+The Robot Package doesn't call moves. A Routine can, once the switch into the move is proved, as in [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills). Filming yourself and turning the clip into an animation is the next step.
 
 Steps are in [Train an animation as a move](/help/train-an-animation-as-a-move).

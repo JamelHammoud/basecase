@@ -35,6 +35,10 @@ fn unsupported(robot: &Robot) -> Vec<&'static str> {
             options.start_area.is_some(),
             "its robots start anywhere in a start area",
         ),
+        (
+            !options.start_states.is_empty(),
+            "its robots start from another skill's states",
+        ),
     ]
     .into_iter()
     .filter(|(refused, _)| *refused)

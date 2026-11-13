@@ -1,5 +1,6 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { Skill, SkillController } from '../skills/artifacts';
+import type { SkillState } from '../skills/environment';
 import type { DriveSetup } from '../sim/drive';
 import type { Controller, SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -183,7 +184,8 @@ export interface BodyPose {
 export class BodyProbe {
   private readonly engine: SimEngine;
   private readonly rootBody: number;
-  private readonly joints: Array<{ id: string; qpos: number }>;
+  private readonly root: { qpos: number; dof: number };
+  private readonly joints: Array<{ id: string; qpos: number; dof: number }>;
 
   constructor(mj: MainModule, engine: SimEngine, body: RoutineBody) {
     const root = body.model.robots.find((r) => r.key === body.robot)?.root ?? '';
@@ -192,10 +194,38 @@ export class BodyProbe {
 
     this.engine = engine;
     this.rootBody = mj.mj_name2id(engine.model, BODY, root);
-    this.joints = body.model.joints.map((j) => ({
-      id: j.id,
-      qpos: engine.model.jnt_qposadr[mj.mj_name2id(engine.model, JOINT, j.name)],
-    }));
+
+    const free = this.rootBody >= 0 ? engine.model.body_jntadr[this.rootBody] : -1;
+
+    this.root = {
+      qpos: free >= 0 ? engine.model.jnt_qposadr[free] : -1,
+      dof: free >= 0 ? engine.model.jnt_dofadr[free] : -1,
+    };
+    this.joints = body.model.joints.map((j) => {
+      const at = mj.mj_name2id(engine.model, JOINT, j.name);
+
+      return { id: j.id, qpos: engine.model.jnt_qposadr[at], dof: engine.model.jnt_dofadr[at] };
+    });
+  }
+
+  state(): SkillState {
+    const { qpos, qvel } = this.engine.data;
+    const { qpos: q, dof: d } = this.root;
+    const at = (list: ArrayLike<number>, from: number, n: number) =>
+      Array.from({ length: n }, (_, i) => list[from + i]);
+
+    return {
+      joints: this.joints.map((j) => qpos[j.qpos]),
+      jointVels: this.joints.map((j) => qvel[j.dof]),
+      height: qpos[q + 2],
+      quat: at(qpos, q + 3, 4) as SkillState['quat'],
+      linear: at(qvel, d, 3) as SkillState['linear'],
+      angular: at(qvel, d + 3, 3) as SkillState['angular'],
+    };
+  }
+
+  jointIds(): string[] {
+    return this.joints.map((j) => j.id);
   }
 
   pose(): BodyPose {

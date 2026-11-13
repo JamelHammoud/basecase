@@ -366,10 +366,10 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
           {
             id: 'tool-erase-marks',
             group: 'Tools',
-            label: 'Erase Marks',
+            label: 'Eraser',
             shortcut: 'E',
             icon: <EraserIcon className={ic} />,
-            keywords: 'annotate eraser remove delete one mark rub out',
+            keywords: 'annotate erase marks remove delete one mark rub out',
             run: () => {
               core.tool.toggleMarking(true);
               core.marks.setTool('eraser');

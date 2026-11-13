@@ -47,8 +47,9 @@ export class CompileContext {
     this.collectFacts();
   }
 
-  fail(code: string, message: string, path?: string) {
-    if (this.errors.length < 200) this.errors.push({ code, message, ...(path ? { path } : {}) });
+  fail(code: string, message: string, path?: string, handoff?: RoutineError['handoff']) {
+    if (this.errors.length < 200)
+      this.errors.push({ code, message, ...(path ? { path } : {}), ...(handoff ? { handoff } : {}) });
   }
 
   nodeOf(step: Step): string {

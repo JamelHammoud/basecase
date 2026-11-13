@@ -52,22 +52,22 @@ export async function recordFromFixture(fixture, specToPart) {
   };
 }
 
-export async function loadFixtureInApp({ page, call, fixture, record }) {
-  await page.evaluate(() => window.__studio.clear());
+export async function loadFixtureInApp({ slot, fixture, record }) {
+  await slot.api('clear');
 
   if (record) {
-    await page.evaluate((r) => window.__studio.load(r), record);
+    await slot.api('load', record);
 
     return record;
   }
 
-  await call('apply', { ops: await fixtureOps(fixture) });
+  await slot.call('apply', { ops: await fixtureOps(fixture) });
 
-  const built = await page.evaluate(() => window.__studio.sceneRecord());
+  const built = await slot.api('sceneRecord');
   const start = { name: fixture.name, parts: built.parts, project: projectOf(fixture), annotations: [] };
 
-  await page.evaluate((r) => window.__studio.load(r), start);
+  await slot.api('load', start);
   await new Promise((r) => setTimeout(r, 1000));
 
-  return page.evaluate(() => window.__studio.sceneRecord());
+  return slot.api('sceneRecord');
 }

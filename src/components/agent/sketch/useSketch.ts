@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { sketchFile } from './sketchFile';
 import { InkedStroke } from './sketchStrokes';
+import { focusPromptSoon } from '../focusPromptSoon';
 
 interface SketchOptions {
   request: number;
@@ -21,7 +22,7 @@ export function useSketch({ request, promptRef, onAttach }: SketchOptions) {
   const back = () => {
     setIsOpen(false);
     setStrokes([]);
-    requestAnimationFrame(() => promptRef.current?.focus());
+    focusPromptSoon(promptRef);
   };
 
   const done = async () => {

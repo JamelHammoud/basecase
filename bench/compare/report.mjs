@@ -53,17 +53,38 @@ function taskTable(stats, [a, b]) {
   );
 }
 
-export function compareMarkdown({ stats, models, labels, effort, plan, git, stopped }) {
+const STOPS = {
+  winner: 'stopped early: the 99% interval excluded zero',
+  equivalent: 'stopped early: the 99% interval sat inside the margin',
+  budget: 'stopped at the budget',
+  served: 'stopped: a different model answered',
+  rounds: 'ran every round',
+};
+
+function setupLine({ git, effort, plan }) {
+  const commit = `${git.commit ?? '—'}${git.dirty ? ' (uncommitted changes)' : ''}`;
+
+  return `Commit ${commit}, harness ${plan.harness}, effort ${effort ?? 'agent default'}. ${plan.rounds} of ${plan.maxRounds} rounds over ${plan.tasks} tasks, ${plan.parallel} at a time, ${STOPS[plan.stop] ?? plan.stop}.`;
+}
+
+function spendLine(stats) {
+  const spent = stats.models.reduce((s, m) => s + (m.spentUsd ?? 0), 0);
+  const reused = stats.models.filter((m) => m.reused).map((m) => `${m.reused} ${m.model} runs`);
+
+  return `Spent ${money(spent)}${reused.length ? `; reused ${reused.join(' and ')} from earlier comparisons on the same harness` : ''}.`;
+}
+
+export function compareMarkdown({ stats, models, labels, effort, plan, git }) {
   const [a, b] = labels;
   const ci = stats.ci ? `${signed(stats.ci[0])} to ${signed(stats.ci[1])}` : '—';
 
   return [
     `# ${a} vs ${b}`,
     '',
-    `Commit ${git.commit ?? '—'}${git.dirty ? ' (uncommitted changes)' : ''}, effort ${effort ?? 'agent default'}, ${plan.done} of ${plan.total} pairs run${stopped ? ` (stopped at the $${plan.budget} budget)` : ''}.`,
-    `Asked for ${models.map((m) => `${m.arg} (agent option “${m.id}”)`).join(' and ')}.`,
+    setupLine({ git, effort, plan }),
+    `Asked for ${models.map((m) => `${m.arg} (agent option “${m.id}”)`).join(' and ')}. ${spendLine(stats)}`,
     '',
-    `**${verdict(stats, labels)}**`,
+    `**${verdict(stats, labels, { margin: plan.margin })}**`,
     '',
     `Gap in pass rate (${a} − ${b}): ${signed(stats.meanDiff)}, 95% interval ${ci}. ${a} better on ${stats.wins} tasks, ${b} on ${stats.losses}, tied on ${stats.ties} (sign test p = ${cell(stats.signP)}).`,
     '',

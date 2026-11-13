@@ -40,7 +40,7 @@ import {
 } from './cad-mcp/sceneTools.mjs';
 import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
-import { setWorld, startDrive } from './cad-mcp/worldTools.mjs';
+import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { createCase } from './cad-mcp/caseTools.mjs';
 import { draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
@@ -98,6 +98,7 @@ const TOOLS = [
   simulate,
   setWorld,
   startDrive,
+  operate,
   createCase,
   makeRoutine,
   readRoutine,

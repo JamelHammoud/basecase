@@ -1,5 +1,6 @@
 use crate::deployed::Squash;
 use crate::envs::{PUSH_GAP_SECONDS, PUSH_SPEED};
+use crate::eyes::EYES_REFUSAL;
 use crate::job::{Algo, Task as JobTask};
 use crate::robot::Robot;
 use forge_ir::task::{Actuated, Code, CommandDraws, Conditions, Pushes, Task, OBSERVATIONS};
@@ -28,6 +29,11 @@ fn unsupported(robot: &Robot) -> Vec<&'static str> {
         (
             options.delay_steps[0] > options.delay_steps[1],
             "its servo delays run backwards",
+        ),
+        (job.sees(), EYES_REFUSAL),
+        (
+            options.start_area.is_some(),
+            "its robots start anywhere in a start area",
         ),
     ]
     .into_iter()

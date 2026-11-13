@@ -30,9 +30,6 @@ fn canary_planted_false_pass_fails() {
             "The false-pass check caught the planted evaluator, so the canary fires"
         );
     } else {
-        assert!(
-            caught,
-            "The false-pass check let the planted evaluator through"
-        );
+        assert!(caught, "The false-pass check let the planted evaluator through");
     }
 }

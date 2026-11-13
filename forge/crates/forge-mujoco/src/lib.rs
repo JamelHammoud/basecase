@@ -4,10 +4,12 @@ mod fields;
 #[cfg(test)]
 mod layout_tests;
 mod model;
+mod rays;
 
 pub use batch::{Batch, StateLayout};
 pub use fields::{Array, Contact, Values};
 pub use model::{Data, Field, Model};
+pub use rays::{Frame, Rays, GROUPS};
 
 use std::ffi::CStr;
 use std::sync::Once;

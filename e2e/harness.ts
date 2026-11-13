@@ -1,6 +1,6 @@
 import { chromium, type Browser, type Page } from 'playwright-core';
-import { realpathSync } from 'node:fs';
-import { createServer, searchForWorkspaceRoot, type ViteDevServer } from 'vite';
+import { inject } from 'vitest';
+import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
 
 const EFFORT_LEVELS = [
   { id: 'low', name: 'Low' },
@@ -40,6 +40,7 @@ export interface App {
   page: Page;
   errors: string[];
   posts: Array<{ route: string; body: unknown }>;
+  requests: string[];
   close: () => Promise<void>;
 }
 
@@ -60,54 +61,46 @@ async function stubBackend(page: Page, posts: App['posts'], lists: Record<string
   });
 }
 
-export const startServer = async (mode = 'development'): Promise<ViteDevServer> => {
-  const fs = { allow: [searchForWorkspaceRoot(process.cwd()), realpathSync('node_modules')] };
-  const server = await createServer({
-    configFile: 'vite.config.ts',
-    mode,
-    server: { port: 0, fs },
-    logLevel: 'silent',
-  });
+export const exposeTestHooks = (page: Page) =>
+  page.addInitScript((flag) => Object.assign(window, { [flag]: true }), TEST_HOOKS_FLAG);
 
-  return server.listen();
-};
+export const launchChrome = (args = ['--enable-unsafe-swiftshader', '--use-angle=swiftshader']) =>
+  chromium.launch({ channel: 'chrome', headless: true, args });
 
 export async function openApp(lists: Record<string, unknown> = {}): Promise<App> {
-  const server = await startServer();
-  const browser: Browser = await chromium.launch({
-    channel: 'chrome',
-    headless: true,
-    args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
-  });
+  const started = Date.now();
+  const browser: Browser = await launchChrome();
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors: string[] = [];
   const posts: App['posts'] = [];
+  const requests: string[] = [];
 
+  page.on('request', (request) => requests.push(request.url()));
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  await exposeTestHooks(page);
   await stubBackend(page, posts, lists);
-  await page.goto(server.resolvedUrls!.local[0]);
+  await page.goto(inject('appUrl'));
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,
   });
+  console.log(`e2e: studio ready in ${Date.now() - started} ms from the ${inject('served')} server`);
 
   return {
     page,
     errors,
     posts,
-    close: async () => {
-      await browser.close();
-      await server.close();
-    },
+    requests,
+    close: () => browser.close(),
   };
 }
 
 export const partCount = (page: Page) =>
   page.evaluate(() => (window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts().length);
 
-const shown = (selector: string) => `${selector}:not([inert] *):visible`;
+export const shown = (selector: string) => `${selector}:not([inert] *):visible`;
 
 export type PlayTabName = 'Cases' | 'Routines' | 'Operate';
 

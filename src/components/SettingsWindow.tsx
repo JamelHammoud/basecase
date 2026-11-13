@@ -6,7 +6,6 @@ import { IS_MAC } from '../utils/os';
 import {
   Button,
   IconButton,
-  Kbd,
   MetaLine,
   modifierName,
   NO_DRAG_REGION,
@@ -19,7 +18,6 @@ import {
   CloseIcon,
   GridIcon,
   KeyboardIcon,
-  MouseIcon,
   PackageIcon,
   PanelsIcon,
   PrinterIcon,
@@ -34,11 +32,10 @@ import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
-export type SettingsPane = 'canvas' | 'navigation' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
   { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
-  { id: 'navigation', label: 'Navigation', icon: <MouseIcon className="w-4 h-4" /> },
   { id: 'layout', label: 'Layout', icon: <PanelsIcon className="w-4 h-4" /> },
   { id: 'region', label: 'Region', icon: <WebIcon className="w-4 h-4" /> },
   { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
@@ -181,7 +178,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-[28px] pt-[4px] pb-[28px]"
           >
             {current.id === 'canvas' && <CanvasPane {...props} />}
-            {current.id === 'navigation' && <NavigationPane {...props} />}
             {current.id === 'layout' && <LayoutPane {...props} />}
             {current.id === 'region' && <RegionPane />}
             {current.id === 'agent' && <AgentPane {...props} />}
@@ -204,6 +200,12 @@ const Unit: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span className="text-white/50">{children}</span>
 );
 
+const SCROLL_HINTS: Record<TrackpadGestureMode, string> = {
+  'orbit-scroll': `Hold ${modifierName('⇧')} while scrolling to pan. Pinch to zoom.`,
+  'pan-scroll': 'Drag the canvas to orbit. Pinch to zoom.',
+  'zoom-scroll': 'Drag the canvas to orbit. Right-drag or middle-drag to pan.',
+};
+
 const CanvasPane: React.FC<PaneProps> = (p) => (
   <>
     <Group title="Display">
@@ -212,6 +214,20 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
       </Row>
       <Row label="Show reference images" shortcut="⇧I">
         <Switch aria-label="Show reference images" checked={p.showReferenceImages} onChange={p.onShowReferenceImages} />
+      </Row>
+    </Group>
+    <Group title={IS_MAC ? 'Trackpad' : 'Mouse and touchpad'}>
+      <Row label={IS_MAC ? 'Two-finger scroll' : 'Scroll'} hint={SCROLL_HINTS[p.trackpadMode]}>
+        <SegmentedControl<TrackpadGestureMode>
+          className="w-[240px]"
+          value={p.trackpadMode}
+          onChange={p.onTrackpadMode}
+          options={[
+            { value: 'orbit-scroll', label: 'Orbit' },
+            { value: 'pan-scroll', label: 'Pan' },
+            { value: 'zoom-scroll', label: 'Zoom' },
+          ]}
+        />
       </Row>
     </Group>
     <Group title="Snapping">
@@ -257,46 +273,6 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
   </>
 );
 
-const SCROLL_HINTS: Record<TrackpadGestureMode, string> = {
-  'orbit-scroll': `Hold ${modifierName('⇧')} while scrolling to pan. Pinch to zoom.`,
-  'pan-scroll': 'Drag the canvas to orbit. Pinch to zoom.',
-  'zoom-scroll': 'Drag the canvas to orbit. Right-drag or middle-drag to pan.',
-};
-
-const NavigationPane: React.FC<PaneProps> = (p) => (
-  <>
-    <Group title={IS_MAC ? 'Trackpad' : 'Mouse and touchpad'}>
-      <Row label={IS_MAC ? 'Two-finger scroll' : 'Scroll'} hint={SCROLL_HINTS[p.trackpadMode]}>
-        <SegmentedControl<TrackpadGestureMode>
-          className="w-[240px]"
-          value={p.trackpadMode}
-          onChange={p.onTrackpadMode}
-          options={[
-            { value: 'orbit-scroll', label: 'Orbit' },
-            { value: 'pan-scroll', label: 'Pan' },
-            { value: 'zoom-scroll', label: 'Zoom' },
-          ]}
-        />
-      </Row>
-      <Row label="Pan" hint="Works in every mode">
-        <span className="flex items-center gap-[6px] text-[12.5px] text-white/50">
-          <Kbd>Space</Kbd> drag
-        </span>
-      </Row>
-    </Group>
-    <Group title="Camera">
-      {CAMERA_KEYS.map(([label, key]) => (
-        <Row key={key} label={label}>
-          <Kbd>{key}</Kbd>
-        </Row>
-      ))}
-      <Row label="Zoom to selection">
-        <Kbd>Z</Kbd>
-      </Row>
-    </Group>
-  </>
-);
-
 const LayoutPane: React.FC<PaneProps> = (p) => (
   <Group title="Panels">
     <Row label="Show sidebar" shortcut="⌘B">
@@ -316,13 +292,6 @@ const LayoutPane: React.FC<PaneProps> = (p) => (
   </Group>
 );
 
-const CAMERA_KEYS: Array<[string, string]> = [
-  ['Isometric', '1'],
-  ['Top', '2'],
-  ['Front', '3'],
-  ['Side', '4'],
-];
-
 const agentOfCommand = (command: string) => AGENT_PROFILES.find((p) => p.command === command);
 
 function agentStatusText(status: AcpStatusInfo) {
@@ -338,68 +307,64 @@ const AgentPane: React.FC<PaneProps> = (p) => {
   const agent = agentOfCommand(command);
 
   return (
-    <>
-      <Group title="Agent">
-        <Row label="Run with" hint={agent?.hint ?? 'Custom ACP agent'}>
-          <SegmentedControl<string>
-            className="w-[320px]"
-            value={agent?.kind ?? ''}
-            onChange={(kind) => {
-              const cmd = AGENT_PROFILES.find((profile) => profile.kind === kind)?.command;
+    <Group>
+      <Row label="Run with" hint={agent?.hint ?? 'Custom ACP agent'}>
+        <SegmentedControl<string>
+          className="w-[320px]"
+          value={agent?.kind ?? ''}
+          onChange={(kind) => {
+            const cmd = AGENT_PROFILES.find((profile) => profile.kind === kind)?.command;
 
-              if (!cmd) return;
+            if (!cmd) return;
 
-              setCommand(cmd);
-              p.onReconnectAcp(cmd);
+            setCommand(cmd);
+            p.onReconnectAcp(cmd);
+          }}
+          options={AGENT_PROFILES.map((profile) => ({ value: profile.kind, label: profile.label }))}
+        />
+      </Row>
+      <Row
+        stacked
+        label="Command"
+        hint={
+          <span
+            className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-200/80'}`}
+          >
+            {agentStatusText(p.acpStatus)}
+          </span>
+        }
+      >
+        <div className="flex gap-[6px]">
+          <TextInput
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') p.onReconnectAcp(command);
             }}
-            options={AGENT_PROFILES.map((profile) => ({ value: profile.kind, label: profile.label }))}
+            aria-label="Agent command"
+            className="font-mono text-[12px]"
           />
-        </Row>
-        <Row
-          stacked
-          label="Command"
-          hint={
-            <span
-              className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-200/80'}`}
-            >
-              {agentStatusText(p.acpStatus)}
-            </span>
-          }
-        >
-          <div className="flex gap-[6px]">
-            <TextInput
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') p.onReconnectAcp(command);
-              }}
-              aria-label="Agent command"
-              className="font-mono text-[12px]"
-            />
-            <IconButton
-              icon={<RefreshIcon className="w-3.5 h-3.5" />}
-              title="Reconnect"
-              onClick={() => p.onReconnectAcp(command)}
-            />
-          </div>
-        </Row>
-      </Group>
-      <Group title="Models">
-        <Row label="Target height" hint="Overall height of what the agent builds. 0 lets it estimate.">
-          <div className="w-[120px]">
-            <NumberInput
-              label="H"
-              title="Target height"
-              value={p.targetHeightMm}
-              onChange={p.onTargetHeight}
-              min={0}
-              max={3000}
-              precision={0}
-              unit="mm"
-            />
-          </div>
-        </Row>
-      </Group>
-    </>
+          <IconButton
+            icon={<RefreshIcon className="w-3.5 h-3.5" />}
+            title="Reconnect"
+            onClick={() => p.onReconnectAcp(command)}
+          />
+        </div>
+      </Row>
+      <Row label="Target height" hint="Height of what the agent builds. 0 lets it estimate.">
+        <div className="w-[120px]">
+          <NumberInput
+            label="H"
+            aria-label="Target height"
+            value={p.targetHeightMm}
+            onChange={p.onTargetHeight}
+            min={0}
+            max={3000}
+            precision={0}
+            unit="mm"
+          />
+        </div>
+      </Row>
+    </Group>
   );
 };

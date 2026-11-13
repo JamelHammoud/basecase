@@ -9,7 +9,7 @@ Goal: take a robot from idea to a working machine without leaving Basecase. Code
 | 1 | **Design** | Describe or sketch the robot; Claude models it with real parts | Done: Agent, Parts, CAD kernel, Library |
 | 2 | **Engineer** | Declare joints, pose it, check torque, range, stability, printability and budget | Done: Pose tab, Build tab |
 | 3 | **Simulate** | Run it under physics: does it stand, do the servos hold, does the walk cycle walk | **Now.** Live sim, checks, measured servo models for the STS3215 and XL330 ([Simulate](guide/simulate.md) §8d), Cases with live drive and the web gallery ([Cases](guide/cases.md) §8h): one Case file runs on any fitting arm, and every Case the app offers has a reference that passes on the arms, rovers, hexapod and stable quadrupeds (`s2-cases-play`) |
-| 4 | **Train** | Teach it any skill in sim, randomized so it works on the real robot | **Now.** Forge native trainer, task contracts and Arena, the Motor Kit (Stand, Velocity tracking, Get up, Settle to neutral, trained through Forge) and the solver race (IK plans, reward search) ([Forge](guide/forge.md) §8g, [Skills](guide/skills.md) §8i) |
+| 4 | **Train** | Teach it any skill in sim, randomized so it works on the real robot | **Now.** Forge native trainer, task contracts and Arena, the Motor Kit (Stand, Velocity tracking, Get up, Settle to neutral, trained through Forge) and the solver race (IK plans, reward search) ([Forge](guide/forge.md) §8g, [Skills](guide/skills.md) §8i). Passed Case tries export as LeRobot datasets with camera video, for fine-tuning GR00T and other vision-language-action models off the Mac ([Cases](guide/cases.md) §8h) |
 | 5 | **Build** | Print the plates, buy the parts, assemble | Mostly: BOM, budget, build guide, printers, plates, slicing and sending ([Print plan.md](Print%20plan.md)). Sending still to confirm on real printers |
 | 6 | **Operate** | Drive it, run trained skills and Routines, record every run | In sim and against emulated servos: Cases with recorded tries, the daemon and its fault matrix ([Robot runtime](guide/robot-runtime.md) §8k), the Routines core ([Routines](guide/routines.md) §8j). Real motors stay locked until the Stage 8 session |
 
@@ -19,7 +19,7 @@ Two loops tie the stages together:
 
 - **Fix loop (stages 1–4):** a failed check, a fall in sim or a policy that won't learn sends you back to Design. Repeat until stages 2–4 pass. Fixing isn't a stage of its own; it's this loop.
 - **Reality loop (stages 3–6):** runs on the real robot are recorded, then used to calibrate the sim (mass, friction, servo response) and retrain. Collecting data isn't the end of the line; it starts the next round.
-  - **Servo calibration (build Stage 6):** done against the hidden twin (`s6-hidden-twin` passes). `src/reality/` fits each servo's model from bench logs, says Measured, Consistent with preset or Can't tell, keeps versions with rollback, and the Simulate tab trains on the active calibration ([Robot runtime](guide/robot-runtime.md) §8k). Not yet: real logs (the NAD gate is parked with no public data pinned), a Calibrate view, and the later rungs (stand, tethered gait, policy tier, A/B).
+  - **Servo calibration (build Stage 6):** done against the hidden twin (`s6-hidden-twin` passes). `src/reality/` fits each servo's model from bench logs, says Measured, Consistent with preset or Can't tell, keeps versions with rollback, and the Simulate tab trains on the active calibration ([Robot runtime](guide/robot-runtime.md) §8k). Operate's Calibrate view runs the bench through the daemon on every joint of the emulated robot in Test and records each fit (every emulated STS3215 reads Measured). Not yet: real logs (the NAD gate is parked with no public data pinned) and the later rungs (stand, tethered gait, policy tier, A/B).
 
 ```
 Design → Engineer → Simulate → Train → Build → Operate
@@ -39,7 +39,7 @@ Turn the scene into a MuJoCo model and run it on the canvas.
   - hinge and slide joints with their ranges
   - position actuators with force limits from the servo's stall torque (`actuatorOf`), or the published `effortNm`
   - a floor and a free joint at the base
-- **Export ▸ MuJoCo Model:** the MJCF and its meshes, ready for any MuJoCo tool.
+- **Export ▸ Robot Package** (done, with T4): the MJCF the sim runs, a URDF with its STL meshes, the joint map and the scene's policies in one zip ([Simulate](guide/simulate.md) §8d).
 - **Done when:** every `ROBOT_PRESET` and the `build-humanoid` bench scene load with no errors, and the model's total mass matches the Weight check.
 
 ### S2. Live sim on the canvas
@@ -85,6 +85,7 @@ New rows in Build → Checks, with the same Pass / Warn / Fail rows that select 
 
 ### T4. Handoff to Operate
 - Export the policy, the MJCF and a joint map (servo ids, zero offsets, directions): everything stage 6 needs to run it on the real robot.
+- **Status:** done as Export ▸ Robot Package: `joint_map.json` gives servo ids as Operate assigns them, Operate's zero (2048 counts) and direction (1), limits and the active calibration, in the daemon's `calibration.json` keys. Not yet: zero offsets and directions measured on a real robot (calibration capture, §8k) and `policy.onnx` in the zip.
 
 **Done when:** a preset quadruped (Go2) trains to walk, and the policy walks in the live sim with randomization on.
 

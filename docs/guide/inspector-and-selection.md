@@ -22,7 +22,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - **Rotate:** X / Y / Z 90° turns the selection as one piece about its center (`handleRotateSelection`).
   - **Combine:** Union / Subtract / Intersect on one strip; Subtract's tooltip names the part it keeps.
   - **Appearance:** `ColorField` and material, each showing “Mixed” when the parts differ.
-  - Strips (`StripGroup` + `StripButton` in `AlignControls.tsx`) are the pattern for a row of equal actions: a 32px soft track with 2px inset cells, never a grid of text buttons or tall tiles.
+  - Strips (`StripGroup` + `StripButton` in `AlignBar.tsx`) are the pattern for a row of equal actions: a 32px soft track with 2px inset cells, never a grid of text buttons or tall tiles.
 - **`NumberInput`:**
   - Drag the label to scrub (Shift ×10, ⌥ ×0.1). ↑/↓ steps, Enter commits, Esc reverts.
   - Accepts math (`40/2`).
@@ -47,11 +47,12 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - With 2+ parts, Union, Subtract (from the primary) and Intersect replace them with one mesh.
   - With one part, Subtract uses every visible Cutout that overlaps it.
 - **Selection bar:** with 2+ parts selected, a glass pill above the toolbar shows the count, Union, Subtract, Intersect and Group/Ungroup.
-- **Align (`AlignControls`):**
-  - X/Y/Z × Left·Center·Right / Bottom·Middle·Top / Back·Center·Front, plus Spread X/Z for 3+ parts.
+- **Align (`AlignBar`):**
+  - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each (disabled under 3 parts). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.
   - Several parts align to their shared bounds; one part aligns to the origin (Bottom = floor).
   - Bounds include each part's rotation (`halfExtents` in `utils/selection.ts`, checked against three.js `Box3`), so align, spread, drop to floor and the sizes in Layers and the Inspector stay right for rotated parts.
-  - Available in the right-click Align submenu, the multi-selection Inspector (`AlignBar`) and ⌘K.
+  - Tooltips say where a part goes: Align left for several parts, Left to origin (Bottom to floor) for one.
+  - ⌘K has Align Left, Right, Top, Bottom, Front, Back and Center (X), and Spread Along X, Y and Z.
 - **Drop to Floor (F):** loose parts each drop to the floor; when every selected part is grouped, the selection lands as one piece.
 
 ## 7a-2. Drag and Drop
@@ -61,6 +62,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Shapes menu:** fades out (stays mounted) while dragging, then closes on drag end. Removing the drag source would cancel the drag.
 - **Image files** dropped on the canvas become reference images (§7b).
 - **Mesh files** (STL, 3MF, OBJ, PLY, FBX, GLB / glTF, DAE) dropped on the canvas, picked with File ▸ Import Mesh, ⌘K or the canvas menu (at the clicked point) are inserted as one `mesh` part each, standing on the drop point (`workspace/meshImport.ts`). Units and axes follow each format's convention: STL, 3MF and PLY are millimetres with Z up; OBJ millimetres with Y up; GLB, glTF and DAE metres; FBX centimetres times its unit scale. A model under 1 mm across is read as metres. Meshes are welded, never simplified, so prints keep every triangle. `mesh.file` marks an imported mesh, and only those print (`isPrinted`); robot links and SimReady meshes don't. Parsing runs in the geometry worker except 3MF and DAE, which need `DOMParser`. FBX textures are skipped (`NoTextures`), since the worker has no `document`.
+- **CAD files** (STEP, STP, IGES, IGS) take the same import path on desktop: drop, Import Mesh, ⌘K or the canvas menu. They never parse in the renderer or in Node: `platformBridge.openCadFile` hands the bytes to the main process (`cad:open`, or `/cad-open` over the dev bridge), which sends them to the same sandboxed converter as `import_maker_cad` (§8a, §0h) in its bodies mode. OpenCascade reads the units from the file header, so every body arrives in millimetres at true size, Y up. Each body becomes its own `mesh` part (`workspace/cadImport.ts`), named from the file's product names (else “⟨file⟩ 2”), coloured with the face colour covering most of it, and grouped under the file name when there's more than one; the whole file stands on the drop point. The converter simplifies a file past 200,000 triangles in total and refuses one with more than 1,000 bodies. A file it can't read gets the same single “Couldn’t import ⟨file⟩” toast as a broken mesh. The web demo keeps meshes only (`IS_WEB_DEMO`).
 - **Scene files** (`.basecase`) dropped on the canvas open in a new tab (§5a). While files are dragged, the overlay reads “Drop to add a reference image” for images alone, “Drop to import” otherwise.
 
 ## 7b. Reference Images
@@ -72,7 +74,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Never printed, exported to STL or used in booleans. Listed in the brief as reference photos, not parts.
 - **Size:** photos are downscaled to 2048px max (`utils/imageFile.ts`). They start upright with a 120mm long side. Width and height stay locked to the photo’s aspect ratio.
 - **Hide all:** the image toggle in the Layers header (shown when the scene has photos), ⇧I, or ⌘K. It’s a view setting, not undoable; hidden photos dim in Layers and aren’t rendered or clickable.
-- **Inspector:** an Image section with preview, Opacity, and Stand Up / Lay Flat (backdrop vs. blueprint on the floor). Notes describe what to take from the photo. The Layers row shows the photo as its glyph.
+- **Inspector:** an Image section with preview, Opacity, and Stand Up / Lay Flat (backdrop vs. blueprint on the floor), with no tooltips on those two. The header is the name row alone: the Image section already says it's a photo, so there's no caption that it isn't printed. Notes describe what to take from the photo. The Layers row shows the photo as its glyph.
 
 ## 8. Mode Panels (Sculpt, Sketch, Import SVG)
 
@@ -80,6 +82,6 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 
 - **Sculpt:** shown while the Sculpt tool (C) is on. The tool is experimental and hidden unless enabled in Settings; when it's off, C, the toolbar button, the ⌘K entry and the Shortcuts row are all gone, and turning it off mid-sculpt switches back to Move. Existing sculpted parts still render and export. Brushes, Size/Strength sliders, Mirror X/Z, Subdivide, Add clay presets. Done switches back to Move.
 - **Sketch:** opened from Shapes ▾ → Sketch, ⌘K or right-click. Extrude / Revolve, Points / Freehand / Hole tools, snap, undo point, clear, then Output fields.
-- **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, paste code, preview, then Output fields. “Edit in Sketch” hands the outline to Sketch.
+- **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, paste code, preview, then Output fields. “Edit in Sketch”, beside the preview, hands the outline to Sketch.
 - Adding a part from Sketch or SVG closes the panel and shows the new part in the Inspector.
 - Combine lives in the selection bar, the right-click menu and the multi-selection Inspector.

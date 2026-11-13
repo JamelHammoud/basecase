@@ -2128,43 +2128,43 @@
         {
           "name": "mechanised UI rules on every view: 32px controls (28px icon-only), 12px type, neutral greys, copy lint, axe",
           "ok": true,
-          "detail": "39.9 s",
+          "detail": "38.2 s",
           "metrics": {},
-          "seconds": 39.887
+          "seconds": 38.158
         },
         {
           "name": "the app bundles",
           "ok": true,
-          "detail": "6.5 s",
+          "detail": "6.2 s",
           "metrics": {},
-          "seconds": 6.46
+          "seconds": 6.166
         },
         {
           "name": "an unsigned app packages",
           "ok": true,
-          "detail": "3.9 s",
+          "detail": "4.0 s",
           "metrics": {},
-          "seconds": 3.855
+          "seconds": 4.015
         },
         {
           "name": "PersonaLab, with only the screen and accessibility tree, finds 80% of 30 planted usability faults, half its findings on target",
           "ok": false,
           "detail": "\n ❯ launchPackaged e2e/app/packagedApp.ts:74:15\n     72| export async function launchPackaged({ agentCommand = OFFLINE_AGENT } …\n     73|   const userData = freshUserData(agentCommand);\n     74|   const app = await electron.launch({\n       |               ^\n     75|     executablePath: packagedBinary(),\n     76|     args: ['--enable-unsafe-swiftshader'],\n ❯ session verify/rehearsal/persona.test.ts:33:15\n ❯ verify/rehearsal/persona.test.ts:73:24\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
           "metrics": {
-            "loadBefore": 3.91748046875,
-            "loadAfter": 2.3466796875
+            "loadBefore": 6.09228515625,
+            "loadAfter": 3.18994140625
           },
-          "seconds": 120.584
+          "seconds": 120.56
         },
         {
           "name": "every required gate passes again from a clean checkout of this commit, parked gates listed with reasons",
           "ok": false,
-          "detail": "verify/servo/bam-reference/target/.rustc_info.json: changed without approval\nverify/servo/bam-reference/target/CACHEDIR.TAG: changed without approval\nverify/servo/bam-reference/target/release/.cargo-artifact-lock: changed without approval\nverify/servo/bam-reference/target/release/.cargo-build-lock: changed without approval\nverify/servo/bam-reference/target/release/.cargo-lock: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/bin-bam-reference: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/bin-bam-reference.json: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/dep-bin-bam-reference: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/bam-reference-cfc3b80ec94f08ce/invoked.timestamp: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/dep-lib-plant_bam: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/invoked.timestamp: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/lib-plant_bam: changed without approval\nverify/servo/bam-reference/target/release/.fingerprint/plant-bam-660bc5cfc82ac170/lib-plant_bam.json: changed without approval\nverify/servo/bam-reference/target/release/bam-reference: changed without approval\nverify/servo/bam-reference/target/release/bam-reference.d: changed without approval\nverify/servo/bam-reference/target/release/deps/bam_reference-cfc3b80ec94f08ce: changed without approval\nverify/servo/bam-reference/target/release/deps/bam_reference-cfc3b80ec94f08ce.d: changed without approval\nverify/servo/bam-reference/target/release/deps/libplant_bam-660bc5cfc82ac170.rlib: changed without approval\nverify/servo/bam-reference/target/release/deps/libplant_bam-660bc5cfc82ac170.rmeta: changed without approval\nverify/servo/bam-reference/target/release/deps/plant_bam-660bc5cfc82ac170.d: changed without approval",
+          "detail": "s1-f2-learner: void (machine busy)\ns1-f3-simd-engine: failed\ns1-f4-metal: failed\ns1-f5-gpu-loop: void (machine busy)\ns1-f6-webgpu: failed\ns2-cases-play: void (machine busy)\ns2-m1-first-case: failed\ns3-anythingzoo: void (machine busy)\ns3-servo-models: failed\ns3a-motor-kit: failed\ns4b-routines-flow: void (machine busy)",
           "metrics": {
-            "loadBefore": 2.3466796875,
-            "loadAfter": 1.41748046875
+            "loadBefore": 3.18994140625,
+            "loadAfter": 10.32177734375
           },
-          "seconds": 22758.25
+          "seconds": 105025.41
         }
       ],
       "canaries": [
@@ -2173,60 +2173,60 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.095
+          "seconds": 1.056
         },
         {
           "name": "10px text is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.71
+          "seconds": 0.781
         },
         {
           "name": "a blue-tinted grey is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.701
+          "seconds": 0.767
         },
         {
           "name": "banned copy is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.691
+          "seconds": 0.748
         },
         {
           "name": "a silent persona misses the recall bar",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.692
+          "seconds": 0.769
         },
         {
           "name": "a persona that flags everything misses the precision bar",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.693
+          "seconds": 0.763
         },
         {
           "name": "a voided gate is not green",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.699
+          "seconds": 0.781
         },
         {
           "name": "a parked gate needs a reason",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.691
+          "seconds": 0.765
         }
       ],
-      "commit": "286da26",
-      "at": "2026-11-12T01:54:16.347Z",
+      "commit": "5fbe62d3",
+      "at": "2026-11-13T07:09:08.430Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

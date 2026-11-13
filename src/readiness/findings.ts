@@ -102,7 +102,7 @@ export function bomFindings(bom: Bom): Finding[] {
     ...(unpriced.length
       ? [
           ruleFinding('no-price', 'note', {
-            text: `No price yet for ${unpriced.map((l) => l.name).join(', ')}.`,
+            text: `No price for ${unpriced.map((l) => l.name).join(', ')}.`,
             agentText: `No price known for ${unpriced.map((l) => l.name).join(', ')}.`,
             ids: unpriced.flatMap((l) => l.partIds),
           }),

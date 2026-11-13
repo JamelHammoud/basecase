@@ -2,17 +2,16 @@ import React, { useMemo } from 'react';
 import type { CustomModelDefinition, ScenePart } from '../../types/robotics';
 import { modelToParts } from '../../utils/libraryParts';
 import { timeAgo } from '../../utils/timeAgo';
-import { Button } from '../../design-system';
 import { Header, SizeLine, Stat } from '../PartDetails';
 
-export function savedWhen(iso: string | undefined): string {
+function savedAgo(iso: string | undefined): string {
   if (!iso) return '';
 
   const t = timeAgo(iso);
 
-  if (t === 'now') return 'Saved just now';
+  if (t === 'now') return 'just now';
 
-  return /^\d+[mhd]$/.test(t) ? `Saved ${t} ago` : `Saved ${t}`;
+  return /^\d+[mhd]$/.test(t) ? `${t} ago` : t;
 }
 
 export function modelParts(m: CustomModelDefinition): ScenePart[] {
@@ -21,7 +20,7 @@ export function modelParts(m: CustomModelDefinition): ScenePart[] {
   return modelToParts(m, [0, 0, 0], () => `preview-${n++}`).parts;
 }
 
-export const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) => (
+const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) => (
   <div className="relative h-[168px] bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)]">
     {thumb ? (
       <img
@@ -45,11 +44,7 @@ const MODEL_SOURCE: Record<CustomModelDefinition['sourceType'], string> = {
   'sculpt-draw': 'Sketch or sculpt',
 };
 
-export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: string | undefined; onInsert: () => void }> = ({
-  model,
-  thumb,
-  onInsert,
-}) => {
+export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: string | undefined }> = ({ model, thumb }) => {
   const parts = useMemo(() => modelParts(model), [model]);
   const d = model.defaultDimensions;
 
@@ -58,22 +53,17 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
       <DetailsHero thumb={thumb} />
       <Header
         title={model.name}
-        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedWhen(model.createdAt).replace(/^Saved /, '')]}
+        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedAgo(model.createdAt)]}
         description={
           model.description && !/^Saved from \d+ parts?\.?$/.test(model.description) ? model.description : undefined
         }
       />
-      <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
+      <div className="px-4 mt-3 pb-4 grid grid-cols-2 gap-1.5">
         <Stat label="Size" wide>
           <SizeLine w={d.width} h={d.height} d={d.depth} />
         </Stat>
         <Stat label="Parts">{parts.length}</Stat>
         {fromCatalog(parts) > 0 && <Stat label="From catalog">{fromCatalog(parts)}</Stat>}
-      </div>
-      <div className="mt-3 border-t border-white/[0.07] p-3">
-        <Button variant="primary" size="sm" fullWidth onClick={onInsert}>
-          Insert
-        </Button>
       </div>
     </div>
   );

@@ -35,11 +35,12 @@ export type SimRequest =
       commands?: Array<{ at: number; command: DriveCommand }>;
     }
   | ({ type: 'routine' } & LiveRoutineInput)
+  | { type: 'cameras'; port: MessagePort | null }
   | { type: 'dispose' };
 
 export type SimResponse =
   | ({ type: 'routine' } & LiveUpdate)
-  | { type: 'ready'; version: string; nq: number; nu: number; nbody: number }
+  | { type: 'ready'; nq: number; nu: number; nbody: number }
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
   | { type: 'replayed' }
@@ -69,6 +70,7 @@ let rtf = 1;
 let recorder: Recorder | null = null;
 let replayTimer = 0;
 let live: LiveRoutine | null = null;
+let cameraPort: MessagePort | null = null;
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
 const frame = () => {
@@ -76,6 +78,12 @@ const frame = () => {
 
   const poses = engine.poses();
   const targets = engine.jointTargets();
+
+  if (cameraPort) {
+    const copy = poses.slice();
+
+    cameraPort.postMessage(copy, [copy.buffer]);
+  }
 
   post({ type: 'frame', poses, targets, stats: engine.stats(rtf), playing }, [poses.buffer, targets.buffer]);
 };
@@ -141,7 +149,7 @@ async function load(msg: Msg<'load'>) {
 
   const m = engine.model;
 
-  post({ type: 'ready', version: mj.mj_versionString(), nq: m.nq, nu: m.nu, nbody: m.nbody });
+  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody });
   frame();
 }
 
@@ -297,6 +305,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   replay,
   run,
   routine: startRoutine,
+  cameras: (msg) => {
+    cameraPort?.close();
+    cameraPort = msg.port;
+    frame();
+  },
   dispose: () => {
     playing = false;
     live = null;

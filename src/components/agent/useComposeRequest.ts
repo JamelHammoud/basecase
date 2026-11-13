@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { focusPromptSoon } from './focusPromptSoon';
 
 export interface ComposeRequest {
   request: string | null;
@@ -14,12 +15,7 @@ export function useComposeRequest(
   const apply = useEffectEvent((text: string) => {
     ctx.setText((draft) => (draft.startsWith(text) ? draft : text + draft));
     compose?.onDone();
-    requestAnimationFrame(() => {
-      const el = ctx.promptRef.current;
-
-      el?.focus();
-      el?.setSelectionRange(text.length, text.length);
-    });
+    focusPromptSoon(ctx.promptRef, text.length);
   });
 
   useEffect(() => {

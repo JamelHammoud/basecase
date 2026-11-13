@@ -1,6 +1,7 @@
+import type { Eye } from '../sim/eyes';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Contract } from './contract';
-import { policyObservation, type Environment, type SignalSource } from './environment';
+import { policyObservation, type Environment, type SignalSource, type StartArea } from './environment';
 import { sha256Hex } from './hash';
 import { KIT_ACTION_SCALE, kitRobot, type V3 } from './kitModel';
 import type { RaceGoal } from './raceTypes';
@@ -19,6 +20,8 @@ export interface DraftInput {
   contract: Contract;
   signals?: Record<string, SignalSource>;
   rewards?: string[];
+  eye?: Eye;
+  startArea?: StartArea;
   analysis?: { quasiStatic?: boolean; motionShapeMatters?: boolean; contactRich?: boolean };
 }
 
@@ -89,14 +92,22 @@ export function draftEnvironment(model: SimModel, input: DraftInput): Environmen
     robot: robot.key,
     horizonS: input.seconds,
     traceDt: TRACE_DT,
-    observation: policyObservation(robot.joints),
+    observation: [
+      ...policyObservation(robot.joints),
+      ...(input.eye ? [{ kind: 'depth-eye' as const, eye: input.eye }] : []),
+    ],
     action: {
       kind: 'position-offset',
       joints: robot.joints,
       scale: robot.floating ? KIT_ACTION_SCALE : ARM_ACTION_SCALE,
       controlDt: CONTROL_DT,
     },
-    reset: { jointNoiseDeg: 1, baseYawDeg: 0, baseOffsetMm: 0 },
+    reset: {
+      jointNoiseDeg: 1,
+      baseYawDeg: 0,
+      baseOffsetMm: 0,
+      ...(input.startArea ? { startArea: input.startArea } : {}),
+    },
     randomization: { friction: [0.8, 1.2], mass: [0.9, 1.1], strength: [0.9, 1], latencyMs: [0, 20] },
     reward: reward ? { kind: 'rewardlang', hash: sha256Hex(reward) } : { kind: 'contract-robustness' },
     contract: input.contract,

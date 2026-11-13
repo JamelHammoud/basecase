@@ -164,9 +164,9 @@ Add `'component:<id>'` (or `'component:<id>|<variant>'`) to `LIST_PRICES` in `sr
 ## 7. Verify and hand off
 
 ```bash
-npm run check
+npm run check:changed -- <the files you added or changed>
 ```
-It must pass (format, lint, types, tests). Don't start the app, previews or screenshots to judge how it looks (AGENTS.md §15): tell the person what to check instead, e.g. “Parts → Computers → Radxa ZERO 3W: thumbnail, hover card, the part page's specs; add it to the canvas; Build → Bill of materials → Components shows ≈ $39.99.”
+It must pass (format, lint, types, the tests related to those files). Don't run the whole suite. Don't start the app, previews or screenshots to judge how it looks (AGENTS.md §15): tell the person what to check instead, e.g. “Parts → Computers → Radxa ZERO 3W: thumbnail, hover card, the part page's specs; add it to the canvas; Build → Bill of materials → Components shows ≈ $39.99.”
 
 Files a new part touches (and nothing else should change):
 

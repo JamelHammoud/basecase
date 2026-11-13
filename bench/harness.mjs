@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import http from 'node:http';
+import net from 'node:net';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -17,12 +18,29 @@ const APP_FILES = [
   'public',
   'index.html',
   'vite.config.ts',
+  'tools/kernelBundle.mjs',
   'package.json',
+  'package-lock.json',
   'tsconfig.json',
   'tsconfig.app.json',
   'tsconfig.node.json',
   'tsconfig.e2e.json',
 ];
+
+function portFree(port) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+
+    server.once('error', () => resolve(false));
+    server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
+  });
+}
+
+export async function nextPort(state) {
+  while (!(await portFree(state.port))) state.port++;
+
+  return state.port++;
+}
 
 export function argOption(args, name, fallback) {
   const i = args.indexOf(`--${name}`);
@@ -76,13 +94,23 @@ export async function waitFor(fn, timeoutMs, label) {
   }
 }
 
+export const viteCacheOf = (app) => path.join(app, '.vite-cache');
+
+function linkNodeModules(app) {
+  const deps = path.join(root, 'node_modules', '.vite', 'deps');
+
+  fs.symlinkSync(path.join(root, 'node_modules'), path.join(app, 'node_modules'), 'dir');
+
+  if (fs.existsSync(deps)) fs.cpSync(deps, path.join(viteCacheOf(app), 'deps'), { recursive: true });
+}
+
 export function snapshotApp(label) {
   const app = fs.mkdtempSync(path.join(os.tmpdir(), `studio-bench-${label}-`));
 
   for (const f of APP_FILES.filter((x) => fs.existsSync(path.join(root, x))))
     fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
 
-  fs.symlinkSync(path.join(root, 'node_modules'), path.join(app, 'node_modules'), 'dir');
+  linkNodeModules(app);
 
   return app;
 }
@@ -122,7 +150,11 @@ async function startVite({ app, port, env, base }) {
   const vite = spawn(
     process.execPath,
     [path.join(app, 'node_modules/vite/bin/vite.js'), '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
-    { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...env, BASECASE_NODE_KERNEL: '1' } },
+    {
+      cwd: app,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, ...env, BASECASE_NODE_KERNEL: '1', BASECASE_VITE_CACHE: viteCacheOf(app) },
+    },
   );
   let exited = false;
   let out = '';

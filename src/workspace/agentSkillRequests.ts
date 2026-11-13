@@ -1,6 +1,8 @@
+import { buildEye, type Eye } from '../sim/eyes';
 import type { SimModel } from '../sim/mjcfTypes';
+import type { ScenePart } from '../types/robotics';
 import type { Contract } from '../skills/contract';
-import type { SignalSource } from '../skills/environment';
+import type { SignalSource, StartArea } from '../skills/environment';
 import type { TrainedEntry } from '../skills/kitEnvironment';
 import type { V3 } from '../skills/kitModel';
 import { kitEntries } from '../skills/motorKit';
@@ -13,6 +15,7 @@ import type { DraftInput, DraftReport } from '../skills/teach';
 
 export interface SkillToolContext {
   skills: { runtime: SkillsRuntime; buildModel: () => Promise<SimModel> };
+  parts?: () => ScenePart[];
   project: () => { skills?: SkillRecord[] };
   setAction: (action: string) => void;
 }
@@ -40,6 +43,15 @@ function goalOf(raw: Payload | undefined): DraftGoal {
   return { kind: 'open' };
 }
 
+function startAreaOf(raw: unknown): StartArea | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+
+  const p = raw as Payload;
+  const range = (v: unknown): [number, number] => (Array.isArray(v) ? [Number(v[0] ?? 0), Number(v[1] ?? 0)] : [0, 0]);
+
+  return { forwardM: range(p.forward_m), sideM: range(p.side_m) };
+}
+
 export function draftInput(p: Payload): DraftInput {
   const contract = (p.contract ?? {}) as { success?: unknown; failures?: unknown };
 
@@ -51,6 +63,7 @@ export function draftInput(p: Payload): DraftInput {
     contract: { version: 1, success: contract.success, failures: contract.failures ?? [] } as Contract,
     signals: p.signals as Record<string, SignalSource> | undefined,
     rewards: p.rewards as string[] | undefined,
+    startArea: startAreaOf(p.start_area),
     analysis: {
       quasiStatic: p.quasi_static as boolean | undefined,
       motionShapeMatters: p.motion_shape_matters as boolean | undefined,
@@ -78,10 +91,32 @@ function draftText(report: DraftReport): string {
   ].join('\n');
 }
 
+function eyeFor(raw: unknown, model: SimModel, parts: ScenePart[]): Eye | string | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+
+  const p = raw as Payload;
+  const name = String(p.part ?? '');
+  const part = parts.find((x) => x.id === name) ?? parts.find((x) => x.name.toLowerCase() === name.toLowerCase());
+
+  if (!part) return `No camera part "${name}".`;
+
+  return buildEye(model, parts, {
+    part: part.id,
+    cols: p.cols as number | undefined,
+    rows: p.rows as number | undefined,
+    rangeM: p.range_m as number | undefined,
+  });
+}
+
 async function draftRequest(payload: Payload, ctx: SkillToolContext) {
   ctx.setAction('Drafting a skill');
 
-  const result = await ctx.skills.runtime.draft(await ctx.skills.buildModel(), draftInput(payload));
+  const model = await ctx.skills.buildModel();
+  const eye = eyeFor(payload.eye, model, ctx.parts?.() ?? []);
+
+  if (typeof eye === 'string') return { text: `Change the draft: ${eye}` };
+
+  const result = await ctx.skills.runtime.draft(model, { ...draftInput(payload), eye });
 
   return { text: result.ok ? draftText(result.report) : `Change the draft: ${result.problems.join(' ')}` };
 }

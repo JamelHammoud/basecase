@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ScenePart } from '../../types/robotics';
 import type { ComponentInfo } from '../../data/components';
-import { ComponentLinks, ModelSource, SizeLine, SpecList, SpecText } from '../PartDetails';
+import { ComponentLinks, DetailBlock, ModelOrigin, SpecRows } from '../PartDetails';
 import {
   IconButton,
   MetaLine,
@@ -23,44 +23,41 @@ export interface PartSectionProps {
 }
 
 export const PartHeader: React.FC<
-  PartSectionProps & Pick<InspectorProps, 'onDuplicate' | 'onSaveAsModel' | 'onDelete'> & { isImage: boolean }
-> = ({ part, onUpdate, onDuplicate, onSaveAsModel, onDelete, isImage }) => (
-  <div className="px-[12px] pt-4 pb-4 border-b border-white/[0.06] space-y-2.5">
-    <div className="flex items-center gap-1">
-      <div className="flex-1 min-w-0 -ml-[8.75px]">
-        <TextInput
-          bare
-          value={part.name}
-          onChange={(e) => onUpdate({ name: e.target.value }, true)}
-          onBlur={(e) => onUpdate({ name: e.target.value.trim() || part.name }, false)}
-          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-          aria-label="Part name"
-          className="font-semibold text-[14px]"
-        />
-      </div>
-      <IconButton
-        icon={<CopyIcon className="w-3.5 h-3.5" />}
-        title="Duplicate"
-        shortcut="⌘D"
-        size="xs"
-        onClick={onDuplicate}
-      />
-      <IconButton
-        icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
-        title="Save to Library"
-        size="xs"
-        onClick={onSaveAsModel}
-      />
-      <IconButton
-        icon={<DeleteIcon className="w-3.5 h-3.5" />}
-        title="Delete"
-        shortcut="⌫"
-        size="xs"
-        variant="danger"
-        onClick={onDelete}
+  PartSectionProps & Pick<InspectorProps, 'onDuplicate' | 'onSaveAsModel' | 'onDelete'>
+> = ({ part, onUpdate, onDuplicate, onSaveAsModel, onDelete }) => (
+  <div className="px-[12px] py-4 border-b border-white/[0.06] flex items-center gap-1">
+    <div className="flex-1 min-w-0 -ml-[8.75px]">
+      <TextInput
+        bare
+        value={part.name}
+        onChange={(e) => onUpdate({ name: e.target.value }, true)}
+        onBlur={(e) => onUpdate({ name: e.target.value.trim() || part.name }, false)}
+        onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+        aria-label="Part name"
+        className="font-semibold text-[14px]"
       />
     </div>
-    {isImage && <p className="text-[12.5px] text-white/50">Not printed or exported</p>}
+    <IconButton
+      icon={<CopyIcon className="w-3.5 h-3.5" />}
+      title="Duplicate"
+      shortcut="⌘D"
+      size="xs"
+      onClick={onDuplicate}
+    />
+    <IconButton
+      icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
+      title="Save to Library"
+      size="xs"
+      onClick={onSaveAsModel}
+    />
+    <IconButton
+      icon={<DeleteIcon className="w-3.5 h-3.5" />}
+      title="Delete"
+      shortcut="⌫"
+      size="xs"
+      variant="danger"
+      onClick={onDelete}
+    />
   </div>
 );
 
@@ -94,8 +91,8 @@ export const ImageSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
             })
       }
       options={[
-        { value: 'up', label: 'Stand Up', title: 'Upright, like a backdrop' },
-        { value: 'flat', label: 'Lay Flat', title: 'On the floor, like a blueprint' },
+        { value: 'up', label: 'Stand Up' },
+        { value: 'flat', label: 'Lay Flat' },
       ]}
     />
   </Section>
@@ -156,17 +153,9 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
 export const ProductSection: React.FC<{ part: ScenePart; comp: ComponentInfo }> = ({ part, comp }) => (
   <Section title="Product" collapsible defaultOpen={false}>
     <MetaLine items={[comp.manufacturer, comp.mpn]} className="text-[12.5px] text-white/50 -mt-1" />
-    <SpecList
-      rows={[
-        ['Size', <SizeLine key="s" w={part.dimensions.width} h={part.dimensions.height} d={part.dimensions.depth} />],
-        ...comp.specs.map(([label, value]): [string, React.ReactNode] => [
-          label,
-          <SpecText key={label} value={value} />,
-        ]),
-      ]}
-    />
-    <p className="text-[12.5px] text-white/55 leading-relaxed">{comp.mounting}</p>
-    <ModelSource c={comp} />
+    <SpecRows c={comp} d={part.dimensions} />
+    <DetailBlock label="Mounting">{comp.mounting}</DetailBlock>
+    <ModelOrigin c={comp} />
     <ComponentLinks c={comp} />
   </Section>
 );

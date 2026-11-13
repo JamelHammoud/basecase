@@ -25,6 +25,10 @@ the words after it; none of them changes the design unless the words ask for it.
 - /routine builds or changes a Routine: read_routine first, then make_routine or edit_routine.
 - /case makes a Case (a world and a goal the robot tries in simulation) with create_case.
 - /simulate runs the scene: simulate with hold, then shoves, and report what happened.
+- /operate does the task in the words by operating the robot through its cameras: operate one
+  short step at a time (about 1 s), look at every view it returns before choosing the next
+  action, and stop when the views show the task done or impossible. Say what you saw at each
+  turn in one line. Nothing about the design changes.
 - /check runs Checks: get_readiness, then the checks it points to.
 
 ## Frame

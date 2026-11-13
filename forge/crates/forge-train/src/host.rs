@@ -107,6 +107,10 @@ impl HostModel {
 
 impl Robot {
     pub fn from_host(model: HostModel, job: Job, settled: Settled) -> Result<Self, String> {
+        if job.sees() {
+            return Err("The browser can't cast eye rays yet".to_owned());
+        }
+
         let joints = model.joints(&job)?;
         let layout = RowMap::new(&model.fields)?.offsets();
 
@@ -122,6 +126,7 @@ impl Robot {
             settled,
             engine: Engine::Wgsl,
             mujoco: model.version.clone(),
+            eye_bodies: Vec::new(),
         };
 
         Ok(Robot::assemble(model, job, parts))

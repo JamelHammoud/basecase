@@ -53,11 +53,7 @@ fn final_state_only_success_is_refused_in_every_disguise() {
     let wrapped = [
         format!(r#"{{"all":[{}]}}"#, always(LAST_ZERO)),
         format!(r#"{{"any":[{},{}]}}"#, always(LAST_ZERO), always(WHOLE)),
-        format!(
-            r#"{{"sequence":[{},{}]}}"#,
-            eventually(LAST_ZERO),
-            always(LAST_ZERO)
-        ),
+        format!(r#"{{"sequence":[{},{}]}}"#, eventually(LAST_ZERO), always(LAST_ZERO)),
     ];
 
     for success in plain.iter().chain(wrapped.iter()) {
@@ -161,9 +157,7 @@ fn non_finite_and_nonsense_atoms_are_refused() {
 
     for atom in bad {
         assert!(
-            refused(&format!(
-                r#"{{"always":{{"window":"whole","state":{atom}}}}}"#
-            )),
+            refused(&format!(r#"{{"always":{{"window":"whole","state":{atom}}}}}"#)),
             "{atom}"
         );
     }
@@ -206,10 +200,7 @@ fn shape_errors_are_refused() {
         assert!(refused(success), "{success}");
     }
 
-    let future = format!(
-        r#"{{"version":2,"success":{},"failures":[]}}"#,
-        always(WHOLE)
-    );
+    let future = format!(r#"{{"version":2,"success":{},"failures":[]}}"#, always(WHOLE));
 
     assert!(Contract::from_json(&future).is_err());
     assert!(Contract::from_json("{").is_err());
@@ -238,8 +229,7 @@ fn trace_errors_are_refused() {
 
 #[test]
 fn check_lists_the_signals_a_contract_reads() {
-    let state =
-        r#"{"atom":{"expr":{"dist":[["a","b","c"],["d","e","x"]]},"cmp":">","value":0,"scale":1}}"#;
+    let state = r#"{"atom":{"expr":{"dist":[["a","b","c"],["d","e","x"]]},"cmp":">","value":0,"scale":1}}"#;
     let success = format!(r#"{{"always":{{"window":"whole","state":{{"not":{state}}}}}}}"#);
 
     assert_eq!(

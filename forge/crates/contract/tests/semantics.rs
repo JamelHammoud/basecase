@@ -75,9 +75,7 @@ fn hold_for_matches_a_brute_force_scan() {
 
     for width in [1usize, 2, 3, 7, 40, 400] {
         let seconds = width as f64 * 0.1;
-        let hold = format!(
-            r#"{{"hold_for":{{"seconds":{seconds},"state":{ABOVE_ONE},"within":"whole"}}}}"#
-        );
+        let hold = format!(r#"{{"hold_for":{{"seconds":{seconds},"state":{ABOVE_ONE},"within":"whole"}}}}"#);
         let expected = values
             .windows(width)
             .map(|dwell| dwell.iter().fold(f64::INFINITY, |lo, v| lo.min(v - 1.0)))
@@ -105,8 +103,7 @@ fn an_empty_window_fails_closed_for_always_too() {
 
 #[test]
 fn windows_select_the_right_ticks() {
-    let between =
-        format!(r#"{{"always":{{"window":{{"from":0.1,"to":0.2}},"state":{ABOVE_ONE}}}}}"#);
+    let between = format!(r#"{{"always":{{"window":{{"from":0.1,"to":0.2}},"state":{ABOVE_ONE}}}}}"#);
     let last = format!(r#"{{"always":{{"window":{{"last":0.1}},"state":{ABOVE_ONE}}}}}"#);
 
     assert!(run(&between, &["0", "2", "2", "0"]).passed);
@@ -119,11 +116,7 @@ fn windows_select_the_right_ticks() {
 fn sequence_steps_start_where_the_previous_first_held() {
     let high = r#"{"atom":{"expr":{"signal":"x"},"cmp":">","value":5,"scale":1}}"#;
     let low = format!(r#"{{"not":{ABOVE_ONE}}}"#);
-    let steps = format!(
-        r#"{{"sequence":[{},{}]}}"#,
-        eventually(high),
-        eventually(&low)
-    );
+    let steps = format!(r#"{{"sequence":[{},{}]}}"#, eventually(high), eventually(&low));
 
     assert!(run(&steps, &["0", "6", "0"]).passed);
     assert!(!run(&steps, &["0", "0", "6"]).passed);
@@ -217,8 +210,7 @@ fn abs_and_delta_compute() {
 fn dist_and_angle_compute() {
     let dist = atom(r#"{"dist":[["a","b","c"],["d","e","f"]]}"#, 0.0);
     let angle = atom(r#"{"angle":[["a","b","c"],["d","e","f"]]}"#, 0.0);
-    let trace =
-        r#"{"dt":0.1,"signals":{"a":[3,3],"b":[0,0],"c":[0,0],"d":[0,0],"e":[4,4],"f":[0,0]}}"#;
+    let trace = r#"{"dt":0.1,"signals":{"a":[3,3],"b":[0,0],"c":[0,0],"d":[0,0],"e":[4,4],"f":[0,0]}}"#;
     let margin = |state: &str| {
         evaluate_json(&contract_of(&always(state)), trace)
             .expect("accepted")
@@ -249,14 +241,11 @@ fn a_zero_vector_has_no_angle() {
 
 #[test]
 fn cost_is_linear_in_trace_length() {
-    let state =
-        r#"{"atom":{"expr":{"abs":{"delta":{"signal":"x"}}},"cmp":"<","value":10,"scale":1}}"#;
+    let state = r#"{"atom":{"expr":{"abs":{"delta":{"signal":"x"}}},"cmp":"<","value":10,"scale":1}}"#;
     let hold = format!(r#"{{"hold_for":{{"seconds":1000,"state":{state},"within":"whole"}}}}"#);
     let contract = Contract::from_json(&contract_of(&hold)).expect("accepted");
     let ticks = 2_000_000;
-    let signals = [(String::from("x"), vec![0.0; ticks])]
-        .into_iter()
-        .collect();
+    let signals = [(String::from("x"), vec![0.0; ticks])].into_iter().collect();
     let trace = Trace::new(0.01, signals).expect("accepted");
     let started = std::time::Instant::now();
     let outcome = contract::evaluate(&contract, &trace).expect("accepted");

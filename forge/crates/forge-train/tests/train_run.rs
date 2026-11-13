@@ -121,6 +121,36 @@ fn a_squashed_ppo_run_exports_a_squashed_policy() {
         .all(|s| s.as_f64().expect("number") >= -2.5));
 }
 
+#[test]
+fn an_eye_run_steps_on_c_mujoco_says_why_and_exports_its_eyes() {
+    let eyes = json!([{
+        "part": "cam-1", "body": "base", "pos": [0, 0, 0.03], "cols": 2, "rows": 2, "rangeM": 2,
+        "dirs": [0, -1, 0, 0, 0, -1, 0, 0, 0, 0.6, -0.8, 0]
+    }]);
+    let folder = job_folder(
+        "eyes",
+        json!({ "eyes": eyes, "backend": "simd", "startArea": { "forwardM": [-0.5, 0.5], "sideM": [0, 1] } }),
+    );
+    let events = run(&folder);
+    let said_why = events
+        .iter()
+        .filter_map(|e| e["message"].as_str())
+        .any(|m| m.contains("can't cast eye rays") && m.contains("C MuJoCo"));
+    let policy: Value =
+        serde_json::from_str(&fs::read_to_string(folder.join("policy.json")).expect("policy")).expect("json");
+    let check: Value =
+        serde_json::from_str(&fs::read_to_string(folder.join("policy-check.json")).expect("check")).expect("json");
+
+    assert!(said_why);
+    assert_eq!(policy["eyes"], eyes);
+    assert_eq!(policy["obsMean"].as_array().expect("mean").len(), 12 + 3 * 2 + 4);
+    assert_eq!(policy["layers"][0]["in"], 12 + 3 * 2 + 4);
+    assert_eq!(
+        check["samples"][0]["obs"].as_array().expect("obs").len(),
+        12 + 3 * 2 + 4
+    );
+}
+
 fn rewards(events: &[Value]) -> Vec<f64> {
     events
         .iter()

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import { argOption, defaultRunName, here, openStudio, root } from '../harness.mjs';
+import { argOption, defaultRunName, here, root } from '../harness.mjs';
+import { openSlotPool, runOnSlots } from '../slots.mjs';
 import { gitInfo } from '../archive.mjs';
+import { harnessKey } from '../compare/cache.mjs';
 import { gradeLine } from './grade.mjs';
 import { runMicroOnce } from './once.mjs';
 import { closeAppModules } from './scenes.mjs';
@@ -31,38 +33,34 @@ if (args.includes('--list')) {
 
 const started = Date.now();
 const log = (...a) => console.log(`[micro ${((Date.now() - started) / 1000).toFixed(0)}s]`, ...a);
-const studio = await openStudio({ label: 'micro', port: Number(argOption(args, 'port', 5190)), log });
+const pool = await openSlotPool({
+  label: 'micro',
+  port: Number(argOption(args, 'port', 5190)),
+  parallel: Number(argOption(args, 'parallel', 4)),
+  perApp: Number(argOption(args, 'per-app', 1)),
+  log,
+});
 const git = gitInfo(root);
 const results = [];
 
-async function runOnce(task, seed) {
-  const { grade, ...r } = await runMicroOnce({
-    studio,
-    task,
-    seed,
-    outDir: outRoot,
-    runsDir,
-    runName,
-    git,
-    model,
-    effort,
-  });
+const out = { dir: outRoot, runsDir, runName, git };
+const harness = harnessKey(root);
 
-  log(gradeLine(task, grade), `$${r.costUsd ?? '?'}`, `${r.seconds}s`, r.servedBy ?? '');
+async function runOnce({ task, seed }, slot) {
+  try {
+    const { grade, ...r } = await runMicroOnce({ slot, task, seed, out, model, effort, harness });
 
-  return r;
-}
-
-for (const task of tasks) {
-  for (let seed = 1; seed <= seeds; seed++) {
-    try {
-      results.push(await runOnce(task, seed));
-    } catch (err) {
-      log(`${task.id} seed ${seed} failed: ${err.message}`);
-      results.push({ task: task.id, category: task.category, heldOut: !!task.heldOut, seed, status: 'error' });
-    }
+    log(gradeLine(task, grade), `$${r.costUsd ?? '?'}`, `${r.seconds}s`, r.servedBy ?? '');
+    results.push(r);
+  } catch (err) {
+    log(`${task.id} seed ${seed} failed: ${err.message}`);
+    results.push({ task: task.id, category: task.category, heldOut: !!task.heldOut, seed, status: 'error' });
   }
 }
+
+const jobs = Array.from({ length: seeds }, (_, i) => tasks.map((task) => ({ task, seed: i + 1 }))).flat();
+
+await runOnSlots(pool.slots, jobs, runOnce);
 
 const stats = suiteStats(results);
 const report = statsMarkdown(stats);
@@ -72,6 +70,6 @@ fs.writeFileSync(path.join(outRoot, 'results.json'), JSON.stringify({ results, s
 fs.writeFileSync(path.join(outRoot, 'report.md'), report + '\n');
 console.log(report);
 
-await studio.close();
+await pool.close();
 await closeAppModules();
 process.exit(0);

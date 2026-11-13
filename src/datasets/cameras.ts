@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { portsOf, worldPort } from '../agent/ports';
 import { eulerToMatrix } from '../agent/agentFrame';
-import { COMPONENT_BY_ID, specLines } from '../data/components';
+import { horizontalDeg, type Lens } from '../cameras/lens';
+import { partLens } from '../cameras/optics';
 import { isCameraPart } from '../routines/capabilities';
 import type { Port } from '../types/ports';
 import type { ScenePart } from '../types/robotics';
@@ -10,7 +11,6 @@ import type { V3 } from '../utils/kinematics';
 export const FRAME_WIDTH = 640;
 export const FRAME_HEIGHT = 480;
 
-const DEFAULT_HFOV = 70;
 const MIN_HFOV = 30;
 const MAX_HFOV = 120;
 const SCENE_HFOV = 60;
@@ -25,9 +25,10 @@ export interface DatasetCamera {
   target: V3;
   up: V3;
   fovDeg: number;
+  lens: Lens;
 }
 
-interface Lens {
+export interface LensPose {
   position: THREE.Vector3;
   axis: THREE.Vector3;
 }
@@ -41,15 +42,9 @@ export function verticalFov(horizontalDeg: number, aspect = FRAME_WIDTH / FRAME_
   return THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(h / 2) / aspect));
 }
 
-export function horizontalFovOf(part: ScenePart): number {
-  const specs = part.componentId ? (COMPONENT_BY_ID[part.componentId]?.specs ?? []) : [];
-  const row = specs.find(([label]) => /^(fov|field of view)$/i.test(label));
-  const first = row && /(\d+(?:\.\d+)?)\s*°/.exec(specLines(row[1]).join(' '));
+export const horizontalFovOf = (part: ScenePart): number => horizontalDeg(partLens(part));
 
-  return first ? Number(first[1]) : DEFAULT_HFOV;
-}
-
-function lensFromBack(part: ScenePart, back: Port[]): Lens {
+function lensFromBack(part: ScenePart, back: Port[]): LensPose {
   const local = back.reduce((sum, p) => sum.add(vec(p.position)), new THREE.Vector3()).divideScalar(back.length);
   const out = vec(back[0].axis).normalize().negate();
   const dims = [part.dimensions.width, part.dimensions.height, part.dimensions.depth];
@@ -62,7 +57,7 @@ function lensFromBack(part: ScenePart, back: Port[]): Lens {
   return { position: vec(front.position), axis: vec(front.axis) };
 }
 
-export function lensOf(part: ScenePart): Lens | null {
+export function lensOf(part: ScenePart): LensPose | null {
   const ports = portsOf(part);
   const lens = ports.find((p) => p.name === 'lens');
 
@@ -89,7 +84,7 @@ export const snakeKey = (name: string) =>
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '') || 'camera';
 
-function uniqueKey(base: string, taken: Set<string>): string {
+export function uniqueKey(base: string, taken: Set<string>): string {
   let n = 1;
 
   while (taken.has(n === 1 ? base : `${base}_${n}`)) n++;
@@ -116,6 +111,7 @@ export function partCameras(parts: ScenePart[], taken = new Set<string>(['scene'
         target: arr(lens.position.clone().addScaledVector(lens.axis, 100)),
         up: arr(upFor(part, lens.axis)),
         fovDeg: verticalFov(horizontalFovOf(part)),
+        lens: partLens(part),
       },
     ];
   });
@@ -150,6 +146,7 @@ export function sceneCamera(robot: ScenePart[], world: ScenePart[]): DatasetCame
     target: arr(center),
     up: [0, 1, 0],
     fovDeg,
+    lens: { model: 'pinhole', hfovDeg: SCENE_HFOV },
   };
 }
 

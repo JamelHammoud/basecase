@@ -1,4 +1,5 @@
 use crate::deployed::Squash;
+use crate::eyes::{self, EyeSpec};
 use crate::options::{self, TaskOptions};
 use serde_json::Value;
 use std::fs;
@@ -100,6 +101,8 @@ pub struct Job {
     pub log_std_min: Option<f32>,
     pub squash: Squash,
     pub options: TaskOptions,
+    pub eyes: Vec<EyeSpec>,
+    pub eyes_json: Option<Value>,
 }
 
 fn required<'a>(root: &'a Value, key: &str) -> Result<&'a Value, String> {
@@ -222,10 +225,19 @@ pub fn parse(root: &Value) -> Result<Job, String> {
             .filter(|v| v.is_finite()),
         squash: squash(root.get("squash").and_then(Value::as_str))?,
         options: options::parse(root)?,
+        eyes: eyes::parse(root)?,
+        eyes_json: root
+            .get("eyes")
+            .filter(|v| v.as_array().is_some_and(|l| !l.is_empty()))
+            .cloned(),
     })
 }
 
 impl Job {
+    pub fn sees(&self) -> bool {
+        !self.eyes.is_empty()
+    }
+
     pub fn envs_on_gpu(&self) -> usize {
         self.gpu_envs.unwrap_or(self.envs)
     }

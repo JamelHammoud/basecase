@@ -1,7 +1,7 @@
 import type React from 'react';
 import { SLASH_COMMANDS, slashText, type SlashName } from '../agent/slashCommands';
 import type { Command } from '../components/CommandPalette';
-import { CasesIcon, CheckIcon, RoutinesIcon, RunIcon, TrainIcon } from '../design-system';
+import { CameraIcon, CasesIcon, CheckIcon, RoutinesIcon, RunIcon, TrainIcon } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
@@ -12,6 +12,7 @@ const ICONS: Record<SlashName, React.ReactNode> = {
   routine: <RoutinesIcon className={ic} />,
   case: <CasesIcon className={ic} />,
   simulate: <RunIcon className={ic} />,
+  operate: <CameraIcon className={ic} />,
   check: <CheckIcon className={ic} />,
 };
 

@@ -1,6 +1,7 @@
 use serde_json::Value;
 
 const RESET_JOINT_NOISE: f64 = 0.05;
+const START_AREA_REACH_M: f64 = 5.0;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CommandRanges {
@@ -23,6 +24,7 @@ pub struct TaskOptions {
     pub fall_resets: bool,
     pub pushes: bool,
     pub episode_s: Option<f64>,
+    pub start_area: Option<[[f64; 2]; 2]>,
 }
 
 impl Default for TaskOptions {
@@ -40,6 +42,7 @@ impl Default for TaskOptions {
             fall_resets: true,
             pushes: true,
             episode_s: None,
+            start_area: None,
         }
     }
 }
@@ -117,6 +120,23 @@ fn ramp(root: &Value) -> Result<Option<f64>, String> {
     }
 }
 
+fn start_area(root: &Value) -> Result<Option<[[f64; 2]; 2]>, String> {
+    let Some(value) = root.get("startArea") else {
+        return Ok(None);
+    };
+    let forward = pair(value.get("forwardM").unwrap_or(&Value::Null), "startArea.forwardM")?;
+    let side = pair(value.get("sideM").unwrap_or(&Value::Null), "startArea.sideM")?;
+    let within = |[low, high]: [f64; 2]| low >= -START_AREA_REACH_M && high <= START_AREA_REACH_M;
+
+    if !(within(forward) && within(side)) {
+        return Err(format!(
+            "startArea reaches at most {START_AREA_REACH_M} m from the start on each axis"
+        ));
+    }
+
+    Ok(Some([forward, side]))
+}
+
 fn flag(root: &Value, key: &str) -> bool {
     root.get(key).and_then(Value::as_bool).unwrap_or(true)
 }
@@ -135,6 +155,7 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         fall_resets: flag(root, "fallResets"),
         pushes: flag(root, "pushes"),
         episode_s: root.get("episodeS").and_then(Value::as_f64).filter(|s| *s > 0.0),
+        start_area: start_area(root)?,
     })
 }
 
@@ -170,6 +191,18 @@ mod tests {
         assert_eq!(ramped.delay_ramp, Some(0.6));
         assert!(parse(&json!({ "delayRamp": 0 })).is_err());
         assert!(parse(&json!({ "delayRamp": 1.5 })).is_err());
+    }
+
+    #[test]
+    fn reads_a_start_area_within_five_metres() {
+        let area = parse(&json!({ "startArea": { "forwardM": [-1, 2], "sideM": [0, 0.5] } })).expect("parses");
+
+        assert_eq!(area.start_area, Some([[-1.0, 2.0], [0.0, 0.5]]));
+        assert!(parse(&json!({ "startArea": { "forwardM": [-6, 0], "sideM": [0, 0] } }))
+            .expect_err("too far")
+            .contains("5 m"));
+        assert!(parse(&json!({ "startArea": { "forwardM": [1, 0], "sideM": [0, 0] } })).is_err());
+        assert!(parse(&json!({ "startArea": { "forwardM": [0, 1] } })).is_err());
     }
 
     #[test]

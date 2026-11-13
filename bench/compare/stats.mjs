@@ -19,15 +19,16 @@ function rng(seed) {
   };
 }
 
-export function bootstrapCI(values, { resamples = 4000, seed = 7 } = {}) {
+export function bootstrapCI(values, { resamples = 4000, seed = 7, level = 0.95 } = {}) {
   if (values.length < 2) return null;
 
   const next = rng(seed);
   const means = Array.from({ length: resamples }, () =>
     mean(Array.from({ length: values.length }, () => values[Math.floor(next() * values.length)])),
   ).sort((a, b) => a - b);
+  const tail = (1 - level) / 2;
 
-  return [means[Math.floor(resamples * 0.025)], means[Math.ceil(resamples * 0.975) - 1]];
+  return [means[Math.floor(resamples * tail)], means[Math.ceil(resamples * (1 - tail)) - 1]];
 }
 
 function choose(n, k) {
@@ -67,6 +68,8 @@ function modelSummary(model, runs, tasks) {
     unavailable: runs.filter((r) => r.status === 'unavailable').length,
     meanPassRate: round(mean(rates)),
     costUsd: round(sum(costs), 2),
+    spentUsd: round(sum(numbers(runs.filter((r) => !r.cached).map((r) => r.costUsd))), 2),
+    reused: runs.filter((r) => r.cached).length,
     costPerRun: round(mean(costs), 3),
     passesPerDollar: sum(costs) ? round(passes / sum(costs), 2) : null,
     meanSeconds: round(mean(numbers(runs.map((r) => r.seconds))), 0),
@@ -95,6 +98,7 @@ export function compareStats(results, models) {
   const wins = paired.filter((t) => t.diff > 0).length;
   const losses = paired.filter((t) => t.diff < 0).length;
   const ci = bootstrapCI(diffs);
+  const stopCi = bootstrapCI(diffs, { level: 0.99 });
 
   return {
     models: models.map((m) =>
@@ -107,6 +111,7 @@ export function compareStats(results, models) {
     paired,
     meanDiff: round(mean(diffs)),
     ci: ci && ci.map((v) => round(v)),
+    stopCi: stopCi && stopCi.map((v) => round(v)),
     wins,
     losses,
     ties: paired.length - wins - losses,
@@ -114,7 +119,7 @@ export function compareStats(results, models) {
   };
 }
 
-export function verdict(stats, [a, b]) {
+export function verdict(stats, [a, b], { margin = 0.1 } = {}) {
   if (stats.paired.length < 3) return 'Too few tasks graded for both models to say anything.';
 
   const [lo, hi] = stats.ci ?? [null, null];
@@ -122,6 +127,9 @@ export function verdict(stats, [a, b]) {
   if (lo !== null && lo > 0) return `${a} passes more tasks than ${b}.`;
 
   if (hi !== null && hi < 0) return `${b} passes more tasks than ${a}.`;
+
+  if (lo !== null && lo >= -margin && hi <= margin)
+    return `No practical difference: the gap is within ±${Math.round(margin * 100)} points of pass rate.`;
 
   return `No clear difference: the 95% interval on the gap includes zero. More seeds or tasks would narrow it.`;
 }

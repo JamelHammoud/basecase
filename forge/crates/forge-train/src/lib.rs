@@ -11,6 +11,12 @@ pub mod episodes;
 pub mod evaluate;
 pub mod events;
 pub mod export;
+#[cfg(feature = "native")]
+pub mod eye_rays;
+#[cfg(not(feature = "native"))]
+#[path = "eye_rays_host.rs"]
+pub mod eye_rays;
+pub mod eyes;
 pub mod gates;
 #[cfg(feature = "native")]
 pub mod gpu_loop;

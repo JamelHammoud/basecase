@@ -27,6 +27,7 @@ export interface DatasetExport {
   canExport: boolean;
   exporting: boolean;
   exportDataset: () => void;
+  build: (tries: TryRecord[]) => Promise<DatasetZip | null>;
 }
 
 async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) {
@@ -50,6 +51,37 @@ async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) 
 
 const triesText = (n: number) => (n === 1 ? '1 try' : `${n} tries`);
 
+export interface DatasetZip {
+  zip: Uint8Array;
+  name: string;
+  used: number;
+  left: number;
+}
+
+type BuildInput = Pick<DatasetExportOptions, 'sim' | 'rig' | 'parts'> & { kase: Case; tries: TryRecord[] };
+
+export async function buildDatasetZip({ sim, rig, parts, kase, tries }: BuildInput): Promise<DatasetZip | null> {
+  const model = sim.model ?? (await sim.buildModel());
+  const { episodes, modelHash } = await usableEpisodes(kase, tries, model);
+
+  if (!episodes.length) return null;
+
+  const visible = parts.filter((p) => p.visible && p.role === 'solid');
+  const name = `${fileSafe(kase.name)}-dataset`;
+  const zip = await exportDatasetZip({
+    name,
+    robotType: snakeKey(rig.robots[0]?.name ?? 'robot'),
+    parts: visible,
+    world: sim.worldParts,
+    model,
+    cameras: datasetCameras(visible, sim.worldParts),
+    episodes,
+    source: { app: 'basecase', case: kase.id, case_name: kase.name, model_hash: modelHash },
+  });
+
+  return { zip, name, used: episodes.length, left: tries.length - episodes.length };
+}
+
 export function useDatasetExport({ sim, rig, parts, active, tries, showToast }: DatasetExportOptions): DatasetExport {
   const [exporting, setExporting] = useState(false);
   const passed = tries.filter((t) => t.passed);
@@ -59,32 +91,17 @@ export function useDatasetExport({ sim, rig, parts, active, tries, showToast }: 
     showToast('Exporting dataset…', { tone: 'progress' });
 
     try {
-      const model = sim.model ?? (await sim.buildModel());
-      const { episodes, modelHash } = await usableEpisodes(kase, passed, model);
+      const made = await buildDatasetZip({ sim, rig, parts, kase, tries: passed });
 
-      if (!episodes.length) {
+      if (!made) {
         showToast('These tries are from an earlier design. Try It again to record new ones.', { tone: 'error' });
 
         return;
       }
 
-      const visible = parts.filter((p) => p.visible && p.role === 'solid');
-      const name = `${fileSafe(kase.name)}-dataset`;
-      const zip = await exportDatasetZip({
-        name,
-        robotType: snakeKey(rig.robots[0]?.name ?? 'robot'),
-        parts: visible,
-        world: sim.worldParts,
-        model,
-        cameras: datasetCameras(visible, sim.worldParts),
-        episodes,
-        source: { app: 'basecase', case: kase.id, case_name: kase.name, model_hash: modelHash },
-      });
-      const left = passed.length - episodes.length;
-
-      downloadBytes(zip, `${name}.zip`, 'application/zip');
+      downloadBytes(made.zip, `${made.name}.zip`, 'application/zip');
       showToast(
-        `Exported ${triesText(episodes.length)} as a dataset${left ? `, left out ${left} from an earlier design` : ''}`,
+        `Exported ${triesText(made.used)} as a dataset${made.left ? `, left out ${made.left} from an earlier design` : ''}`,
       );
     } catch (err) {
       showToast(`Couldn’t export the dataset. ${err instanceof Error ? err.message : String(err)}`, { tone: 'error' });
@@ -94,10 +111,11 @@ export function useDatasetExport({ sim, rig, parts, active, tries, showToast }: 
   };
 
   return {
-    canExport: !!active && passed.length > 0 && !exporting,
+    canExport: !!active && passed.length > 0,
     exporting,
     exportDataset: () => {
       if (active && passed.length && !exporting) void run(active);
     },
+    build: (all) => (active ? buildDatasetZip({ sim, rig, parts, kase: active, tries: all }) : Promise.resolve(null)),
   };
 }

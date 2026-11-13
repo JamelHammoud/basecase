@@ -1,9 +1,8 @@
-import { chromium, type Browser, type Page } from 'playwright-core';
-import type { ViteDevServer } from 'vite';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { Browser, Page } from 'playwright-core';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import type { ForgeHook } from '../src/forge/forgeHook';
 import type { TabKitResult } from '../src/forge/tabTraining';
-import { startServer } from './harness';
+import { launchChrome } from './harness';
 
 const BUDGET_MS = 15 * 60_000;
 const GPU_ARGS = ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-webgpu'];
@@ -26,22 +25,17 @@ async function train(page: Page, attempts = 3): Promise<TabKitResult> {
   }
 }
 
-let server: ViteDevServer;
 let browser: Browser;
-let base: string;
 
-beforeAll(async () => {
-  server = await startServer('web');
-  base = server.resolvedUrls!.local[0].replace(/\/$/, '');
-  browser = await chromium.launch({ channel: 'chrome', headless: true, args: GPU_ARGS });
-}, 120000);
+describe.runIf(process.platform === 'darwin')('Forge in a tab', () => {
+  beforeAll(async () => {
+    browser = await launchChrome(GPU_ARGS);
+  }, 120000);
 
-afterAll(async () => {
-  await browser?.close();
-  await server?.close();
-});
+  afterAll(async () => {
+    await browser?.close();
+  });
 
-describe('Forge in a tab', () => {
   it(
     'forge tab trains Stand on WebGPU to a passing Arena eval within 15 minutes',
     async () => {
@@ -49,7 +43,7 @@ describe('Forge in a tab', () => {
       const errors: string[] = [];
 
       page.on('pageerror', (e) => errors.push(e.message));
-      await page.goto(`${base}/c/hexapod-reach-the-flag`);
+      await page.goto(`${inject('webUrl')}/c/hexapod-reach-the-flag`);
 
       const started = Date.now();
       const result = await train(page);

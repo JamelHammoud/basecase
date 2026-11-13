@@ -37,7 +37,7 @@ One Rust crate, built native (Forge) and to WASM (the app), so both judge with t
 
 ### Environment interface (`environment.ts`)
 
-One task description that lowers to WASM now and to native, SIMD and GPU later, so it holds only data: observation terms (`policyObservation(joints)` is exactly today's policy contract), action spec, reset distribution, randomization ranges, a reward reference (contract robustness or a RewardLang hash) and the contract, plus named signal sources the contract reads (time, joint position, velocity and effort, part position, base height, tilt and forward travel, contact). `validateEnvironment(env, model)` returns plain problems; an empty list means valid.
+One task description that lowers to WASM now and to native, SIMD and GPU later, so it holds only data: observation terms (`policyObservation(joints)` is exactly today's policy contract; a `depth-eye` term adds a camera's rays, its geometry inside the term, §8l), action spec, reset distribution (with an optional `startArea`, metres forward and sideways the start moves each episode, sent to Forge as `startArea`), randomization ranges, a reward reference (contract robustness or a RewardLang hash) and the contract, plus named signal sources the contract reads (time, joint position, velocity and effort, part position, base height, tilt and forward travel, contact). `validateEnvironment(env, model)` returns plain problems; an empty list means valid.
 
 ### Arena (`arena.ts`)
 

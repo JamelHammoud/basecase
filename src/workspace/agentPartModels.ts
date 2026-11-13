@@ -11,6 +11,7 @@ const MEASURING = new Set([
   'simulate',
   'set_world',
   'start_drive',
+  'operate',
   'craft',
   'visible_share',
   'pose',

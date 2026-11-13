@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { bridge, fail, text } from './shared.mjs';
+import { bridge, fail, imageReply, text } from './shared.mjs';
 
 const vec3 = z.array(z.number().finite()).length(3);
 
@@ -75,6 +75,43 @@ export const startDrive = {
   handler: async (args) => {
     try {
       return text((await bridge('start_drive', args, 180000))?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const operate = {
+  name: 'operate',
+  config: {
+    title: 'Operate the robot',
+    description:
+      'Operates the robot one step at a time in the live simulation on the canvas, the way a person at the controls does, and shows what its cameras see after each step. ' +
+      "Each call holds one action for a few seconds, pauses, then returns the views from the robot's camera parts and the scene's camera view, plus whether it fell and where the end effector is. Look at the images, decide the next action, and call again: the robot stays where the last step left it. " +
+      'Actions are the same as start_drive: forward, left and turn (-1 to 1) for robots that move around; lift (-1 to 1) or target (a point in mm, z up) for arms. restart: true puts the robot back at its start. ' +
+      'The user places stationary camera views with Add Camera View; ask for the ones you need by name.',
+    inputSchema: {
+      action: z
+        .object({
+          forward: z.number().min(-1).max(1).optional(),
+          left: z.number().min(-1).max(1).optional(),
+          turn: z.number().min(-1).max(1).optional().describe('Counter-clockwise from above'),
+          lift: z.number().min(-1).max(1).optional().describe('Arms: raise (1) or lower (-1) the end effector'),
+          target: vec3.optional().describe('Arms: move the end effector to this point, mm, z up'),
+        })
+        .optional(),
+      seconds: z.number().min(0.1).max(5).optional().describe('How long to hold the action, default 1'),
+      cameras: z
+        .array(z.string())
+        .max(3)
+        .optional()
+        .describe("Camera names to see through; default the scene view and the robot's cameras"),
+      restart: z.boolean().optional(),
+    },
+  },
+  handler: async (args) => {
+    try {
+      return imageReply(await bridge('operate', args, 120000), 'Nothing to operate.');
     } catch (err) {
       return fail(err);
     }

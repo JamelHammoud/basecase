@@ -1,0 +1,38 @@
+import { BANNED_COPY } from '../../verify/rehearsal/uiRules.ts';
+import { isUserFacing } from './extract.mjs';
+
+export const FIXES = {
+  '\\byet\\b': 'Cut it: “No parts”, not “No parts yet”.',
+  '\\bplease\\b': 'Cut it.',
+  '\\bsimply\\b': 'Cut it.',
+  '\\beasily\\b': 'Cut it.',
+  '\\bsuccessfully\\b': 'Cut it: “Saved”, not “Saved successfully”.',
+  '\\boops\\b': 'State the problem and the fix.',
+  '\\buh-oh\\b': 'State the problem and the fix.',
+  '\\binvalid\\b': 'Say what to do instead.',
+  '\\berror:': 'Say what to do instead.',
+  'will appear here|show up here': 'Omit it, or name the action.',
+  'tried in simulation only': 'Cut it; show the measured limit next to the result.',
+  '\\bclick here\\b': 'Describe the destination.',
+  '^learn more$': 'Describe the destination.',
+  ' [·•|] ': 'Separate items with layout (§3b-16).',
+};
+
+export const LINTED_COPY = BANNED_COPY.filter(([source]) => source in FIXES).map(([source, flags]) => ({
+  pattern: new RegExp(source, flags),
+  fix: FIXES[source],
+}));
+
+const isId = (text) => /\p{L}{2,}/u.test(text) && !isUserFacing(text);
+
+export function findBannedCopy(text) {
+  if (isId(text)) return null;
+
+  for (const { pattern, fix } of LINTED_COPY) {
+    const match = pattern.exec(text) ?? pattern.exec(text.trim());
+
+    if (match) return { word: match[0].trim(), fix };
+  }
+
+  return null;
+}

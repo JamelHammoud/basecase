@@ -31,9 +31,11 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         />
       )}
       <ImportRobotSheet
+        key={robots.robotChoice?.choices.join('\n') ?? 'link'}
         open={robots.importRobotOpen}
+        choice={robots.robotChoice}
         onClose={robots.closeImportRobot}
-        onImport={(src) => void importRobotFrom(src)}
+        onImport={(src, at) => void importRobotFrom(src, at)}
       />
       <RetargetSheet
         key={pose.motionSource?.name}

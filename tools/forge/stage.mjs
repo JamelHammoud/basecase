@@ -11,9 +11,11 @@ const MUJOCO = forgeMujocoVersion();
 const FRAMEWORK_REF = `@rpath/mujoco.framework/Versions/A/libmujoco.${MUJOCO}.dylib`;
 const DYLIB = `libmujoco.${MUJOCO}.dylib`;
 
+const vendorRoot = () => process.env.FORGE_MUJOCO_DIR ?? path.join(root, 'forge', 'vendor', `mujoco-${MUJOCO}`);
+
 function stageMac() {
   const binary = path.join(out, 'forge-train');
-  const vendor = process.env.FORGE_MUJOCO_DIR ?? path.join(root, 'forge', 'vendor', `mujoco-${MUJOCO}`);
+  const vendor = vendorRoot();
 
   fs.copyFileSync(path.join(release, 'forge-train'), binary);
   fs.copyFileSync(path.join(vendor, 'mujoco.framework', 'Versions', 'A', DYLIB), path.join(out, DYLIB));
@@ -24,7 +26,8 @@ function stageMac() {
 }
 
 function stageWindows() {
-  for (const file of ['forge-train.exe', 'mujoco.dll']) fs.copyFileSync(path.join(release, file), path.join(out, file));
+  fs.copyFileSync(path.join(release, 'forge-train.exe'), path.join(out, 'forge-train.exe'));
+  fs.copyFileSync(path.join(vendorRoot(), 'bin', 'mujoco.dll'), path.join(out, 'mujoco.dll'));
 }
 
 fs.rmSync(out, { recursive: true, force: true });

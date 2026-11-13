@@ -50,15 +50,7 @@ function useCommentEdits(setAnnotations: Setter<SceneAnnotation[]>) {
       comments: a.comments.map((c) => (c.id === commentId ? { ...c, text, editedAt: stamp() } : c)),
     }));
 
-  const deleteComment = (id: string, commentId: string) => {
-    updateAnnotation(id, (a) => {
-      const comments = a.comments.filter((c) => c.id !== commentId);
-
-      return comments.length ? { ...a, comments } : null;
-    });
-  };
-
-  return { updateAnnotation, reply, editComment, deleteComment };
+  return { updateAnnotation, reply, editComment };
 }
 
 export function useAnnotations({ initial, parts, showToast, setSelectedIds, stopTools }: AnnotationOptions) {
@@ -116,6 +108,30 @@ export function useAnnotations({ initial, parts, showToast, setSelectedIds, stop
     });
   };
 
+  const deleteComment = (id: string, commentId: string) => {
+    const thread = annotations.find((a) => a.id === id);
+    const index = thread?.comments.findIndex((c) => c.id === commentId) ?? -1;
+
+    if (!thread || index < 0) return;
+
+    if (thread.comments.length === 1) {
+      deleteThread(id);
+
+      return;
+    }
+
+    const comment = thread.comments[index];
+
+    edits.updateAnnotation(id, (a) => ({ ...a, comments: a.comments.filter((c) => c.id !== commentId) }));
+    showToast('Deleted comment', {
+      tone: 'neutral',
+      action: {
+        label: 'Undo',
+        onClick: () => edits.updateAnnotation(id, (a) => ({ ...a, comments: a.comments.toSpliced(index, 0, comment) })),
+      },
+    });
+  };
+
   const toggleResolved = (id: string) => {
     const wasResolved = annotations.find((a) => a.id === id)?.resolved;
 
@@ -149,7 +165,7 @@ export function useAnnotations({ initial, parts, showToast, setSelectedIds, stop
     create,
     reply: edits.reply,
     editComment: edits.editComment,
-    deleteComment: edits.deleteComment,
+    deleteComment,
     deleteThread,
     toggleResolved,
     reset,

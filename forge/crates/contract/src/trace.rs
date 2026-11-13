@@ -42,9 +42,7 @@ impl Trace {
         let ticks = signals.values().next().map_or(0, Vec::len);
 
         if signals.values().any(|values| values.len() != ticks) {
-            return Err(String::from(
-                "Every signal in a trace must have the same length",
-            ));
+            return Err(String::from("Every signal in a trace must have the same length"));
         }
 
         if ticks < 2 {

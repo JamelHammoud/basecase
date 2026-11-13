@@ -81,6 +81,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       viewport: viewportRef.current,
       restoreCanvas: () => viewportRef.current?.setPose(posing.deltas),
       parts: partsRef.current,
+      fixedCameras: projectRef.current.cameras ?? [],
       velocity: simTraining.skills.velocity,
       setAction,
     });

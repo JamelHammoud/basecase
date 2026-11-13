@@ -1,5 +1,5 @@
 import type { Command } from '../components/CommandPalette';
-import { CasesIcon, PlusIcon, RotateLeftIcon, RunIcon, StopIcon } from '../design-system';
+import { CasesIcon, DownloadIcon, PlusIcon, RotateLeftIcon, RunIcon, StopIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -70,6 +70,20 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       ]
     : [];
 
+  const exportDataset: Command[] =
+    cases.dataset.canExport && !cases.dataset.exporting
+      ? [
+          {
+            id: 'case-export-dataset',
+            group: 'Simulate',
+            label: 'Export Dataset',
+            icon: <DownloadIcon className={ic} />,
+            keywords: 'lerobot gr00t groot demonstrations training data video parquet',
+            run: cases.dataset.exportDataset,
+          },
+        ]
+      : [];
+
   const newCase: Command[] = cases.builder.goals.length
     ? [
         {
@@ -96,5 +110,6 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     drive,
     ...respawn,
     ...tryIt,
+    ...exportDataset,
   ];
 }

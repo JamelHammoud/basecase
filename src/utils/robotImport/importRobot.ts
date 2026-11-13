@@ -177,7 +177,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
 
   say('Reading the description');
 
-  const { model, resolver } = await readModel(source);
+  const { model, resolver, origin } = await readModel(source);
   const name = opts.name ?? prettyJointName(model.name);
   const files = await loadMeshFiles(model, resolver, say, notes);
 
@@ -197,7 +197,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   const built = await buildLinkParts(linkGeo, {
     name,
     groupId,
-    source,
+    url: origin,
     rotate: opts.rotate,
     maxTriangles: opts.maxTriangles,
   });

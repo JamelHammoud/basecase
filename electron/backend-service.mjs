@@ -21,6 +21,7 @@ import * as purchases from './backend/purchases.mjs';
 import * as skillStore from './backend/skillStore.mjs';
 import * as sourced from './backend/sourced.mjs';
 import { importMakerCad } from './cadImport/importMakerCad.mjs';
+import { openCadFile } from './cadImport/openCadFile.mjs';
 import { ReferenceImages } from './backend/referenceImages.mjs';
 import * as uploads from './backend/uploads.mjs';
 
@@ -295,6 +296,10 @@ export class BasecaseBackendService {
 
   importMakerCad(payload) {
     return importMakerCad(this.libraryDir, payload, this.converter);
+  }
+
+  openCadFile(payload) {
+    return openCadFile(this.converter, payload);
   }
 
   saveEvidenceFile(payload) {

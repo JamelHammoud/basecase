@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronLeftIcon, TickIcon } from './glyphs';
 import { createPortal } from 'react-dom';
+import { behindModal } from './behindModal';
 import { Kbd } from './Kbd';
 import { Divider } from './Divider';
 
@@ -94,6 +95,7 @@ export const PopoverMenu: React.FC<PopoverMenuProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    const underModal = () => !!anchorRef.current && behindModal(anchorRef.current);
     const handlePointerDownOutside = (e: PointerEvent) => {
       const target = e.target as Node;
 
@@ -101,13 +103,13 @@ export const PopoverMenu: React.FC<PopoverMenuProps> = ({
 
       if (ignoreRef?.current?.contains(target)) return;
 
-      onClose('outside');
+      if (!underModal()) onClose('outside');
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose('escape');
-      }
+      if (e.key !== 'Escape' || underModal()) return;
+
+      e.stopPropagation();
+      onClose('escape');
     };
 
     window.addEventListener('pointerdown', handlePointerDownOutside, true);
@@ -209,6 +211,9 @@ const toneClass = (tone: MenuItemProps['tone'], active: boolean) => {
   return active ? 'bg-figma-blue-fill text-white' : 'text-white/90 hover:bg-figma-blue-fill hover:text-white';
 };
 
+const iconToneClass = (tone: MenuItemProps['tone']) =>
+  tone === 'danger' ? 'text-red-400' : 'text-white/60 group-hover/menuitem:text-white';
+
 export const MenuItem: React.FC<MenuItemProps> = ({
   icon,
   label,
@@ -231,9 +236,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     {checked !== undefined && (
       <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
     )}
-    {icon && (
-      <span className="w-4 shrink-0 flex justify-center text-white/60 group-hover/menuitem:text-white">{icon}</span>
-    )}
+    {icon && <span className={`w-4 shrink-0 flex justify-center ${iconToneClass(tone)}`}>{icon}</span>}
     <span className="flex-1 truncate">{label}</span>
     {detail && (
       <span

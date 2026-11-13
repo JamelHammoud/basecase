@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { ContextMenu, IconButton, RunIcon, Section, type ContextMenuEntry } from '../../design-system';
+import {
+  Button,
+  ContextMenu,
+  DownloadIcon,
+  IconButton,
+  RunIcon,
+  Section,
+  type ContextMenuEntry,
+} from '../../design-system';
 import type { TryRecord } from '../../cases/tries';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
@@ -69,6 +77,19 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, wo
           />
         ))}
       </div>
+      {cases.dataset.canExport && (
+        <Button
+          size="sm"
+          fullWidth
+          className="mt-2"
+          disabled={cases.dataset.exporting}
+          icon={<DownloadIcon className="w-4 h-4" />}
+          title="Passed tries with camera video, for training GR00T or LeRobot"
+          onClick={cases.dataset.exportDataset}
+        >
+          Export Dataset
+        </Button>
+      )}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </Section>
   );

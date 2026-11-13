@@ -34,10 +34,7 @@ afterAll(async () => {
 
 describe('Parts the agent added', () => {
   it('are listed with a real thumbnail and can be added to the scene', async () => {
-    const { page } = app;
-    const requested: string[] = [];
-
-    page.on('request', (request) => requested.push(request.url()));
+    const { page, requests } = app;
 
     await page
       .getByRole('button', { name: /^Added by Agent/ })
@@ -61,8 +58,8 @@ describe('Parts the agent added', () => {
       )
       .toMatch(/^data:image/);
 
-    expect(requested.some((url) => url.includes('/sourced-mesh'))).toBe(true);
-    expect(requested.filter((url) => url.includes('parts/e2e-sourced-board.glb'))).toEqual([]);
+    expect(requests.some((url) => url.includes('/sourced-mesh'))).toBe(true);
+    expect(requests.filter((url) => url.includes('parts/e2e-sourced-board.glb'))).toEqual([]);
 
     const before = await partCount(page);
 

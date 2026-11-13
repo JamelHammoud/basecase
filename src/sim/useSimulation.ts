@@ -13,7 +13,7 @@ import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
-import { newSimWorker, useSimWorker } from './useSimWorker';
+import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
 
 export { simDeltas } from './mjcf';
 
@@ -21,7 +21,7 @@ export type SimStatus = 'off' | 'loading' | 'ready' | 'error';
 
 export interface SimRun {
   stats: SimStats;
-  frames: Array<{ t: number; deltas: Map<string, THREE.Matrix4> }>;
+  frames: Array<{ t: number; deltas: Map<string, THREE.Matrix4>; poses: Float64Array }>;
   model: SimModel;
   trace?: TorqueSeries;
 }
@@ -33,7 +33,6 @@ export interface Simulation {
   latestStats: () => SimStats | null;
   error: string | null;
   model: SimModel | null;
-  version: string | null;
   speed: number;
   controller: Controller;
   start: () => Promise<void>;
@@ -54,6 +53,8 @@ export interface Simulation {
   stopRecording: () => Promise<Recording | null>;
   replay: (r: Recording) => void;
   worldParts: ScenePart[];
+  subscribePoses: (listen: (poses: Float64Array) => void) => () => void;
+  connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[]) => void;
   buildModel: () => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
@@ -147,7 +148,7 @@ async function runModel(
 
     return {
       stats: result.stats,
-      frames: result.frames.map((f) => ({ t: f.t, deltas: simDeltas(m, f.poses) })),
+      frames: result.frames.map((f) => ({ t: f.t, deltas: simDeltas(m, f.poses), poses: f.poses })),
       model: m,
       trace: result.trace,
     };
@@ -240,7 +241,7 @@ export function useSimulation(props: Inputs): Simulation {
   const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
-  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, version, send } = sw;
+  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
   const { worker, load, frameHookRef } = sw;
   const [controller, setController] = useController(send);
 
@@ -312,7 +313,6 @@ export function useSimulation(props: Inputs): Simulation {
     latestStats: sw.latestStats,
     error,
     model,
-    version,
     speed,
     controller,
     start,
@@ -348,6 +348,8 @@ export function useSimulation(props: Inputs): Simulation {
       send({ type: 'replay', qpos: r.qpos, nq: r.nq, dt: r.dt });
     },
     worldParts,
+    subscribePoses: sw.subscribePoses,
+    connectCameras: sw.connectCameras,
     setWorld,
     runRoutine: async (input, onUpdate) => {
       await start();

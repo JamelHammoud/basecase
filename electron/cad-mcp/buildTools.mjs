@@ -10,7 +10,7 @@ export const simulate = {
       "Runs the scene in MuJoCo, the physics engine robots are trained in, and reports what happened: whether each legged robot stayed up or fell (and when), tilt, how far it moved, and every joint's peak actuator effort as a share of its torque limit (its servos' stall torque, the maker's published limit, or an estimate from weight when no servo is assigned). " +
       'Built from the scene itself: parts collide as convex hulls and weigh what verify_design weighs them; every joint is a position servo. The robot starts in the pose on the canvas, just above the floor. Robots with leg joints are free to fall; others are bolted down. ' +
       'Controllers: "hold" holds the pose (does it stand on its own?), "animation:<name>" plays an animation\'s keyframes as servo targets (does the walk cycle really walk, or fall?), "policy:<name>" runs a trained policy, "limp" turns the servos off. ' +
-      "Shove it with pushes (direction in the robot's frame, strength as a share of its weight for 0.15 s; 0.5 is a firm shove). Ask for frames to see renders of the simulated robot. " +
+      'Shove it with pushes (direction in the robot\'s frame, strength as a share of its weight for 0.15 s; 0.5 is a firm shove). Ask for frames to see renders of the simulated robot, and for cameras to see through the robot\'s own camera parts ("Wrist Camera") or the scene\'s camera views ("Scene" when none are placed), as a camera-driven policy would. ' +
       'Use it after define_joints and verify_design on anything with legs, and fix what it finds (servos at 100% for long, falls while holding a pose) before you finish.',
     inputSchema: {
       seconds: z.number().min(0.5).max(30).optional().describe('Simulated time, default 5'),
@@ -27,6 +27,13 @@ export const simulate = {
         .optional(),
       frames: z.array(z.number().min(0)).max(4).optional().describe('Times (s) to render, e.g. [0.5, 2, 5]'),
       views: z.array(VIEW).max(2).optional(),
+      cameras: z
+        .array(z.string())
+        .max(3)
+        .optional()
+        .describe(
+          'Camera names to see through at each frame, e.g. ["Wrist Camera", "Scene"]; the last moment when no frames are given',
+        ),
     },
   },
   handler: async (args) => {

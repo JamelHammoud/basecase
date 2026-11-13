@@ -71,7 +71,7 @@ function context(log: unknown[]): PoseContext {
 describe('getRig', () => {
   it('describes joints, pose, saved poses and animations', async () => {
     expect(getRig(context([])).text).toMatchSnapshot();
-    expect(getRig({ ...context([]), project: DEFAULT_PROJECT }).text).toMatch(/^No joints yet/);
+    expect(getRig({ ...context([]), project: DEFAULT_PROJECT }).text).toMatch(/^No joints\. Declare/);
   });
 });
 

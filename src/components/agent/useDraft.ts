@@ -5,6 +5,7 @@ import { FolderChip, folderChip, useAttachments } from './useAttachments';
 import { QueueControls, QueuedDraft, QueueSlotRef } from './types';
 import { useComposeRequest, type ComposeRequest } from './useComposeRequest';
 import { useQuoteRequest } from './useQuoteRequest';
+import { focusPromptSoon } from './focusPromptSoon';
 
 interface Stash {
   text: string;
@@ -62,12 +63,7 @@ export function useDraft({ onUploadImage, promptRef, queue, quote, compose }: Dr
       stash: editing?.stash ?? { text, quotes, images: attachments.images, folders: attachments.folders },
     });
     load(stashOf(slot.item.params));
-    requestAnimationFrame(() => {
-      const el = promptRef.current;
-
-      el?.focus();
-      el?.setSelectionRange(el.value.length, el.value.length);
-    });
+    focusPromptSoon(promptRef, 'end');
   };
 
   const finishEdit = () => {

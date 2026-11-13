@@ -1,4 +1,5 @@
 import { useExportActions } from './useExportActions';
+import { useFixedCameras } from './useFixedCameras';
 import { useLibraryActions } from './useLibraryActions';
 import { usePartCreation } from './usePartCreation';
 import { usePartEdits } from './usePartEdits';
@@ -15,8 +16,14 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const ops = useSelectionOps(core);
   const library = useLibraryActions(core);
   const exports = useExportActions(core);
+  const cameras = useFixedCameras({
+    project: core.project,
+    updateProjectNow: core.docs.updateProjectNow,
+    viewportRef: core.viewportRef,
+    showToast: core.showToast,
+  });
 
-  return { pose, robots, creation, edits, ops, library, exports };
+  return { pose, robots, creation, edits, ops, library, exports, cameras };
 }
 
 export type WorkspaceActions = ReturnType<typeof useWorkspaceActions>;

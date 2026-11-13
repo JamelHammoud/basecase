@@ -1,0 +1,22 @@
+changelog:
+  exclude:
+    labels:
+      - loop:repair
+      - loop:lesson
+      - loop:loop
+      - loop:update
+      - loop:market
+  categories:
+    - title: New
+      labels:
+        - loop:feature
+        - loop:integration
+    - title: Better
+      labels:
+        - loop:refine
+    - title: Fixed
+      labels:
+        - loop:fix
+    - title: Everything else
+      labels:
+        - '*'

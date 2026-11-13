@@ -360,6 +360,14 @@ const ROBOT_RULES: ToolRule[] = [
       detail: optional(input.live ? 'On the canvas' : ''),
     }),
   },
+  {
+    keys: ['operate'],
+    icon: RunIcon,
+    label: ({ input, verb }) => ({
+      title: `${verb('Operating', 'Operated')} ${Number(input.seconds ?? 1)} s`,
+      detail: optional(input.restart ? 'From the start' : ''),
+    }),
+  },
   plainRule(['create_case'], CasesIcon, ['Making a Case', 'Made a Case']),
   plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
   plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),

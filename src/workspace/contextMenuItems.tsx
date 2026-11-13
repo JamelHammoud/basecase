@@ -1,5 +1,7 @@
-import { AlignControls } from '../components/AlignControls';
+import { cameraViewsExpanded, toggleCameraViews } from '../cameras/cameraViewsStore';
+import { AlignBar } from '../components/AlignBar';
 import {
+  CameraAddIcon,
   AlignCenterXIcon,
   BookmarkAddIcon,
   CommentIcon,
@@ -61,7 +63,7 @@ function sharedEntries({ core, actions }: ContextInputs) {
       label: 'Align',
       icon: <AlignCenterXIcon className={ic} />,
       submenu: (close: () => void) => (
-        <AlignControls
+        <AlignBar
           count={Math.max(1, core.selectedIds.length)}
           onAlign={edits.align}
           onDistribute={edits.distribute}
@@ -268,8 +270,10 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       onSelect: () => ui.setCameraView(v.id),
     })),
     { label: 'Reset View', icon: <CrosshairIcon className={ic} />, onSelect: ui.resetView },
+    { label: 'Add Camera View', icon: <CameraAddIcon className={ic} />, onSelect: actions.cameras.add },
     { divider: true },
     { label: 'Show Grid', checked: studio.showGrid, onSelect: ui.toggleGrid },
+    { label: 'Show Camera Views', shortcut: '⇧V', checked: cameraViewsExpanded(), onSelect: toggleCameraViews },
     { divider: true },
     {
       label: 'Export STL',

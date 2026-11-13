@@ -4,6 +4,7 @@ import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
 import { effortOf } from './mjcfEffort';
+import { robotFingerprint } from './mjcfFingerprint';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
 import { fittedActuatorXml, fittedJointAttrs, fittedServo } from './mjcfServo';
@@ -271,6 +272,7 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
   const floating = !(st.input.fixedBase?.[robot.key] ?? morphology === 'fixed');
   const rootName = `root_${st.robots.length}`;
   const rootOrigin = robot.pivot;
+  const [assetsFrom, actuatorsFrom] = [st.assets.length, st.actuatorXml.length];
   const rb: RobotBuild = {
     st,
     robot,
@@ -300,6 +302,12 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
     floating,
     morphology,
     joints: st.simJoints.filter((j) => j.robot === robot.key).map((j) => j.id),
+    fingerprint: robotFingerprint({
+      timestep: st.input.timestep ?? DEFAULT_TIMESTEP,
+      assets: st.assets.slice(assetsFrom),
+      body: rootLines,
+      actuators: st.actuatorXml.slice(actuatorsFrom),
+    }),
   });
   st.massKg[robot.key] = rb.grams / 1000;
 

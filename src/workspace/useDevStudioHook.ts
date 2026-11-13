@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { withCalibration } from '../reality/projectCalibrations';
+import { modelFingerprints } from '../sim/policyFreshness';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
@@ -46,8 +48,10 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         activeCase: cases.active?.id ?? null,
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
         scanPoints: viewportRef.current?.scanPointCount() ?? 0,
+        fingerprints: modelFingerprints(core.simTraining.skills.model),
       };
     },
+    calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
     routineState: () => core.simTraining.routines.state(),
     datasetFiles: async () => {
       const { cases } = core.simTraining;

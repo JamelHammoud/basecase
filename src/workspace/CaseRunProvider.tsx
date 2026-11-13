@@ -1,8 +1,10 @@
 import React, { createContext, use } from 'react';
-import type { PlacedArea } from '../cases/console/layout';
+import type { ConsoleLayout } from '../cases/console/layout';
 import type { CaseAction } from '../cases/console/panelKinds';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
+import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
+import { startDriving } from '../components/simulate/driveWithCamera';
 import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -10,7 +12,7 @@ import { useConsoleSignals } from './useConsoleSignals';
 
 interface CenterValue {
   ctx: PanelContext;
-  areas: { before: PlacedArea[]; after: PlacedArea[] };
+  areas: ConsoleLayout;
   title: string;
   onDone: () => void;
 }
@@ -70,7 +72,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
 
     if (action === 'try') void run.attempt.start();
     else if (action === 'end-try') run.attempt.end();
-    else if (action === 'drive') void run.sim.drive.start();
+    else if (action === 'drive') void startDriving(run.sim.drive, core.showToast);
     else if (action === 'stop') run.sim.drive.stop();
     else if (action === 'start-over') run.sim.drive.respawn();
     else {
@@ -84,6 +86,12 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
         ctx: {
           bus,
           signals: caseConsole.signals ?? [],
+          scope: {
+            declared: new Set(caseConsole.signals?.map((s) => s.id)),
+            probes: new Set(cases.active?.task.probes.map((p) => p.signal)),
+            inputs: new Set(caseConsole.input),
+          },
+          inputs: caseConsole.input,
           cases,
           sim,
           parts,
@@ -126,4 +134,12 @@ export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
       onDone={running.onDone}
     />
   ));
+}
+
+export function CaseRunOverlays() {
+  const running = use(CaseRunContext);
+
+  if (!running?.areas.overlays.length) return null;
+
+  return <CodeOverlays overlays={running.areas.overlays} ctx={running.ctx} />;
 }

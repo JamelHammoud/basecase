@@ -18,6 +18,8 @@ keywords:
   - 2d to 3d
   - profile
   - import svg
+  - illustrator
+  - figma
 related:
   - save-a-model-to-the-library
   - cut-join-and-intersect-parts
@@ -29,6 +31,7 @@ covers:
   - src/components/studio/useStudioDraft.ts
   - src/components/SculptAndDrawStudio.tsx
   - src/utils/svgTo3DParser.ts
+  - src/components/ViewportToolbar.tsx
 ---
 
 Turn an outline you draw, or an SVG file, into a solid part by extruding it to a thickness or spinning it around an axis.
@@ -55,8 +58,8 @@ Points snap to the grid until you turn off **Snap to grid**. To type exact lengt
 4. Under **Output**, type a name, the width (**W**) and the thickness (**T**).
 5. Click **Add**.
 
-Width runs from 5 to 500 mm and thickness from 1 to 250 mm. **Bevel**, on by default, softens the edges.
+The part starts 64 mm wide and 10 mm thick. Width runs from 5 to 500 mm and thickness from 1 to 250 mm. **Bevel**, on by default, softens the edges.
 
-To paste SVG code instead of choosing a file, click **Paste Code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.
+To paste SVG code from a design app such as Figma or Illustrator, click **Paste Code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.
 
 Sketch is also in [[⌘K]] and the canvas's right-click menu. To open Import SVG with a file already loaded, choose **Import** there, in **File** or in the Library's **+** menu, or drop the SVG on the canvas.

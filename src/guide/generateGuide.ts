@@ -11,6 +11,8 @@ import type { GuideJob, GuideProgress, RenderedGuide } from './renderGuide';
 
 export type { GuideProgress } from './renderGuide';
 
+export type CheckedOrder = NonNullable<GuideJob['order']> & { timedOut: boolean };
+
 export interface GenerateGuideInput {
   title: string;
   parts: ScenePart[];
@@ -18,7 +20,7 @@ export interface GenerateGuideInput {
   onProgress?: (p: GuideProgress) => void;
   onCover?: (dataUrl: string) => void;
   signal?: AbortSignal;
-  order?: () => Promise<GuideJob['order'] | null>;
+  order?: () => Promise<CheckedOrder | null>;
 }
 
 export interface GeneratedGuide {
@@ -89,6 +91,25 @@ function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide
   });
 }
 
+interface RecordInput {
+  id: string;
+  rendered: RenderedGuide;
+  input: GenerateGuideInput;
+  order?: CheckedOrder;
+}
+
+function recordOf({ id, rendered, input, order }: RecordInput): BuildGuideRecord {
+  return {
+    id,
+    pages: rendered.pages,
+    steps: rendered.plan.steps.length,
+    generatedAt: new Date().toISOString(),
+    fingerprint: guideFingerprint(input.title, input.parts, input.project),
+    ...(order?.timedOut && { orderTimedOut: true }),
+    coverDataUrl: rendered.coverDataUrl,
+  };
+}
+
 export async function generateGuide(input: GenerateGuideInput): Promise<GeneratedGuide | null> {
   const { title, project } = input;
   const parts = input.parts.filter(isBuilt);
@@ -109,7 +130,7 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
     project,
     date: today(),
     mark: await brandMark(),
-    order,
+    order: order && { assembly: order.assembly, unproven: order.unproven },
     meshes: await sourcedMeshFiles(parts),
   };
   const rendered = await render(job, input);
@@ -119,14 +140,7 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
   input.onProgress?.({ share: 0.97, label: 'Saving PDF' });
 
   const saved = await platformBridge.saveGuide({ id, html: rendered.html });
-  const record: BuildGuideRecord = {
-    id,
-    pages: rendered.pages,
-    steps: rendered.plan.steps.length,
-    generatedAt: new Date().toISOString(),
-    fingerprint: guideFingerprint(title, input.parts, project),
-    coverDataUrl: rendered.coverDataUrl,
-  };
+  const record = recordOf({ id, rendered, input, order });
 
   return { record, plan: rendered.plan, saved: saved.ok, html: rendered.html };
 }

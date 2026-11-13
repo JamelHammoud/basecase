@@ -84,9 +84,9 @@ const SketchTools: React.FC<{ draft: StudioDraft; bound: boolean; path: boolean;
   </div>
 );
 
-const MODE_OPTIONS: Array<{ value: SketchPanelMode; label: string; title?: string }> = [
-  { value: 'extrude', label: 'Extrude', title: 'Push the outline up into a solid' },
-  { value: 'revolve', label: 'Revolve', title: 'Spin the outline around the center axis' },
+const MODE_OPTIONS: Array<{ value: SketchPanelMode; label: string }> = [
+  { value: 'extrude', label: 'Extrude' },
+  { value: 'revolve', label: 'Revolve' },
 ];
 
 const PATH_OPTION = { value: 'path' as const, label: 'Path' };

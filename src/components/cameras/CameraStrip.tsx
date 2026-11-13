@@ -1,15 +1,18 @@
 import React, { useRef } from 'react';
 import { toggleCameraViews, useCameraViewsState } from '../../cameras/cameraViewsStore';
+import { OPERATOR_KEY, useOperatorCamera } from '../../cameras/operator/operatorCamera';
 import { hasCameraViews } from '../../cameras/views';
 import { ChevronDownIcon, ChevronUpIcon, IconButton } from '../../design-system';
 import { CameraTile } from './CameraTile';
+import { OperatorTile } from './OperatorTile';
 import { useCameraTiles, type CameraTilesInput } from './useCameraTiles';
 
 const ic = 'w-4 h-4';
 
 export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) => {
-  const { expanded } = useCameraViewsState();
-  const present = hasCameraViews(props.parts, props.cameras.cameras, props.sim.status !== 'off');
+  const { expanded, enlarged } = useCameraViewsState();
+  const operator = useOperatorCamera();
+  const present = operator.open || hasCameraViews(props.parts, props.cameras.cameras, props.sim.status !== 'off');
   const frameCounter = useRef<HTMLDivElement | null>(null);
   const tiles = useCameraTiles({
     ...props,
@@ -37,6 +40,9 @@ export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) =
           onClick={toggleCameraViews}
         />
       </div>
+      {expanded && operator.stream && (
+        <OperatorTile stream={operator.stream} label={operator.label} large={enlarged === OPERATOR_KEY} />
+      )}
       {expanded && tiles.views.map((view) => <CameraTile key={view.key} {...tiles.tile(view)} />)}
       {tiles.menu}
     </div>

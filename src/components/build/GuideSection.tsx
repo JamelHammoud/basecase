@@ -82,11 +82,7 @@ const Progress: React.FC<{ progress: GuideRunProgress; onStop: () => void }> = (
   </>
 );
 
-const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord; canOpen: boolean }> = ({
-  guide,
-  record,
-  canOpen,
-}) => {
+const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord }> = ({ guide, record }) => {
   const ago = timeAgo(record.generatedAt);
 
   return (
@@ -98,18 +94,14 @@ const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord; canOpen: boo
         {guide.stale ? 'Out of date' : `Made ${ago === 'now' ? 'just now' : `${ago} ago`}`}
       </div>
       <div className="flex gap-2 mt-2.5">
-        {canOpen && (
-          <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
-            Open
+        <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
+          Open
+        </Button>
+        {guide.stale && (
+          <Button size="sm" variant="primary" onClick={() => void guide.generate()}>
+            Update
           </Button>
         )}
-        <Button
-          size="sm"
-          variant={guide.stale || !canOpen ? 'primary' : 'secondary'}
-          onClick={() => void guide.generate()}
-        >
-          {guide.stale ? 'Update' : 'Regenerate'}
-        </Button>
       </div>
     </>
   );
@@ -128,7 +120,7 @@ const GuideCard: React.FC<{ guide: BuildGuide; sceneName: string }> = ({ guide, 
         onOpen={canOpen ? () => void guide.open() : undefined} />
       <div className="min-w-0 flex-1">
         {guide.progress && <Progress progress={guide.progress} onStop={guide.cancel} />}
-        {!guide.progress && guide.record && <Made guide={guide} record={guide.record} canOpen={canOpen} />}
+        {!guide.progress && guide.record && <Made guide={guide} record={guide.record} />}
       </div>
     </div>
   );

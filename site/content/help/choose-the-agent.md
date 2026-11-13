@@ -33,6 +33,8 @@ Pick which agent designs with you: Claude Code, Codex or Gemini CLI with your ow
 
 ![The Agent pane in Settings](/help/choose-the-agent/agent-pane.png)
 
+**Agent Settings** in [[⌘K]] opens the same pane.
+
 The first time you pick an agent, Basecase downloads it: 263 MB for Claude Code, 340 MB for Codex and 95 MB for Gemini CLI. The Agent tab shows the progress.
 
 ## Sign in

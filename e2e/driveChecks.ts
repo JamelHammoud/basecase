@@ -2,9 +2,13 @@ import { parquetReadObjects } from 'hyparquet';
 import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { expect } from 'vitest';
 import { buildCase, builderRobot } from '../src/cases/caseBuilder';
+import { robotFacts } from '../src/cases/robotFit';
+import { DEMO_CONTROL_DT } from '../src/datasets/demos';
+import { obsSize, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../src/sim/policy';
 import type { ReferenceCommand } from '../src/cases/schema';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { buildRig } from '../src/utils/kinematics';
+import { solveIK } from '../src/utils/kinematicsIk';
 import type { FakeHub } from './fakeHub';
 
 export async function expectDataset(files: Record<string, Buffer>) {
@@ -54,4 +58,49 @@ export function pickTimeline(): ReferenceCommand[] {
   if (!built.ok) throw new Error(built.problem);
 
   return built.kase.reference.timeline;
+}
+
+export function touchingPolicy(): PolicySpec {
+  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const rig = buildRig(arm.joints, arm.parts);
+  const made = buildCase({ goal: 'touch', world: 'floor' }, builderRobot(rig, arm.parts));
+
+  if (!made.ok) throw new Error(made.problem);
+
+  const facts = robotFacts(rig, arm.parts);
+  const hand = facts.endEffector!;
+  const target = made.kase.world.objects.find((o) => o.id === 'point')!.position;
+  const solved = solveIK(rig, {}, [{ partId: hand.part, point: hand.point, target }], { joints: facts.armJoints });
+  const joints = rig.robots[0].joints.map((id) => rig.byId.get(id)!);
+  const pose = joints.map((j) =>
+    j.type === 'revolute' ? ((solved.values[j.id] ?? 0) * Math.PI) / 180 : (solved.values[j.id] ?? 0) / 1000,
+  );
+  const scale = Math.max(0.25, ...pose.map((v) => Math.abs(v) * 1.1));
+  const size = obsSize(joints.length);
+
+  return {
+    format: POLICY_FORMAT,
+    version: POLICY_VERSION,
+    task: 'stand',
+    robot: rig.robots[0].key,
+    joints: joints.map((j) => j.id),
+    defaultPose: joints.map(() => 0),
+    actionScale: scale,
+    controlDt: DEMO_CONTROL_DT,
+    command: [0, 0, 0],
+    obsMean: new Array<number>(size).fill(0),
+    obsStd: new Array<number>(size).fill(1),
+    layers: [
+      {
+        in: size,
+        out: joints.length,
+        w: new Array<number>(size * joints.length).fill(0),
+        b: pose.map((v) => v / scale),
+      },
+    ],
+    activation: 'elu',
+    trainedSteps: 1,
+    mujoco: 'e2e',
+    createdAt: '2026-11-13T00:00:00Z',
+  };
 }

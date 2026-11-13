@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { whenIdle } from '../../utils/whenIdle';
+import { softwareGl } from '../softwareGl';
 import type { Stage } from './stage';
 
 const OUTLINE_LAYER = 7;
@@ -19,7 +20,6 @@ const vertexShader = `
 `;
 
 const fragmentShader = `
-  #define MAX_RADIUS 6
   uniform sampler2D mask;
   uniform vec2 texel;
   uniform float radius;
@@ -32,8 +32,8 @@ const fragmentShader = `
 
     float edge = 0.0;
 
-    for (int x = -MAX_RADIUS; x <= MAX_RADIUS; x++) {
-      for (int y = -MAX_RADIUS; y <= MAX_RADIUS; y++) {
+    for (int x = -REACH; x <= REACH; x++) {
+      for (int y = -REACH; y <= REACH; y++) {
         vec2 offset = vec2(float(x), float(y));
         float reach = clamp(radius + 0.5 - length(offset), 0.0, 1.0);
 
@@ -49,11 +49,17 @@ const fragmentShader = `
   }
 `;
 
-function createQuad(target: THREE.WebGLRenderTarget): THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial> {
+const reachOf = (radius: number) => Math.ceil(radius + 0.5);
+
+function createQuad(
+  target: THREE.WebGLRenderTarget,
+  pixelRatio: number,
+): THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial> {
   const geometry = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);
   const material = new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
+    defines: { REACH: reachOf(OUTLINE_PX * pixelRatio) },
     uniforms: {
       mask: { value: target.texture },
       texel: { value: new THREE.Vector2(1, 1) },
@@ -111,7 +117,7 @@ export class SelectionOutline {
   private readonly stage: Stage;
 
   private readonly target = new THREE.WebGLRenderTarget(1, 1, {
-    samples: 4,
+    samples: softwareGl() ? 0 : 4,
     depthBuffer: false,
     format: THREE.RedFormat,
   });
@@ -133,7 +139,7 @@ export class SelectionOutline {
 
   constructor(stage: Stage) {
     this.stage = stage;
-    this.quad = createQuad(this.target);
+    this.quad = createQuad(this.target, stage.renderer.getPixelRatio());
     stage.overlays.add(this.quad);
     this.cancelWarm = whenIdle(() => this.warm());
   }
@@ -151,7 +157,13 @@ export class SelectionOutline {
 
     const { renderer, camera } = this.stage;
     const radius = OUTLINE_PX * renderer.getPixelRatio();
-    const uniforms = this.quad.material.uniforms;
+    const { uniforms, defines } = this.quad.material;
+
+    if (defines.REACH !== reachOf(radius)) {
+      defines.REACH = reachOf(radius);
+      this.quad.material.needsUpdate = true;
+    }
+
     const pad = new THREE.Vector2(((radius + 1) * 2) / this.size.x, ((radius + 1) * 2) / this.size.y);
     const rect = screenRect(groups, camera, pad);
 

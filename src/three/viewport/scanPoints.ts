@@ -4,6 +4,13 @@ const SCAN_ORDER = 1041;
 const COLOR = '#0d99ff';
 const SIZE_PX = 3;
 const START_POINTS = 1024;
+const SAME_MM = 0.01;
+
+const sameHits = (next: Float32Array, shown: Float32Array, length: number) => {
+  for (let i = 0; i < length; i++) if (Math.abs(next[i] - shown[i]) > SAME_MM) return false;
+
+  return true;
+};
 
 export class ScanPoints {
   private readonly points: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
@@ -37,10 +44,13 @@ export class ScanPoints {
     return this.count;
   }
 
-  set(points: Float32Array | null): void {
+  set(points: Float32Array | null): boolean {
     const { geometry } = this.points;
+    const count = points ? Math.floor(points.length / 3) : 0;
 
-    this.count = points ? Math.floor(points.length / 3) : 0;
+    if (count === this.count && (!points || sameHits(points, this.buffer, count * 3))) return false;
+
+    this.count = count;
 
     if (points && points.length > this.buffer.length) {
       this.buffer = new Float32Array(points.length * 2);
@@ -56,6 +66,8 @@ export class ScanPoints {
     position.needsUpdate = true;
     geometry.setDrawRange(0, this.count);
     this.points.visible = this.count > 0;
+
+    return true;
   }
 
   dispose(): void {

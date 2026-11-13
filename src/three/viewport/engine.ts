@@ -42,10 +42,11 @@ import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
 import { ScaleFigures } from './scaleFigures';
 import { StageOverlays } from './stageOverlays';
+import { samePose } from './samePose';
 import { SelectionOutline } from './selectionOutline';
 import { StressOverlay } from './stressOverlay';
 import { warmShaders } from './shaderWarmup';
-import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE } from './engineKeys';
+import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE, shownPropsChanged, steadyProps } from './engineKeys';
 import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
 import type { ViewportContext, ViewportUi } from './viewportContext';
@@ -186,7 +187,19 @@ export class ViewportEngine {
     this.cleanups.push(warmShaders(stage, loop.invalidate));
   }
 
-  update(props: ViewportProps, meshVersion: number): void {
+  update(next: ViewportProps, meshVersion: number): void {
+    const props = steadyProps(this.props, next);
+
+    if (meshVersion === this.meshVersion && !shownPropsChanged(this.props, props)) {
+      this.props = props;
+
+      return;
+    }
+
+    this.show(props, meshVersion);
+  }
+
+  private show(props: ViewportProps, meshVersion: number): void {
     const previous = this.props;
     const meshChanged = meshVersion !== this.meshVersion;
 
@@ -298,7 +311,7 @@ export class ViewportEngine {
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
-      ...this.overlays.handle(camera),
+      ...this.overlays.handle(ctx.loop.redraw),
       followPart: (partId) => {
         this.follow.follow(partId);
         ctx.loop.following = this.follow.active;
@@ -365,8 +378,13 @@ export class ViewportEngine {
   }
 
   private setPose(deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null): void {
-    this.ctx.layer.pose = deltas ?? new Map();
-    this.ctx.world.pose = worldDeltas ?? new Map();
+    const robot = deltas ?? new Map<string, THREE.Matrix4>();
+    const world = worldDeltas ?? new Map<string, THREE.Matrix4>();
+
+    if (samePose(robot, this.ctx.layer.pose) && samePose(world, this.ctx.world.pose)) return;
+
+    this.ctx.layer.pose = robot;
+    this.ctx.world.pose = world;
     this.ctx.world.applyPose();
     this.applyPose();
     this.gizmo.syncHandToPose();

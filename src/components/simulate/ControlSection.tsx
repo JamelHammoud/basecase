@@ -1,10 +1,11 @@
 import React from 'react';
-import { Button, HandIcon, RunIcon, Section, Select, StopIcon, TrainIcon } from '../../design-system';
+import { Button, CameraIcon, HandIcon, RunIcon, Section, Select, StopIcon, TrainIcon } from '../../design-system';
 import { withVelocity } from '../../sim/driveAccess';
 import type { PolicyRecord, RobotAnimation } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
 import type { Training } from '../../sim/useTraining';
 import { DriveKeys } from './CaseSections';
+import { DRIVE_WITH_CAMERA, driveWithCamera } from './driveWithCamera';
 import { controllerValue } from './format';
 
 interface ControlProps {
@@ -74,14 +75,21 @@ const DriveButton: React.FC<{ sim: Simulation }> = ({ sim }) => {
   );
 };
 
-const DriveControl: React.FC<{ sim: Simulation; walk: WalkTeaching }> = ({ sim, walk }) => {
-  const offer = withVelocity(sim.drive.offer, walk.velocityReady);
+const CameraButton: React.FC<{ sim: Simulation; onToast: (message: string) => void }> = ({ sim, onToast }) => (
+  <Button
+    variant="secondary"
+    size="md"
+    fullWidth
+    icon={<CameraIcon className="w-4 h-4" />}
+    disabled={sim.drive.status === 'checking'}
+    onClick={() => void driveWithCamera(sim.drive, onToast)}
+  >
+    {DRIVE_WITH_CAMERA}
+  </Button>
+);
 
-  if (offer === 'drive') return <DriveButton sim={sim} />;
-
-  if (offer === 'none' || !walk.teachWalk) return null;
-
-  return (
+const TeachButton: React.FC<{ walk: WalkTeaching }> = ({ walk }) =>
+  walk.teachWalk && (
     <Button
       variant="secondary"
       size="md"
@@ -93,11 +101,31 @@ const DriveControl: React.FC<{ sim: Simulation; walk: WalkTeaching }> = ({ sim, 
       Teach It to Move
     </Button>
   );
+
+const DriveControl: React.FC<{ sim: Simulation; walk: WalkTeaching; onToast: (message: string) => void }> = ({
+  sim,
+  walk,
+  onToast,
+}) => {
+  const offer = withVelocity(sim.drive.offer, walk.velocityReady);
+
+  return (
+    <>
+      {(offer === 'drive' || sim.drive.active) && <DriveButton sim={sim} />}
+      {offer === 'teach' && !sim.drive.active && <TeachButton walk={walk} />}
+      {sim.drive.offersPose && !sim.drive.active && <CameraButton sim={sim} onToast={onToast} />}
+    </>
+  );
 };
 
 export const ControlSection: React.FC<
-  ControlProps & { choose: (value: string) => Promise<void>; showDrive: boolean; walk: WalkTeaching }
-> = ({ sim, animations, policies, policyKey, showDrive, choose, walk }) => {
+  ControlProps & {
+    choose: (value: string) => Promise<void>;
+    showDrive: boolean;
+    walk: WalkTeaching;
+    onToast: (message: string) => void;
+  }
+> = ({ sim, animations, policies, policyKey, showDrive, choose, walk, onToast }) => {
   const { drive } = sim;
   const options = [
     { value: 'hold', label: 'Hold pose' },
@@ -122,13 +150,12 @@ export const ControlSection: React.FC<
             size="sm"
             icon={<HandIcon className="w-4 h-4" />}
             disabled={!sim.playing}
-            title="Push the robot sideways"
             onClick={() => sim.push()}
           >
             Push
           </Button>
         </div>
-        {showDrive && <DriveControl sim={sim} walk={walk} />}
+        {showDrive && <DriveControl sim={sim} walk={walk} onToast={onToast} />}
         {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
         {showDrive && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       </div>

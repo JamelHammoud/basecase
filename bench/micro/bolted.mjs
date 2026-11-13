@@ -54,6 +54,8 @@ const LAYOUTS = {
 
 export const layoutNames = Object.keys(LAYOUTS);
 
+export const LAYOUT_NAMES = { visor: 'visor', torso: 'torso-to-pelvis', arm: 'upper arm to shoulder' };
+
 function frameFor(layout) {
   const point = (c) => {
     const out = [...layout.origin];

@@ -25,11 +25,11 @@ import {
   SparklesIcon,
 } from '../design-system';
 import { CAMERA_VIEWS } from '../data/cameraViews';
+import { SETTINGS_PANES } from '../app/settingsPanes';
 import { CATEGORY_LABELS, PART_CATALOG, catalogKey, hardwareVariant } from '../data/catalog';
 import { HARDWARE_BY_TYPE, hardwareName } from '../data/hardware';
 import type { TrackpadGestureMode } from '../types/robotics';
 import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
-import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
 
@@ -186,26 +186,14 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
       keywords: 'preferences grid snap trackpad',
       run: () => studio.openSettings(),
     },
-    ...(IS_WEB_DEMO
-      ? []
-      : [
-          {
-            id: 'agent-settings',
-            group: 'App',
-            label: 'Agent Settings',
-            icon: <SettingsIcon className={ic} />,
-            keywords: 'claude offline command target height',
-            run: () => studio.openSettings('agent'),
-          },
-        ]),
-    {
-      id: 'currency-settings',
+    ...SETTINGS_PANES.filter((pane) => pane.id !== 'shortcuts').map((pane) => ({
+      id: `${pane.id}-settings`,
       group: 'App',
-      label: 'Currency Settings',
+      label: `${pane.label} Settings`,
       icon: <SettingsIcon className={ic} />,
-      keywords: 'currency money price budget euro pound yen dollar region',
-      run: () => studio.openSettings('build'),
-    },
+      keywords: pane.keywords,
+      run: () => studio.openSettings(pane.id),
+    })),
     {
       id: 'shortcuts',
       group: 'App',

@@ -56,7 +56,7 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 
 **Show Build** and **Run Checks** are also in ⌘K.
 
-Settings ▸ Build (⌘,) holds the settings for this tab: whether the agent fixes new blockers, the currency prices show in, and whether the build guide updates on its own.
+Settings ▸ Build (⌘, or **Build Settings** in ⌘K) holds the settings for this tab: whether the agent fixes new blockers, the currency prices show in, and whether the build guide updates on its own.
 
 ![Settings ▸ Build with Checks, Prices and Build guide](/help/get-a-robot-ready-to-build/build-settings.png)
 
@@ -65,6 +65,8 @@ To set a problem aside, click ⋯ on its row and choose **Ignore**. The **Ignore
 ## Cases in Checks
 
 Each Case runs 20 times, with friction, weight, servo strength and servo delay changed a little every time. A box or anything else that moves starts up to 15 mm from where it was placed. A Case is green at 18 of 20 or better, amber from 10 to 17 and red below 10. Its most common failure shows under it, such as Fell or Missed.
+
+A Case with a skill kept by **Train From Tries** runs that skill instead of its scripted motion; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 A robot that can't run a Case gets a red row with the first thing that stops it, such as a Case that needs driven wheels or a fall on hold. [Try a Case](/help/try-a-case) lists each reason. When the robot lacks what the Case needs, the row's note offers **New Case**.
 

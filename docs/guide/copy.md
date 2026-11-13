@@ -91,6 +91,8 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 - [ ] No banned words (§3c)?
 - [ ] No `·` (or a stand-in glyph) between items? Use layout instead (§3b-16).
 
+**The count.** `node tools/copy-diff.mjs [base] [head]` lists the user-facing strings a change adds, changes and removes, and its net (`Copy: 2 added, 1 changed, 1 removed, net +1`). With no arguments it compares your working tree to where it forked from `origin/main`. It reads the rendered positions in `tools/eslint/copy-strings.mjs`, the one extractor every copy check shares: JSX text (with `{…}` for each expression), rendered attributes and properties (`label`, `title`, `placeholder`, `aria-label`, `description`, `message`, `text`…), and toast and confirm arguments, in `src/` and the app menu. Tests, ids, units and paths don't count. The review lane runs it on every pull request; a positive net needs a reason for each added string (Loop, §0l).
+
 ### 3e. Reference examples
 
 Celebrated product copy and what it teaches:

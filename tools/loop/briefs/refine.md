@@ -8,4 +8,6 @@ Pick one existing feature or view and make it fit better. Don't add a new featur
 - remove a dead end, an unused option or a feature that a better one replaced;
 - make a slow interaction feel instant (AGENTS.md, §0f).
 
+Before you finish, run `node tools/copy-diff.mjs`: a refinement's net is zero or below. If it's positive, name each added string in `summary` with why nothing on screen already says it; review fails it otherwise.
+
 Don't pick an area another open pull request is changing (`gh pr list` is read-only and allowed). Keep the change to one feature or view. Answer with `kind` set to `refine`, and list in `summary` what's gone as well as what's better.

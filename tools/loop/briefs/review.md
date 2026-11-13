@@ -6,6 +6,7 @@ Fail it, with a finding for each, when it:
 
 - breaks a rule in AGENTS.md or in the area's guide;
 - adds user-facing copy the §3d checklist would cut. Your default for every new string is "delete it", unless the screen can't work without it;
+- adds more user-facing strings than it removes, when the body doesn't name, for each added string, why nothing on screen already says it. The prompt lists the strings `tools/copy-diff.mjs` counted and the net; give each unexplained one its own `blocker`;
 - adds a feature without an entry point a person can use, or without an e2e test that drives that entry point;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or poll limit, a loosened assertion;
 - changes a protected path (`.github/`, release and updater code, `guardBridge` or `trustedIpc` callers, `checkedFileId`, `publicFetch`, `verify/`, the CAD kernel sandbox, `hw/`) without a reason in the pull request body that holds up;

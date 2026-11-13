@@ -1,4 +1,5 @@
 import { runAgent } from '../lib/agent.mjs';
+import { copyTrend, copyTrendLine, mergedThisWeek } from '../lib/copy.mjs';
 import { createIssue, issues, ownerComments } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
@@ -57,7 +58,7 @@ function context() {
     `## Direction from Jamel (newest last)\n\n${[direction?.body, ...comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n') || 'None yet.'}`,
     listing('Open arcs', mine(issues('loop:arc'))),
     listing('Steps waiting or in progress', [...mine(issues('loop:next')), ...mine(issues('loop:building'))]),
-    `## Recently merged\n\n${merged}`,
+    `## Recently merged\n\n${merged}\n\n${copyTrendLine(copyTrend(mergedThisWeek()))}`,
   ].join('\n\n');
 }
 

@@ -61,6 +61,7 @@ The review lane sees the diff, the pull request body, AGENTS.md, the guides of t
 
 - breaks a rule in AGENTS.md or the area's guide;
 - adds user-facing copy that the §3d checklist would cut. Its default for a new string is "delete it";
+- adds more user-facing strings than it removes without naming, per added string, why nothing on screen already says it. The lane counts them with `tools/copy-diff.mjs` (§3d), puts the list and the net in its prompt and its comment, and the lead lane reads the week's net summed across merged pull requests;
 - ships a feature with no entry point and no e2e test of it;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or a loosened assertion;
 - changes a protected path (`.github/`, release and updater code, `guardBridge`, `trustedIpc`, `checkedFileId` and `publicFetch` callers, `verify/`, the CAD kernel sandbox, `hw/`) without saying why in the body.

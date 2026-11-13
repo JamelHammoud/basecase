@@ -12,7 +12,7 @@ covers:
 Bring in a published robot with its joints, limits and masses, from a link or from files on your computer.
 
 1. Press ⌘K and choose **Import Robot**. It's also in File ▸ Import Robot and the + at the top of the Robots view.
-2. Paste a link to a GitHub repo or folder, a URDF or MJCF file, or a zip.
+2. Paste a link to a GitHub or Hugging Face repo or folder, a URDF or MJCF file, or a zip.
 3. Press Enter.
 
 ![Import Robot with a GitHub repo link](/help/import-a-robot/link.png)

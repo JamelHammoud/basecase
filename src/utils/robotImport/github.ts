@@ -1,4 +1,4 @@
-import { fetchBytes, RAW } from './sources';
+import { fetchBytes, RAW, unopenedRepo } from './sources';
 import type { Tree } from './tree';
 
 export interface RepoLink {
@@ -56,10 +56,10 @@ async function refAndScope(link: RepoLink): Promise<{ ref: string; scope: string
   return null;
 }
 
-export async function githubTree(link: RepoLink): Promise<{ tree: Tree; scope: string }> {
+export async function githubTree(link: RepoLink, url: string): Promise<{ tree: Tree; scope: string }> {
   const found = await refAndScope(link);
 
-  if (!found) throw new Error('Couldn’t open that repository. Link to a public GitHub repo or folder.');
+  if (!found) throw unopenedRepo(url);
 
   const encode = (path: string) => path.split('/').map(encodeURIComponent).join('/');
   const urlOf = (path: string) => `${RAW}/${link.owner}/${link.repo}/${encode(found.ref)}/${encode(path)}`;

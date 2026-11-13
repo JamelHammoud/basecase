@@ -84,6 +84,15 @@ export const CHANGE_SCHEMA = {
     checked: text('How it was checked: tests added, commands run, rates measured'),
     changelog: text('One changelog line if users can see the change, else empty'),
     screenshots: { type: 'array', items: text('Repo path of a committed screenshot on this branch') },
+    copy: {
+      type: 'array',
+      description: 'Every user-facing string this change adds, written as in the code (${…} for interpolations)',
+      items: {
+        type: 'object',
+        properties: { string: text('The string'), why: text('Why the screen needs it') },
+        required: ['string', 'why'],
+      },
+    },
     commitMessage: text('Commit message: a subject line, a blank line, then the why'),
     notes: text('What was learned or left undone, for the loop'),
   },

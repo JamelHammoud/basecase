@@ -167,9 +167,31 @@ jobs:
           git cat-file -e "$base^{commit}" 2>/dev/null || base="$head~1"
           node tools/check-credit.mjs "$base..$head"
 
+  copy:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: New copy is justified and uses no banned words
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          RANGE: ${{ format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) }}
+        run: node tools/check-copy-budget.mjs "$RANGE"
+
   check:
     if: always()
-    needs: [changes, unit, e2e, e2e-windows, app, credit]
+    needs: [changes, unit, e2e, e2e-windows, app, credit, copy]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
@@ -178,10 +200,11 @@ jobs:
           APP: ${{ needs.app.result }}
           APP_NEEDED: ${{ needs.changes.outputs.app }}
           WINDOWS_E2E: ${{ needs.e2e-windows.result }}
+          COPY: ${{ needs.copy.result }}
           EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Required: $REQUIRED; app: $APP (needed: $APP_NEEDED); Windows e2e: $WINDOWS_E2E"
+          echo "Required: $REQUIRED; app: $APP (needed: $APP_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
           [ "$(wc -w <<< "$REQUIRED")" -eq 4 ] || exit 1
           for r in $REQUIRED; do [ "$r" = success ] || exit 1; done
           want_app=success
@@ -190,3 +213,6 @@ jobs:
           want_windows=success
           [ "$EVENT" = pull_request ] && want_windows=skipped
           [ "$WINDOWS_E2E" = "$want_windows" ] || exit 1
+          want_copy=success
+          [ "$EVENT" = pull_request ] || want_copy=skipped
+          [ "$COPY" = "$want_copy" ] || exit 1

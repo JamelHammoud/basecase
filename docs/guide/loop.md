@@ -62,6 +62,7 @@ The review lane sees the diff, the pull request body, AGENTS.md, the guides of t
 
 - breaks a rule in AGENTS.md or the area's guide;
 - adds user-facing copy that the §3d checklist would cut. Its default for a new string is "delete it";
+- adds copy without a reason Check's `copy` job accepts (`tools/check-copy-budget.mjs`): when a pull request adds more strings than it removes, each new string needs a `copy: "<string>" — <why>` line in the body;
 - ships a feature with no entry point and no e2e test of it;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or a loosened assertion;
 - changes a protected path (`.github/`, release and updater code, `guardBridge`, `trustedIpc`, `checkedFileId` and `publicFetch` callers, `verify/`, the CAD kernel sandbox, `hw/`) without saying why in the body.
@@ -98,6 +99,6 @@ docker exec bc-e2e npx vitest run --config vitest.e2e.config.ts e2e/<file>.e2e.t
 
 Check is built for fast pull requests, with `main` as the safety net:
 
-- **On every pull request:** lint, types and unit tests (`npm run check`) on Linux and Windows; e2e on Linux in three parallel shards; the commit-credit check. The packaged-app builds (macOS and Windows) run only when the pull request touches what they build: `electron/`, `forge/`, `hw/`, packaging and native-build tooling, `e2e/app/`, workflows, or `package.json` and the lockfile.
+- **On every pull request:** lint, types and unit tests (`npm run check`) on Linux and Windows; e2e on Linux in three parallel shards; the commit-credit and copy checks. The packaged-app builds (macOS and Windows) run only when the pull request touches what they build: `electron/`, `forge/`, `hw/`, packaging and native-build tooling, `e2e/app/`, workflows, or `package.json` and the lockfile.
 - **On every push to `main`:** all of that, plus e2e on Windows and both packaged-app builds, whatever changed. A failure there goes to the repair lane.
 - **Speed:** a pull request's superseded runs are cancelled, and the Forge and daemon Rust builds are cached.

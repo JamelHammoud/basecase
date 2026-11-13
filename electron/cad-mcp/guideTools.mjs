@@ -32,6 +32,7 @@ const TOOL_GUIDES = {
   simulate: ['simulation'],
   set_world: ['simulation'],
   create_case: ['simulation'],
+  compare_case: ['simulation'],
   run_case: ['simulation'],
   start_drive: ['simulation'],
   draft_skill: ['simulation'],

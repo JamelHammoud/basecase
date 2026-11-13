@@ -26,13 +26,9 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
     <Section
       title="Source"
       actions={
-        <button
-          type="button"
-          onClick={() => draft.setShowPasteSvg((v) => !v)}
-          className="h-7 px-2 rounded-md text-[12.5px] text-white/55 hover:text-white hover:bg-white/[0.06] cursor-default"
-        >
+        <Button variant="ghost" size="xs" onClick={() => draft.setShowPasteSvg((v) => !v)}>
           {showPasteSvg ? 'Hide code' : 'Paste code'}
-        </button>
+        </Button>
       }
     >
       <input
@@ -61,7 +57,6 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
       >
         <FileImportIcon className="w-5 h-5 text-white/50" />
         <span className="text-[13.5px] text-white/85">Choose or drop an SVG</span>
-        <span className="text-[12px] text-white/50">Paths, curves and holes become 3D</span>
       </button>
 
       {showPasteSvg && (
@@ -85,14 +80,9 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
           <div className="text-[12px] text-white/50 mb-1.5">Samples</div>
           <div className="flex flex-wrap gap-1.5">
             {SAMPLE_ROBOTICS_SVGS.map((sample) => (
-              <button
-                key={sample.name}
-                type="button"
-                onClick={() => processSvgString(sample.svg, sample.name)}
-                className="h-7 px-3 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-[12.5px] text-white/70 hover:text-white cursor-default transition-colors"
-              >
+              <Button key={sample.name} size="xs" onClick={() => processSvgString(sample.svg, sample.name)}>
                 {sample.name.replace('.svg', '')}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -155,14 +145,10 @@ const SvgOutput: React.FC<{
               `${parsedSvg.holeCount} ${parsedSvg.holeCount === 1 ? 'hole' : 'holes'}`,
             ]}
           />
-          <button
-            type="button"
-            onClick={onEditInSketch}
-            className="text-[12.5px] text-[#5cb8ff] hover:underline cursor-default"
-          >
-            Edit in Sketch
-          </button>
         </div>
+        <Button variant="ghost" size="xs" onClick={onEditInSketch}>
+          Edit in Sketch
+        </Button>
       </div>
       <OutputFields draft={draft} spanLabel="Width" revolve={false} />
       <div className="grid grid-cols-2 gap-2 pt-1">

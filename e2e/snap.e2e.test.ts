@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { V3 } from '../src/agent/agentFrame';
 import { applySpec } from '../src/agent/agentScene';
 import { portOf, servoWithPortNear, snapBracket } from '../src/agent/fixtures/snapBracket';
@@ -63,7 +63,10 @@ beforeAll(async () => {
     name: 'Snap',
     parts: [bracket, servo],
   });
-  await expect.poll(() => app.page.evaluate(() => (window as unknown as Win).__studio.parts().length)).toBe(2);
+  await vi.waitFor(
+    async () => expect(await app.page.evaluate(() => (window as unknown as Win).__studio.parts().length)).toBe(2),
+    { timeout: 10000 },
+  );
   await frames();
 }, 120000);
 

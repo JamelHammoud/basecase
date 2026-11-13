@@ -247,7 +247,13 @@ function eliminateBelow(M: number[][], c: number, n: number) {
 
 function solveLinear(A: Float64Array[], b: Float64Array): number[] | null {
   const n = b.length;
-  const M = A.map((row, i) => [...row, b[i]]);
+  const M = A.map((row, i) => {
+    const r = Array.from(row);
+
+    r.push(b[i]);
+
+    return r;
+  });
 
   for (let c = 0; c < n; c++) {
     const p = pivotRow(M, c, n);

@@ -9,7 +9,7 @@ import { conditionsOf, ENCODER_RAD, EVIDENCE, explainedShare, preflight } from '
 
 let mujoco: Promise<MainModule> | null = null;
 
-const loadedMujoco = () => (mujoco ??= loadMujoco());
+export const loadedMujoco = () => (mujoco ??= loadMujoco());
 
 export interface CalibrateRequest {
   family: ServoFamily;

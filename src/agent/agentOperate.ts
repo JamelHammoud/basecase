@@ -32,6 +32,7 @@ export interface OperateContext {
   fixedCameras: FixedCamera[];
   wait?: (ms: number) => Promise<void>;
   shoot?: typeof cameraShots;
+  calibrationErrors?: () => Promise<string>;
 }
 
 export interface OperateReply {
@@ -150,8 +151,12 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
     ? ` No camera ${seen.missing.join(', ')}; cameras: ${seen.available.join(', ')}.`
     : '';
 
+  const calibration = (await ctx.calibrationErrors?.()) ?? '';
+
   return {
-    text: `Ran ${seconds.toFixed(1)} s. ${stateLine(ctx, poses)}${missing}`.trim(),
+    text: [`Ran ${seconds.toFixed(1)} s.`, stateLine(ctx, poses), missing.trim(), calibration]
+      .filter(Boolean)
+      .join(' '),
     images: seen.shots,
   };
 }

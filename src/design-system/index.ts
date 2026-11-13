@@ -46,3 +46,4 @@ export { remarkLineBreaks } from './remarkLineBreaks';
 export * from './cursors';
 export * from './OverlayScrollbars';
 export * from './tilt';
+export * from './TracePlot';

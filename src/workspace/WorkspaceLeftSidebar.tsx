@@ -1,6 +1,7 @@
 import { LeftSidebar } from '../components/LeftSidebar';
 import { LAYOUT, PanelResizer } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { calibrateConnectedRobot, rollBackCalibration } from './calibrationActions';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -56,7 +57,15 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         onDescribe: IS_WEB_DEMO ? undefined : () => tool.requestCompose('/case '),
       }}
       routines={{ routines: core.simTraining.routines, onTrain: () => tool.setRightTab('sim') }}
-      operate={{ joints: core.project.joints ?? [], onBrowseRobots: browseRobots }}
+      operate={{
+        joints: core.project.joints ?? [],
+        onBrowseRobots: browseRobots,
+        calibration: {
+          calibrations: core.project.servoCalibrations,
+          onCalibrate: () => void calibrateConnectedRobot(core.docs.updateProjectNow),
+          onRollBack: (jointId) => rollBackCalibration(core.docs.updateProjectNow, jointId),
+        },
+      }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}
       parts={parts}

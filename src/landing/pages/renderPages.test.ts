@@ -106,7 +106,7 @@ describe('site pages', () => {
   it('builds from the committed content', () => {
     const content = readContent(CONTENT_FILES, NOW);
 
-    expect(content.changelog.map((entry) => entry.version).filter(Boolean)).toEqual(['0.1.2', '0.1.1', '0.1.0']);
+    expect(content.changelog.map((entry) => entry.version)).toEqual(['0.1.2', '0.1.1', '0.1.0']);
     expect(content.help.length).toBeGreaterThan(0);
     expect(content.help.every((entry) => entry.covers.length > 0)).toBe(true);
   });

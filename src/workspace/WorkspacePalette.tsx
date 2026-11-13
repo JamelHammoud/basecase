@@ -1,4 +1,5 @@
 import { CommandPalette, type Command } from '../components/CommandPalette';
+import { ErrorBoundary } from '../design-system';
 import { STAYS_IN_RUN } from './caseCommands';
 import { editCommands } from './editCommands';
 import { sceneCommands, type CommandInputs } from './sceneCommands';
@@ -35,5 +36,9 @@ function OpenPalette({ inputs, onClose }: Omit<WorkspacePaletteProps, 'open'>) {
 export function WorkspacePalette({ open, inputs, onClose }: WorkspacePaletteProps) {
   if (!open) return null;
 
-  return <OpenPalette inputs={inputs} onClose={onClose} />;
+  return (
+    <ErrorBoundary region="Commands" onClose={onClose}>
+      <OpenPalette inputs={inputs} onClose={onClose} />
+    </ErrorBoundary>
+  );
 }

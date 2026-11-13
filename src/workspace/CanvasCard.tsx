@@ -2,7 +2,7 @@ import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
 import { TryTimeline } from '../components/simulate/TryTimeline';
 import { ViewportToolbar } from '../components/ViewportToolbar';
-import { FileImportIcon, PhotoIcon, Toast } from '../design-system';
+import { ErrorBoundary, FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
@@ -22,6 +22,10 @@ interface CanvasCardProps {
   pointerHandlers: CanvasMenu['pointerHandlers'];
   drop: ReturnType<typeof useCanvasDrop>;
 }
+
+const CANVAS_FALLBACK = 'absolute inset-0 flex-col';
+
+const TOOLBAR_FALLBACK = 'absolute bottom-5 inset-x-0 z-20';
 
 function DropOverlay({ imagesOnly }: { imagesOnly: boolean }) {
   const Icon = imagesOnly ? PhotoIcon : FileImportIcon;
@@ -126,16 +130,20 @@ export function CanvasCard(props: CanvasCardProps) {
         }}
       />
       {drop.isDraggingFile && <DropOverlay imagesOnly={drop.imagesOnly} />}
-      <SceneViewport active={active} core={core} actions={actions} agent={agent} />
-      {core.printing.mode && (
-        <PlateCanvas active={active} printing={core.printing} parts={core.printing.fitTest?.parts ?? core.parts} />
-      )}
+      <ErrorBoundary region="Canvas" className={CANVAS_FALLBACK}>
+        <SceneViewport active={active} core={core} actions={actions} agent={agent} />
+        {core.printing.mode && (
+          <PlateCanvas active={active} printing={core.printing} parts={core.printing.fitTest?.parts ?? core.parts} />
+        )}
+      </ErrorBoundary>
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <div
         aria-hidden
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
       />
-      <CanvasBottomBar {...props} />
+      <ErrorBoundary region="Toolbar" className={TOOLBAR_FALLBACK}>
+        <CanvasBottomBar {...props} />
+      </ErrorBoundary>
     </main>
   );
 }

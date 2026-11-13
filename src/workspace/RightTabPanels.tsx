@@ -1,6 +1,7 @@
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
 import { DesktopDownload } from '../components/agent/DesktopDownload';
+import { ErrorBoundary } from '../design-system';
 import { DesignersProvider } from '../components/agent/DesignersContext';
 import { PartLinksProvider } from '../components/agent/PartLinksProvider';
 import { canRevertLane } from './agentLanes';
@@ -23,6 +24,14 @@ interface RightTabPanelsProps {
   agent: AgentSession;
 }
 
+const TAB_NAMES: Record<RightTab, string> = {
+  inspector: 'Inspect',
+  pose: 'Pose',
+  sim: 'Simulate',
+  build: 'Build',
+  acp: 'Agent',
+};
+
 interface TabActivityProps {
   tab: RightTab;
   current: RightTab;
@@ -34,7 +43,11 @@ interface TabActivityProps {
 function TabActivity({ tab, current, visited, available = true, children }: TabActivityProps) {
   if (!available || !visited.has(tab)) return null;
 
-  return <Activity mode={tab === current ? 'visible' : 'hidden'}>{children}</Activity>;
+  return (
+    <Activity mode={tab === current ? 'visible' : 'hidden'}>
+      <ErrorBoundary region={TAB_NAMES[tab]}>{children}</ErrorBoundary>
+    </Activity>
+  );
 }
 
 function useVisitedTabs(tab: RightTab) {

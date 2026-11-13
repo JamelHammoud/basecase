@@ -62,6 +62,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
     - Double-click resets the default width (288 / 328).
     - Dragging about 90px past the minimum collapses the panel and restores its default width for next time.
     - Widths persist in `localStorage` (`panel-widths`). The width animation is off while dragging.
+- **Every independently mounted region sits behind an `ErrorBoundary`** (§14), so one that throws while rendering shows “⟨region⟩ stopped working” + [Reload] in its own place and the rest of the window keeps working. Today: the window root (`WindowBoundary` in `main.tsx`, Reload Window), each scene tab (named after the scene), the title bar tabs, Settings, the sidebar card and each of its views (`View` in `LeftSidebar`), the inspector card, each of its tabs (`TabActivity` in `RightTabPanels`) and Print, the canvas (viewport and plates), the bottom toolbar with its toasts, each Case console panel, ⌘K, and the Import Robot, motion import and build guide sheets (as a small dialog). A new panel, view, tab, sheet or dialog gets its own boundary where it mounts.
 - **Canvas overlays:**
   - Centered bottom toolbar.
   - Toasts above the toolbar.

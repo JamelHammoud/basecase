@@ -4,19 +4,13 @@ import { Tooltip } from '../../design-system';
 import { fmtG } from '../../utils/engineeringFormat';
 import { useMoney } from '../../utils/useMoney';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
+import { PendingRow } from './PendingRow';
 
 interface RowProps {
   robot: ComparedRobot;
   better: boolean;
   onShow: (() => void) | null;
 }
-
-const Pending: React.FC = () => (
-  <div className="h-[46px] flex flex-col justify-center gap-2">
-    <span className="block skeleton-line shimmer h-[9px] w-2/3" />
-    <span className="block skeleton-line shimmer h-[7px] w-1/2" />
-  </div>
-);
 
 const CompareRow: React.FC<RowProps> = ({ robot, better, onShow }) => {
   const money = useMoney();
@@ -68,8 +62,8 @@ export const CompareRows: React.FC<{ compare: CaseCompare }> = ({ compare }) => 
   if (!comparison && compare.running)
     return (
       <div className="flex flex-col" data-testid="case-compare">
-        <Pending />
-        <Pending />
+        <PendingRow />
+        <PendingRow />
       </div>
     );
 

@@ -67,6 +67,7 @@ function spawnTrainer({ uv, dir, envDir, forge }) {
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 const RUN_ID = /^policy-[a-z0-9-]+$/;
+const DEMOS_FILE = 'demos.json';
 const RUNS_KEPT = 8;
 const WARM_DIR = 'warm';
 const WARM_FILES = ['resume.json', 'policy.json'];
@@ -80,6 +81,20 @@ function copyWarmStart(from, dir) {
   files.forEach((name) => fs.copyFileSync(path.join(from, name), path.join(dir, WARM_DIR, name)));
 
   return WARM_DIR;
+}
+
+export function writeJobFolder(dir, { xml, job }) {
+  const { demos, ...rest } = job;
+  const runJob = demos === undefined ? rest : { ...rest, demos: DEMOS_FILE };
+
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'model.xml'), xml);
+
+  if (demos !== undefined) fs.writeFileSync(path.join(dir, DEMOS_FILE), JSON.stringify(demos));
+
+  fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(runJob, null, 2));
+
+  return runJob;
 }
 
 const WARM_POLICY_FILE = 'warm-policy.json';
@@ -165,17 +180,17 @@ export class Trainer {
     if (warmPolicy != null && job.warmStart != null)
       throw new Error('A warm start takes an earlier run or a saved policy, not both.');
 
+    if (!this.forge && job.demos !== undefined) throw new Error('Training from tries needs Forge.');
+
     const policyText = warmPolicyText(warmPolicy, this.forge);
     const warmFrom = this.warmSource(job.warmStart);
     const id = newId();
     const dir = path.join(this.jobsDir, id);
 
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'model.xml'), xml);
 
-    const runJob = { ...plainJob, warmStart: warmStartIn(dir, { from: warmFrom, policyText }) };
-
-    fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(runJob, null, 2));
+    const warmStart = warmStartIn(dir, { from: warmFrom, policyText });
+    const runJob = writeJobFolder(dir, { xml, job: { ...plainJob, warmStart } });
 
     const entry = { workspaceId, job: runJob, id, dir, priority, uv };
     const send = this.sender(entry);

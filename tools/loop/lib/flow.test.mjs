@@ -43,6 +43,10 @@ describe('breaches', () => {
     expect(found).toHaveLength(5);
   });
 
+  it('reports pull requests nobody has touched for an hour', () => {
+    expect(breaches({ idlePulls: [461, 473] }, now)).toEqual(['#461, #473 untouched for over 60 min']);
+  });
+
   it('is quiet when the loop flows', () => {
     const found = breaches(
       {

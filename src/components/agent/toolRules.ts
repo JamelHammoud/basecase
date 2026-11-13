@@ -113,7 +113,7 @@ const PART_RULES: ToolRule[] = [
       };
     },
   },
-  partsRule('delete_parts', DeleteIcon, ['Removing', 'Removed']),
+  partsRule('delete_parts', DeleteIcon, ['Deleting', 'Deleted']),
   partsRule('mirror_parts', EditIcon, ['Mirroring', 'Mirrored']),
   {
     keys: ['fasten'],
@@ -201,11 +201,11 @@ const REVIEW_RULES: ToolRule[] = [
       return {
         title: ids.length
           ? `${verb('Inspecting', 'Inspected')} ${names(ids)}`
-          : verb('Looking at the model', 'Looked at the model'),
+          : verb('Looking at the scene', 'Looked at the scene'),
       };
     },
   },
-  plainRule(['check_scene'], CheckIcon, ['Checking the model', 'Checked the model']),
+  plainRule(['check_scene'], CheckIcon, ['Checking the scene', 'Checked the scene']),
   plainRule(['craft_review'], CheckIcon, ['Reviewing the craft', 'Reviewed the craft']),
   plainRule(['check_assembly'], CheckIcon, ['Checking the assembly', 'Checked the assembly']),
   plainRule(['set_interfaces'], FileIcon, ['Writing interface contracts', 'Wrote interface contracts']),

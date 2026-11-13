@@ -34,7 +34,7 @@ Merge parts into one solid, cut one part out of another, or keep only the volume
 1. Select the parts on the canvas. Shift-click adds each one after the first.
 2. Under **Combine** in the Inspector, click **Union** to merge them, or **Intersect** to keep only the volume they share.
 
-The parts become one mesh, named after the first part you selected. A toast says **Merged** or **Intersected**, with Undo.
+The parts become one mesh, named after the first part you selected. A toast with Undo names the parts, as in **Merged Sphere into Cube**.
 
 ## Cut one part out of another
 
@@ -52,4 +52,4 @@ The first part keeps its name, and the parts cut from it sit under it in **Layer
 
 Every visible Cutout that overlaps the part is cut out of it in one step. **Hole** and **Slot**, in [[⌘K]], start as Cutouts, so they skip step 2. **Guide**, beside **Cutout** in the menu, keeps a part as a reference that's never printed.
 
-**Union**, **Subtract** and **Intersect** are also in the right-click menu with several parts selected, and in [[⌘K]]. If one shows an error instead, see [Union, Subtract or Intersect shows an error](/help/troubleshoot-booleans).
+**Union**, **Subtract** and **Intersect** are also in the right-click menu and [[⌘K]] while several parts are selected. If one shows an error instead, see [Union, Subtract or Intersect shows an error](/help/troubleshoot-booleans).

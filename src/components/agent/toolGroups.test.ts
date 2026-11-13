@@ -37,7 +37,7 @@ describe('groupToolRuns', () => {
   it('breaks runs at text and other tools, and names a running group in the present', () => {
     expect(
       feed(['look', 'look', 'text:Hm', 'look', 'look', ['look', 'in_progress'], 'get_part_code', 'mystery_tool']),
-    ).toEqual([0, 1, 2, 'Inspecting the model 3 times', 6, 7]);
+    ).toEqual([0, 1, 2, 'Inspecting the scene 3 times', 6, 7]);
   });
 
   it('gathers consecutive part designers into one card, even a lone one', () => {

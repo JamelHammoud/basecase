@@ -7,14 +7,13 @@ import {
   Section,
   Select,
   Slider,
-  Tooltip,
   CrosshairIcon,
   FloorIcon,
   LayersIcon,
   RotateLeftIcon,
-  RotateRightIcon,
 } from '../../design-system';
 import { wrapDegrees } from './partMath';
+import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
 import { MATERIALS, type InspectorProps, type Phase } from './types';
 
@@ -107,20 +106,7 @@ export const RotationSection: React.FC<PartSectionProps> = ({ part, onUpdate }) 
           />
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-1.5">
-        {(['X', 'Y', 'Z'] as const).map((axis, idx) => (
-          <Tooltip key={axis} label={`Rotate 90° around ${axis}`} className="w-full">
-            <button
-              type="button"
-              onClick={() => setRot(idx, part.rotation[idx] + 90)}
-              className="w-full h-7 rounded-md text-[12px] text-white/50 hover:text-white/90 hover:bg-white/[0.06] flex items-center justify-center gap-1 cursor-default transition-colors"
-            >
-              <RotateRightIcon className="w-3 h-3" />
-              90°
-            </button>
-          </Tooltip>
-        ))}
-      </div>
+      <QuarterTurns onTurn={(idx) => setRot(idx, part.rotation[idx] + 90)} />
     </Section>
   );
 };

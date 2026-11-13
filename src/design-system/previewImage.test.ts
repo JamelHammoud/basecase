@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { PreviewImage } from './PreviewImage';
+import { PreviewImage, previewState } from './PreviewImage';
 
 const render = (src: string | undefined) =>
   renderToStaticMarkup(createElement(PreviewImage, { src, className: 'p-1' }));
@@ -21,5 +21,10 @@ describe('PreviewImage', () => {
 
   it('leaves the frame empty when there is no image, instead of shimmering forever or saying so', () => {
     expect(render('')).toBe('');
+  });
+
+  it('leaves the frame empty once its image fails to load, and tries a new source again', () => {
+    expect(previewState('/robots/so-101.webp', '/robots/so-101.webp')).toBe('empty');
+    expect(previewState('/robots/so-101.png', '/robots/so-101.webp')).toBe('image');
   });
 });

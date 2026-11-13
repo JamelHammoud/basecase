@@ -84,7 +84,8 @@ pub fn build(start: Start) -> Result<(Gpu, Worlds), String> {
     let counters = gpu.alloc::<u32>(COUNTERS * worlds)?;
     let rngs = gpu.alloc::<u32>(4 * worlds)?;
     let obs = gpu.alloc::<f32>(task.nobs() * worlds)?;
-    let knobs = gpu.alloc::<f32>(1)?;
+    let knob_values = task::knobs(task);
+    let knobs = gpu.alloc::<f32>(knob_values.len())?;
 
     gpu.slice_mut(start_row).copy_from_slice(&first);
     gpu.slice_mut(order)
@@ -92,7 +93,7 @@ pub fn build(start: Start) -> Result<(Gpu, Worlds), String> {
         .enumerate()
         .for_each(|(i, o)| *o = i as u32);
     seed_streams(gpu.slice_mut(rngs), seed, 0);
-    gpu.slice_mut(knobs)[0] = task.conditions.delay_steps[1] as f32;
+    gpu.slice_mut(knobs).copy_from_slice(&knob_values);
 
     Ok((
         gpu,
@@ -208,6 +209,8 @@ impl Worlds {
             self.io.arg(),
             self.env.arg(),
             obs.arg(),
+            self.counters.arg(),
+            self.knobs.arg(),
             Arg::Owned(vec![self.worlds as u32, row as u32]),
         ];
 

@@ -1,11 +1,21 @@
 import type { MjData } from '@mujoco/mujoco';
 import type { EyeCaster } from './eyes';
-import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
+import {
+  act,
+  CLOCK_SIZE,
+  observe,
+  observeClock,
+  obsSize,
+  policyObsSize,
+  type ObsSource,
+  type PolicySpec,
+} from './policy';
 
 export interface PolicyState {
   action: Float32Array;
   obs: Float32Array;
   nextAt: number;
+  startedAt: number;
   src: ObsSource;
   targets: Float64Array;
   command: [number, number, number];
@@ -19,6 +29,13 @@ export function stepPolicy(policy: PolicySpec, ps: PolicyState, data: MjData): v
   ps.src.qvel = data.qvel;
   observe(ps.src, { defaultPose: policy.defaultPose, command: ps.command }, ps.action, ps.obs);
   ps.eyes?.cast(ps.obs, obsSize(policy.joints.length));
+
+  if (policy.clock) {
+    const step = Math.round((ps.nextAt - ps.startedAt) / policy.controlDt);
+
+    observeClock(policy.clock, step, ps.obs, policyObsSize(policy) - CLOCK_SIZE);
+  }
+
   ps.action = act(policy, ps.obs);
 
   for (let k = 0; k < ps.action.length; k++) ps.targets[k] = policy.defaultPose[k] + policy.actionScale * ps.action[k];

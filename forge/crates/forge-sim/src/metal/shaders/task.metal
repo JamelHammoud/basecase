@@ -39,6 +39,20 @@ inline void task_state(device const real *row, device const float *env, thread T
     }
 }
 
+inline void task_reference(device const float *knobs, int k, thread TaskState &s) {
+    if (!TASK_REF) {
+        return;
+    }
+    int frame = REF_LOOP ? k % REF_FRAMES : min(k, REF_FRAMES - 1);
+    float turn = REF_LOOP ? 2.0f * M_PI_F / (float)REF_FRAMES : M_PI_F / (float)(REF_FRAMES - 1);
+    float angle = turn * (float)frame;
+    s.clock[0] = precise::sin(angle);
+    s.clock[1] = precise::cos(angle);
+    for (int i = 0; i < REF_WIDTH; i++) {
+        s.ref[i] = knobs[1 + frame * REF_WIDTH + i];
+    }
+}
+
 inline real yawed(real hc, real hs, d4 q, int k) {
     real w = hc * q.v[0] - hs * q.v[3];
     real x = hc * q.v[1] - hs * q.v[2];
@@ -189,6 +203,7 @@ kernel void task_after(device real *io [[buffer(0)]], device const real *start [
     counter[0] = steps;
     TaskState s;
     task_state(row, mine, s);
+    task_reference(knobs, steps, s);
     bool fallen = TASK_FALL_RESETS && task_fell(s) != 0.0f;
     bool ended = steps >= TASK_EPISODE;
     uint at = p[1] + w;
@@ -226,7 +241,8 @@ inline void observed(device const float *env, thread TaskState &s) {
 }
 
 kernel void task_observe(device const real *io [[buffer(0)]], device const float *env [[buffer(1)]],
-                         device float *obs [[buffer(2)]], constant uint *p [[buffer(3)]],
+                         device float *obs [[buffer(2)]], device const int *counters [[buffer(3)]],
+                         device const float *knobs [[buffer(4)]], constant uint *p [[buffer(5)]],
                          uint w [[thread_position_in_grid]]) {
     if (w >= p[0]) {
         return;
@@ -234,6 +250,7 @@ kernel void task_observe(device const real *io [[buffer(0)]], device const float
     device const float *mine = env + w * TASK_ENV;
     TaskState s;
     task_state(io + w * NSTATE, mine, s);
+    task_reference(knobs, counters[TASK_COUNTERS * w], s);
     observed(mine, s);
     task_observe_one(s, obs + (p[1] + w) * NOBS);
 }

@@ -4,6 +4,9 @@ import type { ServoCalibration } from '../src/reality/types';
 import { box } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
+import { fixtureModel } from '../src/skills/fixtureModels';
+import { moveEnvironment } from '../src/skills/moveEnvironment';
+import { clockPolicy, quadSit } from '../src/skills/moveFixtures';
 import { DEFAULT_PROJECT, type PolicyRecord, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematicsRig';
 import { openApp, partCount, type App } from './harness';
@@ -12,8 +15,9 @@ let app: App;
 
 type Studio = {
   load: (r: unknown) => void;
-  simState: () => { fingerprints: Record<string, string> };
+  simState: () => { fingerprints: Record<string, string>; controller: { kind: string; clock: unknown } };
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
+  stubTrainer: (policy: unknown) => void;
 };
 
 const fingerprints = () =>
@@ -210,4 +214,42 @@ describe('a policy trained before a calibration', () => {
     await expect.poll(() => row.getAttribute('data-retraining')).toBe('true');
     expect(app.errors).toEqual([]);
   }, 180000);
+});
+
+describe('a move from a Pose-tab animation', () => {
+  it('lists Sit in the Train section, trains it to a passing run, and Try plays it in the live sim', async () => {
+    const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+    const sit = quadSit();
+    const environment = moveEnvironment(fixtureModel('quad-servo'), sit);
+
+    await loadScene({
+      name: 'quad',
+      parts: robot.parts,
+      project: { ...DEFAULT_PROJECT, joints: robot.joints, animations: [sit] },
+    });
+    await clickTab('Simulate');
+
+    const row = app.page.locator(visible('[data-testid="skill-row"]'), { hasText: 'Sit' }).first();
+
+    await expect.poll(() => row.count(), { timeout: 60000 }).toBe(1);
+    await app.page.evaluate(
+      (policy) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(policy),
+      clockPolicy(environment),
+    );
+    await app.page.route(
+      (url) => url.pathname === '/api/bridge/skill',
+      (route) => {
+        const saved = app.posts.filter((p) => p.route === 'skill-save').at(-1)?.body as { text?: string } | undefined;
+
+        return route.fulfill({ status: 200, contentType: 'application/json', body: saved?.text ?? '{}' });
+      },
+    );
+    await row.locator('button', { hasText: 'Train' }).click();
+    await expect.poll(() => row.innerText(), { timeout: 150000 }).toContain('of 32 tries');
+    await row.locator('button', { hasText: 'Try' }).click();
+    await expect
+      .poll(() => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().controller))
+      .toEqual({ kind: 'policy', clock: { frames: 51, loop: false } });
+    expect(app.errors).toEqual([]);
+  }, 240000);
 });

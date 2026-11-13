@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
+import type { Controller } from '../sim/engine';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { withCalibration } from '../reality/projectCalibrations';
+import { isPolicySpec } from '../sim/policy';
 import { modelFingerprints } from '../sim/policyFreshness';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
@@ -9,6 +11,11 @@ import { robotPackageZip } from './robotPackageExport';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+
+const controllerState = (c: Controller) => ({
+  kind: c.kind,
+  clock: c.kind === 'policy' ? (c.policy.clock ?? null) : null,
+});
 
 interface DevHookOptions {
   active: boolean;
@@ -48,6 +55,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         activeCase: cases.active?.id ?? null,
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
         fingerprints: modelFingerprints(core.simTraining.skills.model),
+        controller: controllerState(sim.controller),
       };
     },
     calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
@@ -59,6 +67,13 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       return zip && unzipSync(zip);
     },
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
+    stubTrainer: (policy) => {
+      if (!isPolicySpec(policy)) throw new Error('stubTrainer takes a policy.');
+
+      core.simTraining.skills.runtime.replaceForge(
+        () => () => Promise.resolve({ ok: true, policy, events: [{ type: 'done', steps: 1 }], stderr: '' }),
+      );
+    },
     robotPackage: async () => {
       const made = await robotPackageZip(core);
 

@@ -1,11 +1,12 @@
 import type { SimModel } from '../sim/mjcfTypes';
+import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
-import { recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
+import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
 import { raceSummary } from './teach';
@@ -51,7 +52,7 @@ export class SkillsRuntime {
   private background: AbortController | null = null;
   private pending: { model: SimModel; tasks: BackgroundTask[] } | null = null;
 
-  private readonly deps: RuntimeDeps;
+  private deps: RuntimeDeps;
 
   constructor(deps: RuntimeDeps) {
     this.deps = deps;
@@ -86,17 +87,34 @@ export class SkillsRuntime {
     return null;
   }
 
+  trainMove(model: SimModel, animation: RobotAnimation): string | null {
+    if (this.user) return BUSY;
+
+    this.running = this.start({
+      target: `move:${animation.id}`,
+      label: animation.name,
+      background: false,
+      work: (forge, signal) => this.moveWork(model, animation, { forge, signal }),
+    });
+
+    return null;
+  }
+
   recheck(model: SimModel, task: BackgroundTask): string | null {
     if (this.user) return BUSY;
 
     this.running = this.start({
-      target: `kit:${task.entry}`,
-      label: KIT_LABELS[task.entry],
+      target: task.target,
+      label: task.label,
       background: false,
       work: (forge, signal) => this.recheckWork(model, task, { forge, signal }),
     });
 
     return null;
+  }
+
+  replaceForge(forge: ForgeFactory) {
+    this.deps = { ...this.deps, forge };
   }
 
   race(model: SimModel, draftId: string, budgetSteps?: number): string | null {
@@ -176,17 +194,41 @@ export class SkillsRuntime {
     if (reply.outcome.kind === 'skill') this.deps.onRecord(skillRecord(reply.outcome.skill, { kit: entry }));
   }
 
+  private async moveWork(
+    model: SimModel,
+    animation: RobotAnimation,
+    ports: { forge: ForgeRunner; signal: AbortSignal },
+  ) {
+    const reply = await this.deps.runner(
+      { type: 'move', model, design: designOf(model), animation },
+      { ...this.ports(), ...ports },
+    );
+    const { outcome, environment } = reply.outcome;
+
+    if (outcome.kind === 'skill')
+      this.deps.onRecord(skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }));
+  }
+
+  private retrain(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
+    if (task.move) return this.moveWork(model, task.move, ports);
+
+    return task.entry ? this.kitWork(model, task.entry, ports) : Promise.resolve();
+  }
+
   private async recheckWork(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
     const skill = await this.deps.loadSkill(task.record.hash);
-    const environment = recordEnvironment(task.record, model);
+    const environment = recordEnvironment(task.record, model, task.move ? [task.move] : []);
 
-    if (!skill || !environment) return this.kitWork(model, task.entry, ports);
+    if (!skill || !environment) return this.retrain(model, task, ports);
 
     const job = { type: 'recheck' as const, model, design: designOf(model), skill, environment };
     const reply = await this.deps.runner(job, { ...this.ports(), ...ports });
 
-    if (reply.skill) this.deps.onRecord(skillRecord(reply.skill, { kit: task.entry }));
-    else await this.kitWork(model, task.entry, ports);
+    if (!reply.skill) return this.retrain(model, task, ports);
+
+    const move = task.move ? moveTag(task.move.id, environment) : undefined;
+
+    this.deps.onRecord(skillRecord(reply.skill, { kit: task.entry, move }));
   }
 
   private setJob(target: SkillTarget, patch: Partial<SkillJob> | null) {
@@ -239,17 +281,17 @@ export class SkillsRuntime {
       const task = tasks[0];
       const controller = new AbortController();
       const run: Run = {
-        target: `kit:${task.entry}`,
-        label: KIT_LABELS[task.entry],
+        target: task.target,
+        label: task.label,
         background: true,
         work: (forge, signal) =>
           task.kind === 'recheck'
             ? this.recheckWork(model, task, { forge, signal })
-            : this.kitWork(model, task.entry, { forge, signal }),
+            : this.retrain(model, task, { forge, signal }),
       };
 
       this.background = controller;
-      this.setJob(run.target, { label: KIT_LABELS[task.entry], background: true, share: null, message: 'Starting' });
+      this.setJob(run.target, { label: task.label, background: true, share: null, message: 'Starting' });
 
       try {
         await run.work(this.forgeFor(run, controller.signal), controller.signal);

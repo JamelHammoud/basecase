@@ -217,3 +217,53 @@ fn encoder_and_imu_biases_reach_only_the_observation() {
 
     assert!((0..ENVS).all(|w| (seen[w * nobs + 12] - truth[w * nobs + 12]).abs() <= ENCODER_BIAS));
 }
+
+const FIRST: &str = "def reward(state):\n    return state.reference[0] + 10.0 * state.reference[3]\n";
+
+fn reference_robot(looping: bool) -> Robot {
+    let frames: Vec<[f64; 4]> = (0..5)
+        .map(|k| [0.3 * (k as f64).sin(), -0.1 * k as f64, 0.12, 0.02 * k as f64])
+        .collect();
+    let options = json!({
+        "reference": { "loop": looping, "frames": frames }, "reward": FIRST, "pushes": false, "fallResets": false
+    });
+
+    robot(&format!("reference-{looping}"), &options)
+}
+
+#[test]
+fn the_clock_and_the_reference_reward_match_the_cpu_on_the_gpu() {
+    for looping in [true, false] {
+        let robot = reference_robot(looping);
+        let reference = robot.job.options.reference.clone().expect("reference");
+        let mut b = bench(&robot);
+        let nobs = b.worlds.nobs;
+
+        assert_eq!(nobs, robot.nobs());
+
+        for k in 0..12 {
+            let obs = b.observe();
+            let clock = reference.clock(k);
+
+            for w in 0..ENVS {
+                let got = &obs[(w + 1) * nobs - 2..(w + 1) * nobs];
+
+                assert!(
+                    (0..2).all(|i| (f64::from(got[i]) - clock[i]).abs() < 1e-6),
+                    "step {k}: {got:?} against {clock:?}"
+                );
+            }
+
+            b.step(0.0);
+
+            let frame = reference.frame(k + 1);
+            let want = frame[0] + 10.0 * frame[3];
+            let rewards = b.gpu.slice(b.outputs.rew).to_vec();
+
+            assert!(
+                rewards.iter().all(|r| (f64::from(*r) - want).abs() < 1e-5),
+                "step {k}: {rewards:?} against {want}"
+            );
+        }
+    }
+}

@@ -52,7 +52,9 @@ const readyToLand = (pull) =>
 const oldest = (times) => times.filter(Boolean).sort()[0] ?? null;
 
 export function measure() {
-  const ready = openPulls({ fresh: true }).filter(readyToLand);
+  const open = openPulls({ fresh: true });
+  const ready = open.filter(readyToLand);
+  const idleSince = Date.now() - LIMITS.idlePullMinutes * 60_000;
   const queued = queuedRuns({ fresh: true });
 
   return {
@@ -61,6 +63,7 @@ export function measure() {
     readyCount: ready.length,
     oldestReadyAt: oldest(ready.map(readySince)),
     queuedRuns: queued.length,
+    idlePulls: open.filter((pull) => Date.parse(pull.updatedAt) < idleSince).map((pull) => pull.number),
     oldestQueuedAt: oldest(queued.map((item) => item.createdAt)),
   };
 }

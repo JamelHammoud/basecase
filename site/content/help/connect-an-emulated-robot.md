@@ -37,7 +37,7 @@ Every servo is emulated: no released build of Basecase can drive real motors. Op
 3. Click **Operate** at the top of the panel.
 4. Click **Connect Emulated Robot**. The header names the servos, such as "2 emulated Feetech servos", one for each joint that moves.
 5. Under **Ladder**, click **Set Up** to check that every servo answers.
-6. Click **Test** to switch the motors on. The line under the rung reads "Motors running" once they're on.
+6. Click **Test** to switch the motors on. The header reads "Motors running" once they're on.
 
 ![Operate in Test with motors running, the ladder, and two emulated servos at 0.0°](/help/calibrate-an-emulated-robot/test.png)
 

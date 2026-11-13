@@ -25,9 +25,11 @@ related:
 covers:
   - src/cases/caseGoals.ts
   - src/cases/caseWorlds.ts
-  - src/cases/templates.ts
-  - src/cases/touchTheDots.ts
-  - src/cases/reachTheFlag.ts
+  - src/cases/caseBuilder.ts
+  - src/cases/dotSpots.ts
+  - src/cases/pickGoal.ts
+  - src/cases/handoffGoal.ts
+  - src/cases/roomWorld.ts
   - src/cases/contract.ts
   - src/cases/scale.ts
   - src/skills/contract.ts
@@ -44,21 +46,26 @@ Every goal and world the Case builder offers, the numbers each goal takes, and e
 | **Push a Box** | Wheels or legs | **Push**, **Box**, **Radius**, **Time** | The box stays within **Radius** of the spot for 0.3 s |
 | **Follow a Path** | Wheels or legs | **Spots**, **Spacing**, **Radius**, **Time** | The base reaches each spot in order, within **Radius** for 0.2 s |
 | **Walk Without Falling** | Legs | **Distance**, **Time** | The base gets more than **Distance** from where it started |
-| **Touch a Point** | An arm | **Distance**, **Height**, **Radius**, **Time** | The end effector stays within **Radius** of the point for 0.2 s |
+| **Touch a Point** | An arm | **Dots**, **Distance**, **Height**, **Radius**, **Time** | The end effector stays within **Radius** of the point for 0.2 s |
+| **Pick Up a Block** | An arm with a gripper | **Distance**, **Spacing**, **Radius**, **Time** | The block lifts by half its size, then ends within **Radius** of the spot for 0.3 s |
+| **Hand Off to a Spot** | Two arms | **Distance**, **Height**, **Radius**, **Time** | One arm holds the point for 0.2 s, then the other holds it alone for 0.2 s |
 
 On a robot with legs, these goals also fail when the robot falls: its base drops below half its starting height.
+
+With **Dots** at 2 or 3, Touch a Point becomes Touch the Dots: the end effector touches each dot in order, holding 0.2 s on each.
 
 The builder starts each number at a default sized to the robot. Its limits:
 
 | Number | Range |
 |---|---|
 | **Distance** | 0 to 5,000 mm; at least 100 mm for Walk Without Falling |
+| **Dots** | 1 to 3 |
 | **Height** | 0 to 2,000 mm |
 | **Radius** | 5 to 1,000 mm |
 | **Push** | 100 to 5,000 mm |
 | **Box** | 40 to 600 mm |
 | **Spots** | 2 to 8 |
-| **Spacing** | 200 to 3,000 mm |
+| **Spacing** | 200 to 3,000 mm; from 50 mm for Pick Up a Block |
 | **Time** | 2 to 120 s |
 
 ## Worlds
@@ -69,17 +76,9 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Corridor** | Wheels and legs | A wall on each side of the route |
 | **Block** | Wheels and legs | A block in the way; tries get 5 s more on wheels and 8 s on legs |
 | **Shelf** | Touch a Point | A box under the point |
+| A room you imported | Reach a Spot, Push a Box, Follow a Path; Touch a Point when a table is in reach | The room's largest walls and furniture, at true size |
 
 A Case's name defaults to its goal and world, such as "Push a Box in a Corridor". A world that would put a solid object where the robot stands is refused, with what to change.
-
-## Examples
-
-| Case | Robots | Passes when |
-|---|---|---|
-| **Touch the Dots** | An arm | The end effector touches each dot in order, holding 0.2 s on each |
-| **Reach the Flag** | Wheels or legs | The base stops within 160 mm of the flag for 0.3 s |
-
-Touch the Dots gives 0.5 s plus 1.8 s per dot. Reach the Flag gives 8 s on wheels and 14 s on legs.
 
 ## How a try is judged
 

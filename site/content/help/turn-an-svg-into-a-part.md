@@ -35,7 +35,7 @@ Extrude a logo, a bracket outline or any SVG drawing into a solid part, at the w
 7. Click **Add**. To keep a copy in the Library too, click **Save to Library**, the bookmark in the part's Inspector header.
 8. Click **Done** to close the panel.
 
-The part starts 64 mm wide and 10 mm thick until you change them. To fix the outline first, click **Edit in Sketch**. To paste SVG code from a design app instead of a file, click **Paste code**.
+The part starts 64 mm wide and 10 mm thick until you change them. To fix the outline first, click **Edit in Sketch**. To paste SVG code from a design app instead of a file, click **Paste Code**.
 
 You can also choose **Import** in the **File** menu, the Library's **+** menu or ⌘K and pick the SVG, or drop it on the canvas. Either way Import SVG opens with the drawing loaded.
 

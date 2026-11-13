@@ -28,6 +28,8 @@ export interface CaseSpec {
   name?: string;
   brief?: string;
   objects?: WorldObject[];
+  logic?: unknown;
+  score?: unknown;
 }
 
 export type BuiltCase = { ok: true; kase: Case } | { ok: false; problem: string };
@@ -175,7 +177,9 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
       seconds: values.seconds,
       probes: [...plan.probes, ...(guard ? [guard.probe] : [])],
       contract: { version: 1, success: plan.success, failures: guard ? [guard.failure] : [] },
+      ...(spec.score !== undefined ? { score: spec.score } : {}),
     },
+    ...(spec.logic !== undefined ? { logic: spec.logic } : {}),
   };
 }
 

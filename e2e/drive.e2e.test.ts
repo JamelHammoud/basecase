@@ -1,6 +1,7 @@
 import { parquetReadObjects } from 'hyparquet';
 import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { KNOCK_COMMANDS, knockGame } from '../src/cases/fixtureGames';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { startFakeHub, type FakeHub } from './fakeHub';
@@ -21,9 +22,16 @@ interface SimState {
   bodies: Array<{ parts: string[]; world: string[] }>;
   activeCase: string | null;
   tries: Array<{ passed: boolean; margin: number }>;
+  facts: Record<string, number | boolean | string> | null;
 }
 
-type Studio = { simState: () => SimState; load: (r: unknown) => void; passTries: () => void };
+type Studio = {
+  simState: () => SimState;
+  load: (r: unknown) => void;
+  passTries: () => void;
+  addCase: (raw: unknown) => string;
+  driveCommand: (command: { v: [number, number, number]; target?: [number, number, number] }) => void;
+};
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -320,4 +328,42 @@ describe('Cases', () => {
       .toBe('/case ');
     expect(app.errors).toEqual([]);
   });
+});
+
+describe('Case logic', () => {
+  itUnlessWindows(
+    'scores a knock-the-blocks game from its Case logic and records the try as a pass',
+    async () => {
+      await loadFixture('arm-6dof');
+
+      const id = await app.page.evaluate(
+        (kase) => (window as unknown as { __studio: Studio }).__studio.addCase(kase),
+        knockGame({ seconds: 9, target: 2 }),
+      );
+
+      await expect.poll(async () => (await simState()).activeCase).toBe(id);
+      await clickTab('Simulate');
+      await button('Try It').click();
+      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+      await expect.poll(async () => (await simState()).facts?.score, { timeout: 30000 }).toBe(0);
+
+      const start = (await simState()).stats?.time ?? 0;
+
+      for (const command of KNOCK_COMMANDS) {
+        await expect
+          .poll(async () => (await simState()).stats?.time ?? 0, { timeout: 30000, interval: 20 })
+          .toBeGreaterThanOrEqual(start + command.at);
+        await app.page.evaluate(
+          (target) => (window as unknown as { __studio: Studio }).__studio.driveCommand({ v: [0, 0, 0], target }),
+          command.target!,
+        );
+      }
+
+      await expect.poll(async () => (await simState()).facts?.score, { timeout: 30000 }).toBe(2);
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 60000 }).toBe(1);
+      expect((await simState()).tries[0].passed).toBe(true);
+      expect(app.errors).toEqual([]);
+    },
+    180000,
+  );
 });

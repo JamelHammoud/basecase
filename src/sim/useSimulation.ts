@@ -10,6 +10,8 @@ import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
+import type { CaseFacts, FactValue } from '../cases/caseFacts';
+import type { LiveCaseInput } from '../cases/liveCase';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
@@ -58,6 +60,9 @@ export interface Simulation {
   setWorld: (items: WorldItem[]) => void;
   buildModel: () => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
+  runCase: (input: LiveCaseInput | null) => void;
+  input: (name: string, value: FactValue) => void;
+  latestFacts: () => CaseFacts | null;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
   run: (opts: {
     seconds: number;
@@ -356,6 +361,9 @@ export function useSimulation(props: Inputs): Simulation {
 
       return sw.startRoutine(input, onUpdate);
     },
+    runCase: (input) => send(input ? { type: 'case', ...input } : { type: 'caseEnd' }),
+    input: (name, value) => send({ type: 'input', name, value }),
+    latestFacts: sw.latestFacts,
     runOn,
     run: async (opts) => {
       const m = await buildModel();

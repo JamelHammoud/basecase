@@ -24,6 +24,9 @@ the words after it; none of them changes the design unless the words ask for it.
   reports.
 - /routine builds or changes a Routine: read_routine first, then make_routine or edit_routine.
 - /case makes a Case (a world and a goal the robot tries in simulation) with create_case.
+  Describe behaviours in a Case as its logic: a Routine whose base do drive hands the robot to the
+  Case's drive, reading case-fact watchers (score, timer, <spot>-count, <object>-over) and
+  live-input ones (a voice word).
 - /simulate runs the scene: simulate with hold, then shoves, and report what happened.
 - /operate does the task in the words by operating the robot through its cameras: operate one
   short step at a time (about 1 s), look at every view it returns before choosing the next

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { parseCase } from '../cases/schema';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
@@ -45,6 +46,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
         activeCase: cases.active?.id ?? null,
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
+        facts: sim.latestFacts(),
       };
     },
     routineState: () => core.simTraining.routines.state(),
@@ -54,6 +56,8 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
 
       return zip && unzipSync(zip);
     },
+    addCase: (raw) => core.simTraining.cases.add(parseCase(raw)).id,
+    driveCommand: (command) => core.simTraining.sim.drive.setKeys(command),
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     robotPackage: async () => {
       const made = await robotPackageZip(core);

@@ -20,6 +20,8 @@ import { type FactValue, renderText, TraceDecoder } from './traceDecode';
 
 type Reply = (ok: boolean) => void;
 
+export type FactFeed = (fact: string, atMs: number) => { value: boolean | number | string; at: number } | undefined;
+
 export interface MotionHost {
   startMove: (move: { token: number; skill: string; move: Motion }, finish: Reply) => void;
 }
@@ -31,6 +33,7 @@ export class ScenarioHost {
   readonly symbols: string[];
   skillLatency: (skill: string) => number = () => SKILL_MS;
   motion: MotionHost | null = null;
+  feed: FactFeed | null = null;
   private readonly decoder: TraceDecoder;
   private readonly cancelled = new Set<number>();
   private readonly doNodes = new Map<number, string>();
@@ -86,19 +89,28 @@ export class ScenarioHost {
     return latest?.value;
   }
 
+  private reading(fact: string, t: number): { value: boolean | number | string; at: number } {
+    const fed = this.feed?.(fact, t);
+
+    if (fed) return fed;
+
+    const mock = this.scenario.mocks[fact];
+
+    return { value: (typeof mock === 'object' ? mock.value : mock) ?? this.worldValue(fact, t) ?? false, at: t };
+  }
+
   sample(watcher: PlanWatcher, index: number, t: number) {
     const enabled = (this.run.watchers() >>> index) & 1;
     const fault = this.fault([watcher.id], t);
 
     if (!enabled || fault?.kind === 'hang' || fault?.kind === 'fail') return;
 
-    const mock = this.scenario.mocks[watcher.id];
-    const raw = (typeof mock === 'object' ? mock.value : mock) ?? this.worldValue(watcher.id, t) ?? false;
+    const { value: raw, at } = this.reading(watcher.id, t);
     const value = { num: worldNum(raw), sym: typeof raw === 'string' ? this.intern(raw) : -1 };
 
     if (fault?.kind === 'garbage') value.num = Number.NaN;
 
-    if (this.run.publish(watcher.fact, value, Math.floor(t))) {
+    if (this.run.publish(watcher.fact, value, Math.floor(at))) {
       this.values.set(watcher.fact, { num: value.num, name: typeof raw === 'string' ? raw : null });
     }
   }

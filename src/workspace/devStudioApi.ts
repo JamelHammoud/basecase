@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import * as THREE from 'three';
 import type { PoseReply } from '../agent/agentPose';
 import type { Viewport3DHandle } from '../components/Viewport3D';
+import type { DriveCommand } from '../sim/driveTypes';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
@@ -29,6 +30,8 @@ export interface DevActions {
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  addCase: (raw: unknown) => string;
+  driveCommand: (command: DriveCommand) => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -138,6 +141,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
+    addCase: (raw: unknown) => devRef.current.addCase(raw),
+    driveCommand: (command: DriveCommand) => devRef.current.driveCommand(command),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();

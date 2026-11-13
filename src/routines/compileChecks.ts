@@ -102,7 +102,7 @@ function checkWatchers(ctx: CompileContext) {
   for (const w of ctx.routine.watchers) {
     const model = findNode(w.model);
 
-    if (!model || model.tier !== 'perception') ctx.fail('unknown-model', `There's no ${w.model} model.`, w.id);
+    if (!model || model.tier === 'remote') ctx.fail('unknown-model', `There's no ${w.model} model.`, w.id);
     else if (!model.outputs.includes(w.publishes.type)) {
       ctx.fail('type-mismatch', `${model.label} doesn't publish ${w.publishes.type}.`, w.id);
     }

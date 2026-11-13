@@ -9,11 +9,25 @@ import type { MjcfInput, SimModel } from '../sim/mjcfTypes';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig, type Rig, type V3 } from '../utils/kinematics';
 import { evaluateContract, type Trace } from '../skills/contract';
+import { NO_BODY, routineBody, type RoutineBody } from '../routines/physicsBody';
+import type { RoutineKit } from '../routines/physicsKit';
+import type { Plan } from '../routines/planTypes';
+import type { SkillContract } from '../routines/schema';
+import { caseFactReader, caseSignalNames, sampleSignals, type CaseFactReader } from './caseFacts';
+import {
+  CaseLogicRun,
+  compileCaseLogic,
+  judgeSoFar,
+  usesBodySkills,
+  type CaseInput,
+  type CaseLogicResult,
+} from './caseLogic';
 import { GroundSteer } from './groundSteer';
 import { probeReader } from './probes';
 import { boundEffector, robotFacts, slotRefusal, type EndEffector, type RobotFacts } from './robotFit';
 import { scaledToReach } from './scale';
 import { worldItem, type Case, type ReferenceCommand } from './schema';
+import type { CaseFacts } from './caseFacts';
 
 export const RECORD_DT = 0.02;
 
@@ -40,6 +54,7 @@ export interface CaseResult {
   frames: CaseFrame[];
   objectIds: string[];
   case: Case;
+  logic?: CaseLogicResult;
 }
 
 interface ProbeBase {
@@ -49,7 +64,12 @@ interface ProbeBase {
 
 export interface RunOptions {
   controller: 'limp' | 'reference';
+  kit?: RoutineKit;
+  skills?: readonly SkillContract[];
+  inputs?: CaseInput[];
 }
+
+const JUDGE_EVERY_TICKS = 12;
 
 interface DriveFor {
   kase: Case;
@@ -117,33 +137,50 @@ interface Rollout {
   engine: SimEngine;
   kase: Case;
   steer: GroundSteer | null;
-  sample: (poses: Float64Array) => void;
+  sample: (poses: Float64Array, t: number) => CaseFacts;
+  logic: CaseLogicRun | null;
+  judge: () => Promise<CaseFacts>;
 }
 
-function follow(engine: SimEngine, steer: GroundSteer | null, c: ReferenceCommand) {
-  if (!steer) return engine.command(toCommand(c));
-
-  if (c.target) return steer.add(c.target, { speed: c.v?.[0], push: c.push });
-
-  steer.clear();
-  engine.command(toCommand(c));
+interface Follower {
+  engine: SimEngine;
+  steer: GroundSteer | null;
+  last: ReferenceCommand | null;
 }
 
-function roll({ engine, kase, steer, sample }: Rollout): CaseFrame[] {
+function follow(f: Follower, c: ReferenceCommand) {
+  f.last = c;
+
+  if (!f.steer) return f.engine.command(toCommand(c));
+
+  if (c.target) return f.steer.add(c.target, { speed: c.v?.[0], push: c.push });
+
+  f.steer.clear();
+  f.engine.command(toCommand(c));
+}
+
+async function roll({ engine, kase, steer, sample, logic, judge }: Rollout): Promise<CaseFrame[]> {
   const timeline = [...kase.reference.timeline].sort((a, b) => a.at - b.at);
   const frames: CaseFrame[] = [];
   const ticks = Math.round(kase.task.seconds / RECORD_DT);
+  const follower: Follower = { engine, steer, last: null };
 
   for (let tick = 0; tick < ticks; tick++) {
     const t = tick * RECORD_DT;
 
-    while (timeline.length && timeline[0].at <= t + 1e-9) follow(engine, steer, timeline.shift()!);
+    while (timeline.length && timeline[0].at <= t + 1e-9) follow(follower, timeline.shift()!);
 
     const poses = engine.poses();
+    const driving = logic?.driving ?? true;
 
-    if (steer?.steering) engine.command(steer.command(poses));
+    if (driving && steer?.steering) engine.command(steer.command(poses));
 
-    sample(poses);
+    const facts = sample(poses, t);
+
+    logic?.advance(t * 1000, facts);
+
+    if (logic && tick > 0 && tick % JUDGE_EVERY_TICKS === 0) logic.judged(await judge());
+
     frames.push({ t, poses });
     engine.step(RECORD_DT);
   }
@@ -157,6 +194,77 @@ function fixedBaseFor(rig: Rig, facts: RobotFacts): Record<string, boolean> | un
   return key && facts.morphology === 'fixed' ? { [key]: true } : undefined;
 }
 
+interface Refused {
+  authored: Case;
+  model: SimModel;
+  refusal: string;
+}
+
+const refused = ({ authored, model, refusal }: Refused): CaseResult => ({
+  passed: false,
+  margin: -1,
+  failed: [],
+  trace: { dt: RECORD_DT, signals: {} },
+  refusal,
+  model,
+  frames: [],
+  objectIds: [],
+  case: authored,
+});
+
+function bodyFor(model: SimModel, robot: CaseRobot, options: RunOptions) {
+  const kit = options.kit;
+
+  return routineBody(model, robot.joints, { skills: kit?.policies ?? [], drive: kit?.drive }) ?? undefined;
+}
+
+type LogicPlan = { plan: Plan | null; refusal?: string };
+
+function logicPlan(kase: Case, options: RunOptions): LogicPlan {
+  if (!kase.logic) return { plan: null };
+
+  const skills = options.skills ?? options.kit?.skills ?? [];
+  const compiled = compileCaseLogic(kase.logic, { skills, modelHash: options.kit?.modelHash });
+
+  return compiled.ok ? { plan: compiled.plan } : { plan: null, refusal: compiled.errors[0].message };
+}
+
+interface LogicStart {
+  plan: Plan | null;
+  kase: Case;
+  engine: SimEngine;
+  body: RoutineBody | null;
+  handBack: () => void;
+  inputs?: CaseInput[];
+}
+
+async function startLogic({ plan, kase, engine, body, handBack, inputs }: LogicStart) {
+  if (!plan) return null;
+
+  const logic = await CaseLogicRun.start({ plan, seconds: kase.task.seconds, engine, body, handBack });
+
+  for (const event of inputs ?? []) logic.input(event);
+
+  return logic;
+}
+
+function factSampler(kase: Case, facts: CaseFactReader, reader: { sample: ProbeSample }, signals: Signals) {
+  const names = caseSignalNames(kase);
+
+  return (poses: Float64Array, t: number) => {
+    const read = facts.read(poses, t);
+
+    reader.sample(poses, signals);
+    sampleSignals(read, names, signals);
+
+    return read;
+  };
+}
+
+type Signals = Record<string, number[]>;
+
+type ProbeSample = (poses: Float64Array, out: Signals) => void;
+
 export async function runCase(
   mj: MainModule,
   authored: Case,
@@ -169,25 +277,22 @@ export async function runCase(
   const base = { parts: robot.parts, rig, project: DEFAULT_PROJECT, measures: robot.measures };
   const input = { ...base, partTriangles: robot.partTriangles };
 
-  if (refusal)
-    return {
-      passed: false,
-      margin: -1,
-      failed: [],
-      trace: { dt: RECORD_DT, signals: {} },
-      refusal,
-      model: buildMjcf(input),
-      frames: [],
-      objectIds: [],
-      case: authored,
-    };
+  if (refusal) return refused({ authored, model: buildMjcf(input), refusal });
 
   const kase = scaledToReach(authored, facts.reachMm, facts.anchor);
   const world = kase.world.objects.map(worldItem);
   const model = buildMjcf({ ...input, world, fixedBase: fixedBaseFor(rig, facts) });
+  const { plan, refusal: logicRefusal } = logicPlan(kase, options);
+
+  if (logicRefusal) return refused({ authored, model, refusal: logicRefusal });
+
+  const body = plan && usesBodySkills(plan) ? bodyFor(model, robot, options) : null;
+
+  if (body === undefined) return refused({ authored, model, refusal: NO_BODY });
+
   const engine = new SimEngine(mj, model);
   const effector = boundEffector(kase.slot.binding, facts, rig);
-  const signals: Record<string, number[]> = {};
+  const signals: Signals = {};
   const probeBase: ProbeBase = {
     part: robot.parts.find((p) => !rig.ownerOf.has(p.id))?.id ?? null,
     point: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
@@ -207,11 +312,15 @@ export async function runCase(
     return axis ? [axis] : [];
   });
   const steer = steerFor({ setup, model, base: probeBase, wheelAxes, objectAt });
+  const handBack = () => engine.setController(chooseController(setup, options));
 
-  engine.setController(chooseController(setup, options));
+  handBack();
 
   try {
-    const frames = roll({ engine, kase, steer, sample: (poses) => reader.sample(poses, signals) });
+    const logic = await startLogic({ plan, kase, engine, body, handBack, inputs: options.inputs });
+    const sample = factSampler(kase, caseFactReader(kase, model), reader, signals);
+    const judge = () => judgeSoFar(kase.task.contract, { dt: RECORD_DT, signals });
+    const frames = await roll({ engine, kase, steer, sample, logic, judge });
     const trace = { dt: RECORD_DT, signals };
     const verdict = await evaluateContract(kase.task.contract, trace);
 
@@ -224,6 +333,7 @@ export async function runCase(
       frames,
       objectIds: kase.world.objects.map((o) => o.id),
       case: kase,
+      ...(logic ? { logic: logic.result() } : {}),
     };
   } finally {
     engine.dispose();

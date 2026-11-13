@@ -5,8 +5,9 @@ import type { Case } from '../cases/schema';
 import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import { saveRecording } from '../cases/tryStore';
 import type { Simulation } from '../sim/useSimulation';
-import type { ScenePart } from '../types/robotics';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
+import { caseLogicPlan } from './caseLogicPlan';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
 
@@ -14,8 +15,10 @@ interface TryOptions {
   sim: Simulation;
   rig: Rig;
   parts: ScenePart[];
+  joints: RobotJoint[];
   active: Case | null;
   onTry: (record: TryRecord) => void;
+  onRefuse: (message: string) => void;
 }
 
 export interface CaseTry {
@@ -27,7 +30,13 @@ export interface CaseTry {
 
 const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-export function useCaseTry({ sim, rig, parts, active, onTry }: TryOptions): CaseTry {
+const scaledCase = (kase: Case, rig: Rig, parts: ScenePart[]) => {
+  const facts = robotFacts(rig, parts);
+
+  return scaledToReach(kase, facts.reachMm, facts.anchor);
+};
+
+export function useCaseTry({ sim, rig, parts, joints, active, onTry, onRefuse }: TryOptions): CaseTry {
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
@@ -43,6 +52,7 @@ export function useCaseTry({ sim, rig, parts, active, onTry }: TryOptions): Case
     const model = sim.model;
     const recording = await sim.stopRecording();
 
+    sim.runCase(null);
     setPhase('scoring');
 
     if (!kase || !model || !recording) {
@@ -53,7 +63,7 @@ export function useCaseTry({ sim, rig, parts, active, onTry }: TryOptions): Case
     }
 
     const facts = robotFacts(rig, parts);
-    const scaled = scaledToReach(kase, facts.reachMm, facts.anchor);
+    const scaled = scaledCase(kase, rig, parts);
     const effector = boundEffector(scaled.slot.binding, facts, rig);
     const verdict = await scoreTry({ kase: scaled, model, recording, effector, rig });
     const id = newTryId();
@@ -95,13 +105,19 @@ export function useCaseTry({ sim, rig, parts, active, onTry }: TryOptions): Case
 
     setPhase('starting');
 
-    if (!(await sim.drive.start())) {
+    const kase = scaledCase(active, rig, parts);
+    const logic = await caseLogicPlan(kase, { parts, joints, buildModel: sim.buildModel });
+
+    if (logic.refusal) onRefuse(logic.refusal);
+
+    if (logic.refusal || !(await sim.drive.start())) {
       setPhase('idle');
 
       return;
     }
 
     setStartedAt(sim.stats?.time ?? 0);
+    sim.runCase({ kase, plan: logic.plan, joints, kit: logic.kit });
     sim.record();
     setPhase('running');
   };

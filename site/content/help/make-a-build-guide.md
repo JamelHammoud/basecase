@@ -51,4 +51,6 @@ To stop the automatic updates, press ⌘, (Ctrl+, on Windows), choose **Build** 
 
 Steps follow an order Basecase proved works. Parts the planner couldn't place come first, in a likely order, and their steps say “Order not checked”.
 
+Checking the order stops after 20 seconds. When it stops early, the card reads **Out of date**, and **Update** checks the order again.
+
 To print the parts the guide uses, see [Print a robot's parts](/help/print-a-robots-parts).

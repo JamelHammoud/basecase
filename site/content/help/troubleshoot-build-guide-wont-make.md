@@ -42,6 +42,8 @@ The run stopped with an error, shown after the message. A failed run leaves the 
 
 Basecase updates the guide on its own 15 seconds after the last change, but waits while the agent is working. A guide you stopped also stays as it was until the scene changes again.
 
+A guide whose order check stopped at its 20-second limit reads Out of date too. An automatic update tries once more, and **Update** tries again whenever you click it.
+
 1. Click **Update** in **Build guide**.
 2. To have it update on its own, press ⌘, (Ctrl+, on Windows), choose **Build** and turn on **Update automatically**.
 

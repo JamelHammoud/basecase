@@ -2,6 +2,8 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { isBuilt } from './guidePlan';
 import { hashText, itemKeyOf } from './guideItems';
 
+export const GUIDE_VERSION = 1;
+
 const round = (v: number) => Math.round(v * 10) / 10;
 
 const lines = new WeakMap<ScenePart, string>();
@@ -28,5 +30,5 @@ export function guideFingerprint(title: string, parts: ScenePart[], project: Pro
 
   const infill = Math.round(Number(project.infillPct) || 0);
 
-  return hashText([title, project.material, infill, ...built, ...joints].join('\n'));
+  return hashText([GUIDE_VERSION, title, project.material, infill, ...built, ...joints].join('\n'));
 }

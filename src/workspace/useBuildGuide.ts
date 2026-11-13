@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { generateGuide, type GeneratedGuide, type GuideProgress } from '../guide/generateGuide';
+import { generateGuide, type CheckedOrder, type GeneratedGuide, type GuideProgress } from '../guide/generateGuide';
 import { guideFingerprint } from '../guide/guideFingerprint';
 import { isBuilt } from '../guide/guidePlan';
 import type { GuidePlan } from '../guide/guideTypes';
@@ -24,10 +24,12 @@ interface BuildGuideOptions {
 
 const ORDER_BUDGET_MS = 20000;
 
-async function buildOrder(viewport: Viewport3DHandle | null, parts: ScenePart[]) {
+async function buildOrder(viewport: Viewport3DHandle | null, parts: ScenePart[]): Promise<CheckedOrder | null> {
   if (!viewport) return null;
 
-  return provenOrderOf(parts, await viewport.assembly({ serviceable: [], budgetMs: ORDER_BUDGET_MS }));
+  const geometry = await viewport.assembly({ serviceable: [], budgetMs: ORDER_BUDGET_MS });
+
+  return { ...provenOrderOf(parts, geometry), timedOut: geometry.timedOut };
 }
 
 export type GuideRunProgress = GuideProgress & { secondsLeft?: number };
@@ -55,7 +57,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
   const planRef = useRef<{ fingerprint: string; plan: GuidePlan } | null>(null);
   const record = project.buildGuide;
   const fingerprint = guideFingerprint(sceneName, parts, project);
-  const stale = !!record && record.fingerprint !== fingerprint;
+  const stale = !!record && (record.fingerprint !== fingerprint || !!record.orderTimedOut);
   const missing = !record && parts.some(isBuilt);
 
   useEffect(() => () => abortRef.current?.abort(), []);

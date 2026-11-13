@@ -35,7 +35,7 @@ For anything else, attach photos from a few sides, or a sketch. The agent compar
 
 ## Say what it must do and what it must use
 
-Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one.
+Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one. The agent also sees the parts you [count as owned](/help/count-the-parts-you-own), and picks them first.
 
 ## Change one thing at a time
 

@@ -63,7 +63,7 @@ export const QtyEditor: React.FC<QtyEditorProps> = ({ line, extra, onQty, onOnHa
         className="w-48"
       >
         {pieces && extra && <CountField label="Quantity" value={extra.qty} min={1} onCommit={onQty} />}
-        {pieces && <CountField label="On Hand" value={line.onHand} min={0} onCommit={onOnHand} />}
+        {pieces && <CountField label="On hand" value={line.onHand} min={0} onCommit={onOnHand} />}
         {extra && (
           <>
             {pieces && <MenuDivider />}

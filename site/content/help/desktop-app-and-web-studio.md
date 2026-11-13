@@ -30,7 +30,7 @@ Model, pose and simulate in your browser at app.basecase.so, with no download, a
 
 The [web studio](https://app.basecase.so) is the same studio as the desktop app, running in a browser tab. You can place parts, import meshes and robots, pose joints, run the simulation and export files.
 
-It saves scenes and Library models in your browser's storage, on that computer only. Clearing site data for app.basecase.so deletes them. Chats aren't saved.
+It saves scenes, Library models, prices and the counts of parts you own in your browser's storage, on that computer only. Clearing site data for app.basecase.so deletes them. Chats aren't saved.
 
 ## What needs the desktop app
 

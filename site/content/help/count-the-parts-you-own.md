@@ -30,9 +30,9 @@ Record the servos, boards and screws you have, so the bill of materials prices o
 1. In the **Build** tab, find **Bill of materials**.
 2. Click a section, such as **Components**, to open it.
 3. Click a line's quantity, such as **8×**.
-4. Type how many you own in **On Hand**, and press Enter.
+4. Type how many you own in **On hand**, and press Enter.
 
-![On Hand set to 6 for the Feetech STS3215, with 2× left to buy](/help/count-the-parts-you-own/on-hand.png)
+![On hand set to 6 for the Feetech STS3215, with 2× left to buy](/help/count-the-parts-you-own/on-hand.png)
 
 The quantity now shows only the units left to buy, and the price counts only those. The count you own shows under the part's name. A part you own in full stays on the list at $0.
 

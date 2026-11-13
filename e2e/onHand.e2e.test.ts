@@ -60,8 +60,8 @@ it('counts servos on hand at $0 in their row, the total and the Budget check, an
   const before = { total: await total(), budget: await budgetBom(), row: dollars(await row.textContent()) };
 
   await count(6).click();
-  await app.page.getByRole('textbox', { name: 'On Hand' }).fill('6');
-  await app.page.getByRole('textbox', { name: 'On Hand' }).press('Enter');
+  await app.page.getByRole('textbox', { name: 'On hand' }).fill('6');
+  await app.page.getByRole('textbox', { name: 'On hand' }).press('Enter');
   await app.page.keyboard.press('Escape');
   await expect.poll(() => count(0).count(), { timeout: 10000 }).toBe(1);
   expect(await row.textContent()).toContain('6 on hand');

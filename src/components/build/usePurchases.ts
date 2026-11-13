@@ -13,8 +13,25 @@ const publish = (next: Purchases) => {
 
 export const knownPurchases = () => purchaseCache;
 
+let latestSave = 0;
+
+function withRecord(current: Purchases, key: string, record: StoredPurchase | null): Purchases {
+  const next = { ...current };
+
+  if (record) next[key] = record;
+  else delete next[key];
+
+  return next;
+}
+
 export async function savePurchaseNow(key: string, record: StoredPurchase | null) {
-  publish(await platformBridge.savePurchase(key, record));
+  const save = ++latestSave;
+
+  if (purchaseCache) publish(withRecord(purchaseCache, key, record));
+
+  const saved = await platformBridge.savePurchase(key, record);
+
+  if (save === latestSave) publish(saved);
 }
 
 export const readOnHand = (key: string) => onHandOf(purchaseCache?.[key]);

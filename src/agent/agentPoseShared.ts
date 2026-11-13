@@ -40,7 +40,7 @@ export interface Scope {
 export function scopeOf(ctx: PoseContext, wanted?: string): Scope | string {
   const full = rigOf(ctx);
 
-  if (!full.robots.length) return 'No joints yet. Declare them with define_joints (or import_robot a published robot).';
+  if (!full.robots.length) return 'No joints. Declare them with define_joints (or import_robot a published robot).';
 
   const w = wanted?.trim().toLowerCase();
   const group = w

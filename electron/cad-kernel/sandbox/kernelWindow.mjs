@@ -35,11 +35,20 @@ function listen(window, handlers) {
   window.on('closed', () => handlers.onGone('its window closed'));
 }
 
+function endRenderer(contents) {
+  const pid = contents.getOSProcessId();
+
+  if (contents.isCrashed() || !Number.isInteger(pid) || pid <= 0) return;
+
+  try {
+    process.kill(pid, 'SIGKILL');
+  } catch {}
+}
+
 function killWindow(window) {
   if (window.isDestroyed()) return;
 
-  if (!window.webContents.isCrashed()) window.webContents.forcefullyCrashRenderer();
-
+  endRenderer(window.webContents);
   window.destroy();
 }
 

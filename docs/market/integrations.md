@@ -34,7 +34,15 @@ Imports, exports and services Basecase connects to, and how far each goes. Entry
 
 Sending to Bambu (Studio, Connect and LAN), Moonraker, PrusaLink and OctoPrint printers ships today ([Printing](../guide/printing.md)).
 
+### Prusa Connect
+
+- **Link:** https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608
+- **Checked:** 2026-11-13
+- **Basecase today:** sends plain G-code to a Prusa printer over PrusaLink on the local network, with the printer's API key, and reads status, pauses, resumes and cancels (`electron/print/connectors/prusalink.mjs`, [Printing](../guide/printing.md)). The printer catalog has two Prusa printers, the MINI and the MK3S (`src/data/printerCatalog.ts`).
+- **Better than Basecase:** Prusa Connect is a free cloud service for Prusa owners, "available from anywhere", for print farms and production statistics, with 1 GB of storage. PrusaLink is built into the CORE One, MK4/S, MK3.9/S, MK3.5/S and XL, and runs on a Raspberry Pi for the MK3/S/+ ([Prusa help](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)).
+- **Worse than Basecase:** the article describes no API for another app to upload files or start prints through Connect ([Prusa help](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)), so a print sent from Basecase goes through PrusaLink.
+- **Basecase should:** match the printers first. The Prusa printers with PrusaLink built in are missing from the catalog, so add them from OrcaSlicer's profiles ([OrcaSlicer](competitors.md#orcaslicer)); leave Connect until Prusa documents an upload API.
+
 ### To check
 
 - Bambu Lab
-- Prusa Connect

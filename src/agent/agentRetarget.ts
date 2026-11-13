@@ -10,6 +10,7 @@ import {
   type PoseReply,
 } from './agentPoseShared';
 import { errorMessage } from '../utils/errorMessage';
+import { duration } from '../utils/duration';
 
 export interface RetargetPayload {
   robot?: string;
@@ -68,7 +69,7 @@ function unmatchedText(res: string, mocap: Mocap): string {
 
 function retargetText(made: { name: string; duration: number; keyframes: unknown[] }, mocap: Mocap, res: Retargeted) {
   return (
-    `${made.name}: ${made.duration} s from ${mocap.duration.toFixed(1)} s of motion (${mocap.bones.length} bones), ${made.keyframes.length} keyframes.` +
+    `${made.name}: ${duration(made.duration)} from ${duration(mocap.duration)} of motion (${mocap.bones.length} bones), ${made.keyframes.length} keyframes.` +
     `\nMatched: ${res.mapped.map((m) => `${KEYPOINT_LABELS[m.keypoint].toLowerCase()} ${m.bone} → ${m.joint}`).join('; ')}` +
     `\nMean miss per landmark: ${Object.entries(res.error)
       .map(([k, v]) => `${KEYPOINT_LABELS[k as Keypoint].toLowerCase()} ${v} mm`)

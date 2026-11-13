@@ -60,7 +60,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 
 - The Claude vision input is 1568px on the long edge. Larger only costs time, so uploads are downscaled to it.
 - `agentBusyRef` mirrors `isAcpBusy` synchronously. Without it, a message sent in the gap before React re-renders would start a second run instead of steering the first.
-- Messages the agent couldn't take at once go to `queuedPromptsRef` and run in order when the run ends. Stop drops them too (marked “Not sent”).
+- A queued message stays out of the transcript until it sends (`LaneFlags.queued`), so a chat message never carries a queued or unsent state. Stop pauses the queue instead of dropping it.
 - A reopened conversation sets `pendingResumeRef`, and the next prompt resumes the ACP session first.
 - A conversation lives in one scene: `studio.focusChat` shows the tab that already has it.
 - `TRANSCRIPT_UPDATES`: only thought, message, tool call, tool call update and plan updates create a reply. Session metadata (commands, modes, usage) must not show as an empty reply.

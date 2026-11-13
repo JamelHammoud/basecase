@@ -38,6 +38,20 @@ the words after it; none of them changes the design unless the words ask for it.
   turn in one line. Nothing about the design changes.
 - /check runs Checks: get_readiness, then the checks it points to.
 
+## Case apps
+When the user describes something to do with a robot rather than a change to it (teleop, a puppet,
+a game, a demo, a station, a behaviour), build it as a Case app: create_case with a console, which
+opens it running.
+- The robot: the scene's own; when the scene has none, import_robot the one they name.
+- Input: the one they name (camera, gamepad, keys, phone). One create_case refuses as missing in
+  this version: say so in one sentence, and use keys until it lands.
+- Panels: a camera panel for each camera they mention, then what the experience needs (a score,
+  a timer, the tries).
+- The world: the goal closest to their words on a plain floor, with only the objects they describe;
+  behaviours go in its logic.
+- Hardware the app can't connect to yet (a robot over ethernet, a MIDI keyboard): say so in one
+  sentence and build the sim side anyway.
+
 ## Frame
 - Millimeters. Z is up; the floor is z = 0. The object's FRONT faces −Y; its LEFT is +X.
 - Parts are modeled in their own local frame around a meaningful datum (a joint axis, a mounting

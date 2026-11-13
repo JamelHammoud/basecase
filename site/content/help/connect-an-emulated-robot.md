@@ -18,6 +18,7 @@ keywords:
 related:
   - the-motor-lock-and-safety-ladder
   - calibrate-an-emulated-robot
+  - connect-an-emulated-ros-2-robot
 covers:
   - src/components/operate/OperatePanel.tsx
   - src/components/operate/RobotLadder.tsx
@@ -45,7 +46,7 @@ Every servo is emulated: no released build of Basecase can drive real motors. Op
 8. Click the **Simulate** button. The emulated servos follow the simulation.
 9. Click **Disconnect** when you're done.
 
-**Show Operate** and **Connect Emulated Robot** are also in [[⌘K]]. A blue dot on the **Operate** tab shows a robot is connected.
+**Show Operate**, **Connect Emulated Robot** and **Show Simulate** are also in [[⌘K]]. A blue dot on the **Operate** tab shows a robot is connected.
 
 ## What you're connected to
 

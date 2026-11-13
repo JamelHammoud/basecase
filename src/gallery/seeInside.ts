@@ -23,8 +23,8 @@ async function keepTrained(trained: GalleryTrained | undefined): Promise<Partial
   return {};
 }
 
-export async function seeInside(bundle: GalleryBundle): Promise<void> {
-  const trained = await keepTrained(bundle.trained);
+export async function seeInside(bundle: GalleryBundle, carried = bundle.trained): Promise<void> {
+  const trained = await keepTrained(carried);
   const scene = bundleScene(bundle);
   const saved = await saveScene({ id: `gallery-${bundle.slug}`, ...scene, project: { ...scene.project, ...trained } });
   const open = (readStored(OPEN_SCENES) as { ids?: string[]; tabIds?: string[] } | null) ?? {};

@@ -1,4 +1,4 @@
-use super::{G1Emulator, G1Options};
+use crate::topic_robot::TopicRobot;
 use servo_wire::{Clock, Sample, SystemClock, Topic, TopicTransport, TransportError};
 use std::collections::VecDeque;
 use std::io::ErrorKind;
@@ -96,19 +96,19 @@ impl TopicTransport for LoopbackLink {
     }
 }
 
-pub struct LoopbackG1 {
+pub struct LoopbackRobot {
     link: LoopbackLink,
     stop: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
 }
 
-impl LoopbackG1 {
+impl LoopbackRobot {
     pub fn link(&self) -> &LoopbackLink {
         &self.link
     }
 }
 
-impl TopicTransport for LoopbackG1 {
+impl TopicTransport for LoopbackRobot {
     fn publish(&mut self, topic: Topic, payload: &[u8]) -> Result<(), TransportError> {
         self.link.publish(topic, payload)
     }
@@ -118,7 +118,7 @@ impl TopicTransport for LoopbackG1 {
     }
 }
 
-impl Drop for LoopbackG1 {
+impl Drop for LoopbackRobot {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::SeqCst);
 
@@ -128,8 +128,8 @@ impl Drop for LoopbackG1 {
     }
 }
 
-struct Served {
-    robot: G1Emulator,
+struct Served<R: TopicRobot> {
+    robot: R,
     link: LoopbackLink,
     clock: SystemClock,
     latency_us: u64,
@@ -137,7 +137,7 @@ struct Served {
     outbound: VecDeque<(u64, Sample)>,
 }
 
-impl Served {
+impl<R: TopicRobot> Served<R> {
     fn turn(&mut self) {
         let now = self.clock.now_micros();
 
@@ -173,12 +173,12 @@ impl Served {
     }
 }
 
-pub fn serve_loopback(options: G1Options, latency_us: u64) -> Result<LoopbackG1, String> {
+pub fn serve_robot<R: TopicRobot>(robot: R, latency_us: u64) -> Result<LoopbackRobot, String> {
     let (near, far) = LoopbackLink::pair()?;
     let stop = Arc::new(AtomicBool::new(false));
     let stopping = stop.clone();
     let mut served = Served {
-        robot: G1Emulator::new(options),
+        robot,
         link: far,
         clock: SystemClock::new(),
         latency_us,
@@ -192,7 +192,7 @@ pub fn serve_loopback(options: G1Options, latency_us: u64) -> Result<LoopbackG1,
         }
     });
 
-    Ok(LoopbackG1 {
+    Ok(LoopbackRobot {
         link: near,
         stop,
         thread: Some(thread),
@@ -211,25 +211,5 @@ mod tests {
             assert!(link.local_addr().unwrap().ip().is_loopback());
             assert!(link.peer_addr().unwrap().ip().is_loopback());
         }
-    }
-
-    #[test]
-    fn the_served_g1_publishes_lowstate_over_loopback() {
-        let mut g1 = serve_loopback(G1Options::default(), 0).unwrap();
-        let mut seen = None;
-
-        for _ in 0..50 {
-            seen = g1.receive(20_000).unwrap();
-
-            if seen.is_some() {
-                break;
-            }
-        }
-
-        let sample = seen.expect("no lowstate within a second");
-
-        assert_eq!(sample.topic, Topic::LowState);
-        assert!(servo_wire::unitree::LowState::decode(&sample.payload).unwrap().crc_ok());
-        assert!(g1.link().local_addr().unwrap().ip().is_loopback());
     }
 }

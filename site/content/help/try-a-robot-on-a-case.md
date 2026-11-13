@@ -10,16 +10,17 @@ covers:
   - src/components/simulate/CaseSections.tsx
   - src/components/simulate/ResultsSection.tsx
   - src/components/simulate/TrainSection.tsx
+  - src/readiness/caseChecks.ts
   - src/utils/engineeringSimModel.ts
 ---
 
 Give your robot a task in a simulated world, drive it through, and keep the tries that passed as training data.
 
 1. Click **Play** in the left rail, then **Cases**.
-2. Click **New Case** to pick a world and a goal. The Simulate tab opens with the Case at the top: its name, its brief, **Check Fit** and the × that closes it.
-3. Click **Check Fit** to see whether the robot fits this Case, compiles and stays up.
+2. Click **New Case** to pick a world and a goal. The Simulate tab opens with the Case at the top: its name, its brief and the × that closes it.
+3. Hover the icon beside the Case's name. It shows how many of 20 runs passed, or why the robot can't run the Case. Click it to open the Case's row in **Build ▸ Checks**.
 
-![The Simulate tab with Touch the Dots open and its fit checked](/help/try-a-robot-on-a-case/case.png)
+![The Simulate tab with Touch the Dots open and its Checks icon beside the name](/help/try-a-robot-on-a-case/case.png)
 
 4. Click **Try It**. The clock counts down the Case's time, and the keys for your kind of robot appear under it.
 5. Click the canvas and drive with W A S D. R starts over and Esc stops.

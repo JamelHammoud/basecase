@@ -43,7 +43,7 @@ Both scenes must be open in tabs. The other robot must fit the Case, and the Cas
 
 ![Results with Rover passing 20 of 20 in blue and Rover copy passing 0 of 20](/help/compare-two-robots-on-a-case/results.png)
 
-Each row shows the scene's name and how many of 20 runs passed. The higher count is blue, and a tie marks neither. Under the name are the estimated cost of the parts and the robot's mass. Cost is the **Bill of materials** estimate without support filament, and mass is the **Weight** check's.
+Each row shows the scene's name and how many of 20 runs passed. The higher count is blue, and a tie marks neither. A robot that can't run the Case, such as one that falls while standing, shows why in place of the count. Under the name are the estimated cost of the parts and the robot's mass. Cost is the **Bill of materials** estimate without support filament, and mass is the **Weight** check's.
 
 Both robots run the same 20 runs. Each run changes friction, weight, servo strength and servo delay a little, and moves anything that can be pushed up to 15 mm. The Case is scaled to each robot's reach, as it is when you try it. A robot with a skill kept for the Case by **Train From Tries** runs that skill, as its row in **Checks** does.
 

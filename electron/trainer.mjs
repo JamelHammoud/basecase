@@ -97,6 +97,33 @@ export function writeJobFolder(dir, { xml, job }) {
   return runJob;
 }
 
+const WARM_POLICY_FILE = 'warm-policy.json';
+const WARM_POLICY_MAX_BYTES = 64 * 1024 * 1024;
+
+function warmPolicyText(policy, forge) {
+  if (policy === undefined || policy === null) return null;
+
+  if (typeof policy !== 'object' || Array.isArray(policy)) throw new Error('A warm start policy is a policy object.');
+
+  if (!forge) throw new Error('Starting from a saved policy needs the Forge trainer.');
+
+  const text = JSON.stringify(policy);
+
+  if (Buffer.byteLength(text) > WARM_POLICY_MAX_BYTES) throw new Error('The policy to start from is over 64 MB.');
+
+  return text;
+}
+
+function warmStartIn(dir, { from, policyText }) {
+  if (policyText) {
+    fs.writeFileSync(path.join(dir, WARM_POLICY_FILE), policyText);
+
+    return WARM_POLICY_FILE;
+  }
+
+  return from ? copyWarmStart(from, dir) : undefined;
+}
+
 export const PRIORITY = { user: 0, kit: 1 };
 
 export const GATE_LEASE = path.join(os.tmpdir(), 'basecase-gatekeeper.lease');
@@ -148,16 +175,22 @@ export class Trainer {
 
     if (!this.forge && !uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
 
+    const { warmPolicy, ...plainJob } = job;
+
+    if (warmPolicy != null && job.warmStart != null)
+      throw new Error('A warm start takes an earlier run or a saved policy, not both.');
+
     if (!this.forge && job.demos !== undefined) throw new Error('Training from tries needs Forge.');
 
+    const policyText = warmPolicyText(warmPolicy, this.forge);
     const warmFrom = this.warmSource(job.warmStart);
     const id = newId();
     const dir = path.join(this.jobsDir, id);
 
     fs.mkdirSync(dir, { recursive: true });
 
-    const warmStart = warmFrom ? copyWarmStart(warmFrom, dir) : undefined;
-    const runJob = writeJobFolder(dir, { xml, job: { ...job, warmStart } });
+    const warmStart = warmStartIn(dir, { from: warmFrom, policyText });
+    const runJob = writeJobFolder(dir, { xml, job: { ...plainJob, warmStart } });
 
     const entry = { workspaceId, job: runJob, id, dir, priority, uv };
     const send = this.sender(entry);
@@ -315,10 +348,10 @@ export class Trainer {
     child.stderr.on('data', (chunk) => {
       err = (err + chunk.toString()).slice(-8000);
     });
-    child.on('close', (code, signal) => this.closed(running, { code, signal, done, err }));
+    child.on('close', (code) => this.closed(running, { code, done, err }));
   }
 
-  closed(running, { code, signal, done, err }) {
+  closed(running, { code, done, err }) {
     const { entry } = running;
     const send = this.sender(entry);
 
@@ -334,11 +367,11 @@ export class Trainer {
 
     this.wake(entry.workspaceId);
     queueMicrotask(() => this.launchNext());
-    send(this.outcome(running, { code, signal, done, err }));
+    send(this.outcome(running, { code, done, err }));
     this.pruneRuns();
   }
 
-  outcome(running, { code, signal, done, err }) {
+  outcome(running, { code, done, err }) {
     const { id, dir, job } = running;
 
     if (done) {
@@ -351,14 +384,14 @@ export class Trainer {
 
     if (running.stopping) return { kind: 'error', message: 'Training stopped.' };
 
-    if (code === null) return { kind: 'error', message: `The trainer crashed (${signal ?? 'killed'}).` };
+    if (code === null) return { kind: 'error', message: 'The trainer crashed. Train again.' };
 
     const lines = err
       .trim()
       .split('\n')
       .filter((l) => l.trim() && !l.startsWith(' '));
 
-    return { kind: 'error', message: lines.at(-1) || `The trainer exited with code ${code}.` };
+    return { kind: 'error', message: lines.at(-1) || 'The trainer stopped without saying why. Train again.' };
   }
 
   stop(workspaceId = 'main') {

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { RobotJoint } from '../types/robotics';
 import { connectedFrom } from './calibrationSession';
-import { servoFamily, type RobotEvent, type RobotState, type RobotStatus } from './robotState';
+import { isServoAsk, servoFamily, type RobotEvent, type RobotState, type RobotStatus } from './robotState';
 import {
   connectRobot,
   enterRung,
@@ -63,6 +63,8 @@ export function canSetUpServos(joints: readonly RobotJoint[], state: RobotState)
   if (!sceneRobot(joints).ok) return false;
 
   if (state.link !== 'connected') return true;
+
+  if (!servoFamily(state.spec)) return false;
 
   const settingUp = state.mode === 'look' || state.mode === 'set_up';
 
@@ -168,7 +170,7 @@ function onEvent(event: RobotEvent) {
 async function connectFactory(joints: readonly RobotJoint[]): Promise<boolean> {
   const robot = sceneRobot(joints);
 
-  if (!robot.ok || robot.spec.family === 'unitree-g1') return false;
+  if (!robot.ok || !isServoAsk(robot.spec)) return false;
 
   if (robotSnapshot().link === 'connected') return true;
 

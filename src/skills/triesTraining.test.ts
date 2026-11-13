@@ -58,6 +58,7 @@ const runsOf = (passes: number): CaseRuns => ({
   failures: passes < TRIES_RUNS ? [{ label: 'missed', runs: TRIES_RUNS - passes }] : [],
   worstSeed: 3,
   refusal: null,
+  misfit: false,
 });
 
 async function scripted() {

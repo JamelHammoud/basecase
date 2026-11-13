@@ -43,6 +43,10 @@ describe('breaches', () => {
     expect(found).toHaveLength(5);
   });
 
+  it('reports pull requests nobody has touched for an hour', () => {
+    expect(breaches({ idlePulls: [461, 473] }, now)).toEqual(['#461, #473 untouched for over 30 min']);
+  });
+
   it('is quiet when the loop flows', () => {
     const found = breaches(
       {
@@ -164,7 +168,7 @@ describe('pull requests open too long', () => {
   it('expires work open over six hours, except batches, repairs and pull requests riding in a batch', () => {
     const pulls = [
       pull(1, 'loop/refine/a', '2026-11-13T09:00:00Z'),
-      pull(2, 'loop/refine/b', '2026-11-13T11:00:00Z'),
+      pull(2, 'loop/refine/b', '2026-11-13T14:00:00Z'),
       pull(3, 'loop/batch/x', '2026-11-13T08:00:00Z'),
       pull(4, 'loop/repair/y', '2026-11-13T08:00:00Z'),
       pull(5, 'loop/build/z', '2026-11-13T08:00:00Z'),

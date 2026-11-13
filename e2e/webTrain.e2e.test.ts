@@ -1,19 +1,14 @@
 import type { Browser, Page } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
-import type { ForgeJob, ForgeRunner } from '../src/skills/forgeRunner';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { exposeTestHooks, launchChrome, partCount, shown } from './harness';
-
-type TabEngine = () => ForgeRunner;
+import { ARENA_LINE, stubHoldPose, stubTabGpu } from './holdPose';
 
 interface Studio {
   load: (record: unknown) => void;
-  stubTabEngine: (engine: TabEngine | null) => void;
   simState: () => { status: string };
 }
-
-const ARENA_LINE = /\d+ of \d+ tries, at least \d+%/;
 
 let browser: Browser;
 let page: Page;
@@ -56,38 +51,6 @@ function savedCounts() {
 
 const stored = () => page.evaluate(savedCounts);
 
-function stubHoldPose() {
-  const holdPose = () => (job: ForgeJob) => {
-    const spec = job.job as { joints: Array<{ id: string }>; robotName: string; defaultPose: number[] };
-    const joints = spec.joints.map((j) => j.id);
-    const inputs = 12 + 3 * joints.length;
-    const policy = {
-      format: 'basecase-policy',
-      version: 1,
-      task: 'stand',
-      robot: spec.robotName,
-      joints,
-      defaultPose: spec.defaultPose,
-      actionScale: job.job.actionScale,
-      controlDt: job.job.controlDt,
-      command: job.job.command,
-      obsMean: new Array(inputs).fill(0),
-      obsStd: new Array(inputs).fill(1),
-      layers: [
-        { in: inputs, out: joints.length, w: new Array(inputs * joints.length).fill(0), b: joints.map(() => 0) },
-      ],
-      activation: 'elu',
-      trainedSteps: 1,
-      mujoco: 'stub',
-      createdAt: '2026-11-13T00:00:00',
-    };
-
-    return Promise.resolve({ ok: true, policy, events: [{ type: 'done', steps: 1 }], stderr: '', run: 'stub-1' });
-  };
-
-  (window as unknown as { __studio: Studio }).__studio.stubTabEngine(holdPose as unknown as TabEngine);
-}
-
 beforeAll(async () => {
   browser = await launchChrome();
   page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -96,12 +59,7 @@ beforeAll(async () => {
     if (m.type() === 'error') errors.push(m.text());
   });
   await exposeTestHooks(page);
-  await page.addInitScript(() =>
-    Object.defineProperty(Navigator.prototype, 'gpu', {
-      configurable: true,
-      get: () => ({ requestAdapter: () => Promise.resolve({}) }),
-    }),
-  );
+  await page.addInitScript(stubTabGpu);
   await page.goto(`${inject('webUrl')}/`);
   await studio();
 }, 120000);
@@ -120,7 +78,7 @@ describe('training in the web studio', () => {
       project: { ...DEFAULT_PROJECT, joints: robot.joints },
     });
     await expect.poll(() => partCount(page)).toBe(robot.parts.length);
-    await page.evaluate(stubHoldPose);
+    await page.evaluate(stubHoldPose, '__studio' as const);
     await openSimulate();
     expect(await page.locator(shown('[data-testid="teach-field"]')).count()).toBe(0);
 

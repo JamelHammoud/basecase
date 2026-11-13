@@ -49,6 +49,7 @@ mod robot_load;
 pub mod sac;
 #[cfg(feature = "native")]
 pub mod shac;
+pub mod start_states;
 pub mod threads;
 #[cfg(feature = "native")]
 pub mod trainer;

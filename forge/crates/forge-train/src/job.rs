@@ -1,6 +1,7 @@
 use crate::deployed::Squash;
 use crate::eyes::{self, EyeSpec};
 use crate::options::{self, TaskOptions};
+use crate::start_states;
 use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -241,6 +242,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
     let options = options::parse(root)?;
 
     options::check_reference(&options, joints.len())?;
+    start_states::check(&options.start_states, joints.len())?;
 
     let job = Job {
         algo,

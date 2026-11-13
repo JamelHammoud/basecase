@@ -20,9 +20,11 @@ const FAULTS = [
   'policy_hang',
   'g1_lowstate_lost',
   'g1_app_lost',
+  'ros2_joint_states_lost',
+  'ros2_app_lost',
 ];
 
-const LOOPBACK_ONLY = path.join('hw', 'crates', 'servo-emu', 'src', 'g1', 'loopback.rs');
+const LOOPBACK_ONLY = path.join('hw', 'crates', 'servo-emu', 'src', 'loopback.rs');
 
 function networkProblems() {
   const grep = sh('grep', [

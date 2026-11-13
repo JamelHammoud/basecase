@@ -194,3 +194,46 @@ unitree-g1:
   - behaviour: The emulated G1 runs in the daemon's process and talks over a pair of UDP sockets bound to 127.0.0.1, one datagram per sample with a topic byte before the CDR payload, with optional injected latency each way.
     source: assumed
     note: Not RTPS. The real-network path is rustdds behind unlock-real-motors.
+ros2-control:
+  - behaviour: The robot publishes sensor_msgs/msg/JointState on /joint_states (DDS rt/joint_states, type sensor_msgs::msg::dds_::JointState_) with header, name, position, velocity and effort, one entry per joint.
+    source: client-derived
+    note: sensor_msgs JointState.msg and joint_state_broadcaster, which publishes every joint's position, velocity and effort interfaces on /joint_states; the rt/ prefix and dds_ type names follow rmw's ROS-to-DDS name mangling.
+  - behaviour: JointState arrives every 10 ms.
+    source: assumed
+    note: 100 Hz is a common controller_manager update_rate in ros2_control examples; real robots set their own.
+  - behaviour: The joints in JointState come in an order of their own, a seeded permutation of the controller's order, the same in every message.
+    source: client-derived
+    note: joint_state_broadcaster orders joints by the hardware interfaces it finds, not by any controller's joint list, so a client has to match by name. The permutation stands in for that.
+  - behaviour: A forward_position controller takes std_msgs/msg/Float64MultiArray on its commands topic, one position per joint in the controller's joint order, and holds the last command.
+    source: client-derived
+    note: forward_command_controller (forward_position_controller) in ros2_controllers, which writes data[i] to joints[i] and keeps the last command.
+  - behaviour: A Float64MultiArray whose data length isn't the controller's joint count is ignored.
+    source: client-derived
+    note: forward_command_controller logs an error and drops a command whose size doesn't match its joints.
+  - behaviour: A joint_trajectory controller takes trajectory_msgs/msg/JointTrajectory on its joint_trajectory topic and matches positions to joints by joint_names, in any order.
+    source: client-derived
+    note: joint_trajectory_controller maps joint_names to its own joints before it uses a trajectory.
+  - behaviour: A JointTrajectory that names a joint the controller doesn't have, leaves one of its joints out, or whose time_from_start doesn't increase is ignored.
+    source: client-derived
+    note: joint_trajectory_controller validates a trajectory before accepting it; with allow_partial_joints_goal false (the default) every joint must be named, and points must be strictly increasing in time.
+  - behaviour: A new trajectory starts from the current setpoint and moves linearly between points over time_from_start, then holds the last point.
+    source: assumed
+    note: joint_trajectory_controller samples with splines (linear only when no velocities are given) and starts from the current state or command; linear interpolation from the setpoint is the simple case.
+  - behaviour: Each arm joint is a PD-driven inertia (kp 50, kd 3) with viscous and Coulomb friction and a 10 Nm torque limit, stepped at 1 kHz, starting within 0.2 rad of zero.
+    source: assumed
+    note: Stands in for whatever hardware interface drives the robot. Hidden per-unit inertia (0.08 kg m2, 20% spread), viscous (30%), Coulomb (30%) and gain (10%) come from the seed, as for the G1.
+  - behaviour: A diff_drive controller takes geometry_msgs/msg/Twist on its cmd_vel topic, using linear.x and angular.z.
+    source: client-derived
+    note: diff_drive_controller in ros2_controllers, cmd_vel_unstamped with use_stamped_vel false (Humble); later releases take TwistStamped on cmd_vel.
+  - behaviour: The base ramps toward the commanded velocity at 1 m/s2 and 4 rad/s2, and turns its two wheels (left, right) at (v - w s/2)/r and (v + w s/2)/r, with s 0.160 m and r 0.033 m, times a hidden per-wheel gain within 10%.
+    source: assumed
+    note: The wheel equations are diff_drive_controller's inverse kinematics; the limits stand in for its linear.x and angular.z acceleration limits, which are off by default. Separation and radius are TurtleBot3 Burger's.
+  - behaviour: With no cmd_vel for 0.5 s, the base's command goes to zero.
+    source: client-derived
+    note: diff_drive_controller's cmd_vel_timeout defaults to 0.5 s.
+  - behaviour: Commands it can't decode are ignored and counted, and so are commands it decodes but can't use.
+    source: assumed
+    note: Controllers log and drop them; the counts let tests prove what the daemon sent.
+  - behaviour: The emulated robot runs in the daemon's process behind the same loopback sockets as the G1.
+    source: assumed
+    note: Not RTPS. The real-network path is rustdds behind unlock-real-motors.

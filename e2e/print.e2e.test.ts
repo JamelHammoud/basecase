@@ -89,12 +89,10 @@ describe('print layout', () => {
 
     const printing = app.page.locator(visible('section'), { hasText: /^Printing/ }).first();
 
-    await expect
-      .poll(() => printing.textContent(), { timeout: 20000 })
-      .toMatch(/^Printing1 plate≈ .*minLay Out Plates$/);
+    await expect.poll(() => printing.textContent(), { timeout: 20000 }).toMatch(/^Printing1 plate≈ .*minPrint$/);
     expect(await app.page.locator(visible('select[aria-label="Printer"]')).count()).toBe(0);
 
-    await printing.getByRole('button', { name: 'Lay Out Plates' }).click();
+    await printing.getByRole('button', { name: 'Print', exact: true }).click();
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
     expect(await app.page.locator(visible('select[aria-label="Printer"]')).count()).toBe(1);
     expect(await app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);

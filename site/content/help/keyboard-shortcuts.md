@@ -104,7 +104,7 @@ On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? wh
 | Show or hide reference images | [[⇧I]] |
 | Show or hide camera views | [[⇧V]] |
 | Print mode | [[⌘P]] |
-| Run a Routine | [[⌘↩]] |
+| Run Routine | [[⌘↩]] |
 | Settings | [[⌘,]] |
 | Shortcuts | [[?]] |
 

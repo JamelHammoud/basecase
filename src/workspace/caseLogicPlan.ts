@@ -4,15 +4,10 @@ import { sceneCapabilities } from '../routines/capabilities';
 import { NO_BODY } from '../routines/physicsBody';
 import type { RoutineKit } from '../routines/physicsKit';
 import type { Plan } from '../routines/planTypes';
-import type { SimModel } from '../sim/mjcfTypes';
-import type { RobotJoint, ScenePart } from '../types/robotics';
-import { sceneKit } from './routineCheck';
+import { withHandoffs } from '../routines/handoffs';
+import { NO_ROUTINE_SKILLS, sceneKit, type RoutineScene } from './routineCheck';
 
-export interface CaseLogicScene {
-  parts: ScenePart[];
-  joints: RobotJoint[];
-  buildModel: () => Promise<SimModel>;
-}
+export type CaseLogicScene = RoutineScene;
 
 export interface CaseLogicPlan {
   plan: Plan | null;
@@ -29,9 +24,11 @@ export async function caseLogicPlan(kase: Case, scene: CaseLogicScene): Promise<
 
   if (bare.ok && !usesBodySkills(bare.plan)) return { plan: bare.plan, kit: null };
 
-  const model = await scene.buildModel();
-  const kit = await sceneKit(model, joints, parts);
-  const compiled = compileCaseLogic(kase.logic, { skills: kit.skills, modelHash: kit.modelHash, capabilities });
+  const skills = scene.skills ?? NO_ROUTINE_SKILLS;
+  const [model, own] = await Promise.all([scene.buildModel(), skills.own()]);
+  const kit = await sceneKit(model, { joints, parts, own });
+  const contracts = withHandoffs(kit, skills.handoffs());
+  const compiled = compileCaseLogic(kase.logic, { skills: contracts, modelHash: kit.modelHash, capabilities });
 
   if (!compiled.ok) return { plan: null, kit, refusal: compiled.errors[0].message };
 

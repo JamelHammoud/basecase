@@ -2,9 +2,11 @@ import type { MainModule } from '@mujoco/mujoco';
 import type { VelocityDrive } from '../sim/driveAccess';
 import type { PolicySpec } from '../sim/policy';
 import { buildMjcf } from '../sim/mjcf';
+import type { SimModel } from '../sim/mjcfTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
 import { modelHashes } from '../skills/artifacts';
 import { kitTopSpeed } from '../skills/kitModel';
+import { hashOf } from '../skills/hash';
 import type { SkillRecord } from '../skills/skillRecords';
 import { readyWalkRecord } from '../skills/skillRows';
 import { designOf } from '../skills/skillsRuntime';
@@ -13,6 +15,7 @@ import { buildRig } from '../utils/kinematics';
 import { caseFilm } from './caseFilm';
 import { runSeeds, type SeedRuns } from './caseRuns';
 import type { FilmShot } from './filmstrip';
+import { checkFit } from './fitCheck';
 import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
 
@@ -41,6 +44,7 @@ export interface RunsJob extends Controlled {
   modelHash: string;
   robot?: WireRobot;
   seeds: number[];
+  stop: string | null;
 }
 
 export interface ReplayJob extends Controlled {
@@ -54,7 +58,7 @@ export interface ReplayJob extends Controlled {
 export type CaseCheckJob = { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob;
 
 export type CaseCheckReply =
-  | { type: 'model'; modelHash: string; walk: WalkPick | null }
+  | { type: 'model'; modelHash: string; walk: WalkPick | null; stop: string | null }
   | { type: 'runs'; result: SeedRuns }
   | { type: 'replay'; film: FilmShot | null };
 
@@ -66,14 +70,8 @@ export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   partTriangles: (id) => robot.triangles[id] ?? null,
 });
 
-function robotModel(robot: WireRobot) {
-  const rig = buildRig(robot.joints, robot.parts);
-
-  return buildMjcf({ ...caseRobotOf(robot), rig, project: DEFAULT_PROJECT });
-}
-
-function walkPick(records: SkillRecord[], model: ReturnType<typeof robotModel>): WalkPick | null {
-  if (!model.robots[0]?.floating) return null;
+function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | null {
+  if (!model?.robots[0]?.floating) return null;
 
   const record = readyWalkRecord({ model, design: designOf(model), records });
 
@@ -85,19 +83,17 @@ const controlOf = (job: Controlled): RunOptions =>
     ? { controller: 'policy', policy: job.policy, jointNoiseDeg: job.jointNoiseDeg }
     : { controller: 'reference', walk: job.walk, jointNoiseDeg: job.jointNoiseDeg };
 
+function modelHashOf(model: SimModel) {
+  const { physics, actuators } = modelHashes(model);
+
+  return `${physics}|${actuators}`;
+}
+
 export class CaseCheckSession {
   private held: { hash: string; robot: WireRobot } | null = null;
 
   async run(mj: MainModule, job: CaseCheckJob): Promise<CaseCheckReply> {
-    if (job.type === 'model') {
-      const model = robotModel(job.robot);
-      const { physics, actuators } = modelHashes(model);
-      const modelHash = `${physics}|${actuators}`;
-
-      this.held = { hash: modelHash, robot: job.robot };
-
-      return { type: 'model', modelHash, walk: walkPick(job.walks, model) };
-    }
+    if (job.type === 'model') return this.fit(mj, job.robot, job.walks);
 
     const held = this.robotFor(job);
     const robot = caseRobotOf(held);
@@ -108,9 +104,22 @@ export class CaseCheckSession {
       return { type: 'replay', film: caseFilm(result, held.parts) };
     }
 
-    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, ...controlOf(job) });
+    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, stop: job.stop, ...controlOf(job) });
 
     return { type: 'runs', result };
+  }
+
+  private fit(mj: MainModule, robot: WireRobot, records: SkillRecord[]): CaseCheckReply {
+    const rig = buildRig(robot.joints, robot.parts);
+    const build = () => buildMjcf({ ...caseRobotOf(robot), rig, project: DEFAULT_PROJECT });
+    const walks = (built: SimModel) => walkPick(records, built) !== null;
+    const { model, stop } = checkFit(mj, { rig, parts: robot.parts, build, walks });
+    const walk = walkPick(records, model);
+    const modelHash = model ? modelHashOf(model) : `unbuilt|${hashOf({ parts: robot.parts, joints: robot.joints })}`;
+
+    this.held = { hash: modelHash, robot };
+
+    return { type: 'model', modelHash, walk, stop };
   }
 
   private robotFor(job: RunsJob | ReplayJob): WireRobot {

@@ -15,7 +15,7 @@ const NOW = Date.UTC(2026, 10, 13, 12);
 const RESET = NOW / 1000 + 3600;
 
 describe('usage limit', () => {
-  it('reads the reset time from a rejected rate limit, wherever it sits in the output', () => {
+  it("reads the reset time from a rejected rate limit in a failed run's result", () => {
     const events = [
       { type: 'rate_limit_event', rate_limit_info: { status: 'allowed_warning', resetsAt: RESET } },
       {
@@ -40,6 +40,29 @@ describe('usage limit', () => {
     expect(limitIn({ out: '{"type":"result","is_error":true,"result":"Tests failed"}' }, NOW)).toBeNull();
     expect(limitIn({ out: '', err: 'spawn claude ENOENT' }, NOW)).toBeNull();
     expect(limitIn({ out: past }, NOW)).toBeNull();
+  });
+
+  it("never pauses for text the agent read: a diff, a file or a tool's output that mentions the limit", () => {
+    const read = { type: 'user', message: { content: [{ type: 'tool_result', content: 'usage limit reached' }] } };
+    const passed = JSON.stringify([read, { type: 'result', is_error: false, result: 'Review: pass' }]);
+    const failed = JSON.stringify([read, { type: 'result', is_error: true, result: 'Tests failed' }]);
+    const nested = JSON.stringify([
+      { type: 'user', message: { content: [{ rate_limit_info: { status: 'rejected', resetsAt: RESET } }] } },
+      { type: 'result', is_error: true, result: 'Tests failed' },
+    ]);
+
+    expect(limitIn({ out: passed }, NOW)).toBeNull();
+    expect(limitIn({ out: failed }, NOW)).toBeNull();
+    expect(limitIn({ out: nested }, NOW)).toBeNull();
+  });
+
+  it('never pauses for a run that finished, whatever its rate limit events say', () => {
+    const events = [
+      { type: 'rate_limit_event', rate_limit_info: { status: 'rejected', resetsAt: RESET } },
+      { type: 'result', is_error: false, result: 'ok' },
+    ];
+
+    expect(limitIn({ out: JSON.stringify(events) }, NOW)).toBeNull();
   });
 
   it('announces a pause once, keeps the latest reset, and probes every 15 minutes', () => {

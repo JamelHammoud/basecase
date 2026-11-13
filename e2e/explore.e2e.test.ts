@@ -19,7 +19,14 @@ let app: App;
 
 const section = (title: RegExp) => app.page.locator(shown('section'), { hasText: title }).first();
 
-const bomText = async () => (await section(/^Bill of materials/).textContent()) ?? '';
+const bomText = async () => {
+  const bom = section(/^Bill of materials/);
+  const components = bom.getByRole('button', { name: /^Components/ }).first();
+
+  if ((await components.getAttribute('aria-expanded')) === 'false') await components.click();
+
+  return (await bom.textContent()) ?? '';
+};
 
 const variants = () =>
   app.page.evaluate(() =>

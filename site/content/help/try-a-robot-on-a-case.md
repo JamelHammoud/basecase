@@ -36,7 +36,7 @@ A humanoid or an arm can follow your own arms instead of the keys: press ⌘K an
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)
 
-While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit at the top of Results, above the latest run.
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit at the top of Results, above the latest run. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows next.
 
 To teach the robot instead of driving it, use **Train**, between Control and Results: type a goal after **Teach it to**, or click a trained policy to run it.
 

@@ -67,6 +67,26 @@ export const defineJoints = {
   },
 };
 
+export const findJointAxes = {
+  name: 'find_joint_axes',
+  config: {
+    title: 'Find joint axes',
+    description:
+      "Reads the parts' meshes for joints: every shaft or pin that turns in a bore on another part, with its axis, a point on it, the parent (the side nearer the base) and child, the slide travel along it and a confidence; pairs held by two or more pins as fixed; and round faces with no partner. " +
+      'Use it on imported parts (STEP, meshes) before define_joints, since they carry no joint data. Defaults to every visible solid part.',
+    inputSchema: {
+      ids: z.array(z.string()).max(120).optional().describe('Parts to read; all visible solid parts when left out'),
+    },
+  },
+  handler: async ({ ids }) => {
+    try {
+      return text((await bridge('find_joint_axes', { ids }, 120000))?.text || 'No joint axes.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
 export const getRig = {
   name: 'get_rig',
   config: {

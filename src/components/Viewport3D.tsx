@@ -39,6 +39,7 @@ const DETACHED: Viewport3DHandle = {
   partTriangles: () => null,
   servoOutput: () => null,
   jointAxis: async () => null,
+  jointAxes: async () => ({ candidates: [], fastened: [], faces: [] }),
   meshesReady: async () => [],
   sweepClashes: async () => [],
   strength: async () => [],

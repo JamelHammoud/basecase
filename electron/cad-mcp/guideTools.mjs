@@ -24,6 +24,7 @@ const TOOL_GUIDES = {
   slice_plates: ['build'],
   size_actuators: ['servos'],
   define_joints: ['joints'],
+  find_joint_axes: ['joints'],
   get_rig: ['motion'],
   pose: ['motion'],
   animate: ['motion'],

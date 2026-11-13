@@ -12,6 +12,7 @@ covers:
   - src/workspace/useHandJoints.ts
   - src/workspace/jointCommands.tsx
   - src/joints/axisFinder.ts
+  - src/joints/jointCandidates.ts
   - src/components/PosePanel.tsx
 ---
 
@@ -30,5 +31,7 @@ Turn two parts of a model you drew or imported into a joint you can pose, check 
 A hinge turns ±90° to start with. A slider travels as far as it can while the two parts still overlap along its axis. To change either, right-click the joint's row in the Pose tab and point at Range.
 
 ![Range in a joint row's right-click menu, with the lowest and highest angle](/help/join-two-parts-with-a-hinge/range.png)
+
+To join every part of an imported assembly at once, ask the agent, for example “Make this a robot.” It finds each shaft or pin turning in a bore and adds those joints. Then it turns each one through its range to check for collisions. Parts bolted together on two or more pins stay fixed. Rails and dovetails aren't found, so add those sliders by hand.
 
 ⌘Z removes a joint you  added. To remove one later, right-click its row in the Pose tab, choose Delete and confirm; ⌘Z brings it back.

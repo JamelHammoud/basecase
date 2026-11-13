@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { showStress } from '../../strength/fields';
 import { DisclosureRow } from '../../design-system';
+import { shownDetail } from '../../readiness/shownDetail';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
 import { EnvelopeRows, FindingPlot, unlisted } from './EnvelopeRows';
@@ -20,7 +21,7 @@ export const CheckItem: React.FC<{
   useEffect(() => (open && stressIds?.length ? showStress(stressIds) : undefined), [open, stressIds]);
 
   const count = blockers.length + notes.length;
-  const detail = count ? '' : check.detail;
+  const detail = shownDetail(check, [...blockers, ...notes]);
   const fields = tetherFieldsFor(check.name, context.tether?.tether);
   const hasBody = count > 0 || fields.length > 0 || !!detail || !!check.envelopes?.length;
   const showDots = context.showDots;

@@ -40,6 +40,7 @@ export function rangeChangeRows(ctx: CheckContext): CheckRow[] {
       check: 'Range changes',
       status: items.length ? 'warn' : 'pass',
       detail: items.length ? `${plural(items.length, 'joint')} narrower than first defined` : '',
+      detailInItems: true,
       items,
     },
   ];

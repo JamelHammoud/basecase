@@ -32,6 +32,7 @@ function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
     check: 'Torque estimates',
     status: 'warn',
     detail: `${plural(estimated.length, 'joint')} without a servo`,
+    detailInItems: true,
     items: [{ text: `No servo on ${labels(estimated)}`, ids: estimated.flatMap((j) => j.child), status: 'warn' }],
   };
 }
@@ -66,6 +67,7 @@ function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
       check: 'Servo models',
       status: 'warn',
       detail: `${plural(guessed.length, 'joint')} without a measured model`,
+      detailInItems: true,
       items: [
         {
           text: `${names} on ${labels(guessed)}`,

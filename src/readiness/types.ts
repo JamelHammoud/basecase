@@ -50,6 +50,7 @@ export interface CheckSummary {
   ids: string[];
   caseId?: string;
   hasDots?: boolean;
+  detailInItems?: boolean;
   envelopes?: JointEnvelope[];
 }
 

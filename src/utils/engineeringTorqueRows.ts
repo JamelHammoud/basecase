@@ -85,6 +85,7 @@ export function torqueRow(loads: JointLoad[], legShare = 1): CheckRow {
     check: 'Servo torque',
     status: torqueStatus(summary),
     detail: torqueDetail(summary),
+    detailInItems: true,
     items: torqueItems(summary),
     ids: [...summary.fails, ...summary.warns].flatMap(loadIds),
   };

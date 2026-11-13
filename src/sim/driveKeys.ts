@@ -52,7 +52,7 @@ export function commandFromPad(pad: PadState, cls: DriveClass): DriveCommand {
   return { v: [forward, side, right] };
 }
 
-const isIdle = (c: DriveCommand) => c.v.every((x) => x === 0) && (c.aux ?? []).every((x) => x === 0);
+export const isIdle = (c: DriveCommand) => c.v.every((x) => x === 0) && (c.aux ?? []).every((x) => x === 0);
 
 export const mergeCommands = (keys: DriveCommand, pad: DriveCommand | null): DriveCommand =>
   pad && !isIdle(pad) ? pad : keys;
@@ -61,5 +61,7 @@ export const sameCommand = (a: DriveCommand, b: DriveCommand) => {
   const sameV = (a.v as V3).every((x, i) => x === b.v[i]);
   const sameAux = (a.aux ?? []).every((x, i) => x === b.aux?.[i]) && (a.aux?.length ?? 0) === (b.aux?.length ?? 0);
 
-  return sameV && sameAux;
+  const sameTarget = (a.target ?? []).every((x, i) => x === b.target?.[i]) && !a.target === !b.target;
+
+  return sameV && sameAux && sameTarget;
 };

@@ -6,6 +6,7 @@ import { useClipboard } from './useClipboard';
 import { useDevStudioHook } from './useDevStudioHook';
 import { useGuideAutoUpdate } from './useGuideAutoUpdate';
 import { useMenuCommands } from './useMenuCommands';
+import { useOpeningCase } from './useOpeningCase';
 import { useWorkspaceActions } from './useWorkspaceActions';
 import { useWorkspaceCore } from './useWorkspaceCore';
 import { useWorkspaceHost } from './useWorkspaceHost';
@@ -37,6 +38,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   useWorkspaceKeys({ active, core, actions, ui });
   useMenuCommands({ active, core, actions, ui });
   useDevStudioHook({ active, core, actions, agent });
+  useOpeningCase({ seed, core, active });
 
   const rightIslandRef = useWorkspaceHost({ active, seed, core, agent });
 

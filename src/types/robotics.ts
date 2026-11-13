@@ -178,14 +178,7 @@ export interface ScenePart extends PartRelations {
   imageDataUrl?: string;
   massG?: number;
   com?: [number, number, number];
-  robotLink?: {
-    robot: string;
-    link: string;
-    url?: string;
-    rotate?: Array<[string, number]>;
-    version: number;
-    fixedMates?: string[];
-  };
+  robotLink?: RobotLinkRef;
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
   group?: { id: string; name: string };
@@ -199,6 +192,7 @@ export type { PartPrint, PrintRecord } from './print';
 
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
+import type { RobotLinkRef } from './robotLink';
 
 import type { PartPrint, PrintRecord } from './print';
 

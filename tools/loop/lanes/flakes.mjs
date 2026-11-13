@@ -37,8 +37,6 @@ const latestGreenMain = () =>
     'check.yml',
     '--branch',
     'main',
-    '--event',
-    'push',
     '--status',
     'success',
     '--limit',

@@ -1,29 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { landStep } from './landing.mjs';
+import { ready } from './landing.mjs';
 
-const ready = { review: 'success', quick: 'success', full: null, dispatched: false };
+const green = { review: 'success', check: 'success' };
 
-describe('landing a reviewed pull request', () => {
-  it('starts the full Check once review and the quick Check pass, and merges when it passes', () => {
-    expect(landStep(ready)).toBe('start full');
-    expect(landStep({ ...ready, full: 'pending' })).toBe('wait');
-    expect(landStep({ ...ready, dispatched: true })).toBe('wait');
-    expect(landStep({ ...ready, full: 'success' })).toBe('merge');
+describe('landing a pull request', () => {
+  it('lands once review and its Check pass', () => {
+    expect(ready(green)).toBe(true);
   });
 
-  it('leaves a full Check failure to the revise lane, and never starts one twice for a head', () => {
-    expect(landStep({ ...ready, full: 'failure' })).toBe('wait');
-  });
-
-  it('waits on review, conflicts, a revision or a red quick Check', () => {
-    expect(landStep({ ...ready, review: null })).toBe('wait');
-    expect(landStep({ ...ready, conflicting: true })).toBe('wait');
-    expect(landStep({ ...ready, revising: true })).toBe('wait');
-    expect(landStep({ ...ready, quick: 'failure' })).toBe('wait');
-  });
-
-  it('merges a repair on its own Check, which is already the full one', () => {
-    expect(landStep({ ...ready, repair: true })).toBe('merge');
-    expect(landStep({ ...ready, repair: true, quick: 'pending' })).toBe('wait');
+  it('waits on review, its Check, conflicts and a revision', () => {
+    expect(ready({ ...green, review: null })).toBe(false);
+    expect(ready({ ...green, check: null })).toBe(false);
+    expect(ready({ ...green, check: 'failure' })).toBe(false);
+    expect(ready({ ...green, conflicting: true })).toBe(false);
+    expect(ready({ ...green, revising: true })).toBe(false);
   });
 });

@@ -2,7 +2,7 @@ export const LIMITS = {
   openWaiting: 12,
   maxOpenHours: 6,
   queuedRuns: 20,
-  mainRedHours: 2,
+  mainRedHours: 12,
   noMergeHours: 2,
   readyWaitingHours: 2,
   oldestQueuedMinutes: 60,

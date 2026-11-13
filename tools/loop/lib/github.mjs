@@ -173,8 +173,6 @@ export const lastFinishedMainCheck = () =>
         'check.yml',
         '--branch',
         'main',
-        '--event',
-        'push',
         '--limit',
         '100',
         '--json',

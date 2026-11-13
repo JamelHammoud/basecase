@@ -17,7 +17,7 @@ import {
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
-import { close } from '../lib/worktree.mjs';
+import { clearPath, close } from '../lib/worktree.mjs';
 
 const MAX_ROUNDS = 4;
 const STUCK = 'loop:stuck';
@@ -60,6 +60,7 @@ function checkout(pull) {
 
   const dir = path.join(WORKTREES, `revise-${pull.number}`);
 
+  clearPath(dir);
   git(['worktree', 'add', '-q', '-B', pull.headRefName, dir, `origin/${pull.headRefName}`], HOME_CHECKOUT);
 
   const linked = path.join(HOME_CHECKOUT, 'node_modules');

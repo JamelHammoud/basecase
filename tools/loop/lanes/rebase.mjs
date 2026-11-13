@@ -3,7 +3,8 @@ import { runAgent } from '../lib/agent.mjs';
 import { checkConclusion, lastFinishedMainCheck, openPulls } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
-import { close } from '../lib/worktree.mjs';
+import { claim } from '../lib/claim.mjs';
+import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 
 const SCHEMA = {
   type: 'object',
@@ -31,7 +32,9 @@ function bringUpToDate(pull, log) {
 
   const dir = path.join(WORKTREES, `rebase-${pull.number}`);
 
+  clearPath(dir);
   git(['worktree', 'add', '-q', '-B', pull.headRefName, dir, `origin/${pull.headRefName}`], HOME_CHECKOUT);
+  linkModules(dir);
 
   try {
     const merged = git(['merge', '--no-edit', 'origin/main'], dir, { allowFail: true }).ok;
@@ -52,6 +55,22 @@ function bringUpToDate(pull, log) {
 
 const isLoop = (pull) => pull.headRefName.startsWith('loop/');
 
+function withClaim(pull, log) {
+  const release = claim(`pull-${pull.number}`);
+
+  if (!release) {
+    log(`#${pull.number}: another lane is working on it`);
+
+    return;
+  }
+
+  try {
+    bringUpToDate(pull, log);
+  } finally {
+    release();
+  }
+}
+
 const behindMain = (pull) => {
   run('git', ['fetch', '-q', 'origin', 'main', pull.headRefName], { cwd: HOME_CHECKOUT });
 
@@ -69,7 +88,7 @@ export default function rebase({ log }) {
   const conflicting = pulls.find((p) => p.mergeable === 'CONFLICTING');
 
   if (conflicting) {
-    bringUpToDate(conflicting, log);
+    withClaim(conflicting, log);
 
     return;
   }
@@ -83,5 +102,5 @@ export default function rebase({ log }) {
     return;
   }
 
-  bringUpToDate(stale, log);
+  withClaim(stale, log);
 }

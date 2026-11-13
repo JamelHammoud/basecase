@@ -106,7 +106,16 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     panels: { tool, annotations, isRightOpen: studio.isRightOpen, sculptEnabled: studio.sculptEnabled },
   });
 
-  const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
+  const simTraining = useSimTraining({
+    workspaceId,
+    scene,
+    docs,
+    posing,
+    viewportRef,
+    showToast,
+    dismissToast: toasts.dismissToast,
+    studio,
+  });
   const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
     parts,

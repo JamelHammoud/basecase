@@ -10,6 +10,6 @@ Right-click a passed try in Results and choose Multiply, or run it from ⌘K. Fi
 
 Each run moves the block and the spot up to 15 mm each way. It also varies friction, masses and servo strength the way Checks does. The arm's target moves with whichever object it was near, so the grip follows the block.
 
-From one driven Pick Up a Block try on our test arm, all 50 runs pass. Without moving the targets, 22 do. Runs go in background workers, and Stop in the toast ends them.
+From one driven Pick Up a Block try on a six-joint arm, all 50 runs pass. Without moving the targets, 22 do. Runs go in background workers, and Stop in the toast ends them.
 
-Generated tries fold into their try's row as a count, and Export Dataset writes one episode per pass. Tries recorded before today, and tries driven by a trained walk, can't be multiplied. Steps are in [Multiply a try into varied demonstrations](/help/multiply-a-try-into-varied-demonstrations).
+Generated tries fold into their try's row as a count, and Export Dataset writes one episode per pass. Tries recorded before today, and tries run by a trained policy, can't be multiplied. Steps are in [Multiply a try into varied demonstrations](/help/multiply-a-try-into-varied-demonstrations).

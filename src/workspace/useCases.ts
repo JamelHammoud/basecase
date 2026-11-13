@@ -25,6 +25,7 @@ interface CasesOptions {
   rig: Rig;
   sim: Simulation;
   showToast: ShowToast;
+  dismissToast: () => void;
   openAccounts: () => void;
   sceneId: string;
   partners: () => SlotRobot[];
@@ -37,7 +38,7 @@ const generatedBody = (count: number) => {
 };
 
 export function useCases(options: CasesOptions) {
-  const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
+  const { parts, project, setProject, rig, sim, showToast, dismissToast, openAccounts, sceneId, partners } = options;
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
@@ -88,7 +89,7 @@ export function useCases(options: CasesOptions) {
   };
 
   const timeline = useTryTimeline({ sim, rig, parts, active, partners });
-  const multiply = useMultiply({ sim, rig, parts, active, partners, tries, setProject, showToast });
+  const multiply = useMultiply({ sim, rig, parts, active, partners, tries, setProject, showToast, dismissToast });
 
   const remove = (id: string) => {
     const kase = cases.find((c) => c.id === id);

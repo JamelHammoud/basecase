@@ -22,6 +22,7 @@ interface SimTrainingOptions {
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
+  dismissToast: () => void;
   studio: Pick<StudioShared, 'openSettings' | 'robotsBeside'>;
 }
 
@@ -34,7 +35,7 @@ function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: st
 }
 
 export function useSimTraining(options: SimTrainingOptions) {
-  const { workspaceId, scene, docs, posing, viewportRef, showToast, studio } = options;
+  const { workspaceId, scene, docs, posing, viewportRef, showToast, dismissToast, studio } = options;
   const { parts, project, projectRef, setProject, commitParts, updateProjectNow } = docs;
   const velocity = useRef<VelocitySource | null>(null);
   const sim = useSimulation({
@@ -86,6 +87,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     rig: posing.rig,
     sim,
     showToast,
+    dismissToast,
     openAccounts: () => studio.openSettings('accounts'),
     sceneId: scene.sceneId,
     partners: () => studio.robotsBeside(workspaceId),

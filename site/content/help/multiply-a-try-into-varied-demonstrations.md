@@ -31,9 +31,7 @@ A robot model needs hundreds of demonstrations to learn a task. Driving each one
 
 ![The try menu in Results with Multiply above Delete](/help/multiply-a-try-into-varied-demonstrations/menu.png)
 
-3. Wait while the toast counts the passing runs.
-
-![The toast counting generated tries, with Stop](/help/multiply-a-try-into-varied-demonstrations/progress.png)
+3. Wait while the toast counts the runs.
 
 ![Results with the passed try showing its generated count](/help/multiply-a-try-into-varied-demonstrations/results.png)
 
@@ -47,6 +45,6 @@ A run that misses is dropped. Multiply again to add 50 more runs with new seeds.
 
 ## Which tries can be multiplied
 
-The try must have passed, and you must have driven it in this version of Basecase. Tries recorded earlier, and tries driven by a trained walk, don't keep the commands Multiply replays. A wheeled robot replays its speeds as they were, without following the moved objects.
+The try must have passed, and you must have driven it in this version of Basecase. Tries recorded earlier, and tries run by a trained policy, don't keep the commands Multiply replays. A wheeled robot replays its speeds as they were, without following the moved objects.
 
 Generated tries go into [Export a LeRobot dataset](/help/export-a-lerobot-dataset) beside the try they came from. Deleting that try deletes them too, and stops a Multiply still running from it.

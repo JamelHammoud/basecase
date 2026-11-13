@@ -194,7 +194,7 @@ async function multiplyFromPalette(count: number) {
   await app.page.keyboard.press('Enter');
   await app.page
     .getByRole('status')
-    .filter({ hasText: /generated/ })
+    .filter({ hasText: /^(Running \d+ of \d+…|Generated \d+ tr)/ })
     .first()
     .waitFor({ timeout: 30000 });
   await expect.poll(async () => (await simState()).multiplying, { timeout: 120000 }).toBeNull();

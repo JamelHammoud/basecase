@@ -1,5 +1,5 @@
 import { CALL_KEYS, CALLS, JSX_PROPS, OBJECT_KEYS } from '../copy/surfaces.mjs';
-import { findBannedCopy } from './copy-banned.mjs';
+import { findBannedCopy } from '../copy/banned.mjs';
 
 const calleeName = (callee) => {
   if (callee.type === 'Identifier') return callee.name;
@@ -25,6 +25,8 @@ const TEXTS = {
   BinaryExpression: (node) => (node.operator === '+' ? [...textsOf(node.left), ...textsOf(node.right)] : []),
   JSXExpressionContainer: (node) => textsOf(node.expression),
   TSAsExpression: (node) => textsOf(node.expression),
+  TSSatisfiesExpression: (node) => textsOf(node.expression),
+  TSNonNullExpression: (node) => textsOf(node.expression),
 };
 
 function textsOf(node) {

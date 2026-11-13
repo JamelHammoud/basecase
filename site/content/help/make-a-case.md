@@ -48,7 +48,7 @@ The Case opens in the **Simulate** tab, and its world appears on the canvas. Nex
 
 ## Name or delete a Case
 
-The **Name** field sets the name before you click **Create**. To delete a Case, right-click it under **In this scene** and choose **Delete**. Its tries go with it, so Basecase asks first.
+The **Name** field sets the name before you click **Create**. To delete a Case, right-click it in the **Cases** tab and choose **Delete**. Its tries go with it, so Basecase asks first.
 
 The open Case's menu also has **Compare With**, which runs it on another open scene's robot. See [Compare two robots on a Case](/help/compare-two-robots-on-a-case).
 

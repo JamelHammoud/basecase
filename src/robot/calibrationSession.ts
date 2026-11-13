@@ -7,7 +7,7 @@ import type { RobotJoint } from '../types/robotics';
 import { canRunBench, playBench } from './benchRun';
 import { robotSceneJoints, robotSnapshot } from './robotStore';
 import { forgetLag } from './robotTwin';
-import { sceneRobot } from './sceneRobot';
+import { sceneRobotChoices } from './sceneRobot';
 
 export type CalibrationPhase = 'idle' | 'moving' | 'fitting';
 
@@ -39,9 +39,9 @@ const sameIds = (a: readonly string[], b: readonly string[]) =>
 
 export function connectedFrom(sceneJoints: readonly RobotJoint[]): string[] | null {
   const connected = robotSceneJoints();
-  const robot = sceneRobot(sceneJoints);
+  const robot = sceneRobotChoices(sceneJoints);
 
-  return connected && robot.ok && sameIds(connected, robot.joints) ? connected : null;
+  return connected && robot.ok && robot.choices.some((c) => sameIds(connected, c.joints)) ? connected : null;
 }
 
 export const canCalibrate = (sceneJoints: readonly RobotJoint[]) =>

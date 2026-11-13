@@ -249,7 +249,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
       disabled: part.rotation.every((r) => r === 0),
       onSelect: () => setFlag({ rotation: [0, 0, 0] }),
     },
-    { label: 'Zoom to Part', shortcut: 'Z', icon: <CrosshairIcon className={ic} />, onSelect: ui.focusSelected },
+    { label: 'Zoom to Selection', shortcut: 'Z', icon: <CrosshairIcon className={ic} />, onSelect: ui.focusSelected },
     { divider: true },
     ...ROLE_ENTRIES.map(({ label, role }) => ({
       label,

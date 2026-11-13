@@ -2,14 +2,16 @@ import { Handle, type Node, type NodeProps, Position } from '@xyflow/react';
 import { Button, TrainIcon } from '../../design-system';
 import { nodeLabel } from '../../routines/flowLabels';
 import type { FlowNode, NodeState } from '../../routines/flowTypes';
+import type { RefusedHandoff } from '../../routines/handoffs';
 import { useEditorContext } from './editorContext';
+import { HandoffFixes } from './HandoffFixes';
 
 export interface RoutineNodeData extends Record<string, unknown> {
   node: FlowNode;
   state: NodeState | '';
   problems: string[];
   needsTraining: boolean;
-  unproven: boolean;
+  handoff: RefusedHandoff | null;
 }
 
 const STATE_FILL: Record<NodeState | '', string> = {
@@ -52,16 +54,6 @@ function TrainButton({ skill }: { skill: string }) {
   );
 }
 
-function StopFirstButton({ id }: { id: string }) {
-  const { editor } = useEditorContext();
-
-  return (
-    <Button size="xs" variant="secondary" className="mt-1 self-start nodrag" onClick={() => editor.stopBefore(id)}>
-      Stop First
-    </Button>
-  );
-}
-
 function EndDot({ id }: { id: string }) {
   return (
     <div data-flow-node={id} className="w-[14px] h-[14px] rounded-full bg-white/20">
@@ -71,22 +63,25 @@ function EndDot({ id }: { id: string }) {
 }
 
 export function RoutineNode({ data }: NodeProps<Node<RoutineNodeData>>) {
-  const { editor } = useEditorContext();
-  const { node, state, problems, needsTraining, unproven } = data;
+  const { editor, handoffs } = useEditorContext();
+  const { node, state, problems, needsTraining, handoff } = data;
 
   if (node.kind === 'end') return <EndDot id={node.id} />;
 
   const label = nodeLabel(node);
   const word = state ? STATE_WORD[state] : undefined;
   const selected = editor.selected === node.id;
-  const ring = selected && state !== 'active' ? 'ring-2 ring-white/70' : '';
+  const busy = handoffs.busy === node.id;
+  const shown = busy ? 'active' : state;
+  const ring = selected && shown !== 'active' ? 'ring-2 ring-white/70' : '';
 
   return (
     <div
       data-flow-node={node.id}
       data-state={state}
       aria-selected={selected}
-      className={`group/node relative w-[196px] min-h-[56px] rounded-[10px] px-3 py-2 flex flex-col gap-0.5 transition-colors duration-150 ${STATE_FILL[state]} ${ring}`}
+      aria-busy={busy}
+      className={`group/node relative w-[196px] h-full min-h-[56px] rounded-[10px] px-3 py-2 flex flex-col gap-0.5 transition-colors duration-150 ${STATE_FILL[shown]} ${ring}`}
     >
       <Handle type="target" position={Position.Top} className={HIDDEN_HANDLE} isConnectable={false} />
       <div className="flex items-center justify-between text-[12px] text-white/50">
@@ -100,7 +95,7 @@ export function RoutineNode({ data }: NodeProps<Node<RoutineNodeData>>) {
         </div>
       ))}
       {needsTraining && <TrainButton skill={String(node.data.skill ?? node.id)} />}
-      {unproven && <StopFirstButton id={node.id} />}
+      {handoff && <HandoffFixes id={node.id} handoff={handoff} />}
       <Handle type="source" position={Position.Bottom} className={SOURCE_HANDLE} />
       {node.kind === 'if' && (
         <>

@@ -13,6 +13,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
+import type { RoutineSkills } from './routineCheck';
 import { useCaseTry } from './useCaseTry';
 import { useDatasetExport } from './useDatasetExport';
 import { useTryTimeline } from './useTryTimeline';
@@ -27,6 +28,7 @@ interface CasesOptions {
   openAccounts: () => void;
   sceneId: string;
   partners: () => SlotRobot[];
+  skills?: RoutineSkills;
 }
 
 export function useCases(options: CasesOptions) {
@@ -135,6 +137,7 @@ export function useCases(options: CasesOptions) {
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
   const attempt = useCaseTry({
+    skills: options.skills,
     sim,
     rig,
     parts,

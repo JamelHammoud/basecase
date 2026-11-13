@@ -1,4 +1,6 @@
-use super::joint::{own_gains, Drive, Joint, STAND_POSE};
+use super::joint::{g1_joint, own_gains, STAND_POSE};
+use crate::joint::{Drive, Joint};
+use crate::topic_robot::TopicRobot;
 use plant_bam::SplitMix;
 use servo_wire::unitree::api::{Request, Response, GET_FSM_ID, LOCOMOTION_FSM};
 use servo_wire::unitree::g1::{is_leg, is_writable, LEGS, MOTORS, WEIGHT_SLOT};
@@ -59,7 +61,7 @@ pub struct G1Emulator {
 impl G1Emulator {
     pub fn new(options: G1Options) -> Self {
         let mut rng = SplitMix::new(options.seed);
-        let joints = (0..MOTORS).map(|motor| Joint::new(motor, &mut rng)).collect();
+        let joints = (0..MOTORS).map(|motor| g1_joint(motor, &mut rng)).collect();
         let temperatures = (0..MOTORS).map(|_| 33 + rng.below(6) as i16).collect();
 
         Self {
@@ -108,7 +110,12 @@ impl G1Emulator {
         match sample.topic {
             Topic::ArmSdk => self.accept_arm_sdk(&sample.payload),
             Topic::LocoRequest => self.answer(&sample.payload),
-            Topic::LowState | Topic::LocoResponse => {}
+            Topic::LowState
+            | Topic::LocoResponse
+            | Topic::JointStates
+            | Topic::PositionCommands
+            | Topic::TrajectoryCommands
+            | Topic::CmdVel => {}
         }
     }
 
@@ -290,6 +297,16 @@ impl G1Emulator {
             .filter(|motor| is_leg(*motor))
             .map(|motor| self.joints[motor].q)
             .collect()
+    }
+}
+
+impl TopicRobot for G1Emulator {
+    fn advance_to(&mut self, at_us: u64) -> Vec<(u64, Sample)> {
+        G1Emulator::advance_to(self, at_us)
+    }
+
+    fn deliver(&mut self, sample: &Sample) {
+        G1Emulator::deliver(self, sample);
     }
 }
 

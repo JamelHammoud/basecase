@@ -20,6 +20,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
+import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
 
 const BUILD_DEBOUNCE_MS = 1500;
 
@@ -146,6 +147,7 @@ export function useSkills(input: SkillsInput) {
   const examples = teachExamples(facts, footPoints(rig, parts).length);
 
   const load = (record: SkillRecord) => platform.loadSkill(record.hash);
+  const routineSkills = useRoutineSkills({ rows, load, project, setProject: input.setProject });
 
   const velocity = async (): Promise<VelocityDrive | null> => {
     const skill = velocityRecord && model ? await load(velocityRecord) : null;
@@ -193,6 +195,8 @@ export function useSkills(input: SkillsInput) {
     train,
     tryRow,
     stop: () => runtime.stopUser(),
+    routineSkills,
+    trainHandoff: (job: HandoffJob) => trainHandoff({ runtime, routineSkills, project, job }),
   };
 }
 

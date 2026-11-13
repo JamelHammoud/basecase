@@ -141,14 +141,19 @@ export function useExportActions(core: WorkspaceCore) {
     if (packingRef.current) return;
 
     packingRef.current = true;
+    showToast('Exporting robot package…', { tone: 'progress' });
 
     try {
       const made = await robotPackageZip(core);
 
-      if (!made) return;
+      if (!made) {
+        toasts.dismissToast();
+
+        return;
+      }
 
       download(made.zip, `${made.name}.zip`, 'application/zip');
-      showToast('Exported robot package');
+      showToast(`Exported ${made.name}`);
     } catch (err) {
       showToast(`Couldn’t export the robot package. ${String(err)}`, { tone: 'error' });
     } finally {

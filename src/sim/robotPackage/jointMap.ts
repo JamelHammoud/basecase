@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { servoFamilyOf } from '../../reality/calibratedInput';
 import { activeCalibrations } from '../../reality/history';
+import { servoLayout, type ServoLayout } from '../../robot/sceneRobot';
 import type { ServoCalibration, ServoFamily } from '../../reality/types';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../../types/robotics';
 import type { SimJoint, SimModel } from '../mjcfTypes';
@@ -24,7 +25,7 @@ export interface JointMapEntry {
 
 export interface JointMap {
   robot: string;
-  class: 'arm' | 'legged';
+  class: ServoLayout['class'];
   joints: JointMapEntry[];
 }
 
@@ -54,13 +55,13 @@ function entryType(j: RobotJoint, sim: SimJoint | undefined): JointMapEntry['typ
 }
 
 export function jointMap({ model, project, parts, name }: JointMapInput): JointMap {
-  const movable = (project.joints ?? []).filter((j) => j.type !== 'fixed');
+  const layout = servoLayout(project.joints ?? []);
   const calibrations = activeCalibrations(project.servoCalibrations);
-  const joints = movable.map((j, i): JointMapEntry => {
+  const joints = layout.movable.map((j, i): JointMapEntry => {
     const sim = model.joints.find((s) => s.id === j.id);
 
     return {
-      id: i + 1,
+      id: layout.ids[i],
       name: sim?.name ?? j.id,
       joint: j.name,
       type: entryType(j, sim),
@@ -72,5 +73,5 @@ export function jointMap({ model, project, parts, name }: JointMapInput): JointM
     };
   });
 
-  return { robot: name, class: movable.some((j) => j.limb === 'leg') ? 'legged' : 'arm', joints };
+  return { robot: name, class: layout.class, joints };
 }

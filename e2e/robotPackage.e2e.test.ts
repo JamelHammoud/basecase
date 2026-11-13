@@ -48,9 +48,7 @@ describe('robot package export', () => {
 
     await exportButton().click();
     await robotPackageItem().click();
-    await expect
-      .poll(() => app.page.getByText('Exported robot package').count(), { timeout: 30000 })
-      .toBeGreaterThan(0);
+    await expect.poll(() => app.page.getByText('Exported arm-robot').count(), { timeout: 30000 }).toBeGreaterThan(0);
 
     const made = (await app.page.evaluate(() =>
       (window as unknown as { __studio: Studio }).__studio.robotPackage(),

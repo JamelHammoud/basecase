@@ -11,7 +11,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Inline-renamable name, then Duplicate / Save to Library / Delete.
   - Hardware shows the same `HardwareConfigurator` sections as Parts (type tiles, drive, size, length, finish) in place of Size and Shape. Specs and Holes come before Notes, collapsed; Holes carries + (Add clearance hole) in its header. Length typing and scrubbing are live; release commits one undo step. The color follows the finish unless it was set by hand.
   - No Solid · Cutout · Guide control: the part type is set from the right-click menu (one part or several).
-  - Size W/H/D (+ wall T), Position X/Y/Z (Floor, Stack and Center actions), Rotation X/Y/Z with 90° steps.
+  - Size W/H/D (+ wall T), Position X/Y/Z (Floor, Stack and Center actions), Rotation X/Y/Z with a strip of 90° turns (`QuarterTurns`, the same strip as a multi-selection's).
   - **Shape** (Round, Taper, Bend, Twist): collapsible, open only when non-zero.
   - Collapsible sections keep their title where a plain section's sits and put the chevron at the far right, after any header actions.
   - Appearance (`ColorField` + material), comments on this part, Notes (sent to the agent; collapsed by default), then Product (maker · part number, specs, mounting, model source, links) for real components.
@@ -19,7 +19,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Title: the group name (renamed in place, one undo step on Enter or blur), or “N parts”. Under it, the part count and the selection's overall size (`39 × 50 × 39 mm`). Group/Ungroup, Duplicate, Save to Library and Delete sit beside it.
   - **Align:** one icon strip per axis (min · center · max) with Spread beside it (`AlignBar`; Spread needs 3+ parts).
   - **Position:** X/Y/Z of the selection's bounds center. Typing, scrubbing and math move every unlocked part together (`handleMoveSelection` takes an absolute target computed from the latest parts, so Enter + blur can't move it twice). Drop to floor and Center on origin in the header.
-  - **Rotate:** X / Y / Z 90° turns the selection as one piece about its center (`handleRotateSelection`).
+  - **Rotation:** the single part's `QuarterTurns` strip; X / Y / Z 90° turns the selection as one piece about its center (`handleRotateSelection`).
   - **Combine:** Union / Subtract / Intersect on one strip; Subtract's tooltip names the part it keeps.
   - **Appearance:** `ColorField` and material, each showing “Mixed” when the parts differ.
   - Strips (`StripGroup` + `StripButton` in `AlignBar.tsx`) are the pattern for a row of equal actions: a 32px soft track with 2px inset cells, never a grid of text buttons or tall tiles.

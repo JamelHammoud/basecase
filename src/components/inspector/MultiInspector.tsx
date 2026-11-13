@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ScenePart } from '../../types/robotics';
 import { AlignBar, StripButton, StripGroup } from '../AlignBar';
-import { selectionBounds, type Axis } from '../../utils/selection';
+import { selectionBounds } from '../../utils/selection';
 import {
   ColorField,
   IconButton,
@@ -17,12 +17,12 @@ import {
   FloorIcon,
   GroupIcon,
   IntersectIcon,
-  RotateRightIcon,
   SubtractIcon,
   UngroupIcon,
   UnionIcon,
 } from '../../design-system';
 import { GroupName } from './GroupName';
+import { QuarterTurns } from './QuarterTurns';
 import { MATERIALS, type InspectorProps } from './types';
 
 const fmt = (v: number) => String(Math.round(v * 10) / 10);
@@ -168,17 +168,8 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
       </div>
     </Section>
 
-    <Section title="Rotate">
-      <StripGroup>
-        {(['X', 'Y', 'Z'] as const).map((axis, idx) => (
-          <StripButton key={axis} title={`Rotate 90° around ${axis}`} onClick={() => onRotateSelection(idx as Axis)}>
-            <RotateRightIcon className="w-3.5 h-3.5" />
-            <span className="tabular">
-              {axis} <span className="text-white/50">90°</span>
-            </span>
-          </StripButton>
-        ))}
-      </StripGroup>
+    <Section title="Rotation">
+      <QuarterTurns onTurn={onRotateSelection} />
     </Section>
   </>
 );

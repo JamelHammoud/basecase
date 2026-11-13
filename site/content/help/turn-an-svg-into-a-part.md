@@ -32,7 +32,7 @@ Extrude a logo, a bracket outline or any SVG drawing into a solid part, at the w
 4. In **W**, type the part's width in millimeters, from 5 to 500.
 5. In **T**, type its thickness in millimeters, from 1 to 250.
 6. Pick a color, and turn off **Bevel** if you want sharp edges.
-7. Click **Add**, or **Add & Save** to keep a copy in the Library too.
+7. Click **Add**. To keep a copy in the Library too, click **Save to Library**, the bookmark in the part's Inspector header.
 8. Click **Done** to close the panel.
 
 The part starts 64 mm wide and 10 mm thick until you change them. To fix the outline first, click **Edit in Sketch**. To paste SVG code from a design app instead of a file, click **Paste code**.

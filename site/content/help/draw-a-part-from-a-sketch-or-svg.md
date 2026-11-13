@@ -41,7 +41,7 @@ Turn an outline you draw, or an SVG file, into a solid part by extruding it to a
 4. Click on the grid to add each corner.
 5. To cut a hole in an extruded outline, choose **Hole** and click inside the shape.
 6. Under **Output**, type a name, the width (**W**) and the thickness (**T**), in millimeters.
-7. Click **Add**, or **Add & Save** to keep a copy in the Library too.
+7. Click **Add**. To keep a copy in the Library too, click **Save to Library**, the bookmark in the part's Inspector header.
 
 The panel closes and the new part is selected. To draw freehand instead of by corners, choose **Freehand** above the grid and drag.
 
@@ -55,7 +55,7 @@ For **Revolve**, **W** is the diameter and **T** is the height. Width runs from 
 2. Click **Choose or drop an SVG** and pick the file.
 3. Check the preview, which counts the shapes and holes it found.
 4. Under **Output**, type a name, the width (**W**) and the thickness (**T**).
-5. Click **Add**, or **Add & Save**.
+5. Click **Add**.
 
 To paste SVG code instead of choosing a file, click **Paste code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.
 

@@ -1,6 +1,6 @@
 ---
 title: Save a model to the Library
-date: 2026-11-12
+date: 2026-11-13
 covers:
   - src/components/LeftSidebar.tsx
   - src/components/LibraryPanel.tsx

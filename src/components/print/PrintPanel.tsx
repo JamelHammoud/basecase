@@ -4,6 +4,7 @@ import type { Plate } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
 import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
+import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import type { Printing } from '../../workspace/usePrinting';
 import { hm, plural } from '../build/format';
 import { plateNumbers, plateStateText } from './plateFacts';
@@ -52,14 +53,40 @@ const throughStudio = (printing: Printing) =>
   !printing.printer.mine?.connection || printing.printer.mine.connection.kind === 'bambu-studio';
 
 function sendLabel(printing: Printing, plate: Plate) {
-  if (!printing.printer.mine) return 'Add Printer to Send';
-
   if (throughStudio(printing)) return `Send Plate ${plate.number}`;
 
-  return printing.printer.mine.connection?.kind === 'bambu-connect'
+  return printing.printer.mine?.connection?.kind === 'bambu-connect'
     ? 'Open in Bambu Connect'
     : `Print Plate ${plate.number}`;
 }
+
+interface PlateHandlers {
+  onSend: () => void;
+  onAddPrinter: () => void;
+}
+
+const SendButton: React.FC<PlateHandlers & { printing: Printing; plate: Plate; blocked: boolean }> = ({
+  printing,
+  plate,
+  blocked,
+  onSend,
+  onAddPrinter,
+}) => {
+  if (printing.printer.mine)
+    return (
+      <Button size="sm" variant="primary" disabled={blocked} onClick={onSend}>
+        {printing.sending === plate.number ? 'Sending…' : sendLabel(printing, plate)}
+      </Button>
+    );
+
+  if (IS_WEB_DEMO) return null;
+
+  return (
+    <Button size="sm" variant="primary" onClick={onAddPrinter}>
+      Add Printer
+    </Button>
+  );
+};
 
 const SliceNotes: React.FC<{ printing: Printing; warnings: string[] }> = ({ printing, warnings }) => (
   <>
@@ -100,19 +127,18 @@ const PlateMarks: React.FC<{ printing: Printing; plate: Plate }> = ({ printing, 
   );
 };
 
-const PlateActions: React.FC<{ printing: Printing; plate: Plate; slicer: string | null; onSend: () => void }> = ({
+const PlateActions: React.FC<PlateHandlers & { printing: Printing; plate: Plate; slicer: string | null }> = ({
   printing,
   plate,
   slicer,
   onSend,
+  onAddPrinter,
 }) => {
-  const blocked = printing.sending !== null || printing.job.slicing || (!slicer && !!printing.printer.mine);
+  const blocked = printing.sending !== null || printing.job.slicing || !slicer;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="primary" disabled={blocked} onClick={onSend}>
-        {printing.sending === plate.number ? 'Sending…' : sendLabel(printing, plate)}
-      </Button>
+    <div className="flex flex-wrap gap-2 empty:hidden">
+      <SendButton printing={printing} plate={plate} blocked={blocked} onSend={onSend} onAddPrinter={onAddPrinter} />
       {slicer && (
         <Button size="sm" variant="secondary" onClick={() => void printing.job.openInSlicer(plate.material)}>
           Open in {slicer}
@@ -122,12 +148,13 @@ const PlateActions: React.FC<{ printing: Printing; plate: Plate; slicer: string 
   );
 };
 
-const PlateDetail: React.FC<{
-  printing: Printing;
-  plate: Plate;
-  tools: PrintToolsStatus | null;
-  onSend: () => void;
-}> = ({ printing, plate, tools, onSend }) => {
+const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; tools: PrintToolsStatus | null }> = ({
+  printing,
+  plate,
+  tools,
+  onSend,
+  onAddPrinter,
+}) => {
   const sliced = printing.freshSlice(plate);
   const { hours, grams, exact } = plateNumbers(plate, sliced);
   const status = plateStatus(plate, printing.records);
@@ -148,7 +175,13 @@ const PlateDetail: React.FC<{
         ]}
       />
       <SliceNotes printing={printing} warnings={sliced?.warnings ?? []} />
-      <PlateActions printing={printing} plate={plate} slicer={slicerName(printing, tools)} onSend={onSend} />
+      <PlateActions
+        printing={printing}
+        plate={plate}
+        slicer={slicerName(printing, tools)}
+        onSend={onSend}
+        onAddPrinter={onAddPrinter}
+      />
       <PlateMarks printing={printing} plate={plate} />
     </Section>
   );
@@ -266,7 +299,13 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
         </Section>
         {selected && <PartControls printing={printing} part={selected} plates={plates} />}
         {plate && (
-          <PlateDetail printing={printing} plate={plate} tools={props.tools} onSend={() => sending.send(plate)} />
+          <PlateDetail
+            printing={printing}
+            plate={plate}
+            tools={props.tools}
+            onSend={() => sending.send(plate)}
+            onAddPrinter={props.onAddPrinter}
+          />
         )}
         <PrintedSection
           report={printing.report}

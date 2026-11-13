@@ -7,7 +7,7 @@ import { connectorFor, discoverPrinters } from './connectors/index.mjs';
 import { jobDir, openFile, openJob, readJson, slicedPlate, sliceJob, writeJob } from './jobs.mjs';
 import { PrinterStore } from './printers.mjs';
 import { extractPlateGcode } from './slice.mjs';
-import { detectSlicers, DOWNLOAD_PAGES, findSlicerApp } from './slicers.mjs';
+import { detectSlicers, DOWNLOAD_PAGES, findSlicerApp, slicerFor } from './slicers.mjs';
 
 const BAMBU_CONNECT = ['/Applications/Bambu Connect.app', path.join(os.homedir(), 'Applications', 'Bambu Connect.app')];
 
@@ -109,11 +109,11 @@ export class Printing {
     const printer = this.printerOrThrow(printerId);
 
     if (throughStudio(printer)) {
-      const app = findSlicerApp('bambu');
+      const app = slicerFor(job?.printer);
 
       await openFile(file, app);
 
-      return { started: false, message: `Opened plate ${plate} in ${app ? 'Bambu Studio' : 'the slicer'}` };
+      return { started: false, message: `Opened plate ${plate} in ${app?.name ?? 'the slicer'}` };
     }
 
     const kind = printer.connection.kind;

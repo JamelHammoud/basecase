@@ -186,7 +186,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             {current.id === 'agent' && <AgentPane {...props} />}
             {current.id === 'build' && <BuildPane prefs={props.buildPrefs} />}
             {current.id === 'printers' && (
-              <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
+              <PrintersPane key={props.printers.loaded ? 'loaded' : 'loading'} state={props.printers} />
             )}
             {current.id === 'accounts' && <AccountsPane />}
             {current.id === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}

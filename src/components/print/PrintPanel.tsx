@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button, MetaLine, NumberInput, Section, Switch, useScrollFade } from '../../design-system';
+import { slicerOrder } from '../../data/printers';
 import type { Plate } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
 import { plateStatus } from '../../print/tracker';
@@ -25,9 +26,9 @@ interface PrintPanelProps {
 }
 
 function slicerName(printing: Printing, tools: PrintToolsStatus | null): string | null {
-  const vendor = printing.printer.model.vendor;
-  const order = vendor === 'BBL' ? ['bambu', 'orca'] : ['orca', 'bambu'];
-  const found = order.map((k) => tools?.slicers.find((s) => s.kind === k)).find(Boolean);
+  const found = slicerOrder(printing.printer.model)
+    .map((k) => tools?.slicers.find((s) => s.kind === k))
+    .find(Boolean);
 
   return found?.name ?? null;
 }

@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import * as THREE from 'three';
 import type { PoseReply } from '../agent/agentPose';
+import type { DriveCommand } from '../sim/driveTypes';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
@@ -26,6 +27,8 @@ export interface DevActions {
   select: (ids: string[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
+  drive: (command: DriveCommand) => void;
+  worldAt: () => Record<string, number[]>;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
@@ -136,6 +139,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
     simState: () => devRef.current.simState(),
+    drive: (command: DriveCommand) => devRef.current.drive(command),
+    worldAt: () => devRef.current.worldAt(),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),

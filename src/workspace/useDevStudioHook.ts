@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { worldDeltas } from '../sim/mjcf';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
@@ -18,6 +20,8 @@ interface DevHookOptions {
 export function useDevStudioHook({ active, core, actions, agent }: DevHookOptions) {
   const { docs, viewportRef, setSelectedIds, posing, loadSeed } = core;
   const { partsRef, projectRef } = docs;
+  const { subscribePoses } = core.simTraining.sim;
+  const posesRef = useRef<Float64Array | null>(null);
   const devRef = useLatestRef<DevActions>({
     importRobot: actions.robots.importRobotFrom,
     posing,
@@ -47,6 +51,19 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
       };
     },
+    drive: (command) => core.simTraining.sim.drive.setKeys(command),
+    worldAt: () => {
+      const { model, worldParts } = core.simTraining.sim;
+      const deltas = model && posesRef.current ? worldDeltas(model, posesRef.current) : new Map();
+
+      return Object.fromEntries(
+        worldParts.map((p) => {
+          const at = new THREE.Vector3(...p.position).applyMatrix4(deltas.get(p.id) ?? new THREE.Matrix4());
+
+          return [p.id, at.toArray()];
+        }),
+      );
+    },
     routineState: () => core.simTraining.routines.state(),
     datasetFiles: async () => {
       const { cases } = core.simTraining;
@@ -66,6 +83,14 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       return made && { html: made.html, pages: made.record.pages, steps: made.record.steps };
     },
   });
+
+  useEffect(() => {
+    if (!exposesTestHooks() || !active) return;
+
+    return subscribePoses((poses) => {
+      posesRef.current = poses;
+    });
+  }, [active, subscribePoses]);
 
   useEffect(() => {
     if (!exposesTestHooks() || !active) return;

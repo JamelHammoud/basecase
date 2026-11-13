@@ -3,6 +3,9 @@ import { scaledFormula } from './contract';
 import type { Case, WorldObject } from './schema';
 
 const SAME_SCALE = 1e-3;
+const FLOOR_MM = 1;
+
+const onFloor = (o: WorldObject) => Math.abs(o.position[1] - o.size[1] / 2) < FLOOR_MM;
 
 export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   const authored = kase.slot.reachMm;
@@ -14,12 +17,17 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
 
   if (sameScale && sameAnchor) return kase;
 
-  const object = (o: WorldObject): WorldObject => ({
-    ...o,
-    position: place(o.position),
-    size: o.size.map((x) => x * s) as V3,
-    ...(o.massG !== undefined ? { massG: o.massG * s ** 3 } : {}),
-  });
+  const object = (o: WorldObject): WorldObject => {
+    const size = o.size.map((x) => x * s) as V3;
+    const [x, y, z] = place(o.position);
+
+    return {
+      ...o,
+      position: [x, onFloor(o) ? size[1] / 2 : y, z],
+      size,
+      ...(o.massG !== undefined ? { massG: o.massG * s ** 3 } : {}),
+    };
+  };
 
   return {
     ...kase,

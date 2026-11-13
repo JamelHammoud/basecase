@@ -9,6 +9,6 @@ Now there's Publish to Hugging Face right under Export Dataset, and in ⌘K. Add
 
 What lands on the Hub is the same LeRobot v2.1 dataset the zip holds: one parquet file and one video per camera for each try, plus the metadata LeRobot and GR00T read, including a modality file for GR00T. The repo is tagged v2.1, because LeRobot's reader loads a dataset at its version tag and refuses one without it. Large files go up through the Hub's LFS storage, in parts when they're big.
 
-Each Case gets its own repo per scene, so publishing Touch the Dots from two different robots makes two datasets instead of one replacing the other. Publishing again from the same scene replaces that repo's episodes with the tries that pass now, and moves the tag to the new commit.
+Each Case gets its own repo per scene, so publishing Touch the Dots from two different scenes makes two datasets instead of one replacing the other. Publishing again from the same scene replaces that repo's episodes with the tries that pass now, and moves the tag to the new commit.
 
 The token stays in the app's main process, encrypted on disk. The page that draws the app only learns whether you're signed in and your account name, and upload addresses outside huggingface.co never receive the token.

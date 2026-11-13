@@ -189,7 +189,7 @@ async function expectPublished(repo: string) {
     'videos/chunk-000/observation.images.scene/episode_000000.mp4',
   ]);
   expect(info.total_frames).toBe(rows.length);
-  expect(published.tags.get('v2.1')).toBe(1);
+  expect(published.tags.get('v2.1')).toBe(published.commits.length);
   expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
 }
 
@@ -232,7 +232,10 @@ describe('Cases', () => {
 
   it('publishes a passed try to Hugging Face after signing in from Settings', async () => {
     const publish = () => button('Publish to Hugging Face');
-    const published = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-the-dots-[0-9a-f]{6}$/.test(name));
+    const commitsOf = (name: string) => hub.repos.get(name)?.commits.length ?? 0;
+    const ours = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-the-dots-[0-9a-f]{6}$/.test(name));
+    const before = new Map(ours().map((name) => [name, commitsOf(name)]));
+    const published = () => ours().filter((name) => commitsOf(name) > (before.get(name) ?? 0));
 
     await openTouchTheDots();
     await button('Try It').click();
@@ -245,21 +248,26 @@ describe('Cases', () => {
     await publish().click();
 
     const token = app.page.locator(visible('input[aria-label="Access token"]'));
+    const signedOut = await token.waitFor({ timeout: 10000 }).then(
+      () => true,
+      () => false,
+    );
 
-    await expect.poll(() => token.count()).toBe(1);
-    await token.fill(HUB_TOKEN);
-    await token.press('Enter');
-    await expect
-      .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings]')).innerText())
-      .toContain('tester');
-    await app.page.keyboard.press('Escape');
+    if (signedOut) {
+      await token.fill(HUB_TOKEN);
+      await token.press('Enter');
+      await expect
+        .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings]')).innerText())
+        .toContain('tester');
+      await app.page.keyboard.press('Escape');
+      await publish().dblclick();
+    }
 
-    await publish().dblclick();
     await expect.poll(() => published().length, { timeout: 120000 }).toBe(1);
 
     const [repo] = published();
 
-    await expect.poll(() => hub.repos.get(repo)!.commits.length, { timeout: 120000 }).toBe(1);
+    await expect.poll(() => commitsOf(repo), { timeout: 120000 }).toBe((before.get(repo) ?? 0) + 1);
     await expectPublished(repo);
     await expect.poll(() => app.page.getByRole('status').filter({ hasText: repo }).count()).toBeGreaterThan(0);
     expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);

@@ -254,6 +254,17 @@ describe('publishing refuses crafted names and addresses', () => {
     }
   });
 
+  it('says why it refuses an empty publish or one with too many files', async () => {
+    hub = await startFakeHub({ token: TOKEN });
+
+    const hubAccount = account();
+    const many = Object.fromEntries(Array.from({ length: 20001 }, (_, i) => [`f${i}.txt`, text('x')]));
+
+    await hubAccount.signIn(TOKEN);
+    await expect(hubAccount.publish({ name: 'ok', files: {} })).rejects.toThrow('There are no files to publish.');
+    await expect(hubAccount.publish({ name: 'ok', files: many })).rejects.toThrow(/at most 20000 files/);
+  });
+
   it('sends uploads to other hosts over https only, without the token, through the public-address guard', async () => {
     hub = await startFakeHub({ token: TOKEN, uploadHost: 'localhost' });
 

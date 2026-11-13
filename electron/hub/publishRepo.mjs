@@ -26,7 +26,9 @@ const asBytes = (value) => (value instanceof Uint8Array ? value : null);
 export function checkedFiles(files) {
   const entries = Object.entries(files && typeof files === 'object' ? files : {});
 
-  if (!entries.length || entries.length > FILES_MAX) throw new Error('There are no files to publish.');
+  if (!entries.length) throw new Error('There are no files to publish.');
+
+  if (entries.length > FILES_MAX) throw new Error(`A publish can send at most ${FILES_MAX} files.`);
 
   return entries.map(([path, value]) => {
     const bytes = asBytes(value);

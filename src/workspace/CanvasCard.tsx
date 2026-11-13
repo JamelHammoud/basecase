@@ -70,7 +70,7 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
       shapesOpen={ui.shapesOpen}
       onShapesOpenChange={ui.setShapesOpen}
       onAddShape={creation.addCatalogItem}
-      onSketch={() => openCreator('draw2d')}
+      onSketch={core.sketching.open}
       onImportSvg={() => openCreator('svg')}
     />
   );

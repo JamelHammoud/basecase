@@ -79,6 +79,8 @@ export interface ViewportProps {
   showGrid: boolean;
   blueprintDataUrl?: string | null;
   onSelectPart: (id: string | null, additive?: boolean, drill?: boolean) => void;
+  onPickPoint?: (id: string, point: Vec3) => void;
+  onOpenPart?: (id: string) => void;
   onMarqueeSelect?: (ids: string[]) => void;
   onUpdatePartsTransform?: (updates: PartTransformUpdate[]) => void;
   onUpdatePartTransform: (id: string, position: Vec3, rotation: Vec3, dimensions?: ScenePart['dimensions']) => void;

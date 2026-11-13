@@ -42,6 +42,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       setSelectedIds([]);
     },
     select: (ids) => setSelectedIds(ids),
+    selectFace: core.sketching.selectFace,
     simState: () => {
       const { sim, cases } = core.simTraining;
       const stats = sim.latestStats() ?? sim.stats;

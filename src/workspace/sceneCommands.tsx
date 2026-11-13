@@ -190,8 +190,8 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       group: 'Scene',
       label: 'Sketch',
       icon: <PenIcon className={ic} />,
-      keywords: 'draw extrude revolve outline',
-      run: () => tool.openCreator('draw2d'),
+      keywords: 'draw extrude revolve outline face dimension constraint',
+      run: core.sketching.open,
     },
     {
       id: 'image',

@@ -22,6 +22,8 @@ export const AccountsPane: React.FC = () => {
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+
+      throw e;
     }
   };
 

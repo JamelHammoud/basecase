@@ -134,7 +134,7 @@ Bring a model from another app into the scene as a printable part.
 - **The blog appears with its first post.** Until then the build writes no `/blog` page, and the nav and sitemap leave it out. The landing's footer links Changelog and Help (`SECTIONS` in `src/landing/pages/sections.ts`).
 - Front matter is `key: value` lines and `- item` lists, indented or not; `true` and `false` are booleans with or without quotes. A missing title or date, a date not written `YYYY-MM-DD`, or a file name that isn't lowercase words joined by dashes fails the build with the file's path.
 - Raw HTML in the markdown is dropped. `http` and `https` links open in a new tab.
-- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and to a help article.
+- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and to a help article, and the nav's Blog link to a post and back. It builds the real `site/content`, so it expects a published post.
 
 ### What Check runs
 

@@ -37,6 +37,15 @@ A new lane that reacts to a head, a status or an issue follows the same rule, an
 
 Comments the loop posts end with `<!-- loop -->`, which is how the learn lane tells them from Jamel's own comments, since both come from Jamel's account. Learn and digest count only what the loop made: reviews from Jamel's account that carry the mark, and closed or repair pull requests from Jamel's account on a `loop/` branch in this repo. An outsider's comment or pull request never becomes a lesson or a number. A branch is pushed only to open its pull request, so a pushed `loop/` branch with no open pull request is debris: `publish` deletes its branch when opening the pull request fails, and tidy deletes any such branch an hour after its last commit, including one whose pull request merged or closed. Branch names end in the time to the second and the process id, so two slots never pick the same name. Tidy never deletes the branch the loop's home follows (`BASECASE_LOOP_REF`). Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions` (except `market`, sandboxed because it reads the web; see Review), so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
 
+**Harness.** Every 12 hours the harness lane (`tools/loop/lanes/harness.mjs`, brief `harness.md`) makes the CAD agent better through the micro-evals ([Benchmark](bench.md)). It keeps its runs in the home checkout's `bench/runs/` (`BASECASE_BENCH_RUNS` overrides it), linked into each worktree, so the baseline cache outlives the run.
+
+1. **Pick.** In a detached worktree of `main` it reads the cached tune runs for `main`'s harness hash at its model and effort (`opus` answered by `claude-opus-5-5`, effort `high`, three seeds), runs whatever is missing on two slots, and picks the category with the lowest pass rate (assembly, service, cost, check integrity, craft, mirroring), skipping one tried in the last three days while another fails (`lib/weakness.mjs`).
+2. **Change.** One session on a `loop/harness/` branch gets the category, its tasks and the failing runs' folders and grader output, and changes the prompt, guides, CAD tools, checks or kernel helpers. A change that touches `bench/`, or nothing in the harness hash, is dropped unmeasured.
+3. **Measure.** The branch runs the tune set and is paired task by task against `main`'s runs with `bench/compare/stats.mjs` (`lib/harnessVerdict.mjs`). It goes on only when at least 5 tasks are graded on both and the 95% interval on the gap is above zero; then both run the held-out set, which holds when its gap is at least zero or its interval stays above −10 points.
+4. **Decide.** A kept change opens a `Harness:` pull request with the weakness, the change and the table of both sets with intervals and the runs used. A discarded one opens a `Lesson:` pull request instead: a `docs/Lessons playbook.md` entry tagged `harness` and its category, which later sessions read so it isn't retried.
+
+`node tools/loop/harness-plan.mjs [checkout]` prints, without running anything, a checkout's harness hash, what the cache covers, the baseline it would run and the weakness it would pick.
+
 ### Giving direction
 
 Jamel steers; nothing waits for Jamel.
@@ -58,6 +67,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 | `fix` | `Fix: …` | `fix.md` | Fixed |
 | `repair` | `Repair: …` | `repair.md` | left out |
 | `lesson` | `Lesson: …` | `lesson.md` | left out |
+| `harness` | `Harness: …` | `harness.md`, with the measurements | Better |
 | `loop`, `update`, `market` | `Loop: …`, `Update: …`, `Market: …` | `loop.md` | left out |
 
 `.github/release.yml` groups the release notes by those labels.

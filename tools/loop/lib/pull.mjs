@@ -13,6 +13,7 @@ export const KINDS = {
   repair: { prefix: 'Repair', template: 'repair' },
   refine: { prefix: 'Refine', template: 'refine' },
   lesson: { prefix: 'Lesson', template: 'lesson' },
+  harness: { prefix: 'Harness', template: 'harness' },
   loop: { prefix: 'Loop', template: 'loop' },
   update: { prefix: 'Update', template: 'loop' },
   market: { prefix: 'Market', template: 'loop' },

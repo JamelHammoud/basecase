@@ -96,6 +96,7 @@ const LABELS = {
   'loop:fix': 'd1242f',
   'loop:repair': 'd1242f',
   'loop:lesson': '8250df',
+  'loop:harness': '1a7f37',
   'loop:loop': '6e7781',
   'loop:update': '6e7781',
   'loop:priority': 'd1242f',

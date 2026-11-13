@@ -57,7 +57,7 @@ export class HubAccount {
   async publish({ name, files } = {}) {
     const token = this.keys.get(TOKEN);
 
-    if (!token) throw new Error('Sign in to Hugging Face in Settings first.');
+    if (!token) throw new Error('Add a Hugging Face access token in Settings ▸ Accounts.');
 
     const client = this.client(token);
     const namespace = this.keys.get(NAME) ?? (await client.whoami()).name;

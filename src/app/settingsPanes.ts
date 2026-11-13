@@ -18,3 +18,13 @@ const PANES: Array<{ id: SettingsPane; label: string; keywords: string }> = [
 const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers', 'accounts'];
 
 export const SETTINGS_PANES = IS_WEB_DEMO ? PANES.filter((p) => !DESKTOP_PANES.includes(p.id)) : PANES;
+
+const SETTINGS_PATH = / in Settings ▸ (\p{L}+)/u;
+
+export const settingsPaneIn = (message: string): SettingsPane | null => {
+  const label = SETTINGS_PATH.exec(message)?.[1];
+
+  return SETTINGS_PANES.find((p) => p.label === label)?.id ?? null;
+};
+
+export const withoutSettingsPath = (message: string) => message.replace(SETTINGS_PATH, '');

@@ -38,7 +38,7 @@ const ReferenceImagesToggle: React.FC<{ props: LayersViewProps }> = ({ props }) 
 };
 
 const SizeFooter: React.FC<{ size: string }> = ({ size }) => (
-  <div className="h-9 shrink-0 px-[12px] flex items-center justify-between border-t border-white/[0.06] text-[12.5px] select-none">
+  <div className="h-[32px] shrink-0 px-[12px] flex items-center justify-between border-t border-white/[0.06] text-[12.5px] select-none">
     <span className="text-white/50">Overall size</span>
     <span className="text-white/70 tabular">
       {size} <span className="text-white/50">mm</span>

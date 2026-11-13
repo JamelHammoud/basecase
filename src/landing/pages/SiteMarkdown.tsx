@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactMarkdown, { type Components } from 'react-markdown';
+import ReactMarkdown, { type Components, type Options } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 const LINK_CLASS = 'text-[#5cb8ff] underline-offset-2 hover:underline';
@@ -51,9 +51,20 @@ const components: Components = {
   hr: () => <hr className="my-[28px] border-0 h-px bg-white/[0.06]" />,
 };
 
-export const SiteMarkdown: React.FC<{ children: string; className?: string }> = ({ children, className }) => (
+interface SiteMarkdownProps {
+  children: string;
+  className?: string;
+  extraComponents?: Components;
+  extraPlugins?: Options['remarkPlugins'];
+}
+
+export const SiteMarkdown: React.FC<SiteMarkdownProps> = ({ children, className, extraComponents, extraPlugins }) => (
   <div className={className}>
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components} skipHtml>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm, ...(extraPlugins ?? [])]}
+      components={{ ...components, ...extraComponents }}
+      skipHtml
+    >
       {children}
     </ReactMarkdown>
   </div>

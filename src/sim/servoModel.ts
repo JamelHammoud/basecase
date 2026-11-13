@@ -23,10 +23,11 @@ export function fitDynamics(fit: ServoFit, volts: number, holdingNm: number): Se
   };
 }
 
-const fitted = (specs: ActuatorSpec[]): specs is Array<ActuatorSpec & { fit: ServoFit }> => specs.every((s) => !!s.fit);
+export const measuredServos = (specs: ActuatorSpec[]): specs is Array<ActuatorSpec & { fit: ServoFit }> =>
+  specs.length > 0 && specs.every((s) => !!s.fit);
 
 export function servoDynamics(specs: ActuatorSpec[], holdingNm: number): ServoDynamics | null {
-  if (!specs.length || !fitted(specs)) return null;
+  if (!measuredServos(specs)) return null;
 
   const each = specs.map((s) => fitDynamics(s.fit, s.atVolts, holdingNm / specs.length));
   const total = (key: keyof Omit<ServoDynamics, 'delayS'>) => each.reduce((sum, d) => sum + d[key], 0);

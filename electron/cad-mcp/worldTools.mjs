@@ -56,6 +56,7 @@ const command = z.object({
   turn: z.number().min(-1).max(1).optional().describe('Counter-clockwise from above'),
   lift: z.number().min(-1).max(1).optional().describe('Arms: raise (1) or lower (-1) the end effector'),
   target: vec3.optional().describe('Arms: move the end effector to this point, mm, z up'),
+  grip: z.number().min(0).max(1).optional().describe('Arms with a gripper: close it (1) or open it (0)'),
 });
 
 export const startDrive = {
@@ -64,7 +65,7 @@ export const startDrive = {
     title: 'Drive the robot',
     description:
       'Drives the robot in MuJoCo with live commands, the same way a person drives it with the keyboard, and reports what happened. ' +
-      'Arms follow the end effector (warm-started inverse kinematics); rovers mix wheel speeds; robots with four or more legs walk on baked gait cycles after a 5 s fall check; any legged robot with a trained walk skill (bipeds included) drives through it. Without one, the reply says how to train it. ' +
+      'Arms follow the end effector (warm-started inverse kinematics; with a gripper, the point between its fingers, held pointing down); rovers mix wheel speeds; robots with four or more legs walk on baked gait cycles after a 5 s fall check; any legged robot with a trained walk skill (bipeds included) drives through it. Without one, the reply says how to train it. ' +
       'Commands are held until the next one; each axis runs -1 to 1. With live: true it drives the canvas for the user to watch and returns at once; otherwise it runs headless and returns how far the robot went, how much it turned, whether it fell, and the end effector for arms.',
     inputSchema: {
       seconds: z.number().min(0.5).max(30).optional().describe('Simulated time, default 6'),
@@ -89,7 +90,8 @@ export const operate = {
       'Operates the robot one step at a time in the live simulation on the canvas, the way a person at the controls does, and shows what its cameras see after each step. ' +
       "Each call holds one action for a few seconds, pauses, then returns the views from the robot's camera parts and the scene's camera view, plus whether it fell and where the end effector is. Look at the images, decide the next action, and call again: the robot stays where the last step left it. " +
       'Actions are the same as start_drive: forward, left and turn (-1 to 1) for robots that move around; lift (-1 to 1) or target (a point in mm, z up) for arms. restart: true puts the robot back at its start. ' +
-      'The user places stationary camera views with Add Camera View; ask for the ones you need by name.',
+      'The user places stationary camera views with Add Camera View; ask for the ones you need by name. ' +
+      "When the robot's servos were calibrated in Operate, the reply ends with each joint's median error replaying the bench log in the sim, with the preset and with the calibration in use.",
     inputSchema: {
       action: z
         .object({

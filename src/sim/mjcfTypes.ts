@@ -55,7 +55,6 @@ export interface SimModel {
   robots: SimRobot[];
   initial: RobotPoseState;
   massKg: Record<string, number>;
-  warnings: string[];
 }
 
 export interface MjcfInput {

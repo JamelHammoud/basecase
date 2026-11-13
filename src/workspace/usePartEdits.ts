@@ -169,7 +169,7 @@ export function usePartEdits(core: WorkspaceCore) {
       commitParts(
         patchWhere(
           (p) => p.id === partId,
-          () => ({ sculptMesh, kind: 'sculpt_mesh' as const }),
+          () => ({ sculptMesh, kind: 'sculpt_mesh' as const, csg: undefined }),
         ),
       ),
     changeHardware,

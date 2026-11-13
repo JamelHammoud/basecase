@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { JointValues, RobotJoint, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
+import type { ArmGrip } from './driveGrip';
 import { rigForWorker, type ArmSetup, type RoverSetup, type WheelSetup } from './drive';
 import { isWheelJoint } from './morphology';
 
@@ -69,6 +70,7 @@ export interface ArmSetupInput {
   anchor: V3;
   reachMm: number;
   start?: JointValues;
+  grip?: ArmGrip | null;
 }
 
 export function armSetup(input: ArmSetupInput): ArmSetup {
@@ -82,5 +84,6 @@ export function armSetup(input: ArmSetupInput): ArmSetup {
     start: input.start ?? {},
     anchor: input.anchor,
     reachMm: input.reachMm,
+    ...(input.grip ? { grip: input.grip } : {}),
   };
 }

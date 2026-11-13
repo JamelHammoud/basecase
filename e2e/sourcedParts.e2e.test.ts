@@ -62,9 +62,15 @@ describe('Parts the agent added', () => {
     expect(requests.filter((url) => url.includes('parts/e2e-sourced-board.glb'))).toEqual([]);
 
     const before = await partCount(page);
+    const add = tile.getByRole('button', { name: 'Add' });
+    const pointerEvents = () => add.evaluate((el) => getComputedStyle(el).pointerEvents);
+
+    await page.mouse.move(0, 0);
+    await expect.poll(pointerEvents).toBe('none');
 
     await tile.hover();
-    await tile.getByRole('button', { name: 'Add' }).click();
+    await expect.poll(pointerEvents).toBe('auto');
+    await add.click();
     await expect.poll(() => partCount(page), { timeout: 20000 }).toBe(before + 1);
   }, 120000);
 
@@ -77,5 +83,11 @@ describe('Parts the agent added', () => {
     await expect
       .poll(() => page.locator('[data-result="0"]').textContent(), { timeout: 10000 })
       .toContain('Added by Agent');
+
+    const row = page.locator('[data-result="0"]');
+    const nameWidth = () => row.getByText('Sourced Test Board').evaluate((el) => el.getBoundingClientRect().width);
+    const rowWidth = await row.evaluate((el) => el.getBoundingClientRect().width);
+
+    expect(await nameWidth()).toBeGreaterThan(rowWidth - 80);
   }, 30000);
 });

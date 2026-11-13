@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { exportStepFile } from '../stepExport.mjs';
 
 const BOX_VOLUME = 6000;
 
@@ -7,6 +8,29 @@ const PARTS = [
   ['openscad', 'include <robotics.scad>\ncube([10, 20, 30]);'],
   ['replicad', 'return makeBox([0, 0, 0], [10, 20, 30]);'],
 ];
+
+const TETRA = [
+  0, 0, 0, 0, 20, 0, 20, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 20, 0, 20, 0, 20, 0, 0, 0, 20, 0, 0, 0, 20,
+];
+const PLACE = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0];
+
+const STEP_JOB = {
+  name: 'Self-test',
+  bodies: [
+    { name: "Box'); #1=X(", color: '#336699', place: PLACE, solid: { type: 'code', code: PARTS[1][1] } },
+    { name: 'Mesh', color: '#999999', place: PLACE, solid: { type: 'mesh', positions: TETRA } },
+  ],
+};
+
+async function exportedStep(kernel) {
+  try {
+    const { step, skipped } = await exportStepFile(kernel, STEP_JOB);
+
+    return { ok: step.startsWith('ISO-10303-21;') && skipped === 0, products: step.match(/= PRODUCT\('/g)?.length };
+  } catch (err) {
+    return { ok: false, error: String(err?.message ?? err) };
+  }
+}
 
 const probeCode = (fileUrl) => `return (async () => {
   const tries = {
@@ -41,9 +65,10 @@ export async function kernelSelfTest(kernel, { outFile, probeFile }) {
 
   const probe = await render(kernel, 'replicad', probeCode(pathToFileURL(probeFile).href));
   const reached = /REACHED:(.*)/.exec(probe.error ?? '')?.[1] ?? 'the probe did not run';
-  const passed = parts.every((p) => p.ok && p.volume === BOX_VOLUME) && reached === '';
+  const step = await exportedStep(kernel);
+  const passed = parts.every((p) => p.ok && p.volume === BOX_VOLUME) && reached === '' && step.ok;
 
-  fs.writeFileSync(outFile, JSON.stringify({ passed, parts, reached }, null, 2));
+  fs.writeFileSync(outFile, JSON.stringify({ passed, parts, reached, step }, null, 2));
   kernel.stop();
 
   return passed;

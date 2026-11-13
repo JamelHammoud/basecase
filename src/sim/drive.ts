@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { JointValues } from '../types/robotics';
-import { forwardKinematics, solveIK, type Rig, type V3 } from '../utils/kinematics';
+import { forwardKinematics, solveIK, type IkTarget, type Rig, type V3 } from '../utils/kinematics';
+import { gripValues, restSide, sideFor, topDownTargets, type ArmGrip } from './driveGrip';
 import { LegsDrive, type LegsSetup } from './driveLegs';
 import type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 
@@ -16,6 +17,7 @@ export interface ArmSetup {
   start: JointValues;
   anchor: V3;
   reachMm: number;
+  grip?: ArmGrip;
 }
 
 export interface WheelSetup {
@@ -37,7 +39,8 @@ export type DriveSetup = ArmSetup | RoverSetup | LegsSetup;
 
 export const CONTROL_DT = 0.02;
 
-const REACH_PER_SECOND = 0.9;
+export const REACH_PER_SECOND = 0.9;
+
 const LIFT_SHARE = 0.7;
 const IK_ITERATIONS = 16;
 
@@ -45,7 +48,7 @@ const clampUnit = (x: number) => Math.max(-1, Math.min(1, x));
 
 export const zeroCommand = (): DriveCommand => ({ v: [0, 0, 0] });
 
-const isMoving = ({ v, aux }: DriveCommand) => v.some((x) => x !== 0) || !!aux?.some((x) => x !== 0);
+const isMoving = ({ v, aux }: DriveCommand) => v.some((x) => x !== 0) || !!aux?.[0];
 
 function tipOf({ rig, part, point }: ArmSetup, values: JointValues): V3 {
   const posed = forwardKinematics(rig, { values });
@@ -70,12 +73,16 @@ class ArmDrive implements DriveLoop {
 
   private nextAt = 0;
 
+  private side: V3 = [1, 0, 0];
+
   constructor(setup: ArmSetup) {
     this.setup = setup;
     this.hand = { part: setup.part, point: setup.point };
     this.values = { ...setup.start };
     this.goal = tipOf(setup, setup.start);
     this.aim = [...this.goal];
+
+    if (setup.grip) this.side = restSide(setup.grip);
   }
 
   command(c: DriveCommand, measured?: JointValues) {
@@ -137,14 +144,14 @@ class ArmDrive implements DriveLoop {
   }
 
   tick(time: number): DriveOutput {
-    if (time < this.nextAt - 1e-9) return { values: this.values };
+    if (time < this.nextAt - 1e-9) return { values: this.output() };
 
     this.nextAt = time + CONTROL_DT;
     this.moveAim();
     this.moveGoal();
 
-    const { rig, part, point, joints } = this.setup;
-    const solved = solveIK(rig, this.values, [{ partId: part, point, target: this.goal }], {
+    const { rig, joints } = this.setup;
+    const solved = solveIK(rig, this.values, this.targets(), {
       joints,
       iterations: IK_ITERATIONS,
       tolerance: 0.5,
@@ -154,7 +161,26 @@ class ArmDrive implements DriveLoop {
 
     this.values = solved.values;
 
-    return { values: this.values };
+    return { values: this.output() };
+  }
+
+  private targets(): IkTarget[] {
+    const { grip, part, point, anchor } = this.setup;
+    const reach: IkTarget = { partId: part, point, target: this.goal };
+
+    if (!grip) return [reach];
+
+    this.side = sideFor(this.goal, anchor, this.side);
+
+    return [reach, ...topDownTargets({ grip, part, point, goal: this.goal, side: this.side })];
+  }
+
+  private output(): JointValues {
+    const { grip, start } = this.setup;
+
+    if (!grip) return this.values;
+
+    return { ...this.values, ...gripValues(grip, this.cmd.aux?.[1] ?? 0, start) };
   }
 }
 

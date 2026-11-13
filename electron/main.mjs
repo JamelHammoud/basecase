@@ -12,6 +12,7 @@ import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
+import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
@@ -188,6 +189,7 @@ ipcMain.handle('sourced:remove', (_e, id) => backend.removeSourced(id));
 ipcMain.handle('sourced:mesh', (_e, id) => backend.sourcedMesh(id));
 ipcMain.handle('sourced:import-cad', (_e, payload) => backend.importMakerCad(payload));
 ipcMain.handle('cad:open', (_e, payload) => backend.openCadFile(payload));
+ipcMain.handle('cad:export-step', (_e, payload) => backend.exportStep(payload));
 ipcMain.handle('chat:get', (_e, id) => backend.getConversation(id));
 ipcMain.handle('chat:save', (_e, conv) => backend.saveConversation(conv));
 ipcMain.handle('chat:delete', (_e, id) => backend.deleteConversation(id));
@@ -216,6 +218,7 @@ ipcMain.handle('library:delete-scene', (_e, sceneId) => backend.deleteScene(scen
 registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerHubHandlers(ipcMain, backend.hub);
+registerOnshapeHandlers(ipcMain, backend.onshape);
 registerShareHandlers(ipcMain);
 
 const robot = new RobotLink({

@@ -3,6 +3,7 @@ import { runSceneBooleanCSG } from '../three/sculptAndBooleanEngine';
 import type { ScenePart } from '../types/robotics';
 import { hardwareCutoutParts } from '../utils/hardwareCutouts';
 import { boundsOverlap } from '../utils/selection';
+import { booleanRecipe } from './stepSolids';
 import { newId, partLabel } from './helpers';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -56,6 +57,21 @@ function booleanOperands(base: ScenePart, solids: ScenePart[], op: BooleanOp, pa
   return cutouts.length
     ? { operands: cutouts }
     : { error: 'Nothing to subtract. Overlap a Cutout or Shift-click a part.' };
+}
+
+export function combinedPart(base: ScenePart, operands: ScenePart[], op: BooleanOp): ScenePart | null {
+  const res = runSceneBooleanCSG(base, operands, op, (p) => buildPartGroup(p, false));
+
+  if (!res) return null;
+
+  const recipe = booleanRecipe(op, [base, ...operands], res);
+
+  return {
+    ...res,
+    name: op === 'subtract' ? base.name : `${base.name} ${op === 'union' ? 'Union' : 'Intersect'}`,
+    group: operands.every((o) => o.group?.id === base.group?.id) ? base.group : undefined,
+    ...(recipe ? { csg: recipe } : {}),
+  };
 }
 
 export function useSelectionOps({ docs, parts, selection, setSelectedIds, showToast, undo }: WorkspaceCore) {
@@ -115,20 +131,14 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
       return;
     }
 
-    const res = runSceneBooleanCSG(base, operands, op, (p) => buildPartGroup(p, false));
+    const result = combinedPart(base, operands, op);
 
-    if (!res) {
+    if (!result) {
       showToast('Those parts don’t overlap', { tone: 'error' });
 
       return;
     }
 
-    const sameGroup = operands.every((o) => o.group?.id === base.group?.id) ? base.group : undefined;
-    const result: ScenePart = {
-      ...res,
-      name: op === 'subtract' ? base.name : `${base.name} ${op === 'union' ? 'Union' : 'Intersect'}`,
-      group: sameGroup,
-    };
     const operandIds = new Set(operands.map((o) => o.id));
 
     commitParts((prev) => prev.filter((p) => !operandIds.has(p.id)).map((p) => (p.id === base.id ? result : p)));

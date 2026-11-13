@@ -58,6 +58,7 @@ export const RULES = {
   tool: assembly('Hard-to-Reach Screws', 'These screws need an L-shaped hex key to reach.'),
   split: assembly('Parts That Wrap Others', 'This part wraps around others and can’t come off in one piece.'),
   lip: assembly('Snug Parts', 'This part only comes off with a tilt or a bit of flex.'),
+  'fixed-mate': assembly('Fixed Mates', 'This mate imports as fixed; only revolute and slider mates move.'),
   service: {
     area: 'assembly',
     check: REPAIRS,
@@ -117,6 +118,8 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
     blocker: 'This servo gets pushed past its limit while walking.',
     note: 'This servo has little to spare while walking.',
   },
+  'Torque estimates': { note: 'These joints have no servo, so the simulation guesses their torque from weight.' },
+  'Servo models': { note: 'These servos have no measured model, so the simulation guesses how they respond.' },
   'Servo alignment': { blocker: 'These servos don’t line up with their joints.' },
   'Joint support': { note: 'These joints are held on one side only, which strains the servo.' },
   'Range of motion': {

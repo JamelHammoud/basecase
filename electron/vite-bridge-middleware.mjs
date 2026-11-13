@@ -2,6 +2,7 @@ import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
 import { nodeKernelService } from './cad-kernel/nodeHost/client.mjs';
 import { hubPostRoutes } from './hub/routes.mjs';
+import { onshapePostRoutes } from './onshape/routes.mjs';
 import { printPostRoutes } from './print/routes.mjs';
 
 const withBase64Files = (got) => ({
@@ -57,6 +58,7 @@ function postRoutes(backend) {
     ['/sourced-remove', (p) => backend.removeSourced(p.id)],
     ['/sourced-import-cad', (p) => backend.importMakerCad(p)],
     ['/cad-open', (p) => openCadFile(backend, p)],
+    ['/cad-export-step', (p) => backend.exportStep(p)],
     ['/chat-save', (p) => backend.saveConversation(p)],
     ['/chat-delete', (p) => backend.deleteConversation(p.id)],
     ['/acp-cancel', (p) => backend.cancelAcpPrompt(p.workspaceId)],
@@ -75,6 +77,7 @@ function postRoutes(backend) {
     ['/delete-scene', (p) => backend.deleteScene(p.sceneId)],
     ...printPostRoutes(backend.printing),
     ...hubPostRoutes(backend.hub),
+    ...onshapePostRoutes(backend.onshape),
   ];
 }
 

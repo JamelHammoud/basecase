@@ -16,7 +16,6 @@ export interface CreateFrom2DDrawingParams {
   bevel: boolean;
   nodes: CustomModelSubNode[];
   svgDataUrl?: string;
-  saveToLibrary: boolean;
 }
 
 export interface SketchOutput {
@@ -100,14 +99,12 @@ export const sketchDrawing = ({
   outerPoints,
   holes,
   output,
-  saveToLibrary,
   now,
 }: {
   mode: SketchMode;
   outerPoints: SketchPoint[];
   holes: SketchPoint[][];
   output: SketchOutput;
-  saveToLibrary: boolean;
   now: number;
 }): CreateFrom2DDrawingParams => {
   const revolve = mode === 'revolve';
@@ -121,6 +118,5 @@ export const sketchDrawing = ({
     color: output.color,
     bevel: revolve ? false : output.bevel,
     nodes: [revolve ? latheNode(outerPoints, output, now) : extrudeNode(outerPoints, holes, output, now)],
-    saveToLibrary,
   };
 };

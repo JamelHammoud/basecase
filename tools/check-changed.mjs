@@ -57,6 +57,8 @@ function steps(files) {
     python.length > 0 && (() => run('Ruff format', 'uvx', ['ruff', 'format', '--check', ...python])),
     files.some((file) => file.endsWith('.md')) &&
       (() => run('Docs', process.execPath, [path.join(root, 'tools/check-docs.mjs')])),
+    files.includes('tools/quarantine.json') &&
+      (() => run('Quarantine', process.execPath, [path.join(root, 'tools/quarantine.mjs')])),
     scripts.some((file) => TYPED.test(file)) && (() => nodeTool('Types', 'typescript/bin/tsc', ['-b'])),
     tested.length > 0 &&
       (() => nodeTool('Related tests', 'vitest/vitest.mjs', ['related', '--run', '--passWithNoTests', ...tested])),

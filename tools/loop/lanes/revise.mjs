@@ -15,6 +15,7 @@ import {
   pullReview,
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
+import { protectedIn, protectedList } from '../lib/protected.mjs';
 import { entryFor, markLooked, recordAttempt } from '../lib/reviseState.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
@@ -36,7 +37,11 @@ const SCHEMA = {
   properties: {
     changed: { type: 'boolean' },
     commitMessage: { type: 'string', description: 'A subject line, a blank line, then what was answered and why' },
-    revision: { type: 'string', description: 'One line for the pull request body: what this revision changed' },
+    revision: {
+      type: 'string',
+      description:
+        'One line for the pull request body: what this revision changed, and why for any protected path it touched',
+    },
     notes: { type: 'string' },
   },
   required: ['changed', 'commitMessage', 'revision', 'notes'],
@@ -100,8 +105,11 @@ function publishRevision(pull, { dir, output }) {
   git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
 
   const heading = pull.body.includes('\n## Revisions\n') ? '' : '\n\n## Revisions\n';
+  const touched = protectedIn('HEAD~1..HEAD', dir);
+  const line =
+    touched.length === 0 ? output.revision : `${output.revision} Protected paths: ${protectedList(touched)}.`;
 
-  editPullBody(pull.number, `${pull.body}${heading}\n- ${output.revision}`);
+  editPullBody(pull.number, `${pull.body}${heading}\n- ${line}`);
 }
 
 function revisePull(pull, { reason, comments, jamelAt }, log) {

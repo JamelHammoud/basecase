@@ -81,7 +81,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       ['Show or hide reference images', ['⇧I']],
       ['Show or hide camera views', ['⇧V']],
       ['Print', ['⌘P']],
-      ['Run routine', ['⌘↩']],
+      ['Run Routine', ['⌘↩']],
       ['Settings', ['⌘,']],
       ['Shortcuts', ['?']],
     ],

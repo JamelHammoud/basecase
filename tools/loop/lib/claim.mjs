@@ -42,6 +42,12 @@ function clearStale(file, stalePid) {
   fs.rmSync(aside, { force: true });
 }
 
+export const held = (key) => {
+  const pid = readPid(path.join(LOCKS, `${key}.claim`));
+
+  return pid > 0 && isAlive(pid);
+};
+
 export function claim(key) {
   fs.mkdirSync(LOCKS, { recursive: true });
 

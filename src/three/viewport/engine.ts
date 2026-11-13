@@ -308,7 +308,12 @@ export class ViewportEngine {
       assembly: (options) => assemblyIn(restSolids(false), { ...fastenerInput(this.props.parts), ...options }),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
-      posedFloor: (ids) => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
+      posedFloor: (ids, pose) =>
+        ctx.layer.withPose(
+          pose ?? ctx.layer.pose,
+          () => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
+          () => this.applyPose(),
+        ),
       meshGaps: (pairs, withinMm) => gapsIn(restShapes([...new Set(pairs.flat())]), pairs, withinMm),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
       restShapes: (ids) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids))),

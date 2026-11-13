@@ -9,6 +9,8 @@ covers:
   - src/workspace/useSkills.ts
   - src/skills/skillsPlatform.ts
   - src/forge/tabSupport.ts
+  - src/gallery/GalleryCard.tsx
+  - src/gallery/useGalleryTraining.ts
 ---
 
 Teach a legged robot to stand, walk, get up or settle, and have Arena check the result before you use it. It works in the desktop app and at app.basecase.so, where it trains on your own GPU in Chrome or Edge.
@@ -26,5 +28,9 @@ Teach a legged robot to stand, walk, get up or settle, and have Arena check the 
 5. Click **Try** to run the skill in the simulation.
 
 ![Stand ready, with its Arena line and Try](/help/train-a-motor-kit-skill/ready.png)
+
+A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand the same way, and the robot stands on the trained skill once Arena passes it. **See Inside** opens the robot in the studio with Stand ready.
+
+![The hexapod's Case card with Stand ready](/help/train-a-motor-kit-skill/gallery.png)
 
 A skill that doesn't pass isn't kept, and its row offers Train again. In the browser, the trained skill is saved with the scene in that browser, so it's still there after a reload. If the browser can't train (no WebGPU), the Train section doesn't appear. The desktop app also retrains skills on its own after you change the robot, and lets you teach new ones by typing a goal; the browser trains only when you press Train.

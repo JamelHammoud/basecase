@@ -8,14 +8,12 @@ import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { calibrateConnectedRobot } from './calibrationActions';
 import type { CommandInputs } from './sceneCommands';
+import { showLeftTab } from './showView';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 const ic = 'w-4 h-4';
 
-const showOperateOf = (core: WorkspaceCore) => () => {
-  core.tool.setLeftTab('operate');
-  core.studio.setIsLeftOpen(true);
-};
+const showOperateOf = (core: WorkspaceCore) => () => showLeftTab(core, 'operate');
 
 export function calibrateJoints(core: WorkspaceCore, only?: readonly string[]) {
   const joints = core.project.joints ?? [];

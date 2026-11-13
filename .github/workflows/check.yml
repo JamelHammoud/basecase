@@ -28,12 +28,10 @@ jobs:
       - name: Decide whether the packaged app and the ROS package need checking
         id: filter
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
           EVENT: ${{ github.event_name }}
-          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          if [ "$EVENT" != pull_request ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then printf 'app=true\nros=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
-          files=$(git diff --name-only "$BASE...$HEAD")
+          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          files=$(git diff --name-only HEAD^1 HEAD)
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
           ros='^(src/sim/|src/utils/robotImport/|src/utils/(kinematics|engineering|stlBytes|zipFolder)|src/types/robotics\.ts$|src/three/meshMeasure\.ts$|src/workspace/robotPackageExport\.ts$|src/reality/|src/robot/sceneRobot\.ts$|tools/ros/|\.github/workflows/check\.yml$|package-lock\.json$)'
@@ -62,12 +60,10 @@ jobs:
       - run: npm ci
       - name: Check only what the pull request changed
         if: ${{ github.event_name == 'pull_request' }}
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           npm run check:tracked
           npm run check:quarantine
-          mapfile -t files < <(git diff --name-only --diff-filter=ACMR "$BASE...HEAD")
+          mapfile -t files < <(git diff --name-only --diff-filter=ACMR HEAD^1 HEAD)
           if [ "${#files[@]}" -eq 0 ]; then echo "Nothing changed to check."; exit 0; fi
           node tools/check-changed.mjs "${files[@]}"
       - name: Check everything
@@ -113,10 +109,8 @@ jobs:
           fetch-depth: 0
       - name: Find the e2e tests the pull request added or changed
         id: files
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          found=$(node tools/e2e-changed.mjs "$BASE")
+          found=$(node tools/e2e-changed.mjs HEAD^1)
           echo "$found"
           echo "list=$(jq -r '.files | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
           echo "pattern=$(jq -r '.pattern' <<< "$found")" >> "$GITHUB_OUTPUT"
@@ -245,12 +239,8 @@ jobs:
 
       - name: No commit credits a model or tool
         env:
-          RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || format('{0}~1..{0}', github.sha) }}
-        run: |
-          base="${RANGE%%..*}"
-          head="${RANGE#*..}"
-          git cat-file -e "$base^{commit}" 2>/dev/null || base="$head~1"
-          node tools/check-credit.mjs "$base..$head"
+          RANGE: ${{ github.event_name == 'pull_request' && 'HEAD^1..HEAD^2' || format('{0}~1..{0}', github.sha) }}
+        run: node tools/check-credit.mjs "$RANGE"
 
   copy:
     if: ${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'loop/batch/') }}
@@ -271,8 +261,7 @@ jobs:
       - name: New copy is justified and uses no banned words
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          RANGE: ${{ format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) }}
-        run: node tools/check-copy-budget.mjs "$RANGE"
+        run: node tools/check-copy-budget.mjs HEAD^1..HEAD^2
 
   check:
     if: always()

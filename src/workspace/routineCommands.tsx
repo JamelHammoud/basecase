@@ -1,16 +1,14 @@
 import type { Command } from '../components/CommandPalette';
 import { PlusIcon, RoutinesIcon, RunIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
+import { showLeftTab } from './showView';
 
 const KEYWORDS = 'routine flow flowchart behaviour behavior reaction sentence';
 
 export function routineCommands({ core }: CommandInputs): Command[] {
   const routines = core.simTraining.routines;
   const { store, editor, view } = routines;
-  const show = () => {
-    core.tool.setLeftTab('routines');
-    core.studio.setIsLeftOpen(true);
-  };
+  const show = () => showLeftTab(core, 'routines');
   const editing: Command[] = view.routine
     ? [
         {

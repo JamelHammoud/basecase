@@ -51,7 +51,7 @@ The **Agent** tab in the web studio reads “Use the agent in the desktop app”
 The web studio keeps scenes, Library models and prices in your browser, not online. Clearing the site's data deletes them. Another browser or computer doesn't see them.
 
 1. Before you clear browser data, open each scene and click **Export** in the title bar.
-2. Choose **Basecase Scene** to download a `.basecase` file.
+2. Choose **Scene** to download a `.basecase` file.
 3. Open the file later in the web studio or the desktop app with **Open Scene File** in ⌘K.
 
 A scene deleted with the browser's data can't be brought back.

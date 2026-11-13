@@ -57,7 +57,7 @@ GR00T works out its own `stats.json` from these.
 | `task_index` | The task, always the Case's |
 | `annotation.human.task_description` | The task again, where GR00T looks for it |
 
-Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints are in the same order and carry the same names as in the robot package's `robot.urdf` and `joint_map.json`.
+Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints are in the same order and carry the same names as in the robot package's `urdf/robot.urdf` and `joint_map.json`.
 
 ## Cameras
 

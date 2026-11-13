@@ -29,7 +29,7 @@ Save the laid-out plates as 3MF files to slice in any slicer, one file per mater
 1. Click **Export** at the top right.
 2. Choose **3MF Plates**.
 
-![The Export menu with 3MF Plates under STL Mesh](/help/export-a-robot-package/menu.png)
+![The Export menu with 3MF Plates under STL](/help/export-a-robot-package/menu.png)
 
 Basecase saves the files to your downloads. With one material it's `<scene>.3mf`. With several, each material gets its own file, such as `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
 

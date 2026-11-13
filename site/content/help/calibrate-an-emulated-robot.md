@@ -12,6 +12,7 @@ keywords:
   - sysid
   - sim to real
   - roll back
+  - replay
   - sts3215
 related:
   - connect-an-emulated-robot
@@ -19,7 +20,9 @@ related:
 covers:
   - src/components/operate/RobotCalibration.tsx
   - src/components/operate/CalibrationRow.tsx
+  - src/components/operate/JointReplayPlot.tsx
   - src/workspace/operateCommands.tsx
+  - src/reality/jointReplay.ts
   - src/robot/calibrationSession.ts
   - src/robot/benchRun.ts
   - src/reality/benchSequence.ts
@@ -44,10 +47,18 @@ Every joint moves slowly through a bench sequence at once, for about 18 seconds.
 
 ![Each joint's verdict and version after calibrating](/help/calibrate-an-emulated-robot/verdicts.png)
 
-6. To go back to the previous version, hover the joint's row and click **Roll Back** (↶).
-7. Click **Roll Back** to confirm.
+6. Click a joint's row to open its replay.
 
-![Rolling a joint back asks first](/help/calibrate-an-emulated-robot/roll-back.png)
+The light line is what the servo did. The grey line is the simulation on the catalog model, and the blue line is the simulation on the fit. Under the plot, grey is the catalog model's median error and blue is the fit's.
+
+![A joint's replay with the preset error and the calibrated error](/help/calibrate-an-emulated-robot/replay.png)
+
+7. To go back to the previous version, hover the joint's row, click **More** and choose **Roll Back**.
+8. Click **Roll Back** to confirm.
+
+![The row's menu with its versions and Roll Back](/help/calibrate-an-emulated-robot/menu.png)
+
+To see what an older version would do before rolling back, choose it in the same menu; the blue line redraws against it.
 
 **Calibrate Servos** is also in [[⌘K]]. It shows only in **Test** with the motors running, and only in the scene the robot was connected from.
 
@@ -68,6 +79,8 @@ The bench sequence ramps every joint 0.25 rad each way at 0.12 rad/s, holding 0.
 Basecase fits the first half of each recording and checks the fit against the second half. It fits the servo's gain, delay, damping, inertia, friction and torque limit. Each stays within a quarter to 4 times the catalog value, or up to 8 times for the delay. On three emulated STS3215 servos, all three read **Measured**, 7 to 10% closer than the catalog model.
 
 If the robot leaves **Test** or faults during the run, nothing is recorded, and the message under **From the daemon** says why.
+
+Replays use the latest bench run, which Basecase keeps until it reloads. After a reload the verdicts and versions stay, and the replays come back with the next **Calibrate Servos**.
 
 ## Where the fit is used
 

@@ -25,10 +25,10 @@ Send a whole design to someone as one .basecase file, which they can open in the
 
 1. Open the scene you want to send.
 2. Click **Export** at the top right of the window.
-3. Choose **Basecase Scene**.
+3. Choose **Scene**.
 4. Send the `.basecase` file Basecase saved. It's named after the scene, in lowercase with dashes, such as `robot-arm.basecase`.
 
-![The Export menu with Basecase Scene](/help/export-a-robot-package/menu.png)
+![The Export menu with Scene highlighted](/help/share-a-scene/menu.png)
 
 The file holds the parts, joints, poses, comments, Cases, Routines and the scene's goal. Print history, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer. [Scenes, files and the Library](/help/scenes-files-and-the-library) explains why.
 

@@ -3,7 +3,8 @@ import { Button, MetaLine, Section } from '../../design-system';
 import type { Plate } from '../../print/plan';
 import type { SlicedPlate } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
-import { hm, plural } from './format';
+import { plural } from '../../utils/plural';
+import { hm } from './format';
 import { plateNumbers } from '../print/plateFacts';
 
 interface PlateTotals {
@@ -38,7 +39,7 @@ export const PlatesSection: React.FC<{ printing: Printing }> = ({ printing }) =>
         <MetaLine
           className="text-[13px] text-white/90 tabular-nums"
           items={[
-            `${plates.length} ${plural(plates.length, 'plate', 'plates')}`,
+            plural(plates.length, 'plate'),
             `${totals.exact ? '' : '≈ '}${hm(totals.hours)}`,
           ]}
         />

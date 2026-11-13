@@ -1,4 +1,5 @@
-import { count, jointLabel, nm } from './engineeringFormat';
+import { jointLabel, nm } from './engineeringFormat';
+import { plural } from './plural';
 import type { CheckRow, JointLoad } from './engineeringTypes';
 
 const share = (v: number | undefined) => (v === undefined ? '?' : v.toFixed(2));
@@ -44,13 +45,13 @@ function worstOf(loads: JointLoad[]): JointLoad | undefined {
 }
 
 function torqueDetail({ loads, fails, warns, unknown, legs }: TorqueSummary): string {
-  if (fails.length) return `${count(fails.length, 'joint')} overloaded`;
+  if (fails.length) return `${plural(fails.length, 'joint')} overloaded`;
 
-  if (warns.length) return `${count(warns.length, 'joint')} with thin margins`;
+  if (warns.length) return `${plural(warns.length, 'joint')} with thin margins`;
 
   const worst = worstOf(loads);
 
-  if (!worst) return `No torque data for ${count(unknown.length, 'joint')}`;
+  if (!worst) return `No torque data for ${plural(unknown.length, 'joint')}`;
 
   const where = worst.kind === 'stance' ? stanceWords(worst, legs) : 'holding';
 

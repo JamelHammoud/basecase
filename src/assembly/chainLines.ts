@@ -3,6 +3,7 @@ import type { ScenePart } from '../types/robotics';
 import type { ChainProblem, FastenerChain, SleeveHost } from './assemblyTypes';
 import type { HeldBy } from './heldBy';
 import { grouped, listIds, mm, type ReportLine } from './reportText';
+import { plural } from '../utils/plural';
 
 export const RANK = {
   air: 1,
@@ -83,7 +84,7 @@ function collapse(lines: ReportLine[]): ReportLine[] {
     {
       rank: lines[0].rank,
       code: lines[0].code,
-      text: `${lines[0].text} ${lines[1].text} The same for ${rest} more group${rest === 1 ? '' : 's'} (${ids.length} screws in all).`,
+      text: `${lines[0].text} ${lines[1].text} The same for ${plural(rest, 'more group')} (${ids.length} screws in all).`,
       ids,
     },
   ];

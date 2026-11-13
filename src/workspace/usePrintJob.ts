@@ -8,6 +8,7 @@ import { platformBridge } from '../utils/platformBridge';
 import type { PrintReport } from '../utils/printReport';
 import type { ShowToast } from './types';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../utils/plural';
 
 interface PrintJobOptions {
   jobId: string;
@@ -117,7 +118,7 @@ export function usePrintJob(options: PrintJobOptions) {
     try {
       const record = await sliceReport(options.report);
 
-      showToast(`Sliced ${record.plates.length} ${record.plates.length === 1 ? 'plate' : 'plates'}`);
+      showToast(`Sliced ${plural(record.plates.length, 'plate')}`);
 
       return record;
     } catch (e) {

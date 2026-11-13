@@ -4,7 +4,8 @@ import type { AssemblyGeometry, PartMoves } from './assemblyGeometry';
 import type { SplitPlane } from './splitTest';
 import { RANK } from './chainLines';
 import type { RemovalPlan } from './removalOrder';
-import { grouped, joinAnd, listIds, plural, type ReportLine } from './reportText';
+import { plural } from '../utils/plural';
+import { grouped, joinAnd, listIds, type ReportLine } from './reportText';
 import { SERVICE_TARGET_STEPS, type ServiceResult } from './serviceDepth';
 
 const PLANE_NAMES = { x: 'left/right', y: 'top/bottom', z: 'front/back' };

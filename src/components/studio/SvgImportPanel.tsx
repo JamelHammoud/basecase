@@ -6,6 +6,7 @@ import { SAMPLE_ROBOTICS_SVGS } from './samples';
 import type { SketchParams as CreateFrom2DDrawingParams } from '../../workspace/partFactories';
 import type { StudioDraft } from './useStudioDraft';
 import { errorMessage } from '../../utils/errorMessage';
+import { plural } from '../../utils/plural';
 
 const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
   const svgFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -139,8 +140,8 @@ const SvgOutput: React.FC<{
         <MetaLine
           className="min-w-0 flex-1 text-[13px] text-white/70 tabular"
           items={[
-            `${parsedSvg.shapeCount} ${parsedSvg.shapeCount === 1 ? 'shape' : 'shapes'}`,
-            parsedSvg.holeCount > 0 && `${parsedSvg.holeCount} ${parsedSvg.holeCount === 1 ? 'hole' : 'holes'}`,
+            plural(parsedSvg.shapeCount, 'shape'),
+            parsedSvg.holeCount > 0 && plural(parsedSvg.holeCount, 'hole'),
           ]}
         />
         <Button variant="ghost" size="xs" onClick={onEditInSketch}>

@@ -1,4 +1,5 @@
 import { AcpToolCallEvent } from '../../types/robotics';
+import { plural } from '../../utils/plural';
 import { isToolRunning, toolKey, toolLabel } from './toolLabel';
 
 const HANDBACK_TOOL = 'SubagentHandback';
@@ -21,12 +22,10 @@ export interface DesignerDetail {
   tone: 'live' | 'quiet' | 'failed';
 }
 
-const counted = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
-
 function madeParts(steps: AcpToolCallEvent[]) {
   const made = steps.filter((step) => toolKey(step) === 'model_part' && step.status === 'completed').length;
 
-  return made ? counted(made, 'part') : '';
+  return made ? plural(made, 'part') : '';
 }
 
 export function designerDetail(call: AcpToolCallEvent, steps: AcpToolCallEvent[]): DesignerDetail {
@@ -45,4 +44,4 @@ export function designerActivity(call: AcpToolCallEvent, steps: AcpToolCallEvent
   return call.childAt ? 'Thinking' : 'Starting';
 }
 
-export const stepCount = (steps: AcpToolCallEvent[]) => counted(steps.length, 'step');
+export const stepCount = (steps: AcpToolCallEvent[]) => plural(steps.length, 'step');

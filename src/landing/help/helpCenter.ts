@@ -87,5 +87,3 @@ export function relatedTo(center: HelpCenter, article: HelpArticle): HelpArticle
 
   return (named.length > 0 ? named : fallback).slice(0, RELATED_LIMIT);
 }
-
-export const countLabel = (count: number) => `${count} ${count === 1 ? 'article' : 'articles'}`;

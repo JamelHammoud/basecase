@@ -7,7 +7,8 @@ import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import type { Printing } from '../../workspace/usePrinting';
-import { hm, plural } from '../build/format';
+import { plural } from '../../utils/plural';
+import { hm } from '../build/format';
 import { plateNumbers, plateStateText } from './plateFacts';
 import { PrintedSection } from './PrintedSection';
 import { PrinterLive } from './PrinterLive';
@@ -43,9 +44,7 @@ function showPart(printing: Printing, id: string) {
 
 const SkipPrinted: React.FC<{ printing: Printing }> = ({ printing }) => (
   <div className="flex items-center justify-between gap-3">
-    <span className="text-[13px] text-white/60">
-      Skip {printing.printedCount} printed {plural(printing.printedCount, 'part', 'parts')}
-    </span>
+    <span className="text-[13px] text-white/60">Skip {plural(printing.printedCount, 'printed part')}</span>
     <Switch aria-label="Skip printed parts" checked={printing.skipPrinted} onChange={printing.setSkipPrinted} />
   </div>
 );

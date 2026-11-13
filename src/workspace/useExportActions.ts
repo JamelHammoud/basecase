@@ -13,6 +13,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 import { useRobotPackageExport } from './useRobotPackageExport';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../utils/plural';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -78,7 +79,7 @@ export function useExportActions(core: WorkspaceCore) {
       if (bytes) download(bytes, `${fileSafe(scene.sceneName)}${single ? '' : `-${file.key}`}.3mf`, 'model/3mf');
     }
 
-    showToast(`Exported ${report.plan.plates.length} ${report.plan.plates.length === 1 ? 'plate' : 'plates'} as 3MF`);
+    showToast(`Exported ${plural(report.plan.plates.length, 'plate')} as 3MF`);
   };
 
   const exportScene = async () => {

@@ -12,6 +12,7 @@ import { RoutineFlow } from './RoutineFlow';
 import { RoutineHeader } from './RoutineHeader';
 import { StepPanel } from './StepPanel';
 import { useRoutineKeys } from './useRoutineKeys';
+import { plural } from '../../utils/plural';
 
 export interface RoutinesPanelProps {
   routines: Routines;
@@ -25,7 +26,7 @@ function statusOf(view: RoutineView, nodeErrors: number): string {
 
   if (view.compiled?.ok) return view.tests?.passed ? 'Every scenario passes' : '';
 
-  if (nodeErrors > 0) return `Fix ${nodeErrors} ${nodeErrors === 1 ? 'step' : 'steps'} to run`;
+  if (nodeErrors > 0) return `Fix ${plural(nodeErrors, 'step')} to run`;
 
   return '';
 }

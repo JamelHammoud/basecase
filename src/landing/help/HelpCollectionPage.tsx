@@ -1,8 +1,9 @@
 import React from 'react';
+import { plural } from '../../utils/plural';
 import { PageTitle } from '../pages/PageTitle';
 import { ArticleRows } from './ArticleRows';
 import { ARTICLE_TYPES } from './helpArticle';
-import { countLabel, type HelpCollection } from './helpCenter';
+import type { HelpCollection } from './helpCenter';
 import { HelpBreadcrumb } from './HelpBreadcrumb';
 import { HelpSearch } from './HelpSearch';
 import { SectionTitle } from './SectionTitle';
@@ -22,7 +23,7 @@ export const HelpCollectionPage: React.FC<{ collection: HelpCollection }> = ({ c
       <HelpSearch className="mt-[40px]" />
       <PageTitle breadcrumb={<HelpBreadcrumb />}>{collection.title}</PageTitle>
       <p className="mt-[14px] text-[16px] leading-[1.55] text-white/60">{collection.description}</p>
-      <p className="mt-[8px] text-[13px] text-white/50 tabular-nums">{countLabel(collection.articles.length)}</p>
+      <p className="mt-[8px] text-[13px] text-white/50 tabular-nums">{plural(collection.articles.length, 'article')}</p>
       {groups.map((group) => (
         <section key={group.type} className="mt-[40px]">
           {groups.length > 1 && <SectionTitle>{TYPE_GROUPS[group.type]}</SectionTitle>}

@@ -3,10 +3,11 @@ import type { CheckContext, CheckRow, EngineeringReport } from './engineeringTyp
 import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
 
+export { plural as count } from './plural';
+
 export const nm = (v: number) => v.toFixed(2);
 export const fmtG = (g: number) => (g >= 1000 ? `${(g / 1000).toFixed(2)} kg` : `${Math.round(g)} g`);
 export const deg = (v: number) => `${Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`;
-export const count = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 export const jointLabel = (j: RobotJoint) => prettyJointName(j.name);
 export const partLabel = (ctx: CheckContext, id: string) =>
   `the ${(ctx.byPart.get(id)?.name ?? id).replace(/^\w/, (c) => c.toLowerCase())}`;

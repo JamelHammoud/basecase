@@ -4,6 +4,7 @@ import type { ScenePart } from '../types/robotics';
 import { isPrinted, printMaterialOf } from './bom';
 import { servoParts } from './engineeringPower';
 import type { CheckContext, CheckRow } from './engineeringTypes';
+import { plural } from './plural';
 
 const SERVO_CASE_C = 65;
 
@@ -67,7 +68,7 @@ export function heatRows(ctx: CheckContext): CheckRow[] {
       check: 'Heat near servos',
       status: soft.length ? 'warn' : 'pass',
       detail: soft.length
-        ? `${soft.length} parts around a servo are PLA, which softens at ${MATERIAL_SOFTENS_C.PLA} °C; servos run at 60–70 °C. Print them in PETG or ASA.`
+        ? `Print ${plural(soft.length, 'part')} around a servo in PETG or ASA: PLA softens at ${MATERIAL_SOFTENS_C.PLA} °C, and servos run at 60–70 °C.`
         : `Parts within 1 mm of a servo${ctx.input.servoTouches ? '' : '’s outline'} are in heat-tolerant filament`,
       ids: soft,
     },

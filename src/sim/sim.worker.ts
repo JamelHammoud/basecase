@@ -49,6 +49,7 @@ export type SimResponse =
       type: 'frame';
       poses: Float64Array;
       targets: Float64Array;
+      angles: Float64Array;
       stats: ReturnType<SimEngine['stats']>;
       playing: boolean;
     }
@@ -79,6 +80,7 @@ const frame = () => {
 
   const poses = engine.poses();
   const targets = engine.jointTargets();
+  const angles = engine.jointAngles();
 
   if (cameraPort) {
     const copy = poses.slice();
@@ -86,7 +88,11 @@ const frame = () => {
     cameraPort.postMessage(copy, [copy.buffer]);
   }
 
-  post({ type: 'frame', poses, targets, stats: engine.stats(rtf), playing }, [poses.buffer, targets.buffer]);
+  post({ type: 'frame', poses, targets, angles, stats: engine.stats(rtf), playing }, [
+    poses.buffer,
+    targets.buffer,
+    angles.buffer,
+  ]);
 };
 
 function loop() {

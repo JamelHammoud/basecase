@@ -5,6 +5,7 @@ import type { ServoCalibration } from '../reality/types';
 import type { RobotJoint } from '../types/robotics';
 import { canRunBench, playBench } from './benchRun';
 import { robotSceneJoints, robotSnapshot } from './robotStore';
+import { forgetLag } from './robotTwin';
 import { sceneRobot } from './sceneRobot';
 
 export type CalibrationPhase = 'idle' | 'moving' | 'fitting';
@@ -45,24 +46,32 @@ export function connectedFrom(sceneJoints: readonly RobotJoint[]): string[] | nu
 export const canCalibrate = (sceneJoints: readonly RobotJoint[]) =>
   phase === 'idle' && Boolean(connectedFrom(sceneJoints)) && canRunBench(robotSnapshot());
 
-export async function calibrateRobot(sceneJoints: readonly RobotJoint[], record: RecordCalibration): Promise<void> {
+export async function calibrateRobot(
+  sceneJoints: readonly RobotJoint[],
+  record: RecordCalibration,
+  only?: string,
+): Promise<void> {
   const joints = connectedFrom(sceneJoints);
 
-  if (!joints || !canCalibrate(sceneJoints)) return;
+  if (!joints || !canCalibrate(sceneJoints) || (only && !joints.includes(only))) return;
+
+  const subset = only ? [joints.indexOf(only)] : joints.map((_, k) => k);
 
   setPhase('moving');
 
   const fitter = calibrator();
 
   try {
-    const recording = await playBench();
+    const recording = await playBench(subset);
 
     if (!recording) return;
 
     setPhase('fitting');
 
-    for (const [k, jointId] of joints.entries())
-      record(jointId, await fitter.calibrate({ family: recording.family, logs: benchLogs(recording, k) }));
+    for (const [i, k] of subset.entries()) {
+      record(joints[k], await fitter.calibrate({ family: recording.family, logs: benchLogs(recording, i) }));
+      forgetLag(joints[k]);
+    }
   } finally {
     fitter.dispose();
     setPhase('idle');

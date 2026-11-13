@@ -490,6 +490,10 @@ export class SimEngine {
     return out;
   }
 
+  jointAngles(): Float64Array {
+    return Float64Array.from(this.jointQpos, (address) => this.data.qpos[address]);
+  }
+
   private eyesFor(policy: PolicySpec): EyeCaster | null {
     if (!policy.eyes?.length) return null;
 

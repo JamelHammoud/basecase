@@ -48,16 +48,20 @@ class BenchClock {
   }
 }
 
-export function playBench(): Promise<BenchRecording | null> {
+export function playBench(moving?: readonly number[]): Promise<BenchRecording | null> {
   const begun = robotSnapshot();
 
   if (!canRunBench(begun) || !begun.spec) return Promise.resolve(null);
 
-  const { ids, family } = begun.spec;
-  const starts = measuredStarts(begun);
+  const { family, ids: servos } = begun.spec;
+  const subset = moving ?? servos.map((_, k) => k);
+  const ids = subset.map((k) => servos[k]);
+  const holds = measuredStarts(begun);
+  const starts = subset.map((k) => holds[k]);
   const samples: BenchSample[] = [];
   const clock = new BenchClock();
-  const intent = (offset: number) => void sendRobotCommand({ cmd: 'intent', joints: starts.map((s) => s + offset) });
+  const intent = (offset: number) =>
+    void sendRobotCommand({ cmd: 'intent', joints: holds.map((s, k) => (subset.includes(k) ? s + offset : s)) });
   let last = begun.status;
 
   return new Promise((resolve) => {

@@ -24,6 +24,7 @@ import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
 import { silhouetteShots } from './fitCapture';
 import { FollowCamera } from './followCamera';
+import { GhostLayer } from './ghostLayer';
 import { Gizmo } from './gizmo';
 import { installKeys } from './keys';
 import { MarkFieldAnchor } from './markFieldAnchor';
@@ -95,6 +96,7 @@ export interface EngineOptions {
   marquee: () => HTMLElement | null;
   measureLabel: () => HTMLElement | null;
   markField: () => HTMLElement | null;
+  ghostLabel: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -130,6 +132,8 @@ export class ViewportEngine {
   private readonly cameraGlyphs: CameraGlyphs;
 
   private readonly follow: FollowCamera;
+
+  private readonly ghost: GhostLayer;
 
   private readonly cleanups: Array<() => void>;
 
@@ -172,6 +176,7 @@ export class ViewportEngine {
     this.cameraGlyphs = new CameraGlyphs(stage.overlays);
     this.cameraGlyphs.sync(options.props.fixedCameras);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
+    this.ghost = new GhostLayer(this.ctx, options.ghostLabel);
 
     const outline = new SelectionOutline(stage);
 
@@ -179,6 +184,7 @@ export class ViewportEngine {
     loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
     loop.afterRender.add(() => this.measureTool.updateLabel());
     loop.afterRender.add(() => this.markField.place());
+    loop.afterRender.add(() => this.ghost.placeLabel());
     loop.afterRender.add(() => {
       if (this.agentFrames.refresh()) loop.invalidate();
     });
@@ -271,6 +277,7 @@ export class ViewportEngine {
     this.markLayer.dispose();
     this.agentFrames.dispose();
     this.cameraGlyphs.dispose();
+    this.ghost.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -315,6 +322,8 @@ export class ViewportEngine {
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
+      setGhost: (ghost) => this.ghost.set(ghost),
+      ghostState: () => this.ghost.state(),
       followPart: (partId) => {
         this.follow.follow(partId);
         ctx.loop.following = this.follow.active;
@@ -406,6 +415,7 @@ export class ViewportEngine {
 
   private afterBuild(): void {
     this.applyPose();
+    this.ghost.sync();
     this.gizmo.refresh();
 
     if (this.frameWhenBuilt && !this.ctx.layer.hasPending) this.frameAll();

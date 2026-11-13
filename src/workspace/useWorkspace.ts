@@ -6,6 +6,7 @@ import { useClipboard } from './useClipboard';
 import { useDevStudioHook } from './useDevStudioHook';
 import { useGuideAutoUpdate } from './useGuideAutoUpdate';
 import { useMenuCommands } from './useMenuCommands';
+import { useRobotGhost } from './useRobotGhost';
 import { useWorkspaceActions } from './useWorkspaceActions';
 import { useWorkspaceCore } from './useWorkspaceCore';
 import { useWorkspaceHost } from './useWorkspaceHost';
@@ -37,6 +38,12 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   useWorkspaceKeys({ active, core, actions, ui });
   useMenuCommands({ active, core, actions, ui });
   useDevStudioHook({ active, core, actions, agent });
+  useRobotGhost({
+    rig: core.posing.rig,
+    parts: core.parts,
+    joints: core.project.joints,
+    viewportRef: core.viewportRef,
+  });
 
   const rightIslandRef = useWorkspaceHost({ active, seed, core, agent });
 

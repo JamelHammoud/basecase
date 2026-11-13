@@ -10,6 +10,7 @@ import { CalibrationRow } from './CalibrationRow';
 export interface CalibrationProps {
   calibrations: Record<string, CalibrationHistory> | undefined;
   onCalibrate: () => void;
+  onCalibrateJoint: (jointId: string) => void;
   onRollBack: (jointId: string) => void;
 }
 

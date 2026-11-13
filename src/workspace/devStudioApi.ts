@@ -6,7 +6,10 @@ import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
 import { bytesToBase64 } from '../utils/base64';
+import type { Angles } from '../robot/robotGap';
+import { degrees } from '../robot/robotGhost';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { twinSnapshot } from '../robot/robotTwin';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
@@ -99,6 +102,22 @@ const partSummaries = (parts: ScenePart[]) =>
     componentId,
   }));
 
+function robotGhostState(viewport: Viewport3DHandle | null) {
+  const twin = twinSnapshot();
+  const byJoint = (angles: Angles | null | undefined) =>
+    twin && angles
+      ? Object.fromEntries(twin.joints.map((id, k) => [id, angles[k] === null ? null : degrees(angles[k])]))
+      : null;
+
+  return {
+    layer: viewport?.ghostState() ?? null,
+    measured: byJoint(twin?.measured),
+    sim: byJoint(twin?.sim),
+    gaps: byJoint(twin?.gaps),
+    largest: twin?.largest ? { joint: twin.largest.joint, degrees: degrees(twin.largest.gap) } : null,
+  };
+}
+
 interface DevRecord {
   name?: string;
   parts: ScenePart[];
@@ -139,6 +158,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    robotGhost: () => robotGhostState(viewportRef.current),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

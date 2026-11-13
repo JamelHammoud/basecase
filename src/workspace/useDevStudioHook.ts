@@ -17,9 +17,10 @@ interface DevHookOptions {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
+  routeFiles: (files: File[]) => void;
 }
 
-export function useDevStudioHook({ active, core, actions, agent }: DevHookOptions) {
+export function useDevStudioHook({ active, core, actions, agent, routeFiles }: DevHookOptions) {
   const { docs, viewportRef, setSelectedIds, posing, loadSeed } = core;
   const { partsRef, projectRef } = docs;
   const { subscribePoses } = core.simTraining.sim;
@@ -35,6 +36,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       setSelectedIds([]);
     },
     select: (ids) => setSelectedIds(ids),
+    dropFiles: routeFiles,
     simState: () => {
       const { sim, cases } = core.simTraining;
       const stats = sim.latestStats() ?? sim.stats;

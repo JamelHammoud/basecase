@@ -36,7 +36,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   useGuideAutoUpdate({ guide: core.guide, enabled: studio.autoGuide, agentBusy: agent.busy });
   useWorkspaceKeys({ active, core, actions, ui });
   useMenuCommands({ active, core, actions, ui });
-  useDevStudioHook({ active, core, actions, agent });
+  useDevStudioHook({ active, core, actions, agent, routeFiles: drop.routeFiles });
 
   const rightIslandRef = useWorkspaceHost({ active, seed, core, agent });
 

@@ -1,5 +1,6 @@
 import type { Command } from '../components/CommandPalette';
 import { CasesIcon, DownloadIcon, PlusIcon, RotateLeftIcon, RunIcon, ShareIcon, StopIcon } from '../design-system';
+import type { Room } from '../cases/roomPlan';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -13,6 +14,11 @@ const showCases = (core: WorkspaceCore) => {
 export const showNewCase = (core: WorkspaceCore) => {
   showCases(core);
   core.simTraining.cases.builder.start();
+};
+
+export const showRoomCase = (core: WorkspaceCore, room: Room) => {
+  showCases(core);
+  core.simTraining.cases.builder.startInRoom(room);
 };
 
 export function caseCommands({ core }: CommandInputs): Command[] {

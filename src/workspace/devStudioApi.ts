@@ -8,7 +8,7 @@ import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from
 import { sceneToStl } from '../utils/aiHandoff';
 import { lastDownload } from '../utils/downloadBytes';
 import { replayErrors } from '../reality/jointReplay';
-import { bytesToBase64 } from '../utils/base64';
+import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
@@ -28,6 +28,7 @@ export interface DevActions {
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   clear: () => void;
   select: (ids: string[]) => void;
+  dropFiles: (files: File[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
@@ -132,6 +133,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
+    dropFiles: (files: Array<{ name: string; base64: string }>) =>
+      devRef.current.dropFiles(files.map((f) => new File([new Uint8Array(base64ToBytes(f.base64))], f.name))),
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),

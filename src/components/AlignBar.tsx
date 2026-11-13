@@ -1,62 +1,7 @@
 import React from 'react';
-import {
-  IconButton,
-  Tooltip,
-  AlignBottomIcon,
-  AlignCenterXIcon,
-  AlignCenterYIcon,
-  AlignLeftIcon,
-  AlignRightIcon,
-  AlignTopIcon,
-  GlyphIcon,
-  SpreadXIcon,
-  SpreadYIcon,
-} from '../design-system';
+import { IconButton, Tooltip } from '../design-system';
 import type { AlignMode, Axis } from '../utils/selection';
-
-const BAR_ROWS: Array<{
-  axis: Axis;
-  label: string;
-  spread: GlyphIcon;
-  options: Array<[AlignMode, string, GlyphIcon]>;
-}> = [
-  {
-    axis: 0,
-    label: 'X',
-    spread: SpreadXIcon,
-    options: [
-      ['min', 'Left', AlignLeftIcon],
-      ['center', 'Center', AlignCenterXIcon],
-      ['max', 'Right', AlignRightIcon],
-    ],
-  },
-  {
-    axis: 1,
-    label: 'Y',
-    spread: SpreadYIcon,
-    options: [
-      ['min', 'Bottom', AlignBottomIcon],
-      ['center', 'Middle', AlignCenterYIcon],
-      ['max', 'Top', AlignTopIcon],
-    ],
-  },
-  {
-    axis: 2,
-    label: 'Z',
-    spread: SpreadXIcon,
-    options: [
-      ['min', 'Back', AlignLeftIcon],
-      ['center', 'Center', AlignCenterXIcon],
-      ['max', 'Front', AlignRightIcon],
-    ],
-  },
-];
-
-const alignTitle = ({ single, axis, mode, side }: { single: boolean; axis: Axis; mode: AlignMode; side: string }) => {
-  if (!single) return `Align ${side.toLowerCase()}`;
-
-  return axis === 1 && mode === 'min' ? 'Bottom to floor' : `${side} to origin`;
-};
+import { ALIGN_AXES, singlePartAlignTitle } from './alignActions';
 
 interface AlignBarProps {
   count: number;
@@ -66,6 +11,7 @@ interface AlignBarProps {
 }
 
 export const AlignBar: React.FC<AlignBarProps> = ({ count, onAlign, onDistribute, onDone }) => {
+  const canSpread = count >= 3;
   const then = (action: () => void) => () => {
     action();
     onDone?.();
@@ -73,26 +19,30 @@ export const AlignBar: React.FC<AlignBarProps> = ({ count, onAlign, onDistribute
 
   return (
     <div className="space-y-1.5">
-      {BAR_ROWS.map((row) => (
-        <div key={row.axis} className="grid grid-cols-[14px_1fr_32px] items-center gap-2">
-          <span className="text-[12px] font-medium text-white/50 text-center select-none">{row.label}</span>
+      {ALIGN_AXES.map((row) => (
+        <div
+          key={row.axis}
+          className={`grid items-center gap-2 ${canSpread ? 'grid-cols-[14px_1fr_32px]' : 'grid-cols-[14px_1fr]'}`}
+        >
+          <span className="text-[12px] font-medium text-white/50 text-center select-none">{row.name}</span>
           <StripGroup>
-            {row.options.map(([mode, side, Icon]) => (
+            {row.aligns.map((action) => (
               <StripButton
-                key={mode}
-                title={alignTitle({ single: count === 1, axis: row.axis, mode, side })}
-                onClick={then(() => onAlign(row.axis, mode))}
+                key={action.mode}
+                title={count === 1 ? singlePartAlignTitle(row.axis, action) : action.label}
+                onClick={then(() => onAlign(row.axis, action.mode))}
               >
-                <Icon className="w-4 h-4" />
+                <action.icon className="w-4 h-4" />
               </StripButton>
             ))}
           </StripGroup>
-          <IconButton
-            icon={<row.spread className="w-4 h-4" />}
-            title={count >= 3 ? `Spread evenly along ${row.label}` : 'Spread needs 3 or more parts'}
-            disabled={count < 3}
-            onClick={then(() => onDistribute(row.axis))}
-          />
+          {canSpread && (
+            <IconButton
+              icon={<row.spread.icon className="w-4 h-4" />}
+              title={row.spread.label}
+              onClick={then(() => onDistribute(row.axis))}
+            />
+          )}
         </div>
       ))}
     </div>

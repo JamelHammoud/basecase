@@ -19,25 +19,28 @@ jobs:
     outputs:
       app: ${{ steps.filter.outputs.app }}
       ros: ${{ steps.filter.outputs.ros }}
+      ios: ${{ steps.filter.outputs.ios }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Decide whether the packaged app and the ROS package need checking
+      - name: Decide whether the packaged app, the ROS package and the iPhone app need checking
         id: filter
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
           EVENT: ${{ github.event_name }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          if [ "$EVENT" != pull_request ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then printf 'app=true\nros=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT" != pull_request ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then printf 'app=true\nros=true\nios=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           files=$(git diff --name-only "$BASE...$HEAD")
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
           ros='^(src/sim/|src/utils/robotImport/|src/utils/(kinematics|engineering|stlBytes|zipFolder)|src/types/robotics\.ts$|src/three/meshMeasure\.ts$|src/workspace/robotPackageExport\.ts$|src/reality/|src/robot/sceneRobot\.ts$|tools/ros/|\.github/workflows/check\.yml$|package-lock\.json$)'
           if grep -qE "$ros" <<< "$files"; then echo "ros=true"; else echo "ros=false"; fi >> "$GITHUB_OUTPUT"
+          ios='^(ios/|e2e/fixtures/scanned-room\.json$|\.github/workflows/check\.yml$)'
+          if grep -qE "$ios" <<< "$files"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
 
   unit:
     strategy:
@@ -235,6 +238,18 @@ jobs:
       - name: Build every fixture robot's package with colcon in ros:jazzy and check its URDF
         run: node tools/ros/check.mjs
 
+  ios:
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build Basecase Scan for the simulator and run its XCTests
+        run: sh ios/test.sh
+
   credit:
     runs-on: ubuntu-latest
     steps:
@@ -276,7 +291,7 @@ jobs:
 
   check:
     if: always()
-    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, credit, copy]
+    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, credit, copy]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
@@ -290,12 +305,14 @@ jobs:
           APP_NEEDED: ${{ needs.changes.outputs.app }}
           ROS: ${{ needs.ros.result }}
           ROS_NEEDED: ${{ needs.changes.outputs.ros }}
+          IOS: ${{ needs.ios.result }}
+          IOS_NEEDED: ${{ needs.changes.outputs.ios }}
           WINDOWS_E2E: ${{ needs.e2e-windows.result }}
           COPY: ${{ needs.copy.result }}
           EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Required: $REQUIRED; full: $FULL; e2e: $E2E; changed e2e: $E2E_CHANGED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
+          echo "Required: $REQUIRED; full: $FULL; e2e: $E2E; changed e2e: $E2E_CHANGED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); iOS: $IOS (needed: $IOS_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
           [ "$(wc -w <<< "$REQUIRED")" -eq 3 ] || exit 1
           for r in $REQUIRED; do [ "$r" = success ] || exit 1; done
           want_full=skipped
@@ -311,6 +328,9 @@ jobs:
           want_ros=success
           [ "$ROS_NEEDED" = true ] || want_ros=skipped
           [ "$ROS" = "$want_ros" ] || exit 1
+          want_ios=success
+          [ "$IOS_NEEDED" = true ] || want_ios=skipped
+          [ "$IOS" = "$want_ios" ] || exit 1
           want_copy=skipped
           [ "$EVENT" = pull_request ] && [[ "$HEAD_REF" != loop/batch/* ]] && want_copy=success
           [ "$COPY" = "$want_copy" ] || exit 1

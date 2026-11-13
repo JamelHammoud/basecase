@@ -12,9 +12,7 @@
 
 **Writing any user-facing text** (labels, buttons, headers, captions, empty states, toasts, errors, tooltips, agent-facing UI)? Follow [Copy](docs/guide/copy.md) (§3; changelog, blog and help center pages §3f), and run its checklist (§3d, repeated below) on every string you add or change.
 
-**Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are.
-
-**Security audit, vulnerable package or toolchain update?** Follow [.agents/skills/security-audit/SKILL.md](.agents/skills/security-audit/SKILL.md) (`npm run security` scans). Code that touches IPC, the HTTP bridge, file ids, outbound fetches or the CAD kernel follows [Security](docs/guide/security.md) (§0h).
+**Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are. **Security audit, vulnerable package or toolchain update?** Follow [.agents/skills/security-audit/SKILL.md](.agents/skills/security-audit/SKILL.md) (`npm run security` scans). Code that touches IPC, the HTTP bridge, file ids, outbound fetches or the CAD kernel follows [Security](docs/guide/security.md) (§0h).
 
 ## Guide index
 
@@ -43,6 +41,7 @@
 | 8i | [Skills](docs/guide/skills.md) | `src/skills/`, task contracts, the solver race, Arena, Motor Kit |
 | 8j | [Routines](docs/guide/routines.md) | `src/routines/`, the coordinator, ML nodes, scenario tests |
 | 8l | [Cameras](docs/guide/cameras.md) | `src/cameras/`, camera parts and lenses, stationary camera views, live views, fisheye, the agent's `operate`, the depth eye |
+| 8m | [Scan app](docs/guide/scan-app.md) | `ios/`, Basecase Scan for iPhone, the room file it shares |
 | 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration (`src/reality/`) |
 | 0k | [Proof](docs/guide/proof.md) | `verify/`, Gatekeeper, gates, the hidden twin, the Stage 8 session |
 | 0l | [Loop](docs/guide/loop.md) | `tools/loop/`, how agents open, review and merge pull requests, CI repair, nightly releases |

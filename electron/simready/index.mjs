@@ -129,8 +129,8 @@ export class SimReady {
 
     const root = await downloadAsset(asset, raw, say);
 
-    if (!fs.existsSync(path.join(this.envDir, 'pyvenv.cfg'))) say('Installing the USD reader (one time)');
-    else say('Converting');
+    if (!fs.existsSync(path.join(this.envDir, 'pyvenv.cfg'))) say('Installing the USD reader…');
+    else say('Converting…');
 
     fs.rmSync(out, { recursive: true, force: true });
     fs.mkdirSync(out, { recursive: true });

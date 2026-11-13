@@ -51,7 +51,7 @@ async function loadMeshFiles(model: Model, resolver: Resolver, say: Say, notes: 
 
       files.set(file, geo);
       done++;
-      say(`Loading meshes ${done}/${unique.length}`);
+      say(`Loading meshes ${done}/${unique.length}…`);
     }
   };
 
@@ -175,13 +175,13 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   const say = opts.onProgress ?? (() => {});
   const notes: string[] = [];
 
-  say('Reading the description');
+  say('Reading the description…');
 
   const { model, resolver, origin } = await readModel(source);
   const name = opts.name ?? prettyJointName(model.name);
   const files = await loadMeshFiles(model, resolver, say, notes);
 
-  say('Building parts');
+  say('Building parts…');
 
   const frame = opts.rotate ? catalogFrame(opts.rotate) : S;
   const linkGeo = await linkGeometries(model, files, frame, opts.color);

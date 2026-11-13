@@ -1,4 +1,4 @@
-import { MISSED, type CaseRuns } from '../cases/caseRuns';
+import { MISSED, noRuns, type CaseRuns } from '../cases/caseRuns';
 import type { CheckRow } from '../utils/engineeringTypes';
 import type { Finding } from './types';
 
@@ -8,6 +8,8 @@ export const CASE_STOPPED = 'The runs stopped.';
 
 const PASS_SHARE = 0.9;
 const WARN_SHARE = 0.5;
+
+export const passesNeeded = (runs: number) => Math.ceil(runs * PASS_SHARE - 1e-9);
 
 export function caseStatus(runs: Pick<CaseRuns, 'runs' | 'passes' | 'refusal'>): CheckRow['status'] {
   if (runs.refusal || !runs.runs) return 'fail';
@@ -33,8 +35,7 @@ export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): Che
   return { ...base, detail, items: failure };
 }
 
-export const stoppedRow = (kase: { id: string; name: string }): CheckRow =>
-  caseRow(kase, { runs: 0, passes: 0, medianMargin: -1, commonFailure: null, refusal: CASE_STOPPED });
+export const stoppedRow = (kase: { id: string; name: string }): CheckRow => caseRow(kase, noRuns(CASE_STOPPED));
 
 export const replacedRow = (kase: { id: string; name: string }): CheckRow => ({
   ...stoppedRow(kase),

@@ -3,7 +3,7 @@ import type { HardwareSpec } from '../data/hardware';
 import type { PartPlacement, PartTransformUpdate } from '../three/viewport/types';
 import type { PartRole, ScenePart, SculptMeshData } from '../types/robotics';
 import { alignParts, distributeParts, type AlignMode, type Axis } from '../utils/selection';
-import { newId } from './helpers';
+import { newId, plural } from './helpers';
 import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withHardware } from './partTransforms';
 import type { CommitParts, Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -59,9 +59,9 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
       ),
     );
 
-    const named = groups.size === 1 ? [...groups.values()][0] : `${groups.size} groups`;
+    const [only] = groups.values();
 
-    showToast(`Ungrouped ${named}`);
+    showToast(`Ungrouped ${groups.size === 1 ? only : plural(groups.size, 'group', 'groups')}`);
   };
 
   const renameGroup = (groupId: string, name: string) =>

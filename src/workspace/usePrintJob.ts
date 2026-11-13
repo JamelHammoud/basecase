@@ -128,7 +128,7 @@ export function usePrintJob(options: PrintJobOptions) {
   };
 
   const openInSlicer = async (material?: PrintMaterial) => {
-    showToast('Preparing the project', { tone: 'progress' });
+    showToast('Preparing the project…', { tone: 'progress' });
 
     try {
       const opened = await printBridge.open(await buildPayload(options, material));

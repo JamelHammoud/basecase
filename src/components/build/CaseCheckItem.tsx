@@ -11,6 +11,7 @@ export const CaseCheckItem: React.FC<{
   <li>
     <button
       type="button"
+      data-status={check.status}
       onClick={() => context.onOpenCase?.(check.caseId)}
       className="w-full flex items-start gap-2 py-1.5 px-[7px] rounded-lg text-left cursor-default hover:bg-white/[0.04]"
     >

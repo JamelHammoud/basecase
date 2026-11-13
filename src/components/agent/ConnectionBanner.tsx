@@ -12,16 +12,11 @@ const ApiKeyField: React.FC<{ onSave: (key: string) => Promise<void>; onCancel: 
   const [key, setKey] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const save = async () => {
+  const save = () => {
     if (!key.trim()) return;
 
     setSaving(true);
-
-    try {
-      await onSave(key.trim());
-    } finally {
-      setSaving(false);
-    }
+    onSave(key.trim()).finally(() => setSaving(false));
   };
 
   return (
@@ -68,14 +63,9 @@ const SignInBanner: React.FC<{
   const [enteringKey, setEnteringKey] = useState(false);
   const method = acpStatus.signIn?.methods[0];
 
-  const signIn = async (id: string) => {
+  const signIn = (id: string) => {
     setWaiting(true);
-
-    try {
-      await onSignIn(id);
-    } finally {
-      setWaiting(false);
-    }
+    onSignIn(id).finally(() => setWaiting(false));
   };
 
   return (
@@ -84,8 +74,8 @@ const SignInBanner: React.FC<{
         <span className="flex-1 min-w-0 break-words">
           {waiting ? 'Finish signing in in your browser' : `Sign in to use ${acpStatus.agentName}`}
         </span>
-        {method && (
-          <Button size="xs" disabled={waiting} onClick={() => signIn(method.id)} className="shrink-0">
+        {method && !waiting && (
+          <Button size="xs" onClick={() => signIn(method.id)} className="shrink-0">
             {method.name}
           </Button>
         )}

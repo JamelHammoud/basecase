@@ -33,7 +33,19 @@ export function createKernel(deps) {
     }
   }
 
-  const runJob = (job) => (job?.mesh ? auditJob(job) : renderJob(job ?? {}));
+  async function stepJob({ step }) {
+    try {
+      return await engines.replicad.exportStep(step);
+    } catch (err) {
+      return { ok: false, error: String(err?.message ?? err).slice(0, 4000) };
+    }
+  }
+
+  const runJob = (job) => {
+    if (job?.step) return stepJob(job);
+
+    return job?.mesh ? auditJob(job) : renderJob(job ?? {});
+  };
 
   return {
     run(job) {

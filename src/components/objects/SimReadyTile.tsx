@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SIMREADY_DRAG_TYPE } from '../../data/dnd';
-import { ArrowUpRightIcon, Button, HoverCard, ObjectsIcon, Tooltip } from '../../design-system';
+import { ArrowUpRightIcon, HoverCard, ObjectsIcon } from '../../design-system';
 import type { SimReadyAsset } from '../../simready/search';
 import { Header, LinkButton, SizeLine, Stat } from '../PartDetails';
 
@@ -30,11 +30,7 @@ const Thumb: React.FC<{ src: string; large?: boolean }> = ({ src, large }) => {
   );
 };
 
-const Details: React.FC<{ asset: SimReadyAsset; onInsert: () => void; disabled: boolean }> = ({
-  asset,
-  onInsert,
-  disabled,
-}) => (
+const Details: React.FC<{ asset: SimReadyAsset }> = ({ asset }) => (
   <div>
     <div className="preview aspect-[4/3] m-2 mb-0 flex items-center justify-center rounded-[14px]">
       <Thumb src={asset.thumbnail} large />
@@ -49,13 +45,10 @@ const Details: React.FC<{ asset: SimReadyAsset; onInsert: () => void; disabled: 
       {asset.massKg !== null && <Stat label="Weight">{kg(asset.massKg)}</Stat>}
       {asset.bodies !== null && asset.bodies > 1 && <Stat label="Moving parts">{asset.bodies}</Stat>}
     </div>
-    <div className="mt-3 border-t border-white/[0.07] p-3 flex items-center gap-1.5">
-      <Button variant="primary" size="sm" fullWidth disabled={disabled} onClick={onInsert}>
-        Insert
-      </Button>
-      <Tooltip label="Open on Hugging Face" side="bottom">
-        <LinkButton href={asset.url} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />} label="Open on Hugging Face" />
-      </Tooltip>
+    <div className="mt-3 border-t border-white/[0.07] p-3 [&>a]:w-full">
+      <LinkButton href={asset.url} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />}>
+        Open on Hugging Face
+      </LinkButton>
     </div>
   </div>
 );
@@ -65,11 +58,7 @@ export const SimReadyTile: React.FC<{
   disabled: boolean;
   onInsert: () => void;
 }> = ({ asset, disabled, onInsert }) => (
-  <HoverCard
-    content={() => <Details asset={asset} onInsert={onInsert} disabled={disabled} />}
-    beside="aside"
-    className="w-full"
-  >
+  <HoverCard content={() => <Details asset={asset} />} beside="aside" className="w-full">
     <button
       type="button"
       disabled={disabled}

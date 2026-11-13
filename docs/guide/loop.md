@@ -68,7 +68,13 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 2. An agent session does the work there, following AGENTS.md and the area's guide, and runs `npm run check:changed -- <files>`.
 3. The lane commits, pushes and opens the pull request. Its body says what changed and why; a `Feature:` or `Integration:` body also names the changelog entry the change adds, and every other kind's Changelog section reads None (`tools/loop/lib/pull.mjs`).
 4. The review lane reviews it in a fresh session (below) and sets the `agent-review` status.
-5. The batch lane gathers it with up to 14 other reviewed pull requests whose quick Check passed into one `loop/batch/` pull request. That batch runs the full Check once, and the merge lane lands it with a merge commit, which marks every pull request in it merged. A batch whose full Check fails closes, and the next batch retries half of it, down to a single pull request, which goes back to the revise lane. Repairs skip the batch: the merge lane squash-merges them on their own once their full Check passes.
+5. The batch lane gathers it with up to 14 other reviewed pull requests whose quick Check passed into one `loop/batch/` pull request. That batch runs the full Check once, and the merge lane lands it with a merge commit, which marks every pull request in it merged. Repairs skip the batch: the merge lane squash-merges them on their own once their full Check passes.
+
+The train never stops for long (`tools/loop/lanes/batch.mjs`, `tools/loop/lib/train.mjs`; checked every minute):
+
+- **A failure is believed only twice.** e2e tests retry once in CI (`vitest.e2e.config.ts`). A failed batch has its failed jobs re-run once before it closes, and so does a red `main`, before the train waits on a repair.
+- **Bisecting runs beside the train.** A batch that fails twice closes and its pull requests become suspects. A bisecting batch (`…-bisect`, titled `…, bisecting`) tries the first half of them; if it passes, it lands and the other half are the suspects; if it fails, its half are. The last suspect standing goes back to the revise lane. Meanwhile a fresh batch carries every other ready pull request, so one bad change holds up only the pull requests under suspicion.
+- **Review goes where it lands.** Eight review slots take pull requests whose quick Check passed first, and skip those with conflicts or a failed Check until the rebase or revise lane has fixed them.
 6. The worktree and the branch are deleted.
 
 `main`'s ruleset requires `check` and `agent-review` and no approvals: GitHub doesn't let an account approve its own pull request, and every pull request is Jamel's.
@@ -102,7 +108,7 @@ A flake that can't be fixed in a day goes on `tools/quarantine.json` with an iss
 
 ### Releases
 
-`.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i). basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
+`.github/workflows/nightly.yml` runs at 09:17 UTC. It takes the newest push to `main` whose full Check passed, and when that's newer than the last release, dispatches `release.yml` to build that commit (its `ref` input) with the next patch version, so one red run at 09:17 doesn't skip the night. GitHub sometimes drops a scheduled run, so the Mac's `nightly` lane starts the workflow itself when it hasn't run by 09:45 UTC (`tools/loop/lib/nightly.mjs`) ([Releases](releases.md), §0i). basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
 
 ### Writing posts and help
 
@@ -112,12 +118,14 @@ basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site
 |---|---|---|
 | `site/content/changelog/` | `YYYY-MM-DD-title-in-words.md` | `title`, `date`, `image` for a cover screenshot, `version` when it shipped in a release |
 | `site/content/blog/` | `title-in-words.md` | `title`, `date`; `draft: true` only to hold a post back |
-| `site/content/help/` | `task-in-words.md`, which is its URL | `title`, `date`, `covers:` (a list of the code paths it documents) |
+| `site/content/help/` | `task-in-words.md`, which is its URL | `title`, `date`, `collection`, `type`, `covers:` (a list of the code paths it documents); optional `updated`, `related:`, `keywords:`, `popular`, `order`, `image` (below) |
 
 ```md
 ---
 title: Import a mesh
 date: 2026-11-12
+collection: design
+type: task
 covers:
   - src/workspace/meshImport.ts
 ---
@@ -135,7 +143,19 @@ Bring a model from another app into the scene as a printable part.
 - **The blog appears with its first post.** Until then the build writes no `/blog` page, and the nav and sitemap leave it out. The landing's footer links Changelog and Help (`SECTIONS` in `src/landing/pages/sections.ts`).
 - Front matter is `key: value` lines and `- item` lists, indented or not; `true` and `false` are booleans with or without quotes. A missing title or date, a date not written `YYYY-MM-DD`, or a file name that isn't lowercase words joined by dashes fails the build with the file's path.
 - Raw HTML in the markdown is dropped. `http` and `https` links open in a new tab.
-- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and to a help article, and the nav's Blog link to a post and back. It builds the real `site/content`, so it expects a published post.
+- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and through a help collection to an article, the nav's Blog link to a post and back, and types into help search on an article to open another by a word from its body. It builds the real `site/content`, so it expects a published post.
+
+#### The help center
+
+`/help` is a home page with search, the collections as cards with their article counts, and Popular articles. Each collection has its own page at `/help/<collection>`, its articles grouped by type; each article is at `/help/<file name>` with a breadcrumb (Help, then its collection), its type and updated date, an On this page list once it has enough `##` headings (3 for task and concept, 2 for reference and troubleshooting), related articles, and previous and next within the collection. The code is `src/landing/help/`.
+
+- **Collections** follow the robotics loop, in this order: `get-started`, `design`, `engineer`, `simulate-and-train`, `build-and-print`, `operate`, `agent`, `files-and-sharing`, `troubleshooting`. Their titles and one-line descriptions live in `src/landing/help/collections.ts`; edit them there. A collection with no published article has no page and stays off the home page, the way the blog waits for its first post.
+- **`type:`** is `task` (how-to, numbered steps), `concept` (what something is and why), `reference` (tables and lists to look things up) or `troubleshooting` (a problem per `##` heading, with its fix), after Diátaxis. It shows as How-to, Concept, Reference or Troubleshooting under the title. Ordered lists in task and troubleshooting articles render as numbered steps; in the others, as plain numbered lists.
+- **Optional fields:** `updated: YYYY-MM-DD` when you rewrite an article (it shows as Updated, and defaults to `date`); `related:` a list of other help file names to link at the end (without it, the article links others from its collection); `keywords:` a list of extra words people search for that the article doesn't say (`slicer`, `cmd k`); `popular: true` to feature it on the home page (up to 6; with none marked, the newest show); `order: 1` and up to place it within its type in the collection (then by title); `image` for an `og:image` and cover.
+- **The build fails with the file's path** on an unknown field (a typo like `colection:`), a missing or unknown `collection` or `type`, an `updated` before `date` or not `YYYY-MM-DD`, a non-numeric `order`, a `popular` that isn't true or false, a `related:` that names a file that doesn't exist or the article itself, and a file name that's also a collection's (`design.md`). Drafts count for `related:`, so a link to one doesn't fail; it just doesn't show until it's published.
+- **In the body:** screenshots go in `site/public/help/<file name>/` and in the markdown as `![What it shows](/help/<file name>/shot.png)`. Write a shortcut as `[[⌘K]]` or `[[⇧⌘Z]]`, with Mac glyphs; it renders as key caps. A note or warning is a GitHub alert: a quote whose first line is `[!NOTE]` or `[!WARNING]`. Tables are GitHub tables.
+- **Search** is a small custom index, not Pagefind: the build writes `/help/search.json` (title, `##` headings, keywords, collection, first paragraph and the body as plain text for every published article) and `src/landing/help/search/helpSearchMain.ts` (about 3 KB gzipped, loaded only by help pages) searches it as you type. Title matches outrank headings, then keywords, the first paragraph and the body; every word must match, the last one by prefix; plurals and accents fold; `src/landing/help/search/synonyms.ts` maps the app's terms to the words people type (STL and mesh, MuJoCo and sim, 3MF and print). With no match it offers the collections. `/` or ⌘K focuses the box, the arrows move, Enter opens, Esc closes. `/help?q=word` opens with a search. Pagefind indexes the built HTML with a native binary and a WebAssembly runtime, and has no synonym list of its own; at a few hundred articles the whole index is still smaller than one screenshot, and building it from the content model keeps ranking testable in Vitest.
+- `src/landing/help/helpCenter.test.ts` checks collections, ordering, related links, front matter failures and unique URLs; `helpPages.test.ts` checks the pages, the search index and that search finds committed articles by words from their bodies; `search/search.test.ts` checks ranking, synonyms and snippets.
 
 ### Keeping the flow
 

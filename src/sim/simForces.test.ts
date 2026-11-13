@@ -41,7 +41,6 @@ const arm = (effort: number): SimModel => ({
   robots: [],
   initial: { values: {} },
   massKg: {},
-  warnings: [],
 });
 
 async function holdArm(stallNm: number, limitNm: number) {

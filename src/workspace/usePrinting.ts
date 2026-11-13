@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/printers';
-import type { Plate } from '../print/plan';
+import { turnedPrint, type Plate } from '../print/plan';
 import { printBridge, type PrinterStatus } from '../print/printBridge';
 import { printRecordFor, splitPrinted, updateRecord, withRecord } from '../print/tracker';
 import type { Viewport3DHandle } from '../three/viewport/types';
@@ -72,6 +72,12 @@ export function usePrinting(options: PrintingOptions) {
       prev.map((p) => (ids.includes(p.id) ? { ...p, print: cleanPrint({ ...p.print, ...patch }) } : p)),
     );
 
+  const turnPart = (id: string) => {
+    const turned = turnedPrint(report?.plan.plates ?? [], id);
+
+    if (turned) setPartPrint([id], turned);
+  };
+
   const freshSlice = (plate: Plate) =>
     job.slice?.plates.find((p) => p.number === plate.number && p.hash === plate.hash);
 
@@ -134,6 +140,7 @@ export function usePrinting(options: PrintingOptions) {
     sendPlate,
     markPlate,
     setPartPrint,
+    turnPart,
     freshSlice,
   };
 }

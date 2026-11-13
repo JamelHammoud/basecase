@@ -7,9 +7,11 @@ import { printReportOf } from '../utils/printReport';
 import { encodeSceneFile, SCENE_FILE_EXTENSION, sharedScene } from '../utils/sceneFile';
 import { scenePreview } from '../three/scenePreview';
 import { fileSafe } from './helpers';
+import { isStepBody } from './stepExport';
+import { useStepExport } from './useStepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
-import { robotPackageZip } from './robotPackageExport';
+import { useRobotPackageExport } from './useRobotPackageExport';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -18,7 +20,8 @@ export function useExportActions(core: WorkspaceCore) {
 
   const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing } = core;
   const sharingRef = useRef(false);
-  const packingRef = useRef(false);
+  const exportStep = useStepExport({ parts, scene, showToast, toasts });
+  const exportRobotPackage = useRobotPackageExport(core);
 
   const exportStl = () => {
     if (parts.length === 0) return;
@@ -137,32 +140,9 @@ export function useExportActions(core: WorkspaceCore) {
     }
   };
 
-  const exportRobotPackage = async () => {
-    if (packingRef.current) return;
-
-    packingRef.current = true;
-    showToast('Exporting robot package…', { tone: 'progress' });
-
-    try {
-      const made = await robotPackageZip(core);
-
-      if (!made) {
-        toasts.dismissToast();
-
-        return;
-      }
-
-      download(made.zip, `${made.name}.zip`, 'application/zip');
-      showToast(`Exported ${made.name}`);
-    } catch (err) {
-      showToast(`Couldn’t export the robot package. ${String(err)}`, { tone: 'error' });
-    } finally {
-      packingRef.current = false;
-    }
-  };
-
   return {
     exportStl,
+    exportStep,
     exportImage,
     export3mf,
     exportScene,
@@ -170,6 +150,7 @@ export function useExportActions(core: WorkspaceCore) {
     copyBrief,
     exportRobotPackage,
     canExportStl: parts.length > 0,
+    canExportStep: parts.some(isStepBody),
     canExportRobot: posing.hasRig,
   };
 }

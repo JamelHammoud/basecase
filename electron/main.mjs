@@ -189,6 +189,7 @@ ipcMain.handle('sourced:remove', (_e, id) => backend.removeSourced(id));
 ipcMain.handle('sourced:mesh', (_e, id) => backend.sourcedMesh(id));
 ipcMain.handle('sourced:import-cad', (_e, payload) => backend.importMakerCad(payload));
 ipcMain.handle('cad:open', (_e, payload) => backend.openCadFile(payload));
+ipcMain.handle('cad:export-step', (_e, payload) => backend.exportStep(payload));
 ipcMain.handle('chat:get', (_e, id) => backend.getConversation(id));
 ipcMain.handle('chat:save', (_e, conv) => backend.saveConversation(conv));
 ipcMain.handle('chat:delete', (_e, id) => backend.deleteConversation(id));

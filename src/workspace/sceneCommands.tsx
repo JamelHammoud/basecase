@@ -65,10 +65,10 @@ function fileCommands({ core }: CommandInputs): Command[] {
     {
       id: 'open-scenes',
       group: 'Scene',
-      label: 'Open Scene…',
+      label: 'Show Scenes',
       shortcut: '⌘O',
       icon: <FolderOpenIcon className={ic} />,
-      keywords: 'scenes files browse recent history delete rename',
+      keywords: 'open saved files browse recent history delete rename',
       run: studio.openSceneList,
     },
     {

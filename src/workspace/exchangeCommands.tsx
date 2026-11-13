@@ -7,8 +7,10 @@ import {
   FolderOpenIcon,
   PhotoIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { SHARE_LABEL } from '../utils/os';
 import type { CommandInputs } from './sceneCommands';
 
@@ -60,6 +62,18 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'print download',
       run: exports.exportStl,
     },
+    ...(IS_WEB_DEMO || !exports.canExportStep
+      ? []
+      : [
+          {
+            id: 'export-step',
+            group: 'Scene',
+            label: 'Export STEP',
+            icon: <ShapeIcon className={ic} />,
+            keywords: 'stp cad assembly fusion onshape solidworks freecad download',
+            run: () => void exports.exportStep(),
+          },
+        ]),
     {
       id: 'airdrop',
       group: 'Scene',

@@ -19,13 +19,16 @@ const FIXTURES: Record<string, string> = {
   '/site/content/blog/unfinished.md': post('title: Unfinished\ndate: 2026-11-10\ndraft: true'),
   '/site/content/blog/tomorrow.md': post('title: Tomorrow\ndate: 2026-11-13'),
   '/site/content/help/import-a-mesh.md': post(
-    'title: Import a mesh\ndate: 2026-11-12\ncovers:\n  - src/workspace/meshImport.ts\n  - src/workspace/usePartCreation.ts',
+    'title: Import a mesh\ndate: 2026-11-12\ncollection: design\ntype: task\ncovers:\n  - src/workspace/meshImport.ts\n  - src/workspace/usePartCreation.ts',
     'Bring a model in.\n\n1. Right-click the canvas.\n2. Choose **Import Mesh**.\n\n<script>alert(1)</script>\n\n[Mail](mailto:hi@example.com) [Source](https://github.com)',
   ),
 };
 
 const render = (files: Record<string, string>) => {
-  const output = renderPages(readContent(files, NOW), ['/assets/index-abc.css']);
+  const output = renderPages(readContent(files, NOW), {
+    stylesheets: ['/assets/index-abc.css'],
+    helpScript: '/assets/help-search-abc.js',
+  });
 
   return new Map(output.map(({ fileName, source }) => [fileName, source]));
 };
@@ -43,7 +46,9 @@ describe('site pages', () => {
       'changelog/2026-11-02-newer.html',
       'changelog/rss.xml',
       'help.html',
+      'help/design.html',
       'help/import-a-mesh.html',
+      'help/search.json',
       'sitemap.xml',
     ]);
     expect(files.get('sitemap.xml')).toContain('<loc>https://basecase.so/help/import-a-mesh</loc>');
@@ -102,7 +107,7 @@ describe('site pages', () => {
 
     expect(article).toContain('<ol');
     expect(article).toContain('<strong class="font-semibold text-white/90">Import Mesh</strong>');
-    expect(article).not.toContain('<script');
+    expect(article.split('</head>')[1]).not.toContain('<script');
     expect(article).not.toContain('alert(1)');
     expect(article).toContain('<a href="mailto:hi@example.com" class=');
     expect(article).toContain('<a href="https://github.com" target="_blank"');
@@ -135,7 +140,7 @@ describe('site pages', () => {
     const content = readContent(CONTENT_FILES, NOW);
 
     expect(content.changelog.flatMap((entry) => entry.version ?? [])).toEqual(['0.1.2', '0.1.1', '0.1.1', '0.1.0']);
-    expect(content.help.length).toBeGreaterThan(0);
-    expect(content.help.every((entry) => entry.covers.length > 0)).toBe(true);
+    expect(content.help.articles.length).toBeGreaterThan(0);
+    expect(content.help.articles.every((entry) => entry.covers.length > 0)).toBe(true);
   });
 });

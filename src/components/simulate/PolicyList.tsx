@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, IconButton, Section, StopIcon } from '../../design-system';
+import { Badge, IconButton, StopIcon } from '../../design-system';
 import type { Training } from '../../sim/useTraining';
 import type { PolicyRecord } from '../../types/robotics';
 import { fmtSteps, pct } from './format';
@@ -25,18 +25,23 @@ const Retraining: React.FC<{ training: Training }> = ({ training }) => {
   );
 };
 
-const PolicyRow: React.FC<{
-  policy: PolicyRecord;
-  training: Training;
+export interface PolicyActions {
   onChoose: (id: string) => void;
   onMenu: (e: React.MouseEvent, id: string) => void;
-}> = ({ policy, training, onChoose, onMenu }) => {
+}
+
+const PolicyRow: React.FC<PolicyActions & { policy: PolicyRecord; training: Training }> = ({
+  policy,
+  training,
+  onChoose,
+  onMenu,
+}) => {
   const retraining = training.retraining === policy.id;
   const running = retraining && training.status !== 'error';
   const stale = training.isStale(policy);
 
   return (
-    <div
+    <li
       className="min-h-8 flex items-center gap-2 -mx-[6px] px-[6px] rounded-lg hover:bg-white/[0.04]"
       data-policy={policy.id}
       data-stale={stale}
@@ -64,19 +69,18 @@ const PolicyRow: React.FC<{
       ) : (
         <span className="text-[12px] text-white/50 tabular shrink-0">{fmtSteps(policy.trainedSteps)} steps</span>
       )}
-    </div>
+    </li>
   );
 };
 
-export const PoliciesSection: React.FC<{
-  policies: PolicyRecord[];
-  training: Training;
-  onChoose: (id: string) => void;
-  onMenu: (e: React.MouseEvent, id: string) => void;
-}> = ({ policies, training, onChoose, onMenu }) => (
-  <Section title="Policies">
+export const PolicyList: React.FC<{ policies: PolicyRecord[]; training: Training; actions: PolicyActions }> = ({
+  policies,
+  training,
+  actions,
+}) => (
+  <ul className="flex flex-col" data-testid="policy-list">
     {policies.map((p) => (
-      <PolicyRow key={p.id} policy={p} training={training} onChoose={onChoose} onMenu={onMenu} />
+      <PolicyRow key={p.id} policy={p} training={training} {...actions} />
     ))}
-  </Section>
+  </ul>
 );

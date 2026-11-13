@@ -2,10 +2,9 @@ import { breaches, expired, lastMergeAt, LIMITS, readySince, redSince } from '..
 import { queuedRuns } from '../lib/flowCounts.mjs';
 import { closePull, isPaused, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
 import { LOOP_MARK } from '../lib/mark.mjs';
-import { isRepair } from '../lib/rank.mjs';
 import { json, run } from '../lib/sh.mjs';
 import { membersOf } from '../lib/evidence.mjs';
-import { eligible, isBatch } from './batch.mjs';
+import { isBatch } from '../lib/landing.mjs';
 
 export const schedule = {
   slots: 1,
@@ -49,13 +48,13 @@ const recentlyMerged = () =>
     'mergedAt',
   ]) ?? [];
 
-const repairReady = (pull) =>
-  isRepair(pull) && pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';
+const readyToLand = (pull) =>
+  pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';
 
 const oldest = (times) => times.filter(Boolean).sort()[0] ?? null;
 
 function measure() {
-  const ready = openPulls({ fresh: true }).filter((pull) => eligible(pull) || repairReady(pull));
+  const ready = openPulls({ fresh: true }).filter(readyToLand);
   const queued = queuedRuns({ fresh: true });
 
   return {
@@ -81,7 +80,7 @@ const report = (found, m) =>
     `| main red since | ${m.mainRedSince ?? 'green'} | ${LIMITS.mainRedHours} h |`,
     `| Last merge | ${m.lastMergeAt ?? 'never'} | ${LIMITS.noMergeHours} h while work waits |`,
     '',
-    'What the loop already does about it: lanes that open pull requests wait while too much is queued (backpressure), repairs land first, and reviewed work lands in batches. If this stays open for hours, the merge path itself is broken.',
+    'What the loop already does about it: lanes that open pull requests wait while too much is queued (backpressure), repairs land first, and each reviewed pull request lands the moment its full Check passes. If this stays open for hours, the merge path itself is broken.',
     '',
     LOOP_MARK,
   ].join('\n');

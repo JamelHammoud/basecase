@@ -28,6 +28,7 @@ const CONTROL_INPUTS = ['move', 'turn', 'lift', 'grip'] as const;
 export const MAX_OBJECTS = 256;
 
 const MAX_COMMANDS = 4096;
+const MAX_COMMAND_JOINTS = 64;
 const MAX_SECONDS = 600;
 const SCORE_COUNTS = ['in', 'out'] as const;
 
@@ -83,6 +84,7 @@ export interface ReferenceCommand {
   target?: V3;
   push?: string;
   aux?: number[];
+  joints?: Record<string, number>;
 }
 
 export type ProbeEnd = 'end-effector' | 'base' | { effector: string } | { object: string } | { point: V3 };
@@ -208,6 +210,14 @@ const readControl: Reader<CaseControl> = (value, where) => {
   };
 };
 
+const readJoints: Reader<Record<string, number>> = (value, where) => {
+  const entries = Object.entries(asRecord(value, where));
+
+  if (entries.length > MAX_COMMAND_JOINTS) return refuse(where, `holds more than ${MAX_COMMAND_JOINTS} joints`);
+
+  return Object.fromEntries(entries.map(([id, v]) => [asId(id, where), asNumber(v, `${where}.${id}`)]));
+};
+
 const readCommand: Reader<ReferenceCommand> = (value, where) => {
   const v = asRecord(value, where);
 
@@ -218,6 +228,7 @@ const readCommand: Reader<ReferenceCommand> = (value, where) => {
     target: optional(v3, v.target, `${where}.target`),
     push: optional(asId, v.push, `${where}.push`),
     aux: optional(listOf(asNumber, 8), v.aux, `${where}.aux`),
+    joints: optional(readJoints, v.joints, `${where}.joints`),
   };
 };
 

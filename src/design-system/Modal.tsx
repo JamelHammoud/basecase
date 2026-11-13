@@ -1,7 +1,17 @@
 import React, { useEffect } from 'react';
 import { CloseIcon } from './glyphs';
 import { createPortal } from 'react-dom';
+import { Button } from './Button';
 import { IconButton } from './IconButton';
+
+export interface ModalAction {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  tone?: 'primary' | 'danger';
+  autoFocus?: boolean;
+  form?: string;
+}
 
 export interface ModalProps {
   isOpen: boolean;
@@ -10,7 +20,8 @@ export interface ModalProps {
   subtitle?: React.ReactNode;
   icon?: React.ReactNode;
   children: React.ReactNode;
-  footer?: React.ReactNode;
+  action?: ModalAction;
+  footerStart?: React.ReactNode;
   headerActions?: React.ReactNode;
   maxWidth?: string;
 }
@@ -22,7 +33,8 @@ export const Modal: React.FC<ModalProps> = ({
   subtitle,
   icon,
   children,
-  footer,
+  action,
+  footerStart,
   headerActions,
   maxWidth = 'max-w-2xl',
 }) => {
@@ -68,7 +80,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
           <div className="flex items-center gap-[4px] shrink-0">
             {headerActions}
-            {!footer && (
+            {!action && (
               <IconButton
                 icon={<CloseIcon className="w-4 h-4" />}
                 title="Close"
@@ -82,9 +94,22 @@ export const Modal: React.FC<ModalProps> = ({
 
         <div className="px-[20px] pb-[20px] overflow-y-auto flex-1">{children}</div>
 
-        {footer && (
-          <div className="px-[20px] py-[12px] border-t border-white/[0.06] flex items-center justify-end gap-[8px] shrink-0">
-            {footer}
+        {action && (
+          <div className="px-[20px] py-[12px] border-t border-white/[0.06] flex items-center gap-[8px] shrink-0">
+            <div className="flex-1 min-w-0 flex items-center gap-[8px]">{footerStart}</div>
+            <Button variant="ghost" title="Cancel" shortcut="Esc" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              variant={action.tone ?? 'primary'}
+              type={action.form ? 'submit' : 'button'}
+              form={action.form}
+              disabled={action.disabled}
+              autoFocus={action.autoFocus}
+              onClick={action.onClick}
+            >
+              {action.label}
+            </Button>
           </div>
         )}
       </div>

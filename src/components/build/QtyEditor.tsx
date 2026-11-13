@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { MenuDivider, MenuItem, MenuLabel, NumberInput, PopoverMenu, Tooltip } from '../../design-system';
+import { deleteEntry, MenuDivider, MenuItem, MenuLabel, NumberInput, PopoverMenu, Tooltip } from '../../design-system';
 import type { BomLine } from '../../utils/bomTypes';
 import { MAX_ON_HAND } from '../../utils/purchases';
 import type { Extra } from './buyExtras';
@@ -68,12 +68,10 @@ export const QtyEditor: React.FC<QtyEditorProps> = ({ line, extra, onQty, onOnHa
           <>
             {pieces && <MenuDivider />}
             <MenuItem
-              label="Delete"
-              tone="danger"
-              onSelect={() => {
+              {...deleteEntry(() => {
                 setOpen(false);
                 onDelete();
-              }}
+              })}
             />
           </>
         )}

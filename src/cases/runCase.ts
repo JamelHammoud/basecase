@@ -7,6 +7,7 @@ import { buildMjcf } from '../sim/mjcf';
 import type { MjcfInput, SimModel } from '../sim/mjcfTypes';
 import type { PolicySpec } from '../sim/policy';
 import { Recorder, type Recording } from '../sim/recorder';
+import { torqueShare } from '../sim/torqueShare';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig, type Rig, type V3 } from '../utils/kinematics';
 import { ArenaWorld } from '../skills/arenaWorld';
@@ -121,7 +122,7 @@ interface Rollout {
   kase: Case;
   steer: GroundSteer | null;
   send: (c: DriveCommand) => void;
-  sample: (poses: Float64Array, t: number) => CaseFacts;
+  sample: (poses: Float64Array, t: number, torque?: number) => CaseFacts;
   logic: CaseLogicRun | null;
   judge: () => Promise<CaseFacts>;
 }
@@ -157,7 +158,7 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
 
     if (driving && steer?.steering) send(steer.command(poses));
 
-    const facts = sample(poses, t);
+    const facts = sample(poses, t, torqueShare(engine));
 
     logic?.advance(t * 1000, facts);
 

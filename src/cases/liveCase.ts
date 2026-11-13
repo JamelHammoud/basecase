@@ -1,4 +1,5 @@
 import type { Controller, SimEngine } from '../sim/engine';
+import { torqueShare } from '../sim/torqueShare';
 import { NO_BODY, routineBody } from '../routines/physicsBody';
 import type { RoutineKit } from '../routines/physicsKit';
 import type { Plan } from '../routines/planTypes';
@@ -70,7 +71,7 @@ export class LiveCase {
     this.owed += seconds;
 
     while (this.owed >= STEP_S - 1e-9) {
-      const read = this.reader.read(this.engine.poses(), this.t);
+      const read = this.reader.read(this.engine.poses(), this.t, torqueShare(this.engine));
 
       sampleSignals(read, this.names, this.signals);
       this.logic?.advance(this.t * 1000, read);

@@ -5,6 +5,7 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   update_parts: ['Adjusting parts in # steps', 'Adjusted parts in # steps'],
   delete_parts: ['Deleting parts in # steps', 'Deleted parts in # steps'],
   mirror_parts: ['Mirroring parts in # steps', 'Mirrored parts in # steps'],
+  merge_parts: ['Merging parts in # steps', 'Merged parts in # steps'],
   fasten: ['Placing # screws', 'Placed # screws'],
   mate: ['Mating # parts', 'Mated # parts'],
   get_ports: ['Reading ports # times', 'Read ports # times'],

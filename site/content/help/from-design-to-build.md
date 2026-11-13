@@ -54,7 +54,7 @@ What the build needs but the model doesn't show joins the list too. A battery br
 
 ## How it gets made
 
-Print mode lays the printed parts out on your printer's plates, slices them in Bambu Studio or OrcaSlicer and sends them. The build guide is a PDF of assembly steps, in an order Basecase checked the parts can go together.
+Print mode lays the printed parts out on your printer's plates, slices them in Bambu Studio or OrcaSlicer and sends them. It also offers to print parts bolted together on one link as one part, when the robot still goes together. The build guide is a PDF of assembly steps, in an order Basecase checked the parts can go together.
 
 ## What the checks can't promise
 

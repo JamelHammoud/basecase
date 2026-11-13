@@ -46,7 +46,6 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Booleans:**
   - With 2+ parts, Union, Subtract (from the primary) and Intersect replace them with one mesh.
   - With one part, Subtract uses every visible Cutout that overlaps it.
-- **Selection bar:** with 2+ parts selected, a glass pill above the toolbar shows the count, Union, Subtract, Intersect and Group/Ungroup.
 - **Align (`AlignBar`):**
   - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each (disabled under 3 parts). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.
   - Several parts align to their shared bounds; one part aligns to the origin (Bottom = floor).
@@ -84,4 +83,4 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 - **Sketch:** opened from Shapes ▾ → Sketch, ⌘K or right-click. Extrude / Revolve, Points / Freehand / Hole tools, snap, undo point, clear, then Output fields.
 - **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, paste code, preview, then Output fields. “Edit in Sketch”, beside the preview, hands the outline to Sketch.
 - Adding a part from Sketch or SVG closes the panel and shows the new part in the Inspector.
-- Combine lives in the selection bar, the right-click menu and the multi-selection Inspector.
+- Combine lives in the multi-selection Inspector, the right-click menu and ⌘K; nothing floats over the canvas for a multi-selection.

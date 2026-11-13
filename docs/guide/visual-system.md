@@ -31,7 +31,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - A new container that holds dividers sets `--pad-x` to its horizontal padding (e.g. `[--pad-x:8px] p-[var(--pad-x)]`) instead of a plain `p-2`.
   - Borders on a block that already spans the container (panel headers, `Section`) count as full width.
 - **Floating surfaces (`.glass`, `.glass-menu` in `index.css`; the names are historical):**
-  - Use only for controls floating over the 3D canvas (toolbar, selection bar, toasts, comment cards), the composer's quote card, and menus, popovers and tooltips.
+  - Use only for controls floating over the 3D canvas (toolbar, toasts, comment cards), the composer's quote card, and menus, popovers and tooltips.
   - **Matte, not glass:** a solid neutral fill (`#262626` floating controls, `#282828` menus) and a soft drop shadow with a 0.5px dark keyline. No translucency, backdrop blur, specular highlight or light outline.
   - Never on the panel cards or the window chrome.
 - **Motion:**

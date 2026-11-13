@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { showStress } from '../../strength/fields';
 import { ChevronDownIcon } from '../../design-system';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
@@ -11,8 +12,12 @@ export const CheckItem: React.FC<{
   blockers: ReadinessFinding[];
   notes: ReadinessFinding[];
   context: FindingContext;
-}> = ({ check, blockers, notes, context }) => {
+  stressIds?: string[];
+}> = ({ check, blockers, notes, context, stressIds }) => {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => (open && stressIds?.length ? showStress(stressIds) : undefined), [open, stressIds]);
+
   const count = blockers.length + notes.length;
   const fields = tetherFieldsFor(check.name, context.tether?.tether);
   const hasBody = count > 0 || !!check.detail || fields.length > 0;

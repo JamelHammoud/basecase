@@ -11,6 +11,7 @@ import type { SweepSpec } from '../analysis/sweep';
 import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from '../analysis/jointAxis';
+import type { StrengthJob, StrengthReading } from '../../strength/types';
 import type {
   CameraPreset,
   MeasureUnit,
@@ -168,6 +169,7 @@ export interface Viewport3DHandle {
   jointAxis: (query: JointAxisQuery) => Promise<FoundAxis | null>;
   meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
+  strength: (jobs: StrengthJob[]) => Promise<Array<StrengthReading | null>>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;

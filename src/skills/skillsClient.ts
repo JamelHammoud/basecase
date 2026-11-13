@@ -1,6 +1,7 @@
 import type { ForgeOutcome } from './forgeRunner';
 import type { SkillsMessage } from './skills.worker';
 import type { ReplyTo, SkillPorts, SkillsJob } from './skillsJob';
+import { errorMessage } from '../utils/errorMessage';
 
 export type SkillRunner = <K extends SkillsJob['type']>(
   job: Extract<SkillsJob, { type: K }>,
@@ -13,7 +14,7 @@ const failed = (e: unknown): ForgeOutcome => ({
   ok: false,
   policy: null,
   events: [],
-  stderr: e instanceof Error ? e.message : String(e),
+  stderr: errorMessage(e),
 });
 
 function answer(worker: Worker, msg: SkillsMessage, ports: SkillPorts) {
@@ -31,7 +32,7 @@ function answer(worker: Worker, msg: SkillsMessage, ports: SkillPorts) {
       .save(msg.path, msg.text)
       .then(
         () => null,
-        (e: unknown) => (e instanceof Error ? e.message : String(e)),
+        (e: unknown) => errorMessage(e),
       )
       .then((error) => worker.postMessage({ type: 'save-result', call: msg.call, error }));
 

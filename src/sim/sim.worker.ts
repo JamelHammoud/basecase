@@ -15,6 +15,7 @@ import { demandedTorques, jointForces, limitForces } from './simForces';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
+import { errorMessage } from '../utils/errorMessage';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -177,7 +178,7 @@ function setController(c: Controller) {
 }
 
 function errorText(e: unknown): string {
-  const s = e instanceof Error ? e.message : String(e);
+  const s = errorMessage(e);
 
   return s.replace(/^Error:\s*/, '');
 }

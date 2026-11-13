@@ -2,6 +2,7 @@ import { isPolicySpec } from '../sim/policy';
 import type { PolicyRecord } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { ForgeJob, ForgeOutcome, ForgeRunner } from './forgeRunner';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface ForgeProgress {
   share: number | null;
@@ -100,7 +101,7 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
           jobId = res.jobId;
           early.filter((ev) => ev.jobId === jobId).forEach(handle);
         },
-        (e: unknown) => settle(failure(e instanceof Error ? e.message : String(e))),
+        (e: unknown) => settle(failure(errorMessage(e))),
       );
     });
 }

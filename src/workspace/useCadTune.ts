@@ -2,8 +2,7 @@ import { useRef } from 'react';
 import { tunedCad, withTunedPart } from '../agent/cadTune';
 import { platformBridge } from '../utils/platformBridge';
 import type { WorkspaceCore } from './useWorkspaceCore';
-
-const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+import { errorMessage } from '../utils/errorMessage';
 
 export function useCadTune({ docs, showToast, workspaceId }: WorkspaceCore) {
   const { partsRef, commitParts } = docs;
@@ -27,7 +26,7 @@ export function useCadTune({ docs, showToast, workspaceId }: WorkspaceCore) {
 
       commitParts((prev) => withTunedPart(prev, id, tuned.cad));
     } catch (err) {
-      showToast(messageOf(err), { tone: 'error' });
+      showToast(errorMessage(err), { tone: 'error' });
     }
   };
 

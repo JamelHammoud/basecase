@@ -1,4 +1,5 @@
 import { loadEstimator, type Estimator } from './estimator';
+import { errorMessage } from '../../utils/errorMessage';
 import { fromRows, type LandmarkRow, type PoseLandmark } from './landmarks';
 import { createOperatorDriver, type OperatorDriver } from './operatorDriver';
 import type { OperatorRequest, OperatorResponse } from './operatorProtocol';
@@ -45,7 +46,7 @@ function guarded(from: Estimator, frame: VideoFrame | ImageBitmap, at: number) {
     return from.detect(frame, at);
   } catch (err) {
     estimator = null;
-    ctx.postMessage({ type: 'estimator', ready: false, message: err instanceof Error ? err.message : String(err) });
+    ctx.postMessage({ type: 'estimator', ready: false, message: errorMessage(err) });
 
     return null;
   }
@@ -99,7 +100,7 @@ async function startEstimator() {
     if (stopped) estimator.close();
     else ctx.postMessage({ type: 'estimator', ready: true });
   } catch (err) {
-    ctx.postMessage({ type: 'estimator', ready: false, message: err instanceof Error ? err.message : String(err) });
+    ctx.postMessage({ type: 'estimator', ready: false, message: errorMessage(err) });
   }
 }
 

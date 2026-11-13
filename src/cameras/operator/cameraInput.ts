@@ -2,6 +2,7 @@ import { rigForWorker } from '../../sim/drive';
 import type { DriveCommand } from '../../sim/driveTypes';
 import type { InputRobot, InputSource } from '../../sim/inputSources';
 import { robotRig } from '../../utils/kinematics';
+import { errorMessage } from '../../utils/errorMessage';
 import { framePump, type FramePump } from './cameraFrames';
 import type { LandmarkRow } from './landmarks';
 import type { OperatorTarget } from './operatorDriver';
@@ -129,7 +130,7 @@ async function open(robot: InputRobot) {
     if (err instanceof Superseded || mine !== generation) throw err;
 
     close();
-    setOperatorState({ failure: { message: err instanceof Error ? err.message : String(err), at: Date.now() } });
+    setOperatorState({ failure: { message: errorMessage(err), at: Date.now() } });
 
     throw err;
   }

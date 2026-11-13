@@ -8,6 +8,7 @@ import { componentArrays, type ComponentArrays } from './componentGeometry';
 import { geometryWorker } from './geometryWorker';
 import { geometryFromArrays } from './partMesh/creased';
 import { linesGeometry } from './partMesh/lateEdges';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface ComponentPiece {
   geometry: THREE.BufferGeometry;
@@ -129,7 +130,7 @@ export function loadComponentMesh(id: string): Promise<LoadedComponent> {
 
     return mesh;
   })().catch((err: unknown) => {
-    entries.set(id, { status: 'error', error: String((err as Error)?.message ?? err) });
+    entries.set(id, { status: 'error', error: errorMessage(err) });
     pending.delete(id);
     notify();
 

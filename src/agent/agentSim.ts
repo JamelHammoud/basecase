@@ -9,6 +9,7 @@ import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics'
 import { prettyJointName, type Rig } from '../utils/kinematics';
 import type { PoseReply } from './agentPose';
 import { TOOL_IMAGE_SIDE } from './agentPoseShared';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface SimulatePayload {
   seconds?: number;
@@ -156,7 +157,7 @@ export async function simulateRequest(ctx: SimContext, p: SimulatePayload): Prom
       frames: requestedFrames(p, seconds),
     });
   } catch (e) {
-    return { text: `The simulation didn't run: ${e instanceof Error ? e.message : String(e)}` };
+    return { text: `The simulation didn't run: ${errorMessage(e)}` };
   }
 
   const text = simReport(run, ctx.rig, seconds);

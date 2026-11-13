@@ -19,7 +19,16 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
 
   const isG1Ask = (spec) => spec && spec.family === 'unitree-g1' && spec.emulated === true && Object.keys(spec).length === 2;
 
+  const isRos2Ask = (spec) => spec && spec.family === 'ros2' && spec.emulated === true && Array.isArray(spec.joints);
+
+  const ros2Layout = (ask) => {
+    const ids = ask.joints.map((_, k) => k + 1);
+    const spec = { family: 'ros2', ids, class: 'arm', emulated: true, controller: { ...ask.controller }, joints: [...ask.joints] };
+    return { spec, ids, start: ids.map(() => 0), writable: ids.map((_, k) => k), lastRung: 'test' };
+  };
+
   const layout = (spec) => {
+    if (isRos2Ask(spec)) return ros2Layout(spec);
     if (!isG1Ask(spec)) return { spec, ids: spec.ids, start: spec.ids.map(() => 0), writable: spec.ids.map((_, k) => k), lastRung: 'longer_runs' };
     const ids = Array.from({ length: 29 }, (_, k) => k + 1);
     const start = ids.map((id) => G1_STANDING[id - 1] ?? 0);
@@ -39,7 +48,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     fault_latched: false,
     joints: robot.ids.map((id, k) =>
       holds(id)
-        ? { id, position: counts(robot.position[k]), temp_c: 30, volts: 7.4, torque_on: robot.run === 'running' && robot.writable.includes(k), reply: 'ok' }
+        ? { id, position: counts(robot.position[k]), temp_c: robot.servos ? 30 : null, volts: robot.servos ? 7.4 : null, torque_on: robot.run === 'running' && robot.writable.includes(k), reply: 'ok' }
         : { id, position: null, temp_c: null, volts: null, torque_on: null, reply: 'missing' },
     ),
   });
@@ -139,6 +148,8 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
 
   const link = (window.__fakeRobotLink = {
     factory: false,
+    lastAsk: null,
+    asked: () => link.lastAsk,
     plugIn,
     onRobotEvent: (callback) => {
       listeners.add(callback);
@@ -147,7 +158,8 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     robotState: async () => ({ connected: false, spec: null, hello: null, status: null }),
     robotConnect: async (ask) => {
       const { spec, ids, start, writable, lastRung } = layout(ask);
-      robot = { ids, writable, lastRung, mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0 };
+      robot = { ids, writable, lastRung, servos: spec.family !== 'ros2', mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0 };
+      link.lastAsk = JSON.parse(JSON.stringify(ask));
       const factory = ask.factory === true || link.factory === true;
       robot.bus = factory ? [] : ids.map((id) => ({ id }));
       robot.plugRequested = false;

@@ -99,7 +99,12 @@ impl G1Bus {
                     self.answers.push(response);
                 }
             }
-            Topic::ArmSdk | Topic::LocoRequest => {}
+            Topic::ArmSdk
+            | Topic::LocoRequest
+            | Topic::JointStates
+            | Topic::PositionCommands
+            | Topic::TrajectoryCommands
+            | Topic::CmdVel => {}
         }
     }
 

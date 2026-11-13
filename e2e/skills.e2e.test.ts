@@ -5,20 +5,32 @@ import { box } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { fixtureModel } from '../src/skills/fixtureModels';
+import { kitJob } from '../src/skills/kitJob';
 import { moveEnvironment } from '../src/skills/moveEnvironment';
 import { clockPolicy, quadSit } from '../src/skills/moveFixtures';
 import { DEFAULT_PROJECT, type PolicyRecord, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematicsRig';
 import { openApp, partCount, type App } from './harness';
+import { holdPolicy } from './holdPose';
 
 let app: App;
 
 type Studio = {
   load: (r: unknown) => void;
-  simState: () => { fingerprints: Record<string, string>; controller: { kind: string; clock: unknown } };
+  simState: () => {
+    fingerprints: Record<string, string>;
+    controller: { kind: string; clock: unknown; trainedSteps: number | null };
+  };
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
-  stubTrainer: (policy: unknown) => void;
+  stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
+  releaseTrainer: () => void;
 };
+
+const trainedSteps = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().controller.trainedSteps);
+
+const releaseTrainer = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.releaseTrainer());
 
 const fingerprints = () =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().fingerprints);
@@ -276,7 +288,42 @@ describe('a move from a Pose-tab animation', () => {
     await row.locator('button', { hasText: 'Try' }).click();
     await expect
       .poll(() => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().controller))
-      .toEqual({ kind: 'policy', clock: { frames: 51, loop: false } });
+      .toMatchObject({ kind: 'policy', clock: { frames: 51, loop: false } });
+    expect(app.errors).toEqual([]);
+  }, 240000);
+});
+
+describe('watching Stand learn', () => {
+  it('plays each snapshot on the canvas while it trains, then keeps them on the row', async () => {
+    const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+    const job = kitJob(fixtureModel('quad-servo'), 'stand', { minutes: 1, seed: 0 });
+    const [first, second, final] = [100, 200, 300].map((steps) => holdPolicy(job, steps));
+
+    await loadScene({ name: 'quad', parts: robot.parts, project: { ...DEFAULT_PROJECT, joints: robot.joints } });
+    await clickTab('Simulate');
+
+    const row = app.page.locator(visible('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
+    const steps = trainedSteps;
+
+    await expect.poll(() => row.count(), { timeout: 60000 }).toBe(1);
+    await app.page.evaluate(
+      ({ policy, snapshots }) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(policy, snapshots),
+      { policy: final, snapshots: [first, second] },
+    );
+    await row.locator('button', { hasText: 'Train' }).click();
+    await expect.poll(steps, { timeout: 60000 }).toBe(100);
+    await expect.poll(() => row.getByTestId('watch-margin').count(), { timeout: 60000 }).toBe(1);
+    await releaseTrainer();
+    await expect.poll(steps, { timeout: 60000 }).toBe(200);
+    await releaseTrainer();
+    await expect.poll(() => row.innerText(), { timeout: 150000 }).toContain('of 32 tries');
+
+    const snapshots = row.getByTestId('snapshot');
+
+    await expect.poll(() => snapshots.count()).toBe(2);
+    expect(await snapshots.allInnerTexts()).toEqual(['50', '100']);
+    await snapshots.first().click();
+    await expect.poll(steps, { timeout: 60000 }).toBe(100);
     expect(app.errors).toEqual([]);
   }, 240000);
 });

@@ -54,6 +54,7 @@ type PortTarget = {
 export const SILENT_ERROR = 'It didn’t answer.';
 
 const MAX_ERRORS = 50;
+const STALL_MS = 2 * PING_MS;
 
 const isAction = (name: string): name is CaseAction => (CASE_ACTIONS as readonly string[]).includes(name);
 
@@ -91,8 +92,9 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   let loaded = false;
   let closed = false;
   const opened = clock.now();
-  let heard = opened;
-  let unanswered = 0;
+  let pingedAt: number | null = null;
+  let lastTick = opened;
+  let repinged = false;
 
   const post = (message: StudioMessage) => port?.postMessage(message);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
@@ -144,8 +146,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   };
 
   const onPortMessage = (e: MessageEvent) => {
-    heard = clock.now();
-    unanswered = 0;
+    pingedAt = null;
+    repinged = false;
 
     const over = spend();
 
@@ -159,15 +161,33 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     else (handlers[m.type] as (message: FrameMessage) => void)(m);
   };
 
+  const ping = (now: number, late: boolean) => {
+    const silent = pingedAt !== null && now - pingedAt >= SILENT_MS;
+
+    if (silent && (!late || repinged)) {
+      fail(SILENT_ERROR);
+
+      return;
+    }
+
+    if (silent) {
+      pingedAt = now;
+      repinged = true;
+    }
+
+    pingedAt ??= now;
+    post({ type: 'ping' });
+  };
+
   const stopPing = clock.every(PING_MS, () => {
-    if (!port && clock.now() - opened >= HELLO_MS) fail(SILENT_ERROR);
+    const now = clock.now();
+    const late = now - lastTick > STALL_MS;
 
-    if (!port) return;
+    lastTick = now;
 
-    unanswered++;
+    if (!port && now - opened >= HELLO_MS) fail(SILENT_ERROR);
 
-    if (unanswered >= SILENT_MS / PING_MS && clock.now() - heard >= SILENT_MS) fail(SILENT_ERROR);
-    else post({ type: 'ping' });
+    if (port) ping(now, late);
   });
 
   return {
@@ -178,8 +198,6 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
 
       port = channel.port1;
       port.onmessage = onPortMessage;
-      heard = clock.now();
-      unanswered = 0;
       (e.source as PortTarget).postMessage(
         { bc: BRIDGE_VERSION, type: 'port' },
         { targetOrigin: '*', transfer: [channel.port2] },

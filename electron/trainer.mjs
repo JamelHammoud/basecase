@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isCount, isSnapshotRef, readJsonOrNull, RUN_ID, snapshotFile } from './backend/trainingSnapshots.mjs';
 import { IS_WINDOWS } from './executables.mjs';
 import { findUv, UV_INSTALL } from './uv.mjs';
 
@@ -66,7 +67,6 @@ function spawnTrainer({ uv, dir, envDir, forge }) {
 
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-const RUN_ID = /^policy-[a-z0-9-]+$/;
 const DEMOS_FILE = 'demos.json';
 const RUNS_KEPT = 8;
 const WARM_DIR = 'warm';
@@ -122,6 +122,13 @@ function warmStartIn(dir, { from, policyText }) {
   }
 
   return from ? copyWarmStart(from, dir) : undefined;
+}
+
+function forward(msg, send) {
+  if (msg.type === 'progress') send({ kind: 'progress', progress: msg });
+  else if (msg.type === 'status') send({ kind: 'status', message: msg.message });
+  else if (msg.type === 'snapshot' && isCount(msg.iteration) && isCount(msg.steps))
+    send({ kind: 'snapshot', iteration: msg.iteration, steps: msg.steps });
 }
 
 export const PRIORITY = { user: 0, kit: 1 };
@@ -339,9 +346,8 @@ export class Trainer {
         try {
           const msg = JSON.parse(line);
 
-          if (msg.type === 'progress') send({ kind: 'progress', progress: msg });
-          else if (msg.type === 'status') send({ kind: 'status', message: msg.message });
-          else if (msg.type === 'done') done = msg;
+          if (msg.type === 'done') done = msg;
+          else forward(msg, send);
         } catch {}
       }
     });
@@ -476,6 +482,10 @@ export class Trainer {
     const file = path.join(this.policiesDir, id, 'policy.json');
 
     return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+  }
+
+  getSnapshot(ref) {
+    return isSnapshotRef(ref) ? readJsonOrNull(snapshotFile(this.jobsDir, ref)) : null;
   }
 
   policyOnnx(id) {

@@ -5,7 +5,6 @@ import { hasCameraViews } from '../cameras/views';
 import {
   CameraAddIcon,
   CameraIcon,
-  CrosshairIcon,
   GridIcon,
   HandIcon,
   KeyboardIcon,
@@ -31,6 +30,7 @@ import { HARDWARE_BY_TYPE, hardwareName } from '../data/hardware';
 import type { TrackpadGestureMode } from '../types/robotics';
 import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
 import type { CommandInputs } from './sceneCommands';
+import { paletteCommand, selectionActions } from './partActions';
 import { showLeftTab } from './showView';
 
 const ic = 'w-4 h-4';
@@ -128,8 +128,10 @@ const SCROLL_COMMANDS: Record<TrackpadGestureMode, { label: string; icon: ReactN
   'zoom-scroll': { label: 'Scroll to Zoom', icon: <SearchIcon className={ic} /> },
 };
 
-function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
+function displayCommands(inputs: CommandInputs): Command[] {
+  const { core, ui, actions } = inputs;
   const { studio } = core;
+  const act = selectionActions(inputs);
   const next = SCROLL_COMMANDS[NEXT_SCROLL_MODE[studio.trackpadMode]];
 
   return [
@@ -161,14 +163,8 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
       keywords: 'camera stationary fixed outside shot frame',
       run: actions.cameras.add,
     },
-    {
-      id: 'zoom-selection',
-      group: 'View',
-      label: 'Zoom to Selection',
-      shortcut: 'Z',
-      icon: <CrosshairIcon className={ic} />,
-      run: ui.focusSelected,
-    },
+    paletteCommand(act.zoom, 'View'),
+    paletteCommand(act.resetView, 'View'),
     {
       id: 'toggle-trackpad',
       group: 'View',

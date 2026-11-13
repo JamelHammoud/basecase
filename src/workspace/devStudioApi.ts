@@ -70,7 +70,8 @@ export interface DevActions {
   addCase: (raw: unknown) => string;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
-  stubTrainer: (policy: unknown) => void;
+  stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
+  releaseTrainer: () => void;
   stubHandoffs: (stub: HandoffStub) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
@@ -269,7 +270,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     addCase: (raw: unknown) => devRef.current.addCase(raw),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
-    stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
+    stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),
+    releaseTrainer: () => devRef.current.releaseTrainer(),
     stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
     plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),

@@ -97,6 +97,7 @@ function measuredRow(lines: PeakLine[]): CheckRow {
     check: 'Peak torque',
     status: worstStatus(fails, warns),
     detail: measuredDetail(lines, fails, warns),
+    detailInItems: true,
     items: flagged.map((p) => ({
       text: peakLineText(p),
       ids: loadIds(p.load),

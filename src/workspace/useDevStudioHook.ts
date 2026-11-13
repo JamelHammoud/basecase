@@ -4,12 +4,12 @@ import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { worldDeltas } from '../sim/mjcf';
 import { parseCase } from '../cases/schema';
 import { withCalibration } from '../reality/projectCalibrations';
-import { isPolicySpec } from '../sim/policy';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devSimState } from './devSimState';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import { robotPackageZip } from './robotPackageExport';
+import { trainerStub } from './trainerStub';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -27,6 +27,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
   const { partsRef, projectRef } = docs;
   const { subscribePoses } = core.simTraining.sim;
   const posesRef = useRef<Float64Array | null>(null);
+  const releaseTrainer = useRef<() => void>(() => {});
   const jointsRef = useRef<Float64Array | null>(null);
   const devRef = useLatestRef<DevActions>({
     importRobot: actions.robots.importRobotFrom,
@@ -86,13 +87,13 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     multiplyRuns: (runs) => core.simTraining.cases.multiply.setRuns(runs),
     sharedLink: () => core.simTraining.share.link,
-    stubTrainer: (policy) => {
-      if (!isPolicySpec(policy)) throw new Error('stubTrainer takes a policy.');
+    stubTrainer: (policy, snapshots) => {
+      const stub = trainerStub(policy, snapshots);
 
-      core.simTraining.skills.runtime.replaceForge(
-        () => () => Promise.resolve({ ok: true, policy, events: [{ type: 'done', steps: 1 }], stderr: '' }),
-      );
+      core.simTraining.skills.runtime.replaceForge(stub.forge, stub.snapshots);
+      releaseTrainer.current = stub.release;
     },
+    releaseTrainer: () => releaseTrainer.current(),
     stubHandoffs: (stub) => core.simTraining.routines.handoffs.stub(stub),
     plantHandoff: (from, to, falls) => core.simTraining.routines.handoffs.plant({ from, to }, falls),
     robotPackage: async () => {

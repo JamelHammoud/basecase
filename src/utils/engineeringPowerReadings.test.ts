@@ -148,9 +148,7 @@ describe('Servo alignment and joint support', () => {
     );
 
     expect(row(none, 'Servo alignment')).toMatchObject({ status: 'not run', detail: 'No output known for 1 servo' });
-    expect(row(some, 'Servo alignment')?.detail).toBe(
-      'Every measured servo output lies on its joint axis; no output known for 1',
-    );
+    expect(row(some, 'Servo alignment')).toMatchObject({ status: 'pass', detail: 'No output known for 1 servo' });
   });
 
   it('counts a flanged bearing on the axis as support', () => {

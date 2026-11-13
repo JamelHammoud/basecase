@@ -95,6 +95,7 @@ pub struct Job {
     pub seed: u64,
     pub max_iterations: Option<usize>,
     pub gate_every: Option<usize>,
+    pub snapshot_every_s: Option<f64>,
     pub eval_seeds: Option<usize>,
     pub gate_speed: f64,
     pub envs: usize,
@@ -148,6 +149,18 @@ fn triple(root: &Value, key: &str) -> Result<[f64; 3], String> {
 
 fn optional_count(root: &Value, key: &str) -> Option<usize> {
     root.get(key).and_then(Value::as_u64).map(|v| v as usize)
+}
+
+fn seconds(root: &Value, key: &str) -> Result<Option<f64>, String> {
+    let Some(value) = root.get(key).filter(|v| !v.is_null()) else {
+        return Ok(None);
+    };
+
+    value
+        .as_f64()
+        .filter(|s| s.is_finite() && *s > 0.0)
+        .map(Some)
+        .ok_or_else(|| format!("job.json needs a number of seconds above 0 in {key}"))
 }
 
 fn warm_start(root: &Value) -> Result<Option<PathBuf>, String> {
@@ -267,6 +280,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         seed: root.get("seed").and_then(Value::as_u64).unwrap_or(0),
         max_iterations: optional_count(root, "maxIterations"),
         gate_every: optional_count(root, "gateEvery"),
+        snapshot_every_s: seconds(root, "snapshotEveryS")?,
         eval_seeds: optional_count(root, "evalSeeds"),
         gate_speed: root.get("gateSpeed").and_then(Value::as_f64).unwrap_or(0.2),
         envs: optional_count(root, "envs").unwrap_or(algo.default_envs()),
@@ -411,6 +425,20 @@ mod tests {
         assert!(parse(&job)
             .expect_err("must fail")
             .contains("reference frames need 3 numbers"));
+    }
+
+    #[test]
+    fn reads_the_snapshot_interval() {
+        let mut job = sample();
+
+        assert_eq!(parse(&job).expect("job parses").snapshot_every_s, None);
+        job["snapshotEveryS"] = json!(2.5);
+        assert_eq!(parse(&job).expect("job parses").snapshot_every_s, Some(2.5));
+
+        for bad in [json!(0), json!(-1), json!("often")] {
+            job["snapshotEveryS"] = bad;
+            assert!(parse(&job).expect_err("must fail").contains("snapshotEveryS"));
+        }
     }
 
     #[test]

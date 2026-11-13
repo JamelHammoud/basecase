@@ -10,13 +10,17 @@ import { DEFAULT_PROJECT, type ProjectSettings, type SculptSettings } from '../t
 import { buildRig } from '../utils/kinematics';
 import { GalleryCard } from './GalleryCard';
 import type { GalleryBundle } from './galleryBundle';
+import type { GalleryConsoleView } from './GalleryConsole';
 import { openGalleryScene } from './openGalleryScene';
 import { useGalleryTraining } from './useGalleryTraining';
 
 const SCULPT: SculptSettings = { brush: 'inflate', radiusMm: 10, strength: 0.5, symmetryX: false, symmetryZ: false };
 const NO_POSE = new Map();
 
-export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) => {
+export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryConsoleView | null }> = ({
+  bundle,
+  Console,
+}) => {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const { parts, joints } = bundle.robot;
   const project: ProjectSettings = { ...DEFAULT_PROJECT, joints };
@@ -54,34 +58,54 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
     (window as unknown as { __forge?: unknown }).__forge = forgeHook(training);
   });
 
+  const canvas = (
+    <div className="absolute inset-0">
+      <Viewport3D
+        ref={viewportRef}
+        parts={parts}
+        worldParts={sim.worldParts}
+        selectedPartIds={[]}
+        transformMode="translate"
+        sculptSettings={SCULPT}
+        snapStepMm={1}
+        snapAngleDeg={15}
+        trackpadMode="orbit-scroll"
+        showGrid
+        onCommitSculptMesh={() => {}}
+        onSelectPart={() => {}}
+        onUpdatePartTransform={() => {}}
+      />
+      <DriveOverlay sim={sim} />
+    </div>
+  );
+  const card = (docked: boolean) => (
+    <GalleryCard
+      kase={kase}
+      sim={sim}
+      training={training}
+      docked={docked}
+      onOpenScene={() => void training.carried().then((trained) => openGalleryScene(bundle, trained ?? bundle.trained))}
+    />
+  );
+
+  if (Console && kase.console)
+    return (
+      <Console
+        kase={kase}
+        caseConsole={kase.console}
+        sim={sim}
+        rig={rig}
+        parts={parts}
+        joints={joints}
+        canvas={canvas}
+        card={card}
+      />
+    );
+
   return (
     <div className="fixed inset-0 bg-[#1b1b1b] text-white">
-      <div className="absolute inset-0">
-        <Viewport3D
-          ref={viewportRef}
-          parts={parts}
-          worldParts={sim.worldParts}
-          selectedPartIds={[]}
-          transformMode="translate"
-          sculptSettings={SCULPT}
-          snapStepMm={1}
-          snapAngleDeg={15}
-          trackpadMode="orbit-scroll"
-          showGrid
-          onCommitSculptMesh={() => {}}
-          onSelectPart={() => {}}
-          onUpdatePartTransform={() => {}}
-        />
-        <DriveOverlay sim={sim} />
-      </div>
-      <GalleryCard
-        kase={kase}
-        sim={sim}
-        training={training}
-        onOpenScene={() =>
-          void training.carried().then((trained) => openGalleryScene(bundle, trained ?? bundle.trained))
-        }
-      />
+      {canvas}
+      {card(false)}
     </div>
   );
 };

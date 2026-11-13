@@ -4,6 +4,7 @@ import type { ScenePart } from '../types/robotics';
 export interface SelectionFacts {
   selected: number;
   grouped: boolean;
+  hardware: boolean;
   parts: number;
 }
 
@@ -17,6 +18,10 @@ const atLeast =
 const NEEDS = new Map<string, Need>([
   ['select-all', (facts) => facts.parts > 0],
   ['copy', atLeast(1)],
+  ['duplicate', atLeast(1)],
+  ['save-to-library', atLeast(1)],
+  ['delete', atLeast(1)],
+  ['clearance-hole', (facts) => facts.hardware],
   ['cut', atLeast(1)],
   ['mirror', atLeast(1)],
   ['group', atLeast(2)],
@@ -36,6 +41,7 @@ const NEEDS = new Map<string, Need>([
 export const selectionFacts = (selected: ScenePart[], parts: ScenePart[]): SelectionFacts => ({
   selected: selected.length,
   grouped: selected.some((p) => !!p.group),
+  hardware: selected.some((p) => !!p.hardware),
   parts: parts.length,
 });
 

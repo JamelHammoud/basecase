@@ -44,7 +44,7 @@ export const CodeFrame: React.FC<CodeFrameProps> = (props) => {
 
   if (failed !== null)
     return (
-      <p data-testid="code-failed" className="text-[13px] text-white/60">
+      <p data-testid="code-failed" className="text-[13px] leading-snug text-white/70">
         Couldn’t run {props.panel.title ?? 'this panel'}. {failed}
       </p>
     );

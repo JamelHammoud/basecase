@@ -99,7 +99,7 @@ const SvgOutput: React.FC<{
 }> = ({ draft, parsedSvg, onEditInSketch, onCreateFrom2DDrawing }) => {
   const { rawSvgText, drawName, svgFileName, drawSpanMm, drawHeightMm, drawBevel, drawColor } = draft;
 
-  const handleBuildSvg3D = (saveToLibrary: boolean) => {
+  const handleBuildSvg3D = () => {
     if (!rawSvgText.trim()) return;
 
     try {
@@ -121,7 +121,6 @@ const SvgOutput: React.FC<{
         bevel: drawBevel,
         nodes: freshParsed.nodes,
         svgDataUrl: freshParsed.svgDataUrl,
-        saveToLibrary,
       });
     } catch (err) {
       draft.setSvgError(String(err));
@@ -151,12 +150,15 @@ const SvgOutput: React.FC<{
         </Button>
       </div>
       <OutputFields draft={draft} spanLabel="Width" revolve={false} />
-      <div className="grid grid-cols-2 gap-2 pt-1">
-        <Button size="md" onClick={() => handleBuildSvg3D(false)} icon={<PlusIcon className="w-4 h-4" />}>
+      <div className="pt-1">
+        <Button
+          size="md"
+          variant="primary"
+          fullWidth
+          onClick={handleBuildSvg3D}
+          icon={<PlusIcon className="w-4 h-4" />}
+        >
           Add
-        </Button>
-        <Button size="md" variant="primary" onClick={() => handleBuildSvg3D(true)}>
-          Add & Save
         </Button>
       </div>
     </Section>

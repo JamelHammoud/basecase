@@ -78,7 +78,7 @@ afterAll(async () => {
 });
 
 describe('Operate calibration', () => {
-  it('calibrates every joint of the emulated arm and rolls one back', async () => {
+  it('calibrates every joint of the emulated arm, replays one and rolls it back', async () => {
     const { page } = app;
 
     await openPlayTab(page, 'Operate');
@@ -108,10 +108,32 @@ describe('Operate calibration', () => {
     const jointId = (await measured.getAttribute('data-calibration-joint')) ?? '';
 
     expect(Number(await row(jointId).getAttribute('data-version'))).toBe(1);
+    await row(jointId).locator('button').first().click();
+
+    const replay = page.locator(visible('[data-testid="joint-replay"]')).first();
+    const trace = (id: string) => replay.locator(`[data-testid="trace-${id}"]`);
+
+    for (const id of ['logged', 'preset', 'calibration'])
+      await expect.poll(() => trace(id).count(), { timeout: 60000 }).toBe(1);
+
+    const errors = await page.evaluate(
+      (id) =>
+        (
+          window as unknown as {
+            __studio: { calibrationReplay: (id: string) => Promise<Record<string, number | null> | null> };
+          }
+        ).__studio.calibrationReplay(id),
+      jointId,
+    );
+
+    expect(errors?.calibrationErrorRad).toBeLessThan(errors?.presetErrorRad ?? 0);
     await row(jointId).hover();
-    await row(jointId).getByRole('button', { name: 'Roll Back' }).click();
+    await row(jointId).getByRole('button', { name: 'More' }).click();
+    await page.getByRole('menuitem', { name: 'Roll Back' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
     await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
+    await expect.poll(() => trace('calibration').count()).toBe(0);
+    expect(await trace('preset').count()).toBe(1);
     expect(app.errors).toEqual([]);
   }, 150000);
 });

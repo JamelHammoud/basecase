@@ -7,6 +7,7 @@ import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import { applyAgentOps } from './applyAgentOps';
 import { awaitPartModels } from './agentPartModels';
 import { requestHandler, type RequestContext } from './agentRequestHandlers';
+import { calibrationErrorsText } from '../agent/agentCalibration';
 import { runPoseTool, runSimTool, withSavedPose } from './agentRobotTools';
 import { sceneChecks } from './sceneChecks';
 import type { AgentRequestEvent, Vec3 } from './types';
@@ -83,6 +84,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       parts: partsRef.current,
       fixedCameras: projectRef.current.cameras ?? [],
       velocity: simTraining.skills.velocity,
+      calibrationErrors: () => calibrationErrorsText(projectRef.current),
       setAction,
     });
 

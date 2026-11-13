@@ -1,5 +1,6 @@
 export const LIMITS = {
-  openWaiting: 30,
+  openWaiting: 12,
+  maxOpenHours: 6,
   queuedRuns: 20,
   mainRedHours: 2,
   noMergeHours: 2,
@@ -10,6 +11,18 @@ export const LIMITS = {
 export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'lead', 'ideas']);
 
 const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : null);
+
+export function expired({ pulls, inBatch, now = Date.now() }) {
+  const limitMs = LIMITS.maxOpenHours * 3_600_000;
+
+  return pulls.filter(
+    (pull) =>
+      !pull.headRefName.startsWith('loop/batch/') &&
+      !pull.headRefName.startsWith('loop/repair/') &&
+      !inBatch.includes(pull.number) &&
+      now - Date.parse(pull.createdAt) > limitMs,
+  );
+}
 
 export const backpressure = ({ openWaiting, queuedRuns }) => {
   if (openWaiting >= LIMITS.openWaiting) return `${openWaiting} pull requests are waiting to land`;

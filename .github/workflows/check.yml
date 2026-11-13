@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: check-${{ github.event.pull_request.number || github.sha }}
+  group: check-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -76,6 +76,11 @@ jobs:
       - run: npx vite build
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/3
 
+      - name: Run quarantined tests
+        if: ${{ !cancelled() && matrix.shard == 1 }}
+        continue-on-error: true
+        run: npm run test:quarantine
+
   e2e-windows:
     if: github.event_name == 'push'
     runs-on: windows-latest
@@ -93,6 +98,11 @@ jobs:
       - run: npm ci
       - run: npx vite build
       - run: npm run test:e2e
+
+      - name: Run quarantined tests
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npm run test:quarantine
 
   app:
     needs: changes

@@ -4,7 +4,7 @@
 
 **Rules live in this repo, nowhere else.** When a maintainer gives a lasting rule or preference (how something should look, behave, be named, be committed), write it here or in the guide for its area, in the same change. Never keep it only in an agent's private memory, a chat or a tool-specific file: the next contributor, on another model, never sees those.
 
-**Before you change an area, read its guide. When you change how it works, update that guide in the same change.** Code folders carry a short `AGENTS.md` that names their guides (`electron/`, `src/three/`, `src/components/`…); agents load the nearest one on their own, so add one when a new area grows.
+**Before you change an area, read its guide. When you change how it works, update that guide in the same change.** A guide, brief or prompt says only what the code does once that change lands: never a lane, file or step another pull request will add. Work that only makes sense together lands as one pull request. Code folders carry a short `AGENTS.md` that names their guides (`electron/`, `src/three/`, `src/components/`…); agents load the nearest one on their own, so add one when a new area grows.
 
 **Keep this file a map.** It's loaded into every agent session: under 200 lines and 32 KiB (Codex stops reading there), checked by `npm run check:docs`. Area detail goes in its guide; add here only what applies to every change. Write rules plainly, without IMPORTANT or capitals, and only what the code can't tell; a rule that must never bend becomes a lint, hook or test. Why it's laid out this way: [Agent instructions](docs/research/Agent%20instructions.md).
 

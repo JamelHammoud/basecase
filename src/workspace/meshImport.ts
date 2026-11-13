@@ -2,16 +2,23 @@ import * as THREE from 'three';
 import { geometryWorker } from '../three/geometryWorker';
 import type { ScenePart } from '../types/robotics';
 import { parseMeshFile } from '../utils/meshFile';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { PRINTED_TAG } from './partFactories';
 import type { Vec3 } from './types';
 
 export const MESH_FILE_EXTENSIONS = ['stl', '3mf', 'obj', 'ply', 'fbx', 'glb', 'gltf', 'dae'];
 
-export const MESH_ACCEPT = MESH_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(',');
+export const CAD_FILE_EXTENSIONS = ['step', 'stp', 'iges', 'igs'];
+
+const IMPORT_EXTENSIONS = IS_WEB_DEMO ? MESH_FILE_EXTENSIONS : [...MESH_FILE_EXTENSIONS, ...CAD_FILE_EXTENSIONS];
+
+export const MESH_ACCEPT = IMPORT_EXTENSIONS.map((ext) => `.${ext}`).join(',');
 
 const extensionOf = (name: string) => name.split('.').pop()?.toLowerCase() ?? '';
 
-export const isMeshFileName = (name: string) => MESH_FILE_EXTENSIONS.includes(extensionOf(name));
+export const isMeshFileName = (name: string) => IMPORT_EXTENSIONS.includes(extensionOf(name));
+
+export const isCadFileName = (name: string) => CAD_FILE_EXTENSIONS.includes(extensionOf(name));
 
 const Z_UP = new Set(['stl', '3mf', 'ply']);
 const MM_PER_UNIT: Record<string, number> = { glb: 1000, gltf: 1000, dae: 1000, fbx: 10 };

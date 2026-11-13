@@ -1,11 +1,11 @@
 import {
-  checkConclusion,
   hasLabel,
   isPaused,
   lastFinishedMainCheck,
   mergePull,
   openPulls,
-  reviewState,
+  pullCheck,
+  pullReview,
 } from '../lib/github.mjs';
 
 export const schedule = {
@@ -27,9 +27,7 @@ const rank = (pull) => {
 const byRank = (a, b) => rank(a) - rank(b) || a.createdAt.localeCompare(b.createdAt);
 
 const ready = (pull) =>
-  pull.mergeable !== 'CONFLICTING' &&
-  checkConclusion(pull.headRefOid) === 'success' &&
-  reviewState(pull.headRefOid) === 'success';
+  pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';
 
 export default function merge({ log }) {
   if (isPaused()) {
@@ -39,7 +37,7 @@ export default function merge({ log }) {
   }
 
   const mainRed = lastFinishedMainCheck()?.conclusion === 'failure';
-  const candidates = openPulls()
+  const candidates = openPulls({ fresh: true })
     .filter((pull) => !mainRed || isRepair(pull))
     .sort(byRank);
   const pull = candidates.find(ready);

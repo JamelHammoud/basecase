@@ -68,7 +68,7 @@ const hex = (c) =>
 
 const UNASSIGNED = { cad1ee: [0.74, 0.74, 0.76], '97a3da': [0.74, 0.74, 0.76] };
 
-function displayColor(color, colorMap = {}) {
+export function displayColor(color, colorMap = {}) {
   const key = hex(color);
 
   if (colorMap[key]) return colorMap[key];
@@ -88,7 +88,7 @@ function round(v, d) {
   return Math.round(v * f) / f;
 }
 
-function weld(soup) {
+export function weld(soup) {
   const map = new Map();
   const positions = [];
   const indices = [];
@@ -117,7 +117,7 @@ function weld(soup) {
   return { positions: new Float32Array(positions), indices: new Uint32Array(clean) };
 }
 
-function compact(indices, positions) {
+export function compact(indices, positions) {
   const remap = new Map();
   const out = [];
   const idx = new Uint32Array(indices.length);

@@ -7,6 +7,12 @@ import { PowerSource, drivesJoint, findPowerSources, sceneRegulators, tetherSour
 
 const CONVERTER_EFFICIENCY = 0.9;
 
+export const POWER_CHECK = {
+  servoVoltage: 'Servo voltage',
+  regulatorInput: 'Regulator input',
+  supplyCurrent: 'Supply current',
+} as const;
+
 export const servoParts = (parts: ScenePart[]): ScenePart[] => parts.filter(drivesJoint);
 
 const actuatorFor = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVariant);
@@ -68,7 +74,7 @@ function outOfRangeRow(source: PowerSource, over: ScenePart[], under: ScenePart[
   const low = `${source.name} ${reaches(source, 'only ')}, below the ${Math.max(...under.map((p) => actuatorFor(p)!.volts[0]))} V minimum of ${count(under.length, 'servo')}`;
 
   return {
-    check: 'Servo voltage',
+    check: POWER_CHECK.servoVoltage,
     status: 'fail',
     detail: over.length ? high : low,
     ids: [...over, ...under].map((p) => p.id),
@@ -93,7 +99,7 @@ function voltageRow(ctx: CheckContext, source: PowerSource): CheckRow {
 
   if (rail)
     return {
-      check: 'Servo voltage',
+      check: POWER_CHECK.servoVoltage,
       status: 'pass',
       detail: `${source.name} ${reaches(source)}; the ${rail.name} (${rail.regulator.vout} V) keeps servos inside their ${ranges} range. Wire the servos to it.`,
       ids: [rail.id],
@@ -102,7 +108,7 @@ function voltageRow(ctx: CheckContext, source: PowerSource): CheckRow {
   if (over.length || under.length) return outOfRangeRow(source, over, under);
 
   return {
-    check: 'Servo voltage',
+    check: POWER_CHECK.servoVoltage,
     status: sagging.length ? 'warn' : 'pass',
     detail: sagging.length
       ? `${source.name} sits at ${b.nominalV} V for most of its charge, under the ${ranges} range of ${count(sagging.length, 'servo')}`
@@ -120,7 +126,7 @@ function regulatorRow(ctx: CheckContext, source: PowerSource): CheckRow | undefi
   const bad = regs.filter(({ regulator: r }) => b.fullV > r.vinMax || b.nominalV < r.vinMin);
 
   return {
-    check: 'Regulator input',
+    check: POWER_CHECK.regulatorInput,
     status: bad.length ? 'fail' : 'pass',
     detail: bad.length
       ? `${source.name}${levels(source)} is outside the input range of ${bad.map((r) => `${r.name} (${r.regulator.vinMin}–${r.regulator.vinMax} V)`).join(', ')}`
@@ -195,7 +201,7 @@ function currentRow(ctx: CheckContext, source: PowerSource): CheckRow {
   if (enough) status = railShort ? 'warn' : 'pass';
 
   return {
-    check: source.tetherA ? 'Supply current' : 'Current and runtime',
+    check: source.tetherA ? POWER_CHECK.supplyCurrent : 'Current and runtime',
     status,
     detail: source.tetherA ? tetherDetail(source.tetherA, draw) : batteryDetail(source, draw),
     items,

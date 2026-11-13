@@ -5,6 +5,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
+import { bytesToBase64 } from '../utils/base64';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
@@ -29,6 +30,7 @@ export interface DevActions {
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
+  passTries: () => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -39,20 +41,10 @@ export interface DevStudioDeps {
   devRef: RefObject<DevActions>;
 }
 
-const CHUNK = 0x8000;
-
-function base64Of(bytes: Uint8Array) {
-  let bin = '';
-
-  for (let i = 0; i < bytes.length; i += CHUNK) bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-
-  return btoa(bin);
-}
-
 function stlBase64(parts: ScenePart[]) {
   const view = sceneToStl(parts);
 
-  return base64Of(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+  return bytesToBase64(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
 }
 
 function addMeshTriangles(groups: Record<string, number[]>, obj: THREE.Object3D) {
@@ -148,18 +140,19 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
+    passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 
-      return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, base64Of(bytes)]));
+      return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, bytesToBase64(bytes)]));
     },
     robotPackage: async () => {
       const made = await devRef.current.robotPackage();
 
       return (
         made && {
-          files: Object.fromEntries(Object.entries(made.files).map(([path, bytes]) => [path, base64Of(bytes)])),
+          files: Object.fromEntries(Object.entries(made.files).map(([path, bytes]) => [path, bytesToBase64(bytes)])),
           simXml: made.simXml,
         }
       );

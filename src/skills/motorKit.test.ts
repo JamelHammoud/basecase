@@ -58,6 +58,23 @@ describe('Motor Kit environments', () => {
     expect(job.delaySteps?.[1]).toBeGreaterThan(0);
     expect(job.reward).toContain('def reward(state):');
   });
+
+  it('train a reverse walk on speeds as far back as forward, with a stronger pull off standing still', () => {
+    const model = fixtureModel('hexapod');
+    const forward = kitJob(model, 'velocity-tracking', { minutes: 1, seed: 1 });
+    const reverse = kitJob(model, 'velocity-tracking', { minutes: 1, seed: 1, reverse: true });
+    const speeds = (job: typeof forward) => ('commands' in job ? job.commands.ranges[0] : [NaN, NaN]);
+    const [lo, hi] = speeds(reverse);
+
+    expect(speeds(forward)[0]).toBe(0);
+    expect(lo).toBeCloseTo(-hi, 9);
+    expect(hi).toBe(speeds(forward)[1]);
+    expect(forward.reward).toContain('0.5 * sqrt(speed_error)');
+    expect(reverse.reward).toContain('1.5 * sqrt(speed_error)');
+    expect(kitEnvironment(model, 'velocity-tracking', { reverse: true }).reward).not.toEqual(
+      kitEnvironment(model, 'velocity-tracking').reward,
+    );
+  });
 });
 
 describe('Motor Kit training', () => {

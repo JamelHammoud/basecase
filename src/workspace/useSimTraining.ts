@@ -8,7 +8,7 @@ import { useTraining } from '../sim/useTraining';
 import { platformBridge } from '../utils/platformBridge';
 import type { PolicyRecord } from '../types/robotics';
 import type { Posing } from '../utils/usePosing';
-import type { ShowToast } from './types';
+import type { ShowToast, StudioShared } from './types';
 import { useCases } from './useCases';
 import { useRoutines } from './useRoutines';
 import { useSkills } from './useSkills';
@@ -16,10 +16,12 @@ import type { SceneDocument } from './useSceneDocument';
 
 interface SimTrainingOptions {
   workspaceId: string;
+  scene: { sceneId: string };
   docs: SceneDocument;
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
+  studio: Pick<StudioShared, 'openSettings'>;
 }
 
 function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: string | null): PolicyRecord[] {
@@ -30,7 +32,8 @@ function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: st
   return policies.map((x, i) => (i === at ? record : x)).filter((x, i) => i === at || x.id !== record.id);
 }
 
-export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToast }: SimTrainingOptions) {
+export function useSimTraining(options: SimTrainingOptions) {
+  const { workspaceId, scene, docs, posing, viewportRef, showToast, studio } = options;
   const { parts, project, projectRef, setProject, commitParts, updateProjectNow } = docs;
   const velocity = useRef<VelocitySource | null>(null);
   const sim = useSimulation({
@@ -79,7 +82,16 @@ export function useSimTraining({ workspaceId, docs, posing, viewportRef, showToa
     });
   };
 
-  const cases = useCases({ parts, project, setProject, rig: posing.rig, sim, showToast });
+  const cases = useCases({
+    parts,
+    project,
+    setProject,
+    rig: posing.rig,
+    sim,
+    showToast,
+    openAccounts: () => studio.openSettings('accounts'),
+    sceneId: scene.sceneId,
+  });
   const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
 
   return { sim, training, policies, deletePolicy, cases, routines, skills };

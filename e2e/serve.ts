@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs';
+import net, { type AddressInfo } from 'node:net';
 import path from 'node:path';
 import { createServer, preview, searchForWorkspaceRoot } from 'vite';
 import type { TestProject } from 'vitest/node';
@@ -8,6 +9,7 @@ declare module 'vitest' {
     appUrl: string;
     webUrl: string;
     served: 'bundle' | 'dev';
+    hubPort: number;
   }
 }
 
@@ -105,7 +107,21 @@ function servesBundle(target: Target): boolean {
   return false;
 }
 
+const freePort = () =>
+  new Promise<number>((resolve) => {
+    const probe = net.createServer().listen(0, '127.0.0.1', () => {
+      const { port } = probe.address() as AddressInfo;
+
+      probe.close(() => resolve(port));
+    });
+  });
+
 export default async function setup(project: TestProject) {
+  const hubPort = await freePort();
+
+  process.env.BASECASE_HUB_URL = `http://127.0.0.1:${hubPort}`;
+  project.provide('hubPort', hubPort);
+
   const bundled = TARGETS.map(servesBundle);
   const running = await Promise.all(TARGETS.map((t, i) => (bundled[i] ? serveBundle(t) : serveDev(t))));
 

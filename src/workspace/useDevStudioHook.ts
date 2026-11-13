@@ -54,10 +54,11 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
     routineState: () => core.simTraining.routines.state(),
     datasetFiles: async () => {
       const { cases } = core.simTraining;
-      const made = await cases.dataset.build(cases.tries);
+      const zip = await cases.dataset.zip(cases.tries);
 
-      return made && unzipSync(made.zip);
+      return zip && unzipSync(zip);
     },
+    passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     robotPackage: async () => {
       const made = await robotPackageZip(core);
 

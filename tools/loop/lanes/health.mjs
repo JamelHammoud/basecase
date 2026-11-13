@@ -53,7 +53,7 @@ const readyToLand = (pull) =>
 
 const oldest = (times) => times.filter(Boolean).sort()[0] ?? null;
 
-function measure() {
+export function measure() {
   const ready = openPulls({ fresh: true }).filter(readyToLand);
   const queued = queuedRuns({ fresh: true });
 

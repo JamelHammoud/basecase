@@ -1,7 +1,7 @@
 import { CAMERA_INPUTS } from '../../sim/inputSources';
 import type { SimDrive } from '../../sim/useDrive';
 
-export const DRIVE_WITH_CAMERA = 'Drive With Camera';
+export const DRIVE_WITH_CAMERA = 'Drive with Camera';
 
 export async function startDriving(drive: SimDrive, onRefuse: (message: string) => void, inputs?: readonly string[]) {
   if (await drive.start(undefined, inputs ? { inputs } : undefined)) return;

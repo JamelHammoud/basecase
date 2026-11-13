@@ -360,7 +360,7 @@ describe('Cases in Checks', () => {
   }, 150000);
 });
 
-describe('Compare With', () => {
+describe('Compare with', () => {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
   const flag = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
   const WEAK_WHEEL_NM = 0.075;
@@ -415,8 +415,8 @@ describe('Compare With', () => {
     await expect.poll(activeCase).toBe(caseId);
 
     await app.page.keyboard.press('Meta+k');
-    await app.page.getByLabel('Search commands').fill('Compare With');
-    await expect.poll(() => app.page.getByText(/^Compare With Weak rover/).count(), { timeout: 15000 }).toBe(1);
+    await app.page.getByLabel('Search commands').fill('Compare with');
+    await expect.poll(() => app.page.getByText(/^Compare with Weak rover/).count(), { timeout: 15000 }).toBe(1);
     await app.page.keyboard.press('Enter');
 
     const rows = app.page.locator(visible('[data-testid="compare-row"]'));

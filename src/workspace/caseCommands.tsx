@@ -80,7 +80,7 @@ function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases'])
     {
       id: 'case-train-from-tries',
       group: 'Simulate',
-      label: 'Train From Tries',
+      label: 'Train from Tries',
       icon: <TrainIcon className={ic} />,
       keywords: 'policy imitation behaviour behavior cloning learn demonstrations demos act lerobot skill',
       run: fromTries.train,
@@ -109,7 +109,7 @@ function compareCommands(core: WorkspaceCore): Command[] {
   return caseCompare.choices.map((choice) => ({
     id: `case-compare-${choice.tabId}`,
     group: 'Simulate',
-    label: `Compare With ${choice.name}`,
+    label: `Compare with ${choice.name}`,
     icon: <CasesIcon className={ic} />,
     keywords: 'case versus pass rate which better robot scene tab',
     run: () => {

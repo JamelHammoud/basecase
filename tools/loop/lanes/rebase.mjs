@@ -82,6 +82,16 @@ function giveUp(pull, log) {
   });
 }
 
+function merged(pull, dir, log) {
+  try {
+    return git(['merge', '--no-edit', 'origin/main'], dir, { allowFail: true }).ok || resolveConflicts(pull, dir);
+  } catch (error) {
+    log(`#${pull.number}: resolving the conflicts failed: ${String(error.message).slice(0, 300)}`);
+
+    return false;
+  }
+}
+
 function mergeMain(pull, log) {
   git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
 
@@ -92,9 +102,7 @@ function mergeMain(pull, log) {
   linkModules(dir);
 
   try {
-    const merged = git(['merge', '--no-edit', 'origin/main'], dir, { allowFail: true }).ok;
-
-    if (!merged && !resolveConflicts(pull, dir)) return false;
+    if (!merged(pull, dir, log)) return false;
 
     git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
     markRefreshed(pull.number, git(['rev-parse', 'HEAD'], dir).out.trim());
@@ -107,15 +115,7 @@ function mergeMain(pull, log) {
 }
 
 function bringUpToDate(pull, log) {
-  let merged = false;
-
-  try {
-    merged = mergeMain(pull, log);
-  } catch (error) {
-    log(`#${pull.number}: bringing it up to date failed: ${String(error.message).slice(0, 300)}`);
-  }
-
-  if (!merged) giveUp(pull, log);
+  if (!mergeMain(pull, log)) giveUp(pull, log);
 }
 
 function claimFirst(pulls) {

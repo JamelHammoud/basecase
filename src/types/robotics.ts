@@ -8,8 +8,7 @@ import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
-import type { BooleanRecipe } from './step';
-import type { BooleanData } from './booleans';
+import type { BooleanFields } from './booleans';
 
 export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
 
@@ -138,7 +137,7 @@ export interface CustomModelDefinition {
   nodes: CustomModelSubNode[];
 }
 
-export interface ScenePart extends PartRelations {
+export interface ScenePart extends PartRelations, BooleanFields {
   id: string;
   name: string;
   kind: PartKind;
@@ -176,7 +175,6 @@ export interface ScenePart extends PartRelations {
     file?: string;
     visual?: { key: string; node: string; matrix: number[] };
   };
-  boolean?: BooleanData;
   hardware?: HardwareSpec;
   componentId?: string;
   componentVariant?: string;
@@ -188,7 +186,6 @@ export interface ScenePart extends PartRelations {
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
   group?: { id: string; name: string };
-  csg?: BooleanRecipe;
   printMaterial?: PrintMaterial;
   print?: PartPrint;
   jointId?: string;

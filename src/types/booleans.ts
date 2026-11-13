@@ -1,4 +1,5 @@
 import type { PartDimensions, ScenePart } from './robotics';
+import type { BooleanRecipe } from './step';
 
 export type BooleanOp = 'subtract' | 'union' | 'intersect';
 
@@ -13,4 +14,9 @@ export interface BooleanData {
   operands: ScenePart[];
   hash?: string;
   frame?: BooleanFrame;
+}
+
+export interface BooleanFields {
+  boolean?: BooleanData;
+  csg?: BooleanRecipe;
 }

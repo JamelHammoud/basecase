@@ -19,6 +19,11 @@ export function touchTheDots(robot: FixtureRobot): Case {
   return touchTheDotsCase(buildRig(robot.joints, robot.parts), robot.parts);
 }
 
-export function runCase(mj: MainModule, kase: Case, robot: FixtureRobot, options: RunOptions) {
-  return runCaseOn(mj, parseCaseFile(kase), caseRobot(robot), options);
+type FixtureRun = Omit<RunOptions, 'partners'> & { partners?: FixtureRobot[] };
+
+export function runCase(mj: MainModule, kase: Case, robot: FixtureRobot, options: FixtureRun) {
+  return runCaseOn(mj, parseCaseFile(kase), caseRobot(robot), {
+    ...options,
+    partners: options.partners?.map(caseRobot),
+  });
 }

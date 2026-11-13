@@ -58,7 +58,7 @@ function inverseRigid(object: THREE.Object3D) {
 }
 
 export function partTriangles(ctx: ViewportContext, id: string): Float32Array | null {
-  const object = ctx.layer.get(id);
+  const object = ctx.layer.get(id) ?? ctx.world.get(id);
 
   if (!object) {
     return null;

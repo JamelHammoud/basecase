@@ -1,3 +1,4 @@
+import type { SceneRobot } from '../app/tabModel';
 import type { PrintersState } from '../app/usePrinters';
 import type { SettingsPane } from '../components/SettingsWindow';
 import type { ToastData } from '../design-system';
@@ -112,6 +113,7 @@ export interface StudioShared {
   openSettings: (pane?: SettingsPane) => void;
   printers: PrintersState;
   tabs: Array<{ id: string; name: string; sceneId: string }>;
+  robotsBeside: (except: string) => SceneRobot[];
   canReopenTab: boolean;
   register: (id: string, handle: WorkspaceHandle | null) => void;
   reportMeta: (id: string, meta: WorkspaceMeta) => void;

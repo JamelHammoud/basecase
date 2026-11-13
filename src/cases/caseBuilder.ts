@@ -14,6 +14,7 @@ import {
   type GoalValues,
 } from './caseGoals';
 import { CASE_WORLDS, type CaseWorld, type WorldKind } from './caseWorlds';
+import { handoffGoal } from './handoffGoal';
 import { robotFacts, type RobotFacts } from './robotFit';
 import { groundRoute } from './groundRoute';
 import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
@@ -64,13 +65,19 @@ export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   };
 }
 
-export const goalOf = (kind: GoalKind): CaseGoal | undefined => CASE_GOALS.find((g) => g.kind === kind);
+const GOALS: CaseGoal[] = [...CASE_GOALS, handoffGoal];
+
+export const goalOf = (kind: GoalKind): CaseGoal | undefined => GOALS.find((g) => g.kind === kind);
 
 export const worldOf = (kind: WorldKind): CaseWorld | undefined => CASE_WORLDS.find((w) => w.kind === kind);
 
-const canDo = (goal: CaseGoal, robot: BuilderRobot) => goal.needs.some((n) => robot.facts.capabilities.includes(n));
+const able = (needs: CaseGoal['needs'], robot: BuilderRobot | undefined) =>
+  !!robot && needs.some((n) => robot.facts.capabilities.includes(n));
 
-export const goalsFor = (robot: BuilderRobot): CaseGoal[] => CASE_GOALS.filter((g) => canDo(g, robot));
+const canDo = (goal: CaseGoal, robot: BuilderRobot) =>
+  able(goal.needs, robot) && (!goal.pair || able(goal.needs, robot.partner));
+
+export const goalsFor = (robot: BuilderRobot): CaseGoal[] => GOALS.filter((g) => canDo(g, robot));
 
 export const worldsFor = (goal: GoalKind): CaseWorld[] => CASE_WORLDS.filter((w) => w.fits(goal));
 
@@ -167,7 +174,7 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
     id: slug(name),
     name,
     brief: spec.brief?.trim() || plan.brief,
-    slot: plan.slot,
+    ...(plan.slots ? { slots: plan.slots } : { slot: plan.slot }),
     world: { objects: [...plan.objects, ...scenery, ...(spec.objects ?? [])] },
     controls: plan.controls,
     reference: { timeline: referenceOf(plan, scenery, robot) },

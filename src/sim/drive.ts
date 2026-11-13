@@ -33,7 +33,14 @@ export interface RoverSetup {
   maxTurnRadS: number;
 }
 
-export type DriveSetup = ArmSetup | RoverSetup | LegsSetup;
+export type RobotDrive = ArmSetup | RoverSetup | LegsSetup;
+
+export interface TeamSetup {
+  kind: 'team';
+  members: Array<{ slot: number; setup: RobotDrive }>;
+}
+
+export type DriveSetup = RobotDrive | TeamSetup;
 
 export const CONTROL_DT = 0.02;
 
@@ -184,7 +191,40 @@ class RoverDrive implements DriveLoop {
   }
 }
 
+class TeamDrive implements DriveLoop {
+  private readonly members: Array<{ slot: number; drive: DriveLoop }>;
+
+  readonly hand?: DriveHand;
+
+  readonly hands: DriveHand[];
+
+  constructor(setup: TeamSetup) {
+    this.members = setup.members.map((m) => ({ slot: m.slot, drive: createDrive(m.setup) }));
+    this.hands = this.members.flatMap((m) => (m.drive.hand ? [m.drive.hand] : []));
+    this.hand = this.members[0]?.drive.hand;
+  }
+
+  command(c: DriveCommand, measured?: JointValues) {
+    this.members.find((m) => m.slot === (c.slot ?? 0))?.drive.command(c, measured);
+  }
+
+  tick(time: number): DriveOutput {
+    const out: Required<DriveOutput> = { values: {}, wheels: {} };
+
+    for (const { drive } of this.members) {
+      const { values, wheels } = drive.tick(time);
+
+      Object.assign(out.values, values);
+      Object.assign(out.wheels, wheels);
+    }
+
+    return out;
+  }
+}
+
 export function createDrive(setup: DriveSetup): DriveLoop {
+  if (setup.kind === 'team') return new TeamDrive(setup);
+
   if (setup.kind === 'arm') return new ArmDrive(setup);
 
   return setup.kind === 'rover' ? new RoverDrive(setup) : new LegsDrive(setup);

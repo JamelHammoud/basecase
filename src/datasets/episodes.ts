@@ -27,10 +27,38 @@ export function sampledFrames(recording: Pick<Recording, 'frames' | 'dt'>): numb
   return Array.from({ length: Math.ceil(recording.frames / stride) }, (_, k) => k * stride);
 }
 
-export function robotJoints(model: SimModel, robotIndex = 0): SimJoint[] {
-  const ids = new Set(model.robots[robotIndex]?.joints ?? []);
+export interface DatasetSlot {
+  id: string;
+  robot: string;
+}
+
+export interface JointGroup {
+  name: string;
+  start: number;
+  end: number;
+}
+
+export function robotJoints(model: SimModel, robotKey = model.robots[0]?.key): SimJoint[] {
+  const ids = new Set(model.robots.find((r) => r.key === robotKey)?.joints ?? []);
 
   return model.joints.filter((j) => ids.has(j.id));
+}
+
+export function datasetJoints(model: SimModel, slots?: DatasetSlot[]) {
+  if (!slots || slots.length < 2) {
+    const joints = robotJoints(model);
+
+    return { joints, names: joints.map((j) => j.name), groups: [{ name: 'joints', start: 0, end: joints.length }] };
+  }
+
+  const per = slots.map((s) => ({ slot: s.id, joints: robotJoints(model, s.robot) }));
+  const starts = per.map((_, i) => per.slice(0, i).reduce((n, p) => n + p.joints.length, 0));
+
+  return {
+    joints: per.flatMap((p) => p.joints),
+    names: per.flatMap((p) => p.joints.map((j) => `${p.slot}.${j.name}`)),
+    groups: per.map((p, i): JointGroup => ({ name: p.slot, start: starts[i], end: starts[i] + p.joints.length })),
+  };
 }
 
 export function canExport(recording: Recording, model: SimModel): boolean {
@@ -42,8 +70,8 @@ export function canExport(recording: Recording, model: SimModel): boolean {
   );
 }
 
-export function episodeData(recording: Recording, model: SimModel, task: string): EpisodeData {
-  const joints = robotJoints(model);
+export function episodeData(recording: Recording, model: SimModel, task: string, slots?: DatasetSlot[]): EpisodeData {
+  const { joints } = datasetJoints(model, slots);
   const index = joints.map((j) => model.joints.indexOf(j));
   const address = recording.jointQpos ?? new Int32Array();
   const frames = sampledFrames(recording);

@@ -29,6 +29,7 @@ export interface DevActions {
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  referenceTry: () => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -138,6 +139,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
+    referenceTry: () => devRef.current.referenceTry(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();

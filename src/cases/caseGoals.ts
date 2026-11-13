@@ -6,7 +6,7 @@ import type { WorldKind } from './caseWorlds';
 import type { RoutePoint } from './groundRoute';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
-export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk';
+export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'handoff';
 
 export type ParamKey =
   'distanceMm' | 'heightMm' | 'sideMm' | 'radiusMm' | 'pushMm' | 'boxMm' | 'stops' | 'spacingMm' | 'seconds';
@@ -18,6 +18,7 @@ export interface BuilderRobot {
   pivot: V3;
   footprint: { width: number; depth: number };
   armSpot: V3 | null;
+  partner?: BuilderRobot;
 }
 
 export interface GoalParam {
@@ -38,6 +39,7 @@ export interface Route {
 export interface GoalPlan {
   brief: string;
   slot: RobotSlot;
+  slots?: RobotSlot[];
   objects: WorldObject[];
   probes: CaseProbe[];
   success: ContractFormula;
@@ -53,6 +55,7 @@ export interface CaseGoal {
   kind: GoalKind;
   name: string;
   needs: Capability[];
+  pair?: boolean;
   params: ParamKey[];
   plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind) => GoalPlan;
   problem?: (robot: BuilderRobot, values: GoalValues) => string | null;
@@ -88,7 +91,7 @@ const ROLL: CaseControl[] = [
   { id: 'turn', label: 'Turn', input: 'turn' },
 ];
 
-const REACH: CaseControl[] = [
+export const REACH: CaseControl[] = [
   { id: 'move', label: 'Move', input: 'move' },
   { id: 'lift', label: 'Raise and Lower', input: 'lift' },
 ];
@@ -105,15 +108,15 @@ export const groundOf = (facts: RobotFacts): Capability | null => {
   return facts.capabilities.includes('wheels') ? 'wheels' : null;
 };
 
-const near = (signal: string, radius: number): ContractState => ({
+export const near = (signal: string, radius: number): ContractState => ({
   atom: { expr: { signal }, cmp: '<', value: radius, scale: radius },
 });
 
-const holdNear = (signal: string, radius: number, seconds: number): ContractFormula => ({
+export const holdNear = (signal: string, radius: number, seconds: number): ContractFormula => ({
   hold_for: { seconds, within: 'whole', state: near(signal, radius) },
 });
 
-const marker = (id: string, name: string, at: V3, size: V3): WorldObject => ({
+export const marker = (id: string, name: string, at: V3, size: V3): WorldObject => ({
   id,
   name,
   kind: 'cylinder',
@@ -149,7 +152,7 @@ export const routeClearance = (robot: BuilderRobot) =>
 const blockRunUp = (robot: BuilderRobot) =>
   2 * (BLOCK_DEPTH_MM + routeClearance(robot) * 1.2 + robot.footprint.depth + robot.footprint.width);
 
-const mm = (x: number) => `${Math.round(x)} mm`;
+export const mm = (x: number) => `${Math.round(x)} mm`;
 
 const reachGoal: CaseGoal = {
   kind: 'reach',
@@ -175,7 +178,16 @@ const reachGoal: CaseGoal = {
     v.distanceMm - v.radiusMm < robot.footprint.depth / 2 ? 'Move the spot farther ahead of the robot.' : null,
 };
 
-const touchTarget = (robot: BuilderRobot, v: GoalValues): V3 => {
+export function pointProblem(arm: Pick<RobotFacts, 'anchor' | 'reachMm'>, at: V3, v: GoalValues): string | null {
+  const { anchor, reachMm } = arm;
+  const far = Math.hypot(at[0] - anchor[0], at[1] - anchor[1], at[2] - anchor[2]);
+
+  if (far > reachMm) return `Bring the point within ${mm(reachMm)} of the arm.`;
+
+  return v.heightMm < v.radiusMm ? 'Raise the point off the floor.' : null;
+}
+
+export const touchTarget = (robot: BuilderRobot, v: GoalValues): V3 => {
   const anchor = robot.facts.anchor;
 
   return [anchor[0] + v.sideMm, v.heightMm, anchor[2] + v.distanceMm];
@@ -214,15 +226,7 @@ const touchGoal: CaseGoal = {
       target: { at, radius: v.radiusMm },
     };
   },
-  problem: (robot, v) => {
-    const at = touchTarget(robot, v);
-    const anchor = robot.facts.anchor;
-    const far = Math.hypot(at[0] - anchor[0], at[1] - anchor[1], at[2] - anchor[2]);
-
-    if (far > robot.facts.reachMm) return `Bring the point within ${mm(robot.facts.reachMm)} of the arm.`;
-
-    return v.heightMm < v.radiusMm ? 'Raise the point off the floor.' : null;
-  },
+  problem: (robot, v) => pointProblem(robot.facts, touchTarget(robot, v), v),
 };
 
 const pushGoal: CaseGoal = {
@@ -399,6 +403,7 @@ export function goalDefaults(kind: GoalKind, robot: BuilderRobot, world: WorldKi
     path: { seconds: legs ? 22 : 13 },
     walk: { distanceMm: 500 },
     touch: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: 4 },
+    handoff: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: 7 },
   };
 
   const values = { ...base, ...byKind[kind] };

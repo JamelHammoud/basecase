@@ -1,5 +1,5 @@
 import type { MainModule } from '@mujoco/mujoco';
-import type { DriveCommand, DriveSetup } from '../sim/drive';
+import type { DriveCommand, DriveSetup, RobotDrive } from '../sim/drive';
 import { rigForWorker } from '../sim/drive';
 import { footPoints } from '../sim/driveLegs';
 import { armSetup, roverForward, roverSetup } from '../sim/driveSetup';
@@ -11,19 +11,15 @@ import { buildRig, type Rig, type V3 } from '../utils/kinematics';
 import { evaluateContract, type Trace } from '../skills/contract';
 import { GroundSteer } from './groundSteer';
 import { probeReader } from './probes';
-import { boundEffector, robotFacts, slotRefusal, type EndEffector, type RobotFacts } from './robotFit';
+import { castRobot, castSlots, guestsOf, type CaseRobot, type CastSlot, type NamedSlot } from './caseCast';
+import { robotFacts, type RobotFacts } from './robotFit';
 import { scaledToReach } from './scale';
-import { worldItem, type Case, type ReferenceCommand } from './schema';
+import { caseSlots, worldItem, type Case, type ReferenceCommand } from './schema';
+import { slotRefusals } from './slots';
+
+export type { CaseRobot } from './caseCast';
 
 export const RECORD_DT = 0.02;
-
-export interface CaseRobot {
-  id: string;
-  parts: MjcfInput['parts'];
-  joints: Parameters<typeof buildRig>[0];
-  measures: MjcfInput['measures'];
-  partTriangles: MjcfInput['partTriangles'];
-}
 
 export interface CaseFrame {
   t: number;
@@ -49,46 +45,56 @@ interface ProbeBase {
 
 export interface RunOptions {
   controller: 'limp' | 'reference';
+  partners?: CaseRobot[];
+  limp?: string[];
 }
 
 interface DriveFor {
-  kase: Case;
+  slot: NamedSlot;
+  cast: CastSlot;
   rig: Rig;
-  robot: CaseRobot;
-  facts: RobotFacts;
-  effector: EndEffector | null;
+  parts: MjcfInput['parts'];
 }
 
 const MIN_DRIVEN_FEET = 4;
 
-function groundDrive(rig: Rig, robot: CaseRobot, facts: RobotFacts, key: string): DriveSetup | null {
+function groundDrive(rig: Rig, parts: MjcfInput['parts'], facts: RobotFacts, key: string): RobotDrive | null {
   if (facts.morphology === 'legged') {
-    const feet = footPoints(rig, robot.parts, key);
+    const feet = footPoints(rig, parts, key);
 
     return feet.length >= MIN_DRIVEN_FEET
       ? { kind: 'legs', robot: key, rig: rigForWorker(rig), feet, start: {} }
       : null;
   }
 
-  return facts.wheels.length ? roverSetup(rig, robot.parts, key) : null;
+  return facts.wheels.length ? roverSetup(rig, parts, key) : null;
 }
 
-function driveFor({ kase, rig, robot, facts, effector }: DriveFor): DriveSetup | null {
-  const key = rig.robots[0]?.key ?? '';
+export function driveFor({ slot, cast, rig, parts }: DriveFor): RobotDrive | null {
+  const { facts, effector } = cast;
+  const key = cast.key ?? '';
 
-  if (kase.slot.needs.includes('arm') && effector && facts.armJoints.length) {
+  if (slot.needs.includes('arm') && effector && facts.armJoints.length) {
     const { armJoints: joints, anchor, reachMm } = facts;
 
     return armSetup({ rig, robot: key, effector, joints, anchor, reachMm });
   }
 
-  return groundDrive(rig, robot, facts, key);
+  return groundDrive(rig, parts, facts, key);
+}
+
+export function teamDrive(setups: Array<RobotDrive | null>): DriveSetup | null {
+  if (setups.length < 2) return setups[0] ?? null;
+
+  const members = setups.flatMap((setup, slot) => (setup ? [{ slot, setup }] : []));
+
+  return members.length ? { kind: 'team', members } : null;
 }
 
 const LEGS_FORWARD: V3 = [0, 0, 1];
 
 interface SteerFor {
-  setup: DriveSetup | null;
+  setup: RobotDrive | null;
   model: SimModel;
   base: ProbeBase;
   wheelAxes: V3[];
@@ -105,7 +111,18 @@ function steerFor({ setup, model, base, wheelAxes, objectAt }: SteerFor): Ground
   return new GroundSteer({ model, part: base.part, point: base.point, forward, objectAt, sideways });
 }
 
-const toCommand = (c: ReferenceCommand): DriveCommand => ({ v: c.v ?? [0, 0, 0], target: c.target, aux: c.aux });
+export const slotIndexOf = (kase: Case, c: ReferenceCommand) =>
+  Math.max(
+    0,
+    caseSlots(kase).findIndex((s) => s.id === c.slot),
+  );
+
+export const toCommand = (c: ReferenceCommand, slot = 0): DriveCommand => ({
+  ...(slot ? { slot } : {}),
+  v: c.v ?? [0, 0, 0],
+  target: c.target,
+  aux: c.aux,
+});
 
 function chooseController(setup: DriveSetup | null, options: RunOptions): Controller {
   if (options.controller === 'limp' || !setup) return { kind: 'limp' };
@@ -120,8 +137,8 @@ interface Rollout {
   sample: (poses: Float64Array) => void;
 }
 
-function follow(engine: SimEngine, steer: GroundSteer | null, c: ReferenceCommand) {
-  if (!steer) return engine.command(toCommand(c));
+function follow(engine: SimEngine, steer: GroundSteer | null, c: ReferenceCommand, slot: number) {
+  if (!steer || slot) return engine.command(toCommand(c, slot));
 
   if (c.target) return steer.add(c.target, { speed: c.v?.[0], push: c.push });
 
@@ -137,7 +154,11 @@ function roll({ engine, kase, steer, sample }: Rollout): CaseFrame[] {
   for (let tick = 0; tick < ticks; tick++) {
     const t = tick * RECORD_DT;
 
-    while (timeline.length && timeline[0].at <= t + 1e-9) follow(engine, steer, timeline.shift()!);
+    while (timeline.length && timeline[0].at <= t + 1e-9) {
+      const c = timeline.shift()!;
+
+      follow(engine, steer, c, slotIndexOf(kase, c));
+    }
 
     const poses = engine.poses();
 
@@ -151,10 +172,37 @@ function roll({ engine, kase, steer, sample }: Rollout): CaseFrame[] {
   return frames;
 }
 
-function fixedBaseFor(rig: Rig, facts: RobotFacts): Record<string, boolean> | undefined {
-  const key = rig.robots[0]?.key;
+function fixedBaseFor(slots: CastSlot[]): Record<string, boolean> | undefined {
+  const fixed = slots.flatMap((s) => (s.key && s.facts.morphology === 'fixed' ? [[s.key, true] as const] : []));
 
-  return key && facts.morphology === 'fixed' ? { [key]: true } : undefined;
+  return fixed.length ? Object.fromEntries(fixed) : undefined;
+}
+
+function limpen(engine: SimEngine, model: SimModel, keys: Set<string>) {
+  const range = engine.model.actuator_forcerange;
+
+  for (const j of model.joints)
+    if (keys.has(j.robot) && j.actuator >= 0) range.fill(0, j.actuator * 2, j.actuator * 2 + 2);
+}
+
+const ownFacts = (robot: CaseRobot | undefined) =>
+  robot ? robotFacts(buildRig(robot.joints, robot.parts), robot.parts) : null;
+
+function refused(authored: Case, robot: CaseRobot, refusal: string): CaseResult {
+  const rig = buildRig(robot.joints, robot.parts);
+  const input = { parts: robot.parts, rig, project: DEFAULT_PROJECT, measures: robot.measures };
+
+  return {
+    passed: false,
+    margin: -1,
+    failed: [],
+    trace: { dt: RECORD_DT, signals: {} },
+    refusal,
+    model: buildMjcf({ ...input, partTriangles: robot.partTriangles }),
+    frames: [],
+    objectIds: [],
+    case: authored,
+  };
 }
 
 export async function runCase(
@@ -163,52 +211,50 @@ export async function runCase(
   robot: CaseRobot,
   options: RunOptions,
 ): Promise<CaseResult> {
-  const rig = buildRig(robot.joints, robot.parts);
-  const facts = robotFacts(rig, robot.parts);
-  const refusal = slotRefusal(authored.slot, facts);
-  const base = { parts: robot.parts, rig, project: DEFAULT_PROJECT, measures: robot.measures };
-  const input = { ...base, partTriangles: robot.partTriangles };
+  const partners = options.partners ?? [];
+  const lead = ownFacts(robot)!;
+  const refusal = slotRefusals(caseSlots(authored), [lead, ...partners.map(ownFacts)]).find(Boolean);
 
-  if (refusal)
-    return {
-      passed: false,
-      margin: -1,
-      failed: [],
-      trace: { dt: RECORD_DT, signals: {} },
-      refusal,
-      model: buildMjcf(input),
-      frames: [],
-      objectIds: [],
-      case: authored,
-    };
+  if (refusal) return refused(authored, robot, refusal);
 
-  const kase = scaledToReach(authored, facts.reachMm, facts.anchor);
+  const kase = scaledToReach(authored, lead.reachMm, lead.anchor);
+  const slots = caseSlots(kase);
+  const guests = guestsOf(slots, partners).map((g, i) => ({ ...g, robot: partners[i] }));
+  const team = castRobot(robot, guests);
+  const rig = buildRig(team.joints, team.parts);
+  const cast = castSlots(slots, { rig, parts: team.parts, guests });
   const world = kase.world.objects.map(worldItem);
-  const model = buildMjcf({ ...input, world, fixedBase: fixedBaseFor(rig, facts) });
+  const input = { parts: team.parts, rig, project: DEFAULT_PROJECT, measures: team.measures };
+  const model = buildMjcf({ ...input, partTriangles: team.partTriangles, world, fixedBase: fixedBaseFor(cast) });
   const engine = new SimEngine(mj, model);
-  const effector = boundEffector(kase.slot.binding, facts, rig);
   const signals: Record<string, number[]> = {};
+  const leadRobot = rig.robots.find((r) => r.key === cast[0].key);
   const probeBase: ProbeBase = {
     part: robot.parts.find((p) => !rig.ownerOf.has(p.id))?.id ?? null,
-    point: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
+    point: leadRobot?.pivot ?? ([0, 0, 0] as V3),
   };
   const objectAt = new Map(kase.world.objects.map((o) => [o.id, o.position]));
   const reader = probeReader(kase.task.probes, {
     model,
-    effector,
+    effector: cast[0].effector,
+    effectors: Object.fromEntries(cast.map((c) => [c.id, c.effector])),
     basePart: probeBase.part,
     basePoint: probeBase.point,
     objectAt,
   });
-  const setup = options.controller === 'reference' ? driveFor({ kase, rig, robot, facts, effector }) : null;
-  const wheelAxes = facts.wheels.flatMap((id): V3[] => {
+  const setups =
+    options.controller === 'reference'
+      ? slots.map((slot, i) => driveFor({ slot, cast: cast[i], rig, parts: team.parts }))
+      : [];
+  const wheelAxes = cast[0].facts.wheels.flatMap((id): V3[] => {
     const axis = rig.byId.get(id)?.axis;
 
     return axis ? [axis] : [];
   });
-  const steer = steerFor({ setup, model, base: probeBase, wheelAxes, objectAt });
+  const steer = steerFor({ setup: setups[0] ?? null, model, base: probeBase, wheelAxes, objectAt });
 
-  engine.setController(chooseController(setup, options));
+  engine.setController(chooseController(teamDrive(setups), options));
+  limpen(engine, model, new Set(cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : []))));
 
   try {
     const frames = roll({ engine, kase, steer, sample: (poses) => reader.sample(poses, signals) });

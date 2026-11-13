@@ -1,5 +1,5 @@
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { columnStats, DATASET_FPS, type EpisodeData, type FeatureStats } from './episodes';
+import { columnStats, DATASET_FPS, type EpisodeData, type FeatureStats, type JointGroup } from './episodes';
 
 export const CODEBASE_VERSION = 'v2.1';
 export const TASK_ANNOTATION = 'annotation.human.task_description';
@@ -22,6 +22,7 @@ export interface DatasetEpisode extends EpisodeData {
 export interface DatasetSpec {
   robotType: string;
   jointNames: string[];
+  jointGroups?: JointGroup[];
   videos: VideoFeature[];
   episodes: DatasetEpisode[];
   source: Record<string, unknown>;
@@ -155,7 +156,8 @@ function info(spec: DatasetSpec) {
 }
 
 function modality(spec: DatasetSpec) {
-  const joints = { joints: { start: 0, end: spec.jointNames.length } };
+  const groups = spec.jointGroups ?? [{ name: 'joints', start: 0, end: spec.jointNames.length }];
+  const joints = Object.fromEntries(groups.map((g) => [g.name, { start: g.start, end: g.end }]));
 
   return {
     state: joints,

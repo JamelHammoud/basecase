@@ -192,7 +192,12 @@ function showFrame(
   msg: Extract<SimResponse, { type: 'frame' }>,
   to: { viewport: Viewport3DHandle | null; listeners: Set<PoseListener> },
 ) {
-  to.viewport?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
+  const robots = simDeltas(m, msg.poses);
+  const world = worldDeltas(m, msg.poses);
+
+  if (m.robots.length > 1) robots.forEach((delta, id) => world.set(id, delta));
+
+  to.viewport?.setPose(robots, world);
   to.listeners.forEach((listen) => listen(msg.poses));
   offerSimTargets(
     m.joints.map((j) => j.id),

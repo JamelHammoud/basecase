@@ -14,7 +14,7 @@ import {
   type DriveOffer,
   type VelocityDrive,
 } from './driveAccess';
-import type { DriveSetup } from './drive';
+import type { DriveSetup, RobotDrive } from './drive';
 import { commandFromPad, mergeCommands, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
@@ -26,13 +26,18 @@ export type DriveStatus = 'off' | 'checking' | 'on' | 'teach' | 'none';
 
 export type VelocitySource = () => Promise<VelocityDrive | null>;
 
+export interface DriveTeam {
+  members: Array<{ slot: number; setup: RobotDrive }>;
+  script: Array<{ at: number; command: DriveCommand }>;
+}
+
 export interface SimDrive {
   status: DriveStatus;
   active: boolean;
   cls: DriveClass | null;
   offer: DriveOffer;
   fell: boolean;
-  start: () => Promise<boolean>;
+  start: (team?: DriveTeam) => Promise<boolean>;
   stop: () => void;
   respawn: () => void;
   setKeys: (command: DriveCommand) => void;
@@ -83,6 +88,12 @@ async function staysUp(
   });
 
   return fallCheckPassed(run.stats, restHeight(model, robotKey), robotKey);
+}
+
+function teamSetup(own: RobotDrive, team: DriveTeam | undefined): DriveSetup {
+  if (!team?.members.length) return own;
+
+  return { kind: 'team', members: [{ slot: 0, setup: own }, ...team.members] };
 }
 
 export function useDrive(inputs: DriveInputs): SimDrive {
@@ -139,11 +150,11 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   }, [simStatus, viewportRef]);
 
   const begin = useCallback(
-    (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>) => {
+    (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam) => {
       const controller: Controller =
         access.kind === 'policy'
           ? { kind: 'policy', policy: access.velocity.policy, robot: access.robot }
-          : { kind: 'drive', setup: access.setup };
+          : { kind: 'drive', setup: teamSetup(access.setup, team) };
 
       clsRef.current = access.cls;
       topSpeed.current = access.kind === 'policy' ? access.velocity.topSpeed : null;
@@ -152,46 +163,53 @@ export function useDrive(inputs: DriveInputs): SimDrive {
       setCls(access.cls);
       latest.current.setController(controller);
       latest.current.send({ type: 'respawn', robot: robotKey });
+
+      if (team?.script.length && access.kind === 'ready')
+        latest.current.send({ type: 'script', commands: team.script });
+
       viewportRef.current?.followPart(access.followPart);
       setDriveStatus('on');
     },
     [robotKey, viewportRef],
   );
 
-  const start = useCallback(async () => {
-    const { parts, rig, pose, startSim, runOn, velocity } = latest.current;
+  const start = useCallback(
+    async (team?: DriveTeam) => {
+      const { parts, rig, pose, startSim, runOn, velocity } = latest.current;
 
-    if (!modelRef.current) await startSim();
+      if (!modelRef.current) await startSim();
 
-    const model = modelRef.current;
+      const model = modelRef.current;
 
-    if (!model) return false;
+      if (!model) return false;
 
-    const ready = (await velocity?.current?.()) ?? null;
-    const access = driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: ready });
+      const ready = (await velocity?.current?.()) ?? null;
+      const access = driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: ready });
 
-    if (access.kind === 'teach' || access.kind === 'none') {
-      setDriveStatus(access.kind);
+      if (access.kind === 'teach' || access.kind === 'none') {
+        setDriveStatus(access.kind);
 
-      return false;
-    }
+        return false;
+      }
 
-    if (access.kind === 'ready' && access.needsFallCheck) setDriveStatus('checking');
+      if (access.kind === 'ready' && access.needsFallCheck) setDriveStatus('checking');
 
-    if (
-      access.kind === 'ready' &&
-      access.needsFallCheck &&
-      !(await staysUp(runOn, model, { setup: access.setup, robotKey }))
-    ) {
-      setDriveStatus('teach');
+      if (
+        access.kind === 'ready' &&
+        access.needsFallCheck &&
+        !(await staysUp(runOn, model, { setup: access.setup, robotKey }))
+      ) {
+        setDriveStatus('teach');
 
-      return false;
-    }
+        return false;
+      }
 
-    begin(access);
+      begin(access, team);
 
-    return true;
-  }, [modelRef, robotKey, begin]);
+      return true;
+    },
+    [modelRef, robotKey, begin],
+  );
 
   const stop = useCallback(() => {
     keysCommand.current = IDLE;

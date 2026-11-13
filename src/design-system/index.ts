@@ -34,6 +34,7 @@ export * from './EmptyState';
 export * from './NoMatches';
 export * from './MetaLine';
 export * from './ContextMenu';
+export * from './menuEntries';
 export * from './ColorPicker';
 export * from './ColorSwatch';
 export * from './ColorSwatches';

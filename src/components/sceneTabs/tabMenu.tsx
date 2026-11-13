@@ -1,4 +1,4 @@
-import { ContextMenuEntry, CloseIcon, DuplicateIcon, EditIcon, HistoryIcon, PlusIcon } from '../../design-system';
+import { ContextMenuEntry, CloseIcon, HistoryIcon, PlusIcon, duplicateEntry, renameEntry } from '../../design-system';
 import { keyFor } from '../../app/shortcuts';
 
 export interface TabMenuActions {
@@ -20,8 +20,8 @@ export function tabMenuItems(id: string, a: TabMenuActions): ContextMenuEntry[] 
   const index = a.tabIds.indexOf(id);
 
   return [
-    { label: 'Rename', icon: <EditIcon className={ic} />, onSelect: () => a.onRename(id) },
-    { label: 'Duplicate', icon: <DuplicateIcon className={ic} />, onSelect: () => a.onDuplicate(id) },
+    renameEntry(() => a.onRename(id)),
+    duplicateEntry(() => a.onDuplicate(id)),
     { divider: true },
     { label: 'New Scene', shortcut: keyFor('new-scene'), icon: <PlusIcon className={ic} />, onSelect: a.onNew },
     {

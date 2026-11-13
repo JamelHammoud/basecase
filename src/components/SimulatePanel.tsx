@@ -89,7 +89,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         {on && sim.stats && sim.model && (
           <ResultSection stats={sim.stats} model={sim.model} rig={rig} onSelectParts={onSelectParts} />
         )}
-        {sim.model && <ModelSection model={sim.model} version={sim.version} />}
+        {sim.model && <ModelSection model={sim.model} />}
         {policies.length > 0 && (
           <PoliciesSection
             policies={policies}

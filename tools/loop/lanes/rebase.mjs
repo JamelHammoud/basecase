@@ -102,6 +102,14 @@ function claimFirst(pulls) {
   return null;
 }
 
+const conflictsWithMain = (pull) =>
+  pull.mergeable === 'CONFLICTING' ||
+  (pull.mergeable === 'UNKNOWN' &&
+    !run('git', ['merge-tree', '--write-tree', '--name-only', 'origin/main', `origin/${pull.headRefName}`], {
+      cwd: HOME_CHECKOUT,
+      allowFail: true,
+    }).ok);
+
 const behindMain = (pull) =>
   !run('git', ['merge-base', '--is-ancestor', 'origin/main', `origin/${pull.headRefName}`], {
     cwd: HOME_CHECKOUT,
@@ -113,10 +121,6 @@ function staleFailures(pulls) {
 
   const failed = pulls.filter((pull) => pullCheck(pull) === 'failure');
 
-  if (failed.length === 0) return [];
-
-  run('git', ['fetch', '-q', 'origin'], { cwd: HOME_CHECKOUT, allowFail: true });
-
   return failed.filter(behindMain);
 }
 
@@ -124,7 +128,10 @@ export default function rebase({ log }) {
   const pulls = openPulls()
     .filter((pull) => pull.headRefName.startsWith('loop/'))
     .sort(byRank);
-  const conflicting = pulls.filter((pull) => pull.mergeable === 'CONFLICTING');
+
+  run('git', ['fetch', '-q', '--prune', 'origin'], { cwd: HOME_CHECKOUT, allowFail: true });
+
+  const conflicting = pulls.filter(conflictsWithMain);
   const next = claimFirst(conflicting) ?? claimFirst(staleFailures(pulls));
 
   if (!next) {

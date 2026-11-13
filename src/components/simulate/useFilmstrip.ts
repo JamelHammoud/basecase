@@ -27,32 +27,38 @@ const boxOf = (p: ScenePart, world: boolean): FilmBox => ({
   color: world ? '#0d99ff' : '#9a9a9a',
 });
 
-async function render(record: TryRecord, model: SimModel, boxes: FilmBox[]): Promise<string | null> {
+async function render(record: TryRecord, model: SimModel, boxes: FilmBox[]): Promise<Blob | null> {
   const recording = await loadRecording(record.id);
 
   if (!recording || recording.nbody !== model.bodies.length) return null;
 
   const id = ++seq;
   const w = filmWorker();
-  const bitmap = await new Promise<ImageBitmap | null>((resolve) => {
-    const onMessage = (ev: MessageEvent<{ id: number; bitmap?: ImageBitmap }>) => {
+
+  return new Promise<Blob | null>((resolve) => {
+    const onMessage = (ev: MessageEvent<{ id: number; blob?: Blob }>) => {
       if (ev.data.id !== id) return;
 
       w.removeEventListener('message', onMessage);
-      resolve(ev.data.bitmap ?? null);
+      resolve(ev.data.blob ?? null);
     };
 
     w.addEventListener('message', onMessage);
     w.postMessage({ id, input: { model, recording, boxes, frames: FRAMES, width: FRAME_W, height: FRAME_H } });
   });
+}
 
-  if (!bitmap) return null;
+const strips = new WeakMap<SimModel, Map<string, Promise<Blob | null>>>();
 
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+function stripOf(record: TryRecord, model: SimModel, boxes: FilmBox[]): Promise<Blob | null> {
+  const key = `${record.id} ${JSON.stringify(boxes)}`;
+  const forModel = strips.get(model) ?? new Map<string, Promise<Blob | null>>();
+  const strip = forModel.get(key) ?? render(record, model, boxes);
 
-  canvas.getContext('bitmaprenderer')!.transferFromImageBitmap(bitmap);
+  forModel.set(key, strip);
+  strips.set(model, forModel);
 
-  return URL.createObjectURL(await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 }));
+  return strip;
 }
 
 export function useFilmstrip(record: TryRecord, model: SimModel | null, parts: ScenePart[], world: ScenePart[]) {
@@ -67,9 +73,8 @@ export function useFilmstrip(record: TryRecord, model: SimModel | null, parts: S
       ...world.map((p) => boxOf(p, true)),
     ];
 
-    void render(record, model, boxes).then((made) => {
-      if (live) setUrl(made);
-      else if (made) URL.revokeObjectURL(made);
+    void stripOf(record, model, boxes).then((blob) => {
+      if (live) setUrl(blob && URL.createObjectURL(blob));
     });
 
     return () => {

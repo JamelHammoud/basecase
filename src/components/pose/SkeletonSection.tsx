@@ -27,7 +27,7 @@ const Joints: React.FC<{ skeleton: SkeletonEdit }> = ({ skeleton }) =>
         data-skeleton-joint={j.id}
         data-margin={m ? m.margin.toFixed(3) : undefined}
         onClick={(e) => skeleton.openMenu(j.id, { x: e.clientX, y: e.clientY })}
-        className={`-mx-[6px] px-[6px] w-[calc(100%+12px)] h-8 rounded-lg flex items-center gap-2.5 text-left cursor-default ${open ? 'bg-[#0d99ff]/[0.12]' : 'hover:bg-white/[0.04]'}`}
+        className={`-mx-[6px] px-[6px] w-[calc(100%+12px)] h-[32px] rounded-lg flex items-center gap-2.5 text-left cursor-default ${open ? 'bg-[#0d99ff]/[0.12]' : 'hover:bg-white/[0.04]'}`}
       >
         <span className="flex-1 min-w-0 truncate text-[13px] text-white/85">{prettyJointName(j.name ?? j.id)}</span>
         {m && (

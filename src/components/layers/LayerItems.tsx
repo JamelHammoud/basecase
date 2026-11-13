@@ -13,7 +13,7 @@ import type { ScenePart } from '../../types/robotics';
 import { hasPrimaryModifier } from '../../utils/os';
 
 const ROW =
-  'group relative h-8 rounded-lg flex items-center text-[13px] cursor-default [transition-property:color,--layer-row-fill] duration-150 ease-in-out bg-[var(--layer-row-fill)]';
+  'group relative h-[32px] rounded-lg flex items-center text-[13px] cursor-default [transition-property:color,--layer-row-fill] duration-150 ease-in-out bg-[var(--layer-row-fill)]';
 const SELECTED = '[--layer-row-fill:color-mix(in_srgb,#0d99ff_18%,var(--color-panel-bg))] text-white';
 const RESTING =
   '[--layer-row-fill:var(--color-panel-bg)] hover:[--layer-row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';

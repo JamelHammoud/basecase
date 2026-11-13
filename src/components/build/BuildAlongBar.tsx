@@ -11,7 +11,7 @@ import {
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 import { useBuildAlongKeys } from '../../workspace/useBuildAlongKeys';
 
-const chip = 'glass rounded-full h-8 px-3.5 flex items-center text-[13px] text-white/85 tabular-nums whitespace-nowrap';
+const chip = 'glass rounded-full h-[28px] px-3.5 flex items-center text-[13px] text-white/85 tabular-nums whitespace-nowrap';
 
 export const BuildAlongBar: React.FC<{ buildAlong: BuildAlong; active: boolean }> = ({ buildAlong, active }) => {
   const { step, index, count, opening, progress } = buildAlong;

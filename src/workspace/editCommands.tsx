@@ -15,6 +15,7 @@ import {
 import { ALIGN_AXES } from '../components/alignActions';
 import type { CommandInputs } from './sceneCommands';
 import { handJointCommands } from './jointCommands';
+import { mirrorCommand } from './mirrorCommands';
 
 const ic = 'w-4 h-4';
 
@@ -62,6 +63,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       icon: <GroupIcon className={ic} />,
       run: edits.group,
     },
+    mirrorCommand(actions.mirror),
     {
       id: 'ungroup',
       group: 'Selection',

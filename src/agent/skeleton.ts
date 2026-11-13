@@ -1,7 +1,7 @@
 import { actuatorOf, COMPONENT_BY_ID } from '../data/components';
 import type { RobotSkeleton, SkeletonJoint, SkeletonLimb, ZUpVec } from '../types/skeleton';
 import { r1, r3 } from './agentFrame';
-import { swapWords } from './agentMirror';
+import { swapWords } from '../mirror/mirrorNames';
 
 export interface SkeletonJointInput {
   id: string;

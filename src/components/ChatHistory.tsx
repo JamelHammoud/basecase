@@ -2,7 +2,7 @@ import React from 'react';
 import { AgentConversationSummary } from '../types/robotics';
 import { groupByDate } from '../utils/dateGroups';
 import { timeAgo } from '../utils/timeAgo';
-import { AgentSpinner, IconButton, useScrollFade, DeleteIcon, confirmAction } from '../design-system';
+import { AGENT_WORKING, IconButton, Spinner, useScrollFade, DeleteIcon, confirmAction } from '../design-system';
 
 interface ChatHistoryProps {
   chats: AgentConversationSummary[];
@@ -55,7 +55,7 @@ const ChatRow: React.FC<{
       <span
         className={`relative pointer-events-none flex-1 min-w-0 pl-[10px] pr-2 flex items-center gap-2 text-[13px] ${ROW_TEXT[state]}`}
       >
-        {running && <AgentSpinner />}
+        {running && <Spinner label={AGENT_WORKING} />}
         <span className="truncate">{c.title}</span>
       </span>
       <span className="relative shrink-0 min-w-[40px] h-full mr-[3px] flex items-center justify-end">

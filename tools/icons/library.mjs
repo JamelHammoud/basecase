@@ -106,7 +106,6 @@ const DRAWN = {
       loopArrow({ c: [12, 12], r: 8.5, from: 160, to: 312, tail: 0.5, arm: 3.5 }) +
       loopArrow({ c: [12, 12], r: 8.5, from: -20, to: 132, tail: 0.5, arm: 3.5 }),
     HistoryIcon: loopArrow({ c: [12, 12], r: 8.75, from: 180, to: -135, cw: false, tail: 2 }) + 'M12 7.5V12L15 13.75',
-    SpinnerIcon: 'M20.5 12A8.5 8.5 0 1 1 14.63 3.92',
     CircleIcon: circle(12, 12, 9),
     CircleDotIcon: { d: circle(12, 12, 9.5), dots: 'M12 12h0', dotSize: 5 },
     CircleCheckIcon: RING + 'M8 12.25L10.75 15L16 9.25',

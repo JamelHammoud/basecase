@@ -66,7 +66,7 @@ The review lane sees the diff, the pull request body, AGENTS.md, the guides of t
 
 - breaks a rule in AGENTS.md or the area's guide;
 - adds user-facing copy that the §3d checklist would cut. Its default for a new string is "delete it";
-- adds copy without a reason Check's `copy` job accepts (`tools/check-copy-budget.mjs`): when a pull request adds more strings than it removes, each new string needs a `copy: "<string>" — <why>` line in the body;
+- adds copy without a reason Check's `copy` job accepts (`tools/check-copy-budget.mjs`): when a pull request adds more strings than it removes, each new string needs a `copy: "<string>" — <why>` line in the body. The review lane counts the strings with `tools/copy-diff.mjs` (§3d), puts the list and the net in its prompt and its comment, and fails a reason that doesn't hold up; the lead lane reads the week's net summed across merged pull requests;
 - ships a feature with no entry point and no e2e test of it;
 - changes what a person does without a new or updated help article (`site/content/help/`) with screenshots (`site/public/help/`), or gets the changelog wrong either way: a capability worth announcing without an entry, or an entry for a fix, polish or a small option. Builders and refiners write these from `tools/loop/briefs/telling.md`, and an arc's big step also gets a short blog post;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or a loosened assertion;

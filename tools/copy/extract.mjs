@@ -166,10 +166,14 @@ function jsxChildrenText(element) {
   return hasText ? element.children.map(jsxChildPiece).join('') : null;
 }
 
-function callStrings(call) {
-  if (!CALLS.has(calleeName(call))) return [];
+const tagged = (hits, kind) => hits.map((hit) => ({ ...hit, kind }));
 
-  return call.arguments.flatMap((arg) => {
+function callStrings(call) {
+  const kind = calleeName(call);
+
+  if (!CALLS.has(kind)) return [];
+
+  const hits = call.arguments.flatMap((arg) => {
     const node = unwrap(arg);
 
     if (!ts.isObjectLiteralExpression(node)) return stringsOf(node);
@@ -178,6 +182,8 @@ function callStrings(call) {
       .filter((prop) => ts.isPropertyAssignment(prop) && CALL_KEYS.has(propName(prop.name)))
       .flatMap((prop) => stringsOf(prop.initializer));
   });
+
+  return tagged(hits, kind);
 }
 
 function attributeStrings(attribute) {
@@ -186,9 +192,9 @@ function attributeStrings(attribute) {
 
   if (!JSX_PROPS.has(name) || !init) return [];
 
-  if (ts.isStringLiteral(init)) return [{ node: init, text: init.text }];
+  if (ts.isStringLiteral(init)) return [{ node: init, text: init.text, kind: name }];
 
-  return ts.isJsxExpression(init) && init.expression ? stringsOf(init.expression) : [];
+  return ts.isJsxExpression(init) && init.expression ? tagged(stringsOf(init.expression), name) : [];
 }
 
 const isJsxParent = (node) => ts.isJsxElement(node) || ts.isJsxFragment(node);
@@ -197,7 +203,7 @@ function childExpressionStrings(node) {
   const parent = node.parent;
   const inChildren = parent && isJsxParent(parent) && node.expression && !isLiteral(unwrap(node.expression));
 
-  return inChildren ? stringsOf(node.expression) : [];
+  return inChildren ? tagged(stringsOf(node.expression), 'text') : [];
 }
 
 function firstTextStart(element) {
@@ -210,7 +216,7 @@ function nodeStrings(node) {
   if (isJsxParent(node)) {
     const text = jsxChildrenText(node);
 
-    return text === null ? [] : [{ node, text, start: firstTextStart(node) }];
+    return text === null ? [] : [{ node, text, kind: 'text', start: firstTextStart(node) }];
   }
 
   if (ts.isJsxAttribute(node)) return attributeStrings(node);
@@ -219,19 +225,23 @@ function nodeStrings(node) {
 
   if (ts.isCallExpression(node)) return callStrings(node);
 
-  const keyed = ts.isPropertyAssignment(node) && OBJECT_KEYS.has(propName(node.name));
+  const key = ts.isPropertyAssignment(node) ? propName(node.name) : null;
 
-  return keyed ? stringsOf(node.initializer) : [];
+  return OBJECT_KEYS.has(key) ? tagged(stringsOf(node.initializer), key) : [];
 }
 
 export function extractStrings(source, fileName = 'file.tsx') {
-  const kind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, kind);
+  const scriptKind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, scriptKind);
   const found = new Map();
 
   const visit = (node) => {
     for (const hit of nodeStrings(node)) {
-      found.set(hit.node.pos, { text: normalize(hit.text), start: hit.start ?? hit.node.getStart(file) });
+      found.set(hit.node.pos, {
+        text: normalize(hit.text),
+        kind: hit.kind,
+        start: hit.start ?? hit.node.getStart(file),
+      });
     }
 
     ts.forEachChild(node, visit);
@@ -241,5 +251,5 @@ export function extractStrings(source, fileName = 'file.tsx') {
 
   return [...found.values()]
     .filter(({ text }) => isUserFacing(text))
-    .map(({ text, start }) => ({ text, line: file.getLineAndCharacterOfPosition(start).line + 1 }));
+    .map(({ text, kind, start }) => ({ text, kind, line: file.getLineAndCharacterOfPosition(start).line + 1 }));
 }

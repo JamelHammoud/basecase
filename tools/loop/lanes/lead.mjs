@@ -10,6 +10,7 @@ import {
   openIssues,
   ownerComments,
 } from '../lib/github.mjs';
+import { copyTrend, copyTrendLine, mergedThisWeek } from '../lib/copy.mjs';
 import { LOOP_DIR, OWNER_LOGIN } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
@@ -143,7 +144,7 @@ function prompt(world) {
     listing('Open arcs', world.arcs),
     listing('Ideas from market research', world.ideas, IDEAS_NOTE),
     listing('Steps waiting or in progress', world.steps),
-    `## Recently merged\n\n${merged}`,
+    `## Recently merged\n\n${merged}\n\n${copyTrendLine(copyTrend(mergedThisWeek()))}`,
   ].join('\n\n');
 }
 

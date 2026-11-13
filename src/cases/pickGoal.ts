@@ -18,6 +18,7 @@ const GRIP_S = 0.6;
 const START_S = 0.2;
 const END_HOLD_S = 0.3;
 const SPARE_S = 1.5;
+const MIN_SPACING_MM = 50;
 const OPEN = [0, 0];
 const SHUT = [0, 1];
 
@@ -161,6 +162,7 @@ export const pickGoalWith = (controls: CaseControl[]): CaseGoal => ({
   name: 'Pick Up a Block',
   needs: ['gripper'],
   params: ['distanceMm', 'spacingMm', 'radiusMm', 'seconds'],
+  bounds: { spacingMm: { min: MIN_SPACING_MM } },
   plan: (robot, v) => {
     const { facts } = robot;
     const layout = layoutOf(robot, v);

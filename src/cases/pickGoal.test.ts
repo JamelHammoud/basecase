@@ -2,7 +2,7 @@ import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { buildRig, type V3 } from '../utils/kinematics';
-import { buildCase, builderRobot, goalsFor, worldsFor } from './caseBuilder';
+import { buildCase, builderRobot, goalOf, goalsFor, goalValues, worldsFor } from './caseBuilder';
 import { robotFacts, slotRefusal } from './robotFit';
 import { scaledToReach } from './scale';
 import type { Case } from './schema';
@@ -88,11 +88,14 @@ describe('Pick Up a Block', () => {
     expect(kase.reference.timeline.map((c) => c.aux?.[1])).toEqual([0, 0, 1, 1, 1, 1, 0, 0]);
   });
 
-  it('keeps the block and the spot on the floor when it scales to a bigger or smaller arm', () => {
+  it('keeps the block on the floor and the grip at its height when it scales to a bigger or smaller arm', () => {
     const kase = pickCase();
+    const gripHeight = kase.reference.timeline[1].target![1] / objectOf(kase, 'block').position[1];
 
     for (const share of [0.5, 2]) {
       const scaled = scaledToReach(kase, kase.slot.reachMm! * share, kase.slot.anchor!);
+      const block = objectOf(scaled, 'block').position;
+      const grip = scaled.reference.timeline[1].target!;
 
       for (const id of ['block', 'spot']) {
         const { position, size } = objectOf(scaled, id);
@@ -100,7 +103,17 @@ describe('Pick Up a Block', () => {
         expect(position[1]).toBeCloseTo(size[1] / 2);
         expect(size[1]).toBeCloseTo(35 * share);
       }
+
+      expect(grip[1] / block[1]).toBeCloseTo(gripHeight);
+      expect([grip[0], grip[2]]).toEqual([block[0], block[2]]);
     }
+  });
+
+  it('keeps Spacing down to 50 mm, while Follow a Path keeps 200 mm', () => {
+    const tight = buildCase({ goal: 'pick', world: 'floor', values: { spacingMm: 50 } }, robotOf('arm-6dof'));
+
+    expect(tight.ok && objectOf(tight.kase, 'spot').position[2] - objectOf(tight.kase, 'block').position[2]).toBe(50);
+    expect(goalValues(goalOf('path')!, robotOf('arm-6dof'), { spacingMm: 50 }).spacingMm).toBe(200);
   });
 
   it('passes with its reference in MuJoCo, and a limp arm misses', async () => {

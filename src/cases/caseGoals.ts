@@ -58,9 +58,10 @@ export interface CaseGoal {
   params: ParamKey[];
   plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind) => GoalPlan;
   problem?: (robot: BuilderRobot, values: GoalValues) => string | null;
+  bounds?: Partial<Record<ParamKey, Pick<GoalParam, 'min'>>>;
 }
 
-export const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
+const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
   distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
   heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
   sideMm: { key: 'sideMm', label: 'Side', unit: 'mm', min: -2000, max: 2000, step: 10 },
@@ -68,9 +69,11 @@ export const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
   pushMm: { key: 'pushMm', label: 'Push', unit: 'mm', min: 100, max: 5000, step: 50 },
   boxMm: { key: 'boxMm', label: 'Box', unit: 'mm', min: 40, max: 600, step: 10 },
   stops: { key: 'stops', label: 'Spots', unit: '', min: 2, max: 8, step: 1 },
-  spacingMm: { key: 'spacingMm', label: 'Spacing', unit: 'mm', min: 50, max: 3000, step: 50 },
+  spacingMm: { key: 'spacingMm', label: 'Spacing', unit: 'mm', min: 200, max: 3000, step: 50 },
   seconds: { key: 'seconds', label: 'Time', unit: 's', min: 2, max: 120, step: 1 },
 };
+
+export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({ ...GOAL_PARAMS[key], ...goal.bounds?.[key] });
 
 const GOAL_BLUE = '#0d99ff';
 const BOX_GREY = '#c8a26a';

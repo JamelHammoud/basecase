@@ -12,6 +12,7 @@ import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
+import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
@@ -216,6 +217,7 @@ ipcMain.handle('library:delete-scene', (_e, sceneId) => backend.deleteScene(scen
 registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerHubHandlers(ipcMain, backend.hub);
+registerOnshapeHandlers(ipcMain, backend.onshape);
 registerShareHandlers(ipcMain);
 
 const robot = new RobotLink({

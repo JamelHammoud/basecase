@@ -90,7 +90,7 @@ describe('Operate calibration', () => {
     await page.locator(visible('[data-robot-rung="test"]')).first().click();
 
     const calibrate = page
-      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate' })
+      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
       .first();
 
     await expect.poll(() => calibrate.isEnabled()).toBe(true);
@@ -109,8 +109,7 @@ describe('Operate calibration', () => {
 
     expect(Number(await row(jointId).getAttribute('data-version'))).toBe(1);
     await row(jointId).hover();
-    await row(jointId).getByRole('button', { name: 'More' }).click();
-    await page.getByRole('menuitem', { name: 'Roll Back' }).click();
+    await row(jointId).getByRole('button', { name: 'Roll Back' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
     await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
     expect(app.errors).toEqual([]);

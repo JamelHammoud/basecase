@@ -17,6 +17,7 @@ export * from './ChoiceGrid';
 export * from './choiceStyles';
 export * from './PanelTabs';
 export * from './Section';
+export * from './RowActions';
 export * from './Modal';
 export * from './ConfirmDialog';
 export * from './ConfirmHost';

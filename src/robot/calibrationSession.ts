@@ -2,8 +2,10 @@ import { useSyncExternalStore } from 'react';
 import { benchLogs } from '../reality/benchLogs';
 import { calibrator } from '../reality/calibrateClient';
 import type { ServoCalibration } from '../reality/types';
+import type { RobotJoint } from '../types/robotics';
 import { canRunBench, playBench } from './benchRun';
 import { robotSceneJoints, robotSnapshot } from './robotStore';
+import { sceneRobot } from './sceneRobot';
 
 export type CalibrationPhase = 'idle' | 'moving' | 'fitting';
 
@@ -30,12 +32,23 @@ export const calibrationPhase = () => phase;
 
 export const useCalibrationPhase = () => useSyncExternalStore(subscribe, calibrationPhase);
 
-export const canCalibrate = () => phase === 'idle' && Boolean(robotSceneJoints()) && canRunBench(robotSnapshot());
+const sameIds = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((id, i) => id === b[i]);
 
-export async function calibrateRobot(record: RecordCalibration): Promise<void> {
-  const joints = robotSceneJoints();
+export function connectedFrom(sceneJoints: readonly RobotJoint[]): string[] | null {
+  const connected = robotSceneJoints();
+  const robot = sceneRobot(sceneJoints);
 
-  if (!joints || !canCalibrate()) return;
+  return connected && robot.ok && sameIds(connected, robot.joints) ? connected : null;
+}
+
+export const canCalibrate = (sceneJoints: readonly RobotJoint[]) =>
+  phase === 'idle' && Boolean(connectedFrom(sceneJoints)) && canRunBench(robotSnapshot());
+
+export async function calibrateRobot(sceneJoints: readonly RobotJoint[], record: RecordCalibration): Promise<void> {
+  const joints = connectedFrom(sceneJoints);
+
+  if (!joints || !canCalibrate(sceneJoints)) return;
 
   setPhase('moving');
 

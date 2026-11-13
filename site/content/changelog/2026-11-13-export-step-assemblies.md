@@ -4,13 +4,13 @@ date: 2026-11-13
 image: /changelog/export-step-assemblies/cover.png
 ---
 
-STEP Assembly, in the Export menu and as Export STEP in ⌘K, saves the whole design as one STEP file that Fusion, Onshape and SolidWorks open, each part a named, coloured body in its group. Parts the agent modelled in replicad and basic shapes arrive as exact solids; catalog parts and meshes arrive faceted.
+STEP, in the Export menu and as Export STEP in ⌘K, saves the whole design as one STEP file that Fusion, Onshape and SolidWorks open, each part a named, coloured body in its group. Parts the agent modelled in replicad and basic shapes arrive as exact solids; catalog parts and meshes arrive faceted.
 
 ## Where it is
 
-Click Export at the top right and choose STEP Assembly, between 3MF Plates and Basecase Scene. It's also Export STEP in ⌘K. It runs in the desktop app, not the web demo, and asks where to save the file.
+Click Export at the top right and choose STEP, between 3MF Plates and Scene. It's also Export STEP in ⌘K. It runs in the desktop app, not the web demo, and asks where to save the file.
 
-![The Export menu open over a base plate with a Feetech STS3215 on it, STEP Assembly fourth in the list](/changelog/export-step-assemblies/cover.png)
+![The Export menu open over a base plate with a Feetech STS3215 on it, STEP fourth in the list](/changelog/export-step-assemblies/cover.png)
 
 ![⌘K with Export STEP typed and the command highlighted](/changelog/export-step-assemblies/command.png)
 

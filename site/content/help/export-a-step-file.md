@@ -13,10 +13,10 @@ covers:
 Hand your design to Fusion, Onshape, SolidWorks or any CAD tool that opens STEP, for drawings, tolerancing or a machinist. STEP export runs in the desktop app.
 
 1. Click **Export** at the top right.
-2. Choose **STEP Assembly**.
+2. Choose **STEP**.
 3. Pick where to save the file.
 
-![The Export menu with STEP Assembly](/help/export-a-step-file/export-menu.png)
+![The Export menu with STEP](/help/export-a-step-file/export-menu.png)
 
 You can also press ⌘K and choose **Export STEP**.
 

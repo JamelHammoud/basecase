@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { benchLogs } from '../reality/benchLogs';
+import { keepBenchLogs } from '../reality/benchLogStore';
 import { calibrator } from '../reality/calibrateClient';
 import type { ServoCalibration } from '../reality/types';
 import type { RobotJoint } from '../types/robotics';
@@ -61,8 +62,12 @@ export async function calibrateRobot(sceneJoints: readonly RobotJoint[], record:
 
     setPhase('fitting');
 
-    for (const [k, jointId] of joints.entries())
-      record(jointId, await fitter.calibrate({ family: recording.family, logs: benchLogs(recording, k) }));
+    for (const [k, jointId] of joints.entries()) {
+      const logs = benchLogs(recording, k);
+      const calibration = await fitter.calibrate({ family: recording.family, logs });
+
+      record(jointId, { ...calibration, logId: keepBenchLogs(recording.family, logs) });
+    }
   } finally {
     fitter.dispose();
     setPhase('idle');

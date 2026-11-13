@@ -60,10 +60,10 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         align="end"
         className="w-56"
       >
-        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="PNG Image" onSelect={run(onExportImage)} />
+        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="Image" onSelect={run(onExportImage)} />
         <MenuItem
           icon={<DownloadIcon className="w-4 h-4" />}
-          label="STL Mesh"
+          label="STL"
           disabled={!canExportStl}
           onSelect={run(onExportStl)}
         />
@@ -76,12 +76,12 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         {onExportStep && (
           <MenuItem
             icon={<PackageIcon className="w-4 h-4" />}
-            label="STEP Assembly"
+            label="STEP"
             disabled={!canExportStl}
             onSelect={run(onExportStep)}
           />
         )}
-        <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Basecase Scene" onSelect={run(onExportScene)} />
+        <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Scene" onSelect={run(onExportScene)} />
         <MenuItem
           icon={<RobotsIcon className="w-4 h-4" />}
           label="Robot Package"

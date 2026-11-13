@@ -62,6 +62,8 @@ Tries are listed worst first, so the misses to look at are on top. To delete a t
 
 Right-click a passed try and choose **Multiply** to replay it in 50 slightly moved worlds. The runs that pass show as a count on its row, such as "50 generated", and deleting the try deletes them too. Steps are in [Multiply a try into varied demonstrations](/help/multiply-a-try-into-varied-demonstrations).
 
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries.
+
 When the robot can't drive, **Teach It to Move** shows under **Try It**. It trains a **Walk** skill; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
 Tries are kept on this computer, not in shared `.basecase` files. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).

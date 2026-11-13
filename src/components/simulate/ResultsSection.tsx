@@ -18,6 +18,8 @@ import type { ScenePart } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import type { Cases } from '../../workspace/useCases';
+import type { CaseCompare } from '../../workspace/useCaseCompare';
+import { CompareRows } from './CompareRows';
 import { FAULT_LABEL } from './faultMenu';
 import type { ShareRobot } from '../../workspace/useShareRobot';
 import { fmtTime } from './format';
@@ -86,6 +88,7 @@ interface ResultsProps {
   parts: ScenePart[];
   world: ScenePart[];
   run: LatestRun | null;
+  compare?: CaseCompare;
 }
 
 const DatasetActions: React.FC<{ cases: Cases }> = ({ cases }) => (
@@ -116,13 +119,18 @@ const DatasetActions: React.FC<{ cases: Cases }> = ({ cases }) => (
   </>
 );
 
-export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, model, parts, world, run }) => {
+const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
+  cases.active && compare && (compare.comparison || compare.running) ? compare : null;
+
+export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, model, parts, world, run, compare }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const tries = cases.active ? cases.tries : [];
   const rows = drivenTries(tries);
   const showRun = !!run && hasRunResult(run.stats, run.model);
 
-  if (!tries.length && !showRun && !share?.canShare) return null;
+  const comparing = comparesCase(cases, compare);
+
+  if (!tries.length && !showRun && !share?.canShare && !comparing) return null;
 
   const openMenu = (e: React.MouseEvent, record: TryRecord) => {
     const multiply: ContextMenuEntry[] =
@@ -146,6 +154,7 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, mode
 
   return (
     <Section title="Results">
+      {comparing && <CompareRows compare={comparing} />}
       {run && showRun && <RunResult {...run} />}
       {rows.length > 0 && (
         <div className="flex flex-col">

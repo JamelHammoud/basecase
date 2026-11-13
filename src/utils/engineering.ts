@@ -100,12 +100,23 @@ function withNoFeetNote(row: CheckRow, floating: RobotBody[]): CheckRow {
   };
 }
 
+export function robotWeight(input: Pick<EngineeringInputs, 'parts' | 'project' | 'measures'>) {
+  const { parts, project, measures } = input;
+  const masses = partMasses(parts, project, measures);
+  const byId = new Map(masses.map((m) => [m.id, m]));
+  const bodies = robotBodies({ parts, joints: project.joints ?? [], measures, byId });
+  const all = massOf(
+    bodies.flatMap((b) => [...b.parts]),
+    byId,
+  );
+
+  return { masses, byId, bodies, all };
+}
+
 export function runEngineering(input: EngineeringInputs): EngineeringReport {
   const { parts, project, measures } = input;
   const joints = project.joints ?? [];
-  const masses = partMasses(parts, project, measures);
-  const byId = new Map(masses.map((m) => [m.id, m]));
-  const bodies = robotBodies({ parts, joints, measures, byId });
+  const { masses, byId, bodies, all } = robotWeight(input);
   const ctx: CheckContext = {
     input,
     parts,
@@ -114,10 +125,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     joints,
     byPart: new Map(parts.map((p) => [p.id, p])),
     byId,
-    all: massOf(
-      bodies.flatMap((b) => [...b.parts]),
-      byId,
-    ),
+    all,
     onFloor: bodies.flatMap((b) => b.feet),
     servos: servoParts(parts),
     bodies,

@@ -25,6 +25,7 @@ covers:
   - src/components/caseRun/
   - src/components/simulate/CaseSections.tsx
   - src/workspace/caseCommands.tsx
+  - src/workspace/agentCaseRequests.ts
 ---
 
 Run a Case in the whole window, laid out the way the Case asks: the robot on the canvas, and around it the cameras, numbers, plots, buttons and tries it needs.
@@ -32,7 +33,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 1. Open a Case. Pick one under Play ▸ Cases, or make one with **New Case**. It opens in the Simulate tab.
 2. Click the expand button in the Case's header, or press [[⌘K]] and choose **Run Case**.
 
-![The Simulate tab with the open Case and its Run Case button](/help/run-a-case/brief.png)
+![The Simulate tab with Touch the Dots open and the Run Case tooltip on its expand button](/help/run-a-case/brief.png)
 
 3. Look at the cards around the canvas. A Case without its own layout shows its cameras on the left: the Scene view, or your stationary camera views, then one tile for each camera on the robot. On the right are the brief, the emulated robot and your tries. Click a camera tile to draw it sharper, right-click it for Look Through, Rename and Lens.
 
@@ -52,7 +53,9 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 7. Click **Done** or press Esc to go back. The first Esc stops driving. Your parts, selection and camera are as you left them.
 
-A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. For now you add a console by editing that file; New Case, the templates and the agent make Cases without one. It says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
+A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. Ask the agent for a Case in words and it writes one, or edit that file. New Case and the templates make Cases without one.
+
+A console says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
 
 A console that lists `camera` among its inputs opens the computer's camera when you click **Try It**. Your arms then drive a humanoid or an arm, as in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 

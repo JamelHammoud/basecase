@@ -30,12 +30,14 @@ interface ModelReading {
   walks: string;
   modelHash: string;
   walk: WalkPick | null;
+  stop: string | null;
 }
 
 interface RobotReading {
   modelHash: string;
   walk: VelocityDrive | null;
   walkHash: string;
+  stop: string | null;
 }
 
 const KEPT_VERDICTS = 64;
@@ -105,7 +107,7 @@ async function readModel(input: CaseRobotInput, robot: () => WireRobot, turn: nu
   if (turn !== null && isNewest(turn)) caseCheckPool.keepOnly(new Set());
 
   const reply = await caseCheckPool.run(0, { type: 'model', robot: robot(), walks: records }, { first: true });
-  const reading = { geometry, walks, modelHash: reply.modelHash, walk: reply.walk };
+  const reading = { geometry, walks, modelHash: reply.modelHash, walk: reply.walk, stop: reply.stop };
 
   keepModel(key, reading);
 
@@ -113,12 +115,12 @@ async function readModel(input: CaseRobotInput, robot: () => WireRobot, turn: nu
 }
 
 async function readRobot(input: CaseRobotInput, robot: () => WireRobot, turn: number | null): Promise<RobotReading> {
-  const { modelHash, walk: pick } = await readModel(input, robot, turn);
+  const { modelHash, walk: pick, stop } = await readModel(input, robot, turn);
   const policy = pick ? await policyOf(pick.hash).catch(() => null) : null;
 
-  if (!pick || !policy) return { modelHash, walk: null, walkHash: '' };
+  if (!pick || !policy) return { modelHash, walk: null, walkHash: '', stop };
 
-  return { modelHash, walk: { policy, topSpeed: pick.topSpeed }, walkHash: pick.hash };
+  return { modelHash, walk: { policy, topSpeed: pick.topSpeed }, walkHash: pick.hash, stop };
 }
 
 interface Judging {
@@ -133,7 +135,7 @@ interface Judging {
 async function judge({ kase, key, reading, robot, runs = CASE_RUNS, tag = key }: Judging): Promise<CaseRuns> {
   const wire = robot();
   const batches = seedBatches(runs, caseCheckPool.size);
-  const job = { type: 'runs' as const, kase, modelHash: reading.modelHash, walk: reading.walk };
+  const job = { type: 'runs' as const, kase, modelHash: reading.modelHash, walk: reading.walk, stop: reading.stop };
   const replies = await Promise.all(
     batches.map((seeds, i) => caseCheckPool.run(i, { ...job, seeds }, { tag, robot: () => wire })),
   );

@@ -1,11 +1,9 @@
 use super::{G1Daemon, G1Run, Holder};
-use crate::control::running::{TEST_TICKS, TEST_TRAVEL_COUNTS};
 use crate::control::DaemonEvent;
 use crate::fault::Fault;
-use crate::intent::MAX_JOINTS;
 use crate::ladder::{Event, Fact, Mode};
 use crate::safety::{ArmSdkLayer, G1Bus, WriteError};
-use crate::watchdog::Freshness;
+use crate::session::TestProgress;
 
 const HANDED_BACK: &str = "The G1's arms are back with its own controller. No more arm commands will be sent.";
 
@@ -44,45 +42,18 @@ impl G1Daemon {
 
     fn start_running(&mut self) {
         let now = self.now_us();
-        let version = self.inputs.intents.version();
-
-        self.intent_watchdog.arm(version, now);
-        self.heartbeat_watchdog.arm(self.inputs.heartbeat.count(), now);
-        self.applied_version = version;
-        self.start = self
+        let start = self
             .with_layer(|layer, reading| layer.present(reading))
             .unwrap_or_default();
-        self.travel = vec![0; self.start.len()];
-        self.stage_ticks = 0;
+
+        self.feed.start(now);
+        self.progress = TestProgress::begin(start);
         self.run = G1Run::Running;
     }
 
-    fn read_intent(&mut self) -> Result<Option<Vec<f32>>, Fault> {
-        let now = self.now_us();
-
-        if self.heartbeat_watchdog.observe(self.inputs.heartbeat.count(), now) == Freshness::Stale {
-            return Err(Fault::ClientLost);
-        }
-
-        let mut values = [0.0f32; MAX_JOINTS];
-        let snapshot = self.inputs.intents.read(&mut values);
-
-        if self.intent_watchdog.observe(self.inputs.intents.version(), now) == Freshness::Stale {
-            return Err(Fault::IntentStale);
-        }
-
-        match snapshot {
-            Some(snap) if snap.version != self.applied_version => {
-                self.applied_version = snap.version;
-
-                Ok(Some(values[..snap.count].to_vec()))
-            }
-            _ => Ok(None),
-        }
-    }
-
     pub(super) fn running(&mut self) {
-        let fresh = match self.read_intent() {
+        let now = self.now_us();
+        let fresh = match self.feed.read(now) {
             Ok(fresh) => fresh,
             Err(fault) => return self.fault(fault),
         };
@@ -99,29 +70,17 @@ impl G1Daemon {
             return self.write_failed(error);
         }
 
-        self.track_travel();
         self.count_stage();
     }
 
-    fn track_travel(&mut self) {
+    fn count_stage(&mut self) {
         let present = self
             .with_layer(|layer, reading| layer.present(reading))
             .unwrap_or_default();
-
-        for ((now, start), travel) in present.iter().zip(&self.start).zip(self.travel.iter_mut()) {
-            if let (Some(now), Some(start)) = (now, start) {
-                *travel = (*travel).max((now - start).abs());
-            }
-        }
-    }
-
-    fn count_stage(&mut self) {
-        self.stage_ticks += 1;
-
-        let travelled = self.travel.iter().all(|travel| *travel >= TEST_TRAVEL_COUNTS);
+        let done = self.progress.observe(&present);
         let earned = self.ladder.state().has(Fact::Tested);
 
-        if self.stage_ticks >= TEST_TICKS && travelled && !earned && self.ladder.mode() == Mode::Test {
+        if done && !earned && self.ladder.mode() == Mode::Test {
             self.ladder.apply(Event::Completed(Mode::Test));
 
             let at_us = self.now_us();

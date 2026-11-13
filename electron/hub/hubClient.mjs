@@ -1,4 +1,5 @@
 import { publicFetch } from '../publicFetch.mjs';
+import { serviceRefusal } from '../refusal.mjs';
 
 export const HUB_ENDPOINT = 'https://huggingface.co';
 
@@ -18,6 +19,14 @@ function errorDetail(text) {
     return text;
   }
 }
+
+export const TOKEN_REFUSED = 'Hugging Face didn’t accept the access token in Settings ▸ Accounts.';
+
+const plainDetail = (detail) => {
+  const text = String(detail ?? '').trim();
+
+  return text && !text.startsWith('<') ? text.slice(0, ERROR_TEXT_MAX) : undefined;
+};
 
 const nextLink = (header) => /<([^>]+)>;\s*rel="next"/.exec(header ?? '')?.[1] ?? null;
 
@@ -43,7 +52,12 @@ export class HubClient {
   async failure(res) {
     const detail = errorDetail((await res.text().catch(() => '')).slice(0, ERROR_TEXT_MAX * 4));
 
-    return new Error(this.scrub(`Hugging Face answered ${res.status}. ${String(detail).slice(0, ERROR_TEXT_MAX)}`));
+    const message =
+      res.status === 401
+        ? TOKEN_REFUSED
+        : serviceRefusal('Hugging Face', { status: res.status, detail: plainDetail(detail), again: 'Try again' });
+
+    return new Error(this.scrub(message));
   }
 
   async api(path, { method = 'GET', json, body, headers = {}, allow = [] } = {}) {

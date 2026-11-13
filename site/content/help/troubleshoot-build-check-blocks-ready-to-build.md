@@ -40,7 +40,7 @@ A blocker remains somewhere in the list, often in a check you haven't opened.
 4. Change the part, or click **Fix** to hand the problem to the agent.
 5. Wait a moment after your last edit. The header reads **Checking…**, then the new verdict.
 
-It worked when the header reads **Ready to build** and the dot on the **Build** tab turns green.
+It worked when the header reads **Ready to build** and the red dot on the **Build** tab is gone.
 
 ## “Some checks didn’t finish, so this answer isn’t complete.”
 

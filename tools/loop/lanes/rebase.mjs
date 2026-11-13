@@ -47,10 +47,25 @@ function resolveConflicts(pull, dir) {
 
   if (!result.ok || !result.output.resolved || !clean) return false;
 
-  git(['add', '-A'], dir);
-  git(['commit', '-q', '--no-edit'], dir);
+  return commitResolution(dir);
+}
 
-  return true;
+function commitResolution(dir) {
+  git(['add', '-A'], dir);
+
+  const first = git(['commit', '-q', '--no-edit'], dir, { allowFail: true });
+
+  if (first.ok) return true;
+
+  const hook = `${first.err}\n${first.out}`.slice(-6000);
+  const prompt = `The conflicts are resolved, but the commit hook rejected the merge:\n\n${hook}\n\nFix what it reports without changing behaviour (for a file over the line limit, move a cohesive part into a sibling module). Then answer resolved.`;
+  const fixed = runAgent({ cwd: dir, name: 'rebase', prompt, schema: SCHEMA, hours: 1 });
+
+  if (!fixed.ok || !fixed.output.resolved) return false;
+
+  git(['add', '-A'], dir);
+
+  return git(['commit', '-q', '--no-edit'], dir, { allowFail: true }).ok;
 }
 
 function giveUp(pull, log) {
@@ -67,6 +82,16 @@ function giveUp(pull, log) {
   });
 }
 
+function merged(pull, dir, log) {
+  try {
+    return git(['merge', '--no-edit', 'origin/main'], dir, { allowFail: true }).ok || resolveConflicts(pull, dir);
+  } catch (error) {
+    log(`#${pull.number}: resolving the conflicts failed: ${String(error.message).slice(0, 300)}`);
+
+    return false;
+  }
+}
+
 function mergeMain(pull, log) {
   git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
 
@@ -77,9 +102,7 @@ function mergeMain(pull, log) {
   linkModules(dir);
 
   try {
-    const merged = git(['merge', '--no-edit', 'origin/main'], dir, { allowFail: true }).ok;
-
-    if (!merged && !resolveConflicts(pull, dir)) return false;
+    if (!merged(pull, dir, log)) return false;
 
     git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
     markRefreshed(pull.number, git(['rev-parse', 'HEAD'], dir).out.trim());

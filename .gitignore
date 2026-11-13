@@ -72,3 +72,8 @@ electron/native/*/build/
 
 # Gatekeeper outputs (fixtures, parity vectors, training runs)
 /verify/out/
+
+# Xcode per-user state and build output (ios/)
+xcuserdata/
+/ios/build/
+DerivedData/

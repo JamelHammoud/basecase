@@ -1,11 +1,25 @@
 import type { V3 } from '../utils/kinematics';
-import { roomObjects, type RoomItem, type RoomScan, type RoomSurface } from './roomWalls';
+import {
+  inRoomFrame,
+  roomFrame,
+  roomObjects,
+  type RoomFrame,
+  type RoomItem,
+  type RoomScan,
+  type RoomSurface,
+} from './roomWalls';
 import { readWorldObjects, type WorldObject } from './schema';
 import { asNumber, asRecord, asString, CaseFileError, listOf, optional, refuse, type Reader } from './validate';
+
+export interface RoomStart {
+  at: V3;
+  heading: number;
+}
 
 export interface Room {
   name: string;
   objects: WorldObject[];
+  start?: RoomStart;
 }
 
 export const ROOM_FILE_EXTENSION = 'json';
@@ -111,10 +125,41 @@ export const roomName = (fileName: string) =>
     .trim()
     .slice(0, 60) || 'Room';
 
+function readTap(value: unknown): RoomSurface {
+  const v = asRecord(value, 'basecase');
+  const start = listOf(bounded(MAX_OFFSET_M), 3)(v.start, 'basecase.start');
+
+  if (start.length !== 3) return refuse('basecase.start', 'must hold 3 numbers');
+
+  return {
+    size: [0, 0, 0],
+    center: start.map((x) => x * MM_PER_M) as V3,
+    yaw: v.heading === undefined ? 0 : asNumber(v.heading, 'basecase.heading'),
+  };
+}
+
+function readStart(value: unknown, frame: RoomFrame): RoomStart | undefined {
+  if (value === undefined) return undefined;
+
+  try {
+    const { center, yaw } = inRoomFrame(readTap(value), frame);
+
+    return { at: [center[0], 0, center[2]], heading: yaw };
+  } catch (error) {
+    if (error instanceof CaseFileError) return undefined;
+
+    throw error;
+  }
+}
+
 export function readRoomPlan(text: string, fileName: string): Room {
-  const objects = roomObjects(readRoomScan(parseJson(text)));
+  const file = parseJson(text);
+  const scan = readRoomScan(file);
+  const objects = roomObjects(scan);
 
   if (!objects.length) throw new CaseFileError('A room file holds no walls or objects');
 
-  return { name: roomName(fileName), objects: readWorldObjects(objects) };
+  const start = readStart(asRecord(file, 'A room file').basecase, roomFrame(scan));
+
+  return { name: roomName(fileName), objects: readWorldObjects(objects), ...(start ? { start } : {}) };
 }

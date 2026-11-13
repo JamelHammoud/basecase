@@ -11,6 +11,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { caseLogicPlan } from './caseLogicPlan';
+import type { RoutineSkills } from './routineCheck';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
 
@@ -23,6 +24,7 @@ interface TryOptions {
   partners: () => SlotRobot[];
   onTry: (record: TryRecord) => void;
   onRefuse: (message: string) => void;
+  skills?: RoutineSkills;
 }
 
 export interface CaseTry {
@@ -56,7 +58,8 @@ function refuseDrive(refusal: string | null | false, onRefuse: (message: string)
   if (refusal) onRefuse(refusal);
 }
 
-export function useCaseTry({ sim, rig, parts, joints, active, partners, onTry, onRefuse }: TryOptions): CaseTry {
+export function useCaseTry(options: TryOptions): CaseTry {
+  const { sim, rig, parts, joints, active, partners, onTry, onRefuse } = options;
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
@@ -131,7 +134,7 @@ export function useCaseTry({ sim, rig, parts, joints, active, partners, onTry, o
 
     const staged = stageCase(active, { rig, parts }, partners());
     const kase = staged.kase;
-    const logic = await caseLogicPlan(kase, { parts, joints, buildModel: sim.buildModel });
+    const logic = await caseLogicPlan(kase, { parts, joints, buildModel: sim.buildModel, skills: options.skills });
 
     if (logic.refusal) onRefuse(logic.refusal);
 

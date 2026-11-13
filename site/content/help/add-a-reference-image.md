@@ -45,6 +45,6 @@ Open **Notes** in the Inspector and write what matters, such as “match the leg
 
 ## Hide every reference image
 
-Press [[⇧I]], or click the image toggle in the header of **Layers**. Hidden images aren't drawn and can't be clicked. **Show reference images** in **Settings** ▸ **Canvas** does the same.
+Press [[⇧I]], or click the image toggle in the header of **Layers**. Hidden images aren't drawn and can't be clicked. **View** ▸ **Show Reference Images** and [[⌘K]] do the same.
 
 Reference images are never printed, exported to STL or used in Union, Subtract or Intersect. Photos larger than 2048 pixels on a side are scaled down to 2048 when you add them.

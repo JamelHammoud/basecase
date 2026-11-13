@@ -1,3 +1,4 @@
+import type { HandoffStub } from './handoffStub';
 import type { RefObject } from 'react';
 import * as THREE from 'three';
 import type { PoseReply } from '../agent/agentPose';
@@ -43,6 +44,7 @@ export interface DevActions {
   load: (seed: WorkspaceSeed) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
+  agentRequest: (kind: string, payload: Payload) => Promise<unknown>;
   clear: () => void;
   select: (ids: string[]) => void;
   dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => void;
@@ -64,6 +66,8 @@ export interface DevActions {
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown) => void;
+  stubHandoffs: (stub: HandoffStub) => void;
+  plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -237,6 +241,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       }),
     poseTool: (kind: string, payload: Payload) => devRef.current.poseTool(kind, payload),
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
+    agentRequest: (kind: string, payload: Payload) => devRef.current.agentRequest(kind, payload),
     guide: () => devRef.current.guide(),
     buildAlongSteps: () => devRef.current.buildAlongSteps(),
     shownParts: () => viewportRef.current?.shownPartIds() ?? [],
@@ -252,6 +257,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
+    stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
+    plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),

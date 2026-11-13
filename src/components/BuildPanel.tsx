@@ -30,6 +30,7 @@ interface BuildPanelProps {
   onFixFinding?: (finding: ReadinessFinding) => void;
   onQuoteFinding?: (finding: ReadinessFinding) => void;
   onOpenCase?: (id: string) => void;
+  onNewCase?: () => void;
   onCalibrate?: (jointIds: string[]) => void;
   panScroll: boolean;
   guide: BuildGuide;
@@ -57,6 +58,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onFixFinding,
   onQuoteFinding,
   onOpenCase,
+  onNewCase,
   onCalibrate,
   panScroll,
   guide,
@@ -102,6 +104,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
                 'print-face': ({ fix }) =>
                   fix?.kind === 'print-face' &&
                   printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
+                ...(onNewCase && { 'new-case': onNewCase }),
                 ...(onCalibrate && {
                   calibrate: ({ fix, ids }: ReadinessFinding) => {
                     onSelectParts(ids);

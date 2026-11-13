@@ -1,4 +1,5 @@
 import { readCapped } from '../publicFetch.mjs';
+import { serviceRefusal } from '../refusal.mjs';
 import { ONSHAPE_ORIGIN } from './link.mjs';
 
 const MAX_JSON_BYTES = 50_000_000;
@@ -13,10 +14,10 @@ const STATUS_ERRORS = {
   401: KEYS_REFUSED,
   403: 'Your Onshape account can’t open that assembly.',
   404: 'Onshape couldn’t find that assembly. Check the link.',
-  429: 'Onshape is limiting requests. Import again in a minute.',
 };
 
-const statusError = (status) => new Error(STATUS_ERRORS[status] ?? `Onshape answered ${status}.`);
+const statusError = (status) =>
+  new Error(STATUS_ERRORS[status] ?? serviceRefusal('Onshape', { status, again: 'Import again' }));
 
 export class OnshapeClient {
   constructor({ keys, origin = ONSHAPE_ORIGIN, fetchImpl = globalThis.fetch }) {

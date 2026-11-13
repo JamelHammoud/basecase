@@ -31,7 +31,21 @@ fn look(bus: &mut robot_daemon::safety::G1Bus) {
 }
 ```
 
-A safety layer, for servos or for the G1's arm_sdk, can only be built with a grant from the ladder:
+A ROS 2 robot's bus reads its joint states but can't publish a command:
+
+```rust
+fn look(bus: &mut robot_daemon::safety::Ros2Bus) {
+    let _ = bus.poll();
+}
+```
+
+```compile_fail
+fn look(bus: &mut robot_daemon::safety::Ros2Bus) {
+    let _ = bus.publish(servo_wire::Topic::PositionCommands, &[0x00, 0x01, 0x00, 0x00]);
+}
+```
+
+A safety layer, for servos, the G1's arm_sdk or a ROS 2 controller, can only be built with a grant from the ladder:
 
 ```compile_fail
 fn arm(bus: robot_daemon::safety::ReadBus) {
@@ -48,6 +62,12 @@ fn arm(bus: robot_daemon::safety::ReadBus) {
 ```compile_fail
 fn arm(bus: robot_daemon::safety::G1Bus, caps: robot_daemon::caps::Caps) {
     let layer = robot_daemon::safety::ArmSdkLayer::new(bus, Vec::new(), caps, robot_daemon::safety::ArmGrant::issue());
+}
+```
+
+```compile_fail
+fn arm(bus: robot_daemon::safety::Ros2Bus, plan: robot_daemon::safety::Ros2Plan) {
+    let layer = robot_daemon::safety::Ros2Layer::new(bus, plan, robot_daemon::safety::ArmGrant::issue());
 }
 ```
 

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon } from './glyphs';
 import { THEME_COLORS } from './theme';
 import { PopoverMenu } from './PopoverMenu';
+import { StatusDot, type Status } from './StatusDot';
 import { Tooltip } from './Tooltip';
 import { useScrollFade } from './useScrollFade';
 
@@ -11,6 +12,7 @@ export interface PanelTab<T extends string> {
   value: T;
   label: string;
   indicator?: React.ReactNode;
+  status?: Status;
   menu?: {
     title: string;
     content: (close: () => void) => React.ReactNode;
@@ -121,6 +123,7 @@ export function PanelTabs<T extends string>({ tabs, value, onChange, label }: Pa
               }`}
             >
               {tab.indicator}
+              {tab.status && <StatusDot {...tab.status} />}
               {tab.label}
             </button>
           );
@@ -171,6 +174,7 @@ function TabWithMenu<T extends string>({
         >
           <span className="flex items-center gap-1.5">
             {tab.indicator}
+            {tab.status && <StatusDot {...tab.status} />}
             {tab.label}
           </span>
           <span

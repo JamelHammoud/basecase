@@ -74,7 +74,7 @@ export interface Simulation {
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[], guests?: SimGuests) => void;
-  buildModel: () => Promise<SimModel>;
+  buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
   input: (name: string, value: FactValue) => void;
@@ -180,6 +180,11 @@ async function runModel(
   }
 }
 
+interface SceneModelOptions {
+  alone?: boolean;
+  pin?: string | null;
+}
+
 function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs) {
   const inputs = useRef({ parts, project, rig, pose, restDeltas });
   const [worldParts, setWorldParts] = useState<WorldItem[]>([]);
@@ -192,7 +197,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
   });
 
   const buildModel = useCallback(
-    async (pin: string | null = null): Promise<SimModel> => {
+    async (options?: SceneModelOptions): Promise<SimModel> => {
       const vp = viewportRef.current;
 
       if (!vp) throw new Error('The canvas isn’t ready.');
@@ -200,7 +205,10 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
       await vp.meshesReady();
 
       const current = inputs.current;
-      const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
+      const [measures, posedFloor] = await Promise.all([
+        vp.measureParts(),
+        vp.posedFloor(undefined, current.restDeltas),
+      ]);
 
       const input = withGuests(
         {
@@ -211,10 +219,10 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
           measures,
           partTriangles: vp.partTriangles,
           posedFloor,
-          world: worldRef.current,
-          ...(pin ? { fixedBase: { [pin]: true } } : {}),
+          world: options?.alone ? [] : worldRef.current,
+          ...(options?.pin ? { fixedBase: { [options.pin]: true } } : {}),
         },
-        guestsRef.current,
+        options?.alone ? NO_GUESTS : guestsRef.current,
       );
 
       return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
@@ -290,7 +298,7 @@ function useSimTouches(
 
 interface SimStartInputs {
   sw: ReturnType<typeof useSimWorker>;
-  buildModel: (pin: string | null) => Promise<SimModel>;
+  buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
   modelRef: React.RefObject<SimModel | null>;
   setModel: (m: SimModel) => void;
   controller: Controller;
@@ -308,7 +316,7 @@ function useSimStart({ sw, buildModel, modelRef, setModel, controller, speed }: 
     let m: SimModel;
 
     try {
-      m = await buildModel(pinned.current);
+      m = await buildModel({ pin: pinned.current });
     } catch (e) {
       setError(errorMessage(e));
       setStatus('error');
@@ -420,7 +428,7 @@ export function useSimulation(props: Inputs): Simulation {
       send({ type: 'speed', value: s });
     },
     setController,
-    buildModel: () => buildModel(),
+    buildModel: (options) => buildModel({ alone: options?.alone }),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     drive,

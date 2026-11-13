@@ -1,4 +1,5 @@
 import React from 'react';
+import { caseCheckId } from '../../readiness/caseChecks';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
 import { NoteRow, type FindingContext } from './FindingRow';
@@ -10,6 +11,7 @@ export const CaseCheckItem: React.FC<{
 }> = ({ check, notes, context }) => (
   <li>
     <button
+      id={caseCheckId(check.caseId)}
       type="button"
       data-status={check.status}
       onClick={() => context.onOpenCase?.(check.caseId)}

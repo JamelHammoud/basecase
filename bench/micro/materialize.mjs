@@ -81,10 +81,11 @@ export async function recordFromFixture(fixture, specToPart, caseKit = null) {
 
 const snakeCase = (key) => key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
-export const casePayload = ({ goal, world, name, values = {} }) => ({
+export const casePayload = ({ goal, world, name, values = {}, ...spec }) => ({
   goal,
   world,
   ...(name ? { name } : {}),
+  ...(spec.console ? { console: spec.console } : {}),
   ...Object.fromEntries(Object.entries(values).map(([k, v]) => [snakeCase(k), v])),
 });
 

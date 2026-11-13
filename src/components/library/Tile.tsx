@@ -2,6 +2,9 @@ import React, { useRef, useState } from 'react';
 import { MODEL_DRAG_TYPE } from '../../data/dnd';
 import { HoverCard, IconButton, Tooltip, MoreIcon, PlusIcon } from '../../design-system';
 
+const HIDDEN_UNTIL_HOVER =
+  'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto';
+
 const TileThumb: React.FC<{ thumb: string | undefined }> = ({ thumb }) => {
   if (thumb) {
     return (
@@ -79,7 +82,7 @@ export const Tile: React.FC<{
           <RenameField name={name} onDone={onRename} />
         ) : (
           <div
-            className="pr-7 text-[13px] leading-[19px] font-medium text-white/90 truncate"
+            className="text-[13px] leading-[19px] font-medium text-white/90 truncate"
             onDoubleClick={(e) => {
               e.stopPropagation();
               onStartRename();
@@ -91,7 +94,7 @@ export const Tile: React.FC<{
         <div className="text-[12px] text-white/50 tabular truncate">{meta}</div>
         {!renaming && (
           <div
-            className="absolute right-0 top-[2px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+            className={`absolute right-0 top-[2px] pl-8 bg-gradient-to-r from-transparent to-[#1f1f1f] to-[32px] transition-opacity ${menuOpen ? '' : HIDDEN_UNTIL_HOVER}`}
             onClick={(e) => e.stopPropagation()}
           >
             <IconButton
@@ -110,7 +113,7 @@ export const Tile: React.FC<{
       {!renaming && (
         <Tooltip
           label="Insert"
-          className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+          className={`absolute top-[8px] right-[8px] transition-opacity ${HIDDEN_UNTIL_HOVER}`}
         >
           <button
             type="button"

@@ -5,6 +5,7 @@ import type { SimReadyAsset } from '../simready/search';
 import type { RobotPreset } from '../utils/robotImport';
 import { LayersView, type LayersViewProps } from './layers/LayersView';
 import { LibraryPanel, type LibraryPanelProps } from './LibraryPanel';
+import { NewModelMenu } from './library/NewModelMenu';
 import { CasesPanel, type CasesPanelProps } from './cases/CasesPanel';
 import { RoutinesPanel, type RoutinesPanelProps } from './routines/RoutinesPanel';
 import { ObjectsPanel } from './objects/ObjectsPanel';
@@ -100,6 +101,15 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
               title="Import robot"
               size="xs"
               onClick={() => props.onImportRobot(null)}
+            />
+          )}
+          {tab === 'library' && (
+            <NewModelMenu
+              canSaveSelection={props.selectedIds.length > 0}
+              canSaveScene={props.parts.length > 0}
+              onSaveModel={props.library.onSaveModel}
+              onImportSvg={props.library.onImportSvg}
+              onImageToModel={props.library.onImageToModel}
             />
           )}
         </div>

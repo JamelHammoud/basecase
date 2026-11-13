@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Command } from '../components/CommandPalette';
-import { cameraViewsExpanded, toggleCameraViews } from '../cameras/cameraViewsStore';
+import { cameraViewsToggleLabel, toggleCameraViews } from '../cameras/cameraViewsStore';
+import { hasCameraViews } from '../cameras/views';
 import {
   CameraAddIcon,
   CameraIcon,
@@ -27,6 +28,9 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
 const ic = 'w-4 h-4';
+
+export const sceneHasCameraViews = ({ core, actions }: Pick<CommandInputs, 'core' | 'actions'>) =>
+  hasCameraViews(core.parts, actions.cameras.cameras, core.simTraining.sim.status !== 'off');
 
 function panelCommands({ core, ui }: CommandInputs): Command[] {
   const { studio, tool } = core;
@@ -103,15 +107,19 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
       icon: <GridIcon className={ic} />,
       run: ui.toggleGrid,
     },
-    {
-      id: 'toggle-camera-views',
-      group: 'View',
-      label: cameraViewsExpanded() ? 'Collapse Camera Views' : 'Expand Camera Views',
-      shortcut: '⇧V',
-      icon: <CameraIcon className={ic} />,
-      keywords: 'camera feed wrist head fisheye robot eyes',
-      run: toggleCameraViews,
-    },
+    ...(sceneHasCameraViews({ core, actions })
+      ? [
+          {
+            id: 'toggle-camera-views',
+            group: 'View',
+            label: cameraViewsToggleLabel(),
+            shortcut: '⇧V',
+            icon: <CameraIcon className={ic} />,
+            keywords: 'camera feed wrist head fisheye robot eyes',
+            run: toggleCameraViews,
+          },
+        ]
+      : []),
     {
       id: 'add-camera-view',
       group: 'Scene',

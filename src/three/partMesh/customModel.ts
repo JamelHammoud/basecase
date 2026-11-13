@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { CustomModelSubNode, PartRole, ScenePart } from '../../types/robotics';
-import { applyDeformersToBufferGeometry, buildBufferGeometryFromSculptData } from '../sculptAndBooleanEngine';
+import { applyDeformersToBufferGeometry, buildBufferGeometryFromSculptData } from '../sculptEngine';
 import { makeSubMesh, type BuildContext } from './context';
 import { createMaterial } from './materials';
 import type { PartBuilder } from './primitives';

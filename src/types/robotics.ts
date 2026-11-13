@@ -9,6 +9,9 @@ import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
 import type { BooleanRecipe } from './step';
+import type { BooleanData } from './booleans';
+
+export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
 
 export type PartCategory =
   | 'custom_models'
@@ -41,6 +44,7 @@ export type PartKind =
   | 'cad_part'
   | 'component'
   | 'mesh'
+  | 'boolean'
   | 'servo'
   | 'stepper_motor'
   | 'hinge_joint'
@@ -172,6 +176,7 @@ export interface ScenePart extends PartRelations {
     file?: string;
     visual?: { key: string; node: string; matrix: number[] };
   };
+  boolean?: BooleanData;
   hardware?: HardwareSpec;
   componentId?: string;
   componentVariant?: string;

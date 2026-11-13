@@ -53,6 +53,60 @@ describe('layerRows', () => {
     expect(layerRows(named, new Set(), 'servo')[0]).toMatchObject({ members: [named[1], named[2]] });
   });
 
+  describe('booleans', () => {
+    const cut = (id: string, operands: ScenePart[], extra: Partial<ScenePart> = {}) =>
+      part(id, { kind: 'boolean', boolean: { op: 'subtract', operands }, ...extra });
+    const inner = cut('inner', [part('plate', { name: 'Plate' }), part('slot', { name: 'Slot', role: 'cutout' })]);
+    const outer = cut('outer', [inner, part('hole', { name: 'Hole', role: 'cutout' })], { name: 'Bracket' });
+    const scene = [part('a'), outer, cut('arm-cut', [part('link'), part('pin')], { group: arm })];
+    const rows = (closed = new Set<string>(), query = '') =>
+      layerRows(scene, closed, query).map((r) =>
+        r.type === 'group' ? `G:${r.name}` : `${r.depth}:${r.part.id}${r.operandOf ? `<${r.operandOf}` : ''}`,
+      );
+
+    it('lists operands under their boolean, one level deeper, recursing into nested booleans', () => {
+      expect(rows()).toEqual([
+        '0:a',
+        '0:outer',
+        '1:inner<outer',
+        '2:plate<inner',
+        '2:slot<inner',
+        '1:hole<outer',
+        'G:Arm',
+        '1:arm-cut',
+        '2:link<arm-cut',
+        '2:pin<arm-cut',
+      ]);
+      expect(layerRows(scene, new Set())[1]).toMatchObject({ collapsed: false });
+      expect(layerRows(scene, new Set())[0]).not.toHaveProperty('collapsed');
+    });
+
+    it('hides operands of a collapsed boolean', () => {
+      expect(rows(new Set(['outer', 'arm-cut']))).toEqual(['0:a', '0:outer', 'G:Arm', '1:arm-cut']);
+      expect(rows(new Set(['inner']))).toEqual([
+        '0:a',
+        '0:outer',
+        '1:inner<outer',
+        '1:hole<outer',
+        'G:Arm',
+        '1:arm-cut',
+        '2:link<arm-cut',
+        '2:pin<arm-cut',
+      ]);
+      expect(layerRows(scene, new Set(['outer']))[1]).toMatchObject({ collapsed: true });
+    });
+
+    it('finds an operand by name and shows it under its parents, even when collapsed', () => {
+      expect(rows(new Set(['outer', 'inner']), 'slot')).toEqual(['0:outer', '1:inner<outer', '2:slot<inner']);
+      expect(rows(new Set(), 'hole')).toEqual(['0:outer', '1:hole<outer']);
+      expect(rows(new Set(), 'bracket')).toEqual(['0:outer']);
+    });
+
+    it('counts only top-level parts', () => {
+      expect(layersTitle(scene)).toEqual(['3 parts']);
+    });
+  });
+
   it('titles and sizes the scene', () => {
     expect(layersTitle(parts)).toEqual(['4 parts', '1 cutout']);
     expect(overallSize([part('a')])).toBe('10 × 20 × 30');

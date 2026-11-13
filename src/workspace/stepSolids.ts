@@ -4,7 +4,7 @@ import { meshScale } from '../three/partMesh/creased';
 import type { PartDimensions, PartKind, ScenePart } from '../types/robotics';
 import type { BooleanRecipe, RecipePart, StepSolid } from '../types/step';
 
-export type ExactSource = RecipePart & Partial<Pick<ScenePart, 'deformers' | 'sculptMesh'>>;
+export type ExactSource = RecipePart & Partial<Pick<ScenePart, 'deformers' | 'sculptMesh' | 'boolean'>>;
 
 const SAME_MM = 0.01;
 const SAME_SCALE = 1e-3;
@@ -114,23 +114,33 @@ function replicadSolid(part: ExactSource): StepSolid | null {
   return moved(fit, { type: 'code', code: cad.code });
 }
 
-function booleanSolid(part: ExactSource, csg: BooleanRecipe): StepSolid | null {
-  const { width, height, depth } = part.dimensions;
-
-  if (!sameSize([width, height, depth], csg.size)) return null;
-
-  const back = new THREE.Matrix4().makeTranslation(-csg.origin[0], -csg.origin[1], -csg.origin[2]);
-  const solids = csg.operands.map((o) => {
+function cutSolid(back: THREE.Matrix4, op: BooleanRecipe['op'], operands: ExactSource[]): StepSolid | null {
+  const solids = operands.map((o) => {
     const solid = exactSolid(o);
 
     return solid && moved(back.clone().multiply(placement(o)), solid);
   });
 
-  return solids.every(Boolean) ? { type: 'boolean', op: csg.op, solids: solids as StepSolid[] } : null;
+  return solids.every(Boolean) ? { type: 'boolean', op, solids: solids as StepSolid[] } : null;
+}
+
+function booleanSolid(part: ExactSource, csg: BooleanRecipe): StepSolid | null {
+  const { width, height, depth } = part.dimensions;
+
+  if (!sameSize([width, height, depth], csg.size)) return null;
+
+  return cutSolid(
+    new THREE.Matrix4().makeTranslation(-csg.origin[0], -csg.origin[1], -csg.origin[2]),
+    csg.op,
+    csg.operands,
+  );
 }
 
 export function exactSolid(part: ExactSource): StepSolid | null {
   if (hasDeformers(part)) return null;
+
+  if (part.kind === 'boolean')
+    return part.boolean ? cutSolid(placement(part).invert(), part.boolean.op, part.boolean.operands) : null;
 
   if (part.csg) return booleanSolid(part, part.csg);
 
@@ -139,27 +149,4 @@ export function exactSolid(part: ExactSource): StepSolid | null {
   if (part.kind === 'cad_part') return part.cad?.language === 'replicad' ? replicadSolid(part) : null;
 
   return PRIMITIVES[part.kind]?.(part.dimensions) ?? null;
-}
-
-const recipePart = ({ kind, position, rotation, dimensions, cad, csg }: ScenePart): RecipePart => ({
-  kind,
-  position,
-  rotation,
-  dimensions,
-  ...(cad
-    ? { cad: { language: cad.language, code: cad.code, originOffset: cad.originOffset, baseSize: cad.baseSize } }
-    : {}),
-  ...(csg ? { csg } : {}),
-});
-
-export function booleanRecipe(
-  op: BooleanRecipe['op'],
-  operands: ScenePart[],
-  result: Pick<ScenePart, 'position' | 'dimensions'>,
-): BooleanRecipe | null {
-  if (!operands.every((p) => exactSolid(p))) return null;
-
-  const { width, height, depth } = result.dimensions;
-
-  return { op, origin: result.position, size: [width, height, depth], operands: operands.map(recipePart) };
 }

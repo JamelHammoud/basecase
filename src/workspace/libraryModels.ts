@@ -27,7 +27,13 @@ export function partsBox(parts: ScenePart[]): Box {
 
 const nodePart = ({ id: _id, position: _position, group: _group, ...part }: ScenePart) => part;
 
-function modelNode(p: ScenePart, center: number[]): CustomModelSubNode {
+function asSaved(part: ScenePart): ScenePart {
+  return part.kind === 'boolean' ? { ...part, kind: 'mesh', boolean: undefined } : part;
+}
+
+function modelNode(source: ScenePart, center: number[]): CustomModelSubNode {
+  const p = asSaved(source);
+
   return {
     id: `node-${p.id}`,
     name: p.name,

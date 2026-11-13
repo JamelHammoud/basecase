@@ -41,7 +41,7 @@ function creased(part: ScenePart, src: MeshSource, creaseDeg: number): Promise<v
 export function preparePart(part: ScenePart): Promise<void> | null {
   if (part.sculptMesh) return null;
 
-  if (part.kind === 'mesh' && part.mesh) return creased(part, part.mesh, MESH_CREASE_DEG);
+  if ((part.kind === 'mesh' || part.kind === 'boolean') && part.mesh) return creased(part, part.mesh, MESH_CREASE_DEG);
 
   if (part.kind === 'cad_part' && part.cad) return creased(part, part.cad, CAD_CREASE_DEG);
 

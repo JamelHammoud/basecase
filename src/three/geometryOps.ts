@@ -7,6 +7,7 @@ import { loadMesh } from '../utils/robotImport/meshes';
 import { componentArrays, componentTransfers } from './componentGeometry';
 import { creasedGeometry } from './partMesh/creased';
 import { creaseEdgesOnly } from './partMesh/creaseEdges';
+import { evaluateBooleanJob, type BooleanJob } from '../booleans/csg';
 
 type Vec3 = [number, number, number];
 
@@ -189,6 +190,11 @@ export const geometryHandlers = {
       entries,
       entries.map((e) => e.data.buffer),
     );
+  },
+  boolean: async (job: BooleanJob) => {
+    const out = await evaluateBooleanJob(job);
+
+    return reply(out, out ? [out.positions.buffer, out.indices.buffer] : []);
   },
   creaseEdges: (job: CreaseEdgesJob) =>
     transferLines(new Float32Array(creaseEdgesOnly(job.edges, job.positions as number[], job.indices as number[]))),

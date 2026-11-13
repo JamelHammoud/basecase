@@ -42,6 +42,29 @@ export function stepHistory(
 export const patchJoints = (up: RobotUpgrade, js: Snapshot['joints']) =>
   up.joints.size && js ? js.map((j) => (up.joints.has(j.id) ? { ...j, ...up.joints.get(j.id) } : j)) : js;
 
+export function patchEveryState(d: DocState, patch: (parts: ScenePart[]) => ScenePart[]): DocState {
+  const snap = (sn: Snapshot) => {
+    const parts = patch(sn.parts);
+
+    return parts === sn.parts ? sn : { ...sn, parts };
+  };
+
+  const states = (list: Snapshot[]) => {
+    const next = list.map(snap);
+
+    return next.every((sn, i) => sn === list[i]) ? list : next;
+  };
+  const next = {
+    parts: patch(d.parts),
+    past: states(d.past),
+    future: states(d.future),
+    base: d.base ? patch(d.base) : d.base,
+  };
+  const same = (Object.keys(next) as Array<keyof DocState>).every((key) => next[key] === d[key]);
+
+  return same ? d : next;
+}
+
 export function upgradeDoc(d: DocState, up: RobotUpgrade): DocState {
   const patch = (ps: ScenePart[]) => patchParts(ps, up);
   const snap = (sn: Snapshot) => ({ ...sn, parts: patch(sn.parts), joints: patchJoints(up, sn.joints) });

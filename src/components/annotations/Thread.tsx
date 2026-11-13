@@ -147,7 +147,7 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
         />
         <IconButton
           icon={<DeleteIcon className="w-4 h-4" />}
-          title="Delete thread"
+          title="Delete comment"
           variant="danger"
           tooltipSide="top"
           onClick={() => setPending({ kind: 'thread' })}

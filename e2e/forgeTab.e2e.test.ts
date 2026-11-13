@@ -17,16 +17,9 @@ const state = (page: Page) =>
 
 const standRow = (page: Page) => page.getByTestId('gallery-card').getByTestId('skill-row').filter({ hasText: 'Stand' });
 
-async function pressTrain(page: Page, attempts = 3): Promise<void> {
+async function pressTrain(page: Page): Promise<void> {
   await page.getByTestId('gallery-card').getByRole('button', { name: 'Train', exact: true }).click({ timeout: 60000 });
-
-  try {
-    await standRow(page).waitFor({ timeout: 60000 });
-  } catch (e) {
-    if (attempts <= 1) throw e;
-
-    return pressTrain(page, attempts - 1);
-  }
+  await standRow(page).waitFor({ timeout: 60000 });
 }
 
 let browser: Browser;

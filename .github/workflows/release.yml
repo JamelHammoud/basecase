@@ -211,7 +211,7 @@ jobs:
             release/alpha.yml
 
   publish:
-    if: ${{ !cancelled() && inputs.release && needs.mac.result == 'success' }}
+    if: ${{ !cancelled() && inputs.release && needs.mac.result == 'success' && needs.windows.result == 'success' }}
     needs: [mac, windows]
     runs-on: ubuntu-latest
     defaults:

@@ -1,13 +1,12 @@
 name: Agents
 
+# Interim (plan, Phase 0a step 1): a manual dry run only. The daily bump moves to
+# Renovate in the workshop organization (after the Phase 0b spike), landed by the merger.
 on:
-  schedule:
-    - cron: '17 6 * * *'
   workflow_dispatch:
 
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 concurrency:
   group: agents
@@ -21,6 +20,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
@@ -31,7 +31,7 @@ jobs:
       - name: Move the agent adapters to their latest releases
         id: bump
         run: |
-          npm install @agentclientprotocol/claude-agent-acp@latest @agentclientprotocol/codex-acp@latest @google/gemini-cli@latest
+          npm install --min-release-age=0 @agentclientprotocol/claude-agent-acp@latest @agentclientprotocol/codex-acp@latest @google/gemini-cli@latest
           if git diff --quiet package.json package-lock.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -48,23 +48,5 @@ jobs:
       - if: steps.bump.outputs.changed == 'true'
         run: npx vite build
 
-      - name: Commit to main
-        if: steps.bump.outputs.changed == 'true'
-        env:
-          SUMMARY: ${{ steps.bump.outputs.summary }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json
-          git commit -m "Update the agent adapters ($SUMMARY)"
-          git push origin HEAD:main
-
-      - name: Release the next patch version
-        if: steps.bump.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          latest=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName')
-          next=$(LATEST="${latest#v}" node -p "const [a, b, c] = process.env.LATEST.split('.').map(Number); [a, b, c + 1].join('.')")
-          gh workflow run release.yml --ref main -f version="$next"
-          echo "Started Release $next" >> "$GITHUB_STEP_SUMMARY"
+      - if: steps.bump.outputs.changed == 'true'
+        run: npm audit signatures

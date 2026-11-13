@@ -3,8 +3,18 @@
     "PostToolUse": [
       {
         "matcher": "Edit|MultiEdit|Write",
-        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks/claude-post-edit.mjs\"" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks/claude-post-edit.mjs\""
+          }
+        ]
       }
     ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
   }
 }

@@ -45,6 +45,7 @@
 | 8l | [Cameras](docs/guide/cameras.md) | `src/cameras/`, camera parts and lenses, stationary camera views, live views, fisheye, the agent's `operate`, the depth eye |
 | 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration (`src/reality/`) |
 | 0k | [Proof](docs/guide/proof.md) | `verify/`, Gatekeeper, gates, the hidden twin, the Stage 8 session |
+| 0l | [Loop](docs/guide/loop.md) | `tools/loop/`, how agents open, review and merge pull requests, CI repair, nightly releases |
 | 9 | [Agent](docs/guide/agent.md) | the ACP agent, its profiles, lanes, CAD tools and kernel, the agent panel and composer |
 | — | [Benchmark](docs/guide/bench.md) | `bench/`, scoring, micro-evals |
 | 10 | [Annotations](docs/guide/annotations.md) | comments in 3D |
@@ -57,7 +58,7 @@ Plans and research live beside them in `docs/` ([Robotics loop](docs/Robotics%20
 ## Working agreements
 
 - **Hobby project.** Basecase is built by Jamel and friends, not a company. No legal, compliance or company concerns in plans, docs or copy. Pick the best tool for the job, whatever its licence.
-- **Commits:** commit only when a maintainer asks, and then straight to `main` (no feature branch). During the robotics build (§0k) agents hold a standing grant: commit straight to `main` once `npm run check:changed` and the relevant gate pass. Read `git status` and the staged list first (§0g). Never add an LLM or tool as an author: no `Co-Authored-By` trailer for Claude, Codex, Gemini or any other model, no “Generated with” line, in commits, PR bodies or anywhere else.
+- **Commits:** agents work in their own git worktree on a `loop/…` branch and open a pull request from Jamel's account; the review lane checks it and the merge lane lands it once `check` and `agent-review` pass ([Loop](docs/guide/loop.md), §0l). A maintainer's own session may also push to `main`. Read `git status` and the staged list first (§0g). Never credit an LLM or tool anywhere: no `Co-Authored-By` trailer for Claude, Codex, Gemini or any other model, no “Generated with” line, no bot author, in commits, pull requests or anywhere else. The `commit-msg` hook and Check's `credit` job reject them.
 - **Several agents may share this checkout.** Before you edit or commit, check `git status` for changes that aren't yours, never overwrite or revert them, and commit only your own files and hunks.
 - **Don't judge visual changes yourself.** Don't start dev servers, previews or screenshots to see how a change looks; run the checks (§15), say what changed and where to look, and a maintainer reviews it in the app. Make visual tweaks big enough to notice (a 2 → 2.25 stroke at 16px is invisible). CI may capture, assert geometry and diff pixels; none of that judges looks. During the robotics build, one maintainer visual review happens at Stage 8 (§0k).
 - **Performance fixes never trade one problem for another.** Don't pause, throttle or defer loading to keep the UI smooth; move the work off the main thread or make it cheap (§0f).

@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  test:
     strategy:
       fail-fast: false
       matrix:
@@ -75,3 +75,32 @@ jobs:
       - name: Convert CAD files in the packaged app's sandbox
         if: runner.os == 'Windows'
         run: npx vitest run --config vitest.app.config.ts e2e/app/cadImportSandbox.app.test.ts
+
+  credit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: No commit credits a model or tool
+        env:
+          RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || format('{0}..{1}', github.event.before, github.sha) }}
+        run: |
+          case "$RANGE" in 0000000000000000000000000000000000000000..*) RANGE="${RANGE#*..}~1..${RANGE#*..}" ;; esac
+          node tools/check-credit.mjs "$RANGE"
+
+  check:
+    if: always()
+    needs: [test, app, credit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pass only when every job passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        shell: bash
+        run: |
+          echo "Results: $RESULTS"
+          [ "$(wc -w <<< "$RESULTS")" -eq 3 ] || exit 1
+          for r in $RESULTS; do [ "$r" = success ] || exit 1; done

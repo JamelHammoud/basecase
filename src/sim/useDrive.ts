@@ -201,6 +201,37 @@ function useDriveCommand(send: DriveInputs['send']) {
   return { push, reset, setKeys, follow, setInputs, inputs, ids, setOwn };
 }
 
+function useStarts(attempt: (team?: DriveTeam) => Promise<boolean>, setOwn: (ids: readonly string[] | null) => void) {
+  const busy = useRef(false);
+
+  const oneAtATime = async (run: () => Promise<boolean>) => {
+    if (busy.current) return false;
+
+    busy.current = true;
+
+    try {
+      return await run();
+    } finally {
+      busy.current = false;
+    }
+  };
+
+  const start = (team?: DriveTeam) => oneAtATime(() => attempt(team));
+
+  const startWith = (using: readonly string[]) =>
+    oneAtATime(async () => {
+      setOwn(using);
+
+      const started = await attempt();
+
+      if (!started) setOwn(null);
+
+      return started;
+    });
+
+  return { start, startWith };
+}
+
 export function useDrive(inputs: DriveInputs): SimDrive {
   const { status: simStatus, send, viewportRef, modelRef, frameHookRef, stats, robotKey } = inputs;
   const [driveStatus, setDriveStatus] = useState<DriveStatus>('off');
@@ -258,7 +289,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     [robotKey, viewportRef, reset],
   );
 
-  const start = useCallback(
+  const attempt = useCallback(
     async (team?: DriveTeam) => {
       const { parts, rig, pose, startSim, runOn, velocity } = latest.current;
 
@@ -311,18 +342,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     [modelRef, robotKey, begin, ids, sources],
   );
 
-  const startWith = useCallback(
-    async (using: readonly string[]) => {
-      setOwn(using);
-
-      const started = await start();
-
-      if (!started) setOwn(null);
-
-      return started;
-    },
-    [start, setOwn],
-  );
+  const { start, startWith } = useStarts(attempt, setOwn);
 
   const stop = useCallback(() => {
     sources.close(ids());

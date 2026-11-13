@@ -27,6 +27,7 @@ const VIDEO: MediaTrackConstraints = { width: { ideal: 640 }, height: { ideal: 4
 const REFUSED = 'Camera access is off in System Settings.';
 
 let session: Session | null = null;
+let generation = 0;
 let lastTracks: MediaStreamTrack[] = [];
 const canvases = new WeakSet<HTMLCanvasElement>();
 
@@ -93,9 +94,26 @@ function begin(stream: MediaStream, target: OperatorTarget, changed: () => void)
   setOperatorState({ on: true, label: stream.getVideoTracks()[0]?.label ?? '' });
 }
 
+class Superseded extends Error {}
+
+async function openStream(mine: number) {
+  if ((await window.electronAPI?.askCameraAccess?.()) === false) throw new Error(REFUSED);
+
+  if (mine !== generation) throw new Superseded();
+
+  const stream = await navigator.mediaDevices.getUserMedia({ video: VIDEO, audio: false });
+
+  if (mine === generation) return stream;
+
+  stream.getTracks().forEach((t) => t.stop());
+
+  throw new Superseded();
+}
+
 async function open(robot: InputRobot) {
   close();
 
+  const mine = generation;
   const target = targetFor(robot);
 
   if (!target) return;
@@ -103,13 +121,14 @@ async function open(robot: InputRobot) {
   let stream: MediaStream | null = null;
 
   try {
-    if ((await window.electronAPI?.askCameraAccess?.()) === false) throw new Error(REFUSED);
-
-    stream = await navigator.mediaDevices.getUserMedia({ video: VIDEO, audio: false });
+    stream = await openStream(mine);
     begin(stream, target, robot.changed);
   } catch (err) {
-    close();
     stream?.getTracks().forEach((t) => t.stop());
+
+    if (err instanceof Superseded || mine !== generation) throw err;
+
+    close();
     setOperatorState({ failure: { message: err instanceof Error ? err.message : String(err), at: Date.now() } });
 
     throw err;
@@ -117,6 +136,8 @@ async function open(robot: InputRobot) {
 }
 
 function close() {
+  generation++;
+
   const s = session;
 
   if (!s) return;

@@ -8,7 +8,7 @@ You can now drive a humanoid or a fixed arm in the simulation by moving your own
 
 Drive With Camera sits under Control in the Simulate tab and in ⌘K. It started with one request: move my arms at the Mac, and the G1's arms move with them.
 
-Your camera shows as a tile above the robot's cameras, with your skeleton drawn over it. On a humanoid, every joint above the hips follows your arms, waist and head. On a fixed arm, the hand follows your right wrist, scaled to the arm's reach. On a robot with a gripper, a pinch of your left hand closes it. Each joint turns at up to 240° a second and stays inside its limits.
+Your camera shows as a tile above the robot's cameras, with your skeleton drawn over it. On a humanoid, every joint above the hips follows your arms, waist and head. Each of those joints turns at up to 240° a second and stays inside its limits. On a fixed arm, the hand follows your right wrist, scaled to the arm's reach. On a robot with a gripper, a pinch of your left hand closes it.
 
 It follows one person, and sees each hand as four points, so single fingers don't move the robot. The camera is an input source like the keys and a gamepad, so a Case can list it.
 

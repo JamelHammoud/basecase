@@ -203,8 +203,9 @@ const failedJobLogs = (runId) =>
 export const failedLog = (runId) =>
   run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out || failedJobLogs(runId);
 
-export const isPaused = () =>
-  run('gh', ['variable', 'get', 'LOOP_PAUSED'], { allowFail: true }).out.trim().toLowerCase() === 'true';
+export const repoVariable = (name) => run('gh', ['variable', 'get', name], { allowFail: true }).out.trim();
+
+export const isPaused = () => repoVariable('LOOP_PAUSED').toLowerCase() === 'true';
 
 export const issues = (label) =>
   cached(

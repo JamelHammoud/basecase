@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { MODEL_DRAG_TYPE } from '../../data/dnd';
-import { HoverCard, IconButton, Tooltip, MoreIcon, PlusIcon } from '../../design-system';
+import { HoverCard, Tooltip, PlusIcon } from '../../design-system';
 
 const TileThumb: React.FC<{ thumb: string | undefined }> = ({ thumb }) => {
   if (thumb) {
@@ -34,7 +34,6 @@ export const Tile: React.FC<{
   modelId: string;
   onStartRename: () => void;
   onRename: (name: string) => void;
-  menuOpen: boolean;
   onMenu: (e: React.MouseEvent) => void;
   details: () => React.ReactNode;
 }> = ({
@@ -46,7 +45,6 @@ export const Tile: React.FC<{
   modelId,
   onStartRename,
   onRename,
-  menuOpen,
   onMenu,
   details,
 }) => {
@@ -74,12 +72,12 @@ export const Tile: React.FC<{
         <TileThumb thumb={thumb} />
       </button>
 
-      <div className="relative pl-0.5 pt-2 cursor-default" onClick={renaming ? undefined : onInsert}>
+      <div className="pl-0.5 pt-2 cursor-default" onClick={renaming ? undefined : onInsert}>
         {renaming ? (
           <RenameField name={name} onDone={onRename} />
         ) : (
           <div
-            className="pr-7 text-[13px] leading-[19px] font-medium text-white/90 truncate"
+            className="text-[13px] leading-[19px] font-medium text-white/90 truncate"
             onDoubleClick={(e) => {
               e.stopPropagation();
               onStartRename();
@@ -89,28 +87,12 @@ export const Tile: React.FC<{
           </div>
         )}
         <div className="text-[12px] text-white/50 tabular truncate">{meta}</div>
-        {!renaming && (
-          <div
-            className="absolute right-0 top-[2px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <IconButton
-              icon={<MoreIcon className="w-4 h-4" />}
-              title="More"
-              size="xs"
-              className="!w-6 !h-6 !rounded-md"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={onMenu}
-            />
-          </div>
-        )}
       </div>
 
       {!renaming && (
         <Tooltip
           label="Insert"
-          className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+          className="absolute top-[8px] right-[8px] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity"
         >
           <button
             type="button"

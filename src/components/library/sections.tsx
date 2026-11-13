@@ -12,8 +12,7 @@ const GRID = 'grid grid-cols-2 gap-x-[8px] gap-y-[12px] px-[4px]';
 export interface SectionState {
   renaming: string | null;
   setRenaming: (id: string | null) => void;
-  menuFor: string | null;
-  showMenu: (id: string, entries: ContextMenuEntry[]) => (e: React.MouseEvent) => void;
+  showMenu: (entries: ContextMenuEntry[]) => (e: React.MouseEvent) => void;
 }
 
 const finishRename =
@@ -48,9 +47,7 @@ export const ModelsSection: React.FC<{
       onInsert={() => props.onInsertModel(m)}
       onRename={finishRename(state, m.name, (name) => props.onRenameModel(m, name))}
       onStartRename={() => state.setRenaming(m.id)}
-      menuOpen={state.menuFor === m.id}
       onMenu={state.showMenu(
-        m.id,
         modelMenu({
           model: m,
           onInsert: () => props.onInsertModel(m),

@@ -262,6 +262,7 @@ function ownInput(robot: CaseRobot): MjcfInput {
     project: DEFAULT_PROJECT,
     measures: robot.measures,
     partTriangles: robot.partTriangles,
+    servoVolts: robot.servoVolts,
   };
 }
 

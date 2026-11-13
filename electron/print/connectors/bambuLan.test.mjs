@@ -160,7 +160,7 @@ describe('Bambu Connect', () => {
 
     expect(await connector.test()).toEqual({
       ok: false,
-      message: 'Install Bambu Connect from bambulab.com, then try again.',
+      message: 'Install Bambu Connect from bambulab.com.',
     });
   });
 });

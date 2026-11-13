@@ -1,9 +1,9 @@
 import React from 'react';
 import type { SavedSceneSummary } from '../../types/robotics';
 import { PreviewImage, RenameField } from '../../design-system';
+import { plural } from '../../../electron/plural.mjs';
 import { timeAgo } from '../../utils/timeAgo';
 import { TILE_RENAME } from '../library/Tile';
-import { partCount } from './partCount';
 import { useScenePreview } from './useScenePreview';
 
 export interface SceneRowProps {
@@ -68,7 +68,7 @@ export const SceneRow: React.FC<SceneRowProps> = ({
           </span>
         )}
         <span className="block text-[12px] leading-[17px] text-white/50 tabular-nums truncate">
-          {partCount(scene.partCount)}
+          {plural(scene.partCount, 'part')}
         </span>
       </span>
       <span className="relative pointer-events-none shrink-0 text-[12px] tabular-nums text-white/50">

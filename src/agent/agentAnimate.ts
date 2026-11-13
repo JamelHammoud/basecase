@@ -25,6 +25,7 @@ import {
   type PoseReply,
   type Scope,
 } from './agentPoseShared';
+import { plural } from '../../electron/plural.mjs';
 
 export interface AnimatePayload {
   robot?: string;
@@ -198,7 +199,7 @@ function animateText(made: RobotAnimation, p: AnimatePayload, built: Built, prob
   const ik = Object.entries(built.ikError).map(([k, v]) => `${k} within ${r1(v)} mm`);
 
   return (
-    `${made.name}: ${made.duration} s, ${made.keyframes.length} keyframes, ${joints.size} joints${made.loop ? ', loops' : ''}${p.play !== false ? ', playing' : ''}.` +
+    `${made.name}: ${made.duration} s, ${plural(made.keyframes.length, 'keyframe')}, ${plural(joints.size, 'joint')}${made.loop ? ', loops' : ''}${p.play !== false ? ', playing' : ''}.` +
     (ik.length ? `\nIK: ${ik.join(', ')}` : '') +
     notesText(built.notes) +
     (problems.size

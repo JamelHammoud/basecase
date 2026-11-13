@@ -3,6 +3,7 @@ import type { InterfaceContract, InterfacePlan } from '../types/interfaces';
 import type { ScenePart } from '../types/robotics';
 import type { ZUpVec } from '../types/skeleton';
 import type { ZUpFrame } from './skeletonFrames';
+import { plural } from '../../electron/plural.mjs';
 
 export interface ContractInput {
   owner: string;
@@ -84,8 +85,8 @@ export function buildInterfaces(
     const missing = c.ids.filter((id) => !present.has(id)).length;
 
     return (
-      `- ${c.owner}: ${c.ids.length} parts${missing ? ` (${missing} not modeled)` : ''}, ${c.envelopes.length} envelopes, ` +
-      `${c.datums.length} datums, ${c.boltPatterns.length} bolt patterns, ${c.seams.length} seams`
+      `- ${c.owner}: ${plural(c.ids.length, 'part')}${missing ? ` (${missing} not modeled)` : ''}, ${plural(c.envelopes.length, 'envelope')}, ` +
+      `${plural(c.datums.length, 'datum')}, ${plural(c.boltPatterns.length, 'bolt pattern')}, ${plural(c.seams.length, 'seam')}`
     );
   });
 

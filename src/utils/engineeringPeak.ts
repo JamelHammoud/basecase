@@ -3,7 +3,8 @@ import { PEAK_DERATE } from './actuatorRules';
 import { actuatorOptions, type ActuatorOption } from './actuatorCatalog';
 import { isLegJoint } from './engineeringBody';
 import { jointEnvelope, outsideShare, type ServoLookup } from './engineeringEnvelope';
-import { count, jointLabel, nm } from './engineeringFormat';
+import { plural } from '../../electron/plural.mjs';
+import { jointLabel, nm } from './engineeringFormat';
 import type { CheckRow, JointEnvelope, JointLoad, WalkJoint, WalkSim } from './engineeringTypes';
 import { PEAK_LIMITS, peakStatus } from './peakTorque';
 
@@ -72,9 +73,9 @@ function fellRow(walk: WalkSim, lines: PeakLine[]): CheckRow {
 }
 
 function measuredDetail(lines: PeakLine[], fails: PeakLine[], warns: PeakLine[]): string {
-  if (fails.length) return `${count(fails.length, 'joint')} past stall while walking`;
+  if (fails.length) return `${plural(fails.length, 'joint')} past stall while walking`;
 
-  if (warns.length) return `${count(warns.length, 'joint')} with thin margins while walking`;
+  if (warns.length) return `${plural(warns.length, 'joint')} with thin margins while walking`;
 
   const worst = [...lines].sort((a, b) => shareOf(b) - shareOf(a))[0];
 

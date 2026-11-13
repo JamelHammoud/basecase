@@ -8,6 +8,7 @@ import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotic
 import { hashText } from '../guide/guideItems';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
 import { jsonHash, numbersHash } from './geometryHash';
+import { plural } from '../../electron/plural.mjs';
 
 const SUPPORT_FILL = 0.2;
 const SHELL_MM = 0.9;
@@ -242,16 +243,16 @@ export function printReportText(r: PrintReport): string {
   const bed = r.plan.bed;
   const lines: string[] = [];
   const plates = Object.entries(r.plates)
-    .map(([m, n]) => `${n} ${m} plate${n === 1 ? '' : 's'}`)
+    .map(([m, n]) => plural(n, `${m} plate`))
     .join(', ');
   const keepOut = bed.keepOut.length
     ? `, ${bed.keepOut.map((k) => `${Math.round(k.w)} × ${Math.round(k.d)} mm`).join(' and ')} keep-out`
     : '';
 
   lines.push(
-    `${r.parts.length} printed parts on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${Math.round(r.totals.grams)} g + ${Math.round(r.totals.supportG)} g support, ${r.totals.hours.toFixed(1)} h, ${plates}. Estimates without a slicer.`,
+    `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${Math.round(r.totals.grams)} g + ${Math.round(r.totals.supportG)} g support, ${r.totals.hours.toFixed(1)} h, ${plates}. Estimates without a slicer.`,
   );
-  lines.push(r.totals.failing ? `${r.totals.failing} parts have issues:` : 'Every part fits and prints.');
+  lines.push(r.totals.failing ? `Issues on ${plural(r.totals.failing, 'part')}:` : 'Every part fits and prints.');
 
   for (const p of r.parts) {
     const s = fmtSize(p.check.size);

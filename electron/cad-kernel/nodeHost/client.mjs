@@ -11,7 +11,8 @@ const root = path.resolve(kernelDir, '..', '..');
 const cadImportDir = path.resolve(kernelDir, '..', 'cadImport');
 const POOL_SIZE = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
 const NETWORK_PERMISSION_NODE = 25;
-const STOPPED_ERROR = 'The CAD kernel stopped (time or memory limit). Simplify the part and try again.';
+const STOPPED_ERROR =
+  'The CAD kernel stopped (time or memory limit). Simplify the part (fewer booleans, lower $fn, fewer hull() pieces).';
 
 function realDir(dir) {
   try {

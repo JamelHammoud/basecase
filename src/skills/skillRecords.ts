@@ -14,6 +14,7 @@ import type { Environment } from './environment';
 import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
+import { plural } from '../../electron/plural.mjs';
 
 export interface MoveTag {
   animation: string;
@@ -114,7 +115,7 @@ export function arenaLine(evidence: ArenaEvidence): string {
   const worst = [...evidence.variants].sort((a, b) => a.passes / a.trials - b.passes / b.trials)[0];
   const share = `at least ${Math.floor(evidence.lowerBound * 100)}%`;
 
-  return worst ? `${worst.passes} of ${worst.trials} tries, ${share}` : share;
+  return worst ? `${worst.passes} of ${plural(worst.trials, 'try', 'tries')}, ${share}` : share;
 }
 
 export function withRecord(records: SkillRecord[], record: SkillRecord): SkillRecord[] {

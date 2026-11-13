@@ -104,7 +104,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        className="w-full max-w-[860px] h-[620px] max-h-[86vh] flex rounded-[18px] bg-[#222222] shadow-[0_0_0_0.5px_rgba(0,0,0,0.6),0_32px_80px_-12px_rgba(0,0,0,0.6),0_8px_24px_rgba(0,0,0,0.3)] overflow-hidden animate-sheet-in"
+        className="w-full max-w-[860px] h-[620px] max-h-[86vh] flex rounded-[18px] sheet overflow-hidden animate-sheet-in"
       >
         <nav aria-label="Settings panes" className="w-[224px] shrink-0 bg-[#1c1c1c] p-[12px] flex flex-col gap-[2px]">
           <h2 className="px-[10px] h-[40px] flex items-center text-[15px] font-semibold text-white/90 mb-[4px]">

@@ -48,6 +48,7 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { sceneHasCameraViews } from './viewCommands';
+import { plural } from '../../electron/plural.mjs';
 
 export interface ContextInputs {
   core: WorkspaceCore;
@@ -142,7 +143,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   const roles = new Set(selectedParts.map((p) => p.role));
 
   return [
-    { heading: `${core.selectedIds.length} parts` },
+    { heading: plural(core.selectedIds.length, 'part') },
     ...wrapItems(inputs),
     { label: 'Union', icon: <UnionIcon className={ic} />, onSelect: () => ops.runBoolean('union') },
     {

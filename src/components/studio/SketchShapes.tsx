@@ -19,7 +19,7 @@ export const SketchGrid: React.FC<{ view: SketchView }> = ({ view }) => {
     <g>
       {lines.map((g) => {
         const major = Math.abs(g) < step / 2;
-        const stroke = major ? '#3f3f46' : '#262626';
+        const stroke = major ? '#404040' : '#262626';
 
         return (
           <React.Fragment key={g}>
@@ -53,7 +53,7 @@ function entityPath(sketch: Sketch, e: SketchEntity) {
 const entityStroke = (e: SketchEntity, selected: boolean) => {
   if (selected) return '#ffffff';
 
-  return e.kind === 'line' && e.ref ? '#71717a' : ACCENT;
+  return e.kind === 'line' && e.ref ? '#737373' : ACCENT;
 };
 
 export const SketchEntities: React.FC<{ sketch: Sketch; selected: string[]; view: SketchView }> = ({

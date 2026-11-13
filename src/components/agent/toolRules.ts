@@ -18,6 +18,7 @@ import {
   ToolIcon as ToolPromptIcon,
   WebIcon,
 } from '../../design-system';
+import { plural } from '../../../electron/plural.mjs';
 import { SIM_RULES } from './simToolRules';
 import { plainRule, type ToolIcon, type ToolRule } from './toolRule';
 
@@ -44,11 +45,7 @@ const hostOf = (url: unknown) => {
   }
 };
 
-const counted = (count: number, noun: string) => {
-  if (count === 0) return `${noun}s`;
-
-  return `${count} ${noun}${count === 1 ? '' : 's'}`;
-};
+const counted = (count: number, noun: string) => (count === 0 ? `${noun}s` : plural(count, noun));
 
 const partGroups = (parts: unknown[]) =>
   Array.from(new Set(parts.map((p) => (p as { group?: string }).group).filter(Boolean))) as string[];
@@ -327,7 +324,7 @@ const ROBOT_RULES: ToolRule[] = [
     icon: CasesIcon,
     label: ({ input, verb }) => ({
       title: verb('Setting the world', 'Set the world'),
-      detail: optional(Array.isArray(input.objects) ? `${input.objects.length} objects` : ''),
+      detail: optional(Array.isArray(input.objects) ? plural(input.objects.length, 'object') : ''),
     }),
   },
   {

@@ -6,6 +6,7 @@ import { findInScene } from './sceneQuery.mjs';
 import { sceneText } from './sceneText.mjs';
 import { settledWrites } from './pendingWrites.mjs';
 import { bridge, clashText, fail, text } from './shared.mjs';
+import { plural } from '../plural.mjs';
 
 export const getScene = {
   name: 'get_scene',
@@ -130,7 +131,7 @@ export const updateParts = {
       const { parts: updates, notice } = clipTexts(given);
       const res = await bridge('apply', { ops: updates.map((u) => ({ op: 'update', part: u })) });
 
-      return text((res.summary || `Updated ${updates.length} parts.`) + notice);
+      return text((res.summary || `Updated ${plural(updates.length, 'part')}.`) + notice);
     } catch (err) {
       return fail(err);
     }
@@ -148,7 +149,7 @@ export const deleteParts = {
     try {
       const res = await bridge('apply', { ops: ids.map((id) => ({ op: 'delete', id })) });
 
-      return text(res.summary || `Deleted ${ids.length} parts.`);
+      return text(res.summary || `Deleted ${plural(ids.length, 'part')}.`);
     } catch (err) {
       return fail(err);
     }
@@ -175,7 +176,7 @@ export const mirrorParts = {
 
       const res = await bridge('apply', { ops: [{ op: 'mirror', ids, axis, rename: rename ?? {} }] });
 
-      return text(res.summary || `Mirrored ${ids.length} parts.`);
+      return text(res.summary || `Mirrored ${plural(ids.length, 'part')}.`);
     } catch (err) {
       return fail(err);
     }

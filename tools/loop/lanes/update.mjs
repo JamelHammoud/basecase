@@ -5,6 +5,12 @@ import { publish } from '../lib/pull.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 1,
+  everySeconds: 24 * 60 * 60,
+  does: 'Moves the agent adapters to their latest releases',
+};
+
 const ADAPTERS = ['@agentclientprotocol/claude-agent-acp', '@agentclientprotocol/codex-acp', '@google/gemini-cli'];
 
 const versions = (dir) => {

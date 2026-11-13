@@ -8,6 +8,12 @@ import {
   reviewState,
 } from '../lib/github.mjs';
 
+export const schedule = {
+  slots: 1,
+  everySeconds: 60,
+  does: "Squash-merges green, reviewed pull requests: repairs first, then the loop's own, then loop:priority, then the oldest; only repairs while main is red",
+};
+
 const isRepair = (pull) => pull.headRefName.startsWith('loop/repair/');
 
 const rank = (pull) => {

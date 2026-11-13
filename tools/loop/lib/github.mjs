@@ -1,3 +1,4 @@
+import { withMark } from './mark.mjs';
 import { json, run } from './sh.mjs';
 
 const REVIEW_CONTEXT = 'agent-review';
@@ -64,7 +65,7 @@ export const setReview = (sha, state, description) =>
   ]);
 
 export const commentOnPull = (number, body) =>
-  run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: body });
+  run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: withMark(body) });
 
 export const mergePull = (number) =>
   run('gh', ['pr', 'merge', String(number), '--squash', '--delete-branch'], { allowFail: true });
@@ -155,6 +156,9 @@ export const createIssue = ({ title, body, labels }) => {
   ).out;
 };
 
+export const closeIssue = (number, comment) =>
+  run('gh', ['issue', 'close', String(number), '--reason', 'completed', '--comment', comment], { allowFail: true });
+
 export const ownerComments = (number, owner) =>
   json('gh', [
     'api',
@@ -177,9 +181,6 @@ export const openIssues = () =>
     '--json',
     'number,title,body,author,labels,createdAt,updatedAt',
   ]) ?? [];
-
-export const closeIssue = (number, comment) =>
-  run('gh', ['issue', 'close', String(number), '--comment', comment], { allowFail: true });
 
 export const editPullLabels = (number, { add = [], remove = [] }) =>
   run(

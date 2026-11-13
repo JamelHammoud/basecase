@@ -1,26 +1,15 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { laneModule, laneNames } from './lib/lanes.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
-const MINUTE = 60;
-const HOUR = 60 * MINUTE;
+const LANES = await Promise.all(laneNames().map(async (name) => ({ name, ...(await laneModule(name)).schedule })));
 
-const slots = (lane, count, every = MINUTE) =>
-  Array.from({ length: count }, (_, i) => ({ lane, slot: String(i + 1), every }));
-
-const JOBS = [
-  ...slots('review', 4),
-  ...slots('merge', 1),
-  ...slots('rebase', 1),
-  ...slots('repair', 1),
-  ...slots('revise', 4),
-  ...slots('build', 5),
-  ...slots('refine', 2),
-  ...slots('lead', 1),
-  { lane: 'update', slot: '1', every: 24 * HOUR },
-];
+const JOBS = LANES.flatMap(({ name, slots, everySeconds }) =>
+  Array.from({ length: slots }, (_, i) => ({ lane: name, slot: String(i + 1), every: everySeconds })),
+);
 
 const AGENTS_DIR = path.join(os.homedir(), 'Library', 'LaunchAgents');
 const DOMAIN = `gui/${os.userInfo().uid}`;
@@ -111,16 +100,16 @@ const LABELS = {
   'loop:update': '6e7781',
   'loop:priority': 'd1242f',
   'loop:request': '000000',
-  'loop:stuck': '6e7781',
-  'loop:revising': 'bf8700',
   'loop:arc': 'bf8700',
   'loop:next': 'bf8700',
   'loop:building': 'bf8700',
   'loop:direction': '000000',
 };
 
+const LANE_LABELS = Object.fromEntries(LANES.flatMap(({ labels = [] }) => labels.map((name) => [name, '6e7781'])));
+
 function ensureLabels() {
-  for (const [name, color] of Object.entries(LABELS)) {
+  for (const [name, color] of Object.entries({ ...LANE_LABELS, ...LABELS })) {
     run('gh', ['label', 'create', name, '--color', color, '--force'], { allowFail: true });
   }
 }
@@ -182,4 +171,12 @@ const command = process.argv[2];
 
 if (command === 'install') install();
 else if (command === 'uninstall') uninstall();
-else console.log('Usage: node tools/loop/install.mjs <install|uninstall>');
+else if (command === 'list') {
+  for (const { name, slots, everySeconds, does } of LANES) {
+    const cadence = everySeconds <= 60 ? 'always on' : `every ${everySeconds / 3600} h`;
+
+    console.log(
+      `${name.padEnd(8)} ${String(slots).padStart(2)} slot${slots > 1 ? 's' : ' '}  ${cadence.padEnd(11)} ${does}`,
+    );
+  }
+} else console.log('Usage: node tools/loop/install.mjs <install|uninstall|list>');

@@ -1,11 +1,11 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { laneNames, laneModule } from './lib/lanes.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
-const LANES = ['review', 'merge', 'rebase', 'repair', 'build', 'refine', 'lead', 'update', 'revise'];
+const LANES = laneNames();
 const [lane, slot = '1'] = process.argv.slice(2);
 
 if (!LANES.includes(lane)) {
@@ -81,8 +81,7 @@ const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.reso
 try {
   if (runsFromHome && lane === 'merge') updateHome();
 
-  const lanePath = path.join(import.meta.dirname, 'lanes', `${lane}.mjs`);
-  const { default: runLane } = await import(pathToFileURL(lanePath).href);
+  const { default: runLane } = await laneModule(lane);
 
   await runLane({ log, slot });
 } catch (error) {

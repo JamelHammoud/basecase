@@ -4,6 +4,12 @@ import { commentOnPull, openPulls, reviewState, setReview } from '../lib/github.
 import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 4,
+  everySeconds: 60,
+  does: 'Reviews each pull request whose head has no agent-review status',
+};
+
 const MAX_DIFF = 400_000;
 
 const SCHEMA = {

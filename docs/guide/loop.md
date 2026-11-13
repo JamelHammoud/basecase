@@ -16,21 +16,11 @@ Basecase is built by a team of agents that runs on Jamel's Mac (`tools/loop/`, s
 
 The loop is a team that never stops. `node tools/loop/install.mjs install` creates the home checkout (`~/.basecase-loop/home`), the GitHub labels and one LaunchAgent per lane slot, after removing any old ones; `uninstall` removes them all. Every working slot is relaunched a minute after it finishes, and a lock per slot keeps it to one run at a time, so each slot is always either working or about to look for work. Logs are in `~/.basecase-loop/logs/`. Setting the repository variable `LOOP_PAUSED` to `true` stops merges and releases.
 
-| Lane | Slots | Does |
-|---|---|---|
-| `build` | 5 | Claims the next `loop:next` step, `loop:priority` first, and ships it as a pull request |
-| `review` | 4 | Reviews each pull request whose head has no `agent-review` status |
-| `revise` | 4 | Answers a failed review, a Check failure that's the pull request's own, or any Check failure on a repair, on its branch; after four failed reviews it labels the pull request `loop:stuck` and stops |
-| `refine` | 2 | Makes one existing feature or view fit better |
-| `merge` | 1 | Squash-merges a pull request with `check` and `agent-review` green: repairs first, then the loop's own improvements, then `loop:priority` work, then the oldest; while `main` is red it takes only repairs, which must turn Check fully green |
-| `rebase` | 1 | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts; once `main` is green, also brings a loop pull request whose Check failed on an older `main` up to date, so its Check runs again with the fix |
-| `repair` | 1 | Opens a repair when `main`'s last finished Check failed |
-| `lead` | 1 | Plans when there's a reason: a new request or Direction comment from Jamel, or fewer waiting steps than builders |
-| `update` | daily | Moves the agent adapters to their latest releases |
+Each lane is one file in `tools/loop/lanes/`. It exports `schedule` (its `slots`, `everySeconds`, any `labels` it needs, and a one-line `does`) and a default function that does one run; its brief, when it runs an agent, is `tools/loop/briefs/<lane>.md`. `run.mjs` and `install.mjs` discover lanes from that folder, so adding or changing a lane touches only its own files. `node tools/loop/install.mjs list` prints every lane with its slots, cadence and what it does.
 
-Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. What's being worked on shows on GitHub: a step being built carries `loop:building`, and a pull request being revised carries `loop:revising`. No pull request or issue is opened when one with the same title is open; a step whose pull request already exists gets a comment linking it. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone.
+Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. What's being worked on shows on GitHub: a step being built carries `loop:building`, and a pull request being revised carries `loop:revising`. No pull request or issue is opened when one with the same title is open; a step whose pull request already exists gets a comment linking it. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone. A lane clears a worktree path left behind by a crashed run before reusing it.
 
-Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions`, so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
+Comments the loop posts end with `<!-- loop -->`, which is how the learn lane tells them from Jamel's own comments, since both come from Jamel's account. Learn and digest count only what the loop made: reviews from Jamel's account that carry the mark, and closed or repair pull requests from Jamel's account on a `loop/` branch in this repo. An outsider's comment or pull request never becomes a lesson or a number. Tidy never deletes the branch the loop's home follows (`BASECASE_LOOP_REF`). Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions` (except `market`, sandboxed because it reads the web; see Review), so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
 
 ### Giving direction
 
@@ -53,7 +43,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 | `fix` | `Fix: …` | `fix.md` | Fixed |
 | `repair` | `Repair: …` | `repair.md` | left out |
 | `lesson` | `Lesson: …` | `lesson.md` | left out |
-| `loop`, `update` | `Loop: …`, `Update: …` | `loop.md` | left out |
+| `loop`, `update`, `market` | `Loop: …`, `Update: …`, `Market: …` | `loop.md` | left out |
 
 `.github/release.yml` groups the release notes by those labels.
 
@@ -70,10 +60,11 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 
 ### Review
 
-The review lane sees the diff, the pull request body, AGENTS.md, the guides of the areas the diff touches and their lessons. It never sees issue or web text, so nothing outside can steer it. It fails a pull request that:
+The review lane sees the diff, the pull request body, AGENTS.md, the guides of the areas the diff touches and their lessons. It never sees issue text. A `market` pull request is the one place web text reaches it: its title, body and diff come from pages the market session read. That session is sandboxed (`runAgent`'s `sandbox` option, `--restricted` in `dontAsk` mode): it has Read, Grep, Glob, WebFetch and WebSearch, and Edit and Write only under `docs/market/`. It has no shell, no subagents, no MCP servers and no GitHub credentials (`GH_TOKEN` empty, `GH_CONFIG_DIR` an empty folder), and its file tools can't leave the worktree, so it can't reach `.git`, the home checkout or the keychain. The runner still publishes nothing if a path outside `docs/market/` changed (`outsideMarket`), and logs the session's `notes` instead of putting them in the body. An injected page can still write misleading entries and idea titles, which review and the lead read as data. It fails a pull request that:
 
 - breaks a rule in AGENTS.md or the area's guide;
 - adds user-facing copy that the §3d checklist would cut. Its default for a new string is "delete it";
+- adds copy without a reason Check's `copy` job accepts (`tools/check-copy-budget.mjs`): when a pull request adds more strings than it removes, each new string needs a `copy: "<string>" — <why>` line in the body;
 - ships a feature with no entry point and no e2e test of it;
 - makes a change a user can see without a changelog entry (`site/content/changelog/`), or changes what a person does without a new or updated help article (`site/content/help/`) with screenshots (`site/public/help/`). Builders and refiners write these from `tools/loop/briefs/telling.md`, and an arc's big step also gets a short blog post;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or a loosened assertion;
@@ -106,3 +97,11 @@ docker exec bc-e2e npx vitest run --config vitest.e2e.config.ts e2e/<file>.e2e.t
 ### Releases
 
 `.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i).
+
+### What Check runs
+
+Check is built for fast pull requests, with `main` as the safety net:
+
+- **On every pull request:** lint, types and unit tests (`npm run check`) on Linux and Windows; e2e on Linux in three parallel shards; the commit-credit and copy checks. The packaged-app builds (macOS and Windows) run only when the pull request touches what they build: `electron/`, `forge/`, `hw/`, packaging and native-build tooling, `e2e/app/`, workflows, or `package.json` and the lockfile.
+- **On every push to `main`:** all of that, plus e2e on Windows and both packaged-app builds, whatever changed. A failure there goes to the repair lane.
+- **Speed:** a pull request's superseded runs are cancelled, and the Forge and daemon Rust builds are cached.

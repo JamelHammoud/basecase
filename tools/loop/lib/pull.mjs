@@ -14,9 +14,18 @@ export const KINDS = {
   lesson: { prefix: 'Lesson', template: 'lesson' },
   loop: { prefix: 'Loop', template: 'loop' },
   update: { prefix: 'Update', template: 'loop' },
+  market: { prefix: 'Market', template: 'loop' },
 };
 
 const NONE = '_None._';
+
+const oneLine = (text) => text.replace(/\s+/g, ' ').trim();
+
+const copyLines = (copy = []) =>
+  copy.length === 0 ? NONE : copy.map(({ string, why }) => `copy: "${oneLine(string)}" — ${oneLine(why)}`).join('\n');
+
+const withCopySection = (template, copy = []) =>
+  template.includes('{{copy}}') || copy.length === 0 ? template : `${template.trimEnd()}\n\n## Copy\n\n{{copy}}\n`;
 
 const screenshotLines = (paths, branch) =>
   paths.length === 0
@@ -26,9 +35,12 @@ const screenshotLines = (paths, branch) =>
 export const pullTitle = (change) => `${KINDS[change.kind].prefix}: ${change.title}`;
 
 export function pullBody(change, { branch, extra = {} }) {
-  const template = fs.readFileSync(
-    path.join(CODE_ROOT, '.github', 'PULL_REQUEST_TEMPLATE', `${KINDS[change.kind].template}.md`),
-    'utf8',
+  const template = withCopySection(
+    fs.readFileSync(
+      path.join(CODE_ROOT, '.github', 'PULL_REQUEST_TEMPLATE', `${KINDS[change.kind].template}.md`),
+      'utf8',
+    ),
+    change.copy,
   );
   const values = {
     summary: change.summary,
@@ -37,6 +49,7 @@ export function pullBody(change, { branch, extra = {} }) {
     checked: change.checked,
     changelog: change.changelog || NONE,
     screenshots: screenshotLines(change.screenshots ?? [], branch),
+    copy: copyLines(change.copy),
     ...extra,
   };
 

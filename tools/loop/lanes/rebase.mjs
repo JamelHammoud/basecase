@@ -6,6 +6,12 @@ import { run } from '../lib/sh.mjs';
 import { claim } from '../lib/claim.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 1,
+  everySeconds: 60,
+  does: 'Merges main into a conflicting loop/ branch, an agent resolving the conflicts, and refreshes a pull request whose Check failed on an older main',
+};
+
 const SCHEMA = {
   type: 'object',
   properties: { resolved: { type: 'boolean' }, notes: { type: 'string' } },

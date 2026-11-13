@@ -5,6 +5,12 @@ import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 5,
+  everySeconds: 60,
+  does: 'Claims the next loop:next step, loop:priority first, and ships it as a pull request',
+};
+
 const NEXT = 'loop:next';
 const BUILDING = 'loop:building';
 const PRIORITY = 'loop:priority';

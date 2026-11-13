@@ -19,6 +19,13 @@ import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 4,
+  everySeconds: 60,
+  labels: ['loop:revising', 'loop:stuck'],
+  does: "Answers a failed review, a Check failure that's the pull request's own, or any Check failure on a repair, on its branch",
+};
+
 const MAX_ROUNDS = 4;
 const STUCK = 'loop:stuck';
 const REVISING = 'loop:revising';

@@ -8,6 +8,6 @@ Check failed on `main`, and every merge and release is blocked until it's green.
 4. **Flaky:** reproduce under load and trace. If you change code for a flake, say what rate you measured before and after. If you can't fix it today, add it to `tools/quarantine.json` (`file`, `test`, `issue`, `until` within two weeks, `reason`), open the issue it names, and say so. Check then reports it without failing on it until the date.
 5. **Environment:** pin the thing that changed. Never edit tests for it.
 
-Never skip, delete or `.only` a test, raise a timeout, or loosen an assertion to make Check pass.
+Never skip or `.only` a test, raise a timeout, add a retry, or loosen an assertion to make Check pass. Deleting a flaky, slow or narrow test is fine when a faster test covers what users rely on (`docs/guide/running-and-testing.md`); say what covers it.
 
 Answer with `kind` set to `repair`. `cause` holds the class and the root cause; `checked` holds the evidence.

@@ -106,6 +106,14 @@ describe('the verdict', () => {
     expect(readinessText(r)).toContain('Thin Walls');
   });
 
+  it('names an ignored kind of problem the way its checks name it now', () => {
+    const saved = ignoreRule(undefined, { rule: 'screw-in-part', ruleName: 'Screws Into Parts' });
+    const screw = { ...blocker('s'), rule: 'screw-in-part', ruleName: 'Screws into Parts' };
+
+    expect(verdict([screw], [part('a')], saved).ignoredRules[0].name).toBe('Screws into Parts');
+    expect(verdict([], [part('a')], saved).ignoredRules[0].name).toBe('Screws Into Parts');
+  });
+
   it('shows every check with its live status', () => {
     const rows: CheckRow[] = [
       { check: 'Weight', status: 'pass', detail: '1 kg' },

@@ -42,7 +42,7 @@ Drive the robot through an open Case while Basecase records it, then see whether
 
 **Try ⟨Case⟩** is also in [[⌘K]]. Pressing [[Esc]] stops driving, which ends the try too.
 
-To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive With Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ## Whether the robot can do it
 

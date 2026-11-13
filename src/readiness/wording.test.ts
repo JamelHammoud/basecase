@@ -26,6 +26,7 @@ describe('what the user reads', () => {
     expect(f.text).toBe('This servo is too weak for its joint.');
     expect(f.detail).toContain('120%');
     expect(f.ruleName).toBe('Servo Torque Checks');
+    expect(engineeringFinding('Range of motion', 'note', { detail: '' }).ruleName).toBe('Range of Motion Checks');
   });
 });
 

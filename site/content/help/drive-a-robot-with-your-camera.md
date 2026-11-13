@@ -30,9 +30,9 @@ Move your arms in front of the computer's camera, and a humanoid or a robot arm 
 It works on humanoids and fixed arms. The camera's picture stays on your computer and is never saved.
 
 1. Click **Simulate** at the top of the right panel.
-2. In **Control**, click **Drive With Camera**.
+2. In **Control**, click **Drive with Camera**.
 
-![Drive With Camera in the Control section of the Simulate tab](/help/drive-a-robot-with-your-camera/control.png)
+![Drive with Camera in the Control section of the Simulate tab](/help/drive-a-robot-with-your-camera/control.png)
 
 3. The first time, allow Basecase to use the camera.
 4. Step back until the camera sees you from the hips up.
@@ -43,7 +43,7 @@ It works on humanoids and fixed arms. The camera's picture stays on your compute
 
 Press [[Esc]] to stop. The camera turns off.
 
-You can also press [[⌘K]] and choose **Drive With Camera**.
+You can also press [[⌘K]] and choose **Drive with Camera**.
 
 ## What follows you
 
@@ -56,4 +56,4 @@ A humanoid with a ready Walk skill keeps standing on it, and [[W]] [[A]] [[S]] [
 
 The still moment in step 5 is your rest pose. If the robot doesn't move, put your arms down, hold still for a second, and try again.
 
-With a Case open, **Drive With Camera** is in [[⌘K]] only; choose it, then click **Try It**. The try records like any other, so it can go into a dataset, as in [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
+With a Case open, **Drive with Camera** is in [[⌘K]] only; choose it, then click **Try It**. The try records like any other, so it can go into a dataset, as in [Export a LeRobot dataset](/help/export-a-lerobot-dataset).

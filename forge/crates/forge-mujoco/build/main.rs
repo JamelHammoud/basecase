@@ -16,7 +16,7 @@ fn vendor_root() -> PathBuf {
 fn compile_shim(root: &Path, target_os: &str) {
     let mut build = cc::Build::new();
 
-    build.file("src/shim.c").file("src/fields.c").warnings(true);
+    build.file("src/shim.c").file("src/fields.c").std("c11").warnings(true);
 
     if target_os == "macos" {
         build.flag(format!("-F{}", root.display()));

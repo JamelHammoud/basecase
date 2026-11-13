@@ -1,7 +1,8 @@
 import type { ConnectionKind, MyPrinter } from '../data/printers';
 import type { PrintMaterial } from '../types/robotics';
-import { electron, post } from '../utils/platform/transport';
 import { bytesToBase64 } from '../utils/base64';
+import { channelCall } from '../utils/platform/channelCall';
+import { electron } from '../utils/platform/transport';
 
 export interface PrintToolsStatus {
   slicers: Array<{ kind: 'bambu' | 'orca' | 'prusa'; name: string; version: string | null }>;
@@ -75,11 +76,6 @@ export interface SliceRecord {
   plates: SlicedPlate[];
 }
 
-const errorText = (e: unknown) =>
-  (e instanceof Error ? e.message : String(e))
-    .replace(/^Error invoking remote method '[^']+':\s*/, '')
-    .replace(/^Error:\s*/, '');
-
 const forHttp = (payload: unknown) => {
   const job = payload as Partial<JobPayload> | undefined;
 
@@ -88,21 +84,8 @@ const forHttp = (payload: unknown) => {
   return { ...job, groups: job.groups.map((g) => ({ ...g, bytes: bytesToBase64(g.bytes) })) };
 };
 
-async function call<T>(channel: string, payload?: unknown): Promise<T> {
-  const api = electron();
-
-  try {
-    if (api?.printCall) return (await api.printCall(channel, payload)) as T;
-
-    const res = await post<T & { error?: string }>(`/${channel.replace(':', '-')}`, { arg: forHttp(payload) });
-
-    if (res && typeof res === 'object' && 'error' in res && res.error) throw new Error(res.error);
-
-    return res;
-  } catch (e) {
-    throw new Error(errorText(e), { cause: e });
-  }
-}
+const call = <T>(channel: string, payload?: unknown) =>
+  channelCall<T>(electron()?.printCall, channel, payload, forHttp);
 
 const asList = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
 

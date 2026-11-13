@@ -1,5 +1,5 @@
 import type { Command } from '../components/CommandPalette';
-import { CasesIcon, DownloadIcon, PlusIcon, RotateLeftIcon, RunIcon, StopIcon } from '../design-system';
+import { CasesIcon, DownloadIcon, PlusIcon, RotateLeftIcon, RunIcon, ShareIcon, StopIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -83,6 +83,19 @@ export function caseCommands({ core }: CommandInputs): Command[] {
           },
         ]
       : [];
+  const publishDataset: Command[] =
+    cases.dataset.canPublish && !cases.dataset.exporting
+      ? [
+          {
+            id: 'case-publish-dataset',
+            group: 'Simulate',
+            label: 'Publish to Hugging Face',
+            icon: <ShareIcon className={ic} />,
+            keywords: 'hub upload share dataset lerobot gr00t groot hf',
+            run: cases.dataset.publishDataset,
+          },
+        ]
+      : [];
 
   const newCase: Command[] = cases.builder.goals.length
     ? [
@@ -111,5 +124,6 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...exportDataset,
+    ...publishDataset,
   ];
 }

@@ -142,7 +142,7 @@ try {
 
   const { default: runLane, schedule } = await laneModule(lane);
 
-  const held = PRODUCERS.has(lane) ? backpressure(flowCounts()) : null;
+  const held = PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null;
 
   if (held) log(`waiting: ${held}`);
   else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });

@@ -10,7 +10,7 @@
 
 **Writing any code?** Follow §0. It's mandatory, and the tooling enforces it: `npm run check:changed -- <your files>` must pass before you finish. Test only your change: never run the whole suite (`npm run check`, `npm test`) for one change; CI runs it on every push (§0a). Throwaway scripts, debug tests and local outputs go in the gitignored `scratch/` folder, never in `src/` (§0g).
 
-**Writing any user-facing text** (labels, buttons, headers, captions, empty states, toasts, errors, tooltips, agent-facing UI)? Follow [Copy](docs/guide/copy.md) (§3), and run its checklist (§3d, repeated below) on every string you add or change.
+**Writing any user-facing text** (labels, buttons, headers, captions, empty states, toasts, errors, tooltips, agent-facing UI)? Follow [Copy](docs/guide/copy.md) (§3; changelog, blog and help center pages §3f), and run its checklist (§3d, repeated below) on every string you add or change.
 
 **Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are.
 

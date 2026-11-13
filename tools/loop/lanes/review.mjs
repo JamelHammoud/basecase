@@ -1,7 +1,8 @@
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
-import { commentOnPull, openPulls, pullReview, setReview } from '../lib/github.mjs';
+import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
+import { commentOnPull, openPulls, pullComments, pullReview, reviewState, setReview } from '../lib/github.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
@@ -88,7 +89,37 @@ function reviewPull(pull, log) {
   }
 }
 
+const REVIEWED = /^### Review: [^(]*\(([0-9a-f]{7,40})\)/;
+
+const lastReviewedSha = (pull) =>
+  pullComments(pull.number)
+    .map((comment) => REVIEWED.exec(comment.body)?.[1])
+    .filter(Boolean)
+    .at(-1);
+
+function carryOver(pull, log) {
+  const short = lastReviewedSha(pull);
+  const reviewed = short ? resolveSha(short) : null;
+
+  if (!reviewed || reviewed === pull.headRefOid) return false;
+
+  const before = ownPatchId(reviewed);
+
+  if (before === null || before !== ownPatchId(pull.headRefOid)) return false;
+
+  const state = reviewState(reviewed);
+
+  if (!['success', 'failure'].includes(state)) return false;
+
+  setReview(pull.headRefOid, state, `Carried over from ${short}: only main changed since`);
+  log(`#${pull.number}: review of ${short} carried over (${state}); only main changed`);
+
+  return true;
+}
+
 export default function review({ log }) {
+  fetchAll();
+
   const waiting = openPulls().filter((pull) => {
     const state = pullReview(pull);
 
@@ -101,7 +132,7 @@ export default function review({ log }) {
     if (!release) continue;
 
     try {
-      reviewPull(pull, log);
+      if (!carryOver(pull, log)) reviewPull(pull, log);
     } finally {
       release();
     }

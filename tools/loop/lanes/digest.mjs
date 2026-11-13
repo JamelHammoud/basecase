@@ -9,6 +9,7 @@ import {
   pullsSince,
   windowStart,
 } from '../lib/history.mjs';
+import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { digestTable, digestTitle, weekStats } from '../lib/stats.mjs';
 
 const DIGEST = 'loop:digest';
@@ -32,6 +33,7 @@ export default function digest({ log }) {
     commits: mainCommits(from),
     runs: mainCheckRuns(),
     openSteps: issues('loop:next').length,
+    owner: OWNER_LOGIN,
     from,
     to,
   });

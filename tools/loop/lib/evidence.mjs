@@ -27,6 +27,12 @@ export function parseReview(body = '') {
 export const isOwnerNote = (comment, owner) =>
   comment.author === owner && !isReviewComment(comment.body) && !comment.body.includes(LOOP_MARK);
 
+export const isLoopReview = (comment, owner) =>
+  comment.author === owner && isReviewComment(comment.body) && comment.body.includes(LOOP_MARK);
+
+export const isLoopPull = (pull, owner) =>
+  pull.author?.login === owner && pull.isCrossRepository === false && Boolean(pull.headRefName?.startsWith('loop/'));
+
 export const isRevert = (message = '') => REVERT.test(message);
 
 export const kindOf = (pull) =>
@@ -53,13 +59,14 @@ const inWindow = (at, since) => Boolean(at) && at >= since;
 export function gatherEvidence({ comments, pulls, commits, since, owner }) {
   const recent = comments.filter((c) => inWindow(c.createdAt, since));
   const notes = [...recent, ...reviewNotes(pulls).filter((c) => inWindow(c.createdAt, since))];
+  const loopPulls = pulls.filter((p) => isLoopPull(p, owner));
 
   return {
     ownerNotes: notes.filter((c) => isOwnerNote(c, owner)),
-    reviews: recent.filter((c) => isReviewComment(c.body)),
-    abandoned: pulls.filter((p) => p.state === 'CLOSED' && !p.mergedAt && inWindow(p.closedAt, since)),
+    reviews: recent.filter((c) => isLoopReview(c, owner)),
+    abandoned: loopPulls.filter((p) => p.state === 'CLOSED' && !p.mergedAt && inWindow(p.closedAt, since)),
     reverts: commits.filter((c) => isRevert(c.message)),
-    repairs: pulls.filter((p) => p.headRefName?.startsWith('loop/repair/') && inWindow(p.createdAt, since)),
+    repairs: loopPulls.filter((p) => p.headRefName.startsWith('loop/repair/') && inWindow(p.createdAt, since)),
   };
 }
 

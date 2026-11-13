@@ -1,4 +1,4 @@
-import { isRevert, isReviewComment, kindOf, parseReview } from './evidence.mjs';
+import { isLoopReview, isRevert, kindOf, parseReview } from './evidence.mjs';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -22,9 +22,9 @@ export function countByKind(pulls) {
   return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
 
-export function reviewTotals(comments) {
+export function reviewTotals(comments, owner) {
   const reviews = comments
-    .filter((c) => isReviewComment(c.body))
+    .filter((c) => isLoopReview(c, owner))
     .map((c) => parseReview(c.body))
     .filter(Boolean);
   const sum = (key) => reviews.reduce((total, review) => total + review[key], 0);
@@ -64,7 +64,7 @@ export function redHours(runs, { from, to }) {
 export const hoursToMerge = (pulls) =>
   median(pulls.map((p) => (Date.parse(p.mergedAt) - Date.parse(p.createdAt)) / HOUR_MS));
 
-export function weekStats({ pulls, comments, commits, runs, openSteps, from, to }) {
+export function weekStats({ pulls, comments, commits, runs, openSteps, owner, from, to }) {
   const merged = mergedIn(pulls, { from, to });
   const byKind = countByKind(merged);
 
@@ -72,7 +72,10 @@ export function weekStats({ pulls, comments, commits, runs, openSteps, from, to 
     merged: merged.length,
     byKind: byKind.filter(([kind]) => kind !== 'lesson'),
     lessons: byKind.find(([kind]) => kind === 'lesson')?.[1] ?? 0,
-    reviews: reviewTotals(comments.filter((c) => c.createdAt >= from && c.createdAt <= to)),
+    reviews: reviewTotals(
+      comments.filter((c) => c.createdAt >= from && c.createdAt <= to),
+      owner,
+    ),
     reverts: commits.filter((c) => isRevert(c.message)).length,
     redHours: redHours(runs, { from, to }),
     openSteps,

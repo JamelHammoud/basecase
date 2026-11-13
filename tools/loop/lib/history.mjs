@@ -36,7 +36,8 @@ export const lineComments = (since) =>
     commentFields(since, 'pull_request_url'),
   ]);
 
-const PULL_FIELDS = 'number,title,body,state,headRefName,labels,createdAt,mergedAt,closedAt,reviews';
+const PULL_FIELDS =
+  'number,title,body,author,isCrossRepository,state,headRefName,labels,createdAt,mergedAt,closedAt,reviews';
 
 export const pullsSince = (since) =>
   json('gh', [

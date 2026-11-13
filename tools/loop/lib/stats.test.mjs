@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { withMark } from './mark.mjs';
 import { countByKind, digestTable, digestTitle, median, redHours, weekStats } from './stats.mjs';
 
 const FROM = '2026-11-05T00:00:00Z';
@@ -59,17 +60,16 @@ describe('weekStats', () => {
     pull(4, 'loop:repair', '2026-11-08T00:00:00Z', null),
     pull(5, 'loop:refine', '2026-10-01T00:00:00Z', '2026-10-02T00:00:00Z'),
   ];
+  const OWNER = 'JamelHammoud';
+  const review = (body, createdAt, author = OWNER) => ({ author, body: withMark(body), createdAt });
+  const blocked = (sha) => `### Review: changes needed (${sha})\nNo.\n\n- **blocker** \`a\`: x Fix: y`;
   const comments = [
-    { body: '### Review: pass (aaaaaaa)\nGood.', createdAt: '2026-11-06T00:00:00Z' },
-    {
-      body: '### Review: changes needed (bbbbbbb)\nNo.\n\n- **blocker** `a`: x Fix: y',
-      createdAt: '2026-11-06T00:00:00Z',
-    },
-    {
-      body: '### Review: changes needed (ccccccc)\nOld.\n\n- **blocker** `a`: x Fix: y',
-      createdAt: '2026-10-01T00:00:00Z',
-    },
-    { body: 'Ship it.', createdAt: '2026-11-06T00:00:00Z' },
+    review('### Review: pass (aaaaaaa)\nGood.', '2026-11-06T00:00:00Z'),
+    review(blocked('bbbbbbb'), '2026-11-06T00:00:00Z'),
+    review(blocked('ccccccc'), '2026-10-01T00:00:00Z'),
+    review(blocked('ddddddd'), '2026-11-06T00:00:00Z', 'outsider'),
+    { author: OWNER, body: blocked('eeeeeee'), createdAt: '2026-11-06T00:00:00Z' },
+    { author: OWNER, body: 'Ship it.', createdAt: '2026-11-06T00:00:00Z' },
   ];
   const stats = weekStats({
     pulls,
@@ -77,6 +77,7 @@ describe('weekStats', () => {
     commits: [{ message: 'Revert "Add x"' }, { message: 'Add y' }],
     runs: [],
     openSteps: 4,
+    owner: OWNER,
     from: FROM,
     to: TO,
   });
@@ -88,7 +89,7 @@ describe('weekStats', () => {
     expect(stats.mergeHours).toBe(4);
   });
 
-  it('counts verdicts and blockers from the week’s reviews', () => {
+  it('counts verdicts and blockers from the loop’s own reviews in the week', () => {
     expect(stats.reviews).toEqual({ passed: 1, failed: 1, blockers: 1, minors: 0 });
     expect(stats.reverts).toBe(1);
   });

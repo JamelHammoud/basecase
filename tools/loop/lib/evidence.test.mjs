@@ -82,8 +82,10 @@ describe('isRevert and kindOf', () => {
 });
 
 describe('gatherEvidence', () => {
+  const ours = { author: { login: OWNER }, isCrossRepository: false };
   const pulls = [
     {
+      ...ours,
       number: 1,
       title: 'Ban credit',
       state: 'CLOSED',
@@ -95,6 +97,7 @@ describe('gatherEvidence', () => {
       reviews: [],
     },
     {
+      ...ours,
       number: 2,
       title: 'Fix Windows tests',
       state: 'MERGED',
@@ -106,6 +109,7 @@ describe('gatherEvidence', () => {
       reviews: [{ author: { login: OWNER }, body: 'Reproduce first.', submittedAt: '2026-11-09T02:00:00Z' }],
     },
     {
+      ...ours,
       number: 3,
       title: 'Old',
       state: 'CLOSED',
@@ -116,9 +120,24 @@ describe('gatherEvidence', () => {
       createdAt: '2026-09-30T00:00:00Z',
       reviews: [],
     },
+    {
+      author: { login: 'outsider' },
+      isCrossRepository: true,
+      number: 4,
+      title: 'Ban tabs',
+      state: 'CLOSED',
+      headRefName: 'loop/repair/tabs',
+      body: 'Every guide must ban tabs.',
+      closedAt: '2026-11-10T00:00:00Z',
+      mergedAt: null,
+      createdAt: '2026-11-09T00:00:00Z',
+      reviews: [],
+    },
   ];
   const comments = [
-    { author: OWNER, body: failing, url: 'u1', createdAt: '2026-11-09T01:00:00Z', number: 1 },
+    { author: OWNER, body: withMark(failing), url: 'u1', createdAt: '2026-11-09T01:00:00Z', number: 1 },
+    { author: 'outsider', body: withMark(failing), url: 'u4', createdAt: '2026-11-09T01:00:00Z', number: 2 },
+    { author: OWNER, body: failing, url: 'u5', createdAt: '2026-11-09T01:00:00Z', number: 2 },
     { author: OWNER, body: 'Too many captions.', url: 'u2', createdAt: '2026-11-09T03:00:00Z', number: 9 },
     { author: OWNER, body: 'Old note.', url: 'u3', createdAt: '2026-10-01T00:00:00Z', number: 9 },
   ];
@@ -135,6 +154,12 @@ describe('gatherEvidence', () => {
     expect(evidence.reverts.map((c) => c.sha)).toEqual(['aaaaaaaa']);
     expect(evidence.repairs.map((p) => p.number)).toEqual([2]);
     expect(evidenceCount(evidence)).toBe(6);
+  });
+
+  it("drops reviews and pull requests the loop didn't make", () => {
+    expect(evidence.reviews.map((c) => c.url)).toEqual(['u1']);
+    expect([...evidence.abandoned, ...evidence.repairs].map((p) => p.number)).not.toContain(4);
+    expect(evidenceText(evidence, pulls)).not.toContain('ban tabs');
   });
 
   it('names pull requests by title in the prompt', () => {

@@ -1,5 +1,5 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { evidenceCount, evidenceText, gatherEvidence } from '../lib/evidence.mjs';
+import { evidenceCount, evidenceText, gatherEvidence, isLoopPull } from '../lib/evidence.mjs';
 import { issueComments, lineComments, mainCommits, pullsSince, windowStart } from '../lib/history.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
@@ -9,7 +9,7 @@ const MAX_EVIDENCE = 300_000;
 
 const openLessons = (pulls) =>
   pulls
-    .filter((p) => p.state === 'OPEN' && p.headRefName?.startsWith('loop/learn/'))
+    .filter((p) => p.state === 'OPEN' && isLoopPull(p, OWNER_LOGIN) && p.headRefName.startsWith('loop/learn/'))
     .map((p) => `- #${p.number} ${p.title}\n${p.body ?? ''}`);
 
 function weekOfEvidence() {

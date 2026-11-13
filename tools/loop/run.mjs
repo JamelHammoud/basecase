@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { heldLocks, isAlive, lockHolder } from './lib/locks.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
@@ -21,18 +22,8 @@ fs.mkdirSync(LOGS, { recursive: true });
 const log = (message) =>
   fs.appendFileSync(path.join(LOGS, `${lane}.log`), `${new Date().toISOString()} [${id}] ${message}\n`);
 
-const isAlive = (pid) => {
-  try {
-    process.kill(pid, 0);
-
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const lockFile = path.join(LOCKS, `${id}.lock`);
-const holder = fs.existsSync(lockFile) ? Number(fs.readFileSync(lockFile, 'utf8')) : 0;
+const holder = lockHolder(lockFile);
 
 if (holder && isAlive(holder)) process.exit(0);
 
@@ -45,11 +36,7 @@ const lockHash = (dir) =>
     .update(fs.readFileSync(path.join(dir, 'package-lock.json')))
     .digest('hex');
 
-const othersRunning = () =>
-  fs
-    .readdirSync(LOCKS)
-    .filter((name) => name !== `${id}.lock`)
-    .some((name) => isAlive(Number(fs.readFileSync(path.join(LOCKS, name), 'utf8'))));
+const othersRunning = () => heldLocks().some((held) => held !== id);
 
 function updateHome() {
   run('git', ['fetch', '-q', 'origin', 'main', HOME_REF], { cwd: HOME_CHECKOUT });

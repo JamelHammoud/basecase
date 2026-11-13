@@ -276,4 +276,16 @@ describe('PhonePairing lifecycle', () => {
     await expect(fetchPage(session.paired.url, { ca: session.ca })).rejects.toMatchObject({ code: 'ECONNREFUSED' });
     expect(await fetchPage(again.url, { ca: again.cert })).toBe(200);
   });
+
+  it('drops a pairing still starting when a newer one overtakes it, with nothing to show', async () => {
+    const pairing = new PhonePairing({ emit: () => {}, address: () => '127.0.0.1' });
+
+    pairings.push(pairing);
+
+    const [first, second] = await Promise.all([pairing.pair(), pairing.pair()]);
+
+    expect(first).toEqual({ ok: false });
+    expect(second.ok).toBe(true);
+    expect(pairing.state()).toMatchObject({ status: 'pairing', token: second.token });
+  });
 });

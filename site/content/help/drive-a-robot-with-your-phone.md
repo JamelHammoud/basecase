@@ -26,23 +26,31 @@ covers:
 
 Steer a rover, a walking robot or an arm in the simulation by tilting your phone, with a touch pad and two buttons on its screen.
 
-Pairing works in the desktop app, with the phone on the same network as the computer. The web studio can't open a network socket, so it doesn't offer it.
+Pairing works in the desktop app, with a robot in the scene and the phone on the same network as the computer. The web studio can't open a network socket, so it doesn't offer it.
 
-1. Open a scene with a robot, press ⌘K and choose **Pair Phone**.
-2. Scan the code with your phone's camera and open the link.
-3. Continue past the warning that the connection isn't private. Basecase makes a new certificate for each pairing, so no browser knows it.
-4. Tap the page once. On an iPhone, allow access to motion and orientation.
-5. On the computer, the code closes once the phone connects. Click **Simulate**, then **Drive**.
-6. Tilt the top of the phone down to go forward, and its left edge down to turn left.
-7. When you're done, press ⌘K and choose **Unpair Phone**.
+1. Press [[⌘K]].
+2. Choose **Pair Phone**.
 
 ![Pair Phone in ⌘K, with a rover in the scene](/help/drive-a-robot-with-your-phone/command.png)
 
+3. Scan the code with your phone's camera.
+
 ![The pairing code over the canvas](/help/drive-a-robot-with-your-phone/code.png)
+
+4. On the phone, open the link.
+5. Continue past the warning that the connection isn't private.
 
 ![The phone's page: Tilt to drive, a touch pad, and the A and B buttons](/help/drive-a-robot-with-your-phone/phone.png)
 
-Press Esc while the code shows to stop pairing. A pairing nobody joins ends after 5 minutes.
+6. Tap the page once.
+7. On an iPhone, allow access to motion and orientation.
+8. On the computer, click **Simulate** at the top of the right panel.
+9. In **Control**, click **Drive**.
+10. Tilt the top of the phone down to go forward, and its left edge down to turn left.
+
+The phone warns because Basecase makes a new certificate for each pairing, so no browser knows it. The code on the computer closes once the phone connects.
+
+When you're done, press [[⌘K]] and choose **Unpair Phone**. Press [[Esc]] while the code shows to stop pairing. A pairing nobody joins ends after 5 minutes.
 
 ## What each input does
 

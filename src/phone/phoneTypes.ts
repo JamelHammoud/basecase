@@ -1,6 +1,6 @@
 import type { PhoneReading } from './phoneDrive';
 
-export type PairReply = { ok: true; url: string; token: string; cert: string } | { ok: false; message: string };
+export type PairReply = { ok: true; url: string; token: string; cert: string } | { ok: false; message?: string };
 
 export type PhoneState =
   | { status: 'off' }

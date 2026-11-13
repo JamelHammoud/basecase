@@ -75,7 +75,7 @@ export class PhonePairing {
       if (generation !== this.#generation) {
         run.server.close();
 
-        return { ok: false, message: 'Pairing was stopped' };
+        return { ok: false };
       }
 
       this.#run = run;

@@ -8,7 +8,7 @@ const ic = 'w-4 h-4';
 
 export const INPUT_COMMANDS = ['pair-phone', 'unpair-phone'];
 
-function phoneCommands({ core }: CommandInputs): Command[] {
+export function inputCommands({ core }: CommandInputs): Command[] {
   if (!canPairPhone()) return [];
 
   if (phoneSnapshot().status === 'off')
@@ -22,7 +22,7 @@ function phoneCommands({ core }: CommandInputs): Command[] {
         run: async () => {
           const reply = await pairPhone();
 
-          if (reply && !reply.ok) core.showToast(reply.message);
+          if (reply && !reply.ok && reply.message) core.showToast(reply.message);
         },
       },
     ];
@@ -38,5 +38,3 @@ function phoneCommands({ core }: CommandInputs): Command[] {
     },
   ];
 }
-
-export const inputCommands = phoneCommands;

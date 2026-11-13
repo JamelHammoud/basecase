@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { HubAccount } from './hub/index.mjs';
 import { Printing } from './print/index.mjs';
 import { SimReady } from './simready/index.mjs';
 import { KitScheduler } from './kitScheduler.mjs';
@@ -65,6 +66,7 @@ export class BasecaseBackendService {
     this.kit = new KitScheduler({ trainer: this.trainer });
     this.simready = new SimReady(this.libraryDir, (event) => this.emitEvent(event));
     this.printing = new Printing({ libraryDir: this.libraryDir, emit: (event) => this.emitEvent(event), secrets });
+    this.hub = new HubAccount({ libraryDir: this.libraryDir, secrets });
   }
 
   simreadyStatus() {

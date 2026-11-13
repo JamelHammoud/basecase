@@ -90,7 +90,7 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Checked:** 2026-11-13
 - **Better than Basecase:** Bambu's own slicer. 2.9.1, released 3 November, slices one model with different nozzle diameters per region, starting with the H3C. It also merges Color Split into Color Matching, adds conformal infill and shows how a 3MF's settings differ from the connected printer's ([2.9.1](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)).
 - **Worse than Basecase:** it slices the parts it's given. Basecase picks each part's flat face, lays out plates per material and leaves parts that are already printed off the plates ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate, as it does: Basecase slices through Bambu Studio's command line and builds its printer catalog from Bambu Studio's machine profiles ([Printing](../guide/printing.md)). That catalog comes from Bambu Studio 2.8.4.61 (`src/data/printerCatalog.ts`) and has no H3C, so regenerate it from 2.9.1. Since it prints multi-material, open a multicolour design there as one project rather than one per material.
+- **Basecase should:** integrate, as it does: Basecase slices through Bambu Studio's command line and builds its printer catalog from Bambu Studio's machine profiles, but that catalog comes from 2.8.4.61 and has no H3C, so regenerate it from 2.9.1 ([Printing](../guide/printing.md), `src/data/printerCatalog.ts`). Open in Bambu Studio could hand over a multicolour design as one unsliced project with each part's filament assigned, while slicing stays one job per material because the command line can't take per-object filaments with 3MF input ([Printing](../guide/printing.md)).
 
 ### OrcaSlicer
 

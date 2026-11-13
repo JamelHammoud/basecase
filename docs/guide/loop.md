@@ -73,6 +73,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 The train never stops for long (`tools/loop/lanes/batch.mjs`, `tools/loop/lib/train.mjs`; checked every minute):
 
 - **A failure is believed only twice.** e2e tests retry once in CI (`vitest.e2e.config.ts`). A failed batch has its failed jobs re-run once before it closes, and so does a red `main`, before the train waits on a repair.
+- **A flaky test becomes work.** The flakes lane (every 10 minutes) reads each Check run on `main` or a batch that passed only when its failed jobs ran again, takes the tests that failed the first time from its log, and files a `loop:priority` fix step for each, so a builder makes it deterministic or deletes it (`tools/loop/lib/flakes.mjs`). The step forbids a longer timeout, a retry or a skip.
 - **Bisecting runs beside the train.** A batch that fails twice closes and its pull requests become suspects. A bisecting batch (`…-bisect`, titled `…, bisecting`) tries the first half of them; if it passes, it lands and the other half are the suspects; if it fails, its half are. The last suspect standing goes back to the revise lane. Meanwhile a fresh batch carries every other ready pull request, so one bad change holds up only the pull requests under suspicion.
 - **Review goes where it lands.** Eight review slots take pull requests whose quick Check passed first, and skip those with conflicts or a failed Check until the rebase or revise lane has fixed them.
 6. The worktree and the branch are deleted.

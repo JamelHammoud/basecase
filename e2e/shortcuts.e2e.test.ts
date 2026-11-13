@@ -25,11 +25,14 @@ const box = (id: string, x: number) => ({
   locked: false,
 });
 
-const select = (ids: string[]) =>
-  app.page.evaluate((list) => (window as unknown as { __studio: Studio }).__studio.select(list), ids);
+const selectedIds = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.selection());
 
-const selection = () =>
-  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.selection().length);
+const selection = () => selectedIds().then((ids) => ids.length);
+
+const select = async (ids: string[]) => {
+  await app.page.evaluate((list) => (window as unknown as { __studio: Studio }).__studio.select(list), ids);
+  await expect.poll(selectedIds).toEqual(ids);
+};
 
 const tabCount = () => app.page.locator(shown('[role="tab"]:has([data-tab-close])')).count();
 

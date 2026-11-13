@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { downloadBytes } from '../utils/downloadBytes';
 import { platformBridge } from '../utils/platformBridge';
 import { fileSafe, plural } from './helpers';
-import { stepJob } from './stepExport';
+import { isStepBody, stepJob } from './stepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 export function useStepExport({
@@ -16,13 +16,20 @@ export function useStepExport({
   const exportingRef = useRef(false);
 
   return async () => {
-    if (exportingRef.current || parts.length === 0) return;
+    if (exportingRef.current || !parts.some(isStepBody)) return;
 
     exportingRef.current = true;
     showToast('Exporting STEP…', { tone: 'progress' });
 
     try {
       const { job, left } = await stepJob(parts, scene.sceneName);
+
+      if (job.bodies.length === 0) {
+        toasts.dismissToast();
+
+        return;
+      }
+
       const { step, skipped } = await platformBridge.exportStep(job);
 
       downloadBytes(new TextEncoder().encode(step), `${fileSafe(scene.sceneName)}.step`, 'model/step');

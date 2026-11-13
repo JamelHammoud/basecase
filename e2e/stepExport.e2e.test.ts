@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openApp, partCount, type App } from './harness';
+import { openApp, partCount, shown, type App } from './harness';
 
 interface Studio {
   parts: () => Array<{ name: string; kind: string }>;
@@ -9,8 +9,6 @@ interface Studio {
 }
 
 let app: App;
-
-const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 const kernelModule = (file: string) =>
   import(pathToFileURL(path.resolve('electron', 'cad-kernel', ...file.split('/'))).href);
@@ -43,7 +41,7 @@ const partsShown = () =>
 
 async function showParts() {
   if (!(await partsShown()))
-    await app.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Parts"]')).click();
+    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Parts"]')).click();
 
   await expect.poll(partsShown).toBe(true);
 }

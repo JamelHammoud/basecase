@@ -5,9 +5,9 @@ import {
   FileIcon,
   FileImportIcon,
   FolderOpenIcon,
-  PackageIcon,
   PhotoIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -62,14 +62,14 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'print download',
       run: exports.exportStl,
     },
-    ...(IS_WEB_DEMO
+    ...(IS_WEB_DEMO || !exports.canExportStep
       ? []
       : [
           {
             id: 'export-step',
             group: 'Scene',
             label: 'Export STEP',
-            icon: <PackageIcon className={ic} />,
+            icon: <ShapeIcon className={ic} />,
             keywords: 'stp cad assembly fusion onshape solidworks freecad download',
             run: () => void exports.exportStep(),
           },

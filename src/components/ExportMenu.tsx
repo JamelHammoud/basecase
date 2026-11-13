@@ -7,16 +7,17 @@ import {
   ClipboardIcon,
   DownloadIcon,
   FileIcon,
-  PackageIcon,
   PhotoIcon,
   PrinterIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
 import { SHARE_LABEL } from '../utils/os';
 
 interface ExportMenuProps {
   canExportStl: boolean;
+  canExportStep: boolean;
   canExportRobot: boolean;
   onExportImage: () => void;
   onExportStl: () => void;
@@ -30,6 +31,7 @@ interface ExportMenuProps {
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({
   canExportStl,
+  canExportStep,
   canExportRobot,
   onExportImage,
   onExportStl,
@@ -75,9 +77,9 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         />
         {onExportStep && (
           <MenuItem
-            icon={<PackageIcon className="w-4 h-4" />}
+            icon={<ShapeIcon className="w-4 h-4" />}
             label="STEP"
-            disabled={!canExportStl}
+            disabled={!canExportStep}
             onSelect={run(onExportStep)}
           />
         )}

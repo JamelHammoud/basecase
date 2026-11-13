@@ -7,6 +7,7 @@ import { printReportOf } from '../utils/printReport';
 import { encodeSceneFile, SCENE_FILE_EXTENSION, sharedScene } from '../utils/sceneFile';
 import { scenePreview } from '../three/scenePreview';
 import { fileSafe } from './helpers';
+import { isStepBody } from './stepExport';
 import { useStepExport } from './useStepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
@@ -149,6 +150,7 @@ export function useExportActions(core: WorkspaceCore) {
     copyBrief,
     exportRobotPackage,
     canExportStl: parts.length > 0,
+    canExportStep: parts.some(isStepBody),
     canExportRobot: posing.hasRig,
   };
 }

@@ -14,6 +14,8 @@ export const OBJECT_JITTER_MM = 15;
 
 export const caseRandom = (seed: number): Random => seededRandom(sha256Hex(`case-run|${seed}`));
 
+export const worldRandom = (seed: number): Random => caseRandom(-seed - 1);
+
 interface InstanceOptions {
   randomization: Randomization;
   bodies: number;
@@ -30,9 +32,9 @@ export const caseInstance = (random: Random, options: InstanceOptions): Instance
 
 const nudge = (random: Random) => (2 * random() - 1) * OBJECT_JITTER_MM;
 
-export function jitteredWorld(kase: Case, random: Random): Case {
+export function jitteredWorld(kase: Case, random: Random, { spots = false } = {}): Case {
   const objects = kase.world.objects.map((o) => {
-    if (o.behavior !== 'dynamic') return o;
+    if (o.behavior === 'static' || (o.behavior === 'marker' && !spots)) return o;
 
     const [x, y, z] = o.position;
 

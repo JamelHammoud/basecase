@@ -70,4 +70,4 @@ A console can also hold the Case's own code: up to 4 panels, each a small web pa
 
 A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
 
-Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.
+Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

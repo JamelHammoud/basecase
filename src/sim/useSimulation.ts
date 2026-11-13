@@ -200,7 +200,10 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
       await vp.meshesReady();
 
       const current = inputs.current;
-      const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
+      const [measures, posedFloor] = await Promise.all([
+        vp.measureParts(),
+        vp.posedFloor(undefined, current.restDeltas),
+      ]);
 
       const input = withGuests(
         {

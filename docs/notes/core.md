@@ -49,7 +49,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - Actuator model: position actuator like a servo. `kp = effort / 0.17` rad (about 10°) for revolute, `effort / 0.005` m (5 mm) for prismatic, so full torque is reached about 10° or 5 mm off target.
 - Joint `armature = max(0.002, effort × 0.004)` for revolute (0.05 for prismatic). Reflected gearbox inertia keeps light links stable at the 2 ms step.
 - Effort source order: servo stall torque, then the maker's published limit (`effortNm`), else an estimate: the weight below the joint held out level from the pivot at about 3× margin. `effortSource` records which.
-- Start height: lift above the floor by `−posedFloor + 2` mm so feet clear the floor wherever the canvas pose puts them. The lift goes in the initial state (body `pos` stays the rest place) so Reset lands the same way.
+- Start height: lift above the floor by `−posedFloor + 2` mm so feet clear the floor wherever the canvas pose puts them. `buildModel` measures it at the canvas pose (`posedFloor(ids, restDeltas)`), never where a running sim has moved the parts, so a model built mid-run hashes the same as one built at rest and a skill trained on it stays ready. The lift goes in the initial state (body `pos` stays the rest place) so Reset lands the same way.
 - Robots with legs float (free root); others are welded to the floor unless `fixedBase` says otherwise. Non-robot solid parts are fixed scenery.
 
 ## sim/engine

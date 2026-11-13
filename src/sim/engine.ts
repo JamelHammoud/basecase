@@ -7,7 +7,9 @@ import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type Dr
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
-import { act, observe, obsSize, type ObsSource, type PolicySpec } from './policy';
+import { eyeCaster, type EyeCaster } from './eyes';
+import { policyObsSize, type PolicySpec } from './policy';
+import { stepPolicy, type PolicyState } from './policyStep';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -78,14 +80,7 @@ export class SimEngine {
   private push: { body: number; force: [number, number, number]; until: number } | null = null;
   private grab: GrabForce;
   private heldRange: ArrayLike<number> | null = null;
-  private policyState: {
-    action: Float32Array;
-    obs: Float32Array;
-    nextAt: number;
-    src: ObsSource;
-    targets: Float64Array;
-    command: [number, number, number];
-  } | null = null;
+  private policyState: PolicyState | null = null;
   readonly dt: number;
   private mj: MainModule;
   readonly sim: SimModel;
@@ -211,6 +206,7 @@ export class SimEngine {
 
   setController(c: Controller) {
     this.controller = c;
+    this.policyState?.eyes?.dispose();
     this.policyState = null;
     this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
     this.setLimp(c.kind === 'limp');
@@ -225,7 +221,7 @@ export class SimEngine {
 
     this.policyState = {
       action: new Float32Array(idx.length),
-      obs: new Float32Array(obsSize(idx.length)),
+      obs: new Float32Array(policyObsSize(c.policy)),
       nextAt: this.data.time,
       src: {
         qpos: this.data.qpos,
@@ -237,6 +233,7 @@ export class SimEngine {
       },
       targets: new Float64Array(idx.length),
       command: [...c.policy.command],
+      eyes: this.eyesFor(c.policy),
     };
   }
 
@@ -325,20 +322,10 @@ export class SimEngine {
     });
   }
 
-  private applyPolicy(policy: PolicySpec, ps: NonNullable<SimEngine['policyState']>) {
+  private applyPolicy(policy: PolicySpec, ps: PolicyState) {
     const { data } = this;
 
-    if (data.time >= ps.nextAt - 1e-9) {
-      ps.src.qpos = data.qpos;
-      ps.src.qvel = data.qvel;
-      observe(ps.src, { defaultPose: policy.defaultPose, command: ps.command }, ps.action, ps.obs);
-      ps.action = act(policy, ps.obs);
-
-      for (let k = 0; k < ps.action.length; k++)
-        ps.targets[k] = policy.defaultPose[k] + policy.actionScale * ps.action[k];
-
-      ps.nextAt += policy.controlDt;
-    }
+    stepPolicy(policy, ps, data);
 
     policy.joints.forEach((id, k) => {
       const actuator = this.sim.joints.find((j) => j.id === id)?.actuator ?? -1;
@@ -496,7 +483,18 @@ export class SimEngine {
     return out;
   }
 
+  private eyesFor(policy: PolicySpec): EyeCaster | null {
+    if (!policy.eyes?.length) return null;
+
+    const caster = eyeCaster(this.mj, this.model, this.data, policy.eyes);
+
+    if (typeof caster === 'string') throw new Error(`${caster} Train it again.`);
+
+    return caster;
+  }
+
   dispose() {
+    this.policyState?.eyes?.dispose();
     this.data.delete();
     this.model.delete();
   }

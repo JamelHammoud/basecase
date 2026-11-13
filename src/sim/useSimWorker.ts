@@ -22,6 +22,8 @@ export function useSimWorker(
   const [version, setVersion] = useState<string | null>(null);
   const ui = useRef<{ at: number; stats: SimStats | null }>({ at: 0, stats: null });
   const frameHookRef = useRef<(() => void) | null>(null);
+  const poseListeners = usePoseListeners();
+  const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
   const routineHookRef = useRef<((update: LiveUpdate) => void) | null>(null);
   const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
@@ -69,12 +71,8 @@ export function useSimWorker(
       if (msg.type !== 'frame' || !m) return;
 
       ui.current.stats = msg.stats;
-      viewportRef.current?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
+      showFrame(m, msg, { viewport: viewportRef.current, listeners: poseListeners.listeners.current });
       frameHookRef.current?.();
-      offerSimTargets(
-        m.joints.map((j) => j.id),
-        msg.targets,
-      );
 
       const now = performance.now();
 
@@ -84,13 +82,13 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef],
+    [viewportRef, modelRef, poseListeners.listeners],
   );
 
   const worker = useCallback(() => {
     if (workerRef.current) return workerRef.current;
 
-    const w = newSimWorker();
+    const w = attachCameras(newSimWorker());
 
     w.onmessage = handle;
     w.onerror = (e) => {
@@ -100,7 +98,7 @@ export function useSimWorker(
     workerRef.current = w;
 
     return w;
-  }, [handle]);
+  }, [handle, attachCameras]);
 
   useEffect(() => () => workerRef.current?.terminate(), []);
 
@@ -157,5 +155,65 @@ export function useSimWorker(
     load,
     frameHookRef,
     startRoutine,
+    subscribePoses: poseListeners.subscribe,
+    connectCameras,
+  };
+}
+
+function useCameraLink(workerRef: React.RefObject<Worker | null>) {
+  const link = useRef<CameraLink | null>(null);
+
+  return {
+    attach: useCallback((w: Worker) => {
+      linkCameras(w, link.current);
+
+      return w;
+    }, []),
+    connect: useCallback(
+      (next: CameraLink | null) => {
+        link.current = next;
+
+        if (workerRef.current) linkCameras(workerRef.current, next);
+      },
+      [workerRef],
+    ),
+  };
+}
+
+export type CameraLink = () => MessagePort;
+
+function linkCameras(w: Worker, link: CameraLink | null) {
+  const port = link?.() ?? null;
+
+  w.postMessage({ type: 'cameras', port } satisfies SimRequest, port ? [port] : []);
+}
+
+type PoseListener = (poses: Float64Array) => void;
+
+function showFrame(
+  m: SimModel,
+  msg: Extract<SimResponse, { type: 'frame' }>,
+  to: { viewport: Viewport3DHandle | null; listeners: Set<PoseListener> },
+) {
+  to.viewport?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
+  to.listeners.forEach((listen) => listen(msg.poses));
+  offerSimTargets(
+    m.joints.map((j) => j.id),
+    msg.targets,
+  );
+}
+
+function usePoseListeners() {
+  const listeners = useRef(new Set<PoseListener>());
+
+  return {
+    listeners,
+    subscribe: useCallback((listen: PoseListener) => {
+      listeners.current.add(listen);
+
+      return () => {
+        listeners.current.delete(listen);
+      };
+    }, []),
   };
 }

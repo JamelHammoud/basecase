@@ -1,5 +1,5 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
-import { act, observe, obsSize, type ObsSource, type PolicySpec } from '../sim/policy';
+import { act, observe, policyObsSize, type ObsSource, type PolicySpec } from '../sim/policy';
 import { rotateIntoFrame, settleStart, type StartJob } from './forgeStart';
 
 const EVAL_SECONDS = 8;
@@ -81,7 +81,7 @@ function forwardSpeed(src: ObsSource) {
 
 function walk(run: Run, src: ObsSource, ctrlDefault: number[]) {
   const { mj, model, data, policy, robot } = run;
-  const obs = new Float32Array(obsSize(policy.joints.length));
+  const obs = new Float32Array(policyObsSize(policy));
   let last: Float32Array = new Float32Array(policy.joints.length);
   let forward = 0;
 

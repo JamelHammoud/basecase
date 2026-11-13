@@ -1,3 +1,5 @@
+import { eyeSize, type Eye } from './eyes';
+
 export const POLICY_FORMAT = 'basecase-policy';
 export const POLICY_VERSION = 1;
 
@@ -28,9 +30,13 @@ export interface PolicySpec {
   trainedSteps: number;
   mujoco: string;
   createdAt: string;
+  eyes?: Eye[];
 }
 
 export const obsSize = (joints: number) => 12 + 3 * joints;
+
+export const policyObsSize = (spec: Pick<PolicySpec, 'joints' | 'eyes'>) =>
+  obsSize(spec.joints.length) + eyeSize(spec.eyes);
 
 export function toBodyFrame(q: ArrayLike<number>, qo: number, v: [number, number, number]): [number, number, number] {
   const w = q[qo],
@@ -127,6 +133,8 @@ export function isPolicySpec(v: unknown): v is PolicySpec {
     p.format === POLICY_FORMAT &&
     p.version === POLICY_VERSION &&
     Array.isArray(p.layers) &&
-    Array.isArray(p.joints)
+    Array.isArray(p.joints) &&
+    (p.eyes === undefined || Array.isArray(p.eyes)) &&
+    (!Array.isArray(p.obsMean) || p.obsMean.length === policyObsSize(p))
   );
 }

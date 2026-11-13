@@ -1,3 +1,5 @@
+import { parquetReadObjects } from 'hyparquet';
+import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
@@ -52,6 +54,40 @@ async function holdKey(key: string, ms: number) {
   await app.page.keyboard.down(key);
   await app.page.waitForTimeout(ms);
   await app.page.keyboard.up(key);
+}
+
+async function datasetFiles() {
+  const files = await app.page.evaluate(() =>
+    (
+      window as unknown as { __studio: { datasetFiles: () => Promise<Record<string, string> | null> } }
+    ).__studio.datasetFiles(),
+  );
+
+  return Object.fromEntries(Object.entries(files ?? {}).map(([path, b64]) => [path, Buffer.from(b64, 'base64')]));
+}
+
+async function expectDataset() {
+  const files = await datasetFiles();
+  const paths = Object.keys(files);
+  const at = (end: string) => files[paths.find((p) => p.endsWith(end))!];
+  const rows = await parquetReadObjects({ file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer });
+  const info = JSON.parse(at('meta/info.json').toString());
+  const videos = paths.filter((p) => p.endsWith('.mp4'));
+
+  expect(paths.some((p) => p.endsWith('meta/modality.json'))).toBe(true);
+  expect(info.total_frames).toBe(rows.length);
+  expect(rows[0]['observation.state']).toHaveLength(3);
+  expect(videos.map((p) => p.split('/').at(-2))).toEqual(['observation.images.scene']);
+
+  for (const path of videos) {
+    const input = new Input({ source: new BufferSource(new Uint8Array(files[path])), formats: ALL_FORMATS });
+    const track = (await input.getPrimaryVideoTrack())!;
+    const stats = await track.computePacketStats();
+
+    expect([track.displayWidth, track.displayHeight]).toEqual([640, 480]);
+    expect(stats.packetCount).toBe(rows.length);
+    expect(info.features['observation.images.scene'].info['video.codec']).toMatch(/h264|vp9|av1/);
+  }
 }
 
 async function stopDriving() {
@@ -128,7 +164,7 @@ describe('live drive', () => {
 });
 
 describe('Cases', () => {
-  it('starts Touch the Dots on an arm, keeps the dots out of parts, and records a try', async () => {
+  it('starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it', async () => {
     await loadFixture('arm-3dof');
     await openPlayTab(app.page, 'Cases');
     await button('Touch the Dots').click();
@@ -160,6 +196,7 @@ describe('Cases', () => {
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].passed).toBe(false);
     await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
+    await expectDataset();
 
     await button('Check Fit').click();
     await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');

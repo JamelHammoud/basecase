@@ -31,6 +31,21 @@ extern "C" {
     pub fn mj_resetData(m: *const MjModel, d: *mut MjData);
     pub fn mj_step(m: *const MjModel, d: *mut MjData);
     pub fn mj_forward(m: *const MjModel, d: *mut MjData);
+    pub fn mj_kinematics(m: *const MjModel, d: *mut MjData);
+    pub fn mj_multiRay(
+        m: *const MjModel,
+        d: *mut MjData,
+        pnt: *const f64,
+        vec: *const f64,
+        geomgroup: *const u8,
+        flg_static: u8,
+        bodyexclude: c_int,
+        geomid: *mut c_int,
+        dist: *mut f64,
+        normal: *mut f64,
+        nray: c_int,
+        cutoff: f64,
+    );
     pub fn mj_setConst(m: *mut MjModel, d: *mut MjData);
     pub fn mj_stateSize(m: *const MjModel, sig: c_int) -> c_int;
     pub fn mj_getState(m: *const MjModel, d: *const MjData, state: *mut f64, sig: c_int);
@@ -93,5 +108,7 @@ extern "C" {
     pub fn forge_qpos(d: *const MjData) -> *mut f64;
     pub fn forge_qvel(d: *const MjData) -> *mut f64;
     pub fn forge_ctrl(d: *const MjData) -> *mut f64;
+    pub fn forge_xpos(d: *const MjData) -> *mut f64;
+    pub fn forge_xmat(d: *const MjData) -> *mut f64;
     pub fn forge_set_time(d: *mut MjData, t: f64);
 }

@@ -4,7 +4,9 @@ import type { Controller } from '../sim/engine';
 import { isStalePolicy } from '../sim/policyFreshness';
 import type { SimRun, Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
-import type { PolicyRecord, RobotAnimation } from '../types/robotics';
+import { cameraShots } from '../cameras/cameraShots';
+import type { FixedCamera } from '../cameras/fixed';
+import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { prettyJointName, type Rig } from '../utils/kinematics';
 import type { PoseReply } from './agentPose';
 import { TOOL_IMAGE_SIDE } from './agentPoseShared';
@@ -15,6 +17,7 @@ export interface SimulatePayload {
   pushes?: Array<{ at: number; direction: 'forward' | 'backward' | 'left' | 'right'; strength?: number }>;
   frames?: number[];
   views?: string[];
+  cameras?: string[];
 }
 
 export interface SimContext {
@@ -25,6 +28,8 @@ export interface SimContext {
   policies: PolicyRecord[];
   viewport: Viewport3DHandle | null;
   restoreCanvas: () => void;
+  parts: ScenePart[];
+  fixedCameras?: FixedCamera[];
 }
 
 const DIRS: Record<string, [number, number, number]> = {
@@ -149,34 +154,63 @@ export async function simulateRequest(ctx: SimContext, p: SimulatePayload): Prom
       seconds,
       controller,
       pushes,
-      frames: p.frames?.filter((t) => t >= 0 && t <= seconds).slice(0, 4),
+      frames: requestedFrames(p, seconds),
     });
   } catch (e) {
     return { text: `The simulation didn't run: ${e instanceof Error ? e.message : String(e)}` };
   }
 
   const text = simReport(run, ctx.rig, seconds);
+  const seen = await cameraReply(ctx, run, p.cameras);
+  const canvas = !p.cameras?.length || p.views?.length ? await viewportShots(ctx, run, p.views) : [];
+
+  return { text: [text, seen.note].filter(Boolean).join('\n'), images: [...canvas, ...seen.shots] };
+}
+
+async function viewportShots(ctx: SimContext, run: SimRun, requested: string[] | undefined) {
+  const vp = ctx.viewport;
+
+  if (!run.frames.length || !vp) return [];
+
+  const views = (requested?.length ? requested : ['iso']).slice(0, 2);
   const shots: Array<Promise<Array<{ view: string; dataUrl: string }>>> = [];
 
-  if (run.frames.length && ctx.viewport) {
-    const vp = ctx.viewport;
-    const views = (p.views?.length ? p.views : ['iso']).slice(0, 2);
-
-    for (const f of run.frames) {
-      vp.setPose(f.deltas as Map<string, THREE.Matrix4>);
-      shots.push(
-        vp
-          .captureViews(views, undefined, { maxSide: TOOL_IMAGE_SIDE })
-          .then((taken) =>
-            taken.map((shot) => ({ view: `${shot.view} at ${f.t.toFixed(1)} s`, dataUrl: shot.dataUrl })),
-          ),
-      );
-    }
-
-    ctx.restoreCanvas();
+  for (const f of run.frames) {
+    vp.setPose(f.deltas as Map<string, THREE.Matrix4>);
+    shots.push(
+      vp
+        .captureViews(views, undefined, { maxSide: TOOL_IMAGE_SIDE })
+        .then((taken) => taken.map((shot) => ({ view: `${shot.view} at ${f.t.toFixed(1)} s`, dataUrl: shot.dataUrl }))),
+    );
   }
 
-  return { text, images: (await Promise.all(shots)).flat() };
+  ctx.restoreCanvas();
+
+  return (await Promise.all(shots)).flat();
+}
+
+function requestedFrames(p: SimulatePayload, seconds: number): number[] | undefined {
+  const frames = p.frames?.filter((t) => t >= 0 && t <= seconds).slice(0, 4);
+
+  return frames?.length || !p.cameras?.length ? frames : [seconds];
+}
+
+async function cameraReply(ctx: SimContext, run: SimRun, names: string[] | undefined) {
+  if (!names?.length) return { shots: [], note: '' };
+
+  const seen = await cameraShots({
+    parts: ctx.parts,
+    world: ctx.sim.worldParts,
+    model: run.model,
+    fixed: ctx.fixedCameras ?? [],
+    names: names.slice(0, 3),
+    frames: run.frames.map((f) => ({ t: f.t, poses: f.poses })),
+  });
+  const note = seen.missing.length
+    ? `No camera ${seen.missing.map((n) => `"${n}"`).join(', ')}. Cameras: ${seen.available.join(', ')}.`
+    : '';
+
+  return { shots: seen.shots, note };
 }
 
 function trainingLine(t: Training): string {

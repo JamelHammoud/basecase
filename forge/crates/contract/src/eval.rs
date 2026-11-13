@@ -62,10 +62,7 @@ fn window_range(window: &Window, trace: &Trace) -> (usize, usize) {
             tick_at_or_after(*from, trace.dt),
             tick_at_or_before(*to, trace.dt).min(last),
         ),
-        Window::Last(seconds) => (
-            last.saturating_sub(tick_at_or_before(*seconds, trace.dt)),
-            last,
-        ),
+        Window::Last(seconds) => (last.saturating_sub(tick_at_or_before(*seconds, trace.dt)), last),
     }
 }
 
@@ -172,16 +169,9 @@ impl Judge<'_> {
         let series = self.series(state);
         let values = &series[from..=to];
         let (margin, worst) = first_max(values, from);
-        let done = values
-            .iter()
-            .position(|value| *value > 0.0)
-            .map(|offset| from + offset);
+        let done = values.iter().position(|value| *value > 0.0).map(|offset| from + offset);
 
-        Verdict {
-            margin,
-            worst,
-            done,
-        }
+        Verdict { margin, worst, done }
     }
 
     fn hold_for(&self, seconds: f64, state: &State, within: &Window, start: usize) -> Verdict {
@@ -293,11 +283,7 @@ impl Judge<'_> {
             Formula::Sequence(items) => self.sequence(items, start),
             Formula::Always(window, state) => self.always(window, state, start),
             Formula::Eventually(window, state) => self.eventually(window, state, start),
-            Formula::HoldFor {
-                seconds,
-                state,
-                within,
-            } => self.hold_for(*seconds, state, within, start),
+            Formula::HoldFor { seconds, state, within } => self.hold_for(*seconds, state, within, start),
         }
     }
 }
@@ -323,9 +309,7 @@ fn is_only_last_tick(window: &Window, trace: &Trace) -> bool {
 pub fn evaluate(contract: &Contract, trace: &Trace) -> Result<Outcome, String> {
     check_signals(contract, trace)?;
 
-    if final_only(&contract.success, &|window| {
-        is_only_last_tick(window, trace)
-    }) {
+    if final_only(&contract.success, &|window| is_only_last_tick(window, trace)) {
         return Err(String::from(FINAL_ONLY));
     }
 

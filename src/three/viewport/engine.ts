@@ -18,7 +18,8 @@ import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
 import { AgentFrames } from './agentFrames';
 import { BlueprintUnderlay } from './blueprint';
-import { focusOn, frameObjects, frameScene, setCameraPreset } from './cameraOps';
+import { CameraGlyphs } from './cameraGlyphs';
+import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
 import { silhouetteShots } from './fitCapture';
@@ -126,6 +127,8 @@ export class ViewportEngine {
 
   private readonly agentFrames: AgentFrames;
 
+  private readonly cameraGlyphs: CameraGlyphs;
+
   private readonly follow: FollowCamera;
 
   private readonly cleanups: Array<() => void>;
@@ -166,6 +169,8 @@ export class ViewportEngine {
     this.markField = new MarkFieldAnchor(this.ctx, this.markLayer, options.markField);
     this.agentFrames = new AgentFrames(this.ctx);
     this.agentFrames.sync(options.props.agentFrames ?? []);
+    this.cameraGlyphs = new CameraGlyphs(stage.overlays);
+    this.cameraGlyphs.sync(options.props.fixedCameras);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
 
     const outline = new SelectionOutline(stage);
@@ -246,6 +251,8 @@ export class ViewportEngine {
 
     if (previous.agentFrames !== props.agentFrames) this.agentFrames.sync(props.agentFrames ?? []);
 
+    if (previous.fixedCameras !== props.fixedCameras) this.cameraGlyphs.sync(props.fixedCameras);
+
     if (!changed(previous, props, ['marks', 'selectedMarkId'])) return;
 
     this.markLayer.sync(props.marks, props.selectedMarkId);
@@ -263,6 +270,7 @@ export class ViewportEngine {
     this.figures.dispose();
     this.markLayer.dispose();
     this.agentFrames.dispose();
+    this.cameraGlyphs.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -300,6 +308,8 @@ export class ViewportEngine {
         return onlyIds?.length || opts?.silhouette || opts?.labels ? unbatched(run) : run();
       },
       setCameraPreset: (preset) => camera(() => setCameraPreset(ctx.stage, preset)),
+      currentView: () => currentView(ctx.stage),
+      lookThrough: (shot) => camera(() => lookThrough(ctx.stage, shot)),
       focusSelected: () => camera(() => focusOn(ctx.stage, ctx.layer.get(this.props.selectedPartIds[0] ?? ''))),
       zoomBy: (factor) => camera(() => zoomCamera(ctx.stage, factor)),
       frameAll: () => this.frameAll(),

@@ -1,23 +1,31 @@
-export function schedule({ tasks, models, seeds }) {
-  const pairs = [];
-
-  for (let seed = 1; seed <= seeds; seed++) {
-    tasks.forEach((task, i) => {
-      const order = (seed + i) % 2 ? [...models].reverse() : [...models];
-
-      pairs.push({ task, seed, order });
-    });
-  }
-
-  return pairs;
-}
-
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
-export function nextPairFits({ spent, pairCosts, budget }) {
+export function roundJobs({ tasks, labels, seed }) {
+  return tasks.flatMap((task, i) => {
+    const order = (seed + i) % 2 ? [...labels].reverse() : [...labels];
+
+    return order.map((label) => ({ task, seed, label }));
+  });
+}
+
+export function canStart({ spent, inflight, perRun, budget }) {
   if (!Number.isFinite(budget)) return true;
 
-  return spent + (mean(pairCosts) ?? 0) <= budget;
+  return spent + (inflight + 1) * (perRun ?? 0) <= budget;
+}
+
+export const MIN_TASKS_TO_SETTLE = 5;
+
+export function settled(stats, { margin }) {
+  if (stats.paired.length < MIN_TASKS_TO_SETTLE || !stats.stopCi) return null;
+
+  const [lo, hi] = stats.stopCi;
+
+  if (lo > 0 || hi < 0) return 'winner';
+
+  if (lo >= -margin && hi <= margin) return 'equivalent';
+
+  return null;
 }
 
 export function historicalRunCost(entries, taskIds) {

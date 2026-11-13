@@ -1,3 +1,4 @@
+import { operateRequest, type OperatePayload } from '../agent/agentOperate';
 import {
   animateRequest,
   getRig,
@@ -98,7 +99,7 @@ export interface SimToolContext extends SimContext, DriveToolContext {
   setAction: (action: string) => void;
 }
 
-export const SIM_TOOL_KINDS = ['simulate', 'training_status', 'set_world', 'start_drive'];
+export const SIM_TOOL_KINDS = ['simulate', 'training_status', 'set_world', 'start_drive', 'operate'];
 
 export async function runSimTool(kind: string, payload: Payload, ctx: SimToolContext): Promise<PoseReply> {
   if (kind === 'set_world') return setWorldRequest(ctx, payload);
@@ -107,6 +108,12 @@ export async function runSimTool(kind: string, payload: Payload, ctx: SimToolCon
     ctx.setAction('Driving');
 
     return startDriveRequest(ctx, payload);
+  }
+
+  if (kind === 'operate') {
+    ctx.setAction('Operating');
+
+    return operateRequest({ ...ctx, fixedCameras: ctx.fixedCameras ?? [] }, payload as OperatePayload);
   }
 
   if (kind === 'simulate') {

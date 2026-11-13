@@ -1,5 +1,6 @@
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
+import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
 import { MarkLabelField } from './MarkLabelField';
@@ -86,6 +87,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
           )
         }
         agentFrames={agent.frames}
+        fixedCameras={project.cameras}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
         worldParts={sim.worldParts}
@@ -94,6 +96,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onPoseJoint={posing.onPoseJoint}
       />
       <DriveOverlay sim={sim} />
+      <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       <AnnotationLayer
         annotations={annotations.annotations}
         parts={parts}

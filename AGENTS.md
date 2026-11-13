@@ -8,7 +8,7 @@
 
 **Keep this file a map.** It's loaded into every agent session: under 200 lines and 32 KiB (Codex stops reading there), checked by `npm run check:docs`. Area detail goes in its guide; add here only what applies to every change. Write rules plainly, without IMPORTANT or capitals, and only what the code can't tell; a rule that must never bend becomes a lint, hook or test. Why it's laid out this way: [Agent instructions](docs/research/Agent%20instructions.md).
 
-**Writing any code?** Follow §0. It's mandatory, and the tooling enforces it: `npm run check` must pass before you finish. Throwaway scripts, debug tests and local outputs go in the gitignored `scratch/` folder, never in `src/` (§0g).
+**Writing any code?** Follow §0. It's mandatory, and the tooling enforces it: `npm run check:changed -- <your files>` must pass before you finish. Test only your change: never run the whole suite (`npm run check`, `npm test`) for one change; CI runs it on every push (§0a). Throwaway scripts, debug tests and local outputs go in the gitignored `scratch/` folder, never in `src/` (§0g).
 
 **Writing any user-facing text** (labels, buttons, headers, captions, empty states, toasts, errors, tooltips, agent-facing UI)? Follow [Copy](docs/guide/copy.md) (§3), and run its checklist (§3d, repeated below) on every string you add or change.
 
@@ -39,9 +39,10 @@
 | 8e | [SimReady](docs/guide/simready.md) | SimReady search, the converter, textures |
 | 8f | [Printing](docs/guide/printing.md) | printers, plates, 3MF, slicing, sending, Print mode |
 | 8g | [Forge](docs/guide/forge.md) | `forge/`, the native trainer, our batched physics, parity with C MuJoCo |
-| 8h | [Cases](docs/guide/cases.md) | `src/cases/`, worlds, robot slots, live driving, recording, the gallery |
+| 8h | [Cases](docs/guide/cases.md) | `src/cases/`, worlds, robot slots, live driving, recording, datasets (`src/datasets/`), the gallery |
 | 8i | [Skills](docs/guide/skills.md) | `src/skills/`, task contracts, the solver race, Arena, Motor Kit |
 | 8j | [Routines](docs/guide/routines.md) | `src/routines/`, the coordinator, ML nodes, scenario tests |
+| 8l | [Cameras](docs/guide/cameras.md) | `src/cameras/`, camera parts and lenses, stationary camera views, live views, fisheye, the agent's `operate`, the depth eye |
 | 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration (`src/reality/`) |
 | 0k | [Proof](docs/guide/proof.md) | `verify/`, Gatekeeper, gates, the hidden twin, the Stage 8 session |
 | 9 | [Agent](docs/guide/agent.md) | the ACP agent, its profiles, lanes, CAD tools and kernel, the agent panel and composer |
@@ -56,7 +57,7 @@ Plans and research live beside them in `docs/` ([Robotics loop](docs/Robotics%20
 ## Working agreements
 
 - **Hobby project.** Basecase is built by Jamel and friends, not a company. No legal, compliance or company concerns in plans, docs or copy. Pick the best tool for the job, whatever its licence.
-- **Commits:** commit only when a maintainer asks, and then straight to `main` (no feature branch). During the robotics build (§0k) agents hold a standing grant: commit straight to `main` once `npm run check` and the relevant gate pass. Read `git status` and the staged list first (§0g). Never add an LLM or tool as an author: no `Co-Authored-By` trailer for Claude, Codex, Gemini or any other model, no “Generated with” line, in commits, PR bodies or anywhere else.
+- **Commits:** commit only when a maintainer asks, and then straight to `main` (no feature branch). During the robotics build (§0k) agents hold a standing grant: commit straight to `main` once `npm run check:changed` and the relevant gate pass. Read `git status` and the staged list first (§0g). Never add an LLM or tool as an author: no `Co-Authored-By` trailer for Claude, Codex, Gemini or any other model, no “Generated with” line, in commits, PR bodies or anywhere else.
 - **Several agents may share this checkout.** Before you edit or commit, check `git status` for changes that aren't yours, never overwrite or revert them, and commit only your own files and hunks.
 - **Don't judge visual changes yourself.** Don't start dev servers, previews or screenshots to see how a change looks; run the checks (§15), say what changed and where to look, and a maintainer reviews it in the app. Make visual tweaks big enough to notice (a 2 → 2.25 stroke at 16px is invisible). CI may capture, assert geometry and diff pixels; none of that judges looks. During the robotics build, one maintainer visual review happens at Stage 8 (§0k).
 - **Performance fixes never trade one problem for another.** Don't pause, throttle or defer loading to keep the UI smooth; move the work off the main thread or make it cheap (§0f).
@@ -70,7 +71,7 @@ These rules hold for every human and agent, on every machine. They're enforced b
 ### 0a. Tooling
 
 - **Prettier** formats (`.prettierrc.json`: single quotes, 120 columns). **ESLint** (`eslint.config.mjs`) enforces everything else. Custom rules live in `tools/eslint/`.
-- `npm run check` = `check:tracked` (§0g) + `check:docs` (this file's size, the guide index, links and § references in every `AGENTS.md` and guide) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`. It must pass before you finish any change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes. `npm run security` (`tools/security/`) scans dependencies, Node, Electron, the Python locks, secrets and risky code, writes `scratch/security/<date>.md` and fails on any critical or high finding (§0h).
+- `npm run check` = `check:tracked` (§0g) + `check:docs` (this file's size, the guide index, links and § references in every `AGENTS.md` and guide) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`: the full run, which CI does on every push. For your own change run `npm run check:changed -- <files you changed>` (`tools/check-changed.mjs`, seconds): Prettier and ESLint on those files, Ruff on Python, `check:docs` when Markdown changed, `tsc -b` when TypeScript changed, and only the tests that import them (`vitest related`). Name your files: with none it takes everything `git diff HEAD` and untracked files show, other agents' work included. Run the full `npm run check` only when a maintainer asks or you change tooling, configs or dependencies, and never rerun a long suite to confirm a small change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes. `npm run security` (`tools/security/`) scans dependencies, Node, Electron, the Python locks, secrets and risky code, writes `scratch/security/<date>.md` and fails on any critical or high finding (§0h).
 - **Node** is pinned in `.nvmrc` (CI reads it) and `engines.node`: the latest release of the active LTS. npm runs dependency install scripts only for packages approved in `allowScripts` (`npm install-scripts ls`).
 - **Hooks run automatically:**
   - Git pre-commit (`simple-git-hooks` + `lint-staged`, installed by `npm install`): formats and lints staged files, then runs `check:tracked`; a commit with lint errors or internal files fails.
@@ -134,7 +135,7 @@ Anything that only serves this session or this machine stays out of git. Put it 
 
 The full rules are in the guides; these are the ones every change must keep.
 
-- **Run and test** ([guide](docs/guide/running-and-testing.md)): `npm start` runs the production bundle, `npm run electron:dev` hot-reloads. `npm test` stays seconds-fast; prefer integration tests on real pipelines; `npm run test:e2e` after UI or viewport changes; `npm run perf:agent` / `perf:viewport` after viewport, mesh, capture or agent-tool changes. A new bridge route needs a `ROUTES` entry in `webBackend.ts`, and desktop-only UI checks `IS_WEB_DEMO`.
+- **Run and test** ([guide](docs/guide/running-and-testing.md)): `npm start` runs the production bundle, `npm run electron:dev` hot-reloads. test your change with `npm run check:changed -- <files>`, never the whole suite; prefer integration tests on real pipelines; `npm run test:e2e` after UI or viewport changes; `npm run perf:agent` / `perf:viewport` after viewport, mesh, capture or agent-tool changes. A new bridge route needs a `ROUTES` entry in `webBackend.ts`, and desktop-only UI checks `IS_WEB_DEMO`.
 - **Performance** ([guide](docs/guide/performance.md)): the app must feel instant. The viewport never rebuilds everything; parts are immutable (replace, never mutate). Heavy geometry, agent checks, captures, thumbnails and printing run in workers, never on the main thread. Render on demand, never an always-on `requestAnimationFrame`. Small payloads across IPC and HTTP. Profile anything over 16 ms in a production build.
 - **Security** ([guide](docs/guide/security.md)): every `/api/*` middleware goes through `guardBridge`, IPC through `trustedIpc`; ids that become paths through `checkedFileId`; agent-controlled fetches through `publicFetch`; no `shell: true`, no `dangerouslySetInnerHTML`; every security fix gets an exploit test.
 - **Windows** ([guide](docs/guide/windows.md)): every change keeps macOS and Windows 11 working. Never spawn `.cmd` / `.bat`; find tools with `findOnPath`; build paths with `path.join`; no signals on Windows (watch a stop file); open files with `openFile` or Electron's `shell`.
@@ -185,7 +186,7 @@ Run it on every string you add or change:
 
 ## 15. Verification Checklist
 
-- [ ] `npm run check` passes (format, ESLint, Ruff, types, tests) and `npm run build` succeeds.
+- [ ] `npm run check:changed -- <your files>` passes (format, ESLint, Ruff, types, related tests). The full `npm run check` and `npm run build` run in CI.
 - [ ] Changes to IPC, the HTTP bridge, file ids, outbound fetches, the CAD kernel or dependencies follow §0h; `npm run security` reports no critical or high finding.
 - [ ] `npm run test:e2e` passes after UI or viewport changes.
 - [ ] Visual changes: no dev servers, previews or screenshots to check the look (see Working agreements); say what changed and what to look at.

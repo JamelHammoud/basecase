@@ -107,19 +107,32 @@ fn joints(model: &Model, job: &Job) -> Result<Joints, String> {
     })
 }
 
+fn eye_bodies(model: &Model, job: &Job) -> Result<Vec<usize>, String> {
+    job.eyes
+        .iter()
+        .map(|eye| {
+            model
+                .body_id(&eye.body)
+                .ok_or_else(|| format!("The model has no body named {} for the eye on {}", eye.body, eye.name()))
+        })
+        .collect()
+}
+
 impl Robot {
     pub fn load(model: Model, job: Job) -> Result<Self, String> {
         let joints = joints(&model, &job)?;
         let layout = RowMap::new(&model)?.offsets();
         let settled = settle(&model, &job, joints.root_qpos, layout)?;
+        let eye_bodies = eye_bodies(&model, &job)?;
         let parts = Assembly {
             timestep: model.timestep(),
             nu: model.nu(),
             layout,
             joints,
             settled,
-            engine: Engine::choose(&model, job.backend),
+            engine: Engine::choose(&model, job.backend, job.sees()),
             mujoco: forge_mujoco::version(),
+            eye_bodies,
         };
 
         Ok(Robot::assemble(model, job, parts))

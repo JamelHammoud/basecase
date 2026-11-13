@@ -17,10 +17,12 @@ import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import { framePoses, type Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
+import { LensRenderer, type Viewport } from '../cameras/lensRender';
 import { FRAME_HEIGHT, FRAME_WIDTH, placeCamera, type DatasetCamera } from './cameras';
 import { DATASET_FPS, type FeatureStats } from './episodes';
 
-const BACKGROUND = 0x262626;
+export const BACKGROUND = 0x262626;
+
 const FLOOR = 0x7a7a7a;
 const STATS_EVERY = 5;
 const STATS_W = 32;
@@ -28,7 +30,7 @@ const STATS_H = 24;
 
 const CODEC_NAMES: Record<string, string> = { avc: 'h264', vp9: 'vp9', av1: 'av1', hevc: 'hevc', vp8: 'vp8' };
 
-interface Posed {
+export interface Posed {
   id: string;
   group: THREE.Group;
   position: THREE.Vector3;
@@ -38,7 +40,7 @@ interface Posed {
 export interface RenderStage {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
-  camera: THREE.PerspectiveCamera;
+  lens: LensRenderer;
   parts: Posed[];
   world: Posed[];
   probe: OffscreenCanvasRenderingContext2D;
@@ -49,13 +51,13 @@ export interface EpisodeVideos {
   imageStats: Record<string, FeatureStats>;
 }
 
-const posed = (part: ScenePart): Posed => {
+export const posed = (part: ScenePart): Posed => {
   const group = buildPartGroup(part, false, { shareGeometry: true });
 
   return { id: part.id, group, position: group.position.clone(), quaternion: group.quaternion.clone() };
 };
 
-function floor(): THREE.Mesh {
+export function floor(): THREE.Mesh {
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(40000, 40000),
     new THREE.MeshStandardMaterial({ color: FLOOR, roughness: 0.95 }),
@@ -66,24 +68,29 @@ function floor(): THREE.Mesh {
   return mesh;
 }
 
-export async function createRenderStage(parts: ScenePart[], world: ScenePart[], meshes?: MeshFiles) {
+export async function createRenderStage(
+  parts: ScenePart[],
+  world: ScenePart[],
+  meshes?: MeshFiles,
+  [width, height]: [number, number] = [FRAME_WIDTH, FRAME_HEIGHT],
+) {
   provideMeshFiles(meshes);
   await loadPartMeshes([...parts, ...world]);
 
   const renderer = new THREE.WebGLRenderer({
-    canvas: new OffscreenCanvas(FRAME_WIDTH, FRAME_HEIGHT),
+    canvas: new OffscreenCanvas(width, height),
     antialias: true,
     preserveDrawingBuffer: true,
   });
 
   renderer.setPixelRatio(1);
-  renderer.setSize(FRAME_WIDTH, FRAME_HEIGHT, false);
+  renderer.setSize(width, height, false);
 
   const scene = createStudioScene(renderer);
   const stage: RenderStage = {
     renderer,
     scene,
-    camera: new THREE.PerspectiveCamera(60, FRAME_WIDTH / FRAME_HEIGHT, 5, 40000),
+    lens: new LensRenderer(renderer),
     parts: parts.map(posed),
     world: world.map(posed),
     probe: new OffscreenCanvas(STATS_W, STATS_H).getContext('2d', { willReadFrequently: true })!,
@@ -97,13 +104,14 @@ export async function createRenderStage(parts: ScenePart[], world: ScenePart[], 
 
 export function disposeRenderStage(stage: RenderStage) {
   [...stage.parts, ...stage.world].forEach((p) => releasePartGroup(p.group));
+  stage.lens.dispose();
   stage.renderer.dispose();
 }
 
 const scratch = new THREE.Matrix4();
 const scale = new THREE.Vector3();
 
-function applyDeltas(items: Posed[], deltas: Map<string, THREE.Matrix4>) {
+export function applyDeltas(items: Posed[], deltas: Map<string, THREE.Matrix4>) {
   for (const item of items) {
     const delta = deltas.get(item.id);
 
@@ -116,16 +124,13 @@ function applyDeltas(items: Posed[], deltas: Map<string, THREE.Matrix4>) {
   }
 }
 
-function renderView(stage: RenderStage, camera: DatasetCamera, delta: THREE.Matrix4 | undefined) {
-  const view = placeCamera(camera, delta);
-  const cam = stage.camera;
-
-  cam.fov = camera.fovDeg;
-  cam.position.set(...view.position);
-  cam.up.set(...view.up);
-  cam.lookAt(...view.target);
-  cam.updateProjectionMatrix();
-  stage.renderer.render(stage.scene, cam);
+export function renderView(
+  stage: RenderStage,
+  camera: DatasetCamera,
+  delta: THREE.Matrix4 | undefined,
+  viewport?: Viewport,
+) {
+  stage.lens.render(stage.scene, { ...placeCamera(camera, delta), lens: camera.lens }, viewport);
 }
 
 class ChannelStats {

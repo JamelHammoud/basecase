@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import net from 'node:net';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ROBOTS } from './robots.mjs';
-import { argOption, here } from './harness.mjs';
+import { argOption, here, nextPort } from './harness.mjs';
 import { readIndex } from './archive.mjs';
 import { robotReport } from './report.mjs';
 
@@ -19,21 +18,6 @@ const hasData = (key) => fs.existsSync(path.join(here, 'data', key));
 const robots = (wanted.length ? wanted : Object.keys(ROBOTS)).filter((k) => ROBOTS[k]);
 const ready = robots.filter((k) => !needsData(k) || hasData(k));
 const skipped = robots.filter((k) => !ready.includes(k));
-
-function portFree(port) {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-
-    server.once('error', () => resolve(false));
-    server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
-  });
-}
-
-async function nextPort(state) {
-  while (!(await portFree(state.port))) state.port++;
-
-  return state.port++;
-}
 
 const passThrough = ['model', 'effort'].flatMap((name) => {
   const value = argOption(args, name, undefined);

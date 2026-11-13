@@ -9,6 +9,7 @@ import { useAgentConnection } from './useAgentConnection';
 import { useAppMenu } from './useAppMenu';
 import { useBackendEvents } from './useBackendEvents';
 import { useContentStable } from './useContentStable';
+import { useDevTabsHook } from './useDevTabsHook';
 import { useLibraries } from './useLibraries';
 import { useMountedTabs } from './useMountedTabs';
 import { usePanelLayout } from './usePanelLayout';
@@ -35,6 +36,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
   const canReopenTab = core.closed.length > 0;
   const isMounted = useMountedTabs(core.tabs, core.activeId);
 
+  useDevTabsHook(core);
   useBackendEvents({
     setAcpStatus: agent.setAcpStatus,
     setCustomModels: libraries.setCustomModels,

@@ -2,6 +2,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
 import { contractSignals, type Contract } from './contract';
 import { hashOf, isHash } from './hash';
+import { eyeProblems, eyeRays, type Eye } from '../sim/eyes';
 
 export const ENVIRONMENT_VERSION = 1;
 
@@ -16,7 +17,8 @@ export type ObservationTerm =
   | { kind: 'joint-positions'; joints: string[] }
   | { kind: 'joint-velocities'; joints: string[] }
   | { kind: 'last-action' }
-  | { kind: 'clock'; periodS: number };
+  | { kind: 'clock'; periodS: number }
+  | { kind: 'depth-eye'; eye: Eye };
 
 export interface ActionSpec {
   kind: 'position-offset' | 'velocity';
@@ -25,11 +27,17 @@ export interface ActionSpec {
   controlDt: number;
 }
 
+export interface StartArea {
+  forwardM: Range;
+  sideM: Range;
+}
+
 export interface ResetDistribution {
   pose?: RobotPoseState;
   jointNoiseDeg: number;
   baseYawDeg: number;
   baseOffsetMm: number;
+  startArea?: StartArea;
 }
 
 export interface Randomization {
@@ -78,6 +86,7 @@ const TERM_SIZE: Record<ObservationTerm['kind'], (term: ObservationTerm, action:
   'joint-velocities': (t) => (t as { joints: string[] }).joints.length,
   'last-action': (_, action) => action.joints.length,
   clock: () => 2,
+  'depth-eye': (t) => eyeRays((t as { eye: Eye }).eye),
 };
 
 export const observationSize = (env: Pick<Environment, 'observation' | 'action'>) =>
@@ -107,13 +116,30 @@ interface ModelIndex {
   joints: Set<string>;
   parts: Set<string>;
   robots: Set<string>;
+  bodies: Set<string>;
 }
 
 const indexOf = (model: SimModel, robot: string): ModelIndex => ({
   joints: new Set(model.joints.filter((j) => j.robot === robot).map((j) => j.id)),
   parts: new Set(model.bodies.flatMap((b) => b.parts)),
   robots: new Set(model.robots.map((r) => r.key)),
+  bodies: new Set(model.bodies.map((b) => b.name)),
 });
+
+export const eyesOf = (env: Pick<Environment, 'observation'>): Eye[] =>
+  env.observation.flatMap((t) => (t.kind === 'depth-eye' ? [t.eye] : []));
+
+function eyeTermProblems(eye: Eye | undefined, index: ModelIndex): string[] {
+  if (!eye || typeof eye !== 'object') return ['A depth eye needs its geometry.'];
+
+  const out = eyeProblems(eye);
+
+  if (!index.bodies.has(eye.body)) out.push(`The eye rides on ${String(eye.body)}, which this model lacks.`);
+
+  if (!Array.isArray(eye.dirs) || eye.dirs.length !== eyeRays(eye) * 3) out.push('An eye has one direction per ray.');
+
+  return out;
+}
 
 function jointProblems(joints: unknown, index: ModelIndex, what: string): string[] {
   if (!Array.isArray(joints) || !joints.length) return [`${what} needs at least one joint.`];
@@ -128,6 +154,8 @@ function termProblems(term: ObservationTerm, index: ModelIndex): string[] {
   if (term.kind === 'command' && !finiteIn(term.size, 1, 8)) return ['A command has 1 to 8 values.'];
 
   if (term.kind === 'clock' && !finiteIn(term.periodS, 0.05, 60)) return ['A clock period is 0.05 to 60 s.'];
+
+  if (term.kind === 'depth-eye') return eyeTermProblems(term.eye, index);
 
   return term.kind in TERM_SIZE ? [] : [`Unknown observation ${String((term as { kind: unknown }).kind)}.`];
 }
@@ -158,10 +186,17 @@ function randomizationProblems(r: Randomization): string[] {
   return out;
 }
 
+export const MAX_START_M = 5;
+
 function resetProblems(reset: ResetDistribution): string[] {
   const ok = finiteIn(reset.jointNoiseDeg, 0, 90) && finiteIn(reset.baseYawDeg, 0, 180);
+  const out = ok && finiteIn(reset.baseOffsetMm, 0, 10000) ? [] : ['Reset noise must be finite and not negative.'];
+  const area = reset.startArea;
 
-  return ok && finiteIn(reset.baseOffsetMm, 0, 10000) ? [] : ['Reset noise must be finite and not negative.'];
+  if (area && !(rangeIn(area.forwardM, -MAX_START_M, MAX_START_M) && rangeIn(area.sideM, -MAX_START_M, MAX_START_M)))
+    out.push(`A start area runs ${-MAX_START_M} to ${MAX_START_M} m each way, low to high.`);
+
+  return out;
 }
 
 const SOURCE_KINDS = new Set([

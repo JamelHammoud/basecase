@@ -209,6 +209,9 @@ const toneClass = (tone: MenuItemProps['tone'], active: boolean) => {
   return active ? 'bg-figma-blue-fill text-white' : 'text-white/90 hover:bg-figma-blue-fill hover:text-white';
 };
 
+const iconToneClass = (tone: MenuItemProps['tone']) =>
+  tone === 'danger' ? 'text-red-400' : 'text-white/60 group-hover/menuitem:text-white';
+
 export const MenuItem: React.FC<MenuItemProps> = ({
   icon,
   label,
@@ -231,9 +234,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     {checked !== undefined && (
       <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
     )}
-    {icon && (
-      <span className="w-4 shrink-0 flex justify-center text-white/60 group-hover/menuitem:text-white">{icon}</span>
-    )}
+    {icon && <span className={`w-4 shrink-0 flex justify-center ${iconToneClass(tone)}`}>{icon}</span>}
     <span className="flex-1 truncate">{label}</span>
     {detail && (
       <span

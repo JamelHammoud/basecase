@@ -75,11 +75,7 @@ fn angle(a: [f64; 3], b: [f64; 3]) -> f64 {
     angle_between(norm(cross(a, b)), dot(a, b))
 }
 
-fn pairwise(
-    trace: &Trace,
-    points: &[Point; 2],
-    measure: fn([f64; 3], [f64; 3]) -> f64,
-) -> Vec<f64> {
+fn pairwise(trace: &Trace, points: &[Point; 2], measure: fn([f64; 3], [f64; 3]) -> f64) -> Vec<f64> {
     let first = coordinates(trace, &points[0]);
     let second = coordinates(trace, &points[1]);
 
@@ -91,10 +87,7 @@ fn pairwise(
 pub fn expr_series(expr: &Expr, trace: &Trace) -> Vec<f64> {
     match expr {
         Expr::Signal(name) => signal(trace, name).to_vec(),
-        Expr::Abs(inner) => expr_series(inner, trace)
-            .iter()
-            .map(|value| value.abs())
-            .collect(),
+        Expr::Abs(inner) => expr_series(inner, trace).iter().map(|value| value.abs()).collect(),
         Expr::Delta(inner) => {
             let values = expr_series(inner, trace);
             let start = values[0];
@@ -118,11 +111,7 @@ fn atom_series(atom: &Atom, trace: &Trace, polarity: Polarity) -> Vec<f64> {
     expr_series(&atom.expr, trace)
         .iter()
         .map(|x| {
-            let gap = if upward {
-                x - atom.value
-            } else {
-                atom.value - x
-            };
+            let gap = if upward { x - atom.value } else { atom.value - x };
             let margin = gap / atom.scale;
 
             if margin.is_finite() {
@@ -150,12 +139,7 @@ fn greater(a: f64, b: f64) -> f64 {
     }
 }
 
-fn fold(
-    states: &[State],
-    trace: &Trace,
-    polarity: Polarity,
-    pick: fn(f64, f64) -> f64,
-) -> Vec<f64> {
+fn fold(states: &[State], trace: &Trace, polarity: Polarity, pick: fn(f64, f64) -> f64) -> Vec<f64> {
     let mut out: Vec<f64> = Vec::new();
 
     for item in states {
@@ -184,11 +168,7 @@ pub fn state_series(state: &State, trace: &Trace, polarity: Polarity) -> Vec<f64
                 ..polarity
             },
         ),
-        (State::All(items), false) | (State::Any(items), true) => {
-            fold(items, trace, polarity, lesser)
-        }
-        (State::All(items), true) | (State::Any(items), false) => {
-            fold(items, trace, polarity, greater)
-        }
+        (State::All(items), false) | (State::Any(items), true) => fold(items, trace, polarity, lesser),
+        (State::All(items), true) | (State::Any(items), false) => fold(items, trace, polarity, greater),
     }
 }

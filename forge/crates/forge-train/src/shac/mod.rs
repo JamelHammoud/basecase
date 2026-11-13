@@ -80,7 +80,7 @@ pub struct Shac<'a> {
 
 impl<'a> Shac<'a> {
     pub fn new(robot: &'a Robot, hyper: Hyper, math: Math) -> Result<Self, String> {
-        let task = crate::gpu_loop::task::describe(robot)?;
+        let task = crate::gpu_loop::task::describe(robot).map_err(|why| format!("SHAC can't train this job: {why}"))?;
         let (nobs, nact) = (task.nobs(), task.nact());
         let count = robot.job.envs;
         let seed = robot.job.seed;

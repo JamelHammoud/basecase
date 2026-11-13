@@ -1,5 +1,5 @@
 import type { ArenaEvidence } from './artifacts';
-import type { RewardRef } from './environment';
+import { eyesOf, type RewardRef } from './environment';
 import { lastError, runCounted, type ForgeTally } from './forgeRunner';
 import { sha256Hex } from './hash';
 import { kitJob } from './kitJob';
@@ -65,6 +65,8 @@ function jobFor(input: RaceInput, options: { source: string; steps: number; seed
     seed: options.seed,
     reward: options.source,
     maxIterations: iterations,
+    eyes: eyesOf(task.environment),
+    startArea: task.environment.reset.startArea,
   });
 
   return { ...base, name: `Race: ${task.id}`, command, commands: undefined, envs: ENVS };

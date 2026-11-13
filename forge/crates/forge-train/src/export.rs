@@ -116,6 +116,10 @@ pub fn policy_json(run: &Trained, steps: u64, created_at: String) -> Value {
         fields.insert("squash".to_owned(), json!(name));
     }
 
+    if let (Some(eyes), Value::Object(fields)) = (&job.eyes_json, &mut spec) {
+        fields.insert("eyes".to_owned(), eyes.clone());
+    }
+
     spec
 }
 

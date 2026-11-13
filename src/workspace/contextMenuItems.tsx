@@ -1,5 +1,7 @@
+import { cameraViewsExpanded, toggleCameraViews } from '../cameras/cameraViewsStore';
 import { AlignControls } from '../components/AlignControls';
 import {
+  CameraAddIcon,
   AlignCenterXIcon,
   BookmarkAddIcon,
   CommentIcon,
@@ -268,8 +270,10 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       onSelect: () => ui.setCameraView(v.id),
     })),
     { label: 'Reset View', icon: <CrosshairIcon className={ic} />, onSelect: ui.resetView },
+    { label: 'Add Camera View', icon: <CameraAddIcon className={ic} />, onSelect: actions.cameras.add },
     { divider: true },
     { label: 'Show Grid', checked: studio.showGrid, onSelect: ui.toggleGrid },
+    { label: 'Show Camera Views', shortcut: '⇧V', checked: cameraViewsExpanded(), onSelect: toggleCameraViews },
     { divider: true },
     {
       label: 'Export STL',

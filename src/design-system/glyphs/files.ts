@@ -92,3 +92,11 @@ export const PrinterIcon = glyph(
 );
 
 export const CommentIcon = glyph('M3 19.5V12A9 9 0 1 1 12 21H4.5A1.5 1.5 0 0 1 3 19.5Z');
+
+export const CameraIcon = glyph(
+  'M5 6.5H6.5L8.25 4H15.75L17.5 6.5H19A2.5 2.5 0 0 1 21.5 9V17.5A2.5 2.5 0 0 1 19 20H5A2.5 2.5 0 0 1 2.5 17.5V9A2.5 2.5 0 0 1 5 6.5ZM12 9.5A3.75 3.75 0 1 0 12 17A3.75 3.75 0 1 0 12 9.5Z',
+);
+
+export const CameraAddIcon = glyph(
+  'M21.5 12.5V17.5A2.5 2.5 0 0 1 19 20H5A2.5 2.5 0 0 1 2.5 17.5V9A2.5 2.5 0 0 1 5 6.5H6.5L8.25 4H12.5M12 9.5A3.75 3.75 0 1 0 12 17A3.75 3.75 0 1 0 12 9.5ZM18.5 2.5V8.5M15.5 5.5H21.5',
+);

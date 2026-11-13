@@ -1,4 +1,5 @@
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
+import type { FixedCamera } from '../../cameras/fixed';
 import type { ThreeMfFileSpec } from '../analysis/analysisOps';
 import type { MeshData } from '../../print/threeMf';
 import type * as THREE from 'three';
@@ -88,6 +89,7 @@ export interface ViewportProps {
   markTool?: MarkTool;
   selectedMarkId?: string | null;
   agentFrames?: AgentFrame[];
+  fixedCameras?: FixedCamera[];
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
   onEraseMarks?: (ids: string[]) => void;
@@ -121,8 +123,16 @@ export interface ClashHit {
   angle: number;
 }
 
+export interface ViewShot {
+  position: Vec3;
+  target: Vec3;
+  hfovDeg: number;
+}
+
 export interface Viewport3DHandle {
   captureScreenshot: () => string;
+  currentView: () => ViewShot;
+  lookThrough: (shot: Pick<ViewShot, 'position' | 'target'>) => void;
   setCameraPreset: (preset: CameraPreset) => void;
   focusSelected: () => void;
   zoomBy: (factor: number) => void;

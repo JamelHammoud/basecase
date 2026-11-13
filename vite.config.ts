@@ -38,6 +38,7 @@ const kernelBundlePlugin = () => {
 };
 
 export default defineConfig(({ mode }) => ({
+  cacheDir: process.env.BASECASE_VITE_CACHE || 'node_modules/.vite',
   server: {
     watch: { ignored: ['**/library/**', '**/ai-reference/**'] },
     headers: ISOLATION_HEADERS,

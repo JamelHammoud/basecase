@@ -88,6 +88,26 @@ export const draftSkill = {
         .optional()
         .describe('The shape of the motion is the point, not only the result'),
       contact_rich: z.boolean().optional(),
+      eye: z
+        .object({
+          part: z.string().min(1).max(80).describe('The camera part, by name or id, on the robot'),
+          cols: z.number().int().min(2).max(32).optional().describe('Default 16'),
+          rows: z.number().int().min(2).max(24).optional().describe('Default 12'),
+          range_m: z.number().min(0.2).max(10).optional().describe('How far it sees, default 3 m'),
+        })
+        .optional()
+        .describe(
+          'Give the policy a depth eye: a grid of distances seen through this camera, for skills that depend on what is around the robot (walls, edges, obstacles, something to find)',
+        ),
+      start_area: z
+        .object({
+          forward_m: z.array(z.number().min(-5).max(5)).length(2),
+          side_m: z.array(z.number().min(-5).max(5)).length(2),
+        })
+        .optional()
+        .describe(
+          'Start each try somewhere in this area (m from the start pose, low to high), so a skill that sees learns from different distances',
+        ),
     },
   },
   handler: (args) => ask('skill_draft', args, 180000),

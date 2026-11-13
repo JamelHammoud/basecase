@@ -3,7 +3,7 @@ import type { CameraPreset, ScenePart } from '../../types/robotics';
 import { selectionBounds } from '../../utils/selection';
 import type { FrameAnimation } from './renderLoop';
 import type { Stage } from './stage';
-import { MAX_DIST } from './types';
+import { MAX_DIST, type Vec3 } from './types';
 
 const PRESET_OFFSETS: Partial<Record<CameraPreset, (distance: number) => [number, number, number]>> = {
   top: (d) => [0, d, 0.01],
@@ -18,6 +18,23 @@ export function setCameraPreset(stage: Stage, preset: CameraPreset): void {
 
   camera.position.set(target.x + offset[0], target.y + offset[1], target.z + offset[2]);
   camera.lookAt(target);
+  orbit.update();
+}
+
+export function currentView(stage: Stage): { position: Vec3; target: Vec3; hfovDeg: number } {
+  const { camera, orbit } = stage;
+  const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
+  const hfovDeg = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(halfV) * camera.aspect));
+
+  return { position: camera.position.toArray(), target: orbit.target.toArray(), hfovDeg };
+}
+
+export function lookThrough(stage: Stage, shot: { position: Vec3; target: Vec3 }): void {
+  const { camera, orbit } = stage;
+
+  camera.position.set(...shot.position);
+  orbit.target.set(...shot.target);
+  camera.lookAt(orbit.target);
   orbit.update();
 }
 

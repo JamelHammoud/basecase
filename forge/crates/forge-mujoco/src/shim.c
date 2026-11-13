@@ -60,5 +60,7 @@ double* forge_dof_frictionloss(const mjModel* m) { return m->dof_frictionloss; }
 double* forge_qpos(const mjData* d) { return d->qpos; }
 double* forge_qvel(const mjData* d) { return d->qvel; }
 double* forge_ctrl(const mjData* d) { return d->ctrl; }
+double* forge_xpos(const mjData* d) { return d->xpos; }
+double* forge_xmat(const mjData* d) { return d->xmat; }
 void forge_set_time(mjData* d, double t) { d->time = t; }
 double forge_time(const mjData* d) { return d->time; }

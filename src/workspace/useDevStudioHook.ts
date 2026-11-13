@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import type { AgentSession } from './useAgentSession';
@@ -45,6 +46,12 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       };
     },
     routineState: () => core.simTraining.routines.state(),
+    datasetFiles: async () => {
+      const { cases } = core.simTraining;
+      const made = await cases.dataset.build(cases.tries);
+
+      return made && unzipSync(made.zip);
+    },
     guide: async () => {
       const made = await core.guide.generate();
 
@@ -62,4 +69,16 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       devRef,
     });
   }, [active, partsRef, projectRef, viewportRef, devRef]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    const registry = ((window as unknown as { __studios?: Record<string, unknown> }).__studios ??= {});
+
+    registry[core.workspaceId] = devStudioApi({ partsRef, projectRef, viewportRef, devRef });
+
+    return () => {
+      delete registry[core.workspaceId];
+    };
+  }, [core.workspaceId, partsRef, projectRef, viewportRef, devRef]);
 }

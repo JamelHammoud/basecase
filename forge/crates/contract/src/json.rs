@@ -325,11 +325,7 @@ impl Parser<'_> {
     }
 
     fn escape(&mut self, out: &mut Vec<u8>) -> Result<(), String> {
-        let code = self
-            .bytes
-            .get(self.at + 1)
-            .copied()
-            .ok_or_else(|| self.malformed())?;
+        let code = self.bytes.get(self.at + 1).copied().ok_or_else(|| self.malformed())?;
 
         self.at += 2;
 
@@ -351,10 +347,7 @@ impl Parser<'_> {
     }
 
     fn hex4(&mut self) -> Result<u32, String> {
-        let digits = self
-            .bytes
-            .get(self.at..self.at + 4)
-            .ok_or_else(|| self.malformed())?;
+        let digits = self.bytes.get(self.at..self.at + 4).ok_or_else(|| self.malformed())?;
         let text = std::str::from_utf8(digits).map_err(|_| self.malformed())?;
         let unit = u32::from_str_radix(text, 16).map_err(|_| self.malformed())?;
 

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { indexEntry } from '../archive.mjs';
+import { appTimeouts } from '../metrics.mjs';
 import { mainServedModel, resolveModel, servedMismatch, sharedEffort } from './models.mjs';
-import { historicalRunCost, nextPairFits, schedule } from './plan.mjs';
+import { canStart, historicalRunCost, roundJobs, settled } from './plan.mjs';
+import { cachedRuns, runFromCache } from './cache.mjs';
+import { runOnSlots } from '../slots.mjs';
 import { bootstrapCI, compareStats, signTestP, verdict } from './stats.mjs';
 import { compareMarkdown } from './report.mjs';
 
@@ -56,17 +59,30 @@ describe('model choice', () => {
   });
 });
 
-describe('schedule and budget', () => {
-  it('runs every task once per seed before the next seed, alternating which model goes first', () => {
-    const pairs = schedule({ tasks: ['A', 'B'], models: ['x', 'y'], seeds: 2 });
+describe('rounds and budget', () => {
+  it('runs both models on every task each round, alternating which goes first', () => {
+    const jobs = roundJobs({ tasks: ['A', 'B'], labels: ['x', 'y'], seed: 1 });
 
-    expect(pairs.map((p) => `${p.seed}${p.task}:${p.order.join('')}`)).toEqual(['1A:yx', '1B:xy', '2A:xy', '2B:yx']);
+    expect(jobs.map((j) => `${j.task}${j.label}`)).toEqual(['Ay', 'Ax', 'Bx', 'By']);
   });
 
-  it('stops before a pair that would pass the budget', () => {
-    expect(nextPairFits({ spent: 0, pairCosts: [], budget: 1 })).toBe(true);
-    expect(nextPairFits({ spent: 8, pairCosts: [2, 3], budget: 10 })).toBe(false);
-    expect(nextPairFits({ spent: 7, pairCosts: [2, 3], budget: 10 })).toBe(true);
+  it('starts a run only if it and the runs in flight fit the budget', () => {
+    expect(canStart({ spent: 0, inflight: 0, perRun: null, budget: 1 })).toBe(true);
+    expect(canStart({ spent: 6, inflight: 3, perRun: 1, budget: 10 })).toBe(true);
+    expect(canStart({ spent: 6, inflight: 4, perRun: 1, budget: 10 })).toBe(false);
+  });
+
+  it('keeps every slot busy until the queue is empty', async () => {
+    const seen = [];
+    const done = await runOnSlots(['s1', 's2'], [1, 2, 3, 4, 5], async (job, slot) => {
+      seen.push(slot);
+      await new Promise((r) => setTimeout(r, job));
+
+      return job * 10;
+    });
+
+    expect(done.sort((x, y) => x - y)).toEqual([10, 20, 30, 40, 50]);
+    expect(new Set(seen)).toEqual(new Set(['s1', 's2']));
   });
 
   it('estimates a run from past micro runs of the same task', () => {
@@ -119,7 +135,20 @@ describe('paired statistics', () => {
     const models = ['fable', 'opus'];
 
     expect(verdict(compareStats(results(6, 0), models), models)).toBe('fable passes more tasks than opus.');
-    expect(verdict(compareStats(results(3, 3), models), models)).toMatch(/^No clear difference/);
+    expect(verdict(compareStats(results(3, 3), models), models)).toMatch(/^No practical difference/);
+  });
+
+  it('stops early on a clear winner or a gap inside the margin, not before five tasks', () => {
+    const models = ['fable', 'opus'];
+    const split = (n) =>
+      ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        .slice(0, n)
+        .flatMap((t, i) => [run('fable', t, i % 2 ? 'pass' : 'fail'), run('opus', t, i % 2 ? 'fail' : 'pass')]);
+
+    expect(settled(compareStats(results(6, 0), models), { margin: 0.1 })).toBe('winner');
+    expect(settled(compareStats(results(3, 3), models), { margin: 0.1 })).toBe('equivalent');
+    expect(settled(compareStats(split(8), models), { margin: 0.1 })).toBeNull();
+    expect(settled(compareStats(results(6, 0).slice(0, 8), models), { margin: 0.1 })).toBeNull();
   });
 
   it('reports cost per model and which model answered', () => {
@@ -133,12 +162,12 @@ describe('paired statistics', () => {
       models: [resolveModel('fable', AVAILABLE), resolveModel('opus', AVAILABLE)],
       labels: ['fable', 'opus'],
       effort: 'high',
-      plan: { done: 6, total: 6, budget: 20 },
+      plan: { harness: 'h1', rounds: 1, maxRounds: 3, tasks: 6, parallel: 8, stop: 'winner', margin: 0.1 },
       git: { commit: 'abc123', dirty: false },
-      stopped: false,
     });
 
     expect(md).toContain('# fable vs opus');
+    expect(md).toContain('1 of 3 rounds over 6 tasks, 8 at a time, stopped early');
     expect(md).toContain('| fable | fable-id | 0.667 |');
   });
 });
@@ -155,5 +184,66 @@ describe('run index', () => {
     });
 
     expect(entry).toMatchObject({ model: 'fable', effort: 'high', servedBy: 'claude-fable-5-2' });
+  });
+});
+
+describe('baseline cache', () => {
+  const entry = (over) => ({
+    kind: 'micro',
+    harness: 'h1',
+    effort: 'high',
+    servedBy: 'claude-opus-5-5',
+    grade: 'pass',
+    task: 'A',
+    run: 'old',
+    seed: 1,
+    at: '2026-11-01T00:00:00Z',
+    costUsd: 2,
+    ...over,
+  });
+
+  it('reuses only runs of the same model, effort and harness, oldest first', () => {
+    const entries = [
+      entry({ at: '2026-11-02T00:00:00Z', seed: 2 }),
+      entry({}),
+      entry({ harness: 'h0' }),
+      entry({ effort: 'low' }),
+      entry({ servedBy: 'claude-opus-5-1' }),
+      entry({ grade: 'error' }),
+      entry({ task: 'B', servedBy: 'claude-opus-5-5[1m]' }),
+    ];
+    const byTask = cachedRuns(entries, { harness: 'h1', effort: 'high', served: 'claude-opus-5-5' });
+
+    expect(byTask.get('A').map((e) => e.seed)).toEqual([1, 2]);
+    expect(byTask.get('B')).toHaveLength(1);
+    expect(cachedRuns(entries, { harness: 'h1', effort: 'high', served: null }).size).toBe(0);
+  });
+
+  it('marks a reused run so its cost is not counted as spent', () => {
+    const reused = runFromCache(entry({}), 'opus');
+    const stats = compareStats([reused, { ...reused, model: 'fable', cached: undefined }], ['fable', 'opus']);
+
+    expect(reused).toMatchObject({ status: 'pass', model: 'opus', cached: 'old' });
+    expect(stats.models.map((m) => [m.spentUsd, m.reused])).toEqual([
+      [2, 0],
+      [0, 1],
+    ]);
+  });
+});
+
+describe('harness health', () => {
+  const failed = (text) => ({
+    type: 'acp-session-update',
+    update: { sessionUpdate: 'tool_call_update', status: 'failed', content: [{ content: { text } }] },
+  });
+
+  it('counts tool calls that never reached the app, not ordinary tool errors', () => {
+    const records = [
+      failed('The app did not answer "snapshot" in time.'),
+      failed('Expected size 40 mm, got 38 mm.'),
+      failed('The app window is not open.'),
+    ];
+
+    expect(appTimeouts(records)).toBe(2);
   });
 });

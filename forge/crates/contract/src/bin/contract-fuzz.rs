@@ -105,10 +105,7 @@ fn window(random: &mut Random) -> Json {
             let from = random.between(0.0, 2.0);
             let length = random.between(0.1, 4.0);
 
-            fields(vec![
-                ("from", Json::Num(from)),
-                ("to", Json::Num(from + length)),
-            ])
+            fields(vec![("from", Json::Num(from)), ("to", Json::Num(from + length))])
         }
         1 => one("last", Json::Num(random.between(0.1, 3.0))),
         _ => Json::Str(String::from("whole")),
@@ -216,12 +213,7 @@ fn accepted_case(random: &mut Random) -> (Json, Json, Outcome) {
 }
 
 fn labels(failed: &[String]) -> Json {
-    Json::Arr(
-        failed
-            .iter()
-            .map(|label| Json::Str(label.clone()))
-            .collect(),
-    )
+    Json::Arr(failed.iter().map(|label| Json::Str(label.clone())).collect())
 }
 
 fn case_json(random: &mut Random) -> Json {
@@ -239,14 +231,8 @@ fn case_json(random: &mut Random) -> Json {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let count = args
-        .get(1)
-        .and_then(|text| text.parse().ok())
-        .unwrap_or(DEFAULT_COUNT);
-    let seed: u64 = args
-        .get(2)
-        .and_then(|text| text.parse().ok())
-        .unwrap_or(DEFAULT_SEED);
+    let count = args.get(1).and_then(|text| text.parse().ok()).unwrap_or(DEFAULT_COUNT);
+    let seed: u64 = args.get(2).and_then(|text| text.parse().ok()).unwrap_or(DEFAULT_SEED);
     let mut random = Random(seed | 1);
     let cases = Json::Arr((0..count).map(|_| case_json(&mut random)).collect());
 

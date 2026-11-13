@@ -1,3 +1,5 @@
+import type { Eye } from '../sim/eyes';
+import type { StartArea } from './environment';
 import type { SimModel } from '../sim/mjcfTypes';
 import { kitCommand, type TrainedEntry } from './kitEnvironment';
 import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
@@ -21,6 +23,8 @@ export interface KitJobOptions {
   delaySteps?: DelaySteps;
   delayRamp?: number;
   warmStart?: string | null;
+  eyes?: Eye[];
+  startArea?: StartArea;
 }
 
 const ROBUST = Object.freeze({
@@ -106,5 +110,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
     ...(options.delayRamp ? { delayRamp: options.delayRamp } : {}),
     ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: LOG_STD_MIN } : {}),
+    ...(options.eyes?.length ? { eyes: options.eyes } : {}),
+    ...(options.startArea ? { startArea: options.startArea } : {}),
   };
 }

@@ -185,9 +185,13 @@ export interface ScenePart extends PartRelations {
   printMaterial?: PrintMaterial;
   print?: PartPrint;
   jointId?: string;
+  cameraLens?: Lens;
 }
 
 export type { PartPrint, PrintRecord } from './print';
+
+import type { FixedCamera } from '../cameras/fixed';
+import type { Lens } from '../cameras/lens';
 
 import type { PartPrint, PrintRecord } from './print';
 
@@ -237,6 +241,7 @@ export interface ProjectSettings extends ProjectRecords {
   routines?: Routine[];
   skills?: SkillRecord[];
   servoCalibrations?: Record<string, CalibrationHistory>;
+  cameras?: FixedCamera[];
 }
 
 export interface Tether {

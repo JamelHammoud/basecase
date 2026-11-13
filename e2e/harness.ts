@@ -40,6 +40,7 @@ export interface App {
   page: Page;
   errors: string[];
   posts: Array<{ route: string; body: unknown }>;
+  requests: string[];
   close: () => Promise<void>;
 }
 
@@ -82,7 +83,9 @@ export async function openApp(lists: Record<string, unknown> = {}): Promise<App>
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors: string[] = [];
   const posts: App['posts'] = [];
+  const requests: string[] = [];
 
+  page.on('request', (request) => requests.push(request.url()));
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
@@ -97,6 +100,7 @@ export async function openApp(lists: Record<string, unknown> = {}): Promise<App>
     page,
     errors,
     posts,
+    requests,
     close: async () => {
       await browser.close();
       await server.close();

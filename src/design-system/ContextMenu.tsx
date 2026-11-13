@@ -126,7 +126,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, minWidth 
                   open ? 'bg-white/[0.09] text-white' : 'text-white/90 hover:bg-white/[0.09]'
                 }`}
               >
-                <span className="w-4 shrink-0 flex justify-center text-white/60">{item.icon}</span>
+                {item.icon && <span className="w-4 shrink-0 flex justify-center text-white/60">{item.icon}</span>}
                 <span className="flex-1 truncate">{item.label}</span>
                 <ChevronRightIcon className="w-3.5 h-3.5 text-white/50" />
               </button>

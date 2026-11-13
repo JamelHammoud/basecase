@@ -25,6 +25,7 @@ export interface DevActions {
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
   routineState: () => unknown;
+  datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
 }
 
 export interface DevStudioDeps {
@@ -36,14 +37,18 @@ export interface DevStudioDeps {
 
 const CHUNK = 0x8000;
 
-function stlBase64(parts: ScenePart[]) {
-  const view = sceneToStl(parts);
-  const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+function base64Of(bytes: Uint8Array) {
   let bin = '';
 
   for (let i = 0; i < bytes.length; i += CHUNK) bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
 
   return btoa(bin);
+}
+
+function stlBase64(parts: ScenePart[]) {
+  const view = sceneToStl(parts);
+
+  return base64Of(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
 }
 
 function addMeshTriangles(groups: Record<string, number[]>, obj: THREE.Object3D) {
@@ -138,5 +143,10 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     guide: () => devRef.current.guide(),
     simState: () => devRef.current.simState(),
     routineState: () => devRef.current.routineState(),
+    datasetFiles: async () => {
+      const files = await devRef.current.datasetFiles();
+
+      return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, base64Of(bytes)]));
+    },
   };
 }

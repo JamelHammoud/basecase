@@ -12,6 +12,7 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['animate', 180000],
   ['simulate', 180000],
   ['start_drive', 180000],
+  ['operate', 120000],
   ['verify', 290000],
   ['sweep_design', 290000],
   ['import_robot', 300000],

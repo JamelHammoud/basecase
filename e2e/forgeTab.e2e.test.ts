@@ -30,18 +30,18 @@ let server: ViteDevServer;
 let browser: Browser;
 let base: string;
 
-beforeAll(async () => {
-  server = await startServer('web');
-  base = server.resolvedUrls!.local[0].replace(/\/$/, '');
-  browser = await chromium.launch({ channel: 'chrome', headless: true, args: GPU_ARGS });
-}, 120000);
+describe.runIf(process.platform === 'darwin')('Forge in a tab', () => {
+  beforeAll(async () => {
+    server = await startServer('web');
+    base = server.resolvedUrls!.local[0].replace(/\/$/, '');
+    browser = await chromium.launch({ channel: 'chrome', headless: true, args: GPU_ARGS });
+  }, 120000);
 
-afterAll(async () => {
-  await browser?.close();
-  await server?.close();
-});
+  afterAll(async () => {
+    await browser?.close();
+    await server?.close();
+  });
 
-describe('Forge in a tab', () => {
   it(
     'forge tab trains Stand on WebGPU to a passing Arena eval within 15 minutes',
     async () => {

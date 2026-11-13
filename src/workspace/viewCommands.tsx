@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 import type { Command } from '../components/CommandPalette';
+import { cameraViewsExpanded, toggleCameraViews } from '../cameras/cameraViewsStore';
 import {
+  CameraAddIcon,
+  CameraIcon,
   CrosshairIcon,
   GridIcon,
   HandIcon,
@@ -88,7 +91,7 @@ const SCROLL_COMMANDS: Record<TrackpadGestureMode, { label: string; icon: ReactN
   'zoom-scroll': { label: 'Scroll to Zoom', icon: <SearchIcon className={ic} /> },
 };
 
-function displayCommands({ core, ui }: CommandInputs): Command[] {
+function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
   const { studio } = core;
   const next = SCROLL_COMMANDS[NEXT_SCROLL_MODE[studio.trackpadMode]];
 
@@ -99,6 +102,23 @@ function displayCommands({ core, ui }: CommandInputs): Command[] {
       label: studio.showGrid ? 'Hide Grid' : 'Show Grid',
       icon: <GridIcon className={ic} />,
       run: ui.toggleGrid,
+    },
+    {
+      id: 'toggle-camera-views',
+      group: 'View',
+      label: cameraViewsExpanded() ? 'Collapse Camera Views' : 'Expand Camera Views',
+      shortcut: '⇧V',
+      icon: <CameraIcon className={ic} />,
+      keywords: 'camera feed wrist head fisheye robot eyes',
+      run: toggleCameraViews,
+    },
+    {
+      id: 'add-camera-view',
+      group: 'Scene',
+      label: 'Add Camera View',
+      icon: <CameraAddIcon className={ic} />,
+      keywords: 'camera stationary fixed outside shot frame',
+      run: actions.cameras.add,
     },
     {
       id: 'zoom-selection',

@@ -1,3 +1,4 @@
+import { toggleCameraViews } from '../cameras/cameraViewsStore';
 import { useEffect, useEffectEvent } from 'react';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { isModalOpen } from '../design-system';
@@ -121,6 +122,13 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
     if (e.shiftKey && key === 'i') {
       e.preventDefault();
       ui.toggleReferenceImages();
+
+      return;
+    }
+
+    if (e.shiftKey && key === 'v') {
+      e.preventDefault();
+      toggleCameraViews();
 
       return;
     }

@@ -58,11 +58,7 @@ pub enum Formula {
     Any(Vec<Formula>),
     Always(Window, State),
     Eventually(Window, State),
-    HoldFor {
-        seconds: f64,
-        state: State,
-        within: Window,
-    },
+    HoldFor { seconds: f64, state: State, within: Window },
     Sequence(Vec<Formula>),
 }
 
@@ -96,15 +92,8 @@ fn exact_fields(json: &Json, names: &[&str], what: &str) -> Result<Fields, Strin
         return Err(format!("{what} must be an object"));
     };
 
-    if fields.len() != names.len()
-        || !names
-            .iter()
-            .all(|name| fields.iter().any(|(key, _)| key == name))
-    {
-        return Err(format!(
-            "{what} must have exactly the fields {}",
-            names.join(", ")
-        ));
+    if fields.len() != names.len() || !names.iter().all(|name| fields.iter().any(|(key, _)| key == name)) {
+        return Err(format!("{what} must have exactly the fields {}", names.join(", ")));
     }
 
     Ok(fields.clone())
@@ -165,9 +154,7 @@ fn parse_point(json: &Json) -> Result<Point, String> {
 
 fn parse_points(json: &Json) -> Result<Box<[Point; 2]>, String> {
     match json {
-        Json::Arr(items) if items.len() == 2 => {
-            Ok(Box::new([parse_point(&items[0])?, parse_point(&items[1])?]))
-        }
+        Json::Arr(items) if items.len() == 2 => Ok(Box::new([parse_point(&items[0])?, parse_point(&items[1])?])),
         _ => Err(String::from("dist and angle need two points")),
     }
 }
@@ -177,9 +164,7 @@ fn parse_window(json: &Json) -> Result<Window, String> {
         Json::Str(text) if text == "whole" => Ok(Window::Whole),
         Json::Obj(fields) if fields.len() == 1 && fields[0].0 == "last" => parse_last(&fields[0].1),
         Json::Obj(_) => parse_between(json),
-        _ => Err(String::from(
-            "A window must be whole, a from and to, or a last",
-        )),
+        _ => Err(String::from("A window must be whole, a from and to, or a last")),
     }
 }
 
@@ -353,9 +338,7 @@ fn collect_expr(expr: &Expr, out: &mut Vec<String>) {
 
 fn collect_state(state: &State, out: &mut Vec<String>) {
     match state {
-        State::All(items) | State::Any(items) => {
-            items.iter().for_each(|item| collect_state(item, out))
-        }
+        State::All(items) | State::Any(items) => items.iter().for_each(|item| collect_state(item, out)),
         State::Not(inner) => collect_state(inner, out),
         State::Atom(atom) => collect_expr(&atom.expr, out),
     }
@@ -366,17 +349,15 @@ fn collect_formula(formula: &Formula, out: &mut Vec<String>) {
         Formula::All(items) | Formula::Any(items) | Formula::Sequence(items) => {
             items.iter().for_each(|item| collect_formula(item, out))
         }
-        Formula::Always(_, state)
-        | Formula::Eventually(_, state)
-        | Formula::HoldFor { state, .. } => collect_state(state, out),
+        Formula::Always(_, state) | Formula::Eventually(_, state) | Formula::HoldFor { state, .. } => {
+            collect_state(state, out)
+        }
     }
 }
 
 pub fn final_only(formula: &Formula, is_final: &impl Fn(&Window) -> bool) -> bool {
     match formula {
-        Formula::All(items) | Formula::Sequence(items) => {
-            items.iter().all(|item| final_only(item, is_final))
-        }
+        Formula::All(items) | Formula::Sequence(items) => items.iter().all(|item| final_only(item, is_final)),
         Formula::Any(items) => items.iter().any(|item| final_only(item, is_final)),
         Formula::Always(window, _) | Formula::Eventually(window, _) => is_final(window),
         Formula::HoldFor { within, .. } => is_final(within),

@@ -49,6 +49,10 @@ export const simulation = {
   the end effector, rovers mix their wheels, four or more legs walk on baked cycles after a fall
   check; a robot with a trained walk (any legged robot, bipeds included) drives through it.
   Without one, start_drive says how to train it.
+- Cameras: simulate with cameras returns what the robot's camera parts (or the scene's camera
+  views) saw at each frame; operate drives the live sim one step at a time and returns those
+  views after each step, for tasks steered by sight. A camera part's lens comes from its catalog
+  field of view; the user can switch any camera to a fisheye.
 - Anything else the user wants the robot to do is a skill: draft_skill writes the contract and
   shows it, train_skill races solvers on it and Arena judges the result (see Slash commands).`,
 };

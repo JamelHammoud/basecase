@@ -44,7 +44,7 @@ export function indexEntry({ run, task, kind, summary, git, at = new Date() }) {
     score: orNull(summary.score?.total),
     drawingIoU: orNull(summary.drawing?.iou),
     ...judgeFields(summary.judge),
-    ...pick(summary, ['grade', 'seed', 'heldOut', 'model', 'effort', 'servedBy']),
+    ...pick(summary, ['grade', 'seed', 'heldOut', 'model', 'effort', 'servedBy', 'harness']),
   };
 }
 

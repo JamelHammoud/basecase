@@ -1,6 +1,7 @@
 use crate::clock::Instant;
 use crate::conditions::{Conditions, Setup};
 use crate::events::Phases;
+use crate::eye_rays::EyeRays;
 use crate::physics::Physics;
 use crate::randomize::{randomize, RANDOMIZED_FIELDS};
 use crate::rewarder::Rewarder;
@@ -29,6 +30,7 @@ pub struct Envs<'a> {
     delayed: Vec<f64>,
     conditions: Conditions,
     rewarder: Rewarder,
+    eyes: EyeRays,
 }
 
 pub struct EnvsSpec {
@@ -115,6 +117,7 @@ impl<'a> Envs<'a> {
                 randomized,
             }),
             rewarder: Rewarder::for_job(&robot.job)?,
+            eyes: EyeRays::new(robot, count, threads),
         };
 
         for sim in 0..count {
@@ -159,6 +162,20 @@ impl<'a> Envs<'a> {
         self.steps_taken[sim] = 0;
         self.last_action[sim * robot.nact..(sim + 1) * robot.nact].fill(0.0);
         self.conditions.reset(sim, &mut self.rngs[sim]);
+        self.shift_start(sim);
+    }
+
+    fn shift_start(&mut self, sim: usize) {
+        let Some([forward, side]) = self.robot.job.options.start_area else {
+            return;
+        };
+        let rng = &mut self.rngs[sim];
+        let shift = [rng.uniform(forward[0], forward[1]), rng.uniform(side[0], side[1])];
+        let at = self.robot.layout.qpos + self.robot.root_qpos;
+        let row = self.batch.row(sim);
+
+        row[at] += shift[0];
+        row[at + 1] += shift[1];
     }
 
     pub fn root_xy(&mut self, sim: usize) -> [f64; 2] {
@@ -186,6 +203,8 @@ impl<'a> Envs<'a> {
 
     pub fn observe(&mut self, out: &mut [f32]) {
         let width = self.robot.nobs();
+
+        self.eyes.see_all(&self.robot.model, &mut self.batch);
 
         for sim in 0..self.count {
             self.observe_one(sim, &mut out[sim * width..(sim + 1) * width]);
@@ -221,6 +240,8 @@ impl<'a> Envs<'a> {
             obs[12 + nact + j] = qvel[robot.joint_dof[j]] as f32;
             obs[12 + 2 * nact + j] = last[j] as f32;
         }
+
+        obs[12 + 3 * nact..].copy_from_slice(self.eyes.values(sim));
     }
 
     pub fn keep_final_obs(&mut self) {
@@ -235,6 +256,7 @@ impl<'a> Envs<'a> {
         let width = self.robot.nobs();
 
         if let Some(mut store) = self.final_obs.take() {
+            self.eyes.see_one(&self.robot.model, &mut self.batch, sim);
             self.observe_one(sim, &mut store[sim * width..(sim + 1) * width]);
             self.final_obs = Some(store);
         }

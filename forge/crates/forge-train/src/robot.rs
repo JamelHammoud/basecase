@@ -28,6 +28,7 @@ pub struct Robot {
     pub z0: f64,
     pub engine: Engine,
     pub mujoco: String,
+    pub eye_bodies: Vec<usize>,
 }
 
 pub struct Joints {
@@ -54,6 +55,7 @@ pub struct Assembly {
     pub settled: Settled,
     pub engine: Engine,
     pub mujoco: String,
+    pub eye_bodies: Vec<usize>,
 }
 
 pub fn rotate_into_frame(q: &[f64], v: [f64; 3]) -> [f64; 3] {
@@ -80,7 +82,11 @@ pub fn quat_multiply(a: [f64; 4], b: [f64; 4]) -> [f64; 4] {
 
 impl Robot {
     pub fn nobs(&self) -> usize {
-        12 + 3 * self.nact
+        12 + 3 * self.nact + self.eye_width()
+    }
+
+    pub fn eye_width(&self) -> usize {
+        crate::eyes::width(&self.job.eyes)
     }
 
     pub fn assemble(model: ModelRef, job: Job, parts: Assembly) -> Self {
@@ -109,6 +115,7 @@ impl Robot {
             z0: job.options.stand_height.unwrap_or(parts.settled.z0),
             engine: parts.engine,
             mujoco: parts.mujoco,
+            eye_bodies: parts.eye_bodies,
             model,
             job,
         }

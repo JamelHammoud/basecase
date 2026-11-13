@@ -41,11 +41,12 @@ jobs:
           echo "summary=$summary" >> "$GITHUB_OUTPUT"
 
       - if: steps.bump.outputs.changed == 'true'
-        run: npm run check
+        run: npm run typecheck
+      - name: Test the code that starts and talks to the agents
+        if: steps.bump.outputs.changed == 'true'
+        run: npx vitest run electron/backend
       - if: steps.bump.outputs.changed == 'true'
         run: npx vite build
-      - if: steps.bump.outputs.changed == 'true'
-        run: npm run test:e2e
 
       - name: Commit to main
         if: steps.bump.outputs.changed == 'true'

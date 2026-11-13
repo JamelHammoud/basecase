@@ -93,3 +93,14 @@ export function runMetrics(records, { result = {}, seconds } = {}) {
     subagentToolCalls: tools.subagentCalls,
   };
 }
+
+const APP_UNREACHABLE = /The app did not answer|The app window is not open|This scene was closed/;
+
+export function appTimeouts(records) {
+  return sessionUpdates(records).filter(
+    (u) =>
+      u.sessionUpdate === 'tool_call_update' &&
+      u.status === 'failed' &&
+      APP_UNREACHABLE.test(JSON.stringify(u.content ?? u.rawOutput ?? '')),
+  ).length;
+}

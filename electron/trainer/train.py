@@ -7,9 +7,10 @@ object per line. The result is policy.json, which the app's simulator runs (src/
 and policy.onnx for running it anywhere else.
 
 The observation and action must match src/sim/policy.ts exactly:
-  obs = [gravity_b(3), angvel_b(3), linvel_b(3), command(3), q - default(n), qd(n), last_action(n)]
+  obs = [gravity_b(3), angvel_b(3), linvel_b(3), command(3), q - default(n), qd(n), last_action(n), eyes(rays)]
   target = default + action_scale * clip(action, -1, 1)
 MuJoCo axes: the robot faces -Y and its left is +X, so "forward" velocity is -v_b.y.
+A job's optional depth eyes add one value per ray: distance / rangeM, or 1 for no ray, no hit or past the range.
 
 Sim-to-real: every environment gets its own friction, link masses and servo stiffness, and the
 robot is shoved at random, so the policy can't rely on the model being exact.
@@ -33,6 +34,77 @@ from torch import nn
 POLICY_FORMAT = "basecase-policy"
 POLICY_VERSION = 1
 FULL = mujoco.mjtState.mjSTATE_FULLPHYSICS
+MAX_EYES = 4
+MAX_RAYS = 32 * 24
+EYE_RANGE_M = (0.2, 10.0)
+RAY_GROUPS = np.array([1, 1, 1, 0, 1, 1], dtype=np.uint8)
+START_AREA_REACH_M = 5.0
+
+
+@dataclass
+class Eye:
+    """One depth eye: rays cast from a point on a body, in that body's frame; [0, 0, 0] directions cast nothing."""
+
+    body: int
+    pos: np.ndarray
+    dirs: np.ndarray
+    slots: np.ndarray
+    rays: int
+    range_m: float
+
+    def cast(self, m, d):
+        values = np.ones(self.rays, dtype=np.float32)
+        if len(self.slots) == 0:
+            return values
+        xmat = d.xmat[self.body].reshape(3, 3)
+        pnt = d.xpos[self.body] + xmat @ self.pos
+        vec = np.ascontiguousarray((self.dirs @ xmat.T).reshape(-1))
+        dist = np.empty(len(self.slots))
+        geomid = np.empty(len(self.slots), dtype=np.int32)
+        mujoco.mj_multiRay(m, d, pnt, vec, RAY_GROUPS, 1, self.body, geomid, dist, None, len(self.slots), self.range_m)
+        seen = np.where((dist < 0) | (dist > self.range_m), 1.0, dist / self.range_m)
+        values[self.slots] = seen.astype(np.float32)
+        return values
+
+
+def parse_eye(base, spec):
+    body = mujoco.mj_name2id(base, mujoco.mjtObj.mjOBJ_BODY, str(spec.get("body", "")))
+    if body < 0:
+        raise ValueError(f"The model has no body named {spec.get('body')} for the eye on {spec.get('part')}")
+    cols, rows = int(spec["cols"]), int(spec["rows"])
+    range_m = float(spec["rangeM"])
+    dirs = np.array(spec["dirs"], dtype=np.float64)
+    if cols < 1 or rows < 1 or cols * rows > MAX_RAYS:
+        raise ValueError(f"an eye casts at most {MAX_RAYS} rays, and this one asks for {cols * rows}")
+    if not EYE_RANGE_M[0] <= range_m <= EYE_RANGE_M[1]:
+        raise ValueError(f"an eye's rangeM runs from {EYE_RANGE_M[0]} to {EYE_RANGE_M[1]} m")
+    if dirs.shape != (3 * cols * rows,) or not np.all(np.isfinite(dirs)):
+        raise ValueError(f"an eye of {cols * rows} rays needs {3 * cols * rows} numbers in dirs")
+    dirs = dirs.reshape(-1, 3)
+    length = np.linalg.norm(dirs, axis=1)
+    if np.any((length != 0) & (np.abs(length - 1) > 1e-3)):
+        raise ValueError("an eye's rays must be unit directions or [0, 0, 0]")
+    slots = np.nonzero(np.any(dirs != 0, axis=1))[0]
+    pos = np.array(spec["pos"], dtype=np.float64)
+    return Eye(body, pos, dirs[slots], slots, cols * rows, range_m)
+
+
+def parse_eyes(base, job):
+    specs = job.get("eyes") or []
+    if len(specs) > MAX_EYES:
+        raise ValueError(f"a policy sees through at most {MAX_EYES} eyes, and this job has {len(specs)}")
+    return [parse_eye(base, spec) for spec in specs]
+
+
+def parse_start_area(job):
+    area = job.get("startArea")
+    if area is None:
+        return None
+    ranges = [[float(v) for v in area[key]] for key in ("forwardM", "sideM")]
+    for lo, hi in ranges:
+        if not -START_AREA_REACH_M <= lo <= hi <= START_AREA_REACH_M:
+            raise ValueError(f"startArea reaches at most {START_AREA_REACH_M} m from the start on each axis, in order")
+    return ranges
 
 
 def hold_delayed_controls(m, d, ctrl):
@@ -101,6 +173,10 @@ class Envs:
         self.episode_steps = int((10.0 if self.task == "stand" else 15.0) / self.control_dt)
 
         self._index_robot(base)
+        self.eyes = parse_eyes(base, job)
+        self.eye_width = sum(eye.rays for eye in self.eyes)
+        self.eye_data = mujoco.MjData(base) if self.eyes else None
+        self.start_area = parse_start_area(job)
         self._settle(base)
         self.models = self._randomized_models(xml, n)
         nthread = max(1, min(os.cpu_count() or 4, n))
@@ -196,6 +272,9 @@ class Envs:
         q[self.rq + 3 : self.rq + 7] = quat_mul(
             [math.cos(yaw / 2), 0, 0, math.sin(yaw / 2)], q[self.rq + 3 : self.rq + 7]
         )
+        if self.start_area is not None:
+            q[self.rq] += self.rng.uniform(*self.start_area[0])
+            q[self.rq + 1] += self.rng.uniform(*self.start_area[1])
         self.state[i] = s
         self.t[i] = 0
         self.last_action[i] = 0
@@ -210,7 +289,21 @@ class Envs:
         cmd = np.tile(self.command, (self.n, 1))
         jp = qpos[:, self.jq] - self.default
         jv = qvel[:, self.jd]
-        return np.concatenate([g, w, v, cmd, jp, jv, self.last_action], axis=1).astype(np.float32)
+        base = np.concatenate([g, w, v, cmd, jp, jv, self.last_action], axis=1).astype(np.float32)
+        if not self.eyes:
+            return base
+        return np.concatenate([base, self._eye_values()], axis=1)
+
+    def _eye_values(self):
+        """Each environment's state, posed in a scratch MjData, then every eye's rays cast against its own model."""
+        d = self.eye_data
+        out = np.empty((self.n, self.eye_width), dtype=np.float32)
+        for i in range(self.n):
+            m = self.models[i]
+            mujoco.mj_setState(m, d, self.state[i], FULL)
+            mujoco.mj_kinematics(m, d)
+            out[i] = np.concatenate([eye.cast(m, d) for eye in self.eyes])
+        return out
 
     def step(self, action):
         a = np.clip(action, -1.0, 1.0)
@@ -367,6 +460,8 @@ def export(path, job, policy, steps):
         "mujoco": mujoco.__version__,
         "createdAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
     }
+    if job.get("eyes"):
+        spec["eyes"] = job["eyes"]
     tmp = path + ".tmp"
     with open(tmp, "w") as f:
         json.dump(spec, f)
@@ -718,7 +813,7 @@ def main():
     emit(type="status", message="Building environments")
     nenv = int(job.get("envs", 64))
     env = Envs(xml, job, nenv, seed=seed + 1)
-    nobs = 12 + 3 * env.na
+    nobs = 12 + 3 * env.na + env.eye_width
     policy = Policy(ActorCritic(nobs, env.na), Normalizer(nobs))
     ppo = Ppo(env, policy)
     policy_path = os.path.join(args.job, "policy.json")

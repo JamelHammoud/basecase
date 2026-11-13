@@ -12,6 +12,7 @@ import {
   scissors,
   sparkle,
 } from './drawings.mjs';
+import { SKETCH } from './sketch.mjs';
 
 const PHOTO_FRAME = rr([2.5, 3.5, 19, 17], 2.5);
 const PHOTO_RIDGE = 'M2.5 15L8 9.5L13.5 15L16 12.5L21.5 16';
@@ -78,6 +79,7 @@ const DRAWN = {
     ChevronUpIcon: { d: 'M6 15L12 9L18 15', weight: LIGHT_CONTROL },
     ChevronLeftIcon: { d: 'M15 6L9 12L15 18', weight: LIGHT_CONTROL },
     ChevronRightIcon: { d: 'M9 6L15 12L9 18', weight: LIGHT_CONTROL },
+    SlashIcon: rr([3, 3, 18, 18], 3) + 'M14.5 7.5L9.5 16.5',
     ArrowUpIcon: 'M12 20V4M5.5 10.5L12 4L18.5 10.5',
     ArrowDownIcon: 'M12 4V20M5.5 13.5L12 20L18.5 13.5',
     ArrowUpRightIcon: 'M6.5 17.5L17.5 6.5M8 6.5H17.5V16',
@@ -301,6 +303,10 @@ const DRAWN = {
       ) +
       'M4 16.5H12M4 20.5H20',
     CommentIcon: 'M3 19.5V12A9 9 0 1 1 12 21H4.5A1.5 1.5 0 0 1 3 19.5Z',
+    CameraIcon:
+      'M5 6.5H6.5L8.25 4H15.75L17.5 6.5H19A2.5 2.5 0 0 1 21.5 9V17.5A2.5 2.5 0 0 1 19 20H5A2.5 2.5 0 0 1 2.5 17.5V9A2.5 2.5 0 0 1 5 6.5ZM12 9.5A3.75 3.75 0 1 0 12 17A3.75 3.75 0 1 0 12 9.5Z',
+    CameraAddIcon:
+      'M21.5 12.5V17.5A2.5 2.5 0 0 1 19 20H5A2.5 2.5 0 0 1 2.5 17.5V9A2.5 2.5 0 0 1 5 6.5H6.5L8.25 4H12.5M12 9.5A3.75 3.75 0 1 0 12 17A3.75 3.75 0 1 0 12 9.5ZM18.5 2.5V8.5M15.5 5.5H21.5',
   },
   tools: {
     MoveIcon: 'M5.5 3V18.5H21M2.5 6L5.5 3L8.5 6M18 15.5L21 18.5L18 21.5M5.5 18.5L12.5 11.5',
@@ -358,6 +364,7 @@ const DRAWN = {
     HandIcon:
       'M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15',
   },
+  sketch: SKETCH,
 };
 
 const OPTICAL = {

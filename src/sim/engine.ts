@@ -223,6 +223,7 @@ export class SimEngine {
       action: new Float32Array(idx.length),
       obs: new Float32Array(policyObsSize(pc.policy)),
       nextAt: this.data.time,
+      startedAt: this.data.time,
       src: {
         qpos: this.data.qpos,
         qvel: this.data.qvel,

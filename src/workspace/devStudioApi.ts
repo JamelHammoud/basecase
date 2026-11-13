@@ -33,6 +33,7 @@ export interface DevActions {
   select: (ids: string[]) => void;
   dropFiles: (files: File[]) => void;
   selection: () => string[];
+  selectFace: (partId: string, normal: [number, number, number]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
@@ -42,6 +43,7 @@ export interface DevActions {
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  stubTrainer: (policy: unknown) => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -165,6 +167,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
 
       return part && { position: part.position, rotation: part.rotation };
     },
+    selectFace: (partId: string, normal: [number, number, number]) => devRef.current.selectFace(partId, normal),
+    triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
@@ -190,6 +194,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     robotGhost: () => robotGhostState(viewportRef.current),

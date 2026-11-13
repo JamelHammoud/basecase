@@ -63,7 +63,7 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
     commitParts(
       patchWhere(
         (p) => p.group?.id === groupId,
-        () => ({ group: { id: groupId, name } }),
+        (p) => ({ group: { ...p.group!, id: groupId, name } }),
       ),
     );
 

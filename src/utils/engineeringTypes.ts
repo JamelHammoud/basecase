@@ -4,6 +4,8 @@ import type { BomInput } from './bom';
 import type { RobotBody } from './engineeringBody';
 import type { V3 } from './engineeringMath';
 import type { ArmModel, PayloadMap } from './payload';
+import type { ChainResult } from '../assembly/assemblyTypes';
+import type { StrengthJob, StrengthReading } from '../strength/types';
 
 export interface PartMass {
   id: string;
@@ -26,12 +28,18 @@ export interface CheckDot {
   shade: number;
 }
 
+export interface FindingFix {
+  kind: 'print-face';
+  part: string;
+  down: V3;
+}
+
 export interface CheckRow {
   check: string;
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail' }>;
+  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix }>;
   itemsAreContext?: boolean;
   dots?: CheckDot[];
 }
@@ -80,6 +88,9 @@ export interface EngineeringInputs {
   walk?: WalkSim | string;
   servoTouches?: string[];
   payload?: (arm: ArmModel) => PayloadMap | null;
+  chains?: ChainResult | null;
+  printDowns?: Record<string, V3>;
+  strength?: (jobs: StrengthJob[]) => Array<StrengthReading | null>;
 }
 
 export interface SweepRequest {

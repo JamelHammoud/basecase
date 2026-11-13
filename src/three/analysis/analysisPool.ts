@@ -21,6 +21,7 @@ import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/ass
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from './jointAxis';
 import type { ArmModel, PayloadMap } from '../../utils/payload';
+import type { StrengthJob, StrengthReading } from '../../strength/types';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -208,6 +209,27 @@ export async function payloadMapsIn(arms: ArmModel[]): Promise<Array<PayloadMap 
   } finally {
     client.busy--;
   }
+}
+
+export async function strengthIn(scene: SceneShapes, jobs: StrengthJob[]): Promise<Array<StrengthReading | null>> {
+  if (!jobs.length) return [];
+
+  const workers = pool().slice(0, jobs.length);
+  const chunks = workers.map((_, w) => jobs.map((job, i) => ({ job, i })).filter(({ i }) => i % workers.length === w));
+  const results = await Promise.all(
+    chunks.map((chunk, w) =>
+      analyze<Array<StrengthReading | null>>(workers[w], scene, {
+        kind: 'strength',
+        instances: scene.instances,
+        jobs: chunk.map((c) => c.job),
+      }),
+    ),
+  );
+  const out: Array<StrengthReading | null> = new Array(jobs.length).fill(null);
+
+  chunks.forEach((chunk, w) => chunk.forEach((c, k) => (out[c.i] = results[w][k])));
+
+  return out;
 }
 
 export function fastenersIn(scene: SceneShapes, input: FastenerInput): Promise<ChainResult> {

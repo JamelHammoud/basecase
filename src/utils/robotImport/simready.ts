@@ -14,6 +14,7 @@ export interface ConvertedLink {
   mesh: string | null;
   color: string | null;
   visuals?: ConvertedVisual[];
+  occurrences?: string[];
   mass?: number;
   com?: [number, number, number];
   triangles?: number;
@@ -29,6 +30,7 @@ export interface ConvertedJoint {
   limit: [number, number] | null;
   effort: number | null;
   velocity: number | null;
+  mate?: string;
 }
 
 export interface FixedMate {

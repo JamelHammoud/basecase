@@ -35,6 +35,8 @@ export const isLoopPull = (pull, owner) =>
 
 export const isRevert = (message = '') => REVERT.test(message);
 
+export const membersOf = (body) => [...(body ?? '').matchAll(/^- #(\d+) /gm)].map((match) => Number(match[1]));
+
 export const kindOf = (pull) =>
   pull.labels
     ?.map((label) => label.name)

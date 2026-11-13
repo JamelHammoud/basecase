@@ -15,6 +15,7 @@ import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from '../analysis/jointAxis';
 import type { CheckDot } from '../../utils/engineeringTypes';
+import type { StrengthJob, StrengthReading } from '../../strength/types';
 import type {
   CameraPreset,
   MeasureUnit,
@@ -84,6 +85,8 @@ export interface ViewportProps {
   showGrid: boolean;
   blueprintDataUrl?: string | null;
   onSelectPart: (id: string | null, additive?: boolean, drill?: boolean) => void;
+  onPickPoint?: (id: string, point: Vec3) => void;
+  onOpenPart?: (id: string) => void;
   onMarqueeSelect?: (ids: string[]) => void;
   onUpdatePartsTransform?: (updates: PartTransformUpdate[]) => void;
   onUpdatePartTransform: (id: string, position: Vec3, rotation: Vec3, dimensions?: ScenePart['dimensions']) => void;
@@ -178,6 +181,7 @@ export interface Viewport3DHandle {
   jointAxis: (query: JointAxisQuery) => Promise<FoundAxis | null>;
   meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
+  strength: (jobs: StrengthJob[]) => Promise<Array<StrengthReading | null>>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;

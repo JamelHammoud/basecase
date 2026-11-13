@@ -13,6 +13,8 @@ import type { FastenerInput } from '../../assembly/assemblyTypes';
 import { assemblyGeometry, type AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 import { jointAxisOf, type JointAxisQuery } from './jointAxis';
 import { payloadMap, type ArmModel } from '../../utils/payload';
+import type { StrengthJob } from '../../strength/types';
+import { strengthOf } from './strengthPart';
 
 export interface GeometryPayload {
   id: string;
@@ -34,6 +36,7 @@ export interface Instance {
 export type AnalysisTask =
   | ({ kind: 'interference'; instances: Instance[]; riders?: OutputRiders } & CollideOptions)
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
+  | { kind: 'strength'; instances: Instance[]; jobs: StrengthJob[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
   | { kind: 'measure' | 'meshes' | 'visibility' | 'floor'; instances: Instance[] }
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
@@ -83,7 +86,7 @@ const placeAll = (instances: Instance[]) =>
 const byId = <T>(instances: Instance[], value: (i: Instance) => T) =>
   Object.fromEntries(instances.map((i) => [i.id, value(i)]));
 
-function run(task: AnalysisTask) {
+function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
   switch (task.kind) {
     case 'interference': {
       const { instances, riders, ...options } = task;
@@ -131,6 +134,16 @@ function runPlaced(task: Extract<AnalysisTask, { kind: 'gaps' | 'threeMf' | 'fas
   }
 }
 
+function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {
+  const byPart = new Map(task.instances.map((i) => [i.id, i]));
+
+  return task.jobs.map((job) => {
+    const instance = byPart.get(job.part);
+
+    return instance ? strengthOf(solidOf(instance.key), instance.key, instance.matrix, job) : null;
+  });
+}
+
 function threeMfFiles(task: Extract<AnalysisTask, { kind: 'threeMf' }>) {
   const keyOf = new Map(task.instances.map((i) => [i.id, i.key]));
   const meshes = new Map<string, ReturnType<typeof weld>>();
@@ -154,7 +167,17 @@ const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[]
   if (kind === 'threeMf')
     return Object.values(result as Record<string, Uint8Array>).map((b) => b.buffer as ArrayBuffer);
 
+  if (kind === 'strength') return fieldBuffers(result);
+
   return kind === 'meshes' ? meshBuffers(result) : [];
+};
+
+const fieldBuffers = (result: unknown) => {
+  const fields = (result as Array<{ field: { cells: Int32Array; ratio: Float32Array } } | null>).flatMap((r) =>
+    r ? [r.field.cells.buffer, r.field.ratio.buffer] : [],
+  );
+
+  return [...new Set(fields)] as ArrayBuffer[];
 };
 
 const meshBuffers = (result: unknown) =>
@@ -168,7 +191,7 @@ export const analysisHandlers = {
     newGeometries.forEach((g) => geometries.set(g.id, g));
     shapes.forEach((s) => specs.set(s.key, s));
 
-    const result = run(task);
+    const result = task.kind === 'strength' ? strengthJobs(task) : run(task);
 
     return reply(result, transferOf(task.kind, result));
   },

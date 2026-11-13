@@ -12,8 +12,10 @@ import { rangeChangeRows } from './engineeringRanges';
 import { simModelRows } from './engineeringSimModel';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
 import { payloadRows } from './engineeringPayload';
+import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
 
+export { STRENGTH_CHECK };
 export { rotateEuler } from './engineeringMath';
 export { downstreamOf, partMasses } from './engineeringMass';
 export { engineeringText } from './engineeringFormat';
@@ -22,6 +24,7 @@ export type {
   CheckRow,
   EngineeringInputs,
   EngineeringReport,
+  FindingFix,
   JointLoad,
   PartMass,
   ServoOutput,
@@ -41,6 +44,7 @@ export const ENGINEERING_CHECKS = [
   'Current and runtime',
   'Standing stability',
   'Heat near servos',
+  STRENGTH_CHECK,
   'Budget',
 ];
 
@@ -136,6 +140,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...powerRows(ctx),
     ...stabilityRows(ctx),
     ...heatRows(ctx),
+    ...strengthRows(ctx, loads),
     budgetRow(ctx),
   ];
 

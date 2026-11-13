@@ -61,6 +61,7 @@ pub fn observe<S: Real>(task: &Task, frame: &Frame<S>, last: &[S]) -> Vec<S> {
             Observed::JointOffsets => out.extend((0..task.nact()).map(|j| frame.joint(task, j))),
             Observed::JointVel => out.extend(task.joints.iter().map(|j| frame.qvel[j.dof])),
             Observed::LastAction => out.extend(last.iter().copied()),
+            Observed::Clock => out.extend(task.reference.iter().flat_map(|r| r.clock(0)).map(S::c)),
         }
     }
 
@@ -85,6 +86,7 @@ fn read<S: Real>(task: &Task, frame: &Frame<S>, actions: &Actions<S>, input: Inp
         Input::JointVel(j) => frame.qvel[task.joints[j].dof],
         Input::Action(j) => actions.action[j],
         Input::LastAction(j) => actions.last[j],
+        Input::Reference(k) => S::c(task.reference.as_ref().map_or(0.0, |r| r.frame(0)[k])),
     }
 }
 

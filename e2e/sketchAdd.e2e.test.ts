@@ -12,6 +12,18 @@ async function openFromShapes(item: string) {
   await app.page.getByRole('menuitem', { name: item }).click();
 }
 
+async function drawRectangle() {
+  const box = (await app.page.locator(shown('[data-testid="sketch-plane"]')).boundingBox())!;
+
+  await app.page.getByRole('button', { name: 'Rectangle', exact: true }).click();
+  await app.page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.6);
+  await app.page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.4, { steps: 4 });
+  await app.page.keyboard.type('40');
+  await app.page.keyboard.press('Tab');
+  await app.page.keyboard.type('20');
+  await app.page.keyboard.press('Enter');
+}
+
 async function addAndExpectPart(title: string) {
   const before = await partCount(app.page);
 
@@ -37,6 +49,7 @@ describe('Sketch and Import SVG add a part with one button', () => {
   it('adds the sketch outline as a part without saving it to the Library', async () => {
     await openFromShapes('Sketch');
     await expect.poll(() => panelTitle('Sketch').count()).toBe(1);
+    await drawRectangle();
 
     await addAndExpectPart('Sketch');
   });

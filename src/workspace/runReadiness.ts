@@ -9,6 +9,8 @@ import { registerSourced } from '../data/sourcedItems';
 import {
   fitProbeFindings,
   fixedMateFindings,
+  goneMateFindings,
+  goneMateIds,
   hiddenFindings,
   sourcingFindings,
   threadFindings,
@@ -66,6 +68,7 @@ export const projectFingerprint = (
     printProcess: project.printProcess,
     animations: jsonHash(project.animations),
     firstRanges: project.firstRanges,
+    goneMates: goneMateIds(project.joints),
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
@@ -92,7 +95,14 @@ export async function runReadiness({
 
   const printing = printReportOf(parts, { project, printer }, viewport.printShapes);
   const engineeringRun = printing.then((report) =>
-    runEngineeringNow({ viewport, parts, project, withSweep: true, supportG: supportOf(report) }),
+    runEngineeringNow({
+      viewport,
+      parts,
+      project,
+      withSweep: true,
+      supportG: supportOf(report),
+      printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
+    }),
   );
   const [engineering, geometry, print, purchases, measures] = await Promise.all([
     engineeringRun,
@@ -120,6 +130,7 @@ export async function runReadiness({
       ...threadFindings(geometry, parts),
       ...hiddenFindings(parts),
       ...fixedMateFindings(parts),
+      ...goneMateFindings(project.joints),
     ],
     {
       parts,

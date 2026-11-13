@@ -4,7 +4,8 @@ import { closePull, isPaused, openPulls, pullCheck, pullReview } from '../lib/gi
 import { LOOP_MARK } from '../lib/mark.mjs';
 import { isRepair } from '../lib/rank.mjs';
 import { json, run } from '../lib/sh.mjs';
-import { eligible, isBatch, membersOf } from './batch.mjs';
+import { membersOf } from '../lib/evidence.mjs';
+import { eligible, isBatch } from './batch.mjs';
 
 export const schedule = {
   slots: 1,

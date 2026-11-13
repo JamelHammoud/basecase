@@ -37,7 +37,7 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 2. Read the header of **Checks**. It says **Ready to build**, or how many problems are left, such as **3 to fix**.
 3. Click a check with a red mark to open it.
 4. Click a part name under a problem to select that part on the canvas.
-5. Click **Fix** to hand the problem to the agent, or change the part yourself.
+5. Click **Fix** to hand the problem to the agent, or change the part yourself. On **Strength**, **Fix** prints the part on its strongest face instead.
 6. If the robot runs on a cable instead of a battery, open **Servo voltage** and type the supply's volts in **V**.
 7. Open **Supply current** and type the supply's amps in **A**.
 8. If the robot is an arm fixed in place, click **Payload** to see how much its hand holds at full reach and close in. While it's open, the canvas shows a dot wherever the hand reaches, bluer where it lifts more.

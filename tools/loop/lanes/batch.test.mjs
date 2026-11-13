@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { membersOf } from './batch.mjs';
+import { membersOf } from '../lib/evidence.mjs';
 
 describe('membersOf', () => {
   it('reads the pull requests a batch lists', () => {

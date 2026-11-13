@@ -39,7 +39,7 @@
     "perf:agent": "node tools/perf/agentBench.mjs",
     "perf:viewport": "node tools/perf/viewportBench.mjs",
     "perf:gallery": "node tools/perf/galleryBench.mjs",
-    "perf:boolean": "node tools/perf/booleanBench.mjs",
+    "perf:booleans": "node tools/perf/booleanBench.mjs",
     "gallery": "node tools/gallery/build.mjs",
     "basecase": "node tools/cli/basecase.mjs",
     "icon": "xcrun actool \"$PWD/build/icon/Basecase.icon\" --compile \"$PWD/build/icon/compiled\" --platform macosx --minimum-deployment-target 26.0 --app-icon Basecase --target-device mac --output-partial-info-plist \"$PWD/build/icon/compiled/partial.plist\" --output-format human-readable-text",

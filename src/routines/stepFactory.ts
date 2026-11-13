@@ -65,7 +65,9 @@ export const askStep = (id: string): AskStep => ({
   ...guard(20_000),
 });
 
-export const waitStep = (id: string, ms = 1000): WaitStep => ({ kind: 'wait', id, ms, ...guard(ms + 1000) });
+export const waitTimeoutMs = (ms: number) => ms + 1000;
+
+export const waitStep = (id: string, ms = 1000): WaitStep => ({ kind: 'wait', id, ms, ...guard(waitTimeoutMs(ms)) });
 
 export const ifStep = (id: string, fact = 'person'): IfStep => ({
   kind: 'if',

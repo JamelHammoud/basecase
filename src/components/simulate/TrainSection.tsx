@@ -1,6 +1,8 @@
 import React, { useId, useState } from 'react';
 import { Button, Section, TextInput } from '../../design-system';
 import type { SceneSkills } from '../../workspace/useSkills';
+import type { PolicyRecord } from '../../types/robotics';
+import { PolicyList, type PolicyActions } from './PolicyList';
 import { SkillsList, type SkillActions } from './SkillsList';
 
 const TeachField: React.FC<{ examples: string[]; onTeach: (goal: string) => void }> = ({ examples, onTeach }) => {
@@ -44,14 +46,17 @@ export const TrainSection: React.FC<{
   skills: SceneSkills;
   actions: SkillActions;
   onTeach: ((goal: string) => void) | null;
-}> = ({ skills, actions, onTeach }) => {
-  if (!skills.available) return null;
+  policies: PolicyRecord[];
+  policyActions: PolicyActions;
+}> = ({ skills, actions, onTeach, policies, policyActions }) => {
+  if (!skills.available && !policies.length) return null;
 
   return (
     <Section title="Train">
       <div className="flex flex-col gap-3">
-        {onTeach && <TeachField examples={skills.examples} onTeach={onTeach} />}
-        {skills.rows.length > 0 && <SkillsList rows={skills.rows} actions={actions} />}
+        {skills.available && onTeach && <TeachField examples={skills.examples} onTeach={onTeach} />}
+        {skills.available && skills.rows.length > 0 && <SkillsList rows={skills.rows} actions={actions} />}
+        {policies.length > 0 && <PolicyList policies={policies} actions={policyActions} />}
       </div>
     </Section>
   );

@@ -11,8 +11,11 @@ import {
 import type { TryRecord } from '../../cases/tries';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
+import type { Simulation } from '../../sim/useSimulation';
+import type { Rig } from '../../utils/kinematics';
 import type { Cases } from '../../workspace/useCases';
 import { fmtTime } from './format';
+import { hasRunResult, RunResult } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
 
 interface TryRowProps {
@@ -41,17 +44,41 @@ const TryRow: React.FC<TryRowProps> = ({ record, model, parts, world, onReplay, 
   );
 };
 
+export interface LatestRun {
+  stats: NonNullable<Simulation['stats']>;
+  model: SimModel;
+  rig: Rig;
+  onSelectParts: (ids: string[]) => void;
+}
+
 interface ResultsProps {
   cases: Cases;
   model: SimModel | null;
   parts: ScenePart[];
   world: ScenePart[];
+  run: LatestRun | null;
 }
 
-export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, world }) => {
-  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
+const ExportDataset: React.FC<{ cases: Cases }> = ({ cases }) => (
+  <Button
+    size="sm"
+    fullWidth
+    className="mt-2"
+    disabled={cases.dataset.exporting}
+    icon={<DownloadIcon className="w-4 h-4" />}
+    title="Passed tries with camera video, for training GR00T or LeRobot"
+    onClick={cases.dataset.exportDataset}
+  >
+    Export Dataset
+  </Button>
+);
 
-  if (!cases.tries.length) return null;
+export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, world, run }) => {
+  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
+  const tries = cases.active ? cases.tries : [];
+  const showRun = !!run && hasRunResult(run.stats, run.model);
+
+  if (!tries.length && !showRun) return null;
 
   const openMenu = (e: React.MouseEvent, record: TryRecord) => {
     e.preventDefault();
@@ -63,33 +90,24 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, wo
   };
 
   return (
-    <Section title="Results" summary={`${cases.tries.filter((t) => t.passed).length} of ${cases.tries.length}`}>
-      <div className="flex flex-col">
-        {cases.tries.map((t) => (
-          <TryRow
-            key={t.id}
-            record={t}
-            model={model}
-            parts={parts}
-            world={world}
-            onReplay={() => void cases.replay(t)}
-            onMenu={(e) => openMenu(e, t)}
-          />
-        ))}
-      </div>
-      {cases.dataset.canExport && (
-        <Button
-          size="sm"
-          fullWidth
-          className="mt-2"
-          disabled={cases.dataset.exporting}
-          icon={<DownloadIcon className="w-4 h-4" />}
-          title="Passed tries with camera video, for training GR00T or LeRobot"
-          onClick={cases.dataset.exportDataset}
-        >
-          Export Dataset
-        </Button>
+    <Section title="Results">
+      {run && showRun && <RunResult {...run} />}
+      {tries.length > 0 && (
+        <div className="flex flex-col">
+          {tries.map((t) => (
+            <TryRow
+              key={t.id}
+              record={t}
+              model={model}
+              parts={parts}
+              world={world}
+              onReplay={() => void cases.replay(t)}
+              onMenu={(e) => openMenu(e, t)}
+            />
+          ))}
+        </div>
       )}
+      {cases.active && cases.dataset.canExport && <ExportDataset cases={cases} />}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </Section>
   );

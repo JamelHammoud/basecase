@@ -62,7 +62,7 @@ export const Section: React.FC<SectionProps> = ({
         {collapsible ? (
           <ToggleTitle title={title} summary={summary} open={isOpen} onToggle={() => setOpen((v) => !v)} />
         ) : (
-          <h3 className="text-[13px] font-semibold text-white/90 select-none">{title}</h3>
+          <h3 className="min-w-0 truncate text-[13px] font-semibold text-white/90 select-none">{title}</h3>
         )}
         {(actions || collapsible) && (
           <div className="flex items-center gap-0.5 -mr-1">

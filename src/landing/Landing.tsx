@@ -5,6 +5,8 @@ import { BotIcon, CartIcon, PrinterIcon } from '../design-system/glyphs/files';
 import { WalkIcon } from '../design-system/glyphs/tools';
 import { CheckIcon, FileIcon } from '../design-system/toolIcons';
 import { LandingActions } from './LandingActions';
+import type { Section } from './pages/sections';
+import { SectionLinks } from './pages/SectionLinks';
 import { RobotStrip } from './RobotStrip';
 
 const FEATURES = [
@@ -17,7 +19,12 @@ const FEATURES = [
   { Icon: FileIcon, title: 'Build guide', text: 'Auto-generate printable build instructions' },
 ];
 
-export const Landing: React.FC<{ browserApp?: string }> = ({ browserApp }) => (
+export interface LandingProps {
+  browserApp?: string;
+  sections?: Section[];
+}
+
+export const Landing: React.FC<LandingProps> = ({ browserApp, sections }) => (
   <main className="min-h-dvh overflow-x-hidden flex flex-col pt-[max(56px,env(safe-area-inset-top))] pb-[max(32px,env(safe-area-inset-bottom))] sm:pt-[96px] sm:pb-[72px]">
     <header className="px-[24px] w-full max-w-[480px] mx-auto">
       <BasecaseLogo className="w-[40px] h-[40px] text-white/90" />
@@ -46,5 +53,11 @@ export const Landing: React.FC<{ browserApp?: string }> = ({ browserApp }) => (
         </li>
       ))}
     </ul>
+
+    {sections && (
+      <footer className="mt-[44px] px-[24px] w-full max-w-[480px] mx-auto">
+        <SectionLinks sections={sections} />
+      </footer>
+    )}
   </main>
 );

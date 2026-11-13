@@ -1,7 +1,6 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import { uniqueCaseId } from '../cases/caseBuilder';
 import { stageCase } from '../cases/caseCast';
-import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
@@ -13,6 +12,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
+import type { RoutineSkills } from './routineCheck';
 import { useCaseTry } from './useCaseTry';
 import { useDatasetExport } from './useDatasetExport';
 import { useTryTimeline } from './useTryTimeline';
@@ -27,13 +27,13 @@ interface CasesOptions {
   openAccounts: () => void;
   sceneId: string;
   partners: () => SlotRobot[];
+  skills?: RoutineSkills;
 }
 
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
   const tries = worstFirst((project.tries ?? []).filter((t) => t.caseId === activeId));
   const hasRobot = rig.robots.length > 0;
@@ -116,25 +116,10 @@ export function useCases(options: CasesOptions) {
       },
     });
 
-  const runFit = async () => {
-    setFit({ caseId: activeId, rows: [], checking: true });
-
-    const rows = await checkFit({
-      kase: active,
-      rig,
-      parts,
-      partners: active ? stageCase(active, { rig, parts }, partners()).partners.flatMap((r) => r ?? []) : [],
-      build: sim.buildModel,
-      run: async ({ model, controller, seconds, commands }) =>
-        (await sim.runOn(model, { seconds, controller, commands })).stats,
-    });
-
-    setFit({ caseId: activeId, rows, checking: false });
-  };
-
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
   const attempt = useCaseTry({
+    skills: options.skills,
     sim,
     rig,
     parts,
@@ -153,13 +138,11 @@ export function useCases(options: CasesOptions) {
     tries,
     hasRobot,
     fixedBase,
-    fit: fit && fit.caseId === activeId ? fit : null,
     open,
     add,
     remove,
     removeTry,
     timeline,
-    runFit,
     attempt,
   };
 }

@@ -30,6 +30,9 @@ pub enum Fault {
     MotorError { joint: String },
     NotBalancing { fsm: Option<i64> },
     LocoSilent,
+    JointStatesLost,
+    JointStatesRefused,
+    JointsUnmatched { missing: Vec<String>, extra: Vec<String> },
 }
 
 impl Fault {
@@ -63,6 +66,9 @@ impl Fault {
             Fault::MotorError { .. } => "motor_error",
             Fault::NotBalancing { .. } => "not_balancing",
             Fault::LocoSilent => "loco_silent",
+            Fault::JointStatesLost => "joint_states_lost",
+            Fault::JointStatesRefused => "joint_states_refused",
+            Fault::JointsUnmatched { .. } => "joints_unmatched",
         }
     }
 
@@ -147,6 +153,15 @@ impl Fault {
                 "The G1's locomotion service didn't answer, so its arms stay with its own controller. Restart the G1, then check again."
                     .into()
             }
+            Fault::JointStatesLost => {
+                "The robot's joint states stopped arriving, so it is holding still. Check its network and that its controllers run."
+                    .into()
+            }
+            Fault::JointStatesRefused => {
+                "The robot's joint states arrive damaged, so it is holding still. Check its controllers, then start again."
+                    .into()
+            }
+            Fault::JointsUnmatched { missing, extra } => crate::ros2::unmatched_message(missing, extra),
         }
     }
 }
@@ -167,6 +182,32 @@ impl Fault {
             other => other.message(),
         }
     }
+}
+
+impl Fault {
+    pub fn ros2_message(&self) -> String {
+        match self {
+            Fault::BusGone => {
+                "The robot's network link closed, so no more commands can reach it. Check its network, then start again."
+                    .into()
+            }
+            Fault::OutOfRange { joint, .. } => format!(
+                "The {joint} joint is outside its calibrated range, so nothing will move. Move it back inside its range, then start again."
+            ),
+            Fault::WriteRefused { detail } => {
+                format!("A joint command was refused ({detail}), so the robot is holding still.")
+            }
+            other => other.message(),
+        }
+    }
+}
+
+pub fn ros2_lost_message(emulated: bool) -> String {
+    if emulated {
+        return "Lost contact with the robot. The emulated robot stopped with the daemon.".into();
+    }
+
+    "Lost contact with the robot. Its controller keeps the last command, so use the robot's own emergency stop.".into()
 }
 
 pub fn g1_lost_message(emulated: bool) -> String {
@@ -241,7 +282,41 @@ mod tests {
             },
             Fault::NotBalancing { fsm: Some(1) },
             Fault::LocoSilent,
+            Fault::JointStatesLost,
+            Fault::JointStatesRefused,
+            Fault::JointsUnmatched {
+                missing: vec!["wrist_roll".into()],
+                extra: vec!["gripper".into(), "camera_tilt".into()],
+            },
         ]
+    }
+
+    fn assert_plain(message: &str) {
+        let lower = message.to_lowercase();
+
+        assert!(message.ends_with('.'), "{message}");
+        assert!(message.len() < 200, "{message}");
+        assert!(BANNED.iter().all(|word| !lower.contains(word)), "{message}");
+    }
+
+    #[test]
+    fn ros2_messages_are_plain_and_never_mention_servos_or_the_g1() {
+        for fault in all_faults() {
+            let message = fault.ros2_message();
+
+            assert_plain(&message);
+
+            if matches!(
+                fault,
+                Fault::BusGone | Fault::OutOfRange { .. } | Fault::WriteRefused { .. } | Fault::JointStatesLost
+            ) {
+                assert!(!message.contains("servo") && !message.contains("G1"), "{message}");
+            }
+        }
+
+        assert_plain(&ros2_lost_message(true));
+        assert_plain(&ros2_lost_message(false));
+        assert!(ros2_lost_message(false).contains("emergency stop"));
     }
 
     #[test]

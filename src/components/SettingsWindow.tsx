@@ -56,8 +56,6 @@ export interface SettingsWindowProps {
   pane: SettingsPane;
   onPaneChange: (pane: SettingsPane) => void;
   onClose: () => void;
-  showGrid: boolean;
-  onShowGrid: (v: boolean) => void;
   sculptEnabled: boolean;
   onSculptEnabled: (v: boolean) => void;
   buildPrefs: BuildPrefs;
@@ -67,8 +65,6 @@ export interface SettingsWindowProps {
   onSnapAngle: (deg: number) => void;
   measureUnit: MeasureUnit;
   onMeasureUnit: (unit: MeasureUnit) => void;
-  showReferenceImages: boolean;
-  onShowReferenceImages: (v: boolean) => void;
   trackpadMode: TrackpadGestureMode;
   onTrackpadMode: (mode: TrackpadGestureMode) => void;
   acpStatus: AcpStatusInfo;
@@ -197,14 +193,6 @@ const SCROLL_HINTS: Record<TrackpadGestureMode, string> = {
 
 const CanvasPane: React.FC<PaneProps> = (p) => (
   <>
-    <Group title="Display">
-      <Row label="Show grid">
-        <Switch aria-label="Show grid" checked={p.showGrid} onChange={p.onShowGrid} />
-      </Row>
-      <Row label="Show reference images" shortcut="⇧I">
-        <Switch aria-label="Show reference images" checked={p.showReferenceImages} onChange={p.onShowReferenceImages} />
-      </Row>
-    </Group>
     <Group title={IS_MAC ? 'Trackpad' : 'Mouse and touchpad'}>
       <Row label={IS_MAC ? 'Two-finger scroll' : 'Scroll'} hint={SCROLL_HINTS[p.trackpadMode]}>
         <SegmentedControl<TrackpadGestureMode>
@@ -253,9 +241,9 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
         />
       </Row>
     </Group>
-    <Group title="Experimental">
-      <Row label="Sculpt tool" hint="Adds Sculpt (C) to the toolbar">
-        <Switch aria-label="Sculpt tool" checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
+    <Group title="Tools">
+      <Row label="Sculpt">
+        <Switch aria-label="Sculpt" checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
       </Row>
     </Group>
   </>

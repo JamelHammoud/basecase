@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ComparedRobot } from '../../cases/caseCompare';
+import { Tooltip } from '../../design-system';
 import { fmtG } from '../../utils/engineeringFormat';
 import { useMoney } from '../../utils/useMoney';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
@@ -24,9 +25,14 @@ const CompareRow: React.FC<RowProps> = ({ robot, better, onShow }) => {
     <>
       <span className="flex items-center gap-2 text-[13px]">
         <span className="flex-1 min-w-0 truncate text-white/85">{robot.name}</span>
-        <span className={`tabular ${better ? 'text-[#0d99ff]' : 'text-white/70'}`} data-testid="compare-passes">
-          {runs.passes} of {runs.runs}
-        </span>
+        <Tooltip label={runs.refusal} disabled={!runs.refusal} className="min-w-0">
+          <span
+            className={`min-w-0 truncate tabular ${better ? 'text-[#0d99ff]' : 'text-white/70'}`}
+            data-testid="compare-passes"
+          >
+            {runs.refusal ?? `${runs.passes} of ${runs.runs}`}
+          </span>
+        </Tooltip>
       </span>
       <span className="flex gap-3 text-[12px] text-white/50 tabular">
         <span>{money.format(robot.costUsd)}</span>

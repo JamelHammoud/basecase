@@ -15,12 +15,23 @@ describe('calling the doctor', () => {
     expect(failingLanes(logs)).toEqual(['merge']);
   });
 
+  it('names a lane that failed five times in the last hour even when other slots succeeded between', () => {
+    const at = (m, text) => `2026-11-13T17:${String(m).padStart(2, '0')}:00.000Z [rebase-${(m % 3) + 1}] ${text}`;
+    const lines = [0, 5, 10, 15, 20].flatMap((m) => [
+      at(m, 'failed: Error: git commit failed'),
+      at(m + 1, '#7: brought up to date with main'),
+    ]);
+
+    expect(failingLanes({ rebase: lines.join('\n') }, Date.parse('2026-11-13T17:30:00Z'))).toEqual(['rebase']);
+    expect(failingLanes({ rebase: lines.join('\n') }, Date.parse('2026-11-13T19:30:00Z'))).toEqual([]);
+  });
+
   it('comes after 45 minutes of a stall or at once for a failing lane, and not again within two hours', () => {
     const quiet = { breaches: [], failing: [], stalledSince: null, lastCallAt: null, now };
 
     expect(shouldCall(quiet)).toBe(false);
-    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(30) })).toBe(false);
-    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(50) })).toBe(true);
+    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(10) })).toBe(false);
+    expect(shouldCall({ ...quiet, breaches: ['main has been red'], stalledSince: minutesAgo(20) })).toBe(true);
     expect(shouldCall({ ...quiet, failing: ['merge'] })).toBe(true);
     expect(shouldCall({ ...quiet, failing: ['merge'], lastCallAt: minutesAgo(60) })).toBe(false);
     expect(shouldCall({ ...quiet, failing: ['merge'], lastCallAt: minutesAgo(130) })).toBe(true);

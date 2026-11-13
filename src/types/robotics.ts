@@ -1,5 +1,5 @@
 import type { Case } from '../cases/schema';
-import type { Routine } from '../routines/schema';
+import type { Routine, TransitionProof } from '../routines/schema';
 import type { SkillRecord } from '../skills/skillRecords';
 import type { TryRecord } from '../cases/tries';
 import type { SourcedItem } from '../data/sourcedItems';
@@ -237,6 +237,7 @@ export interface ProjectSettings extends ProjectRecords {
   cases?: Case[];
   tries?: TryRecord[];
   routines?: Routine[];
+  handoffs?: Record<string, TransitionProof>;
   skills?: SkillRecord[];
   servoCalibrations?: Record<string, CalibrationHistory>;
   cameras?: FixedCamera[];

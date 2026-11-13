@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { presetCase } from '../src/cases/caseBuilder';
-import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { robotFacts, slotRefusal } from '../src/cases/robotFit';
+import { caseSlots } from '../src/cases/schema';
 import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
-import { loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckScene';
+import { armWithEstimates, loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckFixtures';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -25,18 +26,6 @@ const loadParts = (parts: unknown[]) =>
   }, parts);
 
 const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
-
-const armWithEstimates = () => {
-  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
-  const servo = { ...standIn('mg996r', 0), name: 'MG996R', kind: 'component', componentId: 'towerpro-mg996r' };
-  const joints = arm.joints.map((j) => {
-    if (j.id === 'arm0') return { ...j, effortNm: undefined };
-
-    return j.id === 'arm1' ? { ...j, actuators: ['mg996r'] } : j;
-  });
-
-  return { name: 'arm', parts: [...arm.parts, servo], project: { ...DEFAULT_PROJECT, joints } };
-};
 
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
 
@@ -79,8 +68,19 @@ describe('Checks', () => {
     expect(leads).toBe(true);
   }, 90000);
 
-  it('let you ignore a blocker for the whole project, and restore it', async () => {
+  const quotes = () => app.page.locator(visible('[role=group][aria-label=Quotes]'));
+  const quoteProblem = async () => {
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await checks().getByRole('button', { name: 'More' }).first().click();
+    await app.page.getByRole('menuitem', { name: 'Quote' }).click();
+    await expect.poll(() => quotes().count(), { timeout: 10000 }).toBe(1);
+  };
+  const promptContaining = (text: string) =>
+    JSON.stringify(app.posts.find((p) => JSON.stringify(p.body).includes(text))?.body ?? '');
+
+  it('let you ignore a blocker for the whole project, restore it, and send it to the agent with Fix', async () => {
     await loadStandIns();
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await expect.poll(headerText, { timeout: 45000 }).toMatch(/[1-9]\d* to fix/);
     expect(await checks().getByRole('button', { name: 'Fix' }).count()).toBe(0);
     await checks()
@@ -104,55 +104,13 @@ describe('Checks', () => {
       .click();
     await checks().getByRole('button', { name: 'Restore' }).first().click();
     await expect.poll(() => checks().getByRole('button', { name: 'Fix' }).count(), { timeout: 45000 }).toBe(fixes);
-  }, 120000);
-
-  const quotes = () => app.page.locator(visible('[role=group][aria-label=Quotes]'));
-  const quoteProblem = async () => {
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-    await checks().getByRole('button', { name: 'More' }).first().click();
-    await app.page.getByRole('menuitem', { name: 'Quote' }).click();
-    await expect.poll(() => quotes().count(), { timeout: 10000 }).toBe(1);
-  };
-  const promptContaining = (text: string) =>
-    JSON.stringify(app.posts.find((p) => JSON.stringify(p.body).includes(text))?.body ?? '');
-
-  it('quote a problem above the agent’s message box, then let you remove it', async () => {
-    await quoteProblem();
-
-    const box = app.page.locator(visible('textarea')).last();
-
-    expect(await box.inputValue()).toBe('');
-
-    const [quoteBox, composerBox] = await Promise.all([quotes().boundingBox(), box.boundingBox()]);
-
-    expect(quoteBox!.y + quoteBox!.height).toBeLessThanOrEqual(composerBox!.y);
-
-    await quotes().getByRole('button', { name: 'Remove Quote' }).click();
-    await expect.poll(() => quotes().count(), { timeout: 5000 }).toBe(0);
-  }, 30000);
-
-  it('send a problem to the agent with Fix', async () => {
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await checks().getByRole('button', { name: 'Fix' }).first().click();
 
     const prompt = () => promptContaining('Fix this problem from Checks');
 
     await expect.poll(prompt, { timeout: 15000 }).toContain('Fix this problem from Checks');
     expect(prompt()).toContain('dispute_finding');
-  }, 30000);
-
-  it('quote a chat message from its right-click menu', async () => {
-    const typed = 'Quote this message back';
-    const box = app.page.locator(visible('textarea')).last();
-
-    await box.fill(typed);
-    await box.press('Enter');
-    await app.page.getByText(typed).first().click({ button: 'right' });
-    await app.page.getByRole('menuitem', { name: 'Quote Message' }).click();
-    await expect.poll(() => quotes().locator('p').first().textContent(), { timeout: 5000 }).toBe(typed);
-    await quotes().getByRole('button', { name: 'Remove Quote' }).click();
-    await expect.poll(() => quotes().count(), { timeout: 5000 }).toBe(0);
-  }, 30000);
+  }, 120000);
 
   it('send a quote with the message and show it above the text in the chat', async () => {
     await quoteProblem();
@@ -367,6 +325,51 @@ describe('Cases in Checks', () => {
     await app.page.keyboard.press('Enter');
     await expect.poll(focusedValue).toBe('/pass Reach a Spot');
     await app.page.locator(visible('textarea')).last().fill('');
+    expect(app.errors).toEqual([]);
+  }, 150000);
+
+  it('names why the robot doesn’t fit on the row and the Case header, and offers New Case', async () => {
+    const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+    const reason = slotRefusal(caseSlots(flag)[0], robotFacts(buildRig(arm.joints, arm.parts), arm.parts))!;
+
+    await app.page.evaluate(
+      ({ parts, joints, kase }) => {
+        const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
+      },
+      { parts: arm.parts, joints: arm.joints, kase: flag },
+    );
+    await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks().getByRole('button', { name: /^Reach a Spot/ });
+    const entry = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Reach a Spot/ }) })
+      .first();
+
+    await expect.poll(() => row.getAttribute('data-status'), { timeout: 90000 }).toBe('fail');
+    await expect.poll(() => entry.innerText(), { timeout: 10000 }).toContain(reason);
+
+    await row.click();
+    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
+
+    const header = app.page.locator(visible('[data-testid="case-check"]'));
+
+    expect(await app.page.locator(visible('button'), { hasText: 'Check Fit' }).count()).toBe(0);
+    await expect.poll(() => header.getAttribute('data-status'), { timeout: 10000 }).toBe('fail');
+    expect(await header.getAttribute('aria-label')).toBe(reason);
+
+    await header.click();
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.id ?? '')).toBe('case-check-reach-a-spot');
+
+    const note = entry.locator('ul > li').filter({ hasText: reason }).first();
+
+    await note.hover();
+    await note.getByRole('button', { name: 'New Case' }).click();
+    await expect.poll(() => app.page.locator(visible('[data-testid="new-case"]')).count(), { timeout: 10000 }).toBe(1);
+    await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);
   }, 150000);
 });

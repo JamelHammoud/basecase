@@ -1,5 +1,6 @@
 import type { Page } from 'playwright-core';
-import type { ProjectSettings, ScenePart } from '../src/types/robotics';
+import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { walkKey } from '../src/workspace/storedWalk';
 
@@ -30,6 +31,18 @@ export const servo = {
   kind: 'component',
   componentId: 'feetech-sts3215',
   componentVariant: 'c001',
+};
+
+export const armWithEstimates = () => {
+  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const servo = { ...standIn('mg996r', 0), name: 'MG996R', kind: 'component', componentId: 'towerpro-mg996r' };
+  const joints = arm.joints.map((j) => {
+    if (j.id === 'arm0') return { ...j, effortNm: undefined };
+
+    return j.id === 'arm1' ? { ...j, actuators: ['mg996r'] } : j;
+  });
+
+  return { name: 'arm', parts: [...arm.parts, servo], project: { ...DEFAULT_PROJECT, joints } };
 };
 
 const studioLoad = (page: Page, record: { parts: unknown[]; project: unknown }) =>

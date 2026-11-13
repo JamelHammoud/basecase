@@ -46,10 +46,10 @@ function trainer(options) {
 
       return c;
     },
-    null,
+    options?.forge ?? null,
   );
 
-  if (options) t.useGateLease(options.leaseFile, options.leasePollMs);
+  if (options?.leaseFile) t.useGateLease(options.leaseFile, options.leasePollMs);
 
   return { t, events, children };
 }
@@ -243,6 +243,48 @@ describe('continuing from an earlier run', () => {
     expect(() => t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmStart: 'policy-gone' } })).toThrow(
       'The run to continue from is gone.',
     );
+    expect(children).toHaveLength(0);
+  });
+
+  it('writes a saved policy into the new run and points the job at it', () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const policy = { format: 'basecase-policy', layers: [], obsMean: [], obsStd: [] };
+
+    t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Hand-off'), warmPolicy: policy } });
+
+    const dir = children[0].dir;
+    const written = JSON.parse(fs.readFileSync(path.join(dir, 'job.json'), 'utf8'));
+
+    expect(written.warmStart).toBe('warm-policy.json');
+    expect(written).not.toHaveProperty('warmPolicy');
+    expect(JSON.parse(fs.readFileSync(path.join(dir, 'warm-policy.json'), 'utf8'))).toEqual(policy);
+  });
+
+  it('refuses a saved policy together with an earlier run, or one that is not an object', async () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Stand') });
+
+    finishRun(children[0], ['policy.json']);
+    await tick();
+    expect(() =>
+      t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmStart: jobId, warmPolicy: { layers: [] } } }),
+    ).toThrow('A warm start takes an earlier run or a saved policy, not both.');
+
+    for (const warmPolicy of ['policy-a', 7, [1, 2], true]) {
+      expect(() => t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmPolicy } })).toThrow(
+        'A warm start policy is a policy object.',
+      );
+    }
+
+    expect(children).toHaveLength(1);
+  });
+
+  it('refuses a saved policy when only the Python trainer is there', () => {
+    const { t, children } = trainer();
+
+    expect(() =>
+      t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmPolicy: { layers: [] } } }),
+    ).toThrow('Starting from a saved policy needs the Forge trainer.');
     expect(children).toHaveLength(0);
   });
 

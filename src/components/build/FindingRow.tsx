@@ -58,7 +58,7 @@ const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActi
     <>
       {fix && (
         <Button variant="secondary" size="xs" onClick={() => fix(finding)}>
-          Fix
+          {finding.fix?.kind === 'new-case' ? 'New Case' : 'Fix'}
         </Button>
       )}
       <MoreMenu finding={finding} actions={actions} />

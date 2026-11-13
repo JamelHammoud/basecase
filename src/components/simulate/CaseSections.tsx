@@ -5,57 +5,25 @@ import {
   ExpandIcon,
   IconButton,
   Kbd,
-  PlusIcon,
   RunIcon,
   Section,
   StopIcon,
   TrainIcon,
 } from '../../design-system';
-import type { FitRow } from '../../cases/fitCheck';
+import type { CaseCheck } from '../../readiness/caseChecks';
 import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
+import { CheckIcon } from '../build/CheckIcon';
 import { fmtTime } from './format';
-
-const FIT_TONE: Record<FitRow['state'], string> = {
-  pass: 'text-white/70',
-  fail: 'text-[#f87171]',
-  skip: 'text-white/50',
-};
-
-const FitRows: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
-  const fit = cases.fit;
-
-  if (!fit) return null;
-
-  if (fit.checking) return <p className="mt-2 text-[13px] text-white/50">Checking</p>;
-
-  const rows = fit.rows.filter((row) => row.state !== 'skip');
-  const misfit = rows.some((row) => row.id === 'slot' && row.state === 'fail') && cases.builder.goals.length > 0;
-
-  return (
-    <div className="mt-2 flex flex-col" data-testid="robot-fit">
-      {rows.map((row) => (
-        <div key={row.id} className="min-h-8 py-1 flex items-baseline justify-between gap-3 text-[13px]">
-          <span className="text-white/85 shrink-0">{row.label}</span>
-          <span className={`text-right ${FIT_TONE[row.state]}`}>{row.detail}</span>
-        </div>
-      ))}
-      {misfit && (
-        <Button variant="secondary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={onNewCase}>
-          New Case
-        </Button>
-      )}
-    </div>
-  );
-};
 
 interface CaseSectionProps {
   cases: Cases;
-  onNewCase: () => void;
+  check: CaseCheck | null;
+  onOpenCheck: () => void;
   onRun: () => void;
 }
 
-export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRun }) => {
+export const CaseSection: React.FC<CaseSectionProps> = ({ cases, check, onOpenCheck, onRun }) => {
   const kase = cases.active!;
 
   return (
@@ -63,9 +31,16 @@ export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRu
       title={kase.name}
       actions={
         <>
-          <Button variant="ghost" size="sm" disabled={cases.fit?.checking} onClick={() => void cases.runFit()}>
-            Check Fit
-          </Button>
+          {check && (
+            <IconButton
+              icon={<CheckIcon status={check.status} />}
+              title={check.text}
+              size="xs"
+              data-testid="case-check"
+              data-status={check.status}
+              onClick={onOpenCheck}
+            />
+          )}
           <IconButton icon={<ExpandIcon className="w-4 h-4" />} title="Run Case" size="xs" onClick={onRun} />
           <IconButton
             icon={<CloseIcon className="w-4 h-4" />}
@@ -79,7 +54,6 @@ export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRu
       <p className="text-[13px] leading-snug text-white/70" data-testid="case-brief">
         {kase.brief}
       </p>
-      <FitRows cases={cases} onNewCase={onNewCase} />
     </Section>
   );
 };

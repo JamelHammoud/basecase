@@ -25,7 +25,7 @@ describe('toolLabel', () => {
     });
     expect(toolLabel(call('add_parts', {}))).toEqual({ title: 'Blocked out parts', detail: undefined });
     expect(toolLabel(call('delete_parts', { ids: ['a', 'b', 'c', 'd', 'e'] }))).toEqual({
-      title: 'Removed 5 parts',
+      title: 'Deleted 5 parts',
       detail: 'a, b, c, d, e',
     });
     expect(toolLabel(call('update_parts', { updates: [{ id: 'x', name: 'Head' }] }))).toEqual({
@@ -39,7 +39,7 @@ describe('toolLabel', () => {
       title: 'Compared with ref-2',
     });
     expect(toolLabel(call('look', { ids: [] }, 'pending'))).toEqual({
-      title: 'Looking at the model',
+      title: 'Looking at the scene',
       detail: undefined,
     });
     expect(toolLabel(call('WebSearch', { query: 'sts3215' }))).toEqual({ title: 'Searched', detail: 'sts3215' });

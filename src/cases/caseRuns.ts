@@ -26,11 +26,17 @@ export interface CaseRuns {
   failures: FailureCount[];
   worstSeed: number | null;
   refusal: string | null;
+  misfit: boolean;
 }
 
-export type SeedRuns = { refusal: string } | { outcomes: RunOutcome[] };
+export type Refusal = { refusal: string; misfit: boolean };
 
-export type RunsOptions = Omit<RunOptions, 'seed' | 'controller'> & { controller?: RunOptions['controller'] };
+export type SeedRuns = Refusal | { outcomes: RunOutcome[] };
+
+export type RunsOptions = Omit<RunOptions, 'seed' | 'controller'> & {
+  controller?: RunOptions['controller'];
+  stop?: string | null;
+};
 
 function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
@@ -55,7 +61,7 @@ function failureCounts(missed: RunOutcome[]): FailureCount[] {
 const worstOf = (outcomes: RunOutcome[]) =>
   outcomes.reduce<RunOutcome | null>((worst, o) => (worst === null || o.margin < worst.margin ? o : worst), null);
 
-export const noRuns = (refusal: string): CaseRuns => ({
+export const noRuns = (refusal: string, misfit = false): CaseRuns => ({
   runs: 0,
   passes: 0,
   medianMargin: -1,
@@ -63,6 +69,7 @@ export const noRuns = (refusal: string): CaseRuns => ({
   failures: [],
   worstSeed: null,
   refusal,
+  misfit,
 });
 
 export const seedsUpTo = (runs: number) => Array.from({ length: runs }, (_, i) => i + 1);
@@ -82,7 +89,9 @@ export async function runSeeds(
 ): Promise<SeedRuns> {
   const runner = caseRunner(mj, kase, robot, { ...options, controller: options.controller ?? 'reference' });
 
-  if (runner.refusal) return { refusal: runner.refusal };
+  if (runner.refusal) return { refusal: runner.refusal, misfit: true };
+
+  if (options.stop) return { refusal: options.stop, misfit: false };
 
   const outcomes: RunOutcome[] = [];
 
@@ -96,10 +105,10 @@ export async function runSeeds(
 }
 
 export function summarizeRuns(batches: SeedRuns[]): CaseRuns {
-  const refused = batches.find((b): b is { refusal: string } => 'refusal' in b);
+  const refused = batches.find((b): b is Refusal => 'refusal' in b);
   const outcomes = batches.flatMap((b) => ('outcomes' in b ? b.outcomes : []));
 
-  if (refused) return { ...noRuns(refused.refusal), runs: outcomes.length };
+  if (refused) return { ...noRuns(refused.refusal, refused.misfit), runs: outcomes.length };
 
   const missed = outcomes.filter((o) => !o.passed);
   const failures = failureCounts(missed);
@@ -112,6 +121,7 @@ export function summarizeRuns(batches: SeedRuns[]): CaseRuns {
     failures,
     worstSeed: worstOf(missed.length ? missed : outcomes)?.seed ?? null,
     refusal: null,
+    misfit: false,
   };
 }
 

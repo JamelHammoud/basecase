@@ -24,6 +24,7 @@ interface PlatformOptions {
   workspaceId: string;
   store: SkillStore;
   tabEngine?: () => Promise<TabEngine>;
+  onForgeEvent?: (event: ForgeEvent) => void;
 }
 
 const HASH_IN_PATH = /([0-9a-f]{64})\/skill\.json$/;
@@ -42,11 +43,13 @@ const isSkill = (value: unknown): value is Skill =>
 export const tabProgress = (event: ForgeEvent): ForgeProgress | null =>
   trainingProgress(event.type, { message: event.message, progress: event });
 
-function tabForgeFactory(load: () => Promise<TabEngine>): ForgeFactory {
+function tabForgeFactory(load: () => Promise<TabEngine>, tee?: (event: ForgeEvent) => void): ForgeFactory {
   return ({ onProgress, signal }) => {
     let runner: Promise<ForgeRunner> | null = null;
     const onEvent = (event: ForgeEvent) => {
       const progress = tabProgress(event);
+
+      tee?.(event);
 
       if (progress) onProgress(progress);
     };
@@ -63,7 +66,9 @@ export function skillsPlatform(options: PlatformOptions): SkillsPlatform {
   const { web, workspaceId, store } = options;
 
   return {
-    forge: web ? tabForgeFactory(options.tabEngine ?? loadTabEngine) : (o) => trainerForge({ ...o, workspaceId }),
+    forge: web
+      ? tabForgeFactory(options.tabEngine ?? loadTabEngine, options.onForgeEvent)
+      : (o) => trainerForge({ ...o, workspaceId }),
     save: async (path, text) => {
       const hash = HASH_IN_PATH.exec(path)?.[1];
 

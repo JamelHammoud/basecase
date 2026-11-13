@@ -28,7 +28,8 @@ export interface CheckDot {
   shade: number;
 }
 
-export type FindingFix = { kind: 'print-face'; part: string; down: V3 } | { kind: 'calibrate'; joints: string[] };
+export type FindingFix =
+  { kind: 'print-face'; part: string; down: V3 } | { kind: 'calibrate'; joints: string[] } | { kind: 'new-case' };
 
 export interface CheckRow {
   check: string;

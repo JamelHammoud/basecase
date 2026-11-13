@@ -101,6 +101,12 @@ describe('a four-bar from a path drawn in Sketch', () => {
     await expect.poll(() => pathPoints().count()).toBe(2);
     await app.page.keyboard.press('Meta+Shift+z');
     await expect.poll(() => pathPoints().count()).toBe(3);
+    await app.page.locator(shown('button[aria-label="Clear"]')).click();
+    await app.page.getByRole('dialog').getByRole('button', { name: 'Clear', exact: true }).click();
+    await expect.poll(() => pathPoints().count()).toBe(0);
+    await plane().focus();
+    await app.page.keyboard.press('Meta+z');
+    await expect.poll(() => pathPoints().count()).toBe(3);
     expect(await partCount(app.page)).toBe(before);
 
     await app.page.evaluate((points) => (window as unknown as { __studio: Studio }).__studio.sketchPath(points), PATH);

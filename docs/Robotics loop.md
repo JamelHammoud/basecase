@@ -39,6 +39,7 @@ Turn the scene into a MuJoCo model and run it on the canvas.
   - hinge and slide joints with their ranges
   - position actuators with force limits from the servo's stall torque (`actuatorOf`), or the published `effortNm`
   - a floor and a free joint at the base
+- **Closed loops** (planned): a linkage's coupler and rocker joints are welded today. Write them as hinges and connect the coupler body to the rocker body at pivot C with an MJCF `<equality><connect>`, which MuJoCo solves as a soft constraint; Forge (§8g) needs the same constraint before a linkage trains.
 - **Export ▸ Robot Package** (done, with T4): the MJCF the sim runs, a URDF with its STL meshes, the joint map and the scene's policies in one zip, laid out as a ROS 2 description package that builds with colcon and opens in RViz ([Simulate](guide/simulate.md) §8d).
 - **Done when:** every `ROBOT_PRESET` and the `build-humanoid` bench scene load with no errors, and the model's total mass matches the Weight check.
 

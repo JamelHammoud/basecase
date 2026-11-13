@@ -19,12 +19,15 @@ import {
 } from './sketchView';
 import { useSketchDrawing, type SketchEditor } from './useSketchDrawing';
 import { useSketchKeys } from './useSketchKeys';
-import { useSketchPath, type SketchPathEditor } from './useSketchPath';
+import type { SketchPathEditor } from './usePathHistory';
+import { useSketchPath } from './useSketchPath';
 import { useSketchSelection } from './useSketchSelection';
 import type { SketchTool } from './useStudioDraft';
 
 const REFUSE_MS = 700;
 const ZOOM_SPEED = 0.01;
+const ignore = () => {};
+const NO_PATH_EDITOR: SketchPathEditor = { points: [], onChange: ignore, undo: ignore, redo: ignore };
 
 export interface SketchPathMode {
   editor: SketchPathEditor;
@@ -92,7 +95,7 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool
   const grid = snap ? snapStep(view) : null;
   const drawing = useSketchDrawing({ editor, tool, grid, onRefuse: refuse });
   const selection = useSketchSelection({ editor, grid, onRefuse: refuse });
-  const pathing = useSketchPath(path?.editor ?? { points: [], onChange: () => {} }, grid);
+  const pathing = useSketchPath(path?.editor ?? NO_PATH_EDITOR, grid);
   const shown = selection.preview ?? editor.sketch;
 
   useFramedSolutions(path, view, setView);

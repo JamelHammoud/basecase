@@ -23,6 +23,7 @@ import { ThicknessField } from './ThicknessField';
 import { SketchCanvas } from './SketchCanvas';
 import type { SketchEditor } from './useSketchDrawing';
 import { useLinkageSolutions } from './useLinkageSolutions';
+import { usePathHistory } from './usePathHistory';
 import type { SketchPanelMode, SketchTool, StudioDraft } from './useStudioDraft';
 
 export interface BoundSketch {
@@ -92,6 +93,7 @@ const MODE_OPTIONS: Array<{ value: SketchPanelMode; label: string }> = [
 const PATH_OPTION = { value: 'path' as const, label: 'Path' };
 
 const NO_PATH: Vec2[] = [];
+const ignorePath = () => {};
 
 const clearedSketch = (sketch: Sketch): Sketch => ({
   points: sketch.points.filter((p) => p.fixed),
@@ -102,11 +104,15 @@ const clearedSketch = (sketch: Sketch): Sketch => ({
 function usePathMode(pathing: SketchLinkage | null) {
   const solved = useLinkageSolutions(pathing?.path ?? NO_PATH);
   const [highlighted, setHighlighted] = useState(0);
+  const editor = usePathHistory(pathing?.path ?? NO_PATH, pathing?.setPath ?? ignorePath);
 
-  if (!pathing) return { canvas: undefined, choices: null };
+  if (!pathing) return { canvas: undefined, choices: null, clear: null };
 
   return {
-    canvas: { editor: { points: pathing.path, onChange: pathing.setPath }, ...solved, highlighted },
+    canvas: { editor, ...solved, highlighted },
+    clear: () => {
+      if (editor.points.length) editor.onChange([]);
+    },
     choices: solved.solutions.length > 0 && (
       <LinkageChoices
         solutions={solved.solutions}
@@ -144,7 +150,7 @@ export const SketchPanel: React.FC<{
     else if (m !== 'path') bound.onChange({ mode: m });
   };
 
-  const clear = () => (pathing ? pathing.setPath([]) : draft.apply(clearedSketch(draft.sketch)));
+  const clear = () => (path.clear ? path.clear() : draft.apply(clearedSketch(draft.sketch)));
 
   return (
     <>

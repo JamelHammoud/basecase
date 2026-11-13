@@ -3,8 +3,9 @@ import type { MjcfInput } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
 import { buildRig, type Rig, type V3 } from '../utils/kinematics';
 import { boundEffector, robotFacts, slotRefusal, type EndEffector, type RobotFacts } from './robotFit';
-import { scaledToReach } from './scale';
+import { movableWorld, scaledToReach } from './scale';
 import { caseSlots, type Case, type RobotSlot } from './schema';
+import type { CaseWorld } from './worldSet';
 import {
   placedEffector,
   placedRobot,
@@ -130,6 +131,7 @@ export interface StagedCase {
   guests: Guest[];
   joined: SlotRobot;
   partners: Array<SlotRobot | undefined>;
+  world: CaseWorld;
 }
 
 export function stageCase(authored: Case, lead: { rig: Rig; parts: ScenePart[] }, partners: SlotRobot[]): StagedCase {
@@ -139,7 +141,14 @@ export function stageCase(authored: Case, lead: { rig: Rig; parts: ScenePart[] }
   const filled = fillSlots(slots, partners);
   const guests = guestsOf(slots, filled);
 
-  return { kase, slots, guests, joined: castJoined({ parts: [], joints: [] }, guests), partners: filled };
+  return {
+    kase,
+    slots,
+    guests,
+    joined: castJoined({ parts: [], joints: [] }, guests),
+    partners: filled,
+    world: movableWorld(authored, facts),
+  };
 }
 
 export function castOf(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }) {

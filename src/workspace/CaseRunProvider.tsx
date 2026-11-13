@@ -1,5 +1,7 @@
 import React, { createContext, use } from 'react';
 import type { ConsoleLayout } from '../cases/console/layout';
+import { robotFacts } from '../cases/robotFit';
+import { movableWorld } from '../cases/scale';
 import type { CaseAction } from '../cases/console/panelKinds';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
@@ -96,7 +98,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           },
           inputs: caseConsole.input,
           brief: cases.active?.brief ?? '',
-          world: cases.active?.world.objects ?? [],
+          world: movableWorld(cases.active, robotFacts(posing.rig, parts)),
           sim,
           parts,
           joints: core.project.joints ?? [],

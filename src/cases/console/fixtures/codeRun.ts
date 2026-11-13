@@ -15,7 +15,7 @@ import { logicPlan } from '../../runCaseLogic';
 import { worldItem, type Case } from '../../schema';
 import { liveController } from '../../testing';
 import { caseProbeReader, caseProbeWorld, scoreTry, type TryScoring } from '../../tries';
-import { worldRefusal, type WorldChange } from '../../worldSet';
+import { stagedChange, type WorldChange } from '../../worldSet';
 import type { BridgeStore } from '../codeStore';
 import type { FrameSource } from '../codeStreams';
 import { createSignalBus } from '../signalBus';
@@ -92,9 +92,10 @@ export async function openCodeRun(mj: MainModule, input: CodeRunInput): Promise<
   engine.commandHook = recorder.command;
 
   const change = (c: WorldChange) => {
-    const refusal = worldRefusal(staged.kase.world.objects, c.id) ?? world.apply(c);
+    const placed = stagedChange(staged.world, c);
+    const refusal = typeof placed === 'string' ? placed : world.apply(placed);
 
-    if (!refusal) recorder.worldChange(c);
+    if (typeof placed !== 'string' && !refusal) recorder.worldChange(placed);
 
     return refusal;
   };

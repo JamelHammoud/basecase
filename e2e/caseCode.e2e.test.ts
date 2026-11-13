@@ -111,7 +111,7 @@ const LAMP = {
 const LIGHT = `<button data-light style="margin:8px">Light</button>
 <script>
 document.querySelector('[data-light]').addEventListener('click', async () => {
-  basecase.world.set('lamp', { pose: { position: [240, 1, 420] }, colour: '#ff3b30' });
+  basecase.world.set('lamp', { pose: { position: [240, 1, 420] }, color: '#ff3b30' });
   const best = await basecase.store.get();
   const next = (best?.best ?? 0) + 3;
   const reply = await basecase.store.set({ best: next });

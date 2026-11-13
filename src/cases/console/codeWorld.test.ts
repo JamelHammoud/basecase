@@ -80,7 +80,7 @@ describe('world.set from a code panel', () => {
       `<script>
         basecase.world.set('table', { pose: { position: [0, 0, 10] } });
         basecase.world.set('link-2', { pose: { rotation: [0, 90, 0] } });
-        basecase.world.set('ball', { pose: { position: [100, 0, 20] }, colour: '#FF0000' });
+        basecase.world.set('ball', { pose: { position: [100, 0, 20] }, color: '#FF0000' });
       </script>`,
       { world },
     );
@@ -141,13 +141,13 @@ describe('store from a code panel', () => {
 
     await vi.waitFor(() => expect(replies).toHaveLength(4));
     expect(replies).toEqual([
-      { ok: false, problem: 'the value is 1025 KB, over the 64 KB a Case keeps' },
+      { ok: false, problem: 'the value is over the 64 KB a Case keeps' },
       null,
       { ok: true },
       { best: 12, names: ['ada'] },
     ]);
     await vi.waitFor(() => expect(panel.log.store).toEqual({ best: 12, names: ['ada'] }));
-    expect(panel.bridge.errors()).toEqual(['store refused: the value is 1025 KB, over the 64 KB a Case keeps']);
+    expect(panel.bridge.errors()).toEqual(['store refused: the value is over the 64 KB a Case keeps']);
   });
 
   it('writes the Case at most twice a second, keeping the last value', async () => {
@@ -166,6 +166,25 @@ describe('store from a code panel', () => {
     await settle();
     panel.close();
     expect(writes).toEqual([{ best: 50 }, { best: 51 }]);
+  });
+
+  it('refuses a tiny message that doubles to two billion values without walking them all', async () => {
+    const replies: unknown[] = [];
+    const started = performance.now();
+    const panel = open(
+      `<script>
+        let v = 0;
+        for (let i = 0; i < 31; i++) v = [v, v];
+        basecase.store.set(v).then((r) => replies.push(r));
+      </script>`,
+      { globals: { replies } },
+    );
+
+    await vi.waitFor(() =>
+      expect(replies).toEqual([{ ok: false, problem: 'the value is over the 64 KB a Case keeps' }]),
+    );
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(panel.log.store).toBeNull();
   });
 
   it('refuses a value that isn’t plain JSON', async () => {

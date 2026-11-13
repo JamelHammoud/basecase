@@ -4,32 +4,76 @@ const MAX_DEPTH = 32;
 
 export type StoreValue = null | boolean | number | string | unknown[] | { [key: string]: unknown };
 
+type Data = Record<string, unknown>;
+
 const isPlainObject = (value: object) => {
   const proto = Object.getPrototypeOf(value);
 
   return proto === Object.prototype || proto === null;
 };
 
-function isJson(value: unknown, depth = 0): value is StoreValue {
-  if (depth > MAX_DEPTH) return false;
+type Fit = 'json' | 'other' | 'big';
 
-  if (value === null || typeof value === 'boolean' || typeof value === 'string') return true;
+interface Walk {
+  chars: number;
+}
 
-  if (typeof value === 'number') return Number.isFinite(value);
+const grow = (walk: Walk, chars: number): Fit => {
+  walk.chars += chars;
 
-  if (Array.isArray(value)) return value.every((v) => isJson(v, depth + 1));
+  return walk.chars > STORE_MAX_BYTES ? 'big' : 'json';
+};
 
-  return typeof value === 'object' && isPlainObject(value) && Object.values(value).every((v) => isJson(v, depth + 1));
+function fitOf(value: unknown, depth: number, walk: Walk): Fit {
+  if (depth > MAX_DEPTH) return 'other';
+
+  if (value === null || typeof value === 'boolean') return grow(walk, 4);
+
+  if (typeof value === 'string') return grow(walk, value.length + 2);
+
+  if (typeof value === 'number') return Number.isFinite(value) ? grow(walk, 1) : 'other';
+
+  if (Array.isArray(value)) return listFit(value, depth, walk);
+
+  return typeof value === 'object' && isPlainObject(value) ? fieldsFit(value, depth, walk) : 'other';
+}
+
+function listFit(items: readonly unknown[], depth: number, walk: Walk): Fit {
+  if (grow(walk, items.length + 1) === 'big') return 'big';
+
+  for (const item of items) {
+    const fit = fitOf(item, depth + 1, walk);
+
+    if (fit !== 'json') return fit;
+  }
+
+  return 'json';
+}
+
+function fieldsFit(value: object, depth: number, walk: Walk): Fit {
+  const keys = Object.keys(value);
+
+  if (grow(walk, keys.length + 1) === 'big') return 'big';
+
+  for (const key of keys) {
+    const fit = grow(walk, key.length + 3) === 'big' ? 'big' : fitOf((value as Data)[key], depth + 1, walk);
+
+    if (fit !== 'json') return fit;
+  }
+
+  return 'json';
 }
 
 export const storeBytes = (value: StoreValue) => new TextEncoder().encode(JSON.stringify(value)).length;
 
+const TOO_BIG = 'is over the 64 KB a Case keeps';
+
 export function storeRefusal(value: unknown): string | null {
-  if (!isJson(value)) return 'isn’t plain JSON';
+  const fit = fitOf(value, 0, { chars: 0 });
 
-  const bytes = storeBytes(value);
+  if (fit === 'other') return 'isn’t plain JSON';
 
-  return bytes > STORE_MAX_BYTES ? `is ${Math.ceil(bytes / 1024)} KB, over the 64 KB a Case keeps` : null;
+  return fit === 'big' || storeBytes(value as StoreValue) > STORE_MAX_BYTES ? TOO_BIG : null;
 }
 
 interface StoredCase {

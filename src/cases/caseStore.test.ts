@@ -12,10 +12,12 @@ describe('a Case’s store', () => {
     const big = 'x'.repeat(STORE_MAX_BYTES);
 
     expect(parseCase({ ...kase(), store: { best: 12, names: ['ada'] } }).store).toEqual({ best: 12, names: ['ada'] });
-    expect(() => parseCase({ ...kase(), store: big })).toThrow('store is 65 KB, over the 64 KB a Case keeps');
+    expect(() => parseCase({ ...kase(), store: big })).toThrow('store is over the 64 KB a Case keeps');
     expect(storeRefusal({ when: new Date() })).toBe('isn’t plain JSON');
     expect(storeRefusal({ n: Number.NaN })).toBe('isn’t plain JSON');
-    expect(storeRefusal('x'.repeat(1024 * 1024))).toBe('is 1025 KB, over the 64 KB a Case keeps');
+    expect(storeRefusal('x'.repeat(1024 * 1024))).toBe('is over the 64 KB a Case keeps');
+    expect(storeRefusal('é'.repeat(STORE_MAX_BYTES / 2 + 1))).toBe('is over the 64 KB a Case keeps');
+    expect(storeRefusal(Array.from({ length: 1000 }, (_, i) => ({ i, name: 'é'.repeat(20) })))).toBeNull();
   });
 
   it('sets and clears one Case’s store, leaving the others as they were', () => {
@@ -39,15 +41,15 @@ describe('movable world objects in the Case file', () => {
     );
   });
 
-  it('reads a world change field by field and refuses NaN, Infinity and odd colours', () => {
-    expect(readWorldChange({ name: 'lit', pose: { position: [1, 2, 3] }, colour: '#FFAA00' })).toEqual({
+  it('reads a world change field by field and refuses NaN, Infinity and odd colors', () => {
+    expect(readWorldChange({ name: 'lit', pose: { position: [1, 2, 3] }, color: '#FFAA00' })).toEqual({
       id: 'lit',
       pose: { position: [1, 2, 3] },
       color: '#ffaa00',
     });
     expect(readWorldChange({ name: 'lit', pose: { position: [Number.NaN, 0, 0] } })).toBeUndefined();
     expect(readWorldChange({ name: 'lit', pose: { rotation: [0, Infinity, 0] } })).toBeUndefined();
-    expect(readWorldChange({ name: 'lit', colour: 'red' })).toBeUndefined();
+    expect(readWorldChange({ name: 'lit', color: 'red' })).toBeUndefined();
     expect(readWorldChange({ name: 'lit' })).toBeUndefined();
     expect(readWorldChange({ name: '../lit', visible: true })).toBeUndefined();
   });

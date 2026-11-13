@@ -52,7 +52,7 @@ function context(caseConsole: CaseConsole): PanelContext {
     scope: { declared: new Set(), probes: new Set(), inputs: new Set(caseConsole.input) },
     inputs: caseConsole.input,
     brief: kase.brief,
-    world: kase.world.objects,
+    world: { objects: kase.world.objects, place: (p) => p },
     sim: {
       drive: { cls: null },
       model: null,

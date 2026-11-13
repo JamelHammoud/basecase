@@ -6,7 +6,7 @@ import type { CaseAction } from '../../../cases/console/panelKinds';
 import type { FrameSize } from '../../../cases/console/codeStreams';
 import type { FactValue } from '../../../cases/caseFacts';
 import type { StoreValue } from '../../../cases/caseStore';
-import { worldRefusal, type WorldChange } from '../../../cases/worldSet';
+import { stagedChange, type WorldChange } from '../../../cases/worldSet';
 import type { PanelContext } from '../panelContext';
 
 interface BridgeInput {
@@ -36,11 +36,13 @@ export function useCodeBridge({ frameRef, ctx, onFail }: BridgeInput) {
   const event = useEffectEvent((name: string, value: FactValue) => ctx.sim.input(name, value));
   const failed = useEffectEvent((error: string) => onFail(error));
   const world = useEffectEvent((change: WorldChange) => {
-    const refusal = worldRefusal(ctx.world, change.id);
+    const staged = stagedChange(ctx.world, change);
 
-    if (!refusal) ctx.sim.world(change);
+    if (typeof staged === 'string') return staged;
 
-    return refusal;
+    ctx.sim.world(staged);
+
+    return null;
   });
   const frames = useEffectEvent((camera: string, size: FrameSize, onFrame: (bitmap: ImageBitmap) => void) =>
     ctx.studio ? ctx.studio.cameras.stream(camera, size, onFrame) : stopNothing,

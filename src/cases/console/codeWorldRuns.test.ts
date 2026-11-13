@@ -71,7 +71,7 @@ const light = () => {
   while (next === lit) next = Math.floor(Math.random() * spots.length);
   lit = next;
   armed = false;
-  basecase.world.set('lit', { pose: { position: spots[lit] }, colour: '#ff3b30' });
+  basecase.world.set('lit', { pose: { position: spots[lit] }, color: '#ff3b30' });
 };
 light();
 basecase.signals('probe.lit', (v) => {
@@ -150,6 +150,34 @@ describe('code that changes the world, on the sim', () => {
     expect(lit.every((e) => e.color === '#ff3b30' && SPOTS.some((at) => at.join() === e.pose?.position?.join()))).toBe(
       true,
     );
+  }, 60000);
+
+  it('places a lit spot on the scaled spot on arms of different reach', async () => {
+    const landed = [];
+
+    for (const id of ['arm-6dof', 'arm-3dof']) {
+      const run = await openCodeRun(mj, {
+        robot: robot(id),
+        kase: whackATarget(),
+        html: `<script>basecase.world.set('lit', { pose: { position: ${JSON.stringify(SPOTS[0])} } });</script>`,
+      });
+
+      await run.step(0.2);
+
+      const spot = run.scoring.kase.world.objects.find((o) => o.id === 'spot0')!.position;
+      const lit = run.objectAt('lit');
+      const { recording } = await run.finish();
+
+      expect(Math.hypot(...lit.map((x, i) => x - spot[i]))).toBeLessThan(1);
+      expect(recording.world?.[0].pose?.position?.map((x, i) => x - spot[i]).every((d) => Math.abs(d) < 1e-6)).toBe(
+        true,
+      );
+      landed.push(spot);
+    }
+
+    const [authored, scaled] = landed;
+
+    expect(Math.hypot(...authored.map((x, i) => x - scaled[i]))).toBeGreaterThan(20);
   }, 60000);
 
   it('moves the next box onto the belt when the last one is dropped in its bin', async () => {

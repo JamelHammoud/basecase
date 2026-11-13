@@ -54,7 +54,7 @@ function readPose(value: unknown): WorldPose | undefined {
 
 const looksValid = (value: Data) =>
   (value.visible === undefined || typeof value.visible === 'boolean') &&
-  (value.colour === undefined || isColor(value.colour));
+  (value.color === undefined || isColor(value.color));
 
 export function readWorldChange(value: unknown): WorldChange | undefined {
   if (!isData(value) || !isWorldId(value.name) || !looksValid(value)) return undefined;
@@ -63,13 +63,13 @@ export function readWorldChange(value: unknown): WorldChange | undefined {
 
   if (value.pose !== undefined && !pose) return undefined;
 
-  if (!pose && value.visible === undefined && value.colour === undefined) return undefined;
+  if (!pose && value.visible === undefined && value.color === undefined) return undefined;
 
   return {
     id: value.name,
     ...(pose ? { pose } : {}),
     ...(value.visible === undefined ? {} : { visible: value.visible as boolean }),
-    ...(value.colour === undefined ? {} : { color: (value.colour as string).toLowerCase() }),
+    ...(value.color === undefined ? {} : { color: (value.color as string).toLowerCase() }),
   };
 }
 
@@ -78,10 +78,24 @@ export interface MovableObject {
   movable?: boolean;
 }
 
+export interface CaseWorld {
+  objects: readonly MovableObject[];
+  place: (position: V3) => V3;
+}
+
 export function worldRefusal(objects: readonly MovableObject[], id: string): string | null {
   const object = objects.find((o) => o.id === id);
 
   if (!object) return `${id} isn’t in the Case’s world`;
 
   return object.movable ? null : `${id} isn’t movable`;
+}
+
+export function stagedChange(world: CaseWorld, change: WorldChange): WorldChange | string {
+  const refusal = worldRefusal(world.objects, change.id);
+  const position = change.pose?.position;
+
+  if (refusal) return refusal;
+
+  return position ? { ...change, pose: { ...change.pose, position: world.place(position) } } : change;
 }

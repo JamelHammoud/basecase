@@ -21,7 +21,7 @@ interface PortMessage {
 interface WorldSet {
   pose?: { position?: number[]; rotation?: number[] };
   visible?: boolean;
-  colour?: string;
+  color?: string;
 }
 
 export function installCodeClient(win: ClientWindow) {
@@ -123,7 +123,7 @@ export function installCodeClient(win: ClientWindow) {
     },
     world: Object.freeze({
       set(name: string, change: WorldSet = {}) {
-        send({ type: 'world', name, pose: change.pose, visible: change.visible, colour: change.colour });
+        send({ type: 'world', name, pose: change.pose, visible: change.visible, color: change.color });
       },
     }),
     frames(camera: string, options: { width?: number; fps?: number }, onFrame: (bitmap: ImageBitmap) => void) {

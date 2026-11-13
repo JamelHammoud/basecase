@@ -33,13 +33,31 @@ export interface StartArea {
   sideM: Range;
 }
 
+export interface SkillState {
+  joints: number[];
+  jointVels: number[];
+  height: number;
+  quat: [number, number, number, number];
+  linear: [number, number, number];
+  angular: [number, number, number];
+}
+
+export interface SkillStates {
+  skill: string;
+  joints: string[];
+  samples: SkillState[];
+}
+
 export interface ResetDistribution {
   pose?: RobotPoseState;
   jointNoiseDeg: number;
   baseYawDeg: number;
   baseOffsetMm: number;
   startArea?: StartArea;
+  states?: SkillStates;
 }
+
+export const MAX_START_STATES = 256;
 
 export interface Randomization {
   friction: Range;
@@ -123,14 +141,14 @@ const finiteIn = (v: unknown, min: number, max: number) =>
 const rangeIn = (r: unknown, min: number, max: number) =>
   Array.isArray(r) && r.length === 2 && finiteIn(r[0], min, max) && finiteIn(r[1], min, max) && r[0] <= r[1];
 
-interface ModelIndex {
+export interface ModelIndex {
   joints: Set<string>;
   parts: Set<string>;
   robots: Set<string>;
   bodies: Set<string>;
 }
 
-const indexOf = (model: SimModel, robot: string): ModelIndex => ({
+export const modelIndex = (model: SimModel, robot: string): ModelIndex => ({
   joints: new Set(model.joints.filter((j) => j.robot === robot).map((j) => j.id)),
   parts: new Set(model.bodies.flatMap((b) => b.parts)),
   robots: new Set(model.robots.map((r) => r.key)),
@@ -199,7 +217,42 @@ function randomizationProblems(r: Randomization): string[] {
 
 export const MAX_START_M = 5;
 
-function resetProblems(reset: ResetDistribution): string[] {
+const finiteList = (v: unknown, length: number) =>
+  Array.isArray(v) && v.length === length && v.every((x) => typeof x === 'number' && Number.isFinite(x));
+
+function sampleFits(sample: SkillState, joints: number): boolean {
+  const lists =
+    finiteList(sample.joints, joints) &&
+    finiteList(sample.jointVels, joints) &&
+    finiteList(sample.quat, 4) &&
+    finiteList(sample.linear, 3) &&
+    finiteList(sample.angular, 3);
+
+  return lists && finiteIn(sample.height, 1e-4, 100) && Math.abs(Math.hypot(...sample.quat) - 1) < 1e-3;
+}
+
+function statesProblems(states: SkillStates | undefined, index: ModelIndex): string[] {
+  if (!states) return [];
+
+  if (typeof states.skill !== 'string' || !states.skill) return ['Start states name the skill they come from.'];
+
+  const joints = jointProblems(states.joints, index, 'A start state');
+
+  if (joints.length) return joints;
+
+  const { samples } = states;
+
+  if (!Array.isArray(samples) || samples.length < 1 || samples.length > MAX_START_STATES)
+    return [`Start states hold 1 to ${MAX_START_STATES} states.`];
+
+  return samples.every((s) => sampleFits(s, states.joints.length))
+    ? []
+    : [
+        `Each start state has a finite position and speed for each of its ${states.joints.length} joints, a height above 0 and a unit quaternion.`,
+      ];
+}
+
+export function resetProblems(reset: ResetDistribution, index: ModelIndex): string[] {
   const ok = finiteIn(reset.jointNoiseDeg, 0, 90) && finiteIn(reset.baseYawDeg, 0, 180);
   const out = ok && finiteIn(reset.baseOffsetMm, 0, 10000) ? [] : ['Reset noise must be finite and not negative.'];
   const area = reset.startArea;
@@ -207,7 +260,7 @@ function resetProblems(reset: ResetDistribution): string[] {
   if (area && !(rangeIn(area.forwardM, -MAX_START_M, MAX_START_M) && rangeIn(area.sideM, -MAX_START_M, MAX_START_M)))
     out.push(`A start area runs ${-MAX_START_M} to ${MAX_START_M} m each way, low to high.`);
 
-  return out;
+  return [...out, ...statesProblems(reset.states, index)];
 }
 
 const SOURCE_KINDS = new Set([
@@ -288,14 +341,14 @@ function shapeProblems(env: Environment, index: ModelIndex): string[] {
 }
 
 export async function validateEnvironment(env: Environment, model: SimModel): Promise<string[]> {
-  const index = indexOf(model, env.robot);
+  const index = modelIndex(model, env.robot);
 
   return [
     ...shapeProblems(env, index),
     ...env.observation.flatMap((term) => termProblems(term, index)),
     ...actionProblems(env.action, index),
     ...randomizationProblems(env.randomization),
-    ...resetProblems(env.reset),
+    ...resetProblems(env.reset, index),
     ...rewardProblems(env.reward),
     ...referenceProblems(env.reference, env.action.joints),
     ...Object.entries(env.signals).flatMap(([name, source]) => sourceProblems(name, source, index)),

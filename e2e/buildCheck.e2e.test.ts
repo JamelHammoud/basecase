@@ -30,17 +30,26 @@ const standIn = (id: string, x: number) => ({
   locked: false,
 });
 
-const loadStandIns = () =>
-  app.page.evaluate(
-    (parts) => {
-      const studio = (window as unknown as { __studio: StudioHook }).__studio;
+const loadParts = (parts: unknown[]) =>
+  app.page.evaluate((list) => {
+    const studio = (window as unknown as { __studio: StudioHook }).__studio;
 
-      studio.load({ parts, project: studio.sceneRecord().project });
-    },
-    [standIn('one', -60), standIn('two', 60)],
-  );
+    studio.load({ parts: list, project: studio.sceneRecord().project });
+  }, parts);
+
+const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
+
+const servo = {
+  ...standIn('servo', 0),
+  name: 'Feetech STS3215',
+  kind: 'component',
+  componentId: 'feetech-sts3215',
+  componentVariant: 'c001',
+};
 
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
+
+const section = (title: RegExp) => app.page.locator(visible('section'), { hasText: title }).first();
 
 const headerText = async () => (await checks().locator('header').first().textContent()) ?? '';
 
@@ -163,5 +172,36 @@ describe('Checks', () => {
     await expect
       .poll(() => app.page.locator(visible('p')).filter({ hasText: exactly }).count(), { timeout: 5000 })
       .toBeGreaterThan(0);
+  }, 30000);
+});
+
+describe('Build tab fields', () => {
+  it('set the tether in the power check that reads it', async () => {
+    await loadParts([servo]);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Servo voltage/ }) })
+      .first();
+
+    await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
+    await row.getByRole('button', { name: /^Servo voltage/ }).click();
+
+    const volts = row.getByRole('textbox', { name: 'Supply voltage' });
+
+    await volts.fill('24');
+    await volts.press('Enter');
+    await expect.poll(async () => (await row.textContent()) ?? '', { timeout: 45000 }).toMatch(/24 V.*maximum/);
+    expect(await row.locator('svg.text-red-400').count()).toBeGreaterThan(0);
+  }, 90000);
+
+  it('set a budget beside the bill of materials total', async () => {
+    const bom = section(/^Bill of materials/);
+    const budget = bom.getByRole('textbox', { name: /^Budget in / });
+
+    await budget.fill('100000');
+    await budget.press('Enter');
+    await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
 });

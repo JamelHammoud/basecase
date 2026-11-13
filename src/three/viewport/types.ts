@@ -52,6 +52,18 @@ export type GrabHandler = (
   phase: GrabPhase,
 ) => void;
 
+export interface SkeletonView {
+  joints: Array<{ id: string; at: Vec3; color: string }>;
+  bones: Array<[Vec3, Vec3]>;
+}
+
+export interface SkeletonDragEvent {
+  id: string;
+  delta: Vec3;
+  phase: GrabPhase;
+  alone: boolean;
+}
+
 export interface AgentFrame {
   key: string;
   color: string;
@@ -100,6 +112,9 @@ export interface ViewportProps {
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
+  skeleton?: SkeletonView | null;
+  onSkeletonDrag?: (drag: SkeletonDragEvent) => void;
+  onSkeletonPick?: (id: string, at: { x: number; y: number }) => void;
 }
 
 export type MarkTool = 'marker' | 'eraser';

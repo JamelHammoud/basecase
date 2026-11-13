@@ -17,6 +17,7 @@ import { snapshotShapes } from '../analysis/sceneShapes';
 import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
 import { AgentFrames } from './agentFrames';
+import { SkeletonOverlay } from './skeletonOverlay';
 import { BlueprintUnderlay } from './blueprint';
 import { CameraGlyphs } from './cameraGlyphs';
 import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
@@ -129,6 +130,8 @@ export class ViewportEngine {
 
   private readonly cameraGlyphs: CameraGlyphs;
 
+  private readonly skeleton: SkeletonOverlay;
+
   private readonly follow: FollowCamera;
 
   private readonly cleanups: Array<() => void>;
@@ -171,6 +174,8 @@ export class ViewportEngine {
     this.agentFrames.sync(options.props.agentFrames ?? []);
     this.cameraGlyphs = new CameraGlyphs(stage.overlays);
     this.cameraGlyphs.sync(options.props.fixedCameras);
+    this.skeleton = new SkeletonOverlay(this.ctx);
+    this.skeleton.sync(options.props.skeleton);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
 
     const outline = new SelectionOutline(stage);
@@ -203,6 +208,7 @@ export class ViewportEngine {
       }),
       () => outline.dispose(),
     ];
+    this.cleanups.push(this.skeleton.install());
     this.api = this.completing(this.handle());
     this.syncWorld();
     this.syncScene();
@@ -253,6 +259,8 @@ export class ViewportEngine {
 
     if (previous.fixedCameras !== props.fixedCameras) this.cameraGlyphs.sync(props.fixedCameras);
 
+    if (previous.skeleton !== props.skeleton) this.skeleton.sync(props.skeleton);
+
     if (!changed(previous, props, ['marks', 'selectedMarkId'])) return;
 
     this.markLayer.sync(props.marks, props.selectedMarkId);
@@ -271,6 +279,7 @@ export class ViewportEngine {
     this.markLayer.dispose();
     this.agentFrames.dispose();
     this.cameraGlyphs.dispose();
+    this.skeleton.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();

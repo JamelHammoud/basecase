@@ -13,6 +13,7 @@ import { newSceneId } from '../utils/sceneIds';
 import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
+import type { JointDragStep } from './useSkeletonEdit';
 
 type Payload = Record<string, unknown>;
 
@@ -24,6 +25,7 @@ export interface DevActions {
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   clear: () => void;
   select: (ids: string[]) => void;
+  dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
   routineState: () => unknown;
@@ -117,6 +119,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
+    dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => devRef.current.dragSkeleton(step),
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),

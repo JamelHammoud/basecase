@@ -7,6 +7,7 @@ import {
   type SceneMark,
   type ScenePart,
 } from '../types/robotics';
+import type { RobotSkeleton } from '../types/skeleton';
 import { jointsWithoutParts } from '../utils/kinematics';
 import { EMPTY_DOC, docFromParts, liveEdit, pushHistory, stepHistory, type HistoryDirection } from './docHistory';
 import { projectFromSeed } from './helpers';
@@ -51,9 +52,15 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
+  const tracked = (): Omit<Snapshot, 'parts'> => {
+    const { pose, joints, marks, skeleton } = projectRef.current;
+
+    return { pose, joints, marks, skeleton };
+  };
 
   const commitParts: CommitParts = (updater, live = false) => {
-    const { pose, joints, marks } = projectRef.current;
+    const now = tracked();
+    const { joints } = now;
     const d = docRef.current;
 
     if (live) {
@@ -66,7 +73,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     const kept = new Set(parts.map((p) => p.id));
     const nextJoints = jointsWithoutParts(joints, new Set(d.parts.filter((p) => !kept.has(p.id)).map((p) => p.id)));
 
-    writeDoc(pushHistory(d, parts, { pose, joints, marks }));
+    writeDoc(pushHistory(d, parts, now));
 
     if (nextJoints !== joints) restoreJoints(nextJoints);
 
@@ -83,24 +90,25 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
 
     const d = docRef.current;
 
-    writeDoc(
-      pushHistory(d, d.parts, { pose: before, joints: projectRef.current.joints, marks: projectRef.current.marks }),
-    );
+    writeDoc(pushHistory(d, d.parts, { ...tracked(), pose: before }));
+  };
+
+  const recordSkeletonEdit = (before: RobotSkeleton | undefined) => {
+    writeDoc(pushHistory(docRef.current, docRef.current.parts, { ...tracked(), skeleton: before }));
+    lastPoseEditRef.current = 0;
   };
 
   const commitMarks = (next: SceneMark[]) => {
-    const { pose, joints, marks } = projectRef.current;
     const d = docRef.current;
 
-    writeDoc(pushHistory(d, d.parts, { pose, joints, marks }));
+    writeDoc(pushHistory(d, d.parts, tracked()));
     updateProjectNow((p) => ({ ...p, marks: next.length ? next : undefined }));
     lastPoseEditRef.current = 0;
   };
 
   const travel = (direction: HistoryDirection, restorePose: (pose: RobotPoseState | undefined) => void) => {
     const d = docRef.current;
-    const { pose, joints, marks } = projectRef.current;
-    const here: Snapshot = { parts: d.parts, pose, joints, marks };
+    const here: Snapshot = { parts: d.parts, ...tracked() };
     const moved = stepHistory(d, here, direction);
 
     if (!moved) return;
@@ -111,6 +119,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     if (moved.to.joints !== here.joints) restoreJoints(moved.to.joints);
 
     if (moved.to.marks !== here.marks) updateProjectNow((p) => ({ ...p, marks: moved.to.marks }));
+
+    if (moved.to.skeleton !== here.skeleton) updateProjectNow((p) => ({ ...p, skeleton: moved.to.skeleton }));
 
     if (moved.to.pose !== here.pose) restorePose(moved.to.pose);
   };
@@ -131,6 +141,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     commitParts,
     commitMarks,
     recordPoseEdit,
+    recordSkeletonEdit,
     resetDoc: (parts: ScenePart[]) => writeDoc(docFromParts(parts)),
     travel,
     clearDocument,

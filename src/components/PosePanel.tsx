@@ -6,9 +6,12 @@ import type { Posing } from '../utils/usePosing';
 import { AnimationsSection } from './pose/AnimationsSection';
 import { JointRow } from './pose/JointRow';
 import { PosesSection } from './pose/PosesSection';
+import { SkeletonSection } from './pose/SkeletonSection';
+import type { SkeletonEdit } from '../workspace/useSkeletonEdit';
 
 interface PosePanelProps {
   posing: Posing;
+  skeleton: SkeletonEdit;
   onSelectParts: (ids: string[]) => void;
   onImportMotion: () => void;
   onWalkCycle: () => void;
@@ -35,6 +38,7 @@ function rowLabel(j: RobotJoint, group: string): string {
 
 export const PosePanel: React.FC<PosePanelProps> = ({
   posing,
+  skeleton,
   onSelectParts,
   onImportMotion,
   onWalkCycle,
@@ -98,17 +102,22 @@ export const PosePanel: React.FC<PosePanelProps> = ({
         style={fadeStyle}
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
       >
-        <AnimationsSection
-          posing={posing}
-          renaming={renaming}
-          setRenaming={setRenaming}
-          openMenu={openMenu}
-          canWalk={canWalk}
-          onWalkCycle={onWalkCycle}
-          onImportMotion={onImportMotion}
-        />
+        <SkeletonSection skeleton={skeleton} />
 
-        <PosesSection posing={posing} renaming={renaming} setRenaming={setRenaming} openMenu={openMenu} />
+        {posing.robot && (
+          <>
+            <AnimationsSection
+              posing={posing}
+              renaming={renaming}
+              setRenaming={setRenaming}
+              openMenu={openMenu}
+              canWalk={canWalk}
+              onWalkCycle={onWalkCycle}
+              onImportMotion={onImportMotion}
+            />
+            <PosesSection posing={posing} renaming={renaming} setRenaming={setRenaming} openMenu={openMenu} />
+          </>
+        )}
 
         {groups.map((g) => (
           <Section

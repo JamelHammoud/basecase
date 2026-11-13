@@ -12,7 +12,7 @@ export interface MotionSource {
   text: string;
 }
 
-export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast }: WorkspaceCore) {
+export function usePoseActions({ posing, parts, project, setSelectedIds, tool, showToast }: WorkspaceCore) {
   const { setMode } = tool;
   const { addAnimation, play } = posing;
   const motionInputRef = useRef<HTMLInputElement | null>(null);
@@ -21,7 +21,7 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
   const canWalk = !!robotRig && robotRig.joints.some((j) => j.limb === 'leg' || LEG_JOINT.test(j.name));
 
   const openPose = () => {
-    if (!posing.hasRig) return;
+    if (!posing.hasRig && !project.skeleton) return;
 
     const first = posing.rig.robots[0];
 

@@ -8,7 +8,7 @@ import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
 import { useAnnotations } from './useAnnotations';
 import { useMarks, useMarkState } from './useMarks';
 import { useMeasure } from './useMeasure';
-import { usePanelSync } from './usePanelSync';
+import { usePoseScope } from './usePoseScope';
 import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
@@ -74,15 +74,10 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     transformMode: tool.transformMode,
     onPoseEdit: docs.recordPoseEdit,
   });
-  const onRobot = posing.hasRig && !!posing.robot;
-
-  usePanelSync({
-    tool,
-    annotations,
-    isRightOpen: studio.isRightOpen,
-    sculptEnabled: studio.sculptEnabled,
-    onRobot,
-    hasRig: posing.hasRig,
+  const { onRobot, skeleton, posable } = usePoseScope({
+    posing,
+    docs,
+    panels: { tool, annotations, isRightOpen: studio.isRightOpen, sculptEnabled: studio.sculptEnabled },
   });
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
@@ -150,6 +145,8 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     tool,
     posing,
     onRobot,
+    posable,
+    skeleton,
     simTraining,
     guide,
     undo: () => travel('undo', restorePose),

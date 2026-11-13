@@ -151,7 +151,7 @@ function useTeach(core: WorkspaceCore, agent: AgentSession) {
 }
 
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
-  const { tool, posing, onRobot, project, setSelectedIds, simTraining } = core;
+  const { tool, posing, posable, project, setSelectedIds, simTraining } = core;
   const { pose } = actions;
   const onTeach = useTeach(core, agent);
   const current = tool.rightTab;
@@ -159,9 +159,10 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <TabActivity tab="pose" current={current} visited={visited} available={onRobot}>
+      <TabActivity tab="pose" current={current} visited={visited} available={posable}>
         <PosePanel
           posing={posing}
+          skeleton={core.skeleton}
           onSelectParts={setSelectedIds}
           onImportMotion={pose.importMotion}
           onWalkCycle={pose.walkCycle}

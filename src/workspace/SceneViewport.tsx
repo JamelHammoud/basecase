@@ -3,6 +3,7 @@ import { AnnotationLayer } from '../components/Annotations';
 import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
+import { SkeletonServoMenu } from '../components/pose/SkeletonServoMenu';
 import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -94,7 +95,11 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}
+        skeleton={core.skeleton.view}
+        onSkeletonDrag={core.skeleton.onViewportDrag}
+        onSkeletonPick={core.skeleton.openMenu}
       />
+      <SkeletonServoMenu skeleton={core.skeleton} />
       <DriveOverlay sim={sim} />
       <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       <AnnotationLayer

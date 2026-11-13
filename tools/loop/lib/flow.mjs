@@ -6,6 +6,7 @@ export const LIMITS = {
   noMergeHours: 2,
   readyWaitingHours: 2,
   oldestQueuedMinutes: 60,
+  idlePullMinutes: 60,
 };
 
 export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'lead', 'ideas']);
@@ -54,6 +55,9 @@ export function breaches(m, now = Date.now()) {
 
   if (ready !== null && ready > LIMITS.readyWaitingHours)
     found.push(`a reviewed, green pull request has waited ${ready.toFixed(1)} h`);
+
+  if (m.idlePulls?.length > 0)
+    found.push(`${m.idlePulls.map((n) => `#${n}`).join(', ')} untouched for over ${LIMITS.idlePullMinutes} min`);
 
   if (m.queuedRuns >= LIMITS.queuedRuns) found.push(`${m.queuedRuns} CI runs are queued`);
 

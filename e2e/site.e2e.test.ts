@@ -12,6 +12,7 @@ const TYPES: Record<string, string> = {
   '.css': 'text/css',
   '.js': 'text/javascript',
   '.svg': 'image/svg+xml',
+  '.png': 'image/png',
   '.webp': 'image/webp',
   '.xml': 'application/xml',
   '.json': 'application/json',
@@ -99,6 +100,14 @@ describe('basecase.so', () => {
     await entry.click();
     await page.waitForURL(/\/changelog\/[a-z0-9-]+$/);
     expect(await page.locator('h1').innerText()).toBe(title);
+    await expect.poll(() => page.locator('article img').count()).toBeGreaterThan(1);
+    await expect
+      .poll(() =>
+        page
+          .locator('article img')
+          .evaluateAll((images) => images.every((i) => (i as HTMLImageElement).naturalWidth > 0)),
+      )
+      .toBe(true);
 
     await page.getByRole('link', { name: 'Changelog', exact: true }).last().click();
     await page.waitForURL(`${base}/changelog`);

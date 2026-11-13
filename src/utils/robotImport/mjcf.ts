@@ -39,13 +39,22 @@ interface BodyLink {
 const classDefaults = (ctx: MjContext, cls: string, tag: string) =>
   ctx.defaults.classes.get(cls)?.get(tag) ?? ctx.defaults.classes.get('main')?.get(tag) ?? {};
 
+function inlineMesh(m: Element, scale: number[]): [string, MjMesh] | null {
+  const name = m.getAttribute('name');
+  const vertex = m.getAttribute('vertex');
+
+  if (!name || !vertex) return null;
+
+  return [name, { points: nums(vertex, []).map((v, i) => v * scale[i % 3]) }];
+}
+
 function assetMesh(m: Element, defaults: MjDefaults, meshdir: string): [string, MjMesh] | null {
   const file = m.getAttribute('file');
-
-  if (!file) return null;
-
   const cls = defaults.classes.get(m.getAttribute('class') ?? 'main')?.get('mesh') ?? {};
   const [sx, sy, sz] = nums(m.getAttribute('scale') ?? cls.scale, [1, 1, 1]);
+
+  if (!file) return inlineMesh(m, [sx, sy ?? sx, sz ?? sx]);
+
   const name =
     m.getAttribute('name') ??
     file

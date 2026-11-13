@@ -65,6 +65,14 @@ describe('operate', () => {
     expect(reply.images).toHaveLength(1);
   });
 
+  it('ends with the bench replay errors per joint when a servo was calibrated', async () => {
+    const shoot = vi.fn(async () => ({ shots: [], missing: [], available: ['Scene'] }));
+    const errors = 'Bench log replayed in the sim, median error per joint: Elbow 1.20° with the preset.';
+    const reply = await operateRequest({ ...context(fakeSim(true), shoot), calibrationErrors: async () => errors }, {});
+
+    expect(reply.text.endsWith(` ${errors}`)).toBe(true);
+  });
+
   it('says what to do when nothing drives the robot', async () => {
     const sim = fakeSim(false);
 

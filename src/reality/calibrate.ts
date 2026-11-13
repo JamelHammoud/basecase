@@ -1,4 +1,5 @@
-import loadMujoco, { type MainModule } from '@mujoco/mujoco';
+import { type MainModule } from '@mujoco/mujoco';
+import { loadMujoco } from '../sim/loadMujoco';
 import { presetServo } from './bench';
 import { fitScales, segmentErrors, wholeLogErrors, windowOf, type FitContext } from './fitServo';
 import { climbLadder, combinedError, RUNGS, type RungResult } from './ladder';

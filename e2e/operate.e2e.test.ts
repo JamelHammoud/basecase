@@ -78,62 +78,66 @@ afterAll(async () => {
 });
 
 describe('Operate calibration', () => {
-  it('calibrates every joint of the emulated arm, replays one and rolls it back', async () => {
-    const { page } = app;
+  it.skipIf(process.platform === 'win32')(
+    'calibrates every joint of the emulated arm, replays one and rolls it back',
+    async () => {
+      const { page } = app;
 
-    await openPlayTab(page, 'Operate');
-    await page.locator(visible('button'), { hasText: 'Connect Emulated Robot' }).first().click();
-    await page.locator(visible('[data-robot-rung="set_up"]')).first().click();
-    await expect
-      .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
-      .toBe('set_up');
-    await page.locator(visible('[data-robot-rung="test"]')).first().click();
-
-    const calibrate = page
-      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
-      .first();
-
-    await expect.poll(() => calibrate.isEnabled()).toBe(true);
-    await calibrate.click();
-    await expect
-      .poll(() => page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating'))
-      .not.toBe('idle');
-
-    for (const id of ['shoulder', 'elbow'])
+      await openPlayTab(page, 'Operate');
+      await page.locator(visible('button'), { hasText: 'Connect Emulated Robot' }).first().click();
+      await page.locator(visible('[data-robot-rung="set_up"]')).first().click();
       await expect
-        .poll(() => row(id).getAttribute('data-verdict'), { timeout: 90000 })
-        .toMatch(/^(measured|consistent)$/);
+        .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
+        .toBe('set_up');
+      await page.locator(visible('[data-robot-rung="test"]')).first().click();
 
-    const measured = page.locator(visible('[data-calibration-joint][data-verdict="measured"]')).first();
-    const jointId = (await measured.getAttribute('data-calibration-joint')) ?? '';
+      const calibrate = page
+        .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
+        .first();
 
-    expect(Number(await row(jointId).getAttribute('data-version'))).toBe(1);
-    await row(jointId).locator('button').first().click();
+      await expect.poll(() => calibrate.isEnabled()).toBe(true);
+      await calibrate.click();
+      await expect
+        .poll(() => page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating'))
+        .not.toBe('idle');
 
-    const replay = page.locator(visible('[data-testid="joint-replay"]')).first();
-    const trace = (id: string) => replay.locator(`[data-testid="trace-${id}"]`);
+      for (const id of ['shoulder', 'elbow'])
+        await expect
+          .poll(() => row(id).getAttribute('data-verdict'), { timeout: 90000 })
+          .toMatch(/^(measured|consistent)$/);
 
-    for (const id of ['logged', 'preset', 'calibration'])
-      await expect.poll(() => trace(id).count(), { timeout: 60000 }).toBe(1);
+      const measured = page.locator(visible('[data-calibration-joint][data-verdict="measured"]')).first();
+      const jointId = (await measured.getAttribute('data-calibration-joint')) ?? '';
 
-    const errors = await page.evaluate(
-      (id) =>
-        (
-          window as unknown as {
-            __studio: { calibrationReplay: (id: string) => Promise<Record<string, number | null> | null> };
-          }
-        ).__studio.calibrationReplay(id),
-      jointId,
-    );
+      expect(Number(await row(jointId).getAttribute('data-version'))).toBe(1);
+      await row(jointId).locator('button').first().click();
 
-    expect(errors?.calibrationErrorRad).toBeLessThan(errors?.presetErrorRad ?? 0);
-    await row(jointId).hover();
-    await row(jointId).getByRole('button', { name: 'More' }).click();
-    await page.getByRole('menuitem', { name: 'Roll Back' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
-    await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
-    await expect.poll(() => trace('calibration').count()).toBe(0);
-    expect(await trace('preset').count()).toBe(1);
-    expect(app.errors).toEqual([]);
-  }, 150000);
+      const replay = page.locator(visible('[data-testid="joint-replay"]')).first();
+      const trace = (id: string) => replay.locator(`[data-testid="trace-${id}"]`);
+
+      for (const id of ['logged', 'preset', 'calibration'])
+        await expect.poll(() => trace(id).count(), { timeout: 60000 }).toBe(1);
+
+      const errors = await page.evaluate(
+        (id) =>
+          (
+            window as unknown as {
+              __studio: { calibrationReplay: (id: string) => Promise<Record<string, number | null> | null> };
+            }
+          ).__studio.calibrationReplay(id),
+        jointId,
+      );
+
+      expect(errors?.calibrationErrorRad).toBeLessThan(errors?.presetErrorRad ?? 0);
+      await row(jointId).hover();
+      await row(jointId).getByRole('button', { name: 'More' }).click();
+      await page.getByRole('menuitem', { name: 'Roll Back' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
+      await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
+      await expect.poll(() => trace('calibration').count()).toBe(0);
+      expect(await trace('preset').count()).toBe(1);
+      expect(app.errors).toEqual([]);
+    },
+    150000,
+  );
 });

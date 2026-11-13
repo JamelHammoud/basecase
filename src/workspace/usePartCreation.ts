@@ -5,7 +5,7 @@ import {
   createSculptClayPreset,
   extractSculptDataFromGeometry,
   tessellateGeometryForSculpting,
-} from '../three/sculptAndBooleanEngine';
+} from '../three/sculptEngine';
 import type { CatalogItem, CustomModelDefinition, ScenePart } from '../types/robotics';
 import { readImageFile } from '../utils/imageFile';
 import { pickFiles } from '../utils/pickFiles';

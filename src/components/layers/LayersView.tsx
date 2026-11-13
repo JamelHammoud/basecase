@@ -124,7 +124,9 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
               <PartRow
                 key={row.part.id}
                 part={row.part}
-                inGroup={row.inGroup}
+                depth={row.depth}
+                operandOf={row.operandOf}
+                collapsed={row.collapsed}
                 selected={selected.has(row.part.id)}
                 dimmed={!row.part.visible || (row.part.kind === 'image_plane' && !props.showReferenceImages)}
                 editing={editingId === row.part.id}
@@ -133,6 +135,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
                 onRename={props.onRenamePart}
                 onContextMenu={partMenu}
                 onToggle={props.onTogglePartFlag}
+                onToggleCollapsed={toggleCollapsed}
               />
             ),
           )}

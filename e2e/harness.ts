@@ -10,8 +10,16 @@ const EFFORT_LEVELS = [
   { id: 'max', name: 'Max' },
 ];
 
+const EARLIER_SCENE = {
+  id: 'scene-earlier',
+  name: 'Earlier Scene',
+  globalGoal: '',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  partCount: 1,
+};
+
 const LISTS: Record<string, unknown> = {
-  scenes: [],
+  scenes: [EARLIER_SCENE],
   models: [],
   images: [],
   chats: [],

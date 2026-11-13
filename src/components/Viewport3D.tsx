@@ -50,6 +50,7 @@ const DETACHED: Viewport3DHandle = {
   ghostState: () => null,
   followPart: () => {},
   restBounds: () => null,
+  restShapes: () => ({ instances: [], shapes: new Map(), geometries: new Map() }),
   silhouetteShots: () => [],
   posedInterference: async () => [],
   posedFloor: async () => null,

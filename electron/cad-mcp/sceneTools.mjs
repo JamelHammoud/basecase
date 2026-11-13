@@ -12,7 +12,7 @@ export const getScene = {
   config: {
     title: 'Read scene',
     description:
-      'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), box (world bounding box min..max), color, role, material, catalog or supply key, note. All in mm, z up. `Marks` (when present) lists the strokes the user drew on the canvas: colour, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
+      'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), box (world bounding box min..max), color, role, material, catalog or supply key, note. All in mm, z up. A boolean shows its operation as its kind (boolean(subtract), union or intersect) and operands=[base, tools…]; each operand follows on its own indented line marked operand-of. Move, resize or rotate an operand by id with update_parts and the result re-cuts, instead of redoing the cut. `Marks` (when present) lists the strokes the user drew on the canvas: colour, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
       'Over 20 parts, the whole scene comes back as a summary per group (box and ids); pass group or ids for the full lines, or use find_in_scene. Call first, and whenever the user may have edited the scene.',
     inputSchema: {
       ids: z.array(idSchema).optional().describe('Only these parts'),
@@ -110,7 +110,7 @@ export const updateParts = {
   config: {
     title: 'Move or restyle parts',
     description:
-      "Changes placement (position, rotation), color, name, group, role, material or note of existing parts by id. For primitives you can also change size. To change a CAD part's geometry, call model_part again.",
+      "Changes placement (position, rotation), color, name, group, role, material or note of existing parts by id. For primitives you can also change size. Ids may be a boolean's operands; the boolean re-cuts. To change a CAD part's geometry, call model_part again.",
     inputSchema: {
       updates: z
         .array(

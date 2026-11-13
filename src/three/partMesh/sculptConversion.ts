@@ -4,7 +4,7 @@ import {
   buildBufferGeometryFromSculptData,
   tessellateGeometryForSculpting,
   weldAndNormalizeGeometry,
-} from '../sculptAndBooleanEngine';
+} from '../sculptEngine';
 import type { GroupBuilder } from './customModel';
 
 const refineSculpt = (part: ScenePart) => {

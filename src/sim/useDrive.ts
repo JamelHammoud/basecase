@@ -15,16 +15,19 @@ import {
   type VelocityDrive,
 } from './driveAccess';
 import type { DriveSetup } from './drive';
-import { commandFromPad, mergeCommands, sameCommand, type DriveClass } from './driveKeys';
+import { commandFromPad, isIdle, mergeCommands, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
 import type { RunOptions, SimRun, SimStatus } from './useSimulation';
+import type { FrameHook, SimFrame } from './useSimWorker';
 
 export type DriveStatus = 'off' | 'checking' | 'on' | 'teach' | 'none';
 
 export type VelocitySource = () => Promise<VelocityDrive | null>;
+
+export type Autopilot = (frame: SimFrame) => DriveCommand;
 
 export interface SimDrive {
   status: DriveStatus;
@@ -36,6 +39,7 @@ export interface SimDrive {
   stop: () => void;
   respawn: () => void;
   setKeys: (command: DriveCommand) => void;
+  follow: (autopilot: Autopilot) => void;
 }
 
 interface DriveInputs {
@@ -48,7 +52,7 @@ interface DriveInputs {
   send: (msg: SimRequest) => void;
   viewportRef: React.RefObject<Viewport3DHandle | null>;
   modelRef: React.RefObject<SimModel | null>;
-  frameHookRef: React.RefObject<(() => void) | null>;
+  frameHookRef: React.RefObject<FrameHook | null>;
   startSim: () => Promise<void>;
   setController: (c: Controller) => void;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
@@ -61,6 +65,26 @@ function firstPad(): Gamepad | null {
   if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
 
   return [...navigator.getGamepads()].find((p) => p?.connected) ?? null;
+}
+
+function manualCommand(keys: DriveCommand, cls: DriveClass): DriveCommand {
+  const pad = firstPad();
+
+  return mergeCommands(keys, pad ? commandFromPad(pad, cls) : null);
+}
+
+function steered(
+  autopilot: React.RefObject<Autopilot | null>,
+  manual: DriveCommand,
+  frame?: SimFrame,
+): DriveCommand | null {
+  if (!isIdle(manual)) autopilot.current = null;
+
+  const auto = autopilot.current;
+
+  if (!auto) return manual;
+
+  return frame ? auto(frame) : null;
 }
 
 function restHeight(model: SimModel, key?: string): number {
@@ -94,6 +118,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   const sent = useRef<DriveCommand>(IDLE);
   const clsRef = useRef<DriveClass | null>(null);
   const topSpeed = useRef<number | null>(null);
+  const autopilot = useRef<Autopilot | null>(null);
   const [seenSimStatus, setSeenSimStatus] = useState(simStatus);
 
   if (seenSimStatus !== simStatus) {
@@ -105,19 +130,18 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     latest.current = inputs;
   });
 
-  const push = useCallback(() => {
-    const pad = firstPad();
-    const current = clsRef.current;
+  const push = useCallback(
+    (frame?: SimFrame) => {
+      const current = clsRef.current;
+      const merged = current && steered(autopilot, manualCommand(keysCommand.current, current), frame);
 
-    if (!current) return;
+      if (!merged || sameCommand(merged, sent.current)) return;
 
-    const merged = mergeCommands(keysCommand.current, pad ? commandFromPad(pad, current) : null);
-
-    if (sameCommand(merged, sent.current)) return;
-
-    sent.current = merged;
-    send({ type: 'command', ...(topSpeed.current === null ? merged : policyCommand(merged, topSpeed.current)) });
-  }, [send]);
+      sent.current = merged;
+      send({ type: 'command', ...(topSpeed.current === null ? merged : policyCommand(merged, topSpeed.current)) });
+    },
+    [send],
+  );
 
   const active = driveStatus === 'on' && simStatus === 'ready';
 
@@ -133,6 +157,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     if (simStatus !== 'off') return;
 
     clsRef.current = null;
+    autopilot.current = null;
     keysCommand.current = IDLE;
     sent.current = IDLE;
     viewportRef.current?.followPart(null);
@@ -147,6 +172,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
       clsRef.current = access.cls;
       topSpeed.current = access.kind === 'policy' ? access.velocity.topSpeed : null;
+      autopilot.current = null;
       keysCommand.current = IDLE;
       sent.current = IDLE;
       setCls(access.cls);
@@ -195,6 +221,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
   const stop = useCallback(() => {
     keysCommand.current = IDLE;
+    autopilot.current = null;
     clsRef.current = null;
     topSpeed.current = null;
     viewportRef.current?.followPart(null);
@@ -212,6 +239,10 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     [push],
   );
 
+  const follow = useCallback((next: Autopilot) => {
+    if (clsRef.current) autopilot.current = next;
+  }, []);
+
   const robotStat = stats?.robots.find((r) => r.key === robotKey) ?? stats?.robots[0];
   const offered = driveOffer({ rig: inputs.rig, parts: inputs.parts, robotKey, velocityReady: false });
 
@@ -225,5 +256,6 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     stop,
     respawn,
     setKeys,
+    follow,
   };
 }

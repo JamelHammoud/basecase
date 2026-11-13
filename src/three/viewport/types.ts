@@ -11,6 +11,7 @@ import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
 import type { Snap } from '../../agent/snap';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
+import type { SceneShapes } from '../analysis/sceneShapes';
 import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from '../analysis/jointAxis';
@@ -191,6 +192,7 @@ export interface Viewport3DHandle {
   ghostState: () => GhostState | null;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
+  restShapes: (ids: string[]) => SceneShapes;
   silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];
   posedInterference: (onlyIds?: string[], riders?: Record<string, string[]>) => Promise<Interference[]>;
   posedFloor: (ids?: string[]) => Promise<number | null>;

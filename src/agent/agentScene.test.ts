@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { booleanPart } from '../booleans/parts';
 import {
   agentCatalog,
   applySpec,
@@ -133,6 +134,34 @@ describe('scene ops', () => {
     ]);
 
     expect(scene.bounds?.size).toEqual([200, 50, 50]);
+  });
+
+  it('reports a boolean with its operation and its operands as parts, base first', () => {
+    const plate = specToPart({ id: 'plate', shape: 'box', size: [40, 30, 4], position: [0, 0, 2] });
+    const hole = specToPart({ id: 'hole', shape: 'hole_cylinder', size: [6, 6, 10], position: [5, 0, 2] });
+    const [cut] = snapshotScene([booleanPart({ id: 'cut', base: plate, tools: [hole], op: 'subtract' })]).parts;
+
+    expect(cut.kind).toBe('boolean (subtract)');
+    expect(cut.operands?.map((o) => [o.id, o.kind, o.operandOf])).toEqual([
+      ['plate', 'box', 'cut'],
+      ['hole', 'hole_cylinder', 'cut'],
+    ]);
+    expect(cut.operands?.[1]).toMatchObject({ position: [5, 0, 2], size: [6, 6, 10] });
+  });
+
+  it('reports a nested boolean down to its innermost operands', () => {
+    const block = specToPart({ id: 'block', shape: 'box', size: [20, 20, 20], position: [0, 0, 10] });
+    const knob = specToPart({ id: 'knob', shape: 'box', size: [5, 5, 5], position: [0, 0, 22] });
+    const slot = specToPart({ id: 'slot', shape: 'box', size: [4, 30, 4], position: [0, 0, 10] });
+    const merged = booleanPart({ id: 'merged', base: block, tools: [knob], op: 'union' });
+    const [outer] = snapshotScene([booleanPart({ id: 'outer', base: merged, tools: [slot], op: 'subtract' })]).parts;
+    const inner = outer.operands?.[0];
+
+    expect([outer.kind, inner?.kind, inner?.operandOf]).toEqual(['boolean (subtract)', 'boolean (union)', 'outer']);
+    expect(inner?.operands?.map((o) => [o.id, o.operandOf])).toEqual([
+      ['block', 'merged'],
+      ['knob', 'merged'],
+    ]);
   });
 
   it('snapshots the scene in the agent frame', () => {

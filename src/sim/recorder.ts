@@ -1,4 +1,5 @@
 import type { SimEngine } from './engine';
+import type { FaultKind, RecordedFault } from './faults';
 
 export const RECORD_HZ = 50;
 
@@ -19,6 +20,7 @@ export interface Recording {
   jointQpos?: Int32Array;
   scan?: Float32Array;
   scanWidth?: number;
+  faults?: RecordedFault[];
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -77,6 +79,7 @@ export class Recorder {
   private readonly jointQpos: Int32Array;
 
   private readonly scan: Growing<Float32Array> | null;
+  private readonly faults: RecordedFault[] = [];
 
   constructor(engine: SimEngine) {
     const { model } = engine;
@@ -90,7 +93,19 @@ export class Recorder {
     this.poses = new Growing(f32, 512 * engine.sim.bodies.length * 7);
     this.jointQpos = engine.jointAddresses();
     this.scan = engine.scanner ? new Growing(f32, 512 * engine.scanner.values.length) : null;
+
+    for (const j of engine.stats().joints) if (j.fault) this.faults.push({ joint: j.id, kind: j.fault, at: 0 });
+
     this.sample();
+  }
+
+  fault(joint: string, kind: FaultKind | null) {
+    const at = this.engine.data.time - this.started;
+    const open = this.faults.find((f) => f.joint === joint && f.until === undefined);
+
+    if (open) open.until = at;
+
+    if (kind) this.faults.push({ joint, kind, at });
   }
 
   readonly hook = () => {
@@ -138,6 +153,7 @@ export class Recorder {
       ...(this.scan && this.engine.scanner
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
+      faults: this.faults,
     };
   }
 }

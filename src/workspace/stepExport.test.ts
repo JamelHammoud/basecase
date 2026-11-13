@@ -1,13 +1,15 @@
 import * as THREE from 'three';
 import { afterAll, describe, expect, it } from 'vitest';
 import { specToPart } from '../agent/agentScene';
+import { evaluateBoolean } from '../booleans/evaluate';
+import { booleanHash } from '../booleans/hash';
+import { booleanPart, withResult } from '../booleans/parts';
 import { buildPartGroup } from '../three/buildPartMesh';
 import { provideMeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
 import type { ExportedStep, StepJob } from '../types/step';
 import { stepJob } from './stepExport';
 import { exactSolid } from './stepSolids';
-import { combinedPart } from './useSelectionOps';
 
 interface OcctMesh {
   name: string;
@@ -66,11 +68,13 @@ async function bracketPart(): Promise<ScenePart> {
   });
 }
 
-function subtractedBox(): ScenePart {
+async function subtractedBox(): Promise<ScenePart> {
   const plate = specToPart({ id: 'plate', name: 'Base Plate', shape: 'box', size: [80, 50, 6], position: [0, 0, 3] });
   const hole = specToPart({ id: 'hole', shape: 'hole_cylinder', size: [12, 12, 20], position: [10, 5, 3] });
 
-  return combinedPart(plate, [hole], 'subtract')!;
+  const draft = booleanPart({ id: 'plate', base: { ...plate, id: 'plate-base' }, tools: [hole], op: 'subtract' });
+
+  return withResult(draft, booleanHash(draft), await evaluateBoolean(draft));
 }
 
 function servoPart(): ScenePart {
@@ -146,7 +150,7 @@ async function exported(parts: ScenePart[]): Promise<{ job: StepJob; left: numbe
 
 describe('STEP export', () => {
   it('writes a replicad bracket, a subtracted box and a catalog servo as named bodies at their scene bounds', async () => {
-    const parts = [await bracketPart(), subtractedBox(), servoPart()];
+    const parts = [await bracketPart(), await subtractedBox(), servoPart()];
     const { job, left, step, skipped } = await exported(parts);
 
     expect(job.bodies.map((b) => b.solid.type)).toEqual(['moved', 'moved', 'mesh']);
@@ -206,13 +210,22 @@ describe('STEP export', () => {
     }
   }, 120_000);
 
-  it('rebuilds a subtracted box exactly only while it keeps the size it was made at', () => {
-    const box = subtractedBox();
+  it('rebuilds a subtracted box exactly from its operands while every operand is exact', async () => {
+    const box = await subtractedBox();
+    const operands = box.boolean!.operands;
 
-    expect(box.csg?.operands.map((o) => o.kind)).toEqual(['box', 'hole_cylinder']);
+    expect(operands.map((o) => o.kind)).toEqual(['box', 'hole_cylinder']);
     expect(exactSolid(box)?.type).toBe('boolean');
-    expect(exactSolid({ ...box, dimensions: { ...box.dimensions, width: box.dimensions.width + 5 } })).toBeNull();
-    expect(exactSolid({ ...box, csg: undefined })).toBeNull();
+    expect(
+      exactSolid({
+        ...box,
+        boolean: {
+          ...box.boolean!,
+          operands: [operands[0], { ...operands[1], sculptMesh: { positions: [], indices: [] } }],
+        },
+      }),
+    ).toBeNull();
+    expect(exactSolid({ ...box, boolean: undefined })).toBeNull();
   });
 
   it('leaves out what a CAD file has no body for, and counts a part it cannot build', async () => {

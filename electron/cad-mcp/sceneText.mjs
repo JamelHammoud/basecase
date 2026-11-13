@@ -6,7 +6,12 @@ const num = (v, digits) => +(+v).toFixed(digits);
 const vec = (a, digits = 2) => `[${a.map((v) => num(v, digits)).join(',')}]`;
 const isZero = (a) => !a || a.every((v) => v === 0);
 
-const links = (p) => [p.mirrorOf && `mirror-of=${p.mirrorOf}`, p.frame && `frame=${p.frame}`];
+const links = (p) => [
+  p.operandOf && `operand-of=${p.operandOf}`,
+  p.operands && `operands=[${p.operands.map((o) => o.id).join(',')}]`,
+  p.mirrorOf && `mirror-of=${p.mirrorOf}`,
+  p.frame && `frame=${p.frame}`,
+];
 
 export function partLine(p, withNotes = true) {
   return [
@@ -32,6 +37,13 @@ export function partLine(p, withNotes = true) {
     .filter(Boolean)
     .join(' ');
 }
+
+export const partLines = (p, withNotes = true, depth = 0) => [
+  `${'  '.repeat(depth)}${partLine(p, withNotes)}`,
+  ...(p.operands ?? []).flatMap((o) => partLines(o, withNotes, depth + 1)),
+];
+
+const treeIds = (p) => [p.id, ...(p.operands ?? []).flatMap(treeIds)];
 
 function groupLine([name, parts]) {
   const min = [0, 1, 2].map((k) => Math.min(...parts.map((p) => p.bounds.min[k])));
@@ -59,7 +71,9 @@ function pickParts(parts, { ids, group }) {
   const groupName = group?.trim().toLowerCase();
 
   return parts.filter(
-    (p) => (!wanted || wanted.has(p.id)) && (!groupName || (p.group ?? '').toLowerCase() === groupName),
+    (p) =>
+      (!wanted || treeIds(p).some((id) => wanted.has(id))) &&
+      (!groupName || (p.group ?? '').toLowerCase() === groupName),
   );
 }
 
@@ -74,7 +88,7 @@ function header(snap, picked, filtered) {
 }
 
 function missingIds(parts, ids) {
-  const known = new Set(parts.map((p) => p.id));
+  const known = new Set(parts.flatMap(treeIds));
   const missing = (ids ?? []).filter((id) => !known.has(id));
 
   return missing.length ? [`Not in the scene: ${missing.join(', ')}.`] : [];
@@ -96,7 +110,7 @@ export function sceneText(snap, filter = {}) {
   const list = (withNotes) =>
     [
       ...header(snap, picked, filtered),
-      ...picked.map((p) => partLine(p, withNotes)),
+      ...picked.flatMap((p) => partLines(p, withNotes)),
       ...missingIds(snap.parts, filter.ids),
       ...marks,
     ].join('\n');

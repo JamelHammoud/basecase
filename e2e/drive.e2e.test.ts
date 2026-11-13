@@ -23,9 +23,9 @@ interface SimState {
   world: string[];
   bodies: Array<{ parts: string[]; world: string[] }>;
   activeCase: string | null;
-  tries: Array<{ passed: boolean; margin: number }>;
   effector: number[] | null;
   scanPoints: number;
+  tries: Array<{ passed: boolean; margin: number }>;
 }
 
 type Studio = {

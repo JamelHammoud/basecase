@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { editWithOperands } from '../booleans/operands';
+import { booleanPart, findPartDeep } from '../booleans/parts';
 import { toCad } from '../agent/agentFrame';
 import { applySpec, specToPart, type AgentCadPayload } from '../agent/agentScene';
 import { planMate } from '../agent/mate';
@@ -74,5 +76,42 @@ describe('applyAgentOps with mates', () => {
     placed('lid', 'under').forEach((v, k) => expect(v).toBeCloseTo(placed('base', 'top')[k], 2));
     expect(commits).toEqual([true, false]);
     expect(actors.editsFor('main/agent-1', 'Left leg')?.sort()).toEqual(['base', 'lid']);
+  });
+});
+
+describe('applyAgentOps on a boolean', () => {
+  const plate = specToPart({ id: 'plate', shape: 'box', size: [40, 40, 4], position: [0, 0, 0] });
+  const hole = specToPart({ id: 'hole', shape: 'hole_cylinder', size: [6, 6, 10], position: [0, 0, 0] });
+  const cut = booleanPart({ id: 'cut', base: plate, tools: [hole], op: 'subtract' });
+
+  function booleanScene() {
+    let parts: ScenePart[] = [cut];
+    const { ctx } = scene(parts, new ActorIndex(), 'main/agent-1');
+    const routed: AgentOpsContext = {
+      ...ctx,
+      current: () => parts,
+      commitParts: (fn) => {
+        parts = editWithOperands(parts, fn);
+      },
+    };
+
+    return { parts: () => parts, ctx: routed };
+  }
+
+  it('moves an operand by id inside its boolean', async () => {
+    const { parts, ctx } = booleanScene();
+    const summary = await applyAgentOps([{ op: 'update', part: { id: 'hole', position: [10, 0, 0] } }], ctx);
+
+    expect(summary).toContain('updated hole');
+    expect(parts().map((p) => p.id)).toEqual(['cut']);
+    expect(toCad(findPartDeep(parts(), 'hole')!.position)[0]).toBeCloseTo(10, 3);
+  });
+
+  it('deletes an operand by id without calling it missing', async () => {
+    const { parts, ctx } = booleanScene();
+    const summary = await applyAgentOps([{ op: 'delete', id: 'hole' }], ctx);
+
+    expect(summary).not.toContain('not found');
+    expect(findPartDeep(parts(), 'hole')).toBeUndefined();
   });
 });

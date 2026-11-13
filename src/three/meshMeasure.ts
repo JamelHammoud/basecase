@@ -44,6 +44,29 @@ export function worldTriangles(object: THREE.Object3D): Float32Array {
   return all;
 }
 
+const UNIT = new THREE.Vector3(1, 1, 1);
+
+export function rigidFrame(object: THREE.Object3D) {
+  const t = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+
+  object.matrixWorld.decompose(t, q, new THREE.Vector3());
+
+  return { t, q, matrix: new THREE.Matrix4().compose(t, q, UNIT) };
+}
+
+export function localTriangles(object: THREE.Object3D): Float32Array {
+  const triangles = worldTriangles(object);
+  const inverse = rigidFrame(object).matrix.invert();
+  const v = new THREE.Vector3();
+
+  for (let i = 0; i < triangles.length; i += 3) {
+    v.fromArray(triangles, i).applyMatrix4(inverse).toArray(triangles, i);
+  }
+
+  return triangles;
+}
+
 export interface MeshMeasure {
   volumeMm3: number;
   areaMm2: number;

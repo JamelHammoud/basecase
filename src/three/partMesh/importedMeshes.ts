@@ -248,6 +248,7 @@ function imageTexture(url: string): THREE.Texture {
 export const IMPORTED_BUILDERS: Record<string, PartBuilder> = {
   cad_part: cadPart,
   mesh: importedMesh,
+  boolean: importedMesh,
   component: componentPart,
   hardware: hardwarePart,
   image_plane: imagePlane,

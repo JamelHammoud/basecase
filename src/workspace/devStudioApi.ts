@@ -14,6 +14,9 @@ import { degrees } from '../robot/robotGhost';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { twinSnapshot } from '../robot/robotTwin';
 import { importRobot } from '../utils/robotImport';
+import { downstreamOf } from '../utils/engineeringMass';
+import { sweepSamples } from '../utils/engineeringJoints';
+import { resolveJoints } from '../utils/kinematics';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
 import type { ServoCalibration } from '../reality/types';
@@ -43,6 +46,7 @@ export interface DevActions {
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  sharedLink: () => string | null;
   stubTrainer: (policy: unknown) => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
@@ -137,8 +141,23 @@ interface DevRecord {
   annotations?: SceneAnnotation[];
 }
 
+async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewport: Viewport3DHandle | null) {
+  const joints = resolveJoints(project.joints ?? [], parts);
+  const turning = joints.filter((j) => j.type === 'revolute');
+  const specs = turning.map((j) => ({
+    moving: [...downstreamOf(j, joints)],
+    origin: j.origin,
+    axis: new THREE.Vector3(...j.axis).normalize().toArray(),
+    anglesDeg: sweepSamples(j, j.range ?? [-90, 90]),
+  }));
+  const hits = (await viewport?.sweepClashes(specs)) ?? [];
+
+  return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
+    rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
     parts: () => partSummaries(partsRef.current),
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
     checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
@@ -194,6 +213,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),

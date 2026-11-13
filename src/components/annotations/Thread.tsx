@@ -1,7 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SceneAnnotation } from '../../types/robotics';
 import { timeAgo } from '../../utils/timeAgo';
-import { Button, IconButton, MetaLine, CircleCheckIcon, CloseIcon, DeleteIcon, EditIcon } from '../../design-system';
+import {
+  Button,
+  IconButton,
+  MetaLine,
+  CircleCheckIcon,
+  CloseIcon,
+  DeleteIcon,
+  EditIcon,
+  RowActions,
+} from '../../design-system';
 import { AutoTextarea, CommentComposer } from './CommentComposer';
 import { DeleteCommentDialog, type PendingDelete } from './DeleteCommentDialog';
 
@@ -78,7 +87,7 @@ const CommentItem: React.FC<{
       )}
 
       {!editing && (
-        <div className="absolute top-2 right-2 flex pl-8 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity bg-gradient-to-r from-transparent to-[#282828] to-[32px]">
+        <RowActions fill="#282828" className="top-2 right-2">
           <IconButton
             icon={<EditIcon className="w-3.5 h-3.5" />}
             title="Edit"
@@ -99,7 +108,7 @@ const CommentItem: React.FC<{
               onClick={onDelete}
             />
           )}
-        </div>
+        </RowActions>
       )}
     </div>
   );

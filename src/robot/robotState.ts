@@ -23,6 +23,7 @@ export interface JointStatus {
 }
 
 export interface RobotStatus {
+  at_us?: number;
   mode: RobotMode;
   run: string;
   sealed: boolean;

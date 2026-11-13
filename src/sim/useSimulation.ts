@@ -33,7 +33,6 @@ export interface Simulation {
   latestStats: () => SimStats | null;
   error: string | null;
   model: SimModel | null;
-  version: string | null;
   speed: number;
   controller: Controller;
   start: () => Promise<void>;
@@ -242,7 +241,7 @@ export function useSimulation(props: Inputs): Simulation {
   const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
-  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, version, send } = sw;
+  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
   const { worker, load, frameHookRef } = sw;
   const [controller, setController] = useController(send);
 
@@ -314,7 +313,6 @@ export function useSimulation(props: Inputs): Simulation {
     latestStats: sw.latestStats,
     error,
     model,
-    version,
     speed,
     controller,
     start,

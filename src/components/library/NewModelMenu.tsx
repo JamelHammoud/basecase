@@ -18,7 +18,7 @@ export const NewModelMenu: React.FC<{
   return (
     <div className="relative" ref={triggerRef}>
       <IconButton
-        icon={<PlusIcon className="w-3.5 h-3.5" />}
+        icon={<PlusIcon className="w-4 h-4" />}
         title="New model"
         size="xs"
         isToggled={open}

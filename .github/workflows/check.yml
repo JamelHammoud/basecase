@@ -4,13 +4,19 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request whose branch this full Check is for
+        type: string
+        required: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: check-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: check-${{ github.event.pull_request.number || inputs.pr || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   changes:
@@ -27,7 +33,7 @@ jobs:
       - name: Decide whether the packaged app and the ROS package need checking
         id: filter
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then printf 'app=true\nros=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
@@ -41,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON((github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
+        os: ${{ fromJSON((github.event_name != 'pull_request' || startsWith(github.head_ref, 'loop/repair/')) && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -61,7 +67,7 @@ jobs:
         run: npm audit --audit-level=high
 
   e2e:
-    if: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+    if: ${{ (github.event_name != 'pull_request' || startsWith(github.head_ref, 'loop/repair/')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -86,7 +92,7 @@ jobs:
         run: npm run test:quarantine
 
   e2e-windows:
-    if: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+    if: ${{ (github.event_name != 'pull_request' || startsWith(github.head_ref, 'loop/repair/')) }}
     runs-on: windows-latest
     defaults:
       run:
@@ -111,7 +117,7 @@ jobs:
 
   app:
     needs: changes
-    if: ${{ needs.changes.outputs.app == 'true' && (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+    if: ${{ needs.changes.outputs.app == 'true' && (github.event_name != 'pull_request' || startsWith(github.head_ref, 'loop/repair/')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -192,7 +198,7 @@ jobs:
 
       - name: No commit credits a model or tool
         env:
-          RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || format('{0}..{1}', github.event.before, github.sha) }}
+          RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || github.event_name == 'workflow_dispatch' && format('origin/main..{0}', github.sha) || format('{0}..{1}', github.event.before, github.sha) }}
         run: |
           base="${RANGE%%..*}"
           head="${RANGE#*..}"
@@ -222,6 +228,7 @@ jobs:
         run: node tools/check-copy-budget.mjs "$RANGE"
 
   check:
+    name: ${{ github.event_name == 'workflow_dispatch' && 'check (full)' || 'check' }}
     if: always()
     needs: [changes, unit, e2e, e2e-windows, app, ros, credit, copy]
     runs-on: ubuntu-latest
@@ -230,7 +237,7 @@ jobs:
         env:
           REQUIRED: ${{ needs.changes.result }} ${{ needs.unit.result }} ${{ needs.credit.result }}
           E2E: ${{ needs.e2e.result }}
-          FULL: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+          FULL: ${{ (github.event_name != 'pull_request' || startsWith(github.head_ref, 'loop/repair/')) }}
           HEAD_REF: ${{ github.head_ref }}
           APP: ${{ needs.app.result }}
           APP_NEEDED: ${{ needs.changes.outputs.app }}

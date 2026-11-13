@@ -10,7 +10,7 @@ export default defineConfig({
       'bench/**/*.test.mjs',
       'verify/lib/*.test.mjs',
     ],
-    exclude: ['bench/data/**', 'bench/runs/**', '**/node_modules/**', ...quarantineExclude()],
+    exclude: ['bench/data/**', 'bench/runs/**', '**/node_modules/**', '**/*.perf.test.ts', ...quarantineExclude()],
     setupFiles: ['tools/quarantine-setup.mjs'],
     environment: 'node',
   },

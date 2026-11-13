@@ -33,7 +33,7 @@ Push, pull and smooth a part's surface with a brush, for shapes like a shell or 
 Sculpt is off until you turn it on in Settings.
 
 1. Press [[⌘,]] and choose **Canvas**.
-2. Under **Experimental**, turn on **Sculpt tool**, then close Settings.
+2. Under **Tools**, turn on **Sculpt**, then close Settings.
 3. Click **Sculpt** in the bottom toolbar.
 4. Under **Add clay**, click **Sphere**, **Block**, **Capsule** or **Cylinder**.
 5. Under **Brush**, choose **Inflate**, **Carve**, **Grab**, **Flatten**, **Smooth** or **Pinch**.

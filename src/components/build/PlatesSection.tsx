@@ -6,6 +6,7 @@ import type { Printing } from '../../workspace/usePrinting';
 import { plural } from '../../../electron/plural.mjs';
 import { hm } from './format';
 import { plateNumbers } from '../print/plateFacts';
+import { keyFor } from '../../app/shortcuts';
 
 interface PlateTotals {
   hours: number;
@@ -43,7 +44,7 @@ export const PlatesSection: React.FC<{ printing: Printing }> = ({ printing }) =>
             `${totals.exact ? '' : '≈ '}${hm(totals.hours)}`,
           ]}
         />
-        <Button size="sm" variant="secondary" title="Print" shortcut="⌘P" onClick={() => printing.openMode(1)}>
+        <Button size="sm" variant="secondary" title="Print" shortcut={keyFor('print')} onClick={() => printing.openMode(1)}>
           Print
         </Button>
       </div>

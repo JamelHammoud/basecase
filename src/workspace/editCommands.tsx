@@ -4,6 +4,7 @@ import { ALIGN_AXES } from '../components/alignActions';
 import type { CommandInputs } from './sceneCommands';
 import { handJointCommands } from './jointCommands';
 import { mirrorCommand } from './mirrorCommands';
+import { keyFor } from '../app/shortcuts';
 import { isRotated, onePartActions, paletteCommand, selectionActions } from './partActions';
 
 const ic = 'w-4 h-4';
@@ -18,7 +19,7 @@ function clipboardCommands(inputs: CommandInputs): Command[] {
       id: 'copy',
       group: 'Selection',
       label: 'Copy',
-      shortcut: '⌘C',
+      shortcut: keyFor('copy'),
       icon: <CopyIcon className={ic} />,
       run: () => clipboard.copyViaCommand(false),
     },
@@ -26,7 +27,7 @@ function clipboardCommands(inputs: CommandInputs): Command[] {
       id: 'cut',
       group: 'Selection',
       label: 'Cut',
-      shortcut: '⌘X',
+      shortcut: keyFor('cut'),
       icon: <CutIcon className={ic} />,
       run: () => clipboard.copyViaCommand(true),
     },
@@ -34,7 +35,7 @@ function clipboardCommands(inputs: CommandInputs): Command[] {
       id: 'paste',
       group: 'Selection',
       label: 'Paste',
-      shortcut: '⌘V',
+      shortcut: keyFor('paste'),
       icon: <PasteIcon className={ic} />,
       run: clipboard.pasteParts,
     },

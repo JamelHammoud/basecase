@@ -6,6 +6,7 @@ import { ChevronDownIcon, ChevronUpIcon, IconButton } from '../../design-system'
 import { CameraTile } from './CameraTile';
 import { OperatorTile } from './OperatorTile';
 import { useCameraTiles, type CameraTilesInput } from './useCameraTiles';
+import { keyFor } from '../../app/shortcuts';
 
 const ic = 'w-4 h-4';
 
@@ -35,7 +36,7 @@ export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) =
         <IconButton
           icon={expanded ? <ChevronUpIcon className={ic} /> : <ChevronDownIcon className={ic} />}
           title={expanded ? 'Collapse' : 'Expand'}
-          shortcut="⇧V"
+          shortcut={keyFor('toggle-camera-views')}
           tooltipSide="right"
           onClick={toggleCameraViews}
         />

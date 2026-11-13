@@ -25,6 +25,7 @@ import { GroupName } from './GroupName';
 import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
 import { MATERIALS, type InspectorProps } from './types';
+import { keyFor } from '../../app/shortcuts';
 
 const fmt = (v: number) => String(Math.round(v * 10) / 10);
 
@@ -74,7 +75,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           <IconButton
             icon={<UngroupIcon className="w-3.5 h-3.5" />}
             title="Ungroup"
-            shortcut="⇧⌘G"
+            shortcut={keyFor('ungroup')}
             size="xs"
             onClick={onUngroup}
           />
@@ -83,7 +84,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           <IconButton
             icon={<GroupIcon className="w-3.5 h-3.5" />}
             title="Group"
-            shortcut="⌘G"
+            shortcut={keyFor('group')}
             size="xs"
             onClick={onGroup}
           />
@@ -91,7 +92,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
         <IconButton
           icon={<CopyIcon className="w-3.5 h-3.5" />}
           title="Duplicate"
-          shortcut="⌘D"
+          shortcut={keyFor('duplicate')}
           size="xs"
           onClick={onDuplicate}
         />
@@ -105,7 +106,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
         <IconButton
           icon={<DeleteIcon className="w-3.5 h-3.5" />}
           title="Delete"
-          shortcut="⌫"
+          shortcut={keyFor('delete')}
           size="xs"
           variant="danger"
           onClick={onDelete}
@@ -145,7 +146,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
           <IconButton
             icon={<FloorIcon className="w-3.5 h-3.5" />}
             title="Drop to floor"
-            shortcut="F"
+            shortcut={keyFor('drop-to-floor')}
             size="xs"
             onClick={onDropToFloor}
           />

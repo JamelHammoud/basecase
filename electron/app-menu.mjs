@@ -1,5 +1,6 @@
 import { Menu } from 'electron';
 import { APP_DISPLAY_NAME } from './appName.mjs';
+import { acceleratorOf, menuAccelerator, tabChord } from './shortcutKeys.mjs';
 
 const DEFAULT_STATE = {
   sidebar: true,
@@ -15,10 +16,10 @@ const DEFAULT_STATE = {
 };
 
 const CAMERA_VIEWS = [
-  { id: 'isometric', label: 'Isometric', key: '1' },
-  { id: 'top', label: 'Top', key: '2' },
-  { id: 'front', label: 'Front', key: '3' },
-  { id: 'right', label: 'Side', key: '4' },
+  { id: 'isometric', label: 'Isometric' },
+  { id: 'top', label: 'Top' },
+  { id: 'front', label: 'Front' },
+  { id: 'right', label: 'Side' },
 ];
 
 let state = { ...DEFAULT_STATE };
@@ -62,8 +63,12 @@ function clickOnly(id) {
   };
 }
 
-function item(label, id, accelerator, extra = {}) {
-  return { label, click: clickOnly(id), accelerator, registerAccelerator: false, ...extra };
+function item(label, id, extra = {}) {
+  return { id, label, click: clickOnly(id), accelerator: menuAccelerator(id), registerAccelerator: false, ...extra };
+}
+
+function sent(label, id) {
+  return { id, label, accelerator: menuAccelerator(id), click: send(id) };
 }
 
 const separator = { type: 'separator' };
@@ -91,7 +96,7 @@ function appMenu() {
       { role: 'about', label: `About ${APP_DISPLAY_NAME}` },
       ...updateItems(),
       separator,
-      { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: send('settings') },
+      sent('Settings', 'settings'),
       separator,
       { role: 'services' },
       separator,
@@ -108,21 +113,21 @@ function fileMenu(isMac) {
   return {
     label: 'File',
     submenu: [
-      item('New Scene', 'new-scene', 'CmdOrCtrl+T'),
-      item('Show Scenes', 'open-scenes', 'CmdOrCtrl+O'),
+      item('New Scene', 'new-scene'),
+      item('Show Scenes', 'open-scenes'),
       item('Open Scene File', 'open-scene-file'),
-      item('Reopen Closed Scene', 'reopen-tab', 'Shift+CmdOrCtrl+T', { enabled: state.canReopenTab }),
+      item('Reopen Closed Scene', 'reopen-tab', { enabled: state.canReopenTab }),
       separator,
       item('Export Scene', 'export-scene'),
-      item('Export STL', 'export-stl', undefined, { enabled: state.hasParts }),
-      ...(isMac ? [item('AirDrop', 'airdrop', undefined, { enabled: state.hasParts })] : []),
-      item('Print', 'print', 'CmdOrCtrl+P', { enabled: state.hasParts }),
+      item('Export STL', 'export-stl', { enabled: state.hasParts }),
+      ...(isMac ? [item('AirDrop', 'airdrop', { enabled: state.hasParts })] : []),
+      item('Print', 'print', { enabled: state.hasParts }),
       separator,
       item('Add Reference Image', 'add-reference-image'),
       item('Import', 'import'),
       item('Import Robot', 'import-robot'),
       separator,
-      item('Close Scene', 'close-tab', 'CmdOrCtrl+W'),
+      item('Close Scene', 'close-tab'),
       isMac ? { role: 'close', label: 'Close Window', accelerator: 'Shift+CmdOrCtrl+W' } : { role: 'quit' },
     ],
   };
@@ -132,19 +137,19 @@ function editMenu(isMac) {
   return {
     label: 'Edit',
     submenu: [
-      { label: 'Undo', accelerator: 'CmdOrCtrl+Z', click: send('undo') },
-      { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', click: send('redo') },
+      sent('Undo', 'undo'),
+      sent('Redo', 'redo'),
       separator,
       { role: 'cut' },
       { role: 'copy' },
       { role: 'paste' },
-      { label: 'Select All', accelerator: 'CmdOrCtrl+A', click: send('select-all') },
+      sent('Select All', 'select-all'),
       separator,
-      item('Duplicate', 'duplicate', 'CmdOrCtrl+D', { enabled: state.hasSelection }),
-      item('Delete', 'delete', 'Backspace', { enabled: state.hasSelection }),
+      item('Duplicate', 'duplicate', { enabled: state.hasSelection }),
+      item('Delete', 'delete', { enabled: state.hasSelection }),
       separator,
-      item('Find Parts', 'find-parts', 'CmdOrCtrl+F'),
-      ...(isMac ? [] : [separator, { label: 'Settings', accelerator: 'Ctrl+,', click: send('settings') }]),
+      item('Find Parts', 'find-parts'),
+      ...(isMac ? [] : [separator, sent('Settings', 'settings')]),
     ],
   };
 }
@@ -159,37 +164,43 @@ function viewMenu(isMac) {
   return {
     label: 'View',
     submenu: [
-      item('Command Menu', 'palette', 'CmdOrCtrl+K'),
+      item('Command Menu', 'palette'),
       separator,
       {
         label: 'Camera',
         submenu: [
-          ...CAMERA_VIEWS.map((v) => item(v.label, `view:${v.id}`, v.key)),
+          ...CAMERA_VIEWS.map((v) => item(v.label, `view:${v.id}`)),
           separator,
-          item('Zoom to Selection', 'zoom-selection', 'Z', { enabled: state.hasSelection }),
+          item('Zoom to Selection', 'zoom-selection', { enabled: state.hasSelection }),
           item('Reset View', 'reset-view'),
         ],
       },
       {
         label: isMac ? 'Two-Finger Scroll' : 'Scroll',
         submenu: SCROLL_MODES.map(([label, mode]) =>
-          item(label, `trackpad:${mode}`, undefined, { type: 'radio', checked: state.trackpadMode === mode }),
+          item(label, `trackpad:${mode}`, { type: 'radio', checked: state.trackpadMode === mode }),
         ),
       },
       separator,
-      item('Show Grid', 'toggle-grid', undefined, { type: 'checkbox', checked: state.grid }),
-      item('Show Reference Images', 'toggle-reference-images', 'Shift+I', {
+      item('Show Grid', 'toggle-grid', { type: 'checkbox', checked: state.grid }),
+      item('Show Reference Images', 'toggle-reference-images', {
         type: 'checkbox',
         checked: state.referenceImages,
       }),
       separator,
-      item('Show Sidebar', 'toggle-sidebar', 'CmdOrCtrl+B', { type: 'checkbox', checked: state.sidebar }),
-      item('Show Inspector', 'toggle-inspector', 'CmdOrCtrl+I', { type: 'checkbox', checked: state.inspector }),
+      item('Show Sidebar', 'toggle-sidebar', { type: 'checkbox', checked: state.sidebar }),
+      item('Show Inspector', 'toggle-inspector', { type: 'checkbox', checked: state.inspector }),
       separator,
       { role: 'togglefullscreen' },
       ...(process.defaultApp ? [separator, { role: 'reload' }, { role: 'toggleDevTools' }] : []),
     ],
   };
+}
+
+function tabAccelerator(index, count) {
+  const chord = tabChord(index, count);
+
+  return chord && acceleratorOf(chord);
 }
 
 function windowMenu(isMac) {
@@ -199,11 +210,12 @@ function windowMenu(isMac) {
       { role: 'minimize' },
       { role: isMac ? 'zoom' : 'togglefullscreen' },
       separator,
-      item('Show Previous Scene', 'prev-tab', 'Shift+CmdOrCtrl+[', { enabled: state.tabs.length > 1 }),
-      item('Show Next Scene', 'next-tab', 'Shift+CmdOrCtrl+]', { enabled: state.tabs.length > 1 }),
+      item('Show Previous Scene', 'prev-tab', { enabled: state.tabs.length > 1 }),
+      item('Show Next Scene', 'next-tab', { enabled: state.tabs.length > 1 }),
       separator,
       ...state.tabs.map((t, i) =>
-        item(t.name || 'Untitled', `tab:${t.id}`, i < 9 ? `CmdOrCtrl+${i + 1}` : undefined, {
+        item(t.name || 'Untitled', `tab:${t.id}`, {
+          accelerator: tabAccelerator(i, state.tabs.length),
           type: 'checkbox',
           checked: t.id === state.activeTab,
         }),
@@ -218,20 +230,19 @@ function helpMenu(isMac) {
 
   return {
     role: 'help',
-    submenu: [item('Keyboard Shortcuts', 'shortcuts', '?'), ...(isMac ? [] : extras)],
+    submenu: [item('Keyboard Shortcuts', 'shortcuts'), ...(isMac ? [] : extras)],
   };
 }
 
-function rebuild() {
-  const isMac = process.platform === 'darwin';
-  const template = [
-    ...(isMac ? [appMenu()] : []),
-    fileMenu(isMac),
-    editMenu(isMac),
-    viewMenu(isMac),
-    windowMenu(isMac),
-    helpMenu(isMac),
-  ];
+export const menuTemplate = (isMac) => [
+  ...(isMac ? [appMenu()] : []),
+  fileMenu(isMac),
+  editMenu(isMac),
+  viewMenu(isMac),
+  windowMenu(isMac),
+  helpMenu(isMac),
+];
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+function rebuild() {
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(process.platform === 'darwin')));
 }

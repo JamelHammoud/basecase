@@ -34,6 +34,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { sceneHasCameraViews } from './viewCommands';
 import { plural } from '../../electron/plural.mjs';
+import { keyFor } from '../app/shortcuts';
 
 export interface ContextInputs {
   core: WorkspaceCore;
@@ -192,7 +193,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
       ? [
           {
             label: `Ungroup ${part.group.name}`,
-            shortcut: '⇧⌘G',
+            shortcut: keyFor('ungroup'),
             icon: <UngroupIcon className={ic} />,
             onSelect: edits.ungroup,
           },
@@ -211,7 +212,12 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
   const { tool, studio } = core;
   const shared = sharedEntries(inputs);
   const items: ContextMenuEntry[] = [
-    { label: 'Add Part', shortcut: '⌘K', icon: <PlusIcon className={ic} />, onSelect: () => ui.setPaletteOpen(true) },
+    {
+      label: 'Add Part',
+      shortcut: keyFor('palette'),
+      icon: <PlusIcon className={ic} />,
+      onSelect: () => ui.setPaletteOpen(true),
+    },
     ...commentHere,
     {
       label: 'Add Reference Image',
@@ -221,7 +227,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: core.sketching.open },
     {
       label: 'Annotate',
-      shortcut: 'N',
+      shortcut: keyFor('annotate'),
       icon: <MarkerIcon className={ic} />,
       onSelect: () => tool.toggleMarking(true),
     },
@@ -238,7 +244,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     { divider: true },
     ...CAMERA_VIEWS.map((v) => ({
       label: `${v.label} View`,
-      shortcut: v.shortcut,
+      shortcut: keyFor(`view:${v.id}`),
       icon: <ShapeIcon className={ic} />,
       onSelect: () => ui.setCameraView(v.id),
     })),
@@ -248,7 +254,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       ? [
           {
             label: cameraViewsToggleLabel(),
-            shortcut: '⇧V',
+            shortcut: keyFor('toggle-camera-views'),
             icon: <CameraIcon className={ic} />,
             onSelect: toggleCameraViews,
           },
@@ -275,13 +281,13 @@ export function contextMenuItems(menu: CanvasMenuState, inputs: ContextInputs): 
     ? [
         {
           label: 'Comment Here',
-          shortcut: 'M',
+          shortcut: keyFor('comment'),
           icon: <CommentIcon className={ic} />,
           onSelect: () => core.annotations.place(point, menu.partId),
         },
         {
           label: 'Measure from Here',
-          shortcut: 'D',
+          shortcut: keyFor('measure'),
           icon: <RulerIcon className={ic} />,
           onSelect: () => {
             core.viewportRef.current?.measureFrom(menu.x, menu.y);

@@ -4,6 +4,7 @@ import type { ScenePart } from '../../types/robotics';
 import { GroupRow, PartRow } from './LayerItems';
 import { layerRows, layersTitle, overallSize } from './layerRows';
 import { useRevealSelection } from './useRevealSelection';
+import { keyFor } from '../../app/shortcuts';
 
 export interface LayersViewProps {
   parts: ScenePart[];
@@ -27,7 +28,7 @@ const ReferenceImagesToggle: React.FC<{ props: LayersViewProps }> = ({ props }) 
       <IconButton
         icon={shown ? <PhotoIcon className="w-3.5 h-3.5" /> : <PhotoOffIcon className="w-3.5 h-3.5" />}
         title={shown ? 'Hide reference images' : 'Show reference images'}
-        shortcut="⇧I"
+        shortcut={keyFor('toggle-reference-images')}
         size="xs"
         isToggled={!shown}
         onClick={props.onToggleReferenceImages}

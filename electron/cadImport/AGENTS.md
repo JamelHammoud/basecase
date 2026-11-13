@@ -1,6 +1,6 @@
 # electron/cadImport/
 
-Maker CAD files the agent downloads: the link check, the download, and the converter that runs inside the CAD kernel's Chromium sandbox (`convertWorker.mjs`), plus the STEP, GLB and meshopt code the parts pipeline shares. The test-only Node host is in `nodeHost/`. Before editing here, read:
+Maker CAD files the agent downloads and STEP or IGES files people drop on the canvas: the link check, the download, and the converter that runs inside the CAD kernel's Chromium sandbox (`convertWorker.mjs`), plus the STEP, GLB and meshopt code the parts pipeline shares. The test-only Node host is in `nodeHost/`. Before editing here, read:
 
 - [Security](../../docs/guide/security.md) (§0h)
 - [Parts catalog](../../docs/guide/parts-catalog.md) (§8a)

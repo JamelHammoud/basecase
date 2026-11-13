@@ -9,6 +9,7 @@ import {
   Section,
   ShareIcon,
   Tooltip,
+  deleteEntry,
   type ContextMenuEntry,
 } from '../../design-system';
 import { generatedFrom, type TryRecord } from '../../cases/tries';
@@ -157,7 +158,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
       y: e.clientY,
       items: [
         ...(multiply.can(record) ? [{ label: 'Multiply', onSelect: () => multiply.multiply(record) }] : []),
-        { label: 'Delete', tone: 'danger', onSelect: () => cases.removeTry(record) },
+        deleteEntry(() => cases.removeTry(record)),
       ],
     });
   };

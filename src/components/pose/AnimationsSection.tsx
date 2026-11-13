@@ -12,6 +12,8 @@ import {
   RunIcon,
   RenameField,
   confirmAction,
+  deleteEntry,
+  renameEntry,
 } from '../../design-system';
 import type { RobotAnimation } from '../../types/robotics';
 import type { Posing } from '../../utils/usePosing';
@@ -100,13 +102,10 @@ const AnimationRow: React.FC<{
           },
           { label: 'Loop', checked: a.loop, onSelect: () => posing.setAnimationLoop(a.id, !a.loop) },
           { divider: true },
-          { label: 'Rename', onSelect: () => setRenaming(a.id) },
-          {
-            label: 'Delete',
-            tone: 'danger',
-            onSelect: () =>
-              confirmAction({ title: `Delete ${a.name}?`, onConfirm: () => posing.deleteAnimation(a.id) }),
-          },
+          renameEntry(() => setRenaming(a.id)),
+          deleteEntry(() =>
+            confirmAction({ title: `Delete ${a.name}?`, onConfirm: () => posing.deleteAnimation(a.id) }),
+          ),
         ])
       }
     >

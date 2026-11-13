@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   ContextMenu,
   ContextMenuEntry,
-  DeleteIcon,
+  deleteEntry,
   NoMatches,
   PlusIcon,
   PreviewImage,
@@ -33,12 +33,7 @@ const icon = 'w-3.5 h-3.5';
 const importedMenu = (r: ImportedRobot, onInsert: () => void): ContextMenuEntry[] => [
   { label: 'Insert', icon: <PlusIcon className={icon} />, onSelect: onInsert },
   { divider: true },
-  {
-    label: 'Delete',
-    icon: <DeleteIcon className={icon} />,
-    tone: 'danger',
-    onSelect: () => confirmAction({ title: `Delete ${r.name}?`, onConfirm: () => forgetImportedRobot(r.url) }),
-  },
+  deleteEntry(() => confirmAction({ title: `Delete ${r.name}?`, onConfirm: () => forgetImportedRobot(r.url) })),
 ];
 
 export const RobotsPanel: React.FC<{

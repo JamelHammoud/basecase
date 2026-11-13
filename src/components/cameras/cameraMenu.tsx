@@ -1,7 +1,7 @@
 import type { Lens } from '../../cameras/lens';
 import { lensLabel } from '../../cameras/lens';
 import type { CameraView } from '../../cameras/views';
-import type { ContextMenuEntry } from '../../design-system';
+import { deleteEntry, renameEntry, type ContextMenuEntry } from '../../design-system';
 import { MenuItem } from '../../design-system/PopoverMenu';
 
 export const LENS_CHOICES: Lens[] = [
@@ -52,7 +52,7 @@ export function cameraMenu(view: CameraView, actions: CameraMenuActions): Contex
     { heading: view.label },
     { label: 'Look Through', onSelect: () => actions.lookThrough(view) },
   ];
-  const rename: ContextMenuEntry = { label: 'Rename', onSelect: () => actions.startRename(view) };
+  const rename = renameEntry(() => actions.startRename(view));
 
   if (fixed) {
     return [
@@ -61,7 +61,7 @@ export function cameraMenu(view: CameraView, actions: CameraMenuActions): Contex
       lensSubmenu((lens) => actions.setLens(fixed, lens ?? view.lens), view),
       { label: 'Use Current View', onSelect: () => actions.reframe(fixed) },
       { divider: true },
-      { label: 'Delete', tone: 'danger', onSelect: () => actions.remove(fixed) },
+      deleteEntry(() => actions.remove(fixed)),
     ];
   }
 

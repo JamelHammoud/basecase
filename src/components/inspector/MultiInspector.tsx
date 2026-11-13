@@ -11,9 +11,9 @@ import {
   Select,
   useScrollFade,
   BookmarkAddIcon,
-  CopyIcon,
   CrosshairIcon,
   DeleteIcon,
+  DuplicateIcon,
   FloorIcon,
   GroupIcon,
   IntersectIcon,
@@ -89,7 +89,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           />
         )}
         <IconButton
-          icon={<CopyIcon className="w-3.5 h-3.5" />}
+          icon={<DuplicateIcon className="w-3.5 h-3.5" />}
           title="Duplicate"
           shortcut="⌘D"
           size="xs"

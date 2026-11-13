@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, ContextMenu, MenuItem, PlusIcon, type ContextMenuEntry } from '../../design-system';
+import { Button, ContextMenu, MenuItem, PlusIcon, deleteEntry, type ContextMenuEntry } from '../../design-system';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
 import { CaseRow } from './CaseRow';
@@ -69,10 +69,7 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [
-        ...(cases.active?.id === id ? compareEntry(compare, onOpen) : []),
-        { label: 'Delete', tone: 'danger', onSelect: () => cases.remove(id) },
-      ],
+      items: [...(cases.active?.id === id ? compareEntry(compare, onOpen) : []), deleteEntry(() => cases.remove(id))],
     });
   };
 

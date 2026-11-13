@@ -4,6 +4,7 @@ import type { Finding } from './types';
 
 export const CASE_RULE = 'case';
 export const CASES = 'Cases';
+export const CASE_STOPPED = 'The runs stopped with an error.';
 
 const PASS_SHARE = 0.9;
 const WARN_SHARE = 0.5;
@@ -32,7 +33,13 @@ export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): Che
   return { ...base, detail, items: failure };
 }
 
+export const stoppedRow = (kase: { id: string; name: string }): CheckRow =>
+  caseRow(kase, { runs: 0, passes: 0, medianMargin: -1, commonFailure: null, refusal: CASE_STOPPED });
+
 function agentTextOf(row: CheckRow, failure: string): string {
+  if (failure === CASE_STOPPED)
+    return `Case ${row.check}: its runs stopped with an error, so it isn't judged. Run get_readiness again.`;
+
   if (!row.detail) return `Case ${row.check}: the robot can't enter it. ${failure}`;
 
   return `Case ${row.check}: passed ${row.detail} randomized runs (friction, mass, servo strength and delay varied). Most common failure: ${failure}. Change the design so it passes at least 18 of 20.`;

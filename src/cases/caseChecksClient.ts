@@ -1,84 +1,176 @@
-import type { CaseCheckJob, CaseCheckReply } from './caseCheckJob';
+import type { CaseCheckJob, CaseCheckReply, WireRobot } from './caseCheckJob';
 
 const MAX_WORKERS = 4;
 const IDLE_MS = 30000;
 
-interface Pending {
+type Answer = { id: number; reply: CaseCheckReply } | { id: number; error: string };
+
+export interface JobOptions {
+  tag?: string;
+  robot?: () => WireRobot;
+  first?: boolean;
+}
+
+interface Queued {
+  id: number;
+  job: CaseCheckJob;
+  tag: string;
+  robot?: () => WireRobot;
   resolve: (reply: CaseCheckReply) => void;
   reject: (error: Error) => void;
 }
 
-type Answer = { id: number; reply: CaseCheckReply } | { id: number; error: string };
+interface Slot {
+  index: number;
+  worker: WorkerLike;
+  queue: Queued[];
+  running: Queued | null;
+  held: string | null;
+}
+
+export interface WorkerLike {
+  onmessage: ((ev: MessageEvent<Answer>) => void) | null;
+  onerror: ((ev: ErrorEvent) => void) | null;
+  postMessage: (message: { id: number; job: CaseCheckJob }) => void;
+  terminate: () => void;
+}
 
 export const caseWorkerCount = (cores: number | undefined) =>
   Math.max(1, Math.min(MAX_WORKERS, Math.floor((cores ?? 2) / 2)));
 
-class CaseCheckPool {
-  private workers: Worker[] = [];
-  private pending = new Map<number, Pending>();
+const spawnCaseWorker = () =>
+  new Worker(new URL('./caseChecks.worker.ts', import.meta.url), { type: 'module' }) as WorkerLike;
+
+export class CaseCheckPool {
+  private slots = new Map<number, Slot>();
   private calls = 0;
-  private busy = 0;
   private idle: ReturnType<typeof setTimeout> | null = null;
+
+  private readonly spawn: () => WorkerLike;
+
+  constructor(spawn: () => WorkerLike = spawnCaseWorker) {
+    this.spawn = spawn;
+  }
 
   get size() {
     return caseWorkerCount(globalThis.navigator?.hardwareConcurrency);
   }
 
-  private worker(index: number): Worker {
-    this.workers[index] ??= this.spawn();
+  run<T extends CaseCheckReply['type']>(
+    index: number,
+    job: Extract<CaseCheckJob, { type: T }>,
+    options: JobOptions = {},
+  ): Promise<Extract<CaseCheckReply, { type: T }>> {
+    if (this.idle) clearTimeout(this.idle);
 
-    return this.workers[index];
+    this.idle = null;
+
+    const at = index % this.size;
+    const slot = this.slot(at);
+
+    return new Promise((resolve, reject) => {
+      const queued: Queued = {
+        id: ++this.calls,
+        job,
+        tag: options.tag ?? '',
+        robot: options.robot,
+        resolve: resolve as Queued['resolve'],
+        reject,
+      };
+
+      if (options.first) slot.queue.unshift(queued);
+      else slot.queue.push(queued);
+
+      this.next(at);
+    });
   }
 
-  private spawn(): Worker {
-    const worker = new Worker(new URL('./caseChecks.worker.ts', import.meta.url), { type: 'module' });
+  keepOnly(tags: ReadonlySet<string>) {
+    for (const slot of this.slots.values()) {
+      const dropped = slot.queue.filter((q) => q.tag && !tags.has(q.tag));
 
-    worker.onmessage = (ev: MessageEvent<Answer>) => this.settle(ev.data);
+      slot.queue = slot.queue.filter((q) => !dropped.includes(q));
+
+      for (const q of dropped) q.reject(new Error('A newer check replaced this one.'));
+    }
+  }
+
+  private slot(index: number): Slot {
+    const known = this.slots.get(index);
+
+    if (known) return known;
+
+    const worker = this.spawn();
+    const slot: Slot = { index, worker, queue: [], running: null, held: null };
+
+    worker.onmessage = (ev) => this.settle(slot, ev.data);
     worker.onerror = (e) => this.failAll(new Error(e.message || 'The Case checks stopped.'));
+    this.slots.set(index, slot);
 
-    return worker;
+    return slot;
   }
 
-  private settle(answer: Answer) {
-    const waiting = this.pending.get(answer.id);
+  private withRobot(slot: Slot, queued: Queued): CaseCheckJob {
+    const { job } = queued;
 
-    this.pending.delete(answer.id);
+    if (job.type !== 'runs' || slot.held === job.modelHash) return job;
 
-    if ('error' in answer) waiting?.reject(new Error(answer.error));
-    else waiting?.resolve(answer.reply);
+    slot.held = job.modelHash;
+
+    return { ...job, robot: queued.robot?.() };
+  }
+
+  private next(index: number) {
+    const slot = this.slots.get(index);
+
+    if (!slot || slot.running) return;
+
+    const queued = slot.queue.shift();
+
+    if (!queued) {
+      this.closeWhenIdle();
+
+      return;
+    }
+
+    slot.running = queued;
+    slot.worker.postMessage({ id: queued.id, job: this.withRobot(slot, queued) });
+  }
+
+  private settle(slot: Slot, answer: Answer) {
+    const queued = slot.running;
+
+    if (!queued || queued.id !== answer.id) return;
+
+    slot.running = null;
+
+    if ('error' in answer) slot.held = null;
+    else if (answer.reply.type === 'model') slot.held = answer.reply.modelHash;
+
+    if ('error' in answer) queued.reject(new Error(answer.error));
+    else queued.resolve(answer.reply);
+
+    if (this.slots.get(slot.index) === slot) this.next(slot.index);
+  }
+
+  private closeWhenIdle() {
+    const busy = [...this.slots.values()].some((s) => s.running || s.queue.length);
+
+    if (!busy) this.idle = setTimeout(() => this.close(), IDLE_MS);
   }
 
   private failAll(error: Error) {
-    for (const waiting of this.pending.values()) waiting.reject(error);
+    for (const slot of this.slots.values()) {
+      for (const q of [slot.running, ...slot.queue]) q?.reject(error);
+    }
 
-    this.pending.clear();
     this.close();
   }
 
   private close() {
-    for (const worker of this.workers) worker?.terminate();
+    for (const slot of this.slots.values()) slot.worker.terminate();
 
-    this.workers = [];
-  }
-
-  async run<T extends CaseCheckReply['type']>(index: number, job: Extract<CaseCheckJob, { type: T }>) {
-    if (this.idle) clearTimeout(this.idle);
-
-    this.busy++;
-
-    try {
-      const id = ++this.calls;
-      const reply = await new Promise<CaseCheckReply>((resolve, reject) => {
-        this.pending.set(id, { resolve, reject });
-        this.worker(index % this.size).postMessage({ id, job });
-      });
-
-      return reply as Extract<CaseCheckReply, { type: T }>;
-    } finally {
-      this.busy--;
-
-      if (!this.busy) this.idle = setTimeout(() => this.close(), IDLE_MS);
-    }
+    this.slots.clear();
   }
 }
 

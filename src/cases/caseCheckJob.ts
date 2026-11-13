@@ -26,9 +26,16 @@ export interface WalkOffer {
   policy: PolicySpec;
 }
 
-export type CaseCheckJob =
-  | { type: 'model'; robot: WireRobot; walk: WalkOffer | null }
-  | { type: 'runs'; kase: Case; robot: WireRobot; seeds: number[]; walk: VelocityDrive | null };
+export interface RunsJob {
+  type: 'runs';
+  kase: Case;
+  modelHash: string;
+  robot?: WireRobot;
+  seeds: number[];
+  walk: VelocityDrive | null;
+}
+
+export type CaseCheckJob = { type: 'model'; robot: WireRobot; walk: WalkOffer | null } | RunsJob;
 
 export type CaseCheckReply =
   { type: 'model'; modelHash: string; walk: VelocityDrive | null } | { type: 'runs'; result: SeedRuns };
@@ -55,15 +62,27 @@ function readyWalk(offer: WalkOffer | null, model: ReturnType<typeof robotModel>
   return fresh && offer.record.evidence ? { policy: offer.policy, topSpeed: kitTopSpeed(model) } : null;
 }
 
-export async function runCaseCheckJob(mj: MainModule, job: CaseCheckJob): Promise<CaseCheckReply> {
-  if (job.type === 'model') {
-    const model = robotModel(job.robot);
-    const { physics, actuators } = modelHashes(model);
+export class CaseCheckSession {
+  private held: { hash: string; robot: WireRobot } | null = null;
 
-    return { type: 'model', modelHash: `${physics}|${actuators}`, walk: readyWalk(job.walk, model) };
+  async run(mj: MainModule, job: CaseCheckJob): Promise<CaseCheckReply> {
+    if (job.type === 'model') {
+      const model = robotModel(job.robot);
+      const { physics, actuators } = modelHashes(model);
+      const modelHash = `${physics}|${actuators}`;
+
+      this.held = { hash: modelHash, robot: job.robot };
+
+      return { type: 'model', modelHash, walk: readyWalk(job.walk, model) };
+    }
+
+    if (job.robot) this.held = { hash: job.modelHash, robot: job.robot };
+
+    if (this.held?.hash !== job.modelHash) throw new Error(`No robot with model ${job.modelHash} was sent.`);
+
+    const robot = caseRobotOf(this.held.robot);
+    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, walk: job.walk });
+
+    return { type: 'runs', result };
   }
-
-  const result = await runSeeds(mj, job.kase, caseRobotOf(job.robot), { seeds: job.seeds, walk: job.walk });
-
-  return { type: 'runs', result };
 }

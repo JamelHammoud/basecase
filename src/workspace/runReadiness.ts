@@ -23,7 +23,7 @@ import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
 import { caseFindings } from '../readiness/caseChecks';
-import { caseCheckRows } from './caseChecks';
+import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
 
 const BUDGET_MS = 30000;
@@ -89,6 +89,8 @@ export async function runReadiness({
   printer,
   fingerprint,
 }: ReadinessInput): Promise<Readiness> {
+  const turn = nextCaseTurn();
+
   await loadSourced();
   registerSourced(project.sourced ?? []);
   await viewport.meshesReady();
@@ -99,7 +101,7 @@ export async function runReadiness({
   );
   const measuring = viewport.measureParts();
   const casesRun = measuring.then((measures) =>
-    caseCheckRows({ parts, project, measures, partTriangles: viewport.partTriangles }),
+    caseCheckRows({ parts, project, measures, partTriangles: viewport.partTriangles, turn }),
   );
   const [engineering, geometry, print, purchases, measures, cases] = await Promise.all([
     engineeringRun,

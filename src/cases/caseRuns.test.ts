@@ -58,10 +58,20 @@ describe('seeded Case runs', () => {
     expect(await goalAt(3)).toEqual(await goalAt(4));
   });
 
-  it.each([
-    { robot: 'arm-3dof', template: 'touch-the-dots' },
-    { robot: 'rover-diff', template: 'reach-the-flag' },
-  ])('a limp $robot gets 0 of 20 on $template', async ({ robot, template: id }) => {
+  const templatesFor = (robot: FixtureRobot) => caseTemplates(buildRig(robot.joints, robot.parts), robot.parts);
+  const limpRuns = ['arm-3dof', 'rover-diff'].flatMap((robot) =>
+    templatesFor(fixture(robot))
+      .filter((t) => !t.refusal)
+      .map((t) => ({ robot, template: t.id })),
+  );
+
+  it('a limp robot is tried on every template', () => {
+    const every = templatesFor(fixture('rover-diff')).map((t) => t.id);
+
+    expect(new Set(limpRuns.map((r) => r.template))).toEqual(new Set(every));
+  });
+
+  it.each(limpRuns)('a limp $robot gets 0 of 20 on $template', async ({ robot, template: id }) => {
     const mj = await loadMujoco();
     const r = fixture(robot);
     const runs = await runCaseTimes(mj, template(r, id), caseRobot(r), { controller: 'limp' });
@@ -111,14 +121,18 @@ describe('seeded Case runs', () => {
     expect(finding).toMatchObject({ level: 'note', check: 'Reach the Flag', text: runs.refusal });
   });
 
-  it('seeded fault: cutting a rover’s wheel motors to 30% turns its row from pass to fail', async () => {
-    const mj = await loadMujoco();
+  describe('seeded fault: cutting a rover’s wheel motors to 30% turns its row from pass to fail', () => {
     const rover = withWheelEffort(fixture('rover-diff'), SMALL_GEAR_MOTOR_NM);
-    const weak = withWheelEffort(rover, SMALL_GEAR_MOTOR_NM * 0.3);
     const flag = template(rover, 'reach-the-flag');
 
-    expect(caseRow(flag, await runCaseTimes(mj, flag, caseRobot(rover))).status).toBe('pass');
-    expect(caseRow(flag, await runCaseTimes(mj, flag, caseRobot(weak))).status).toBe('fail');
+    it.each([
+      { motors: 'full', robot: rover, status: 'pass' },
+      { motors: '30%', robot: withWheelEffort(rover, SMALL_GEAR_MOTOR_NM * 0.3), status: 'fail' },
+    ])('$motors wheel motors read $status', async ({ robot, status }) => {
+      const mj = await loadMujoco();
+
+      expect(caseRow(flag, await runCaseTimes(mj, flag, caseRobot(robot))).status).toBe(status);
+    });
   });
 });
 

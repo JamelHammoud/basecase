@@ -30,7 +30,7 @@ A clean run in a perfect world says little about the real robot, so Checks judge
 - **Controller:** the reference, or with `RunOptions.walk` a ready Walk policy for a legged robot, as Drive picks it: the steering commands go through `policyCommand`, like the keys.
 - **`caseRunner`** does everything that doesn't depend on the seed once (rig, fit, scaling, the drive setup and its baked gait), and `run(seed)` builds the jittered world's model and rolls it. `runCase` is `caseRunner(…).run()`.
 - **`runCaseTimes`** (`caseRuns.ts`) runs seeds 1 to N (`CASE_RUNS` = 20) and returns the passes, the median margin and the most common failure label (`missed` for a run that failed no named failure). `runSeeds` and `summarizeRuns` are the same split in two, so the Checks workers can each take a batch of seeds (`caseCheckJob.ts`).
-- **Tests** (`caseRuns.test.ts`): same seed, same result; a limp robot gets 0 of 20 on both templates; the fixture rover reaches the flag 18 or more of 20; the weak quadruped fails Walk Without Falling by falling; a misfit's row carries the refusal. Seeded fault: the rover on 0.25 N·m wheel motors passes Reach the Flag 20 of 20, and cut to 30% it fails every run.
+- **Tests** (`caseRuns.test.ts`): same seed, same result; a limp robot gets 0 of 20 on every template, each on a fixture it fits; the fixture rover reaches the flag 18 or more of 20; the weak quadruped fails Walk Without Falling by falling; a misfit's row carries the refusal. Seeded fault: the rover on 0.25 N·m wheel motors passes Reach the Flag 20 of 20, and cut to 30% it fails every run.
 
 ### Making a Case
 

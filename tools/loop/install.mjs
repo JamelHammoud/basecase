@@ -11,7 +11,7 @@ const slots = (lane, count, every = MINUTE) =>
   Array.from({ length: count }, (_, i) => ({ lane, slot: String(i + 1), every }));
 
 const JOBS = [
-  ...slots('review', 2),
+  ...slots('review', 4),
   ...slots('merge', 1),
   ...slots('rebase', 1),
   ...slots('repair', 1),

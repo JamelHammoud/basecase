@@ -1,14 +1,12 @@
 import { parquetReadObjects } from 'hyparquet';
-import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
-import { buildCase, builderRobot } from '../src/cases/caseBuilder';
 import type { ReferenceCommand } from '../src/cases/schema';
 import type { DriveCommand } from '../src/sim/driveTypes';
 import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
-import { buildRig } from '../src/utils/kinematics';
 import { startFakeHub, type FakeHub } from './fakeHub';
+import { expectDataset, expectPublished, pickTimeline } from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
@@ -99,30 +97,6 @@ async function datasetFiles() {
   return Object.fromEntries(Object.entries(files ?? {}).map(([path, b64]) => [path, Buffer.from(b64, 'base64')]));
 }
 
-async function expectDataset() {
-  const files = await datasetFiles();
-  const paths = Object.keys(files);
-  const at = (end: string) => files[paths.find((p) => p.endsWith(end))!];
-  const rows = await parquetReadObjects({ file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer });
-  const info = JSON.parse(at('meta/info.json').toString());
-  const videos = paths.filter((p) => p.endsWith('.mp4'));
-
-  expect(paths.some((p) => p.endsWith('meta/modality.json'))).toBe(true);
-  expect(info.total_frames).toBe(rows.length);
-  expect(rows[0]['observation.state']).toHaveLength(3);
-  expect(videos.map((p) => p.split('/').at(-2))).toEqual(['observation.images.scene']);
-
-  for (const path of videos) {
-    const input = new Input({ source: new BufferSource(new Uint8Array(files[path])), formats: ALL_FORMATS });
-    const track = (await input.getPrimaryVideoTrack())!;
-    const stats = await track.computePacketStats();
-
-    expect([track.displayWidth, track.displayHeight]).toEqual([640, 480]);
-    expect(stats.packetCount).toBe(rows.length);
-    expect(info.features['observation.images.scene'].info['video.codec']).toMatch(/h264|vp9|av1/);
-  }
-}
-
 async function stopDriving() {
   await app.page.keyboard.press('Escape');
   await expect.poll(async () => (await simState()).drive).toBe('off');
@@ -199,15 +173,6 @@ describe('live drive', () => {
   });
 });
 
-function pickTimeline(): ReferenceCommand[] {
-  const arm = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
-  const built = buildCase({ goal: 'pick', world: 'floor' }, builderRobot(buildRig(arm.joints, arm.parts), arm.parts));
-
-  if (!built.ok) throw new Error(built.problem);
-
-  return built.kase.reference.timeline;
-}
-
 const simTime = async () => (await simState()).stats?.time ?? 0;
 
 const blockHeight = () =>
@@ -265,23 +230,6 @@ async function endTryAt(seconds: number) {
   }, seconds);
 }
 
-async function expectPublished(repo: string) {
-  const published = hub.repos.get(repo)!;
-  const paths = [...published.files.keys()];
-  const parquet = published.files.get('data/chunk-000/episode_000000.parquet')!;
-  const rows = await parquetReadObjects({ file: new Uint8Array(parquet).buffer });
-  const info = JSON.parse(published.files.get('meta/info.json')!.toString());
-
-  expect(published.kind).toBe('dataset');
-  expect(paths).toEqual(expect.arrayContaining(['meta/info.json', 'meta/modality.json', 'meta/episodes.jsonl']));
-  expect(paths.filter((p) => p.endsWith('.mp4'))).toEqual([
-    'videos/chunk-000/observation.images.scene/episode_000000.mp4',
-  ]);
-  expect(info.total_frames).toBe(rows.length);
-  await expect.poll(() => published.tags.get('v2.1')).toBe(published.commits.length);
-  expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
-}
-
 describe('Cases', () => {
   itUnlessWindows(
     'starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it',
@@ -315,7 +263,7 @@ describe('Cases', () => {
 
       expect(clashes).not.toContain('dot0');
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
-      await expectDataset();
+      await expectDataset(await datasetFiles());
 
       const headings = await simHeadings();
 
@@ -380,7 +328,7 @@ describe('Cases', () => {
       expect(published()).toHaveLength(1);
       expect(said).toContain(repo);
       expect(commitsOf(repo)).toBe((before.get(repo) ?? 0) + 1);
-      await expectPublished(repo);
+      await expectPublished(hub, repo);
       expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
       expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
       expect(app.errors).toEqual([]);

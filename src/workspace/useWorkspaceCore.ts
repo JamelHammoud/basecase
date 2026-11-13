@@ -61,12 +61,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     measure,
     mark: { marking: markState.marking, setMarking },
   });
-  const marks = useMarks({
-    docs,
-    showToast,
-    selection: markState.selection,
-    tool: markState.tool,
-  });
+  const marks = useMarks({ docs, showToast, selection: markState.selection, tool: markState.tool });
   const posing = usePosing({
     parts,
     project,

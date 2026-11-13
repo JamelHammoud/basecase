@@ -34,7 +34,6 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   const { edits } = actions;
   const { sim } = simTraining;
   const { cursors, lanes } = agent;
-  const { setDraft } = annotations;
   const editingMark = marks.selected;
   const shownParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
 
@@ -115,7 +114,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         activeId={annotations.activeId}
         draft={annotations.draft}
         onOpen={annotations.setActiveId}
-        onCancelDraft={() => setDraft(null)}
+        onCancelDraft={() => annotations.setDraft(null)}
         onCreate={annotations.create}
         onReply={annotations.reply}
         onEditComment={annotations.editComment}

@@ -11,6 +11,7 @@ import { eyeCaster, type EyeCaster } from './eyes';
 import { policyObsSize, type PolicySpec } from './policy';
 import { stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
+import { readJointAngles, readJointTargets } from './jointReadout';
 import { Scanner } from './scanner';
 
 export type Controller =
@@ -485,17 +486,11 @@ export class SimEngine {
   }
 
   jointTargets(out = new Float64Array(this.sim.joints.length)): Float64Array {
-    this.sim.joints.forEach((j, i) => {
-      const commanded = j.actuator >= 0 && j.drive === 'position';
-
-      out[i] = commanded ? this.data.ctrl[j.actuator] : this.data.qpos[this.jointQpos[i]];
-    });
-
-    return out;
+    return readJointTargets(this.sim, this.data, this.jointQpos, out);
   }
 
   jointAngles(): Float64Array {
-    return Float64Array.from(this.jointQpos, (address) => this.data.qpos[address]);
+    return readJointAngles(this.data, this.jointQpos);
   }
 
   private eyesFor(policy: PolicySpec): EyeCaster | null {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { failedTests, flakeStep, passedOnRerun } from './flakes.mjs';
+import { failedTests, flakeStep, passedOnRerun, slowStep, slowTests } from './flakes.mjs';
 
 const esc = String.fromCharCode(27);
 
@@ -29,6 +29,26 @@ describe('flaky tests', () => {
     const step = flakeStep('e2e/drive.e2e.test.ts > Cases > publishes a passed try', 'https://example.com/run/1');
 
     expect(step.title).toBe('Fix: Make the flaky test "publishes a passed try" in e2e/drive.e2e.test.ts deterministic');
+    expect(step.body).toContain('Never raise a timeout');
+  });
+});
+
+describe('slow tests', () => {
+  it('finds each passing test over 30 s, ignoring file totals, colours and quick ones', () => {
+    const log = [
+      `e2e (1)\tRun\t2026-11-13T16:00:00Z ${esc}[32m✓${esc}[39m exports a box as one STEP file ${esc}[33m63010ms${esc}[39m`,
+      'e2e (2)\tRun\t2026-11-13T16:00:01Z  ✓ e2e/drive.e2e.test.ts (8 tests) 85000ms',
+      'e2e (2)\tRun\t2026-11-13T16:00:02Z      ✓ drives an arm with W 4100ms',
+    ].join('\n');
+
+    expect(slowTests(log)).toEqual([{ name: 'exports a box as one STEP file', ms: 63010 }]);
+  });
+
+  it('asks to speed up or delete the test, never for a longer timeout', () => {
+    const step = slowStep({ name: 'draws a mark', ms: 50_000 }, 'https://example.com/run/2');
+
+    expect(step.title).toBe('Fix: Speed up or delete the slow test "draws a mark"');
+    expect(step.body).toContain('took 50 s');
     expect(step.body).toContain('Never raise a timeout');
   });
 });

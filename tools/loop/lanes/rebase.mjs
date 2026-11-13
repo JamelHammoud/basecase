@@ -2,7 +2,7 @@ import path from 'node:path';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { behindMain, conflictsWithMain, fetchAll } from '../lib/branches.mjs';
-import { lastFinishedMainCheck, openPulls, pullCheck, pullComments, pullReview } from '../lib/github.mjs';
+import { openPulls, pullCheck, pullComments, pullReview } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
 import { entryFor, markRefreshed, recordConflictFail } from '../lib/pullState.mjs';
 import { byRank } from '../lib/rank.mjs';
@@ -106,8 +106,6 @@ function claimFirst(pulls) {
 }
 
 function staleFailures(pulls) {
-  if (lastFinishedMainCheck()?.conclusion !== 'success') return [];
-
   const refreshable = (pull) =>
     pullCheck(pull) === 'failure' &&
     pullReview(pull) !== 'failure' &&

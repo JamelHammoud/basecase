@@ -38,6 +38,7 @@ export * from './CodeBlock';
 export * from './PanelResizer';
 export * from './ImageViewer';
 export * from './HoverCard';
+export * from './PreviewImage';
 export * from './useScrollFade';
 export * from './glyph';
 export * from './glyphs';

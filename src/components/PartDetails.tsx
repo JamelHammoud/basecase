@@ -4,7 +4,7 @@ import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/co
 import { isSourcedId } from '../data/sourcedItems';
 import { usePartThumbnail } from '../three/partThumbnails';
 import { keySpecs } from '../utils/keySpecs';
-import { MetaLine, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon } from '../design-system';
+import { MetaLine, PreviewImage, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon } from '../design-system';
 
 const fmt = (v: number) => String(Math.round(v * 100) / 100);
 
@@ -134,32 +134,27 @@ export const Stat: React.FC<{ label: string; children: React.ReactNode; wide?: b
   </div>
 );
 
-export const Hero: React.FC<
-  {
-    item: CatalogItem;
-    className?: string;
-  } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
-> = ({ item, className = 'h-[136px]', ...rest }) => {
-  const thumb = usePartThumbnail(item);
+type HeroFrameProps = { className?: string } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>;
 
-  return (
-    <div
-      {...rest}
-      className={`relative bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)] ${className}`}
-    >
-      {thumb ? (
-        <img
-          src={thumb}
-          alt=""
-          draggable={false}
-          className="absolute inset-0 w-full h-full object-contain p-2.5 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
-        />
-      ) : (
-        <div className="absolute inset-0 shimmer" />
-      )}
-    </div>
-  );
-};
+export const HeroImage: React.FC<HeroFrameProps & { src: string | undefined }> = ({
+  src,
+  className = 'h-[136px]',
+  ...rest
+}) => (
+  <div
+    {...rest}
+    className={`relative bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)] ${className}`}
+  >
+    <PreviewImage
+      src={src}
+      className="absolute inset-0 p-2.5 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
+    />
+  </div>
+);
+
+export const Hero: React.FC<HeroFrameProps & { item: CatalogItem }> = ({ item, ...rest }) => (
+  <HeroImage src={usePartThumbnail(item)} {...rest} />
+);
 
 export const Header: React.FC<{
   title: string;

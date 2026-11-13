@@ -125,6 +125,8 @@ function announcePause(error) {
 }
 
 const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.resolve(HOME_CHECKOUT);
+const startedAt = Date.now();
+const LONG_RUN_MINUTES = 2;
 
 try {
   if (runsFromHome && lane === 'merge') updateHome();
@@ -139,3 +141,7 @@ try {
     process.exitCode = 1;
   }
 }
+
+const minutes = Math.round((Date.now() - startedAt) / 60_000);
+
+if (minutes >= LONG_RUN_MINUTES) log(`took ${minutes} min`);

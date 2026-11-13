@@ -39,7 +39,7 @@ export const lineComments = (since) =>
 const PULL_FIELDS =
   'number,title,body,author,isCrossRepository,state,headRefName,labels,createdAt,mergedAt,closedAt,reviews';
 
-export const pullsSince = (since) =>
+export const pullsSince = (since, extraFields = []) =>
   json('gh', [
     'pr',
     'list',
@@ -50,7 +50,7 @@ export const pullsSince = (since) =>
     '--search',
     `updated:>=${since.slice(0, 10)}`,
     '--json',
-    PULL_FIELDS,
+    [PULL_FIELDS, ...extraFields].join(','),
   ]) ?? [];
 
 export const mainCommits = (since) =>

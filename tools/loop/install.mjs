@@ -167,13 +167,22 @@ function uninstall() {
   console.log('Removed every loop job.');
 }
 
+const HOUR = 60 * 60;
+const WEEK = 7 * 24 * HOUR;
+
+const cadenceOf = (seconds) => {
+  if (seconds <= 60) return 'always on';
+
+  return seconds === WEEK ? 'weekly' : `every ${seconds / HOUR} h`;
+};
+
 const command = process.argv[2];
 
 if (command === 'install') install();
 else if (command === 'uninstall') uninstall();
 else if (command === 'list') {
   for (const { name, slots, everySeconds, does } of LANES) {
-    const cadence = everySeconds <= 60 ? 'always on' : `every ${everySeconds / 3600} h`;
+    const cadence = cadenceOf(everySeconds);
 
     console.log(
       `${name.padEnd(8)} ${String(slots).padStart(2)} slot${slots > 1 ? 's' : ' '}  ${cadence.padEnd(11)} ${does}`,

@@ -31,6 +31,11 @@ jobs:
       - run: npm run check
       - run: npx vite build
       - run: npm run test:e2e
+
+      - name: Run quarantined tests
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npm run test:quarantine
       - if: runner.os == 'Linux'
         run: npm audit --audit-level=high
 

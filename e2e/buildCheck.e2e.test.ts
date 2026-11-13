@@ -144,7 +144,7 @@ describe('Checks', () => {
 
     expect(quoteBox!.y + quoteBox!.height).toBeLessThanOrEqual(composerBox!.y);
 
-    await quotes().getByRole('button', { name: 'Remove Quote' }).click();
+    await quotes().getByRole('button', { name: 'Remove quote' }).click();
     await expect.poll(() => quotes().count(), { timeout: 5000 }).toBe(0);
   }, 30000);
 
@@ -167,7 +167,7 @@ describe('Checks', () => {
     await app.page.getByText(typed).first().click({ button: 'right' });
     await app.page.getByRole('menuitem', { name: 'Quote Message' }).click();
     await expect.poll(() => quotes().locator('p').first().textContent(), { timeout: 5000 }).toBe(typed);
-    await quotes().getByRole('button', { name: 'Remove Quote' }).click();
+    await quotes().getByRole('button', { name: 'Remove quote' }).click();
     await expect.poll(() => quotes().count(), { timeout: 5000 }).toBe(0);
   }, 30000);
 

@@ -39,7 +39,7 @@ export function RoutinesPanel({ routines, onTrain }: RoutinesPanelProps) {
     return (
       <EmptyState
         icon={<RoutinesIcon className="w-5 h-5" />}
-        title="No routines"
+        title="No Routines"
         action={
           <Button variant="primary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={() => store.create()}>
             New Routine

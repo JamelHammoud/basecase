@@ -354,7 +354,7 @@ export function contextMenuItems(menu: CanvasMenuState, inputs: ContextInputs): 
           onSelect: () => core.annotations.place(point, menu.partId),
         },
         {
-          label: 'Measure From Here',
+          label: 'Measure from Here',
           shortcut: 'D',
           icon: <RulerIcon className={ic} />,
           onSelect: () => {

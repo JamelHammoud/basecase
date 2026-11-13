@@ -6,6 +6,7 @@ import {
   IconButton,
   LockIcon,
   LookIcon,
+  RenameField,
   UnlockIcon,
 } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
@@ -23,26 +24,6 @@ const CLICKABLE_ON_REVEAL =
 const COLLAPSED_UNTIL_REVEAL = 'hidden group-hover:flex group-has-[:focus-visible]:flex';
 
 const rowTone = (selected: boolean, rest: string) => (selected ? SELECTED : `${RESTING} ${rest}`);
-
-export const RenameInput: React.FC<{ current: string; onCommit: (name: string) => void; onCancel: () => void }> = ({
-  current,
-  onCommit,
-  onCancel,
-}) => (
-  <input
-    autoFocus
-    defaultValue={current}
-    onFocus={(e) => e.target.select()}
-    onClick={(e) => e.stopPropagation()}
-    onBlur={(e) => onCommit(e.target.value.trim() || current)}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter') e.currentTarget.blur();
-
-      if (e.key === 'Escape') onCancel();
-    }}
-    className="flex-1 min-w-0 h-6 px-1 -mx-1 rounded bg-black/30 ring-1 ring-[#0d99ff] outline-none text-white"
-  />
-);
 
 const PartGlyph: React.FC<{ part: ScenePart }> = ({ part }) => {
   if (part.kind === 'image_plane' && part.imageDataUrl) {
@@ -193,13 +174,14 @@ export const PartRow: React.FC<PartRowProps> = ({
       {collapsed !== undefined && <Chevron collapsed={collapsed} onToggle={() => on.onToggleCollapsed(part.id)} />}
       <PartGlyph part={part} />
       {renaming ? (
-        <RenameInput
-          current={part.name}
-          onCommit={(name) => {
-            on.onRename(part.id, name);
+        <RenameField
+          name={part.name}
+          className="-mx-1.5"
+          onDone={(name) => {
+            if (name) on.onRename(part.id, name);
+
             on.onEdit(null);
           }}
-          onCancel={() => on.onEdit(null)}
         />
       ) : (
         <span className="flex-1 truncate">{part.name}</span>
@@ -240,13 +222,14 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
     <Chevron collapsed={collapsed} onToggle={() => on.onToggleCollapsed(id)} />
     <GroupIcon className="w-3.5 h-3.5 text-white/50 shrink-0" />
     {editing ? (
-      <RenameInput
-        current={name}
-        onCommit={(next) => {
-          on.onRename(id, next);
+      <RenameField
+        name={name}
+        className="-mx-1.5"
+        onDone={(next) => {
+          if (next) on.onRename(id, next);
+
           on.onEdit(null);
         }}
-        onCancel={() => on.onEdit(null)}
       />
     ) : (
       <span className="flex-1 truncate">{name}</span>

@@ -14,13 +14,11 @@ export interface SectionState {
   showMenu: (entries: ContextMenuEntry[]) => (e: React.MouseEvent) => void;
 }
 
-const finishRename =
-  (state: SectionState, current: string, rename: (name: string) => void) =>
-  (name: string) => {
-    state.setRenaming(null);
+const finishRename = (state: SectionState, rename: (name: string) => void) => (name: string | null) => {
+  state.setRenaming(null);
 
-    if (name && name !== current) rename(name);
-  };
+  if (name) rename(name);
+};
 
 const EmptyModelsAction: React.FC<{ props: LibraryPanelProps }> = ({ props }) =>
   props.selectedIds.length > 0 ? (
@@ -44,7 +42,7 @@ export const ModelsSection: React.FC<{
       model={m}
       renaming={state.renaming === m.id}
       onInsert={() => props.onInsertModel(m)}
-      onRename={finishRename(state, m.name, (name) => props.onRenameModel(m, name))}
+      onRename={finishRename(state, (name) => props.onRenameModel(m, name))}
       onMenu={state.showMenu(
         modelMenu({
           model: m,

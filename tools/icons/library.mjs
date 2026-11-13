@@ -131,7 +131,6 @@ const DRAWN = {
       'M10 3.5H6A2.5 2.5 0 0 0 3.5 6V18A2.5 2.5 0 0 0 6 20.5H18A2.5 2.5 0 0 0 20.5 18V14M14 3.5H20.5V10M20.5 3.5L11 13',
     PanelLeftIcon: PANEL + 'M7.75 8V16',
     PanelRightIcon: PANEL + 'M16.25 8V16',
-    PanelsIcon: PANEL + 'M7.75 8V16M16.25 8V16',
   },
   editing: {
     ComposeIcon:

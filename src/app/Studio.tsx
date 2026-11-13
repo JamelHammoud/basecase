@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { SettingsWindow } from '../components/SettingsWindow';
 import { SceneWorkspace } from '../SceneWorkspace';
 import { useScenePersistence, type InitialTabs } from './openScenes';
-import { DEFAULT_PANEL_WIDTHS } from './storedSettings';
 import { tabListOf } from './tabModel';
 import { TitleBarTabs } from './TitleBarTabs';
 import { useAgentConnection } from './useAgentConnection';
@@ -132,12 +131,6 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         onShowReferenceImages={prefs.setShowReferenceImages}
         trackpadMode={prefs.trackpadMode}
         onTrackpadMode={prefs.setTrackpadMode}
-        isLeftOpen={layout.isLeftOpen}
-        onLeftOpen={layout.setIsLeftOpen}
-        isRightOpen={layout.isRightOpen}
-        onRightOpen={layout.setIsRightOpen}
-        panelWidths={layout.panelWidths}
-        onResetPanelWidths={() => layout.setPanelWidths({ ...DEFAULT_PANEL_WIDTHS })}
         acpStatus={agent.acpStatus}
         onReconnectAcp={agent.reconnectAcp}
         targetHeightMm={agent.agentTargetHeightMm}

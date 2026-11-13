@@ -27,6 +27,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Strips (`StripGroup` + `StripButton` in `AlignBar.tsx`) are the pattern for a row of equal actions: a 32px soft track with 2px inset cells, never a grid of text buttons or tall tiles.
 - **`NumberInput`:**
   - Drag the label to scrub (Shift ×10, ⌥ ×0.1). ↑/↓ steps, Enter commits, Esc reverts.
+  - Hovering a one-letter label shows what it stands for (W: Width (X)). A field with its name beside it (Wall thickness, Copies, Infill) has no tooltip.
   - Accepts math (`40/2`).
 - **Live vs. committed edits:** scrubbing, slider drags and typing call `onChange(value, live=true)`. Those skip undo history until release or blur, which commits one undo step (`commitParts(updater, live)` in `App.tsx`).
 

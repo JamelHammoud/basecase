@@ -124,7 +124,3 @@ export const PanelLeftIcon = glyph(
 export const PanelRightIcon = glyph(
   'M5 3.5H19A2.5 2.5 0 0 1 21.5 6V18A2.5 2.5 0 0 1 19 20.5H5A2.5 2.5 0 0 1 2.5 18V6A2.5 2.5 0 0 1 5 3.5ZM16.25 8V16',
 );
-
-export const PanelsIcon = glyph(
-  'M5 3.5H19A2.5 2.5 0 0 1 21.5 6V18A2.5 2.5 0 0 1 19 20.5H5A2.5 2.5 0 0 1 2.5 18V6A2.5 2.5 0 0 1 5 3.5ZM7.75 8V16M16.25 8V16',
-);

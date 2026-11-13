@@ -4,9 +4,7 @@ import { AcpStatusInfo, MeasureUnit, TrackpadGestureMode } from '../types/roboti
 import { AGENT_PROFILES } from '../agent/agentKinds';
 import { IS_MAC } from '../utils/os';
 import {
-  Button,
   IconButton,
-  MetaLine,
   modifierName,
   NO_DRAG_REGION,
   NumberInput,
@@ -20,7 +18,6 @@ import {
   HumanIcon,
   KeyboardIcon,
   PackageIcon,
-  PanelsIcon,
   PrinterIcon,
   RefreshIcon,
 } from '../design-system';
@@ -32,11 +29,10 @@ import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
-export type SettingsPane = 'canvas' | 'layout' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
   { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
-  { id: 'layout', label: 'Layout', icon: <PanelsIcon className="w-4 h-4" /> },
   { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
   { id: 'build', label: 'Build', icon: <PackageIcon className="w-4 h-4" /> },
   { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
@@ -75,12 +71,6 @@ export interface SettingsWindowProps {
   onShowReferenceImages: (v: boolean) => void;
   trackpadMode: TrackpadGestureMode;
   onTrackpadMode: (mode: TrackpadGestureMode) => void;
-  isLeftOpen: boolean;
-  onLeftOpen: (v: boolean) => void;
-  isRightOpen: boolean;
-  onRightOpen: (v: boolean) => void;
-  panelWidths: { left: number; right: number };
-  onResetPanelWidths: () => void;
   acpStatus: AcpStatusInfo;
   onReconnectAcp: (command?: string) => Promise<void>;
   targetHeightMm: number;
@@ -178,7 +168,6 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-[28px] pt-[4px] pb-[28px]"
           >
             {current.id === 'canvas' && <CanvasPane {...props} />}
-            {current.id === 'layout' && <LayoutPane {...props} />}
             {current.id === 'agent' && <AgentPane {...props} />}
             {current.id === 'build' && <BuildPane prefs={props.buildPrefs} />}
             {current.id === 'printers' && (
@@ -270,25 +259,6 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
       </Row>
     </Group>
   </>
-);
-
-const LayoutPane: React.FC<PaneProps> = (p) => (
-  <Group title="Panels">
-    <Row label="Show sidebar" shortcut="⌘B">
-      <Switch aria-label="Show sidebar" checked={p.isLeftOpen} onChange={p.onLeftOpen} />
-    </Row>
-    <Row label="Show inspector" shortcut="⌘I">
-      <Switch aria-label="Show inspector" checked={p.isRightOpen} onChange={p.onRightOpen} />
-    </Row>
-    <Row
-      label="Panel widths"
-      hint={<MetaLine items={[`Sidebar ${p.panelWidths.left} px`, `Inspector ${p.panelWidths.right} px`]} />}
-    >
-      <Button size="sm" onClick={p.onResetPanelWidths}>
-        Reset
-      </Button>
-    </Row>
-  </Group>
 );
 
 const agentOfCommand = (command: string) => AGENT_PROFILES.find((p) => p.command === command);

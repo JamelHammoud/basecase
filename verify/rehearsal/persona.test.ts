@@ -43,13 +43,18 @@ async function session(lab: PersonaLab, options: { index: number; rng: Rng; kind
     await plantFaults(run.page, specs);
     await sleep(500);
 
-    const rects = await faultRects(run.page);
     const { findings } = await lab.runPersona({
       screen: screenOf(run.page),
       goals: goalsFor(view),
       minutes: SESSION_MINUTES,
     });
-    const planted: PlantedFault[] = specs.map((s) => ({ session: options.index, ...s, rect: rects[s.name] ?? null }));
+    const rects = await faultRects(run.page);
+    const planted: PlantedFault[] = specs.map((s) => ({
+      session: options.index,
+      ...s,
+      rect: rects[s.name]?.[0] ?? null,
+      seen: rects[s.name] ?? [],
+    }));
 
     return { planted, found: { session: options.index, findings } as SessionFindings };
   } finally {

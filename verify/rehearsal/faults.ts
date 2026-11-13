@@ -49,7 +49,14 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
     ({ list, selector }) => {
       const label = (el: Element) => (el.getAttribute('aria-label') ?? el.textContent ?? '').trim();
       const done = new WeakSet<Element>();
-      const rects: Record<string, unknown> = {};
+      const rects: Record<string, DOMRect[]> = {};
+      const sameRect = (a: DOMRect, b: DOMRect) =>
+        Math.abs(a.x - b.x) < 4 && Math.abs(a.y - b.y) < 4 && Math.abs(a.width - b.width) < 4;
+      const remember = (name: string, rect: DOMRect) => {
+        const seen = (rects[name] ??= []);
+
+        if (rect.width > 0 && seen.length < 40 && !seen.some((r) => sameRect(r, rect))) seen.push(rect);
+      };
       const swallow = (el: HTMLElement) =>
         el.addEventListener('click', (e) => (e.stopImmediatePropagation(), e.preventDefault()), true);
       const apply: Record<string, (el: HTMLElement) => void> = {
@@ -117,7 +124,7 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
 
           if (!el) continue;
 
-          rects[spec.name] = el.getBoundingClientRect().toJSON();
+          remember(spec.name, el.getBoundingClientRect());
 
           if (!done.has(el)) {
             done.add(el);
@@ -135,5 +142,14 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
   );
 }
 
-export const faultRects = (page: Page): Promise<Record<string, Rect>> =>
-  page.evaluate(() => (window as unknown as { __gateFaultRects?: Record<string, Rect> }).__gateFaultRects ?? {});
+export const faultRects = (page: Page): Promise<Record<string, Rect[]>> =>
+  page.evaluate(() => {
+    const seen = (window as unknown as { __gateFaultRects?: Record<string, DOMRect[]> }).__gateFaultRects ?? {};
+
+    return Object.fromEntries(
+      Object.entries(seen).map(([name, list]) => [
+        name,
+        list.map((r) => ({ x: r.x, y: r.y, width: r.width, height: r.height })),
+      ]),
+    );
+  });

@@ -13,6 +13,7 @@ export interface PlantedFault {
   kind: FaultKind;
   name: string;
   rect: Rect | null;
+  seen?: Rect[];
 }
 
 export interface SessionFindings {
@@ -28,10 +29,14 @@ const inside = (at: [number, number] | undefined, r: Rect | null, slack: number)
   at[1] >= r.y - slack &&
   at[1] <= r.y + r.height + slack;
 
-const names = (f: Finding, fault: PlantedFault) => f.where.toLowerCase().includes(fault.name.toLowerCase());
+const squashed = (text: string) => text.toLowerCase().replace(/\s+/g, '');
 
-export const matches = (f: Finding, fault: PlantedFault) =>
-  names(f, fault) || inside(f.at, fault.rect, PERSONA_BARS.slackPx);
+const names = (f: Finding, fault: PlantedFault) => squashed(f.where).includes(squashed(fault.name));
+
+const placed = (f: Finding, fault: PlantedFault) =>
+  [fault.rect, ...(fault.seen ?? [])].some((r) => inside(f.at, r, PERSONA_BARS.slackPx));
+
+export const matches = (f: Finding, fault: PlantedFault) => names(f, fault) || placed(f, fault);
 
 export interface PersonaScore {
   recall: number;

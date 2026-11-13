@@ -32,10 +32,14 @@ export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ pr
           </button>
         ))}
       </div>
-      <IslandDivider />
-      <Button size="sm" variant="ghost" onClick={arrange} disabled={!plate}>
-        Auto Arrange
-      </Button>
+      {!printing.fitTest && (
+        <>
+          <IslandDivider />
+          <Button size="sm" variant="ghost" onClick={arrange} disabled={!plate}>
+            Auto Arrange
+          </Button>
+        </>
+      )}
     </FloatingIsland>
   );
 };

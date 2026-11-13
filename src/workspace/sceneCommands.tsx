@@ -31,6 +31,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
 import { skeletonCommands } from './skeletonCommands';
+import { fitTestCommands } from './fitTestCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
@@ -145,6 +146,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
         void core.readiness.checkNow();
       },
     },
+    ...fitTestCommands({ core }),
     {
       id: 'slice-plates',
       group: 'Scene',

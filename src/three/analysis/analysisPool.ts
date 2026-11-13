@@ -16,6 +16,7 @@ import {
 import { geometryPayload, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
+import type { FitCoupon, FitCouponTask } from './fitCoupons';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 import type { FoundAxis } from '../../joints/axisFinder';
@@ -205,4 +206,10 @@ export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Pr
 
 export function jointAxisIn(scene: SceneShapes, query: JointAxisQuery): Promise<FoundAxis | null> {
   return analyze(pool()[0], scene, { kind: 'jointAxis', instances: scene.instances, ...query });
+}
+
+export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<FitCoupon[]> {
+  if (!task.fits.length || !task.hosts.length) return Promise.resolve([]);
+
+  return analyze(leastBusy(), scene, { kind: 'fitCoupons', instances: scene.instances, ...task });
 }

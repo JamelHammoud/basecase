@@ -37,6 +37,7 @@ export interface DevActions {
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
   worldAt: () => Record<string, number[]>;
+  printPlates: () => unknown;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
@@ -162,6 +163,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
     worldAt: () => devRef.current.worldAt(),
+    printPlates: () => devRef.current.printPlates(),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),

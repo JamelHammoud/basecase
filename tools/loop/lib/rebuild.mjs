@@ -76,7 +76,7 @@ export function rebuild(pull, { comments, stuck, log }) {
 
     const step = stepOf(pull);
     const url = publish(
-      { ...out, why: `${out.why}\n\nRebuilds #${pull.number}.${step ? ` Closes #${step}.` : ''}` },
+      { ...out, links: [`Rebuilds #${pull.number}.`, ...(step ? [`Closes #${step}.`] : [])] },
       worktree,
     );
 

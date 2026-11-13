@@ -22,12 +22,31 @@ const byPriorityThenAge = (a, b) =>
 
 const openPullNumbers = () => new Set(openPulls().map((pull) => pull.number));
 
+const ORPHAN_AFTER_MS = 30 * 60 * 1000;
+
+const stepsWithPulls = () =>
+  new Set(
+    openPulls().flatMap((pull) => [
+      ...[...pull.body.matchAll(/Closes #(\d+)/g)].map((m) => Number(m[1])),
+      ...[/^loop\/build\/(\d+)-/.exec(pull.headRefName)?.[1]].filter(Boolean).map(Number),
+    ]),
+  );
+
+const orphaned = (now) => {
+  const built = stepsWithPulls();
+
+  return issues(BUILDING).filter(
+    (issue) => !built.has(issue.number) && now - Date.parse(issue.updatedAt) > ORPHAN_AFTER_MS,
+  );
+};
+
 const waitingSteps = () => {
   const now = Date.now();
   const openNumbers = openPullNumbers();
+  const queued = issues(NEXT).filter((issue) => !hasLabel(issue, BUILDING));
 
-  return issues(NEXT)
-    .filter((issue) => issue.author?.login === OWNER_LOGIN && !hasLabel(issue, BUILDING))
+  return [...queued, ...orphaned(now)]
+    .filter((issue) => issue.author?.login === OWNER_LOGIN)
     .filter((issue) => !stepWaiting(stepEntry(issue.number), { now, openNumbers }))
     .sort(byPriorityThenAge);
 };
@@ -76,7 +95,7 @@ function buildStep(step, { log, slot }) {
       return;
     }
 
-    const change = { ...result.output, why: `${result.output.why}\n\nCloses #${step.number}.` };
+    const change = { ...result.output, links: [`Closes #${step.number}.`] };
     const onDuplicate = (open) => {
       commentOnIssue(step.number, `Already being built in #${open.number}.`);
       log(`#${step.number}: #${open.number} already has this title`);

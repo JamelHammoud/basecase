@@ -64,7 +64,9 @@ export function pullBody(change, { branch, extra = {}, protectedPaths = [] }) {
     .replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? NONE)
     .trim();
 
-  return withProtected(body, protectedPaths);
+  const links = (change.links ?? []).join(' ');
+
+  return withProtected(links ? `${body}\n\n${links}` : body, protectedPaths);
 }
 
 const git = (args, dir, opts = {}) => run('git', args, { cwd: dir, ...opts });

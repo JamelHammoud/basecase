@@ -6,8 +6,6 @@ import { parseMeshFile as parsePositions } from '../meshFile';
 import type { MeshGeometry, Model, ModelJoint } from './model';
 import { catalogFrame, limbOf, publishedData, round, S, type PublishedData } from './published';
 import { readModel } from './readModel';
-import { applyJointMap } from './robotPackage';
-import type { CalibrationHistory } from '../../reality/history';
 import type { Resolver, Source } from './sources';
 
 export interface ImportOptions {
@@ -24,7 +22,6 @@ export interface ImportedRobot {
   joints: RobotJoint[];
   triangles: number;
   notes: string[];
-  servoCalibrations?: Record<string, CalibrationHistory>;
 }
 
 type Say = (message: string) => void;
@@ -180,8 +177,8 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
 
   say('Reading the description');
 
-  const { model, resolver, jointMap, origin } = await readModel(source);
-  const name = opts.name ?? jointMap?.robot ?? prettyJointName(model.name);
+  const { model, resolver, origin } = await readModel(source);
+  const name = opts.name ?? prettyJointName(model.name);
   const files = await loadMeshFiles(model, resolver, say, notes);
 
   say('Building parts');
@@ -209,9 +206,6 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   applyPublishedMass(built, data);
 
   const joints = sceneJoints(model, built.partOfLink, { name, frame, shift: built.shift, data });
-  const robot = { name, triangles: built.triangles, notes };
 
-  if (!jointMap) return { ...robot, parts: built.parts, joints };
-
-  return { ...robot, ...applyJointMap({ parts: built.parts, joints }, jointMap, built.partOfLink) };
+  return { name, parts: built.parts, joints, triangles: built.triangles, notes };
 }

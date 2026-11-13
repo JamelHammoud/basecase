@@ -3,7 +3,7 @@ import { ARTICULATED_PARTS } from '../data/articulatedParts';
 import { loadSimReady, type SimReadyImport } from '../simready/loadAsset';
 import { prepareParts } from '../three/partMesh/prepare';
 import type { SimReadyAsset } from '../simready/search';
-import type { CatalogItem, ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import type { CatalogItem, RobotJoint, ScenePart } from '../types/robotics';
 import {
   importRobot,
   RobotChoiceError,
@@ -35,16 +35,6 @@ export interface RobotChoice {
   source: Exclude<RobotSource, { kind: 'simready' }>;
   at?: Vec3;
   choices: string[];
-}
-
-function calibrationsByPlacedId(robot: ImportedRobot, placed: RobotJoint[]) {
-  return Object.fromEntries(
-    robot.joints.flatMap((j, i) => {
-      const history = robot.servoCalibrations?.[j.id];
-
-      return history && placed[i] ? [[placed[i].id, history]] : [];
-    }),
-  );
 }
 
 function rememberPreview(robot: ImportedRobot, url: string) {
@@ -113,13 +103,9 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
   const takenJointIds = () => (projectRef.current.joints ?? []).map((j) => j.id);
 
-  const insertRig = (placed: PlacedRig, frame: boolean, calibrations: ProjectSettings['servoCalibrations'] = {}) => {
+  const insertRig = (placed: PlacedRig, frame: boolean) => {
     commitParts((prev) => [...prev, ...placed.parts]);
-    updateProjectNow((p) => ({
-      ...p,
-      joints: [...(p.joints ?? []), ...placed.joints],
-      ...(Object.keys(calibrations).length ? { servoCalibrations: { ...p.servoCalibrations, ...calibrations } } : {}),
-    }));
+    updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...placed.joints] }));
     setSelectedIds(placed.parts.map((p) => p.id));
 
     if (frame) frameNextRef.current = true;
@@ -134,9 +120,9 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     const placed = placeRobot({ parts: robot.parts, joints: robot.joints, shift, takenJointIds: takenJointIds() });
 
     await prepareParts(placed.parts);
-    insertRig(placed, !at, calibrationsByPlacedId(robot, placed.joints));
+    insertRig(placed, !at);
 
-    if (source.kind === 'url') rememberPreview(robot, source.url);
+    if (source.kind === 'url') rememberPreview(robot, robot.parts[0]?.robotLink?.url ?? source.url);
 
     showToast(isObject ? `Inserted ${robot.name}` : insertedMessage(robot, placed.joints), {
       action: poseAction(placed.joints),

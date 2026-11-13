@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { strToU8 } from 'three/examples/jsm/libs/fflate.module.js';
 import { importRobot } from '../robotImport';
 import { safeEntryPath, unzipEntries } from './archive';
-import { localFile, TinyDomParser, zipOf } from './robotImport.fixtures';
+import { DESK_ARM, deskArmFiles, deskArmZip, localFile, TinyDomParser, zipOf } from './robotImport.fixtures';
 import { localTree, treeResolver } from './tree';
 
 const URDF = (mesh: string) => `<robot name="sneaky">
@@ -63,5 +63,30 @@ describe('zip entry paths', () => {
 
     expect(robot.notes).toEqual(["Couldn't read secret.stl"]);
     expect(robot.joints.map((j) => j.id)).toEqual(['hinge']);
+  });
+});
+
+describe('zips and folders', () => {
+  const deg = (rad: number) => Math.round(((rad * 180) / Math.PI) * 100) / 100;
+
+  it('imports a zipped description with its joints, limits and masses', async () => {
+    const robot = await importRobot({ kind: 'files', files: [localFile('desk_arm.zip', deskArmZip())] });
+
+    expect(robot.notes).toEqual([]);
+    expect(robot.joints.map((j) => [j.name, j.type, j.range])).toEqual(
+      DESK_ARM.joints.map((j) => [j.name, 'revolute', [deg(j.limits[0]), deg(j.limits[1])]]),
+    );
+    expect(robot.joints[1].parentJoint).toBe('Shoulder');
+
+    for (const p of DESK_ARM.parts) {
+      expect(robot.parts.find((part) => part.robotLink?.link === p.link)?.massG, p.link).toBe(p.massKg * 1000);
+    }
+  });
+
+  it('imports the same description as a dropped folder', async () => {
+    const files = Object.entries(deskArmFiles()).map(([path, bytes]) => localFile(path, bytes));
+    const robot = await importRobot({ kind: 'files', files });
+
+    expect(robot.joints.map((j) => j.id)).toEqual(['Shoulder', 'Elbow']);
   });
 });

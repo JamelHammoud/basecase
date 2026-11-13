@@ -50,12 +50,6 @@ describe('chooseEntry', () => {
     expect(await chooseEntry(scoped, mjcfIn([]))).toEqual({ entry: 'robots/go1_description/urdf/go1.urdf' });
   });
 
-  it('opens a Basecase package through its joint map', async () => {
-    const paths = ['arm/robot.urdf', 'arm/robot.xml', 'arm/joint_map.json', 'arm/meshes/a.stl'];
-
-    expect(await chooseEntry(paths, mjcfIn(['arm/robot.xml']))).toEqual({ jointMap: 'arm/joint_map.json' });
-  });
-
   it('finds nothing in a folder without a description', async () => {
     expect(await chooseEntry(['notes/readme.md', 'pkg/package.xml'], mjcfIn([]))).toBeNull();
   });

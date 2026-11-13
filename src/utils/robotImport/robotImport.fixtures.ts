@@ -1,9 +1,6 @@
 import * as THREE from 'three';
 import { strToU8, zipSync, type Zippable } from 'three/examples/jsm/libs/fflate.module.js';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
-import { BAM_STS3215_7V4 } from '../../data/servoFits';
-import type { ServoCalibration } from '../../reality/types';
-import { PACKAGE_FORMAT, type JointMap } from './robotPackage';
 import type { LocalFile } from './sources';
 
 class XmlElement {
@@ -58,7 +55,7 @@ export const localFile = (path: string, content: string | Uint8Array): LocalFile
   blob: new Blob([typeof content === 'string' ? content : (content as Uint8Array<ArrayBuffer>)]),
 });
 
-export interface PackagePart {
+export interface ArmPart {
   link: string;
   body: string;
   massKg: number;
@@ -66,63 +63,30 @@ export interface PackagePart {
   size: number;
 }
 
-export interface PackageJoint {
-  id: string;
+export interface ArmJoint {
   name: string;
   parent: string;
   child: string;
   origin: [number, number, number];
   limits: [number, number];
-  servoLink?: string;
 }
 
 export const DESK_ARM = {
-  name: 'Desk Arm',
   bodies: ['body_base', 'body_shoulder', 'body_elbow'],
   parts: [
     { link: 'base_plate', body: 'body_base', massKg: 0.2, at: [0, 0, 0.01], size: 0.08 },
-    { link: 'servo_1', body: 'body_base', massKg: 0.055, at: [0, 0, 0.035], size: 0.03 },
     { link: 'upper_arm', body: 'body_shoulder', massKg: 0.08, at: [0, 0, 0.1], size: 0.04 },
-    { link: 'servo_2', body: 'body_shoulder', massKg: 0.055, at: [0, 0, 0.14], size: 0.03 },
     { link: 'forearm', body: 'body_elbow', massKg: 0.06, at: [0, 0, 0.22], size: 0.035 },
-  ] satisfies PackagePart[],
+  ] satisfies ArmPart[],
   joints: [
-    {
-      id: 'shoulder',
-      name: 'Shoulder',
-      parent: 'body_base',
-      child: 'body_shoulder',
-      origin: [0, 0, 0.05],
-      limits: [-1.5, 1.5],
-      servoLink: 'servo_1',
-    },
-    {
-      id: 'elbow',
-      name: 'Elbow',
-      parent: 'body_shoulder',
-      child: 'body_elbow',
-      origin: [0, 0, 0.11],
-      limits: [-0.5, 2],
-      servoLink: 'servo_2',
-    },
-  ] satisfies PackageJoint[],
-};
-
-export const SHOULDER_CALIBRATION: ServoCalibration = {
-  verdict: 'measured',
-  family: 'sts3215',
-  version: 3,
-  rung: 'response',
-  fit: { ...BAM_STS3215_7V4, kt: 1.1 },
-  volts: 7.4,
-  scales: { kt: 0.86 },
-  conditions: { volts: 7.4, temperatureC: 31 },
-  evidence: { logs: 4, presetErrorRad: 0.08, fittedErrorRad: 0.02, gain: 0.75, explained: 0.9, reason: 'fits' },
+    { name: 'Shoulder', parent: 'body_base', child: 'body_shoulder', origin: [0, 0, 0.05], limits: [-1.5, 1.5] },
+    { name: 'Elbow', parent: 'body_shoulder', child: 'body_elbow', origin: [0, 0, 0.11], limits: [-0.5, 2] },
+  ] satisfies ArmJoint[],
 };
 
 const v = (p: number[]) => p.join(' ');
 
-function partLink(p: PackagePart): string {
+function partLink(p: ArmPart): string {
   return `  <link name="${p.link}">
     <inertial><origin xyz="${v(p.at)}"/><mass value="${p.massKg}"/></inertial>
     <visual><origin xyz="${v(p.at)}"/><geometry><mesh filename="meshes/${p.link}.stl"/></geometry></visual>
@@ -130,7 +94,7 @@ function partLink(p: PackagePart): string {
   <joint name="${p.link}_fixed" type="fixed"><parent link="${p.body}"/><child link="${p.link}"/></joint>`;
 }
 
-function jointXml(j: PackageJoint): string {
+function jointXml(j: ArmJoint): string {
   return `  <joint name="${j.name}" type="revolute">
     <parent link="${j.parent}"/><child link="${j.child}"/>
     <origin xyz="${v(j.origin)}"/><axis xyz="0 1 0"/>
@@ -150,27 +114,6 @@ export function deskArmUrdf(): string {
   ].join('\n');
 }
 
-export function deskArmJointMap(): JointMap {
-  return {
-    format: PACKAGE_FORMAT,
-    version: 1,
-    robot: DESK_ARM.name,
-    urdf: 'robot.urdf',
-    mjcf: 'robot.xml',
-    joints: DESK_ARM.joints.map((j, i) => ({
-      id: j.id,
-      name: j.name,
-      mjcf: `j${i}_${j.id}`,
-      type: 'revolute',
-      limits: j.limits,
-      servo: { componentId: 'feetech-sts3215', variant: 'c001', family: 'sts3215', id: i + 1, link: j.servoLink },
-      zeroOffset: 0,
-      direction: 1,
-      calibration: j.id === 'shoulder' ? SHOULDER_CALIBRATION : null,
-    })),
-  };
-}
-
 function cubeStl(size: number): Uint8Array {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size));
   const view = new STLExporter().parse(mesh, { binary: true }) as DataView;
@@ -178,18 +121,13 @@ function cubeStl(size: number): Uint8Array {
   return new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
 }
 
-const MJCF_DECOY =
-  '<mujoco model="desk_arm"><worldbody><body name="b"><geom type="box" size="1 1 1"/></body></worldbody></mujoco>';
-
-export function deskArmPackageFiles(top = 'desk_arm'): Record<string, Uint8Array> {
+export function deskArmFiles(top = 'desk_arm'): Record<string, Uint8Array> {
   const files: Record<string, Uint8Array> = {
-    [`${top}/robot.urdf`]: strToU8(deskArmUrdf()),
-    [`${top}/robot.xml`]: strToU8(MJCF_DECOY),
-    [`${top}/joint_map.json`]: strToU8(JSON.stringify(deskArmJointMap(), null, 2)),
-    [`${top}/policies/reach/policy.json`]: strToU8('{}'),
+    [`${top}/package.xml`]: strToU8('<package><name>desk_arm</name></package>'),
+    [`${top}/urdf/desk_arm.urdf`]: strToU8(deskArmUrdf()),
   };
 
-  for (const p of DESK_ARM.parts) files[`${top}/meshes/${p.link}.stl`] = cubeStl(p.size);
+  for (const p of DESK_ARM.parts) files[`${top}/urdf/meshes/${p.link}.stl`] = cubeStl(p.size);
 
   return files;
 }
@@ -202,4 +140,4 @@ export function zipOf(files: Record<string, Uint8Array>): Uint8Array {
   return zipSync(entries);
 }
 
-export const deskArmPackageZip = () => zipOf(deskArmPackageFiles());
+export const deskArmZip = () => zipOf(deskArmFiles());

@@ -80,7 +80,6 @@ export const ImportRobotSheet: React.FC<{
         />
       ) : (
         <TextInput
-          aria-label="Robot link"
           autoFocus
           value={url}
           onChange={(e) => setUrl(e.target.value)}

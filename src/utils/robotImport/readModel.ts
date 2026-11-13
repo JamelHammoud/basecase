@@ -2,7 +2,6 @@ import { chooseEntry, inScope, looksLikeRobotMjcf, RobotChoiceError } from './en
 import { githubTree, repoLink } from './github';
 import { parseMjcf } from './mjcf';
 import type { Model } from './model';
-import { JOINT_MAP_FILE, packageEntries, parseJointMap, type JointMap } from './robotPackage';
 import { convertedResolver, parseConverted } from './simready';
 import { fetchBytes, inlineIncludes, rawUrl, urlResolver, type Resolver, type Source } from './sources';
 import { localTree, treeResolver, type Tree } from './tree';
@@ -11,13 +10,7 @@ import { parseUrdf } from './urdf';
 export interface ReadModel {
   model: Model;
   resolver: Resolver;
-  jointMap?: JointMap;
   origin?: string;
-}
-
-interface TreeEntry {
-  entry: string;
-  jointMap?: JointMap;
 }
 
 interface Located {
@@ -55,31 +48,18 @@ async function locate(source: Exclude<Source, { kind: 'converted' }>): Promise<L
 
 const decode = (data: ArrayBuffer | null) => (data ? new TextDecoder().decode(data) : '');
 
-async function packageEntry({ tree, scope }: Located, mapPath: string): Promise<TreeEntry> {
-  const paths = inScope(tree.paths, scope);
-  const jointMap = parseJointMap(decode(await tree.read(mapPath)));
-  const entry = jointMap && packageEntries(jointMap, mapPath).find((p) => paths.includes(p));
-
-  if (entry) return { entry, jointMap };
-
-  return treeEntry({ tree: { ...tree, paths: paths.filter((p) => !p.endsWith(JOINT_MAP_FILE)) }, scope: '' });
-}
-
-async function treeEntry(located: Located, picked?: string): Promise<TreeEntry> {
-  const { tree, scope } = located;
+async function treeEntry({ tree, scope }: Located, picked?: string): Promise<string> {
   const paths = inScope(tree.paths, scope);
 
-  if (picked && paths.includes(picked)) return { entry: picked };
+  if (picked && paths.includes(picked)) return picked;
 
   const choice = await chooseEntry(paths, async (p) => looksLikeRobotMjcf(decode(await tree.read(p))));
 
   if (!choice) throw new Error(NO_ROBOT);
 
-  if ('jointMap' in choice) return packageEntry(located, choice.jointMap);
-
   if ('choices' in choice) throw new RobotChoiceError(choice.choices);
 
-  return choice;
+  return choice.entry;
 }
 
 async function sourceResolver(source: Exclude<Source, { kind: 'converted' }>) {
@@ -93,18 +73,18 @@ async function sourceResolver(source: Exclude<Source, { kind: 'converted' }>) {
 
   if (!located) throw new Error(NO_ROBOT);
 
-  const { entry, jointMap } = await treeEntry(located, source.entry);
+  const entry = await treeEntry(located, source.entry);
   const resolver = await treeResolver(located.tree, entry);
   const origin = located.tree.urlOf?.(entry);
 
-  return { resolver, from: entry, origin, jointMap };
+  return { resolver, from: entry, origin };
 }
 
 export async function readModel(source: Source): Promise<ReadModel> {
   if (source.kind === 'converted')
     return { model: parseConverted(source.model), resolver: convertedResolver(source.files) };
 
-  const { resolver, from, origin, jointMap } = await sourceResolver(source);
+  const { resolver, from, origin } = await sourceResolver(source);
   let text = resolver.entry.text;
 
   if (/<mujoco\b/.test(text)) text = await inlineIncludes(text, resolver.read, from);
@@ -117,5 +97,5 @@ export async function readModel(source: Source): Promise<ReadModel> {
 
   if (rootTag !== 'robot' && rootTag !== 'mujoco') throw new Error('Choose a URDF or MJCF file.');
 
-  return { model: rootTag === 'robot' ? parseUrdf(doc) : parseMjcf(doc), resolver, jointMap, origin };
+  return { model: rootTag === 'robot' ? parseUrdf(doc) : parseMjcf(doc), resolver, origin };
 }

@@ -1,11 +1,9 @@
-import { JOINT_MAP_FILE } from './robotPackage';
-
 const NOT_ROBOTS = /(^|\/)(package\.xml|[^/]*\.(launch|gazebo|srdf|sdf|world|config)\.xml|[^/]*\.launch)$/i;
 const NOT_ROBOT_DIRS = /(^|\/)(launch|config|rviz|worlds?|test|tests|\.github|docs?)\//i;
 const SCENE = /(^|\/)scene[^/]*\.xml$/i;
 const MAX_PEEKS = 24;
 
-export type EntryChoice = { entry: string } | { jointMap: string } | { choices: string[] };
+export type EntryChoice = { entry: string } | { choices: string[] };
 
 export class RobotChoiceError extends Error {
   readonly choices: string[];
@@ -56,10 +54,6 @@ export async function chooseEntry(
   paths: string[],
   isRobotMjcf: (path: string) => Promise<boolean>,
 ): Promise<EntryChoice | null> {
-  const map = shallowest(paths.filter((p) => p.split('/').pop() === JOINT_MAP_FILE))[0];
-
-  if (map) return { jointMap: map };
-
   const mjcf = await mjcfRobots(paths, isRobotMjcf);
   const robots = mjcf.filter((p) => !SCENE.test(p));
 

@@ -1,6 +1,6 @@
 import type { ConsoleSignal } from '../../../cases/console/format';
 import type { SignalValue } from '../../../cases/console/signalBus';
-import { clockTime } from '../../../utils/duration';
+import { runClock } from '../../../utils/duration';
 
 export function signalText(id: string, value: SignalValue | undefined, signals: readonly ConsoleSignal[]): string {
   if (value === undefined) return '';
@@ -9,7 +9,7 @@ export function signalText(id: string, value: SignalValue | undefined, signals: 
 
   const def = signals.find((s) => s.id === id);
 
-  if (def?.kind === 'timer' || id === 'time') return clockTime(value);
+  if (def?.kind === 'timer' || id === 'time') return runClock(value);
 
   return Number.isInteger(value) ? String(value) : value.toFixed(Math.abs(value) >= 100 ? 0 : 2);
 }

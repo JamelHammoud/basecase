@@ -4,6 +4,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { BANNED_COPY } from '../../verify/rehearsal/uiRules.ts';
 import { FIXES, LINTED_COPY, findBannedCopy } from '../copy/banned.mjs';
 import { GLOSSARY } from '../copy/glossary.mjs';
+import { SPELLING } from '../copy/spelling.mjs';
 import rule from './copy.mjs';
 
 RuleTester.afterAll = afterAll;
@@ -66,7 +67,9 @@ const GLOSSARY_SAMPLES = [
   ['Regenerate', 'Regenerate', 'Update'],
 ];
 
-const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES];
+const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british} one`, british]);
+
+const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES];
 
 const errors = (text) => [{ messageId: 'banned', data: findBannedCopy(text) }];
 
@@ -157,6 +160,27 @@ describe('glossary', () => {
   });
 });
 
+describe('spelling', () => {
+  it('flags each British spelling with the American one', () => {
+    for (const [text, british] of SPELLING_SAMPLES) {
+      const hit = findBannedCopy(text);
+
+      expect(hit?.word).toBe(british);
+      expect(hit?.fix).toContain(`“${SPELLING[british]}”`);
+      expect(hit?.section).toBe('§3b-20');
+    }
+  });
+
+  it('allows the American spellings and ids that keep the British one', () => {
+    for (const text of [
+      ...Object.values(SPELLING).map((american) => `The ${american} one`),
+      'robot.travelled',
+      'Greyhound',
+    ])
+      expect(findBannedCopy(text)).toBeNull();
+  });
+});
+
 tester.run('basecase/copy', rule, {
   valid: [
     'const yet = 1;',
@@ -198,5 +222,6 @@ tester.run('basecase/copy', rule, {
     { code: 'showToast(`Erased ${name}`);', errors: errors('Erased ') },
     { code: '<IconButton title="Remove Price" />;', errors: errors('Remove Price') },
     { code: '<a aria-label={`View ${name}`} />;', errors: errors('View ') },
+    { code: 'const el = <p>Centre of mass</p>;', errors: errors('Centre of mass') },
   ],
 });

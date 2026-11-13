@@ -23,6 +23,7 @@ covers:
   - src/components/operate/RobotHeader.tsx
   - src/components/operate/RobotJoints.tsx
   - src/components/operate/RobotMessages.tsx
+  - src/robot/intentMirror.ts
   - src/components/operate/JointRow.tsx
   - src/robot/jointRows.ts
   - src/robot/robotState.ts
@@ -57,7 +58,7 @@ Under **Emulated servos**, each joint has one row with its name and bus ID. IDs 
 
 | Reading | What it means |
 |---|---|
-| An angle, such as 12.5° | The servo's position; 0° is its centre, count 2048 of 4096 |
+| An angle, such as 12.5° | The servo's position; 0° is its center, count 2048 of 4096 |
 | A temperature, such as 30 °C | The servo's temperature; it's switched off at 50 °C |
 | No reply | The servo didn't answer this reading, or its motor isn't a Feetech or Dynamixel servo, such as the DS3218, so the daemon can't read it |
 | Garbled reply | The servo's answer was corrupted |
@@ -65,7 +66,7 @@ Under **Emulated servos**, each joint has one row with its name and bus ID. IDs 
 
 ## Messages from the daemon
 
-The newest six messages show under the first line, each labelled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
+The newest six messages show under the first line, each labeled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
 
 When the daemon refuses a rung:
 
@@ -90,6 +91,8 @@ When a fault stops the robot, the message names the servo or joint, such as:
 | "The servo 2 joint is outside its calibrated range, so the motors stay off. Move it back by hand, then start again." | Every motor |
 | "The app stopped talking to the robot, so the robot is holding still." | The robot holds |
 | "Commands stopped arriving, so the robot is holding still." | The robot holds |
+
+On an arm, a fault that stops the robot has **Replay in Sim** under it, which plays the 20 seconds before it in the simulation: [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation). From a fault until you climb the **Ladder** again, the simulation sends the robot no commands.
 
 When the daemon itself exits without being asked, **Daemon lost** shows "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
 

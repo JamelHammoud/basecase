@@ -20,6 +20,7 @@ const ARTICLES = prepareArticles({
     doc('/help/import-a-mesh', 'Import a mesh', 'Bring an STL or OBJ file in. Press ⌘K and choose Import Mesh.'),
     doc('/help/share-a-scene', 'Share a scene', 'Save a scene as a .basecase file to send to someone.'),
     doc('/help/slice-plates', 'Slice plates', 'Lay out plates and send them to the printer.', { keywords: ['bambu'] }),
+    doc('/help/paint-a-part', 'Paint a part', 'Pick a color for the part.'),
     doc('/help/fix-a-crash', 'When the app quits', 'Reopen it and send the report.', { headings: ['Send a report'] }),
   ],
 });
@@ -46,6 +47,7 @@ describe('help search', () => {
     expect(paths('⌘K')).toEqual(['/help/import-a-mesh']);
     expect(paths('command palette')).toEqual(['/help/import-a-mesh']);
     expect(paths('crash')).toEqual(['/help/fix-a-crash']);
+    expect(paths('colour')).toEqual(['/help/paint-a-part']);
   });
 
   it('ignores stop words and accents', () => {

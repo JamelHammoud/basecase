@@ -4,7 +4,7 @@ import type { FaultKind } from '../../sim/faults';
 import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import { FAULT_LABEL, faultSubmenu } from './faultMenu';
-import { clockTime } from '../../utils/duration';
+import { runClock } from '../../utils/duration';
 import { pct } from './format';
 
 type SimStats = NonNullable<Simulation['stats']>;
@@ -23,7 +23,7 @@ const RobotResult: React.FC<{ result: SimStats['robots'][number]; model: SimMode
       <div className="flex items-baseline justify-between gap-2 text-[13px]">
         <span className="text-white/85 truncate">{robot.name}</span>
         <span className={r.fellAt !== null ? 'text-[#f87171]' : 'text-white/70'}>
-          {r.fellAt !== null ? `Fell at ${clockTime(r.fellAt)}` : 'Standing'}
+          {r.fellAt !== null ? `Fell at ${runClock(r.fellAt)}` : 'Standing'}
         </span>
       </div>
       <MetaLine
@@ -69,7 +69,7 @@ const PeakTorque: React.FC<{
             <span className="flex-1 min-w-0 truncate text-[13px] text-white/80">{name}</span>
             {j.fault && <Badge variant="amber">{FAULT_LABEL[j.fault]}</Badge>}
             {j.saturatedS > 0.05 && (
-              <span className="text-[12px] text-white/50 tabular">{clockTime(j.saturatedS)} at limit</span>
+              <span className="text-[12px] text-white/50 tabular">{runClock(j.saturatedS)} at limit</span>
             )}
             <span
               className={`w-10 text-right text-[13px] tabular ${j.peak >= 0.98 ? 'text-[#f87171]' : 'text-white/70'}`}

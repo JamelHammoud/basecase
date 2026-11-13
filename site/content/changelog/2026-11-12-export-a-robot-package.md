@@ -10,7 +10,7 @@ Before, no export carried the sim model or its policies. Running a policy in ano
 
 ## Where it is
 
-Click Export at the top right and choose Robot Package, or Export Robot Package in ⌘K. It's greyed out until the scene has at least one movable joint, whether you built the robot yourself or imported one. A toast shows while it builds, then "Exported" with the package's name, and `<scene>-robot.zip` lands in your downloads. The work happens off the main thread, so the canvas keeps moving while a big robot packs.
+Click Export at the top right and choose Robot Package, or Export Robot Package in ⌘K. It's grayed out until the scene has at least one movable joint, whether you built the robot yourself or imported one. A toast shows while it builds, then "Exported" with the package's name, and `<scene>-robot.zip` lands in your downloads. The work happens off the main thread, so the canvas keeps moving while a big robot packs.
 
 ![The toast after the SO-101 arm's package is saved](/changelog/export-a-robot-package/exported.png)
 
@@ -18,7 +18,7 @@ Click Export at the top right and choose Robot Package, or Export Robot Package 
 
 `robot.xml` is the MuJoCo model Simulate runs, byte for byte, with every collision hull written inline, so it loads in MuJoCo with no other file.
 
-`urdf/robot.urdf` is for ROS and anything else that reads URDF. It has one link per body of the robot and one joint per movable joint, named the same as in `robot.xml`, with axes and limits. Each link carries its mass, centre of mass and inertia, and the masses add up to the Weight check's total. Every part is a binary STL in `meshes/`, already placed in its link's frame, and shared between visual and collision.
+`urdf/robot.urdf` is for ROS and anything else that reads URDF. It has one link per body of the robot and one joint per movable joint, named the same as in `robot.xml`, with axes and limits. Each link carries its mass, center of mass and inertia, and the masses add up to the Weight check's total. Every part is a binary STL in `meshes/`, already placed in its link's frame, and shared between visual and collision.
 
 `joint_map.json` lists each movable joint in order with a servo id from 1. Each entry has the joint's names in the model and in your scene, its servo's bus (Feetech, Dynamixel or none) and the servo itself. Its zero offset, direction, limits and active calibration follow. Its keys are the ones Basecase's robot daemon reads. So for a robot whose joints are all revolute with limits, the file works as that daemon's calibration file as is.
 

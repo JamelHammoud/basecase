@@ -8,7 +8,7 @@ Drag a servo onto a bracket and it snaps into place by its real horn pattern, an
 
 ## How it works
 
-Every catalog part already knows its mounting ports. An STS3215 has its output shaft, the four M3 holes on its horn, the idler boss and the M2 holes in its case. Agent-made parts carry the ports they were modelled with. Until now only the agent could use them.
+Every catalog part already knows its mounting ports. An STS3215 has its output shaft, the four M3 holes on its horn, the idler boss and the M2 holes in its case. Agent-made parts carry the ports they were modeled with. Until now only the agent could use them.
 
 Now, when you drag a part with Move (V), white dots show on the ports that fit something nearby. They show on the part you're dragging and on the parts around it. A hole circle fits one with the same count, pitch and thread, and a screw hole fits a hole of the same thread. An output shaft or boss fits a bore it slides into. Bring a dot within about 8 mm of its partner and the pair turns blue as the part jumps into place.
 

@@ -1,4 +1,4 @@
-import { clockTime, duration } from '../utils/duration';
+import { runClock, duration } from '../utils/duration';
 import { reachableFrom } from './generatePaths';
 import { findNode } from './nodes';
 import type { Plan, PlanOp } from './planTypes';
@@ -7,7 +7,7 @@ import type { Condition } from './schema';
 
 export { describeRoutine } from './explainGraph';
 
-const at = (ms: number) => clockTime(ms / 1000);
+const at = (ms: number) => runClock(ms / 1000);
 const two = (n: number) => n.toFixed(2);
 
 function factLabel(plan: Plan, fact: string): string {

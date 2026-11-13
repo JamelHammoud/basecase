@@ -64,7 +64,7 @@ function weightRow(all: CheckContext['all'], masses: PartMass[], bodies: RobotBo
   return {
     check: 'Weight',
     status: est.length ? 'warn' : 'pass',
-    detail: `${fmtG(all.grams)}, centre of mass ${Math.round(all.com[1])} mm up${estimated}${leftOut}`,
+    detail: `${fmtG(all.grams)}, center of mass ${Math.round(all.com[1])} mm up${estimated}${leftOut}`,
     ids: est.map((m) => m.id),
   };
 }

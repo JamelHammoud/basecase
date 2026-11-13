@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clockTime, duration } from './duration';
+import { runClock, duration } from './duration';
 
 describe('duration', () => {
   it('reads seconds to a tenth under a minute', () => {
@@ -21,9 +21,9 @@ describe('duration', () => {
   });
 });
 
-describe('clockTime', () => {
+describe('runClock', () => {
   it('keeps one decimal so a running clock holds its width', () => {
-    expect(clockTime(2)).toBe('2.0 s');
-    expect(clockTime(12.34)).toBe('12.3 s');
+    expect(runClock(2)).toBe('2.0 s');
+    expect(runClock(12.34)).toBe('12.3 s');
   });
 });

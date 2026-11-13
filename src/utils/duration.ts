@@ -1,6 +1,6 @@
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export const clockTime = (seconds: number) => `${seconds.toFixed(1)} s`;
+export const runClock = (seconds: number) => `${seconds.toFixed(1)} s`;
 
 export function duration(seconds: number, smallest: 's' | 'min' = 's'): string {
   const tenths = Math.round(Math.max(0, seconds) * 10) / 10;

@@ -36,7 +36,7 @@ export const simulation = {
   text: `
 - Design checks use hold and shove: simulate with controller "hold" for 5 s, then shoves of 0.3
   × body weight from each side. If it falls, or a servo sits at its limit for long, fix the design
-  (feet, centre of mass, servo, lever length), not the test.
+  (feet, center of mass, servo, lever length), not the test.
 - Open-loop keyframe gaits fall even on good designs, so simulate "animation:<name>" says little
   about the design. Whether it walks is answered by a trained skill: train_skill kit "walk"
   (velocity tracking, proved in Arena), then start_drive drives it. Once a walk policy exists,

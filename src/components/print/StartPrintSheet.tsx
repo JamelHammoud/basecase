@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, MetaLine, Modal } from '../../design-system';
+import { MetaLine, Modal } from '../../design-system';
 import type { PrinterSetup } from '../../data/printers';
 import type { Plate } from '../../print/plan';
 import type { PrinterStatus, SlicedPlate } from '../../print/printBridge';
@@ -39,16 +39,7 @@ export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced,
       onClose={onClose}
       title={`Print plate ${plate.number} on ${printer.label}?`}
       maxWidth="max-w-[420px]"
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={onStart} disabled={!!busy} autoFocus>
-            Start Print
-          </Button>
-        </div>
-      }
+      action={{ label: 'Start Print', disabled: !!busy, autoFocus: true, onClick: onStart }}
     >
       <div className="flex gap-4">
         {sliced?.thumbnail && (

@@ -10,6 +10,7 @@ import type { Printing } from '../../workspace/usePrinting';
 import { plural } from '../../../electron/plural.mjs';
 import { duration } from '../../utils/duration';
 import { plateNumbers, plateStateText } from './plateFacts';
+import { MergeSection } from './MergeSection';
 import { PrintedSection } from './PrintedSection';
 import { PrinterLive } from './PrinterLive';
 import { PrintSettings } from './PrintSettings';
@@ -318,6 +319,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onAddPrinter={props.onAddPrinter}
           />
         )}
+        <MergeSection merges={printing.merges} parts={parts} />
         <PrintedSection
           report={printing.report}
           project={props.project}

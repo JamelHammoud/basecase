@@ -27,8 +27,8 @@ export const look = {
       labels: z
         .boolean()
         .optional()
-        .describe('Flat colour per part with a numbered label, the same number in every view, and a legend'),
-      grid: z.boolean().optional().describe('Draw a mm grid at the model’s centre plane (straight views)'),
+        .describe('Flat color per part with a numbered label, the same number in every view, and a legend'),
+      grid: z.boolean().optional().describe('Draw a mm grid at the model’s center plane (straight views)'),
       detail: z.boolean().optional().describe('Render at the largest size this agent reads, for fine detail'),
     },
   },

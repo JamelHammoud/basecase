@@ -12,9 +12,11 @@ import {
   RunIcon,
   RenameField,
   confirmAction,
+  deleteEntry,
+  renameEntry,
 } from '../../design-system';
 import type { RobotAnimation } from '../../types/robotics';
-import { clockTime, duration } from '../../utils/duration';
+import { runClock, duration } from '../../utils/duration';
 import type { Posing } from '../../utils/usePosing';
 
 export type OpenMenu = (e: React.MouseEvent, items: ContextMenuEntry[]) => void;
@@ -99,13 +101,10 @@ const AnimationRow: React.FC<{
           },
           { label: 'Loop', checked: a.loop, onSelect: () => posing.setAnimationLoop(a.id, !a.loop) },
           { divider: true },
-          { label: 'Rename', onSelect: () => setRenaming(a.id) },
-          {
-            label: 'Delete',
-            tone: 'danger',
-            onSelect: () =>
-              confirmAction({ title: `Delete ${a.name}?`, onConfirm: () => posing.deleteAnimation(a.id) }),
-          },
+          renameEntry(() => setRenaming(a.id)),
+          deleteEntry(() =>
+            confirmAction({ title: `Delete ${a.name}?`, onConfirm: () => posing.deleteAnimation(a.id) }),
+          ),
         ])
       }
     >
@@ -149,7 +148,7 @@ const AnimationRow: React.FC<{
             style={{ '--fill': `${(t / a.duration) * 100}%` } as React.CSSProperties}
             onChange={(e) => posing.scrub(a.id, Number(e.target.value))}
           />
-          <span className="w-[44px] text-right text-[12px] text-white/50 tabular">{clockTime(t)}</span>
+          <span className="w-[44px] text-right text-[12px] text-white/50 tabular">{runClock(t)}</span>
         </div>
       )}
     </div>

@@ -10,7 +10,7 @@ A LiDAR from Parts now scans in the simulator the way its datasheet says it does
 
 Put a LiDAR on the robot and group it with the body, then Drive or Try It. Basecase reads the range, scan rate and sample rate from the part's spec rows, the same rows Parts shows. An RPLIDAR C1 casts 500 rays out to 12 m ten times a second, and an LD19 casts 450. A Hokuyo UST-10LX sweeps 270° forty times a second.
 
-The scan comes from the sensor's optical centre, measured for each of the 18 LiDARs in the catalog. A C1 whose model includes its cable still scans from its head. Moving the LiDAR higher, lower or further forward changes what it sees on the next run. Steps are in [Simulate a LiDAR](/help/simulate-a-lidar).
+The scan comes from the sensor's optical center, measured for each of the 18 LiDARs in the catalog. A C1 whose model includes its cable still scans from its head. Moving the LiDAR higher, lower or further forward changes what it sees on the next run. Steps are in [Simulate a LiDAR](/help/simulate-a-lidar).
 
 ![A rover with an RPLIDAR C1 in a corridor Case, its returns drawn along both walls](/changelog/simulate-lidars/cover.png)
 

@@ -94,6 +94,8 @@ class ArmDrive implements DriveLoop {
   }
 
   command(c: DriveCommand, measured?: JointValues) {
+    if (c.joints) return this.follow(c);
+
     const released = isMoving(this.cmd) && !isMoving(c) && !c.target;
 
     this.cmd = c;
@@ -104,6 +106,15 @@ class ArmDrive implements DriveLoop {
 
     if (measured) this.values = Object.fromEntries(this.setup.joints.map((id) => [id, measured[id] ?? 0]));
 
+    this.goal = tipOf(this.setup, this.values);
+    this.aim = [...this.goal];
+  }
+
+  private follow(c: DriveCommand) {
+    const given = Object.entries(c.joints ?? {}).filter(([, v]) => Number.isFinite(v));
+
+    this.cmd = c;
+    this.values = { ...this.values, ...Object.fromEntries(given) };
     this.goal = tipOf(this.setup, this.values);
     this.aim = [...this.goal];
   }
@@ -152,7 +163,7 @@ class ArmDrive implements DriveLoop {
   }
 
   tick(time: number): DriveOutput {
-    if (time < this.nextAt - 1e-9) return { values: this.output() };
+    if (this.cmd.joints || time < this.nextAt - 1e-9) return { values: this.output() };
 
     this.nextAt = time + CONTROL_DT;
     this.moveAim();
@@ -186,7 +197,7 @@ class ArmDrive implements DriveLoop {
   private output(): JointValues {
     const { grip, start } = this.setup;
 
-    if (!grip) return this.values;
+    if (!grip || this.cmd.joints) return this.values;
 
     return { ...this.values, ...gripValues(grip, this.cmd.aux?.[1] ?? 0, start) };
   }

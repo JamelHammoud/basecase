@@ -84,10 +84,12 @@ A Case's name defaults to its goal and world, such as "Push a Box in a Corridor"
 
 ## How a try is judged
 
-1. Each Case measures distances, called probes, such as from the base to the spot, in millimetres.
+1. Each Case measures distances, called probes, such as from the base to the spot, in millimeters.
 2. Basecase reads every probe at every frame of the recorded try, 50 times a second.
 3. The contract's success rule and failure rules read those readings.
 4. The try passes when the success rule holds and no failure rule fires.
+
+A Case made by **Replay in Sim** reads torque instead: each frame's highest joint torque, as a share of the most its servo can push.
 
 A success rule is built from a few parts:
 

@@ -9,6 +9,7 @@ import {
   Section,
   ShareIcon,
   Tooltip,
+  deleteEntry,
   type ContextMenuEntry,
 } from '../../design-system';
 import { generatedFrom, type TryRecord } from '../../cases/tries';
@@ -24,7 +25,7 @@ import { ExploreRows } from './ExploreRows';
 import { FAULT_LABEL } from './faultMenu';
 import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
-import { clockTime } from '../../utils/duration';
+import { runClock } from '../../utils/duration';
 import { ProgressBar } from './ProgressBar';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
@@ -48,7 +49,7 @@ const Faults: React.FC<{ record: TryRecord; rig: Rig }> = ({ record, rig }) =>
   record.manifest.faults?.map((f) => (
     <Tooltip
       key={`${f.joint}-${f.at}`}
-      label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${clockTime(f.at)}`}
+      label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${runClock(f.at)}`}
     >
       <span data-testid="try-fault">
         <Badge variant="amber">{FAULT_LABEL[f.kind]}</Badge>
@@ -64,7 +65,7 @@ const TryRow: React.FC<TryRowProps> = (props) => {
     <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
       <div className="flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
-        <span className="text-white/50 tabular">{clockTime(record.seconds)}</span>
+        <span className="text-white/50 tabular">{runClock(record.seconds)}</span>
         <span className="flex-1 text-white/50 tabular" data-testid="try-generated">
           {generated > 0 && plural(generated, 'variation')}
         </span>
@@ -158,7 +159,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
       y: e.clientY,
       items: [
         ...(multiply.can(record) ? [{ label: 'Multiply', onSelect: () => multiply.multiply(record) }] : []),
-        { label: 'Delete', tone: 'danger', onSelect: () => cases.removeTry(record) },
+        deleteEntry(() => cases.removeTry(record)),
       ],
     });
   };

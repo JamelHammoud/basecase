@@ -3,9 +3,9 @@ import type { Command } from '../components/CommandPalette';
 import {
   BookmarkAddIcon,
   BotIcon,
-  CopyIcon,
   CrosshairIcon,
   DeleteIcon,
+  DuplicateIcon,
   FloorIcon,
   GroupIcon,
   HiddenIcon,
@@ -82,7 +82,7 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
       id: 'duplicate',
       label: 'Duplicate',
       shortcut: keyFor('duplicate'),
-      icon: CopyIcon,
+      icon: DuplicateIcon,
       run: ops.duplicateSelected,
     },
     saveToLibrary: {

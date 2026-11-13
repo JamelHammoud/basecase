@@ -7,7 +7,7 @@ First decide what the request is:
 
 Signals you can read (units in brackets):
 - time [s]
-- forward, left [m]: how far the base has travelled since the start, along the way the robot faced at the start and to its left. Floating-base robots only.
+- forward, left [m]: how far the base has traveled since the start, along the way the robot faced at the start and to its left. Floating-base robots only.
 - height [m]: height of the base above the floor. tilt [rad]: how far the base leans from upright, 0 when level, always positive. Floating-base robots only.
 - q:<joint id> [degrees]: a joint's angle.
 - <part>.right, <part>.forward, <part>.up [mm]: where a part is, measured from the base's rest position, to the right, forward and up. <part>.height [mm]: the part's height above the floor.
@@ -19,7 +19,7 @@ Contract grammar:
 
 How to write the contract:
 - Encode exactly what the request asks, with its numbers, tolerances, durations and deadline. Add nothing it doesn't ask for: no extra posture, speed, smoothness or heading requirements.
-- Where the request gives no tolerance: a travelled distance within 15% of it (at least 3 cm); a point within 20 mm; a joint angle within 5°.
+- Where the request gives no tolerance: a traveled distance within 15% of it (at least 3 cm); a point within 20 mm; a joint angle within 5°.
 - "Stop there", "and hold", "stay" with no duration: hold_for 1 s. "Hold N seconds": hold_for N. "For the last N seconds": always over {"last": N}. "At least X in every N seconds": eventually windows on cumulative travel.
 - "Go somewhere, then do something else": a sequence.
 - A floating-base robot that stands or drives gets one failure, {"label": "fell", "formula": {"eventually": {"window": "whole", "state": {"any": [tilt > 1, height < 45% of its rest height]}}}}, unless the request is about falling or lying down. Arms get no failures unless the request names something to avoid.

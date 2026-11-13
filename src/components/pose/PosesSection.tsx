@@ -1,5 +1,14 @@
 import React from 'react';
-import { IconButton, Section, BookmarkAddIcon, RotateLeftIcon, RenameField, confirmAction } from '../../design-system';
+import {
+  IconButton,
+  Section,
+  BookmarkAddIcon,
+  RotateLeftIcon,
+  RenameField,
+  confirmAction,
+  deleteEntry,
+  renameEntry,
+} from '../../design-system';
 import { isRestPose } from '../../utils/kinematics';
 import type { Posing } from '../../utils/usePosing';
 import type { OpenMenu } from './AnimationsSection';
@@ -44,13 +53,11 @@ export const PosesSection: React.FC<{
           onContextMenu={(e) =>
             openMenu(e, [
               { label: 'Apply', onSelect: () => posing.applySavedPose(p.id) },
-              { label: 'Rename', onSelect: () => setRenaming(p.id) },
+              renameEntry(() => setRenaming(p.id)),
               { divider: true },
-              {
-                label: 'Delete',
-                tone: 'danger',
-                onSelect: () => confirmAction({ title: `Delete ${p.name}?`, onConfirm: () => posing.deletePose(p.id) }),
-              },
+              deleteEntry(() =>
+                confirmAction({ title: `Delete ${p.name}?`, onConfirm: () => posing.deletePose(p.id) }),
+              ),
             ])
           }
         >

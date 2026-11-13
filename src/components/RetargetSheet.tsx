@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, FileImportIcon, Modal, Select, Switch } from '../design-system';
+import { FileImportIcon, Modal, Select, Switch } from '../design-system';
 import type { RobotAnimation } from '../types/robotics';
 import { duration } from '../utils/duration';
 import { isMovable, prettyJointName, type Rig } from '../utils/kinematics';
@@ -114,16 +114,7 @@ export const RetargetSheet: React.FC<{
       subtitle={duration(motion.duration)}
       icon={<FileImportIcon className="w-4 h-4" />}
       maxWidth="max-w-[560px]"
-      footer={
-        <div className="flex items-center justify-end gap-2 w-full">
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" size="sm" onClick={create}>
-            Import
-          </Button>
-        </div>
-      }
+      action={{ label: 'Import', onClick: create }}
     >
       <div className="space-y-4">
         <MappingGrid

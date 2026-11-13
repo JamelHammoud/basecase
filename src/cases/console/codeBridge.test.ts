@@ -254,7 +254,7 @@ describe('the bridge’s guards', () => {
     );
   });
 
-  it('unloads a panel that stops answering the heartbeat for 2 s, with its error', async () => {
+  it('unloads a panel that stops answering the heartbeat for 2 s', async () => {
     const clock = fakeClock();
     const healthy = open('', { bus: busFor(robot('rover-diff')), scope: scope(), clock });
     const hung = open(JOYSTICK, { bus: busFor(robot('rover-diff')), scope: scope(), clock });
@@ -271,7 +271,7 @@ describe('the bridge’s guards', () => {
     expect(hung.log.drives).toEqual([null]);
   });
 
-  it('waits for the frame’s hello before it counts missed answers', () => {
+  it('gives the frame 10 s to say hello before it unloads it', () => {
     const clock = fakeClock();
     const failed: string[] = [];
     const bridge = openCodeBridge({
@@ -290,9 +290,11 @@ describe('the bridge’s guards', () => {
       clock,
     });
 
-    clock.tick(10_000);
-    bridge.close();
+    clock.tick(9_500);
     expect(failed).toEqual([]);
+    clock.tick(500);
+    expect(failed).toEqual([SILENT_ERROR]);
+    bridge.close();
   });
 
   it('fails a panel whose script throws while it loads, with the first error', async () => {

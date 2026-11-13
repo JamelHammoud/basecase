@@ -3,6 +3,7 @@ import type { FactValue } from '../caseFacts';
 import {
   BRIDGE_VERSION,
   ERROR_MAX_CHARS,
+  HELLO_MS,
   isHello,
   MESSAGES_PER_SECOND,
   PING_MS,
@@ -50,7 +51,7 @@ type PortTarget = {
   postMessage: (message: unknown, options: { targetOrigin: string; transfer: Transferable[] }) => void;
 };
 
-export const SILENT_ERROR = 'It stopped answering for 2 s.';
+export const SILENT_ERROR = 'It didn’t answer.';
 
 const MAX_ERRORS = 50;
 
@@ -89,7 +90,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   let port: MessagePort | null = null;
   let loaded = false;
   let closed = false;
-  let heard = clock.now();
+  const opened = clock.now();
+  let heard = opened;
   let unanswered = 0;
 
   const post = (message: StudioMessage) => port?.postMessage(message);
@@ -158,6 +160,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   };
 
   const stopPing = clock.every(PING_MS, () => {
+    if (!port && clock.now() - opened >= HELLO_MS) fail(SILENT_ERROR);
+
     if (!port) return;
 
     unanswered++;

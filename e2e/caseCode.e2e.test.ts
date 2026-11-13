@@ -1,6 +1,6 @@
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
@@ -131,11 +131,11 @@ async function openCase(console: unknown) {
   await expect.poll(areaCount).toBe(1);
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -165,10 +165,18 @@ describe('Case code panels', () => {
 
     expect(under).toBe('CANVAS');
 
-    const pad = await frameOf('stick').locator('canvas').boundingBox();
-    const [cx, cy] = [pad!.x + pad!.width / 2, pad!.y + pad!.height / 2];
+    const pad = frameOf('stick').locator('canvas');
+    const box = await pad.boundingBox();
+    const [cx, cy] = [box!.x + box!.width / 2, box!.y + box!.height / 2];
+    let nudge = 0;
 
-    await page.mouse.move(cx, cy);
+    await expect
+      .poll(async () => {
+        await page.mouse.move(cx + (nudge++ % 2), cy);
+
+        return pad.evaluate((el) => el.matches(':hover'));
+      })
+      .toBe(true);
     await page.mouse.down();
     await page.mouse.move(cx, cy - 70, { steps: 4 });
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
@@ -244,7 +252,7 @@ describe('Case code panels', () => {
     });
 
     expect(await framesUntil(failed)).toBeGreaterThan(3);
-    expect(await page.locator(failed).textContent()).toBe('Couldn’t run Spin. It stopped answering for 2 s.');
+    expect(await page.locator(failed).textContent()).toBe('Couldn’t run Spin. It didn’t answer.');
     expect(await page.locator('[data-panel="spin"] iframe').count()).toBe(0);
 
     await page.keyboard.press('Escape');

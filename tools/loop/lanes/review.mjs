@@ -1,7 +1,7 @@
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
-import { commentOnPull, openPulls, reviewState, setReview } from '../lib/github.mjs';
+import { commentOnPull, openPulls, pullReview, setReview } from '../lib/github.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
@@ -90,7 +90,7 @@ function reviewPull(pull, log) {
 
 export default function review({ log }) {
   const waiting = openPulls().filter((pull) => {
-    const state = reviewState(pull.headRefOid);
+    const state = pullReview(pull);
 
     return state === null || state === 'error';
   });

@@ -3,31 +3,32 @@ import { creditProblems } from '../credit.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
-  checkConclusion,
   checkRunFor,
-  commentOnPull,
   editPullBody,
   editPullLabels,
   failedLog,
-  hasLabel,
+  isLoopComment,
   lastFinishedMainCheck,
   openPulls,
+  pullCheck,
   pullComments,
-  reviewState,
+  pullReview,
 } from '../lib/github.mjs';
-import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
+import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
+import { protectedIn, protectedList } from '../lib/protected.mjs';
+import { entryFor, markLooked, recordAttempt } from '../lib/reviseState.mjs';
 import { run } from '../lib/sh.mjs';
-import { clearPath, close } from '../lib/worktree.mjs';
+import { clearPath, close, linkModules } from '../lib/worktree.mjs';
+import { rebuild } from '../lib/rebuild.mjs';
 
 export const schedule = {
   slots: 4,
   everySeconds: 60,
-  labels: ['loop:revising', 'loop:stuck'],
-  does: "Answers a failed review, a Check failure that's the pull request's own, or any Check failure on a repair, on its branch",
+  labels: ['loop:revising'],
+  does: "Answers a failed review, a pull request's own Check failure or a comment from Jamel on its branch, and rebuilds a change from main after four failed attempts",
 };
 
-const MAX_ROUNDS = 4;
-const STUCK = 'loop:stuck';
+const MAX_ATTEMPTS = 4;
 const REVISING = 'loop:revising';
 const MAX_LOG = 60_000;
 
@@ -36,7 +37,11 @@ const SCHEMA = {
   properties: {
     changed: { type: 'boolean' },
     commitMessage: { type: 'string', description: 'A subject line, a blank line, then what was answered and why' },
-    revision: { type: 'string', description: 'One line for the pull request body: what this revision changed' },
+    revision: {
+      type: 'string',
+      description:
+        'One line for the pull request body: what this revision changed, and why for any protected path it touched',
+    },
     notes: { type: 'string' },
   },
   required: ['changed', 'commitMessage', 'revision', 'notes'],
@@ -44,23 +49,38 @@ const SCHEMA = {
 
 const git = (args, cwd, opts = {}) => run('git', args, { cwd, ...opts });
 
-const reasonFor = (pull, mainGreen) => {
-  if (!pull.headRefName.startsWith('loop/') || hasLabel(pull, STUCK)) return null;
+const jamelComments = (comments) =>
+  comments.filter((comment) => comment.author === OWNER_LOGIN && !isLoopComment(comment));
 
-  if (reviewState(pull.headRefOid) === 'failure') return 'review';
+function needFor(pull, mainGreen) {
+  if (!pull.headRefName.startsWith('loop/')) return null;
 
-  const ownsFailures = mainGreen || pull.headRefName.startsWith('loop/repair/');
+  const entry = entryFor(pull.number);
+  const failing =
+    pullReview(pull) === 'failure' ||
+    ((mainGreen || pull.headRefName.startsWith('loop/repair/')) && pullCheck(pull) === 'failure');
+  const newHead = !entry.heads.includes(pull.headRefOid);
 
-  return ownsFailures && checkConclusion(pull.headRefOid) === 'failure' ? 'check' : null;
-};
+  if (failing && newHead) return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
 
-const evidence = (pull, reason, reviews) => {
-  if (reason === 'review') return `The review lane's findings on the current head:\n\n${reviews.at(-1) ?? ''}`;
+  return pull.updatedAt > entry.lastLook ? { entry, reason: 'maybe-jamel' } : null;
+}
 
-  const runInfo = checkRunFor(pull.headRefOid);
+function evidence(pull, reason, comments) {
+  const reviews = comments.filter((c) => c.body.startsWith('### Review:')).map((c) => c.body);
+  const jamel = jamelComments(comments).map((c) => `Jamel (${c.createdAt}): ${c.body}`);
+  const parts = [`Jamel's comments, newest last, which come first:\n\n${jamel.join('\n\n') || 'None.'}`];
 
-  return `Its Check failed. Either main is green, so the failure is this pull request's, or this is a repair that has to turn Check fully green. The failed log:\n\n${runInfo ? failedLog(runInfo.databaseId).slice(-MAX_LOG) : 'unavailable'}`;
-};
+  if (reason === 'review') parts.push(`The review lane's findings on the current head:\n\n${reviews.at(-1) ?? ''}`);
+
+  if (reason === 'check') {
+    const runInfo = checkRunFor(pull.headRefOid);
+
+    parts.push(`Its Check failed. The failed log:\n\n${runInfo ? failedLog(runInfo.databaseId).slice(-MAX_LOG) : ''}`);
+  }
+
+  return parts.join('\n\n');
+}
 
 function checkout(pull) {
   git(['fetch', '-q', 'origin', 'main', pull.headRefName], HOME_CHECKOUT);
@@ -69,21 +89,9 @@ function checkout(pull) {
 
   clearPath(dir);
   git(['worktree', 'add', '-q', '-B', pull.headRefName, dir, `origin/${pull.headRefName}`], HOME_CHECKOUT);
-
-  const linked = path.join(HOME_CHECKOUT, 'node_modules');
-
-  run('ln', ['-s', linked, path.join(dir, 'node_modules')], { allowFail: true });
+  linkModules(dir);
 
   return { dir };
-}
-
-function giveUp(pull, rounds, log) {
-  editPullLabels(pull.number, { add: [STUCK] });
-  commentOnPull(
-    pull.number,
-    `Review has asked for changes ${rounds} times, so the loop has stopped revising this pull request. Close it, or give direction here.`,
-  );
-  log(`#${pull.number}: stuck after ${rounds} rounds`);
 }
 
 function publishRevision(pull, { dir, output }) {
@@ -97,35 +105,31 @@ function publishRevision(pull, { dir, output }) {
   git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
 
   const heading = pull.body.includes('\n## Revisions\n') ? '' : '\n\n## Revisions\n';
+  const touched = protectedIn('HEAD~1..HEAD', dir);
+  const line =
+    touched.length === 0 ? output.revision : `${output.revision} Protected paths: ${protectedList(touched)}.`;
 
-  editPullBody(pull.number, `${pull.body}${heading}\n- ${output.revision}`);
+  editPullBody(pull.number, `${pull.body}${heading}\n- ${line}`);
 }
 
-function revisePull(pull, reason, log) {
-  const reviews = pullComments(pull.number).filter((body) => body.startsWith('### Review:'));
-  const rounds = reviews.filter((body) => body.startsWith('### Review: changes needed')).length;
-
-  if (rounds >= MAX_ROUNDS) {
-    giveUp(pull, rounds, log);
-
-    return;
-  }
-
+function revisePull(pull, { reason, comments, jamelAt }, log) {
   const worktree = checkout(pull);
 
   try {
     if (!git(['merge', '-q', '--no-edit', 'origin/main'], worktree.dir, { allowFail: true }).ok) {
       git(['merge', '--abort'], worktree.dir, { allowFail: true });
-      log(`#${pull.number}: conflicts with main; leaving it to the rebase lane`);
+      log(`#${pull.number}: conflicts with main; the rebase lane resolves those first`);
 
       return;
     }
 
-    const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, reviews)}`;
+    recordAttempt(pull.number, { head: pull.headRefOid, jamelAt });
+
+    const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, comments)}`;
     const result = runAgent({ cwd: worktree.dir, name: 'revise', prompt, schema: SCHEMA, hours: 4 });
 
     if (!result.ok || !result.output.changed) {
-      log(`#${pull.number}: no revision: ${String(result.error ?? result.output.notes).slice(0, 400)}`);
+      log(`#${pull.number}: nothing to change: ${String(result.error ?? result.output.notes).slice(0, 400)}`);
 
       return;
     }
@@ -137,21 +141,43 @@ function revisePull(pull, reason, log) {
   }
 }
 
+function handle(pull, need, log) {
+  const comments = pullComments(pull.number);
+  const latestJamel = jamelComments(comments).at(-1)?.createdAt ?? '';
+  const jamelNew = latestJamel > need.entry.lastJamel;
+  const jamelReason = jamelNew ? 'jamel' : null;
+  const reason = need.reason === 'maybe-jamel' ? jamelReason : need.reason;
+
+  if (!reason) return;
+
+  editPullLabels(pull.number, { add: [REVISING] });
+
+  try {
+    if (need.entry.attempts >= MAX_ATTEMPTS && !need.entry.rebuilt && reason !== 'jamel') {
+      rebuild(pull, { comments, log });
+
+      return;
+    }
+
+    revisePull(pull, { reason, comments, jamelAt: latestJamel }, log);
+  } finally {
+    editPullLabels(pull.number, { remove: [REVISING] });
+  }
+}
+
 export default function revise({ log }) {
   const mainGreen = lastFinishedMainCheck()?.conclusion === 'success';
 
   for (const pull of openPulls()) {
-    const reason = reasonFor(pull, mainGreen);
-    const release = reason ? claim(`pull-${pull.number}`) : null;
+    const need = needFor(pull, mainGreen);
+    const release = need ? claim(`pull-${pull.number}`) : null;
 
     if (!release) continue;
 
-    editPullLabels(pull.number, { add: [REVISING] });
-
     try {
-      revisePull(pull, reason, log);
+      handle(pull, need, log);
     } finally {
-      editPullLabels(pull.number, { remove: [REVISING] });
+      markLooked(pull.number, new Date().toISOString());
       release();
     }
 

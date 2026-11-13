@@ -1,4 +1,5 @@
 import { fromCompiledModule } from '../cad-kernel/sandbox/wasm.mjs';
+import { convertBodies } from './bodiesCore.mjs';
 import { convertCad } from './convertCore.mjs';
 import { encodeReply, errorReply } from './reply.mjs';
 
@@ -18,7 +19,15 @@ async function loadOcct() {
 async function reply(job) {
   if (job.probe) return (await import('./probes.mjs')).runProbe(job.probe);
 
-  const { glb, result } = convertCad(await loadOcct(), job);
+  const occt = await loadOcct();
+
+  if (job.bodies) {
+    const { header, bin } = convertBodies(occt, job);
+
+    return encodeReply(header, bin);
+  }
+
+  const { glb, result } = convertCad(occt, job);
 
   return encodeReply({ ok: true, ...result }, glb);
 }

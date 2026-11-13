@@ -1,10 +1,9 @@
 import React from 'react';
 import { NumberInput, Section, Tooltip } from '../../design-system';
 import type { ProjectSettings } from '../../types/robotics';
-import { type Bom, STALE_DAYS } from '../../utils/bom';
+import type { Bom } from '../../utils/bom';
 import type { Money } from '../../utils/currency';
 import { useMoney } from '../../utils/useMoney';
-import { plural } from './format';
 
 type Totals = Bom['totals'];
 
@@ -60,13 +59,6 @@ const BudgetLeft: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
   );
 };
 
-const StaleNotice: React.FC<{ stale: number }> = ({ stale }) => (
-  <div className="text-[12.5px] text-amber-400">
-    Recheck {stale} {plural(stale, 'price', 'prices')} before ordering. {plural(stale, 'It’s', 'They’re')} over{' '}
-    {STALE_DAYS} days old.
-  </div>
-);
-
 const budgetStep = (money: Money) => 10 ** Math.max(1, Math.round(Math.log10(money.rate * 10)));
 
 function budgetPatch(amount: number, money: Money): Partial<ProjectSettings> {
@@ -101,7 +93,6 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({ bom, project, onCh
       </div>
       {budget !== undefined && <BudgetBar t={t} budget={budget} />}
       {budget !== undefined && <BudgetLeft t={t} budget={budget} />}
-      {t.stale > 0 && <StaleNotice stale={t.stale} />}
     </Section>
   );
 };

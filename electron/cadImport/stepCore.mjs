@@ -34,7 +34,7 @@ function keepMesh(mesh, { src, hidden }) {
   return !src.keepBox || insideBox(mesh.attributes.position.array, src.keepBox);
 }
 
-function addMesh(mesh, { src, addTriangle }) {
+export function addMesh(mesh, { src, addTriangle }) {
   const pos = mesh.attributes.position.array;
   const idx = mesh.index.array;
   const faceColor = new Array(idx.length / 3).fill(null);
@@ -96,12 +96,19 @@ function apply(m, [x, y, z]) {
   return [m[0] * x + m[1] * y + m[2] * z, m[3] * x + m[4] * y + m[5] * z, m[6] * x + m[7] * y + m[8] * z];
 }
 
-export function readOcctBytes(occt, { content, ext, src, addTriangle }) {
-  const params = meshingParams(src);
-  const result =
-    ext === '.igs' || ext === '.iges' ? occt.ReadIgesFile(content, params) : occt.ReadStepFile(content, params);
+const isIges = (ext) => ext === '.igs' || ext === '.iges';
 
-  if (!result.success) return false;
+export function readOcct(occt, { content, ext, src }) {
+  const params = meshingParams(src);
+  const result = isIges(ext) ? occt.ReadIgesFile(content, params) : occt.ReadStepFile(content, params);
+
+  return result?.success ? result : null;
+}
+
+export function readOcctBytes(occt, { content, ext, src, addTriangle }) {
+  const result = readOcct(occt, { content, ext, src });
+
+  if (!result) return false;
 
   const hidden = (src.hideMeshes ?? []).map((h) => h.toLowerCase());
 

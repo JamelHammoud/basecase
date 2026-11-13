@@ -12,15 +12,7 @@ function dialogCopy(annotation: SceneAnnotation, number: number, pending: NonNul
   if (pending.kind === 'comment') {
     const text = annotation.comments.find((c) => c.id === pending.commentId)?.text ?? '';
 
-    return {
-      title: 'Delete comment?',
-      body: (
-        <>
-          <Quote text={text} />
-          <p className="mt-[8px]">You can’t undo this.</p>
-        </>
-      ),
-    };
+    return { title: 'Delete comment?', body: <Quote text={text} /> };
   }
 
   const count = annotation.comments.length;

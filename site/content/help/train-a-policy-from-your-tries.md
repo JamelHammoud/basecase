@@ -1,6 +1,7 @@
 ---
 title: Train a policy from your tries
 date: 2026-11-13
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 6
@@ -25,6 +26,7 @@ covers:
   - src/skills/triesTraining.ts
   - src/datasets/demos.ts
   - src/datasets/usableTries.ts
+  - src/workspace/useTryMultiply.ts
   - forge/crates/forge-train/src/bc/
 ---
 
@@ -61,5 +63,7 @@ Below 29 passes, nothing is saved. The count turns red, with the start, middle a
 ## Which tries it learns from
 
 Only passed tries recorded on the robot as it is now count, as in [Export a LeRobot dataset](/help/export-a-lerobot-dataset). Tries recorded before Train From Tries arrived are left out too. When fewer than five count, a toast says "These tries are from an earlier design. Try It again to record new ones."
+
+Tries that **Multiply** made from a passed try count too, so one try you drove can be enough. See [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
 The policy learns joint targets from the joints' positions and speeds and the Case's target. It doesn't see camera video. How it's judged is in [Arena](/help/arena).

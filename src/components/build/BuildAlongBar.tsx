@@ -31,7 +31,7 @@ export const BuildAlongBar: React.FC<{ buildAlong: BuildAlong; active: boolean }
         {opening ? (
           <div className="flex items-center gap-2 px-[8px] text-[12.5px] text-white/60 whitespace-nowrap">
             <SpinnerIcon className="w-4 h-4 animate-spin" />
-            {progress?.label}
+            {progress && `${progress.label}…`}
           </div>
         ) : (
           <>

@@ -19,6 +19,7 @@ export interface ArmOptions {
   mate?: string;
   angleDeg?: number;
   gripper?: boolean;
+  brace?: boolean;
   limits?: [string, string] | null;
 }
 
@@ -83,6 +84,7 @@ export function fakeArm({
   mate = 'REVOLUTE',
   angleDeg = 0,
   gripper = false,
+  brace = false,
   limits = ['-90 deg', '45 deg'],
 }: ArmOptions = {}) {
   const base: Box = { id: 'IBase', partId: 'JHD', name: 'Base', size: [60, 60, 40], at: [0, 0, 0], massKg: 0.5 };
@@ -99,6 +101,14 @@ export function fakeArm({
           mateFeature('Mgrip', 'Fastened 1', 'FASTENED', [
             { path: ['IArm'], origin: [0, 0, 0.12] },
             { path: ['IGrip'], origin: [0, 0, 0] },
+          ]),
+        ]
+      : []),
+    ...(brace
+      ? [
+          mateFeature('Mbrace', 'Brace', 'REVOLUTE', [
+            { path: ['IBase'], origin: [0.02, 0, 0.04] },
+            { path: ['IArm'], origin: [0.02, 0, 0] },
           ]),
         ]
       : []),

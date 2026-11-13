@@ -4,6 +4,7 @@ import { ONSHAPE_ORIGIN } from './link.mjs';
 const MAX_JSON_BYTES = 50_000_000;
 const MAX_HOPS = 3;
 const REDIRECTS = new Set([301, 302, 303, 307, 308]);
+const MALFORMED_REPLY = 'Onshape sent a malformed reply.';
 
 export const KEYS_REFUSED = 'Onshape didn’t accept the API keys in Settings ▸ Accounts.';
 export const OFF_SITE = 'Onshape sent the request to another site, so it stopped.';
@@ -55,7 +56,7 @@ export class OnshapeClient {
 
       const next = new URL(res.headers.get('location') ?? '', url);
 
-      if (next.origin !== this.origin) throw new Error(OFF_SITE);
+      if (next.origin !== this.origin || !next.pathname.startsWith('/api/')) throw new Error(OFF_SITE);
 
       url = next;
 
@@ -76,7 +77,13 @@ export class OnshapeClient {
   async json(path, options) {
     const res = await this.request(path, options);
 
-    return JSON.parse((await readCapped(res, MAX_JSON_BYTES, 'Onshape’s reply')).toString('utf8'));
+    const text = (await readCapped(res, MAX_JSON_BYTES, 'Onshape’s reply')).toString('utf8');
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error(MALFORMED_REPLY);
+    }
   }
 
   async bytes(path, maxBytes) {

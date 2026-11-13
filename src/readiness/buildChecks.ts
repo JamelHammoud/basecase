@@ -71,7 +71,7 @@ export function fixedMateFindings(parts: ScenePart[]): Finding[] {
   return parts.flatMap((p) =>
     (p.robotLink?.fixedMates ?? []).map((mate) =>
       ruleFinding('fixed-mate', 'note', {
-        text: `${mate} became a fixed joint. Only revolute and slider mates move.`,
+        text: `${mate} imports as fixed; only revolute and slider mates move.`,
         agentText: `The Onshape mate "${mate}" on ${p.name} has no matching joint type, so it was imported as fixed. Add a joint by hand if it should move.`,
         ids: [p.id],
         subject: `${p.id}:${mate}`,

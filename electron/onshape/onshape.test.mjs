@@ -77,6 +77,14 @@ describe('mates to joints', () => {
     expect(rows[0].text).toContain('Elbow');
   });
 
+  it('leaves out a revolute mate that closes a loop, without a Checks row', async () => {
+    const { model, robot, parts } = await sceneOf({ brace: true });
+
+    expect(robot.joints.map((j) => j.name)).toEqual(['Elbow']);
+    expect(model.fixedMates).toEqual([]);
+    expect(fixedMateFindings(parts)).toEqual([]);
+  });
+
   it('weighs parts that have a material and leaves the rest unweighed', async () => {
     const { robot } = await sceneOf();
 

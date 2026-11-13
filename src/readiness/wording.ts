@@ -58,7 +58,7 @@ export const RULES = {
   tool: assembly('Hard-to-Reach Screws', 'These screws need an L-shaped hex key to reach.'),
   split: assembly('Parts That Wrap Others', 'This part wraps around others and can’t come off in one piece.'),
   lip: assembly('Snug Parts', 'This part only comes off with a tilt or a bit of flex.'),
-  'fixed-mate': assembly('Fixed Mates', 'This mate became a fixed joint. Only revolute and slider mates move.'),
+  'fixed-mate': assembly('Fixed Mates', 'This mate imports as fixed; only revolute and slider mates move.'),
   service: {
     area: 'assembly',
     check: REPAIRS,

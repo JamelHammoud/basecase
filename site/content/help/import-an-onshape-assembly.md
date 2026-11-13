@@ -28,4 +28,4 @@ Each part comes in as its own mesh, except parts held together by a fastened mat
 
 ![The Pose tab turning the imported Elbow hinge](/help/import-an-onshape-assembly/pose.png)
 
-Any other mate, like a cylindrical, ball or pin slot mate, is held fixed. The Build tab's Checks list each one under Fixed Mates, on the part it holds, so you can add the joint by hand.
+Any other mate, like a cylindrical, ball or pin slot mate, is held fixed. The Build tab's Checks list each one under Fixed Mates, on the part it holds, so you can add the joint by hand. A mate that closes a loop, like the last pin of a four-bar linkage, is left out, because each part hangs off exactly one joint.

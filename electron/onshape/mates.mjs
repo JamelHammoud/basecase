@@ -67,11 +67,9 @@ function quantity(parameter, units) {
 
   const m = /^\s*([-+]?\d*\.?\d+(?:e[-+]?\d+)?)\s*\*?\s*([a-z]+)?\s*$/i.exec(String(parameter.expression ?? ''));
 
-  if (m) {
-    const scale = m[2] ? units[m[2].toLowerCase()] : Object.values(units)[0];
+  const scale = m && (m[2] ? units[m[2].toLowerCase()] : Object.values(units)[0]);
 
-    return scale === undefined ? null : Number(m[1]) * scale;
-  }
+  if (scale !== undefined && scale !== null) return Number(m[1]) * scale;
 
   return Number.isFinite(parameter.value) ? parameter.value : null;
 }

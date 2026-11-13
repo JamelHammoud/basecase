@@ -124,10 +124,6 @@ function mateJoint(b, mate, parentGroup) {
   return { name: mate.name, type: JOINT_TYPES[mate.type], parent, child, ...frame, effort: null, velocity: null };
 }
 
-function stuckMate(b, mate) {
-  if (mate.type !== 'FASTENED') b.fixedMates.push({ name: mate.name, link: b.names.get(b.groupOf(mate.ends[1].path)) });
-}
-
 function treeJoints(b, root) {
   const joints = [];
   const seen = new Set([root]);
@@ -145,11 +141,7 @@ function treeJoints(b, root) {
 
       const other = groups[0] === group ? groups[1] : groups[0];
 
-      if (other === group || seen.has(other)) {
-        stuckMate(b, mate);
-
-        continue;
-      }
+      if (other === group || seen.has(other)) continue;
 
       seen.add(other);
       queue.push(other);

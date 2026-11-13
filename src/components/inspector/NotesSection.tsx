@@ -1,11 +1,10 @@
 import React from 'react';
 import { Section, TextArea } from '../../design-system';
-import type { Phase } from './types';
 
 export const NotesSection: React.FC<{
   value: string;
   rows: number;
-  onChange: (value: string, live?: Phase) => void;
+  onChange: (value: string, live: boolean) => void;
 }> = ({ value, rows, onChange }) => (
   <Section title="Notes" collapsible defaultOpen={value.trim() !== ''}>
     <TextArea

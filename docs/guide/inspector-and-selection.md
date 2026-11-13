@@ -5,7 +5,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 ## 7. Inspector (Figma UI3 style)
 
 - Sections are separated by full-width hairline dividers, never boxed cards. Section titles are sentence case and 13px semibold.
-- **Notes** (`NotesSection`) is one section for the scene and for a part: a text area with no placeholder, collapsed while empty and open when it has text. The agent reads both.
+- **Notes** (`NotesSection`) is one section for the scene and for a part: a text area with no placeholder, collapsed while empty and open when it has text. `Section` reads `defaultOpen` only on mount, so `InspectTab` keys the Inspector by `sceneId` and `PartInspector` keys Notes by part id: loading a scene into the open tab or picking another part opens Notes again when they hold text.
 - Every Inspect view and mode panel scrolls with `useScrollFade`, like Parts: an edge fades only while there's more to scroll past it.
 - **No selection:** Notes for the scene (saved with it to `ai-reference/`) and Comments (just the title and + when there are none). Scene stats live in Layers: the header shows parts and cutouts, and a footer shows the overall size.
 - **Part selected:**

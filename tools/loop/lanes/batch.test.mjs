@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { membersOf, nextMembers } from './batch.mjs';
+import { membersOf } from '../lib/evidence.mjs';
+import { nextMembers } from './batch.mjs';
 
 const pull = (number) => ({ number });
 

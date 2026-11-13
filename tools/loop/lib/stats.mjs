@@ -1,15 +1,9 @@
 import { isLoopReview, isRevert, kindOf, parseReview } from './evidence.mjs';
+import { laneNamesIn, laneStats, MEASURES, median, round, worstChange } from './laneStats.mjs';
+
+export { median } from './laneStats.mjs';
 
 const HOUR_MS = 60 * 60 * 1000;
-
-export const median = (values) => {
-  if (values.length === 0) return null;
-
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-
-  return sorted.length % 2 === 1 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-};
 
 export const mergedIn = (pulls, { from, to }) =>
   pulls.filter((p) => p.mergedAt && p.mergedAt >= from && p.mergedAt <= to);
@@ -64,11 +58,14 @@ export function redHours(runs, { from, to }) {
 export const hoursToMerge = (pulls) =>
   median(pulls.map((p) => (Date.parse(p.mergedAt) - Date.parse(p.createdAt)) / HOUR_MS));
 
-export function weekStats({ pulls, comments, commits, runs, openSteps, owner, from, to }) {
+export function weekStats({ pulls, comments, commits, runs, steps = [], openSteps, owner, from, to, previous = null }) {
   const merged = mergedIn(pulls, { from, to });
   const byKind = countByKind(merged);
+  const lanes = laneStats({ pulls, comments, commits, steps, owner, from, to });
 
   return {
+    from,
+    to,
     merged: merged.length,
     byKind: byKind.filter(([kind]) => kind !== 'lesson'),
     lessons: byKind.find(([kind]) => kind === 'lesson')?.[1] ?? 0,
@@ -76,10 +73,13 @@ export function weekStats({ pulls, comments, commits, runs, openSteps, owner, fr
       comments.filter((c) => c.createdAt >= from && c.createdAt <= to),
       owner,
     ),
-    reverts: commits.filter((c) => isRevert(c.message)).length,
+    reverts: commits.filter((c) => isRevert(c.message) && (!c.date || (c.date >= from && c.date <= to))).length,
     redHours: redHours(runs, { from, to }),
     openSteps,
     mergeHours: hoursToMerge(merged),
+    lanes,
+    lastLanes: previous?.lanes ?? null,
+    worst: worstChange(lanes, previous?.lanes ?? null),
   };
 }
 
@@ -104,3 +104,69 @@ export function digestTable(stats) {
 
   return ['| Measure | Week |', '|---|---:|', ...rows.map(([name, value]) => `| ${name} | ${value} |`)].join('\n');
 }
+
+const DIGEST_BLOCK = /^```json digest\n([\s\S]*?)\n```$/m;
+
+const shown = (value) => (value === null || value === undefined ? 'None' : String(round(value)));
+
+const signed = (value) => (value > 0 ? `+${value}` : String(value));
+
+const change = (value, last) => (value === null || last === null ? '' : signed(round(value - last)));
+
+export function laneTable(lanes, last) {
+  const head = last
+    ? ['| Lane | Measure | This week | Last week | Change |', '|---|---|---:|---:|---:|']
+    : ['| Lane | Measure | This week |', '|---|---|---:|'];
+  const rows = laneNamesIn(lanes, last).flatMap((lane) =>
+    MEASURES.map((measure) => ({
+      measure,
+      value: lanes[lane]?.[measure.key] ?? null,
+      before: last?.[lane]?.[measure.key] ?? null,
+    }))
+      .filter(({ value, before }) => value !== null || before !== null)
+      .map(({ measure, value, before }) => {
+        const cells = [`\`${lane}\``, measure.name, shown(value)];
+
+        return `| ${(last ? [...cells, shown(before), change(value, before)] : cells).join(' | ')} |`;
+      }),
+  );
+
+  return [...head, ...rows].join('\n');
+}
+
+const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1);
+
+export const worstLine = (worst) =>
+  worst
+    ? `Worst change: \`${worst.lane}\` ${lowerFirst(worst.name)}, ${shown(worst.last)} last week and ${shown(worst.value)} this week.`
+    : 'No lane got worse on any measure since last week.';
+
+export const worstSection = (worst, ask) =>
+  worst ? [`## The digest's worst number\n\n${worstLine(worst)}\n\n${ask}`] : [];
+
+export const digestJson = (stats) =>
+  [
+    '```json digest',
+    JSON.stringify({ from: stats.from, to: stats.to, lanes: stats.lanes, worst: stats.worst }),
+    '```',
+  ].join('\n');
+
+export function parseDigest(body) {
+  const block = DIGEST_BLOCK.exec(body ?? '');
+
+  if (!block) return null;
+
+  try {
+    return JSON.parse(block[1]);
+  } catch {
+    return null;
+  }
+}
+
+export const digestBody = (stats) =>
+  [
+    digestTable(stats),
+    laneTable(stats.lanes, stats.lastLanes),
+    ...(stats.lastLanes ? [worstLine(stats.worst)] : []),
+    digestJson(stats),
+  ].join('\n\n');

@@ -11,8 +11,10 @@ import {
   ownerComments,
 } from '../lib/github.mjs';
 import { copyTrend, copyTrendLine, mergedThisWeek } from '../lib/copy.mjs';
+import { digestWorst } from '../lib/history.mjs';
 import { LOOP_DIR, OWNER_LOGIN } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
+import { worstSection } from '../lib/stats.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -138,19 +140,10 @@ const reasonToPlan = (world, state) => {
   return world.waiting < BUILDERS && queueChanged ? `${world.waiting} steps waiting for ${BUILDERS} builders` : null;
 };
 
-function prompt(world) {
-  const merged = run('gh', [
-    'pr',
-    'list',
-    '--state',
-    'merged',
-    '--limit',
-    '40',
-    '--json',
-    'title',
-    '--jq',
-    '.[].title',
-  ]).out;
+const recentlyMerged = () =>
+  run('gh', ['pr', 'list', '--state', 'merged', '--limit', '40', '--json', 'title', '--jq', '.[].title']).out;
+
+export function leadPrompt(world, { merged, copyLine, worst }) {
   const direction = [world.direction?.body, ...world.comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n');
 
   return [
@@ -160,9 +153,17 @@ function prompt(world) {
     listing('Open arcs', world.arcs),
     listing('Ideas', world.ideas, IDEAS_NOTE),
     listing('Steps waiting or in progress', world.steps),
-    `## Recently merged\n\n${merged}\n\n${copyTrendLine(copyTrend(mergedThisWeek()))}`,
+    `## Recently merged\n\n${merged}\n\n${copyLine}`,
+    ...worstSection(worst, 'When a step would move it back, plan that step ahead of a new one.'),
   ].join('\n\n');
 }
+
+const prompt = (world) =>
+  leadPrompt(world, {
+    merged: recentlyMerged(),
+    copyLine: copyTrendLine(copyTrend(mergedThisWeek())),
+    worst: digestWorst(),
+  });
 
 const numbers = (list) => new Set(list.map((issue) => issue.number));
 

@@ -7,6 +7,7 @@ import { MAIN_LANE, splitLaneKey } from './agentLanes';
 import { applyAgentOps } from './applyAgentOps';
 import { awaitPartModels } from './agentPartModels';
 import { requestHandler, type RequestContext } from './agentRequestHandlers';
+import { calibrationErrorsText } from '../agent/agentCalibration';
 import { runPoseTool, runSimTool, withSavedPose } from './agentRobotTools';
 import { sceneChecks } from './sceneChecks';
 import type { AgentRequestEvent, Vec3 } from './types';
@@ -14,6 +15,7 @@ import type { AgentCursors } from './useAgentCursors';
 import type { AgentLanes } from './useAgentLanes';
 import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
+import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 type Payload = Record<string, unknown>;
@@ -27,6 +29,7 @@ interface AgentRequestOptions {
   actors: ActorIndex;
   cursors: AgentCursors;
   robots: RobotInsert;
+  wrap: WrapRobot;
 }
 
 interface Author {
@@ -52,7 +55,7 @@ function firstDelivery(requestId: string) {
   return true;
 }
 
-export function useAgentRequests({ core, lanes, controls, actors, cursors, robots }: AgentRequestOptions) {
+export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
@@ -69,6 +72,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       selectedIds,
       setAction,
       importRobot: robots.importRobotFrom,
+      wrap: wrap.wrap,
     });
 
   const simTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
@@ -83,6 +87,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       parts: partsRef.current,
       fixedCameras: projectRef.current.cameras ?? [],
       velocity: simTraining.skills.velocity,
+      calibrationErrors: () => calibrationErrorsText(projectRef.current),
       setAction,
     });
 

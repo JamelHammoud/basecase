@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { ScenePart } from '../../types/robotics';
-import { applyDeformersToBufferGeometry } from '../sculptAndBooleanEngine';
+import { applyDeformersToBufferGeometry } from '../sculptEngine';
 import { createMaterial, crispEdgeMaterial } from './materials';
 import { acquireShared, markShared } from './sharedGeometry';
 

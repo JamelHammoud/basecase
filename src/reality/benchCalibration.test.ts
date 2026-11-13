@@ -8,6 +8,10 @@ import { BENCH, BENCH_SECONDS, benchOffset, EMULATED_LOAD } from './benchSequenc
 import { calibratedInput, calibrateServo } from './calibrate';
 import { predictLog, type FitContext } from './fitServo';
 import { activeCalibrations } from './history';
+import { keepBenchLogs } from './benchLogStore';
+import { jointReplay } from './jointReplay';
+import { LADDER } from './ladder';
+import { medianError, replayTrace } from './replayTrace';
 import { withCalibration, withRollBack } from './projectCalibrations';
 import { scaledFit, type ServoScales } from './servoParams';
 import type { ServoLog } from './types';
@@ -128,4 +132,65 @@ describe('calibrating from the bench', () => {
     expect(history?.active).toBe(1);
     expect(withRollBack(project, BENCH_JOINT).servoCalibrations?.[BENCH_JOINT].active).toBeNull();
   }, 60_000);
+});
+
+describe('replaying the bench log', () => {
+  const HIDDEN: ServoScales = { gain: Math.log(0.5) };
+
+  it('a hidden unit’s replay error falls from preset to calibrated by the gate’s margin', async () => {
+    const logs = benchLogs(recording(HIDDEN), 0);
+    const calibration = await calibrateServo({ family: 'sts3215', logs, mj });
+    const kept = { ...calibration, logId: keepBenchLogs('sts3215', logs) };
+    const history = withCalibration({ ...DEFAULT_PROJECT }, BENCH_JOINT, kept).servoCalibrations![BENCH_JOINT];
+    const replay = await jointReplay(history);
+    const samples = logs.reduce((n, log) => n + log.positionRad.length, 0);
+
+    expect(calibration.verdict).toBe('measured');
+    expect(replay?.version).toBe(1);
+    expect(replay?.logged).toHaveLength(samples);
+    expect(replay?.preset.positionRad).toHaveLength(samples);
+    expect(replay?.calibration?.positionRad).toHaveLength(samples);
+    expect(replay!.calibration!.medianErrorRad).toBeLessThanOrEqual(
+      replay!.preset.medianErrorRad! * (1 - LADDER.passGain),
+    );
+    expect((await jointReplay(history, 1))?.calibration).toBe(replay?.calibration);
+  }, 90_000);
+
+  it('a shuffled log shows no gain and stays Can’t tell', async () => {
+    const logs = benchLogs(shuffled(recording(HIDDEN)), 0);
+    const calibration = await calibrateServo({ family: 'sts3215', logs, mj });
+    const kept = { ...calibration, logId: keepBenchLogs('sts3215', logs) };
+    const history = withCalibration({ ...DEFAULT_PROJECT }, BENCH_JOINT, kept).servoCalibrations![BENCH_JOINT];
+    const replay = await jointReplay(history);
+    const asFitted = replayTrace(mj, { family: 'sts3215', logs, fit: calibration.fit });
+
+    expect(calibration.verdict).toBe('cant-tell');
+    expect(history.active).toBeNull();
+    expect(replay?.calibration).toBeNull();
+    expect(asFitted.medianErrorRad).toBeCloseTo(replay!.preset.medianErrorRad!, 9);
+  }, 90_000);
+
+  it('skips samples a status missed, including the first', () => {
+    const full = recording({});
+    const missed = new Set([0, 1, 7, 30]);
+    const gappy: BenchRecording = {
+      ...full,
+      samples: full.samples.map((s, i) =>
+        missed.has(i) ? { ...s, joints: [{ positionRad: null, volts: null, temperatureC: null }] } : s,
+      ),
+    };
+    const whole = replayTrace(mj, { family: 'sts3215', logs: benchLogs(full, 0) });
+    const gapped = replayTrace(mj, { family: 'sts3215', logs: benchLogs(gappy, 0) });
+
+    expect(gapped.positionRad.every(Number.isFinite)).toBe(true);
+    expect(Number.isFinite(gapped.medianErrorRad)).toBe(true);
+    expect(gapped.medianErrorRad).toBeLessThan(whole.medianErrorRad! + COUNT);
+  }, 60_000);
+
+  it('has no median error when every sample was missed', () => {
+    const [log] = benchLogs(recording({}), 0);
+    const missed = { ...log, positionRad: log.positionRad.map(() => Number.NaN) };
+
+    expect(medianError([log.positionRad], [missed])).toBeNull();
+  });
 });

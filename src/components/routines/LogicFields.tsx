@@ -4,7 +4,7 @@ import { describeCondition } from '../../routines/explainGraph';
 import { MODEL_NODES } from '../../routines/nodes';
 import type { Condition, Routine } from '../../routines/schema';
 import { allSteps } from '../../routines/schema';
-import { inferStep, SENSED_FACTS, watcherFor } from '../../routines/stepFactory';
+import { inferStep, SENSED_FACTS, waitTimeoutMs, watcherFor } from '../../routines/stepFactory';
 import { type FieldProps, seconds } from './fieldTypes';
 import { NumberField } from './NumberField';
 import { TextField } from './TextField';
@@ -71,24 +71,23 @@ function IfFields({ node, routine, apply, update }: FieldProps) {
 }
 
 function WaitFields({ node, update }: FieldProps) {
-  const timeoutMs = Number(node.data.timeoutMs ?? 0);
+  if (node.data.ms === undefined) return <TimeLimit node={node} update={update} />;
 
   return (
-    <>
-      {node.data.ms !== undefined && (
-        <NumberField
-          label="Wait"
-          value={seconds(node.data.ms)}
-          unit="s"
-          min={0.1}
-          max={600}
-          step={0.5}
-          precision={1}
-          onCommit={(s) => update({ ms: Math.round(s * 1000), timeoutMs: Math.max(timeoutMs, s * 1000 + 1000) })}
-        />
-      )}
-      <TimeLimit node={node} update={update} />
-    </>
+    <NumberField
+      label="For"
+      value={seconds(node.data.ms)}
+      unit="s"
+      min={0.1}
+      max={600}
+      step={0.5}
+      precision={1}
+      onCommit={(s) => {
+        const ms = Math.round(s * 1000);
+
+        update({ ms, timeoutMs: waitTimeoutMs(ms) });
+      }}
+    />
   );
 }
 

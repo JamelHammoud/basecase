@@ -35,13 +35,16 @@ const DETACHED: Viewport3DHandle = {
   exportUsdz: async () => new Uint8Array(),
   partTriangles: () => null,
   servoOutput: () => null,
+  jointAxis: async () => null,
   meshesReady: async () => [],
   sweepClashes: async () => [],
+  strength: async () => [],
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},
   followPart: () => {},
   restBounds: () => null,
+  restShapes: () => ({ instances: [], shapes: new Map(), geometries: new Map() }),
   silhouetteShots: () => [],
   posedInterference: async () => [],
   posedFloor: async () => null,
@@ -52,6 +55,10 @@ const DETACHED: Viewport3DHandle = {
 };
 
 const canvasCursor = (props: ViewportProps) => {
+  if (props.axisPick) {
+    return props.axisPick.ready ? CURSORS.crosshair : 'not-allowed';
+  }
+
   if (props.annotateMode) {
     return CURSORS.comment;
   }

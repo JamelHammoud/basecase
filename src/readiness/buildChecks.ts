@@ -3,7 +3,7 @@ import type { FastenerChain } from '../assembly/assemblyTypes';
 import { sourcedIdOfKey, sourcedItem, unreferencedReason } from '../data/sourcedItems';
 import { worldPort, portsOf } from '../agent/ports';
 import type { Port } from '../types/ports';
-import type { ScenePart } from '../types/robotics';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { Bom } from '../utils/bomTypes';
 import { isPrinted } from '../utils/bom';
 import type { Finding } from './types';
@@ -66,6 +66,38 @@ export function hiddenFindings(parts: ScenePart[]): Finding[] {
     }),
   ];
 }
+
+export function fixedMateFindings(parts: ScenePart[]): Finding[] {
+  return parts.flatMap((p) =>
+    (p.robotLink?.fixedMates ?? []).map((mate) =>
+      ruleFinding('fixed-mate', 'note', {
+        text: `${mate} imports as fixed; only revolute and slider mates move.`,
+        agentText: `The Onshape mate "${mate}" on ${p.name} has no matching joint type, so it was imported as fixed. Add a joint by hand if it should move.`,
+        ids: [p.id],
+        subject: `${p.id}:${mate}`,
+      }),
+    ),
+  );
+}
+
+export function goneMateFindings(joints: RobotJoint[] = []): Finding[] {
+  return joints
+    .filter((j) => j.onshape?.gone)
+    .map((j) =>
+      ruleFinding('gone-mate', 'note', {
+        text: `${j.name} has no mate in Onshape.`,
+        agentText: `The joint "${j.name}" (${j.id}) lost its mate in the linked Onshape assembly, so it moves only in Basecase. Remove the joint, or add the mate back in Onshape and update the robot from Onshape.`,
+        ids: j.child,
+        subject: j.id,
+      }),
+    );
+}
+
+export const goneMateIds = (joints: RobotJoint[] = []) => {
+  const ids = joints.filter((j) => j.onshape?.gone).map((j) => j.id);
+
+  return ids.length ? ids : undefined;
+};
 
 export function fitProbeFindings(g: AssemblyGeometry, parts: ScenePart[]): Finding[] {
   const name = (id: string) => parts.find((p) => p.id === id)?.name ?? id;

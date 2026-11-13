@@ -30,6 +30,7 @@ pub struct Evaluation {
 struct Run<'a> {
     program: &'a Program,
     state: &'a RewardState<'a>,
+    reference: &'a [f64],
     terms: Vec<TermValue>,
     blamed: Vec<String>,
 }
@@ -141,6 +142,7 @@ impl Run<'_> {
             StateField::JointVel => Value::Vector(s.joint_vel.to_vec()),
             StateField::Action => Value::Vector(s.action.to_vec()),
             StateField::LastAction => Value::Vector(s.last_action.to_vec()),
+            StateField::Reference => Value::Vector(self.reference.to_vec()),
         }
     }
 
@@ -253,6 +255,14 @@ impl Run<'_> {
 
 impl Program {
     pub fn evaluate(&self, state: &RewardState) -> Evaluation {
+        self.evaluate_with_reference(state, &[])
+    }
+
+    pub fn evaluate_with_reference(&self, state: &RewardState, reference: &[f64]) -> Evaluation {
+        assert!(
+            !self.reference || reference.len() == self.schema.joints + 2,
+            "The reference has a different length than the joint count plus 2"
+        );
         assert_eq!(
             state.joint_pos.len(),
             self.schema.joints,
@@ -267,6 +277,7 @@ impl Program {
         let mut run = Run {
             program: self,
             state,
+            reference,
             terms: Vec::new(),
             blamed: Vec::new(),
         };

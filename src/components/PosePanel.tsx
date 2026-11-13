@@ -4,11 +4,18 @@ import type { RobotJoint } from '../types/robotics';
 import { jointGroups, nameWords, prettyJointName, sideOf } from '../utils/kinematics';
 import type { Posing } from '../utils/usePosing';
 import { AnimationsSection } from './pose/AnimationsSection';
+import { JointRangeFields } from './pose/JointRangeFields';
 import { JointRow } from './pose/JointRow';
 import { PosesSection } from './pose/PosesSection';
 
+export interface JointEdits {
+  remove: (id: string) => void;
+  setRange: (id: string, range: [number, number], live?: boolean) => void;
+}
+
 interface PosePanelProps {
   posing: Posing;
+  jointEdits: JointEdits;
   onSelectParts: (ids: string[]) => void;
   onImportMotion: () => void;
   onWalkCycle: () => void;
@@ -33,8 +40,18 @@ function rowLabel(j: RobotJoint, group: string): string {
   return s ? s[0].toUpperCase() + s.slice(1) : prettyJointName(j.name);
 }
 
+const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
+  {
+    label: 'Range',
+    submenu: () => <JointRangeFields joint={j} onChange={(range, live) => edits.setRange(j.id, range, live)} />,
+  },
+  { divider: true },
+  { label: 'Delete', tone: 'danger', onSelect: () => edits.remove(j.id) },
+];
+
 export const PosePanel: React.FC<PosePanelProps> = ({
   posing,
+  jointEdits,
   onSelectParts,
   onImportMotion,
   onWalkCycle,
@@ -127,6 +144,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
                 active={j.id === activeJointId}
                 onSelect={() => select(j)}
                 onChange={(v) => posing.setJointValue(j.id, v)}
+                onContextMenu={(e) => openMenu(e, jointMenu(j, jointEdits))}
               />
             ))}
           </Section>

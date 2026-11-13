@@ -1,4 +1,5 @@
 import type { SimModel } from '../sim/mjcfTypes';
+import type { RobotAnimation } from '../types/robotics';
 import {
   currentDesign,
   skillFreshness,
@@ -10,12 +11,25 @@ import {
   type SkillOrigin,
 } from './artifacts';
 import type { Environment } from './environment';
+import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
+import { moveEnvironment } from './moveEnvironment';
+
+export interface MoveTag {
+  animation: string;
+  reference: string;
+}
+
+export const moveTag = (animation: string, environment: Environment): MoveTag => ({
+  animation,
+  reference: hashOf(environment.reference ?? null),
+});
 
 export interface SkillRecord {
   hash: string;
   name: string;
   kit: TrainedEntry | null;
+  move?: MoveTag | null;
   goal: string | null;
   binding: SkillBinding;
   evidence: ArenaEvidence | null;
@@ -26,35 +40,59 @@ export interface SkillRecord {
 
 export function skillRecord(
   skill: Skill,
-  options: { kit: TrainedEntry | null; goal?: string | null; environment?: Environment | null },
+  options: { kit: TrainedEntry | null; move?: MoveTag; goal?: string | null; environment?: Environment | null },
 ): SkillRecord {
+  const rebuilt = !!options.kit || !!options.move;
+
   return {
     hash: skillHash(skill),
     name: skill.name,
     kit: options.kit,
+    ...(options.move ? { move: options.move } : {}),
     goal: options.goal ?? null,
     binding: skill.binding,
     evidence: skill.evidence,
     origin: skill.origin ?? null,
-    environment: options.kit ? null : (options.environment ?? null),
+    environment: rebuilt ? null : (options.environment ?? null),
     createdAt: new Date().toISOString(),
   };
 }
 
-export function recordEnvironment(record: SkillRecord, model: SimModel): Environment | null {
-  if (!record.kit) return record.environment;
+function rebuiltEnvironment(record: SkillRecord, model: SimModel, animations: readonly RobotAnimation[]) {
+  if (record.kit) return kitEnvironment(model, record.kit);
+
+  const animation = animations.find((a) => a.id === record.move?.animation);
+
+  return animation ? moveEnvironment(model, animation) : null;
+}
+
+export function recordEnvironment(
+  record: SkillRecord,
+  model: SimModel,
+  animations: readonly RobotAnimation[] = [],
+): Environment | null {
+  if (!record.kit && !record.move) return record.environment;
 
   try {
-    return kitEnvironment(model, record.kit);
+    return rebuiltEnvironment(record, model, animations);
   } catch {
     return null;
   }
 }
 
-export function recordFreshness(record: SkillRecord, options: { design: string; model: SimModel }): Freshness {
-  const environment = recordEnvironment(record, options.model);
+export interface FreshnessInput {
+  design: string;
+  model: SimModel;
+  animations?: readonly RobotAnimation[];
+}
+
+export function recordFreshness(record: SkillRecord, options: FreshnessInput): Freshness {
+  const environment = recordEnvironment(record, options.model, options.animations);
 
   if (!environment) return 'needs-training';
+
+  if (record.move && moveTag(record.move.animation, environment).reference !== record.move.reference)
+    return 'needs-training';
 
   return skillFreshness(record, currentDesign({ ...options, environment }));
 }

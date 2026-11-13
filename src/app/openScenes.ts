@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { WorkspaceHandle, WorkspaceSeed } from '../SceneWorkspace';
+import type { SavedSceneSummary } from '../types/robotics';
+import { platformBridge } from '../utils/platformBridge';
+import { firstRobotSeed } from './firstLaunch';
 import { loadSceneSeed } from './sceneSeeds';
 import { readStored, writeStored } from './storedSettings';
 import { blankSeed, FIRST_TAB, MAX_TABS, newTabId, type TabEntry, type TabListItem } from './tabModel';
 
 const KEY = 'open-scenes';
 
-interface StoredOpenScenes {
+export interface StoredOpenScenes {
   ids: string[];
   tabIds: string[];
   active: number;
@@ -62,13 +65,35 @@ export function tabsFromSeeds(seeds: Array<WorkspaceSeed | null>, active: number
   return { tabs, activeId: tabs[activeIndex].id };
 }
 
+export interface LaunchSources {
+  stored: StoredOpenScenes;
+  loadSeed: (id: string) => Promise<WorkspaceSeed | null>;
+  listScenes: () => Promise<SavedSceneSummary[]>;
+  firstRobot: () => Promise<WorkspaceSeed | null>;
+}
+
+export async function launchTabs({ stored, loadSeed, listScenes, firstRobot }: LaunchSources): Promise<InitialTabs> {
+  const { ids, tabIds, active } = stored;
+  const seeds = await Promise.all(ids.map(loadSeed));
+
+  if (seeds.some(Boolean)) return tabsFromSeeds(seeds, active, tabIds);
+
+  const saved = await listScenes().catch(() => null);
+  const first = saved?.length === 0 ? await firstRobot() : null;
+
+  return first ? { tabs: [{ id: FIRST_TAB, seed: first }], activeId: FIRST_TAB } : tabsFromSeeds([], 0);
+}
+
 export function useInitialTabs(): InitialTabs | null {
   const [initial, setInitial] = useState<InitialTabs | null>(null);
 
   useEffect(() => {
-    const { ids, tabIds, active } = readOpenScenes();
-
-    void Promise.all(ids.map(loadSceneSeed)).then((seeds) => setInitial(tabsFromSeeds(seeds, active, tabIds)));
+    void launchTabs({
+      stored: readOpenScenes(),
+      loadSeed: loadSceneSeed,
+      listScenes: platformBridge.listScenes,
+      firstRobot: firstRobotSeed,
+    }).then(setInitial);
   }, []);
 
   return initial;

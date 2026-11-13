@@ -175,3 +175,22 @@ fn the_gpu_loop_masks_linear_velocity_and_warm_starts() {
         "{status:?}"
     );
 }
+
+#[test]
+fn a_reference_job_trains_on_the_gpu_loop_with_its_clock() {
+    let frames: Vec<[f64; 4]> = (0..30)
+        .map(|k| {
+            let phase = std::f64::consts::TAU * k as f64 / 30.0;
+
+            [0.2 * phase.sin(), -0.2 * phase.sin(), 0.12, 0.0]
+        })
+        .collect();
+    let reward = "def reward(state):\n    return exp(-8.0 * sum(square(state.reference[:2] - state.joint_pos)))\n";
+    let policy = trains_on_the_gpu(
+        "gpu-loop-reference",
+        &json!({ "reference": { "loop": true, "frames": frames }, "reward": reward }),
+    );
+
+    assert_eq!(policy["clock"], json!({ "frames": 30, "loop": true }));
+    assert_eq!(policy["layers"][0]["in"], 12 + 3 * 2 + 2);
+}

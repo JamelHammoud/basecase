@@ -8,7 +8,7 @@ All seven milestones are built. docs/guide/printing.md §8f describes how the co
 
 | # | Milestone | State | Verified by |
 |---|---|---|---|
-| P1 | Printers | Done: 92-printer catalog generated from Bambu Studio 2.08.04, My printers, Settings → Printers, Printer and Quality in Print mode, the agent's text names the scene's printer | `printReport.test.ts` (P1S keep-out, Prusa MINI diagonal, custom bed) |
+| P1 | Printers | Done: 103-printer catalog generated from Bambu Studio 2.9.1 and, for Prusa, OrcaSlicer 2.5.0 (each entry records its source), My printers, Settings → Printers, Printer and Quality in Print mode, the agent's text names the scene's printer | `printReport.test.ts` (P1S keep-out, Prusa MINI diagonal, custom bed) |
 | P2 | Plates as data | Done: poses with flat faces, MaxRects packing, per-part overrides, copies, plate hashes | `plan.test.ts` (transforms fill their rectangle on the bed), `printReport.test.ts` |
 | P3 | Print mode | Done: plate view, drag, Lay on Face, Turn 90°, plate switching, Auto Arrange, Print panel | `e2e/print.e2e.test.ts` (opens, shows the plate, closes, no console errors) |
 | P4 | 3MF handoff | Done: Export ▸ 3MF Plates (one file per material), Open in Bambu Studio / OrcaSlicer from the Print panel's Plate N section as a project of that plate's material with printer, process and filament set | `slice.test.mjs` |

@@ -70,6 +70,18 @@ The AnythingZoo (`verify/zoo/`). The builder implements `src/skills/anything.ts`
 - **No contact signals in hidden judges, for now:** they were left out because Arena's contact reader (`src/skills/arenaSignals.ts`, frozen by `s3a-motor-kit`) leaked the contact list and exhausted the 2 GB WASM heap in about 20,000 reads. The reader now frees it (`arenaSignals.test.ts`); letting the generator use contact signals is the next change to this gate.
 - **Canaries:** a do-nothing skill claimed as passing, a skill claimed for folding a towel, a rubber-stamp contract, giving up everywhere, a slow router, a log that prints a hidden contract, and a hidden judge that standing still meets.
 
+### Stage 3b: `s3b-moves`
+
+Pose-tab animations trained as moves (`verify/skills/moves.test.ts`). The cases are built in code in `src/skills/moveCases.ts`, so the unit test (`moveCases.test.ts`) and the gate share them: a 4 s squat-and-wave `.bvh` retargeted onto biped-servo by the app's retargeter, quad-servo's sit and a paw shake, a hexapod dance step on a 120 bpm clock, a hand-keyed bow on biped-servo, a right-arm wave on a humanoid with Unitree G1 joint names, and a wave on arm-3dof.
+
+- **Judged again, not taken on trust.** Each case goes through `trainMove` with the gate's Forge runner, and the skill that comes back is rerun in `runArena` on a freshly built `moveEnvironment` with a new salt. It must pass there, and the environment `trainMove` used must hash the same as the fresh one.
+- **The squat is the case playback can't do.** The mocap squat sits back with the thighs level and the shins near vertical, which a person balances with a forward lean the robot has no joint for. Played back as an animation it falls backwards (nominally in the unit test, and in Arena for this gate), so only a trained policy passes. It must reach 29 of 32 in every variant, and it trains on the tracking path.
+- **Hand-keyed and retargeted take one path.** The bow and the squat on biped-servo route to tracking with the same observation terms and action joints.
+- **A one-shot ends on its last key.** The trained sit's nominal rollout ends with every joint within the tube's tolerance (0.25 rad) of the last key, and the unit test checks that the tube's windows after the move are centred on it.
+- **A fixed robot doesn't train.** The arm's wave routes to `ik-or-motion-plan`: the animation itself is proved in Arena, with no Forge run and zero steps.
+- **Standing still fails every legged move,** in the unit test (one nominal rollout each) and in the canary.
+- **Canary:** a zero policy (holding the rest pose) passes a move contract in Arena. It fires when every legged case's contract rejects it.
+
 ### Stage 6: `s6-hidden-twin` and `s6-hidden-twin-nad`
 
 The HiddenTwin (`verify/twin/`) is gate-side TypeScript, so builders never see its parameters. The builder implements `src/reality/calibrate.ts` exporting `calibrateServo` (logs in, a calibration with a verdict `measured`, `consistent` or `cant-tell` out) and `calibratedInput` (applies calibrations to an `MjcfInput`, so MuJoCo predicts and the gate measures).

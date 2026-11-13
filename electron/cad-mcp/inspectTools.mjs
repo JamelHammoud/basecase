@@ -164,6 +164,7 @@ async function interferenceIssues() {
 }
 
 const FINISHED_KINDS = new Set([
+  'boolean',
   'cad_part',
   'component',
   'custom_model',
@@ -176,7 +177,11 @@ const FINISHED_KINDS = new Set([
 function primitiveIssues(solids) {
   const primitives = solids.filter(
     (p) =>
-      p.role === 'solid' && !p.supply && p.kind && !FINISHED_KINDS.has(p.kind) && !String(p.kind).startsWith('cad'),
+      p.role === 'solid' &&
+      !p.supply &&
+      p.kind &&
+      !FINISHED_KINDS.has(String(p.kind).split(' ')[0]) &&
+      !String(p.kind).startsWith('cad'),
   );
 
   if (!primitives.length) return [];

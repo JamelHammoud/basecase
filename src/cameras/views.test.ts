@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ScenePart } from '../types/robotics';
 import { pickViews } from './cameraShots';
 import type { FixedCamera } from './fixed';
-import { cameraViews, findView } from './views';
+import { cameraViews, findView, hasCameraViews } from './views';
 
 const wrist = {
   id: 'cam',
@@ -29,6 +29,16 @@ const outside: FixedCamera = {
 };
 
 describe('camera views', () => {
+  it('has views only with a camera part, a stationary camera or a simulation', () => {
+    const box = { ...wrist, id: 'box', componentId: undefined, kind: 'box' } as ScenePart;
+
+    expect(hasCameraViews([box], [], false)).toBe(false);
+    expect(hasCameraViews([{ ...wrist, visible: false }], [], false)).toBe(false);
+    expect(hasCameraViews([wrist], [], false)).toBe(true);
+    expect(hasCameraViews([box], [outside], false)).toBe(true);
+    expect(hasCameraViews([box], [], true)).toBe(true);
+  });
+
   it('frames a scene view when nothing stationary is placed', () => {
     expect(cameraViews([wrist], []).map((v) => v.key)).toEqual(['scene', 'wrist_camera']);
   });

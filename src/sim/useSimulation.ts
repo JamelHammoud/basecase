@@ -5,6 +5,7 @@ import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/roboti
 import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
+import type { FaultKind } from './faults';
 import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
@@ -33,6 +34,7 @@ export interface Simulation {
   latestStats: () => SimStats | null;
   error: string | null;
   model: SimModel | null;
+  modelNow: () => SimModel | null;
   speed: number;
   controller: Controller;
   start: () => Promise<void>;
@@ -48,6 +50,7 @@ export interface Simulation {
     phase: 'start' | 'move' | 'end',
   ) => void;
   push: (robot?: string) => void;
+  setFault: (jointId: string, kind: FaultKind | null) => void;
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
@@ -313,6 +316,7 @@ export function useSimulation(props: Inputs): Simulation {
     latestStats: sw.latestStats,
     error,
     model,
+    modelNow: () => modelRef.current,
     speed,
     controller,
     start,
@@ -340,6 +344,7 @@ export function useSimulation(props: Inputs): Simulation {
 
       if (msg) send(msg);
     },
+    setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,

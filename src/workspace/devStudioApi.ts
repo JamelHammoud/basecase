@@ -1,15 +1,22 @@
 import type { RefObject } from 'react';
 import * as THREE from 'three';
 import type { PoseReply } from '../agent/agentPose';
+import type { DriveCommand } from '../sim/driveTypes';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
+import { lastDownload } from '../utils/downloadBytes';
+import { replayErrors } from '../reality/jointReplay';
 import { bytesToBase64 } from '../utils/base64';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { importRobot } from '../utils/robotImport';
+import { downstreamOf } from '../utils/engineeringMass';
+import { sweepSamples } from '../utils/engineeringJoints';
+import { resolveJoints } from '../utils/kinematics';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
+import type { ServoCalibration } from '../reality/types';
 import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
@@ -24,11 +31,18 @@ export interface DevActions {
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   clear: () => void;
   select: (ids: string[]) => void;
+  selectFace: (partId: string, normal: [number, number, number]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
+  drive: (command: DriveCommand) => void;
+  worldAt: () => Record<string, number[]>;
+  calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
+  printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  sharedLink: () => string | null;
+  stubTrainer: (policy: unknown) => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -106,17 +120,41 @@ interface DevRecord {
   annotations?: SceneAnnotation[];
 }
 
+async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewport: Viewport3DHandle | null) {
+  const joints = resolveJoints(project.joints ?? [], parts);
+  const turning = joints.filter((j) => j.type === 'revolute');
+  const specs = turning.map((j) => ({
+    moving: [...downstreamOf(j, joints)],
+    origin: j.origin,
+    axis: new THREE.Vector3(...j.axis).normalize().toArray(),
+    anglesDeg: sweepSamples(j, j.range ?? [-90, 90]),
+  }));
+  const hits = (await viewport?.sweepClashes(specs)) ?? [];
+
+  return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
+    rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
     parts: () => partSummaries(partsRef.current),
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
+    lastDownload: () => {
+      const file = lastDownload();
+
+      return file && { name: file.name, base64: bytesToBase64(file.bytes) };
+    },
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
+    projectPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
+    selectFace: (partId: string, normal: [number, number, number]) => devRef.current.selectFace(partId, normal),
+    triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
+    project: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
@@ -136,9 +174,16 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
     simState: () => devRef.current.simState(),
+    drive: (command: DriveCommand) => devRef.current.drive(command),
+    worldAt: () => devRef.current.worldAt(),
+    calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
+    printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    sharedLink: () => devRef.current.sharedLink(),
+    stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

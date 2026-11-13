@@ -4,6 +4,7 @@ import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
 import { Recorder, recordingTransfer, type Recording } from './recorder';
 import { SimEngine, type Controller } from './engine';
+import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
@@ -20,6 +21,7 @@ export type SimRequest =
   | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number }
   | ({ type: 'command' } & DriveCommand)
   | { type: 'respawn'; robot?: string }
+  | { type: 'fault'; joint: string; kind: FaultKind | null }
   | { type: 'record'; on: boolean }
   | { type: 'replay'; qpos: Float64Array; nq: number; dt: number }
   | { type: 'grab'; phase: 'start'; body: number; point: [number, number, number] }
@@ -300,6 +302,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   respawn: (msg) => {
     engine?.respawn(msg.robot);
+    frame();
+  },
+  fault: (msg) => {
+    engine?.setFault(msg.joint, msg.kind);
+    recorder?.fault(msg.joint, msg.kind);
     frame();
   },
   record,

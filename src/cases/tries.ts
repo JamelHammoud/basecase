@@ -1,3 +1,4 @@
+import type { RecordedFault } from '../sim/faults';
 import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -14,6 +15,7 @@ export interface TryManifest {
   seed: number;
   frames: number;
   dt: number;
+  faults?: RecordedFault[];
 }
 
 export interface TryRecord {
@@ -65,6 +67,7 @@ export async function tryManifest(kase: Case, model: SimModel, recording: Record
     seed: 0,
     frames: recording.frames,
     dt: recording.dt,
+    faults: recording.faults ?? [],
   };
 }
 

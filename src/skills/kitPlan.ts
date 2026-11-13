@@ -1,13 +1,26 @@
+import type { RobotAnimation } from '../types/robotics';
 import type { ModelHashes } from './artifacts';
 import type { TrainedEntry } from './kitEnvironment';
 import type { SkillRecord } from './skillRecords';
-import type { SkillRow } from './skillRows';
+import type { SkillRow, SkillTarget } from './skillRows';
 
 export interface BackgroundTask {
-  entry: TrainedEntry;
+  target: SkillTarget;
+  label: string;
+  entry: TrainedEntry | null;
+  move: RobotAnimation | null;
   kind: 'recheck' | 'train';
   record: SkillRecord;
 }
+
+export const taskOf = (row: SkillRow, record: SkillRecord, kind: BackgroundTask['kind']): BackgroundTask => ({
+  target: row.target,
+  label: row.label,
+  entry: row.kit,
+  move: row.move,
+  kind,
+  record,
+});
 
 export const KIT_DEBOUNCE_MS = 5000;
 
@@ -19,11 +32,11 @@ export function designMoved(before: ModelHashes | null, after: ModelHashes): boo
 
 export function backgroundTasks(rows: SkillRow[]): BackgroundTask[] {
   return rows.flatMap((row): BackgroundTask[] => {
-    if (!row.kit || !row.record) return [];
+    if (!(row.kit || row.move) || !row.record) return [];
 
-    if (row.state.kind === 'recheck') return [{ entry: row.kit, kind: 'recheck', record: row.record }];
+    if (row.state.kind === 'recheck') return [taskOf(row, row.record, 'recheck')];
 
-    return row.state.kind === 'untrained' ? [{ entry: row.kit, kind: 'train', record: row.record }] : [];
+    return row.state.kind === 'untrained' ? [taskOf(row, row.record, 'train')] : [];
   });
 }
 

@@ -57,7 +57,7 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
     commitParts(
       patchWhere(
         (p) => p.group?.id === groupId,
-        () => ({ group: { id: groupId, name } }),
+        (p) => ({ group: { ...p.group!, id: groupId, name } }),
       ),
     );
 
@@ -169,7 +169,7 @@ export function usePartEdits(core: WorkspaceCore) {
       commitParts(
         patchWhere(
           (p) => p.id === partId,
-          () => ({ sculptMesh, kind: 'sculpt_mesh' as const }),
+          () => ({ sculptMesh, kind: 'sculpt_mesh' as const, csg: undefined }),
         ),
       ),
     changeHardware,

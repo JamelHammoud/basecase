@@ -15,11 +15,11 @@ function dialogCopy(annotation: SceneAnnotation, number: number, pending: NonNul
     return { title: 'Delete comment?', body: <Quote text={text} /> };
   }
 
-  const count = annotation.comments.length;
+  const replies = annotation.comments.length - 1;
 
   return {
-    title: `Delete thread #${number}?`,
-    body: count > 1 ? <p>Deletes its {count} comments.</p> : <Quote text={annotation.comments[0]?.text ?? ''} />,
+    title: `Delete comment #${number}?`,
+    body: replies > 0 ? <p>Deletes its replies.</p> : <Quote text={annotation.comments[0]?.text ?? ''} />,
   };
 }
 

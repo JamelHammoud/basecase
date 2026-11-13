@@ -7,8 +7,10 @@ import {
   type SceneMark,
   type ScenePart,
 } from '../types/robotics';
+import { editWithOperands } from '../booleans/operands';
 import { jointsWithoutParts } from '../utils/kinematics';
 import { EMPTY_DOC, docFromParts, liveEdit, pushHistory, stepHistory, type HistoryDirection } from './docHistory';
+import { useBooleanResults } from './useBooleanResults';
 import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
 
@@ -39,6 +41,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   const docRef = useRef(doc);
   const partsRef = useRef(doc.parts);
   const lastPoseEditRef = useRef(0);
+  const liveJointsRef = useRef<{ key: string; joints: RobotJoint[] | undefined } | null>(null);
 
   useEffect(() => {
     partsRef.current = doc.parts;
@@ -50,19 +53,36 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     setDoc(next);
   };
 
+  useBooleanResults(doc.parts, docRef, writeDoc);
+
   const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
 
+  const settleLiveJoints = (key?: string) => {
+    const pending = liveJointsRef.current;
+
+    if (!pending || pending.key === key) return pending;
+
+    const { pose, marks } = projectRef.current;
+
+    liveJointsRef.current = null;
+    writeDoc(pushHistory(docRef.current, docRef.current.parts, { pose, joints: pending.joints, marks }));
+
+    return null;
+  };
+
   const commitParts: CommitParts = (updater, live = false) => {
+    if (!live) settleLiveJoints();
+
     const { pose, joints, marks } = projectRef.current;
     const d = docRef.current;
 
     if (live) {
-      writeDoc(liveEdit(d, updater(d.parts)));
+      writeDoc(liveEdit(d, editWithOperands(d.parts, updater)));
 
       return;
     }
 
-    const parts = updater(d.parts);
+    const parts = editWithOperands(d.parts, updater);
     const kept = new Set(parts.map((p) => p.id));
     const nextJoints = jointsWithoutParts(joints, new Set(d.parts.filter((p) => !kept.has(p.id)).map((p) => p.id)));
 
@@ -74,6 +94,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   const recordPoseEdit = (before: RobotPoseState | undefined) => {
+    settleLiveJoints();
+
     const now = performance.now();
     const folds = now - lastPoseEditRef.current < POSE_FOLD_MS;
 
@@ -89,6 +111,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   const commitMarks = (next: SceneMark[]) => {
+    settleLiveJoints();
+
     const { pose, joints, marks } = projectRef.current;
     const d = docRef.current;
 
@@ -97,7 +121,27 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     lastPoseEditRef.current = 0;
   };
 
+  const commitJoints = (update: (p: ProjectSettings) => ProjectSettings, edit?: { key: string; live: boolean }) => {
+    const pending = settleLiveJoints(edit?.key);
+    const { pose, joints, marks } = projectRef.current;
+    const before = pending ?? { key: edit?.key ?? '', joints };
+
+    updateProjectNow(update);
+
+    if (edit?.live) {
+      liveJointsRef.current = before;
+
+      return;
+    }
+
+    liveJointsRef.current = null;
+    writeDoc(pushHistory(docRef.current, docRef.current.parts, { pose, joints: before.joints, marks }));
+    lastPoseEditRef.current = 0;
+  };
+
   const travel = (direction: HistoryDirection, restorePose: (pose: RobotPoseState | undefined) => void) => {
+    settleLiveJoints();
+
     const d = docRef.current;
     const { pose, joints, marks } = projectRef.current;
     const here: Snapshot = { parts: d.parts, pose, joints, marks };
@@ -130,6 +174,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     writeDoc,
     commitParts,
     commitMarks,
+    commitJoints,
     recordPoseEdit,
     resetDoc: (parts: ScenePart[]) => writeDoc(docFromParts(parts)),
     travel,

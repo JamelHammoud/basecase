@@ -99,7 +99,7 @@ export const CHANGE_SCHEMA = {
     changed: { type: 'boolean', description: 'False when nothing should be merged' },
     kind: {
       type: 'string',
-      enum: ['feature', 'integration', 'fix', 'repair', 'refine', 'lesson', 'loop', 'update', 'market'],
+      enum: ['feature', 'integration', 'fix', 'repair', 'refine', 'lesson', 'harness', 'loop', 'update', 'market'],
     },
     title: text('What changed, verb first, sentence case, no period, no kind prefix'),
     summary: text('What a user or contributor gets, in two or three plain sentences'),

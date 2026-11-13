@@ -21,6 +21,36 @@
   }
 }
 
+@layer components {
+  .help-steps {
+    counter-reset: help-step;
+    list-style: none;
+    padding-left: 0;
+  }
+  .help-steps > li {
+    counter-increment: help-step;
+    position: relative;
+    padding-left: 38px;
+  }
+  .help-steps > li::before {
+    content: counter(help-step);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 /* The robots drift sideways forever. The track holds the list three times and each tile carries
    its own gap, so shifting by exactly one copy (a third of the track) loops seamlessly, and two
    copies always cover the widest window. */

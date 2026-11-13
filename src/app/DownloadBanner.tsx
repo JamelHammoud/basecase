@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Button, CloseIcon, DownloadIcon, IconButton, LAYOUT } from '../design-system';
-import { DESKTOP_DOWNLOAD, IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { DESKTOP_AGENT_LINE, DESKTOP_DOWNLOAD, IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { readStored, writeStored } from './storedSettings';
 
 const DISMISSED_KEY = 'download-banner-dismissed';
@@ -24,7 +24,7 @@ function DownloadBannerFrame({ children }: { children: ReactNode }) {
           inert={dismissed}
           aria-hidden={dismissed}
         >
-          <span className="text-[13px] font-medium text-white truncate">Build with the agent in the desktop app</span>
+          <span className="text-[13px] font-medium text-white truncate">{DESKTOP_AGENT_LINE}</span>
           <Button
             variant="contrast"
             size="xs"

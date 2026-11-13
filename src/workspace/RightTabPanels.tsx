@@ -162,6 +162,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
       <TabActivity tab="pose" current={current} visited={visited} available={onRobot}>
         <PosePanel
           posing={posing}
+          jointEdits={actions.joints}
           onSelectParts={setSelectedIds}
           onImportMotion={pose.importMotion}
           onWalkCycle={pose.walkCycle}
@@ -173,6 +174,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           sim={simTraining.sim}
           training={simTraining.training}
           cases={simTraining.cases}
+          share={simTraining.share}
           parts={core.parts}
           rig={posing.rig}
           animations={project.animations ?? []}

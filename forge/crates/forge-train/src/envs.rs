@@ -20,6 +20,7 @@ pub struct Envs<'a> {
     pub count: usize,
     rngs: Vec<Rng>,
     pub steps_taken: Vec<i64>,
+    ticks: Vec<i64>,
     push_at: Vec<i64>,
     last_action: Vec<f64>,
     action: Vec<f64>,
@@ -100,6 +101,7 @@ impl<'a> Envs<'a> {
             count,
             rngs,
             steps_taken: vec![0; count],
+            ticks: vec![0; count],
             push_at,
             last_action: vec![0.0; count * nact],
             action: vec![0.0; count * nact],
@@ -160,6 +162,7 @@ impl<'a> Envs<'a> {
 
         qpos[quat_at..quat_at + 4].copy_from_slice(&turned);
         self.steps_taken[sim] = 0;
+        self.ticks[sim] = 0;
         self.last_action[sim * robot.nact..(sim + 1) * robot.nact].fill(0.0);
         self.conditions.reset(sim, &mut self.rngs[sim]);
         self.shift_start(sim);
@@ -241,7 +244,21 @@ impl<'a> Envs<'a> {
             obs[12 + 2 * nact + j] = last[j] as f32;
         }
 
-        obs[12 + 3 * nact..].copy_from_slice(self.eyes.values(sim));
+        let eyes = self.eyes.values(sim);
+
+        obs[12 + 3 * nact..12 + 3 * nact + eyes.len()].copy_from_slice(eyes);
+        self.write_clock(sim, obs);
+    }
+
+    fn write_clock(&self, sim: usize, obs: &mut [f32]) {
+        let Some(reference) = &self.robot.job.options.reference else {
+            return;
+        };
+        let at = obs.len() - 2;
+        let clock = reference.clock(self.ticks[sim]);
+
+        obs[at] = clock[0] as f32;
+        obs[at + 1] = clock[1] as f32;
     }
 
     pub fn keep_final_obs(&mut self) {
@@ -353,6 +370,7 @@ impl<'a> Envs<'a> {
 
         for sim in 0..self.count {
             self.steps_taken[sim] += 1;
+            self.ticks[sim] += 1;
 
             let row = self.batch.row(sim);
             let qpos = &row[layout.qpos..];
@@ -379,10 +397,12 @@ impl<'a> Envs<'a> {
                 last_action: &self.last_action[sim * nact..(sim + 1) * nact],
                 bodies: &[],
             };
+            let reference = robot.job.options.reference.as_ref();
+            let frame = reference.map_or(&[][..], |r| r.frame(self.ticks[sim]));
             let fell = robot.job.options.fall_resets && handwritten::fell(&state);
             let timeout = self.steps_taken[sim] >= robot.episode_steps;
 
-            result.reward[sim] = self.rewarder.reward(&state) as f32;
+            result.reward[sim] = self.rewarder.reward(&state, frame) as f32;
             result.fell[sim] = fell;
             result.timeout[sim] = timeout;
             self.last_action[sim * nact..(sim + 1) * nact].copy_from_slice(&self.action[sim * nact..(sim + 1) * nact]);

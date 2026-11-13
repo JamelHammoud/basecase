@@ -17,6 +17,7 @@ import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useBuildGuide } from './useBuildGuide';
 import { useReadiness } from './useReadiness';
+import { useSketchSession } from './useSketchSession';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -107,7 +108,6 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
 
   const { setSceneId, setSceneName, setGlobalGoal } = scene;
   const { setProject, resetDoc, travel } = docs;
-  const { reset: resetAnnotations } = annotations;
   const { restorePose } = posing;
 
   const loadSeed = (next: WorkspaceSeed, message?: string) => {
@@ -117,7 +117,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     setGlobalGoal(next.globalGoal || '');
     setProject(projectFromSeed(next.project));
     resetDoc(next.parts || []);
-    resetAnnotations(next.annotations || []);
+    annotations.reset(next.annotations || []);
     setSelectedIds([]);
     tool.leaveSceneView();
 
@@ -144,6 +144,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     selectedIds,
     setSelectedIds,
     selection,
+    sketching: useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool }),
     annotations,
     marks,
     measure,

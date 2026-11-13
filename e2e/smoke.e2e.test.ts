@@ -55,6 +55,30 @@ describe('studio smoke test', () => {
     expect(fromSource).toBe(inject('served') === 'dev');
   });
 
+  it('leaves part exports out of ⌘K until the scene has parts', async () => {
+    const command = (name: string) => app.page.getByRole('button', { name, exact: true });
+    const searchExports = async () => {
+      await app.page.keyboard.press('Meta+k');
+      await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
+      await app.page.keyboard.type('export');
+      await expect.poll(() => command('Export Scene').count()).toBe(1);
+    };
+
+    await searchExports();
+    expect(await command('Export STL').count()).toBe(0);
+    expect(await command('Export 3MF Plates').count()).toBe(0);
+    await app.page.keyboard.press('Escape');
+
+    await app.page.keyboard.press('a');
+    await app.page.getByRole('button', { name: /^Cube/ }).first().click();
+    await searchExports();
+    expect(await command('Export STL').count()).toBe(1);
+    expect(await command('Export 3MF Plates').count()).toBe(1);
+    await app.page.keyboard.press('Escape');
+    await app.page.keyboard.press('Meta+z');
+    await expect.poll(() => partCount(app.page)).toBe(0);
+  });
+
   it('adds a shape from the Shapes menu', async () => {
     await app.page.keyboard.press('a');
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();
@@ -171,7 +195,7 @@ describe('studio commands', () => {
     expect(await cursor()).toBe(idle);
   });
 
-  it('asks before deleting a comment or a thread, and undoes a deleted reply', async () => {
+  it('asks before deleting a comment or a reply, and undoes a deleted reply', async () => {
     const dialog = app.page.getByRole('dialog');
     const parts = await partCount(app.page);
     const comment = (text: string) => app.page.locator('p', { hasText: text });
@@ -200,8 +224,8 @@ describe('studio commands', () => {
     await app.page.getByRole('status').getByRole('button', { name: 'Undo' }).click();
     await expect.poll(() => comment('Second note').count()).toBe(1);
 
-    await app.page.getByRole('button', { name: 'Delete thread' }).click();
-    await expect.poll(() => dialog.getAttribute('aria-label')).toBe('Delete thread #1?');
+    await app.page.getByRole('button', { name: 'Delete comment' }).click();
+    await expect.poll(() => dialog.getAttribute('aria-label')).toBe('Delete comment #1?');
     await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
     await expect.poll(() => comment('Second note').count()).toBe(0);
     await app.page.keyboard.press('m');

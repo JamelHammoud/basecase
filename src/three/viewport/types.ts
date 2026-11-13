@@ -8,7 +8,11 @@ import type { ChainResult } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
+import type { SceneShapes } from '../analysis/sceneShapes';
 import type { MeshMeasure } from '../meshMeasure';
+import type { FoundAxis } from '../../joints/axisFinder';
+import type { JointAxisQuery } from '../analysis/jointAxis';
+import type { StrengthJob, StrengthReading } from '../../strength/types';
 import type {
   CameraPreset,
   MeasureUnit,
@@ -59,6 +63,11 @@ export interface AgentFrame {
   emphasis: 'focus' | 'normal' | 'dim';
 }
 
+export interface AxisPickHit {
+  part: string;
+  point: Vec3;
+}
+
 export interface ViewportProps {
   sceneKey?: string;
   parts: ScenePart[];
@@ -71,6 +80,8 @@ export interface ViewportProps {
   showGrid: boolean;
   blueprintDataUrl?: string | null;
   onSelectPart: (id: string | null, additive?: boolean, drill?: boolean) => void;
+  onPickPoint?: (id: string, point: Vec3) => void;
+  onOpenPart?: (id: string) => void;
   onMarqueeSelect?: (ids: string[]) => void;
   onUpdatePartsTransform?: (updates: PartTransformUpdate[]) => void;
   onUpdatePartTransform: (id: string, position: Vec3, rotation: Vec3, dimensions?: ScenePart['dimensions']) => void;
@@ -100,6 +111,8 @@ export interface ViewportProps {
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
+  axisPick?: { parts: string[]; ready: boolean } | null;
+  onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
 }
 
 export type MarkTool = 'marker' | 'eraser';
@@ -156,13 +169,16 @@ export interface Viewport3DHandle {
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
+  jointAxis: (query: JointAxisQuery) => Promise<FoundAxis | null>;
   meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
+  strength: (jobs: StrengthJob[]) => Promise<Array<StrengthReading | null>>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
+  restShapes: (ids: string[]) => SceneShapes;
   silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];
   posedInterference: (onlyIds?: string[], riders?: Record<string, string[]>) => Promise<Interference[]>;
   posedFloor: (ids?: string[]) => Promise<number | null>;

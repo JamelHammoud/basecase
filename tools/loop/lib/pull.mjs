@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
-import { createPull, openPulls, repo, sameTitle } from './github.mjs';
+import { createPull, openPulls, repo } from './github.mjs';
+import { sameTitle } from './titles.mjs';
 import { CODE_ROOT } from './paths.mjs';
 import { protectedIn, protectedList } from './protected.mjs';
 import { run } from './sh.mjs';
@@ -13,6 +14,7 @@ export const KINDS = {
   repair: { prefix: 'Repair', template: 'repair' },
   refine: { prefix: 'Refine', template: 'refine' },
   lesson: { prefix: 'Lesson', template: 'lesson' },
+  harness: { prefix: 'Harness', template: 'harness' },
   loop: { prefix: 'Loop', template: 'loop' },
   update: { prefix: 'Update', template: 'loop' },
   market: { prefix: 'Market', template: 'loop' },

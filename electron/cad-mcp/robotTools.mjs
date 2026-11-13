@@ -253,7 +253,7 @@ export const importRobot = {
     title: 'Import a published robot',
     description:
       'Inserts a published robot from its URDF or MuJoCo MJCF with its meshes: every link becomes a part, every joint becomes a posable joint with its real axis and limits. ' +
-      'Presets: humanoids unitree-g1 (29 joints), unitree-h1, unitree-h1-2, apptronik-apollo, booster-t1, berkeley-humanoid; small bipeds robotis-op3, open-duck-mini; quadrupeds unitree-go2, unitree-go1, unitree-b2, anymal-c, spot; arms so101, franka-panda, ur5e. Or a URL to a .urdf or .xml, a GitHub or Hugging Face repo or folder, or a .zip. When a repo holds several robots the reply lists them: call again with entry. ' +
+      'Presets: humanoids unitree-g1 (29 joints), unitree-h1, unitree-h1-2, apptronik-apollo, booster-t1, berkeley-humanoid; small bipeds robotis-op3, open-duck-mini; quadrupeds unitree-go2, unitree-go1, unitree-b2, anymal-c, spot; arms so101, franka-panda, ur5e. Or a URL to a .urdf or .xml, a GitHub or Hugging Face repo or folder, a .zip, or an Onshape assembly tab link (cad.onshape.com/documents/…/e/…; needs the user’s Onshape keys in Settings ▸ Accounts). When a repo holds several robots the reply lists them: call again with entry. ' +
       'Use it when the user wants an existing robot to pose or animate, or as a reference beside a design.',
     inputSchema: {
       preset: z
@@ -284,6 +284,28 @@ export const importRobot = {
   handler: async (args) => {
     try {
       return text((await bridge('import_robot', args, 300000))?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const wrapRobot = {
+  name: 'wrap_robot',
+  config: {
+    title: 'Wrap a robot in a mesh',
+    description:
+      'Wraps a jointed robot in a character mesh the user imported (an owl, a droid body): fits the mesh around the robot by uniform scale and centring, hollows it to a 2 mm wall, cuts it at each joint into one shell per link, and cuts away whatever a servo, a link or another shell would hit across each joint’s range. ' +
+      'Each shell is a printed part attached to its link, so it poses, animates and simulates with it; the mesh is hidden, and one undo restores everything. Takes a few seconds to a minute. ' +
+      'mesh = the imported mesh part (default: the only one); robot = its name or key from get_rig (default: the selected robot, or the only one).',
+    inputSchema: {
+      mesh: z.string().optional(),
+      robot: ROBOT,
+    },
+  },
+  handler: async (args) => {
+    try {
+      return text((await bridge('wrap_robot', args, 300000))?.text || 'ok');
     } catch (err) {
       return fail(err);
     }

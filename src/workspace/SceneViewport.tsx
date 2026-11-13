@@ -1,3 +1,4 @@
+import { drilledOperands } from '../booleans/picking';
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
 import { CameraStrip } from '../components/cameras/CameraStrip';
@@ -36,7 +37,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   const { cursors, lanes } = agent;
   const { setDraft } = annotations;
   const editingMark = marks.selected;
-  const shownParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
+  const topParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
+  const shownParts = [...topParts, ...drilledOperands(parts, selectedIds)];
 
   return (
     <>
@@ -53,6 +55,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         showGrid={studio.showGrid}
         blueprintDataUrl={null}
         onSelectPart={selection.select}
+        onPickPoint={core.sketching.notePick}
+        onOpenPart={core.sketching.edit}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
         onMarqueeSelect={selection.marqueeSelect}
@@ -94,6 +98,13 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}
+        axisPick={
+          actions.joints.picking && {
+            parts: [actions.joints.picking.parent, actions.joints.picking.child],
+            ready: actions.joints.picking.ready,
+          }
+        }
+        onAxisPick={actions.joints.onAxisPick}
       />
       <DriveOverlay sim={sim} />
       <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />

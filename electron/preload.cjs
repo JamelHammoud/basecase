@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sourcedMesh: (id) => ipcRenderer.invoke('sourced:mesh', id),
   importMakerCad: (payload) => ipcRenderer.invoke('sourced:import-cad', payload),
   openCadFile: (payload) => ipcRenderer.invoke('cad:open', payload),
+  exportStep: (payload) => ipcRenderer.invoke('cad:export-step', payload),
   getChat: (id) => ipcRenderer.invoke('chat:get', id),
   saveChat: (conv) => ipcRenderer.invoke('chat:save', conv),
   deleteChat: (id) => ipcRenderer.invoke('chat:delete', id),
@@ -83,6 +84,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('hub:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown Hugging Face call')),
+  onshapeCall: (channel, payload) =>
+    String(channel).startsWith('onshape:')
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown Onshape call')),
   robotConnect: (spec) => ipcRenderer.invoke('robot:connect', spec),
   robotCommand: (command) => ipcRenderer.invoke('robot:command', command),
   robotDisconnect: () => ipcRenderer.invoke('robot:disconnect'),

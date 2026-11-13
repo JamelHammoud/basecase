@@ -1,4 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import { openApp, type App } from './harness';
 
 interface StudioHook {
@@ -45,6 +48,18 @@ const servo = {
   kind: 'component',
   componentId: 'feetech-sts3215',
   componentVariant: 'c001',
+};
+
+const armWithEstimates = () => {
+  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const servo = { ...standIn('mg996r', 0), name: 'MG996R', kind: 'component', componentId: 'towerpro-mg996r' };
+  const joints = arm.joints.map((j) => {
+    if (j.id === 'arm0') return { ...j, effortNm: undefined };
+
+    return j.id === 'arm1' ? { ...j, actuators: ['mg996r'] } : j;
+  });
+
+  return { name: 'arm', parts: [...arm.parts, servo], project: { ...DEFAULT_PROJECT, joints } };
 };
 
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
@@ -173,6 +188,33 @@ describe('Checks', () => {
       .poll(() => app.page.locator(visible('p')).filter({ hasText: exactly }).count(), { timeout: 5000 })
       .toBeGreaterThan(0);
   }, 30000);
+
+  it('say which joints the simulation estimates, and select their parts', async () => {
+    await app.page.evaluate(
+      (record) => (window as unknown as { __studio: StudioHook }).__studio.load(record),
+      armWithEstimates(),
+    );
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const estimates = checks().getByRole('button', { name: /^Torque estimates/ });
+
+    await expect.poll(() => estimates.count(), { timeout: 45000 }).toBe(1);
+    await estimates.click();
+    await expect
+      .poll(() => checks().innerText(), { timeout: 45000 })
+      .toContain('These joints have no servo, so the simulation guesses their torque from weight.');
+    expect(await checks().innerText()).toContain('No servo on Arm0');
+    await checks().getByRole('button', { name: 'link0', exact: true }).first().click();
+
+    const models = checks().getByRole('button', { name: /^Servo models/ });
+
+    await models.click();
+    await expect
+      .poll(() => checks().innerText(), { timeout: 45000 })
+      .toContain('These servos have no measured model, so the simulation guesses how they respond.');
+    expect(await checks().innerText()).toContain('MG996R on Arm1');
+    expect(app.errors).toEqual([]);
+  }, 90000);
 });
 
 describe('Build tab fields', () => {
@@ -204,4 +246,30 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+});
+
+describe('Strength', () => {
+  it('fails an L-bracket printed with its layers across the bend, and Fix turns it on its side', async () => {
+    const scene = lBracketScene();
+
+    await app.page.evaluate((record) => {
+      const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+      studio.load({ parts: record.parts, project: { ...(studio.sceneRecord().project as object), ...record.project } });
+    }, scene);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Strength/ }) })
+      .first();
+
+    await expect.poll(() => row.locator('svg.text-red-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
+    await row.getByRole('button', { name: /^Strength/ }).click();
+    expect(await row.textContent()).toContain(L_BRACKET_NAME);
+
+    await row.getByRole('button', { name: 'Fix' }).first().click();
+    await expect.poll(() => row.locator('svg.text-emerald-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
+    expect(await row.locator('svg.text-red-400').count()).toBe(0);
+  }, 200000);
 });

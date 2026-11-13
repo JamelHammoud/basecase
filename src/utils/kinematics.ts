@@ -193,6 +193,12 @@ export function jointsWithoutParts(joints: RobotJoint[] | undefined, deleted: Se
 
 export const jointUnit = (j: RobotJoint) => (j.type === 'prismatic' ? 'mm' : '°');
 
+export function jointRange(joint: RobotJoint): [number, number] {
+  if (joint.range) return [Math.min(...joint.range), Math.max(...joint.range)];
+
+  return joint.type === 'prismatic' ? [-100, 100] : [-180, 180];
+}
+
 export function linkParts(rig: Rig, jointId: string): string[] {
   return [...rig.ownerOf].filter(([, j]) => j === jointId).map(([p]) => p);
 }

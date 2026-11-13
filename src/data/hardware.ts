@@ -1131,17 +1131,6 @@ export const stockLengths = (spec: HardwareSpec): number[] => HARDWARE_BY_TYPE[s
 export const isStockLength = (spec: HardwareSpec): boolean =>
   spec.length === undefined || stockLengths(spec).includes(spec.length);
 
-export function nearestStockLengths(spec: HardwareSpec): number[] {
-  const list = stockLengths(spec);
-
-  if (spec.length === undefined || !list.length) return [];
-
-  const below = [...list].reverse().find((l) => l < spec.length!);
-  const above = list.find((l) => l > spec.length!);
-
-  return [below, above].filter((l): l is number => l !== undefined);
-}
-
 export interface HardwareFamily {
   id: string;
   name: string;

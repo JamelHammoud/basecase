@@ -7,7 +7,7 @@ import type { Simulation } from '../sim/useSimulation';
 import { modelHashes, type ModelHashes, type Skill } from '../skills/artifacts';
 import type { TrainedEntry } from '../skills/kitEnvironment';
 import { kitTopSpeed } from '../skills/kitModel';
-import { backgroundTasks, Debounce, designMoved } from '../skills/kitPlan';
+import { backgroundTasks, Debounce, designMoved, taskOf } from '../skills/kitPlan';
 import { kitEntries } from '../skills/motorKit';
 import { inSkillsWorker } from '../skills/skillsClient';
 import { withRecord, type SkillRecord } from '../skills/skillRecords';
@@ -71,9 +71,11 @@ function useSceneModel(input: SkillsInput, runtime: SkillsRuntime, watch: boolea
   const [debounce] = useState(() => new Debounce(BUILD_DEBOUNCE_MS));
   const hashes = useRef<ModelHashes | null>(null);
   const records = useRef<SkillRecord[]>([]);
+  const animations = useRef(project.animations ?? []);
 
   useLayoutEffect(() => {
     records.current = project.skills ?? [];
+    animations.current = project.animations ?? [];
   });
 
   useEffect(() => {
@@ -83,7 +85,13 @@ function useSceneModel(input: SkillsInput, runtime: SkillsRuntime, watch: boolea
       void buildModel().then(
         (built) => {
           const next = modelHashes(built);
-          const rows = skillRows({ model: built, design: designOf(built), records: records.current, jobs: [] });
+          const rows = skillRows({
+            model: built,
+            design: designOf(built),
+            records: records.current,
+            jobs: [],
+            animations: animations.current,
+          });
 
           if (designMoved(hashes.current, next)) runtime.planBackground(built, backgroundTasks(rows));
 
@@ -93,7 +101,7 @@ function useSceneModel(input: SkillsInput, runtime: SkillsRuntime, watch: boolea
         () => null,
       );
     });
-  }, [watch, parts, project.joints, buildModel, runtime, debounce]);
+  }, [watch, parts, project.joints, project.servoCalibrations, project.animations, buildModel, runtime, debounce]);
 
   useEffect(() => () => debounce.cancel(), [debounce]);
 
@@ -106,9 +114,10 @@ export function useSkills(input: SkillsInput) {
   const { runtime, jobs } = useRuntime(input);
   const records = project.skills ?? [];
   const facts = robotFacts(rig, parts);
-  const watch = available && (facts.morphology === 'legged' || records.length > 0);
+  const watch = available && (facts.morphology === 'legged' || records.length > 0 || !!project.policies?.length);
   const model = useSceneModel(input, runtime, watch);
-  const rows: SkillRow[] = model ? skillRows({ model, design: designOf(model), records, jobs }) : [];
+  const animations = project.animations ?? [];
+  const rows: SkillRow[] = model ? skillRows({ model, design: designOf(model), records, jobs, animations }) : [];
   const velocityRecord = readyVelocity(rows);
   const examples = teachExamples(facts, footPoints(rig, parts).length);
 
@@ -131,8 +140,10 @@ export function useSkills(input: SkillsInput) {
   const train = async (row: SkillRow) => {
     const built = await sim.buildModel();
 
-    if (row.kit && row.record && row.state.kind === 'recheck')
-      return runtime.recheck(built, { entry: row.kit, kind: 'recheck', record: row.record });
+    if ((row.kit || row.move) && row.record && row.state.kind === 'recheck')
+      return runtime.recheck(built, taskOf(row, row.record, 'recheck'));
+
+    if (row.move) return runtime.trainMove(built, row.move);
 
     return row.kit ? runtime.trainKit(built, row.kit) : null;
   };
@@ -151,6 +162,7 @@ export function useSkills(input: SkillsInput) {
   return {
     runtime,
     available,
+    model,
     buildModel: sim.buildModel,
     rows,
     examples,

@@ -10,16 +10,12 @@ const BACK: Partial<Record<Entry['kind'], { href: string; label: string }>> = {
   blog: { href: '/blog', label: 'Blog' },
 };
 
-const dated = (entry: Entry) => entry.kind !== 'help';
-
 export const ArticlePage: React.FC<{ entry: Entry }> = ({ entry }) => (
   <article>
     <PageTitle back={BACK[entry.kind]}>{entry.title}</PageTitle>
-    {dated(entry) && (
-      <div className="mt-[14px]">
-        <EntryMeta entry={entry} />
-      </div>
-    )}
+    <div className="mt-[14px]">
+      <EntryMeta entry={entry} />
+    </div>
     {entry.image && <EntryImage src={entry.image} alt="" className="mt-[32px]" />}
     <SiteMarkdown className="mt-[32px] text-[16px] leading-[1.6] text-white/60">{entry.body}</SiteMarkdown>
     {entry.line && (

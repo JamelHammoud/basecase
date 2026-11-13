@@ -10,16 +10,19 @@ import {
   PhotoIcon,
   PrinterIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
 import { SHARE_LABEL } from '../utils/os';
 
 interface ExportMenuProps {
-  canExportStl: boolean;
+  canExportParts: boolean;
+  canExportStep: boolean;
   canExportRobot: boolean;
   onExportImage: () => void;
   onExportStl: () => void;
   onExport3mf: () => void;
+  onExportStep?: () => void;
   onExportScene: () => void;
   onExportRobot: () => void;
   onAirDrop: () => void;
@@ -27,11 +30,13 @@ interface ExportMenuProps {
 }
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({
-  canExportStl,
+  canExportParts,
+  canExportStep,
   canExportRobot,
   onExportImage,
   onExportStl,
   onExport3mf,
+  onExportStep,
   onExportScene,
   onExportRobot,
   onAirDrop,
@@ -57,20 +62,28 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         align="end"
         className="w-56"
       >
-        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="PNG Image" onSelect={run(onExportImage)} />
+        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="Image" onSelect={run(onExportImage)} />
         <MenuItem
           icon={<DownloadIcon className="w-4 h-4" />}
-          label="STL Mesh"
-          disabled={!canExportStl}
+          label="STL"
+          disabled={!canExportParts}
           onSelect={run(onExportStl)}
         />
         <MenuItem
           icon={<PrinterIcon className="w-4 h-4" />}
           label="3MF Plates"
-          disabled={!canExportStl}
+          disabled={!canExportParts}
           onSelect={run(onExport3mf)}
         />
-        <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Basecase Scene" onSelect={run(onExportScene)} />
+        {onExportStep && (
+          <MenuItem
+            icon={<ShapeIcon className="w-4 h-4" />}
+            label="STEP"
+            disabled={!canExportStep}
+            onSelect={run(onExportStep)}
+          />
+        )}
+        <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Scene" onSelect={run(onExportScene)} />
         <MenuItem
           icon={<RobotsIcon className="w-4 h-4" />}
           label="Robot Package"
@@ -86,7 +99,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         <MenuItem
           icon={<ShareIcon className="w-4 h-4" />}
           label={SHARE_LABEL}
-          disabled={!canExportStl}
+          disabled={!canExportParts}
           onSelect={run(onAirDrop)}
         />
       </PopoverMenu>

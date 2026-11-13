@@ -96,6 +96,8 @@ describe('runEngineering on a two-joint leg', () => {
       ['Weight', 'pass'],
       ['Servo torque', 'pass'],
       ['Peak torque', 'not run'],
+      ['Torque estimates', 'pass'],
+      ['Servo models', 'warn'],
       ['Servo alignment', 'pass'],
       ['Joint support', 'pass'],
       ['Servo voltage', 'pass'],

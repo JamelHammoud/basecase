@@ -60,7 +60,7 @@ export interface PrintPlan {
   plateOf: Record<string, number>;
 }
 
-const score = (pose: PrintPose, fits: boolean) =>
+export const poseScore = (pose: PrintPose, fits: boolean) =>
   (fits ? 0 : 1e12) + pose.supportMm3 - pose.contactMm2 * 0.5 + pose.size[2] * 0.01;
 
 function overridePose(shape: PrintShape, down?: Vec3) {
@@ -80,7 +80,7 @@ export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): Prin
   const scored = candidates.map((pose) => {
     const fit = fitOnBed(pose.size[0], pose.size[1], pose.size[2], bed);
 
-    return { pose, fit, score: score(pose, !!fit) };
+    return { pose, fit, score: poseScore(pose, !!fit) };
   });
   const best = scored.reduce((a, b) => (b.score < a.score ? b : a));
   const { pose, fit } = best;
@@ -224,4 +224,14 @@ export function buildPrintPlan(inputs: PlanInput[], setup: PrinterSetup, bed: Be
     plates,
     plateOf,
   };
+}
+
+export function turnedPrint(plates: Plate[], id: string): PartPrint | null {
+  for (const plate of plates) {
+    const item = plate.items.find((it) => it.id === id && it.copy === 0);
+
+    if (item) return { turned: item.yaw !== 90, at: [item.x, item.y], plate: plate.local };
+  }
+
+  return null;
 }

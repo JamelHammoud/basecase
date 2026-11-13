@@ -8,6 +8,7 @@ import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
 import { eyeCaster, type EyeCaster } from './eyes';
+import { ActuatorFaults, type FaultKind } from './faults';
 import { policyObsSize, type PolicySpec } from './policy';
 import { stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
@@ -24,6 +25,7 @@ export interface JointStat {
   id: string;
   peak: number;
   saturatedS: number;
+  fault?: FaultKind;
 }
 
 export interface RobotStat {
@@ -74,7 +76,7 @@ export class SimEngine {
   private fellAt = new Map<string, number>();
   private push: { body: number; force: [number, number, number]; until: number } | null = null;
   private grab: GrabForce;
-  private heldRange: ArrayLike<number> | null = null;
+  private faults: ActuatorFaults;
   private policyState: PolicyState | null = null;
   readonly dt: number;
   private mj: MainModule;
@@ -87,6 +89,7 @@ export class SimEngine {
     this.data = new mj.MjData(this.model);
     this.dt = this.model.opt.timestep;
     this.grab = new GrabForce(this.model, this.data, this.dt);
+    this.faults = new ActuatorFaults(this.model);
 
     const id = (type: number, name: string) => mj.mj_name2id(this.model, type, name);
     const BODY = mj.mjtObj.mjOBJ_BODY.value,
@@ -142,6 +145,7 @@ export class SimEngine {
     this.fellAt.clear();
     this.push = null;
     this.grab.forget();
+    this.faults.reprime();
     this.setController(this.controller);
   }
 
@@ -185,6 +189,7 @@ export class SimEngine {
     this.setController(this.controller);
     mj.mj_forward(model, data);
     this.holdDelayedControls(r.joints);
+    this.faults.reprime();
   }
 
   private holdDelayedControls(joints: number[]) {
@@ -204,7 +209,7 @@ export class SimEngine {
     this.policyState?.eyes?.dispose();
     this.policyState = null;
     this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
-    this.setLimp(c.kind === 'limp');
+    this.faults.setLimpAll(c.kind === 'limp');
     this.route = c.kind === 'route' ? this.routeRunner(c) : null;
 
     const pc = routePolicy(c);
@@ -221,6 +226,7 @@ export class SimEngine {
       action: new Float32Array(idx.length),
       obs: new Float32Array(policyObsSize(pc.policy)),
       nextAt: this.data.time,
+      startedAt: this.data.time,
       src: {
         qpos: this.data.qpos,
         qvel: this.data.qvel,
@@ -281,16 +287,19 @@ export class SimEngine {
     return jointQposOf(j.type, values?.[j.id] ?? this.sim.initial.values[j.id] ?? 0);
   }
 
-  private setLimp(limp: boolean) {
-    const range = this.model.actuator_forcerange;
+  setFault(jointId: string, kind: FaultKind | null) {
+    const i = this.sim.joints.findIndex((j) => j.id === jointId);
+    const j = this.sim.joints[i];
 
-    if (limp && !this.heldRange) {
-      this.heldRange = range.slice();
-      range.fill(0);
-    } else if (!limp && this.heldRange) {
-      range.set(this.heldRange);
-      this.heldRange = null;
-    }
+    if (!j || j.actuator < 0) return;
+
+    this.faults.set(j.actuator, kind, j.drive === 'position' ? this.data.qpos[this.jointQpos[i]] : 0);
+  }
+
+  private faultField(actuator: number): { fault?: FaultKind } {
+    const fault = actuator >= 0 ? this.faults.kindOf(actuator) : undefined;
+
+    return fault ? { fault } : {};
   }
 
   private applyControl() {
@@ -362,6 +371,7 @@ export class SimEngine {
 
     for (let s = 0; s < steps; s++) {
       this.applyControl();
+      this.faults.apply(data.ctrl);
       this.applyPush();
       this.grab.apply();
       mj.mj_step(model, data);
@@ -420,7 +430,12 @@ export class SimEngine {
           speed: r.rootDof >= 0 ? Math.hypot(data.qvel[r.rootDof], data.qvel[r.rootDof + 1]) : 0,
         };
       }),
-      joints: this.sim.joints.map((j, i) => ({ id: j.id, peak: this.peaks[i], saturatedS: this.saturated[i] })),
+      joints: this.sim.joints.map((j, i) => ({
+        id: j.id,
+        peak: this.peaks[i],
+        saturatedS: this.saturated[i],
+        ...this.faultField(j.actuator),
+      })),
       ...(this.drive?.hand ? { effector: this.handAt(this.drive.hand) } : {}),
     };
   }
@@ -463,18 +478,8 @@ export class SimEngine {
     const { xpos, xquat } = this.data;
 
     this.bodyIds.forEach((b, i) => {
-      out.set(
-        [
-          xpos[b * 3],
-          xpos[b * 3 + 1],
-          xpos[b * 3 + 2],
-          xquat[b * 4],
-          xquat[b * 4 + 1],
-          xquat[b * 4 + 2],
-          xquat[b * 4 + 3],
-        ],
-        i * 7,
-      );
+      out.set(xpos.subarray(b * 3, b * 3 + 3), i * 7);
+      out.set(xquat.subarray(b * 4, b * 4 + 4), i * 7 + 3);
     });
 
     return out;

@@ -193,7 +193,7 @@ describe('Routines in the app', () => {
     await expect.poll(async () => (await routineState()).compiled?.ok, { timeout: 30000 }).toBe(true);
   });
 
-  it('shows Needs Training on a skill the Kit cannot run, and refuses to run the Routine', async () => {
+  it('shows Train on a skill the Kit cannot run, and refuses to run the Routine', async () => {
     await load(greeterWithoutHead());
 
     const made = await agent.call('make_routine', { sentence: SENTENCE, routine: greetingRoutine() });
@@ -206,7 +206,7 @@ describe('Routines in the app', () => {
 
     const node = app.page.locator(visible('[data-testid="routine-flow"] [data-flow-node="lookAt"]'));
 
-    await expect.poll(() => node.locator('button', { hasText: 'Needs Training' }).count()).toBe(1);
+    await expect.poll(() => node.locator('button', { hasText: 'Train' }).count()).toBe(1);
     expect((await agent.call('test_routine', {})).passed).toBe(false);
     expect((await agent.call('run_routine', { scenario: ACCEPTANCE[0].scenario, live: true })).started).not.toBe(true);
   });

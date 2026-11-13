@@ -6,6 +6,7 @@ import { FIXTURE_SKILLS } from './fixtureSkills';
 import { withNeeds } from './routineNeeds';
 import type { Routine, Step } from './schema';
 import { validateRoutine } from './schema';
+import { waitTimeoutMs } from './stepFactory';
 import { stepChoices } from './stepMenu';
 import { compileRoutine, generateScenarios, runScenario } from './testing';
 
@@ -155,5 +156,16 @@ describe('editing a Routine by hand', () => {
     const r = applyEdit(built(), edit);
 
     expect(validateRoutine(r).ok).toBe(false);
+  });
+
+  it('keeps a timed Wait inside its time limit however long it waits', () => {
+    const r = add(blank(), 'wait', at(0));
+
+    for (const ms of [200, 1000, 45_000]) {
+      const edited = applyEdit(r, { op: 'update', id: 'wait', patch: { ms, timeoutMs: waitTimeoutMs(ms) } });
+
+      expect(edited.base.onTimeout[0]).toMatchObject({ kind: 'wait', ms });
+      expect(compileRoutine(edited).ok).toBe(true);
+    }
   });
 });

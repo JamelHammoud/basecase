@@ -8,6 +8,10 @@ import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
+import type { BooleanFields } from './booleans';
+import type { SculptMeshData } from './sculpt';
+
+export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
 
 export type PartCategory =
   | 'custom_models'
@@ -40,6 +44,7 @@ export type PartKind =
   | 'cad_part'
   | 'component'
   | 'mesh'
+  | 'boolean'
   | 'servo'
   | 'stepper_motor'
   | 'hinge_joint'
@@ -75,20 +80,7 @@ export interface PartDeformers {
   roundness?: number;
 }
 
-export interface SculptMeshData {
-  positions: number[];
-  indices?: number[];
-}
-
-export type SculptBrushKind = 'inflate' | 'carve' | 'flatten' | 'smooth' | 'pinch' | 'grab';
-
-export interface SculptSettings {
-  brush: SculptBrushKind;
-  radiusMm: number;
-  strength: number;
-  symmetryX: boolean;
-  symmetryZ: boolean;
-}
+export type { SculptBrushKind, SculptMeshData, SculptSettings } from './sculpt';
 
 export interface ContourExtrudeData {
   outerLoop: Array<[number, number]>;
@@ -133,7 +125,7 @@ export interface CustomModelDefinition {
   nodes: CustomModelSubNode[];
 }
 
-export interface ScenePart extends PartRelations {
+export interface ScenePart extends PartRelations, BooleanFields {
   id: string;
   name: string;
   kind: PartKind;
@@ -178,20 +170,23 @@ export interface ScenePart extends PartRelations {
   imageDataUrl?: string;
   massG?: number;
   com?: [number, number, number];
-  robotLink?: { robot: string; link: string; url?: string; rotate?: Array<[string, number]>; version: number };
+  robotLink?: RobotLinkRef;
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
-  group?: { id: string; name: string };
+  group?: PartGroup;
   printMaterial?: PrintMaterial;
   print?: PartPrint;
   jointId?: string;
   cameraLens?: Lens;
+  sketch?: PartSketch;
 }
 
 export type { PartPrint, PrintRecord } from './print';
 
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
+import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
+import type { PartSketch } from '../utils/sketch/types';
 
 import type { PartPrint, PrintRecord } from './print';
 
@@ -213,6 +208,7 @@ export interface RobotJoint {
   velocity?: number;
   published?: string;
   limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
+  onshape?: OnshapeMate;
 }
 
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';
@@ -267,7 +263,9 @@ export interface PolicyRecord {
   robotName: string;
   command: [number, number, number];
   trainedSteps: number;
+  minutes?: number;
   modelVersion?: number;
+  fingerprint?: string;
   createdAt: string;
   eval?: { fellAt: number | null; seconds: number; forward: number; travelled: number };
 }

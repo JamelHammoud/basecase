@@ -1,12 +1,20 @@
 import * as THREE from 'three';
-import { displayRgb, type Model, type ModelJoint, type ModelLink } from './model';
+import { displayRgb, type Model, type ModelJoint, type ModelLink, type Visual } from './model';
 import type { Resolver } from './sources';
+
+export interface ConvertedVisual {
+  mesh: string;
+  color: string | null;
+  origin: number[];
+}
 
 export interface ConvertedLink {
   name: string;
   world: number[];
   mesh: string | null;
   color: string | null;
+  visuals?: ConvertedVisual[];
+  occurrences?: string[];
   mass?: number;
   com?: [number, number, number];
   triangles?: number;
@@ -22,10 +30,16 @@ export interface ConvertedJoint {
   limit: [number, number] | null;
   effort: number | null;
   velocity: number | null;
+  mate?: string;
+}
+
+export interface FixedMate {
+  name: string;
+  link: string;
 }
 
 export interface ConvertedModel {
-  format: 'basecase-simready';
+  format: 'basecase-simready' | 'basecase-onshape';
   version: number;
   name: string;
   root: string | null;
@@ -34,9 +48,11 @@ export interface ConvertedModel {
   friction: number | null;
   visual?: string;
   notes: string[];
+  fixedMates?: FixedMate[];
 }
 
 const IDENTITY = new THREE.Matrix4();
+const CONVERTED_FORMATS: Array<ConvertedModel['format']> = ['basecase-simready', 'basecase-onshape'];
 
 function hexColor(hex: string | null): THREE.Color | undefined {
   if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return undefined;
@@ -46,18 +62,22 @@ function hexColor(hex: string | null): THREE.Color | undefined {
   return displayRgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
+const visual = (v: ConvertedVisual): Visual => ({
+  geometry: { type: 'mesh', file: v.mesh, scale: new THREE.Vector3(1, 1, 1) },
+  origin: new THREE.Matrix4().fromArray(v.origin),
+  color: hexColor(v.color),
+});
+
+function visualsOf(l: ConvertedLink): Visual[] {
+  if (l.visuals) return l.visuals.map(visual);
+
+  return l.mesh ? [visual({ mesh: l.mesh, color: l.color, origin: IDENTITY.toArray() })] : [];
+}
+
 function link(l: ConvertedLink): ModelLink {
   return {
     world: new THREE.Matrix4().fromArray(l.world),
-    visuals: l.mesh
-      ? [
-          {
-            geometry: { type: 'mesh', file: l.mesh, scale: new THREE.Vector3(1, 1, 1) },
-            origin: IDENTITY.clone(),
-            color: hexColor(l.color),
-          },
-        ]
-      : [],
+    visuals: visualsOf(l),
     mass: l.mass,
     com: l.com ? new THREE.Vector3(...l.com) : undefined,
   };
@@ -78,7 +98,7 @@ function joint(j: ConvertedJoint): ModelJoint {
 }
 
 export function parseConverted(m: ConvertedModel): Model {
-  if (m.format !== 'basecase-simready') throw new Error('That isn’t a converted SimReady asset.');
+  if (!CONVERTED_FORMATS.includes(m.format)) throw new Error('That isn’t a converted SimReady asset.');
 
   return {
     name: m.name,

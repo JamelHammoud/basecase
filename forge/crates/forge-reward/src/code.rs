@@ -11,6 +11,7 @@ pub enum Input {
     JointVel(usize),
     Action(usize),
     LastAction(usize),
+    Reference(usize),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

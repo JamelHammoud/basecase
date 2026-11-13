@@ -1,8 +1,11 @@
 import React from 'react';
 import { Button, useScrollFade } from '../design-system';
-import { CustomModelSubNode, ScenePart, SculptSettings } from '../types/robotics';
+import type { ScenePart, SculptSettings } from '../types/robotics';
+import type { SketchShape } from '../utils/sketch/placement';
+import type { Sketch } from '../utils/sketch/types';
+import type { SketchParams } from '../workspace/partFactories';
 import { SculptPanel } from './studio/SculptPanel';
-import { SketchPanel } from './studio/SketchPanel';
+import { SketchPanel, type BoundSketch, type SketchOutput } from './studio/SketchPanel';
 import { SvgImportPanel } from './studio/SvgImportPanel';
 import { useStudioDraft } from './studio/useStudioDraft';
 
@@ -19,18 +22,10 @@ interface SculptAndDrawStudioProps {
   onUpdateSculptSettings: (patch: Partial<SculptSettings>) => void;
   onAddClayPreset: (preset: 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule') => void;
   onSubdivideSelectedClay: () => void;
-  onCreateFrom2DDrawing: (params: {
-    name: string;
-    mode: 'extrude' | 'revolve' | 'svg';
-    widthMm: number;
-    heightMm: number;
-    depthMm: number;
-    color: string;
-    bevel: boolean;
-    nodes: CustomModelSubNode[];
-    svgDataUrl?: string;
-    saveToLibrary: boolean;
-  }) => void;
+  onCreateFrom2DDrawing: (params: SketchParams) => void;
+  sketchStart: Sketch;
+  boundSketch: BoundSketch | null;
+  onCreateSketch: (shape: SketchShape, output: SketchOutput) => void;
 }
 
 export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
@@ -43,9 +38,12 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
   onAddClayPreset,
   onSubdivideSelectedClay,
   onCreateFrom2DDrawing,
+  sketchStart,
+  boundSketch,
+  onCreateSketch,
 }) => {
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
-  const draft = useStudioDraft();
+  const draft = useStudioDraft(sketchStart, boundSketch ? null : 'line');
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -60,13 +58,13 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
         {subTab === 'clay' && (
           <SculptPanel
             sculptSettings={sculptSettings}
-            hasSelection={!!selectedPart}
+            canSubdivide={!!selectedPart?.sculptMesh}
             onUpdateSculptSettings={onUpdateSculptSettings}
             onAddClayPreset={onAddClayPreset}
             onSubdivideSelectedClay={onSubdivideSelectedClay}
           />
         )}
-        {subTab === 'draw2d' && <SketchPanel draft={draft} onCreateFrom2DDrawing={onCreateFrom2DDrawing} />}
+        {subTab === 'draw2d' && <SketchPanel draft={draft} bound={boundSketch} onCreate={onCreateSketch} />}
         {subTab === 'svg' && (
           <SvgImportPanel
             draft={draft}

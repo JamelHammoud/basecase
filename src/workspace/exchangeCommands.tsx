@@ -2,12 +2,15 @@ import type { Command } from '../components/CommandPalette';
 import {
   ClipboardIcon,
   DownloadIcon,
+  FileIcon,
   FileImportIcon,
   FolderOpenIcon,
   PhotoIcon,
   RobotsIcon,
+  ShapeIcon,
   ShareIcon,
 } from '../design-system';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { SHARE_LABEL } from '../utils/os';
 import type { CommandInputs } from './sceneCommands';
 
@@ -24,33 +27,15 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     keywords: 'mujoco mjcf urdf ros lerobot joint map policy zip download',
     run: () => void exports.exportRobotPackage(),
   };
-
-  return [
-    {
-      id: 'open-scene-file',
-      group: 'Scene',
-      label: 'Open Scene File',
-      icon: <FolderOpenIcon className={ic} />,
-      keywords: 'import basecase share friend shared received',
-      run: () => void studio.openSceneFile(),
-    },
-    {
-      id: 'export-scene',
-      group: 'Scene',
-      label: 'Export Scene',
-      icon: <DownloadIcon className={ic} />,
-      keywords: 'share send friend basecase file download save',
-      run: () => void exports.exportScene(),
-    },
-    ...(exports.canExportRobot ? [robotPackage] : []),
-    {
-      id: 'copy-brief',
-      group: 'Scene',
-      label: 'Copy as Markdown',
-      icon: <ClipboardIcon className={ic} />,
-      keywords: 'markdown clipboard export brief spec',
-      run: exports.copyBrief,
-    },
+  const stepExport: Command = {
+    id: 'export-step',
+    group: 'Scene',
+    label: 'Export STEP',
+    icon: <ShapeIcon className={ic} />,
+    keywords: 'stp cad assembly fusion onshape solidworks freecad download',
+    run: () => void exports.exportStep(),
+  };
+  const partExports: Command[] = [
     {
       id: 'export',
       group: 'Scene',
@@ -67,6 +52,36 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
       run: () => void exports.airDrop(),
     },
+  ];
+
+  return [
+    {
+      id: 'open-scene-file',
+      group: 'Scene',
+      label: 'Open Scene File',
+      icon: <FolderOpenIcon className={ic} />,
+      keywords: 'import basecase share friend shared received',
+      run: () => void studio.openSceneFile(),
+    },
+    {
+      id: 'export-scene',
+      group: 'Scene',
+      label: 'Export Scene',
+      icon: <FileIcon className={ic} />,
+      keywords: 'share send friend basecase file download save',
+      run: () => void exports.exportScene(),
+    },
+    ...(exports.canExportRobot ? [robotPackage] : []),
+    {
+      id: 'copy-brief',
+      group: 'Scene',
+      label: 'Copy as Markdown',
+      icon: <ClipboardIcon className={ic} />,
+      keywords: 'markdown clipboard export brief spec',
+      run: exports.copyBrief,
+    },
+    ...(exports.canExportParts ? partExports : []),
+    ...(IS_WEB_DEMO || !exports.canExportStep ? [] : [stepExport]),
     {
       id: 'export-image',
       group: 'Scene',

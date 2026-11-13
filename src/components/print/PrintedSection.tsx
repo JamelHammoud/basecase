@@ -1,8 +1,8 @@
 import React from 'react';
-import { Divider, MetaLine, Section } from '../../design-system';
+import { MetaLine, Section } from '../../design-system';
 import type { PrintMaterial, ProjectSettings } from '../../types/robotics';
 import { type PrintReport, fmtSize } from '../../utils/printReport';
-import { hm } from './format';
+import { hm } from '../build/format';
 
 type PrintedPart = PrintReport['parts'][number];
 
@@ -53,20 +53,11 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
 
 export const PrintedSection: React.FC<PrintedSectionProps> = ({ report, project, onSelectParts }) =>
   report && report.parts.length > 0 ? (
-    <>
-      <Divider className="my-4" />
-      <Section
-        title="Printed parts"
-        summary={report.parts.length}
-        collapsible
-        defaultOpen={false}
-        className="!px-0 !py-0 !border-b-0"
-      >
-        <ul className="-mx-[7px]">
-          {issuesFirst(report.parts).map((p) => (
-            <PrintedRow key={p.id} part={p} material={project.material} onSelectParts={onSelectParts} />
-          ))}
-        </ul>
-      </Section>
-    </>
+    <Section title="Printed parts" summary={report.parts.length} collapsible defaultOpen={false}>
+      <ul className="-mx-[7px]">
+        {issuesFirst(report.parts).map((p) => (
+          <PrintedRow key={p.id} part={p} material={project.material} onSelectParts={onSelectParts} />
+        ))}
+      </ul>
+    </Section>
   ) : null;

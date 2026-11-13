@@ -13,6 +13,7 @@ import type { ScenePart } from '../types/robotics';
 import { downloadBytes } from '../utils/downloadBytes';
 import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { openLink } from '../utils/openLink';
 import { fileSafe } from './helpers';
 import type { ShowToast, ToastOptions } from './types';
 import { errorMessage } from '../utils/errorMessage';
@@ -138,7 +139,7 @@ const PUBLISH: Delivery = {
 
     return {
       message: `Published to ${published.repo}${leftOut(made)}`,
-      options: { action: { label: 'Open', onClick: () => window.open(published.url, '_blank', 'noopener') } },
+      options: { action: { label: 'Open', onClick: () => openLink(published.url) } },
     };
   },
 };

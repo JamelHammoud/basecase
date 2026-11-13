@@ -11,6 +11,8 @@ keywords:
   - amazon
   - csv
   - spreadsheet
+  - cart
+  - buy all
   - supplies
   - bom
 related:
@@ -19,6 +21,8 @@ related:
   - print-a-robots-parts
 covers:
   - src/components/build/BuyList.tsx
+  - src/components/build/cart.ts
+  - src/workspace/buildCommands.tsx
   - src/components/build/BuyRow.tsx
   - src/components/build/buyLine.ts
   - src/components/build/AddSupplyMenu.tsx
@@ -27,14 +31,23 @@ covers:
   - src/utils/bomNeeds.ts
 ---
 
-Open each store listing from the bill of materials, add the supplies a build needs, and export the list to order from.
+Fill an Amazon cart from the bill of materials, open the other stores' listings, add the supplies a build needs, and export the list.
 
-1. In the **Build** tab, open a section of **Bill of materials**.
-2. Hover a line and click the link at its right end. It opens the listing you saved, or an Amazon search for the exact part.
-3. To add something the model doesn't show, click **+** beside **Bill of materials**.
-4. Choose a supply under **Power**, **Wiring**, **Electronics** or **Tools**.
-5. To buy more of a supply you added, click its quantity and change **Quantity**.
-6. Click the spreadsheet icon beside **+**, then choose **CSV Spreadsheet** or **Markdown**.
+1. In the **Build** tab, click the spreadsheet icon beside **Bill of materials**.
+2. Choose **Buy All**. Your browser opens an Amazon cart with every line that has an Amazon listing, in whole packs.
+3. Below **Buy All**, choose each line listed under another store to open its listing there.
+4. To add something the model doesn't show, click **+** beside **Bill of materials**.
+5. Choose a supply under **Power**, **Wiring**, **Electronics** or **Tools**.
+6. To buy more of a supply you added, click its quantity and change **Quantity**.
+7. To keep a copy, click the spreadsheet icon and choose **CSV Spreadsheet** or **Markdown**.
+
+![The bill of materials menu with Buy All for amazon.com, and screws and wire listed under their own stores](/help/buy-the-parts-for-a-robot/buy-all.png)
+
+You can also press ⌘K and choose **Buy All**.
+
+The cart counts packs from the price you checked. Six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. A line with no saved pack size goes in by the piece.
+
+Other stores take no shared cart, so their lines open one listing at a time. A line with no store link keeps its own link: hover it and click the link at its right end for an Amazon search.
 
 Basecase saves `<scene>-bom.csv` or `<scene>-bom.md` to your downloads, to order from in any store.
 

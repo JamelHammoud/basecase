@@ -53,8 +53,10 @@ const upright = (height: number, share: number, tiltRad: number): State => ({
   all: [atom(signal('tilt'), '<', tiltRad, 0.1), atom(signal('height'), '>', share * height, 0.02)],
 });
 
+export const FELL = 'fell';
+
 const fell = (height: number) => ({
-  label: 'fell',
+  label: FELL,
   formula: {
     eventually: {
       window: 'whole' as const,

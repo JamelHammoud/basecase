@@ -82,7 +82,7 @@ pub fn quat_multiply(a: [f64; 4], b: [f64; 4]) -> [f64; 4] {
 
 impl Robot {
     pub fn nobs(&self) -> usize {
-        12 + 3 * self.nact + self.eye_width()
+        12 + 3 * self.nact + self.eye_width() + self.job.clock_width()
     }
 
     pub fn eye_width(&self) -> usize {

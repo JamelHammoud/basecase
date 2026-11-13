@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyPlan } from '../lib/leadPlan.mjs';
-import { prompt } from './lead.mjs';
+import { worstLine } from '../lib/stats.mjs';
+import { leadPrompt, prompt } from './lead.mjs';
 
 const label = (...names) => names.map((name) => ({ name }));
 
@@ -199,5 +200,41 @@ describe('lead: prompt', () => {
     expect(section('12 Say less')).toContain('#21 Drop the old menu');
     expect(section('12 Say less')).toContain('Cut three labels');
     expect(section('11 Prove it in a Case')).toContain('big bet');
+  });
+});
+
+const digestWorld = {
+  direction: { body: 'Make the loop better every week.' },
+  comments: [],
+  requests: [],
+  tracked: [],
+  arcs: [{ number: 224, title: 'Basecase improves its own harness every week', body: 'Measured.' }],
+  ideas: [],
+  steps: [],
+};
+const facts = { merged: 'Add a digest', copyLine: 'Copy this week: net +0 strings across 1 merged pull request' };
+const worst = {
+  lane: 'build',
+  measure: 'revisions',
+  name: 'Review rounds before pass, per pull request',
+  last: 0.5,
+  value: 1.25,
+  score: 0.75,
+};
+
+describe('leadPrompt', () => {
+  it("hands the lead the digest's worst number", () => {
+    const text = leadPrompt(digestWorld, { ...facts, worst });
+
+    expect(text).toContain("## The digest's worst number");
+    expect(text).toContain(worstLine(worst));
+    expect(text).toContain('`build` review rounds before pass, per pull request, 0.5 last week and 1.25 this week.');
+  });
+
+  it('leaves the section out when no digest named one', () => {
+    const text = leadPrompt(digestWorld, { ...facts, worst: null });
+
+    expect(text).not.toContain('worst number');
+    expect(text).toContain('## Recently merged\n\nAdd a digest');
   });
 });

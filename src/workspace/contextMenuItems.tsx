@@ -23,6 +23,7 @@ import {
   PenIcon,
   PhotoIcon,
   PlusIcon,
+  RefreshIcon,
   RotateLeftIcon,
   RulerIcon,
   SparklesIcon,
@@ -36,6 +37,7 @@ import {
 import { partQuote } from '../agent/partQuote';
 import { faultSubmenu } from '../components/simulate/faultMenu';
 import { CAMERA_VIEWS } from '../data/cameraViews';
+import { partTarget, selectedTarget, type OnshapeTarget } from '../onshape/onshapeTarget';
 import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -119,6 +121,18 @@ function wrapItems({ actions }: ContextInputs): ContextMenuEntry[] {
   ];
 }
 
+function onshapeItems({ actions }: ContextInputs, target: OnshapeTarget | null): ContextMenuEntry[] {
+  if (IS_WEB_DEMO || !target) return [];
+
+  return [
+    {
+      label: 'Update from Onshape',
+      icon: <RefreshIcon className={ic} />,
+      onSelect: () => void actions.onshape.update(target.group.id),
+    },
+  ];
+}
+
 function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   const { core, actions } = inputs;
   const { ops, edits } = actions;
@@ -154,6 +168,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     ...(selectedParts.some((p) => p.group)
       ? [{ label: 'Ungroup', shortcut: '⇧⌘G', icon: <UngroupIcon className={ic} />, onSelect: edits.ungroup }]
       : []),
+    ...onshapeItems(inputs, selectedTarget(core.parts, core.selectedIds)),
     shared.duplicate,
     shared.selectAll,
     shared.saveToLibrary,
@@ -255,6 +270,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
           },
         ]
       : []),
+    ...onshapeItems(inputs, partTarget(inputs.core.parts, part)),
     { divider: true },
     ...partFlagItems(part, setFlag),
     shared.remove,
@@ -273,7 +289,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       icon: <PhotoIcon className={ic} />,
       onSelect: () => actions.creation.pickReferenceImage(menu.point),
     },
-    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: () => tool.openCreator('draw2d') },
+    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: core.sketching.open },
     {
       label: 'Annotate',
       shortcut: 'N',

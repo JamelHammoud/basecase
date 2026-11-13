@@ -60,6 +60,15 @@ export type SignalSource =
   | { kind: 'base-forward' }
   | { kind: 'contact'; part: string; with: string | 'floor' };
 
+export interface MoveReference {
+  joints: string[];
+  controlDt: number;
+  loop: boolean;
+  frames: number[][];
+}
+
+export const MAX_REFERENCE_FRAMES = 30000;
+
 export interface Environment {
   version: typeof ENVIRONMENT_VERSION;
   robot: string;
@@ -72,6 +81,7 @@ export interface Environment {
   reward: RewardRef;
   contract: Contract;
   signals: Record<string, SignalSource>;
+  reference?: MoveReference;
 }
 
 export const MAX_HORIZON_S = 600;
@@ -227,6 +237,25 @@ function sourceProblems(name: string, source: SignalSource, index: ModelIndex): 
 
 const touchable = (other: string, index: ModelIndex) => other === 'floor' || index.parts.has(other);
 
+function referenceProblems(reference: MoveReference | undefined, joints: string[]): string[] {
+  if (!reference) return [];
+
+  const { frames } = reference;
+  const width = joints.length + 2;
+  const same = reference.joints.length === joints.length && reference.joints.every((j, i) => j === joints[i]);
+
+  if (!same) return ['The reference moves other joints than the action.'];
+
+  if (!finiteIn(reference.controlDt, 1e-4, 1)) return ['The reference’s step runs from 0.1 ms to 1 s.'];
+
+  if (!Array.isArray(frames) || frames.length < 2 || frames.length > MAX_REFERENCE_FRAMES)
+    return [`A reference has 2 to ${MAX_REFERENCE_FRAMES} frames.`];
+
+  const ok = frames.every((f) => Array.isArray(f) && f.length === width && f.every(Number.isFinite));
+
+  return ok ? [] : [`Each reference frame has ${width} finite numbers.`];
+}
+
 async function contractProblems(env: Environment): Promise<string[]> {
   try {
     const needed = await contractSignals(env.contract);
@@ -267,6 +296,7 @@ export async function validateEnvironment(env: Environment, model: SimModel): Pr
     ...randomizationProblems(env.randomization),
     ...resetProblems(env.reset),
     ...rewardProblems(env.reward),
+    ...referenceProblems(env.reference, env.action.joints),
     ...Object.entries(env.signals).flatMap(([name, source]) => sourceProblems(name, source, index)),
     ...(await contractProblems(env)),
   ];

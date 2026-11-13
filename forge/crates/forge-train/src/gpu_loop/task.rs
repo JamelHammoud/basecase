@@ -3,12 +3,12 @@ use crate::envs::{PUSH_GAP_SECONDS, PUSH_SPEED};
 use crate::eyes::EYES_REFUSAL;
 use crate::job::{Algo, Task as JobTask};
 use crate::robot::Robot;
-use forge_ir::task::{Actuated, Code, CommandDraws, Conditions, Pushes, Task, OBSERVATIONS};
-use forge_reward::{compile, programs, Schema};
+use forge_ir::task::{Actuated, Code, CommandDraws, Conditions, Observed, Pushes, Task, OBSERVATIONS};
+use forge_reward::{compile_for, programs, Schema};
 
-fn lowered(source: &str, joints: usize) -> Result<Code, String> {
+fn lowered(source: &str, joints: usize, reference: bool) -> Result<Code, String> {
     let schema = Schema { joints, bodies: 0 };
-    let program = compile(source, schema).map_err(|e| format!("The reward doesn't compile: {e}"))?;
+    let program = compile_for(source, schema, reference).map_err(|e| format!("The reward doesn't compile: {e}"))?;
 
     program.lower()
 }
@@ -68,6 +68,12 @@ fn conditions(robot: &Robot) -> Conditions {
     }
 }
 
+fn observations(robot: &Robot) -> Vec<Observed> {
+    let clock = robot.job.options.reference.is_some().then_some(Observed::Clock);
+
+    OBSERVATIONS.into_iter().chain(clock).collect()
+}
+
 pub fn lower(robot: &Robot) -> Result<Task, String> {
     if robot.job.algo != Algo::Ppo {
         return Err("Forge's GPU loop can't train this job: it learns with PPO only".to_owned());
@@ -85,6 +91,8 @@ pub fn describe(robot: &Robot) -> Result<Task, String> {
 
     let job = &robot.job;
     let nact = robot.nact;
+    let reference = job.options.reference.clone();
+    let follows = reference.is_some();
     let joints = (0..nact)
         .map(|j| Actuated {
             qpos: robot.joint_qpos[j],
@@ -111,8 +119,9 @@ pub fn describe(robot: &Robot) -> Result<Task, String> {
         squash: job.squash == Squash::Tanh,
         pushes: pushes(robot),
         conditions: conditions(robot),
-        observations: OBSERVATIONS.to_vec(),
-        reward: lowered(&reward_source(robot), nact)?,
-        fell: lowered(&programs::fell(), nact)?,
+        observations: observations(robot),
+        reward: lowered(&reward_source(robot), nact, follows)?,
+        fell: lowered(&programs::fell(), nact, follows)?,
+        reference,
     })
 }

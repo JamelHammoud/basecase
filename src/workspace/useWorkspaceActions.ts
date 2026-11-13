@@ -2,6 +2,7 @@ import { useExportActions } from './useExportActions';
 import { useFixedCameras } from './useFixedCameras';
 import { useHandJoints } from './useHandJoints';
 import { useLibraryActions } from './useLibraryActions';
+import { useOnshapeUpdate } from './useOnshapeUpdate';
 import { usePartCreation } from './usePartCreation';
 import { usePartEdits } from './usePartEdits';
 import { usePoseActions } from './usePoseActions';
@@ -20,6 +21,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const exports = useExportActions(core);
   const joints = useHandJoints(core);
   const wrap = useWrapRobot(core);
+  const onshape = useOnshapeUpdate(core);
   const cameras = useFixedCameras({
     project: core.project,
     updateProjectNow: core.docs.updateProjectNow,
@@ -27,7 +29,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     showToast: core.showToast,
   });
 
-  return { pose, robots, creation, edits, ops, library, exports, cameras, joints, wrap };
+  return { pose, robots, creation, edits, ops, library, exports, cameras, joints, wrap, onshape };
 }
 
 export type WorkspaceActions = ReturnType<typeof useWorkspaceActions>;

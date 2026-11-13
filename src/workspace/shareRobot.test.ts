@@ -96,6 +96,7 @@ const skillRow = (createdAt: string): SkillRow => {
     record,
     state: { kind: 'ready', arena: '' },
     drives: false,
+    move: null,
   };
 };
 

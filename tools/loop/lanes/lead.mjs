@@ -15,8 +15,10 @@ import {
   setIssueBody,
 } from '../lib/github.mjs';
 import { copyTrend, copyTrendLine, mergedThisWeek } from '../lib/copy.mjs';
+import { digestWorst } from '../lib/history.mjs';
 import { LOOP_DIR, OWNER_LOGIN } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
+import { worstSection } from '../lib/stats.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 import { applyPlan } from '../lib/leadPlan.mjs';
 
@@ -171,6 +173,7 @@ const mergedTitles = () =>
 const progressOf = () => ({
   recentSteps: mergedSteps(),
   mergedTitles: mergedTitles(),
+  worst: digestWorst(),
   copyLine: copyTrendLine(copyTrend(mergedThisWeek())),
 });
 
@@ -192,7 +195,7 @@ const stepList = (heading, items) =>
   items.length > 0 ? `${heading}:\n${items.map((item) => `  - ${item}`).join('\n')}` : `${heading}: none.`;
 
 function arcListing(world) {
-  const { byArc } = progress(world.arcs, { open: world.steps, merged: world.recentSteps });
+  const { byArc } = progress(world.arcs, { open: world.steps, merged: world.recentSteps ?? [] });
   const noBigBet = world.arcs.some(isBigBet) ? '' : `No open arc carries \`${BIG_BET}\`.`;
   const entries = world.arcs.map((arc) => {
     const steps = byArc.get(arc.number);
@@ -218,7 +221,7 @@ function arcListing(world) {
     .join('\n\n');
 }
 
-export function prompt(world) {
+export function leadPrompt(world, { merged, copyLine, worst }) {
   const direction = [world.direction?.body, ...world.comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n');
 
   return [
@@ -228,9 +231,13 @@ export function prompt(world) {
     arcListing(world),
     listing('Ideas', world.ideas, IDEAS_NOTE),
     listing('Steps waiting or in progress', world.steps),
-    `## Recently merged\n\n${world.mergedTitles}\n\n${world.copyLine}`,
+    `## Recently merged\n\n${merged}\n\n${copyLine}`,
+    ...worstSection(worst, 'When a step would move it back, plan that step ahead of a new one.'),
   ].join('\n\n');
 }
+
+export const prompt = (world) =>
+  leadPrompt(world, { merged: world.mergedTitles, copyLine: world.copyLine, worst: world.worst });
 
 const github = { closeIssue, commentOnIssue, createIssue, editIssueLabels, findOpenIssue, setIssueBody };
 

@@ -1,7 +1,9 @@
+use forge_ir::task::Reference;
 use serde_json::Value;
 
 const RESET_JOINT_NOISE: f64 = 0.05;
 const START_AREA_REACH_M: f64 = 5.0;
+const REFERENCE_FRAMES: [usize; 2] = [2, 30_000];
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CommandRanges {
@@ -25,6 +27,7 @@ pub struct TaskOptions {
     pub pushes: bool,
     pub episode_s: Option<f64>,
     pub start_area: Option<[[f64; 2]; 2]>,
+    pub reference: Option<Reference>,
 }
 
 impl Default for TaskOptions {
@@ -43,6 +46,7 @@ impl Default for TaskOptions {
             pushes: true,
             episode_s: None,
             start_area: None,
+            reference: None,
         }
     }
 }
@@ -137,6 +141,67 @@ fn start_area(root: &Value) -> Result<Option<[[f64; 2]; 2]>, String> {
     Ok(Some([forward, side]))
 }
 
+fn reference_frame(value: &Value, index: usize) -> Result<Vec<f64>, String> {
+    let numbers = value
+        .as_array()
+        .ok_or_else(|| format!("reference frame {index} isn't a list of numbers"))?;
+
+    numbers
+        .iter()
+        .map(|v| v.as_f64().filter(|x| x.is_finite()))
+        .collect::<Option<Vec<f64>>>()
+        .ok_or_else(|| format!("reference frame {index} has a value that isn't a finite number"))
+}
+
+fn reference(root: &Value) -> Result<Option<Reference>, String> {
+    let Some(value) = root.get("reference") else {
+        return Ok(None);
+    };
+    let looping = value
+        .get("loop")
+        .and_then(Value::as_bool)
+        .ok_or("job.json needs true or false in reference.loop")?;
+    let [fewest, most] = REFERENCE_FRAMES;
+    let list = value
+        .get("frames")
+        .and_then(Value::as_array)
+        .filter(|l| (fewest..=most).contains(&l.len()))
+        .ok_or_else(|| format!("job.json needs {fewest} to {most} frames in reference.frames, one per control step"))?;
+    let width = list[0].as_array().map_or(0, Vec::len);
+    let mut frames = Vec::with_capacity(width * list.len());
+
+    for (index, item) in list.iter().enumerate() {
+        let frame = reference_frame(item, index)?;
+
+        if frame.len() != width {
+            return Err(format!(
+                "reference frame {index} has {} numbers and frame 0 has {width}",
+                frame.len()
+            ));
+        }
+
+        frames.extend(frame);
+    }
+
+    Ok(Some(Reference { looping, width, frames }))
+}
+
+pub fn check_reference(options: &TaskOptions, joints: usize) -> Result<(), String> {
+    let Some(found) = options.reference.as_ref().map(|r| r.width) else {
+        return Ok(());
+    };
+
+    if found == joints + 2 {
+        return Ok(());
+    }
+
+    Err(format!(
+        "reference frames need {} numbers each, the offset from defaultPose of each of the {joints} joints \
+         (radians or metres), then the base height in metres and the tilt in radians; they have {found}",
+        joints + 2
+    ))
+}
+
 fn flag(root: &Value, key: &str) -> bool {
     root.get(key).and_then(Value::as_bool).unwrap_or(true)
 }
@@ -156,12 +221,13 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         pushes: flag(root, "pushes"),
         episode_s: root.get("episodeS").and_then(Value::as_f64).filter(|s| *s > 0.0),
         start_area: start_area(root)?,
+        reference: reference(root)?,
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{parse, TaskOptions};
+    use super::{check_reference, parse, TaskOptions};
     use serde_json::json;
 
     #[test]
@@ -203,6 +269,39 @@ mod tests {
             .contains("5 m"));
         assert!(parse(&json!({ "startArea": { "forwardM": [1, 0], "sideM": [0, 0] } })).is_err());
         assert!(parse(&json!({ "startArea": { "forwardM": [0, 1] } })).is_err());
+    }
+
+    #[test]
+    fn reads_a_reference_as_one_frame_per_control_step() {
+        let options =
+            parse(&json!({ "reference": { "loop": true, "frames": [[0.1, -0.2, 0.12, 0], [0.2, -0.1, 0.13, 0.05]] } }))
+                .expect("parses");
+        let reference = options.reference.as_ref().expect("reference");
+
+        assert!(reference.looping);
+        assert_eq!((reference.width, reference.count()), (4, 2));
+        assert_eq!(reference.frame(1), &[0.2, -0.1, 0.13, 0.05]);
+        assert!(check_reference(&options, 2).is_ok());
+        assert!(check_reference(&options, 3)
+            .expect_err("one joint short")
+            .contains("need 5 numbers"));
+        assert!(check_reference(&TaskOptions::default(), 3).is_ok());
+    }
+
+    #[test]
+    fn refuses_references_of_the_wrong_shape() {
+        let refused = |reference: serde_json::Value| parse(&json!({ "reference": reference })).expect_err("refused");
+
+        assert!(refused(json!({ "loop": true, "frames": [[0, 0]] })).contains("reference.frames"));
+        assert!(refused(json!({ "loop": true, "frames": [] })).contains("reference.frames"));
+        assert!(refused(json!({ "frames": [[0, 0], [0, 0]] })).contains("reference.loop"));
+        assert!(refused(json!({ "loop": false, "frames": [[0, 0], [0, 0, 0]] })).contains("frame 1 has 3"));
+        assert!(refused(json!({ "loop": false, "frames": [[0, 0], [0, "a"]] })).contains("frame 1"));
+        assert!(refused(json!({ "loop": false, "frames": [[0, 0], 4] })).contains("frame 1"));
+
+        let long = vec![json!([0, 0]); 30_001];
+
+        assert!(refused(json!({ "loop": true, "frames": long })).contains("30000"));
     }
 
     #[test]

@@ -38,6 +38,7 @@ const DETACHED: Viewport3DHandle = {
   jointAxis: async () => null,
   meshesReady: async () => [],
   sweepClashes: async () => [],
+  strength: async () => [],
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},

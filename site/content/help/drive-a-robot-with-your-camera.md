@@ -50,11 +50,9 @@ You can also press [[⌘K]] and choose **Drive With Camera**.
 | Robot | What moves |
 |---|---|
 | Humanoid | Its arms, waist and head follow yours. Its legs stay still. |
-| Fixed arm | Its hand follows your right hand as it moves away from your right shoulder, scaled to the arm's reach. |
+| Fixed arm | Its hand follows your right hand as it moves away from your right shoulder, scaled to the arm's reach. Pinch your left thumb and index finger together to close its gripper. |
 
-Pinch your left thumb and index finger together to close the gripper.
-
-A humanoid with a ready Walk skill keeps standing on it, and [[W]] [[A]] [[S]] [[D]] still walk it. Without one, its base is held in place while you drive, so it can't fall over.
+A humanoid with a ready Walk skill keeps standing on it, and [[W]] [[A]] [[S]] [[D]] still walk it. Without one, its base is held in place while you drive, so it can't fall over. It stays held after you stop, until you end the simulation.
 
 The still moment in step 5 is your rest pose. If the robot doesn't move, put your arms down, hold still for a second, and try again.
 

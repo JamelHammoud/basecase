@@ -41,7 +41,7 @@ export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) =
         />
       </div>
       {expanded && operator.stream && (
-        <OperatorTile stream={operator.stream} label={operator.label ?? ''} large={enlarged === OPERATOR_KEY} />
+        <OperatorTile stream={operator.stream} label={operator.label} large={enlarged === OPERATOR_KEY} />
       )}
       {expanded && tiles.views.map((view) => <CameraTile key={view.key} {...tiles.tile(view)} />)}
       {tiles.menu}

@@ -212,7 +212,7 @@ async function grantedModel(
 ): Promise<DriveAccess | null> {
   const { rig, parts, pose, robotKey, startSim, pinned } = inputs;
 
-  if (!modelRef.current || (!want.pose && pinned())) await startSim(null);
+  if (!modelRef.current || (pinned() && (!want.pose || want.velocity))) await startSim(null);
 
   const access = (model: SimModel) =>
     driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: want.velocity, pose: want.pose });

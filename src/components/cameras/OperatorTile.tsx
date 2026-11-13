@@ -6,7 +6,7 @@ import { tileFrame, tileLabel } from './tileStyle';
 
 interface OperatorTileProps {
   stream: MediaStream;
-  label: string;
+  label: string | null;
   large: boolean;
 }
 
@@ -32,14 +32,14 @@ export const OperatorTile: React.FC<OperatorTileProps> = ({ stream, label, large
     <div data-testid="camera-tile" data-camera={OPERATOR_KEY} className={tileFrame(false, large)}>
       <button
         type="button"
-        aria-label={label}
+        aria-label={label ?? undefined}
         onClick={() => enlargeCameraView(OPERATOR_KEY)}
         className="absolute inset-0 block cursor-default -scale-x-100"
       >
         <video ref={video} muted playsInline autoPlay className="absolute inset-0 w-full h-full block object-cover" />
         <canvas ref={canvas} className="absolute inset-0 w-full h-full block" />
       </button>
-      <span className={tileLabel}>{label}</span>
+      {label && <span className={tileLabel}>{label}</span>}
     </div>
   );
 };

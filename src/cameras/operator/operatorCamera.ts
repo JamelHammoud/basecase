@@ -78,7 +78,7 @@ function start(stream: MediaStream, robot: InputRobot) {
   session = { worker, frames, stream };
   lastTrack = track ?? null;
   latency.clear();
-  set({ open: true, stream, label: track?.label || 'Camera', estimator: null, error: null });
+  set({ open: true, stream, label: track?.label || null, estimator: null, error: null });
 }
 
 export function closeOperatorCamera() {

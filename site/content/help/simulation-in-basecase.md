@@ -41,7 +41,7 @@ When the robot does something wrong, fix the design. The model follows on the ne
 
 ## Servos, measured or estimated
 
-A joint driven by a catalog servo with a published model moves the way a bench test of that servo model says it does. The STS3215 is modelled at 7.4 V and the XL330 at 5 V. [Explore](/help/explore-servo-versions-on-a-case) models each servo at the supply voltage it tries instead. Each model includes the servo's gain, its delay, back-EMF damping and friction that grows with load.
+A joint driven by a catalog servo with a published model moves the way a bench test of that servo model says it does. The STS3215 is modeled at 7.4 V and the XL330 at 5 V. [Explore](/help/explore-servo-versions-on-a-case) models each servo at the supply voltage it tries instead. Each model includes the servo's gain, its delay, back-EMF damping and friction that grows with load.
 
 Any other joint gets an estimated servo. Its torque comes from the servo's stall torque, or from the weight the joint holds when it has no servo. **Build** ▸ **Checks** names these joints under **Torque estimates**, and every servo not yet **Measured** under **Servo models**.
 

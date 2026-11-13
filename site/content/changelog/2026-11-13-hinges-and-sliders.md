@@ -14,7 +14,7 @@ Select the part that stays put, then Shift-click the part that moves. Add Hinge 
 
 ## How the axis is found
 
-If one part has a shaft in a bore on the other, the joint goes straight onto that axis with no click. Otherwise you click a round face on either part, and Basecase fits a cylinder to it. Its axis becomes the joint's axis, and its centre the pivot. It works the same on a cylinder from Shapes, a catalog part, an imported mesh or a STEP body. Flat faces don't give an axis, so the cursor turns into a no-entry sign over them and a click does nothing.
+If one part has a shaft in a bore on the other, the joint goes straight onto that axis with no click. Otherwise you click a round face on either part, and Basecase fits a cylinder to it. Its axis becomes the joint's axis, and its center the pivot. It works the same on a cylinder from Shapes, a catalog part, an imported mesh or a STEP body. Flat faces don't give an axis, so the cursor turns into a no-entry sign over them and a click does nothing.
 
 ## What you get
 

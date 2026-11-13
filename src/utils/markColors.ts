@@ -31,7 +31,7 @@ export const markColorOf = (mark: { color?: string }) => normalizeHex(mark.color
 function neutralName(v: number): string {
   if (v > 0.8) return 'white';
 
-  return v < 0.25 ? 'black' : 'grey';
+  return v < 0.25 ? 'black' : 'gray';
 }
 
 export function markColorName(hex: string): string {

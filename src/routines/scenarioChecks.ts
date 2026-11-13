@@ -147,7 +147,7 @@ function nameSafety(r: RunRecord): string[] {
       const spoken = new RegExp(`\\b${name}\\b`, 'i').test(e.text ?? '');
 
       if (spoken && !recognised.has(name.toLowerCase())) {
-        failures.push(`Said "${e.text}" at ${seconds(e.t)} without recognising ${name}`);
+        failures.push(`Said "${e.text}" at ${seconds(e.t)} without recognizing ${name}`);
       }
     }
   }

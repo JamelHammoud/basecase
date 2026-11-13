@@ -87,8 +87,8 @@ function stabilityDetail({ marginMm, heightMm, tipDeg, onALine }: Stability): st
   if (onALine) return 'Rests on a line with no third contact, so it has to balance itself';
 
   return marginMm <= 0
-    ? `Centre of mass is ${Math.abs(Math.round(marginMm))} mm outside the feet: it falls over`
-    : `Centre of mass ${Math.round(marginMm)} mm inside the outline of the feet, ${Math.round(heightMm)} mm up: tips past ${tipDeg.toFixed(1)}°`;
+    ? `Center of mass is ${Math.abs(Math.round(marginMm))} mm outside the feet: it falls over`
+    : `Center of mass ${Math.round(marginMm)} mm inside the outline of the feet, ${Math.round(heightMm)} mm up: tips past ${tipDeg.toFixed(1)}°`;
 }
 
 function stabilityRow(s: Stability): CheckRow {

@@ -27,7 +27,7 @@ Draw a profile with typed lengths on a part's face, push it into a solid of an e
 
 ![A rectangle being drawn with 40 and 20 typed in its fields](/help/sketch-a-part-to-exact-dimensions/typed.png)
 
-5. Set **T** to the thickness in millimetres. A negative thickness cuts into the face instead, as a Cutout you can subtract.
+5. Set **T** to the thickness in millimeters. A negative thickness cuts into the face instead, as a Cutout you can subtract.
 6. Click **Add**. The new part stands on the face at exactly the size you typed.
 
 ![The 40 × 20 × 5 mm part on the box, with its size in the Inspector](/help/sketch-a-part-to-exact-dimensions/extruded.png)

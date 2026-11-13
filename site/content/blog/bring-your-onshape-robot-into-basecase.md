@@ -9,7 +9,7 @@ The first time, add an Onshape API key in Settings ▸ Accounts: the access key 
 
 Basecase reads the assembly the way Onshape describes it. Every part is exported as STEP and converted inside the same sandboxed converter that opens STEP files you drop on the canvas. Parts fastened together become one part.
 
-A revolute mate becomes a hinge and a slider mate a slide, along the mate connector's axis. The mate's limits become the range. They're measured from where the assembly sits, so the robot starts in the pose you modelled. Whichever part is fixed in Onshape becomes the base. Parts with a material bring their mass and centre of mass, which feed the engineering checks.
+A revolute mate becomes a hinge and a slider mate a slide, along the mate connector's axis. The mate's limits become the range. They're measured from where the assembly sits, so the robot starts in the pose you modeled. Whichever part is fixed in Onshape becomes the base. Parts with a material bring their mass and center of mass, which feed the engineering checks.
 
 Some mates have no joint to become. A cylindrical, ball or pin slot mate is held fixed. Checks in the Build tab list it under Fixed Mates on the part it holds, instead of stopping the import to ask.
 

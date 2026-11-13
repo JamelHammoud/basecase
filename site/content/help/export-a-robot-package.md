@@ -41,7 +41,7 @@ A toast shows the progress, then names the package when it's saved. Basecase sav
 
 ![The toast after the package is saved](/help/export-a-robot-package/exported.png)
 
-**Export Robot Package** is also in ⌘K. Until the scene has a joint that turns or slides, the menu item is greyed out and the command is hidden.
+**Export Robot Package** is also in ⌘K. Until the scene has a joint that turns or slides, the menu item is grayed out and the command is hidden.
 
 ## Open it in ROS 2
 

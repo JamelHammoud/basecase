@@ -23,4 +23,4 @@ Build Along plays your robot's build guide on the canvas, one step at a time, so
 
 If you changed the design since the guide was last made, Build Along makes it again first, and the bar shows its progress.
 
-![Three servos labelled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/help/build-along/servos.png)
+![Three servos labeled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/help/build-along/servos.png)

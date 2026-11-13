@@ -22,7 +22,7 @@ Click Try It in the Simulate tab. W A S D move the hand and Q E raise and lower 
 
 ## What counts
 
-A try passes when the block rises by more than half its size, then ends with its centre within Radius of the spot. Shoving it along the floor onto the spot fails, because it never leaves the floor. The Case's reference does the whole thing on its own: above the block, down, grip, lift, carry, lower, release.
+A try passes when the block rises by more than half its size, then ends with its center within Radius of the spot. Shoving it along the floor onto the spot fails, because it never leaves the floor. The Case's reference does the whole thing on its own: above the block, down, grip, lift, carry, lower, release.
 
 ![Results with a passed Pick Up a Block try](/changelog/pick-up-a-block/results.png)
 

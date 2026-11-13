@@ -26,5 +26,7 @@ export function guideFingerprint(title: string, parts: ScenePart[], project: Pro
     [j.id, j.parent.join(','), j.child.join(','), j.limb ?? ''].join('|'),
   );
 
-  return hashText([title, project.material, ...built, ...joints].join('\n'));
+  const infill = Math.round(Number(project.infillPct) || 0);
+
+  return hashText([title, project.material, infill, ...built, ...joints].join('\n'));
 }

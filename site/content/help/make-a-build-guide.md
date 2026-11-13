@@ -39,7 +39,7 @@ Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the f
 
 ## Keep it current
 
-When the design changes, the card reads **Out of date** in amber, and **Update** appears beside **Open**.
+When the design or the infill in Print mode changes, the card reads **Out of date** in amber, and **Update** appears beside **Open**.
 
 ![The Build guide card reading Out of date, with Open and Update buttons](/help/make-a-build-guide/out-of-date.png)
 

@@ -30,6 +30,14 @@ export const checkConclusion = (sha) => {
   return latest.conclusion;
 };
 
+export const failingJobs = (sha) =>
+  json('gh', [
+    'api',
+    `repos/${repo()}/commits/${sha}/check-runs?per_page=100`,
+    '--jq',
+    '[.check_runs[] | select(.conclusion == "failure" and .name != "check") | .name] | unique',
+  ]) ?? [];
+
 export const reviewState = (sha) =>
   json('gh', [
     'api',

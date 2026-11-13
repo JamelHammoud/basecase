@@ -18,7 +18,7 @@ import { store } from '../lib/store.mjs';
 export const schedule = {
   slots: 1,
   everySeconds: 60,
-  does: 'Starts the full Check on each reviewed pull request whose quick Check passed and merges it the moment that passes, repairs first; only repairs while main is red',
+  does: 'Starts the full Check on each reviewed pull request whose quick Check passed and merges it the moment that passes, repairs first; while main is red only repairs merge, and full Checks still start',
 };
 
 const REDISPATCH_MS = 45 * 60 * 1000;
@@ -85,22 +85,23 @@ export default function merge({ log }) {
   const state = started.get('state');
   const now = Date.now();
   const pulls = openPulls({ fresh: true })
-    .filter((pull) => !isBatch(pull) && (isRepair(pull) || !mainRed))
+    .filter((pull) => !isBatch(pull))
     .sort(byRank);
   let acted = false;
 
   for (const pull of pulls) {
     const dispatched = now - (state[pull.headRefOid] ?? 0) < REDISPATCH_MS;
     const next = stepFor(pull, dispatched);
+    const held = mainRed && !isRepair(pull);
 
-    if (next === 'merge') land(pull, log);
+    if (next === 'merge' && !held) land(pull, log);
 
     if (next === 'start full') startFull(pull, state, log);
 
-    acted ||= next !== 'wait';
+    acted ||= next === 'start full' || (next === 'merge' && !held);
   }
 
-  if (!acted) log(mainRed ? 'main is red; only repairs land until a repair turns it green' : 'nothing ready to land');
+  if (!acted) log(mainRed ? 'main is red; only repairs land, and full Checks keep starting' : 'nothing ready to land');
 
   for (const sha of Object.keys(state)) if (now - state[sha] > 24 * 3_600_000) delete state[sha];
 

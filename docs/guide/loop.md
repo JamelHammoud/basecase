@@ -86,7 +86,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 
 Each pull request lands on its own (`tools/loop/lanes/merge.mjs`, `tools/loop/lib/landing.mjs`; checked every minute). Batches used to carry 15 reviewed pull requests through one full Check, but a batch passes only when all 15 do: on 13 November 6 of every 10 failed, and one bad change held up 14 good ones through re-runs and bisecting. The full Check takes about 11 minutes, so with 12 pull requests open at most, each one running its own fits the runners.
 
-- **A failure is believed only twice.** e2e tests retry once in CI (`vitest.e2e.config.ts`), and a red `main` has its failed jobs re-run once before only repairs land.
+- **A failure is believed only twice.** e2e tests retry once in CI (`vitest.e2e.config.ts`), and a red `main` has its failed jobs re-run once before only repairs land. Full Checks keep starting while `main` is red, so reviewed pull requests merge the moment it turns green.
 - **A flaky test becomes work.** The flakes lane (every 10 minutes) reads each Check run on `main` that passed only when its failed jobs ran again, takes the tests that failed the first time from its log, and files a `loop:priority` fix step for each, so a builder makes it deterministic or deletes it (`tools/loop/lib/flakes.mjs`). The step forbids a longer timeout, a retry or a skip. Timing budgets run on demand (`npm run perf:booleans`), never in Check.
 - **Review goes where it lands.** Eight review slots take pull requests whose quick Check passed first, and skip those with conflicts or a failed Check until the rebase or revise lane has fixed them.
 6. The worktree and the branch are deleted.

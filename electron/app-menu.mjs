@@ -109,7 +109,7 @@ function fileMenu(isMac) {
     label: 'File',
     submenu: [
       item('New Scene', 'new-scene', 'CmdOrCtrl+T'),
-      item('Open Scene…', 'open-scenes', 'CmdOrCtrl+O'),
+      item('Show Scenes', 'open-scenes', 'CmdOrCtrl+O'),
       item('Open Scene File', 'open-scene-file'),
       item('Reopen Closed Scene', 'reopen-tab', 'Shift+CmdOrCtrl+T', { enabled: state.canReopenTab }),
       separator,

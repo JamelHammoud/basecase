@@ -30,11 +30,9 @@ export const ModelTile: React.FC<{
         </>
       }
       thumb={thumb}
-      openLabel="Insert"
       renaming={renaming}
-      onOpen={onInsert}
-      onAdd={onInsert}
-      dragModelId={model.id}
+      onInsert={onInsert}
+      modelId={model.id}
       onStartRename={onStartRename}
       onRename={onRename}
       menuOpen={menuOpen}

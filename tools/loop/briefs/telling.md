@@ -1,8 +1,8 @@
 ## Tell people
 
-A change a user can see isn't done until it's told. Write these in the same pull request, plainly, the way a careful person explains a thing to a friend: what you do, what you see, with the real names, numbers, shortcuts and menu paths. No headers in short text, no bold-label lists, no "Try it" endings, no marketing words.
+A change that adds or changes what a person does isn't done until it's told. Write these in the same pull request, plainly, the way a careful person explains a thing to a friend: what you do, what you see, with the real names, numbers, shortcuts and menu paths. No headers in short text, no bold-label lists, no "Try it" endings, no marketing words.
 
-**Changelog entry (every user-visible change):** `site/content/changelog/YYYY-MM-DD-<slug>.md`, dated today.
+**Changelog entry (only for a change worth announcing):** `site/content/changelog/YYYY-MM-DD-<slug>.md`, dated today. The bar is Amp's Chronicle: a new capability, a new way of working, or a change in how the product behaves that a regular user would tell a friend about. Most pull requests don't clear it. Fixes, polish, refinements, faster loads, renamed labels and one more option in a menu never get an entry; the release notes already list every merged pull request. When in doubt, leave it out. Several steps of one arc share one entry, written by the step that makes it usable.
 
 ```md
 ---
@@ -13,7 +13,7 @@ date: 2026-11-13
 Publish to Hugging Face, next to Export Dataset in Results and in ⌘K, sends the tries that passed to a dataset repo on your account. Add your access token once in Settings ▸ Accounts.
 ```
 
-The title is the feature's name in a few words. The body is two sentences: what you can do now, and how you get to it.
+The title is the feature's name in a few words. The body is two sentences: what you can do now, and how you get to it. If an entry for the same feature is already in the folder, update it instead of adding another.
 
 **Help article (when the change adds or changes something a person does):** a new `site/content/help/<slug>.md`, or an update to the article that already covers it. Search `site/content/help/` first.
 

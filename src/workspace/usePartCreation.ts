@@ -6,10 +6,11 @@ import {
   extractSculptDataFromGeometry,
   tessellateGeometryForSculpting,
 } from '../three/sculptAndBooleanEngine';
-import type { CatalogItem, CustomModelDefinition } from '../types/robotics';
+import type { CatalogItem, CustomModelDefinition, ScenePart } from '../types/robotics';
 import { readImageFile } from '../utils/imageFile';
 import { pickFiles } from '../utils/pickFiles';
-import { MESH_ACCEPT, meshPartFromFile } from './meshImport';
+import { cadPartsFromFile } from './cadImport';
+import { MESH_ACCEPT, isCadFileName, meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
 import { platformBridge } from '../utils/platformBridge';
 import { modelId, newId, stamp } from './helpers';
@@ -115,6 +116,13 @@ function useSculptCreation(core: WorkspaceCore) {
 
 const MESH_STEP = 40;
 
+const partsFromFile = async (file: File, at: Vec3 | null): Promise<ScenePart[]> =>
+  isCadFileName(file.name)
+    ? cadPartsFromFile({ file, at, newId })
+    : [await meshPartFromFile({ file, id: newId('mesh'), at })];
+
+const importedName = (parts: ScenePart[]) => parts[0].group?.name ?? parts[0].name;
+
 function useMeshImport(core: WorkspaceCore) {
   'use memo';
 
@@ -128,11 +136,10 @@ function useMeshImport(core: WorkspaceCore) {
     showToast(`Importing ${label}…`, { tone: 'progress' });
 
     const results = await Promise.allSettled(
-      files.map((file, i) =>
-        meshPartFromFile({ file, id: newId('mesh'), at: at ? [at[0] + i * MESH_STEP, at[1], at[2]] : null }),
-      ),
+      files.map((file, i) => partsFromFile(file, at ? [at[0] + i * MESH_STEP, at[1], at[2]] : null)),
     );
-    const parts = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+    const imported = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+    const parts = imported.flat();
     const failed = files.filter((_, i) => results[i].status === 'rejected');
 
     if (parts.length > 0) {
@@ -149,7 +156,7 @@ function useMeshImport(core: WorkspaceCore) {
       return;
     }
 
-    showToast(parts.length === 1 ? `Inserted ${parts[0].name}` : `Inserted ${parts.length} meshes`);
+    showToast(imported.length === 1 ? `Inserted ${importedName(imported[0])}` : `Inserted ${imported.length} meshes`);
   };
 
   const pickMeshes = async (at?: Vec3 | null) => importMeshes(await pickFiles(MESH_ACCEPT, true), at);

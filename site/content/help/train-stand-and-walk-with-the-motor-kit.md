@@ -68,12 +68,14 @@ A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/
 
 ## How long it takes
 
-Measured on an M5 Pro Mac:
+Measured in the desktop app on an M5 Pro Mac:
 
 | Skill | Four or six legs | Two legs |
 |---|---|---|
 | **Stand** | About 2 minutes | 8 to 12 minutes |
 | **Walk** | About 19 minutes | About 28 minutes |
+
+In Chrome on the same Mac, Stand took about two and a quarter minutes.
 
 When the first try fails Arena, Walk trains again from its best result. It can then take up to 30 minutes on four or six legs, and 45 on two.
 

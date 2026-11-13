@@ -46,9 +46,9 @@ The scene must have a robot with joints. [Cases](/help/cases) explains what a Ca
 
 8. Click **Create**.
 
-The Case opens in the **Simulate** tab, and its world appears on the canvas.
+![Touch the Dots open in the Simulate tab](/help/make-a-case/opened.png)
 
-![Touch the Dots open in the Simulate tab](/help/make-a-case/opened.png) Next, [try the Case](/help/try-a-case).
+The Case opens in the **Simulate** tab, and its world appears on the canvas. Next, [try the Case](/help/try-a-case).
 
 **New Case** is also in [[⌘K]], and [[↩]] creates the Case from the **Name** field. To start from a ready-made Case instead, click one under **Examples**.
 

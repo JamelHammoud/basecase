@@ -13,7 +13,7 @@ covers:
 
 Move, resize or turn the part that made a hole, and the cut in the result follows.
 
-Start from a part cut with **Subtract**, as in [Cut, join and intersect parts](/help/cut-join-and-intersect-parts). In Layers, the parts it was made from sit under it, the first part on top.
+The part must already be cut with **Subtract**, as in [Cut, join and intersect parts](/help/cut-join-and-intersect-parts). In Layers, the parts it was made from sit under it, the first part on top.
 
 ![Layers with Servo Mount, and Servo Mount, Servo Pocket and Cable Hole nested under it](/help/edit-a-cut/result.png)
 

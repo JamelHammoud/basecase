@@ -1,5 +1,5 @@
 import type { SourcedItem } from '../../data/sourcedItems';
-import type { ConnectReply, RobotEvent, RobotLinkState, RobotSpec } from '../../robot/robotState';
+import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState } from '../../robot/robotState';
 import {
   AcpChatMessage,
   AcpStatusInfo,
@@ -204,7 +204,7 @@ declare global {
       onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
-      robotConnect?: (spec: RobotSpec) => Promise<ConnectReply>;
+      robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
       robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
       robotDisconnect?: () => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;

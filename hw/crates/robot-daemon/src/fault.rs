@@ -24,6 +24,11 @@ pub enum Fault {
     IntentStale,
     ClientLost,
     WriteRefused { detail: String },
+    StateLost,
+    StateCorrupt,
+    MotorsMissing { count: usize },
+    MotorError { joint: String },
+    NotBalancing { fsm: Option<i64> },
 }
 
 impl Fault {
@@ -51,6 +56,11 @@ impl Fault {
             Fault::IntentStale => "intent_stale",
             Fault::ClientLost => "client_lost",
             Fault::WriteRefused { .. } => "write_refused",
+            Fault::StateLost => "lowstate_lost",
+            Fault::StateCorrupt => "lowstate_crc",
+            Fault::MotorsMissing { .. } => "motors_missing",
+            Fault::MotorError { .. } => "motor_error",
+            Fault::NotBalancing { .. } => "not_balancing",
         }
     }
 
@@ -113,8 +123,48 @@ impl Fault {
             Fault::IntentStale => "Commands stopped arriving, so the robot is holding still.".into(),
             Fault::ClientLost => "The app stopped talking to the robot, so the robot is holding still.".into(),
             Fault::WriteRefused { detail } => format!("A motor command was refused ({detail}), so the robot is holding still."),
+            Fault::StateLost => {
+                "The G1 stopped sending its state, so its arms went back to its own controller. Check the Ethernet cable, then start again."
+                    .into()
+            }
+            Fault::StateCorrupt => {
+                "The G1's state messages arrive damaged, so its arms went back to its own controller. Check the Ethernet cable, then start again."
+                    .into()
+            }
+            Fault::MotorsMissing { count } => format!(
+                "{count} of the G1's 29 motors aren't answering, so nothing will move. Restart the G1, then check again."
+            ),
+            Fault::MotorError { joint } => format!(
+                "The G1 reports an error on its {joint} motor, so its arms went back to its own controller."
+            ),
+            Fault::NotBalancing { .. } => {
+                "The G1 isn't balancing in its locomotion mode, so its arms stay with its own controller. Stand it up with its remote, then check again."
+                    .into()
+            }
         }
     }
+}
+
+const HANDED_BACK: &str = "so the G1's arms went back to its own controller.";
+
+impl Fault {
+    pub fn g1_message(&self) -> String {
+        match self {
+            Fault::ClientLost => format!("The app stopped talking to the robot, {HANDED_BACK}"),
+            Fault::IntentStale => format!("Commands stopped arriving, {HANDED_BACK}"),
+            Fault::IntentNotFinite => format!("A command contained a value that isn't a number, {HANDED_BACK}"),
+            Fault::WriteRefused { detail } => format!("An arm command was refused ({detail}), {HANDED_BACK}"),
+            Fault::BusGone => format!("The robot's network link closed, {HANDED_BACK} Check the Ethernet cable."),
+            Fault::OutOfRange { joint, .. } => format!(
+                "The {joint} joint is outside its calibrated range, so the G1's arms stay with its own controller."
+            ),
+            other => other.message(),
+        }
+    }
+}
+
+pub fn g1_lost_message() -> String {
+    "Lost contact with the robot. The G1 keeps its last arm command, so hold its remote's emergency stop.".into()
 }
 
 pub fn daemon_lost_message(family: Family) -> String {
@@ -173,6 +223,13 @@ mod tests {
             Fault::WriteRefused {
                 detail: "sealed".into(),
             },
+            Fault::StateLost,
+            Fault::StateCorrupt,
+            Fault::MotorsMissing { count: 2 },
+            Fault::MotorError {
+                joint: "right_elbow_joint".into(),
+            },
+            Fault::NotBalancing { fsm: Some(1) },
         ]
     }
 
@@ -186,6 +243,36 @@ mod tests {
             assert!(message.len() < 200, "{message}");
             assert!(BANNED.iter().all(|word| !lower.contains(word)), "{message}");
             assert!(!fault.code().is_empty());
+        }
+    }
+
+    #[test]
+    fn g1_messages_say_the_arms_went_back_to_the_g1() {
+        let g1_faults = all_faults().into_iter().filter(|fault| {
+            matches!(
+                fault,
+                Fault::ClientLost
+                    | Fault::IntentStale
+                    | Fault::IntentNotFinite
+                    | Fault::WriteRefused { .. }
+                    | Fault::BusGone
+                    | Fault::OutOfRange { .. }
+                    | Fault::StateLost
+                    | Fault::StateCorrupt
+                    | Fault::MotorsMissing { .. }
+                    | Fault::MotorError { .. }
+                    | Fault::NotBalancing { .. }
+            )
+        });
+
+        for fault in g1_faults {
+            let message = fault.g1_message();
+            let lower = message.to_lowercase();
+
+            assert!(message.ends_with('.'), "{message}");
+            assert!(message.len() < 200, "{message}");
+            assert!(BANNED.iter().all(|word| !lower.contains(word)), "{message}");
+            assert!(!message.contains("holding still"), "{message}");
         }
     }
 

@@ -3,7 +3,7 @@ import { Button, MetaLine } from '../../design-system';
 import { useRobot } from '../../robot/useRobot';
 import { sceneRobot } from '../../robot/sceneRobot';
 import { connectRobot, disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
-import type { RobotState } from '../../robot/robotState';
+import type { RobotFamily, RobotState } from '../../robot/robotState';
 import type { RobotJoint } from '../../types/robotics';
 import { RobotCalibration, type CalibrationProps } from './RobotCalibration';
 import { RobotJoints } from './RobotJoints';
@@ -26,7 +26,7 @@ const RUN: Record<string, string> = {
   stopped: 'Stopped',
 };
 
-const FAMILY = { feetech: 'Feetech', dynamixel: 'Dynamixel' };
+const FAMILY: Record<RobotFamily, string> = { feetech: 'Feetech', dynamixel: 'Dynamixel', 'unitree-g1': 'G1' };
 
 function ConnectButton({ joints, onBrowseRobots }: Pick<OperatePanelProps, 'joints' | 'onBrowseRobots'>) {
   const [refusal, setRefusal] = useState<string | null>(null);

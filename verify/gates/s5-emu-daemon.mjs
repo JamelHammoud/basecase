@@ -17,7 +17,31 @@ const FAULTS = [
   'daemon_host_death',
   'policy_nan',
   'policy_hang',
+  'g1_lowstate_lost',
+  'g1_app_lost',
 ];
+
+const LOOPBACK_ONLY = path.join('hw', 'crates', 'servo-emu', 'src', 'g1', 'loopback.rs');
+
+function networkProblems() {
+  const grep = sh('grep', [
+    '-rlE',
+    '--include=*.rs',
+    'rustdds::|::bind\\(|0\\.0\\.0\\.0|UNSPECIFIED',
+    path.join(ROOT, 'hw', 'crates'),
+  ]);
+  const outside = grep.stdout
+    .split('\n')
+    .filter((f) => f && !f.includes('transport-real') && !f.endsWith(LOOPBACK_ONLY));
+  const loopback = fs.readFileSync(path.join(ROOT, LOOPBACK_ONLY), 'utf8');
+  const binds = [...loopback.matchAll(/::bind\(([^)]*)\)/g)].map((m) => m[1]);
+
+  if (outside.length) return `Network use outside the loopback emulator: ${outside.join(', ')}`;
+
+  if (!binds.length || binds.some((b) => !b.includes('LOOPBACK'))) return `The emulator binds ${binds.join(', ')}`;
+
+  return null;
+}
 
 const CONFORMANCE = path.join(ROOT, 'verify', 'hw', process.platform === 'darwin' ? 'pty_baud.py' : 'conformance.py');
 
@@ -91,13 +115,18 @@ export default {
       },
     },
     {
-      name: 'default builds contain no real serial transport',
+      name: 'default builds contain no real serial or network transport',
       run: () => {
         const r = sh('cargo', ['tree', '--manifest-path', MANIFEST, '-e', 'normal']);
         const grep = sh('grep', ['-rln', '--include=*.rs', 'serialport::', path.join(ROOT, 'hw')]);
         const outside = grep.stdout.split('\n').filter((f) => f && !f.includes('transport-real'));
+        const network = networkProblems();
 
         if (/\bserialport\b/.test(r.stdout)) return fail('serialport is in the default dependency tree');
+
+        if (/\brustdds\b/.test(r.stdout)) return fail('rustdds is in the default dependency tree');
+
+        if (network) return fail(network);
 
         return outside.length ? fail(`Serial use outside transport-real: ${outside.join(', ')}`) : pass();
       },

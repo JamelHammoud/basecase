@@ -1,6 +1,8 @@
 use crate::control::{Command, Daemon, DaemonEvent, Run};
-use crate::fault::daemon_lost_message;
+use crate::fault::{daemon_lost_message, g1_lost_message};
+use crate::g1::G1Daemon;
 use crate::ladder::Mode;
+use crate::safety::Reading;
 use crate::telemetry::Sample;
 use crate::transport::real_motors_unlocked;
 use serde::{Deserialize, Serialize};
@@ -85,21 +87,33 @@ struct Hello {
     lost_message: String,
 }
 
-pub fn hello_line(family: Family, emulated: bool) -> String {
+fn hello(family: &'static str, emulated: bool, lost_message: String) -> String {
     let hello = Hello {
         event: "hello",
         version: env!("CARGO_PKG_VERSION"),
-        family: match family {
-            Family::Feetech => "feetech",
-            Family::Dynamixel => "dynamixel",
-        },
+        family,
         emulated,
         real_transport: real_motors_unlocked(),
-        lost_message: daemon_lost_message(family),
+        lost_message,
     };
 
     serde_json::to_string(&hello).unwrap_or_default()
 }
+
+pub fn hello_line(family: Family, emulated: bool) -> String {
+    let name = match family {
+        Family::Feetech => "feetech",
+        Family::Dynamixel => "dynamixel",
+    };
+
+    hello(name, emulated, daemon_lost_message(family))
+}
+
+pub fn g1_hello_line(emulated: bool) -> String {
+    hello(G1_FAMILY, emulated, g1_lost_message())
+}
+
+pub const G1_FAMILY: &str = "unitree-g1";
 
 #[derive(Serialize)]
 struct JointStatus {
@@ -153,6 +167,52 @@ pub fn status_line(daemon: &Daemon) -> String {
     };
 
     serde_json::to_string(&outbound).unwrap_or_default()
+}
+
+#[derive(Serialize)]
+struct G1Status<'a> {
+    event: &'static str,
+    at_us: u64,
+    mode: Mode,
+    run: &'a str,
+    sealed: bool,
+    fault_latched: bool,
+    weight: f32,
+    joints: Vec<JointStatus>,
+}
+
+fn g1_joints(reading: Option<&Reading>) -> Vec<JointStatus> {
+    let motors = reading.map(|reading| reading.motors.as_slice()).unwrap_or_default();
+
+    motors
+        .iter()
+        .enumerate()
+        .map(|(motor, state)| JointStatus {
+            id: Some(servo_wire::unitree::g1::joint_id(motor)),
+            position: Some(
+                (2048.0 + state.q * crate::calibration::COUNTS_PER_TURN / std::f32::consts::TAU).round() as i32,
+            ),
+            temp_c: Some(state.temp_c),
+            volts: Some(state.volts),
+            torque_on: Some(state.enabled),
+            reply: if state.error == 0 { "ok" } else { "missing" },
+        })
+        .collect()
+}
+
+pub fn g1_status_line(daemon: &G1Daemon) -> String {
+    let status = G1Status {
+        event: "status",
+        at_us: daemon.now_us(),
+        mode: daemon.mode(),
+        run: daemon.run().label(),
+        sealed: daemon.is_sealed(),
+        fault_latched: daemon.fault_latched(),
+        weight: daemon.weight(),
+        joints: g1_joints(daemon.reading()),
+    };
+
+    serde_json::to_string(&status).unwrap_or_default()
 }
 
 fn joint_status(sample: &Sample) -> JointStatus {
@@ -221,6 +281,15 @@ mod tests {
 
         assert!(!line.contains('\n'));
         assert!(line.contains(r#""event":"fault""#));
+    }
+
+    #[test]
+    fn the_g1_says_hello_with_its_own_family_and_words() {
+        let hello: serde_json::Value = serde_json::from_str(&g1_hello_line(true)).unwrap();
+
+        assert_eq!(hello["family"], "unitree-g1");
+        assert_eq!(hello["real_transport"], false);
+        assert_eq!(hello["lost_message"], g1_lost_message());
     }
 
     #[test]

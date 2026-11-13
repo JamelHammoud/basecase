@@ -3,7 +3,7 @@ import { Button } from '../../design-system';
 import type { CalibrationHistory } from '../../reality/history';
 import { canRunBench } from '../../robot/benchRun';
 import { connectedFrom, useCalibrationPhase } from '../../robot/calibrationSession';
-import type { RobotState } from '../../robot/robotState';
+import { servoFamily, type RobotState } from '../../robot/robotState';
 import type { RobotJoint } from '../../types/robotics';
 import { CalibrationRow } from './CalibrationRow';
 
@@ -31,7 +31,11 @@ export const RobotCalibration: React.FC<RobotCalibrationProps> = ({
 
     return history?.versions.length ? [{ joint, history }] : [];
   });
-  const offered = robot.link === 'connected' && robot.mode === 'test' && Boolean(connectedFrom(joints));
+  const offered =
+    robot.link === 'connected' &&
+    robot.mode === 'test' &&
+    servoFamily(robot.spec) !== null &&
+    Boolean(connectedFrom(joints));
 
   if (!offered && !rows.length) return null;
 

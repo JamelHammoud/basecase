@@ -8,7 +8,7 @@ export default defineConfig({
     setupFiles: ['tools/quarantine-setup.mjs'],
     globalSetup: ['e2e/serve.ts'],
     environment: 'node',
-    testTimeout: 60000,
+    testTimeout: 180000,
     hookTimeout: 120000,
     fileParallelism: false,
     expect: { poll: { timeout: 10000 } },

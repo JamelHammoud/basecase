@@ -17,6 +17,7 @@ import {
   BotIcon,
   CloseIcon,
   GridIcon,
+  HumanIcon,
   KeyboardIcon,
   PackageIcon,
   PanelsIcon,
@@ -25,6 +26,7 @@ import {
   WebIcon,
 } from '../design-system';
 import type { PrintersState } from '../app/usePrinters';
+import { AccountsPane } from './settings/AccountsPane';
 import { BuildPane, type BuildPrefs } from './settings/BuildPane';
 import { PrintersPane } from './settings/PrintersPane';
 import { RegionPane } from './settings/RegionPane';
@@ -32,7 +34,7 @@ import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
-export type SettingsPane = 'canvas' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
   { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
@@ -41,10 +43,11 @@ const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> =
   { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
   { id: 'build', label: 'Build', icon: <PackageIcon className="w-4 h-4" /> },
   { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
+  { id: 'accounts', label: 'Accounts', icon: <HumanIcon className="w-4 h-4" /> },
   { id: 'shortcuts', label: 'Shortcuts', icon: <KeyboardIcon className="w-4 h-4" /> },
 ];
 
-const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers'];
+const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers', 'accounts'];
 
 const VISIBLE_PANES = IS_WEB_DEMO ? PANES.filter((p) => !DESKTOP_PANES.includes(p.id)) : PANES;
 
@@ -185,6 +188,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             {current.id === 'printers' && (
               <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
             )}
+            {current.id === 'accounts' && <AccountsPane />}
             {current.id === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
           </div>
         </div>

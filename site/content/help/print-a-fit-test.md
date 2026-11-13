@@ -1,6 +1,8 @@
 ---
 title: Print a fit test
 date: 2026-11-13
+collection: build-and-print
+type: task
 covers:
   - src/print/fitTest.ts
   - src/three/analysis/fitCoupons.ts

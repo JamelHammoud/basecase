@@ -1,6 +1,8 @@
 ---
 title: Train a Motor Kit skill
 date: 2026-11-12
+collection: simulate-and-train
+type: task
 covers:
   - src/components/simulate/TrainSection.tsx
   - src/components/simulate/SkillsList.tsx

@@ -1,6 +1,8 @@
 ---
 title: Start a Case
 date: 2026-11-13
+collection: simulate-and-train
+type: task
 covers:
   - src/components/cases/CasesPanel.tsx
   - src/components/cases/NewCaseCard.tsx

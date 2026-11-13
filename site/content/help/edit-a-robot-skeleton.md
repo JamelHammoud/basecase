@@ -1,6 +1,8 @@
 ---
 title: Shape a robot as a stick figure
 date: 2026-11-13
+collection: design
+type: task
 covers:
   - src/workspace/useSkeletonEdit.ts
   - src/components/pose/SkeletonSection.tsx

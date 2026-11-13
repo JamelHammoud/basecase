@@ -1,6 +1,8 @@
 ---
 title: Build a robot step by step on the canvas
 date: 2026-11-13
+collection: build-and-print
+type: task
 covers:
   - src/workspace/useBuildAlong.ts
   - src/components/build/BuildAlongBar.tsx

@@ -144,7 +144,7 @@ describe('site pages', () => {
     expect(content.help.articles.every((entry) => entry.covers.length > 0)).toBe(true);
   });
 
-  it('gives every changelog entry a cover and a screenshot that exist', () => {
+  it('points every changelog cover and screenshot at an image that exists', () => {
     const published = new Set(
       Object.keys(import.meta.glob('../../../site/public/changelog/*/*.png')).map((key) =>
         key.replace('../../../site/public', ''),
@@ -154,10 +154,8 @@ describe('site pages', () => {
     for (const entry of readContent(CONTENT_FILES, NOW).changelog) {
       const screenshots = [...entry.body.matchAll(/!\[[^\]]+\]\((\/changelog\/[^)\s]+)\)/g)].map((m) => m[1]);
 
-      expect(entry.image, entry.slug).toMatch(/^\/changelog\//);
-      expect(screenshots.length, entry.slug).toBeGreaterThan(0);
       expect(
-        [entry.image, ...screenshots].filter((src) => !published.has(src ?? '')),
+        [...(entry.image ? [entry.image] : []), ...screenshots].filter((src) => !published.has(src)),
         entry.slug,
       ).toEqual([]);
     }

@@ -1,6 +1,8 @@
 ---
 title: Tune an agent-made part
 date: 2026-11-13
+collection: design
+type: task
 covers:
   - src/components/inspector/DimensionsSection.tsx
   - src/workspace/useCadTune.ts

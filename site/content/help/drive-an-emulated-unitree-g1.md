@@ -1,6 +1,8 @@
 ---
 title: Drive an emulated Unitree G1
 date: 2026-11-13
+collection: operate
+type: task
 covers:
   - electron/robot/unitreeG1.mjs
   - electron/robot/robotSpec.mjs

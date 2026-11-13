@@ -1,6 +1,8 @@
 ---
 title: Run a Case from the Command Center
 date: 2026-11-13
+collection: simulate-and-train
+type: task
 covers:
   - src/cases/console/
   - src/sim/inputSources.ts

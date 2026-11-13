@@ -5,11 +5,11 @@ import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
 import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import type { Printing } from '../../workspace/usePrinting';
-import { hm } from '../build/format';
+import { hm, plural } from '../build/format';
 import { PlateRow, plateNumbers } from '../build/PlateRow';
-import { slicerName } from '../build/PlatesSection';
-import { PrintSettings } from '../build/PrintSettings';
+import { PrintedSection } from './PrintedSection';
 import { PrinterLive } from './PrinterLive';
+import { PrintSettings } from './PrintSettings';
 import { StartPrintSheet } from './StartPrintSheet';
 
 interface PrintPanelProps {
@@ -22,6 +22,31 @@ interface PrintPanelProps {
   onAddPrinter: () => void;
   onDone: () => void;
 }
+
+function slicerName(printing: Printing, tools: PrintToolsStatus | null): string | null {
+  const vendor = printing.printer.model.vendor;
+  const order = vendor === 'BBL' ? ['bambu', 'orca'] : ['orca', 'bambu'];
+  const found = order.map((k) => tools?.slicers.find((s) => s.kind === k)).find(Boolean);
+
+  return found?.name ?? null;
+}
+
+function showPart(printing: Printing, id: string) {
+  const plate = printing.report?.parts.find((p) => p.id === id)?.plate;
+
+  if (plate) printing.setModePlate(plate);
+
+  printing.selectPart(id);
+}
+
+const SkipPrinted: React.FC<{ printing: Printing }> = ({ printing }) => (
+  <div className="flex items-center justify-between gap-3">
+    <span className="text-[13px] text-white/60">
+      Skip {printing.printedCount} printed {plural(printing.printedCount, 'part', 'parts')}
+    </span>
+    <Switch aria-label="Skip printed parts" checked={printing.skipPrinted} onChange={printing.setSkipPrinted} />
+  </div>
+);
 
 const throughStudio = (printing: Printing) =>
   !printing.printer.mine?.connection || printing.printer.mine.connection.kind === 'bambu-studio';
@@ -234,6 +259,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onChangeProject={props.onChangeProject}
             onAddPrinter={props.onAddPrinter}
           />
+          {printing.printedCount > 0 && <SkipPrinted printing={printing} />}
           <PrinterLive printing={printing} />
         </Section>
         {selected && <PartControls printing={printing} part={selected} plates={plates} />}
@@ -256,6 +282,11 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             ))}
           </ul>
         </Section>
+        <PrintedSection
+          report={printing.report}
+          project={props.project}
+          onSelectParts={([id]) => id && showPart(printing, id)}
+        />
       </div>
       <StartPrintSheet
         plate={sending.confirming}

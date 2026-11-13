@@ -8,7 +8,7 @@ All seven milestones are built. docs/guide/printing.md §8f describes how the co
 
 | # | Milestone | State | Verified by |
 |---|---|---|---|
-| P1 | Printers | Done: 92-printer catalog generated from Bambu Studio 2.08.04, My printers, Settings → Printers, Printer and Quality in the Build tab, the agent's text names the scene's printer | `printReport.test.ts` (P1S keep-out, Prusa MINI diagonal, custom bed) |
+| P1 | Printers | Done: 92-printer catalog generated from Bambu Studio 2.08.04, My printers, Settings → Printers, Printer and Quality in Print mode, the agent's text names the scene's printer | `printReport.test.ts` (P1S keep-out, Prusa MINI diagonal, custom bed) |
 | P2 | Plates as data | Done: poses with flat faces, MaxRects packing, per-part overrides, copies, plate hashes | `plan.test.ts` (transforms fill their rectangle on the bed), `printReport.test.ts` |
 | P3 | Print mode | Done: plate view, drag, Lay on Face, Turn 90°, plate switching, Auto Arrange, Print panel | `e2e/print.e2e.test.ts` (opens, shows the plate, closes, no console errors) |
 | P4 | 3MF handoff | Done: Export ▸ 3MF Plates (one file per material), Open in Bambu Studio / OrcaSlicer as a full project with printer, process and filament set | `slice.test.mjs` |
@@ -147,7 +147,7 @@ Connectors per ecosystem in `electron/printers/connect/`, one interface: `discov
 - **Add Printer** (Settings → Printers): Find on Network (Bambu printers answer SSDP on the LAN; Moonraker, OctoPrint and PrusaLink usually advertise over mDNS), or enter an address. Access codes and API keys are stored like agent keys (`safeStorage`, `library/agent-config/printer-keys.json`), never in the scene or in logs.
 - **For your P1S:** start with Bambu Connect (works with the cloud account and today's firmware, one extra click in Bambu Connect). Offer LAN Developer Mode as an advanced connection for people who want status and one-click starts in Basecase, with Bambu's own warning repeated plainly.
 - **Starting a print** (Print in the Print panel): a sheet shows the plate thumbnail, printer, material and grams, the AMS slot or loaded filament it maps to (where the printer reports one; a mismatch blocks with the fix: “Load PETG in slot 2 or change the plate to PLA”), and “Clear the bed” as a reminder, then **Start Print**. Never from the agent, never in the background.
-- **Status:** a printing plate shows its progress, layer and time left in its plate tile and the Build tab; errors (HMS codes on Bambu) are translated to a sentence with the fix where known. A toast says when a plate finishes: “Plate 2 finished on P1S”.
+- **Status:** a printing plate shows its progress, layer and time left in its plate tile in Print mode; errors (HMS codes on Bambu) are translated to a sentence with the fix where known. A toast says when a plate finishes: “Plate 2 finished on P1S”.
 
 **Done when** a plate goes from Basecase to the P1S through Bambu Connect, and through LAN mode on a Developer Mode printer with live progress; Moonraker, PrusaLink and OctoPrint connectors pass tests against recorded responses (and a real printer where one is available).
 

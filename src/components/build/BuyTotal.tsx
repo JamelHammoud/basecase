@@ -1,22 +1,18 @@
 import React from 'react';
-import { NumberInput, Section, Tooltip } from '../../design-system';
+import { NumberInput, Tooltip } from '../../design-system';
 import type { ProjectSettings } from '../../types/robotics';
 import { type Bom, STALE_DAYS } from '../../utils/bom';
-import type { Money } from '../../utils/currency';
 import { useMoney } from '../../utils/useMoney';
+import { budgetPatch, budgetStanding, budgetStep, hasEstimate } from './budget';
 import { plural } from './format';
 
 type Totals = Bom['totals'];
 
-interface BudgetSectionProps {
-  bom: Bom;
+interface BuyTotalProps {
+  totals: Totals;
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
 }
-
-const hasEstimate = (t: Totals) => t.estimatedUsd > t.pricedUsd + 0.005;
-
-const share = (usd: number, budget: number) => (budget ? Math.min(1, usd / budget) : 0);
 
 const Total: React.FC<{ t: Totals }> = ({ t }) => {
   const money = useMoney();
@@ -33,30 +29,25 @@ const Total: React.FC<{ t: Totals }> = ({ t }) => {
 };
 
 const BudgetBar: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
-  const over = t.estimatedUsd > budget;
-
-  return (
-    <div className="relative h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Spent of budget">
-      <div
-        className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500/40' : 'bg-[#0d99ff]/35'}`}
-        style={{ width: `${share(t.estimatedUsd, budget) * 100}%` }}
-      />
-      <div
-        className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500' : 'bg-[#0d99ff]'}`}
-        style={{ width: `${share(t.pricedUsd, budget) * 100}%` }}
-      />
-    </div>
-  );
-};
-
-const BudgetLeft: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
-  const over = t.estimatedUsd > budget;
   const money = useMoney();
+  const { over, differenceUsd, pricedShare, estimatedShare } = budgetStanding(t, budget);
 
   return (
-    <div className={`text-[12.5px] tabular-nums ${over ? 'text-red-400' : 'text-white/50'}`}>
-      {over ? `${money.format(t.estimatedUsd - budget)} over budget` : `${money.format(budget - t.estimatedUsd)} left`}
-    </div>
+    <>
+      <div className="relative h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Spent of budget">
+        <div
+          className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500/40' : 'bg-[#0d99ff]/35'}`}
+          style={{ width: `${estimatedShare * 100}%` }}
+        />
+        <div
+          className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500' : 'bg-[#0d99ff]'}`}
+          style={{ width: `${pricedShare * 100}%` }}
+        />
+      </div>
+      <div className={`text-[12.5px] tabular-nums ${over ? 'text-red-400' : 'text-white/50'}`}>
+        {money.format(differenceUsd)} {over ? 'over budget' : 'left'}
+      </div>
+    </>
   );
 };
 
@@ -67,23 +58,12 @@ const StaleNotice: React.FC<{ stale: number }> = ({ stale }) => (
   </div>
 );
 
-const budgetStep = (money: Money) => 10 ** Math.max(1, Math.round(Math.log10(money.rate * 10)));
-
-function budgetPatch(amount: number, money: Money): Partial<ProjectSettings> {
-  if (amount <= 0) return { budgetUsd: undefined, budgetEntered: undefined };
-
-  const { usd, entered } = money.enter(amount);
-
-  return { budgetUsd: usd, budgetEntered: entered };
-}
-
-export const BudgetSection: React.FC<BudgetSectionProps> = ({ bom, project, onChangeProject }) => {
-  const t = bom.totals;
+export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChangeProject }) => {
   const budget = project.budgetUsd;
   const money = useMoney();
 
   return (
-    <Section title="Budget">
+    <>
       <div className="flex items-center justify-between gap-3">
         <Total t={t} />
         <div className="w-[112px] shrink-0">
@@ -100,8 +80,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({ bom, project, onCh
         </div>
       </div>
       {budget !== undefined && <BudgetBar t={t} budget={budget} />}
-      {budget !== undefined && <BudgetLeft t={t} budget={budget} />}
       {t.stale > 0 && <StaleNotice stale={t.stale} />}
-    </Section>
+    </>
   );
 };

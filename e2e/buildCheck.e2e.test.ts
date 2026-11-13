@@ -53,20 +53,18 @@ afterAll(async () => {
 });
 
 describe('Checks', () => {
-  it('run on their own and show a live verdict in the Build tab', async () => {
+  it('run on their own and lead the Build tab with a live verdict', async () => {
     await addCube();
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await expect.poll(() => checks().isVisible(), { timeout: 20000 }).toBe(true);
     await expect.poll(headerText, { timeout: 45000 }).toMatch(/Ready to build|\d+ to fix/);
     expect(await checks().textContent()).toContain('Parts attached');
 
-    const belowGuide = await checks().evaluate((section) => {
-      const guide = document.getElementById('build-guide');
+    const leads = await checks().evaluate(
+      (section) => section.parentElement?.querySelector(':scope > section') === section,
+    );
 
-      return !!guide && !!(guide.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING);
-    });
-
-    expect(belowGuide).toBe(true);
+    expect(leads).toBe(true);
   }, 90000);
 
   it('let you ignore a blocker for the whole project, and restore it', async () => {

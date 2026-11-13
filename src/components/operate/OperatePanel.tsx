@@ -5,6 +5,7 @@ import { sceneRobot } from '../../robot/sceneRobot';
 import { connectRobot, disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
 import type { RobotState } from '../../robot/robotState';
 import type { RobotJoint } from '../../types/robotics';
+import { RobotCalibration, type CalibrationProps } from './RobotCalibration';
 import { RobotJoints } from './RobotJoints';
 import { RobotLadder, rungLabel } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
@@ -12,6 +13,7 @@ import { RobotMessages } from './RobotMessages';
 export interface OperatePanelProps {
   joints: RobotJoint[];
   onBrowseRobots: () => void;
+  calibration: CalibrationProps;
 }
 
 const RUN: Record<string, string> = {
@@ -43,7 +45,7 @@ const NoRobot: React.FC<{ onBrowseRobots: () => void }> = ({ onBrowseRobots }) =
   />
 );
 
-function ConnectButton({ joints, onBrowseRobots }: OperatePanelProps) {
+function ConnectButton({ joints, onBrowseRobots }: Pick<OperatePanelProps, 'joints' | 'onBrowseRobots'>) {
   const [refusal, setRefusal] = useState<string | null>(null);
   const robot = sceneRobot(joints);
 
@@ -116,7 +118,7 @@ function RobotHeader({ robot }: { robot: RobotState }) {
   );
 }
 
-export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots }) => {
+export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots, calibration }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
 
@@ -125,6 +127,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobo
       {connected ? <RobotHeader robot={robot} /> : <ConnectButton joints={joints} onBrowseRobots={onBrowseRobots} />}
       <RobotMessages messages={robot.messages} />
       {connected && <RobotLadder robot={robot} />}
+      <RobotCalibration robot={robot} joints={joints} {...calibration} />
       {connected && <RobotJoints ids={robot.spec?.ids ?? []} joints={robot.status?.joints ?? []} />}
     </div>
   );

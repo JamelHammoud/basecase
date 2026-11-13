@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, ExternalLinkIcon, HoverCard, Tooltip } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
-import type { BomLine } from '../../utils/bom';
+import { type BomLine, STALE_DAYS } from '../../utils/bom';
 import { scaledEntry } from '../../utils/currency';
 import { useMoney } from '../../utils/useMoney';
 import { PART_PREVIEW_WIDTH, PartPreviewCard } from '../agent/PartPreviewCard';
@@ -49,7 +49,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.record)
     return (
-      <Tooltip label={`Checked ${l.record.checkedAt}${stale ? ', over 60 days ago' : ''}`} className="shrink-0 -my-[5px]">
+      <Tooltip label={`Checked ${l.record.checkedAt}${stale ? `, over ${STALE_DAYS} days ago` : ''}`} className="shrink-0 -my-[5px]">
         <button
           type="button"
           onClick={onCheck}

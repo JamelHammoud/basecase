@@ -15,9 +15,10 @@ export function replayLog(mj: MainModule, model: SimModel, log: ServoLog, jointI
 
     const id = mj.mj_name2id(engine.model, mj.mjtObj.mjOBJ_JOINT.value, joint.name);
     const at = engine.model.jnt_qposadr[id];
+    const start = log.positionRad.find(Number.isFinite) ?? 0;
 
-    engine.setController({ kind: 'hold', values: { [joint.id]: log.positionRad[0] / D2R } });
-    engine.data.qpos[at] = log.positionRad[0];
+    engine.setController({ kind: 'hold', values: { [joint.id]: start / D2R } });
+    engine.data.qpos[at] = start;
     engine.refreshKinematics();
     log.goalRad.forEach((goal, i) => {
       out[i] = engine.data.qpos[at];

@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
+import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Geometry } from './model';
 
@@ -103,6 +104,20 @@ export async function loadMesh(data: ArrayBuffer, path: string): Promise<THREE.B
   return null;
 }
 
+function hullGeometry(points: number[]): THREE.BufferGeometry | null {
+  const vectors = Array.from({ length: Math.floor(points.length / 3) }, (_, i) =>
+    new THREE.Vector3().fromArray(points, i * 3),
+  );
+
+  if (vectors.length < 4) return null;
+
+  try {
+    return new ConvexGeometry(vectors);
+  } catch {
+    return null;
+  }
+}
+
 export function primitive(g: Geometry): THREE.BufferGeometry | null {
   let geo: THREE.BufferGeometry;
 
@@ -130,6 +145,8 @@ export function primitive(g: Geometry): THREE.BufferGeometry | null {
       geo.rotateX(Math.PI / 2);
 
       break;
+    case 'hull':
+      return hullGeometry(g.points);
     default:
       return null;
   }

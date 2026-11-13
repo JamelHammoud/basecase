@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuEntry, Tooltip, ArrowUpIcon, StopSolidIcon, TickIcon } from '../../design-system';
+import { ContextMenu, ContextMenuEntry, IconButton, ArrowUpIcon, StopSolidIcon, TickIcon } from '../../design-system';
 import { hasPrimaryModifier } from '../../utils/os';
 import { SendIntent } from './types';
-
-const ROUND_BUTTON =
-  'w-8 h-8 rounded-full bg-white text-black flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.92] hover:bg-white/90';
 
 interface SendMenuOptions {
   isBusy: boolean;
@@ -41,36 +38,41 @@ export const SendControls: React.FC<{
 
   if (isBusy && !hasDraft && !editing)
     return (
-      <Tooltip label="Stop" shortcut="Esc" side="top">
-        <button type="button" aria-label="Stop" onClick={onStop} className={ROUND_BUTTON}>
-          <StopSolidIcon className="w-3.5 h-3.5" />
-        </button>
-      </Tooltip>
+      <IconButton
+        icon={<StopSolidIcon className="w-3.5 h-3.5" />}
+        title="Stop"
+        shortcut="Esc"
+        tooltipSide="top"
+        variant="send"
+        className="rounded-full"
+        onClick={onStop}
+      />
     );
 
   return (
     <>
-      <Tooltip label={updating ? 'Update' : 'Send'} shortcut="↩︎" side="top">
-        <button
-          type="button"
-          aria-label={updating ? 'Update' : 'Send'}
-          aria-haspopup="menu"
-          aria-expanded={!!menu}
-          onClick={(e) => onSend(hasPrimaryModifier(e) ? 'queue' : 'default')}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setMenu({ x: e.clientX, y: e.clientY });
-          }}
-          disabled={!canSend}
-          className={`${ROUND_BUTTON} disabled:bg-white/15 disabled:text-white/40 disabled:active:scale-100`}
-        >
-          {updating ? (
+      <IconButton
+        icon={
+          updating ? (
             <TickIcon className="w-[18px] h-[18px]" strokeWidth={2.5} />
           ) : (
             <ArrowUpIcon className="w-[18px] h-[18px]" strokeWidth={2.25} />
-          )}
-        </button>
-      </Tooltip>
+          )
+        }
+        title={updating ? 'Update' : 'Send'}
+        shortcut="↩︎"
+        tooltipSide="top"
+        variant="send"
+        className="rounded-full"
+        aria-haspopup="menu"
+        aria-expanded={!!menu}
+        onClick={(e) => onSend(hasPrimaryModifier(e) ? 'queue' : 'default')}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setMenu({ x: e.clientX, y: e.clientY });
+        }}
+        disabled={!canSend}
+      />
       {menu && (
         <ContextMenu
           x={menu.x}

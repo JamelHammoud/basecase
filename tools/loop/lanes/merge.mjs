@@ -1,6 +1,24 @@
-import { checkConclusion, isPaused, latestMainCheck, mergePull, openPulls, reviewState } from '../lib/github.mjs';
+import {
+  checkConclusion,
+  hasLabel,
+  isPaused,
+  latestMainCheck,
+  mergePull,
+  openPulls,
+  reviewState,
+} from '../lib/github.mjs';
 
 const isRepair = (pull) => pull.headRefName.startsWith('loop/repair/');
+
+const rank = (pull) => {
+  if (isRepair(pull)) return 0;
+
+  if (pull.headRefName.startsWith('loop/loop/') || hasLabel(pull, 'loop:loop')) return 1;
+
+  return hasLabel(pull, 'loop:priority') ? 2 : 3;
+};
+
+const byRank = (a, b) => rank(a) - rank(b) || a.createdAt.localeCompare(b.createdAt);
 
 const ready = (pull) =>
   pull.mergeable !== 'CONFLICTING' &&
@@ -15,7 +33,9 @@ export default function merge({ log }) {
   }
 
   const mainRed = latestMainCheck()?.conclusion === 'failure';
-  const candidates = openPulls().filter((pull) => !mainRed || isRepair(pull));
+  const candidates = openPulls()
+    .filter((pull) => !mainRed || isRepair(pull))
+    .sort(byRank);
   const pull = candidates.find(ready);
 
   if (!pull) {

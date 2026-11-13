@@ -45,8 +45,6 @@ function prompt(pull, { comments, stuck }) {
 }
 
 export function rebuild(pull, { comments, stuck, log }) {
-  markRebuilt(pull.number);
-
   const worktree = openBranch('rebuild', pull.title.replace(/^[A-Za-z]+: /, ''));
 
   try {
@@ -57,6 +55,8 @@ export function rebuild(pull, { comments, stuck, log }) {
       schema: SCHEMA,
       hours: 8,
     });
+
+    markRebuilt(pull.number);
 
     if (!result.ok) {
       log(`#${pull.number}: rebuild session failed; revising continues: ${String(result.error).slice(0, 300)}`);

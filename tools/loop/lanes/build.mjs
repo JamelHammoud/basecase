@@ -7,6 +7,7 @@ import { recordDecline, stepEntry, stepWaiting } from '../lib/stepState.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 5,
   everySeconds: 60,
   does: 'Claims the next loop:next step, loop:priority first, and ships it as a pull request',

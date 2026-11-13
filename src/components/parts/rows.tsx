@@ -6,7 +6,7 @@ import { isSourcedId } from '../../data/sourcedItems';
 import { PART_DRAG_TYPE } from '../../data/dnd';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { Tooltip, ChevronRightIcon, PlusIcon } from '../../design-system';
+import { BrowseRow, Tooltip, PlusIcon } from '../../design-system';
 import type { Category } from './partsViews';
 
 export const Thumb: React.FC<{ url?: string; className?: string; empty?: boolean }> = ({
@@ -110,17 +110,11 @@ export const CategoryRow: React.FC<{ category: Category; onOpen: () => void }> =
   const meta = category.family ? category.family.description : partCount(category.count ?? category.items.length);
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="group w-full flex items-center gap-3 h-[52px] px-1.5 rounded-xl text-left cursor-default hover:bg-white/[0.05] active:scale-[0.99] transition-[background-color,transform] duration-150"
-    >
-      <Thumb url={thumb} empty={!category.items.length} className="w-12 h-9 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <div className="text-[13.5px] font-medium text-white/90 truncate">{category.title}</div>
-        <div className="text-[12px] text-white/50 truncate">{meta}</div>
-      </div>
-      <ChevronRightIcon className="w-4 h-4 text-white/25 group-hover:text-white/50 shrink-0 transition-colors" />
-    </button>
+    <BrowseRow
+      title={category.title}
+      meta={meta}
+      thumb={<Thumb url={thumb} empty={!category.items.length} className="w-12 h-9 shrink-0" />}
+      onOpen={onOpen}
+    />
   );
 };

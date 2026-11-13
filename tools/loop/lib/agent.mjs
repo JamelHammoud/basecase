@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { BRIEFS } from './paths.mjs';
 import { run } from './sh.mjs';
+import { limitIn, pause, resume, startPause, UsageLimit } from './usage.mjs';
 
 const TELLING = new Set(['build', 'refine']);
 
@@ -43,7 +44,23 @@ const withoutGithub = (fn) => {
   }
 };
 
+function throwIfLimited(output) {
+  const limit = limitIn(output);
+
+  if (!limit) return;
+
+  const error = new UsageLimit(limit.until);
+
+  error.started = startPause(limit.until);
+
+  throw error;
+}
+
 export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
+  const paused = pause();
+
+  if (paused && Date.now() < paused.until) throw new UsageLimit(paused.until);
+
   const args = [
     '-p',
     prompt,
@@ -59,6 +76,10 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
   const launch = (env) =>
     run(process.env.CLAUDE_BIN || 'claude', args, { cwd, env, timeout: hours * 60 * 60 * 1000, allowFail: true });
   const { out, err } = sandbox ? withoutGithub(launch) : launch();
+
+  throwIfLimited({ out, err });
+
+  if (paused) resume();
 
   try {
     const result = lastResult(out);

@@ -16,6 +16,7 @@ import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 1,
   everySeconds: 60,
   does: 'Plans arcs and steps when Jamel opens a request or comments on Direction, or when fewer steps wait than builders',

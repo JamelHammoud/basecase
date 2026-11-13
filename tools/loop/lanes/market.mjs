@@ -7,6 +7,7 @@ import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 1,
   everySeconds: 60,
   labels: ['loop:market', 'loop:idea'],

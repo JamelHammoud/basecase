@@ -11,10 +11,10 @@ type DatasetHandlers = {
 
 const localHandlers = async (): Promise<DatasetHandlers> => {
   const { buildDataset } = await import('./buildDataset');
-  const { zipDataset } = await import('./zipDataset');
+  const { zipFolder } = await import('../utils/zipFolder');
 
   return {
-    zip: async (job) => ({ result: zipDataset(job.name, await buildDataset(job)) }),
+    zip: async (job) => ({ result: zipFolder(job.name, await buildDataset(job)) }),
     files: async (job) => ({ result: await buildDataset(job) }),
   };
 };

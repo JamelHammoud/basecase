@@ -10,7 +10,10 @@ const post = (fields: string, body = 'One sentence about it.') => `---\n${fields
 
 const FIXTURES: Record<string, string> = {
   '/site/content/changelog/2026-11-01-older.md': post('title: Older\ndate: 2026-11-01\nversion: 0.1.1'),
-  '/site/content/changelog/2026-11-02-newer.md': post('title: Newer & better\ndate: 2026-11-02\nversion: 0.1.2'),
+  '/site/content/changelog/2026-11-02-newer.md': post(
+    'title: Newer & better\ndate: 2026-11-02\nversion: 0.1.2\nimage: /changelog/newer/cover.png',
+    'It does more now.\n\n## How\n\n![The panel](/changelog/newer/panel.png)\n\n[Bad](javascript:alert(1))',
+  ),
   '/site/content/changelog/2026-11-03-hidden.md': post('title: Hidden entry\ndate: 2026-11-03\ndraft: true'),
   '/site/content/blog/launch.md': post('title: Launch\ndate: 2026-11-10\ndraft: false\nline: "Built on a Sunday."'),
   '/site/content/blog/unfinished.md': post('title: Unfinished\ndate: 2026-11-10\ndraft: true'),
@@ -36,6 +39,8 @@ describe('site pages', () => {
       'blog/launch.html',
       'changelog.html',
       'changelog.json',
+      'changelog/2026-11-01-older.html',
+      'changelog/2026-11-02-newer.html',
       'changelog/rss.xml',
       'help.html',
       'help/import-a-mesh.html',
@@ -62,11 +67,34 @@ describe('site pages', () => {
     expect(page.indexOf('Newer &amp; better')).toBeLessThan(page.indexOf('Older'));
     expect(feed.items.map((item: { title: string }) => item.title)).toEqual(['Newer & better', 'Older']);
     expect(feed.items[0]).toMatchObject({
-      url: 'https://basecase.so/changelog#2026-11-02-newer',
+      url: 'https://basecase.so/changelog/2026-11-02-newer',
       _basecase: { version: '0.1.2' },
     });
     expect(rss).toContain('<title>Newer &amp; better</title>');
     expect(rss.indexOf('Newer')).toBeLessThan(rss.indexOf('Older'));
+  });
+
+  it('gives each changelog entry its own page, linked from the list', () => {
+    const list = files.get('changelog.html')!;
+    const entry = files.get('changelog/2026-11-02-newer.html')!;
+
+    expect(list).toContain('href="/changelog/2026-11-02-newer"');
+    expect(list).toContain('id="2026-11-02-newer"');
+    expect(list).toContain('It does more now.');
+    expect(list).not.toContain('panel.png');
+    expect(entry).toContain('href="/changelog"');
+    expect(entry).toContain('src="/changelog/newer/cover.png"');
+    expect(entry).toContain('src="/changelog/newer/panel.png"');
+    expect(entry).toContain('<meta property="og:image" content="https://basecase.so/changelog/newer/cover.png"/>');
+    expect(files.get('sitemap.xml')).toContain('<loc>https://basecase.so/changelog/2026-11-02-newer</loc>');
+  });
+
+  it('puts the cover and screenshots in the feeds with absolute URLs, and drops script links', () => {
+    const [newer] = JSON.parse(files.get('changelog.json')!).items;
+
+    expect(newer.content_html).toContain('<img src="https://basecase.so/changelog/newer/cover.png"');
+    expect(newer.content_html).toContain('src="https://basecase.so/changelog/newer/panel.png"');
+    expect(newer.content_html).not.toContain('javascript:');
   });
 
   it('renders markdown as elements and drops raw HTML', () => {

@@ -5,8 +5,24 @@ export const MAX_SERVOS = 32;
 
 export type SceneRobot = { ok: true; spec: RobotSpec; joints: string[] } | { ok: false; reason: string };
 
-export function sceneRobot(joints: readonly RobotJoint[]): SceneRobot {
+export interface ServoLayout {
+  movable: RobotJoint[];
+  ids: number[];
+  class: RobotSpec['class'];
+}
+
+export function servoLayout(joints: readonly RobotJoint[]): ServoLayout {
   const movable = joints.filter((j) => j.type !== 'fixed');
+
+  return {
+    movable,
+    ids: movable.map((_, i) => i + 1),
+    class: movable.some((j) => j.limb === 'leg') ? 'legged' : 'arm',
+  };
+}
+
+export function sceneRobot(joints: readonly RobotJoint[]): SceneRobot {
+  const { movable, ids, class: robotClass } = servoLayout(joints);
 
   if (movable.length === 0) return { ok: false, reason: 'Add a robot with joints to emulate its servos.' };
 
@@ -17,8 +33,8 @@ export function sceneRobot(joints: readonly RobotJoint[]): SceneRobot {
     ok: true,
     spec: {
       family: 'feetech',
-      ids: movable.map((_, i) => i + 1),
-      class: movable.some((j) => j.limb === 'leg') ? 'legged' : 'arm',
+      ids,
+      class: robotClass,
       emulated: true,
     },
     joints: movable.map((j) => j.id),

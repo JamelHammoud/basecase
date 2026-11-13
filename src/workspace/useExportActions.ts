@@ -9,22 +9,16 @@ import { scenePreview } from '../three/scenePreview';
 import { fileSafe } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
+import { robotPackageZip } from './robotPackageExport';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
-export function useExportActions({
-  parts,
-  scene,
-  annotations,
-  showToast,
-  toasts,
-  viewportRef,
-  project,
-  printer,
-}: WorkspaceCore) {
+export function useExportActions(core: WorkspaceCore) {
   'use memo';
 
+  const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing } = core;
   const sharingRef = useRef(false);
+  const packingRef = useRef(false);
 
   const exportStl = () => {
     if (parts.length === 0) return;
@@ -143,7 +137,41 @@ export function useExportActions({
     }
   };
 
-  return { exportStl, exportImage, export3mf, exportScene, airDrop, copyBrief, canExportStl: parts.length > 0 };
+  const exportRobotPackage = async () => {
+    if (packingRef.current) return;
+
+    packingRef.current = true;
+    showToast('Exporting robot package…', { tone: 'progress' });
+
+    try {
+      const made = await robotPackageZip(core);
+
+      if (!made) {
+        toasts.dismissToast();
+
+        return;
+      }
+
+      download(made.zip, `${made.name}.zip`, 'application/zip');
+      showToast(`Exported ${made.name}`);
+    } catch (err) {
+      showToast(`Couldn’t export the robot package. ${String(err)}`, { tone: 'error' });
+    } finally {
+      packingRef.current = false;
+    }
+  };
+
+  return {
+    exportStl,
+    exportImage,
+    export3mf,
+    exportScene,
+    airDrop,
+    copyBrief,
+    exportRobotPackage,
+    canExportStl: parts.length > 0,
+    canExportRobot: posing.hasRig,
+  };
 }
 
 export type ExportActions = ReturnType<typeof useExportActions>;

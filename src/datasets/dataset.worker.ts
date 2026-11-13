@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 import { reply, serve } from '../utils/workerRpc';
 import { buildDataset, type DatasetJob } from './buildDataset';
-import { zipDataset } from './zipDataset';
+import { zipFolder } from '../utils/zipFolder';
 
 serve({
   zip: async (job: DatasetJob) => {
-    const zip = zipDataset(job.name, await buildDataset(job));
+    const zip = zipFolder(job.name, await buildDataset(job));
 
     return reply(zip, [zip.buffer]);
   },

@@ -6,6 +6,7 @@ import { publish } from '../lib/pull.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 1,
   everySeconds: 24 * 60 * 60,
   does: 'Turns mistakes seen twice, or once by Jamel, into a lint, test, guide rule or playbook entry',

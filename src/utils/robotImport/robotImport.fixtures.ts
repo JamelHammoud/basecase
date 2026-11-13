@@ -50,6 +50,8 @@ export class TinyDomParser {
   }
 }
 
+export const parseXml = (text: string) => new TinyDomParser().parseFromString(text) as unknown as Document;
+
 export const localFile = (path: string, content: string | Uint8Array): LocalFile => ({
   path,
   blob: new Blob([typeof content === 'string' ? content : (content as Uint8Array<ArrayBuffer>)]),

@@ -39,7 +39,7 @@ It saves scenes and Library models in your browser's storage, on that computer o
 | The agent | The Agent tab offers the desktop download instead |
 | Slicing and printing | “Download Basecase to slice and print.” |
 | SimReady objects | “Download Basecase to insert SimReady models.” |
-| Training and teaching skills | Motor Kit skills only, in a browser with WebGPU |
+| Training and teaching skills | “Download Basecase to train policies.”, except Motor Kit skills in a browser that can run them |
 | **Play** ▸ **Operate** | Not shown |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |

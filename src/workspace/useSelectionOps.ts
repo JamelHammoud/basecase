@@ -111,11 +111,7 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
     const solids = selectedParts.filter((p) => p.kind !== 'image_plane');
     const base = solids[0];
 
-    if (!base) {
-      showToast('Select a part first', { tone: 'error' });
-
-      return;
-    }
+    if (!base) return;
 
     const { operands: tools, error } = booleanOperands(base, solids, op, parts);
 

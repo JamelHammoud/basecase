@@ -179,8 +179,18 @@ export const openIssues = () =>
 export const closeIssue = (number, comment) =>
   run('gh', ['issue', 'close', String(number), '--comment', comment], { allowFail: true });
 
-export const editPullLabels = (number, { add = [] }) =>
-  run('gh', ['pr', 'edit', String(number), ...add.flatMap((label) => ['--add-label', label])], { allowFail: true });
+export const editPullLabels = (number, { add = [], remove = [] }) =>
+  run(
+    'gh',
+    [
+      'pr',
+      'edit',
+      String(number),
+      ...add.flatMap((label) => ['--add-label', label]),
+      ...remove.flatMap((label) => ['--remove-label', label]),
+    ],
+    { allowFail: true },
+  );
 
 export const editPullBody = (number, body) =>
   run('gh', ['pr', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });

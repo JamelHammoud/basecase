@@ -20,7 +20,7 @@ The loop is a team that never stops. `node tools/loop/install.mjs install` creat
 |---|---|---|
 | `build` | 5 | Claims the next `loop:next` step, `loop:priority` first, and ships it as a pull request |
 | `review` | 2 | Reviews each pull request whose head has no `agent-review` status |
-| `revise` | 2 | Answers a failed review, a Check failure that's the pull request's own, or any Check failure on a repair, on its branch; after four failed reviews it labels the pull request `loop:stuck` and stops |
+| `revise` | 4 | Answers a failed review, a Check failure that's the pull request's own, or any Check failure on a repair, on its branch; after four failed reviews it labels the pull request `loop:stuck` and stops |
 | `refine` | 2 | Makes one existing feature or view fit better |
 | `merge` | 1 | Squash-merges a pull request with `check` and `agent-review` green: repairs first, then the loop's own improvements, then `loop:priority` work, then the oldest; while `main` is red it takes only repairs, which must turn Check fully green |
 | `rebase` | 1 | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts |
@@ -28,7 +28,7 @@ The loop is a team that never stops. `node tools/loop/install.mjs install` creat
 | `lead` | 1 | Plans when there's a reason: a new request or Direction comment from Jamel, or fewer waiting steps than builders |
 | `update` | daily | Moves the agent adapters to their latest releases |
 
-Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. No pull request or issue is opened when one with the same title is open; a step whose pull request already exists gets a comment linking it. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone.
+Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. What's being worked on shows on GitHub: a step being built carries `loop:building`, and a pull request being revised carries `loop:revising`. No pull request or issue is opened when one with the same title is open; a step whose pull request already exists gets a comment linking it. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone.
 
 Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions`, so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
 

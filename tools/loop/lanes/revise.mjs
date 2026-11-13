@@ -21,6 +21,7 @@ import { close } from '../lib/worktree.mjs';
 
 const MAX_ROUNDS = 4;
 const STUCK = 'loop:stuck';
+const REVISING = 'loop:revising';
 const MAX_LOG = 60_000;
 
 const SCHEMA = {
@@ -137,9 +138,12 @@ export default function revise({ log }) {
 
     if (!release) continue;
 
+    editPullLabels(pull.number, { add: [REVISING] });
+
     try {
       revisePull(pull, reason, log);
     } finally {
+      editPullLabels(pull.number, { remove: [REVISING] });
       release();
     }
 

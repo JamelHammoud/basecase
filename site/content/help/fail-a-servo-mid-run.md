@@ -1,10 +1,12 @@
 ---
 title: Fail a servo mid-run
 date: 2026-11-13
+collection: simulate-and-train
+type: task
 covers:
   - src/sim/faults.ts
   - src/components/simulate/faultMenu.tsx
-  - src/components/simulate/ResultSection.tsx
+  - src/components/simulate/RunResult.tsx
   - src/components/simulate/ResultsSection.tsx
   - src/workspace/contextMenuItems.tsx
 ---

@@ -1,6 +1,8 @@
 ---
 title: Edit a cut after you make it
 date: 2026-11-13
+collection: design
+type: task
 covers:
   - src/workspace/useSelectionOps.ts
   - src/booleans/picking.ts

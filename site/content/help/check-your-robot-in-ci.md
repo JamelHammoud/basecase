@@ -1,6 +1,8 @@
 ---
 title: Check your robot in CI
 date: 2026-11-13
+collection: simulate-and-train
+type: task
 covers:
   - tools/cli/basecase.mjs
   - src/cases/sceneCheck.ts

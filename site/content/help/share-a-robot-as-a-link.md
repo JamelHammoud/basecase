@@ -1,6 +1,8 @@
 ---
 title: Share a robot as a link
 date: 2026-11-13
+collection: files-and-sharing
+type: task
 covers:
   - src/workspace/useShareRobot.ts
   - src/workspace/shareRobot.ts

@@ -1,6 +1,8 @@
 ---
 title: Drive your first robot
 date: 2026-11-13
+collection: get-started
+type: task
 covers:
   - src/app/firstLaunch.ts
   - src/app/openScenes.ts

@@ -74,3 +74,9 @@ export function sceneModel({ sourceParts, single, sceneName, screenshot }: Scene
     nodes: sourceParts.map((p) => modelNode(p, center)),
   };
 }
+
+const newestFirst = (a: CustomModelDefinition, b: CustomModelDefinition) =>
+  (b.createdAt || '').localeCompare(a.createdAt || '');
+
+export const withModel = (models: CustomModelDefinition[], model: CustomModelDefinition) =>
+  [model, ...models.filter((m) => m.id !== model.id)].sort(newestFirst);

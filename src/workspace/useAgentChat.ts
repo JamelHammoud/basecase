@@ -149,7 +149,8 @@ export function useAgentChat({ core, lanes, stop, persistLane }: AgentChatOption
   };
 
   const deleteChat = async (chatId: string) => {
-    setChatList(await platformBridge.deleteChat(chatId));
+    setChatList((chats) => chats.filter((c) => c.id !== chatId));
+    platformBridge.deleteChat(chatId).catch(async () => setChatList(await platformBridge.listChats()));
 
     const lane = laneOfChat(lanes.lanesRef.current, chatId);
 

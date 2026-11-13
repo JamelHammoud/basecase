@@ -17,6 +17,10 @@ async function rewrite(id: string, changes: Partial<SavedSceneRecord> & { keepUp
   return platformBridge.saveScene({ ...record, ...changes });
 }
 
+const reloadScenes = async () => sceneStore.set(await platformBridge.listScenes());
+
+const keep = (saved: SavedSceneSummary | null) => (saved ? sceneStore.upsert(saved) : reloadScenes());
+
 export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTabActions>) {
   'use memo';
 
@@ -29,7 +33,7 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
     return findSceneTab(tabs, metas, sceneId);
   };
 
-  const renameScene = async (scene: SavedSceneSummary, name: string) => {
+  const renameScene = (scene: SavedSceneSummary, name: string) => {
     const tab = tabFor(scene.id);
 
     sceneStore.upsert({ ...scene, name });
@@ -40,32 +44,34 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
       return;
     }
 
-    sceneStore.upsert(await rewrite(scene.id, { name, keepUpdatedAt: true }));
+    rewrite(scene.id, { name, keepUpdatedAt: true }).then(keep, reloadScenes);
   };
 
   const duplicateScene = async (scene: SavedSceneSummary) => {
     const tab = tabFor(scene.id);
-
-    if (tab) await handles.current.get(tab.id)?.flush();
-
+    const id = newSceneId();
     const name = sceneCopyName(
       scene.name,
       latestRef.current.metas,
       sceneStore.get().map((s) => s.name),
     );
 
-    sceneStore.upsert(await rewrite(scene.id, { id: newSceneId(), name, chatId: null }));
+    sceneStore.upsert({ ...scene, id, name, updatedAt: new Date().toISOString() });
     toastInFront(`Duplicated ${scene.name}`);
+
+    if (tab) await handles.current.get(tab.id)?.flush();
+
+    rewrite(scene.id, { id, name, chatId: null }).then(keep, reloadScenes);
   };
 
-  const deleteScene = async (scene: SavedSceneSummary) => {
+  const deleteScene = (scene: SavedSceneSummary) => {
     const tab = tabFor(scene.id);
 
     if (tab) closeTabs([tab.id], true);
 
     setClosed((prev) => prev.filter((c) => c.seed.sceneId !== scene.id));
     sceneStore.remove(scene.id);
-    sceneStore.set(await platformBridge.deleteScene(scene.id));
+    platformBridge.deleteScene(scene.id).catch(reloadScenes);
     window.setTimeout(() => toastInFront(`Deleted ${scene.name}`), 0);
   };
 

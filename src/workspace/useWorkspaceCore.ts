@@ -21,6 +21,7 @@ import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
+import { useRobotPolicy } from '../robot/robotPolicy';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -107,6 +108,14 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   });
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
+
+  useRobotPolicy({
+    active,
+    policies: project.policies,
+    isStale: simTraining.training.isStale,
+    skillRows: simTraining.skills.rows,
+  });
+
   const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
     parts,

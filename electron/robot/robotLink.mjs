@@ -5,11 +5,14 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { checkedCommand, checkedRobotSpec, daemonArgs, emulatedCalibration, LADDER } from './robotSpec.mjs';
 import { IntentPacer } from './intentPacer.mjs';
+import { checkedPolicyRefs } from './robotPolicy.mjs';
 
 export const DAEMON_ENV = 'BASECASE_ROBOT_DAEMON';
 export const DAEMON_FILE = process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon';
 
 const NEVER_STARTED = 'The robot daemon stopped before it started.';
+const UNDOCUMENTED = { ok: false, message: 'The robot only takes the documented commands.' };
+const POLICY_FILE = 'policy.onnx';
 const MAX_LINE = 64 * 1024;
 const STOP_GRACE_MS = 3000;
 
@@ -41,12 +44,37 @@ const parseLine = (line) => {
 
 const motorsRun = (mode) => LADDER.indexOf(mode) >= LADDER.indexOf('test');
 
+function written(bytes, target) {
+  const staged = `${target}.part`;
+
+  try {
+    fs.writeFileSync(staged, bytes);
+    fs.renameSync(staged, target);
+
+    return true;
+  } catch {
+    fs.rmSync(staged, { force: true });
+
+    return false;
+  }
+}
+
+function placePolicy(artefacts, bytes) {
+  const target = path.join(artefacts, POLICY_FILE);
+
+  if (bytes && written(bytes, target)) return;
+
+  fs.rmSync(target, { force: true });
+}
+
 export class RobotLink {
-  constructor({ binary, emit, spawnFn = spawnDaemon, tmpDir = os.tmpdir() }) {
+  constructor({ binary, emit, spawnFn = spawnDaemon, tmpDir = os.tmpdir(), policyBytes = () => null }) {
     this.binary = binary;
     this.emit = emit;
     this.spawnFn = spawnFn;
     this.tmpDir = tmpDir;
+    this.policyBytes = policyBytes;
+    this.policyRefs = [];
     this.session = null;
   }
 
@@ -76,6 +104,7 @@ export class RobotLink {
     const artefacts = fs.mkdtempSync(path.join(this.tmpDir, 'basecase-robot-'));
 
     fs.writeFileSync(path.join(artefacts, 'calibration.json'), JSON.stringify(emulatedCalibration(spec)));
+    placePolicy(artefacts, this.currentPolicy());
 
     const child = this.spawnFn(this.binary, daemonArgs(spec, artefacts));
     const session = { spec, child, artefacts, hello: null, status: null, mode: 'look', asked: false, stderr: '' };
@@ -128,10 +157,45 @@ export class RobotLink {
 
     const command = checkedCommand(ask, session.spec.ids.length);
 
-    if (!command) return { ok: false, message: 'The robot only takes the documented commands.' };
+    if (!command) return UNDOCUMENTED;
 
     if (command.cmd === 'intent') session.pacer.hold(command.joints);
     else this.write(session, command);
+
+    return { ok: true };
+  }
+
+  bytesOf(ref) {
+    try {
+      return this.policyBytes(ref);
+    } catch {
+      return null;
+    }
+  }
+
+  currentPolicy() {
+    for (const ref of this.policyRefs) {
+      const bytes = this.bytesOf(ref);
+
+      if (bytes) return bytes;
+    }
+
+    return null;
+  }
+
+  policy(ask) {
+    const refs = checkedPolicyRefs(ask);
+
+    if (!refs) return UNDOCUMENTED;
+
+    this.policyRefs = refs;
+
+    const session = this.session;
+
+    if (!session) return { ok: true };
+
+    placePolicy(session.artefacts, this.currentPolicy());
+    this.write(session, { cmd: 'recheck' });
 
     return { ok: true };
   }

@@ -428,17 +428,18 @@ describe('robot daemon', () => {
   it('answers robot channels only from the app frame', () => {
     const handlers = new Map();
     const ipcMain = { handle: (channel, fn) => handlers.set(channel, fn), on: () => {} };
-    const link = { connect: vi.fn(), command: vi.fn(), disconnect: vi.fn(), state: vi.fn() };
+    const link = { connect: vi.fn(), command: vi.fn(), disconnect: vi.fn(), state: vi.fn(), policy: vi.fn() };
 
     registerRobotHandlers(trustedIpc(ipcMain, 'app://basecase'), link);
 
-    for (const channel of ['robot:connect', 'robot:command', 'robot:disconnect', 'robot:state']) {
+    for (const channel of ['robot:connect', 'robot:command', 'robot:disconnect', 'robot:state', 'robot:policy']) {
       const evil = { senderFrame: { parent: null, url: 'https://example.com/' } };
 
       expect(() => handlers.get(channel)(evil, ARM), channel).toThrow('Refused');
     }
 
     expect(link.connect).not.toHaveBeenCalled();
+    expect(link.policy).not.toHaveBeenCalled();
   });
 });
 

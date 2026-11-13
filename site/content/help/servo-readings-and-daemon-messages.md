@@ -74,7 +74,7 @@ When the daemon refuses a rung:
 | "A fault is still active. Go back to Look and clear it first." | A fault is latched |
 | "Check the servos first: every servo must answer with the right model." | **Set Up** hasn't passed |
 | "Calibrate the robot first." | There's no calibration |
-| "Load a policy first." | The daemon has no policy; Basecase doesn't load one |
+| "Load a policy first." | The scene has no ready skill or up-to-date policy |
 | "Test every joint with the current calibration first." | **Test** hasn't finished with this calibration |
 | "Rehearse the current policy first." | **Rehearse** hasn't finished with this policy |
 

@@ -22,12 +22,13 @@ covers:
   - src/components/simulate/ControlSection.tsx
   - src/components/operate/OperatePanel.tsx
   - src/robot/intentMirror.ts
+  - src/robot/robotPolicy.ts
   - electron/robot/intentPacer.mjs
 ---
 
 Play a trained skill or policy in the simulation while the emulated robot is in Test, and watch its servos follow through the safety layer.
 
-The robot follows the app's simulation; it doesn't run the policy itself. The rungs that would, **Rehearse** and up, need a policy loaded into the daemon, and Basecase doesn't load one. Clicking **Rehearse** answers "Load a policy first."
+The robot follows the app's simulation; it doesn't run the policy itself. Basecase still hands the robot the scene's newest ready skill or up-to-date policy, so **Rehearse** and the rungs above it open. On those rungs the robot follows the simulation too.
 
 1. Connect the emulated robot and climb to **Test**. Steps are in [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. Click **Simulate** at the top of the right panel.

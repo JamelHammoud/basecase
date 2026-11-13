@@ -61,7 +61,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 
 ### 3c. Words and patterns to avoid
 
-Most single words and the separators below are linted: `basecase/copy` (`tools/eslint/copy.mjs`) checks JSX text, rendered attributes and properties (`label`, `title`, `placeholder`, `aria-label`, `description`, `message`, `text`…), toasts and confirms in `src/` and the app menu, against the list in [`tools/eslint/copy-banned.mjs`](../../tools/eslint/copy-banned.mjs). Add a banned word there, not here alone. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
+Most single words and the separators below are linted: `basecase/copy` (`tools/eslint/copy.mjs`) checks JSX text, toasts and confirms in `src/` and the app menu, and the props and properties listed in [`tools/copy/surfaces.mjs`](../../tools/copy/surfaces.mjs) (`label`, `title`, `placeholder`, `aria-label`, `alt`, `heading`, `message`…), the same list the copy budget below reads, against the list in [`tools/eslint/copy-banned.mjs`](../../tools/eslint/copy-banned.mjs). Add a banned word there, not here alone. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
 
 | Avoid | Why | Use instead |
 |---|---|---|
@@ -92,7 +92,7 @@ Most single words and the separators below are linted: `basecase/copy` (`tools/e
 - [ ] Same word as everywhere else for this thing? Right casing for this element?
 - [ ] No banned words (“yet”, “please”, “Oops”, “Invalid…”; §3c) and no `·` or stand-in glyph between items (§3b-16)? `basecase/copy` lints both; the rest of §3c is yours to catch.
 
-**The copy budget.** On every pull request, Check's `copy` job (`tools/check-copy-budget.mjs`, logic in `tools/copy/`) collects the user-facing strings in each changed `src/` file before and after: JSX text, labelling props (`aria-label`, `title`, `placeholder`, `label`, `alt`, `tooltip`, `hint`…), `showToast` / `toastInFront` / `notify` / `confirmAction` arguments, and `label` / `title` / `hint` properties of command and menu objects. Tests, `src/data/` and strings that are only symbols, numbers, units, ids or paths are skipped. It prints `Copy: +N −M` and fails when:
+**The copy budget.** On every pull request, Check's `copy` job (`tools/check-copy-budget.mjs`, logic in `tools/copy/`) collects the user-facing strings in each changed `src/` file before and after: JSX text, the props and properties in `tools/copy/surfaces.mjs` (`aria-label`, `title`, `label`, `alt`, `hint`, the `label` of command and menu objects…), and `showToast` / `toastInFront` / `notify` / `confirmAction` arguments. Tests, `src/data/` and strings that are only symbols, numbers, units, ids or paths are skipped. It prints `Copy: +N −M` and fails when:
 
 - the change adds more strings than it removes and a new one has no line `copy: "<string>" — <why the screen needs it>` in the body's Copy section (the loop fills it from its answer's `copy` field, for every kind of pull request; a template without a Copy section gets one appended). Removing strings never needs a reason, and repeating a string the file already has doesn't either;
 - an added string uses a word §3c bans (`BANNED_COPY` in `verify/rehearsal/uiRules.ts`), whatever the net.

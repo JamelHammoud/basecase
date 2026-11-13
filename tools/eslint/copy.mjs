@@ -1,22 +1,5 @@
+import { CALL_KEYS, CALLS, JSX_PROPS, OBJECT_KEYS } from '../copy/surfaces.mjs';
 import { findBannedCopy } from './copy-banned.mjs';
-
-const RENDERED_ATTRIBUTES = new Set([
-  'label',
-  'title',
-  'placeholder',
-  'aria-label',
-  'description',
-  'caption',
-  'hint',
-  'tooltip',
-  'message',
-  'confirmLabel',
-  'emptyLabel',
-]);
-
-const RENDERED_PROPERTIES = new Set([...RENDERED_ATTRIBUTES, 'ariaLabel', 'subtitle', 'detail', 'text']);
-
-const COPY_CALLS = new Set(['showToast', 'toastInFront', 'toast', 'notify', 'confirmAction']);
 
 const calleeName = (callee) => {
   if (callee.type === 'Identifier') return callee.name;
@@ -34,8 +17,6 @@ const propertyName = (node) => {
   return typeof node.key.value === 'string' ? node.key.value : null;
 };
 
-const textsOfObject = (node) => node.properties.filter((p) => p.type === 'Property').flatMap((p) => textsOf(p.value));
-
 const TEXTS = {
   Literal: (node) => (typeof node.value === 'string' ? [{ node, text: node.value }] : []),
   TemplateLiteral: (node) => node.quasis.map((q) => ({ node: q, text: q.value.cooked ?? '' })),
@@ -44,7 +25,6 @@ const TEXTS = {
   BinaryExpression: (node) => (node.operator === '+' ? [...textsOf(node.left), ...textsOf(node.right)] : []),
   JSXExpressionContainer: (node) => textsOf(node.expression),
   TSAsExpression: (node) => textsOf(node.expression),
-  ObjectExpression: textsOfObject,
 };
 
 function textsOf(node) {
@@ -52,6 +32,13 @@ function textsOf(node) {
 
   return read ? read(node) : [];
 }
+
+const callArgumentTexts = (node) =>
+  node.type === 'ObjectExpression'
+    ? node.properties
+        .filter((p) => p.type === 'Property' && CALL_KEYS.has(propertyName(p)))
+        .flatMap((p) => textsOf(p.value))
+    : textsOf(node);
 
 const JSX_PARENTS = new Set(['JSXElement', 'JSXFragment']);
 
@@ -86,15 +73,15 @@ export default {
       JSXAttribute(node) {
         const name = node.name.type === 'JSXIdentifier' ? node.name.name : null;
 
-        if (RENDERED_ATTRIBUTES.has(name)) check(textsOf(node.value));
+        if (JSX_PROPS.has(name)) check(textsOf(node.value));
       },
       Property(node) {
-        if (node.parent?.type === 'ObjectExpression' && RENDERED_PROPERTIES.has(propertyName(node))) {
+        if (node.parent?.type === 'ObjectExpression' && OBJECT_KEYS.has(propertyName(node))) {
           check(textsOf(node.value));
         }
       },
       CallExpression(node) {
-        if (COPY_CALLS.has(calleeName(node.callee))) check(node.arguments.flatMap(textsOf));
+        if (CALLS.has(calleeName(node.callee))) check(node.arguments.flatMap(callArgumentTexts));
       },
     };
   },

@@ -39,7 +39,17 @@ describe('banned copy list', () => {
   });
 
   it('keeps unit dots, masked fields and words that only contain a banned one', () => {
-    for (const text of ['12 N·m', '3 kg·cm', '••••••••', 'Saved just now', 'Valid', 'Yeti', 'Pleased'])
+    for (const text of [
+      '12 N·m',
+      '3 kg·cm',
+      '••••••••',
+      'Saved just now',
+      'Valid',
+      'Yeti',
+      'Pleased',
+      'invalid-field',
+      'invalid_size',
+    ])
       expect(findBannedCopy(text)).toBeNull();
   });
 });
@@ -52,6 +62,9 @@ tester.run('basecase/copy', rule, {
     "expect(screen.getByText('No parts yet')).toBeNull();",
     'const el = <div className="yet please">No parts</div>;',
     "const el = <Part id={'invalid'} />;",
+    "const field = { label: 'invalid-field' };",
+    "const el = <Size title={'invalid_size'} />;",
+    "showToast('Saved', { id: 'please' });",
     "const command = { id: 'please', label: 'Group' };",
     'const torque = <span>{`${n} N·m`}</span>;',
   ],
@@ -60,6 +73,10 @@ tester.run('basecase/copy', rule, {
     { code: 'const el = <input placeholder="Please type" />;', errors: errors('please') },
     { code: '<button aria-label={busy ? "Saving" : "Saved successfully"} />;', errors: errors('successfully') },
     { code: '<Row description="Chats will appear here" />;', errors: errors('will appear here') },
+    { code: '<img alt="Please wait" />;', errors: errors('please') },
+    { code: '<Section heading="Oops" />;', errors: errors('Oops') },
+    { code: '<Empty emptyText="No parts yet" />;', errors: errors('yet') },
+    { code: "confirmAction({ title: 'Delete it?', body: 'Simply undo it' });", errors: errors('simply') },
     { code: "const el = <p>{a}{' · '}{b}</p>;", errors: errors('·') },
     { code: 'const el = <p>{`${a} · ${b}`}</p>;', errors: errors('·') },
     { code: "showToast('Exported successfully');", errors: errors('successfully') },

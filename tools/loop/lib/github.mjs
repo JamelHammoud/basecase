@@ -54,8 +54,8 @@ export const reviewState = (sha) =>
     'api',
     `repos/${repo()}/commits/${sha}/statuses`,
     '--jq',
-    `[.[] | select(.context == "${REVIEW_CONTEXT}") | .state][0]`,
-  ]);
+    `[.[] | select(.context == "${REVIEW_CONTEXT}") | .state][0:1]`,
+  ])?.[0] ?? null;
 
 export const setReview = (sha, state, description) =>
   run('gh', [

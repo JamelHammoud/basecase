@@ -72,6 +72,10 @@ describe('a Case console', () => {
     expect(one({ id: 'a', kind: 'value', signal: 'input.gamepad.forward' })).toThrow(/doesn’t list/);
     expect(one({ id: 'a', kind: 'value', signal: 'joint.elbow.speed' })).toThrow(/must be joint/);
     expect(one({ id: 'a', kind: 'value', signal: 'camera.*' })).toThrow(/can’t be shown here/);
+    expect(one({ id: 'a', kind: 'value', signal: 'joint.*.position' })).toThrow(
+      /joint.\*.position can’t be shown here/,
+    );
+    expect(one({ id: 'a', kind: 'plot', signals: ['joint.*.position'] })).not.toThrow();
     expect(one({ id: 'a', kind: 'camera', signal: 'camera.operator' })).toThrow(/needs the camera input/);
     expect(one({ id: 'a', kind: 'plot', signals: [] })).toThrow(/must name a signal/);
     expect(one({ id: 'a', kind: 'plot', signals: ['time'], seconds: 900 })).toThrow(/seconds must be from 2 to 120/);
@@ -110,6 +114,9 @@ describe('a Case console', () => {
       ]),
     ).toThrow(/repeats t/);
     expect(signals([{ id: 'n', kind: 'counter', when: { signal: 'time' } }])).toThrow(/needs above or below/);
+    expect(signals([{ id: 'n', kind: 'counter', when: { signal: 'joint.*.effort', above: 1 } }])).toThrow(
+      /when.signal joint.\*.effort can’t be shown here/,
+    );
     expect(
       signals([
         { id: 's', kind: 'score', sum: [{ signal: 'n', times: 1 }] },

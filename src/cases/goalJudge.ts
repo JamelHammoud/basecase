@@ -37,16 +37,29 @@ export function workerJudge(contract: Contract): GoalJudge {
   const worker = new Worker(new URL('./goalJudge.worker.ts', import.meta.url), { type: 'module' });
   const waiting = new Map<number, (result: ContractResult | null) => void>();
   let calls = 0;
+  let failed = false;
+
+  const settleAll = () => {
+    waiting.forEach((resolve) => resolve(null));
+    waiting.clear();
+  };
 
   worker.onmessage = (ev: MessageEvent<JudgeReply>) => {
     waiting.get(ev.data.id)?.(ev.data.result);
     waiting.delete(ev.data.id);
   };
+  worker.onerror = () => {
+    failed = true;
+    settleAll();
+  };
+  worker.onmessageerror = settleAll;
   worker.postMessage({ contract } satisfies JudgeRequest);
 
   return {
     judge: (dt, delta) =>
       new Promise((resolve) => {
+        if (failed) return resolve(null);
+
         const id = ++calls;
 
         waiting.set(id, resolve);
@@ -54,8 +67,7 @@ export function workerJudge(contract: Contract): GoalJudge {
       }),
     dispose() {
       worker.terminate();
-      waiting.forEach((resolve) => resolve(null));
-      waiting.clear();
+      settleAll();
     },
   };
 }

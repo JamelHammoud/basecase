@@ -29,7 +29,7 @@ function useActions(core: WorkspaceCore) {
       drive: !driving,
       stop: driving,
       'start-over': driving,
-      reset: sim.status !== 'off',
+      reset: sim.status !== 'off' && attempt.phase === 'idle',
     })[action];
 
   return { can, run: { attempt, sim } };

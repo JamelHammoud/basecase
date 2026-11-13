@@ -55,7 +55,7 @@ export function signalShape(id: string, scope: SignalScope): SignalShape | strin
 }
 
 export const signalRef =
-  (scope: SignalScope, shapes: readonly SignalShape[]): Reader<string> =>
+  (scope: SignalScope, shapes: readonly SignalShape[], many = false): Reader<string> =>
   (value, where) => {
     if (typeof value !== 'string' || !/^[\w.*-]{1,120}$/.test(value)) return refuse(where, 'must be a signal name');
 
@@ -63,7 +63,9 @@ export const signalRef =
 
     if (!['number', 'labels', 'camera'].includes(shape)) return refuse(where, `${value} ${shape}`);
 
-    return shapes.includes(shape as SignalShape) ? value : refuse(where, `${value} can’t be shown here`);
+    const fits = shapes.includes(shape as SignalShape) && (many || !value.includes('*'));
+
+    return fits ? value : refuse(where, `${value} can’t be shown here`);
   };
 
 export const matches = (pattern: string, id: string) => {

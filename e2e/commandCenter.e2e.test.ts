@@ -186,6 +186,7 @@ describe('Command Center', () => {
 
     await inPanel('go', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    await expect.poll(() => inPanel('reset', 'Reset').isDisabled()).toBe(true);
     await expect
       .poll(async () => Number.parseFloat((await clock.textContent()) ?? '60'), { timeout: 30000 })
       .toBeLessThan(59);

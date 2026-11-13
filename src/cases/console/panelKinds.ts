@@ -22,12 +22,12 @@ const between = (min: number, max: number): Reader<number> => {
   };
 };
 
-const numbers = (scope: SignalScope) => signalRef(scope, ['number']);
+const numbers = (scope: SignalScope, many = false) => signalRef(scope, ['number'], many);
 
 const readTable = (v: Config, where: string, scope: SignalScope) => {
   const of = oneOf(['servos', 'joints', 'signals'] as const)(v.of, `${where}.of`);
 
-  if (of === 'signals') return { of, signals: listOf(numbers(scope), 24)(v.signals, `${where}.signals`) };
+  if (of === 'signals') return { of, signals: listOf(numbers(scope, true), 24)(v.signals, `${where}.signals`) };
 
   if (of === 'servos') return { of };
 
@@ -43,13 +43,13 @@ const readText = (v: Config, where: string) =>
 
 export const PANEL_KINDS = {
   camera: kind({
-    read: (v, where, scope) => ({ signal: signalRef(scope, ['camera'])(v.signal, `${where}.signal`) }),
+    read: (v, where, scope) => ({ signal: signalRef(scope, ['camera'], true)(v.signal, `${where}.signal`) }),
   }),
   value: kind({ read: (v, where, scope) => ({ signal: numbers(scope)(v.signal, `${where}.signal`) }) }),
   plot: kind({
     read: (v, where, scope) => {
       const seconds = optional(between(2, 120), v.seconds, `${where}.seconds`);
-      const signals = listOf(numbers(scope), 8)(v.signals, `${where}.signals`);
+      const signals = listOf(numbers(scope, true), 8)(v.signals, `${where}.signals`);
 
       if (!signals.length) refuse(`${where}.signals`, 'must name a signal');
 

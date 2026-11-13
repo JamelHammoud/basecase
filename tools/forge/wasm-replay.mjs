@@ -45,6 +45,8 @@ async function main() {
       ctrlDefault: job.ctrlDefault,
       joints: job.joints,
       gateSpeed: job.gateSpeed ?? DEFAULT_SPEED,
+      seed: job.seed ?? 0,
+      resetNoise: job.resetNoise,
     },
     policy: readJson(folder, 'policy.json'),
     seeds: Number(seeds ?? DEFAULT_SEEDS),

@@ -71,6 +71,10 @@ impl Algorithm for GpuPpo {
         self.step()
     }
 
+    fn leaves_the_cpu_free(&self) -> bool {
+        true
+    }
+
     fn report(&mut self) -> Report {
         self.episodes.trim();
         self.norm = sync::normalizer(&self.gpu, &self.buffers, self.dims.nobs);

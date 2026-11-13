@@ -130,8 +130,6 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - `purchaseCache` is module-level: purchase records are app-wide, so every Build tab shares one copy.
 - Mesh measurements are taken after the viewport renders the new parts and settle before measuring.
 - Run Checks sets its state, then runs the sweep in a `setTimeout`, so the button shows its state before the sweep blocks the thread.
-- A budget caption is hidden when the list is empty, because the $0 total already says it.
-- With no printed parts the printing section is just its settings.
 
 ## HardwareConfigurator
 

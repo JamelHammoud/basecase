@@ -1,0 +1,58 @@
+import type { SpecFormula, SpecState, TaskSpec } from './anythingTypes';
+
+const WINDOW_SHARE = 0.8;
+
+function stepFor(sig: string): number {
+  if (sig === 'time') return 0;
+
+  if (sig === 'tilt') return 0.015;
+
+  if (sig.startsWith('q:')) return 0.5;
+
+  return sig.includes('.') ? 3 : 0.005;
+}
+
+function state(s: SpecState, sign: number): SpecState {
+  if ('atom' in s) {
+    const { atom } = s;
+    const up = atom.cmp.startsWith('>') ? 1 : -1;
+
+    return { atom: { ...atom, value: atom.value + sign * up * stepFor(atom.sig) } };
+  }
+
+  if ('within' in s) {
+    const share = sign > 0 ? WINDOW_SHARE : 1 / WINDOW_SHARE;
+
+    return { within: { ...s.within, tol: s.within.tol * share } };
+  }
+
+  if ('near' in s) {
+    const share = sign > 0 ? WINDOW_SHARE : 1 / WINDOW_SHARE;
+
+    return { near: { ...s.near, tol: s.near.tol * share } };
+  }
+
+  if ('not' in s) return { not: state(s.not, -sign) };
+
+  return 'all' in s ? { all: s.all.map((x) => state(x, sign)) } : { any: s.any.map((x) => state(x, sign)) };
+}
+
+function formula(f: SpecFormula, sign: number): SpecFormula {
+  if ('always' in f) return { always: { ...f.always, state: state(f.always.state, sign) } };
+
+  if ('eventually' in f) return { eventually: { ...f.eventually, state: state(f.eventually.state, sign) } };
+
+  if ('hold_for' in f) return { hold_for: { ...f.hold_for, state: state(f.hold_for.state, sign) } };
+
+  if ('sequence' in f) return { sequence: f.sequence.map((x) => formula(x, sign)) };
+
+  return 'all' in f ? { all: f.all.map((x) => formula(x, sign)) } : { any: f.any.map((x) => formula(x, sign)) };
+}
+
+export function tightenedSpec(spec: TaskSpec): TaskSpec {
+  return {
+    ...spec,
+    success: formula(spec.success, 1),
+    failures: spec.failures.map((f) => ({ ...f, formula: formula(f.formula, -1) })),
+  };
+}

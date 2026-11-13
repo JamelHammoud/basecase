@@ -193,10 +193,22 @@ function onFloor<T extends RoomSurface>(surface: T, floor: number): T {
   return { ...surface, center: [x, y - floor, z] };
 }
 
+export interface RoomFrame {
+  turn: number;
+  floor: number;
+}
+
+export const roomFrame = (scan: RoomScan): RoomFrame => ({
+  turn: -dominantYaw(scan.walls.length ? scan.walls : scan.objects),
+  floor: floorOf(scan),
+});
+
+export const inRoomFrame = <T extends RoomSurface>(surface: T, { turn, floor }: RoomFrame): T =>
+  onFloor(turned(surface, turn), floor);
+
 export function roomObjects(scan: RoomScan): WorldObject[] {
-  const turn = -dominantYaw(scan.walls.length ? scan.walls : scan.objects);
-  const floor = floorOf(scan);
-  const level = <T extends RoomSurface>(list: T[]) => list.map((s) => onFloor(turned(s, turn), floor));
+  const frame = roomFrame(scan);
+  const level = <T extends RoomSurface>(list: T[]) => list.map((s) => inRoomFrame(s, frame));
   const holes = level([...scan.doors, ...scan.openings]);
   const windows = level(scan.windows);
   const walls = level(scan.walls).flatMap((wall, i) => {

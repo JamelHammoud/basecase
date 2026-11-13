@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
 import type { Locator } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { fixtureRoom } from '../src/cases/roomFixture';
+import { builderRobot } from '../src/cases/caseBuilder';
+import { FIXTURE_TABLE, FIXTURE_TAP_MM, fixtureRoom } from '../src/cases/roomFixture';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { buildRig } from '../src/utils/kinematics';
 import { openApp, partCount, type App } from './harness';
 
 interface SimState {
@@ -17,6 +20,7 @@ type Studio = {
   simState: () => SimState;
   load: (r: unknown) => void;
   dropFiles: (files: Array<{ name: string; base64: string }>) => void;
+  worldAt: () => Record<string, number[]>;
 };
 
 const DISTANCE_MM = 2000;
@@ -30,8 +34,10 @@ const simState = () =>
 
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
 
+const rover = () => fixtureRobots().find((r) => r.id === 'rover-diff')!;
+
 async function loadRover() {
-  const robot = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const robot = rover();
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: 'rover-diff',
@@ -117,4 +123,31 @@ describe('a scanned room', () => {
     },
     180000,
   );
+
+  it('starts the robot where the scan app’s file says, facing its heading', async () => {
+    const robot = rover();
+    const { pivot } = builderRobot(buildRig(robot.joints, robot.parts), robot.parts);
+    const [x, , z] = FIXTURE_TABLE.center.map((m) => m * 1000);
+    const fromTap = [x - FIXTURE_TAP_MM[0], z - FIXTURE_TAP_MM[2]];
+
+    await loadRover();
+    await dropFile('Scanned Room.json', readFileSync('e2e/fixtures/scanned-room.json', 'utf8'));
+
+    const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+    await expect.poll(() => card.count()).toBe(1);
+    await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
+    await fill(card, 'Distance', 600);
+    await fill(card, 'Radius', 150);
+    await card.locator('button', { hasText: 'Create' }).click();
+    await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-scanned-room');
+
+    const table = await app.page.evaluate(
+      () => (window as unknown as { __studio: Studio }).__studio.worldAt()['table-1'],
+    );
+
+    expect(Math.abs(table[0] - (pivot[0] - fromTap[1]))).toBeLessThan(10);
+    expect(Math.abs(table[2] - (pivot[2] + fromTap[0]))).toBeLessThan(10);
+    expect(app.errors).toEqual([]);
+  }, 120000);
 });

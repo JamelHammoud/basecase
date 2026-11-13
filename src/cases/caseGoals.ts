@@ -19,6 +19,7 @@ export type GoalValues = Record<ParamKey, number>;
 export interface BuilderRobot {
   facts: RobotFacts;
   pivot: V3;
+  forward: V3;
   footprint: { width: number; depth: number };
   armSpots: V3[];
   partner?: BuilderRobot;

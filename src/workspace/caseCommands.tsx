@@ -11,15 +11,13 @@ import {
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
+import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 const ic = 'w-4 h-4';
 
-const showCases = (core: WorkspaceCore) => {
-  core.tool.setLeftTab('cases');
-  core.studio.setIsLeftOpen(true);
-};
+const showCases = (core: WorkspaceCore) => showLeftTab(core, 'cases');
 
 export const showNewCase = (core: WorkspaceCore) => {
   showCases(core);

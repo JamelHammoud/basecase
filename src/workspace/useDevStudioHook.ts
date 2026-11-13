@@ -33,6 +33,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     load: (seed) => loadSeed(seed),
     poseTool: agent.requests.poseTool,
     simTool: agent.requests.simTool,
+    agentRequest: agent.requests.request,
     clear: () => {
       docs.clearDocument();
       setSelectedIds([]);

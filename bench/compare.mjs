@@ -8,13 +8,15 @@ import { runMicroOnce } from './micro/once.mjs';
 import { closeAppModules } from './micro/scenes.mjs';
 import { runnable, selectTasks } from './micro/tasks/index.mjs';
 import { resolveModel, servedMismatch, sharedEffort } from './compare/models.mjs';
-import { canStart, historicalRunCost, roundJobs, settled } from './compare/plan.mjs';
-import { cachedRuns, harnessKey, runFromCache } from './compare/cache.mjs';
+import { canStart, historicalRunCost, liveRunsPlanned, roundJobs, settled, splitSlots } from './compare/plan.mjs';
+import { harnessKey, runFromCache } from './compare/cache.mjs';
+import { againstArms, armCache, DEFAULT_MODEL, dirOf, modelArms } from './compare/arms.mjs';
+import { checkoutRef, refFromArgs } from './compare/against.mjs';
 import { compareStats } from './compare/stats.mjs';
 import { compareMarkdown } from './compare/report.mjs';
 
 const args = process.argv.slice(2);
-const labels = argOption(args, 'models', '').split(',').filter(Boolean);
+const against = args.includes('--against') ? refFromArgs(args) : null;
 const opts = {
   maxRounds: Number(argOption(args, 'seeds', 3)),
   budget: Number(argOption(args, 'budget', 20)),
@@ -28,68 +30,133 @@ const runName = argOption(args, 'run', `compare-${defaultRunName()}`);
 const runsDir = path.join(here, 'runs');
 const outRoot = path.join(runsDir, runName);
 const tasks = selectTasks({ ids, split }).filter((t) => runnable(t));
+const wantedEffort = argOption(args, 'effort', against ? 'high' : undefined);
 
-if (labels.length !== 2) {
-  console.error('Name two models: node bench/compare.mjs --models claude-fable-5-2,claude-opus-5-5 [--budget 20]');
+const NO_ARMS =
+  'Name two models (node bench/compare.mjs --models claude-fable-5-2,claude-opus-5-5) or a harness to compare against (--against main).';
+
+function buildModelArms() {
+  const labels = argOption(args, 'models', '').split(',').filter(Boolean);
+
+  if (labels.length !== 2) throw new Error(NO_ARMS);
+
+  return { arms: modelArms({ labels, harness: harnessKey(root), source: root, git: gitInfo(root) }) };
+}
+
+function buildArms() {
+  if (!against) return buildModelArms();
+
+  const ref = checkoutRef({ cwd: root, ref: against });
+
+  process.on('exit', ref.remove);
+  process.once('SIGINT', () => process.exit(130));
+  process.once('SIGTERM', () => process.exit(143));
+
+  return {
+    ref,
+    arms: againstArms({ model: argOption(args, 'model', DEFAULT_MODEL), tree: root, ref, gitOf: gitInfo }),
+  };
+}
+
+let built;
+
+try {
+  built = buildArms();
+} catch (err) {
+  console.error(err.message);
   process.exit(1);
 }
 
-const harness = harnessKey(root);
+const { arms } = built;
+const labels = arms.map((arm) => arm.label);
 const index = readIndex(runsDir);
 const perRunHistory = historicalRunCost(
   index,
   tasks.map((t) => t.id),
 );
+const cachesAt = (effort) => arms.map((arm) => armCache(index, arm, { effort, useCache: opts.useCache }));
+const money = (v) => `$${v.toFixed(2)}`;
 
-function cacheFor(model, effort) {
-  const served = model.expectServed ?? (/^claude-/i.test(model.arg) ? model.arg : null);
+function harnessLine() {
+  if (!against) return `Harness ${arms[0].harness}.`;
 
-  return opts.useCache ? cachedRuns(index, { harness, effort, served }) : new Map();
+  const [tree, ref] = arms;
+
+  return `The working tree (harness ${tree.harness}) against ${ref.label} at ${built.ref.commit.slice(0, 7)} (harness ${ref.harness}), both on ${tree.model}.`;
+}
+
+function costLine(live) {
+  const total = live.reduce((a, b) => a + b, 0);
+  const runs = `Up to ${total} live runs (${labels.map((l, i) => `${live[i]} ${l}`).join(', ')}).`;
+
+  if (!perRunHistory)
+    return `${runs} No past micro runs to estimate cost from. Runs stop before passing $${opts.budget}.`;
+
+  return `${runs} Past micro runs cost about ${money(perRunHistory)} each, so up to about ${money(total * perRunHistory)}; runs stop before passing $${opts.budget}.`;
 }
 
 function printPlan(effort) {
-  const reusable = labels.map((l) => {
-    const byTask = cacheFor({ arg: l }, effort);
-
-    return `${l}: ${tasks.filter((t) => byTask.get(t.id)?.length).length} of ${tasks.length} tasks cached`;
-  });
-
-  console.log(`Harness ${harness}. ${tasks.length} tasks, up to ${opts.maxRounds} rounds, ${opts.parallel} at a time.`);
-  console.log(`Reusable from earlier runs at effort ${effort ?? 'default'}: ${reusable.join('; ')}.`);
-  console.log(
-    perRunHistory
-      ? `Past micro runs cost about $${perRunHistory.toFixed(2)} each; the $${opts.budget} budget covers about ${Math.floor(opts.budget / perRunHistory)} live runs.`
-      : `No past micro runs to estimate cost from. Runs stop before passing $${opts.budget}.`,
+  const caches = cachesAt(effort);
+  const reusable = arms.map((arm, i) =>
+    arm.cache
+      ? `${arm.label}: ${tasks.filter((t) => caches[i].get(t.id)?.length).length} of ${tasks.length} tasks cached`
+      : `${arm.label}: always live`,
   );
+
+  console.log(harnessLine());
+  console.log(`${tasks.length} tasks, up to ${opts.maxRounds} rounds, ${opts.parallel} at a time.`);
+  console.log(`Reusable from earlier runs at effort ${effort ?? 'default'}: ${reusable.join('; ')}.`);
+  console.log(costLine(liveRunsPlanned({ tasks, rounds: opts.maxRounds, caches })));
 }
 
 if (args.includes('--dry')) {
-  printPlan(argOption(args, 'effort', 'high'));
+  printPlan(wantedEffort ?? 'high');
   process.exit(0);
 }
 
 const started = Date.now();
 const log = (...a) => console.log(`[compare ${((Date.now() - started) / 1000).toFixed(0)}s]`, ...a);
-const pool = await openSlotPool({
-  label: 'compare',
-  port: Number(argOption(args, 'port', 5191)),
-  parallel: opts.parallel,
-  perApp: Number(argOption(args, 'per-app', 1)),
-  log,
-});
-const git = gitInfo(root);
-const { models: available = [] } = await (await fetch(`${pool.studios[0].base}/api/bridge/acp-status`)).json();
-const resolved = labels.map((l) => resolveModel(l, available));
+const port = Number(argOption(args, 'port', 5191));
+const perApp = Number(argOption(args, 'per-app', 1));
+
+async function openPools() {
+  if (!against) {
+    const pool = await openSlotPool({ label: 'compare', port, parallel: opts.parallel, perApp, log });
+
+    arms.forEach((arm) => (arm.slots = pool.slots));
+
+    return [pool];
+  }
+
+  const live = liveRunsPlanned({ tasks, rounds: opts.maxRounds, caches: cachesAt(wantedEffort) });
+  const sizes = splitSlots(opts.parallel, live);
+  const pools = [];
+
+  for (const [i, arm] of arms.entries()) {
+    if (!sizes[i]) continue;
+
+    const label = `compare-${dirOf(arm.label)}`;
+    const pool = await openSlotPool({ label, port, parallel: sizes[i], perApp, source: arm.source, log });
+
+    arm.slots = pool.slots;
+    pools.push(pool);
+  }
+
+  return pools;
+}
+
+const pools = await openPools();
+const { models: available = [] } = await (await fetch(`${pools[0].studios[0].base}/api/bridge/acp-status`)).json();
+const resolved = arms.map((arm) => resolveModel(arm.model, available));
 const effort = sharedEffort(
   resolved.map((r) => available.find((m) => m.id === r.id)),
-  argOption(args, 'effort', undefined),
+  wantedEffort,
 );
-const caches = resolved.map((m) => cacheFor(m, effort));
+const caches = cachesAt(effort);
 const state = { spent: 0, inflight: 0, liveCosts: [], stop: null, verified: new Set() };
 const results = [];
-const out = { dir: '', runsDir, runName, git };
 
-log(`${resolved.map((r) => `${r.arg} → ${r.id}`).join(' and ')} at effort ${effort ?? 'default'}`);
+log(`${resolved.map((r, i) => `${labels[i]}: ${r.arg} → ${r.id}`).join(', ')} at effort ${effort ?? 'default'}`);
 printPlan(effort);
 
 const perRunEstimate = () =>
@@ -115,6 +182,7 @@ async function liveRun({ task, seed, label }, slot) {
     return null;
   }
 
+  const arm = arms[labels.indexOf(label)];
   const model = resolved[labels.indexOf(label)];
 
   state.inflight++;
@@ -124,10 +192,10 @@ async function liveRun({ task, seed, label }, slot) {
       slot,
       task,
       seed,
-      out: { ...out, dir: path.join(outRoot, label, 'micro') },
+      out: { dir: path.join(outRoot, dirOf(label), 'micro'), runsDir, runName, git: arm.git },
       model: model.id,
       effort,
-      harness,
+      harness: arm.harness,
     });
 
     log(`${task.id} seed ${seed} ${label}: ${grade.status}, $${r.costUsd ?? '?'}, ${r.seconds}s, ${r.servedBy ?? '?'}`);
@@ -152,6 +220,29 @@ function recordLive(run) {
   if (typeof run.costUsd === 'number') state.liveCosts.push(run.costUsd);
 }
 
+const armSummary = () => arms.map(({ label, harness, git }) => ({ label, harness, git }));
+
+function writeResults(extra = {}) {
+  fs.writeFileSync(
+    path.join(outRoot, 'results.json'),
+    JSON.stringify({ labels, resolved, effort, arms: armSummary(), results, ...extra }, null, 1),
+  );
+}
+
+function runLiveJobs(live) {
+  const bySlots = new Map();
+
+  for (const job of live) {
+    const { slots } = arms[labels.indexOf(job.label)];
+
+    bySlots.set(slots, [...(bySlots.get(slots) ?? []), job]);
+  }
+
+  const runJob = async (job, slot) => recordLive(await liveRun(job, slot));
+
+  return Promise.all([...bySlots].map(([slots, jobs]) => runOnSlots(slots, jobs, runJob)));
+}
+
 async function runRound(seed) {
   const jobs = roundJobs({ tasks, labels, seed });
   const live = [];
@@ -164,8 +255,8 @@ async function runRound(seed) {
   }
 
   log(`round ${seed}: ${live.length} live runs, ${jobs.length - live.length} reused`);
-  await runOnSlots(pool.slots, live, async (job, slot) => recordLive(await liveRun(job, slot)));
-  fs.writeFileSync(path.join(outRoot, 'results.json'), JSON.stringify({ labels, resolved, effort, results }, null, 1));
+  await runLiveJobs(live);
+  writeResults();
 }
 
 fs.mkdirSync(outRoot, { recursive: true });
@@ -179,16 +270,20 @@ while (rounds < opts.maxRounds && !state.stop) {
 }
 
 const stats = compareStats(results, labels);
-const plan = { ...opts, harness, rounds, tasks: tasks.length, stop: state.stop ?? 'rounds' };
-const report = compareMarkdown({ stats, models: resolved, labels, effort, plan, git });
+const plan = {
+  ...opts,
+  harness: arms[0].harness,
+  arms: against ? armSummary() : null,
+  rounds,
+  tasks: tasks.length,
+  stop: state.stop ?? 'rounds',
+};
+const report = compareMarkdown({ stats, models: resolved, labels, effort, plan, git: arms[0].git });
 
-fs.writeFileSync(
-  path.join(outRoot, 'results.json'),
-  JSON.stringify({ labels, resolved, effort, results, stats }, null, 1),
-);
+writeResults({ stats, plan });
 fs.writeFileSync(path.join(outRoot, 'report.md'), report + '\n');
 console.log(`\n${report}\n\nSaved to ${path.relative(root, outRoot)}/report.md`);
 
-await pool.close();
+await Promise.all(pools.map((pool) => pool.close()));
 await closeAppModules();
 process.exit(0);

@@ -104,14 +104,16 @@ function readResult(outDir) {
   }
 }
 
-function failure(result, stderr, code) {
+function failure(result, stderr) {
   const text = result?.error_string && result.error_string !== 'Success.' ? result.error_string : null;
   const lastError = stderr
     .split('\n')
     .reverse()
     .find((l) => /\[error\]/.test(l));
 
-  return new Error(text ?? lastError?.replace(/^.*\[error\]\s*/, '').trim() ?? `The slicer stopped with code ${code}.`);
+  return new Error(
+    text ?? lastError?.replace(/^.*\[error\]\s*/, '').trim() ?? 'The slicer stopped without saying why. Slice again.',
+  );
 }
 
 export function runSlicer(options) {
@@ -140,7 +142,7 @@ export function runSlicer(options) {
 
       if (signal?.aborted) reject(new Error('Slicing stopped.'));
       else if (code === 0 && result?.return_code === 0) resolve(result);
-      else reject(failure(result, log, code));
+      else reject(failure(result, log));
     });
   });
 }

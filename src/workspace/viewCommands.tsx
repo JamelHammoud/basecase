@@ -9,11 +9,16 @@ import {
   GridIcon,
   HandIcon,
   KeyboardIcon,
+  LayersIcon,
+  LibraryIcon,
+  ObjectsIcon,
   PackageIcon,
   PanelLeftIcon,
   PanelRightIcon,
   PlusIcon,
+  RobotsIcon,
   RotateIcon,
+  RunIcon,
   SearchIcon,
   SettingsIcon,
   ShapeIcon,
@@ -26,8 +31,16 @@ import type { TrackpadGestureMode } from '../types/robotics';
 import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
+import { showLeftTab } from './showView';
 
 const ic = 'w-4 h-4';
+
+const SIDEBAR_VIEWS = [
+  { tab: 'robots', label: 'Show Robots', icon: <RobotsIcon className={ic} />, keywords: 'import urdf humanoid arm' },
+  { tab: 'objects', label: 'Show Objects', icon: <ObjectsIcon className={ic} />, keywords: 'simready props world' },
+  { tab: 'layers', label: 'Show Layers', icon: <LayersIcon className={ic} />, keywords: 'outline tree groups hide' },
+  { tab: 'library', label: 'Show Library', icon: <LibraryIcon className={ic} />, keywords: 'saved models reuse' },
+] as const;
 
 export const sceneHasCameraViews = ({ core, actions }: Pick<CommandInputs, 'core' | 'actions'>) =>
   hasCameraViews(core.parts, actions.cameras.cameras, core.simTraining.sim.status !== 'off');
@@ -70,6 +83,26 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       icon: <PanelRightIcon className={ic} />,
       run: ui.toggleRight,
     },
+    ...SIDEBAR_VIEWS.map((v) => ({
+      id: `show-${v.tab}`,
+      group: 'Panels',
+      label: v.label,
+      icon: v.icon,
+      keywords: v.keywords,
+      run: () => showLeftTab(core, v.tab),
+    })),
+    ...(core.posing.hasRig
+      ? [
+          {
+            id: 'show-simulate',
+            group: 'Panels',
+            label: 'Show Simulate',
+            icon: <RunIcon className={ic} />,
+            keywords: 'mujoco physics sim train policy',
+            run: () => tool.openRightTab('sim'),
+          },
+        ]
+      : []),
     {
       id: 'build',
       group: 'Panels',

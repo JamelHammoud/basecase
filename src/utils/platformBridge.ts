@@ -68,7 +68,7 @@ const acpBridge = {
   sendAcpPrompt: (payload: AcpPromptPayload): Promise<PromptResult> =>
     electron()?.sendAcpPrompt(payload) ??
     postOrThrow('/acp-prompt', payload, (body, res) =>
-      !res.ok || body.error ? String(body.error || `Agent error ${res.status}`) : null,
+      !res.ok || body.error ? String(body.error || 'Couldn’t reach the agent. Send the message again.') : null,
     ),
 
   steerAcp: (payload: AcpPromptPayload): Promise<SteerOutcome> =>

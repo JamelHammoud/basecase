@@ -2,17 +2,19 @@ import React, { useState } from 'react';
 import { Button, SegmentedControl } from '../../design-system';
 import { FAMILY_NAMES } from '../../robot/robotFamilies';
 import type { RobotFamily } from '../../robot/robotState';
+import { emulatedSpec } from '../../robot/emulatedUnits';
 import { connectRobot } from '../../robot/robotStore';
 import { sceneRobotChoices } from '../../robot/sceneRobot';
-import type { RobotJoint } from '../../types/robotics';
+import type { RobotJoint, ScenePart } from '../../types/robotics';
 import { PlayNoRobot } from '../PlayNoRobot';
 
 interface ConnectRobotButtonProps {
   joints: RobotJoint[];
+  parts: readonly ScenePart[];
   onBrowseRobots: () => void;
 }
 
-export const ConnectRobotButton: React.FC<ConnectRobotButtonProps> = ({ joints, onBrowseRobots }) => {
+export const ConnectRobotButton: React.FC<ConnectRobotButtonProps> = ({ joints, parts, onBrowseRobots }) => {
   const [refusal, setRefusal] = useState<string | null>(null);
   const [family, setFamily] = useState<RobotFamily | null>(null);
   const robot = sceneRobotChoices(joints);
@@ -25,7 +27,7 @@ export const ConnectRobotButton: React.FC<ConnectRobotButtonProps> = ({ joints, 
   const chosen = robot.choices.find((c) => c.spec.family === family) ?? robot.choices[0];
 
   const connect = async () => {
-    const reply = await connectRobot(chosen.spec, chosen.joints);
+    const reply = await connectRobot(emulatedSpec({ choice: chosen, joints, parts }), chosen.joints);
 
     setRefusal(reply.ok ? null : reply.message);
   };

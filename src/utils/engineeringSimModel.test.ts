@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { presetServo } from '../reality/bench';
+import { presetServo } from '../reality/servoEstimate';
+import { FAMILY_SERVOS } from '../reality/servoPart';
 import { EMPTY_HISTORY, recordCalibration, rollBack, type CalibrationHistory } from '../reality/history';
 import type { ServoCalibration } from '../reality/types';
 import { engineeringFindings } from '../readiness/findings';
@@ -119,7 +120,7 @@ describe('Torque estimates', () => {
 const LEGS = ['hipL', 'kneeL', 'ankleL', 'hipR', 'kneeR', 'ankleR'];
 
 const measuredFit = (): ServoCalibration => ({
-  ...presetServo('sts3215'),
+  ...presetServo(FAMILY_SERVOS.sts3215),
   verdict: 'measured',
   family: 'sts3215',
   version: 0,
@@ -207,6 +208,13 @@ describe('Servo models', () => {
       'servo-hipL, servo-kneeL, servo-ankleL and 3 more on Hip l, Knee l, Ankle l and 3 more',
     );
     expect(models.items![0].ids).toHaveLength(6);
+    expect(models.items![0].fix).toEqual({ kind: 'calibrate', joints: LEGS });
+  });
+
+  it('offers no Calibrate for servos the daemon can’t reach', () => {
+    const models = row(run(withServo(biped(), 'dsservo-ds3218')), 'Servo models')!;
+
+    expect(models.detail).toBe('6 joints without a measured model');
     expect(models.items![0].fix).toBeUndefined();
   });
 
@@ -217,7 +225,12 @@ describe('Servo models', () => {
     expect(models.status).toBe('warn');
     expect(models.detail).toBe('2 joints without a measured model');
     expect(models.items).toEqual([
-      { text: 'servo-kneeL and servo-kneeR on Knee l and Knee r', ids: ['servo-kneeL', 'servo-kneeR'], status: 'warn' },
+      {
+        text: 'servo-kneeL and servo-kneeR on Knee l and Knee r',
+        ids: ['servo-kneeL', 'servo-kneeR'],
+        status: 'warn',
+        fix: { kind: 'calibrate', joints: ['kneeL', 'kneeR'] },
+      },
     ]);
   });
 

@@ -6,6 +6,7 @@ import readline from 'node:readline';
 import { checkedCommand, checkedRobotSpec, daemonArgs, emulatedCalibration, LADDER } from './robotSpec.mjs';
 import { IntentPacer } from './intentPacer.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
+import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
 
 export const DAEMON_ENV = 'BASECASE_ROBOT_DAEMON';
 export const DAEMON_FILE = process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon';
@@ -105,6 +106,8 @@ export class RobotLink {
 
     fs.writeFileSync(path.join(artefacts, 'calibration.json'), JSON.stringify(emulatedCalibration(spec)));
     placePolicy(artefacts, this.currentPolicy());
+
+    if (spec.units) fs.writeFileSync(path.join(artefacts, UNITS_FILE), unitsJson(spec.units));
 
     const child = this.spawnFn(this.binary, daemonArgs(spec, artefacts));
     const session = { spec, child, artefacts, hello: null, status: null, mode: 'look', asked: false, stderr: '' };

@@ -16,6 +16,7 @@ pub const MIN_VOLTAGE: u16 = 15;
 pub const MAX_TORQUE: u16 = 16;
 pub const UNLOADING: u16 = 19;
 pub const P_GAIN: u16 = 21;
+pub const FACTORY_P_GAIN: u8 = 32;
 pub const CW_DEAD: u16 = 26;
 pub const CCW_DEAD: u16 = 27;
 pub const PROTECTION_CURRENT: u16 = 28;
@@ -67,7 +68,7 @@ pub fn factory(id: u8) -> Registers {
     table.set_u8(18, 12);
     table.set_u8(UNLOADING, UNLOAD_OVERHEAT | UNLOAD_CURRENT | UNLOAD_OVERLOAD);
     table.set_u8(20, 47);
-    table.set_u8(P_GAIN, 32);
+    table.set_u8(P_GAIN, FACTORY_P_GAIN);
     table.set_u8(22, 32);
     table.set_u8(23, 0);
     table.set_u16(24, 16);

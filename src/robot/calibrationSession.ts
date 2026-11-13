@@ -2,9 +2,11 @@ import { useSyncExternalStore } from 'react';
 import { benchLogs } from '../reality/benchLogs';
 import { keepBenchLogs } from '../reality/benchLogStore';
 import { calibrator } from '../reality/calibrateClient';
-import type { ServoCalibration } from '../reality/types';
-import type { RobotJoint } from '../types/robotics';
+import { benchServo } from '../reality/servoPart';
+import type { ServoCalibration, ServoPart } from '../reality/types';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import { canRunBench, playBench } from './benchRun';
+import { servoFamily } from './robotState';
 import { robotSceneJoints, robotSnapshot } from './robotStore';
 import { forgetLag } from './robotTwin';
 import { sceneRobotChoices } from './sceneRobot';
@@ -47,36 +49,57 @@ export function connectedFrom(sceneJoints: readonly RobotJoint[]): string[] | nu
 export const canCalibrate = (sceneJoints: readonly RobotJoint[]) =>
   phase === 'idle' && Boolean(connectedFrom(sceneJoints)) && canRunBench(robotSnapshot());
 
-export async function calibrateRobot(
-  sceneJoints: readonly RobotJoint[],
-  record: RecordCalibration,
-  only?: readonly string[],
-): Promise<void> {
-  const joints = connectedFrom(sceneJoints);
+export interface CalibrateRobotInput {
+  joints: readonly RobotJoint[];
+  parts: readonly ScenePart[];
+  record: RecordCalibration;
+  only?: readonly string[];
+}
 
-  if (!joints || !canCalibrate(sceneJoints)) return;
+interface BenchJoint {
+  index: number;
+  jointId: string;
+  servo: ServoPart;
+}
 
-  const subset = joints.map((_, k) => k).filter((k) => !only || only.includes(joints[k]));
+function benchJoints({ joints: sceneJoints, parts, only }: CalibrateRobotInput, connected: string[]): BenchJoint[] {
+  const bus = servoFamily(robotSnapshot().spec);
 
-  if (!subset.length) return;
+  if (!bus) return [];
+
+  return connected.flatMap((jointId, index) => {
+    const servo = benchServo({ joint: sceneJoints.find((j) => j.id === jointId), parts, bus });
+
+    return servo && (!only || only.includes(jointId)) ? [{ index, jointId, servo }] : [];
+  });
+}
+
+export async function calibrateRobot(input: CalibrateRobotInput): Promise<void> {
+  const connected = connectedFrom(input.joints);
+
+  if (!connected || !canCalibrate(input.joints)) return;
+
+  const moving = benchJoints(input, connected);
+
+  if (!moving.length) return;
 
   setPhase('moving');
 
   const fitter = calibrator();
 
   try {
-    const recording = await playBench(subset);
+    const recording = await playBench(moving.map((m) => m.index));
 
     if (!recording) return;
 
     setPhase('fitting');
 
-    for (const [i, k] of subset.entries()) {
-      const logs = benchLogs(recording, i);
-      const calibration = await fitter.calibrate({ family: recording.family, logs });
+    for (const [joint, { jointId, servo }] of moving.entries()) {
+      const logs = benchLogs({ recording, joint, servo });
+      const calibration = await fitter.calibrate({ servo, logs });
 
-      record(joints[k], { ...calibration, logId: keepBenchLogs(recording.family, logs) });
-      forgetLag(joints[k]);
+      input.record(jointId, { ...calibration, logId: keepBenchLogs(servo, logs) });
+      forgetLag(jointId);
     }
   } finally {
     fitter.dispose();

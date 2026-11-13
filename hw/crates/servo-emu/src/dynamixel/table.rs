@@ -32,6 +32,7 @@ pub const HARDWARE_ERROR: u16 = 70;
 pub const VELOCITY_I: u16 = 76;
 pub const VELOCITY_P: u16 = 78;
 pub const POSITION_P: u16 = 84;
+pub const FACTORY_POSITION_P: u16 = 400;
 pub const BUS_WATCHDOG: u16 = 98;
 pub const GOAL_PWM: u16 = 100;
 pub const GOAL_CURRENT: u16 = 102;
@@ -96,7 +97,7 @@ pub fn restore_ram(table: &mut Registers) {
     table.set_u8(STATUS_RETURN, 2);
     table.set_u16(VELOCITY_I, 1600);
     table.set_u16(VELOCITY_P, 180);
-    table.set_u16(POSITION_P, 400);
+    table.set_u16(POSITION_P, FACTORY_POSITION_P);
 
     let pwm_limit = table.u16_at(PWM_LIMIT);
     let current_limit = table.u16_at(CURRENT_LIMIT);

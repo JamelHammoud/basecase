@@ -273,6 +273,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
         files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),
       ),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
+    calibrations: () => projectRef.current.servoCalibrations ?? {},
     robotGhost: () => robotGhostState(viewportRef.current),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();

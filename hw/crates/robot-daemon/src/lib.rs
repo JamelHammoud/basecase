@@ -18,6 +18,7 @@ pub mod session;
 pub mod stop;
 pub mod telemetry;
 pub mod transport;
+pub mod units;
 pub mod watchdog;
 
 pub use control::{Command, Daemon, DaemonConfig, DaemonEvent, Inputs, Run};

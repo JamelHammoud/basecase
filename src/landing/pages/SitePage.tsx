@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ContentKind, Section } from './sections';
-import { SITE_URL } from './siteContent';
+import { absoluteUrl, SITE_URL } from './siteContent';
 import { SiteNav } from './SiteNav';
 
 export interface PageHead {
@@ -8,6 +8,7 @@ export interface PageHead {
   description: string;
   path: string;
   feeds?: { href: string; type: string; title: string }[];
+  image?: string;
 }
 
 interface SitePageProps {
@@ -33,7 +34,7 @@ export const SitePage: React.FC<SitePageProps> = ({ head, section, sections, sty
       <meta property="og:url" content={`${SITE_URL}${head.path}`} />
       <meta property="og:title" content={head.title} />
       <meta property="og:description" content={head.description} />
-      <meta property="og:image" content={`${SITE_URL}/og.png`} />
+      <meta property="og:image" content={absoluteUrl(head.image ?? '/og.png')} />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       {head.feeds?.map((feed) => (

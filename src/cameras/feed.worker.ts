@@ -1,9 +1,13 @@
 /// <reference lib="webworker" />
 import { FRAME_MS, type FeedEvent, type FeedRequest } from './feedProtocol';
 import { LiveStage, type LiveTarget } from './liveStage';
+import { GpuFence } from '../three/gpuFence';
+
+const FENCE_POLL_MS = 4;
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const stage = new LiveStage();
+const fence = new GpuFence(stage.renderer.getContext() as WebGL2RenderingContext);
 const targets = new Map<string, LiveTarget>();
 
 let poses: Float64Array | null = null;
@@ -13,9 +17,19 @@ let frames = 0;
 
 function draw() {
   scheduled = false;
+
+  if (fence.full()) {
+    scheduled = true;
+    setTimeout(draw, FENCE_POLL_MS);
+
+    return;
+  }
+
   drewAt = performance.now();
 
   if (!stage.draw(poses, targets)) return;
+
+  fence.mark();
 
   const bitmaps: Record<string, ImageBitmap> = {};
 

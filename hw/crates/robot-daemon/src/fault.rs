@@ -36,6 +36,16 @@ pub enum Fault {
 }
 
 impl Fault {
+    pub fn motor_id(&self) -> Option<u8> {
+        match self {
+            Fault::Overheat { id, .. }
+            | Fault::ServoProtection { id }
+            | Fault::Stall { id, .. }
+            | Fault::WrongDirection { id, .. } => Some(*id),
+            _ => None,
+        }
+    }
+
     pub fn code(&self) -> &'static str {
         match self {
             Fault::BusGone => "bus_gone",

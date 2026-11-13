@@ -222,7 +222,7 @@ impl Rig {
 
     pub fn first_fault(&self) -> Option<(u64, String, String)> {
         self.events.iter().find_map(|event| match event {
-            DaemonEvent::Fault { at_us, code, message } => Some((*at_us, code.clone(), message.clone())),
+            DaemonEvent::Fault { at_us, code, message, .. } => Some((*at_us, code.clone(), message.clone())),
             _ => None,
         })
     }

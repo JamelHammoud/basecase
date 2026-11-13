@@ -58,8 +58,8 @@ type ProbeSample = (poses: Float64Array, out: Signals) => void;
 export function factSampler(kase: Case, facts: CaseFactReader, reader: { sample: ProbeSample }, signals: Signals) {
   const names = caseSignalNames(kase);
 
-  return (poses: Float64Array, t: number) => {
-    const read = facts.read(poses, t);
+  return (poses: Float64Array, t: number, torque?: number) => {
+    const read = facts.read(poses, t, torque);
 
     reader.sample(poses, signals);
     sampleSignals(read, names, signals);

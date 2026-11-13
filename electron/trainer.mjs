@@ -478,6 +478,14 @@ export class Trainer {
     return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
   }
 
+  policyOnnx(id) {
+    if (typeof id !== 'string' || !RUN_ID.test(id)) return null;
+
+    const file = path.join(this.policiesDir, id, 'policy.onnx');
+
+    return fs.existsSync(file) ? file : null;
+  }
+
   deletePolicy(id) {
     if (!RUN_ID.test(id)) return false;
 

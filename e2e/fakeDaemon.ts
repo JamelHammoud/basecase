@@ -134,6 +134,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     const next = LADDER.indexOf(mode);
     if (next > LADDER.indexOf(robot.lastRung)) return refuse('This robot stops at Test.');
     if (mode !== 'look' && next !== LADDER.indexOf(robot.mode) + 1) return refuse('One rung at a time.');
+    if (next >= LADDER.indexOf('rehearse') && !link.policy.length) return refuse('Load a policy first.');
     const silent = robot.ids.find((id) => !holds(id));
     if (mode === 'test' && silent !== undefined) return refuse('Servo ' + silent + " doesn't answer.");
     robot.mode = mode;
@@ -148,6 +149,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
 
   const link = (window.__fakeRobotLink = {
     factory: false,
+    policy: [],
     lastAsk: null,
     asked: () => link.lastAsk,
     plugIn,
@@ -156,6 +158,10 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
       return () => listeners.delete(callback);
     },
     robotState: async () => ({ connected: false, spec: null, hello: null, status: null }),
+    robotPolicy: async (refs) => {
+      link.policy = refs;
+      return { ok: true };
+    },
     robotConnect: async (ask) => {
       const { spec, ids, start, writable, lastRung } = layout(ask);
       robot = { ids, writable, lastRung, servos: spec.family !== 'ros2', mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0 };

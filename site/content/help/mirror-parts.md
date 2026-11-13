@@ -30,7 +30,7 @@ Build one arm or leg, then have the agent mirror it to the other side, with serv
 
 There's no Mirror command; the agent mirrors parts for you. It needs an agent connected, as in [Choose the agent](/help/choose-the-agent).
 
-1. Right-click a part to mirror and choose **Reference Part**.
+1. Right-click a part to mirror and choose **Quote Part**.
 2. In the Agent tab's composer, say what to mirror and where, such as “Mirror this leg to the right side”.
 3. Press [[↩]] to send.
 
@@ -44,4 +44,4 @@ Real components can't be built mirror-image, so the agent doesn't flip them. It 
 
 Each copy stays linked to its source. Make changes on the source side, then ask the agent to mirror it again; the new copy replaces the old one. If either side is edited on its own, the agent is reminded to mirror again.
 
-**Reference Part** works in the desktop app. To sculpt both sides of one part at once, use **Mirror X** in [Sculpt a part](/help/sculpt-a-part).
+**Quote Part** works in the desktop app. To sculpt both sides of one part at once, use **Mirror X** in [Sculpt a part](/help/sculpt-a-part).

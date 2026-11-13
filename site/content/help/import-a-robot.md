@@ -49,7 +49,9 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 
 ## Insert a robot from the shelf
 
-**Robots** lists ready robots by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**, such as the Unitree G1, Go2 and SO-101. Click one to insert it, or drag it onto the canvas. Robots you imported from a link come first, under **Imported**.
+**Robots** lists ready robots by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**, such as the Unitree G1, Go2 and SO-101. Click one to insert it, or drag it onto the canvas. Robots you imported come first, under **Imported**, so you can insert them again with a click. To take one off the list, right-click it and choose **Delete**. Scenes that already use it keep it.
+
+![An imported robot's right-click menu with Insert and Delete](/help/import-a-robot/imported.png)
 
 ## What comes in
 

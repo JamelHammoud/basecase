@@ -58,7 +58,8 @@ The estimated total is over your budget. Lines marked ≈ count at their list pr
 
 1. Open **Budget** in Checks to see the total against your budget.
 2. Save the prices you really pay with **Add Price** in **Bill of materials**. List prices can be higher than what you pay.
-3. Swap expensive parts, or raise the budget in the field beside the total.
+3. Set **On Hand** for parts you already own. They cost $0.
+4. Swap expensive parts, or raise the budget in the field beside the total.
 
 Budget turns amber above 90% of the budget and red over it. [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget) has the steps.
 

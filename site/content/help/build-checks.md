@@ -71,7 +71,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
-| Budget | The estimated total against your budget | Over budget; amber above 90%. Not run until you set a budget |
+| Budget | The estimated cost of the parts left to buy against your budget | Over budget; amber above 90%. Not run until you set a budget |
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 

@@ -77,6 +77,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={(m) => showToast(m)}
+      onSetOnHand={(key, count) => void docs.setOnHand(key, count)}
       guide={guide}
       readiness={core.readiness}
     />

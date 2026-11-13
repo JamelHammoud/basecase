@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { withStoredPurchase } from '../purchaseRecord.mjs';
 
 const purchasesFile = (libraryDir) => path.join(libraryDir, 'purchases.json');
 
@@ -11,13 +12,8 @@ export function listPurchases(libraryDir) {
   }
 }
 
-export function savePurchase(libraryDir, { key, record }) {
-  if (!key || typeof key !== 'string') throw new Error('Missing purchase key');
-
-  const all = listPurchases(libraryDir);
-
-  if (record) all[key] = { ...record, checkedAt: record.checkedAt || new Date().toLocaleDateString('en-CA') };
-  else delete all[key];
+export function savePurchase(libraryDir, payload) {
+  const all = withStoredPurchase(listPurchases(libraryDir), payload, new Date().toLocaleDateString('en-CA'));
 
   fs.writeFileSync(purchasesFile(libraryDir), JSON.stringify(all, null, 2), 'utf-8');
 

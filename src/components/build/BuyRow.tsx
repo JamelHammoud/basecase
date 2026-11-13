@@ -7,7 +7,7 @@ import { dayLabel } from '../../utils/timeAgo';
 import { useMoney } from '../../utils/useMoney';
 import { PART_PREVIEW_WIDTH, PartPreviewCard } from '../agent/PartPreviewCard';
 import type { Extra } from './buyExtras';
-import { lineAmount, lineCount, linkLabel } from './buyLine';
+import { lineAmount, lineCount, lineOnHand, linkLabel } from './buyLine';
 import { QtyEditor } from './QtyEditor';
 
 export interface BuyContext {
@@ -17,6 +17,7 @@ export interface BuyContext {
   onSelectParts: (ids: string[]) => void;
   extraOf: (key: string) => Extra | undefined;
   onExtraQty: (key: string, qty: number) => void;
+  onOnHand: (line: BomLine, count: number) => void;
   onDeleteExtra: (line: BomLine) => void;
 }
 
@@ -47,6 +48,13 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
 const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: l, onCheck }) => {
   const stale = l.status === 'stale';
   const money = useMoney();
+
+  if (!l.toBuy)
+    return (
+      <button type="button" onClick={onCheck} className={`${PRICE_CLASS} shrink-0 -my-[5px] text-white/90`}>
+        {money.format(0)}
+      </button>
+    );
 
   if (l.record)
     return (
@@ -82,12 +90,14 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
 const LineFacts: React.FC<{ line: BomLine; note?: string }> = ({ line: l, note }) => {
   const amount = lineAmount(l);
+  const onHand = lineOnHand(l);
 
   return (
     <>
       <span className="block text-[13px] leading-[18px] text-white/90">{l.name}</span>
-      {(amount || l.detail || note) && (
+      {(amount || onHand || l.detail || note) && (
         <span className="flex flex-wrap gap-x-[12px] text-[12px] leading-[16px] text-white/50">
+          {onHand && <span className="tabular-nums">{onHand}</span>}
           {amount && <span className="tabular-nums">{amount}</span>}
           {l.detail && <span>{l.detail}</span>}
           {note && <span>{note}</span>}
@@ -137,12 +147,13 @@ const LineText: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, c
 const LineCount: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => {
   const extra = context.extraOf(l.key);
 
-  if (extra)
+  if (extra || l.unit === 'pcs')
     return (
       <QtyEditor
         line={l}
         extra={extra}
         onQty={(qty) => context.onExtraQty(l.key, qty)}
+        onOnHand={(count) => context.onOnHand(l, count)}
         onDelete={() => context.onDeleteExtra(l)}
       />
     );

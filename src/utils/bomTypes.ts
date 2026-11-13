@@ -24,6 +24,8 @@ export interface BomLine {
   name: string;
   detail: string;
   qty: number;
+  onHand: number;
+  toBuy: number;
   unit: 'pcs' | 'g';
   partIds: string[];
   url?: string;

@@ -1,17 +1,45 @@
 import React, { useRef, useState } from 'react';
 import { MenuDivider, MenuItem, MenuLabel, NumberInput, PopoverMenu, Tooltip } from '../../design-system';
 import type { BomLine } from '../../utils/bomTypes';
+import { MAX_ON_HAND } from '../../utils/purchases';
 import type { Extra } from './buyExtras';
 import { lineCount } from './buyLine';
 
-export const QtyEditor: React.FC<{
+interface QtyEditorProps {
   line: BomLine;
-  extra: Extra;
+  extra?: Extra;
   onQty: (qty: number) => void;
+  onOnHand: (count: number) => void;
   onDelete: () => void;
-}> = ({ line, extra, onQty, onDelete }) => {
+}
+
+const CountField: React.FC<{ label: string; value: number; min: number; onCommit: (v: number) => void }> = ({
+  label,
+  value,
+  min,
+  onCommit,
+}) => (
+  <>
+    <MenuLabel>{label}</MenuLabel>
+    <div className="px-1 pb-1">
+      <NumberInput
+        value={value}
+        min={min}
+        max={MAX_ON_HAND}
+        step={1}
+        precision={0}
+        unit=""
+        aria-label={label}
+        onChange={(v, live) => !live && onCommit(v)}
+      />
+    </div>
+  </>
+);
+
+export const QtyEditor: React.FC<QtyEditorProps> = ({ line, extra, onQty, onOnHand, onDelete }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
+  const pieces = line.unit === 'pcs';
 
   return (
     <div className="relative shrink-0 min-w-[28px] flex justify-end" ref={ref}>
@@ -34,31 +62,21 @@ export const QtyEditor: React.FC<{
         align="start"
         className="w-48"
       >
-        {line.unit === 'pcs' && (
+        {pieces && extra && <CountField label="Quantity" value={extra.qty} min={1} onCommit={onQty} />}
+        {pieces && <CountField label="On Hand" value={line.onHand} min={0} onCommit={onOnHand} />}
+        {extra && (
           <>
-            <MenuLabel>Quantity</MenuLabel>
-            <div className="px-1 pb-1">
-              <NumberInput
-                value={extra.qty}
-                min={1}
-                step={1}
-                precision={0}
-                unit=""
-                aria-label="Quantity"
-                onChange={(v, live) => !live && onQty(v)}
-              />
-            </div>
-            <MenuDivider />
+            {pieces && <MenuDivider />}
+            <MenuItem
+              label="Delete"
+              tone="danger"
+              onSelect={() => {
+                setOpen(false);
+                onDelete();
+              }}
+            />
           </>
         )}
-        <MenuItem
-          label="Delete"
-          tone="danger"
-          onSelect={() => {
-            setOpen(false);
-            onDelete();
-          }}
-        />
       </PopoverMenu>
     </div>
   );

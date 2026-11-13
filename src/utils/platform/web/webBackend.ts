@@ -1,4 +1,5 @@
-import type { AcpStatusInfo, CustomModelDefinition, PurchaseRecord } from '../../../types/robotics';
+import type { AcpStatusInfo, CustomModelDefinition, Purchases, StoredPurchase } from '../../../types/robotics';
+import { withStoredPurchase } from '../../../../electron/purchaseRecord.mjs';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { trainedPolicy, trainedSkill } from './webTrained';
@@ -44,13 +45,10 @@ async function deleteModel(id: string) {
   return listModels();
 }
 
-const listPurchases = async () => (await idbGet<Record<string, PurchaseRecord>>('settings', 'purchases')) ?? {};
+const listPurchases = async () => (await idbGet<Purchases>('settings', 'purchases')) ?? {};
 
-async function savePurchase({ key, record }: { key: string; record: PurchaseRecord | null }) {
-  const all = await listPurchases();
-
-  if (record) all[key] = { ...record, checkedAt: record.checkedAt || new Date().toLocaleDateString('en-CA') };
-  else delete all[key];
+async function savePurchase(payload: { key: string; record: StoredPurchase | null }) {
+  const all: Purchases = withStoredPurchase(await listPurchases(), payload, new Date().toLocaleDateString('en-CA'));
 
   await idbPut('settings', 'purchases', all);
 
@@ -88,7 +86,7 @@ const ROUTES: Record<string, Route> = {
   'save-model': (b) => saveModel(b as unknown as CustomModelDefinition),
   'delete-model': (b) => deleteModel(String(b.modelId)),
   purchases: listPurchases,
-  'purchase-save': (b) => savePurchase(b as { key: string; record: PurchaseRecord | null }),
+  'purchase-save': (b) => savePurchase(b as { key: string; record: StoredPurchase | null }),
   scenes: listScenes,
   scene: (_, params) => getScene(params.get('id') ?? ''),
   'save-scene': (b) => saveScene(b),

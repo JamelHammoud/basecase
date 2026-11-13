@@ -1,6 +1,7 @@
 import type { ActuatorSpec } from '../data/components';
 import { LIST_PRICES, listPriceFor } from '../data/listPrices';
-import type { PurchaseRecord } from '../types/robotics';
+import type { Purchases } from '../types/robotics';
+import { onHandOf, pricedRecord } from '../utils/purchases';
 import { holdVerdict, ratingAt, stanceVerdict } from '../utils/actuatorRules';
 import { currentMoney, formatMoney, formatWhole } from '../utils/currencyStore';
 
@@ -10,7 +11,8 @@ export interface CatalogNeed {
 }
 
 export interface CatalogContext {
-  purchases: Record<string, PurchaseRecord>;
+  purchases: Purchases;
+  used?: Record<string, number>;
   budget?: { budgetUsd: number; estimatedUsd: number };
   stance?: CatalogNeed & { crouchDeg?: number };
   hold?: CatalogNeed;
@@ -20,7 +22,7 @@ export interface CatalogContext {
 const per = (n: number) => (n > 1 ? ` per ${n}` : '');
 
 export function unitPrice(key: string, ctx?: CatalogContext): number | undefined {
-  const checked = ctx?.purchases[key];
+  const checked = pricedRecord(ctx?.purchases[key]);
 
   if (checked) return checked.priceUsd / checked.packQty;
 
@@ -30,7 +32,7 @@ export function unitPrice(key: string, ctx?: CatalogContext): number | undefined
 }
 
 export function priceText(key: string, ctx?: CatalogContext): string {
-  const checked = ctx?.purchases[key];
+  const checked = pricedRecord(ctx?.purchases[key]);
 
   if (checked)
     return `${formatMoney(checked.priceUsd, checked.entered)}${per(checked.packQty)} checked ${checked.checkedAt}`;
@@ -78,10 +80,28 @@ export function hardwarePrices(type: string, ctx?: CatalogContext): string {
   return `; prices: ${keys.map((k) => `${k.slice(prefix.length)} ${priceText(k, ctx)}`).join('; ')}`;
 }
 
+export const ownedKeys = (ctx?: CatalogContext) =>
+  Object.keys(ctx?.purchases ?? {}).filter((key) => onHandOf(ctx?.purchases[key]) > 0);
+
+export function ownedText(key: string, ctx?: CatalogContext): string {
+  const owned = onHandOf(ctx?.purchases[key]);
+
+  if (!owned) return '';
+
+  const used = ctx?.used?.[key] ?? 0;
+
+  return `${owned} owned, ${used} in this scene, ${Math.max(0, owned - used)} left`;
+}
+
 export function catalogHeader(ctx?: CatalogContext): string[] {
   if (!ctx) return [];
 
   const lines: string[] = [];
+  const owned = ownedKeys(ctx);
+
+  if (owned.length)
+    lines.push(`On hand (use these first): ${owned.map((key) => `${key} ${ownedText(key, ctx)}`).join('; ')}.`);
+
   const b = ctx.budget;
 
   if (b) {

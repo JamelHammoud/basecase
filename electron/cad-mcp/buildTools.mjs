@@ -91,7 +91,7 @@ export const getBom = {
   config: {
     title: 'Bill of materials',
     description:
-      'The build\'s bill of materials, computed from the scene: catalog components and exact hardware counted by part, printed parts as filament grams, plus purchase-only extras (set_build). Each line has its catalog key and its price: the one the user checked from a listing, with the date, else a dated list price from a maker or distributor store (an estimate, marked ~), else "no price known". ' +
+      'The build\'s bill of materials, computed from the scene: catalog components and exact hardware counted by part, printed parts as filament grams, plus purchase-only extras (set_build). Each line has its catalog key, how many the user owns and has to buy when they own some (record_on_hand), and the price of the units to buy: the one the user checked from a listing, with the date, else a dated list price from a maker or distributor store (an estimate, marked ~), else "no price known". ' +
       "The estimate (checked prices plus list prices) is compared with the user's budget. Use it to keep the design inside the budget (fewer or cheaper actuators, one screw size), and report it at the end. Never state a price that is not in this output.",
     inputSchema: {},
   },
@@ -198,6 +198,32 @@ export const setBuild = {
       return text(
         `Extras: ${(res?.extras ?? []).map((x) => `${x.qty}× ${x.key}`).join(', ') || 'none'}.${tethered}${unknown}${plan}`,
       );
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const recordOnHand = {
+  name: 'record_on_hand',
+  config: {
+    title: 'Parts on hand',
+    description:
+      'Records how many of a part the user already owns, by catalog key from find_parts or get_bom ("component:<id>|<version>", exact "hardware:<type>|<size>|<length>", "supply:<id>"), in units, not packs. ' +
+      'Use it when the user lists what they have or pastes an order confirmation: match each item to its key and count units (2 packs of 100 screws is 200). onHand replaces the stored count; 0 clears it. ' +
+      'Owned units cost nothing in get_bom and the Budget check, and find_parts lists them first. It never removes a checked price.',
+    inputSchema: {
+      counts: z
+        .array(z.object({ key: z.string().max(200), onHand: z.number().int().min(0).max(100000) }))
+        .min(1)
+        .max(200),
+    },
+  },
+  handler: async ({ counts }) => {
+    try {
+      const res = await bridge('record_on_hand', { counts });
+
+      return text(res?.text || 'Nothing recorded.');
     } catch (err) {
       return fail(err);
     }

@@ -14,6 +14,7 @@ keywords:
   - euro
   - stale
 related:
+  - count-the-parts-you-own
   - buy-the-parts-for-a-robot
   - get-a-robot-ready-to-build
   - from-design-to-build
@@ -49,6 +50,7 @@ The bar under the total shows how much is left, or how far over budget you are. 
 - A price marked ≈ is the maker's or a distributor's list price. The total is marked ≈ while any line uses one.
 - A price saved more than 60 days ago turns amber. Hover it to see the date, then save the price you see now.
 - **Equipment**, such as tools, is left out of the budget.
+- Parts you own cost $0. See [Count the parts you already own](/help/count-the-parts-you-own).
 
 To keep the store page with a price, open **Listing** in the same sheet and paste the link into **Listing link**.
 

@@ -120,6 +120,7 @@ const EDITS = new Set([
   'mate',
   'define_joints',
   'set_build',
+  'record_on_hand',
   'add_sourced_item',
   'import_maker_cad',
 ]);

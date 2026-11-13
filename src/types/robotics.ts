@@ -316,16 +316,7 @@ export interface EnteredPrice {
   currency: string;
 }
 
-export interface PurchaseRecord {
-  url?: string;
-  asin?: string;
-  title?: string;
-  packQty: number;
-  priceUsd: number;
-  entered?: EnteredPrice;
-  checkedAt: string;
-  note?: string;
-}
+export type { OnHandRecord, PurchaseRecord, Purchases, StoredPurchase } from './purchases';
 
 export interface ReferenceImageRecord {
   id: string;

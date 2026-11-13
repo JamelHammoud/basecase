@@ -183,10 +183,19 @@ function textPrice(l: BomLine, money: Money): string {
   return 'no price known';
 }
 
+function textOwned(l: BomLine): string {
+  if (!l.onHand) return '';
+
+  const unit = l.unit === 'g' ? ' g' : '';
+
+  return ` · ${l.qty - l.toBuy}${unit} owned, ${l.toBuy}${unit} to buy`;
+}
+
 function textLine(l: BomLine, money: Money): string {
   const qty = l.unit === 'g' ? `${l.qty} g` : `${l.qty}×`;
+  const price = l.toBuy ? textPrice(l, money) : 'all owned, nothing to buy';
 
-  return `- ${qty} ${l.name} [${l.key}] · ${textPrice(l, money)}${l.warning ? ` · ${l.warning}` : ''}`;
+  return `- ${qty} ${l.name} [${l.key}]${textOwned(l)} · ${price}${l.warning ? ` · ${l.warning}` : ''}`;
 }
 
 function textNotes(bom: Bom, names: Record<string, string>): string[] {
@@ -223,6 +232,7 @@ export function bomText(bom: Bom, names: Record<string, string>, money: Money = 
     textSummary(bom.totals, money),
     "Checked prices are the user's own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price.",
     ...currencyNote(money),
+    ...(bom.lines.some((l) => l.onHand) ? ['Owned units are parts the user has on hand: they cost nothing here.'] : []),
   ];
 
   for (const { cat, ls } of byCategory(bom)) out.push('', `${cat}:`, ...ls.map((l) => textLine(l, money)));

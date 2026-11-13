@@ -1,5 +1,5 @@
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { ProjectSettings, PurchaseRecord, RobotJoint, ScenePart } from '../types/robotics';
+import type { ProjectSettings, Purchases, RobotJoint, ScenePart } from '../types/robotics';
 import type { BomInput } from './bom';
 import type { RobotBody } from './engineeringBody';
 import type { V3 } from './engineeringMath';
@@ -113,7 +113,7 @@ export interface EngineeringInputs {
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;
   servoOutputs: Record<string, ServoOutput>;
-  purchases?: Record<string, PurchaseRecord>;
+  purchases?: Purchases;
   supportG?: BomInput['supportG'];
   sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
   walk?: WalkSim | string;

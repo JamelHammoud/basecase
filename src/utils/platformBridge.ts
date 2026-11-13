@@ -4,7 +4,8 @@ import type {
   AgentConversation,
   AgentConversationSummary,
   CustomModelDefinition,
-  PurchaseRecord,
+  Purchases,
+  StoredPurchase,
   ReferenceImageRecord,
   SavedSceneRecord,
   SavedSceneSummary,
@@ -140,9 +141,9 @@ const libraryBridge = {
   deleteChat: (id: string): Promise<AgentConversationSummary[]> =>
     electron()?.deleteChat(id) ?? post('/chat-delete', { id }),
 
-  listPurchases: (): Promise<Record<string, PurchaseRecord>> =>
+  listPurchases: (): Promise<Purchases> =>
     quietly(async () => (await electron()?.listPurchases()) ?? get('/purchases'), {}),
-  savePurchase: (key: string, record: PurchaseRecord | null): Promise<Record<string, PurchaseRecord>> =>
+  savePurchase: (key: string, record: StoredPurchase | null): Promise<Purchases> =>
     electron()?.savePurchase({ key, record }) ?? post('/purchase-save', { key, record }),
 
   listSourced: (): Promise<SourcedItem[]> =>

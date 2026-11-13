@@ -50,7 +50,7 @@ Only you can set a blocker aside, with **Ignore**. The agent can say it disagree
 
 The **Bill of materials** is built from the scene. Components count by part, screws and nuts by their exact size, and printed parts become grams of filament per material. Filament rounds up to whole spools with 15% to spare.
 
-What the build needs but the model doesn't show joins the list too. A battery brings a switch, fuse, connector, wire and charger; servos bring their cables. Prices you check in a store are exact; the rest are list prices, marked ≈.
+What the build needs but the model doesn't show joins the list too. A battery brings a switch, fuse, connector, wire and charger; servos bring their cables. Prices you check in a store are exact; the rest are list prices, marked ≈. Parts you own come off the count and cost $0, once you set how many in **On Hand**.
 
 ## How it gets made
 

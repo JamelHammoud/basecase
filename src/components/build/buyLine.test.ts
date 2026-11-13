@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BomLine } from '../../utils/bomTypes';
-import { bomGroups, lineAmount, lineCount } from './buyLine';
+import { bomGroups, lineAmount, lineCount, lineOnHand } from './buyLine';
 
 const line = (o: Partial<BomLine>): BomLine => ({
   key: 'k',
@@ -12,7 +12,9 @@ const line = (o: Partial<BomLine>): BomLine => ({
   partIds: [],
   urlKind: 'none',
   status: 'unchecked',
+  onHand: 0,
   ...o,
+  toBuy: o.toBuy ?? o.qty ?? 2,
 });
 
 const record = { priceUsd: 10, packQty: 10, checkedAt: '2026-11-01' };
@@ -72,5 +74,25 @@ describe('line quantities', () => {
 
     expect(lineCount(filament)).toBe('2×');
     expect(lineAmount(filament)).toBe('1,240 g');
+  });
+
+  it('counts only the pieces left to buy, with what is on hand beside them', () => {
+    const servos = line({ qty: 8, onHand: 6, toBuy: 2 });
+
+    expect(lineCount(servos)).toBe('2×');
+    expect(lineOnHand(servos)).toBe('6 on hand');
+    expect(lineOnHand(line({ qty: 8 }))).toBe('');
+  });
+});
+
+describe('owned lines', () => {
+  it('keep their section at $0 without marking the subtotal estimated', () => {
+    const [group] = bomGroups({
+      lines: [line({ lineUsd: 12.5, status: 'checked', record }), line({ onHand: 13, toBuy: 0, estUsd: 0 })],
+    });
+
+    expect(group.lines).toHaveLength(2);
+    expect(group.usd).toBe(12.5);
+    expect(group.estimated).toBe(false);
   });
 });

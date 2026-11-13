@@ -20,6 +20,7 @@ const TOOL_GUIDES = {
   fasten: ['fasteners'],
   get_bom: ['build'],
   set_build: ['build'],
+  record_on_hand: ['build'],
   check_printability: ['build'],
   slice_plates: ['build'],
   size_actuators: ['servos'],

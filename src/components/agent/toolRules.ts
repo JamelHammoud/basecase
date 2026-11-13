@@ -232,6 +232,7 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['synthesize_linkage'], JointsIcon, ['Fitting a four-bar', 'Fitted a four-bar']),
   plainRule(['sweep_design'], RunIcon, ['Comparing design options', 'Compared design options']),
   plainRule(['set_build'], FileIcon, ['Updating the build', 'Updated the build']),
+  plainRule(['record_on_hand'], FileIcon, ['Updating parts on hand', 'Updated parts on hand']),
   plainRule(['build_guide'], FileIcon, ['Making the build guide', 'Made the build guide']),
 ];
 

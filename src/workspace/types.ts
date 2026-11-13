@@ -164,6 +164,12 @@ export interface Snapshot {
   marks: SceneMark[] | undefined;
   skeleton: RobotSkeleton | undefined;
   tether?: Tether;
+  onHand?: OnHandCount;
+}
+
+export interface OnHandCount {
+  key: string;
+  count: number;
 }
 
 export interface DocState {

@@ -1,4 +1,7 @@
 import { agentCatalog, type CatalogContext } from '../agent/agentCatalog';
+import { ownedKeys } from '../agent/agentCatalogPrices';
+import { onHandText, onHandUpdates } from '../agent/onHand';
+import { writeOnHand } from '../components/build/usePurchases';
 import type { AgentOp } from '../agent/agentScene';
 import { sizeActuators } from '../utils/actuatorSizing';
 import { sizingJoints } from '../utils/actuatorSizingInput';
@@ -50,11 +53,26 @@ function hardest(report: EngineeringReport): Pick<CatalogContext, 'stance' | 'ho
 export async function catalogRequest(payload: Payload, ctx: RequestContext) {
   const project = ctx.project();
   const purchases = await platformBridge.listPurchases();
-  const bom = project.budgetUsd === undefined ? undefined : await sceneBom(ctx);
+  const owns = ownedKeys({ purchases }).length > 0;
+  const bom = project.budgetUsd === undefined && !owns ? undefined : await sceneBom(ctx);
   const needs = project.joints?.length ? hardest(await loadReport(ctx)) : {};
-  const budget = bom && { budgetUsd: project.budgetUsd!, estimatedUsd: bom.totals.estimatedUsd };
+  const budget =
+    bom && project.budgetUsd !== undefined
+      ? { budgetUsd: project.budgetUsd, estimatedUsd: bom.totals.estimatedUsd }
+      : undefined;
+  const used = bom && Object.fromEntries(bom.lines.map((l) => [l.key, l.qty]));
 
-  return { text: agentCatalog(String(payload.query ?? ''), { purchases, budget, ...needs }) };
+  return {
+    text: agentCatalog(String(payload.query ?? ''), { purchases, budget, used, ...needs }),
+  };
+}
+
+export async function recordOnHandRequest(payload: Payload) {
+  const { updates, refused } = onHandUpdates(payload.counts);
+
+  for (const u of updates) await writeOnHand(u.key, u.onHand);
+
+  return { text: onHandText(updates, refused) };
 }
 
 function sizedReply(families: ReturnType<typeof sizeActuators>, totalG: number, lead = '') {

@@ -13,6 +13,8 @@ const line = (o: Partial<BomLine> = {}): BomLine => ({
   partIds: [],
   urlKind: 'none',
   status: 'unchecked',
+  onHand: 0,
+  toBuy: 1,
   ...o,
 });
 

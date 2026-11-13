@@ -29,7 +29,13 @@ import { findJointAxes } from './agentJointAxes';
 import { PORT_HANDLERS } from './agentPortRequests';
 import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';
 import { costByClass } from '../utils/budget';
-import { budgetPlanNote, catalogRequest, costNotes, sizeActuatorsRequest } from './agentCostRequests';
+import {
+  budgetPlanNote,
+  catalogRequest,
+  costNotes,
+  recordOnHandRequest,
+  sizeActuatorsRequest,
+} from './agentCostRequests';
 import { POSE_TOOL_KINDS, SIM_TOOL_KINDS } from './agentRobotTools';
 import type { SweepPayload } from './agentSweepRequest';
 import type { Vec3 } from './types';
@@ -301,6 +307,7 @@ const HANDLERS: Record<string, Handler> = {
     return { text: engineeringText(await ctx.verify({ peak: payload.peak === true }), toCad) };
   },
   set_build: setBuild,
+  record_on_hand: recordOnHandRequest,
   readiness: (_payload, ctx) => readinessRequest(ctx),
   readiness_line: (_payload, ctx) => {
     void ctx.readiness.checkNow();

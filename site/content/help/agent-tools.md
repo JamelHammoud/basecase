@@ -133,6 +133,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `check_printability` | Checks each part against your printer |
 | `slice_plates` | Slices plates for print time and grams, without printing |
 | `set_build` | Sets extras, budget and filament |
+| `record_on_hand` | Records how many of a part you own |
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
 | `sweep_design` | Tries a value on copies, without changing the scene |

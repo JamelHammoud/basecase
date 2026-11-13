@@ -5,7 +5,15 @@ import { componentPorts } from '../data/componentPorts';
 import { catalogPortLines } from './ports';
 import { currencyNote } from '../utils/currency';
 import { currentMoney } from '../utils/currencyStore';
-import { actuatorValue, catalogHeader, hardwarePrices, priceText, type CatalogContext } from './agentCatalogPrices';
+import {
+  actuatorValue,
+  catalogHeader,
+  hardwarePrices,
+  ownedKeys,
+  ownedText,
+  priceText,
+  type CatalogContext,
+} from './agentCatalogPrices';
 
 export type { CatalogContext } from './agentCatalogPrices';
 
@@ -24,7 +32,9 @@ function versionText(c: Component, v: NonNullable<Component['variants']>[number]
   const linear = v.linear ? `, ${v.linear.forceN} N max, ${v.linear.mmPerS} mm/s` : '';
   const price = v.actuator ? actuatorValue(v.actuator, key, ctx) : priceText(key, ctx);
 
-  return `${key} = ${v.label}${v.actuator ? `, ${act(v.actuator)}` : ''}${linear} · ${price}`;
+  const owned = ownedText(key, ctx);
+
+  return `${key} = ${v.label}${v.actuator ? `, ${act(v.actuator)}` : ''}${linear} · ${price}${owned ? ` · ${owned}` : ''}`;
 }
 
 function componentActuatorLine(c: Component, ctx?: CatalogContext): string | null {
@@ -57,13 +67,35 @@ function componentPortLine(c: Component): string | null {
     : null;
 }
 
+const ownedSuffix = (c: Component, ctx?: CatalogContext) => {
+  const owned = c.variants?.length ? '' : ownedText(`component:${c.id}`, ctx);
+
+  return owned ? ` · ${owned}` : '';
+};
+
+function ownedFirst(comps: Component[], ctx?: CatalogContext): Component[] {
+  const owned = ownedKeys(ctx);
+
+  if (!owned.length) return comps;
+
+  const owns = (c: Component) =>
+    owned.some((key) => key === `component:${c.id}` || key.startsWith(`component:${c.id}|`));
+  const groups = [...new Set(comps.map((c) => c.group))];
+
+  return groups.flatMap((group) => {
+    const inGroup = comps.filter((c) => c.group === group);
+
+    return [...inGroup.filter(owns), ...inGroup.filter((c) => !owns(c))];
+  });
+}
+
 function componentLines(comps: Component[], ctx?: CatalogContext): string[] {
   const lines = [
     'Components (exact manufacturer geometry; size is x × y × z in mm as placed with rotation [0, 0, 0]):',
   ];
   let group = '';
 
-  for (const c of comps) {
+  for (const c of ownedFirst(comps, ctx)) {
     if (c.group !== group) {
       group = c.group;
       lines.push(`${group}:`);
@@ -76,7 +108,7 @@ function componentLines(comps: Component[], ctx?: CatalogContext): string[] {
       .join('; ');
 
     lines.push(
-      `- component:${c.id} — ${c.name} · ${sz.width} × ${sz.depth} × ${sz.height} mm · ${specs}${componentPrice(c, ctx)} · Mounting: ${c.mounting}`,
+      `- component:${c.id} — ${c.name} · ${sz.width} × ${sz.depth} × ${sz.height} mm · ${specs}${componentPrice(c, ctx)}${ownedSuffix(c, ctx)} · Mounting: ${c.mounting}`,
     );
 
     for (const extra of [componentActuatorLine(c, ctx), componentPowerLine(c), componentPortLine(c)])

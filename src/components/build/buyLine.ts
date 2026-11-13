@@ -9,7 +9,9 @@ export interface BomGroup {
   attention: boolean;
 }
 
-export const lineCount = (l: BomLine) => `${l.unit === 'g' ? (l.packs ?? 1) : l.qty}×`;
+export const lineCount = (l: BomLine) => `${l.unit === 'g' ? (l.packs ?? 1) : l.toBuy}×`;
+
+export const lineOnHand = (l: BomLine) => (l.onHand && l.unit === 'pcs' ? `${l.onHand} on hand` : '');
 
 export function lineAmount(l: BomLine) {
   if (l.unit === 'g') return `${l.qty.toLocaleString('en-US')} g`;
@@ -28,7 +30,7 @@ function groupOf(category: BomCategory, lines: BomLine[]): BomGroup {
     category,
     lines,
     usd: priced.length ? priced.reduce((sum, usd) => sum + usd, 0) : undefined,
-    estimated: lines.some((l) => l.lineUsd === undefined),
+    estimated: lines.some((l) => l.lineUsd === undefined && l.toBuy > 0),
     attention: lines.some((l) => l.warning || l.status === 'stale'),
   };
 }

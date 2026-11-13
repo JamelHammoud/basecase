@@ -7,7 +7,7 @@ import { plural } from '../../electron/plural.mjs';
 
 const WARN_SHARE = 0.9;
 
-const qtyOf = (l: BomLine) => (l.unit === 'g' ? `${l.qty} g` : `${l.qty}×`);
+const qtyOf = (l: BomLine) => (l.unit === 'g' ? `${l.qty} g` : `${l.toBuy}×`);
 const BIGGEST = 3;
 
 export function budgetRow(ctx: CheckContext): CheckRow {

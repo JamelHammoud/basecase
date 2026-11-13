@@ -34,7 +34,7 @@ covers:
 Fill an Amazon cart from the bill of materials, open the other stores' listings, add the supplies a build needs, and export the list.
 
 1. In the **Build** tab, click the spreadsheet icon beside **Bill of materials**.
-2. Choose **Buy All**. Your browser opens an Amazon cart with every line that has an Amazon listing, in whole packs.
+2. Choose **Buy All**. Your browser opens an Amazon cart with every line that has an Amazon listing, in whole packs of what's left to buy.
 3. Below **Buy All**, choose each line listed under another store to open its listing there.
 4. To add something the model doesn't show, click **+** beside **Bill of materials**.
 5. Choose a supply under **Power**, **Wiring**, **Electronics** or **Tools**.

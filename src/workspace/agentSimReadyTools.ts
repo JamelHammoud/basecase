@@ -28,7 +28,7 @@ export async function findObjects(ctx: SimReadyToolContext, payload: Payload) {
 
   const found = await searchSimReady({ query, shelf, limit }).catch(() => null);
 
-  if (!found) return { text: 'Couldn’t reach SimReady Central. Try again later.' };
+  if (!found) return { text: 'Couldn’t reach SimReady Central. Call find_objects again in a minute.' };
 
   if (!found.length) return { text: `No SimReady ${shelf} match "${query}".` };
 

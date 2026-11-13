@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const APP_NAME = 'Bambu Connect.app';
-const INSTALL_MESSAGE = 'Install Bambu Connect from bambulab.com, then try again.';
+const INSTALL_MESSAGE = 'Install Bambu Connect from bambulab.com.';
 const CONTROL_MESSAGE = 'Control this print in Bambu Connect.';
 
 export function bambuConnectUrl(file, name) {

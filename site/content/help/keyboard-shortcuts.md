@@ -16,6 +16,7 @@ related:
   - trackpad-and-mouse-controls
   - run-a-command
 covers:
+  - src/components/shortcutGroups.ts
   - src/components/ShortcutsList.tsx
   - src/workspace/useWorkspaceKeys.ts
   - src/app/tabShortcuts.ts
@@ -24,16 +25,16 @@ covers:
   - electron/app-menu.mjs
 ---
 
-Every keyboard shortcut in Basecase, grouped by what you're doing, with the Windows keys beside the Mac ones.
+Every keyboard shortcut in Basecase, grouped by what you're doing, as the **Shortcuts** pane in Settings lists them.
 
-On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? while you're not typing to open this list in Settings.
+On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? while you're not typing to open the **Shortcuts** pane.
 
 ## Navigate
 
 | Action | Keys |
 |---|---|
 | Pan | Hold Space and drag |
-| Zoom to the selection | [[Z]] |
+| Zoom to selection | [[Z]] |
 | Isometric view | [[1]] |
 | Top view | [[2]] |
 | Front view | [[3]] |
@@ -46,20 +47,22 @@ On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? wh
 | Move | [[V]] or [[W]] |
 | Rotate | [[E]] |
 | Scale | [[R]] |
-| Sculpt, once it's on in **Settings** ▸ **Canvas** | [[C]] |
+| Sculpt | [[C]] |
 | Sculpt inverted | ⌥ and drag |
-| Pose | [[P]] |
+| Show pose | [[P]] |
 | Comment | [[M]] |
 | Measure | [[D]] |
 | Measure without snapping | ⇧ and click |
 | Measure vertically | ⌥ and click |
 | Annotate | [[N]] |
-| Marker, while annotating | [[P]] |
-| Eraser, while annotating | [[E]] |
+| Marker while annotating | [[P]] |
+| Eraser while annotating | [[E]] |
 | Shapes | [[A]] |
-| Drop to the floor | [[F]] |
-| Stack on the part below | [[S]] |
+| Drop to floor | [[F]] |
+| Stack on part below | [[S]] |
 | Move or rotate without snapping | ⇧ and drag |
+
+The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 
 ## Edit
 
@@ -67,7 +70,7 @@ On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? wh
 |---|---|
 | Undo | [[⌘Z]] |
 | Redo | [[⇧⌘Z]] or [[⌘Y]] |
-| Add to the selection | ⇧ and click |
+| Add to selection | ⇧ and click |
 | Box select | ⇧ and drag |
 | Select a part inside a group | ⌘ and click, or double-click |
 | Select all | [[⌘A]] |
@@ -85,13 +88,13 @@ On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? wh
 | Action | Keys |
 |---|---|
 | New scene | [[⌘T]] |
-| Open a saved scene | [[⌘O]] |
-| Close the scene | [[⌘W]] |
-| Reopen the last closed scene | [[⇧⌘T]] |
+| Show scenes | [[⌘O]] |
+| Close scene | [[⌘W]] |
+| Reopen closed scene | [[⇧⌘T]] |
 | Next scene | [[⌃Tab]], or ⇧⌘ and ] |
 | Previous scene | [[⌃⇧Tab]], or ⇧⌘ and [ |
-| Go to scene 1 to 8 | [[⌘1]] to [[⌘8]] |
-| Go to the last scene | [[⌘9]] |
+| Go to scene 1–8 | [[⌘1]] to [[⌘8]] |
+| Go to last scene | [[⌘9]] |
 
 ## App
 
@@ -99,23 +102,27 @@ On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? wh
 |---|---|
 | Command menu | [[⌘K]] |
 | Find parts | [[⌘F]] |
-| Show or hide the sidebar | [[⌘B]] |
-| Show or hide the inspector | [[⌘I]] |
+| Show or hide sidebar | [[⌘B]] |
+| Show or hide inspector | [[⌘I]] |
 | Show or hide reference images | [[⇧I]] |
 | Show or hide camera views | [[⇧V]] |
-| Print mode | [[⌘P]] |
+| Print | [[⌘P]] |
 | Run Routine | [[⌘↩]] |
 | Settings | [[⌘,]] |
-| Shortcuts | [[?]] |
+| Keyboard shortcuts | [[?]] |
 
-## Agent composer
+## Agent
+
+These keys work in the message field of the **Agent** tab.
 
 | Action | Keys |
 |---|---|
 | Send | [[↩]] |
 | New line | [[⇧↩]] |
-| Queue a message while the agent works | [[⌘↩]] |
-| Stop the agent, with an empty message | [[Esc]] |
-| Open slash commands, at the start of a message | [[/]] |
+| Queue | [[⌘↩]] |
+| Stop | [[Esc]] |
+| Slash commands | [[/]] |
+
+Queue sends the message once the agent finishes its current work. Esc stops the agent only while the message field is empty. A slash at the start of a message opens the slash commands.
 
 For the trackpad and mouse, see [Trackpad and mouse controls](/help/trackpad-and-mouse-controls).

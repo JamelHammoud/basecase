@@ -14,6 +14,7 @@ keywords:
   - /simulate
   - /routine
   - /operate
+  - /pass
 related:
   - design-a-robot-with-the-agent
   - agent-tools
@@ -38,5 +39,7 @@ Type / at the start of a message to list them, then press Enter or Tab to pick o
 | `/check` | **Run Checks** | Checks the design is ready to build |
 
 None of them changes the design unless your words ask for it. For example, `/case reach the cup on the shelf` adds a Case and leaves the robot alone.
+
+`/pass` followed by a Case's name is the one that does change the design: the agent changes the robot until that Case passes. It isn't in the list; [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent) shows how to start it.
 
 **Ask the Agent** in **Play** ▸ **Cases** starts a message with `/case`, and **Teach** in the Simulate tab's **Train** section sends `/train` with your goal.

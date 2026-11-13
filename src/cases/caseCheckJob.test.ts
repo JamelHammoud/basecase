@@ -59,6 +59,30 @@ describe('the Case checks worker job', () => {
     SIM_MS,
   );
 
+  it(
+    'replays one seed into a three-frame filmstrip of the robot and the world',
+    async () => {
+      const mj = await loadMujoco();
+      const robot = wire('rover-diff');
+      const fixture = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+      const kase = presetCase(fixture, 'reach-the-flag');
+      const session = new CaseCheckSession();
+      const reply = await session.run(mj, { type: 'replay', kase, modelHash: 'rover', robot, seed: 4, walk: null });
+
+      if (reply.type !== 'replay' || !reply.film) throw new Error('No film came back.');
+
+      const { recording, model, boxes } = reply.film;
+
+      expect(recording.frames).toBe(3);
+      expect(recording.poses).toHaveLength(3 * model.bodies.length * 7);
+      expect(recording.t[0]).toBe(0);
+      expect(recording.t[2]).toBeGreaterThan(recording.t[1]);
+      expect(boxes.filter((b) => b.world).map((b) => b.id)).toEqual(['spot']);
+      expect(boxes.filter((b) => !b.world).length).toBeGreaterThan(0);
+    },
+    SIM_MS,
+  );
+
   it('splits 20 seeds evenly across the workers', () => {
     expect(seedBatches(20, 4)).toEqual([
       [1, 2, 3, 4, 5],

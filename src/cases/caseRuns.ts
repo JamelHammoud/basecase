@@ -7,9 +7,15 @@ export const CASE_RUNS = 20;
 export const MISSED = 'missed';
 
 export interface RunOutcome {
+  seed: number;
   passed: boolean;
   margin: number;
   failed: string[];
+}
+
+export interface FailureCount {
+  label: string;
+  runs: number;
 }
 
 export interface CaseRuns {
@@ -17,6 +23,8 @@ export interface CaseRuns {
   passes: number;
   medianMargin: number;
   commonFailure: string | null;
+  failures: FailureCount[];
+  worstSeed: number | null;
   refusal: string | null;
 }
 
@@ -33,17 +41,29 @@ function median(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-function mostCommon(labels: string[]): string | null {
+function failureCounts(missed: RunOutcome[]): FailureCount[] {
   const counts = new Map<string, number>();
 
-  for (const label of labels) counts.set(label, (counts.get(label) ?? 0) + 1);
+  for (const outcome of missed) {
+    for (const label of new Set(outcome.failed.length ? outcome.failed : [MISSED]))
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
 
-  let best: string | null = null;
-
-  for (const [label, n] of counts) if (best === null || n > counts.get(best)!) best = label;
-
-  return best;
+  return [...counts].map(([label, runs]) => ({ label, runs })).sort((a, b) => b.runs - a.runs);
 }
+
+const worstOf = (outcomes: RunOutcome[]) =>
+  outcomes.reduce<RunOutcome | null>((worst, o) => (worst === null || o.margin < worst.margin ? o : worst), null);
+
+export const noRuns = (refusal: string): CaseRuns => ({
+  runs: 0,
+  passes: 0,
+  medianMargin: -1,
+  commonFailure: null,
+  failures: [],
+  worstSeed: null,
+  refusal,
+});
 
 export const seedsUpTo = (runs: number) => Array.from({ length: runs }, (_, i) => i + 1);
 
@@ -69,7 +89,7 @@ export async function runSeeds(
   for (const seed of options.seeds) {
     const { passed, margin, failed } = await runner.run(seed);
 
-    outcomes.push({ passed, margin, failed });
+    outcomes.push({ seed, passed, margin, failed });
   }
 
   return { outcomes };
@@ -79,16 +99,18 @@ export function summarizeRuns(batches: SeedRuns[]): CaseRuns {
   const refused = batches.find((b): b is { refusal: string } => 'refusal' in b);
   const outcomes = batches.flatMap((b) => ('outcomes' in b ? b.outcomes : []));
 
-  if (refused)
-    return { runs: outcomes.length, passes: 0, medianMargin: -1, commonFailure: null, refusal: refused.refusal };
+  if (refused) return { ...noRuns(refused.refusal), runs: outcomes.length };
 
   const missed = outcomes.filter((o) => !o.passed);
+  const failures = failureCounts(missed);
 
   return {
     runs: outcomes.length,
     passes: outcomes.length - missed.length,
     medianMargin: median(outcomes.map((o) => o.margin)),
-    commonFailure: mostCommon(missed.flatMap((o) => (o.failed.length ? o.failed : [MISSED]))),
+    commonFailure: failures[0]?.label ?? null,
+    failures,
+    worstSeed: worstOf(missed.length ? missed : outcomes)?.seed ?? null,
     refusal: null,
   };
 }

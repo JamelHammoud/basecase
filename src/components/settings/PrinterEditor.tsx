@@ -10,6 +10,7 @@ import {
 import { printBridge, type SavedPrinter } from '../../print/printBridge';
 import { SettingsRow as Row } from '../SettingsRows';
 import { SecretField } from './SecretField';
+import { errorMessage } from '../../utils/errorMessage';
 
 const CUSTOM = 'custom';
 const NONE = 'none';
@@ -82,7 +83,7 @@ const ConnectionTest: React.FC<{ id: string }> = ({ id }) => {
     try {
       setResult(await printBridge.test(id));
     } catch (e) {
-      setResult({ ok: false, message: e instanceof Error ? e.message : String(e) });
+      setResult({ ok: false, message: errorMessage(e) });
     } finally {
       setTesting(false);
     }

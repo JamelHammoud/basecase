@@ -3,6 +3,7 @@ import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
+import type { ScenePart } from '../types/robotics';
 import type { V3 } from '../utils/kinematics';
 
 export interface FilmBox {
@@ -22,6 +23,22 @@ export interface FilmstripInput {
   width: number;
   height: number;
 }
+
+export type FilmShot = Omit<FilmstripInput, 'frames' | 'width' | 'height'>;
+
+export const partBox = (p: ScenePart, world: boolean): FilmBox => ({
+  id: p.id,
+  world,
+  position: p.position,
+  rotation: p.rotation,
+  size: [p.dimensions.width, p.dimensions.height, p.dimensions.depth],
+  color: world ? '#0d99ff' : '#9a9a9a',
+});
+
+export const filmBoxes = (parts: ScenePart[], world: ScenePart[]): FilmBox[] => [
+  ...parts.filter((p) => p.visible && p.role === 'solid').map((p) => partBox(p, false)),
+  ...world.map((p) => partBox(p, true)),
+];
 
 export type Polygon = Array<[number, number]>;
 

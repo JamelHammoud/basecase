@@ -8,6 +8,7 @@ const MEASURING = new Set([
   'verify',
   'sweep_design',
   'define_joints',
+  'find_joint_axes',
   'simulate',
   'set_world',
   'start_drive',

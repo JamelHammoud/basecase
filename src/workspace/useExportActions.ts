@@ -12,6 +12,7 @@ import { useStepExport } from './useStepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 import { useRobotPackageExport } from './useRobotPackageExport';
+import { errorMessage } from '../utils/errorMessage';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -50,7 +51,7 @@ export function useExportActions(core: WorkspaceCore) {
       await navigator.clipboard.writeText(markdown);
       showToast('Copied as Markdown');
     } catch (err) {
-      showToast(`Couldn’t copy. ${String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t copy. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 
@@ -97,7 +98,7 @@ export function useExportActions(core: WorkspaceCore) {
       download(bytes, `${fileSafe(scene.sceneName)}.${SCENE_FILE_EXTENSION}`, 'application/gzip');
       showToast(`Exported ${scene.sceneName}`);
     } catch (err) {
-      showToast(`Couldn’t export the scene. ${String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t export the scene. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 
@@ -134,7 +135,7 @@ export function useExportActions(core: WorkspaceCore) {
 
       showToast(`Exported ${scene.sceneName} as USDZ`);
     } catch (err) {
-      showToast(`Couldn’t export USDZ. ${String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t export USDZ. ${errorMessage(err)}`, { tone: 'error' });
     } finally {
       sharingRef.current = false;
     }

@@ -16,15 +16,38 @@ const ICONS: Record<SlashName, React.ReactNode> = {
   check: <CheckIcon className={ic} />,
 };
 
-export function slashPaletteCommands({ core }: CommandInputs): Command[] {
+const FAILING = new Set(['fail', 'warn']);
+
+function makeItPass({ core }: CommandInputs): Command[] {
+  const kase = core.simTraining.cases.active;
+  const row = kase && core.readiness.current?.rows.find((r) => r.caseId === kase.id);
+
+  if (!kase || !row || !FAILING.has(row.status)) return [];
+
+  return [
+    {
+      id: 'agent-make-it-pass',
+      group: 'Agent',
+      label: 'Make It Pass',
+      icon: <CasesIcon className={ic} />,
+      keywords: `/pass ${kase.name} case fix redesign agent`,
+      run: () => core.tool.requestCompose(`/pass ${kase.name}`),
+    },
+  ];
+}
+
+export function slashPaletteCommands(inputs: CommandInputs): Command[] {
   if (IS_WEB_DEMO) return [];
 
-  return SLASH_COMMANDS.map((command) => ({
-    id: `agent-slash-${command.name}`,
-    group: 'Agent',
-    label: command.label,
-    icon: ICONS[command.name],
-    keywords: `/${command.name} ${command.keywords} agent`,
-    run: () => core.tool.requestCompose(slashText(command.name)),
-  }));
+  return [
+    ...makeItPass(inputs),
+    ...SLASH_COMMANDS.map((command) => ({
+      id: `agent-slash-${command.name}`,
+      group: 'Agent',
+      label: command.label,
+      icon: ICONS[command.name],
+      keywords: `/${command.name} ${command.keywords} agent`,
+      run: () => inputs.core.tool.requestCompose(slashText(command.name)),
+    })),
+  ];
 }

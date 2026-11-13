@@ -37,17 +37,13 @@ Turn an outline you draw, or an SVG file, into a solid part by extruding it to a
 
 1. Click **Shapes** in the bottom toolbar and choose **Sketch**.
 2. Under **Outline**, choose **Extrude** to push the outline up into a solid, or **Revolve** to spin it around the center axis.
-3. Click **Clear**, then **Clear** again to confirm, to start from an empty sketch.
-4. Click on the grid to add each corner.
-5. To cut a hole in an extruded outline, choose **Hole** and click inside the shape.
-6. Under **Output**, type a name, the width (**W**) and the thickness (**T**), in millimeters.
-7. Click **Add**. To keep a copy in the Library too, click **Save to Library**, the bookmark in the part's Inspector header.
+3. With **Line** picked, click on the grid for each corner, then click the first corner again to close the outline.
+4. Under **Output**, type a name and, for an extrusion, the thickness (**T**) in millimeters.
+5. Click **Add**. To keep a copy in the Library too, click **Save to Library**, the bookmark in the part's Inspector header.
 
-The panel closes and the new part is selected. To draw freehand instead of by corners, choose **Freehand** above the grid and drag.
+The panel closes and the new part is selected. **Rectangle**, **Circle** and **Arc**, beside **Line**, draw those shapes instead.
 
-Points snap to the grid until you turn off **Snap to grid**, and **Remove last point** takes back one corner.
-
-For **Revolve**, **W** is the diameter and **T** is the height. Width runs from 5 to 500 mm and thickness from 1 to 250 mm. **Bevel**, on by default for extrusions, softens the edges.
+Points snap to the grid until you turn off **Snap to grid**. To type exact lengths, see [Sketch a part to exact dimensions](/help/sketch-a-part-to-exact-dimensions).
 
 ## Turn an SVG into a part
 
@@ -57,6 +53,8 @@ For **Revolve**, **W** is the diameter and **T** is the height. Width runs from 
 4. Under **Output**, type a name, the width (**W**) and the thickness (**T**).
 5. Click **Add**.
 
-To paste SVG code instead of choosing a file, click **Paste code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.
+Width runs from 5 to 500 mm and thickness from 1 to 250 mm. **Bevel**, on by default, softens the edges.
+
+To paste SVG code instead of choosing a file, click **Paste Code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.
 
 Sketch is also in [[⌘K]] and the canvas's right-click menu. To open Import SVG with a file already loaded, choose **Import** there, in **File** or in the Library's **+** menu, or drop the SVG on the canvas.

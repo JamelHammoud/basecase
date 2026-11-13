@@ -16,6 +16,7 @@ import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { fileSafe } from './helpers';
 import type { ShowToast, ToastOptions } from './types';
+import { errorMessage } from '../utils/errorMessage';
 
 interface DatasetExportOptions {
   sim: Simulation;
@@ -177,7 +178,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
 
       showToast(done.message, done.options);
     } catch (err) {
-      showToast(`${delivery.failed} ${err instanceof Error ? err.message : String(err)}`, { tone: 'error' });
+      showToast(`${delivery.failed} ${errorMessage(err)}`, { tone: 'error' });
     } finally {
       setExporting(false);
     }

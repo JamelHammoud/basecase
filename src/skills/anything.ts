@@ -11,6 +11,7 @@ import { taskEnvironment } from './anythingEnvironment';
 import { Poser } from './anythingPoser';
 import { race, routeOf, solveMethod, travels, type Attempt, type Task } from './anythingRace';
 import type { AnythingInput, AnythingOutcome, TaskSpec } from './anythingTypes';
+import { errorMessage } from '../utils/errorMessage';
 
 export type { AnythingInput, AnythingOutcome, Approval, Proposal } from './anythingTypes';
 
@@ -112,7 +113,7 @@ export async function trainAnything(input: AnythingInput, ask: Ask = askClaude):
   try {
     return await solve(input, { facts, poser, meter, ask });
   } catch (error) {
-    return { kind: 'not-found', reason: `Stopped: ${(error as Error).message}`, cost: meter.cost() };
+    return { kind: 'not-found', reason: `Stopped: ${errorMessage(error)}`, cost: meter.cost() };
   } finally {
     poser.dispose();
   }

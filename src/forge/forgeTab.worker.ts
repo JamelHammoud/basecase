@@ -6,6 +6,7 @@ import { ForgeGpu } from './forgeGpu';
 import { settleStart, type StartJob } from './forgeStart';
 import { loadForgeWasm, type ForgeEvent, type ForgeWasm } from './forgeWasm';
 import { hasJspi } from './tabSupport';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface ForgeTabRequest {
   type: 'train';
@@ -76,5 +77,5 @@ async function train(msg: ForgeTabRequest) {
 }
 
 ctx.onmessage = (ev: MessageEvent<ForgeTabRequest>) => {
-  train(ev.data).catch((e: unknown) => post({ type: 'error', message: e instanceof Error ? e.message : String(e) }));
+  train(ev.data).catch((e: unknown) => post({ type: 'error', message: errorMessage(e) }));
 };

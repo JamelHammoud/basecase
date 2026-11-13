@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { buildRig } from '../src/utils/kinematics';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 let app: App;
@@ -31,16 +33,17 @@ async function holdKey(key: string, ms: number) {
 
 async function openTouchTheDots() {
   const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const kase = presetCase('touch-the-dots', buildRig(robot.joints, robot.parts), robot.parts);
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: 'arm-3dof',
     parts: robot.parts,
-    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+    project: { ...DEFAULT_PROJECT, joints: robot.joints, cases: [kase] },
   });
   await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
   await openPlayTab(app.page, 'Cases');
-  await button('Touch the Dots').click();
-  await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
+  await app.page.locator(visible('[data-testid="cases-panel"] button'), { hasText: kase.name }).first().click();
+  await expect.poll(async () => (await simState()).activeCase).toBe(kase.id);
 }
 
 beforeAll(async () => {

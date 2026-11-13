@@ -17,6 +17,7 @@ import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { openCadFile } from './cadImport/openCadFile.mjs';
 import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
 import { RobotLink } from './robot/robotLink.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
@@ -426,5 +427,24 @@ describe('robot daemon', () => {
     }
 
     expect(link.connect).not.toHaveBeenCalled();
+  });
+});
+
+describe('phone pairing', () => {
+  it('answers phone channels only from the app frame', () => {
+    const handlers = new Map();
+    const ipcMain = { handle: (channel, fn) => handlers.set(channel, fn), on: () => {} };
+    const phone = { pair: vi.fn(), unpair: vi.fn(), state: vi.fn() };
+
+    registerPhoneHandlers(trustedIpc(ipcMain, 'app://basecase'), phone);
+
+    for (const channel of ['phone:pair', 'phone:unpair', 'phone:state']) {
+      const evil = { senderFrame: { parent: null, url: 'https://example.com/' } };
+
+      expect(() => handlers.get(channel)(evil), channel).toThrow('Refused');
+    }
+
+    expect(phone.pair).not.toHaveBeenCalled();
+    expect(phone.unpair).not.toHaveBeenCalled();
   });
 });

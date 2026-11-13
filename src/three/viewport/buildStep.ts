@@ -9,7 +9,7 @@ const ARROW_COLOR = 0x0d99ff;
 const ARROW_ORDER = 20;
 const LABEL_GAP_PX = 8;
 const LABEL_CLASS =
-  'absolute left-0 top-0 glass rounded-full h-8 px-3.5 flex items-center whitespace-nowrap text-[13px] text-white/90 tabular-nums pointer-events-none';
+  'absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 flex items-center whitespace-nowrap text-[13px] text-white/90 tabular-nums pointer-events-none';
 const UP = new THREE.Vector3(0, 1, 0);
 const BOX = new THREE.Box3();
 

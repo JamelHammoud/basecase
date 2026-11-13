@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuEntry, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, deleteEntry, useScrollFade } from '../design-system';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
@@ -83,7 +83,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       items: [
         { label: 'Retrain', disabled: !training.canTrain, onSelect: () => void training.retrain(policy) },
         { divider: true },
-        { label: 'Delete', tone: 'danger', onSelect: () => onDeletePolicy(id) },
+        deleteEntry(() => onDeletePolicy(id)),
       ],
     });
   };

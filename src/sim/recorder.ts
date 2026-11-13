@@ -1,6 +1,7 @@
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimEngine } from './engine';
 import type { FaultKind, RecordedFault } from './faults';
+import { torqueShare } from './torqueShare';
 
 export const RECORD_HZ = 50;
 
@@ -28,6 +29,7 @@ export interface Recording {
   root?: [number, number];
   scan?: Float32Array;
   scanWidth?: number;
+  torque?: Float32Array;
   faults?: RecordedFault[];
   commands?: RecordedCommand[];
   controller?: Controller;
@@ -85,6 +87,8 @@ export class Recorder {
   private readonly qvel: Growing<Float32Array>;
 
   private readonly poses: Growing<Float32Array>;
+
+  private readonly torque = new Growing(f32, 512);
 
   private readonly jointQpos: Int32Array;
 
@@ -153,6 +157,7 @@ export class Recorder {
     this.qpos.push(data.qpos);
     this.qvel.push(data.qvel);
     this.poses.push(this.engine.poses());
+    this.torque.push([torqueShare(this.engine)]);
 
     if (this.scan && this.engine.scanner) {
       this.engine.scanner.tick();
@@ -178,6 +183,7 @@ export class Recorder {
       qpos: this.qpos.done(),
       qvel: this.qvel.done(),
       poses: this.poses.done(),
+      torque: this.torque.done(),
       jointQpos: this.jointQpos,
       jointDof: this.jointDof,
       root: this.root,
@@ -191,7 +197,9 @@ export class Recorder {
 }
 
 export const recordingTransfer = (r: Recording): Transferable[] =>
-  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.jointQpos, r.jointDof, r.scan].flatMap((a) => (a ? [a.buffer] : []));
+  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.torque, r.jointQpos, r.jointDof, r.scan].flatMap((a) =>
+    a ? [a.buffer] : [],
+  );
 
 export function framePoses(r: Recording, frame: number): Float64Array {
   const size = r.nbody * 7;

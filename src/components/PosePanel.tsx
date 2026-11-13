@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ContextMenu, ContextMenuEntry, Section, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, Section, deleteEntry, useScrollFade } from '../design-system';
 import type { RobotJoint } from '../types/robotics';
 import { jointGroups, nameWords, prettyJointName, sideOf } from '../utils/kinematics';
 import type { Posing } from '../utils/usePosing';
@@ -50,7 +50,7 @@ const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
     submenu: () => <JointRangeFields joint={j} onChange={(range, live) => edits.setRange(j.id, range, live)} />,
   },
   { divider: true },
-  { label: 'Delete', tone: 'danger', onSelect: () => edits.remove(j.id) },
+  deleteEntry(() => edits.remove(j.id)),
 ];
 
 export const PosePanel: React.FC<PosePanelProps> = ({

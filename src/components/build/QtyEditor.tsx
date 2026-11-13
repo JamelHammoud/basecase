@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { MenuDivider, MenuItem, MenuLabel, NumberInput, PopoverMenu, Tooltip } from '../../design-system';
+import { deleteEntry, MenuDivider, MenuItem, MenuLabel, NumberInput, PopoverMenu, Tooltip } from '../../design-system';
 import type { BomLine } from '../../utils/bomTypes';
 import type { Extra } from './buyExtras';
 import { lineCount } from './buyLine';
@@ -52,12 +52,10 @@ export const QtyEditor: React.FC<{
           </>
         )}
         <MenuItem
-          label="Delete"
-          tone="danger"
-          onSelect={() => {
+          {...deleteEntry(() => {
             setOpen(false);
             onDelete();
-          }}
+          })}
         />
       </PopoverMenu>
     </div>

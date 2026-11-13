@@ -18,7 +18,7 @@ const SPEEDS = [
 ];
 
 const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
-  <div className="flex items-center gap-1.5 h-9">
+  <div className="flex items-center gap-1.5 h-[32px]">
     <IconButton
       icon={sim.playing ? <PauseIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
       title={sim.playing ? 'Pause' : 'Play'}

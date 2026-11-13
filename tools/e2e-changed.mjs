@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const TEST = /^\s*(?:it|test|itUnless\w*|it\.\w+)\(\s*(['"`])((?:\\.|(?!\1).)+)\1/;
+const TEST = /^[ \t]*(?:it|test|itUnless\w*|it\.\w+)\(\s*(['"`])((?:\\.|(?!\1).)+)\1/gm;
 const HUNK = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/;
 
 export function changedLines(diff) {
@@ -23,10 +23,8 @@ export function changedLines(diff) {
 }
 
 export function testsAt(source, lines) {
-  const starts = source
-    .split('\n')
-    .map((text, index) => ({ line: index + 1, name: TEST.exec(text)?.[2] }))
-    .filter((entry) => entry.name);
+  const lineAt = (index) => source.slice(0, index).split('\n').length;
+  const starts = [...source.matchAll(TEST)].map((match) => ({ line: lineAt(match.index), name: match[2] }));
   const owning = (n) => starts.filter((start) => start.line <= n).at(-1);
 
   return [

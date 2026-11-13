@@ -6,11 +6,12 @@ import { verifyDesign } from './verifyDesign';
 export function sceneChecks(
   core: WorkspaceCore,
   setAction: (action: string) => void,
-): Pick<RequestContext, 'verify' | 'sweep' | 'readiness'> {
+): Pick<RequestContext, 'verify' | 'sweep' | 'readiness' | 'mergeParts'> {
   const { docs, viewportRef, posing, simTraining } = core;
 
   return {
     readiness: core.readiness,
+    mergeParts: core.printing.merges.mergeIds,
     verify: (opts) =>
       verifyDesign({
         viewport: viewportRef.current,

@@ -80,6 +80,7 @@ export function booleanPart({ id, base, tools, op }: NewBoolean): BooleanPart {
     visible: true,
     locked: false,
     ...(sameGroup ? { group: sameGroup } : {}),
+    ...(base.printMaterial ? { printMaterial: base.printMaterial } : {}),
     boolean: { op, operands: [base, ...tools].map(asOperand) },
   };
 }

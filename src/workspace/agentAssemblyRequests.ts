@@ -3,7 +3,11 @@ import { rememberClamps } from '../assembly/clampCache';
 import { clampsOf } from '../assembly/followers';
 import { twinDifferences } from '../assembly/twinLint';
 import type { Viewport3DHandle } from '../components/Viewport3D';
-import type { ScenePart } from '../types/robotics';
+import type { PrinterSetup } from '../data/printers';
+import { bedOf } from '../print/bed';
+import { mergeInput } from '../print/merge/mergeInput';
+import { mergeLines } from '../print/merge/mergeText';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { designedFits } from '../utils/designedFits';
 
 interface FitContext {
@@ -27,7 +31,13 @@ export async function chainsNow(ctx: FitContext) {
 
 const ASSEMBLY_BUDGET_MS = 30000;
 
-export async function assemblyCheck(ctx: FitContext & { setAction: (action: string) => void }) {
+interface AssemblyContext extends FitContext {
+  setAction: (action: string) => void;
+  project: () => ProjectSettings;
+  printer: () => PrinterSetup;
+}
+
+export async function assemblyCheck(ctx: AssemblyContext) {
   const viewport = ctx.viewport();
 
   if (!viewport) return { text: '' };
@@ -35,13 +45,24 @@ export async function assemblyCheck(ctx: FitContext & { setAction: (action: stri
   ctx.setAction('Checking the assembly');
 
   const parts = ctx.parts();
-  const geometry = await viewport.assembly({ serviceable: serviceableIds(parts), budgetMs: ASSEMBLY_BUDGET_MS });
+  const merges = mergeInput(parts, ctx.project(), bedOf(ctx.printer().model));
+  const geometry = await viewport.assembly({
+    serviceable: serviceableIds(parts),
+    budgetMs: ASSEMBLY_BUDGET_MS,
+    merges,
+  });
 
   rememberClamps(parts, clampsOf(geometry.chains));
 
   const { text, plan, service, enclosing } = assemblyReport(parts, geometry);
+  const names = new Map(parts.map((p) => [p.id, p.name]));
+  const groups = geometry.merges?.groups ?? [];
+  const merged = [text, ...mergeLines(groups, (id) => names.get(id) ?? id)].join('\n');
 
-  return { text, data: { screws: plan.screws, stuckParts: plan.stuckParts, service, enclosing } };
+  return {
+    text: merged,
+    data: { screws: plan.screws, stuckParts: plan.stuckParts, service, enclosing, merges: groups },
+  };
 }
 
 export async function sceneFits(payload: { ids?: string[]; twins?: boolean }, ctx: FitContext) {

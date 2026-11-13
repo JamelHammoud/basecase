@@ -1,7 +1,7 @@
 import '@xyflow/react/dist/style.css';
 import { type Connection, type Node, ReactFlow } from '@xyflow/react';
 import { useState } from 'react';
-import { ContextMenu, type ContextMenuEntry, DeleteIcon, PlusIcon } from '../../design-system';
+import { ContextMenu, type ContextMenuEntry, PlusIcon, deleteEntry } from '../../design-system';
 import type { Flow, NodeState } from '../../routines/flowTypes';
 import type { RoutineError } from '../../routines/schema';
 import { AddNode } from './AddNode';
@@ -62,19 +62,12 @@ export function RoutineFlow({ flow, states, errors }: RoutineFlowProps) {
       x: e.clientX,
       y: e.clientY,
       items: [
-        { label: 'Add Step After', icon: <PlusIcon className="w-4 h-4" />, onSelect: () => editor.addAfter(node.id) },
-        ...(kind === 'base'
-          ? []
-          : [
-              { divider: true as const },
-              {
-                label: 'Delete',
-                shortcut: '⌫',
-                tone: 'danger' as const,
-                icon: <DeleteIcon className="w-4 h-4" />,
-                onSelect: () => editor.remove(node.id),
-              },
-            ]),
+        {
+          label: 'Add Step After',
+          icon: <PlusIcon className="w-3.5 h-3.5" />,
+          onSelect: () => editor.addAfter(node.id),
+        },
+        ...(kind === 'base' ? [] : [{ divider: true as const }, deleteEntry(() => editor.remove(node.id), '⌫')]),
       ],
     });
   };

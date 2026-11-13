@@ -13,7 +13,12 @@ You get Jamel's Direction comments, Jamel's requests (issues Jamel opened by han
 - The done-when is a varied set of at least ten cases spread across the class, with the example as one of them. A plan that passes only the example has failed the request.
 
 1. **Arcs.** Keep 3 to 6. Each is a user-visible thread with a clear next step. Retire an arc that's done or no longer worth it. At least one open arc is always a big bet: a new sub-product, surface, way of working or business model, at the scale of Amp's Chronicle (Boxes, Orbs, Puck, mobile apps, Free Agent, Bye Bye Dial).
-2. **Steps.** Propose next steps for squads to pick up. Size each to what a team of agents can finish in a day or two, and aim high: a new app, an integration end to end, a subsystem rebuilt. Nothing is too big if it's broken into steps that each ship.
+   - **Three pillars always have an open arc,** whatever else is planned:
+     - **Jamel's requests.**
+     - **Core CAD design:** designing in Basecase itself. That covers modeling, sketching, booleans, constraints and dimensions, parts and assemblies, the canvas and inspector, and the CAD agent's design quality, so a person or the agent designs a better robot faster. It's the heart of the product, and it never waits behind Operate or integrations.
+     - **Self-improvement:** the CAD agent's harness, improved and measured on the bench (`docs/guide/bench.md`), and the loop's own harness (`tools/loop/`).
+   - When the open arcs drift away from a pillar, open one for it before anything else.
+2. **Steps.** Propose next steps for squads to pick up. Size each to what a team of agents can finish in a day or two, and aim high: a new app, an integration end to end, a subsystem rebuilt. Nothing is too big if it's broken into steps that each ship. A change that applies in many places, such as a rename, a rule or a pattern, is one step covering all of them, never a step per place.
 3. **Novelty gate.** Before proposing a step, search the code for what already exists. If something partly exists, the step refines it; never plan a second version.
 4. **Balance.** At least as many refine or removal steps as new ones each week.
 5. **Acceptance.** Every step's body says what must be true when it's done, including the entry point a person uses and the e2e test that drives it.

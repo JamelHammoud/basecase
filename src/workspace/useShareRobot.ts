@@ -9,6 +9,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { publishSharedRobot, sharedRobotBundle, storedSkill } from './shareRobot';
 import type { ShowToast } from './types';
 import type { SceneSkills } from './useSkills';
+import { errorMessage } from '../utils/errorMessage';
 
 interface ShareRobotOptions {
   scene: { sceneId: string; sceneName: string };
@@ -70,7 +71,7 @@ export function useShareRobot(options: ShareRobotOptions): ShareRobot {
     try {
       await publish();
     } catch (err) {
-      showToast(`Couldn’t share the robot. ${err instanceof Error ? err.message : String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t share the robot. ${errorMessage(err)}`, { tone: 'error' });
     } finally {
       setSharing(false);
     }

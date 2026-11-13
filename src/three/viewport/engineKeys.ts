@@ -38,6 +38,7 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'partTriangles',
   'servoOutput',
   'jointAxis',
+  'jointAxes',
   'sweepClashes',
   'strength',
   'pickAt',

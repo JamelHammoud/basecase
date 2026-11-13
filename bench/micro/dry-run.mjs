@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { argOption, here, openStudio } from '../harness.mjs';
-import { gradeLine, gradeTask } from './grade.mjs';
+import { gradeLine, gradeTask, startFacts } from './grade.mjs';
 import { closeAppModules, readJson, solutionRecord, specToPartFn, startRecord } from './scenes.mjs';
 import { selectTasks } from './tasks/index.mjs';
 
@@ -64,11 +64,13 @@ async function sanity(task, ctx) {
     fs.writeFileSync(path.join(saveDir, task.id, 'start.json'), JSON.stringify(before));
   }
 
-  const start = await gradeTask(task, { before, after: before, app: await appFor(ctx.studio, before) });
+  const startApp = await appFor(ctx.studio, before);
+  const facts = await startFacts(task, startApp);
+  const start = await gradeTask(task, { before, after: before, app: startApp, ...facts });
 
   rows.push({ task, label: 'start', grade: start, ok: start.status !== 'pass' && start.status !== 'error' });
 
-  const fixed = (await solutionRecord(task, ctx)) ?? (task.solutionAnswer ? before : null);
+  const fixed = (await solutionRecord(task, ctx, before)) ?? (task.solutionAnswer ? before : null);
 
   if (fixed) {
     const grade = await gradeTask(task, {
@@ -76,6 +78,7 @@ async function sanity(task, ctx) {
       after: fixed,
       answer: task.solutionAnswer,
       app: await appFor(ctx.studio, fixed),
+      ...facts,
     });
 
     rows.push({ task, label: 'solution', grade, ok: grade.status === 'pass' || grade.status === 'unavailable' });
@@ -90,7 +93,8 @@ async function graded(task, ctx) {
   for (const where of savedScenes(task)) {
     const saved = readSaved(where);
     const before = saved.before ?? (await startRecord(task, ctx));
-    const grade = await gradeTask(task, { ...saved, before, app: await appFor(ctx.studio, saved.after) });
+    const facts = task.startBom ? await startFacts(task, await appFor(ctx.studio, before)) : {};
+    const grade = await gradeTask(task, { ...saved, ...facts, before, app: await appFor(ctx.studio, saved.after) });
 
     if (regrade) fs.writeFileSync(path.join(where, 'grade.json'), JSON.stringify(grade, null, 1));
 

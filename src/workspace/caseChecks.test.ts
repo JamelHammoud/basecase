@@ -10,7 +10,7 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import type { Case } from '../cases/schema';
 import type { ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { caseCheckRows, caseRunsOf, nextCaseTurn } from './caseChecks';
+import { caseCheckRows, caseVerdict, nextCaseTurn } from './caseChecks';
 
 vi.mock('../cases/caseChecksClient', () => ({
   caseCheckPool: { size: 2, run: vi.fn(), keepOnly: vi.fn() },
@@ -80,7 +80,7 @@ describe('Case rows in Checks', () => {
   });
 
   it('give an overtaken check the newest check’s verdict for the same Case', async () => {
-    const outcomes = Array.from({ length: 10 }, () => ({ passed: true, margin: 1, failed: [] }));
+    const outcomes = Array.from({ length: 10 }, (_, i) => ({ seed: i + 1, passed: true, margin: 1, failed: [] }));
     const gate: { open?: () => void } = {};
     const answered = new Promise<void>((resolve) => {
       gate.open = resolve;
@@ -153,13 +153,13 @@ describe('Case rows in Checks', () => {
 
     const scene = sceneWith('quad-big', 'reach-the-flag');
     const [kase] = scene.project.cases as Case[];
-    const compared = await caseRunsOf(scene, kase);
+    const compared = (await caseVerdict(scene, kase)).runs;
     const calls = run.mock.calls.length;
 
     expect(compared).toMatchObject({ runs: 20, passes: 20 });
     expect(run.mock.calls.filter(([, job]) => job.type === 'runs').map(([, , options]) => options?.tag)).toEqual([
-      undefined,
-      undefined,
+      '',
+      '',
     ]);
     expect(keepOnly).not.toHaveBeenCalled();
     expect((await caseCheckRows({ ...scene, turn: nextCaseTurn() }))[0]).toMatchObject({ detail: '20 of 20' });

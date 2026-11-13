@@ -40,7 +40,9 @@ describe('packaged app', () => {
   });
 
   it('adds, duplicates and undoes parts', async () => {
+    await run.page.locator(visible('button[aria-label="New scene"]')).first().click();
     await run.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).click();
+    await expect.poll(layerRows).toBe(0);
     await run.page.keyboard.press('a');
     await run.page.getByRole('button', { name: /^Cube/ }).first().click();
     await expect.poll(layerRows).toBe(1);

@@ -334,6 +334,42 @@ describe('Cases in Checks', () => {
       .toContain(flag.brief);
     expect(app.errors).toEqual([]);
   }, 150000);
+
+  it('puts /pass and the open Case in the composer from ⌘K when its row fails', async () => {
+    const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+    const focusedValue = () =>
+      app.page.evaluate(() => {
+        const el = document.activeElement;
+
+        return el instanceof HTMLTextAreaElement ? el.value : el?.tagName;
+      });
+
+    await app.page.evaluate(
+      ({ parts, joints, kase }) => {
+        const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
+      },
+      { parts: arm.parts, joints: arm.joints, kase: flag },
+    );
+    await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks().getByRole('button', { name: /^Reach a Spot/ });
+
+    await expect.poll(() => row.count(), { timeout: 90000 }).toBe(1);
+    await expect.poll(() => row.getAttribute('data-status'), { timeout: 90000 }).toBe('fail');
+    await row.click();
+    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
+
+    await app.page.keyboard.press('Meta+k');
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
+    await app.page.keyboard.type('Make It Pass');
+    await app.page.keyboard.press('Enter');
+    await expect.poll(focusedValue).toBe('/pass Reach a Spot');
+    await app.page.locator(visible('textarea')).last().fill('');
+    expect(app.errors).toEqual([]);
+  }, 150000);
 });
 
 describe('Compare With', () => {

@@ -4,10 +4,13 @@ import { compileCaseLogic } from '../cases/caseLogic';
 import type { Case } from '../cases/schema';
 import type { Routine } from '../routines/schema';
 import { fixtureRobots } from '../sim/fixtures/robots';
+import type { ProjectSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import type { CaseRuns } from '../cases/caseRuns';
 import { CASE_HANDLERS, caseValues } from './agentCaseRequests';
 import type { Cases } from './useCases';
+
+const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
 
 function contextFor(id: string) {
   const r = fixtureRobots().find((f) => f.id === id)!;
@@ -29,7 +32,7 @@ function contextFor(id: string) {
 
   const caseCompare = { choicesFor: () => [], compareNow: async () => null as never, start: () => {} };
 
-  return { ctx: { cases, routines, caseCompare, setAction: () => {} }, added };
+  return { ctx: { cases, routines, caseCompare, setAction: () => {}, ...scene }, added };
 }
 
 const create = (payload: Record<string, unknown>, id = 'rover-diff') => {
@@ -134,6 +137,8 @@ describe('compare_case', () => {
     passes,
     medianMargin: 0.1234,
     commonFailure: null,
+    failures: [],
+    worstSeed: null,
     refusal: null,
   });
   const started: string[] = [];
@@ -141,6 +146,7 @@ describe('compare_case', () => {
     cases: { cases: [kase], active } as unknown as Cases,
     routines: { checkLogic: async () => ({ ok: true }) as never },
     setAction: () => {},
+    ...scene,
     caseCompare: {
       choicesFor: () => choices,
       start: (tabId: string) => void started.push(tabId),

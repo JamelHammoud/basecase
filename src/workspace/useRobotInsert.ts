@@ -21,6 +21,7 @@ import { articulatedShift, importOffset, palmOf, placeRobot } from './robotPlace
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useLeader } from './useLeader';
+import { errorMessage } from '../utils/errorMessage';
 
 export type RobotSource =
   | { kind: 'url'; url: string; name?: string; entry?: string }
@@ -168,7 +169,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
       return `Several robots here. Pass one as entry: ${error.choices.join(', ')}`;
     }
 
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
 
     showToast(message, { tone: 'error' });
 

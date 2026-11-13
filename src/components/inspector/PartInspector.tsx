@@ -54,7 +54,14 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
 
       {sized && <SizeSection part={part} onUpdate={onUpdate} isImage={isImage} />}
 
-      {tunable && <DimensionsSection key={part.id} part={part} code={part.cad!.code} onTune={props.onTuneDimensions} />}
+      {tunable && (
+        <DimensionsSection
+          key={`dimensions-${part.id}`}
+          part={part}
+          code={part.cad!.code}
+          onTune={props.onTuneDimensions}
+        />
+      )}
 
       <PositionSection {...props} />
 
@@ -69,7 +76,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
       {partComments.length > 0 && <CommentsSection {...props} list={partComments} />}
 
       <NotesSection
-        key={part.id}
+        key={`notes-${part.id}`}
         value={part.note ?? ''}
         rows={3}
         onChange={(note, live) => onUpdate({ note }, live)}

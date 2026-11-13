@@ -5,7 +5,7 @@ import { comparable, comparableRobots, compareCase, type CompareRobot, type Comp
 import type { Case } from '../cases/schema';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
-import { caseRunsOf } from './caseChecks';
+import { caseVerdict } from './caseChecks';
 import type { StudioShared } from './types';
 import type { SceneDocument } from './useSceneDocument';
 
@@ -80,7 +80,7 @@ export function useCaseCompare({ inFront, kase, fingerprint, studio, source }: C
     if (!own || !theirs) throw new Error('That scene was closed.');
 
     return compareCase(target, [own, theirs], {
-      runs: (robot) => caseRunsOf(robot, target),
+      runs: async (robot) => (await caseVerdict(robot, target)).runs,
       purchases: knownPurchases() ?? (await platformBridge.listPurchases().catch(() => ({}))),
     });
   };

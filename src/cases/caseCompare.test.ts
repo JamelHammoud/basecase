@@ -33,7 +33,15 @@ const rover = withWheelEffort(fixture('rover-diff'), SMALL_GEAR_MOTOR_NM);
 const weak = withWheelEffort(rover, SMALL_GEAR_MOTOR_NM * 0.3);
 const flag = presetCase(rover, 'reach-the-flag');
 
-const runs = (passes: number): CaseRuns => ({ runs: 20, passes, medianMargin: 0, commonFailure: null, refusal: null });
+const runs = (passes: number): CaseRuns => ({
+  runs: 20,
+  passes,
+  medianMargin: 0,
+  commonFailure: null,
+  failures: [],
+  worstSeed: null,
+  refusal: null,
+});
 
 describe('comparing two robots on one Case', () => {
   it(

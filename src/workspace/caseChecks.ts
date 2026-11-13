@@ -1,4 +1,5 @@
 import type { WalkPick, WireRobot } from '../cases/caseCheckJob';
+import type { FilmShot } from '../cases/filmstrip';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { readCases, type Case } from '../cases/schema';
@@ -123,12 +124,13 @@ interface Judging {
   key: string;
   reading: RobotReading;
   robot: () => WireRobot;
+  runs?: number;
   tag?: string;
 }
 
-async function judge({ kase, reading, robot, tag }: Judging): Promise<CaseRuns> {
+async function judge({ kase, key, reading, robot, runs = CASE_RUNS, tag = key }: Judging): Promise<CaseRuns> {
   const wire = robot();
-  const batches = seedBatches(CASE_RUNS, caseCheckPool.size);
+  const batches = seedBatches(runs, caseCheckPool.size);
   const job = { type: 'runs' as const, kase, modelHash: reading.modelHash, walk: reading.walk };
   const replies = await Promise.all(
     batches.map((seeds, i) => caseCheckPool.run(i, { ...job, seeds }, { tag, robot: () => wire })),
@@ -214,15 +216,27 @@ export async function caseCheckRows(input: CaseChecksInput): Promise<CheckRow[]>
 
   caseCheckPool.keepOnly(new Set(keyed.map((k) => k.key)));
 
-  return Promise.all(
-    keyed.map(({ kase, key }) => rowOf(input, kase, verdictOf({ kase, key, reading, robot, tag: key }))),
-  );
+  return Promise.all(keyed.map(({ kase, key }) => rowOf(input, kase, verdictOf({ kase, key, reading, robot }))));
 }
 
-export async function caseRunsOf(input: CaseRobotInput, kase: Case): Promise<CaseRuns> {
+export interface CaseVerdict {
+  runs: CaseRuns;
+  cached: boolean;
+  film: (seed: number) => Promise<FilmShot | null>;
+}
+
+export async function caseVerdict(input: CaseRobotInput, kase: Case, runs = CASE_RUNS): Promise<CaseVerdict> {
   let wired: WireRobot | null = null;
   const robot = () => (wired ??= wireRobot(input));
   const reading = await readRobot(input, robot, null);
+  const key = runs === CASE_RUNS ? verdictKey(kase, reading) : `${verdictKey(kase, reading)}|${runs}`;
+  const cached = verdicts.has(key) || inFlight.has(key);
+  const judged = await verdictOf({ kase, key, reading, robot, runs, tag: '' });
+  const film = async (seed: number) => {
+    const job = { type: 'replay' as const, kase, modelHash: reading.modelHash, seed, walk: reading.walk };
 
-  return verdictOf({ kase, key: verdictKey(kase, reading), reading, robot });
+    return (await caseCheckPool.run(0, job, { robot })).film;
+  };
+
+  return { runs: judged, cached, film };
 }

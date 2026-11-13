@@ -6,16 +6,17 @@ import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
 import { comparable, type Comparison } from '../cases/caseCompare';
 import type { Case } from '../cases/schema';
+import { caseNamed, runCase, type RunCaseContext } from './agentCaseRun';
 import type { Cases } from './useCases';
 import type { CaseCompare } from './useCaseCompare';
+import { errorMessage } from '../utils/errorMessage';
 
 type Payload = Record<string, unknown>;
 
-interface CaseContext {
+interface CaseContext extends RunCaseContext {
   cases: Cases;
   caseCompare: Pick<CaseCompare, 'choicesFor' | 'compareNow' | 'start'>;
   routines: { checkLogic: (logic: unknown) => Promise<CompileResult> };
-  setAction: (action: string) => void;
 }
 
 const VALUE_KEYS: Array<[string, ParamKey]> = [
@@ -47,7 +48,7 @@ function extraObjects(payload: Payload): WorldObject[] | string {
   try {
     return sceneObjects(Array.isArray(payload.objects) ? (payload.objects as AgentObject[]) : []);
   } catch (e) {
-    return e instanceof Error ? e.message : String(e);
+    return errorMessage(e);
   }
 }
 
@@ -93,12 +94,9 @@ async function createCase(payload: Payload, ctx: CaseContext) {
   return { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
 }
 
-const named = (wanted: string) => (c: { id: string; name: string }) =>
-  c.id === wanted || c.name.toLowerCase() === wanted.toLowerCase();
-
 function caseToCompare(payload: Payload, cases: Cases): Case | string {
   const wanted = text(payload.case);
-  const kase = wanted ? cases.cases.find(named(wanted)) : cases.active;
+  const kase = wanted ? caseNamed(cases.cases, wanted) : cases.active;
 
   if (!kase) return wanted ? `This scene has no Case named ${wanted}.` : 'No Case is open. Name one with case.';
 
@@ -146,5 +144,6 @@ async function compareCaseRequest(payload: Payload, ctx: CaseContext) {
 
 export const CASE_HANDLERS: Record<string, (payload: Payload, ctx: CaseContext) => Promise<unknown>> = {
   create_case: createCase,
+  run_case: runCase,
   compare_case: compareCaseRequest,
 };

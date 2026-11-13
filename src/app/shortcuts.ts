@@ -23,7 +23,7 @@ const NAMED_KEYS: Record<string, string[]> = {
   Tab: ['tab'],
 };
 const KEYS_BY_CODE: Record<string, string> = { '[': 'BracketLeft', ']': 'BracketRight' };
-const TYPED_SYMBOL = /^[^\p{L}\p{N}]$/u;
+const SHIFT_FREE_KEYS = new Set(['?', ',']);
 
 export const SHORTCUT_IDS = Object.keys(SHORTCUTS) as ShortcutId[];
 
@@ -46,7 +46,7 @@ function keyMatches(chord: Chord, e: ShortcutKey) {
 }
 
 function modifiersMatch(chord: Chord, e: ShortcutKey) {
-  const shiftMatters = !TYPED_SYMBOL.test(chord.key) || Object.hasOwn(KEYS_BY_CODE, chord.key);
+  const shiftMatters = !SHIFT_FREE_KEYS.has(chord.key);
   const control = chord.ctrl ? e.ctrlKey : !chord.mod && !e.ctrlKey && !e.metaKey;
 
   if (shiftMatters && e.shiftKey !== chord.shift) return false;

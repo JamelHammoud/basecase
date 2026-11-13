@@ -149,4 +149,11 @@ describe('the Shortcuts pane', () => {
     expect(shortcutFor({ ...eventFor('⌘Z'), shiftKey: true }, 'canvas')).toBe('redo');
     expect(shortcutFor({ ...eventFor('F'), altKey: true }, 'canvas')).toBeNull();
   });
+
+  it('leaves the keys the field types to the field', () => {
+    for (const chord of TYPED_BY_THE_FIELD) expect(shortcutFor(eventFor(chord), 'composer')).toBeNull();
+
+    expect(shortcutFor(eventFor('⇧⌫'), 'canvas')).toBeNull();
+    expect(shortcutFor(eventFor('?'), 'canvas')).toBe('shortcuts');
+  });
 });

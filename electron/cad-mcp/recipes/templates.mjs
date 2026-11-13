@@ -109,6 +109,39 @@ export function armTemplate() {
   return finish(chain);
 }
 
+const ARM_MASS_G = 900;
+const BIPED_MASS_G = 1600;
+
+const toZUp = (v) => [v.x, v.y, v.z].map(r2);
+
+export function templateSkeleton(template, { limb, massG }) {
+  const servos = new Map(template.servos.map((s) => [s.id, s]));
+  const owner = new Map(template.joints.map((j) => [j.child[0], j.id]));
+
+  return {
+    mass_g: massG,
+    replace: true,
+    joints: template.joints.map((j) => {
+      const servo = servos.get(j.actuators[0]);
+      const mesh = servo.frame.clone().multiply(SERVO_FROM_MESH);
+      const parent = owner.get(j.parent[0]);
+
+      return {
+        id: j.id,
+        name: j.name,
+        ...(parent ? { parent } : {}),
+        origin: toZUp(CATALOG_HORN.clone().applyMatrix4(mesh)),
+        axis: toZUp(new THREE.Vector3(0, 0, 1).transformDirection(mesh)),
+        range: j.range,
+        limb,
+        actuator: servo.catalog,
+      };
+    }),
+  };
+}
+
+export const armSkeleton = () => templateSkeleton(armTemplate(), { limb: 'arm', massG: ARM_MASS_G });
+
 const HIP_X = 62;
 const HIP_Z = 301.8;
 const PLATE_Z = 38.15;
@@ -193,6 +226,8 @@ export function bipedTemplate() {
 
   return finish({ parts, servos: [...left.servos, ...right.servos], joints: [...left.joints, ...right.joints] });
 }
+
+export const bipedSkeleton = () => templateSkeleton(bipedTemplate(), { limb: 'leg', massG: BIPED_MASS_G });
 
 export function formatTemplate(template) {
   const parts = template.parts.map(

@@ -36,6 +36,11 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       setSelectedIds([]);
     },
     select: (ids) => setSelectedIds(ids),
+    dragSkeleton: (step) => {
+      core.skeleton.drag({ ...step, phase: 'start' });
+      core.skeleton.drag({ ...step, phase: 'move' });
+      core.skeleton.drag({ ...step, phase: 'end' });
+    },
     simState: () => {
       const { sim, cases } = core.simTraining;
       const stats = sim.latestStats() ?? sim.stats;

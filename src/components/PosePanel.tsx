@@ -7,6 +7,8 @@ import { AnimationsSection } from './pose/AnimationsSection';
 import { JointRangeFields } from './pose/JointRangeFields';
 import { JointRow } from './pose/JointRow';
 import { PosesSection } from './pose/PosesSection';
+import { SkeletonSection } from './pose/SkeletonSection';
+import type { SkeletonEdit } from '../workspace/useSkeletonEdit';
 
 export interface JointEdits {
   remove: (id: string) => void;
@@ -16,6 +18,7 @@ export interface JointEdits {
 interface PosePanelProps {
   posing: Posing;
   jointEdits: JointEdits;
+  skeleton: SkeletonEdit;
   onSelectParts: (ids: string[]) => void;
   onImportMotion: () => void;
   onWalkCycle: () => void;
@@ -52,6 +55,7 @@ const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
 export const PosePanel: React.FC<PosePanelProps> = ({
   posing,
   jointEdits,
+  skeleton,
   onSelectParts,
   onImportMotion,
   onWalkCycle,
@@ -115,17 +119,22 @@ export const PosePanel: React.FC<PosePanelProps> = ({
         style={fadeStyle}
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
       >
-        <AnimationsSection
-          posing={posing}
-          renaming={renaming}
-          setRenaming={setRenaming}
-          openMenu={openMenu}
-          canWalk={canWalk}
-          onWalkCycle={onWalkCycle}
-          onImportMotion={onImportMotion}
-        />
+        <SkeletonSection skeleton={skeleton} />
 
-        <PosesSection posing={posing} renaming={renaming} setRenaming={setRenaming} openMenu={openMenu} />
+        {posing.robot && (
+          <>
+            <AnimationsSection
+              posing={posing}
+              renaming={renaming}
+              setRenaming={setRenaming}
+              openMenu={openMenu}
+              canWalk={canWalk}
+              onWalkCycle={onWalkCycle}
+              onImportMotion={onImportMotion}
+            />
+            <PosesSection posing={posing} renaming={renaming} setRenaming={setRenaming} openMenu={openMenu} />
+          </>
+        )}
 
         {groups.map((g) => (
           <Section

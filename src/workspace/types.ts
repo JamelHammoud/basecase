@@ -2,6 +2,7 @@ import type { SceneRobot } from '../app/tabModel';
 import type { PrintersState } from '../app/usePrinters';
 import type { SettingsPane } from '../components/SettingsWindow';
 import type { ToastData } from '../design-system';
+import type { RobotSkeleton } from '../types/skeleton';
 import type { LaneChat } from './agentLanes';
 import type {
   AcpStatusInfo,
@@ -153,6 +154,7 @@ export interface Snapshot {
   pose: RobotPoseState | undefined;
   joints: RobotJoint[] | undefined;
   marks: SceneMark[] | undefined;
+  skeleton: RobotSkeleton | undefined;
 }
 
 export interface DocState {

@@ -85,10 +85,10 @@ function partsBox(parts: ScenePart[]): THREE.Box3 | null {
 export function frameScene(stage: Stage, parts: ScenePart[]): void {
   const box = partsBox(parts);
 
-  if (!box) {
-    return;
-  }
+  if (box) frameBox(stage, box);
+}
 
+export function frameBox(stage: Stage, box: THREE.Box3): void {
   const { camera, orbit } = stage;
   const { target, position } = framing(camera, box, HOME_DIRECTION);
 

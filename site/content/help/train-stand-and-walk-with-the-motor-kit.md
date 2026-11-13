@@ -48,7 +48,7 @@ The Motor Kit is for robots that stand on their own legs. Training runs in the d
 ![The Train section with Stand, Walk, Get up and Settle](/help/train-stand-and-walk-with-the-motor-kit/rows.png)
 
 3. Click **Train** on the skill you want.
-4. Wait while the row shows the trainer's message and a progress bar.
+4. Wait while the row shows the trainer's message and a progress bar. The robot on the canvas runs the newest snapshot of the skill.
 
 ![Stand training at 25%](/help/train-stand-and-walk-with-the-motor-kit/training.png)
 
@@ -57,7 +57,7 @@ The Motor Kit is for robots that stand on their own legs. Training runs in the d
 
 ![Stand ready, with its Arena line and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
 
-To stop training, click **Stop training** (■) on the row. **Teach It to Move**, under **Control**, trains **Walk** too. A skill that doesn't pass Arena isn't kept, and its row offers **Train** again.
+To stop training, click **Stop training** (■) on the row. [Watch a skill learn while it trains](/help/watch-a-skill-learn) explains the snapshots. **Teach It to Move**, under **Control**, trains **Walk** too. A skill that doesn't pass Arena isn't kept, and its row offers **Train** again.
 
 ## In the browser
 
@@ -92,6 +92,6 @@ One training job runs at a time across the whole app, and others wait their turn
 
 ## After you change the design
 
-In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A colour or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
+In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A color or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
 
 To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

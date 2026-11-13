@@ -3,7 +3,7 @@ import { Button, FolderOpenIcon, IconButton, Section, settleTilt, tiltToward } f
 import type { GuidePages } from '../../guide/viewer/guidePages';
 import type { BuildGuideRecord } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
-import { timeAgo } from '../../utils/timeAgo';
+import { agoPhrase } from '../../utils/timeAgo';
 import { REVEAL_LABEL } from '../../utils/os';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
 import { plural } from '../../../electron/plural.mjs';
@@ -83,15 +83,13 @@ const Progress: React.FC<{ progress: GuideRunProgress; onStop: () => void }> = (
 );
 
 const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord }> = ({ guide, record }) => {
-  const ago = timeAgo(record.generatedAt);
-
   return (
     <>
       <div className="text-[13px] text-white/90 tabular-nums truncate">
         {plural(record.pages, 'page')}
       </div>
       <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/50'}`}>
-        {guide.stale ? 'Out of date' : `Made ${ago === 'now' ? 'just now' : `${ago} ago`}`}
+        {guide.stale ? 'Out of date' : `Made ${agoPhrase(record.generatedAt)}`}
       </div>
       <div className="flex gap-2 mt-2.5">
         <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
@@ -139,7 +137,7 @@ export const GuideSection: React.FC<GuideSectionProps> = ({ guide, sceneName, ca
         {(progress || record) && <GuideCard guide={guide} sceneName={sceneName} />}
         {!progress && !record && (
           <Button variant="primary" fullWidth disabled={!canGenerate} onClick={() => void guide.generate()}>
-            Generate Guide
+            Make Guide
           </Button>
         )}
       </div>

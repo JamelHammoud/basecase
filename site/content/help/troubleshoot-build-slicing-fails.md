@@ -48,7 +48,7 @@ No printer is saved, so there's nowhere to send the plate. Clicking it opens Set
 1. Follow [Add a printer](/help/add-a-printer) from step 2.
 2. Pick the printer under **Printer** in Print mode.
 
-## The send button is greyed out
+## The send button is grayed out
 
 The plate is slicing or sending, or a printer is set but no slicer is installed. Wait for the progress line to finish, or install a slicer as above.
 

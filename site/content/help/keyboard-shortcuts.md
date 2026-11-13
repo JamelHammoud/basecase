@@ -16,6 +16,7 @@ related:
   - trackpad-and-mouse-controls
   - run-a-command
 covers:
+  - electron/shortcuts.json
   - src/components/shortcutGroups.ts
   - src/components/ShortcutsList.tsx
   - src/workspace/useWorkspaceKeys.ts

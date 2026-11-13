@@ -24,7 +24,7 @@ covers:
 
 Import Robot needs a URDF or MJCF description it can reach, and the mesh files that description names.
 
-## Import stays greyed out
+## Import stays grayed out
 
 The link isn't one Basecase can read. It takes a GitHub repo or folder, a Hugging Face link, or an `https` link ending in `.urdf`, `.xml`, `.mjcf` or `.zip`.
 

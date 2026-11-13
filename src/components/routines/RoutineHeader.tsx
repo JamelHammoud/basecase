@@ -3,17 +3,18 @@ import {
   Button,
   ChevronDownIcon,
   confirmAction,
-  DeleteIcon,
-  EditIcon,
+  deleteEntry,
   IconButton,
   MenuDivider,
   MenuItem,
   PlusIcon,
   PopoverMenu,
   RenameField,
+  renameEntry,
   RunIcon,
 } from '../../design-system';
 import type { Routines } from '../../workspace/useRoutines';
+import { keyFor } from '../../app/shortcuts';
 
 export function RoutineHeader({ routines }: { routines: Routines }) {
   const { store, editor, view, showToast } = routines;
@@ -78,13 +79,9 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
             />
           ))}
           <MenuDivider />
-          <MenuItem icon={<PlusIcon className="w-4 h-4" />} label="New Routine" onSelect={closing(store.create)} />
-          <MenuItem
-            icon={<EditIcon className="w-4 h-4" />}
-            label="Rename"
-            onSelect={closing(() => setRenaming(true))}
-          />
-          <MenuItem icon={<DeleteIcon className="w-4 h-4" />} label="Delete" tone="danger" onSelect={closing(remove)} />
+          <MenuItem icon={<PlusIcon className="w-3.5 h-3.5" />} label="New Routine" onSelect={closing(store.create)} />
+          <MenuItem {...renameEntry(closing(() => setRenaming(true)))} />
+          <MenuItem {...deleteEntry(closing(remove))} />
         </PopoverMenu>
       </div>
       <IconButton size="sm" icon={<PlusIcon className="w-4 h-4" />} title="Add step" onClick={editor.addHere} />
@@ -94,7 +91,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
           variant="primary"
           icon={<RunIcon className="w-4 h-4" />}
           title="Run Routine"
-          shortcut="⌘↩"
+          shortcut={keyFor('run-routine')}
           onClick={() => void routines.run()}
         >
           Run

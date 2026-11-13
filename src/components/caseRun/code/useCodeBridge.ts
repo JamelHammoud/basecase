@@ -30,7 +30,7 @@ export const pressStudioKey = ({ key, meta, ctrl, shift }: FrameKey) =>
 export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
   const current = useEffectEvent(() => ({ bus: ctx.bus, scope: ctx.scope, inputs: ctx.inputs }));
   const watchKey = useEffectEvent(() => ({
-    key: codePanelKey(ctx.cases.active?.id ?? '', panel.id),
+    key: codePanelKey(ctx.studio?.cases.active?.id ?? '', panel.id),
     source: panel.source,
   }));
   const can = useEffectEvent((action: CaseAction) => ctx.can(action));

@@ -1,5 +1,5 @@
 ---
-title: Build guide won't generate or open
+title: Build guide won't make or open
 date: 2026-11-13
 updated: 2026-11-13
 collection: troubleshooting
@@ -22,20 +22,20 @@ covers:
 
 Most build guide problems come from a scene with nothing to build, or a run that stopped with an error.
 
-## Generate Guide is greyed out
+## Make Guide is grayed out
 
 The guide shows only parts you'd build: visible parts that aren't cutouts. A scene of hidden parts or cutouts has nothing to draw.
 
 1. Show the parts you want in the guide.
 2. Check that they are solid parts, not cutouts.
 
-It worked when **Generate Guide** turns blue.
+It worked when **Make Guide** turns blue.
 
 ## “Couldn’t make the guide.”
 
 The run stopped with an error, shown after the message. A failed run leaves the last guide alone until the scene changes again.
 
-1. Click the card's button again: **Generate Guide** or **Update**.
+1. Click the card's button again: **Make Guide** or **Update**.
 2. If the same error comes back, read the reason after the message. It names what stopped the run.
 
 ## The guide stays Out of date

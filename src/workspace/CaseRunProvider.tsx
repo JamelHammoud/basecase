@@ -5,6 +5,7 @@ import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
 import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
 import { startDriving } from '../components/simulate/driveWithCamera';
+import { ModeHeader } from '../design-system';
 import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -92,17 +93,20 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
             inputs: new Set(caseConsole.input),
           },
           inputs: caseConsole.input,
-          cases,
+          brief: cases.active?.brief ?? '',
           sim,
           parts,
           joints: core.project.joints ?? [],
-          cameras,
           fire,
           can,
-          onBrowseRobots: () => {
-            caseRun.leave();
-            tool.setLeftTab('robots');
-            studio.setIsLeftOpen(true);
+          studio: {
+            cases,
+            cameras,
+            onBrowseRobots: () => {
+              caseRun.leave();
+              tool.setLeftTab('robots');
+              studio.setIsLeftOpen(true);
+            },
           },
         },
         areas: layout,
@@ -130,8 +134,7 @@ export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
       area={area}
       side={side}
       ctx={running.ctx}
-      title={running.title}
-      onDone={running.onDone}
+      header={<ModeHeader title={running.title} onDone={running.onDone} />}
     />
   ));
 }

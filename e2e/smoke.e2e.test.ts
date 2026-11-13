@@ -160,6 +160,24 @@ describe('command menu', () => {
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.getByLabel('Search commands').count()).toBe(0);
   });
+
+  it('duplicates and deletes the selection, like its right-click menu', async () => {
+    const run = async (name: string) => {
+      await app.page.keyboard.press('Meta+k');
+      await app.page.getByLabel('Search commands').fill(name);
+      await app.page.keyboard.press('Enter');
+    };
+
+    await app.page.keyboard.press('a');
+    await app.page.getByRole('button', { name: /^Cube/ }).first().click();
+
+    const before = await partCount(app.page);
+
+    await run('Duplicate');
+    await expect.poll(() => partCount(app.page)).toBe(before + 1);
+    await run('Delete');
+    await expect.poll(() => partCount(app.page)).toBe(before);
+  });
 });
 
 describe('studio commands', () => {

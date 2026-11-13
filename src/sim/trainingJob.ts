@@ -1,5 +1,6 @@
 import type { SimModel } from './mjcfTypes';
 import type { TrainTask } from './policy';
+import { SNAPSHOT_EVERY_S } from '../skills/snapshots';
 
 export interface TrainOptions {
   task: TrainTask;
@@ -33,5 +34,6 @@ export function trainingJob(model: SimModel, robotKey: string, opts: TrainOption
     rootOffset: [root[0] / 1000, -root[2] / 1000, root[1] / 1000],
     actionScale: 0.25,
     controlDt: 0.02,
+    snapshotEveryS: SNAPSHOT_EVERY_S,
   };
 }

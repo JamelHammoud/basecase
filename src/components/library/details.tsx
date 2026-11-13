@@ -1,18 +1,8 @@
 import React, { useMemo } from 'react';
 import type { CustomModelDefinition, ScenePart } from '../../types/robotics';
 import { modelToParts } from '../../utils/libraryParts';
-import { timeAgo } from '../../utils/timeAgo';
+import { agoPhrase } from '../../utils/timeAgo';
 import { Header, HeroImage, SizeLine, Stat } from '../PartDetails';
-
-function savedAgo(iso: string | undefined): string {
-  if (!iso) return '';
-
-  const t = timeAgo(iso);
-
-  if (t === 'now') return 'just now';
-
-  return /^\d+[mhd]$/.test(t) ? `${t} ago` : t;
-}
 
 export function modelParts(m: CustomModelDefinition): ScenePart[] {
   let n = 0;
@@ -38,7 +28,7 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
       <HeroImage src={thumb} className="h-[168px]" />
       <Header
         title={model.name}
-        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedAgo(model.createdAt)]}
+        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', model.createdAt ? agoPhrase(model.createdAt) : '']}
         description={
           model.description && !/^Saved from \d+ parts?\.?$/.test(model.description) ? model.description : undefined
         }

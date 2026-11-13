@@ -14,14 +14,29 @@ import type { SkillRunner } from './skillsClient';
 import type { SkillsJob } from './skillsJob';
 import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
+import {
+  NO_SNAPSHOT_STORE,
+  NO_SNAPSHOTS,
+  trailRefs,
+  withSnapshot,
+  type SnapshotRef,
+  type Snapshots,
+  type SnapshotTrail,
+} from './snapshots';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
 import { raceSummary } from './teach';
 import type { ForgeProgress } from './trainerForge';
+import type { Environment } from './environment';
 import { triesSkill } from './triesTraining';
 
-export interface ForgeFactory {
-  (options: { background: boolean; onProgress: (p: ForgeProgress) => void; signal: AbortSignal }): ForgeRunner;
+export interface ForgeFactoryOptions {
+  background: boolean;
+  onProgress: (p: ForgeProgress) => void;
+  onSnapshot?: (ref: SnapshotRef) => void;
+  signal: AbortSignal;
 }
+
+export type ForgeFactory = (options: ForgeFactoryOptions) => ForgeRunner;
 
 export interface RuntimeDeps {
   runner: SkillRunner;
@@ -30,6 +45,7 @@ export interface RuntimeDeps {
   loadSkill: (hash: string) => Promise<Skill | null>;
   onRecord: (record: SkillRecord) => void;
   onChange: (jobs: SkillJob[]) => void;
+  snapshots?: Snapshots;
 }
 
 export interface RaceReport {
@@ -80,6 +96,7 @@ export class SkillsRuntime {
   private running: Promise<void> = Promise.resolve();
   private background: AbortController | null = null;
   private pending: { model: SimModel; tasks: BackgroundTask[] } | null = null;
+  private trails = new Map<SkillTarget, SnapshotTrail>();
 
   private deps: RuntimeDeps;
 
@@ -186,8 +203,18 @@ export class SkillsRuntime {
     return result;
   }
 
-  replaceForge(forge: ForgeFactory) {
-    this.deps = { ...this.deps, forge };
+  replaceForge(forge: ForgeFactory, snapshots?: Snapshots) {
+    this.deps = { ...this.deps, forge, ...(snapshots ? { snapshots } : {}) };
+  }
+
+  loadSnapshot(ref: SnapshotRef, skill?: string) {
+    return (this.deps.snapshots ?? NO_SNAPSHOT_STORE).load(ref, skill);
+  }
+
+  environmentOf(target: SkillTarget): Environment | null {
+    const report = [...this.drafts.values()].find((r) => `goal:${r.draft.name}` === target);
+
+    return report?.draft.environment ?? null;
   }
 
   race(model: SimModel, draftId: string, budgetSteps?: number): string | null {
@@ -209,7 +236,7 @@ export class SkillsRuntime {
           { ...this.ports(), forge, signal },
         );
 
-        this.finishRace(report, reply.outcome);
+        await this.finishRace(report, reply.outcome);
       },
     });
 
@@ -242,11 +269,19 @@ export class SkillsRuntime {
     return { forge: failForge, save: this.deps.save };
   }
 
-  private finishRace(report: DraftReport, outcome: RaceOutcome) {
+  private async keep(target: SkillTarget, record: SkillRecord) {
+    const refs = trailRefs(this.trails.get(target) ?? NO_SNAPSHOTS);
+    const kept = refs.length ? await (this.deps.snapshots ?? NO_SNAPSHOT_STORE).keep(record.hash, refs) : [];
+
+    this.deps.onRecord(kept.length ? { ...record, snapshots: kept } : record);
+  }
+
+  private async finishRace(report: DraftReport, outcome: RaceOutcome) {
     const { draft } = report;
 
     if (outcome.kind === 'skill')
-      this.deps.onRecord(
+      await this.keep(
+        `goal:${draft.name}`,
         skillRecord(outcome.skill, { kit: null, goal: draft.request, environment: draft.environment }),
       );
 
@@ -296,7 +331,8 @@ export class SkillsRuntime {
       { ...this.ports(), ...ports },
     );
 
-    if (reply.outcome.kind === 'skill') this.deps.onRecord(skillRecord(reply.outcome.skill, { kit: entry }));
+    if (reply.outcome.kind === 'skill')
+      await this.keep(`kit:${entry}`, skillRecord(reply.outcome.skill, { kit: entry }));
   }
 
   private async moveWork(
@@ -311,7 +347,10 @@ export class SkillsRuntime {
     const { outcome, environment } = reply.outcome;
 
     if (outcome.kind === 'skill')
-      this.deps.onRecord(skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }));
+      await this.keep(
+        `move:${animation.id}`,
+        skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }),
+      );
   }
 
   private retrain(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
@@ -333,7 +372,7 @@ export class SkillsRuntime {
 
     const move = task.move ? moveTag(task.move.id, environment) : undefined;
 
-    this.deps.onRecord(skillRecord(reply.skill, { kit: task.entry, move }));
+    await this.keep(task.target, skillRecord(reply.skill, { kit: task.entry, move }));
   }
 
   private setJob(target: SkillTarget, patch: Partial<SkillJob> | null) {
@@ -349,6 +388,10 @@ export class SkillsRuntime {
       background: run.background,
       signal,
       onProgress: (p) => this.setJob(run.target, { share: p.share, message: p.message }),
+      onSnapshot: (ref) => {
+        this.trails.set(run.target, withSnapshot(this.trails.get(run.target) ?? NO_SNAPSHOTS, ref));
+        this.setJob(run.target, { snapshot: ref });
+      },
     });
 
     return async (job) => {
@@ -368,7 +411,8 @@ export class SkillsRuntime {
     this.background?.abort();
     this.user = controller;
     this.userLabel = run.label;
-    this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting' });
+    this.trails.set(run.target, NO_SNAPSHOTS);
+    this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting', snapshot: null });
 
     try {
       await run.work(this.forgeFor(run, controller.signal), controller.signal);
@@ -376,6 +420,7 @@ export class SkillsRuntime {
       controller.abort();
     } finally {
       this.user = null;
+      this.trails.delete(run.target);
       this.setJob(run.target, null);
       void this.drainBackground();
     }
@@ -397,7 +442,14 @@ export class SkillsRuntime {
       };
 
       this.background = controller;
-      this.setJob(run.target, { label: task.label, background: true, share: null, message: 'Starting' });
+      this.trails.set(run.target, NO_SNAPSHOTS);
+      this.setJob(run.target, {
+        label: task.label,
+        background: true,
+        share: null,
+        message: 'Starting',
+        snapshot: null,
+      });
 
       try {
         await run.work(this.forgeFor(run, controller.signal), controller.signal);
@@ -405,6 +457,7 @@ export class SkillsRuntime {
         controller.abort();
       }
 
+      this.trails.delete(run.target);
       this.setJob(run.target, null);
 
       if (controller.signal.aborted) return;

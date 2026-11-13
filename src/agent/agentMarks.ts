@@ -34,7 +34,7 @@ function markPhrase(mark: SceneMark, names: Map<string, string>): string {
   const listed = marked.slice(0, MAX_NAMED).join(', ');
   const more = marked.length > MAX_NAMED ? ` and ${marked.length - MAX_NAMED} more` : '';
   const around = marked.length ? ` around ${listed}${more}` : '';
-  const label = mark.label ? `, labelled "${mark.label}"` : '';
+  const label = mark.label ? `, labeled "${mark.label}"` : '';
 
   return `${markColorName(markColorOf(mark))}${around}${label}`;
 }
@@ -46,5 +46,5 @@ export function marksNote(marks: SceneMark[] | undefined, parts: ScenePart[]): s
   const listed = marks.slice(0, MAX_LISTED).map((m) => markPhrase(m, names));
   const more = marks.length > MAX_LISTED ? `; and ${marks.length - MAX_LISTED} more` : '';
 
-  return `[The user drew ${plural(marks.length, 'mark')} on the canvas: ${listed.join('; ')}${more}. Each colour and label says what the user means by that mark. get_scene lists them under "marks"; look renders show them with their labels, and look with a mark's "seenFrom" view shows it as the user drew it. They point at what this message is about; they aren't geometry.]`;
+  return `[The user drew ${plural(marks.length, 'mark')} on the canvas: ${listed.join('; ')}${more}. Each color and label says what the user means by that mark. get_scene lists them under "marks"; look renders show them with their labels, and look with a mark's "seenFrom" view shows it as the user drew it. They point at what this message is about; they aren't geometry.]`;
 }

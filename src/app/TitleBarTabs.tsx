@@ -6,6 +6,7 @@ import { IS_WINDOWS } from '../utils/os';
 import { useCaptionInset } from '../utils/useCaptionInset';
 import { useStoplights } from '../utils/useStoplights';
 import { idsAfter, idsExcept, sceneTabsOf, type Metas, type TabEntry } from './tabModel';
+import { keyFor } from './shortcuts';
 
 const AFTER_LIGHTS = LAYOUT.lightsX + LAYOUT.lightsWidth + 8;
 const RAIL_SLOT_LEFT = 26 - 14;
@@ -105,7 +106,7 @@ export function TitleBarTabs({
         <IconButton
           icon={<PanelLeftIcon className="w-[18px] h-[18px]" />}
           title={isLeftOpen ? 'Hide sidebar' : 'Show sidebar'}
-          shortcut="⌘B"
+          shortcut={keyFor('toggle-sidebar')}
           onClick={onToggleLeft}
         />
         <ScenesMenu {...scenes} />

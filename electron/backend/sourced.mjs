@@ -38,12 +38,14 @@ function cleanPrice(price) {
 
   assertHttps(price.url, 'The price link');
 
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(price.seen)) throw new Error('price.seen must be a date, YYYY-MM-DD.');
+
   return {
     usd: Number(price.usd),
     per: Math.max(1, Number(price.per) || 1),
     store: text(price.store, 80),
     url: price.url,
-    seen: text(price.seen, 10),
+    seen: price.seen,
   };
 }
 

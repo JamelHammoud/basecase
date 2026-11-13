@@ -9,7 +9,7 @@ covers:
   - src/workspace/useFitTest.ts
   - src/workspace/usePrinting.ts
   - src/components/print/PrintPanel.tsx
-  - src/workspace/fitTestCommands.tsx
+  - src/workspace/printCommands.tsx
 ---
 
 Print small pieces of your design around each servo pocket, insert hole, bearing seat and screw hole, so you can check they fit before printing the whole thing.

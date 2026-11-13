@@ -30,6 +30,18 @@ async function renderCad(backend, payload) {
 
 const searchParam = (url, name) => new URL(url, 'http://x').searchParams.get(name);
 
+const countParam = (url, name) => {
+  const value = searchParam(url, name);
+
+  return value !== null && /^\d+$/.test(value) ? Number(value) : null;
+};
+
+const snapshotRef = (url) => ({
+  run: searchParam(url, 'run'),
+  iteration: countParam(url, 'iteration'),
+  skill: searchParam(url, 'skill') ?? undefined,
+});
+
 function getRoutes(backend) {
   return [
     ['/acp-status', (url) => backend.getAcpStatus(searchParam(url, 'workspace') ?? undefined)],
@@ -39,6 +51,7 @@ function getRoutes(backend) {
     ['/simready-status', () => backend.simreadyStatus()],
     ['/policy?', (url) => backend.getPolicy(searchParam(url, 'id'))],
     ['/skill?', (url) => backend.getSkill(searchParam(url, 'hash'))],
+    ['/snapshot?', (url) => backend.getSnapshot(snapshotRef(url))],
     ['/purchases', () => backend.listPurchases()],
     ['/sourced-parts', () => backend.listSourced()],
     ['/sourced-mesh?', (url) => ({ data: backend.sourcedMesh(searchParam(url, 'id'))?.toString('base64') ?? null })],
@@ -65,6 +78,7 @@ function postRoutes(backend) {
     ['/train-kit-cancel', (p) => backend.kitCancel(p.workspaceId)],
     ['/skill-save', (p) => backend.saveSkill(p)],
     ['/policy-delete', (p) => backend.deletePolicy(p.id)],
+    ['/snapshot-keep', (p) => backend.keepSnapshots(p)],
     ['/purchase-save', (p) => backend.savePurchase(p)],
     ['/sourced-save', (p) => backend.saveSourced(p)],
     ['/sourced-remove', (p) => backend.removeSourced(p.id)],

@@ -21,6 +21,16 @@ export interface AppMenuInput {
   settingsOpen: boolean;
 }
 
+export const tabActions = (commands: TabCommands): Record<string, () => void> => ({
+  'new-scene': () => commands.newScene(),
+  'close-tab': () => commands.closeTab(commands.activeId),
+  'reopen-tab': () => commands.reopenTab(),
+  'next-tab': () => commands.cycleTab(1),
+  'prev-tab': () => commands.cycleTab(-1),
+  'open-scenes': () => commands.toggleSceneList(),
+  'open-scene-file': () => commands.openSceneFile(),
+});
+
 function runTabCommand(id: string, commands: TabCommands): boolean {
   if (id.startsWith('tab:')) {
     commands.selectTab(id.slice(4));
@@ -28,16 +38,8 @@ function runTabCommand(id: string, commands: TabCommands): boolean {
     return true;
   }
 
-  const actions = new Map<string, () => void>([
-    ['new-scene', () => commands.newScene()],
-    ['close-tab', () => commands.closeTab(commands.activeId)],
-    ['reopen-tab', () => commands.reopenTab()],
-    ['next-tab', () => commands.cycleTab(1)],
-    ['prev-tab', () => commands.cycleTab(-1)],
-    ['open-scenes', () => commands.toggleSceneList()],
-    ['open-scene-file', () => commands.openSceneFile()],
-  ]);
-  const run = actions.get(id);
+  const actions = tabActions(commands);
+  const run = Object.hasOwn(actions, id) ? actions[id] : undefined;
 
   run?.();
 

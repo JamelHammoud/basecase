@@ -64,6 +64,7 @@ describe('the policy sent to the robot', () => {
       share: 0.5,
       message: '',
       background: false,
+      snapshot: null,
     });
 
     const many = Array.from({ length: 40 }, (_, k) =>

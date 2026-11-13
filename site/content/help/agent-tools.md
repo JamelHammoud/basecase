@@ -54,7 +54,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 |---|---|
 | `look` | Renders the model from one or more views |
 | `check_scene` | Finds parts that overlap, float or sit below the floor |
-| `check_assembly` | Checks the robot can be put together and serviced |
+| `check_assembly` | Checks the robot can be put together and serviced, and lists printed parts that could print as one |
 | `craft_review` | Flags parts that look plain or unfinished |
 | `verify_design` | Runs the engineering checks: pass, warn or fail |
 | `get_readiness` | Reads the Build tab's verdict |
@@ -135,6 +135,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `get_bom` | Reads the bill of materials |
 | `check_printability` | Checks each part against your printer |
 | `slice_plates` | Slices plates for print time and grams, without printing |
+| `merge_parts` | Merges printed parts that `check_assembly` lists into one, when you ask |
 | `set_build` | Sets extras, budget and filament |
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |

@@ -1,3 +1,4 @@
+import { buildBom } from '../utils/bom';
 import type { HandoffStub } from './handoffStub';
 import type { RefObject } from 'react';
 import * as THREE from 'three';
@@ -73,7 +74,8 @@ export interface DevActions {
   codeReports: () => Record<string, CodeReport | null>;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
-  stubTrainer: (policy: unknown) => void;
+  stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
+  releaseTrainer: () => void;
   stubHandoffs: (stub: HandoffStub) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
@@ -264,6 +266,10 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     drive: (command: DriveCommand) => devRef.current.drive(command),
     worldAt: () => devRef.current.worldAt(),
     printPlates: () => devRef.current.printPlates(),
+    bomLines: () =>
+      buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
+        ({ key, qty }) => ({ key, qty }),
+      ),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
@@ -274,7 +280,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     codeReports: () => devRef.current.codeReports(),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
-    stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
+    stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),
+    releaseTrainer: () => devRef.current.releaseTrainer(),
     stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
     plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),

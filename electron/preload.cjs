@@ -45,6 +45,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSkill: (hash) => ipcRenderer.invoke('skill:get', hash),
   getPolicy: (id) => ipcRenderer.invoke('policy:get', id),
   deletePolicy: (id) => ipcRenderer.invoke('policy:delete', id),
+  getSnapshot: (ref) => ipcRenderer.invoke('snapshot:get', ref),
+  keepSnapshots: (payload) => ipcRenderer.invoke('snapshot:keep', payload),
   savePurchase: (payload) => ipcRenderer.invoke('purchases:save', payload),
   listSourced: () => ipcRenderer.invoke('sourced:list'),
   saveSourced: (payload) => ipcRenderer.invoke('sourced:save', payload),

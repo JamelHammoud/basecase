@@ -20,12 +20,14 @@ import type {
   CadTuneAnswer,
   CadTuneRequest,
   EvidenceFilePayload,
+  KeptSnapshot,
   LiveRun,
   OpenedCad,
   RenderedCad,
   ScenePreviewPayload,
   SimReadyFetched,
   SimReadyStatus,
+  SnapshotRef,
   SteerOutcome,
   TrainerStatus,
   TrainStartPayload,
@@ -258,6 +260,9 @@ const libraryBridge = {
   },
 };
 
+const snapshotQuery = ({ run, iteration, skill }: SnapshotRef) =>
+  new URLSearchParams({ run, iteration: String(iteration), ...(skill ? { skill } : {}) }).toString();
+
 const trainingBridge = {
   trainStatus: (): Promise<TrainerStatus> => electron()?.trainStatus() ?? get('/train-status'),
   trainStart: (payload: TrainStartPayload): Promise<{ jobId: string }> =>
@@ -277,6 +282,11 @@ const trainingBridge = {
   getSkill: (hash: string): Promise<unknown> => electron()?.getSkill(hash) ?? get(`/skill${query('hash', hash)}`),
   getPolicy: (id: string): Promise<unknown> => electron()?.getPolicy(id) ?? get(`/policy${query('id', id)}`),
   deletePolicy: (id: string): Promise<boolean> => electron()?.deletePolicy(id) ?? post('/policy-delete', { id }),
+  getSnapshot: (ref: SnapshotRef): Promise<unknown> =>
+    electron()?.getSnapshot(ref) ?? get(`/snapshot?${snapshotQuery(ref)}`),
+  keepSnapshots: (payload: { hash: string; snapshots: KeptSnapshot[] }): Promise<KeptSnapshot[]> =>
+    electron()?.keepSnapshots(payload) ??
+    postOrThrow('/snapshot-keep', payload, (body, res) => (res.ok ? null : String(body.error))),
 };
 
 const simreadyBridge = {

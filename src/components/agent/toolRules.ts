@@ -112,6 +112,7 @@ const PART_RULES: ToolRule[] = [
   },
   partsRule('delete_parts', DeleteIcon, ['Deleting', 'Deleted']),
   partsRule('mirror_parts', EditIcon, ['Mirroring', 'Mirrored']),
+  partsRule('merge_parts', EditIcon, ['Merging', 'Merged']),
   {
     keys: ['fasten'],
     icon: ToolPromptIcon,

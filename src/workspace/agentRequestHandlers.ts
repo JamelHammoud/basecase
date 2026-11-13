@@ -80,6 +80,7 @@ export interface RequestContext {
   caseExplore: CaseExplore;
   caseRun: CaseRun;
   skills: SceneSkills;
+  mergeParts: (ids: string[]) => Promise<string | null>;
 }
 
 type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
@@ -282,6 +283,17 @@ const HANDLERS: Record<string, Handler> = {
   screenshot,
   interference: (payload, ctx) => sceneFits({ ids: idsOf(payload), twins: payload.twins === true }, ctx),
   assembly: (_payload, ctx) => assemblyCheck(ctx),
+  merge: async (payload, ctx) => {
+    ctx.setAction('Merging parts');
+
+    const done = await ctx.mergeParts((payload.ids as string[] | undefined) ?? []);
+
+    return {
+      text: done
+        ? `${done}.`
+        : 'check_assembly doesn’t offer that merge now. Run it again and pass one listed ids array.',
+    };
+  },
   silhouette_compare: silhouetteCompare,
   target_compare: (payload, ctx) => targetCompare(payload, ctx),
   fit_view: (payload, ctx) => fitView(payload, ctx),

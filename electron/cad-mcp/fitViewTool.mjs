@@ -11,7 +11,7 @@ function cameraLine(name, res, focal) {
   const c = res.camera;
   const seeded = focal?.focal35 && res.seededFov ? ` (from the photo's ${r(focal.focal35)} mm focal length)` : '';
 
-  return `Camera fitted to ${name} (${res.renders} renders): az ${r(c.az)}°, el ${r(c.el)}°, roll ${r(c.roll)}°, vertical FOV ${r(c.fov)}°${seeded}, ${r(c.distanceMm)} mm from the model's centre.`;
+  return `Camera fitted to ${name} (${res.renders} renders): az ${r(c.az)}°, el ${r(c.el)}°, roll ${r(c.roll)}°, vertical FOV ${r(c.fov)}°${seeded}, ${r(c.distanceMm)} mm from the model's center.`;
 }
 
 function fitText(name, res, focal) {
@@ -29,7 +29,7 @@ function fitText(name, res, focal) {
 
   lines.push(
     `Photo mask: ${maskSource(res)}.`,
-    'Overlay: red is the photo only, blue is the model only, grey is both.',
+    'Overlay: red is the photo only, blue is the model only, gray is both.',
     "A silhouette can't tell front from back on a symmetric robot: pass az near the view you expect. Bands where the photo is posed differently (hands, head turn) aren't shape errors.",
   );
 

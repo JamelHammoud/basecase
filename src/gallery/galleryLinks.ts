@@ -4,6 +4,8 @@ export const HUB_ORIGIN = 'https://huggingface.co';
 
 export const SHARED_ROBOT_FILE = 'basecase-robot.json';
 
+export const SHARED_CASE_TAG = 'basecase-case';
+
 const HUB_NAME = /^(?!.*(?:--|\.\.))[A-Za-z0-9](?:[A-Za-z0-9._-]{0,94}[A-Za-z0-9])?$/;
 const SHARED_PATH = /^\/r\/([^/]+)\/([^/]+)\/?$/;
 

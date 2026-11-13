@@ -71,7 +71,7 @@ describe('two robots in one Case', () => {
       const card = app.page.locator(shown('[data-testid="new-case"]'));
 
       await card.locator('[role=radio]', { hasText: 'Hand Off to a Spot' }).click();
-      await card.locator('button', { hasText: 'Create' }).click();
+      await card.locator('button', { hasText: 'Make Case' }).click();
       await expect.poll(async () => (await simState()).activeCase).toBe('hand-off-to-a-spot');
       expect((await simState()).guests.length).toBeGreaterThan(0);
 

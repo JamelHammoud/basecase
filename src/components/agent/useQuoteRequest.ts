@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, type RefObject } from 'react';
 import type { MessageQuote } from '../../types/robotics';
+import { focusPromptSoon } from './focusPromptSoon';
 
 export function useQuoteRequest(
   request: MessageQuote | null,
@@ -12,12 +13,7 @@ export function useQuoteRequest(
   const apply = useEffectEvent((quote: MessageQuote) => {
     ctx.addQuote(quote);
     ctx.onQuoted?.();
-    requestAnimationFrame(() => {
-      const el = ctx.promptRef.current;
-
-      el?.focus();
-      el?.setSelectionRange(el.value.length, el.value.length);
-    });
+    focusPromptSoon(ctx.promptRef, 'end');
   });
 
   useEffect(() => {

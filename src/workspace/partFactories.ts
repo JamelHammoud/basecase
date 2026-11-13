@@ -15,7 +15,6 @@ export interface SketchParams {
   bevel: boolean;
   nodes: CustomModelSubNode[];
   svgDataUrl?: string;
-  saveToLibrary: boolean;
 }
 
 const PRINTED_TAG = '3D Printed PLA/PETG';

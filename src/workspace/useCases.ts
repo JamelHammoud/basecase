@@ -98,6 +98,8 @@ export function useCases(options: CasesOptions) {
       onConfirm: () => {
         const gone = (project.tries ?? []).filter((t) => t.caseId === id);
 
+        if (gone.some((t) => t.id === multiply.running?.source)) multiply.stop();
+
         gone.forEach((t) => void deleteRecording(t.id));
         setProject((p) => ({
           ...p,
@@ -112,26 +114,29 @@ export function useCases(options: CasesOptions) {
 
   const timeline = useTryTimeline({ sim, rig, parts, active, partners });
 
+  const builder = useCaseBuilder({ rig, parts, add, partners });
+  const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
+  const addTries = (records: TryRecord[]) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...records] }));
+  const multiply = useTryMultiply({ sim, rig, parts, active, tries, partners, onTries: addTries, showToast });
   const removeTry = (record: TryRecord) => {
     const generated = generatedFrom(tries, record);
-    const gone = new Set([record.id, ...generated.map((t) => t.id)]);
+    const known = [record.id, ...generated.map((t) => t.id)];
+    const goes = (t: TryRecord) => t.id === record.id || (t.generated && t.manifest.source === record.id);
 
     confirmAction({
       title: `Delete this try?`,
       ...(generated.length ? { body: `Its ${generated.length} generated tries go with it.` } : {}),
       onConfirm: () => {
-        if (timeline.record && gone.has(timeline.record.id)) timeline.close();
+        if (multiply.running?.source === record.id) multiply.stop();
 
-        gone.forEach((id) => void deleteRecording(id));
-        setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => !gone.has(t.id)) }));
+        if (timeline.record && goes(timeline.record)) timeline.close();
+
+        known.forEach((id) => void deleteRecording(id));
+        setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => !goes(t)) }));
       },
     });
   };
 
-  const builder = useCaseBuilder({ rig, parts, add, partners });
-  const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
-  const addTries = (records: TryRecord[]) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...records] }));
-  const multiply = useTryMultiply({ sim, rig, parts, active, tries, partners, onTries: addTries, showToast });
   const fromTries: TriesTraining = useTriesTraining({
     sim,
     active,

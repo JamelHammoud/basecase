@@ -7,6 +7,7 @@ type Answer = { id: number; reply: CaseCheckReply } | { id: number; error: strin
 
 export interface JobOptions {
   tag?: string;
+  group?: string;
   robot?: () => WireRobot;
   first?: boolean;
 }
@@ -15,6 +16,7 @@ interface Queued {
   id: number;
   job: CaseCheckJob;
   tag: string;
+  group: string;
   robot?: () => WireRobot;
   resolve: (reply: CaseCheckReply) => void;
   reject: (error: Error) => void;
@@ -73,6 +75,7 @@ export class CaseCheckPool {
         id: ++this.calls,
         job,
         tag: options.tag ?? '',
+        group: options.group ?? '',
         robot: options.robot,
         resolve: resolve as Queued['resolve'],
         reject,
@@ -85,9 +88,9 @@ export class CaseCheckPool {
     });
   }
 
-  keepOnly(tags: ReadonlySet<string>) {
+  keepOnly(tags: ReadonlySet<string>, group = '') {
     for (const slot of this.slots.values()) {
-      const dropped = slot.queue.filter((q) => q.tag && !tags.has(q.tag));
+      const dropped = slot.queue.filter((q) => q.group === group && q.tag && !tags.has(q.tag));
 
       slot.queue = slot.queue.filter((q) => !dropped.includes(q));
 
@@ -175,5 +178,3 @@ export class CaseCheckPool {
 }
 
 export const caseCheckPool = new CaseCheckPool();
-
-export const multiplyPool = new CaseCheckPool();

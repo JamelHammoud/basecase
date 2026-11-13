@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { stageCase, stagedEffectors } from '../cases/caseCast';
-import { multiplyPool } from '../cases/caseChecksClient';
+import { caseCheckPool } from '../cases/caseChecksClient';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, generatedTry, multipliable, sha256, type TryRecord, type TryScoring } from '../cases/tries';
@@ -17,7 +17,7 @@ import { EARLIER_TRIES } from './useDatasetExport';
 export const MULTIPLY_RUNS = 50;
 
 const BATCH = 5;
-const TAG = 'multiply';
+const GROUP = 'multiply';
 
 interface MultiplyOptions {
   sim: Simulation;
@@ -57,7 +57,8 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
   const { sim, rig, parts, active, tries, partners, onTries, showToast } = options;
   const [running, setRunning] = useState<MultiplyProgress | null>(null);
   const [runs, setRuns] = useState(MULTIPLY_RUNS);
-  const stopped = useRef(true);
+  const turn = useRef(0);
+  const busy = useRef(false);
   const sources = tries.filter(multipliable);
   const latest = running ? null : ([...sources].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null);
 
@@ -78,7 +79,7 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
     };
   };
 
-  const keep = async (record: TryRecord, kept: Variation[]) => {
+  const keep = async (record: TryRecord, kept: Variation[], live: () => boolean) => {
     const made = kept.map((v) =>
       generatedTry({
         source: record,
@@ -91,18 +92,26 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
 
     await Promise.all(made.map((t, i) => saveRecording(t.id, kept[i].recording)));
 
-    if (made.length) onTries(made);
+    if (made.length && live()) onTries(made);
   };
 
   const run = async (record: TryRecord, kase: Case) => {
-    if (!stopped.current) return;
+    if (busy.current) return;
 
-    stopped.current = false;
+    busy.current = true;
 
+    const token = ++turn.current;
+    const live = () => turn.current === token;
     const source = await sourceOf(record, kase).catch((err: unknown) => errorMessage(err));
 
+    if (!live()) {
+      busy.current = false;
+
+      return;
+    }
+
     if (!source || typeof source === 'string') {
-      stopped.current = true;
+      busy.current = false;
       showToast(source || EARLIER_TRIES, { tone: 'error' });
 
       return;
@@ -119,11 +128,15 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
     try {
       await Promise.all(
         batchesOf(seeds).map(async (batch, i) => {
-          const reply = await multiplyPool.run(i, { type: 'multiply', source, seeds: batch }, { tag: TAG });
+          const job = { type: 'multiply' as const, source, seeds: batch };
+          const reply = await caseCheckPool.run(i, job, { tag: GROUP, group: GROUP });
 
-          if (stopped.current) return;
+          if (!live()) return;
 
-          await keep(record, reply.result.kept);
+          await keep(record, reply.result.kept, live);
+
+          if (!live()) return;
+
           done += reply.result.tried;
           kept += reply.result.kept.length;
           setRunning({ source: record.id, done, total: runs });
@@ -131,19 +144,18 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
       );
       showToast(keptText(kept, done));
     } catch (err) {
-      if (!stopped.current) showToast(errorMessage(err), { tone: 'error' });
+      if (live()) showToast(errorMessage(err), { tone: 'error' });
       else showToast(keptText(kept, done));
     } finally {
-      stopped.current = true;
+      stop();
+      busy.current = false;
       setRunning(null);
     }
   };
 
   function stop() {
-    if (stopped.current) return;
-
-    stopped.current = true;
-    multiplyPool.keepOnly(new Set());
+    turn.current++;
+    caseCheckPool.keepOnly(new Set(), GROUP);
   }
 
   return {

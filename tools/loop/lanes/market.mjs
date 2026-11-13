@@ -1,16 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import { createIssue, issues } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
+import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 const IDEA = 'loop:idea';
 const TAKEN_LABELS = [IDEA, 'loop:next', 'loop:building'];
+const MARKET = 'docs/market/';
 const ENTRY = /^docs\/market\/[a-z-]+\.md#[a-z0-9-]+$/;
 
 const idea = {
   type: 'object',
   properties: {
-    title: { type: 'string', description: 'The step, verb first, sentence case, no period' },
+    title: { type: 'string', maxLength: 80, description: 'The step, verb first, sentence case, no period' },
     kind: { type: 'string', enum: ['feature', 'integration', 'refine'] },
     entries: {
       type: 'array',
@@ -32,11 +36,11 @@ const titleKey = (title) => title.trim().toLowerCase().replace(/\s+/g, ' ').repl
 
 const takenTitles = () => TAKEN_LABELS.flatMap((label) => issues(label)).map((issue) => issue.title);
 
-export const freshIdeas = (ideas, taken) => {
+export const freshIdeas = (ideas, taken, known) => {
   const seen = new Set(taken.map(titleKey));
 
   return ideas
-    .map((candidate) => ({ ...candidate, entries: candidate.entries.filter((entry) => ENTRY.test(entry)) }))
+    .map((candidate) => ({ ...candidate, entries: candidate.entries.filter((entry) => known.has(entry)) }))
     .filter((candidate) => {
       const key = titleKey(candidate.title);
 
@@ -47,6 +51,53 @@ export const freshIdeas = (ideas, taken) => {
       return true;
     });
 };
+
+const slug = (heading) =>
+  heading
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N} _-]/gu, '')
+    .replaceAll(' ', '-');
+
+export const anchors = (markdown) => {
+  const counts = new Map();
+  let fenced = false;
+
+  return markdown.split('\n').flatMap((line) => {
+    if (line.startsWith('```')) fenced = !fenced;
+
+    const heading = fenced ? null : /^#{1,6} (.+)$/.exec(line);
+
+    if (!heading) return [];
+
+    const base = slug(heading[1]);
+    const count = counts.get(base) ?? 0;
+
+    counts.set(base, count + 1);
+
+    return [count === 0 ? base : `${base}-${count}`];
+  });
+};
+
+const knownEntries = (dir) => {
+  const folder = path.join(dir, MARKET);
+  const files = fs.readdirSync(folder).filter((file) => file.endsWith('.md'));
+
+  return new Set(
+    files.flatMap((file) =>
+      anchors(fs.readFileSync(path.join(folder, file), 'utf8')).map((anchor) => `${MARKET}${file}#${anchor}`),
+    ),
+  );
+};
+
+export const outsideMarket = (paths) => paths.filter((file) => !file.startsWith(MARKET) || file.includes('..'));
+
+const nulList = (out) => out.split('\0').filter(Boolean);
+
+const changedPaths = (dir, base) => [
+  ...nulList(run('git', ['diff', '--name-only', '--no-renames', '-z', base], { cwd: dir }).out),
+  ...nulList(run('git', ['ls-files', '--others', '--exclude-standard', '-z'], { cwd: dir }).out),
+];
 
 export const ideaBody = (candidate) =>
   [`Kind: ${candidate.kind}`, '', ...candidate.entries.map((entry) => `- ${entry}`)].join('\n');
@@ -63,6 +114,7 @@ const withNotes = (change) =>
 export default function market({ log }) {
   const taken = takenTitles();
   const worktree = openBranch('market', 'research');
+  const base = run('git', ['rev-parse', 'HEAD'], { cwd: worktree.dir }).out;
 
   try {
     const result = runAgent({ cwd: worktree.dir, name: 'market', prompt: prompt(taken), schema: SCHEMA, hours: 3 });
@@ -73,12 +125,20 @@ export default function market({ log }) {
       return;
     }
 
+    const stray = outsideMarket(changedPaths(worktree.dir, base));
+
+    if (stray.length > 0) {
+      log(`market session changed files outside ${MARKET}, nothing published: ${stray.slice(0, 20).join(', ')}`);
+
+      return;
+    }
+
     const { ideas = [], ...change } = result.output;
     const url = publish(withNotes({ ...change, kind: 'market' }), worktree);
 
     log(url ? `opened ${url}` : `no doc change: ${change.notes}`);
 
-    for (const candidate of freshIdeas(ideas, taken)) {
+    for (const candidate of freshIdeas(ideas, taken, knownEntries(worktree.dir))) {
       log(`idea ${createIssue({ title: candidate.title, body: ideaBody(candidate), labels: [IDEA] })}`);
     }
   } finally {

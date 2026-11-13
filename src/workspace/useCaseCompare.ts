@@ -1,12 +1,14 @@
-import { useEffect, useEffectEvent, useRef, useState, type RefObject } from 'react';
+import { useEffect, useEffectEvent, useState, type RefObject } from 'react';
 import { knownPurchases } from '../components/build/usePurchases';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { comparable, comparableRobots, compareCase, type CompareRobot, type Comparison } from '../cases/caseCompare';
 import type { Case } from '../cases/schema';
 import { jsonHash } from '../utils/geometryHash';
+import { errorMessage } from '../utils/errorMessage';
 import { platformBridge } from '../utils/platformBridge';
 import { caseVerdict } from './caseChecks';
-import type { StudioShared } from './types';
+import { newestComparison } from './newestComparison';
+import type { ShowToast, StudioShared } from './types';
 import type { SceneDocument } from './useSceneDocument';
 
 export interface SceneCaseSource {
@@ -47,12 +49,7 @@ interface CaseCompareOptions {
   fingerprint: string;
   studio: Pick<StudioShared, 'robotsBeside' | 'handleOf' | 'selectTab' | 'tabs'>;
   source: SceneCaseSource;
-}
-
-interface Result {
-  key: string;
-  tabId: string;
-  comparison: Comparison | null;
+  showToast: ShowToast;
 }
 
 type ComparePick = { caseId: string; tabId: string } | null;
@@ -63,17 +60,20 @@ function pickedTab(against: ComparePick, kase: Case | null, tabs: StudioShared['
   return tabs.some((t) => t.id === against.tabId) ? against.tabId : null;
 }
 
-export function useCaseCompare({ inFront, kase, fingerprint, studio, source }: CaseCompareOptions) {
+export function useCaseCompare({ inFront, kase, fingerprint, studio, source, showToast }: CaseCompareOptions) {
   const [choices, setChoices] = useState<CompareChoice[]>([]);
   const [against, setAgainst] = useState<ComparePick>(null);
-  const [result, setResult] = useState<Result | null>(null);
-  const [running, setRunning] = useState(false);
-  const turn = useRef(0);
+  const [newest] = useState(() => newestComparison<Comparison>());
+  const [inFlight] = useState(() => new Map<string, Promise<Comparison>>());
+  const [view, setView] = useState(newest.view);
   const caseKey = kase ? jsonHash(kase) : '';
   const tabsKey = studio.tabs.map((t) => `${t.id}:${t.name}`).join('|');
   const current = pickedTab(against, kase, studio.tabs);
 
-  const compareNow = async (target: Case, tabId: string): Promise<Comparison> => {
+  const keyOf = (target: Case, tabId: string) =>
+    `${jsonHash(target)}|${fingerprint}|${tabId}:${studio.handleOf(tabId)?.fingerprint() ?? ''}`;
+
+  const measureBoth = async (target: Case, tabId: string): Promise<Comparison> => {
     const other = studio.handleOf(tabId);
     const [own, theirs] = await Promise.all([sceneCaseRobot(source), other?.caseRobot() ?? null]);
 
@@ -83,6 +83,15 @@ export function useCaseCompare({ inFront, kase, fingerprint, studio, source }: C
       runs: async (robot) => (await caseVerdict(robot, target)).runs,
       purchases: knownPurchases() ?? (await platformBridge.listPurchases().catch(() => ({}))),
     });
+  };
+
+  const compareNow = (target: Case, tabId: string): Promise<Comparison> => {
+    const key = keyOf(target, tabId);
+    const running = inFlight.get(key) ?? measureBoth(target, tabId).finally(() => inFlight.delete(key));
+
+    inFlight.set(key, running);
+
+    return running;
   };
 
   const choicesFor = (target: Case): CompareChoice[] => {
@@ -102,24 +111,25 @@ export function useCaseCompare({ inFront, kase, fingerprint, studio, source }: C
   }, [inFront, caseKey, tabsKey, fingerprint]);
 
   const rerun = useEffectEvent(async (tabId: string) => {
-    const other = studio.handleOf(tabId);
+    if (!kase || !studio.handleOf(tabId)) return;
 
-    if (!kase || !other) return;
+    const key = keyOf(kase, tabId);
+    const start = newest.want(key);
 
-    const key = `${caseKey}|${fingerprint}|${tabId}:${other.fingerprint()}`;
+    setView(newest.view());
 
-    if (result?.key === key) return;
+    if (!start) return;
 
-    const mine = ++turn.current;
+    try {
+      const comparison = await compareNow(kase, tabId);
 
-    setRunning(true);
+      if (newest.settle({ key, tabId, comparison })) setView(newest.view());
+    } catch (e) {
+      if (!newest.fail(key)) return;
 
-    const comparison = await compareNow(kase, tabId).catch(() => null);
-
-    if (mine !== turn.current) return;
-
-    setResult({ key, tabId, comparison });
-    setRunning(false);
+      setView(newest.view());
+      showToast(errorMessage(e), { tone: 'error' });
+    }
   });
 
   useEffect(() => {
@@ -130,12 +140,13 @@ export function useCaseCompare({ inFront, kase, fingerprint, studio, source }: C
     return () => clearTimeout(soon);
   }, [current, inFront, caseKey, fingerprint, tabsKey]);
 
-  const shown = current && result?.tabId === current && result.comparison?.caseId === kase?.id ? result : null;
+  const { result } = view;
+  const shown = current && result?.tabId === current && result.comparison.caseId === kase?.id ? result : null;
 
   return {
     choices,
     comparison: shown?.comparison ?? null,
-    running: !!current && running,
+    running: !!current && view.running,
     start: (tabId: string) => {
       if (kase) setAgainst({ caseId: kase.id, tabId });
     },

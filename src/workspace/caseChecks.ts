@@ -48,6 +48,8 @@ let turns = 0;
 
 export const nextCaseTurn = () => ++turns;
 
+export const forgetCaseModels = () => models.clear();
+
 const isSkill = (value: unknown): value is Skill =>
   typeof value === 'object' && value !== null && (value as { format?: unknown }).format === 'basecase-skill';
 

@@ -10,8 +10,6 @@ interface RowProps {
   onShow: (() => void) | null;
 }
 
-const signed = (n: number) => `${n < 0 ? '−' : ''}${Math.abs(n).toFixed(2)}`;
-
 const Pending: React.FC = () => (
   <div className="h-[46px] flex flex-col justify-center gap-2">
     <span className="block skeleton-line shimmer h-[9px] w-2/3" />
@@ -31,7 +29,6 @@ const CompareRow: React.FC<RowProps> = ({ robot, better, onShow }) => {
         </span>
       </span>
       <span className="flex gap-3 text-[12px] text-white/50 tabular">
-        <span>{signed(runs.medianMargin)}</span>
         <span>{money.format(robot.costUsd)}</span>
         <span>{fmtG(robot.massG)}</span>
       </span>

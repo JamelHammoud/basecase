@@ -10,7 +10,7 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import type { Case } from '../cases/schema';
 import type { ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { caseCheckRows, caseVerdict, nextCaseTurn } from './caseChecks';
+import { caseCheckRows, caseVerdict, forgetCaseModels, nextCaseTurn } from './caseChecks';
 
 vi.mock('../cases/caseChecksClient', () => ({
   caseCheckPool: { size: 2, run: vi.fn(), keepOnly: vi.fn() },
@@ -36,6 +36,7 @@ describe('Case rows in Checks', () => {
   beforeEach(() => {
     run.mockReset();
     keepOnly.mockReset();
+    forgetCaseModels();
   });
 
   it('turn a Case whose runs throw into a red note, leaving every other finding and the verdict alone', async () => {
@@ -92,7 +93,7 @@ describe('Case rows in Checks', () => {
         : (answered.then(() => ({ type: 'runs', result: { outcomes } })) as never),
     );
 
-    const scene = sceneWith('quad-servo', 'reach-the-flag');
+    const scene = sceneWith('rover-diff', 'reach-the-flag');
     const older = nextCaseTurn();
     const newest = caseCheckRows({ ...scene, turn: nextCaseTurn() });
 

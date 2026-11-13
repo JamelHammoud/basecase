@@ -10,7 +10,7 @@ It's **Compare With** in the open Case's right-click menu in the Cases list, and
 
 Choosing a gripper or a servo used to mean opening each tab and trying the Case once in each. One clean run hides how a design copes when the floor or a servo is a little off. On Reach a Spot, our test rover passed 20 of 20, and a copy with 0.075 N·m wheel motors passed none.
 
-Both robots get the same 20 runs: friction, weight, servo strength and servo delay change a little in each. The two rows top the Results section, with the higher count in blue. Under each name sit the median margin, the bill of materials estimate and the Weight check's mass. Clicking the other row opens its tab with the Case.
+Both robots get the same 20 runs: friction, weight, servo strength and servo delay change a little in each. The two rows top the Results section, with the higher count in blue. Under each name sit the bill of materials estimate and the Weight check's mass. Clicking the other row opens its tab with the Case.
 
 Only Cases with one robot can be compared. The cost leaves out support filament. The agent answers "which is better" with the same runs.
 

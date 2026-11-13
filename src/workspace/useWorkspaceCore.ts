@@ -132,6 +132,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     fingerprint: readiness.fingerprint,
     studio,
     source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
+    showToast,
   });
 
   return {

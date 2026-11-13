@@ -62,7 +62,7 @@ const PeakTorque: React.FC<{
             key={j.id}
             type="button"
             data-testid="peak-row"
-            className="w-full h-8 -mx-[6px] px-[6px] rounded-md flex items-center gap-2 text-left hover:bg-white/[0.05] cursor-default"
+            className="w-full h-[32px] -mx-[6px] px-[6px] rounded-md flex items-center gap-2 text-left hover:bg-white/[0.05] cursor-default"
             onClick={() => onSelectParts(linkOf(j.id))}
             onContextMenu={(e) => openMenu(e, j, name)}
           >

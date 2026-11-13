@@ -145,21 +145,21 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
         style={{ cursor: spacePressed ? undefined : canvasCursor(props) }}
       />
       {snapBypassed && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 glass-menu rounded-full h-8 px-3.5 flex items-center text-[12.5px] text-white/85 pointer-events-none animate-fade-in">
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 glass-menu rounded-full h-[28px] px-3.5 flex items-center text-[12.5px] text-white/85 pointer-events-none animate-fade-in">
           Snapping off
         </div>
       )}
       <div
         ref={measureLabelRef}
         aria-live="polite"
-        className="absolute left-0 top-0 glass rounded-full h-8 px-3.5 items-center whitespace-pre text-[13px] tabular-nums pointer-events-none"
+        className="absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 items-center whitespace-pre text-[13px] tabular-nums pointer-events-none"
         style={{ display: 'none' }}
       />
       <div ref={buildLabelsRef} className="absolute left-0 top-0" />
       <div
         ref={ghostLabelRef}
         data-testid="ghost-gap"
-        className="absolute left-0 top-0 glass rounded-full h-8 px-3.5 items-center text-[13px] tabular-nums text-[#0d99ff] pointer-events-none"
+        className="absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 items-center text-[13px] tabular-nums text-[#0d99ff] pointer-events-none"
         style={{ display: 'none' }}
       />
       <div ref={markFieldRef} className="absolute left-0 top-0">

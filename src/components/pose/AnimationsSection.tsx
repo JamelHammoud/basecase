@@ -108,7 +108,7 @@ const AnimationRow: React.FC<{
         ])
       }
     >
-      <div className="h-9 flex items-center gap-1.5">
+      <div className="h-[32px] flex items-center gap-1.5">
         <IconButton
           icon={playing ? <PauseIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
           title={playing ? 'Pause' : 'Play'}

@@ -24,6 +24,8 @@ Send someone a link that opens your robot and its Case in their browser, where t
 
 ![The Link copied toast above the toolbar](/help/share-a-robot-as-a-link/copied.png)
 
+Without a token, **Share Robot** opens **Accounts** instead. If the Hub refuses the token, click **Open** in the message to paste a new one.
+
 Whoever opens the link sees the robot in its Case's world with the Case's name and brief, a Drive button and Open Scene, which opens the robot in the studio in their browser. A legged robot also gets **Train**, which teaches it to stand on their GPU, in Chrome or Edge. Open Scene then brings that skill along.
 
 ![A shared rover open in the browser, with Drive and Open Scene](/help/share-a-robot-as-a-link/browser.png)

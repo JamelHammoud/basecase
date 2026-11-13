@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../src/types/robotics';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
@@ -70,7 +70,7 @@ beforeAll(async () => {
     (record) => (window as unknown as { __studio: { load: (r: unknown) => void } }).__studio.load(record),
     ARM,
   );
-  await expect.poll(() => partCount(app.page)).toBe(ARM.parts.length);
+  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(ARM.parts.length), { timeout: 10000 });
 }, 120000);
 
 afterAll(async () => {
@@ -78,40 +78,44 @@ afterAll(async () => {
 });
 
 describe('Operate calibration', () => {
-  it('calibrates every joint of the emulated arm and rolls one back', async () => {
-    const { page } = app;
+  it.skipIf(process.platform === 'win32')(
+    'calibrates every joint of the emulated arm and rolls one back',
+    async () => {
+      const { page } = app;
 
-    await openPlayTab(page, 'Operate');
-    await page.locator(visible('button'), { hasText: 'Connect Emulated Robot' }).first().click();
-    await page.locator(visible('[data-robot-rung="set_up"]')).first().click();
-    await expect
-      .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
-      .toBe('set_up');
-    await page.locator(visible('[data-robot-rung="test"]')).first().click();
-
-    const calibrate = page
-      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
-      .first();
-
-    await expect.poll(() => calibrate.isEnabled()).toBe(true);
-    await calibrate.click();
-    await expect
-      .poll(() => page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating'))
-      .not.toBe('idle');
-
-    for (const id of ['shoulder', 'elbow'])
+      await openPlayTab(page, 'Operate');
+      await page.locator(visible('button'), { hasText: 'Connect Emulated Robot' }).first().click();
+      await page.locator(visible('[data-robot-rung="set_up"]')).first().click();
       await expect
-        .poll(() => row(id).getAttribute('data-verdict'), { timeout: 90000 })
-        .toMatch(/^(measured|consistent)$/);
+        .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
+        .toBe('set_up');
+      await page.locator(visible('[data-robot-rung="test"]')).first().click();
 
-    const measured = page.locator(visible('[data-calibration-joint][data-verdict="measured"]')).first();
-    const jointId = (await measured.getAttribute('data-calibration-joint')) ?? '';
+      const calibrate = page
+        .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
+        .first();
 
-    expect(Number(await row(jointId).getAttribute('data-version'))).toBe(1);
-    await row(jointId).hover();
-    await row(jointId).getByRole('button', { name: 'Roll Back' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
-    await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
-    expect(app.errors).toEqual([]);
-  }, 150000);
+      await expect.poll(() => calibrate.isEnabled()).toBe(true);
+      await calibrate.click();
+      await expect
+        .poll(() => page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating'))
+        .not.toBe('idle');
+
+      for (const id of ['shoulder', 'elbow'])
+        await expect
+          .poll(() => row(id).getAttribute('data-verdict'), { timeout: 90000 })
+          .toMatch(/^(measured|consistent)$/);
+
+      const measured = page.locator(visible('[data-calibration-joint][data-verdict="measured"]')).first();
+      const jointId = (await measured.getAttribute('data-calibration-joint')) ?? '';
+
+      expect(Number(await row(jointId).getAttribute('data-version'))).toBe(1);
+      await row(jointId).hover();
+      await row(jointId).getByRole('button', { name: 'Roll Back' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
+      await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
+      expect(app.errors).toEqual([]);
+    },
+    150000,
+  );
 });

@@ -8,8 +8,8 @@ export const schedule = {
   agent: true,
   slots: 1,
   everySeconds: 60,
-  labels: ['loop:idea'],
-  does: 'Takes one stage of the robotics loop per run and files ideas that would make it best in class, for a first robot and a thousandth',
+  labels: ['loop:idea', 'loop:big-bet'],
+  does: 'Takes one stage of the robotics loop, or new directions beyond it, per run and files big bets and features for a first robot and a thousandth',
 };
 
 export const STAGES = [
@@ -26,7 +26,14 @@ export const STAGES = [
     name: 'Operate',
     focus: 'Operate: the real robot, calibration, live driving, recording and closing the loop back to sim',
   },
+  {
+    name: 'New directions',
+    focus:
+      'new directions beyond the six stages: what Basecase could become next, such as new sub-products, new surfaces (phone, web, hardware), cloud services, community and sharing, marketplaces, education, business models, and what to remove. Return only big bets this run',
+  },
 ];
+
+export const BIG_BET = 'loop:big-bet';
 
 const MAX_WAITING = 12;
 
@@ -42,13 +49,14 @@ const SCHEMA = {
         type: 'object',
         properties: {
           title: { type: 'string', maxLength: 80 },
+          scale: { type: 'string', enum: ['big bet', 'feature'] },
           for: { type: 'string', enum: ['first robot', 'thousandth robot', 'both'] },
           moment: { type: 'string' },
           bestToday: { type: 'string' },
           basecaseToday: { type: 'string' },
           firstStep: { type: 'string' },
         },
-        required: ['title', 'for', 'moment', 'bestToday', 'basecaseToday', 'firstStep'],
+        required: ['title', 'scale', 'for', 'moment', 'bestToday', 'basecaseToday', 'firstStep'],
       },
     },
     notes: { type: 'string' },
@@ -64,13 +72,16 @@ const FOR = {
 
 export const ideaBody = (idea, stage) =>
   [
+    `**Scale:** ${idea.scale === 'big bet' ? 'Big bet' : 'Feature'}`,
     `**Stage:** ${stage}`,
     `**For:** ${FOR[idea.for]}`,
     `**The moment:** ${idea.moment}`,
     `**Best today:** ${idea.bestToday}`,
     `**Basecase today:** ${idea.basecaseToday}`,
-    `**First step:** ${idea.firstStep}`,
+    `**${idea.scale === 'big bet' ? 'Why now, and the first steps' : 'First step'}:** ${idea.firstStep}`,
   ].join('\n\n');
+
+export const labelsFor = (idea) => (idea.scale === 'big bet' ? [IDEA, BIG_BET] : [IDEA]);
 
 export const freshIdeas = (ideas, taken) => {
   const seen = new Set(taken.map(titleKey));
@@ -126,7 +137,9 @@ export default function ideas({ log }) {
   }
 
   for (const idea of freshIdeas(result.output.ideas, taken)) {
-    log(`${stage.name}: ${createIssue({ title: idea.title, body: ideaBody(idea, stage.name), labels: [IDEA] })}`);
+    log(
+      `${stage.name}: ${createIssue({ title: idea.title, body: ideaBody(idea, stage.name), labels: labelsFor(idea) })}`,
+    );
   }
 
   if (result.output.notes) log(`notes: ${result.output.notes}`);

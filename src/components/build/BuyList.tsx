@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { IconButton, MenuItem, PopoverMenu, Section, SpreadsheetIcon, confirmAction } from '../../design-system';
-import type { ScenePart } from '../../types/robotics';
+import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { describeKey } from '../../utils/bom';
 import type { Bom, BomCategory, BomLine } from '../../utils/bomTypes';
 import { AddSupplyMenu } from './AddSupplyMenu';
 import { type Extra, withAdded, withQty, without } from './buyExtras';
+import { BuyTotal } from './BuyTotal';
 import { BuyGroup } from './BuyGroup';
 import { bomGroups } from './buyLine';
 import type { BuyContext } from './BuyRow';
@@ -15,8 +16,8 @@ interface BuyListProps {
   bom: Bom;
   parts: ScenePart[];
   panScroll: boolean;
-  extras: Extra[];
-  onChangeExtras: (extras: Extra[]) => void;
+  project: ProjectSettings;
+  onChangeProject: (patch: Partial<ProjectSettings>) => void;
   onCheck: (line: BomLine) => void;
   onSelectParts: (ids: string[]) => void;
   onExportCsv: () => void;
@@ -75,13 +76,15 @@ export const BuyList: React.FC<BuyListProps> = ({
   bom,
   parts,
   panScroll,
-  extras,
-  onChangeExtras,
+  project,
+  onChangeProject,
   onCheck,
   onSelectParts,
   onExportCsv,
   onExportMarkdown,
 }) => {
+  const extras = project.extras ?? [];
+  const onChangeExtras = (next: Extra[]) => onChangeProject({ extras: next });
   const [openGroups, setOpenGroups] = useState<Partial<Record<BomCategory, boolean>>>({});
   const groups = bomGroups(bom);
   const standIns = bom.standIns.length;
@@ -118,7 +121,7 @@ export const BuyList: React.FC<BuyListProps> = ({
         </>
       }
     >
-      {!hasRows && !bom.madeElsewhere.length && <span className="text-[13px] text-white/50">No parts</span>}
+      <BuyTotal totals={bom.totals} project={project} onChangeProject={onChangeProject} />
       {hasRows && (
         <ul className="-mx-[7px]">
           {standIns > 0 && (

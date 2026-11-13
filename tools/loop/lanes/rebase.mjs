@@ -1,9 +1,10 @@
 import path from 'node:path';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
-import { lastFinishedMainCheck, openPulls, pullCheck, pullComments } from '../lib/github.mjs';
+import { behindMain, conflictsWithMain, fetchAll } from '../lib/branches.mjs';
+import { lastFinishedMainCheck, openPulls, pullCheck, pullComments, pullReview } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
-import { entryFor, recordConflictFail } from '../lib/pullState.mjs';
+import { entryFor, markRefreshed, recordConflictFail } from '../lib/pullState.mjs';
 import { byRank } from '../lib/rank.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 import { run } from '../lib/sh.mjs';
@@ -12,7 +13,7 @@ import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 export const schedule = {
   slots: 3,
   everySeconds: 60,
-  does: 'Merges main into conflicting loop/ branches, an agent resolving the conflicts, rebuilds a change whose conflicts fail twice, and refreshes a pull request whose Check failed on an older main',
+  does: 'Merges main into conflicting loop/ branches, an agent resolving the conflicts, rebuilds a change whose conflicts fail twice, and refreshes a failed Check once per head',
 };
 
 const MAX_CONFLICT_FAILS = 2;
@@ -80,6 +81,7 @@ function mergeMain(pull, log) {
     if (!merged && !resolveConflicts(pull, dir)) return false;
 
     git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
+    markRefreshed(pull.number, git(['rev-parse', 'HEAD'], dir).out.trim());
     log(`#${pull.number}: brought up to date with main`);
 
     return true;
@@ -102,26 +104,15 @@ function claimFirst(pulls) {
   return null;
 }
 
-const conflictsWithMain = (pull) =>
-  pull.mergeable === 'CONFLICTING' ||
-  (pull.mergeable === 'UNKNOWN' &&
-    !run('git', ['merge-tree', '--write-tree', '--name-only', 'origin/main', `origin/${pull.headRefName}`], {
-      cwd: HOME_CHECKOUT,
-      allowFail: true,
-    }).ok);
-
-const behindMain = (pull) =>
-  !run('git', ['merge-base', '--is-ancestor', 'origin/main', `origin/${pull.headRefName}`], {
-    cwd: HOME_CHECKOUT,
-    allowFail: true,
-  }).ok;
-
 function staleFailures(pulls) {
   if (lastFinishedMainCheck()?.conclusion !== 'success') return [];
 
-  const failed = pulls.filter((pull) => pullCheck(pull) === 'failure');
+  const refreshable = (pull) =>
+    pullCheck(pull) === 'failure' &&
+    pullReview(pull) !== 'failure' &&
+    !entryFor(pull.number).refreshed.includes(pull.headRefOid);
 
-  return failed.filter(behindMain);
+  return pulls.filter(refreshable).filter(behindMain);
 }
 
 export default function rebase({ log }) {
@@ -129,7 +120,7 @@ export default function rebase({ log }) {
     .filter((pull) => pull.headRefName.startsWith('loop/'))
     .sort(byRank);
 
-  run('git', ['fetch', '-q', '--prune', 'origin'], { cwd: HOME_CHECKOUT, allowFail: true });
+  fetchAll();
 
   const conflicting = pulls.filter(conflictsWithMain);
   const next = claimFirst(conflicting) ?? claimFirst(staleFailures(pulls));

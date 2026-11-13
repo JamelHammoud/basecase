@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
+import { conflictsWithMain, fetchAll } from '../lib/branches.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
@@ -61,7 +62,8 @@ function needFor(pull, mainGreen) {
     ((mainGreen || pull.headRefName.startsWith('loop/repair/')) && pullCheck(pull) === 'failure');
   const newHead = !entry.heads.includes(pull.headRefOid);
 
-  if (failing && newHead) return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
+  if (failing && newHead && !conflictsWithMain(pull))
+    return { entry, reason: pullReview(pull) === 'failure' ? 'review' : 'check' };
 
   return pull.updatedAt > entry.lastLook ? { entry, reason: 'maybe-jamel' } : null;
 }
@@ -167,6 +169,8 @@ function handle(pull, need, log) {
 
 export default function revise({ log }) {
   const mainGreen = lastFinishedMainCheck()?.conclusion === 'success';
+
+  fetchAll();
 
   for (const pull of openPulls()) {
     const need = needFor(pull, mainGreen);

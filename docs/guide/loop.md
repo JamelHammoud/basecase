@@ -27,8 +27,11 @@ Basecase is built by a team of agents that runs on Jamel's Mac (`tools/loop/`, s
 | `lead` | 4 h | Reads the Direction issue and plans arcs and steps as issues |
 | `update` | 24 h | Moves the agent adapters to their latest releases |
 | `market` | 24 h | Checks competitors, partners and integrations in `docs/market/` and files `loop:idea` issues (a title and the entries behind it, each one present in `docs/market/`); a run that changes anything outside `docs/market/` publishes nothing; the lead closes an idea when it promotes it to a step |
+| `learn` | 24 h | Turns mistakes seen twice, or once by Jamel, into a lint, test, guide rule or playbook entry |
+| `digest` | 24 h | Posts the week's numbers as a `loop:digest` issue, once a week |
+| `tidy` | 1 h | Deletes `loop/` branches and loop worktrees idle for over 24 hours |
 
-Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions` (except `market`, sandboxed because it reads the web; see Review), so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
+Comments the loop posts end with `<!-- loop -->`, which is how the learn lane tells them from Jamel's own comments, since both come from Jamel's account. Learn and digest count only what the loop made: reviews from Jamel's account that carry the mark, and closed or repair pull requests from Jamel's account on a `loop/` branch in this repo. An outsider's comment or pull request never becomes a lesson or a number. Tidy never deletes the branch the loop's home follows (`BASECASE_LOOP_REF`). Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions` (except `market`, sandboxed because it reads the web; see Review), so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
 
 ### Pull request kinds
 

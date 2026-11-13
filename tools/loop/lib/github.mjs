@@ -1,3 +1,4 @@
+import { withMark } from './mark.mjs';
 import { json, run } from './sh.mjs';
 
 const REVIEW_CONTEXT = 'agent-review';
@@ -61,7 +62,7 @@ export const setReview = (sha, state, description) =>
   ]);
 
 export const commentOnPull = (number, body) =>
-  run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: body });
+  run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: withMark(body) });
 
 export const mergePull = (number) =>
   run('gh', ['pr', 'merge', String(number), '--squash', '--delete-branch'], { allowFail: true });

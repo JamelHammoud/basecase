@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { sourcingFindings } from '../readiness/buildChecks';
 import { bomFindings } from '../readiness/findings';
 import { box, joint, type FixtureRobot, type P3 } from '../sim/fixtures/parts';
-import { fixtureRobots } from '../sim/fixtures/robots';
+import { fixtureRobots, withoutGripper } from '../sim/fixtures/robots';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
 import { buildRig, forwardKinematics, isMovable, resolveJoints } from '../utils/kinematics';
@@ -81,7 +81,7 @@ const so101Sized = () =>
     { id: 'gripper', axis: X, origin: [10, 220, 270] },
   ]);
 
-const arm6 = () => fixtureRobots().find((r) => r.id === 'arm-6dof')!;
+const arm6 = () => withoutGripper(fixtureRobots().find((r) => r.id === 'arm-6dof')!);
 const ARMS = [arm6(), deskArm(), urArm(), so101Sized()];
 
 const leaderOf = (r: FixtureRobot) => makeLeader({ parts: r.parts, joints: r.joints, sceneId: 'scene-follower' })!;
@@ -200,7 +200,7 @@ describe('which robots get a leader', () => {
   it('leads fixed-base arms only', () => {
     const leadable = fixtureRobots().filter((r) => followerArms(r.parts, r.joints).length);
 
-    expect(leadable.map((r) => r.id)).toEqual(['arm-3dof', 'arm-6dof']);
+    expect(leadable.map((r) => r.id)).toEqual(['arm-3dof']);
   });
 
   it('takes a gripper as the trigger, and leaves an arm without one with a bare handle', () => {

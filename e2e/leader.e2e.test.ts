@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { fixtureRobots, withoutGripper } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ProjectSettings, type RobotJoint } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
 
@@ -15,7 +15,7 @@ interface Tabs {
   select: (id: string) => void;
 }
 
-const arm = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
+const arm = withoutGripper(fixtureRobots().find((r) => r.id === 'arm-6dof')!);
 const movable = (joints: RobotJoint[] = []) => joints.filter((j) => j.type !== 'fixed').map((j) => j.id);
 
 const tabs = () => app.page.evaluate(() => (window as unknown as { __studioTabs: Tabs }).__studioTabs.list());

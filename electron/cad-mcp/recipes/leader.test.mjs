@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { box, joint } from '../../../src/sim/fixtures/parts';
-import { fixtureRobots } from '../../../src/sim/fixtures/robots';
+import { fixtureRobots, withoutGripper } from '../../../src/sim/fixtures/robots';
 import { makeLeader } from '../../../src/leader/makeLeader';
 import { renderPart } from '../../cad-kernel/nodeHost/client.mjs';
 
@@ -30,7 +30,7 @@ function grippedArm() {
   return { parts, joints };
 }
 
-const arm6 = fixtureRobots().find((r) => r.id === 'arm-6dof');
+const arm6 = withoutGripper(fixtureRobots().find((r) => r.id === 'arm-6dof'));
 const LEADERS = {
   gripped: makeLeader({ ...grippedArm(), sceneId: 'a' }),
   'arm-6dof': makeLeader({ parts: arm6.parts, joints: arm6.joints, sceneId: 'b' }),

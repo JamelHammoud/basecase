@@ -30,10 +30,9 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     marks,
     measure,
     posing,
-    simTraining,
+    simTraining: { sim },
   } = core;
   const { edits } = actions;
-  const { sim } = simTraining;
   const { cursors, lanes } = agent;
   const editingMark = marks.selected;
   const topParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');

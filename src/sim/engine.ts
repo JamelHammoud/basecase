@@ -498,9 +498,7 @@ export class SimEngine {
   }
 
   private eyesFor(policy: PolicySpec): EyeCaster | null {
-    if (!policy.eyes?.length) return null;
-
-    const caster = eyeCaster(this.mj, this.model, this.data, policy.eyes);
+    const caster = policy.eyes?.length ? eyeCaster(this.mj, this.model, this.data, policy.eyes) : null;
 
     if (typeof caster === 'string') throw new Error(`${caster} Train it again.`);
 

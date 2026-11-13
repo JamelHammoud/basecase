@@ -105,7 +105,7 @@ basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site
 
 | Folder | File name | Front matter |
 |---|---|---|
-| `site/content/changelog/` | `YYYY-MM-DD-title-in-words.md` | `title`, `date`, `version` when it shipped in a release |
+| `site/content/changelog/` | `YYYY-MM-DD-title-in-words.md` | `title`, `date`, `image` for a cover screenshot, `version` when it shipped in a release |
 | `site/content/blog/` | `title-in-words.md` | `title`, `date`; `draft: true` only to hold a post back |
 | `site/content/help/` | `task-in-words.md`, which is its URL | `title`, `date`, `covers:` (a list of the code paths it documents) |
 
@@ -124,13 +124,13 @@ Bring a model from another app into the scene as a printable part.
 ```
 
 - **Titles are in sentence case**, in every folder: capitals only for proper nouns. Menu labels quoted in the body keep theirs.
-- **A changelog entry** is a title and two sentences, Chronicle-style, and only for a change worth announcing: a new capability, a new way of working, or a real change in how the product behaves. Fixes and polish reach people through the release notes, which list every merged pull request. The page lists entries newest first and feeds them to `/changelog/rss.xml` and `/changelog.json`.
+- **A changelog entry** is a short article in the manner of Amp's Chronicle, and only for a change worth announcing: a new capability, a new way of working, or a real change in how the product behaves. Fixes and polish reach people through the release notes, which list every merged pull request. Each entry has its own page at `/changelog/<file name>`, with a link back, the date, its cover and the body with screenshots (in `site/public/changelog/<slug>/`). `/changelog` lists them newest first with the cover, date, title and first paragraph, each linking to its page (old `/changelog#<file name>` links still land on the list), and the feeds (`/changelog/rss.xml`, `/changelog.json`) carry the full entry with absolute image URLs. The entry's cover is its `og:image`. The brief that says how to write one is `tools/loop/briefs/telling.md`.
 - **A help article** has an imperative title, one sentence on what it's for and numbered steps. Write only steps you've checked in the code; the `covers` paths are what to recheck when that code changes.
 - **Drafts and future dates stay out.** The build skips `draft: true` and any date after the day it runs, in every folder. Nothing rebuilds the site on a schedule, so a future-dated file publishes with the first deploy on or after its date.
 - **The blog appears with its first post.** Until then the build writes no `/blog` page, and the nav and sitemap leave it out. The landing's footer links Changelog and Help (`SECTIONS` in `src/landing/pages/sections.ts`).
 - Front matter is `key: value` lines and `- item` lists, indented or not; `true` and `false` are booleans with or without quotes. A missing title or date, a date not written `YYYY-MM-DD`, or a file name that isn't lowercase words joined by dashes fails the build with the file's path.
 - Raw HTML in the markdown is dropped. `http` and `https` links open in a new tab.
-- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog and a help article.
+- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and to a help article.
 
 ### What Check runs
 

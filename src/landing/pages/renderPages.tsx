@@ -1,13 +1,13 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ArticlePage } from './ArticlePage';
 import { ChangelogPage } from './ChangelogPage';
 import { EntryList } from './EntryList';
 import { changelogJson, changelogRss, sitemap } from './feeds';
 import { sectionsWithBlog, type ContentKind, type Section } from './sections';
-import { entryPath, type Entry, type SiteContent } from './siteContent';
+import { absoluteUrl, entryPath, type Entry, type SiteContent } from './siteContent';
 import { SitePage, type PageHead } from './SitePage';
 
 export interface SiteFile {
@@ -29,7 +29,7 @@ const CHANGELOG_FEEDS = [
 
 const articleSpec = (entry: Entry): PageSpec => ({
   fileName: `${entry.kind}/${entry.slug}.html`,
-  head: { title: entry.title, description: entry.summary, path: entryPath(entry) },
+  head: { title: entry.title, description: entry.summary, path: entryPath(entry), image: entry.image },
   section: entry.kind,
   body: <ArticlePage entry={entry} />,
 });
@@ -61,6 +61,7 @@ function pageSpecs(content: SiteContent): PageSpec[] {
       body: <EntryList title="Help" entries={content.help} />,
     },
     ...(content.blog.length > 0 ? [blogSpec(content.blog)] : []),
+    ...content.changelog.map(articleSpec),
     ...content.blog.map(articleSpec),
     ...content.help.map(articleSpec),
   ];
@@ -81,9 +82,16 @@ export function renderPages(content: SiteContent, stylesheets: string[]): SiteFi
   const items = content.changelog.map((entry) => ({
     entry,
     html: renderToStaticMarkup(
-      <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
-        {entry.body}
-      </ReactMarkdown>,
+      <>
+        {entry.image && <img src={absoluteUrl(entry.image)} alt="" />}
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          skipHtml
+          urlTransform={(url) => absoluteUrl(defaultUrlTransform(url))}
+        >
+          {entry.body}
+        </ReactMarkdown>
+      </>,
     ),
   }));
 

@@ -11,6 +11,7 @@ export interface Entry {
   covers: string[];
   version?: string;
   line?: string;
+  image?: string;
 }
 
 export type SiteContent = Record<ContentKind, Entry[]>;
@@ -68,6 +69,7 @@ function entryFrom(path: string, source: string): Draft {
     covers: Array.isArray(covers) ? covers : [],
     version: text(data.version),
     line: text(data.line),
+    image: text(data.image),
   };
 
   return { entry, draft: data.draft === true };
@@ -96,8 +98,9 @@ export function readContent(files: Record<string, string>, now: Date): SiteConte
 
 export const SITE_URL = 'https://basecase.so';
 
-export const entryPath = (entry: Entry) =>
-  entry.kind === 'changelog' ? `/changelog#${entry.slug}` : `/${entry.kind}/${entry.slug}`;
+export const entryPath = (entry: Entry) => `/${entry.kind}/${entry.slug}`;
+
+export const absoluteUrl = (href: string) => (href.startsWith('/') ? `${SITE_URL}${href}` : href);
 
 const DAY_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' });
 

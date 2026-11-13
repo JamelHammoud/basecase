@@ -1,6 +1,7 @@
 import { cached } from './cache.mjs';
 import { LOOP_MARK, withMark } from './mark.mjs';
 import { json, run } from './sh.mjs';
+import { openMatch } from './titles.mjs';
 
 const REVIEW_CONTEXT = 'agent-review';
 let slug;
@@ -13,60 +14,6 @@ export const repo = () => {
 
 const PULL_FIELDS =
   'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable,labels,updatedAt,statusCheckRollup';
-
-const FILLER = new Set(
-  'the and with from for into its their this that each every one any all a an as at by of on in to or so when'.split(
-    ' ',
-  ),
-);
-const KIND_WORDS = new Set([
-  'feature',
-  'integration',
-  'refine',
-  'fix',
-  'repair',
-  'lesson',
-  'loop',
-  'update',
-  'market',
-  'harness',
-]);
-
-const titleWords = (title) =>
-  new Set(
-    title
-      .toLowerCase()
-      .split(/[^a-z0-9]+/)
-      .filter((word) => /\d/.test(word) || (word.length >= 3 && !FILLER.has(word) && !KIND_WORDS.has(word))),
-  );
-
-const numbersIn = (words) =>
-  [...words]
-    .filter((word) => /\d/.test(word))
-    .sort()
-    .join(' ');
-
-export const similarTitle = (a, b) => {
-  const [x, y] = [titleWords(a), titleWords(b)];
-  const shared = [...x].filter((word) => y.has(word)).length;
-  const smaller = Math.min(x.size, y.size);
-  const union = x.size + y.size - shared;
-
-  if (smaller < 3 || numbersIn(x) !== numbersIn(y)) return false;
-
-  return shared / union >= 0.6 || shared / smaller >= 0.8;
-};
-
-export const sameTitle = (a, b) => {
-  const norm = (t) =>
-    t
-      .toLowerCase()
-      .replace(/\s+/g, ' ')
-      .replace(/[.\s]+$/, '')
-      .trim();
-
-  return norm(a) === norm(b);
-};
 
 export const openPulls = ({ fresh = false } = {}) =>
   cached('open-pulls', { ttlMs: 20_000, refresh: fresh }, () =>
@@ -278,20 +225,15 @@ const openIssueSummaries = () =>
     '--limit',
     '500',
     '--json',
-    'title,labels',
+    'number,title,url,labels',
     '--jq',
-    '[.[] | {title, labels: [.labels[].name]}]',
+    '[.[] | {number, title, url, labels: [.labels[].name]}]',
   ]) ?? [];
 
-export const alreadyOpen = (title, open, similarAmong = []) =>
-  open.some(
-    (issue) =>
-      sameTitle(issue.title, title) ||
-      (issue.labels.some((label) => similarAmong.includes(label)) && similarTitle(issue.title, title)),
-  );
+export const findOpenIssue = ({ title, similarAmong }) => openMatch(title, openIssueSummaries(), similarAmong);
 
 export const createIssue = ({ title, body, labels, similarAmong }) => {
-  if (alreadyOpen(title, openIssueSummaries(), similarAmong)) return null;
+  if (findOpenIssue({ title, similarAmong })) return null;
 
   return ghCreating(
     ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],

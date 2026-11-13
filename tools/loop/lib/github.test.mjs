@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sameTitle, similarTitle, stuckRuns, verdictOf } from './github.mjs';
+import { alreadyOpen, sameTitle, similarTitle, stuckRuns, verdictOf } from './github.mjs';
 
 describe('sameTitle', () => {
   it.each([
@@ -38,8 +38,47 @@ describe('similarTitle', () => {
       'Open a Case as a Command Center with the robot and its cameras',
     ],
     ['Simulate catalog LiDARs from their spec rows', 'Import a scanned room as a Case world at true size'],
+    ['Digest: week of 2026-11-06', 'Digest: week of 2026-11-13'],
+    ['Teleop a G1 over ethernet from the Mac camera', 'Teleop a H1 over ethernet from the Mac camera'],
   ])('tells %s and %s apart', (a, b) => {
     expect(similarTitle(a, b)).toBe(false);
+  });
+});
+
+describe('alreadyOpen', () => {
+  const steps = ['loop:next', 'loop:building'];
+  const open = (title, label) => [{ title, labels: [label] }];
+
+  it('skips a step that rewords an open step', () => {
+    const step = open('Open a Case in a Command Center showing the robot, its cameras, joints and tries', 'loop:next');
+
+    expect(
+      alreadyOpen('Open a Case as a Command Center with the robot, its cameras, joints and tries', step, steps),
+    ).toBe(true);
+  });
+
+  it('files a step that rewords the idea it promotes', () => {
+    expect(
+      alreadyOpen(
+        'Train a policy from teleop demos in a Case',
+        open('Train a policy from teleop demos', 'loop:idea'),
+        steps,
+      ),
+    ).toBe(false);
+  });
+
+  it('files a step under an arc with nearly the same name', () => {
+    const arc = open('Operate a robot from a Case Command Center', 'loop:arc');
+
+    expect(alreadyOpen('Operate a robot from a Case Command Center with its cameras', arc, steps)).toBe(false);
+  });
+
+  it('files the next digest while the last one is open', () => {
+    expect(alreadyOpen('Digest: week of 2026-11-13', open('Digest: week of 2026-11-06', 'loop:digest'))).toBe(false);
+  });
+
+  it('skips any issue with the same title', () => {
+    expect(alreadyOpen('Digest: week of 2026-11-13', open('digest: week of 2026-11-13', 'loop:digest'))).toBe(true);
   });
 });
 

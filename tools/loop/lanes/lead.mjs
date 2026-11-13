@@ -164,6 +164,7 @@ function prompt(world) {
   ].join('\n\n');
 }
 
+const STEP_LABELS = ['loop:next', 'loop:building'];
 const numbers = (list) => new Set(list.map((issue) => issue.number));
 
 function fileStep(s, known, log) {
@@ -172,7 +173,7 @@ function fileStep(s, known, log) {
   const labels = ['loop:next', `loop:${s.kind}`, ...(request ? ['loop:priority'] : [])];
   const head = [request ? `Request: #${request}` : '', promotes ? `Idea: #${promotes}` : ''].filter(Boolean).join('\n');
   const body = `${head ? `${head}\n` : ''}Arc: ${s.arc}\nKind: ${s.kind}\n\n${s.body}`;
-  const url = createIssue({ title: s.title, body, labels });
+  const url = createIssue({ title: s.title, body, labels, similarAmong: STEP_LABELS });
 
   log(url ? `step ${url}` : `skipped, already open: ${s.title}`);
 
@@ -197,7 +198,9 @@ function fileSteps(output, world, log) {
   };
 
   for (const arc of output.newArcs) {
-    log(`arc ${createIssue({ ...arc, labels: ['loop:arc'] }) ?? `skipped, already open: ${arc.title}`}`);
+    log(
+      `arc ${createIssue({ ...arc, labels: ['loop:arc'], similarAmong: ['loop:arc'] }) ?? `skipped, already open: ${arc.title}`}`,
+    );
   }
 
   for (const s of output.steps) fileStep(s, known, log);

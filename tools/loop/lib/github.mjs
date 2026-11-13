@@ -37,8 +37,14 @@ const titleWords = (title) =>
     title
       .toLowerCase()
       .split(/[^a-z0-9]+/)
-      .filter((word) => word.length >= 3 && !FILLER.has(word) && !KIND_WORDS.has(word)),
+      .filter((word) => /\d/.test(word) || (word.length >= 3 && !FILLER.has(word) && !KIND_WORDS.has(word))),
   );
+
+const numbersIn = (words) =>
+  [...words]
+    .filter((word) => /\d/.test(word))
+    .sort()
+    .join(' ');
 
 export const similarTitle = (a, b) => {
   const [x, y] = [titleWords(a), titleWords(b)];
@@ -46,7 +52,7 @@ export const similarTitle = (a, b) => {
   const smaller = Math.min(x.size, y.size);
   const union = x.size + y.size - shared;
 
-  if (smaller < 3) return false;
+  if (smaller < 3 || numbersIn(x) !== numbersIn(y)) return false;
 
   return shared / union >= 0.6 || shared / smaller >= 0.8;
 };
@@ -263,11 +269,29 @@ const labelArgs = ({ add = [], remove = [] }) => [
 export const editIssueLabels = (number, change) =>
   ghCreating(['issue', 'edit', String(number), ...labelArgs(change)], {});
 
-const openIssueTitles = () =>
-  json('gh', ['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'title', '--jq', '[.[].title]']) ?? [];
+const openIssueSummaries = () =>
+  json('gh', [
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--limit',
+    '500',
+    '--json',
+    'title,labels',
+    '--jq',
+    '[.[] | {title, labels: [.labels[].name]}]',
+  ]) ?? [];
 
-export const createIssue = ({ title, body, labels }) => {
-  if (openIssueTitles().some((open) => sameTitle(open, title) || similarTitle(open, title))) return null;
+export const alreadyOpen = (title, open, similarAmong = []) =>
+  open.some(
+    (issue) =>
+      sameTitle(issue.title, title) ||
+      (issue.labels.some((label) => similarAmong.includes(label)) && similarTitle(issue.title, title)),
+  );
+
+export const createIssue = ({ title, body, labels, similarAmong }) => {
+  if (alreadyOpen(title, openIssueSummaries(), similarAmong)) return null;
 
   return ghCreating(
     ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],

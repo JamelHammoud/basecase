@@ -35,7 +35,7 @@ export const AddedByAgent: React.FC<{
       {items.length > 0 && <TileGrid items={items} onOpen={onOpen} onAdd={onAdd} meta={makerLine} />}
       {waiting.length > 0 && (
         <div className="px-[8px] pb-4">
-          <SectionHeader title="Needs a 3D Model" />
+          <SectionHeader title="Needs a 3D model" />
           {waiting.map((item) => (
             <PartWithoutMesh key={item.id} item={item} />
           ))}

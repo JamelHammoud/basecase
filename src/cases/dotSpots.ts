@@ -1,16 +1,13 @@
 import * as THREE from 'three';
-import type { ScenePart } from '../types/robotics';
 import { forwardKinematics, solveIK, type Rig, type V3 } from '../utils/kinematics';
-import { robotFacts, type EndEffector } from './robotFit';
-import { CASE_FORMAT_VERSION, type Case, type ReferenceCommand, type WorldObject } from './schema';
+import type { EndEffector } from './robotFit';
 
-const DOT_COUNT = 3;
+export const DOT_COUNT = 3;
+
 const FORWARD_REACH_SHARE = 0.85;
 const FORWARD_ELEVATIONS_DEG = [60, 30, 0, 75, 45, 15];
 const IK_ITERATIONS = 80;
 const REACHED_SHARE = 0.25;
-const HOLD_SECONDS = 0.2;
-const MOVE_SECONDS = 1.8;
 const MIN_HEIGHT_MM = 30;
 const CANDIDATE_FRACTIONS = [
   [0.45, 0.4],
@@ -92,69 +89,4 @@ export function dotSpots(rig: Rig, effector: EndEffector, arm: ArmReach, radius:
   const posed = CANDIDATE_FRACTIONS.map((f) => tipAt(rig, effector, candidateValues(rig, arm.joints, f)));
 
   return pickSpots(posed, rest, radius);
-}
-
-const dotObject = (position: V3, index: number, radius: number): WorldObject => ({
-  id: `dot${index}`,
-  name: `Dot ${index + 1}`,
-  kind: 'sphere',
-  position,
-  rotation: [0, 0, 0],
-  size: [radius * 2, radius * 2, radius * 2],
-  color: '#0d99ff',
-  opacity: 0.6,
-  behavior: 'marker',
-});
-
-export function touchTheDotsCase(rig: Rig, parts: ScenePart[]): Case {
-  const facts = robotFacts(rig, parts);
-  const effector = facts.endEffector;
-
-  if (!effector) throw new Error('Touch the Dots needs an arm with an end effector.');
-
-  const radius = Math.max(12, facts.reachMm * 0.08);
-  const spots = dotSpots(
-    rig,
-    effector,
-    { joints: facts.armJoints, anchor: facts.anchor, reachMm: facts.reachMm },
-    radius,
-  );
-  const timeline: ReferenceCommand[] = spots.map((target, i) => ({ at: 0.2 + i * MOVE_SECONDS, target }));
-
-  return {
-    formatVersion: CASE_FORMAT_VERSION,
-    id: 'touch-the-dots',
-    name: 'Touch the Dots',
-    brief: 'Touch each dot in order with the end effector.',
-    slot: {
-      needs: ['arm'],
-      minJoints: 2,
-      binding: { endEffector: effector },
-      reachMm: facts.reachMm,
-      anchor: facts.anchor,
-    },
-    world: { objects: spots.map((spot, i) => dotObject(spot, i, radius)) },
-    controls: [
-      { id: 'move', label: 'Move', input: 'move' },
-      { id: 'lift', label: 'Raise and Lower', input: 'lift' },
-    ],
-    reference: { timeline },
-    task: {
-      seconds: 0.5 + spots.length * MOVE_SECONDS,
-      probes: spots.map((_, i) => ({ signal: `dot${i}`, from: 'end-effector', to: { object: `dot${i}` } })),
-      contract: {
-        version: 1,
-        success: {
-          sequence: spots.map((_, i) => ({
-            hold_for: {
-              seconds: HOLD_SECONDS,
-              within: 'whole',
-              state: { atom: { expr: { signal: `dot${i}` }, cmp: '<', value: radius, scale: radius } },
-            },
-          })),
-        },
-        failures: [],
-      },
-    },
-  };
 }

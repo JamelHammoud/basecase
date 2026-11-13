@@ -19,6 +19,7 @@ const VALUE_KEYS: Array<[string, ParamKey]> = [
   ['radius_mm', 'radiusMm'],
   ['push_mm', 'pushMm'],
   ['box_mm', 'boxMm'],
+  ['dots', 'dots'],
   ['stops', 'stops'],
   ['spacing_mm', 'spacingMm'],
   ['seconds', 'seconds'],

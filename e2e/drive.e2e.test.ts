@@ -172,7 +172,18 @@ describe('live drive', () => {
 async function openTouchTheDots() {
   await loadFixture('arm-3dof');
   await openPlayTab(app.page, 'Cases');
-  await button('Touch the Dots').click();
+  await button('New Case').click();
+
+  const card = app.page.locator(visible('[data-testid="new-case"]'));
+  const dots = card.getByLabel('Dots');
+
+  await dots.fill('3');
+  await dots.press('Enter');
+  await expect
+    .poll(() => card.getByTestId('new-case-brief').innerText())
+    .toBe('Touch each dot in order with the end effector.');
+  expect(await card.getByLabel('Distance').count()).toBe(0);
+  await card.locator('button', { hasText: 'Create' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
 }
 
@@ -275,14 +286,14 @@ describe('Cases', () => {
     expect(app.errors).toEqual([]);
   }, 180000);
 
-  it('makes a Case with New Case, lists only the examples that fit, and opens it', async () => {
+  it('makes a Case with New Case, the only way to start one besides the agent, and opens it', async () => {
     await loadFixture('rover-diff');
     await openPlayTab(app.page, 'Cases');
 
     const panel = app.page.locator(visible('[data-testid="cases-panel"]'));
 
-    await expect.poll(() => panel.innerText()).toContain('Reach the Flag');
-    expect(await panel.innerText()).not.toContain('Touch the Dots');
+    await expect.poll(() => button('New Case').count()).toBe(1);
+    expect(await panel.innerText()).not.toMatch(/Examples|Touch the Dots|Reach the Flag/);
 
     await button('New Case').click();
 

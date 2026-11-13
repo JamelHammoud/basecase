@@ -80,7 +80,13 @@ describe('a Case drives the emulated robot through the daemon', () => {
     await waitFor('running', () => daemonEvents(relay, 'status').some((w) => w.msg.run === 'running'));
 
     await openPlayTab(dev.page, 'Cases');
-    await button('Touch the Dots').click();
+    await button('New Case').click();
+
+    const dots = dev.page.locator(visible('[data-testid="new-case"]')).getByLabel('Dots');
+
+    await dots.fill('3');
+    await dots.press('Enter');
+    await button('Create').click();
     await button('Try It').click();
     await waitFor('the try to drive', async () => (await simDrive()) === 'on', 60000);
 

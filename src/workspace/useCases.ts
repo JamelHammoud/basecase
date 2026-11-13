@@ -1,10 +1,9 @@
 import { useEffect, useEffectEvent, useState } from 'react';
-import { fittingTemplates } from '../cases/caseBuilder';
+import { uniqueCaseId } from '../cases/caseBuilder';
 import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
 import { scaledToReach } from '../cases/scale';
 import { parseCase, worldItem, type Case } from '../cases/schema';
-import { caseTemplates, uniqueCaseId } from '../cases/templates';
 import { worstFirst, type TryRecord } from '../cases/tries';
 import { deleteRecording, loadRecording } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
@@ -43,7 +42,6 @@ export function useCases(options: CasesOptions) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
-  const templates = caseTemplates(rig, parts);
   const tries = worstFirst((project.tries ?? []).filter((t) => t.caseId === activeId));
   const hasRobot = rig.robots.length > 0;
   const fixedBase = hasRobot && robotFacts(rig, parts).morphology === 'fixed';
@@ -85,12 +83,6 @@ export function useCases(options: CasesOptions) {
     sim.setWorld(scaledToReach(named, facts.reachMm, facts.anchor).world.objects.map(worldItem));
 
     return named;
-  };
-
-  const addTemplate = (templateId: string) => {
-    const template = templates.find((t) => t.id === templateId);
-
-    return template && !template.refusal ? add(template.build()) : null;
   };
 
   const remove = (id: string) => {
@@ -160,8 +152,6 @@ export function useCases(options: CasesOptions) {
   return {
     cases,
     active,
-    templates,
-    examples: fittingTemplates(templates),
     builder,
     dataset,
     tries,
@@ -170,7 +160,6 @@ export function useCases(options: CasesOptions) {
     fit: fit && fit.caseId === activeId ? fit : null,
     open,
     add,
-    addTemplate,
     remove,
     removeTry,
     replay,

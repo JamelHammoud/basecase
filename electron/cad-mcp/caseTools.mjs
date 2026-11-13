@@ -12,7 +12,7 @@ export const createCase = {
       'Adds a Case to the scene and opens it in the Simulate tab: a world and a goal the robot tries in simulation, scored by the app (the user presses Try It and drives). ' +
       'Use it when the user describes something for the robot to try, or sends /case followed by a description. Pick the goal and world closest to their words and set the numbers from them; never change the design for a Case. ' +
       'Goals: reach (stop on a spot distance_mm ahead; wheels or legs), push (push a box_mm cube push_mm onto a spot; wheels or legs), path (pass `stops` spots spacing_mm apart, in order; wheels or legs), ' +
-      'walk (walk distance_mm without falling; legs), touch (touch a point with the end effector, distance_mm ahead of the arm, height_mm above the floor, side_mm to its left; arms). ' +
+      'walk (walk distance_mm without falling; legs), touch (touch a point with the end effector, distance_mm ahead of the arm, height_mm above the floor, side_mm to its left; arms; with `dots` 2 or 3, touch that many dots the arm can reach, in order, instead). ' +
       'radius_mm is how close counts, seconds the time allowed; anything left out gets a default sized to the robot. ' +
       'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch. ' +
       'objects adds world objects as in set_world (agent frame). A legged robot that falls fails any Case. ' +
@@ -38,6 +38,7 @@ export const createCase = {
       radius_mm: mm('How close counts as there'),
       push_mm: mm('push: how far the box must go'),
       box_mm: mm('push: the box’s side'),
+      dots: z.number().int().min(1).max(3).optional().describe('touch: how many dots, in order'),
       stops: z.number().int().min(2).max(8).optional().describe('path: how many spots'),
       spacing_mm: mm('path: distance between spots'),
       seconds: z.number().min(2).max(120).optional(),

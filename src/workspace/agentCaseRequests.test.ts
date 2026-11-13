@@ -49,6 +49,17 @@ describe('create_case', () => {
     });
   });
 
+  it('touches several dots in order on an arm when given a dot count', async () => {
+    expect(await create({ goal: 'touch', dots: 3 }, 'arm-6dof').reply).toEqual({
+      ok: true,
+      id: 'touch-the-dots',
+      name: 'Touch the Dots',
+      brief: 'Touch each dot in order with the end effector.',
+      seconds: 6,
+      objects: 3,
+    });
+  });
+
   it('adds the agent’s own objects in the agent frame', async () => {
     const { reply, added } = create({
       goal: 'reach',

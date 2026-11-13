@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { servoLayout } from '../src/robot/sceneRobot';
 import type { RobotJoint } from '../src/types/robotics';
 import { openApp, shown, type App } from './harness';
@@ -91,7 +91,7 @@ beforeAll(async () => {
     },
     { parts, joints },
   );
-  await expect.poll(async () => (await shownParts()).length, { timeout: 30000 }).toBe(parts.length);
+  await vi.waitFor(async () => expect(await shownParts()).toHaveLength(parts.length), { timeout: 30000 });
 }, 120000);
 
 afterAll(async () => {

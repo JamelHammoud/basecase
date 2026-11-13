@@ -16,7 +16,7 @@ export interface BuyContext {
   onSelectParts: (ids: string[]) => void;
   extraOf: (key: string) => Extra | undefined;
   onExtraQty: (key: string, qty: number) => void;
-  onRemoveExtra: (line: BomLine) => void;
+  onDeleteExtra: (line: BomLine) => void;
 }
 
 const PRICE_CLASS =
@@ -142,7 +142,7 @@ const LineCount: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, 
         line={l}
         extra={extra}
         onQty={(qty) => context.onExtraQty(l.key, qty)}
-        onRemove={() => context.onRemoveExtra(l)}
+        onDelete={() => context.onDeleteExtra(l)}
       />
     );
 

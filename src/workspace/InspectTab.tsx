@@ -40,6 +40,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
 
   return (
     <Inspector
+      key={scene.sceneId}
       part={selection.selectedPart}
       parts={parts}
       globalGoal={scene.globalGoal}

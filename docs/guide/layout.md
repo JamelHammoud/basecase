@@ -43,9 +43,9 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
     - **Library** (`LibraryPanel`) holds saved models, in the same voice as Parts. Saved scenes live in the Scenes menu (`ScenesMenu`, ⌘O, beside the sidebar toggle), not here.
       - **New Model** (+) sits in the view's header, like Robots' Import robot: Save Selection, Save Whole Scene, Import (§7), From Image.
       - **Search** first (“Search library”, matches names and descriptions; Esc clears), then the models as a 2-column grid, with no section title: Library holds only models.
-      - **Tiles** (`library/Tile.tsx`) match Parts tiles: a 4:3 thumbnail that zooms on hover, name, and the size (`347 × 213 × 347 mm`). Clicking a tile or its + inserts the model; tiles also drag onto the canvas. The + is the only hover control and takes no clicks while hidden, so the name runs the tile's full width.
+      - **Tiles** (`library/Tile.tsx`) match Robots and Objects tiles: one button with a 4:3 thumbnail that zooms on hover, the name, and the size (`347 × 213 × 347 mm`). Clicking anywhere on a tile inserts the model, and tiles drag onto the canvas. They carry no hover controls: a + would only repeat the click.
       - **Hover** opens details beside the panel (`HoverCard`): large preview, where it came from and how long ago, the description, Size, Parts and From catalog (only when non-zero). It has no Insert of its own.
-      - **Right-click:** Insert, Rename, Duplicate, Delete. Double-click a name to rename it in place.
+      - **Right-click:** Insert, Rename, Duplicate, Delete. Rename edits the name in place. There's no double-click rename, since a tile's first click already inserts.
       - **Delete** asks first (§3b-12), then toasts “Deleted ⟨name⟩” + [Undo], which saves it back.
       - Empty, it shows “No models” and one action: Save Selection while something is selected, else Import.
     - **Saved scenes** (`ScenesMenu`, `components/scenes/`): a popover with “Search scenes” and the scenes grouped by date, arrow keys and Enter to open. Right-click or ⋯: Open (except this tab's scene), Rename, Duplicate (“Sprout copy”, “Sprout copy 2”…), Delete (asks first). Renaming a scene that's open renames its tab too.

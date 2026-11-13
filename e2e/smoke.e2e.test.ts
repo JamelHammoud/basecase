@@ -86,6 +86,23 @@ describe('studio commands', () => {
     await app.page.keyboard.press('Escape');
   });
 
+  it('aligns a part from the context menu and closes it', async () => {
+    const xs = () =>
+      app.page.evaluate(() =>
+        (window as unknown as { __studio: { parts: () => Array<{ position: number[] }> } }).__studio
+          .parts()
+          .map((p) => p.position[0]),
+      );
+    const before = await xs();
+
+    await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Align', exact: true }).hover();
+    await app.page.getByRole('button', { name: 'Left to origin' }).click();
+
+    await expect.poll(xs).not.toEqual(before);
+    await expect.poll(() => app.page.getByRole('menuitem', { name: /Duplicate/ }).count()).toBe(0);
+  });
+
   it('toggles comment mode', async () => {
     const cursor = () => app.page.locator(visible('.canvas-cursor')).evaluate((el) => (el as HTMLElement).style.cursor);
     const idle = await cursor();

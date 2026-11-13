@@ -303,6 +303,11 @@ describe('Build tab fields', () => {
   }, 30000);
 
   it('ask before deleting a saved price, then fall back to the list price', async () => {
+    await app.page.route('**/api/bridge/purchase-save', (route) => {
+      const { key, record } = route.request().postDataJSON() as { key: string; record: unknown };
+
+      return route.fulfill({ json: record ? { [key]: record } : {} });
+    });
     await loadParts([servo]);
 
     const bom = section(/^Bill of materials/);
@@ -326,7 +331,7 @@ describe('Build tab fields', () => {
     const confirm = app.page.getByRole('dialog', { name: /^Delete price for / });
 
     await expect.poll(() => confirm.isVisible(), { timeout: 5000 }).toBe(true);
-    expect(await sheet.count()).toBe(1);
+    await expect.poll(() => sheet.count(), { timeout: 5000 }).toBe(1);
     expect(await saved.isVisible()).toBe(true);
 
     await confirm.getByRole('button', { name: 'Delete', exact: true }).click();
@@ -363,7 +368,7 @@ describe('Cases in Checks', () => {
     await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
     await expect
       .poll(() => app.page.locator(visible('[data-testid="case-brief"]')).innerText(), { timeout: 10000 })
-      .toContain('Reach a Spot');
+      .toBe(flag.brief);
     expect(app.errors).toEqual([]);
   }, 150000);
 });

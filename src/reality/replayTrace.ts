@@ -22,7 +22,10 @@ export function medianError(predicted: ArrayLike<number>[], logs: ServoLog[]): n
   const errors = logs.flatMap((log, k) => {
     const [from, to] = windowOf(log, 'all');
 
-    return log.positionRad.slice(from, to).map((p, i) => Math.abs(predicted[k][from + i] - p));
+    return log.positionRad
+      .slice(from, to)
+      .map((p, i) => Math.abs(predicted[k][from + i] - p))
+      .filter(Number.isFinite);
   });
 
   return errors.length ? median(errors) : Number.NaN;

@@ -46,8 +46,6 @@ export const RobotCalibration: React.FC<RobotCalibrationProps> = ({
           fullWidth
           className="mb-[2px]"
           disabled={phase !== 'idle' || !canRunBench(robot)}
-          title="Move each emulated joint and fit its servo"
-          tooltipSide="right"
           onClick={onCalibrate}
         >
           Calibrate

@@ -169,4 +169,21 @@ describe('replaying the bench log', () => {
     expect(replay?.calibration).toBeNull();
     expect(asFitted.medianErrorRad).toBeCloseTo(replay!.preset.medianErrorRad, 9);
   }, 90_000);
+
+  it('skips samples a status missed, including the first', () => {
+    const full = recording({});
+    const missed = new Set([0, 1, 7, 30]);
+    const gappy: BenchRecording = {
+      ...full,
+      samples: full.samples.map((s, i) =>
+        missed.has(i) ? { ...s, joints: [{ positionRad: null, volts: null, temperatureC: null }] } : s,
+      ),
+    };
+    const whole = replayTrace(mj, { family: 'sts3215', logs: benchLogs(full, 0) });
+    const gapped = replayTrace(mj, { family: 'sts3215', logs: benchLogs(gappy, 0) });
+
+    expect(gapped.positionRad.every(Number.isFinite)).toBe(true);
+    expect(Number.isFinite(gapped.medianErrorRad)).toBe(true);
+    expect(gapped.medianErrorRad).toBeLessThan(whole.medianErrorRad + COUNT);
+  }, 60_000);
 });

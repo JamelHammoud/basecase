@@ -10,7 +10,6 @@ import type { Cases } from '../workspace/useCases';
 import type { SceneSkills } from '../workspace/useSkills';
 import { BriefSection, RobotFitSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
-import { EmulatedRobotSection } from './simulate/EmulatedRobotSection';
 import { ModelSection } from './simulate/ModelSection';
 import { PoliciesSection } from './simulate/PoliciesSection';
 import { ResultSection } from './simulate/ResultSection';
@@ -31,6 +30,7 @@ interface SimulatePanelProps {
   onNewCase: () => void;
   skills: SceneSkills;
   onTeach: ((goal: string) => void) | null;
+  onOpenCommandCenter: () => void;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -72,7 +72,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       <SimControls sim={sim} on={on} />
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {kase && <BriefSection cases={cases} />}
+        {kase && <BriefSection cases={cases} onOpenCommandCenter={props.onOpenCommandCenter} />}
         {kase && <RobotFitSection cases={cases} onNewCase={onNewCase} />}
         {kase && (
           <TrySection
@@ -81,7 +81,6 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             cls={sim.drive.cls}
           />
         )}
-        <EmulatedRobotSection />
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} />
         <TrainSection skills={skills} actions={skillActions} onTeach={onTeach} />
         {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}

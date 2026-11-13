@@ -14,11 +14,12 @@ interface CameraStripProps {
   sim: Pick<Simulation, 'status' | 'model' | 'worldParts' | 'connectCameras'>;
   cameras: FixedCameras;
   patchPart: (id: string, patch: Partial<ScenePart>) => void;
+  inCard?: boolean;
 }
 
 const ic = 'w-4 h-4';
 
-export const CameraStrip: React.FC<CameraStripProps> = ({ parts, sim, cameras, patchPart }) => {
+export const CameraStrip: React.FC<CameraStripProps> = ({ parts, sim, cameras, patchPart, inCard = false }) => {
   const { expanded, enlarged } = useCameraViewsState();
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -26,9 +27,10 @@ export const CameraStrip: React.FC<CameraStripProps> = ({ parts, sim, cameras, p
   const solid = parts.filter((p) => p.visible && p.role === 'solid');
   const views = cameraViews(solid, sim.worldParts, cameras.cameras);
   const hasCamera = cameras.cameras.length > 0 || views.some((v) => v.part);
-  const present = sim.status !== 'off' || hasCamera;
+  const present = inCard || sim.status !== 'off' || hasCamera;
+  const shown = inCard || expanded;
   const canvasRef = useCameraFeed({
-    active: present && expanded,
+    active: present && shown,
     parts: solid,
     world: sim.worldParts,
     model: sim.model,
@@ -60,23 +62,30 @@ export const CameraStrip: React.FC<CameraStripProps> = ({ parts, sim, cameras, p
     <div
       ref={stripRef}
       data-testid="camera-strip"
-      className="absolute left-3 top-3 z-20 flex flex-col items-start gap-2"
+      className={
+        inCard
+          ? 'flex flex-col gap-2 px-[12px] pb-[12px]'
+          : 'absolute left-3 top-3 z-20 flex flex-col items-start gap-2'
+      }
     >
-      <div className="flex items-center gap-1 rounded-[10px] bg-[#262626] py-1 pl-3 pr-1 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
-        <span className="text-[13px] font-medium text-white/85">Cameras</span>
-        <IconButton
-          icon={expanded ? <ChevronUpIcon className={ic} /> : <ChevronDownIcon className={ic} />}
-          title={expanded ? 'Collapse' : 'Expand'}
-          shortcut="⇧V"
-          tooltipSide="right"
-          onClick={toggleCameraViews}
-        />
-      </div>
-      {expanded &&
+      {!inCard && (
+        <div className="flex items-center gap-1 rounded-[10px] bg-[#262626] py-1 pl-3 pr-1 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+          <span className="text-[13px] font-medium text-white/85">Cameras</span>
+          <IconButton
+            icon={expanded ? <ChevronUpIcon className={ic} /> : <ChevronDownIcon className={ic} />}
+            title={expanded ? 'Collapse' : 'Expand'}
+            shortcut="⇧V"
+            tooltipSide="right"
+            onClick={toggleCameraViews}
+          />
+        </div>
+      )}
+      {shown &&
         views.map((view) => (
           <CameraTile
             key={view.key}
             view={view}
+            fill={inCard}
             large={enlarged === view.key}
             renaming={renaming === view.key}
             onRename={(name) => rename(view, name)}

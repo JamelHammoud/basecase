@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { CanvasCard } from './workspace/CanvasCard';
 import { CanvasContextMenu } from './workspace/CanvasContextMenu';
+import { CommandCenterColumn } from './workspace/CommandCenterColumn';
+import { CommandCenterSide } from './workspace/CommandCenterSide';
 import { RightPanel } from './workspace/RightPanel';
 import { TitleBarActions } from './workspace/TitleBarActions';
 import type { SceneWorkspaceProps } from './workspace/types';
@@ -33,7 +35,7 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
         onToggleRight={ui.toggleRight}
       />
       <ViewRail
-        isLeftOpen={studio.isLeftOpen}
+        isLeftOpen={studio.isLeftOpen && !core.commandCenter.open}
         leftTab={tool.leftTab}
         playTab={tool.playTab}
         onPickView={ui.pickLeftView}
@@ -46,6 +48,7 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
           ui={ui}
           onPartContextMenu={(id, x, y) => openMenu(x, y, id, null)}
         />
+        {core.commandCenter.open && <CommandCenterSide core={core} actions={actions} />}
         <CanvasCard
           active={props.active}
           core={core}
@@ -56,6 +59,7 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
           drop={drop}
         />
         <RightPanel core={core} actions={actions} ui={ui} agent={agent} />
+        {core.commandCenter.open && <CommandCenterColumn core={core} />}
         <CanvasContextMenu menu={canvasMenu.menu} inputs={inputs} onClose={canvasMenu.closeMenu} />
       </div>
       <WorkspacePalette open={ui.paletteOpen} inputs={{ ...inputs, clipboard }} onClose={() => setPaletteOpen(false)} />

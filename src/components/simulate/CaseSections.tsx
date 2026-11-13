@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Button,
   CloseIcon,
+  ExpandIcon,
   IconButton,
   Kbd,
   PlusIcon,
@@ -21,24 +22,50 @@ const FIT_TONE: Record<FitRow['state'], string> = {
   skip: 'text-white/50',
 };
 
-export const BriefSection: React.FC<{ cases: Cases }> = ({ cases }) => {
+interface BriefProps {
+  cases: Cases;
+  onOpenCommandCenter?: () => void;
+  failed?: string[];
+}
+
+const BriefActions: React.FC<{ cases: Cases; onOpenCommandCenter?: () => void }> = ({ cases, onOpenCommandCenter }) => (
+  <>
+    {onOpenCommandCenter && (
+      <IconButton
+        icon={<ExpandIcon className="w-4 h-4" />}
+        title="Open Command Center"
+        size="xs"
+        onClick={onOpenCommandCenter}
+      />
+    )}
+    <IconButton
+      icon={<CloseIcon className="w-4 h-4" />}
+      title="Close Case"
+      size="xs"
+      onClick={() => cases.open(null)}
+    />
+  </>
+);
+
+export const BriefSection: React.FC<BriefProps> = ({ cases, onOpenCommandCenter, failed }) => {
   const kase = cases.active!;
+  const inCenter = failed !== undefined;
 
   return (
     <Section
       title="Brief"
-      actions={
-        <IconButton
-          icon={<CloseIcon className="w-4 h-4" />}
-          title="Close Case"
-          size="xs"
-          onClick={() => cases.open(null)}
-        />
-      }
+      actions={!inCenter && <BriefActions cases={cases} onOpenCommandCenter={onOpenCommandCenter} />}
     >
       <div className="flex flex-col gap-1" data-testid="case-brief">
-        <div className="text-[14px] font-medium text-white/90">{kase.name}</div>
+        {!inCenter && <div className="text-[14px] font-medium text-white/90">{kase.name}</div>}
         <p className="text-[13px] leading-snug text-white/70">{kase.brief}</p>
+        {!!failed?.length && (
+          <ul className="flex flex-col gap-1 text-[13px] text-[#f87171]" aria-live="polite" data-testid="goal-failed">
+            {failed.map((label) => (
+              <li key={label}>{label}</li>
+            ))}
+          </ul>
+        )}
       </div>
     </Section>
   );

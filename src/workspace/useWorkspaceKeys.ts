@@ -111,7 +111,10 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     ...Object.fromEntries(CAMERA_VIEWS.map((v, i) => [String(i + 1), () => ui.setCameraView(v.id)])),
   };
 
-  return { global, withMod, plain };
+  const center: KeyMap = { escape: core.commandCenter.leave };
+  const centerWithMod: KeyMap = { b: withMod.b, i: withMod.i };
+
+  return { global, withMod, plain, center, centerWithMod };
 }
 
 export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
@@ -143,13 +146,19 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
     runKey(maps.plain, key, e, false);
   };
 
+  const runScoped = (e: KeyboardEvent, key: string, mod: boolean) => {
+    if (core.commandCenter.open) runKey(mod ? maps.centerWithMod : maps.center, key, e, true);
+    else if (mod) runKey(maps.withMod, key, e, true);
+    else if (!e.altKey && !core.printing.mode) runPlain(e, key);
+  };
+
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
     const mod = e.metaKey || e.ctrlKey;
     const key = e.key.toLowerCase();
 
     if (mod && runKey(maps.global, key, e, true)) return;
 
-    if (mod && !e.shiftKey && key === 'f' && !blocked) {
+    if (mod && !e.shiftKey && key === 'f' && !blocked && !core.commandCenter.open) {
       e.preventDefault();
       ui.findParts();
 
@@ -158,15 +167,7 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
 
     if (keysGoElsewhere() || blocked || core.simTraining.sim.drive.active) return;
 
-    if (mod) {
-      runKey(maps.withMod, key, e, true);
-
-      return;
-    }
-
-    if (e.altKey || core.printing.mode) return;
-
-    runPlain(e, key);
+    runScoped(e, key, mod);
   });
 
   useEffect(() => {

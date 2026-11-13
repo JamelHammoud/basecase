@@ -42,9 +42,8 @@ export interface TryScoring {
   rig: Rig;
 }
 
-export async function scoreTry({ kase, model, recording, effector, rig }: TryScoring) {
-  const signals: Record<string, number[]> = {};
-  const reader = probeReader(kase.task.probes, {
+export const caseProbeReader = ({ kase, model, effector, rig }: Omit<TryScoring, 'recording'>) =>
+  probeReader(kase.task.probes, {
     model,
     effector,
     basePart: [...(rig.robots[0]?.parts ?? [])].find((id) => !rig.ownerOf.has(id)) ?? null,
@@ -52,9 +51,13 @@ export async function scoreTry({ kase, model, recording, effector, rig }: TrySco
     objectAt: new Map(kase.world.objects.map((o) => [o.id, o.position])),
   });
 
+export async function scoreTry({ recording, ...scoring }: TryScoring) {
+  const signals: Record<string, number[]> = {};
+  const reader = caseProbeReader(scoring);
+
   for (let i = 0; i < recording.frames; i++) reader.sample(framePoses(recording, i), signals);
 
-  return evaluateContract(kase.task.contract, { dt: recording.dt, signals });
+  return evaluateContract(scoring.kase.task.contract, { dt: recording.dt, signals });
 }
 
 export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {

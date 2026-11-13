@@ -96,9 +96,11 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
           onUngroup={edits.ungroup}
         />
       )}
-      <div className="pointer-events-auto">
-        <CanvasToolbar core={core} actions={actions} ui={ui} />
-      </div>
+      {!core.commandCenter.open && (
+        <div className="pointer-events-auto">
+          <CanvasToolbar core={core} actions={actions} ui={ui} />
+        </div>
+      )}
     </div>
   );
 }
@@ -109,7 +111,11 @@ export function CanvasCard(props: CanvasCardProps) {
   const { creation } = actions;
   const { imageInputRef } = creation;
   const showSelectionBar =
-    selection.selectedParts.length > 1 && tool.transformMode !== 'pose' && !tool.marking && !tool.measuring;
+    selection.selectedParts.length > 1 &&
+    tool.transformMode !== 'pose' &&
+    !tool.marking &&
+    !tool.measuring &&
+    !core.commandCenter.open;
 
   return (
     <main

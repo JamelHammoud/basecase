@@ -30,6 +30,7 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 6. Click **End Try**, or let the time run out.
 7. Read **Results** at the bottom of the tab: how the latest run went, then every try with Passed or Missed and a filmstrip. Click **Replay** on a try to watch it again, or right-click it to delete it.
 8. Once a try passes, click **Export Dataset** under the tries, or choose it in ⌘K.
+9. Once five tries pass, click **Train From Tries** to teach the robot from them. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)
 

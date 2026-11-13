@@ -91,13 +91,13 @@ afterAll(async () => {
   await app?.close();
 });
 
-describe('Train From Tries', () => {
+describe('Train from Tries', () => {
   it.skipIf(process.platform === 'win32')(
     'trains from five driven tries, refuses a policy the Case fails and keeps one it passes as a ready skill',
     async () => {
       const policy = touchingPolicy();
       const still = { ...policy, layers: [{ ...policy.layers[0], b: policy.layers[0].b.map(() => 0) }] };
-      const trainFromTries = () => button('Train From Tries');
+      const trainFromTries = () => button('Train from Tries');
       const result = app.page.locator(visible('[data-testid="tries-policy"]'));
       const skill = app.page.locator(visible('[data-testid="skill-row"]'), { hasText: 'Touch a Point' });
 
@@ -117,8 +117,8 @@ describe('Train From Tries', () => {
 
       await stubTrainer(policy);
       await app.page.keyboard.press('Meta+k');
-      await app.page.getByLabel('Search commands').fill('Train From Tries');
-      await app.page.locator(visible('button[data-idx]')).filter({ hasText: 'Train From Tries' }).first().click();
+      await app.page.getByLabel('Search commands').fill('Train from Tries');
+      await app.page.locator(visible('button[data-idx]')).filter({ hasText: 'Train from Tries' }).first().click();
       await expect.poll(() => result.getAttribute('data-kept'), { timeout: 180000 }).toBe('true');
       expect(await result.innerText()).toMatch(/^(29|30|31|32) of 32$/);
 

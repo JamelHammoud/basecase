@@ -25,14 +25,14 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 4. Click **Try It**. The clock counts down the Case's time, and the keys for your kind of robot appear under it.
 5. Click the canvas and drive with W A S D. R starts over and Esc stops.
 
-A humanoid or an arm can follow your own arms instead of the keys: press ⌘K and choose **Drive With Camera** before step 4. Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+A humanoid or an arm can follow your own arms instead of the keys: press ⌘K and choose **Drive with Camera** before step 4. Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ![A try running, with the clock, End Try and the keys](/help/try-a-robot-on-a-case/trying.png)
 
 6. Click **End Try**, or let the time run out.
 7. Read **Results** at the bottom of the tab: how the latest run went, then every try with Passed or Missed and a filmstrip. Click **Replay** on a try to watch it again, or right-click it to [multiply](/help/multiply-a-try-into-demonstrations) or delete it.
 8. Once a try passes, click **Export Dataset** under the tries, or choose it in ⌘K.
-9. Once five tries pass, click **Train From Tries** to teach the robot from them. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+9. Once five tries pass, click **Train from Tries** to teach the robot from them. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)
 

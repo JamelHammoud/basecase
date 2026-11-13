@@ -31,7 +31,7 @@ covers:
 Drive the robot through an open Case while Basecase records it, then see whether the try passed and replay it.
 
 1. Click **Play** in the view rail.
-2. Click a Case under **In this scene**. It opens in the **Simulate** tab.
+2. Click a Case under **New Case**. It opens in the **Simulate** tab.
 3. Under **Try**, click **Try It**. Recording starts and the robot is yours to drive.
 4. Drive the robot to the goal with the keys listed under **Try**.
 5. Click **End Try**, or let the clock run out.
@@ -62,6 +62,8 @@ When the robot lacks what the Case needs, point at the row's note and click **Ne
 ## Results
 
 The **Results** header counts passed tries out of all of them. Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries.
 
 When the robot can't drive, **Teach It to Move** shows under **Try It**. It trains a **Walk** skill; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 

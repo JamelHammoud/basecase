@@ -1,6 +1,6 @@
 import type { CompileContext } from './compileContext';
 import { leaves, positiveLeaves } from './compileConditions';
-import type { Condition, Resource, SayStep, Step } from './schema';
+import type { Condition, Resource, SayStep, Step, TransitionProof } from './schema';
 import { forEachStep, isGuarded } from './schema';
 
 const MIN_PROOF_SEEDS = 8;
@@ -74,6 +74,13 @@ export class FlowChecker {
     return hubs;
   }
 
+  private proof(from: string, to: string): TransitionProof | null {
+    const proof = this.ctx.skills.get(from)?.transitions[to];
+    const hash = this.ctx.options.modelHash;
+
+    return proof && proof.seeds >= MIN_PROOF_SEEDS && (!hash || proof.modelHash === hash) ? proof : null;
+  }
+
   proven(from: string, to: string): boolean {
     if (from === to || this.stopVia(from) === to) return true;
 
@@ -81,10 +88,7 @@ export class FlowChecker {
 
     if (listed) return listed.includes(`${from}->${to}`);
 
-    const proof = this.ctx.skills.get(from)?.transitions[to];
-    const hash = this.ctx.options.modelHash;
-
-    return !!proof && proof.seeds >= MIN_PROOF_SEEDS && proof.falls === 0 && (!hash || proof.modelHash === hash);
+    return this.proof(from, to)?.falls === 0;
   }
 
   private edge(from: string, to: string, node: string) {
@@ -94,13 +98,14 @@ export class FlowChecker {
 
     this.edges.add(key);
 
-    if (!this.proven(from, to)) {
-      this.ctx.fail(
-        'unproven-transition',
-        `${from} to ${to} isn't proven in simulation. Prove it, or stop first.`,
-        node,
-      );
-    }
+    if (this.proven(from, to)) return;
+
+    const proof = this.ctx.options.provenTransitions ? null : this.proof(from, to);
+    const message = proof
+      ? `${from} to ${to} fell in ${proof.falls} of ${proof.seeds} tries in simulation.`
+      : `${from} to ${to} isn't proven in simulation. Prove it, or stop first.`;
+
+    this.ctx.fail('unproven-transition', message, node, { from, to, falls: proof?.falls ?? null });
   }
 
   run() {

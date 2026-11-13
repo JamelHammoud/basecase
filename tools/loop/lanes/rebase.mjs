@@ -47,10 +47,25 @@ function resolveConflicts(pull, dir) {
 
   if (!result.ok || !result.output.resolved || !clean) return false;
 
-  git(['add', '-A'], dir);
-  git(['commit', '-q', '--no-edit'], dir);
+  return commitResolution(dir);
+}
 
-  return true;
+function commitResolution(dir) {
+  git(['add', '-A'], dir);
+
+  const first = git(['commit', '-q', '--no-edit'], dir, { allowFail: true });
+
+  if (first.ok) return true;
+
+  const hook = `${first.err}\n${first.out}`.slice(-6000);
+  const prompt = `The conflicts are resolved, but the commit hook rejected the merge:\n\n${hook}\n\nFix what it reports without changing behaviour (for a file over the line limit, move a cohesive part into a sibling module). Then answer resolved.`;
+  const fixed = runAgent({ cwd: dir, name: 'rebase', prompt, schema: SCHEMA, hours: 1 });
+
+  if (!fixed.ok || !fixed.output.resolved) return false;
+
+  git(['add', '-A'], dir);
+
+  return git(['commit', '-q', '--no-edit'], dir, { allowFail: true }).ok;
 }
 
 function giveUp(pull, log) {
@@ -92,7 +107,15 @@ function mergeMain(pull, log) {
 }
 
 function bringUpToDate(pull, log) {
-  if (!mergeMain(pull, log)) giveUp(pull, log);
+  let merged = false;
+
+  try {
+    merged = mergeMain(pull, log);
+  } catch (error) {
+    log(`#${pull.number}: bringing it up to date failed: ${String(error.message).slice(0, 300)}`);
+  }
+
+  if (!merged) giveUp(pull, log);
 }
 
 function claimFirst(pulls) {

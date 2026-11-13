@@ -6,8 +6,11 @@ import type { Routine } from '../routines/schema';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import type { ProjectSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
+import type { CaseRuns } from '../cases/caseRuns';
 import { CASE_HANDLERS, caseValues } from './agentCaseRequests';
 import type { Cases } from './useCases';
+
+const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
 
 function contextFor(id: string) {
   const r = fixtureRobots().find((f) => f.id === id)!;
@@ -27,9 +30,9 @@ function contextFor(id: string) {
   } as unknown as Cases;
   const routines = { checkLogic: async (logic: unknown) => compileCaseLogic(logic as Routine, { skills: [] }) };
 
-  const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
+  const caseCompare = { choicesFor: () => [], compareNow: async () => null as never, start: () => {} };
 
-  return { ctx: { cases, routines, setAction: () => {}, ...scene }, added };
+  return { ctx: { cases, routines, caseCompare, setAction: () => {}, ...scene }, added };
 }
 
 const create = (payload: Record<string, unknown>, id = 'rover-diff') => {
@@ -119,5 +122,66 @@ describe('create_case', () => {
     expect(compiled.ok).toBe(false);
     expect(await refused.reply).toEqual({ ok: false, problem: compiled.errors![0].message });
     expect(refused.added).toEqual([]);
+  });
+});
+
+describe('compare_case', () => {
+  const rover = fixtureRobots().find((f) => f.id === 'rover-diff')!;
+  const made = buildCase(
+    { goal: 'reach', world: 'floor' },
+    builderRobot(buildRig(rover.joints, rover.parts), rover.parts),
+  );
+  const kase = made.ok ? made.kase : null!;
+  const runs = (passes: number): CaseRuns => ({
+    runs: 20,
+    passes,
+    medianMargin: 0.1234,
+    commonFailure: null,
+    failures: [],
+    worstSeed: null,
+    refusal: null,
+    misfit: false,
+  });
+  const started: string[] = [];
+  const ctxWith = (choices: Array<{ tabId: string; name: string }>, active: Case | null = kase) => ({
+    cases: { cases: [kase], active } as unknown as Cases,
+    routines: { checkLogic: async () => ({ ok: true }) as never },
+    setAction: () => {},
+    ...scene,
+    caseCompare: {
+      choicesFor: () => choices,
+      start: (tabId: string) => void started.push(tabId),
+      compareNow: async (_: Case, tabId: string) => ({
+        caseId: kase.id,
+        robots: [
+          { tabId: 'mine', name: 'Rover', runs: runs(19), costUsd: 120.5, massG: 1234.4 },
+          { tabId, name: 'Rover copy', runs: runs(4), costUsd: 98, massG: 1100 },
+        ],
+        better: 'mine',
+      }),
+    },
+  });
+
+  it('runs the open Case against the first robot that fits, and names the better scene', async () => {
+    const reply = await CASE_HANDLERS.compare_case({}, ctxWith([{ tabId: 'tab-2', name: 'Rover copy' }]));
+
+    expect(reply).toEqual({
+      ok: true,
+      case: kase.name,
+      robots: [
+        { scene: 'Rover', passes: 19, runs: 20, median_margin: 0.123, cost_usd: 120.5, mass_g: 1234 },
+        { scene: 'Rover copy', passes: 4, runs: 20, median_margin: 0.123, cost_usd: 98, mass_g: 1100 },
+      ],
+      better: 'Rover',
+    });
+    expect(started).toEqual(['tab-2']);
+  });
+
+  it('says why when no other open scene fits, or none is open', async () => {
+    expect(await CASE_HANDLERS.compare_case({}, ctxWith([]))).toMatchObject({ ok: false, scenes: [] });
+    expect(await CASE_HANDLERS.compare_case({}, ctxWith([], null))).toMatchObject({ ok: false });
+    expect(
+      await CASE_HANDLERS.compare_case({ scene: 'Arm' }, ctxWith([{ tabId: 'tab-2', name: 'Rover copy' }])),
+    ).toMatchObject({ ok: false, scenes: ['Rover copy'] });
   });
 });

@@ -9,7 +9,6 @@ import {
   editPullLabels,
   failedLog,
   isLoopComment,
-  lastFinishedMainCheck,
   openPulls,
   pullCheck,
   pullComments,
@@ -60,13 +59,11 @@ const git = (args, cwd, opts = {}) => run('git', args, { cwd, ...opts });
 const jamelComments = (comments) =>
   comments.filter((comment) => comment.author === OWNER_LOGIN && !isLoopComment(comment));
 
-function needFor(pull, mainGreen) {
+function needFor(pull) {
   if (!pull.headRefName.startsWith('loop/')) return null;
 
   const entry = entryFor(pull.number);
-  const failing =
-    pullReview(pull) === 'failure' ||
-    ((mainGreen || pull.headRefName.startsWith('loop/repair/')) && pullCheck(pull) === 'failure');
+  const failing = pullReview(pull) === 'failure' || pullCheck(pull) === 'failure';
   const newHead = !entry.heads.includes(pull.headRefOid);
 
   if (failing && newHead && !conflictsWithMain(pull))
@@ -189,12 +186,10 @@ function handle(pull, need, log) {
 }
 
 export default function revise({ log }) {
-  const mainGreen = lastFinishedMainCheck()?.conclusion === 'success';
-
   fetchAll();
 
   for (const pull of openPulls()) {
-    const need = needFor(pull, mainGreen);
+    const need = needFor(pull);
     const release = need ? claim(`pull-${pull.number}`) : null;
 
     if (!release) continue;

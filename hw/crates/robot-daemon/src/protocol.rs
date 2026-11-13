@@ -1,7 +1,8 @@
 use crate::control::{Command, Daemon, DaemonEvent, Run};
-use crate::fault::{daemon_lost_message, g1_lost_message};
+use crate::fault::{daemon_lost_message, g1_lost_message, ros2_lost_message};
 use crate::g1::G1Daemon;
 use crate::ladder::Mode;
+use crate::ros2::Ros2Daemon;
 use crate::safety::Reading;
 use crate::telemetry::Sample;
 use crate::transport::real_motors_unlocked;
@@ -123,6 +124,11 @@ pub fn g1_hello_line(emulated: bool) -> String {
 }
 
 pub const G1_FAMILY: &str = "unitree-g1";
+pub const ROS2_FAMILY: &str = "ros2";
+
+pub fn ros2_hello_line(emulated: bool) -> String {
+    hello(ROS2_FAMILY, emulated, ros2_lost_message(emulated))
+}
 
 #[derive(Serialize)]
 struct JointStatus {
@@ -212,6 +218,37 @@ fn g1_joints(reading: Option<&Reading>) -> Vec<JointStatus> {
             reply: if state.error == 0 { "ok" } else { "missing" },
         })
         .collect()
+}
+
+fn status_counts(rad: f64) -> i32 {
+    (2048.0 + rad * f64::from(crate::calibration::COUNTS_PER_TURN) / std::f64::consts::TAU).round() as i32
+}
+
+pub fn ros2_status_line(daemon: &Ros2Daemon) -> String {
+    let torque_on = daemon.run().is_commanding();
+    let joints = daemon
+        .joint_positions()
+        .into_iter()
+        .zip(1..=u8::MAX)
+        .map(|(rad, id)| JointStatus {
+            id: Some(id),
+            position: rad.map(status_counts),
+            temp_c: None,
+            volts: None,
+            torque_on: Some(torque_on),
+            reply: if rad.is_some() { "ok" } else { "missing" },
+        })
+        .collect();
+    let outbound = Outbound::Status {
+        at_us: daemon.now_us(),
+        mode: daemon.mode(),
+        run: daemon.run().label(),
+        sealed: daemon.is_sealed(),
+        fault_latched: daemon.fault_latched(),
+        joints,
+    };
+
+    serde_json::to_string(&outbound).unwrap_or_default()
 }
 
 pub fn g1_status_line(daemon: &G1Daemon) -> String {
@@ -317,6 +354,17 @@ mod tests {
         assert_eq!(hello["real_transport"], false);
         assert_eq!(hello["lost_message"], g1_lost_message(true));
         assert!(!g1_lost_message(true).contains("remote"));
+    }
+
+    #[test]
+    fn a_ros2_robot_says_hello_with_its_own_family_and_words() {
+        let hello: serde_json::Value = serde_json::from_str(&ros2_hello_line(true)).unwrap();
+
+        assert_eq!(hello["family"], "ros2");
+        assert_eq!(hello["emulated"], true);
+        assert_eq!(hello["lost_message"], ros2_lost_message(true));
+        assert_eq!(status_counts(0.0), 2048);
+        assert_eq!(status_counts(std::f64::consts::PI), 4096);
     }
 
     #[test]

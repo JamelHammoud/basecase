@@ -1,11 +1,14 @@
+import type { HandoffResult } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
+import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
+import type { SkillsJob } from './skillsJob';
 import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
@@ -41,6 +44,8 @@ interface Run {
 
 export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 
+const refused = (reason: string): HandoffResult => ({ skill: null, proof: null, reason });
+
 const BUSY = 'Training is running. Check list_skills, or wait for it to finish.';
 
 export class SkillsRuntime {
@@ -48,6 +53,7 @@ export class SkillsRuntime {
   lastRace: RaceReport | null = null;
   private drafts = new Map<string, DraftReport>();
   private user: AbortController | null = null;
+  private userLabel = '';
   private running: Promise<void> = Promise.resolve();
   private background: AbortController | null = null;
   private pending: { model: SimModel; tasks: BackgroundTask[] } | null = null;
@@ -111,6 +117,34 @@ export class SkillsRuntime {
     });
 
     return null;
+  }
+
+  async trainHandoff(
+    job: Omit<Extract<SkillsJob, { type: 'handoff' }>, 'type'>,
+    row: { target: SkillTarget; label: string },
+  ): Promise<HandoffResult | null> {
+    if (this.user) return refused(`${this.userLabel} is training.`);
+
+    let result: HandoffResult | null = null;
+
+    this.running = this.start({
+      ...row,
+      background: false,
+      work: async (forge, signal) => {
+        try {
+          const reply = await this.deps.runner({ type: 'handoff', ...job }, { ...this.ports(), forge, signal });
+
+          result = reply.result;
+        } catch (error) {
+          if (!signal.aborted) result = refused(errorMessage(error));
+
+          throw error;
+        }
+      },
+    });
+    await this.running;
+
+    return result;
   }
 
   replaceForge(forge: ForgeFactory) {
@@ -262,6 +296,7 @@ export class SkillsRuntime {
 
     this.background?.abort();
     this.user = controller;
+    this.userLabel = run.label;
     this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting' });
 
     try {

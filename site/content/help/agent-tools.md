@@ -114,7 +114,8 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `operate` | Steps the simulation and returns the robot's camera views |
 | `create_case` | Adds a Case |
 | `run_case` | Runs a Case 20 times and reports how often it passed and why it failed |
-| `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine |
+| `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
+| `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |
 | `train_skill` | Trains a skill in the background |

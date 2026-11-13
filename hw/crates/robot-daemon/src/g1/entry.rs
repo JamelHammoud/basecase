@@ -5,6 +5,7 @@ use crate::control::{Command, DaemonEvent};
 use crate::fault::Fault;
 use crate::ladder::{digest, refusal_message, Artefacts, Event, Fact, Hash, Mode};
 use crate::safety::{ArmGrant, ArmSdkLayer, G1Bus};
+use crate::session::TestProgress;
 use servo_wire::unitree::api::LOCOMOTION_FSM;
 use servo_wire::unitree::g1::{joint_id, motor_of, LIMITS, WRITABLE};
 
@@ -232,9 +233,7 @@ impl G1Daemon {
         let bus = self.take_bus().ok_or("The robot's network link is gone.")?;
 
         self.holder = Holder::Armed(ArmSdkLayer::new(bus, joints, caps_for(target), grant));
-        self.start = Vec::new();
-        self.travel = Vec::new();
-        self.stage_ticks = 0;
+        self.progress = TestProgress::default();
         self.run = if target == Mode::SetUp {
             G1Run::Idle
         } else {

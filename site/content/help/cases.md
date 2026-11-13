@@ -29,7 +29,7 @@ covers:
 
 Cases turn "can my robot do this" into a pass or a miss, judged the same way for any robot that fits.
 
-A robot that stands in the simulation tells you little about whether it can reach a shelf or push a box. A Case asks that question the same way every time, so you can compare two designs, or the same design before and after a change.
+A robot that stands in the simulation tells you little about whether it can reach a shelf or push a box. A Case asks that question the same way every time, so you can [compare two designs](/help/compare-two-robots-on-a-case), or the same design before and after a change.
 
 ## What a Case holds
 

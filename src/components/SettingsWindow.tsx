@@ -253,9 +253,9 @@ const CanvasPane: React.FC<PaneProps> = (p) => (
         />
       </Row>
     </Group>
-    <Group title="Experimental">
-      <Row label="Sculpt tool" hint="Adds Sculpt (C) to the toolbar">
-        <Switch aria-label="Sculpt tool" checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
+    <Group title="Tools">
+      <Row label="Sculpt">
+        <Switch aria-label="Sculpt" checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
       </Row>
     </Group>
   </>

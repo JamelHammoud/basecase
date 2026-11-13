@@ -3,11 +3,12 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { presetCase } from '../src/cases/caseBuilder';
 import { robotFacts, slotRefusal } from '../src/cases/robotFit';
 import { caseSlots } from '../src/cases/schema';
-import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
+import type { ProjectSettings, ScenePart } from '../src/types/robotics';
 import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
 import { walkKey } from '../src/workspace/storedWalk';
+import { armWithEstimates, servo, standIn } from './buildCheckFixtures';
 import { openApp, partCount, type App } from './harness';
 
 interface StudioHook {
@@ -25,21 +26,6 @@ const addCube = async () => {
   await app.page.getByRole('button', { name: /^Cube/ }).first().click();
 };
 
-const standIn = (id: string, x: number) => ({
-  id,
-  name: `Generic servo ${id}`,
-  kind: 'servo',
-  category: 'actuators',
-  role: 'solid',
-  position: [x, 20, 0],
-  rotation: [0, 0, 0],
-  dimensions: { width: 40, height: 40, depth: 20 },
-  color: '#888888',
-  note: '',
-  visible: true,
-  locked: false,
-});
-
 const loadParts = (parts: unknown[]) =>
   app.page.evaluate((list) => {
     const studio = (window as unknown as { __studio: StudioHook }).__studio;
@@ -48,26 +34,6 @@ const loadParts = (parts: unknown[]) =>
   }, parts);
 
 const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
-
-const servo = {
-  ...standIn('servo', 0),
-  name: 'Feetech STS3215',
-  kind: 'component',
-  componentId: 'feetech-sts3215',
-  componentVariant: 'c001',
-};
-
-const armWithEstimates = () => {
-  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
-  const servo = { ...standIn('mg996r', 0), name: 'MG996R', kind: 'component', componentId: 'towerpro-mg996r' };
-  const joints = arm.joints.map((j) => {
-    if (j.id === 'arm0') return { ...j, effortNm: undefined };
-
-    return j.id === 'arm1' ? { ...j, actuators: ['mg996r'] } : j;
-  });
-
-  return { name: 'arm', parts: [...arm.parts, servo], project: { ...DEFAULT_PROJECT, joints } };
-};
 
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
 
@@ -417,6 +383,80 @@ describe('Cases in Checks', () => {
     await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);
   }, 150000);
+});
+
+describe('Compare With', () => {
+  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const flag = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
+  const WEAK_WHEEL_NM = 0.075;
+
+  type CaseHook = StudioHook & { addCase: (raw: unknown) => string };
+
+  const tabs = () =>
+    app.page.evaluate(
+      () => (window as unknown as { __studioTabs: { list: () => { activeId: string } } }).__studioTabs.list().activeId,
+    );
+  const loadRover = (name: string) =>
+    app.page.evaluate(
+      ({ name, parts, joints }) => {
+        const hook = (window as unknown as { __studio: StudioHook }).__studio;
+
+        hook.load({ name, parts, project: { ...hook.sceneRecord().project, joints, cases: [] } } as never);
+      },
+      { name, parts: rover.parts, joints: rover.joints },
+    );
+
+  it('runs the open Case on another tab’s robot and marks the one that passes more often', async () => {
+    await loadRover('Rover');
+    await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
+
+    const first = await tabs();
+
+    await app.page.evaluate(() => (window as unknown as { __studioTabs: { open: () => void } }).__studioTabs.open());
+    await expect.poll(tabs).not.toBe(first);
+    await expect.poll(() => partCount(app.page)).toBe(0);
+    await loadRover('Weak rover');
+    await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
+    await app.page.evaluate((nm) => {
+      const hook = (window as unknown as { __studio: StudioHook }).__studio;
+      const record = hook.sceneRecord();
+      const joints = (record.project.joints ?? []).map((j) => ({ ...j, effortNm: nm }));
+
+      hook.load({ name: 'Weak rover', parts: record.parts, project: { ...record.project, joints } } as never);
+    }, WEAK_WHEEL_NM);
+    await app.page.evaluate(
+      (id) => (window as unknown as { __studioTabs: { select: (id: string) => void } }).__studioTabs.select(id),
+      first,
+    );
+    await expect.poll(tabs).toBe(first);
+
+    const caseId = await app.page.evaluate(
+      (raw) => (window as unknown as { __studio: CaseHook }).__studio.addCase(raw),
+      flag,
+    );
+    const activeCase = () =>
+      app.page.evaluate(() => (window as unknown as { __studio: CaseHook }).__studio.simState().activeCase);
+
+    await expect.poll(activeCase).toBe(caseId);
+
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('Compare With');
+    await expect.poll(() => app.page.getByText(/^Compare With Weak rover/).count(), { timeout: 15000 }).toBe(1);
+    await app.page.keyboard.press('Enter');
+
+    const rows = app.page.locator(visible('[data-testid="compare-row"]'));
+
+    await expect.poll(() => rows.count(), { timeout: 150000 }).toBe(2);
+
+    const passes = await rows.locator('[data-testid="compare-passes"]').allInnerTexts();
+
+    expect(passes).toHaveLength(2);
+    passes.forEach((text) => expect(text).toMatch(/^\d+ of 20$/));
+    expect(await rows.nth(0).getAttribute('data-better')).toBe('true');
+    expect(await rows.nth(1).getAttribute('data-better')).toBe('false');
+    expect(await rows.nth(1).innerText()).toContain('Weak rover');
+    expect(app.errors).toEqual([]);
+  }, 240000);
 });
 
 describe('Strength', () => {

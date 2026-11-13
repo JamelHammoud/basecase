@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { Button, ContextMenu, PlusIcon, type ContextMenuEntry } from '../../design-system';
+import { Button, ContextMenu, MenuItem, PlusIcon, type ContextMenuEntry } from '../../design-system';
 import type { Cases } from '../../workspace/useCases';
+import type { CaseCompare } from '../../workspace/useCaseCompare';
 import { CaseRow } from './CaseRow';
 import { NewCaseCard } from './NewCaseCard';
 
 export interface CasesPanelProps {
   cases: Cases;
+  compare: Pick<CaseCompare, 'choices' | 'start'>;
   onOpen: () => void;
   onBrowseRobots: () => void;
   onDescribe?: () => void;
 }
 
-const Heading: React.FC<{ children: string }> = ({ children }) => (
-  <div className="px-[4px] h-8 flex items-center text-[12px] font-medium text-white/50">{children}</div>
-);
-
-function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseRobots'>) {
+function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseRobots' | 'compare'>) {
   const { builder } = cases;
 
   return (
@@ -42,7 +40,31 @@ function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseR
   );
 }
 
-export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onDescribe }) => {
+function compareEntry(compare: CasesPanelProps['compare'], onOpen: () => void): ContextMenuEntry[] {
+  if (!compare.choices.length) return [];
+
+  return [
+    {
+      label: 'Compare With',
+      submenuWidth: 220,
+      submenu: (close) =>
+        compare.choices.map((choice) => (
+          <MenuItem
+            key={choice.tabId}
+            label={choice.name}
+            onSelect={() => {
+              compare.start(choice.tabId);
+              onOpen();
+              close();
+            }}
+          />
+        )),
+    },
+    { divider: true },
+  ];
+}
+
+export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, onDescribe }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
   const open = (id: string) => {
@@ -54,7 +76,10 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onDescrib
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [{ label: 'Delete', tone: 'danger', onSelect: () => cases.remove(id) }],
+      items: [
+        ...(cases.active?.id === id ? compareEntry(compare, onOpen) : []),
+        { label: 'Delete', tone: 'danger', onSelect: () => cases.remove(id) },
+      ],
     });
   };
 
@@ -63,7 +88,6 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onDescrib
       <NewCase cases={cases} onOpen={onOpen} onDescribe={onDescribe} />
       {cases.cases.length > 0 && (
         <div className="mb-3">
-          <Heading>In this scene</Heading>
           {cases.cases.map((c) => (
             <CaseRow
               key={c.id}

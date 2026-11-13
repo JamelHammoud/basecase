@@ -111,29 +111,31 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Find the e2e files the pull request added or changed
+      - name: Find the e2e tests the pull request added or changed
         id: files
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          files=$(git diff --name-only --diff-filter=ACMR "$BASE...HEAD" -- 'e2e/*.e2e.test.ts' | tr '\n' ' ')
-          echo "list=$files" >> "$GITHUB_OUTPUT"
-          echo "e2e files: ${files:-none}"
-      - if: ${{ steps.files.outputs.list != '' }}
+          found=$(node tools/e2e-changed.mjs "$BASE")
+          echo "$found"
+          echo "list=$(jq -r '.files | join(" ")' <<< "$found")" >> "$GITHUB_OUTPUT"
+          echo "pattern=$(jq -r '.pattern' <<< "$found")" >> "$GITHUB_OUTPUT"
+      - if: ${{ steps.files.outputs.pattern != '' }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
-      - if: ${{ steps.files.outputs.list != '' }}
+      - if: ${{ steps.files.outputs.pattern != '' }}
         run: npm ci
-      - if: ${{ steps.files.outputs.list != '' }}
+      - if: ${{ steps.files.outputs.pattern != '' }}
         run: npx vite build && npx vite build --mode web --outDir dist-web
-      - if: ${{ steps.files.outputs.list != '' }}
+      - if: ${{ steps.files.outputs.pattern != '' }}
         env:
           FILES: ${{ steps.files.outputs.list }}
+          PATTERN: ${{ steps.files.outputs.pattern }}
         run: |
           read -ra list <<< "$FILES"
-          npx vitest run --config vitest.e2e.config.ts "${list[@]}"
+          npx vitest run --config vitest.e2e.config.ts "${list[@]}" -t "$PATTERN"
 
   e2e-windows:
     if: ${{ github.event_name != 'pull_request' }}

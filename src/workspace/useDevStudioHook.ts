@@ -89,6 +89,8 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
         () => () => Promise.resolve({ ok: true, policy, events: [{ type: 'done', steps: 1 }], stderr: '' }),
       );
     },
+    stubHandoffs: (stub) => core.simTraining.routines.handoffs.stub(stub),
+    plantHandoff: (from, to, falls) => core.simTraining.routines.handoffs.plant({ from, to }, falls),
     robotPackage: async () => {
       const made = await robotPackageZip(core);
 

@@ -211,6 +211,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           skills={simTraining.skills}
           onTeach={onTeach}
           onRunCase={core.caseRun.enter}
+          compare={core.caseCompare}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

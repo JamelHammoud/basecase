@@ -33,6 +33,8 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)
 
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit at the top of Results, above the latest run.
+
 To teach the robot instead of driving it, use **Train**, between Control and Results: type a goal after **Teach it to**, or click a trained policy to run it.
 
 What the simulation has to guess is in **Build ▸ Checks**. **Torque estimates** names the joints without a servo, whose strength is estimated from the weight they hold, and **Servo models** names servos the simulation has no measured model for. Click a part under either to select it.

@@ -9,6 +9,8 @@ pub const SOFT_START_TICKS: u32 = 50;
 pub const FALL_TORQUE: f32 = 0.10;
 pub const DISABLE_RETRIES: u32 = 5;
 pub const MAX_LEAD_RAD: f32 = 0.25;
+pub const BASE_FORWARD_STEP_M_S: f32 = 0.01;
+pub const BASE_TURN_STEP_RAD_S: f32 = 0.04;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Caps {
@@ -17,6 +19,8 @@ pub struct Caps {
     pub step_rad: f32,
     pub stop_temp_c: f32,
     pub run_limit_s: Option<f32>,
+    pub base_forward_m_s: f32,
+    pub base_turn_rad_s: f32,
 }
 
 pub const FIRST_RUN: Caps = Caps {
@@ -25,6 +29,8 @@ pub const FIRST_RUN: Caps = Caps {
     step_rad: 0.02,
     stop_temp_c: 50.0,
     run_limit_s: Some(30.0),
+    base_forward_m_s: 0.2,
+    base_turn_rad_s: 1.0,
 };
 
 pub const POLICY: Caps = Caps {
@@ -33,6 +39,8 @@ pub const POLICY: Caps = Caps {
     step_rad: 0.05,
     stop_temp_c: 50.0,
     run_limit_s: Some(300.0),
+    base_forward_m_s: 0.5,
+    base_turn_rad_s: 2.0,
 };
 
 pub const LONGER_RUNS: Caps = Caps {
@@ -72,6 +80,9 @@ mod tests {
         assert_eq!(FIRST_RUN.step_rad, 0.02);
         assert_eq!(FIRST_RUN.stop_temp_c, 50.0);
         assert_eq!(WATCHDOG_US, 100_000);
+        assert_eq!((FIRST_RUN.base_forward_m_s, FIRST_RUN.base_turn_rad_s), (0.2, 1.0));
+        assert_eq!((POLICY.base_forward_m_s, POLICY.base_turn_rad_s), (0.5, 2.0));
+        assert_eq!(LONGER_RUNS.base_forward_m_s, POLICY.base_forward_m_s);
     }
 
     #[test]

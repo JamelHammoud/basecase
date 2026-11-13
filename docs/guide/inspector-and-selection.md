@@ -17,7 +17,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Appearance (`ColorField` + material), comments on this part, Notes (sent to the agent; collapsed by default), then Product (maker · part number, specs, mounting, model source, links) for real components.
 - **Several parts selected (`MultiInspector`), like a multi-selection in Figma:**
   - Title: the group name (renamed in place, one undo step on Enter or blur), or “N parts”. Under it, the part count and the selection's overall size (`39 × 50 × 39 mm`). Group/Ungroup, Duplicate, Save to Library and Delete sit beside it.
-  - **Align:** one icon strip per axis (min · center · max) with Spread beside it (`AlignBar`; Spread needs 3+ parts).
+  - **Align:** one icon strip per axis (min · center · max) with Spread beside it (`AlignBar`; Spread shows from 3 parts).
   - **Position:** X/Y/Z of the selection's bounds center. Typing, scrubbing and math move every unlocked part together (`handleMoveSelection` takes an absolute target computed from the latest parts, so Enter + blur can't move it twice). Drop to floor and Center on origin in the header.
   - **Rotate:** X / Y / Z 90° turns the selection as one piece about its center (`handleRotateSelection`).
   - **Combine:** Union / Subtract / Intersect on one strip; Subtract's tooltip names the part it keeps.
@@ -48,11 +48,10 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - With one part, Subtract uses every visible Cutout that overlaps it.
 - **Selection bar:** with 2+ parts selected, a glass pill above the toolbar shows the count, Union, Subtract, Intersect and Group/Ungroup.
 - **Align (`AlignBar`):**
-  - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each (disabled under 3 parts). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.
+  - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each once 3 or more parts are selected (below that the strip takes the row). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.
   - Several parts align to their shared bounds; one part aligns to the origin (Bottom = floor).
   - Bounds include each part's rotation (`halfExtents` in `utils/selection.ts`, checked against three.js `Box3`), so align, spread, drop to floor and the sizes in Layers and the Inspector stay right for rotated parts.
-  - Tooltips say where a part goes: Align left for several parts, Left to origin (Bottom to floor) for one.
-  - ⌘K has Align Left, Right, Top, Bottom, Front, Back and Center (X), and Spread Along X, Y and Z.
+  - One table names every action, `ALIGN_AXES` in `components/alignActions.ts`: the strip's tooltips and ⌘K read their labels from it, so both say Align Left … Align Front, Align Center (X), Align Middle, Align Center (Z) and Spread Along X, Y and Z, with each action's own icon. With one part the tooltips say where it goes instead: Left to origin, Bottom to floor.
 - **Drop to Floor (F):** loose parts each drop to the floor; when every selected part is grouped, the selection lands as one piece.
 
 ## 7a-2. Drag and Drop

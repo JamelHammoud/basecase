@@ -39,7 +39,13 @@ function setSceneJoints(joints: string[] | null) {
   rememberSceneJoints(joints);
 }
 
-let api: ElectronApi | null = null;
+export type RobotLinkApi = Pick<
+  ElectronApi,
+  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent'
+>;
+
+let api: RobotLinkApi | null = null;
+let benchDriving = false;
 const listeners = new Set<() => void>();
 
 function set(next: RobotState) {
@@ -53,6 +59,12 @@ function set(next: RobotState) {
 export const robotSnapshot = () => state;
 
 export const robotSceneJoints = () => sceneJoints;
+
+export const robotBenchDriving = () => benchDriving;
+
+export function setBenchDriving(driving: boolean) {
+  benchDriving = driving;
+}
 
 export function subscribeRobot(listener: () => void) {
   listeners.add(listener);
@@ -77,12 +89,12 @@ function adopt(link: RobotLinkState) {
   set(events.reduce<RobotState>((s, e) => (e ? applyRobotEvent(s, e) : s), INITIAL_ROBOT));
 }
 
-export function startRobotStore(electronApi: ElectronApi) {
-  if (api || !electronApi.onRobotEvent) return;
+export function startRobotStore(link: RobotLinkApi) {
+  if (api || !link.onRobotEvent) return;
 
-  api = electronApi;
-  electronApi.onRobotEvent(receiveRobotEvent);
-  void electronApi.robotState?.().then(adopt);
+  api = link;
+  link.onRobotEvent(receiveRobotEvent);
+  void link.robotState?.().then(adopt);
 }
 
 const unavailable: ConnectReply = { ok: false, message: 'Emulated robots run in the desktop app.' };

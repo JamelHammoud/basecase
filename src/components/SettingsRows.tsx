@@ -1,9 +1,9 @@
 import React from 'react';
 import { Kbd } from '../design-system';
 
-export const SettingsGroup: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+export const SettingsGroup: React.FC<{ title?: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-[24px] last:mb-0">
-    <h4 className="mb-[8px] text-[12.5px] font-medium text-white/50">{title}</h4>
+    {title && <h4 className="mb-[8px] text-[12.5px] font-medium text-white/50">{title}</h4>}
     <div className="rounded-[12px] bg-white/[0.035] divide-y divide-white/[0.06]">{children}</div>
   </section>
 );

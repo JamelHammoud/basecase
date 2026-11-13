@@ -62,24 +62,27 @@ export function useFilmstrip(record: TryRecord, model: SimModel | null, parts: S
     if (!model) return;
 
     let live = true;
-    let made: string | null = null;
     const boxes = [
       ...parts.filter((p) => p.visible && p.role === 'solid').map((p) => boxOf(p, false)),
       ...world.map((p) => boxOf(p, true)),
     ];
 
-    void render(record, model, boxes).then((u) => {
-      made = u;
-
-      if (live) setUrl(u);
+    void render(record, model, boxes).then((made) => {
+      if (live) setUrl(made);
+      else if (made) URL.revokeObjectURL(made);
     });
 
     return () => {
       live = false;
-
-      if (made) URL.revokeObjectURL(made);
     };
   }, [record, model, parts, world]);
+
+  useEffect(
+    () => () => {
+      if (url) URL.revokeObjectURL(url);
+    },
+    [url],
+  );
 
   return url;
 }

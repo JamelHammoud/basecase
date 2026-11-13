@@ -53,7 +53,7 @@ Drive works in the live sim, never as a physics-off puppet. A command is `{type:
 
 An arm drive reports its hand in `SimStats.effector` (mm, world frame, from the drive's bound part and point); the dev `simState()` passes it on. The canvas shows stats ten times a second, but `sim.latestStats()` returns the newest frame's, and the dev `simState()` and the gallery's `__gallery.state()` read that: a reading 100 ms stale put a stopped rover 3 cm short of where it really stopped.
 
-The canvas overlay (`DriveOverlay`) shows “Fell. Press R.”, speed in m/s for robots that move around, and Esc to exit. The camera follows the robot's base (`followPart`, `FollowCamera`), and the key light keeps fitting while it follows.
+The canvas overlay (`DriveOverlay`) shows “Fell. Press R.”, speed in m/s for robots that move around, and Esc with Stop Driving, the name the button and ⌘K use. The side panel's key list leaves Esc out: the overlay and the Stop Driving button already show it. The camera follows the robot's base (`followPart`, `FollowCamera`), and the key light keeps fitting while it follows.
 
 ### Tries
 

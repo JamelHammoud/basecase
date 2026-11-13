@@ -122,8 +122,8 @@ export const setReview = (sha, state, description) =>
 export const commentOnPull = (number, body) =>
   run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: withMark(body) });
 
-export const mergePull = (number) =>
-  run('gh', ['pr', 'merge', String(number), '--squash', '--delete-branch'], { allowFail: true });
+export const mergePull = (number, method = 'squash') =>
+  run('gh', ['pr', 'merge', String(number), `--${method}`, '--delete-branch'], { allowFail: true });
 
 const MISSING_LABEL = /'(loop:[a-z-]+)' not found/;
 

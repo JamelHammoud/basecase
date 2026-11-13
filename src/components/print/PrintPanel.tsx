@@ -149,7 +149,7 @@ const PlateDetail: React.FC<{
       />
       <SliceNotes printing={printing} warnings={sliced?.warnings ?? []} />
       <PlateActions printing={printing} plate={plate} slicer={slicerName(printing, tools)} onSend={onSend} />
-      <PlateMarks printing={printing} plate={plate} />
+      {!printing.fitTest && <PlateMarks printing={printing} plate={plate} />}
     </Section>
   );
 };
@@ -253,10 +253,22 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <div className="h-[44px] shrink-0 pl-[12px] pr-[8px] flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold text-white/90">Print</h2>
-        <Button variant="primary" size="sm" title="Done" shortcut="Esc" onClick={onDone}>
-          Done
-        </Button>
+        <h2 className="text-[15px] font-semibold text-white/90">{printing.fitTest ? 'Print Fit Test' : 'Print'}</h2>
+        <div className="flex items-center gap-2">
+          {!printing.fitTest && printing.canFitTest && (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={printing.fitCutting}
+              onClick={() => void printing.startFitTest()}
+            >
+              Print Fit Test
+            </Button>
+          )}
+          <Button variant="primary" size="sm" title="Done" shortcut="Esc" onClick={onDone}>
+            Done
+          </Button>
+        </div>
       </div>
       <div ref={ref} style={style} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <Section title="Printer">
@@ -267,7 +279,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onChangeProject={props.onChangeProject}
             onAddPrinter={props.onAddPrinter}
           />
-          {printing.printedCount > 0 && <SkipPrinted printing={printing} />}
+          {printing.printedCount > 0 && !printing.fitTest && <SkipPrinted printing={printing} />}
           <PrinterLive printing={printing} />
         </Section>
         {selected && <PartControls printing={printing} part={selected} plates={plates} />}

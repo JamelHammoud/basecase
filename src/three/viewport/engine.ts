@@ -3,6 +3,7 @@ import { fastenerInput } from '../../assembly/fastenerSpec';
 import {
   assemblyIn,
   fastenersIn,
+  fitCouponsIn,
   floorIn,
   gapsIn,
   interferenceIn,
@@ -78,6 +79,7 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'printShapes',
   'printMeshes',
   'printThreeMf',
+  'fitCoupons',
   'exportUsdz',
   'partTriangles',
   'servoOutput',
@@ -355,6 +357,11 @@ export class ViewportEngine {
           snapshotShapes(measure.partObjects(ctx, [...new Set(files.flatMap((f) => f.items.map((i) => i.id)))])),
           files,
           plateSize,
+        ),
+      fitCoupons: (task) =>
+        fitCouponsIn(
+          withRest(() => snapshotShapes(measure.partObjects(ctx, [...task.hosts, ...task.fits.map((f) => f.id)]))),
+          task,
         ),
       exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),

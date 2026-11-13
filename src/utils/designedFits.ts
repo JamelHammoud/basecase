@@ -22,7 +22,8 @@ const SCREWS = new Set<HardwareType>([
 const isPrinted = (p?: ScenePart) => !!p && p.kind !== 'component' && p.kind !== 'hardware';
 const insertSpec = (p?: ScenePart) =>
   p?.kind === 'hardware' && p.hardware?.type === 'heat_insert' ? heatInsert(p.hardware) : null;
-const isScrew = (p?: ScenePart) => p?.kind === 'hardware' && !!p.hardware && SCREWS.has(p.hardware.type);
+
+export const isScrew = (p?: ScenePart) => p?.kind === 'hardware' && !!p.hardware && SCREWS.has(p.hardware.type);
 
 function insertFit(i: Interference, byId: Map<string, ScenePart>): FitInterference[] {
   const [id, host] = insertSpec(byId.get(i.a)) ? [i.a, i.b] : [i.b, i.a];

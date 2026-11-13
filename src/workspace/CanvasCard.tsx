@@ -130,7 +130,9 @@ export function CanvasCard(props: CanvasCardProps) {
       />
       {drop.isDraggingFile && <DropOverlay imagesOnly={drop.imagesOnly} />}
       <SceneViewport active={active} core={core} actions={actions} agent={agent} />
-      {core.printing.mode && <PlateCanvas active={active} printing={core.printing} parts={core.parts} />}
+      {core.printing.mode && (
+        <PlateCanvas active={active} printing={core.printing} parts={core.printing.fitTest?.parts ?? core.parts} />
+      )}
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <div
         aria-hidden

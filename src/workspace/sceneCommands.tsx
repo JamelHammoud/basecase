@@ -17,7 +17,6 @@ import {
   PhotoAddIcon,
   PhotoIcon,
   PoseIcon,
-  PrinterIcon,
   WalkIcon,
   RotateIcon,
   RotateLeftIcon,
@@ -31,6 +30,7 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
+import { printCommands } from './printCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
@@ -109,49 +109,6 @@ function fileCommands({ core }: CommandInputs): Command[] {
         keywords: 'tab switch go to',
         run: () => studio.selectTab(t.id),
       })),
-  ];
-}
-
-function printCommands({ core, actions }: CommandInputs): Command[] {
-  const { exports } = actions;
-
-  return [
-    {
-      id: 'export-3mf',
-      group: 'Scene',
-      label: 'Export 3MF Plates',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates slicer bambu prusa orca download',
-      run: () => void exports.export3mf(),
-    },
-    {
-      id: 'lay-out-plates',
-      group: 'Scene',
-      label: 'Lay Out Plates',
-      shortcut: '⌘P',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates bed printer slice',
-      run: () => core.printing.openMode(1),
-    },
-    {
-      id: 'check-ready',
-      group: 'Scene',
-      label: 'Run Checks',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'ready to build buildable audit blockers build check assemble',
-      run: () => {
-        core.tool.setRightTab('build');
-        void core.readiness.checkNow();
-      },
-    },
-    {
-      id: 'slice-plates',
-      group: 'Scene',
-      label: 'Slice Plates',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'print slicer bambu studio orca gcode',
-      run: () => void core.printing.job.runSlice(),
-    },
   ];
 }
 

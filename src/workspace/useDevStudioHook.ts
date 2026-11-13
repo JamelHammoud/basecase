@@ -48,6 +48,11 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       };
     },
     routineState: () => core.simTraining.routines.state(),
+    printPlates: () => ({
+      open: !!core.printing.mode,
+      fitTest: !!core.printing.fitTest,
+      plates: (core.printing.report?.plan.plates ?? []).map((p) => p.items.map((it) => it.id)),
+    }),
     datasetFiles: async () => {
       const { cases } = core.simTraining;
       const zip = await cases.dataset.zip(cases.tries);

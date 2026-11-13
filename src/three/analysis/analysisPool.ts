@@ -16,6 +16,7 @@ import {
 import { geometryPayload, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
+import type { FitCoupon, FitCouponTask } from './fitCoupons';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 
@@ -199,4 +200,10 @@ export function fastenersIn(scene: SceneShapes, input: FastenerInput): Promise<C
 
 export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Promise<AssemblyGeometry> {
   return analyze(leastBusy(), scene, { kind: 'assembly', instances: scene.instances, ...input });
+}
+
+export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<FitCoupon[]> {
+  if (!task.fits.length || !task.hosts.length) return Promise.resolve([]);
+
+  return analyze(leastBusy(), scene, { kind: 'fitCoupons', instances: scene.instances, ...task });
 }

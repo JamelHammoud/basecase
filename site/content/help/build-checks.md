@@ -34,7 +34,7 @@ covers:
 
 Every check the Build tab runs, with the problems each one reports in the words the app uses.
 
-Checks list the worst first: red, then amber, then green, then grey for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
+Checks list the worst first: red, then amber, then green, then gray for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
 
 ## Build checks
 
@@ -52,7 +52,7 @@ Checks list the worst first: red, then amber, then green, then grey for Not run.
 
 | Check | What it measures | When it fails |
 |---|---|---|
-| Weight | Total mass and centre of mass | Never; it reports the numbers |
+| Weight | Total mass and center of mass | Never; it reports the numbers |
 | Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot; amber from 0.40 of stall |
 | Peak torque | Torque and speed while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Amber when over 5% of a joint's walk is past its servo's torque–speed line. Not run without a walking policy |
 | Torque estimates | Joints with no servo or published torque | A note: the simulation guesses their torque from weight |
@@ -68,7 +68,7 @@ Checks list the worst first: red, then amber, then green, then grey for Not run.
 | Current and runtime | The battery's current against the servos' draw | A battery that can't supply enough current |
 | Supply current | A cable supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
 | Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
-| Standing stability | The centre of mass over the feet | “The robot would tip over standing still.” |
+| Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
 | Budget | The estimated total against your budget | Over budget; amber above 90%. Not run until you set a budget |
@@ -79,7 +79,7 @@ A servo can't give full torque and full speed at once, so the blue line falls fr
 
 ![Peak torque's warning for Left knee, with its walk plotted against the STS3215's line and the next servo up](/help/build-checks/peak-torque-plot.png)
 
-Grey dots are moments the joint was braking, which the line doesn't limit. The dashed line is the servo's rated torque. The grey line is the next stronger servo in the catalog for the same bus and voltage, named under the plot.
+Gray dots are moments the joint was braking, which the line doesn't limit. The dashed line is the servo's rated torque. The gray line is the next stronger servo in the catalog for the same bus and voltage, named under the plot.
 
 Each Case in the scene also gets a row, named after it. It runs the Case 20 times with randomized physics and passes at 18. A Case that misses more adds a note, never a blocker. A robot that can't run the Case fails its row with the reason, such as an arm on a Case that needs driven wheels, or a fall on hold. [Try a Case](/help/try-a-case) lists each reason.
 

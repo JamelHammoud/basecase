@@ -303,7 +303,7 @@ function originOffsets(parts, joints) {
 
     return outside > OFF_ORIGIN_MM
       ? [
-          `The joints' centre is ${Math.round(Math.abs((lo + hi) / 2 - joint))} mm from the model's along ${'XY'[k]}, outside it. Joints are checked at their published X and Y, so centre the model on the origin first.\n`,
+          `The joints' center is ${Math.round(Math.abs((lo + hi) / 2 - joint))} mm from the model's along ${'XY'[k]}, outside it. Joints are checked at their published X and Y, so center the model on the origin first.\n`,
         ]
       : [];
   });

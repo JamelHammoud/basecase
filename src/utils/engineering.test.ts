@@ -106,7 +106,7 @@ describe('runEngineering on a two-joint leg', () => {
       ['Heat near servos', 'warn'],
       ['Budget', 'not run'],
     ]);
-    expect(r.rows[0].detail).toBe('378 g, centre of mass 130 mm up');
+    expect(r.rows[0].detail).toBe('378 g, center of mass 130 mm up');
     expect(r.rows.find((x) => x.check === 'Heat near servos')!.ids).toEqual(['shin']);
     expect(r.joints.map((l) => [l.joint.id, l.massG.toFixed(1), l.status])).toEqual([
       ['hip', '43.6', 'pass'],

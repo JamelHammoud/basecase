@@ -22,7 +22,7 @@ covers:
 
 Most build guide problems come from a scene with nothing to build, or a run that stopped with an error.
 
-## Generate Guide is greyed out
+## Generate Guide is grayed out
 
 The guide shows only parts you'd build: visible parts that aren't cutouts. A scene of hidden parts or cutouts has nothing to draw.
 

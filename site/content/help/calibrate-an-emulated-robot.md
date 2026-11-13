@@ -62,7 +62,7 @@ The **Pose** tab marks the same joints **Measured**.
 
 6. Click a joint's row to open its replay.
 
-The light line is what the servo did. The grey line is the simulation on the catalog model, and the blue line is the simulation on the fit. Under the plot, grey is the catalog model's median error and blue is the fit's.
+The light line is what the servo did. The gray line is the simulation on the catalog model, and the blue line is the simulation on the fit. Under the plot, gray is the catalog model's median error and blue is the fit's.
 
 ![A joint's replay with the preset error and the calibrated error](/help/calibrate-an-emulated-robot/replay.png)
 

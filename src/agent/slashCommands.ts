@@ -9,7 +9,12 @@ export interface SlashCommand {
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = Object.freeze([
   { name: 'train', label: 'Teach a Skill', hint: 'Teach the robot a skill', keywords: 'train skill learn policy' },
-  { name: 'routine', label: 'Make a Routine', hint: 'Build or change a Routine', keywords: 'routine behaviour steps' },
+  {
+    name: 'routine',
+    label: 'Make a Routine',
+    hint: 'Build or change a Routine',
+    keywords: 'routine behavior behaviour steps',
+  },
   { name: 'case', label: 'Make a Case', hint: 'A world and a goal to try', keywords: 'case challenge world goal' },
   {
     name: 'simulate',

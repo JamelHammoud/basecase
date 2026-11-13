@@ -176,9 +176,9 @@ describe('check_skeleton placement notes', () => {
     const centred = [{ id: 'leg', bounds: { min: [-10, -10, 0], max: [10, 10, 200] } }];
     const near = [{ id: 'leg', bounds: { min: [15, -10, 0], max: [35, 10, 200] } }];
 
-    expect(checkAgainstSkeleton(sk, away, 100)).toContain("The joints' centre is 1000 mm from the model's along X");
+    expect(checkAgainstSkeleton(sk, away, 100)).toContain("The joints' center is 1000 mm from the model's along X");
     expect(checkAgainstSkeleton(sk, centred, 100)).toContain('Every joint sits inside the model.');
-    expect(checkAgainstSkeleton(sk, near, 100)).not.toContain("The joints' centre");
+    expect(checkAgainstSkeleton(sk, near, 100)).not.toContain("The joints' center");
   });
 
   it('counts the joints it leaves off the list', () => {

@@ -33,7 +33,7 @@ export const insertObject = {
     title: 'Insert a SimReady object',
     description:
       "Downloads one SimReady asset by the url find_objects returned and inserts it. Objects land as a group that moves freely in simulate (falls, slides, can be pushed or grasped) with the maker's mass and friction; " +
-      'robots and grippers come with their joints, like import_robot. position (mm, the bottom centre) places it; omit it to put it beside the scene. The first insert installs the USD reader (about a minute).',
+      'robots and grippers come with their joints, like import_robot. position (mm, the bottom center) places it; omit it to put it beside the scene. The first insert installs the USD reader (about a minute).',
     inputSchema: {
       url: z.string().url(),
       position: vec3.optional(),

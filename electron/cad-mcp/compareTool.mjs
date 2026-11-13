@@ -74,10 +74,10 @@ async function silhouetteText({ ref, refUrl, straight, ids }) {
 
 const CHECKLIST = [
   'Compare them subassembly by subassembly, top to bottom:',
-  '1. Silhouette: where does each subassembly start and end, as a fraction of total height? How wide is each one relative to the height and to its neighbours (e.g. base vs column, head vs torso)?',
+  '1. Silhouette: where does each subassembly start and end, as a fraction of total height? How wide is each one relative to the height and to its neighbors (e.g. base vs column, head vs torso)?',
   "2. Shape: each shell's profile (taper, roundness, flat vs domed, corner radii), the visible seams and splits, and which part each feature belongs to (a camera on a cap brim belongs to the cap).",
   '3. Missing or extra features.',
-  "Shadows, reflections, highlights and colour changes are not geometry unless you can see an edge, gap or step. If the photo is at an angle you didn't match, call compare again with a closer az/el.",
+  "Shadows, reflections, highlights and color changes are not geometry unless you can see an edge, gap or step. If the photo is at an angle you didn't match, call compare again with a closer az/el.",
   'Write the 3 biggest differences, then fix them before moving on.',
 ].join('\n');
 

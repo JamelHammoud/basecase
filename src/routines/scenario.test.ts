@@ -40,7 +40,7 @@ describe('runScenario on the greeting', () => {
     });
 
     expect(r.passed).toBe(false);
-    expect(r.failures[0]).toMatch(/without recognising Maya/);
+    expect(r.failures[0]).toMatch(/without recognizing Maya/);
   });
 
   it('keeps control at 50 Hz while the remote model hangs', async () => {

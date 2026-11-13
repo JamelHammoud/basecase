@@ -78,7 +78,7 @@ export function targetText(name, view, fit) {
     cornerLine(fit.corners),
     'Width per tenth of the height, top to bottom (yours → model):',
     ...fit.bands.filter((b) => b.targetMm > 0).map((b) => bandLine(b, flagMm)),
-    'Overlay: red is the target only, blue is the model only, grey is both. Close the flagged bands and the corner radii first.',
+    'Overlay: red is the target only, blue is the model only, gray is both. Close the flagged bands and the corner radii first.',
   ].join('\n');
 }
 

@@ -21,7 +21,7 @@ export const expectSchema = z
       .array(axis)
       .max(3)
       .optional()
-      .describe('Mirror-symmetric across the bounding-box centre on these axes'),
+      .describe('Mirror-symmetric across the bounding-box center on these axes'),
     genus: z.number().int().min(0).max(500).optional().describe('Through holes and handles, for a clean solid'),
     bodies: z.number().int().min(1).max(50).optional(),
   })

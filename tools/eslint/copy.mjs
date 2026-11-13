@@ -49,7 +49,7 @@ export default {
     type: 'suggestion',
     docs: {
       description:
-        'Disallow words and separators the copy guide bans (§3c), and synonyms of its glossary (§3b-17), in user-facing strings',
+        'Disallow words and separators the copy guide bans (§3c), synonyms of its glossary (§3b-17) and British spellings (§3b-20) in user-facing strings',
     },
     messages: { banned: 'Copy ({{section}}): “{{word}}” is banned. {{fix}}' },
     schema: [],

@@ -91,7 +91,7 @@ const railHoles = (rail: string) => {
 
   return [
     holeRow('Rail bolts', `${r.boltSize}, every ${r.pitchP}`),
-    holeRow('Tap in the base', `${r.boltSize} on a ${r.pitchP} pitch`, 'mm, centred'),
+    holeRow('Tap in the base', `${r.boltSize} on a ${r.pitchP} pitch`, 'mm, centered'),
   ];
 };
 

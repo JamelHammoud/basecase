@@ -1,5 +1,6 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
+import { clockTime } from '../utils/duration';
 import { encodeBitmap } from '../utils/imageEncode';
 import type { FixedCamera } from './fixed';
 import { cameraViews, findView, type CameraView } from './views';
@@ -47,7 +48,7 @@ export function pickViews(all: CameraView[], names: string[]): { views: CameraVi
 }
 
 export const shotLabel = (view: CameraView, t: number | null) =>
-  t === null ? view.label : `${view.label} at ${t.toFixed(1)} s`;
+  t === null ? view.label : `${view.label} at ${clockTime(t)}`;
 
 export async function cameraShots(input: CameraShotInput): Promise<CameraShots> {
   const solid = input.parts.filter((p) => p.visible && p.role === 'solid');

@@ -1,3 +1,4 @@
+import { duration } from '../utils/duration';
 import { describeCondition } from './explainGraph';
 import type { FlowNode } from './flowTypes';
 import { findNode } from './nodes';
@@ -28,11 +29,7 @@ const capitalised = (text: string) => text.charAt(0).toUpperCase() + text.slice(
 const quoted = (text: unknown) => `“${String(text ?? '')}”`;
 const rounded = (n: number) => Math.round(n * 100) / 100;
 
-export function seconds(ms: number): string {
-  if (ms >= 60_000) return `${rounded(ms / 60_000)} min`;
-
-  return `${rounded(ms / 1000)} s`;
-}
+const seconds = (ms: number) => duration(ms / 1000);
 
 const sentence = (cond: unknown) => capitalised(describeCondition(cond as Condition));
 const modelLabel = (d: Data) => findNode(String(d.model))?.label ?? String(d.model);

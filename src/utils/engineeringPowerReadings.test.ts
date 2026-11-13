@@ -286,14 +286,13 @@ describe('Current and runtime from the simulated walk', () => {
     };
   };
   const numbers = (detail: string) => {
-    const [, peak, avg, minutes] = /^About ([\d.]+) A peak and ([\d.]+) A average walking .* about (\d+) min/.exec(
-      detail,
-    )!;
+    const [, peak, avg, hours, minutes] =
+      /^About ([\d.]+) A peak and ([\d.]+) A average walking .* about (?:(\d+) h )?(\d+) min/.exec(detail)!;
 
-    return { peak: Number(peak), avg: Number(avg), minutes: Number(minutes) };
+    return { peak: Number(peak), avg: Number(avg), minutes: Number(hours ?? 0) * 60 + Number(minutes) };
   };
   const ESTIMATE =
-    'About 1.8 A peak and 0.8 A standing from the pack (estimate); Ovonic 2S 2200 mAh 50C LiPo gives about 128 min. Fuse the pack near 3 A.';
+    'About 1.8 A peak and 0.8 A standing from the pack (estimate); Ovonic 2S 2200 mAh 50C LiPo gives about 2 h 08 min. Fuse the pack near 3 A.';
 
   it('reads τ ÷ kt plus idle per servo, and runtime from the pack’s capacity over that', () => {
     const s = scene();

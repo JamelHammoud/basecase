@@ -24,10 +24,11 @@ import { ExploreRows } from './ExploreRows';
 import { FAULT_LABEL } from './faultMenu';
 import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
-import { fmtTime } from './format';
+import { clockTime } from '../../utils/duration';
 import { ProgressBar } from './ProgressBar';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
+import { plural } from '../../../electron/plural.mjs';
 
 interface TryRowProps {
   record: TryRecord;
@@ -47,7 +48,7 @@ const Faults: React.FC<{ record: TryRecord; rig: Rig }> = ({ record, rig }) =>
   record.manifest.faults?.map((f) => (
     <Tooltip
       key={`${f.joint}-${f.at}`}
-      label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${fmtTime(f.at)}`}
+      label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${clockTime(f.at)}`}
     >
       <span data-testid="try-fault">
         <Badge variant="amber">{FAULT_LABEL[f.kind]}</Badge>
@@ -63,9 +64,9 @@ const TryRow: React.FC<TryRowProps> = (props) => {
     <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
       <div className="flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
-        <span className="text-white/50 tabular">{fmtTime(record.seconds)}</span>
+        <span className="text-white/50 tabular">{clockTime(record.seconds)}</span>
         <span className="flex-1 text-white/50 tabular" data-testid="try-generated">
-          {generated > 0 && `${generated} generated`}
+          {generated > 0 && plural(generated, 'variation')}
         </span>
         <Faults record={record} rig={rig} />
         <IconButton icon={<RunIcon className="w-4 h-4" />} title="Replay" size="xs" onClick={onReplay} />

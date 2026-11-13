@@ -67,7 +67,7 @@ exports[`getRig > describes joints, pose, saved poses and animations 1`] = `
 
 Pose on the canvas: hip 10
 Saved poses: Crouch
-Animations: Wave (2s, loops)"
+Animations: Wave (2 s, loops)"
 `;
 
 exports[`setPoseRequest > clamps values, applies saved poses and saves 1`] = `

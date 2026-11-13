@@ -1,6 +1,7 @@
 import { ActuatorSpec, BatterySpec, COMPONENT_BY_ID, actuatorOf } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isLegJoint } from './engineeringBody';
+import { duration } from './duration';
 import { jointLabel } from './engineeringFormat';
 import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
@@ -220,7 +221,7 @@ const estimated = (draw: Draw) => (draw.hungriest ? '' : ' (estimate)');
 function batteryDetail(source: PowerSource, draw: Draw): string {
   const runtime = ((0.8 * source.battery.capacityAh) / draw.avg) * 60;
 
-  return `${amps(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${Math.round(runtime)} min. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
+  return `${amps(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${duration(runtime * 60, 'min')}. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
 }
 
 const tetherDetail = (tetherA: number, draw: Draw) =>

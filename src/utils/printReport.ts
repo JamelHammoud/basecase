@@ -7,6 +7,7 @@ import { PRINT_RULES, printHours, type PrintShape, type Vec3 } from '../three/pr
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { hashText } from '../guide/guideItems';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
+import { duration } from './duration';
 import { jsonHash, numbersHash } from './geometryHash';
 import { plural } from '../../electron/plural.mjs';
 
@@ -250,7 +251,7 @@ export function printReportText(r: PrintReport): string {
     : '';
 
   lines.push(
-    `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${Math.round(r.totals.grams)} g + ${Math.round(r.totals.supportG)} g support, ${r.totals.hours.toFixed(1)} h, ${plates}. Estimates without a slicer.`,
+    `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${Math.round(r.totals.grams)} g + ${Math.round(r.totals.supportG)} g support, ${duration(r.totals.hours * 3600, 'min')}, ${plates}. Estimates without a slicer.`,
   );
   lines.push(r.totals.failing ? `Issues on ${plural(r.totals.failing, 'part')}:` : 'Every part fits and prints.');
 

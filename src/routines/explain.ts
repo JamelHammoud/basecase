@@ -1,3 +1,4 @@
+import { clockTime, duration } from '../utils/duration';
 import { reachableFrom } from './generatePaths';
 import { findNode } from './nodes';
 import type { Plan, PlanOp } from './planTypes';
@@ -6,7 +7,7 @@ import type { Condition } from './schema';
 
 export { describeRoutine } from './explainGraph';
 
-const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+const at = (ms: number) => clockTime(ms / 1000);
 const two = (n: number) => n.toFixed(2);
 
 function factLabel(plan: Plan, fact: string): string {
@@ -64,7 +65,7 @@ function failureCause(plan: Plan, e: TraceEvent, target: number): string | null 
   const label = op ? nodeLabel(op) : (e.node ?? '');
 
   if (e.kind === 'opTimeout' && op && leads(plan, op.onTimeout, target)) {
-    return `${label} ran out of time after ${seconds(op.timeoutMs)}`;
+    return `${label} ran out of time after ${duration(op.timeoutMs / 1000)}`;
   }
 
   if (e.kind === 'opFail' && op && leads(plan, op.onFail, target)) return `${label} failed`;
@@ -119,15 +120,15 @@ export function causeOf(plan: Plan, trace: TraceEvent[], index: number): string 
 export function explainEvent(plan: Plan, trace: TraceEvent[], index: number): string | null {
   const e = trace[index];
 
-  if (e.kind === 'said') return `Said ${e.text} at ${seconds(e.t)} because ${causeOf(plan, trace, index)}`;
+  if (e.kind === 'said') return `Said ${e.text} at ${at(e.t)} because ${causeOf(plan, trace, index)}`;
 
-  if (e.kind === 'fired') return `Started ${e.reaction} at ${seconds(e.t)} because ${firedCause(plan, trace, index)}`;
+  if (e.kind === 'fired') return `Started ${e.reaction} at ${at(e.t)} because ${firedCause(plan, trace, index)}`;
 
-  if (e.kind === 'preempted') return `Stopped ${e.reaction} at ${seconds(e.t)} for ${e.by}, which comes first`;
+  if (e.kind === 'preempted') return `Stopped ${e.reaction} at ${at(e.t)} for ${e.by}, which comes first`;
 
-  if (e.kind === 'safeStop') return `Stopped safely at ${seconds(e.t)} because the ${e.why}`;
+  if (e.kind === 'safeStop') return `Stopped safely at ${at(e.t)} because the ${e.why}`;
 
-  if (e.kind === 'tripped') return `Control stopped the robot at ${seconds(e.t)} because the coordinator went quiet`;
+  if (e.kind === 'tripped') return `Control stopped the robot at ${at(e.t)} because the coordinator went quiet`;
 
   return null;
 }

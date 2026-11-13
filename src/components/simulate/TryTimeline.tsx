@@ -2,7 +2,7 @@ import React from 'react';
 import { CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
-import { fmtTime } from './format';
+import { clockTime } from '../../utils/duration';
 import { TimelineLane } from './TimelineLane';
 import { useTimelineKeys } from './useTimelineKeys';
 
@@ -51,11 +51,11 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
         />
         <Slider
           className="flex-1 min-w-0"
-          label={fmtTime(frame * dt)}
+          label={clockTime(frame * dt)}
           value={frame}
           min={0}
           max={Math.max(frames - 1, 1)}
-          format={() => fmtTime((frames - 1) * dt)}
+          format={() => clockTime((frames - 1) * dt)}
           onChange={(v) => timeline.seek(v)}
         />
         <IconButton

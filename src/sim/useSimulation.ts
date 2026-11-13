@@ -18,6 +18,7 @@ import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
+import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { AmpModel } from '../utils/servoAmps';
 
@@ -64,7 +65,9 @@ export interface Simulation {
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
-  replay: (r: Recording) => void;
+  scrub: (r: Recording | null) => Promise<Float32Array[] | null>;
+  seek: (frame: number) => void;
+  sought: () => Sought | null;
   worldParts: ScenePart[];
   guestParts: ScenePart[];
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
@@ -385,10 +388,13 @@ export function useSimulation(props: Inputs): Simulation {
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,
-    replay: (r) => {
+    scrub: (r) => {
       setPlaying(false);
-      send({ type: 'replay', qpos: r.qpos, nq: r.nq, dt: r.dt });
+
+      return sw.scrub(r);
     },
+    seek: sw.seek,
+    sought: sw.sought,
     worldParts,
     guestParts,
     subscribePoses: sw.subscribePoses,

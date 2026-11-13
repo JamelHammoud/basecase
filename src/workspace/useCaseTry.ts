@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { castSlots, stageCase, type StagedCase } from '../cases/caseCast';
+import { castOf, stageCase, stagedEffectors, type StagedCase } from '../cases/caseCast';
 import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
 import { worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
@@ -9,7 +9,7 @@ import type { RobotDrive } from '../sim/drive';
 import type { DriveTeam } from '../sim/useDrive';
 import type { Simulation } from '../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../types/robotics';
-import { buildRig, type Rig } from '../utils/kinematics';
+import type { Rig } from '../utils/kinematics';
 import { caseLogicPlan } from './caseLogicPlan';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
@@ -34,13 +34,6 @@ export interface CaseTry {
 }
 
 const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-
-function castOf(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }) {
-  const parts = [...scene.parts, ...staged.joined.parts];
-  const rig = staged.guests.length ? buildRig([...scene.rig.joints, ...staged.joined.joints], parts) : scene.rig;
-
-  return { rig, parts, slots: castSlots(staged.slots, { rig, parts, guests: staged.guests }) };
-}
 
 function teamFor(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }, all: boolean): DriveTeam {
   const { rig, parts, slots } = castOf(staged, scene);
@@ -86,10 +79,13 @@ export function useCaseTry({ sim, rig, parts, joints, active, partners, onTry, o
     }
 
     const staged = stageCase(kase, { rig, parts }, partners());
-    const cast = castOf(staged, { rig, parts });
-    const effectors = Object.fromEntries(cast.slots.map((s) => [s.id, s.effector]));
-    const scoring = { kase: staged.kase, model, recording, rig, effectors };
-    const verdict = await scoreTry({ ...scoring, effector: cast.slots[0].effector });
+    const verdict = await scoreTry({
+      kase: staged.kase,
+      model,
+      recording,
+      rig,
+      ...stagedEffectors(staged, { rig, parts }),
+    });
     const id = newTryId();
 
     await saveRecording(id, recording);

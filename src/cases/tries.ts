@@ -3,7 +3,7 @@ import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
-import { evaluateContract } from '../skills/contract';
+import { evaluateContract, type Trace } from '../skills/contract';
 import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
 import { probeReader, type ProbeWorld } from './probes';
 import type { EndEffector } from './robotFit';
@@ -64,7 +64,7 @@ export const caseProbeWorld = ({
 export const caseProbeReader = (scoring: Omit<TryScoring, 'recording'>) =>
   probeReader(scoring.kase.task.probes, caseProbeWorld(scoring));
 
-export async function scoreTry({ recording, ...scoring }: TryScoring) {
+export function trySignals({ recording, ...scoring }: TryScoring): Trace {
   const signals: Record<string, number[]> = {};
   const reader = caseProbeReader(scoring);
 
@@ -78,8 +78,10 @@ export async function scoreTry({ recording, ...scoring }: TryScoring) {
     sampleSignals(facts.read(poses, i * recording.dt), names, signals);
   }
 
-  return evaluateContract(scoring.kase.task.contract, { dt: recording.dt, signals });
+  return { dt: recording.dt, signals };
 }
+
+export const scoreTry = (scoring: TryScoring) => evaluateContract(scoring.kase.task.contract, trySignals(scoring));
 
 export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {
   return {

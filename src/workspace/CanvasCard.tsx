@@ -1,5 +1,6 @@
 import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
+import { TryTimeline } from '../components/simulate/TryTimeline';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { MarkBar } from './MarkBar';
@@ -75,7 +76,7 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
   );
 }
 
-function CanvasBottomBar({ core, actions, ui }: CanvasCardProps) {
+function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
   const { tool, marks, toasts } = core;
 
   return (
@@ -84,6 +85,13 @@ function CanvasBottomBar({ core, actions, ui }: CanvasCardProps) {
         <div className="pointer-events-auto" key={toasts.toast.id}>
           <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
         </div>
+      )}
+      {active && !core.printing.mode && (
+        <TryTimeline
+          timeline={core.simTraining.cases.timeline}
+          rig={core.posing.rig}
+          onSelectParts={core.setSelectedIds}
+        />
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
       {!core.caseRun.open && (

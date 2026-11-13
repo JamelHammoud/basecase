@@ -1,0 +1,77 @@
+import { useCallback, useRef } from 'react';
+import type { Recording } from './recorder';
+import type { SimRequest, SimResponse } from './sim.worker';
+
+export type RecordingReply = Extract<SimResponse, { type: 'recorded' | 'scrubbed' | 'sought' }>;
+
+export interface Sought {
+  frame: number;
+  qpos: Float64Array;
+}
+
+export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
+  const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
+  const waiter = useRef<((efforts: Float32Array[] | null) => void) | null>(null);
+  const sought = useRef<Sought | null>(null);
+
+  const reply = useCallback((msg: RecordingReply) => {
+    if (msg.type === 'recorded') {
+      recordWaiter.current?.(msg.recording);
+      recordWaiter.current = null;
+
+      return;
+    }
+
+    if (msg.type === 'sought') {
+      sought.current = { frame: msg.frame, qpos: msg.qpos };
+
+      return;
+    }
+
+    waiter.current?.(msg.efforts);
+    waiter.current = null;
+  }, []);
+
+  const scrub = useCallback(
+    (recording: Recording | null) =>
+      new Promise<Float32Array[] | null>((resolve) => {
+        const w = workerRef.current;
+
+        sought.current = null;
+        waiter.current?.(null);
+        waiter.current = null;
+
+        if (!w) {
+          resolve(null);
+
+          return;
+        }
+
+        waiter.current = resolve;
+        w.postMessage({ type: 'scrub', recording } satisfies SimRequest);
+      }),
+    [workerRef],
+  );
+
+  const seek = useCallback(
+    (frame: number) => workerRef.current?.postMessage({ type: 'seek', frame } satisfies SimRequest),
+    [workerRef],
+  );
+
+  const stopRecording = useCallback(
+    () =>
+      new Promise<Recording | null>((resolve) => {
+        if (!workerRef.current) {
+          resolve(null);
+
+          return;
+        }
+
+        recordWaiter.current = resolve;
+        workerRef.current.postMessage({ type: 'record', on: false } satisfies SimRequest);
+      }),
+    [workerRef],
+  );
+
+  return { reply, stopRecording, scrub, seek, sought: useCallback(() => sought.current, []) };
+}

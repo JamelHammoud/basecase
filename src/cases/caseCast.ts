@@ -140,3 +140,19 @@ export function stageCase(authored: Case, lead: { rig: Rig; parts: ScenePart[] }
 
   return { kase, slots, guests, joined: castJoined({ parts: [], joints: [] }, guests), partners: filled };
 }
+
+export function castOf(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }) {
+  const parts = [...scene.parts, ...staged.joined.parts];
+  const rig = staged.guests.length ? buildRig([...scene.rig.joints, ...staged.joined.joints], parts) : scene.rig;
+
+  return { rig, parts, slots: castSlots(staged.slots, { rig, parts, guests: staged.guests }) };
+}
+
+export function stagedEffectors(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }) {
+  const { slots } = castOf(staged, scene);
+
+  return {
+    effector: slots[0]?.effector ?? null,
+    effectors: Object.fromEntries(slots.map((s) => [s.id, s.effector])),
+  };
+}

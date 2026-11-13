@@ -1,10 +1,17 @@
+import type { ControllerKind } from '../../electron/robot/ros2.mjs';
+
 export const LADDER = ['look', 'set_up', 'test', 'rehearse', 'first_run', 'policy', 'longer_runs'] as const;
 
 export type RobotMode = (typeof LADDER)[number];
 
 export type ServoFamily = 'feetech' | 'dynamixel';
 
-export type RobotFamily = ServoFamily | 'unitree-g1';
+export type RobotFamily = ServoFamily | 'unitree-g1' | 'ros2';
+
+export interface Ros2Controller {
+  kind: ControllerKind;
+  topic: string;
+}
 
 export interface RobotSpec {
   family: RobotFamily;
@@ -12,6 +19,8 @@ export interface RobotSpec {
   class: 'arm' | 'legged';
   emulated: true;
   factory?: true;
+  controller?: Ros2Controller;
+  joints?: string[];
 }
 
 export type ServoRobotSpec = RobotSpec & { family: ServoFamily };
@@ -21,7 +30,14 @@ export interface UnitreeG1Ask {
   emulated: true;
 }
 
-export type ConnectSpec = ServoRobotSpec | UnitreeG1Ask;
+export interface Ros2Ask {
+  family: 'ros2';
+  emulated: true;
+  controller: Ros2Controller;
+  joints: string[];
+}
+
+export type ConnectSpec = ServoRobotSpec | UnitreeG1Ask | Ros2Ask;
 
 export function servoFamily(spec: { family: RobotFamily } | null | undefined): ServoFamily | null {
   const family = spec?.family;
@@ -29,10 +45,14 @@ export function servoFamily(spec: { family: RobotFamily } | null | undefined): S
   return family === 'feetech' || family === 'dynamixel' ? family : null;
 }
 
-export const G1_TOP_RUNG: RobotMode = 'test';
+export const isServoAsk = (spec: ConnectSpec): spec is ServoRobotSpec => servoFamily(spec) !== null;
+
+export const TEST_TOP_FAMILIES: readonly RobotFamily[] = ['unitree-g1', 'ros2'];
+
+const TEST_LADDER = LADDER.slice(0, LADDER.indexOf('test') + 1);
 
 export const ladderFor = (spec: { family: RobotFamily } | null | undefined): readonly RobotMode[] =>
-  spec?.family === 'unitree-g1' ? LADDER.slice(0, LADDER.indexOf(G1_TOP_RUNG) + 1) : LADDER;
+  spec && TEST_TOP_FAMILIES.includes(spec.family) ? TEST_LADDER : LADDER;
 
 export type ConnectReply = { ok: true } | { ok: false; message: string };
 

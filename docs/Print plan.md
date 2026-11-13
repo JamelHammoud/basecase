@@ -85,7 +85,7 @@ Today orientation and packing are computed, reported as text and thrown away. Ma
 
 A mode, like Measure or Sketch: the canvas shows plates instead of the assembled robot; the inspector shows the Print panel.
 
-- **Opening:** Build → Printed parts → **Lay Out Plates**; File → Print (⌘P); ⌘K “Lay Out Plates”. Done (Esc) returns to the assembly.
+- **Opening:** Build → Printing → **Print**; File → Print (⌘P); ⌘K “Print”. Done (Esc) returns to the assembly.
 - **Canvas:** one plate at a time, drawn to scale: the bed outline, its keep-outs shaded, the printable height as a faint box. Parts appear in print orientation (`PlateLayer` in `three/viewport/`, reusing `buildPartGroup` with `shareGeometry`, so no geometry is rebuilt; the assembly's `PartLayer` is hidden, not torn down). A strip of plate thumbnails sits above the toolbar, like the marks pill: “Plate 1 PLA”, “Plate 2 PLA”, “Plate 3 TPU”; ←/→ switch.
 - **Adjusting:**
   - Drag a part to move it on the plate; drag it onto another plate's thumbnail to move it there.
@@ -172,7 +172,7 @@ All new strings follow §3. Proposed:
 
 | Where | Text |
 |---|---|
-| Build → Printed parts buttons | Lay Out Plates, Open in Bambu Studio, Slice |
+| Build → Printed parts buttons | Print, Open in Bambu Studio, Slice |
 | Print panel footer | Open in ⟨slicer⟩, Slice, Print |
 | Start sheet | title “Print Plate 2 on P1S?”, Cancel, Start Print |
 | Toasts | Opened Robot Arm in Bambu Studio, Sliced 4 plates, Sent Plate 2 to P1S, Plate 2 finished on P1S |

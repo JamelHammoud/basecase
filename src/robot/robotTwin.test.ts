@@ -4,7 +4,7 @@ import { buildRig, poseDeltas } from '../utils/kinematics';
 import { playBench } from './benchRun';
 import { GAP_LIMIT_RAD, LAG_HOLD_MS, LagWatch } from './robotGap';
 import { robotGhost } from './robotGhost';
-import { radiansFromCounts, type RobotSpec } from './robotState';
+import { radiansFromCounts, type ServoRobotSpec } from './robotState';
 import { connectRobot, receiveRobotEvent, startRobotStore, type RobotLinkApi } from './robotStore';
 import { noteSimAngles, subscribeTwin, twinSnapshot } from './robotTwin';
 
@@ -39,7 +39,7 @@ const status = (positions: number[], atUs?: number) =>
   });
 
 async function connect(joints: string[]) {
-  const spec: RobotSpec = { family: 'feetech', ids: joints.map((_, k) => k + 1), class: 'arm', emulated: true };
+  const spec: ServoRobotSpec = { family: 'feetech', ids: joints.map((_, k) => k + 1), class: 'arm', emulated: true };
 
   receiveRobotEvent({ event: 'link', state: 'connected', spec });
   await connectRobot(spec, joints);

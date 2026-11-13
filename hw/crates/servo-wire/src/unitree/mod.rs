@@ -1,10 +1,9 @@
 pub mod api;
-pub mod cdr;
 pub mod g1;
 pub mod hg;
 mod image;
 
-pub use cdr::Short;
+pub use crate::cdr::Short;
 pub use hg::{ImuState, LowCmd, LowState, MotorCmd, MotorState, MOTOR_SLOTS};
 
 const POLYNOMIAL: u32 = 0x04c1_1db7;

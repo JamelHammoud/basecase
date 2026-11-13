@@ -1,7 +1,8 @@
 use crate::caps::TICK_US;
 use crate::control::{Command, Daemon, DaemonEvent, Run};
 use crate::g1::{G1Daemon, G1Run};
-use crate::protocol::{event_line, g1_status_line, status_line};
+use crate::protocol::{event_line, g1_status_line, ros2_status_line, status_line};
+use crate::ros2::Ros2Daemon;
 use servo_wire::Clock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, SyncSender};
@@ -68,6 +69,28 @@ impl Controller for G1Daemon {
 
     fn is_quiet(&self) -> bool {
         matches!(self.run(), G1Run::Idle | G1Run::Stopped)
+    }
+}
+
+impl Controller for Ros2Daemon {
+    fn command(&mut self, command: Command) {
+        let _ = Ros2Daemon::command(self, command);
+    }
+
+    fn tick(&mut self) {
+        Ros2Daemon::tick(self);
+    }
+
+    fn take_events(&mut self) -> Vec<DaemonEvent> {
+        Ros2Daemon::take_events(self)
+    }
+
+    fn status_line(&self) -> String {
+        ros2_status_line(self)
+    }
+
+    fn is_quiet(&self) -> bool {
+        !self.run().is_commanding()
     }
 }
 

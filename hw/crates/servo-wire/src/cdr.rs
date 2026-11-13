@@ -49,6 +49,11 @@ impl Writer {
         self.body.extend_from_slice(&value.to_le_bytes());
     }
 
+    pub fn f64(&mut self, value: f64) {
+        self.align(8);
+        self.body.extend_from_slice(&value.to_le_bytes());
+    }
+
     pub fn string(&mut self, value: &str) {
         let length = u32::try_from(value.len() + 1).unwrap_or(u32::MAX);
 
@@ -128,6 +133,18 @@ impl<'a> Reader<'a> {
         Ok(i64::from_le_bytes(self.array(8)?))
     }
 
+    pub fn f64(&mut self) -> Result<f64, Short> {
+        Ok(f64::from_le_bytes(self.array(8)?))
+    }
+
+    pub fn raw(&mut self, size: usize) -> Result<&'a [u8], Short> {
+        self.take(size, 1)
+    }
+
+    pub fn remaining(&self) -> usize {
+        self.body.len().saturating_sub(self.at)
+    }
+
     pub fn string(&mut self) -> Result<String, Short> {
         let length = usize::try_from(self.u32()?).map_err(|_| Short)?;
         let bytes = self.take(length, 1)?;
@@ -160,16 +177,21 @@ mod tests {
         writer.u8(9);
         writer.i16(-2);
         writer.i64(3);
+        writer.u8(1);
+        writer.f64(-0.5);
 
         let payload = writer.finish();
         let mut reader = Reader::new(&payload).unwrap();
 
-        assert_eq!(payload.len(), 4 + 24);
+        assert_eq!(payload.len(), 4 + 40);
         assert_eq!(reader.u8(), Ok(7));
         assert_eq!(reader.f32(), Ok(1.5));
         assert_eq!(reader.u8(), Ok(9));
         assert_eq!(reader.i16(), Ok(-2));
         assert_eq!(reader.i64(), Ok(3));
+        assert_eq!(reader.u8(), Ok(1));
+        assert_eq!(reader.f64(), Ok(-0.5));
+        assert_eq!(reader.remaining(), 0);
     }
 
     #[test]

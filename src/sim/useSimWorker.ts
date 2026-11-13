@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { offerSimTargets } from '../robot/intentMirror';
+import { noteSimAngles } from '../robot/robotTwin';
 import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
@@ -200,10 +201,11 @@ function showFrame(
   if (msg.scan) to.viewport?.setScan(msg.scan.points);
 
   to.listeners.forEach((listen) => listen(msg.poses));
-  offerSimTargets(
-    m.joints.map((j) => j.id),
-    msg.targets,
-  );
+
+  const ids = m.joints.map((j) => j.id);
+
+  offerSimTargets(ids, msg.targets);
+  noteSimAngles(ids, msg.angles);
 }
 
 function usePoseListeners() {

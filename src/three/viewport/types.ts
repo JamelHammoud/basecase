@@ -1,4 +1,6 @@
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
+import type { GhostState } from './ghostLayer';
+import type { RobotGhost } from '../../robot/robotGhost';
 import type { FixedCamera } from '../../cameras/fixed';
 import type { ThreeMfFileSpec } from '../analysis/analysisOps';
 import type { MeshData } from '../../print/threeMf';
@@ -175,6 +177,8 @@ export interface Viewport3DHandle {
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
   setScan: (points: Float32Array | null) => void;
   scanPointCount: () => number;
+  setGhost: (ghost: RobotGhost | null) => void;
+  ghostState: () => GhostState | null;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   silhouetteShots: (specs: CameraSpec[], opts: { onlyIds?: string[]; maxSide: number }) => SilhouetteShot[];

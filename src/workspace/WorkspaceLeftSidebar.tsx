@@ -63,6 +63,8 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         calibration: {
           calibrations: core.project.servoCalibrations,
           onCalibrate: () => void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? []),
+          onCalibrateJoint: (jointId) =>
+            void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? [], jointId),
           onRollBack: (jointId) => rollBackCalibration(core.docs.updateProjectNow, jointId),
         },
       }}

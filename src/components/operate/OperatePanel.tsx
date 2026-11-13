@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Button } from '../../design-system';
 import { useRobot } from '../../robot/useRobot';
+import { canRunBench } from '../../robot/benchRun';
+import { connectedFrom, useCalibrationPhase } from '../../robot/calibrationSession';
 import { sceneRobot } from '../../robot/sceneRobot';
 import { jointRows } from '../../robot/jointRows';
 import { connectRobot, disconnectRobot, robotConnection, sendRobotCommand } from '../../robot/robotStore';
 import type { RobotState } from '../../robot/robotState';
 import type { RobotJoint } from '../../types/robotics';
 import { RobotCalibration, type CalibrationProps } from './RobotCalibration';
-import { RobotJoints } from './RobotJoints';
+import { RobotJoints, type JointCalibrate } from './RobotJoints';
 import { RobotLadder } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
 import { PlayNoRobot } from '../PlayNoRobot';
@@ -99,10 +101,22 @@ function RobotHeader({ robot }: { robot: RobotState }) {
   );
 }
 
+function useJointCalibrate(robot: RobotState, joints: RobotJoint[], calibration: CalibrationProps) {
+  const phase = useCalibrationPhase();
+
+  if (robot.mode !== 'test' || !connectedFrom(joints)) return undefined;
+
+  return {
+    disabled: phase !== 'idle' || !canRunBench(robot),
+    onCalibrate: calibration.onCalibrateJoint,
+  } satisfies JointCalibrate;
+}
+
 export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots, calibration }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
   const rows = jointRows({ joints, calibrations: calibration.calibrations, connection: robotConnection(robot) });
+  const calibrate = useJointCalibrate(robot, joints, calibration);
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="operate-panel">
@@ -110,7 +124,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobo
       <RobotMessages messages={robot.messages} />
       {connected && <RobotLadder robot={robot} />}
       <RobotCalibration robot={robot} joints={joints} onCalibrate={calibration.onCalibrate} />
-      <RobotJoints rows={rows} live={connected} onRollBack={calibration.onRollBack} />
+      <RobotJoints rows={rows} live={connected} onRollBack={calibration.onRollBack} calibrate={calibrate} />
     </div>
   );
 };

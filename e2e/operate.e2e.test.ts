@@ -36,6 +36,7 @@ const joint = (id: string, parent: string[], child: string[], y: number): RobotJ
   origin: [0, y, 0],
   axis: [1, 0, 0],
   actuators: [parent[1]],
+  limb: 'arm',
 });
 
 const ARM = {
@@ -57,6 +58,44 @@ const ARM = {
 };
 
 const row = (id: string) => app.page.locator(visible(`[data-calibration-joint="${id}"]`)).first();
+
+const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
+
+interface Ghost {
+  layer: { parts: Record<string, number[]>; values: Record<string, number>; label: string | null } | null;
+  measured: Record<string, number | null> | null;
+  sim: Record<string, number | null> | null;
+  largest: { joint: string; degrees: number } | null;
+}
+
+const ghost = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: { robotGhost: () => Ghost } }).__studio.robotGhost());
+
+const simDrive = () =>
+  app.page.evaluate(
+    () => (window as unknown as { __studio: { simState: () => { drive: string } } }).__studio.simState().drive,
+  );
+
+async function climbToTest() {
+  const { page } = app;
+
+  await openPlayTab(page, 'Operate');
+
+  if (await button(/^Disconnect$/).count()) await button(/^Disconnect$/).click();
+
+  await button('Connect Emulated Robot').click();
+  await page.locator(visible('[data-robot-rung="set_up"]')).first().click();
+  await expect
+    .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
+    .toBe('set_up');
+  await page.locator(visible('[data-robot-rung="test"]')).first().click();
+  await expect
+    .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
+    .toBe('test');
+}
+
+const spread = (g: Ghost) =>
+  Math.max(...Object.keys(g.measured ?? {}).map((id) => Math.abs((g.measured?.[id] ?? 0) - (g.sim?.[id] ?? 0))));
 
 beforeAll(async () => {
   app = await openApp();
@@ -83,15 +122,11 @@ describe('Operate calibration', () => {
     async () => {
       const { page } = app;
 
-      await openPlayTab(page, 'Operate');
-      await page.locator(visible('button'), { hasText: 'Connect Emulated Robot' }).first().click();
-      await page.locator(visible('[data-robot-rung="set_up"]')).first().click();
+      await climbToTest();
 
-      const ladder = page.locator(visible('[data-testid="robot-mode"]')).first();
-
-      await expect.poll(() => ladder.getAttribute('data-mode')).toBe('set_up');
-      expect(await ladder.locator('[data-robot-rung]').count()).toBe(7);
-      await page.locator(visible('[data-robot-rung="test"]')).first().click();
+      expect(
+        await page.locator(visible('[data-testid="robot-mode"]')).first().locator('[data-robot-rung]').count(),
+      ).toBe(7);
 
       const calibrate = page
         .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
@@ -143,6 +178,53 @@ describe('Operate calibration', () => {
       await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
       await expect.poll(() => trace('calibration').count()).toBe(0);
       expect(await trace('preset').count()).toBe(1);
+      expect(app.errors).toEqual([]);
+    },
+    150000,
+  );
+
+  it.skipIf(process.platform === 'win32')(
+    'draws the measured robot as a ghost that follows the emulated servos, and labels the largest gap',
+    async () => {
+      const { page } = app;
+
+      await climbToTest();
+      await page.locator(visible('[role=tab]'), { hasText: 'Simulate' }).first().click();
+      await button(/^Drive$/).click();
+      await expect.poll(simDrive, { timeout: 60000 }).toBe('on');
+      await page.mouse.click(720, 450);
+      await page.keyboard.down('w');
+
+      const moving = await vi.waitFor(
+        async () => {
+          const g = await ghost();
+
+          expect(g.layer).not.toBeNull();
+          expect(Math.abs(g.largest?.degrees ?? 0)).toBeGreaterThan(1);
+
+          return g;
+        },
+        { timeout: 10000, interval: 100 },
+      );
+
+      expect(Object.keys(moving.layer!.parts).sort()).toEqual(['elbow-servo', 'fore', 'upper']);
+      expect(moving.layer!.label).toMatch(/^[+-]\d+\.\d°$/);
+
+      for (const [id, degrees] of Object.entries(moving.measured!))
+        expect(moving.layer!.values[id] ?? 0).toBeCloseTo(degrees ?? 0, 3);
+
+      expect(spread(moving)).toBeGreaterThan(1);
+
+      await page.keyboard.up('w');
+      await expect
+        .poll(async () => Math.abs((await ghost()).largest?.degrees ?? Infinity), { timeout: 15000 })
+        .toBeLessThan(1.5);
+
+      await openPlayTab(page, 'Operate');
+      await button(/^Disconnect$/).click();
+      await expect.poll(async () => (await ghost()).layer).toBeNull();
+      expect(await page.locator(visible('[data-testid="ghost-gap"]')).count()).toBe(0);
+      await page.keyboard.press('Escape');
       expect(app.errors).toEqual([]);
     },
     150000,

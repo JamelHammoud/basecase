@@ -23,6 +23,7 @@ covers:
   - src/workspace/useCases.ts
   - src/workspace/caseCommands.tsx
   - src/cases/fitCheck.ts
+  - src/readiness/caseChecks.ts
   - src/cases/tries.ts
   - src/cases/tryStore.ts
 ---
@@ -31,30 +32,32 @@ Drive the robot through an open Case while Basecase records it, then see whether
 
 1. Click **Play** in the view rail.
 2. Click a Case under **New Case**. It opens in the **Simulate** tab.
-3. Under **Robot fit**, click **Check Fit**.
-4. Under **Try**, click **Try It**. Recording starts and the robot is yours to drive.
-5. Drive the robot to the goal with the keys listed under **Try**.
-6. Click **End Try**, or let the clock run out.
-7. Read the new try under **Results**: **Passed** or **Missed**, how long it took, and four frames from it.
-8. Click **Replay** (▷) on a try to watch it again.
+3. Under **Try**, click **Try It**. Recording starts and the robot is yours to drive.
+4. Drive the robot to the goal with the keys listed under **Try**.
+5. Click **End Try**, or let the clock run out.
+6. Read the new try under **Results**: **Passed** or **Missed**, how long it took, and four frames from it.
+7. Click **Replay** (▷) on a try to watch it again.
 
 ![Results with a passed try of Touch the Dots, and Export Dataset and Publish to Hugging Face under it](/help/publish-a-dataset-to-hugging-face/results.png)
 
 **Try ⟨Case⟩** is also in [[⌘K]]. Pressing [[Esc]] stops driving, which ends the try too.
 
-## Robot fit
+## Whether the robot can do it
 
-**Check Fit** runs the robot in the simulation before you try it. Rows that don't apply to this robot are left out.
+The icon beside the Case's name is its row in **Build ▸ Checks**. Hover it for how many of 20 runs passed. Click it to open the row.
 
-| Row | What it says |
+The row checks the robot before it runs the Case. It names the first thing that stops it:
+
+| Stop | What the row says |
 |---|---|
-| **Fits this Case** | **Yes**, or **No** when the robot lacks what the Case needs |
-| **Compiles** | How many joints the model has, or why it can't be built |
-| **Settles** | **Stays up** for 1.5 s on hold, or when it fell |
-| **Body** | **Fixed base**, **Wheels**, **Legs** or **Wheels on legs** |
-| **Fall check** | **Walks 5 s** for a walking robot, or **Falls on its walk** |
+| The robot lacks what the Case needs | What the Case needs and what the robot has, such as "This Case needs driven wheels. This robot has a fixed base." |
+| The model can't be built | MuJoCo's error |
+| It falls on hold in its first 1.5 s | When it fell, such as **Fell at 0.4 s** |
+| A robot with four or more legs and no **Walk** falls in a 5-second walk | **Falls on its walk** |
 
-When the robot doesn't fit, **New Case** under the rows builds one it does.
+![A Checks row saying the arm needs driven wheels for Reach a Spot, with New Case on its note](/help/try-a-case/misfit.png)
+
+When the robot lacks what the Case needs, point at the row's note and click **New Case** to build one it can do.
 
 ## Results
 

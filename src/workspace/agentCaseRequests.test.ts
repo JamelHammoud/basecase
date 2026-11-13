@@ -140,6 +140,7 @@ describe('compare_case', () => {
     failures: [],
     worstSeed: null,
     refusal: null,
+    misfit: false,
   });
   const started: string[] = [];
   const ctxWith = (choices: Array<{ tabId: string; name: string }>, active: Case | null = kase) => ({

@@ -41,7 +41,7 @@ const presetOn = (robotId: string, id: PresetId) => presetCase(fixture(robotId),
 
 function answer(modelHash: string, outcome: (seed: number) => { passed: boolean; margin: number; failed: string[] }) {
   run.mockImplementation(async (_index, job: CaseCheckJob) => {
-    if (job.type === 'model') return { type: 'model', modelHash, walk: null } as never;
+    if (job.type === 'model') return { type: 'model', modelHash, walk: null, stop: null } as never;
 
     if (job.type === 'replay') return { type: 'replay', film } as never;
 
@@ -84,8 +84,8 @@ describe('run_case', () => {
   it('says why the robot can’t enter a refused Case, without runs or a filmstrip', async () => {
     run.mockImplementation(async (_index, job: CaseCheckJob) =>
       job.type === 'model'
-        ? ({ type: 'model', modelHash: 'refused', walk: null } as never)
-        : ({ type: 'runs', result: { refusal: 'This Case needs wheels or legs.' } } as never),
+        ? ({ type: 'model', modelHash: 'refused', walk: null, stop: null } as never)
+        : ({ type: 'runs', result: { refusal: 'This Case needs wheels or legs.', misfit: true } } as never),
     );
 
     const reply = await runCase({}, scene('arm-3dof', presetOn('rover-diff', 'reach-the-flag')));

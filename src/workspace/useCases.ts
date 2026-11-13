@@ -100,7 +100,7 @@ export function useCases(options: CasesOptions) {
 
     confirmAction({
       title: `Delete ${kase.name}?`,
-      body: 'Its tries go with it. You can’t undo this.',
+      body: 'Its tries go with it.',
       onConfirm: () => {
         const gone = (project.tries ?? []).filter((t) => t.caseId === id);
 
@@ -119,7 +119,6 @@ export function useCases(options: CasesOptions) {
   const removeTry = (record: TryRecord) =>
     confirmAction({
       title: `Delete this try?`,
-      body: 'You can’t undo this.',
       onConfirm: () => {
         void deleteRecording(record.id);
         setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => t.id !== record.id) }));

@@ -1,6 +1,9 @@
 ---
 title: Export a STEP file
 date: 2026-11-13
+collection: files-and-sharing
+type: task
+order: 7
 covers:
   - src/workspace/useStepExport.ts
   - src/workspace/stepExport.ts

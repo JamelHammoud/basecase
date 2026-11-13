@@ -96,11 +96,13 @@ function onKey(elements: Elements, event: KeyboardEvent) {
 }
 
 function onSubmit(elements: Elements, event: SubmitEvent) {
-  const target = options(elements.list)[Math.max(0, activeIndex(elements.list))];
+  const target = elements.list.hidden ? undefined : options(elements.list)[Math.max(0, activeIndex(elements.list))];
+
+  if (!target && elements.input.value.trim() !== '') return;
 
   event.preventDefault();
 
-  if (target && !elements.list.hidden) window.location.assign(target.href);
+  if (target) window.location.assign(target.href);
 }
 
 export function attachSearch(elements: Elements, load: () => Promise<Index | null>) {

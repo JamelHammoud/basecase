@@ -75,11 +75,7 @@ export function useSimTraining(options: SimTrainingOptions) {
 
     if (!policy) return;
 
-    confirmAction({
-      title: `Delete ${policy.name}?`,
-      body: 'You can’t undo this.',
-      onConfirm: () => removePolicy(id),
-    });
+    confirmAction({ title: `Delete ${policy.name}?`, onConfirm: () => removePolicy(id) });
   };
 
   const cases = useCases({

@@ -43,6 +43,7 @@ describe.skipIf(!findSlicerApp('bambu'))('slicing with Bambu Studio', () => {
     ],
     printer: {
       vendor: model.vendor,
+      slicers: ['bambu'],
       machine: model.presets.machine,
       process: model.presets.process,
       filaments: { PLA: model.presets.filaments.PLA.name, TPU: model.presets.filaments.TPU.name },

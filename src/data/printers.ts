@@ -10,6 +10,13 @@ export interface PrinterPresets {
   filaments: Partial<Record<PrintMaterial, { name: string; density?: number }>>;
 }
 
+export type SlicerKind = 'bambu' | 'orca' | 'prusa';
+
+export interface CatalogSource {
+  slicer: SlicerKind;
+  version: string;
+}
+
 export interface PrinterModel {
   id: string;
   maker: string;
@@ -21,6 +28,7 @@ export interface PrinterModel {
   enclosed: boolean;
   bedType: string | null;
   vendor: string;
+  source: CatalogSource | null;
   presets: PrinterPresets | null;
 }
 
@@ -84,6 +92,7 @@ export function customModel(size: { width: number; depth: number; height: number
     enclosed: false,
     bedType: null,
     vendor: 'custom',
+    source: null,
     presets: null,
   };
 }
@@ -123,6 +132,12 @@ export function resolvePrinter(id: string | undefined, mine: MyPrinter[]): Print
   const model0 = fallbackModel();
 
   return { id: model0.id, label: model0.name, model: model0, nozzle: 0.4, mine: null };
+}
+
+export function slicerOrder(model: PrinterModel): SlicerKind[] {
+  if (model.source?.slicer === 'orca') return ['orca'];
+
+  return model.vendor === 'BBL' ? ['bambu', 'orca'] : ['orca', 'bambu'];
 }
 
 export const shortName = (model: PrinterModel): string =>

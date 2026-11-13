@@ -84,4 +84,25 @@ describe('PartLayer', () => {
     expect(layer.hasPending).toBe(false);
     expect(layer.objects()).toHaveLength(40);
   });
+
+  it('maps a point picked on a posed part back to the same spot at rest', () => {
+    const layer = layerWith([part('arm', { position: [20, 0, 0] })]);
+    const group = layer.get('arm')!;
+    const onSurface = new THREE.Vector3(5, 2, -3);
+
+    group.updateMatrixWorld(true);
+
+    const atRest = onSurface.clone().applyMatrix4(group.matrixWorld);
+
+    layer.pose = new Map([['arm', new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(40))]]);
+    layer.applyPose();
+
+    const picked = onSurface.clone().applyMatrix4(group.matrixWorld);
+
+    expect(picked.distanceTo(atRest)).toBeGreaterThan(5);
+    expect(
+      new THREE.Vector3(...layer.pointAtRest('arm', [picked.x, picked.y, picked.z])).distanceTo(atRest),
+    ).toBeLessThan(1e-9);
+    expect(layer.pointAtRest('other', [1, 2, 3])).toEqual([1, 2, 3]);
+  });
 });

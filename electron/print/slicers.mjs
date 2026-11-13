@@ -83,3 +83,17 @@ export function detectSlicers() {
     .map((kind) => findSlicerApp(kind))
     .filter(Boolean);
 }
+
+const DEFAULT_ORDER = ['orca', 'bambu'];
+
+export const slicerOrder = (printer) => (printer?.slicers?.length ? printer.slicers : DEFAULT_ORDER);
+
+export function slicerFor(printer, { wanted, platform, env } = {}) {
+  for (const kind of wanted ? [wanted] : slicerOrder(printer)) {
+    const app = findSlicerApp(kind, { platform, env });
+
+    if (app) return app;
+  }
+
+  return null;
+}

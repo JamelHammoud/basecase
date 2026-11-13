@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { backpressure, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
+import { backpressure, expired, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
 
 const now = Date.parse('2026-11-13T12:00:00Z');
 const hoursAgo = (h) => new Date(now - h * 3_600_000).toISOString();
 
 describe('backpressure', () => {
   it('holds producers back when too much waits to land or CI is backed up', () => {
-    expect(backpressure({ openWaiting: 30, queuedRuns: 0 })).toMatch(/30 pull requests/);
+    expect(backpressure({ openWaiting: 12, queuedRuns: 0 })).toMatch(/12 pull requests/);
     expect(backpressure({ openWaiting: 5, queuedRuns: 20 })).toMatch(/20 CI runs/);
-    expect(backpressure({ openWaiting: 29, queuedRuns: 19 })).toBeNull();
+    expect(backpressure({ openWaiting: 11, queuedRuns: 19 })).toBeNull();
   });
 });
 
@@ -140,5 +140,22 @@ describe('lastMergeAt', () => {
     expect(lastMergeAt([{ mergedAt: hoursAgo(3) }, { mergedAt: hoursAgo(0.4) }, { mergedAt: null }])).toBe(
       hoursAgo(0.4),
     );
+  });
+});
+
+describe('pull requests open too long', () => {
+  const at = Date.parse('2026-11-13T16:00:00Z');
+  const pull = (number, headRefName, createdAt) => ({ number, headRefName, createdAt });
+
+  it('expires work open over six hours, except batches, repairs and pull requests riding in a batch', () => {
+    const pulls = [
+      pull(1, 'loop/refine/a', '2026-11-13T09:00:00Z'),
+      pull(2, 'loop/refine/b', '2026-11-13T11:00:00Z'),
+      pull(3, 'loop/batch/x', '2026-11-13T08:00:00Z'),
+      pull(4, 'loop/repair/y', '2026-11-13T08:00:00Z'),
+      pull(5, 'loop/build/z', '2026-11-13T08:00:00Z'),
+    ];
+
+    expect(expired({ pulls, inBatch: [5], now: at }).map((p) => p.number)).toEqual([1]);
   });
 });

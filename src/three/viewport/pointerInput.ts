@@ -83,8 +83,22 @@ export class PointerInput {
       this.sculpt.begin(e);
   }
 
+  private axisAt(e: PointerEvent, click: boolean): void {
+    const { axisPick, onAxisPick } = this.ctx.props();
+    const hit = raycastParts(this.ctx.stage, e.clientX, e.clientY);
+    const part = hitPartId(hit);
+
+    onAxisPick?.(hit && part && axisPick?.parts.includes(part) ? { part, point: toVec3(hit.point) } : null, click);
+  }
+
   private onMove(e: PointerEvent): void {
     const cursor = this.ctx.stage.brushCursor;
+
+    if (this.ctx.props().axisPick) {
+      this.axisAt(e, false);
+
+      return;
+    }
 
     if (this.placingFigure()) {
       this.figures.hoverAt(e.clientX, e.clientY);
@@ -120,6 +134,12 @@ export class PointerInput {
     }
 
     if (this.gizmo.dragging() || e.button !== 0 || this.moved(e) || this.ctx.props().markMode) {
+      return;
+    }
+
+    if (this.ctx.props().axisPick) {
+      this.axisAt(e, true);
+
       return;
     }
 
@@ -179,8 +199,9 @@ export class PointerInput {
   }
 
   private onDoubleClick(e: MouseEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode, onSelectPart } = this.ctx.props();
-    const blocked = annotateMode || measureMode || markMode || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
+    const { annotateMode, measureMode, markMode, transformMode, onSelectPart, axisPick } = this.ctx.props();
+    const blocked =
+      annotateMode || measureMode || markMode || axisPick || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
 
     if (e.button !== 0 || additive(e) || blocked || this.moved(e)) {
       return;

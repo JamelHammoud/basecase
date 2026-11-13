@@ -187,7 +187,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
   const retry = async (options: Omit<PromptOptions, 'note'>) => {
     const { id, messages, chatId } = lanes.current;
-    const user = messages.findLast((m) => m.role === 'user' && !m.queued && !m.notSent);
+    const user = messages.findLast((m) => m.role === 'user');
 
     if (flagsOf(id).busy || !user) return;
 

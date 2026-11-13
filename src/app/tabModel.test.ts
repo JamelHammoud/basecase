@@ -8,6 +8,7 @@ import {
   insertTab,
   moveTab,
   nextActiveAfterClose,
+  sceneCopyName,
   tabListOf,
   type Metas,
   type TabEntry,
@@ -35,6 +36,14 @@ describe('scene tabs', () => {
     expect(blankSeed(metas).sceneName).toBe('Untitled 3');
     expect(blankSeed(metas, ['a']).sceneName).toBe('Untitled');
     expect(blankSeed({}).blank).toBe(true);
+  });
+
+  it('names a duplicate after the open tabs and the saved scenes', () => {
+    const metas: Metas = { a: meta('Sprout'), b: meta('Sprout copy') };
+
+    expect(sceneCopyName('Sprout', metas, [])).toBe('Sprout copy 2');
+    expect(sceneCopyName('Sprout', {}, ['Sprout copy', 'Sprout copy 2'])).toBe('Sprout copy 3');
+    expect(sceneCopyName('Sprout copy 2', metas, ['Sprout copy 2'])).toBe('Sprout copy 3');
   });
 
   it('activates the next tab to the right, then the left, after closing', () => {

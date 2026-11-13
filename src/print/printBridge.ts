@@ -1,11 +1,11 @@
-import type { ConnectionKind, MyPrinter } from '../data/printers';
+import type { ConnectionKind, MyPrinter, SlicerKind } from '../data/printers';
 import type { PrintMaterial } from '../types/robotics';
 import { bytesToBase64 } from '../utils/base64';
 import { channelCall } from '../utils/platform/channelCall';
 import { electron } from '../utils/platform/transport';
 
 export interface PrintToolsStatus {
-  slicers: Array<{ kind: 'bambu' | 'orca' | 'prusa'; name: string; version: string | null }>;
+  slicers: Array<{ kind: SlicerKind; name: string; version: string | null }>;
   downloads: Record<string, string>;
   bambuConnect: boolean;
 }
@@ -36,6 +36,7 @@ export interface PrinterStatus {
 
 export interface JobPrinter {
   vendor: string;
+  slicers: SlicerKind[];
   machine: string;
   process: string;
   bedType: string | null;

@@ -46,11 +46,7 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
   };
 
   const confirmDelete = (scene: SavedSceneSummary) =>
-    confirmAction({
-      title: `Delete ${scene.name}?`,
-      body: 'You can’t undo this.',
-      onConfirm: () => props.onDeleteScene(scene),
-    });
+    confirmAction({ title: `Delete ${scene.name}?`, onConfirm: () => props.onDeleteScene(scene) });
 
   const showMenu = (scene: SavedSceneSummary, e: React.MouseEvent) => {
     e.preventDefault();

@@ -1,8 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { Button, IconButton, MetaLine, NumberInput, TextInput, ChevronDownIcon, CloseIcon, ExternalLinkIcon } from '../../design-system';
+import React, { useId, useState } from 'react';
+import {
+  Button,
+  IconButton,
+  MetaLine,
+  Modal,
+  NumberInput,
+  TextInput,
+  ChevronDownIcon,
+  ExternalLinkIcon,
+} from '../../design-system';
 import type { PurchaseRecord } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
+import { linkLabel } from './buyLine';
 import { type PurchaseForm, canSave, formatPrice, initialPurchaseForm, linkError, purchaseRecord } from './purchaseForm';
 
 interface CheckSheetProps {
@@ -20,29 +30,18 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
 
 const needed = (line: BomLine) => (line.unit === 'g' ? `${line.qty.toLocaleString('en-US')} g` : line.qty);
 
-const SheetHeader: React.FC<{ line: BomLine; onClose: () => void }> = ({ line, onClose }) => (
-  <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-1">
-    <div className="min-w-0">
-      <h2 className="text-[15px] font-semibold text-white truncate">{line.name}</h2>
-      <MetaLine className="text-[13px] text-white/50 mt-0.5" items={[`Need ${needed(line)}`, line.detail]} />
-    </div>
-    <IconButton icon={<CloseIcon className="w-4 h-4" />} title="Close" shortcut="Esc" size="sm" onClick={onClose} />
-  </div>
-);
-
 const ListingLink: React.FC<{ line: BomLine }> = ({ line }) => {
-  if (!line.url) return null;
+  const { url } = line;
+
+  if (!url) return null;
 
   return (
-    <a
-      href={line.url}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-medium bg-white/[0.07] hover:bg-white/[0.11] text-white/90 cursor-default"
-    >
-      <ExternalLinkIcon className="w-3.5 h-3.5" />
-      {line.urlKind === 'product' ? 'Open Listing' : 'Search Amazon'}
-    </a>
+    <IconButton
+      icon={<ExternalLinkIcon className="w-4 h-4" />}
+      title={linkLabel(line)}
+      size="sm"
+      onClick={() => window.open(url, '_blank', 'noopener')}
+    />
   );
 };
 
@@ -82,12 +81,10 @@ const PriceFields: React.FC<{
 };
 
 const ListingFields: React.FC<{
-  line: BomLine;
   form: PurchaseForm;
   onChange: (patch: Partial<PurchaseForm>) => void;
-}> = ({ line, form, onChange }) => (
+}> = ({ form, onChange }) => (
   <div className="space-y-3 animate-fade-in">
-    <ListingLink line={line} />
     <Field label="Listing link">
       <TextInput
         value={form.url}
@@ -122,7 +119,7 @@ const SheetFields: React.FC<{
   const [showListing, setShowListing] = useState(() => hasListingDetails(props.line));
 
   return (
-    <div className="px-5 py-3 space-y-3">
+    <div className="space-y-3">
       <PriceFields {...props} />
       <button
         type="button"
@@ -142,54 +139,46 @@ const SheetFields: React.FC<{
 
 export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave }) => {
   const money = useMoney();
+  const formId = useId();
   const [form, setForm] = useState(() => initialPurchaseForm(line, money));
   const valid = canSave(form);
   const update = (patch: Partial<PurchaseForm>) => setForm((f) => ({ ...f, ...patch }));
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-
-    window.addEventListener('keydown', onKey);
-
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   return (
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center p-8 bg-black/50 animate-fade-in"
-      onPointerDown={(e) => e.target === e.currentTarget && onClose()}
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={line.name}
+      subtitle={<MetaLine items={[`Need ${needed(line)}`, line.detail]} />}
+      headerActions={<ListingLink line={line} />}
+      maxWidth="max-w-[440px]"
+      footer={
+        <>
+          {line.record && (
+            <Button variant="ghost" size="sm" onClick={() => onSave(null)}>
+              Remove Price
+            </Button>
+          )}
+          <div className="flex-1 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>
+          <Button variant="secondary" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form={formId} variant="primary" size="sm" disabled={!valid}>
+            Save
+          </Button>
+        </>
+      }
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Add price"
-        className="w-full max-w-[440px] rounded-2xl bg-[#1c1c20] ring-1 ring-white/[0.1] shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)] animate-sheet-in"
-      >
-        <SheetHeader line={line} onClose={onClose} />
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
+      <form
+        id={formId}
+        onSubmit={(e) => {
+          e.preventDefault();
 
-            if (valid) onSave(purchaseRecord(form, money));
-          }}
-        >
-          <SheetFields line={line} form={form} onChange={update} />
-          <div className="flex items-center gap-2 px-5 pb-4 pt-1">
-            {line.record && (
-              <Button variant="ghost" size="sm" onClick={() => onSave(null)}>
-                Remove Price
-              </Button>
-            )}
-            <div className="flex-1 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>
-            <Button variant="secondary" size="sm" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" size="sm" disabled={!valid}>
-              Save
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          if (valid) onSave(purchaseRecord(form, money));
+        }}
+      >
+        <SheetFields line={line} form={form} onChange={update} />
+      </form>
+    </Modal>
   );
 };

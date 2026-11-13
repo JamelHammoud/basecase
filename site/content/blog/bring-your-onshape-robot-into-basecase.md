@@ -15,4 +15,4 @@ Some mates have no joint to become. A cylindrical, ball or pin slot mate is held
 
 We wanted this because the CAD you already have is the fastest way into the loop. Design in Onshape, then pose, simulate and train in Basecase without a converter in between. An assembly with up to 300 different parts imports in one go.
 
-The help article [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) walks through the key and the import.
+The [changelog entry](/changelog/2026-11-12-import-onshape-assemblies) lists what stays fixed and the limits. The help article [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) walks through the key and the import.

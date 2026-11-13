@@ -69,6 +69,11 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
     },
     calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
     routineState: () => core.simTraining.routines.state(),
+    printState: () => ({
+      open: !!core.printing.mode,
+      printer: core.printing.printer.model.id,
+      bed: core.printing.report?.plan.bed ?? null,
+    }),
     datasetFiles: async () => {
       const { cases } = core.simTraining;
       const zip = await cases.dataset.zip(cases.tries);

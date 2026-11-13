@@ -9,6 +9,8 @@ import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
 import type { MeshMeasure } from '../meshMeasure';
+import type { FoundAxis } from '../../joints/axisFinder';
+import type { JointAxisQuery } from '../analysis/jointAxis';
 import type {
   CameraPreset,
   MeasureUnit,
@@ -59,6 +61,11 @@ export interface AgentFrame {
   emphasis: 'focus' | 'normal' | 'dim';
 }
 
+export interface AxisPickHit {
+  part: string;
+  point: Vec3;
+}
+
 export interface ViewportProps {
   sceneKey?: string;
   parts: ScenePart[];
@@ -100,6 +107,8 @@ export interface ViewportProps {
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
+  axisPick?: { parts: string[]; ready: boolean } | null;
+  onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
 }
 
 export type MarkTool = 'marker' | 'eraser';
@@ -156,6 +165,7 @@ export interface Viewport3DHandle {
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
+  jointAxis: (query: JointAxisQuery) => Promise<FoundAxis | null>;
   meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
   frameAll: () => void;

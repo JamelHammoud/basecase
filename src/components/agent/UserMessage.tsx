@@ -112,13 +112,12 @@ export const UserMessage: React.FC<{
 }> = ({ msg, onOpenImages, onContextMenu }) => {
   const images = imagesOf(msg);
   const folders = msg.folderAttachments ?? [];
-  const pending = msg.queued || msg.notSent;
 
   return (
-    <div className="flex flex-col items-end gap-1 animate-fade-in min-w-0">
+    <div className="flex flex-col items-end animate-fade-in min-w-0">
       <div
         onContextMenu={onContextMenu}
-        className={`max-w-[85%] min-w-0 rounded-[18px] bg-white/[0.08] px-3.5 py-2.5 space-y-2 ${pending ? 'opacity-60' : ''}`}
+        className="max-w-[85%] min-w-0 rounded-[18px] bg-white/[0.08] px-3.5 py-2.5 space-y-2"
       >
         {images.length > 0 && <ImageGrid images={images} onOpenImages={onOpenImages} />}
         {folders.length > 0 && <FolderChips folders={folders} />}
@@ -127,7 +126,6 @@ export const UserMessage: React.FC<{
         ))}
         {msg.text && <ClampedText text={msg.text} />}
       </div>
-      {pending && <span className="text-[12px] text-white/50 pr-1">Not sent</span>}
     </div>
   );
 };

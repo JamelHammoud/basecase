@@ -34,6 +34,7 @@ export interface DevActions {
   worldAt: () => Record<string, number[]>;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
+  printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
@@ -125,6 +126,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       return file && { name: file.name, base64: bytesToBase64(file.bytes) };
     },
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
+    projectPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),
@@ -152,6 +154,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     worldAt: () => devRef.current.worldAt(),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
+    printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),

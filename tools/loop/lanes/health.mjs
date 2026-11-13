@@ -1,16 +1,16 @@
-import { breaches, lastMergeAt, LIMITS, readySince, redSince } from '../lib/flow.mjs';
+import { breaches, expired, lastMergeAt, LIMITS, readySince, redSince } from '../lib/flow.mjs';
 import { queuedRuns } from '../lib/flowCounts.mjs';
-import { openPulls, pullCheck, pullReview } from '../lib/github.mjs';
+import { closePull, isPaused, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
 import { LOOP_MARK } from '../lib/mark.mjs';
 import { isRepair } from '../lib/rank.mjs';
 import { json, run } from '../lib/sh.mjs';
-import { eligible } from './batch.mjs';
+import { eligible, isBatch, membersOf } from './batch.mjs';
 
 export const schedule = {
   slots: 1,
   everySeconds: 600,
   labels: ['loop:health'],
-  does: 'Watches main, the merge queue and CI, and keeps one Loop health issue open while any of them stalls',
+  does: 'Closes pull requests open over six hours, watches main, the merge queue and CI, and keeps one Loop health issue open while any of them stalls',
 };
 
 const TITLE = 'Loop health';
@@ -95,7 +95,24 @@ function settle(issue, log) {
   log(`healthy; closed #${issue.number}`);
 }
 
+function expire(log) {
+  if (isPaused()) return;
+
+  const pulls = openPulls({ fresh: true });
+  const inBatch = pulls.filter(isBatch).flatMap((batch) => membersOf(batch.body));
+
+  for (const pull of expired({ pulls, inBatch })) {
+    closePull(
+      pull.number,
+      `Open over ${LIMITS.maxOpenHours} hours without landing, so it closes. Its step goes back to the builders and is rebuilt from current main, which costs less than keeping it up to date.`,
+    );
+    log(`#${pull.number}: open over ${LIMITS.maxOpenHours} h; closed`);
+  }
+}
+
 export default function health({ log }) {
+  expire(log);
+
   const m = measure();
   const found = breaches(m);
   const issue = openIssue();

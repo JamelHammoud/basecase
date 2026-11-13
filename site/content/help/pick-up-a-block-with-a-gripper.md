@@ -1,6 +1,9 @@
 ---
 title: Pick up a block with a gripper
 date: 2026-11-13
+collection: simulate-and-train
+type: task
+order: 3
 covers:
   - src/cases/pickGoal.ts
   - src/cases/gripper.ts

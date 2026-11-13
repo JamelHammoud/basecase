@@ -60,7 +60,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 
 - The Claude vision input is 1568px on the long edge. Larger only costs time, so uploads are downscaled to it.
 - `agentBusyRef` mirrors `isAcpBusy` synchronously. Without it, a message sent in the gap before React re-renders would start a second run instead of steering the first.
-- Messages the agent couldn't take at once go to `queuedPromptsRef` and run in order when the run ends. Stop drops them too (marked “Not sent”).
+- A queued message stays out of the transcript until it sends (`LaneFlags.queued`), so a chat message never carries a queued or unsent state. Stop pauses the queue instead of dropping it.
 - A reopened conversation sets `pendingResumeRef`, and the next prompt resumes the ACP session first.
 - A conversation lives in one scene: `studio.focusChat` shows the tab that already has it.
 - `TRANSCRIPT_UPDATES`: only thought, message, tool call, tool call update and plan updates create a reply. Session metadata (commands, modes, usage) must not show as an empty reply.
@@ -228,6 +228,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - `PopoverMenu`: `GAP = { top: 10, bottom: 8, left: 8, right: 8 }` is the space between trigger and menu, and between menu and window edge. Placement is measured before paint and re-run on resize, scroll and content change.
 - `Section`: an empty or collapsed section renders only its header, centered between equal paddings. The title is the toggle for keyboard and screen readers; the chevron mirrors it for the pointer.
 - `useScrollFade`: a callback ref (attaches whenever the element mounts, also after a panel first renders without it). State changes only when an edge flips, so scrolling doesn't re-render. Image `load` doesn't bubble, so it's listened for in the capture phase. A `ResizeObserver` also watches children, since a child that grows (a tab widening on hover) changes overflow without resizing the container. On `input` (a textarea that grows) it measures on the next frame, never inside the event: the listener runs before React's `onChange`, so a state change there re-renders a controlled textarea with the old text and wipes the keystroke (Shift+Enter needed twice, characters lost as a line wrapped); the next frame also measures after the composer has resized.
+- `focusPromptSoon` (`components/agent/`): refocuses the composer on the next frame and sets the caret, unless focus has moved elsewhere. A slash command picked with the keyboard skips it: the composer already has focus, and React setting the new value puts the caret at its end. Scheduling it anyway let the late caret move collapse a selection made in between, so select-all and Delete on the next frame deleted nothing.
 - `cursors.ts`: cursors are 32 × 32 CSS px SVGs shipped at 2x in an `image-set` so they stay sharp on Retina. The OS draws them, so they never lag the pointer. The arrow is shared with `AgentCursor`; its tip sits so the 1.5px stroke's outer edge lands on (3, 3). Hotspots: arrow (3, 3), comment pin (3, 27), crosshair (16, 16).
 - `icons.tsx`:
   - `Knockout` cuts children out through a mask for filled glyphs. The filled nut's cuts run past the silhouette (`NUT_CUTS`) so they reach its outer edge.

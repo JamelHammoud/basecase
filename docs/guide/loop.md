@@ -68,7 +68,13 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 2. An agent session does the work there, following AGENTS.md and the area's guide, and runs `npm run check:changed -- <files>`.
 3. The lane commits, pushes and opens the pull request. Its body says what changed and why; a `Feature:` or `Integration:` body also names the changelog entry the change adds, and every other kind's Changelog section reads None (`tools/loop/lib/pull.mjs`).
 4. The review lane reviews it in a fresh session (below) and sets the `agent-review` status.
-5. The batch lane gathers it with up to 14 other reviewed pull requests whose quick Check passed into one `loop/batch/` pull request. That batch runs the full Check once, and the merge lane lands it with a merge commit, which marks every pull request in it merged. A batch whose full Check fails closes, and the next batch retries half of it, down to a single pull request, which goes back to the revise lane. Repairs skip the batch: the merge lane squash-merges them on their own once their full Check passes.
+5. The batch lane gathers it with up to 14 other reviewed pull requests whose quick Check passed into one `loop/batch/` pull request. That batch runs the full Check once, and the merge lane lands it with a merge commit, which marks every pull request in it merged. Repairs skip the batch: the merge lane squash-merges them on their own once their full Check passes.
+
+The train never stops for long (`tools/loop/lanes/batch.mjs`, `tools/loop/lib/train.mjs`; checked every minute):
+
+- **A failure is believed only twice.** e2e tests retry once in CI (`vitest.e2e.config.ts`). A failed batch has its failed jobs re-run once before it closes, and so does a red `main`, before the train waits on a repair.
+- **Bisecting runs beside the train.** A batch that fails twice closes and its pull requests become suspects. A bisecting batch (`…-bisect`, titled `…, bisecting`) tries the first half of them; if it passes, it lands and the other half are the suspects; if it fails, its half are. The last suspect standing goes back to the revise lane. Meanwhile a fresh batch carries every other ready pull request, so one bad change holds up only the pull requests under suspicion.
+- **Review goes where it lands.** Eight review slots take pull requests whose quick Check passed first, and skip those with conflicts or a failed Check until the rebase or revise lane has fixed them.
 6. The worktree and the branch are deleted.
 
 `main`'s ruleset requires `check` and `agent-review` and no approvals: GitHub doesn't let an account approve its own pull request, and every pull request is Jamel's.

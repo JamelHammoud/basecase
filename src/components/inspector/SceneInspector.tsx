@@ -1,6 +1,7 @@
 import React from 'react';
-import { Section, TextArea, useScrollFade } from '../../design-system';
+import { useScrollFade } from '../../design-system';
 import { CommentsSection } from './CommentsSection';
+import { NotesSection } from './NotesSection';
 import type { InspectorProps } from './types';
 
 export const SceneInspector: React.FC<InspectorProps> = (props) => {
@@ -9,14 +10,7 @@ export const SceneInspector: React.FC<InspectorProps> = (props) => {
 
   return (
     <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-      <Section title="Project description" collapsible defaultOpen={false}>
-        <TextArea
-          rows={6}
-          value={globalGoal}
-          onChange={(e) => onChangeGoal(e.target.value, true)}
-          onBlur={(e) => onChangeGoal(e.target.value, false)}
-        />
-      </Section>
+      <NotesSection value={globalGoal} rows={6} onChange={onChangeGoal} />
 
       <CommentsSection {...props} list={props.annotations} />
     </div>

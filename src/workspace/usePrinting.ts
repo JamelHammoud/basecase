@@ -76,11 +76,7 @@ export function usePrinting(options: PrintingOptions) {
     job.slice?.plates.find((p) => p.number === plate.number && p.hash === plate.hash);
 
   const sendPlate = async (plate: Plate) => {
-    if (!printer.mine) {
-      showToast('Add your printer in Settings → Printers to send plates', { tone: 'error' });
-
-      return;
-    }
+    if (!printer.mine) return;
 
     setSending(plate.number);
 

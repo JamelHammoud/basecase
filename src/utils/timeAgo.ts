@@ -1,5 +1,16 @@
-export function timeAgo(iso: string): string {
-  const s = (Date.now() - Date.parse(iso)) / 1000;
+const MONTH_DAY = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+const MONTH_DAY_YEAR = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+const parseWhen = (when: string) => new Date(/^\d{4}-\d{2}-\d{2}$/.test(when) ? `${when}T12:00:00` : when);
+
+export function dayLabel(when: string, now = new Date()): string {
+  const d = parseWhen(when);
+
+  return (d.getFullYear() === now.getFullYear() ? MONTH_DAY : MONTH_DAY_YEAR).format(d);
+}
+
+export function timeAgo(iso: string, now = new Date()): string {
+  const s = (now.getTime() - Date.parse(iso)) / 1000;
 
   if (s < 60) return 'now';
 
@@ -9,5 +20,13 @@ export function timeAgo(iso: string): string {
 
   if (s < 604800) return `${Math.floor(s / 86400)}d`;
 
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return dayLabel(iso, now);
+}
+
+export function agoPhrase(iso: string, now = new Date()): string {
+  const t = timeAgo(iso, now);
+
+  if (t === 'now') return 'just now';
+
+  return /^\d+[mhd]$/.test(t) ? `${t} ago` : t;
 }

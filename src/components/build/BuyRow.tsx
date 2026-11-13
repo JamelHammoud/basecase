@@ -3,6 +3,7 @@ import { Button, ExternalLinkIcon, HoverCard, Tooltip } from '../../design-syste
 import type { ScenePart } from '../../types/robotics';
 import { type BomLine, STALE_DAYS } from '../../utils/bom';
 import { scaledEntry } from '../../utils/currency';
+import { dayLabel } from '../../utils/timeAgo';
 import { useMoney } from '../../utils/useMoney';
 import { PART_PREVIEW_WIDTH, PartPreviewCard } from '../agent/PartPreviewCard';
 import type { Extra } from './buyExtras';
@@ -49,7 +50,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.record)
     return (
-      <Tooltip label={`Checked ${l.record.checkedAt}${stale ? `, over ${STALE_DAYS} days ago` : ''}`} className="shrink-0 -my-[5px]">
+      <Tooltip label={`Checked ${dayLabel(l.record.checkedAt)}${stale ? `, over ${STALE_DAYS} days ago` : ''}`} className="shrink-0 -my-[5px]">
         <button
           type="button"
           onClick={onCheck}
@@ -63,7 +64,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
   if (l.estimate && l.estUsd !== undefined)
     return (
       <Tooltip
-        label={`List price at ${l.estimate.store}, ${l.estimate.seen}. Add the price you see`}
+        label={`List price at ${l.estimate.store}, ${dayLabel(l.estimate.seen)}. Add the price you see`}
         className="shrink-0 -my-[5px]"
       >
         <button type="button" onClick={onCheck} className={`${PRICE_CLASS} text-white/50 hover:text-white/75`}>

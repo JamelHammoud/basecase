@@ -25,6 +25,7 @@ export interface DevActions {
   clear: () => void;
   select: (ids: string[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
+  buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   simState: () => unknown;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
@@ -135,6 +136,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     poseTool: (kind: string, payload: Payload) => devRef.current.poseTool(kind, payload),
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
+    buildAlongSteps: () => devRef.current.buildAlongSteps(),
+    shownParts: () => viewportRef.current?.shownPartIds() ?? [],
     simState: () => devRef.current.simState(),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),

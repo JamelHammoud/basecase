@@ -18,6 +18,7 @@ import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
 import { AgentFrames } from './agentFrames';
 import { BlueprintUnderlay } from './blueprint';
+import { BuildStepLayer } from './buildStep';
 import { CameraGlyphs } from './cameraGlyphs';
 import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
@@ -54,6 +55,7 @@ const GIZMO_KEYS: Array<keyof ViewportProps> = [
   'pose',
   'measureMode',
   'markMode',
+  'buildStep',
 ];
 
 const FIGURE_KEYS: Array<keyof ViewportProps> = ['figures', 'humanHeightMm', 'measureKind', 'measureMode'];
@@ -95,6 +97,7 @@ export interface EngineOptions {
   marquee: () => HTMLElement | null;
   measureLabel: () => HTMLElement | null;
   markField: () => HTMLElement | null;
+  buildLabels: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -130,6 +133,8 @@ export class ViewportEngine {
   private readonly cameraGlyphs: CameraGlyphs;
 
   private readonly follow: FollowCamera;
+
+  private readonly buildStep: BuildStepLayer;
 
   private readonly cleanups: Array<() => void>;
 
@@ -172,11 +177,12 @@ export class ViewportEngine {
     this.cameraGlyphs = new CameraGlyphs(stage.overlays);
     this.cameraGlyphs.sync(options.props.fixedCameras);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
+    this.buildStep = new BuildStepLayer(this.ctx, options.buildLabels);
 
     const outline = new SelectionOutline(stage);
 
     loop.beforeRender.add(() => this.follow.update());
-    loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
+    loop.beforeRender.add(() => outline.prepare(this.buildStep.outlined(this.props.selectedPartIds)));
     loop.afterRender.add(() => this.measureTool.updateLabel());
     loop.afterRender.add(() => this.markField.place());
     loop.afterRender.add(() => {
@@ -223,7 +229,9 @@ export class ViewportEngine {
 
     if (props.sceneKey !== previous.sceneKey) frameScene(this.ctx.stage, props.parts);
 
-    if (props.pose !== previous.pose) this.ctx.layer.pose = props.pose ?? new Map();
+    if (props.pose !== previous.pose && !props.buildStep) this.ctx.layer.pose = props.pose ?? new Map();
+
+    if (props.buildStep !== previous.buildStep) this.buildStep.show(props.buildStep ?? null);
 
     this.syncTools(previous, props);
 
@@ -271,6 +279,7 @@ export class ViewportEngine {
     this.markLayer.dispose();
     this.agentFrames.dispose();
     this.cameraGlyphs.dispose();
+    this.buildStep.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -283,6 +292,8 @@ export class ViewportEngine {
     const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
     const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
     const camera = <T>(run: () => T) => {
+      ctx.loop.frameAnimation = null;
+
       const result = run();
 
       ctx.loop.invalidate();
@@ -369,11 +380,13 @@ export class ViewportEngine {
       projectPoints: (points) => measure.projectPoints(ctx, points),
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
       cancelMeasure: () => this.measureTool.clear(),
+      shownPartIds: () => this.buildStep.shownIds(),
     };
   }
 
   private applyPose(): void {
     this.ctx.layer.applyPose(this.gizmo.draggedObject);
+    this.buildStep.reapply();
     this.ctx.loop.invalidate();
   }
 

@@ -15,7 +15,7 @@ import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
-import { useBuildGuide } from './useBuildGuide';
+import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
@@ -86,16 +86,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   });
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
-  const guide = useBuildGuide({
-    sceneName: scene.sceneName,
-    parts,
-    project,
-    partsRef: docs.partsRef,
-    projectRef,
-    updateProjectNow: docs.updateProjectNow,
-    showToast,
-    viewportRef,
-  });
+  const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
     parts,
     selectedIds,
@@ -112,6 +103,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
 
   const loadSeed = (next: WorkspaceSeed, message?: string) => {
     guide.cancel();
+    buildAlong.close();
     setSceneId(next.sceneId);
     setSceneName(next.sceneName);
     setGlobalGoal(next.globalGoal || '');
@@ -152,6 +144,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     onRobot,
     simTraining,
     guide,
+    buildAlong,
     undo: () => travel('undo', restorePose),
     redo: () => travel('redo', restorePose),
     loadSeed,

@@ -75,12 +75,12 @@ export class PointerInput {
   }
 
   private onDown(e: PointerEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode } = this.ctx.props();
+    const { annotateMode, measureMode, markMode, transformMode, buildStep } = this.ctx.props();
+    const otherTool = annotateMode || measureMode || markMode || buildStep;
 
     this.down = { x: e.clientX, y: e.clientY };
 
-    if (!annotateMode && !measureMode && !markMode && transformMode === 'sculpt' && e.button === 0)
-      this.sculpt.begin(e);
+    if (!otherTool && transformMode === 'sculpt' && e.button === 0) this.sculpt.begin(e);
   }
 
   private onMove(e: PointerEvent): void {
@@ -119,7 +119,9 @@ export class PointerInput {
       return;
     }
 
-    if (this.gizmo.dragging() || e.button !== 0 || this.moved(e) || this.ctx.props().markMode) {
+    const { markMode, buildStep } = this.ctx.props();
+
+    if (this.gizmo.dragging() || e.button !== 0 || this.moved(e) || markMode || buildStep) {
       return;
     }
 
@@ -179,8 +181,9 @@ export class PointerInput {
   }
 
   private onDoubleClick(e: MouseEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode, onSelectPart } = this.ctx.props();
-    const blocked = annotateMode || measureMode || markMode || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
+    const { annotateMode, measureMode, markMode, transformMode, onSelectPart, buildStep } = this.ctx.props();
+    const blocked =
+      annotateMode || measureMode || markMode || buildStep || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
 
     if (e.button !== 0 || additive(e) || blocked || this.moved(e)) {
       return;

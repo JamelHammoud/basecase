@@ -65,6 +65,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
 
       return made && { html: made.html, pages: made.record.pages, steps: made.record.steps };
     },
+    buildAlongSteps: () => core.buildAlong.steps,
   });
 
   useEffect(() => {

@@ -156,7 +156,7 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
       return;
     }
 
-    if (keysGoElsewhere() || blocked || core.simTraining.sim.drive.active) return;
+    if (keysGoElsewhere() || blocked || core.simTraining.sim.drive.active || core.buildAlong.active) return;
 
     if (mod) {
       runKey(maps.withMod, key, e, true);

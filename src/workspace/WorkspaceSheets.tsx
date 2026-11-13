@@ -28,6 +28,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onClosed={guide.closeViewer}
           onReveal={desktop ? () => void guide.reveal() : undefined}
           onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
+          onBuildAlong={() => void core.buildAlong.open()}
         />
       )}
       <ImportRobotSheet

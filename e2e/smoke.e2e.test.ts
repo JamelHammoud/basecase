@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -30,6 +30,13 @@ afterAll(async () => {
 });
 
 describe('studio smoke test', () => {
+  it('loads cross-origin isolated, from the built bundle when there is one', async () => {
+    const fromSource = app.requests.some((url) => new URL(url).pathname.startsWith('/src/'));
+
+    expect(await app.page.evaluate(() => crossOriginIsolated)).toBe(true);
+    expect(fromSource).toBe(inject('served') === 'dev');
+  });
+
   it('adds a shape from the Shapes menu', async () => {
     await app.page.keyboard.press('a');
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();

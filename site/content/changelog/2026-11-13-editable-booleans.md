@@ -4,17 +4,19 @@ date: 2026-11-13
 image: /changelog/editable-booleans/cover.png
 ---
 
-Union, Subtract and Intersect now keep the parts they were made from, so you can move a servo pocket 2 mm, widen a cable hole or turn a slot without undoing the cut.
+Union, Subtract and Intersect now keep the parts they were made from. You can move a servo pocket 2 mm, widen a cable hole or turn a slot without undoing the cut.
 
 ## What a cut keeps
 
-A boolean used to replace its parts with one fixed mesh named "(Cutouts Carved)" or "(Boolean Merged)". Now the result keeps the name of the part you kept, and Layers lists the parts it was made from under it, the kept part first. Old scenes open as they were; cuts made before today stay single meshes.
+A boolean used to replace its parts with one fixed mesh named "(Cutouts Carved)" or "(Boolean Merged)". Now the result keeps the name of the part you kept. Layers lists the parts it was made from under it, the kept part first. Old scenes open as they were; cuts made before today stay single meshes.
 
 ![Layers with Servo Mount, and Servo Mount, Servo Pocket and Cable Hole nested under it](/changelog/editable-booleans/result.png)
 
 ## Editing a cut
 
-Double-click or ⌘-click a hole on the canvas to select the part that cut it, the way you'd reach into a group. Its row in Layers works too. It draws over the result, Cutouts in red and solid parts in translucent blue, and the gizmo, the Position, Size and Rotation fields, and Delete all act on it. The cut follows each change, and each change is one step for ⌘Z.
+Double-click or ⌘-click a hole on the canvas to select the part that cut it, the way you'd reach into a group. Its row in Layers works too. It draws over the result, Cutouts in red and solid parts in translucent blue. The gizmo, the Position, Size and Rotation fields, and Delete all act on it. The cut follows each change, and each change is one step for ⌘Z.
+
+Steps are in [Edit a cut after you make it](/help/edit-a-cut).
 
 ![The Cable Hole selected inside the plate, with the gizmo on it](/changelog/editable-booleans/drilled.png)
 

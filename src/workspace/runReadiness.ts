@@ -9,6 +9,8 @@ import { registerSourced } from '../data/sourcedItems';
 import {
   fitProbeFindings,
   fixedMateFindings,
+  goneMateFindings,
+  goneMateIds,
   hiddenFindings,
   sourcingFindings,
   threadFindings,
@@ -72,6 +74,7 @@ export const projectFingerprint = (
     walks: (project.skills ?? []).map((s) => s.hash),
     walk: jsonHash(project.walk),
     firstRanges: project.firstRanges,
+    goneMates: goneMateIds(project.joints),
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
@@ -107,6 +110,7 @@ export async function runReadiness({
       withSweep: true,
       walk: freshWalk(parts, project),
       supportG: supportOf(report),
+      printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
     }),
   );
   const measuring = viewport.measureParts();
@@ -141,6 +145,7 @@ export async function runReadiness({
       ...hiddenFindings(parts),
       ...fixedMateFindings(parts),
       ...caseFindings(cases),
+      ...goneMateFindings(project.joints),
     ],
     {
       parts,

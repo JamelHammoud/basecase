@@ -184,14 +184,15 @@ export class PointerInput {
   }
 
   private select(e: PointerEvent): void {
-    const { onSelectPart } = this.ctx.props();
+    const { onSelectPart, onPickPoint } = this.ctx.props();
     const deep = hasPrimaryModifier(e);
     const hit = deep
       ? raycastParts(this.ctx.stage, e.clientX, e.clientY)
       : raycastUnlocked(this.ctx, e.clientX, e.clientY);
     const partId = hitPartId(hit);
 
-    if (partId) {
+    if (partId && hit) {
+      onPickPoint?.(partId, toVec3(hit.point));
       onSelectPart(partId, e.shiftKey, deep);
 
       return;
@@ -201,7 +202,8 @@ export class PointerInput {
   }
 
   private onDoubleClick(e: MouseEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode, onSelectPart, axisPick, buildStep } = this.ctx.props();
+    const { annotateMode, measureMode, markMode, transformMode, onSelectPart, onOpenPart, axisPick, buildStep } =
+      this.ctx.props();
     const blocked =
       annotateMode ||
       measureMode ||
@@ -217,6 +219,9 @@ export class PointerInput {
 
     const partId = hitPartId(raycastUnlocked(this.ctx, e.clientX, e.clientY));
 
-    if (partId) onSelectPart(partId, false, true);
+    if (!partId) return;
+
+    onSelectPart(partId, false, true);
+    onOpenPart?.(partId);
   }
 }

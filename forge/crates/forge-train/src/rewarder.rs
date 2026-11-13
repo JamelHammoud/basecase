@@ -1,5 +1,5 @@
 use crate::job::{Job, Task};
-use forge_reward::{compile, handwritten, Program, RewardState, Schema};
+use forge_reward::{compile_for, handwritten, Program, RewardState, Schema};
 
 pub enum Rewarder {
     Stand,
@@ -14,7 +14,8 @@ impl Rewarder {
                 joints: job.joints.len(),
                 bodies: 0,
             };
-            let program = compile(source, schema).map_err(|e| format!("The reward doesn't compile: {e}"))?;
+            let program = compile_for(source, schema, job.options.reference.is_some())
+                .map_err(|e| format!("The reward doesn't compile: {e}"))?;
 
             return Ok(Self::Program(Box::new(program)));
         }
@@ -25,11 +26,11 @@ impl Rewarder {
         })
     }
 
-    pub fn reward(&self, state: &RewardState) -> f64 {
+    pub fn reward(&self, state: &RewardState, reference: &[f64]) -> f64 {
         match self {
             Self::Stand => handwritten::scaled(state, handwritten::stand(state)),
             Self::Walk => handwritten::scaled(state, handwritten::walk(state)),
-            Self::Program(program) => program.evaluate(state).total,
+            Self::Program(program) => program.evaluate_with_reference(state, reference).total,
         }
     }
 }

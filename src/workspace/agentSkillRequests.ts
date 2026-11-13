@@ -1,10 +1,11 @@
 import { buildEye, type Eye } from '../sim/eyes';
 import type { SimModel } from '../sim/mjcfTypes';
-import type { ScenePart } from '../types/robotics';
+import type { RobotAnimation, ScenePart } from '../types/robotics';
 import type { Contract } from '../skills/contract';
 import type { SignalSource, StartArea } from '../skills/environment';
 import type { TrainedEntry } from '../skills/kitEnvironment';
 import type { V3 } from '../skills/kitModel';
+import { moveAnimations } from '../skills/moveEnvironment';
 import { kitEntries } from '../skills/motorKit';
 import type { Rollout } from '../skills/rollout';
 import type { SkillRecord } from '../skills/skillRecords';
@@ -16,7 +17,7 @@ import type { DraftInput, DraftReport } from '../skills/teach';
 export interface SkillToolContext {
   skills: { runtime: SkillsRuntime; buildModel: () => Promise<SimModel> };
   parts?: () => ScenePart[];
-  project: () => { skills?: SkillRecord[] };
+  project: () => { skills?: SkillRecord[]; animations?: RobotAnimation[] };
   setAction: (action: string) => void;
 }
 
@@ -133,6 +134,20 @@ function trainKitRequest(model: SimModel, kit: string, ctx: SkillToolContext) {
   );
 }
 
+function trainMoveRequest(model: SimModel, name: string, ctx: SkillToolContext) {
+  const moves = moveAnimations(model, ctx.project().animations ?? []);
+  const move = moves.find((a) => a.name.toLowerCase() === name.trim().toLowerCase());
+
+  if (!move)
+    return moves.length
+      ? `No move named "${name}". Moves: ${moves.map((a) => a.name).join(', ')}.`
+      : 'Moves are Pose-tab animations of a robot that walks on legs. Animate one first.';
+
+  return (
+    ctx.skills.runtime.trainMove(model, move) ?? `Training the move ${move.name} in Forge. Follow it with list_skills.`
+  );
+}
+
 async function trainRequest(payload: Payload, ctx: SkillToolContext) {
   ctx.setAction('Starting training');
 
@@ -140,7 +155,9 @@ async function trainRequest(payload: Payload, ctx: SkillToolContext) {
 
   if (typeof payload.kit === 'string') return { text: trainKitRequest(model, payload.kit, ctx) };
 
-  if (typeof payload.draft !== 'string') return { text: 'Pass draft (from draft_skill) or kit.' };
+  if (typeof payload.move === 'string') return { text: trainMoveRequest(model, payload.move, ctx) };
+
+  if (typeof payload.draft !== 'string') return { text: 'Pass draft (from draft_skill), kit or move.' };
 
   const minutes = Number(payload.budget_minutes);
   const budget = Number.isFinite(minutes) && minutes > 0 ? minutes * 60 * FORGE_STEPS_PER_S : undefined;
@@ -167,6 +184,12 @@ function stateText(row: SkillRow): string {
   return `${state.background ? 'retraining in the background' : 'training'}${share} (${state.message})`;
 }
 
+function rowKind(row: SkillRow): string {
+  if (row.kit) return ' (Motor Kit)';
+
+  return row.move ? ' (move)' : '';
+}
+
 function raceLines(race: NonNullable<SkillsRuntime['lastRace']>): string[] {
   return [
     `Last race, “${race.name}”:`,
@@ -182,10 +205,11 @@ async function listRequest(_payload: Payload, ctx: SkillToolContext) {
     design: designOf(model),
     records: ctx.project().skills ?? [],
     jobs: ctx.skills.runtime.jobs,
+    animations: ctx.project().animations,
   });
   const race = ctx.skills.runtime.lastRace;
   const lines = rows.length
-    ? rows.map((r) => `- ${r.label}${r.kit ? ' (Motor Kit)' : ''}: ${stateText(r)}`)
+    ? rows.map((r) => `- ${r.label}${rowKind(r)}: ${stateText(r)}`)
     : ['No skills. Teach one with draft_skill.'];
 
   if (race) lines.push(...raceLines(race));

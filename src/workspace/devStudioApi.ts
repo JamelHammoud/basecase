@@ -32,6 +32,7 @@ export interface DevActions {
   clear: () => void;
   select: (ids: string[]) => void;
   dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => void;
+  selectFace: (partId: string, normal: [number, number, number]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   simState: () => unknown;
@@ -45,6 +46,7 @@ export interface DevActions {
   passTries: () => void;
   addCase: (raw: unknown) => string;
   referenceTry: () => Promise<void>;
+  stubTrainer: (policy: unknown) => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -140,6 +142,9 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
     dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => devRef.current.dragSkeleton(step),
+    selectFace: (partId: string, normal: [number, number, number]) => devRef.current.selectFace(partId, normal),
+    triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
+    project: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
@@ -170,6 +175,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     passTries: () => devRef.current.passTries(),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
     referenceTry: () => devRef.current.referenceTry(),
+    stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     stubTabEngine,
     pickFiles: (files: { name: string; base64: string }[]) =>

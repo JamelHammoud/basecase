@@ -7,6 +7,7 @@ import type { TetherControl } from './TetherFields';
 
 export interface FindingActions {
   onFix?: (finding: ReadinessFinding) => void;
+  onApplyFix?: (finding: ReadinessFinding) => void;
   onQuote?: (finding: ReadinessFinding) => void;
   onIgnore: (finding: ReadinessFinding) => void;
   onIgnoreRule: (finding: ReadinessFinding) => void;
@@ -49,16 +50,20 @@ const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }>
   );
 };
 
-const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => (
-  <>
-    {actions.onFix && (
-      <Button variant="secondary" size="xs" onClick={() => actions.onFix?.(finding)}>
-        Fix
-      </Button>
-    )}
-    <MoreMenu finding={finding} actions={actions} />
-  </>
-);
+const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
+  const fix = finding.fix ? actions.onApplyFix : actions.onFix;
+
+  return (
+    <>
+      {fix && (
+        <Button variant="secondary" size="xs" onClick={() => fix(finding)}>
+          Fix
+        </Button>
+      )}
+      <MoreMenu finding={finding} actions={actions} />
+    </>
+  );
+};
 
 const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext; muted?: boolean }> = ({
   finding,

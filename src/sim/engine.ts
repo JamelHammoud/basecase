@@ -7,6 +7,7 @@ import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type Dr
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
+import type { SimStats } from './engineStats';
 import { eyeCaster, type EyeCaster } from './eyes';
 import { policyObsSize, type PolicySpec } from './policy';
 import { stepPolicy, type PolicyState } from './policyStep';
@@ -20,30 +21,7 @@ export type Controller =
   | RouteController
   | { kind: 'limp' };
 
-export interface JointStat {
-  id: string;
-  peak: number;
-  saturatedS: number;
-}
-
-export interface RobotStat {
-  key: string;
-  fellAt: number | null;
-  height: number;
-  tilt: number;
-  travelled: number;
-  forward: number;
-  speed: number;
-}
-
-export interface SimStats {
-  time: number;
-  robots: RobotStat[];
-  joints: JointStat[];
-  rtf: number;
-  effector?: [number, number, number];
-  effectors?: Array<[number, number, number]>;
-}
+export type { JointStat, RobotStat, SimStats } from './engineStats';
 
 const D2R = Math.PI / 180;
 const GAIN_SLOTS = 10;
@@ -222,6 +200,7 @@ export class SimEngine {
       action: new Float32Array(idx.length),
       obs: new Float32Array(policyObsSize(pc.policy)),
       nextAt: this.data.time,
+      startedAt: this.data.time,
       src: {
         qpos: this.data.qpos,
         qvel: this.data.qvel,

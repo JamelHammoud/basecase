@@ -149,7 +149,7 @@ export function useExportActions(core: WorkspaceCore) {
     airDrop,
     copyBrief,
     exportRobotPackage,
-    canExportStl: parts.length > 0,
+    canExportParts: parts.length > 0,
     canExportStep: parts.some(isStepBody),
     canExportRobot: posing.hasRig,
   };

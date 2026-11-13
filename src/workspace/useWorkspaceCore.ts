@@ -18,6 +18,7 @@ import { useToolMode } from './useToolMode';
 import { useCommandCenter } from './useCommandCenter';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
+import { useSketchSession } from './useSketchSession';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -144,6 +145,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     selectedIds,
     setSelectedIds,
     selection,
+    sketching: useSketchSession({ docs, viewportRef, selectedIds, setSelectedIds, tool }),
     annotations,
     marks,
     measure,

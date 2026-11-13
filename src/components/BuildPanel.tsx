@@ -96,6 +96,8 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
             panScroll,
             actions: {
               onFix: onFixFinding,
+              onApplyFix: ({ fix }) =>
+                fix && printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
               onQuote: onQuoteFinding,
               onIgnore: (finding) => onChangeProject({ readiness: ignoreFinding(project.readiness, finding) }),
               onIgnoreRule: (finding) => onChangeProject({ readiness: ignoreRule(project.readiness, finding) }),

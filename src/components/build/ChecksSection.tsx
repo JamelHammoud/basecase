@@ -3,7 +3,7 @@ import { Section } from '../../design-system';
 import { ownedBy } from '../../readiness/readiness';
 import type { CheckStatus, CheckSummary, Readiness } from '../../readiness/types';
 import { READINESS_CHECKS } from '../../readiness/wording';
-import { ENGINEERING_CHECKS } from '../../utils/engineering';
+import { ENGINEERING_CHECKS, STRENGTH_CHECK } from '../../utils/engineering';
 import { CaseCheckItem } from './CaseCheckItem';
 import { CheckIcon } from './CheckIcon';
 import { CheckItem } from './CheckItem';
@@ -22,6 +22,9 @@ const SEVERITY: Record<CheckStatus, number> = { fail: 0, warn: 1, pass: 2, 'not 
 const bySeverity = (checks: CheckSummary[]) => [...checks].sort((a, b) => SEVERITY[a.status] - SEVERITY[b.status]);
 
 const FIRST_RUN = [...READINESS_CHECKS, ...ENGINEERING_CHECKS];
+
+const stressIdsOf = (readiness: Readiness, name: string) =>
+  name === STRENGTH_CHECK ? readiness.rows.find((r) => r.check === name)?.ids : undefined;
 
 function verdict(readiness: Readiness | null, checking: boolean): { text: string; tone: string } {
   if (!readiness || checking) return { text: 'Checking…', tone: 'text-white/50' };
@@ -50,8 +53,9 @@ const Entry: React.FC<{ check: CheckSummary; readiness: Readiness; context: Find
   if (check.caseId) return <CaseCheckItem check={{ ...check, caseId: check.caseId }} notes={notes} context={context} />;
 
   const blockers = readiness.blockers.filter(ownedBy(check));
+  const stressIds = stressIdsOf(readiness, check.name);
 
-  return <CheckItem check={check} blockers={blockers} notes={notes} context={context} />;
+  return <CheckItem check={check} blockers={blockers} notes={notes} context={context} stressIds={stressIds} />;
 };
 
 export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checking, context, restore }) => {

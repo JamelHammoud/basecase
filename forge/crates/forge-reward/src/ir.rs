@@ -23,6 +23,7 @@ pub enum StateField {
     JointVel,
     Action,
     LastAction,
+    Reference,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

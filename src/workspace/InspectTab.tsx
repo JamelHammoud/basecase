@@ -1,5 +1,9 @@
 import { Inspector } from '../components/Inspector';
 import { SculptAndDrawStudio } from '../components/SculptAndDrawStudio';
+import type { BoundSketch, SketchOutput } from '../components/studio/SketchPanel';
+import { GROUND_PLANE, sketchSolid, type SketchShape } from '../utils/sketch/placement';
+import { EMPTY_SKETCH } from '../utils/sketch/types';
+import { solidSketchParams } from './partFactories';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -8,13 +12,36 @@ interface InspectTabProps {
   actions: WorkspaceActions;
 }
 
+function boundSketch(core: WorkspaceCore): BoundSketch | null {
+  const partId = core.sketching.target?.partId;
+  const record = partId ? core.parts.find((p) => p.id === partId)?.sketch : undefined;
+
+  if (!partId || !record) return null;
+
+  return { record, onChange: (patch) => core.sketching.change(partId, patch), undo: core.undo, redo: core.redo };
+}
+
 function ModePanel({ core, actions }: InspectTabProps) {
-  const { tool, selection } = core;
+  const { tool, selection, sketching } = core;
   const { creation } = actions;
   const studioMode = tool.studioMode!;
+  const target = sketching.target;
+
+  const createSketch = async (shape: SketchShape, output: SketchOutput) => {
+    const solid = sketchSolid(target?.plane ?? GROUND_PLANE, shape, { id: `node-sketch-${Date.now()}`, ...output });
+
+    if (!solid) return;
+
+    await creation.createFromSketch(solidSketchParams(solid, output));
+    tool.setCreator(null);
+  };
 
   return (
     <SculptAndDrawStudio
+      key={target?.key ?? 0}
+      sketchStart={target?.start ?? EMPTY_SKETCH}
+      boundSketch={boundSketch(core)}
+      onCreateSketch={(shape, output) => void createSketch(shape, output)}
       selectedPart={selection.selectedPart}
       sculptSettings={tool.sculptSettings}
       mode={studioMode}

@@ -37,6 +37,7 @@ import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
 import { operateCommands } from './operateCommands';
 import { buildCommands } from './buildCommands';
+import { onshapeCommands } from './onshapeCommands';
 
 export interface CommandInputs {
   core: WorkspaceCore;
@@ -116,16 +117,17 @@ function fileCommands({ core }: CommandInputs): Command[] {
 
 function printCommands({ core, actions }: CommandInputs): Command[] {
   const { exports } = actions;
+  const export3mf: Command = {
+    id: 'export-3mf',
+    group: 'Scene',
+    label: 'Export 3MF Plates',
+    icon: <PrinterIcon className={ic} />,
+    keywords: 'print plates slicer bambu prusa orca download',
+    run: () => void exports.export3mf(),
+  };
 
   return [
-    {
-      id: 'export-3mf',
-      group: 'Scene',
-      label: 'Export 3MF Plates',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates slicer bambu prusa orca download',
-      run: () => void exports.export3mf(),
-    },
+    ...(exports.canExportParts ? [export3mf] : []),
     {
       id: 'lay-out-plates',
       group: 'Scene',
@@ -184,8 +186,8 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       group: 'Scene',
       label: 'Sketch',
       icon: <PenIcon className={ic} />,
-      keywords: 'draw extrude revolve outline',
-      run: () => tool.openCreator('draw2d'),
+      keywords: 'draw extrude revolve outline face dimension constraint',
+      run: core.sketching.open,
     },
     {
       id: 'image',
@@ -394,6 +396,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...poseCommands(inputs),
   ...skeletonCommands(inputs),
   ...robotCommands(inputs),
+  ...onshapeCommands(inputs),
   ...caseCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),

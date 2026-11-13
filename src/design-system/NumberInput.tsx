@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { clampNumber, evaluateMath, formatNumber, stepMultiplier } from './numberInputMath';
+import { Tooltip } from './Tooltip';
 import { useNumberScrub } from './useNumberScrub';
 
 export interface NumberInputProps {
@@ -16,6 +17,31 @@ export interface NumberInputProps {
   title?: string;
   'aria-label'?: string;
 }
+
+type ScrubHandlers = ReturnType<typeof useNumberScrub>['handlers'];
+
+const ScrubLabel: React.FC<{ label: React.ReactNode; title?: string; handlers: ScrubHandlers }> = ({
+  label,
+  title,
+  handlers,
+}) => {
+  const handle = (
+    <span
+      {...handlers}
+      className="w-7 h-full shrink-0 flex items-center justify-center text-[12px] font-medium text-white/50 group-hover:text-white/60 cursor-ew-resize select-none touch-none"
+    >
+      {label}
+    </span>
+  );
+
+  if (!title) return handle;
+
+  return (
+    <Tooltip label={title} className="h-full shrink-0">
+      {handle}
+    </Tooltip>
+  );
+};
 
 const accessibleName = ({ ariaLabel, title, label }: { ariaLabel?: string; title?: string; label?: React.ReactNode }) =>
   ariaLabel ?? title ?? (typeof label === 'string' ? label : undefined);
@@ -98,19 +124,11 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
   return (
     <div
-      title={title}
       className={`group relative flex items-center h-[32px] rounded-lg bg-white/[0.05] hover:bg-white/[0.07] ring-1 ring-inset ring-transparent focus-within:ring-[#0d99ff] focus-within:bg-black/20 transition-colors ${
         disabled ? 'opacity-40 pointer-events-none' : ''
       } ${scrubbing ? 'ring-white/[0.12]' : ''} ${className}`}
     >
-      {label !== undefined && (
-        <span
-          {...handlers}
-          className="w-7 h-full shrink-0 flex items-center justify-center text-[12px] font-medium text-white/50 group-hover:text-white/60 cursor-ew-resize select-none touch-none"
-        >
-          {label}
-        </span>
-      )}
+      {label !== undefined && <ScrubLabel label={label} title={title} handlers={handlers} />}
       <input
         ref={inputRef}
         type="text"

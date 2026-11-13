@@ -35,6 +35,7 @@ describe('scenes menu', () => {
     await expect.poll(() => row.count()).toBe(1);
 
     await askToDelete();
+    expect(await dialog.getByRole('button', { name: /^Close/ }).count()).toBe(0);
     await page.keyboard.press('Escape');
     await expect.poll(() => dialog.count()).toBe(0);
     expect(await row.count()).toBe(1);

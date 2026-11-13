@@ -28,6 +28,8 @@ describe('Strength', () => {
     const before = await strengthReport(lBracketScene());
     const fix = before.row!.items![0].fix!;
 
+    if (fix.kind !== 'print-face') throw new Error(`Expected a print face, got ${fix.kind}`);
+
     for (const down of [ON_ITS_SIDE, fix.down]) {
       const { row, readings } = await strengthReport(lBracketScene({ down }));
 

@@ -37,12 +37,22 @@ export function importKindOf(name: string, { cad }: ImportOptions): ImportKind |
   return KINDS.find((kind) => KIND_EXTENSIONS[kind].includes(ext)) ?? null;
 }
 
+export const isImageType = (type: string | undefined) => !!type && /^image\/(?!svg)/.test(type);
+
+interface NamedFile {
+  name: string;
+  type?: string;
+}
+
+const fileKindOf = (file: NamedFile, options: ImportOptions) =>
+  importKindOf(file.name, options) ?? (isImageType(file.type) ? 'image' : null);
+
 export type SortedImports<T> = Record<ImportKind | 'unknown', T[]>;
 
-export function sortImports<T extends { name: string }>(files: T[], options: ImportOptions): SortedImports<T> {
+export function sortImports<T extends NamedFile>(files: T[], options: ImportOptions): SortedImports<T> {
   const sorted: SortedImports<T> = { parts: [], svg: [], robot: [], motion: [], scene: [], image: [], unknown: [] };
 
-  for (const file of files) sorted[importKindOf(file.name, options) ?? 'unknown'].push(file);
+  for (const file of files) sorted[fileKindOf(file, options) ?? 'unknown'].push(file);
 
   return sorted;
 }
@@ -59,14 +69,11 @@ export interface ImportHandlers<T> {
   unknown: (files: T[]) => void;
 }
 
-export function routeImports<T extends { name: string }>(
-  files: T[],
-  handlers: ImportHandlers<T>,
-  options: ImportOptions,
-) {
+export function routeImports<T extends NamedFile>(files: T[], handlers: ImportHandlers<T>, options: ImportOptions) {
   const sorted = sortImports(files, options);
-  const [svg] = sorted.svg;
-  const [motion] = sorted.motion;
+  const [svg, ...extraSvgs] = sorted.svg;
+  const [motion, ...extraMotions] = sorted.motion;
+  const unknown = [...extraSvgs, ...extraMotions, ...sorted.unknown];
 
   if (sorted.parts.length) handlers.parts(sorted.parts);
 
@@ -79,7 +86,7 @@ export function routeImports<T extends { name: string }>(
   sorted.scene.forEach((file) => handlers.scene(file));
   sorted.image.forEach((file, i) => handlers.image(file, i));
 
-  if (sorted.unknown.length) handlers.unknown(sorted.unknown);
+  if (unknown.length) handlers.unknown(unknown);
 }
 
 export const importAccept = ({ cad }: ImportOptions) =>

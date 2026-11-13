@@ -61,6 +61,19 @@ describe('import route', () => {
     });
   });
 
+  it('sends any image type the drop overlay calls an image to the image flow', () => {
+    const files = [
+      { name: 'photo.avif', type: 'image/avif' },
+      { name: 'scan.bmp', type: 'image/bmp' },
+      { name: 'logo.svgz', type: 'image/svg+xml' },
+      { name: 'notes.txt', type: 'text/plain' },
+    ];
+    const sorted = sortImports(files, DESKTOP);
+
+    expect(sorted.image).toEqual([files[0], files[1]]);
+    expect(sorted.unknown).toEqual([files[2], files[3]]);
+  });
+
   it('offers every routed extension in the picker', () => {
     const accept = importAccept(DESKTOP).split(',');
 
@@ -82,9 +95,19 @@ describe('import route', () => {
       image: vi.fn(),
       unknown: vi.fn(),
     } satisfies ImportHandlers<{ name: string }>;
-    const files = ['a.STL', 'b.obj', 'c.svg', 'd.svg', 'e.zip', 'f.urdf', 'g.bvh', 'h.png', 'i.txt', 'j.doc'].map(
-      (name) => ({ name }),
-    );
+    const files = [
+      'a.STL',
+      'b.obj',
+      'c.svg',
+      'd.svg',
+      'e.zip',
+      'f.urdf',
+      'g.bvh',
+      'h.png',
+      'i.txt',
+      'j.doc',
+      'k.bvh',
+    ].map((name) => ({ name }));
 
     routeImports(files, handlers, DESKTOP);
 
@@ -94,7 +117,7 @@ describe('import route', () => {
     expect(handlers.motion).toHaveBeenCalledExactlyOnceWith(files[6]);
     expect(handlers.image).toHaveBeenCalledExactlyOnceWith(files[7], 0);
     expect(handlers.scene).not.toHaveBeenCalled();
-    expect(handlers.unknown).toHaveBeenCalledExactlyOnceWith([files[8], files[9]]);
+    expect(handlers.unknown).toHaveBeenCalledExactlyOnceWith([files[3], files[10], files[8], files[9]]);
     expect(couldntImport([files[8], files[9]])).toBe('Couldn’t import i.txt, j.doc');
   });
 

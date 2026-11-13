@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { catalogItemFromKey } from '../data/catalog';
 import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
 import { droppedFolders } from './droppedFolders';
+import { isImageType } from './importRoute';
 import type { Vec3 } from './types';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -17,7 +18,7 @@ export function dropPoint(hit: Hit, snapStepMm: number): Vec3 | undefined {
 }
 
 const onlyImages = (items: DataTransferItemList) =>
-  Array.from(items).every((item) => item.kind === 'file' && /^image\/(?!svg)/.test(item.type));
+  Array.from(items).every((item) => item.kind === 'file' && isImageType(item.type));
 
 function parseDrag<T>(data: string) {
   try {

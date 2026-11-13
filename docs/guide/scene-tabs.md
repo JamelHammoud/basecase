@@ -19,7 +19,7 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
   - Past their minimum width they scroll sideways (the wheel scrolls; an edge fades only while tabs are hidden past it, measured from layout so sliding tabs don't trigger it).
   - New tabs grow in (`animate-tab-in`); tabs slide into place after insert, close and drop (FLIP, 220ms).
   - Press selects. Drag past 4px reorders. Double-click renames inline. Middle-click closes. × closes (`Close  ⌘W`); it's a 28px mouse target hidden from the accessibility tree, since a button inside a tab breaks the tab role, so keyboard and screen reader users close with ⌘W or the tab's menu. Right-click: Rename, Duplicate, New Scene, Reopen Closed Scene, Close, Close Other Scenes, Close Scenes to the Right.
-  - Resting 800ms on a background tab opens a small preview card under it: a fresh frame of that scene, its name, and its part count, or the agent's live activity while it works.
+  - Resting 800ms on a background tab opens a small preview card under it: a fresh frame of that scene, its name, and its part count in the Scenes list's words (“0 parts”, “1 part”, `scenes/partCount.ts`), or the agent's live activity while it works.
   - + (28px) 2px after the last tab (its glyph carries 6px of air, so it reads about as far out as the tabs are apart): `New scene  ⌘T`.
 - **Opening and closing:**
   - New scenes are numbered so open tabs never share a name: Untitled, Untitled 2…

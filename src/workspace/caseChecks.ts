@@ -20,6 +20,7 @@ export interface CaseRobotInput {
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;
   partTriangles: (id: string) => Float32Array | null;
+  servoVolts?: number;
 }
 
 export interface CaseChecksInput extends CaseRobotInput {
@@ -82,7 +83,14 @@ function wireRobot(input: CaseRobotInput): WireRobot {
     if (t) triangles[p.id] = t;
   }
 
-  return { id: 'scene', parts: input.parts, joints: input.project.joints ?? [], measures: input.measures, triangles };
+  return {
+    id: 'scene',
+    parts: input.parts,
+    joints: input.project.joints ?? [],
+    measures: input.measures,
+    triangles,
+    servoVolts: input.servoVolts,
+  };
 }
 
 function keepModel(key: string, reading: ModelReading) {
@@ -115,13 +123,20 @@ async function readModel(input: CaseRobotInput, robot: () => WireRobot, turn: nu
   return reading;
 }
 
-async function readRobot(input: CaseRobotInput, robot: () => WireRobot, turn: number | null): Promise<RobotReading> {
-  const { modelHash, walk: pick, stop } = await readModel(input, robot, turn);
+async function readingOf({
+  modelHash,
+  walk: pick,
+  stop,
+}: Omit<ModelReading, 'geometry' | 'walks'>): Promise<RobotReading> {
   const policy = pick ? await policyOf(pick.hash).catch(() => null) : null;
 
   if (!pick || !policy) return { modelHash, walk: null, walkHash: '', stop };
 
   return { modelHash, walk: { policy, topSpeed: pick.topSpeed }, walkHash: pick.hash, stop };
+}
+
+async function readRobot(input: CaseRobotInput, robot: () => WireRobot, turn: number | null): Promise<RobotReading> {
+  return readingOf(await readModel(input, robot, turn));
 }
 
 export interface CaseControl {
@@ -291,4 +306,13 @@ export async function caseVerdict(
   };
 
   return { runs: judged, cached, modelHash: reading.modelHash, film };
+}
+
+export async function exploreVerdict(input: CaseRobotInput, kase: Case, runs: number): Promise<CaseRuns> {
+  const wire = wireRobot(input);
+  const robot = () => wire;
+  const model = await caseCheckPool.run(0, { type: 'model', robot: wire, walks: walkRecords(input.project) });
+  const reading = await readingOf(model);
+
+  return judge({ kase, key: '', reading, robot, runs, tag: '' });
 }

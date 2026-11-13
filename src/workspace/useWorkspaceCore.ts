@@ -15,6 +15,7 @@ import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useCaseCompare } from './useCaseCompare';
+import { useCaseExplore } from './useCaseExplore';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useCaseRun } from './useCaseRun';
@@ -134,6 +135,13 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
     showToast,
   });
+  const caseExplore = useCaseExplore({
+    kase: simTraining.cases.active,
+    parts,
+    project,
+    source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
+    showToast,
+  });
 
   return {
     workspaceId,
@@ -141,6 +149,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     printer,
     readiness,
     caseCompare,
+    caseExplore,
     printing,
     viewportRef,
     scene,

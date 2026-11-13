@@ -40,6 +40,7 @@ import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import type { CaseCompare } from './useCaseCompare';
+import type { CaseExplore } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
@@ -69,6 +70,7 @@ export interface RequestContext {
   routines: Routines;
   cases: Cases;
   caseCompare: CaseCompare;
+  caseExplore: CaseExplore;
   caseRun: CaseRun;
   skills: SceneSkills;
 }

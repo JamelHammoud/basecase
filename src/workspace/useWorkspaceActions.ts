@@ -1,4 +1,5 @@
 import { useExportActions } from './useExportActions';
+import { useFileImport } from './useFileImport';
 import { useFixedCameras } from './useFixedCameras';
 import { useHandJoints } from './useHandJoints';
 import { useLibraryActions } from './useLibraryActions';
@@ -13,6 +14,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const pose = usePoseActions(core);
   const robots = useRobotInsert(core, pose.openPose);
   const creation = usePartCreation(core, robots);
+  const files = useFileImport(core, { creation, robots, pose });
   const edits = usePartEdits(core);
   const ops = useSelectionOps(core);
   const library = useLibraryActions(core);
@@ -25,7 +27,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     showToast: core.showToast,
   });
 
-  return { pose, robots, creation, edits, ops, library, exports, cameras, joints };
+  return { pose, robots, creation, files, edits, ops, library, exports, cameras, joints };
 }
 
 export type WorkspaceActions = ReturnType<typeof useWorkspaceActions>;

@@ -141,6 +141,11 @@ export type RightTab = 'inspector' | 'pose' | 'sim' | 'build' | 'acp';
 
 export type CreatorMode = 'draw2d' | 'svg';
 
+export interface TextFile {
+  name: string;
+  text: string;
+}
+
 export interface Snapshot {
   parts: ScenePart[];
   pose: RobotPoseState | undefined;

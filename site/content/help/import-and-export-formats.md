@@ -18,7 +18,7 @@ keywords:
   - glb
   - units
 related:
-  - import-a-mesh
+  - import-a-file
   - export-an-stl-file
 covers:
   - src/workspace/meshImport.ts
@@ -36,7 +36,7 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 
 | Format | How it comes in | Units Basecase assumes |
 |---|---|---|
-| STL, 3MF, PLY | [Import a mesh](/help/import-a-mesh), as one part per file | Millimeters, Z up |
+| STL, 3MF, PLY | [Import a file](/help/import-a-file), as one part per file | Millimeters, Z up |
 | OBJ | Import a mesh | Millimeters, Y up |
 | GLB, glTF, DAE | Import a mesh | Meters |
 | FBX | Import a mesh | Centimeters |
@@ -45,7 +45,7 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 | URDF, MJCF, zip | [Import a robot](/help/import-a-robot), with its joints | The file's own units |
 | `.basecase` | [Open a shared scene](/help/open-a-shared-scene) | — |
 | PNG, JPEG and other images | Dropped on the canvas, as a flat reference image | — |
-| BVH | **File** ▸ **Import BVH**, as motion for a robot with joints | — |
+| BVH | **File** ▸ **Import**, as motion for a robot with joints | — |
 
 A mesh that comes in smaller than 1 mm across is read as meters and scaled up 1,000 times.
 

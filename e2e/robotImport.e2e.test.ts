@@ -58,7 +58,7 @@ afterAll(async () => {
 });
 
 describe('robot import', () => {
-  it('inserts the robot when its zip is dropped on the canvas', async () => {
+  it('opens Import Robot with a zip dropped on the canvas and inserts it', async () => {
     const zip = Buffer.from(deskArmZip()).toString('base64');
     const before = await jointCount();
 
@@ -75,6 +75,11 @@ describe('robot import', () => {
         target.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer, ...at }));
       }
     }, zip);
+
+    const sheet = app.page.getByRole('dialog', { name: 'Import Robot' });
+
+    await sheet.getByText('desk_arm.zip').waitFor();
+    await sheet.getByRole('button', { name: 'Import', exact: true }).click();
 
     await expect.poll(jointCount, { timeout: 30000 }).toBe(before + 2);
   });

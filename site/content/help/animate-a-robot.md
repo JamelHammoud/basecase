@@ -51,7 +51,7 @@ A walk cycle needs leg joints. Without them, **+** offers only **Import BVH**. *
 
 Bones are matched by name, so files from Mixamo, CMU, Daz and Unreal work without changes. Each robot limb points the way the performer's limb points, so the robot's proportions can differ from the person's.
 
-**Import BVH** is also in **File** and [[⌘K]].
+You can also choose **Import** in **File** or [[⌘K]] and pick the `.bvh` file.
 
 ## Play and edit an animation
 

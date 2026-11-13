@@ -8,9 +8,9 @@ import {
 } from '../three/sculptAndBooleanEngine';
 import type { CatalogItem, CustomModelDefinition, ScenePart } from '../types/robotics';
 import { readImageFile } from '../utils/imageFile';
-import { pickFiles } from '../utils/pickFiles';
 import { cadPartsFromFile } from './cadImport';
-import { MESH_ACCEPT, isCadFileName, meshPartFromFile } from './meshImport';
+import { couldntImport, isCadFileName } from './importRoute';
+import { meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
 import { newId } from './helpers';
 import {
@@ -140,9 +140,7 @@ function useMeshImport(core: WorkspaceCore) {
     }
 
     if (failed.length > 0) {
-      showToast(`Couldn’t import ${failed.map((f) => f.name).join(', ')}. Try STL, 3MF, OBJ, PLY, FBX or GLB.`, {
-        tone: 'error',
-      });
+      showToast(couldntImport(failed), { tone: 'error' });
 
       return;
     }
@@ -150,9 +148,7 @@ function useMeshImport(core: WorkspaceCore) {
     showToast(imported.length === 1 ? `Inserted ${importedName(imported[0])}` : `Inserted ${imported.length} meshes`);
   };
 
-  const pickMeshes = async (at?: Vec3 | null) => importMeshes(await pickFiles(MESH_ACCEPT, true), at);
-
-  return { importMeshes, pickMeshes };
+  return { importMeshes };
 }
 
 export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {

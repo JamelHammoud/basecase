@@ -11,6 +11,7 @@ import { replayErrors } from '../reality/jointReplay';
 import { bytesToBase64 } from '../utils/base64';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
+import { pickNextFiles } from '../utils/pickFiles';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
@@ -159,6 +160,10 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     stubTabEngine,
+    pickFiles: (files: { name: string; base64: string }[]) =>
+      pickNextFiles(
+        files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),
+      ),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();

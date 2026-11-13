@@ -19,7 +19,7 @@ keywords:
   - inches
   - units
 related:
-  - import-a-mesh
+  - import-a-file
   - open-a-step-or-iges-file
 covers:
   - src/workspace/usePartCreation.ts

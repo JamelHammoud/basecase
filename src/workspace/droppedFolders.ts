@@ -3,8 +3,6 @@ import type { LocalFile } from '../utils/robotImport';
 const MAX_FILES = 20_000;
 const SKIPPED_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv']);
 
-const isRobotFileName = (name: string) => /\.(zip|urdf|mjcf|xml)$/i.test(name);
-
 const fileOf = (entry: FileSystemFileEntry) => new Promise<File>((resolve, reject) => entry.file(resolve, reject));
 
 const batchOf = (reader: FileSystemDirectoryReader) =>
@@ -28,32 +26,31 @@ async function collect(entry: FileSystemEntry, out: LocalFile[]): Promise<void> 
   }
 }
 
-export type DroppedRobotItem = FileSystemDirectoryEntry | File;
-
-function robotItem(item: DataTransferItem): DroppedRobotItem | null {
-  const entry = item.webkitGetAsEntry();
-
-  if (entry?.isDirectory) return entry as FileSystemDirectoryEntry;
-
-  const file = item.getAsFile();
-
-  return file && isRobotFileName(file.name) ? file : null;
+export interface DroppedFolder {
+  name: string;
+  files: LocalFile[];
 }
 
-export function robotItems(items: DataTransferItemList): DroppedRobotItem[] {
-  return Array.from(items)
-    .filter((item) => item.kind === 'file')
-    .map(robotItem)
-    .filter((e): e is DroppedRobotItem => !!e);
+async function folderFiles(entry: FileSystemDirectoryEntry): Promise<DroppedFolder> {
+  const files: LocalFile[] = [];
+
+  await collect(entry, files);
+
+  return { name: entry.name, files };
 }
 
-export async function droppedRobotFiles(items: DroppedRobotItem[]): Promise<LocalFile[]> {
-  const out: LocalFile[] = [];
+export function droppedFolders(items: DataTransferItemList) {
+  const entries = Array.from(items).filter((item) => item.kind === 'file');
+  const dirs = entries.flatMap((item) => {
+    const entry = item.webkitGetAsEntry();
 
-  for (const item of items) {
-    if (item instanceof File) out.push({ path: item.name, blob: item });
-    else await collect(item, out);
-  }
+    return entry?.isDirectory ? [entry as FileSystemDirectoryEntry] : [];
+  });
+  const plain = entries.flatMap((item) => {
+    const file = item.webkitGetAsEntry()?.isDirectory ? null : item.getAsFile();
 
-  return out;
+    return file ? [file] : [];
+  });
+
+  return { plain, folders: Promise.all(dirs.map(folderFiles)) };
 }

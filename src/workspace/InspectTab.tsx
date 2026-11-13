@@ -18,6 +18,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
       selectedPart={selection.selectedPart}
       sculptSettings={tool.sculptSettings}
       mode={studioMode}
+      svgFile={tool.creatorSvg}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}
       onDone={() => (studioMode === 'clay' ? tool.setMode('translate') : tool.setCreator(null))}
       onUpdateSculptSettings={tool.updateSculptSettings}

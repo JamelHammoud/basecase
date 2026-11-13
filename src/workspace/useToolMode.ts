@@ -4,7 +4,7 @@ import { isPlayTab, type PlayTab } from '../components/playViews';
 import type { StudioSubTab } from '../components/SculptAndDrawStudio';
 import type { MessageQuote, SculptSettings, TransformMode } from '../types/robotics';
 import type { Annotations } from './useAnnotations';
-import type { CreatorMode, RightTab, Setter } from './types';
+import type { CreatorMode, RightTab, Setter, TextFile } from './types';
 
 const DEFAULT_SCULPT: SculptSettings = {
   brush: 'inflate',
@@ -32,6 +32,7 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
   const [playTab, setPlayTab] = useState<PlayTab>('cases');
   const [rightTab, setRightTab] = useState<RightTab>('inspector');
   const [creator, setCreator] = useState<CreatorMode | null>(null);
+  const [creatorSvg, setCreatorSvg] = useState<TextFile | null>(null);
   const [sculptSettings, setSculptSettings] = useState<SculptSettings>(DEFAULT_SCULPT);
   const [attachRequest, setAttachRequest] = useState(0);
   const [sketchRequest, setSketchRequest] = useState(0);
@@ -89,10 +90,11 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     setTransformMode((m) => (m === 'sculpt' ? 'translate' : m));
   };
 
-  const openCreator = (mode: CreatorMode) => {
+  const openCreator = (mode: CreatorMode, svg: TextFile | null = null) => {
     setIsRightOpen(true);
     setRightTab('inspector');
     setCreator(mode);
+    setCreatorSvg(svg);
   };
 
   const openRightTab = (tab: RightTab) => {
@@ -140,6 +142,7 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     creator,
     setCreator,
     openCreator,
+    creatorSvg,
     studioMode,
     sculptSettings,
     updateSculptSettings: (patch: Partial<SculptSettings>) => setSculptSettings((s) => ({ ...s, ...patch })),

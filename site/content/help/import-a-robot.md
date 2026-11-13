@@ -27,7 +27,8 @@ covers:
   - src/components/ImportRobotSheet.tsx
   - src/components/RobotsPanel.tsx
   - src/workspace/useCanvasDrop.ts
-  - src/workspace/droppedRobot.ts
+  - src/workspace/droppedFolders.ts
+  - src/workspace/useFileImport.ts
   - src/workspace/useRobotInsert.ts
   - src/utils/robotImport/
 ---
@@ -45,7 +46,7 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-**Import Robot** is also in **File** and [[⌘K]]. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF or MJCF file onto the canvas, where it stands at the drop point.
+**Import Robot** is also in **File** and [[⌘K]]. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF or MJCF file onto the canvas, or pick the file with **Import** in the canvas menu. Import Robot opens with it loaded; click **Import** and the robot stands where you dropped it.
 
 ## Insert a robot from the shelf
 

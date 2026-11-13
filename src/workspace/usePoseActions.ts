@@ -73,6 +73,11 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
     }
   };
 
+  const importMotionFile = (file: File) => {
+    if (posing.hasRig) void readMotionFile(file);
+    else showToast('Add joints to retarget motion onto');
+  };
+
   const createAnimation = (anim: RobotAnimation, summary: string) => {
     setMotion(null);
 
@@ -92,6 +97,7 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
     closeMotion: () => setMotion(null),
     importMotion,
     readMotionFile,
+    importMotionFile,
     createAnimation,
   };
 }

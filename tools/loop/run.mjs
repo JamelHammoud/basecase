@@ -1,6 +1,9 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { backpressure, PRODUCERS } from './lib/flow.mjs';
+import { flowCounts } from './lib/flowCounts.mjs';
 import { laneNames, laneModule } from './lib/lanes.mjs';
 import { claim } from './lib/claim.mjs';
 import { commentOnIssue, issues } from './lib/github.mjs';
@@ -127,11 +130,20 @@ function announcePause(error) {
 const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.resolve(HOME_CHECKOUT);
 
 try {
-  if (runsFromHome && lane === 'merge') updateHome();
+  if (runsFromHome && lane === 'merge') {
+    updateHome();
+    spawn(process.execPath, [path.join(HOME_CHECKOUT, 'tools', 'loop', 'install.mjs'), 'sync', String(process.pid)], {
+      detached: true,
+      stdio: 'ignore',
+    }).unref();
+  }
 
   const { default: runLane, schedule } = await laneModule(lane);
 
-  if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });
+  const held = PRODUCERS.has(lane) ? backpressure(flowCounts()) : null;
+
+  if (held) log(`waiting: ${held}`);
+  else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });
 } catch (error) {
   if (error instanceof UsageLimit) announcePause(error);
   else {

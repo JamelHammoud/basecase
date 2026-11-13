@@ -91,8 +91,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   let loaded = false;
   let closed = false;
   const opened = clock.now();
-  let heard = opened;
-  let unanswered = 0;
+  let pingedAt: number | null = null;
 
   const post = (message: StudioMessage) => port?.postMessage(message);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
@@ -144,8 +143,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   };
 
   const onPortMessage = (e: MessageEvent) => {
-    heard = clock.now();
-    unanswered = 0;
+    pingedAt = null;
 
     const over = spend();
 
@@ -164,10 +162,14 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
 
     if (!port) return;
 
-    unanswered++;
+    if (pingedAt !== null && clock.now() - pingedAt >= SILENT_MS) {
+      fail(SILENT_ERROR);
 
-    if (unanswered >= SILENT_MS / PING_MS && clock.now() - heard >= SILENT_MS) fail(SILENT_ERROR);
-    else post({ type: 'ping' });
+      return;
+    }
+
+    pingedAt ??= clock.now();
+    post({ type: 'ping' });
   });
 
   return {
@@ -178,8 +180,6 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
 
       port = channel.port1;
       port.onmessage = onPortMessage;
-      heard = clock.now();
-      unanswered = 0;
       (e.source as PortTarget).postMessage(
         { bc: BRIDGE_VERSION, type: 'port' },
         { targetOrigin: '*', transfer: [channel.port2] },

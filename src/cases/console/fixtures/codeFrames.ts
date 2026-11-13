@@ -169,7 +169,7 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
   };
 }
 
-export function fakeClock(): BridgeClock & { tick: (ms: number) => void } {
+export function fakeClock(): BridgeClock & { tick: (ms: number) => void; freeze: (ms: number) => void } {
   let now = 0;
   let tasks: Array<{ at: number; every: number; run: () => void; gone: boolean }> = [];
 
@@ -198,6 +198,17 @@ export function fakeClock(): BridgeClock & { tick: (ms: number) => void } {
       }
 
       now = end;
+      tasks = tasks.filter((t) => !t.gone);
+    },
+    freeze(ms) {
+      now += ms;
+
+      for (const due of tasks.filter((t) => !t.gone && t.at <= now)) {
+        due.gone = due.every === 0;
+        due.at = now + due.every;
+        due.run();
+      }
+
       tasks = tasks.filter((t) => !t.gone);
     },
   };

@@ -1,11 +1,50 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { presetCase } from '../cases/caseBuilder';
+import { CODE_SOURCE_MAX_BYTES } from '../cases/console/panelKinds';
+import { gameLogic } from '../cases/fixtureGames';
+import { parseCase } from '../cases/schema';
+import { fixtureRobots } from '../sim/fixtures/robots';
+import { buildRig } from '../utils/kinematics';
+import { galleryBundleOf } from './buildBundle';
 import { fetchGalleryBundle } from './fetchBundle';
-import { GALLERY_BUNDLE_MAX_BYTES, galleryBundleBytes, readGalleryBundleBytes } from './galleryBundle';
+import { bundleScene, GALLERY_BUNDLE_MAX_BYTES, galleryBundleBytes, readGalleryBundleBytes } from './galleryBundle';
 import { galleryBundles } from './galleryEntries';
 import { galleryBundleSource, sharedBundleUrl, sharedRobotLink, sharedRobotPath } from './galleryLinks';
 
 const bundle = () => JSON.parse(JSON.stringify(galleryBundles()[1]));
 const bytesOf = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+
+const STICK = '<canvas></canvas><script>basecase.drive({ v: [1, 0, 0] })</script>';
+
+function cockpit(source = STICK) {
+  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const kase = parseCase({
+    ...presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts),
+    console: {
+      input: ['code', 'keys'],
+      panels: [
+        { id: 'stick', kind: 'code', title: 'Stick', height: 240, source },
+        { id: 'hud', kind: 'code', source: STICK },
+      ],
+      layout: {
+        areas: [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'top-left', width: 240, height: 48 }] },
+          { size: 320, panels: ['stick'] },
+        ],
+      },
+    },
+    logic: gameLogic(9),
+  });
+
+  return galleryBundleOf({
+    slug: 'rover-cockpit-1a2b3c',
+    title: 'Rover Cockpit: Two-wheel rover',
+    robotName: 'Two-wheel rover',
+    parts: rover.parts,
+    joints: rover.joints,
+    kase,
+  });
+}
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -72,6 +111,28 @@ describe('shared robot bundles', () => {
     expect(() => galleryBundleBytes(big)).toThrow('over 8 MB');
     expect(() => readGalleryBundleBytes(new Uint8Array(GALLERY_BUNDLE_MAX_BYTES + 1))).toThrow('over 8 MB');
     expect(readGalleryBundleBytes(galleryBundleBytes(bundle())).slug).toBe('rover-reach-the-flag');
+  });
+
+  it('carry a Case’s code panels and logic into the page and into the scene See Inside saves', () => {
+    const bundle = cockpit();
+    const read = readGalleryBundleBytes(galleryBundleBytes(bundle));
+
+    expect(read.case.console).toEqual(bundle.case.console);
+    expect(read.case.console?.panels.map((p) => p.kind === 'code' && p.source)).toEqual([STICK, STICK]);
+    expect(read.case.logic).toEqual(gameLogic(9));
+    expect(bundleScene(read).project.cases).toEqual([bundle.case]);
+  });
+
+  it('refuse a code panel that takes the bundle past 8 MB, with the same message', () => {
+    const near = cockpit();
+
+    near.title += 'x'.repeat(GALLERY_BUNDLE_MAX_BYTES - galleryBundleBytes(near).byteLength - 200_000);
+    expect(galleryBundleBytes(near).byteLength).toBeLessThan(GALLERY_BUNDLE_MAX_BYTES);
+
+    const over = { ...cockpit(`<p>${'x'.repeat(CODE_SOURCE_MAX_BYTES - 7)}</p>`), title: near.title };
+
+    expect(() => galleryBundleBytes(over)).toThrow('It’s over 8 MB.');
+    expect(() => readGalleryBundleBytes(bytesOf(over))).toThrow('It’s over 8 MB.');
   });
 
   it('refuse a mesh whose triangles point past its vertices, and a skill that isn’t what its record says', () => {

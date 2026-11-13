@@ -29,11 +29,15 @@ export const ListPanel: React.FC<PanelViewProps<'list'>> = (props) => {
 
   if (panel.of === 'failures') return <Failures {...props} />;
 
+  const cases = ctx.studio?.cases;
+
+  if (!cases) return null;
+
   const tries = (
     <>
-      <TrySection cases={ctx.cases} teachWalk={null} cls={ctx.sim.drive.cls} />
+      <TrySection cases={cases} teachWalk={null} cls={ctx.sim.drive.cls} />
       <ResultsSection
-        cases={ctx.cases}
+        cases={cases}
         rig={buildRig(ctx.joints, ctx.parts)}
         model={ctx.sim.model}
         parts={ctx.parts}

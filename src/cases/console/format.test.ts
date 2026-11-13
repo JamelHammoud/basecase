@@ -48,6 +48,18 @@ describe('a Case console', () => {
     expect(parseCase(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
   });
 
+  it('lays out only what each surface can show: servos need the desktop, cameras and tries the studio', () => {
+    const shown = (surface: { desktop: boolean; studio: boolean }) => {
+      const layout = consoleLayout(DEFAULT_CONSOLE, surface);
+
+      return [...ids(layout.before), ...ids(layout.after)];
+    };
+
+    expect(shown({ desktop: true, studio: true })).toEqual([['cameras'], ['brief', 'failures', 'servos', 'tries']]);
+    expect(shown({ desktop: false, studio: true })).toEqual([['cameras'], ['brief', 'failures', 'tries']]);
+    expect(shown({ desktop: false, studio: false })).toEqual([['brief', 'failures']]);
+  });
+
   it('refuses inputs no source registers, naming the ones arc #184 plans apart from unknown ones', () => {
     const base = DEFAULT_CONSOLE;
 
@@ -140,7 +152,7 @@ describe('code panels', () => {
         { size: 320, panels: ['stick', 'clock'] },
       ],
     )();
-    const layout = consoleLayout(parsed.console!, { desktop: false });
+    const layout = consoleLayout(parsed.console!, { desktop: false, studio: true });
 
     expect(parsed.console!.panels[0]).toEqual({
       id: 'stick',
@@ -225,7 +237,7 @@ describe('five consoles from arc #184', () => {
 
   it('parses each once keys stand in for the missing input, and lays out its own areas', () => {
     const laid = ARC_CONSOLES.map(({ console }) => {
-      const layout = consoleLayout(withConsole(runnable(console))().console!, { desktop: true });
+      const layout = consoleLayout(withConsole(runnable(console))().console!, { desktop: true, studio: true });
 
       return [ids(layout.before), ids(layout.after)];
     });

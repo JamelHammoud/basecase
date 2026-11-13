@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PlacedArea } from '../../cases/console/layout';
 import type { PanelKind, PanelOf, PanelSpec } from '../../cases/console/panelKinds';
-import { LAYOUT, ModeHeader, useScrollFade } from '../../design-system';
+import { LAYOUT, useScrollFade } from '../../design-system';
 import type { PanelContext } from './panelContext';
 import { PANEL_VIEWS } from './panelViews';
 
@@ -9,8 +9,7 @@ interface CaseRunAreaProps {
   area: PlacedArea;
   side: 'before' | 'after';
   ctx: PanelContext;
-  title: string;
-  onDone: () => void;
+  header: React.ReactNode;
 }
 
 function Panel({ panel, ctx }: { panel: PanelSpec; ctx: PanelContext }) {
@@ -28,7 +27,7 @@ function Panel({ panel, ctx }: { panel: PanelSpec; ctx: PanelContext }) {
   );
 }
 
-export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, title, onDone }) => {
+export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, header }) => {
   const { ref, style } = useScrollFade();
 
   return (
@@ -43,7 +42,7 @@ export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, title
         }`}
         style={{ width: area.size, marginLeft: side === 'after' ? LAYOUT.panelGap : 0 }}
       >
-        {area.last && <ModeHeader title={title} onDone={onDone} />}
+        {area.last && header}
         <div ref={ref} style={style} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           {area.panels.map((panel) => (
             <Panel key={panel.id} panel={panel} ctx={ctx} />

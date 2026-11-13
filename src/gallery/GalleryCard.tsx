@@ -29,13 +29,18 @@ export const GalleryCard: React.FC<{
   kase: Case;
   sim: Simulation;
   training: GalleryTraining;
+  docked: boolean;
   onSeeInside: () => void;
-}> = ({ kase, sim, training, onSeeInside }) => {
+}> = ({ kase, sim, training, docked, onSeeInside }) => {
   const { drive } = sim;
 
   return (
     <aside
-      className="glass absolute left-4 top-4 w-[300px] rounded-[12px] p-4 flex flex-col gap-3"
+      className={`flex flex-col gap-3 ${
+        docked
+          ? 'px-[12px] py-3 border-b border-white/[0.06]'
+          : 'glass absolute left-4 top-4 w-[300px] rounded-[12px] p-4'
+      }`}
       data-testid="gallery-card"
     >
       <div>
@@ -52,8 +57,8 @@ export const GalleryCard: React.FC<{
       >
         {drive.active ? 'Stop Driving' : 'Drive'}
       </Button>
-      {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
-      {drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
+      {!docked && drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
+      {!docked && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       <TrainPart training={training} />
       <Button variant="secondary" size="md" fullWidth onClick={onSeeInside}>
         See Inside

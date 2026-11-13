@@ -24,6 +24,12 @@ The row's More menu lists every measured version. Choosing an older one redraws 
 
 The agent's `operate` reply ends with the same median errors for each joint.
 
+## Policies trained on an older fit
+
+A policy trained before a calibration shows Out of date in the Simulate tab's Policies, because the servos it learned on aren't the ones the sim runs now. Right-click it and choose Retrain to train it again on the fit, with the same task, speed and training time; the old policy keeps running until the new one replaces it. Rolling the calibration back makes it current again.
+
+![Policies with Walk 1 and Stand 1 marked Out of date, and Retrain in the right-click menu](/changelog/calibrate-servos/retrain.png)
+
 ## What it doesn't do
 
 Replays use the latest bench run, which the app keeps until it reloads. After a reload the verdicts and versions stay, and the replays come back with the next Calibrate Servos.

@@ -30,7 +30,7 @@ describe('one way to declare a joint', () => {
       parts,
     );
 
-    expect(text).toMatch(/^1 joints declared\./);
+    expect(text).toMatch(/^1 joint declared\./);
     expect(next.joints).toEqual([direct]);
     expect(direct.frame?.part).toBe('base');
     expect(resolveJoints([direct], parts)[0].origin.map((v) => Math.round(v * 1e3) / 1e3)).toEqual([0, 20, 0]);

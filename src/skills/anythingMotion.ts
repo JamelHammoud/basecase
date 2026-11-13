@@ -9,6 +9,7 @@ import { betterJudged, judgeOn, Trials, type Judged, type TrialCase } from './an
 import { augmented, LEAPS, leapsIn, type Key } from './anythingAugment';
 import { Statics, type JointValues } from './anythingStatics';
 import type { TaskSpec } from './anythingTypes';
+import { plural } from '../../electron/plural.mjs';
 
 const LEADS = [0.3, 0, 0.6];
 const CHECK_CASES = 8;
@@ -188,7 +189,7 @@ export async function planMotion(input: MotionInput): Promise<MotionPlan> {
     }
 
     const controller = controllerOf(plan!.keys, { lead: plan!.lead, horizonS: spec.seconds });
-    const reason = `The plan passed ${plan!.judged.passed} of ${cases.length} checks before Arena.`;
+    const reason = `The plan passed ${plan!.judged.passed} of ${plural(cases.length, 'check')} before Arena.`;
 
     return { controller: plan!.judged.passed === cases.length ? controller : null, reason };
   } finally {

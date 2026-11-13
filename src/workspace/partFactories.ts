@@ -3,6 +3,7 @@ import { hardwareName, hardwareNote } from '../data/hardware';
 import type { CatalogItem, CustomModelSubNode, ScenePart, SculptMeshData } from '../types/robotics';
 import type { SketchSolid } from '../utils/sketch/placement';
 import type { Vec3 } from './types';
+import { plural } from '../../electron/plural.mjs';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
 
@@ -141,7 +142,7 @@ export function clayPart(preset: ClayPreset, id: string, sculptMesh: SculptMeshD
 
 function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) {
   if (params.mode === 'svg') {
-    return `Imported SVG (${params.nodes.length} path${params.nodes.length === 1 ? '' : 's'})`;
+    return `Imported SVG (${plural(params.nodes.length, 'path')})`;
   }
 
   return params.mode === 'extrude' ? 'Sketch extrusion' : 'Sketch revolve';

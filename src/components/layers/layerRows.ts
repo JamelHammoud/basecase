@@ -1,6 +1,7 @@
 import { isBooleanPart, operandsOf } from '../../booleans/parts';
 import type { ScenePart } from '../../types/robotics';
 import { selectionBounds } from '../../utils/selection';
+import { plural } from '../../../electron/plural.mjs';
 
 export interface PartLayerRow {
   type: 'part';
@@ -84,8 +85,6 @@ export function overallSize(parts: ScenePart[]): string | null {
 
   return [0, 1, 2].map((i) => Math.round(max[i] - min[i])).join(' × ');
 }
-
-const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 
 export function layersTitle(parts: ScenePart[]): string[] {
   const cutouts = parts.filter((p) => p.role === 'cutout').length;

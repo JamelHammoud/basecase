@@ -8,6 +8,7 @@ import type { Environment } from './environment';
 import type { BodyFacts } from './anythingBody';
 import { betterJudged, judgeOn, Trials, type Judged } from './anythingSim';
 import type { TaskSpec } from './anythingTypes';
+import { plural } from '../../electron/plural.mjs';
 
 const CHECK_CASES = 8;
 
@@ -146,7 +147,7 @@ export async function planRoute(options: {
 
     return {
       controller: passed === all ? best!.controller : null,
-      reason: `The route passed ${passed} of ${all} checks before Arena.`,
+      reason: `The route passed ${passed} of ${plural(all, 'check')} before Arena.`,
     };
   } finally {
     trials.dispose();

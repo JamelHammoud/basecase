@@ -46,7 +46,7 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 
 ![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
 
-**Open Build** and **Run Checks** are also in ⌘K.
+**Show Build** and **Run Checks** are also in ⌘K.
 
 Settings ▸ Build (⌘,) holds the settings for this tab: whether the agent fixes new blockers, the currency prices show in, and whether the build guide updates on its own.
 

@@ -133,8 +133,59 @@ export function failedChecks(dir) {
   }
 }
 
-export function harnessLessons() {
+export function agentLessons() {
   const text = fs.existsSync(PLAYBOOK) ? fs.readFileSync(PLAYBOOK, 'utf8') : '';
 
-  return activeLessons(parsePlaybook(text)).filter((lesson) => lesson.tags.includes('harness'));
+  return activeLessons(parsePlaybook(text));
+}
+
+export const spentOn = (name) =>
+  readIndex(BENCH_RUNS)
+    .filter((entry) => entry.run === name && typeof entry.costUsd === 'number')
+    .reduce((sum, entry) => sum + entry.costUsd, 0);
+
+export const compareArgs = ({ against, split, budget, name }) => [
+  'bench/compare.mjs',
+  '--against',
+  against,
+  `--${split}`,
+  '--model',
+  SETTINGS.served,
+  '--effort',
+  SETTINGS.effort,
+  '--seeds',
+  String(SETTINGS.seeds),
+  '--parallel',
+  String(SETTINGS.parallel),
+  '--port',
+  String(SETTINGS.port),
+  '--budget',
+  budget.toFixed(2),
+  '--run',
+  name,
+];
+
+const readIfThere = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
+
+export function runCompare({ dir, log, ...plan }) {
+  const args = compareArgs(plan);
+
+  log(`bench: node ${args.join(' ')}`);
+  linkRuns(dir);
+
+  const result = run(process.execPath, args, { cwd: dir, timeout: BENCH_TIMEOUT_MS, allowFail: true });
+  const out = path.join(BENCH_RUNS, plan.name);
+  const saved = JSON.parse(readIfThere(path.join(out, 'results.json')) ?? '{}');
+
+  if (!result.ok || !saved.stats) {
+    log(`compare ${plan.name} ended badly: ${(result.err || result.out).slice(-500)}`);
+
+    return null;
+  }
+
+  const spent = saved.stats.models.reduce((sum, model) => sum + (model.spentUsd ?? 0), 0);
+
+  const runs = [...new Set(saved.results.map((result) => result.cached ?? plan.name))];
+
+  return { stats: saved.stats, report: readIfThere(path.join(out, 'report.md')), spent, runs };
 }

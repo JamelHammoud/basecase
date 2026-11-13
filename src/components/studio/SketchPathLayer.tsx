@@ -2,9 +2,9 @@ import React from 'react';
 import { linkageFrames, tracedPath, type LinkageFrame } from '../../linkage/linkageFrames';
 import type { LinkageSolution, Vec2 } from '../../utils/linkage';
 import type { Sketch } from '../../utils/sketch/types';
+import { THEME_COLORS } from '../../design-system';
 import { toSvg, type SketchView } from './sketchView';
 
-export const PATH_ACCENT = '#0d99ff';
 export const PATH_MUTED = '#a3a3a3';
 
 const thin = { vectorEffect: 'non-scaling-stroke' as const };
@@ -60,7 +60,7 @@ const Solution: React.FC<{ solution: LinkageSolution; highlighted: boolean; dot:
   dot,
 }) => {
   const frames = linkageFrames(solution, STEPS);
-  const color = highlighted ? PATH_ACCENT : PATH_MUTED;
+  const color = highlighted ? THEME_COLORS.figmaBlue : PATH_MUTED;
 
   return (
     <g opacity={highlighted ? 1 : 0.5} data-testid="linkage-solution">
@@ -107,6 +107,7 @@ export const SketchPathLayer: React.FC<SketchPathLayerProps> = ({ points, soluti
       {points.map((p, i) => (
         <circle
           key={i}
+          data-testid="path-point"
           cx={toSvg(p)[0]}
           cy={toSvg(p)[1]}
           r={dot * 1.4}

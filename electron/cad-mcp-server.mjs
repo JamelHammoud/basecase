@@ -152,7 +152,7 @@ for (const tool of TOOLS.filter((t) => !(NO_WEB && t.web))) {
     pushGuides(
       tool.name,
       args,
-      await withBuildCheck(tool.name, await withToolCall(extra, () => tool.handler(args, extra))),
+      await withBuildCheck({ name: tool.name, args }, await withToolCall(extra, () => tool.handler(args, extra))),
     ),
   );
 }

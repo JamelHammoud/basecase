@@ -41,13 +41,13 @@ Draw the path a leg, finger or head should trace, and get a four-bar linkage tha
 
    ![Three linkages over a foot path, with their errors listed below the plane](/help/design-a-linkage-from-a-path/linkages.png)
 
-6. Click the row of the linkage you want to add it to the scene.
+6. Below the plane, click the row of the linkage to add.
 
 The linkage lands on the sketch's plane as four printed bars, **Ground**, **Crank**, **Coupler** and **Rocker**, with a Feetech STS3215 under the crank. The servo stands on the plane and turns the crank across the path you drew. Press ⌘Z to remove it.
 
 ![The four bars and the servo added to the scene](/help/design-a-linkage-from-a-path/inserted.png)
 
-You can also drag across the plane to draw the path in one stroke, which keeps 12 points along it. Drag a point to move it, or press Delete to remove the last one.
+You can also drag across the plane to draw the path in one stroke, which keeps 12 points along it. Drag a point to move it, or press Delete to remove the last one. ⌘Z and ⇧⌘Z undo and redo your points.
 
 When no linkage fits, the plane's border turns red. Links stay between 10 and 300 mm, so points too far apart get none. The linkage moves in Pose, but closed loops aren't simulated: in Simulate the coupler rides the crank as one rigid arm.
 

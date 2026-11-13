@@ -140,16 +140,15 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool
     gestures.move(at, tolerance);
   };
 
-  const sketchKeys = useSketchKeys({ editor, drawing, selection, tool, onTool, rootRef: containerRef });
-
-  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!path) return sketchKeys(e);
-
-    if (e.key !== 'Backspace' && e.key !== 'Delete') return;
-
-    e.preventDefault();
-    pathing.dropLast();
-  };
+  const onKeyDown = useSketchKeys({
+    editor,
+    drawing,
+    selection,
+    tool,
+    onTool,
+    rootRef: containerRef,
+    path: path ? pathing : null,
+  });
 
   const ringClass = refused || path?.unsolvable ? 'ring-red-500' : 'ring-white/[0.06] focus-visible:ring-white/20';
 

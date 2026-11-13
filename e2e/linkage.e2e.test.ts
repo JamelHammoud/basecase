@@ -21,6 +21,7 @@ const plane = () => app.page.locator(shown('[data-testid="sketch-plane"]'));
 const pathTab = () => app.page.locator(shown('[role="tab"]'), { hasText: /^Path$/ });
 const choices = () => app.page.locator(shown('button'), { hasText: /^\d+\.\d mm$/ });
 const drawn = () => app.page.locator(shown('[data-testid="linkage-solution"]'));
+const pathPoints = () => plane().locator('[data-testid="path-point"]');
 
 type Studio = {
   sceneRecord: () => { parts: ScenePart[]; project: { joints?: RobotJoint[] } };
@@ -76,7 +77,7 @@ afterAll(async () => {
 describe('a four-bar from a path drawn in Sketch', () => {
   let before = 0;
 
-  it('offers linkages for a path, drawn over the sketch with their error in mm', async () => {
+  it('keeps its own undo for clicked points, then offers linkages drawn over the sketch with their error in mm', async () => {
     before = await partCount(app.page);
     await app.page.keyboard.press('Meta+k');
     await app.page.keyboard.type('Sketch');
@@ -84,6 +85,24 @@ describe('a four-bar from a path drawn in Sketch', () => {
     await expect.poll(() => plane().count()).toBe(1);
 
     await pathTab().click();
+
+    for (const [x, y] of [
+      [0.3, 0.3],
+      [0.5, 0.6],
+      [0.7, 0.4],
+    ]) {
+      const box = (await plane().boundingBox())!;
+
+      await app.page.mouse.click(box.x + box.width * x, box.y + box.height * y);
+    }
+
+    await expect.poll(() => pathPoints().count()).toBe(3);
+    await app.page.keyboard.press('Meta+z');
+    await expect.poll(() => pathPoints().count()).toBe(2);
+    await app.page.keyboard.press('Meta+Shift+z');
+    await expect.poll(() => pathPoints().count()).toBe(3);
+    expect(await partCount(app.page)).toBe(before);
+
     await app.page.evaluate((points) => (window as unknown as { __studio: Studio }).__studio.sketchPath(points), PATH);
 
     await expect.poll(() => choices().count(), { timeout: 20000 }).toBeGreaterThan(0);

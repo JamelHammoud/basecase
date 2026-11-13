@@ -30,7 +30,7 @@ export const tracedPath = (solution: LinkageSolution, samples: number): Vec2[] =
   couplerCurve(solution.linkage, solution.crank[0], solution.crank[1], samples);
 
 export function resampled(stroke: Vec2[], count: number): Vec2[] {
-  if (stroke.length <= count) return stroke;
+  if (stroke.length < 2) return stroke;
 
   const lengths = [0];
 

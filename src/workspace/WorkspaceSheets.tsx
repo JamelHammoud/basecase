@@ -1,5 +1,6 @@
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
+import { ErrorBoundary } from '../design-system';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -21,32 +22,37 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
   return (
     <>
       {active && guide.viewing && (
-        <GuideViewer
-          key={guide.viewing.key}
-          pages={guide.viewing}
-          title={core.scene.sceneName}
-          onClosed={guide.closeViewer}
-          onReveal={desktop ? () => void guide.reveal() : undefined}
-          onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
-          onBuildAlong={() => void core.buildAlong.open()}
-        />
+        <ErrorBoundary key={guide.viewing.key} region="Build guide" onClose={guide.closeViewer}>
+          <GuideViewer
+            pages={guide.viewing}
+            title={core.scene.sceneName}
+            onClosed={guide.closeViewer}
+            onReveal={desktop ? () => void guide.reveal() : undefined}
+            onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
+            onBuildAlong={() => void core.buildAlong.open()}
+          />
+        </ErrorBoundary>
       )}
-      <ImportRobotSheet
-        key={robots.robotChoice?.choices.join('\n') ?? robots.robotFiles?.name ?? 'link'}
-        open={robots.importRobotOpen}
-        choice={robots.robotChoice}
-        loaded={robots.robotFiles}
-        onClose={robots.closeImportRobot}
-        onImport={(src, at) => void importRobotFrom(src, at)}
-      />
-      {pose.motion && (
-        <RetargetSheet
-          motion={pose.motion}
-          rig={posing.robot?.rig ?? posing.rig}
-          pointOf={posing.pointOf}
-          onClose={pose.closeMotion}
-          onCreate={pose.createAnimation}
+      <ErrorBoundary region="Import robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
+        <ImportRobotSheet
+          key={robots.robotChoice?.choices.join('\n') ?? robots.robotFiles?.name ?? 'link'}
+          open={robots.importRobotOpen}
+          choice={robots.robotChoice}
+          loaded={robots.robotFiles}
+          onClose={robots.closeImportRobot}
+          onImport={(src, at) => void importRobotFrom(src, at)}
         />
+      </ErrorBoundary>
+      {pose.motion && (
+        <ErrorBoundary key={pose.motion.name} region="Motion import" onClose={pose.closeMotion}>
+          <RetargetSheet
+            motion={pose.motion}
+            rig={posing.robot?.rig ?? posing.rig}
+            pointOf={posing.pointOf}
+            onClose={pose.closeMotion}
+            onCreate={pose.createAnimation}
+          />
+        </ErrorBoundary>
       )}
       <input
         ref={motionInputRef}

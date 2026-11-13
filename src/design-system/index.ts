@@ -28,6 +28,8 @@ export * from './SectionHeader';
 export * from './BrowseRow';
 export * from './Toast';
 export * from './EmptyState';
+export * from './ErrorBoundary';
+export { crashRegion } from './crashProbe';
 export * from './MetaLine';
 export * from './ContextMenu';
 export * from './ColorPicker';

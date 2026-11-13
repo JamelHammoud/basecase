@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PlacedArea } from '../../cases/console/layout';
 import type { PanelKind, PanelOf, PanelSpec } from '../../cases/console/panelKinds';
-import { LAYOUT, ModeHeader, useScrollFade } from '../../design-system';
+import { ErrorBoundary, LAYOUT, ModeHeader, useScrollFade } from '../../design-system';
 import type { PanelContext } from './panelContext';
 import { PANEL_VIEWS } from './panelViews';
 
@@ -23,7 +23,9 @@ function Panel({ panel, ctx }: { panel: PanelSpec; ctx: PanelContext }) {
       data-kind={panel.kind}
       className="border-b border-white/[0.06] last:border-b-0 empty:hidden"
     >
-      <View panel={panel} ctx={ctx} />
+      <ErrorBoundary region={panel.title || 'Panel'} className="flex-col py-[24px]">
+        <View panel={panel} ctx={ctx} />
+      </ErrorBoundary>
     </div>
   );
 }

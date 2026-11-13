@@ -1,0 +1,47 @@
+---
+title: Requests that get good results
+date: 2026-11-13
+updated: 2026-11-13
+collection: agent
+type: concept
+order: 2
+keywords:
+  - prompting
+  - prompt tips
+  - how to ask
+  - better results
+  - examples
+related:
+  - design-a-robot-with-the-agent
+  - attach-photos-files-and-sketches
+covers:
+  - electron/cad-agent-prompt.mjs
+  - electron/backend/promptBlocks.mjs
+  - src/components/agent/Composer.tsx
+---
+
+Give the agent a size, real parts and a photo, and the robot it builds lands much closer to the one you pictured.
+
+## Give it a size
+
+Without a size, the agent estimates one from your words and photos. “Open Duck Mini, 40 cm tall” anchors every part to the right scale from the first step. **Target height** in **Settings** ▸ **Agent** does the same for every request.
+
+## Name the robot or show it
+
+If the robot exists, name it, with the exact version. The agent searches GitHub for its published URDF or MJCF, and copies the joint layout from it. A wrong variant gives a different robot, so “Berkeley Humanoid Lite” and “Berkeley Humanoid” aren't interchangeable.
+
+For anything else, attach photos from a few sides, or a sketch. The agent compares its model against each photo as it goes, and an SVG drawn in millimeters is matched at its true size.
+
+## Say what it must do and what it must use
+
+Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one.
+
+## Change one thing at a time
+
+After the first design, short follow-ups work best: “Longer legs”, “Thicker brackets”, “Round the edges”, “Use M3 screws”. Point at the part you mean with **Reference Part** or a mark, since the agent doesn't see your selection. [Point the agent at a part](/help/point-the-agent-at-a-part) has the steps.
+
+## Ask about Checks instead of hiding them
+
+When a Check fails, ask the agent to fix it, or why it matters. It won't narrow a range or hide a part to pass a check, and it tells you when a check looks wrong.
+
+For what the agent won't do however you ask, see [Agent limits](/help/agent-limits).

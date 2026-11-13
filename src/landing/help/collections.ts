@@ -8,12 +8,12 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'get-started',
     title: 'Get started',
-    description: 'Install Basecase, open your first scene and find your way around the studio.',
+    description: 'Install Basecase, pose and simulate your first robot, and find your way around the window.',
   },
   {
     slug: 'design',
     title: 'Design',
-    description: 'Shape parts, place real components, import meshes and robots, and lay out a scene.',
+    description: 'Place real parts, shape and combine your own, and bring in CAD, meshes and robots.',
   },
   {
     slug: 'engineer',
@@ -23,7 +23,7 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'simulate-and-train',
     title: 'Simulate and train',
-    description: 'Run the robot in MuJoCo, record Cases and teach it new skills.',
+    description: 'Run the robot in MuJoCo, drive it, try Cases, train skills and export datasets.',
   },
   {
     slug: 'build-and-print',
@@ -33,7 +33,7 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'operate',
     title: 'Operate',
-    description: 'Connect a robot, calibrate its servos and drive it.',
+    description: 'Connect an emulated robot, climb the safety ladder and calibrate its servos.',
   },
   {
     slug: 'agent',
@@ -48,6 +48,6 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'troubleshooting',
     title: 'Troubleshooting',
-    description: 'Fixes for problems with the app, the agent, simulation and printing.',
+    description: 'Fixes for the agent, imports, printing and updates, by the message you see.',
   },
 ];

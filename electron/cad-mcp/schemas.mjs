@@ -90,7 +90,7 @@ export const edgesSchema = z
   .nullable()
   .optional()
   .describe(
-    'Round (fillet) or bevel (chamfer) every edge of a box, cube, cylinder, tube, hex_prism or wedge by mm, kept inside its size and clamped to just under half its smallest side. mm 0 or null makes the edges sharp again.',
+    'Round (fillet) or bevel (chamfer) every edge of a box, cube, cylinder, tube, hex_prism or wedge by mm, kept inside its size and clamped to just under its limit (half the smallest side, half a tube’s wall, a hex_prism’s or wedge’s inradius); get_scene reports the result. mm 0 or null makes the edges sharp again.',
   );
 
 export const primitiveSchema = z.object({

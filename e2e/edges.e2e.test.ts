@@ -6,7 +6,8 @@ let app: App;
 
 type Studio = {
   select: (ids: string[]) => void;
-  sceneRecord: () => { parts: ScenePart[] };
+  load: (record: { parts: ScenePart[]; project: unknown }) => void;
+  sceneRecord: () => { parts: ScenePart[]; project: unknown };
   partTriangles: (id: string) => number[];
 };
 
@@ -100,6 +101,43 @@ describe('Edges in the Inspector', () => {
 
     await expect.poll(async () => (await thePart()).edges?.mm ?? 0).toBe(0);
     await expect.poll(async () => rayHits(await triangles(), corner(), [1, 0, 0])).toBe(true);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('keeps an old part’s Round slider through a drag to 0, so ⌘Z brings Round back', async () => {
+    await app.page.evaluate(() => {
+      const studio = (window as unknown as { __studio: Studio }).__studio;
+      const { parts, project } = studio.sceneRecord();
+
+      studio.load({ parts: parts.map((p) => ({ ...p, deformers: { ...p.deformers, roundness: 0.5 } })), project });
+    });
+
+    const { id } = await thePart();
+
+    await app.page.evaluate((partId) => (window as unknown as { __studio: Studio }).__studio.select([partId]), id);
+
+    const shape = app.page.locator(shown('button[aria-expanded]'), { hasText: /^Shape$/ });
+
+    if ((await shape.getAttribute('aria-expanded')) === 'false') await shape.click();
+
+    const round = app.page.locator(shown('input[aria-label="Round"]'));
+
+    await expect.poll(() => round.count()).toBe(1);
+
+    const box = (await round.boundingBox())!;
+    const y = box.y + box.height / 2;
+
+    await app.page.mouse.move(box.x + box.width / 2, y);
+    await app.page.mouse.down();
+    await app.page.mouse.move(box.x + 1, y, { steps: 5 });
+    await app.page.mouse.up();
+
+    await expect.poll(async () => (await thePart()).deformers?.roundness ?? 0).toBe(0);
+    await expect.poll(() => round.count()).toBe(0);
+
+    await app.page.keyboard.press('Meta+z');
+
+    await expect.poll(async () => (await thePart()).deformers?.roundness).toBe(0.5);
     expect(app.errors).toEqual([]);
   });
 });

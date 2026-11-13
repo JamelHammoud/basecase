@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ScenePart } from '../../types/robotics';
 import {
   ColorField,
@@ -118,8 +118,14 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
   const d = part.deformers || {};
   const edged = canEdge(part);
   const hasShape = !!d.taper || !!d.bendDeg || !!d.twistDeg || !!d.roundness || !!part.edges?.mm;
+  const [roundingId, setRoundingId] = useState<string | null>(null);
+  const showRound = !!d.roundness || roundingId === part.id;
   const setDeformer = (key: keyof NonNullable<ScenePart['deformers']>, v: number, live?: Phase) =>
     onUpdate({ deformers: { ...part.deformers, [key]: v } }, live);
+  const setRound = (v: number, live?: Phase) => {
+    setRoundingId(live ? part.id : null);
+    setDeformer('roundness', v, live);
+  };
 
   return (
     <Section
@@ -140,16 +146,16 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
       }
     >
       {edged && <EdgesField part={part} onUpdate={onUpdate} />}
-      {!!d.roundness && (
+      {showRound && (
         <Slider
           label="Round"
           min={0}
           max={1}
           step={0.05}
           defaultValue={0}
-          value={d.roundness}
+          value={d.roundness || 0}
           format={(v) => `${Math.round(v * 100)}%`}
-          onChange={(v, l) => setDeformer('roundness', v, l)}
+          onChange={setRound}
         />
       )}
       <Slider

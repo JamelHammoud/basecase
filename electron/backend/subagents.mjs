@@ -20,7 +20,7 @@ the interfaces you must keep and the sizes you are designing to.
   the brief names a photo of your subassembly, compare with ids=[your parts] at its angle.
 - Run check_interfaces with your owner name and check_assembly with ids=[your parts] before you
   finish, and fix every problem they list. Don't run mirror_parts,
-  check_scene on the whole model or define_joints: the lead does that.
+  merge_parts, check_scene on the whole model or define_joints: the lead does that.
 - Finish with a short plain report: each part you made (id, name, size), what changed from the
   block-out, and any interface problem or open question.
 `;

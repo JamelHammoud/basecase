@@ -10,7 +10,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 
 export type { BooleanOp } from '../types/robotics';
 
-function booleanDone(op: BooleanOp, base: ScenePart, tools: ScenePart[]): string {
+export function booleanDone(op: BooleanOp, base: ScenePart, tools: ScenePart[]): string {
   const others = partLabel(tools);
 
   if (op === 'subtract') return `Subtracted ${others} from ${base.name}`;
@@ -52,7 +52,8 @@ export function clearanceCutouts(sources: ScenePart[]): ScenePart[] {
   });
 }
 
-const unchangedSince = (parts: ScenePart[], used: ScenePart[]) => used.every((p) => findPartDeep(parts, p.id) === p);
+export const unchangedSince = (parts: ScenePart[], used: ScenePart[]) =>
+  used.every((p) => findPartDeep(parts, p.id) === p);
 
 function booleanOperands(base: ScenePart, solids: ScenePart[], op: BooleanOp, parts: ScenePart[]) {
   const operands = solids.slice(1);

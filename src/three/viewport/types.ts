@@ -8,7 +8,8 @@ import type { MeshData } from '../../print/threeMf';
 import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
 import type { ChainResult } from '../../assembly/assemblyTypes';
-import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
+import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
+import type { FastenerInput } from '../../assembly/assemblyTypes';
 import type { Snap } from '../../agent/snap';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
@@ -192,7 +193,7 @@ export interface Viewport3DHandle {
   ) => Promise<Array<{ view: string; dataUrl: string; labels?: number[] }>>;
   interference: (onlyIds?: string[]) => Promise<{ interferences: Interference[]; coplanar: Coplanar[] }>;
   fastenerChains: () => Promise<ChainResult>;
-  assembly: (options: { serviceable: string[]; budgetMs: number; batteries?: string[] }) => Promise<AssemblyGeometry>;
+  assembly: (options: Omit<AssemblyGeometryInput, keyof FastenerInput>) => Promise<AssemblyGeometry>;
   measureParts: (ids?: string[]) => Promise<Record<string, MeshMeasure>>;
   visibleShares: () => Promise<Record<string, number>>;
   printShapes: (

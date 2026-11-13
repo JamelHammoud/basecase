@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { weld, writeThreeMf } from '../../print/threeMf';
 import { reply } from '../../utils/workerRpc';
-import { collide, place, type CollideOptions } from './collide';
+import { collide, place, type CollideOptions, type Placed } from './collide';
 import { collideRiding, type OutputRiders } from './outputRiders';
 import { printReportOf, worldMeasure } from './shapeReports';
 import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
@@ -16,6 +16,7 @@ import { jointAxesOf, jointAxisOf, type JointAxisQuery } from './jointAxis';
 import { payloadMap, type ArmModel } from '../../utils/payload';
 import type { StrengthJob } from '../../strength/types';
 import { strengthOf } from './strengthPart';
+import { planMerges } from '../../print/merge/mergePlan';
 
 export interface GeometryPayload {
   id: string;
@@ -147,7 +148,15 @@ function runOnPlaced(task: Extract<AnalysisTask, { kind: 'fasteners' | 'assembly
 
   if (task.kind === 'fasteners') return traceFasteners(placed, task);
 
-  return task.kind === 'assembly' ? assemblyGeometry(placed, task) : fitCoupons(placed, task);
+  return task.kind === 'assembly' ? assemblyWithMerges(placed, task) : fitCoupons(placed, task);
+}
+
+function assemblyWithMerges(placed: Placed[], task: Extract<AnalysisTask, { kind: 'assembly' }>) {
+  const geometry = assemblyGeometry(placed, task);
+
+  if (!task.merges) return geometry;
+
+  return { ...geometry, merges: planMerges({ placed, geometry, roles: task.roles }, task.merges) };
 }
 
 function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {

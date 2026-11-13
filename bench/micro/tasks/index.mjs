@@ -8,10 +8,14 @@ import { COST_TASKS, SERVICE_TASKS } from './serviceCost.mjs';
 import { CRAFT_TASKS, INTEGRITY_TASKS, MIRROR_TASKS } from './quality.mjs';
 import { RIG_TASKS } from './rigging.mjs';
 import { allOf, pending } from '../checks.mjs';
+import { harvestedTask } from '../harvest/kinds.mjs';
+import { readStubs } from '../stubs.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 export const MICRO_DATA = path.resolve(here, '../../data/micro');
+
+export const HARVESTED_DIR = path.join(here, 'harvested');
 
 export const SEED_TASKS = [
   ...ASSEMBLY_TASKS,
@@ -35,9 +39,15 @@ export function hasRealScene(task, dataDir = MICRO_DATA) {
   return !!file && fs.existsSync(file);
 }
 
-function stubTask(dir, file) {
-  const stub = JSON.parse(fs.readFileSync(file, 'utf8'));
+const harvestNumber = (task) => Number(task.id.slice(1));
 
+export const HARVESTED_TASKS = readStubs(HARVESTED_DIR)
+  .map(({ stub }) => harvestedTask(stub))
+  .sort((a, b) => harvestNumber(a) - harvestNumber(b));
+
+export const ALL_TASKS = [...SEED_TASKS, ...HARVESTED_TASKS];
+
+function stubTask(dir, stub) {
   return {
     id: stub.id,
     category: stub.category ?? 'critique',
@@ -52,17 +62,8 @@ function stubTask(dir, file) {
   };
 }
 
-export function stubTasks(dataDir = MICRO_DATA) {
-  const stubsDir = path.join(dataDir, 'stubs');
-
-  if (!fs.existsSync(stubsDir)) return [];
-
-  return fs
-    .readdirSync(stubsDir)
-    .map((d) => path.join(stubsDir, d))
-    .filter((d) => fs.existsSync(path.join(d, 'task.json')))
-    .map((d) => stubTask(d, path.join(d, 'task.json')));
-}
+export const stubTasks = (dataDir = MICRO_DATA) =>
+  readStubs(path.join(dataDir, 'stubs')).map(({ dir, stub }) => stubTask(dir, stub));
 
 export function startSceneFile(task, dataDir = MICRO_DATA) {
   if (task.startFile) return task.startFile;
@@ -75,7 +76,7 @@ export function runnable(task, dataDir = MICRO_DATA) {
 }
 
 export function selectTasks({ ids, split = 'all', withStubs = false, dataDir = MICRO_DATA } = {}) {
-  const all = [...SEED_TASKS, ...(withStubs ? stubTasks(dataDir) : [])];
+  const all = [...ALL_TASKS, ...(withStubs ? stubTasks(dataDir) : [])];
   const wanted = ids?.length ? all.filter((t) => ids.includes(t.id)) : all;
 
   if (split === 'tune') return wanted.filter((t) => !t.heldOut);

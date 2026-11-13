@@ -46,11 +46,12 @@ const TeachField: React.FC<{ examples: string[]; onTeach: (goal: string) => void
 export const TrainSection: React.FC<{
   skills: SceneSkills;
   actions: SkillActions;
+  margin: number | null;
   onTeach: ((goal: string) => void) | null;
   policies: PolicyRecord[];
   training: Training;
   policyActions: PolicyActions;
-}> = ({ skills, actions, onTeach, policies, training, policyActions }) => {
+}> = ({ skills, actions, margin, onTeach, policies, training, policyActions }) => {
   const showsSkills = skills.available && (onTeach !== null || skills.rows.length > 0);
 
   if (!showsSkills && !policies.length) return null;
@@ -59,7 +60,9 @@ export const TrainSection: React.FC<{
     <Section title="Train">
       <div className="flex flex-col gap-3">
         {skills.available && onTeach && <TeachField examples={skills.examples} onTeach={onTeach} />}
-        {skills.available && skills.rows.length > 0 && <SkillsList rows={skills.rows} actions={actions} />}
+        {skills.available && skills.rows.length > 0 && (
+          <SkillsList rows={skills.rows} actions={actions} margin={margin} />
+        )}
         {policies.length > 0 && <PolicyList policies={policies} training={training} actions={policyActions} />}
       </div>
     </Section>

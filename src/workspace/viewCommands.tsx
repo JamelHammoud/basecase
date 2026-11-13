@@ -32,6 +32,7 @@ import type { TrackpadGestureMode } from '../types/robotics';
 import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
 import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
+import { keyFor } from '../app/shortcuts';
 
 const ic = 'w-4 h-4';
 
@@ -53,7 +54,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       id: `view-${v.id}`,
       group: 'View',
       label: `${v.label} View`,
-      shortcut: v.shortcut,
+      shortcut: keyFor(`view:${v.id}`),
       icon: <ShapeIcon className={ic} />,
       keywords: 'camera',
       run: () => ui.setCameraView(v.id),
@@ -62,7 +63,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       id: 'find-parts',
       group: 'View',
       label: 'Find Parts',
-      shortcut: '⌘F',
+      shortcut: keyFor('find-parts'),
       icon: <SearchIcon className={ic} />,
       keywords: 'search catalog servo screw component hardware',
       run: ui.findParts,
@@ -71,7 +72,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       id: 'toggle-left',
       group: 'View',
       label: studio.isLeftOpen ? 'Hide Sidebar' : 'Show Sidebar',
-      shortcut: '⌘B',
+      shortcut: keyFor('toggle-sidebar'),
       icon: <PanelLeftIcon className={ic} />,
       run: ui.toggleLeft,
     },
@@ -79,7 +80,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       id: 'toggle-right',
       group: 'View',
       label: studio.isRightOpen ? 'Hide Inspector' : 'Show Inspector',
-      shortcut: '⌘I',
+      shortcut: keyFor('toggle-inspector'),
       icon: <PanelRightIcon className={ic} />,
       run: ui.toggleRight,
     },
@@ -146,7 +147,7 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
             id: 'toggle-camera-views',
             group: 'View',
             label: cameraViewsToggleLabel(),
-            shortcut: '⇧V',
+            shortcut: keyFor('toggle-camera-views'),
             icon: <CameraIcon className={ic} />,
             keywords: 'camera feed wrist head fisheye robot eyes',
             run: toggleCameraViews,
@@ -165,7 +166,7 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
       id: 'zoom-selection',
       group: 'View',
       label: 'Zoom to Selection',
-      shortcut: 'Z',
+      shortcut: keyFor('zoom-selection'),
       icon: <CrosshairIcon className={ic} />,
       run: ui.focusSelected,
     },
@@ -181,7 +182,7 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
       id: 'settings',
       group: 'App',
       label: 'Settings',
-      shortcut: '⌘,',
+      shortcut: keyFor('settings'),
       icon: <SettingsIcon className={ic} />,
       keywords: 'preferences grid snap trackpad',
       run: () => studio.openSettings(),
@@ -198,7 +199,7 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
       id: 'shortcuts',
       group: 'App',
       label: 'Keyboard Shortcuts',
-      shortcut: '?',
+      shortcut: keyFor('shortcuts'),
       icon: <KeyboardIcon className={ic} />,
       run: () => studio.openSettings('shortcuts'),
     },

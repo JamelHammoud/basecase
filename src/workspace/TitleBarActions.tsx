@@ -4,6 +4,7 @@ import { DRAG_REGION, IconButton, NO_DRAG_REGION, PanelRightIcon, RedoIcon, Undo
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { useCaptionInset } from '../utils/useCaptionInset';
 import type { ExportActions } from './useExportActions';
+import { keyFor } from '../app/shortcuts';
 
 interface TitleBarActionsProps {
   islandRef: RefObject<HTMLDivElement | null>;
@@ -39,14 +40,14 @@ export function TitleBarActions({
           <IconButton
             icon={<UndoIcon className="w-[18px] h-[18px]" />}
             title="Undo"
-            shortcut="⌘Z"
+            shortcut={keyFor('undo')}
             onClick={onUndo}
             disabled={!canUndo}
           />
           <IconButton
             icon={<RedoIcon className="w-[18px] h-[18px]" />}
             title="Redo"
-            shortcut="⇧⌘Z"
+            shortcut={keyFor('redo')}
             onClick={onRedo}
             disabled={!canRedo}
           />
@@ -67,7 +68,7 @@ export function TitleBarActions({
         <IconButton
           icon={<PanelRightIcon className="w-[18px] h-[18px]" />}
           title={isRightOpen ? 'Hide inspector' : 'Show inspector'}
-          shortcut="⌘I"
+          shortcut={keyFor('toggle-inspector')}
           onClick={onToggleRight}
         />
       </div>

@@ -14,6 +14,7 @@ import {
   type GlyphProps,
   SettingsIcon,
 } from '../design-system';
+import { keyFor } from '../app/shortcuts';
 
 type RailView = Exclude<LeftTab, PlayTab> | 'play';
 
@@ -83,7 +84,7 @@ export function ViewRail({ isLeftOpen, leftTab, playTab, onPickView, onOpenSetti
       <IconButton
         icon={<SettingsIcon className={RAIL_ICON} />}
         title="Settings"
-        shortcut="⌘,"
+        shortcut={keyFor('settings')}
         tooltipSide="right"
         size="md"
         variant="ghost"

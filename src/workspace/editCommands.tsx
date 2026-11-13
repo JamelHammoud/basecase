@@ -16,6 +16,7 @@ import { ALIGN_AXES } from '../components/alignActions';
 import type { CommandInputs } from './sceneCommands';
 import { handJointCommands } from './jointCommands';
 import { mirrorCommand } from './mirrorCommands';
+import { keyFor } from '../app/shortcuts';
 
 const ic = 'w-4 h-4';
 
@@ -27,7 +28,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       id: 'select-all',
       group: 'Selection',
       label: 'Select All',
-      shortcut: '⌘A',
+      shortcut: keyFor('select-all'),
       icon: <LayersIcon className={ic} />,
       run: core.selection.selectAll,
     },
@@ -35,7 +36,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       id: 'copy',
       group: 'Selection',
       label: 'Copy',
-      shortcut: '⌘C',
+      shortcut: keyFor('copy'),
       icon: <CopyIcon className={ic} />,
       run: () => clipboard.copyViaCommand(false),
     },
@@ -43,7 +44,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       id: 'cut',
       group: 'Selection',
       label: 'Cut',
-      shortcut: '⌘X',
+      shortcut: keyFor('cut'),
       icon: <CutIcon className={ic} />,
       run: () => clipboard.copyViaCommand(true),
     },
@@ -51,7 +52,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       id: 'paste',
       group: 'Selection',
       label: 'Paste',
-      shortcut: '⌘V',
+      shortcut: keyFor('paste'),
       icon: <PasteIcon className={ic} />,
       run: clipboard.pasteParts,
     },
@@ -59,7 +60,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       id: 'group',
       group: 'Selection',
       label: 'Group',
-      shortcut: '⌘G',
+      shortcut: keyFor('group'),
       icon: <GroupIcon className={ic} />,
       run: edits.group,
     },
@@ -68,7 +69,7 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
       id: 'ungroup',
       group: 'Selection',
       label: 'Ungroup',
-      shortcut: '⇧⌘G',
+      shortcut: keyFor('ungroup'),
       icon: <UngroupIcon className={ic} />,
       run: edits.ungroup,
     },
@@ -140,7 +141,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       id: 'floor',
       group: 'Tools',
       label: 'Drop to Floor',
-      shortcut: 'F',
+      shortcut: keyFor('drop-to-floor'),
       icon: <FloorIcon className={ic} />,
       run: edits.dropToGround,
     },
@@ -148,7 +149,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       id: 'stack',
       group: 'Tools',
       label: 'Stack on Part Below',
-      shortcut: 'S',
+      shortcut: keyFor('stack'),
       icon: <LayersIcon className={ic} />,
       run: edits.stackOnBelow,
     },

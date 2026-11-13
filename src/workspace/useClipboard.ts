@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
+import type { ShortcutId } from '../app/shortcuts';
 import { isTextEntry, withFlag } from './helpers';
 import { PARTS_CLIPBOARD_TYPE, copyToClipboard, takePaste } from './partsClipboard';
 import type { SelectionOps } from './useSelectionOps';
@@ -11,6 +12,10 @@ interface ClipboardOptions {
   blocked: boolean;
   addImagePlane: (file: Blob, name?: string) => Promise<void>;
 }
+
+export const CLIPBOARD_EVENTS = ['copy', 'cut', 'paste'] as const satisfies ShortcutId[];
+
+type ClipboardShortcut = (typeof CLIPBOARD_EVENTS)[number];
 
 const hasTextSelection = () => (window.getSelection()?.toString() ?? '') !== '';
 
@@ -79,17 +84,16 @@ export function useClipboard({ core, ops, active, blocked, addImagePlane }: Clip
   useEffect(() => {
     if (!active) return;
 
-    const copy = (e: ClipboardEvent) => onCopy(e);
-    const paste = (e: ClipboardEvent) => onPaste(e);
+    const listeners: Record<ClipboardShortcut, (e: ClipboardEvent) => void> = {
+      copy: (e) => onCopy(e),
+      cut: (e) => onCopy(e),
+      paste: (e) => onPaste(e),
+    };
 
-    window.addEventListener('copy', copy);
-    window.addEventListener('cut', copy);
-    window.addEventListener('paste', paste);
+    for (const name of CLIPBOARD_EVENTS) window.addEventListener(name, listeners[name]);
 
     return () => {
-      window.removeEventListener('copy', copy);
-      window.removeEventListener('cut', copy);
-      window.removeEventListener('paste', paste);
+      for (const name of CLIPBOARD_EVENTS) window.removeEventListener(name, listeners[name]);
     };
   }, [active]);
 

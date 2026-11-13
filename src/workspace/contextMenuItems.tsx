@@ -50,6 +50,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { sceneHasCameraViews } from './viewCommands';
 import { plural } from '../../electron/plural.mjs';
+import { keyFor } from '../app/shortcuts';
 
 export interface ContextInputs {
   core: WorkspaceCore;
@@ -83,20 +84,20 @@ function sharedEntries({ core, actions }: ContextInputs) {
     } satisfies ContextMenuEntry,
     drop: {
       label: 'Drop to Floor',
-      shortcut: 'F',
+      shortcut: keyFor('drop-to-floor'),
       icon: <FloorIcon className={ic} />,
       onSelect: edits.dropToGround,
     } satisfies ContextMenuEntry,
     duplicate: {
       label: 'Duplicate',
-      shortcut: '⌘D',
+      shortcut: keyFor('duplicate'),
       icon: <CopyIcon className={ic} />,
       onSelect: ops.duplicateSelected,
     } satisfies ContextMenuEntry,
     mirror: mirrorMenuEntry(actions.mirror),
     selectAll: {
       label: 'Select All',
-      shortcut: '⌘A',
+      shortcut: keyFor('select-all'),
       icon: <SelectAllIcon className={ic} />,
       disabled: core.parts.length === 0,
       onSelect: core.selection.selectAll,
@@ -108,7 +109,7 @@ function sharedEntries({ core, actions }: ContextInputs) {
     } satisfies ContextMenuEntry,
     remove: {
       label: 'Delete',
-      shortcut: '⌫',
+      shortcut: keyFor('delete'),
       icon: <DeleteIcon className={ic} />,
       tone: 'danger',
       onSelect: ops.deleteSelected,
@@ -168,9 +169,16 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     ...(selectedParts.some((p) => p.hardware)
       ? [{ label: 'Add Clearance Holes', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
       : []),
-    { label: 'Group', shortcut: '⌘G', icon: <GroupIcon className={ic} />, onSelect: edits.group },
+    { label: 'Group', shortcut: keyFor('group'), icon: <GroupIcon className={ic} />, onSelect: edits.group },
     ...(selectedParts.some((p) => p.group)
-      ? [{ label: 'Ungroup', shortcut: '⇧⌘G', icon: <UngroupIcon className={ic} />, onSelect: edits.ungroup }]
+      ? [
+          {
+            label: 'Ungroup',
+            shortcut: keyFor('ungroup'),
+            icon: <UngroupIcon className={ic} />,
+            onSelect: edits.ungroup,
+          },
+        ]
       : []),
     ...onshapeItems(inputs, selectedTarget(core.parts, core.selectedIds)),
     shared.duplicate,
@@ -247,14 +255,24 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     { divider: true },
     shared.align,
     shared.drop,
-    { label: 'Stack on Part Below', shortcut: 'S', icon: <LayersIcon className={ic} />, onSelect: edits.stackOnBelow },
+    {
+      label: 'Stack on Part Below',
+      shortcut: keyFor('stack'),
+      icon: <LayersIcon className={ic} />,
+      onSelect: edits.stackOnBelow,
+    },
     {
       label: 'Reset Rotation',
       icon: <RotateLeftIcon className={ic} />,
       disabled: part.rotation.every((r) => r === 0),
       onSelect: () => setFlag({ rotation: [0, 0, 0] }),
     },
-    { label: 'Zoom to Selection', shortcut: 'Z', icon: <CrosshairIcon className={ic} />, onSelect: ui.focusSelected },
+    {
+      label: 'Zoom to Selection',
+      shortcut: keyFor('zoom-selection'),
+      icon: <CrosshairIcon className={ic} />,
+      onSelect: ui.focusSelected,
+    },
     { divider: true },
     ...ROLE_ENTRIES.map(({ label, role }) => ({
       label,
@@ -271,7 +289,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
       ? [
           {
             label: `Ungroup ${part.group.name}`,
-            shortcut: '⇧⌘G',
+            shortcut: keyFor('ungroup'),
             icon: <UngroupIcon className={ic} />,
             onSelect: edits.ungroup,
           },
@@ -289,7 +307,12 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
   const { tool, studio } = core;
   const shared = sharedEntries(inputs);
   const items: ContextMenuEntry[] = [
-    { label: 'Add Part', shortcut: '⌘K', icon: <PlusIcon className={ic} />, onSelect: () => ui.setPaletteOpen(true) },
+    {
+      label: 'Add Part',
+      shortcut: keyFor('palette'),
+      icon: <PlusIcon className={ic} />,
+      onSelect: () => ui.setPaletteOpen(true),
+    },
     ...commentHere,
     {
       label: 'Add Reference Image',
@@ -299,7 +322,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: core.sketching.open },
     {
       label: 'Annotate',
-      shortcut: 'N',
+      shortcut: keyFor('annotate'),
       icon: <MarkerIcon className={ic} />,
       onSelect: () => tool.toggleMarking(true),
     },
@@ -316,7 +339,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     { divider: true },
     ...CAMERA_VIEWS.map((v) => ({
       label: `${v.label} View`,
-      shortcut: v.shortcut,
+      shortcut: keyFor(`view:${v.id}`),
       icon: <ShapeIcon className={ic} />,
       onSelect: () => ui.setCameraView(v.id),
     })),
@@ -326,7 +349,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       ? [
           {
             label: cameraViewsToggleLabel(),
-            shortcut: '⇧V',
+            shortcut: keyFor('toggle-camera-views'),
             icon: <CameraIcon className={ic} />,
             onSelect: toggleCameraViews,
           },
@@ -353,13 +376,13 @@ export function contextMenuItems(menu: CanvasMenuState, inputs: ContextInputs): 
     ? [
         {
           label: 'Comment Here',
-          shortcut: 'M',
+          shortcut: keyFor('comment'),
           icon: <CommentIcon className={ic} />,
           onSelect: () => core.annotations.place(point, menu.partId),
         },
         {
           label: 'Measure from Here',
-          shortcut: 'D',
+          shortcut: keyFor('measure'),
           icon: <RulerIcon className={ic} />,
           onSelect: () => {
             core.viewportRef.current?.measureFrom(menu.x, menu.y);

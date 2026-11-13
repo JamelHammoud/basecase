@@ -21,7 +21,8 @@ the words after it; none of them changes the design unless the words ask for it.
   that holds still, which must fail. Show the contract in plain words and the rollouts, ask, then
   train_skill on the draft. Stand, walk, get-up and settle are Motor Kit entries: train_skill
   kit. When the race comes back not found, say what it tried and offer the design change it
-  reports.
+  reports. A named move (sit, bow, wave, dance) is an animation trained as a move: animate it,
+  then train_skill move with the animation's name.
 - /routine builds or changes a Routine: read_routine first, then make_routine or edit_routine.
 - /case makes a Case (a world and a goal the robot tries in simulation) with create_case.
 - /simulate runs the scene: simulate with hold, then shoves, and report what happened.

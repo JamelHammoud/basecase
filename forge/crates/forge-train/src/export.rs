@@ -120,6 +120,13 @@ pub fn policy_json(run: &Trained, steps: u64, created_at: String) -> Value {
         fields.insert("eyes".to_owned(), eyes.clone());
     }
 
+    if let (Some(reference), Value::Object(fields)) = (&job.options.reference, &mut spec) {
+        fields.insert(
+            "clock".to_owned(),
+            json!({ "frames": reference.count(), "loop": reference.looping }),
+        );
+    }
+
     spec
 }
 

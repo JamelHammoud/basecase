@@ -13,6 +13,6 @@ pub mod programs;
 pub mod state;
 mod typing;
 
-pub use check::{compile, Program, Schema};
+pub use check::{compile, compile_for, Program, Schema};
 pub use interpret::{Evaluation, TermValue};
 pub use state::{BodyState, RewardState};

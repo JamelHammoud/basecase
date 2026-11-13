@@ -188,6 +188,10 @@ pub fn parse(root: &Value) -> Result<Job, String> {
     let task_name = text(root, "task")?;
     let task = if task_name == "stand" { Task::Stand } else { Task::Walk };
     let algo = Algo::parse(root.get("algo").and_then(Value::as_str))?;
+    let joints = joints(root)?;
+    let options = options::parse(root)?;
+
+    options::check_reference(&options, joints.len())?;
 
     Ok(Job {
         algo,
@@ -202,7 +206,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         minutes: number(root, "minutes")?,
         command: triple(root, "command")?,
         root: text(root, "root")?,
-        joints: joints(root)?,
+        joints,
         default_pose: numbers(root, "defaultPose")?,
         ctrl_default: numbers(root, "ctrlDefault")?,
         initial_joints: initial_joints(root)?,
@@ -224,7 +228,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
             .map(|v| v as f32)
             .filter(|v| v.is_finite()),
         squash: squash(root.get("squash").and_then(Value::as_str))?,
-        options: options::parse(root)?,
+        options,
         eyes: eyes::parse(root)?,
         eyes_json: root
             .get("eyes")
@@ -236,6 +240,10 @@ pub fn parse(root: &Value) -> Result<Job, String> {
 impl Job {
     pub fn sees(&self) -> bool {
         !self.eyes.is_empty()
+    }
+
+    pub fn clock_width(&self) -> usize {
+        2 * usize::from(self.options.reference.is_some())
     }
 
     pub fn envs_on_gpu(&self) -> usize {
@@ -331,6 +339,18 @@ mod tests {
         assert_eq!(parse(&job).expect("job parses").algo, super::Algo::FlashSac);
         job["algo"] = json!("dqn");
         assert!(parse(&job).expect_err("must fail").contains("dqn"));
+    }
+
+    #[test]
+    fn a_reference_needs_two_numbers_past_the_joints() {
+        let mut job = sample();
+
+        job["reference"] = json!({ "loop": false, "frames": [[0.1, 0.12, 0], [0.2, 0.12, 0]] });
+        assert_eq!(parse(&job).expect("job parses").clock_width(), 2);
+        job["reference"] = json!({ "loop": false, "frames": [[0.1, 0.12], [0.2, 0.12]] });
+        assert!(parse(&job)
+            .expect_err("must fail")
+            .contains("reference frames need 3 numbers"));
     }
 
     #[test]

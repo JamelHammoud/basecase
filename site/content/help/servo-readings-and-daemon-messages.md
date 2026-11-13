@@ -20,6 +20,7 @@ related:
   - the-motor-lock-and-safety-ladder
 covers:
   - src/components/operate/OperatePanel.tsx
+  - src/components/operate/RobotHeader.tsx
   - src/components/operate/RobotJoints.tsx
   - src/components/operate/RobotMessages.tsx
   - src/components/operate/JointRow.tsx
@@ -42,10 +43,10 @@ The first line names the servos, such as "2 emulated Feetech servos", then the m
 | Motor state | What it means |
 |---|---|
 | Motors off | No motor is powered |
-| Starting motors | Torque is ramping up from 5% over 1 second |
+| Starting motors… | Torque is ramping up from 5% over 1 second |
 | Motors running | Motors follow the app's commands |
 | Rehearsing, motors off | A policy runs with no motor writes |
-| Stopping | The robot is coming to rest |
+| Stopping… | The robot is coming to rest |
 | Stopped | The robot has stopped, and takes no more commands until you go back to **Look** |
 
 **Stop** shows while motors run. **Clear Fault** shows in **Look** while a fault is active.

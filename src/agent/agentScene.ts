@@ -4,7 +4,8 @@ import { hardwareName, hardwareNote } from '../data/hardware';
 import { SUPPLY_BY_ID } from '../data/supplies';
 import type { PartMate } from '../types/ports';
 import type { RobotSkeleton } from '../types/skeleton';
-import { PartKind, PartRole, PrintMaterial, ScenePart } from '../types/robotics';
+import { PartEdges, PartKind, PartRole, PrintMaterial, ScenePart } from '../types/robotics';
+import { partEdges, specEdges } from '../utils/partEdges';
 import { cadMeshToScene, mirroredPorts, type AgentCadPayload } from './cadMesh';
 import { isBooleanPart } from '../booleans/parts';
 import { portsOf, portSummary } from './ports';
@@ -50,6 +51,7 @@ export interface AgentPartSpec {
   catalog?: string;
   mates?: PartMate[];
   frame?: string;
+  edges?: PartEdges | null;
 }
 
 export type AgentOp =
@@ -214,6 +216,13 @@ function primitivePart(spec: AgentPartSpec, base: PartBase): ScenePart {
   const catalog = [...PART_CATALOG, ...BLOCKOUT_ONLY].find((c) => c.kind === kind);
   const [sx, sy, sz] = spec.size ?? [20, 20, 20];
   const role: PartRole = spec.role ?? defaultRole(kind);
+  const dimensions = {
+    width: Math.max(0.5, r1(sx)),
+    height: Math.max(0.5, r1(sz)),
+    depth: Math.max(0.5, r1(sy)),
+    ...thicknessField(spec, catalog),
+  };
+  const edges = specEdges({ kind, dimensions }, spec.edges ?? null);
 
   return {
     ...base,
@@ -221,15 +230,11 @@ function primitivePart(spec: AgentPartSpec, base: PartBase): ScenePart {
     category: catalog?.category ?? 'primitives',
     role,
     position: toScene(spec.position ?? [0, 0, sz / 2]).map(r3) as V3,
-    dimensions: {
-      width: Math.max(0.5, r1(sx)),
-      height: Math.max(0.5, r1(sz)),
-      depth: Math.max(0.5, r1(sy)),
-      ...thicknessField(spec, catalog),
-    },
+    dimensions,
     color: primitiveColor(spec, role, catalog),
     ...primitiveMaterial(spec, catalog),
     ...supplyFields(spec.supply),
+    ...(edges ? { edges } : {}),
   };
 }
 
@@ -335,6 +340,8 @@ export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
     };
   }
 
+  if (spec.edges !== undefined) next.edges = specEdges(next, spec.edges);
+
   if (spec.cad && part.cad) next.cad = recompiled(part.cad, spec.cad);
 
   if (spec.rotation || spec.position || spec.cad) applyPlacement(next, part, spec);
@@ -366,6 +373,7 @@ function kindLabel(p: ScenePart): string {
 
 function partEntry(p: ScenePart, measured?: PartBoxes) {
   const isCad = p.kind === 'cad_part' && !!p.cad;
+  const edges = partEdges(p);
 
   return {
     id: p.id,
@@ -374,6 +382,7 @@ function partEntry(p: ScenePart, measured?: PartBoxes) {
     position: toCad(placementPoint(p)).map(r3),
     rotation: rotToCad(p.rotation),
     ...(isCad ? { volume: p.cad!.volume } : { size: [p.dimensions.width, p.dimensions.depth, p.dimensions.height] }),
+    ...(edges ? { edges } : {}),
     bounds: partBoundsCad(p, measured),
     color: p.color,
     role: p.role,

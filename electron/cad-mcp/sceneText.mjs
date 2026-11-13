@@ -24,6 +24,7 @@ export function partLine(p, withNotes = true) {
     `pos=${vec(p.position)}`,
     !isZero(p.rotation) && `rot=${vec(p.rotation, 1)}`,
     p.size ? `size=${vec(p.size)}` : p.volume !== undefined && `vol=${Math.round(p.volume)}`,
+    p.edges && `edges=${p.edges.kind}:${num(p.edges.mm, 2)}`,
     p.bounds && `box=${vec(p.bounds.min, 1)}..${vec(p.bounds.max, 1)}`,
     p.color,
     p.role && p.role !== 'solid' && `role=${p.role}`,

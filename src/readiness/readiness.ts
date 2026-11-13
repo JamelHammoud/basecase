@@ -33,6 +33,7 @@ function readingsLine(p: ScenePart): string {
     !!p.physics?.dynamic,
     JSON.stringify(p.dimensions),
     jsonHash(p.deformers),
+    jsonHash(p.edges),
     jsonHash(p.customNodes),
     numbersHash(p.cad?.positions),
     numbersHash(p.sculptMesh?.positions),

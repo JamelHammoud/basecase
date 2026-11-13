@@ -27,7 +27,7 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
       title="Source"
       actions={
         <Button variant="ghost" size="xs" onClick={() => draft.setShowPasteSvg((v) => !v)}>
-          {showPasteSvg ? 'Hide code' : 'Paste code'}
+          {showPasteSvg ? 'Hide Code' : 'Paste Code'}
         </Button>
       }
     >
@@ -136,16 +136,13 @@ const SvgOutput: React.FC<{
           alt=""
           className="w-14 h-14 rounded-lg bg-white p-1.5 object-contain shrink-0"
         />
-        <div className="min-w-0 flex-1">
-          <div className="text-[13px] text-white/90 truncate">{parsedSvg.name}</div>
-          <MetaLine
-            className="text-[12px] text-white/50 tabular"
-            items={[
-              `${parsedSvg.shapeCount} ${parsedSvg.shapeCount === 1 ? 'shape' : 'shapes'}`,
-              `${parsedSvg.holeCount} ${parsedSvg.holeCount === 1 ? 'hole' : 'holes'}`,
-            ]}
-          />
-        </div>
+        <MetaLine
+          className="min-w-0 flex-1 text-[13px] text-white/70 tabular"
+          items={[
+            `${parsedSvg.shapeCount} ${parsedSvg.shapeCount === 1 ? 'shape' : 'shapes'}`,
+            parsedSvg.holeCount > 0 && `${parsedSvg.holeCount} ${parsedSvg.holeCount === 1 ? 'hole' : 'holes'}`,
+          ]}
+        />
         <Button variant="ghost" size="xs" onClick={onEditInSketch}>
           Edit in Sketch
         </Button>

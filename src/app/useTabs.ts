@@ -36,6 +36,8 @@ export function useTabs(initial: InitialTabs) {
 
   const robotsBeside = (except: string) => sceneRobots(latestRef.current.tabs, snapshotOf, except);
 
+  const handleOf = (id: string) => handles.current.get(id) ?? null;
+
   const reportMeta = (id: string, meta: WorkspaceMeta) => {
     setMetas((prev) => ({ ...prev, [id]: meta }));
   };
@@ -114,6 +116,7 @@ export function useTabs(initial: InitialTabs) {
     register,
     snapshotOf,
     robotsBeside,
+    handleOf,
     reportMeta,
     toastInFront,
     capturePreview,

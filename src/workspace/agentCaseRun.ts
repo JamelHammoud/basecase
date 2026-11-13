@@ -26,7 +26,7 @@ const runsOf = (payload: Payload) => {
   return Number.isInteger(n) && n > 0 ? Math.min(n, MAX_RUNS) : CASE_RUNS;
 };
 
-function caseNamed(cases: Case[], wanted: string): Case | null {
+export function caseNamed(cases: Case[], wanted: string): Case | null {
   const key = wanted.trim().toLowerCase();
 
   return cases.find((c) => c.id === wanted) ?? cases.find((c) => c.name.toLowerCase() === key) ?? null;

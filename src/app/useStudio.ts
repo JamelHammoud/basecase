@@ -72,7 +72,7 @@ export function useStudio(sources: StudioSources) {
   const { customModels, setCustomModels, uploadedImages, setUploadedImages, chatList, setChatList } = libraries;
   const { acpStatus, reconnectAcp, signInAcp, saveAgentApiKey, agentTargetHeightMm, agentChoice, setAgentChoice } =
     agent;
-  const { register, reportMeta, newScene, selectTab, robotsBeside } = core;
+  const { register, reportMeta, newScene, selectTab, robotsBeside, handleOf } = core;
   const { renameTab, closeTab, duplicateTab, reopenTab, cycleTab, focusChat, notify } = actions;
   const canReopenTab = core.closed.length > 0;
 
@@ -105,6 +105,7 @@ export function useStudio(sources: StudioSources) {
       printers,
       tabs: tabList,
       robotsBeside,
+      handleOf,
       canReopenTab,
       register,
       reportMeta,
@@ -150,6 +151,7 @@ export function useStudio(sources: StudioSources) {
       printers,
       tabList,
       robotsBeside,
+      handleOf,
       canReopenTab,
       register,
       reportMeta,

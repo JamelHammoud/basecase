@@ -60,10 +60,11 @@ describe('help pages', () => {
     expect(files.get('sitemap.xml')).toContain('<loc>https://basecase.so/help/design</loc>');
   });
 
-  it('gives an article a breadcrumb, its type, the updated date and an outline', () => {
+  it('gives an article a breadcrumb, its type unless it is a how-to, the updated date and an outline', () => {
     expect(article).toContain('aria-label="Breadcrumb"');
     expect(article).toMatch(/href="\/help\/design"[^>]*>Design<\/a>/);
-    expect(article).toContain('How-to');
+    expect(article).not.toContain('How-to');
+    expect(files.get('help/what-a-mesh-is.html')).toContain('<span>Concept</span>');
     expect(article).toContain('<time dateTime="2026-11-10">November 10, 2026</time>');
     expect(article).toContain('On this page');
     expect(article).toContain('href="#choose-a-file"');

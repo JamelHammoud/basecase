@@ -31,7 +31,7 @@ describe('help collections', () => {
 
   it('keeps the collections in the order of the robotics loop and drops empty ones', () => {
     expect(center.collections.map((collection) => collection.slug)).toEqual(['design', 'files-and-sharing']);
-    expect(center.collections[0].description).toBe(HELP_COLLECTIONS[1].description);
+    expect(center.collections[0].description).toBe(HELP_COLLECTIONS[0].description);
   });
 
   it('orders a collection by type, then order, then title, and leaves drafts out', () => {
@@ -74,7 +74,7 @@ describe('help front matter', () => {
 
   it('fails the build with the file path', () => {
     expect(failure({ a: article('title: A\ntype: task') })).toThrow('/site/content/help/a.md: set "collection:"');
-    expect(failure({ a: task('A', 'gardening') })).toThrow(/a\.md: set "collection:" to one of get-started/);
+    expect(failure({ a: task('A', 'gardening') })).toThrow(/a\.md: set "collection:" to one of design/);
     expect(failure({ a: article('title: A\ncollection: design') })).toThrow(/a\.md: set "type:"/);
     expect(failure({ a: article('title: A\ncollection: design\ntype: tutorial') })).toThrow(/a\.md: set "type:"/);
     expect(failure({ a: task('A', 'design', 'colection: design') })).toThrow(/a\.md: "colection:" isn't a help field/);

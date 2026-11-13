@@ -1,10 +1,20 @@
 import { ZIP_TOO_LARGE } from './archive';
 import { chooseEntry, descriptionKind, inScope, RobotChoiceError } from './entry';
 import { githubTree, repoLink } from './github';
+import { hubFileUrl, hubLink, hubTree } from './hub';
 import { parseMjcf } from './mjcf';
 import type { Model } from './model';
 import { convertedResolver, parseConverted } from './simready';
-import { fetchBytes, inlineIncludes, rawUrl, TooLargeError, urlResolver, type Resolver, type Source } from './sources';
+import {
+  fetchBytes,
+  inlineIncludes,
+  noRobotAt,
+  rawUrl,
+  TooLargeError,
+  urlResolver,
+  type Resolver,
+  type Source,
+} from './sources';
 import { localTree, treeResolver, type Tree } from './tree';
 import { parseUrdf } from './urdf';
 
@@ -17,6 +27,7 @@ export interface ReadModel {
 interface Located {
   tree: Tree;
   scope: string;
+  entry?: string;
 }
 
 const NO_ROBOT = 'Choose a folder with a .urdf or MJCF .xml file.';
@@ -25,10 +36,12 @@ const MAX_ZIP_BYTES = 200 * 1024 * 1024;
 export const isZipLink = (url: string) => /\.zip(?:[?#]|$)/i.test(url.trim());
 
 export const isRobotLink = (url: string) =>
-  !!repoLink(url) || /^https:\/\/[^\s/]+\.[^\s/]+\/\S+\.(urdf|xml|mjcf|zip)(?:[?#]\S*)?$/i.test(url.trim());
+  !!repoLink(url) ||
+  !!hubLink(url) ||
+  /^https:\/\/[^\s/]+\.[^\s/]+\/\S+\.(urdf|xml|mjcf|zip)(?:[?#]\S*)?$/i.test(url.trim());
 
 async function zipTree(url: string): Promise<Tree> {
-  const bytes = await fetchBytes(rawUrl(url), MAX_ZIP_BYTES).catch((error: unknown) => {
+  const bytes = await fetchBytes(url, MAX_ZIP_BYTES).catch((error: unknown) => {
     throw new Error(
       error instanceof TooLargeError ? ZIP_TOO_LARGE : 'Couldn’t download that zip. Link to a public zip file.',
     );
@@ -42,21 +55,27 @@ async function locate(source: Exclude<Source, { kind: 'converted' }>): Promise<L
 
   const repo = repoLink(source.url);
 
-  if (repo) return githubTree(repo);
+  if (repo) return githubTree(repo, source.url);
 
-  return isZipLink(source.url) ? { tree: await zipTree(source.url), scope: '' } : null;
+  const hub = hubLink(source.url);
+
+  if (hub?.file && isZipLink(hub.path)) return { tree: await zipTree(hubFileUrl(hub, hub.path)), scope: '' };
+
+  if (hub) return hubTree(hub, source.url);
+
+  return isZipLink(source.url) ? { tree: await zipTree(rawUrl(source.url)), scope: '' } : null;
 }
 
 const decode = (data: ArrayBuffer | null) => (data ? new TextDecoder().decode(data) : '');
 
-async function treeEntry({ tree, scope }: Located, picked?: string): Promise<string> {
+async function treeEntry({ tree, scope }: Located, picked?: string, link?: string): Promise<string> {
   const paths = inScope(tree.paths, scope);
 
   if (picked && paths.includes(picked)) return picked;
 
   const choice = await chooseEntry(paths, async (p) => descriptionKind(decode(await tree.read(p))));
 
-  if (!choice) throw new Error(NO_ROBOT);
+  if (!choice) throw link ? noRobotAt(link) : new Error(NO_ROBOT);
 
   if ('choices' in choice) throw new RobotChoiceError(choice.choices);
 
@@ -74,7 +93,7 @@ async function sourceResolver(source: Exclude<Source, { kind: 'converted' }>) {
 
   if (!located) throw new Error(NO_ROBOT);
 
-  const entry = await treeEntry(located, source.entry);
+  const entry = await treeEntry(located, source.entry ?? located.entry, source.kind === 'url' ? source.url : undefined);
   const resolver = await treeResolver(located.tree, entry);
   const origin = located.tree.urlOf?.(entry);
 

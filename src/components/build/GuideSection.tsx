@@ -108,7 +108,7 @@ const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord; canOpen: boo
           variant={guide.stale || !canOpen ? 'primary' : 'secondary'}
           onClick={() => void guide.generate()}
         >
-          {guide.stale ? 'Update' : 'Regenerate'}
+          Regenerate
         </Button>
       </div>
     </>

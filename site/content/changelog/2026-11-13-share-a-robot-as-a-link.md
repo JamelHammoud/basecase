@@ -24,11 +24,11 @@ Basecase saves the robot's parts and joints, the Case and the newest policy or s
 
 ## What the link opens
 
-The link opens a page with the robot in its Case's world, the Case's name and brief, Drive and See Inside. Drive runs the simulation in the tab with the keyboard, the same as the example Cases on app.basecase.so. See Inside opens the robot as a scene in the browser studio, with the Case and the trained policy or skill.
+The link opens a page with the robot in its Case's world, the Case's name and brief, Drive and Open Scene. Drive runs the simulation in the tab with the keyboard, the same as the example Cases on app.basecase.so. Open Scene opens the robot in the browser studio, with the Case and the trained policy or skill.
 
-A legged robot's link also shows Train in Chrome and Edge. It trains Stand on the visitor's GPU, and See Inside then opens the robot with Stand ready. Steps are in [Train a Motor Kit skill](/help/train-a-motor-kit-skill).
+A legged robot's link also shows Train in Chrome and Edge. It trains Stand on the visitor's GPU, and Open Scene then opens the robot with Stand ready. Steps are in [Train a Motor Kit skill](/help/train-a-motor-kit-skill).
 
-![The shared rover in the browser with Drive and See Inside](/changelog/share-a-robot-as-a-link/browser.png)
+![The shared rover in the browser with Drive and Open Scene](/changelog/share-a-robot-as-a-link/browser.png)
 
 ## Limits
 

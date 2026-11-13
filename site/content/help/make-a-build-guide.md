@@ -36,7 +36,7 @@ Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the f
 
 ## Keep it current
 
-When the design changes, the card reads **Out of date** in amber and its button reads **Update**. Basecase also updates the guide on its own, 15 seconds after the last change, once the agent is done. An update redraws only the steps that show the parts you changed.
+When the design changes, the card reads **Out of date** in amber. Click **Regenerate** to bring it up to date. Basecase also updates the guide on its own, 15 seconds after the last change, once the agent is done. An update redraws only the steps that show the parts you changed.
 
 To stop the automatic updates, press ⌘, (Ctrl+, on Windows), choose **Build** and turn off **Update automatically**.
 

@@ -37,7 +37,7 @@ The **Simulate** tab appears in the right panel once the scene has a joint. [Sim
 5. To lift or fling the robot, select one of its parts, press V and drag the Move gizmo.
 6. Read **Results**: **Standing**, or the moment the robot fell, with its tilt and how far it moved.
 7. Click a joint under **Peak torque** to select the parts it moves.
-8. Click **End simulation** (×) to stop and put the canvas back.
+8. Click **Stop simulation** (×) to put the canvas back.
 
 The bar at the top of the tab also has **Pause**, **Reset** and three speeds: ¼×, ½× and 1×.
 

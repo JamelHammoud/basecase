@@ -69,11 +69,11 @@ describe('gallery links', () => {
     await page.close();
   }, 240000);
 
-  it('opens the scene in the studio from See Inside', async () => {
+  it('opens the scene in the studio from Open Scene', async () => {
     const { page } = await open('/c/arm-touch-the-dots');
 
     await expect.poll(() => page.getByTestId('gallery-card').count(), { timeout: 60000 }).toBe(1);
-    await page.getByRole('button', { name: 'See Inside' }).click();
+    await page.getByRole('button', { name: 'Open Scene' }).click();
     await page.waitForURL(`${base}/`);
     await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
       timeout: 60000,
@@ -99,7 +99,7 @@ describe('gallery links', () => {
     await expect.poll(async () => (await state(page))?.controller, { timeout: 30000 }).toBe('policy');
     expect((await state(page))?.skill?.steps).toBe(1);
 
-    await card.getByRole('button', { name: 'See Inside' }).click();
+    await card.getByRole('button', { name: 'Open Scene' }).click();
     await page.waitForURL(`${base}/`);
     await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
       timeout: 60000,

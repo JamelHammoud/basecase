@@ -36,7 +36,7 @@ It worked when **Generate Guide** turns blue.
 
 The run stopped with an error, shown after the message. A failed run leaves the last guide alone until the scene changes again.
 
-1. Click the card's button again: **Generate Guide**, **Update** or **Regenerate**.
+1. Click the card's button again: **Generate Guide** or **Regenerate**.
 2. If the same error comes back, read the reason after the message. It names what stopped the run.
 
 ## “Regenerate the guide to open it”
@@ -47,7 +47,7 @@ The PDF isn't where Basecase saved it, often because the file was moved or delet
 
 Basecase updates the guide on its own 15 seconds after the last change, but waits while the agent is working. A guide you stopped also stays as it was until the scene changes again.
 
-1. Click **Update** in **Build guide**.
+1. Click **Regenerate** in **Build guide**.
 2. To have it update on its own, press ⌘, (Ctrl+, on Windows), choose **Build** and turn on **Update automatically**.
 
 ## Show in Finder and Open PDF are missing

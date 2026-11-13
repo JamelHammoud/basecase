@@ -417,7 +417,7 @@ describe('a gripper', () => {
     await app.page.keyboard.up(' ');
     await waitSim(1);
     await handAt(away);
-    await button('End Try').click();
+    await button('Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].passed).toBe(true);
     expect(app.errors).toEqual([]);
@@ -443,7 +443,7 @@ describe('LiDAR', () => {
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
       await holdKey('w', 1000);
       await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
-      await button('End Try').click();
+      await button('Stop Try').click();
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
       const files = await datasetFiles();

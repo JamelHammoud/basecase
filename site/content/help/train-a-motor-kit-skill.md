@@ -29,7 +29,7 @@ Teach a legged robot to stand, walk, get up or settle, and have Arena check the 
 
 ![Stand ready, with its Arena line and Try](/help/train-a-motor-kit-skill/ready.png)
 
-A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand the same way, and the robot stands on the trained skill once Arena passes it. **See Inside** opens the robot in the studio with Stand ready.
+A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand the same way, and the robot stands on the trained skill once Arena passes it. **Open Scene** opens the robot in the studio with Stand ready.
 
 ![The hexapod's Case card with Stand ready](/help/train-a-motor-kit-skill/gallery.png)
 

@@ -121,7 +121,7 @@ export function useMarks({ docs, showToast, selection, tool }: MarkOptions) {
 
     if (selectedId && gone.has(selectedId)) select(null);
 
-    showToast(erased.length === 1 ? `Erased ${markName(erased[0])}` : `Erased ${markCount(erased.length)}`, {
+    showToast(erased.length === 1 ? `Deleted ${markName(erased[0])}` : `Deleted ${markCount(erased.length)}`, {
       tone: 'neutral',
       action: { label: 'Undo', onClick: () => commitMarks(before) },
     });

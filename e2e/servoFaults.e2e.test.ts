@@ -76,7 +76,7 @@ describe('servo faults', () => {
     const [joint] = Object.keys((await simState()).faults);
     const limpAt = (await simState()).stats!.time;
 
-    await button('End Try').click();
+    await button('Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
     const [fault] = (await simState()).tries[0].faults;

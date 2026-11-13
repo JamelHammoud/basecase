@@ -135,7 +135,7 @@ describe('Train on a gallery Case card', () => {
     expect(await made.carried()).toBeNull();
   });
 
-  it('carries the trained skill into the scene See Inside saves, record and skill file', async () => {
+  it('carries the trained skill into the scene Open Scene saves, record and skill file', async () => {
     const { made } = trainer((skill) => ({ kind: 'skill', skill, environment: kitEnvironment(model, 'stand'), cost }));
     const record = await made.train(model);
     const bundle = hexapod();

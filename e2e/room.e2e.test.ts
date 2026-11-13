@@ -115,7 +115,7 @@ describe('a scanned room', () => {
         .toBeGreaterThan((DISTANCE_MM - 60) / 1000);
       await app.page.keyboard.up('w');
       await app.page.waitForTimeout(1500);
-      await button('End Try').click();
+      await button('Stop Try').click();
 
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       expect((await simState()).tries[0].passed).toBe(true);

@@ -56,7 +56,7 @@ export const GalleryCard: React.FC<{
       {drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       <TrainPart training={training} />
       <Button variant="secondary" size="md" fullWidth onClick={onSeeInside}>
-        See Inside
+        Open Scene
       </Button>
     </aside>
   );

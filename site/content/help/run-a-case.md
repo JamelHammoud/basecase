@@ -45,9 +45,9 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 5. Click **Try It** and drive with W A S D and Q E, or a gamepad. While the try runs, anything the Case counts as a failure shows in red under the brief as it happens.
 
-![A try running, with the clock and End Try](/help/run-a-case/trying.png)
+![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **End Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes.
+6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes.
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 

@@ -146,19 +146,21 @@ export const PosePanel: React.FC<PosePanelProps> = ({
             open={isOpen(g.label)}
             onOpenChange={(open) => setToggled((t) => ({ ...t, [g.label]: { open, joint: activeJointId } }))}
           >
-            {g.joints.map((j) => (
-              <JointRow
-                key={j.id}
-                joint={j}
-                label={rowLabel(j, g.label)}
-                value={pose?.values[j.id] ?? 0}
-                active={j.id === activeJointId}
-                measured={measured.has(j.id)}
-                onSelect={() => select(j)}
-                onChange={(v) => posing.setJointValue(j.id, v)}
-                onContextMenu={(e) => openMenu(e, jointMenu(j, jointEdits))}
-              />
-            ))}
+            <div className="grid grid-cols-[fit-content(60%)_minmax(0,1fr)_52px] gap-2.5">
+              {g.joints.map((j) => (
+                <JointRow
+                  key={j.id}
+                  joint={j}
+                  label={rowLabel(j, g.label)}
+                  value={pose?.values[j.id] ?? 0}
+                  active={j.id === activeJointId}
+                  measured={measured.has(j.id)}
+                  onSelect={() => select(j)}
+                  onChange={(v) => posing.setJointValue(j.id, v)}
+                  onContextMenu={(e) => openMenu(e, jointMenu(j, jointEdits))}
+                />
+              ))}
+            </div>
           </Section>
         ))}
       </div>

@@ -93,6 +93,15 @@ Replays use the latest bench run, which Basecase keeps until it reloads. After a
 
 The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos.
 
-**Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints still on the catalog model. Hover the note and click **Fix** to select those servos and calibrate those joints alone. The robot has to be in **Test**, connected from this scene.
+**Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints still on the catalog model.
 
-![Servo models after Elbow was rolled back, naming the Elbow servo with Fix on its note](/help/calibrate-an-emulated-robot/checks-rolled-back.png) **Export** ▸ **Robot Package** carries each joint's active calibration in `joint_map.json`; see [Export a robot package](/help/export-a-robot-package).
+To calibrate only those joints, the robot must be in **Test**, connected from this scene.
+
+1. In **Build** ▸ **Checks**, expand **Servo models**.
+2. Hover the note and click **Fix**.
+
+Basecase selects those servos and calibrates their joints alone.
+
+![Servo models after Elbow was rolled back, naming the Elbow servo with Fix on its note](/help/calibrate-an-emulated-robot/checks-rolled-back.png)
+
+**Export** ▸ **Robot Package** carries each joint's active calibration in `joint_map.json`; see [Export a robot package](/help/export-a-robot-package).

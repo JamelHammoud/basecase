@@ -9,7 +9,7 @@ import { radiansFromCounts, type JointStatus } from '../../robot/robotState';
 import { JointReplayPlot } from './JointReplayPlot';
 import { hasJointRowMenu, JointRowMenu, type ReplayChoice } from './JointRowMenu';
 import type { JointCalibrate } from './RobotJoints';
-import { MeasuredBadge, VERDICTS } from './verdicts';
+import { MeasuredBadge, VERDICTS } from '../verdicts';
 
 const REPLIES: Record<string, string> = {
   missing: 'No reply',

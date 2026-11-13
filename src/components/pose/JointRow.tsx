@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { RobotJoint } from '../../types/robotics';
 import { jointRange, jointUnit } from '../../utils/kinematics';
-import { MeasuredBadge } from '../operate/verdicts';
+import { MeasuredBadge } from '../verdicts';
 
 export const JointRow: React.FC<{
   joint: RobotJoint;
@@ -31,7 +31,7 @@ export const JointRow: React.FC<{
     <div
       data-joint={joint.id}
       onContextMenu={onContextMenu}
-      className={`-mx-[6px] px-[6px] rounded-lg grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_52px] items-center gap-2.5 h-8 scroll-my-3 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}
+      className={`-mx-[6px] px-[6px] rounded-lg col-span-3 grid grid-cols-subgrid items-center h-8 scroll-my-3 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}
     >
       <span className="min-w-0 flex items-center gap-1.5">
         <button

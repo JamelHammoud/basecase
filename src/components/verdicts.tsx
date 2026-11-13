@@ -1,6 +1,6 @@
 import React from 'react';
-import { Badge } from '../../design-system';
-import type { CalibrationVerdict } from '../../reality/types';
+import { Badge } from '../design-system';
+import type { CalibrationVerdict } from '../reality/types';
 
 export const VERDICTS: Record<CalibrationVerdict, string> = {
   measured: 'Measured',

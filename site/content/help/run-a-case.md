@@ -63,6 +63,6 @@ A console can also hold the Case's own code: up to 4 panels, each a small web pa
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 
-A code panel that stops answering for 2 seconds closes. In its place you see “Couldn’t run” with the panel's name and its first error.
+A code panel that stops answering for 2 seconds closes. In its place you see “Couldn’t run” with the panel's name and “It stopped answering for 2 s.” A panel whose script fails while it loads shows its error there instead.
 
 Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.

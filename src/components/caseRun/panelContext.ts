@@ -38,3 +38,11 @@ export const busKey = (bus: SignalBus) => {
 
   return busKeys.get(bus);
 };
+
+export const codeFrameKey = (bus: SignalBus, source: string) => {
+  let hash = 0x811c9dc5;
+
+  for (let i = 0; i < source.length; i++) hash = Math.imul(hash ^ source.charCodeAt(i), 0x01000193);
+
+  return `${busKey(bus)}:${source.length}:${(hash >>> 0).toString(36)}`;
+};

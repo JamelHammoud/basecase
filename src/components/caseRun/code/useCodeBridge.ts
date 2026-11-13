@@ -8,7 +8,6 @@ import type { PanelContext } from '../panelContext';
 
 interface BridgeInput {
   frameRef: RefObject<HTMLIFrameElement | null>;
-  panel: string;
   ctx: PanelContext;
   onFail: (error: string) => void;
 }
@@ -25,7 +24,7 @@ export const pressStudioKey = ({ key, meta, ctrl, shift }: FrameKey) =>
     }),
   );
 
-export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
+export function useCodeBridge({ frameRef, ctx, onFail }: BridgeInput) {
   const current = useEffectEvent(() => ({ bus: ctx.bus, scope: ctx.scope, inputs: ctx.inputs }));
   const can = useEffectEvent((action: CaseAction) => ctx.can(action));
   const fire = useEffectEvent((action: CaseAction) => ctx.fire(action));
@@ -33,11 +32,11 @@ export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
   const failed = useEffectEvent((error: string) => onFail(error));
 
   useLayoutEffect(() => {
+    const owner = {};
     const bridge = openCodeBridge({
-      panel,
       frame: () => frameRef.current?.contentWindow,
       ...current(),
-      studio: { drive: (command) => setCodeDrive(panel, command), event, can, fire, key: pressStudioKey },
+      studio: { drive: (command) => setCodeDrive(owner, command), event, can, fire, key: pressStudioKey },
       onFail: failed,
     });
     const listen = (e: MessageEvent) => bridge.receive(e);
@@ -48,5 +47,5 @@ export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
       window.removeEventListener('message', listen);
       bridge.close();
     };
-  }, [panel, frameRef]);
+  }, [frameRef]);
 }

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FixtureRobot } from '../../sim/fixtures/parts';
 import { fixtureRobots } from '../../sim/fixtures/robots';
 import { readInputs } from '../../sim/inputSources';
-import { codePanelErrors, SILENT_ERROR } from './codeBridge';
+import { openCodeBridge, SILENT_ERROR } from './codeBridge';
 import { setCodeDrive } from './codeDrive';
 import { fakeClock, openTestFrame, type FrameOptions, type TestFrame } from './fixtures/codeFrames';
 import { createSignalBus, type SignalBus } from './signalBus';
@@ -36,6 +36,7 @@ const sampleOf = (fixture: FixtureRobot, time: number, running = false) => ({
 });
 
 const opened: TestFrame[] = [];
+const stickOwner = {};
 
 function open(html: string, o: FrameOptions) {
   const frame = openTestFrame(html, o);
@@ -47,7 +48,7 @@ function open(html: string, o: FrameOptions) {
 
 afterEach(() => {
   opened.splice(0).forEach((f) => f.close());
-  setCodeDrive('test', null);
+  setCodeDrive(stickOwner, null);
 });
 
 const JOYSTICK = `<script>
@@ -135,7 +136,7 @@ describe('code panels through the bridge', () => {
     expect(stick.log.fired).toEqual(['drive']);
     expect(stick.body.find('pad', 'stick')!.calls).toContain('arc(140,20,24,0,6.28)');
 
-    setCodeDrive('test', stick.log.drives.at(-1)!);
+    setCodeDrive(stickOwner, stick.log.drives.at(-1)!);
 
     const read = readInputs(['code', 'keys'], { cls: 'rover', keys: { v: [0, 0, 0] } });
 
@@ -192,7 +193,7 @@ describe('code panels through the bridge', () => {
     start.dispatch('click');
     await vi.waitFor(() => expect(start.textContent).toBe('try can’t run now'));
     expect(panel.log.fired).toEqual(['try']);
-    expect(codePanelErrors('test')).toEqual(['action refused: try can’t run now']);
+    expect(panel.bridge.errors()).toEqual(['action refused: try can’t run now']);
   });
 
   it('draws a plot from joint.*.effort, at most 20 times a second', async () => {
@@ -229,7 +230,7 @@ describe('code panels through the bridge', () => {
     );
 
     await vi.waitFor(() =>
-      expect(codePanelErrors('test')).toEqual([
+      expect(panel.bridge.errors()).toEqual([
         'signals refused: robot.mood must be robot.height or tilt or speed or travelled or x or z',
         'drive refused: the console’s input doesn’t list code',
       ]),
@@ -270,17 +271,41 @@ describe('the bridge’s guards', () => {
     expect(hung.log.drives).toEqual([null]);
   });
 
+  it('waits for the frame’s hello before it counts missed answers', () => {
+    const clock = fakeClock();
+    const failed: string[] = [];
+    const bridge = openCodeBridge({
+      frame: () => null,
+      bus: busFor(robot('rover-diff')),
+      scope: scope(),
+      inputs: ['code'],
+      studio: {
+        drive: () => undefined,
+        event: () => undefined,
+        can: () => true,
+        fire: () => undefined,
+        key: () => undefined,
+      },
+      onFail: (error) => failed.push(error),
+      clock,
+    });
+
+    clock.tick(10_000);
+    bridge.close();
+    expect(failed).toEqual([]);
+  });
+
   it('fails a panel whose script throws while it loads, with the first error', async () => {
     const panel = open('<script>throw new Error("no piano here")</script><script>throw new Error("later")</script>', {
       bus: busFor(robot('rover-diff')),
       scope: scope(),
     });
 
-    await vi.waitFor(() => expect(panel.log.failed).toEqual(['Uncaught Error: no piano here']));
+    await vi.waitFor(() => expect(panel.log.failed).toEqual(['no piano here']));
   });
 
   it('refuses malformed calls and keeps them per panel', async () => {
-    open(
+    const panel = open(
       `<script>
         basecase.drive({ v: [9, 0, 0] });
         basecase.event('no spaces allowed', 1);
@@ -290,7 +315,7 @@ describe('the bridge’s guards', () => {
     );
 
     await vi.waitFor(() =>
-      expect(codePanelErrors('test')).toEqual([
+      expect(panel.bridge.errors()).toEqual([
         'sent a malformed drive message',
         'sent a malformed event message',
         'action refused: launch is no action',

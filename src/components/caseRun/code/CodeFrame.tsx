@@ -22,7 +22,7 @@ function LiveFrame({
 }: CodeFrameProps & { onFail: (e: string) => void }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
 
-  useCodeBridge({ frameRef, panel: panel.id, ctx, onFail });
+  useCodeBridge({ frameRef, ctx, onFail });
 
   return (
     <iframe

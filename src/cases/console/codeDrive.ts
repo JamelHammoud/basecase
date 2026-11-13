@@ -1,11 +1,11 @@
 import type { DriveCommand } from '../../sim/driveTypes';
 
-const commands = new Map<string, { command: DriveCommand; at: number }>();
+const commands = new Map<object, { command: DriveCommand; at: number }>();
 let order = 0;
 
-export function setCodeDrive(panel: string, command: DriveCommand | null) {
-  if (command) commands.set(panel, { command, at: ++order });
-  else commands.delete(panel);
+export function setCodeDrive(owner: object, command: DriveCommand | null) {
+  if (command) commands.set(owner, { command, at: ++order });
+  else commands.delete(owner);
 }
 
 export function codeDriveReading(): DriveCommand | null {

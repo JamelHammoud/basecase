@@ -49,7 +49,8 @@ export function installCodeClient(win: ClientWindow) {
     pending.splice(0).forEach((m) => port?.postMessage(m));
   };
 
-  const errorText = (reason: unknown) => String((reason as Error | null)?.message ?? reason);
+  const errorText = (reason: unknown) =>
+    (reason == null ? '' : String((reason as Error).message ?? reason)).replace(/^(Uncaught\s+)?(\w*Error:\s*)*/, '');
 
   const forwardKey = (e: KeyboardEvent) => {
     const k = e.key.toLowerCase();
@@ -61,7 +62,9 @@ export function installCodeClient(win: ClientWindow) {
   };
 
   win.addEventListener('message', adopt);
-  win.addEventListener('error', (e: ErrorEvent) => send({ type: 'error', message: e.message || errorText(e.error) }));
+  win.addEventListener('error', (e: ErrorEvent) =>
+    send({ type: 'error', message: errorText(e.error) || errorText(e.message) }),
+  );
   win.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) =>
     send({ type: 'error', message: errorText(e.reason) }),
   );

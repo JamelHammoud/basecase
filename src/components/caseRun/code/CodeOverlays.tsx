@@ -2,7 +2,7 @@ import React from 'react';
 import type { OverlayAnchor } from '../../../cases/console/format';
 import type { PlacedOverlay } from '../../../cases/console/layout';
 import { LAYOUT } from '../../../design-system';
-import { busKey, type PanelContext } from '../panelContext';
+import { codeFrameKey, type PanelContext } from '../panelContext';
 import { CodeFrame } from './CodeFrame';
 
 const INSET = LAYOUT.cardPadding;
@@ -35,6 +35,12 @@ export const CodeOverlays: React.FC<{ overlays: PlacedOverlay[]; ctx: PanelConte
       className="absolute z-10 pointer-events-none"
       style={placement(o)}
     >
-      <CodeFrame key={busKey(ctx.bus)} panel={o.spec} ctx={ctx} pointer={o.pointer === true} className="h-full" />
+      <CodeFrame
+        key={codeFrameKey(ctx.bus, o.spec.source)}
+        panel={o.spec}
+        ctx={ctx}
+        pointer={o.pointer === true}
+        className="h-full"
+      />
     </div>
   ));

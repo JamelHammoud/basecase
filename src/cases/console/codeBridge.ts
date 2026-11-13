@@ -26,7 +26,6 @@ export interface BridgeStudio {
 }
 
 export interface CodeBridgeOptions {
-  panel: string;
   frame: () => unknown;
   bus: SignalBus;
   scope: SignalScope;
@@ -43,6 +42,7 @@ export interface BridgeEnvelope {
 
 export interface CodeBridge {
   receive: (e: BridgeEnvelope) => void;
+  errors: () => readonly string[];
   close: () => void;
 }
 
@@ -53,9 +53,6 @@ type PortTarget = {
 export const SILENT_ERROR = 'It stopped answering for 2 s.';
 
 const MAX_ERRORS = 50;
-const PANEL_ERRORS = new Map<string, string[]>();
-
-export const codePanelErrors = (panel: string): readonly string[] => PANEL_ERRORS.get(panel) ?? [];
 
 const isAction = (name: string): name is CaseAction => (CASE_ACTIONS as readonly string[]).includes(name);
 
@@ -94,8 +91,6 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   let closed = false;
   let heard = clock.now();
   let unanswered = 0;
-
-  PANEL_ERRORS.set(o.panel, errors);
 
   const post = (message: StudioMessage) => port?.postMessage(message);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
@@ -163,6 +158,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   };
 
   const stopPing = clock.every(PING_MS, () => {
+    if (!port) return;
+
     unanswered++;
 
     if (unanswered >= SILENT_MS / PING_MS && clock.now() - heard >= SILENT_MS) fail(SILENT_ERROR);
@@ -184,6 +181,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
         { targetOrigin: '*', transfer: [channel.port2] },
       );
     },
+    errors: () => errors,
     close,
   };
 }

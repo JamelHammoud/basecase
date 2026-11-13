@@ -126,7 +126,6 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
   };
 
   bridge = openCodeBridge({
-    panel: 'test',
     frame: () => frame.win,
     bus: o.bus,
     scope: o.scope,

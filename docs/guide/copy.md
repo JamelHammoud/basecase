@@ -61,7 +61,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 
 ### 3c. Words and patterns to avoid
 
-The single words and separators below are linted: `basecase/copy` (`tools/eslint/copy.mjs`) checks JSX text, rendered attributes and properties (`label`, `title`, `placeholder`, `aria-label`, `description`, `message`, `text`…), toasts and confirms in `src/` and the app menu, against the list in [`tools/eslint/copy-banned.mjs`](../../tools/eslint/copy-banned.mjs). Add a banned word there, not here alone. The rest of the table still needs a reader.
+Most single words and the separators below are linted: `basecase/copy` (`tools/eslint/copy.mjs`) checks JSX text, rendered attributes and properties (`label`, `title`, `placeholder`, `aria-label`, `description`, `message`, `text`…), toasts and confirms in `src/` and the app menu, against the list in [`tools/eslint/copy-banned.mjs`](../../tools/eslint/copy-banned.mjs). Add a banned word there, not here alone. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
 
 | Avoid | Why | Use instead |
 |---|---|---|
@@ -90,8 +90,7 @@ The single words and separators below are linted: `basecase/copy` (`tools/eslint
 - [ ] If it asks for work, does it start with the verb, and does clicking it help do the work?
 - [ ] Is the most important word first?
 - [ ] Same word as everywhere else for this thing? Right casing for this element?
-- [ ] No banned words (§3c)?
-- [ ] No `·` (or a stand-in glyph) between items? Use layout instead (§3b-16).
+- [ ] No banned words (“yet”, “please”, “Oops”, “Invalid…”; §3c) and no `·` or stand-in glyph between items (§3b-16)? `basecase/copy` lints both; the rest of §3c is yours to catch.
 
 **The copy budget.** On every pull request, Check's `copy` job (`tools/check-copy-budget.mjs`, logic in `tools/copy/`) collects the user-facing strings in each changed `src/` file before and after: JSX text, labelling props (`aria-label`, `title`, `placeholder`, `label`, `alt`, `tooltip`, `hint`…), `showToast` / `toastInFront` / `notify` / `confirmAction` arguments, and `label` / `title` / `hint` properties of command and menu objects. Tests, `src/data/` and strings that are only symbols, numbers, units, ids or paths are skipped. It prints `Copy: +N −M` and fails when:
 

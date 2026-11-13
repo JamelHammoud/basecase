@@ -7,6 +7,7 @@ import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { GroundSteer } from './groundSteer';
 import { boundEffector, robotFacts, type EndEffector, type RobotFacts } from './robotFit';
+import { toCommand } from './caseDrives';
 import { caseSlots, type Case, type ReferenceCommand } from './schema';
 
 export interface CaseBase {
@@ -92,8 +93,6 @@ export function steerFor({ setup, model, rig, parts, kase }: SteerFor): GroundSt
     sideways: setup.kind === 'legs',
   });
 }
-
-const toCommand = (c: ReferenceCommand): DriveCommand => ({ v: c.v ?? [0, 0, 0], target: c.target, aux: c.aux });
 
 export class ReferencePlayer {
   private readonly timeline: ReferenceCommand[];

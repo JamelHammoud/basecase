@@ -61,4 +61,5 @@ export const toCommand = (c: ReferenceCommand, slot = 0): DriveCommand => ({
   v: c.v ?? [0, 0, 0],
   target: c.target,
   aux: c.aux,
+  ...(c.joints ? { joints: c.joints } : {}),
 });

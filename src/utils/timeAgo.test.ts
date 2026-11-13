@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agoPhrase, dayLabel, fullDate, timeAgo } from './timeAgo';
+import { agoPhrase, clockTime, dayLabel, fullDate, timeAgo } from './timeAgo';
 
 const now = new Date('2026-11-13T15:00:00');
 const before = (s: number) => new Date(now.getTime() - s * 1000).toISOString();
@@ -42,5 +42,12 @@ describe('dayLabel', () => {
 describe('fullDate', () => {
   it('spells out the month and always keeps the year', () => {
     expect(fullDate(now)).toBe('November 13, 2026');
+  });
+});
+
+describe('clockTime', () => {
+  it('reads the same on every machine, with a plain space', () => {
+    expect(clockTime(new Date('2026-11-13T14:32:00'))).toBe('2:32 PM');
+    expect(clockTime(new Date('2026-11-13T09:05:00').getTime())).toBe('9:05 AM');
   });
 });

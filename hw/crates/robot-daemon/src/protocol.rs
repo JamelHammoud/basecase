@@ -57,6 +57,8 @@ enum Outbound<'a> {
         at_us: u64,
         code: &'a str,
         message: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        id: Option<u8>,
     },
     Mode {
         at_us: u64,
@@ -142,10 +144,16 @@ struct JointStatus {
 
 pub fn event_line(event: &DaemonEvent) -> String {
     let outbound = match event {
-        DaemonEvent::Fault { at_us, code, message } => Outbound::Fault {
+        DaemonEvent::Fault {
+            at_us,
+            code,
+            message,
+            id,
+        } => Outbound::Fault {
             at_us: *at_us,
             code,
             message,
+            id: *id,
         },
         DaemonEvent::Mode { at_us, mode } => Outbound::Mode {
             at_us: *at_us,
@@ -340,10 +348,21 @@ mod tests {
             at_us: 5,
             code: "overheat".into(),
             message: "Servo 2 is hot.".into(),
+            id: Some(2),
         });
 
         assert!(!line.contains('\n'));
         assert!(line.contains(r#""event":"fault""#));
+        assert!(line.contains(r#""id":2"#));
+
+        let unnamed = event_line(&DaemonEvent::Fault {
+            at_us: 5,
+            code: "client_lost".into(),
+            message: "The app stopped talking to the robot.".into(),
+            id: None,
+        });
+
+        assert!(!unnamed.contains(r#""id""#));
     }
 
     #[test]

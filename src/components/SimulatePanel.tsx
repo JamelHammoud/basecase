@@ -7,6 +7,7 @@ import type { SkillRow } from '../skills/skillRows';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
+import type { CaseCheck } from '../readiness/caseChecks';
 import type { ShareRobot } from '../workspace/useShareRobot';
 import type { SceneSkills } from '../workspace/useSkills';
 import { CaseSection, TrySection } from './simulate/CaseSections';
@@ -26,7 +27,8 @@ interface SimulatePanelProps {
   policies: PolicyRecord[];
   onSelectParts: (ids: string[]) => void;
   onDeletePolicy: (id: string) => void;
-  onNewCase: () => void;
+  caseCheck: CaseCheck | null;
+  onOpenCaseCheck: () => void;
   skills: SceneSkills;
   onTeach: ((goal: string) => void) | null;
   onRunCase: () => void;
@@ -41,7 +43,7 @@ function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTea
 }
 
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
-  const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy, onNewCase } = props;
+  const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy } = props;
   const { skills, onTeach, share } = props;
   const walk = useWalkTeaching(skills, onTeach);
   const skillActions = {
@@ -81,7 +83,14 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       <SimControls sim={sim} on={on} />
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {kase && <CaseSection cases={cases} onNewCase={onNewCase} onRun={props.onRunCase} />}
+        {kase && (
+          <CaseSection
+            cases={cases}
+            check={props.caseCheck}
+            onOpenCheck={props.onOpenCaseCheck}
+            onRun={props.onRunCase}
+          />
+        )}
         {kase && (
           <TrySection
             cases={cases}

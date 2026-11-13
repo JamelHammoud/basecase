@@ -54,8 +54,11 @@ function failureLine(runs: CaseRuns): string {
 }
 
 export function runCaseText(kase: Pick<Case, 'name'>, runs: CaseRuns, cached: boolean): string {
-  if (runs.refusal)
-    return `Case ${kase.name}: the robot can't enter it. ${runs.refusal} Change the design so it fits, then run_case again.`;
+  if (runs.refusal) {
+    const why = runs.misfit ? "can't enter it" : "can't run it";
+
+    return `Case ${kase.name}: the robot ${why}. ${runs.refusal} Change the design so it does, then run_case again.`;
+  }
 
   const needed = passesNeeded(runs.runs);
   const head = `Case ${kase.name}: passed ${runs.passes} of ${runs.runs} randomized runs (friction, mass, servo strength and delay varied); median margin ${margin(runs.medianMargin)}.`;

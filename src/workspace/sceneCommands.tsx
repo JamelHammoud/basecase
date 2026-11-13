@@ -144,7 +144,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
       group: 'Scene',
       label: 'Run Checks',
       icon: <PrinterIcon className={ic} />,
-      keywords: 'ready to build buildable audit blockers build check assemble',
+      keywords: 'ready to build buildable audit blockers build check assemble case fit robot',
       run: () => {
         core.tool.setRightTab('build');
         void core.readiness.checkNow();

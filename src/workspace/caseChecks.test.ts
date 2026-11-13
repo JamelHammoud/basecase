@@ -29,7 +29,7 @@ function sceneWith(robotId: string, templateId: PresetId) {
   return { parts: robot.parts, project, measures: {}, partTriangles: () => null };
 }
 
-const modelReply = { type: 'model', modelHash: 'm', walk: null } as const;
+const modelReply = { type: 'model', modelHash: 'm', walk: null, stop: null } as const;
 
 describe('Case rows in Checks', () => {
   beforeEach(() => {

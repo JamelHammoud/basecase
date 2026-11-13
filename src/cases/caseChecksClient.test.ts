@@ -27,7 +27,14 @@ class FakeWorker implements WorkerLike {
 
 const robot = { id: 'scene', parts: [], joints: [], measures: {}, triangles: {} } as WireRobot;
 const kase = { id: 'flag' } as Case;
-const runs = (seeds: number[], modelHash = 'm1') => ({ type: 'runs' as const, kase, modelHash, seeds, walk: null });
+const runs = (seeds: number[], modelHash = 'm1') => ({
+  type: 'runs' as const,
+  kase,
+  modelHash,
+  seeds,
+  walk: null,
+  stop: null,
+});
 const ran = { type: 'runs', result: { outcomes: [] } } as CaseCheckReply;
 
 function pool() {
@@ -76,7 +83,7 @@ describe('the Case checks pool', () => {
     workers[0].answer(ran);
     await running;
     expect(workers[0].posted[1].job.type).toBe('model');
-    workers[0].answer({ type: 'model', modelHash: 'm1', walk: null });
+    workers[0].answer({ type: 'model', modelHash: 'm1', walk: null, stop: null });
     await model;
     expect(workers[0].posted[2].job).toMatchObject({ seeds: [3] });
     expect(workers[0].posted[2].job).not.toHaveProperty('robot');

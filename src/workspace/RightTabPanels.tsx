@@ -10,6 +10,7 @@ import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
 import { measuredJoints } from '../reality/measuredJoints';
 import type { ProjectSettings } from '../types/robotics';
+import { caseCheckId, caseCheckOf } from '../readiness/caseChecks';
 import { findingQuote, fixPrompt } from '../readiness/readiness';
 import { showNewCase } from './caseCommands';
 import { calibrateJoints } from './operateCommands';
@@ -71,6 +72,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
         simTraining.cases.open(id);
         tool.setRightTab('sim');
       }}
+      onNewCase={simTraining.cases.builder.goals.length ? () => showNewCase(core) : undefined}
       onCalibrate={IS_WEB_DEMO ? undefined : (jointIds) => calibrateJoints(core, jointIds)}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
@@ -94,6 +96,16 @@ function useOpenGuide(core: WorkspaceCore) {
       if (ready) window.requestAnimationFrame(() => void guide.open());
     });
   };
+}
+
+function openCaseCheck(core: WorkspaceCore, caseId: string) {
+  core.tool.setRightTab('build');
+  window.requestAnimationFrame(() => {
+    const row = document.getElementById(caseCheckId(caseId));
+
+    row?.scrollIntoView({ block: 'center' });
+    row?.focus({ preventScroll: true });
+  });
 }
 
 function AgentTab(props: Omit<RightTabPanelsProps, 'actions'>) {
@@ -194,7 +206,8 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           policies={simTraining.policies}
           onSelectParts={setSelectedIds}
           onDeletePolicy={simTraining.deletePolicy}
-          onNewCase={() => showNewCase(core)}
+          caseCheck={simTraining.cases.active && caseCheckOf(core.readiness.current, simTraining.cases.active.id)}
+          onOpenCaseCheck={() => simTraining.cases.active && openCaseCheck(core, simTraining.cases.active.id)}
           skills={simTraining.skills}
           onTeach={onTeach}
           onRunCase={core.caseRun.enter}

@@ -136,7 +136,12 @@ describe('seeded Case runs', () => {
 
       expect(runs.refusal).toMatch(/wheels/);
       expect(row).toMatchObject({ status: 'fail', detail: '', caseId: 'reach-a-spot' });
-      expect(finding).toMatchObject({ level: 'note', check: 'Reach a Spot', text: runs.refusal });
+      expect(finding).toMatchObject({
+        level: 'note',
+        check: 'Reach a Spot',
+        text: runs.refusal,
+        fix: { kind: 'new-case' },
+      });
     },
     SIM_MS,
   );
@@ -260,6 +265,7 @@ describe('summarizing runs', () => {
       ],
       worstSeed: 3,
       refusal: null,
+      misfit: false,
     });
   });
 
@@ -270,6 +276,9 @@ describe('summarizing runs', () => {
   });
 
   it('reads a refusal from any batch', () => {
-    expect(summarizeRuns([{ refusal: 'No wheels.' }]).refusal).toBe('No wheels.');
+    expect(summarizeRuns([{ refusal: 'No wheels.', misfit: true }])).toMatchObject({
+      refusal: 'No wheels.',
+      misfit: true,
+    });
   });
 });

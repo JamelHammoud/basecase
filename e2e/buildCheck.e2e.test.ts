@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { presetCase } from '../src/cases/caseBuilder';
+import { robotFacts, slotRefusal } from '../src/cases/robotFit';
+import { caseSlots } from '../src/cases/schema';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
@@ -368,6 +370,51 @@ describe('Cases in Checks', () => {
     await app.page.keyboard.press('Enter');
     await expect.poll(focusedValue).toBe('/pass Reach a Spot');
     await app.page.locator(visible('textarea')).last().fill('');
+    expect(app.errors).toEqual([]);
+  }, 150000);
+
+  it('names why the robot doesn’t fit on the row and the Case header, and offers New Case', async () => {
+    const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+    const reason = slotRefusal(caseSlots(flag)[0], robotFacts(buildRig(arm.joints, arm.parts), arm.parts))!;
+
+    await app.page.evaluate(
+      ({ parts, joints, kase }) => {
+        const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
+      },
+      { parts: arm.parts, joints: arm.joints, kase: flag },
+    );
+    await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks().getByRole('button', { name: /^Reach a Spot/ });
+    const entry = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Reach a Spot/ }) })
+      .first();
+
+    await expect.poll(() => row.getAttribute('data-status'), { timeout: 90000 }).toBe('fail');
+    await expect.poll(() => entry.innerText(), { timeout: 10000 }).toContain(reason);
+
+    await row.click();
+    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
+
+    const header = app.page.locator(visible('[data-testid="case-check"]'));
+
+    expect(await app.page.locator(visible('button'), { hasText: 'Check Fit' }).count()).toBe(0);
+    await expect.poll(() => header.getAttribute('data-status'), { timeout: 10000 }).toBe('fail');
+    expect(await header.getAttribute('aria-label')).toBe(reason);
+
+    await header.click();
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.id ?? '')).toBe('case-check-reach-a-spot');
+
+    const note = entry.locator('ul > li').filter({ hasText: reason }).first();
+
+    await note.hover();
+    await note.getByRole('button', { name: 'New Case' }).click();
+    await expect.poll(() => app.page.locator(visible('[data-testid="new-case"]')).count(), { timeout: 10000 }).toBe(1);
+    await app.page.keyboard.press('Escape');
     expect(app.errors).toEqual([]);
   }, 150000);
 });

@@ -62,7 +62,11 @@ export function RoutineFlow({ flow, states, errors }: RoutineFlowProps) {
       x: e.clientX,
       y: e.clientY,
       items: [
-        { label: 'Add Step After', icon: <PlusIcon className="w-4 h-4" />, onSelect: () => editor.addAfter(node.id) },
+        {
+          label: 'Add Step After',
+          icon: <PlusIcon className="w-3.5 h-3.5" />,
+          onSelect: () => editor.addAfter(node.id),
+        },
         ...(kind === 'base' ? [] : [{ divider: true as const }, deleteEntry(() => editor.remove(node.id), '⌫')]),
       ],
     });

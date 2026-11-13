@@ -24,9 +24,10 @@ interface DevHookOptions {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
+  routeFiles: (files: File[]) => void;
 }
 
-export function useDevStudioHook({ active, core, actions, agent }: DevHookOptions) {
+export function useDevStudioHook({ active, core, actions, agent, routeFiles }: DevHookOptions) {
   const { docs, viewportRef, setSelectedIds, posing, loadSeed } = core;
   const { partsRef, projectRef } = docs;
   const { subscribePoses } = core.simTraining.sim;
@@ -42,6 +43,8 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
       setSelectedIds([]);
     },
     select: (ids) => setSelectedIds(ids),
+    dropFiles: routeFiles,
+    selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,
     simState: () => {
       const { sim, cases } = core.simTraining;
@@ -60,6 +63,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         activeCase: cases.active?.id ?? null,
         faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin, faults: t.manifest.faults ?? [] })),
+        scanPoints: viewportRef.current?.scanPointCount() ?? 0,
         fingerprints: modelFingerprints(core.simTraining.skills.model),
         controller: controllerState(sim.controller),
       };

@@ -8,8 +8,11 @@ import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from
 import { sceneToStl } from '../utils/aiHandoff';
 import { lastDownload } from '../utils/downloadBytes';
 import { replayErrors } from '../reality/jointReplay';
-import { bytesToBase64 } from '../utils/base64';
+import { base64ToBytes, bytesToBase64 } from '../utils/base64';
+import type { Angles } from '../robot/robotGap';
+import { degrees } from '../robot/robotGhost';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { twinSnapshot } from '../robot/robotTwin';
 import { importRobot } from '../utils/robotImport';
 import { downstreamOf } from '../utils/engineeringMass';
 import { sweepSamples } from '../utils/engineeringJoints';
@@ -31,6 +34,8 @@ export interface DevActions {
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   clear: () => void;
   select: (ids: string[]) => void;
+  dropFiles: (files: File[]) => void;
+  selection: () => string[];
   selectFace: (partId: string, normal: [number, number, number]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
@@ -113,6 +118,22 @@ const partSummaries = (parts: ScenePart[]) =>
     componentId,
   }));
 
+function robotGhostState(viewport: Viewport3DHandle | null) {
+  const twin = twinSnapshot();
+  const byJoint = (angles: Angles | null | undefined) =>
+    twin && angles
+      ? Object.fromEntries(twin.joints.map((id, k) => [id, angles[k] === null ? null : degrees(angles[k])]))
+      : null;
+
+  return {
+    layer: viewport?.ghostState() ?? null,
+    measured: byJoint(twin?.measured),
+    sim: byJoint(twin?.sim),
+    gaps: byJoint(twin?.gaps),
+    largest: twin?.largest ? { joint: twin.largest.joint, degrees: degrees(twin.largest.gap) } : null,
+  };
+}
+
 interface DevRecord {
   name?: string;
   parts: ScenePart[];
@@ -139,6 +160,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
     parts: () => partSummaries(partsRef.current),
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
+    checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
     lastDownload: () => {
@@ -152,9 +174,20 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
+    dropFiles: (files: Array<{ name: string; base64: string }>) =>
+      devRef.current.dropFiles(files.map((f) => new File([new Uint8Array(base64ToBytes(f.base64))], f.name))),
+    selection: () => devRef.current.selection(),
+    dragPart: (id: string, to: [number, number, number], free?: boolean) =>
+      viewportRef.current?.dragPart(id, to, free) ?? false,
+    project: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
+    mates: (id: string) => partsRef.current.find((p) => p.id === id)?.mates ?? [],
+    pose: (id: string) => {
+      const part = partsRef.current.find((p) => p.id === id);
+
+      return part && { position: part.position, rotation: part.rotation };
+    },
     selectFace: (partId: string, normal: [number, number, number]) => devRef.current.selectFace(partId, normal),
     triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
-    project: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
@@ -184,6 +217,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
+    robotGhost: () => robotGhostState(viewportRef.current),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

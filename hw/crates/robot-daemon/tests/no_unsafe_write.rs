@@ -20,6 +20,7 @@ enum Step {
 }
 
 struct Registers {
+    id: u16,
     torque: u16,
     goal: u16,
     limit: u16,
@@ -32,6 +33,7 @@ struct Registers {
 fn registers(family: Family) -> Registers {
     match family {
         Family::Feetech => Registers {
+            id: 5,
             torque: 40,
             goal: 42,
             limit: 48,
@@ -41,6 +43,7 @@ fn registers(family: Family) -> Registers {
             max_speed: 325,
         },
         Family::Dynamixel => Registers {
+            id: 7,
             torque: 64,
             goal: 116,
             limit: 100,
@@ -99,6 +102,7 @@ fn step_strategy() -> impl Strategy<Value = Step> {
             Just(Command::ClearFault),
             Just(Command::Enter(Mode::SetUp)),
             Just(Command::Enter(Mode::Test)),
+            (1u8..=3).prop_map(|id| Command::AssignId { id, model: 777 }),
         ]
         .prop_map(Step::Order),
     ]
@@ -199,12 +203,22 @@ fn check(rig: &Rig, record: &Record) -> Result<(), TestCaseError> {
     let calibration = Calibration::parse(CALIBRATION.as_bytes()).unwrap();
     let mut last_goal = [None::<i32>; 4];
     let mut last_limit = [u32::MAX; 4];
+    let mut powered = [false; 4];
 
     for write in rig.writes() {
         let id = usize::from(write.id);
         let raw = value(&write);
 
         prop_assert!(IDS.contains(&write.id), "write to an unknown servo: {write:?}");
+
+        if write.address == regs.torque {
+            powered[id] = raw == 1;
+        }
+
+        if write.address == regs.id {
+            prop_assert!(!powered[id], "ID written to a powered servo: {write:?}");
+            prop_assert!(IDS.contains(&(raw as u8)), "ID outside the robot: {write:?}");
+        }
 
         if write.address == regs.goal {
             let goal = raw as i32;
@@ -295,6 +309,53 @@ fn the_checker_sees_real_motion() {
         assert!(goals > 100, "only {goals} goal writes: the property would be vacuous");
         check(&rig, &record).unwrap();
     }
+}
+
+#[test]
+fn numbering_factory_servos_then_moving_them_writes_nothing_unsafe() {
+    for family in [Family::Feetech, Family::Dynamixel] {
+        let mut rig = Rig::factory(family, Schedule::new());
+        let mut record = Record {
+            windows: Vec::new(),
+            commands: Vec::new(),
+        };
+
+        rig.wave = false;
+        rig.target = Some(vec![0.0, 0.0, 0.0]);
+        rig.command(Command::Enter(Mode::SetUp)).unwrap();
+
+        for id in [3, 2, 1] {
+            rig.plug_in();
+            rig.assign(id).unwrap();
+            observe_tick(&mut rig, &mut record);
+        }
+
+        rig.command(Command::Enter(Mode::Test)).unwrap();
+
+        for step in sweep() {
+            apply(&mut rig, &mut record, &step);
+            observe_tick(&mut rig, &mut record);
+        }
+
+        let ids_written = rig
+            .writes()
+            .iter()
+            .filter(|write| write.address == registers(family).id)
+            .count();
+
+        assert_eq!(ids_written, 2);
+        check(&rig, &record).unwrap();
+    }
+}
+
+#[test]
+fn the_checker_catches_an_id_written_to_a_powered_servo() {
+    let (rig, record) = run(Family::Feetech, &sweep());
+    let renumber = servo_wire::feetech::raw_frame(0xFE, 0x83, &[5, 1, 1, 9]);
+
+    check(&rig, &record).unwrap();
+    rig.tap.record(rig.now(), &renumber);
+    assert!(check(&rig, &record).is_err());
 }
 
 #[test]

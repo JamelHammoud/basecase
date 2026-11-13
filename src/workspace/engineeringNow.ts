@@ -8,6 +8,8 @@ import { SERVO_TOUCH_MM, servoTouchPairs } from '../utils/engineeringHeat';
 import type { EngineeringInputs, ServoLine, WalkSim } from '../utils/engineeringTypes';
 import { jointsWithChains } from '../assembly/rigJoints';
 import { platformBridge } from '../utils/platformBridge';
+import { payloadMapsIn } from '../three/analysis/analysisPool';
+import type { ArmModel } from '../utils/payload';
 import { rememberStress } from '../strength/fields';
 import type { StrengthJob } from '../strength/types';
 
@@ -54,6 +56,7 @@ const sweepKey = (spec: SweepSpec) =>
 async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs) {
   const sweeps = new Map<string, SweepSpec>();
   const jobs = new Map<string, StrengthJob>();
+  const arms = new Map<string, ArmModel>();
 
   runEngineering({
     ...input,
@@ -67,14 +70,21 @@ async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs)
 
       return asked.map(() => null);
     },
+    payload: (arm) => {
+      arms.set(JSON.stringify(arm), arm);
+
+      return null;
+    },
   });
 
-  const [clashes, readings] = await Promise.all([
+  const [clashes, readings, maps] = await Promise.all([
     viewport.sweepClashes([...sweeps.values()]),
     viewport.strength([...jobs.values()]),
+    payloadMapsIn([...arms.values()]),
   ]);
   const clashOf = new Map([...sweeps.keys()].map((k, i) => [k, clashes[i] ?? []]));
   const readingOf = new Map([...jobs.keys()].map((k, i) => [k, readings[i] ?? null]));
+  const mapByArm = new Map([...arms.keys()].map((k, i) => [k, maps[i] ?? null]));
 
   rememberStress(readings);
 
@@ -82,6 +92,7 @@ async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs)
     ...input,
     sweep: (spec) => clashOf.get(sweepKey(spec)) ?? [],
     strength: (asked) => asked.map((job) => readingOf.get(job.key) ?? null),
+    payload: (arm) => mapByArm.get(JSON.stringify(arm)) ?? null,
   });
 }
 

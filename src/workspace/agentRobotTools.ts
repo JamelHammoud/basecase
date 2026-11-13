@@ -18,6 +18,8 @@ import { findObjects, insertObject } from './agentSimReadyTools';
 import { newId } from './helpers';
 import { robotHeightMm } from './robotPlacement';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
+import type { Leader } from '../leader/makeLeader';
+import { scopeOf } from '../agent/agentPoseShared';
 import { wrapRobotRequest } from './agentWrapRequest';
 import type { WrapRobot } from './useWrapRobot';
 
@@ -25,6 +27,7 @@ type Payload = Record<string, unknown>;
 
 export interface PoseToolContext extends PoseContext {
   setAction: (action: string) => void;
+  makeLeader: (robot?: string) => Leader | null;
   wrap: WrapRobot['wrap'];
   importRobot: (
     source: RobotSource,
@@ -67,6 +70,30 @@ async function importRobotTool(ctx: PoseToolContext, payload: Payload): Promise<
   return { text: importedText(await ctx.importRobot(source, undefined, { ask: false })) };
 }
 
+function leaderText(leader: Leader) {
+  const printed = leader.parts.filter((p) => p.cad).map((p) => p.name);
+
+  return (
+    `Opened "${leader.name}" in a new scene tab: ${leader.joints.length} joints in the follower's order (${leader.joints.map((j) => j.id).join(', ')}), ` +
+    `one Dynamixel XL330-M288 per joint, and ${printed.length} printed parts (${printed.join(', ')}). Its scene records this scene and the joints it leads.`
+  );
+}
+
+function makeLeaderTool(ctx: PoseToolContext, payload: Payload): PoseReply {
+  const wanted = typeof payload.robot === 'string' ? payload.robot : undefined;
+  const scope = wanted ? scopeOf(ctx, wanted) : null;
+
+  if (typeof scope === 'string') return { text: scope };
+
+  ctx.setAction('Making a leader');
+
+  const leader = ctx.makeLeader(scope?.key);
+
+  return {
+    text: leader ? leaderText(leader) : 'No fixed-base arm whose movable joints form one chain.',
+  };
+}
+
 const POSE_TOOLS: Record<string, (ctx: PoseToolContext, payload: Payload) => PoseReply | Promise<PoseReply>> = {
   get_rig: (ctx, payload) => getRig(ctx, typeof payload.robot === 'string' ? payload.robot : undefined),
   pose: (ctx, payload) => {
@@ -84,6 +111,7 @@ const POSE_TOOLS: Record<string, (ctx: PoseToolContext, payload: Payload) => Pos
 
     return retargetRequest(ctx, payload as RetargetPayload);
   },
+  make_leader: makeLeaderTool,
   find_objects: findObjects,
   insert_object: insertObject,
   wrap_robot: (ctx, payload) =>
@@ -99,6 +127,7 @@ export const POSE_TOOL_KINDS = [
   'animate',
   'retarget',
   'import_robot',
+  'make_leader',
   'wrap_robot',
   'find_objects',
   'insert_object',

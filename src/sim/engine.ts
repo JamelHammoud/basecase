@@ -12,6 +12,8 @@ import { ActuatorFaults, type FaultKind } from './faults';
 import { policyObsSize, type PolicySpec } from './policy';
 import { stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
+import { readJointAngles, readJointTargets } from './jointReadout';
+import { Scanner } from './scanner';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -79,6 +81,7 @@ export class SimEngine {
   private faults: ActuatorFaults;
   private policyState: PolicyState | null = null;
   readonly dt: number;
+  readonly scanner: Scanner | null;
   private mj: MainModule;
   readonly sim: SimModel;
 
@@ -89,11 +92,11 @@ export class SimEngine {
     this.data = new mj.MjData(this.model);
     this.dt = this.model.opt.timestep;
     this.grab = new GrabForce(this.model, this.data, this.dt);
+    this.scanner = Scanner.create(mj, this.model, this.data, sim.scans);
     this.faults = new ActuatorFaults(this.model);
 
     const id = (type: number, name: string) => mj.mj_name2id(this.model, type, name);
-    const BODY = mj.mjtObj.mjOBJ_BODY.value,
-      JOINT = mj.mjtObj.mjOBJ_JOINT.value;
+    const [BODY, JOINT] = [mj.mjtObj.mjOBJ_BODY.value, mj.mjtObj.mjOBJ_JOINT.value];
 
     this.bodyIds = sim.bodies.map((b) => id(BODY, b.name));
 
@@ -376,6 +379,7 @@ export class SimEngine {
       this.grab.apply();
       mj.mj_step(model, data);
       afterStep?.();
+      this.scanner?.tick();
       this.stepHook?.();
 
       const force = data.actuator_force;
@@ -486,19 +490,15 @@ export class SimEngine {
   }
 
   jointTargets(out = new Float64Array(this.sim.joints.length)): Float64Array {
-    this.sim.joints.forEach((j, i) => {
-      const commanded = j.actuator >= 0 && j.drive === 'position';
+    return readJointTargets(this.sim, this.data, this.jointQpos, out);
+  }
 
-      out[i] = commanded ? this.data.ctrl[j.actuator] : this.data.qpos[this.jointQpos[i]];
-    });
-
-    return out;
+  jointAngles(): Float64Array {
+    return readJointAngles(this.data, this.jointQpos);
   }
 
   private eyesFor(policy: PolicySpec): EyeCaster | null {
-    if (!policy.eyes?.length) return null;
-
-    const caster = eyeCaster(this.mj, this.model, this.data, policy.eyes);
+    const caster = policy.eyes?.length ? eyeCaster(this.mj, this.model, this.data, policy.eyes) : null;
 
     if (typeof caster === 'string') throw new Error(`${caster} Train it again.`);
 
@@ -507,6 +507,7 @@ export class SimEngine {
 
   dispose() {
     this.policyState?.eyes?.dispose();
+    this.scanner?.dispose();
     this.data.delete();
     this.model.delete();
   }

@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { THEME_COLORS } from '../../design-system/theme';
+import type { Snap } from '../../agent/snap';
+import type { ScenePart } from '../../types/robotics';
+import { PortSnap } from './portSnap';
 import { roundedUpdate } from './transformRounding';
+import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
 
 interface PivotStart {
@@ -28,6 +32,8 @@ export class Gizmo {
 
   readonly hand = namedObject('sim-hand');
 
+  readonly snap: PortSnap;
+
   private poseDrag: { quaternion: THREE.Quaternion; position: THREE.Vector3 } | null = null;
 
   private handStart: { quaternion: THREE.Quaternion; ids: string[] } | null = null;
@@ -38,6 +44,7 @@ export class Gizmo {
 
   constructor(ctx: ViewportContext) {
     this.ctx = ctx;
+    this.snap = new PortSnap(ctx);
 
     const { scene, camera, renderer } = ctx.stage;
 
@@ -54,6 +61,7 @@ export class Gizmo {
 
   dispose(): void {
     this.controls.dispose();
+    this.snap.dispose();
   }
 
   get draggedObject(): THREE.Object3D | null {
@@ -261,6 +269,8 @@ export class Gizmo {
     if (object === this.hand) this.moveHand();
 
     if (object === this.pivot) this.movePivotItems();
+
+    if (object?.userData.partId) this.snap.move(object);
   }
 
   private moveHand(): void {
@@ -347,6 +357,9 @@ export class Gizmo {
     this.ctx.ui.setSnapBypassed(dragging && this.ctx.runtime.shiftHeld);
 
     const object = this.controls.object;
+    const partId = object?.userData.partId as string | undefined;
+
+    if (dragging && partId && this.controls.getMode() === 'translate') this.snap.begin(partId);
 
     if (dragging || !object || object === this.jointPivot) {
       return;
@@ -364,11 +377,60 @@ export class Gizmo {
     }
 
     const scaled = this.controls.getMode() === 'scale';
+    const snapped = this.snap.end();
     const rest = this.ctx.layer.toRest(part.id, object.position, object.quaternion);
     const update = roundedUpdate(part, rest, { free: this.ctx.runtime.shiftHeld, scale: scaled ? object.scale : null });
+
+    if (this.controls.getMode() === 'translate' && this.placeMated(part, update, snapped)) return;
 
     if (update.dimensions) object.scale.set(1, 1, 1);
 
     this.ctx.props().onUpdatePartTransform(part.id, update.position, update.rotation, update.dimensions);
+  }
+
+  resnap(): void {
+    this.snap.resnap(this.draggedObject);
+    this.ctx.loop.invalidate();
+  }
+
+  dragTo(id: string, to: Vec3, free = false): boolean {
+    const object = this.ctx.layer.get(id);
+
+    if (!object) return false;
+
+    const held = this.ctx.runtime.freeHeld;
+
+    this.ctx.runtime.freeHeld = free;
+    this.snap.begin(id);
+    object.position.set(...to);
+    object.updateMatrixWorld(true);
+    this.snap.move(object);
+
+    const snapped = this.snap.snapped();
+
+    this.commitSingle(object);
+    this.ctx.runtime.freeHeld = held;
+
+    return snapped;
+  }
+
+  private placeMated(part: ScenePart, update: { position: Vec3; rotation: Vec3 }, snap: Snap | null): boolean {
+    const place = this.ctx.props().onPlacePart;
+
+    if (!place || (!snap && !part.mates?.length)) return false;
+
+    if (snap) {
+      place({ id: part.id, ...snap.placement });
+
+      return true;
+    }
+
+    const still = update.position.every((v, k) => Math.abs(v - part.position[k]) < 0.05);
+
+    if (still) return false;
+
+    place({ id: part.id, position: update.position, rotation: update.rotation, mates: undefined, frame: part.frame });
+
+    return true;
   }
 }

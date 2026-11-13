@@ -1,4 +1,6 @@
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
+import type { GhostState } from './ghostLayer';
+import type { RobotGhost } from '../../robot/robotGhost';
 import type { FixedCamera } from '../../cameras/fixed';
 import type { ThreeMfFileSpec } from '../analysis/analysisOps';
 import type { MeshData } from '../../print/threeMf';
@@ -6,12 +8,14 @@ import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
 import type { ChainResult } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
+import type { Snap } from '../../agent/snap';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
 import type { SceneShapes } from '../analysis/sceneShapes';
 import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from '../analysis/jointAxis';
+import type { CheckDot } from '../../utils/engineeringTypes';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 import type {
   CameraPreset,
@@ -40,6 +44,8 @@ export interface PartTransformUpdate {
   rotation: Vec3;
   dimensions?: ScenePart['dimensions'];
 }
+
+export type PartPlacement = { id: string } & Pick<ScenePart, 'position' | 'rotation' | 'mates' | 'frame'>;
 
 export interface PoseJointTarget {
   id: string;
@@ -85,6 +91,7 @@ export interface ViewportProps {
   onMarqueeSelect?: (ids: string[]) => void;
   onUpdatePartsTransform?: (updates: PartTransformUpdate[]) => void;
   onUpdatePartTransform: (id: string, position: Vec3, rotation: Vec3, dimensions?: ScenePart['dimensions']) => void;
+  onPlacePart?: (placement: PartPlacement) => void;
   onCommitSculptMesh: (id: string, sculptMesh: SculptMeshData) => void;
   annotateMode?: boolean;
   measureMode?: boolean;
@@ -101,6 +108,7 @@ export interface ViewportProps {
   selectedMarkId?: string | null;
   agentFrames?: AgentFrame[];
   fixedCameras?: FixedCamera[];
+  checkDots?: CheckDot[] | null;
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
   onEraseMarks?: (ids: string[]) => void;
@@ -150,6 +158,8 @@ export interface Viewport3DHandle {
   focusSelected: () => void;
   zoomBy: (factor: number) => void;
   pickAt: (clientX: number, clientY: number) => { partId: string | null; point: Vec3 } | null;
+  dragPart: (id: string, to: Vec3, free?: boolean) => boolean;
+  previewSnap: (part: ScenePart | null, free: boolean) => Snap | null;
   captureViews: (
     views: string[],
     onlyIds?: string[],
@@ -176,6 +186,10 @@ export interface Viewport3DHandle {
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
+  setScan: (points: Float32Array | null) => void;
+  scanPointCount: () => number;
+  setGhost: (ghost: RobotGhost | null) => void;
+  ghostState: () => GhostState | null;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   restShapes: (ids: string[]) => SceneShapes;
@@ -186,6 +200,7 @@ export interface Viewport3DHandle {
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;
+  checkDotCount: () => number;
 }
 
 export const MIN_DIST = 25;

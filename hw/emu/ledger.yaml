@@ -41,6 +41,12 @@ feetech:
   - behaviour: Broadcast ping is answered by every servo in ID order, about 3 ms apart.
     source: assumed
     note: rustypot lists broadcast ping as supported for the STS3215; the spacing is invented.
+  - behaviour: Servos sharing an ID answer a broadcast ping at the same moment, so their replies collide into one.
+    source: assumed
+    note: Same half-duplex model as addressed replies. Identical replies look like one servo, so the daemon probes a new servo's position before numbering it.
+  - behaviour: A new servo comes from the factory at ID 1, and the ID at address 5 can be rewritten between an unlock and a lock.
+    source: client-derived
+    note: LeRobot's motor setup writes ID 5 after clearing Lock 55 and assumes new servos answer at ID 1. Check both in the Stage 8 register dump.
   - behaviour: Sync read (0x82) is answered by each listed servo in list order, back to back.
     source: client-derived
     note: scservo_sdk GroupSyncRead reads one status per listed id in order. Timing between replies is assumed.
@@ -88,6 +94,9 @@ dynamixel:
   - behaviour: EEPROM writes are refused with an Access error while torque is on.
     source: datasheet
     note: e-Manual caution on the EEPROM area. The error code is from the protocol 2.0 error list.
+  - behaviour: A new XL330 comes from the factory at ID 1, and its ID sits at address 7 in EEPROM with no lock register.
+    source: datasheet
+    note: e-Manual control table (ID 7, default 1).
   - behaviour: Writes to read-only registers return an Access error.
     source: assumed
     note: Error code chosen from the protocol 2.0 list.

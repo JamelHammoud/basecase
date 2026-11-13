@@ -4,7 +4,7 @@ use crate::safety::{ReadBus, Reply};
 use crate::telemetry::block;
 use servo_wire::Family;
 
-const SCAN_TIMEOUT_US: u64 = 20_000;
+pub(super) const SCAN_TIMEOUT_US: u64 = 20_000;
 const DUPLICATE_PROBES: usize = 3;
 
 pub const STS3215_MODEL: u16 = 777;
@@ -18,26 +18,54 @@ pub fn expected_model(family: Family) -> u16 {
 }
 
 pub fn scan_bus(bus: &mut ReadBus, ids: &[u8]) -> Result<Hash, Fault> {
+    let scanned = scan_present(bus, ids)?;
+
+    match scanned.missing.first() {
+        Some(id) => Err(Fault::NoReply { id: *id }),
+        None => Ok(scanned.firmware),
+    }
+}
+
+pub struct Scanned {
+    pub firmware: Hash,
+    pub missing: Vec<u8>,
+}
+
+pub fn scan_present(bus: &mut ReadBus, ids: &[u8]) -> Result<Scanned, Fault> {
     let mut firmware = Vec::new();
+    let mut missing = Vec::new();
 
     for id in ids {
-        let (model, version) = identify(bus, *id)?;
-        let expected = expected_model(bus.family());
-
-        if model != expected {
-            return Err(Fault::WrongModel {
-                id: *id,
-                found: model,
-                expected,
-            });
+        match check_servo(bus, *id, expected_model(bus.family())) {
+            Ok(version) => {
+                firmware.push(*id);
+                firmware.extend_from_slice(&version);
+            }
+            Err(Fault::NoReply { .. }) => missing.push(*id),
+            Err(fault) => return Err(fault),
         }
-
-        probe_for_duplicates(bus, *id)?;
-        firmware.push(*id);
-        firmware.extend_from_slice(&version);
     }
 
-    Ok(digest(&firmware))
+    Ok(Scanned {
+        firmware: digest(&firmware),
+        missing,
+    })
+}
+
+pub(super) fn check_servo(bus: &mut ReadBus, id: u8, expected: u16) -> Result<Vec<u8>, Fault> {
+    let (model, version) = identify(bus, id)?;
+
+    if model != expected {
+        return Err(Fault::WrongModel {
+            id,
+            found: model,
+            expected,
+        });
+    }
+
+    probe_for_duplicates(bus, id)?;
+
+    Ok(version)
 }
 
 fn identify(bus: &mut ReadBus, id: u8) -> Result<(u16, Vec<u8>), Fault> {

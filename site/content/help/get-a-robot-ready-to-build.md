@@ -27,6 +27,8 @@ covers:
   - src/workspace/RightPanelTabs.tsx
   - src/workspace/viewCommands.tsx
   - src/workspace/sceneCommands.tsx
+  - src/utils/engineeringPayload.ts
+  - src/three/viewport/checkDots.ts
 ---
 
 Clear every problem the Build tab finds, so the design can be printed, bought and put together.
@@ -38,9 +40,12 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 5. Click **Fix** to hand the problem to the agent, or change the part yourself. On **Strength**, **Fix** prints the part on its strongest face instead.
 6. If the robot runs on a cable instead of a battery, open **Servo voltage** and type the supply's volts in **V**.
 7. Open **Supply current** and type the supply's amps in **A**.
-8. Wait for the header to read **Ready to build**. The checks run again on their own after every change.
+8. If the robot is an arm fixed in place, click **Payload** to see how much its hand holds at full reach and close in. While it's open, the canvas shows a dot wherever the hand reaches, bluer where it lifts more.
+9. Wait for the header to read **Ready to build**. The checks run again on their own after every change.
 
 ![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
+
+![An SO-101 arm inside a cloud of dots, with Payload open in Checks reading 1.26 kg at full reach, 1.88 kg close in](/help/get-a-robot-ready-to-build/payload.png)
 
 **Open Build** and **Run Checks** are also in ⌘K.
 

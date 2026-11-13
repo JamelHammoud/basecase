@@ -10,8 +10,15 @@ export interface BuildGuideRecord {
   coverDataUrl?: string;
 }
 
+export interface LeaderLink {
+  sceneId: string;
+  robot: string;
+  joints: Record<string, string>;
+}
+
 export interface ProjectRecords {
   buildGuide?: BuildGuideRecord;
+  leads?: LeaderLink;
   skeleton?: RobotSkeleton;
   interfaces?: InterfacePlan;
 }

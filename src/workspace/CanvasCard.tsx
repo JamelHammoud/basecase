@@ -5,7 +5,6 @@ import { FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
-import { SelectionBar } from './SelectionBar';
 import type { AgentSession } from './useAgentSession';
 import type { CanvasMenu } from './useCanvasMenu';
 import type { useCanvasDrop } from './useCanvasDrop';
@@ -76,9 +75,8 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
   );
 }
 
-function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProps & { showSelectionBar: boolean }) {
-  const { tool, selection, marks, toasts } = core;
-  const { ops, edits } = actions;
+function CanvasBottomBar({ core, actions, ui }: CanvasCardProps) {
+  const { tool, marks, toasts } = core;
 
   return (
     <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-[8px] pointer-events-none">
@@ -88,14 +86,6 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
         </div>
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
-      {showSelectionBar && !core.printing.mode && (
-        <SelectionBar
-          selectedParts={selection.selectedParts}
-          onBoolean={ops.runBoolean}
-          onGroup={edits.group}
-          onUngroup={edits.ungroup}
-        />
-      )}
       <div className="pointer-events-auto">
         <CanvasToolbar core={core} actions={actions} ui={ui} />
       </div>
@@ -105,11 +95,8 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
 
 export function CanvasCard(props: CanvasCardProps) {
   const { active, core, actions, agent, pointerHandlers, drop } = props;
-  const { selection, tool } = core;
   const { creation } = actions;
   const { imageInputRef } = creation;
-  const showSelectionBar =
-    selection.selectedParts.length > 1 && tool.transformMode !== 'pose' && !tool.marking && !tool.measuring;
 
   return (
     <main
@@ -136,7 +123,7 @@ export function CanvasCard(props: CanvasCardProps) {
         aria-hidden
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
       />
-      <CanvasBottomBar {...props} showSelectionBar={showSelectionBar} />
+      <CanvasBottomBar {...props} />
     </main>
   );
 }

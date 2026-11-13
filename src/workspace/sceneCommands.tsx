@@ -35,6 +35,7 @@ import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
 import { operateCommands } from './operateCommands';
+import { leaderCommands } from './leaderCommands';
 import { onshapeCommands } from './onshapeCommands';
 
 export interface CommandInputs {
@@ -406,6 +407,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...toolCommands(inputs),
   ...poseCommands(inputs),
   ...robotCommands(inputs),
+  ...leaderCommands(inputs),
   ...onshapeCommands(inputs),
   ...caseCommands(inputs),
   ...slashPaletteCommands(inputs),

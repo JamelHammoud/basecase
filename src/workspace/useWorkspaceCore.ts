@@ -8,6 +8,7 @@ import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
 import { useAnnotations } from './useAnnotations';
 import { useMarks, useMarkState } from './useMarks';
 import { useMeasure } from './useMeasure';
+import { useCadCompile } from './useCadCompile';
 import { usePanelSync } from './usePanelSync';
 import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
@@ -37,6 +38,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { showToast } = toasts;
 
   useRobotUpgrade(docs, showToast);
+  useCadCompile(docs);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const measure = useMeasure();
@@ -59,12 +61,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     measure,
     mark: { marking: markState.marking, setMarking },
   });
-  const marks = useMarks({
-    docs,
-    showToast,
-    selection: markState.selection,
-    tool: markState.tool,
-  });
+  const marks = useMarks({ docs, showToast, selection: markState.selection, tool: markState.tool });
   const posing = usePosing({
     parts,
     project,
@@ -108,6 +105,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
 
   const { setSceneId, setSceneName, setGlobalGoal } = scene;
   const { setProject, resetDoc, travel } = docs;
+  const { reset: resetAnnotations } = annotations;
   const { restorePose } = posing;
 
   const loadSeed = (next: WorkspaceSeed, message?: string) => {
@@ -117,7 +115,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     setGlobalGoal(next.globalGoal || '');
     setProject(projectFromSeed(next.project));
     resetDoc(next.parts || []);
-    annotations.reset(next.annotations || []);
+    resetAnnotations(next.annotations || []);
     setSelectedIds([]);
     tool.leaveSceneView();
 

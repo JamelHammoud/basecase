@@ -130,6 +130,7 @@ function checkSummaries(open: Finding[], rows: CheckRow[]): CheckSummary[] {
       status: checkStatus(row.check, open, row.status),
       detail: row.detail,
       ids: idsOf(row.check),
+      ...(row.dots?.length ? { hasDots: true } : {}),
     })),
   ];
 }

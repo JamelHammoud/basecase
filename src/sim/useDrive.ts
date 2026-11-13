@@ -11,6 +11,7 @@ import {
   fallCheckCommands,
   fallCheckPassed,
   policyCommand,
+  posePin,
   type DriveAccess,
   type DriveOffer,
   type VelocityDrive,
@@ -212,7 +213,9 @@ async function grantedModel(
 ): Promise<DriveAccess | null> {
   const { rig, parts, pose, robotKey, startSim, pinned } = inputs;
 
-  if (!modelRef.current || (pinned() && (!want.pose || want.velocity))) await startSim(null);
+  const poseOnly = want.pose && !want.velocity;
+
+  if (!modelRef.current || (pinned() && !poseOnly)) await startSim(poseOnly ? posePin({ rig, parts, robotKey }) : null);
 
   const access = (model: SimModel) =>
     driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: want.velocity, pose: want.pose });
@@ -292,7 +295,12 @@ export function useDrive(inputs: DriveInputs): SimDrive {
       closeSession(session);
 
       const robot = inputRobot(access, { rig: latest.current.rig, viewport: viewportRef.current });
+
+      session.current = ids;
+
       const refusal = robot && posesInputs(ids) ? await openInputs(ids, robot) : null;
+
+      if (session.current !== ids) return false;
 
       refused.current = refusal;
       session.current = refusal ? null : ids;

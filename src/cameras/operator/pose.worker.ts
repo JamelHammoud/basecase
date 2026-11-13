@@ -20,7 +20,6 @@ let feedTimer: ReturnType<typeof setTimeout> | null = null;
 let lastTimestamp = 0;
 let seenPerson = false;
 let closed = false;
-let loading = false;
 
 const post = (event: PoseEvent) => scope.postMessage(event);
 
@@ -77,7 +76,6 @@ function detectLatest() {
 }
 
 function loadEstimator() {
-  loading = true;
   loadPoseEstimator().then(({ landmarker, delegate }) => {
     if (closed || fed) return landmarker.close();
 
@@ -88,8 +86,6 @@ function loadEstimator() {
 
 function take(picture: Picture) {
   const seenAt = wallClock();
-
-  if (!estimator && !fed && !loading) loadEstimator();
 
   if (fed || !estimator || closed) return picture.close();
 
@@ -163,9 +159,11 @@ function open(msg: Extract<PoseRequest, { type: 'open' }>) {
   robot = msg.robot;
   follower = createPoseFollower(msg.robot);
 
+  fed = !!msg.standIn;
+
   if (msg.frames) pump(msg.frames).catch(fail);
 
-  fed = !!msg.standIn;
+  if (!fed) loadEstimator();
 }
 
 function close() {

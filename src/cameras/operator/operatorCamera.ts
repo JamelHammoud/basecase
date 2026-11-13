@@ -27,6 +27,7 @@ let lastTrack: MediaStreamTrack | null = null;
 let fresh: { follow: PoseFollow; seenAt: number; read: boolean } | null = null;
 let points: SkeletonPoint[] | null = null;
 let standIn: Extract<PoseRequest, { type: 'feed' }> | null = null;
+let settleOpen: ((refusal: string | null) => void) | null = null;
 const listeners = new Set<() => void>();
 const pointListeners = new Set<(next: SkeletonPoint[] | null) => void>();
 const latency = createLatencyLog(LATENCY_SAMPLES);
@@ -41,10 +42,26 @@ function setPoints(next: SkeletonPoint[] | null) {
   pointListeners.forEach((draw) => draw(next));
 }
 
-function receive(event: PoseEvent) {
-  if (event.type === 'error') return set({ error: event.message });
+function settle(refusal: string | null) {
+  const resolve = settleOpen;
 
-  if (event.type === 'ready') return set({ estimator: event.delegate });
+  settleOpen = null;
+  resolve?.(refusal);
+}
+
+function fail(message: string) {
+  settle(CAMERA_REFUSAL);
+  set({ error: message });
+}
+
+function receive(event: PoseEvent) {
+  if (event.type === 'error') return fail(event.message);
+
+  if (event.type === 'ready') {
+    settle(null);
+
+    return set({ estimator: event.delegate });
+  }
 
   fresh = event.follow && { follow: event.follow, seenAt: event.seenAt, read: false };
   setPoints(event.image);
@@ -65,7 +82,7 @@ function start(stream: MediaStream, robot: InputRobot) {
   const worker = new Worker(new URL('./pose.worker.ts', import.meta.url), { type: 'module' });
 
   worker.onmessage = (ev: MessageEvent<PoseEvent>) => receive(ev.data);
-  worker.onerror = (ev) => set({ error: ev.message || 'The pose worker stopped.' });
+  worker.onerror = (ev) => fail(ev.message || 'The pose worker stopped.');
 
   const frames = frameSource(stream, worker);
   const open: PoseRequest = { type: 'open', robot, frames: frames.frames, standIn: !!standIn };
@@ -84,6 +101,7 @@ function start(stream: MediaStream, robot: InputRobot) {
 export function closeOperatorCamera() {
   generation++;
   fresh = null;
+  settle(null);
 
   if (!session) return;
 
@@ -112,9 +130,20 @@ export async function openOperatorCamera(robot: InputRobot): Promise<string | nu
     return null;
   }
 
+  const waits = !standIn;
+  const ready = new Promise<string | null>((resolve) => {
+    settleOpen = resolve;
+  });
+
   start(stream, robot);
 
-  return null;
+  if (!waits) settle(null);
+
+  const refusal = await ready;
+
+  if (refusal && opening === generation) closeOperatorCamera();
+
+  return refusal;
 }
 
 export function latestFollow(): PoseFollow | null {
@@ -130,8 +159,14 @@ export function latestFollow(): PoseFollow | null {
 export function feedOperatorPose(samples: PoseSample[], fps?: number) {
   const feed: PoseRequest = { type: 'feed', samples, fps };
 
-  if (session) session.worker.postMessage(feed);
-  else standIn = feed;
+  if (!session) {
+    standIn = feed;
+
+    return;
+  }
+
+  session.worker.postMessage(feed);
+  settle(null);
 }
 
 export const operatorLatency = (): LatencyStats | null => latency.stats();

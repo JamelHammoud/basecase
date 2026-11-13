@@ -32,7 +32,7 @@ It works on humanoids and fixed arms. The camera's picture stays on your compute
 1. Click **Simulate** at the top of the right panel.
 2. In **Control**, click **Drive With Camera**.
 
-![Drive With Camera under Drive in the Simulate tab](/help/drive-a-robot-with-your-camera/control.png)
+![Drive With Camera in the Control section of the Simulate tab](/help/drive-a-robot-with-your-camera/control.png)
 
 3. The first time, allow Basecase to use the camera.
 4. Step back until the camera sees you from the hips up.

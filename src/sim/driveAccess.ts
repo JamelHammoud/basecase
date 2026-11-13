@@ -167,6 +167,15 @@ export function poseOffer(options: { rig: Rig; parts: ScenePart[]; robotKey?: st
   return hasArms(rig) || (facts.morphology === 'fixed' && !!facts.endEffector);
 }
 
+export function posePin(options: { rig: Rig; parts: ScenePart[]; robotKey?: string }): string | null {
+  const { rig, parts, robotKey } = options;
+  const robot = rig.robots.find((r) => r.key === robotKey) ?? rig.robots[0];
+
+  if (!robot || !hasArms(rig)) return null;
+
+  return robotFacts(rig, parts, robot.key).morphology === 'fixed' ? null : robot.key;
+}
+
 export const withVelocity = (offer: DriveOffer, velocityReady: boolean): DriveOffer =>
   offer === 'teach' && velocityReady ? 'drive' : offer;
 

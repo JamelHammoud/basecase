@@ -4,7 +4,7 @@ import { caseRobot } from '../cases/testing';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { humanoid } from '../utils/mocap.fixtures';
 import { buildRig } from '../utils/kinematics';
-import { driveAccess, poseOffer, type VelocityDrive } from './driveAccess';
+import { driveAccess, poseOffer, posePin, type VelocityDrive } from './driveAccess';
 import { SimEngine } from './engine';
 import { fixtureRobots } from './fixtures/robots';
 import { buildMjcf } from './mjcf';
@@ -32,6 +32,7 @@ describe('driving by pose', () => {
     const access = driveAccess({ rig, parts, model, pose: true });
 
     expect(access).toMatchObject({ kind: 'ready', cls: 'pose', pin: model.robots[0].key });
+    expect(posePin({ rig, parts })).toBe(model.robots[0].key);
 
     const pinned = g1(model.robots[0].key);
     const again = driveAccess({ rig, parts, model: pinned.model, pose: true });
@@ -55,6 +56,7 @@ describe('driving by pose', () => {
     const model = buildMjcf({ ...caseRobot(arm), rig: armRig, project: DEFAULT_PROJECT });
 
     expect(driveAccess({ rig: armRig, parts: arm.parts, model, pose: true })).toMatchObject({ cls: 'arm' });
+    expect(posePin({ rig: armRig, parts: arm.parts })).toBeNull();
     expect(poseOffer({ rig: armRig, parts: arm.parts })).toBe(true);
     expect(poseOffer({ rig: buildRig(rover.joints, rover.parts), parts: rover.parts })).toBe(false);
   });

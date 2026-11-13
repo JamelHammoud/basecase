@@ -70,6 +70,8 @@ Keys also let go when the window loses focus, so switching apps stops the robot.
 
 On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Camera**. In the web studio, allow the camera in the browser's site settings.
 
+The same message shows when pose estimation can't start, even with the camera allowed. The camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive With Camera** again.
+
 ## Drive is greyed out
 
 It reads "Checking it stays up" while a robot with legs walks a 5-second fall check in the background. Wait for it to finish; **Drive** then starts, or **Teach It to Move** takes its place.

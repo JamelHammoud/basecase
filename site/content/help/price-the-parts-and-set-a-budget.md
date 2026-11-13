@@ -52,6 +52,8 @@ The bar under the total shows how much is left, or how far over budget you are. 
 
 To keep the store page with a price, open **Listing** in the same sheet and paste the link into **Listing link**.
 
+To delete a saved price, click it, click **Delete Price**, then **Delete**. The line goes back to its list price, or to **Add Price** when it has none.
+
 ## Show prices in your currency
 
 Press ⌘, (Ctrl+, on Windows), choose **Build** and pick one of 30 currencies in **Currency** under **Prices**. Basecase converts at European Central Bank rates, updated once a day when the app starts. A price you type in your currency reads back exactly as you typed it.

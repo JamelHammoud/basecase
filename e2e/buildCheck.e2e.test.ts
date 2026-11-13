@@ -301,6 +301,38 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+
+  it('ask before deleting a saved price, then fall back to the list price', async () => {
+    await loadParts([servo]);
+
+    const bom = section(/^Bill of materials/);
+    const listPrice = bom.getByRole('button', { name: /^≈ / }).first();
+    const saved = bom.getByRole('button', { name: /^\$21\.50$/ });
+    const sheet = app.page.getByRole('dialog');
+    const closedGroup = bom.locator('li > button[aria-expanded="false"]');
+
+    await expect.poll(() => bom.locator('li > button[aria-expanded]').count(), { timeout: 10000 }).toBeGreaterThan(0);
+
+    while ((await closedGroup.count()) > 0) await closedGroup.first().click();
+
+    await listPrice.click();
+    await sheet.getByLabel('Price', { exact: true }).fill('21.50');
+    await sheet.getByRole('button', { name: 'Save' }).click();
+    await expect.poll(() => saved.isVisible(), { timeout: 10000 }).toBe(true);
+
+    await saved.click();
+    await sheet.getByRole('button', { name: 'Delete Price' }).click();
+
+    const confirm = app.page.getByRole('dialog', { name: /^Delete price for / });
+
+    await expect.poll(() => confirm.isVisible(), { timeout: 5000 }).toBe(true);
+    expect(await sheet.count()).toBe(1);
+    expect(await saved.isVisible()).toBe(true);
+
+    await confirm.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect.poll(() => listPrice.isVisible(), { timeout: 10000 }).toBe(true);
+    expect(await saved.count()).toBe(0);
+  }, 30000);
 });
 
 describe('Cases in Checks', () => {

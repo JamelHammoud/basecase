@@ -18,7 +18,8 @@ import { type PurchaseForm, canSave, formatPrice, initialPurchaseForm, linkError
 interface CheckSheetProps {
   line: BomLine;
   onClose: () => void;
-  onSave: (r: PurchaseRecord | null) => void;
+  onSave: (r: PurchaseRecord) => void;
+  onDelete: () => void;
 }
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -137,7 +138,7 @@ const SheetFields: React.FC<{
   );
 };
 
-export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave }) => {
+export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave, onDelete }) => {
   const money = useMoney();
   const formId = useId();
   const [form, setForm] = useState(() => initialPurchaseForm(line, money));
@@ -155,8 +156,8 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
       footer={
         <>
           {line.record && (
-            <Button variant="ghost" size="sm" onClick={() => onSave(null)}>
-              Remove Price
+            <Button variant="ghost" size="sm" onClick={onDelete}>
+              Delete Price
             </Button>
           )}
           <div className="flex-1 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>

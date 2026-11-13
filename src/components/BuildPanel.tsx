@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useScrollFade } from '../design-system';
+import { confirmAction, useScrollFade } from '../design-system';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
@@ -82,7 +82,11 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {
     await savePurchase(line.key, record);
     setChecking(null);
-    onToast(record ? `Saved price for ${line.name}` : `Removed price for ${line.name}`);
+    onToast(record ? `Saved price for ${line.name}` : `Deleted price for ${line.name}`);
+  };
+  const deletePrice = (line: BomLine) => {
+    setChecking(null);
+    confirmAction({ title: `Delete price for ${line.name}?`, onConfirm: () => void savePrice(line, null) });
   };
 
   return (
@@ -131,6 +135,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           line={checking}
           onClose={() => setChecking(null)}
           onSave={(record) => savePrice(checking, record)}
+          onDelete={() => deletePrice(checking)}
         />
       )}
     </div>

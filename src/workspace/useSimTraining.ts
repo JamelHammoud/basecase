@@ -1,10 +1,12 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { confirmAction } from '../design-system/confirmStore';
+import { modelFingerprints } from '../sim/policyFreshness';
 import type { VelocitySource } from '../sim/useDrive';
 import { useSimulation } from '../sim/useSimulation';
 import { useTraining } from '../sim/useTraining';
 import { platformBridge } from '../utils/platformBridge';
+import type { PolicyRecord } from '../types/robotics';
 import type { Posing } from '../utils/usePosing';
 import type { ShowToast, StudioShared } from './types';
 import { useCases } from './useCases';
@@ -20,6 +22,14 @@ interface SimTrainingOptions {
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
   studio: Pick<StudioShared, 'openSettings'>;
+}
+
+function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: string | null): PolicyRecord[] {
+  const at = policies.findIndex((x) => x.id === replaces);
+
+  if (at < 0) return [...policies.filter((x) => x.id !== record.id), record];
+
+  return policies.map((x, i) => (i === at ? record : x)).filter((x, i) => i === at || x.id !== record.id);
 }
 
 export function useSimTraining(options: SimTrainingOptions) {
@@ -47,8 +57,12 @@ export function useSimTraining(options: SimTrainingOptions) {
     buildModel: sim.buildModel,
     robotKey: posing.robot?.group.key ?? posing.rig.robots[0]?.key ?? null,
     policies,
-    onPolicy: (record) =>
-      setProject((p) => ({ ...p, policies: [...(p.policies ?? []).filter((x) => x.id !== record.id), record] })),
+    fingerprints: modelFingerprints(skills.model),
+    onPolicy: (record, replaces) => {
+      setProject((p) => ({ ...p, policies: withPolicy(p.policies ?? [], record, replaces) }));
+
+      if (replaces && replaces !== record.id) void platformBridge.deletePolicy(replaces);
+    },
   });
 
   const removePolicy = (id: string) => {

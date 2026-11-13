@@ -59,7 +59,7 @@ The canvas overlay (`DriveOverlay`) shows “Fell. Press R.”, speed in m/s for
 
 A try records at 50 Hz in the worker (`src/sim/recorder.ts`, hung on `SimEngine.stepHook`, the second step slot): time, actions, qpos, qvel and every body's pose (kinematics refreshed first, so poses match qpos). It ends when the Case's time runs out, on End Try, or when driving stops. `scoreTry` runs the Case's probes and contract over it; `tryManifest` stores the Case and model hashes, seed, frame count and step. Recordings live in IndexedDB (`basecase-tries`, `src/cases/tryStore.ts`); `project.tries` holds only the records and `sharedScene` strips them from `.basecase` files, like policies. Replay sets the recorded qpos frame by frame in the worker.
 
-The filmstrip (`src/cases/filmstrip.ts`, drawn by `filmstrip.worker.ts` on an `OffscreenCanvas`) projects each part's box and the world's objects at four moments of a try, in the same three-quarter view as captures. Results list tries worst first.
+The filmstrip (`src/cases/filmstrip.ts`, drawn by `filmstrip.worker.ts` on an `OffscreenCanvas`) projects each part's box and the world's objects at four moments of a try, in the same three-quarter view as captures. Results list tries worst first. `useFilmstrip` revokes a strip's blob URL only once a newer strip has replaced it on screen (or the row is gone): a re-rendered row that loads a revoked URL logs `net::ERR_FILE_NOT_FOUND`, which fails the Cases e2e.
 
 A recording also keeps each joint's `qpos` address (`Recording.jointQpos`, from `SimEngine.jointAddresses`), so a dataset can read joint state without loading MuJoCo. Tries recorded before it existed have none and can't be exported.
 

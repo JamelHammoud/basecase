@@ -138,7 +138,8 @@ export class Updates {
     this.say('error');
 
     if (installing) void this.tellInstallFailed();
-    else if (asked) void dialog.showMessageBox({ message: 'Couldn’t check for updates', detail: 'Try again later.' });
+    else if (asked)
+      void dialog.showMessageBox({ message: 'Couldn’t check for updates', detail: 'Check again in a minute.' });
   }
 
   say(word, version) {

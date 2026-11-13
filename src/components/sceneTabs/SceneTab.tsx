@@ -1,5 +1,5 @@
 import React from 'react';
-import { AgentSpinner, TextInput, Tooltip, CloseIcon } from '../../design-system';
+import { AgentSpinner, RenameField, Tooltip, CloseIcon } from '../../design-system';
 import type { SceneTabInfo } from '../SceneTabs';
 
 export interface SceneTabHandlers {
@@ -9,7 +9,7 @@ export interface SceneTabHandlers {
   onPointerEnter: () => void;
   onPointerLeave: () => void;
   onStartRename: () => void;
-  onFinishRename: (name: string) => void;
+  onFinishRename: (name: string | null) => void;
   onMenu: (e: React.MouseEvent<HTMLDivElement>) => void;
   onCloseTab: () => void;
 }
@@ -23,30 +23,6 @@ function tabFill(active: boolean, dragging: boolean) {
 
   return dragging ? `bg-white/[0.07] ${edge}` : `hover:bg-white/[0.05] ${edge}`;
 }
-
-const RenameField: React.FC<{ name: string; onFinish: (name: string) => void }> = ({ name, onFinish }) => (
-  <div className="flex-1 min-w-0" onPointerDown={(e) => e.stopPropagation()}>
-    <TextInput
-      bare
-      autoFocus
-      defaultValue={name}
-      aria-label="Scene name"
-      className="h-[24px]! pl-1.5! text-[13px]"
-      onFocus={(e) => e.currentTarget.select()}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-
-        if (e.key === 'Enter') e.currentTarget.blur();
-
-        if (e.key === 'Escape') {
-          e.currentTarget.value = name;
-          e.currentTarget.blur();
-        }
-      }}
-      onBlur={(e) => onFinish(e.currentTarget.value.trim())}
-    />
-  </div>
-);
 
 export const SceneTab: React.FC<{
   tab: SceneTabInfo;
@@ -81,7 +57,7 @@ export const SceneTab: React.FC<{
     <div className="relative flex-1 min-w-0 self-stretch flex items-center gap-2 pl-[10px]">
       {tab.busy && <AgentSpinner />}
       {renaming ? (
-        <RenameField name={tab.name} onFinish={h.onFinishRename} />
+        <RenameField name={tab.name} label="Scene name" onDone={h.onFinishRename} />
       ) : (
         <span
           className={`flex-1 min-w-0 truncate text-[13px] transition-colors duration-150 ${

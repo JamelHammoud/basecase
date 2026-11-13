@@ -39,7 +39,7 @@ Nothing installs when you quit Basecase yourself.
 
 ## “Couldn’t check for updates”
 
-Basecase couldn't reach GitHub, where updates come from. Check you're online, then try **Check for Updates** again later.
+Basecase couldn't reach GitHub, where updates come from. Check you're online, then choose **Check for Updates** again in a minute.
 
 ## “Couldn’t install the update”
 

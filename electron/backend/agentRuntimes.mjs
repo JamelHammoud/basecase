@@ -166,7 +166,9 @@ export class AgentRuntimes {
     );
 
     if (`sha512-${hash.digest('base64')}` !== entry.integrity) {
-      throw new Error(`${spec.name} didn’t match its checksum, so it wasn’t installed. Reconnect to try again.`);
+      throw new Error(
+        `${spec.name} didn’t match its checksum, so it wasn’t installed. Reconnect to download it again.`,
+      );
     }
 
     return tarball;

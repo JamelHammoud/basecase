@@ -37,6 +37,7 @@ const runs = (passes: number): CaseRuns => ({
   runs: 20,
   passes,
   medianMargin: 0,
+  worstMargin: 0,
   commonFailure: null,
   failures: [],
   worstSeed: null,

@@ -18,13 +18,15 @@ export const servoParts = (parts: ScenePart[]): ScenePart[] => parts.filter(driv
 
 const actuatorFor = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVariant);
 
-const actuatorsIn = (ctx: CheckContext) => [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
+type PowerScene = Pick<CheckContext, 'parts' | 'project' | 'servos'>;
+
+const actuatorsIn = (ctx: PowerScene) => [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
 
 const isOver = (b: BatterySpec, a: ActuatorSpec) => b.fullV > a.volts[1] + 1e-6;
 const isUnder = (b: BatterySpec, a: ActuatorSpec) => b.fullV < a.volts[0] - 1e-6;
 const sagsUnder = (b: BatterySpec, a: ActuatorSpec) => b.nominalV < a.volts[0] - 1e-6;
 
-function servoRail(ctx: CheckContext, acts: ActuatorSpec[], source: PowerSource) {
+function servoRail(ctx: PowerScene, acts: ActuatorSpec[], source: PowerSource) {
   const fits = sceneRegulators(ctx.parts).filter(
     ({ regulator: r }) =>
       acts.every((a) => r.vout >= a.volts[0] && r.vout <= a.volts[1]) &&
@@ -35,14 +37,14 @@ function servoRail(ctx: CheckContext, acts: ActuatorSpec[], source: PowerSource)
   return fits.sort((x, y) => y.regulator.vout - x.regulator.vout || y.regulator.ioutA - x.regulator.ioutA)[0];
 }
 
-function railOf(ctx: CheckContext, source: PowerSource) {
+function railOf(ctx: PowerScene, source: PowerSource) {
   const acts = actuatorsIn(ctx);
   const outOfRange = acts.some((a) => isOver(source.battery, a) || isUnder(source.battery, a));
 
   return outOfRange ? servoRail(ctx, acts, source) : undefined;
 }
 
-function sourceRank(ctx: CheckContext, source: PowerSource): number {
+function sourceRank(ctx: PowerScene, source: PowerSource): number {
   const acts = actuatorsIn(ctx);
 
   if (acts.every((a) => !isOver(source.battery, a) && !isUnder(source.battery, a))) return 0;
@@ -50,14 +52,14 @@ function sourceRank(ctx: CheckContext, source: PowerSource): number {
   return servoRail(ctx, acts, source) ? 1 : 2;
 }
 
-export function servoSource(ctx: CheckContext): PowerSource | undefined {
+export function servoSource(ctx: PowerScene): PowerSource | undefined {
   const ranked = findPowerSources(ctx).map((source) => ({ source, rank: sourceRank(ctx, source) }));
   const best = ranked.sort((x, y) => x.rank - y.rank || x.source.name.localeCompare(y.source.name))[0]?.source;
 
   return best ?? tetherSource(ctx);
 }
 
-export function servoSupplyVolts(ctx: CheckContext): number | undefined {
+export function servoSupplyVolts(ctx: PowerScene): number | undefined {
   const source = servoSource(ctx);
 
   if (!source) return undefined;

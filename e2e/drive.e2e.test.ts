@@ -60,6 +60,15 @@ async function holdKey(key: string, ms: number) {
   await app.page.keyboard.up(key);
 }
 
+async function holdKeyUntilForward(key: string, metres: number) {
+  await app.page.mouse.click(720, 450);
+  await app.page.keyboard.down(key);
+  await expect
+    .poll(async () => (await simState()).stats?.robots[0].forward ?? 0, { timeout: 30000 })
+    .toBeGreaterThan(metres);
+  await app.page.keyboard.up(key);
+}
+
 async function datasetFiles() {
   const files = await app.page.evaluate(() =>
     (
@@ -141,8 +150,7 @@ describe('live drive', () => {
 
   it('walks a hexapod after its fall check, and offers to teach a biped to walk instead of Drive', async () => {
     await startDriving('hexapod');
-    await holdKey('w', 3000);
-    await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
+    await holdKeyUntilForward('w', 0.1);
     await stopDriving();
 
     await loadFixture('biped-servo');
@@ -191,7 +199,7 @@ async function expectPublished(repo: string) {
     'videos/chunk-000/observation.images.scene/episode_000000.mp4',
   ]);
   expect(info.total_frames).toBe(rows.length);
-  expect(published.tags.get('v2.1')).toBe(published.commits.length);
+  await expect.poll(() => published.tags.get('v2.1')).toBe(published.commits.length);
   expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
 }
 

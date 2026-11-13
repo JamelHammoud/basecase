@@ -1,7 +1,6 @@
 import type * as THREE from 'three';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Controller } from '../sim/engine';
-import { isStalePolicy } from '../sim/policyFreshness';
 import type { SimRun, Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
 import { cameraShots } from '../cameras/cameraShots';
@@ -56,7 +55,7 @@ async function policyController(ctx: SimContext, name: string): Promise<Controll
   if (!rec)
     return `No policy "${name}". Policies: ${ctx.policies.map((x) => x.name).join(', ') || 'none (train a skill with train_skill)'}.`;
 
-  if (isStalePolicy(rec)) return `Policy ${rec.name} was trained on an older sim. Train it again.`;
+  if (ctx.training.isStale(rec)) return `Policy ${rec.name} was trained on an older sim. Train it again.`;
 
   const spec = await ctx.training.loadPolicy(rec.id);
 
@@ -250,7 +249,7 @@ export function trainingStatusText(ctx: SimContext): string {
     lines.push('Policies:');
 
     for (const r of ctx.policies) {
-      const stale = isStalePolicy(r) ? '; trained on an older sim, train it again' : '';
+      const stale = t.isStale(r) ? '; trained on an older sim, train it again' : '';
 
       lines.push(
         `- ${r.name} (${r.task}${r.task === 'walk' ? ` at ${r.command[0]} m/s` : ''}, ${(r.trainedSteps / 1e6).toFixed(1)}M steps${evalSummary(r.eval)}${stale})`,

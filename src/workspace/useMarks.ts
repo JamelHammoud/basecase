@@ -127,18 +127,19 @@ export function useMarks({ docs, showToast, selection, tool }: MarkOptions) {
     });
   };
 
-  const clear = () => {
+  const deleteAll = () => {
     const before = current();
 
     if (!before.length) return;
 
+    const name = before.length === 1 ? markName(before[0]) : markCount(before.length);
+
     confirmAction({
-      title: `Clear ${markCount(before.length)}?`,
-      confirmLabel: 'Clear',
+      title: `Delete ${name}?`,
       onConfirm: () => {
         commitMarks([]);
         select(null);
-        showToast(`Cleared ${markCount(before.length)}`, {
+        showToast(`Deleted ${name}`, {
           tone: 'neutral',
           action: { label: 'Undo', onClick: () => commitMarks(before) },
         });
@@ -160,7 +161,7 @@ export function useMarks({ docs, showToast, selection, tool }: MarkOptions) {
     remove,
     move,
     erase,
-    clear,
+    deleteAll,
   };
 }
 

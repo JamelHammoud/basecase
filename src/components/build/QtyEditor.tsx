@@ -8,8 +8,8 @@ export const QtyEditor: React.FC<{
   line: BomLine;
   extra: Extra;
   onQty: (qty: number) => void;
-  onRemove: () => void;
-}> = ({ line, extra, onQty, onRemove }) => {
+  onDelete: () => void;
+}> = ({ line, extra, onQty, onDelete }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -52,11 +52,11 @@ export const QtyEditor: React.FC<{
           </>
         )}
         <MenuItem
-          label="Remove"
+          label="Delete"
           tone="danger"
           onSelect={() => {
             setOpen(false);
-            onRemove();
+            onDelete();
           }}
         />
       </PopoverMenu>

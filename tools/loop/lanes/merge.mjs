@@ -2,7 +2,7 @@ import {
   checkConclusion,
   hasLabel,
   isPaused,
-  latestMainCheck,
+  lastFinishedMainCheck,
   mergePull,
   openPulls,
   reviewState,
@@ -32,7 +32,7 @@ export default function merge({ log }) {
     return;
   }
 
-  const mainRed = latestMainCheck()?.conclusion === 'failure';
+  const mainRed = lastFinishedMainCheck()?.conclusion === 'failure';
   const candidates = openPulls()
     .filter((pull) => !mainRed || isRepair(pull))
     .sort(byRank);

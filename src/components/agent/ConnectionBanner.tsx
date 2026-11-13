@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import type { AcpStatusInfo } from '../../types/robotics';
-import { TextInput } from '../../design-system';
+import { Button, TextInput } from '../../design-system';
 
 const BANNER = 'mx-[8px] px-3 py-2 rounded-xl bg-amber-500/10 text-[13px] text-amber-200/90 flex flex-col gap-2';
 const ROW = 'flex items-center gap-2';
-const BANNER_BUTTON =
-  'h-7 px-2.5 rounded-lg text-[12.5px] font-medium text-amber-100 hover:bg-amber-500/15 cursor-default shrink-0 disabled:opacity-60';
 
 const ApiKeyField: React.FC<{ onSave: (key: string) => Promise<void>; onCancel: () => void }> = ({
   onSave,
@@ -37,9 +35,9 @@ const ApiKeyField: React.FC<{ onSave: (key: string) => Promise<void>; onCancel: 
         }}
         className="flex-1 min-w-0"
       />
-      <button type="button" disabled={saving || !key.trim()} onClick={save} className={BANNER_BUTTON}>
+      <Button size="xs" disabled={saving || !key.trim()} onClick={save} className="shrink-0">
         {saving ? 'Saving…' : 'Save'}
-      </button>
+      </Button>
     </div>
   );
 };
@@ -77,14 +75,14 @@ const SignInBanner: React.FC<{
           {waiting ? 'Finish signing in in your browser' : `Sign in to use ${acpStatus.agentName}`}
         </span>
         {method && !waiting && (
-          <button type="button" onClick={() => signIn(method.id)} className={BANNER_BUTTON}>
+          <Button size="xs" onClick={() => signIn(method.id)} className="shrink-0">
             {method.name}
-          </button>
+          </Button>
         )}
         {acpStatus.signIn?.apiKey && !enteringKey && (
-          <button type="button" onClick={() => setEnteringKey(true)} className={BANNER_BUTTON}>
+          <Button size="xs" onClick={() => setEnteringKey(true)} className="shrink-0">
             Add API Key
-          </button>
+          </Button>
         )}
       </div>
       {acpStatus.error && <span className="text-[12.5px] text-amber-200/70 break-words">{acpStatus.error}</span>}
@@ -113,9 +111,9 @@ export const ConnectionBanner: React.FC<{
         <span className="flex-1 min-w-0 break-words">
           {acpStatus.error ? `Agent isn’t connected. ${acpStatus.error}` : 'Agent isn’t connected.'}
         </span>
-        <button type="button" onClick={() => onReconnect(acpStatus.agentCommand)} className={BANNER_BUTTON}>
+        <Button size="xs" onClick={() => onReconnect(acpStatus.agentCommand)} className="shrink-0">
           Reconnect
-        </button>
+        </Button>
       </div>
     </div>
   );

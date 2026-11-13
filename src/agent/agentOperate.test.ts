@@ -64,6 +64,14 @@ describe('operate', () => {
     expect(reply.images).toHaveLength(1);
   });
 
+  it('adds each calibrated servo’s replay errors after the step', async () => {
+    const shoot = vi.fn(async () => ({ shots: [], missing: [], available: ['Scene'] }));
+    const servos = 'Median error replaying each servo’s bench log: Shoulder: 2.1° on the preset, 0.6° on v1.';
+    const reply = await operateRequest({ ...context(fakeSim(true), shoot), servoReplays: async () => servos }, {});
+
+    expect(reply.text.split('\n')).toEqual([expect.stringMatching(/^Ran 1\.0 s\./), servos]);
+  });
+
   it('says what to do when nothing drives the robot', async () => {
     const sim = fakeSim(false);
 

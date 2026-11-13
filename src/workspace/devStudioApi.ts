@@ -10,7 +10,8 @@ import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
-import type { ServoCalibration } from '../reality/types';
+import type { JointReplayErrors } from '../reality/replayClient';
+import type { ReplayLog, ServoCalibration } from '../reality/types';
 import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
@@ -27,7 +28,8 @@ export interface DevActions {
   select: (ids: string[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
-  calibrate: (jointId: string, calibration: ServoCalibration) => void;
+  calibrate: (jointId: string, calibration: ServoCalibration, logs?: ReplayLog[]) => void;
+  replayErrors: (jointId: string, version?: number) => Promise<JointReplayErrors | null>;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
@@ -138,7 +140,9 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
     simState: () => devRef.current.simState(),
-    calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
+    calibrate: (jointId: string, calibration: ServoCalibration, logs?: ReplayLog[]) =>
+      devRef.current.calibrate(jointId, calibration, logs),
+    replayErrors: (jointId: string, version?: number) => devRef.current.replayErrors(jointId, version),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),

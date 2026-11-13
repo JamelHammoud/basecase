@@ -87,7 +87,7 @@ export const operate = {
     title: 'Operate the robot',
     description:
       'Operates the robot one step at a time in the live simulation on the canvas, the way a person at the controls does, and shows what its cameras see after each step. ' +
-      "Each call holds one action for a few seconds, pauses, then returns the views from the robot's camera parts and the scene's camera view, plus whether it fell and where the end effector is. Look at the images, decide the next action, and call again: the robot stays where the last step left it. " +
+      "Each call holds one action for a few seconds, pauses, then returns the views from the robot's camera parts and the scene's camera view, plus whether it fell and where the end effector is, and, for servos calibrated in Operate, each joint's median error replaying its bench log on the preset and on the active calibration. Look at the images, decide the next action, and call again: the robot stays where the last step left it. " +
       'Actions are the same as start_drive: forward, left and turn (-1 to 1) for robots that move around; lift (-1 to 1) or target (a point in mm, z up) for arms. restart: true puts the robot back at its start. ' +
       'The user places stationary camera views with Add Camera View; ask for the ones you need by name.',
     inputSchema: {

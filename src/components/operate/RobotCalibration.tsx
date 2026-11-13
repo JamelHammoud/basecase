@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../../design-system';
 import type { CalibrationHistory } from '../../reality/history';
 import { canRunBench } from '../../robot/benchRun';
 import { connectedFrom, useCalibrationPhase } from '../../robot/calibrationSession';
 import type { RobotState } from '../../robot/robotState';
 import type { RobotJoint } from '../../types/robotics';
+import { CalibrationReplay } from './CalibrationReplay';
 import { CalibrationRow } from './CalibrationRow';
 
 export interface CalibrationProps {
@@ -18,6 +19,11 @@ interface RobotCalibrationProps extends CalibrationProps {
   joints: RobotJoint[];
 }
 
+interface OpenReplay {
+  jointId: string;
+  version: number | null;
+}
+
 export const RobotCalibration: React.FC<RobotCalibrationProps> = ({
   robot,
   joints,
@@ -26,6 +32,10 @@ export const RobotCalibration: React.FC<RobotCalibrationProps> = ({
   onRollBack,
 }) => {
   const phase = useCalibrationPhase();
+  const [replay, setReplay] = useState<OpenReplay | null>(null);
+  const toggle = (jointId: string) =>
+    setReplay((open) => (open?.jointId === jointId ? null : { jointId, version: null }));
+  const showVersion = (jointId: string, version: number) => setReplay({ jointId, version });
   const rows = joints.flatMap((joint) => {
     const history = calibrations?.[joint.id];
 
@@ -48,9 +58,27 @@ export const RobotCalibration: React.FC<RobotCalibrationProps> = ({
           Calibrate Servos
         </Button>
       )}
-      {rows.map(({ joint, history }) => (
-        <CalibrationRow key={joint.id} jointId={joint.id} name={joint.name} history={history} onRollBack={onRollBack} />
-      ))}
+      {rows.map(({ joint, history }) => {
+        const open = replay?.jointId === joint.id ? replay : null;
+
+        return (
+          <React.Fragment key={joint.id}>
+            <CalibrationRow
+              jointId={joint.id}
+              name={joint.name}
+              history={history}
+              open={Boolean(open)}
+              shown={open?.version ?? null}
+              onToggle={toggle}
+              onShowVersion={showVersion}
+              onRollBack={onRollBack}
+            />
+            {open && history.logs?.length ? (
+              <CalibrationReplay history={history} version={open.version ?? history.active} />
+            ) : null}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };

@@ -1,17 +1,24 @@
-import type { ServoCalibration } from './types';
+import type { ReplayLog, ServoCalibration } from './types';
 
 export interface CalibrationHistory {
   versions: ServoCalibration[];
   active: number | null;
+  logs?: ReplayLog[];
 }
 
 export const EMPTY_HISTORY: CalibrationHistory = Object.freeze({ versions: [], active: null });
 
-export function recordCalibration(history: CalibrationHistory, calibration: ServoCalibration): CalibrationHistory {
+export function recordCalibration(
+  history: CalibrationHistory,
+  calibration: ServoCalibration,
+  logs?: ReplayLog[],
+): CalibrationHistory {
   const version = (history.versions.at(-1)?.version ?? 0) + 1;
   const recorded = { ...calibration, version };
 
   return {
+    ...history,
+    ...(logs ? { logs } : {}),
     versions: [...history.versions, recorded],
     active: calibration.verdict === 'measured' ? version : history.active,
   };
@@ -20,6 +27,9 @@ export function recordCalibration(history: CalibrationHistory, calibration: Serv
 export function activeCalibration(history: CalibrationHistory): ServoCalibration | null {
   return history.versions.find((c) => c.version === history.active) ?? null;
 }
+
+export const measuredVersions = (history: CalibrationHistory) =>
+  history.versions.filter((c) => c.verdict === 'measured');
 
 export function rollBack(history: CalibrationHistory): CalibrationHistory {
   const earlier = history.versions.filter(

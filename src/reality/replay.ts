@@ -1,11 +1,11 @@
 import type { MainModule } from '@mujoco/mujoco';
 import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
-import type { ServoLog } from './types';
+import type { ReplayLog } from './types';
 
 const D2R = Math.PI / 180;
 
-export function replayLog(mj: MainModule, model: SimModel, log: ServoLog, jointId: string): Float64Array {
+export function replayLog(mj: MainModule, model: SimModel, log: ReplayLog, jointId: string): Float64Array {
   const engine = new SimEngine(mj, model);
   const joint = model.joints.find((j) => j.id === jointId);
   const out = new Float64Array(log.goalRad.length);

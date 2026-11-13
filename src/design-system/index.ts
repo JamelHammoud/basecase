@@ -18,6 +18,8 @@ export * from './choiceStyles';
 export * from './PanelTabs';
 export * from './Section';
 export * from './RowActions';
+export * from './TracePlot';
+export { TRACE_COLORS, type Trace, type TraceTone } from './tracePlotMath';
 export * from './Modal';
 export * from './ConfirmDialog';
 export * from './ConfirmHost';

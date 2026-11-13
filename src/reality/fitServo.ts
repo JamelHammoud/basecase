@@ -5,7 +5,7 @@ import { BENCH_JOINT, benchInput } from './bench';
 import { levenbergMarquardt } from './leastSquares';
 import { replayLog, rmsError } from './replay';
 import { scaleBounds, scaledFit, scalesOf, type ServoParam, type ServoScales } from './servoParams';
-import type { ServoFamily, ServoLog } from './types';
+import type { ReplayLog, ServoFamily, ServoLog } from './types';
 
 export interface FitContext {
   mj: MainModule;
@@ -15,7 +15,7 @@ export interface FitContext {
 
 const PRIOR_RAD = 0.002;
 
-export function predictLog(ctx: FitContext, fit: ServoFit, log: ServoLog): Float64Array {
+export function predictLog(ctx: FitContext, fit: ServoFit, log: ReplayLog): Float64Array {
   const input = benchInput(ctx.family, log.payload);
   const model = buildMjcf({ ...input, servoFits: { [BENCH_JOINT]: { fit, volts: ctx.preset.volts } } });
 
@@ -26,7 +26,7 @@ export type Segment = 'fit' | 'check' | 'all';
 
 export const SETTLE_S = 0.3;
 
-export function windowOf(log: ServoLog, segment: Segment): [number, number] {
+export function windowOf(log: ReplayLog, segment: Segment): [number, number] {
   const n = log.positionRad.length;
   const settle = Math.min(n - 1, Math.round(SETTLE_S / log.dt));
   const half = Math.max(settle + 1, Math.floor(n / 2));

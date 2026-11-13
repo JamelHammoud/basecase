@@ -1,6 +1,6 @@
 import type { ProjectSettings } from '../types/robotics';
 import { EMPTY_HISTORY, recordCalibration, rollBack, type CalibrationHistory } from './history';
-import type { ServoCalibration } from './types';
+import type { ReplayLog, ServoCalibration } from './types';
 
 function withHistory(
   project: ProjectSettings,
@@ -12,7 +12,11 @@ function withHistory(
   return { ...project, servoCalibrations: { ...project.servoCalibrations, [jointId]: change(history) } };
 }
 
-export const withCalibration = (project: ProjectSettings, jointId: string, calibration: ServoCalibration) =>
-  withHistory(project, jointId, (history) => recordCalibration(history, calibration));
+export const withCalibration = (
+  project: ProjectSettings,
+  jointId: string,
+  calibration: ServoCalibration,
+  logs?: ReplayLog[],
+) => withHistory(project, jointId, (history) => recordCalibration(history, calibration, logs));
 
 export const withRollBack = (project: ProjectSettings, jointId: string) => withHistory(project, jointId, rollBack);

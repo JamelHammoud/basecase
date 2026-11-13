@@ -1,6 +1,7 @@
 import { resolvePrinter } from '../data/printers';
 import { useRef } from 'react';
 import type { AgentOp } from '../agent/agentScene';
+import { replayErrorsText } from '../reality/replayClient';
 import { platformBridge } from '../utils/platformBridge';
 import { conflictText, type ActorIndex } from './agentActors';
 import { MAIN_LANE, splitLaneKey } from './agentLanes';
@@ -83,6 +84,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       parts: partsRef.current,
       fixedCameras: projectRef.current.cameras ?? [],
       velocity: simTraining.skills.velocity,
+      servoReplays: () => replayErrorsText(projectRef.current.joints ?? [], projectRef.current.servoCalibrations),
       setAction,
     });
 

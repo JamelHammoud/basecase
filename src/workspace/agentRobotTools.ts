@@ -103,6 +103,7 @@ export async function runPoseTool(kind: string, payload: Payload, ctx: PoseToolC
 
 export interface SimToolContext extends SimContext, DriveToolContext {
   setAction: (action: string) => void;
+  servoReplays?: () => Promise<string>;
 }
 
 export const SIM_TOOL_KINDS = ['simulate', 'training_status', 'set_world', 'start_drive', 'operate'];

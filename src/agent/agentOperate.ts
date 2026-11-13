@@ -32,6 +32,7 @@ export interface OperateContext {
   fixedCameras: FixedCamera[];
   wait?: (ms: number) => Promise<void>;
   shoot?: typeof cameraShots;
+  servoReplays?: () => Promise<string>;
 }
 
 export interface OperateReply {
@@ -150,8 +151,10 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
     ? ` No camera ${seen.missing.join(', ')}; cameras: ${seen.available.join(', ')}.`
     : '';
 
+  const servos = (await ctx.servoReplays?.().catch(() => '')) ?? '';
+
   return {
-    text: `Ran ${seconds.toFixed(1)} s. ${stateLine(ctx, poses)}${missing}`.trim(),
+    text: [`Ran ${seconds.toFixed(1)} s. ${stateLine(ctx, poses)}${missing}`.trim(), servos].filter(Boolean).join('\n'),
     images: seen.shots,
   };
 }

@@ -18,6 +18,8 @@ export interface ServoLog {
   payload: BenchPayload;
 }
 
+export type ReplayLog = Pick<ServoLog, 'family' | 'dt' | 'goalRad' | 'positionRad' | 'payload'>;
+
 export type CalibrationVerdict = 'measured' | 'consistent' | 'cant-tell';
 
 export type RungName = 'preset' | 'response' | 'friction-force';

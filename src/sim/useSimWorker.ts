@@ -185,7 +185,7 @@ function linkCameras(w: Worker, link: CameraLink | null) {
   w.postMessage({ type: 'cameras', port } satisfies SimRequest, port ? [port] : []);
 }
 
-type PoseListener = (poses: Float64Array) => void;
+type PoseListener = (poses: Float64Array, frame: { joints: Float64Array }) => void;
 
 function showFrame(
   m: SimModel,
@@ -193,10 +193,10 @@ function showFrame(
   to: { viewport: Viewport3DHandle | null; listeners: Set<PoseListener> },
 ) {
   to.viewport?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
-  to.listeners.forEach((listen) => listen(msg.poses));
+  to.listeners.forEach((listen) => listen(msg.poses, msg));
   offerSimTargets(
     m.joints.map((j) => j.id),
-    msg.targets,
+    m.joints.map((_, i) => msg.joints[i * 3]),
   );
 }
 

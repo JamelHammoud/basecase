@@ -15,9 +15,10 @@ import {
   type VelocityDrive,
 } from './driveAccess';
 import type { DriveSetup } from './drive';
-import { commandFromPad, mergeCommands, sameCommand, type DriveClass } from './driveKeys';
+import { sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
+import { readInputs, STUDIO_INPUTS } from './inputSources';
 import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
 import type { RunOptions, SimRun, SimStatus } from './useSimulation';
@@ -36,6 +37,8 @@ export interface SimDrive {
   stop: () => void;
   respawn: () => void;
   setKeys: (command: DriveCommand) => void;
+  setInputs: (ids: readonly string[] | null) => void;
+  inputs: () => Record<string, DriveCommand | null>;
 }
 
 interface DriveInputs {
@@ -56,12 +59,6 @@ interface DriveInputs {
 }
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
-
-function firstPad(): Gamepad | null {
-  if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
-
-  return [...navigator.getGamepads()].find((p) => p?.connected) ?? null;
-}
 
 function restHeight(model: SimModel, key?: string): number {
   const robot = model.robots.find((r) => r.key === key) ?? model.robots[0];
@@ -94,6 +91,8 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   const sent = useRef<DriveCommand>(IDLE);
   const clsRef = useRef<DriveClass | null>(null);
   const topSpeed = useRef<number | null>(null);
+  const inputIds = useRef<readonly string[]>(STUDIO_INPUTS);
+  const readings = useRef<Record<string, DriveCommand | null>>({});
   const [seenSimStatus, setSeenSimStatus] = useState(simStatus);
 
   if (seenSimStatus !== simStatus) {
@@ -106,12 +105,14 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   });
 
   const push = useCallback(() => {
-    const pad = firstPad();
     const current = clsRef.current;
 
     if (!current) return;
 
-    const merged = mergeCommands(keysCommand.current, pad ? commandFromPad(pad, current) : null);
+    const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current });
+    const merged = read.command;
+
+    readings.current = read.readings;
 
     if (sameCommand(merged, sent.current)) return;
 
@@ -197,6 +198,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     keysCommand.current = IDLE;
     clsRef.current = null;
     topSpeed.current = null;
+    readings.current = {};
     viewportRef.current?.followPart(null);
     latest.current.setController({ kind: 'hold' });
     setDriveStatus('off');
@@ -225,5 +227,9 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     stop,
     respawn,
     setKeys,
+    setInputs: (ids) => {
+      inputIds.current = ids ?? STUDIO_INPUTS;
+    },
+    inputs: () => readings.current,
   };
 }

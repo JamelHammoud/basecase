@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, MetaLine, NumberInput, Section, Switch, useScrollFade } from '../../design-system';
+import { Button, MetaLine, ModeHeader, NumberInput, Section, Switch, useScrollFade } from '../../design-system';
 import { slicerOrder } from '../../data/printers';
 import type { Plate } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
@@ -280,12 +280,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <div className="h-[44px] shrink-0 pl-[12px] pr-[8px] flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold text-white/90">Print</h2>
-        <Button variant="primary" size="sm" title="Done" shortcut="Esc" onClick={onDone}>
-          Done
-        </Button>
-      </div>
+      <ModeHeader title="Print" onDone={onDone} />
       <div ref={ref} style={style} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <Section title="Printer">
           <PrintSettings

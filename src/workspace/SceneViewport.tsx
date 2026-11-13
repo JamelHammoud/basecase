@@ -8,6 +8,8 @@ import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
+const NO_SELECTION: string[] = [];
+
 interface SceneViewportProps {
   active: boolean;
   core: WorkspaceCore;
@@ -44,7 +46,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         ref={viewportRef}
         sceneKey={scene.sceneId}
         parts={shownParts}
-        selectedPartIds={selectedIds}
+        selectedPartIds={core.commandCenter.open ? NO_SELECTION : selectedIds}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
         snapStepMm={studio.snapStepMm}
@@ -103,7 +105,9 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onAxisPick={actions.joints.onAxisPick}
       />
       <DriveOverlay sim={sim} />
-      <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
+      {!core.commandCenter.open && (
+        <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
+      )}
       <AnnotationLayer
         annotations={annotations.annotations}
         parts={parts}

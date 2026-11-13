@@ -48,7 +48,7 @@ function useKeyEditClock() {
   };
 }
 
-function usePanelToggles({ studio, tool }: WorkspaceCore) {
+function usePanelToggles({ studio, tool, commandCenter }: WorkspaceCore) {
   'use memo';
 
   const { setIsLeftOpen, setIsRightOpen, setPanelWidths, setResizingPanel } = studio;
@@ -62,7 +62,8 @@ function usePanelToggles({ studio, tool }: WorkspaceCore) {
     toggleReferenceImages: () => setShowReferenceImages((v) => !v),
     toggleTrackpad: () => setTrackpadMode((m) => NEXT_SCROLL_MODE[m]),
     pickLeftView: (view: LeftTab) => {
-      if (isLeftOpen && (leftTab === view || (isPlayTab(leftTab) && isPlayTab(view)))) {
+      if (commandCenter.open) commandCenter.leave();
+      else if (isLeftOpen && (leftTab === view || (isPlayTab(leftTab) && isPlayTab(view)))) {
         setIsLeftOpen(false);
 
         return;

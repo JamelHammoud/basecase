@@ -480,11 +480,15 @@ export class SimEngine {
     return out;
   }
 
-  jointTargets(out = new Float64Array(this.sim.joints.length)): Float64Array {
-    this.sim.joints.forEach((j, i) => {
-      const commanded = j.actuator >= 0 && j.drive === 'position';
+  jointStates(out = new Float64Array(this.sim.joints.length * 3)): Float64Array {
+    const { ctrl, qpos, actuator_force: force } = this.data;
 
-      out[i] = commanded ? this.data.ctrl[j.actuator] : this.data.qpos[this.jointQpos[i]];
+    this.sim.joints.forEach((j, i) => {
+      const position = qpos[this.jointQpos[i]];
+
+      out[i * 3] = j.actuator >= 0 && j.drive === 'position' ? ctrl[j.actuator] : position;
+      out[i * 3 + 1] = position;
+      out[i * 3 + 2] = j.actuator >= 0 ? force[j.actuator] : 0;
     });
 
     return out;

@@ -1,5 +1,14 @@
 import type { Command } from '../components/CommandPalette';
-import { CasesIcon, DownloadIcon, PlusIcon, RotateLeftIcon, RunIcon, ShareIcon, StopIcon } from '../design-system';
+import {
+  CasesIcon,
+  DownloadIcon,
+  ExpandIcon,
+  PlusIcon,
+  RotateLeftIcon,
+  RunIcon,
+  ShareIcon,
+  StopIcon,
+} from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -14,6 +23,47 @@ export const showNewCase = (core: WorkspaceCore) => {
   showCases(core);
   core.simTraining.cases.builder.start();
 };
+
+export const STAYS_IN_CENTER = new Set([
+  'drive-start',
+  'drive-stop',
+  'drive-respawn',
+  'case-try',
+  'case-export-dataset',
+  'case-publish-dataset',
+]);
+
+const openCommandCenter = (core: WorkspaceCore): Command => ({
+  id: 'case-command-center',
+  group: 'Simulate',
+  label: 'Open Command Center',
+  icon: <ExpandIcon className={ic} />,
+  keywords: 'case app console teleop cameras joints tries operator dashboard',
+  run: core.commandCenter.enter,
+});
+
+function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Command[] {
+  if (dataset.exporting) return [];
+
+  const exportDataset: Command = {
+    id: 'case-export-dataset',
+    group: 'Simulate',
+    label: 'Export Dataset',
+    icon: <DownloadIcon className={ic} />,
+    keywords: 'lerobot gr00t groot demonstrations training data video parquet',
+    run: dataset.exportDataset,
+  };
+  const publishDataset: Command = {
+    id: 'case-publish-dataset',
+    group: 'Simulate',
+    label: 'Publish to Hugging Face',
+    icon: <ShareIcon className={ic} />,
+    keywords: 'hub upload share dataset lerobot gr00t groot hf',
+    run: dataset.publishDataset,
+  };
+
+  return [...(dataset.canExport ? [exportDataset] : []), ...(dataset.canPublish ? [publishDataset] : [])];
+}
 
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
@@ -70,32 +120,8 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       ]
     : [];
 
-  const exportDataset: Command[] =
-    cases.dataset.canExport && !cases.dataset.exporting
-      ? [
-          {
-            id: 'case-export-dataset',
-            group: 'Simulate',
-            label: 'Export Dataset',
-            icon: <DownloadIcon className={ic} />,
-            keywords: 'lerobot gr00t groot demonstrations training data video parquet',
-            run: cases.dataset.exportDataset,
-          },
-        ]
-      : [];
-  const publishDataset: Command[] =
-    cases.dataset.canPublish && !cases.dataset.exporting
-      ? [
-          {
-            id: 'case-publish-dataset',
-            group: 'Simulate',
-            label: 'Publish to Hugging Face',
-            icon: <ShareIcon className={ic} />,
-            keywords: 'hub upload share dataset lerobot gr00t groot hf',
-            run: cases.dataset.publishDataset,
-          },
-        ]
-      : [];
+  const commandCenter: Command[] =
+    cases.active && !core.commandCenter.open && !core.printing.mode ? [openCommandCenter(core)] : [];
 
   const newCase: Command[] = cases.builder.goals.length
     ? [
@@ -123,7 +149,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     drive,
     ...respawn,
     ...tryIt,
-    ...exportDataset,
-    ...publishDataset,
+    ...commandCenter,
+    ...datasetCommands(cases),
   ];
 }

@@ -16,6 +16,7 @@ import { useSimTraining } from './useSimTraining';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useBuildGuide } from './useBuildGuide';
+import { useCommandCenter } from './useCommandCenter';
 import { useReadiness } from './useReadiness';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
@@ -26,6 +27,30 @@ function useSceneMeta(seed?: WorkspaceSeed) {
 
   return { sceneId, setSceneId, sceneName, setSceneName, globalGoal, setGlobalGoal, initial };
 }
+
+interface SeedTargets {
+  guide: { cancel: () => void };
+  scene: Pick<ReturnType<typeof useSceneMeta>, 'setSceneId' | 'setSceneName' | 'setGlobalGoal'>;
+  docs: Pick<ReturnType<typeof useSceneDocument>, 'setProject' | 'resetDoc'>;
+  annotations: { reset: (annotations: NonNullable<WorkspaceSeed['annotations']>) => void };
+  setSelectedIds: (ids: string[]) => void;
+  tool: { leaveSceneView: () => void };
+  showToast: (message: string) => void;
+}
+
+const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) => {
+  to.guide.cancel();
+  to.scene.setSceneId(next.sceneId);
+  to.scene.setSceneName(next.sceneName);
+  to.scene.setGlobalGoal(next.globalGoal || '');
+  to.docs.setProject(projectFromSeed(next.project));
+  to.docs.resetDoc(next.parts || []);
+  to.annotations.reset(next.annotations || []);
+  to.setSelectedIds([]);
+  to.tool.leaveSceneView();
+
+  if (message) to.showToast(message);
+};
 
 export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorkspaceProps, 'active'>) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
@@ -105,24 +130,11 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     showReferenceImages: studio.showReferenceImages,
   });
 
-  const { setSceneId, setSceneName, setGlobalGoal } = scene;
-  const { setProject, resetDoc, travel } = docs;
-  const { reset: resetAnnotations } = annotations;
+  const commandCenter = useCommandCenter({ viewportRef, selectedIds, setSelectedIds, simTraining });
+
+  const { travel } = docs;
   const { restorePose } = posing;
-
-  const loadSeed = (next: WorkspaceSeed, message?: string) => {
-    guide.cancel();
-    setSceneId(next.sceneId);
-    setSceneName(next.sceneName);
-    setGlobalGoal(next.globalGoal || '');
-    setProject(projectFromSeed(next.project));
-    resetDoc(next.parts || []);
-    resetAnnotations(next.annotations || []);
-    setSelectedIds([]);
-    tool.leaveSceneView();
-
-    if (message) showToast(message);
-  };
+  const loadSeed = seedLoader({ guide, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
 
@@ -151,6 +163,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     posing,
     onRobot,
     simTraining,
+    commandCenter,
     guide,
     undo: () => travel('undo', restorePose),
     redo: () => travel('redo', restorePose),

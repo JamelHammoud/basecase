@@ -35,7 +35,7 @@ function useKeys(printing: Printing, plates: Plate[], active: boolean) {
       ArrowRight: () => index < plates.length - 1 && printing.setModePlate(plates[index + 1].number),
       ArrowLeft: () => index > 0 && printing.setModePlate(plates[index - 1].number),
       f: () => mode.selected && printing.setFaceMode(!mode.face),
-      r: () => mode.selected && turnPart(printing, plates[index], mode.selected),
+      r: () => mode.selected && printing.turnPart(mode.selected),
     };
     const action = actions[e.key.length === 1 ? e.key.toLowerCase() : e.key];
 
@@ -60,14 +60,6 @@ function createView(container: HTMLElement): PlateView | null {
 
     return null;
   }
-}
-
-export function turnPart(printing: Printing, plate: Plate | undefined, id: string) {
-  const item = plate?.items.find((it) => it.id === id && it.copy === 0);
-
-  if (!item || !plate) return;
-
-  printing.setPartPrint([id], { turned: item.yaw !== 90, at: [item.x, item.y], plate: plate.local });
 }
 
 export function PlateCanvas({ active, printing, parts }: PlateCanvasProps) {

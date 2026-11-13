@@ -53,7 +53,7 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
 
 export const PrintedSection: React.FC<PrintedSectionProps> = ({ report, project, onSelectParts }) =>
   report && report.parts.length > 0 ? (
-    <Section title="Printed parts" summary={report.parts.length} collapsible defaultOpen={false}>
+    <Section title="Parts" summary={report.parts.length} collapsible defaultOpen={false}>
       <ul className="-mx-[7px]">
         {issuesFirst(report.parts).map((p) => (
           <PrintedRow key={p.id} part={p} material={project.material} onSelectParts={onSelectParts} />

@@ -5,6 +5,7 @@ import { COMPONENT_BY_ID } from '../data/components';
 const MEASURING = new Set([
   'interference',
   'assembly',
+  'merge',
   'verify',
   'sweep_design',
   'define_joints',

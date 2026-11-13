@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type RefObject } from 'react';
 import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/printers';
 import { turnedPrint, type Plate } from '../print/plan';
 import { printBridge, type PrinterStatus } from '../print/printBridge';
@@ -9,6 +9,7 @@ import { useBuildReport } from '../components/build/useBuildReport';
 import { shapeKey } from '../utils/printReport';
 import type { CommitParts, Setter, ShowToast } from './types';
 import { useFitTest } from './useFitTest';
+import { useMerges } from './useMerges';
 import { usePrintJob } from './usePrintJob';
 import { usePrintStatus } from './usePrintStatus';
 import { errorMessage } from '../utils/errorMessage';
@@ -24,6 +25,8 @@ interface PrintingOptions {
   commitParts: CommitParts;
   viewport: () => Viewport3DHandle | null;
   showToast: ShowToast;
+  partsRef: RefObject<ScenePart[]>;
+  undo: () => void;
 }
 
 export function amsFor(plate: Plate, status: PrinterStatus | null) {
@@ -61,6 +64,17 @@ export function usePrinting(options: PrintingOptions) {
     enabled: options.buildOpen || !!mode,
   });
   const fit = useFitTest({ parts, project, printer, viewport });
+  const merges = useMerges({
+    active: !!mode && !fit.active,
+    parts,
+    partsRef: options.partsRef,
+    project,
+    printer,
+    viewport,
+    commitParts,
+    showToast,
+    undo: options.undo,
+  });
   const shown = fit.active ? fit.report : report;
   const job = usePrintJob({
     ...options,
@@ -164,6 +178,7 @@ export function usePrinting(options: PrintingOptions) {
     canFitTest: fit.available,
     fitCutting: fit.cutting,
     startFitTest,
+    merges,
     sending,
     sendPlate,
     markPlate,
@@ -177,14 +192,22 @@ export type Printing = ReturnType<typeof usePrinting>;
 
 interface ScenePrintingOptions {
   scene: { sceneId: string; sceneName: string };
-  docs: { parts: ScenePart[]; project: ProjectSettings; setProject: Setter<ProjectSettings>; commitParts: CommitParts };
+  docs: {
+    parts: ScenePart[];
+    partsRef: RefObject<ScenePart[]>;
+    project: ProjectSettings;
+    setProject: Setter<ProjectSettings>;
+    commitParts: CommitParts;
+  };
   studio: { printers: { printers: MyPrinter[] }; isRightOpen: boolean };
   tool: { rightTab: string };
   viewportRef: { current: Viewport3DHandle | null };
   showToast: ShowToast;
+  undo: () => void;
 }
 
-export function useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast }: ScenePrintingOptions) {
+export function useScenePrinting(options: ScenePrintingOptions) {
+  const { scene, docs, studio, tool, viewportRef, showToast, undo } = options;
   const printer = resolvePrinter(docs.project.printer, studio.printers.printers);
   const printing = usePrinting({
     jobId: scene.sceneId,
@@ -197,6 +220,8 @@ export function useScenePrinting({ scene, docs, studio, tool, viewportRef, showT
     commitParts: docs.commitParts,
     viewport: () => viewportRef.current,
     showToast,
+    partsRef: docs.partsRef,
+    undo,
   });
 
   return { printer, printing };

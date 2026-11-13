@@ -1,3 +1,4 @@
+import { buildBom } from '../utils/bom';
 import type { HandoffStub } from './handoffStub';
 import type { RefObject } from 'react';
 import * as THREE from 'three';
@@ -266,6 +267,10 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
+    bomLines: () =>
+      buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
+        ({ key, qty }) => ({ key, qty }),
+      ),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),

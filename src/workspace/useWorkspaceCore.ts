@@ -131,9 +131,10 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const { travel } = docs;
   const { restorePose } = posing;
+  const undo = () => travel('undo', restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
-  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
+  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo });
 
   const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
   const caseCompare = useCaseCompare({
@@ -183,7 +184,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     caseRun,
     guide,
     buildAlong,
-    undo: () => travel('undo', restorePose),
+    undo,
     redo: () => travel('redo', restorePose),
     loadSeed,
   };

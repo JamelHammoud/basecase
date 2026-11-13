@@ -6,11 +6,13 @@ import { traceFasteners } from './fastenerChain';
 import { fitProbes, type FitProbes } from './fitProbes';
 import { AXES, blockersAlong, blocksAlong, directionsFor, exitTravel, ownTravel } from './moveBlockers';
 import { splitPlanes, type SplitPlane } from './splitTest';
+import type { MergeInput, MergePlan } from '../print/merge/mergeTypes';
 
 export interface AssemblyGeometryInput extends FastenerInput {
   serviceable: string[];
   budgetMs: number;
   batteries?: string[];
+  merges?: MergeInput;
 }
 
 export interface PartMoves {
@@ -30,6 +32,7 @@ export interface AssemblyGeometry {
   fits: FitProbes;
   timedOut: boolean;
   ms: number;
+  merges?: MergePlan;
 }
 
 const CAPTURE_MM = 2;

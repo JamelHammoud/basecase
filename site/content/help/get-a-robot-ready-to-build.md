@@ -27,6 +27,7 @@ covers:
   - src/workspace/RightPanelTabs.tsx
   - src/workspace/viewCommands.tsx
   - src/workspace/sceneCommands.tsx
+  - src/components/settings/BuildPane.tsx
 ---
 
 Clear every problem the Build tab finds, so the design can be printed, bought and put together.
@@ -43,6 +44,10 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 ![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
 
 **Open Build** and **Run Checks** are also in ⌘K.
+
+Settings ▸ Build (⌘,) holds the settings for this tab: whether the agent fixes new blockers, the currency prices show in, and whether the build guide updates on its own.
+
+![Settings ▸ Build with Checks, Prices and Build guide](/help/get-a-robot-ready-to-build/build-settings.png)
 
 To set a problem aside, click ⋯ on its row and choose **Ignore**. The **Ignore All** item below it, named after the kind of problem, sets aside every problem of that kind. Ignored problems stay under **Ignored**, where **Restore** brings each one back.
 

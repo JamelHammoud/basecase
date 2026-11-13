@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { caseName, goalValues, worldsFor } from '../../cases/caseBuilder';
-import { GOAL_PARAMS, type GoalKind, type GoalValues } from '../../cases/caseGoals';
+import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
 import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
 import type { CaseBuilder } from '../../workspace/useCaseBuilder';
@@ -58,19 +58,23 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         />
       )}
       <div className="flex flex-col gap-2">
-        {goal.params.map((key) => (
-          <FieldRow key={key} label={GOAL_PARAMS[key].label}>
-            <NumberInput
-              value={values[key]}
-              unit={GOAL_PARAMS[key].unit}
-              min={GOAL_PARAMS[key].min}
-              max={GOAL_PARAMS[key].max}
-              step={GOAL_PARAMS[key].step}
-              precision={0}
-              onChange={(v) => setGiven((g) => ({ ...g, [key]: v }))}
-            />
-          </FieldRow>
-        ))}
+        {goal.params.map((key) => {
+          const param = goalParam(goal, key);
+
+          return (
+            <FieldRow key={key} label={param.label}>
+              <NumberInput
+                value={values[key]}
+                unit={param.unit}
+                min={param.min}
+                max={param.max}
+                step={param.step}
+                precision={0}
+                onChange={(v) => setGiven((g) => ({ ...g, [key]: v }))}
+              />
+            </FieldRow>
+          );
+        })}
         <FieldRow label="Name">
           <TextInput
             value={name ?? caseName(goal.kind, world)}

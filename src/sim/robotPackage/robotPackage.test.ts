@@ -70,7 +70,10 @@ describe('robot package', () => {
       const axis = new THREE.Vector3(...toMj(scene.axis)).normalize();
 
       expect(j.axis.distanceTo(axis)).toBeLessThan(1e-5);
-      expect(j.limit?.map((v) => round(THREE.MathUtils.radToDeg(v)))).toEqual(sortedRange(sim.range));
+
+      const toScene = sim.type === 'prismatic' ? (v: number) => v * 1000 : THREE.MathUtils.radToDeg;
+
+      expect(j.limit?.map((v) => round(toScene(v)))).toEqual(sortedRange(sim.range));
     }
 
     const urdfKg = [...urdf.links.values()].reduce((s, l) => s + (l.mass ?? 0), 0);

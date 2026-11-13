@@ -36,12 +36,13 @@ export interface JointSpec {
   range?: [number, number] | null;
   parentJoint?: string;
   limb?: RobotJoint['limb'];
+  type?: 'revolute' | 'prismatic';
 }
 
 export const joint = (s: JointSpec): RobotJoint => ({
   id: s.id,
   name: s.id,
-  type: 'revolute',
+  type: s.type ?? 'revolute',
   parent: [s.link[0]],
   child: [s.link[1]],
   origin: s.origin,

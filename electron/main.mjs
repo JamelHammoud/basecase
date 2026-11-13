@@ -1,7 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { app, BrowserWindow, ipcMain as electronIpc, nativeTheme, safeStorage, session, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain as electronIpc,
+  nativeTheme,
+  safeStorage,
+  session,
+  shell,
+  systemPreferences,
+} from 'electron';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { SandboxKernel } from './cad-kernel/sandbox/sandboxKernel.mjs';
@@ -11,6 +20,7 @@ import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
+import { installPermissions } from './permissions.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
@@ -42,6 +52,8 @@ const ipcMain = trustedIpc(electronIpc, APP_ORIGIN);
 app.setName('Basecase');
 
 if (DEV_MODE) app.setAboutPanelOptions({ applicationName: APP_DISPLAY_NAME });
+
+app.commandLine.appendSwitch('enable-features', 'IsolateSandboxedIframes');
 
 if (process.env.BASECASE_USER_DATA && process.env.STUDIO_AGENT_OFFLINE === '1')
   app.commandLine.appendSwitch('use-mock-keychain');
@@ -239,17 +251,6 @@ const phone = new PhonePairing({ emit: sendTo('phone:event') });
 
 registerPhoneHandlers(ipcMain, phone);
 
-const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write', 'fullscreen']);
-
-function limitPermissions() {
-  const allowed = (permission, origin) => ALLOWED_PERMISSIONS.has(permission) && isAppUrl(origin ?? '', APP_ORIGIN);
-
-  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) =>
-    callback(allowed(permission, details.requestingUrl)),
-  );
-  session.defaultSession.setPermissionCheckHandler((_contents, permission, origin) => allowed(permission, origin));
-}
-
 const selfTestFile = process.env.BASECASE_KERNEL_SELFTEST;
 const cadImportSelfTestSpec = process.env.BASECASE_CADIMPORT_SELFTEST;
 
@@ -275,7 +276,7 @@ app.whenReady().then(async () => {
   }
 
   nativeTheme.themeSource = 'dark';
-  limitPermissions();
+  installPermissions(session.defaultSession, { appOrigin: APP_ORIGIN, platform: process.platform, systemPreferences });
   installAppMenu(() => mainWindow, {
     onCheckForUpdates: fromSource ? null : () => updates.checkNow(),
     betaUpdates: fromSource ? null : { get: () => updates.wantsBeta(), set: (beta) => updates.setBeta(beta) },

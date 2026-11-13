@@ -19,4 +19,6 @@ export const FAULTS = {
   shortScrew: (f) => shortenScrew(f, f.meta.screws[0], 4),
   sideways: (f) => slideScrew(f, f.meta.screws[0], 2),
   sunk: (f) => sinkScrew(f, f.meta.screws[0], 3),
+  missingScrew: (f) => dropPart(f, f.meta.screws[0]),
+  lifted: (f) => sinkScrew(f, f.meta.screws[0], -1.5),
 };

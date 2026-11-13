@@ -61,11 +61,16 @@ export const createCase = {
         .record(z.string(), z.unknown())
         .optional()
         .describe(
-          'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone; a source this version lacks is refused, so leave it out and say so). ' +
-            'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset), list (of: tries or failures), text (of: brief, or text), map (trail). ' +
+          'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone, camera, code; a source this version lacks is refused, so leave it out and say so). ' +
+            'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset), list (of: tries or failures), text (of: brief, or text), map (trail), ' +
+            'code (source: one HTML document with its script and style inline, at most 256 KB; height 80–900; at most 4 per console) for a control or readout no other kind draws, such as a joystick, a piano, a HUD or picture buttons. ' +
+            'A code panel runs sandboxed with no network, storage or parent access, and its script uses window.basecase: signals(names, (values, time) => …) gets those signals at most 20 times a second; ' +
+            'drive({ v: [forward, left, turn] each −1 to 1, aux?, target? }) drives the robot, drive(null) lets go, and needs code in input; event(name, value?) sends a named event to logic; action(name) runs a button action and resolves { ok, problem? }; ' +
+            'CSS variables --bc-bg, --bc-panel, --bc-surface, --bc-accent, --bc-red, --bc-ink, --bc-ink-2, --bc-ink-3, --bc-font, --bc-text, --bc-radius and --bc-control match the studio. ' +
             'Signals: joint.<id>.target/position/effort (joint.*.position in plots), robot.height/tilt/speed/travelled/x/z, probe.<name>, input.<source>.forward/left/turn/lift/grip, goal.passed/margin, time, and the Case’s own. ' +
             'signals (optional): [{ id, kind: timer (seconds), counter (when: { signal, above|below }), score (sum: [{ signal, times }]) }]. ' +
-            'layout: { areas: [{ size: 200–720, panels: [ids] }, { canvas: true }, …] }, the canvas once, every panel placed once.',
+            'layout: { areas: [{ size: 200–720, panels: [ids] }, { canvas: true, overlays? }, …] }, the canvas once, every panel placed once. ' +
+            'overlays draw code panels over the canvas: [{ panel, anchor, width?, height?, pointer? }], anchor top-left, top-right, bottom-left or bottom-right (width and height), top or bottom (height), left or right (width), or fill; sizes 40–1600; clicks pass through to the canvas unless pointer is true.',
         ),
     },
   },

@@ -36,6 +36,23 @@ const readTable = (v: Config, where: string, scope: SignalScope) => {
   return columns ? { of, columns: columns as JointField[] } : { of };
 };
 
+export const CODE_SOURCE_MAX_BYTES = 256 * 1024;
+
+const readSource: Reader<string> = (value, where) => {
+  if (typeof value !== 'string' || !value.trim()) return refuse(where, 'must be an HTML document');
+
+  if (new TextEncoder().encode(value).length > CODE_SOURCE_MAX_BYTES) return refuse(where, 'must be at most 256 KB');
+
+  return value;
+};
+
+const readCode = (v: Config, where: string) => {
+  const source = readSource(v.source, `${where}.source`);
+  const height = optional(between(80, 900), v.height, `${where}.height`);
+
+  return height === undefined ? { source } : { source, height };
+};
+
 const readText = (v: Config, where: string) =>
   v.of === undefined
     ? { text: asString(v.text, `${where}.text`) }
@@ -67,6 +84,7 @@ export const PANEL_KINDS = {
       return trail === undefined ? {} : { trail };
     },
   }),
+  code: kind({ read: readCode }),
 };
 
 export type PanelKind = keyof typeof PANEL_KINDS;

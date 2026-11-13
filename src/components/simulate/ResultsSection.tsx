@@ -11,7 +11,7 @@ import {
   Tooltip,
   type ContextMenuEntry,
 } from '../../design-system';
-import type { TryRecord } from '../../cases/tries';
+import { generatedFrom, type TryRecord } from '../../cases/tries';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
@@ -25,6 +25,7 @@ import { FAULT_LABEL } from './faultMenu';
 import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
 import { fmtTime } from './format';
+import { ProgressBar } from './ProgressBar';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
 
@@ -34,6 +35,8 @@ interface TryRowProps {
   model: SimModel | null;
   parts: ScenePart[];
   world: ScenePart[];
+  generated: number;
+  progress: number | null;
   onReplay: () => void;
   onMenu: (e: React.MouseEvent) => void;
 }
@@ -52,17 +55,22 @@ const Faults: React.FC<{ record: TryRecord; rig: Rig }> = ({ record, rig }) =>
     </Tooltip>
   ));
 
-const TryRow: React.FC<TryRowProps> = ({ record, rig, model, parts, world, onReplay, onMenu }) => {
+const TryRow: React.FC<TryRowProps> = (props) => {
+  const { record, rig, model, parts, world, generated, progress, onReplay, onMenu } = props;
   const film = useFilmstrip(record, model, parts, world);
 
   return (
     <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
       <div className="flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
-        <span className="flex-1 text-white/50 tabular">{fmtTime(record.seconds)}</span>
+        <span className="text-white/50 tabular">{fmtTime(record.seconds)}</span>
+        <span className="flex-1 text-white/50 tabular" data-testid="try-generated">
+          {generated > 0 && `${generated} generated`}
+        </span>
         <Faults record={record} rig={rig} />
         <IconButton icon={<RunIcon className="w-4 h-4" />} title="Replay" size="xs" onClick={onReplay} />
       </div>
+      {progress !== null && <ProgressBar share={progress} />}
       {film && <img src={film} alt="" className="w-full h-14 object-cover rounded-[6px]" draggable={false} />}
     </div>
   );
@@ -129,7 +137,11 @@ const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
 export const ResultsSection: React.FC<ResultsProps> = (props) => {
   const { cases, rig, share, model, parts, world, run, compare, explore } = props;
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
-  const tries = cases.active ? cases.tries : [];
+  const all = cases.active ? cases.tries : [];
+  const tries = all.filter((t) => !t.generated);
+  const { multiply } = cases;
+  const progressOf = (t: TryRecord) =>
+    multiply.running?.source === t.id ? multiply.running.done / multiply.running.total : null;
   const showRun = !!run && hasRunResult(run.stats, run.model);
 
   const comparing = comparesCase(cases, compare);
@@ -143,7 +155,10 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [{ label: 'Delete', tone: 'danger', onSelect: () => cases.removeTry(record) }],
+      items: [
+        ...(multiply.can(record) ? [{ label: 'Multiply', onSelect: () => multiply.multiply(record) }] : []),
+        { label: 'Delete', tone: 'danger', onSelect: () => cases.removeTry(record) },
+      ],
     });
   };
 
@@ -162,6 +177,8 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
               model={model}
               parts={parts}
               world={world}
+              generated={generatedFrom(all, t).length}
+              progress={progressOf(t)}
               onReplay={() => void cases.timeline.show(t)}
               onMenu={(e) => openMenu(e, t)}
             />

@@ -13,6 +13,13 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
+import {
+  feedOperatorPose,
+  operatorCameraSnapshot,
+  operatorLatency,
+  operatorTrackState,
+} from '../cameras/operator/operatorCamera';
+import type { PoseSample } from '../cameras/operator/poseFollow';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
@@ -56,6 +63,7 @@ export interface DevActions {
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  multiplyRuns: (runs: number) => void;
   addCase: (raw: unknown) => string;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
@@ -169,6 +177,21 @@ async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewpo
   return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
 }
 
+function operatorCameraState() {
+  const { open, label, estimator, error } = operatorCameraSnapshot();
+  const track = operatorTrackState();
+
+  return {
+    open,
+    live: open && track === 'live',
+    ended: track === 'ended',
+    label,
+    estimator,
+    error,
+    latency: operatorLatency(),
+  };
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
     rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
@@ -232,6 +255,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
@@ -240,6 +264,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
+    feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
+    operatorCamera: () => operatorCameraState(),
     stubTabEngine,
     exploreLimit: (designs: number) => limitExplore(designs),
     pickFiles: (files: { name: string; base64: string }[]) =>

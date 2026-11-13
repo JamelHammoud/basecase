@@ -55,7 +55,7 @@ Simulating never changes your parts. The canvas shows the simulated pose, and en
 
 ## Where the same physics runs
 
-- **Drive** steers the robot live with the keyboard or a gamepad.
+- **Drive** steers the robot live with the keyboard, a gamepad, a phone or your arms in front of the camera. A humanoid driven by the camera has its base held in place, unless it has a ready Walk skill.
 - **Cases** record tries and judge each one pass or miss.
 - **Training** teaches skills on Forge, Basecase's own trainer, built on the same MuJoCo formulation. A trained skill counts only after Arena replays it on MuJoCo itself.
 - **Routines** run step by step on the live simulation.

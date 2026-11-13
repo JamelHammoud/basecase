@@ -169,6 +169,32 @@ describe('create_case with a console', () => {
     });
   });
 
+  it('keeps code panels in a column and over the canvas, driving through the code source', async () => {
+    const joystickApp = {
+      input: ['code', 'keys'],
+      panels: [
+        {
+          id: 'stick',
+          kind: 'code',
+          title: 'Joystick',
+          source: '<canvas></canvas><script>basecase.drive(null)</script>',
+        },
+        { id: 'hud', kind: 'code', source: '<p id="v"></p>', height: 120 },
+      ],
+      layout: {
+        areas: [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'top-left', width: 220, height: 80 }] },
+          { size: 320, panels: ['stick'] },
+        ],
+      },
+    };
+    const { reply, added, running } = create({ goal: 'reach', name: 'Joystick Rover', console: joystickApp });
+
+    expect(await reply).toMatchObject({ ok: true, running: true });
+    expect(added[0].console).toEqual(joystickApp);
+    expect(running).toEqual(['joystick-rover']);
+  });
+
   it('leaves a Case without a console in the studio', async () => {
     const { reply, running } = create({ goal: 'reach' });
 

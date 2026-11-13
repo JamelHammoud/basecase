@@ -1,14 +1,17 @@
 import type { ProjectSettings } from '../types/robotics';
 import { PEAK_DERATE } from './actuatorRules';
+import { actuatorOptions, type ActuatorOption } from './actuatorCatalog';
 import { isLegJoint } from './engineeringBody';
+import { jointEnvelope, outsideShare, type ServoLookup } from './engineeringEnvelope';
 import { count, jointLabel, nm } from './engineeringFormat';
-import type { CheckRow, JointLoad, WalkJoint, WalkSim } from './engineeringTypes';
-import { peakStatus } from './peakTorque';
+import type { CheckRow, JointEnvelope, JointLoad, WalkJoint, WalkSim } from './engineeringTypes';
+import { PEAK_LIMITS, peakStatus } from './peakTorque';
 
 interface PeakLine {
   load: JointLoad;
   walk: WalkJoint;
   stallNm: number;
+  outside: number;
   status: CheckRow['status'];
 }
 
@@ -19,10 +22,32 @@ const loadIds = (l: JointLoad) => (l.joint.actuators?.length ? l.joint.actuators
 
 const shareOf = (p: PeakLine) => p.walk.p99Nm / p.stallNm;
 
+const pastLine = (outside: number) => outside > PEAK_LIMITS.outside;
+
 function peakLineText(p: PeakLine): string {
   const over = p.walk.overS > 0 ? `, above stall for ${p.walk.overS.toFixed(2)} s` : '';
+  const past = pastLine(p.outside) ? `, ${Math.round(p.outside * 100)}% of the walk past its torque–speed line` : '';
 
-  return `${jointLabel(p.load.joint)}: asks for ${nm(p.walk.p99Nm)} N·m at the 99th percentile, ${shareOf(p).toFixed(2)} of its ${nm(p.stallNm)} N·m stall${over}`;
+  return `${jointLabel(p.load.joint)}: asks for ${nm(p.walk.p99Nm)} N·m at the 99th percentile, ${shareOf(p).toFixed(2)} of its ${nm(p.stallNm)} N·m stall${over}${past}`;
+}
+
+function lineStatus(walk: WalkJoint, stallNm: number, outside: number): CheckRow['status'] {
+  const status = peakStatus(walk, stallNm);
+
+  return status === 'pass' && pastLine(outside) ? 'warn' : status;
+}
+
+function envelopesOf(lines: PeakLine[], servoOf?: ServoLookup): JointEnvelope[] {
+  if (!servoOf) return [];
+
+  let options: ActuatorOption[] | undefined;
+  const lazyOptions = () => (options ??= actuatorOptions());
+
+  return lines.flatMap((p) => {
+    const e = jointEnvelope(p.load, p.walk, { servo: servoOf(p.load.joint), options: lazyOptions });
+
+    return e ? [e] : [];
+  });
 }
 
 function notRun(loads: JointLoad[], project: ProjectSettings, reason?: string): CheckRow[] {
@@ -41,7 +66,7 @@ function fellRow(walk: WalkSim, lines: PeakLine[]): CheckRow {
     check: 'Peak torque',
     status: 'fail',
     detail: `Fell at ${walk.fellAt!.toFixed(1)} s walking with servos limited to ${PEAK_DERATE} × stall`,
-    items: lines.map((p) => ({ text: peakLineText(p), ids: loadIds(p.load) })),
+    items: lines.map((p) => ({ text: peakLineText(p), ids: loadIds(p.load), joint: p.load.joint.id })),
     ids: lines.flatMap((p) => loadIds(p.load)),
   };
 }
@@ -74,22 +99,32 @@ function measuredRow(lines: PeakLine[]): CheckRow {
     items: flagged.map((p) => ({
       text: peakLineText(p),
       ids: loadIds(p.load),
+      joint: p.load.joint.id,
       status: p.status === 'fail' ? ('fail' as const) : ('warn' as const),
     })),
     ids: flagged.flatMap((p) => loadIds(p.load)),
   };
 }
 
-export function peakRow(loads: JointLoad[], project: ProjectSettings, walk?: WalkSim | string): CheckRow[] {
+export function peakRow(
+  loads: JointLoad[],
+  project: ProjectSettings,
+  walk?: WalkSim | string,
+  servoOf?: ServoLookup,
+): CheckRow[] {
   if (typeof walk !== 'object') return notRun(loads, project, walk);
 
   const lines = peakJoints(loads).flatMap((load): PeakLine[] => {
     const w = walk.joints[load.joint.id];
+    const outside = w ? outsideShare(load, w) : 0;
 
-    return w ? [{ load, walk: w, stallNm: load.stallNm!, status: peakStatus(w, load.stallNm!) }] : [];
+    return w ? [{ load, walk: w, stallNm: load.stallNm!, outside, status: lineStatus(w, load.stallNm!, outside) }] : [];
   });
 
   if (!lines.length) return notRun(loads, project, 'The walk policy drives none of the leg joints');
 
-  return walk.fellAt === null ? [measuredRow(lines)] : [fellRow(walk, lines)];
+  const row = walk.fellAt === null ? measuredRow(lines) : fellRow(walk, lines);
+  const envelopes = envelopesOf(lines, servoOf);
+
+  return [envelopes.length ? { ...row, envelopes } : row];
 }

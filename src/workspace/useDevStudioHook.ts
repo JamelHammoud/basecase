@@ -27,6 +27,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
   const { partsRef, projectRef } = docs;
   const { subscribePoses } = core.simTraining.sim;
   const posesRef = useRef<Float64Array | null>(null);
+  const jointsRef = useRef<Float64Array | null>(null);
   const devRef = useLatestRef<DevActions>({
     importRobot: actions.robots.importRobotFrom,
     posing,
@@ -47,7 +48,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     dropFiles: routeFiles,
     selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,
-    simState: () => devSimState(core),
+    simState: () => devSimState(core, jointsRef.current),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
     worldAt: () => {
       const { model, worldParts } = core.simTraining.sim;
@@ -82,6 +83,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     addCase: (raw) => core.simTraining.cases.add(parseCase(raw)).id,
     referenceTry: () => core.simTraining.cases.attempt.reference(),
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
+    multiplyRuns: (runs) => core.simTraining.cases.multiply.setRuns(runs),
     sharedLink: () => core.simTraining.share.link,
     stubTrainer: (policy) => {
       if (!isPolicySpec(policy)) throw new Error('stubTrainer takes a policy.');
@@ -108,8 +110,9 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
   useEffect(() => {
     if (!exposesTestHooks() || !active) return;
 
-    return subscribePoses((poses) => {
+    return subscribePoses((poses, frame) => {
       posesRef.current = poses;
+      jointsRef.current = frame.joints;
     });
   }, [active, subscribePoses]);
 

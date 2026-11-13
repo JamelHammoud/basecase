@@ -36,10 +36,11 @@ export interface CheckRow {
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix }>;
+  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix; joint?: string }>;
   itemsAreContext?: boolean;
   caseId?: string;
   dots?: CheckDot[];
+  envelopes?: JointEnvelope[];
 }
 
 export interface JointLoad {
@@ -56,6 +57,7 @@ export interface JointLoad {
   ratedNm?: number;
   ratedEstimated?: boolean;
   volts?: number;
+  noLoadRpm?: number;
   stallShare?: number;
   heatShare?: number;
   simRmsNm?: number;
@@ -66,6 +68,22 @@ export interface WalkJoint {
   p99Nm: number;
   rmsNm: number;
   overS: number;
+  samples?: Array<[rpm: number, nm: number]>;
+}
+
+export interface ServoCurve {
+  stallNm: number;
+  ratedNm: number;
+  rpm: number;
+}
+
+export interface JointEnvelope {
+  joint: string;
+  label: string;
+  samples: Array<[rpm: number, nm: number]>;
+  servo: ServoCurve & { name: string };
+  up?: ServoCurve & { name: string };
+  outside: number;
 }
 
 export interface WalkAmps {

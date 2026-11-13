@@ -4,6 +4,7 @@ import { controlValues } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import * as THREE from 'three';
 import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
+import { PoseDrive, type PoseSetup } from './drivePose';
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
@@ -19,7 +20,7 @@ import { Scanner } from './scanner';
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
   | { kind: 'animation'; animation: RobotAnimation }
-  | { kind: 'policy'; policy: PolicySpec; robot: string; hold?: Record<string, number> }
+  | { kind: 'policy'; policy: PolicySpec; robot: string; hold?: Record<string, number>; pose?: PoseSetup }
   | { kind: 'drive'; setup: DriveSetup }
   | RouteController
   | { kind: 'limp' };
@@ -49,8 +50,11 @@ export class SimEngine {
   }>;
   private controller: Controller = { kind: 'hold' };
   private drive: DriveLoop | null = null;
+  private arms: PoseDrive | null = null;
   private route: RouteRunner | null = null;
   stepHook: (() => void) | null = null;
+  commandHook: ((c: DriveCommand) => void) | null = null;
+  private given = new Map<number, DriveCommand>();
   private peaks: Float64Array;
   private saturated: Float64Array;
   private fellAt = new Map<string, number>();
@@ -187,9 +191,11 @@ export class SimEngine {
 
   setController(c: Controller) {
     this.controller = c;
+    this.given.clear();
     this.policyState?.eyes?.dispose();
     this.policyState = null;
     this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
+    this.arms = c.kind === 'policy' && c.pose ? new PoseDrive(c.pose) : null;
     this.faults.setLimpAll(c.kind === 'limp');
     this.route = c.kind === 'route' ? this.routeRunner(c) : null;
 
@@ -229,9 +235,16 @@ export class SimEngine {
   }
 
   command(c: DriveCommand) {
+    this.given.set(c.slot ?? 0, c);
+    this.commandHook?.(c);
     this.drive?.command(c, this.drive.hand ? this.holdValues() : undefined);
+    this.arms?.command(c);
 
     if (this.policyState) this.policyState.command = [c.v[0], c.v[1], c.v[2]];
+  }
+
+  givenCommands(): DriveCommand[] {
+    return [...this.given.values()];
   }
 
   grabStart(body: number, point: [number, number, number]) {
@@ -307,6 +320,17 @@ export class SimEngine {
     this.route?.apply(data, ps);
 
     if (pc && ps) this.applyPolicy(pc.policy, ps);
+
+    if (this.arms) this.applyArms(this.arms);
+  }
+
+  private applyArms(arms: PoseDrive) {
+    const { values } = arms.tick(this.data.time);
+
+    this.sim.joints.forEach((j, i) => {
+      if (j.actuator >= 0 && j.drive === 'position' && values?.[j.id] !== undefined)
+        this.data.ctrl[j.actuator] = this.targetFor(i, values);
+    });
   }
 
   private applyDrive(drive: DriveLoop) {

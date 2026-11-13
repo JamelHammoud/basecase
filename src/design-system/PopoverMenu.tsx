@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { behindModal } from './behindModal';
 import { Kbd } from './Kbd';
 import { Divider } from './Divider';
+import { MenuGutterPad, MenuGutterScope, useMenuGutter } from './menuGutter';
 
 export interface PopoverMenuProps {
   isOpen: boolean;
@@ -184,7 +185,7 @@ export const PopoverMenu: React.FC<PopoverMenuProps> = ({
           }
         >
           <div className={`glass-menu rounded-[14px] p-[var(--pad-x)] min-w-44 ${ANIMATION[side]} ${className}`}>
-            {children}
+            <MenuGutterScope>{children}</MenuGutterScope>
           </div>
         </div>,
         document.body,
@@ -224,32 +225,39 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   disabled = false,
   tone = 'default',
   active = false,
-}) => (
-  <button
-    type="button"
-    role="menuitem"
-    disabled={disabled}
-    onClick={onSelect}
-    data-active={active || undefined}
-    className={`w-full h-[32px] px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors disabled:opacity-35 ${toneClass(tone, active)} group/menuitem`}
-  >
-    {checked !== undefined && (
-      <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
-    )}
-    {icon && <span className={`w-4 shrink-0 flex justify-center ${iconToneClass(tone)}`}>{icon}</span>}
-    <span className="flex-1 truncate">{label}</span>
-    {detail && (
-      <span
-        className={`shrink-0 text-[12.5px] group-hover/menuitem:text-white/80 ${active ? 'text-white/80' : 'text-white/50'}`}
-      >
-        {detail}
-      </span>
-    )}
-    {shortcut && (
-      <Kbd className="group-hover/menuitem:[&_kbd]:bg-white/20 group-hover/menuitem:[&_kbd]:text-white">{shortcut}</Kbd>
-    )}
-  </button>
-);
+}) => {
+  const padded = useMenuGutter(checked !== undefined || !!icon);
+
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={disabled}
+      onClick={onSelect}
+      data-active={active || undefined}
+      className={`w-full h-[32px] px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors disabled:opacity-35 ${toneClass(tone, active)} group/menuitem`}
+    >
+      {checked !== undefined && (
+        <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
+      )}
+      {icon && <span className={`w-4 shrink-0 flex justify-center ${iconToneClass(tone)}`}>{icon}</span>}
+      {padded && <MenuGutterPad />}
+      <span className="flex-1 truncate">{label}</span>
+      {detail && (
+        <span
+          className={`shrink-0 text-[12.5px] group-hover/menuitem:text-white/80 ${active ? 'text-white/80' : 'text-white/50'}`}
+        >
+          {detail}
+        </span>
+      )}
+      {shortcut && (
+        <Kbd className="group-hover/menuitem:[&_kbd]:bg-white/20 group-hover/menuitem:[&_kbd]:text-white">
+          {shortcut}
+        </Kbd>
+      )}
+    </button>
+  );
+};
 
 const menuLabelClass = 'px-2 pt-1.5 pb-1 text-[12px] font-medium text-white/50 select-none';
 

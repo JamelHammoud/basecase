@@ -81,6 +81,7 @@ const KEYS: Record<DriveClass, Array<[string, string]>> = {
     ['Walk and turn', 'W A S D'],
     ['Step sideways', 'Q E'],
   ],
+  pose: [],
 };
 
 export const DriveKeys: React.FC<{ cls: DriveClass }> = ({ cls }) => (

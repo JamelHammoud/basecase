@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, IconButton, RunIcon, StopIcon, TrainIcon } from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
-import { pct } from './format';
+import { trainingLine } from './format';
 import { ProgressBar } from './ProgressBar';
 
 export interface SkillActions {
@@ -18,7 +18,7 @@ function stateLine(row: SkillRow): string | null {
 
   if (state.kind !== 'training') return null;
 
-  return state.share === null ? `${state.message}…` : `${state.message} ${pct(state.share)}`;
+  return trainingLine(state.message, state.share);
 }
 
 const RowAction: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row, actions }) => {

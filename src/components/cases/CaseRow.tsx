@@ -4,12 +4,11 @@ interface CaseRowProps {
   name: string;
   brief: string;
   selected?: boolean;
-  icon?: React.ReactNode;
   onClick: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }
 
-export const CaseRow: React.FC<CaseRowProps> = ({ name, brief, selected, icon, onClick, onContextMenu }) => (
+export const CaseRow: React.FC<CaseRowProps> = ({ name, brief, selected, onClick, onContextMenu }) => (
   <button
     type="button"
     aria-pressed={selected}
@@ -19,7 +18,6 @@ export const CaseRow: React.FC<CaseRowProps> = ({ name, brief, selected, icon, o
       selected ? 'bg-white/[0.09]' : 'hover:bg-white/[0.05]'
     }`}
   >
-    {icon && <span className="mt-0.5 shrink-0 text-white/55">{icon}</span>}
     <span className="min-w-0 flex-1">
       <span className="block text-[13px] font-medium text-white/90 truncate">{name}</span>
       <span className="block text-[12px] text-white/50 leading-snug">{brief}</span>

@@ -6,20 +6,16 @@ import type { FixtureRobot } from '../sim/fixtures/parts';
 import { obsSize, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../sim/policy';
 import { modelOf } from '../skills/fixtureModels';
 import { buildRig } from '../utils/kinematics';
-import { buildCase, builderRobot } from './caseBuilder';
+import { buildCase, builderRobot, CASE_PRESETS, presetsFor, type PresetId } from './caseBuilder';
 import { caseRunner } from './runCase';
 import { caseRandom, jitteredWorld } from './caseRandom';
 import { CASE_RUNS, runCaseTimes, summarizeRuns } from './caseRuns';
 import type { Case } from './schema';
-import { caseTemplates } from './templates';
-import { caseRobot } from './testing';
+import { caseRobot, presetCase } from './testing';
 
 const fixture = (id: string) => fixtureRobots().find((r) => r.id === id)!;
 
-const template = (robot: FixtureRobot, id: string): Case =>
-  caseTemplates(buildRig(robot.joints, robot.parts), robot.parts)
-    .find((t) => t.id === id)!
-    .build();
+const template = (robot: FixtureRobot, id: PresetId): Case => presetCase(robot, id);
 
 const withWheelEffort = (robot: FixtureRobot, effortNm: number): FixtureRobot => ({
   ...robot,
@@ -72,15 +68,13 @@ describe('seeded Case runs', () => {
     SIM_MS,
   );
 
-  const templatesFor = (robot: FixtureRobot) => caseTemplates(buildRig(robot.joints, robot.parts), robot.parts);
+  const presetsOf = (robot: FixtureRobot) => presetsFor(builderRobot(buildRig(robot.joints, robot.parts), robot.parts));
   const limpRuns = ['arm-3dof', 'rover-diff'].flatMap((robot) =>
-    templatesFor(fixture(robot))
-      .filter((t) => !t.refusal)
-      .map((t) => ({ robot, template: t.id })),
+    presetsOf(fixture(robot)).map((id) => ({ robot, template: id })),
   );
 
   it('a limp robot is tried on every template', () => {
-    const every = templatesFor(fixture('rover-diff')).map((t) => t.id);
+    const every = Object.keys(CASE_PRESETS);
 
     expect(new Set(limpRuns.map((r) => r.template))).toEqual(new Set(every));
   });
@@ -141,8 +135,8 @@ describe('seeded Case runs', () => {
       const [finding] = caseFindings([row]);
 
       expect(runs.refusal).toMatch(/wheels/);
-      expect(row).toMatchObject({ status: 'fail', detail: '', caseId: 'reach-the-flag' });
-      expect(finding).toMatchObject({ level: 'note', check: 'Reach the Flag', text: runs.refusal });
+      expect(row).toMatchObject({ status: 'fail', detail: '', caseId: 'reach-a-spot' });
+      expect(finding).toMatchObject({ level: 'note', check: 'Reach a Spot', text: runs.refusal });
     },
     SIM_MS,
   );

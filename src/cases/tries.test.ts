@@ -11,18 +11,15 @@ import { buildRig } from '../utils/kinematics';
 import { filmFrames } from './filmstrip';
 import { robotFacts } from './robotFit';
 import { worldItem } from './schema';
-import { caseTemplates } from './templates';
-import { caseRobot, runCase, touchTheDots } from './testing';
+import { caseRobot, presetCase, runCase, touchTheDots } from './testing';
 import { scoreTry, tryManifest, worstFirst, type TryRecord } from './tries';
 
 const robot = (id: string) => fixtureRobots().find((r) => r.id === id)!;
 
-function liveTry(id: string, templateId: string) {
+function liveTry(id: string) {
   const r = robot(id);
   const rig = buildRig(r.joints, r.parts);
-  const kase = caseTemplates(rig, r.parts)
-    .find((t) => t.id === templateId)!
-    .build();
+  const kase = presetCase(r, 'reach-the-flag');
   const model = buildMjcf({
     ...caseRobot(r),
     rig,
@@ -36,7 +33,7 @@ function liveTry(id: string, templateId: string) {
 describe('recording a try', () => {
   it('records 50 Hz and replays to the same poses', async () => {
     const mj = await loadMujoco();
-    const { r, rig, kase, model } = liveTry('rover-diff', 'reach-the-flag');
+    const { r, rig, kase, model } = liveTry('rover-diff');
     const engine = new SimEngine(mj, model);
     const access = driveAccess({ rig, parts: r.parts, model });
 
@@ -117,10 +114,7 @@ describe('recording a try', () => {
   it('a rover reaches the flag on its reference, and a limp one does not', async () => {
     const mj = await loadMujoco();
     const rover = robot('rover-diff');
-    const rig = buildRig(rover.joints, rover.parts);
-    const kase = caseTemplates(rig, rover.parts)
-      .find((t) => t.id === 'reach-the-flag')!
-      .build();
+    const kase = presetCase(rover, 'reach-the-flag');
 
     expect((await runCase(mj, kase, rover, { controller: 'reference' })).passed).toBe(true);
     expect((await runCase(mj, kase, rover, { controller: 'limp' })).passed).toBe(false);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { caseName, goalValues, worldsFor } from '../../cases/caseBuilder';
+import { caseName, goalFields, goalValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
 import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
@@ -58,7 +58,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         />
       )}
       <div className="flex flex-col gap-2">
-        {goal.params.map((key) => {
+        {goalFields(goal, values).map((key) => {
           const param = goalParam(goal, key);
 
           return (
@@ -77,7 +77,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         })}
         <FieldRow label="Name">
           <TextInput
-            value={name ?? caseName(goal.kind, world)}
+            value={name ?? caseName(goal.kind, world, values)}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') create();

@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { caseTemplates } from '../src/cases/templates';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { presetCase } from '../src/cases/testing';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
-import { buildRig } from '../src/utils/kinematics';
 import { openApp, partCount, type App } from './harness';
 
 interface StudioHook {
@@ -252,9 +251,7 @@ describe('Build tab fields', () => {
 
 describe('Cases in Checks', () => {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
-  const flag = caseTemplates(buildRig(rover.joints, rover.parts), rover.parts)
-    .find((t) => t.id === 'reach-the-flag')!
-    .build();
+  const flag = presetCase(rover, 'reach-the-flag');
   const activeCase = () =>
     app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().activeCase);
 
@@ -270,17 +267,17 @@ describe('Cases in Checks', () => {
     await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
 
-    const row = checks().getByRole('button', { name: /^Reach the Flag/ });
+    const row = checks().getByRole('button', { name: /^Reach a Spot/ });
 
     await expect.poll(() => row.count(), { timeout: 90000 }).toBe(1);
     await expect.poll(async () => (await row.textContent()) ?? '', { timeout: 90000 }).toMatch(/\d+ of 20$/);
     expect(await activeCase()).toBeNull();
 
     await row.click();
-    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-the-flag');
+    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
     await expect
       .poll(() => app.page.locator(visible('[data-testid="case-brief"]')).innerText(), { timeout: 10000 })
-      .toContain('Reach the Flag');
+      .toContain('Reach a Spot');
     expect(app.errors).toEqual([]);
   }, 150000);
 });

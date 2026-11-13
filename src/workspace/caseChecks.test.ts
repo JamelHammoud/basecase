@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CaseCheckJob } from '../cases/caseCheckJob';
 import { caseCheckPool } from '../cases/caseChecksClient';
-import { caseTemplates } from '../cases/templates';
+import { presetCase } from '../cases/testing';
+import type { PresetId } from '../cases/caseBuilder';
 import { CASE_STOPPED, caseFindings } from '../readiness/caseChecks';
 import { readinessOf } from '../readiness/readiness';
 import { ruleFinding } from '../readiness/wording';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import type { ProjectSettings } from '../types/robotics';
-import { buildRig } from '../utils/kinematics';
 import { platformBridge } from '../utils/platformBridge';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 
@@ -21,11 +21,9 @@ const run = vi.mocked(caseCheckPool.run);
 const getSkill = vi.mocked(platformBridge.getSkill);
 const keepOnly = vi.mocked(caseCheckPool.keepOnly);
 
-function sceneWith(robotId: string, templateId: string) {
+function sceneWith(robotId: string, templateId: PresetId) {
   const robot = fixtureRobots().find((r) => r.id === robotId)!;
-  const kase = caseTemplates(buildRig(robot.joints, robot.parts), robot.parts)
-    .find((t) => t.id === templateId)!
-    .build();
+  const kase = presetCase(robot, templateId);
   const project = { joints: robot.joints, cases: [kase] } as unknown as ProjectSettings;
 
   return { parts: robot.parts, project, measures: {}, partTriangles: () => null };
@@ -50,11 +48,11 @@ describe('Case rows in Checks', () => {
     const wall = ruleFinding('thin', 'note', { agentText: 'A wall is 0.6 mm thick.', subject: 'wall' });
     const readiness = readinessOf([wall, ...caseFindings(rows)], { parts: scene.parts, fingerprint: 'f', rows });
 
-    expect(row).toMatchObject({ check: 'Reach the Flag', status: 'fail', detail: '' });
+    expect(row).toMatchObject({ check: 'Reach a Spot', status: 'fail', detail: '' });
     expect(row.items).toEqual([{ text: CASE_STOPPED, status: 'fail' }]);
     expect(readiness.status).toBe('ready');
     expect(readiness.blockers).toEqual([]);
-    expect(readiness.notes.map((f) => f.key)).toEqual(expect.arrayContaining([wall.key, 'design:case:reach-the-flag']));
+    expect(readiness.notes.map((f) => f.key)).toEqual(expect.arrayContaining([wall.key, 'design:case:reach-a-spot']));
   });
 
   it('turn every Case into a red note when the robot’s model can’t be built', async () => {

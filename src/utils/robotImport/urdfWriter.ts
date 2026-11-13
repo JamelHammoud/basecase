@@ -14,11 +14,14 @@ export interface UrdfInput {
   parts: ScenePart[];
   masses: PartMass[];
   triangles: (id: string) => Float32Array | null;
+  meshUri?: (path: string) => string;
+  tail?: string[];
 }
 
 export interface UrdfFiles {
   urdf: string;
   meshes: Record<string, Float32Array>;
+  root: string;
 }
 
 interface WriteState {
@@ -32,6 +35,8 @@ interface WriteState {
 }
 
 export const WORLD_LINK = 'world';
+
+const BASE_LINK = 'base_link';
 
 const origin = (xyz: V3) => `<origin xyz="${vec(xyz)}" rpy="0 0 0"/>`;
 
@@ -73,7 +78,8 @@ function inertialXml({ kg, com, inertia: I }: LinkInertial): string[] {
 }
 
 function geometryXml(st: WriteState, p: PlacedPart): string[] {
-  const mesh = `<geometry><mesh filename="${esc(meshPath(st, p))}"/></geometry>`;
+  const path = meshPath(st, p);
+  const mesh = `<geometry><mesh filename="${esc(st.input.meshUri?.(path) ?? path)}"/></geometry>`;
 
   return [
     `    <visual>`,
@@ -146,7 +152,7 @@ function jointXml(st: WriteState, link: JointLink, body?: SimBody) {
 
 const offset = (a: V3, b: V3) => toMj([a[0] - b[0], a[1] - b[1], a[2] - b[2]]);
 
-function writeRobot(st: WriteState, key: string, world: boolean) {
+function writeRobot(st: WriteState, key: string, root: string) {
   const bodies = st.input.model.bodies.filter((b) => b.robot === key);
   const byName = new Map(bodies.map((b) => [b.name, b]));
 
@@ -159,8 +165,8 @@ function writeRobot(st: WriteState, key: string, world: boolean) {
       const link = { name: body.name.replace(/^b_/, ''), parent: parent.name, child: body.name };
 
       jointXml(st, { ...link, at: offset(body.origin, parent.origin) }, body);
-    } else if (world) {
-      jointXml(st, { name: `${WORLD_LINK}_${body.name}`, parent: WORLD_LINK, child: body.name, at: toMj(body.origin) });
+    } else {
+      jointXml(st, { name: `${root}_${body.name}`, parent: root, child: body.name, at: toMj(body.origin) });
     }
   }
 }
@@ -175,11 +181,11 @@ export function writeUrdf(input: UrdfInput): UrdfFiles {
     links: [],
     joints: [],
   };
-  const world = input.model.robots.length > 1;
+  const root = input.model.robots.length > 1 ? WORLD_LINK : BASE_LINK;
 
-  if (world) st.links.push(`  <link name="${WORLD_LINK}"/>`);
+  st.links.push(`  <link name="${root}"/>`);
 
-  for (const robot of input.model.robots) writeRobot(st, robot.key, world);
+  for (const robot of input.model.robots) writeRobot(st, robot.key, root);
 
   const urdf = [
     '<?xml version="1.0"?>',
@@ -187,9 +193,10 @@ export function writeUrdf(input: UrdfInput): UrdfFiles {
     ...st.colors.values(),
     ...st.links,
     ...st.joints,
+    ...(input.tail ?? []),
     '</robot>',
     '',
   ].join('\n');
 
-  return { urdf, meshes: st.meshes };
+  return { urdf, meshes: st.meshes, root };
 }

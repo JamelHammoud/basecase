@@ -11,7 +11,7 @@ import {
   setReview,
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
-import { isRepair } from '../lib/rank.mjs';
+import { byRank, isRepair } from '../lib/rank.mjs';
 import { run } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
 import { close } from '../lib/worktree.mjs';
@@ -118,7 +118,7 @@ export default function batch({ log }) {
 
   const open = openPulls({ fresh: true });
   const current = open.find(isBatch);
-  const ready = open.filter(eligible).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const ready = open.filter(eligible).sort(byRank);
 
   if (current && pullCheck(current) === 'failure') return settleFailed(current, ready, log);
 

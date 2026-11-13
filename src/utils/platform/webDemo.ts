@@ -13,3 +13,5 @@ export const MAC_DOWNLOAD = { url: `${RELEASES}/Basecase.dmg`, label: 'Download 
 export const WINDOWS_DOWNLOAD = { url: `${RELEASES}/Basecase-Setup.exe`, label: 'Download for Windows' };
 
 export const DESKTOP_DOWNLOAD = IS_WINDOWS ? WINDOWS_DOWNLOAD : MAC_DOWNLOAD;
+
+export const DESKTOP_AGENT_LINE = 'Build with the agent in the desktop app';

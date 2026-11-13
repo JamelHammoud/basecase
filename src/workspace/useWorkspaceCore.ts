@@ -8,6 +8,7 @@ import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
 import { useAnnotations } from './useAnnotations';
 import { useMarks, useMarkState } from './useMarks';
 import { useMeasure } from './useMeasure';
+import { useCadCompile } from './useCadCompile';
 import { usePanelSync } from './usePanelSync';
 import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
@@ -36,6 +37,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { showToast } = toasts;
 
   useRobotUpgrade(docs, showToast);
+  useCadCompile(docs);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const measure = useMeasure();
@@ -108,7 +110,6 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { setSceneId, setSceneName, setGlobalGoal } = scene;
   const { setProject, resetDoc, travel } = docs;
   const { reset: resetAnnotations } = annotations;
-  const { restorePose } = posing;
 
   const loadSeed = (next: WorkspaceSeed, message?: string) => {
     guide.cancel();
@@ -152,8 +153,8 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     onRobot,
     simTraining,
     guide,
-    undo: () => travel('undo', restorePose),
-    redo: () => travel('redo', restorePose),
+    undo: () => travel('undo', posing.restorePose),
+    redo: () => travel('redo', posing.restorePose),
     loadSeed,
   };
 }

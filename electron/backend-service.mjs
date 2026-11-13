@@ -23,6 +23,7 @@ import * as skillStore from './backend/skillStore.mjs';
 import * as sourced from './backend/sourced.mjs';
 import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { openCadFile } from './cadImport/openCadFile.mjs';
+import { renderCad } from './backend/cadRender.mjs';
 import { ReferenceImages } from './backend/referenceImages.mjs';
 import * as uploads from './backend/uploads.mjs';
 
@@ -56,6 +57,7 @@ export class BasecaseBackendService {
       secrets,
     });
     this.bridge.serve('references', (_payload, workspaceId) => ({ names: this.references.ofLane(workspaceId) }));
+    this.kernel = kernel;
     serveKernel(this.bridge, kernel);
     this.converter = typeof kernel?.convert === 'function' ? kernel : null;
     this.bridgeReady = this.startAgentBridge();
@@ -302,6 +304,10 @@ export class BasecaseBackendService {
 
   openCadFile(payload) {
     return openCadFile(this.converter, payload);
+  }
+
+  renderCad(payload) {
+    return renderCad(this.kernel, payload);
   }
 
   saveEvidenceFile(payload) {

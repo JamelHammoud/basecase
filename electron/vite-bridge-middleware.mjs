@@ -15,6 +15,10 @@ async function openCadFile(backend, { name, data }) {
   return { ...opened, data: Buffer.from(opened.data).toString('base64') };
 }
 
+async function renderCad(backend, payload) {
+  return JSON.parse(Buffer.from(await backend.renderCad(payload)).toString());
+}
+
 const searchParam = (url, name) => new URL(url, 'http://x').searchParams.get(name);
 
 function getRoutes(backend) {
@@ -57,6 +61,7 @@ function postRoutes(backend) {
     ['/sourced-remove', (p) => backend.removeSourced(p.id)],
     ['/sourced-import-cad', (p) => backend.importMakerCad(p)],
     ['/cad-open', (p) => openCadFile(backend, p)],
+    ['/cad-render', (p) => renderCad(backend, p)],
     ['/chat-save', (p) => backend.saveConversation(p)],
     ['/chat-delete', (p) => backend.deleteConversation(p.id)],
     ['/acp-cancel', (p) => backend.cancelAcpPrompt(p.workspaceId)],

@@ -37,6 +37,7 @@ import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CanvasMenuState } from './useCanvasMenu';
+import { leaderMenuItems } from './leaderCommands';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -192,6 +193,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.selectAll,
     shared.saveToLibrary,
     ...referencePart(inputs, part),
+    ...leaderMenuItems(actions, part.id),
     ...commentHere,
     { divider: true },
     shared.align,

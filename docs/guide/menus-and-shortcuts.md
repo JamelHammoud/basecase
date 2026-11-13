@@ -5,7 +5,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 ## 11. Menus, Palette & Shortcuts
 
 - **Right-click (`ContextMenu` primitive):**
-  - **Part:** the part's name heads the menu; clicking it copies the name. Then Duplicate, Save to Library, Reference Part (desktop only: opens the Agent tab with the part quoted in the composer, `partQuote`), Comment Here, Measure From Here, Align ▸, Drop to Floor, Stack, Reset Rotation, Zoom, Solid/Cutout/Guide, Subtract Overlapping Cutouts, Ungroup, Select All, Lock, Hide, Delete.
+  - **Part:** the part's name heads the menu; clicking it copies the name. Then Duplicate, Save to Library, Reference Part (desktop only: opens the Agent tab with the part quoted in the composer, `partQuote`), Make a Leader (on a part of a fixed-base arm, §8c), Comment Here, Measure From Here, Align ▸, Drop to Floor, Stack, Reset Rotation, Zoom, Solid/Cutout/Guide, Subtract Overlapping Cutouts, Ungroup, Select All, Lock, Hide, Delete.
   - **Several parts** (right-click inside the selection keeps it): Union, Subtract from {first}, Intersect, Align ▸, Drop to Floor, Solid/Cutout/Guide (checked only when all match; reference photos keep their role), Group/Ungroup, Duplicate, Select All, Save to Library, Delete.
   - Submenus (`submenu` entries) open on hover, flip left near the window edge, and can hold custom content.
   - **Routine step** (Routines view, §8j): Add Step After, Delete (⌫). The Start step has only Add Step After.

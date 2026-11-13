@@ -1,5 +1,6 @@
 import type { SourcedItem } from '../../data/sourcedItems';
 import type { ConnectReply, RobotEvent, RobotLinkState, RobotSpec } from '../../robot/robotState';
+import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
   AcpStatusInfo,
@@ -25,6 +26,19 @@ export interface CadBody {
 export interface OpenedCad {
   bodies: CadBody[];
   data: Uint8Array;
+}
+
+export type CadLanguage = 'openscad' | 'replicad';
+
+export interface RenderedCad {
+  ok: boolean;
+  positions?: number[];
+  indices?: number[];
+  edges?: number[] | null;
+  stats?: { volume?: number };
+  audit?: CadAudit;
+  ports?: CadPort[];
+  error?: string;
 }
 
 export interface AcpPromptPayload {
@@ -164,6 +178,7 @@ declare global {
       sourcedMesh: (id: string) => Promise<Uint8Array | null>;
       importMakerCad: (payload: unknown) => Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }>;
       openCadFile: (payload: { name: string; bytes: Uint8Array }) => Promise<OpenedCad>;
+      renderCad: (payload: { language: CadLanguage; code: string }) => Promise<Uint8Array>;
       savePurchase: (payload: {
         key: string;
         record: PurchaseRecord | null;

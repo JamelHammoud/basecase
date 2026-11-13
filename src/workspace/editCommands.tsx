@@ -14,6 +14,7 @@ import {
 } from '../design-system';
 import type { AlignMode, Axis } from '../utils/selection';
 import type { CommandInputs } from './sceneCommands';
+import { handJointCommands } from './jointCommands';
 
 const ic = 'w-4 h-4';
 
@@ -153,5 +154,6 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
 
 export const editCommands = (inputs: CommandInputs): Command[] => [
   ...clipboardCommands(inputs),
+  ...handJointCommands(inputs.actions.joints),
   ...arrangeCommands(inputs),
 ];

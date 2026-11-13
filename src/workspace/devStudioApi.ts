@@ -125,6 +125,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       return file && { name: file.name, base64: bytesToBase64(file.bytes) };
     },
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
+    projectPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),

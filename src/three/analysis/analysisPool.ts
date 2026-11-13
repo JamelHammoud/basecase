@@ -18,6 +18,8 @@ import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
+import type { FoundAxis } from '../../joints/axisFinder';
+import type { JointAxisQuery } from './jointAxis';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -199,4 +201,8 @@ export function fastenersIn(scene: SceneShapes, input: FastenerInput): Promise<C
 
 export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Promise<AssemblyGeometry> {
   return analyze(leastBusy(), scene, { kind: 'assembly', instances: scene.instances, ...input });
+}
+
+export function jointAxisIn(scene: SceneShapes, query: JointAxisQuery): Promise<FoundAxis | null> {
+  return analyze(pool()[0], scene, { kind: 'jointAxis', instances: scene.instances, ...query });
 }

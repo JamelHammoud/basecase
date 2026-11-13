@@ -1,6 +1,13 @@
 ---
 title: Join two parts with a hinge or slider
 date: 2026-11-13
+collection: engineer
+type: task
+keywords:
+  - joint
+  - hinge
+  - slider
+  - axis
 covers:
   - src/workspace/useHandJoints.ts
   - src/workspace/jointCommands.tsx

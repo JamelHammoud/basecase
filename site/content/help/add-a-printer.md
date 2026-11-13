@@ -15,6 +15,10 @@ keywords:
   - moonraker
   - prusalink
   - octoprint
+  - prusa
+  - core one
+  - mk4s
+  - orcaslicer
   - lan mode
   - access code
 related:
@@ -28,6 +32,7 @@ covers:
   - src/data/printerCatalog.ts
   - electron/print/printers.mjs
   - electron/print/connectors/
+  - electron/print/slicers.mjs
 ---
 
 Save your printer once, so Print mode lays parts out on its real bed and sends sliced plates to it from the desktop app.
@@ -41,7 +46,13 @@ Save your printer once, so Print mode lays parts out on its real bed and sends s
 7. Type the **Access code** or **API key**, and for Bambu LAN the **Serial number**.
 8. Click **Test Connection**. The row reads “Connected to” and the printer's name when it works.
 
-**Model** lists 92 printers, from the profiles Bambu Studio ships. On first launch, Basecase adds the printer you last chose in Bambu Studio, if you have it. **Find on Network** in the same pane lists Bambu Lab, Klipper and OctoPrint printers it can see; click **Add** on one.
+**Model** lists over a hundred printers, from the profiles Bambu Studio and OrcaSlicer ship. On first launch, Basecase adds the printer you last chose in Bambu Studio, if you have it. **Find on Network** in the same pane lists Bambu Lab, Klipper and OctoPrint printers it can see; click **Add** on one.
+
+## Prusa printers
+
+Prusa's CORE One, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so install it before you slice for them. The XL is its single-tool version; the 5-tool XL and printers with an MMU aren't listed.
+
+![Settings ▸ Printers with a Prusa CORE One sending through PrusaLink](/help/add-your-printer/printers.png)
 
 ## Connections
 

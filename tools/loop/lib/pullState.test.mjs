@@ -7,13 +7,20 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'revise-state-'));
 
 vi.stubEnv('BASECASE_LOOP_DIR', dir);
 
-const { entryFor, markLooked, markRebuilt, recordAttempt } = await import('./reviseState.mjs');
+const { entryFor, markLooked, markRebuilt, recordAttempt } = await import('./pullState.mjs');
 
 afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-describe('revise state', () => {
+describe('pull state', () => {
   it('starts empty for a pull request it has never seen', () => {
-    expect(entryFor(1)).toEqual({ heads: [], attempts: 0, lastJamel: '', lastLook: '', rebuilt: false });
+    expect(entryFor(1)).toEqual({
+      heads: [],
+      attempts: 0,
+      lastJamel: '',
+      lastLook: '',
+      conflictFails: 0,
+      rebuilt: false,
+    });
   });
 
   it('counts every attempt but remembers each head once', () => {

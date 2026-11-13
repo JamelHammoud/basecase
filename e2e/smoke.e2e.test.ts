@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -16,6 +16,21 @@ const sidebarShows = (name: string) =>
 
     return aside?.style.width !== '0px' && aside?.querySelector('h2')?.textContent === title;
   }, name);
+
+const blurFocus = () => (document.activeElement as HTMLElement | null)?.blur();
+
+const fillDiffersFromPanel = (row: Element) => {
+  const probe = document.createElement('div');
+
+  probe.style.background = 'var(--color-panel-bg)';
+  row.after(probe);
+
+  const panel = getComputedStyle(probe).backgroundColor;
+
+  probe.remove();
+
+  return getComputedStyle(row).backgroundColor !== panel;
+};
 
 const clickRail = async (name: string) => {
   if (await sidebarShows(name)) return;
@@ -33,6 +48,13 @@ afterAll(async () => {
 });
 
 describe('studio smoke test', () => {
+  it('loads cross-origin isolated, from the built bundle when there is one', async () => {
+    const fromSource = app.requests.some((url) => new URL(url).pathname.startsWith('/src/'));
+
+    expect(await app.page.evaluate(() => crossOriginIsolated)).toBe(true);
+    expect(fromSource).toBe(inject('served') === 'dev');
+  });
+
   it('adds a shape from the Shapes menu', async () => {
     await app.page.keyboard.press('a');
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();
@@ -74,6 +96,38 @@ describe('studio smoke test', () => {
   });
 });
 
+describe('Layers rows', () => {
+  it('runs a Layers name under its row toggles and keeps Show while the part is hidden', async () => {
+    await clickRail('Layers');
+
+    const row = app.page.locator(visible('[data-layer-row^="part:"]'), { hasText: 'Cube' }).first();
+    const nameRight = () => row.locator('span.truncate').evaluate((el) => el.getBoundingClientRect().right);
+    const rowRight = () => row.evaluate((el) => el.getBoundingClientRect().right);
+
+    await row.locator('span.truncate').click({ position: { x: 4, y: 4 } });
+    await app.page.mouse.move(0, 0);
+    await expect.poll(() => row.evaluate(fillDiffersFromPanel)).toBe(true);
+    expect((await rowRight()) - (await nameRight())).toBeLessThan(16);
+
+    await row.hover();
+    await row.getByRole('button', { name: 'Hide' }).click();
+    await app.page.mouse.move(0, 0);
+    await app.page.evaluate(blurFocus);
+
+    const show = row.getByRole('button', { name: 'Show' });
+
+    await expect.poll(() => show.evaluate((el) => el.checkVisibility({ opacityProperty: true }))).toBe(true);
+
+    await row.hover();
+    await show.click();
+    await app.page.mouse.move(0, 0);
+
+    const hide = row.getByRole('button', { name: 'Hide' });
+
+    await expect.poll(() => hide.evaluate((el) => el.checkVisibility({ opacityProperty: true }))).toBe(false);
+  });
+});
+
 describe('studio commands', () => {
   it('opens and closes the command palette', async () => {
     await app.page.keyboard.press('Meta+k');
@@ -87,6 +141,23 @@ describe('studio commands', () => {
     await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click({ button: 'right' });
     await expect.poll(() => app.page.getByRole('menuitem', { name: /Duplicate/ }).count()).toBeGreaterThan(0);
     await app.page.keyboard.press('Escape');
+  });
+
+  it('aligns a part from the context menu and closes it', async () => {
+    const xs = () =>
+      app.page.evaluate(() =>
+        (window as unknown as { __studio: { parts: () => Array<{ position: number[] }> } }).__studio
+          .parts()
+          .map((p) => p.position[0]),
+      );
+    const before = await xs();
+
+    await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Align', exact: true }).hover();
+    await app.page.getByRole('button', { name: 'Left to origin' }).click();
+
+    await expect.poll(xs).not.toEqual(before);
+    await expect.poll(() => app.page.getByRole('menuitem', { name: /Duplicate/ }).count()).toBe(0);
   });
 
   it('toggles comment mode', async () => {

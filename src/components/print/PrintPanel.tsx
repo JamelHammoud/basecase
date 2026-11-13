@@ -241,7 +241,7 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
             max={20}
             step={1}
             precision={0}
-            title="Copies"
+            aria-label="Copies"
             onChange={(v, live) => !live && set({ copies: v > 1 ? v : undefined })}
           />
         </div>

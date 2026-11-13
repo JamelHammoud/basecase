@@ -7,6 +7,7 @@ import type { PrintMaterial, ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { PrintReport } from '../utils/printReport';
 import type { ShowToast } from './types';
+import { errorMessage } from '../utils/errorMessage';
 
 interface PrintJobOptions {
   jobId: string;
@@ -21,8 +22,6 @@ interface PrintJobOptions {
 
 const threeMfOf = async (options: PrintJobOptions, spec: JobSpec): Promise<Record<string, Uint8Array>> =>
   (await (options.threeMf ?? options.viewport()?.printThreeMf)?.(spec.files, spec.plateSize)) ?? {};
-
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 async function buildPayload(options: PrintJobOptions, material?: PrintMaterial): Promise<JobPayload> {
   const { report, printer, project, jobId, sceneName } = options;
@@ -102,7 +101,7 @@ export function usePrintJob(options: PrintJobOptions) {
 
       return record;
     } catch (e) {
-      setError(message(e));
+      setError(errorMessage(e));
 
       throw e;
     } finally {
@@ -122,7 +121,7 @@ export function usePrintJob(options: PrintJobOptions) {
 
       return record;
     } catch (e) {
-      showToast(message(e), { tone: 'error' });
+      showToast(errorMessage(e), { tone: 'error' });
 
       return null;
     }
@@ -138,7 +137,7 @@ export function usePrintJob(options: PrintJobOptions) {
         opened.opened === 'default' ? `Opened ${options.sceneName}` : `Opened ${options.sceneName} in ${opened.opened}`,
       );
     } catch (e) {
-      showToast(message(e), { tone: 'error' });
+      showToast(errorMessage(e), { tone: 'error' });
     }
   };
 

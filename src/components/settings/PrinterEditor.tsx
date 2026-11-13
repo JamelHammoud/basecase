@@ -10,6 +10,7 @@ import {
 import { printBridge, type SavedPrinter } from '../../print/printBridge';
 import { SettingsRow as Row } from '../SettingsRows';
 import { SecretField } from './SecretField';
+import { errorMessage } from '../../utils/errorMessage';
 
 const CUSTOM = 'custom';
 const NONE = 'none';
@@ -55,7 +56,7 @@ const CustomBed: React.FC<{ printer: SavedPrinter; onChange: (next: MyPrinter) =
         step={5}
         precision={0}
         unit="mm"
-        title={label}
+        aria-label={label}
         onChange={(v, live) => !live && onChange({ ...printer, custom: { ...size, [key]: v } })}
       />
     </div>
@@ -82,7 +83,7 @@ const ConnectionTest: React.FC<{ id: string }> = ({ id }) => {
     try {
       setResult(await printBridge.test(id));
     } catch (e) {
-      setResult({ ok: false, message: e instanceof Error ? e.message : String(e) });
+      setResult({ ok: false, message: errorMessage(e) });
     } finally {
       setTesting(false);
     }

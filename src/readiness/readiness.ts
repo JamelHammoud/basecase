@@ -4,6 +4,7 @@ import type { MessageQuote, ScenePart } from '../types/robotics';
 import type { CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions, ReadinessFinding } from './types';
 import { READINESS_CHECKS, ruleFinding } from './wording';
+import { errorMessage } from '../utils/errorMessage';
 
 const round = (v: number) => Math.round(v * 10) / 10;
 
@@ -48,7 +49,7 @@ export function failedReadiness(
   error: unknown,
   ctx: { parts: ScenePart[]; decisions?: ReadinessDecisions },
 ): Readiness {
-  const reason = error instanceof Error ? error.message : String(error);
+  const reason = errorMessage(error);
   const failed = ruleFinding('unfinished', 'blocker', {
     agentText: `The checks stopped with an error, so nothing here is measured: ${reason}. Run get_readiness again.`,
     subject: 'error',

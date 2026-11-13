@@ -1,3 +1,5 @@
+import { phoneCommand } from '../phone/phoneDrive';
+import { phoneReading } from '../phone/phoneStore';
 import { commandFromPad, isIdle, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 
@@ -12,7 +14,7 @@ export interface InputSource {
 }
 
 export const NAMED_INPUTS = ['camera', 'phone', 'midi', 'leader-arm', 'voice', 'policy', 'script'] as const;
-export const STUDIO_INPUTS = ['gamepad', 'keys'];
+export const STUDIO_INPUTS = ['phone', 'gamepad', 'keys'];
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
 const sources = new Map<string, InputSource>();
@@ -32,6 +34,14 @@ function firstPad(): Gamepad | null {
 }
 
 registerInputSource({ id: 'keys', read: ({ keys }) => keys });
+registerInputSource({
+  id: 'phone',
+  read: ({ cls }) => {
+    const reading = phoneReading();
+
+    return reading ? phoneCommand(reading, cls) : null;
+  },
+});
 registerInputSource({
   id: 'gamepad',
   read: ({ cls }) => {

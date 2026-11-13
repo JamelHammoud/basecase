@@ -106,9 +106,6 @@ export const CHANGE_SCHEMA = {
     why: text('One or two sentences: the reason, from the arc, the bug or the failure'),
     cause: text('For fix and repair: the root cause and how it was reproduced; else empty'),
     checked: text('How it was checked: tests added, commands run, rates measured'),
-    changelog: text(
-      'For feature and integration: the title and first sentence of the entry this change adds in site/content/changelog/; else empty',
-    ),
     screenshots: { type: 'array', items: text('Repo path of a committed screenshot on this branch') },
     copy: {
       type: 'array',
@@ -122,5 +119,5 @@ export const CHANGE_SCHEMA = {
     commitMessage: text('Commit message: a subject line, a blank line, then the why'),
     notes: text('What was learned or left undone, for the loop'),
   },
-  required: ['changed', 'kind', 'title', 'summary', 'why', 'cause', 'checked', 'changelog', 'screenshots'],
+  required: ['changed', 'kind', 'title', 'summary', 'why', 'cause', 'checked', 'screenshots'],
 };

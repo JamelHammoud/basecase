@@ -1,5 +1,6 @@
 import { compileCsg } from './csg.mjs';
 import { toScene } from './geometry.mjs';
+import { importedParts } from './imported.mjs';
 
 const OP_FIELDS = [
   'id',
@@ -46,7 +47,7 @@ export async function recordFromFixture(fixture, specToPart) {
 
   return {
     name: fixture.name,
-    parts: ops.map((o) => specToPart(o.part)),
+    parts: [...ops.map((o) => specToPart(o.part)), ...(await importedParts(fixture))],
     project: projectOf(fixture),
     annotations: [],
   };
@@ -61,10 +62,13 @@ export async function loadFixtureInApp({ slot, fixture, record }) {
     return record;
   }
 
-  await slot.call('apply', { ops: await fixtureOps(fixture) });
+  const ops = await fixtureOps(fixture);
 
-  const built = await slot.api('sceneRecord');
-  const start = { name: fixture.name, parts: built.parts, project: projectOf(fixture), annotations: [] };
+  if (ops.length) await slot.call('apply', { ops });
+
+  const built = ops.length ? await slot.api('sceneRecord') : { parts: [] };
+  const parts = [...built.parts, ...(await importedParts(fixture))];
+  const start = { name: fixture.name, parts, project: projectOf(fixture), annotations: [] };
 
   await slot.api('load', start);
   await new Promise((r) => setTimeout(r, 1000));

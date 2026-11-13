@@ -3,6 +3,8 @@ import { guardBridge } from './bridgeGuard.mjs';
 import { nodeKernelService } from './cad-kernel/nodeHost/client.mjs';
 import { hubPostRoutes } from './hub/routes.mjs';
 import { onshapePostRoutes } from './onshape/routes.mjs';
+import { phoneBridgeMiddleware } from './phone/phoneBridge.mjs';
+import { PhonePairing } from './phone/phonePairing.mjs';
 import { printPostRoutes } from './print/routes.mjs';
 
 const withBase64Files = (got) => ({
@@ -126,7 +128,7 @@ async function respondToPost({ routes, url, body, res }) {
     res.end(JSON.stringify(await route(payload)));
   } catch (err) {
     res.statusCode = 500;
-    res.end(JSON.stringify({ error: String(err) }));
+    res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
   }
 }
 
@@ -181,11 +183,14 @@ function bridgeMiddleware(backend) {
 function installBridge(server) {
   const kernel = process.env.BASECASE_NODE_KERNEL === '1' ? nodeKernelService : undefined;
   const backend = new BasecaseBackendService(process.cwd(), { kernel });
+  const phone = new PhonePairing();
   const stopAgent = () => backend.disconnectAcpAgent();
 
   server.httpServer?.once('close', stopAgent);
+  server.httpServer?.once('close', () => phone.dispose());
   process.once('exit', stopAgent);
   server.middlewares.use('/api/events', guardBridge(eventsMiddleware(backend)));
+  server.middlewares.use('/api/bridge', guardBridge(phoneBridgeMiddleware(phone)));
   server.middlewares.use('/api/bridge', guardBridge(bridgeMiddleware(backend)));
 }
 

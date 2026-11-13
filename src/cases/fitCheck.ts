@@ -15,6 +15,7 @@ import { buildRig } from '../utils/kinematics';
 import { robotFacts } from './robotFit';
 import { caseSlots, type Case } from './schema';
 import { slotRefusals, type SlotRobot } from './slots';
+import { errorMessage } from '../utils/errorMessage';
 
 export type FitState = 'pass' | 'fail' | 'skip';
 
@@ -90,10 +91,7 @@ export async function checkFit(input: FitInput): Promise<FitRow[]> {
   try {
     model = await input.build();
   } catch (e) {
-    return [
-      ...rows,
-      { id: 'compile', label: 'Compiles', state: 'fail', detail: e instanceof Error ? e.message : String(e) },
-    ];
+    return [...rows, { id: 'compile', label: 'Compiles', state: 'fail', detail: errorMessage(e) }];
   }
 
   rows.push({ id: 'compile', label: 'Compiles', state: 'pass', detail: `${model.joints.length} joints` });

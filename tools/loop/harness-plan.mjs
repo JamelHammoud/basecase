@@ -1,6 +1,9 @@
 import path from 'node:path';
 import { harnessKey } from '../../bench/compare/cache.mjs';
-import { BENCH_RUNS, cachedFor, harnessLessons, microArgs, SETTINGS, taskMeta } from './lib/benchRuns.mjs';
+import { readExperiments } from '../../bench/experiments.mjs';
+import { agentLessons, BENCH_RUNS, cachedFor, compareArgs, microArgs, SETTINGS, taskMeta } from './lib/benchRuns.mjs';
+import { repoVariable } from './lib/github.mjs';
+import { budgetFrom } from './lib/harnessVerdict.mjs';
 import { CODE_ROOT } from './lib/paths.mjs';
 import { pickWeakness, runsOf, shortfall, weaknessMarkdown } from './lib/weakness.mjs';
 
@@ -27,7 +30,9 @@ console.log(
 console.log(plan('tune', meta.tune));
 console.log(plan('heldout', meta.heldout));
 console.log(`Reused runs: ${runsOf(cached).join(', ') || 'none'}.`);
-console.log(`Harness lessons in the playbook: ${harnessLessons().length}.`);
+console.log(
+  `Lessons in the playbook: ${agentLessons().length}. Changes already measured: ${readExperiments().length}.`,
+);
 
 const weakness = pickWeakness({ entries: [...cached.values()].flat(), categoryOf: meta.categoryOf });
 
@@ -36,6 +41,11 @@ console.log(
     ? `\n${weaknessMarkdown(weakness, { titleOf: meta.titleOf, settings: SETTINGS, harness })}`
     : '\nNo weakness to pick until the tune baseline has failing runs.',
 );
-console.log(
-  `\nBranch measurement: node ${microArgs({ split: 'tune', seeds: SETTINGS.seeds, name: 'harness-<time>-tune' }).join(' ')}`,
-);
+
+const budget = budgetFrom(repoVariable('LOOP_BENCH_BUDGET'));
+const measure = (split) =>
+  `node ${compareArgs({ against: '<main>', split, budget, name: `harness-<time>-${split}` }).join(' ')}`;
+
+console.log(`\nBudget per run: $${budget} (LOOP_BENCH_BUDGET), the baseline's runs included.`);
+console.log(`Branch measurement: ${measure('tune')}`);
+console.log(`Then, if tune improves: ${measure('heldout')}`);

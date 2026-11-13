@@ -428,7 +428,12 @@ describe('LiDAR', () => {
   itUnlessWindows(
     'scans a corridor with a rover’s LiDAR, draws the hits and exports them as observation.scan',
     async () => {
-      await loadFixture(withLidar(fixtureRobots().find((r) => r.id === 'rover-diff')!));
+      await loadFixture(
+        withLidar(
+          fixtureRobots().find((r) => r.id === 'rover-diff')!,
+          'slamtec-rplidar-s2',
+        ),
+      );
       await openPlayTab(app.page, 'Cases');
       await button('New Case').click();
 
@@ -441,9 +446,8 @@ describe('LiDAR', () => {
 
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await holdKey('w', 1000);
       await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
-      await button('Stop Try').click();
+      await endTryAt(SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
       const files = await datasetFiles();
@@ -453,8 +457,8 @@ describe('LiDAR', () => {
       });
       const info = JSON.parse(at('meta/info.json').toString());
 
-      expect(info.features['observation.scan'].shape).toEqual([500]);
-      expect(rows[0]['observation.scan']).toHaveLength(500);
+      expect(info.features['observation.scan'].shape).toEqual([720]);
+      expect(rows[0]['observation.scan']).toHaveLength(720);
       expect(JSON.parse(at('meta/modality.json').toString()).state.scan.original_key).toBe('observation.scan');
       expect(app.errors).toEqual([]);
     },

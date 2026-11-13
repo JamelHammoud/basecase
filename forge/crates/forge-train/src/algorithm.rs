@@ -35,5 +35,6 @@ pub fn build<'a>(algo: Algo, envs: Envs<'a>, seed: u64, math: Math) -> Result<Bo
         Algo::FastSac => Ok(Box::new(Sac::new(envs, seed, math, Recipe::fast()))),
         Algo::FlashSac => Ok(Box::new(Sac::new(envs, seed, math, Recipe::flash()))),
         Algo::Shac => Err("SHAC needs Forge's gradients, which this build doesn't carry".to_owned()),
+        Algo::Bc => Err("Training from demos needs no robots".to_owned()),
     }
 }

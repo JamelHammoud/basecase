@@ -41,7 +41,9 @@ const reasonFor = (pull, mainGreen) => {
 
   if (reviewState(pull.headRefOid) === 'failure') return 'review';
 
-  return mainGreen && checkConclusion(pull.headRefOid) === 'failure' ? 'check' : null;
+  const ownsFailures = mainGreen || pull.headRefName.startsWith('loop/repair/');
+
+  return ownsFailures && checkConclusion(pull.headRefOid) === 'failure' ? 'check' : null;
 };
 
 const evidence = (pull, reason, reviews) => {
@@ -49,7 +51,7 @@ const evidence = (pull, reason, reviews) => {
 
   const runInfo = checkRunFor(pull.headRefOid);
 
-  return `Its Check failed while main is green, so the failure is this pull request's. The failed log:\n\n${runInfo ? failedLog(runInfo.databaseId).slice(-MAX_LOG) : 'unavailable'}`;
+  return `Its Check failed. Either main is green, so the failure is this pull request's, or this is a repair that has to turn Check fully green. The failed log:\n\n${runInfo ? failedLog(runInfo.databaseId).slice(-MAX_LOG) : 'unavailable'}`;
 };
 
 function checkout(pull) {

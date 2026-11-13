@@ -13,7 +13,7 @@ export const BuildPane: React.FC<{ prefs: BuildPrefs }> = ({ prefs }) => (
   <>
     <Group title="Build guide">
       <Row label="Update automatically" hint="15 s after the scene changes, once the agent is done">
-        <Switch aria-label="Update build guide automatically" checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
+        <Switch aria-label="Update automatically" checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
       </Row>
     </Group>
     <Group title="Checks">

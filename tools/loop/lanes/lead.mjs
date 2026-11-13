@@ -6,6 +6,7 @@ import {
   commentOnIssue,
   createIssue,
   editIssueLabels,
+  findOpenIssue,
   hasLabel,
   openIssues,
   ownerComments,
@@ -147,9 +148,9 @@ function prompt(world) {
     '--limit',
     '40',
     '--json',
-    'title',
+    'title,mergedAt',
     '--jq',
-    '.[].title',
+    '.[] | "\\(.mergedAt[0:10]) \\(.title)"',
   ]).out;
   const direction = [world.direction?.body, ...world.comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n');
 
@@ -164,6 +165,12 @@ function prompt(world) {
   ].join('\n\n');
 }
 
+const STEP_LABELS = ['loop:next', 'loop:building'];
+const openStep = (title) => {
+  const match = findOpenIssue({ title, similarAmong: STEP_LABELS });
+
+  return match?.labels.some((label) => STEP_LABELS.includes(label)) ? match : null;
+};
 const numbers = (list) => new Set(list.map((issue) => issue.number));
 
 function fileStep(s, known, log) {
@@ -172,9 +179,10 @@ function fileStep(s, known, log) {
   const labels = ['loop:next', `loop:${s.kind}`, ...(request ? ['loop:priority'] : [])];
   const head = [request ? `Request: #${request}` : '', promotes ? `Idea: #${promotes}` : ''].filter(Boolean).join('\n');
   const body = `${head ? `${head}\n` : ''}Arc: ${s.arc}\nKind: ${s.kind}\n\n${s.body}`;
-  const url = createIssue({ title: s.title, body, labels });
+  const owner = openStep(s.title);
+  const url = owner?.url ?? createIssue({ title: s.title, body, labels, similarAmong: STEP_LABELS });
 
-  log(url ? `step ${url}` : `skipped, already open: ${s.title}`);
+  log(owner ? `already open as ${owner.url}: ${s.title}` : `step ${url ?? `skipped, already open: ${s.title}`}`);
 
   if (!url) return;
 
@@ -197,7 +205,9 @@ function fileSteps(output, world, log) {
   };
 
   for (const arc of output.newArcs) {
-    log(`arc ${createIssue({ ...arc, labels: ['loop:arc'] }) ?? `skipped, already open: ${arc.title}`}`);
+    log(
+      `arc ${createIssue({ ...arc, labels: ['loop:arc'], similarAmong: ['loop:arc'] }) ?? `skipped, already open: ${arc.title}`}`,
+    );
   }
 
   for (const s of output.steps) fileStep(s, known, log);

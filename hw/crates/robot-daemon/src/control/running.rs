@@ -9,8 +9,8 @@ use crate::stop::plan_for;
 use crate::telemetry::{Sample, Telemetry};
 use crate::watchdog::Freshness;
 
-const TEST_TICKS: u32 = 250;
-const TEST_TRAVEL_COUNTS: i32 = 20;
+pub(crate) const TEST_TICKS: u32 = 250;
+pub(crate) const TEST_TRAVEL_COUNTS: i32 = 20;
 const REHEARSE_TICKS: u32 = 500;
 
 pub(super) struct Fresh {

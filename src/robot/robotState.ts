@@ -2,7 +2,9 @@ export const LADDER = ['look', 'set_up', 'test', 'rehearse', 'first_run', 'polic
 
 export type RobotMode = (typeof LADDER)[number];
 
-export type RobotFamily = 'feetech' | 'dynamixel';
+export type ServoFamily = 'feetech' | 'dynamixel';
+
+export type RobotFamily = ServoFamily | 'unitree-g1';
 
 export interface RobotSpec {
   family: RobotFamily;
@@ -10,6 +12,26 @@ export interface RobotSpec {
   class: 'arm' | 'legged';
   emulated: true;
 }
+
+export type ServoRobotSpec = RobotSpec & { family: ServoFamily };
+
+export interface UnitreeG1Ask {
+  family: 'unitree-g1';
+  emulated: true;
+}
+
+export type ConnectSpec = ServoRobotSpec | UnitreeG1Ask;
+
+export function servoFamily(spec: { family: RobotFamily } | null | undefined): ServoFamily | null {
+  const family = spec?.family;
+
+  return family === 'feetech' || family === 'dynamixel' ? family : null;
+}
+
+export const G1_TOP_RUNG: RobotMode = 'test';
+
+export const ladderFor = (spec: { family: RobotFamily } | null | undefined): readonly RobotMode[] =>
+  spec?.family === 'unitree-g1' ? LADDER.slice(0, LADDER.indexOf(G1_TOP_RUNG) + 1) : LADDER;
 
 export type ConnectReply = { ok: true } | { ok: false; message: string };
 

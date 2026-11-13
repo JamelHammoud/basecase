@@ -1,5 +1,5 @@
 mod entry;
-mod running;
+pub(crate) mod running;
 mod scan;
 mod stopping;
 

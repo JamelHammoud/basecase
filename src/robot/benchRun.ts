@@ -1,7 +1,7 @@
 import type { BenchRecording, BenchSample } from '../reality/benchLogs';
 import { familyOfRobot } from '../reality/benchLogs';
 import { BENCH_SECONDS, benchOffset } from '../reality/benchSequence';
-import { radiansFromCounts, type RobotState, type RobotStatus } from './robotState';
+import { radiansFromCounts, servoFamily, type RobotState, type RobotStatus } from './robotState';
 import { robotSnapshot, sendRobotCommand, setBenchDriving, subscribeRobot } from './robotStore';
 
 export const BENCH_INTENT_MS = 25;
@@ -9,7 +9,10 @@ export const BENCH_INTENT_MS = 25;
 const BENCH_END_GRACE_S = 1;
 
 export const canRunBench = (state: RobotState) =>
-  state.link === 'connected' && state.mode === 'test' && state.status?.run === 'running';
+  state.link === 'connected' &&
+  servoFamily(state.spec) !== null &&
+  state.mode === 'test' &&
+  state.status?.run === 'running';
 
 const radians = (position: number | null | undefined) =>
   typeof position === 'number' ? radiansFromCounts(position) : null;
@@ -58,10 +61,11 @@ export function benchSeconds(heard: HeardStatus[]): number[] {
 
 export function playBench(): Promise<BenchRecording | null> {
   const begun = robotSnapshot();
+  const family = servoFamily(begun.spec);
 
-  if (!canRunBench(begun) || !begun.spec) return Promise.resolve(null);
+  if (!canRunBench(begun) || !begun.spec || !family) return Promise.resolve(null);
 
-  const { ids, family } = begun.spec;
+  const { ids } = begun.spec;
   const starts = measuredStarts(begun);
   const heard: HeardStatus[] = [];
   const startedAt = performance.now();

@@ -1,9 +1,14 @@
+import { G1_WRITABLE_IDS, g1JointName, UNITREE_G1 } from './unitreeG1.mjs';
+
 export const FAMILIES = ['feetech', 'dynamixel'];
 export const CLASSES = ['arm', 'legged'];
 export const LADDER = ['look', 'set_up', 'test', 'rehearse', 'first_run', 'policy', 'longer_runs'];
 export const MAX_SERVOS = 32;
 
 const SPEC_KEYS = ['class', 'emulated', 'family', 'ids'];
+const G1_KEYS = ['emulated', 'family'];
+const ONLY_EMULATED = 'Only an emulated robot can connect: family, servo IDs, class and emulated, nothing else.';
+const MOTORS_LOCKED = 'Real motors are locked in this build. Connect an emulated robot instead.';
 const BARE_COMMANDS = new Set(['heartbeat', 'stop', 'fall', 'release', 'clear_fault', 'recheck']);
 
 const isPlainObject = (value) =>
@@ -30,10 +35,9 @@ function idsProblem(ids) {
 }
 
 function specProblem(spec) {
-  if (!isPlainObject(spec) || !sameKeys(spec, SPEC_KEYS))
-    return 'Only an emulated robot can connect: family, servo IDs, class and emulated, nothing else.';
+  if (!isPlainObject(spec) || !sameKeys(spec, SPEC_KEYS)) return ONLY_EMULATED;
 
-  if (spec.emulated !== true) return 'Real motors are locked in this build. Connect an emulated robot instead.';
+  if (spec.emulated !== true) return MOTORS_LOCKED;
 
   if (!FAMILIES.includes(spec.family)) return 'Choose Feetech or Dynamixel servos.';
 
@@ -42,15 +46,30 @@ function specProblem(spec) {
   return idsProblem(spec.ids);
 }
 
+const asksForG1 = (spec) => isPlainObject(spec) && spec.family === UNITREE_G1;
+
+function g1Problem(spec) {
+  if (!sameKeys(spec, G1_KEYS)) return ONLY_EMULATED;
+
+  return spec.emulated === true ? null : MOTORS_LOCKED;
+}
+
+const G1_SPEC = Object.freeze({ family: UNITREE_G1, ids: G1_WRITABLE_IDS, class: 'legged', emulated: true });
+
 export function checkedRobotSpec(spec) {
-  const problem = specProblem(spec);
+  const g1 = asksForG1(spec);
+  const problem = g1 ? g1Problem(spec) : specProblem(spec);
 
   if (problem) return { ok: false, message: problem };
 
-  return { ok: true, spec: { family: spec.family, ids: [...spec.ids], class: spec.class, emulated: true } };
+  const { family, ids, class: robotClass } = g1 ? G1_SPEC : spec;
+
+  return { ok: true, spec: { family, ids: [...ids], class: robotClass, emulated: true } };
 }
 
-export const daemonArgs = (spec, artefacts) => [
+const g1Args = (artefacts) => ['--family', UNITREE_G1, '--emulated', '--artefacts', artefacts];
+
+const servoArgs = (spec, artefacts) => [
   '--family',
   spec.family,
   '--ids',
@@ -61,6 +80,9 @@ export const daemonArgs = (spec, artefacts) => [
   '--artefacts',
   artefacts,
 ];
+
+export const daemonArgs = (spec, artefacts) =>
+  spec.family === UNITREE_G1 ? g1Args(artefacts) : servoArgs(spec, artefacts);
 
 const isJointValue = (value) => value === null || (typeof value === 'number' && Number.isFinite(value));
 
@@ -89,7 +111,7 @@ const RANGE_RAD = 2.8;
 export const emulatedCalibration = (spec) => ({
   joints: spec.ids.map((id) => ({
     id,
-    name: `servo ${id}`,
+    name: spec.family === UNITREE_G1 ? g1JointName(id) : `servo ${id}`,
     zero_counts: ZERO_COUNTS,
     direction: 1,
     min_rad: -RANGE_RAD,

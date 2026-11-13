@@ -3,10 +3,10 @@ import {
   applyRobotEvent,
   INITIAL_ROBOT,
   type ConnectReply,
+  type ConnectSpec,
   type RobotEvent,
   type RobotLinkState,
   type RobotMode,
-  type RobotSpec,
   type RobotState,
 } from './robotState';
 
@@ -99,7 +99,7 @@ export function startRobotStore(link: RobotLinkApi) {
 
 const unavailable: ConnectReply = { ok: false, message: 'Emulated robots run in the desktop app.' };
 
-export async function connectRobot(spec: RobotSpec, joints: string[]): Promise<ConnectReply> {
+export async function connectRobot(spec: ConnectSpec, joints: string[]): Promise<ConnectReply> {
   const reply = (await api?.robotConnect?.(spec)) ?? unavailable;
 
   if (reply.ok) setSceneJoints(joints);

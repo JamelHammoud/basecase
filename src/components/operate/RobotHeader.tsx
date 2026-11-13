@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, MetaLine } from '../../design-system';
 import { disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
-import type { RobotState } from '../../robot/robotState';
+import type { RobotFamily, RobotState } from '../../robot/robotState';
 import { rungLabel } from './RobotLadder';
 
 const RUN: Record<string, string> = {
@@ -13,7 +13,7 @@ const RUN: Record<string, string> = {
   stopped: 'Stopped',
 };
 
-const FAMILY = { feetech: 'Feetech', dynamixel: 'Dynamixel' };
+const FAMILY: Record<RobotFamily, string> = { feetech: 'Feetech', dynamixel: 'Dynamixel', 'unitree-g1': 'G1' };
 
 function servoCount(robot: RobotState) {
   const n = robot.spec?.ids.length ?? 0;

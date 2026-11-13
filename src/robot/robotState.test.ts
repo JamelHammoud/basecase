@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { RobotJoint } from '../types/robotics';
 import { intentFromSim } from './intentMirror';
 import {
+  ladderFor,
   applyRobotEvent,
   INITIAL_ROBOT,
   MAX_MESSAGES,
@@ -33,6 +34,12 @@ const joint = (id: string, extra: Partial<RobotJoint> = {}): RobotJoint => ({
 });
 
 describe('robot state', () => {
+  it('offers the G1 only Look, Set Up and Test', () => {
+    expect(ladderFor({ family: 'unitree-g1' })).toEqual(['look', 'set_up', 'test']);
+    expect(ladderFor({ family: 'feetech' })).toHaveLength(7);
+    expect(ladderFor(null)).toHaveLength(7);
+  });
+
   it('lets only the next rung or Look be entered, one at a time', () => {
     const look = connected();
 

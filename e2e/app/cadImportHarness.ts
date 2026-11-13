@@ -26,8 +26,14 @@ export interface ProbeOutcome {
   probes?: Record<string, string>;
 }
 
+export interface OpenOutcome {
+  error?: string;
+  bodies?: Array<{ name: string; size: number[] }>;
+}
+
 export interface SelfTestReport {
   imports: Record<string, ImportOutcome>;
+  opens: Record<string, OpenOutcome>;
   reach: ProbeOutcome;
   hang: { stopped: ProbeOutcome; next: ImportOutcome } | null;
   memory: { stopped: ProbeOutcome; next: ImportOutcome } | null;
@@ -89,6 +95,9 @@ async function runUnsandboxed(spec: Record<string, unknown>): Promise<SelfTestRe
   return runCadImportSelfTest(createNodeConverter(), { ...spec, memoryMs: 0 });
 }
 
+const stoppedAt = (report: { running?: string } | null) =>
+  report?.running ? `stopped during ${report.running}` : 'wrote no report';
+
 function runPackaged(spec: Record<string, unknown>, dir: string): Promise<SelfTestReport> {
   const specFile = path.join(dir, 'spec.json');
   const out = path.join(dir, 'report.json');
@@ -114,8 +123,10 @@ function runPackaged(spec: Record<string, unknown>, dir: string): Promise<SelfTe
     app.once('exit', (code) => {
       clearTimeout(timer);
 
-      if (fs.existsSync(out)) resolve(JSON.parse(fs.readFileSync(out, 'utf8')));
-      else reject(new Error(`The packaged self-test wrote no report (exit ${code}). ${stderr}`));
+      const report = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : null;
+
+      if (code === 0 && report && !report.running) resolve(report);
+      else reject(new Error(`The packaged self-test ${stoppedAt(report)} (exit ${code}). ${stderr}`));
     });
   });
 }
@@ -125,6 +136,11 @@ export async function runConverterSelfTest(
   { hangMs, memoryMs }: { hangMs: number; memoryMs: number },
 ): Promise<SelfTestReport> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-cadimport-test-'));
+  const twoBodies = path.join(FIXTURES, 'two-bodies-inch.step');
+  const broken = path.join(dir, 'broken.step');
+
+  fs.writeFileSync(broken, fs.readFileSync(twoBodies).subarray(0, 3000));
+
   const spec = {
     partId: 'fixture-plate',
     url: 'https://example.com/plate',
@@ -132,6 +148,10 @@ export async function runConverterSelfTest(
       { name: 'plate.step', file: path.join(FIXTURES, 'plate.step'), ext: '.step' },
       { name: 'plate.zip', file: path.join(FIXTURES, 'plate.zip'), ext: '.zip' },
       { name: 'tetra.stl', file: path.join(FIXTURES, 'tetra.stl'), ext: '.stl' },
+    ],
+    opens: [
+      { name: 'broken.step', file: broken },
+      { name: 'two-bodies-inch.step', file: twoBodies },
     ],
     targets: world.targets,
     hangMs,

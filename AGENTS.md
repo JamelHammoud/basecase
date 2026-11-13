@@ -4,7 +4,7 @@
 
 **Rules live in this repo, nowhere else.** When a maintainer gives a lasting rule or preference (how something should look, behave, be named, be committed), write it here or in the guide for its area, in the same change. Never keep it only in an agent's private memory, a chat or a tool-specific file: the next contributor, on another model, never sees those.
 
-**Before you change an area, read its guide. When you change how it works, update that guide in the same change.** Code folders carry a short `AGENTS.md` that names their guides (`electron/`, `src/three/`, `src/components/`…); agents load the nearest one on their own, so add one when a new area grows.
+**Before you change an area, read its guide. When you change how it works, update that guide in the same change.** A guide, brief or prompt says only what the code does once that change lands: never a lane, file or step another pull request will add. Work that only makes sense together lands as one pull request. Code folders carry a short `AGENTS.md` that names their guides (`electron/`, `src/three/`, `src/components/`…); agents load the nearest one on their own, so add one when a new area grows.
 
 **Keep this file a map.** It's loaded into every agent session: under 200 lines and 32 KiB (Codex stops reading there), checked by `npm run check:docs`. Area detail goes in its guide; add here only what applies to every change. Write rules plainly, without IMPORTANT or capitals, and only what the code can't tell; a rule that must never bend becomes a lint, hook or test. Why it's laid out this way: [Agent instructions](docs/research/Agent%20instructions.md).
 
@@ -85,6 +85,7 @@ These rules hold for every human and agent, on every machine. They're enforced b
 | Rule | Limit | How to comply |
 |---|---|---|
 | No comments (`basecase/no-comments`) | none, except `@vite-ignore` / `#__PURE__` pragmas | Name things so the code reads on its own. Lasting context (why a value is what it is, platform quirks, bugs avoided) goes in the area's guide (`docs/guide/`) or `docs/notes/` (`ui.md`, `core.md`, `node.md`) |
+| Banned copy (`basecase/copy`) | none in user-facing strings in `src/` and the app menu | Cut the word or the line (§3c); the list is `BANNED_COPY` in `verify/rehearsal/uiRules.ts`, linted through `tools/copy/banned.mjs` |
 | No nested `if` in one function (`basecase/no-nested-if`) | 0 | Guard clauses and early returns, combined conditions, lookup tables, or extract a named predicate / function |
 | Blank line between statements of different kinds (`@stylistic/padding-line-between-statements`) | — | Auto-fixed. Consecutive declarations or expression statements may group; every `if`, loop, block and `return` is set off by blank lines |
 | `max-lines` per file | 400 (blank lines not counted) | Split by responsibility into sibling modules. Data catalogs (`src/data/`) and the agent prompt are exempt |
@@ -173,8 +174,7 @@ Run it on every string you add or change:
 - [ ] If it asks for work, does it start with the verb, and does clicking it help do the work?
 - [ ] Is the most important word first?
 - [ ] Same word as everywhere else for this thing? Right casing for this element (Title Case buttons and menu items, sentence case for the rest)?
-- [ ] No banned words (“yet”, “please”, “simply”, “successfully”, “Oops”, “Invalid…”; the full list is §3c)?
-- [ ] No `·` (or a stand-in glyph) between items? Use layout instead (§3b-16).
+- [ ] No banned words (“yet”, “please”, “Oops”, “Invalid…”; §3c) and no `·` or stand-in glyph between items (§3b-16)? `basecase/copy` lints both; the rest of §3c is yours to catch.
 
 ## 13. Functional Invariants (never break these)
 

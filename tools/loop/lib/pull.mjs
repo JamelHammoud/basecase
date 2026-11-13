@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
 import { createPull, openPulls, repo } from './github.mjs';
+import { landedIn, NOTHING_LANDED } from './landed.mjs';
 import { sameTitle } from './titles.mjs';
 import { CODE_ROOT } from './paths.mjs';
 import { protectedIn, protectedList } from './protected.mjs';
@@ -27,13 +28,18 @@ const oneLine = (text) => text.replace(/\s+/g, ' ').trim();
 export const copyLines = (copy = []) =>
   copy.length === 0 ? NONE : copy.map(({ string, why }) => `copy: "${oneLine(string)}" — ${oneLine(why)}`).join('\n');
 
-const withCopySection = (template, copy = []) =>
-  template.includes('{{copy}}') || copy.length === 0 ? template : `${template.trimEnd()}\n\n## Copy\n\n{{copy}}\n`;
-
-const screenshotLines = (paths, branch) =>
+const screenshotLines = (paths, { branch, slug }) =>
   paths.length === 0
     ? NONE
-    : paths.map((file) => `![${path.basename(file)}](https://github.com/${repo()}/raw/${branch}/${file})`).join('\n\n');
+    : paths
+        .map((file) => `![${path.basename(file)}](https://github.com/${slug ?? repo()}/raw/${branch}/${file})`)
+        .join('\n\n');
+
+const shownScreenshots = (change, landed) => [
+  ...new Set([...(change.screenshots ?? []).filter(landed.exists), ...landed.images]),
+];
+
+const entryLines = (entries) => (entries.length === 0 ? NONE : entries.join('\n\n'));
 
 export const pullTitle = (change) => `${KINDS[change.kind].prefix}: ${change.title}`;
 
@@ -46,28 +52,35 @@ const withProtected = (body, files = []) =>
     ? body
     : `${body}\n\n## Protected paths\n\n${protectedList(files)}. The reason for each is in Why; review fails one without it.`;
 
-const templateFor = (change) =>
-  withCopySection(
+const ADDED_SECTIONS = { screenshots: 'Screenshots', copy: 'Copy', changelog: 'Changelog' };
+
+const withAddedSections = (template, values) =>
+  Object.entries(ADDED_SECTIONS)
+    .filter(([field]) => !template.includes(`{{${field}}}`) && values[field] !== NONE)
+    .reduce((text, [field, heading]) => `${text.trimEnd()}\n\n## ${heading}\n\n{{${field}}}\n`, template);
+
+const templateFor = (change, values) =>
+  withAddedSections(
     fs.readFileSync(
       path.join(CODE_ROOT, '.github', 'PULL_REQUEST_TEMPLATE', `${KINDS[change.kind].template}.md`),
       'utf8',
     ),
-    change.copy,
+    values,
   );
 
-const fieldValues = (change, branch) => ({
+const fieldValues = (change, { branch, slug, landed }) => ({
   summary: change.summary,
   why: change.why,
   cause: change.cause || NONE,
   checked: change.checked,
-  changelog: (ANNOUNCED.has(change.kind) && change.changelog) || NONE,
-  screenshots: screenshotLines(change.screenshots ?? [], branch),
+  changelog: entryLines(landed.entries),
+  screenshots: screenshotLines(shownScreenshots(change, landed), { branch, slug }),
   copy: copyLines(change.copy),
 });
 
-export function pullBody(change, { branch, extra = {}, protectedPaths = [] }) {
-  const values = { ...fieldValues(change, branch), ...extra };
-  const body = templateFor(change)
+export function pullBody(change, { branch, slug, extra = {}, protectedPaths = [], landed = NOTHING_LANDED }) {
+  const values = { ...fieldValues(change, { branch, slug, landed }), ...extra };
+  const body = templateFor(change, values)
     .replace(/<!--[\s\S]*?-->\n*/g, '')
     .replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? NONE)
     .trim();
@@ -77,7 +90,9 @@ export function pullBody(change, { branch, extra = {}, protectedPaths = [] }) {
   return withProtected(links ? `${body}\n\n${links}` : body, protectedPaths);
 }
 
-export const REVISED_FIELDS = ['summary', 'checked', 'changelog', 'screenshots', 'copy'];
+export const REVISED_FIELDS = ['summary', 'why', 'checked', 'screenshots', 'copy'];
+
+const REVISED_SECTIONS = [...REVISED_FIELDS, 'changelog'];
 
 const TRAILING = ['## Protected paths', '## Revisions'];
 
@@ -101,12 +116,12 @@ function withSection(body, heading, value) {
   return before < 0 ? `${body.trimEnd()}\n\n${fresh}`.trimEnd() : sections.toSpliced(before, 0, fresh).join('\n');
 }
 
-export function revisedBody(body, change, { branch }) {
-  const template = templateFor(change);
-  const values = fieldValues(change, branch);
+export function revisedBody(body, change, { branch, slug, landed = NOTHING_LANDED }) {
+  const values = fieldValues(change, { branch, slug, landed });
+  const template = templateFor(change, values);
 
-  return REVISED_FIELDS.reduce((text, field) => {
-    const heading = headingOf(template, field) ?? (field === 'copy' ? 'Copy' : null);
+  return REVISED_SECTIONS.reduce((text, field) => {
+    const heading = headingOf(template, field) ?? ADDED_SECTIONS[field];
 
     return heading ? withSection(text, heading, values[field]) : text;
   }, body);
@@ -142,7 +157,12 @@ export function publish(change, { dir, branch, extra, onDuplicate }) {
   git(['push', '-q', '-u', 'origin', branch], dir);
 
   const title = pullTitle(change);
-  const body = pullBody(change, { branch, extra, protectedPaths: protectedIn('origin/main...HEAD', dir) });
+  const body = pullBody(change, {
+    branch,
+    extra,
+    protectedPaths: protectedIn('origin/main...HEAD', dir),
+    landed: landedIn('origin/main...HEAD', dir),
+  });
 
   try {
     return createPull({ branch, title, body, label: `loop:${change.kind}` });

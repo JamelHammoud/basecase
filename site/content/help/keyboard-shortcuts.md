@@ -47,10 +47,12 @@ On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? wh
 | Rotate | [[E]] |
 | Scale | [[R]] |
 | Sculpt, once it's on in **Settings** ▸ **Canvas** | [[C]] |
+| Sculpt inverted | ⌥ and drag |
 | Pose | [[P]] |
 | Comment | [[M]] |
 | Measure | [[D]] |
 | Measure without snapping | ⇧ and click |
+| Measure vertically | ⌥ and click |
 | Annotate | [[N]] |
 | Marker, while annotating | [[P]] |
 | Eraser, while annotating | [[E]] |

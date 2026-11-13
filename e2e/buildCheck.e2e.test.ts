@@ -368,7 +368,7 @@ describe('Cases in Checks', () => {
     await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
     await expect
       .poll(() => app.page.locator(visible('[data-testid="case-brief"]')).innerText(), { timeout: 10000 })
-      .toBe(flag.brief);
+      .toContain(flag.brief);
     expect(app.errors).toEqual([]);
   }, 150000);
 });

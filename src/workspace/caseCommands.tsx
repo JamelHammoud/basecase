@@ -65,6 +65,21 @@ function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Co
   return [...(dataset.canExport ? [exportDataset] : []), ...(dataset.canPublish ? [publishDataset] : [])];
 }
 
+function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
+  if (!share.canShare || share.sharing) return [];
+
+  return [
+    {
+      id: 'share-robot',
+      group: 'Simulate',
+      label: 'Share Robot',
+      icon: <ShareIcon className={ic} />,
+      keywords: 'link url web browser gallery hub hugging face publish drive',
+      run: share.share,
+    },
+  ];
+}
+
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim, cases } = simTraining;
@@ -151,5 +166,6 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...tryIt,
     ...commandCenter,
     ...datasetCommands(cases),
+    ...shareCommands(simTraining),
   ];
 }

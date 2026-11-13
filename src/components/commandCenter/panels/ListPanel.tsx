@@ -1,5 +1,6 @@
 import React from 'react';
 import { Section } from '../../../design-system';
+import { buildRig } from '../../../utils/kinematics';
 import { ResultsSection } from '../../simulate/ResultsSection';
 import { TrySection } from '../../simulate/CaseSections';
 import { useBus, type PanelViewProps } from '../panelContext';
@@ -31,7 +32,14 @@ export const ListPanel: React.FC<PanelViewProps<'list'>> = (props) => {
   const tries = (
     <>
       <TrySection cases={ctx.cases} teachWalk={null} cls={ctx.sim.drive.cls} />
-      <ResultsSection cases={ctx.cases} model={ctx.sim.model} parts={ctx.parts} world={ctx.sim.worldParts} run={null} />
+      <ResultsSection
+        cases={ctx.cases}
+        rig={buildRig(ctx.joints, ctx.parts)}
+        model={ctx.sim.model}
+        parts={ctx.parts}
+        world={ctx.sim.worldParts}
+        run={null}
+      />
     </>
   );
 

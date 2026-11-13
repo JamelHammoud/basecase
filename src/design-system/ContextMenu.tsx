@@ -30,6 +30,34 @@ export interface ContextMenuProps {
   onClose: () => void;
 }
 
+const EDGE_PAD = 8;
+
+const Submenu: React.FC<{ left: boolean; width: number; children: React.ReactNode }> = ({ left, width, children }) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [lift, setLift] = useState(0);
+
+  useLayoutEffect(() => {
+    const rect = ref.current?.getBoundingClientRect();
+
+    if (!rect) return;
+
+    setLift(Math.max(0, Math.min(rect.bottom - (window.innerHeight - EDGE_PAD), rect.top - EDGE_PAD)));
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      className={`glass-menu absolute -top-1.5 rounded-[14px] [--pad-x:8px] p-[var(--pad-x)] animate-fade-in ${
+        left ? 'right-full mr-2' : 'left-full ml-2'
+      }`}
+      style={{ width, transform: lift ? `translateY(${-lift}px)` : undefined }}
+    >
+      {children}
+    </div>
+  );
+};
+
 const closingThen = (onClose: () => void, onSelect?: () => void) =>
   onSelect &&
   (() => {
@@ -131,15 +159,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, minWidth 
                 <ChevronRightIcon className="w-3.5 h-3.5 text-white/50" />
               </button>
               {open && (
-                <div
-                  role="menu"
-                  className={`glass-menu absolute -top-1.5 rounded-[14px] [--pad-x:8px] p-[var(--pad-x)] animate-fade-in ${
-                    pos?.subLeft ? 'right-full mr-2' : 'left-full ml-2'
-                  }`}
-                  style={{ width: item.submenuWidth ?? 260 }}
-                >
+                <Submenu left={!!pos?.subLeft} width={item.submenuWidth ?? 260}>
                   {item.submenu(onClose)}
-                </div>
+                </Submenu>
               )}
             </div>
           );

@@ -66,6 +66,67 @@ describe('sceneText', () => {
   });
 });
 
+const operand = (id, operandOf, over = {}) => ({
+  id,
+  name: id,
+  kind: 'box',
+  position: [0, 0, 2],
+  rotation: [0, 0, 0],
+  size: [40, 30, 4],
+  bounds: { min: [-20, -15, 0], max: [20, 15, 4] },
+  color: '#888888',
+  role: 'solid',
+  operandOf,
+  ...over,
+});
+
+const booleanOf = (id, op, operands, over = {}) => ({
+  ...operand(id, undefined, over),
+  kind: `boolean (${op})`,
+  operands: operands.map((o) => ({ ...o, operandOf: id })),
+});
+
+describe('sceneText with booleans', () => {
+  const hole = operand('hole', 'cut', { kind: 'hole_cylinder', position: [5, 0, 2], size: [6, 6, 10], role: 'cutout' });
+  const cut = booleanOf('cut', 'subtract', [operand('plate'), hole], { group: 'Base' });
+
+  it('lists a boolean with its operation and operand ids, then each operand indented, base first', () => {
+    const lines = sceneText({ ...scene(0), parts: [cut] }).split('\n');
+
+    expect(lines[2]).toBe('1 parts:');
+    expect(lines[3]).toMatch(
+      /^cut "cut" boolean\(subtract\) group="Base" pos=\[0,0,2\] size=\[40,30,4\] .*operands=\[plate,hole\]/,
+    );
+    expect(lines[4]).toMatch(/^ {2}plate "plate" box pos=\[0,0,2\] size=\[40,30,4\] .*operand-of=cut/);
+    expect(lines[5]).toMatch(
+      /^ {2}hole "hole" hole_cylinder pos=\[5,0,2\] size=\[6,6,10\] .*role=cutout operand-of=cut/,
+    );
+  });
+
+  it('nests a boolean inside a boolean, and finds an operand by id', () => {
+    const merged = booleanOf('merged', 'union', [operand('block'), operand('knob')]);
+    const outer = booleanOf('outer', 'subtract', [merged, operand('slot')]);
+    const snap = { ...scene(2), parts: [...scene(2).parts, outer] };
+    const lines = sceneText(snap).split('\n');
+
+    expect(lines.slice(5).map((l) => l.match(/^ *\S+/)[0])).toEqual([
+      'outer',
+      '  merged',
+      '    block',
+      '    knob',
+      '  slot',
+    ]);
+    expect(lines[6]).toContain('boolean(union)');
+    expect(lines[6]).toContain('operand-of=outer operands=[block,knob]');
+
+    const picked = sceneText(snap, { ids: ['knob'] });
+
+    expect(picked).toContain('1 of 3 parts:');
+    expect(picked).toContain('    knob "knob"');
+    expect(picked).not.toContain('Not in the scene');
+  });
+});
+
 describe('findInScene', () => {
   it('matches words, group and a region, and sorts by distance with near', () => {
     expect(findInScene(scene(30), { query: 'part 7' })).toContain('1 of 30 parts match');

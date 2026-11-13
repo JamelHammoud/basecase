@@ -27,7 +27,7 @@ export function useSimWorker(
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null });
-  const frameHookRef = useRef<(() => void) | null>(null);
+  const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
   const routineHookRef = useRef<((update: LiveUpdate) => void) | null>(null);
@@ -78,7 +78,7 @@ export function useSimWorker(
       ui.current.stats = msg.stats;
       ui.current.facts = msg.facts ?? null;
       showFrame(m, msg, { viewport: viewportRef.current, listeners: poseListeners.listeners.current });
-      frameHookRef.current?.();
+      frameHookRef.current?.({ poses: msg.poses, time: msg.stats.time });
 
       const now = performance.now();
 
@@ -195,6 +195,13 @@ function linkCameras(w: Worker, link: CameraLink | null) {
 }
 
 type PoseListener = (poses: Float64Array, frame: { joints: Float64Array }) => void;
+
+export interface SimFrame {
+  poses: Float64Array;
+  time: number;
+}
+
+export type FrameHook = (frame: SimFrame) => void;
 
 function showFrame(
   m: SimModel,

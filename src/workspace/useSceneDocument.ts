@@ -8,8 +8,10 @@ import {
   type ScenePart,
 } from '../types/robotics';
 import type { RobotSkeleton } from '../types/skeleton';
+import { editWithOperands } from '../booleans/operands';
 import { jointsWithoutParts } from '../utils/kinematics';
 import { EMPTY_DOC, docFromParts, liveEdit, pushHistory, stepHistory, type HistoryDirection } from './docHistory';
+import { useBooleanResults } from './useBooleanResults';
 import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
 
@@ -52,6 +54,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     setDoc(next);
   };
 
+  useBooleanResults(doc.parts, docRef, writeDoc);
+
   const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
   const tracked = (): Omit<Snapshot, 'parts'> => {
     const { pose, joints, marks, skeleton } = projectRef.current;
@@ -78,12 +82,12 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     const d = docRef.current;
 
     if (live) {
-      writeDoc(liveEdit(d, updater(d.parts)));
+      writeDoc(liveEdit(d, editWithOperands(d.parts, updater)));
 
       return;
     }
 
-    const parts = updater(d.parts);
+    const parts = editWithOperands(d.parts, updater);
     const kept = new Set(parts.map((p) => p.id));
     const nextJoints = jointsWithoutParts(joints, new Set(d.parts.filter((p) => !kept.has(p.id)).map((p) => p.id)));
 

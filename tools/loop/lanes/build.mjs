@@ -1,8 +1,9 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
-import { commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
+import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
+import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
 import { recordDecline, stepEntry, stepWaiting } from '../lib/stepState.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
@@ -24,28 +25,28 @@ const openPullNumbers = () => new Set(openPulls().map((pull) => pull.number));
 
 const ORPHAN_AFTER_MS = 30 * 60 * 1000;
 
-const stepsWithPulls = () =>
-  new Set(
-    openPulls().flatMap((pull) => [
-      ...[...pull.body.matchAll(/Closes #(\d+)/g)].map((m) => Number(m[1])),
-      ...[/^loop\/build\/(\d+)-/.exec(pull.headRefName)?.[1]].filter(Boolean).map(Number),
-    ]),
-  );
+function closeIfMerged(step, index) {
+  if (stepStatus(index, step.number) !== 'merged') return false;
 
-const orphaned = (now) => {
-  const built = stepsWithPulls();
+  closeIssue(step.number, 'Done: a pull request for this step has merged.');
 
-  return issues(BUILDING).filter(
-    (issue) => !built.has(issue.number) && now - Date.parse(issue.updatedAt) > ORPHAN_AFTER_MS,
-  );
-};
+  return true;
+}
+
+const unbuilt = (steps, index) =>
+  steps.filter((step) => !closeIfMerged(step, index) && stepStatus(index, step.number) === 'none');
 
 const waitingSteps = () => {
+  const index = stepPullIndex();
+
+  if (!index) return [];
+
   const now = Date.now();
   const openNumbers = openPullNumbers();
   const queued = issues(NEXT).filter((issue) => !hasLabel(issue, BUILDING));
+  const stale = issues(BUILDING).filter((issue) => now - Date.parse(issue.updatedAt) > ORPHAN_AFTER_MS);
 
-  return [...queued, ...orphaned(now)]
+  return unbuilt([...queued, ...stale], index)
     .filter((issue) => issue.author?.login === OWNER_LOGIN)
     .filter((issue) => !stepWaiting(stepEntry(issue.number), { now, openNumbers }))
     .sort(byPriorityThenAge);
@@ -91,6 +92,15 @@ function buildStep(step, { log, slot }) {
     if (!result.ok || !result.output.changed) {
       giveBack(result);
       log(`#${step.number} not built: ${String(result.error ?? result.output.notes).slice(0, 500)}`);
+
+      return;
+    }
+
+    const latest = stepPullIndex({ fresh: true });
+    const taken = latest ? stepStatus(latest, step.number) : 'none';
+
+    if (taken !== 'none') {
+      log(`#${step.number}: another pull request for this step is ${taken} now; not publishing a second`);
 
       return;
     }

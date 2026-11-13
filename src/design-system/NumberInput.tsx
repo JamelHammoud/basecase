@@ -36,6 +36,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 }) => {
   const [draft, setDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const handledByKey = useRef(false);
   const clamp = (v: number) => clampNumber(v, { min, max, precision });
   const format = (v: number) => formatNumber(v, precision);
   const { scrubbing, handlers } = useNumberScrub({
@@ -55,9 +56,19 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
     const parsed = evaluateMath(draft);
 
-    if (parsed !== null) onChange(clamp(parsed));
+    if (parsed !== null && clamp(parsed) !== value) onChange(clamp(parsed));
 
     setDraft(null);
+  };
+
+  const onBlur = () => {
+    if (handledByKey.current) {
+      handledByKey.current = false;
+
+      return;
+    }
+
+    commitDraft();
   };
 
   const stepBy = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -81,6 +92,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     else if (e.key === 'Escape') setDraft(null);
     else return;
 
+    handledByKey.current = true;
     (e.target as HTMLInputElement).blur();
   };
 
@@ -112,7 +124,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
           requestAnimationFrame(() => document.activeElement === e.target && e.target.select());
         }}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={commitDraft}
+        onBlur={onBlur}
         onKeyDown={onKeyDown}
         className={`w-full min-w-0 h-full bg-transparent text-[13px] text-white/90 tabular outline-none ${
           label !== undefined ? 'pl-0' : 'pl-2'

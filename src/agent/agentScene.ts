@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { BLOCKOUT_ONLY, PART_CATALOG, catalogItemFromKey, catalogNote } from '../data/catalog';
 import { COMPONENT_BY_ID } from '../data/components';
 import { hardwareName, hardwareNote } from '../data/hardware';
@@ -7,10 +6,11 @@ import type { PartMate } from '../types/ports';
 import type { RobotSkeleton } from '../types/skeleton';
 import { PartKind, PartRole, PrintMaterial, ScenePart } from '../types/robotics';
 import { cadMeshToScene, mirroredPorts, type AgentCadPayload } from './cadMesh';
+import { isBooleanPart } from '../booleans/parts';
 import { portsOf, portSummary } from './ports';
+import { partBoundsCad, type PartBoxes } from './sceneBounds';
 import {
   add,
-  eulerToMatrix,
   groupFor,
   MIRROR_AXIS_INDEX,
   r1,
@@ -29,6 +29,7 @@ export { agentCatalog } from './agentCatalog';
 export type { AgentCadPayload } from './cadMesh';
 export { groupFor, rotToCad, rotToScene, toCad, toScene } from './agentFrame';
 export { mirrorParts } from './agentMirror';
+export { partBoundsCad, type PartBoxes } from './sceneBounds';
 
 export interface AgentPartSpec {
   id: string;
@@ -340,43 +341,6 @@ export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
   return next;
 }
 
-function worldBox(p: ScenePart): { min: V3; max: V3 } {
-  const hx = p.dimensions.width / 2,
-    hy = p.dimensions.height / 2,
-    hz = p.dimensions.depth / 2;
-  const m = eulerToMatrix(p.rotation);
-  const min: V3 = [Infinity, Infinity, Infinity];
-  const max: V3 = [-Infinity, -Infinity, -Infinity];
-
-  const corners = [-hx, hx].flatMap((cx) => [-hy, hy].flatMap((cy) => [-hz, hz].map((cz) => [cx, cy, cz] as V3)));
-
-  for (const [cx, cy, cz] of corners) {
-    const v = new THREE.Vector3(cx, cy, cz).applyMatrix4(m);
-    const w: V3 = [v.x + p.position[0], v.y + p.position[1], v.z + p.position[2]];
-
-    for (let i = 0; i < 3; i++) {
-      min[i] = Math.min(min[i], w[i]);
-      max[i] = Math.max(max[i], w[i]);
-    }
-  }
-
-  return { min, max };
-}
-
-function boxToCad(b: { min: V3; max: V3 }) {
-  const a = toCad(b.min);
-  const c = toCad(b.max);
-
-  return {
-    min: [Math.min(a[0], c[0]), Math.min(a[1], c[1]), Math.min(a[2], c[2])].map(r2),
-    max: [Math.max(a[0], c[0]), Math.max(a[1], c[1]), Math.max(a[2], c[2])].map(r2),
-  };
-}
-
-export type PartBoxes = Record<string, { min: V3; max: V3 } | undefined>;
-
-export const partBoundsCad = (p: ScenePart, measured?: PartBoxes) => boxToCad(measured?.[p.id] ?? worldBox(p));
-
 function materialOf(p: ScenePart): string | undefined {
   if (p.printMaterial) return p.printMaterial.toLowerCase();
 
@@ -391,6 +355,48 @@ function sceneLinks(p: ScenePart) {
     ...(p.frame ? { frame: p.frame } : {}),
     ...(ports ? { ports } : {}),
   };
+}
+
+function kindLabel(p: ScenePart): string {
+  if (p.kind === 'cad_part' && p.cad) return `cad (${p.cad.language})`;
+
+  return isBooleanPart(p) ? `boolean (${p.boolean.op})` : p.kind;
+}
+
+function partEntry(p: ScenePart, measured?: PartBoxes) {
+  const isCad = p.kind === 'cad_part' && !!p.cad;
+
+  return {
+    id: p.id,
+    name: p.name,
+    kind: kindLabel(p),
+    position: toCad(placementPoint(p)).map(r3),
+    rotation: rotToCad(p.rotation),
+    ...(isCad ? { volume: p.cad!.volume } : { size: [p.dimensions.width, p.dimensions.depth, p.dimensions.height] }),
+    bounds: partBoundsCad(p, measured),
+    color: p.color,
+    role: p.role,
+    group: p.group?.name,
+    material: materialOf(p),
+    ...(p.componentId
+      ? { catalog: `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}` }
+      : {}),
+    ...(p.supplyId ? { supply: `supply:${p.supplyId}` } : {}),
+    ...sceneLinks(p),
+    ...(p.note ? { note: p.note } : {}),
+    ...(p.visible ? {} : { hidden: true }),
+    ...(p.kind === 'image_plane' ? { referenceImage: true } : {}),
+  };
+}
+
+export type ScenePartEntry = ReturnType<typeof partEntry> & { operands?: ScenePartEntry[]; operandOf?: string };
+
+function partTree(p: ScenePart, measured?: PartBoxes, operandOf?: string): ScenePartEntry {
+  const entry = { ...partEntry(p, measured), ...(operandOf ? { operandOf } : {}) };
+
+  if (!isBooleanPart(p)) return entry;
+
+  return { ...entry, operands: p.boolean.operands.map((o) => partTree(o, measured, p.id)) };
 }
 
 export function snapshotScene(parts: ScenePart[], measured?: PartBoxes) {
@@ -412,33 +418,7 @@ export function snapshotScene(parts: ScenePart[], measured?: PartBoxes) {
 
   return {
     frame: 'mm, Z up, floor z = 0, front faces −Y, left is +X',
-    parts: parts.map((p) => {
-      const isCad = p.kind === 'cad_part' && !!p.cad;
-
-      return {
-        id: p.id,
-        name: p.name,
-        kind: isCad ? `cad (${p.cad!.language})` : p.kind,
-        position: toCad(placementPoint(p)).map(r3),
-        rotation: rotToCad(p.rotation),
-        ...(isCad
-          ? { volume: p.cad!.volume }
-          : { size: [p.dimensions.width, p.dimensions.depth, p.dimensions.height] }),
-        bounds: partBoundsCad(p, measured),
-        color: p.color,
-        role: p.role,
-        group: p.group?.name,
-        material: materialOf(p),
-        ...(p.componentId
-          ? { catalog: `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}` }
-          : {}),
-        ...(p.supplyId ? { supply: `supply:${p.supplyId}` } : {}),
-        ...sceneLinks(p),
-        ...(p.note ? { note: p.note } : {}),
-        ...(p.visible ? {} : { hidden: true }),
-        ...(p.kind === 'image_plane' ? { referenceImage: true } : {}),
-      };
-    }),
+    parts: parts.map((p) => partTree(p, measured)),
     bounds,
   };
 }

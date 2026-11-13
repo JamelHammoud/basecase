@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { gallerySlug, parseGalleryBundle } from './galleryBundle';
+import { parseGalleryBundle } from './galleryBundle';
+import { gallerySlug } from './galleryLinks';
 import { galleryBundles, galleryIndex } from './galleryEntries';
 
 const FILES = import.meta.glob<string>('../../public/gallery/*.json', {

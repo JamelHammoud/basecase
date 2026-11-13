@@ -13,6 +13,9 @@ import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
 import { importRobot } from '../utils/robotImport';
+import { downstreamOf } from '../utils/engineeringMass';
+import { sweepSamples } from '../utils/engineeringJoints';
+import { resolveJoints } from '../utils/kinematics';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
 import type { ServoCalibration } from '../reality/types';
@@ -46,6 +49,7 @@ export interface DevActions {
   passTries: () => void;
   addCase: (raw: unknown) => string;
   referenceTry: () => Promise<void>;
+  sharedLink: () => string | null;
   stubTrainer: (policy: unknown) => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
@@ -124,8 +128,23 @@ interface DevRecord {
   annotations?: SceneAnnotation[];
 }
 
+async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewport: Viewport3DHandle | null) {
+  const joints = resolveJoints(project.joints ?? [], parts);
+  const turning = joints.filter((j) => j.type === 'revolute');
+  const specs = turning.map((j) => ({
+    moving: [...downstreamOf(j, joints)],
+    origin: j.origin,
+    axis: new THREE.Vector3(...j.axis).normalize().toArray(),
+    anglesDeg: sweepSamples(j, j.range ?? [-90, 90]),
+  }));
+  const hits = (await viewport?.sweepClashes(specs)) ?? [];
+
+  return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
+    rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
     parts: () => partSummaries(partsRef.current),
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
@@ -175,6 +194,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     passTries: () => devRef.current.passTries(),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
     referenceTry: () => devRef.current.referenceTry(),
+    sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     stubTabEngine,

@@ -26,6 +26,7 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'posedFloor',
   'meshGaps',
   'restBounds',
+  'restShapes',
   'silhouetteShots',
   'measureParts',
   'visibleShares',

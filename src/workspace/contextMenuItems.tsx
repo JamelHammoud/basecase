@@ -5,6 +5,7 @@ import {
   CameraIcon,
   AlignCenterXIcon,
   BookmarkAddIcon,
+  BotIcon,
   CommentIcon,
   CopyIcon,
   CrosshairIcon,
@@ -34,6 +35,7 @@ import {
   UnlockIcon,
 } from '../design-system';
 import { partQuote } from '../agent/partQuote';
+import { faultSubmenu } from '../components/simulate/faultMenu';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { partTarget, selectedTarget, type OnshapeTarget } from '../onshape/onshapeTarget';
 import type { ContextMenuEntry } from '../design-system';
@@ -110,6 +112,15 @@ function sharedEntries({ core, actions }: ContextInputs) {
   };
 }
 
+function wrapItems({ actions }: ContextInputs): ContextMenuEntry[] {
+  if (!actions.wrap.canWrap()) return [];
+
+  return [
+    { label: 'Wrap Robot', icon: <BotIcon className={ic} />, onSelect: actions.wrap.wrapSelected },
+    { divider: true },
+  ];
+}
+
 function onshapeItems({ actions }: ContextInputs, target: OnshapeTarget | null): ContextMenuEntry[] {
   if (IS_WEB_DEMO || !target) return [];
 
@@ -131,6 +142,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
 
   return [
     { heading: `${core.selectedIds.length} parts` },
+    ...wrapItems(inputs),
     { label: 'Union', icon: <UnionIcon className={ic} />, onSelect: () => ops.runBoolean('union') },
     {
       label: `Subtract from ${selectedParts[0]?.name ?? 'First'}`,
@@ -196,6 +208,18 @@ function referencePart({ core }: ContextInputs, part: ScenePart): ContextMenuEnt
   ];
 }
 
+function faultItems({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
+  const { sim } = core.simTraining;
+  const jointId = core.posing.rig.ownerOf.get(part.id);
+  const driven = sim.model?.joints.some((j) => j.id === jointId && j.actuator >= 0);
+
+  if (sim.status === 'off' || !jointId || !driven) return [];
+
+  const current = sim.stats?.joints.find((j) => j.id === jointId)?.fault;
+
+  return [faultSubmenu(current, (kind) => sim.setFault(jointId, kind)), { divider: true }];
+}
+
 function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextMenuEntry[]): ContextMenuEntry[] {
   const { actions, ui } = inputs;
   const { ops, edits } = actions;
@@ -204,6 +228,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
 
   return [
     { heading: part.name, onSelect: () => copyPartName(inputs, part.name) },
+    ...faultItems(inputs, part),
     ...(part.hardware
       ? [{ label: 'Add Clearance Hole', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
       : []),

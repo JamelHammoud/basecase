@@ -5,6 +5,7 @@ import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/roboti
 import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
+import type { FaultKind } from './faults';
 import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
@@ -41,6 +42,7 @@ export interface Simulation {
   latestStats: () => SimStats | null;
   error: string | null;
   model: SimModel | null;
+  modelNow: () => SimModel | null;
   speed: number;
   controller: Controller;
   start: () => Promise<void>;
@@ -56,6 +58,7 @@ export interface Simulation {
     phase: 'start' | 'move' | 'end',
   ) => void;
   push: (robot?: string) => void;
+  setFault: (jointId: string, kind: FaultKind | null) => void;
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
@@ -254,6 +257,27 @@ function useController(send: (msg: SimRequest) => void) {
   return [controller, setController] as const;
 }
 
+function useSimTouches(
+  modelRef: React.RefObject<SimModel | null>,
+  send: (msg: SimRequest) => void,
+): Pick<Simulation, 'grab' | 'push'> {
+  'use memo';
+
+  return {
+    grab: (partIds, hand, phase) => {
+      const m = modelRef.current;
+      const msg = m && grabRequest(m, partIds, hand, phase);
+
+      if (msg) send(msg);
+    },
+    push: (robot) => {
+      const msg = pushRequest(modelRef.current, robot);
+
+      if (msg) send(msg);
+    },
+  };
+}
+
 export function useSimulation(props: Inputs): Simulation {
   const { parts, project, rig, pose, viewportRef } = props;
   const [model, setModel] = useState<SimModel | null>(null);
@@ -265,6 +289,7 @@ export function useSimulation(props: Inputs): Simulation {
   const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
   const { worker, load, frameHookRef } = sw;
   const [controller, setController] = useController(send);
+  const touch = useSimTouches(modelRef, send);
 
   const start = useCallback(async () => {
     setError(null);
@@ -334,6 +359,7 @@ export function useSimulation(props: Inputs): Simulation {
     latestStats: sw.latestStats,
     error,
     model,
+    modelNow: () => modelRef.current,
     speed,
     controller,
     start,
@@ -350,17 +376,8 @@ export function useSimulation(props: Inputs): Simulation {
     },
     setController,
     buildModel,
-    grab: (partIds, hand, phase) => {
-      const m = modelRef.current;
-      const msg = m && grabRequest(m, partIds, hand, phase);
-
-      if (msg) send(msg);
-    },
-    push: (robot) => {
-      const msg = pushRequest(modelRef.current, robot);
-
-      if (msg) send(msg);
-    },
+    ...touch,
+    setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,

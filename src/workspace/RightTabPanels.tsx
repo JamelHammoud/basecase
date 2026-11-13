@@ -179,6 +179,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           sim={simTraining.sim}
           training={simTraining.training}
           cases={simTraining.cases}
+          share={simTraining.share}
           parts={core.parts}
           rig={posing.rig}
           animations={project.animations ?? []}

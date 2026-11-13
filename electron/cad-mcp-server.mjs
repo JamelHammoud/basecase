@@ -24,7 +24,7 @@ import { createGuidePusher, getGuide } from './cad-mcp/guideTools.mjs';
 import { checkScene, look } from './cad-mcp/inspectTools.mjs';
 import { fasten, getPorts, mate } from './cad-mcp/portTools.mjs';
 import { findRecipes } from './cad-mcp/recipeTools.mjs';
-import { animate, defineJoints, getRig, importRobot, pose, retargetMotion } from './cad-mcp/robotTools.mjs';
+import { animate, defineJoints, getRig, importRobot, pose, retargetMotion, wrapRobot } from './cad-mcp/robotTools.mjs';
 import { modelPart } from './cad-mcp/modelPart.mjs';
 import { checkInterfaces, defineSkeleton, setInterfaces } from './cad-mcp/planTools.mjs';
 import {
@@ -93,6 +93,7 @@ const TOOLS = [
   animate,
   retargetMotion,
   importRobot,
+  wrapRobot,
   findObjects,
   insertObject,
   simulate,

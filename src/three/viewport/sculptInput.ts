@@ -1,10 +1,6 @@
 import * as THREE from 'three';
 import { convertScenePartToSculptMesh } from '../buildPartMesh';
-import {
-  sculptStroke,
-  buildBufferGeometryFromSculptData,
-  extractSculptDataFromGeometry,
-} from '../sculptAndBooleanEngine';
+import { sculptStroke, buildBufferGeometryFromSculptData, extractSculptDataFromGeometry } from '../sculptEngine';
 import type { ScenePart } from '../../types/robotics';
 import { raycastParts } from './picking';
 import type { ViewportContext } from './viewportContext';

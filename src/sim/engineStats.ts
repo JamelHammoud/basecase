@@ -1,7 +1,10 @@
+import type { FaultKind } from './faults';
+
 export interface JointStat {
   id: string;
   peak: number;
   saturatedS: number;
+  fault?: FaultKind;
 }
 
 export interface RobotStat {

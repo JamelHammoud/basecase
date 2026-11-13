@@ -1,7 +1,8 @@
 import { presetCase, type PresetId } from '../cases/caseBuilder';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { buildRig } from '../utils/kinematics';
-import { GALLERY_FORMAT_VERSION, type GalleryBundle } from './galleryBundle';
+import { galleryBundleOf } from './buildBundle';
+import type { GalleryBundle } from './galleryBundle';
 
 const ENTRIES: Array<{ slug: string; robot: string; name: string; preset: PresetId }> = [
   { slug: 'arm-touch-the-dots', robot: 'arm-6dof', name: 'Six-joint arm', preset: 'touch-the-dots' },
@@ -16,13 +17,14 @@ export function galleryBundles(): GalleryBundle[] {
     const robot = robots.find((r) => r.id === e.robot)!;
     const kase = presetCase(e.preset, buildRig(robot.joints, robot.parts), robot.parts);
 
-    return {
-      formatVersion: GALLERY_FORMAT_VERSION,
+    return galleryBundleOf({
       slug: e.slug,
       title: `${kase.name}: ${e.name}`,
-      robot: { name: e.name, parts: robot.parts, joints: robot.joints },
-      case: kase,
-    };
+      robotName: e.name,
+      parts: robot.parts,
+      joints: robot.joints,
+      kase,
+    });
   });
 }
 

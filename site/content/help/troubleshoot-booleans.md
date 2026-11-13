@@ -19,7 +19,7 @@ related:
   - group-parts
 covers:
   - src/workspace/useSelectionOps.ts
-  - src/three/sculptAndBooleanEngine.ts
+  - src/booleans/evaluate.ts
 ---
 
 Fix the toast that appears instead of a merged, cut or intersected part, or a cut that went the wrong way.

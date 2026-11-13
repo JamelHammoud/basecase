@@ -1,3 +1,4 @@
+import { drilledOperands } from '../booleans/picking';
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
 import { BuildAlongBar } from '../components/build/BuildAlongBar';
@@ -56,7 +57,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   const { sim } = simTraining;
   const { cursors, lanes } = agent;
   const { setDraft } = annotations;
-  const shownParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
+  const topParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
+  const shownParts = [...topParts, ...drilledOperands(parts, selectedIds)];
 
   return (
     <>

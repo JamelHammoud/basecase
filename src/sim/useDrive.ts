@@ -15,13 +15,14 @@ import {
   type VelocityDrive,
 } from './driveAccess';
 import type { DriveSetup, RobotDrive } from './drive';
-import { sameCommand, type DriveClass } from './driveKeys';
+import { isIdle, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import { readInputs, STUDIO_INPUTS } from './inputSources';
 import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
 import type { RunOptions, SimRun, SimStatus } from './useSimulation';
+import type { FrameHook, SimFrame } from './useSimWorker';
 
 export type DriveStatus = 'off' | 'checking' | 'on' | 'teach' | 'none';
 
@@ -31,6 +32,8 @@ export interface DriveTeam {
   members: Array<{ slot: number; setup: RobotDrive }>;
   script: Array<{ at: number; command: DriveCommand }>;
 }
+
+export type Autopilot = (frame: SimFrame) => DriveCommand;
 
 export interface SimDrive {
   status: DriveStatus;
@@ -44,6 +47,7 @@ export interface SimDrive {
   setKeys: (command: DriveCommand) => void;
   setInputs: (ids: readonly string[] | null) => void;
   inputs: () => Record<string, DriveCommand | null>;
+  follow: (autopilot: Autopilot) => void;
 }
 
 interface DriveInputs {
@@ -56,7 +60,7 @@ interface DriveInputs {
   send: (msg: SimRequest) => void;
   viewportRef: React.RefObject<Viewport3DHandle | null>;
   modelRef: React.RefObject<SimModel | null>;
-  frameHookRef: React.RefObject<(() => void) | null>;
+  frameHookRef: React.RefObject<FrameHook | null>;
   startSim: () => Promise<void>;
   setController: (c: Controller) => void;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
@@ -64,6 +68,20 @@ interface DriveInputs {
 }
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
+
+function steered(
+  autopilot: React.RefObject<Autopilot | null>,
+  manual: DriveCommand,
+  frame?: SimFrame,
+): DriveCommand | null {
+  if (!isIdle(manual)) autopilot.current = null;
+
+  const auto = autopilot.current;
+
+  if (!auto) return manual;
+
+  return frame ? auto(frame) : null;
+}
 
 function restHeight(model: SimModel, key?: string): number {
   const robot = model.robots.find((r) => r.key === key) ?? model.robots[0];
@@ -110,17 +128,70 @@ function controllerFor(access: Extract<DriveAccess, { kind: 'ready' | 'policy' }
   return { kind: 'drive', setup: teamSetup(access.setup, team) };
 }
 
-export function useDrive(inputs: DriveInputs): SimDrive {
-  const { status: simStatus, send, viewportRef, modelRef, frameHookRef, stats, robotKey } = inputs;
-  const [driveStatus, setDriveStatus] = useState<DriveStatus>('off');
-  const [cls, setCls] = useState<DriveClass | null>(null);
-  const latest = useRef(inputs);
+function useDriveCommand(send: DriveInputs['send']) {
   const keysCommand = useRef<DriveCommand>(IDLE);
   const sent = useRef<DriveCommand>(IDLE);
   const clsRef = useRef<DriveClass | null>(null);
   const topSpeed = useRef<number | null>(null);
   const inputIds = useRef<readonly string[]>(STUDIO_INPUTS);
   const readings = useRef<Record<string, DriveCommand | null>>({});
+  const autopilot = useRef<Autopilot | null>(null);
+
+  const push = useCallback(
+    (frame?: SimFrame) => {
+      const current = clsRef.current;
+
+      if (!current) return;
+
+      const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current });
+      const merged = steered(autopilot, read.command, frame);
+
+      readings.current = read.readings;
+
+      if (!merged || sameCommand(merged, sent.current)) return;
+
+      sent.current = merged;
+      send({ type: 'command', ...(topSpeed.current === null ? merged : policyCommand(merged, topSpeed.current)) });
+    },
+    [send],
+  );
+
+  const reset = useCallback((cls: DriveClass | null, speed: number | null) => {
+    clsRef.current = cls;
+    topSpeed.current = speed;
+    autopilot.current = null;
+    keysCommand.current = IDLE;
+    sent.current = IDLE;
+    readings.current = {};
+  }, []);
+
+  const setKeys = useCallback(
+    (command: DriveCommand) => {
+      keysCommand.current = command;
+      push();
+    },
+    [push],
+  );
+
+  const follow = useCallback((next: Autopilot) => {
+    if (clsRef.current) autopilot.current = next;
+  }, []);
+
+  const setInputs = useCallback((ids: readonly string[] | null) => {
+    inputIds.current = ids ?? STUDIO_INPUTS;
+  }, []);
+
+  const inputs = useCallback(() => readings.current, []);
+
+  return { push, reset, setKeys, follow, setInputs, inputs };
+}
+
+export function useDrive(inputs: DriveInputs): SimDrive {
+  const { status: simStatus, send, viewportRef, modelRef, frameHookRef, stats, robotKey } = inputs;
+  const [driveStatus, setDriveStatus] = useState<DriveStatus>('off');
+  const [cls, setCls] = useState<DriveClass | null>(null);
+  const latest = useRef(inputs);
+  const { push, reset, setKeys, follow, setInputs, inputs: readInputsNow } = useDriveCommand(send);
   const [seenSimStatus, setSeenSimStatus] = useState(simStatus);
 
   if (seenSimStatus !== simStatus) {
@@ -131,22 +202,6 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   useLayoutEffect(() => {
     latest.current = inputs;
   });
-
-  const push = useCallback(() => {
-    const current = clsRef.current;
-
-    if (!current) return;
-
-    const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current });
-    const merged = read.command;
-
-    readings.current = read.readings;
-
-    if (sameCommand(merged, sent.current)) return;
-
-    sent.current = merged;
-    send({ type: 'command', ...(topSpeed.current === null ? merged : policyCommand(merged, topSpeed.current)) });
-  }, [send]);
 
   const active = driveStatus === 'on' && simStatus === 'ready';
 
@@ -161,20 +216,15 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   useEffect(() => {
     if (simStatus !== 'off') return;
 
-    clsRef.current = null;
-    keysCommand.current = IDLE;
-    sent.current = IDLE;
+    reset(null, null);
     viewportRef.current?.followPart(null);
-  }, [simStatus, viewportRef]);
+  }, [simStatus, viewportRef, reset]);
 
   const begin = useCallback(
     (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam) => {
       const controller = controllerFor(access, team);
 
-      clsRef.current = access.cls;
-      topSpeed.current = access.kind === 'policy' ? access.velocity.topSpeed : null;
-      keysCommand.current = IDLE;
-      sent.current = IDLE;
+      reset(access.cls, access.kind === 'policy' ? access.velocity.topSpeed : null);
       setCls(access.cls);
       latest.current.setController(controller);
       latest.current.send({ type: 'respawn', robot: robotKey });
@@ -185,7 +235,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
       viewportRef.current?.followPart(access.followPart);
       setDriveStatus('on');
     },
-    [robotKey, viewportRef],
+    [robotKey, viewportRef, reset],
   );
 
   const start = useCallback(
@@ -223,24 +273,13 @@ export function useDrive(inputs: DriveInputs): SimDrive {
   );
 
   const stop = useCallback(() => {
-    keysCommand.current = IDLE;
-    clsRef.current = null;
-    topSpeed.current = null;
-    readings.current = {};
+    reset(null, null);
     viewportRef.current?.followPart(null);
     latest.current.setController({ kind: 'hold' });
     setDriveStatus('off');
-  }, [viewportRef]);
+  }, [viewportRef, reset]);
 
   const respawn = useCallback(() => send({ type: 'respawn', robot: robotKey }), [send, robotKey]);
-
-  const setKeys = useCallback(
-    (command: DriveCommand) => {
-      keysCommand.current = command;
-      push();
-    },
-    [push],
-  );
 
   const robotStat = stats?.robots.find((r) => r.key === robotKey) ?? stats?.robots[0];
   const offered = driveOffer({ rig: inputs.rig, parts: inputs.parts, robotKey, velocityReady: false });
@@ -255,9 +294,8 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     stop,
     respawn,
     setKeys,
-    setInputs: (ids) => {
-      inputIds.current = ids ?? STUDIO_INPUTS;
-    },
-    inputs: () => readings.current,
+    setInputs,
+    inputs: readInputsNow,
+    follow,
   };
 }

@@ -143,12 +143,6 @@ const PUBLISH: Delivery = {
   },
 };
 
-const signedIn = () =>
-  hubBridge.account().then(
-    (a) => a.signedIn,
-    () => false,
-  );
-
 export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
   const { sim, rig, parts, active, tries, showToast, openAccounts, sceneId } = options;
   const [exporting, setExporting] = useState(false);
@@ -193,7 +187,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
   };
 
   const publish = async (kase: Case) => {
-    if (await signedIn()) await run(kase, PUBLISH);
+    if (await hubBridge.signedIn()) await run(kase, PUBLISH);
     else openAccounts();
   };
 

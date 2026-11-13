@@ -20,7 +20,7 @@ const download = ({ url, label }: { url: string; label: string }): Action => ({
   Icon: DownloadIcon,
 });
 
-const GITHUB: Action = { href: GITHUB_URL, label: 'View on GitHub', Icon: ArrowUpRightIcon, external: true };
+const GITHUB: Action = { href: GITHUB_URL, label: 'Open on GitHub', Icon: ArrowUpRightIcon, external: true };
 
 function actionsFor(browserApp: string | undefined): Action[] {
   if (browserApp && !hasSmallWindow()) {

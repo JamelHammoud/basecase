@@ -1,14 +1,14 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { AgentSpinner } from '../../design-system';
+import { AGENT_WORKING, Spinner } from '../../design-system';
 import type { SceneTabInfo } from '../SceneTabs';
-import { partCount } from '../scenes/partCount';
+import { plural } from '../../../electron/plural.mjs';
 import { PREVIEW_WIDTH, TabPreviewSpot } from './useTabPreview';
 
 function caption(tab: SceneTabInfo) {
   if (tab.busy) return tab.activity || 'Working';
 
-  return partCount(tab.partCount);
+  return plural(tab.partCount, 'part');
 }
 
 export const TabPreviewCard: React.FC<{ tab: SceneTabInfo; spot: TabPreviewSpot; image?: string }> = ({
@@ -26,7 +26,7 @@ export const TabPreviewCard: React.FC<{ tab: SceneTabInfo; spot: TabPreviewSpot;
       <div className="px-3 py-2.5">
         <div className="text-[13px] font-medium text-white/90 truncate">{tab.name || 'Untitled'}</div>
         <div className="text-[12px] text-white/50 tabular mt-0.5 flex items-center gap-1.5 min-w-0">
-          {tab.busy && <AgentSpinner />}
+          {tab.busy && <Spinner label={AGENT_WORKING} />}
           <span className="truncate">{caption(tab)}</span>
         </div>
       </div>

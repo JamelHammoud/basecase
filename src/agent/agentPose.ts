@@ -33,6 +33,7 @@ import {
   type PoseReply,
   type Scope,
 } from './agentPoseShared';
+import { plural } from '../../electron/plural.mjs';
 
 export { animateRequest, type AnimatePayload } from './agentAnimate';
 export type { PoseContext, PoseReply } from './agentPoseShared';
@@ -121,7 +122,7 @@ export function getRig(ctx: PoseContext, wanted?: string): PoseReply {
   const names = new Map(ctx.parts.map((p) => [p.id, p.name]));
   const lines = [
     ...robotsHeader(full, scope),
-    `${scope.name}: ${movable.length} joints (values from the modeled pose; agent frame, mm):`,
+    `${scope.name}: ${plural(movable.length, 'joint')} (values from the modeled pose; agent frame, mm):`,
     ...movable.map((j) => jointLine(rig, j, names)),
     '',
     canvasPoseLine(scope.local),

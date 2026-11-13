@@ -26,7 +26,7 @@ Make a Case where an arm lifts a block off the floor and sets it on a spot, then
 
 ![The arm carrying the block toward the blue spot](/help/pick-up-a-block-with-a-gripper/carry.png)
 
-8. Click **End Try**, or let the time run out. The try passes when the block left the floor on the way and its centre ends within Radius of the spot. Pushing it there doesn't count.
+8. Click **Stop Try**, or let the time run out. The try passes when the block left the floor on the way and its centre ends within Radius of the spot. Pushing it there doesn't count.
 
 ![Results with a passed try](/help/pick-up-a-block-with-a-gripper/results.png)
 

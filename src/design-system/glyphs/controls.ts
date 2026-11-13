@@ -56,8 +56,6 @@ export const HistoryIcon = glyph(
   'M3.25 12A8.75 8.75 0 1 0 5.81 5.81L4.4 7.23M8.15 7.23L4.4 7.23L4.4 3.48M12 7.5V12L15 13.75',
 );
 
-export const SpinnerIcon = glyph('M20.5 12A8.5 8.5 0 1 1 14.63 3.92');
-
 export const CircleIcon = glyph('M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0');
 
 export const CircleDotIcon = glyph({

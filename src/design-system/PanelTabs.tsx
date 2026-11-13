@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon } from './glyphs';
-import { THEME_COLORS } from './theme';
 import { PopoverMenu } from './PopoverMenu';
 import { StatusDot, type Status } from './StatusDot';
 import { Tooltip } from './Tooltip';
@@ -195,17 +194,3 @@ function TabWithMenu<T extends string>({
     </div>
   );
 }
-
-export const AgentSpinner: React.FC<{ className?: string; color?: string }> = ({
-  className = 'w-3 h-3',
-  color = THEME_COLORS.textPrimary,
-}) => (
-  <svg
-    viewBox="0 0 16 16"
-    className={`${className} shrink-0 motion-safe:animate-spin [animation-duration:900ms]`}
-    aria-label="Agent working"
-  >
-    <circle cx="8" cy="8" r="6" fill="none" stroke={color} strokeOpacity="0.3" strokeWidth="2.25" />
-    <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={color} strokeWidth="2.25" strokeLinecap="round" />
-  </svg>
-);

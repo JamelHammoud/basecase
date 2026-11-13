@@ -53,7 +53,7 @@ Double-click a slider to send its joint back to 0. Posing never changes the part
 2. Click the blue **Simulate** button. The arm starts under physics and holds the pose you set, while the clock beside the controls counts up.
 3. Under **Control**, choose **Limp**. The motors let go, and the arm folds down.
 4. Click **Reset** to start again from your pose.
-5. Click **End simulation** to go back to editing.
+5. Click **Stop simulation** to go back to editing.
 
 Your scene saves itself as you work. Press [[⌘O]] to find it again later in the Scenes menu.
 

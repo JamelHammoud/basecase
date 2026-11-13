@@ -229,6 +229,15 @@
       0 4px 12px rgba(0, 0, 0, 0.25);
   }
 
+  /* Modals and Settings: the same matte surface, lifted further off the dimmed app */
+  .sheet {
+    background: #222222;
+    box-shadow:
+      0 0 0 0.5px rgba(0, 0, 0, 0.6),
+      0 32px 80px -12px rgba(0, 0, 0, 0.6),
+      0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
   /* Window-level vibrancy surface for the sidebar (solid fallback in the browser) */
   .sidebar-surface {
     background: #1f1f1f;
@@ -332,7 +341,7 @@ input[type='range'].slider::-webkit-slider-thumb {
   box-shadow:
     0 0 0 0.5px rgba(0, 0, 0, 0.4),
     0 1px 3px rgba(0, 0, 0, 0.5);
-  transition: transform 120ms var(--ease-out-expo);
+  transition: transform 150ms var(--ease-out-expo);
 }
 input[type='range'].slider:hover::-webkit-slider-thumb {
   transform: scale(1.15);

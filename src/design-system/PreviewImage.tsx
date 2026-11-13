@@ -6,12 +6,15 @@ export const previewState = (src: string | undefined, failedSrc?: string) => {
   return src && src !== failedSrc ? 'image' : 'empty';
 };
 
+const ZOOM_ON_HOVER = 'transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]';
+
 export const PreviewImage: React.FC<{
   src: string | undefined;
   className?: string;
   lazy?: boolean;
+  zoom?: boolean;
   onError?: () => void;
-}> = ({ src, className = '', lazy, onError }) => {
+}> = ({ src, className = '', lazy, zoom, onError }) => {
   const [failedSrc, setFailedSrc] = useState<string>();
   const state = previewState(src, failedSrc);
 
@@ -29,7 +32,7 @@ export const PreviewImage: React.FC<{
         setFailedSrc(src);
         onError?.();
       }}
-      className={`w-full h-full object-contain ${className}`}
+      className={`w-full h-full object-contain ${zoom ? ZOOM_ON_HOVER : ''} ${className}`}
     />
   );
 };

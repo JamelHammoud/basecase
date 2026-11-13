@@ -52,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`w-full ${maxWidth} max-h-[82vh] flex flex-col rounded-2xl bg-[#222222] ring-1 ring-white/[0.1] shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden animate-sheet-in`}
+        className={`w-full ${maxWidth} max-h-[82vh] flex flex-col rounded-2xl sheet overflow-hidden animate-sheet-in`}
       >
         <div className="flex items-center justify-between gap-[12px] min-h-[60px] px-[20px] py-[16px] shrink-0">
           <div className="flex items-center gap-[12px] min-w-0">

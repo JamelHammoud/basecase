@@ -34,7 +34,7 @@ Drive the robot through an open Case while Basecase records it, then see whether
 2. Click a Case under **New Case**. It opens in the **Simulate** tab.
 3. Under **Try**, click **Try It**. Recording starts and the robot is yours to drive.
 4. Drive the robot to the goal with the keys listed under **Try**.
-5. Click **End Try**, or let the clock run out.
+5. Click **Stop Try**, or let the clock run out.
 6. Read the new try under **Results**: **Passed** or **Missed**, how long it took, and four frames from it.
 7. Click **Replay** (▷) on a try to watch it again.
 
@@ -67,7 +67,7 @@ Tries are listed worst first, so the misses to look at are on top. To delete a t
 
 A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from it. Its row counts them, such as **50 generated**, and deleting the try deletes them too. Steps are in [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
-While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries.
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows there too, under any comparison.
 
 When the robot can't drive, **Teach It to Move** shows under **Try It**. It trains a **Walk** skill; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 

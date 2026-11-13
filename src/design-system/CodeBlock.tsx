@@ -112,7 +112,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language, title, cla
       >
         <Lines lines={lines} />
       </pre>
-      <div className="absolute top-1.5 right-1.5 flex gap-0.5 rounded-[10px] bg-[#1d1d1d] opacity-0 group-hover/code:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+      <div className="absolute top-1.5 right-1.5 flex gap-0.5 rounded-[10px] bg-[#1d1d1d] opacity-0 pointer-events-none group-hover/code:opacity-100 group-hover/code:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity duration-150">
         <CopyButton code={code} size="xs" />
         <IconButton
           icon={<ExpandIcon className="w-3.5 h-3.5" />}

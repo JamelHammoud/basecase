@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ContextMenu, EmptyState, SearchField, useScrollFade, type ContextMenuEntry } from '../design-system';
+import { ContextMenu, NoMatches, SearchField, useScrollFade, type ContextMenuEntry } from '../design-system';
 import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 import { ModelsSection, type SectionState } from './library/sections';
 
@@ -62,7 +62,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
 
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
         {searching && models.length === 0 ? (
-          <EmptyState title={`No matches for “${query.trim()}”`} />
+          <NoMatches query={query} />
         ) : (
           <div className="px-[8px] pb-4">
             <ModelsSection props={props} models={models} state={state} />

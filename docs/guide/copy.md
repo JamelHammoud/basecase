@@ -40,14 +40,14 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 9. **Errors and warnings:** say what happened, then how to fix it, next to the problem. Prefer the fix to the fault (Apple: “Choose a password with at least 8 characters”, not “That password is too short”). Example: “Nothing to subtract. Overlap a Cutout or Shift-click a part.” No error codes in the UI and no robotic “Invalid X”. A caught error reaches the screen through `errorMessage` (`src/utils/errorMessage.ts`), never `String(err)`: it shows the error's own sentence, without the “Error:” that `String` adds or Electron's “Error invoking remote method ‘…’:” wrapper. An HTTP status, exit code or signal never reaches the screen: a refusal from an outside service goes through `serviceRefusal` (`electron/refusal.mjs`: “Onshape is limiting requests. Import again in a minute.”, or the service's own reason after “refused the request:”), and a process that stops without a reason says so and names the step to run again (“The slicer stopped without saying why. Slice again.”). An error ends on its fix (“Install Bambu Connect from bambulab.com.”), never with “then try again” after it; when doing it again is the whole fix, it names the step (“Print the plate again.”, “Check again in a minute.”), and its button says the same (Search Again, not Try Again). Agent-facing tool results keep the status, which the agent can act on.
 10. **Notices that ask for work** start with the verb and select or open the things they're about: “Replace 2 stand-ins with real parts”.
 11. **Placeholders show an example**, never instructions: “e.g. 4× M3 holes, 0.2 mm clearance”.
-    - Search fields are the exception: they name what they search, “Search parts”, “Search commands” (⌘K). A search with no result shows “No matches for “⟨query⟩”” (`EmptyState`), in ⌘K too.
+    - Search fields are the exception: they name what they search, “Search parts”, “Search commands” (⌘K). A search with no result shows “No matches for “⟨query⟩”” through `NoMatches`, which trims the query, in every search in the app: ⌘K, Parts, Robots, Objects, Library, Layers and the Scenes menu.
 12. **Destructive actions ask first.** Deleting, removing or clearing anything a person made opens a confirmation (`confirmAction` or `ConfirmDialog`: title “Delete ⟨name⟩?”, Cancel and Delete) before anything happens. Asking already says it's for good, so the dialog has no body unless something else goes too (“Its tries go with it.”), and never “You can’t undo this”; a toast with Undo may follow. Never delete on the first click, on double-click, or at once with only an Undo toast, and never arm a button on the first click and act on the second. The exception is removing parts from the scene (⌫, Delete in the Inspector or right-click menu): that's ordinary editing, so it happens at once with a “Deleted ⟨name⟩” toast and Undo. Removing a step from a Routine (⌫ or right-click Delete) is ordinary editing too: at once, with a “Deleted ⟨step⟩” toast and Undo. Agent tools (`delete_parts`) don't ask.
 13. **Toasts confirm in past tense** and name the thing, with Undo for destructive or bulk actions: “Deleted Cube” + [Undo], “Saved Robot Arm”, “Exported STL”. Not a bare “Saved” or “Done”, and never “successfully”.
 14. **Footnotes and fine print:** one line, front-loaded, fragments are fine. A footnote that repeats the settings and numbers above it doesn't exist: under Printing, the ≈ on the time already says it's an estimate and Slice is right there.
 15. **Numbers:**
     - Tabular figures, units in a muted suffix (`mm`, `°`, `%`).
     - Use `×` for sizes: `40 × 36 × 20`.
-    - Use numerals, not words (“3 parts”), and pluralize correctly (“1 part”, “2 parts”).
+    - Use numerals, not words (“3 parts”), and pluralize correctly (“1 part”, “2 parts”). Every count in the app and the agent's text goes through `plural` (`electron/plural.mjs`, shared by the renderer, the main process and the MCP server: `plural(n, 'part')`, `plural(n, 'mesh', 'meshes')`), never a hand-written `n === 1` ternary or a bare `${n} parts`. The CAD kernel reads only its own folder, so its counts use drawing notation (“4× through hole”). Word a count so no verb has to agree with it: “No price on 2 lines”, not “2 lines have no price”.
 16. **No middle dots (`·`) between items, and no other separator glyph in their place** (a pipe, `•`, `—`). Separate facts with layout instead:
     - a meta line of facts: `MetaLine` (items 12px apart; `SectionHeader` and the part page and hover card subtitles take a list and use it);
     - a spec value with several facts: a list (`SpecValue`), rendered one per line by `SpecText`;
@@ -57,13 +57,30 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 17. **Same word everywhere for the same thing:**
     - Parts are added, models are inserted, scenes are opened (in a tab) and closed, comments are posted, prices are added and checked.
     - Part types are **Solid / Cutout / Guide**.
+    - One verb per action, in buttons, menu items, ⌘K, the app menu, confirmations, toasts and help articles. A toast uses its past tense (Deleted, Stopped). `basecase/copy` fails a label that starts with a synonym listed in [`tools/copy/glossary.mjs`](../../tools/copy/glossary.mjs) and names the word to use, so a new row goes there and here together. Train stays right elsewhere, so the Teach row needs a reader.
+
+      | Action | Word | Not |
+      |---|---|---|
+      | Destroy something a person made (a mark, comment, price, scene, chat, pose, policy, Case, try, step…), one or all of them | Delete | Erase, Discard, Trash, Destroy; Remove or Clear before one of those things |
+      | Take something out of a list or a draft without destroying it (an attachment, a quote) | Remove | Detach |
+      | Empty a field, a drawing in progress or a state (a search, a sketch, a fault) | Clear | Wipe |
+      | Halt something running (the sim, a try, driving, a print, training, the agent) | Stop | End (End effector and the End key stay), Halt, Abort, Terminate, Kill |
+      | Open a scene, file, image or page | Open | View (a menu named View stays), See Inside |
+      | Put away a tab, window, sheet or Case | Close | Dismiss |
+      | Bring a panel, view or layer into sight; Hide puts it away | Show | Reveal, Toggle |
+      | Make a second one beside the first | Duplicate | Clone |
+      | Start a Case, Routine, Checks or a policy | Run | Launch, Execute |
+      | Put a part in the scene | Add | Insert Part |
+      | Put a model or robot in the scene | Insert | Add Model, Add Robot |
+      | Make an out-of-date build guide again | Update | Regenerate |
+      | Describe a new skill for the agent to train; Train runs training on a skill row | Teach | — |
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.
     - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.agents/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbours before shipping.
 19. **No status dots** unless they report an error or a live background process. The agent panel shows connection state only when disconnected. A tab's dot is its `status` in `PanelTabs`, whose only tones are `live` (blue) and `problem` (red), named in the app's own tooltip: the Build tab shows red while something is left to fix and nothing once it's Ready to build.
 
 ### 3c. Words and patterns to avoid
 
-One list holds the banned words and separators: `BANNED_COPY` in [`verify/rehearsal/uiRules.ts`](../../verify/rehearsal/uiRules.ts), which the copy budget below, the Stage 7 rehearsal's screen scan and the lint all read. `basecase/copy` (`tools/eslint/copy.mjs`) lints the entries that [`tools/copy/banned.mjs`](../../tools/copy/banned.mjs) gives a fix, in JSX text, toasts and confirms in `src/` and the app menu, and in the props and properties listed in [`tools/copy/surfaces.mjs`](../../tools/copy/surfaces.mjs) (`label`, `title`, `placeholder`, `aria-label`, `alt`, `heading`, `message`…). The list is under `verify/`, so a new word needs a maintainer's OK (§0k); give it a fix in `tools/copy/banned.mjs` to lint it too. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
+One list holds the banned words and separators: `BANNED_COPY` in [`verify/rehearsal/uiRules.ts`](../../verify/rehearsal/uiRules.ts), which the copy budget below, the Stage 7 rehearsal's screen scan and the lint all read. `basecase/copy` (`tools/eslint/copy.mjs`) lints the entries that [`tools/copy/banned.mjs`](../../tools/copy/banned.mjs) gives a fix, in JSX text, toasts and confirms in `src/` and the app menu, and in the props and properties listed in [`tools/copy/surfaces.mjs`](../../tools/copy/surfaces.mjs) (`label`, `title`, `placeholder`, `aria-label`, `alt`, `heading`, `message`…). The list is under `verify/`, so a new word needs a maintainer's OK (§0k); give it a fix in `tools/copy/banned.mjs` to lint it too. The same rule fails a label that starts with a synonym from the glossary (§3b-17, `tools/copy/glossary.mjs`), which lives under `tools/` and needs no OK beyond this guide. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
 
 | Avoid | Why | Use instead |
 |---|---|---|

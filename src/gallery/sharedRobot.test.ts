@@ -113,7 +113,7 @@ describe('shared robot bundles', () => {
     expect(readGalleryBundleBytes(galleryBundleBytes(bundle())).slug).toBe('rover-reach-the-flag');
   });
 
-  it('carry a Case’s code panels and logic into the page and into the scene See Inside saves', () => {
+  it('carry a Case’s code panels and logic into the page and into the scene Open Scene saves', () => {
     const bundle = cockpit();
     const read = readGalleryBundleBytes(galleryBundleBytes(bundle));
 

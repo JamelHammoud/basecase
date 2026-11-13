@@ -142,7 +142,7 @@ export const Select: React.FC<SelectProps> = ({ options, className = '', ...prop
   <div className="relative w-full">
     <select className={`${fieldBase} h-[32px] pl-2.5 pr-8 appearance-none cursor-default ${className}`} {...props}>
       {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-[#1e1e22] text-white">
+        <option key={o.value} value={o.value} className="bg-[#282828] text-white">
           {o.label}
         </option>
       ))}

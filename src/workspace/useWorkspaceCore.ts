@@ -15,12 +15,14 @@ import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useCaseCompare } from './useCaseCompare';
+import { useCaseExplore } from './useCaseExplore';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
+import { useRobotPolicy } from '../robot/robotPolicy';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -107,6 +109,14 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   });
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
+
+  useRobotPolicy({
+    active,
+    policies: project.policies,
+    isStale: simTraining.training.isStale,
+    skillRows: simTraining.skills.rows,
+  });
+
   const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
     parts,
@@ -134,6 +144,13 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
     showToast,
   });
+  const caseExplore = useCaseExplore({
+    kase: simTraining.cases.active,
+    parts,
+    project,
+    source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
+    showToast,
+  });
 
   return {
     workspaceId,
@@ -141,6 +158,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     printer,
     readiness,
     caseCompare,
+    caseExplore,
     printing,
     viewportRef,
     scene,

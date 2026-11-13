@@ -4,6 +4,7 @@ import { buildRig, partMatrix, type V3 } from '../utils/kinematics';
 import type { EndEffector, RobotFacts } from './robotFit';
 import { slotRefusal } from './robotFit';
 import type { RobotSlot } from './schema';
+import { plural } from '../../electron/plural.mjs';
 
 export interface SlotRobot {
   parts: ScenePart[];
@@ -68,6 +69,7 @@ function placedJoint(j: RobotJoint, place: Placement): RobotJoint {
     axis: place.turn(j.axis),
     ...(j.parentJoint ? { parentJoint: place.id(j.parentJoint) } : {}),
     ...(j.actuators ? { actuators: j.actuators.map(place.id) } : {}),
+    ...(j.loop ? { loop: { ...j.loop, driver: place.id(j.loop.driver) } } : {}),
     ...(j.frame
       ? { frame: { part: place.id(j.frame.part), origin: place.at(j.frame.origin), axis: place.turn(j.frame.axis) } }
       : {}),
@@ -95,7 +97,7 @@ export function slotRefusals(slots: RobotSlot[], facts: Array<RobotFacts | null>
   return slots.map((slot, i) => {
     const own = facts[i];
 
-    if (!own) return `This Case needs ${slots.length} robots. Open the others in tabs.`;
+    if (!own) return `This Case needs ${plural(slots.length, 'robot')}. Open the others in tabs.`;
 
     return slotRefusal(slot, own);
   });

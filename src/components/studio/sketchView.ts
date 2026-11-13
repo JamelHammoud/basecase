@@ -59,6 +59,19 @@ export function fitView(sketch: Sketch): SketchView {
   };
 }
 
+export function insideView(view: SketchView, sketch: Sketch): boolean {
+  const extent = sketchExtent(sketch);
+  const half = view.span / 2;
+
+  return (
+    !extent ||
+    (extent.min[0] >= view.cx - half &&
+      extent.max[0] <= view.cx + half &&
+      extent.min[1] >= view.cy - half &&
+      extent.max[1] <= view.cy + half)
+  );
+}
+
 export const niceStep = (target: number) => NICE_STEPS.find((s) => s >= target) ?? NICE_STEPS[NICE_STEPS.length - 1];
 
 export const gridStep = (view: SketchView) => niceStep(view.span / 10);

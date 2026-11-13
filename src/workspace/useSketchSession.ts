@@ -1,6 +1,8 @@
 import { useRef, useState, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
-import type { ScenePart } from '../types/robotics';
+import { linkageParts } from '../linkage/linkageParts';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { LinkageSolution, Vec2 } from '../utils/linkage';
 import { faceOf, placedPlane, referenceSketch, toPartLocal, type FacePick } from '../utils/sketch/face';
 import {
   GROUND_PLANE,
@@ -12,6 +14,7 @@ import {
   type Vec3,
 } from '../utils/sketch/placement';
 import { EMPTY_SKETCH, type Sketch } from '../utils/sketch/types';
+import { newId } from './helpers';
 import type { CommitParts, Setter } from './types';
 import type { ToolMode } from './useToolMode';
 
@@ -23,7 +26,11 @@ export interface SketchTarget {
 }
 
 interface SessionOptions {
-  docs: { partsRef: RefObject<ScenePart[]>; commitParts: CommitParts };
+  docs: {
+    partsRef: RefObject<ScenePart[]>;
+    commitParts: CommitParts;
+    updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
+  };
   viewportRef: RefObject<Viewport3DHandle | null>;
   selectedIds: string[];
   setSelectedIds: Setter<string[]>;
@@ -63,6 +70,7 @@ export function useSketchSession({ docs, viewportRef, selectedIds, setSelectedId
   const { partsRef, commitParts } = docs;
   const lastPick = useRef<Pick | null>(null);
   const [target, setTarget] = useState<SketchTarget | null>(null);
+  const [path, setPath] = useState<Vec2[]>([]);
 
   const part = (id: string) => partsRef.current.find((p) => p.id === id);
 
@@ -78,6 +86,7 @@ export function useSketchSession({ docs, viewportRef, selectedIds, setSelectedId
     const key = Date.now();
 
     setTarget(pickedFace(key) ?? { key, plane: GROUND_PLANE, start: EMPTY_SKETCH });
+    setPath([]);
     tool.openCreator('draw2d');
   };
 
@@ -90,10 +99,23 @@ export function useSketchSession({ docs, viewportRef, selectedIds, setSelectedId
     tool.openCreator('draw2d');
   };
 
+  const insertLinkage = (solution: LinkageSolution) => {
+    const built = linkageParts(solution, target?.plane ?? GROUND_PLANE, newId('linkage'));
+
+    commitParts((prev) => [...prev, ...built.parts]);
+    docs.updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...built.joints] }));
+    setSelectedIds(built.parts.map((p) => p.id));
+    setPath([]);
+    tool.setCreator(null);
+  };
+
   return {
     target,
     open,
     edit,
+    path,
+    setPath,
+    insertLinkage,
     notePick: (partId: string, point: Vec3) => {
       lastPick.current = { partId, pick: { point } };
     },

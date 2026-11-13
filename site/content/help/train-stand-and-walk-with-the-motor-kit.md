@@ -21,6 +21,7 @@ keywords:
 related:
   - teach-a-robot-a-skill
   - arena
+  - run-a-trained-skill-on-the-emulated-robot
 covers:
   - src/components/simulate/SkillsList.tsx
   - src/components/simulate/TrainSection.tsx
@@ -62,7 +63,7 @@ To stop training, click **Stop training** (■) on the row. **Teach It to Move**
 
 The **Train** section shows only when the browser can train on the GPU. A skill trained there is saved with the scene in that browser, so it's still there after a reload. The browser trains only when you click **Train**.
 
-A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand, and the robot stands on the skill once Arena passes it. **See Inside** opens the robot in the studio with Stand ready.
+A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand, and the robot stands on the skill once Arena passes it. **Open Scene** opens the robot in the studio with Stand ready.
 
 ![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 
@@ -93,4 +94,4 @@ One training job runs at a time across the whole app, and others wait their turn
 
 In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A colour or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
 
-To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill).
+To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

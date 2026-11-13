@@ -9,8 +9,7 @@ const TileText: React.FC<{ meta: React.ReactNode; children: React.ReactNode }> =
   </div>
 );
 
-const TILE_IMAGE =
-  'p-1.5 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]';
+const TILE_IMAGE = 'p-1.5 animate-fade-in';
 
 const TILE_NAME = 'text-[13px] leading-[19px] font-medium text-white/90 truncate';
 
@@ -31,7 +30,7 @@ export const Tile: React.FC<{
     return (
       <div data-library-tile className="w-full">
         <div className="preview aspect-[4/3]">
-          <PreviewImage src={thumb} className={TILE_IMAGE} />
+          <PreviewImage src={thumb} zoom className={TILE_IMAGE} />
         </div>
         <TileText meta={meta}>
           <RenameField name={name} onDone={onRename} className={TILE_RENAME} />
@@ -59,7 +58,7 @@ export const Tile: React.FC<{
         className="group w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"
       >
         <div className="preview aspect-[4/3]">
-          <PreviewImage src={thumb} className={TILE_IMAGE} />
+          <PreviewImage src={thumb} zoom className={TILE_IMAGE} />
         </div>
         <TileText meta={meta}>
           <div className={TILE_NAME}>{name}</div>

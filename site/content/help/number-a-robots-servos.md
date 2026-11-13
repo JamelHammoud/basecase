@@ -21,6 +21,8 @@ New servos all answer at ID 1. Basecase numbers the movable joints 1, 2, 3 and s
 4. Plug in that joint's servo next to the ones already done. With emulated servos, Basecase plugs it in for you. Once it answers at its new ID, the next joint lights up.
 5. When the last joint, ID 1, is done, every servo answers under Emulated servos. Click Test on the Ladder to go on.
 
+A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply, because the daemon can't read it.
+
 ![Operate before the robot connects, with Set Up Servos under Connect Emulated Robot](/help/number-a-robots-servos/operate.png)
 
 ![The Wrist row with ID 3, and the wrist's moving part selected on the canvas](/help/number-a-robots-servos/wrist.png)

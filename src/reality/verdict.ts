@@ -1,4 +1,5 @@
-import type { ServoFamily, ServoLog } from './types';
+import { sameServo, servoName } from './servoPart';
+import type { ServoLog, ServoPart } from './types';
 
 export const ENCODER_RAD = (2 * Math.PI) / 4096;
 
@@ -13,10 +14,10 @@ export function explainedShare(errors: number[], spreads: number[]): number {
 
 const finite = (values: number[]) => values.every(Number.isFinite);
 
-function logProblem(log: ServoLog, family: ServoFamily): string | null {
+function logProblem(log: ServoLog, servo: ServoPart): string | null {
   const n = log.goalRad.length;
 
-  if (log.family !== family) return `A log is from a ${log.family}, not a ${family}`;
+  if (!sameServo(log.servo, servo)) return `A log is from a ${servoName(log.servo)}, not a ${servoName(servo)}`;
 
   if (!Number.isFinite(log.dt) || log.dt <= 0) return 'A log has no sample period';
 
@@ -29,10 +30,10 @@ function logProblem(log: ServoLog, family: ServoFamily): string | null {
   return null;
 }
 
-export function preflight(logs: ServoLog[], family: ServoFamily): string | null {
+export function preflight(logs: ServoLog[], servo: ServoPart): string | null {
   if (logs.length < 2) return 'Two logs or more are needed';
 
-  return logs.map((log) => logProblem(log, family)).find((p) => p) ?? null;
+  return logs.map((log) => logProblem(log, servo)).find((p) => p) ?? null;
 }
 
 export const median = (values: number[]) => {

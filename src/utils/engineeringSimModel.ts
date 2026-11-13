@@ -1,10 +1,12 @@
 import { listIds } from '../assembly/reportText';
 import { COMPONENT_BY_ID } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
-import { measuredJoints, servoFamilyOf } from '../reality/measuredJoints';
+import { measuredJoints } from '../reality/measuredJoints';
+import { calibratable } from '../reality/servoPart';
 import { jointServos } from '../sim/mjcfEffort';
 import { isWheelJoint } from '../sim/morphology';
-import { count, jointLabel } from './engineeringFormat';
+import { jointLabel } from './engineeringFormat';
+import { plural } from '../../electron/plural.mjs';
 import { isMovable } from './kinematics';
 import { buildRig } from './kinematicsRig';
 import type { CheckContext, CheckRow, FindingFix } from './engineeringTypes';
@@ -30,13 +32,13 @@ function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
   return {
     check: 'Torque estimates',
     status: 'warn',
-    detail: `${count(estimated.length, 'joint')} without a servo`,
+    detail: `${plural(estimated.length, 'joint')} without a servo`,
     items: [{ text: `No servo on ${labels(estimated)}`, ids: estimated.flatMap((j) => j.child), status: 'warn' }],
   };
 }
 
 function calibrateFix(ctx: CheckContext, guessed: RobotJoint[]): FindingFix | undefined {
-  const joints = guessed.filter((j) => servoFamilyOf(j, ctx.parts)).map((j) => j.id);
+  const joints = guessed.filter((j) => calibratable(j, ctx.parts)).map((j) => j.id);
 
   return joints.length ? { kind: 'calibrate', joints } : undefined;
 }
@@ -64,7 +66,7 @@ function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
     {
       check: 'Servo models',
       status: 'warn',
-      detail: `${count(guessed.length, 'joint')} without a measured model`,
+      detail: `${plural(guessed.length, 'joint')} without a measured model`,
       items: [
         {
           text: `${names} on ${labels(guessed)}`,

@@ -29,7 +29,7 @@
 | 5 | [Layout and sidebar views](docs/guide/layout.md) | the side panels, Parts, Robots, Objects, Layers, Library, panel resizing |
 | 5a | [Scene tabs](docs/guide/scene-tabs.md) | tabs, opening and closing scenes, `.basecase` files |
 | 6, 6a | [Toolbar and Settings](docs/guide/toolbar-and-settings.md) | the bottom toolbar, Measure, Annotate, Settings panes |
-| 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, drag and drop, reference images, Sculpt / Sketch / Import SVG |
+| 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, Mirror (`src/mirror/`), drag and drop, reference images, Sculpt / Sketch / Import SVG |
 | 8a | [Parts catalog](docs/guide/parts-catalog.md) | real components, meshes, the parts pipeline, parts the agent sources |
 | 8b | [Build](docs/guide/build.md) | Checks, BOM, prices, currency, printability, engineering checks, the build guide |
 | 8c | [Joints and motion](docs/guide/joints-and-motion.md) | joints, kinematics, the Pose tab, animation, robot import, mocap |
@@ -84,7 +84,7 @@ These rules hold for every human and agent, on every machine. They're enforced b
 | Rule | Limit | How to comply |
 |---|---|---|
 | No comments (`basecase/no-comments`) | none, except `@vite-ignore` / `#__PURE__` pragmas | Name things so the code reads on its own. Lasting context (why a value is what it is, platform quirks, bugs avoided) goes in the area's guide (`docs/guide/`) or `docs/notes/` (`ui.md`, `core.md`, `node.md`) |
-| Banned copy (`basecase/copy`) | none in user-facing strings in `src/` and the app menu | Cut the word or the line (§3c); the list is `BANNED_COPY` in `verify/rehearsal/uiRules.ts`, linted through `tools/copy/banned.mjs` |
+| Banned copy (`basecase/copy`) | none in user-facing strings in `src/` and the app menu | Cut the word or the line (§3c); the list is `BANNED_COPY` in `verify/rehearsal/uiRules.ts`, linted through `tools/copy/banned.mjs` with the verb glossary (§3b-17) |
 | No nested `if` in one function (`basecase/no-nested-if`) | 0 | Guard clauses and early returns, combined conditions, lookup tables, or extract a named predicate / function |
 | Blank line between statements of different kinds (`@stylistic/padding-line-between-statements`) | — | Auto-fixed. Consecutive declarations or expression statements may group; every `if`, loop, block and `return` is set off by blank lines |
 | `max-lines` per file | 400 (blank lines not counted) | Split by responsibility into sibling modules. Data catalogs (`src/data/`) and the agent prompt are exempt |

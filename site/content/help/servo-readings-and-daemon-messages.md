@@ -59,7 +59,7 @@ Under **Emulated servos**, each joint has one row with its name and bus ID. IDs 
 |---|---|
 | An angle, such as 12.5° | The servo's position; 0° is its centre, count 2048 of 4096 |
 | A temperature, such as 30 °C | The servo's temperature; it's switched off at 50 °C |
-| No reply | The servo didn't answer this reading |
+| No reply | The servo didn't answer this reading, or its motor isn't a Feetech or Dynamixel servo, such as the DS3218, so the daemon can't read it |
 | Garbled reply | The servo's answer was corrupted |
 | Wrong ID answered | Another servo answered for this one |
 
@@ -75,7 +75,7 @@ When the daemon refuses a rung:
 | "A fault is still active. Go back to Look and clear it first." | A fault is latched |
 | "Check the servos first: every servo must answer with the right model." | **Set Up** hasn't passed |
 | "Calibrate the robot first." | There's no calibration |
-| "Load a policy first." | The daemon has no policy; Basecase doesn't load one |
+| "Load a policy first." | The scene has no ready skill or up-to-date policy |
 | "Test every joint with the current calibration first." | **Test** hasn't finished with this calibration |
 | "Rehearse the current policy first." | **Rehearse** hasn't finished with this policy |
 

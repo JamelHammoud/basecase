@@ -1,6 +1,7 @@
 import { actuatorOf } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
-import { count, deg, jointLabel, partLabel } from './engineeringFormat';
+import { deg, jointLabel, partLabel } from './engineeringFormat';
+import { plural } from '../../electron/plural.mjs';
 import { isLegJoint } from './engineeringBody';
 import { V3, boxCorners, dot, lineDistance, norm, rotateEuler, sub } from './engineeringMath';
 import { downstreamOf } from './engineeringMass';
@@ -119,7 +120,7 @@ function alignmentRow(ctx: CheckContext, joints: RobotJoint[]): CheckRow {
     return {
       check: 'Servo alignment',
       status: 'not run',
-      detail: `No output known for ${count(unmeasured.length, 'servo')}`,
+      detail: `No output known for ${plural(unmeasured.length, 'servo')}`,
     };
 
   return {
@@ -212,13 +213,13 @@ function sweepJoint(ctx: CheckContext, j: RobotJoint): Item[] {
 }
 
 function rangeDetail(designed: Item[], published: Item[], slides: number): string {
-  const unswept = slides ? `; ${count(slides, 'slide')} not swept` : '';
+  const unswept = slides ? `; ${plural(slides, 'slide')} not swept` : '';
 
   if (designed.length)
-    return `${count(designed.length, 'joint end')} hit another part before the end of the range${unswept}`;
+    return `${plural(designed.length, 'joint end')} hit another part before the end of the range${unswept}`;
 
   if (published.length)
-    return `The maker’s limits are motor limits: ${count(published.length, 'joint end')} meet another part first, with the rest of the robot in its home pose${unswept}`;
+    return `The maker’s limits are motor limits: another part stops ${plural(published.length, 'joint end')} first, with the rest of the robot in its home pose${unswept}`;
 
   return `Every turning joint clears its range, sampled every ${DESIGNED_STEP_DEG}°${unswept}`;
 }
@@ -236,7 +237,7 @@ export function rangeOfMotionRows(ctx: CheckContext): CheckRow[] {
   const slides = ctx.joints.filter((j) => j.type === 'prismatic').length;
 
   if (!turning.length && slides)
-    return [{ check: 'Range of motion', status: 'not run', detail: `${count(slides, 'slide')} not swept` }];
+    return [{ check: 'Range of motion', status: 'not run', detail: `${plural(slides, 'slide')} not swept` }];
 
   const designed: Item[] = [];
   const published: Item[] = [];

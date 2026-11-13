@@ -5,6 +5,7 @@ import type { CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions, ReadinessFinding } from './types';
 import { READINESS_CHECKS, ruleFinding } from './wording';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 
 const round = (v: number) => Math.round(v * 10) / 10;
 
@@ -217,7 +218,7 @@ export function newBlockers(before: Readiness | null, after: Readiness): Finding
   return after.blockers.filter((f) => !known.has(f.key));
 }
 
-const countText = (n: number) => `${n} blocker${n === 1 ? '' : 's'}`;
+const countText = (n: number) => plural(n, 'blocker');
 
 export function readinessText(r: Readiness): string {
   if (r.status === 'empty') return 'Nothing to check yet.';

@@ -130,7 +130,7 @@ const SheetFields: React.FC<{
       >
         Listing
         <ChevronDownIcon
-          className={`w-3.5 h-3.5 transition-transform duration-200 ${showListing ? 'rotate-180' : ''}`}
+          className={`w-3.5 h-3.5 transition-transform duration-150 ${showListing ? 'rotate-180' : ''}`}
         />
       </button>
       {showListing && <ListingFields {...props} />}

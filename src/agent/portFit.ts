@@ -1,4 +1,5 @@
 import type { MateType, Port, PortKind } from '../types/ports';
+import { plural } from '../../electron/plural.mjs';
 
 const BORE_TIGHT_MM = 0.3;
 const BORE_SLACK_MM = 1.5;
@@ -21,7 +22,7 @@ const HOLES: PortKind[] = ['screw', 'bore'];
 const pairKey = (a: Port, b: Port) => [a.kind, b.kind].sort().join('+');
 
 function circleProblem(a: Port, b: Port): string | null {
-  if (a.count !== b.count) return `${a.count} holes against ${b.count}`;
+  if (a.count !== b.count) return `${plural(a.count ?? 0, 'hole')} against ${b.count}`;
 
   const off = Math.abs((a.pitchDiameterMm ?? 0) - (b.pitchDiameterMm ?? 0));
 

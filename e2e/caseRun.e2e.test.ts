@@ -132,7 +132,7 @@ describe('Run Case', () => {
 
     await inPanel('tries', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await inPanel('tries', 'End Try').click();
+    await inPanel('tries', 'Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
     const ended = await simState();
@@ -204,7 +204,7 @@ describe('Run Case', () => {
       Number.parseFloat((await panel('score').locator('[data-signal="score"]').textContent()) ?? ''),
     ).toBeGreaterThan(0);
 
-    await inPanel('tries', 'End Try').click();
+    await inPanel('tries', 'Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
     const ended = await simState();

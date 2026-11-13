@@ -9,6 +9,7 @@ import {
   DeleteIcon,
   GripIcon,
 } from '../../../design-system';
+import { plural } from '../../../../electron/plural.mjs';
 import { QueueControls, QueuedItem } from '../types';
 import { lineTop, QUEUE_ROW_PX } from './queueDrag';
 import { QueuedRowBody } from './QueuedRowBody';
@@ -125,9 +126,7 @@ export const QueuedMessages: React.FC<{ queue: QueueControls; onEdit: (id: strin
         onClick={() => setOpen((v) => !v)}
         className="w-full h-10 pl-4 pr-3 flex items-center gap-2 text-[13px] text-white/55 hover:text-white/85 cursor-default transition-colors"
       >
-        <span className="flex-1 min-w-0 truncate text-left">
-          {items.length} message{items.length === 1 ? '' : 's'} queued
-        </span>
+        <span className="flex-1 min-w-0 truncate text-left">{plural(items.length, 'message')} queued</span>
         {open ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
       </button>
       {open && (

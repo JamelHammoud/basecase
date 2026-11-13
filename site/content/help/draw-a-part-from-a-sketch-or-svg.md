@@ -46,6 +46,8 @@ Turn an outline you draw, or an SVG file, into a solid part by extruding it to a
 
 The panel closes and the new part is selected. **Rectangle**, **Circle** and **Arc**, beside **Line**, draw those shapes instead.
 
+**Path**, the third choice under **Outline**, fits a linkage to points you click instead of making a solid. [Design a linkage from a path](/help/design-a-linkage-from-a-path) has the steps.
+
 Points snap to the grid until you turn off **Snap to grid**. To type exact lengths, see [Sketch a part to exact dimensions](/help/sketch-a-part-to-exact-dimensions).
 
 ## Turn an SVG into a part

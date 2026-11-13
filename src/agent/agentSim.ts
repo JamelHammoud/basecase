@@ -10,6 +10,7 @@ import { prettyJointName, type Rig } from '../utils/kinematics';
 import type { PoseReply } from './agentPose';
 import { TOOL_IMAGE_SIDE } from './agentPoseShared';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 
 export interface SimulatePayload {
   seconds?: number;
@@ -103,7 +104,7 @@ export function simReport(run: SimRun, rig: Rig, seconds: number): string {
   const guessed = model.joints.filter((j) => j.dynamics === 'estimated' && j.effortSource !== 'estimate');
 
   lines.push(
-    `MuJoCo model: ${model.joints.length} actuated joints, ${total.toFixed(2)} kg${estimated.length ? `; torque limits for ${estimated.length} joints are estimated from weight (no servo assigned)` : ''}${guessed.length ? `; servo response for ${guessed.length} joints is estimated (measured fits exist only for the STS3215 7.4 V and XL330)` : ''}.`,
+    `MuJoCo model: ${plural(model.joints.length, 'actuated joint')}, ${total.toFixed(2)} kg${estimated.length ? `; torque limits are estimated for ${plural(estimated.length, 'joint')} from weight (no servo assigned)` : ''}${guessed.length ? `; servo response is estimated for ${plural(guessed.length, 'joint')} (measured fits exist only for the STS3215 7.4 V and XL330)` : ''}.`,
   );
 
   for (const r of stats.robots) {

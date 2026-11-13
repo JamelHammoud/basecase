@@ -30,8 +30,8 @@ export const GalleryCard: React.FC<{
   sim: Simulation;
   training: GalleryTraining;
   docked: boolean;
-  onSeeInside: () => void;
-}> = ({ kase, sim, training, docked, onSeeInside }) => {
+  onOpenScene: () => void;
+}> = ({ kase, sim, training, docked, onOpenScene }) => {
   const { drive } = sim;
 
   return (
@@ -60,8 +60,8 @@ export const GalleryCard: React.FC<{
       {!docked && drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
       {!docked && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       <TrainPart training={training} />
-      <Button variant="secondary" size="md" fullWidth onClick={onSeeInside}>
-        See Inside
+      <Button variant="secondary" size="md" fullWidth onClick={onOpenScene}>
+        Open Scene
       </Button>
     </aside>
   );

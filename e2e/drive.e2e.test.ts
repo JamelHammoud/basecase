@@ -418,7 +418,7 @@ describe('a gripper', () => {
     await app.page.keyboard.up(' ');
     await waitSim(1);
     await handAt(away);
-    await button('End Try').click();
+    await button('Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].passed).toBe(true);
     expect(app.errors).toEqual([]);

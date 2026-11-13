@@ -1,6 +1,7 @@
 import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
 import { canCalibrate } from '../robot/calibrationSession';
+import { emulatedSpec } from '../robot/emulatedUnits';
 import { connectRobot, robotSnapshot } from '../robot/robotStore';
 import { servoFamily } from '../robot/robotState';
 import { sceneRobot } from '../robot/sceneRobot';
@@ -20,7 +21,8 @@ export function calibrateJoints(core: WorkspaceCore, only?: readonly string[]) {
 
   showOperateOf(core)();
 
-  if (canCalibrate(joints)) void calibrateConnectedRobot(core.docs.updateProjectNow, joints, only);
+  if (canCalibrate(joints))
+    void calibrateConnectedRobot(core.docs.updateProjectNow, { joints, parts: core.parts, only });
 }
 
 function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): Command[] {
@@ -37,7 +39,7 @@ function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): 
       keywords: 'servo ids number assign factory plug emulated robot',
       run: () => {
         showOperate();
-        void setUpServos({ joints, select: core.setSelectedIds });
+        void setUpServos({ joints, parts: core.parts, select: core.setSelectedIds });
       },
     },
   ];
@@ -72,7 +74,8 @@ export function operateCommands(inputs: CommandInputs): Command[] {
             run: () => {
               showOperate();
 
-              if (robotSnapshot().link !== 'connected') void connectRobot(robot.spec, robot.joints);
+              if (robotSnapshot().link !== 'connected')
+                void connectRobot(emulatedSpec({ choice: robot, joints, parts: core.parts }), robot.joints);
             },
           },
         ]

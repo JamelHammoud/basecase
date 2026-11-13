@@ -1,7 +1,8 @@
 use crate::dynamixel::DynamixelServo;
 use crate::feetech::FeetechServo;
 use crate::firmware::Firmware;
-use plant_bam::{Load, Plant, SplitMix, UnitParams, STS3215_7V4, XL330};
+use crate::parts::{supply_volts, unit_for, PartsById};
+use plant_bam::{Load, PartModel, Plant, SplitMix};
 use servo_wire::dynamixel as dxl_wire;
 use servo_wire::{Family, Scan};
 use std::sync::{Arc, Mutex};
@@ -55,12 +56,15 @@ pub struct Timed {
 pub(crate) struct Slot {
     pub(crate) firmware: Box<dyn Firmware>,
     pub(crate) powered: bool,
+    unit_seed: u64,
+    fitted_id: u8,
 }
 
 pub struct ServoBus {
     pub(crate) family: Family,
     pub(crate) options: BusOptions,
     pub(crate) slots: Vec<Slot>,
+    parts: PartsById,
     inbox: Vec<u8>,
     last_rx_us: u64,
     stepped_to_us: u64,
@@ -73,14 +77,16 @@ pub struct ServoBus {
 
 impl ServoBus {
     pub fn new(family: Family, ids: &[u8], options: BusOptions) -> Self {
-        let (nominal_volts, reset_volts) = match family {
-            Family::Feetech => (7.4, 3.5),
-            Family::Dynamixel => (5.0, 3.0),
-        };
+        Self::with_parts(family, ids, options, PartsById::new())
+    }
+
+    pub fn with_parts(family: Family, ids: &[u8], options: BusOptions, parts: PartsById) -> Self {
+        let (nominal_volts, reset_volts) = supply_volts(family);
         let mut bus = Self {
             family,
             options,
             slots: Vec::new(),
+            parts,
             inbox: Vec::new(),
             last_rx_us: 0,
             stepped_to_us: 0,
@@ -100,6 +106,10 @@ impl ServoBus {
 
     pub fn factory(family: Family, options: BusOptions) -> Self {
         Self::new(family, &[], options)
+    }
+
+    pub fn factory_with_parts(family: Family, options: BusOptions, parts: PartsById) -> Self {
+        Self::with_parts(family, &[], options, parts)
     }
 
     pub fn plug_in_new_servo(&mut self) {
@@ -122,9 +132,9 @@ impl ServoBus {
         let slot_index = self.slots.len() as u64;
         let unit_seed = self.options.seed.wrapping_add(slot_index << 8);
         let wrong_model = self.options.fault == CliFault::WrongModel;
+        let unit = unit_for(self.family, self.part_of(id), unit_seed, id);
         let firmware: Box<dyn Firmware> = match self.family {
             Family::Feetech => {
-                let unit = UnitParams::from_seed(STS3215_7V4, unit_seed, id);
                 let mut servo = FeetechServo::new(id, Plant::new(unit, self.options.load, start));
 
                 if wrong_model {
@@ -134,7 +144,6 @@ impl ServoBus {
                 Box::new(servo)
             }
             Family::Dynamixel => {
-                let unit = UnitParams::from_seed(XL330, unit_seed, id);
                 let mut servo = DynamixelServo::new(id, Plant::new(unit, self.options.load, start));
 
                 if wrong_model {
@@ -148,7 +157,39 @@ impl ServoBus {
         self.slots.push(Slot {
             firmware,
             powered: true,
+            unit_seed,
+            fitted_id: id,
         });
+    }
+
+    fn part_of(&self, id: u8) -> Option<&PartModel> {
+        self.parts
+            .iter()
+            .find(|(part_id, _)| *part_id == id)
+            .map(|(_, part)| part)
+    }
+
+    fn refit_renumbered(&mut self) {
+        if self.parts.is_empty() {
+            return;
+        }
+
+        let renumbered: Vec<usize> = (0..self.slots.len())
+            .filter(|&k| self.slots[k].firmware.id() != self.slots[k].fitted_id)
+            .collect();
+
+        for k in renumbered {
+            let id = self.slots[k].firmware.id();
+            let unit = unit_for(self.family, self.part_of(id), self.slots[k].unit_seed, id);
+            let slot = &mut self.slots[k];
+
+            slot.firmware.plant_mut().unit = unit;
+            slot.fitted_id = id;
+        }
+    }
+
+    pub fn unit_of(&self, id: u8) -> Option<plant_bam::UnitParams> {
+        self.servo(id).map(|servo| servo.plant().unit)
     }
 
     pub fn family(&self) -> Family {
@@ -258,6 +299,7 @@ impl ServoBus {
 
                 let answers = self.dispatch(&frame, now_us);
 
+                self.refit_renumbered();
                 replies.extend(answers.into_iter().filter_map(|timed| self.damage_for_cli(timed)));
 
                 true

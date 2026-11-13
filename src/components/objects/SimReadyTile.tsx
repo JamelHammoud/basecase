@@ -58,11 +58,7 @@ export const SimReadyTile: React.FC<{
       className="group w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"
     >
       <div className="preview aspect-[4/3] flex items-center justify-center">
-        <PreviewImage
-          src={asset.thumbnail}
-          lazy
-          className="transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-        />
+        <PreviewImage src={asset.thumbnail} lazy zoom />
       </div>
       <div className="px-0.5 pt-2">
         <div className="text-[13px] font-medium text-white/90 truncate">{asset.name}</div>

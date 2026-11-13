@@ -66,7 +66,9 @@ export const TablePanel: React.FC<PanelViewProps<'table'>> = (props) => {
   const { panel, ctx } = props;
 
   if (panel.of === 'servos')
-    return ctx.studio && <CaseRunJoints joints={ctx.joints} onBrowseRobots={ctx.studio.onBrowseRobots} />;
+    return (
+      ctx.studio && <CaseRunJoints joints={ctx.joints} parts={ctx.parts} onBrowseRobots={ctx.studio.onBrowseRobots} />
+    );
 
   return panel.of === 'joints' ? <JointsTable {...props} /> : <SignalsTable {...props} />;
 };

@@ -221,10 +221,7 @@ const TypeTile: React.FC<{
           selected ? 'ring-[1.5px] ring-inset ring-[#0d99ff]/70' : ''
         }`}
       >
-        <PreviewImage
-          src={thumb}
-          className="p-1 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-        />
+        <PreviewImage src={thumb} zoom className="p-1 animate-fade-in" />
       </span>
       <span
         className={`block mt-[6px] text-center text-[12.5px] font-medium truncate transition-colors duration-150 ${

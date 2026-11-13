@@ -27,16 +27,16 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 
 A humanoid or an arm can follow your own arms instead of the keys: press ⌘K and choose **Drive with Camera** before step 4. Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
-![A try running, with the clock, End Try and the keys](/help/try-a-robot-on-a-case/trying.png)
+![A try running, with the clock, Stop Try and the keys](/help/try-a-robot-on-a-case/trying.png)
 
-6. Click **End Try**, or let the time run out.
+6. Click **Stop Try**, or let the time run out.
 7. Read **Results** at the bottom of the tab: how the latest run went, then every try with Passed or Missed and a filmstrip. Click **Replay** on a try to watch it again, or right-click it to [multiply](/help/multiply-a-try-into-demonstrations) or delete it.
 8. Once a try passes, click **Export Dataset** under the tries, or choose it in ⌘K.
 9. Once five tries pass, click **Train from Tries** to teach the robot from them. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)
 
-While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit at the top of Results, above the latest run.
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit at the top of Results, above the latest run. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows next.
 
 To teach the robot instead of driving it, use **Train**, between Control and Results: type a goal after **Teach it to**, or click a trained policy to run it.
 

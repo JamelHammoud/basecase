@@ -3,7 +3,7 @@ import type { ProjectSettings } from '../types/robotics';
 import type { RobotSkeleton } from '../types/skeleton';
 import { sizeActuators } from '../utils/actuatorSizing';
 import { skeletonSizing } from '../utils/skeletonSizing';
-import { declareJoints } from '../workspace/agentBuildRequests';
+import { declareJoints } from '../joints/declareJoints';
 import { toCad, toScene, type V3 } from './agentFrame';
 import { mirrorParts, specToPart } from './agentScene';
 import { buildSkeleton, skeletonText, type SkeletonJointInput } from './skeleton';

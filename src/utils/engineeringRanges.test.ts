@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { printed } from '../assembly/assembly.fixtures';
 import type { ProjectSettings } from '../types/robotics';
-import { declareJoints, type JointSpec } from '../workspace/agentBuildRequests';
+import { declareJoints, type JointSpec } from '../joints/declareJoints';
 import { runEngineering } from './engineering';
 
 const parts = [printed('base', { size: [20, 10, 20] }, [0, 0, 0]), printed('link', { size: [10, 40, 10] }, [0, 10, 0])];

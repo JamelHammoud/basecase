@@ -4,6 +4,7 @@ import type { RobotJoint } from '../types/robotics';
 import { jointGroups, nameWords, prettyJointName, sideOf } from '../utils/kinematics';
 import type { Posing } from '../utils/usePosing';
 import { AnimationsSection } from './pose/AnimationsSection';
+import { JointRangeFields } from './pose/JointRangeFields';
 import { JointRow } from './pose/JointRow';
 import { PosesSection } from './pose/PosesSection';
 
@@ -13,6 +14,8 @@ interface PosePanelProps {
   onImportMotion: () => void;
   onWalkCycle: () => void;
   canWalk: boolean;
+  onJointRange: (id: string, range: [number, number], live?: boolean) => void;
+  onDeleteJoint: (id: string) => void;
 }
 
 function rowLabel(j: RobotJoint, group: string): string {
@@ -39,6 +42,8 @@ export const PosePanel: React.FC<PosePanelProps> = ({
   onImportMotion,
   onWalkCycle,
   canWalk,
+  onJointRange,
+  onDeleteJoint,
 }) => {
   const { activeJointId } = posing;
   const rig = posing.robot?.rig ?? null;
@@ -79,6 +84,15 @@ export const PosePanel: React.FC<PosePanelProps> = ({
     e.preventDefault();
     setMenu({ x: e.clientX, y: e.clientY, items });
   };
+
+  const jointMenu = (j: RobotJoint): ContextMenuEntry[] => [
+    {
+      label: 'Range',
+      submenu: () => <JointRangeFields joint={j} onChange={(range, live) => onJointRange(j.id, range, live)} />,
+    },
+    { divider: true },
+    { label: 'Delete', tone: 'danger', onSelect: () => onDeleteJoint(j.id) },
+  ];
 
   const select = (j: RobotJoint) => {
     posing.selectJoint(j.id);
@@ -127,6 +141,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
                 active={j.id === activeJointId}
                 onSelect={() => select(j)}
                 onChange={(v) => posing.setJointValue(j.id, v)}
+                onContextMenu={(e) => openMenu(e, jointMenu(j))}
               />
             ))}
           </Section>

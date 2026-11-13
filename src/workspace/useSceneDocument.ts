@@ -39,6 +39,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   const docRef = useRef(doc);
   const partsRef = useRef(doc.parts);
   const lastPoseEditRef = useRef(0);
+  const liveJointsRef = useRef<{ joints: RobotJoint[] | undefined } | null>(null);
 
   useEffect(() => {
     partsRef.current = doc.parts;
@@ -97,6 +98,25 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     lastPoseEditRef.current = 0;
   };
 
+  const commitJointEdit = (update: (p: ProjectSettings) => ProjectSettings, live = false) => {
+    const { pose, joints, marks } = projectRef.current;
+
+    if (live) {
+      liveJointsRef.current ??= { joints };
+      updateProjectNow(update);
+
+      return;
+    }
+
+    const before = liveJointsRef.current?.joints ?? joints;
+    const d = docRef.current;
+
+    liveJointsRef.current = null;
+    writeDoc(pushHistory(d, d.parts, { pose, joints: before, marks }));
+    updateProjectNow(update);
+    lastPoseEditRef.current = 0;
+  };
+
   const travel = (direction: HistoryDirection, restorePose: (pose: RobotPoseState | undefined) => void) => {
     const d = docRef.current;
     const { pose, joints, marks } = projectRef.current;
@@ -130,6 +150,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     writeDoc,
     commitParts,
     commitMarks,
+    commitJointEdit,
     recordPoseEdit,
     resetDoc: (parts: ScenePart[]) => writeDoc(docFromParts(parts)),
     travel,

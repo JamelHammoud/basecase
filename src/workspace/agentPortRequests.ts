@@ -6,7 +6,7 @@ import { frameLookup } from '../agent/skeletonFrames';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { portsOf, portText, worldPort, type WorldPort } from '../agent/ports';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
-import { declareJoints } from './agentBuildRequests';
+import { declareJoints } from '../joints/declareJoints';
 
 type Payload = Record<string, unknown>;
 

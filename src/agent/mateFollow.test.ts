@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Port } from '../types/ports';
 import type { ScenePart } from '../types/robotics';
-import { declareJoints } from '../workspace/agentBuildRequests';
+import { declareJoints } from '../joints/declareJoints';
 import { toCad, type V3 } from './agentFrame';
 import { applySpec, specToPart, type AgentCadPayload } from './agentScene';
 import { followMates } from './mateFollow';

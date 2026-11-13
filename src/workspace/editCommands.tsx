@@ -6,7 +6,9 @@ import {
   FloorIcon,
   GroupIcon,
   IntersectIcon,
+  JointsIcon,
   LayersIcon,
+  MoveIcon,
   PasteIcon,
   SubtractIcon,
   UngroupIcon,
@@ -150,7 +152,33 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
   ];
 }
 
+function jointCommands({ actions }: CommandInputs): Command[] {
+  const { joints } = actions;
+
+  if (!joints.canJoin) return [];
+
+  return [
+    {
+      id: 'add-hinge',
+      group: 'Selection',
+      label: 'Add Hinge',
+      icon: <JointsIcon className={ic} />,
+      keywords: 'joint revolute pivot axis pose',
+      run: () => joints.start('revolute'),
+    },
+    {
+      id: 'add-slider',
+      group: 'Selection',
+      label: 'Add Slider',
+      icon: <MoveIcon className={ic} />,
+      keywords: 'joint prismatic linear rail axis pose',
+      run: () => joints.start('prismatic'),
+    },
+  ];
+}
+
 export const editCommands = (inputs: CommandInputs): Command[] => [
   ...clipboardCommands(inputs),
   ...arrangeCommands(inputs),
+  ...jointCommands(inputs),
 ];

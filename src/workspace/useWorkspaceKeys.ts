@@ -34,14 +34,15 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   'use memo';
 
   const { tool, annotations, studio, undo, redo, selection, setSelectedIds, viewportRef, marks } = core;
-  const { edits, ops, pose } = actions;
+  const { edits, ops, pose, joints } = actions;
 
   const leaveMeasure = () => {
     if (!viewportRef.current?.cancelMeasure()) tool.toggleMeasure(false);
   };
 
   const escape = () => {
-    if (annotations.draft) annotations.setDraft(null);
+    if (joints.picking) joints.cancel();
+    else if (annotations.draft) annotations.setDraft(null);
     else if (annotations.activeId) annotations.setActiveId(null);
     else if (annotations.commentMode) annotations.toggleCommentMode(false);
     else if (tool.measuring) leaveMeasure();

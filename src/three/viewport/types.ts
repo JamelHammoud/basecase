@@ -100,6 +100,7 @@ export interface ViewportProps {
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
+  onPickAxis?: ((clientX: number, clientY: number) => void) | null;
 }
 
 export type MarkTool = 'marker' | 'eraser';
@@ -136,7 +137,7 @@ export interface Viewport3DHandle {
   setCameraPreset: (preset: CameraPreset) => void;
   focusSelected: () => void;
   zoomBy: (factor: number) => void;
-  pickAt: (clientX: number, clientY: number) => { partId: string | null; point: Vec3 } | null;
+  pickAt: (clientX: number, clientY: number) => { partId: string | null; point: Vec3; local?: Vec3 } | null;
   captureViews: (
     views: string[],
     onlyIds?: string[],

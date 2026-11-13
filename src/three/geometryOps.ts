@@ -6,6 +6,7 @@ import { loadMesh } from '../utils/robotImport/meshes';
 import { componentArrays, componentTransfers } from './componentGeometry';
 import { creasedGeometry } from './partMesh/creased';
 import { creaseEdgesOnly } from './partMesh/creaseEdges';
+import { roundFaceAt, sharedAxis } from '../joints/axisFinder';
 
 type Vec3 = [number, number, number];
 
@@ -156,7 +157,19 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
+export interface RoundFaceJob {
+  soup: Float32Array;
+  point: Vec3;
+}
+
+export interface SharedAxisJob {
+  parent: Float32Array;
+  child: Float32Array;
+}
+
 export const geometryHandlers = {
+  roundFace: (job: RoundFaceJob) => reply(roundFaceAt(job.soup, job.point)),
+  sharedAxis: (job: SharedAxisJob) => reply(sharedAxis(job.parent, job.child)),
   linkMesh: async (job: LinkMeshJob) => reply(await linkMesh(job)),
   linkSoup: (pieces: SoupPiece[]) => {
     const result = linkSoup(pieces);

@@ -14,10 +14,12 @@ import {
   GroupIcon,
   HiddenIcon,
   IntersectIcon,
+  JointsIcon,
   LayersIcon,
   LockIcon,
   LookIcon,
   MarkerIcon,
+  MoveIcon,
   PenIcon,
   PhotoIcon,
   PlusIcon,
@@ -105,6 +107,23 @@ function sharedEntries({ core, actions }: ContextInputs) {
   };
 }
 
+function jointItems({ joints }: WorkspaceActions): ContextMenuEntry[] {
+  return [
+    {
+      label: 'Add Hinge',
+      icon: <JointsIcon className={ic} />,
+      disabled: !joints.canJoin,
+      onSelect: () => joints.start('revolute'),
+    },
+    {
+      label: 'Add Slider',
+      icon: <MoveIcon className={ic} />,
+      disabled: !joints.canJoin,
+      onSelect: () => joints.start('prismatic'),
+    },
+  ];
+}
+
 function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   const { core, actions } = inputs;
   const { ops, edits } = actions;
@@ -121,6 +140,8 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
       onSelect: () => ops.runBoolean('subtract'),
     },
     { label: 'Intersect', icon: <IntersectIcon className={ic} />, onSelect: () => ops.runBoolean('intersect') },
+    { divider: true },
+    ...jointItems(actions),
     { divider: true },
     shared.align,
     shared.drop,

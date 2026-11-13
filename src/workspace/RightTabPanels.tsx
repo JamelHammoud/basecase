@@ -155,7 +155,7 @@ function useTeach(core: WorkspaceCore, agent: AgentSession) {
 
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
   const { tool, posing, onRobot, project, setSelectedIds, simTraining } = core;
-  const { pose } = actions;
+  const { pose, joints } = actions;
   const onTeach = useTeach(core, agent);
   const current = tool.rightTab;
   const visited = useVisitedTabs(current);
@@ -169,6 +169,8 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onImportMotion={pose.importMotion}
           onWalkCycle={pose.walkCycle}
           canWalk={pose.canWalk}
+          onJointRange={joints.setRange}
+          onDeleteJoint={joints.remove}
         />
       </TabActivity>
       <TabActivity tab="sim" current={current} visited={visited} available={posing.hasRig}>

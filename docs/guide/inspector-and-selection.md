@@ -53,6 +53,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Bounds include each part's rotation (`halfExtents` in `utils/selection.ts`, checked against three.js `Box3`), so align, spread, drop to floor and the sizes in Layers and the Inspector stay right for rotated parts.
   - Available in the right-click Align submenu, the multi-selection Inspector (`AlignBar`) and ⌘K.
 - **Drop to Floor (F):** loose parts each drop to the floor; when every selected part is grouped, the selection lands as one piece.
+- **Joining two parts (Add Hinge, Add Slider):** with exactly two parts selected, the first is the parent and the second the child that moves (§8c). The canvas then waits for a click on a round face (crosshair cursor; clicks pick an axis instead of selecting, and Esc gives up) unless the two parts already share a bore and shaft.
 
 ## 7a-2. Drag and Drop
 

@@ -119,6 +119,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
+    frameAll: () => viewportRef.current?.frameAll(),
+    screenPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),

@@ -1,5 +1,5 @@
 import type { ScenePart, RobotJoint } from '../types/robotics';
-import type { JointSpec } from '../workspace/agentBuildRequests';
+import type { JointSpec } from '../joints/declareJoints';
 import { r3, toCad, type V3 } from './agentFrame';
 import type { MateArgs } from './mate';
 import { findPort, type WorldPort } from './ports';

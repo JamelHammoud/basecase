@@ -94,6 +94,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}
+        onPickAxis={actions.joints.picking ? actions.joints.pickAxis : null}
       />
       <DriveOverlay sim={sim} />
       <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />

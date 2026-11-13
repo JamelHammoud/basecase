@@ -111,7 +111,11 @@ export function pickAt(ctx: ViewportContext, clientX: number, clientY: number) {
   const hit = raycaster.intersectObjects(partMeshes(ctx.stage), false)[0];
 
   if (hit) {
-    return { partId: hitPartId(hit), point: toVec3(hit.point) };
+    const partId = hitPartId(hit);
+    const object = partId ? ctx.layer.get(partId) : undefined;
+    const local = object ? toVec3(hit.point.clone().applyMatrix4(inverseRigid(object).inverse)) : undefined;
+
+    return { partId, point: toVec3(hit.point), local };
   }
 
   const floor = floorPoint(raycaster);

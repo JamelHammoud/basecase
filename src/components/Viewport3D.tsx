@@ -60,7 +60,9 @@ const canvasCursor = (props: ViewportProps) => {
     return CURSORS.eraser;
   }
 
-  return props.measureMode || props.markMode || props.transformMode === 'sculpt' ? CURSORS.crosshair : CURSORS.arrow;
+  const aiming = props.measureMode || props.markMode || props.onPickAxis || props.transformMode === 'sculpt';
+
+  return aiming ? CURSORS.crosshair : CURSORS.arrow;
 };
 
 type Viewport3DProps = ViewportProps & { markField?: React.ReactNode };

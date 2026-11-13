@@ -18,12 +18,8 @@ import { printReportOf, printReportText, type PrintReport } from '../utils/print
 import type { VisionMasks } from '../utils/photoMask';
 import { maskProfile, referenceProfile } from '../utils/silhouette';
 import { bandMismatch, type Profile } from '../utils/silhouetteProfile';
-import {
-  applyBuildSettings,
-  declareJoints,
-  type BuildSettingsPayload,
-  type DefineJointsPayload,
-} from './agentBuildRequests';
+import { applyBuildSettings, type BuildSettingsPayload } from './agentBuildRequests';
+import { declareJoints, type DefineJointsPayload } from '../joints/declareJoints';
 import { craftScene, partMeshes, visibleShare } from './agentCraftRequests';
 import { PORT_HANDLERS } from './agentPortRequests';
 import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';

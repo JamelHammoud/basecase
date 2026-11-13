@@ -123,6 +123,14 @@ export class PointerInput {
       return;
     }
 
+    const pickAxis = this.ctx.props().onPickAxis;
+
+    if (pickAxis) {
+      pickAxis(e.clientX, e.clientY);
+
+      return;
+    }
+
     if (this.ctx.props().measureMode) {
       this.measureClick(e);
 
@@ -179,8 +187,9 @@ export class PointerInput {
   }
 
   private onDoubleClick(e: MouseEvent): void {
-    const { annotateMode, measureMode, markMode, transformMode, onSelectPart } = this.ctx.props();
-    const blocked = annotateMode || measureMode || markMode || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
+    const { annotateMode, measureMode, markMode, transformMode, onSelectPart, onPickAxis } = this.ctx.props();
+    const blocked =
+      annotateMode || measureMode || markMode || onPickAxis || transformMode === 'sculpt' || this.gizmo.hoveringAxis();
 
     if (e.button !== 0 || additive(e) || blocked || this.moved(e)) {
       return;

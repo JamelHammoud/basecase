@@ -75,7 +75,7 @@ After a walk policy is trained, the agent can test it in simulation. The robot w
 
 A servo can't give full torque and full speed at once. Its torque–speed line falls from stall at 0 rpm to its no-load speed at your supply voltage. Peak torque also warns when more than 5% of a joint's walk is past that line, and names the joint and the share.
 
-Open **Peak torque** and click a joint to plot its walk on its servo's line, beside the next stronger servo in the catalog. [Checks in the Build tab](/help/build-checks) shows the plot.
+Open **Peak torque** to plot each joint's walk on its servo's line, beside the next stronger servo in the catalog. [Checks in the Build tab](/help/build-checks) shows the plot.
 
 ## Making a joint pass
 

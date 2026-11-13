@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronDownIcon, MetaLine, TracePlot, type Trace } from '../../design-system';
+import { DisclosureRow, MetaLine, TracePlot, type Trace } from '../../design-system';
+import type { ReadinessFinding } from '../../readiness/types';
 import type { JointEnvelope, ServoCurve } from '../../utils/engineeringTypes';
 import { isMotoring } from '../../utils/peakTorque';
 
@@ -36,58 +37,68 @@ export function envelopeTraces(e: JointEnvelope): Trace[] {
 }
 
 const Swatch: React.FC<{ className: string; name: string }> = ({ className, name }) => (
-  <span className="inline-flex items-center gap-1.5">
-    <span className={`w-3 h-0.5 rounded-full shrink-0 ${className}`} />
+  <>
+    <span className={`inline-block align-middle w-3 h-0.5 mr-1.5 rounded-full ${className}`} />
     {name}
-  </span>
+  </>
 );
+
+const EnvelopePlot: React.FC<{ envelope: JointEnvelope }> = ({ envelope }) => (
+  <div data-joint={envelope.joint} className="pt-1.5 flex flex-col gap-1.5">
+    <TracePlot
+      traces={envelopeTraces(envelope)}
+      height={PLOT}
+      limit={envelope.servo.ratedNm}
+      fromZero
+      units={{ x: 'rpm', y: 'N·m' }}
+    />
+    <MetaLine
+      className="text-[12px] leading-4 text-white/50"
+      items={[
+        <Swatch key="servo" className="bg-[#0d99ff]" name={envelope.servo.name} />,
+        envelope.up && <Swatch key="up" className="bg-white/35" name={envelope.up.name} />,
+      ]}
+    />
+  </div>
+);
+
+export const FindingPlot: React.FC<{ finding: ReadinessFinding; envelopes?: JointEnvelope[] }> = ({
+  finding,
+  envelopes,
+}) => {
+  const envelope = finding.joint ? envelopes?.find((e) => e.joint === finding.joint) : undefined;
+
+  return envelope ? <EnvelopePlot envelope={envelope} /> : null;
+};
+
+export function unlisted(envelopes: JointEnvelope[], findings: ReadinessFinding[]): JointEnvelope[] {
+  const listed = new Set(findings.map((f) => f.joint));
+
+  return envelopes.filter((e) => !listed.has(e.joint));
+}
 
 const EnvelopeRow: React.FC<{ envelope: JointEnvelope }> = ({ envelope }) => {
   const [open, setOpen] = useState(false);
-  const share = Math.round(envelope.outside * 100);
 
   return (
-    <li data-joint={envelope.joint}>
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-start gap-2 py-1.5 pl-[31px] pr-[7px] rounded-lg text-left cursor-default hover:bg-white/[0.04]"
-      >
+    <li>
+      <DisclosureRow open={open} onToggle={() => setOpen((v) => !v)} className="pl-[31px] pr-[7px]">
         <span className="min-w-0 flex-1 text-[13px] leading-[18px] text-white/85">{envelope.label}</span>
-        {share > 0 && <span className="text-[12px] leading-[18px] text-white/50 tabular">{share}%</span>}
-        <span className="h-[18px] flex items-center shrink-0">
-          <ChevronDownIcon
-            className={`w-3.5 h-3.5 text-white/50 transition-transform duration-150 ${open ? '' : '-rotate-90'}`}
-          />
-        </span>
-      </button>
+      </DisclosureRow>
       {open && (
-        <div className="pl-[31px] pr-[7px] pb-1.5 flex flex-col gap-1.5">
-          <TracePlot
-            traces={envelopeTraces(envelope)}
-            height={PLOT}
-            limit={envelope.servo.ratedNm}
-            fromZero
-            units={{ x: 'rpm', y: 'N·m' }}
-          />
-          <MetaLine
-            className="text-[12px] leading-4 text-white/50"
-            items={[
-              <Swatch key="servo" className="bg-[#0d99ff]" name={envelope.servo.name} />,
-              envelope.up && <Swatch key="up" className="bg-white/35" name={envelope.up.name} />,
-            ]}
-          />
+        <div className="pl-[31px] pr-[7px] pb-1.5">
+          <EnvelopePlot envelope={envelope} />
         </div>
       )}
     </li>
   );
 };
 
-export const EnvelopeRows: React.FC<{ envelopes: JointEnvelope[] }> = ({ envelopes }) => (
-  <ul>
-    {envelopes.map((e) => (
-      <EnvelopeRow key={e.joint} envelope={e} />
-    ))}
-  </ul>
-);
+export const EnvelopeRows: React.FC<{ envelopes: JointEnvelope[] }> = ({ envelopes }) =>
+  envelopes.length ? (
+    <ul>
+      {envelopes.map((e) => (
+        <EnvelopeRow key={e.joint} envelope={e} />
+      ))}
+    </ul>
+  ) : null;

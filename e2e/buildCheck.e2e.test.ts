@@ -230,7 +230,7 @@ describe('Build tab fields', () => {
       },
     };
     const row = checkRow('Peak torque');
-    const knee = row.locator('li[data-joint="ja"]');
+    const plot = (joint: string) => row.locator(`[data-joint="${joint}"]`);
 
     await loadKnees(app.page);
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
@@ -241,19 +241,24 @@ describe('Build tab fields', () => {
         async () => {
           await expand(row, 'Peak torque');
 
-          return knee.isVisible();
+          return plot('ja').isVisible();
         },
         { timeout: 45000 },
       )
       .toBe(true);
-    expect(await row.textContent()).toMatch(/Left knee: .*% of the walk past its torque–speed line/);
 
-    await knee.getByRole('button', { name: /^Left knee/ }).click();
+    const note = row.locator('li', { has: plot('ja') });
+
+    expect(await note.textContent()).toMatch(/Left knee: .*% of the walk past its torque–speed line/);
 
     for (const id of ['driving', 'braking', 'servo', 'up'])
-      await expect.poll(() => knee.locator(`[data-testid="trace-${id}"]`).count()).toBe(1);
+      expect(await plot('ja').locator(`[data-testid="trace-${id}"]`).count()).toBe(1);
 
-    expect(await knee.textContent()).toMatch(/N·m.*rpm.*Servo a/);
+    expect(await plot('ja').textContent()).toMatch(/N·m.*rpm.*Servo a/);
+    expect(await plot('jb').count()).toBe(0);
+
+    await row.getByRole('button', { name: /^Right knee/ }).click();
+    await expect.poll(() => plot('jb').isVisible()).toBe(true);
   }, 120000);
 
   it('set a budget beside the bill of materials total', async () => {

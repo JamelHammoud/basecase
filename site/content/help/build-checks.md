@@ -73,9 +73,11 @@ Checks list the worst first: red, then amber, then green, then grey for Not run.
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
 | Budget | The estimated total against your budget | Over budget; amber above 90%. Not run until you set a budget |
 
-Open **Peak torque** and click a joint to plot its walk against its servo's torque–speed line. A servo can't give full torque and full speed at once, so the blue line falls from stall at 0 rpm to no torque at top speed. Each dot is 25 ms of the walk, and a white dot above the line asks for more than the servo gives at that speed.
+Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 
-![Peak torque open on Left knee, with its walk plotted against the STS3215's line and the next servo up](/help/build-checks/peak-torque-plot.png)
+A servo can't give full torque and full speed at once, so the blue line falls from stall at 0 rpm to no torque at top speed. Each dot is 25 ms of the walk, and a white dot above the line asks for more than the servo gives at that speed.
+
+![Peak torque's warning for Left knee, with its walk plotted against the STS3215's line and the next servo up](/help/build-checks/peak-torque-plot.png)
 
 Grey dots are moments the joint was braking, which the line doesn't limit. The dashed line is the servo's rated torque. The grey line is the next stronger servo in the catalog for the same bus and voltage, named under the plot.
 

@@ -7,6 +7,8 @@ export const PEAK_WINDOW_S = 0.025;
 export const PEAK_LIMITS = { pass: 0.8, warn: 1, overS: 0.05, outside: 0.05 };
 export const RPM_PER_RAD_S = 60 / (2 * Math.PI);
 
+const SAMPLE_EVERY = 2;
+
 export interface TorqueSeries {
   windowS: number;
   absDemand: number[][];
@@ -162,7 +164,9 @@ export function jointSamples(series: TorqueSeries, index: number, settleS: numbe
   const speed = series.speed?.[index].slice(from) ?? [];
 
   return torque.flatMap((nm, i): Array<[number, number]> =>
-    Number.isFinite(speed[i]) ? [[round(speed[i] * RPM_PER_RAD_S, 0.1), round(nm, 0.001)]] : [],
+    i % SAMPLE_EVERY === 0 && Number.isFinite(speed[i])
+      ? [[round(speed[i] * RPM_PER_RAD_S, 0.1), round(nm, 0.001)]]
+      : [],
   );
 }
 

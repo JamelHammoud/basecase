@@ -111,7 +111,7 @@ describe('Torque–speed envelope', () => {
     expect(envelope.up).toMatchObject({ name: up.name, stallNm: servoCurve(up.act, VOLTS)!.stallNm });
   });
 
-  it('names the joint past its line in the agent’s check output', () => {
+  it('names the joint past its line in the agent’s check output, and ties the finding to it for its plot', () => {
     const findings = engineeringFindings({
       rows: [peakOf(trace(0.5, 0.8))],
       joints: [load],
@@ -121,9 +121,10 @@ describe('Torque–speed envelope', () => {
     });
 
     expect(findings[0].agentText).toMatch(/^Peak torque: Left knee: .*50% of the walk past its torque–speed line/);
+    expect(findings[0].joint).toBe('knee');
   });
 
-  it('records each window’s speed with its torque, in rpm and N·m', () => {
+  it('keeps every second window’s speed with its torque, in rpm and N·m', () => {
     const dt = 0.005;
     const recorder = new TorqueRecorder(1, dt);
     const radS = 2;
@@ -132,7 +133,7 @@ describe('Torque–speed envelope', () => {
 
     const samples = jointSamples(recorder.series(), 0, 0);
 
-    expect(samples).toHaveLength(8);
+    expect(samples).toHaveLength(4);
     expect(samples[0][0]).toBeCloseTo((radS * 60) / (2 * Math.PI), 1);
     expect(samples[0][1]).toBeCloseTo(0.5, 9);
   });

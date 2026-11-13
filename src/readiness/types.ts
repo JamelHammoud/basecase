@@ -19,6 +19,7 @@ export interface Finding {
   ids: string[];
   caseId?: string;
   fix?: FindingFix;
+  joint?: string;
 }
 
 export interface FindingDispute {

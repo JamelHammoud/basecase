@@ -66,7 +66,7 @@ function fellRow(walk: WalkSim, lines: PeakLine[]): CheckRow {
     check: 'Peak torque',
     status: 'fail',
     detail: `Fell at ${walk.fellAt!.toFixed(1)} s walking with servos limited to ${PEAK_DERATE} × stall`,
-    items: lines.map((p) => ({ text: peakLineText(p), ids: loadIds(p.load) })),
+    items: lines.map((p) => ({ text: peakLineText(p), ids: loadIds(p.load), joint: p.load.joint.id })),
     ids: lines.flatMap((p) => loadIds(p.load)),
   };
 }
@@ -99,6 +99,7 @@ function measuredRow(lines: PeakLine[]): CheckRow {
     items: flagged.map((p) => ({
       text: peakLineText(p),
       ids: loadIds(p.load),
+      joint: p.load.joint.id,
       status: p.status === 'fail' ? ('fail' as const) : ('warn' as const),
     })),
     ids: flagged.flatMap((p) => loadIds(p.load)),

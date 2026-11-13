@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { showStress } from '../../strength/fields';
-import { ChevronDownIcon } from '../../design-system';
+import { DisclosureRow } from '../../design-system';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
-import { EnvelopeRows } from './EnvelopeRows';
+import { EnvelopeRows, FindingPlot, unlisted } from './EnvelopeRows';
 import { BlockerRow, NoteRow, type FindingContext } from './FindingRow';
 import { TetherFields } from './TetherFields';
 import { tetherFieldsFor } from './tetherRows';
@@ -36,13 +36,7 @@ export const CheckItem: React.FC<{
 
   return (
     <li data-check={check.name} data-status={check.status}>
-      <button
-        type="button"
-        aria-expanded={hasBody ? open : undefined}
-        disabled={!hasBody}
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-start gap-2 py-1.5 px-[7px] rounded-lg text-left cursor-default enabled:hover:bg-white/[0.04]"
-      >
+      <DisclosureRow open={open} onToggle={() => setOpen((v) => !v)} disabled={!hasBody}>
         <CheckIcon status={check.status} />
         <span
           className={`min-w-0 flex-1 text-[13px] leading-[18px] ${check.status === 'not run' ? 'text-white/50' : 'text-white/90'}`}
@@ -50,14 +44,7 @@ export const CheckItem: React.FC<{
           {check.name}
         </span>
         {count > 0 && <span className="text-[12px] leading-[18px] text-white/50 tabular">{count}</span>}
-        {hasBody && (
-          <span className="h-[18px] flex items-center shrink-0">
-            <ChevronDownIcon
-              className={`w-3.5 h-3.5 text-white/50 transition-transform duration-150 ${open ? '' : '-rotate-90'}`}
-            />
-          </span>
-        )}
-      </button>
+      </DisclosureRow>
       {open && hasBody && (
         <div className="pb-1">
           {check.detail && (
@@ -66,13 +53,17 @@ export const CheckItem: React.FC<{
           {context.tether && fields.length > 0 && <TetherFields fields={fields} control={context.tether} />}
           <ul>
             {blockers.map((finding) => (
-              <BlockerRow key={finding.key} finding={finding} context={context} />
+              <BlockerRow key={finding.key} finding={finding} context={context}>
+                <FindingPlot finding={finding} envelopes={check.envelopes} />
+              </BlockerRow>
             ))}
             {notes.map((finding) => (
-              <NoteRow key={finding.key} finding={finding} context={context} />
+              <NoteRow key={finding.key} finding={finding} context={context}>
+                <FindingPlot finding={finding} envelopes={check.envelopes} />
+              </NoteRow>
             ))}
           </ul>
-          {check.envelopes && <EnvelopeRows envelopes={check.envelopes} />}
+          {check.envelopes && <EnvelopeRows envelopes={unlisted(check.envelopes, [...blockers, ...notes])} />}
         </div>
       )}
     </li>

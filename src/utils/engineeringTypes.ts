@@ -36,7 +36,7 @@ export interface CheckRow {
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix }>;
+  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix; joint?: string }>;
   itemsAreContext?: boolean;
   caseId?: string;
   dots?: CheckDot[];

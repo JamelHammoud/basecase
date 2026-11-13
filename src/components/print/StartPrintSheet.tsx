@@ -4,7 +4,7 @@ import type { PrinterSetup } from '../../data/printers';
 import type { Plate } from '../../print/plan';
 import type { PrinterStatus, SlicedPlate } from '../../print/printBridge';
 import { hm } from '../build/format';
-import { plateNumbers } from '../build/PlateRow';
+import { plateNumbers } from './plateFacts';
 
 interface StartPrintSheetProps {
   plate: Plate | null;

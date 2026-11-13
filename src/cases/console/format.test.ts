@@ -126,6 +126,85 @@ describe('a Case console', () => {
   });
 });
 
+describe('code panels', () => {
+  const STICK = '<canvas></canvas><script>basecase.drive({ v: [0, 0, 0] })</script>';
+  const code = (id: string, source = STICK) => ({ id, kind: 'code', source });
+  const coded = (panels: unknown[], areas: unknown[]) =>
+    withConsole({ input: ['code', 'keys'], panels, layout: { areas } });
+
+  it('parse in an area and as canvas overlays, and lay out with the overlays apart', () => {
+    const parsed = coded(
+      [{ ...code('stick'), title: 'Stick', height: 240 }, code('hud'), { id: 'clock', kind: 'value', signal: 'time' }],
+      [
+        { canvas: true, overlays: [{ panel: 'hud', anchor: 'top-left', width: 240, height: 120 }] },
+        { size: 320, panels: ['stick', 'clock'] },
+      ],
+    )();
+    const layout = consoleLayout(parsed.console!, { desktop: false });
+
+    expect(parsed.console!.panels[0]).toEqual({
+      id: 'stick',
+      kind: 'code',
+      title: 'Stick',
+      source: STICK,
+      height: 240,
+    });
+    expect(ids(layout.after)).toEqual([['stick', 'clock']]);
+    expect(layout.overlays.map((o) => [o.panel, o.anchor, o.pointer, o.spec.source])).toEqual([
+      ['hud', 'top-left', undefined, STICK],
+    ]);
+    expect(parseCase(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
+  });
+
+  it('keep the pointer flag and need the sides their anchor uses', () => {
+    const overlay = (o: Record<string, unknown>) =>
+      coded([code('hud')], [{ canvas: true, overlays: [{ panel: 'hud', ...o }] }]);
+
+    expect(overlay({ anchor: 'fill', pointer: true })().console!.layout.areas[0]).toEqual({
+      canvas: true,
+      overlays: [{ panel: 'hud', anchor: 'fill', pointer: true }],
+    });
+    expect(overlay({ anchor: 'bottom', height: 90 })).not.toThrow();
+    expect(overlay({ anchor: 'bottom' })).toThrow(/overlays\[0\].height is needed for this anchor/);
+    expect(overlay({ anchor: 'left', height: 90 })).toThrow(/overlays\[0\].width is needed/);
+    expect(overlay({ anchor: 'middle' })).toThrow(/overlays\[0\].anchor must be one of top-left/);
+    expect(overlay({ anchor: 'fill', pointer: 'yes' })).toThrow(/overlays\[0\].pointer must be true or false/);
+    expect(overlay({ anchor: 'top-left', width: 20, height: 90 })).toThrow(/width must be from 40 to 1600/);
+  });
+
+  it('refuse a 300 KB source and a fifth code panel by path', () => {
+    const big = `<script>const pad = '${'x'.repeat(300 * 1024)}';</script>`;
+    const five = ['a', 'b', 'c', 'd', 'e'].map((id) => code(id));
+
+    expect(coded([code('stick', big)], [{ canvas: true }, { size: 300, panels: ['stick'] }])).toThrow(
+      /^console.panels\[0\].source must be at most 256 KB$/,
+    );
+    expect(coded([code('stick', ' ')], [{ canvas: true }, { size: 300, panels: ['stick'] }])).toThrow(
+      /panels\[0\].source must be an HTML document/,
+    );
+    expect(coded(five, [{ canvas: true }, { size: 300, panels: five.map((p) => p.id) }])).toThrow(
+      /^console.panels\[4\] is a fifth code panel; a Case runs at most 4$/,
+    );
+  });
+
+  it('refuse an overlay that isn’t a code panel, or a code panel placed twice', () => {
+    const clock = { id: 'clock', kind: 'value', signal: 'time' };
+
+    expect(coded([clock], [{ canvas: true, overlays: [{ panel: 'clock', anchor: 'fill' }] }])).toThrow(
+      /areas\[0\].overlays\[0\].panel clock isn’t a code panel/,
+    );
+    expect(
+      coded(
+        [code('hud')],
+        [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'fill' }] },
+          { size: 300, panels: ['hud'] },
+        ],
+      ),
+    ).toThrow(/repeats hud/);
+  });
+});
+
 describe('five consoles from arc #184', () => {
   it('names the inputs this version lacks and refuses them by path', () => {
     const refused = ARC_CONSOLES.flatMap(({ name, console }) => {

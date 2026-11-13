@@ -13,6 +13,9 @@ keywords:
   - camera feed
   - score
   - timer
+  - code panel
+  - joystick
+  - HUD
 related:
   - try-a-case
   - make-a-case
@@ -55,5 +58,11 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. For now you add a console by editing that file; New Case, the templates and the agent make Cases without one. It says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
+
+A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Press one the way you'd press any control. Esc and [[⌘K]] still work while you use it. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
+
+![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
+
+A code panel that stops answering for 2 seconds closes. In its place you see “Couldn’t run” with the panel's name and its first error.
 
 Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.

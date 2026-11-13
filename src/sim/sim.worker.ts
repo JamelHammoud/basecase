@@ -7,6 +7,7 @@ import { SimEngine, type Controller } from './engine';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
+import type { AmpModel } from '../utils/servoAmps';
 import { demandedTorques, jointForces, limitForces } from './simForces';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 
@@ -33,6 +34,7 @@ export type SimRequest =
       frames?: number[];
       forceLimits?: Record<string, number>;
       trace?: boolean;
+      currents?: Record<string, AmpModel>;
       commands?: Array<{ at: number; command: DriveCommand }>;
     }
   | ({ type: 'routine' } & LiveRoutineInput)
@@ -226,9 +228,9 @@ function applyDueCommands(sim: SimEngine, commands: NonNullable<Msg<'run'>['comm
   while (commands.length && commands[0].at <= t + 1e-9) sim.command(commands.shift()!.command);
 }
 
-function tracer(sim: SimEngine) {
+function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
   const n = sim.sim.joints.length;
-  const recorder = new TorqueRecorder(n, sim.dt);
+  const recorder = new TorqueRecorder(n, sim.dt, { amps: sim.sim.joints.map((j) => currents[j.id] ?? null) });
   const demand = new Float64Array(n);
   const actual = new Float64Array(n);
 
@@ -255,7 +257,7 @@ function run(msg: Msg<'run'>) {
 
   if (msg.forceLimits) limitForces(sim.model, sim.sim, msg.forceLimits);
 
-  const trace = msg.trace ? tracer(sim) : null;
+  const trace = msg.trace ? tracer(sim, msg.currents) : null;
 
   while (sim.data.time < end - 1e-9) {
     const t = sim.data.time - start;

@@ -1,11 +1,13 @@
 import { isStalePolicy } from '../sim/policyFreshness';
+import { walkPolicy } from '../sim/walkPolicy';
 import type { SimModel } from '../sim/mjcf';
 import type { Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
-import type { PolicyRecord } from '../types/robotics';
+import type { PolicyRecord, ScenePart } from '../types/robotics';
 import { PEAK_DERATE } from '../utils/actuatorRules';
 import type { JointLoad, WalkJoint, WalkSim } from '../utils/engineeringTypes';
 import { jointPeak, type PeakSpan, type TorqueSeries } from '../utils/peakTorque';
+import { walkAmpModels, walkPower } from '../utils/servoAmps';
 
 export const PEAK_SECONDS = 14;
 export const PEAK_SHOVE_SHARE = 0.3;
@@ -19,12 +21,6 @@ export interface PeakDeps {
   sim: Simulation;
   training: Training;
   policies: PolicyRecord[];
-}
-
-export function walkPolicy(policies: PolicyRecord[]): PolicyRecord | undefined {
-  const walks = policies.filter((p) => p.task === 'walk');
-
-  return walks.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 }
 
 const stallOf = (loads: JointLoad[]) =>
@@ -55,7 +51,13 @@ export function peakShoves(weightN: number) {
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-export async function walkSim(deps: PeakDeps, loads: JointLoad[], massG: number): Promise<WalkSim | string> {
+export interface WalkDesign {
+  joints: JointLoad[];
+  massG: number;
+  parts: ScenePart[];
+}
+
+export async function walkSim(deps: PeakDeps, { joints: loads, massG, parts }: WalkDesign): Promise<WalkSim | string> {
   const record = walkPolicy(deps.policies);
 
   if (!record) return 'Needs a trained walk policy: landing loads come from walking, not standing';
@@ -73,6 +75,7 @@ export async function walkSim(deps: PeakDeps, loads: JointLoad[], massG: number)
       pushes: peakShoves((massG / 1000) * 9.81).map((p) => ({ ...p, robot: record.robot })),
       forceLimits: (model) => peakLimits(loads, model),
       trace: true,
+      currents: walkAmpModels(loads, parts),
     });
     const robot = run.stats.robots.find((r) => r.key === record.robot) ?? run.stats.robots[0];
 
@@ -81,6 +84,13 @@ export async function walkSim(deps: PeakDeps, loads: JointLoad[], massG: number)
       seconds: PEAK_SECONDS,
       fellAt: robot?.fellAt ?? null,
       joints: run.trace ? walkJoints(run.model, run.trace, loads) : {},
+      power: run.trace
+        ? walkPower(
+            run.trace,
+            run.model.joints.map((j) => j.id),
+            PEAK_SPAN,
+          )
+        : undefined,
     };
   } catch (e) {
     return `The walk didn’t run: ${message(e)}`;

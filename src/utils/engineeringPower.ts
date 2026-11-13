@@ -1,9 +1,10 @@
 import { ActuatorSpec, BatterySpec, COMPONENT_BY_ID, actuatorOf } from '../data/components';
-import type { ScenePart } from '../types/robotics';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isLegJoint } from './engineeringBody';
-import { count } from './engineeringFormat';
+import { count, jointLabel } from './engineeringFormat';
 import type { CheckContext, CheckRow } from './engineeringTypes';
 import { PowerSource, drivesJoint, findPowerSources, sceneRegulators, tetherSource } from './powerSources';
+import { IDLE_A, STALL_A } from './servoAmps';
 
 const CONVERTER_EFFICIENCY = 0.9;
 
@@ -142,15 +143,21 @@ function computeWatts(parts: ScenePart[]): [number, number] {
   return parts.some((p) => p.componentId === 'raspberry-pi-5') ? [9, 16] : [2, 4];
 }
 
-function servoCurrent(ctx: CheckContext): { peak: number; avg: number } {
+interface ServoDraw {
+  peak: number;
+  avg: number;
+  hungriest?: { joint: RobotJoint; avgA: number; peakA: number };
+}
+
+function servoCurrent(ctx: CheckContext): ServoDraw {
   const legIds = new Set(ctx.joints.filter(isLegJoint).flatMap((j) => j.actuators ?? []));
   let peak = 0,
     avg = 0;
 
   for (const p of ctx.servos) {
     const act = actuatorFor(p);
-    const rated = act?.ratedA ?? (act?.stallA ?? 2) / 3;
-    const idle = act?.idleA ?? 0.15;
+    const rated = act?.ratedA ?? (act?.stallA ?? STALL_A) / 3;
+    const idle = act?.idleA ?? IDLE_A;
     const leg = legIds.has(p.id);
 
     peak += leg ? rated : idle * 2;
@@ -160,52 +167,91 @@ function servoCurrent(ctx: CheckContext): { peak: number; avg: number } {
   return { peak, avg };
 }
 
+function walkedCurrent(ctx: CheckContext): ServoDraw | undefined {
+  const walk = ctx.input.walk;
+
+  if (typeof walk !== 'object' || walk.fellAt !== null || !walk.power) return undefined;
+
+  const walked = ctx.joints.filter((j) => walk.power!.joints[j.id]);
+
+  if (!walked.length) return undefined;
+
+  const driven = new Set(walked.flatMap((j) => j.actuators ?? []));
+  const idle = ctx.servos.filter((p) => !driven.has(p.id)).map((p) => actuatorFor(p)?.idleA ?? IDLE_A);
+  const idleA = idle.reduce((s, a) => s + a, 0);
+  const joint = [...walked].sort((a, b) => walk.power!.joints[b.id].avgA - walk.power!.joints[a.id].avgA)[0];
+
+  return {
+    peak: walk.power.peakA + idleA * 2,
+    avg: walk.power.avgA + idleA,
+    hungriest: { joint, ...walk.power.joints[joint.id] },
+  };
+}
+
 function currentDraw(ctx: CheckContext, source: PowerSource) {
   const b = source.battery;
-  const servo = servoCurrent(ctx);
+  const servo = walkedCurrent(ctx) ?? servoCurrent(ctx);
   const rail = railOf(ctx, source);
   const toPack = rail ? rail.regulator.vout / (b.nominalV * CONVERTER_EFFICIENCY) : 1;
   const computeW = computeWatts(ctx.parts);
   const avg = servo.avg * toPack + computeW[0] / (b.nominalV * CONVERTER_EFFICIENCY);
   const peak = servo.peak * toPack + computeW[1] / (b.nominalV * CONVERTER_EFFICIENCY);
 
-  return { servoPeak: servo.peak, rail, avg, peak };
+  return { servoPeak: servo.peak, rail, avg, peak, hungriest: servo.hungriest };
 }
 
-function batteryDetail(source: PowerSource, { avg, peak }: { avg: number; peak: number }): string {
-  const runtime = ((0.8 * source.battery.capacityAh) / avg) * 60;
+type Draw = ReturnType<typeof currentDraw>;
 
-  return `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A standing from the pack (estimate); ${source.name} gives about ${Math.round(runtime)} min. Fuse the pack near ${Math.ceil(peak * 1.4)} A.`;
+const amps = ({ avg, peak, hungriest }: Draw) =>
+  hungriest
+    ? `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A average walking`
+    : `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A standing`;
+
+const jointAmps = (h: NonNullable<Draw['hungriest']>) =>
+  `${jointLabel(h.joint)}: ${h.avgA.toFixed(1)} A average, ${h.peakA.toFixed(1)} A peak`;
+
+const hungriestNote = (draw: Draw) => (draw.hungriest ? ` ${jointAmps(draw.hungriest)}.` : '');
+
+const estimated = (draw: Draw) => (draw.hungriest ? '' : ' (estimate)');
+
+function batteryDetail(source: PowerSource, draw: Draw): string {
+  const runtime = ((0.8 * source.battery.capacityAh) / draw.avg) * 60;
+
+  return `${amps(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${Math.round(runtime)} min. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
 }
 
-const tetherDetail = (tetherA: number, { avg, peak }: { avg: number; peak: number }) =>
-  `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A standing (estimate); the tether gives ${tetherA} A`;
+const tetherDetail = (tetherA: number, draw: Draw) =>
+  `${amps(draw)}${estimated(draw)}; the tether gives ${tetherA} A${hungriestNote(draw)}`;
+
+function railWarning({ rail, servoPeak }: Draw): NonNullable<CheckRow['items']> {
+  if (!rail || servoPeak <= rail.regulator.ioutA) return [];
+
+  return [
+    {
+      text: `${rail.name} gives ${rail.regulator.ioutA} A; the servos ask for about ${servoPeak.toFixed(1)} A at peak`,
+      ids: [rail.id],
+      status: 'warn',
+    },
+  ];
+}
 
 function currentRow(ctx: CheckContext, source: PowerSource): CheckRow {
   const draw = currentDraw(ctx, source);
-  const { rail, servoPeak, peak } = draw;
   const b = source.battery;
-  const railShort = !!rail && servoPeak > rail.regulator.ioutA;
-  const items = railShort
-    ? [
-        {
-          text: `${rail.name} gives ${rail.regulator.ioutA} A; the servos ask for about ${servoPeak.toFixed(1)} A at peak`,
-          ids: [rail.id],
-          status: 'warn' as const,
-        },
-      ]
-    : [];
-  const enough = source.tetherA ? source.tetherA >= peak : b.cRating * b.capacityAh >= 1.5 * peak;
+  const warning = railWarning(draw);
+  const hungriest = draw.hungriest && !warning.length ? draw.hungriest : undefined;
+  const enough = source.tetherA ? source.tetherA >= draw.peak : b.cRating * b.capacityAh >= 1.5 * draw.peak;
   let status: CheckRow['status'] = 'fail';
 
-  if (enough) status = railShort ? 'warn' : 'pass';
+  if (enough) status = warning.length ? 'warn' : 'pass';
 
   return {
     check: source.tetherA ? POWER_CHECK.supplyCurrent : 'Current and runtime',
     status,
     detail: source.tetherA ? tetherDetail(source.tetherA, draw) : batteryDetail(source, draw),
-    items,
-    ids: items.flatMap((i) => i.ids),
+    items: hungriest ? [{ text: jointAmps(hungriest), ids: hungriest.joint.actuators ?? [] }] : warning,
+    ...(hungriest ? { itemsAreContext: true } : {}),
+    ids: warning.flatMap((i) => i.ids ?? []),
   };
 }
 

@@ -23,6 +23,7 @@ import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
 import { runEngineeringNow } from './engineeringNow';
+import { freshWalk } from './storedWalk';
 
 const BUDGET_MS = 30000;
 
@@ -64,6 +65,7 @@ export const projectFingerprint = (
     infill: project.infillPct,
     printProcess: project.printProcess,
     animations: jsonHash(project.animations),
+    walk: jsonHash(project.walk),
     firstRanges: project.firstRanges,
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
@@ -91,7 +93,14 @@ export async function runReadiness({
 
   const printing = printReportOf(parts, { project, printer }, viewport.printShapes);
   const engineeringRun = printing.then((report) =>
-    runEngineeringNow({ viewport, parts, project, withSweep: true, supportG: supportOf(report) }),
+    runEngineeringNow({
+      viewport,
+      parts,
+      project,
+      withSweep: true,
+      walk: freshWalk(parts, project),
+      supportG: supportOf(report),
+    }),
   );
   const [engineering, geometry, print, purchases, measures] = await Promise.all([
     engineeringRun,

@@ -1,6 +1,7 @@
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { TorqueRecorder, jointPeak, peakStatus } from '../utils/peakTorque';
+import { walkPower } from '../utils/servoAmps';
 import { SimEngine } from './engine';
 import type { SimModel } from './mjcf';
 import { demandedTorques, limitForces } from './simForces';
@@ -44,10 +45,12 @@ const arm = (effort: number): SimModel => ({
   warnings: [],
 });
 
+const AMPS = { idleA: 0.15, perNmA: 0.8 };
+
 async function holdArm(stallNm: number, limitNm: number) {
   const mj = await loadMujoco();
   const engine = new SimEngine(mj, arm(stallNm));
-  const recorder = new TorqueRecorder(1, engine.dt);
+  const recorder = new TorqueRecorder(1, engine.dt, { amps: [AMPS] });
   const demand = new Float64Array(1);
 
   limitForces(engine.model, engine.sim, { arm: limitNm });
@@ -56,10 +59,11 @@ async function holdArm(stallNm: number, limitNm: number) {
   );
 
   const peak = jointPeak(recorder.series(), 0, stallNm, { settleS: 1, heatFromS: 1, heatToS: 2 });
+  const power = walkPower(recorder.series(), ['arm'], { settleS: 1 });
 
   engine.dispose();
 
-  return peak;
+  return { ...peak, power };
 }
 
 describe('Peak torque in MuJoCo', () => {
@@ -70,6 +74,8 @@ describe('Peak torque in MuJoCo', () => {
     expect(peak.rmsNm).toBeCloseTo(HOLD_NM, 1);
     expect(peak.overS).toBe(0);
     expect(peakStatus(peak, 4)).toBe('pass');
+    expect(peak.power.joints.arm.avgA).toBeCloseTo(AMPS.idleA + AMPS.perNmA * HOLD_NM, 1);
+    expect(peak.power.avgA).toBeCloseTo(peak.power.joints.arm.avgA, 9);
   });
 
   it('reports what a derated servo is asked for, past its limit, and fails it', async () => {

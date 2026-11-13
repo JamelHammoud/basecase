@@ -1,9 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { ProjectSettings, ScenePart } from '../src/types/robotics';
+import type { WalkSim } from '../src/utils/engineeringTypes';
+import { walkKey } from '../src/workspace/storedWalk';
 import { openApp, type App } from './harness';
 
 interface StudioHook {
   load: (record: { parts: unknown[]; project: unknown }) => void;
-  sceneRecord: () => { project: unknown };
+  sceneRecord: () => { parts: ScenePart[]; project: ProjectSettings };
 }
 
 let app: App;
@@ -195,6 +198,56 @@ describe('Build tab fields', () => {
     await expect.poll(async () => (await row.textContent()) ?? '', { timeout: 45000 }).toMatch(/24 V.*maximum/);
     expect(await row.locator('svg.text-red-400').count()).toBeGreaterThan(0);
   }, 90000);
+
+  it('read current and runtime from a stored walk, naming the hungriest joint', async () => {
+    const knee = (id: string, x: number) => ({ ...servo, id, name: `Servo ${id}`, position: [x, 20, 0] });
+    const pack = { ...standIn('pack', 0), name: 'Pack', kind: 'component', componentId: 'ovonic-2s-2200-50c' };
+    const rail = { ...standIn('rail', 120), name: 'Rail', kind: 'component', componentId: 'pololu-d36v50f6' };
+    const joints = [
+      { id: 'ja', name: 'Left knee', limb: 'leg', parent: ['pack'], child: ['a'], actuators: ['a'] },
+      { id: 'jb', name: 'Right knee', limb: 'leg', parent: ['pack'], child: ['b'], actuators: ['b'] },
+    ].map((j) => ({ ...j, type: 'revolute', origin: [0, 20, 0], axis: [1, 0, 0] }));
+    const walk: WalkSim = {
+      policy: 'Walk',
+      seconds: 14,
+      fellAt: null,
+      joints: {},
+      power: { avgA: 1.6, peakA: 3.4, joints: { ja: { avgA: 1, peakA: 2 }, jb: { avgA: 0.6, peakA: 1.4 } } },
+    };
+    const load = (record: { parts: unknown[]; project: unknown }) =>
+      app.page.evaluate((r) => (window as unknown as { __studio: StudioHook }).__studio.load(r), record);
+    const record = () =>
+      app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.sceneRecord());
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Current and runtime/ }) })
+      .first();
+    const detail = async () => {
+      const button = row.getByRole('button', { name: /^Current and runtime/ });
+
+      if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+
+      return (await row.locator('p').first().textContent()) ?? '';
+    };
+
+    await load({
+      parts: [knee('a', -60), knee('b', 60), pack, rail],
+      project: { ...(await record()).project, joints },
+    });
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
+    await expect.poll(detail, { timeout: 45000 }).toContain('(estimate)');
+
+    const estimate = await detail();
+    const scene = await record();
+
+    await load({
+      parts: scene.parts,
+      project: { ...scene.project, walk: { ...walk, key: walkKey(scene.parts, scene.project) } },
+    });
+    await expect.poll(detail, { timeout: 45000 }).not.toBe(estimate);
+    expect(await detail()).toMatch(/A average walking .*Left knee: 1\.0 A average/);
+  }, 120000);
 
   it('set a budget beside the bill of materials total', async () => {
     const bom = section(/^Bill of materials/);

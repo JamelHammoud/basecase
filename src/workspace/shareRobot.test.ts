@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { caseTemplates } from '../cases/templates';
+import { presetCase } from '../cases/caseBuilder';
 import { GALLERY_BUNDLE_MAX_BYTES, galleryBundleBytes, readGalleryBundleBytes } from '../gallery/galleryBundle';
 import { sharedRobotLink, sharedRobotPath } from '../gallery/galleryLinks';
 import { fixtureTriangles } from '../sim/fixtures/parts';
@@ -13,9 +13,7 @@ import { buildRig } from '../utils/kinematics';
 import { sharedRobotBundle, type ShareSource } from './shareRobot';
 
 const rover = fixtureRobot('rover-diff');
-const kase = caseTemplates(buildRig(rover.joints, rover.parts), rover.parts)
-  .find((t) => t.id === 'reach-the-flag')!
-  .build();
+const kase = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
 const sourcedMotor = (p: ScenePart): ScenePart =>
   p.id === 'left_wheel_disc' ? { ...p, kind: 'component', componentId: 'sourced-gear-motor-1a2b' } : p;
 const table: ScenePart = { ...rover.parts[0], id: 'table', name: 'Table', position: [900, 0, 900] };

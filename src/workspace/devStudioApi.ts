@@ -12,6 +12,8 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { stubTabEngine } from '../skills/skillsPlatform';
+import { pickNextFiles } from '../utils/pickFiles';
 import { twinSnapshot } from '../robot/robotTwin';
 import { importRobot } from '../utils/robotImport';
 import { downstreamOf } from '../utils/engineeringMass';
@@ -23,6 +25,7 @@ import type { ServoCalibration } from '../reality/types';
 import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
+import type { JointDragStep } from './useSkeletonEdit';
 
 type Payload = Record<string, unknown>;
 
@@ -34,18 +37,23 @@ export interface DevActions {
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   clear: () => void;
   select: (ids: string[]) => void;
+  dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => void;
   dropFiles: (files: File[]) => void;
   selection: () => string[];
   selectFace: (partId: string, normal: [number, number, number]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
+  buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
   worldAt: () => Record<string, number[]>;
+  printPlates: () => unknown;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  addCase: (raw: unknown) => string;
+  referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown) => void;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
@@ -174,6 +182,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
+    dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => devRef.current.dragSkeleton(step),
     dropFiles: (files: Array<{ name: string; base64: string }>) =>
       devRef.current.dropFiles(files.map((f) => new File([new Uint8Array(base64ToBytes(f.base64))], f.name))),
     selection: () => devRef.current.selection(),
@@ -206,16 +215,26 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     poseTool: (kind: string, payload: Payload) => devRef.current.poseTool(kind, payload),
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
+    buildAlongSteps: () => devRef.current.buildAlongSteps(),
+    shownParts: () => viewportRef.current?.shownPartIds() ?? [],
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
     worldAt: () => devRef.current.worldAt(),
+    printPlates: () => devRef.current.printPlates(),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    addCase: (raw: unknown) => devRef.current.addCase(raw),
+    referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    stubTabEngine,
+    pickFiles: (files: { name: string; base64: string }[]) =>
+      pickNextFiles(
+        files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),
+      ),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     robotGhost: () => robotGhostState(viewportRef.current),
     datasetFiles: async () => {

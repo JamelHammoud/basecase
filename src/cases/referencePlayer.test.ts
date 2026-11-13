@@ -12,8 +12,7 @@ import { livePlayer } from './referencePlayer';
 import { robotFacts } from './robotFit';
 import { scaledToReach } from './scale';
 import { worldItem } from './schema';
-import { caseTemplates } from './templates';
-import { caseRobot } from './testing';
+import { caseRobot, presetCase } from './testing';
 
 const FRAME_S = 1 / 60;
 
@@ -23,9 +22,7 @@ describe('the live reference', () => {
     const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
     const rig = buildRig(rover.joints, rover.parts);
     const facts = robotFacts(rig, rover.parts);
-    const authored = caseTemplates(rig, rover.parts)
-      .find((t) => t.id === 'reach-the-flag')!
-      .build();
+    const authored = presetCase(rover, 'reach-the-flag');
     const kase = scaledToReach(authored, facts.reachMm, facts.anchor);
     const model = buildMjcf({
       ...caseRobot(rover),

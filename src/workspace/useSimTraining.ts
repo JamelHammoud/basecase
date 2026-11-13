@@ -22,7 +22,7 @@ interface SimTrainingOptions {
   posing: Posing;
   viewportRef: RefObject<Viewport3DHandle | null>;
   showToast: ShowToast;
-  studio: Pick<StudioShared, 'openSettings'>;
+  studio: Pick<StudioShared, 'openSettings' | 'robotsBeside'>;
 }
 
 function withPolicy(policies: PolicyRecord[], record: PolicyRecord, replaces: string | null): PolicyRecord[] {
@@ -88,6 +88,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     showToast,
     openAccounts: () => studio.openSettings('accounts'),
     sceneId: scene.sceneId,
+    partners: () => studio.robotsBeside(workspaceId),
   });
   const share = useShareRobot({
     scene: { sceneId: scene.sceneId, sceneName: scene.sceneName },

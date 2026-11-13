@@ -64,30 +64,41 @@ const usesAngle = (expr: Expr): boolean => {
   return 'delta' in expr ? usesAngle(expr.delta) : false;
 };
 
-function scaledState(state: State, s: number): State {
-  if ('all' in state) return { all: state.all.map((x) => scaledState(x, s)) };
+const readsUnitless = (expr: Expr, unitless: ReadonlySet<string>): boolean => {
+  if ('signal' in expr) return unitless.has(expr.signal);
 
-  if ('any' in state) return { any: state.any.map((x) => scaledState(x, s)) };
+  if ('abs' in expr) return readsUnitless(expr.abs, unitless);
 
-  if ('not' in state) return { not: scaledState(state.not, s) };
+  return 'delta' in expr ? readsUnitless(expr.delta, unitless) : false;
+};
 
-  if (usesAngle(state.atom.expr)) return state;
+const NOTHING_UNITLESS: ReadonlySet<string> = new Set();
+
+function scaledState(state: State, s: number, unitless: ReadonlySet<string>): State {
+  if ('all' in state) return { all: state.all.map((x) => scaledState(x, s, unitless)) };
+
+  if ('any' in state) return { any: state.any.map((x) => scaledState(x, s, unitless)) };
+
+  if ('not' in state) return { not: scaledState(state.not, s, unitless) };
+
+  if (usesAngle(state.atom.expr) || readsUnitless(state.atom.expr, unitless)) return state;
 
   return { atom: { ...state.atom, value: state.atom.value * s, scale: state.atom.scale * s } };
 }
 
-export function scaledFormula(formula: Formula, s: number): Formula {
-  if ('all' in formula) return { all: formula.all.map((f) => scaledFormula(f, s)) };
+export function scaledFormula(formula: Formula, s: number, unitless = NOTHING_UNITLESS): Formula {
+  const formulas = (list: Formula[]) => list.map((f) => scaledFormula(f, s, unitless));
+  const state = (st: State) => scaledState(st, s, unitless);
 
-  if ('any' in formula) return { any: formula.any.map((f) => scaledFormula(f, s)) };
+  if ('all' in formula) return { all: formulas(formula.all) };
 
-  if ('sequence' in formula) return { sequence: formula.sequence.map((f) => scaledFormula(f, s)) };
+  if ('any' in formula) return { any: formulas(formula.any) };
 
-  if ('hold_for' in formula)
-    return { hold_for: { ...formula.hold_for, state: scaledState(formula.hold_for.state, s) } };
+  if ('sequence' in formula) return { sequence: formulas(formula.sequence) };
 
-  if ('eventually' in formula)
-    return { eventually: { ...formula.eventually, state: scaledState(formula.eventually.state, s) } };
+  if ('hold_for' in formula) return { hold_for: { ...formula.hold_for, state: state(formula.hold_for.state) } };
 
-  return { always: { ...formula.always, state: scaledState(formula.always.state, s) } };
+  if ('eventually' in formula) return { eventually: { ...formula.eventually, state: state(formula.eventually.state) } };
+
+  return { always: { ...formula.always, state: state(formula.always.state) } };
 }

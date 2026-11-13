@@ -90,7 +90,7 @@ describe('compiledDoc', () => {
     const other = placeholder('b', [0, 0, 0], 'cube(1);');
     const d = {
       parts: [a, other],
-      past: [{ parts: [a], pose: undefined, joints: undefined, marks: undefined }],
+      past: [{ parts: [a], pose: undefined, joints: undefined, marks: undefined, skeleton: undefined }],
       future: [],
       base: null,
     };

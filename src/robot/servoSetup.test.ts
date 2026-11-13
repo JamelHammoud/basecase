@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RobotJoint } from '../types/robotics';
-import type { RobotEvent, RobotSpec } from './robotState';
+import type { ConnectSpec, RobotEvent } from './robotState';
 import { receiveRobotEvent, robotSnapshot, startRobotStore, type RobotLinkApi } from './robotStore';
 import { canSetUpServos, endServoSetup, servoSetup, setUpServos } from './servoSetup';
 
@@ -50,8 +50,8 @@ function factoryBus() {
       return () => {};
     },
     robotState: async () => ({ connected: false, spec: null, hello: null, status: null }),
-    robotConnect: async (spec: RobotSpec) => {
-      ids = spec.ids;
+    robotConnect: async (spec: ConnectSpec) => {
+      ids = 'ids' in spec ? spec.ids : [];
       emit({ event: 'link', state: 'connected', spec });
 
       return { ok: true };

@@ -29,6 +29,7 @@ interface SimulatePanelProps {
   onNewCase: () => void;
   skills: SceneSkills;
   onTeach: ((goal: string) => void) | null;
+  onOpenCommandCenter: () => void;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -80,7 +81,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       <SimControls sim={sim} on={on} />
 
       <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {kase && <CaseSection cases={cases} onNewCase={onNewCase} />}
+        {kase && <CaseSection cases={cases} onNewCase={onNewCase} onOpenCommandCenter={props.onOpenCommandCenter} />}
         {kase && (
           <TrySection
             cases={cases}

@@ -3,7 +3,16 @@ import type { WorkspaceHandle, WorkspaceMeta, WorkspaceSeed } from '../SceneWork
 import type { ToastData } from '../design-system';
 import { platformBridge } from '../utils/platformBridge';
 import type { InitialTabs } from './openScenes';
-import { blankSeed, insertTab, MAX_TABS, newTabId, type ClosedTab, type Metas, type TabEntry } from './tabModel';
+import {
+  blankSeed,
+  insertTab,
+  MAX_TABS,
+  newTabId,
+  sceneRobots,
+  type ClosedTab,
+  type Metas,
+  type TabEntry,
+} from './tabModel';
 import { useLatest } from './useLatest';
 import { splitLaneKey } from '../workspace/agentLanes';
 
@@ -24,6 +33,8 @@ export function useTabs(initial: InitialTabs) {
   };
 
   const snapshotOf = (tab: TabEntry) => handles.current.get(tab.id)?.snapshot() ?? tab.seed;
+
+  const robotsBeside = (except: string) => sceneRobots(latestRef.current.tabs, snapshotOf, except);
 
   const reportMeta = (id: string, meta: WorkspaceMeta) => {
     setMetas((prev) => ({ ...prev, [id]: meta }));
@@ -102,6 +113,7 @@ export function useTabs(initial: InitialTabs) {
     latestRef,
     register,
     snapshotOf,
+    robotsBeside,
     reportMeta,
     toastInFront,
     capturePreview,

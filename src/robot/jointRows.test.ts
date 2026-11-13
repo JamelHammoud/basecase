@@ -50,7 +50,7 @@ const connectedTo = (joints: RobotJoint[]) => {
 
   if (!robot.ok) throw new Error(robot.reason);
 
-  return { ids: robot.spec.ids, jointIds: robot.joints };
+  return { ids: 'ids' in robot.spec ? robot.spec.ids : [], jointIds: robot.joints };
 };
 
 const summary = (rows: ReturnType<typeof jointRows>) =>

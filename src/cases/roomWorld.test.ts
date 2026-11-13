@@ -61,9 +61,9 @@ describe('a room world', () => {
     const wall = kase.world.objects.find((o) => o.id === 'table-1')!;
     const doorZ = FIXTURE_DOOR.center[1] * 1000 - FIXTURE_START_MM[2] + rover.pivot[2];
 
-    expect(caseName('reach', 'room', room)).toBe('Reach a Spot in Fixture Flat');
+    expect(caseName('reach', 'room', undefined, room)).toBe('Reach a Spot in Fixture Flat');
     expect(kase.name).toBe('Reach a Spot in Fixture Flat');
-    expect(kase.slot.reachMm).toBeUndefined();
+    expect(kase.slot!.reachMm).toBeUndefined();
     expect(scaledToReach(kase, 420, [0, 50, 0])).toBe(kase);
     expect(wall.size.map(Math.round)).toEqual([1200, 750, 800]);
     expect(kase.reference.timeline.map((c) => c.target)).toEqual([

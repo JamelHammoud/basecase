@@ -3,6 +3,7 @@ import type { GhostState } from './ghostLayer';
 import type { RobotGhost } from '../../robot/robotGhost';
 import type { FixedCamera } from '../../cameras/fixed';
 import type { ThreeMfFileSpec } from '../analysis/analysisOps';
+import type { FitCoupon, FitCouponTask } from '../analysis/fitCoupons';
 import type { MeshData } from '../../print/threeMf';
 import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
@@ -62,6 +63,18 @@ export type GrabHandler = (
   phase: GrabPhase,
 ) => void;
 
+export interface SkeletonView {
+  joints: Array<{ id: string; at: Vec3; color: string }>;
+  bones: Array<[Vec3, Vec3]>;
+}
+
+export interface SkeletonDragEvent {
+  id: string;
+  delta: Vec3;
+  phase: GrabPhase;
+  alone: boolean;
+}
+
 export interface AgentFrame {
   key: string;
   color: string;
@@ -72,6 +85,13 @@ export interface AgentFrame {
 export interface AxisPickHit {
   part: string;
   point: Vec3;
+}
+
+export interface BuildStepView {
+  shown: string[];
+  moves: Array<{ partId: string; offset: Vec3 }>;
+  arrows: Array<{ from: Vec3; to: Vec3 }>;
+  labels: Array<{ partId: string; text: string }>;
 }
 
 export interface ViewportProps {
@@ -121,6 +141,10 @@ export interface ViewportProps {
   onGrab?: GrabHandler | null;
   axisPick?: { parts: string[]; ready: boolean } | null;
   onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
+  buildStep?: BuildStepView | null;
+  skeleton?: SkeletonView | null;
+  onSkeletonDrag?: (drag: SkeletonDragEvent) => void;
+  onSkeletonPick?: (id: string, at: { x: number; y: number }) => void;
 }
 
 export type MarkTool = 'marker' | 'eraser';
@@ -176,6 +200,7 @@ export interface Viewport3DHandle {
   ) => Promise<Record<string, ShapeReport>>;
   printMeshes: (ids: string[]) => Promise<Record<string, MeshData>>;
   printThreeMf: (files: ThreeMfFileSpec[], plateSize: [number, number]) => Promise<Record<string, Uint8Array>>;
+  fitCoupons: (task: FitCouponTask) => Promise<FitCoupon[]>;
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
@@ -200,6 +225,7 @@ export interface Viewport3DHandle {
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;
+  shownPartIds: () => string[];
   checkDotCount: () => number;
 }
 

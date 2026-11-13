@@ -86,9 +86,11 @@ function CanvasBottomBar({ core, actions, ui }: CanvasCardProps) {
         </div>
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
-      <div className="pointer-events-auto">
-        <CanvasToolbar core={core} actions={actions} ui={ui} />
-      </div>
+      {!core.commandCenter.open && (
+        <div className="pointer-events-auto">
+          <CanvasToolbar core={core} actions={actions} ui={ui} />
+        </div>
+      )}
     </div>
   );
 }
@@ -117,7 +119,9 @@ export function CanvasCard(props: CanvasCardProps) {
       />
       {drop.isDraggingFile && <DropOverlay imagesOnly={drop.imagesOnly} />}
       <SceneViewport active={active} core={core} actions={actions} agent={agent} />
-      {core.printing.mode && <PlateCanvas active={active} printing={core.printing} parts={core.parts} />}
+      {core.printing.mode && (
+        <PlateCanvas active={active} printing={core.printing} parts={core.printing.fitTest?.parts ?? core.parts} />
+      )}
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <div
         aria-hidden

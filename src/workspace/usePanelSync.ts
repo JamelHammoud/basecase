@@ -3,12 +3,12 @@ import type { TransformMode } from '../types/robotics';
 import type { Annotations } from './useAnnotations';
 import type { ToolMode } from './useToolMode';
 
-interface PanelSyncOptions {
+export interface PanelSyncOptions {
   tool: ToolMode;
   annotations: Pick<Annotations, 'setCommentMode'>;
   isRightOpen: boolean;
   sculptEnabled: boolean;
-  onRobot: boolean;
+  posable: boolean;
   hasRig: boolean;
 }
 
@@ -18,7 +18,7 @@ const modeForPosing = (mode: TransformMode, posing: boolean): TransformMode => {
   return mode === 'pose' ? 'translate' : mode;
 };
 
-export function usePanelSync({ tool, annotations, isRightOpen, sculptEnabled, onRobot, hasRig }: PanelSyncOptions) {
+export function usePanelSync({ tool, annotations, isRightOpen, sculptEnabled, posable, hasRig }: PanelSyncOptions) {
   const posingActive = tool.rightTab === 'pose' && isRightOpen;
   const [wasPosing, setWasPosing] = useState(posingActive);
 
@@ -33,7 +33,7 @@ export function usePanelSync({ tool, annotations, isRightOpen, sculptEnabled, on
 
   if (!sculptEnabled && tool.transformMode === 'sculpt') tool.setMode('translate');
 
-  const tabGone = (!onRobot && tool.rightTab === 'pose') || (!hasRig && tool.rightTab === 'sim');
+  const tabGone = (!posable && tool.rightTab === 'pose') || (!hasRig && tool.rightTab === 'sim');
 
   if (tabGone) tool.setRightTab('inspector');
 }

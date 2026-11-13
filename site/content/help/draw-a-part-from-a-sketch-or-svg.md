@@ -59,4 +59,4 @@ For **Revolve**, **W** is the diameter and **T** is the height. Width runs from 
 
 To paste SVG code instead of choosing a file, click **Paste code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.
 
-Sketch is also in [[⌘K]] and the canvas's right-click menu. Import SVG is in both of those, in **File** ▸ **Import SVG**, and in the Library's **+** menu.
+Sketch is also in [[⌘K]] and the canvas's right-click menu. To open Import SVG with a file already loaded, choose **Import** there, in **File** or in the Library's **+** menu, or drop the SVG on the canvas.

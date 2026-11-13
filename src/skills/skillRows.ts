@@ -41,15 +41,18 @@ export const KIT_LABELS: Record<TrainedEntry, string> = {
 
 const RANK: Record<Freshness, number> = { fresh: 0, 'rerun-arena': 1, 'needs-training': 2 };
 
-interface RowInput {
+interface DesignInput {
   model: SimModel;
   design: string;
+}
+
+interface RowInput extends DesignInput {
   records: SkillRecord[];
   jobs: SkillJob[];
   animations?: readonly RobotAnimation[];
 }
 
-function best(records: SkillRecord[], input: RowInput) {
+function best(records: SkillRecord[], input: DesignInput) {
   const ranked = records
     .map((record) => ({ record, freshness: recordFreshness(record, input) }))
     .sort((a, b) => RANK[a.freshness] - RANK[b.freshness] || b.record.createdAt.localeCompare(a.record.createdAt));
@@ -57,11 +60,15 @@ function best(records: SkillRecord[], input: RowInput) {
   return ranked[0] ?? null;
 }
 
+const readyEvidence = (found: ReturnType<typeof best> | null) =>
+  found?.freshness === 'fresh' ? (found.record.evidence ?? null) : null;
+
 function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefined): SkillState {
   if (job) return { kind: 'training', share: job.share, message: job.message, background: job.background };
 
-  if (found?.freshness === 'fresh' && found.record.evidence)
-    return { kind: 'ready', arena: arenaLine(found.record.evidence) };
+  const evidence = readyEvidence(found);
+
+  if (evidence) return { kind: 'ready', arena: arenaLine(evidence) };
 
   return found?.freshness === 'rerun-arena' ? { kind: 'recheck' } : { kind: 'untrained' };
 }
@@ -156,3 +163,12 @@ export function skillRows(input: RowInput): SkillRow[] {
 
 export const readyVelocity = (rows: SkillRow[]) =>
   rows.find((r) => r.kit === 'velocity-tracking' && r.state.kind === 'ready')?.record ?? null;
+
+export function readyWalkRecord(input: DesignInput & { records: SkillRecord[] }): SkillRecord | null {
+  const found = best(
+    input.records.filter((r) => r.kit === 'velocity-tracking'),
+    input,
+  );
+
+  return found && readyEvidence(found) ? found.record : null;
+}

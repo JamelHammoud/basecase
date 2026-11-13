@@ -1,5 +1,5 @@
 import type { WorkspaceMeta, WorkspaceSeed } from '../SceneWorkspace';
-import type { SavedSceneRecord } from '../types/robotics';
+import type { RobotJoint, SavedSceneRecord, ScenePart } from '../types/robotics';
 import { newSceneId } from '../utils/sceneIds';
 import { moveItem } from '../utils/moveItem';
 import { copyName } from '../workspace/helpers';
@@ -25,6 +25,13 @@ export interface TabListItem {
 }
 
 export type Metas = Record<string, WorkspaceMeta>;
+
+export interface SceneRobot {
+  tabId: string;
+  name: string;
+  parts: ScenePart[];
+  joints: RobotJoint[];
+}
 
 export const newTabId = () => `tab-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
@@ -148,4 +155,17 @@ export function idsAfter(tabs: TabEntry[], id: string): string[] {
 
 export function idsExcept(tabs: TabEntry[], id: string): string[] {
   return tabs.filter((t) => t.id !== id).map((t) => t.id);
+}
+
+export function sceneRobots(
+  tabs: TabEntry[],
+  snapshotOf: (tab: TabEntry) => WorkspaceSeed | undefined,
+  except: string,
+): SceneRobot[] {
+  return tabs.flatMap((tab) => {
+    const seed = tab.id === except ? undefined : snapshotOf(tab);
+    const joints = seed?.project?.joints ?? [];
+
+    return seed && joints.length ? [{ tabId: tab.id, name: seed.sceneName, parts: seed.parts, joints }] : [];
+  });
 }

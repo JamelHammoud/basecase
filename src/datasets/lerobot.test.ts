@@ -2,6 +2,8 @@ import loadMujoco from '@mujoco/mujoco';
 import { parquetReadObjects } from 'hyparquet';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { describe, expect, it } from 'vitest';
+import { castRobot, guestsOf } from '../cases/caseCast';
+import { caseSlots } from '../cases/schema';
 import { caseRobot } from '../cases/testing';
 import { SimEngine } from '../sim/engine';
 import { fixtureRobots } from '../sim/fixtures/robots';
@@ -12,7 +14,15 @@ import { buildRig } from '../utils/kinematics';
 import { zipFolder } from '../utils/zipFolder';
 import { withLidar } from '../sim/fixtures/parts';
 import { scanSensors } from './buildDataset';
-import { canExport, columnStats, DATASET_FPS, episodeData, robotJoints, sampledFrames } from './episodes';
+import {
+  canExport,
+  columnStats,
+  DATASET_FPS,
+  datasetJoints,
+  episodeData,
+  robotJoints,
+  sampledFrames,
+} from './episodes';
 import { dataPath, lerobotFiles, SCAN_KEY, TASK_ANNOTATION, videoPath, type DatasetEpisode } from './lerobot';
 
 const TASK = 'Touch the point with the end effector.';
@@ -32,6 +42,38 @@ async function armTry(robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!)
   engine.dispose();
 
   return { mj, model, recording };
+}
+
+async function twoArmTry() {
+  const mj = await loadMujoco();
+  const arm = caseRobot(fixtureRobots().find((r) => r.id === 'arm-3dof')!);
+  const pose = { position: [0, 50, 600] as [number, number, number], yawDeg: 180 };
+  const slots = caseSlots({
+    slots: [
+      { id: 'a', needs: ['arm'], binding: {} },
+      { id: 'b', needs: ['arm'], binding: {}, pose },
+    ],
+  });
+  const team = castRobot(
+    arm,
+    guestsOf(slots, [arm]).map((g) => ({ ...g, robot: arm })),
+  );
+  const model = buildMjcf({ ...team, rig: buildRig(team.joints, team.parts), project: DEFAULT_PROJECT });
+  const engine = new SimEngine(mj, model);
+  const recorder = new Recorder(engine);
+
+  engine.stepHook = recorder.hook;
+  engine.step(0.5);
+
+  const recording = recorder.finish();
+
+  engine.dispose();
+
+  return {
+    model,
+    recording,
+    slots: model.robots.map((r) => ({ id: r.key.startsWith('b.') ? 'b' : 'a', robot: r.key })),
+  };
 }
 
 const fakeVideo = new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112]);
@@ -133,6 +175,42 @@ describe('LeRobot datasets from tries', () => {
     });
   });
 
+  it('zips under one folder, keeping media uncompressed', () => {
+    const zip = zipFolder('touch-dataset', { 'meta/info.json': new Uint8Array([123, 125]), 'a.mp4': fakeVideo });
+    const back = unzipSync(zip);
+
+    expect(Object.keys(back).sort()).toEqual(['touch-dataset/a.mp4', 'touch-dataset/meta/info.json']);
+    expect(back['touch-dataset/a.mp4']).toEqual(fakeVideo);
+  });
+});
+
+describe('a LeRobot dataset with more than joints', () => {
+  it('writes every slot’s joints into one state and action, prefixed and grouped by slot', async () => {
+    const { model, recording, slots } = await twoArmTry();
+    const { names, groups } = datasetJoints(model, slots);
+    const data = episodeData(recording, model, TASK, slots);
+    const files = lerobotFiles({
+      robotType: 'arm',
+      jointNames: names,
+      jointGroups: groups,
+      videos: [],
+      episodes: [asEpisode(data, 0)],
+      source: {},
+    });
+    const info = JSON.parse(text(files, 'meta/info.json'));
+    const modality = JSON.parse(text(files, 'meta/modality.json'));
+    const rows = await parquetReadObjects({ file: files[dataPath(0)].slice().buffer });
+
+    expect(names).toHaveLength(6);
+    expect(names.filter((n) => n.startsWith('a.'))).toHaveLength(3);
+    expect(names.filter((n) => n.startsWith('b.'))).toHaveLength(3);
+    expect(info.features['observation.state'].names).toEqual(names);
+    expect(info.features.action.names).toEqual(names);
+    expect(modality.state).toEqual({ a: { start: 0, end: 3 }, b: { start: 3, end: 6 } });
+    expect(modality.action).toEqual(modality.state);
+    expect(rows[0]['observation.state']).toHaveLength(6);
+  });
+
   it('adds each LiDAR scan as observation.scan, read back with the right shape', async () => {
     const rover = withLidar(fixtureRobots().find((r) => r.id === 'rover-diff')!);
     const { model, recording } = await armTry(rover);
@@ -162,13 +240,5 @@ describe('LeRobot datasets from tries', () => {
       { part: 'lidar', name: 'Slamtec RPLIDAR C1', rays: 500, rangeM: 12, rateHz: 10, fovDeg: 360 },
     ]);
     expect(lines(files, 'meta/episodes_stats.jsonl')[0].stats).toHaveProperty([SCAN_KEY, 'count'], [rows.length]);
-  });
-
-  it('zips under one folder, keeping media uncompressed', () => {
-    const zip = zipFolder('touch-dataset', { 'meta/info.json': new Uint8Array([123, 125]), 'a.mp4': fakeVideo });
-    const back = unzipSync(zip);
-
-    expect(Object.keys(back).sort()).toEqual(['touch-dataset/a.mp4', 'touch-dataset/meta/info.json']);
-    expect(back['touch-dataset/a.mp4']).toEqual(fakeVideo);
   });
 });

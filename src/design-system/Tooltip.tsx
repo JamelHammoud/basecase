@@ -50,7 +50,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const timerRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
-  const confirming = useSyncExternalStore(subscribeConfirm, currentConfirm) !== null;
+  const confirming = useSyncExternalStore(subscribeConfirm, currentConfirm, currentConfirm) !== null;
   const suppressed = disabled || confirming || controlsOpenPopover(children);
 
   const clearTimer = () => {

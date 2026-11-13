@@ -7,12 +7,13 @@ import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type Dr
 import { GrabForce } from './grabForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
+import type { SimStats } from './engineStats';
 import { eyeCaster, type EyeCaster } from './eyes';
 import { ActuatorFaults, type FaultKind } from './faults';
 import { policyObsSize, type PolicySpec } from './policy';
 import { stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
-import { readJointAngles, readJointTargets } from './jointReadout';
+import { readJointAngles, readJointStates } from './jointReadout';
 import { Scanner } from './scanner';
 
 export type Controller =
@@ -23,30 +24,7 @@ export type Controller =
   | RouteController
   | { kind: 'limp' };
 
-export interface JointStat {
-  id: string;
-  peak: number;
-  saturatedS: number;
-  fault?: FaultKind;
-}
-
-export interface RobotStat {
-  key: string;
-  fellAt: number | null;
-  height: number;
-  tilt: number;
-  travelled: number;
-  forward: number;
-  speed: number;
-}
-
-export interface SimStats {
-  time: number;
-  robots: RobotStat[];
-  joints: JointStat[];
-  rtf: number;
-  effector?: [number, number, number];
-}
+export type { JointStat, RobotStat, SimStats } from './engineStats';
 
 const D2R = Math.PI / 180;
 const GAIN_SLOTS = 10;
@@ -441,6 +419,7 @@ export class SimEngine {
         ...this.faultField(j.actuator),
       })),
       ...(this.drive?.hand ? { effector: this.handAt(this.drive.hand) } : {}),
+      ...(this.drive?.hands ? { effectors: this.drive.hands.map((h) => this.handAt(h)) } : {}),
     };
   }
 
@@ -489,8 +468,8 @@ export class SimEngine {
     return out;
   }
 
-  jointTargets(out = new Float64Array(this.sim.joints.length)): Float64Array {
-    return readJointTargets(this.sim, this.data, this.jointQpos, out);
+  jointStates(out = new Float64Array(this.sim.joints.length * 3)): Float64Array {
+    return readJointStates(this.sim, this.data, this.jointQpos, out);
   }
 
   jointAngles(): Float64Array {

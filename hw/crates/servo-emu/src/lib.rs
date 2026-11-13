@@ -4,6 +4,7 @@ mod dispatch;
 pub mod dynamixel;
 pub mod feetech;
 pub mod firmware;
+pub mod g1;
 pub mod inprocess;
 #[cfg(unix)]
 pub mod pty;

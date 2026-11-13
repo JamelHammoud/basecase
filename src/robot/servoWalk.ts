@@ -1,10 +1,10 @@
 import type { RobotJoint } from '../types/robotics';
-import type { JointStatus, RobotFamily } from './robotState';
+import type { JointStatus, ServoFamily } from './robotState';
 import { servoLayout } from './sceneRobot';
 
 export const FACTORY_ID = 1;
 
-export const SERVO_MODEL: Record<RobotFamily, number> = { feetech: 777, dynamixel: 1200 };
+export const SERVO_MODEL: Record<ServoFamily, number> = { feetech: 777, dynamixel: 1200 };
 
 export interface ServoWalkStep {
   jointId: string;

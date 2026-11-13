@@ -45,6 +45,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
       selectedPart={selection.selectedPart}
       sculptSettings={tool.sculptSettings}
       mode={studioMode}
+      svgFile={tool.creatorSvg}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}
       onDone={() => (studioMode === 'clay' ? tool.setMode('translate') : tool.setCreator(null))}
       onUpdateSculptSettings={tool.updateSculptSettings}
@@ -60,7 +61,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
 
 function SceneInspector({ core, actions }: InspectTabProps) {
   const { scene, parts, studio, selection, annotations } = core;
-  const { edits, ops, library } = actions;
+  const { edits, ops, library, tuning } = actions;
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
 
@@ -94,6 +95,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onRenameGroup={edits.renameGroup}
       onChangeHardware={edits.changeHardware}
       onAddClearanceHole={ops.addClearanceHole}
+      onTuneDimensions={tuning.tune}
     />
   );
 }

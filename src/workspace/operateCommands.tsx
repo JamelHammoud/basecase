@@ -2,6 +2,7 @@ import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
 import { canCalibrate } from '../robot/calibrationSession';
 import { connectRobot, robotSnapshot } from '../robot/robotStore';
+import { servoFamily } from '../robot/robotState';
 import { sceneRobot } from '../robot/sceneRobot';
 import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -58,13 +59,17 @@ export function operateCommands(inputs: CommandInputs): Command[] {
             group: 'Operate',
             label: 'Connect Emulated Robot',
             icon: <OperateIcon className={ic} />,
-            keywords: 'robot daemon emulated servos feetech',
+            keywords: 'robot daemon emulated servos feetech unitree g1',
             run: () => {
               showOperate();
 
               if (robotSnapshot().link !== 'connected') void connectRobot(robot.spec, robot.joints);
             },
           },
+        ]
+      : []),
+    ...(robot.ok && servoFamily(robot.spec)
+      ? [
           {
             id: 'calibrate-robot',
             group: 'Operate',

@@ -7,8 +7,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { measuredRadians } from './intentPacer.mjs';
 import { daemonBinary, RobotLink } from './robotLink.mjs';
 import { checkedCommand, checkedRobotSpec, emulatedCalibration } from './robotSpec.mjs';
+import { G1_JOINT_NAMES } from './unitreeG1.mjs';
 
 const ARM = { family: 'feetech', ids: [1, 2], class: 'arm', emulated: true };
+const G1 = { family: 'unitree-g1', emulated: true };
+const G1_IDS = Array.from({ length: 17 }, (_, k) => k + 13);
 const HELLO = { event: 'hello', emulated: true, real_transport: false, lost_message: 'Lost contact with the robot.' };
 
 function fakeDaemon() {
@@ -191,5 +194,63 @@ describe('robot link', () => {
       path.join(resources, 'hw', process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon'),
     );
     expect(daemonBinary({ env: { BASECASE_ROBOT_DAEMON: 'relay' }, resources, fromSource: false })).toBe('relay');
+  });
+});
+
+describe('robot link for the emulated G1', () => {
+  it('normalizes the emulated G1 to its 17 writable joints and spawns it with no ids, class or port', () => {
+    const { link, spawned, events } = linkWithFake();
+    const spec = { family: 'unitree-g1', ids: G1_IDS, class: 'legged', emulated: true };
+
+    expect(checkedRobotSpec(G1)).toEqual({ ok: true, spec });
+    expect(link.connect(G1)).toEqual({ ok: true });
+    expect(events.at(-1)).toEqual({ event: 'link', state: 'connected', spec });
+
+    const [{ args }] = spawned;
+    const artefacts = args[args.indexOf('--artefacts') + 1];
+    const calibration = JSON.parse(fs.readFileSync(path.join(artefacts, 'calibration.json'), 'utf8'));
+
+    expect(args).toEqual(['--family', 'unitree-g1', '--emulated', '--artefacts', artefacts]);
+    expect(calibration.class).toBe('legged');
+    expect(calibration.joints.map((j) => [j.id, j.name])).toEqual(G1_IDS.map((id) => [id, G1_JOINT_NAMES[id - 1]]));
+    expect(calibration.joints[0]).toEqual({
+      id: 13,
+      name: 'waist_yaw_joint',
+      zero_counts: 2048,
+      direction: 1,
+      min_rad: -2.8,
+      max_rad: 2.8,
+    });
+    expect(calibration.joints.at(-1).name).toBe('right_wrist_yaw_joint');
+    expect(link.command({ cmd: 'intent', joints: G1_IDS.map(() => 0) })).toEqual({ ok: true });
+    expect(link.command({ cmd: 'intent', joints: Array(29).fill(0) }).ok).toBe(false);
+    link.disconnect();
+  });
+
+  it('refuses any other G1 ask with the words it uses for every robot', () => {
+    const asks = [
+      { ...G1, ids: G1_IDS },
+      { ...G1, ids: G1_IDS, class: 'legged' },
+      { ...G1, class: 'legged' },
+      { ...G1, port: '/dev/ttyUSB0' },
+      { ...G1, interface: 'en0' },
+      { ...G1, emulated: false },
+      { ...G1, emulated: 'true' },
+      { family: 'unitree-g1' },
+      { family: 'unitree-g1 --port /dev/ttyUSB0', emulated: true },
+      Object.assign(Object.create({ family: 'unitree-g1' }), { emulated: true }),
+      Object.assign(Object.create({ interface: 'en0' }), G1),
+    ];
+    const { link, spawned } = linkWithFake();
+
+    for (const ask of asks) {
+      const reply = checkedRobotSpec(ask);
+
+      expect(reply.ok, JSON.stringify(ask)).toBe(false);
+      expect(reply.message).toMatch(/^(Only an emulated robot can connect|Real motors are locked|Choose Feetech)/);
+      expect(link.connect(ask).ok).toBe(false);
+    }
+
+    expect(spawned).toEqual([]);
   });
 });

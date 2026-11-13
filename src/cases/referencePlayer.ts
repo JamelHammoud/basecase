@@ -7,7 +7,7 @@ import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { GroundSteer } from './groundSteer';
 import { boundEffector, robotFacts, type EndEffector, type RobotFacts } from './robotFit';
-import type { Case, ReferenceCommand } from './schema';
+import { caseSlots, type Case, type ReferenceCommand } from './schema';
 
 export interface CaseBase {
   part: string | null;
@@ -61,7 +61,7 @@ function groundDrive(rig: Rig, parts: ScenePart[], facts: RobotFacts, key: strin
 export function driveFor({ kase, rig, parts, facts, effector }: DriveFor): DriveSetup | null {
   const key = rig.robots[0]?.key ?? '';
 
-  if (kase.slot.needs.includes('arm') && effector && facts.armJoints.length) {
+  if (caseSlots(kase)[0].needs.includes('arm') && effector && facts.armJoints.length) {
     const { armJoints: joints, anchor, reachMm, gripper } = facts;
 
     return armSetup({ rig, robot: key, effector, joints, anchor, reachMm, grip: gripper });
@@ -126,7 +126,7 @@ export class ReferencePlayer {
 
 export function livePlayer({ kase, rig, parts, model, send }: LivePlayer): ReferencePlayer {
   const facts = robotFacts(rig, parts);
-  const effector = boundEffector(kase.slot.binding, facts, rig);
+  const effector = boundEffector(caseSlots(kase)[0].binding, facts, rig);
   const setup = driveFor({ kase, rig, parts, facts, effector });
 
   return new ReferencePlayer(kase.reference.timeline, steerFor({ setup, model, rig, parts, kase }), send);

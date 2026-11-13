@@ -59,7 +59,7 @@ Bones are matched by name, so files from Mixamo, CMU, Daz and Unreal work withou
 
 When the robot can't follow the performer to within 25 mm, a toast names the point that misses most, such as Left knee off by 40 mm.
 
-**Import BVH** is also in **File** and [[⌘K]].
+You can also choose **Import** in **File** or [[⌘K]] and pick the `.bvh` file.
 
 ## Play and edit an animation
 

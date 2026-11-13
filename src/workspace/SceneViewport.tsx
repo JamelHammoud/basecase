@@ -1,19 +1,40 @@
 import { drilledOperands } from '../booleans/picking';
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
+import { BuildAlongBar } from '../components/build/BuildAlongBar';
 import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
+import { SkeletonServoMenu } from '../components/pose/SkeletonServoMenu';
 import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+
+const NO_SELECTION: string[] = [];
 
 interface SceneViewportProps {
   active: boolean;
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
+}
+
+function markFieldFor(marks: WorkspaceCore['marks']) {
+  const editingMark = marks.selected;
+
+  if (!editingMark) return null;
+
+  return (
+    <MarkLabelField
+      key={editingMark.id}
+      label={editingMark.label ?? ''}
+      color={marks.color}
+      autoFocus={marks.freshId === editingMark.id}
+      onCommit={(label) => marks.setLabel(editingMark.id, label)}
+      onClose={() => marks.select(null)}
+    />
+  );
 }
 
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
@@ -34,7 +55,6 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   } = core;
   const { edits } = actions;
   const { cursors, lanes } = agent;
-  const editingMark = marks.selected;
   const topParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
   const shownParts = [...topParts, ...drilledOperands(parts, selectedIds)];
 
@@ -44,7 +64,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         ref={viewportRef}
         sceneKey={scene.sceneId}
         parts={shownParts}
-        selectedPartIds={selectedIds}
+        selectedPartIds={core.commandCenter.open ? NO_SELECTION : selectedIds}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
         snapStepMm={studio.snapStepMm}
@@ -77,24 +97,13 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onSelectMark={marks.select}
         onEraseMarks={marks.erase}
         onMoveMark={marks.move}
-        markField={
-          editingMark && (
-            <MarkLabelField
-              key={editingMark.id}
-              label={editingMark.label ?? ''}
-              color={marks.color}
-              autoFocus={marks.freshId === editingMark.id}
-              onCommit={(label) => marks.setLabel(editingMark.id, label)}
-              onClose={() => marks.select(null)}
-            />
-          )
-        }
+        markField={markFieldFor(marks)}
         agentFrames={agent.frames}
         fixedCameras={project.cameras}
         checkDots={core.readiness.dots}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
-        worldParts={sim.worldParts}
+        worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}
@@ -105,9 +114,17 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
           }
         }
         onAxisPick={actions.joints.onAxisPick}
+        buildStep={core.buildAlong.view}
+        skeleton={core.skeleton.view}
+        onSkeletonDrag={core.skeleton.onViewportDrag}
+        onSkeletonPick={core.skeleton.openMenu}
       />
+      <SkeletonServoMenu skeleton={core.skeleton} />
       <DriveOverlay sim={sim} />
-      <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
+      <BuildAlongBar buildAlong={core.buildAlong} active={active} />
+      {!core.commandCenter.open && (
+        <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
+      )}
       <AnnotationLayer
         annotations={annotations.annotations}
         parts={parts}

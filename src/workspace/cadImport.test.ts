@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CadBody } from '../utils/platform/types';
 import { cadParts } from './cadImport';
-import { isCadFileName, isMeshFileName } from './meshImport';
+import { importKindOf, isCadFileName } from './importRoute';
 
 const TRIANGLE = { positions: [0, 0, 0, 1, 0, 0, 0, 1, 0], indices: [0, 1, 2] };
 
@@ -52,7 +52,7 @@ describe('CAD import', () => {
 
   it('takes STEP and IGES through the mesh import on desktop', () => {
     for (const name of ['a.step', 'b.STP', 'c.iges', 'd.igs']) {
-      expect(isMeshFileName(name), name).toBe(true);
+      expect(importKindOf(name, { cad: true }), name).toBe('parts');
       expect(isCadFileName(name), name).toBe(true);
     }
 

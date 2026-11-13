@@ -1,6 +1,8 @@
+import type { SceneRobot } from '../app/tabModel';
 import type { PrintersState } from '../app/usePrinters';
 import type { SettingsPane } from '../components/SettingsWindow';
 import type { ToastData } from '../design-system';
+import type { RobotSkeleton } from '../types/skeleton';
 import type { LaneChat } from './agentLanes';
 import type {
   AcpStatusInfo,
@@ -113,6 +115,7 @@ export interface StudioShared {
   openSettings: (pane?: SettingsPane) => void;
   printers: PrintersState;
   tabs: Array<{ id: string; name: string; sceneId: string }>;
+  robotsBeside: (except: string) => SceneRobot[];
   canReopenTab: boolean;
   register: (id: string, handle: WorkspaceHandle | null) => void;
   reportMeta: (id: string, meta: WorkspaceMeta) => void;
@@ -142,11 +145,17 @@ export type RightTab = 'inspector' | 'pose' | 'sim' | 'build' | 'acp';
 
 export type CreatorMode = 'draw2d' | 'svg';
 
+export interface TextFile {
+  name: string;
+  text: string;
+}
+
 export interface Snapshot {
   parts: ScenePart[];
   pose: RobotPoseState | undefined;
   joints: RobotJoint[] | undefined;
   marks: SceneMark[] | undefined;
+  skeleton: RobotSkeleton | undefined;
 }
 
 export interface DocState {

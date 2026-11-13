@@ -20,7 +20,13 @@ pub fn plan_for(fault: &Fault, class: RobotClass) -> StopPlan {
         | Fault::WrongId { .. }
         | Fault::RepliesLate
         | Fault::DuplicateId { .. }
-        | Fault::WrongModel { .. } => StopPlan::SealNow,
+        | Fault::WrongModel { .. }
+        | Fault::StateLost
+        | Fault::StateCorrupt
+        | Fault::MotorsMissing { .. }
+        | Fault::MotorError { .. }
+        | Fault::NotBalancing { .. }
+        | Fault::LocoSilent => StopPlan::SealNow,
         Fault::Overheat { id, .. }
         | Fault::Stall { id, .. }
         | Fault::WrongDirection { id, .. }

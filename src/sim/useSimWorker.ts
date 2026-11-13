@@ -6,9 +6,23 @@ import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { Recording } from './recorder';
+import type { CaseFacts } from '../cases/caseFacts';
 import type { Scan } from './scanner';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
+
+interface LatestFrame {
+  at: number;
+  stats: SimStats | null;
+  facts: CaseFacts | null;
+  scan: Scan | null;
+}
+
+function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame' }>) {
+  latest.stats = msg.stats;
+  latest.facts = msg.facts ?? null;
+  latest.scan = msg.scan ?? latest.scan;
+}
 
 export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
 
@@ -21,7 +35,7 @@ export function useSimWorker(
   const [playing, setPlaying] = useState(false);
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ui = useRef<{ at: number; stats: SimStats | null; scan: Scan | null }>({ at: 0, stats: null, scan: null });
+  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null });
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
@@ -70,8 +84,7 @@ export function useSimWorker(
 
       if (msg.type !== 'frame' || !m) return;
 
-      ui.current.stats = msg.stats;
-      ui.current.scan = msg.scan ?? ui.current.scan;
+      noteFrame(ui.current, msg);
       showFrame(m, msg, { viewport: viewportRef.current, listeners: poseListeners.listeners.current });
       frameHookRef.current?.({ poses: msg.poses, time: msg.stats.time });
 
@@ -147,6 +160,7 @@ export function useSimWorker(
     setPlaying,
     stats,
     latestStats: () => (status === 'off' ? null : ui.current.stats),
+    latestFacts: () => (status === 'off' ? null : ui.current.facts),
     latestScan: () => (status === 'off' ? null : ui.current.scan),
     setStats,
     error,
@@ -189,7 +203,7 @@ function linkCameras(w: Worker, link: CameraLink | null) {
   w.postMessage({ type: 'cameras', port } satisfies SimRequest, port ? [port] : []);
 }
 
-type PoseListener = (poses: Float64Array) => void;
+type PoseListener = (poses: Float64Array, frame: { joints: Float64Array }) => void;
 
 export interface SimFrame {
   poses: Float64Array;
@@ -203,16 +217,27 @@ function showFrame(
   msg: Extract<SimResponse, { type: 'frame' }>,
   to: { viewport: Viewport3DHandle | null; listeners: Set<PoseListener> },
 ) {
-  to.viewport?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
+  const robots = simDeltas(m, msg.poses);
+  const world = worldDeltas(m, msg.poses);
+
+  if (m.robots.length > 1) robots.forEach((delta, id) => world.set(id, delta));
+
+  to.viewport?.setPose(robots, world);
 
   if (msg.scan) to.viewport?.setScan(msg.scan.points);
 
-  to.listeners.forEach((listen) => listen(msg.poses));
+  to.listeners.forEach((listen) => listen(msg.poses, msg));
 
   const ids = m.joints.map((j) => j.id);
 
-  offerSimTargets(ids, msg.targets);
-  noteSimAngles(ids, msg.angles);
+  offerSimTargets(
+    ids,
+    m.joints.map((_, i) => msg.joints[i * 3]),
+  );
+  noteSimAngles(
+    ids,
+    Float64Array.from(m.joints, (_, i) => msg.joints[i * 3 + 1]),
+  );
 }
 
 function usePoseListeners() {

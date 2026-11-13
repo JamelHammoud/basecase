@@ -71,7 +71,7 @@ describe('a gripper', () => {
     expect(facts.gripper).toBeNull();
     expect(goalsFor(robotOf('arm-3dof')).map((g) => g.kind)).toEqual(['touch']);
     expect(goalsFor(robotOf('arm-6dof')).map((g) => g.kind)).toEqual(['touch', 'pick']);
-    expect(slotRefusal(pickCase().slot, facts)).toBe('This Case needs a gripper. This robot has a fixed base.');
+    expect(slotRefusal(pickCase().slot!, facts)).toBe('This Case needs a gripper. This robot has a fixed base.');
   });
 });
 
@@ -93,7 +93,7 @@ describe('Pick Up a Block', () => {
     const gripHeight = kase.reference.timeline[1].target![1] / objectOf(kase, 'block').position[1];
 
     for (const share of [0.5, 2]) {
-      const scaled = scaledToReach(kase, kase.slot.reachMm! * share, kase.slot.anchor!);
+      const scaled = scaledToReach(kase, kase.slot!.reachMm! * share, kase.slot!.anchor!);
       const block = objectOf(scaled, 'block').position;
       const grip = scaled.reference.timeline[1].target!;
 
@@ -116,8 +116,8 @@ describe('Pick Up a Block', () => {
 
     const ball = { ...objectOf(pickCase(), 'block'), id: 'ball' };
     const kase = { ...touch.kase, world: { objects: [...touch.kase.world.objects, ball] } };
-    const anchor = kase.slot.anchor!;
-    const scaled = scaledToReach(kase, kase.slot.reachMm! * 2, anchor);
+    const anchor = kase.slot!.anchor!;
+    const scaled = scaledToReach(kase, kase.slot!.reachMm! * 2, anchor);
 
     expect(objectOf(scaled, 'ball').position[1]).toBeCloseTo(anchor[1] + (ball.position[1] - anchor[1]) * 2);
   });

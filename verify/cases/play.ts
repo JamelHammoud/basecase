@@ -1,7 +1,6 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { builderRobot, buildCase, fittingTemplates, goalsFor, worldsFor } from '../../src/cases/caseBuilder';
+import { builderRobot, buildCase, CASE_PRESETS, goalsFor, presetsFor, worldsFor } from '../../src/cases/caseBuilder';
 import type { Case } from '../../src/cases/schema';
-import { caseTemplates } from '../../src/cases/templates';
 import { runCase } from '../../src/cases/testing';
 import { box, joint, type FixtureRobot, type P3 } from '../../src/sim/fixtures/parts';
 import { fixtureRobots } from '../../src/sim/fixtures/robots';
@@ -149,9 +148,17 @@ function minimumProblems(id: string, examples: number, built: number): string[] 
 
 export function casesFor(robot: FixtureRobot): OfferedCases {
   const rig = buildRig(robot.joints, robot.parts);
-  const templates = fittingTemplates(caseTemplates(rig, robot.parts)).map((t) => ({ name: t.name, kase: t.build() }));
   const builder = builderRobot(rig, robot.parts);
   const problems: string[] = [];
+  const presets = presetsFor(builder).flatMap((id) => {
+    const made = buildCase(CASE_PRESETS[id], builder);
+
+    if (made.ok) return [{ name: id, kase: made.kase }];
+
+    problems.push(`${id} fits but does not build: ${made.problem}`);
+
+    return [];
+  });
   const built = goalsFor(builder).flatMap((goal) =>
     worldsFor(goal.kind).flatMap((world) => {
       const made = buildCase({ goal: goal.kind, world: world.kind }, builder);
@@ -164,9 +171,9 @@ export function casesFor(robot: FixtureRobot): OfferedCases {
     }),
   );
 
-  problems.push(...minimumProblems(robot.id, templates.length, built.length));
+  problems.push(...minimumProblems(robot.id, presets.length, built.length));
 
-  return { cases: [...templates, ...built], problems };
+  return { cases: [...presets, ...built], problems };
 }
 
 export const roundTrip = (kase: Case): Case => JSON.parse(JSON.stringify(kase)) as Case;

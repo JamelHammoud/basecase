@@ -8,7 +8,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 
 const LEG_JOINT = /hip|knee|ankle|leg|haa|kfe/i;
 
-export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast }: WorkspaceCore) {
+export function usePoseActions({ posing, parts, project, setSelectedIds, tool, showToast }: WorkspaceCore) {
   const { setMode } = tool;
   const { addAnimation, play } = posing;
   const motionInputRef = useRef<HTMLInputElement | null>(null);
@@ -17,7 +17,7 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
   const canWalk = !!robotRig && robotRig.joints.some((j) => j.limb === 'leg' || LEG_JOINT.test(j.name));
 
   const openPose = () => {
-    if (!posing.hasRig) return;
+    if (!posing.hasRig && !project.skeleton) return;
 
     const first = posing.rig.robots[0];
 
@@ -73,6 +73,11 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
     }
   };
 
+  const importMotionFile = (file: File) => {
+    if (posing.hasRig) void readMotionFile(file);
+    else showToast('Add joints to retarget motion onto');
+  };
+
   const createAnimation = (anim: RobotAnimation, summary: string) => {
     setMotion(null);
 
@@ -92,6 +97,7 @@ export function usePoseActions({ posing, parts, setSelectedIds, tool, showToast 
     closeMotion: () => setMotion(null),
     importMotion,
     readMotionFile,
+    importMotionFile,
     createAnimation,
   };
 }

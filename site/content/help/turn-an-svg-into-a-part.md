@@ -14,7 +14,7 @@ keywords:
   - figma
   - 2d to 3d
 related:
-  - import-a-mesh
+  - import-a-file
   - save-a-model-to-the-library
 covers:
   - src/components/SculptAndDrawStudio.tsx
@@ -37,6 +37,6 @@ Extrude a logo, a bracket outline or any SVG drawing into a solid part, at the w
 
 The part starts 64 mm wide and 10 mm thick until you change them. To fix the outline first, click **Edit in Sketch**. To paste SVG code from a design app instead of a file, click **Paste code**.
 
-Import SVG is also in the **File** menu, the Library's **+** menu and ⌘K. Dropping an SVG on the canvas adds it as a flat reference image, not a part.
+You can also choose **Import** in the **File** menu, the Library's **+** menu or ⌘K and pick the SVG, or drop it on the canvas. Either way Import SVG opens with the drawing loaded.
 
-For 3D files such as STL or OBJ, see [Import a mesh](/help/import-a-mesh).
+For 3D files such as STL or OBJ, see [Import a file](/help/import-a-file).

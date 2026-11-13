@@ -27,6 +27,7 @@ import { findRecipes } from './cad-mcp/recipeTools.mjs';
 import {
   animate,
   defineJoints,
+  findJointAxes,
   getRig,
   importRobot,
   makeLeader,
@@ -96,6 +97,7 @@ const TOOLS = [
   checkScene,
   craftReview,
   checkAssembly,
+  findJointAxes,
   defineJoints,
   getRig,
   pose,

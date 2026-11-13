@@ -3,12 +3,11 @@ import { fromFeetInches, heightsInFeet, toFeetInches } from '../three/viewport/m
 import type { FigurePlacements, MeasureKind } from '../three/viewport/types';
 import type { MeasureUnit } from '../types/robotics';
 import {
+  Button,
   FloatingIsland,
   IconButton,
   IslandDivider,
   NumberInput,
-  Tooltip,
-  CloseIcon,
   DogIcon,
   HumanIcon,
   RulerIcon,
@@ -31,7 +30,7 @@ interface MeasureToolbarProps {
   humanHeightMm: number;
   onHumanHeight: (mm: number) => void;
   unit: MeasureUnit;
-  onExit: () => void;
+  onDone: () => void;
 }
 
 const clampHeight = (mm: number) => Math.min(MAX_HEIGHT_MM, Math.max(MIN_HEIGHT_MM, mm));
@@ -70,22 +69,20 @@ function HeightField({ heightMm, unit, onChange }: HeightInputProps & { unit: Me
   const set = (mm: number) => onChange(clampHeight(mm));
 
   return (
-    <Tooltip label="Height" side="top">
-      <div className="px-1 flex gap-1">
-        {heightsInFeet(unit, navigator.language) ? (
-          <FeetInchesInputs heightMm={heightMm} onChange={set} />
-        ) : (
-          <NumberInput
-            className="w-[96px]"
-            value={heightMm / 10}
-            step={1}
-            precision={1}
-            unit="cm"
-            onChange={(cm) => set(cm * 10)}
-          />
-        )}
-      </div>
-    </Tooltip>
+    <div className="px-1 flex gap-1">
+      {heightsInFeet(unit, navigator.language) ? (
+        <FeetInchesInputs heightMm={heightMm} onChange={set} />
+      ) : (
+        <NumberInput
+          className="w-[96px]"
+          value={heightMm / 10}
+          step={1}
+          precision={1}
+          unit="cm"
+          onChange={(cm) => set(cm * 10)}
+        />
+      )}
+    </div>
   );
 }
 
@@ -96,7 +93,7 @@ export const MeasureToolbar: React.FC<MeasureToolbarProps> = ({
   humanHeightMm,
   onHumanHeight,
   unit,
-  onExit,
+  onDone,
 }) => (
   <FloatingIsland className="p-1.5 gap-1 rounded-[20px] animate-pop-up">
     {KINDS.map((k) => (
@@ -117,13 +114,8 @@ export const MeasureToolbar: React.FC<MeasureToolbarProps> = ({
       </>
     )}
     <IslandDivider />
-    <IconButton
-      icon={<CloseIcon className="w-5 h-5" />}
-      title="Exit measure"
-      shortcut="Esc"
-      tooltipSide="top"
-      size="lg"
-      onClick={onExit}
-    />
+    <Button size="sm" variant="ghost" onClick={onDone} title="Done" shortcut="Esc" tooltipSide="top">
+      Done
+    </Button>
   </FloatingIsland>
 );

@@ -9,6 +9,7 @@ import {
 } from '../../data/printers';
 import { printBridge, type SavedPrinter } from '../../print/printBridge';
 import { SettingsRow as Row } from '../SettingsRows';
+import { SecretField } from './SecretField';
 
 const CUSTOM = 'custom';
 const NONE = 'none';
@@ -95,32 +96,6 @@ const ConnectionTest: React.FC<{ id: string }> = ({ id }) => {
       <Button size="sm" variant="secondary" onClick={() => void run()} disabled={testing}>
         {testing ? 'Testing…' : 'Test Connection'}
       </Button>
-    </Row>
-  );
-};
-
-const SecretField: React.FC<{ label: string; saved: boolean; onSecret: (secret: string) => Promise<unknown> }> = ({
-  label,
-  saved,
-  onSecret,
-}) => {
-  const [draft, setDraft] = useState('');
-
-  return (
-    <Row label={label} hint={saved && !draft ? 'Saved' : undefined}>
-      <div className="w-[200px]">
-        <TextInput
-          type="password"
-          value={draft}
-          placeholder={saved ? '••••••••' : ''}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={() => {
-            if (draft) void onSecret(draft).then(() => setDraft(''));
-          }}
-          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-          aria-label={label}
-        />
-      </div>
     </Row>
   );
 };

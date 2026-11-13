@@ -2,6 +2,7 @@ import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
+import { waitsOn } from '../lib/dependsOn.mjs';
 import { checkedRun } from '../lib/preflight.mjs';
 import { publish } from '../lib/pull.mjs';
 import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
@@ -47,8 +48,11 @@ const waitingSteps = () => {
   const queued = issues(NEXT).filter((issue) => !hasLabel(issue, BUILDING));
   const stale = issues(BUILDING).filter((issue) => now - Date.parse(issue.updatedAt) > ORPHAN_AFTER_MS);
 
+  const openSteps = [...issues(NEXT), ...issues(BUILDING)];
+
   return unbuilt([...queued, ...stale], index)
     .filter((issue) => issue.author?.login === OWNER_LOGIN)
+    .filter((issue) => !waitsOn(issue, openSteps))
     .filter((issue) => !stepWaiting(stepEntry(issue.number), { now, openNumbers }))
     .sort(byPriorityThenAge);
 };

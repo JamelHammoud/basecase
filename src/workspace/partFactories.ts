@@ -1,6 +1,7 @@
 import { catalogNote } from '../data/catalog';
 import { hardwareName, hardwareNote } from '../data/hardware';
 import type { CatalogItem, CustomModelSubNode, ScenePart, SculptMeshData } from '../types/robotics';
+import type { SketchSolid } from '../utils/sketch/placement';
 import type { Vec3 } from './types';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
@@ -16,6 +17,7 @@ export interface SketchParams {
   nodes: CustomModelSubNode[];
   svgDataUrl?: string;
   saveToLibrary: boolean;
+  solid?: SketchSolid;
 }
 
 const PRINTED_TAG = '3D Printed PLA/PETG';
@@ -154,6 +156,15 @@ export const sketchDimensions = (params: SketchParams) => ({
 });
 
 export function sketchPart(params: SketchParams, id: string): ScenePart {
+  const { solid } = params;
+  const base = flatSketchPart(params, id);
+
+  return solid
+    ? { ...base, position: solid.position, rotation: solid.rotation, role: solid.role, sketch: solid.record }
+    : base;
+}
+
+function flatSketchPart(params: SketchParams, id: string): ScenePart {
   return {
     id,
     name: params.name,
@@ -174,3 +185,20 @@ export function sketchPart(params: SketchParams, id: string): ScenePart {
 }
 
 export { PRINTED_TAG };
+
+export const solidSketchParams = (
+  solid: SketchSolid,
+  output: { name: string; color: string },
+  saveToLibrary: boolean,
+): SketchParams => ({
+  name: output.name,
+  mode: solid.record.mode,
+  widthMm: solid.dimensions.width,
+  heightMm: solid.dimensions.height,
+  depthMm: solid.dimensions.depth,
+  color: output.color,
+  bevel: false,
+  nodes: [solid.node],
+  saveToLibrary,
+  solid,
+});

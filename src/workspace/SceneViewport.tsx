@@ -53,6 +53,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         showGrid={studio.showGrid}
         blueprintDataUrl={null}
         onSelectPart={selection.select}
+        onPickPoint={core.sketching.notePick}
+        onOpenPart={core.sketching.edit}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
         onMarqueeSelect={selection.marqueeSelect}

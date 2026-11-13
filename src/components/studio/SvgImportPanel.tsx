@@ -3,7 +3,7 @@ import { Button, MetaLine, Section, TextArea, FileImportIcon, PlusIcon } from '.
 import { parseSvgTo3DNodes, type ParsedSvg3DResult } from '../../utils/svgTo3DParser';
 import { OutputFields } from './OutputFields';
 import { SAMPLE_ROBOTICS_SVGS } from './samples';
-import type { CreateFrom2DDrawingParams } from './sketchGeometry';
+import type { SketchParams as CreateFrom2DDrawingParams } from '../../workspace/partFactories';
 import type { StudioDraft } from './useStudioDraft';
 
 const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
@@ -150,7 +150,7 @@ const SvgOutput: React.FC<{
           Edit in Sketch
         </Button>
       </div>
-      <OutputFields draft={draft} spanLabel="Width" revolve={false} />
+      <OutputFields draft={draft} depth svg />
       <div className="grid grid-cols-2 gap-2 pt-1">
         <Button size="md" onClick={() => handleBuildSvg3D(false)} icon={<PlusIcon className="w-4 h-4" />}>
           Add

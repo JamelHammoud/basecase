@@ -246,7 +246,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       icon: <PhotoIcon className={ic} />,
       onSelect: () => actions.creation.pickReferenceImage(menu.point),
     },
-    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: () => tool.openCreator('draw2d') },
+    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: core.sketching.open },
     {
       label: 'Annotate',
       shortcut: 'N',

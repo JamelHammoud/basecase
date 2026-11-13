@@ -26,6 +26,7 @@ export interface DevActions {
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   clear: () => void;
   select: (ids: string[]) => void;
+  selectFace: (partId: string, normal: [number, number, number]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
@@ -120,6 +121,9 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     cadSources: () => cadSources(partsRef.current),
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
+    selectFace: (partId: string, normal: [number, number, number]) => devRef.current.selectFace(partId, normal),
+    triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
+    project: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),

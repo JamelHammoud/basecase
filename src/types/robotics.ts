@@ -186,6 +186,7 @@ export interface ScenePart extends PartRelations {
   print?: PartPrint;
   jointId?: string;
   cameraLens?: Lens;
+  sketch?: PartSketch;
 }
 
 export type { PartPrint, PrintRecord } from './print';
@@ -193,6 +194,7 @@ export type { PartPrint, PrintRecord } from './print';
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
 import type { RobotLinkRef } from './robotLink';
+import type { PartSketch } from '../utils/sketch/types';
 
 import type { PartPrint, PrintRecord } from './print';
 

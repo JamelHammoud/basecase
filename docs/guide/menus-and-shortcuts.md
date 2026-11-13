@@ -19,6 +19,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Tools: V/E/R/C/M, D measure, N annotate, A shapes. P opens the Pose tab.
   - Placement and view: F floor, S stack, Z zoom, 1–4 views, ⇧I reference images, ⇧V camera views.
   - Edit: ⌘Z / ⇧⌘Z, ⌘C / ⌘X / ⌘V, ⌘D, ⌫, ⌘A select all, ⌘G / ⇧⌘G group, Esc (closes draft → thread → comment mode → measurement → Measure tool → selection).
+  - Sketch plane (while it has focus, §8): typing a number with a shape started opens its length (a line, then Tab for the angle), width (a rectangle, then Tab for the height) or diameter (a circle); Enter places it, Esc closes the fields, then cancels the shape, then clears the selection, then drops the tool. With one segment selected, typing a number or Enter edits its dimension. ⌫ deletes the selection. ⌘Z / ⇧⌘Z undo and redo sketch edits; the plane owns its edits through `data-own-edits` like the Routines view, and a reopened sketch's undo is the scene's.
   - Routines view (while it has focus, §8j): ⌘Z / ⇧⌘Z undo and redo Routine edits (the view owns its edits through `data-own-edits`, so the scene's history is untouched), ⌫ deletes the selected step, Esc clears the selection, ↑ ↓ Home End move through the step menu. ⌘↩ runs the open Routine whenever the Routines view is open.
   - App: ⌘S Save Scene, ⌘F Find Parts, ⌘P Print (Lay Out Plates), ⌘, Settings, ⌘B / ⌘I panels, ? Settings → Shortcuts.
   - Scenes: ⌘T new, ⌘W close, ⇧⌘T reopen, ⌃Tab / ⇧⌘] next, ⌃⇧Tab / ⇧⌘[ previous, ⌘1–⌘9 (§5a).

@@ -11,6 +11,7 @@ import {
 import type { MarkTool } from '../three/viewport/types';
 import { MarkColors } from './MarkColors';
 import type { Marks } from './useMarks';
+import { keyFor } from '../app/shortcuts';
 
 interface MarkBarProps {
   marks: Marks;
@@ -18,8 +19,8 @@ interface MarkBarProps {
 }
 
 const TOOLS: Array<{ tool: MarkTool; label: string; shortcut: string; icon: React.ReactNode }> = [
-  { tool: 'marker', label: 'Marker', shortcut: 'P', icon: <MarkerIcon className="w-4 h-4" /> },
-  { tool: 'eraser', label: 'Eraser', shortcut: 'E', icon: <EraserIcon className="w-4 h-4" /> },
+  { tool: 'marker', label: 'Marker', shortcut: keyFor('marker'), icon: <MarkerIcon className="w-4 h-4" /> },
+  { tool: 'eraser', label: 'Eraser', shortcut: keyFor('eraser'), icon: <EraserIcon className="w-4 h-4" /> },
 ];
 
 function MarkTools({ marks }: { marks: Marks }) {

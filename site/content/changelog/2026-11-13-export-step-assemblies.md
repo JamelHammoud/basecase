@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/export-step-assemblies/cover.png
 ---
 
-STEP saves the whole design as one file that Fusion, Onshape and SolidWorks open, with each part a named, coloured body. Agent-modelled parts and basic shapes arrive as exact solids; catalog parts and meshes arrive faceted.
+STEP saves the whole design as one file that Fusion, Onshape and SolidWorks open, with each part a named, colored body. Agent-modeled parts and basic shapes arrive as exact solids; catalog parts and meshes arrive faceted.
 
 ## Where it is
 
@@ -20,10 +20,10 @@ While the file is built, Exporting STEP… shows in a toast. A three-part scene 
 
 ## What's in the file
 
-One assembly in millimetres, Z up. Each visible part is its own named, coloured body, placed where it sits in the scene. Each group becomes a sub-assembly.
+One assembly in millimeters, Z up. Each visible part is its own named, colored body, placed where it sits in the scene. Each group becomes a sub-assembly.
 
 Parts the agent wrote in replicad come out as exact solids, and so do most basic shapes and booleans made from them. Their curves and faces stay true, so you can pick and dimension them. Catalog parts, imported meshes and everything else come out as faceted solids built from their triangles, simplified to about 6,000 triangles each. A faceted Feetech STS3215 adds about 5 MB.
 
 ## What's left out
 
-Cutouts, hidden parts and reference images aren't exported, and parts are exported as modelled, not as posed. If a part can't be built, the rest still export and a toast says Exported STEP without 1 part, so nothing goes missing silently. An export that runs past 5 minutes stops; hiding the largest parts gets it under.
+Cutouts, hidden parts and reference images aren't exported, and parts are exported as modeled, not as posed. If a part can't be built, the rest still export and a toast says Exported STEP without 1 part, so nothing goes missing silently. An export that runs past 5 minutes stops; hiding the largest parts gets it under.

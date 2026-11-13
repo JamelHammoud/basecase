@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/edit-a-robot-skeleton/cover.png
 ---
 
-You can now lay out a robot as joints and bones in the Pose tab and drag a hip or a knee by the millimetre. Each servo's torque margin changes as you drag, before the agent builds a single part.
+You can now lay out a robot as joints and bones in the Pose tab and drag a hip or a knee by the millimeter. Each servo's torque margin changes as you drag, before the agent builds a single part.
 
 ## Where it is
 
@@ -22,7 +22,7 @@ Drag a joint ball and that joint moves with everything below it, in 1 mm steps (
 
 ## Margins and servos
 
-Each joint shows how much of its servo's stall torque is left at its hardest load, standing or holding the limb out. It shows as a percentage next to its name and as the ball's colour: green, amber or red, like Checks. It's the same sizing the agent's `size_actuators` runs on a skeleton. Click a joint and the menu offers the next stronger servo on the same bus. On the biped's knee that's the STS3250, which takes it from 88% to 93%.
+Each joint shows how much of its servo's stall torque is left at its hardest load, standing or holding the limb out. It shows as a percentage next to its name and as the ball's color: green, amber or red, like Checks. It's the same sizing the agent's `size_actuators` runs on a skeleton. Click a joint and the menu offers the next stronger servo on the same bus. On the biped's knee that's the STS3250, which takes it from 88% to 93%.
 
 ![Clicking the left knee offers the Feetech STS3250](/changelog/edit-a-robot-skeleton/servo-menu.png)
 

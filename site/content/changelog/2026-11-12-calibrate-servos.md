@@ -28,9 +28,9 @@ Every Feetech and Dynamixel servo in the catalog can be calibrated, each against
 
 ## The replay
 
-Clicking a joint opens its replay. The bench log goes back through the sim twice, once with the preset and once with the calibration. Both are drawn over what the servo really did: the light line is the servo, grey is the preset and blue is the calibration. Under the plot are each one's median error in degrees. On this Shoulder joint, the median error fell from 0.71° to 0.12°.
+Clicking a joint opens its replay. The bench log goes back through the sim twice, once with the preset and once with the calibration. Both are drawn over what the servo really did: the light line is the servo, gray is the preset and blue is the calibration. Under the plot are each one's median error in degrees. On this Shoulder joint, the median error fell from 0.71° to 0.12°.
 
-![The Shoulder joint's replay in Operate, with the servo's path, the preset in grey, the calibration in blue and 0.71° and 0.12° under it](/changelog/calibrate-servos/replay.png)
+![The Shoulder joint's replay in Operate, with the servo's path, the preset in gray, the calibration in blue and 0.71° and 0.12° under it](/changelog/calibrate-servos/replay.png)
 
 ## Older versions and rolling back
 

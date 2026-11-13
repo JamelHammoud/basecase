@@ -77,7 +77,7 @@ const RUNGS: Rung[] = [
   {
     method: 'tracking-rl-with-reset-curriculum',
     applies: (t) => t.trajectoryOptimisation === 'found-success',
-    reason: () => 'Trajectory optimisation found one success, so the policy learns to track it from easier starts.',
+    reason: () => 'Trajectory optimization found one success, so the policy learns to track it from easier starts.',
   },
   {
     method: 'reward-search',

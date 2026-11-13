@@ -1071,7 +1071,7 @@ export const MISUMI_CORNER_BRACKETS: Record<
     allowableLoadN: 1176,
     screw: 'CBM5-10',
     nut: 'HNTT5-5',
-    material: 'ADC12 aluminium die-cast',
+    material: 'ADC12 aluminum die-cast',
   },
   HBLFSNF5: {
     maker: 'Misumi',
@@ -1090,7 +1090,7 @@ export const MISUMI_CORNER_BRACKETS: Record<
     allowableLoadN: 1176,
     screw: 'CBM5-10',
     nut: 'HNTT5-5',
-    material: 'ADC12 aluminium die-cast',
+    material: 'ADC12 aluminum die-cast',
   },
 };
 

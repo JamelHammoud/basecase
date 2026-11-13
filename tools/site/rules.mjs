@@ -1,3 +1,4 @@
+import { findBritish } from '../copy/spelling.mjs';
 import { SITE_BANNED, VAGUE_ALT, VAGUE_LINK_TEXT } from './banned.mjs';
 import { IMAGE, LINK, plainText, prose, sentencesOf, wordCount } from './blocks.mjs';
 
@@ -51,6 +52,18 @@ export function bannedWords(page) {
         .filter(Boolean)
         .map((match) => problem(block.line, `“${match[0]}” is on the banned list; say the specific thing (§3f)`));
     });
+}
+
+const readText = (text) => text.replace(/`[^`]*`/g, '').replace(/\]\([^)]*\)/g, ']');
+
+export function spelling(page) {
+  const lines = [{ line: 1, text: String(page.data.title ?? '') }, ...page.blocks];
+
+  return lines.flatMap(({ line, text }) =>
+    findBritish(readText(text)).map(({ word, use }) =>
+      problem(line, `“${word}” is British; spell it “${use}” (§3b-20)`),
+    ),
+  );
 }
 
 const linksIn = (block) => [...block.text.matchAll(LINK)].map(([, text, href]) => ({ text, href }));

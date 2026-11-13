@@ -1,5 +1,6 @@
-import { toggleCameraViews } from '../cameras/cameraViewsStore';
 import { useEffect, useEffectEvent } from 'react';
+import { shortcutFor, type ShortcutHandlers, type ShortcutId } from '../app/shortcuts';
+import { toggleCameraViews } from '../cameras/cameraViewsStore';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { isModalOpen } from '../design-system';
 import { endServoSetup, servoSetup } from '../robot/servoSetup';
@@ -15,33 +16,99 @@ interface KeyOptions {
   ui: WorkspaceUi;
 }
 
-type KeyMap = Record<string, (e: KeyboardEvent) => void>;
+export type WorkspaceKeyDeps = Omit<KeyOptions, 'active'>;
+
+const ANYWHERE = new Set<ShortcutId>(['palette', 'settings']);
+const SHIFTED = new Set<ShortcutId>(['toggle-reference-images', 'toggle-camera-views', 'shortcuts']);
 
 const isFormFocus = (el: Element | null) => isTextEntry(el) || el instanceof HTMLSelectElement;
 
 const keysGoElsewhere = () => isFormFocus(document.activeElement) || isModalOpen();
 
-const runKey = (map: KeyMap, key: string, e: KeyboardEvent, prevent: boolean) => {
-  if (!Object.hasOwn(map, key)) return false;
+function editKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
+  const { tool, undo, redo, selection } = core;
+  const { edits, ops } = actions;
+  const { marks } = core;
 
-  if (prevent) e.preventDefault();
+  const deleteSelected = () => {
+    if (tool.marking && marks.selected) marks.remove(marks.selected.id);
+    else ops.deleteSelected();
+  };
 
-  map[key](e);
+  return {
+    undo: () => {
+      ui.markKeyEdit();
+      undo();
+    },
+    redo: () => {
+      ui.markKeyEdit();
+      redo();
+    },
+    'select-all': () => {
+      ui.markKeyEdit();
+      selection.selectAll();
+    },
+    group: edits.group,
+    ungroup: edits.ungroup,
+    duplicate: ops.duplicateSelected,
+    delete: deleteSelected,
+    'drop-to-floor': edits.dropToGround,
+    stack: edits.stackOnBelow,
+  };
+}
 
-  return true;
-};
+function toolKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
+  const { tool, annotations, studio, marks } = core;
 
-function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
-  'use memo';
+  return {
+    move: () => tool.setMode('translate'),
+    rotate: () => tool.setMode('rotate'),
+    scale: () => tool.setMode('scale'),
+    sculpt: () => {
+      if (studio.sculptEnabled) tool.setMode('sculpt');
+    },
+    'show-pose': () => actions.pose.openPose(),
+    comment: () => annotations.toggleCommentMode(),
+    measure: () => tool.toggleMeasure(),
+    annotate: () => tool.toggleMarking(),
+    marker: () => marks.setTool('marker'),
+    eraser: () => marks.setTool('eraser'),
+    shapes: ui.toggleShapes,
+  };
+}
 
-  const { tool, annotations, studio, undo, redo, selection, setSelectedIds, viewportRef, marks } = core;
-  const { edits, ops, pose, joints } = actions;
+function appKeys({ core, ui }: WorkspaceKeyDeps): ShortcutHandlers {
+  const { tool, studio } = core;
+
+  const runRoutine = () => {
+    const { routines } = core.simTraining;
+
+    if (tool.leftTab === 'routines' && studio.isLeftOpen && routines.view.compiled?.ok) void routines.run();
+  };
+
+  return {
+    palette: ui.togglePalette,
+    settings: () => studio.openSettings(),
+    shortcuts: () => studio.openSettings('shortcuts'),
+    'find-parts': ui.findParts,
+    'toggle-sidebar': ui.toggleLeft,
+    'toggle-inspector': ui.toggleRight,
+    'toggle-reference-images': ui.toggleReferenceImages,
+    'toggle-camera-views': toggleCameraViews,
+    print: () => (core.printing.mode ? core.printing.closeMode() : core.printing.openMode(1)),
+    'run-routine': runRoutine,
+  };
+}
+
+function viewKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
+  const { tool, annotations, setSelectedIds, viewportRef, marks } = core;
+  const { joints } = actions;
 
   const leaveMeasure = () => {
     if (!viewportRef.current?.cancelMeasure()) tool.toggleMeasure(false);
   };
 
-  const escape = () => {
+  const deselect = () => {
     if (servoSetup()) endServoSetup();
     else if (annotations.draft) annotations.setDraft(null);
     else if (annotations.activeId) annotations.setActiveId(null);
@@ -53,125 +120,55 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     else setSelectedIds([]);
   };
 
-  const runRoutine = () => {
-    const { routines } = core.simTraining;
-
-    if (tool.leftTab === 'routines' && studio.isLeftOpen && routines.view.compiled?.ok) void routines.run();
+  return {
+    'zoom-selection': ui.focusSelected,
+    deselect,
+    ...Object.fromEntries(CAMERA_VIEWS.map((v) => [`view:${v.id}`, () => ui.setCameraView(v.id)])),
   };
-
-  const deleteSelected = () => {
-    if (tool.marking && marks.selected) marks.remove(marks.selected.id);
-    else ops.deleteSelected();
-  };
-
-  const global: KeyMap = {
-    k: ui.togglePalette,
-    ',': () => studio.openSettings(),
-  };
-
-  const withMod: KeyMap = {
-    z: (e) => {
-      ui.markKeyEdit();
-
-      if (e.shiftKey) redo();
-      else undo();
-    },
-    y: () => {
-      ui.markKeyEdit();
-      redo();
-    },
-    g: (e) => (e.shiftKey ? edits.ungroup() : edits.group()),
-    a: () => {
-      ui.markKeyEdit();
-      selection.selectAll();
-    },
-    d: ops.duplicateSelected,
-    b: ui.toggleLeft,
-    i: ui.toggleRight,
-    p: () => (core.printing.mode ? core.printing.closeMode() : core.printing.openMode(1)),
-    enter: runRoutine,
-  };
-
-  const plain: KeyMap = {
-    v: () => tool.setMode('translate'),
-    w: () => tool.setMode('translate'),
-    e: () => (tool.marking ? marks.setTool('eraser') : tool.setMode('rotate')),
-    r: () => tool.setMode('scale'),
-    c: () => {
-      if (studio.sculptEnabled) tool.setMode('sculpt');
-    },
-    p: () => (tool.marking ? marks.setTool('marker') : pose.openPose()),
-    f: edits.dropToGround,
-    s: edits.stackOnBelow,
-    z: ui.focusSelected,
-    m: () => annotations.toggleCommentMode(),
-    d: () => tool.toggleMeasure(),
-    n: () => tool.toggleMarking(),
-    a: ui.toggleShapes,
-    escape,
-    backspace: deleteSelected,
-    delete: deleteSelected,
-    ...Object.fromEntries(CAMERA_VIEWS.map((v, i) => [String(i + 1), () => ui.setCameraView(v.id)])),
-  };
-
-  const running: KeyMap = { escape: core.caseRun.leave };
-
-  return { global, withMod, plain, running };
 }
 
+export const workspaceKeyHandlers = (deps: WorkspaceKeyDeps): ShortcutHandlers => ({
+  ...editKeys(deps),
+  ...toolKeys(deps),
+  ...appKeys(deps),
+  ...viewKeys(deps),
+});
+
 export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
-  const maps = useKeyMaps({ core, actions, ui });
   const blocked = ui.paletteOpen || core.studio.settingsOpen;
 
-  const runPlain = (e: KeyboardEvent, key: string) => {
-    if (e.shiftKey && key === 'i') {
-      e.preventDefault();
-      ui.toggleReferenceImages();
+  const commandFor = (e: KeyboardEvent) =>
+    (core.tool.marking && shortcutFor(e, 'annotate')) || shortcutFor(e, 'canvas');
 
-      return;
-    }
+  const runsAnywhere = (id: ShortcutId | null) =>
+    !!id && (ANYWHERE.has(id) || (id === 'find-parts' && !blocked && !core.caseRun.open));
 
-    if (e.shiftKey && key === 'v') {
-      e.preventDefault();
-      toggleCameraViews();
+  const keysOff = () => keysGoElsewhere() || blocked || core.simTraining.sim.drive.active || core.buildAlong.active;
 
-      return;
-    }
+  const onRunningKey = (e: KeyboardEvent, id: ShortcutId | null) => {
+    if (id !== 'deselect') return;
 
-    if (e.key === '?') {
-      e.preventDefault();
-      core.studio.openSettings('shortcuts');
-
-      return;
-    }
-
-    runKey(maps.plain, key, e, false);
-  };
-
-  const runScoped = (e: KeyboardEvent, key: string, mod: boolean) => {
-    const running = core.caseRun.open;
-
-    if (running && !mod) runKey(maps.running, key, e, true);
-    else if (!running && mod) runKey(maps.withMod, key, e, true);
-    else if (!running && !e.altKey && !core.printing.mode) runPlain(e, key);
+    e.preventDefault();
+    core.caseRun.leave();
   };
 
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+    const id = commandFor(e);
     const mod = e.metaKey || e.ctrlKey;
-    const key = e.key.toLowerCase();
 
-    if (mod && runKey(maps.global, key, e, true)) return;
+    if (!runsAnywhere(id) && keysOff()) return;
 
-    if (mod && !e.shiftKey && key === 'f' && !blocked && !core.caseRun.open) {
-      e.preventDefault();
-      ui.findParts();
+    if (!runsAnywhere(id) && core.caseRun.open) {
+      onRunningKey(e, id);
 
       return;
     }
 
-    if (keysGoElsewhere() || blocked || core.simTraining.sim.drive.active || core.buildAlong.active) return;
+    if (!id || (!mod && core.printing.mode)) return;
 
-    runScoped(e, key, mod);
+    if (mod || SHIFTED.has(id)) e.preventDefault();
+
+    workspaceKeyHandlers({ core, actions, ui })[id]?.(e);
   });
 
   useEffect(() => {

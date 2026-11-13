@@ -40,7 +40,7 @@ const signal = z.object({
 });
 
 const CONTRACT =
-  'The contract is the judge: { success: Formula, failures: [{ label, formula }] } over named signals, in SI units (m, rad, s, metres in the MuJoCo world frame, which is the agent frame / 1000). ' +
+  'The contract is the judge: { success: Formula, failures: [{ label, formula }] } over named signals, in SI units (m, rad, s, meters in the MuJoCo world frame, which is the agent frame / 1000). ' +
   'Formula: { all: [..] }, { any: [..] }, { always: { window, state } }, { eventually: { window, state } }, { hold_for: { seconds, state, within: window } }, { sequence: [..] }. ' +
   'State: { all }, { any }, { not }, { atom: { expr, cmp: "<"|"<="|">"|">=", value, scale } } (scale: how much counts as a clear margin). ' +
   'Expr: { signal: name }, { abs: expr }, { delta: expr } (change since the start), { dist: [[x,y,z],[x,y,z]] }, { angle: [[..],[..]] } with each name a signal. ' +

@@ -115,7 +115,7 @@ function checkedBody(body, budget) {
 
   return {
     name: shortText(body.name, 'part name'),
-    color: typeof body.color === 'string' && HEX.test(body.color) ? body.color.toLowerCase() : fail('colour'),
+    color: typeof body.color === 'string' && HEX.test(body.color) ? body.color.toLowerCase() : fail('color'),
     group: body.group === undefined ? undefined : shortText(body.group, 'group name'),
     place: checkedMatrix(body.place, { rigid: true }),
     solid: checkedSolid(body.solid, budget),

@@ -52,4 +52,4 @@ The command exits 0 when every Case passes, 1 when any misses, and 2 when it can
 
 In a clone of Basecase, `npx basecase check robot.basecase` runs the same command.
 
-Catalog parts and parts the agent modelled use their real meshes. A part the agent sourced that isn't in the catalog yet runs as its box, because its mesh stays on the computer that sourced it.
+Catalog parts and parts the agent modeled use their real meshes. A part the agent sourced that isn't in the catalog yet runs as its box, because its mesh stays on the computer that sourced it.

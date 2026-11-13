@@ -133,6 +133,7 @@ export const SketchPanel: React.FC<{
           size="md"
           variant="primary"
           fullWidth
+          className="mt-1"
           disabled={outerPoints.length < 3}
           onClick={build}
           icon={<PlusIcon className="w-4 h-4" />}

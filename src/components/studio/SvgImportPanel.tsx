@@ -150,7 +150,14 @@ const SvgOutput: React.FC<{
         </Button>
       </div>
       <OutputFields draft={draft} spanLabel="Width" revolve={false} />
-      <Button size="md" variant="primary" fullWidth onClick={handleBuildSvg3D} icon={<PlusIcon className="w-4 h-4" />}>
+      <Button
+        size="md"
+        variant="primary"
+        fullWidth
+        className="mt-1"
+        onClick={handleBuildSvg3D}
+        icon={<PlusIcon className="w-4 h-4" />}
+      >
         Add
       </Button>
     </Section>

@@ -121,7 +121,7 @@ export const ConnectionBanner: React.FC<{
     <div className={BANNER}>
       <div className={ROW}>
         <span className="flex-1 min-w-0 break-words">
-          {acpStatus.error ? `Agent error: ${acpStatus.error}` : 'Agent isn’t connected.'}
+          {acpStatus.error ? `Agent isn’t connected. ${acpStatus.error}` : 'Agent isn’t connected.'}
         </span>
         <button type="button" onClick={() => onReconnect(acpStatus.agentCommand)} className={BANNER_BUTTON}>
           Reconnect

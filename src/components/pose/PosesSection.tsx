@@ -69,7 +69,6 @@ export const PosesSection: React.FC<{
               type="button"
               className="flex-1 min-w-0 h-8 text-left text-[13px] text-white/85 truncate cursor-default"
               onClick={() => posing.applySavedPose(p.id)}
-              onDoubleClick={() => setRenaming(p.id)}
             >
               {p.name}
             </button>

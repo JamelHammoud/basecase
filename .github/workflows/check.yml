@@ -93,16 +93,43 @@ jobs:
           git cat-file -e "$base^{commit}" 2>/dev/null || base="$head~1"
           node tools/check-credit.mjs "$base..$head"
 
+  copy:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: New copy is justified and uses no banned words
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          RANGE: ${{ format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) }}
+        run: node tools/check-copy-budget.mjs "$RANGE"
+
   check:
     if: always()
-    needs: [test, app, credit]
+    needs: [test, app, credit, copy]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job passed
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          CORE: ${{ needs.test.result }} ${{ needs.app.result }} ${{ needs.credit.result }}
+          COPY: ${{ needs.copy.result }}
+          EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Results: $RESULTS"
-          [ "$(wc -w <<< "$RESULTS")" -eq 3 ] || exit 1
-          for r in $RESULTS; do [ "$r" = success ] || exit 1; done
+          echo "Results: $CORE, copy $COPY"
+          [ "$(wc -w <<< "$CORE")" -eq 3 ] || exit 1
+          for r in $CORE; do [ "$r" = success ] || exit 1; done
+          want=success
+          [ "$EVENT" = pull_request ] || want=skipped
+          [ "$COPY" = "$want" ] || exit 1

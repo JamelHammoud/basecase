@@ -18,6 +18,11 @@ export const KINDS = {
 
 const NONE = '_None._';
 
+const copyLines = (copy = []) =>
+  copy.length === 0
+    ? NONE
+    : copy.map(({ string, why }) => `copy: "${string.replace(/\s+/g, ' ')}" — ${why}`).join('\n');
+
 const screenshotLines = (paths, branch) =>
   paths.length === 0
     ? NONE
@@ -37,6 +42,7 @@ export function pullBody(change, { branch, extra = {} }) {
     checked: change.checked,
     changelog: change.changelog || NONE,
     screenshots: screenshotLines(change.screenshots ?? [], branch),
+    copy: copyLines(change.copy),
     ...extra,
   };
 

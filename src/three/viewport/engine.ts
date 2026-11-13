@@ -17,16 +17,12 @@ import {
 import { snapshotShapes } from '../analysis/sceneShapes';
 import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
-import { AgentFrames } from './agentFrames';
 import { BlueprintUnderlay } from './blueprint';
-import { CameraGlyphs } from './cameraGlyphs';
-import { CheckDots } from './checkDots';
 import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
 import { silhouetteShots } from './fitCapture';
 import { FollowCamera } from './followCamera';
-import { GhostLayer } from './ghostLayer';
 import { Gizmo } from './gizmo';
 import { installKeys } from './keys';
 import { MarkFieldAnchor } from './markFieldAnchor';
@@ -40,7 +36,7 @@ import { PartLayer } from './partLayer';
 import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
 import { ScaleFigures } from './scaleFigures';
-import { ScanPoints } from './scanPoints';
+import { StageOverlays } from './stageOverlays';
 import { SelectionOutline } from './selectionOutline';
 import { warmShaders } from './shaderWarmup';
 import { createStage, disposeStage } from './stage';
@@ -132,16 +128,9 @@ export class ViewportEngine {
 
   private readonly markField: MarkFieldAnchor;
 
-  private readonly agentFrames: AgentFrames;
-
-  private readonly cameraGlyphs: CameraGlyphs;
-
-  private readonly scanPoints: ScanPoints;
-  private readonly checkDots: CheckDots;
+  private readonly overlays: StageOverlays;
 
   private readonly follow: FollowCamera;
-
-  private readonly ghost: GhostLayer;
 
   private readonly cleanups: Array<() => void>;
 
@@ -179,15 +168,8 @@ export class ViewportEngine {
     this.markLayer.sync(options.props.marks, options.props.selectedMarkId);
     this.markInput = new MarkInput(this.ctx, this.markLayer);
     this.markField = new MarkFieldAnchor(this.ctx, this.markLayer, options.markField);
-    this.agentFrames = new AgentFrames(this.ctx);
-    this.agentFrames.sync(options.props.agentFrames ?? []);
-    this.cameraGlyphs = new CameraGlyphs(stage.overlays);
-    this.cameraGlyphs.sync(options.props.fixedCameras);
-    this.scanPoints = new ScanPoints(stage.overlays);
-    this.checkDots = new CheckDots(stage.overlays);
-    this.checkDots.sync(options.props.checkDots);
+    this.overlays = new StageOverlays(this.ctx, options.props, options.ghostLabel);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
-    this.ghost = new GhostLayer(this.ctx, options.ghostLabel);
 
     const outline = new SelectionOutline(stage);
 
@@ -195,9 +177,9 @@ export class ViewportEngine {
     loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
     loop.afterRender.add(() => this.measureTool.updateLabel());
     loop.afterRender.add(() => this.markField.place());
-    loop.afterRender.add(() => this.ghost.placeLabel());
+    loop.afterRender.add(() => this.overlays.ghost.placeLabel());
     loop.afterRender.add(() => {
-      if (this.agentFrames.refresh()) loop.invalidate();
+      if (this.overlays.agentFrames.refresh()) loop.invalidate();
     });
 
     const gizmoState = {
@@ -267,11 +249,7 @@ export class ViewportEngine {
 
     if ((previous.markMode && !props.markMode) || previous.markTool !== props.markTool) this.markInput.cancel();
 
-    if (previous.agentFrames !== props.agentFrames) this.agentFrames.sync(props.agentFrames ?? []);
-
-    if (previous.fixedCameras !== props.fixedCameras) this.cameraGlyphs.sync(props.fixedCameras);
-
-    if (previous.checkDots !== props.checkDots) this.checkDots.sync(props.checkDots);
+    this.overlays.sync(previous, props);
 
     if (!changed(previous, props, ['marks', 'selectedMarkId'])) return;
 
@@ -289,11 +267,7 @@ export class ViewportEngine {
     this.measureTool.dispose();
     this.figures.dispose();
     this.markLayer.dispose();
-    this.agentFrames.dispose();
-    this.cameraGlyphs.dispose();
-    this.scanPoints.dispose();
-    this.checkDots.dispose();
-    this.ghost.dispose();
+    this.overlays.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -338,10 +312,7 @@ export class ViewportEngine {
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
-      setScan: (points) => camera(() => this.scanPoints.set(points)),
-      scanPointCount: () => this.scanPoints.size,
-      setGhost: (ghost) => this.ghost.set(ghost),
-      ghostState: () => this.ghost.state(),
+      ...this.overlays.handle(camera),
       followPart: (partId) => {
         this.follow.follow(partId);
         ctx.loop.following = this.follow.active;
@@ -405,7 +376,6 @@ export class ViewportEngine {
       projectPoints: (points) => measure.projectPoints(ctx, points),
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
       cancelMeasure: () => this.measureTool.clear(),
-      checkDotCount: () => this.checkDots.count,
     };
   }
 
@@ -443,7 +413,7 @@ export class ViewportEngine {
 
   private afterBuild(): void {
     this.applyPose();
-    this.ghost.sync();
+    this.overlays.ghost.sync();
     this.gizmo.refresh();
 
     if (this.frameWhenBuilt && !this.ctx.layer.hasPending) this.frameAll();

@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { MODEL_DRAG_TYPE } from '../../data/dnd';
 import { HoverCard, IconButton, Tooltip, MoreIcon, PlusIcon } from '../../design-system';
 
-const TileThumb: React.FC<{ thumb: string | undefined; fallback?: string }> = ({ thumb, fallback }) => {
+const TileThumb: React.FC<{ thumb: string | undefined }> = ({ thumb }) => {
   if (thumb) {
     return (
       <img
@@ -14,11 +14,9 @@ const TileThumb: React.FC<{ thumb: string | undefined; fallback?: string }> = ({
     );
   }
 
-  if (thumb === '' || fallback) {
+  if (thumb === '') {
     return (
-      <span className="w-full h-full flex items-center justify-center text-[12px] text-white/50">
-        {fallback ?? 'No preview'}
-      </span>
+      <span className="w-full h-full flex items-center justify-center text-[12px] text-white/50">No preview</span>
     );
   }
 
@@ -31,14 +29,9 @@ export const Tile: React.FC<{
   name: string;
   meta: React.ReactNode;
   thumb: string | undefined;
-  fallback?: string;
-  badge?: string;
-  current?: boolean;
-  openLabel: string;
   renaming: boolean;
-  onOpen: () => void;
-  onAdd?: () => void;
-  dragModelId?: string;
+  onInsert: () => void;
+  modelId: string;
   onStartRename: () => void;
   onRename: (name: string) => void;
   menuOpen: boolean;
@@ -48,14 +41,9 @@ export const Tile: React.FC<{
   name,
   meta,
   thumb,
-  fallback,
-  badge,
-  current,
-  openLabel,
   renaming,
-  onOpen,
-  onAdd,
-  dragModelId,
+  onInsert,
+  modelId,
   onStartRename,
   onRename,
   menuOpen,
@@ -67,11 +55,9 @@ export const Tile: React.FC<{
       data-library-tile
       className="group relative w-full"
       onContextMenu={onMenu}
-      draggable={!!dragModelId && !renaming}
+      draggable={!renaming}
       onDragStart={(e) => {
-        if (!dragModelId) return;
-
-        e.dataTransfer.setData(MODEL_DRAG_TYPE, dragModelId);
+        e.dataTransfer.setData(MODEL_DRAG_TYPE, modelId);
         e.dataTransfer.effectAllowed = 'copy';
 
         const img = (e.currentTarget as HTMLElement).querySelector('img');
@@ -81,21 +67,14 @@ export const Tile: React.FC<{
     >
       <button
         type="button"
-        onClick={onOpen}
-        aria-label={`${openLabel}: ${name}`}
-        className={`preview block w-full aspect-[4/3] cursor-default active:scale-[0.98] transition-[background-color,transform] duration-150 ${
-          current ? 'ring-[1.5px] ring-inset ring-[#0d99ff]/70' : ''
-        }`}
+        onClick={onInsert}
+        aria-label={`Insert: ${name}`}
+        className="preview block w-full aspect-[4/3] cursor-default active:scale-[0.98] transition-[background-color,transform] duration-150"
       >
-        <TileThumb thumb={thumb} fallback={fallback} />
-        {badge && (
-          <span className="absolute top-[8px] left-[8px] h-5 px-1.5 rounded-full bg-black/50 ring-1 ring-white/10 backdrop-blur-md text-[12px] leading-5 font-medium text-white/80">
-            {badge}
-          </span>
-        )}
+        <TileThumb thumb={thumb} />
       </button>
 
-      <div className="relative pl-0.5 pt-2 cursor-default" onClick={renaming ? undefined : onOpen}>
+      <div className="relative pl-0.5 pt-2 cursor-default" onClick={renaming ? undefined : onInsert}>
         {renaming ? (
           <RenameField name={name} onDone={onRename} />
         ) : (
@@ -128,7 +107,7 @@ export const Tile: React.FC<{
         )}
       </div>
 
-      {onAdd && !renaming && (
+      {!renaming && (
         <Tooltip
           label="Insert"
           className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
@@ -138,7 +117,7 @@ export const Tile: React.FC<{
             aria-label={`Insert ${name}`}
             onClick={(e) => {
               e.stopPropagation();
-              onAdd();
+              onInsert();
             }}
             className="w-7 h-7 rounded-full bg-[#0d99ff] text-white flex items-center justify-center cursor-default shadow-[0_2px_6px_rgba(0,0,0,0.4)] hover:bg-[#2ba5ff] active:scale-[0.94] transition-[background-color,transform] duration-150"
           >

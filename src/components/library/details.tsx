@@ -5,14 +5,14 @@ import { timeAgo } from '../../utils/timeAgo';
 import { Button } from '../../design-system';
 import { Header, SizeLine, Stat } from '../PartDetails';
 
-export function savedWhen(iso: string | undefined): string {
+function savedAgo(iso: string | undefined): string {
   if (!iso) return '';
 
   const t = timeAgo(iso);
 
-  if (t === 'now') return 'Saved just now';
+  if (t === 'now') return 'just now';
 
-  return /^\d+[mhd]$/.test(t) ? `Saved ${t} ago` : `Saved ${t}`;
+  return /^\d+[mhd]$/.test(t) ? `${t} ago` : t;
 }
 
 export function modelParts(m: CustomModelDefinition): ScenePart[] {
@@ -21,7 +21,7 @@ export function modelParts(m: CustomModelDefinition): ScenePart[] {
   return modelToParts(m, [0, 0, 0], () => `preview-${n++}`).parts;
 }
 
-export const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) => (
+const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) => (
   <div className="relative h-[168px] bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)]">
     {thumb ? (
       <img
@@ -58,7 +58,7 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
       <DetailsHero thumb={thumb} />
       <Header
         title={model.name}
-        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedWhen(model.createdAt).replace(/^Saved /, '')]}
+        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedAgo(model.createdAt)]}
         description={
           model.description && !/^Saved from \d+ parts?\.?$/.test(model.description) ? model.description : undefined
         }

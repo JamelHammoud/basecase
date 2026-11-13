@@ -10,6 +10,7 @@ type Config = Record<string, unknown>;
 interface PanelKindSpec<C extends Config> {
   read: (v: Config, where: string, scope: SignalScope) => C;
   desktopOnly?: (config: C) => boolean;
+  studioOnly?: (config: C) => boolean;
 }
 
 const kind = <C extends Config>(spec: PanelKindSpec<C>) => spec;
@@ -61,6 +62,7 @@ const readText = (v: Config, where: string) =>
 export const PANEL_KINDS = {
   camera: kind({
     read: (v, where, scope) => ({ signal: signalRef(scope, ['camera'], true)(v.signal, `${where}.signal`) }),
+    studioOnly: () => true,
   }),
   value: kind({ read: (v, where, scope) => ({ signal: numbers(scope)(v.signal, `${where}.signal`) }) }),
   plot: kind({
@@ -75,7 +77,10 @@ export const PANEL_KINDS = {
   }),
   table: kind({ read: readTable, desktopOnly: (c) => c.of === 'servos' }),
   button: kind({ read: (v, where) => ({ action: oneOf(CASE_ACTIONS)(v.action, `${where}.action`) }) }),
-  list: kind({ read: (v, where) => ({ of: oneOf(['tries', 'failures'] as const)(v.of, `${where}.of`) }) }),
+  list: kind({
+    read: (v, where) => ({ of: oneOf(['tries', 'failures'] as const)(v.of, `${where}.of`) }),
+    studioOnly: (c) => c.of === 'tries',
+  }),
   text: kind({ read: readText }),
   map: kind({
     read: (v, where) => {
@@ -100,5 +105,14 @@ export type PanelSpec = { [K in PanelKind]: PanelOf<K> }[PanelKind];
 export const readPanelConfig = (k: PanelKind, v: Config, where: string, scope: SignalScope) =>
   (PANEL_KINDS[k].read as PanelKindSpec<Config>['read'])(v, where, scope);
 
-export const panelOnDesktopOnly = (panel: PanelSpec) =>
-  (PANEL_KINDS[panel.kind] as PanelKindSpec<Config>).desktopOnly?.(panel as unknown as Config) ?? false;
+export interface PanelSurface {
+  desktop: boolean;
+  studio: boolean;
+}
+
+export function panelShows(panel: PanelSpec, { desktop, studio }: PanelSurface) {
+  const spec = PANEL_KINDS[panel.kind] as PanelKindSpec<Config>;
+  const config = panel as unknown as Config;
+
+  return (desktop || !spec.desktopOnly?.(config)) && (studio || !spec.studioOnly?.(config));
+}

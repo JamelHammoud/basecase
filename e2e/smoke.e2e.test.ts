@@ -97,7 +97,7 @@ describe('studio commands', () => {
     expect(await cursor()).toBe(idle);
   });
 
-  it('asks before deleting a comment or a thread', async () => {
+  it('asks before deleting a comment or a thread, and undoes a deleted reply', async () => {
     const dialog = app.page.getByRole('dialog');
     const parts = await partCount(app.page);
     const comment = (text: string) => app.page.locator('p', { hasText: text });
@@ -117,6 +117,14 @@ describe('studio commands', () => {
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     expect(await partCount(app.page)).toBe(parts);
     expect(await comment('First note').count()).toBe(1);
+
+    await comment('Second note').hover();
+    await app.page.getByRole('button', { name: 'Delete', exact: true }).last().click();
+    await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect.poll(() => comment('Second note').count()).toBe(0);
+    expect(await app.page.getByRole('button', { name: 'Delete', exact: true }).count()).toBe(0);
+    await app.page.getByRole('status').getByRole('button', { name: 'Undo' }).click();
+    await expect.poll(() => comment('Second note').count()).toBe(1);
 
     await app.page.getByRole('button', { name: 'Delete thread' }).click();
     await expect.poll(() => dialog.getAttribute('aria-label')).toBe('Delete thread #1?');

@@ -26,6 +26,12 @@ Every run is kept. To go back, hover a joint's row and click Roll Back; it asks 
 
 ![Rolling back the Shoulder asks first](/changelog/calibrate-servos/roll-back.png)
 
+## Policies trained before it
+
+A policy trained before a calibration shows Out of date in the Simulate tab's Policies, because the servos it learned on aren't the ones the sim runs now. Right-click it and choose Retrain to train it again on the fit, with the same task, speed and training time; the old policy keeps running until the new one replaces it. Rolling the calibration back makes it current again.
+
+![Policies with Walk 1 and Stand 1 marked Out of date, and Retrain in the right-click menu](/changelog/calibrate-servos/retrain.png)
+
 ## What it doesn't do yet
 
 Calibrate Servos runs on the emulated robot only, and no real servo has been calibrated with it. The fit covers what the simulator's servo model has terms for; backlash, flex in the frame, a sagging supply and heat aren't modelled, so the fit absorbs what it can of them into those terms.

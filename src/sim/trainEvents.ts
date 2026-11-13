@@ -7,11 +7,12 @@ import type { TrainProgress, Training } from './useTraining';
 export interface TrainJob {
   id: string | null;
   task: TrainTask;
+  replaces: string | null;
 }
 
 export interface TrainEventContext {
   job: { current: TrainJob | null };
-  onPolicy: (record: PolicyRecord) => void;
+  onPolicy: (record: PolicyRecord, replaces: string | null) => void;
   setMessage: Dispatch<SetStateAction<string | null>>;
   setStatus: Dispatch<SetStateAction<Training['status']>>;
   setProgress: Dispatch<SetStateAction<TrainProgress | null>>;
@@ -49,7 +50,7 @@ export function trainingBlocker(robotKey: string | null, trainer: TrainerStatus 
 }
 
 function onDone(ctx: TrainEventContext, record: PolicyRecord) {
-  ctx.onPolicy(record);
+  ctx.onPolicy(record, ctx.job.current?.replaces ?? null);
 
   const task = ctx.job.current?.task ?? record.task;
 

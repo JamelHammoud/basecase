@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, IconButton, RunIcon, StopIcon, TrainIcon } from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
 import { pct } from './format';
+import { ProgressBar } from './ProgressBar';
 
 export interface SkillActions {
   onTrain: (row: SkillRow) => void;
@@ -57,15 +58,6 @@ const RowAction: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row, ac
   );
 };
 
-const Progress: React.FC<{ share: number }> = ({ share }) => (
-  <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-    <div
-      className="h-full bg-[#0d99ff] transition-[width] duration-300"
-      style={{ width: `${Math.round(Math.min(1, share) * 100)}%` }}
-    />
-  </div>
-);
-
 export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions }> = ({ rows, actions }) => (
   <ul className="flex flex-col gap-1" data-testid="skills-list">
     {rows.map((row) => {
@@ -76,7 +68,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions }> =
           <div className="flex-1 min-w-0">
             <div className="text-[13px] text-white/85 truncate">{row.label}</div>
             {line && <div className="text-[12px] text-white/50 tabular truncate">{line}</div>}
-            {row.state.kind === 'training' && row.state.share !== null && <Progress share={row.state.share} />}
+            {row.state.kind === 'training' && row.state.share !== null && <ProgressBar share={row.state.share} />}
           </div>
           <RowAction row={row} actions={actions} />
         </li>

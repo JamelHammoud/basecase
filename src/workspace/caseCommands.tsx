@@ -10,6 +10,7 @@ import {
   StopIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
+import { INPUT_COMMANDS } from './inputCommands';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -32,6 +33,7 @@ export const STAYS_IN_RUN = new Set([
   'case-try',
   'case-export-dataset',
   'case-publish-dataset',
+  ...INPUT_COMMANDS,
 ]);
 
 export const showRoomCase = (core: WorkspaceCore, room: Room) => {
@@ -84,6 +86,22 @@ function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
       run: share.share,
     },
   ];
+}
+
+function compareCommands(core: WorkspaceCore): Command[] {
+  const { caseCompare, tool } = core;
+
+  return caseCompare.choices.map((choice) => ({
+    id: `case-compare-${choice.tabId}`,
+    group: 'Simulate',
+    label: `Compare With ${choice.name}`,
+    icon: <CasesIcon className={ic} />,
+    keywords: 'case versus pass rate which better robot scene tab',
+    run: () => {
+      caseCompare.start(choice.tabId);
+      tool.setRightTab('sim');
+    },
+  }));
 }
 
 export function caseCommands({ core }: CommandInputs): Command[] {
@@ -170,6 +188,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...caseRun,
+    ...(cases.active ? compareCommands(core) : []),
     ...datasetCommands(cases),
     ...shareCommands(simTraining),
   ];

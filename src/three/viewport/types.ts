@@ -15,6 +15,7 @@ import type { SweepSpec } from '../analysis/sweep';
 import type { SceneShapes } from '../analysis/sceneShapes';
 import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
+import type { JointAxes } from '../../joints/jointCandidates';
 import type { JointAxisQuery } from '../analysis/jointAxis';
 import type { CheckDot } from '../../utils/engineeringTypes';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
@@ -205,6 +206,7 @@ export interface Viewport3DHandle {
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
   jointAxis: (query: JointAxisQuery) => Promise<FoundAxis | null>;
+  jointAxes: (ids: string[]) => Promise<JointAxes>;
   meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
   strength: (jobs: StrengthJob[]) => Promise<Array<StrengthReading | null>>;

@@ -107,7 +107,7 @@ export function useAgentSession({ core, seed, active, robots, wrap, placeCustomM
     },
     'agent-status': (event, laneId) => onStatus(laneId, event),
     'agent-blocked': (event) =>
-      showToast(`Blocked “${String(event.title)}”: the agent only edits the model`, { tone: 'neutral' }),
+      showToast(`Blocked “${String(event.title)}”: the agent only edits the scene`, { tone: 'neutral' }),
     'acp-session': (event, laneId) => {
       const sessionId = event.sessionId;
 

@@ -23,13 +23,13 @@ covers:
   - src/cases/robotFit.ts
   - src/cases/tries.ts
   - src/cases/tryStore.ts
-  - src/cases/templates.ts
+  - src/cases/caseBuilder.ts
   - src/components/cases/CasesPanel.tsx
 ---
 
 Cases turn "can my robot do this" into a pass or a miss, judged the same way for any robot that fits.
 
-A robot that stands in the simulation tells you little about whether it can reach a shelf or push a box. A Case asks that question the same way every time, so you can compare two designs, or the same design before and after a change.
+A robot that stands in the simulation tells you little about whether it can reach a shelf or push a box. A Case asks that question the same way every time, so you can [compare two designs](/help/compare-two-robots-on-a-case), or the same design before and after a change.
 
 ## What a Case holds
 
@@ -45,8 +45,6 @@ Every Case also carries a reference: a route that proves the Case can be passed.
 
 A Case is written once and runs on any robot that fits its slot. For an arm, Basecase scales the whole world to the arm's reach, measured from its shoulder. Touch the Dots written on one arm puts its dots within reach of the next.
 
-The **Cases** list shows only Cases the robot in this scene can try. One that doesn't fit is left out, rather than listed with a reason.
-
 ## Tries
 
 You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
@@ -60,5 +58,4 @@ Cases measure. Skills you train in the **Train** section are judged by the same 
 ## Where Cases come from
 
 - **New Case** builds one from a goal and a world. Steps are in [Make a Case](/help/make-a-case).
-- **Examples** are ready-made Cases for this robot: Touch the Dots for an arm, Reach the Flag for wheels or legs.
 - **Ask the Agent** lets you describe one in words, with `/case` in the agent's box.

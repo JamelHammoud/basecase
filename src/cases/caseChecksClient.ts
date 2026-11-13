@@ -113,7 +113,7 @@ export class CaseCheckPool {
   private withRobot(slot: Slot, queued: Queued): CaseCheckJob {
     const { job } = queued;
 
-    if (job.type !== 'runs' || slot.held === job.modelHash) return job;
+    if (job.type === 'model' || slot.held === job.modelHash) return job;
 
     slot.held = job.modelHash;
 

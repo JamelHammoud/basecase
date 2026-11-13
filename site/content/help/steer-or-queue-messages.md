@@ -37,7 +37,7 @@ With Claude and Codex, the agent reads it right away and changes course. Gemini 
 1. While the agent works, type the next request.
 2. Press [[⌘↩]].
 
-You can also right-click the send button and choose **Queue**. Queued messages show above the composer and send one at a time after the run. Hover one to click **Send now**, **Edit** or **Delete**. Delete asks first. Drag a message by its handle to change the order.
+You can also right-click the send button and choose **Queue**. Queued messages show above the composer and send one at a time after the run. Click one to edit it. Hover one to click **Send now** or **Delete**. Delete asks first. Drag a message to change the order.
 
 ## Stop the agent
 

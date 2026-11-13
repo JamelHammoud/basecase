@@ -1,29 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { MODEL_DRAG_TYPE, setSceneDrag } from '../../data/dnd';
-import { HoverCard } from '../../design-system';
-
-const TileThumb: React.FC<{ thumb: string | undefined }> = ({ thumb }) => {
-  if (thumb) {
-    return (
-      <img
-        src={thumb}
-        alt=""
-        draggable={false}
-        className="w-full h-full object-contain p-1.5 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-      />
-    );
-  }
-
-  if (thumb === '') {
-    return (
-      <span className="w-full h-full flex items-center justify-center text-[12px] text-white/50">No preview</span>
-    );
-  }
-
-  return (
-    <span className="block w-full h-full shimmer" />
-  );
-};
+import { HoverCard, PreviewImage } from '../../design-system';
 
 const TileText: React.FC<{ meta: React.ReactNode; children: React.ReactNode }> = ({ meta, children }) => (
   <div className="pl-0.5 pt-2">
@@ -31,6 +8,9 @@ const TileText: React.FC<{ meta: React.ReactNode; children: React.ReactNode }> =
     <div className="text-[12px] text-white/50 tabular truncate">{meta}</div>
   </div>
 );
+
+const TILE_IMAGE =
+  'p-1.5 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]';
 
 const TILE_NAME = 'text-[13px] leading-[19px] font-medium text-white/90 truncate';
 
@@ -49,7 +29,7 @@ export const Tile: React.FC<{
     return (
       <div data-library-tile className="w-full">
         <div className="preview aspect-[4/3]">
-          <TileThumb thumb={thumb} />
+          <PreviewImage src={thumb} className={TILE_IMAGE} />
         </div>
         <TileText meta={meta}>
           <RenameField name={name} onDone={onRename} />
@@ -77,7 +57,7 @@ export const Tile: React.FC<{
         className="group w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"
       >
         <div className="preview aspect-[4/3]">
-          <TileThumb thumb={thumb} />
+          <PreviewImage src={thumb} className={TILE_IMAGE} />
         </div>
         <TileText meta={meta}>
           <div className={TILE_NAME}>{name}</div>

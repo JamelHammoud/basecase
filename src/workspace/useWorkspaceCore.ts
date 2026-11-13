@@ -14,6 +14,7 @@ import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
+import { useCaseCompare } from './useCaseCompare';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useCaseRun } from './useCaseRun';
@@ -56,7 +57,7 @@ const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) 
   if (message) to.showToast(message);
 };
 
-export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorkspaceProps, 'active'>) {
+export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
   const docs = useSceneDocument(seed);
@@ -125,12 +126,21 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
 
   const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
+  const caseCompare = useCaseCompare({
+    inFront: active,
+    kase: simTraining.cases.active,
+    fingerprint: readiness.fingerprint,
+    studio,
+    source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
+    showToast,
+  });
 
   return {
     workspaceId,
     studio,
     printer,
     readiness,
+    caseCompare,
     printing,
     viewportRef,
     scene,

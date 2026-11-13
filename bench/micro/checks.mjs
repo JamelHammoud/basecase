@@ -1,6 +1,6 @@
 import { AdapterMissing } from './adapters.mjs';
 import { connected, heldByEdges } from './fasteners.mjs';
-import { add, dot, frameOf, len, meshStats, scale, sub } from './geometry.mjs';
+import { add, dot, frameOf, len, meshStats, scale, sub, toScene } from './geometry.mjs';
 
 const probeOf = (ctx) => (ctx.probe ??= ctx.adapters.fasteners(ctx, ctx.after));
 const listed = (ids, max = 6) =>
@@ -189,6 +189,33 @@ export const rolesKept = (filter) =>
       'Roles kept',
       'Dodged',
     );
+  });
+
+const DEG = Math.PI / 180;
+const unitOf = (v) => scale(v, 1 / len(v));
+
+function lineMiss(j, want) {
+  const axis = unitOf(toScene(want.axis));
+  const rel = sub(j.origin, toScene(want.origin));
+  const deg = Math.acos(Math.min(1, Math.abs(dot(unitOf(j.axis), axis)))) / DEG;
+
+  return { deg, mm: len(sub(rel, scale(axis, dot(rel, axis)))) };
+}
+
+export const hingesOn = (wanted, { maxDeg, maxMm }) =>
+  check(`${wanted.length} hinges, each within ${maxDeg}° and ${maxMm} mm of its axis`, (ctx) => {
+    const hinges = (ctx.after?.project?.joints ?? []).filter((j) => (j.type ?? 'revolute') === 'revolute');
+    const misses = wanted.map((w) => {
+      const near = hinges.map((j) => lineMiss(j, w)).filter((m) => m.deg <= maxDeg && m.mm <= maxMm);
+
+      return near.length ? null : w.id;
+    });
+    const missing = misses.filter(Boolean);
+
+    return {
+      pass: hinges.length === wanted.length && !missing.length,
+      detail: missing.length ? `No hinge on ${missing.join(', ')}` : `${hinges.length} hinges`,
+    };
   });
 
 const PARALLEL_COS = Math.cos((2 * Math.PI) / 180);

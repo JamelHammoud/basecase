@@ -9,6 +9,7 @@ import { platformBridge } from '../utils/platformBridge';
 import type { ShowToast } from './types';
 import { provenOrderOf } from '../assembly/provenOrder';
 import type { Viewport3DHandle } from '../components/Viewport3D';
+import { errorMessage } from '../utils/errorMessage';
 
 interface BuildGuideOptions {
   sceneName: string;
@@ -123,8 +124,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
     })
       .then((result) => finish(result, quiet || background))
       .catch((err: unknown) => {
-        if (!background)
-          showToast(`Couldn’t make the guide. ${String((err as Error)?.message ?? err)}`, { tone: 'error' });
+        if (!background) showToast(`Couldn’t make the guide. ${errorMessage(err)}`, { tone: 'error' });
 
         return null;
       })

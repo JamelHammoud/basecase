@@ -56,7 +56,6 @@ export default function update({ log }) {
         why: 'A new model reaches the Model menu only through a newer adapter, since the list comes from the CLI the adapter pins (§9).',
         cause: '',
         checked: 'CI runs Check, e2e and the packaged app on this pull request.',
-        changelog: '',
         screenshots: [],
         commitMessage: `Move the agent adapters to their latest releases\n\n${moved.join('\n')}`,
       },

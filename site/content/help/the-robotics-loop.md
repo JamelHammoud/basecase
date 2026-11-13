@@ -39,7 +39,7 @@ MuJoCo is the physics engine robotics labs use to test robots before they build 
 
 ## How the stages loop
 
-A failure in Engineer, Simulate or Train sends you back to Design. Say a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. The Stance check fails in the **Build** tab, and the fix is a stronger servo in Design.
+A failure in Engineer, Simulate or Train sends you back to Design. Say a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. The **Servo torque** check fails in the **Build** tab, and the fix is a stronger servo in Design.
 
 Data from a running robot loops back the other way. Calibrating a servo fits its model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit.
 

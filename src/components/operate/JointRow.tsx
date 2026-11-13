@@ -9,12 +9,7 @@ import { radiansFromCounts, type JointStatus } from '../../robot/robotState';
 import { JointReplayPlot } from './JointReplayPlot';
 import { hasJointRowMenu, JointRowMenu, type ReplayChoice } from './JointRowMenu';
 import type { JointCalibrate } from './RobotJoints';
-
-const VERDICTS: Record<CalibrationVerdict, string> = {
-  measured: 'Measured',
-  consistent: 'Consistent with preset',
-  'cant-tell': 'Can’t tell',
-};
+import { MeasuredBadge, VERDICTS } from '../verdicts';
 
 const REPLIES: Record<string, string> = {
   missing: 'No reply',
@@ -60,35 +55,46 @@ function Reading({ reading, gap, showTemp }: { reading: JointStatus | null; gap:
   );
 }
 
-function Calibration({ history }: { history: CalibrationHistory }) {
+function Calibration({ history, measured }: { history: CalibrationHistory; measured: boolean }) {
   const verdict = history.versions.at(-1)?.verdict;
   const version = versionLabel(history, verdict);
 
   return (
     <MetaLine
       className="text-[12px] text-white/50"
-      items={[verdict && VERDICTS[verdict], version && <span className="tabular-nums text-white/90">{version}</span>]}
+      items={[
+        !(measured && verdict === 'measured') && verdict && VERDICTS[verdict],
+        version && <span className="tabular-nums text-white/90">{version}</span>,
+      ]}
     />
   );
 }
 
-const rowData = ({ busId, joint, reading, history }: JointRowModel, calibrated: boolean, gap: number | null) => ({
+interface RowState {
+  calibrated: boolean;
+  measured: boolean;
+  gap: number | null;
+}
+
+const rowData = ({ busId, joint, reading, history }: JointRowModel, { calibrated, measured, gap }: RowState) => ({
   'data-robot-joint': busId,
   'data-gap': gap === null ? '' : (gap * 180) / Math.PI,
   'data-position': reading?.position ?? '',
   'data-calibration-joint': calibrated ? joint?.id : undefined,
   'data-verdict': history?.versions.at(-1)?.verdict ?? '',
   'data-version': history?.active ?? 0,
+  'data-measured': measured,
 });
 
-function JointLabel({ row: { busId, joint, history } }: { row: JointRowModel }) {
+function JointLabel({ row: { busId, joint, history }, measured }: { row: JointRowModel; measured: boolean }) {
   return (
     <span className="min-w-0 flex flex-col">
-      <span className="flex min-w-0 items-baseline gap-[8px]">
+      <span className="flex min-w-0 items-center gap-[8px]">
         {joint && <span className="min-w-0 truncate text-white/80">{joint.name}</span>}
         <span className="shrink-0 tabular-nums text-white/50">{busId}</span>
+        {measured && <MeasuredBadge />}
       </span>
-      {history && <Calibration history={history} />}
+      {history && <Calibration history={history} measured={measured} />}
     </span>
   );
 }
@@ -114,6 +120,7 @@ function laggingCalibrate(row: JointRowModel, twin: JointGap | null, calibrate: 
 interface JointRowProps {
   row: JointRowModel;
   live: boolean;
+  measured: boolean;
   replay: ReplayChoice | null;
   onReplay: (choice: ReplayChoice | null) => void;
   onRollBack?: (jointId: string) => void;
@@ -135,7 +142,16 @@ function CalibrateJoint({ jointId, calibrate }: { jointId: string; calibrate: Jo
   );
 }
 
-export const JointRow: React.FC<JointRowProps> = ({ row, live, replay, onReplay, onRollBack, twin, calibrate }) => {
+export const JointRow: React.FC<JointRowProps> = ({
+  row,
+  live,
+  measured,
+  replay,
+  onReplay,
+  onRollBack,
+  twin,
+  calibrate,
+}) => {
   const { joint, reading, history } = row;
   const { jointId, open, shown, replayable } = replayState(row, replay);
   const menu = joint && history && onRollBack && hasJointRowMenu(history);
@@ -145,7 +161,7 @@ export const JointRow: React.FC<JointRowProps> = ({ row, live, replay, onReplay,
   return (
     <>
       <div
-        {...rowData(row, Boolean(onRollBack), gap)}
+        {...rowData(row, { calibrated: Boolean(onRollBack), measured, gap })}
         className={`group relative flex items-center rounded-lg text-[13px] hover:bg-[#333333] ${open ? 'bg-[#333333]' : ''}`}
       >
         <button
@@ -155,7 +171,7 @@ export const JointRow: React.FC<JointRowProps> = ({ row, live, replay, onReplay,
           onClick={() => onReplay(open ? null : { jointId, version: null })}
           className="flex-1 min-w-0 min-h-8 px-1 py-1.5 flex items-center justify-between gap-3 text-left cursor-default"
         >
-          <JointLabel row={row} />
+          <JointLabel row={row} measured={measured} />
           {live && <Reading reading={reading} gap={gap} showTemp={!lagging} />}
         </button>
         {lagging && <CalibrateJoint {...lagging} />}

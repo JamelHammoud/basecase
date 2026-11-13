@@ -1,10 +1,12 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react';
 import { downscaleDataUrl } from '../utils/imageFile';
 import { useLatestRef } from '../utils/useLatestRef';
+import type { Case } from '../cases/schema';
 import type { SceneDraft } from './sceneDraft';
 import type { WorkspaceHandle, WorkspaceMeta, WorkspaceSeed } from './types';
 import type { AgentSession } from './useAgentSession';
 import { useAutosave, type Autosave } from './useAutosave';
+import { sceneCaseRobot } from './useCaseCompare';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 interface HostOptions {
@@ -20,6 +22,16 @@ interface HandleOptions {
   core: WorkspaceCore;
   agent: AgentSession;
   autosave: Autosave;
+}
+
+function openCaseIn(core: WorkspaceCore, kase: Case) {
+  const { cases } = core.simTraining;
+  const known = cases.cases.find((c) => c.id === kase.id);
+
+  if (known) cases.open(known.id);
+  else cases.add(kase);
+
+  core.tool.setRightTab('sim');
 }
 
 function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
@@ -45,6 +57,9 @@ function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
     discard: autosave.discard,
     stop: agent.controls.stopAll,
     toast: showToast,
+    fingerprint: core.readiness.fingerprint,
+    caseRobot: () => sceneCaseRobot({ workspaceId, sceneName: scene.sceneName, docs, viewportRef }),
+    openCase: (kase: Case) => openCaseIn(core, kase),
   });
   const register = useEffectEvent((id: string, handle: WorkspaceHandle | null) => studio.register(id, handle));
 
@@ -64,6 +79,9 @@ function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
       flush: () => hostRef.current.flush(),
       discard: () => hostRef.current.discard(),
       stopAgent: () => hostRef.current.stop(),
+      fingerprint: () => hostRef.current.fingerprint,
+      caseRobot: () => hostRef.current.caseRobot(),
+      openCase: (kase) => hostRef.current.openCase(kase),
     };
 
     register(workspaceId, handle);

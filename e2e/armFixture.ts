@@ -20,7 +20,7 @@ const block = (id: string, y: number, extra: Partial<ScenePart> = {}): ScenePart
 const servo = (id: string, y: number) =>
   block(id, y, { componentId: 'feetech-sts3215', componentVariant: 'c001', massG: 55 });
 
-const JOINT_NAMES: Record<string, string> = { shoulder: 'Shoulder', elbow: 'Elbow', wrist: 'Wrist' };
+export const JOINT_NAMES: Record<string, string> = { shoulder: 'Shoulder', elbow: 'Elbow', wrist: 'Wrist' };
 
 const joint = (id: string, parent: string[], child: string[], y: number): RobotJoint => ({
   id,

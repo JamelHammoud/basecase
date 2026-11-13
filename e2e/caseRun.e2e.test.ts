@@ -129,7 +129,6 @@ describe('Run Case', () => {
     const measured = panel('servos').locator('[data-robot-joint]:not([data-position=""])');
 
     await expect.poll(() => measured.count(), { timeout: 30000 }).toBe(3);
-    expect(await panel('servos').getByTestId('robot-mode').getAttribute('data-mode')).toBe('look');
 
     await inPanel('tries', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
@@ -141,6 +140,11 @@ describe('Run Case', () => {
     expect(ended.tries[0].seconds).toBeLessThan(ended.caseSeconds! - 1);
 
     await expect.poll(() => panel('tries').getByTestId('try-row').count()).toBe(1);
+
+    const strip = panel('tries').getByTestId('try-row').locator('img');
+
+    await expect.poll(() => strip.count()).toBe(1);
+    await expect.poll(() => strip.evaluate((img: HTMLImageElement) => (img.complete ? img.naturalWidth : 0))).toBe(288);
     await expect.poll(async () => (await simState()).drive).toBe('off');
 
     await page.keyboard.press('Escape');

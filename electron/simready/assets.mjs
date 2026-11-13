@@ -84,7 +84,7 @@ async function downloadOne(a, entry, dir) {
 }
 
 export async function downloadAsset(a, dir, say) {
-  say('Listing files');
+  say('Listing files…');
 
   const files = neededFiles(await listTree(a));
   const total = files.reduce((s, f) => s + (f.size ?? 0), 0);
@@ -101,7 +101,7 @@ export async function downloadAsset(a, dir, say) {
       await downloadOne(a, f, dir);
       done++;
       bytes += f.size ?? 0;
-      say(`Downloading ${Math.round((bytes / Math.max(total, 1)) * 100)}%`, { done, total: files.length });
+      say(`Downloading ${Math.round((bytes / Math.max(total, 1)) * 100)}%…`, { done, total: files.length });
     }
   };
 

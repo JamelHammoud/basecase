@@ -25,6 +25,7 @@ import {
   type DefineJointsPayload,
 } from './agentBuildRequests';
 import { craftScene, partMeshes, visibleShare } from './agentCraftRequests';
+import { findJointAxes } from './agentJointAxes';
 import { PORT_HANDLERS } from './agentPortRequests';
 import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';
 import { costByClass } from '../utils/budget';
@@ -38,6 +39,7 @@ import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_HANDLERS } from './agentCaseRequests';
+import type { CaseCompare } from './useCaseCompare';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
 import type { Cases } from './useCases';
@@ -65,6 +67,7 @@ export interface RequestContext {
   buildGuide: () => Promise<GeneratedGuide | null>;
   routines: Routines;
   cases: Cases;
+  caseCompare: CaseCompare;
   skills: SceneSkills;
 }
 
@@ -277,6 +280,12 @@ const HANDLERS: Record<string, Handler> = {
   printability,
   slice: slicePlates,
   define_joints: defineJoints,
+  find_joint_axes: (payload, ctx) =>
+    findJointAxes(payload, {
+      parts: ctx.parts,
+      joints: () => ctx.project().joints ?? [],
+      jointAxes: async (ids) => (await ctx.viewport()?.jointAxes(ids)) ?? { candidates: [], fastened: [], faces: [] },
+    }),
   verify: async (payload, ctx) => {
     ctx.setAction('Checking the design');
 

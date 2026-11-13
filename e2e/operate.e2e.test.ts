@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { ARM, THREE_JOINT_ARM } from './armFixture';
+import { ARM, JOINT_NAMES, THREE_JOINT_ARM } from './armFixture';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
@@ -7,17 +7,56 @@ let app: App;
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
+const ARM_JOINTS = ARM.project.joints.map((joint) => joint.id);
+
 interface FakeLink {
   factory: boolean;
   plugIn: () => boolean;
   robotDisconnect: () => Promise<unknown>;
 }
 
-type StudioWindow = { __studio: { load: (r: unknown) => void; selection: () => string[] }; __fakeRobotLink: FakeLink };
+type StudioWindow = {
+  __studio: { load: (r: unknown) => void; select: (ids: string[]) => void; selection: () => string[] };
+  __fakeRobotLink: FakeLink;
+};
 
 const row = (id: string) => app.page.locator(visible(`[data-calibration-joint="${id}"]`)).first();
 
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
+
+const rightTab = (name: string) =>
+  app.page
+    .locator(visible('[role=tab]'), { hasText: new RegExp(`^${name}$`) })
+    .first()
+    .click();
+
+const servoModels = () => app.page.locator(visible('[data-check="Servo models"]')).first();
+
+const calibrating = () =>
+  app.page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating');
+
+async function measuredRows() {
+  const rows = app.page.locator(visible('[data-calibration-joint][data-measured="true"]'));
+
+  return (await rows.evaluateAll((els) => els.map((el) => el.getAttribute('data-calibration-joint') ?? ''))).sort();
+}
+
+async function poseMarks() {
+  await app.page.evaluate(() => (window as unknown as StudioWindow).__studio.select(['upper']));
+  await rightTab('Pose');
+
+  const rows = app.page.locator(visible('[data-joint]'), { hasText: 'Measured' });
+
+  return (await rows.evaluateAll((els) => els.map((el) => el.getAttribute('data-joint') ?? ''))).sort();
+}
+
+async function expectServoModels(measured: string[]) {
+  expect(await poseMarks()).toEqual(measured);
+  await rightTab('Build');
+  await expect
+    .poll(() => servoModels().getAttribute('data-status'), { timeout: 45000 })
+    .toBe(measured.length === ARM_JOINTS.length ? 'pass' : 'warn');
+}
 
 interface Ghost {
   layer: { parts: Record<string, number[]>; values: Record<string, number>; label: string | null } | null;
@@ -103,6 +142,13 @@ describe('Operate calibration', () => {
         .poll(() => row(id).getAttribute('data-verdict'), { timeout: 90000 })
         .toMatch(/^(measured|consistent)$/);
 
+    const verdicts = page.locator(visible('[data-calibration-joint][data-verdict="measured"]'));
+    const measuredIds = (
+      await verdicts.evaluateAll((els) => els.map((el) => el.getAttribute('data-calibration-joint') ?? ''))
+    ).sort();
+
+    expect(await measuredRows()).toEqual(measuredIds);
+    await expectServoModels(measuredIds);
     expect(await row('shoulder').getAttribute('data-robot-joint')).toBe('1');
     expect(await row('elbow').getAttribute('data-robot-joint')).toBe('2');
     await expect.poll(async () => Number(await row('elbow').getAttribute('data-position'))).toBeGreaterThan(0);
@@ -138,8 +184,36 @@ describe('Operate calibration', () => {
     await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
     await expect.poll(() => trace('calibration').count()).toBe(0);
     expect(await trace('preset').count()).toBe(1);
+    expect(await row(jointId).getAttribute('data-measured')).toBe('false');
+
+    const rest = measuredIds.filter((id) => id !== jointId);
+
+    await expectServoModels(rest);
+    await servoModels()
+      .getByRole('button', { name: /^Servo models/ })
+      .click();
+
+    const note = servoModels().locator('li', { hasText: JOINT_NAMES[jointId] }).first();
+
+    await expect.poll(() => note.count(), { timeout: 45000 }).toBe(1);
+    await note.hover();
+    await note.getByRole('button', { name: 'Fix' }).click();
+    await expect.poll(calibrating).not.toBe('idle');
+    expect(await page.evaluate(() => (window as unknown as StudioWindow).__studio.selection())).toContain(
+      `${jointId}-servo`,
+    );
+    await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
+
+    const verdict = await row(jointId).getAttribute('data-verdict');
+
+    expect(await row(jointId).getAttribute('data-measured')).toBe(String(verdict === 'measured'));
+
+    const again = await measuredRows();
+
+    expect(again.filter((id) => id !== jointId)).toEqual(rest);
+    await expectServoModels(again);
     expect(app.errors).toEqual([]);
-  }, 150000);
+  }, 240000);
 
   it.skipIf(process.platform === 'win32')(
     'draws the measured robot as a ghost that follows the emulated servos, and labels the largest gap',

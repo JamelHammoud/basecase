@@ -2,6 +2,7 @@ import { LeftSidebar } from '../components/LeftSidebar';
 import { LAYOUT, PanelResizer } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { setUpServos } from '../robot/servoSetup';
+import { measuredJoints } from '../reality/measuredJoints';
 import { calibrateConnectedRobot, rollBackCalibration } from './calibrationActions';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -53,6 +54,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       }
       cases={{
         cases: core.simTraining.cases,
+        compare: core.caseCompare,
         onOpen: () => tool.setRightTab('sim'),
         onBrowseRobots: browseRobots,
         onDescribe: IS_WEB_DEMO ? undefined : () => tool.requestCompose('/case '),
@@ -63,9 +65,14 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         onBrowseRobots: browseRobots,
         calibration: {
           calibrations: core.project.servoCalibrations,
+          measured: measuredJoints({
+            joints: core.project.joints ?? [],
+            parts,
+            calibrations: core.project.servoCalibrations,
+          }),
           onCalibrate: () => void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? []),
           onCalibrateJoint: (jointId) =>
-            void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? [], jointId),
+            void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? [], [jointId]),
           onRollBack: (jointId) => rollBackCalibration(core.docs.updateProjectNow, jointId),
         },
         onSetUpServos: () => void setUpServos({ joints: core.project.joints ?? [], select: core.setSelectedIds }),

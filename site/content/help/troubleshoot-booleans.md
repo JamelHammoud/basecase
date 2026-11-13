@@ -49,10 +49,6 @@ The parts don't share any volume, so there's nothing to merge, cut or keep.
 1. Move the parts until they overlap. Measure with [[D]] if you can't tell.
 2. Run the command again.
 
-## “Select a part first”
-
-Nothing is selected, or only reference images are. Reference images are never used in Union, Subtract or Intersect. Select a solid part and try again.
-
 ## Subtract cut the wrong part
 
 Subtract keeps the first part you selected and cuts the others out of it.
@@ -65,4 +61,4 @@ The tooltip on **Subtract** names the part it keeps, so you can check before you
 
 ## How to tell it worked
 
-A toast says **Merged**, **Subtracted** or **Intersected** with Undo, and the result is selected as one part.
+A toast with Undo names the parts, as in **Subtracted Hole from Cube**, and the result is selected as one part.

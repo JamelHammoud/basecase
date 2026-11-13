@@ -1,3 +1,4 @@
+import { ROS2, ros2JointsProblem, ros2TopicProblem } from './ros2.mjs';
 import { G1_WRITABLE_IDS, g1JointName, UNITREE_G1 } from './unitreeG1.mjs';
 
 export const FAMILIES = ['feetech', 'dynamixel'];
@@ -7,8 +8,11 @@ export const MAX_SERVOS = 32;
 
 const SPEC_KEYS = ['class', 'emulated', 'family', 'ids'];
 const G1_KEYS = ['emulated', 'family'];
+const ROS2_KEYS = ['controller', 'emulated', 'family', 'joints'];
+const CONTROLLER_KEYS = ['kind', 'topic'];
 const FACTORY_SPEC_KEYS = ['class', 'emulated', 'factory', 'family', 'ids'];
 const ONLY_EMULATED = 'Only an emulated robot can connect: family, servo IDs, class and emulated, nothing else.';
+const ONLY_ROS2 = 'Only an emulated ROS 2 robot can connect: family, controller, joints and emulated, nothing else.';
 const MOTORS_LOCKED = 'Real motors are locked in this build. Connect an emulated robot instead.';
 const BARE_COMMANDS = new Set(['heartbeat', 'stop', 'fall', 'release', 'clear_fault', 'recheck', 'plug_in']);
 const MAX_MODEL = 65535;
@@ -51,7 +55,7 @@ function specProblem(spec) {
   return idsProblem(spec.ids);
 }
 
-const asksForG1 = (spec) => isPlainObject(spec) && spec.family === UNITREE_G1;
+const asksFor = (spec, family) => isPlainObject(spec) && spec.family === family;
 
 function g1Problem(spec) {
   if (!sameKeys(spec, G1_KEYS)) return ONLY_EMULATED;
@@ -61,8 +65,40 @@ function g1Problem(spec) {
 
 const G1_SPEC = Object.freeze({ family: UNITREE_G1, ids: G1_WRITABLE_IDS, class: 'legged', emulated: true });
 
-export function checkedRobotSpec(spec) {
-  const g1 = asksForG1(spec);
+const plainController = (controller) => isPlainObject(controller) && sameKeys(controller, CONTROLLER_KEYS);
+
+function ros2ShapeProblem(spec) {
+  if (!sameKeys(spec, ROS2_KEYS) || !plainController(spec.controller)) return ONLY_ROS2;
+
+  return spec.emulated === true ? null : MOTORS_LOCKED;
+}
+
+function checkedRos2Spec(spec) {
+  const shape = ros2ShapeProblem(spec);
+
+  if (shape) return { ok: false, message: shape };
+
+  const { kind, topic } = spec.controller;
+  const joints = Array.isArray(spec.joints) ? [...spec.joints] : null;
+  const problem = ros2TopicProblem(kind, topic) ?? ros2JointsProblem(kind, joints);
+
+  if (problem) return { ok: false, message: problem };
+
+  return {
+    ok: true,
+    spec: {
+      family: ROS2,
+      ids: joints.map((_, k) => k + 1),
+      class: 'arm',
+      emulated: true,
+      controller: { kind, topic },
+      joints,
+    },
+  };
+}
+
+function checkedServoSpec(spec) {
+  const g1 = asksFor(spec, UNITREE_G1);
   const problem = g1 ? g1Problem(spec) : specProblem(spec);
 
   if (problem) return { ok: false, message: problem };
@@ -73,7 +109,9 @@ export function checkedRobotSpec(spec) {
   return { ok: true, spec: !g1 && spec.factory === true ? { ...checked, factory: true } : checked };
 }
 
-const g1Args = (artefacts) => ['--family', UNITREE_G1, '--emulated', '--artefacts', artefacts];
+export const checkedRobotSpec = (spec) => (asksFor(spec, ROS2) ? checkedRos2Spec(spec) : checkedServoSpec(spec));
+
+const g1Args = (_spec, artefacts) => ['--family', UNITREE_G1, '--emulated', '--artefacts', artefacts];
 
 const servoArgs = (spec, artefacts) => [
   '--family',
@@ -88,8 +126,26 @@ const servoArgs = (spec, artefacts) => [
   ...(spec.factory === true ? ['--factory'] : []),
 ];
 
-export const daemonArgs = (spec, artefacts) =>
-  spec.family === UNITREE_G1 ? g1Args(artefacts) : servoArgs(spec, artefacts);
+const ros2Args = (spec, artefacts) => [
+  '--family',
+  ROS2,
+  '--controller',
+  spec.controller.kind,
+  '--topic',
+  spec.controller.topic,
+  '--joints',
+  spec.joints.join(','),
+  '--emulated',
+  '--artefacts',
+  artefacts,
+];
+
+const FAMILY_ARGS = new Map([
+  [UNITREE_G1, g1Args],
+  [ROS2, ros2Args],
+]);
+
+export const daemonArgs = (spec, artefacts) => (FAMILY_ARGS.get(spec.family) ?? servoArgs)(spec, artefacts);
 
 const isJointValue = (value) => value === null || (typeof value === 'number' && Number.isFinite(value));
 
@@ -125,10 +181,16 @@ export function checkedCommand(command, joints) {
 const ZERO_COUNTS = 2048;
 const RANGE_RAD = 2.8;
 
+function calibrationName(spec, id, k) {
+  if (spec.family === UNITREE_G1) return g1JointName(id);
+
+  return spec.family === ROS2 ? spec.joints[k] : `servo ${id}`;
+}
+
 export const emulatedCalibration = (spec) => ({
-  joints: spec.ids.map((id) => ({
+  joints: spec.ids.map((id, k) => ({
     id,
-    name: spec.family === UNITREE_G1 ? g1JointName(id) : `servo ${id}`,
+    name: calibrationName(spec, id, k),
     zero_counts: ZERO_COUNTS,
     direction: 1,
     min_rad: -RANGE_RAD,

@@ -1,12 +1,17 @@
-use super::SharedG1;
 use servo_wire::{Clock, Sample, Topic, TopicTransport, TransportError};
 use std::collections::VecDeque;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+
+pub trait TopicRobot: Send + 'static {
+    fn advance_to(&mut self, at_us: u64) -> Vec<(u64, Sample)>;
+
+    fn deliver(&mut self, sample: &Sample);
+}
 
 pub type SampleFilter = Box<dyn FnMut(Sample) -> Option<Sample> + Send>;
 
-pub struct InProcessG1 {
-    robot: SharedG1,
+pub struct InProcessRobot<R: TopicRobot> {
+    robot: Arc<Mutex<R>>,
     clock: Arc<dyn Clock>,
     latency_us: u64,
     to_robot: VecDeque<(u64, Sample)>,
@@ -14,8 +19,8 @@ pub struct InProcessG1 {
     filter: Option<SampleFilter>,
 }
 
-impl InProcessG1 {
-    pub fn new(robot: SharedG1, clock: Arc<dyn Clock>, latency_us: u64) -> Self {
+impl<R: TopicRobot> InProcessRobot<R> {
+    pub fn new(robot: Arc<Mutex<R>>, clock: Arc<dyn Clock>, latency_us: u64) -> Self {
         Self {
             robot,
             clock,
@@ -26,7 +31,7 @@ impl InProcessG1 {
         }
     }
 
-    pub fn robot(&self) -> SharedG1 {
+    pub fn robot(&self) -> Arc<Mutex<R>> {
         self.robot.clone()
     }
 
@@ -78,7 +83,7 @@ impl InProcessG1 {
     }
 }
 
-impl TopicTransport for InProcessG1 {
+impl<R: TopicRobot> TopicTransport for InProcessRobot<R> {
     fn publish(&mut self, topic: Topic, payload: &[u8]) -> Result<(), TransportError> {
         let at = self.clock.now_micros() + self.latency_us;
 
@@ -117,8 +122,8 @@ impl TopicTransport for InProcessG1 {
 
 #[cfg(test)]
 mod tests {
-    use super::super::{G1Emulator, G1Options, STATE_EVERY_US};
     use super::*;
+    use crate::g1::{G1Emulator, G1Options, InProcessG1, STATE_EVERY_US};
     use servo_wire::VirtualClock;
 
     #[test]

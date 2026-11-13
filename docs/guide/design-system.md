@@ -8,7 +8,7 @@ Use these primitives. Never hand-roll a styled `<button>` or input when one fits
 
 - `Button` (primary, secondary, ghost, danger, contrast; xs/sm/md; optional `title` + `shortcut` tooltip)
 - `MenuItem` (shared by `PopoverMenu` and `ContextMenu`): `tone: 'danger'` paints the label and its icon red
-- `IconButton` (required `title`, `shortcut`, `isActive` solid accent, `isToggled` soft fill; xs/sm/md/lg)
+- `IconButton` (required `title`, `shortcut`, `isActive` solid accent, `isToggled` soft fill; xs/sm/md/lg). `variant="send"` with `className="rounded-full"` is the round white button that sends what's typed: the agent composer's Send, Update and Stop, and a comment's Post.
 - Both take `className="rounded-full"` for a fully round button: `sizeRadius` drops the size's own radius, because Tailwind's stylesheet order, not class order, decides which radius wins and `rounded-lg` beats `rounded-full`. Any other whole-button radius passed through `className` needs `!`.
 - `Tooltip` (portal, 500ms delay, instant while “warm”), `Kbd`. A tooltip never shows while the popover its trigger controls is open: give every popover or menu trigger `aria-expanded={open}` (and `aria-haspopup="menu"` for menus), and `Tooltip` stays hidden while it's true. Don't hand-roll `disabled={open}` or drop the title instead.
 - `FieldRow` (`label`, then the field): an 88px muted label left of a form field, as in the Routines step fields and the New Case card.

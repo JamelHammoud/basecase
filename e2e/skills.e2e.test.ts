@@ -1,11 +1,23 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { BAM_STS3215_7V4 } from '../src/data/servoFits';
+import type { ServoCalibration } from '../src/reality/types';
+import { box } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
-import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
+import { DEFAULT_PROJECT, type PolicyRecord, type ProjectSettings, type ScenePart } from '../src/types/robotics';
+import { buildRig } from '../src/utils/kinematicsRig';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
 
-type Studio = { load: (r: unknown) => void };
+type Studio = {
+  load: (r: unknown) => void;
+  simState: () => { fingerprints: Record<string, string> };
+  calibrate: (jointId: string, calibration: ServoCalibration) => void;
+};
+
+const fingerprints = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().fingerprints);
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -36,7 +48,7 @@ async function loadFixture(id: string) {
 }
 
 beforeAll(async () => {
-  app = await openApp();
+  app = await openApp({ 'train-status': { uv: true, ready: true, running: [] } });
 }, 120000);
 
 afterAll(async () => {
@@ -113,4 +125,89 @@ describe('the Train section', () => {
     expect(await button(/^Stand$|^Walk$/).count()).toBe(0);
     expect(app.errors).toEqual([]);
   });
+});
+
+const servoQuad = () => {
+  const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+  const hip = robot.joints.find((j) => j.id === 'leg0_abduct')!;
+  const servo: ScenePart = {
+    ...box('leg0_servo', hip.origin, [24, 32, 45], 55),
+    componentId: 'feetech-sts3215',
+    componentVariant: 'c001',
+  };
+  const joints = robot.joints.map((j) =>
+    j === hip ? { ...j, parent: [...j.parent, servo.id], actuators: [servo.id] } : j,
+  );
+  const parts = [...robot.parts, servo];
+
+  return { name: 'quad', parts, project: { ...DEFAULT_PROJECT, joints } as ProjectSettings };
+};
+
+const calibration = (): ServoCalibration => ({
+  verdict: 'measured',
+  family: 'sts3215',
+  version: 0,
+  rung: 'response',
+  fit: { ...BAM_STS3215_7V4, kt: BAM_STS3215_7V4.kt * 0.8 },
+  volts: 7.4,
+  scales: { kt: 0.8 },
+  conditions: { volts: 7.4, temperatureC: 30 },
+  evidence: { logs: 3, presetErrorRad: 0.04, fittedErrorRad: 0.01, gain: 0.75, explained: 0.9, reason: '' },
+});
+
+const loadScene = async (record: ReturnType<typeof servoQuad>) => {
+  await app.page.evaluate((r) => (window as unknown as { __studio: Studio }).__studio.load(r), record);
+  await expect.poll(() => partCount(app.page)).toBe(record.parts.length);
+};
+
+describe('a policy trained before a calibration', () => {
+  it('shows Out of date once a joint is calibrated, and Retrain starts the same job', async () => {
+    const scene = servoQuad();
+    const key = buildRig(scene.project.joints!, scene.parts).robots[0].key;
+
+    await loadScene(scene);
+    await expect.poll(async () => (await fingerprints())[key] ?? '', { timeout: 60000 }).not.toBe('');
+
+    const policy: PolicyRecord = {
+      id: 'walk-before-calibration',
+      name: 'Walk 1',
+      task: 'walk',
+      robot: key,
+      robotName: 'quad',
+      command: [0.3, 0, 0],
+      trainedSteps: 2_000_000,
+      minutes: 5,
+      modelVersion: SIM_MODEL_VERSION,
+      fingerprint: (await fingerprints())[key],
+      createdAt: '2026-11-01T00:00:00.000Z',
+    };
+
+    await loadScene({ ...scene, project: { ...scene.project, policies: [policy] } });
+    await clickTab('Simulate');
+
+    const row = app.page.locator(visible(`[data-policy="${policy.id}"]`)).first();
+
+    await expect.poll(() => row.getAttribute('data-stale'), { timeout: 60000 }).toBe('false');
+    await app.page.evaluate(
+      (c) => (window as unknown as { __studio: Studio }).__studio.calibrate('leg0_abduct', c),
+      calibration(),
+    );
+    await expect.poll(() => row.getAttribute('data-stale'), { timeout: 60000 }).toBe('true');
+    expect(await row.innerText()).toContain('Out of date');
+
+    await row.click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Retrain' }).click();
+
+    const started = () =>
+      app.posts
+        .map((p) => (p.route === 'train-start' ? (p.body as { job: Record<string, unknown> }).job : null))
+        .find((job) => job?.name === policy.name);
+
+    await expect.poll(() => started() ?? null, { timeout: 60000 }).not.toBeNull();
+    expect(started()).toMatchObject({ task: 'walk', minutes: 5, command: [0.3, 0, 0], robotKey: key });
+    expect(started()?.fingerprint).toBe((await fingerprints())[key]);
+    expect(started()?.fingerprint).not.toBe(policy.fingerprint);
+    await expect.poll(() => row.getAttribute('data-retraining')).toBe('true');
+    expect(app.errors).toEqual([]);
+  }, 180000);
 });

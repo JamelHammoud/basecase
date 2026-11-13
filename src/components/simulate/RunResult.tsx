@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { MetaLine, Section } from '../../design-system';
+import { MetaLine } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import { fmtTime, pct } from './format';
@@ -67,7 +67,7 @@ const PeakTorque: React.FC<{
   );
 };
 
-export const ResultSection: React.FC<{
+export const RunResult: React.FC<{
   stats: SimStats;
   model: SimModel;
   rig: Rig;
@@ -83,11 +83,15 @@ export const ResultSection: React.FC<{
   );
 
   return (
-    <Section title="Result">
+    <div className="mb-2" data-testid="run-result">
       {stats.robots.map((r) => (
         <RobotResult key={r.key} result={r} model={model} />
       ))}
       {worst.length > 0 && <PeakTorque worst={worst} rig={rig} onSelectParts={onSelectParts} />}
-    </Section>
+    </div>
   );
 };
+
+export const hasRunResult = (stats: SimStats, model: SimModel) =>
+  stats.joints.some((j) => j.peak > 0.05) ||
+  stats.robots.some((r) => model.robots.find((x) => x.key === r.key)?.floating);

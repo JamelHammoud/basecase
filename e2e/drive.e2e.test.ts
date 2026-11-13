@@ -45,6 +45,13 @@ const clickTab = (name: string) => app.page.locator(visible('[role=tab]'), { has
 
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
 
+const simHeadings = () =>
+  app.page
+    .getByTestId('case-brief')
+    .locator('xpath=ancestor::section/..')
+    .locator(':scope > section > header h3')
+    .allInnerTexts();
+
 async function startDriving(id: string) {
   await loadFixture(id);
   await clickTab('Simulate');
@@ -210,6 +217,7 @@ describe('Cases', () => {
       await openTouchTheDots();
       await expect.poll(() => app.page.getByTestId('case-brief').count()).toBe(1);
       expect(await app.page.getByTestId('case-brief').innerText()).not.toContain('simulation only');
+      expect((await simHeadings())[0]).toBe('Touch the Dots');
 
       const partsBefore = await partCount(app.page);
 
@@ -236,6 +244,16 @@ describe('Cases', () => {
       expect((await simState()).tries[0].passed).toBe(false);
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
       await expectDataset();
+
+      const headings = await simHeadings();
+
+      expect(headings.filter((h) => ['Try', 'Control', 'Train', 'Results'].includes(h))).toEqual(
+        headings.includes('Train') ? ['Try', 'Control', 'Train', 'Results'] : ['Try', 'Control', 'Results'],
+      );
+      expect(headings.indexOf('Try')).toBe(1);
+      expect(
+        headings.filter((h) => ['Brief', 'Robot fit', 'Result', 'Model', 'Emulated robot', 'Policies'].includes(h)),
+      ).toEqual([]);
 
       await button('Check Fit').click();
       await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
@@ -311,7 +329,7 @@ describe('Cases', () => {
     await card.locator('button', { hasText: 'Create' }).click();
 
     await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
-    await expect.poll(() => app.page.getByTestId('case-brief').innerText()).toContain('Push a Box in a Corridor');
+    await expect.poll(async () => (await simHeadings())[0]).toBe('Push a Box in a Corridor');
     expect((await simState()).world).toEqual(['box', 'goal', 'wall-left', 'wall-right']);
     expect(await panel.innerText()).toContain('In this scene');
 

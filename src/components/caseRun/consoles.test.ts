@@ -12,7 +12,7 @@ import { fixtureRobots } from '../../sim/fixtures/robots';
 import type { Simulation } from '../../sim/useSimulation';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
-import { CommandCenterArea } from './CommandCenterArea';
+import { CaseRunArea } from './CaseRunArea';
 import type { PanelContext } from './panelContext';
 
 const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
@@ -86,7 +86,7 @@ function render(caseConsole: CaseConsole) {
     layout[side]
       .map((area) =>
         renderToStaticMarkup(
-          createElement(CommandCenterArea, { area, side, ctx, title: kase.name, onDone: () => undefined }),
+          createElement(CaseRunArea, { area, side, ctx, title: kase.name, onDone: () => undefined }),
         ),
       )
       .join('');
@@ -97,7 +97,7 @@ function render(caseConsole: CaseConsole) {
 const panelsIn = (html: string) =>
   [...html.matchAll(/data-panel="([^"]+)" data-kind="([^"]+)"/g)].map((m) => `${m[1]}:${m[2]}`);
 
-describe('the Command Center renders any console', () => {
+describe('a running Case renders any console', () => {
   it('draws the default console as cameras, then the canvas, then brief, failures, servos and tries', () => {
     const { before, after } = render(DEFAULT_CONSOLE);
 

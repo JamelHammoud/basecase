@@ -16,7 +16,7 @@ import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
-import { useCommandCenter } from './useCommandCenter';
+import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
@@ -116,7 +116,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     showReferenceImages: studio.showReferenceImages,
   });
 
-  const commandCenter = useCommandCenter({ viewportRef, selectedIds, setSelectedIds, simTraining });
+  const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
 
   const { travel } = docs;
   const { restorePose } = posing;
@@ -152,7 +152,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     posable,
     skeleton,
     simTraining,
-    commandCenter,
+    caseRun,
     guide,
     buildAlong,
     undo: () => travel('undo', restorePose),

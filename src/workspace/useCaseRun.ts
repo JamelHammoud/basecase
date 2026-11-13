@@ -6,7 +6,7 @@ import type { ViewShot } from '../three/viewport/types';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { Cases } from './useCases';
 
-interface CommandCenterInput {
+interface CaseRunInput {
   viewportRef: RefObject<Viewport3DHandle | null>;
   selectedIds: string[];
   setSelectedIds: (ids: string[]) => void;
@@ -19,7 +19,7 @@ interface Return {
   selection: string[];
 }
 
-export function useCommandCenter({ viewportRef, selectedIds, setSelectedIds, simTraining }: CommandCenterInput) {
+export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining }: CaseRunInput) {
   const { sim, cases } = simTraining;
   const [back, setBack] = useState<Return | null>(null);
   const activeId = cases.active?.id ?? null;
@@ -74,4 +74,4 @@ export function useCommandCenter({ viewportRef, selectedIds, setSelectedIds, sim
   return { open, caseConsole, layout, enter, leave };
 }
 
-export type CommandCenter = ReturnType<typeof useCommandCenter>;
+export type CaseRun = ReturnType<typeof useCaseRun>;

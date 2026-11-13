@@ -86,7 +86,7 @@ function CanvasBottomBar({ core, actions, ui }: CanvasCardProps) {
         </div>
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
-      {!core.commandCenter.open && (
+      {!core.caseRun.open && (
         <div className="pointer-events-auto">
           <CanvasToolbar core={core} actions={actions} ui={ui} />
         </div>

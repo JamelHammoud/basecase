@@ -8,12 +8,12 @@ import { RobotHeader } from '../operate/RobotHeader';
 import { RobotJoints } from '../operate/RobotJoints';
 import { RobotMessages } from '../operate/RobotMessages';
 
-interface CommandCenterJointsProps {
+interface CaseRunJointsProps {
   joints: RobotJoint[];
   onBrowseRobots: () => void;
 }
 
-export const CommandCenterJoints: React.FC<CommandCenterJointsProps> = ({ joints, onBrowseRobots }) => {
+export const CaseRunJoints: React.FC<CaseRunJointsProps> = ({ joints, onBrowseRobots }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
   const rows = jointRows({ joints, calibrations: undefined, connection: robotConnection(robot) });

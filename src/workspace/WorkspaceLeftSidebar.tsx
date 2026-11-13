@@ -32,8 +32,8 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
 
   return (
     <LeftSidebar
-      open={studio.isLeftOpen && !core.commandCenter.open}
-      inert={core.commandCenter.open}
+      open={studio.isLeftOpen && !core.caseRun.open}
+      inert={core.caseRun.open}
       partsSearchRef={ui.partsSearchRef}
       onImportRobot={robots.pickRobot}
       onInsertSimReady={(asset) => robots.importRobotFrom({ kind: 'simready', asset })}

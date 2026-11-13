@@ -1,8 +1,8 @@
 import { CommandPalette, type Command } from '../components/CommandPalette';
-import { STAYS_IN_CENTER } from './caseCommands';
+import { STAYS_IN_RUN } from './caseCommands';
 import { editCommands } from './editCommands';
 import { sceneCommands, type CommandInputs } from './sceneCommands';
-import type { CommandCenter } from './useCommandCenter';
+import type { CaseRun } from './useCaseRun';
 import { viewCommands } from './viewCommands';
 
 interface WorkspacePaletteProps {
@@ -11,14 +11,14 @@ interface WorkspacePaletteProps {
   onClose: () => void;
 }
 
-const leavingFirst = (commands: Command[], center: CommandCenter): Command[] =>
+const leavingFirst = (commands: Command[], running: CaseRun): Command[] =>
   commands.map((c) =>
-    STAYS_IN_CENTER.has(c.id)
+    STAYS_IN_RUN.has(c.id)
       ? c
       : {
           ...c,
           run: () => {
-            center.leave();
+            running.leave();
             c.run();
           },
         },
@@ -26,8 +26,8 @@ const leavingFirst = (commands: Command[], center: CommandCenter): Command[] =>
 
 function OpenPalette({ inputs, onClose }: Omit<WorkspacePaletteProps, 'open'>) {
   const all = [...sceneCommands(inputs), ...editCommands(inputs), ...viewCommands(inputs)];
-  const center = inputs.core.commandCenter;
-  const commands = center.open ? leavingFirst(all, center) : all;
+  const running = inputs.core.caseRun;
+  const commands = running.open ? leavingFirst(all, running) : all;
 
   return <CommandPalette open onClose={onClose} commands={commands} />;
 }

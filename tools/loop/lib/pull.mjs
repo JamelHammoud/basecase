@@ -14,6 +14,7 @@ export const KINDS = {
   lesson: { prefix: 'Lesson', template: 'lesson' },
   loop: { prefix: 'Loop', template: 'loop' },
   update: { prefix: 'Update', template: 'loop' },
+  market: { prefix: 'Market', template: 'loop' },
 };
 
 const NONE = '_None._';

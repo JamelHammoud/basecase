@@ -18,6 +18,7 @@ const JOBS = [
   { lane: 'refine', every: 6 * HOUR },
   { lane: 'lead', every: 4 * HOUR },
   { lane: 'update', every: 24 * HOUR },
+  { lane: 'market', every: 24 * HOUR },
 ];
 
 const AGENTS_DIR = path.join(os.homedir(), 'Library', 'LaunchAgents');
@@ -100,6 +101,8 @@ const LABELS = {
   'loop:lesson': '8250df',
   'loop:loop': '6e7781',
   'loop:update': '6e7781',
+  'loop:market': '6e7781',
+  'loop:idea': 'bf8700',
   'loop:arc': 'bf8700',
   'loop:next': 'bf8700',
   'loop:building': 'bf8700',

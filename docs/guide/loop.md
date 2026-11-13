@@ -26,6 +26,7 @@ Basecase is built by a team of agents that runs on Jamel's Mac (`tools/loop/`, s
 | `refine` | 6 h | Makes one existing feature or view fit better |
 | `lead` | 4 h | Reads the Direction issue and plans arcs and steps as issues |
 | `update` | 24 h | Moves the agent adapters to their latest releases |
+| `market` | 24 h | Checks competitors, partners and integrations in `docs/market/` and files steps as `loop:idea` issues for the lead |
 
 Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions`, so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
 
@@ -40,7 +41,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 | `fix` | `Fix: …` | `fix.md` | Fixed |
 | `repair` | `Repair: …` | `repair.md` | left out |
 | `lesson` | `Lesson: …` | `lesson.md` | left out |
-| `loop`, `update` | `Loop: …`, `Update: …` | `loop.md` | left out |
+| `loop`, `update`, `market` | `Loop: …`, `Update: …`, `Market: …` | `loop.md` | left out |
 
 `.github/release.yml` groups the release notes by those labels.
 

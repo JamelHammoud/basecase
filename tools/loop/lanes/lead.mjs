@@ -56,6 +56,10 @@ function context() {
   return [
     `## Direction from Jamel (newest last)\n\n${[direction?.body, ...comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n') || 'None yet.'}`,
     listing('Open arcs', mine(issues('loop:arc'))),
+    listing(
+      'Ideas from market research (promote the good ones to steps; they close when promoted)',
+      mine(issues('loop:idea')),
+    ),
     listing('Steps waiting or in progress', [...mine(issues('loop:next')), ...mine(issues('loop:building'))]),
     `## Recently merged\n\n${merged}`,
   ].join('\n\n');

@@ -89,6 +89,9 @@ async function runUnsandboxed(spec: Record<string, unknown>): Promise<SelfTestRe
   return runCadImportSelfTest(createNodeConverter(), { ...spec, memoryMs: 0 });
 }
 
+const stoppedAt = (report: { running?: string } | null) =>
+  report?.running ? `stopped during ${report.running}` : 'wrote no report';
+
 function runPackaged(spec: Record<string, unknown>, dir: string): Promise<SelfTestReport> {
   const specFile = path.join(dir, 'spec.json');
   const out = path.join(dir, 'report.json');
@@ -114,8 +117,10 @@ function runPackaged(spec: Record<string, unknown>, dir: string): Promise<SelfTe
     app.once('exit', (code) => {
       clearTimeout(timer);
 
-      if (fs.existsSync(out)) resolve(JSON.parse(fs.readFileSync(out, 'utf8')));
-      else reject(new Error(`The packaged self-test wrote no report (exit ${code}). ${stderr}`));
+      const report = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : null;
+
+      if (code === 0 && report && !report.running) resolve(report);
+      else reject(new Error(`The packaged self-test ${stoppedAt(report)} (exit ${code}). ${stderr}`));
     });
   });
 }

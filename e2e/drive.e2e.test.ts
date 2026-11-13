@@ -20,7 +20,8 @@ interface SimState {
   world: string[];
   bodies: Array<{ parts: string[]; world: string[] }>;
   activeCase: string | null;
-  tries: Array<{ passed: boolean; margin: number }>;
+  faults: Record<string, string>;
+  tries: Array<{ passed: boolean; margin: number; faults: Array<{ joint: string; kind: string; at: number }> }>;
 }
 
 type Studio = { simState: () => SimState; load: (r: unknown) => void; passTries: () => void };
@@ -326,6 +327,39 @@ describe('Cases', () => {
         }),
       )
       .toBe('/case ');
+    expect(app.errors).toEqual([]);
+  });
+});
+
+describe('servo faults', () => {
+  itUnlessWindows('makes a joint Limp from Peak torque during a try, and the try records it', async () => {
+    await openTouchTheDots();
+    await button('Try It').click();
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    await holdKey('w', 800);
+
+    const row = app.page.locator(visible('[data-testid="peak-row"]')).first();
+    const item = (name: string) => app.page.locator(visible('[role=menuitem]'), { hasText: new RegExp(`^${name}$`) });
+
+    await expect.poll(() => row.count(), { timeout: 30000 }).toBe(1);
+    await row.click({ button: 'right' });
+    await item('Fault').click();
+    await item('Limp').click();
+    await expect.poll(async () => Object.values((await simState()).faults)).toEqual(['limp']);
+    await expect.poll(() => row.innerText()).toContain('Limp');
+
+    const [joint] = Object.keys((await simState()).faults);
+    const limpAt = (await simState()).stats!.time;
+
+    await button('End Try').click();
+    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+
+    const [fault] = (await simState()).tries[0].faults;
+
+    expect(fault).toMatchObject({ joint, kind: 'limp' });
+    expect(fault.at).toBeGreaterThan(0);
+    expect(fault.at).toBeLessThanOrEqual(limpAt);
+    await expect.poll(() => app.page.getByTestId('try-fault').innerText()).toBe('Limp');
     expect(app.errors).toEqual([]);
   });
 });

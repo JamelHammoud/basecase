@@ -46,7 +46,8 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         world: sim.worldParts.map((p) => p.id),
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
         activeCase: cases.active?.id ?? null,
-        tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
+        faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
+        tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin, faults: t.manifest.faults ?? [] })),
         fingerprints: modelFingerprints(core.simTraining.skills.model),
       };
     },

@@ -93,10 +93,16 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         <EmulatedRobotSection />
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} />
         <TrainSection skills={skills} actions={skillActions} onTeach={onTeach} />
-        {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}
+        {kase && <ResultsSection cases={cases} model={sim.model} rig={rig} parts={parts} world={sim.worldParts} />}
 
         {on && sim.stats && sim.model && (
-          <ResultSection stats={sim.stats} model={sim.model} rig={rig} onSelectParts={onSelectParts} />
+          <ResultSection
+            stats={sim.stats}
+            model={sim.model}
+            rig={rig}
+            onSelectParts={onSelectParts}
+            onFault={sim.setFault}
+          />
         )}
         {sim.model && <ModelSection model={sim.model} />}
         {policies.length > 0 && (

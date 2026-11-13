@@ -6,8 +6,10 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 - **Right-click (`ContextMenu` primitive):**
   - **Part:** the part's name heads the menu; clicking it copies the name. Then Duplicate, Save to Library, Reference Part (desktop only: opens the Agent tab with the part quoted in the composer, `partQuote`), Comment Here, Measure From Here, Align ▸, Drop to Floor, Stack, Reset Rotation, Zoom, Solid/Cutout/Guide, Subtract Overlapping Cutouts, Ungroup, Select All, Lock, Hide, Delete.
+  - **Part moved by a joint, while simulating:** Fault ▸ (Limp, Weak, Stuck, Laggy, Clear; the active one checked) follows the name (§8d).
+  - **Peak torque row** (Simulate tab, §8d): the joint's name heads the menu, then the same Fault ▸.
   - **Several parts** (right-click inside the selection keeps it): Union, Subtract from {first}, Intersect, Align ▸, Drop to Floor, Solid/Cutout/Guide (checked only when all match; reference photos keep their role), Group/Ungroup, Duplicate, Select All, Save to Library, Delete.
-  - Submenus (`submenu` entries) open on hover, flip left near the window edge, and can hold custom content.
+  - Submenus (`submenu` entries) open on hover, flip left near the window edge, shift up to stay above its bottom, and can hold custom content.
   - **Routine step** (Routines view, §8j): Add Step After, Delete (⌫). The Start step has only Add Step After.
   - **Empty canvas:** Add Part, Comment Here, Measure From Here, Add Reference Image, Sketch, Annotate, Clear Marks (with marks), Import Mesh, Import SVG, Select All, camera views, Reset View, Add Camera View, Collapse / Expand Camera Views (while the scene has camera views), Show Grid, Export STL.
   - **Camera tile** (§8l): the camera's name heads the menu; Look Through, Rename, Lens ▸; stationary cameras add Use Current View and Delete.

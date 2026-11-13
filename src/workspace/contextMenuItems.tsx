@@ -33,6 +33,7 @@ import {
   UnlockIcon,
 } from '../design-system';
 import { partQuote } from '../agent/partQuote';
+import { faultSubmenu } from '../components/simulate/faultMenu';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
@@ -179,6 +180,18 @@ function referencePart({ core }: ContextInputs, part: ScenePart): ContextMenuEnt
   ];
 }
 
+function faultItems({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
+  const { sim } = core.simTraining;
+  const jointId = core.posing.rig.ownerOf.get(part.id);
+  const driven = sim.model?.joints.some((j) => j.id === jointId && j.actuator >= 0);
+
+  if (sim.status === 'off' || !jointId || !driven) return [];
+
+  const current = sim.stats?.joints.find((j) => j.id === jointId)?.fault;
+
+  return [faultSubmenu(current, (kind) => sim.setFault(jointId, kind)), { divider: true }];
+}
+
 function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextMenuEntry[]): ContextMenuEntry[] {
   const { actions, ui } = inputs;
   const { ops, edits } = actions;
@@ -187,6 +200,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
 
   return [
     { heading: part.name, onSelect: () => copyPartName(inputs, part.name) },
+    ...faultItems(inputs, part),
     ...(part.hardware
       ? [{ label: 'Add Clearance Hole', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
       : []),

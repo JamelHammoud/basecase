@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Badge,
   Button,
   ContextMenu,
   DownloadIcon,
@@ -7,17 +8,21 @@ import {
   RunIcon,
   Section,
   ShareIcon,
+  Tooltip,
   type ContextMenuEntry,
 } from '../../design-system';
 import type { TryRecord } from '../../cases/tries';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
+import { prettyJointName, type Rig } from '../../utils/kinematics';
 import type { Cases } from '../../workspace/useCases';
+import { FAULT_LABEL } from './faultMenu';
 import { fmtTime } from './format';
 import { useFilmstrip } from './useFilmstrip';
 
 interface TryRowProps {
   record: TryRecord;
+  rig: Rig;
   model: SimModel | null;
   parts: ScenePart[];
   world: ScenePart[];
@@ -27,7 +32,19 @@ interface TryRowProps {
 
 const outcome = (r: TryRecord) => (r.passed ? 'Passed' : 'Missed');
 
-const TryRow: React.FC<TryRowProps> = ({ record, model, parts, world, onReplay, onMenu }) => {
+const Faults: React.FC<{ record: TryRecord; rig: Rig }> = ({ record, rig }) =>
+  record.manifest.faults?.map((f) => (
+    <Tooltip
+      key={`${f.joint}-${f.at}`}
+      label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${fmtTime(f.at)}`}
+    >
+      <span data-testid="try-fault">
+        <Badge variant="amber">{FAULT_LABEL[f.kind]}</Badge>
+      </span>
+    </Tooltip>
+  ));
+
+const TryRow: React.FC<TryRowProps> = ({ record, rig, model, parts, world, onReplay, onMenu }) => {
   const film = useFilmstrip(record, model, parts, world);
 
   return (
@@ -35,6 +52,7 @@ const TryRow: React.FC<TryRowProps> = ({ record, model, parts, world, onReplay, 
       <div className="flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
         <span className="flex-1 text-white/50 tabular">{fmtTime(record.seconds)}</span>
+        <Faults record={record} rig={rig} />
         <IconButton icon={<RunIcon className="w-4 h-4" />} title="Replay" size="xs" onClick={onReplay} />
       </div>
       {film && <img src={film} alt="" className="w-full h-14 object-cover rounded-[6px]" draggable={false} />}
@@ -44,12 +62,13 @@ const TryRow: React.FC<TryRowProps> = ({ record, model, parts, world, onReplay, 
 
 interface ResultsProps {
   cases: Cases;
+  rig: Rig;
   model: SimModel | null;
   parts: ScenePart[];
   world: ScenePart[];
 }
 
-export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, world }) => {
+export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, model, parts, world }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
   if (!cases.tries.length) return null;
@@ -70,6 +89,7 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, wo
           <TryRow
             key={t.id}
             record={t}
+            rig={rig}
             model={model}
             parts={parts}
             world={world}

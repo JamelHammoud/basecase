@@ -74,7 +74,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Never printed, exported to STL or used in booleans. Listed in the brief as reference photos, not parts.
 - **Size:** photos are downscaled to 2048px max (`utils/imageFile.ts`). They start upright with a 120mm long side. Width and height stay locked to the photo’s aspect ratio.
 - **Hide all:** the image toggle in the Layers header (shown when the scene has photos), ⇧I, or ⌘K. It’s a view setting, not undoable; hidden photos dim in Layers and aren’t rendered or clickable.
-- **Inspector:** an Image section with preview, Opacity, and Stand Up / Lay Flat (backdrop vs. blueprint on the floor). Notes describe what to take from the photo. The Layers row shows the photo as its glyph.
+- **Inspector:** an Image section with preview, Opacity, and Stand Up / Lay Flat (backdrop vs. blueprint on the floor), with no tooltips on those two. The header is the name row alone: the Image section already says it's a photo, so there's no caption that it isn't printed. Notes describe what to take from the photo. The Layers row shows the photo as its glyph.
 
 ## 8. Mode Panels (Sculpt, Sketch, Import SVG)
 

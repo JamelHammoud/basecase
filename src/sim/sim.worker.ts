@@ -11,7 +11,7 @@ import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
 import type { AmpModel } from '../utils/servoAmps';
-import { demandedTorques, jointForces, limitForces } from './simForces';
+import { demandedTorques, jointForces, jointSpeeds, limitForces } from './simForces';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
@@ -284,6 +284,7 @@ function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
   const recorder = new TorqueRecorder(n, sim.dt, { amps: sim.sim.joints.map((j) => currents[j.id] ?? null) });
   const demand = new Float64Array(n);
   const actual = new Float64Array(n);
+  const speed = new Float64Array(n);
 
   return {
     recorder,
@@ -291,6 +292,7 @@ function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
       recorder.add(
         demandedTorques(sim.model, sim.data, sim.sim.joints, demand),
         jointForces(sim.data, sim.sim.joints, actual),
+        jointSpeeds(sim.data, sim.sim.joints, speed),
       ),
   };
 }

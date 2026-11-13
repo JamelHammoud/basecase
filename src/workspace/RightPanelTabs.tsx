@@ -14,9 +14,7 @@ interface RightPanelTabsProps {
 const HISTORY_INSET = 16;
 
 const toFix = (readiness: Readiness | null) =>
-  readiness?.status === 'blocked'
-    ? { tone: 'problem' as const, label: `${readiness.blockers.length} to fix` }
-    : undefined;
+  readiness?.blockers.length ? { tone: 'problem' as const, label: `${readiness.blockers.length} to fix` } : undefined;
 
 export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
   const { studio, tool, posable, posing } = core;

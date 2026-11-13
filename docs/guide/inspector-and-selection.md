@@ -5,8 +5,9 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 ## 7. Inspector (Figma UI3 style)
 
 - Sections are separated by full-width hairline dividers, never boxed cards. Section titles are sentence case and 13px semibold.
+- **Notes** (`NotesSection`) is one section for the scene and for a part: a text area with no placeholder, collapsed while empty and open when it has text. `Section` reads `defaultOpen` only on mount, so `InspectTab` keys the Inspector by `sceneId` and `PartInspector` keys Notes by part id: loading a scene into the open tab or picking another part opens Notes again when they hold text.
 - Every Inspect view and mode panel scrolls with `useScrollFade`, like Parts: an edge fades only while there's more to scroll past it.
-- **No selection:** Project description (collapsed by default; saved with the scene to `ai-reference/`; no placeholder, like Notes) and Comments (just the title and + when there are none). Scene stats live in Layers: the header shows parts and cutouts, and a footer shows the overall size.
+- **No selection:** Notes for the scene (saved with it to `ai-reference/`) and Comments (just the title and + when there are none). Scene stats live in Layers: the header shows parts and cutouts, and a footer shows the overall size.
 - **Part selected:**
   - Inline-renamable name, then Duplicate / Save to Library / Delete.
   - Hardware shows the same `HardwareConfigurator` sections as Parts (type tiles, drive, size, length, finish) in place of Size and Shape. Specs and Holes come before Notes, collapsed; Holes carries + (Add clearance hole) in its header. Length typing and scrubbing are live; release commits one undo step. The color follows the finish unless it was set by hand.
@@ -14,7 +15,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Size W/H/D (+ wall T), Position X/Y/Z (Floor, Stack and Center actions), Rotation X/Y/Z with 90° steps.
   - **Shape** (Round, Taper, Bend, Twist): collapsible, open only when non-zero.
   - Collapsible sections keep their title where a plain section's sits and put the chevron at the far right, after any header actions.
-  - Appearance (`ColorField` + material), comments on this part, Notes (sent to the agent; collapsed by default), then Product (maker · part number, specs, mounting, model source, links) for real components.
+  - Appearance (`ColorField` + material), comments on this part, Notes (sent to the agent), then Product (maker · part number, specs, mounting, model source, links) for real components.
 - **Several parts selected (`MultiInspector`), like a multi-selection in Figma:**
   - Title: the group name (renamed in place, one undo step on Enter or blur), or “N parts”. Under it, the part count and the selection's overall size (`39 × 50 × 39 mm`). Group/Ungroup, Duplicate, Save to Library and Delete sit beside it.
   - **Align:** one icon strip per axis (min · center · max) with Spread beside it (`AlignBar`; Spread needs 3+ parts).

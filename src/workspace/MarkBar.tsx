@@ -60,10 +60,10 @@ function MarkActions({ marks }: { marks: Marks }) {
   return (
     <IconButton
       icon={<DeleteIcon className="w-4 h-4" />}
-      title="Clear marks"
+      title="Delete marks"
       tooltipSide="top"
       className="rounded-full"
-      onClick={marks.clear}
+      onClick={marks.deleteAll}
     />
   );
 }

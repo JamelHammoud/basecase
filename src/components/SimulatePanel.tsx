@@ -81,7 +81,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             cls={sim.drive.cls}
           />
         )}
-        <EmulatedRobotSection />
+        <EmulatedRobotSection joints={rig.joints} />
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} />
         <TrainSection skills={skills} actions={skillActions} onTeach={onTeach} />
         {kase && <ResultsSection cases={cases} model={sim.model} parts={parts} world={sim.worldParts} />}

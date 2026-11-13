@@ -86,9 +86,11 @@ describe('Operate calibration', () => {
       await openPlayTab(page, 'Operate');
       await page.locator(visible('button'), { hasText: 'Connect Emulated Robot' }).first().click();
       await page.locator(visible('[data-robot-rung="set_up"]')).first().click();
-      await expect
-        .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
-        .toBe('set_up');
+
+      const ladder = page.locator(visible('[data-testid="robot-mode"]')).first();
+
+      await expect.poll(() => ladder.getAttribute('data-mode')).toBe('set_up');
+      expect(await ladder.locator('[data-robot-rung]').count()).toBe(7);
       await page.locator(visible('[data-robot-rung="test"]')).first().click();
 
       const calibrate = page
@@ -105,6 +107,11 @@ describe('Operate calibration', () => {
         await expect
           .poll(() => row(id).getAttribute('data-verdict'), { timeout: 90000 })
           .toMatch(/^(measured|consistent)$/);
+
+      expect(await row('shoulder').getAttribute('data-robot-joint')).toBe('1');
+      expect(await row('elbow').getAttribute('data-robot-joint')).toBe('2');
+      await expect.poll(async () => Number(await row('elbow').getAttribute('data-position'))).toBeGreaterThan(0);
+      expect(await row('elbow').textContent()).toContain('Elbow');
 
       const measured = page.locator(visible('[data-calibration-joint][data-verdict="measured"]')).first();
       const jointId = (await measured.getAttribute('data-calibration-joint')) ?? '';

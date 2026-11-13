@@ -1,57 +1,21 @@
 import React from 'react';
 import { SectionHeader } from '../../design-system';
-import { radiansFromCounts, type JointStatus } from '../../robot/robotState';
-
-const REPLIES: Record<string, string> = {
-  missing: 'No reply',
-  garbled: 'Garbled reply',
-  wrong_id: 'Wrong ID answered',
-};
-
-const degrees = (counts: number) => ((radiansFromCounts(counts) * 180) / Math.PI).toFixed(1);
-
-function JointRow({ joint, id }: { joint: JointStatus | undefined; id: number }) {
-  const position = joint?.position;
-  const answered = joint?.reply === 'ok' && typeof position === 'number';
-
-  return (
-    <div
-      data-robot-joint={id}
-      data-position={typeof position === 'number' ? position : ''}
-      className="h-8 px-1 flex items-center justify-between gap-3 text-[13px]"
-    >
-      <span className="text-white/80">Servo {id}</span>
-      {answered ? (
-        <span className="flex items-baseline gap-[12px] tabular-nums text-white/90">
-          <span>
-            {degrees(position)}
-            <span className="text-white/50">°</span>
-          </span>
-          {typeof joint.temp_c === 'number' && (
-            <span className="text-white/50">
-              {joint.temp_c.toFixed(0)}
-              <span> °C</span>
-            </span>
-          )}
-        </span>
-      ) : (
-        <span className="text-white/50">{REPLIES[joint?.reply ?? 'missing'] ?? 'No reply'}</span>
-      )}
-    </div>
-  );
-}
+import type { JointRow as JointRowModel } from '../../robot/jointRows';
+import { JointRow } from './JointRow';
 
 interface RobotJointsProps {
-  ids: number[];
-  joints: JointStatus[];
+  rows: JointRowModel[];
+  live: boolean;
+  onRollBack?: (jointId: string) => void;
   bare?: boolean;
 }
 
-export const RobotJoints: React.FC<RobotJointsProps> = ({ ids, joints, bare }) => (
-  <div className={bare ? '' : 'mb-3'}>
-    {!bare && <SectionHeader title="Emulated servos" />}
-    {ids.map((id) => (
-      <JointRow key={id} id={id} joint={joints.find((j) => j.id === id)} />
-    ))}
-  </div>
-);
+export const RobotJoints: React.FC<RobotJointsProps> = ({ rows, live, onRollBack, bare }) =>
+  rows.length > 0 && (
+    <div className={bare ? '' : 'mb-3'}>
+      {!bare && <SectionHeader title="Emulated servos" />}
+      {rows.map((row) => (
+        <JointRow key={row.busId} row={row} live={live} onRollBack={onRollBack} />
+      ))}
+    </div>
+  );

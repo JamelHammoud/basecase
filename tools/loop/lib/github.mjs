@@ -95,7 +95,7 @@ export const commentOnPull = (number, body) =>
   run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: withMark(body) });
 
 export const mergePull = (number, method = 'squash') =>
-  run('gh', ['pr', 'merge', String(number), `--${method}`, '--delete-branch'], { allowFail: true });
+  run('gh', ['pr', 'merge', String(number), `--${method}`, '-R', repo()], { allowFail: true });
 
 const MISSING_LABEL = /'(loop:[a-z-]+)' not found/;
 

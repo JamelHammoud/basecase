@@ -25,6 +25,7 @@ covers:
   - src/components/ViewportToolbar.tsx
   - src/components/LeftSidebar.tsx
   - src/components/PlayTabs.tsx
+  - src/design-system/PanelResizer.tsx
 ---
 
 Find your way around the studio: views on the left, the canvas in the middle, and the panel for what you've selected on the right.
@@ -74,6 +75,8 @@ The right panel has a tab for each job:
 - **Simulate** runs the scene under physics. It shows once the scene has movable joints.
 - **Build** holds the Checks, bill of materials, build guide and printing. Its dot is green when the design is ready to build, and red when something needs fixing.
 - **Agent** is where you talk to the agent.
+
+Drag the edge of the sidebar or the right panel to resize it. Double-click the edge to put it back to its default width.
 
 ## The command menu
 

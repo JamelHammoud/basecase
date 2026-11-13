@@ -152,6 +152,16 @@ describe('Layers rows', () => {
   });
 });
 
+describe('command menu', () => {
+  it('names the query when nothing matches', async () => {
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('zzqx');
+    await expect.poll(() => app.page.getByText('No matches for “zzqx”').count()).toBe(1);
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => app.page.getByLabel('Search commands').count()).toBe(0);
+  });
+});
+
 describe('studio commands', () => {
   it('opens and closes the command palette', async () => {
     await app.page.keyboard.press('Meta+k');

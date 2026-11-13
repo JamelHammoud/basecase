@@ -35,6 +35,7 @@ import { fitTestCommands } from './fitTestCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
+import { inputCommands } from './inputCommands';
 import { operateCommands } from './operateCommands';
 import { buildCommands } from './buildCommands';
 import { leaderCommands } from './leaderCommands';
@@ -403,4 +404,5 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),
   ...operateCommands(inputs),
+  ...inputCommands(inputs),
 ];

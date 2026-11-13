@@ -3,8 +3,9 @@ import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import { COMPONENT_BY_ID } from '../../data/components';
 import type { HardwareSpec } from '../../data/hardware';
 import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
-import { IconButton, Section, TextArea, useScrollFade, PlusIcon } from '../../design-system';
+import { IconButton, useScrollFade, PlusIcon } from '../../design-system';
 import { CommentsSection } from './CommentsSection';
+import { NotesSection } from './NotesSection';
 import { ImageSection, PartHeader, ProductSection, SizeSection } from './partSections';
 import { AppearanceSection, PositionSection, RotationSection, ShapeSection } from './partTransformSections';
 import type { InspectorProps } from './types';
@@ -59,15 +60,12 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
 
       {partComments.length > 0 && <CommentsSection {...props} list={partComments} />}
 
-      <Section title="Notes" collapsible defaultOpen={false}>
-        <TextArea
-          rows={3}
-          aria-label="Notes"
-          value={part.note}
-          onChange={(e) => onUpdate({ note: e.target.value }, true)}
-          onBlur={(e) => onUpdate({ note: e.target.value }, false)}
-        />
-      </Section>
+      <NotesSection
+        key={part.id}
+        value={part.note ?? ''}
+        rows={3}
+        onChange={(note, live) => onUpdate({ note }, live)}
+      />
 
       {comp && <ProductSection part={part} comp={comp} />}
     </div>

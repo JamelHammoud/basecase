@@ -13,9 +13,7 @@ const NAMED = 3;
 
 const labels = (joints: RobotJoint[]) => listIds(joints.map(jointLabel), NAMED);
 
-const hasStall = (ctx: CheckContext, j: RobotJoint) => jointServos(j, ctx.byPart).some((s) => s.stallNm > 0);
-
-const hasTorque = (ctx: CheckContext, j: RobotJoint) => hasStall(ctx, j) || (j.effortNm ?? 0) > 0;
+const hasTorque = (ctx: CheckContext, j: RobotJoint) => jointServos(j, ctx.byPart).length > 0 || (j.effortNm ?? 0) > 0;
 
 const isCatalogServo = (p: ScenePart | undefined): p is ScenePart =>
   !!p?.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';

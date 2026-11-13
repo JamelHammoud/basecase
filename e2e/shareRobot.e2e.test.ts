@@ -45,8 +45,13 @@ async function openRoverCase() {
   });
   await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
   await openPlayTab(app.page, 'Cases');
-  await app.page.locator(shown('button'), { hasText: 'Reach the Flag' }).first().click();
-  await expect.poll(() => activeCase()).toBe('reach-the-flag');
+  await app.page.locator(shown('button'), { hasText: 'New Case' }).first().click();
+
+  const card = app.page.locator(shown('[data-testid="new-case"]'));
+
+  await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
+  await card.locator('button', { hasText: 'Create' }).click();
+  await expect.poll(() => activeCase()).toBe('reach-a-spot');
 
   return rover;
 }
@@ -126,7 +131,7 @@ describe('Share Robot', () => {
       const bundle = repo.files.get(FILE)!;
 
       expect(repo.kind).toBe('dataset');
-      expect(JSON.parse(bundle.toString()).case.id).toBe('reach-the-flag');
+      expect(JSON.parse(bundle.toString()).case.id).toBe('reach-a-spot');
       expect(await app.page.evaluate(() => navigator.clipboard.readText())).toBe(link);
       await expect
         .poll(() => app.page.getByRole('status').filter({ hasText: 'Link copied' }).count())
@@ -137,7 +142,7 @@ describe('Share Robot', () => {
       const card = page.getByTestId('gallery-card');
 
       await expect.poll(() => card.count(), { timeout: 60000 }).toBe(1);
-      expect(await card.innerText()).toContain('Reach the Flag');
+      expect(await card.innerText()).toContain('Reach a Spot');
       await expect.poll(() => page.locator('#boot').count()).toBe(0);
       await expect.poll(async () => (await gallery(page))?.status, { timeout: 60000 }).toBe('ready');
       await card.getByRole('button', { name: 'Drive', exact: true }).click();

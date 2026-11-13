@@ -37,7 +37,7 @@ export const DriveOverlay: React.FC<{ sim: Simulation }> = ({ sim }) => {
         )}
         <Banner>
           <Kbd>Esc</Kbd>
-          Exit
+          Stop Driving
         </Banner>
       </div>
     </div>

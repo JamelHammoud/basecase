@@ -1,4 +1,4 @@
-import React, { useEffect, useEffectEvent, useImperativeHandle, useRef, useState } from 'react';
+import React, { useEffect, useEffectEvent, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { CURSORS } from '../design-system/cursors';
 import { useComponentMeshVersion } from '../three/componentMeshes';
 import { useSimReadyVisualVersion } from '../three/simreadyVisuals';
@@ -105,7 +105,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     engineRef.current?.update(props, meshVersion);
   });
 

@@ -25,6 +25,10 @@ export function rawUrl(url: string): string {
 
 export class TooLargeError extends Error {}
 
+export const unopenedRepo = (url: string) => new Error(`Couldn’t open ${url}. Link to a public repo or folder.`);
+
+export const noRobotAt = (url: string) => new Error(`Couldn’t find a .urdf or MJCF .xml file in ${url}.`);
+
 async function readCapped(res: Response, maxBytes: number): Promise<ArrayBuffer> {
   if (Number(res.headers.get('content-length')) > maxBytes) throw new TooLargeError();
 

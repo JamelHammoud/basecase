@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { missingLabel } from '../lib/github.mjs';
-import { freshIdeas, ideaBody, STAGES } from './ideas.mjs';
+import { freshIdeas, ideaBody, labelsFor, STAGES } from './ideas.mjs';
 
-const idea = (title) => ({
+const idea = (title, scale = 'feature') => ({
   title,
+  scale,
   for: 'both',
   moment: 'You pick two grippers and see which one picks the cup more often.',
   bestToday: 'Zeromatter compares end-effectors before procurement.',
@@ -21,6 +22,7 @@ describe('ideas lane', () => {
       'Train',
       'Build',
       'Operate',
+      'New directions',
     ]);
   });
 
@@ -40,6 +42,15 @@ describe('ideas lane', () => {
     expect(body).toContain('**Stage:** Simulate');
     expect(body).toContain('**For:** Both the first robot and the thousandth');
     expect(body).toContain('**First step:** Run a Case');
+  });
+
+  it('labels a big bet so it can be found, and says its first steps', () => {
+    const bet = idea('Ship a robot as a kit from one sentence', 'big bet');
+
+    expect(labelsFor(bet)).toEqual(['loop:idea', 'loop:big-bet']);
+    expect(labelsFor(idea('Compare two grippers'))).toEqual(['loop:idea']);
+    expect(ideaBody(bet, 'New directions')).toContain('**Scale:** Big bet');
+    expect(ideaBody(bet, 'New directions')).toContain('**Why now, and the first steps:**');
   });
 
   it('names a missing loop label from gh, and only loop labels', () => {

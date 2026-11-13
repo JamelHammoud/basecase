@@ -3,6 +3,8 @@ import { ChevronDownIcon } from '../../design-system';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
 import { BlockerRow, NoteRow, type FindingContext } from './FindingRow';
+import { TetherFields } from './TetherFields';
+import { tetherFieldsFor } from './tetherRows';
 
 export const CheckItem: React.FC<{
   check: CheckSummary;
@@ -12,7 +14,8 @@ export const CheckItem: React.FC<{
 }> = ({ check, blockers, notes, context }) => {
   const [open, setOpen] = useState(false);
   const count = blockers.length + notes.length;
-  const hasBody = count > 0 || !!check.detail;
+  const fields = tetherFieldsFor(check.name, context.tether?.tether);
+  const hasBody = count > 0 || !!check.detail || fields.length > 0;
 
   return (
     <li>
@@ -43,6 +46,7 @@ export const CheckItem: React.FC<{
           {check.detail && (
             <p className="pl-[31px] pr-[7px] pb-0.5 text-[12.5px] leading-[17px] text-white/50">{check.detail}</p>
           )}
+          {context.tether && fields.length > 0 && <TetherFields fields={fields} control={context.tether} />}
           <ul>
             {blockers.map((finding) => (
               <BlockerRow key={finding.key} finding={finding} context={context} />

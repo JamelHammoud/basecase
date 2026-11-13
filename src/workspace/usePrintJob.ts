@@ -106,14 +106,20 @@ export function usePrintJob(options: PrintJobOptions) {
     }
   };
 
+  const stopSlice = () => void printBridge.stopSlice(jobId);
+
   const runSlice = async () => {
+    showToast('Slicing…', { tone: 'progress', action: { label: 'Stop', onClick: stopSlice } });
+
     try {
       const record = await sliceReport(options.report);
 
       showToast(`Sliced ${record.plates.length} ${record.plates.length === 1 ? 'plate' : 'plates'}`);
 
       return record;
-    } catch {
+    } catch (e) {
+      showToast(message(e), { tone: 'error' });
+
       return null;
     }
   };
@@ -139,7 +145,7 @@ export function usePrintJob(options: PrintJobOptions) {
     error,
     runSlice,
     sliceReport,
-    stopSlice: () => void printBridge.stopSlice(jobId),
+    stopSlice,
     openInSlicer,
     reveal: () => void printBridge.reveal(jobId),
   };

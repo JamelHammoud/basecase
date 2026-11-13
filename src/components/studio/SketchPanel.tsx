@@ -75,8 +75,8 @@ const SketchTools: React.FC<{ draft: StudioDraft; bound: boolean; onClear: () =>
 );
 
 const MODE_OPTIONS = [
-  { value: 'extrude' as const, label: 'Extrude', title: 'Push the outline up into a solid' },
-  { value: 'revolve' as const, label: 'Revolve', title: 'Spin the outline around the center axis' },
+  { value: 'extrude' as const, label: 'Extrude' },
+  { value: 'revolve' as const, label: 'Revolve' },
 ];
 
 const clearedSketch = (sketch: Sketch): Sketch => ({

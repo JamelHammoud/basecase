@@ -39,7 +39,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
 
   return (
     <div ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-      <PartHeader {...props} isImage={isImage} />
+      <PartHeader {...props} />
 
       {isImage && <ImageSection part={part} onUpdate={onUpdate} />}
 

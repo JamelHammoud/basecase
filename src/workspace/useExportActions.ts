@@ -10,23 +10,17 @@ import { fileSafe } from './helpers';
 import { useStepExport } from './useStepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
+import { useRobotPackageExport } from './useRobotPackageExport';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
-export function useExportActions({
-  parts,
-  scene,
-  annotations,
-  showToast,
-  toasts,
-  viewportRef,
-  project,
-  printer,
-}: WorkspaceCore) {
+export function useExportActions(core: WorkspaceCore) {
   'use memo';
 
+  const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing } = core;
   const sharingRef = useRef(false);
   const exportStep = useStepExport({ parts, scene, showToast });
+  const exportRobotPackage = useRobotPackageExport(core);
 
   const exportStl = () => {
     if (parts.length === 0) return;
@@ -153,7 +147,9 @@ export function useExportActions({
     exportScene,
     airDrop,
     copyBrief,
+    exportRobotPackage,
     canExportStl: parts.length > 0,
+    canExportRobot: posing.hasRig,
   };
 }
 

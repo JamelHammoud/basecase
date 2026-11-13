@@ -1,10 +1,15 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { failedLog, lastFinishedMainCheck, openPulls, repo } from '../lib/github.mjs';
+import { failedLog, lastFinishedMainCheck, openPulls, repo, unstickMainChecks } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { json } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
-export const schedule = { slots: 1, everySeconds: 60, does: "Opens a repair when main's last finished Check failed" };
+export const schedule = {
+  agent: true,
+  slots: 1,
+  everySeconds: 60,
+  does: "Opens a repair when main's last finished Check failed",
+};
 
 const MAX_LOG = 80_000;
 const HANDLED_FOR_MS = 6 * 60 * 60 * 1000;
@@ -20,9 +25,17 @@ const beingRepaired = () =>
   );
 
 export default function repair({ log }) {
+  unstickMainChecks(log);
+
   const latest = lastFinishedMainCheck();
 
-  if (!latest || latest.conclusion !== 'failure') {
+  if (!latest) {
+    log('no Check on main has a result yet');
+
+    return;
+  }
+
+  if (latest.conclusion !== 'failure') {
     log('main is green');
 
     return;

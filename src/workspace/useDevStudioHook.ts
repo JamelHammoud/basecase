@@ -3,6 +3,7 @@ import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
+import { robotPackageZip } from './robotPackageExport';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -49,9 +50,15 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
     routineState: () => core.simTraining.routines.state(),
     datasetFiles: async () => {
       const { cases } = core.simTraining;
-      const made = await cases.dataset.build(cases.tries);
+      const zip = await cases.dataset.zip(cases.tries);
 
-      return made && unzipSync(made.zip);
+      return zip && unzipSync(zip);
+    },
+    passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
+    robotPackage: async () => {
+      const made = await robotPackageZip(core);
+
+      return made && { files: unzipSync(made.zip), simXml: (await core.simTraining.sim.buildModel()).xml };
     },
     guide: async () => {
       const made = await core.guide.generate();

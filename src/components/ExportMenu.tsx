@@ -10,28 +10,33 @@ import {
   PackageIcon,
   PhotoIcon,
   PrinterIcon,
+  RobotsIcon,
   ShareIcon,
 } from '../design-system';
 import { SHARE_LABEL } from '../utils/os';
 
 interface ExportMenuProps {
   canExportStl: boolean;
+  canExportRobot: boolean;
   onExportImage: () => void;
   onExportStl: () => void;
   onExport3mf: () => void;
   onExportStep?: () => void;
   onExportScene: () => void;
+  onExportRobot: () => void;
   onAirDrop: () => void;
   onCopyMarkdown: () => void;
 }
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({
   canExportStl,
+  canExportRobot,
   onExportImage,
   onExportStl,
   onExport3mf,
   onExportStep,
   onExportScene,
+  onExportRobot,
   onAirDrop,
   onCopyMarkdown,
 }) => {
@@ -77,6 +82,12 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           />
         )}
         <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Basecase Scene" onSelect={run(onExportScene)} />
+        <MenuItem
+          icon={<RobotsIcon className="w-4 h-4" />}
+          label="Robot Package"
+          disabled={!canExportRobot}
+          onSelect={run(onExportRobot)}
+        />
         <MenuDivider />
         <MenuItem
           icon={<ClipboardIcon className="w-4 h-4" />}

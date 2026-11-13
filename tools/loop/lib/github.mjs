@@ -88,12 +88,30 @@ export const commentOnPull = (number, body) =>
 export const mergePull = (number) =>
   run('gh', ['pr', 'merge', String(number), '--squash', '--delete-branch'], { allowFail: true });
 
+const MISSING_LABEL = /'(loop:[a-z-]+)' not found/;
+
+export const missingLabel = (stderr) => MISSING_LABEL.exec(stderr)?.[1] ?? null;
+
+function ghCreating(args, { input, tries = 4 }) {
+  const result = run('gh', args, { input, allowFail: true });
+  const label = result.ok ? null : missingLabel(result.err);
+
+  if (result.ok) return result.out;
+
+  if (!label || tries <= 1) throw new Error(`gh ${args.slice(0, 2).join(' ')} failed: ${result.err.slice(-2000)}`);
+
+  run('gh', ['label', 'create', label, '--color', '6e7781', '--force']);
+
+  return ghCreating(args, { input, tries: tries - 1 });
+}
+
 export const createPull = ({ branch, title, body, label }) =>
-  run(
-    'gh',
+  ghCreating(
     ['pr', 'create', '--base', 'main', '--head', branch, '--title', title, '--body-file', '-', '--label', label],
-    { input: body },
-  ).out;
+    {
+      input: body,
+    },
+  );
 
 export const latestMainCheck = () =>
   (json('gh', [
@@ -111,32 +129,72 @@ export const latestMainCheck = () =>
     'databaseId,conclusion,status,headSha,createdAt',
   ]) ?? [])[0] ?? null;
 
-export const lastFinishedMainCheck = () =>
+const FINAL = new Set(['success', 'failure', 'timed_out']);
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+const jobConclusions = (run) =>
   cached(
-    'main-check',
-    { ttlMs: 30_000 },
+    `jobs-${run.databaseId}`,
+    { ttlMs: run.status === 'completed' ? WEEK_MS : 60_000 },
     () =>
-      (
-        json('gh', [
-          'run',
-          'list',
-          '--workflow',
-          'check.yml',
-          '--branch',
-          'main',
-          '--event',
-          'push',
-          '--status',
-          'completed',
-          '--limit',
-          '10',
-          '--json',
-          'databaseId,conclusion,status,headSha,createdAt',
-        ]) ?? []
-      ).find((run) => run.conclusion !== 'cancelled' && run.conclusion !== 'skipped') ?? null,
+      json('gh', ['api', `repos/${repo()}/actions/runs/${run.databaseId}/jobs`, '--jq', '[.jobs[].conclusion]']) ?? [],
   );
 
-export const failedLog = (runId) => run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out;
+const failedJob = (run) =>
+  jobConclusions(run).some((conclusion) => conclusion === 'failure' || conclusion === 'timed_out');
+
+export const verdictOf = (runs, hasFailedJob) => {
+  for (const run of runs) {
+    if (run.status === 'completed' && FINAL.has(run.conclusion)) return run;
+
+    if (hasFailedJob(run)) return { ...run, conclusion: 'failure' };
+  }
+
+  return null;
+};
+
+export const lastFinishedMainCheck = () =>
+  cached('main-check', { ttlMs: 60_000 }, () =>
+    verdictOf(
+      json('gh', [
+        'run',
+        'list',
+        '--workflow',
+        'check.yml',
+        '--branch',
+        'main',
+        '--event',
+        'push',
+        '--limit',
+        '100',
+        '--json',
+        'databaseId,conclusion,status,headSha,createdAt',
+      ]) ?? [],
+      failedJob,
+    ),
+  );
+
+const JOB_LOG_CHARS = 40_000;
+
+const failedJobLogs = (runId) =>
+  (
+    json('gh', [
+      'api',
+      `repos/${repo()}/actions/runs/${runId}/jobs`,
+      '--jq',
+      '[.jobs[] | select(.conclusion == "failure" or .conclusion == "timed_out") | {id, name}]',
+    ]) ?? []
+  )
+    .map(({ id, name }) => {
+      const log = run('gh', ['api', `repos/${repo()}/actions/jobs/${id}/logs`], { allowFail: true }).out;
+
+      return `## ${name}\n\n${log.slice(-JOB_LOG_CHARS)}`;
+    })
+    .join('\n\n');
+
+export const failedLog = (runId) =>
+  run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out || failedJobLogs(runId);
 
 export const isPaused = () =>
   run('gh', ['variable', 'get', 'LOOP_PAUSED'], { allowFail: true }).out.trim().toLowerCase() === 'true';
@@ -156,18 +214,17 @@ export const issues = (label) =>
         '--limit',
         '100',
         '--json',
-        'number,title,body,author,labels,createdAt',
+        'number,title,body,author,labels,createdAt,updatedAt',
       ]) ?? [],
   );
 
-export const editIssueLabels = (number, { add = [], remove = [] }) =>
-  run('gh', [
-    'issue',
-    'edit',
-    String(number),
-    ...add.flatMap((label) => ['--add-label', label]),
-    ...remove.flatMap((label) => ['--remove-label', label]),
-  ]);
+const labelArgs = ({ add = [], remove = [] }) => [
+  ...add.flatMap((label) => ['--add-label', label]),
+  ...remove.flatMap((label) => ['--remove-label', label]),
+];
+
+export const editIssueLabels = (number, change) =>
+  ghCreating(['issue', 'edit', String(number), ...labelArgs(change)], {});
 
 const openIssueTitles = () =>
   json('gh', ['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'title', '--jq', '[.[].title]']) ?? [];
@@ -175,17 +232,18 @@ const openIssueTitles = () =>
 export const createIssue = ({ title, body, labels }) => {
   if (openIssueTitles().some((open) => sameTitle(open, title))) return null;
 
-  return run(
-    'gh',
+  return ghCreating(
     ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],
     {
       input: body,
     },
-  ).out;
+  );
 };
 
-export const closeIssue = (number, comment) =>
-  run('gh', ['issue', 'close', String(number), '--reason', 'completed', '--comment', comment], { allowFail: true });
+export const closeIssue = (number, comment, reason = 'completed') =>
+  run('gh', ['issue', 'close', String(number), '--reason', reason, '--comment', withMark(comment)], {
+    allowFail: true,
+  });
 
 export const ownerComments = (number, owner) =>
   json('gh', [
@@ -210,21 +268,19 @@ export const openIssues = () =>
     'number,title,body,author,labels,createdAt,updatedAt',
   ]) ?? [];
 
-export const editPullLabels = (number, { add = [], remove = [] }) =>
-  run(
-    'gh',
-    [
-      'pr',
-      'edit',
-      String(number),
-      ...add.flatMap((label) => ['--add-label', label]),
-      ...remove.flatMap((label) => ['--remove-label', label]),
-    ],
-    { allowFail: true },
-  );
+export function editPullLabels(number, change) {
+  try {
+    return ghCreating(['pr', 'edit', String(number), ...labelArgs(change)], {});
+  } catch {
+    return null;
+  }
+}
 
-export const editPullBody = (number, body) =>
-  run('gh', ['pr', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });
+export const editPull = (number, { title, body }) =>
+  run('gh', ['pr', 'edit', String(number), ...(title ? ['--title', title] : []), '--body-file', '-'], {
+    input: body,
+    allowFail: true,
+  });
 
 export const pullComments = (number) =>
   json('gh', [
@@ -262,4 +318,39 @@ export function appendToIssue(number, text) {
   const body = run('gh', ['issue', 'view', String(number), '--json', 'body', '--jq', '.body']).out;
 
   run('gh', ['issue', 'edit', String(number), '--body-file', '-'], { input: `${body}\n\n${text}`, allowFail: true });
+}
+
+export const issueIsOpen = (number) =>
+  run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===
+  'OPEN';
+
+const STUCK_AFTER_MS = 60 * 60 * 1000;
+
+export const stuckRuns = (runs, now) =>
+  runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STUCK_AFTER_MS);
+
+export function unstickMainChecks(log, now = Date.now()) {
+  const unfinished =
+    json('gh', [
+      'run',
+      'list',
+      '--workflow',
+      'check.yml',
+      '--branch',
+      'main',
+      '--limit',
+      '30',
+      '--json',
+      'databaseId,status,createdAt,headSha',
+    ]) ?? [];
+
+  for (const stuck of stuckRuns(unfinished, now)) {
+    const done = run('gh', ['api', '-X', 'POST', `repos/${repo()}/actions/runs/${stuck.databaseId}/force-cancel`], {
+      allowFail: true,
+    }).ok;
+
+    log(
+      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, unfinished after an hour`,
+    );
+  }
 }

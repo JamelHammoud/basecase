@@ -1,6 +1,7 @@
 import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
 import { nodeKernelService } from './cad-kernel/nodeHost/client.mjs';
+import { hubPostRoutes } from './hub/routes.mjs';
 import { printPostRoutes } from './print/routes.mjs';
 
 const withBase64Files = (got) => ({
@@ -74,6 +75,7 @@ function postRoutes(backend) {
     ['/save-scene', (p) => backend.saveScene(p)],
     ['/delete-scene', (p) => backend.deleteScene(p.sceneId)],
     ...printPostRoutes(backend.printing),
+    ...hubPostRoutes(backend.hub),
   ];
 }
 

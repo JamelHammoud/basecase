@@ -17,6 +17,7 @@ import {
   BotIcon,
   CloseIcon,
   GridIcon,
+  HumanIcon,
   KeyboardIcon,
   PackageIcon,
   PanelsIcon,
@@ -25,6 +26,7 @@ import {
   WebIcon,
 } from '../design-system';
 import type { PrintersState } from '../app/usePrinters';
+import { AccountsPane } from './settings/AccountsPane';
 import { BuildPane, type BuildPrefs } from './settings/BuildPane';
 import { PrintersPane } from './settings/PrintersPane';
 import { RegionPane } from './settings/RegionPane';
@@ -32,7 +34,7 @@ import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
-export type SettingsPane = 'canvas' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'shortcuts';
+export type SettingsPane = 'canvas' | 'layout' | 'region' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
 
 const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
   { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
@@ -41,10 +43,11 @@ const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> =
   { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
   { id: 'build', label: 'Build', icon: <PackageIcon className="w-4 h-4" /> },
   { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
+  { id: 'accounts', label: 'Accounts', icon: <HumanIcon className="w-4 h-4" /> },
   { id: 'shortcuts', label: 'Shortcuts', icon: <KeyboardIcon className="w-4 h-4" /> },
 ];
 
-const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers'];
+const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers', 'accounts'];
 
 const VISIBLE_PANES = IS_WEB_DEMO ? PANES.filter((p) => !DESKTOP_PANES.includes(p.id)) : PANES;
 
@@ -185,6 +188,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             {current.id === 'printers' && (
               <PrintersPane key={props.printers.printers.length ? 'loaded' : 'empty'} state={props.printers} />
             )}
+            {current.id === 'accounts' && <AccountsPane />}
             {current.id === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
           </div>
         </div>
@@ -307,68 +311,64 @@ const AgentPane: React.FC<PaneProps> = (p) => {
   const agent = agentOfCommand(command);
 
   return (
-    <>
-      <Group title="Agent">
-        <Row label="Run with" hint={agent?.hint ?? 'Custom ACP agent'}>
-          <SegmentedControl<string>
-            className="w-[320px]"
-            value={agent?.kind ?? ''}
-            onChange={(kind) => {
-              const cmd = AGENT_PROFILES.find((profile) => profile.kind === kind)?.command;
+    <Group>
+      <Row label="Run with" hint={agent?.hint ?? 'Custom ACP agent'}>
+        <SegmentedControl<string>
+          className="w-[320px]"
+          value={agent?.kind ?? ''}
+          onChange={(kind) => {
+            const cmd = AGENT_PROFILES.find((profile) => profile.kind === kind)?.command;
 
-              if (!cmd) return;
+            if (!cmd) return;
 
-              setCommand(cmd);
-              p.onReconnectAcp(cmd);
+            setCommand(cmd);
+            p.onReconnectAcp(cmd);
+          }}
+          options={AGENT_PROFILES.map((profile) => ({ value: profile.kind, label: profile.label }))}
+        />
+      </Row>
+      <Row
+        stacked
+        label="Command"
+        hint={
+          <span
+            className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-200/80'}`}
+          >
+            {agentStatusText(p.acpStatus)}
+          </span>
+        }
+      >
+        <div className="flex gap-[6px]">
+          <TextInput
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') p.onReconnectAcp(command);
             }}
-            options={AGENT_PROFILES.map((profile) => ({ value: profile.kind, label: profile.label }))}
+            aria-label="Agent command"
+            className="font-mono text-[12px]"
           />
-        </Row>
-        <Row
-          stacked
-          label="Command"
-          hint={
-            <span
-              className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-200/80'}`}
-            >
-              {agentStatusText(p.acpStatus)}
-            </span>
-          }
-        >
-          <div className="flex gap-[6px]">
-            <TextInput
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') p.onReconnectAcp(command);
-              }}
-              aria-label="Agent command"
-              className="font-mono text-[12px]"
-            />
-            <IconButton
-              icon={<RefreshIcon className="w-3.5 h-3.5" />}
-              title="Reconnect"
-              onClick={() => p.onReconnectAcp(command)}
-            />
-          </div>
-        </Row>
-      </Group>
-      <Group title="Models">
-        <Row label="Target height" hint="Overall height of what the agent builds. 0 lets it estimate.">
-          <div className="w-[120px]">
-            <NumberInput
-              label="H"
-              title="Target height"
-              value={p.targetHeightMm}
-              onChange={p.onTargetHeight}
-              min={0}
-              max={3000}
-              precision={0}
-              unit="mm"
-            />
-          </div>
-        </Row>
-      </Group>
-    </>
+          <IconButton
+            icon={<RefreshIcon className="w-3.5 h-3.5" />}
+            title="Reconnect"
+            onClick={() => p.onReconnectAcp(command)}
+          />
+        </div>
+      </Row>
+      <Row label="Target height" hint="Height of what the agent builds. 0 lets it estimate.">
+        <div className="w-[120px]">
+          <NumberInput
+            label="H"
+            aria-label="Target height"
+            value={p.targetHeightMm}
+            onChange={p.onTargetHeight}
+            min={0}
+            max={3000}
+            precision={0}
+            unit="mm"
+          />
+        </div>
+      </Row>
+    </Group>
   );
 };

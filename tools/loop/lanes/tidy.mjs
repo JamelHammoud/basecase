@@ -9,7 +9,7 @@ import { isLoopBranch, parseRefs, parseWorktrees, staleBranches, staleWorktrees 
 export const schedule = {
   slots: 1,
   everySeconds: 60 * 60,
-  does: 'Deletes loop/ branches and loop worktrees idle for over 24 hours',
+  does: 'Deletes pushed loop/ branches with no open pull request after an hour, and idle loop worktrees after 24 hours',
 };
 
 const git = (args, opts = {}) => run('git', args, { cwd: HOME_CHECKOUT, ...opts });
@@ -17,13 +17,15 @@ const git = (args, opts = {}) => run('git', args, { cwd: HOME_CHECKOUT, ...opts 
 const REF_FORMAT = '--format=%(refname:lstrip=3) %(committerdate:unix)';
 const LOCAL_FORMAT = '--format=%(refname:lstrip=2) %(committerdate:unix)';
 
+const ORPHAN_BRANCH_MS = 60 * 60 * 1000;
+
 const worktrees = () => parseWorktrees(git(['worktree', 'list', '--porcelain']).out);
 
 function deleteRemoteBranches(log, now) {
   git(['fetch', '-q', '--prune', 'origin', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
 
   const branches = parseRefs(git(['for-each-ref', REF_FORMAT, 'refs/remotes/origin/loop']).out);
-  const stale = staleBranches({ branches, keep: [...openHeads(), HOME_REF], now });
+  const stale = staleBranches({ branches, keep: [...openHeads(), HOME_REF], now, maxAgeMs: ORPHAN_BRANCH_MS });
 
   for (const name of stale) {
     const { ok, err } = git(['push', '-q', 'origin', '--delete', name], { allowFail: true });

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ProjectSettings } from '../src/types/robotics';
-import { deskArmFiles, deskArmZip } from '../src/utils/robotImport/robotImport.fixtures';
+import { deskArmFiles, deskArmZip, hubListing } from '../src/utils/robotImport/robotImport.fixtures';
 import { openApp, type App } from './harness';
 
 let app: App;
@@ -25,6 +25,28 @@ async function serveRepo() {
 
     return bytes ? route.fulfill({ status: 200, body: Buffer.from(bytes) }) : route.fulfill({ status: 404 });
   });
+}
+
+async function serveHub() {
+  const files = deskArmFiles('desk_arm_description');
+  const resolve = 'https://huggingface.co/me/desk-arm/resolve/main/';
+
+  await app.page.route('https://huggingface.co/api/models/me/desk-arm/tree/main?recursive=true', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: hubListing(files) }),
+  );
+  await app.page.route(`${resolve}**`, (route) => {
+    const bytes = files[decodeURIComponent(route.request().url().slice(resolve.length))];
+
+    return bytes ? route.fulfill({ status: 200, body: Buffer.from(bytes) }) : route.fulfill({ status: 404 });
+  });
+}
+
+async function importLink(link: string) {
+  await app.page.keyboard.press('Meta+k');
+  await app.page.keyboard.type('Import Robot');
+  await app.page.keyboard.press('Enter');
+  await app.page.getByLabel('Robot link').fill(link);
+  await app.page.keyboard.press('Enter');
 }
 
 beforeAll(async () => {
@@ -62,13 +84,19 @@ describe('robot import', () => {
 
     const before = await jointCount();
 
-    await app.page.keyboard.press('Meta+k');
-    await app.page.keyboard.type('Import Robot');
-    await app.page.keyboard.press('Enter');
-    await app.page.getByLabel('Robot link').fill('github.com/me/arms');
-    await app.page.keyboard.press('Enter');
+    await importLink('github.com/me/arms');
     await app.page.getByRole('radio', { name: 'b/urdf/desk_arm.urdf' }).click({ timeout: 30000 });
     await app.page.getByRole('button', { name: 'Import', exact: true }).click();
+
+    await expect.poll(jointCount, { timeout: 30000 }).toBe(before + 2);
+  });
+
+  it('imports a robot from a Hugging Face Hub repo link', async () => {
+    await serveHub();
+
+    const before = await jointCount();
+
+    await importLink('huggingface.co/me/desk-arm');
 
     await expect.poll(jointCount, { timeout: 30000 }).toBe(before + 2);
   });

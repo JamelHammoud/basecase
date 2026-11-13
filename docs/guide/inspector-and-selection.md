@@ -75,7 +75,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Never printed, exported to STL or used in booleans. Listed in the brief as reference photos, not parts.
 - **Size:** photos are downscaled to 2048px max (`utils/imageFile.ts`). They start upright with a 120mm long side. Width and height stay locked to the photo’s aspect ratio.
 - **Hide all:** the image toggle in the Layers header (shown when the scene has photos), ⇧I, or ⌘K. It’s a view setting, not undoable; hidden photos dim in Layers and aren’t rendered or clickable.
-- **Inspector:** an Image section with preview, Opacity, and Stand Up / Lay Flat (backdrop vs. blueprint on the floor). Notes describe what to take from the photo. The Layers row shows the photo as its glyph.
+- **Inspector:** an Image section with preview, Opacity, and Stand Up / Lay Flat (backdrop vs. blueprint on the floor), with no tooltips on those two. The header is the name row alone: the Image section already says it's a photo, so there's no caption that it isn't printed. Notes describe what to take from the photo. The Layers row shows the photo as its glyph.
 
 ## 8. Mode Panels (Sculpt, Sketch, Import SVG)
 
@@ -83,6 +83,6 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 
 - **Sculpt:** shown while the Sculpt tool (C) is on. The tool is experimental and hidden unless enabled in Settings; when it's off, C, the toolbar button, the ⌘K entry and the Shortcuts row are all gone, and turning it off mid-sculpt switches back to Move. Existing sculpted parts still render and export. Brushes, Size/Strength sliders, Mirror X/Z, Subdivide, Add clay presets. Done switches back to Move.
 - **Sketch:** opened from Shapes ▾ → Sketch, ⌘K or right-click. Extrude / Revolve, Points / Freehand / Hole tools, snap, undo point, clear, then Output fields.
-- **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, paste code, preview, then Output fields. “Edit in Sketch” hands the outline to Sketch.
+- **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, paste code, preview, then Output fields. “Edit in Sketch”, beside the preview, hands the outline to Sketch.
 - Adding a part from Sketch or SVG closes the panel and shows the new part in the Inspector.
 - Combine lives in the selection bar, the right-click menu and the multi-selection Inspector.

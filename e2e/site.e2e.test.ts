@@ -91,7 +91,39 @@ describe('basecase.so', () => {
     expect(await page.locator('h1').innerText()).toBe('Changelog');
     expect(await fontWeight(page, 'h1')).toBe('600');
     expect(await page.locator('nav a[aria-current="page"]').innerText()).toBe('Changelog');
-    expect(await page.locator('nav a[href="/blog"]').count()).toBe(0);
+    expect(await page.locator('nav a[href="/blog"]').count()).toBe(1);
+
+    const entry = page.locator('main ol > li a').first();
+    const title = await entry.locator('h2').innerText();
+
+    await entry.click();
+    await page.waitForURL(/\/changelog\/[a-z0-9-]+$/);
+    expect(await page.locator('h1').innerText()).toBe(title);
+
+    await page.getByRole('link', { name: 'Changelog', exact: true }).last().click();
+    await page.waitForURL(`${base}/changelog`);
+    expect(errors).toEqual([]);
+    await page.close();
+  });
+
+  it('goes from the changelog to a blog post and back', async () => {
+    const { page, errors } = await open('/changelog');
+
+    await page.locator('nav a[href="/blog"]').click();
+    await page.waitForURL(`${base}/blog`);
+
+    expect(await page.locator('h1').innerText()).toBe('Blog');
+    expect(await page.locator('nav a[aria-current="page"]').innerText()).toBe('Blog');
+
+    const post = page.locator('main ul h2 a').first();
+    const title = await post.innerText();
+
+    await post.click();
+    await page.waitForURL(/\/blog\/[a-z0-9-]+$/);
+    expect(await page.locator('article h1').innerText()).toBe(title);
+
+    await page.getByRole('link', { name: 'Blog', exact: true }).last().click();
+    await page.waitForURL(`${base}/blog`);
     expect(errors).toEqual([]);
     await page.close();
   });

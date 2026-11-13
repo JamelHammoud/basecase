@@ -108,7 +108,7 @@ A flake that can't be fixed in a day goes on `tools/quarantine.json` with an iss
 
 ### Releases
 
-`.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i). basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
+`.github/workflows/nightly.yml` runs at 09:17 UTC. It takes the newest push to `main` whose full Check passed, and when that's newer than the last release, dispatches `release.yml` to build that commit (its `ref` input) with the next patch version, so one red run at 09:17 doesn't skip the night. GitHub sometimes drops a scheduled run, so the Mac's `nightly` lane starts the workflow itself when it hasn't run by 09:45 UTC (`tools/loop/lib/nightly.mjs`) ([Releases](releases.md), §0i). basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
 
 ### Writing posts and help
 

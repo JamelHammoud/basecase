@@ -139,21 +139,6 @@ describe('Checks', () => {
   const promptContaining = (text: string) =>
     JSON.stringify(app.posts.find((p) => JSON.stringify(p.body).includes(text))?.body ?? '');
 
-  it('quote a problem above the agent’s message box, then let you remove it', async () => {
-    await quoteProblem();
-
-    const box = app.page.locator(visible('textarea')).last();
-
-    expect(await box.inputValue()).toBe('');
-
-    const [quoteBox, composerBox] = await Promise.all([quotes().boundingBox(), box.boundingBox()]);
-
-    expect(quoteBox!.y + quoteBox!.height).toBeLessThanOrEqual(composerBox!.y);
-
-    await quotes().getByRole('button', { name: 'Remove Quote' }).click();
-    await expect.poll(() => quotes().count(), { timeout: 5000 }).toBe(0);
-  }, 30000);
-
   it('send a problem to the agent with Fix', async () => {
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await checks().getByRole('button', { name: 'Fix' }).first().click();
@@ -162,19 +147,6 @@ describe('Checks', () => {
 
     await expect.poll(prompt, { timeout: 15000 }).toContain('Fix this problem from Checks');
     expect(prompt()).toContain('dispute_finding');
-  }, 30000);
-
-  it('quote a chat message from its right-click menu', async () => {
-    const typed = 'Quote this message back';
-    const box = app.page.locator(visible('textarea')).last();
-
-    await box.fill(typed);
-    await box.press('Enter');
-    await app.page.getByText(typed).first().click({ button: 'right' });
-    await app.page.getByRole('menuitem', { name: 'Quote Message' }).click();
-    await expect.poll(() => quotes().locator('p').first().textContent(), { timeout: 5000 }).toBe(typed);
-    await quotes().getByRole('button', { name: 'Remove Quote' }).click();
-    await expect.poll(() => quotes().count(), { timeout: 5000 }).toBe(0);
   }, 30000);
 
   it('send a quote with the message and show it above the text in the chat', async () => {

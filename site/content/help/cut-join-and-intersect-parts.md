@@ -52,4 +52,4 @@ The first part keeps its name, and the parts cut from it sit under it in **Layer
 
 Every visible Cutout that overlaps the part is cut out of it in one step. **Hole** and **Slot**, in [[⌘K]], start as Cutouts, so they skip step 2. **Guide**, beside **Cutout** in the menu, keeps a part as a reference that's never printed.
 
-**Union**, **Subtract** and **Intersect** are also in the right-click menu with several parts selected, and in [[⌘K]]. If one shows an error instead, see [Union, Subtract or Intersect shows an error](/help/troubleshoot-booleans).
+**Union**, **Subtract** and **Intersect** are also in the right-click menu and [[⌘K]] while several parts are selected. If one shows an error instead, see [Union, Subtract or Intersect shows an error](/help/troubleshoot-booleans).

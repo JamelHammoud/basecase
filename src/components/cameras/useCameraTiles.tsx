@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { enlargeCameraView, useCameraViewsState } from '../../cameras/cameraViewsStore';
 import { useCameraFeed } from '../../cameras/useCameraFeed';
-import { cameraViews, type CameraView } from '../../cameras/views';
+import { cameraViews, stripParts, type CameraView } from '../../cameras/views';
 import { ContextMenu, type ContextMenuEntry } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import type { ScenePart } from '../../types/robotics';
@@ -29,7 +29,7 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
   const { enlarged } = useCameraViewsState();
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
-  const solid = parts.filter((p) => p.visible && p.role === 'solid');
+  const solid = stripParts(parts);
   const views = cameraViews(solid, sim.worldParts, cameras.cameras);
   const canvasRef = useCameraFeed({
     active: active(views),

@@ -57,11 +57,20 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const [policyKey, setPolicyKey] = useState<string | null>(null);
   const kase = cases.active;
   const openPolicyMenu = (e: React.MouseEvent, id: string) => {
+    const policy = policies.find((p) => p.id === id);
+
     e.preventDefault();
+
+    if (!policy) return;
+
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [{ label: 'Delete', tone: 'danger', onSelect: () => onDeletePolicy(id) }],
+      items: [
+        { label: 'Retrain', disabled: !training.canTrain, onSelect: () => void training.retrain(policy) },
+        { divider: true },
+        { label: 'Delete', tone: 'danger', onSelect: () => onDeletePolicy(id) },
+      ],
     });
   };
   const control = { sim, training, animations, policies, policyKey, setPolicyKey };
@@ -90,7 +99,12 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         )}
         {sim.model && <ModelSection model={sim.model} />}
         {policies.length > 0 && (
-          <PoliciesSection policies={policies} onChoose={(id) => void choose(`policy:${id}`)} onMenu={openPolicyMenu} />
+          <PoliciesSection
+            policies={policies}
+            training={training}
+            onChoose={(id) => void choose(`policy:${id}`)}
+            onMenu={openPolicyMenu}
+          />
         )}
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}

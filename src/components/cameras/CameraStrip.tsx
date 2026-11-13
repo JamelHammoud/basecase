@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { toggleCameraViews, useCameraViewsState } from '../../cameras/cameraViewsStore';
+import { hasCameraViews } from '../../cameras/views';
 import { ChevronDownIcon, ChevronUpIcon, IconButton } from '../../design-system';
 import { CameraTile } from './CameraTile';
 import { useCameraTiles, type CameraTilesInput } from './useCameraTiles';
@@ -8,19 +9,17 @@ const ic = 'w-4 h-4';
 
 export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) => {
   const { expanded } = useCameraViewsState();
-  const { sim } = props;
-  const hasCamera = (views: { part: string | null }[]) => props.cameras.cameras.length > 0 || views.some((v) => v.part);
-  const present = (views: { part: string | null }[]) => sim.status !== 'off' || hasCamera(views);
+  const present = hasCameraViews(props.parts, props.cameras.cameras, props.sim.status !== 'off');
   const frameCounter = useRef<HTMLDivElement | null>(null);
   const tiles = useCameraTiles({
     ...props,
-    active: (views) => present(views) && expanded,
+    active: () => present && expanded,
     onFrames: (frames) => {
       if (frameCounter.current) frameCounter.current.dataset.frames = String(frames);
     },
   });
 
-  if (!present(tiles.views)) return null;
+  if (!present) return null;
 
   return (
     <div

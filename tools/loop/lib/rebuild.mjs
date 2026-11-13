@@ -1,6 +1,7 @@
-import { CHANGE_SCHEMA, runAgent } from './agent.mjs';
+import { CHANGE_SCHEMA } from './agent.mjs';
 import { appendToIssue, closePull, commentOnIssue, commentOnPull, editIssueLabels } from './github.mjs';
 import { HOME_CHECKOUT } from './paths.mjs';
+import { checkedRun } from './preflight.mjs';
 import { publish } from './pull.mjs';
 import { markRebuilt } from './pullState.mjs';
 import { run } from './sh.mjs';
@@ -48,12 +49,13 @@ export function rebuild(pull, { comments, stuck, log }) {
   const worktree = openBranch('rebuild', pull.title.replace(/^[A-Za-z]+: /, ''));
 
   try {
-    const result = runAgent({
+    const result = checkedRun({
       cwd: worktree.dir,
       name: 'rebuild',
       prompt: prompt(pull, { comments, stuck }),
       schema: SCHEMA,
       hours: 8,
+      log,
     });
 
     markRebuilt(pull.number);

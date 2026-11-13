@@ -10,6 +10,8 @@ export const LIMITS = {
 
 export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'lead', 'ideas']);
 
+export const LANE_SHARE = { refine: 3 };
+
 const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : null);
 
 export function expired({ pulls, inBatch, now = Date.now() }) {
@@ -24,13 +26,19 @@ export function expired({ pulls, inBatch, now = Date.now() }) {
   );
 }
 
-export const backpressure = ({ openWaiting, queuedRuns }) => {
+export const laneOf = (branch) => /^loop\/([^/]+)\//.exec(branch)?.[1] ?? null;
+
+export function backpressure({ openWaiting, queuedRuns, byLane = {} }, lane = null) {
   if (openWaiting >= LIMITS.openWaiting) return `${openWaiting} pull requests are waiting to land`;
 
   if (queuedRuns >= LIMITS.queuedRuns) return `${queuedRuns} CI runs are queued`;
 
+  const own = byLane[lane] ?? 0;
+
+  if (own >= (LANE_SHARE[lane] ?? Infinity)) return `${own} of its own pull requests are waiting to land`;
+
   return null;
-};
+}
 
 export function breaches(m, now = Date.now()) {
   const found = [];

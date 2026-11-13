@@ -88,12 +88,30 @@ export const commentOnPull = (number, body) =>
 export const mergePull = (number) =>
   run('gh', ['pr', 'merge', String(number), '--squash', '--delete-branch'], { allowFail: true });
 
+const MISSING_LABEL = /'(loop:[a-z-]+)' not found/;
+
+export const missingLabel = (stderr) => MISSING_LABEL.exec(stderr)?.[1] ?? null;
+
+function ghCreating(args, { input, tries = 4 }) {
+  const result = run('gh', args, { input, allowFail: true });
+  const label = result.ok ? null : missingLabel(result.err);
+
+  if (result.ok) return result.out;
+
+  if (!label || tries <= 1) throw new Error(`gh ${args.slice(0, 2).join(' ')} failed: ${result.err.slice(-2000)}`);
+
+  run('gh', ['label', 'create', label, '--color', '6e7781', '--force']);
+
+  return ghCreating(args, { input, tries: tries - 1 });
+}
+
 export const createPull = ({ branch, title, body, label }) =>
-  run(
-    'gh',
+  ghCreating(
     ['pr', 'create', '--base', 'main', '--head', branch, '--title', title, '--body-file', '-', '--label', label],
-    { input: body },
-  ).out;
+    {
+      input: body,
+    },
+  );
 
 export const latestMainCheck = () =>
   (json('gh', [
@@ -160,14 +178,13 @@ export const issues = (label) =>
       ]) ?? [],
   );
 
-export const editIssueLabels = (number, { add = [], remove = [] }) =>
-  run('gh', [
-    'issue',
-    'edit',
-    String(number),
-    ...add.flatMap((label) => ['--add-label', label]),
-    ...remove.flatMap((label) => ['--remove-label', label]),
-  ]);
+const labelArgs = ({ add = [], remove = [] }) => [
+  ...add.flatMap((label) => ['--add-label', label]),
+  ...remove.flatMap((label) => ['--remove-label', label]),
+];
+
+export const editIssueLabels = (number, change) =>
+  ghCreating(['issue', 'edit', String(number), ...labelArgs(change)], {});
 
 const openIssueTitles = () =>
   json('gh', ['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'title', '--jq', '[.[].title]']) ?? [];
@@ -175,17 +192,16 @@ const openIssueTitles = () =>
 export const createIssue = ({ title, body, labels }) => {
   if (openIssueTitles().some((open) => sameTitle(open, title))) return null;
 
-  return run(
-    'gh',
+  return ghCreating(
     ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],
     {
       input: body,
     },
-  ).out;
+  );
 };
 
-export const closeIssue = (number, comment) =>
-  run('gh', ['issue', 'close', String(number), '--reason', 'completed', '--comment', withMark(comment)], {
+export const closeIssue = (number, comment, reason = 'completed') =>
+  run('gh', ['issue', 'close', String(number), '--reason', reason, '--comment', withMark(comment)], {
     allowFail: true,
   });
 
@@ -212,18 +228,13 @@ export const openIssues = () =>
     'number,title,body,author,labels,createdAt,updatedAt',
   ]) ?? [];
 
-export const editPullLabels = (number, { add = [], remove = [] }) =>
-  run(
-    'gh',
-    [
-      'pr',
-      'edit',
-      String(number),
-      ...add.flatMap((label) => ['--add-label', label]),
-      ...remove.flatMap((label) => ['--remove-label', label]),
-    ],
-    { allowFail: true },
-  );
+export function editPullLabels(number, change) {
+  try {
+    return ghCreating(['pr', 'edit', String(number), ...labelArgs(change)], {});
+  } catch {
+    return null;
+  }
+}
 
 export const editPullBody = (number, body) =>
   run('gh', ['pr', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });

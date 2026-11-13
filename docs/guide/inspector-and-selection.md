@@ -85,7 +85,7 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 
 - **Sculpt:** shown while the Sculpt tool (C) is on. The tool is experimental and hidden unless enabled in Settings; when it's off, C, the toolbar button, the ⌘K entry and the Shortcuts row are all gone, and turning it off mid-sculpt switches back to Move. Existing sculpted parts still render and export. Brushes, Size/Strength sliders, Mirror X/Z, Subdivide (only while one sculpted part is selected), Add clay presets. Done switches back to Move.
 - **Sketch:** opened from Shapes ▾ → Sketch, ⌘K or right-click. Extrude / Revolve, Points / Freehand / Hole tools, snap, undo point, clear, then Output fields.
-- **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, paste code, preview, then Output fields. “Edit in Sketch”, beside the preview, hands the outline to Sketch.
+- **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, Paste Code, then Output: the preview with its shape count (and hole count when there are holes), then the Output fields. The name lives only in the Name field, which starts as the file's name, so the preview row doesn't repeat it. “Edit in Sketch”, beside the preview, hands the outline to Sketch.
 - Adding a part from Sketch or SVG closes the panel and shows the new part in the Inspector.
 - Both end in one Add button. To keep the result, use Save to Library on the new part (the bookmark in its Inspector header, or right-click); the model it saves inserts that same part again.
 - Combine lives in the selection bar, the right-click menu and the multi-selection Inspector.

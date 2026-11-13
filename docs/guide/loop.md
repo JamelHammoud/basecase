@@ -80,20 +80,9 @@ A red `check` on `main` is the first thing any lane fixes. Classify it before to
 3. **Flaky.** Passes and fails on the same commit. Reproduce it under load in the container, trace from page load, and count a fix only with a measured rate: at least 10 runs before and 10 after, at the same load.
 4. **Environment.** A runner image, a dependency release or an outage: pin it or rerun later, never edit tests for it.
 
-A flake that can't be fixed in a day goes on a dated quarantine list that Check reports without failing on.
+A flake that can't be fixed in a day goes on `tools/quarantine.json` with an issue, an `until` date and a reason (an empty `test` takes the whole file). The unit and e2e runs skip it until that date, then it runs, and fails, again. `npm run test:quarantine` runs only those tests and reports them without failing (Check runs it after the first Linux e2e shard, and after Windows e2e on `main`); `npm run check:quarantine` fails Check on a malformed or dateless entry.
 
-**Linux e2e on a Mac:** CI runs e2e on x86-64 Linux with Google Chrome. The `node:26.13.0-bookworm` image runs that under OrbStack's emulation:
-
-```sh
-git worktree add --detach /tmp/bc-linux origin/main
-docker run -d --name bc-e2e --platform linux/amd64 --cpus 3 -v /tmp/bc-linux:/repo -w /repo \
-  -e ELECTRON_SKIP_BINARY_DOWNLOAD=1 -e PLAYWRIGHT_BROWSERS_PATH=/repo/.pw node:26.13.0-bookworm sleep infinity
-docker exec bc-e2e npm ci --ignore-scripts
-docker exec bc-e2e npx playwright install --with-deps chrome
-docker exec bc-e2e npx vitest run --config vitest.e2e.config.ts e2e/<file>.e2e.test.ts
-```
-
-`--cpus 2` to 3 gives CI-like load. Clean up with `docker rm -f bc-e2e` and `git worktree remove --force /tmp/bc-linux`.
+**Linux e2e on a Mac:** CI runs e2e on x86-64 Linux with Google Chrome. `node tools/loop/linux-e2e.mjs e2e/<file>.e2e.test.ts --runs 10 --cpus 3` runs it there: a detached worktree of `--ref` (default `origin/main`) under the system temp folder, the `node:26.13.0-bookworm` image under OrbStack's emulation (`--platform linux/amd64`), `npm ci --ignore-scripts` into a container volume and Google Chrome in the container, then the file `--runs` times. `node_modules` stays off the bind mount: Vite reading it through the mount missed the 30 s page load. It prints the failing tests of each run and `passed X of N`, and removes the container and the worktree even when it fails. Setup takes several minutes; `--cpus 2` to 3 gives CI-like load. It runs quarantined tests too (`BASECASE_QUARANTINE=off`), so it can measure a flake on the list.
 
 ### Releases
 

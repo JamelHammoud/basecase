@@ -4,7 +4,7 @@ date: 2026-11-12
 image: /changelog/train-skills-in-the-browser/cover.png
 ---
 
-The web studio at app.basecase.so now trains Motor Kit skills (Stand, Walk, Get up and Settle) on your own GPU, and Arena checks each one before you can use it.
+The web studio at app.basecase.so now trains Motor Kit skills on your own GPU: Stand, Walk, Get up and Settle. Arena checks each one before you can use it.
 
 ## Where it is
 
@@ -22,4 +22,6 @@ Passed skills are saved in your browser with the scene, so they're still there a
 
 ## What it doesn't do yet
 
-It needs WebGPU and WebAssembly JSPI, which Chrome and Edge have. In other browsers the Train section doesn't appear. Teaching a skill by typing a goal goes through the agent, which is in the desktop app only, and the desktop app is still the place where skills retrain on their own after you change the robot.
+It needs WebGPU and WebAssembly JSPI, which Chrome and Edge have. In other browsers the Train section doesn't appear. Teaching a skill by typing a goal goes through the agent, which is in the desktop app only. The desktop app is also still the place where skills retrain on their own after you change the robot.
+
+Steps are in [Train a Motor Kit skill](/help/train-a-motor-kit-skill).

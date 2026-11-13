@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/build-along/cover.png
 ---
 
-Build Along plays your robot's build guide on the canvas one step at a time, with the screws counted for each step and every servo labelled with its joint and bus ID.
+Build Along plays your robot's build guide on the canvas one step at a time. Each step counts its screws and labels every servo with its joint and bus ID.
 
 ## Where it is
 
@@ -18,10 +18,12 @@ The canvas shows only what's built so far and what this step adds. The new parts
 
 ## Servo IDs
 
-A step that adds a servo labels it with the joint it drives and its bus ID, like Shoulder lift, ID 2. The numbers come from the same place as the robot package's joint map and Operate's Connect, so a servo set to that ID and fitted where the label says is the one the sim and Operate expect. A hand-made kit guide keeps the ID script and the assembly video apart; here they're one step.
+A step that adds a servo labels it with the joint it drives and its bus ID, like Shoulder lift, ID 2. The numbers come from the same place as the robot package's joint map and Operate's Connect. So a servo set to that ID and fitted where the label says is the one the sim and Operate expect. A hand-made kit guide keeps the ID script and the assembly video apart; here they're one step.
 
 ![Three servos labelled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/changelog/build-along/cover.png)
 
 ## The guide it follows
 
 Build Along reads the same plan the PDF is drawn from, in the order the assembly check proves. If the design changed since the guide was last made, it makes the guide again first. It never edits the scene: hiding parts and moving them in is only how the canvas shows the step.
+
+Steps are in [Build a robot step by step on the canvas](/help/build-along).

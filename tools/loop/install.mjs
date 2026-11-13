@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { HOME_CHECKOUT, LOGS } from './lib/paths.mjs';
+import { HOME_CHECKOUT, HOME_REF, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
 const MINUTE = 60;
@@ -115,8 +115,8 @@ function ensureLabels() {
 function ensureHome() {
   if (fs.existsSync(HOME_CHECKOUT)) return;
 
-  run('git', ['fetch', '-q', 'origin', 'main']);
-  run('git', ['worktree', 'add', '-q', '--detach', HOME_CHECKOUT, 'origin/main']);
+  run('git', ['fetch', '-q', 'origin', 'main', HOME_REF]);
+  run('git', ['worktree', 'add', '-q', '--detach', HOME_CHECKOUT, `origin/${HOME_REF}`]);
   run('npm', ['ci', '--no-audit', '--no-fund'], {
     cwd: HOME_CHECKOUT,
     timeout: 30 * 60 * 1000,
@@ -130,7 +130,12 @@ function install() {
   fs.mkdirSync(AGENTS_DIR, { recursive: true });
   fs.mkdirSync(LOGS, { recursive: true });
 
-  const env = { PATH: searchPath(), HOME: os.homedir(), CLAUDE_BIN: run('which', ['claude']).out };
+  const env = {
+    PATH: searchPath(),
+    HOME: os.homedir(),
+    CLAUDE_BIN: run('which', ['claude']).out,
+    BASECASE_LOOP_REF: HOME_REF,
+  };
 
   for (const job of JOBS) load(label(job), laneDict(job, env));
 

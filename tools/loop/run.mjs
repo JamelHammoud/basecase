@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { HOME_CHECKOUT, LOCKS, LOGS } from './lib/paths.mjs';
+import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
 const LANES = ['review', 'merge', 'rebase', 'repair', 'build', 'refine', 'lead', 'update'];
@@ -52,8 +52,8 @@ const othersRunning = () =>
     .some((name) => isAlive(Number(fs.readFileSync(path.join(LOCKS, name), 'utf8'))));
 
 function updateHome() {
-  run('git', ['fetch', '-q', 'origin', 'main'], { cwd: HOME_CHECKOUT });
-  run('git', ['reset', '-q', '--hard', 'origin/main'], { cwd: HOME_CHECKOUT });
+  run('git', ['fetch', '-q', 'origin', 'main', HOME_REF], { cwd: HOME_CHECKOUT });
+  run('git', ['reset', '-q', '--hard', `origin/${HOME_REF}`], { cwd: HOME_CHECKOUT });
 
   const stampFile = path.join(HOME_CHECKOUT, 'node_modules', '.loop-lock-hash');
   const hash = lockHash(HOME_CHECKOUT);

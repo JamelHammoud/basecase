@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
 import { createPull, repo } from './github.mjs';
+import { CODE_ROOT } from './paths.mjs';
 import { run } from './sh.mjs';
 
 export const KINDS = {
@@ -24,9 +25,9 @@ const screenshotLines = (paths, branch) =>
 
 export const pullTitle = (change) => `${KINDS[change.kind].prefix}: ${change.title}`;
 
-export function pullBody(change, { dir, branch, extra = {} }) {
+export function pullBody(change, { branch, extra = {} }) {
   const template = fs.readFileSync(
-    path.join(dir, '.github', 'PULL_REQUEST_TEMPLATE', `${KINDS[change.kind].template}.md`),
+    path.join(CODE_ROOT, '.github', 'PULL_REQUEST_TEMPLATE', `${KINDS[change.kind].template}.md`),
     'utf8',
   );
   const values = {
@@ -63,10 +64,10 @@ export function publish(change, { dir, branch, extra }) {
 
   if (git(['status', '--porcelain'], dir).out !== '') git(['commit', '-q', '-F', '-'], dir, { input: message });
 
-  run('node', ['tools/check-credit.mjs', 'origin/main..HEAD'], { cwd: dir });
+  run('node', [path.join(CODE_ROOT, 'tools', 'check-credit.mjs'), 'origin/main..HEAD'], { cwd: dir });
   git(['push', '-q', '-u', 'origin', branch], dir);
 
   const title = pullTitle(change);
 
-  return createPull({ branch, title, body: pullBody(change, { dir, branch, extra }), label: `loop:${change.kind}` });
+  return createPull({ branch, title, body: pullBody(change, { branch, extra }), label: `loop:${change.kind}` });
 }

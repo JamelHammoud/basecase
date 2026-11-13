@@ -11,6 +11,7 @@ import { visibleShares } from './visibility';
 import { traceFasteners } from '../../assembly/fastenerChain';
 import type { FastenerInput } from '../../assembly/assemblyTypes';
 import { assemblyGeometry, type AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
+import { jointAxisOf, type JointAxisQuery } from './jointAxis';
 
 export interface GeometryPayload {
   id: string;
@@ -37,7 +38,8 @@ export type AnalysisTask =
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
-  | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] };
+  | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] }
+  | ({ kind: 'jointAxis'; instances: Instance[] } & JointAxisQuery);
 
 export interface ThreeMfFileSpec {
   key: string;
@@ -108,6 +110,13 @@ function run(task: AnalysisTask) {
       );
     case 'floor':
       return lowestPart(placeAll(task.instances))?.y ?? null;
+    default:
+      return runPlaced(task);
+  }
+}
+
+function runPlaced(task: Extract<AnalysisTask, { kind: 'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' }>) {
+  switch (task.kind) {
     case 'gaps':
       return pairsWithin(placeAll(task.instances), task.pairs, task.withinMm);
     case 'threeMf':
@@ -116,6 +125,8 @@ function run(task: AnalysisTask) {
       return traceFasteners(placeAll(task.instances), task);
     case 'assembly':
       return assemblyGeometry(placeAll(task.instances), task);
+    case 'jointAxis':
+      return jointAxisOf(task, (key) => solidOf(key).positions);
   }
 }
 

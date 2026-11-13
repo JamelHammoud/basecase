@@ -6,6 +6,7 @@ import {
   floorIn,
   gapsIn,
   interferenceIn,
+  jointAxisIn,
   measuresIn,
   visibilityIn,
   printMeshesIn,
@@ -54,6 +55,7 @@ const GIZMO_KEYS: Array<keyof ViewportProps> = [
   'pose',
   'measureMode',
   'markMode',
+  'axisPick',
 ];
 
 const FIGURE_KEYS: Array<keyof ViewportProps> = ['figures', 'humanHeightMm', 'measureKind', 'measureMode'];
@@ -81,6 +83,7 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'exportUsdz',
   'partTriangles',
   'servoOutput',
+  'jointAxis',
   'sweepClashes',
   'pickAt',
   'focusSelected',
@@ -359,6 +362,11 @@ export class ViewportEngine {
       exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),
+      jointAxis: (query) =>
+        jointAxisIn(
+          withRest(() => snapshotShapes(measure.partObjects(ctx, [query.parent, query.child]))),
+          query,
+        ),
       meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
       sweepClashes: (sweeps) =>
         sweepsIn(

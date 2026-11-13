@@ -5,7 +5,7 @@ import { dot, lineDistance, norm } from '../utils/engineeringMath';
 import { describeKey } from '../utils/bom';
 import type { Money } from '../utils/currency';
 import { currentMoney } from '../utils/currencyStore';
-import { anchorJoint } from '../utils/kinematics';
+import { jointFrom, jointProblem, withJoints } from '../joints/declare';
 import type { Vec3 } from './types';
 
 export interface JointSpec {
@@ -29,16 +29,6 @@ export interface DefineJointsPayload {
 
 export type ServoOutputOf = (id: string) => { point: Vec3; axis: Vec3 } | null | undefined;
 
-function jointProblem(j: JointSpec, ids: Set<string>): string | null {
-  const missing = [...j.parent, ...j.child, ...(j.actuators ?? [])].filter((id) => !ids.has(id));
-
-  if (missing.length) return `${j.id}: no parts named ${missing.join(', ')}`;
-
-  const both = j.parent.filter((id) => j.child.includes(id));
-
-  return both.length ? `${j.id}: ${both.join(', ')} can't be on both sides` : null;
-}
-
 function seeded(j: JointSpec, planned: SkeletonJoint | undefined): JointSpec {
   if (!planned) return j;
 
@@ -58,7 +48,7 @@ function makeJoint(j: JointSpec, parts: ScenePart[], servoOutput: ServoOutputOf,
 
   if (!origin || !axis) return `${j.id}: give origin and axis, an actuator, or a skeleton joint to take them from`;
 
-  return anchorJoint(
+  return jointFrom(
     {
       id: j.id,
       name: j.name ?? j.id,
@@ -113,14 +103,6 @@ function skeletonDrift(j: RobotJoint, planned: SkeletonJoint | undefined): strin
   return `${j.id}: ${parallel ? '' : 'not parallel to and '}${Math.round(off * 10) / 10} mm off the skeleton axis; move the parts or update define_skeleton`;
 }
 
-function withFirstRanges(known: ProjectSettings['firstRanges'], made: RobotJoint[]) {
-  const out = { ...known };
-
-  for (const j of made) if (j.range && !out[j.id]) out[j.id] = [Math.min(...j.range), Math.max(...j.range)];
-
-  return out;
-}
-
 export function declareJoints(
   pl: DefineJointsPayload,
   parts: ScenePart[],
@@ -142,8 +124,7 @@ export function declareJoints(
 
   const drift = made.map((m) => skeletonDrift(m, plannedJoint(project, m.id))).filter((x): x is string => !!x);
 
-  const keep = pl.replace ? [] : (project.joints ?? []).filter((j) => !made.some((m) => m.id === j.id));
-  const next = { ...project, joints: [...keep, ...made], firstRanges: withFirstRanges(project.firstRanges, made) };
+  const next = withJoints(project, made, pl.replace);
   const text =
     `${next.joints.length} joints declared.` +
     (made.length ? `\n${made.map((j) => jointLine(j, pl.joints, project)).join('\n')}` : '') +

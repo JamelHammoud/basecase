@@ -3,7 +3,8 @@ import type { CatalogItem, PartDimensions } from '../types/robotics';
 import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/components';
 import { isSourcedId } from '../data/sourcedItems';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { MetaLine, Tooltip, ArrowUpRightIcon, CartIcon, DrawingIcon, FileIcon, VerifiedIcon } from '../design-system';
+import { keySpecs } from '../utils/keySpecs';
+import { MetaLine, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon } from '../design-system';
 
 const fmt = (v: number) => String(Math.round(v * 100) / 100);
 
@@ -133,32 +134,13 @@ export const Stat: React.FC<{ label: string; children: React.ReactNode; wide?: b
   </div>
 );
 
-interface HeroBadge {
-  icon: React.ReactNode;
-  label: string;
-}
-
-const sourceBadge = (c: ComponentInfo): HeroBadge => {
-  if (c.model.source === 'manufacturer') {
-    return { icon: <VerifiedIcon className="w-3.5 h-3.5 text-[#0d99ff]" />, label: `${c.model.by} CAD` };
-  }
-
-  if (c.model.source === 'checked') {
-    return { icon: <VerifiedIcon className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'Checked against drawing' };
-  }
-
-  return { icon: <DrawingIcon className="w-3.5 h-3.5 text-white/60" />, label: 'From the drawing' };
-};
-
 export const Hero: React.FC<
   {
     item: CatalogItem;
-    source?: ComponentInfo;
     className?: string;
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
-> = ({ item, source, className = 'h-[136px]', ...rest }) => {
+> = ({ item, className = 'h-[136px]', ...rest }) => {
   const thumb = usePartThumbnail(item);
-  const badge = source && sourceBadge(source);
 
   return (
     <div
@@ -174,12 +156,6 @@ export const Hero: React.FC<
         />
       ) : (
         <div className="absolute inset-0 shimmer" />
-      )}
-      {badge && (
-        <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 h-6 pl-1.5 pr-2 rounded-full bg-black/45 ring-1 ring-white/10 text-[12px] font-medium text-white/80 backdrop-blur-md">
-          {badge.icon}
-          {badge.label}
-        </div>
       )}
     </div>
   );
@@ -228,33 +204,34 @@ const Footer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="mt-3 border-t border-white/[0.07] p-3 flex items-center gap-1.5">{children}</div>
 );
 
+export const makerSubtitle = (c: ComponentInfo) => [c.manufacturer, isSourcedId(c.id) ? 'Added by Agent' : ''];
+
 export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
   const c = item.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
-  const d = item.defaultDimensions;
 
   if (!c) return null;
 
+  const [size, ...rest] = keySpecs(c, item.defaultDimensions);
+
   return (
-    <div className="pb-0">
-      <Hero item={item} source={c} />
-      <Header
-        title={c.name}
-        subtitle={[c.manufacturer, isSourcedId(c.id) ? 'Added by Agent' : c.mpn]}
-        description={c.description}
-      />
+    <div>
+      <Hero item={item} />
+      <Header title={item.name} subtitle={makerSubtitle(c)} description={c.description} />
       <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
-        <Stat label="Size" wide>
-          <SizeLine w={d.width} h={d.height} d={d.depth} />
+        <Stat label={size.label} wide>
+          {size.value}
         </Stat>
-        {c.specs.slice(0, 4).map(([label, value]) => (
-          <Stat key={label} label={label}>
-            <SpecText value={value} />
+        {rest.map((k) => (
+          <Stat key={k.label} label={k.label} wide={rest.length === 1}>
+            {k.value}
           </Stat>
         ))}
       </div>
-      <Footer>
-        <BuyLinks c={c} />
-      </Footer>
+      {(c.links.amazon || c.links.datasheet || c.links.product) && (
+        <Footer>
+          <BuyLinks c={c} />
+        </Footer>
+      )}
     </div>
   );
 };

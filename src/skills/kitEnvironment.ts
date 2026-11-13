@@ -3,7 +3,7 @@ import type { Cmp, Contract, Expr, Formula, State } from './contract';
 import { policyObservation, type Environment, type ResetDistribution, type SignalSource } from './environment';
 import { sha256Hex } from './hash';
 import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, neutralRad, offsetPose, rootHeight, type V3 } from './kitModel';
-import { kitReward } from './kitRewards';
+import { kitReward, type KitRewardOptions } from './kitRewards';
 
 export type KitEntry = 'stand' | 'get-up' | 'velocity-tracking' | 'pose-tracking' | 'settle-to-neutral';
 export type TrainedEntry = Exclude<KitEntry, 'pose-tracking'>;
@@ -75,11 +75,14 @@ function velocityFormula(height: number, speed: number): Formula {
 
   if (speed === 0) return { all: [steady, always(atom({ abs: travel }, '<', KIT_BARS.stillDriftM, 0.05))] };
 
+  const sign = Math.sign(speed);
+  const [ahead, behind]: [Cmp, Cmp] = sign > 0 ? ['>', '<'] : ['<', '>'];
+
   return {
     all: [
       steady,
-      { eventually: { window: end, state: atom(travel, '>', KIT_BARS.slowestShare * speed * (T - 1), 0.1) } },
-      { always: { window: end, state: atom(travel, '<', KIT_BARS.fastestShare * speed * T + 0.05, 0.1) } },
+      { eventually: { window: end, state: atom(travel, ahead, KIT_BARS.slowestShare * speed * (T - 1), 0.1) } },
+      { always: { window: end, state: atom(travel, behind, KIT_BARS.fastestShare * speed * T + sign * 0.05, 0.1) } },
     ],
   };
 }
@@ -173,7 +176,8 @@ function signalsFor(model: SimModel, entry: TrainedEntry): Record<string, Signal
 export const kitCommand = (model: SimModel, entry: TrainedEntry): V3 =>
   entry === 'velocity-tracking' ? [kitTopSpeed(model), 0, 0] : [0, 0, 0];
 
-export const kitRewardHash = (model: SimModel, entry: TrainedEntry) => sha256Hex(kitReward(model, entry));
+export const kitRewardHash = (model: SimModel, entry: TrainedEntry, options: KitRewardOptions = {}) =>
+  sha256Hex(kitReward(model, entry, options));
 
 export function trainedEntry(entry: KitEntry): TrainedEntry {
   if (entry === 'pose-tracking') throw new Error('Pose tracking isn’t in the Motor Kit. Its entries are for legs.');
@@ -181,7 +185,7 @@ export function trainedEntry(entry: KitEntry): TrainedEntry {
   return entry;
 }
 
-export function kitEnvironment(model: SimModel, entry: KitEntry): Environment {
+export function kitEnvironment(model: SimModel, entry: KitEntry, options: KitRewardOptions = {}): Environment {
   const trained = trainedEntry(entry);
   const robot = kitRobot(model);
 
@@ -194,7 +198,7 @@ export function kitEnvironment(model: SimModel, entry: KitEntry): Environment {
     action: { kind: 'position-offset', joints: robot.joints, scale: KIT_ACTION_SCALE, controlDt: CONTROL_DT },
     reset: resetFor(model, trained),
     randomization: { friction: [0.8, 1.2], mass: [0.9, 1.1], strength: [0.9, 1], latencyMs: [0, 20] },
-    reward: { kind: 'rewardlang', hash: kitRewardHash(model, trained) },
+    reward: { kind: 'rewardlang', hash: kitRewardHash(model, trained, options) },
     contract: kitContract(model, trained),
     signals: signalsFor(model, trained),
   };

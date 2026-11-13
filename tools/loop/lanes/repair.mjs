@@ -27,7 +27,13 @@ const beingRepaired = () =>
 export default function repair({ log }) {
   const latest = lastFinishedMainCheck();
 
-  if (!latest || latest.conclusion !== 'failure') {
+  if (!latest) {
+    log('no Check on main has a result yet');
+
+    return;
+  }
+
+  if (latest.conclusion !== 'failure') {
     log('main is green');
 
     return;

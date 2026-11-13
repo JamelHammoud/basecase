@@ -1,11 +1,11 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { laneNames, laneModule } from './lib/lanes.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
-const LANES = ['review', 'merge', 'rebase', 'repair', 'build', 'refine', 'lead', 'update'];
+const LANES = laneNames();
 const [lane, slot = '1'] = process.argv.slice(2);
 
 if (!LANES.includes(lane)) {
@@ -13,7 +13,7 @@ if (!LANES.includes(lane)) {
   process.exit(2);
 }
 
-const id = lane === 'build' ? `${lane}-${slot}` : lane;
+const id = `${lane}-${slot}`;
 
 fs.mkdirSync(LOCKS, { recursive: true });
 fs.mkdirSync(LOGS, { recursive: true });
@@ -52,8 +52,14 @@ const othersRunning = () =>
     .some((name) => isAlive(Number(fs.readFileSync(path.join(LOCKS, name), 'utf8'))));
 
 function updateHome() {
-  run('git', ['fetch', '-q', 'origin', 'main', HOME_REF], { cwd: HOME_CHECKOUT });
-  run('git', ['reset', '-q', '--hard', `origin/${HOME_REF}`], { cwd: HOME_CHECKOUT });
+  const exists = run('git', ['ls-remote', '--exit-code', '--heads', 'origin', HOME_REF], {
+    cwd: HOME_CHECKOUT,
+    allowFail: true,
+  }).ok;
+  const ref = exists ? HOME_REF : 'main';
+
+  run('git', ['fetch', '-q', 'origin', ref], { cwd: HOME_CHECKOUT });
+  run('git', ['reset', '-q', '--hard', `origin/${ref}`], { cwd: HOME_CHECKOUT });
 
   const stampFile = path.join(HOME_CHECKOUT, 'node_modules', '.loop-lock-hash');
   const hash = lockHash(HOME_CHECKOUT);
@@ -75,8 +81,7 @@ const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.reso
 try {
   if (runsFromHome && lane === 'merge') updateHome();
 
-  const lanePath = path.join(import.meta.dirname, 'lanes', `${lane}.mjs`);
-  const { default: runLane } = await import(pathToFileURL(lanePath).href);
+  const { default: runLane } = await laneModule(lane);
 
   await runLane({ log, slot });
 } catch (error) {

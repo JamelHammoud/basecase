@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, EmptyState, MetaLine, OperateIcon, RobotsIcon } from '../../design-system';
+import { Button, MetaLine } from '../../design-system';
 import { useRobot } from '../../robot/useRobot';
 import { sceneRobot } from '../../robot/sceneRobot';
 import { connectRobot, disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
@@ -8,6 +8,7 @@ import type { RobotJoint } from '../../types/robotics';
 import { RobotJoints } from './RobotJoints';
 import { RobotLadder, rungLabel } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
+import { PlayNoRobot } from '../PlayNoRobot';
 
 export interface OperatePanelProps {
   joints: RobotJoint[];
@@ -25,29 +26,11 @@ const RUN: Record<string, string> = {
 
 const FAMILY = { feetech: 'Feetech', dynamixel: 'Dynamixel' };
 
-const NoRobot: React.FC<{ onBrowseRobots: () => void }> = ({ onBrowseRobots }) => (
-  <EmptyState
-    icon={<OperateIcon className="w-5 h-5" />}
-    title="No robot"
-    action={
-      <Button
-        variant="primary"
-        size="sm"
-        icon={<RobotsIcon className="w-4 h-4" />}
-        title="Add a robot to emulate its servos"
-        onClick={onBrowseRobots}
-      >
-        Browse Robots
-      </Button>
-    }
-  />
-);
-
 function ConnectButton({ joints, onBrowseRobots }: OperatePanelProps) {
   const [refusal, setRefusal] = useState<string | null>(null);
   const robot = sceneRobot(joints);
 
-  if (!joints.some((j) => j.type !== 'fixed')) return <NoRobot onBrowseRobots={onBrowseRobots} />;
+  if (!joints.some((j) => j.type !== 'fixed')) return <PlayNoRobot onBrowseRobots={onBrowseRobots} />;
 
   if (!robot.ok) return null;
 

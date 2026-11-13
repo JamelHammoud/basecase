@@ -2,7 +2,7 @@ import React from 'react';
 import { AgentConversationSummary } from '../types/robotics';
 import { groupByDate } from '../utils/dateGroups';
 import { timeAgo } from '../utils/timeAgo';
-import { AgentSpinner, Tooltip, useScrollFade, DeleteIcon, confirmAction } from '../design-system';
+import { AgentSpinner, IconButton, useScrollFade, DeleteIcon, confirmAction } from '../design-system';
 
 interface ChatHistoryProps {
   chats: AgentConversationSummary[];
@@ -26,8 +26,6 @@ const ROW_TEXT: Record<RowState, string> = {
   idle: 'text-white/75 group-hover/chat:text-white/95',
 };
 
-const RUNNING_LABEL = 'Running';
-
 const ChatRow: React.FC<{
   chat: AgentConversationSummary;
   current: boolean;
@@ -50,7 +48,7 @@ const ChatRow: React.FC<{
 
           if (!current) onOpenChat(c.id);
         }}
-        className="absolute inset-0 rounded-[8px] cursor-default disabled:cursor-default"
+        className="absolute inset-0 rounded-[8px] cursor-default"
         aria-current={current || undefined}
         aria-label={c.title}
       />
@@ -60,14 +58,17 @@ const ChatRow: React.FC<{
         {running && <AgentSpinner />}
         <span className="truncate">{c.title}</span>
       </span>
-      <span className="relative shrink-0 min-w-[40px] h-full mr-[4px] flex items-center justify-end">
-        <span className="pr-[6px] whitespace-nowrap text-[12px] tabular-nums text-white/50 transition-opacity duration-150 group-hover/chat:opacity-0 group-focus-within/chat:opacity-0">
+      <span className="relative shrink-0 min-w-[40px] h-full mr-[3px] flex items-center justify-end">
+        <span className="pr-[7px] whitespace-nowrap text-[12px] tabular-nums text-white/50 transition-opacity duration-150 group-hover/chat:opacity-0 group-focus-within/chat:opacity-0">
           {running ? '' : timeAgo(c.updatedAt)}
         </span>
-        <Tooltip label="Delete chat" side="right">
-          <button
-            type="button"
-            aria-label="Delete chat"
+        <span className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/chat:opacity-100 group-hover/chat:pointer-events-auto group-focus-within/chat:opacity-100 group-focus-within/chat:pointer-events-auto">
+          <IconButton
+            icon={<DeleteIcon className="w-3.5 h-3.5" />}
+            title="Delete"
+            tooltipSide="right"
+            variant="danger"
+            size="xs"
             onClick={() =>
               confirmAction({
                 title: `Delete ${c.title}?`,
@@ -75,11 +76,8 @@ const ChatRow: React.FC<{
                 onConfirm: () => onDeleteChat(c.id),
               })
             }
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-[26px] h-[26px] rounded-[6px] flex items-center justify-center text-white/50 hover:text-red-400 hover:bg-red-500/15 cursor-default opacity-0 scale-90 transition-[opacity,scale,color,background-color] duration-150 group-hover/chat:opacity-100 group-hover/chat:scale-100 focus-visible:opacity-100 focus-visible:scale-100"
-          >
-            <DeleteIcon className="w-3.5 h-3.5" />
-          </button>
-        </Tooltip>
+          />
+        </span>
       </span>
     </div>
   );
@@ -107,10 +105,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
     );
   }
 
-  const groups = [
-    ...(running.length ? [{ label: RUNNING_LABEL, items: running }] : []),
-    ...groupByDate(saved, new Date()),
-  ];
+  const groups = [...(running.length ? [{ label: 'Running', items: running }] : []), ...groupByDate(saved, new Date())];
 
   return (
     <div

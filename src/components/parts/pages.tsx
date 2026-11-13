@@ -4,17 +4,17 @@ import { COMPONENT_BY_ID, ComponentInfo } from '../../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, hardwareSubtitle } from '../../data/hardware';
 import { isSourcedId } from '../../data/sourcedItems';
 import type { CatalogItem, PartDimensions } from '../../types/robotics';
+import { Button, MetaLine, Section, Tooltip, CartIcon, PlusIcon } from '../../design-system';
 import {
-  Button,
-  MetaLine,
-  Section,
-  Tooltip,
-  ArrowUpRightIcon,
-  CartIcon,
-  FileIcon,
-  PlusIcon,
-} from '../../design-system';
-import { Hero, LinkButton, SizeLine, SpecRow, SpecText } from '../PartDetails';
+  ComponentLinks,
+  DetailBlock,
+  Hero,
+  LinkButton,
+  ModelOrigin,
+  SizeSpecRow,
+  SpecRow,
+  SpecRows,
+} from '../PartDetails';
 import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
 import { keySpecs } from '../../utils/keySpecs';
 import { hardwareItem, type View } from './partsViews';
@@ -34,27 +34,6 @@ const PageTitle: React.FC<{ title: string; subtitle: string | string[]; descript
   </div>
 );
 
-const modelOrigin = (c: ComponentInfo): string => {
-  if (c.model.source === 'manufacturer') return `From ${c.model.by}'s CAD files`;
-
-  if (c.model.source === 'checked') return `By ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`;
-
-  return `Modeled from the ${c.model.by} drawing`;
-};
-
-const DetailBlock: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <div className="text-[13px] leading-relaxed">
-    <div className="text-white/50">{label}</div>
-    <div className="mt-0.5 text-white/80">{children}</div>
-  </div>
-);
-
-const SizeSpecRow: React.FC<{ d: PartDimensions }> = ({ d }) => (
-  <SpecRow label="Size">
-    <SizeLine w={d.width} h={d.height} d={d.depth} />
-  </SpecRow>
-);
-
 const ComponentSpecs: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, d }) => (
   <>
     <Section title="Key specs">
@@ -67,14 +46,7 @@ const ComponentSpecs: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, 
       </dl>
     </Section>
     <Section title="All specs" collapsible defaultOpen={false}>
-      <dl className="-my-[5px]">
-        <SizeSpecRow d={d} />
-        {c.specs.map(([label, value]) => (
-          <SpecRow key={label} label={label}>
-            <SpecText value={value} />
-          </SpecRow>
-        ))}
-      </dl>
+      <SpecRows c={c} d={d} />
     </Section>
   </>
 );
@@ -85,24 +57,8 @@ const ComponentDetails: React.FC<{ c: ComponentInfo }> = ({ c }) => (
       <SpecRow label="Part number">{c.mpn}</SpecRow>
     </dl>
     <DetailBlock label="Mounting">{c.mounting}</DetailBlock>
-    <DetailBlock label="3D model">
-      {modelOrigin(c)}
-      {c.model.license && <span className="block text-white/50">{c.model.license}</span>}
-    </DetailBlock>
-    {(c.links.datasheet || c.links.product) && (
-      <div className="flex gap-1.5 pt-0.5">
-        {c.links.datasheet && (
-          <LinkButton href={c.links.datasheet} icon={<FileIcon className="w-3.5 h-3.5" />}>
-            Datasheet
-          </LinkButton>
-        )}
-        {c.links.product && (
-          <LinkButton href={c.links.product} icon={<ArrowUpRightIcon className="w-3.5 h-3.5" />}>
-            Product Page
-          </LinkButton>
-        )}
-      </div>
-    )}
+    <ModelOrigin c={c} />
+    <ComponentLinks c={c} shop={false} />
   </Section>
 );
 

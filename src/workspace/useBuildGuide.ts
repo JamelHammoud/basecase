@@ -60,11 +60,17 @@ export function useBuildGuide(options: BuildGuideOptions) {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const openPdf = async () => {
+  const withPdf = async (act: (id: string) => Promise<boolean>) => {
     const id = projectRef.current.buildGuide?.id;
 
-    if (id && !(await platformBridge.openGuide(id))) showToast('Regenerate the guide to open it', { tone: 'error' });
+    if (!id || (await act(id))) return;
+
+    const made = await generate({ quiet: true });
+
+    if (made) await act(made.record.id);
   };
+
+  const openPdf = () => withPdf(platformBridge.openGuide);
 
   const show = async (current: { id: string; generatedAt: string }) => {
     const pages = await loadGuidePages(current.id, current.generatedAt);
@@ -86,11 +92,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
 
   const closeViewer = () => setViewing(null);
 
-  const reveal = async () => {
-    const id = projectRef.current.buildGuide?.id;
-
-    if (id && !(await platformBridge.revealGuide(id))) showToast('Regenerate the guide to show it', { tone: 'error' });
-  };
+  const reveal = () => withPdf(platformBridge.revealGuide);
 
   const finish = (result: GeneratedGuide | null, quiet: boolean) => {
     if (!result) return result;

@@ -20,6 +20,7 @@ export interface CaseRobot extends SlotRobot {
   id: string;
   measures: MjcfInput['measures'];
   partTriangles: MjcfInput['partTriangles'];
+  servoVolts?: number;
 }
 
 export type NamedSlot = RobotSlot & { id: string };

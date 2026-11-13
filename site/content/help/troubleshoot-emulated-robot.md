@@ -22,6 +22,7 @@ covers:
   - src/components/operate/RobotCalibration.tsx
   - src/components/operate/RobotMessages.tsx
   - src/robot/sceneRobot.ts
+  - src/robot/robotPolicy.ts
   - hw/crates/robot-daemon/src/ladder/mod.rs
   - hw/crates/robot-daemon/src/fault.rs
 ---
@@ -37,7 +38,11 @@ Operate shows "No robot" when the scene has no joint that moves. With more than 
 
 ## "Load a policy first"
 
-**Rehearse** and every rung above it run a policy on the robot. Basecase doesn't load a policy into the robot daemon, so these rungs stay refused. To see a skill on the servos, run it in the simulation from **Test**; steps are in [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).
+**Rehearse** and every rung above it need a trained policy, and the scene in front has none the robot can take. Basecase hands over the newest ready skill or up-to-date policy. A policy marked **Out of date** doesn't count; [Retrain an out-of-date policy](/help/retrain-an-out-of-date-policy) fixes it. A skill that replays an animation has no policy to hand over.
+
+1. Click **Simulate** at the top of the right panel.
+2. Under **Train**, click **Train** on a skill, and wait until it's ready.
+3. Click **Rehearse** in **Operate** again. You don't need to reconnect.
 
 ## "A fault is still active"
 

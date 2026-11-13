@@ -1,5 +1,6 @@
 import type { ElectronApi } from '../utils/platform/types';
 import type { RobotConnection } from './jointRows';
+import type { RobotPolicyRef } from './robotPolicy';
 import {
   applyRobotEvent,
   INITIAL_ROBOT,
@@ -42,10 +43,11 @@ function setSceneJoints(joints: string[] | null) {
 
 export type RobotLinkApi = Pick<
   ElectronApi,
-  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent'
+  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent' | 'robotPolicy'
 >;
 
 let api: RobotLinkApi | null = null;
+let policies: RobotPolicyRef[] | undefined;
 let benchDriving = false;
 const listeners = new Set<() => void>();
 const eventListeners = new Set<(event: RobotEvent) => void>();
@@ -112,6 +114,9 @@ export function startRobotStore(link: RobotLinkApi) {
 
   api = link;
   link.onRobotEvent(receiveRobotEvent);
+
+  if (policies) void link.robotPolicy?.(policies);
+
   void link.robotState?.().then(adopt);
 }
 
@@ -123,6 +128,11 @@ export async function connectRobot(spec: ConnectSpec, joints: string[]): Promise
   if (reply.ok) setSceneJoints(joints);
 
   return reply;
+}
+
+export function setRobotPolicy(refs: RobotPolicyRef[]) {
+  policies = refs;
+  void api?.robotPolicy?.(refs);
 }
 
 export const disconnectRobot = async () => (await api?.robotDisconnect?.()) ?? unavailable;

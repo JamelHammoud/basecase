@@ -22,6 +22,7 @@ export interface CaseRuns {
   runs: number;
   passes: number;
   medianMargin: number;
+  worstMargin: number;
   commonFailure: string | null;
   failures: FailureCount[];
   worstSeed: number | null;
@@ -65,6 +66,7 @@ export const noRuns = (refusal: string, misfit = false): CaseRuns => ({
   runs: 0,
   passes: 0,
   medianMargin: -1,
+  worstMargin: -1,
   commonFailure: null,
   failures: [],
   worstSeed: null,
@@ -112,11 +114,13 @@ export function summarizeRuns(batches: SeedRuns[]): CaseRuns {
 
   const missed = outcomes.filter((o) => !o.passed);
   const failures = failureCounts(missed);
+  const margins = outcomes.map((o) => o.margin);
 
   return {
     runs: outcomes.length,
     passes: outcomes.length - missed.length,
-    medianMargin: median(outcomes.map((o) => o.margin)),
+    medianMargin: median(margins),
+    worstMargin: margins.length ? Math.min(...margins) : -1,
     commonFailure: failures[0]?.label ?? null,
     failures,
     worstSeed: worstOf(missed.length ? missed : outcomes)?.seed ?? null,

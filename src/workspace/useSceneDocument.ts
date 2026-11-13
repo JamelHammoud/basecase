@@ -6,6 +6,7 @@ import {
   type RobotPoseState,
   type SceneMark,
   type ScenePart,
+  type Tether,
 } from '../types/robotics';
 import type { RobotSkeleton } from '../types/skeleton';
 import { editWithOperands } from '../booleans/operands';
@@ -16,6 +17,21 @@ import { projectFromSeed } from './helpers';
 import type { CommitParts, DocState, Snapshot, WorkspaceSeed } from './types';
 
 const POSE_FOLD_MS = 700;
+
+function supplyFor(d: DocState, direction: HistoryDirection, tether: Tether | undefined) {
+  const next = (direction === 'undo' ? d.past : d.future).at(-1);
+
+  return next && 'tether' in next ? { tether } : {};
+}
+
+function restoredProject(to: Snapshot, here: Snapshot): Partial<ProjectSettings> {
+  return {
+    ...(to.joints === here.joints ? {} : { joints: to.joints }),
+    ...(to.marks === here.marks ? {} : { marks: to.marks }),
+    ...(to.skeleton === here.skeleton ? {} : { skeleton: to.skeleton }),
+    ...('tether' in to && to.tether !== here.tether ? { tether: to.tether } : {}),
+  };
+}
 
 function useProjectState(seed?: WorkspaceSeed) {
   const [project, setProject] = useState<ProjectSettings>(() => projectFromSeed(seed?.project));
@@ -146,11 +162,18 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     lastPoseEditRef.current = 0;
   };
 
+  const commitDesign = (parts: ScenePart[], tether: Tether | undefined) => {
+    settleLiveJoints();
+    writeDoc(pushHistory(docRef.current, parts, { ...tracked(), tether: projectRef.current.tether }));
+    updateProjectNow((p) => ({ ...p, tether }));
+    lastPoseEditRef.current = 0;
+  };
+
   const travel = (direction: HistoryDirection, restorePose: (pose: RobotPoseState | undefined) => void) => {
     settleLiveJoints();
 
     const d = docRef.current;
-    const here: Snapshot = { parts: d.parts, ...tracked() };
+    const here: Snapshot = { parts: d.parts, ...tracked(), ...supplyFor(d, direction, projectRef.current.tether) };
     const moved = stepHistory(d, here, direction);
 
     if (!moved) return;
@@ -158,11 +181,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     writeDoc(moved.doc);
     lastPoseEditRef.current = 0;
 
-    if (moved.to.joints !== here.joints) restoreJoints(moved.to.joints);
-
-    if (moved.to.marks !== here.marks) updateProjectNow((p) => ({ ...p, marks: moved.to.marks }));
-
-    if (moved.to.skeleton !== here.skeleton) updateProjectNow((p) => ({ ...p, skeleton: moved.to.skeleton }));
+    updateProjectNow((p) => ({ ...p, ...restoredProject(moved.to, here) }));
 
     if (moved.to.pose !== here.pose) restorePose(moved.to.pose);
   };
@@ -183,6 +202,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     commitParts,
     commitMarks,
     commitJoints,
+    commitDesign,
     recordPoseEdit,
     recordSkeletonEdit,
     resetDoc: (parts: ScenePart[]) => writeDoc(docFromParts(parts)),

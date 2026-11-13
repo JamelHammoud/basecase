@@ -54,6 +54,7 @@ const runsOf = (passes: number): CaseRuns => ({
   runs: TRIES_RUNS,
   passes,
   medianMargin: 0.1,
+  worstMargin: 0.1,
   commonFailure: passes < TRIES_RUNS ? 'missed' : null,
   failures: passes < TRIES_RUNS ? [{ label: 'missed', runs: TRIES_RUNS - passes }] : [],
   worstSeed: 3,

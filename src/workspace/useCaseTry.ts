@@ -1,8 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { boundEffector, robotFacts } from '../cases/robotFit';
-import { scaledToReach } from '../cases/scale';
 import type { Case } from '../cases/schema';
-import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
+import { liveScoring, scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import { saveRecording } from '../cases/tryStore';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
@@ -52,10 +50,8 @@ export function useCaseTry({ sim, rig, parts, active, onTry }: TryOptions): Case
       return;
     }
 
-    const facts = robotFacts(rig, parts);
-    const scaled = scaledToReach(kase, facts.reachMm, facts.anchor);
-    const effector = boundEffector(scaled.slot.binding, facts, rig);
-    const verdict = await scoreTry({ kase: scaled, model, recording, effector, rig });
+    const scoring = liveScoring({ kase, model, recording, rig, parts });
+    const verdict = await scoreTry(scoring);
     const id = newTryId();
 
     await saveRecording(id, recording);
@@ -67,7 +63,7 @@ export function useCaseTry({ sim, rig, parts, active, onTry }: TryOptions): Case
       passed: verdict.passed,
       margin: verdict.margin,
       seconds: recording.frames * recording.dt,
-      manifest: await tryManifest(scaled, model, recording),
+      manifest: await tryManifest(scoring.kase, model, recording),
     });
     sim.drive.stop();
     setPhase('idle');

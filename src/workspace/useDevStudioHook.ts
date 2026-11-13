@@ -2,11 +2,15 @@ import { useEffect } from 'react';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { withCalibration } from '../reality/projectCalibrations';
 import { modelFingerprints } from '../sim/policyFreshness';
+import type { Recording } from '../sim/recorder';
+import type { Simulation } from '../sim/useSimulation';
+import { linkParts, type Rig } from '../utils/kinematics';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import { robotPackageZip } from './robotPackageExport';
 import type { AgentSession } from './useAgentSession';
+import type { TryTimeline } from './useTryTimeline';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -15,6 +19,28 @@ interface DevHookOptions {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
+}
+
+function frameQpos(r: Recording, frame: number) {
+  return Array.from(r.qpos.subarray(frame * r.nq, (frame + 1) * r.nq));
+}
+
+function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
+  const { recording } = timeline;
+
+  if (!recording) return null;
+
+  const sought = sim.sought();
+
+  return {
+    frame: timeline.frame,
+    frames: timeline.frames,
+    qpos: sought ? Array.from(sought.qpos) : null,
+    sought: sought?.frame ?? null,
+    lastQpos: frameQpos(recording, recording.frames - 1),
+    lanes: timeline.lanes.map((l) => ({ joint: l.jointId, link: linkParts(rig, l.jointId) })),
+    trips: timeline.trips,
+  };
 }
 
 export function useDevStudioHook({ active, core, actions, agent }: DevHookOptions) {
@@ -47,6 +73,8 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
         activeCase: cases.active?.id ?? null,
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
+        selected: core.selectedIds,
+        timeline: timelineState(cases.timeline, sim, posing.rig),
         fingerprints: modelFingerprints(core.simTraining.skills.model),
       };
     },

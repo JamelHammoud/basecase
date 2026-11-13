@@ -4,9 +4,9 @@ import { offerSimTargets } from '../robot/intentMirror';
 import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
-import type { Recording } from './recorder';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
+import { useRecordingLink } from './useRecordingLink';
 
 export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
 
@@ -24,8 +24,9 @@ export function useSimWorker(
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
   const routineHookRef = useRef<((update: LiveUpdate) => void) | null>(null);
-  const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
+  const recordingLink = useRecordingLink(workerRef);
+  const recordingReply = recordingLink.reply;
 
   const send = useCallback((msg: SimRequest) => workerRef.current?.postMessage(msg), []);
 
@@ -47,9 +48,8 @@ export function useSimWorker(
         return;
       }
 
-      if (msg.type === 'recorded') {
-        recordWaiter.current?.(msg.recording);
-        recordWaiter.current = null;
+      if (msg.type === 'recorded' || msg.type === 'scrubbed' || msg.type === 'sought') {
+        recordingReply(msg);
 
         return;
       }
@@ -80,7 +80,7 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef, poseListeners.listeners],
+    [viewportRef, modelRef, poseListeners.listeners, recordingReply],
   );
 
   const worker = useCallback(() => {
@@ -121,23 +121,11 @@ export function useSimWorker(
     [modelRef],
   );
 
-  const stopRecording = useCallback(
-    () =>
-      new Promise<Recording | null>((resolve) => {
-        if (!workerRef.current) {
-          resolve(null);
-
-          return;
-        }
-
-        recordWaiter.current = resolve;
-        workerRef.current.postMessage({ type: 'record', on: false } satisfies SimRequest);
-      }),
-    [],
-  );
-
   return {
-    stopRecording,
+    stopRecording: recordingLink.stopRecording,
+    scrub: recordingLink.scrub,
+    seek: recordingLink.seek,
+    sought: recordingLink.sought,
     status,
     setStatus,
     playing,

@@ -1,5 +1,6 @@
 import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
+import { TryTimeline } from '../components/simulate/TryTimeline';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { MarkBar } from './MarkBar';
@@ -76,7 +77,8 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
   );
 }
 
-function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProps & { showSelectionBar: boolean }) {
+function CanvasBottomBar(props: CanvasCardProps & { showSelectionBar: boolean }) {
+  const { core, actions, ui, showSelectionBar } = props;
   const { tool, selection, marks, toasts } = core;
   const { ops, edits } = actions;
 
@@ -86,6 +88,13 @@ function CanvasBottomBar({ core, actions, ui, showSelectionBar }: CanvasCardProp
         <div className="pointer-events-auto" key={toasts.toast.id}>
           <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
         </div>
+      )}
+      {props.active && !core.printing.mode && (
+        <TryTimeline
+          timeline={core.simTraining.cases.timeline}
+          rig={core.posing.rig}
+          onSelectParts={core.setSelectedIds}
+        />
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
       {showSelectionBar && !core.printing.mode && (

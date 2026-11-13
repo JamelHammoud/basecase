@@ -14,6 +14,7 @@ import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
+import type { Sought } from './useRecordingLink';
 
 export { simDeltas } from './mjcf';
 
@@ -31,6 +32,7 @@ export interface Simulation {
   playing: boolean;
   stats: SimStats | null;
   latestStats: () => SimStats | null;
+  latestModel: () => SimModel | null;
   error: string | null;
   model: SimModel | null;
   speed: number;
@@ -51,7 +53,9 @@ export interface Simulation {
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
-  replay: (r: Recording) => void;
+  scrub: (r: Recording | null) => Promise<Float32Array[] | null>;
+  seek: (frame: number) => void;
+  sought: () => Sought | null;
   worldParts: ScenePart[];
   subscribePoses: (listen: (poses: Float64Array) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
@@ -311,6 +315,7 @@ export function useSimulation(props: Inputs): Simulation {
     playing,
     stats,
     latestStats: sw.latestStats,
+    latestModel: () => modelRef.current,
     error,
     model,
     speed,
@@ -343,10 +348,13 @@ export function useSimulation(props: Inputs): Simulation {
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,
-    replay: (r) => {
+    scrub: (r) => {
       setPlaying(false);
-      send({ type: 'replay', qpos: r.qpos, nq: r.nq, dt: r.dt });
+
+      return sw.scrub(r);
     },
+    seek: sw.seek,
+    sought: sw.sought,
     worldParts,
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,

@@ -1,10 +1,12 @@
 import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
+import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
-import { evaluateContract } from '../skills/contract';
+import { evaluateContract, type Trace } from '../skills/contract';
 import { probeReader } from './probes';
-import type { EndEffector } from './robotFit';
+import { boundEffector, robotFacts, type EndEffector } from './robotFit';
+import { scaledToReach } from './scale';
 import { CASE_FORMAT_VERSION, type Case } from './schema';
 
 export interface TryManifest {
@@ -42,7 +44,16 @@ export interface TryScoring {
   rig: Rig;
 }
 
-export async function scoreTry({ kase, model, recording, effector, rig }: TryScoring) {
+export function liveScoring(
+  live: Pick<TryScoring, 'kase' | 'model' | 'recording' | 'rig'> & { parts: ScenePart[] },
+): TryScoring {
+  const facts = robotFacts(live.rig, live.parts);
+  const kase = scaledToReach(live.kase, facts.reachMm, facts.anchor);
+
+  return { ...live, kase, effector: boundEffector(kase.slot.binding, facts, live.rig) };
+}
+
+export function trySignals({ kase, model, recording, effector, rig }: TryScoring): Trace {
   const signals: Record<string, number[]> = {};
   const reader = probeReader(kase.task.probes, {
     model,
@@ -54,8 +65,10 @@ export async function scoreTry({ kase, model, recording, effector, rig }: TrySco
 
   for (let i = 0; i < recording.frames; i++) reader.sample(framePoses(recording, i), signals);
 
-  return evaluateContract(kase.task.contract, { dt: recording.dt, signals });
+  return { dt: recording.dt, signals };
 }
+
+export const scoreTry = (scoring: TryScoring) => evaluateContract(scoring.kase.task.contract, trySignals(scoring));
 
 export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {
   return {

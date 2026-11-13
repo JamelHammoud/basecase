@@ -3,6 +3,7 @@ import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
 import { Recorder, recordingTransfer, type Recording } from './recorder';
+import { fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
 import { SimEngine, type Controller } from './engine';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
@@ -21,7 +22,8 @@ export type SimRequest =
   | ({ type: 'command' } & DriveCommand)
   | { type: 'respawn'; robot?: string }
   | { type: 'record'; on: boolean }
-  | { type: 'replay'; qpos: Float64Array; nq: number; dt: number }
+  | { type: 'scrub'; recording: Recording | null }
+  | { type: 'seek'; frame: number }
   | { type: 'grab'; phase: 'start'; body: number; point: [number, number, number] }
   | { type: 'grab'; phase: 'move'; point: [number, number, number]; turn: [number, number, number, number] | null }
   | { type: 'grab'; phase: 'end' }
@@ -44,7 +46,8 @@ export type SimResponse =
   | { type: 'ready'; nq: number; nu: number; nbody: number }
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
-  | { type: 'replayed' }
+  | { type: 'scrubbed'; efforts: Float32Array[] | null }
+  | { type: 'sought'; frame: number; qpos: Float64Array }
   | {
       type: 'frame';
       poses: Float64Array;
@@ -69,7 +72,7 @@ let timer = 0;
 let last = 0;
 let rtf = 1;
 let recorder: Recorder | null = null;
-let replayTimer = 0;
+let scrubbed: Recording | null = null;
 let live: LiveRoutine | null = null;
 let cameraPort: MessagePort | null = null;
 
@@ -143,6 +146,7 @@ async function load(msg: Msg<'load'>) {
   engine?.dispose();
   engine = null;
   live = null;
+  scrubbed = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
 
@@ -171,37 +175,35 @@ function record(msg: Msg<'record'>) {
   post({ type: 'recorded', recording }, recording ? recordingTransfer(recording) : []);
 }
 
-function replay(msg: Msg<'replay'>) {
-  if (!engine) return;
-
-  const sim = engine;
-  const frames = Math.floor(msg.qpos.length / msg.nq);
-  let frameAt = 0;
-
+function halt() {
   playing = false;
   clearTimeout(timer);
-  clearTimeout(replayTimer);
+}
 
-  const tick = () => {
-    if (frameAt >= frames) {
-      post({ type: 'replayed' });
+async function scrub(msg: Msg<'scrub'>) {
+  mj ??= await loadMujoco();
+  halt();
+  scrubbed = engine && msg.recording && fitsRecording(engine, msg.recording) ? msg.recording : null;
 
-      return;
-    }
+  const efforts = engine && scrubbed ? recordedEfforts(mj, engine, scrubbed) : null;
 
-    sim.setState(msg.qpos.subarray(frameAt * msg.nq, (frameAt + 1) * msg.nq));
-    frame();
-    frameAt++;
-    replayTimer = setTimeout(tick, msg.dt * 1000) as unknown as number;
-  };
+  post({ type: 'scrubbed', efforts }, efforts?.map((e) => e.buffer) ?? []);
+}
 
-  tick();
+function seek(msg: Msg<'seek'>) {
+  if (!engine || !mj || !scrubbed) return;
+
+  halt();
+
+  const frameAt = setRecordedFrame(mj, engine, scrubbed, msg.frame);
+  const qpos = Float64Array.from(engine.data.qpos);
+
+  frame();
+  post({ type: 'sought', frame: frameAt, qpos }, [qpos.buffer]);
 }
 
 function play() {
   if (!engine || playing) return;
-
-  clearTimeout(replayTimer);
 
   playing = true;
   last = performance.now();
@@ -277,8 +279,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   load,
   play,
   pause: () => {
-    playing = false;
-    clearTimeout(timer);
+    halt();
     frame();
   },
   reset: (msg) => {
@@ -303,7 +304,8 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     frame();
   },
   record,
-  replay,
+  scrub,
+  seek,
   run,
   routine: startRoutine,
   cameras: (msg) => {
@@ -315,8 +317,8 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     playing = false;
     live = null;
     recorder = null;
+    scrubbed = null;
     clearTimeout(timer);
-    clearTimeout(replayTimer);
     engine?.dispose();
     engine = null;
   },

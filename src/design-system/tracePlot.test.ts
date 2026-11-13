@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { TracePlot } from './TracePlot';
-import { tracePaths, traceRange, type Trace } from './tracePaths';
+import { sampleAt, tracePaths, traceRange, type Trace } from './tracePaths';
 
 const BOX = { width: 100, height: 50, inset: 5 };
 
@@ -30,6 +30,27 @@ describe('tracePaths', () => {
     expect(high).toBeCloseTo(3.3, 9);
     expect(traceRange([trace('a', [])])).toEqual([-1, 1]);
   });
+
+  it('widens the range to take in a limit line', () => {
+    expect(traceRange([trace('a', [0, 1])], [4])).toEqual([0, 4]);
+  });
+
+  it('draws a long trace one low and one high point per column, keeping the spike', () => {
+    const values = Array.from({ length: 30000 }, (_, i) => (i === 12345 ? 50 : Math.sin(i / 100)));
+    const [only] = tracePaths([trace('a', values)], BOX);
+    const points = only.d.split(/[ML]/).filter(Boolean);
+    const ys = points.map((p) => Number(p.split(' ')[1]));
+
+    expect(points.length).toBeLessThanOrEqual(2 * BOX.width);
+    expect(Math.min(...ys)).toBeCloseTo(BOX.inset, 5);
+  });
+
+  it('maps a fraction of the width to the nearest sample', () => {
+    expect(sampleAt(0, 151)).toBe(0);
+    expect(sampleAt(0.5, 151)).toBe(75);
+    expect(sampleAt(1.4, 151)).toBe(150);
+    expect(sampleAt(-1, 151)).toBe(0);
+  });
 });
 
 describe('TracePlot', () => {
@@ -45,6 +66,23 @@ describe('TracePlot', () => {
     expect(html).toContain('data-testid="trace-preset"');
     expect(html.match(/#0d99ff/g)).toHaveLength(1);
     expect(html).not.toMatch(/<text/);
+  });
+
+  it('draws the playhead, the limit and the markers over the traces', () => {
+    const html = renderToStaticMarkup(
+      createElement(TracePlot, {
+        traces: [trace('effort', [0, 1, 2, 1, 0], 'primary')],
+        height: 50,
+        playhead: 2,
+        limit: 4,
+        markers: [1, 3],
+      }),
+    );
+
+    expect(html).toContain('data-testid="trace-playhead" d="M500.0 0V50"');
+    expect(html).toContain('data-testid="trace-limit" d="M0 8.0H1000"');
+    expect(html.match(/data-testid="trace-marker"/g)).toHaveLength(2);
+    expect(html.match(/#f87171/g)).toHaveLength(2);
   });
 
   it('draws nothing while loading', () => {

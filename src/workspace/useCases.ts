@@ -6,7 +6,7 @@ import { scaledToReach } from '../cases/scale';
 import { parseCase, worldItem, type Case } from '../cases/schema';
 import { caseTemplates, uniqueCaseId } from '../cases/templates';
 import { worstFirst, type TryRecord } from '../cases/tries';
-import { deleteRecording, loadRecording } from '../cases/tryStore';
+import { deleteRecording } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
 import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -15,6 +15,7 @@ import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
 import { useCaseTry } from './useCaseTry';
 import { useDatasetExport } from './useDatasetExport';
+import { useTryTimeline } from './useTryTimeline';
 
 interface CasesOptions {
   parts: ScenePart[];
@@ -116,21 +117,19 @@ export function useCases(options: CasesOptions) {
     });
   };
 
+  const timeline = useTryTimeline({ sim, rig, parts, active });
+
   const removeTry = (record: TryRecord) =>
     confirmAction({
       title: `Delete this try?`,
       body: 'You can’t undo this.',
       onConfirm: () => {
+        if (timeline.record?.id === record.id) timeline.close();
+
         void deleteRecording(record.id);
         setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => t.id !== record.id) }));
       },
     });
-
-  const replay = async (record: TryRecord) => {
-    const recording = await loadRecording(record.id);
-
-    if (recording && sim.model) sim.replay(recording);
-  };
 
   const runFit = async () => {
     setFit({ caseId: activeId, rows: [], checking: true });
@@ -173,7 +172,7 @@ export function useCases(options: CasesOptions) {
     addTemplate,
     remove,
     removeTry,
-    replay,
+    timeline,
     runFit,
     attempt,
   };

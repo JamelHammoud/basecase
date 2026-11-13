@@ -73,7 +73,7 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, wo
             model={model}
             parts={parts}
             world={world}
-            onReplay={() => void cases.replay(t)}
+            onReplay={() => void cases.timeline.show(t)}
             onMenu={(e) => openMenu(e, t)}
           />
         ))}

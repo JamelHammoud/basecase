@@ -21,6 +21,15 @@ interface SimState {
   bodies: Array<{ parts: string[]; world: string[] }>;
   activeCase: string | null;
   tries: Array<{ passed: boolean; margin: number }>;
+  selected: string[];
+  timeline: {
+    frame: number;
+    frames: number;
+    qpos: number[] | null;
+    sought: number | null;
+    lastQpos: number[];
+    lanes: Array<{ joint: string; link: string[] }>;
+  } | null;
 }
 
 type Studio = { simState: () => SimState; load: (r: unknown) => void; passTries: () => void };
@@ -202,6 +211,59 @@ async function expectPublished(repo: string) {
   expect(published.tags.get('v2.1')).toBe(published.commits.length);
   expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
 }
+
+describe('Try timeline', () => {
+  itUnlessWindows('scrubs a try on the timeline under the canvas and selects a joint from its lane', async () => {
+    const timeline = async () => (await simState()).timeline;
+
+    await openTouchTheDots();
+    await button('Try It').click();
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    await holdKey('w', 800);
+    await button('End Try').click();
+    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+
+    const scene = await app.page.evaluate(() =>
+      JSON.stringify((window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts()),
+    );
+
+    await app.page.getByTestId('try-row').first().locator('button[aria-label="Replay"]').click();
+    await expect.poll(() => app.page.getByTestId('timeline-lane').count(), { timeout: 30000 }).toBeGreaterThan(0);
+    await expect.poll(async () => (await timeline())?.sought).toBe(0);
+
+    const opened = (await timeline())!;
+
+    expect(opened.frames).toBeGreaterThan(40);
+    await app.page.keyboard.press('ArrowRight');
+    await expect.poll(async () => (await timeline())?.sought).toBe(1);
+    await app.page.keyboard.press('End');
+    await expect.poll(async () => (await timeline())?.sought).toBe(opened.frames - 1);
+
+    const end = (await timeline())!;
+
+    expect(end.qpos).toEqual(end.lastQpos);
+
+    const lane = end.lanes[end.lanes.length - 1];
+
+    expect(lane.link.length).toBeGreaterThan(0);
+    await app.page
+      .locator(`[data-testid="timeline-lane"][data-joint="${lane.joint}"] svg`)
+      .nth(1)
+      .click({ position: { x: 1, y: 10 } });
+    await expect.poll(async () => (await simState()).selected).toEqual(lane.link);
+    await expect.poll(async () => (await timeline())?.sought).toBe(0);
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => app.page.getByTestId('try-timeline').count()).toBe(0);
+    expect((await simState()).selected).toEqual(lane.link);
+    expect(
+      await app.page.evaluate(() =>
+        JSON.stringify((window as unknown as { __studio: { parts: () => unknown[] } }).__studio.parts()),
+      ),
+    ).toBe(scene);
+    expect(app.errors).toEqual([]);
+  });
+});
 
 describe('Cases', () => {
   itUnlessWindows(

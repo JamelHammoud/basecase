@@ -63,7 +63,7 @@ function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams, carriedG }:
   return Math.abs(tGrf + tDistal) / 1000;
 }
 
-function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): Rating | undefined {
+export function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): Rating | undefined {
   const specs = jointServos(j, ctx.byPart);
 
   if (!specs.length) return undefined;

@@ -11,12 +11,14 @@ import { stabilityOf, stabilityRows } from './engineeringStability';
 import { rangeChangeRows } from './engineeringRanges';
 import { simModelRows } from './engineeringSimModel';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
+import { payloadRows } from './engineeringPayload';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
 
 export { rotateEuler } from './engineeringMath';
 export { downstreamOf, partMasses } from './engineeringMass';
 export { engineeringText } from './engineeringFormat';
 export type {
+  CheckDot,
   CheckRow,
   EngineeringInputs,
   EngineeringReport,
@@ -126,6 +128,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
       ? [withNoFeetNote(torqueRow(loads, env.crouch.share), floating), ...peakRow(loads, project, input.walk)]
       : []),
     ...simModelRows(ctx),
+    ...payloadRows(ctx, env.volts),
     ...jointPartsRows(ctx),
     ...servoMountRows(ctx),
     ...rangeOfMotionRows(ctx),

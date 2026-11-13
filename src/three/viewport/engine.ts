@@ -20,6 +20,7 @@ import { exportUsdz } from '../usdz/usdzExport';
 import { AgentFrames } from './agentFrames';
 import { BlueprintUnderlay } from './blueprint';
 import { CameraGlyphs } from './cameraGlyphs';
+import { CheckDots } from './checkDots';
 import { currentView, focusOn, frameObjects, frameScene, lookThrough, setCameraPreset } from './cameraOps';
 import { CanvasSizer } from './canvasSizer';
 import { captureScreenshot, captureViews } from './captures';
@@ -134,6 +135,7 @@ export class ViewportEngine {
   private readonly cameraGlyphs: CameraGlyphs;
 
   private readonly scanPoints: ScanPoints;
+  private readonly checkDots: CheckDots;
 
   private readonly follow: FollowCamera;
 
@@ -178,6 +180,8 @@ export class ViewportEngine {
     this.cameraGlyphs = new CameraGlyphs(stage.overlays);
     this.cameraGlyphs.sync(options.props.fixedCameras);
     this.scanPoints = new ScanPoints(stage.overlays);
+    this.checkDots = new CheckDots(stage.overlays);
+    this.checkDots.sync(options.props.checkDots);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
 
     const outline = new SelectionOutline(stage);
@@ -260,6 +264,8 @@ export class ViewportEngine {
 
     if (previous.fixedCameras !== props.fixedCameras) this.cameraGlyphs.sync(props.fixedCameras);
 
+    if (previous.checkDots !== props.checkDots) this.checkDots.sync(props.checkDots);
+
     if (!changed(previous, props, ['marks', 'selectedMarkId'])) return;
 
     this.markLayer.sync(props.marks, props.selectedMarkId);
@@ -279,6 +285,7 @@ export class ViewportEngine {
     this.agentFrames.dispose();
     this.cameraGlyphs.dispose();
     this.scanPoints.dispose();
+    this.checkDots.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -386,6 +393,7 @@ export class ViewportEngine {
       projectPoints: (points) => measure.projectPoints(ctx, points),
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
       cancelMeasure: () => this.measureTool.clear(),
+      checkDotCount: () => this.checkDots.count,
     };
   }
 

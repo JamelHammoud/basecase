@@ -52,6 +52,7 @@ const DETACHED: Viewport3DHandle = {
   projectPoints: (points) => points.map(() => ({ x: 0, y: 0, visible: false })),
   measureFrom: () => {},
   cancelMeasure: () => false,
+  checkDotCount: () => 0,
 };
 
 const canvasCursor = (props: ViewportProps) => {

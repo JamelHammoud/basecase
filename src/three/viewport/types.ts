@@ -11,6 +11,7 @@ import type { SweepSpec } from '../analysis/sweep';
 import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from '../analysis/jointAxis';
+import type { CheckDot } from '../../utils/engineeringTypes';
 import type {
   CameraPreset,
   MeasureUnit,
@@ -97,6 +98,7 @@ export interface ViewportProps {
   selectedMarkId?: string | null;
   agentFrames?: AgentFrame[];
   fixedCameras?: FixedCamera[];
+  checkDots?: CheckDot[] | null;
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
   onEraseMarks?: (ids: string[]) => void;
@@ -182,6 +184,7 @@ export interface Viewport3DHandle {
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;
+  checkDotCount: () => number;
 }
 
 export const MIN_DIST = 25;

@@ -12,6 +12,7 @@ import { traceFasteners } from '../../assembly/fastenerChain';
 import type { FastenerInput } from '../../assembly/assemblyTypes';
 import { assemblyGeometry, type AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 import { jointAxisOf, type JointAxisQuery } from './jointAxis';
+import { payloadMap, type ArmModel } from '../../utils/payload';
 
 export interface GeometryPayload {
   id: string;
@@ -185,4 +186,5 @@ export const analysisHandlers = {
 
     return reply({ shapes: specs.size, geometries: geometries.size });
   },
+  payloadMaps: (arms: ArmModel[]) => reply(arms.map((arm) => payloadMap(arm))),
 };

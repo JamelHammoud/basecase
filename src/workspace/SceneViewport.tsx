@@ -88,6 +88,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         }
         agentFrames={agent.frames}
         fixedCameras={project.cameras}
+        checkDots={core.readiness.dots}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
         worldParts={sim.worldParts}

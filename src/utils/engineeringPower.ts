@@ -60,6 +60,12 @@ export function servoSource(ctx: PowerScene): PowerSource | undefined {
   return best ?? tetherSource(ctx);
 }
 
+export function servoRegulator(ctx: PowerScene) {
+  const source = servoSource(ctx);
+
+  return source ? railOf(ctx, source) : undefined;
+}
+
 export function servoSupplyVolts(ctx: PowerScene): number | undefined {
   const source = servoSource(ctx);
 

@@ -28,7 +28,7 @@ const measure = (volumeMm3: number, areaMm2: number): MeshMeasure => ({
   triangles: 12,
 });
 
-const project: ProjectSettings = { printer: 'bambu-p1s', material: 'PLA', infillPct: 20, budgetUsd: 50 };
+const project: ProjectSettings = { printer: 'bambu-p1s', material: 'PLA', infillPct: 20, budgetUsd: 60 };
 const screw = makeSpec('socket_head', { size: 'M3', length: 12 });
 const parts = [
   part({ id: 'servo', name: 'Hip servo', kind: 'component', componentId: 'feetech-sts3215', componentVariant: 'c001' }),
@@ -58,8 +58,9 @@ describe('buildBom', () => {
     expect(line('supply:filament-pla')).toMatchObject({ unit: 'g', packs: 1, partIds: ['bracket'] });
   });
 
-  it('adds what the scene needs by itself: cables for servos, keys for screws', () => {
+  it('adds what the scene needs by itself: cables for servos, a pigtail for the LiPo, keys for screws', () => {
     expect(line('supply:servo-cable-5264-3pin').qty).toBe(1);
+    expect(line('supply:xt60-pigtail').qty).toBe(1);
     expect(line('supply:hex-key-set').category).toBe('Equipment');
   });
 
@@ -74,7 +75,7 @@ describe('buildBom', () => {
     expect(bom.standIns).toEqual([{ id: 'standin', name: 'Generic servo' }]);
     expect(bom.unmeasured).toEqual([]);
     expect(line('component:feetech-sts3215|c001')).toMatchObject({ status: 'unchecked', estUsd: 20 });
-    expect(bom.totals).toMatchObject({ checked: 0, stale: 0, budgetUsd: 50, overBudget: false });
+    expect(bom.totals).toMatchObject({ checked: 0, stale: 0, budgetUsd: 60, overBudget: false });
   });
 
   it('applies checked prices and flags stale ones', () => {
@@ -106,6 +107,6 @@ describe('buildBom', () => {
     expect(priced.lines[0]).toMatchObject({ status: 'checked', urlKind: 'product', lineUsd: 17.5 });
     expect(priced.lines[1]).toMatchObject({ status: 'stale', packs: 1, lineUsd: 8.99 });
     expect(priced.totals).toMatchObject({ checkedUsd: 17.5, pricedUsd: 26.49, checked: 1, stale: 1 });
-    expect(bomText(priced, {})).toContain('Budget $50.00. Checked prices total $26.49 (1 checked, 1 stale).');
+    expect(bomText(priced, {})).toContain('Budget $60.00. Checked prices total $26.49 (1 checked, 1 stale).');
   });
 });

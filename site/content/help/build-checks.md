@@ -30,6 +30,7 @@ covers:
   - src/utils/engineeringEnvelope.ts
   - src/components/build/EnvelopeRows.tsx
   - src/readiness/caseChecks.ts
+  - src/wiring/wiringChecks.ts
 ---
 
 Every check the Build tab runs, with the problems each one reports in the words the app uses.
@@ -68,6 +69,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Current and runtime | The battery's current against the servos' draw | A battery that can't supply enough current |
 | Supply current | A cable supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
 | Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
+| Servo bus | Each servo's connector against the bus adapters in the build | A servo no adapter plugs into, or one adapter carrying two kinds of servo. Shown only when it fails |
 | Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |

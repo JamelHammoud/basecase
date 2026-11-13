@@ -6,7 +6,8 @@ import { caseSlots } from '../src/cases/schema';
 import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
-import { armWithEstimates, loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckFixtures';
+import { so101 } from '../src/wiring/fixtures';
+import { armWithEstimates, bomRow, loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckFixtures';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -270,6 +271,15 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+});
+
+describe('Cables', () => {
+  it('list one 5264 cable per hop of an SO-101 arm, with no generic pack', async () => {
+    const cables = await bomRow(app.page, so101(), 'Bus Servo Cable');
+
+    await expect.poll(() => cables.count(), { timeout: 20000 }).toBe(1);
+    expect(await cables.first().innerText()).toMatch(/^6×/);
+  }, 90000);
 });
 
 describe('Cases in Checks', () => {

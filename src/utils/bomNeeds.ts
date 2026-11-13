@@ -1,10 +1,12 @@
 import { COMPONENT_BY_ID } from '../data/components';
 import type { ScenePart } from '../types/robotics';
+import type { Netlist } from '../wiring/netlist';
 
 interface SceneFacts {
   battery: boolean;
+  plugged: boolean;
   tether: boolean;
-  servos: boolean;
+  unwiredServos: boolean;
   sensors: boolean;
   piCamera: boolean;
   pi: boolean;
@@ -25,10 +27,14 @@ const NEEDS: Need[] = [
   { supply: 'dc-bench-supply', match: /power supply|bench supply|psu/i, when: (s) => s.tether },
   { supply: 'rocker-switch-20a', match: /switch/i, when: powered },
   { supply: 'blade-fuse-holder', match: /fuse/i, when: powered },
-  { supply: 'xt60-pigtail', match: /xt60|xt30|pigtail/i, when: powered },
+  { supply: 'xt60-pigtail', match: /xt60|xt30|pigtail/i, when: (s) => s.battery && !s.plugged },
   { supply: 'wire-18awg-silicone', match: /\bawg\b|\d+\s*awg/i, when: powered },
   { supply: 'lipo-balance-charger', match: /charger/i, when: (s) => s.battery },
-  { supply: 'servo-cable-5264-3pin', match: /servo cable|5264|jst.*servo|dynamixel.*cable/i, when: (s) => s.servos },
+  {
+    supply: 'servo-cable-5264-3pin',
+    match: /servo cable|5264|jst.*servo|dynamixel.*cable/i,
+    when: (s) => s.unwiredServos,
+  },
   { supply: 'stemma-qt-cable', match: /stemma|qwiic|dupont|jumper/i, when: (s) => s.sensors },
   { supply: 'pi5-camera-cable-200', match: /camera (cable|ribbon)|ffc|fpc/i, when: (s) => s.piCamera },
   { supply: 'microsd-64gb', match: /micro\s?sd/i, when: (s) => s.pi },
@@ -39,14 +45,21 @@ const NEEDS: Need[] = [
 
 const componentOf = (p: ScenePart) => (p.componentId ? COMPONENT_BY_ID[p.componentId] : undefined);
 
-function sceneFacts(parts: ScenePart[], tether: boolean): SceneFacts {
+export interface WiringFacts {
+  tether: boolean;
+  netlist: Netlist;
+}
+
+function sceneFacts(parts: ScenePart[], { tether, netlist }: WiringFacts): SceneFacts {
   const comps = parts.map(componentOf).filter((c) => !!c);
+  const wired = new Set(netlist.buses.flatMap((b) => b.servos.map((s) => s.id)));
   const hardware = parts.flatMap((p) => (p.kind === 'hardware' && p.hardware ? [p.hardware.type] : []));
 
   return {
     battery: comps.some((c) => !!c.battery),
+    plugged: netlist.power.source !== null,
     tether,
-    servos: comps.some((c) => c.group === 'Servos'),
+    unwiredServos: parts.some((p) => componentOf(p)?.group === 'Servos' && !wired.has(p.id)),
     sensors: comps.some((c) => /sensor|imu|tof/i.test(`${c.group} ${c.name}`)),
     piCamera: comps.some((c) => /raspberry.*camera/i.test(`${c.manufacturer} ${c.name}`)),
     pi: comps.some((c) => /raspberry pi/i.test(c.name) && c.group === 'Computers'),
@@ -56,8 +69,8 @@ function sceneFacts(parts: ScenePart[], tether: boolean): SceneFacts {
   };
 }
 
-export function neededSupplyKeys(parts: ScenePart[], listed: string, tether = false): string[] {
-  const facts = sceneFacts(parts, tether);
+export function neededSupplyKeys(parts: ScenePart[], listed: string, wiring: WiringFacts): string[] {
+  const facts = sceneFacts(parts, wiring);
 
   return NEEDS.filter((n) => n.when(facts) && !n.match.test(listed)).map((n) => `supply:${n.supply}`);
 }

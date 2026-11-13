@@ -1,6 +1,13 @@
 ---
 title: Scrub a try on the timeline
 date: 2026-11-13
+collection: simulate-and-train
+type: task
+order: 5
+keywords:
+  - replay a try
+  - joint effort
+  - try timeline
 covers:
   - src/components/simulate/TryTimeline.tsx
   - src/components/simulate/TimelineLane.tsx
@@ -26,4 +33,4 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 
 6. Press Esc to close it.
 
-The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Result. A try recorded before you added or removed a joint doesn't open.
+The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open.

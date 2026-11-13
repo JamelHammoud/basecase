@@ -108,6 +108,44 @@ describe('Hugging Face Hub links', () => {
     expect(robot.joints).toHaveLength(2);
   });
 
+  it('imports only the file a file link names', async () => {
+    serveRepo({ repo: 'me/renamed', files: deskArmFiles('arm') });
+
+    await expect(
+      importRobot({ kind: 'url', url: 'https://huggingface.co/me/renamed/blob/main/arm/urdf/old_arm.urdf' }),
+    ).rejects.toThrow(
+      'Couldn’t find a .urdf or MJCF .xml file in https://huggingface.co/me/renamed/blob/main/arm/urdf/old_arm.urdf.',
+    );
+    expect(fetched).toEqual([api('models/me/renamed')]);
+  });
+
+  it('reads a file link straight when the listing stops early, and asks for a folder in a repo too big to list', async () => {
+    const files = deskArmFiles('arm');
+    const meshes = Object.fromEntries(Object.entries(files).filter(([path]) => path.endsWith('.stl')));
+    const pages = Array.from({ length: 21 }, (_, i) =>
+      i ? `${api('models/me/huge')}&cursor=${i}` : api('models/me/huge'),
+    );
+
+    serveRepo({ repo: 'me/huge', files });
+    pages.forEach((page, i) =>
+      served.set(
+        page,
+        () => new Response(i ? '[]' : hubListing(meshes), { headers: { link: `<${pages[i + 1]}>; rel="next"` } }),
+      ),
+    );
+
+    const robot = await importRobot({
+      kind: 'url',
+      url: 'https://huggingface.co/me/huge/blob/main/arm/urdf/desk_arm.urdf',
+    });
+
+    expect(robot.joints).toHaveLength(2);
+    expect(robot.notes).toEqual([]);
+    await expect(importRobot({ kind: 'url', url: 'https://huggingface.co/me/huge' })).rejects.toThrow(
+      'Couldn’t open https://huggingface.co/me/huge. Link to a public repo or folder.',
+    );
+  });
+
   it('names the link when a repo holds no robot', async () => {
     serveRepo({ repo: 'me/notes', files: { 'README.md': strToU8('# Notes'), 'config.json': strToU8('{}') } });
 
@@ -128,7 +166,11 @@ describe('Hugging Face Hub links', () => {
       expect(isRobotLink(url)).toBe(true);
     }
 
-    for (const url of ['https://huggingface.co/docs/lerobot', 'https://huggingface.co/spaces/me/arm']) {
+    for (const url of [
+      'https://huggingface.co/docs/lerobot',
+      'https://huggingface.co/spaces/me/arm',
+      'https://huggingface.co/datasets/lerobot',
+    ]) {
       expect(isRobotLink(url)).toBe(false);
     }
   });

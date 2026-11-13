@@ -1,5 +1,5 @@
 import { safeEntryPath } from './archive';
-import { fetchBytes, unopenedRepo } from './sources';
+import { fetchBytes, noRobotAt, unopenedRepo } from './sources';
 import type { Tree } from './tree';
 
 export const HUB = 'https://huggingface.co';
@@ -19,11 +19,14 @@ const NOT_REPOS = new Set([
   'blog',
   'chat',
   'collections',
+  'datasets',
   'docs',
+  'enterprise',
   'join',
   'learn',
   'login',
   'models',
+  'new',
   'organizations',
   'papers',
   'posts',
@@ -103,7 +106,12 @@ const files = (entries: Entry[]) =>
     .filter((e) => e.type === 'file' && typeof e.path === 'string' && safeEntryPath(e.path) === e.path)
     .map((e) => e.path as string);
 
-async function listing(link: HubLink): Promise<string[] | null> {
+interface Listing {
+  paths: string[];
+  complete: boolean;
+}
+
+async function listing(link: HubLink): Promise<Listing | null> {
   const paths: string[] = [];
   let url: string | null = `${treeApi(link)}?recursive=true`;
 
@@ -120,14 +128,21 @@ async function listing(link: HubLink): Promise<string[] | null> {
     url = nextPage(res, link);
   }
 
-  return paths;
+  return { paths, complete: !url };
+}
+
+function treePaths(link: HubLink, url: string, found: Listing | null): string[] {
+  if (!found || (!found.complete && !link.file)) throw unopenedRepo(url);
+
+  if (!link.file || found.paths.includes(link.path)) return found.paths;
+
+  if (found.complete) throw noRobotAt(url);
+
+  return [link.path, ...found.paths];
 }
 
 export async function hubTree(link: HubLink, url: string): Promise<{ tree: Tree; scope: string; entry?: string }> {
-  const paths = await listing(link);
-
-  if (!paths) throw unopenedRepo(url);
-
+  const paths = treePaths(link, url, await listing(link));
   const listed = new Set(paths);
   const urlOf = (path: string) => hubFileUrl(link, path);
 

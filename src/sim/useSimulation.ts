@@ -33,6 +33,7 @@ export interface Simulation {
   latestStats: () => SimStats | null;
   error: string | null;
   model: SimModel | null;
+  modelNow: () => SimModel | null;
   speed: number;
   controller: Controller;
   start: () => Promise<void>;
@@ -313,6 +314,7 @@ export function useSimulation(props: Inputs): Simulation {
     latestStats: sw.latestStats,
     error,
     model,
+    modelNow: () => modelRef.current,
     speed,
     controller,
     start,

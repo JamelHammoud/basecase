@@ -222,6 +222,8 @@ export async function openStudio({ label, port, env = {}, givenApp, log = consol
   ctx.vite = await startVite({ app, port, env, base });
   log('dev server up');
 
+  if (!givenApp) await postJson(`${base}/api/bridge/save-scene`, { id: 'scene-bench', name: 'Bench', parts: [] });
+
   const browser = await chromium.launch({
     channel: 'chrome',
     headless: true,

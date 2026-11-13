@@ -1,6 +1,12 @@
 import { parseCase, type Case } from '../cases/schema';
 import { asId, asRecord, asString, listOf, refuse } from '../cases/validate';
-import type { RobotJoint, ScenePart } from '../types/robotics';
+import {
+  DEFAULT_PROJECT,
+  type ProjectSettings,
+  type RobotJoint,
+  type SceneAnnotation,
+  type ScenePart,
+} from '../types/robotics';
 
 export const GALLERY_FORMAT_VERSION = 1;
 
@@ -60,6 +66,22 @@ export function parseGalleryBundle(input: unknown): GalleryBundle {
     case: parseCase(v.case),
   };
 }
+
+export interface BundleScene {
+  name: string;
+  globalGoal: string;
+  parts: ScenePart[];
+  annotations: SceneAnnotation[];
+  project: ProjectSettings;
+}
+
+export const bundleScene = (bundle: GalleryBundle): BundleScene => ({
+  name: bundle.title,
+  globalGoal: '',
+  parts: bundle.robot.parts,
+  annotations: [],
+  project: { ...DEFAULT_PROJECT, joints: bundle.robot.joints, cases: [bundle.case] },
+});
 
 export const gallerySlug = (path: string): string | null => {
   const m = /^\/c\/([\w-]{1,80})\/?$/.exec(path);

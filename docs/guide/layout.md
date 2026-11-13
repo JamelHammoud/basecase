@@ -65,4 +65,5 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Centered bottom toolbar.
   - Toasts above the toolbar.
   - No empty-scene prompt: an empty scene is just the canvas.
+  - **First launch** is the one exception: a profile with no saved scenes and no tabs to restore opens on the two-wheel rover driving to its flag, with Simulate in front (§5a, §8h). Every new scene after that, ⌘T included, is an empty canvas.
   - Annotation pins and cards.

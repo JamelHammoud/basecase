@@ -97,6 +97,10 @@ function stepLog({ owner, url, title, arc }) {
   return url ? `step ${url}${arc === null ? '' : `, no open arc ${arc}`}` : `skipped, already open: ${title}`;
 }
 
+function notePlanned(ctx, request, url) {
+  ctx.planned.set(request, [...(ctx.planned.get(request) ?? []), issueNumber(url)]);
+}
+
 function fileStep(ctx, s) {
   const target = resolveArc(s.arc, ctx);
 
@@ -126,14 +130,25 @@ function fileStep(ctx, s) {
 
   if (number && target.number) ctx.docs.set(target.number, withTask(ctx.docs.body(target.number), number));
 
-  if (request) {
-    ctx.gh.editIssueLabels(request, { add: ['loop:request'] });
-    ctx.gh.commentOnIssue(request, `Planned as ${url}.`);
-  }
+  if (request) notePlanned(ctx, request, url);
 
   if (promotes) {
     ctx.gh.closeIssue(promotes, `Promoted to ${url}.`);
     ctx.known.ideas.delete(promotes);
+  }
+}
+
+export const plannedLine = (steps) => {
+  const refs = steps.map((step) => `#${step}`);
+  const list = refs.length > 1 ? `${refs.slice(0, -1).join(', ')} and ${refs.at(-1)}` : refs[0];
+
+  return `Planned as ${list}.`;
+};
+
+function tellRequests(ctx) {
+  for (const [request, steps] of ctx.planned) {
+    ctx.gh.editIssueLabels(request, { add: ['loop:request'] });
+    ctx.gh.commentOnIssue(request, plannedLine(steps.filter(Boolean)));
   }
 }
 
@@ -156,6 +171,7 @@ export function applyPlan(output, world, { log, gh }) {
     log,
     docs: tracker([...world.arcs, ...world.steps], gh),
     stepArcs: new Map(),
+    planned: new Map(),
     movedTo: new Map(),
     opened: new Map(),
     open: world.arcs.filter((arc) => !retired.has(arc.number)),
@@ -178,6 +194,8 @@ export function applyPlan(output, world, { log, gh }) {
   for (const title of plan.refused) log(`refused arc "${title}": ${MAX_ARCS} arcs would already be open`);
 
   for (const s of output.steps) fileStep(ctx, s);
+
+  tellRequests(ctx);
 
   ctx.docs.flush();
   closeIdeasAndRequests(ctx, output);

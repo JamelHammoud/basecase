@@ -41,6 +41,7 @@ const LISTS: Record<string, unknown> = {
   'print-status': { slicers: [], downloads: {}, bambuConnect: false },
   'print-printers': [],
   'print-last-slice': null,
+  'phone-state': { status: 'off' },
   'upload-image': { id: 'image-1', name: 'Upload', dataUrl: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' },
 };
 

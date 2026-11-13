@@ -40,7 +40,7 @@ A Routine is the flowchart itself, saved with the scene. Basecase checks every s
 5. Choose a step, such as **Drive** under Move.
 6. Click the new step, and set its fields under the flow, such as **Distance**, **Speed** and **Heading**.
 7. Repeat steps 4 to 6 for each step you want.
-8. If a step shows **Needs Training**, click **Train ⟨skill⟩** on it and train the skill in the **Simulate** tab.
+8. If a step shows **Train**, click it and train the skill in the **Simulate** tab.
 9. Click **Run**.
 
 The robot runs the Routine in the simulation, and each step lights as it runs. **Run Routine** ([[⌘↩]]), **Add Step** and **New Routine** are also in [[⌘K]]. To describe a Routine in words instead, type `/routine` and what it should do in the agent's box.

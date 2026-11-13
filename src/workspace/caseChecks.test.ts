@@ -79,7 +79,7 @@ describe('Case rows in Checks', () => {
   });
 
   it('give an overtaken check the newest check’s verdict for the same Case', async () => {
-    const outcomes = Array.from({ length: 10 }, () => ({ passed: true, margin: 1, failed: [] }));
+    const outcomes = Array.from({ length: 10 }, (_, i) => ({ seed: i + 1, passed: true, margin: 1, failed: [] }));
     const gate: { open?: () => void } = {};
     const answered = new Promise<void>((resolve) => {
       gate.open = resolve;

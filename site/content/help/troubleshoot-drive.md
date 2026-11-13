@@ -42,7 +42,7 @@ Training **Walk** is in [Train Stand and Walk with the Motor Kit](/help/train-st
 
 **Drive** hides while a Case is open, because **Try It** drives instead.
 
-1. Click **Close Case** (×) beside **Brief** in the **Simulate** tab.
+1. Click **Close Case** (×) beside the Case's name in the **Simulate** tab.
 2. Find **Drive** under **Control**.
 
 A robot with no arm, wheels or legs has nothing to drive, and shows no **Drive** at all. **Drive With Camera** shows only for a humanoid or an arm fixed to the ground.

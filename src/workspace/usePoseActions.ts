@@ -70,7 +70,7 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     try {
       setMotion(parseBvh(text, file.name.replace(/\.bvh$/i, '')));
     } catch (err) {
-      showToast(`Couldn’t read ${file.name}: ${errorMessage(err)}`);
+      showToast(`Couldn’t read ${file.name}. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 

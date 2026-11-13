@@ -1,6 +1,7 @@
 ---
 title: Try a robot on a Case
 date: 2026-11-12
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 4
@@ -15,7 +16,7 @@ covers:
 Give your robot a task in a simulated world, drive it through, and keep the tries that passed as training data.
 
 1. Click **Play** in the left rail, then **Cases**.
-2. Click an example that fits your robot, or **New Case** to pick a world and a goal. The Simulate tab opens with the Case at the top: its name, its brief, **Check Fit** and the × that closes it.
+2. Click **New Case** to pick a world and a goal. The Simulate tab opens with the Case at the top: its name, its brief, **Check Fit** and the × that closes it.
 3. Click **Check Fit** to see whether the robot fits this Case, compiles and stays up.
 
 ![The Simulate tab with Touch the Dots open and its fit checked](/help/try-a-robot-on-a-case/case.png)

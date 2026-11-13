@@ -54,7 +54,7 @@ Describe what you want to do with the robot, such as "drive this rover with a ga
 
 ![The agent's Case app running: Front Camera on the left, the rover in the middle, Map and Speed on the right](/help/make-a-case/case-app.png)
 
-Keys and a gamepad are the inputs today. Name another, such as your Mac's camera or a phone, and the agent says so and uses the keys.
+Keys, a gamepad and a phone are the inputs today. Name another, such as your Mac's camera or MIDI, and the agent says so and uses the keys.
 
 ## Name or delete a Case
 

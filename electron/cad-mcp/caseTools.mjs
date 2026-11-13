@@ -5,7 +5,7 @@ import { worldObject } from './worldTools.mjs';
 const mm = (what) => z.number().finite().optional().describe(what);
 
 const CONSOLE_HELP =
-  'input: input source ids, first moving one drives: keys, gamepad, or one the person named (camera, phone, midi, leader-arm, voice, policy, script; refused while this version lacks it). ' +
+  'input: input source ids, first moving one drives: keys, gamepad, phone, or one the person named (camera, midi, leader-arm, voice, policy, script; refused while this version lacks it). ' +
   'signals (optional): the Case’s own numbers, { id, kind: timer, seconds? } counting a try’s seconds (down from seconds), { id, kind: counter, when: { signal, above | below } }, { id, kind: score, sum: [{ signal, times }] }. ' +
   'panels: { id, kind, title? } plus the kind’s settings: camera { signal: camera.<name> or camera.* (robot cameras), camera.operator (the person, needs the camera input) }, value { signal }, plot { signals, seconds? }, ' +
   'table { of: joints | servos | signals }, button { action: try | end-try | drive | stop | start-over | reset }, list { of: tries | failures }, text { of: brief } or { text }, map { trail? }. ' +

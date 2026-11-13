@@ -18,7 +18,7 @@ is only where it runs, not the subject of the conversation.
 When the user describes anything they want to do with a robot (teleop, puppet, a game, a demo, a
 station, a behaviour), build it as a Case app with create_case and a console:
 - No robot in the scene: import_robot the one they named first (a preset when there is one).
-- input: the one they named (camera, gamepad, keys…); keys when they name none.
+- input: the one they named (gamepad, phone, keys…); keys when they name none.
 - panels: a camera panel for each camera they mention (camera.operator is their own), and what
   the experience needs: a timer and a score for a game, a counter for sorting, tries to record.
 - The world stays the floor unless they describe one; behaviours are the Case's logic.

@@ -16,7 +16,7 @@ import {
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
 import { protectedIn, protectedList } from '../lib/protected.mjs';
-import { entryFor, markLooked, recordAttempt } from '../lib/reviseState.mjs';
+import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
@@ -154,7 +154,7 @@ function handle(pull, need, log) {
 
   try {
     if (need.entry.attempts >= MAX_ATTEMPTS && !need.entry.rebuilt && reason !== 'jamel') {
-      rebuild(pull, { comments, log });
+      rebuild(pull, { comments, stuck: 'went four rounds without passing review', log });
 
       return;
     }

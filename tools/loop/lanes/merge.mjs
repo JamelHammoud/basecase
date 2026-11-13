@@ -1,30 +1,11 @@
-import {
-  hasLabel,
-  isPaused,
-  lastFinishedMainCheck,
-  mergePull,
-  openPulls,
-  pullCheck,
-  pullReview,
-} from '../lib/github.mjs';
+import { byRank, isRepair } from '../lib/rank.mjs';
+import { isPaused, lastFinishedMainCheck, mergePull, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
 
 export const schedule = {
   slots: 1,
   everySeconds: 60,
   does: "Squash-merges green, reviewed pull requests: repairs first, then the loop's own, then loop:priority, then the oldest; only repairs while main is red",
 };
-
-const isRepair = (pull) => pull.headRefName.startsWith('loop/repair/');
-
-const rank = (pull) => {
-  if (isRepair(pull)) return 0;
-
-  if (pull.headRefName.startsWith('loop/loop/') || hasLabel(pull, 'loop:loop')) return 1;
-
-  return hasLabel(pull, 'loop:priority') ? 2 : 3;
-};
-
-const byRank = (a, b) => rank(a) - rank(b) || a.createdAt.localeCompare(b.createdAt);
 
 const ready = (pull) =>
   pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';

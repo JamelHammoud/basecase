@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { LOOP_DIR } from './paths.mjs';
 
-const DIR = path.join(LOOP_DIR, 'state', 'revise');
+const DIR = path.join(LOOP_DIR, 'state', 'pulls');
 const fileFor = (number) => path.join(DIR, `${number}.json`);
 
 const read = (number) => {
@@ -18,6 +18,7 @@ export const entryFor = (number) => ({
   attempts: 0,
   lastJamel: '',
   lastLook: '',
+  conflictFails: 0,
   rebuilt: false,
   ...read(number),
 });
@@ -31,6 +32,14 @@ export function saveEntry(number, entry) {
 }
 
 export const markLooked = (number, at) => saveEntry(number, { ...entryFor(number), lastLook: at });
+
+export const recordConflictFail = (number) => {
+  const entry = entryFor(number);
+
+  saveEntry(number, { ...entry, conflictFails: entry.conflictFails + 1 });
+
+  return entry.conflictFails + 1;
+};
 
 export const markRebuilt = (number) => saveEntry(number, { ...entryFor(number), rebuilt: true });
 

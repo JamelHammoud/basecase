@@ -11,8 +11,6 @@ type Studio = {
   simState: () => { activeCase: string | null };
 };
 
-const studio = () => (window as unknown as { __studio: Studio }).__studio;
-
 const RECORDED_CREATE_CASE = {
   goal: 'touch',
   name: 'Wrist Camera Teleop',
@@ -75,13 +73,18 @@ describe('A Case app from the agent', () => {
     const { page } = app;
     const scene = armWithCamera();
 
-    await page.evaluate((record) => studio().load(record), scene);
+    await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
     await expect.poll(() => partCount(page)).toBe(scene.parts.length);
 
-    const reply = await page.evaluate((payload) => studio().agentRequest('create_case', payload), RECORDED_CREATE_CASE);
+    const reply = await page.evaluate(
+      (payload) => (window as unknown as { __studio: Studio }).__studio.agentRequest('create_case', payload),
+      RECORDED_CREATE_CASE,
+    );
 
     expect(reply).toMatchObject({ ok: true, id: 'wrist-camera-teleop', running: true });
-    expect(await page.evaluate(() => studio().simState().activeCase)).toBe('wrist-camera-teleop');
+    expect(await page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().activeCase)).toBe(
+      'wrist-camera-teleop',
+    );
     await expect.poll(panelIds).toEqual(['wrist', 'arm', 'tries']);
     await expect.poll(() => page.locator(shown('[data-panel="wrist"] [data-camera="wrist_camera"]')).count()).toBe(1);
     expect(await page.locator(shown('[data-testid="camera-strip"]')).count()).toBe(0);

@@ -5,6 +5,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
+import { replayErrors } from '../reality/jointReplay';
 import { bytesToBase64 } from '../utils/base64';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
@@ -144,6 +145,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     stubTabEngine,
+    calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

@@ -2,7 +2,6 @@ import { Handle, type Node, type NodeProps, Position } from '@xyflow/react';
 import { Button, TrainIcon } from '../../design-system';
 import { nodeLabel } from '../../routines/flowLabels';
 import type { FlowNode, NodeState } from '../../routines/flowTypes';
-import { skillLabel } from '../../routines/stepMenu';
 import { useEditorContext } from './editorContext';
 
 export interface RoutineNodeData extends Record<string, unknown> {
@@ -39,19 +38,16 @@ const SOURCE_HANDLE =
 
 function TrainButton({ skill }: { skill: string }) {
   const { onTrain } = useEditorContext();
-  const label = skillLabel(skill);
 
   return (
     <Button
-      size="sm"
+      size="xs"
       variant="secondary"
-      fullWidth
-      className="mt-1 h-auto! py-1.5 justify-start! nodrag"
-      icon={<TrainIcon className="w-4 h-4" />}
+      className="mt-1 self-start nodrag"
+      icon={<TrainIcon className="w-3.5 h-3.5" />}
       onClick={() => onTrain(skill)}
     >
-      <span className="block text-[12px] font-normal text-white/50">Needs Training</span>
-      <span className="block">Train {label}</span>
+      Train
     </Button>
   );
 }

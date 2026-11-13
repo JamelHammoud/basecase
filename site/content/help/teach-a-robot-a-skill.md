@@ -55,4 +55,6 @@ The agent says what each method tried. When a design change would make the skill
 
 A skill belongs to the design it was trained on. A colour or name change keeps it ready. A change to a mass or size shows **Recheck** on its row, and a change to a joint shows **Train**. Either button sends your words back to the agent.
 
+A ready skill is also a step in a Routine; see [Build a Routine](/help/build-a-routine).
+
 Stand, Walk, Get up and Settle don't need words; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).

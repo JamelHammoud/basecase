@@ -3,6 +3,7 @@ import { Button, EmptyState, PlusIcon, RoutinesIcon } from '../../design-system'
 import { insertPoints } from '../../routines/edit';
 import { lightFlow, routineToFlow } from '../../routines/flow';
 import type { RoutineError } from '../../routines/schema';
+import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import { ADD_LABELS } from '../../workspace/routineMount';
 import type { RoutineView } from '../../workspace/routineTypes';
 import type { Routines } from '../../workspace/useRoutines';
@@ -57,7 +58,9 @@ export function RoutinesPanel({ routines, onTrain }: RoutinesPanelProps) {
   const general = errors.filter((e) => !e.path || !ids.has(e.path));
   const status = statusOf(view, new Set(errors.filter((e) => e.path && ids.has(e.path)).map((e) => e.path)).size);
   const failures = view.run?.done ? view.run.failures : [];
-  const context = { editor, routine, skills: view.kit?.skills ?? [], points, onTrain };
+  const { handoffs } = routines;
+  const trainable = new Set(IS_WEB_DEMO ? [] : handoffs.skills.trainable(view.own));
+  const context = { editor, routine, skills: view.kit?.skills ?? [], points, onTrain, handoffs, trainable };
 
   return (
     <EditorContext value={context}>

@@ -1,12 +1,12 @@
 export const LIMITS = {
   openWaiting: 12,
-  maxOpenHours: 6,
+  maxOpenHours: 3,
   queuedRuns: 20,
   mainRedHours: 12,
   noMergeHours: 2,
   readyWaitingHours: 2,
   oldestQueuedMinutes: 60,
-  idlePullMinutes: 60,
+  idlePullMinutes: 30,
 };
 
 export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'lead', 'ideas']);

@@ -1,4 +1,5 @@
 import type { MainModule } from '@mujoco/mujoco';
+import { trainHandoff, type HandoffResult, type HandoffTrainInput } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
@@ -15,14 +16,16 @@ export type SkillsJob =
   | { type: 'race'; model: SimModel; draft: SkillDraft; budgetSteps?: number }
   | { type: 'kit'; model: SimModel; design: string; entry: TrainedEntry }
   | { type: 'move'; model: SimModel; design: string; animation: RobotAnimation }
-  | { type: 'recheck'; model: SimModel; design: string; skill: Skill; environment: Environment };
+  | { type: 'recheck'; model: SimModel; design: string; skill: Skill; environment: Environment }
+  | ({ type: 'handoff' } & Omit<HandoffTrainInput, 'mj' | 'forge' | 'save'>);
 
 export type SkillsReply =
   | { type: 'draft'; result: DraftResult }
   | { type: 'race'; outcome: RaceOutcome }
   | { type: 'kit'; outcome: KitOutcome }
   | { type: 'move'; outcome: MoveOutcome }
-  | { type: 'recheck'; skill: Skill | null };
+  | { type: 'recheck'; skill: Skill | null }
+  | { type: 'handoff'; result: HandoffResult };
 
 export type ReplyTo<K extends SkillsJob['type']> = Extract<SkillsReply, { type: K }>;
 
@@ -42,6 +45,8 @@ export async function runSkillsJob(job: SkillsJob, ports: SkillPorts & { mj: Mai
   if (job.type === 'kit') return { type: 'kit', outcome: await trainKitEntry({ mj, ...job, forge, save, signal }) };
 
   if (job.type === 'move') return { type: 'move', outcome: await trainMove({ mj, ...job, forge, save, signal }) };
+
+  if (job.type === 'handoff') return { type: 'handoff', result: await trainHandoff({ mj, ...job, forge, save }) };
 
   return { type: 'recheck', skill: await recheckSkill({ mj, ...job, save }) };
 }

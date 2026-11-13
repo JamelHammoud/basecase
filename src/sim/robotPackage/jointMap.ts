@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { servoFamilyOf } from '../../reality/measuredJoints';
 import { activeCalibrations } from '../../reality/history';
+import { busOf, jointServo } from '../../reality/servoPart';
+import type { ServoCalibration, ServoPart } from '../../reality/types';
+import type { ServoFamily } from '../../robot/robotState';
 import { servoLayout, type ServoLayout } from '../../robot/sceneRobot';
-import type { ServoCalibration, ServoFamily } from '../../reality/types';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../../types/robotics';
 import type { SimJoint, SimModel } from '../mjcfTypes';
 
@@ -14,6 +15,7 @@ export interface JointMapEntry {
   joint: string;
   type: 'revolute' | 'continuous' | 'prismatic';
   family: ServoFamily | null;
+  servo: ServoPart | null;
   zero_counts: number;
   direction: 1 | -1;
   min_rad?: number;
@@ -48,6 +50,13 @@ function limits(sim: SimJoint | undefined): Partial<JointMapEntry> {
   return { min_rad: round(THREE.MathUtils.degToRad(lo)), max_rad: round(THREE.MathUtils.degToRad(hi)) };
 }
 
+function servoOf(j: RobotJoint, parts: readonly ScenePart[]) {
+  const servo = jointServo(j, parts);
+  const bus = servo ? busOf(servo) : undefined;
+
+  return { family: bus === 'feetech' || bus === 'dynamixel' ? bus : null, servo };
+}
+
 function entryType(j: RobotJoint, sim: SimJoint | undefined): JointMapEntry['type'] {
   if (j.type === 'prismatic') return 'prismatic';
 
@@ -65,7 +74,7 @@ export function jointMap({ model, project, parts, name }: JointMapInput): JointM
       name: sim?.name ?? j.id,
       joint: j.name,
       type: entryType(j, sim),
-      family: servoFamilyOf(j, parts),
+      ...servoOf(j, parts),
       zero_counts: ZERO_COUNTS,
       direction: 1,
       ...limits(sim),

@@ -38,7 +38,7 @@ export async function jointReplay(history: CalibrationHistory, version: number |
   if (!bench) return null;
 
   const shown = shownCalibration(history, version);
-  const request = { family: bench.family, logs: bench.logs };
+  const request = { servo: bench.servo, logs: bench.logs };
   const [preset, calibration] = await Promise.all([
     cachedReplay({ logId: bench.logId, version: 0 }, request),
     shown ? cachedReplay({ logId: bench.logId, version: shown.version }, { ...request, fit: shown.fit }) : null,

@@ -30,6 +30,7 @@ export * from './BrowseRow';
 export * from './DisclosureRow';
 export * from './Toast';
 export * from './EmptyState';
+export * from './NoMatches';
 export * from './MetaLine';
 export * from './ContextMenu';
 export * from './ColorPicker';

@@ -1,15 +1,14 @@
-import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { saveSkill } from '../backend/skillStore.mjs';
 import { Trainer } from '../trainer.mjs';
 import { measuredRadians } from './intentPacer.mjs';
 import { policyOnnx } from './policyOnnx.mjs';
-import { daemonBinary, RobotLink } from './robotLink.mjs';
+import { daemonBinary } from './robotLink.mjs';
+import { linkWithFake } from './robotLinkFake.mjs';
 import { robotPolicyBytes } from './robotPolicy.mjs';
 import { checkedCommand, checkedRobotSpec, emulatedCalibration } from './robotSpec.mjs';
 import { G1_JOINT_NAMES } from './unitreeG1.mjs';
@@ -18,27 +17,6 @@ const ARM = { family: 'feetech', ids: [1, 2], class: 'arm', emulated: true };
 const G1 = { family: 'unitree-g1', emulated: true };
 const G1_IDS = Array.from({ length: 17 }, (_, k) => k + 13);
 const HELLO = { event: 'hello', emulated: true, real_transport: false, lost_message: 'Lost contact with the robot.' };
-
-function fakeDaemon() {
-  const child = new EventEmitter();
-
-  child.stdin = new PassThrough();
-  child.stdout = new PassThrough();
-  child.stderr = new PassThrough();
-  child.kill = vi.fn();
-  child.sent = [];
-  child.stdin.on('data', (chunk) =>
-    child.sent.push(
-      ...String(chunk)
-        .split('\n')
-        .filter(Boolean)
-        .map((l) => JSON.parse(l)),
-    ),
-  );
-  child.say = (event) => child.stdout.write(`${JSON.stringify(event)}\n`);
-
-  return child;
-}
 
 const KIT_WALK = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -87,29 +65,6 @@ const placedPolicy = (spawned) => {
 
   return fs.existsSync(file) ? fs.readFileSync(file) : null;
 };
-
-function linkWithFake(options = {}) {
-  const binary = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-robot-test-')), 'robot-daemon');
-
-  fs.writeFileSync(binary, '');
-
-  const spawned = [];
-  const events = [];
-  const link = new RobotLink({
-    ...options,
-    binary,
-    emit: (e) => events.push(e),
-    spawnFn: (bin, args) => {
-      const child = fakeDaemon();
-
-      spawned.push({ bin, args, child });
-
-      return child;
-    },
-  });
-
-  return { link, spawned, events };
-}
 
 const settle = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 

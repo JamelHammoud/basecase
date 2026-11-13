@@ -29,7 +29,7 @@
 | 5 | [Layout and sidebar views](docs/guide/layout.md) | the side panels, Parts, Robots, Objects, Layers, Library, panel resizing |
 | 5a | [Scene tabs](docs/guide/scene-tabs.md) | tabs, opening and closing scenes, `.basecase` files |
 | 6, 6a | [Toolbar and Settings](docs/guide/toolbar-and-settings.md) | the bottom toolbar, Measure, Annotate, Settings panes |
-| 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, drag and drop, reference images, Sculpt / Sketch / Import SVG |
+| 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, Mirror (`src/mirror/`), drag and drop, reference images, Sculpt / Sketch / Import SVG |
 | 8a | [Parts catalog](docs/guide/parts-catalog.md) | real components, meshes, the parts pipeline, parts the agent sources |
 | 8b | [Build](docs/guide/build.md) | Checks, BOM, prices, currency, printability, engineering checks, the build guide |
 | 8c | [Joints and motion](docs/guide/joints-and-motion.md) | joints, kinematics, the Pose tab, animation, robot import, mocap |

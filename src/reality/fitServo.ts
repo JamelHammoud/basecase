@@ -5,19 +5,19 @@ import { BENCH_JOINT, benchInput } from './bench';
 import { levenbergMarquardt } from './leastSquares';
 import { replayLog, rmsError } from './replay';
 import { scaleBounds, scaledFit, scalesOf, type ServoParam, type ServoScales } from './servoParams';
-import type { ServoFamily, ServoLog } from './types';
+import type { ServoLog, ServoPart } from './types';
 
 export interface FitContext {
   mj: MainModule;
-  family: ServoFamily;
+  servo: ServoPart;
   preset: { fit: ServoFit; volts: number };
 }
 
 const PRIOR_RAD = 0.002;
 
-export function predictLog(ctx: FitContext, fit: ServoFit, log: ServoLog): Float64Array {
-  const input = benchInput(ctx.family, log.payload);
-  const model = buildMjcf({ ...input, servoFits: { [BENCH_JOINT]: { fit, volts: ctx.preset.volts } } });
+export function predictLog(ctx: FitContext, fit: ServoFit | null, log: ServoLog): Float64Array {
+  const input = benchInput(ctx.servo, log.payload);
+  const model = buildMjcf(fit ? { ...input, servoFits: { [BENCH_JOINT]: { fit, volts: ctx.preset.volts } } } : input);
 
   return replayLog(ctx.mj, model, log, BENCH_JOINT);
 }
@@ -44,11 +44,11 @@ function windowError(predicted: Float64Array, log: ServoLog, [from, to]: [number
   return Math.sqrt(sum / Math.max(to - from, 1));
 }
 
-export function segmentErrors(ctx: FitContext, fit: ServoFit, logs: ServoLog[], segment: Segment): number[] {
+export function segmentErrors(ctx: FitContext, fit: ServoFit | null, logs: ServoLog[], segment: Segment): number[] {
   return logs.map((log) => windowError(predictLog(ctx, fit, log), log, windowOf(log, segment)));
 }
 
-export function wholeLogErrors(ctx: FitContext, fit: ServoFit, logs: ServoLog[]): number[] {
+export function wholeLogErrors(ctx: FitContext, fit: ServoFit | null, logs: ServoLog[]): number[] {
   return logs.map((log) => rmsError(predictLog(ctx, fit, log), log.positionRad));
 }
 

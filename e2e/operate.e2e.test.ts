@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { ARM, JOINT_NAMES, THREE_JOINT_ARM } from './armFixture';
+import { ARM, JOINT_NAMES, MIXED_ARM, THREE_JOINT_ARM } from './armFixture';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
@@ -17,8 +17,17 @@ interface FakeLink {
   robotDisconnect: () => Promise<unknown>;
 }
 
+interface RecordedCalibrations {
+  [jointId: string]: { versions: Array<{ verdict: string; servo?: { componentId: string; variant?: string } }> };
+}
+
 type StudioWindow = {
-  __studio: { load: (r: unknown) => void; select: (ids: string[]) => void; selection: () => string[] };
+  __studio: {
+    load: (r: unknown) => void;
+    select: (ids: string[]) => void;
+    selection: () => string[];
+    calibrations: () => RecordedCalibrations;
+  };
   __fakeRobotLink: FakeLink;
 };
 
@@ -284,6 +293,34 @@ describe('Operate calibration', () => {
     },
     150000,
   );
+});
+
+describe('Operate calibration of a mixed arm', () => {
+  it('calibrates an STS3215 C046 and an XL430 each against its own servo', async () => {
+    const { page } = app;
+
+    await loadRecord(MIXED_ARM);
+    await climbToTest();
+    await page
+      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
+      .first()
+      .click();
+    await expect.poll(calibrating).not.toBe('idle');
+    await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
+
+    const recorded = await page.evaluate(() => (window as unknown as StudioWindow).__studio.calibrations());
+    const newest = (id: string) => recorded[id]?.versions.at(-1);
+
+    expect(newest('shoulder')?.servo).toEqual({ componentId: 'feetech-sts3215', variant: 'c046' });
+    expect(newest('elbow')?.servo).toEqual({ componentId: 'dynamixel-xl430-w250' });
+
+    for (const id of ['shoulder', 'elbow']) {
+      expect(newest(id)?.verdict).toMatch(/^(measured|consistent|cant-tell)$/);
+      expect(await row(id).getAttribute('data-verdict')).toBe(newest(id)?.verdict);
+    }
+
+    expect(app.errors).toEqual([]);
+  }, 150000);
 });
 
 describe('Operate servo setup', () => {

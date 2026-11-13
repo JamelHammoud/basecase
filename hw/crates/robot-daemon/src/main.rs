@@ -7,8 +7,10 @@ use robot_daemon::protocol::{
 };
 use robot_daemon::ros2::{Ros2Daemon, Ros2Parts, Ros2Spec};
 use robot_daemon::runner::{Controller, Runner};
-use robot_daemon::transport::{open, open_g1, open_ros2, NewServos, Ros2Link, Target, NO_MORE_SERVOS};
+use robot_daemon::transport::{open, open_g1, open_ros2, NewServos, Ros2Link, ServoRobot, Target, NO_MORE_SERVOS};
+use robot_daemon::units::parse_units;
 use robot_daemon::{Command, Daemon, DaemonConfig, Inputs};
+use servo_emu::PartModel;
 use servo_wire::ros2::{checked_joints, checked_topic, ControllerKind};
 use servo_wire::{Clock, Family, SystemClock};
 use std::io::{BufRead, Write};
@@ -22,6 +24,7 @@ enum Robot {
         family: Family,
         ids: Vec<u8>,
         class: RobotClass,
+        units: Vec<Option<PartModel>>,
     },
     G1,
     Ros2 {
@@ -38,6 +41,7 @@ struct Flags {
     controller: Option<String>,
     topic: Option<String>,
     joints: Option<String>,
+    units: Option<PathBuf>,
 }
 
 struct Options {
@@ -78,8 +82,18 @@ fn main() {
             say_hello(&ros2_hello_line(emulated));
             serve(daemon.inputs(), daemon, clock, None);
         }
-        Robot::Servos { family, ids, class } => {
-            let opened = open(&options.target, family, &ids, clock.clone()).unwrap_or_else(|message| quit(3, &message));
+        Robot::Servos {
+            family,
+            ids,
+            class,
+            units,
+        } => {
+            let robot = ServoRobot {
+                family,
+                ids: &ids,
+                units: &units,
+            };
+            let opened = open(&options.target, robot, clock.clone()).unwrap_or_else(|message| quit(3, &message));
             let config = DaemonConfig { family, ids, class };
             let mut daemon = Daemon::new(config, opened.transport, clock.clone(), artefacts);
             let _policy = attach_policy(&mut daemon, &options.artefacts);
@@ -217,6 +231,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
             "--controller" => flags.controller = Some(value()?),
             "--topic" => flags.topic = Some(value()?),
             "--joints" => flags.joints = Some(value()?),
+            "--units" => flags.units = Some(PathBuf::from(value()?)),
             "--artefacts" => artefacts = PathBuf::from(value()?),
             "--latency-ms" => latency_us = value()?.parse::<u64>().map_err(|_| "Bad latency")? * 1000,
             "--emulated" => {
@@ -245,12 +260,33 @@ fn parse(args: &[String]) -> Result<Options, String> {
             factory,
         },
         _ if factory => Err("--factory needs --emulated")?,
+        _ if flags.units.is_some() => Err("--units needs --emulated")?,
         real => real,
     };
+    let units = flags.units.take();
+
     Ok(Options {
-        robot: robot_of(flags)?,
+        robot: with_units(robot_of(flags)?, units)?,
         artefacts,
         target,
+    })
+}
+
+fn with_units(robot: Robot, path: Option<PathBuf>) -> Result<Robot, String> {
+    let Some(path) = path else {
+        return Ok(robot);
+    };
+    let Robot::Servos { family, ids, class, .. } = robot else {
+        return Err("--units is for --family feetech or dynamixel only".into());
+    };
+    let bytes = std::fs::read(&path).map_err(|error| format!("The servo models file can't be read: {error}"))?;
+    let units = parse_units(&bytes, &ids)?;
+
+    Ok(Robot::Servos {
+        family,
+        ids,
+        class,
+        units,
     })
 }
 
@@ -312,6 +348,7 @@ fn robot_of(flags: Flags) -> Result<Robot, String> {
         family: parse_family(&family)?,
         ids,
         class: class.unwrap_or(RobotClass::Arm),
+        units: Vec::new(),
     })
 }
 

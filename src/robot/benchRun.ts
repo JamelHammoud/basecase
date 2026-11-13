@@ -1,5 +1,4 @@
 import type { BenchRecording, BenchSample } from '../reality/benchLogs';
-import { familyOfRobot } from '../reality/benchLogs';
 import { BENCH_SECONDS, benchOffset } from '../reality/benchSequence';
 import { radiansFromCounts, servoFamily, type RobotState, type RobotStatus } from './robotState';
 import { robotSnapshot, sendRobotCommand, setBenchDriving, subscribeRobot } from './robotStore';
@@ -61,9 +60,8 @@ export function benchSeconds(heard: HeardStatus[]): number[] {
 
 export function playBench(moving?: readonly number[]): Promise<BenchRecording | null> {
   const begun = robotSnapshot();
-  const family = servoFamily(begun.spec);
 
-  if (!canRunBench(begun) || !begun.spec || !family) return Promise.resolve(null);
+  if (!canRunBench(begun) || !begun.spec) return Promise.resolve(null);
 
   const { ids: servos } = begun.spec;
   const subset = moving ?? servos.map((_, k) => k);
@@ -78,7 +76,7 @@ export function playBench(moving?: readonly number[]): Promise<BenchRecording | 
   const recording = (): BenchRecording => {
     const seconds = benchSeconds(heard);
 
-    return { family: familyOfRobot(family), starts, samples: heard.map((h, i) => sampleOf(h.status, ids, seconds[i])) };
+    return { starts, samples: heard.map((h, i) => sampleOf(h.status, ids, seconds[i])) };
   };
   let last = begun.status;
   let lead = Number.POSITIVE_INFINITY;

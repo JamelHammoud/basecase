@@ -2,7 +2,7 @@ import React from 'react';
 import { catalogRef } from '../../data/catalog';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { Button, EmptyState, HoverCard, PreviewImage, REVEAL_ON_HOVER, SectionHeader } from '../../design-system';
+import { Button, HoverCard, NoMatches, PreviewImage, REVEAL_ON_HOVER, SectionHeader } from '../../design-system';
 import { CatalogDetails } from '../PartDetails';
 import type { Category } from './partsViews';
 import { AddButton, CategoryRow, ResultRow, dragProps, metaLine } from './rows';
@@ -88,8 +88,8 @@ export const SearchResults: React.FC<{
   onSearchAll?: () => void;
 }> = ({ results, active, query, onHover, onOpen, onAdd, onSearchAll }) =>
   results.length === 0 ? (
-    <EmptyState
-      title={`No matches for “${query.trim()}”`}
+    <NoMatches
+      query={query}
       action={
         onSearchAll && (
           <Button variant="secondary" size="sm" onClick={onSearchAll}>

@@ -45,7 +45,7 @@ A joint driven by a catalog servo with a published model moves the way a bench t
 
 Any other joint gets an estimated servo. Its torque comes from the servo's stall torque, or from the weight the joint holds when it has no servo. **Build** ▸ **Checks** names these joints under **Torque estimates**, and every servo not yet **Measured** under **Servo models**.
 
-Calibrating a connected robot replaces a servo's catalog model with one fitted to it, and marks its joint **Measured** in the Pose tab. Steps are in [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
+Calibrating a connected robot replaces each Feetech or Dynamixel servo's model, published or estimated, with one fitted to it. It marks the joint **Measured** in the Pose tab. Steps are in [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
 
 ## What a run tells you
 

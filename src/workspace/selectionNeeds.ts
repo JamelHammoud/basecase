@@ -18,6 +18,7 @@ const NEEDS = new Map<string, Need>([
   ['select-all', (facts) => facts.parts > 0],
   ['copy', atLeast(1)],
   ['cut', atLeast(1)],
+  ['mirror', atLeast(1)],
   ['group', atLeast(2)],
   ['ungroup', (facts) => facts.grouped],
   ['union', atLeast(2)],

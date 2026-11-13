@@ -10,6 +10,7 @@ use servo_wire::unitree::g1::{joint_id, motor_of, LIMITS, WRITABLE};
 
 pub const POLICY_RUNGS_OUT: &str = "The G1 climbs to Test only. Policy runs stay off for it.";
 const CALIBRATION_JOINTS: &str = "The calibration must list the G1's 17 arm and waist joints, ids 13 to 29.";
+const LOOK_FIRST: &str = "Go back to Look first.";
 
 pub fn writable_joint(id: u8, name: String) -> JointCalibration {
     let (min_rad, max_rad) = motor_of(id).map_or((0.0, 0.0), |motor| LIMITS[motor]);
@@ -67,7 +68,13 @@ fn set_up_fault(bus: &mut G1Bus) -> Result<Hash, Fault> {
         return Err(Fault::MotorsMissing { count: missing });
     }
 
-    let fsm = bus.ask_fsm(FSM_TIMEOUT_US).map_err(|_| Fault::BusGone)?;
+    let answer = bus
+        .ask_fsm(FSM_TIMEOUT_US)
+        .map_err(|_| Fault::BusGone)?
+        .ok_or(Fault::LocoSilent)?;
+    let fsm = Some(answer)
+        .filter(|answer| answer.code == 0)
+        .and_then(|answer| answer.data_number());
 
     if fsm != Some(LOCOMOTION_FSM) {
         return Err(Fault::NotBalancing { fsm });
@@ -159,6 +166,10 @@ impl G1Daemon {
             return Err(POLICY_RUNGS_OUT.into());
         }
 
+        if self.holds_arms() {
+            return Err(LOOK_FIRST.into());
+        }
+
         if target == Mode::SetUp && self.ladder.mode() == Mode::Look {
             self.set_up()?;
         }
@@ -176,9 +187,13 @@ impl G1Daemon {
         Ok(())
     }
 
+    fn holds_arms(&self) -> bool {
+        matches!(self.run, G1Run::SoftStart | G1Run::Running | G1Run::HandingBack { .. })
+    }
+
     fn set_up(&mut self) -> Result<(), String> {
         let Holder::Look(bus) = &mut self.holder else {
-            return Err("Go back to Look first.".into());
+            return Err(LOOK_FIRST.into());
         };
         let checked = bus
             .wait_for_state(LOST_STATE_US)

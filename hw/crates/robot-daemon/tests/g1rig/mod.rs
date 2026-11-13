@@ -57,6 +57,7 @@ pub struct G1Rig {
     pub writer: IntentWriter,
     pub published: Published,
     pub corrupt_state: Arc<AtomicBool>,
+    pub mute_loco: Arc<AtomicBool>,
     pub client_alive: bool,
     pub intents_flow: bool,
     pub target: Vec<f32>,
@@ -64,8 +65,12 @@ pub struct G1Rig {
     ticks: u64,
 }
 
-fn corrupting(flag: Arc<AtomicBool>) -> impl FnMut(Sample) -> Option<Sample> + Send {
+fn corrupting(flag: Arc<AtomicBool>, mute_loco: Arc<AtomicBool>) -> impl FnMut(Sample) -> Option<Sample> + Send {
     move |mut sample: Sample| {
+        if sample.topic == Topic::LocoResponse && mute_loco.load(Ordering::SeqCst) {
+            return None;
+        }
+
         if sample.topic == Topic::LowState && flag.load(Ordering::SeqCst) {
             let last = sample.payload.len() - 1;
 
@@ -86,9 +91,10 @@ impl G1Rig {
         let shared: Arc<dyn Clock> = Arc::new(clock.clone());
         let robot = G1Emulator::new(options).shared();
         let corrupt_state = Arc::new(AtomicBool::new(false));
+        let mute_loco = Arc::new(AtomicBool::new(false));
         let mut inner = InProcessG1::new(robot.clone(), shared.clone(), latency_us);
 
-        inner.set_filter(Box::new(corrupting(corrupt_state.clone())));
+        inner.set_filter(Box::new(corrupting(corrupt_state.clone(), mute_loco.clone())));
 
         let published = Published::default();
         let tapped = Tapped {
@@ -107,6 +113,7 @@ impl G1Rig {
             robot,
             published,
             corrupt_state,
+            mute_loco,
             client_alive: true,
             intents_flow: true,
             target: WRITABLE.map(|motor| STAND_POSE[motor]).collect(),

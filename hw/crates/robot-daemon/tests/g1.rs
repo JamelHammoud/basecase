@@ -9,6 +9,7 @@ use robot_daemon::Command;
 use servo_emu::g1::{G1Fault, G1Options, STAND_POSE};
 use servo_wire::unitree::g1::{LEGS, RIGHT_SHOULDER_PITCH, WEIGHT_SLOT};
 use servo_wire::unitree::MotorCmd;
+use std::sync::atomic::Ordering;
 
 #[test]
 fn the_emulated_g1_follows_an_arm_intent_round_trip() {
@@ -84,6 +85,54 @@ fn the_weight_falls_in_steps_no_larger_than_the_ramp() {
     assert!(weights
         .windows(2)
         .all(|pair| pair[0] - pair[1] <= WEIGHT_FALL_PER_TICK + 1e-6));
+}
+
+#[test]
+fn entering_test_again_while_the_arms_are_held_is_refused() {
+    let mut rig = G1Rig::new();
+
+    rig.climb_to_test();
+
+    let before = rig.now();
+
+    assert!(rig.command(Command::Enter(Mode::Test)).is_err());
+    rig.ticks(5);
+
+    assert_eq!(rig.daemon.run(), G1Run::Running);
+    assert_eq!(rig.robot_weight(), 1.0);
+
+    rig.command(Command::Stop).unwrap();
+    rig.tick();
+
+    assert!(rig.command(Command::Enter(Mode::Test)).is_err());
+    rig.ticks(10);
+
+    let weights: Vec<f32> = rig
+        .published_after(before - 1)
+        .iter()
+        .map(|(_, c)| weight_of(c))
+        .collect();
+
+    assert_eq!(weights.last(), Some(&0.0));
+    assert!(weights
+        .windows(2)
+        .all(|pair| pair[0] - pair[1] <= WEIGHT_FALL_PER_TICK + 1e-6));
+    assert_eq!(rig.daemon.run(), G1Run::Stopped);
+}
+
+#[test]
+fn set_up_says_when_the_loco_service_doesnt_answer() {
+    let mut rig = G1Rig::new();
+
+    rig.mute_loco.store(true, Ordering::SeqCst);
+    rig.ticks(5);
+
+    assert!(rig.command(Command::Enter(Mode::SetUp)).is_err());
+    assert_eq!(
+        rig.first_fault().map(|(_, code, _)| code).as_deref(),
+        Some("loco_silent")
+    );
+    assert_eq!(rig.daemon.mode(), Mode::Look);
 }
 
 #[test]

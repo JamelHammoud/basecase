@@ -212,7 +212,9 @@ impl ArmSdkLayer {
     }
 
     pub fn release(mut self) -> G1Bus {
-        if !self.sealed && self.goals.iter().all(Option::is_some) {
+        let within_one_tick = self.weight <= WEIGHT_FALL_PER_TICK;
+
+        if !self.sealed && within_one_tick && self.goals.iter().all(Option::is_some) {
             let mode_machine = self.bus.latest().map_or(0, |reading| reading.mode_machine);
             let bytes = self.command_bytes(0.0, mode_machine);
 

@@ -29,6 +29,7 @@ pub enum Fault {
     MotorsMissing { count: usize },
     MotorError { joint: String },
     NotBalancing { fsm: Option<i64> },
+    LocoSilent,
 }
 
 impl Fault {
@@ -61,6 +62,7 @@ impl Fault {
             Fault::MotorsMissing { .. } => "motors_missing",
             Fault::MotorError { .. } => "motor_error",
             Fault::NotBalancing { .. } => "not_balancing",
+            Fault::LocoSilent => "loco_silent",
         }
     }
 
@@ -141,6 +143,10 @@ impl Fault {
                 "The G1 isn't balancing in its locomotion mode, so its arms stay with its own controller. Stand it up with its remote, then check again."
                     .into()
             }
+            Fault::LocoSilent => {
+                "The G1's locomotion service didn't answer, so its arms stay with its own controller. Restart the G1, then check again."
+                    .into()
+            }
         }
     }
 }
@@ -163,7 +169,11 @@ impl Fault {
     }
 }
 
-pub fn g1_lost_message() -> String {
+pub fn g1_lost_message(emulated: bool) -> String {
+    if emulated {
+        return "Lost contact with the robot. The emulated G1 stopped with the daemon.".into();
+    }
+
     "Lost contact with the robot. The G1 keeps its last arm command, so hold its remote's emergency stop.".into()
 }
 
@@ -230,6 +240,7 @@ mod tests {
                 joint: "right_elbow_joint".into(),
             },
             Fault::NotBalancing { fsm: Some(1) },
+            Fault::LocoSilent,
         ]
     }
 
@@ -262,6 +273,7 @@ mod tests {
                     | Fault::MotorsMissing { .. }
                     | Fault::MotorError { .. }
                     | Fault::NotBalancing { .. }
+                    | Fault::LocoSilent
             )
         });
 

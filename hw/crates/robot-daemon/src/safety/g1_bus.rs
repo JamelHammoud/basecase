@@ -140,7 +140,7 @@ impl G1Bus {
         }
     }
 
-    pub fn ask_fsm(&mut self, timeout_us: u64) -> Result<Option<i64>, BusGone> {
+    pub fn ask_fsm(&mut self, timeout_us: u64) -> Result<Option<Response>, BusGone> {
         let id = self.next_request;
         let deadline = self.clock.now_micros() + timeout_us;
 
@@ -152,9 +152,7 @@ impl G1Bus {
 
         loop {
             if let Some(answer) = self.answers.iter().find(|answer| answer.id == id) {
-                return Ok(Some(answer)
-                    .filter(|answer| answer.code == 0)
-                    .and_then(Response::data_number));
+                return Ok(Some(answer.clone()));
             }
 
             let now = self.clock.now_micros();

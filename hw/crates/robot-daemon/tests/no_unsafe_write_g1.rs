@@ -3,7 +3,7 @@ mod g1rig;
 use g1rig::{weight_of, G1Rig, SHOULDER};
 use proptest::prelude::*;
 use robot_daemon::ladder::Mode;
-use robot_daemon::safety::{ARM_KD, ARM_KP, WEIGHT_RISE_PER_TICK};
+use robot_daemon::safety::{ARM_KD, ARM_KP, WEIGHT_FALL_PER_TICK, WEIGHT_RISE_PER_TICK};
 use robot_daemon::Command;
 use servo_emu::g1::{G1Fault, G1Options, STAND_POSE};
 use servo_wire::unitree::g1::{LEGS, LIMITS, WEIGHT_SLOT, WRITABLE};
@@ -170,7 +170,9 @@ fn check_fields(command: &LowCmd) -> Result<(), String> {
 }
 
 fn check_motion(previous: &LowCmd, command: &LowCmd, measured: &[Option<f32>]) -> Result<(), String> {
-    if weight_of(command) - weight_of(previous) > WEIGHT_RISE_PER_TICK + 1e-5 {
+    let change = weight_of(command) - weight_of(previous);
+
+    if change > WEIGHT_RISE_PER_TICK + 1e-5 || -change > WEIGHT_FALL_PER_TICK + 1e-5 {
         return Err(format!(
             "weight jumped {} → {}",
             weight_of(previous),
@@ -260,6 +262,17 @@ fn the_checker_catches_a_planted_jump() {
     let planted = published.len() - 5;
 
     published[planted].1.motor_cmd[servo_wire::unitree::g1::RIGHT_SHOULDER_PITCH].q += 0.2;
+
+    assert!(check(&published, &record).is_err());
+}
+
+#[test]
+fn the_checker_catches_a_planted_weight_drop() {
+    let (rig, record) = reaching_session();
+    let mut published = rig.published();
+    let planted = published.len() - 5;
+
+    published[planted].1.motor_cmd[WEIGHT_SLOT].q = 0.0;
 
     assert!(check(&published, &record).is_err());
 }

@@ -110,7 +110,7 @@ pub fn hello_line(family: Family, emulated: bool) -> String {
 }
 
 pub fn g1_hello_line(emulated: bool) -> String {
-    hello(G1_FAMILY, emulated, g1_lost_message())
+    hello(G1_FAMILY, emulated, g1_lost_message(emulated))
 }
 
 pub const G1_FAMILY: &str = "unitree-g1";
@@ -289,7 +289,8 @@ mod tests {
 
         assert_eq!(hello["family"], "unitree-g1");
         assert_eq!(hello["real_transport"], false);
-        assert_eq!(hello["lost_message"], g1_lost_message());
+        assert_eq!(hello["lost_message"], g1_lost_message(true));
+        assert!(!g1_lost_message(true).contains("remote"));
     }
 
     #[test]

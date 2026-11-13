@@ -111,7 +111,7 @@ describe('vite bridge middleware', () => {
       status: 404,
     });
     expect(await request(bridge, { method: 'POST', url: '/save-scene', body: '{bad' })).toMatchObject({ status: 500 });
-    expect(await post('/train-stop', {})).toEqual({ result: { error: 'Error: boom' }, status: 500, calls: [] });
+    expect(await post('/train-stop', {})).toEqual({ result: { error: 'boom' }, status: 500, calls: [] });
     expect((await request(bridge, { method: 'PUT', url: '/scenes' })).result).toBe('next');
   });
 

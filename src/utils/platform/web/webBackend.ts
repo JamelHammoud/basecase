@@ -4,6 +4,7 @@ import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { trainedPolicy, trainedSkill } from './webTrained';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
 import { getSkill, saveSkill } from './webSkills';
+import { errorMessage } from '../../errorMessage';
 
 type Body = Record<string, unknown>;
 
@@ -133,7 +134,7 @@ export async function webRequest(path: string, init?: RequestInit): Promise<Resp
   try {
     return json(await route(parsed(init?.body), url.searchParams));
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+    return json({ error: errorMessage(e) }, 500);
   }
 }
 

@@ -1,3 +1,5 @@
+import { errorMessage } from './errorMessage';
+
 export interface Reply<R> {
   result: R;
   transfer?: Transferable[];
@@ -34,7 +36,7 @@ export function serve(handlers: Handlers): void {
 
       scope.postMessage({ id: data.id, result }, transfer);
     } catch (error) {
-      scope.postMessage({ id: data.id, error: error instanceof Error ? error.message : String(error) }, []);
+      scope.postMessage({ id: data.id, error: errorMessage(error) }, []);
     }
   };
 }

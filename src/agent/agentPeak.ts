@@ -7,6 +7,7 @@ import { PEAK_DERATE } from '../utils/actuatorRules';
 import type { JointLoad, WalkJoint, WalkSim } from '../utils/engineeringTypes';
 import { jointPeak, type PeakSpan, type TorqueSeries } from '../utils/peakTorque';
 import { walkAmpModels, walkPower } from '../utils/servoAmps';
+import { errorMessage } from '../utils/errorMessage';
 
 export const PEAK_SECONDS = 14;
 export const PEAK_SHOVE_SHARE = 0.3;
@@ -47,8 +48,6 @@ export function peakShoves(weightN: number) {
 
   return PEAK_SHOVES.map((s) => ({ at: s.at, force: [s.x * n, 0, 0] as [number, number, number] }));
 }
-
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export interface WalkDesign {
   joints: JointLoad[];
@@ -92,6 +91,6 @@ export async function walkSim(deps: PeakDeps, { joints: loads, massG, parts }: W
         : undefined,
     };
   } catch (e) {
-    return `The walk didn’t run: ${message(e)}`;
+    return `The walk didn’t run: ${errorMessage(e)}`;
   }
 }

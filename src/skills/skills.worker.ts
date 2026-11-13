@@ -3,6 +3,7 @@ import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from '../sim/loadMujoco';
 import type { ForgeJob, ForgeOutcome } from './forgeRunner';
 import { runSkillsJob, type SkillsJob, type SkillsReply } from './skillsJob';
+import { errorMessage } from '../utils/errorMessage';
 
 export type SkillsRequest =
   | SkillsJob
@@ -54,6 +55,6 @@ ctx.onmessage = async (ev: MessageEvent<SkillsRequest>) => {
     mj ??= await loadMujoco();
     ctx.postMessage(await runSkillsJob(msg, { mj, forge, save }));
   } catch (e) {
-    ctx.postMessage({ type: 'error', message: e instanceof Error ? e.message : String(e) } satisfies SkillsMessage);
+    ctx.postMessage({ type: 'error', message: errorMessage(e) } satisfies SkillsMessage);
   }
 };

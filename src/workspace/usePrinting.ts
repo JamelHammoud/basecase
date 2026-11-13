@@ -11,6 +11,7 @@ import type { CommitParts, Setter, ShowToast } from './types';
 import { useFitTest } from './useFitTest';
 import { usePrintJob } from './usePrintJob';
 import { usePrintStatus } from './usePrintStatus';
+import { errorMessage } from '../utils/errorMessage';
 
 interface PrintingOptions {
   jobId: string;
@@ -32,8 +33,6 @@ export function amsFor(plate: Plate, status: PrinterStatus | null) {
 
   return { useAms: true, amsMapping: [tray.slot] };
 }
-
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 function cleanPrint(print: PartPrint): PartPrint | undefined {
   const entries = Object.entries(print).filter(([, v]) => v !== undefined && v !== false);
@@ -114,7 +113,7 @@ export function usePrinting(options: PrintingOptions) {
 
       showToast(sent.started ? `Sent plate ${plate.number} to ${printer.label}` : sent.message);
     } catch (e) {
-      showToast(message(e), { tone: 'error' });
+      showToast(errorMessage(e), { tone: 'error' });
     } finally {
       setSending(null);
     }

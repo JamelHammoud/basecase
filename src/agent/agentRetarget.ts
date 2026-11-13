@@ -9,6 +9,7 @@ import {
   type PoseContext,
   type PoseReply,
 } from './agentPoseShared';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface RetargetPayload {
   robot?: string;
@@ -91,7 +92,7 @@ export async function retargetRequest(ctx: PoseContext, p: RetargetPayload): Pro
   try {
     mocap = parseBvh(source.text, name);
   } catch (err) {
-    return { text: `Couldn’t read the BVH: ${err instanceof Error ? err.message : String(err)}` };
+    return { text: `Couldn’t read the BVH: ${errorMessage(err)}` };
   }
 
   const res = retarget(mocap, scope.rig, pointOfFor(scope.rig, ctx.viewport), {

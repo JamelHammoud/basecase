@@ -136,6 +136,14 @@ Bring a model from another app into the scene as a printable part.
 - Raw HTML in the markdown is dropped. `http` and `https` links open in a new tab.
 - `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and to a help article, and the nav's Blog link to a post and back. It builds the real `site/content`, so it expects a published post.
 
+### Keeping the flow
+
+Three guards keep work moving without anyone watching:
+
+- **Backpressure.** Lanes that open pull requests (build, refine, market, learn, update, harness, retro) wait while 30 pull requests are waiting to land or 20 CI runs are queued (`tools/loop/lib/flow.mjs`). The lanes that drain the queue (review, revise, rebase, batch, merge, repair) never wait.
+- **New lanes start themselves.** After each update of the home checkout, the merge lane runs `install.mjs sync`, detached. It loads new lanes, reloads changed ones and removes deleted ones, leaving running lanes alone.
+- **Health.** The health lane checks every 10 minutes how long `main` has been red, how long since the last merge, the oldest reviewed and green pull request, and the CI queue. While any of them is over its limit, it keeps one `Loop health` issue up to date, and it closes that issue once the loop flows again.
+
 ### What Check runs
 
 Check is built for fast pull requests, with `main` as the safety net:

@@ -5,6 +5,8 @@ import { roverForward } from '../sim/driveSetup';
 import { SimEngine, type Controller } from '../sim/engine';
 import { buildMjcf } from '../sim/mjcf';
 import type { MjcfInput, SimModel } from '../sim/mjcfTypes';
+import type { PolicySpec } from '../sim/policy';
+import { Recorder, type Recording } from '../sim/recorder';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig, type Rig, type V3 } from '../utils/kinematics';
 import { ArenaWorld } from '../skills/arenaWorld';
@@ -12,6 +14,7 @@ import { evaluateContract, type Trace } from '../skills/contract';
 import type { Randomization } from '../skills/environment';
 import { NO_BODY } from '../routines/physicsBody';
 import { caseFactReader, type CaseFacts } from './caseFacts';
+import { caseCommand } from './caseTarget';
 import { judgeSoFar, usesBodySkills, type CaseLogicResult, type CaseLogicRun } from './caseLogic';
 import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld, worldRandom } from './caseRandom';
 import { GroundSteer } from './groundSteer';
@@ -44,6 +47,7 @@ export interface CaseResult {
   objectIds: string[];
   case: Case;
   logic?: CaseLogicResult;
+  recording?: Recording;
 }
 
 interface ProbeBase {
@@ -52,9 +56,12 @@ interface ProbeBase {
 }
 
 export interface RunOptions extends LogicOptions {
-  controller: 'limp' | 'reference';
+  controller: 'limp' | 'reference' | 'policy';
   seed?: number;
   randomization?: Randomization;
+  jointNoiseDeg?: number;
+  policy?: PolicySpec | null;
+  record?: boolean;
   walk?: VelocityDrive | null;
   partners?: CaseRobot[];
   limp?: string[];
@@ -90,6 +97,18 @@ function chooseController({ setups, walk, rig }: Fitted): Controller {
 
   return team ? { kind: 'drive', setup: team } : { kind: 'limp' };
 }
+
+function runController(fit: Fitted, kase: Case, options: RunOptions): Controller {
+  if (options.controller !== 'policy' || !options.policy) return chooseController(fit);
+
+  return {
+    kind: 'policy',
+    policy: { ...options.policy, command: caseCommand(kase) },
+    robot: fit.rig.robots[0]?.key ?? '',
+  };
+}
+
+const withoutReference = (kase: Case): Case => ({ ...kase, reference: { timeline: [] } });
 
 function walkFor(setup: RobotDrive | null, facts: RobotFacts, options: RunOptions): VelocityDrive | null {
   const floating = facts.morphology !== 'fixed';
@@ -176,6 +195,7 @@ export interface EngineStart {
   controller: Controller;
   seed?: number;
   randomization?: Randomization;
+  jointNoiseDeg?: number;
 }
 
 export function startEngine(mj: MainModule, model: SimModel, options: EngineStart): Started {
@@ -194,6 +214,8 @@ export function startEngine(mj: MainModule, model: SimModel, options: EngineStar
   const instance = caseInstance(random, {
     randomization: options.randomization ?? CASE_RANDOMIZATION,
     bodies: arena.engine.model.nbody - 1,
+    joints: arena.engine.sim.joints.length,
+    jointNoiseDeg: options.jointNoiseDeg,
   });
 
   arena.prepare({ instance, controller: { kind: 'hold' }, start: model.initial, robot: model.robots[0]?.key ?? '' });
@@ -302,16 +324,19 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     objectAt,
   });
   const steer = steerFor({ fit, model, objectAt });
-  const controller = chooseController(fit);
+  const controller = runController(fit, kase, options);
   const { engine, dispose } = startEngine(mj, model, {
     controller,
     seed: options.seed,
     randomization: options.randomization,
+    jointNoiseDeg: options.jointNoiseDeg,
   });
+  const recorder = options.record ? new Recorder(engine) : null;
   const send = (c: DriveCommand) => engine.command(walk ? policyCommand(c, walk.topSpeed) : c);
   const limp = new Set(fit.cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : [])));
 
   limpen(engine, model, limp);
+  engine.stepHook = recorder?.hook ?? null;
 
   const handBack = () => engine.setController(controller);
 
@@ -319,7 +344,8 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     const logic = await startLogic({ plan, kase, engine, body, handBack, inputs: options.inputs });
     const sample = factSampler(kase, caseFactReader(kase, model), reader, signals);
     const judge = () => judgeSoFar(kase.task.contract, { dt: RECORD_DT, signals });
-    const frames = await roll({ engine, kase, steer, send, sample, logic, judge });
+    const driven = controller.kind === 'policy' ? withoutReference(kase) : kase;
+    const frames = await roll({ engine, kase: driven, steer, send, sample, logic, judge });
     const trace = { dt: RECORD_DT, signals };
     const verdict = await evaluateContract(kase.task.contract, trace);
 
@@ -333,6 +359,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
       objectIds: kase.world.objects.map((o) => o.id),
       case: kase,
       ...(logic ? { logic: logic.result() } : {}),
+      ...(recorder ? { recording: recorder.finish() } : {}),
     };
   } finally {
     dispose();
@@ -358,7 +385,7 @@ export function caseRunner(mj: MainModule, authored: Case, robot: CaseRobot, opt
 
   return {
     refusal: null,
-    controller: chooseController(fit).kind,
+    controller: runController(fit, fit.scaled, options).kind,
     run: (seed = options.seed) => rollFitted(mj, fit, { ...options, seed }),
   };
 }

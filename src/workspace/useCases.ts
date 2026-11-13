@@ -17,6 +17,9 @@ import { useCaseTry } from './useCaseTry';
 import { useDatasetExport } from './useDatasetExport';
 import { useTryMultiply } from './useTryMultiply';
 import { useTryTimeline } from './useTryTimeline';
+import { useTriesTraining, type TriesTraining } from './useTriesTraining';
+import type { SkillsRuntime } from '../skills/skillsRuntime';
+import type { CaseRobotInput } from './caseChecks';
 
 interface CasesOptions {
   parts: ScenePart[];
@@ -29,10 +32,13 @@ interface CasesOptions {
   sceneId: string;
   partners: () => SlotRobot[];
   skills?: RoutineSkills;
+  skillTraining: { runtime: SkillsRuntime; busy: boolean };
+  caseRobot: () => Promise<CaseRobotInput | null>;
 }
 
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
+  const { skillTraining, caseRobot } = options;
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
@@ -126,6 +132,14 @@ export function useCases(options: CasesOptions) {
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
   const addTries = (records: TryRecord[]) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...records] }));
   const multiply = useTryMultiply({ sim, rig, parts, active, tries, partners, onTries: addTries, showToast });
+  const fromTries: TriesTraining = useTriesTraining({
+    sim,
+    active,
+    tries,
+    skills: skillTraining,
+    caseRobot,
+    showToast,
+  });
   const attempt = useCaseTry({
     skills: options.skills,
     sim,
@@ -143,6 +157,7 @@ export function useCases(options: CasesOptions) {
     active,
     builder,
     dataset,
+    fromTries,
     tries,
     hasRobot,
     fixedBase,

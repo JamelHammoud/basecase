@@ -10,7 +10,7 @@ pub use crate::heads::Minibatch;
 const HIDDEN: [usize; 3] = [256, 128, 64];
 const LOG_STD_INIT: f32 = -0.7;
 pub const LOG_STD_MAX: f32 = 0.0;
-const ACTOR_OUT_GAIN: f64 = 0.01;
+pub const ACTOR_OUT_GAIN: f64 = 0.01;
 const CRITIC_OUT_GAIN: f64 = 1.0;
 
 pub const LEARN_RATE_MIN: f32 = 1e-5;
@@ -68,7 +68,7 @@ pub struct Learner {
     blocks: Blocks,
 }
 
-fn sized(nobs: usize, nact: usize) -> Vec<usize> {
+pub fn sized(nobs: usize, nact: usize) -> Vec<usize> {
     let mut sizes = vec![nobs];
 
     sizes.extend_from_slice(&HIDDEN);

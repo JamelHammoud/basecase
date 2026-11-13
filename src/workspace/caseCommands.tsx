@@ -9,6 +9,7 @@ import {
   RunIcon,
   ShareIcon,
   StopIcon,
+  TrainIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
@@ -33,6 +34,7 @@ export const STAYS_IN_RUN = new Set([
   'case-multiply',
   'case-export-dataset',
   'case-publish-dataset',
+  'case-train-from-tries',
   ...INPUT_COMMANDS,
 ]);
 
@@ -86,6 +88,21 @@ function multiplyCommands({ multiply }: WorkspaceCore['simTraining']['cases']): 
       icon: <DuplicateIcon className={ic} />,
       keywords: 'try variations demonstrations dataset augment generate jitter',
       run: () => multiply.multiply(latest),
+    },
+  ];
+}
+
+function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases']): Command[] {
+  if (!fromTries.ready) return [];
+
+  return [
+    {
+      id: 'case-train-from-tries',
+      group: 'Simulate',
+      label: 'Train From Tries',
+      icon: <TrainIcon className={ic} />,
+      keywords: 'policy imitation behaviour behavior cloning learn demonstrations demos act lerobot skill',
+      run: fromTries.train,
     },
   ];
 }
@@ -208,6 +225,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...(cases.active ? compareCommands(core) : []),
     ...(cases.active ? multiplyCommands(cases) : []),
     ...datasetCommands(cases),
+    ...fromTriesCommands(cases),
     ...shareCommands(simTraining),
   ];
 }

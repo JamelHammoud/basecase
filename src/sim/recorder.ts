@@ -24,6 +24,8 @@ export interface Recording {
   qvel: Float32Array;
   poses: Float32Array;
   jointQpos?: Int32Array;
+  jointDof?: Int32Array;
+  root?: [number, number];
   scan?: Float32Array;
   scanWidth?: number;
   faults?: RecordedFault[];
@@ -86,6 +88,10 @@ export class Recorder {
 
   private readonly jointQpos: Int32Array;
 
+  private readonly jointDof: Int32Array;
+
+  private readonly root: [number, number];
+
   private readonly scan: Growing<Float32Array> | null;
   private readonly faults: RecordedFault[] = [];
   private readonly commands: RecordedCommand[] = [];
@@ -102,6 +108,8 @@ export class Recorder {
     this.qvel = new Growing(f32, 512 * model.nv);
     this.poses = new Growing(f32, 512 * engine.sim.bodies.length * 7);
     this.jointQpos = engine.jointAddresses();
+    this.jointDof = engine.dofAddresses();
+    this.root = engine.rootAddresses();
     this.scan = engine.scanner ? new Growing(f32, 512 * engine.scanner.values.length) : null;
     this.controller = controller;
 
@@ -171,6 +179,8 @@ export class Recorder {
       qvel: this.qvel.done(),
       poses: this.poses.done(),
       jointQpos: this.jointQpos,
+      jointDof: this.jointDof,
+      root: this.root,
       ...(this.scan && this.engine.scanner
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
@@ -181,7 +191,7 @@ export class Recorder {
 }
 
 export const recordingTransfer = (r: Recording): Transferable[] =>
-  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.jointQpos, r.scan].flatMap((a) => (a ? [a.buffer] : []));
+  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.jointQpos, r.jointDof, r.scan].flatMap((a) => (a ? [a.buffer] : []));
 
 export function framePoses(r: Recording, frame: number): Float64Array {
   const size = r.nbody * 7;

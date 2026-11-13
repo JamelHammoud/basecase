@@ -31,14 +31,26 @@ function contextFor(id: string) {
   const routines = { checkLogic: async (logic: unknown) => compileCaseLogic(logic as Routine, { skills: [] }) };
 
   const caseCompare = { choicesFor: () => [], compareNow: async () => null as never, start: () => {} };
+  const running: string[] = [];
+  const caseRun = { enterCase: (caseId: string) => void running.push(caseId) };
 
-  return { ctx: { cases, routines, caseCompare, setAction: () => {}, ...scene }, added };
+  return { ctx: { cases, routines, caseCompare, caseRun, setAction: () => {}, ...scene }, added, running };
 }
 
 const create = (payload: Record<string, unknown>, id = 'rover-diff') => {
-  const { ctx, added } = contextFor(id);
+  const { ctx, added, running } = contextFor(id);
 
-  return { reply: CASE_HANDLERS.create_case(payload, ctx), added };
+  return { reply: CASE_HANDLERS.create_case(payload, ctx), added, running };
+};
+
+const ROVER_APP = {
+  input: ['gamepad', 'keys'],
+  panels: [
+    { id: 'front', kind: 'camera', signal: 'camera.*' },
+    { id: 'speed', kind: 'value', title: 'Speed', signal: 'robot.speed' },
+    { id: 'tries', kind: 'list', of: 'tries' },
+  ],
+  layout: { areas: [{ size: 480, panels: ['front'] }, { canvas: true }, { size: 300, panels: ['speed', 'tries'] }] },
 };
 
 describe('create_case', () => {
@@ -125,6 +137,41 @@ describe('create_case', () => {
   });
 });
 
+describe('create_case with a console', () => {
+  it('keeps the console on the Case and opens the new Case running', async () => {
+    const { reply, added, running } = create({ goal: 'reach', name: 'Drive to the Dock', console: ROVER_APP });
+
+    expect(await reply).toMatchObject({ ok: true, id: 'drive-to-the-dock', running: true });
+    expect(added[0].console).toEqual(ROVER_APP);
+    expect(running).toEqual(['drive-to-the-dock']);
+  });
+
+  it('refuses a panel the format refuses, by its path, and adds and opens nothing', async () => {
+    const radar = { ...ROVER_APP, panels: [...ROVER_APP.panels.slice(0, 2), { id: 'tries', kind: 'radar' }] };
+    const { reply, added, running } = create({ goal: 'reach', console: radar });
+
+    expect(await reply).toEqual({ ok: false, problem: expect.stringMatching(/^console\.panels\[2\]\.kind /) });
+    expect(added).toEqual([]);
+    expect(running).toEqual([]);
+  });
+
+  it('refuses an input this version lacks with the words the agent passes on', async () => {
+    const midi = { ...ROVER_APP, input: ['midi'] };
+
+    expect(await create({ goal: 'reach', console: midi }).reply).toEqual({
+      ok: false,
+      problem: 'console.input[0] midi can’t drive a Case in this version',
+    });
+  });
+
+  it('leaves a Case without a console in the studio', async () => {
+    const { reply, running } = create({ goal: 'reach' });
+
+    expect(await reply).not.toHaveProperty('running');
+    expect(running).toEqual([]);
+  });
+});
+
 describe('compare_case', () => {
   const rover = fixtureRobots().find((f) => f.id === 'rover-diff')!;
   const made = buildCase(
@@ -148,6 +195,7 @@ describe('compare_case', () => {
     routines: { checkLogic: async () => ({ ok: true }) as never },
     setAction: () => {},
     ...scene,
+    caseRun: { enterCase: () => {} },
     caseCompare: {
       choicesFor: () => choices,
       start: (tabId: string) => void started.push(tabId),

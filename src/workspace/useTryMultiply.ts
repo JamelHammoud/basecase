@@ -12,7 +12,7 @@ import type { ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
 import type { Rig } from '../utils/kinematics';
 import type { ShowToast } from './types';
-import { EARLIER_DESIGN } from './useDatasetExport';
+import { EARLIER_TRIES } from './useDatasetExport';
 
 export const MULTIPLY_RUNS = 50;
 
@@ -103,7 +103,7 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
 
     if (!source || typeof source === 'string') {
       stopped.current = true;
-      showToast(source || EARLIER_DESIGN, { tone: 'error' });
+      showToast(source || EARLIER_TRIES, { tone: 'error' });
 
       return;
     }

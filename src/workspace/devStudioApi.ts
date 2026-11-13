@@ -37,6 +37,7 @@ export interface DevActions {
   load: (seed: WorkspaceSeed) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
+  agentRequest: (kind: string, payload: Payload) => Promise<unknown>;
   clear: () => void;
   select: (ids: string[]) => void;
   dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => void;
@@ -219,6 +220,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       }),
     poseTool: (kind: string, payload: Payload) => devRef.current.poseTool(kind, payload),
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
+    agentRequest: (kind: string, payload: Payload) => devRef.current.agentRequest(kind, payload),
     guide: () => devRef.current.guide(),
     buildAlongSteps: () => devRef.current.buildAlongSteps(),
     shownParts: () => viewportRef.current?.shownPartIds() ?? [],

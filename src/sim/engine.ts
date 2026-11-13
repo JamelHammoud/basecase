@@ -203,7 +203,7 @@ export class SimEngine {
     const r = this.robots.find((x) => x.key === pc.robot) ?? this.robots.find((x) => x.floating);
     const idx = pc.policy.joints.map((id) => this.sim.joints.findIndex((j) => j.id === id));
 
-    if (!r || r.rootQpos < 0 || idx.some((i) => i < 0))
+    if (!r || idx.some((i) => i < 0))
       throw new Error('This policy was trained on joints this robot no longer has. Train it again.');
 
     this.policyState = {
@@ -454,6 +454,16 @@ export class SimEngine {
 
   jointAddresses(): Int32Array {
     return Int32Array.from(this.jointQpos);
+  }
+
+  dofAddresses(): Int32Array {
+    return Int32Array.from(this.jointDof);
+  }
+
+  rootAddresses(): [number, number] {
+    const r = this.robots[0];
+
+    return r ? [r.rootQpos, r.rootDof] : [-1, -1];
   }
 
   refreshKinematics() {

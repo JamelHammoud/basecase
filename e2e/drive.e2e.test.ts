@@ -5,6 +5,7 @@ import type { DriveCommand } from '../src/sim/driveTypes';
 import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
 import { expectCaseCheckOpensRow, expectDataset, expectGenerated, expectPublished, pickTimeline } from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
@@ -13,31 +14,6 @@ const HUB_TOKEN = 'hf_e2eFakeHubToken';
 
 let app: App;
 let hub: FakeHub;
-
-interface SimState {
-  status: string;
-  drive: string;
-  driveClass: string | null;
-  offer: string;
-  stats: { time: number; robots: Array<{ forward: number; travelled: number; fellAt: number | null }> } | null;
-  world: string[];
-  bodies: Array<{ parts: string[]; world: string[] }>;
-  activeCase: string | null;
-  effector: number[] | null;
-  scanPoints: number;
-  tries: Array<{ passed: boolean; margin: number; generated: boolean }>;
-  multiplying: boolean;
-}
-
-type Studio = {
-  simState: () => SimState;
-  load: (r: unknown) => void;
-  passTries: () => void;
-  referenceTry: () => Promise<void>;
-  multiplyRuns: (runs: number) => void;
-  drive: (c: DriveCommand) => void;
-  worldAt: () => Record<string, number[]>;
-};
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -453,7 +429,12 @@ describe('LiDAR', () => {
   itUnlessWindows(
     'scans a corridor with a rover’s LiDAR, draws the hits and exports them as observation.scan',
     async () => {
-      await loadFixture(withLidar(fixtureRobots().find((r) => r.id === 'rover-diff')!));
+      await loadFixture(
+        withLidar(
+          fixtureRobots().find((r) => r.id === 'rover-diff')!,
+          'slamtec-rplidar-s2',
+        ),
+      );
       await openPlayTab(app.page, 'Cases');
       await button('New Case').click();
 
@@ -466,9 +447,8 @@ describe('LiDAR', () => {
 
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await holdKey('w', 1000);
       await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
-      await button('End Try').click();
+      await endTryAt(SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
       const files = await datasetFiles();
@@ -478,8 +458,8 @@ describe('LiDAR', () => {
       });
       const info = JSON.parse(at('meta/info.json').toString());
 
-      expect(info.features['observation.scan'].shape).toEqual([500]);
-      expect(rows[0]['observation.scan']).toHaveLength(500);
+      expect(info.features['observation.scan'].shape).toEqual([720]);
+      expect(rows[0]['observation.scan']).toHaveLength(720);
       expect(JSON.parse(at('meta/modality.json').toString()).state.scan.original_key).toBe('observation.scan');
       expect(app.errors).toEqual([]);
     },

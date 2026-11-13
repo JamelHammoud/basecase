@@ -16,11 +16,18 @@ export const caseRandom = (seed: number): Random => seededRandom(sha256Hex(`case
 
 export const worldRandom = (seed: number): Random => caseRandom(-seed - 1);
 
-export const caseInstance = (random: Random, options: { randomization: Randomization; bodies: number }): Instance =>
+interface InstanceOptions {
+  randomization: Randomization;
+  bodies: number;
+  joints?: number;
+  jointNoiseDeg?: number;
+}
+
+export const caseInstance = (random: Random, options: InstanceOptions): Instance =>
   drawInstance(random, {
-    ranges: { ...options.randomization, jointNoiseDeg: 0, baseYawDeg: 0, baseOffsetMm: 0 },
+    ranges: { ...options.randomization, jointNoiseDeg: options.jointNoiseDeg ?? 0, baseYawDeg: 0, baseOffsetMm: 0 },
     bodies: options.bodies,
-    joints: 0,
+    joints: options.jointNoiseDeg ? (options.joints ?? 0) : 0,
   });
 
 const nudge = (random: Random) => (2 * random() - 1) * OBJECT_JITTER_MM;

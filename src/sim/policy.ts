@@ -83,25 +83,32 @@ export interface ObsSource {
   jointDof: number[];
 }
 
+const FIXED_BASE = [0, 0, -1, 0, 0, 0, 0, 0, 0];
+
+function observeBase(src: ObsSource, out: Float32Array) {
+  const { qpos, qvel, rootQpos: rq, rootDof: rd } = src;
+
+  if (rq < 0) {
+    out.set(FIXED_BASE);
+
+    return;
+  }
+
+  const g = toBodyFrame(qpos, rq + 3, [0, 0, -1]);
+  const v = toBodyFrame(qpos, rq + 3, [qvel[rd], qvel[rd + 1], qvel[rd + 2]]);
+
+  out.set([g[0], g[1], g[2], qvel[rd + 3], qvel[rd + 4], qvel[rd + 5], v[0], v[1], v[2]]);
+}
+
 export function observe(
   src: ObsSource,
   spec: Pick<PolicySpec, 'defaultPose' | 'command'>,
   lastAction: ArrayLike<number>,
   out: Float32Array,
 ): Float32Array {
-  const { qpos, qvel, rootQpos: rq, rootDof: rd } = src;
-  const g = toBodyFrame(qpos, rq + 3, [0, 0, -1]);
-  const v = toBodyFrame(qpos, rq + 3, [qvel[rd], qvel[rd + 1], qvel[rd + 2]]);
+  const { qpos, qvel } = src;
 
-  out[0] = g[0];
-  out[1] = g[1];
-  out[2] = g[2];
-  out[3] = qvel[rd + 3];
-  out[4] = qvel[rd + 4];
-  out[5] = qvel[rd + 5];
-  out[6] = v[0];
-  out[7] = v[1];
-  out[8] = v[2];
+  observeBase(src, out);
   out[9] = spec.command[0];
   out[10] = spec.command[1];
   out[11] = spec.command[2];

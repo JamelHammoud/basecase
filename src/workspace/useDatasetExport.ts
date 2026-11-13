@@ -1,11 +1,10 @@
 import { useRef, useState } from 'react';
 import { caseSlots, type Case } from '../cases/schema';
 import { sha256, type TryRecord } from '../cases/tries';
-import { loadRecording } from '../cases/tryStore';
 import type { DatasetJobEpisode } from '../datasets/buildDataset';
 import { datasetCameras, snakeKey } from '../datasets/cameras';
 import { exportDatasetFiles, exportDatasetZip, type DatasetSpec } from '../datasets/datasetClient';
-import { canExport } from '../datasets/episodes';
+import { usableTries } from '../datasets/usableTries';
 import { slotKeys } from '../cases/slots';
 import { hubBridge } from '../hub/hubBridge';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -39,32 +38,24 @@ export interface DatasetExport {
 }
 
 async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) {
-  const modelHash = await sha256(model.xml);
-  const episodes: DatasetJobEpisode[] = [];
-
-  for (const record of passed) {
-    const recording = record.manifest.modelHash === modelHash ? await loadRecording(record.id) : null;
-
-    if (!recording || !canExport(recording, model)) continue;
-
-    episodes.push({
-      recording,
-      task: kase.brief.trim() || kase.name,
-      source: {
-        try: record.id,
-        at: record.at,
-        margin: record.margin,
-        case_hash: record.manifest.caseHash,
-        seed: record.manifest.seed,
-        source: record.manifest.source ?? null,
-      },
-    });
-  }
+  const { usable, modelHash } = await usableTries(passed, model);
+  const episodes: DatasetJobEpisode[] = usable.map(({ record, recording }) => ({
+    recording,
+    task: kase.brief.trim() || kase.name,
+    source: {
+      try: record.id,
+      at: record.at,
+      margin: record.margin,
+      case_hash: record.manifest.caseHash,
+      seed: record.manifest.seed,
+      source: record.manifest.source ?? null,
+    },
+  }));
 
   return { episodes, modelHash };
 }
 
-export const EARLIER_DESIGN = 'These tries are from an earlier design. Try It again to record new ones.';
+export const EARLIER_TRIES = 'These tries are from an earlier design. Try It again to record new ones.';
 
 const triesText = (n: number) => (n === 1 ? '1 try' : `${n} tries`);
 
@@ -169,7 +160,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
       const made = await prepare(kase, passed);
 
       if (!made) {
-        showToast(EARLIER_DESIGN, { tone: 'error' });
+        showToast(EARLIER_TRIES, { tone: 'error' });
 
         return;
       }

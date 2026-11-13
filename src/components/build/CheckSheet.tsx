@@ -9,6 +9,7 @@ import {
   ChevronDownIcon,
   ExternalLinkIcon,
 } from '../../design-system';
+import { confirmAction } from '../../design-system/confirmStore';
 import type { PurchaseRecord } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
@@ -155,8 +156,12 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
       footer={
         <>
           {line.record && (
-            <Button variant="ghost" size="sm" onClick={() => onSave(null)}>
-              Remove Price
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => confirmAction({ title: `Delete price for ${line.name}?`, onConfirm: () => onSave(null) })}
+            >
+              Delete Price
             </Button>
           )}
           <div className="flex-1 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>

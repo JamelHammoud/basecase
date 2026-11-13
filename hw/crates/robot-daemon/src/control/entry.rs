@@ -1,4 +1,4 @@
-use super::scan::scan_bus;
+use super::scan::{scan_bus, scan_present};
 use super::{Daemon, DaemonEvent, Holder, Run};
 use crate::calibration::{Calibration, JointCalibration};
 use crate::caps::caps_for;
@@ -16,6 +16,7 @@ pub enum Command {
     Release,
     ClearFault,
     Recheck,
+    AssignId { id: u8, model: u16 },
 }
 
 impl Daemon {
@@ -35,6 +36,7 @@ impl Daemon {
 
                 Ok(())
             }
+            Command::AssignId { id, model } => self.assign_id(id, model),
         };
 
         if let Err(message) = &outcome {
@@ -130,6 +132,10 @@ impl Daemon {
             self.check_bus()?;
         }
 
+        if target == Mode::Test && self.ladder.mode() == Mode::SetUp && self.firmware.is_none() {
+            self.recount_bus()?;
+        }
+
         let current = self.current_artefacts();
         let grant = self
             .ladder
@@ -148,13 +154,13 @@ impl Daemon {
         let Holder::Look(bus) = &mut self.holder else {
             return Err("Go back to Look first.".into());
         };
-        let scanned = scan_bus(bus, &ids);
+        let scanned = scan_present(bus, &ids);
 
         self.ladder.apply(Event::Learned(Fact::BusChecked, scanned.is_ok()));
 
         match scanned {
-            Ok(firmware) => {
-                self.firmware = Some(firmware);
+            Ok(scanned) => {
+                self.firmware = scanned.missing.is_empty().then_some(scanned.firmware);
 
                 Ok(())
             }
@@ -163,6 +169,25 @@ impl Daemon {
 
                 Err(fault.message())
             }
+        }
+    }
+
+    fn recount_bus(&mut self) -> Result<(), String> {
+        let ids = self.config.ids.clone();
+        let Holder::Armed(layer) = &mut self.holder else {
+            return Err("Go back to Look first.".into());
+        };
+
+        match scan_bus(layer.bus_mut(), &ids) {
+            Ok(firmware) => {
+                self.firmware = Some(firmware);
+
+                Ok(())
+            }
+            Err(Fault::NoReply { id }) => Err(format!(
+                "Servo {id} doesn't answer. Give every servo its ID in Set up first."
+            )),
+            Err(fault) => Err(fault.message()),
         }
     }
 

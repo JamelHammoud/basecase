@@ -6,7 +6,7 @@ import { PassThrough } from 'node:stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { measuredRadians } from './intentPacer.mjs';
 import { daemonBinary, RobotLink } from './robotLink.mjs';
-import { checkedCommand, emulatedCalibration } from './robotSpec.mjs';
+import { checkedCommand, checkedRobotSpec, emulatedCalibration } from './robotSpec.mjs';
 
 const ARM = { family: 'feetech', ids: [1, 2], class: 'arm', emulated: true };
 const HELLO = { event: 'hello', emulated: true, real_transport: false, lost_message: 'Lost contact with the robot.' };
@@ -75,6 +75,35 @@ describe('robot link', () => {
     link.disconnect();
   });
 
+  it('starts a factory bus only when the spec asks for one, and still writes the calibration', () => {
+    const { link, spawned } = linkWithFake();
+
+    expect(link.connect({ ...ARM, factory: true })).toEqual({ ok: true });
+
+    const [{ args }] = spawned;
+    const artefacts = args[args.indexOf('--artefacts') + 1];
+
+    expect(args.at(-1)).toBe('--factory');
+    expect(link.state().spec).toEqual({ ...ARM, factory: true });
+    expect(JSON.parse(fs.readFileSync(path.join(artefacts, 'calibration.json'), 'utf8'))).toEqual(
+      emulatedCalibration(ARM),
+    );
+    link.disconnect();
+
+    const plain = linkWithFake();
+
+    plain.link.connect(ARM);
+    expect(plain.spawned[0].args).not.toContain('--factory');
+    plain.link.disconnect();
+  });
+
+  it('refuses a factory flag that is anything but true', () => {
+    for (const factory of ['yes', 1, false, null, 'true'])
+      expect(checkedRobotSpec({ ...ARM, factory }).ok, String(factory)).toBe(false);
+
+    expect(checkedRobotSpec(ARM)).toEqual({ ok: true, spec: ARM });
+  });
+
   it('beats while idle, holds the measured pose from Test on, and forwards the latest intent', async () => {
     const { link, spawned } = linkWithFake();
 
@@ -122,6 +151,25 @@ describe('robot link', () => {
     expect(checkedCommand({ cmd: 'intent', joints: [0.1, null] }, 2)).toEqual({ cmd: 'intent', joints: [0.1, null] });
     expect(checkedCommand({ cmd: 'intent', joints: [0.1] }, 2)).toBeNull();
     expect(checkedCommand({ cmd: 'intent', joints: [0.1, Infinity] }, 2)).toBeNull();
+  });
+
+  it('forwards assign_id and plug_in only in their documented shape', () => {
+    expect(checkedCommand({ cmd: 'assign_id', id: 3, model: 777 }, 2)).toEqual({ cmd: 'assign_id', id: 3, model: 777 });
+    expect(checkedCommand({ cmd: 'plug_in' }, 2)).toEqual({ cmd: 'plug_in' });
+    expect(checkedCommand({ cmd: 'plug_in', id: 1 }, 2)).toBeNull();
+
+    const refused = [
+      { cmd: 'assign_id', id: 3, model: 777, port: '/dev/ttyUSB0' },
+      { cmd: 'assign_id', id: 0, model: 777 },
+      { cmd: 'assign_id', id: 254, model: 777 },
+      { cmd: 'assign_id', id: 2.5, model: 777 },
+      { cmd: 'assign_id', id: '3', model: 777 },
+      { cmd: 'assign_id', id: 3, model: 65536 },
+      { cmd: 'assign_id', id: 3, model: -1 },
+      { cmd: 'assign_id', id: 3 },
+    ];
+
+    for (const command of refused) expect(checkedCommand(command, 2), JSON.stringify(command)).toBeNull();
   });
 
   it('reads measured positions in calibration order', () => {

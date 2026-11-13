@@ -32,6 +32,7 @@ export interface DevActions {
   clear: () => void;
   select: (ids: string[]) => void;
   dropFiles: (files: File[]) => void;
+  selection: () => string[];
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
@@ -154,6 +155,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     select: (ids: string[]) => devRef.current.select(ids),
     dropFiles: (files: Array<{ name: string; base64: string }>) =>
       devRef.current.dropFiles(files.map((f) => new File([new Uint8Array(base64ToBytes(f.base64))], f.name))),
+    selection: () => devRef.current.selection(),
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),

@@ -37,6 +37,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     },
     select: (ids) => setSelectedIds(ids),
     dropFiles: routeFiles,
+    selection: () => core.selectedIds,
     simState: () => {
       const { sim, cases } = core.simTraining;
       const stats = sim.latestStats() ?? sim.stats;

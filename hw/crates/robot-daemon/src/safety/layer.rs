@@ -28,6 +28,7 @@ pub enum WriteError {
     WrongLength { expected: usize, got: usize },
     NoTelemetry { id: u8 },
     OutOfRange { id: u8 },
+    MotorsOn,
 }
 
 impl From<BusGone> for WriteError {
@@ -43,6 +44,7 @@ pub struct SafetyLayer {
     goals: Vec<Option<SafeGoal>>,
     caps: Caps,
     torque_fraction: f32,
+    powered: bool,
     sealed: bool,
 }
 
@@ -58,6 +60,7 @@ impl SafetyLayer {
             goals,
             caps,
             torque_fraction: 0.0,
+            powered: false,
             sealed: false,
         }
     }
@@ -171,7 +174,18 @@ impl SafetyLayer {
             });
         }
 
+        self.powered = true;
         self.write(&self.for_all(Register::Torque(true)))
+    }
+
+    pub fn renumber(&mut self, from: u8, to: u8) -> Result<(), WriteError> {
+        if self.powered || self.torque_fraction > 0.0 {
+            return Err(WriteError::MotorsOn);
+        }
+
+        self.write(&[(from, Register::EepromLock(false))])?;
+        self.write(&[(from, Register::Id(to))])?;
+        self.write(&[(to, Register::EepromLock(true))])
     }
 
     pub fn set_torque_fraction(&mut self, requested: f32) -> Result<(), WriteError> {
@@ -302,5 +316,88 @@ impl SafetyLayer {
         }
 
         self.bus
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::caps::FIRST_RUN;
+    use servo_emu::{BusOptions, InProcessBus, ServoBus, SharedBus};
+    use servo_wire::VirtualClock;
+    use std::sync::Arc;
+
+    fn layer(family: Family) -> (SafetyLayer, SharedBus) {
+        let clock = Arc::new(VirtualClock::new());
+        let servos = ServoBus::new(family, &[1, 2], BusOptions::default()).shared();
+        let bus = ReadBus::new(
+            Box::new(InProcessBus::new(servos.clone(), clock.clone(), 0)),
+            family,
+            clock,
+        );
+        let joints = [1, 2]
+            .map(|id| JointCalibration {
+                id,
+                name: format!("servo {id}"),
+                zero_counts: 2048,
+                direction: 1,
+                min_rad: -1.0,
+                max_rad: 1.0,
+            })
+            .to_vec();
+
+        (SafetyLayer::new(bus, joints, FIRST_RUN, ArmGrant::issue()), servos)
+    }
+
+    fn present() -> Vec<Option<Telemetry>> {
+        [1, 2]
+            .map(|id| {
+                Some(Telemetry {
+                    id,
+                    torque_on: false,
+                    goal: 2048,
+                    position: 2048,
+                    velocity_rad_s: 0.0,
+                    load_fraction: 0.0,
+                    volts: 7.4,
+                    temp_c: 25.0,
+                    overload: false,
+                    overcurrent: false,
+                    hardware_error: 0,
+                    watchdog_tripped: false,
+                })
+            })
+            .to_vec()
+    }
+
+    #[test]
+    fn renumbering_a_servo_with_motors_off_moves_it_to_its_new_id() {
+        for family in [Family::Feetech, Family::Dynamixel] {
+            let (mut layer, servos) = layer(family);
+
+            layer.renumber(2, 7).unwrap();
+            assert_eq!(servos.lock().unwrap().servo_ids(), vec![1, 7]);
+        }
+    }
+
+    #[test]
+    fn a_layer_that_has_powered_motors_never_renumbers() {
+        let (mut prepared, _) = layer(Family::Feetech);
+
+        prepared.prepare(&present()).unwrap();
+        assert_eq!(prepared.renumber(2, 7), Err(WriteError::MotorsOn));
+
+        let (mut enabled, servos) = layer(Family::Feetech);
+
+        enabled.goals = vec![hold_at(2048, enabled.bounds[0]); 2];
+        enabled.enable().unwrap();
+        assert_eq!(enabled.renumber(2, 7), Err(WriteError::MotorsOn));
+        assert_eq!(servos.lock().unwrap().servo_ids(), vec![1, 2]);
+
+        let (mut sealed, servos) = layer(Family::Feetech);
+
+        sealed.seal();
+        assert_eq!(sealed.renumber(2, 7), Err(WriteError::Sealed));
+        assert_eq!(servos.lock().unwrap().servo_ids(), vec![1, 2]);
     }
 }

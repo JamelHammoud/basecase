@@ -12,12 +12,14 @@ import { RobotCalibration, type CalibrationProps } from './RobotCalibration';
 import { RobotJoints, type JointCalibrate } from './RobotJoints';
 import { RobotLadder } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
+import { ServoSetupSection } from './ServoSetupSection';
 import { PlayNoRobot } from '../PlayNoRobot';
 
 export interface OperatePanelProps {
   joints: RobotJoint[];
   onBrowseRobots: () => void;
   calibration: CalibrationProps;
+  onSetUpServos: () => void;
 }
 
 const RUN: Record<string, string> = {
@@ -112,7 +114,7 @@ function useJointCalibrate(robot: RobotState, joints: RobotJoint[], calibration:
   } satisfies JointCalibrate;
 }
 
-export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots, calibration }) => {
+export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots, calibration, onSetUpServos }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
   const rows = jointRows({ joints, calibrations: calibration.calibrations, connection: robotConnection(robot) });
@@ -121,6 +123,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobo
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="operate-panel">
       {connected ? <RobotHeader robot={robot} /> : <ConnectButton joints={joints} onBrowseRobots={onBrowseRobots} />}
+      <ServoSetupSection robot={robot} joints={joints} onSetUp={onSetUpServos} />
       <RobotMessages messages={robot.messages} />
       {connected && <RobotLadder robot={robot} />}
       <RobotCalibration robot={robot} joints={joints} onCalibrate={calibration.onCalibrate} />

@@ -28,6 +28,7 @@ import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
+import { limitExplore } from './useCaseExplore';
 
 type Payload = Record<string, unknown>;
 
@@ -240,6 +241,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
     stubTabEngine,
+    exploreLimit: (designs: number) => limitExplore(designs),
     pickFiles: (files: { name: string; base64: string }[]) =>
       pickNextFiles(
         files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),

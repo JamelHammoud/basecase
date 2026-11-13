@@ -257,6 +257,7 @@ describe('summarizing runs', () => {
       runs: 5,
       passes: 2,
       medianMargin: -0.1,
+      worstMargin: -0.6,
       commonFailure: 'fell',
       failures: [
         { label: 'fell', runs: 2 },

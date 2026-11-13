@@ -14,6 +14,7 @@ import { CaseSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
 import { ResultsSection } from './simulate/ResultsSection';
 import type { CaseCompare } from '../workspace/useCaseCompare';
+import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection } from './simulate/TrainSection';
 
@@ -34,6 +35,8 @@ interface SimulatePanelProps {
   onTeach: ((goal: string) => void) | null;
   onRunCase: () => void;
   compare: CaseCompare;
+  explore: CaseExplore;
+  sceneName: string;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -91,6 +94,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             check={props.caseCheck}
             onOpenCheck={props.onOpenCaseCheck}
             onRun={props.onRunCase}
+            explore={props.explore}
           />
         )}
         {kase && (
@@ -117,6 +121,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
           parts={parts}
           world={sim.worldParts}
           compare={props.compare}
+          explore={{ rows: props.explore, sceneName: props.sceneName }}
           run={
             on && sim.stats && sim.model
               ? { stats: sim.stats, model: sim.model, rig, onSelectParts, onFault: sim.setFault }

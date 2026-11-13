@@ -11,12 +11,13 @@ interface FittedInput {
   rig: Rig;
   masses: Map<string, { grams: number; centroid: V3 }>;
   calibrated?: JointServoFit;
+  volts?: number;
 }
 
-export function fittedServo({ j, byId, rig, masses, calibrated }: FittedInput): ServoDynamics | null {
+export function fittedServo({ j, byId, rig, masses, calibrated, volts }: FittedInput): ServoDynamics | null {
   if (j.type !== 'revolute') return null;
 
-  const specs = jointServos(j, byId);
+  const specs = jointServos(j, byId, volts);
   const used = calibrated ? specs.map((s) => ({ ...s, fit: calibrated.fit, atVolts: calibrated.volts })) : specs;
 
   return servoDynamics(used, holdingLoad(j, rig, masses).momentNm);

@@ -18,7 +18,9 @@ import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
+import type { CaseExplore } from '../../workspace/useCaseExplore';
 import { CompareRows } from './CompareRows';
+import { ExploreRows } from './ExploreRows';
 import { FAULT_LABEL } from './faultMenu';
 import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
@@ -83,6 +85,7 @@ interface ResultsProps {
   world: ScenePart[];
   run: LatestRun | null;
   compare?: CaseCompare;
+  explore?: { rows: CaseExplore; sceneName: string };
 }
 
 const DatasetActions: React.FC<{ cases: Cases }> = ({ cases }) => (
@@ -123,14 +126,17 @@ const TryActions: React.FC<{ cases: Cases }> = ({ cases }) => (
 const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
   cases.active && compare && (compare.comparison || compare.running) ? compare : null;
 
-export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, model, parts, world, run, compare }) => {
+export const ResultsSection: React.FC<ResultsProps> = (props) => {
+  const { cases, rig, share, model, parts, world, run, compare, explore } = props;
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const tries = cases.active ? cases.tries : [];
   const showRun = !!run && hasRunResult(run.stats, run.model);
 
   const comparing = comparesCase(cases, compare);
+  const exploring = cases.active && explore?.rows.shown ? explore : null;
+  const shows = [tries.length > 0, showRun, !!share?.canShare, !!comparing, !!exploring];
 
-  if (!tries.length && !showRun && !share?.canShare && !comparing) return null;
+  if (!shows.some(Boolean)) return null;
 
   const openMenu = (e: React.MouseEvent, record: TryRecord) => {
     e.preventDefault();
@@ -144,6 +150,7 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, mode
   return (
     <Section title="Results">
       {comparing && <CompareRows compare={comparing} />}
+      {exploring && <ExploreRows explore={exploring.rows} sceneName={exploring.sceneName} />}
       {run && showRun && <RunResult {...run} />}
       {tries.length > 0 && (
         <div className="flex flex-col">

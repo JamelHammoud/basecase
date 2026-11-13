@@ -8,6 +8,7 @@ import {
   RunIcon,
   ShareIcon,
   StopIcon,
+  SwapIcon,
   TrainIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
@@ -119,6 +120,24 @@ function compareCommands(core: WorkspaceCore): Command[] {
   }));
 }
 
+function exploreCommands({ caseExplore, tool }: WorkspaceCore): Command[] {
+  if (!caseExplore.available || caseExplore.running) return [];
+
+  return [
+    {
+      id: 'case-explore',
+      group: 'Simulate',
+      label: 'Explore',
+      icon: <SwapIcon className={ic} />,
+      keywords: 'case servo version variant voltage supply sweep which buy cheaper stronger compare',
+      run: () => {
+        caseExplore.start();
+        tool.setRightTab('sim');
+      },
+    },
+  ];
+}
+
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim, cases } = simTraining;
@@ -204,6 +223,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...tryIt,
     ...caseRun,
     ...(cases.active ? compareCommands(core) : []),
+    ...exploreCommands(core),
     ...datasetCommands(cases),
     ...fromTriesCommands(cases),
     ...shareCommands(simTraining),

@@ -1,9 +1,19 @@
-import { CasesIcon, CheckIcon, EditIcon, LookIcon, RoutinesIcon, RunIcon, TrainIcon } from '../../design-system';
+import {
+  CasesIcon,
+  CheckIcon,
+  EditIcon,
+  LookIcon,
+  RoutinesIcon,
+  RunIcon,
+  SwapIcon,
+  TrainIcon,
+} from '../../design-system';
 import { plainRule, type ToolRule } from './toolRule';
 
 export const SIM_RULES: ToolRule[] = [
   plainRule(['create_case'], CasesIcon, ['Making a Case', 'Made a Case']),
   plainRule(['run_case'], RunIcon, ['Running the Case', 'Ran the Case']),
+  plainRule(['explore_case'], SwapIcon, ['Exploring servos', 'Explored servos']),
   plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
   plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
   plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),

@@ -72,6 +72,7 @@ export interface MjcfInput {
   world?: WorldItem[];
   worldTriangles?: (id: string) => Float32Array | null;
   servoFits?: Record<string, JointServoFit>;
+  servoVolts?: number;
 }
 
 export interface JointServoFit {

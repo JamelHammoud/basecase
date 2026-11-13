@@ -129,3 +129,25 @@ export const compareCase = {
     }
   },
 };
+
+export const exploreCase = {
+  name: 'explore_case',
+  config: {
+    title: 'Explore servo versions on a Case',
+    description:
+      'Runs a Case on versions of this robot’s own design: every catalog version of each joint’s servo (for example Feetech STS3215 C001, C018, C044, C046), alone and together, times the supply voltages they’re rated at, up to 64 designs, each over 8 seeded randomized runs. ' +
+      'The current design is the first. A robot powered by a battery keeps the battery’s voltage. Nothing in the scene changes; the rows also show in Results when the Case is open, where the user can apply one. ' +
+      'Use it to answer which servo to buy, or whether a cheaper or stronger version still passes, with numbers. Only Cases with one robot slot. ' +
+      'Returns { ok, case, runs, designs: [{ servos, volts, passes, worst_margin, cost_usd, mass_g, changes: [{ joints, mpn }], current?, refusal? }] } sorted by passes, then cost, or { ok: false, problem }.',
+    inputSchema: {
+      case: z.string().min(1).max(120).optional().describe('The Case’s id or name; the open Case when left out'),
+    },
+  },
+  handler: async (args) => {
+    try {
+      return text(await bridge('explore_case', args, 600000));
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};

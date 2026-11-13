@@ -25,6 +25,7 @@ export interface WireRobot {
   joints: RobotJoint[];
   measures: Record<string, MeshMeasure | undefined>;
   triangles: Record<string, Float32Array>;
+  servoVolts?: number;
 }
 
 export interface WalkPick {
@@ -68,6 +69,7 @@ export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   joints: robot.joints,
   measures: robot.measures,
   partTriangles: (id) => robot.triangles[id] ?? null,
+  servoVolts: robot.servoVolts,
 });
 
 function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | null {

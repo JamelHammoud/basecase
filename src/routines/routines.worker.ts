@@ -11,6 +11,7 @@ import { runPhysics, type PhysicsScenarioResult } from './physicsRun';
 import type { Plan } from './planTypes';
 import { runScenario } from './scenario';
 import type { Scenario } from './scenarioTypes';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface ScenarioOutcome {
   covers: string;
@@ -58,6 +59,6 @@ ctx.onmessage = async (ev: MessageEvent<RoutinesRequest>) => {
   try {
     ctx.postMessage(await handle(ev.data));
   } catch (e) {
-    ctx.postMessage({ type: 'error', message: e instanceof Error ? e.message : String(e) } satisfies RoutinesResponse);
+    ctx.postMessage({ type: 'error', message: errorMessage(e) } satisfies RoutinesResponse);
   }
 };

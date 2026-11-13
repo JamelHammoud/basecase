@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { bridge, fail, text } from './shared.mjs';
+import { bridge, fail, imageReply, text } from './shared.mjs';
 import { worldObject } from './worldTools.mjs';
 
 const mm = (what) => z.number().finite().optional().describe(what);
@@ -61,6 +61,58 @@ export const createCase = {
   handler: async (args) => {
     try {
       return text(await bridge('create_case', args, 60000));
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const runCase = {
+  name: 'run_case',
+  config: {
+    title: 'Run a Case',
+    description:
+      'Runs a Case in this scene on the current design, over seeded randomized runs (friction, mass, servo strength and delay varied), the same runs as its Checks row; when nothing changed since that row ran it returns its result at once. ' +
+      'Returns the pass count, the median margin (above 0 passes), the failed labels most runs share, the reason when the robot can’t enter the Case, and a filmstrip of the worst run (start, middle, end). ' +
+      'Use it to check a design against the user’s Cases, and after each design change while making one pass.',
+    inputSchema: {
+      id: z.string().min(1).max(120).optional().describe('The Case’s id or name; the open Case when left out'),
+      runs: z.number().int().min(1).max(100).optional().describe('How many seeded runs; 20 when left out'),
+    },
+  },
+  handler: async (args) => {
+    try {
+      const res = await bridge('run_case', args, 300000);
+
+      return res?.ok === false ? text(res) : imageReply(res, 'The Case ran.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const compareCase = {
+  name: 'compare_case',
+  config: {
+    title: 'Compare robots on a Case',
+    description:
+      'Runs a Case 20 times with randomized friction, mass, servo strength and delay, on this scene’s robot and on the robot in another open scene tab, with the same seeds, and returns both side by side. ' +
+      'Use it to answer which design is better: the user duplicates the scene, swaps a gripper, servo or camera mount, and asks which passes more often. ' +
+      'The Case is scaled to each robot’s reach. Only robots that fit the Case are compared, and only Cases with one robot slot. ' +
+      'Returns { ok, case, robots: [{ scene, passes, runs, median_margin, cost_usd, mass_g, refusal? }], better } where better names the scene with the higher pass rate (null on a tie), or { ok: false, problem, scenes? } listing the scenes that fit.',
+    inputSchema: {
+      case: z.string().min(1).max(120).optional().describe('The Case’s id or name; the open Case when left out'),
+      scene: z
+        .string()
+        .min(1)
+        .max(120)
+        .optional()
+        .describe('The other open scene tab’s name; the first whose robot fits when left out'),
+    },
+  },
+  handler: async (args) => {
+    try {
+      return text(await bridge('compare_case', args, 300000));
     } catch (err) {
       return fail(err);
     }

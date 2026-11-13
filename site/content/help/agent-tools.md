@@ -95,11 +95,14 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_interfaces` | Sets what each part designer must connect to |
 | `check_interfaces` | Checks a subassembly against those connections |
 | `define_joints` | Declares the robot's joints |
+| `find_joint_axes` | Finds the hinges in imported parts: each shaft or pin in a bore |
 | `get_rig` | Lists joints, poses and animations |
 | `pose` | Poses the robot without changing parts |
 | `animate` | Makes keyframes or a walking gait |
 | `retarget_motion` | Turns BVH motion capture into an animation |
 | `import_robot` | Inserts a published URDF or MJCF robot |
+| `make_leader` | Makes a leader arm you move by hand, in a new scene tab |
+| `wrap_robot` | Wraps a robot in an imported mesh, cut into printed shells |
 
 ## Simulation, Cases, Routines and skills
 
@@ -110,6 +113,8 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
 | `create_case` | Adds a Case |
+| `run_case` | Runs a Case 20 times and reports how often it passed and why it failed |
+| `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |

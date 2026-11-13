@@ -1,7 +1,15 @@
 import { withAdapters } from './adapters.mjs';
 
-export async function gradeTask(task, { before, after, answer = '', app = null, adapters } = {}) {
-  const ctx = { task, before, after, answer, app, adapters: withAdapters(adapters) };
+export async function startFacts(task, app) {
+  if (!task.startBom || !app) return {};
+
+  const bom = await withAdapters().bom({ app });
+
+  return { startBomUsd: bom.estimatedUsd ?? null };
+}
+
+export async function gradeTask(task, { before, after, answer = '', app = null, adapters, startBomUsd = null } = {}) {
+  const ctx = { task, before, after, answer, app, adapters: withAdapters(adapters), startBomUsd };
 
   try {
     const result = await task.grade(ctx);

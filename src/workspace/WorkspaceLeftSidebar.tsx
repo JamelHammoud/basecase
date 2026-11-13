@@ -54,6 +54,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       }
       cases={{
         cases: core.simTraining.cases,
+        compare: core.caseCompare,
         onOpen: () => tool.setRightTab('sim'),
         onBrowseRobots: browseRobots,
         onDescribe: IS_WEB_DEMO ? undefined : () => tool.requestCompose('/case '),

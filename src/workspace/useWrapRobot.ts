@@ -4,11 +4,10 @@ import type { RobotJoint } from '../types/robotics';
 import { applyWrap, cachedWrapTarget, wrapPlan, type WrapEdit, type WrapTarget } from '../wrap/wrapPlan';
 import { attempt } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { errorMessage } from '../utils/errorMessage';
 
 const FLOOR_Y = 0;
 const NO_JOINTS: RobotJoint[] = [];
-
-const reasonOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 export function useWrapRobot(core: WorkspaceCore) {
   'use memo';
@@ -31,7 +30,7 @@ export function useWrapRobot(core: WorkspaceCore) {
     if (!outcome.ok || !outcome.value.shells.length) {
       showToast(`Couldn’t wrap ${target.robot.name}`, { tone: 'error' });
 
-      return outcome.ok ? 'The mesh doesn’t reach any of the robot’s links.' : reasonOf(outcome.error);
+      return outcome.ok ? 'The mesh doesn’t reach any of the robot’s links.' : errorMessage(outcome.error);
     }
 
     const edit = applyWrap(

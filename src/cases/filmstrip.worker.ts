@@ -1,15 +1,16 @@
 /// <reference lib="webworker" />
 import { filmFrames, frameBounds, type FilmstripInput } from './filmstrip';
+import { errorMessage } from '../utils/errorMessage';
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
 const BACKGROUND = '#202020';
 const PAD = 10;
 
-function draw(input: FilmstripInput): ImageBitmap {
+function draw(input: FilmstripInput): OffscreenCanvas {
   const frames = filmFrames(input);
   const canvas = new OffscreenCanvas(input.width * frames.length, input.height);
-  const g = canvas.getContext('2d')!;
+  const g = canvas.getContext('2d', { willReadFrequently: true })!;
   const b = frameBounds(frames);
   const scale = Math.min(
     (input.width - PAD * 2) / Math.max(b.maxX - b.minX, 1),
@@ -37,15 +38,15 @@ function draw(input: FilmstripInput): ImageBitmap {
     g.globalAlpha = 1;
   });
 
-  return canvas.transferToImageBitmap();
+  return canvas;
 }
 
-ctx.onmessage = (ev: MessageEvent<{ id: number; input: FilmstripInput }>) => {
+ctx.onmessage = async (ev: MessageEvent<{ id: number; input: FilmstripInput; image: ImageEncodeOptions }>) => {
   try {
-    const bitmap = draw(ev.data.input);
+    const blob = await draw(ev.data.input).convertToBlob(ev.data.image);
 
-    ctx.postMessage({ id: ev.data.id, bitmap }, [bitmap]);
+    ctx.postMessage({ id: ev.data.id, blob });
   } catch (e) {
-    ctx.postMessage({ id: ev.data.id, error: e instanceof Error ? e.message : String(e) });
+    ctx.postMessage({ id: ev.data.id, error: errorMessage(e) });
   }
 };

@@ -51,6 +51,6 @@ To sculpt a part already in the scene, select it instead of adding clay. Hold [[
 | Mirror X | On or off | On |
 | Mirror Z | On or off | Off |
 
-**Mirror X** repeats each stroke on the other side of the part, left to right, and **Mirror Z** front to back. **Subdivide**, shown while a part is selected, adds vertices so the brush can make finer detail; a toast gives the new count.
+**Mirror X** repeats each stroke on the other side of the part, left to right, and **Mirror Z** front to back. **Subdivide**, shown while a sculpted part is selected, adds vertices so the brush can make finer detail; a toast gives the new count.
 
 Sculpting a box, shaft or other shape turns it into a sculpted mesh. Each stroke is one step, so [[⌘Z]] takes back the last one. Sculpted parts still render, print and export after you turn the tool off.

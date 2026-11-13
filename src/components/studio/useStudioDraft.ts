@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { polylineSketch } from '../../utils/sketch/edit';
 import type { Sketch, SketchMode, Vec2 } from '../../utils/sketch/types';
 import { ParsedSvg3DResult, parseSvgTo3DNodes } from '../../utils/svgTo3DParser';
+import { errorMessage } from '../../utils/errorMessage';
 
 export type SketchTool = 'line' | 'rect' | 'circle' | 'arc';
 
@@ -73,7 +74,7 @@ export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | 
 
       history.apply(polylineSketch(svgLoops(contour.outerLoop, contour.holes ?? [], drawSpanMm)));
     } catch (err) {
-      setSvgError(String(err));
+      setSvgError(errorMessage(err));
       setParsedSvg(null);
     }
   };

@@ -133,10 +133,10 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
     {
       id: 'lay-out-plates',
       group: 'Scene',
-      label: 'Lay Out Plates',
+      label: 'Print',
       shortcut: '⌘P',
       icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates bed printer slice',
+      keywords: 'lay out plates bed printer slice',
       run: () => core.printing.openMode(1),
     },
     {
@@ -366,10 +366,10 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
           {
             id: 'tool-erase-marks',
             group: 'Tools',
-            label: 'Erase Marks',
+            label: 'Eraser',
             shortcut: 'E',
             icon: <EraserIcon className={ic} />,
-            keywords: 'annotate eraser remove delete one mark rub out',
+            keywords: 'annotate erase marks remove delete one mark rub out',
             run: () => {
               core.tool.toggleMarking(true);
               core.marks.setTool('eraser');

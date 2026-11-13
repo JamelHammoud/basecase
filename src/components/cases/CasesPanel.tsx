@@ -13,10 +13,6 @@ export interface CasesPanelProps {
   onDescribe?: () => void;
 }
 
-const Heading: React.FC<{ children: string }> = ({ children }) => (
-  <div className="px-[4px] h-8 flex items-center text-[12px] font-medium text-white/50">{children}</div>
-);
-
 function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseRobots' | 'compare'>) {
   const { builder } = cases;
 
@@ -92,7 +88,6 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
       <NewCase cases={cases} onOpen={onOpen} onDescribe={onDescribe} />
       {cases.cases.length > 0 && (
         <div className="mb-3">
-          <Heading>In this scene</Heading>
           {cases.cases.map((c) => (
             <CaseRow
               key={c.id}

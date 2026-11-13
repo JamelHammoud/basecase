@@ -370,7 +370,7 @@ describe('Cases', () => {
     await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
     await expect.poll(async () => (await simHeadings())[0]).toBe('Push a Box in a Corridor');
     expect((await simState()).world).toEqual(['box', 'goal', 'wall-left', 'wall-right']);
-    expect(await panel.innerText()).toContain('In this scene');
+    expect(await panel.innerText()).toContain('Push a Box in a Corridor');
 
     await button('Ask the Agent').click();
     await expect.poll(() => app.page.locator(visible('textarea')).last().inputValue()).toBe('/case ');

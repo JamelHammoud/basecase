@@ -1,4 +1,4 @@
-use super::cdr::{Reader, Short, Writer};
+use crate::cdr::{Reader, Short, Writer};
 
 pub const GET_FSM_ID: i64 = 7001;
 pub const LOCOMOTION_FSM: i64 = 200;

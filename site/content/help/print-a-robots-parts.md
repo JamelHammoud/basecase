@@ -54,7 +54,7 @@ If you haven't saved a printer, the plate's button reads **Add Printer** and ope
 
 With Bambu Studio, the plate opens there and you start the print in Bambu Studio. Bambu Connect works the same way.
 
-Print mode also opens from **File** ▸ **Print**, from **Lay Out Plates** in the Build tab, and from ⌘K. **Slice Plates** in ⌘K slices every plate at once; a toast shows the progress, with **Stop**.
+Print mode also opens from **File** ▸ **Print**, from **Print** in the Build tab, and from ⌘K. **Slice Plates** in ⌘K slices every plate at once; a toast shows the progress, with **Stop**.
 
 ## On the plate
 

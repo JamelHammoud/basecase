@@ -1,3 +1,4 @@
+import type { HandoffStub } from './handoffStub';
 import type { RefObject } from 'react';
 import * as THREE from 'three';
 import type { PoseReply } from '../agent/agentPose';
@@ -58,6 +59,8 @@ export interface DevActions {
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown) => void;
+  stubHandoffs: (stub: HandoffStub) => void;
+  plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
@@ -232,6 +235,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
+    stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
+    plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
     stubTabEngine,

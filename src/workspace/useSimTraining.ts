@@ -91,6 +91,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     openAccounts: () => studio.openSettings('accounts'),
     sceneId: scene.sceneId,
     partners: () => studio.robotsBeside(workspaceId),
+    skills: skills.routineSkills,
   });
   const share = useShareRobot({
     scene: { sceneId: scene.sceneId, sceneName: scene.sceneName },
@@ -105,7 +106,17 @@ export function useSimTraining(options: SimTrainingOptions) {
     showToast,
     openAccounts: () => studio.openSettings('accounts'),
   });
-  const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
+  const routines = useRoutines({
+    parts,
+    project,
+    projectRef,
+    sim,
+    commitParts,
+    updateProjectNow,
+    showToast,
+    skills: skills.routineSkills,
+    trainHandoff: skills.trainHandoff,
+  });
 
   return { sim, training, policies, deletePolicy, cases, routines, skills, share };
 }

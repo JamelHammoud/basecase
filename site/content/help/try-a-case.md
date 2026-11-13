@@ -30,7 +30,7 @@ covers:
 Drive the robot through an open Case while Basecase records it, then see whether the try passed and replay it.
 
 1. Click **Play** in the view rail.
-2. Click a Case under **In this scene**. It opens in the **Simulate** tab.
+2. Click a Case under **New Case**. It opens in the **Simulate** tab.
 3. Under **Robot fit**, click **Check Fit**.
 4. Under **Try**, click **Try It**. Recording starts and the robot is yours to drive.
 5. Drive the robot to the goal with the keys listed under **Try**.

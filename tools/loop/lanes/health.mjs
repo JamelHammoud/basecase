@@ -1,7 +1,9 @@
 import { breaches, expired, lastMergeAt, LIMITS, readySince, redSince } from '../lib/flow.mjs';
 import { queuedRuns } from '../lib/flowCounts.mjs';
-import { closePull, isPaused, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
+import { closePull, editPullLabels, hasLabel, isPaused, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
+import { held } from '../lib/claim.mjs';
 import { LOOP_MARK } from '../lib/mark.mjs';
+import { nudge } from '../lib/pullState.mjs';
 import { json, run } from '../lib/sh.mjs';
 import { membersOf } from '../lib/evidence.mjs';
 import { isBatch } from '../lib/landing.mjs';
@@ -10,7 +12,7 @@ export const schedule = {
   slots: 1,
   everySeconds: 600,
   labels: ['loop:health'],
-  does: 'Closes pull requests open over six hours, watches main, the merge queue and CI, and keeps one Loop health issue open while any of them stalls',
+  does: 'Closes pull requests open over three hours, nudges any untouched for 30 minutes, watches main, the merge queue and CI, and keeps one Loop health issue open while any of them stalls',
 };
 
 const TITLE = 'Loop health';
@@ -52,7 +54,9 @@ const readyToLand = (pull) =>
 const oldest = (times) => times.filter(Boolean).sort()[0] ?? null;
 
 export function measure() {
-  const ready = openPulls({ fresh: true }).filter(readyToLand);
+  const open = openPulls({ fresh: true });
+  const ready = open.filter(readyToLand);
+  const idleSince = Date.now() - LIMITS.idlePullMinutes * 60_000;
   const queued = queuedRuns({ fresh: true });
 
   return {
@@ -61,6 +65,7 @@ export function measure() {
     readyCount: ready.length,
     oldestReadyAt: oldest(ready.map(readySince)),
     queuedRuns: queued.length,
+    idlePulls: open.filter((pull) => Date.parse(pull.updatedAt) < idleSince).map((pull) => pull.number),
     oldestQueuedAt: oldest(queued.map((item) => item.createdAt)),
   };
 }
@@ -99,7 +104,7 @@ function expire(log) {
   const pulls = openPulls({ fresh: true });
   const inBatch = pulls.filter(isBatch).flatMap((batch) => membersOf(batch.body));
 
-  for (const pull of expired({ pulls, inBatch })) {
+  for (const pull of expired({ pulls, inBatch }).filter((p) => !held(`pull-${p.number}`))) {
     closePull(
       pull.number,
       `Open over ${LIMITS.maxOpenHours} hours without landing, so it closes. Its step goes back to the builders and is rebuilt from current main, which costs less than keeping it up to date.`,
@@ -108,8 +113,24 @@ function expire(log) {
   }
 }
 
+function nudgeIdle(log) {
+  if (isPaused()) return;
+
+  const idleSince = Date.now() - LIMITS.idlePullMinutes * 60_000;
+
+  for (const pull of openPulls({ fresh: true }).filter((p) => Date.parse(p.updatedAt) < idleSince)) {
+    nudge(pull.number, pull.headRefOid);
+
+    if (hasLabel(pull, 'loop:revising') && !held(`pull-${pull.number}`))
+      editPullLabels(pull.number, { remove: ['loop:revising'] });
+
+    log(`#${pull.number}: untouched for ${LIMITS.idlePullMinutes} min; nudged revise and rebase to look again`);
+  }
+}
+
 export default function health({ log }) {
   expire(log);
+  nudgeIdle(log);
 
   const m = measure();
   const found = breaches(m);

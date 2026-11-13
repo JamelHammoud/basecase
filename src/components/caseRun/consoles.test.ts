@@ -75,6 +75,7 @@ function context(caseConsole: CaseConsole): PanelContext {
         onMenu: () => undefined,
       }),
       menu: null,
+      stream: () => () => undefined,
     } satisfies CameraTiles,
     fire: () => undefined,
     can: () => true,

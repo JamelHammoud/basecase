@@ -4,7 +4,9 @@ import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
+import { storeRefusal, type StoreValue } from './caseStore';
 import {
+  asBoolean,
   asId,
   asNumber,
   asRecord,
@@ -68,6 +70,7 @@ export interface WorldObject {
   behavior: WorldBehavior;
   massG?: number;
   friction?: number;
+  movable?: boolean;
 }
 
 export interface CaseControl {
@@ -118,6 +121,7 @@ export interface Case {
   task: CaseTask;
   console?: CaseConsole;
   logic?: Routine;
+  store?: StoreValue;
 }
 
 const v3 = vector(3) as unknown as Reader<V3>;
@@ -187,6 +191,7 @@ const readObject: Reader<WorldObject> = (value, where) => {
     behavior: oneOf(BEHAVIORS)(v.behavior, `${where}.behavior`),
     massG: optional(asNumber, v.massG, `${where}.massG`),
     friction: optional(asNumber, v.friction, `${where}.friction`),
+    ...(v.movable === undefined ? {} : { movable: asBoolean(v.movable, `${where}.movable`) }),
   };
 };
 
@@ -259,6 +264,12 @@ const readTask: Reader<CaseTask> = (value, where) => {
   };
 };
 
+const readStore: Reader<StoreValue> = (value, where) => {
+  const refusal = storeRefusal(value);
+
+  return refusal ? refuse(where, refusal) : (value as StoreValue);
+};
+
 const readLogic: Reader<Routine> = (value, where) => {
   const valid = validateRoutine(value);
 
@@ -320,6 +331,7 @@ export function parseCase(input: unknown): Case {
     task,
     ...(caseConsole ? { console: caseConsole } : {}),
     ...(v.logic !== undefined ? { logic: readLogic(v.logic, 'logic') } : {}),
+    ...(v.store !== undefined ? { store: readStore(v.store, 'store') } : {}),
   };
 
   checkSlotNames(kase);
@@ -356,5 +368,5 @@ export function worldItem(o: WorldObject): WorldItem {
     ...(o.friction !== undefined ? { physics: { dynamic: o.behavior === 'dynamic', friction: o.friction } } : {}),
   };
 
-  return { ...part, behavior: o.behavior };
+  return { ...part, behavior: o.behavior, ...(o.movable ? { movable: true } : {}) };
 }

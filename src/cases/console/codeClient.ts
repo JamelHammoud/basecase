@@ -14,12 +14,21 @@ interface PortMessage {
   values?: Values;
   ok?: boolean;
   problem?: string;
+  value?: unknown;
+  bitmap?: ImageBitmap;
+}
+
+interface WorldSet {
+  pose?: { position?: number[]; rotation?: number[] };
+  visible?: boolean;
+  colour?: string;
 }
 
 export function installCodeClient(win: ClientWindow) {
   const pending: unknown[] = [];
   const subs = new Map<number, (values: Values, time: number) => void>();
-  const replies = new Map<number, (reply: Reply) => void>();
+  const replies = new Map<number, (m: PortMessage) => void>();
+  const streams = new Map<number, (bitmap: ImageBitmap) => void>();
   let port: MessagePort | null = null;
   let next = 1;
 
@@ -28,21 +37,40 @@ export function installCodeClient(win: ClientWindow) {
     else if (pending.length < 256) pending.push(message);
   };
 
+  const deliver = (m: PortMessage) => {
+    const onFrame = streams.get(m.id ?? 0);
+
+    if (onFrame && m.bitmap) onFrame(m.bitmap);
+    else m.bitmap?.close?.();
+  };
+
   const receive = (m: PortMessage) => {
     if (m.type === 'ping') send({ type: 'pong' });
 
     if (m.type === 'signals') subs.get(m.id ?? 0)?.(m.values ?? {}, m.time ?? 0);
 
-    if (m.type !== 'action') return;
+    if (m.type === 'frame') deliver(m);
 
-    replies.get(m.id ?? 0)?.({ ok: m.ok === true, ...(m.problem ? { problem: m.problem } : {}) });
+    if (m.type !== 'action' && m.type !== 'store') return;
+
+    replies.get(m.id ?? 0)?.(m);
     replies.delete(m.id ?? 0);
   };
+
+  const ask = (message: { type: string; value?: unknown; name?: string }) => {
+    const id = next++;
+
+    send({ ...message, id });
+
+    return new Promise<PortMessage>((resolve) => replies.set(id, resolve));
+  };
+
+  const answer = (m: PortMessage): Reply => ({ ok: m.ok === true, ...(m.problem ? { problem: m.problem } : {}) });
 
   const adopt = (e: MessageEvent) => {
     const data = e.data as { bc?: number; type?: string } | null;
 
-    if (port || e.source !== win.parent || data?.bc !== 1 || data.type !== 'port' || !e.ports[0]) return;
+    if (port || e.source !== win.parent || data?.bc !== 2 || data.type !== 'port' || !e.ports[0]) return;
 
     port = e.ports[0];
     port.onmessage = (m: MessageEvent) => receive(m.data as PortMessage);
@@ -72,7 +100,7 @@ export function installCodeClient(win: ClientWindow) {
   win.addEventListener('load', () => send({ type: 'loaded' }));
 
   const api = Object.freeze({
-    version: 1,
+    version: 2,
     signals(names: string | string[], onValue: (values: Values, time: number) => void) {
       const id = next++;
 
@@ -91,14 +119,30 @@ export function installCodeClient(win: ClientWindow) {
       send({ type: 'event', name, value });
     },
     action(name: string) {
+      return ask({ type: 'action', name }).then(answer);
+    },
+    world: Object.freeze({
+      set(name: string, change: WorldSet = {}) {
+        send({ type: 'world', name, pose: change.pose, visible: change.visible, colour: change.colour });
+      },
+    }),
+    frames(camera: string, options: { width?: number; fps?: number }, onFrame: (bitmap: ImageBitmap) => void) {
       const id = next++;
 
-      send({ type: 'action', id, name });
+      streams.set(id, onFrame);
+      send({ type: 'frames', id, camera, width: options?.width, fps: options?.fps });
 
-      return new Promise<Reply>((resolve) => replies.set(id, resolve));
+      return () => {
+        streams.delete(id);
+        send({ type: 'unframes', id });
+      };
     },
+    store: Object.freeze({
+      get: () => ask({ type: 'store-get' }).then((m) => m.value ?? null),
+      set: (value: unknown) => ask({ type: 'store-set', value }).then(answer),
+    }),
   });
 
   Object.defineProperty(win, 'basecase', { value: api });
-  win.parent.postMessage({ bc: 1, type: 'hello' }, '*');
+  win.parent.postMessage({ bc: 2, type: 'hello' }, '*');
 }

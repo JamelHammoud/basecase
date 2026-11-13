@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import { uniqueCaseId } from '../cases/caseBuilder';
 import { stageCase } from '../cases/caseCast';
+import { withCaseStore, type StoreValue } from '../cases/caseStore';
 import { robotFacts } from '../cases/robotFit';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
@@ -43,6 +44,13 @@ const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boole
 
   return all.filter((t) => !goes(t));
 };
+
+const caseStore = (active: Case | null, setProject: Setter<ProjectSettings>) => ({
+  get: () => active?.store ?? null,
+  set: (value: StoreValue) => {
+    if (active) setProject((p) => ({ ...p, cases: withCaseStore(p.cases, active.id, value) }));
+  },
+});
 
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
@@ -180,6 +188,7 @@ export function useCases(options: CasesOptions) {
     timeline,
     attempt,
     multiply,
+    store: caseStore(active, setProject),
   };
 }
 

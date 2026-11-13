@@ -47,13 +47,15 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
   const { caseRun, simTraining, posing, parts, tool, studio } = core;
   const { sim, cases } = simTraining;
   const { open, caseConsole, layout } = caseRun;
-  const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
+  const wantsTiles = caseConsole.panels.some((p) => p.kind === 'camera');
+  const wantsStreams = caseConsole.panels.some((p) => p.kind === 'code');
   const cameras = useCameraTiles({
     parts,
     sim,
     cameras: actions.cameras,
     patchPart: actions.edits.patchPart,
-    active: () => open && wantsCameras,
+    active: () => open && (wantsTiles || wantsStreams),
+    tiles: wantsTiles,
   });
   const bus = useConsoleSignals({
     open,

@@ -40,7 +40,11 @@ export function runCase(mj: MainModule, kase: Case, robot: FixtureRobot, options
 
 const LIVE_FRAME_SECONDS = 1 / 60;
 
-function liveController(robot: FixtureRobot, rig: ReturnType<typeof buildRig>, model: TryScoring['model']): Controller {
+export function liveController(
+  robot: FixtureRobot,
+  rig: ReturnType<typeof buildRig>,
+  model: TryScoring['model'],
+): Controller {
   const access = driveAccess({ rig, parts: robot.parts, model, robotKey: model.robots[0]?.key, velocity: null });
 
   if (access.kind !== 'ready') throw new Error(`${robot.id} can't drive.`);

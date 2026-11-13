@@ -10,6 +10,7 @@ import type { Scan } from './scanner';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
+import type { WorldLooks } from '../cases/worldSet';
 
 interface LatestFrame {
   at: number;
@@ -24,6 +25,14 @@ function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame
   latest.scan = msg.scan ?? latest.scan;
 }
 
+const NO_LOOKS: WorldLooks = {};
+
+const RECORDING_REPLIES = new Set<SimResponse['type']>(['recorded', 'scrubbed', 'sought']);
+
+const isRecordingReply = (
+  msg: SimResponse,
+): msg is Extract<SimResponse, { type: 'recorded' | 'scrubbed' | 'sought' }> => RECORDING_REPLIES.has(msg.type);
+
 export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
 
 export function useSimWorker(
@@ -35,6 +44,7 @@ export function useSimWorker(
   const [playing, setPlaying] = useState(false);
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [worldLooks, setWorldLooks] = useState<WorldLooks>({});
   const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null });
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
@@ -58,13 +68,19 @@ export function useSimWorker(
         return;
       }
 
+      if (msg.type === 'world') {
+        setWorldLooks(msg.looks);
+
+        return;
+      }
+
       if (msg.type === 'routine') {
         routineHookRef.current?.(msg);
 
         return;
       }
 
-      if (msg.type === 'recorded' || msg.type === 'scrubbed' || msg.type === 'sought') {
+      if (isRecordingReply(msg)) {
         recordingReply(msg);
 
         return;
@@ -150,6 +166,7 @@ export function useSimWorker(
     latestStats: () => (status === 'off' ? null : ui.current.stats),
     latestFacts: () => (status === 'off' ? null : ui.current.facts),
     latestScan: () => (status === 'off' ? null : ui.current.scan),
+    worldLooks: status === 'off' ? NO_LOOKS : worldLooks,
     setStats,
     error,
     setError,

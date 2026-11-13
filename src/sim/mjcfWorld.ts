@@ -72,8 +72,11 @@ export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {
     const name = `w${i}_${safeId(item.id)}`;
     const geom = worldGeom(item, input, out, assetOffset);
 
-    out.bodies.push({ name, parts: [], world: [item.id], origin: item.position });
-    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(item.position))}">`);
+    const mocap = item.movable && item.behavior !== 'dynamic';
+    const moves = item.movable ? { moves: { kind: mocap ? 'mocap' : 'free', rotation: item.rotation } as const } : {};
+
+    out.bodies.push({ name, parts: [], world: [item.id], origin: item.position, ...moves });
+    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(item.position))}"${mocap ? ' mocap="true"' : ''}>`);
 
     if (item.behavior === 'dynamic') out.lines.push(`      <freejoint name="${esc(name)}"/>`);
 

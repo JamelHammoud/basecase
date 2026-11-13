@@ -16,11 +16,16 @@ keywords:
   - code panel
   - joystick
   - HUD
+  - high score
+  - movable
 related:
   - try-a-case
   - make-a-case
 covers:
   - src/cases/console/
+  - src/cases/worldSet.ts
+  - src/cases/caseStore.ts
+  - src/sim/worldMoves.ts
   - src/sim/inputSources.ts
   - src/workspace/useCaseRun.ts
   - src/workspace/useConsoleSignals.ts
@@ -67,6 +72,10 @@ A console that lists `camera` among its inputs opens the computer's camera when 
 A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc and [[⌘K]] still work while you use it. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
+
+A code panel can also change the Case's world while it runs. It can move, light or hide an object the Case marks as movable, such as a target that pops up or a wall that opens. Each change is kept on the try, so a replay shows the same world. It can watch one of the robot's cameras at up to 640 × 480 and 15 frames a second, and the frames stay on your computer. It can keep up to 64 KB with the Case, such as a high score, which stays after a reload and Reset.
+
+![A rover Case with a code panel showing the Scene camera, a target the code lit in red, and a best score of 6](/help/run-a-case/world.png)
 
 A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
 

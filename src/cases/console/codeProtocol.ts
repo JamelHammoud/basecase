@@ -1,7 +1,9 @@
 import type { DriveCommand } from '../../sim/driveTypes';
 import type { FactValue } from '../caseFacts';
+import type { StoreValue } from '../caseStore';
+import { readWorldChange, type WorldChange } from '../worldSet';
 
-export const BRIDGE_VERSION = 1;
+export const BRIDGE_VERSION = 2;
 export const SIGNAL_INTERVAL_MS = 50;
 export const PING_MS = 500;
 export const SILENT_MS = 2000;
@@ -10,6 +12,7 @@ export const MESSAGES_PER_SECOND = 240;
 export const ERROR_MAX_CHARS = 500;
 
 const MAX_NAMES = 32;
+const MAX_CAMERA_CHARS = 40;
 const MAX_ID = 1_000_000;
 
 export type FrameKey = { key: 'Escape' | 'k'; meta: boolean; ctrl: boolean; shift: boolean };
@@ -23,14 +26,21 @@ export type FrameMessage =
   | { type: 'event'; name: string; value: FactValue }
   | { type: 'action'; id: number; name: string }
   | { type: 'error'; message: string }
-  | ({ type: 'key' } & FrameKey);
+  | ({ type: 'key' } & FrameKey)
+  | { type: 'world'; change: WorldChange }
+  | { type: 'frames'; id: number; camera: string; width?: number; fps?: number }
+  | { type: 'unframes'; id: number }
+  | { type: 'store-get'; id: number }
+  | { type: 'store-set'; id: number; value: unknown };
 
 export type SignalValues = Record<string, number | string[]>;
 
 export type StudioMessage =
   | { type: 'ping' }
   | { type: 'signals'; id: number; time: number; values: SignalValues }
-  | { type: 'action'; id: number; ok: boolean; problem?: string };
+  | { type: 'action'; id: number; ok: boolean; problem?: string }
+  | { type: 'frame'; id: number; bitmap: ImageBitmap }
+  | { type: 'store'; id: number; ok: boolean; value?: StoreValue; problem?: string };
 
 type Data = Record<string, unknown>;
 
@@ -75,6 +85,26 @@ function readValue(value: unknown): FactValue | undefined {
   return typeof value === 'string' && value.length <= 200 ? value : undefined;
 }
 
+const isCamera = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0 && value.length <= MAX_CAMERA_CHARS;
+
+const isOptional = (value: unknown, check: (v: unknown) => boolean) => value === undefined || check(value);
+
+const isRate = (value: unknown) => typeof value === 'number' && Number.isFinite(value);
+
+function readFrames(m: Data): FrameMessage | undefined {
+  if (!isId(m.id) || !isCamera(m.camera) || !isOptional(m.width, Number.isInteger) || !isOptional(m.fps, isRate))
+    return undefined;
+
+  return {
+    type: 'frames',
+    id: m.id,
+    camera: m.camera,
+    ...(m.width === undefined ? {} : { width: m.width as number }),
+    ...(m.fps === undefined ? {} : { fps: m.fps as number }),
+  };
+}
+
 const readNames = (value: unknown) =>
   Array.isArray(value) && value.length > 0 && value.length <= MAX_NAMES && value.every((n) => typeof n === 'string')
     ? value.map((n: string) => n.slice(0, 120))
@@ -105,6 +135,15 @@ const READERS: Record<string, (m: Data) => FrameMessage | undefined> = {
     m.key === 'Escape' || m.key === 'k'
       ? { type: 'key', key: m.key, meta: m.meta === true, ctrl: m.ctrl === true, shift: m.shift === true }
       : undefined,
+  world: (m) => {
+    const change = readWorldChange(m);
+
+    return change ? { type: 'world', change } : undefined;
+  },
+  frames: readFrames,
+  unframes: (m) => (isId(m.id) ? { type: 'unframes', id: m.id } : undefined),
+  'store-get': (m) => (isId(m.id) ? { type: 'store-get', id: m.id } : undefined),
+  'store-set': (m) => (isId(m.id) ? { type: 'store-set', id: m.id, value: m.value } : undefined),
 };
 
 export function readFrameMessage(value: unknown): FrameMessage | string {

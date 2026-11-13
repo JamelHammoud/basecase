@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import type { SimEngine } from '../sim/engine';
 import { toMj, worldDeltas } from '../sim/mjcfFrames';
 import { framePoses, Recorder, type RecordedCommand, type Recording } from '../sim/recorder';
+import { WorldMoves } from '../sim/worldMoves';
+import type { WorldEvent } from './worldSet';
 import type { V3 } from '../utils/kinematics';
 import { jitteredWorld, worldRandom } from './caseRandom';
 import { startEngine } from './runCase';
@@ -108,9 +110,14 @@ interface Due {
   apply: () => void;
 }
 
+interface Replayed {
+  engine: SimEngine;
+  recorder: Recorder;
+  world: WorldMoves;
+}
+
 function timeline(
-  engine: SimEngine,
-  recorder: Recorder,
+  { engine, recorder, world }: Replayed,
   source: { commands: RecordedCommand[]; recording: Recording },
 ) {
   const fault = (joint: string, kind: Parameters<SimEngine['setFault']>[1]) => () => {
@@ -118,6 +125,12 @@ function timeline(
     recorder.fault(joint, kind);
   };
   const due: Due[] = source.commands.map((c) => ({ at: c.at, apply: () => engine.command(c.command) }));
+
+  const changeWorld = (change: WorldEvent) => () => {
+    if (!world.apply(change)) recorder.worldChange(change);
+  };
+
+  for (const change of source.recording.world ?? []) due.push({ at: change.at, apply: changeWorld(change) });
 
   for (const f of source.recording.faults ?? []) {
     due.push({ at: f.at, apply: fault(f.joint, f.kind) });
@@ -155,13 +168,14 @@ export async function replayTry(mj: MainModule, source: TryScoring, seed: number
     placeStart(mj, engine, { recording, offsets });
 
     const recorder = new Recorder(engine, controller);
+    const world = new WorldMoves(mj, engine);
 
     engine.stepHook = recorder.hook;
     engine.commandHook = recorder.command;
     roll(
       engine,
       recorder,
-      timeline(engine, recorder, { commands: shiftedCommands(source, offsets), recording }),
+      timeline({ engine, recorder, world }, { commands: shiftedCommands(source, offsets), recording }),
       recording.frames,
     );
 

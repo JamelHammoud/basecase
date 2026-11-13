@@ -1,5 +1,6 @@
 import type { DriveCommand } from '../../sim/driveTypes';
 import type { FactValue } from '../caseFacts';
+import { WORLD_CALLS_PER_SECOND, type WorldChange } from '../worldSet';
 import {
   BRIDGE_VERSION,
   ERROR_MAX_CHARS,
@@ -14,6 +15,8 @@ import {
   type StudioMessage,
 } from './codeProtocol';
 import { REAL_CLOCK, signalFeed, type BridgeClock } from './codeSignals';
+import { coalescedStore, storeGetReply, storeSetReply, type BridgeStore } from './codeStore';
+import { dropFrame, frameStreams, type FrameSource } from './codeStreams';
 import { CASE_ACTIONS, type CaseAction } from './panelKinds';
 import type { SignalBus } from './signalBus';
 import type { SignalScope } from './signalNames';
@@ -24,6 +27,9 @@ export interface BridgeStudio {
   can: (action: CaseAction) => boolean;
   fire: (action: CaseAction) => void;
   key: (key: FrameKey) => void;
+  world: (change: WorldChange) => string | null;
+  frames: FrameSource;
+  store: BridgeStore;
 }
 
 export interface CodeBridgeOptions {
@@ -34,6 +40,7 @@ export interface CodeBridgeOptions {
   studio: BridgeStudio;
   onFail: (error: string) => void;
   clock?: BridgeClock;
+  channel?: () => MessageChannel;
 }
 
 export interface BridgeEnvelope {
@@ -67,7 +74,7 @@ function actionReply(m: { id: number; name: string }, studio: BridgeStudio): Stu
   return { type: 'action', id: m.id, ok: true };
 }
 
-function budget(clock: BridgeClock) {
+function budget(clock: BridgeClock, perSecond: number) {
   let start = clock.now();
   let count = 0;
 
@@ -79,14 +86,15 @@ function budget(clock: BridgeClock) {
 
     count++;
 
-    return count - MESSAGES_PER_SECOND;
+    return count - perSecond;
   };
 }
 
 export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   const clock = o.clock ?? REAL_CLOCK;
   const errors: string[] = [];
-  const spend = budget(clock);
+  const spend = budget(clock, MESSAGES_PER_SECOND);
+  const spendWorld = budget(clock, WORLD_CALLS_PER_SECOND);
   let port: MessagePort | null = null;
   let loaded = false;
   let closed = false;
@@ -101,12 +109,42 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     if (errors.length < MAX_ERRORS) errors.push(error.slice(0, ERROR_MAX_CHARS));
   };
 
+  const postFrame = (id: number, bitmap: ImageBitmap) => {
+    if (port) port.postMessage({ type: 'frame', id, bitmap } satisfies StudioMessage, [bitmap]);
+    else dropFrame(bitmap);
+  };
+
+  const streams = frameStreams({ source: o.studio.frames, clock, post: postFrame, note });
+  const store = coalescedStore(o.studio.store, clock);
+
+  const world = (change: WorldChange) => {
+    const over = spendWorld();
+
+    if (over === 1) note(`world refused: more than ${WORLD_CALLS_PER_SECOND} calls a second`);
+
+    if (over > 0) return;
+
+    const refusal = o.studio.world(change);
+
+    if (refusal) note(`world refused: ${refusal}`);
+  };
+
+  const storeSet = (m: { id: number; value: unknown }) => {
+    const reply = storeSetReply(m, store);
+
+    if (reply.type === 'store' && reply.problem) note(`store refused: ${reply.problem}`);
+
+    post(reply);
+  };
+
   const close = () => {
     if (closed) return;
 
     closed = true;
     stopPing();
     feed.close();
+    streams.close();
+    store.flush();
     o.studio.drive(null);
     port?.close();
     port = null;
@@ -141,6 +179,11 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     },
     error: (m) => (loaded ? note(m.message) : fail(m.message)),
     key: (m) => o.studio.key({ key: m.key, meta: m.meta, ctrl: m.ctrl, shift: m.shift }),
+    world: (m) => world(m.change),
+    frames: (m) => streams.open(m),
+    unframes: (m) => streams.stop(m.id),
+    'store-get': (m) => post(storeGetReply(m.id, store)),
+    'store-set': storeSet,
   };
 
   const onPortMessage = (e: MessageEvent) => {
@@ -174,7 +217,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     receive(e) {
       if (closed || port || !e.source || e.source !== o.frame() || !isHello(e.data)) return;
 
-      const channel = new MessageChannel();
+      const channel = o.channel?.() ?? new MessageChannel();
 
       port = channel.port1;
       port.onmessage = onPortMessage;

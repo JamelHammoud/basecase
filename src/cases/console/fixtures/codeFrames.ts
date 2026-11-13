@@ -1,9 +1,13 @@
 import type { DriveCommand } from '../../../sim/driveTypes';
 import type { FactValue } from '../../caseFacts';
+import type { StoreValue } from '../../caseStore';
+import type { WorldChange } from '../../worldSet';
 import { openCodeBridge, type BridgeStudio, type CodeBridge } from '../codeBridge';
 import { codeClientScript } from '../codeDocument';
 import type { FrameKey } from '../codeProtocol';
 import type { BridgeClock } from '../codeSignals';
+import type { BridgeStore } from '../codeStore';
+import type { FrameSize, FrameSource } from '../codeStreams';
 import type { CaseAction } from '../panelKinds';
 import type { SignalBus } from '../signalBus';
 import type { SignalScope } from '../signalNames';
@@ -58,6 +62,9 @@ export interface StudioLog {
   fired: CaseAction[];
   keys: FrameKey[];
   failed: string[];
+  world: WorldChange[];
+  streams: Array<{ camera: string; size: FrameSize }>;
+  store: StoreValue | null;
 }
 
 export interface FrameOptions {
@@ -66,6 +73,12 @@ export interface FrameOptions {
   inputs?: string[];
   can?: (action: CaseAction) => boolean;
   clock?: BridgeClock;
+  world?: (change: WorldChange) => string | null;
+  frames?: FrameSource;
+  store?: BridgeStore;
+  globals?: Record<string, unknown>;
+  drive?: (command: DriveCommand | null) => void;
+  event?: (name: string, value: FactValue) => void;
 }
 
 export interface TestFrame {
@@ -80,12 +93,41 @@ export interface TestFrame {
   close: () => void;
 }
 
+function transferringChannel(): MessageChannel {
+  const channel = new MessageChannel();
+  const { port1, port2 } = channel;
+  const post = port1.postMessage.bind(port1);
+  const closers = [port1.close.bind(port1), port2.close.bind(port2)];
+  let open = true;
+
+  const close = () => {
+    open = false;
+    closers.forEach((c) => c());
+  };
+
+  const transfer = (data: unknown, moved?: unknown) => {
+    if (!Array.isArray(moved) || !moved.length) {
+      post(data);
+
+      return;
+    }
+
+    queueMicrotask(() => open && port2.onmessage?.call(port2, { data } as MessageEvent));
+  };
+
+  port1.postMessage = transfer as MessagePort['postMessage'];
+  port1.close = close;
+  port2.close = close;
+
+  return channel;
+}
+
 const runIn = (win: Record<string, unknown>, script: string) =>
   (new Function('window', `with (window) {\n${script}\n}`) as (w: Record<string, unknown>) => void)(win);
 
 const scriptsOf = (html: string) => [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 
-function fakeWindow(parent: object) {
+function fakeWindow(parent: object, globals: Record<string, unknown> = {}) {
   const listeners = new Map<string, Listener[]>();
   const body = new FakeElement('body');
   const win: Record<string, unknown> = {
@@ -96,6 +138,7 @@ function fakeWindow(parent: object) {
     Promise,
     document: { body, createElement: (tag: string) => new FakeElement(tag) },
     addEventListener: (type: string, l: Listener) => listeners.set(type, [...(listeners.get(type) ?? []), l]),
+    ...globals,
   };
   const dispatch = (type: string, e: Record<string, unknown>) =>
     listeners.get(type)?.forEach((l) => l({ type, preventDefault: () => undefined, ...e }));
@@ -106,11 +149,20 @@ function fakeWindow(parent: object) {
 }
 
 export function openTestFrame(html: string, o: FrameOptions): TestFrame {
-  const log: StudioLog = { drives: [], events: [], fired: [], keys: [], failed: [] };
+  const log: StudioLog = {
+    drives: [],
+    events: [],
+    fired: [],
+    keys: [],
+    failed: [],
+    world: [],
+    streams: [],
+    store: null,
+  };
   const ports: MessagePort[] = [];
   let bridge: CodeBridge | null = null;
   const parent = { postMessage: (data: unknown) => bridge?.receive({ source: frame.win, data }) };
-  const frame = fakeWindow(parent);
+  const frame = fakeWindow(parent, o.globals);
 
   frame.win.postMessage = (data: unknown, options: { transfer?: MessagePort[] }) => {
     ports.push(...(options.transfer ?? []));
@@ -118,11 +170,31 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
   };
 
   const studio: BridgeStudio = {
-    drive: (command) => log.drives.push(command),
-    event: (name, value) => log.events.push([name, value]),
+    drive: (command) => {
+      log.drives.push(command);
+      o.drive?.(command);
+    },
+    event: (name, value) => {
+      log.events.push([name, value]);
+      o.event?.(name, value);
+    },
     can: o.can ?? (() => true),
     fire: (action) => log.fired.push(action),
     key: (key) => log.keys.push(key),
+    world: o.world ?? ((change) => (log.world.push(change), null)),
+    frames:
+      o.frames ??
+      ((camera, size) => {
+        log.streams.push({ camera, size });
+
+        return () => undefined;
+      }),
+    store: o.store ?? {
+      get: () => log.store,
+      set: (value) => {
+        log.store = value;
+      },
+    },
   };
 
   bridge = openCodeBridge({
@@ -133,6 +205,7 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
     studio,
     onFail: (error) => log.failed.push(error),
     ...(o.clock ? { clock: o.clock } : {}),
+    channel: transferringChannel,
   });
 
   const run = (script: string) => runIn(frame.win, script);

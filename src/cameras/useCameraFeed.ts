@@ -1,15 +1,14 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { CameraLink } from '../sim/useSimWorker';
-import { sourcedMeshFiles } from '../three/componentMeshes';
-import { packParts } from '../three/packedMesh';
 import type { ScenePart } from '../types/robotics';
-import type { FeedEvent, FeedRequest } from './feedProtocol';
-import { LARGE_SIZE, TILE_SIZE } from './liveStage';
+import { LiveFeed, type Canvases, type FeedStream } from './liveFeed';
+import { streamFps, streamSize } from './streamPace';
 import type { CameraView } from './views';
 
 export interface CameraFeedInput {
   active: boolean;
+  tiles?: boolean;
   parts: ScenePart[];
   world: ScenePart[];
   model: SimModel | null;
@@ -19,83 +18,17 @@ export interface CameraFeedInput {
   onFrames: (frames: number) => void;
 }
 
-type Canvases = Map<string, HTMLCanvasElement>;
-
-const same = <T>(a: T[], b: T[]) => a.length === b.length && a.every((x, i) => x === b[i]);
-
-class LiveFeed {
-  private readonly worker = new Worker(new URL('./feed.worker.ts', import.meta.url), { type: 'module' });
-
-  private sceneTicket = 0;
-
-  private sent: { parts: ScenePart[]; world: ScenePart[]; model?: SimModel | null; views?: string } = {
-    parts: [],
-    world: [],
-  };
-
-  constructor(canvases: Canvases, onFrames: (frames: number) => void) {
-    this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => {
-      for (const [key, bitmap] of Object.entries(data.bitmaps)) {
-        const ctx = canvases.get(key)?.getContext('bitmaprenderer');
-
-        if (ctx) ctx.transferFromImageBitmap(bitmap);
-        else bitmap.close();
-      }
-
-      onFrames(data.frames);
-    };
-  }
-
-  link(): MessagePort {
-    const channel = new MessageChannel();
-
-    this.post({ type: 'port', port: channel.port1 }, [channel.port1]);
-
-    return channel.port2;
-  }
-
-  async scene(parts: ScenePart[], world: ScenePart[]): Promise<void> {
-    if (this.sceneTicket && same(this.sent.parts, parts) && same(this.sent.world, world)) return;
-
-    this.sent = { ...this.sent, parts, world };
-
-    const ticket = ++this.sceneTicket;
-    const meshes = await sourcedMeshFiles([...parts, ...world]);
-
-    if (ticket === this.sceneTicket)
-      this.post({ type: 'scene', parts: packParts(parts), world: packParts(world), meshes });
-  }
-
-  model(model: SimModel | null): void {
-    if (this.sent.model === model) return;
-
-    this.sent.model = model;
-    this.post({ type: 'model', model });
-  }
-
-  views(views: CameraView[], enlarged: string | null): void {
-    const sizes = Object.fromEntries(views.map((v) => [v.key, v.key === enlarged ? LARGE_SIZE : TILE_SIZE]));
-    const key = JSON.stringify([views, sizes]);
-
-    if (this.sent.views === key) return;
-
-    this.sent.views = key;
-    this.post({ type: 'views', views, sizes });
-  }
-
-  dispose(): void {
-    this.worker.terminate();
-  }
-
-  private post(message: FeedRequest, transfer: Transferable[] = []): void {
-    this.worker.postMessage(message, transfer);
-  }
+export interface CameraFeed {
+  canvasRef: (key: string) => (canvas: HTMLCanvasElement | null) => void;
+  stream: (stream: FeedStream) => () => void;
 }
 
-export function useCameraFeed(input: CameraFeedInput) {
+export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   const canvases = useRef<Canvases>(new Map());
+  const streams = useRef(new Set<FeedStream>());
   const feedRef = useRef<LiveFeed | null>(null);
   const { active, parts, world, model, views, enlarged, connectCameras } = input;
+  const tiles = input.tiles ?? true;
   const onFrames = useEffectEvent((frames: number) => input.onFrames(frames));
 
   useEffect(() => {
@@ -105,6 +38,8 @@ export function useCameraFeed(input: CameraFeedInput) {
 
     feedRef.current = feed;
     connectCameras(() => feed.link());
+
+    for (const stream of streams.current) feed.stream(stream);
 
     return () => {
       connectCameras(null);
@@ -122,11 +57,24 @@ export function useCameraFeed(input: CameraFeedInput) {
   }, [active, model]);
 
   useEffect(() => {
-    if (active) feedRef.current?.views(views, enlarged);
-  }, [active, views, enlarged]);
+    if (active) feedRef.current?.views(views, tiles ? { enlarged } : null);
+  }, [active, views, tiles, enlarged]);
 
-  return (key: string) => (canvas: HTMLCanvasElement | null) => {
-    if (canvas) canvases.current.set(key, canvas);
-    else canvases.current.delete(key);
+  return {
+    canvasRef: (key) => (canvas) => {
+      if (canvas) canvases.current.set(key, canvas);
+      else canvases.current.delete(key);
+    },
+    stream: (asked) => {
+      const stream = { ...asked, size: streamSize(asked.size), fps: streamFps(asked.fps) };
+
+      streams.current.add(stream);
+      feedRef.current?.stream(stream);
+
+      return () => {
+        streams.current.delete(stream);
+        feedRef.current?.unstream(stream);
+      };
+    },
   };
 }

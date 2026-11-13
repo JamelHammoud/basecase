@@ -1,6 +1,7 @@
 ---
 title: Multiply a try into demonstrations
 date: 2026-11-13
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 5
@@ -51,6 +52,8 @@ The Case's contract judges every variation, and only passes are kept. Multiply a
 ## Limits
 
 Tries recorded before Multiply carry no commands, so their menu has no **Multiply**. Record a new try.
+
+An object the Case's code moved during the try goes exactly where the code put it, without the 15 mm shift.
 
 Only targets move with the objects. A try driven with the keys alone replays the same key presses, so a variation passes only when the moved spot still lies where the hand went.
 

@@ -1,22 +1,17 @@
-import { runFromCache } from '../../../bench/compare/cache.mjs';
 import { MIN_TASKS_TO_SETTLE } from '../../../bench/compare/plan.mjs';
-import { compareStats } from '../../../bench/compare/stats.mjs';
 
-export const LABELS = ['branch', 'main'];
-export const MARGIN = 0.1;
 export const MIN_HELDOUT_TASKS = 3;
+export const COST_BAR = 0.2;
+export const DEFAULT_BUDGET = 40;
 
-const latest = (byTask, ids, seeds) =>
-  [...byTask.entries()].filter(([task]) => ids.includes(task)).flatMap(([, runs]) => runs.slice(-seeds));
+export const budgetFrom = (value) => (Number(value) > 0 ? Number(value) : DEFAULT_BUDGET);
 
-export function measure({ main, branch, ids, seeds }) {
-  return compareStats(
-    [
-      ...latest(branch, ids, seeds).map((entry) => runFromCache(entry, 'branch')),
-      ...latest(main, ids, seeds).map((entry) => runFromCache(entry, 'main')),
-    ],
-    LABELS,
-  );
+export function skipReason({ paused, pulls, now = Date.now() }) {
+  if (paused && now < paused.until) return 'usage is paused';
+
+  const open = pulls.find((pull) => pull.headRefName.startsWith('loop/harness/'));
+
+  return open ? `#${open.number} is already open` : null;
 }
 
 const points = (value) => `${value >= 0 ? '+' : '−'}${Math.abs(Math.round(value * 100))}`;
@@ -26,34 +21,63 @@ const gapText = (stats) =>
     ? `${points(stats.meanDiff)} points (95% interval ${points(stats.ci[0])} to ${points(stats.ci[1])})`
     : 'none';
 
-const tuneVerdict = (tune) => {
-  if (!tune || tune.paired.length < MIN_TASKS_TO_SETTLE)
-    return { verdict: 'discard', reason: `only ${tune?.paired.length ?? 0} tune tasks were graded on both harnesses` };
+const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+
+const perPass = (sets, side) => {
+  const passes = sum(sets.map((set) => set.models[side].passes ?? 0));
+
+  return passes ? sum(sets.map((set) => set.models[side].costUsd ?? 0)) / passes : Infinity;
+};
+
+export function costRise(sets) {
+  const [branch, main] = [perPass(sets, 0), perPass(sets, 1)];
+
+  if (main === Infinity) return branch === Infinity ? null : -1;
+
+  return branch / main - 1;
+}
+
+const inconclusive = (set, paired) => ({
+  verdict: 'inconclusive',
+  reason: `only ${paired} ${set} tasks were graded on both harnesses`,
+});
+
+function heldoutVerdict({ tune, heldout, costBar }) {
+  if (heldout.paired.length < MIN_HELDOUT_TASKS) return inconclusive('held-out', heldout.paired.length);
+
+  if (!heldout.ci || heldout.ci[0] <= 0)
+    return { verdict: 'discard', reason: `held out didn't clearly improve: gap ${gapText(heldout)}` };
+
+  const rise = costRise([tune, heldout]);
+
+  if (rise === null || rise >= costBar)
+    return {
+      verdict: 'discard',
+      reason: `cost per pass rose ${rise === null ? 'without a pass' : `${Math.round(rise * 100)}%`}`,
+    };
+
+  return { verdict: 'keep', reason: `tune improved by ${gapText(tune)}; held out by ${gapText(heldout)}` };
+}
+
+export function decide({ tune, heldout, costBar = COST_BAR }) {
+  if (!tune || tune.paired.length < MIN_TASKS_TO_SETTLE) return inconclusive('tune', tune?.paired.length ?? 0);
 
   if (!tune.ci || tune.ci[0] <= 0)
     return { verdict: 'discard', reason: `tune didn't clearly improve: gap ${gapText(tune)}` };
 
-  return null;
-};
-
-const holds = (heldout, margin) => heldout.meanDiff >= 0 || (heldout.ci !== null && heldout.ci[0] >= -margin);
-
-export function decide({ tune, heldout, margin = MARGIN }) {
-  const failed = tuneVerdict(tune);
-
-  if (failed) return failed;
-
   if (!heldout) return { verdict: 'confirm', reason: `tune improved: gap ${gapText(tune)}` };
 
-  if (heldout.paired.length < MIN_HELDOUT_TASKS)
-    return { verdict: 'discard', reason: `only ${heldout.paired.length} held-out tasks were graded on both harnesses` };
-
-  if (!holds(heldout, margin)) return { verdict: 'discard', reason: `held out regressed: gap ${gapText(heldout)}` };
-
-  return { verdict: 'keep', reason: `tune improved by ${gapText(tune)}; held out ${gapText(heldout)}` };
+  return heldoutVerdict({ tune, heldout, costBar });
 }
 
+export const confirmHeldout = ({ tune, heldout, costBar = COST_BAR }) =>
+  heldout
+    ? decide({ tune, heldout, costBar })
+    : { verdict: 'inconclusive', reason: 'the held-out compare ended without results' };
+
 const pct = (value) => (value === null || value === undefined ? '—' : `${Math.round(value * 100)}%`);
+
+const money = (value) => (Number.isFinite(value) ? `$${value.toFixed(2)}` : '—');
 
 const row = (name, stats) => {
   const [branch, main] = stats.models;
@@ -63,29 +87,48 @@ const row = (name, stats) => {
   return `| ${name} | ${stats.paired.length} | ${pct(main.meanPassRate)} | ${pct(branch.meanPassRate)} | ${gap} | ${interval} | ${stats.wins} / ${stats.losses} / ${stats.ties} | ${stats.signP ?? '—'} |`;
 };
 
+const costLine = (sets) => {
+  const rise = costRise(sets);
+  const change = rise === null ? '' : ` (${rise >= 0 ? '+' : '−'}${Math.abs(Math.round(rise * 100))}%)`;
+
+  return `Cost per pass: ${money(perPass(sets, 1))} on \`main\`, ${money(perPass(sets, 0))} here${change}.`;
+};
+
+const reportBlock = (name, measured) =>
+  measured?.report
+    ? `<details><summary>${name}: <code>report.md</code></summary>\n\n${measured.report.replace(/^# .*\n+/, '')}\n</details>`
+    : '';
+
 export function measuredMarkdown({ tune, heldout, settings, harness, runs }) {
+  const sets = [tune, heldout].filter(Boolean).map((measured) => measured.stats);
+
   return [
     '| Set | Tasks | `main` | This branch | Gap, points | 95% interval | Better / worse / same | Sign test p |',
     '|---|---|---|---|---|---|---|---|',
-    row('Tune', tune),
-    heldout ? row('Held out', heldout) : '| Held out | — | — | — | — | — | — | — |',
+    row('Tune', tune.stats),
+    heldout ? row('Held out', heldout.stats) : '| Held out | — | — | — | — | — | — | — |',
     '',
-    `Mean pass rate per task, ${settings.seeds} seeds each, answered by \`${settings.served}\` at effort ${settings.effort}. Harness \`${harness.main}\` on \`main\`, \`${harness.branch}\` here. Interval: bootstrap over tasks (\`bench/compare/stats.mjs\`).`,
+    `Mean pass rate per task, up to ${settings.seeds} seeds each, answered by \`${settings.served}\` at effort ${settings.effort}. Harness \`${harness.main}\` on \`main\`, \`${harness.branch}\` here. ${costLine(sets)} Measured with \`bench/compare.mjs --against\`.`,
     '',
     `Runs (\`bench/runs/index.jsonl\`): ${runs.map((name) => `\`${name}\``).join(', ')}.`,
-  ].join('\n');
+    '',
+    reportBlock('Tune', tune),
+    '',
+    reportBlock('Held out', heldout),
+  ]
+    .join('\n')
+    .trimEnd();
 }
 
-export function lessonFields({ weakness, change, decision, runs }) {
+export function experimentFields({ weakness, change, decision, runs }) {
   return {
-    title: `${change.title} didn't help ${weakness.category}`,
+    title: change.title,
     lesson: [
       `Weakness: ${weakness.category} micro-evals, ${Math.round(weakness.rate * 100)}% of tune runs passing on main.`,
-      `Tried: ${change.summary}`,
-      `Not kept: ${decision.reason}.`,
-      "Don't retry this change as it was; a new attempt at this weakness needs a different cause or fix.",
+      `Change: ${change.summary}`,
+      `${decision.verdict === 'keep' ? 'Kept' : 'Not kept'}: ${decision.reason}.`,
     ].join(' '),
     evidence: runs,
-    tags: ['harness', weakness.category],
+    tags: [weakness.category, decision.verdict === 'keep' ? 'kept' : 'not kept'],
   };
 }

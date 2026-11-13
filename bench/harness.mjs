@@ -118,11 +118,11 @@ function writeBenchConfig(app) {
   fs.writeFileSync(path.join(app, BENCH_VITE_CONFIG), `${body.join('\n')}\n`);
 }
 
-export function snapshotApp(label) {
+export function snapshotApp(label, source = root) {
   const app = fs.mkdtempSync(path.join(os.tmpdir(), `studio-bench-${label}-`));
 
-  for (const f of APP_FILES.filter((x) => fs.existsSync(path.join(root, x))))
-    fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
+  for (const f of APP_FILES.filter((x) => fs.existsSync(path.join(source, x))))
+    fs.cpSync(path.join(source, f), path.join(app, f), { recursive: true });
 
   linkNodeModules(app);
   writeBenchConfig(app);
@@ -224,8 +224,8 @@ function stopper({ vite, app, givenApp }) {
   };
 }
 
-export async function openStudio({ label, port, env = {}, givenApp, log = console.log, agent = true }) {
-  const app = givenApp ? path.resolve(givenApp) : snapshotApp(label);
+export async function openStudio({ label, port, env = {}, givenApp, source, log = console.log, agent = true }) {
+  const app = givenApp ? path.resolve(givenApp) : snapshotApp(label, source);
   const base = `http://127.0.0.1:${port}`;
   const ctx = { app, givenApp };
   const cleanup = stopper(ctx);

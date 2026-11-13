@@ -3,6 +3,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
+export const HARNESS_EXCLUDES = [
+  ':(exclude)**/*.test.*',
+  ':(exclude)**/*.css',
+  ':(exclude)**/*.md',
+  ':(exclude)**/AGENTS.md',
+];
+
 export const HARNESS_PATHS = [
   'electron/cad-agent-prompt.mjs',
   'electron/cad-agent-guides',
@@ -29,16 +36,13 @@ export const HARNESS_PATHS = [
   'public/parts',
   'package-lock.json',
   'vite.config.ts',
-  ':(exclude)**/*.test.*',
-  ':(exclude)**/*.css',
-  ':(exclude)**/*.md',
-  ':(exclude)**/AGENTS.md',
+  ...HARNESS_EXCLUDES,
 ];
 
 const git = (cwd, args) => execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
 
-function untrackedDigest(cwd) {
-  const files = git(cwd, ['ls-files', '--others', '--exclude-standard', '--', ...HARNESS_PATHS])
+function untrackedDigest(cwd, paths) {
+  const files = git(cwd, ['ls-files', '--others', '--exclude-standard', '--', ...paths])
     .split('\n')
     .filter(Boolean)
     .sort();
@@ -49,12 +53,12 @@ function untrackedDigest(cwd) {
   return hash.digest('hex');
 }
 
-export function harnessKey(cwd) {
+export function harnessKey(cwd, paths = HARNESS_PATHS) {
   const hash = crypto.createHash('sha256');
 
-  hash.update(git(cwd, ['ls-files', '-s', '--', ...HARNESS_PATHS]));
-  hash.update(git(cwd, ['diff', 'HEAD', '--', ...HARNESS_PATHS]));
-  hash.update(untrackedDigest(cwd));
+  hash.update(git(cwd, ['ls-files', '-s', '--', ...paths]));
+  hash.update(git(cwd, ['diff', 'HEAD', '--', ...paths]));
+  hash.update(untrackedDigest(cwd, paths));
 
   return hash.digest('hex').slice(0, 16);
 }

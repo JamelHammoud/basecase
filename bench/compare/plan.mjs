@@ -38,3 +38,16 @@ export function historicalRunCost(entries, taskIds) {
 
   return mean(taskIds.map(ofTask));
 }
+
+export const liveRunsPlanned = ({ tasks, rounds, caches }) =>
+  caches.map((byTask) => tasks.reduce((n, task) => n + Math.max(0, rounds - (byTask.get(task.id)?.length ?? 0)), 0));
+
+export function splitSlots(parallel, [a, b]) {
+  if (!a || !b) return [a ? parallel : 0, b ? parallel : 0];
+
+  if (parallel < 2) return [1, 1];
+
+  const first = Math.min(parallel - 1, Math.max(1, Math.round((parallel * a) / (a + b))));
+
+  return [first, parallel - first];
+}

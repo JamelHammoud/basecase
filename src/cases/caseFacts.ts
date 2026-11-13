@@ -11,7 +11,7 @@ const FLOOR_SLACK_MM = 5;
 const UP = new THREE.Vector3(0, 1, 0);
 const D2R = Math.PI / 180;
 
-export const CASE_SIGNALS = ['score', 'elapsed', 'timer'] as const;
+export const CASE_SIGNALS = ['score', 'elapsed', 'timer', 'torque'] as const;
 
 export const countFact = (spot: string) => `${spot}-count`;
 
@@ -50,7 +50,7 @@ function score(rule: ScoreRule | undefined, inSpot: Map<string, string>, started
 }
 
 export interface CaseFactReader {
-  read(poses: Float64Array, seconds: number): CaseFacts;
+  read(poses: Float64Array, seconds: number, torque?: number): CaseFacts;
 }
 
 export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
@@ -63,7 +63,7 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
   const startedIn = new Map(movers.map((o) => [o.id, spotOf(o, new THREE.Vector3(...o.position))]));
 
   return {
-    read(poses, seconds) {
+    read(poses, seconds, torque) {
       const deltas = worldDeltas(model, poses);
       const placed = spots.map((s) => movedSpot(s, deltas.get(s.id)));
       const facts: CaseFacts = { elapsed: seconds, timer: Math.max(0, kase.task.seconds - seconds) };
@@ -91,6 +91,8 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
       const points = score(kase.task.score, inSpot, startedIn);
 
       if (points !== undefined) facts.score = points;
+
+      if (torque !== undefined) facts.torque = torque;
 
       return facts;
     },

@@ -1,5 +1,5 @@
 import { motorsCanRun, radiansFromCounts, type RobotState } from './robotState';
-import { robotBenchDriving, robotSceneJoints, robotSnapshot, sendRobotCommand } from './robotStore';
+import { robotBenchDriving, robotFaultHeld, robotSceneJoints, robotSnapshot, sendRobotCommand } from './robotStore';
 
 export const MIRROR_EVERY_MS = 25;
 
@@ -29,7 +29,8 @@ export function offerSimTargets(ids: readonly string[], targets: ArrayLike<numbe
   const state = robotSnapshot();
   const joints = robotSceneJoints();
 
-  if (state.link !== 'connected' || !motorsCanRun(state.mode) || !joints || robotBenchDriving()) return;
+  if (state.link !== 'connected' || !motorsCanRun(state.mode) || !joints || robotBenchDriving() || robotFaultHeld())
+    return;
 
   if (joints.length !== state.spec?.ids.length) return;
 

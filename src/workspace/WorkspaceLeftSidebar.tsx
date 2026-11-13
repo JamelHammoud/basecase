@@ -4,6 +4,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { setUpServos } from '../robot/servoSetup';
 import { measuredJoints } from '../reality/measuredJoints';
 import { calibrateConnectedRobot, rollBackCalibration } from './calibrationActions';
+import { canReplayRuns, replayRobotRun } from './robotReplay';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -83,6 +84,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         },
         onSetUpServos: () =>
           void setUpServos({ joints: core.project.joints ?? [], parts, select: core.setSelectedIds }),
+        onReplay: canReplayRuns(core) ? (messageId) => replayRobotRun(core, messageId) : undefined,
       }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}

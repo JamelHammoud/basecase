@@ -8,6 +8,7 @@ import { sceneRobot } from '../robot/sceneRobot';
 import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { calibrateConnectedRobot } from './calibrationActions';
+import { replayableFault, replayRobotRun } from './robotReplay';
 import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -41,6 +42,23 @@ function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): 
         showOperate();
         void setUpServos({ joints, parts: core.parts, select: core.setSelectedIds });
       },
+    },
+  ];
+}
+
+function replayCommands(core: WorkspaceCore): Command[] {
+  const messageId = replayableFault(core);
+
+  if (messageId === null) return [];
+
+  return [
+    {
+      id: 'replay-in-sim',
+      group: 'Operate',
+      label: 'Replay in Sim',
+      icon: <OperateIcon className={ic} />,
+      keywords: 'fault stall replay robot run case simulate torque',
+      run: () => replayRobotRun(core, messageId),
     },
   ];
 }
@@ -93,5 +111,6 @@ export function operateCommands(inputs: CommandInputs): Command[] {
         ]
       : []),
     ...setUpServosCommands(inputs, showOperate),
+    ...replayCommands(core),
   ];
 }

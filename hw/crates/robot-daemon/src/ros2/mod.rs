@@ -176,6 +176,7 @@ impl Ros2Daemon {
             at_us,
             code: fault.code().into(),
             message: fault.ros2_message(),
+            id: None,
         });
     }
 

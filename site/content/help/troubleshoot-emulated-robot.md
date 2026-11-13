@@ -54,6 +54,8 @@ The daemon says "A fault is still active. Go back to Look and clear it first." A
 4. Click **Set Up**.
 5. Click **Test**.
 
+From the fault until you climb again, the simulation sends the robot no commands. On an arm, **Replay in Sim** under the fault plays the 20 seconds before it in the simulation. Steps are in [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).
+
 ## "The app stopped talking to the robot"
 
 The full message is "The app stopped talking to the robot, so the robot is holding still." The app missed its 100 ms check-in with the robot daemon. That happens when the computer is heavily loaded or goes to sleep.

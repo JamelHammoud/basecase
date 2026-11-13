@@ -145,6 +145,7 @@ impl G1Daemon {
             at_us,
             code: fault.code().into(),
             message: fault.g1_message(),
+            id: None,
         });
     }
 

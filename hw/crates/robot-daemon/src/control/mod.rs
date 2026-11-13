@@ -40,7 +40,12 @@ pub struct Inputs {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DaemonEvent {
-    Fault { at_us: u64, code: String, message: String },
+    Fault {
+        at_us: u64,
+        code: String,
+        message: String,
+        id: Option<u8>,
+    },
     Mode { at_us: u64, mode: Mode },
     Stopped { at_us: u64, message: String },
     Completed { at_us: u64, mode: Mode },
@@ -190,6 +195,7 @@ impl Daemon {
             at_us,
             code: fault.code().into(),
             message: fault.message(),
+            id: fault.motor_id(),
         });
     }
 

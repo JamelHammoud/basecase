@@ -89,6 +89,8 @@ A Case's name defaults to its goal and world, such as "Push a Box in a Corridor"
 3. The contract's success rule and failure rules read those readings.
 4. The try passes when the success rule holds and no failure rule fires.
 
+A Case made by **Replay in Sim** reads torque instead: each frame's highest joint torque, as a share of the most its servo can push.
+
 A success rule is built from a few parts:
 
 | Part | Holds when |

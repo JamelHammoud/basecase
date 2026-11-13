@@ -73,7 +73,7 @@ The right panel has a tab for each job:
 - **Inspect** edits the selected part's size, position, rotation and look.
 - **Pose** moves a robot's joints. It shows while a robot is selected.
 - **Simulate** runs the scene under physics. It shows once the scene has movable joints.
-- **Build** holds the Checks, bill of materials, build guide and printing. Its dot is green when the design is ready to build, and red when something needs fixing.
+- **Build** holds the Checks, bill of materials, build guide and printing. A red dot on it means something is left to fix. Its tooltip says how many.
 - **Agent** is where you talk to the agent.
 
 Drag the edge of the sidebar or the right panel to resize it. Double-click the edge to put it back to its default width.

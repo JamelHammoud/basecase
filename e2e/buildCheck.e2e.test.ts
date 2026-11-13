@@ -73,6 +73,8 @@ const section = (title: RegExp) => app.page.locator(visible('section'), { hasTex
 
 const headerText = async () => (await checks().locator('header').first().textContent()) ?? '';
 
+const buildTabDot = () => app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().getByRole('img');
+
 beforeAll(async () => {
   app = await openApp();
 }, 120000);
@@ -88,6 +90,7 @@ describe('Checks', () => {
     await expect.poll(() => checks().isVisible(), { timeout: 20000 }).toBe(true);
     await expect.poll(headerText, { timeout: 45000 }).toMatch(/Ready to build|\d+ to fix/);
     expect(await checks().textContent()).toContain('Parts attached');
+    expect(await buildTabDot().count()).toBe(/Ready to build/.test(await headerText()) ? 0 : 1);
 
     const leads = await checks().evaluate(
       (section) => section.parentElement?.querySelector(':scope > section') === section,
@@ -99,6 +102,9 @@ describe('Checks', () => {
   it('let you ignore a blocker for the whole project, and restore it', async () => {
     await loadStandIns();
     await expect.poll(headerText, { timeout: 45000 }).toMatch(/[1-9]\d* to fix/);
+    await expect
+      .poll(() => buildTabDot().getAttribute('aria-label'))
+      .toBe((await headerText()).match(/\d+ to fix/)?.[0]);
     expect(await checks().getByRole('button', { name: 'Fix' }).count()).toBe(0);
     await checks()
       .getByRole('button', { name: /^Real parts/ })

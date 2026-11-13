@@ -57,7 +57,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
     - Part types are **Solid / Cutout / Guide**.
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.
     - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.agents/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbours before shipping.
-19. **No status dots** unless they report an error or a live background process. The agent panel shows connection state only when disconnected.
+19. **No status dots** unless they report an error or a live background process. The agent panel shows connection state only when disconnected. A tab's dot is its `status` in `PanelTabs`, whose only tones are `live` (blue) and `problem` (red), named in the app's own tooltip: the Build tab shows red while something is left to fix and nothing once it's Ready to build.
 
 ### 3c. Words and patterns to avoid
 

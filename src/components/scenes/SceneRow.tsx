@@ -1,5 +1,6 @@
 import React from 'react';
 import type { SavedSceneSummary } from '../../types/robotics';
+import { PreviewImage } from '../../design-system';
 import { timeAgo } from '../../utils/timeAgo';
 import { RenameField } from '../library/Tile';
 import { partCount } from './partCount';
@@ -52,9 +53,7 @@ export const SceneRow: React.FC<SceneRowProps> = ({
         />
       )}
       <span className="preview preview-sm relative pointer-events-none shrink-0 w-[53px] h-[40px]">
-        {thumb && (
-          <img src={thumb} alt="" draggable={false} className="absolute inset-0 w-full h-full object-contain p-[3px]" />
-        )}
+        <PreviewImage src={thumb} className="absolute inset-0 p-[3px]" />
       </span>
       <span className="relative flex-1 min-w-0 pointer-events-none">
         {renaming ? (

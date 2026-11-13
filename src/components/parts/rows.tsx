@@ -6,7 +6,7 @@ import { isSourcedId } from '../../data/sourcedItems';
 import { PART_DRAG_TYPE, setSceneDrag } from '../../data/dnd';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { BrowseRow, RowActions, Tooltip, PlusIcon } from '../../design-system';
+import { BrowseRow, PreviewImage, RowActions, Tooltip, PlusIcon } from '../../design-system';
 import type { Category } from './partsViews';
 
 export const Thumb: React.FC<{ url?: string; className?: string; empty?: boolean }> = ({
@@ -15,8 +15,7 @@ export const Thumb: React.FC<{ url?: string; className?: string; empty?: boolean
   empty,
 }) => (
   <div className={`preview preview-sm ${className}`}>
-    {url && <img src={url} alt="" draggable={false} className="w-full h-full object-contain p-0.5" />}
-    {!url && !empty && <div className="w-full h-full shimmer" />}
+    <PreviewImage src={empty ? '' : url} className="p-0.5" />
   </div>
 );
 

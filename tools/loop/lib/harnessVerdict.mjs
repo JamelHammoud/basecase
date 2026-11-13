@@ -70,6 +70,11 @@ export function decide({ tune, heldout, costBar = COST_BAR }) {
   return heldoutVerdict({ tune, heldout, costBar });
 }
 
+export const confirmHeldout = ({ tune, heldout, costBar = COST_BAR }) =>
+  heldout
+    ? decide({ tune, heldout, costBar })
+    : { verdict: 'inconclusive', reason: 'the held-out compare ended without results' };
+
 const pct = (value) => (value === null || value === undefined ? '—' : `${Math.round(value * 100)}%`);
 
 const money = (value) => (Number.isFinite(value) ? `$${value.toFixed(2)}` : '—');

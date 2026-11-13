@@ -16,7 +16,14 @@ import {
   unlinkRuns,
 } from '../lib/benchRuns.mjs';
 import { openPulls, repoVariable } from '../lib/github.mjs';
-import { budgetFrom, decide, experimentFields, measuredMarkdown, skipReason } from '../lib/harnessVerdict.mjs';
+import {
+  budgetFrom,
+  confirmHeldout,
+  decide,
+  experimentFields,
+  measuredMarkdown,
+  skipReason,
+} from '../lib/harnessVerdict.mjs';
 import { publish } from '../lib/pull.mjs';
 import { run } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
@@ -102,7 +109,7 @@ function measureBranch({ worktree, mainSha, budget, log }) {
 
   const heldout = compare('heldout');
 
-  return { tune, heldout, decision: decide({ tune: tune.stats, heldout: heldout?.stats }) };
+  return { tune, heldout, decision: confirmHeldout({ tune: tune.stats, heldout: heldout?.stats }) };
 }
 
 const usedRuns = ({ tune, heldout }) => [...new Set([...(tune?.runs ?? []), ...(heldout?.runs ?? [])])].sort();
@@ -216,9 +223,9 @@ function attempt({ worktree, base, budget, log }) {
 
   unlinkRuns(worktree.dir);
 
-  if (decision.verdict === 'inconclusive') return log(`nothing recorded: ${decision.reason}`);
+  if (decision.verdict === 'discard') return recordNull({ worktree, weakness, change, decision, runs, log });
 
-  if (decision.verdict !== 'keep') return recordNull({ worktree, weakness, change, decision, runs, log });
+  if (decision.verdict !== 'keep') return log(`nothing recorded: ${decision.reason}`);
 
   recordExperiment({ worktree, weakness, change, decision, runs });
 

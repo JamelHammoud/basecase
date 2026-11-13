@@ -49,6 +49,8 @@ function buildArms() {
   const ref = checkoutRef({ cwd: root, ref: against });
 
   process.on('exit', ref.remove);
+  process.once('SIGINT', () => process.exit(130));
+  process.once('SIGTERM', () => process.exit(143));
 
   return {
     ref,

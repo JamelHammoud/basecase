@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compareStats } from '../../../bench/compare/stats.mjs';
 import {
   budgetFrom,
+  confirmHeldout,
   costRise,
   decide,
   DEFAULT_BUDGET,
@@ -47,10 +48,17 @@ describe('decide', () => {
     expect(decide({ tune: null }).verdict).toBe('inconclusive');
   });
 
+  it('records nothing when the held-out compare ends without results', () => {
+    expect(confirmHeldout({ tune: tuneWin, heldout: undefined })).toEqual({
+      verdict: 'inconclusive',
+      reason: 'the held-out compare ended without results',
+    });
+  });
+
   it('keeps a change only when held out clearly improves and cost per pass rises less than 20%', () => {
     const heldout = measure({ tasks: HELD, branch: ALL, main: ONE_IN_THREE, branchCost: 0.6 });
 
-    expect(decide({ tune: tuneWin, heldout }).verdict).toBe('keep');
+    expect(confirmHeldout({ tune: tuneWin, heldout }).verdict).toBe('keep');
   });
 
   it('discards a change that only holds on held out, where it once was kept', () => {

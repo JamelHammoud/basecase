@@ -2,6 +2,9 @@ import React, { useRef, useState } from 'react';
 import { MODEL_DRAG_TYPE } from '../../data/dnd';
 import { HoverCard, Tooltip, PlusIcon } from '../../design-system';
 
+const HIDDEN_UNTIL_HOVER =
+  'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto';
+
 const TileThumb: React.FC<{ thumb: string | undefined }> = ({ thumb }) => {
   if (thumb) {
     return (
@@ -92,7 +95,7 @@ export const Tile: React.FC<{
       {!renaming && (
         <Tooltip
           label="Insert"
-          className="absolute top-[8px] right-[8px] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity"
+          className={`absolute top-[8px] right-[8px] transition-opacity ${HIDDEN_UNTIL_HOVER}`}
         >
           <button
             type="button"

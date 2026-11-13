@@ -38,16 +38,34 @@ afterAll(async () => {
   await app?.close();
 });
 
-describe('library tiles', () => {
-  it('show only Insert on hover', async () => {
+describe('Library', () => {
+  it('saves the scene from the New Model menu in the view header', async () => {
+    await app.page.keyboard.press('a');
+    await app.page.getByRole('button', { name: /^Cube/ }).first().click();
+    expect(await partCount(app.page)).toBe(1);
+
     await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
+
+    const header = app.page.locator(shown('aside div:has(> h2)'), { hasText: 'Library' });
+
+    await header.getByRole('button', { name: 'New model' }).click();
+    await app.page.getByRole('menuitem', { name: 'Save Whole Scene' }).click();
+
+    await expect.poll(() => app.posts.some((p) => p.route === 'save-model')).toBe(true);
+    expect(await app.page.locator(shown('aside')).getByText('Models', { exact: true }).count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('shows only Insert on a hovered tile', async () => {
     await tile().hover();
 
     await expect.poll(() => tile().getByRole('button', { name: 'Insert Bracket' }).isVisible()).toBe(true);
     expect(await tile().getByRole('button', { name: 'More' }).count()).toBe(0);
   });
 
-  it('open the model menu on right-click and insert from it', async () => {
+  it('opens the model menu on right-click and inserts from it', async () => {
+    const before = await partCount(app.page);
+
     await tile().click({ button: 'right' });
 
     for (const name of ['Insert', 'Rename', 'Duplicate', 'Delete']) {
@@ -56,7 +74,7 @@ describe('library tiles', () => {
 
     await app.page.getByRole('menuitem', { name: 'Insert' }).click();
 
-    await expect.poll(() => partCount(app.page)).toBeGreaterThan(0);
+    await expect.poll(() => partCount(app.page)).toBeGreaterThan(before);
     expect(app.errors).toEqual([]);
   });
 });

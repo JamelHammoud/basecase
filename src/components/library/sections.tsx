@@ -1,10 +1,9 @@
 import React from 'react';
-import { Button, SectionHeader, type ContextMenuEntry } from '../../design-system';
+import { Button, type ContextMenuEntry } from '../../design-system';
 import type { CustomModelDefinition } from '../../types/robotics';
 import type { LibraryPanelProps } from '../LibraryPanel';
 import { modelMenu } from './menus';
 import { ModelTile } from './ModelTile';
-import { NewModelMenu } from './NewModelMenu';
 import { InlineEmpty } from './Tile';
 
 const GRID = 'grid grid-cols-2 gap-x-[8px] gap-y-[12px] px-[4px]';
@@ -59,25 +58,9 @@ export const ModelsSection: React.FC<{
     />
   );
 
-  return (
-    <section className="mb-3">
-      <SectionHeader
-        title="Models"
-        action={
-          <NewModelMenu
-            canSaveSelection={props.selectedIds.length > 0}
-            canSaveScene={props.parts.length > 0}
-            onSaveModel={props.onSaveModel}
-            onImportSvg={props.onImportSvg}
-            onImageToModel={props.onImageToModel}
-          />
-        }
-      />
-      {models.length === 0 ? (
-        <InlineEmpty title="No models" action={<EmptyModelsAction props={props} />} />
-      ) : (
-        <div className={GRID}>{models.map(tile)}</div>
-      )}
-    </section>
+  return models.length === 0 ? (
+    <InlineEmpty title="No models" action={<EmptyModelsAction props={props} />} />
+  ) : (
+    <div className={GRID}>{models.map(tile)}</div>
   );
 };

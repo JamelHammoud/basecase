@@ -10,6 +10,8 @@ export interface RefusedHandoff extends Handoff {
 
 export const handoffKey = (h: Handoff) => `${h.from}->${h.to}`;
 
+export const notOnBody = (pair: Handoff) => `${pair.to} doesn’t run on this robot.`;
+
 export interface HandoffKit {
   skills: readonly SkillContract[];
   policies: StampScene['skills'];

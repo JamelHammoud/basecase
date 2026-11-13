@@ -1,6 +1,6 @@
 import { type RefObject, useState } from 'react';
 import type { CompileResult } from '../routines/compile';
-import { handoffKey, refusedHandoffs, type HandoffProofs } from '../routines/handoffs';
+import { handoffKey, notOnBody, refusedHandoffs, type HandoffProofs } from '../routines/handoffs';
 import { scriptedDrive } from '../routines/physicsDrive';
 import { PROOF_SEEDS } from '../routines/physicsProver';
 import { inRoutinesWorker } from '../routines/routinesClient';
@@ -9,6 +9,7 @@ import { pairStamp } from '../routines/skillStamps';
 import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
 import { modelHashes, type Skill } from '../skills/artifacts';
+import { errorMessage } from '../utils/errorMessage';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { stubbedPorts, type HandoffPorts, type HandoffStub } from './handoffStub';
 import { sceneSkills, type OwnSkill, type RoutineSkills } from './routineCheck';
@@ -82,7 +83,7 @@ export function useHandoffs(input: HandoffsInput) {
     return skill && proof ? { skill, proof, target: found.target } : { reason };
   };
 
-  const prove = async (pair: Handoff, node: string): Promise<TransitionProof | null> => {
+  const proveQuietly = async (pair: Handoff, node: string): Promise<TransitionProof | null> => {
     const found: { proof: TransitionProof | null } = { proof: null };
 
     await during(node, async () => {
@@ -94,6 +95,16 @@ export function useHandoffs(input: HandoffsInput) {
     return found.proof;
   };
 
+  const prove = async (pair: Handoff, node: string) => {
+    const proof = await proveQuietly(pair, node).catch((error: unknown) => {
+      input.showToast(errorMessage(error));
+
+      return undefined;
+    });
+
+    if (proof === null) input.showToast(notOnBody(pair));
+  };
+
   const proveRefused = async (compile: (skillsFor: RoutineSkills) => Promise<CompileResult>) => {
     const first = await compile(skills);
     const unproven = first.ok ? [] : refusedHandoffs(first.errors).filter((h) => h.falls === null);
@@ -103,7 +114,7 @@ export function useHandoffs(input: HandoffsInput) {
     const fresh: HandoffProofs = {};
 
     for (const pair of unproven) {
-      const proof = await prove(pair, pair.node ?? '');
+      const proof = await proveQuietly(pair, pair.node ?? '');
 
       if (proof) fresh[handoffKey(pair)] = proof;
     }
@@ -113,7 +124,7 @@ export function useHandoffs(input: HandoffsInput) {
 
   const train = (pair: Handoff, node: string) =>
     during(node, async () => {
-      const done = await trained(pair);
+      const done = await trained(pair).catch((error: unknown) => ({ reason: errorMessage(error) }));
 
       if (!done) return;
 

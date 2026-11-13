@@ -34,7 +34,7 @@ A Routine only switches between two skills once the switch has run in the simula
 
 ![The Wave step after Walk, with Prove and Stop First](/help/prove-a-hand-off-between-skills/refused.png)
 
-Basecase runs the switch 8 times on your robot, each from a slightly different start and at a different moment in the first skill. With no falls, the step turns ready and the Routine can run.
+Basecase runs the switch 8 times on your robot, each from a slightly different start and at a different moment in the first skill. With no falls, the step turns ready and the Routine can run. If the second skill can't run on your robot, a message says so.
 
 ## When it falls
 
@@ -51,6 +51,6 @@ To avoid the switch instead, click **Stop First**. The robot settles before the 
 
 ## Limits
 
-A proof belongs to the robot and the two skills as they are. A change to a mass, size or joint makes the switch unproven again. So does retraining either skill. **Train Hand-off** retrains moves only, not skills taught from a sentence, and it needs the desktop app.
+A proof belongs to the robot and the two skills as they are. A change to a mass, size or joint makes the switch unproven again. So does retraining either skill. **Train Hand-off** retrains moves only, not skills taught from a sentence, and it needs the desktop app. Only one skill trains at a time, so while another trains, a message names it.
 
 Case logic shows in the same Routines tab, so its steps get **Prove** too. When the agent builds a Routine or Case logic, it proves each switch itself and tells you about any that fell.

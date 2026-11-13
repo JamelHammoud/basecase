@@ -3,6 +3,7 @@ import type { Skill } from '../skills/artifacts';
 import type { Environment } from '../skills/environment';
 import type { ForgeRunner, SkillSave } from '../skills/forgeRunner';
 import { trainHandoffSkill } from '../skills/handoff';
+import { notOnBody } from './handoffs';
 import { handoffStates, proveHandoff, type KitScene } from './physicsKit';
 import type { Handoff, TransitionProof } from './schema';
 
@@ -39,7 +40,7 @@ export async function trainHandoff(input: HandoffTrainInput): Promise<HandoffRes
   const skills = scene.skills.map((s) => (s === target ? trained : s));
   const proof = proveHandoff({ ...scene, skills }, pair);
 
-  if (!proof) return { skill: null, proof: null, reason: `${pair.to} doesn’t run on this robot.` };
+  if (!proof) return { skill: null, proof: null, reason: notOnBody(pair) };
 
   if (proof.falls > 0)
     return {

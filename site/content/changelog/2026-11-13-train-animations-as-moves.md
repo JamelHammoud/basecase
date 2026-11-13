@@ -21,8 +21,12 @@ A move that doesn't loop also has to hold its last pose for 2 s. Holding still n
 
 Editing the animation puts its row back to Train, since the policy learned the old one. A change to the robot itself retrains moves you've trained before in the background, the same way it does Stand and Walk.
 
+## In a Routine
+
+A Routine or Case logic can switch from Walk or Settle straight into a move, or into a skill you taught from a sentence. The switch runs 8 times in simulation first, as in [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).
+
 ## What it doesn't do
 
-The Robot Package doesn't call moves. A Routine can, once the switch into the move is proved, as in [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills). Filming yourself and turning the clip into an animation is the next step.
+The Robot Package doesn't call moves. Filming yourself and turning the clip into an animation is the next step.
 
 Steps are in [Train an animation as a move](/help/train-an-animation-as-a-move).

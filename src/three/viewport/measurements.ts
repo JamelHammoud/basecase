@@ -1,11 +1,9 @@
 import * as THREE from 'three';
 import { outputLine } from '../analysis/rotorSplit';
-import { worldTriangles } from '../meshMeasure';
+import { localTriangles, rigidFrame } from '../meshMeasure';
 import { floorPoint, hitPartId, partMeshes, rayAt } from './picking';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
-
-const UNIT = new THREE.Vector3(1, 1, 1);
 
 const toVec3 = (v: THREE.Vector3) => v.toArray() as Vec3;
 
@@ -48,32 +46,10 @@ export function boundsOf(ctx: ViewportContext, ids: string[]): { min: Vec3; max:
   return box.isEmpty() ? null : { min: toVec3(box.min), max: toVec3(box.max) };
 }
 
-function inverseRigid(object: THREE.Object3D) {
-  const t = new THREE.Vector3();
-  const q = new THREE.Quaternion();
-
-  object.matrixWorld.decompose(t, q, new THREE.Vector3());
-
-  return { t, q, inverse: new THREE.Matrix4().compose(t, q, UNIT).invert() };
-}
-
 export function partTriangles(ctx: ViewportContext, id: string): Float32Array | null {
   const object = ctx.layer.get(id);
 
-  if (!object) {
-    return null;
-  }
-
-  const triangles = worldTriangles(object);
-  const { inverse } = inverseRigid(object);
-  const v = new THREE.Vector3();
-
-  for (let i = 0; i < triangles.length; i += 3) {
-    v.set(triangles[i], triangles[i + 1], triangles[i + 2]).applyMatrix4(inverse);
-    triangles.set([v.x, v.y, v.z], i);
-  }
-
-  return triangles;
+  return object ? localTriangles(object) : null;
 }
 
 export function servoOutput(ctx: ViewportContext, id: string): { point: Vec3; axis: Vec3 } | null {
@@ -83,21 +59,13 @@ export function servoOutput(ctx: ViewportContext, id: string): { point: Vec3; ax
     return null;
   }
 
-  object.updateWorldMatrix(true, true);
-
-  const { t, q, inverse } = inverseRigid(object);
-  const triangles = worldTriangles(object);
+  const triangles = localTriangles(object);
 
   if (!triangles.length) {
     return null;
   }
 
-  const v = new THREE.Vector3();
-
-  for (let i = 0; i < triangles.length; i += 3) {
-    v.fromArray(triangles, i).applyMatrix4(inverse).toArray(triangles, i);
-  }
-
+  const { t, q } = rigidFrame(object);
   const line = outputLine(triangles);
 
   return {

@@ -142,4 +142,31 @@ describe('annotate marks', () => {
     expect(meanX(after[0])).toBeGreaterThan(meanX(before) + 1);
     expect(app.errors).toEqual([]);
   });
+
+  it('deletes every mark after asking, with Undo', async () => {
+    const { x, y } = await canvasCenter();
+
+    await draw([
+      [x - 200, y - 160],
+      [x + 200, y - 160],
+    ]);
+    expect(await marks()).toHaveLength(2);
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => app.page.getByLabel('Mark label').count()).toBe(0);
+
+    await app.page.keyboard.press('Meta+k');
+    await app.page.keyboard.type('Delete Marks');
+    await app.page.keyboard.press('Enter');
+
+    const dialog = app.page.getByRole('dialog');
+
+    await expect.poll(() => dialog.getByText('Delete 2 marks?').count()).toBe(1);
+    expect(await marks()).toHaveLength(2);
+    await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect.poll(async () => (await marks()).length).toBe(0);
+
+    await app.page.getByRole('status').getByRole('button', { name: 'Undo' }).click();
+    await expect.poll(async () => (await marks()).length).toBe(2);
+    expect(app.errors).toEqual([]);
+  });
 });

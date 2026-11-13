@@ -2,30 +2,11 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { extractCopy } from './eslint/copy-strings.mjs';
-
-const SOURCES = [/^src\/.+\.tsx?$/, /^electron\/app-menu\.mjs$/];
-const SKIPPED = [/\.d\.ts$/, /\.(test|spec|e2e)\.[cm]?[jt]sx?$/, /(^|\/)(__tests__|fixtures?)\//];
-
-export const isCopySource = (file) =>
-  SOURCES.some((pattern) => pattern.test(file)) && !SKIPPED.some((pattern) => pattern.test(file));
+import { diffStrings, isScanned } from './copy/budget.mjs';
+import { extractStrings } from './copy/extract.mjs';
 
 const stringsOf = (file, source) =>
-  source === null || !isCopySource(file) ? [] : extractCopy(source, file).map((entry) => ({ ...entry, file }));
-
-function subtract(list, other) {
-  const left = new Map();
-
-  for (const { text } of other) left.set(text, (left.get(text) ?? 0) + 1);
-
-  return list.filter(({ text }) => {
-    const remaining = left.get(text) ?? 0;
-
-    left.set(text, remaining - 1);
-
-    return remaining <= 0;
-  });
-}
+  source === null || !isScanned(file) ? [] : extractStrings(source, file).map((entry) => ({ ...entry, file }));
 
 function pairByKind(removed, added) {
   const unpaired = [...added];
@@ -53,7 +34,8 @@ export function diffCopy(files) {
   for (const { file, before = null, after = null, renamedFrom = file } of files) {
     const old = stringsOf(renamedFrom, before);
     const now = stringsOf(file, after);
-    const paired = pairByKind(subtract(old, now), subtract(now, old));
+    const { added, removed } = diffStrings(old, now);
+    const paired = pairByKind(removed, added);
 
     result.added.push(...paired.added);
     result.changed.push(...paired.changed);
@@ -115,7 +97,7 @@ export function copyDiffOfRange({ cwd = process.cwd(), base = 'origin/main', hea
 
   return diffCopy(
     changes
-      .filter(({ from, to }) => isCopySource(from) || isCopySource(to))
+      .filter(({ from, to }) => isScanned(from) || isScanned(to))
       .map(({ status, from, to }) => ({
         file: to,
         renamedFrom: from,

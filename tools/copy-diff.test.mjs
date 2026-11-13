@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { copySummary, diffCopy, formatCopyDiff, isCopySource } from './copy-diff.mjs';
-import { extractCopy, isUserFacing } from './eslint/copy-strings.mjs';
+import { copySummary, diffCopy, formatCopyDiff } from './copy-diff.mjs';
 
 const texts = (list) => list.map(({ text }) => text);
 
@@ -31,35 +30,6 @@ const SAVE_AFTER = `export function save(scene) {
   showToast(\`Saved \${scene.name}\`, { tone: 'success' });
 }
 `;
-
-describe('extractCopy', () => {
-  it('reads JSX text with slots, rendered attributes, toasts and command labels', () => {
-    const source = `const A = () => (
-      <div>
-        <p>Deleted {name} from the scene</p>
-        <input placeholder={busy ? 'Searching' : 'Search parts'} className="w-4" data-id="search-box" />
-      </div>
-    );
-    showToast(\`Deleted \${n}\`, { tone: 'success', action: { label: 'Undo', onClick } });
-    const commands = [{ id: 'reopen-scene', label: 'Reopen Closed Scene', keywords: 'tab undo' }];`;
-
-    expect(extractCopy(source, 'src/A.tsx')).toEqual([
-      { text: 'Deleted {…} from the scene', kind: 'text', line: 3 },
-      { text: 'Searching', kind: 'placeholder', line: 4 },
-      { text: 'Search parts', kind: 'placeholder', line: 4 },
-      { text: 'Deleted {…}', kind: 'showToast', line: 7 },
-      { text: 'Undo', kind: 'label', line: 7 },
-      { text: 'Reopen Closed Scene', kind: 'label', line: 8 },
-    ]);
-  });
-
-  it('skips identifiers, units, paths and separators', () => {
-    for (const text of ['reopen-scene', 'invalid_field', 'agentPose', 'mm', '12 kg·cm', 'src/a.ts', ' · ', '42'])
-      expect(isUserFacing(text)).toBe(false);
-
-    for (const text of ['Lens', 'Add Part', 'Deleted {…}']) expect(isUserFacing(text)).toBe(true);
-  });
-});
 
 describe('diffCopy', () => {
   it('counts an added label and a removed empty-state caption', () => {
@@ -112,19 +82,6 @@ describe('diffCopy', () => {
 
     expect(diff).toEqual({ added: [], changed: [], removed: [], net: 0 });
   });
-});
-
-describe('isCopySource', () => {
-  it.each(['src/components/View.tsx', 'src/workspace/useMarks.ts', 'electron/app-menu.mjs'])('reads %s', (file) => {
-    expect(isCopySource(file)).toBe(true);
-  });
-
-  it.each(['src/utils/math.test.ts', 'src/types.d.ts', 'electron/main.mjs', 'tools/copy-diff.mjs', 'docs/a.md'])(
-    'skips %s',
-    (file) => {
-      expect(isCopySource(file)).toBe(false);
-    },
-  );
 });
 
 describe('formatCopyDiff', () => {

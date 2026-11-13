@@ -2,6 +2,8 @@ import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import { publish } from '../lib/pull.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
+export const schedule = { slots: 2, everySeconds: 60, does: 'Makes one existing feature or view fit better' };
+
 export default function refine({ log }) {
   const worktree = openBranch('refine', 'fit');
 

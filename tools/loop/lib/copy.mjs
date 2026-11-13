@@ -19,7 +19,7 @@ export const copyReviewNote = ({ net }) => {
   if (net === null) return UNCOUNTED_NOTE;
 
   return net > 0
-    ? 'This pull request adds more user-facing strings than it removes. For each added string, its body must name why nothing on screen already says it; fail it with a blocker for every one that has no such reason.'
+    ? 'This pull request adds more user-facing strings than it removes. Each added string needs a `copy:` line in the body naming why nothing on screen already says it; fail it with a blocker for every one whose reason is missing or does not hold up.'
     : 'It adds no more user-facing strings than it removes; still judge each added or changed string by the §3d checklist.';
 };
 

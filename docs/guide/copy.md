@@ -91,7 +91,14 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 - [ ] No banned words (§3c)?
 - [ ] No `·` (or a stand-in glyph) between items? Use layout instead (§3b-16).
 
-**The count.** `node tools/copy-diff.mjs [base] [head]` lists the user-facing strings a change adds, changes and removes, and its net (`Copy: 2 added, 1 changed, 1 removed, net +1`). With no arguments it compares your working tree to where it forked from `origin/main`. It reads the rendered positions in `tools/eslint/copy-strings.mjs`, the one extractor every copy check shares: JSX text (with `{…}` for each expression), rendered attributes and properties (`label`, `title`, `placeholder`, `aria-label`, `description`, `message`, `text`…), and toast and confirm arguments, in `src/` and the app menu. Tests, ids, units and paths don't count. The review lane runs it on every pull request; a positive net needs a reason for each added string (Loop, §0l).
+**The copy budget.** On every pull request, Check's `copy` job (`tools/check-copy-budget.mjs`, logic in `tools/copy/`) collects the user-facing strings in each changed `src/` file before and after: JSX text, labelling props (`aria-label`, `title`, `placeholder`, `label`, `alt`, `tooltip`, `hint`…), `showToast` / `toastInFront` / `notify` / `confirmAction` arguments, and `label` / `title` / `hint` properties of command and menu objects. Tests, `src/data/` and strings that are only symbols, numbers, units, ids or paths are skipped. It prints `Copy: +N −M` and fails when:
+
+- the change adds more strings than it removes and a new one has no line `copy: "<string>" — <why the screen needs it>` in the body's Copy section (the loop fills it from its answer's `copy` field, for every kind of pull request; a template without a Copy section gets one appended). Removing strings never needs a reason, and repeating a string the file already has doesn't either;
+- an added string uses a word §3c bans (`BANNED_COPY` in `verify/rehearsal/uiRules.ts`), whatever the net.
+
+Run it locally with `node tools/check-copy-budget.mjs origin/main..HEAD` (`PR_BODY` holds the body). Check runs on pushes, not on body edits, so a `copy:` line added to the body afterwards counts only once another commit is pushed; a reason belongs in the answer's `copy` field from the start.
+
+**The count.** `node tools/copy-diff.mjs [base] [head]` lists the strings a change adds, changes and removes, and its net (`Copy: 2 added, 1 changed, 1 removed, net +1`), from the same extractor (`tools/copy/extract.mjs`). A removed string and an added one in the same file and position (both JSX text, both a `title`, both a `showToast` argument…) count as one changed string. With no arguments it compares your working tree, uncommitted work included, to where it forked from `origin/main`, so run it before you finish. The review lane runs it on every pull request and puts the list in its prompt and comment (Loop, §0l).
 
 ### 3e. Reference examples
 

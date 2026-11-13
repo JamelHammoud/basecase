@@ -1,5 +1,6 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { VelocityDrive } from '../sim/driveAccess';
+import type { PolicySpec } from '../sim/policy';
 import { buildMjcf } from '../sim/mjcf';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
@@ -15,7 +16,7 @@ import { caseFilm } from './caseFilm';
 import { runSeeds, type SeedRuns } from './caseRuns';
 import type { FilmShot } from './filmstrip';
 import { checkFit } from './fitCheck';
-import { caseRunner, type CaseRobot } from './runCase';
+import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
 
 export interface WireRobot {
@@ -31,23 +32,27 @@ export interface WalkPick {
   topSpeed: number;
 }
 
-export interface RunsJob {
+interface Controlled {
+  walk: VelocityDrive | null;
+  policy?: PolicySpec | null;
+  jointNoiseDeg?: number;
+}
+
+export interface RunsJob extends Controlled {
   type: 'runs';
   kase: Case;
   modelHash: string;
   robot?: WireRobot;
   seeds: number[];
-  walk: VelocityDrive | null;
   stop: string | null;
 }
 
-export interface ReplayJob {
+export interface ReplayJob extends Controlled {
   type: 'replay';
   kase: Case;
   modelHash: string;
   robot?: WireRobot;
   seed: number;
-  walk: VelocityDrive | null;
 }
 
 export type CaseCheckJob = { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob;
@@ -73,6 +78,11 @@ function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | nu
   return record ? { hash: record.hash, topSpeed: kitTopSpeed(model) } : null;
 }
 
+const controlOf = (job: Controlled): RunOptions =>
+  job.policy
+    ? { controller: 'policy', policy: job.policy, jointNoiseDeg: job.jointNoiseDeg }
+    : { controller: 'reference', walk: job.walk, jointNoiseDeg: job.jointNoiseDeg };
+
 function modelHashOf(model: SimModel) {
   const { physics, actuators } = modelHashes(model);
 
@@ -89,12 +99,12 @@ export class CaseCheckSession {
     const robot = caseRobotOf(held);
 
     if (job.type === 'replay') {
-      const result = await caseRunner(mj, job.kase, robot, { controller: 'reference', walk: job.walk }).run(job.seed);
+      const result = await caseRunner(mj, job.kase, robot, controlOf(job)).run(job.seed);
 
       return { type: 'replay', film: caseFilm(result, held.parts) };
     }
 
-    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, walk: job.walk, stop: job.stop });
+    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, stop: job.stop, ...controlOf(job) });
 
     return { type: 'runs', result };
   }

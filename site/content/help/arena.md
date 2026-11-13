@@ -24,7 +24,7 @@ covers:
   - src/skills/skillRows.ts
 ---
 
-Every skill Basecase trains must pass Arena, 96 fresh tries under conditions the trainer never saw, before its row says it's ready.
+Every skill Basecase trains from a goal must pass Arena, 96 fresh tries under conditions the trainer never saw, before its row says it's ready.
 
 A policy can score well in training and still fail on a real robot. It may have learned one floor's friction, or one servo's exact timing. Arena exists to catch that before you rely on the skill.
 
@@ -43,6 +43,8 @@ Where a skill was trained on wider ranges, Arena uses those instead. It never us
 A skill passes when, in every variant, the share of passing tries is at least 75% with 95% confidence. In practice that's 29 of 32 tries or better in each.
 
 The skill's row shows its weakest variant, such as "31 of 32 tries, at least 86%". The percentage is that confidence bound, not the raw share.
+
+A policy trained from a Case's tries is judged by its Case instead. It runs the Case 32 times, each from joints up to 5° off, with friction, masses, servo strength and delays up to 20 ms drawn as in **Checks**. The bar is the same: 29 of 32. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 ## Why the reward can't cheat
 

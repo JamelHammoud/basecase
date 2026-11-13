@@ -68,7 +68,7 @@ No part in the scene prints. Components, screws and stand-ins are bought, not pr
 
 ## “The slicer returned no plates. Slice again.”
 
-The slicer finished without a result Basecase could read. The same goes for a message that a plate “isn’t in the sliced file”.
+The slicer finished without a result Basecase could read. The same goes for a message that a plate “isn’t in the sliced file”, and for “The slicer stopped without saying why. Slice again.”
 
 1. Press ⌘K and choose **Slice Plates**.
 2. If it fails again, read the slicer's own message under the plate. Basecase shows it as the slicer wrote it.

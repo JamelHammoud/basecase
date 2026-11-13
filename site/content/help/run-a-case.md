@@ -25,6 +25,7 @@ covers:
   - src/components/caseRun/
   - src/components/simulate/CaseSections.tsx
   - src/workspace/caseCommands.tsx
+  - src/workspace/agentCaseRequests.ts
 ---
 
 Run a Case in the whole window, laid out the way the Case asks: the robot on the canvas, and around it the cameras, numbers, plots, buttons and tries it needs.
@@ -52,7 +53,9 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 7. Click **Done** or press Esc to go back. The first Esc stops driving. Your parts, selection and camera are as you left them.
 
-A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. For now you add a console by editing that file; New Case, the templates and the agent make Cases without one. It says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
+A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. Ask the agent for a Case in words and it writes one, or edit that file. New Case and the templates make Cases without one.
+
+A console says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 

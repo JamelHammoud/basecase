@@ -41,7 +41,7 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 | GLB, glTF, DAE | Import a mesh | Meters |
 | FBX | Import a mesh | Centimeters |
 | STEP, STP, IGES, IGS | Import a mesh, in the desktop app only | The file's own units |
-| SVG | [Turn an SVG drawing into a part](/help/turn-an-svg-into-a-part) | The width you type |
+| SVG | [Draw a part from a sketch or SVG](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part) | The width you type |
 | URDF, MJCF, zip | [Import a robot](/help/import-a-robot), with its joints | The file's own units |
 | `.basecase` | [Open a shared scene](/help/open-a-shared-scene) | — |
 | PNG, JPEG and other images | Dropped on the canvas, as a flat reference image | — |

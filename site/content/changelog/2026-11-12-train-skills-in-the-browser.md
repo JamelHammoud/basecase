@@ -24,4 +24,4 @@ Passed skills are saved in your browser with the scene, so they're still there a
 
 It needs WebGPU and WebAssembly JSPI, which Chrome and Edge have. In other browsers the Train section doesn't appear. Teaching a skill by typing a goal goes through the agent, which is in the desktop app only. The desktop app is also still the place where skills retrain on their own after you change the robot.
 
-Steps are in [Train a Motor Kit skill](/help/train-a-motor-kit-skill).
+Steps are in [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).

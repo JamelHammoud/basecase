@@ -12,6 +12,7 @@ const runs = (passes: number, extra: Partial<CaseRuns> = {}): CaseRuns => ({
   failures: passes < 20 ? [{ label: 'fell', runs: 20 - passes }] : [],
   worstSeed: passes < 20 ? 1 : null,
   refusal: null,
+  misfit: false,
   ...extra,
 });
 

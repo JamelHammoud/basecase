@@ -105,4 +105,25 @@ describe('PartLayer', () => {
     ).toBeLessThan(1e-9);
     expect(layer.pointAtRest('other', [1, 2, 3])).toEqual([1, 2, 3]);
   });
+
+  it('measures under a given pose, then puts the live pose back', () => {
+    const layer = layerWith([part('arm', { position: [20, 0, 0] })]);
+    const group = layer.get('arm')!;
+    const live = new Map([['arm', new THREE.Matrix4().makeTranslation(0, -30, 0)]]);
+    const canvas = new Map([['arm', new THREE.Matrix4().makeTranslation(0, 10, 0)]]);
+    const height = () => {
+      group.updateMatrixWorld(true);
+
+      return new THREE.Vector3().setFromMatrixPosition(group.matrixWorld).y;
+    };
+    const reapply = () => layer.applyPose();
+
+    layer.pose = live;
+    reapply();
+
+    expect(layer.withPose(canvas, height, reapply)).toBeCloseTo(10);
+    expect(layer.withRest(height, reapply)).toBeCloseTo(0);
+    expect(layer.pose).toBe(live);
+    expect(height()).toBeCloseTo(-30);
+  });
 });

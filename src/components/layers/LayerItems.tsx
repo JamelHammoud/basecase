@@ -1,11 +1,25 @@
 import React from 'react';
-import { ChevronRightIcon, GroupIcon, HiddenIcon, LockIcon, LookIcon, UnlockIcon } from '../../design-system';
+import {
+  ChevronRightIcon,
+  GroupIcon,
+  HiddenIcon,
+  IconButton,
+  LockIcon,
+  LookIcon,
+  UnlockIcon,
+} from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 import { hasPrimaryModifier } from '../../utils/os';
 
-const ROW = 'group h-8 rounded-lg flex items-center text-[13px] cursor-default transition-colors';
+const ROW =
+  'group relative h-8 rounded-lg flex items-center text-[13px] cursor-default transition-colors bg-[var(--row-fill)] [--row-fill:var(--color-panel-bg)]';
+const SELECTED = '[--row-fill:color-mix(in_srgb,#0d99ff_18%,var(--color-panel-bg))] text-white';
+const HOVER = 'hover:[--row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
+const ACTIONS_FADE = 'linear-gradient(to right, transparent, var(--row-fill) 32px)';
+const SHOW_ON_HOVER =
+  'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto';
 
-const rowTone = (selected: boolean, rest: string) => (selected ? 'bg-[#0d99ff]/[0.18] text-white' : rest);
+const rowTone = (selected: boolean, rest: string) => (selected ? SELECTED : `${rest} ${HOVER}`);
 
 export const RenameInput: React.FC<{ current: string; onCommit: (name: string) => void; onCancel: () => void }> = ({
   current,
@@ -64,16 +78,37 @@ const RowToggle: React.FC<{
   title: string;
   icons: [React.ReactNode, React.ReactNode];
 }> = ({ on, onClick, title, icons }) => (
-  <button
-    type="button"
-    aria-label={title}
+  <IconButton
+    icon={on ? icons[0] : icons[1]}
+    title={title}
+    variant="ghost"
+    size="xs"
+    className={`transition-opacity ${on ? '' : SHOW_ON_HOVER}`}
     onClick={onClick}
-    className={`w-7 h-7 rounded-md flex items-center justify-center cursor-default transition-opacity hover:bg-white/[0.08] ${
-      on ? 'text-white/60 opacity-100' : 'text-white/50 hover:text-white/80 opacity-0 group-hover:opacity-100'
+  />
+);
+
+const RowActions: React.FC<{ part: ScenePart; onToggle: PartRowProps['onToggle'] }> = ({ part, onToggle }) => (
+  <div
+    className={`absolute inset-y-0 right-0 flex items-center pl-8 pr-1 rounded-r-lg transition-opacity ${
+      part.locked || !part.visible ? '' : SHOW_ON_HOVER
     }`}
+    style={{ backgroundImage: ACTIONS_FADE }}
+    onClick={(e) => e.stopPropagation()}
   >
-    {on ? icons[0] : icons[1]}
-  </button>
+    <RowToggle
+      on={part.locked}
+      onClick={() => onToggle(part.id, 'locked')}
+      title={part.locked ? 'Unlock' : 'Lock'}
+      icons={[<LockIcon key="on" className="w-3.5 h-3.5" />, <UnlockIcon key="off" className="w-3.5 h-3.5" />]}
+    />
+    <RowToggle
+      on={!part.visible}
+      onClick={() => onToggle(part.id, 'visible')}
+      title={part.visible ? 'Hide' : 'Show'}
+      icons={[<HiddenIcon key="on" className="w-3.5 h-3.5" />, <LookIcon key="off" className="w-3.5 h-3.5" />]}
+    />
+  </div>
 );
 
 export interface PartRowProps {
@@ -101,7 +136,7 @@ export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimme
       e.preventDefault();
       on.onContextMenu(part, e.clientX, e.clientY);
     }}
-    className={`${ROW} ${inGroup ? 'pl-8' : 'pl-2.5'} pr-1 gap-2 ${rowTone(selected, 'text-white/80 hover:bg-white/[0.05]')} ${
+    className={`${ROW} ${inGroup ? 'pl-8' : 'pl-2.5'} pr-2.5 gap-2 ${rowTone(selected, 'text-white/80')} ${
       dimmed ? 'text-white/50' : ''
     }`}
   >
@@ -118,20 +153,7 @@ export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimme
     ) : (
       <span className="flex-1 truncate">{part.name}</span>
     )}
-    <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-      <RowToggle
-        on={part.locked}
-        onClick={() => on.onToggle(part.id, 'locked')}
-        title={part.locked ? 'Unlock' : 'Lock'}
-        icons={[<LockIcon key="on" className="w-3.5 h-3.5" />, <UnlockIcon key="off" className="w-3.5 h-3.5" />]}
-      />
-      <RowToggle
-        on={!part.visible}
-        onClick={() => on.onToggle(part.id, 'visible')}
-        title={part.visible ? 'Hide' : 'Show'}
-        icons={[<HiddenIcon key="on" className="w-3.5 h-3.5" />, <LookIcon key="off" className="w-3.5 h-3.5" />]}
-      />
-    </div>
+    <RowActions part={part} onToggle={on.onToggle} />
   </li>
 );
 
@@ -161,7 +183,7 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
       e.preventDefault();
       on.onContextMenu(memberIds, selected, { x: e.clientX, y: e.clientY });
     }}
-    className={`${ROW} pl-1 pr-2 gap-1.5 font-medium ${rowTone(selected, 'text-white/85 hover:bg-white/[0.05]')}`}
+    className={`${ROW} pl-1 pr-2 gap-1.5 font-medium ${rowTone(selected, 'text-white/85')}`}
   >
     <button
       type="button"

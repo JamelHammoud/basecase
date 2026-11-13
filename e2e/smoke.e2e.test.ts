@@ -14,6 +14,8 @@ const sidebarShows = (name: string) =>
     return aside?.style.width !== '0px' && aside?.querySelector('h2')?.textContent === title;
   }, name);
 
+const blurFocus = () => (document.activeElement as HTMLElement | null)?.blur();
+
 const clickRail = async (name: string) => {
   if (await sidebarShows(name)) return;
 
@@ -84,6 +86,30 @@ describe('studio commands', () => {
     await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click({ button: 'right' });
     await expect.poll(() => app.page.getByRole('menuitem', { name: /Duplicate/ }).count()).toBeGreaterThan(0);
     await app.page.keyboard.press('Escape');
+  });
+
+  it('runs a Layers name under its row toggles and keeps Show while the part is hidden', async () => {
+    await clickRail('Layers');
+
+    const row = app.page.locator(visible('[data-layer-row^="part:"]'), { hasText: 'Cube' }).first();
+    const nameRight = () => row.locator('span.truncate').evaluate((el) => el.getBoundingClientRect().right);
+    const rowRight = () => row.evaluate((el) => el.getBoundingClientRect().right);
+
+    expect((await rowRight()) - (await nameRight())).toBeLessThan(16);
+
+    await row.hover();
+    await row.getByRole('button', { name: 'Hide' }).click();
+    await app.page.mouse.move(0, 0);
+    await app.page.evaluate(blurFocus);
+
+    const show = row.getByRole('button', { name: 'Show' });
+
+    await expect.poll(() => show.evaluate((el) => el.checkVisibility({ opacityProperty: true }))).toBe(true);
+
+    await row.hover();
+    await show.click();
+    await expect.poll(() => row.getByRole('button', { name: 'Hide' }).count()).toBe(1);
+    await app.page.evaluate(blurFocus);
   });
 
   it('toggles comment mode', async () => {

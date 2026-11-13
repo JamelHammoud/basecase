@@ -16,6 +16,19 @@ const sidebarShows = (name: string) =>
 
 const blurFocus = () => (document.activeElement as HTMLElement | null)?.blur();
 
+const fillDiffersFromPanel = (row: Element) => {
+  const probe = document.createElement('div');
+
+  probe.style.background = 'var(--color-panel-bg)';
+  row.after(probe);
+
+  const panel = getComputedStyle(probe).backgroundColor;
+
+  probe.remove();
+
+  return getComputedStyle(row).backgroundColor !== panel;
+};
+
 const clickRail = async (name: string) => {
   if (await sidebarShows(name)) return;
 
@@ -95,6 +108,9 @@ describe('studio commands', () => {
     const nameRight = () => row.locator('span.truncate').evaluate((el) => el.getBoundingClientRect().right);
     const rowRight = () => row.evaluate((el) => el.getBoundingClientRect().right);
 
+    await row.locator('span.truncate').click({ position: { x: 4, y: 4 } });
+    await app.page.mouse.move(0, 0);
+    await expect.poll(() => row.evaluate(fillDiffersFromPanel)).toBe(true);
     expect((await rowRight()) - (await nameRight())).toBeLessThan(16);
 
     await row.hover();

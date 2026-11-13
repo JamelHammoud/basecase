@@ -12,14 +12,17 @@ import type { ScenePart } from '../../types/robotics';
 import { hasPrimaryModifier } from '../../utils/os';
 
 const ROW =
-  'group relative h-8 rounded-lg flex items-center text-[13px] cursor-default transition-colors bg-[var(--row-fill)] [--row-fill:var(--color-panel-bg)]';
+  'group relative h-8 rounded-lg flex items-center text-[13px] cursor-default transition-colors bg-[var(--row-fill)]';
 const SELECTED = '[--row-fill:color-mix(in_srgb,#0d99ff_18%,var(--color-panel-bg))] text-white';
-const HOVER = 'hover:[--row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
+const RESTING =
+  '[--row-fill:var(--color-panel-bg)] hover:[--row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
 const ACTIONS_FADE = 'linear-gradient(to right, transparent, var(--row-fill) 32px)';
-const SHOW_ON_HOVER =
-  'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto';
+const REVEAL = 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100';
+const CLICKABLE_ON_REVEAL =
+  'pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto';
+const COLLAPSED_UNTIL_REVEAL = 'hidden group-hover:flex group-focus-within:flex';
 
-const rowTone = (selected: boolean, rest: string) => (selected ? SELECTED : `${rest} ${HOVER}`);
+const rowTone = (selected: boolean, rest: string) => (selected ? SELECTED : `${RESTING} ${rest}`);
 
 export const RenameInput: React.FC<{ current: string; onCommit: (name: string) => void; onCancel: () => void }> = ({
   current,
@@ -74,42 +77,53 @@ const PartGlyph: React.FC<{ part: ScenePart }> = ({ part }) => {
 
 const RowToggle: React.FC<{
   on: boolean;
+  pinned: boolean;
   onClick: () => void;
   title: string;
   icons: [React.ReactNode, React.ReactNode];
-}> = ({ on, onClick, title, icons }) => (
-  <IconButton
-    icon={on ? icons[0] : icons[1]}
-    title={title}
-    variant="ghost"
-    size="xs"
-    className={`transition-opacity ${on ? '' : SHOW_ON_HOVER}`}
-    onClick={onClick}
-  />
-);
+}> = ({ on, pinned, onClick, title, icons }) => {
+  const button = (
+    <IconButton
+      icon={on ? icons[0] : icons[1]}
+      title={title}
+      variant="ghost"
+      size="xs"
+      className={on ? 'pointer-events-auto' : CLICKABLE_ON_REVEAL}
+      onClick={onClick}
+    />
+  );
 
-const RowActions: React.FC<{ part: ScenePart; onToggle: PartRowProps['onToggle'] }> = ({ part, onToggle }) => (
-  <div
-    className={`absolute inset-y-0 right-0 flex items-center pl-8 pr-1 rounded-r-lg transition-opacity ${
-      part.locked || !part.visible ? '' : SHOW_ON_HOVER
-    }`}
-    style={{ backgroundImage: ACTIONS_FADE }}
-    onClick={(e) => e.stopPropagation()}
-  >
-    <RowToggle
-      on={part.locked}
-      onClick={() => onToggle(part.id, 'locked')}
-      title={part.locked ? 'Unlock' : 'Lock'}
-      icons={[<LockIcon key="on" className="w-3.5 h-3.5" />, <UnlockIcon key="off" className="w-3.5 h-3.5" />]}
-    />
-    <RowToggle
-      on={!part.visible}
-      onClick={() => onToggle(part.id, 'visible')}
-      title={part.visible ? 'Hide' : 'Show'}
-      icons={[<HiddenIcon key="on" className="w-3.5 h-3.5" />, <LookIcon key="off" className="w-3.5 h-3.5" />]}
-    />
-  </div>
-);
+  return pinned && !on ? <span className={COLLAPSED_UNTIL_REVEAL}>{button}</span> : button;
+};
+
+const RowActions: React.FC<{ part: ScenePart; onToggle: PartRowProps['onToggle'] }> = ({ part, onToggle }) => {
+  const pinned = part.locked || !part.visible;
+
+  return (
+    <div
+      className={`absolute inset-y-0 right-0 flex items-center pl-8 pr-1 rounded-r-lg pointer-events-none transition-opacity ${
+        pinned ? '' : REVEAL
+      }`}
+      style={{ backgroundImage: ACTIONS_FADE }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <RowToggle
+        on={part.locked}
+        pinned={pinned}
+        onClick={() => onToggle(part.id, 'locked')}
+        title={part.locked ? 'Unlock' : 'Lock'}
+        icons={[<LockIcon key="on" className="w-3.5 h-3.5" />, <UnlockIcon key="off" className="w-3.5 h-3.5" />]}
+      />
+      <RowToggle
+        on={!part.visible}
+        pinned={pinned}
+        onClick={() => onToggle(part.id, 'visible')}
+        title={part.visible ? 'Hide' : 'Show'}
+        icons={[<HiddenIcon key="on" className="w-3.5 h-3.5" />, <LookIcon key="off" className="w-3.5 h-3.5" />]}
+      />
+    </div>
+  );
+};
 
 export interface PartRowProps {
   part: ScenePart;

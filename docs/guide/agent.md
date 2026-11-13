@@ -122,11 +122,10 @@ Silhouette and proportion scores (what the bench measures today) matter less tha
 
 ### Panel
 - **No header row.** History opens from the Agent tab: while it's the open tab, hovering its pill widens it as a chevron fades in from the left beside the label, and clicking anywhere on the pill opens the chat list (`ChatHistory`). New chat sits in the composer next to +.
-- **History list:** as wide as the inspector's header content (the card less its 8px header padding; the menu anchors to the tab row, not the pill), grouped by last use (Today, Yesterday, Previous 7 days, then by month) under quiet group labels. Rows are one line: the title, and the time on the right, which Delete replaces on hover. Running chats in this scene sit in a **Running** group at the top, each with the agent spinner and no time. The current chat sits on a soft fill. Any chat can be opened while others run (§9 Concurrent chats).
+- **History list:** as wide as the inspector's header content (the card less its 8px header padding; the menu anchors to the tab row, not the pill), grouped by last use (Today, Yesterday, Previous 7 days, then by month) under quiet group labels. Rows are one line: the title, and the time on the right, which Delete (a danger `IconButton`, confirmed first) replaces on hover or keyboard focus; hidden, it takes no clicks. Running chats in this scene sit in a **Running** group at the top, each with the agent spinner and no time. The current chat sits on a soft fill. Any chat can be opened while others run (§9 Concurrent chats).
 - **History:**
   - Conversations are saved to `library/conversations/` after each run, and when their tab closes.
   - Opening one restores the transcript and resumes the ACP session (`resumeSession`), so Claude keeps its context.
-  - Each chat has a delete action.
 - **Transcript (`segments`):** thoughts, markdown text (`Markdown`, GFM) and tool steps appear in the order they streamed.
   - **Follow:** the feed sticks to the bottom while the agent streams. Scrolling up (wheel, scrollbar, keys) stops the follow until you scroll back to the very bottom; a round “Scroll to bottom” button shows meanwhile. Sending a message re-sticks it.
   - **Edge fades:** a 28px mask fades the top and/or bottom of the feed only while there's more to scroll to past that edge (`feedMask`).

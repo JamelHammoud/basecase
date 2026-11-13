@@ -63,7 +63,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       group: 'Scene',
       label: 'Import Mesh',
       icon: <FileImportIcon className={ic} />,
-      keywords: 'stl 3mf obj ply fbx glb gltf dae model file print',
+      keywords: 'stl 3mf obj ply fbx glb gltf dae step stp iges igs cad model file print',
       run: () => void creation.pickMeshes(),
     },
   ];

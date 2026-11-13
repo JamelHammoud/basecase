@@ -28,18 +28,48 @@ const siteAssetsPlugin = (): Plugin => ({
   },
 });
 
+interface Prerender {
+  renderSite: () => string;
+  renderSitePages: (stylesheets: string[]) => { fileName: string; source: string }[];
+}
+
+const loadPrerender = async () => {
+  const { module } = await runnerImport<Prerender>(path.join(repoDir, 'src/landing/prerender.tsx'), {
+    configFile: false,
+    root: repoDir,
+    logLevel: 'error',
+  });
+
+  return module;
+};
+
 const prerenderPlugin = (): Plugin => ({
   name: 'basecase-site-prerender',
   apply: 'build',
   transformIndexHtml: {
     order: 'post',
     async handler(html) {
-      const { module } = await runnerImport<{ renderSite: () => string }>(
-        path.join(repoDir, 'src/landing/prerender.tsx'),
-        { configFile: false, root: repoDir, logLevel: 'error' },
-      );
+      const { renderSite } = await loadPrerender();
 
-      return html.replace('<div id="root"></div>', `<div id="root">${module.renderSite()}</div>`);
+      return html.replace('<div id="root"></div>', `<div id="root">${renderSite()}</div>`);
+    },
+  },
+});
+
+const sitePagesPlugin = (): Plugin => ({
+  name: 'basecase-site-pages',
+  apply: 'build',
+  generateBundle: {
+    order: 'post',
+    async handler(_options, bundle) {
+      const stylesheets = Object.keys(bundle)
+        .filter((fileName) => fileName.endsWith('.css'))
+        .map((fileName) => `/${fileName}`);
+      const { renderSitePages } = await loadPrerender();
+
+      for (const { fileName, source } of renderSitePages(stylesheets)) {
+        this.emitFile({ type: 'asset', fileName, source });
+      }
     },
   },
 });
@@ -48,5 +78,12 @@ export default defineConfig(({ command }) => ({
   root: siteDir,
   publicDir: command === 'serve' ? publicDir : path.join(siteDir, 'public'),
   build: { outDir: path.join(siteDir, 'dist'), emptyOutDir: true },
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwindcss(), siteAssetsPlugin(), prerenderPlugin()],
+  plugins: [
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
+    tailwindcss(),
+    siteAssetsPlugin(),
+    prerenderPlugin(),
+    sitePagesPlugin(),
+  ],
 }));

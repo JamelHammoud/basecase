@@ -25,6 +25,24 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     keywords: 'mujoco mjcf urdf ros lerobot joint map policy zip download',
     run: () => void exports.exportRobotPackage(),
   };
+  const partExports: Command[] = [
+    {
+      id: 'export',
+      group: 'Scene',
+      label: 'Export STL',
+      icon: <DownloadIcon className={ic} />,
+      keywords: 'print download',
+      run: exports.exportStl,
+    },
+    {
+      id: 'airdrop',
+      group: 'Scene',
+      label: SHARE_LABEL,
+      icon: <ShareIcon className={ic} />,
+      keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
+      run: () => void exports.airDrop(),
+    },
+  ];
 
   return [
     {
@@ -52,22 +70,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       keywords: 'markdown clipboard export brief spec',
       run: exports.copyBrief,
     },
-    {
-      id: 'export',
-      group: 'Scene',
-      label: 'Export STL',
-      icon: <DownloadIcon className={ic} />,
-      keywords: 'print download',
-      run: exports.exportStl,
-    },
-    {
-      id: 'airdrop',
-      group: 'Scene',
-      label: SHARE_LABEL,
-      icon: <ShareIcon className={ic} />,
-      keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
-      run: () => void exports.airDrop(),
-    },
+    ...(exports.canExportParts ? partExports : []),
     {
       id: 'export-image',
       group: 'Scene',

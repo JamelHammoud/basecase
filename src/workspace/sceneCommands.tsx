@@ -114,16 +114,17 @@ function fileCommands({ core }: CommandInputs): Command[] {
 
 function printCommands({ core, actions }: CommandInputs): Command[] {
   const { exports } = actions;
+  const export3mf: Command = {
+    id: 'export-3mf',
+    group: 'Scene',
+    label: 'Export 3MF Plates',
+    icon: <PrinterIcon className={ic} />,
+    keywords: 'print plates slicer bambu prusa orca download',
+    run: () => void exports.export3mf(),
+  };
 
   return [
-    {
-      id: 'export-3mf',
-      group: 'Scene',
-      label: 'Export 3MF Plates',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates slicer bambu prusa orca download',
-      run: () => void exports.export3mf(),
-    },
+    ...(exports.canExportParts ? [export3mf] : []),
     {
       id: 'lay-out-plates',
       group: 'Scene',

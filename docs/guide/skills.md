@@ -51,7 +51,7 @@ The independent verifier, on the WASM `SimEngine`. `runArena({ mj, model, contra
 
 ### Method Router (`router.ts`)
 
-`routeTask(analysis)` is pure and walks the plan's rungs in order: unverifiable, IK or motion plan, tracking (built for moves, below), Routine, LQR or MPC (12 state values or fewer, no rich contact), tracking RL with a reset curriculum, reward search (6 candidates at 5M steps, 2 at 25M, 1 at 100M, up to 3 rounds, warm-started after the first), ask for a demo, then not found with design relaxations. It returns the method, the rung and the reason. The ask-for-demo rung's solver is Train From Tries (§8h): a person's passed tries of a Case are the demo, and the skill it keeps records `ask-for-demo` as its method. The router doesn't send drafts to it, since a draft carries no Case.
+`routeTask(analysis)` is pure and walks the plan's rungs in order: unverifiable, IK or motion plan, tracking (built for moves, below), Routine, LQR or MPC (12 state values or fewer, no rich contact), tracking RL with a reset curriculum, reward search (6 candidates at 5M steps, 2 at 25M, 1 at 100M, up to 3 rounds, warm-started after the first), ask for a demo, then not found with design relaxations. It returns the method, the rung and the reason. The ask-for-demo rung's solver is Train from Tries (§8h): a person's passed tries of a Case are the demo, and the skill it keeps records `ask-for-demo` as its method. The router doesn't send drafts to it, since a draft carries no Case.
 
 ### Feasibility, Tier 1 (`feasibility.ts`)
 
@@ -136,7 +136,7 @@ In the app (`src/workspace/useSkills.ts`) the scene model is rebuilt 1.5 s after
   - A gallery page's Train (§8h) runs Stand through the same platform, outside the studio: `src/gallery/galleryTrainer.ts` builds its own `SkillsRuntime` and shows only the Stand row.
   - Tests swap the tab engine through `__studio.stubTabEngine` or `__gallery.stubTabEngine` (`e2e/holdPose.ts`: `webTrain.e2e.test.ts` and `gallery.e2e.test.ts` train Stand on a hold-pose stub, so the real Arena judges it); the real GPU path is `e2e/forgeTab.e2e.test.ts`.
 - **`SkillsRuntime`** (`skillsRuntime.ts`, framework-free) holds drafts, jobs with progress and the last race, one user job at a time, and the background queue. `learnFromTries` runs a Case's behaviour cloning job and keeps the policy only when the Case's own runs pass it (§8h). A skill that passes Arena becomes a `SkillRecord` in `project.skills` (`skillRecords.ts`: the skill without its controller, plus the Kit entry or the user's words and, for taught skills, the environment); `.basecase` files drop them, like policies.
-- **The skills list** (`skillRows.ts`): one row per Kit entry (Stand, Walk, Get up, Settle), per move and per taught skill (a skill Train From Tries kept is one, named after its Case), each training (with the job's message and share), ready (its worst Arena variant: “31 of 32 tries, at least 86%”), recheck or untrained.
+- **The skills list** (`skillRows.ts`): one row per Kit entry (Stand, Walk, Get up, Settle), per move and per taught skill (a skill Train from Tries kept is one, named after its Case), each training (with the job's message and share), ready (its worst Arena variant: “31 of 32 tries, at least 86%”), recheck or untrained.
 
 ### Cases on the one contract
 

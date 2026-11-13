@@ -2127,44 +2127,44 @@
       "checks": [
         {
           "name": "mechanised UI rules on every view: 32px controls (28px icon-only), 12px type, neutral greys, copy lint, axe",
-          "ok": true,
-          "detail": "38.2 s",
+          "ok": false,
+          "detail": " FAIL  verify/rehearsal/uiRules.test.ts [ verify/rehearsal/uiRules.test.ts ]\nError: page.goto: url: expected string, got undefined\n ❯ openApp e2e/harness.ts:85:14\n     83|   await exposeTestHooks(page);\n     84|   await stubBackend(page, posts, lists);\n     85|   await page.goto(inject('appUrl'));\n       |              ^\n     86|   await page.waitForFunction(() => Boolean((window as unknown as { __s…\n     87|     timeout: 60000,\n ❯ verify/rehearsal/uiRules.test.ts:64:9\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
           "metrics": {},
-          "seconds": 38.158
+          "seconds": 1.37
         },
         {
           "name": "the app bundles",
           "ok": true,
-          "detail": "6.2 s",
+          "detail": "7.5 s",
           "metrics": {},
-          "seconds": 6.166
+          "seconds": 7.468
         },
         {
           "name": "an unsigned app packages",
           "ok": true,
-          "detail": "4.0 s",
+          "detail": "4.3 s",
           "metrics": {},
-          "seconds": 4.015
+          "seconds": 4.273
         },
         {
           "name": "PersonaLab, with only the screen and accessibility tree, finds 80% of 30 planted usability faults, half its findings on target",
           "ok": false,
           "detail": "\n ❯ launchPackaged e2e/app/packagedApp.ts:74:15\n     72| export async function launchPackaged({ agentCommand = OFFLINE_AGENT } …\n     73|   const userData = freshUserData(agentCommand);\n     74|   const app = await electron.launch({\n       |               ^\n     75|     executablePath: packagedBinary(),\n     76|     args: ['--enable-unsafe-swiftshader'],\n ❯ session verify/rehearsal/persona.test.ts:33:15\n ❯ verify/rehearsal/persona.test.ts:73:24\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯",
           "metrics": {
-            "loadBefore": 6.09228515625,
-            "loadAfter": 3.18994140625
+            "loadBefore": 6.15966796875,
+            "loadAfter": 4.19287109375
           },
-          "seconds": 120.56
+          "seconds": 120.655
         },
         {
           "name": "every required gate passes again from a clean checkout of this commit, parked gates listed with reasons",
           "ok": false,
-          "detail": "s1-f2-learner: void (machine busy)\ns1-f3-simd-engine: failed\ns1-f4-metal: failed\ns1-f5-gpu-loop: void (machine busy)\ns1-f6-webgpu: failed\ns2-cases-play: void (machine busy)\ns2-m1-first-case: failed\ns3-anythingzoo: void (machine busy)\ns3-servo-models: failed\ns3a-motor-kit: failed\ns4b-routines-flow: void (machine busy)",
+          "detail": "s1-f1-native-trainer: void (machine busy)\ns1-f1b-sysid-rewardlang: failed\ns1-f7-gradients: failed\ns2-cases-play: failed\ns3-anythingzoo: failed\ns3-servo-models: failed\ns4b-routines-flow: failed",
           "metrics": {
-            "loadBefore": 3.18994140625,
-            "loadAfter": 10.32177734375
+            "loadBefore": 4.19287109375,
+            "loadAfter": 3.10595703125
           },
-          "seconds": 105025.41
+          "seconds": 25354.075
         }
       ],
       "canaries": [
@@ -2173,60 +2173,60 @@
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 1.056
+          "seconds": 1.378
         },
         {
           "name": "10px text is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.781
+          "seconds": 0.749
         },
         {
           "name": "a blue-tinted grey is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.767
+          "seconds": 0.731
         },
         {
           "name": "banned copy is caught",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.748
+          "seconds": 0.746
         },
         {
           "name": "a silent persona misses the recall bar",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.769
+          "seconds": 0.751
         },
         {
           "name": "a persona that flags everything misses the precision bar",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.763
+          "seconds": 0.759
         },
         {
           "name": "a voided gate is not green",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.781
+          "seconds": 0.775
         },
         {
           "name": "a parked gate needs a reason",
           "ok": true,
           "detail": "",
           "metrics": {},
-          "seconds": 0.765
+          "seconds": 0.773
         }
       ],
-      "commit": "5fbe62d3",
-      "at": "2026-11-13T07:09:08.430Z",
+      "commit": "03768b7e",
+      "at": "2026-11-13T14:22:13.632Z",
       "manifest": "clean",
       "tree": "clean",
       "uncommittedPinned": [],

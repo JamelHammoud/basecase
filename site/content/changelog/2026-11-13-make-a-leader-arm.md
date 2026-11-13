@@ -4,11 +4,11 @@ date: 2026-11-13
 image: /changelog/make-a-leader-arm/cover.png
 ---
 
-Make a Leader turns an arm in your scene into a hand-sized leader with the same joints, a Dynamixel XL330 in each one, and printed brackets ready for Build.
+Make a Leader turns an arm in your scene into a hand-sized leader with the same joints. Each joint gets a Dynamixel XL330 and printed brackets ready for Build.
 
 ## Where it is
 
-It's in ⌘K whenever the scene has a fixed-base arm, and in the right-click menu of any part of that arm. The leader opens in a new tab named after the arm, so the SO-101 Arm becomes SO-101 Arm Leader. The agent has it too, as `make_leader`.
+It's in ⌘K whenever the scene has a fixed-base arm, and in the right-click menu of any part of that arm. The leader opens in a new tab named after the arm, so the SO-101 Arm becomes SO-101 Arm Leader. The agent has it too, as `make_leader`. Steps are in [Make a leader arm](/help/make-a-leader-arm).
 
 ![Make a Leader in the right-click menu of the SO-101](/changelog/make-a-leader-arm/menu.png)
 

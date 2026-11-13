@@ -1,6 +1,8 @@
 ---
 title: Snap parts together by their mounting holes
 date: 2026-11-13
+collection: design
+type: task
 covers:
   - src/agent/snap.ts
   - src/agent/portFit.ts

@@ -1,6 +1,8 @@
 ---
 title: Make a leader arm
 date: 2026-11-13
+collection: operate
+type: task
 covers:
   - src/leader/makeLeader.ts
   - src/leader/leaderArm.ts

@@ -1,6 +1,8 @@
 ---
 title: Number a robot's servos
 date: 2026-11-13
+collection: operate
+type: task
 covers:
   - src/components/operate/ServoSetupSection.tsx
   - src/robot/servoSetup.ts

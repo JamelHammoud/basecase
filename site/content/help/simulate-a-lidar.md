@@ -1,6 +1,8 @@
 ---
 title: Simulate a LiDAR
 date: 2026-11-13
+collection: simulate-and-train
+type: task
 covers:
   - src/sim/lidar.ts
   - src/sim/scanner.ts

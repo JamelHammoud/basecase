@@ -8,9 +8,11 @@ Drag a servo onto a bracket and it snaps into place by its real horn pattern, an
 
 ## How it works
 
-Every catalog part already knows its mounting ports: an STS3215 has its output shaft, the four M3 holes on its horn, the idler boss and the M2 holes in its case. Agent-made parts carry the ports they were modelled with. Until now only the agent could use them.
+Every catalog part already knows its mounting ports. An STS3215 has its output shaft, the four M3 holes on its horn, the idler boss and the M2 holes in its case. Agent-made parts carry the ports they were modelled with. Until now only the agent could use them.
 
-Now, when you drag a part with Move (V), white dots show on the ports that fit something nearby, on the part you're dragging and on the parts around it. A hole circle fits one with the same count, pitch and thread; a screw hole fits a hole of the same thread; an output shaft or boss fits a bore it slides into. Bring a dot within about 8 mm of its partner and the pair turns blue as the part jumps into place, turned so the two line up. Let go and it's mated.
+Now, when you drag a part with Move (V), white dots show on the ports that fit something nearby. They show on the part you're dragging and on the parts around it. A hole circle fits one with the same count, pitch and thread, and a screw hole fits a hole of the same thread. An output shaft or boss fits a bore it slides into. Bring a dot within about 8 mm of its partner and the pair turns blue as the part jumps into place.
+
+The part turns so the two line up. Let go and it's mated. Steps are in [Snap parts together by their mounting holes](/help/snap-parts-together-by-their-mounting-holes).
 
 ![A servo dragged toward a bracket, with dots on the ports that fit](/changelog/snap-parts-by-their-mounting-ports/near.png)
 
@@ -26,7 +28,7 @@ Dropping a tile from Parts, or a one-part model from the Library, snaps the same
 
 ## Same as the agent
 
-Snapping uses the agent's own `mate` placement for the pair it finds, so a part you snap by hand and a part the agent mates land in exactly the same spot. The agent now also says when two ports it mates don't fit, such as M3 holes against M2.
+Snapping uses the agent's own `mate` placement for the pair it finds. A part you snap by hand and a part the agent mates land in exactly the same spot. The agent now also says when two ports it mates don't fit, such as M3 holes against M2.
 
 ## What it doesn't do yet
 

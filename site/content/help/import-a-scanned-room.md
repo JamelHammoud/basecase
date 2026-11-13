@@ -1,6 +1,8 @@
 ---
 title: Import a scanned room as a Case world
 date: 2026-11-13
+collection: simulate-and-train
+type: task
 covers:
   - src/cases/roomPlan.ts
   - src/cases/roomWalls.ts

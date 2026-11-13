@@ -30,6 +30,12 @@ interface CasesOptions {
   partners: () => SlotRobot[];
 }
 
+const generatedBody = (count: number) => {
+  if (!count) return undefined;
+
+  return count === 1 ? 'Its generated try goes with it.' : `Its ${count} generated tries go with it.`;
+};
+
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
   const cases = readCases(project.cases);
@@ -111,7 +117,7 @@ export function useCases(options: CasesOptions) {
 
     confirmAction({
       title: `Delete this try?`,
-      body: generated.length ? `Its ${generated.length} generated tries go with it.` : undefined,
+      body: generatedBody(generated.length),
       onConfirm: () => {
         const gone = new Set([record.id, ...generated.map((t) => t.id)]);
 

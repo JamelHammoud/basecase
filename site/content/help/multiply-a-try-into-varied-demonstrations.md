@@ -26,18 +26,19 @@ Turn one passed try into dozens of passing ones, each with the block and spot mo
 
 A robot model needs hundreds of demonstrations to learn a task. Driving each one by hand is the slow part. Multiply runs your try 50 more times in simulation, each in a slightly different world, and keeps the runs that pass.
 
-1. Open a Case and drive a try with **Try It** until it passes. Steps are in [Try a Case](/help/try-a-case).
-2. Under **Results**, right-click the passed try and choose **Multiply**.
+1. Open a Case and click **Try It**.
+2. Drive the try until it passes. Steps are in [Try a Case](/help/try-a-case).
+3. Under **Results**, right-click the passed try and choose **Multiply**.
 
 ![The try menu in Results with Multiply above Delete](/help/multiply-a-try-into-varied-demonstrations/menu.png)
 
-3. Wait while the toast counts the passing runs. Click **Stop** in the toast to end early and keep what's made.
+4. Wait while the toast counts the passing runs.
 
 ![The toast counting generated tries, with Stop](/help/multiply-a-try-into-varied-demonstrations/progress.png)
 
 ![Results with the passed try showing its generated count](/help/multiply-a-try-into-varied-demonstrations/results.png)
 
-The try's row shows how many passed, such as "50 generated". **Multiply Try** is in [[⌘K]], where it takes your newest passed try.
+To end early and keep what's made, click **Stop** in the toast. The try's row shows how many passed, such as "50 generated". **Multiply Try** is in [[⌘K]], where it takes your newest passed try.
 
 ## What changes in each run
 

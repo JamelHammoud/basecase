@@ -144,7 +144,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
       group: 'Scene',
       label: 'Run Checks',
       icon: <PrinterIcon className={ic} />,
-      keywords: 'ready to build buildable audit blockers build check assemble',
+      keywords: 'ready to build buildable audit blockers build check assemble case fit robot',
       run: () => {
         core.tool.setRightTab('build');
         void core.readiness.checkNow();
@@ -366,10 +366,10 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
           {
             id: 'tool-erase-marks',
             group: 'Tools',
-            label: 'Erase Marks',
+            label: 'Eraser',
             shortcut: 'E',
             icon: <EraserIcon className={ic} />,
-            keywords: 'annotate eraser remove delete one mark rub out',
+            keywords: 'annotate erase marks remove delete one mark rub out',
             run: () => {
               core.tool.toggleMarking(true);
               core.marks.setTool('eraser');

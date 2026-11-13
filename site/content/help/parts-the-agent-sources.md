@@ -32,7 +32,7 @@ When the catalog lacks a part, the agent finds a real one online and adds it to 
 
 Ask the agent for a part by name or with a link. It opens the maker's page and looks for the part number before it saves anything. When the maker publishes a STEP or IGES model, the agent downloads it, converts it and checks its size against the datasheet. Holes that go through the part become mounting points, like a catalog part's.
 
-The part joins **Parts** at once, under **Added by Agent** in **Components**. Parts with no 3D model yet are listed under **Needs a 3D Model**. They can't be placed, so each opens its product page instead.
+The part joins **Parts** at once, under **Added by Agent** in **Components**. Parts with no 3D model yet are listed under **Needs a 3D model**. They can't be placed, so each opens its product page instead.
 
 ## On the bill of materials
 

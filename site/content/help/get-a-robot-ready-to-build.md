@@ -24,6 +24,7 @@ covers:
   - src/components/build/FindingRow.tsx
   - src/components/build/IgnoredChecks.tsx
   - src/components/build/CaseCheckItem.tsx
+  - src/components/simulate/CaseSections.tsx
   - src/workspace/caseChecks.ts
   - src/components/build/TetherFields.tsx
   - src/workspace/RightPanelTabs.tsx
@@ -65,12 +66,16 @@ To set a problem aside, click ⋯ on its row and choose **Ignore**. The **Ignore
 
 Each Case runs 20 times, with friction, weight, servo strength and servo delay changed a little every time. A box or anything else that moves starts up to 15 mm from where it was placed. A Case is green at 18 of 20 or better, amber from 10 to 17 and red below 10. Its most common failure shows under it, such as Fell or Missed.
 
-A robot that can't enter a Case gets a red row that says why. Cases never count toward Ready to build, and you can ignore one from its ⋯ menu like any other note. They run again only when the robot or the Case changes. To have the agent change the robot until a red or amber Case passes, follow [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
+A robot that can't run a Case gets a red row with the first thing that stops it, such as a Case that needs driven wheels or a fall on hold. [Try a Case](/help/try-a-case) lists each reason. When the robot lacks what the Case needs, the row's note offers **New Case**.
+
+Cases never count toward Ready to build, and you can ignore one from its ⋯ menu like any other note. They run again only when the robot or the Case changes. To have the agent change the robot until a red or amber Case passes, follow [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 
 ![Checks with Reach the Flag and Follow a Path past a Block, each passing 20 of 20](/help/get-a-robot-ready-to-build/cases-in-checks.png)
 
 ![Checks with Reach the Flag at 0 of 20 and Missed under it, on a rover with weak wheel motors](/help/get-a-robot-ready-to-build/case-row-failing.png)
 
-![Reach the Flag open in Simulate after clicking its row](/help/get-a-robot-ready-to-build/case-in-simulate.png)
+![Reach a Spot open in Simulate after clicking its row, with a green check beside its name](/help/get-a-robot-ready-to-build/case-in-simulate.png)
+
+The icon beside the Case's name in Simulate is its row's status. Click it to come back to the row.
 
 Why each check exists is in [The path from design to build](/help/from-design-to-build). Next, [price the parts and set a budget](/help/price-the-parts-and-set-a-budget).

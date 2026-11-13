@@ -60,7 +60,7 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
         {subTab === 'clay' && (
           <SculptPanel
             sculptSettings={sculptSettings}
-            hasSelection={!!selectedPart}
+            canSubdivide={!!selectedPart?.sculptMesh}
             onUpdateSculptSettings={onUpdateSculptSettings}
             onAddClayPreset={onAddClayPreset}
             onSubdivideSelectedClay={onSubdivideSelectedClay}

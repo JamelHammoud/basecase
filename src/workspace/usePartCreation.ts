@@ -87,21 +87,16 @@ function useSculptCreation(core: WorkspaceCore) {
     commitParts((prev) => [...prev, clayPart(preset, id, createSculptClayPreset(preset))]);
     setSelectedIds([id]);
     setTransformMode('sculpt');
-    showToast(`Added ${CLAY_LABELS[preset]}. Drag on it to sculpt.`);
+    showToast(`Added ${CLAY_LABELS[preset]}`);
   };
 
   const subdivideSelectedClay = () => {
     const part = selection.selectedPart;
 
-    if (!part) return;
+    if (!part?.sculptMesh) return;
 
     const { width, height, depth } = part.dimensions;
-    const geom = buildBufferGeometryFromSculptData(
-      part.sculptMesh || createSculptClayPreset('clay_sphere'),
-      width,
-      height,
-      depth,
-    );
+    const geom = buildBufferGeometryFromSculptData(part.sculptMesh, width, height, depth);
     const subdivided = extractSculptDataFromGeometry(tessellateGeometryForSculpting(geom), width, height, depth);
     const selectedId = selection.selectedPartId;
 

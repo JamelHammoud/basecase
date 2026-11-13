@@ -15,7 +15,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
 
   return (
     <SculptAndDrawStudio
-      selectedPart={selection.selectedParts[0] ?? null}
+      selectedPart={selection.selectedPart}
       sculptSettings={tool.sculptSettings}
       mode={studioMode}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}

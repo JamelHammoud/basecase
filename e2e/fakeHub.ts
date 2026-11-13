@@ -27,6 +27,7 @@ export interface FakeHubOptions {
   multipartOver?: number;
   uploadHost?: string;
   failCommit?: string;
+  port?: number;
 }
 
 export interface FakeHub {
@@ -309,7 +310,7 @@ export async function startFakeHub(options: FakeHubOptions): Promise<FakeHub> {
   const hub = new FakeHubServer(options);
   const server = http.createServer((req, res) => void hub.handle(req, res));
 
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  await new Promise<void>((resolve) => server.listen(options.port ?? 0, '127.0.0.1', resolve));
   hub.listen(server);
 
   return {

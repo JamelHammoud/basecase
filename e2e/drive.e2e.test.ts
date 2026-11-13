@@ -1,6 +1,6 @@
 import { parquetReadObjects } from 'hyparquet';
 import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { startFakeHub, type FakeHub } from './fakeHub';
@@ -100,15 +100,13 @@ async function stopDriving() {
 }
 
 beforeAll(async () => {
-  hub = await startFakeHub({ token: HUB_TOKEN });
-  process.env.BASECASE_HUB_URL = hub.url;
+  hub = await startFakeHub({ token: HUB_TOKEN, port: inject('hubPort') });
   app = await openApp({}, ['hub-']);
 }, 120000);
 
 afterAll(async () => {
   await app?.close();
   await hub?.close();
-  delete process.env.BASECASE_HUB_URL;
 });
 
 describe('live drive', () => {

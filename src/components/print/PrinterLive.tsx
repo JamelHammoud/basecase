@@ -6,7 +6,7 @@ import { hm } from '../build/format';
 
 const STATE_TEXT: Record<PrinterStatus['state'], string> = {
   idle: 'Ready',
-  preparing: 'Preparing',
+  preparing: 'Preparing…',
   printing: 'Printing',
   paused: 'Paused',
   finished: 'Finished',

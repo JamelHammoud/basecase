@@ -7,10 +7,10 @@ import { plural } from '../../utils/plural';
 
 const RUN: Record<string, string> = {
   idle: 'Motors off',
-  soft_start: 'Starting motors',
+  soft_start: 'Starting motors…',
   running: 'Motors running',
   rehearsing: 'Rehearsing, motors off',
-  stopping: 'Stopping',
+  stopping: 'Stopping…',
   stopped: 'Stopped',
 };
 

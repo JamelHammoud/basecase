@@ -11,6 +11,7 @@ import { powerRows, servoParts, servoSupplyVolts } from './engineeringPower';
 import { stabilityOf, stabilityRows } from './engineeringStability';
 import { rangeChangeRows } from './engineeringRanges';
 import { simModelRows } from './engineeringSimModel';
+import { servoLookup } from './engineeringEnvelope';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
 import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
@@ -138,7 +139,10 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     weightRow(ctx.all, masses, bodies),
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
     ...(loads.length
-      ? [withNoFeetNote(torqueRow(loads, env.crouch.share), floating), ...peakRow(loads, project, input.walk)]
+      ? [
+          withNoFeetNote(torqueRow(loads, env.crouch.share), floating),
+          ...peakRow(loads, project, input.walk, servoLookup(ctx.byPart)),
+        ]
       : []),
     ...simModelRows(ctx),
     ...payloadRows(ctx, env.volts),

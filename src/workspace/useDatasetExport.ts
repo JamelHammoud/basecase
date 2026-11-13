@@ -42,7 +42,14 @@ async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) 
   const episodes: DatasetJobEpisode[] = usable.map(({ record, recording }) => ({
     recording,
     task: kase.brief.trim() || kase.name,
-    source: { try: record.id, at: record.at, margin: record.margin, case_hash: record.manifest.caseHash },
+    source: {
+      try: record.id,
+      at: record.at,
+      margin: record.margin,
+      case_hash: record.manifest.caseHash,
+      seed: record.manifest.seed,
+      source: record.manifest.source ?? null,
+    },
   }));
 
   return { episodes, modelHash };

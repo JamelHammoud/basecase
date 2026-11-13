@@ -8,7 +8,29 @@ export type ConsoleSignal =
   | { id: string; kind: 'counter'; when: { signal: string; above?: number; below?: number } }
   | { id: string; kind: 'score'; sum: Array<{ signal: string; times: number }> };
 
-export type ConsoleArea = { canvas: true } | { size: number; panels: string[] };
+export const OVERLAY_ANCHORS = [
+  'top-left',
+  'top',
+  'top-right',
+  'left',
+  'fill',
+  'right',
+  'bottom-left',
+  'bottom',
+  'bottom-right',
+] as const;
+
+export type OverlayAnchor = (typeof OVERLAY_ANCHORS)[number];
+
+export interface CanvasOverlay {
+  panel: string;
+  anchor: OverlayAnchor;
+  width?: number;
+  height?: number;
+  pointer?: boolean;
+}
+
+export type ConsoleArea = { canvas: true; overlays?: CanvasOverlay[] } | { size: number; panels: string[] };
 
 export interface CaseConsole {
   input: string[];
@@ -18,6 +40,9 @@ export interface CaseConsole {
 }
 
 const MAX_PANELS = 24;
+const MAX_CODE_PANELS = 4;
+const OVERLAY_MIN = 40;
+const OVERLAY_MAX = 1600;
 const AREA_MIN = 200;
 const AREA_MAX = 720;
 
@@ -119,10 +144,42 @@ function readPanel(value: unknown, where: string, scope: SignalScope): PanelSpec
   return { id, kind: k, ...(title === undefined ? {} : { title }), ...config } as PanelSpec;
 }
 
+const overlaySide = (value: unknown, where: string, needed: boolean) => {
+  if (value === undefined) return needed ? refuse(where, 'is needed for this anchor') : undefined;
+
+  const n = asNumber(value, where);
+
+  return n >= OVERLAY_MIN && n <= OVERLAY_MAX ? n : refuse(where, `must be from ${OVERLAY_MIN} to ${OVERLAY_MAX}`);
+};
+
+const readOverlay: Reader<CanvasOverlay> = (value, where) => {
+  const v = asRecord(value, where);
+  const panel = asId(v.panel, `${where}.panel`);
+  const anchor = oneOf(OVERLAY_ANCHORS)(v.anchor, `${where}.anchor`);
+  const across = anchor === 'top' || anchor === 'bottom';
+  const down = anchor === 'left' || anchor === 'right';
+  const width = overlaySide(v.width, `${where}.width`, anchor !== 'fill' && !across);
+  const height = overlaySide(v.height, `${where}.height`, anchor !== 'fill' && !down);
+
+  if (v.pointer !== undefined && typeof v.pointer !== 'boolean') refuse(`${where}.pointer`, 'must be true or false');
+
+  return {
+    panel,
+    anchor,
+    ...(width === undefined ? {} : { width }),
+    ...(height === undefined ? {} : { height }),
+    ...(v.pointer === true ? { pointer: true } : {}),
+  };
+};
+
 const readArea: Reader<ConsoleArea> = (value, where) => {
   const v = asRecord(value, where);
 
-  if (v.canvas === true) return { canvas: true };
+  if (v.canvas === true) {
+    const overlays = optional(listOf(readOverlay, MAX_CODE_PANELS), v.overlays, `${where}.overlays`);
+
+    return overlays ? { canvas: true, overlays } : { canvas: true };
+  }
 
   const size = asNumber(v.size, `${where}.size`);
 
@@ -141,8 +198,17 @@ function readLayout(value: unknown, where: string, panels: PanelSpec[]) {
 
   if (areas.filter((a) => 'canvas' in a).length !== 1) refuse(`${where}.areas`, 'must hold the canvas once');
 
-  const placed = areas.flatMap((a) => ('panels' in a ? a.panels : []));
-  const ids = new Set(panels.map((p) => p.id));
+  const kinds = new Map(panels.map((p) => [p.id, p.kind]));
+
+  areas.forEach((a, i) =>
+    ('overlays' in a ? (a.overlays ?? []) : []).forEach((o, j) => {
+      if (kinds.has(o.panel) && kinds.get(o.panel) !== 'code')
+        refuse(`${where}.areas[${i}].overlays[${j}].panel`, `${o.panel} isn’t a code panel`);
+    }),
+  );
+
+  const placed = areas.flatMap((a) => ('panels' in a ? a.panels : (a.overlays ?? []).map((o) => o.panel)));
+  const ids = new Set(kinds.keys());
 
   placed.forEach((id) => {
     if (!ids.has(id)) refuse(`${where}.areas`, `places ${id}, which no panel is`);
@@ -171,6 +237,10 @@ export const consoleReader =
       (p) => p.id,
       `${where}.panels`,
     );
+
+    const fifth = panels.filter((p) => p.kind === 'code')[MAX_CODE_PANELS];
+
+    if (fifth) refuse(`${where}.panels[${panels.indexOf(fifth)}]`, 'is a fifth code panel; a Case runs at most 4');
 
     return {
       input,

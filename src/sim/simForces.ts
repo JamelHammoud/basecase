@@ -30,6 +30,14 @@ export function jointForces(data: MjData, joints: SimModel['joints'], out: Float
   return out;
 }
 
+export function jointSpeeds(data: MjData, joints: SimModel['joints'], out: Float64Array): Float64Array {
+  joints.forEach((j, i) => {
+    out[i] = j.actuator < 0 ? 0 : data.actuator_velocity[j.actuator];
+  });
+
+  return out;
+}
+
 export function limitForces(model: MjModel, sim: SimModel, limits: Record<string, number>) {
   const range = model.actuator_forcerange;
 

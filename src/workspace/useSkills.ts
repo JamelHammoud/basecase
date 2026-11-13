@@ -106,7 +106,7 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
         () => null,
       );
     });
-  }, [watch, parts, project.joints, buildModel, runtime, platform, debounce]);
+  }, [watch, parts, project.joints, project.servoCalibrations, buildModel, runtime, platform, debounce]);
 
   useEffect(() => () => debounce.cancel(), [debounce]);
 
@@ -120,7 +120,7 @@ export function useSkills(input: SkillsInput) {
   const { runtime, platform, jobs } = useRuntime(input);
   const records = project.skills ?? [];
   const facts = robotFacts(rig, parts);
-  const watch = available && (facts.morphology === 'legged' || records.length > 0);
+  const watch = available && (facts.morphology === 'legged' || records.length > 0 || !!project.policies?.length);
   const model = useSceneModel(input, { runtime, platform, watch });
   const rows: SkillRow[] = model ? skillRows({ model, design: designOf(model), records, jobs }) : [];
   const velocityRecord = readyVelocity(rows);
@@ -161,6 +161,7 @@ export function useSkills(input: SkillsInput) {
   return {
     runtime,
     available,
+    model,
     buildModel: sim.buildModel,
     rows,
     examples,

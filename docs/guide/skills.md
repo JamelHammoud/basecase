@@ -108,7 +108,7 @@ Compute priority is viewport, Gatekeeper lease, user training, Motor Kit (`elect
 - **The gate lease holds the Kit:** with `useGateLease()` (the app's trainer; tests construct their own), no Kit job starts while `$TMPDIR/basecase-gatekeeper.lease` exists, and a running one is paused when the lease appears (polled every 30 s). User training isn't held.
 - **The viewport comes first:** a Kit child process runs at OS priority 10 (`os.setPriority`).
 
-In the desktop app (`src/workspace/useSkills.ts`) a legged robot's model is rebuilt 1.5 s after the last edit to parts or joints. When its topology, physics or actuator hash moved (`designMoved`; a colour or name edit moves none), `backgroundTasks` lists every Kit entry that was trained before and isn't fresh now: Arena again for `rerun-arena` (`recheckSkill`, no training), the Kit pipeline for `needs-training`. Entries nobody trained never start on their own. A newer design aborts the running one (latest wins); a user job aborts it too and the queue resumes after.
+In the app (`src/workspace/useSkills.ts`) the scene model is rebuilt 1.5 s after the last edit to parts, joints or servo calibrations, while the robot is legged or the scene has skills or policies; the Policies section reads its fingerprints too (§8d). On the desktop, when its topology, physics or actuator hash moved (`designMoved`; a colour or name edit moves none), `backgroundTasks` lists every Kit entry that was trained before and isn't fresh now: Arena again for `rerun-arena` (`recheckSkill`, no training), the Kit pipeline for `needs-training`. Entries nobody trained never start on their own. A newer design aborts the running one (latest wins); a user job aborts it too and the queue resumes after.
 
 ### In the app
 

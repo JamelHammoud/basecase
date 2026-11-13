@@ -53,7 +53,16 @@ const strips = new WeakMap<SimModel, Map<string, Promise<Blob | null>>>();
 function stripOf(record: TryRecord, model: SimModel, boxes: FilmBox[]): Promise<Blob | null> {
   const key = `${record.id} ${JSON.stringify(boxes)}`;
   const forModel = strips.get(model) ?? new Map<string, Promise<Blob | null>>();
-  const strip = forModel.get(key) ?? render(record, model, boxes);
+  const cached = forModel.get(key);
+
+  if (cached) return cached;
+
+  const forget = () => {
+    forModel.delete(key);
+
+    return null;
+  };
+  const strip = render(record, model, boxes).then((blob) => blob ?? forget(), forget);
 
   forModel.set(key, strip);
   strips.set(model, forModel);

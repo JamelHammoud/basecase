@@ -10,7 +10,6 @@ keywords:
   - generate guide greyed out
   - out of date
   - guide error
-  - pdf missing
 related:
   - make-a-build-guide
   - troubleshoot-build-check-blocks-ready-to-build
@@ -21,7 +20,7 @@ covers:
   - src/components/settings/BuildPane.tsx
 ---
 
-Most build guide problems come from a scene with nothing to build, or a guide file that was moved.
+Most build guide problems come from a scene with nothing to build, or a run that stopped with an error.
 
 ## Generate Guide is greyed out
 
@@ -36,18 +35,16 @@ It worked when **Generate Guide** turns blue.
 
 The run stopped with an error, shown after the message. A failed run leaves the last guide alone until the scene changes again.
 
-1. Click the card's button again: **Generate Guide** or **Regenerate**.
+1. Click the card's button again: **Generate Guide** or **Update**.
 2. If the same error comes back, read the reason after the message. It names what stopped the run.
-
-## “Regenerate the guide to open it”
-
-The PDF isn't where Basecase saved it, often because the file was moved or deleted. Click **Regenerate**, then **Open**.
 
 ## The guide stays Out of date
 
 Basecase updates the guide on its own 15 seconds after the last change, but waits while the agent is working. A guide you stopped also stays as it was until the scene changes again.
 
-1. Click **Regenerate** in **Build guide**.
+A guide whose order check stopped at its 20-second limit reads Out of date too. An automatic update tries once more, and **Update** tries again whenever you click it.
+
+1. Click **Update** in **Build guide**.
 2. To have it update on its own, press ⌘, (Ctrl+, on Windows), choose **Build** and turn on **Update automatically**.
 
 ## Show in Finder and Open PDF are missing

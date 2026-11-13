@@ -59,6 +59,7 @@ const GLOSSARY_SAMPLES = [
   ['Insert Part', 'Insert Part', 'Add'],
   ['Add Robot', 'Add Robot', 'Insert'],
   ['Add a model', 'Add a model', 'Insert'],
+  ['Regenerate', 'Regenerate', 'Update'],
 ];
 
 const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES];

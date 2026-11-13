@@ -55,7 +55,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 17. **Same word everywhere for the same thing:**
     - Parts are added, models are inserted, scenes are opened (in a tab) and closed, comments are posted, prices are added and checked.
     - Part types are **Solid / Cutout / Guide**.
-    - One verb per action, in buttons, menu items, ⌘K, the app menu, confirmations, toasts and help articles. A toast uses its past tense (Deleted, Stopped). `basecase/copy` fails a label that starts with a synonym listed in [`tools/copy/glossary.mjs`](../../tools/copy/glossary.mjs) and names the word to use, so a new row goes there and here together. Update and Train stay right elsewhere, so their rows need a reader.
+    - One verb per action, in buttons, menu items, ⌘K, the app menu, confirmations, toasts and help articles. A toast uses its past tense (Deleted, Stopped). `basecase/copy` fails a label that starts with a synonym listed in [`tools/copy/glossary.mjs`](../../tools/copy/glossary.mjs) and names the word to use, so a new row goes there and here together. Train stays right elsewhere, so the Teach row needs a reader.
 
       | Action | Word | Not |
       |---|---|---|
@@ -70,7 +70,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Start a Case, Routine, Checks or a policy | Run | Launch, Execute |
       | Put a part in the scene | Add | Insert Part |
       | Put a model or robot in the scene | Insert | Add Model, Add Robot |
-      | Make the build guide again | Regenerate | Update |
+      | Make an out-of-date build guide again | Update | Regenerate |
       | Describe a new skill for the agent to train; Train runs training on a skill row | Teach | — |
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.
     - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.agents/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbours before shipping.

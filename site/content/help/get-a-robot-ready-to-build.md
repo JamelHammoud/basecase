@@ -10,6 +10,7 @@ covers:
   - src/components/build/BuyTotal.tsx
   - src/components/build/PlatesSection.tsx
   - src/components/print/PrintPanel.tsx
+  - src/components/settings/BuildPane.tsx
 ---
 
 The Build tab tells you whether a design can be built, what to buy for it and how to print it.
@@ -19,9 +20,12 @@ The Build tab tells you whether a design can be built, what to buy for it and ho
 3. Click a check with a red or amber mark to see what's wrong and which parts it means. Click Fix to hand it to the agent.
 4. If the robot runs on a cable instead of a battery, open Servo voltage or Supply current and set the supply's volts (V) and amps (A).
 5. Type your budget in the field beside the total under Bill of materials. The bar under it shows how much is left.
-6. Click Lay Out Plates under Printing, or press ⌘P, to open Print mode.
+6. To see prices in another currency, open Settings ▸ Build (⌘,) and choose one under Prices ▸ Currency.
+7. Click Lay Out Plates under Printing, or press ⌘P, to open Print mode.
 
 ![The Build tab with Checks first and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
+
+![Settings ▸ Build with Checks, Prices and Build guide](/help/get-a-robot-ready-to-build/build-settings.png)
 
 In Print mode you choose the printer, quality, material and infill, move parts around the plate and send each plate to your printer. Printed parts lists every part with its plate and print time. To slice every plate at once, open ⌘K and choose Slice Plates; a toast shows the progress, with Stop.
 

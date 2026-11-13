@@ -1,5 +1,6 @@
 import { useState, type Dispatch, type KeyboardEvent, type RefObject, type SetStateAction } from 'react';
 import { filterSlash, slashQuery, stepSlash, withSlash, type SlashCommand } from '../../agent/slashCommands';
+import { focusPromptSoon } from './focusPromptSoon';
 
 interface SlashInputs {
   text: string;
@@ -22,12 +23,7 @@ export function useSlashMenu({ text, setText, promptRef }: SlashInputs) {
     const next = withSlash(text, command.name);
 
     setText(next);
-    requestAnimationFrame(() => {
-      const el = promptRef.current;
-
-      el?.focus();
-      el?.setSelectionRange(next.length, next.length);
-    });
+    focusPromptSoon(promptRef, next.length);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>): boolean => {

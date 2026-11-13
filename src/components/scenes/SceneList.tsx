@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SearchField, useScrollFade } from '../../design-system';
+import { EmptyState, NoMatches, SearchField, useScrollFade } from '../../design-system';
 import type { SavedSceneSummary } from '../../types/robotics';
 import { groupByDate } from '../../utils/dateGroups';
 import { SceneRow } from './SceneRow';
@@ -69,11 +69,7 @@ export const SceneList: React.FC<SceneListProps> = (props) => {
         />
       </div>
       <div ref={fadeRef} style={fadeStyle} className="min-h-0 overflow-y-auto overflow-x-hidden px-[6px] pb-[6px]">
-        {flat.length === 0 && (
-          <div className="px-4 py-6 text-center text-[13px] text-white/50">
-            {q ? `No matches for “${query.trim()}”` : 'No scenes'}
-          </div>
-        )}
+        {flat.length === 0 && (q ? <NoMatches query={query} /> : <EmptyState title="No scenes" />)}
         {groups.map((g, gi) => (
           <section key={g.label} className={gi > 0 ? 'mt-2' : ''}>
             <h3 className="px-[10px] pt-[6px] pb-[4px] text-[12px] font-medium text-white/50 select-none">{g.label}</h3>

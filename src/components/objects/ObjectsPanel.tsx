@@ -1,5 +1,5 @@
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { BrowseRow, Button, EmptyState, SearchField, useScrollFade } from '../../design-system';
+import { BrowseRow, Button, EmptyState, NoMatches, SearchField, useScrollFade } from '../../design-system';
 import type { SimReadyAsset } from '../../simready/search';
 import { useSimReadySearch } from '../../simready/useSimReadySearch';
 import { OBJECT_CATEGORIES, type ObjectCategory } from './objectCategories';
@@ -44,7 +44,7 @@ const Results: React.FC<{
       />
     );
 
-  if (!search.loading && !search.results.length) return <EmptyState title={`No matches for “${query}”`} />;
+  if (!search.loading && !search.results.length) return <NoMatches query={query} />;
 
   return (
     <div className="px-[12px] pt-1 pb-4">

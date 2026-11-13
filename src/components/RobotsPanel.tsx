@@ -3,7 +3,7 @@ import {
   ContextMenu,
   ContextMenuEntry,
   DeleteIcon,
-  EmptyState,
+  NoMatches,
   PlusIcon,
   PreviewImage,
   SearchField,
@@ -103,7 +103,7 @@ export const RobotsPanel: React.FC<{
       </div>
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
         {nothing ? (
-          <EmptyState title={`No matches for “${query.trim()}”`} />
+          <NoMatches query={query} />
         ) : (
           <div className="px-[8px] pb-4">
             {imported.length > 0 && (

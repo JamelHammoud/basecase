@@ -200,7 +200,7 @@ const BuyLinks: React.FC<{ c: ComponentInfo }> = ({ c }) => (
   </>
 );
 
-const Footer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const Footer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="mt-3 border-t border-white/[0.07] p-3 flex items-center gap-1.5">{children}</div>
 );
 

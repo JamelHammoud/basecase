@@ -43,7 +43,7 @@ async function couplerAt(joint: string, value: number): Promise<Vec2> {
     async ([j, v, id]) => {
       const studio = (window as unknown as { __studio: Studio }).__studio;
 
-      while (studio.posing().pose?.values[j] !== v) await new Promise(requestAnimationFrame);
+      while ((studio.posing().pose?.values[j] ?? 0) !== v) await new Promise(requestAnimationFrame);
 
       return studio.posedPort(id, 'P');
     },

@@ -17,6 +17,7 @@ keywords:
   - gallery
 related:
   - run-a-simulation
+  - drive-a-robot-with-your-camera
   - try-a-case
 covers:
   - src/components/simulate/ControlSection.tsx
@@ -40,6 +41,8 @@ Steer an arm, a rover or a walking robot live in MuJoCo with the keyboard or a g
 6. Press [[Esc]] to stop driving.
 
 **Stop Driving** under **Control** stops too, and **Drive** is also in [[⌘K]]. With a Case open, **Try It** starts driving instead; see [Try a Case](/help/try-a-case).
+
+A humanoid or an arm can also follow your own arms: click **Drive With Camera** under **Control**. Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ## Keys
 

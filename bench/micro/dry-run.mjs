@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { argOption, here, openStudio } from '../harness.mjs';
 import { gradeLine, gradeTask, startFacts } from './grade.mjs';
-import { closeAppModules, readJson, solutionRecord, specToPartFn, startRecord } from './scenes.mjs';
+import { appFor, sanity } from './sanity.mjs';
+import { closeAppModules, readJson, specToPartFn, startRecord } from './scenes.mjs';
 import { selectTasks } from './tasks/index.mjs';
 
 const args = process.argv.slice(2);
@@ -46,47 +47,6 @@ function readSaved(where) {
   };
 }
 
-async function appFor(studio, scene) {
-  if (!studio) return null;
-
-  await studio.page.evaluate((r) => window.__studio.load(r), scene);
-  await new Promise((r) => setTimeout(r, 800));
-
-  return { call: studio.call };
-}
-
-async function sanity(task, ctx) {
-  const before = await startRecord(task, ctx);
-  const rows = [];
-
-  if (saveDir) {
-    fs.mkdirSync(path.join(saveDir, task.id), { recursive: true });
-    fs.writeFileSync(path.join(saveDir, task.id, 'start.json'), JSON.stringify(before));
-  }
-
-  const startApp = await appFor(ctx.studio, before);
-  const facts = await startFacts(task, startApp);
-  const start = await gradeTask(task, { before, after: before, app: startApp, ...facts });
-
-  rows.push({ task, label: 'start', grade: start, ok: start.status !== 'pass' && start.status !== 'error' });
-
-  const fixed = (await solutionRecord(task, ctx, before)) ?? (task.solutionAnswer ? before : null);
-
-  if (fixed) {
-    const grade = await gradeTask(task, {
-      before,
-      after: fixed,
-      answer: task.solutionAnswer,
-      app: await appFor(ctx.studio, fixed),
-      ...facts,
-    });
-
-    rows.push({ task, label: 'solution', grade, ok: grade.status === 'pass' || grade.status === 'unavailable' });
-  }
-
-  return rows;
-}
-
 async function graded(task, ctx) {
   const rows = [];
 
@@ -108,7 +68,7 @@ const studio = withApp
   ? await openStudio({ label: 'micro-dry', port: Number(argOption(args, 'port', 5196)), agent: false })
   : null;
 const ctx = { studio, specToPart: await specToPartFn() };
-const mode = scenesDir || regrade ? graded : sanity;
+const mode = scenesDir || regrade ? graded : (task, c) => sanity(task, c, saveDir);
 const tasks = selectTasks({ ids, split }).filter((t) => t.fixture || scenesDir || regrade);
 let bad = 0;
 

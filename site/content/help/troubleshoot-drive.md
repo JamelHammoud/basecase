@@ -13,6 +13,8 @@ keywords:
   - falls over
   - fell
   - checking it stays up
+  - camera
+  - couldn't open the camera
 related:
   - drive-a-robot-in-the-simulation
   - train-stand-and-walk-with-the-motor-kit
@@ -22,9 +24,11 @@ covers:
   - src/workspace/useDriveKeys.ts
   - src/sim/driveAccess.ts
   - src/sim/useDrive.ts
+  - src/cameras/operator/operatorCamera.ts
+  - electron/permissions.mjs
 ---
 
-Fixes for a robot that shows Teach It to Move, has no Drive button, ignores the keys, or falls as soon as it moves.
+Fixes for a robot that shows Teach It to Move, has no Drive button, ignores the keys or the camera, or falls as soon as it moves.
 
 ## Teach It to Move shows instead of Drive
 
@@ -44,6 +48,8 @@ Training **Walk** is in [Train Stand and Walk with the Motor Kit](/help/train-st
 
 A robot with no arm, wheels or legs has nothing to drive, and shows no **Drive** at all.
 
+**Drive With Camera** hides while a Case is open too, but stays in [[⌘K]].
+
 ## The keys do nothing
 
 The canvas reads "Click the canvas to drive" while a text field or a dialog has the keyboard.
@@ -52,6 +58,19 @@ The canvas reads "Click the canvas to drive" while a text field or a dialog has 
 2. Press [[W]] again.
 
 Keys also let go when the window loses focus, so switching apps stops the robot.
+
+## “Couldn’t open the camera.”
+
+**Drive With Camera** got no picture: Basecase isn't allowed to use the camera, or no camera is connected.
+
+1. On a Mac, open **System Settings** ▸ **Privacy & Security** ▸ **Camera**.
+2. Turn on **Basecase**.
+3. Quit and reopen Basecase.
+4. Click **Drive With Camera** again.
+
+On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Camera**. In the web studio, allow the camera in the browser's site settings.
+
+The same message shows when pose estimation can't start, even with the camera allowed. The camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive With Camera** again.
 
 ## Drive is greyed out
 

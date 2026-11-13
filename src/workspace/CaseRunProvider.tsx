@@ -3,6 +3,7 @@ import type { PlacedArea } from '../cases/console/layout';
 import type { CaseAction } from '../cases/console/panelKinds';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
+import { startDriving } from '../components/simulate/driveWithCamera';
 import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -70,7 +71,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
 
     if (action === 'try') void run.attempt.start();
     else if (action === 'end-try') run.attempt.end();
-    else if (action === 'drive') void run.sim.drive.start();
+    else if (action === 'drive') void startDriving(run.sim.drive, core.showToast);
     else if (action === 'stop') run.sim.drive.stop();
     else if (action === 'start-over') run.sim.drive.respawn();
     else {

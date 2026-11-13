@@ -58,7 +58,7 @@ function firstDelivery(requestId: string) {
 
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
-  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts } = docs;
+  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitCases } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
@@ -93,10 +93,8 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       setAction,
     });
 
-  const laneBusy = (id: string) => lanes.isBusy(id);
-
   const guard = (author: Author, partId: string) => {
-    const holder = actors.holderOf(partId, author.actor, laneBusy);
+    const holder = actors.holderOf(partId, author.actor, lanes.isBusy);
 
     if (holder) return conflictText(partId, holder, actors);
 
@@ -150,6 +148,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     slice: (report) => core.printing.job.sliceReport(report),
     viewport: () => viewportRef.current,
     setProjectNow,
+    commitCases,
     insertParts: (parts, joints) => {
       commitParts((prev) => [...prev, ...parts]);
       updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));

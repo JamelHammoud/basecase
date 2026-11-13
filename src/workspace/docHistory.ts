@@ -1,4 +1,4 @@
-import type { ScenePart } from '../types/robotics';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { RobotUpgrade } from '../utils/robotImport';
 import { patchParts } from '../utils/robotUpgrade';
 import type { DocState, Snapshot } from './types';
@@ -19,6 +19,25 @@ export const pushHistory = (d: DocState, parts: ScenePart[], snapshot: Omit<Snap
 export const liveEdit = (d: DocState, parts: ScenePart[]): DocState => ({ ...d, base: d.base ?? d.parts, parts });
 
 export type HistoryDirection = 'undo' | 'redo';
+
+const KEPT_WHEN_CHANGED = ['tether', 'cases'] as const;
+
+export function supplyFor(d: DocState, direction: HistoryDirection, project: ProjectSettings): Partial<Snapshot> {
+  const next = (direction === 'undo' ? d.past : d.future).at(-1);
+
+  return Object.fromEntries(KEPT_WHEN_CHANGED.filter((key) => next && key in next).map((key) => [key, project[key]]));
+}
+
+export function restoredProject(to: Snapshot, here: Snapshot): Partial<ProjectSettings> {
+  return {
+    ...(to.joints === here.joints ? {} : { joints: to.joints }),
+    ...(to.marks === here.marks ? {} : { marks: to.marks }),
+    ...(to.skeleton === here.skeleton ? {} : { skeleton: to.skeleton }),
+    ...Object.fromEntries(
+      KEPT_WHEN_CHANGED.filter((key) => key in to && to[key] !== here[key]).map((key) => [key, to[key]]),
+    ),
+  };
+}
 
 export function stepHistory(
   d: DocState,

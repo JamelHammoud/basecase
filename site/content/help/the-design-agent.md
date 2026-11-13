@@ -38,7 +38,7 @@ It chooses parts from the same catalog as the **Parts** view, with their real si
 
 It can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach it a skill. When it writes a Routine, it proves each switch between skills and names any that fell. Given a Case and two open scenes, it says which robot passes more often. Asked which servo to buy, it runs the Case on each catalog version and answers with passes, cost and mass. Given the path a leg or finger should trace, it fits a four-bar linkage to it.
 
-Tell it what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). It draws a control the Case's panels lack, such as a joystick or a piano, as a code panel.
+Tell it what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). It draws a control the Case's panels lack, such as a joystick or a piano, as a code panel. After each write it reads the panel's errors and a capture of the window, and fixes what broke. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 
 ## What it cares about
 

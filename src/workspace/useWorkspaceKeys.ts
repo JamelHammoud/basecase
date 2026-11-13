@@ -115,8 +115,9 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   };
 
   const running: KeyMap = { escape: core.caseRun.leave };
+  const runningWithMod: KeyMap = { z: withMod.z, y: withMod.y, i: withMod.i };
 
-  return { global, withMod, plain, running };
+  return { global, withMod, plain, running, runningWithMod };
 }
 
 export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
@@ -156,6 +157,9 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
     else if (!running && !e.altKey && !core.printing.mode) runPlain(e, key);
   };
 
+  const runWhileRunning = (e: KeyboardEvent, key: string, mod: boolean) =>
+    mod && core.caseRun.open && runKey(maps.runningWithMod, key, e, true);
+
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
     const mod = e.metaKey || e.ctrlKey;
     const key = e.key.toLowerCase();
@@ -169,7 +173,9 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
       return;
     }
 
-    if (keysGoElsewhere() || blocked || core.simTraining.sim.drive.active || core.buildAlong.active) return;
+    if (keysGoElsewhere() || blocked || runWhileRunning(e, key, mod)) return;
+
+    if (core.simTraining.sim.drive.active || core.buildAlong.active) return;
 
     runScoped(e, key, mod);
   });

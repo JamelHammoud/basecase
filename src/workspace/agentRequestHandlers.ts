@@ -38,6 +38,7 @@ import { fitView } from './agentFitView';
 import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
+import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
@@ -61,6 +62,7 @@ export interface RequestContext {
   slice: (report: PrintReport) => Promise<SliceRecord>;
   viewport: () => Viewport3DHandle | null;
   setProjectNow: (next: ProjectSettings) => void;
+  commitCases: (update: (cases: ProjectSettings['cases']) => ProjectSettings['cases']) => void;
   insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
@@ -332,6 +334,7 @@ const HANDLERS: Record<string, Handler> = {
   ...PLAN_HANDLERS,
   ...ROUTINE_HANDLERS,
   ...CASE_HANDLERS,
+  ...CASE_CODE_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

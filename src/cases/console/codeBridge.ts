@@ -34,6 +34,20 @@ export interface CodeBridgeOptions {
   studio: BridgeStudio;
   onFail: (error: string) => void;
   clock?: BridgeClock;
+  firstLine?: number;
+}
+
+export interface CodeError {
+  message: string;
+  line?: number;
+}
+
+export interface CodeReport {
+  loaded: boolean;
+  failed: string | null;
+  errors: CodeError[];
+  logs: string[];
+  refused: string[];
 }
 
 export interface BridgeEnvelope {
@@ -43,7 +57,7 @@ export interface BridgeEnvelope {
 
 export interface CodeBridge {
   receive: (e: BridgeEnvelope) => void;
-  errors: () => readonly string[];
+  report: () => CodeReport;
   close: () => void;
 }
 
@@ -53,7 +67,7 @@ type PortTarget = {
 
 export const SILENT_ERROR = 'It didn’t answer.';
 
-const MAX_ERRORS = 50;
+export const REPORT_LIMITS = { errors: 10, logs: 20, refused: 20 } as const;
 
 const isAction = (name: string): name is CaseAction => (CASE_ACTIONS as readonly string[]).includes(name);
 
@@ -85,7 +99,11 @@ function budget(clock: BridgeClock) {
 
 export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   const clock = o.clock ?? REAL_CLOCK;
-  const errors: string[] = [];
+  const errors: CodeError[] = [];
+  const logs: string[] = [];
+  const refused: string[] = [];
+  const firstLine = o.firstLine ?? 1;
+  let failed: string | null = null;
   const spend = budget(clock);
   let port: MessagePort | null = null;
   let loaded = false;
@@ -97,8 +115,16 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   const post = (message: StudioMessage) => port?.postMessage(message);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
 
-  const note = (error: string) => {
-    if (errors.length < MAX_ERRORS) errors.push(error.slice(0, ERROR_MAX_CHARS));
+  const keep = <T>(list: T[], item: T, limit: number) => {
+    if (list.length < limit) list.push(item);
+  };
+
+  const note = (error: string) => keep(refused, error.slice(0, ERROR_MAX_CHARS), REPORT_LIMITS.refused);
+
+  const thrown = (message: string, line?: number) => {
+    const at = line === undefined ? undefined : line - firstLine + 1;
+
+    keep(errors, at !== undefined && at > 0 ? { message, line: at } : { message }, REPORT_LIMITS.errors);
   };
 
   const close = () => {
@@ -112,10 +138,11 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     port = null;
   };
 
-  const fail = (error: string) => {
+  const fail = (error: string, line?: number) => {
     if (closed) return;
 
-    note(error);
+    thrown(error, line);
+    failed = error;
     close();
     o.onFail(error);
   };
@@ -125,7 +152,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     loaded: () => {
       loaded = true;
     },
-    subscribe: (m) => feed.subscribe(m.id, m.names).forEach((refused) => note(`signals refused: ${refused}`)),
+    subscribe: (m) => feed.subscribe(m.id, m.names).forEach((why) => note(`signals refused: ${why}`)),
     unsubscribe: (m) => feed.unsubscribe(m.id),
     drive: (m) =>
       o.inputs.includes('code')
@@ -139,7 +166,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
 
       post(reply);
     },
-    error: (m) => (loaded ? note(m.message) : fail(m.message)),
+    error: (m) => (loaded ? thrown(m.message, m.line) : fail(m.message, m.line)),
+    log: (m) => keep(logs, m.text, REPORT_LIMITS.logs),
     key: (m) => o.studio.key({ key: m.key, meta: m.meta, ctrl: m.ctrl, shift: m.shift }),
   };
 
@@ -185,7 +213,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
         { targetOrigin: '*', transfer: [channel.port2] },
       );
     },
-    errors: () => errors,
+    report: () => ({ loaded, failed, errors: [...errors], logs: [...logs], refused: [...refused] }),
     close,
   };
 }

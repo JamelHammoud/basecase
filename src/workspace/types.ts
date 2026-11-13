@@ -164,6 +164,7 @@ export interface Snapshot {
   marks: SceneMark[] | undefined;
   skeleton: RobotSkeleton | undefined;
   tether?: Tether;
+  cases?: ProjectSettings['cases'];
 }
 
 export interface DocState {

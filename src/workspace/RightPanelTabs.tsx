@@ -21,7 +21,7 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
   const { chat, current, lanes } = agent;
   const running = runningChats(lanes.lanes, new Date());
   const hasChats = studio.chatList.length > 0 || running.length > 0;
-  const tabs: PanelTab<RightTab>[] = [
+  const all: PanelTab<RightTab>[] = [
     { value: 'inspector', label: 'Inspect' },
     ...(posable ? [{ value: 'pose' as const, label: 'Pose' }] : []),
     ...(posing.hasRig ? [{ value: 'sim' as const, label: 'Simulate' }] : []),
@@ -49,6 +49,7 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
         : undefined,
     },
   ];
+  const tabs = core.caseRun.open ? all.filter((t) => t.value === 'acp') : all;
 
   return (
     <div className="h-[44px] shrink-0 flex items-center px-[8px]">

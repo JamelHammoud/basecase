@@ -1,13 +1,26 @@
-import type { ScenePart } from '../types/robotics';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { RobotUpgrade } from '../utils/robotImport';
 import { patchParts } from '../utils/robotUpgrade';
-import type { DocState, Snapshot } from './types';
+import type { DocState, JointState, Snapshot } from './types';
 
 export const HISTORY_LIMIT = 50;
 
 export const EMPTY_DOC: DocState = { parts: [], past: [], future: [], base: null };
 
 export const docFromParts = (parts: ScenePart[]): DocState => ({ parts, past: [], future: [], base: null });
+
+export const projectSnapshot = (p: ProjectSettings): Omit<Snapshot, 'parts'> => ({
+  pose: p.pose,
+  joints: p.joints,
+  marks: p.marks,
+  firstRanges: p.firstRanges,
+});
+
+export const withJointState = (p: ProjectSettings, { joints, firstRanges }: JointState): ProjectSettings => ({
+  ...p,
+  joints,
+  firstRanges,
+});
 
 export const pushHistory = (d: DocState, parts: ScenePart[], snapshot: Omit<Snapshot, 'parts'>): DocState => ({
   parts,

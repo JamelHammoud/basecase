@@ -146,7 +146,10 @@ export interface Snapshot {
   pose: RobotPoseState | undefined;
   joints: RobotJoint[] | undefined;
   marks: SceneMark[] | undefined;
+  firstRanges: ProjectSettings['firstRanges'];
 }
+
+export type JointState = Pick<Snapshot, 'joints' | 'firstRanges'>;
 
 export interface DocState {
   parts: ScenePart[];

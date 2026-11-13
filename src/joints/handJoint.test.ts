@@ -4,8 +4,9 @@ import { toScene } from '../agent/agentFrame';
 import { printed } from '../assembly/assembly.fixtures';
 import type { ProjectSettings } from '../types/robotics';
 import { runEngineering } from '../utils/engineering';
+import { docFromParts, projectSnapshot, pushHistory, stepHistory, withJointState } from '../workspace/docHistory';
 import { buildRig, forwardKinematics } from '../utils/kinematics';
-import { declareJoints } from './declareJoints';
+import { declareJoints, withJoints } from './declareJoints';
 import { addHandJoint, HINGE_RANGE, uniqueJointId, withJointRange, withoutJoint } from './handJoint';
 
 const PROJECT: ProjectSettings = { printer: 'default', material: 'PLA', infillPct: 20 };
@@ -182,5 +183,43 @@ describe('joints added by hand', () => {
     expect(slider.joint.id).toBe('upper_arm');
     expect(slider.next.firstRanges).toEqual({ upper_arm: [-10, 70] });
     expect(rangeRow(slider.next)?.status).toBe('pass');
+  });
+
+  const undone = (before: ProjectSettings, after: ProjectSettings) => {
+    const doc = pushHistory(docFromParts(parts), parts, projectSnapshot(before));
+    const moved = stepHistory(doc, { parts, ...projectSnapshot(after) }, 'undo');
+
+    if (!moved) throw new Error('nothing to undo');
+
+    return withJointState(after, moved.to);
+  };
+
+  it('forgets an undone joint, so a new one on the same part starts fresh', () => {
+    const back = undone(PROJECT, hinge());
+
+    expect(back.joints).toBeUndefined();
+    expect(back.firstRanges).toBeUndefined();
+
+    const slider = addHandJoint(
+      { type: 'prismatic', parent: 'base', child: 'link', at, range: [-10, 70] },
+      parts,
+      back,
+    );
+
+    if (typeof slider === 'string') throw new Error(slider);
+
+    expect(slider.next.firstRanges).toEqual({ upper_arm: [-10, 70] });
+    expect(rangeRow(slider.next)?.status).toBe('pass');
+  });
+
+  it('tracks a deleted joint again once the delete is undone', () => {
+    const made = hinge();
+    const back = undone(made, withoutJoint(made, 'upper_arm'));
+
+    expect(back.firstRanges).toEqual({ upper_arm: [-90, 90] });
+
+    const narrowed = withJoints(back, [{ ...back.joints![0], range: [-30, 30] }]);
+
+    expect(rangeRow(narrowed)?.status).toBe('warn');
   });
 });

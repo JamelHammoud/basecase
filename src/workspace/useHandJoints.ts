@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { RoundFace } from '../joints/axisFinder';
 import type { SceneAxis } from '../joints/declareJoints';
@@ -54,8 +54,13 @@ export function useHandJoints(core: WorkspaceCore, active: boolean) {
   const busyRef = useRef(false);
   const canJoin = core.selectedIds.length === 2;
   const context = pickContext(core, active);
+  const nowRef = useRef({ picking, context });
 
   if (picking && picking.context !== context) setPicking(null);
+
+  useEffect(() => {
+    nowRef.current = { picking, context };
+  }, [picking, context]);
 
   const placedSoup = (id: string): PlacedSoup | null => {
     const part = partsRef.current.find((p) => p.id === id);
@@ -94,6 +99,8 @@ export function useHandJoints(core: WorkspaceCore, active: boolean) {
     const pick = { type, parent, child };
     const shared = await placement(pick);
 
+    if (nowRef.current.context !== context) return;
+
     if (shared) place(pick, shared);
     else setPicking({ ...pick, context });
   };
@@ -121,7 +128,7 @@ export function useHandJoints(core: WorkspaceCore, active: boolean) {
         busyRef.current = false;
       });
 
-    if (!placed) return;
+    if (!placed || nowRef.current.picking !== picking) return;
 
     setPicking(null);
     place(picking, placed);

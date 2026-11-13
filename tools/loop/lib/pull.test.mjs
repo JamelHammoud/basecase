@@ -58,7 +58,11 @@ const landed = (files, onDisk = files) =>
 
 describe('the changelog section', () => {
   it.each(Object.keys(KINDS))('names the entry a %s diff adds, by title and first sentence', (kind) => {
-    const body = pullBody(change(kind, []), { branch: 'b', landed: landed([ENTRY, 'src/a.ts']) });
+    const body = pullBody(change(kind, []), {
+      branch: 'b',
+      slug: 'acme/basecase',
+      landed: landed([ENTRY, 'src/a.ts']),
+    });
 
     expect(body).toContain(
       `## Changelog\n\n**Publish datasets to Hugging Face** (\`${ENTRY}\`)\nPublish a Case's passed tries to the Hub from Results.`,
@@ -66,9 +70,9 @@ describe('the changelog section', () => {
   });
 
   it('reads None when the diff adds no entry', () => {
-    expect(pullBody(change('feature', []), { branch: 'b', landed: landed(['src/a.ts']) })).toContain(
-      '## Changelog\n\n_None._',
-    );
+    expect(
+      pullBody(change('feature', []), { branch: 'b', slug: 'acme/basecase', landed: landed(['src/a.ts']) }),
+    ).toContain('## Changelog\n\n_None._');
   });
 });
 
@@ -77,7 +81,11 @@ describe('the screenshots section', () => {
   const cover = 'site/public/changelog/publish-datasets/cover.png';
 
   it('shows every image the diff adds, even when the answer lists none', () => {
-    const body = pullBody(change('refine', []), { branch: 'b', landed: landed([shot, cover, 'src/a.ts']) });
+    const body = pullBody(change('refine', []), {
+      branch: 'b',
+      slug: 'acme/basecase',
+      landed: landed([shot, cover, 'src/a.ts']),
+    });
 
     expect(body).toContain(`raw/b/${shot})`);
     expect(body).toContain(`raw/b/${cover})`);
@@ -86,7 +94,7 @@ describe('the screenshots section', () => {
 
   it('drops a listed screenshot that is not on the branch, and lists each image once', () => {
     const answer = { ...change('feature', []), screenshots: [shot, 'site/public/help/calibrate/missing.png'] };
-    const body = pullBody(answer, { branch: 'b', landed: landed([shot]) });
+    const body = pullBody(answer, { branch: 'b', slug: 'acme/basecase', landed: landed([shot]) });
 
     expect(body).not.toContain('missing.png');
     expect(body.split(`raw/b/${shot})`)).toHaveLength(2);
@@ -95,19 +103,26 @@ describe('the screenshots section', () => {
   it('keeps a listed screenshot an earlier commit on the branch added', () => {
     const answer = { ...change('refine', []), screenshots: [shot] };
 
-    expect(pullBody(answer, { branch: 'b', landed: landed([], [shot]) })).toContain(`raw/b/${shot})`);
+    expect(pullBody(answer, { branch: 'b', slug: 'acme/basecase', landed: landed([], [shot]) })).toContain(
+      `raw/b/${shot})`,
+    );
   });
 });
 
 describe('revisedBody', () => {
   const opened = `${pullBody(change('feature', []), {
     branch: 'b',
+    slug: 'acme/basecase',
     protectedPaths: ['.github/workflows/check.yml'],
     landed: landed([ENTRY]),
   })}\n\n## Revisions\n\n- Added the help article.`;
 
   it('adds the copy reasons a revision gives, so Check can read them', () => {
-    const body = revisedBody(opened, change('feature', copy), { branch: 'b', landed: landed([ENTRY]) });
+    const body = revisedBody(opened, change('feature', copy), {
+      branch: 'b',
+      slug: 'acme/basecase',
+      landed: landed([ENTRY]),
+    });
 
     expect(parseJustifications(body).get(normalize('Print failed: ${reason}'))).toBe(
       'Names the failure so it can be fixed.',
@@ -116,7 +131,11 @@ describe('revisedBody', () => {
   });
 
   it('drops the changelog line once the diff no longer adds the entry, and keeps Protected paths', () => {
-    const body = revisedBody(opened, change('feature', []), { branch: 'b', landed: landed(['src/a.ts']) });
+    const body = revisedBody(opened, change('feature', []), {
+      branch: 'b',
+      slug: 'acme/basecase',
+      landed: landed(['src/a.ts']),
+    });
 
     expect(opened).toContain('Publish datasets to Hugging Face');
     expect(body).toContain('## Changelog\n\n_None._');
@@ -129,7 +148,7 @@ describe('revisedBody', () => {
     const body = revisedBody(
       opened,
       { ...change('feature', []), why: 'Main already has the hover card cuts.' },
-      { branch: 'b' },
+      { branch: 'b', slug: 'acme/basecase' },
     );
 
     expect(body).toContain('## Why\n\nMain already has the hover card cuts.');
@@ -137,8 +156,8 @@ describe('revisedBody', () => {
   });
 
   it('adds a Copy section ahead of Revisions to a body whose template lacks one', () => {
-    const fix = `${pullBody(change('fix', []), { branch: 'b' })}\n\n## Revisions\n\n- First pass.`;
-    const body = revisedBody(fix, change('fix', copy), { branch: 'b' });
+    const fix = `${pullBody(change('fix', []), { branch: 'b', slug: 'acme/basecase' })}\n\n## Revisions\n\n- First pass.`;
+    const body = revisedBody(fix, change('fix', copy), { branch: 'b', slug: 'acme/basecase' });
 
     expect(body.indexOf('## Copy')).toBeGreaterThan(body.indexOf('## Changelog'));
     expect(body.indexOf('## Copy')).toBeLessThan(body.indexOf('## Revisions'));
@@ -147,8 +166,12 @@ describe('revisedBody', () => {
 
   it('adds the Changelog and Screenshots a fix diff brings, and clears them when a revision drops them', () => {
     const shot = 'site/public/help/print/failed.png';
-    const opened = pullBody(change('fix', []), { branch: 'b', landed: landed([ENTRY, shot]) });
-    const body = revisedBody(opened, change('fix', []), { branch: 'b', landed: landed(['src/a.ts']) });
+    const opened = pullBody(change('fix', []), { branch: 'b', slug: 'acme/basecase', landed: landed([ENTRY, shot]) });
+    const body = revisedBody(opened, change('fix', []), {
+      branch: 'b',
+      slug: 'acme/basecase',
+      landed: landed(['src/a.ts']),
+    });
 
     expect(opened).toContain('## Changelog\n\n**Publish datasets to Hugging Face**');
     expect(opened).toContain(`raw/b/${shot})`);

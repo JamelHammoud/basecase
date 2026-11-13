@@ -28,10 +28,12 @@ const oneLine = (text) => text.replace(/\s+/g, ' ').trim();
 const copyLines = (copy = []) =>
   copy.length === 0 ? NONE : copy.map(({ string, why }) => `copy: "${oneLine(string)}" — ${oneLine(why)}`).join('\n');
 
-const screenshotLines = (paths, branch) =>
+const screenshotLines = (paths, { branch, slug }) =>
   paths.length === 0
     ? NONE
-    : paths.map((file) => `![${path.basename(file)}](https://github.com/${repo()}/raw/${branch}/${file})`).join('\n\n');
+    : paths
+        .map((file) => `![${path.basename(file)}](https://github.com/${slug ?? repo()}/raw/${branch}/${file})`)
+        .join('\n\n');
 
 const shownScreenshots = (change, landed) => [
   ...new Set([...(change.screenshots ?? []).filter(landed.exists), ...landed.images]),
@@ -64,18 +66,18 @@ const templateFor = (change, values) =>
     values,
   );
 
-const fieldValues = (change, branch, landed) => ({
+const fieldValues = (change, { branch, slug, landed }) => ({
   summary: change.summary,
   why: change.why,
   cause: change.cause || NONE,
   checked: change.checked,
   changelog: entryLines(landed.entries),
-  screenshots: screenshotLines(shownScreenshots(change, landed), branch),
+  screenshots: screenshotLines(shownScreenshots(change, landed), { branch, slug }),
   copy: copyLines(change.copy),
 });
 
-export function pullBody(change, { branch, extra = {}, protectedPaths = [], landed = NOTHING_LANDED }) {
-  const values = { ...fieldValues(change, branch, landed), ...extra };
+export function pullBody(change, { branch, slug, extra = {}, protectedPaths = [], landed = NOTHING_LANDED }) {
+  const values = { ...fieldValues(change, { branch, slug, landed }), ...extra };
   const body = templateFor(change, values)
     .replace(/<!--[\s\S]*?-->\n*/g, '')
     .replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? NONE)
@@ -112,8 +114,8 @@ function withSection(body, heading, value) {
   return before < 0 ? `${body.trimEnd()}\n\n${fresh}`.trimEnd() : sections.toSpliced(before, 0, fresh).join('\n');
 }
 
-export function revisedBody(body, change, { branch, landed = NOTHING_LANDED }) {
-  const values = fieldValues(change, branch, landed);
+export function revisedBody(body, change, { branch, slug, landed = NOTHING_LANDED }) {
+  const values = fieldValues(change, { branch, slug, landed });
   const template = templateFor(change, values);
 
   return REVISED_SECTIONS.reduce((text, field) => {

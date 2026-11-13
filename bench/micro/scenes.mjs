@@ -31,6 +31,8 @@ export async function specToPartFn() {
 export const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 
 export async function startRecord(task, { specToPart, dataDir } = {}) {
+  if (task.record) return task.record(appModule);
+
   const file = startSceneFile(task, dataDir);
 
   if (file) return readJson(file);

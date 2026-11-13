@@ -17,6 +17,7 @@ interface SimState {
 }
 
 type Studio = {
+  agentRequest: (kind: string, payload: unknown) => Promise<unknown>;
   simState: () => SimState;
   load: (r: unknown) => void;
   parts: () => ScenePart[];
@@ -77,6 +78,20 @@ function armWithCamera() {
     },
   };
 }
+
+const RECORDED_CREATE_CASE = {
+  goal: 'touch',
+  name: 'Wrist Camera Drive',
+  console: {
+    input: ['keys'],
+    panels: [
+      { id: 'wrist', kind: 'camera', signal: 'camera.wrist_camera' },
+      { id: 'go', kind: 'button', action: 'try' },
+      { id: 'tries', kind: 'list', of: 'tries' },
+    ],
+    layout: { areas: [{ size: 480, panels: ['wrist'] }, { canvas: true }, { size: 300, panels: ['go', 'tries'] }] },
+  },
+};
 
 beforeAll(async () => {
   app = await openApp();
@@ -211,6 +226,32 @@ describe('Run Case', () => {
 
     await page.keyboard.press('Escape');
     await expect.poll(areaCount).toBe(0);
+    expect(app.errors).toEqual([]);
+  }, 180000);
+
+  it('opens a Case the agent builds with a camera console in Run Case, without a click', async () => {
+    const { page } = app;
+    const scene = armWithCamera();
+
+    await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
+    await expect.poll(() => partCount(page)).toBe(scene.parts.length);
+
+    const partsBefore = await sceneParts();
+    const reply = await page.evaluate(
+      (payload) => (window as unknown as { __studio: Studio }).__studio.agentRequest('create_case', payload),
+      RECORDED_CREATE_CASE,
+    );
+
+    expect(reply).toMatchObject({ ok: true, id: 'wrist-camera-drive', running: true });
+    await expect.poll(async () => (await simState()).activeCase).toBe('wrist-camera-drive');
+    await expect.poll(panelIds).toEqual(['wrist', 'go', 'tries']);
+    expect(await areaCount()).toBe(2);
+    await expect.poll(() => panel('wrist').locator('[data-camera="wrist_camera"]').count()).toBe(1);
+    expect(await page.locator(shown('[data-testid="camera-strip"]')).count()).toBe(0);
+
+    await page.keyboard.press('Escape');
+    await expect.poll(areaCount).toBe(0);
+    expect(await sceneParts()).toBe(partsBefore);
     expect(app.errors).toEqual([]);
   }, 180000);
 });

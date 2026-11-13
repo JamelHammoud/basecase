@@ -9,9 +9,10 @@ import type { Cases } from './useCases';
 type Payload = Record<string, unknown>;
 
 interface CaseContext {
-  cases: Cases;
+  cases: Pick<Cases, 'builder' | 'cases' | 'fitOf'>;
   routines: { checkLogic: (logic: unknown) => Promise<CompileResult> };
   setAction: (action: string) => void;
+  runCase: (id: string) => void;
 }
 
 const VALUE_KEYS: Array<[string, ParamKey]> = [
@@ -75,6 +76,7 @@ async function createCase(payload: Payload, ctx: CaseContext) {
     objects,
     logic: payload.logic,
     score: payload.score,
+    console: payload.console,
   };
   const refused = await logicProblem(spec, ctx);
 
@@ -85,10 +87,28 @@ async function createCase(payload: Payload, ctx: CaseContext) {
   if (!built.ok) return built;
 
   const { id, name, brief, task, world } = built.kase;
+  const reply = { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
 
-  return { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
+  if (!built.kase.console) return reply;
+
+  ctx.runCase(id);
+
+  return { ...reply, running: true };
+}
+
+async function checkCaseFit(payload: Payload, ctx: CaseContext) {
+  const kase = ctx.cases.cases.find((c) => c.id === payload.id);
+
+  if (!kase)
+    return {
+      ok: false,
+      problem: `No Case ${String(payload.id)}. Cases: ${ctx.cases.cases.map((c) => c.id).join(', ')}`,
+    };
+
+  return { ok: true, rows: await ctx.cases.fitOf(kase) };
 }
 
 export const CASE_HANDLERS: Record<string, (payload: Payload, ctx: CaseContext) => Promise<unknown>> = {
   create_case: createCase,
+  check_case_fit: checkCaseFit,
 };

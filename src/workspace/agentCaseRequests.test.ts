@@ -12,7 +12,10 @@ function contextFor(id: string) {
   const r = fixtureRobots().find((f) => f.id === id)!;
   const robot = builderRobot(buildRig(r.joints, r.parts), r.parts);
   const added: Case[] = [];
+  const running: string[] = [];
   const cases = {
+    cases: added,
+    fitOf: async (kase: Case) => [{ id: 'slot', label: 'Fits this Case', state: 'pass', detail: kase.name }],
     builder: {
       preview: (spec: CaseSpec) => buildCase(spec, robot),
       add: (spec: CaseSpec) => {
@@ -26,14 +29,22 @@ function contextFor(id: string) {
   } as unknown as Cases;
   const routines = { checkLogic: async (logic: unknown) => compileCaseLogic(logic as Routine, { skills: [] }) };
 
-  return { ctx: { cases, routines, setAction: () => {} }, added };
+  const ctx = { cases, routines, setAction: () => {}, runCase: (caseId: string) => running.push(caseId) };
+
+  return { ctx, added, running };
 }
 
 const create = (payload: Record<string, unknown>, id = 'rover-diff') => {
-  const { ctx, added } = contextFor(id);
+  const { ctx, added, running } = contextFor(id);
 
-  return { reply: CASE_HANDLERS.create_case(payload, ctx), added };
+  return { reply: CASE_HANDLERS.create_case(payload, ctx), added, running, ctx };
 };
+
+const cameraConsole = (panels: unknown[] = [{ id: 'eye', kind: 'camera', signal: 'camera.*' }]) => ({
+  input: ['keys'],
+  panels: [...panels, { id: 'tries', kind: 'list', of: 'tries' }],
+  layout: { areas: [{ canvas: true }, { size: 360, panels: ['eye', 'tries'] }] },
+});
 
 describe('create_case', () => {
   it('maps the agent’s numbers onto the builder’s', () => {
@@ -116,5 +127,54 @@ describe('create_case', () => {
     expect(compiled.ok).toBe(false);
     expect(await refused.reply).toEqual({ ok: false, problem: compiled.errors![0].message });
     expect(refused.added).toEqual([]);
+  });
+
+  it('builds a Case app from a console and opens it in Run Case', async () => {
+    const { reply, added, running } = create({ goal: 'touch', console: cameraConsole() }, 'arm-3dof');
+
+    expect(await reply).toMatchObject({ ok: true, id: 'touch-a-point', running: true });
+    expect(added[0].console?.panels.map((p) => p.kind)).toEqual(['camera', 'list']);
+    expect(running).toEqual(['touch-a-point']);
+  });
+
+  it('opens nothing without a console', async () => {
+    const { reply, running } = create({ goal: 'reach' });
+
+    expect(await reply).not.toHaveProperty('running');
+    expect(running).toEqual([]);
+  });
+
+  it('refuses a console panel or input parseCase refuses, by its path, and adds and opens nothing', async () => {
+    const radar = create({ goal: 'touch', console: cameraConsole([{ id: 'eye', kind: 'radar' }]) }, 'arm-3dof');
+
+    expect(await radar.reply).toEqual({
+      ok: false,
+      problem: expect.stringMatching(/^console.panels\[0\].kind must be/),
+    });
+    expect(radar.added).toEqual([]);
+    expect(radar.running).toEqual([]);
+
+    const midi = create({ goal: 'touch', console: { ...cameraConsole(), input: ['midi'] } }, 'arm-3dof');
+
+    expect(await midi.reply).toEqual({
+      ok: false,
+      problem: 'console.input[0] midi can’t drive a Case in this version',
+    });
+    expect(midi.running).toEqual([]);
+  });
+
+  it('checks a Case’s fit by id, and names the Cases there are for an unknown one', async () => {
+    const { reply, ctx } = create({ goal: 'reach' });
+
+    await reply;
+
+    expect(await CASE_HANDLERS.check_case_fit({ id: 'reach-a-spot' }, ctx)).toEqual({
+      ok: true,
+      rows: [{ id: 'slot', label: 'Fits this Case', state: 'pass', detail: 'Reach a Spot' }],
+    });
+    expect(await CASE_HANDLERS.check_case_fit({ id: 'nope' }, ctx)).toEqual({
+      ok: false,
+      problem: 'No Case nope. Cases: reach-a-spot',
+    });
   });
 });

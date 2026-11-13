@@ -6,10 +6,12 @@ import { archiveRun } from '../archive.mjs';
 import { mainServedModel, servedModels } from '../compare/models.mjs';
 import { gradeTask } from './grade.mjs';
 import { loadFixtureInApp } from './materialize.mjs';
-import { readJson } from './scenes.mjs';
+import { appModule, readJson } from './scenes.mjs';
 import { startSceneFile } from './tasks/index.mjs';
 
 async function startScene(slot, task) {
+  if (task.record) return loadFixtureInApp({ slot, fixture: null, record: await task.record(appModule) });
+
   const file = startSceneFile(task);
 
   return loadFixtureInApp({ slot, fixture: file ? null : task.fixture(), record: file ? readJson(file) : null });

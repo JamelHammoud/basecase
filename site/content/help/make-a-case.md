@@ -23,6 +23,8 @@ covers:
   - src/cases/caseWorlds.ts
   - src/workspace/caseCommands.tsx
   - src/workspace/useCaseBuilder.ts
+  - src/workspace/agentCaseRequests.ts
+  - electron/cad-agent-prompt.mjs
 ---
 
 Choose a goal and a world for the robot in this scene, set its distances and time limit, and open it ready to try.
@@ -45,6 +47,14 @@ The Case opens in the **Simulate** tab, and its world appears on the canvas. Nex
 ## Describe a Case in words
 
 **Ask the Agent**, under **New Case**, puts `/case` in the agent's box. Write the goal after it, such as "push the box to the wall in under 10 seconds", and send it. The agent builds the Case through the same builder and opens it. **Ask the Agent** is in the desktop app only.
+
+## Ask for a Case app
+
+Describe what you want to do with the robot, such as "drive this rover with a gamepad while I watch its front camera". The agent gives the Case its own layout and runs it in the whole window, as in [Run a Case](/help/run-a-case). With no robot in the scene, it imports the one you name first.
+
+![The agent's Case app running: Front Camera on the left, the rover in the middle, Map and Speed on the right](/help/make-a-case/case-app.png)
+
+Keys and a gamepad are the inputs today. Name another, such as your Mac's camera or a phone, and the agent says so and uses the keys.
 
 ## Name or delete a Case
 

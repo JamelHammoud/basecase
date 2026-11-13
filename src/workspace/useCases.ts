@@ -116,18 +116,21 @@ export function useCases(options: CasesOptions) {
       },
     });
 
-  const runFit = async () => {
-    setFit({ caseId: activeId, rows: [], checking: true });
-
-    const rows = await checkFit({
-      kase: active,
+  const fitOf = (kase: Case | null) =>
+    checkFit({
+      kase,
       rig,
       parts,
-      partners: active ? stageCase(active, { rig, parts }, partners()).partners.flatMap((r) => r ?? []) : [],
+      partners: kase ? stageCase(kase, { rig, parts }, partners()).partners.flatMap((r) => r ?? []) : [],
       build: sim.buildModel,
       run: async ({ model, controller, seconds, commands }) =>
         (await sim.runOn(model, { seconds, controller, commands })).stats,
     });
+
+  const runFit = async () => {
+    setFit({ caseId: activeId, rows: [], checking: true });
+
+    const rows = await fitOf(active);
 
     setFit({ caseId: activeId, rows, checking: false });
   };
@@ -160,6 +163,7 @@ export function useCases(options: CasesOptions) {
     removeTry,
     timeline,
     runFit,
+    fitOf,
     attempt,
   };
 }

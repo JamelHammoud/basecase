@@ -109,7 +109,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
-| `create_case` | Adds a Case |
+| `create_case` | Adds a Case, or a Case app it opens in Run Case |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |

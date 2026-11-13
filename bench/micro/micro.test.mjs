@@ -13,10 +13,10 @@ const build = (fixture) => recordFromFixture(fixture, specToPart);
 const task = (id) => SEED_TASKS.find((t) => t.id === id);
 
 describe('seed tasks', () => {
-  it('covers the 29 seed tasks with a held-out third', () => {
-    expect(SEED_TASKS).toHaveLength(29);
-    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(29);
-    expect(selectTasks({ split: 'heldout' })).toHaveLength(10);
+  it('covers the 41 seed tasks with a held-out third', () => {
+    expect(SEED_TASKS).toHaveLength(41);
+    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(41);
+    expect(selectTasks({ split: 'heldout' })).toHaveLength(14);
     expect(selectTasks({ split: 'tune' }).some((t) => t.heldOut)).toBe(false);
   });
 

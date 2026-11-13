@@ -125,3 +125,13 @@ export async function servoSolver(ctx, _scene, { tolerance = 0.15 } = {}) {
     detail: `actuators $${spent} vs cheapest passing $${solved.cheapestActuatorsUsd} (${Math.round(regret * 100)}%)`,
   };
 }
+
+export async function inputBuilt(id) {
+  try {
+    const { appModule } = await import('./scenes.mjs');
+
+    return (await appModule('/src/sim/inputSources.ts')).hasInputSource(id);
+  } catch (err) {
+    throw new AdapterMissing('inputBuilt', `the input sources this version registers (${err.message})`);
+  }
+}

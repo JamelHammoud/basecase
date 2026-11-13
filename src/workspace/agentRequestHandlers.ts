@@ -65,6 +65,7 @@ export interface RequestContext {
   buildGuide: () => Promise<GeneratedGuide | null>;
   routines: Routines;
   cases: Cases;
+  runCase: (id: string) => void;
   skills: SceneSkills;
 }
 

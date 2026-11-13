@@ -11,7 +11,7 @@
     "test": "",
     "issue": 465,
     "until": "2026-11-27",
-    "reason": "Run Case panels keep remounting while a try runs: on Windows End Try detaches until the click times out, and on Linux the default-layout test fails 2 of 6 at End Try and starves the page's main thread for the next test"
+    "reason": "Skips the whole file: on Linux the default-layout test fails 2 of 6 at End Try and starves the page's main thread for the next test, and on Windows both tests' End Try detaches until the click times out"
   },
   {
     "file": "e2e/drive.e2e.test.ts",
@@ -32,13 +32,13 @@
     "test": "scores a knock-the-blocks game from its Case logic and records the try as a pass",
     "issue": 474,
     "until": "2026-11-27",
-    "reason": "Passed at c3b1e44 and failed twice at 5bf24f15 with the score never reaching 2; fails 3 of 3 on a Mac at either commit"
+    "reason": "A real failure, not a frame stall: it fails 3 of 3 on a Mac with hardware GL at c3b1e44 and 5bf24f15, and twice on Linux at 5bf24f15 with the score never reaching 2. The cause isn't found; #474 lists it"
   },
   {
     "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "opens on the rover driving to its flag",
     "issue": 474,
     "until": "2026-11-27",
-    "reason": "Passed on Windows e2e at c3b1e44 and timed out twice at 5bf24f15 while the rover drives on software GL"
+    "reason": "Timed out twice on Windows e2e at 5bf24f15 while the rover drives on software GL, after passing at c3b1e44. The skip covers every platform, though it passes on Linux and a Mac"
   }
 ]

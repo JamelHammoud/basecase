@@ -30,6 +30,7 @@ interface BuildPanelProps {
   onFixFinding?: (finding: ReadinessFinding) => void;
   onQuoteFinding?: (finding: ReadinessFinding) => void;
   onOpenCase?: (id: string) => void;
+  onCalibrate?: (jointIds: string[]) => void;
   panScroll: boolean;
   guide: BuildGuide;
   readiness: ReadinessHandle;
@@ -56,6 +57,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onFixFinding,
   onQuoteFinding,
   onOpenCase,
+  onCalibrate,
   panScroll,
   guide,
   readiness,
@@ -100,8 +102,18 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
             panScroll,
             actions: {
               onFix: onFixFinding,
-              onApplyFix: ({ fix }) =>
-                fix && printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
+              onApplyFix: {
+                'print-face': ({ fix }) =>
+                  fix?.kind === 'print-face' &&
+                  printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
+                ...(onCalibrate && {
+                  calibrate: ({ fix, ids }: ReadinessFinding) => {
+                    onSelectParts(ids);
+
+                    if (fix?.kind === 'calibrate') onCalibrate(fix.joints);
+                  },
+                }),
+              },
               onQuote: onQuoteFinding,
               onIgnore: (finding) => onChangeProject({ readiness: ignoreFinding(project.readiness, finding) }),
               onIgnoreRule: (finding) => onChangeProject({ readiness: ignoreRule(project.readiness, finding) }),

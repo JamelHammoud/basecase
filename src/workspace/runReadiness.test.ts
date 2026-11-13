@@ -53,6 +53,7 @@ describe('what makes checks run again', () => {
     ['gait', { animations: [{ id: 'a', name: 'walk' }] as ProjectSettings['animations'] }],
     ['first ranges', { firstRanges: { j: [-90, 90] } }],
     ['print quality', { printProcess: 'fine' }],
+    ['active calibration', { servoCalibrations: { j: { versions: [], active: 1 } } }],
   ])('the project’s %s', (_name, change) => {
     expect(print([part], { ...project, ...change })).not.toBe(print());
   });

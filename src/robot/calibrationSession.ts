@@ -50,13 +50,15 @@ export const canCalibrate = (sceneJoints: readonly RobotJoint[]) =>
 export async function calibrateRobot(
   sceneJoints: readonly RobotJoint[],
   record: RecordCalibration,
-  only?: string,
+  only?: readonly string[],
 ): Promise<void> {
   const joints = connectedFrom(sceneJoints);
 
-  if (!joints || !canCalibrate(sceneJoints) || (only && !joints.includes(only))) return;
+  if (!joints || !canCalibrate(sceneJoints)) return;
 
-  const subset = only ? [joints.indexOf(only)] : joints.map((_, k) => k);
+  const subset = joints.map((_, k) => k).filter((k) => !only || only.includes(joints[k]));
+
+  if (!subset.length) return;
 
   setPhase('moving');
 

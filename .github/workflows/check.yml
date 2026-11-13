@@ -1,9 +1,10 @@
 name: Check
 
 on:
-  push:
-    branches: [main]
   pull_request:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,10 +28,11 @@ jobs:
       - name: Decide whether the packaged app and the ROS package need checking
         id: filter
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+          EVENT: ${{ github.event_name }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then printf 'app=true\nros=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT" != pull_request ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then printf 'app=true\nros=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           files=$(git diff --name-only "$BASE...$HEAD")
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
@@ -41,8 +43,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON((github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
+        os: ${{ fromJSON(github.event_name != 'pull_request' && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     defaults:
       run:
         shell: bash
@@ -50,23 +53,37 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - run: npm ci
-      - run: npm run check
+      - name: Check only what the pull request changed
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          npm run check:tracked
+          npm run check:quarantine
+          mapfile -t files < <(git diff --name-only --diff-filter=ACMR "$BASE...HEAD")
+          if [ "${#files[@]}" -eq 0 ]; then echo "Nothing changed to check."; exit 0; fi
+          node tools/check-changed.mjs "${files[@]}"
+      - name: Check everything
+        if: ${{ github.event_name != 'pull_request' }}
+        run: npm run check
       - if: runner.os == 'Linux'
         run: npm audit --audit-level=high
 
   e2e:
-    if: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+    if: ${{ github.event_name != 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
         shard: [1, 2, 3]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -85,9 +102,43 @@ jobs:
         continue-on-error: true
         run: npm run test:quarantine
 
+  e2e-changed:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Find the e2e files the pull request added or changed
+        id: files
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          files=$(git diff --name-only --diff-filter=ACMR "$BASE...HEAD" -- 'e2e/*.e2e.test.ts' | tr '\n' ' ')
+          echo "list=$files" >> "$GITHUB_OUTPUT"
+          echo "e2e files: ${files:-none}"
+      - if: ${{ steps.files.outputs.list != '' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - if: ${{ steps.files.outputs.list != '' }}
+        run: npm ci
+      - if: ${{ steps.files.outputs.list != '' }}
+        run: npx vite build && npx vite build --mode web --outDir dist-web
+      - if: ${{ steps.files.outputs.list != '' }}
+        env:
+          FILES: ${{ steps.files.outputs.list }}
+        run: |
+          read -ra list <<< "$FILES"
+          npx vitest run --config vitest.e2e.config.ts "${list[@]}"
+
   e2e-windows:
-    if: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+    if: ${{ github.event_name != 'pull_request' }}
     runs-on: windows-latest
+    timeout-minutes: 25
     defaults:
       run:
         shell: bash
@@ -111,7 +162,7 @@ jobs:
 
   app:
     needs: changes
-    if: ${{ needs.changes.outputs.app == 'true' && (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+    if: ${{ needs.changes.outputs.app == 'true' && github.event_name != 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -192,7 +243,7 @@ jobs:
 
       - name: No commit credits a model or tool
         env:
-          RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || format('{0}..{1}', github.event.before, github.sha) }}
+          RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || format('{0}~1..{0}', github.sha) }}
         run: |
           base="${RANGE%%..*}"
           head="${RANGE#*..}"
@@ -223,14 +274,15 @@ jobs:
 
   check:
     if: always()
-    needs: [changes, unit, e2e, e2e-windows, app, ros, credit, copy]
+    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, credit, copy]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
         env:
           REQUIRED: ${{ needs.changes.result }} ${{ needs.unit.result }} ${{ needs.credit.result }}
           E2E: ${{ needs.e2e.result }}
-          FULL: ${{ (github.event_name == 'push' || startsWith(github.head_ref, 'loop/batch/') || startsWith(github.head_ref, 'loop/repair/')) }}
+          E2E_CHANGED: ${{ needs.e2e-changed.result }}
+          FULL: ${{ github.event_name != 'pull_request' }}
           HEAD_REF: ${{ github.head_ref }}
           APP: ${{ needs.app.result }}
           APP_NEEDED: ${{ needs.changes.outputs.app }}
@@ -241,13 +293,16 @@ jobs:
           EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Required: $REQUIRED; full: $FULL; e2e: $E2E; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
+          echo "Required: $REQUIRED; full: $FULL; e2e: $E2E; changed e2e: $E2E_CHANGED; app: $APP (needed: $APP_NEEDED); ROS: $ROS (needed: $ROS_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
           [ "$(wc -w <<< "$REQUIRED")" -eq 3 ] || exit 1
           for r in $REQUIRED; do [ "$r" = success ] || exit 1; done
           want_full=skipped
           [ "$FULL" = true ] && want_full=success
           [ "$E2E" = "$want_full" ] || exit 1
           [ "$WINDOWS_E2E" = "$want_full" ] || exit 1
+          want_changed=success
+          [ "$FULL" = true ] && want_changed=skipped
+          [ "$E2E_CHANGED" = "$want_changed" ] || exit 1
           want_app=skipped
           [ "$FULL" = true ] && [ "$APP_NEEDED" = true ] && want_app=success
           [ "$APP" = "$want_app" ] || exit 1

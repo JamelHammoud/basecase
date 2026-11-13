@@ -1,42 +1,7 @@
 import ts from 'typescript';
+import { CALL_KEYS, CALLS, JSX_PROPS, OBJECT_KEYS } from './surfaces.mjs';
 
 export const SLOT = '{…}';
-
-export const JSX_PROPS = new Set([
-  'aria-label',
-  'aria-description',
-  'aria-placeholder',
-  'aria-roledescription',
-  'aria-valuetext',
-  'title',
-  'placeholder',
-  'label',
-  'alt',
-  'tooltip',
-  'description',
-  'emptyText',
-  'confirmLabel',
-  'subtitle',
-  'hint',
-  'caption',
-  'heading',
-]);
-
-export const OBJECT_KEYS = new Set([
-  'label',
-  'title',
-  'placeholder',
-  'tooltip',
-  'description',
-  'emptyText',
-  'confirmLabel',
-  'subtitle',
-  'hint',
-]);
-
-export const CALLS = new Set(['showToast', 'toastInFront', 'toast', 'notify', 'confirmAction']);
-
-const CALL_KEYS = new Set([...OBJECT_KEYS, 'body', 'message']);
 
 const UNITS = new Set(
   [

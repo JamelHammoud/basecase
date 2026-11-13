@@ -67,7 +67,7 @@ function sizedReply(families: ReturnType<typeof sizeActuators>, totalG: number, 
 }
 
 function skeletonReply(project: ProjectSettings) {
-  if (!project.skeleton) return { text: 'No skeleton yet. Lay it out with define_skeleton, or declare joints first.' };
+  if (!project.skeleton) return { text: 'No skeleton. Lay it out with define_skeleton, or declare joints first.' };
 
   const input = skeletonSizing(project.skeleton);
 
@@ -87,7 +87,7 @@ export async function sizeActuatorsRequest(payload: Payload, ctx: RequestContext
   if (source === 'skeleton') return skeletonReply(project);
 
   if (!project.joints?.length)
-    return { text: 'No joints yet. Declare them with define_joints, then size their actuators.' };
+    return { text: 'No joints. Declare them with define_joints, then size their actuators.' };
 
   ctx.setAction('Sizing the actuators');
 

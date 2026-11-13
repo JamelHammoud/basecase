@@ -47,7 +47,14 @@ function reviewPull(pull, log) {
 
   try {
     const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: worktree.dir }).out.slice(0, MAX_DIFF);
-    const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\nIts diff against main:\n\n${diff}`;
+    const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: worktree.dir, allowFail: true }).ok;
+
+    if (!onMain) run('git', ['merge', '--abort'], { cwd: worktree.dir, allowFail: true });
+
+    const where = onMain
+      ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
+      : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
+    const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\nIts diff against main:\n\n${diff}`;
     const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
 
     if (!result.ok) {

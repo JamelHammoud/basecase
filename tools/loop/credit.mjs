@@ -1,11 +1,15 @@
+const MODELS = String.raw`\b(claude|codex|gemini|copilot|cursor|chatgpt|gpt-?\d*|openai|anthropic|llm|ai)\b`;
+const BOT_ADDRESS = /noreply@anthropic\.com|@anthropic\.com|@openai\.com|\[bot\]@users\.noreply\.github\.com/i;
+
 const CREDIT_LINES = [
-  /^\s*co-authored-by:/i,
-  /generated (with|by) .*(claude|codex|gemini|copilot|cursor|chatgpt|gpt|llm|ai)/i,
-  /🤖/u,
+  new RegExp(String.raw`^\s*co-authored-by:.*${MODELS}`, 'i'),
+  /^\s*co-authored-by:.*(noreply@anthropic\.com|\[bot\])/i,
+  new RegExp(String.raw`generated (with|by)\b.*${MODELS}`, 'i'),
+  /🤖.*generated|generated.*🤖/iu,
   /noreply@anthropic\.com/i,
 ];
 
-const MODEL_IDENTITIES = /(anthropic|claude|openai|codex|gemini|copilot|chatgpt|\[bot\]@)/i;
+const MODEL_NAMES = /^(claude( code)?|codex|gemini( cli)?|(github )?copilot|chatgpt|cursor( agent)?|openai codex)$/i;
 
 export const creditProblems = (message) =>
   message
@@ -15,4 +19,4 @@ export const creditProblems = (message) =>
     .map((line) => line.trim());
 
 export const identityProblem = ({ name, email }) =>
-  MODEL_IDENTITIES.test(`${name} <${email}>`) ? `${name} <${email}>` : null;
+  MODEL_NAMES.test(name.trim()) || BOT_ADDRESS.test(email) ? `${name} <${email}>` : null;

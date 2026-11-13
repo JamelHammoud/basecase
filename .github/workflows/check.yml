@@ -88,8 +88,10 @@ jobs:
         env:
           RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || format('{0}..{1}', github.event.before, github.sha) }}
         run: |
-          case "$RANGE" in 0000000000000000000000000000000000000000..*) RANGE="${RANGE#*..}~1..${RANGE#*..}" ;; esac
-          node tools/check-credit.mjs "$RANGE"
+          base="${RANGE%%..*}"
+          head="${RANGE#*..}"
+          git cat-file -e "$base^{commit}" 2>/dev/null || base="$head~1"
+          node tools/check-credit.mjs "$base..$head"
 
   check:
     if: always()

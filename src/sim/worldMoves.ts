@@ -15,6 +15,7 @@ interface Mover {
   geoms: number[];
   contype: number[];
   conaffinity: number[];
+  rgba: Float32Array;
   rest: THREE.Quaternion;
 }
 
@@ -61,6 +62,7 @@ export class WorldMoves {
         geoms,
         contype: geoms.map((g) => model.geom_contype[g]),
         conaffinity: geoms.map((g) => model.geom_conaffinity[g]),
+        rgba: Float32Array.from(geoms.flatMap((g) => Array.from(model.geom_rgba.subarray(g * 4, g * 4 + 4)))),
         rest: turnOf(b.moves.rotation),
       });
     }
@@ -107,6 +109,7 @@ export class WorldMoves {
       m.geoms.forEach((g, k) => {
         model.geom_contype[g] = m.contype[k];
         model.geom_conaffinity[g] = m.conaffinity[k];
+        model.geom_rgba.set(m.rgba.subarray(k * 4, k * 4 + 4), g * 4);
       });
 
       if (m.mocap < 0) continue;

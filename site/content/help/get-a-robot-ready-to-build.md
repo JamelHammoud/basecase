@@ -70,7 +70,7 @@ A Case with a skill kept by **Train from Tries** runs that skill instead of its 
 
 A robot that can't run a Case gets a red row with the first thing that stops it, such as a Case that needs driven wheels or a fall on hold. [Try a Case](/help/try-a-case) lists each reason. When the robot lacks what the Case needs, the row's note offers **New Case**.
 
-Cases never count toward Ready to build, and you can ignore one from its ⋯ menu like any other note. They run again only when the robot or the Case changes. To have the agent change the robot until a red or amber Case passes, follow [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
+Cases never count toward Ready to build, and you can ignore one from its ⋯ menu like any other note. They run again only when the robot or the Case changes. A high score the Case's code keeps doesn't count as a change. To have the agent change the robot until a red or amber Case passes, follow [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 
 ![Checks with Reach the Flag and Follow a Path past a Block, each passing 20 of 20](/help/get-a-robot-ready-to-build/cases-in-checks.png)
 

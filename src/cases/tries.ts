@@ -8,6 +8,7 @@ import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
 import { probeReader, type ProbeWorld } from './probes';
 import type { EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, type Case } from './schema';
+import { caseIdentity } from './caseStore';
 
 export interface TryManifest {
   formatVersion: typeof CASE_FORMAT_VERSION;
@@ -90,7 +91,7 @@ export const scoreTry = (scoring: TryScoring) => evaluateContract(scoring.kase.t
 export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {
   return {
     formatVersion: CASE_FORMAT_VERSION,
-    caseHash: await sha256(JSON.stringify({ ...kase, store: undefined })),
+    caseHash: await sha256(JSON.stringify(caseIdentity(kase))),
     modelHash: await sha256(model.xml),
     seed: 0,
     frames: recording.frames,

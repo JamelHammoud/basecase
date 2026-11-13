@@ -10,7 +10,7 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import type { Case } from '../cases/schema';
 import type { ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
-import { caseCheckRows, caseVerdict, forgetCaseModels, nextCaseTurn } from './caseChecks';
+import { caseCheckRows, caseVerdict, forgetCaseModels, nextCaseTurn, verdictKey } from './caseChecks';
 
 vi.mock('../cases/caseChecksClient', () => ({
   caseCheckPool: { size: 2, run: vi.fn(), keepOnly: vi.fn() },
@@ -165,5 +165,17 @@ describe('Case rows in Checks', () => {
     expect(keepOnly).not.toHaveBeenCalled();
     expect((await caseCheckRows({ ...scene, turn: nextCaseTurn() }))[0]).toMatchObject({ detail: '20 of 20' });
     expect(run.mock.calls).toHaveLength(calls);
+  });
+});
+
+describe('a Case’s verdict key', () => {
+  it('keeps a Case’s verdict when only its stored score changes', () => {
+    const kase = presetCase(fixtureRobots()[0], 'reach-the-flag');
+    const reading = { modelHash: 'm', walkHash: 'w' };
+
+    expect(verdictKey({ ...kase, store: { best: 9 } }, reading)).toBe(verdictKey(kase, reading));
+    expect(verdictKey({ ...kase, task: { ...kase.task, seconds: kase.task.seconds + 1 } }, reading)).not.toBe(
+      verdictKey(kase, reading),
+    );
   });
 });

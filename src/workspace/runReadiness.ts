@@ -18,6 +18,7 @@ import {
 } from '../readiness/buildChecks';
 import { assemblyFindings, bomFindings, engineeringFindings, fitFindings, printFindings } from '../readiness/findings';
 import { activeVersions } from '../reality/measuredJoints';
+import { casesIdentity } from '../cases/caseStore';
 import { readinessFingerprint, readinessOf, UNSETTLED_FINGERPRINT } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
@@ -71,7 +72,7 @@ export const projectFingerprint = (
     infill: project.infillPct,
     printProcess: project.printProcess,
     animations: jsonHash(project.animations),
-    cases: jsonHash(project.cases),
+    cases: jsonHash(casesIdentity(project.cases)),
     walks: (project.skills ?? []).map((s) => s.hash),
     walk: jsonHash(project.walk),
     firstRanges: project.firstRanges,

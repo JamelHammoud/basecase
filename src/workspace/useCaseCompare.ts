@@ -3,6 +3,7 @@ import { knownPurchases } from '../components/build/usePurchases';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { comparable, comparableRobots, compareCase, type CompareRobot, type Comparison } from '../cases/caseCompare';
 import type { Case } from '../cases/schema';
+import { caseIdentity } from '../cases/caseStore';
 import { jsonHash } from '../utils/geometryHash';
 import { errorMessage } from '../utils/errorMessage';
 import { platformBridge } from '../utils/platformBridge';
@@ -66,12 +67,12 @@ export function useCaseCompare({ inFront, kase, fingerprint, studio, source, sho
   const [newest] = useState(() => newestComparison<Comparison>());
   const [inFlight] = useState(() => new Map<string, Promise<Comparison>>());
   const [view, setView] = useState(newest.view);
-  const caseKey = kase ? jsonHash(kase) : '';
+  const caseKey = kase ? jsonHash(caseIdentity(kase)) : '';
   const tabsKey = studio.tabs.map((t) => `${t.id}:${t.name}`).join('|');
   const current = pickedTab(against, kase, studio.tabs);
 
   const keyOf = (target: Case, tabId: string) =>
-    `${jsonHash(target)}|${fingerprint}|${tabId}:${studio.handleOf(tabId)?.fingerprint() ?? ''}`;
+    `${jsonHash(caseIdentity(target))}|${fingerprint}|${tabId}:${studio.handleOf(tabId)?.fingerprint() ?? ''}`;
 
   const measureBoth = async (target: Case, tabId: string): Promise<Comparison> => {
     const other = studio.handleOf(tabId);

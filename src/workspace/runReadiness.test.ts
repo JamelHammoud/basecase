@@ -3,6 +3,8 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { COMPONENT_BY_ID } from '../data/components';
 import type { PrinterSetup } from '../data/printers';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
+import { presetCase } from '../cases/testing';
+import { fixtureRobots } from '../sim/fixtures/robots';
 import { batteriesIn, projectFingerprint, runReadiness, type ReadinessWorld } from './runReadiness';
 
 const part: ScenePart = {
@@ -65,6 +67,16 @@ describe('what makes checks run again', () => {
   it('the currency or its rates', () => {
     expect(print([part], project, { ...world, money: { code: 'EUR', ratesDate: '2026-01-01' } })).not.toBe(print());
     expect(print([part], project, { ...world, money: { code: 'USD', ratesDate: '2026-02-01' } })).not.toBe(print());
+  });
+
+  it('a Case’s task, but not the score its code keeps', () => {
+    const kase = presetCase(fixtureRobots()[0], 'reach-the-flag');
+    const withCases = (cases: unknown[]) => print([part], { ...project, cases } as ProjectSettings);
+
+    expect(withCases([{ ...kase, store: { best: 9 } }])).toBe(withCases([kase]));
+    expect(withCases([{ ...kase, task: { ...kase.task, seconds: kase.task.seconds + 1 } }])).not.toBe(
+      withCases([kase]),
+    );
   });
 
   it('nothing else: the same inputs read the same', () => {

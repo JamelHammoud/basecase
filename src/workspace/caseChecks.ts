@@ -3,6 +3,7 @@ import type { FilmShot } from '../cases/filmstrip';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { readCases, type Case } from '../cases/schema';
+import { caseIdentity } from '../cases/caseStore';
 import { readinessFingerprint } from '../readiness/readiness';
 import { caseRow, replacedRow, stoppedRow } from '../readiness/caseChecks';
 import type { VelocityDrive } from '../sim/driveAccess';
@@ -209,7 +210,8 @@ function verdictOf(judging: Judging): Promise<CaseRuns> {
   return running;
 }
 
-const verdictKey = (kase: Case, reading: RobotReading) => `${hashOf(kase)}|${reading.modelHash}|${reading.walkHash}`;
+export const verdictKey = (kase: Case, reading: Pick<RobotReading, 'modelHash' | 'walkHash'>) =>
+  `${hashOf(caseIdentity(kase))}|${reading.modelHash}|${reading.walkHash}`;
 
 const controlKey = (control: CaseControl | null | undefined) =>
   control ? `|${hashOf(control.policy)}|${control.jointNoiseDeg ?? 0}` : '';

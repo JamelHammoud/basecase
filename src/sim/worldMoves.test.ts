@@ -130,13 +130,16 @@ describe('movable world objects', () => {
 
   it('puts every object back on reset, and replays changes up to a time', () => {
     const opened = open();
-    const { engine, moves } = opened;
+    const { engine, moves, model } = opened;
+    const geom = engine.model.body_geomadr[model.bodies.findIndex((b) => b.world?.[0] === 'target') + 1];
+    const authored = Array.from(engine.model.geom_rgba.subarray(geom * 4, geom * 4 + 4));
 
     moves.apply({ id: 'target', pose: { position: [-120, 1, 90] }, color: '#00ff00' });
     engine.reset();
     moves.reset();
     expect(near(at(opened, 'target'), [150, 1, 0])).toBe(true);
     expect(moves.looks()).toEqual({});
+    expect(Array.from(engine.model.geom_rgba.subarray(geom * 4, geom * 4 + 4))).toEqual(authored);
 
     moves.replay(
       [

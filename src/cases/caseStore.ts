@@ -94,3 +94,27 @@ export function withCaseStore<T>(cases: readonly T[] | undefined, id: string, va
     return (value === null ? rest : { ...rest, store: value }) as T;
   });
 }
+
+const identities = new WeakMap<object, object>();
+
+const remembered = <T extends object>(value: T, make: () => object): T => {
+  const known = identities.get(value) ?? make();
+
+  identities.set(value, known);
+
+  return known as T;
+};
+
+export const caseIdentity = <T extends object>(kase: T): Omit<T, 'store'> =>
+  'store' in kase
+    ? remembered(kase, () => {
+        const rest: Record<string, unknown> = { ...kase };
+
+        delete rest.store;
+
+        return rest;
+      })
+    : kase;
+
+export const casesIdentity = <T extends object>(cases: readonly T[] | undefined) =>
+  cases && cases.some((kase) => 'store' in kase) ? remembered(cases, () => cases.map(caseIdentity)) : cases;

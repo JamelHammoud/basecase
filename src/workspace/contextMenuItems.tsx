@@ -4,6 +4,7 @@ import {
   CameraAddIcon,
   AlignCenterXIcon,
   BookmarkAddIcon,
+  BotIcon,
   CommentIcon,
   CopyIcon,
   CrosshairIcon,
@@ -105,6 +106,15 @@ function sharedEntries({ core, actions }: ContextInputs) {
   };
 }
 
+function wrapItems({ actions }: ContextInputs): ContextMenuEntry[] {
+  if (!actions.wrap.canWrap()) return [];
+
+  return [
+    { label: 'Wrap Robot', icon: <BotIcon className={ic} />, onSelect: actions.wrap.wrapSelected },
+    { divider: true },
+  ];
+}
+
 function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   const { core, actions } = inputs;
   const { ops, edits } = actions;
@@ -114,6 +124,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
 
   return [
     { heading: `${core.selectedIds.length} parts` },
+    ...wrapItems(inputs),
     { label: 'Union', icon: <UnionIcon className={ic} />, onSelect: () => ops.runBoolean('union') },
     {
       label: `Subtract from ${selectedParts[0]?.name ?? 'First'}`,

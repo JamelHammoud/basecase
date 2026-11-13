@@ -92,3 +92,22 @@ export function geometryPayload(id: string, geometry: THREE.BufferGeometry): Geo
     index: index ? new Uint32Array(index.array as Uint16Array | Uint32Array) : null,
   };
 }
+
+const SLICE_MS = 8;
+const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+export async function copyGeometries(scene: SceneShapes, ids: string[]): Promise<GeometryPayload[]> {
+  const out: GeometryPayload[] = [];
+  let sliceStart = performance.now();
+
+  for (const id of ids) {
+    out.push(geometryPayload(id, scene.geometries.get(id)!));
+
+    if (performance.now() - sliceStart < SLICE_MS) continue;
+
+    await yieldToMain();
+    sliceStart = performance.now();
+  }
+
+  return out;
+}

@@ -46,6 +46,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Booleans:**
   - With 2+ parts, Union, Subtract (from the primary) and Intersect replace them with one mesh.
   - With one part, Subtract uses every visible Cutout that overlaps it.
+- **Wrap Robot:** with exactly one visible imported mesh (`mesh.file`) and parts of exactly one jointed robot selected (`wrapTarget`), the several-parts menu starts with Wrap Robot, and ⌘K lists it under Selection. It turns the mesh into one hollow shell per link that clears every joint's range (§8c, `src/wrap/`): a progress toast shows while the wrap worker runs, the canvas stays live, and the shells come back selected, with the mesh hidden. One undo restores the mesh, the robot's joints and its parts. The fit is a starting point: resize a shell with Size like any part.
 - **Selection bar:** with 2+ parts selected, a glass pill above the toolbar shows the count, Union, Subtract, Intersect and Group/Ungroup.
 - **Align (`AlignBar`):**
   - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each (disabled under 3 parts). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.

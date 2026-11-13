@@ -5,15 +5,8 @@ import type { MeshData } from '../../print/threeMf';
 import type { ShapeReport } from './shapeReports';
 import type { CollideOptions } from './collide';
 import type { OutputRiders } from './outputRiders';
-import {
-  analysisHandlers,
-  MISSING_SHAPE,
-  type AnalysisTask,
-  type GeometryPayload,
-  type Instance,
-  type ThreeMfFileSpec,
-} from './analysisOps';
-import { geometryPayload, type SceneShapes } from './sceneShapes';
+import { analysisHandlers, MISSING_SHAPE, type AnalysisTask, type Instance, type ThreeMfFileSpec } from './analysisOps';
+import { copyGeometries, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
@@ -44,25 +37,6 @@ function pool(): Client[] {
   }));
 
   return clients;
-}
-
-const SLICE_MS = 8;
-const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-async function copyGeometries(scene: SceneShapes, ids: string[]) {
-  const out: GeometryPayload[] = [];
-  let sliceStart = performance.now();
-
-  for (const id of ids) {
-    out.push(geometryPayload(id, scene.geometries.get(id)!));
-
-    if (performance.now() - sliceStart < SLICE_MS) continue;
-
-    await yieldToMain();
-    sliceStart = performance.now();
-  }
-
-  return out;
 }
 
 async function payloadFor(client: Client, scene: SceneShapes, instances: Instance[]) {

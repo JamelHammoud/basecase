@@ -1,6 +1,7 @@
 import type { Command } from '../components/CommandPalette';
 import {
   AlignCenterXIcon,
+  BotIcon,
   CopyIcon,
   CutIcon,
   FloorIcon,
@@ -88,6 +89,21 @@ function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command
   ];
 }
 
+function wrapCommands({ actions }: CommandInputs): Command[] {
+  if (!actions.wrap.canWrap()) return [];
+
+  return [
+    {
+      id: 'wrap-robot',
+      group: 'Selection',
+      label: 'Wrap Robot',
+      icon: <BotIcon className={ic} />,
+      keywords: 'shell skin character mesh cover body printable',
+      run: actions.wrap.wrapSelected,
+    },
+  ];
+}
+
 function arrangeCommands({ actions }: CommandInputs): Command[] {
   const { edits, ops } = actions;
 
@@ -152,6 +168,7 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
 }
 
 export const editCommands = (inputs: CommandInputs): Command[] => [
+  ...wrapCommands(inputs),
   ...clipboardCommands(inputs),
   ...arrangeCommands(inputs),
 ];

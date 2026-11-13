@@ -20,6 +20,7 @@ import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
 import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
+import { pushRequest } from './push';
 import type { AmpModel } from '../utils/servoAmps';
 
 export { simDeltas } from './mjcf';
@@ -120,17 +121,6 @@ function grabRequest(
   }
 
   return { type: 'grab', phase: 'move', point: toMj(hand.position), turn: hand.turn ? quatToMj(hand.turn) : null };
-}
-
-function pushRequest(m: SimModel | null, robot: string | undefined): SimRequest | null {
-  const key = robot ?? m?.robots.find((r) => r.floating)?.key ?? m?.robots[0]?.key;
-
-  if (!m || !key) return null;
-
-  const n = (m.massKg[key] || 1) * 9.81 * 0.5;
-  const a = Math.random() * Math.PI * 2;
-
-  return { type: 'push', robot: key, force: [Math.cos(a) * n, 0, Math.sin(a) * n] };
 }
 
 type Ran = Extract<SimResponse, { type: 'ran' }>;
@@ -276,7 +266,7 @@ function useSimTouches(
       if (msg) send(msg);
     },
     push: (robot) => {
-      const msg = pushRequest(modelRef.current, robot);
+      const msg = pushRequest(modelRef.current, robot, Math.random() * Math.PI * 2);
 
       if (msg) send(msg);
     },

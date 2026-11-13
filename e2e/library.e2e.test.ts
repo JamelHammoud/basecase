@@ -1,10 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { CustomModelDefinition } from '../src/types/robotics';
-import { openApp, partCount, type App } from './harness';
+import { openApp, partCount, shown, type App } from './harness';
 
 let app: App;
-
-const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 const bracket: CustomModelDefinition = {
   id: 'model-bracket',
@@ -30,7 +28,7 @@ const bracket: CustomModelDefinition = {
   ],
 };
 
-const tile = () => app.page.locator(visible('[data-library-tile]'), { hasText: 'Bracket' }).first();
+const tile = () => app.page.locator(shown('[data-library-tile]'), { hasText: 'Bracket' }).first();
 
 beforeAll(async () => {
   app = await openApp({ models: [bracket] });
@@ -41,8 +39,8 @@ afterAll(async () => {
 });
 
 describe('library tiles', () => {
-  it('show only Insert on hover, with the name running the full width', async () => {
-    await app.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
+  it('show only Insert on hover', async () => {
+    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
     await tile().hover();
 
     await expect.poll(() => tile().getByRole('button', { name: 'Insert Bracket' }).isVisible()).toBe(true);

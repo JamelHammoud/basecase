@@ -19,7 +19,7 @@ Basecase is built by a team of agents that runs on Jamel's Mac (`tools/loop/`, s
 | Lane | Every | Does |
 |---|---|---|
 | `review` | 2 min | Reviews each pull request whose head has no `agent-review` status |
-| `merge` | 5 min | Squash-merges the oldest pull request with `check` and `agent-review` green. While `main` is red it takes only repairs, and a repair may merge with `check` failing if every failing job also fails on `main`, so it adds no failure of its own |
+| `merge` | 5 min | Squash-merges the oldest pull request with `check` and `agent-review` green; while `main` is red it takes only repairs, which must turn Check fully green |
 | `rebase` | 10 min | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts |
 | `repair` | 15 min | Opens a repair when Check fails on `main` |
 | `build` ×3 | 5 min | Builds the oldest `loop:next` issue Jamel's account opened |

@@ -12,6 +12,38 @@ Basecase is built by a team of agents that runs on Jamel's Mac (`tools/loop/`, s
 - Claude Code's own attribution is off (`.claude/settings.json`, `attribution`). The `commit-msg` hook (`tools/hooks/commit-msg.mjs`) and Check's `credit` job (`tools/check-credit.mjs`) reject a `Co-Authored-By` trailer, a "Generated with" line, or a model or bot as author or committer. Both share `tools/loop/credit.mjs`.
 - The loop's scripts make every commit, push and pull request themselves. An agent session edits and tests; it never runs `git commit`, `git push` or `gh pr`.
 
+### Lanes
+
+`node tools/loop/install.mjs install` creates the home checkout (`~/.basecase-loop/home`, reset to `origin/main` by the merge lane, so the loop always runs its latest merged code), the GitHub labels and one LaunchAgent per lane. `uninstall` removes them. Logs are in `~/.basecase-loop/logs/`. Setting the repository variable `LOOP_PAUSED` to `true` stops merges and releases.
+
+| Lane | Every | Does |
+|---|---|---|
+| `review` | 2 min | Reviews each pull request whose head has no `agent-review` status |
+| `merge` | 5 min | Squash-merges the oldest pull request with `check` and `agent-review` green; only repairs while `main` is red |
+| `rebase` | 10 min | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts |
+| `repair` | 15 min | Opens a repair when Check fails on `main` |
+| `build` ×3 | 5 min | Builds the oldest `loop:next` issue Jamel's account opened |
+| `refine` | 6 h | Makes one existing feature or view fit better |
+| `lead` | 4 h | Reads the Direction issue and plans arcs and steps as issues |
+| `update` | 24 h | Moves the agent adapters to their latest releases |
+
+Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
+
+### Pull request kinds
+
+Every pull request has one kind, shown three ways: a title prefix, a `loop:` label and a template in `.github/PULL_REQUEST_TEMPLATE/`. The loop fills the template from the agent's answer, so pull requests of a kind read alike.
+
+| Kind | Title | Template | In release notes |
+|---|---|---|---|
+| `feature`, `integration` | `Feature: …`, `Integration: …` | `feature.md`, with screenshots | New |
+| `refine` | `Refine: …` | `refine.md`, with screenshots | Better |
+| `fix` | `Fix: …` | `fix.md` | Fixed |
+| `repair` | `Repair: …` | `repair.md` | left out |
+| `lesson` | `Lesson: …` | `lesson.md` | left out |
+| `loop`, `update` | `Loop: …`, `Update: …` | `loop.md` | left out |
+
+`.github/release.yml` groups the release notes by those labels.
+
 ### A change, start to finish
 
 1. The lane makes a worktree from `origin/main` under `~/.basecase-loop/worktrees/` and a branch `loop/<lane>/<slug>`. The shared checkout is never touched.
@@ -59,4 +91,4 @@ docker exec bc-e2e npx vitest run --config vitest.e2e.config.ts e2e/<file>.e2e.t
 
 ### Releases
 
-A nightly workflow releases the Mac and Windows apps when `main` has changed since the last release and `check` passed on its head ([Releases](releases.md), §0i).
+`.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i).

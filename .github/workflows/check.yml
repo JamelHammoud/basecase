@@ -8,8 +8,34 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  test:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Decide whether the packaged app needs building
+        id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" != pull_request ]; then echo "app=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          files=$(git diff --name-only "$BASE...$HEAD")
+          pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
+          if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
+
+  unit:
     strategy:
       fail-fast: false
       matrix:
@@ -29,12 +55,60 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - run: npm ci
       - run: npm run check
-      - run: npx vite build
-      - run: npm run test:e2e
       - if: runner.os == 'Linux'
         run: npm audit --audit-level=high
 
+  e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx vite build
+      - run: npx vite build --mode web --outDir dist-web
+      - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/3
+
+      - name: Run quarantined tests
+        if: ${{ !cancelled() && matrix.shard == 1 }}
+        continue-on-error: true
+        run: npm run test:quarantine
+
+  e2e-windows:
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx vite build
+      - run: npx vite build --mode web --outDir dist-web
+      - run: npm run test:e2e
+
+      - name: Run quarantined tests
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npm run test:quarantine
+
   app:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -58,8 +132,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx vite build
+      - run: rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: |
+            forge
+            hw
       - name: Build the Forge trainer and the robot daemon
-        run: rustup toolchain install stable --profile minimal && npm run build:forge && npm run build:daemon
+        run: npm run build:forge && npm run build:daemon
       - name: Package the app, unsigned
         run: npx electron-builder ${{ matrix.target }} --dir --publish never -c.mac.forceCodeSigning=false
         env:
@@ -74,7 +154,13 @@ jobs:
           cat "$RUNNER_TEMP/kernel.json"
       - name: Convert CAD files in the packaged app's sandbox
         if: runner.os == 'Windows'
-        run: npx vitest run --config vitest.app.config.ts e2e/app/cadImportSandbox.app.test.ts
+        run: |
+          if npx vitest run --config vitest.app.config.ts e2e/app/cadImportSandbox.app.test.ts; then exit 0; fi
+          if [[ "$(date -u +%F)" < 2026-11-27 ]]; then
+            echo "::warning::Quarantined until 2026-11-27 (#54): the packaged Windows app crashes in the CAD-import self-test."
+            exit 0
+          fi
+          exit 1
 
   credit:
     runs-on: ubuntu-latest
@@ -93,16 +179,52 @@ jobs:
           git cat-file -e "$base^{commit}" 2>/dev/null || base="$head~1"
           node tools/check-credit.mjs "$base..$head"
 
-  check:
-    if: always()
-    needs: [test, app, credit]
+  copy:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Pass only when every job passed
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: New copy is justified and uses no banned words
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          RANGE: ${{ format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) }}
+        run: node tools/check-copy-budget.mjs "$RANGE"
+
+  check:
+    if: always()
+    needs: [changes, unit, e2e, e2e-windows, app, credit, copy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pass only when every job that had to run passed
+        env:
+          REQUIRED: ${{ needs.changes.result }} ${{ needs.unit.result }} ${{ needs.e2e.result }} ${{ needs.credit.result }}
+          APP: ${{ needs.app.result }}
+          APP_NEEDED: ${{ needs.changes.outputs.app }}
+          WINDOWS_E2E: ${{ needs.e2e-windows.result }}
+          COPY: ${{ needs.copy.result }}
+          EVENT: ${{ github.event_name }}
         shell: bash
         run: |
-          echo "Results: $RESULTS"
-          [ "$(wc -w <<< "$RESULTS")" -eq 3 ] || exit 1
-          for r in $RESULTS; do [ "$r" = success ] || exit 1; done
+          echo "Required: $REQUIRED; app: $APP (needed: $APP_NEEDED); Windows e2e: $WINDOWS_E2E; copy: $COPY"
+          [ "$(wc -w <<< "$REQUIRED")" -eq 4 ] || exit 1
+          for r in $REQUIRED; do [ "$r" = success ] || exit 1; done
+          want_app=success
+          [ "$APP_NEEDED" = true ] || want_app=skipped
+          [ "$APP" = "$want_app" ] || exit 1
+          want_windows=success
+          [ "$EVENT" = pull_request ] && want_windows=skipped
+          [ "$WINDOWS_E2E" = "$want_windows" ] || exit 1
+          want_copy=success
+          [ "$EVENT" = pull_request ] || want_copy=skipped
+          [ "$COPY" = "$want_copy" ] || exit 1

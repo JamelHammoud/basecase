@@ -139,21 +139,16 @@ describe('a built Case in MuJoCo', () => {
     expect(limp.margin).toBeLessThan(0);
   });
 
-  it('the reference steers around a block and pushes a box onto its spot, on wheels and on legs', async () => {
+  it.each([
+    { id: 'rover-four', goal: 'push', world: 'block' },
+    { id: 'rover-diff', goal: 'path', world: 'block' },
+    { id: 'hexapod', goal: 'path', world: 'block' },
+    { id: 'quad-servo', goal: 'push', world: 'floor' },
+  ] as const)('the reference passes $goal in $world on $id', async ({ id, goal, world }) => {
     const mj = await loadMujoco();
-    const runs = [
-      ['rover-four', 'push', 'block'],
-      ['rover-diff', 'path', 'block'],
-      ['hexapod', 'path', 'block'],
-      ['quad-servo', 'push', 'floor'],
-    ] as const;
+    const reference = await runCase(mj, built(id, { goal, world }), fixture(id), { controller: 'reference' });
 
-    for (const [id, goal, world] of runs) {
-      const kase = built(id, { goal, world });
-      const reference = await runCase(mj, kase, fixture(id), { controller: 'reference' });
-
-      expect(reference.passed, `${goal} in ${world} on ${id}`).toBe(true);
-    }
+    expect(reference.passed).toBe(true);
   });
 
   it('Touch the Dots written on six joints runs unchanged on three', async () => {

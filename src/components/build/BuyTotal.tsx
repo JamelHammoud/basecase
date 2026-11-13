@@ -1,10 +1,9 @@
 import React from 'react';
 import { NumberInput, Tooltip } from '../../design-system';
 import type { ProjectSettings } from '../../types/robotics';
-import { type Bom, STALE_DAYS } from '../../utils/bom';
+import type { Bom } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
 import { budgetPatch, budgetStanding, budgetStep, hasEstimate } from './budget';
-import { plural } from './format';
 
 type Totals = Bom['totals'];
 
@@ -51,13 +50,6 @@ const BudgetBar: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
   );
 };
 
-const StaleNotice: React.FC<{ stale: number }> = ({ stale }) => (
-  <div className="text-[12.5px] text-amber-400">
-    Recheck {stale} {plural(stale, 'price', 'prices')} before ordering. {plural(stale, 'It’s', 'They’re')} over{' '}
-    {STALE_DAYS} days old.
-  </div>
-);
-
 export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChangeProject }) => {
   const budget = project.budgetUsd;
   const money = useMoney();
@@ -80,7 +72,6 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
         </div>
       </div>
       {budget !== undefined && <BudgetBar t={t} budget={budget} />}
-      {t.stale > 0 && <StaleNotice stale={t.stale} />}
     </>
   );
 };

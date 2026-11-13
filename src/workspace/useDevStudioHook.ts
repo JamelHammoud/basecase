@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import type { AgentSession } from './useAgentSession';
@@ -60,7 +61,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
   });
 
   useEffect(() => {
-    if (!import.meta.env.DEV || !active) return;
+    if (!exposesTestHooks() || !active) return;
 
     (window as unknown as { __studio?: unknown }).__studio = devStudioApi({
       partsRef,
@@ -71,7 +72,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
   }, [active, partsRef, projectRef, viewportRef, devRef]);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!exposesTestHooks()) return;
 
     const registry = ((window as unknown as { __studios?: Record<string, unknown> }).__studios ??= {});
 

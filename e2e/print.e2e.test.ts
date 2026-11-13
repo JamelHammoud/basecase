@@ -31,7 +31,7 @@ describe('print layout', () => {
     await printing.getByRole('button', { name: 'Lay Out Plates' }).click();
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
     expect(await app.page.locator(visible('select[aria-label="Printer"]')).count()).toBe(1);
-    expect(await app.page.locator(visible('button'), { hasText: 'Plate 1' }).count()).toBeGreaterThan(0);
+    expect(await app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);
     expect(
       await app.page.locator(visible('button[aria-expanded="false"]'), { hasText: /^Printed parts/ }).textContent(),
     ).toBe('Printed parts1');
@@ -48,6 +48,9 @@ describe('print layout', () => {
     await app.page.keyboard.press('Meta+p');
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
     await expect.poll(() => app.page.locator(visible('canvas')).count()).toBeGreaterThan(0);
+    await expect.poll(() => app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);
+    expect(await app.page.locator(visible('h3'), { hasText: /^Plates$/ }).count()).toBe(0);
+    expect(await app.page.getByRole('button', { name: 'Close plates' }).count()).toBe(0);
 
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);

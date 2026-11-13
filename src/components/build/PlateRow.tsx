@@ -25,7 +25,7 @@ const STATE_TEXT: Record<PlateStatus['state'], string> = {
   failed: 'Failed',
 };
 
-function stateText(status: PlateStatus, live?: PrinterStatus | null) {
+export function plateStateText(status: PlateStatus, live?: PrinterStatus | null) {
   if (status.state === 'printing' && live?.progress !== undefined) return `Printing ${Math.round(live.progress * 100)}%`;
 
   return STATE_TEXT[status.state];
@@ -78,7 +78,7 @@ export const PlateRow: React.FC<PlateRowProps> = ({ plate, bed, sliced, status, 
           ) : null}
         </div>
         <span className={`text-[12px] shrink-0 tabular-nums ${STATE_CLASS[status.state]}`}>
-          {stateText(status, live)}
+          {plateStateText(status, live)}
         </span>
       </button>
     </li>

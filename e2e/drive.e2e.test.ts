@@ -228,6 +228,20 @@ async function endTryAt(seconds: number) {
   }, seconds);
 }
 
+async function expectCaseCheckOpensRow(name: string) {
+  const verdict = app.page.locator(visible('[data-testid="case-check"]'));
+
+  expect(await app.page.locator(visible('button'), { hasText: 'Check Fit' }).count()).toBe(0);
+  expect(await app.page.getByTestId('robot-fit').count()).toBe(0);
+  await expect.poll(() => verdict.count(), { timeout: 120000 }).toBe(1);
+  expect(['pass', 'warn', 'fail']).toContain(await verdict.getAttribute('data-status'));
+  await verdict.click();
+  await expect
+    .poll(() => app.page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 10000 })
+    .toMatch(/^case-check-/);
+  expect(await app.page.locator(visible('[id^="case-check-"]')).innerText()).toContain(name);
+}
+
 describe('Cases', () => {
   itUnlessWindows(
     'starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it',
@@ -273,8 +287,7 @@ describe('Cases', () => {
         headings.filter((h) => ['Brief', 'Robot fit', 'Result', 'Model', 'Emulated robot', 'Policies'].includes(h)),
       ).toEqual([]);
 
-      await button('Check Fit').click();
-      await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
+      await expectCaseCheckOpensRow('Touch the Dots');
       expect(app.errors).toEqual([]);
     },
   );
@@ -355,7 +368,7 @@ describe('Cases', () => {
     await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
     await expect.poll(async () => (await simHeadings())[0]).toBe('Push a Box in a Corridor');
     expect((await simState()).world).toEqual(['box', 'goal', 'wall-left', 'wall-right']);
-    expect(await panel.innerText()).toContain('In this scene');
+    expect(await panel.innerText()).toContain('Push a Box in a Corridor');
 
     await button('Ask the Agent').click();
     await expect.poll(() => app.page.locator(visible('textarea')).last().inputValue()).toBe('/case ');

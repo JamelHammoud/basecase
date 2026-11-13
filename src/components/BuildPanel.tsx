@@ -30,6 +30,7 @@ interface BuildPanelProps {
   onFixFinding?: (finding: ReadinessFinding) => void;
   onQuoteFinding?: (finding: ReadinessFinding) => void;
   onOpenCase?: (id: string) => void;
+  onNewCase?: () => void;
   onCalibrate?: (jointIds: string[]) => void;
   panScroll: boolean;
   guide: BuildGuide;
@@ -57,6 +58,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onFixFinding,
   onQuoteFinding,
   onOpenCase,
+  onNewCase,
   onCalibrate,
   panScroll,
   guide,
@@ -84,7 +86,8 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {
     await savePurchase(line.key, record);
     setChecking(null);
-    onToast(record ? `Saved price for ${line.name}` : `Removed price for ${line.name}`);
+
+    if (record) onToast(`Saved price for ${line.name}`);
   };
 
   return (
@@ -102,6 +105,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
                 'print-face': ({ fix }) =>
                   fix?.kind === 'print-face' &&
                   printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
+                ...(onNewCase && { 'new-case': onNewCase }),
                 ...(onCalibrate && {
                   calibrate: ({ fix, ids }: ReadinessFinding) => {
                     onSelectParts(ids);

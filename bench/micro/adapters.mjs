@@ -40,6 +40,12 @@ export async function runCase(ctx, id) {
   throw new AdapterMissing('runCase', `run_case data from the running app (${reply?.error ?? 'no data'})`);
 }
 
+async function inputBuilt(_ctx, id) {
+  const { appModule } = await import('./scenes.mjs');
+
+  return (await appModule('/src/sim/inputSources.ts')).hasInputSource(id);
+}
+
 export const STS3215_OUTPUT = { point: [-12.66, 18.9, -0.16], axis: [0, 1, 0] };
 
 export const DEFAULT_ADAPTERS = {
@@ -57,6 +63,7 @@ export const DEFAULT_ADAPTERS = {
     return res.data ?? parseBomTotal(res.text);
   },
   runCase,
+  inputBuilt,
   checkRows: async (ctx) =>
     parseCheckRows((await needApp(ctx, 'checkRows', 'the engineering checks').call('verify')).text),
 };

@@ -1,6 +1,6 @@
 import { MISSED, noRuns, type CaseRuns } from '../cases/caseRuns';
 import type { CheckRow } from '../utils/engineeringTypes';
-import type { Finding } from './types';
+import type { CheckStatus, Finding, Readiness } from './types';
 
 export const CASE_RULE = 'case';
 export const CASES = 'Cases';
@@ -27,7 +27,11 @@ export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): Che
   const status = caseStatus(runs);
   const base = { check: kase.name, status, caseId: kase.id };
 
-  if (runs.refusal) return { ...base, detail: '', items: [{ text: runs.refusal, status: 'fail' }] };
+  if (runs.refusal) {
+    const fix = runs.misfit ? { fix: { kind: 'new-case' as const } } : {};
+
+    return { ...base, detail: '', items: [{ text: runs.refusal, status: 'fail', ...fix }] };
+  }
 
   const detail = `${runs.passes} of ${runs.runs}`;
   const failure = status === 'pass' || !runs.commonFailure ? [] : [{ text: failureText(runs.commonFailure) }];
@@ -49,7 +53,7 @@ function agentTextOf(row: CheckRow, failure: string): string {
   if (failure === CASE_STOPPED)
     return `Case ${row.check}: its runs stopped with an error, so it isn't judged. Run get_readiness again.`;
 
-  if (!row.detail) return `Case ${row.check}: the robot can't enter it. ${failure}`;
+  if (!row.detail) return `Case ${row.check}: the robot can't run it. ${failure}`;
 
   return `Case ${row.check}: passed ${row.detail} randomized runs (friction, mass, servo strength and delay varied). Most common failure: ${failure}. Change the design so it passes at least 18 of 20.`;
 }
@@ -72,7 +76,25 @@ export function caseFindings(rows: CheckRow[]): Finding[] {
         text: item.text,
         agentText: agentTextOf(row, item.text),
         ids: [],
+        ...(item.fix ? { fix: item.fix } : {}),
       } satisfies Finding,
     ];
   });
+}
+
+export const caseCheckId = (caseId: string) => `case-check-${caseId}`;
+
+export interface CaseCheck {
+  status: CheckStatus;
+  text: string;
+}
+
+export function caseCheckOf(readiness: Readiness | null, caseId: string): CaseCheck | null {
+  const check = readiness?.checks.find((c) => c.caseId === caseId);
+
+  if (!check) return null;
+
+  const note = readiness?.notes.find((f) => f.caseId === caseId);
+
+  return { status: check.status, text: check.detail || note?.text || check.name };
 }

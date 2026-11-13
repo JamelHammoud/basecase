@@ -23,7 +23,7 @@ Send someone a link that opens your robot and its Case in their browser, where t
 
 ![The Link copied toast above the toolbar](/help/share-a-robot-as-a-link/copied.png)
 
-Whoever opens the link sees the robot in its Case's world with the Case's name and brief, a Drive button and See Inside, which opens the robot in the studio in their browser.
+Whoever opens the link sees the robot in its Case's world with the Case's name and brief, a Drive button and See Inside, which opens the robot in the studio in their browser. A legged robot also gets **Train**, which teaches it to stand on their GPU, in Chrome or Edge. See Inside then brings that skill along.
 
 ![A shared rover open in the browser, with Drive and See Inside](/help/share-a-robot-as-a-link/browser.png)
 

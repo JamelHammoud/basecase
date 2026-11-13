@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const LOCKED = 'Real motors are locked in this build';
 const PORT = process.platform === 'win32' ? 'COM3' : '/dev/null';
 const NETWORK = process.platform === 'win32' ? 'Ethernet' : 'en0';
+const ROS2_ARGS = ['--family', 'ros2', '--controller', 'forward_position', '--joints', 'shoulder_pan_joint'];
 
 const run = (binary, args, input) =>
   spawnSync(binary, args, { input, encoding: 'utf8', timeout: 10000, maxBuffer: 16 * 1024 * 1024 });
@@ -19,28 +20,34 @@ function helloOf(binary) {
   }
 }
 
+const LOCKED_ASKS = [
+  { what: 'a real port', args: ['--family', 'feetech', '--ids', '1', '--port', PORT] },
+  { what: 'a network interface', args: ['--family', 'unitree-g1', '--interface', NETWORK] },
+  { what: 'a ROS 2 robot on a network interface', args: [...ROS2_ARGS, '--interface', NETWORK] },
+];
+
+function unlockedAsk(binary, { what, args }) {
+  const r = run(binary, args);
+  const said = `${r.stdout ?? ''}${r.stderr ?? ''}`;
+
+  return r.status === 0 || !said.includes(LOCKED) ? [`Asked for ${what}, it said: ${said.trim()}`] : [];
+}
+
+function helloProblems(hello) {
+  if (hello?.event !== 'hello') return [`The first line wasn't a hello event: ${JSON.stringify(hello)}`];
+
+  return hello.real_transport === false ? [] : ['The hello event says real transport is in this build'];
+}
+
 export function lockProblems(binary) {
   if (!fs.existsSync(binary)) return [`No daemon at ${binary}`];
 
-  const problems = [];
-  const port = run(binary, ['--family', 'feetech', '--ids', '1', '--port', PORT]);
-  const said = `${port.stdout ?? ''}${port.stderr ?? ''}`;
-  const network = run(binary, ['--family', 'unitree-g1', '--interface', NETWORK]);
-  const answered = `${network.stdout ?? ''}${network.stderr ?? ''}`;
-  const hello = helloOf(binary);
   const bytes = fs.readFileSync(binary);
+  const carried = ['serialport', 'rustdds'].filter((name) => bytes.includes(Buffer.from(name)));
 
-  if (port.status === 0 || !said.includes(LOCKED)) problems.push(`Asked for a real port, it said: ${said.trim()}`);
-
-  if (network.status === 0 || !answered.includes(LOCKED))
-    problems.push(`Asked for a network interface, it said: ${answered.trim()}`);
-
-  if (bytes.includes(Buffer.from('serialport'))) problems.push('The binary carries serialport');
-
-  if (bytes.includes(Buffer.from('rustdds'))) problems.push('The binary carries rustdds');
-
-  if (hello?.event !== 'hello') problems.push(`The first line wasn't a hello event: ${JSON.stringify(hello)}`);
-  else if (hello.real_transport !== false) problems.push('The hello event says real transport is in this build');
-
-  return problems;
+  return [
+    ...LOCKED_ASKS.flatMap((ask) => unlockedAsk(binary, ask)),
+    ...carried.map((name) => `The binary carries ${name}`),
+    ...helloProblems(helloOf(binary)),
+  ];
 }

@@ -26,10 +26,16 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   const open = back !== null && back.caseId === activeId;
   const caseConsole = cases.active?.console ?? DEFAULT_CONSOLE;
 
+  const enterCase = (caseId: string) => {
+    const fresh = { caseId, view: viewportRef.current?.currentView() ?? null, selection: selectedIds };
+
+    setBack((saved) => (saved ? { ...saved, caseId } : fresh));
+  };
+
   const enter = () => {
     if (open || !cases.active) return;
 
-    setBack({ caseId: cases.active.id, view: viewportRef.current?.currentView() ?? null, selection: selectedIds });
+    enterCase(cases.active.id);
   };
 
   const restore = (saved: Return) => {
@@ -71,7 +77,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO });
 
-  return { open, caseConsole, layout, enter, leave };
+  return { open, caseConsole, layout, enter, enterCase, leave };
 }
 
 export type CaseRun = ReturnType<typeof useCaseRun>;

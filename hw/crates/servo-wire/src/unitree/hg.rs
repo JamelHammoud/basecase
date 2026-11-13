@@ -1,6 +1,6 @@
-use super::cdr::{Reader, Short, Writer};
 use super::crc_of_image;
 use super::image::Image;
+use crate::cdr::{Reader, Short, Writer};
 
 pub const MOTOR_SLOTS: usize = 35;
 pub const REMOTE_BYTES: usize = 40;

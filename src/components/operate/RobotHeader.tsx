@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from '../../design-system';
 import { disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
-import type { RobotFamily, RobotState } from '../../robot/robotState';
+import { FAMILY_NAMES } from '../../robot/robotFamilies';
+import type { RobotState } from '../../robot/robotState';
 
 const RUN: Record<string, string> = {
   idle: 'Motors off',
@@ -12,11 +13,9 @@ const RUN: Record<string, string> = {
   stopped: 'Stopped',
 };
 
-const FAMILY: Record<RobotFamily, string> = { feetech: 'Feetech', dynamixel: 'Dynamixel', 'unitree-g1': 'G1' };
-
 function servoCount(robot: RobotState) {
   const n = robot.spec?.ids.length ?? 0;
-  const family = FAMILY[robot.spec?.family ?? 'feetech'];
+  const family = FAMILY_NAMES[robot.spec?.family ?? 'feetech'];
 
   return `${n} emulated ${family} ${n === 1 ? 'servo' : 'servos'}`;
 }

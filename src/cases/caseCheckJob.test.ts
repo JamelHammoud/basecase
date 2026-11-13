@@ -48,7 +48,7 @@ describe('the Case checks worker job', () => {
       const fixture = fixtureRobots().find((r) => r.id === 'rover-diff')!;
       const kase = presetCase(fixture, 'reach-the-flag');
       const session = new CaseCheckSession();
-      const job = { type: 'runs' as const, kase, modelHash: 'rover', walk: null };
+      const job = { type: 'runs' as const, kase, modelHash: 'rover', walk: null, stop: null };
       const first = await session.run(mj, { ...job, robot, seeds: [1] });
       const again = await session.run(mj, { ...job, seeds: [2] });
 

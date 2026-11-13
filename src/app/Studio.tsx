@@ -119,16 +119,12 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         pane={settings.pane}
         onPaneChange={settings.changePane}
         onClose={settings.closeSettings}
-        showGrid={prefs.showGrid}
-        onShowGrid={prefs.setShowGrid}
         snapStepMm={prefs.snapStepMm}
         onSnapStep={prefs.setSnapStepMm}
         snapAngleDeg={prefs.snapAngleDeg}
         onSnapAngle={prefs.setSnapAngleDeg}
         measureUnit={prefs.measureUnit}
         onMeasureUnit={prefs.setMeasureUnit}
-        showReferenceImages={prefs.showReferenceImages}
-        onShowReferenceImages={prefs.setShowReferenceImages}
         trackpadMode={prefs.trackpadMode}
         onTrackpadMode={prefs.setTrackpadMode}
         acpStatus={agent.acpStatus}

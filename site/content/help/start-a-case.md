@@ -27,4 +27,4 @@ A Case is a goal your robot tries in simulation, like touching a dot or reaching
 
 ![Touch the Dots open in the Simulate tab](/help/start-a-case/opened.png)
 
-To describe a Case in your own words instead, click **Ask the Agent** under New Case and type what the robot should do after `/case`. Cases you've made are listed under In this scene; right-click one to delete it.
+To describe a Case in your own words instead, click **Ask the Agent** under New Case and type what the robot should do after `/case`. Cases you've made are listed under New Case; right-click one to delete it.

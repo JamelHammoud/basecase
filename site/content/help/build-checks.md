@@ -71,7 +71,7 @@ Checks list the worst first: red, then amber, then green, then grey for Not run.
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
 | Budget | The estimated total against your budget | Over budget; amber above 90%. Not run until you set a budget |
 
-Each Case in the scene also gets a row, named after it. It runs the Case 20 times with randomized physics and passes at 18. A Case that misses more adds a note, never a blocker.
+Each Case in the scene also gets a row, named after it. It runs the Case 20 times with randomized physics and passes at 18. A Case that misses more adds a note, never a blocker. A robot that can't run the Case fails its row with the reason, such as an arm on a Case that needs driven wheels, or a fall on hold. [Try a Case](/help/try-a-case) lists each reason.
 
 ## Problems every check can show
 

@@ -9,6 +9,7 @@ const DIST = path.join(ROOT, 'node_modules/.cache/gallery-bench/dist');
 const BUDGET = { compressedMb: 8, driveSeconds: 6, realTime: 0.97 };
 const SLUGS = ['rover-reach-the-flag', 'hexapod-reach-the-flag', 'arm-touch-the-dots'];
 const GPU_ARGS = ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'];
+const TRAINING_FILES = /forge|galleryTrainer|skills\.worker/i;
 
 const args = new Set(process.argv.slice(2));
 
@@ -37,7 +38,11 @@ async function waitFor(page, test, timeoutMs) {
 async function measure(browser, url) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   let compressed = 0;
+  const training = [];
 
+  page.on('request', (request) => {
+    if (TRAINING_FILES.test(new URL(request.url()).pathname)) training.push(request.url());
+  });
   page.on('response', async (response) => {
     try {
       compressed += gzipSync(await response.body()).length;
@@ -62,7 +67,7 @@ async function measure(browser, url) {
   await page.keyboard.up('w');
   await page.close();
 
-  return { compressedMb: compressed / 1e6, toDrive, rtf: driving?.stats?.rtf ?? 0 };
+  return { compressedMb: compressed / 1e6, toDrive, rtf: driving?.stats?.rtf ?? 0, training: training.length };
 }
 
 const server = await serveStatic(DIST);
@@ -71,11 +76,15 @@ let ok = true;
 
 for (const slug of SLUGS) {
   const r = await measure(browser, `${server.url}c/${slug}`);
-  const pass = r.compressedMb <= BUDGET.compressedMb && r.toDrive <= BUDGET.driveSeconds && r.rtf >= BUDGET.realTime;
+  const pass =
+    r.compressedMb <= BUDGET.compressedMb &&
+    r.toDrive <= BUDGET.driveSeconds &&
+    r.rtf >= BUDGET.realTime &&
+    r.training === 0;
 
   ok &&= pass;
   console.log(
-    `${slug.padEnd(24)} ${r.compressedMb.toFixed(2)} MB compressed, drive in ${r.toDrive.toFixed(1)} s, ${r.rtf.toFixed(2)}× real time ${pass ? 'PASS' : 'FAIL'}`,
+    `${slug.padEnd(24)} ${r.compressedMb.toFixed(2)} MB compressed, drive in ${r.toDrive.toFixed(1)} s, ${r.rtf.toFixed(2)}× real time, ${r.training} training files ${pass ? 'PASS' : 'FAIL'}`,
   );
 }
 

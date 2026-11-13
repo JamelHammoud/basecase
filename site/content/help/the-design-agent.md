@@ -36,7 +36,9 @@ The agent builds in the open scene, in front of you. It reads your words, photos
 
 It chooses parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. When a part isn't in the catalog, it can add one it found on the web. Those show as Added by Agent in the bill of materials.
 
-It can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach it a skill. Given a Case and two open scenes, it says which robot passes more often.
+It can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach it a skill. When it writes a Routine, it proves each switch between skills and names any that fell. Given a Case and two open scenes, it says which robot passes more often.
+
+Tell it what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case).
 
 ## What it cares about
 

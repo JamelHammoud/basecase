@@ -57,6 +57,18 @@ pub fn next_goal(requested: i32, previous: SafeGoal, present: i32, bounds: Count
     SafeGoal(i32::try_from(next).unwrap_or(previous.0))
 }
 
+pub fn next_speed(previous: f32, requested: f32, cap: f32, step: f32) -> f32 {
+    let usable = [previous, requested, cap, step].iter().all(|value| value.is_finite()) && cap >= 0.0 && step >= 0.0;
+
+    if !usable || previous.abs() > cap {
+        return 0.0;
+    }
+
+    let target = requested.clamp(-cap, cap);
+
+    (previous + (target - previous).clamp(-step, step)).clamp(-cap, cap)
+}
+
 pub fn torque_fraction_within(requested: f32, cap: f32) -> f32 {
     if !requested.is_finite() || !cap.is_finite() {
         return 0.0;
@@ -202,6 +214,16 @@ mod tests {
     }
 
     #[test]
+    fn speeds_ramp_toward_the_request_inside_the_cap() {
+        assert_eq!(next_speed(0.0, 1.0, 0.2, 0.01), 0.01);
+        assert_eq!(next_speed(0.195, 1.0, 0.2, 0.01), 0.2);
+        assert_eq!(next_speed(0.0, -0.005, 0.2, 0.01), -0.005);
+        assert_eq!(next_speed(0.1, f32::NAN, 0.2, 0.01), 0.0);
+        assert_eq!(next_speed(0.5, 0.5, 0.2, 0.01), 0.0);
+        assert_eq!(next_speed(0.1, 0.1, -1.0, 0.01), 0.0);
+    }
+
+    #[test]
     fn torque_requests_are_capped() {
         assert_eq!(torque_fraction_within(0.9, 0.3), 0.3);
         assert_eq!(torque_fraction_within(-1.0, 0.3), 0.0);
@@ -210,6 +232,23 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn speeds_never_pass_the_cap_or_the_ramp(
+            cap in 0.0f32..3.0,
+            step in 0.0f32..0.1,
+            requests in proptest::collection::vec(any::<f32>(), 1..100),
+        ) {
+            let mut speed = 0.0f32;
+
+            for requested in requests {
+                let next = next_speed(speed, requested, cap, step);
+
+                prop_assert!(next.abs() <= cap);
+                prop_assert!(next == 0.0 || (next - speed).abs() <= step * 1.0001);
+                speed = next;
+            }
+        }
+
         #[test]
         fn never_leaves_bounds_or_exceeds_a_step(
             min in -5000i32..5000,

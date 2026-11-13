@@ -99,7 +99,7 @@ async function partData(job, unique) {
     if (mass) masses.set(key, mass);
 
     done++;
-    job.say(`Loading meshes ${done}/${unique.length}`);
+    job.say(`Loading meshes ${done}/${unique.length}…`);
   });
 
   return { meshes, masses, files };

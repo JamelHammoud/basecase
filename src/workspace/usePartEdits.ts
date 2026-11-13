@@ -3,7 +3,7 @@ import type { HardwareSpec } from '../data/hardware';
 import type { PartPlacement, PartTransformUpdate } from '../three/viewport/types';
 import type { PartRole, ScenePart, SculptMeshData } from '../types/robotics';
 import { alignParts, distributeParts, type AlignMode, type Axis } from '../utils/selection';
-import { newId } from './helpers';
+import { newId, plural } from './helpers';
 import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withHardware } from './partTransforms';
 import type { CommitParts, Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -46,17 +46,22 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
   };
 
   const ungroup = () => {
-    const groupIds = new Set(selection.selectedParts.map((p) => p.group?.id).filter(Boolean));
+    const groups = new Map(
+      selection.selectedParts.flatMap((p) => (p.group ? [[p.group.id, p.group.name] as const] : [])),
+    );
 
-    if (groupIds.size === 0) return;
+    if (groups.size === 0) return;
 
     commitParts(
       patchWhere(
-        (p) => !!p.group && groupIds.has(p.group.id),
+        (p) => !!p.group && groups.has(p.group.id),
         () => ({ group: undefined }),
       ),
     );
-    showToast('Ungrouped');
+
+    const [only] = groups.values();
+
+    showToast(`Ungrouped ${groups.size === 1 ? only : plural(groups.size, 'group', 'groups')}`);
   };
 
   const renameGroup = (groupId: string, name: string) =>

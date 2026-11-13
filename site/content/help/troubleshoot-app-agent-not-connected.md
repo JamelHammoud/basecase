@@ -72,7 +72,7 @@ For Gemini with a personal Google account, click **Add API Key** and paste a Gem
 
 ## A reply ends with “Couldn’t finish.”
 
-The agent stopped with an error of its own, such as a usage limit on your account. A toast starting “Agent error.” shows the same reason.
+The agent stopped with an error of its own, such as a usage limit on your account. A toast starting “The agent couldn’t finish.” shows the same reason.
 
 1. Read the reason after the message.
 2. Click **Retry** under the reply once the cause is gone.

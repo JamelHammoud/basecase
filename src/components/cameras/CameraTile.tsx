@@ -1,7 +1,7 @@
 import React from 'react';
 import { lensLabel } from '../../cameras/lens';
+import { RenameField } from '../../design-system';
 import type { CameraView } from '../../cameras/views';
-import { RenameField } from '../pose/RenameField';
 import { tileChip, tileFrame, tileLabel } from './tileStyle';
 
 export interface CameraTileProps {
@@ -9,7 +9,7 @@ export interface CameraTileProps {
   large: boolean;
   fill?: boolean;
   renaming: boolean;
-  onRename: (name: string) => void;
+  onRename: (name: string | null) => void;
   canvasRef: (canvas: HTMLCanvasElement | null) => void;
   onToggleSize: () => void;
   onMenu: (x: number, y: number) => void;

@@ -9,6 +9,7 @@ export * from './Slider';
 export * from './Switch';
 export * from './Field';
 export * from './FieldRow';
+export * from './RenameField';
 export * from './FloatingIsland';
 export * from './Divider';
 export * from './PopoverMenu';

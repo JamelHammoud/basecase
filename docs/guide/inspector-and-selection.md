@@ -22,7 +22,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - **Rotate:** X / Y / Z 90° turns the selection as one piece about its center (`handleRotateSelection`).
   - **Combine:** Union / Subtract / Intersect on one strip; Subtract's tooltip names the part it keeps.
   - **Appearance:** `ColorField` and material, each showing “Mixed” when the parts differ.
-  - Strips (`StripGroup` + `StripButton` in `AlignControls.tsx`) are the pattern for a row of equal actions: a 32px soft track with 2px inset cells, never a grid of text buttons or tall tiles.
+  - Strips (`StripGroup` + `StripButton` in `AlignBar.tsx`) are the pattern for a row of equal actions: a 32px soft track with 2px inset cells, never a grid of text buttons or tall tiles.
 - **`NumberInput`:**
   - Drag the label to scrub (Shift ×10, ⌥ ×0.1). ↑/↓ steps, Enter commits, Esc reverts.
   - Accepts math (`40/2`).
@@ -47,11 +47,12 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - With 2+ parts, Union, Subtract (from the primary) and Intersect replace them with one mesh.
   - With one part, Subtract uses every visible Cutout that overlaps it.
 - **Selection bar:** with 2+ parts selected, a glass pill above the toolbar shows the count, Union, Subtract, Intersect and Group/Ungroup.
-- **Align (`AlignControls`):**
-  - X/Y/Z × Left·Center·Right / Bottom·Middle·Top / Back·Center·Front, plus Spread X/Z for 3+ parts.
+- **Align (`AlignBar`):**
+  - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each (disabled under 3 parts). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.
   - Several parts align to their shared bounds; one part aligns to the origin (Bottom = floor).
   - Bounds include each part's rotation (`halfExtents` in `utils/selection.ts`, checked against three.js `Box3`), so align, spread, drop to floor and the sizes in Layers and the Inspector stay right for rotated parts.
-  - Available in the right-click Align submenu, the multi-selection Inspector (`AlignBar`) and ⌘K.
+  - Tooltips say where a part goes: Align left for several parts, Left to origin (Bottom to floor) for one.
+  - ⌘K has Align Left, Right, Top, Bottom, Front, Back and Center (X), and Spread Along X, Y and Z.
 - **Drop to Floor (F):** loose parts each drop to the floor; when every selected part is grouped, the selection lands as one piece.
 
 ## 7a-2. Drag and Drop

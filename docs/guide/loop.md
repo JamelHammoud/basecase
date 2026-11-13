@@ -92,3 +92,34 @@ docker exec bc-e2e npx vitest run --config vitest.e2e.config.ts e2e/<file>.e2e.t
 ### Releases
 
 `.github/workflows/nightly.yml` runs at 09:17 UTC. When `main` has changed since the last release and `check` passed on its head, it dispatches `release.yml` with the next patch version ([Releases](releases.md), §0i).
+
+### Writing posts and help
+
+basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site/content/` by `npm run build:site` ([Running and testing](running-and-testing.md), §0d). To add one, write a file; nothing else needs registering.
+
+| Folder | File name | Front matter |
+|---|---|---|
+| `site/content/changelog/` | `YYYY-MM-DD-title-in-words.md` | `title`, `date`, `version` when it shipped in a release |
+| `site/content/blog/` | `title-in-words.md` | `title`, `date`, `draft: true` until Jamel publishes it, `line` for Jamel's line |
+| `site/content/help/` | `task-in-words.md`, which is its URL | `title`, `date`, `covers:` (a list of the code paths it documents) |
+
+```md
+---
+title: Import a mesh
+date: 2026-11-12
+covers:
+  - src/workspace/meshImport.ts
+---
+
+Bring a model from another app into the scene as a printable part.
+
+1. Right-click an empty spot on the canvas.
+2. Choose **Import Mesh**.
+```
+
+- **A changelog entry** is a title and two sentences, Chronicle-style. The page lists entries newest first and feeds them to `/changelog/rss.xml` and `/changelog.json`.
+- **A help article** has an imperative title, one sentence on what it's for and numbered steps. Write only steps you've checked in the code; the `covers` paths are what to recheck when that code changes.
+- **Drafts and future dates stay out.** The build skips `draft: true` and any date after the day it runs, in every folder.
+- Front matter is `key: value` lines and `- item` lists. A missing title or date, a date not written `YYYY-MM-DD`, or a file name that isn't lowercase words joined by dashes fails the build with the file's path.
+- Raw HTML in the markdown is dropped. Links that start with a scheme open in a new tab.
+- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`.

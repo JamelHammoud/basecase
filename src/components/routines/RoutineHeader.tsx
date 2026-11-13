@@ -109,7 +109,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
           size="sm"
           variant="primary"
           icon={<RunIcon className="w-4 h-4" />}
-          title="Run routine"
+          title="Run Routine"
           shortcut="⌘↩"
           onClick={() => void routines.run()}
         >

@@ -16,6 +16,7 @@ import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import { errorMessage } from '../utils/errorMessage';
+import { PoseGate } from './poseGate';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -93,15 +94,17 @@ let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
 let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
 let scanShown = -1;
+const poseGate = new PoseGate();
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
-const frame = () => {
+const frame = (force = false) => {
   if (!engine) return;
 
   const poses = engine.poses();
   const joints = engine.jointStates();
+  const moved = poseGate.moved(poses) || force;
 
-  if (cameraPort) {
+  if (cameraPort && moved) {
     const copy = poses.slice();
 
     cameraPort.postMessage(copy, [copy.buffer]);
@@ -196,6 +199,7 @@ async function load(msg: Msg<'load'>) {
   playing = false;
   engine = new SimEngine(mj, msg.model);
   scanShown = -1;
+  poseGate.reset();
 
   if (msg.controller) setController(msg.controller);
 
@@ -372,7 +376,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   cameras: (msg) => {
     cameraPort?.close();
     cameraPort = msg.port;
-    frame();
+    frame(true);
   },
   dispose: () => {
     playing = false;

@@ -23,6 +23,7 @@ interface PosePanelProps {
   onImportMotion: () => void;
   onWalkCycle: () => void;
   canWalk: boolean;
+  measured: ReadonlySet<string>;
 }
 
 function rowLabel(j: RobotJoint, group: string): string {
@@ -60,6 +61,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
   onImportMotion,
   onWalkCycle,
   canWalk,
+  measured,
 }) => {
   const { activeJointId } = posing;
   const rig = posing.robot?.rig ?? null;
@@ -151,6 +153,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
                 label={rowLabel(j, g.label)}
                 value={pose?.values[j.id] ?? 0}
                 active={j.id === activeJointId}
+                measured={measured.has(j.id)}
                 onSelect={() => select(j)}
                 onChange={(v) => posing.setJointValue(j.id, v)}
                 onContextMenu={(e) => openMenu(e, jointMenu(j, jointEdits))}

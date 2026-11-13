@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { presetServo } from '../reality/bench';
+import { EMPTY_HISTORY, recordCalibration, rollBack, type CalibrationHistory } from '../reality/history';
+import type { ServoCalibration } from '../reality/types';
 import { engineeringFindings } from '../readiness/findings';
 import { biped, box, component, joint, part, run, row, type Scene } from './engineering.fixtures';
 
@@ -113,14 +116,77 @@ describe('Torque estimates', () => {
   });
 });
 
-describe('Servo models', () => {
-  it('passes when every servo has a measured model', () => {
-    expect(row(run(withServo(biped(), STS3215)), 'Servo models')).toMatchObject({
-      status: 'pass',
-      detail: 'Every servo has a measured model',
-    });
+const LEGS = ['hipL', 'kneeL', 'ankleL', 'hipR', 'kneeR', 'ankleR'];
+
+const measuredFit = (): ServoCalibration => ({
+  ...presetServo('sts3215'),
+  verdict: 'measured',
+  family: 'sts3215',
+  version: 0,
+  rung: 'response',
+  scales: {},
+  conditions: { volts: 7.4, temperatureC: 30 },
+  evidence: { logs: 2, presetErrorRad: 0.02, fittedErrorRad: 0.01, gain: 0.5, explained: 0.99, reason: '' },
+});
+
+const calibrated = (ids: string[]): Record<string, CalibrationHistory> =>
+  Object.fromEntries(ids.map((id) => [id, recordCalibration(EMPTY_HISTORY, measuredFit())]));
+
+const models = (servoCalibrations?: Record<string, CalibrationHistory>) =>
+  row(run(withServo(biped(), STS3215), { servoCalibrations }), 'Servo models')!;
+
+describe('Servo models over a calibration history', () => {
+  it('warns while every joint runs on its catalog preset, and offers Calibrate on all of them', () => {
+    const r = models();
+
+    expect(r).toMatchObject({ status: 'warn', detail: '6 joints without a measured model' });
+    expect(r.items![0].fix).toEqual({ kind: 'calibrate', joints: LEGS });
   });
 
+  it('counts only the joints still estimated when some are measured', () => {
+    const r = models(calibrated(['hipL', 'kneeL', 'ankleL', 'hipR']));
+
+    expect(r.detail).toBe('2 joints without a measured model');
+    expect(r.items).toEqual([
+      {
+        text: 'servo-kneeR and servo-ankleR on Knee r and Ankle r',
+        ids: ['servo-kneeR', 'servo-ankleR'],
+        status: 'warn',
+        fix: { kind: 'calibrate', joints: ['kneeR', 'ankleR'] },
+      },
+    ]);
+  });
+
+  it('passes when every joint has a Measured calibration', () => {
+    expect(models(calibrated(LEGS))).toMatchObject({ status: 'pass', detail: 'Every servo has a measured model' });
+  });
+
+  it('returns with the joint rolled back to its preset selected (seeded fault)', () => {
+    const histories = calibrated(LEGS);
+    const servoCalibrations = { ...histories, kneeR: rollBack(histories.kneeR) };
+    const r = models(servoCalibrations);
+
+    expect(r.detail).toBe('1 joint without a measured model');
+    expect(r.items).toEqual([
+      {
+        text: 'servo-kneeR on Knee r',
+        ids: ['servo-kneeR'],
+        status: 'warn',
+        fix: { kind: 'calibrate', joints: ['kneeR'] },
+      },
+    ]);
+    expect(
+      engineeringFindings(run(withServo(biped(), STS3215), { servoCalibrations })).find(
+        (f) => f.check === 'Servo models',
+      ),
+    ).toMatchObject({
+      agentText: 'Servo models: servo-kneeR on Knee r',
+      fix: { kind: 'calibrate', joints: ['kneeR'] },
+    });
+  });
+});
+
+describe('Servo models', () => {
   it('leaves out wheels on measured servos and on gearmotors', () => {
     const r = run(
       rover([
@@ -141,6 +207,7 @@ describe('Servo models', () => {
       'servo-hipL, servo-kneeL, servo-ankleL and 3 more on Hip l, Knee l, Ankle l and 3 more',
     );
     expect(models.items![0].ids).toHaveLength(6);
+    expect(models.items![0].fix).toBeUndefined();
   });
 
   it('names the servos without a measured model and selects them', () => {

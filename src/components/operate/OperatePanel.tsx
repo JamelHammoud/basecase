@@ -49,7 +49,13 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobo
       <RobotMessages messages={robot.messages} />
       {connected && <RobotLadder robot={robot} />}
       <RobotCalibration robot={robot} joints={joints} onCalibrate={calibration.onCalibrate} />
-      <RobotJoints rows={rows} live={connected} onRollBack={calibration.onRollBack} calibrate={calibrate} />
+      <RobotJoints
+        rows={rows}
+        live={connected}
+        measured={calibration.measured}
+        onRollBack={calibration.onRollBack}
+        calibrate={calibrate}
+      />
     </div>
   );
 };

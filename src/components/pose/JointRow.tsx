@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import type { RobotJoint } from '../../types/robotics';
 import { jointRange, jointUnit } from '../../utils/kinematics';
+import { MeasuredBadge } from '../operate/verdicts';
 
 export const JointRow: React.FC<{
   joint: RobotJoint;
   label: string;
   value: number;
   active: boolean;
+  measured: boolean;
   onSelect: () => void;
   onChange: (v: number) => void;
   onContextMenu: (e: React.MouseEvent) => void;
-}> = ({ joint, label, value, active, onSelect, onChange, onContextMenu }) => {
+}> = ({ joint, label, value, active, measured, onSelect, onChange, onContextMenu }) => {
   const unit = jointUnit(joint);
   const [lo, hi] = jointRange(joint);
   const fill = ((value - lo) / Math.max(hi - lo, 1e-6)) * 100;
@@ -31,13 +33,16 @@ export const JointRow: React.FC<{
       onContextMenu={onContextMenu}
       className={`-mx-[6px] px-[6px] rounded-lg grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_52px] items-center gap-2.5 h-8 scroll-my-3 ${active ? 'bg-[#0d99ff]/[0.12]' : ''}`}
     >
-      <button
-        type="button"
-        onClick={onSelect}
-        className={`text-left text-[13px] truncate cursor-default ${active ? 'text-white' : 'text-white/60 hover:text-white/85'}`}
-      >
-        {label}
-      </button>
+      <span className="min-w-0 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onSelect}
+          className={`min-w-0 text-left text-[13px] truncate cursor-default ${active ? 'text-white' : 'text-white/60 hover:text-white/85'}`}
+        >
+          {label}
+        </button>
+        {measured && <MeasuredBadge />}
+      </span>
       <input
         type="range"
         className="slider"

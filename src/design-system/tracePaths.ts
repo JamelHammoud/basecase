@@ -4,6 +4,8 @@ export interface Trace {
   id: string;
   values: ArrayLike<number>;
   tone: TraceTone;
+  x?: ArrayLike<number>;
+  points?: boolean;
 }
 
 export interface TraceBox {
@@ -12,14 +14,9 @@ export interface TraceBox {
   inset: number;
 }
 
-type Range = [number, number];
+export type Range = [number, number];
 
-const finiteValues = (traces: Trace[], extra: number[]) =>
-  [...traces.flatMap((t) => Array.from(t.values)), ...extra].filter((v) => Number.isFinite(v));
-
-export function traceRange(traces: Trace[], extra: number[] = []): Range {
-  const values = finiteValues(traces, extra);
-
+function rangeOf(values: number[]): Range {
   if (!values.length) return [-1, 1];
 
   const low = values.reduce((a, b) => Math.min(a, b));
@@ -28,6 +25,19 @@ export function traceRange(traces: Trace[], extra: number[] = []): Range {
 
   return [low - pad, high + pad];
 }
+
+const finite = (values: number[]) => values.filter((v) => Number.isFinite(v));
+
+export const traceRange = (traces: Trace[], extra: number[] = []): Range =>
+  rangeOf(finite([...traces.flatMap((t) => Array.from(t.values)), ...extra]));
+
+export const hasX = (traces: Trace[]) => traces.some((t) => t.x);
+
+export const xRange = (traces: Trace[], extra: number[] = []): Range =>
+  rangeOf(finite([...traces.flatMap((t) => (t.x ? Array.from(t.x) : [])), ...extra]));
+
+export const valueX = (value: number, range: Range, box: TraceBox) =>
+  ((value - range[0]) / (range[1] - range[0])) * box.width;
 
 export const sampleCount = (traces: Trace[]) => traces.reduce((n, t) => Math.max(n, t.values.length), 0);
 
@@ -84,10 +94,41 @@ function pathOf(values: ArrayLike<number>, range: Range, box: TraceBox): string 
   return parts.join('');
 }
 
-export function tracePaths(
-  traces: Trace[],
-  box: TraceBox,
-  range: Range = traceRange(traces),
-): Array<{ id: string; tone: TraceTone; d: string }> {
-  return traces.map((t) => ({ id: t.id, tone: t.tone, d: pathOf(t.values, range, box) }));
+function placedPath(t: Trace, ranges: { x: Range; y: Range }, box: TraceBox): string {
+  const parts: string[] = [];
+  let pen = 'M';
+
+  for (let i = 0; i < t.values.length; i++) {
+    const v = t.values[i];
+    const x = t.x?.[i] ?? Number.NaN;
+
+    if (!Number.isFinite(v) || !Number.isFinite(x)) {
+      pen = 'M';
+
+      continue;
+    }
+
+    const at = `${valueX(x, ranges.x, box).toFixed(1)} ${valueY(v, ranges.y, box).toFixed(1)}`;
+
+    parts.push(t.points ? `M${at}h0` : `${pen}${at}`);
+    pen = 'L';
+  }
+
+  return parts.join('');
+}
+
+export interface TracePath {
+  id: string;
+  tone: TraceTone;
+  d: string;
+  points?: boolean;
+}
+
+export function tracePaths(traces: Trace[], box: TraceBox, range: Range = traceRange(traces), x?: Range): TracePath[] {
+  return traces.map((t) => ({
+    id: t.id,
+    tone: t.tone,
+    d: t.x && x ? placedPath(t, { x, y: range }, box) : pathOf(t.values, range, box),
+    ...(t.points ? { points: true } : {}),
+  }));
 }

@@ -5,36 +5,15 @@ import type { DriveCommand } from '../src/sim/driveTypes';
 import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
-import { expectDataset, expectPublished, pickTimeline } from './driveChecks';
+import { expectCaseCheckOpensRow, expectDataset, expectGenerated, expectPublished, pickTimeline } from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
 
 let app: App;
 let hub: FakeHub;
-
-interface SimState {
-  status: string;
-  drive: string;
-  driveClass: string | null;
-  offer: string;
-  stats: { time: number; robots: Array<{ forward: number; travelled: number; fellAt: number | null }> } | null;
-  world: string[];
-  bodies: Array<{ parts: string[]; world: string[] }>;
-  activeCase: string | null;
-  effector: number[] | null;
-  scanPoints: number;
-  tries: Array<{ passed: boolean; margin: number }>;
-}
-
-type Studio = {
-  simState: () => SimState;
-  load: (r: unknown) => void;
-  passTries: () => void;
-  drive: (c: DriveCommand) => void;
-  worldAt: () => Record<string, number[]>;
-};
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -228,20 +207,6 @@ async function endTryAt(seconds: number) {
   }, seconds);
 }
 
-async function expectCaseCheckOpensRow(name: string) {
-  const verdict = app.page.locator(visible('[data-testid="case-check"]'));
-
-  expect(await app.page.locator(visible('button'), { hasText: 'Check Fit' }).count()).toBe(0);
-  expect(await app.page.getByTestId('robot-fit').count()).toBe(0);
-  await expect.poll(() => verdict.count(), { timeout: 120000 }).toBe(1);
-  expect(['pass', 'warn', 'fail']).toContain(await verdict.getAttribute('data-status'));
-  await verdict.click();
-  await expect
-    .poll(() => app.page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 10000 })
-    .toMatch(/^case-check-/);
-  expect(await app.page.locator(visible('[id^="case-check-"]')).innerText()).toContain(name);
-}
-
 describe('Cases', () => {
   itUnlessWindows(
     'starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it',
@@ -287,7 +252,7 @@ describe('Cases', () => {
         headings.filter((h) => ['Brief', 'Robot fit', 'Result', 'Model', 'Emulated robot', 'Policies'].includes(h)),
       ).toEqual([]);
 
-      await expectCaseCheckOpensRow('Touch the Dots');
+      await expectCaseCheckOpensRow(app.page, 'Touch the Dots');
       expect(app.errors).toEqual([]);
     },
   );
@@ -383,6 +348,42 @@ describe('Cases', () => {
       .toBe('/case ');
     expect(app.errors).toEqual([]);
   });
+});
+
+describe('Multiply', () => {
+  itUnlessWindows(
+    'multiplies a passed try from ⌘K into generated tries under its row, and exports them with their seeds',
+    async () => {
+      await openTouchTheDots();
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.referenceTry());
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 60000 }).toBe(1);
+      expect((await simState()).tries[0].passed).toBe(true);
+
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.multiplyRuns(5));
+      await app.page.keyboard.press('Meta+k');
+      await app.page.getByLabel('Search commands').fill('Multiply');
+      await expect.poll(() => app.page.getByText(/^Multiply$/).count(), { timeout: 15000 }).toBe(1);
+      await app.page.keyboard.press('Enter');
+
+      const done = app.page.getByRole('status').filter({ hasText: /^Kept \d+ of 5\b/ });
+
+      await done.first().waitFor({ timeout: 120000 });
+
+      const kept = Number(/Kept (\d+)/.exec(await done.first().innerText())![1]);
+      const rows = app.page.locator(visible('[data-testid="try-row"]'));
+
+      expect(kept).toBeGreaterThan(0);
+      await expect.poll(async () => (await simState()).tries.filter((t) => t.generated).length).toBe(kept);
+      expect((await simState()).multiplying).toBe(false);
+      expect((await simState()).tries.every((t) => t.passed)).toBe(true);
+      expect(await rows.count()).toBe(1);
+      expect(await rows.first().getByTestId('try-generated').innerText()).toBe(`${kept} generated`);
+
+      expectGenerated(await datasetFiles(), kept);
+      expect(app.errors).toEqual([]);
+    },
+    180000,
+  );
 });
 
 describe('a gripper', () => {

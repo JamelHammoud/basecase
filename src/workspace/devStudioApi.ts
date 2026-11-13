@@ -35,6 +35,7 @@ import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
+import { limitExplore } from './useCaseExplore';
 
 type Payload = Record<string, unknown>;
 
@@ -62,6 +63,7 @@ export interface DevActions {
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
+  multiplyRuns: (runs: number) => void;
   addCase: (raw: unknown) => string;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
@@ -253,6 +255,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
+    multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
@@ -264,11 +267,13 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
     operatorCamera: () => operatorCameraState(),
     stubTabEngine,
+    exploreLimit: (designs: number) => limitExplore(designs),
     pickFiles: (files: { name: string; base64: string }[]) =>
       pickNextFiles(
         files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),
       ),
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
+    calibrations: () => projectRef.current.servoCalibrations ?? {},
     robotGhost: () => robotGhostState(viewportRef.current),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();

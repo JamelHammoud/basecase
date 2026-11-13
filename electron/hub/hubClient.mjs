@@ -31,10 +31,11 @@ const plainDetail = (detail) => {
 const nextLink = (header) => /<([^>]+)>;\s*rel="next"/.exec(header ?? '')?.[1] ?? null;
 
 export class HubClient {
-  constructor({ endpoint = HUB_ENDPOINT, token, outbound = publicFetch }) {
+  constructor({ endpoint = HUB_ENDPOINT, token, outbound = publicFetch, again = 'Publish again' }) {
     this.origin = new URL(endpoint).origin;
     this.token = token;
     this.outbound = outbound;
+    this.again = again;
   }
 
   url(path) {
@@ -55,7 +56,7 @@ export class HubClient {
     const message =
       res.status === 401
         ? TOKEN_REFUSED
-        : serviceRefusal('Hugging Face', { status: res.status, detail: plainDetail(detail), again: 'Try again' });
+        : serviceRefusal('Hugging Face', { status: res.status, detail: plainDetail(detail), again: this.again });
 
     return new Error(this.scrub(message));
   }

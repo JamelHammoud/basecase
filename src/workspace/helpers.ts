@@ -38,8 +38,6 @@ export const stamp = () => new Date().toISOString();
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 export const isTextEntry = (el: Element | null) =>
   el instanceof HTMLInputElement ||
   el instanceof HTMLTextAreaElement ||

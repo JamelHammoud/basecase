@@ -1,6 +1,7 @@
 import { BOM_CATEGORIES, Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS, localDate } from './bomTypes';
 import { currencyNote, type Money, scaledEntry } from './currency';
 import { currentMoney } from './currencyStore';
+import { plural } from '../../electron/plural.mjs';
 
 const STATUS_LABEL: Record<PriceStatus, string> = { checked: 'Checked', stale: 'Stale', unchecked: 'Not checked' };
 const LINK_TYPE: Record<BomLine['urlKind'], string> = { product: 'Listing', search: 'Search', none: '' };
@@ -75,17 +76,17 @@ export function bomToCsv(bom: Bom, partNames: Record<string, string>, money: Mon
 }
 
 function markdownTotals(t: Bom['totals'], money: Money): string[] {
-  const out = [`- **Checked total:** ${money.format(t.checkedUsd)} (${t.checked} lines)`];
+  const out = [`- **Checked total:** ${money.format(t.checkedUsd)} (${plural(t.checked, 'line')})`];
 
   if (t.stale)
     out.push(
-      `- **Stale checks** (over ${STALE_DAYS} days): ${t.stale} lines, ${money.format(t.pricedUsd - t.checkedUsd)}`,
+      `- **Stale checks** (over ${STALE_DAYS} days): ${plural(t.stale, 'line')}, ${money.format(t.pricedUsd - t.checkedUsd)}`,
     );
 
-  if (t.unchecked) out.push(`- **Not checked:** ${t.unchecked} lines, not in the checked total`);
+  if (t.unchecked) out.push(`- **Not checked:** ${plural(t.unchecked, 'line')}, not in the checked total`);
 
   out.push(
-    `- **Estimated total:** ~${money.format(t.estimatedUsd)}, using maker and distributor list prices (marked ~) for unchecked lines${t.unpriced ? `; ${t.unpriced} lines have no price` : ''}`,
+    `- **Estimated total:** ~${money.format(t.estimatedUsd)}, using maker and distributor list prices (marked ~) for unchecked lines${t.unpriced ? `; no price on ${plural(t.unpriced, 'line')}` : ''}`,
   );
 
   if (t.budgetUsd !== undefined)
@@ -167,7 +168,7 @@ function textSummary(t: Bom['totals'], money: Money): string {
   const over = t.budgetUsd !== undefined && t.estimatedUsd > t.budgetUsd ? ' The estimate is OVER BUDGET.' : '';
 
   return (
-    `${budget}. Checked prices total ${money.format(t.pricedUsd)} (${t.checked} checked, ${t.stale} stale). With list-price estimates for the rest: ~${money.format(t.estimatedUsd)}${t.unpriced ? `, plus ${t.unpriced} lines with no price known` : ''}.` +
+    `${budget}. Checked prices total ${money.format(t.pricedUsd)} (${t.checked} checked, ${t.stale} stale). With list-price estimates for the rest: ~${money.format(t.estimatedUsd)}${t.unpriced ? `, plus ${plural(t.unpriced, 'line')} with no price known` : ''}.` +
     over
   );
 }
@@ -196,10 +197,7 @@ function textNotes(bom: Bom, names: Record<string, string>): string[] {
       .map(([m, g]) => `${m} ${Math.round(g ?? 0)} g`)
       .join(', ');
 
-    out.push(
-      '',
-      `Printed: ${bom.printed.length} ${bom.printed.length === 1 ? 'part' : 'parts'}, ${fil} (estimate, no supports).`,
-    );
+    out.push('', `Printed: ${plural(bom.printed.length, 'part')}, ${fil} (estimate, no supports).`);
   }
 
   if (bom.standIns.length)

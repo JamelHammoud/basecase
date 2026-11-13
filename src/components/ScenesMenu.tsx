@@ -92,7 +92,7 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
           onRename={(scene, name) => {
             setRenaming(null);
 
-            if (name && name !== scene.name) props.onRenameScene(scene, name);
+            if (name) props.onRenameScene(scene, name);
           }}
           onMenu={showMenu}
         />

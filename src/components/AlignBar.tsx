@@ -54,13 +54,13 @@ export const StripGroup: React.FC<{ children: React.ReactNode }> = ({ children }
 );
 
 export const StripButton: React.FC<{
-  title: string;
+  title?: string;
   shortcut?: string;
   onClick: () => void;
   className?: string;
   children: React.ReactNode;
-}> = ({ title, shortcut, onClick, className = '', children }) => (
-  <Tooltip label={title} shortcut={shortcut} className="flex-1 min-w-0">
+}> = ({ title, shortcut, onClick, className = '', children }) => {
+  const button = (
     <button
       type="button"
       aria-label={title}
@@ -69,5 +69,13 @@ export const StripButton: React.FC<{
     >
       {children}
     </button>
-  </Tooltip>
-);
+  );
+
+  if (!title) return button;
+
+  return (
+    <Tooltip label={title} shortcut={shortcut} className="flex-1 min-w-0">
+      {button}
+    </Tooltip>
+  );
+};

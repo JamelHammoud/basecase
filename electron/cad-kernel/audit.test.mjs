@@ -40,8 +40,8 @@ describe('kernel audit', () => {
     const checks = Object.fromEntries(res.audit.checks.map((c) => [`${c.name} ${c.want}`, c.pass]));
 
     expect(checks).toEqual({
-      'holes 4 through holes Ø3.4 along z': true,
-      'holes 2 through holes Ø8 along z': false,
+      'holes 4× through hole Ø3.4 along z': true,
+      'holes 2× through hole Ø8 along z': false,
       'min wall 1.2 mm': true,
       'flat base a flat face on z = -3 covering 25% of the footprint': true,
       'symmetric in x mirror image across x = 0': true,

@@ -150,14 +150,13 @@ export const ControlSection: React.FC<
             size="sm"
             icon={<HandIcon className="w-4 h-4" />}
             disabled={!sim.playing}
-            title="Push the robot sideways"
             onClick={() => sim.push()}
           >
             Push
           </Button>
         </div>
         {showDrive && <DriveControl sim={sim} walk={walk} onToast={onToast} />}
-        {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
+        {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
         {showDrive && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       </div>
     </Section>

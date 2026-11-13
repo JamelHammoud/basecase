@@ -20,7 +20,7 @@ Click Export at the top right and choose Robot Package, or Export Robot Package 
 
 `urdf/robot.urdf` is for ROS and anything else that reads URDF. It has one link per body of the robot and one joint per movable joint, named the same as in `robot.xml`, with axes and limits. Each link carries its mass, centre of mass and inertia, and the masses add up to the Weight check's total. Every part is a binary STL in `meshes/`, already placed in its link's frame, and shared between visual and collision.
 
-`joint_map.json` lists each movable joint in order with a servo id from 1. Each entry has the joint's names in the model and in your scene and its servo family (STS3215, XL330 or none). Its zero offset, direction, limits and active calibration follow. Its keys are the ones Basecase's robot daemon reads. So for a robot whose joints are all revolute with limits, the file works as that daemon's calibration file as is.
+`joint_map.json` lists each movable joint in order with a servo id from 1. Each entry has the joint's names in the model and in your scene, its servo's bus (Feetech, Dynamixel or none) and the servo itself. Its zero offset, direction, limits and active calibration follow. Its keys are the ones Basecase's robot daemon reads. So for a robot whose joints are all revolute with limits, the file works as that daemon's calibration file as is.
 
 `policies/` holds one folder per policy you trained. Each has the policy and a `spec.json` naming the joints its actions drive, its default pose, action scale, observations and control step.
 

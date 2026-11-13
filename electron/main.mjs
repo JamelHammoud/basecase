@@ -25,6 +25,7 @@ import { registerHubHandlers } from './hub/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
+import { robotPolicyBytes } from './robot/robotPolicy.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
 import { PhonePairing } from './phone/phonePairing.mjs';
 import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
@@ -52,6 +53,8 @@ const ipcMain = trustedIpc(electronIpc, APP_ORIGIN);
 app.setName('Basecase');
 
 if (DEV_MODE) app.setAboutPanelOptions({ applicationName: APP_DISPLAY_NAME });
+
+app.commandLine.appendSwitch('enable-features', 'IsolateSandboxedIframes');
 
 if (process.env.BASECASE_USER_DATA && process.env.STUDIO_AGENT_OFFLINE === '1')
   app.commandLine.appendSwitch('use-mock-keychain');
@@ -241,7 +244,11 @@ const sendTo = (channel) => (event) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, event);
 };
 
-const robot = new RobotLink({ binary: robotBinary, emit: sendTo('robot:event') });
+const robot = new RobotLink({
+  binary: robotBinary,
+  emit: sendTo('robot:event'),
+  policyBytes: robotPolicyBytes({ libraryDir: backend.libraryDir, trainer: backend.trainer }),
+});
 
 registerRobotHandlers(ipcMain, robot);
 

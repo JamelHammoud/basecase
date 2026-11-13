@@ -16,7 +16,8 @@ import {
 import { rememberImportedRobot, robotPreviewImage } from '../utils/robotPreview';
 import { useLatestRef } from '../utils/useLatestRef';
 import { whenIdle } from '../utils/whenIdle';
-import { attempt, plural } from './helpers';
+import { plural } from '../../electron/plural.mjs';
+import { attempt } from './helpers';
 import { articulatedShift, importOffset, palmOf, placeRobot } from './robotPlacement';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -85,7 +86,7 @@ async function loadRobot(source: RobotSource, say: (m: string) => void): Promise
 }
 
 const insertedMessage = (robot: ImportedRobot, joints: RobotJoint[]) =>
-  `Inserted ${robot.name} with ${plural(joints.length, 'joint', 'joints')}${robot.notes.length ? `. Missing ${plural(robot.notes.length, 'file', 'files')}` : ''}`;
+  `Inserted ${robot.name} with ${plural(joints.length, 'joint')}${robot.notes.length ? `. Missing ${plural(robot.notes.length, 'file')}` : ''}`;
 
 async function downloadArticulated(item: CatalogItem) {
   const src = ARTICULATED_PARTS[item.componentId!];
@@ -199,7 +200,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
     await prepareParts(placed.parts);
     insertRig(placed, true);
-    showToast(`Added ${item.name} with ${plural(placed.joints.length, 'joint', 'joints')}`, {
+    showToast(`Added ${item.name} with ${plural(placed.joints.length, 'joint')}`, {
       action: poseAction(placed.joints),
     });
   };

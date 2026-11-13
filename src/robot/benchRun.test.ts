@@ -4,6 +4,7 @@ import { FAKE_DAEMON_SCRIPT } from '../../e2e/fakeDaemon';
 import { benchLogs, type BenchRecording } from '../reality/benchLogs';
 import { BENCH, BENCH_SECONDS } from '../reality/benchSequence';
 import { calibrateServo } from '../reality/calibrate';
+import { FAMILY_SERVOS } from '../reality/servoPart';
 import { benchSeconds, playBench } from './benchRun';
 import { FakeEventLoop, type Stall } from './eventLoop.fixtures';
 import {
@@ -72,8 +73,8 @@ describe('the bench on the fake daemon', () => {
     expect(stalled).not.toBeNull();
 
     for (const k of JOINTS.keys()) {
-      const want = benchLogs(steady as BenchRecording, k);
-      const got = benchLogs(stalled as BenchRecording, k);
+      const want = benchLogs({ recording: steady as BenchRecording, joint: k, servo: FAMILY_SERVOS.sts3215 });
+      const got = benchLogs({ recording: stalled as BenchRecording, joint: k, servo: FAMILY_SERVOS.sts3215 });
 
       for (const [i, log] of got.entries()) {
         expect(log.dt).toBeCloseTo(0.1, 6);
@@ -84,7 +85,7 @@ describe('the bench on the fake daemon', () => {
         );
       }
 
-      const calibration = await calibrateServo({ family: 'sts3215', logs: got, mj });
+      const calibration = await calibrateServo({ servo: FAMILY_SERVOS.sts3215, logs: got, mj });
 
       expect(calibration.verdict).toMatch(/^(measured|consistent)$/);
     }

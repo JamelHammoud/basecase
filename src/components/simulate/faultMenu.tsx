@@ -23,7 +23,7 @@ export function faultSubmenu(current: FaultKind | undefined, pick: (kind: FaultK
           />
         ))}
         <MenuDivider />
-        <MenuItem label="Clear" checked={false} disabled={!current} onSelect={() => choose(null, close)} />
+        <MenuItem label="Clear" disabled={!current} onSelect={() => choose(null, close)} />
       </>
     ),
   };

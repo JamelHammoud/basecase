@@ -6,7 +6,7 @@ image: /changelog/teach-a-robot-a-case-from-your-tries/cover.png
 
 You can now drive a robot through a Case five times and train a policy from those tries in one click. Basecase keeps the policy only if it passes the Case by itself.
 
-**Train From Tries** is under Results in the Simulate tab, and in ⌘K. It works in the desktop app only.
+**Train from Tries** is under Results in the Simulate tab, and in ⌘K. It works in the desktop app only.
 
 Teaching a robot from demonstrations usually means LeRobot's Python stack, a GPU and hours of training. Then nothing says whether the policy works until it runs on the robot.
 

@@ -48,7 +48,7 @@ Training **Walk** is in [Train Stand and Walk with the Motor Kit](/help/train-st
 
 A robot with no arm, wheels or legs has nothing to drive, and shows no **Drive** at all.
 
-**Drive With Camera** hides while a Case is open too, but stays in [[⌘K]].
+**Drive with Camera** hides while a Case is open too, but stays in [[⌘K]].
 
 ## The keys do nothing
 
@@ -61,20 +61,20 @@ Keys also let go when the window loses focus, so switching apps stops the robot.
 
 ## “Couldn’t open the camera.”
 
-**Drive With Camera** got no picture: Basecase isn't allowed to use the camera, or no camera is connected.
+**Drive with Camera** got no picture: Basecase isn't allowed to use the camera, or no camera is connected.
 
 1. On a Mac, open **System Settings** ▸ **Privacy & Security** ▸ **Camera**.
 2. Turn on **Basecase**.
 3. Quit and reopen Basecase.
-4. Click **Drive With Camera** again.
+4. Click **Drive with Camera** again.
 
 On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Camera**. In the web studio, allow the camera in the browser's site settings.
 
-The same message shows when pose estimation can't start, even with the camera allowed. The camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive With Camera** again.
+The same message shows when pose estimation can't start, even with the camera allowed. The camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive with Camera** again.
 
 ## Drive is greyed out
 
-It reads "Checking it stays up" while a robot with legs walks a 5-second fall check in the background. Wait for it to finish; **Drive** then starts, or **Teach It to Move** takes its place.
+It reads "Checking it stays up…" while a robot with legs walks a 5-second fall check in the background. Wait for it to finish; **Drive** then starts, or **Teach It to Move** takes its place.
 
 ## The robot falls over
 

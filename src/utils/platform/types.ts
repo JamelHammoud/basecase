@@ -1,5 +1,6 @@
 import type { SourcedItem } from '../../data/sourcedItems';
 import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
+import type { RobotPolicyRef } from '../../robot/robotPolicy';
 import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState } from '../../robot/robotState';
 import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
@@ -238,6 +239,7 @@ declare global {
       robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
       robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
       robotDisconnect?: () => Promise<ConnectReply>;
+      robotPolicy?: (refs: RobotPolicyRef[]) => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;
       onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
       phonePair?: () => Promise<PairReply>;

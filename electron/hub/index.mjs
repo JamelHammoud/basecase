@@ -27,8 +27,8 @@ export class HubAccount {
     this.outbound = outbound;
   }
 
-  client(token) {
-    return new HubClient({ endpoint: this.endpoint(), token, outbound: this.outbound });
+  client(token, again) {
+    return new HubClient({ endpoint: this.endpoint(), token, outbound: this.outbound, again });
   }
 
   account() {
@@ -42,7 +42,7 @@ export class HubAccount {
 
     if (!value || value.length > TOKEN_MAX || /\s/.test(value)) throw new Error('That isn’t a Hugging Face token.');
 
-    const who = await this.client(value).whoami();
+    const who = await this.client(value, 'Save the token again').whoami();
 
     if (who.role === 'read') throw new Error('This token can only read. Make one with write access.');
 

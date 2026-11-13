@@ -1,4 +1,5 @@
 import type { ControllerKind } from '../../electron/robot/ros2.mjs';
+import type { M6Friction } from '../data/servoFits';
 
 export const LADDER = ['look', 'set_up', 'test', 'rehearse', 'first_run', 'policy', 'longer_runs'] as const;
 
@@ -23,7 +24,21 @@ export interface RobotSpec {
   joints?: string[];
 }
 
-export type ServoRobotSpec = RobotSpec & { family: ServoFamily };
+export interface EmulatedUnit {
+  volts: number;
+  kt: number;
+  resistance: number;
+  armature: number;
+  friction: M6Friction;
+  firmwareKp: number;
+  errorGain: number;
+  errorGainRatio: number;
+  maxDuty: number;
+  maxVelocity: number;
+  delayS: number;
+}
+
+export type ServoRobotSpec = RobotSpec & { family: ServoFamily; units?: Array<EmulatedUnit | null> };
 
 export interface UnitreeG1Ask {
   family: 'unitree-g1';

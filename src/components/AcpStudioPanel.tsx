@@ -57,7 +57,7 @@ const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
         type="button"
         aria-label="Scroll to bottom"
         onClick={onClick}
-        className="w-8 h-8 rounded-full bg-[#2a2a2f] ring-1 ring-white/[0.1] shadow-[0_4px_14px_rgba(0,0,0,0.45)] text-white/80 hover:text-white hover:bg-[#323238] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
+        className="w-8 h-8 rounded-full glass text-white/80 hover:text-white hover:bg-[#2e2e2e] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
       >
         <ChevronDownIcon className="w-4 h-4 translate-y-[1px]" />
       </button>

@@ -1,5 +1,5 @@
 import { BENCH, benchOffset, EMULATED_LOAD } from './benchSequence';
-import type { ServoFamily, ServoLog } from './types';
+import type { ServoLog, ServoPart } from './types';
 import { median } from './verdict';
 
 export interface BenchJointSample {
@@ -14,7 +14,6 @@ export interface BenchSample {
 }
 
 export interface BenchRecording {
-  family: ServoFamily;
   starts: number[];
   samples: BenchSample[];
 }
@@ -27,12 +26,18 @@ function sampleSpacing(samples: BenchSample[]): number {
   return gaps.length ? median(gaps) : Number.NaN;
 }
 
-function logOf(recording: BenchRecording, joint: number, samples: BenchSample[]): ServoLog {
+interface LogInput {
+  recording: BenchRecording;
+  joint: number;
+  servo: ServoPart;
+}
+
+function logOf({ recording, joint, servo }: LogInput, samples: BenchSample[]): ServoLog {
   const start = recording.starts[joint];
   const at = samples.map((s) => s.joints[joint]);
 
   return {
-    family: recording.family,
+    servo,
     dt: sampleSpacing(samples),
     goalRad: samples.map((s) => benchOffset(s.seconds)),
     positionRad: at.map((j) => orNaN(j?.positionRad) - start),
@@ -43,15 +48,13 @@ function logOf(recording: BenchRecording, joint: number, samples: BenchSample[])
   };
 }
 
-export function benchLogs(recording: BenchRecording, joint: number): ServoLog[] {
+export function benchLogs(input: LogInput): ServoLog[] {
+  const { recording } = input;
+
   return Array.from({ length: BENCH.logs }, (_, i) =>
     logOf(
-      recording,
-      joint,
+      input,
       recording.samples.filter((s) => s.seconds >= i * BENCH.logS && s.seconds < (i + 1) * BENCH.logS),
     ),
   );
 }
-
-export const familyOfRobot = (family: 'feetech' | 'dynamixel'): ServoFamily =>
-  family === 'feetech' ? 'sts3215' : 'xl330';

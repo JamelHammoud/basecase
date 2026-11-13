@@ -56,4 +56,4 @@ The figure shows how fast the simulation runs against the clock. At **1×**, a f
 
 ## Checks says the simulation guesses torque
 
-In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures one.
+In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures any Feetech or Dynamixel servo. Any other servo stays on its estimate.

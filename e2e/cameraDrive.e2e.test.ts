@@ -56,12 +56,12 @@ afterAll(async () => {
   await app?.close();
 });
 
-describe('Drive With Camera', () => {
+describe('Drive with Camera', () => {
   it('raises the G1’s right arm with the person’s, holds the legs and turns the camera off on Esc', async () => {
     const { page } = app;
 
     await page.evaluate((samples) => (window as unknown as StudioWindow).__studio.feedPose(samples), raiseRightArm());
-    await command('Drive With Camera');
+    await command('Drive with Camera');
     await expect.poll(async () => (await studio()).drive, { timeout: 60000 }).toBe('on');
     await page.locator(shown(OPERATOR_TILE)).first().waitFor();
     expect(await operatorCamera()).toMatchObject({ open: true, live: true });

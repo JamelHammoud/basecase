@@ -3,19 +3,11 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { presetCase } from '../src/cases/caseBuilder';
 import { robotFacts, slotRefusal } from '../src/cases/robotFit';
 import { caseSlots } from '../src/cases/schema';
-import type { ProjectSettings, ScenePart } from '../src/types/robotics';
 import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
-import { walkKey } from '../src/workspace/storedWalk';
-import { armWithEstimates, servo, standIn } from './buildCheckFixtures';
+import { armWithEstimates, loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckFixtures';
 import { openApp, partCount, type App } from './harness';
-
-interface StudioHook {
-  load: (record: { parts: unknown[]; project: unknown }) => void;
-  sceneRecord: () => { parts: ScenePart[]; project: ProjectSettings };
-  simState: () => { activeCase: string | null };
-}
 
 let app: App;
 
@@ -38,6 +30,18 @@ const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
 
 const section = (title: RegExp) => app.page.locator(visible('section'), { hasText: title }).first();
+
+const checkRow = (name: string) =>
+  checks()
+    .locator('li')
+    .filter({ has: app.page.getByRole('button', { name: new RegExp(`^${name}`) }) })
+    .first();
+
+const expand = async (row: ReturnType<typeof checkRow>, name: string) => {
+  const button = row.getByRole('button', { name: new RegExp(`^${name}`) }).first();
+
+  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+};
 
 const headerText = async () => (await checks().locator('header').first().textContent()) ?? '';
 
@@ -187,13 +191,6 @@ describe('Build tab fields', () => {
   }, 90000);
 
   it('read current and runtime from a stored walk, naming the hungriest joint', async () => {
-    const knee = (id: string, x: number) => ({ ...servo, id, name: `Servo ${id}`, position: [x, 20, 0] });
-    const pack = { ...standIn('pack', 0), name: 'Pack', kind: 'component', componentId: 'ovonic-2s-2200-50c' };
-    const rail = { ...standIn('rail', 120), name: 'Rail', kind: 'component', componentId: 'pololu-d36v50f6' };
-    const joints = [
-      { id: 'ja', name: 'Left knee', limb: 'leg', parent: ['pack'], child: ['a'], actuators: ['a'] },
-      { id: 'jb', name: 'Right knee', limb: 'leg', parent: ['pack'], child: ['b'], actuators: ['b'] },
-    ].map((j) => ({ ...j, type: 'revolute', origin: [0, 20, 0], axis: [1, 0, 0] }));
     const walk: WalkSim = {
       policy: 'Walk',
       seconds: 14,
@@ -201,39 +198,67 @@ describe('Build tab fields', () => {
       joints: {},
       power: { avgA: 1.6, peakA: 3.4, joints: { ja: { avgA: 1, peakA: 2 }, jb: { avgA: 0.6, peakA: 1.4 } } },
     };
-    const load = (record: { parts: unknown[]; project: unknown }) =>
-      app.page.evaluate((r) => (window as unknown as { __studio: StudioHook }).__studio.load(r), record);
-    const record = () =>
-      app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.sceneRecord());
-    const row = checks()
-      .locator('li')
-      .filter({ has: app.page.getByRole('button', { name: /^Current and runtime/ }) })
-      .first();
+    const row = checkRow('Current and runtime');
     const detail = async () => {
-      const button = row.getByRole('button', { name: /^Current and runtime/ });
-
-      if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+      await expand(row, 'Current and runtime');
 
       return (await row.locator('p').first().textContent()) ?? '';
     };
 
-    await load({
-      parts: [knee('a', -60), knee('b', 60), pack, rail],
-      project: { ...(await record()).project, joints },
-    });
+    await loadKnees(app.page);
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
     await expect.poll(detail, { timeout: 45000 }).toContain('(estimate)');
 
     const estimate = await detail();
-    const scene = await record();
 
-    await load({
-      parts: scene.parts,
-      project: { ...scene.project, walk: { ...walk, key: walkKey(scene.parts, scene.project) } },
-    });
+    await storeWalk(app.page, walk);
     await expect.poll(detail, { timeout: 45000 }).not.toBe(estimate);
     expect(await detail()).toMatch(/A average walking .*Left knee: 1\.0 A average/);
+  }, 120000);
+
+  it('plot each knee’s walk on its servo’s torque–speed line under Peak torque', async () => {
+    const samples = (rpm: number): Array<[number, number]> =>
+      Array.from({ length: 40 }, (_, i) => (i % 2 ? [rpm, 1.1] : [-5, 0.3]));
+    const walk: WalkSim = {
+      policy: 'Walk',
+      seconds: 14,
+      fellAt: null,
+      joints: {
+        ja: { p99Nm: 1.1, rmsNm: 0.5, overS: 0, samples: samples(40) },
+        jb: { p99Nm: 1.1, rmsNm: 0.5, overS: 0, samples: samples(5) },
+      },
+    };
+    const row = checkRow('Peak torque');
+    const plot = (joint: string) => row.locator(`[data-joint="${joint}"]`);
+
+    await loadKnees(app.page);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await storeWalk(app.page, walk);
+    await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
+    await expect
+      .poll(
+        async () => {
+          await expand(row, 'Peak torque');
+
+          return plot('ja').isVisible();
+        },
+        { timeout: 45000 },
+      )
+      .toBe(true);
+
+    const note = row.locator('li', { has: app.page.locator('[data-joint="ja"]') });
+
+    expect(await note.textContent()).toMatch(/Left knee: .*% of the walk past its torque–speed line/);
+
+    for (const id of ['driving', 'braking', 'servo', 'up'])
+      expect(await plot('ja').locator(`[data-testid="trace-${id}"]`).count()).toBe(1);
+
+    expect(await plot('ja').textContent()).toMatch(/N·m.*rpm.*Servo a/);
+    expect(await plot('jb').count()).toBe(0);
+
+    await row.getByRole('button', { name: /^Right knee/ }).click();
+    await expect.poll(() => plot('jb').isVisible()).toBe(true);
   }, 120000);
 
   it('set a budget beside the bill of materials total', async () => {
@@ -360,7 +385,7 @@ describe('Cases in Checks', () => {
   }, 150000);
 });
 
-describe('Compare With', () => {
+describe('Compare with', () => {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
   const flag = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
   const WEAK_WHEEL_NM = 0.075;
@@ -415,8 +440,8 @@ describe('Compare With', () => {
     await expect.poll(activeCase).toBe(caseId);
 
     await app.page.keyboard.press('Meta+k');
-    await app.page.getByLabel('Search commands').fill('Compare With');
-    await expect.poll(() => app.page.getByText(/^Compare With Weak rover/).count(), { timeout: 15000 }).toBe(1);
+    await app.page.getByLabel('Search commands').fill('Compare with');
+    await expect.poll(() => app.page.getByText(/^Compare with Weak rover/).count(), { timeout: 15000 }).toBe(1);
     await app.page.keyboard.press('Enter');
 
     const rows = app.page.locator(visible('[data-testid="compare-row"]'));

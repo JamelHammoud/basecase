@@ -19,6 +19,7 @@ import type {
   SceneMark,
   ScenePart,
   MeasureUnit,
+  Tether,
   TrackpadGestureMode,
 } from '../types/robotics';
 
@@ -162,6 +163,7 @@ export interface Snapshot {
   joints: RobotJoint[] | undefined;
   marks: SceneMark[] | undefined;
   skeleton: RobotSkeleton | undefined;
+  tether?: Tether;
 }
 
 export interface DocState {

@@ -1,12 +1,12 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { ServoFit } from '../data/components';
-import { presetServo } from './bench';
 import { predictLog, windowOf, type FitContext } from './fitServo';
-import type { ServoFamily, ServoLog } from './types';
+import { presetServo } from './servoEstimate';
+import type { ServoLog, ServoPart } from './types';
 import { median } from './verdict';
 
 export interface ReplayRequest {
-  family: ServoFamily;
+  servo: ServoPart;
   logs: ServoLog[];
   fit?: ServoFit;
 }
@@ -32,8 +32,8 @@ export function medianError(predicted: ArrayLike<number>[], logs: ServoLog[]): n
 }
 
 export function replayTrace(mj: MainModule, request: ReplayRequest): ReplayTrace {
-  const ctx: FitContext = { mj, family: request.family, preset: presetServo(request.family) };
-  const fit = request.fit ?? ctx.preset.fit;
+  const ctx: FitContext = { mj, servo: request.servo, preset: presetServo(request.servo) };
+  const fit = request.fit ?? null;
   const predicted = request.logs.map((log) => predictLog(ctx, fit, log));
 
   return {

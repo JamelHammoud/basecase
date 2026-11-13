@@ -2,13 +2,13 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { AgentSpinner } from '../../design-system';
 import type { SceneTabInfo } from '../SceneTabs';
-import { partCount } from '../scenes/partCount';
+import { plural } from '../../../electron/plural.mjs';
 import { PREVIEW_WIDTH, TabPreviewSpot } from './useTabPreview';
 
 function caption(tab: SceneTabInfo) {
   if (tab.busy) return tab.activity || 'Working';
 
-  return partCount(tab.partCount);
+  return plural(tab.partCount, 'part');
 }
 
 export const TabPreviewCard: React.FC<{ tab: SceneTabInfo; spot: TabPreviewSpot; image?: string }> = ({

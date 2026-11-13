@@ -3,6 +3,7 @@ import type { PanelKind } from '../../cases/console/panelKinds';
 import type { PanelViewProps } from './panelContext';
 import { ButtonPanel } from './panels/ButtonPanel';
 import { CameraPanel } from './panels/CameraPanel';
+import { CodePanel } from './panels/CodePanel';
 import { ListPanel } from './panels/ListPanel';
 import { MapPanel } from './panels/MapPanel';
 import { PlotPanel } from './panels/PlotPanel';
@@ -19,4 +20,5 @@ export const PANEL_VIEWS: { [K in PanelKind]: React.FC<PanelViewProps<K>> } = {
   list: ListPanel,
   text: TextPanel,
   map: MapPanel,
+  code: CodePanel,
 };

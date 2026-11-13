@@ -62,6 +62,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       routines={{ routines: core.simTraining.routines, onTrain: () => tool.setRightTab('sim') }}
       operate={{
         joints: core.project.joints ?? [],
+        parts,
         onBrowseRobots: browseRobots,
         calibration: {
           calibrations: core.project.servoCalibrations,
@@ -70,12 +71,18 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
             parts,
             calibrations: core.project.servoCalibrations,
           }),
-          onCalibrate: () => void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? []),
+          onCalibrate: () =>
+            void calibrateConnectedRobot(core.docs.updateProjectNow, { joints: core.project.joints ?? [], parts }),
           onCalibrateJoint: (jointId) =>
-            void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? [], [jointId]),
+            void calibrateConnectedRobot(core.docs.updateProjectNow, {
+              joints: core.project.joints ?? [],
+              parts,
+              only: [jointId],
+            }),
           onRollBack: (jointId) => rollBackCalibration(core.docs.updateProjectNow, jointId),
         },
-        onSetUpServos: () => void setUpServos({ joints: core.project.joints ?? [], select: core.setSelectedIds }),
+        onSetUpServos: () =>
+          void setUpServos({ joints: core.project.joints ?? [], parts, select: core.setSelectedIds }),
       }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}

@@ -52,7 +52,7 @@ export const GalleryCard: React.FC<{
       >
         {drive.active ? 'Stop Driving' : 'Drive'}
       </Button>
-      {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
+      {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
       {drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       <TrainPart training={training} />
       <Button variant="secondary" size="md" fullWidth onClick={onOpenScene}>

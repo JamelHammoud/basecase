@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { RobotJoint, ScenePart } from '../types/robotics';
-import { presetServo } from './bench';
 import { EMPTY_HISTORY, recordCalibration, rollBack, type CalibrationHistory } from './history';
 import { measuredJoints } from './measuredJoints';
-import type { CalibrationVerdict, ServoCalibration, ServoFamily } from './types';
+import { presetServo } from './servoEstimate';
+import { FAMILY_SERVOS } from './servoPart';
+import type { CalibrationRecord, CalibrationVerdict, ServoCalibration, ServoPart } from './types';
 
 const servo = (id: string, componentVariant = 'c001'): ScenePart =>
   ({ id, name: id, kind: 'component', componentId: 'feetech-sts3215', componentVariant }) as ScenePart;
@@ -19,15 +20,19 @@ const joint = (id: string): RobotJoint => ({
   actuators: [`${id}-servo`],
 });
 
-const calibration = (verdict: CalibrationVerdict, family: ServoFamily = 'sts3215'): ServoCalibration => ({
-  ...presetServo('sts3215'),
+const record = (verdict: CalibrationVerdict, servo: ServoPart = FAMILY_SERVOS.sts3215): CalibrationRecord => ({
+  ...presetServo(servo),
   verdict,
-  family,
   version: 0,
   rung: verdict === 'measured' ? 'response' : 'preset',
   scales: {},
   conditions: { volts: 7.4, temperatureC: 30 },
   evidence: { logs: 2, presetErrorRad: 0.02, fittedErrorRad: 0.01, gain: 0.5, explained: 0.99, reason: '' },
+});
+
+const calibration = (verdict: CalibrationVerdict, servo: ServoPart = FAMILY_SERVOS.sts3215): ServoCalibration => ({
+  ...record(verdict, servo),
+  servo,
 });
 
 const recorded = (...verdicts: CalibrationVerdict[]) =>
@@ -71,8 +76,24 @@ describe('measuredJoints', () => {
 
   it('leaves out a calibration for another servo, as the simulation does', () => {
     const parts = [servo('shoulder-servo', 'c018'), ...PARTS.slice(1)];
-    const xl330 = recordCalibration(EMPTY_HISTORY, calibration('measured', 'xl330'));
+    const xl330 = recordCalibration(EMPTY_HISTORY, calibration('measured', FAMILY_SERVOS.xl330));
 
     expect(measured({ shoulder: recorded('measured'), elbow: xl330 }, parts)).toEqual([]);
+  });
+
+  it('measures any catalog servo against its own variant', () => {
+    const c046 = { componentId: 'feetech-sts3215', variant: 'c046' };
+    const parts = [servo('shoulder-servo', 'c046'), ...PARTS.slice(1)];
+    const own = recordCalibration(EMPTY_HISTORY, calibration('measured', c046));
+
+    expect(measured({ shoulder: own, elbow: own }, parts)).toEqual(['shoulder']);
+  });
+
+  it('loads an old record named by family, and rolls it back', () => {
+    const old = recordCalibration(EMPTY_HISTORY, { ...record('measured'), family: 'sts3215' });
+    const parsed = JSON.parse(JSON.stringify({ shoulder: old })) as Record<string, CalibrationHistory>;
+
+    expect(measured(parsed)).toEqual(['shoulder']);
+    expect(measured({ shoulder: rollBack(parsed.shoulder) })).toEqual([]);
   });
 });

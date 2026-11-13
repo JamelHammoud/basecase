@@ -19,6 +19,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { toCad, toScene } from './agentFrame';
+import { plural } from '../../electron/plural.mjs';
 
 export interface DriveToolContext {
   sim: Simulation;
@@ -82,7 +83,7 @@ export function setWorldRequest(ctx: DriveToolContext, payload: { objects?: Agen
   if (!objects.length) return { text: 'Cleared the world.' };
 
   return {
-    text: `The world holds ${objects.length} objects: ${objects.map((o) => `${o.name} (${o.behavior})`).join(', ')}.`,
+    text: `The world holds ${plural(objects.length, 'object')}: ${objects.map((o) => `${o.name} (${o.behavior})`).join(', ')}.`,
   };
 }
 

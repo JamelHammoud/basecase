@@ -1,4 +1,5 @@
 import { ROS2, ros2JointsProblem, ros2TopicProblem } from './ros2.mjs';
+import { copiedUnits, unitsArgs, unitsProblem } from './servoUnits.mjs';
 import { G1_WRITABLE_IDS, g1JointName, UNITREE_G1 } from './unitreeG1.mjs';
 
 export const FAMILIES = ['feetech', 'dynamixel'];
@@ -10,7 +11,7 @@ const SPEC_KEYS = ['class', 'emulated', 'family', 'ids'];
 const G1_KEYS = ['emulated', 'family'];
 const ROS2_KEYS = ['controller', 'emulated', 'family', 'joints'];
 const CONTROLLER_KEYS = ['kind', 'topic'];
-const FACTORY_SPEC_KEYS = ['class', 'emulated', 'factory', 'family', 'ids'];
+const OPTIONAL_SPEC_KEYS = ['factory', 'units'];
 const ONLY_EMULATED = 'Only an emulated robot can connect: family, servo IDs, class and emulated, nothing else.';
 const ONLY_ROS2 = 'Only an emulated ROS 2 robot can connect: family, controller, joints and emulated, nothing else.';
 const MOTORS_LOCKED = 'Real motors are locked in this build. Connect an emulated robot instead.';
@@ -40,8 +41,11 @@ function idsProblem(ids) {
   return null;
 }
 
+const optionalKeys = (spec) => OPTIONAL_SPEC_KEYS.filter((key) => Object.hasOwn(spec, key));
+
 const knownSpecKeys = (spec) =>
-  sameKeys(spec, SPEC_KEYS) || (sameKeys(spec, FACTORY_SPEC_KEYS) && spec.factory === true);
+  sameKeys(spec, [...SPEC_KEYS, ...optionalKeys(spec)].sort()) &&
+  (!Object.hasOwn(spec, 'factory') || spec.factory === true);
 
 function specProblem(spec) {
   if (!isPlainObject(spec) || !knownSpecKeys(spec)) return ONLY_EMULATED;
@@ -52,7 +56,11 @@ function specProblem(spec) {
 
   if (!CLASSES.includes(spec.class)) return 'Choose an arm or a legged robot.';
 
-  return idsProblem(spec.ids);
+  const ids = idsProblem(spec.ids);
+
+  if (ids || !Object.hasOwn(spec, 'units')) return ids;
+
+  return unitsProblem(spec.units, spec.ids);
 }
 
 const asksFor = (spec, family) => isPlainObject(spec) && spec.family === family;
@@ -103,10 +111,13 @@ function checkedServoSpec(spec) {
 
   if (problem) return { ok: false, message: problem };
 
-  const { family, ids, class: robotClass } = g1 ? G1_SPEC : spec;
-  const checked = { family, ids: [...ids], class: robotClass, emulated: true };
+  if (g1) return { ok: true, spec: { ...G1_SPEC, ids: [...G1_SPEC.ids] } };
 
-  return { ok: true, spec: !g1 && spec.factory === true ? { ...checked, factory: true } : checked };
+  const checked = { family: spec.family, ids: [...spec.ids], class: spec.class, emulated: true };
+  const factory = spec.factory === true ? { factory: true } : {};
+  const units = Object.hasOwn(spec, 'units') ? { units: copiedUnits(spec.units) } : {};
+
+  return { ok: true, spec: { ...checked, ...factory, ...units } };
 }
 
 export const checkedRobotSpec = (spec) => (asksFor(spec, ROS2) ? checkedRos2Spec(spec) : checkedServoSpec(spec));
@@ -124,6 +135,7 @@ const servoArgs = (spec, artefacts) => [
   '--artefacts',
   artefacts,
   ...(spec.factory === true ? ['--factory'] : []),
+  ...unitsArgs(spec, artefacts),
 ];
 
 const ros2Args = (spec, artefacts) => [

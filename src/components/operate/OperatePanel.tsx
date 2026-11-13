@@ -5,7 +5,7 @@ import { jointRows } from '../../robot/jointRows';
 import { robotConnection } from '../../robot/robotStore';
 import type { RobotState } from '../../robot/robotState';
 import { useRobot } from '../../robot/useRobot';
-import type { RobotJoint } from '../../types/robotics';
+import type { RobotJoint, ScenePart } from '../../types/robotics';
 import { ConnectRobotButton } from './ConnectRobotButton';
 import { RobotCalibration, type CalibrationProps } from './RobotCalibration';
 import { RobotHeader } from './RobotHeader';
@@ -16,6 +16,7 @@ import { ServoSetupSection } from './ServoSetupSection';
 
 export interface OperatePanelProps {
   joints: RobotJoint[];
+  parts: readonly ScenePart[];
   onBrowseRobots: () => void;
   calibration: CalibrationProps;
   onSetUpServos: () => void;
@@ -32,10 +33,21 @@ function useJointCalibrate(robot: RobotState, joints: RobotJoint[], calibration:
   } satisfies JointCalibrate;
 }
 
-export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots, calibration, onSetUpServos }) => {
+export const OperatePanel: React.FC<OperatePanelProps> = ({
+  joints,
+  parts,
+  onBrowseRobots,
+  calibration,
+  onSetUpServos,
+}) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
-  const rows = jointRows({ joints, calibrations: calibration.calibrations, connection: robotConnection(robot) });
+  const rows = jointRows({
+    joints,
+    parts,
+    calibrations: calibration.calibrations,
+    connection: robotConnection(robot),
+  });
   const calibrate = useJointCalibrate(robot, joints, calibration);
 
   return (
@@ -43,7 +55,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobo
       {connected ? (
         <RobotHeader robot={robot} />
       ) : (
-        <ConnectRobotButton joints={joints} onBrowseRobots={onBrowseRobots} />
+        <ConnectRobotButton joints={joints} parts={parts} onBrowseRobots={onBrowseRobots} />
       )}
       <ServoSetupSection robot={robot} joints={joints} onSetUp={onSetUpServos} />
       <RobotMessages messages={robot.messages} />

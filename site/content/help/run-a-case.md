@@ -13,6 +13,9 @@ keywords:
   - camera feed
   - score
   - timer
+  - code panel
+  - joystick
+  - HUD
 related:
   - try-a-case
   - make-a-case
@@ -47,7 +50,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train From Tries joins them once five pass.
+6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass.
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 
@@ -61,4 +64,10 @@ A console that lists `camera` among its inputs opens the computer's camera when 
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
-Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.
+A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc and [[⌘K]] still work while you use it. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
+
+![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
+
+A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
+
+Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

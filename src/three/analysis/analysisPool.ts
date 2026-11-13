@@ -13,6 +13,7 @@ import type { FitCoupon, FitCouponTask } from './fitCoupons';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 import type { FoundAxis } from '../../joints/axisFinder';
+import type { JointAxes } from '../../joints/jointCandidates';
 import type { JointAxisQuery } from './jointAxis';
 import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
@@ -217,6 +218,10 @@ export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Pr
 
 export function jointAxisIn(scene: SceneShapes, query: JointAxisQuery): Promise<FoundAxis | null> {
   return analyze(pool()[0], scene, { kind: 'jointAxis', instances: scene.instances, ...query });
+}
+
+export function jointAxesIn(scene: SceneShapes, ids: string[]): Promise<JointAxes> {
+  return analyze(leastBusy(), scene, { kind: 'jointAxes', instances: scene.instances, ids });
 }
 
 export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<FitCoupon[]> {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AgentSpinner, RenameField, Tooltip, CloseIcon } from '../../design-system';
+import { AGENT_WORKING, RenameField, Spinner, Tooltip, CloseIcon } from '../../design-system';
 import type { SceneTabInfo } from '../SceneTabs';
 
 export interface SceneTabHandlers {
@@ -61,7 +61,7 @@ export const SceneTab: React.FC<{
     <div
       className={`relative flex-1 min-w-0 self-stretch flex items-center gap-2 pl-[10px] ${active ? 'pr-[28px]' : 'pr-[10px]'}`}
     >
-      {tab.busy && <AgentSpinner />}
+      {tab.busy && <Spinner label={AGENT_WORKING} />}
       {renaming ? (
         <RenameField name={tab.name} label="Scene name" onDone={h.onFinishRename} />
       ) : (

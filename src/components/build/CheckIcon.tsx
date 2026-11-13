@@ -1,5 +1,5 @@
 import React from 'react';
-import { CircleCheckIcon, CircleCloseIcon, CircleMinusIcon, SpinnerIcon, WarningIcon } from '../../design-system';
+import { CircleCheckIcon, CircleCloseIcon, CircleMinusIcon, Spinner, WarningIcon } from '../../design-system';
 import type { CheckStatus } from '../../readiness/types';
 
 const ICONS: Record<CheckStatus, React.ReactNode> = {
@@ -11,6 +11,6 @@ const ICONS: Record<CheckStatus, React.ReactNode> = {
 
 export const CheckIcon: React.FC<{ status: CheckStatus | 'checking' }> = ({ status }) => (
   <span className="h-[18px] flex items-center shrink-0">
-    {status === 'checking' ? <SpinnerIcon className="w-4 h-4 text-white/35 animate-spin" /> : ICONS[status]}
+    {status === 'checking' ? <Spinner className="w-4 h-4 text-white/35" /> : ICONS[status]}
   </span>
 );

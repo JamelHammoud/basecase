@@ -29,6 +29,7 @@ export * from './SectionHeader';
 export * from './BrowseRow';
 export * from './DisclosureRow';
 export * from './Toast';
+export * from './Spinner';
 export * from './EmptyState';
 export * from './NoMatches';
 export * from './MetaLine';

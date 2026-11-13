@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { engineeringFindings } from '../readiness/findings';
-import { biped, run, row, type Scene } from './engineering.fixtures';
+import { biped, box, component, joint, part, run, row, type Scene } from './engineering.fixtures';
 
 const STS3215 = 'feetech-sts3215';
 
@@ -8,6 +8,36 @@ const unassigned = (s: Scene, ids: string[]): Scene => ({
   ...s,
   joints: s.joints.map((j) => (ids.includes(j.id) ? { ...j, actuators: [] } : j)),
 });
+
+const rover = (wheels: Array<[string, string, string?]>): Scene => {
+  const scene: Scene = {
+    parts: [part('chassis', { massG: 800 })],
+    measures: { chassis: box([-80, 30, -80], [80, 70, 80]) },
+    joints: [],
+  };
+
+  wheels.forEach(([side, componentId, componentVariant], i) => {
+    const x = i ? 90 : -90;
+
+    scene.parts.push(
+      part(`wheel${side}`, { massG: 40 }),
+      component(`motor${side}`, componentId, { componentVariant, massG: 30 }),
+    );
+    scene.measures[`wheel${side}`] = box([x - 10, 0, -30], [x + 10, 60, 30]);
+    scene.measures[`motor${side}`] = box([x * 0.7 - 10, 40, -10], [x * 0.7 + 10, 60, 10]);
+    scene.joints.push(
+      joint(`wheel${side}`, {
+        name: `Wheel ${side}`,
+        origin: [x, 30, 0],
+        parent: ['chassis'],
+        child: [`wheel${side}`],
+        actuators: [`motor${side}`],
+      }),
+    );
+  });
+
+  return scene;
+};
 
 const withServo = (s: Scene, componentId: string): Scene => ({
   ...s,
@@ -26,7 +56,7 @@ describe('Torque estimates', () => {
     expect(estimates.status).toBe('warn');
     expect(estimates.detail).toBe('2 joints without a servo');
     expect(estimates.items).toEqual([
-      { text: 'No servo on Knee l, Knee r', ids: ['shankL', 'shankR'], status: 'warn' },
+      { text: 'No servo on Knee l and Knee r', ids: ['shankL', 'shankR'], status: 'warn' },
     ]);
   });
 
@@ -91,6 +121,28 @@ describe('Servo models', () => {
     });
   });
 
+  it('leaves out wheels on measured servos and on gearmotors', () => {
+    const r = run(
+      rover([
+        ['l', STS3215, 'c001'],
+        ['r', 'pololu-micro-metal-gearmotor'],
+      ]),
+    );
+
+    expect(row(r, 'Servo models')).toBeUndefined();
+    expect(row(r, 'Torque estimates')!.status).toBe('pass');
+  });
+
+  it('names a few joints and counts the rest', () => {
+    const models = row(run(biped()), 'Servo models')!;
+
+    expect(models.detail).toBe('6 joints without a measured model');
+    expect(models.items![0].text).toBe(
+      'servo-hipL, servo-kneeL, servo-ankleL and 3 more on Hip l, Knee l, Ankle l and 3 more',
+    );
+    expect(models.items![0].ids).toHaveLength(6);
+  });
+
   it('names the servos without a measured model and selects them', () => {
     const r = run(unassigned(biped(), ['hipL', 'hipR', 'ankleL', 'ankleR']));
     const models = row(r, 'Servo models')!;
@@ -98,7 +150,7 @@ describe('Servo models', () => {
     expect(models.status).toBe('warn');
     expect(models.detail).toBe('2 joints without a measured model');
     expect(models.items).toEqual([
-      { text: 'servo-kneeL, servo-kneeR on Knee l, Knee r', ids: ['servo-kneeL', 'servo-kneeR'], status: 'warn' },
+      { text: 'servo-kneeL and servo-kneeR on Knee l and Knee r', ids: ['servo-kneeL', 'servo-kneeR'], status: 'warn' },
     ]);
   });
 

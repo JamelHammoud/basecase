@@ -1,4 +1,6 @@
-import type { RobotJoint } from '../types/robotics';
+import { listIds } from '../assembly/reportText';
+import { COMPONENT_BY_ID } from '../data/components';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import { jointServos } from '../sim/mjcfEffort';
 import { isWheelJoint } from '../sim/morphology';
 import { measuredServos } from '../sim/servoModel';
@@ -7,11 +9,19 @@ import { isMovable } from './kinematics';
 import { buildRig } from './kinematicsRig';
 import type { CheckContext, CheckRow } from './engineeringTypes';
 
-const labels = (joints: RobotJoint[]) => joints.map(jointLabel).join(', ');
+const NAMED = 3;
+
+const labels = (joints: RobotJoint[]) => listIds(joints.map(jointLabel), NAMED);
 
 const hasStall = (ctx: CheckContext, j: RobotJoint) => jointServos(j, ctx.byPart).some((s) => s.stallNm > 0);
 
 const hasTorque = (ctx: CheckContext, j: RobotJoint) => hasStall(ctx, j) || (j.effortNm ?? 0) > 0;
+
+const isCatalogServo = (p: ScenePart | undefined): p is ScenePart =>
+  !!p?.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';
+
+const servoParts = (ctx: CheckContext, j: RobotJoint) =>
+  (j.actuators ?? []).map((id) => ctx.byPart.get(id)).filter(isCatalogServo);
 
 function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
   const estimated = movable.filter((j) => !hasTorque(ctx, j));
@@ -28,26 +38,26 @@ function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
 }
 
 function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
-  const servoed = movable.filter((j) => jointServos(j, ctx.byPart).length > 0);
-
-  if (!servoed.length) return [];
-
   const rig = buildRig(ctx.joints, ctx.parts);
-  const measured = (j: RobotJoint) =>
-    j.type === 'revolute' && !isWheelJoint(j, ctx.byPart, rig) && measuredServos(jointServos(j, ctx.byPart));
-  const guessed = servoed.filter((j) => !measured(j));
+  const modelled = movable.filter(
+    (j) => j.type === 'revolute' && servoParts(ctx, j).length > 0 && !isWheelJoint(j, ctx.byPart, rig),
+  );
+
+  if (!modelled.length) return [];
+
+  const guessed = modelled.filter((j) => !measuredServos(jointServos(j, ctx.byPart)));
 
   if (!guessed.length) return [{ check: 'Servo models', status: 'pass', detail: 'Every servo has a measured model' }];
 
-  const servoIds = guessed.flatMap((j) => j.actuators ?? []);
-  const names = [...new Set(servoIds.map((id) => ctx.byPart.get(id)?.name ?? id))].join(', ');
+  const servos = guessed.flatMap((j) => servoParts(ctx, j));
+  const names = listIds([...new Set(servos.map((p) => p.name))], NAMED);
 
   return [
     {
       check: 'Servo models',
       status: 'warn',
       detail: `${count(guessed.length, 'joint')} without a measured model`,
-      items: [{ text: `${names} on ${labels(guessed)}`, ids: servoIds, status: 'warn' }],
+      items: [{ text: `${names} on ${labels(guessed)}`, ids: servos.map((p) => p.id), status: 'warn' }],
     },
   ];
 }

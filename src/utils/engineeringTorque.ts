@@ -1,4 +1,4 @@
-import { actuatorOf } from '../data/components';
+import { jointServos } from '../sim/mjcfEffort';
 import type { RobotJoint } from '../types/robotics';
 import { crouchTorque, holdVerdict, ratingAt, stanceVerdict, type Rating } from './actuatorRules';
 import { isLegJoint } from './engineeringBody';
@@ -64,16 +64,13 @@ function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams, carriedG }:
 }
 
 function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): Rating | undefined {
-  if (!j.actuators?.length) return undefined;
+  const specs = jointServos(j, ctx.byPart);
+
+  if (!specs.length) return undefined;
 
   const total: Rating = { stallNm: 0, ratedNm: 0, ratedEstimated: false, volts: volts ?? 0 };
 
-  for (const id of j.actuators) {
-    const p = ctx.byPart.get(id);
-    const act = p?.componentId ? actuatorOf(p.componentId, p.componentVariant) : undefined;
-
-    if (!act) return undefined;
-
+  for (const act of specs) {
     const r = ratingAt(act, volts);
 
     total.stallNm += r.stallNm;

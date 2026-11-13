@@ -1,4 +1,4 @@
-import type { CheckRow, FindingFix } from '../utils/engineeringTypes';
+import type { CheckRow, FindingFix, JointEnvelope } from '../utils/engineeringTypes';
 
 export type { FindingFix } from '../utils/engineeringTypes';
 
@@ -49,6 +49,7 @@ export interface CheckSummary {
   ids: string[];
   caseId?: string;
   hasDots?: boolean;
+  envelopes?: JointEnvelope[];
 }
 
 export interface ReadinessFinding extends Finding {

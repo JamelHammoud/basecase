@@ -63,6 +63,8 @@ function stanceTorque(ctx: CheckContext, { joint, a, r, down, grams, carriedG }:
   return Math.abs(tGrf + tDistal) / 1000;
 }
 
+const slowest = (a?: number, b?: number) => (a === undefined || b === undefined ? (a ?? b) : Math.min(a, b));
+
 export function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): Rating | undefined {
   const specs = jointServos(j, ctx.byPart);
 
@@ -77,6 +79,7 @@ export function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): R
     total.ratedNm += r.ratedNm;
     total.ratedEstimated ||= r.ratedEstimated;
     total.volts = r.volts;
+    total.rpm = slowest(total.rpm, r.rpm);
   }
 
   return total;
@@ -129,6 +132,14 @@ function carriedGrams(ctx: CheckContext, j: RobotJoint, env: LoadEnv): number {
   return robotG * (env.crouch.shares.get(j.id) ?? 1);
 }
 
+const ratingFields = (j: RobotJoint, rating: Rating | undefined) => ({
+  stallNm: rating?.stallNm ?? j.effortNm,
+  ratedNm: rating?.ratedNm,
+  ratedEstimated: rating?.ratedEstimated,
+  volts: rating?.volts,
+  noLoadRpm: rating?.rpm,
+});
+
 export function jointLoad(ctx: CheckContext, j: RobotJoint, env: LoadEnv): JointLoad {
   const a = norm(j.axis);
   const down = downstreamOf(j, ctx.joints);
@@ -155,10 +166,7 @@ export function jointLoad(ctx: CheckContext, j: RobotJoint, env: LoadEnv): Joint
     leverMm: lever,
     loadNm: verdict.loadNm,
     kind: verdict.kind,
-    stallNm: rating?.stallNm ?? j.effortNm,
-    ratedNm: rating?.ratedNm,
-    ratedEstimated: rating?.ratedEstimated,
-    volts: rating?.volts,
+    ...ratingFields(j, rating),
     stallShare: verdict.stallShare,
     heatShare: 'heatShare' in verdict ? verdict.heatShare : undefined,
     simRmsNm: verdict.kind === 'stance' ? simRms : undefined,

@@ -1,18 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { presetCase } from '../src/cases/caseBuilder';
-import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
-import { walkKey } from '../src/workspace/storedWalk';
+import { loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckScene';
 import { openApp, partCount, type App } from './harness';
-
-interface StudioHook {
-  load: (record: { parts: unknown[]; project: unknown }) => void;
-  sceneRecord: () => { parts: ScenePart[]; project: ProjectSettings };
-  simState: () => { activeCase: string | null };
-}
 
 let app: App;
 
@@ -23,21 +17,6 @@ const addCube = async () => {
   await app.page.getByRole('button', { name: /^Cube/ }).first().click();
 };
 
-const standIn = (id: string, x: number) => ({
-  id,
-  name: `Generic servo ${id}`,
-  kind: 'servo',
-  category: 'actuators',
-  role: 'solid',
-  position: [x, 20, 0],
-  rotation: [0, 0, 0],
-  dimensions: { width: 40, height: 40, depth: 20 },
-  color: '#888888',
-  note: '',
-  visible: true,
-  locked: false,
-});
-
 const loadParts = (parts: unknown[]) =>
   app.page.evaluate((list) => {
     const studio = (window as unknown as { __studio: StudioHook }).__studio;
@@ -46,14 +25,6 @@ const loadParts = (parts: unknown[]) =>
   }, parts);
 
 const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
-
-const servo = {
-  ...standIn('servo', 0),
-  name: 'Feetech STS3215',
-  kind: 'component',
-  componentId: 'feetech-sts3215',
-  componentVariant: 'c001',
-};
 
 const armWithEstimates = () => {
   const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
@@ -70,6 +41,18 @@ const armWithEstimates = () => {
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
 
 const section = (title: RegExp) => app.page.locator(visible('section'), { hasText: title }).first();
+
+const checkRow = (name: string) =>
+  checks()
+    .locator('li')
+    .filter({ has: app.page.getByRole('button', { name: new RegExp(`^${name}`) }) })
+    .first();
+
+const expand = async (row: ReturnType<typeof checkRow>, name: string) => {
+  const button = row.getByRole('button', { name: new RegExp(`^${name}`) }).first();
+
+  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+};
 
 const headerText = async () => (await checks().locator('header').first().textContent()) ?? '';
 
@@ -244,13 +227,6 @@ describe('Build tab fields', () => {
   }, 90000);
 
   it('read current and runtime from a stored walk, naming the hungriest joint', async () => {
-    const knee = (id: string, x: number) => ({ ...servo, id, name: `Servo ${id}`, position: [x, 20, 0] });
-    const pack = { ...standIn('pack', 0), name: 'Pack', kind: 'component', componentId: 'ovonic-2s-2200-50c' };
-    const rail = { ...standIn('rail', 120), name: 'Rail', kind: 'component', componentId: 'pololu-d36v50f6' };
-    const joints = [
-      { id: 'ja', name: 'Left knee', limb: 'leg', parent: ['pack'], child: ['a'], actuators: ['a'] },
-      { id: 'jb', name: 'Right knee', limb: 'leg', parent: ['pack'], child: ['b'], actuators: ['b'] },
-    ].map((j) => ({ ...j, type: 'revolute', origin: [0, 20, 0], axis: [1, 0, 0] }));
     const walk: WalkSim = {
       policy: 'Walk',
       seconds: 14,
@@ -258,39 +234,62 @@ describe('Build tab fields', () => {
       joints: {},
       power: { avgA: 1.6, peakA: 3.4, joints: { ja: { avgA: 1, peakA: 2 }, jb: { avgA: 0.6, peakA: 1.4 } } },
     };
-    const load = (record: { parts: unknown[]; project: unknown }) =>
-      app.page.evaluate((r) => (window as unknown as { __studio: StudioHook }).__studio.load(r), record);
-    const record = () =>
-      app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.sceneRecord());
-    const row = checks()
-      .locator('li')
-      .filter({ has: app.page.getByRole('button', { name: /^Current and runtime/ }) })
-      .first();
+    const row = checkRow('Current and runtime');
     const detail = async () => {
-      const button = row.getByRole('button', { name: /^Current and runtime/ });
-
-      if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+      await expand(row, 'Current and runtime');
 
       return (await row.locator('p').first().textContent()) ?? '';
     };
 
-    await load({
-      parts: [knee('a', -60), knee('b', 60), pack, rail],
-      project: { ...(await record()).project, joints },
-    });
+    await loadKnees(app.page);
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
     await expect.poll(detail, { timeout: 45000 }).toContain('(estimate)');
 
     const estimate = await detail();
-    const scene = await record();
 
-    await load({
-      parts: scene.parts,
-      project: { ...scene.project, walk: { ...walk, key: walkKey(scene.parts, scene.project) } },
-    });
+    await storeWalk(app.page, walk);
     await expect.poll(detail, { timeout: 45000 }).not.toBe(estimate);
     expect(await detail()).toMatch(/A average walking .*Left knee: 1\.0 A average/);
+  }, 120000);
+
+  it('plot each knee’s walk on its servo’s torque–speed line under Peak torque', async () => {
+    const samples = (rpm: number): Array<[number, number]> =>
+      Array.from({ length: 40 }, (_, i) => (i % 2 ? [rpm, 1.1] : [-5, 0.3]));
+    const walk: WalkSim = {
+      policy: 'Walk',
+      seconds: 14,
+      fellAt: null,
+      joints: {
+        ja: { p99Nm: 1.1, rmsNm: 0.5, overS: 0, samples: samples(40) },
+        jb: { p99Nm: 1.1, rmsNm: 0.5, overS: 0, samples: samples(5) },
+      },
+    };
+    const row = checkRow('Peak torque');
+    const knee = row.locator('li[data-joint="ja"]');
+
+    await loadKnees(app.page);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await storeWalk(app.page, walk);
+    await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
+    await expect
+      .poll(
+        async () => {
+          await expand(row, 'Peak torque');
+
+          return knee.isVisible();
+        },
+        { timeout: 45000 },
+      )
+      .toBe(true);
+    expect(await row.textContent()).toMatch(/Left knee: .*% of the walk past its torque–speed line/);
+
+    await knee.getByRole('button', { name: /^Left knee/ }).click();
+
+    for (const id of ['driving', 'braking', 'servo', 'up'])
+      await expect.poll(() => knee.locator(`[data-testid="trace-${id}"]`).count()).toBe(1);
+
+    expect(await knee.textContent()).toMatch(/N·m.*rpm.*Servo a/);
   }, 120000);
 
   it('set a budget beside the bill of materials total', async () => {

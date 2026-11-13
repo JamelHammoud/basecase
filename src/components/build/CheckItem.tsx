@@ -3,9 +3,12 @@ import { showStress } from '../../strength/fields';
 import { ChevronDownIcon } from '../../design-system';
 import type { CheckSummary, ReadinessFinding } from '../../readiness/types';
 import { CheckIcon } from './CheckIcon';
+import { EnvelopeRows } from './EnvelopeRows';
 import { BlockerRow, NoteRow, type FindingContext } from './FindingRow';
 import { TetherFields } from './TetherFields';
 import { tetherFieldsFor } from './tetherRows';
+
+const hasOwnBody = (check: CheckSummary) => !!check.detail || !!check.envelopes?.length;
 
 export const CheckItem: React.FC<{
   check: CheckSummary;
@@ -20,7 +23,7 @@ export const CheckItem: React.FC<{
 
   const count = blockers.length + notes.length;
   const fields = tetherFieldsFor(check.name, context.tether?.tether);
-  const hasBody = count > 0 || !!check.detail || fields.length > 0;
+  const hasBody = count > 0 || fields.length > 0 || hasOwnBody(check);
   const showDots = context.showDots;
 
   useEffect(() => {
@@ -69,6 +72,7 @@ export const CheckItem: React.FC<{
               <NoteRow key={finding.key} finding={finding} context={context} />
             ))}
           </ul>
+          {check.envelopes && <EnvelopeRows envelopes={check.envelopes} />}
         </div>
       )}
     </li>

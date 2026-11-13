@@ -29,6 +29,7 @@ covers:
   - src/utils/engineeringTorqueRows.ts
   - src/utils/engineeringCrouch.ts
   - src/utils/engineeringPeak.ts
+  - src/utils/engineeringEnvelope.ts
   - src/utils/keySpecs.ts
   - docs/guide/build.md
 ---
@@ -72,9 +73,13 @@ After a walk policy is trained, the agent can test it in simulation. The robot w
 
 **Peak torque** fails when a joint asks for more than stall for over 50 ms, or the robot falls. It warns above 0.8 of stall.
 
+A servo can't give full torque and full speed at once. Its torque–speed line falls from stall at 0 rpm to its no-load speed at your supply voltage. Peak torque also warns when more than 5% of a joint's walk is past that line, and names the joint and the share.
+
+Open **Peak torque** and click a joint to plot its walk on its servo's line, beside the next stronger servo in the catalog. [Checks in the Build tab](/help/build-checks) shows the plot.
+
 ## Making a joint pass
 
-- **A stronger servo.** Compare the strength on each servo's page in **Parts** ▸ **Servos**.
+- **A stronger servo.** Compare the strength on each servo's page in **Parts** ▸ **Servos**. A joint's plot under **Peak torque** names the next one up.
 - **A shorter lever.** Torque grows with the distance from the joint to the load it holds.
 - **A lighter robot.** Every leg joint carries the full weight.
 - **A higher voltage,** inside the servo's range. Torque is read at your supply voltage, so a higher one can add torque.

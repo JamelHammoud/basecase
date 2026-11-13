@@ -8,6 +8,7 @@ import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
 import type { ChainResult } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
+import type { Snap } from '../../agent/snap';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
 import type { MeshMeasure } from '../meshMeasure';
@@ -41,6 +42,8 @@ export interface PartTransformUpdate {
   rotation: Vec3;
   dimensions?: ScenePart['dimensions'];
 }
+
+export type PartPlacement = { id: string } & Pick<ScenePart, 'position' | 'rotation' | 'mates' | 'frame'>;
 
 export interface PoseJointTarget {
   id: string;
@@ -84,6 +87,7 @@ export interface ViewportProps {
   onMarqueeSelect?: (ids: string[]) => void;
   onUpdatePartsTransform?: (updates: PartTransformUpdate[]) => void;
   onUpdatePartTransform: (id: string, position: Vec3, rotation: Vec3, dimensions?: ScenePart['dimensions']) => void;
+  onPlacePart?: (placement: PartPlacement) => void;
   onCommitSculptMesh: (id: string, sculptMesh: SculptMeshData) => void;
   annotateMode?: boolean;
   measureMode?: boolean;
@@ -150,6 +154,8 @@ export interface Viewport3DHandle {
   focusSelected: () => void;
   zoomBy: (factor: number) => void;
   pickAt: (clientX: number, clientY: number) => { partId: string | null; point: Vec3 } | null;
+  dragPart: (id: string, to: Vec3, free?: boolean) => boolean;
+  previewSnap: (part: ScenePart | null, free: boolean) => Snap | null;
   captureViews: (
     views: string[],
     onlyIds?: string[],

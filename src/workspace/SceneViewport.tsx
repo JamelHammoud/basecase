@@ -55,6 +55,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onSelectPart={selection.select}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
+        onPlacePart={edits.placePart}
         onMarqueeSelect={selection.marqueeSelect}
         onCommitSculptMesh={edits.commitSculptMesh}
         annotateMode={annotations.commentMode}

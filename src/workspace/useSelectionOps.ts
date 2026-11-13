@@ -30,6 +30,7 @@ export function duplicateParts(parts: ScenePart[]): ScenePart[] {
     name: parts.length === 1 ? `${p.name} Copy` : p.name,
     group: copyGroup(p.group),
     position: [p.position[0] + DUPLICATE_STEP, p.position[1], p.position[2] + DUPLICATE_STEP] as Vec3,
+    mates: undefined,
   }));
 }
 

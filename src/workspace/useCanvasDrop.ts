@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import type { Snap } from '../agent/snap';
 import { catalogItemFromKey } from '../data/catalog';
 import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
 import { isRoomFileName } from '../cases/roomPlan';
+import { hasPrimaryModifier } from '../utils/os';
 import { isSceneFileName } from '../utils/sceneFile';
 import { showRoomCase } from './caseCommands';
+import { droppedPart } from './dropPreview';
 import { droppedRobotFiles, robotItems, type DroppedRobotItem } from './droppedRobot';
 import { isMeshFileName } from './meshImport';
 import { readRoomFile } from './roomImport';
@@ -35,8 +38,9 @@ function parseDrag<T>(data: string) {
 }
 
 export function useCanvasDrop(core: WorkspaceCore, { creation, robots }: WorkspaceActions) {
-  const { viewportRef, studio, showToast } = core;
+  const { viewportRef, studio, showToast, parts } = core;
   const [dragging, setDragging] = useState<'images' | 'files' | null>(null);
+  const snapRef = useRef<Snap | null>(null);
   const { importRobotFrom } = robots;
   const { addCatalogItem, placeCustomModel, addImagePlane, importMeshes } = creation;
 
@@ -64,8 +68,10 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots }: Workspa
     const item = partKind ? catalogItemFromKey(partKind) : undefined;
     const model = studio.customModels.find((m) => m.id === modelId);
 
-    if (item) addCatalogItem(item, at);
-    else if (model) placeCustomModel(model, at);
+    const place = snapRef.current?.placement;
+
+    if (item) addCatalogItem(item, at, place);
+    else if (model) placeCustomModel(model, at, place);
     else if (robot) dropRobot(robot, at);
     else if (simready) dropSimReady(simready, at);
 
@@ -111,11 +117,20 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots }: Workspa
     routeFiles(Array.from(e.dataTransfer.files), hit);
   };
 
+  const previewSnap = (e: React.DragEvent | null) => {
+    const viewport = viewportRef.current;
+    const at = e ? dropPoint(viewport?.pickAt(e.clientX, e.clientY), studio.snapStepMm) : undefined;
+    const mover = e && droppedPart({ types: e.dataTransfer.types, parts, models: studio.customModels, at });
+
+    snapRef.current = viewport?.previewSnap(mover, !!e && hasPrimaryModifier(e)) ?? null;
+  };
+
   const dropHandlers = {
     onDragOver: (e: React.DragEvent) => {
       if (isSceneDrag(e.dataTransfer.types)) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
+        previewSnap(e);
 
         return;
       }
@@ -127,13 +142,18 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots }: Workspa
       setDragging(onlyImages(e.dataTransfer.items) ? 'images' : 'files');
     },
     onDragLeave: (e: React.DragEvent) => {
-      if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget as Node)) setDragging(null);
+      if (e.currentTarget !== e.target && e.currentTarget.contains(e.relatedTarget as Node)) return;
+
+      setDragging(null);
+      previewSnap(null);
     },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
       setDragging(null);
 
       if (!dropSceneItem(e)) dropFiles(e);
+
+      previewSnap(null);
     },
   };
 

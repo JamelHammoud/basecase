@@ -168,7 +168,7 @@ export class ViewportEngine {
       batches,
       loop,
       ui: options.ui,
-      runtime: { shiftHeld: false, altHeld: false, draggingGizmo: false },
+      runtime: { shiftHeld: false, altHeld: false, freeHeld: false, draggingGizmo: false },
       props: () => this.props,
       applyPose: () => this.applyPose(),
     };
@@ -216,6 +216,7 @@ export class ViewportEngine {
       new PointerInput(this.ctx, gizmoState, { measure: this.measureTool, figures: this.figures }).install(),
       installKeys(this.ctx, () => {
         this.gizmo.applySnaps();
+        this.gizmo.resnap();
         this.measureTool.refresh();
       }),
       () => outline.dispose(),
@@ -399,6 +400,8 @@ export class ViewportEngine {
           sweeps,
         ),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
+      dragPart: (id, to, free) => this.gizmo.dragTo(id, to, free),
+      previewSnap: (part, free) => this.gizmo.snap.preview(part, free),
       projectPoints: (points) => measure.projectPoints(ctx, points),
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
       cancelMeasure: () => this.measureTool.clear(),

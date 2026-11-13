@@ -4,7 +4,7 @@ import { booleanPart, findPartDeep, freshOperandIds, withResult } from '../boole
 import type { BooleanOp, ScenePart } from '../types/robotics';
 import { hardwareCutoutParts } from '../utils/hardwareCutouts';
 import { boundsOverlap } from '../utils/selection';
-import { newId, partLabel } from './helpers';
+import { copyName, newId, partLabel } from './helpers';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -20,20 +20,23 @@ export function booleanDone(op: BooleanOp, base: ScenePart, tools: ScenePart[]):
 
 const DUPLICATE_STEP = 15;
 
-export function duplicateParts(parts: ScenePart[]): ScenePart[] {
+export function duplicateParts(parts: ScenePart[], scene: ScenePart[]): ScenePart[] {
+  const groupNames = scene.flatMap((p) => (p.group ? [p.group.name] : []));
   const groupMap = new Map<string, { id: string; name: string }>();
   const copyGroup = (group: ScenePart['group']) => {
     if (!group) return group;
 
-    if (!groupMap.has(group.id)) groupMap.set(group.id, { id: newId('group'), name: `${group.name} Copy` });
+    if (!groupMap.has(group.id)) groupMap.set(group.id, { id: newId('group'), name: copyName(group.name, groupNames) });
 
     return groupMap.get(group.id);
   };
+  const partNames = scene.map((p) => p.name);
+  const partName = (p: ScenePart) => (parts.length === 1 ? copyName(p.name, partNames) : p.name);
 
   return parts.map((p) => ({
     ...freshOperandIds(p, () => newId()),
     id: newId(),
-    name: parts.length === 1 ? `${p.name} Copy` : p.name,
+    name: partName(p),
     group: copyGroup(p.group),
     position: [p.position[0] + DUPLICATE_STEP, p.position[1], p.position[2] + DUPLICATE_STEP] as Vec3,
     mates: undefined,
@@ -96,7 +99,7 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
   const duplicateSelected = () => {
     if (selectedParts.length === 0) return;
 
-    const copies = duplicateParts(selectedParts);
+    const copies = duplicateParts(selectedParts, parts);
 
     commitParts((prev) => [...prev, ...copies]);
     setSelectedIds(copies.map((c) => c.id));

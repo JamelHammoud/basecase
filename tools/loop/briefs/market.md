@@ -27,7 +27,7 @@ Check the oldest entries first, then the names with no entry. Spend most of the 
 
 ## Ideas
 
-Propose up to 5 steps in `ideas`, each one a thing a squad could ship in a day or two, backed by entries you wrote. Each has a `title` (verb first, sentence case), a `kind` (`feature`, `integration` or `refine`) and a `body`: what to build, why, what Basecase has already (search the code), and links to the entries and pages behind it. Don't propose a title from the open list in the prompt, or a second version of something that exists.
+Propose up to 5 steps in `ideas`, each one a thing a squad could ship in a day or two, backed by entries you wrote. Each has a `title` (verb first, sentence case), a `kind` (`feature`, `integration` or `refine`) and `entries`: the `docs/market/` entries behind it as `path#anchor` (`docs/market/competitors.md#onshape`). Put the case for the step in those entries' **Basecase should** line, after searching the code for what Basecase has already; the idea itself carries no other text. Ideas are filed as soon as you answer, so cite entries that are on `main` or that this run adds. Don't propose a title from the open list in the prompt, or a second version of something that exists.
 
 ## Your answer
 

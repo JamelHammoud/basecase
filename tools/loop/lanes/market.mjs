@@ -4,19 +4,22 @@ import { publish } from '../lib/pull.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 const IDEA = 'loop:idea';
-const TAKEN_LABELS = [IDEA, 'loop:next'];
+const TAKEN_LABELS = [IDEA, 'loop:next', 'loop:building'];
+const ENTRY = /^docs\/market\/[a-z-]+\.md#[a-z0-9-]+$/;
 
 const idea = {
   type: 'object',
   properties: {
     title: { type: 'string', description: 'The step, verb first, sentence case, no period' },
     kind: { type: 'string', enum: ['feature', 'integration', 'refine'] },
-    body: {
-      type: 'string',
-      description: 'What to build and why, what Basecase has already, and links to the market entries behind it',
+    entries: {
+      type: 'array',
+      items: { type: 'string', pattern: ENTRY.source },
+      minItems: 1,
+      description: 'The docs/market/ entries behind it, as path#anchor, e.g. docs/market/competitors.md#onshape',
     },
   },
-  required: ['title', 'kind', 'body'],
+  required: ['title', 'kind', 'entries'],
 };
 
 const SCHEMA = {
@@ -32,16 +35,21 @@ const takenTitles = () => TAKEN_LABELS.flatMap((label) => issues(label)).map((is
 export const freshIdeas = (ideas, taken) => {
   const seen = new Set(taken.map(titleKey));
 
-  return ideas.filter((candidate) => {
-    const key = titleKey(candidate.title);
+  return ideas
+    .map((candidate) => ({ ...candidate, entries: candidate.entries.filter((entry) => ENTRY.test(entry)) }))
+    .filter((candidate) => {
+      const key = titleKey(candidate.title);
 
-    if (seen.has(key)) return false;
+      if (seen.has(key) || candidate.entries.length === 0) return false;
 
-    seen.add(key);
+      seen.add(key);
 
-    return true;
-  });
+      return true;
+    });
 };
+
+export const ideaBody = (candidate) =>
+  [`Kind: ${candidate.kind}`, '', ...candidate.entries.map((entry) => `- ${entry}`)].join('\n');
 
 const prompt = (taken) =>
   [
@@ -51,9 +59,6 @@ const prompt = (taken) =>
 
 const withNotes = (change) =>
   change.notes ? { ...change, summary: `${change.summary}\n\n**For Jamel:** ${change.notes}` } : change;
-
-const ideaBody = (candidate, url) =>
-  [`Kind: ${candidate.kind}`, `From the market lane${url ? `, ${url}` : ''}.`, '', candidate.body].join('\n');
 
 export default function market({ log }) {
   const taken = takenTitles();
@@ -74,7 +79,7 @@ export default function market({ log }) {
     log(url ? `opened ${url}` : `no doc change: ${change.notes}`);
 
     for (const candidate of freshIdeas(ideas, taken)) {
-      log(`idea ${createIssue({ title: candidate.title, body: ideaBody(candidate, url), labels: [IDEA] })}`);
+      log(`idea ${createIssue({ title: candidate.title, body: ideaBody(candidate), labels: [IDEA] })}`);
     }
   } finally {
     close(worktree);

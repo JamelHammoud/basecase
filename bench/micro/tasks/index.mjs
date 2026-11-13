@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ASSEMBLY_TASKS } from './assembly.mjs';
+import { CASE_TASKS } from './cases.mjs';
 import { COST_TASKS, SERVICE_TASKS } from './serviceCost.mjs';
 import { CRAFT_TASKS, INTEGRITY_TASKS, MIRROR_TASKS } from './quality.mjs';
 import { RIG_TASKS } from './rigging.mjs';
@@ -19,6 +20,7 @@ export const SEED_TASKS = [
   ...CRAFT_TASKS,
   ...MIRROR_TASKS,
   ...RIG_TASKS,
+  ...CASE_TASKS,
 ];
 
 export function realScenePath(name, dataDir = MICRO_DATA) {

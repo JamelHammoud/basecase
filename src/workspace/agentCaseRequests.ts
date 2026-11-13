@@ -4,14 +4,14 @@ import type { GoalKind, GoalValues, ParamKey } from '../cases/caseGoals';
 import type { WorldKind } from '../cases/caseWorlds';
 import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
+import { runCase, type RunCaseContext } from './agentCaseRun';
 import type { Cases } from './useCases';
 
 type Payload = Record<string, unknown>;
 
-interface CaseContext {
+interface CaseContext extends RunCaseContext {
   cases: Cases;
   routines: { checkLogic: (logic: unknown) => Promise<CompileResult> };
-  setAction: (action: string) => void;
 }
 
 const VALUE_KEYS: Array<[string, ParamKey]> = [
@@ -91,4 +91,5 @@ async function createCase(payload: Payload, ctx: CaseContext) {
 
 export const CASE_HANDLERS: Record<string, (payload: Payload, ctx: CaseContext) => Promise<unknown>> = {
   create_case: createCase,
+  run_case: runCase,
 };

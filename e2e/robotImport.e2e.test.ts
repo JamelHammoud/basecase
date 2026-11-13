@@ -1,6 +1,10 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ProjectSettings } from '../src/types/robotics';
 import { deskArmFiles, deskArmZip, hubListing } from '../src/utils/robotImport/robotImport.fixtures';
+import { fusionArmFiles } from '../src/utils/robotImport/xacro.fixtures';
 import { openApp, type App } from './harness';
 
 let app: App;
@@ -41,12 +45,27 @@ async function serveHub() {
   });
 }
 
-async function importLink(link: string) {
+async function openImportRobot() {
   await app.page.keyboard.press('Meta+k');
   await app.page.keyboard.type('Import Robot');
   await app.page.keyboard.press('Enter');
+}
+
+async function importLink(link: string) {
+  await openImportRobot();
   await app.page.getByLabel('Robot link').fill(link);
   await app.page.keyboard.press('Enter');
+}
+
+function folderOf(files: Record<string, Uint8Array>): string {
+  const root = mkdtempSync(join(tmpdir(), 'basecase-xacro-'));
+
+  for (const [path, bytes] of Object.entries(files)) {
+    mkdirSync(dirname(join(root, path)), { recursive: true });
+    writeFileSync(join(root, path), bytes);
+  }
+
+  return root;
 }
 
 beforeAll(async () => {
@@ -77,6 +96,20 @@ describe('robot import', () => {
     }, zip);
 
     await expect.poll(jointCount, { timeout: 30000 }).toBe(before + 2);
+  });
+
+  it('imports a fusion2urdf xacro package from Choose Folder', async () => {
+    const root = folderOf(fusionArmFiles());
+    const before = await jointCount();
+
+    try {
+      await openImportRobot();
+      await app.page.locator('input[webkitdirectory]').setInputFiles(join(root, 'desk_arm_description'));
+
+      await expect.poll(jointCount, { timeout: 30000 }).toBe(before + 2);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('lists the robots in a repo and imports the one picked', async () => {

@@ -25,3 +25,5 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
 To import from files instead, drag a robot's folder, zip, URDF or MJCF file onto the canvas. The robot stands where you drop it. **Choose Folder** in Import Robot does the same for a folder.
+
+Robots exported from Fusion 360 with fusion2urdf, and ROS description packages written in xacro, import the same way: choose the package folder, drop it on the canvas, or paste its repo link. Basecase reads the top-level `.xacro` or `.urdf.xacro` file, follows its includes inside the package, and fills in its properties, macros and `xacro:arg` defaults. When the package also has a plain `.urdf`, that file is used instead. If a xacro needs something Basecase can't fill in, like a YAML file it loads or an environment variable, the import stops and the message names the file.

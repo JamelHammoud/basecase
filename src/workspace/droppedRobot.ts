@@ -3,7 +3,7 @@ import type { LocalFile } from '../utils/robotImport';
 const MAX_FILES = 20_000;
 const SKIPPED_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv']);
 
-const isRobotFileName = (name: string) => /\.(zip|urdf|mjcf|xml)$/i.test(name);
+const isRobotFileName = (name: string) => /\.(zip|urdf|mjcf|xml|xacro)$/i.test(name);
 
 const fileOf = (entry: FileSystemFileEntry) => new Promise<File>((resolve, reject) => entry.file(resolve, reject));
 

@@ -49,11 +49,11 @@ export function descriptionKind(text: string): DescriptionKind | null {
   return /<include\b/.test(text) ? 'mjcf-includes' : null;
 }
 
-type Classify = (path: string) => Promise<DescriptionKind | null>;
+type Peek = (path: string) => Promise<string>;
 
-async function peekXml(paths: string[], classify: Classify): Promise<Array<[string, DescriptionKind | null]>> {
+async function peekXml(paths: string[], peek: Peek): Promise<Array<[string, DescriptionKind | null]>> {
   const xml = descriptions(paths).filter(isXml).sort(byDepth).slice(0, MAX_PEEKS);
-  const kinds = await Promise.all(xml.map((p) => classify(p).catch(() => null)));
+  const kinds = await Promise.all(xml.map((p) => peek(p).then(descriptionKind, () => null)));
 
   return xml.map((p, i) => [p, kinds[i]]);
 }
@@ -66,16 +66,51 @@ function decide(paths: string[]): EntryChoice | null {
   return top.length === 1 ? { entry: top[0] } : { choices: top };
 }
 
-export async function chooseEntry(paths: string[], classify: Classify): Promise<EntryChoice | null> {
-  const peeked = await peekXml(paths, classify);
+const XACRO_INCLUDE = /<xacro:include\b[^>]*?\bfilename\s*=\s*["']([^"']+)["']/g;
+const ROBOT_NAME = /<robot\b[^>]*?\bname\s*=\s*["']([^"']+)["']/;
+const DESCRIPTION_DIR = /(^|\/)(urdf|description|[^/]*_description)\//;
+const isXacro = (path: string) => /\.xacro$/i.test(path);
+const fileName = (path: string) => path.split('/').pop()!.toLowerCase();
+const stemOf = (path: string) => fileName(path).replace(/(\.urdf)?\.xacro$/, '');
+
+interface XacroFile {
+  path: string;
+  text: string;
+}
+
+function xacroScore({ path, text }: XacroFile): number {
+  const stem = stemOf(path);
+  const named =
+    stem === ROBOT_NAME.exec(text)?.[1].toLowerCase() || path.toLowerCase().includes(`${stem}_description/`);
+
+  return (DESCRIPTION_DIR.test(path) ? 2 : 0) + (named ? 1 : 0);
+}
+
+async function topXacro(paths: string[], peek: Peek): Promise<EntryChoice | null> {
+  const files = descriptions(paths)
+    .filter(isXacro)
+    .sort(byDepth)
+    .slice(0, MAX_PEEKS * 2);
+  const texts = await Promise.all(files.map((p) => peek(p).catch(() => '')));
+  const included = new Set(texts.flatMap((t) => [...t.matchAll(XACRO_INCLUDE)].map((m) => fileName(m[1]))));
+  const top = files
+    .map((path, i) => ({ path, text: texts[i] }))
+    .filter((f) => descriptionKind(f.text) === 'urdf' && !included.has(fileName(f.path)));
+  const best = Math.max(...top.map(xacroScore));
+
+  return decide(top.filter((f) => xacroScore(f) === best).map((f) => f.path));
+}
+
+export async function chooseEntry(paths: string[], peek: Peek): Promise<EntryChoice | null> {
+  const peeked = await peekXml(paths, peek);
   const ofKind = (kind: DescriptionKind) => peeked.filter(([, k]) => k === kind).map(([p]) => p);
   const mjcf = ofKind('mjcf');
-
-  return (
+  const described =
     decide(mjcf.filter((p) => !SCENE.test(p))) ??
     decide([...descriptions(paths).filter(isUrdf), ...ofKind('urdf')]) ??
-    decide(mjcf) ??
-    decide(paths.filter(isUrdf)) ??
-    decide(ofKind('mjcf-includes'))
-  );
+    decide(mjcf);
+
+  if (described) return described;
+
+  return (await topXacro(paths, peek)) ?? decide(paths.filter(isUrdf)) ?? decide(ofKind('mjcf-includes'));
 }

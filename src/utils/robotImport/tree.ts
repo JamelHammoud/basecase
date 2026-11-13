@@ -1,6 +1,6 @@
 import { geometryWorker } from '../../three/geometryWorker';
 import { safeEntryPath, ZIP_TOO_LARGE } from './archive';
-import { candidates, norm, type LocalFile, type Resolver } from './sources';
+import { candidates, couldntRead, norm, type LocalFile, type Resolver } from './sources';
 
 export interface Tree {
   paths: string[];
@@ -52,7 +52,7 @@ export async function treeResolver(tree: Tree, entryPath: string): Promise<Resol
   const known = new Set(tree.paths);
   const data = await tree.read(entryPath);
 
-  if (!data) throw new Error(`Couldn’t read ${entryPath}`);
+  if (!data) throw couldntRead(entryPath);
 
   return {
     entry: { name: entryPath, text: new TextDecoder().decode(data) },

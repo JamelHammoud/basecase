@@ -27,6 +27,8 @@ export class TooLargeError extends Error {}
 
 export const unopenedRepo = (url: string) => new Error(`Couldn’t open ${url}. Link to a public repo or folder.`);
 
+export const couldntRead = (path: string) => new Error(`Couldn’t read ${path}`);
+
 export const noRobotAt = (url: string) => new Error(`Couldn’t find a .urdf or MJCF .xml file in ${url}.`);
 
 async function readCapped(res: Response, maxBytes: number): Promise<ArrayBuffer> {
@@ -153,13 +155,15 @@ export async function urlResolver(url: string): Promise<Resolver> {
   const u = new URL(entryUrl);
   const origin = u.origin;
   const entryPath = decodeURIComponent(u.pathname);
+  const root = u.host === new URL(RAW).host ? `/${entryPath.split('/').slice(1, 4).join('/')}/` : '/';
+  const inside = (path: string) => /^https?:/.test(path) || (path.startsWith(root) && !/\/\.\.?(\/|$)/.test(path));
   let winning: number | null = null;
 
   return {
     entry: { name: entryPath.split('/').pop() ?? 'robot', text },
     read: async (ref, from) => {
       const base = from ?? entryPath;
-      const list = candidates(ref, base);
+      const list = candidates(ref, base).filter(inside);
       const order =
         winning !== null && winning < list.length
           ? [winning, ...list.keys()].filter((v, i, a) => a.indexOf(v) === i)

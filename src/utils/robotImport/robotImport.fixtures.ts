@@ -116,7 +116,7 @@ export function deskArmUrdf(): string {
   ].join('\n');
 }
 
-function cubeStl(size: number): Uint8Array {
+export function cubeStl(size: number): Uint8Array {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size));
   const view = new STLExporter().parse(mesh, { binary: true }) as DataView;
 

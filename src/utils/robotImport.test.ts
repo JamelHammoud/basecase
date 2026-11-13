@@ -1,60 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { importRobot, rawUrl } from './robotImport';
-
-class XmlElement {
-  children: XmlElement[] = [];
-  tagName: string;
-  private attrs: Map<string, string>;
-
-  constructor(tagName: string, attrs: Map<string, string>) {
-    this.tagName = tagName;
-    this.attrs = attrs;
-  }
-
-  getAttribute(name: string) {
-    return this.attrs.get(name) ?? null;
-  }
-
-  get attributes() {
-    return [...this.attrs].map(([name, value]) => ({ name, value }));
-  }
-}
-
-class TinyDomParser {
-  parseFromString(text: string) {
-    const root = new XmlElement('#document', new Map());
-    const stack = [root];
-
-    for (const [, close, tag, attrText, selfClose] of text.matchAll(
-      /<(\/?)([A-Za-z_][\w:.-]*)((?:\s+[\w:.-]+\s*=\s*"[^"]*")*)\s*(\/?)>/g,
-    )) {
-      if (close) {
-        stack.pop();
-
-        continue;
-      }
-
-      const el = new XmlElement(
-        tag,
-        new Map([...attrText.matchAll(/([\w:.-]+)\s*=\s*"([^"]*)"/g)].map((a) => [a[1], a[2]])),
-      );
-
-      stack[stack.length - 1].children.push(el);
-
-      if (!selfClose) stack.push(el);
-    }
-
-    return { documentElement: root.children[0], querySelector: () => null };
-  }
-}
-
-const file = (path: string, text: string) => {
-  const f = new File([text], path.split('/').pop()!);
-
-  Object.defineProperty(f, 'webkitRelativePath', { value: path });
-
-  return f;
-};
+import { localFile, TinyDomParser } from './robotImport/robotImport.fixtures';
 
 const URDF = `<?xml version="1.0"?>
 <robot name="two_link_arm">
@@ -110,7 +56,7 @@ afterEach(() => {
 
 describe('importRobot', () => {
   it('reads a URDF into parts and joints in millimetres and degrees', async () => {
-    const robot = await importRobot({ kind: 'files', files: [file('arm/urdf/arm.urdf', URDF)] });
+    const robot = await importRobot({ kind: 'files', files: [localFile('arm/urdf/arm.urdf', URDF)] });
     const [shoulder, lift] = robot.joints;
 
     expect(robot.name).toBe('Two link arm');
@@ -125,7 +71,7 @@ describe('importRobot', () => {
   });
 
   it('reads an MJCF, keeping visual geoms and actuator limits', async () => {
-    const robot = await importRobot({ kind: 'files', files: [file('mini/mini.xml', MJCF)] });
+    const robot = await importRobot({ kind: 'files', files: [localFile('mini/mini.xml', MJCF)] });
 
     expect(robot.name).toBe('Mini arm');
     expect(robot.parts.map((p) => p.name)).toEqual(['Base', 'Arm']);
@@ -136,7 +82,7 @@ describe('importRobot', () => {
   });
 
   it('asks for a robot description when the folder has none', async () => {
-    await expect(importRobot({ kind: 'files', files: [file('x/readme.txt', 'hi')] })).rejects.toThrow(
+    await expect(importRobot({ kind: 'files', files: [localFile('x/readme.txt', 'hi')] })).rejects.toThrow(
       'Choose a folder with a .urdf or MJCF .xml file.',
     );
   });

@@ -45,11 +45,11 @@ Both scenes must be open in tabs. The other robot must fit the Case, and the Cas
 
 Each row shows the scene's name and how many of 20 runs passed. The higher count is blue, and a tie marks neither. A robot that can't run the Case, such as one that falls while standing, shows why in place of the count. Under the name are the estimated cost of the parts and the robot's mass. Cost is the **Bill of materials** estimate without support filament, and mass is the **Weight** check's.
 
-Both robots run the same 20 runs. Each run changes friction, weight, servo strength and servo delay a little, and moves anything that can be pushed up to 15 mm. The Case is scaled to each robot's reach, as it is when you try it. A robot with a skill kept for the Case by **Train From Tries** runs that skill, as its row in **Checks** does.
+Both robots run the same 20 runs. Each run changes friction, weight, servo strength and servo delay a little, and moves anything that can be pushed up to 15 mm. The Case is scaled to each robot's reach, as it is when you try it. A robot with a skill kept for the Case by **Train from Tries** runs that skill, as its row in **Checks** does.
 
 Click the copy's row to open its tab with the Case. If the copy doesn't have the Case, it's added there.
 
-You can also press [[⌘K]] and choose **Compare With** followed by the scene's name. Ask the agent which version is better and it runs the same comparison.
+You can also press [[⌘K]] and choose **Compare with** followed by the scene's name. Ask the agent which version is better and it runs the same comparison.
 
 Nothing is saved. Change either robot and the rows update, the next time the first scene is in front.
 

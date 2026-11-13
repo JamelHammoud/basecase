@@ -1,3 +1,5 @@
+import { plural } from '../plural.mjs';
+
 const MAX_SCENE_CHARS = 45000;
 const FULL_LIST_PARTS = 20;
 const IDS_PER_GROUP = 40;
@@ -51,7 +53,7 @@ function groupLine([name, parts]) {
   const ids = parts.slice(0, IDS_PER_GROUP).map((p) => p.id);
   const more = parts.length > IDS_PER_GROUP ? ` +${parts.length - IDS_PER_GROUP} more` : '';
 
-  return `${JSON.stringify(name)}: ${parts.length} parts, box=${vec(min, 1)}..${vec(max, 1)}, ids ${ids.join(' ')}${more}`;
+  return `${JSON.stringify(name)}: ${plural(parts.length, 'part')}, box=${vec(min, 1)}..${vec(max, 1)}, ids ${ids.join(' ')}${more}`;
 }
 
 function groupSummary(parts) {
@@ -83,7 +85,7 @@ function header(snap, picked, filtered) {
   return [
     `Frame: ${snap.frame}.`,
     b ? `Scene box ${vec(b.min, 1)}..${vec(b.max, 1)}, size ${vec(b.size, 1)}.` : 'Empty scene.',
-    filtered ? `${picked.length} of ${snap.parts.length} parts:` : `${picked.length} parts:`,
+    filtered ? `${picked.length} of ${plural(snap.parts.length, 'part')}:` : `${plural(picked.length, 'part')}:`,
   ];
 }
 
@@ -97,7 +99,7 @@ function missingIds(parts, ids) {
 function summary(snap, picked, marks) {
   return [
     ...header(snap, [], false).slice(0, 2),
-    `${picked.length} parts, by group. Call get_scene with group or ids for full lines (placement, size, box, ports, notes), or find_in_scene to search:`,
+    `${plural(picked.length, 'part')}, by group. Call get_scene with group or ids for full lines (placement, size, box, ports, notes), or find_in_scene to search:`,
     ...groupSummary(picked),
     ...marks,
   ].join('\n');

@@ -4,6 +4,7 @@ import { imageCaps } from './imageCaps.mjs';
 import { settledWrites } from './pendingWrites.mjs';
 import { lineMemory, reportLines } from './repeatLines.mjs';
 import { VIEW, bridge, fail, text } from './shared.mjs';
+import { plural } from '../plural.mjs';
 
 function legendText(res) {
   const rows = (res.legend ?? []).map((l) => `${l.label} ${l.id}${l.name && l.name !== l.id ? ` (${l.name})` : ''}`);
@@ -235,7 +236,7 @@ export const checkScene = {
       const { clashes, flush, twins } = await interferenceIssues();
       const others = [...placementIssues(physical), ...primitiveIssues(solids), ...twins];
       const b = scene.bounds;
-      const head = `${solids.length} parts${b ? `, overall ${b.size.map((v) => Math.round(v)).join(' × ')} mm (x × y × z)` : ''}.`;
+      const head = `${plural(solids.length, 'part')}${b ? `, overall ${b.size.map((v) => Math.round(v)).join(' × ')} mm (x × y × z)` : ''}.`;
       const lines = issueLines({ clashes, flush, others });
       const report = lines.length ? `${head}\nIssues:\n${lines.join('\n')}` : `${head}\nNo issues found.`;
 

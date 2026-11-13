@@ -6,7 +6,7 @@ import { platformBridge } from '../../utils/platformBridge';
 import { timeAgo } from '../../utils/timeAgo';
 import { REVEAL_LABEL } from '../../utils/os';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
-import { plural } from './format';
+import { plural } from '../../../electron/plural.mjs';
 import { GuideCoverPage } from './GuideCoverPage';
 import { useGuidePages } from './useGuidePages';
 
@@ -82,34 +82,26 @@ const Progress: React.FC<{ progress: GuideRunProgress; onStop: () => void }> = (
   </>
 );
 
-const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord; canOpen: boolean }> = ({
-  guide,
-  record,
-  canOpen,
-}) => {
+const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord }> = ({ guide, record }) => {
   const ago = timeAgo(record.generatedAt);
 
   return (
     <>
       <div className="text-[13px] text-white/90 tabular-nums truncate">
-        {plural(record.pages, '1 page', `${record.pages} pages`)}
+        {plural(record.pages, 'page')}
       </div>
       <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/50'}`}>
         {guide.stale ? 'Out of date' : `Made ${ago === 'now' ? 'just now' : `${ago} ago`}`}
       </div>
       <div className="flex gap-2 mt-2.5">
-        {canOpen && (
-          <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
-            Open
+        <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
+          Open
+        </Button>
+        {guide.stale && (
+          <Button size="sm" variant="primary" onClick={() => void guide.generate()}>
+            Update
           </Button>
         )}
-        <Button
-          size="sm"
-          variant={guide.stale || !canOpen ? 'primary' : 'secondary'}
-          onClick={() => void guide.generate()}
-        >
-          {guide.stale ? 'Update' : 'Regenerate'}
-        </Button>
       </div>
     </>
   );
@@ -128,7 +120,7 @@ const GuideCard: React.FC<{ guide: BuildGuide; sceneName: string }> = ({ guide, 
         onOpen={canOpen ? () => void guide.open() : undefined} />
       <div className="min-w-0 flex-1">
         {guide.progress && <Progress progress={guide.progress} onStop={guide.cancel} />}
-        {!guide.progress && guide.record && <Made guide={guide} record={guide.record} canOpen={canOpen} />}
+        {!guide.progress && guide.record && <Made guide={guide} record={guide.record} />}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { isSourcedId } from '../../data/sourcedItems';
 import { PART_DRAG_TYPE, setSceneDrag } from '../../data/dnd';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
+import { plural } from '../../../electron/plural.mjs';
 import { BrowseRow, PreviewImage, RowActions, Tooltip, PlusIcon } from '../../design-system';
 import type { Category } from './partsViews';
 
@@ -95,11 +96,9 @@ export const ResultRow: React.FC<{
   );
 };
 
-const partCount = (count: number) => `${count} ${count === 1 ? 'part' : 'parts'}`;
-
 export const CategoryRow: React.FC<{ category: Category; onOpen: () => void }> = ({ category, onOpen }) => {
   const thumb = usePartThumbnail(category.items[0]);
-  const meta = category.family ? category.family.description : partCount(category.count ?? category.items.length);
+  const meta = category.family ? category.family.description : plural(category.count ?? category.items.length, 'part');
 
   return (
     <BrowseRow

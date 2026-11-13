@@ -41,6 +41,8 @@ The **Simulate** tab appears in the right panel once the scene has a joint. [Sim
 
 The bar at the top of the tab also has **Pause**, **Reset** and three speeds: ¼×, ½× and 1×.
 
+After **Drive with Camera** on a humanoid with no ready Walk, its base stays held in place, so **Push** can't move it. **Reset** keeps it held; click **End simulation**, then **Simulate**, to free it.
+
 ## Reading Peak torque
 
 Each joint shows the most torque it needed as a share of its servo's limit. A share of 98% or more turns red. When a joint spent time at its limit, the row says how long, such as "0.4 s at limit".

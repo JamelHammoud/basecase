@@ -5,7 +5,7 @@ import type { Training } from '../sim/useTraining';
 import type { PolicyRecord, ScenePart } from '../types/robotics';
 import { PEAK_DERATE } from '../utils/actuatorRules';
 import type { JointLoad, WalkJoint, WalkSim } from '../utils/engineeringTypes';
-import { jointPeak, type PeakSpan, type TorqueSeries } from '../utils/peakTorque';
+import { jointPeak, jointSamples, type PeakSpan, type TorqueSeries } from '../utils/peakTorque';
 import { walkAmpModels, walkPower } from '../utils/servoAmps';
 import { errorMessage } from '../utils/errorMessage';
 
@@ -40,7 +40,16 @@ export function walkJoints(
 ): Record<string, WalkJoint> {
   const stall = stallOf(loads);
 
-  return Object.fromEntries(model.joints.map((j, i) => [j.id, jointPeak(trace, i, stall.get(j.id) ?? j.effort, span)]));
+  return Object.fromEntries(
+    model.joints.map((j, i) => {
+      const samples = jointSamples(trace, i, span.settleS);
+
+      return [
+        j.id,
+        { ...jointPeak(trace, i, stall.get(j.id) ?? j.effort, span), ...(samples.length ? { samples } : {}) },
+      ];
+    }),
+  );
 }
 
 export function peakShoves(weightN: number) {

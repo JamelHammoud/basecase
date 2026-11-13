@@ -16,6 +16,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { fileSafe } from './helpers';
 import type { ShowToast, ToastOptions } from './types';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 
 interface DatasetExportOptions {
   sim: Simulation;
@@ -42,15 +43,20 @@ async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) 
   const episodes: DatasetJobEpisode[] = usable.map(({ record, recording }) => ({
     recording,
     task: kase.brief.trim() || kase.name,
-    source: { try: record.id, at: record.at, margin: record.margin, case_hash: record.manifest.caseHash },
+    source: {
+      try: record.id,
+      at: record.at,
+      margin: record.margin,
+      case_hash: record.manifest.caseHash,
+      seed: record.manifest.seed,
+      source: record.manifest.source ?? null,
+    },
   }));
 
   return { episodes, modelHash };
 }
 
 export const EARLIER_TRIES = 'These tries are from an earlier design. Try It again to record new ones.';
-
-const triesText = (n: number) => (n === 1 ? '1 try' : `${n} tries`);
 
 interface PreparedDataset {
   job: DatasetSpec;
@@ -119,7 +125,7 @@ const EXPORT: Delivery = {
   deliver: async (made) => {
     downloadBytes(await exportDatasetZip(made.job), `${made.name}.zip`, 'application/zip');
 
-    return { message: `Exported ${triesText(made.used)} as a dataset${leftOut(made)}` };
+    return { message: `Exported ${plural(made.used, 'try', 'tries')} as a dataset${leftOut(made)}` };
   },
 };
 

@@ -19,8 +19,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Menus and popovers: 14px.
   - Toolbar islands: 16–20px.
   - Composer and toasts: pill.
-- **Surfaces (neutral greys, equal R = G = B; never blue-tinted greys like zinc or slate):**
-  - `#121212` window chrome (darkest; slightly translucent in Electron), `#1b1b1b` canvas card (also the 3D scene background), `#1f1f1f` sidebar and inspector cards, `#222222` modals and Settings, glass `rgba(32–36, …)`.
+- **Surfaces (neutral greys, equal R = G = B; never blue-tinted greys like zinc or slate):** `neutralGreys.test.ts` fails any tinted grey in a Tailwind class (`bg-[#2a2a2f]`) or a stylesheet. Part colours are scene data and aren't held to it.
+  - `#121212` window chrome (darkest; slightly translucent in Electron), `#1b1b1b` canvas card (also the 3D scene background), `#1f1f1f` sidebar and inspector cards, `#222222` modals and Settings (`.sheet`), glass `rgba(32–36, …)`.
   - Separate levels with lightness steps, not borders or shadows. Panel cards have no outline, and card headers have no line under them. The one exception is the canvas card: a near-transparent white ring (`inset 0 0 0 1px white/[0.05]`) drawn over the 3D view, so the scene separates from the chrome.
   - **Dividers inside panels are fine** and give them structure: full-width `white/[0.06]` hairlines between inspector sections (`Section`), above panel footers, between part-page sections, in menus (`MenuDivider`) and in modals.
 - **Text tiers:** `white/90` primary, `white/60` secondary, `white/50` hints (meta lines, units, section labels, placeholders).
@@ -30,9 +30,9 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Use `Divider` (or `MenuDivider` in menus). It cancels the container's horizontal padding, which the container publishes as `--pad-x`. `.glass-menu` defaults to 6px; `Section` sets 12px and Settings 24px.
   - A new container that holds dividers sets `--pad-x` to its horizontal padding (e.g. `[--pad-x:8px] p-[var(--pad-x)]`) instead of a plain `p-2`.
   - Borders on a block that already spans the container (panel headers, `Section`) count as full width.
-- **Floating surfaces (`.glass`, `.glass-menu` in `index.css`; the names are historical):**
-  - Use only for controls floating over the 3D canvas (toolbar, toasts, comment cards), the composer's quote card, and menus, popovers and tooltips.
-  - **Matte, not glass:** a solid neutral fill (`#262626` floating controls, `#282828` menus) and a soft drop shadow with a 0.5px dark keyline. No translucency, backdrop blur, specular highlight or light outline.
+- **Floating surfaces (`.glass`, `.glass-menu` and `.sheet` in `index.css`; the names are historical):**
+  - Use only for controls floating over the 3D canvas (toolbar, toasts, comment cards, the Cameras strip) or over a list (the chat's scroll-to-bottom button), the composer's quote card, menus, popovers and tooltips, and sheets (`Modal`, Settings).
+  - **Matte, not glass:** a solid neutral fill (`#262626` floating controls, `#282828` menus, `#222222` sheets) and a soft drop shadow with a 0.5px dark keyline. No translucency, backdrop blur, specular highlight or light outline. A surface takes its class rather than hand-rolling the fill and shadow.
   - Never on the panel cards or the window chrome.
 - **Motion:**
   - 150ms for hover and press. Press scales to 0.94–0.97.

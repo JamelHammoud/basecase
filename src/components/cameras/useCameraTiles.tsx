@@ -46,10 +46,10 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
     startRename: (view: CameraView) => setRenaming(view.key),
     setPartLens: (partId: string, lens: ScenePart['cameraLens']) => patchPart(partId, { cameraLens: lens }),
   };
-  const rename = (view: CameraView, name: string) => {
+  const rename = (view: CameraView, name: string | null) => {
     setRenaming(null);
 
-    if (!name || name === view.label) return;
+    if (!name) return;
 
     if (view.fixed) cameras.rename(view.fixed, name);
     else if (view.part) patchPart(view.part, { name });

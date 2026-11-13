@@ -149,12 +149,14 @@ describe('build guide plan', () => {
     expect(plan().steps.some((s) => s.unproven)).toBe(false);
   });
 
-  it('changes its fingerprint only when the build changes', () => {
+  it('changes its fingerprint only when what the guide shows changes', () => {
     const project = { printer: 'bambu-p1s' as const, material: 'PETG' as const, infillPct: 15, joints };
     const before = guideFingerprint('Test Bot', parts, project);
     const moved = parts.map((x) => (x.id === 'shell' ? { ...x, position: [0, 220, 0] as V3 } : x));
 
     expect(guideFingerprint('Test Bot', [...parts], project)).toBe(before);
     expect(guideFingerprint('Test Bot', moved, project)).not.toBe(before);
+    expect(guideFingerprint('Test Bot', parts, { ...project, infillPct: 15.2 })).toBe(before);
+    expect(guideFingerprint('Test Bot', parts, { ...project, infillPct: 30 })).not.toBe(before);
   });
 });

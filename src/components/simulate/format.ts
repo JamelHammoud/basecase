@@ -4,6 +4,12 @@ export const fmtTime = (t: number) => `${t.toFixed(1)} s`;
 
 export const pct = (u: number) => `${Math.round(Math.min(u, 1) * 100)}%`;
 
+export const trainingLine = (message: string, share: number | null): string => {
+  if (share !== null) return `${message} ${pct(share)}`;
+
+  return /[.!?…]$/.test(message) ? message : `${message}…`;
+};
+
 export const fmtSteps = (n: number): string => {
   if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`;
 

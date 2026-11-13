@@ -43,7 +43,7 @@ The repo is private, the link points at a branch or folder that doesn't exist, o
 
 The link is public, but there's no robot description in it. Link to the folder that holds the `.urdf` or `.xml` file, or to the file itself. From a folder on your computer, the message reads “Choose a folder with a .urdf or MJCF .xml file.”
 
-## “Couldn’t load any of its … meshes. Choose the folder that has them.”
+## “Couldn’t load its … meshes. Choose the folder with the robot’s mesh files.”
 
 The description names mesh files that aren't beside it. Many repos keep meshes in a separate folder.
 

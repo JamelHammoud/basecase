@@ -3,6 +3,7 @@ import { buildBom, isPrinted } from './bom';
 import type { BomLine } from './bomTypes';
 import { formatWhole } from './currencyStore';
 import type { CheckContext, CheckRow } from './engineeringTypes';
+import { plural } from '../../electron/plural.mjs';
 
 const WARN_SHARE = 0.9;
 
@@ -27,7 +28,7 @@ export function budgetRow(ctx: CheckContext): CheckRow {
   if (est > budget) status = 'fail';
   else if (est > WARN_SHARE * budget) status = 'warn';
 
-  const unpriced = bom.totals.unpriced ? `; ${bom.totals.unpriced} lines have no price` : '';
+  const unpriced = bom.totals.unpriced ? `; no price on ${plural(bom.totals.unpriced, 'line')}` : '';
   const noSupport = !ctx.input.supportG && ctx.parts.some(isPrinted) ? '; support filament not counted' : '';
   const biggest = [...bom.lines].sort((a, b) => lineUsd(b) - lineUsd(a)).slice(0, BIGGEST);
 

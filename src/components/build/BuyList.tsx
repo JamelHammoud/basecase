@@ -10,7 +10,7 @@ import { BuyGroup } from './BuyGroup';
 import { bomGroups } from './buyLine';
 import type { BuyContext } from './BuyRow';
 import { CheckIcon } from './CheckIcon';
-import { plural } from './format';
+import { plural } from '../../../electron/plural.mjs';
 
 interface BuyListProps {
   bom: Bom;
@@ -66,7 +66,7 @@ const StandInsRow: React.FC<{ count: number; onClick: () => void }> = ({ count, 
     >
       <CheckIcon status="warn" />
       <span className="min-w-0 flex-1 text-[13px] leading-[18px] text-white/90">
-        Replace {count} {plural(count, 'stand-in', 'stand-ins')} with real parts
+        Replace {plural(count, 'stand-in')} with real parts
       </span>
     </button>
   </li>

@@ -91,6 +91,22 @@ describe('the Case checks pool', () => {
     await wanted;
   });
 
+  it('keeps another group’s queued jobs when a check drops its own', async () => {
+    const { pool: p, workers } = pool();
+    const running = p.run(0, runs([1]), { tag: 'old', robot: () => robot });
+    const stale = p.run(0, runs([2]), { tag: 'old', robot: () => robot });
+    const other = p.run(0, runs([3]), { tag: 'multiply', group: 'multiply', robot: () => robot });
+
+    p.keepOnly(new Set());
+    await expect(stale).rejects.toThrow();
+    workers[0].answer(ran);
+    await running;
+    expect(workers[0].posted[1].job).toMatchObject({ seeds: [3] });
+    p.keepOnly(new Set(), 'multiply');
+    workers[0].answer(ran);
+    await other;
+  });
+
   it('rejects every job when a worker dies, and the next job starts a fresh worker', async () => {
     const { pool: p, workers } = pool();
     const a = p.run(0, runs([1]));

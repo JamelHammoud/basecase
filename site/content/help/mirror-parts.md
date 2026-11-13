@@ -60,6 +60,6 @@ A joint whose moving parts are all mirrored gets a twin on the copies, with the 
 
 ## Ask the agent
 
-The agent mirrors with the same placement through its `mirror_parts` tool, across the middle of the scene. Its copies stay linked to their source: when either side changes, the agent is reminded to mirror again. Its copies don't take joints or mates with them. To ask it, right-click a part, choose **Reference Part**, and say what to mirror and where. **Reference Part** works in the desktop app.
+The agent mirrors with the same placement through its `mirror_parts` tool, across the middle of the scene. Its copies stay linked to their source: when either side changes, the agent is reminded to mirror again. Its copies don't take joints or mates with them. To ask it, right-click a part, choose **Quote Part**, and say what to mirror and where. **Quote Part** works in the desktop app.
 
 To sculpt both sides of one part at once, use **Mirror X** in [Sculpt a part](/help/sculpt-a-part).

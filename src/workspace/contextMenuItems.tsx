@@ -49,6 +49,7 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { sceneHasCameraViews } from './viewCommands';
+import { plural } from '../../electron/plural.mjs';
 
 export interface ContextInputs {
   core: WorkspaceCore;
@@ -144,7 +145,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   const roles = new Set(selectedParts.map((p) => p.role));
 
   return [
-    { heading: `${core.selectedIds.length} parts` },
+    { heading: plural(core.selectedIds.length, 'part') },
     ...wrapItems(inputs),
     { label: 'Union', icon: <UnionIcon className={ic} />, onSelect: () => ops.runBoolean('union') },
     {
@@ -200,12 +201,12 @@ function partFlagItems(part: ScenePart, setFlag: (patch: Partial<ScenePart>) => 
   ];
 }
 
-function referencePart({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
+function quotePart({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
   if (IS_WEB_DEMO) return [];
 
   return [
     {
-      label: 'Reference Part',
+      label: 'Quote Part',
       icon: <SparklesIcon className={ic} />,
       onSelect: () => core.tool.requestQuote(partQuote(part)),
     },
@@ -240,7 +241,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.mirror,
     shared.selectAll,
     shared.saveToLibrary,
-    ...referencePart(inputs, part),
+    ...quotePart(inputs, part),
     ...leaderMenuItems(actions, part.id),
     ...commentHere,
     { divider: true },
@@ -357,7 +358,7 @@ export function contextMenuItems(menu: CanvasMenuState, inputs: ContextInputs): 
           onSelect: () => core.annotations.place(point, menu.partId),
         },
         {
-          label: 'Measure From Here',
+          label: 'Measure from Here',
           shortcut: 'D',
           icon: <RulerIcon className={ic} />,
           onSelect: () => {

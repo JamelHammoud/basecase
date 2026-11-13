@@ -186,7 +186,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
     <>
       <Section title="Combine">
         <StripGroup>
-          <StripButton title="Merge into one solid" onClick={() => onBoolean('union')}>
+          <StripButton onClick={() => onBoolean('union')}>
             <UnionIcon className="w-4 h-4" />
             Union
           </StripButton>
@@ -198,7 +198,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
             <SubtractIcon className="w-4 h-4" />
             Subtract
           </StripButton>
-          <StripButton title="Keep only the shared volume" onClick={() => onBoolean('intersect')}>
+          <StripButton onClick={() => onBoolean('intersect')}>
             <IntersectIcon className="w-4 h-4" />
             Intersect
           </StripButton>

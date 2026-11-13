@@ -32,8 +32,6 @@ export const mm = (v: number) => `${Math.round(v * 100) / 100}mm`;
 export const box = (x: number, y: number, w: number, h: number) =>
   `left:${mm(x)};top:${mm(y)};width:${mm(w)};height:${mm(h)}`;
 
-export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 export interface PageOptions {
   className?: string;
   bare?: boolean;

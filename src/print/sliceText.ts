@@ -1,5 +1,6 @@
 import type { PrintReport } from '../utils/printReport';
 import type { SliceRecord } from './printBridge';
+import { plural } from '../../electron/plural.mjs';
 
 const minutes = (s: number) => {
   const m = Math.round(s / 60);
@@ -11,7 +12,7 @@ export function sliceText(report: PrintReport, record: SliceRecord): string {
   const byNumber = new Map(report.plan.plates.map((p) => [p.number, p]));
   const total = record.plates.reduce((t, p) => ({ s: t.s + p.seconds, g: t.g + p.grams }), { s: 0, g: 0 });
   const lines = [
-    `Sliced ${record.plates.length} plates for a ${report.printer.model.name} in ${record.slicer.name} ${record.slicer.version ?? ''}: ${minutes(total.s)} of printing, ${Math.round(total.g)} g of filament.`.replace(
+    `Sliced ${plural(record.plates.length, 'plate')} for a ${report.printer.model.name} in ${record.slicer.name} ${record.slicer.version ?? ''}: ${minutes(total.s)} of printing, ${Math.round(total.g)} g of filament.`.replace(
       ' :',
       ':',
     ),

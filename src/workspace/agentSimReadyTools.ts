@@ -1,6 +1,7 @@
 import { isRobotUrl, knownAsset, searchSimReady, type SimReadyAsset } from '../simready/search';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { Vec3 } from './types';
+import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
@@ -28,7 +29,7 @@ export async function findObjects(ctx: SimReadyToolContext, payload: Payload) {
 
   const found = await searchSimReady({ query, shelf, limit }).catch(() => null);
 
-  if (!found) return { text: 'Couldn’t reach SimReady Central. Try again later.' };
+  if (!found) return { text: 'Couldn’t reach SimReady Central. Call find_objects again in a minute.' };
 
   if (!found.length) return { text: `No SimReady ${shelf} match "${query}".` };
 
@@ -59,9 +60,11 @@ export async function insertObject(ctx: SimReadyToolContext, payload: Payload) {
   const kg = got.parts.reduce((s, p) => s + (p.massG ?? 0), 0) / 1000;
   const ids = got.parts.map((p) => p.id).join(', ');
   const kind =
-    isRobotUrl(url) || got.joints.length ? `${got.joints.length} joints (call get_rig)` : 'moves freely in simulate';
+    isRobotUrl(url) || got.joints.length
+      ? `${plural(got.joints.length, 'joint')} (call get_rig)`
+      : 'moves freely in simulate';
 
   return {
-    text: `Inserted ${got.name}: ${got.parts.length} parts (group "${got.name}"), ${Math.round(kg * 1000) / 1000} kg, ${kind}.\nPart ids: ${ids}`,
+    text: `Inserted ${got.name}: ${plural(got.parts.length, 'part')} (group "${got.name}"), ${Math.round(kg * 1000) / 1000} kg, ${kind}.\nPart ids: ${ids}`,
   };
 }

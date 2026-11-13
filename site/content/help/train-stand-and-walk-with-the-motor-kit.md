@@ -16,9 +16,12 @@ keywords:
   - teach it to move
   - metal
   - gpu
+  - webgpu
+  - browser
 related:
   - teach-a-robot-a-skill
   - arena
+  - run-a-trained-skill-on-the-emulated-robot
 covers:
   - src/components/simulate/SkillsList.tsx
   - src/components/simulate/TrainSection.tsx
@@ -26,6 +29,10 @@ covers:
   - src/skills/motorKit.ts
   - src/skills/skillRows.ts
   - src/workspace/useSkills.ts
+  - src/skills/skillsPlatform.ts
+  - src/forge/tabSupport.ts
+  - src/gallery/GalleryCard.tsx
+  - src/gallery/useGalleryTraining.ts
   - electron/trainer.mjs
   - electron/kitScheduler.mjs
   - forge/crates/forge-train/src/trainer.rs
@@ -33,25 +40,43 @@ covers:
 
 Give a robot with legs its four basic skills, Stand, Walk, Get up and Settle, trained and proved in Arena without writing a goal.
 
-The Motor Kit is for robots that stand on their own legs. Training runs in the desktop app, and uses every core while it runs.
+The Motor Kit is for robots that stand on their own legs. Training runs in the desktop app, and at app.basecase.so in Chrome or Edge, on your own GPU.
 
 1. Click **Simulate** at the top of the right panel.
 2. Under **Train**, find **Stand**, **Walk**, **Get up** and **Settle**.
+
+![The Train section with Stand, Walk, Get up and Settle](/help/train-stand-and-walk-with-the-motor-kit/rows.png)
+
 3. Click **Train** on the skill you want.
 4. Wait while the row shows the trainer's message and a progress bar.
+
+![Stand training at 25%](/help/train-stand-and-walk-with-the-motor-kit/training.png)
+
 5. When the row shows its Arena line, such as "32 of 32 tries, at least 91%", click **Try** to run it in the simulation.
 6. For **Walk**, click **Drive** instead, and steer with [[W A S D]].
 
-To stop training, click **Stop training** (■) on the row. **Teach It to Move**, under **Control**, trains **Walk** too.
+![Stand ready, with its Arena line and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
+
+To stop training, click **Stop training** (■) on the row. **Teach It to Move**, under **Control**, trains **Walk** too. A skill that doesn't pass Arena isn't kept, and its row offers **Train** again.
+
+## In the browser
+
+The **Train** section shows only when the browser can train on the GPU. A skill trained there is saved with the scene in that browser, so it's still there after a reload. The browser trains only when you click **Train**.
+
+A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand, and the robot stands on the skill once Arena passes it. **See Inside** opens the robot in the studio with Stand ready.
+
+![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 
 ## How long it takes
 
-Measured on an M5 Pro Mac:
+Measured in the desktop app on an M5 Pro Mac:
 
 | Skill | Four or six legs | Two legs |
 |---|---|---|
 | **Stand** | About 2 minutes | 8 to 12 minutes |
 | **Walk** | About 19 minutes | About 28 minutes |
+
+In Chrome on the same Mac, Stand took about two and a quarter minutes.
 
 When the first try fails Arena, Walk trains again from its best result. It can then take up to 30 minutes on four or six legs, and 45 on two.
 
@@ -67,6 +92,6 @@ One training job runs at a time across the whole app, and others wait their turn
 
 ## After you change the design
 
-1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A colour or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
+In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A colour or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
 
-To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill).
+To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

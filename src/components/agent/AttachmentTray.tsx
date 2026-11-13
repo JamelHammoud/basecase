@@ -2,6 +2,7 @@ import React from 'react';
 import { MetaLine, Tooltip, CloseIcon, FolderIcon, SpinnerIcon } from '../../design-system';
 import { Attachments, FolderChip } from './useAttachments';
 import { OpenImages } from './types';
+import { plural } from '../../../electron/plural.mjs';
 
 const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => (
   <button
@@ -17,7 +18,7 @@ const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, o
 function folderMeta(f: FolderChip): string[] {
   if (!f.ready) return [`${f.done} of ${f.total}`];
 
-  const files = `${f.fileCount} file${f.fileCount === 1 ? '' : 's'}`;
+  const files = plural(f.fileCount ?? 0, 'file');
 
   return f.skipped ? [files, `${f.skipped} skipped`] : [files];
 }

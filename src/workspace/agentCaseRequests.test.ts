@@ -7,6 +7,9 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import type { ProjectSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import type { CaseRuns } from '../cases/caseRuns';
+import { designChanges, designKey, exploreSpace, type Design } from '../cases/explore';
+import { servoArm } from '../sim/fixtures/servoArm';
+import { DEFAULT_PROJECT } from '../types/robotics';
 import { CASE_HANDLERS, caseValues } from './agentCaseRequests';
 import type { Cases } from './useCases';
 
@@ -34,7 +37,9 @@ function contextFor(id: string) {
   const running: string[] = [];
   const caseRun = { enterCase: (caseId: string) => void running.push(caseId) };
 
-  return { ctx: { cases, routines, caseCompare, caseRun, setAction: () => {}, ...scene }, added, running };
+  const caseExplore = { explore: async () => 'unused' };
+
+  return { ctx: { cases, routines, caseCompare, caseExplore, caseRun, setAction: () => {}, ...scene }, added, running };
 }
 
 const create = (payload: Record<string, unknown>, id = 'rover-diff') => {
@@ -164,6 +169,32 @@ describe('create_case with a console', () => {
     });
   });
 
+  it('keeps code panels in a column and over the canvas, driving through the code source', async () => {
+    const joystickApp = {
+      input: ['code', 'keys'],
+      panels: [
+        {
+          id: 'stick',
+          kind: 'code',
+          title: 'Joystick',
+          source: '<canvas></canvas><script>basecase.drive(null)</script>',
+        },
+        { id: 'hud', kind: 'code', source: '<p id="v"></p>', height: 120 },
+      ],
+      layout: {
+        areas: [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'top-left', width: 220, height: 80 }] },
+          { size: 320, panels: ['stick'] },
+        ],
+      },
+    };
+    const { reply, added, running } = create({ goal: 'reach', name: 'Joystick Rover', console: joystickApp });
+
+    expect(await reply).toMatchObject({ ok: true, running: true });
+    expect(added[0].console).toEqual(joystickApp);
+    expect(running).toEqual(['joystick-rover']);
+  });
+
   it('leaves a Case without a console in the studio', async () => {
     const { reply, running } = create({ goal: 'reach' });
 
@@ -183,6 +214,7 @@ describe('compare_case', () => {
     runs: 20,
     passes,
     medianMargin: 0.1234,
+    worstMargin: 0.05,
     commonFailure: null,
     failures: [],
     worstSeed: null,
@@ -196,6 +228,7 @@ describe('compare_case', () => {
     setAction: () => {},
     ...scene,
     caseRun: { enterCase: () => {} },
+    caseExplore: { explore: async () => 'unused' },
     caseCompare: {
       choicesFor: () => choices,
       start: (tabId: string) => void started.push(tabId),
@@ -231,5 +264,80 @@ describe('compare_case', () => {
     expect(
       await CASE_HANDLERS.compare_case({ scene: 'Arm' }, ctxWith([{ tabId: 'tab-2', name: 'Rover copy' }])),
     ).toMatchObject({ ok: false, scenes: ['Rover copy'] });
+  });
+});
+
+describe('explore_case', () => {
+  const arm = servoArm();
+  const made = buildCase(
+    { goal: 'touch', world: 'floor', values: { dots: 3 } },
+    builderRobot(buildRig(arm.joints, arm.parts), arm.parts),
+  );
+  const kase = made.ok ? made.kase : null!;
+  const space = exploreSpace(arm.parts, { ...DEFAULT_PROJECT, joints: arm.joints })!;
+  const weaker: Design = { variants: ['c046', 'c044', 'c044'], volts: space.current.volts };
+  const runs = (passes: number, worstMargin: number): CaseRuns => ({
+    runs: 8,
+    passes,
+    medianMargin: 0,
+    worstMargin,
+    commonFailure: null,
+    failures: [],
+    worstSeed: null,
+    refusal: null,
+    misfit: false,
+  });
+  const row = (design: Design, passes: number, costUsd: number) => ({
+    key: designKey(design),
+    design,
+    changes: designChanges(space, design),
+    runs: runs(passes, passes === 8 ? 0.10351 : -0.02),
+    costUsd,
+    massG: 1234.4,
+  });
+  const ctxWith = (explored: unknown, active: Case | null = kase) => ({
+    cases: { cases: [kase], active } as unknown as Cases,
+    routines: { checkLogic: async () => ({ ok: true }) as never },
+    setAction: () => {},
+    ...scene,
+    caseRun: { enterCase: () => {} },
+    caseCompare: { choicesFor: () => [], start: () => {}, compareNow: async () => null as never },
+    caseExplore: { explore: async () => explored as never },
+  });
+
+  it('lists each design with its servos, passes, worst margin, cost and mass, the best first', async () => {
+    const explored = { space, rows: [row(weaker, 1, 62), row(space.current, 8, 63.98)] };
+    const reply = await CASE_HANDLERS.explore_case({}, ctxWith(explored));
+
+    expect(reply).toMatchObject({
+      ok: true,
+      case: kase.name,
+      runs: 8,
+      current: {
+        servos: [
+          { joint: 'Shoulder', mpn: 'ST-3215-C001' },
+          { joint: 'Elbow', mpn: 'ST-3215-C044' },
+          { joint: 'Wrist', mpn: 'ST-3215-C044' },
+        ],
+      },
+      designs: [
+        { servos: 'current design', passes: 8, worst_margin: 0.104, cost_usd: 63.98, mass_g: 1234, current: true },
+        {
+          servos: 'Shoulder C046',
+          passes: 1,
+          worst_margin: -0.02,
+          changes: [{ joints: ['Shoulder'], mpn: 'ST-3215-C046' }],
+        },
+      ],
+    });
+  });
+
+  it('says why it can’t explore', async () => {
+    expect(await CASE_HANDLERS.explore_case({}, ctxWith('No joint has a catalog servo.'))).toEqual({
+      ok: false,
+      problem: 'No joint has a catalog servo.',
+    });
+    expect(await CASE_HANDLERS.explore_case({}, ctxWith(null, null))).toMatchObject({ ok: false });
+    expect(await CASE_HANDLERS.explore_case({ case: 'Nope' }, ctxWith(null))).toMatchObject({ ok: false });
   });
 });

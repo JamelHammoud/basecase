@@ -5,10 +5,13 @@ import type { WorldKind } from '../cases/caseWorlds';
 import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
 import { comparable, type Comparison } from '../cases/caseCompare';
+import { designLabel, designServos, EXPLORE_RUNS, sameDesign } from '../cases/explore';
+import { sortRows } from '../cases/exploreSort';
 import type { Case } from '../cases/schema';
 import { caseNamed, runCase, type RunCaseContext } from './agentCaseRun';
 import type { Cases } from './useCases';
 import type { CaseCompare } from './useCaseCompare';
+import type { CaseExplore, Exploration } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
 import { errorMessage } from '../utils/errorMessage';
 
@@ -17,6 +20,7 @@ type Payload = Record<string, unknown>;
 interface CaseContext extends RunCaseContext {
   cases: Cases;
   caseCompare: Pick<CaseCompare, 'choicesFor' | 'compareNow' | 'start'>;
+  caseExplore: Pick<CaseExplore, 'explore'>;
   caseRun: Pick<CaseRun, 'enterCase'>;
   routines: { checkLogic: (logic: unknown) => Promise<CompileResult> };
 }
@@ -150,8 +154,48 @@ async function compareCaseRequest(payload: Payload, ctx: CaseContext) {
   return comparisonReply(kase, await ctx.caseCompare.compareNow(kase, choice.tabId));
 }
 
+const round = (v: number, places: number) => Number(v.toFixed(places));
+
+function exploreReply(kase: Case, { space, rows }: Exploration) {
+  return {
+    ok: true,
+    case: kase.name,
+    runs: EXPLORE_RUNS,
+    current: { servos: designServos(space, space.current), volts: space.current.volts },
+    designs: sortRows(rows, { key: 'passes', descending: true }).map(({ design, runs, changes, costUsd, massG }) => ({
+      servos: sameDesign(design, space.current) ? 'current design' : designLabel(space, design),
+      volts: design.volts,
+      passes: runs.passes,
+      worst_margin: round(runs.worstMargin, 3),
+      cost_usd: round(costUsd, 2),
+      mass_g: Math.round(massG),
+      changes: changes.map(({ joints, mpn }) => ({ joints, mpn })),
+      ...(sameDesign(design, space.current) ? { current: true } : {}),
+      ...(runs.refusal ? { refusal: runs.refusal } : {}),
+    })),
+  };
+}
+
+async function exploreCaseRequest(payload: Payload, ctx: CaseContext) {
+  const wanted = text(payload.case);
+  const kase = wanted ? caseNamed(ctx.cases.cases, wanted) : ctx.cases.active;
+
+  if (!kase)
+    return {
+      ok: false,
+      problem: wanted ? `This scene has no Case named ${wanted}.` : 'No Case is open. Name one with case.',
+    };
+
+  ctx.setAction('Exploring servos');
+
+  const explored = await ctx.caseExplore.explore(kase);
+
+  return typeof explored === 'string' ? { ok: false, problem: explored } : exploreReply(kase, explored);
+}
+
 export const CASE_HANDLERS: Record<string, (payload: Payload, ctx: CaseContext) => Promise<unknown>> = {
   create_case: createCase,
   run_case: runCase,
   compare_case: compareCaseRequest,
+  explore_case: exploreCaseRequest,
 };

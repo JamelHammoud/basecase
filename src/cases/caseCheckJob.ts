@@ -18,6 +18,9 @@ import type { FilmShot } from './filmstrip';
 import { checkFit } from './fitCheck';
 import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
+import type { TryScoring } from './tries';
+import { multiplyTry, type Multiplied } from './tryReplay';
+import { recordingTransfer } from '../sim/recorder';
 
 export interface WireRobot {
   id: string;
@@ -25,6 +28,7 @@ export interface WireRobot {
   joints: RobotJoint[];
   measures: Record<string, MeshMeasure | undefined>;
   triangles: Record<string, Float32Array>;
+  servoVolts?: number;
 }
 
 export interface WalkPick {
@@ -55,12 +59,23 @@ export interface ReplayJob extends Controlled {
   seed: number;
 }
 
-export type CaseCheckJob = { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob;
+export interface MultiplyJob {
+  type: 'multiply';
+  source: TryScoring;
+  seeds: number[];
+}
+
+export type CaseCheckJob =
+  { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob | MultiplyJob;
 
 export type CaseCheckReply =
   | { type: 'model'; modelHash: string; walk: WalkPick | null; stop: string | null }
   | { type: 'runs'; result: SeedRuns }
-  | { type: 'replay'; film: FilmShot | null };
+  | { type: 'replay'; film: FilmShot | null }
+  | { type: 'multiply'; result: Multiplied };
+
+export const replyTransfer = (reply: CaseCheckReply): Transferable[] =>
+  reply.type === 'multiply' ? reply.result.kept.flatMap((v) => recordingTransfer(v.recording)) : [];
 
 export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   id: robot.id,
@@ -68,6 +83,7 @@ export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   joints: robot.joints,
   measures: robot.measures,
   partTriangles: (id) => robot.triangles[id] ?? null,
+  servoVolts: robot.servoVolts,
 });
 
 function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | null {
@@ -94,6 +110,8 @@ export class CaseCheckSession {
 
   async run(mj: MainModule, job: CaseCheckJob): Promise<CaseCheckReply> {
     if (job.type === 'model') return this.fit(mj, job.robot, job.walks);
+
+    if (job.type === 'multiply') return { type: 'multiply', result: await multiplyTry(mj, job.source, job.seeds) };
 
     const held = this.robotFor(job);
     const robot = caseRobotOf(held);

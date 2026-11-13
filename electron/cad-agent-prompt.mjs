@@ -47,6 +47,8 @@ opens it running.
   this version: say so in one sentence, and use keys until it lands.
 - Panels: a camera panel for each camera they mention, then what the experience needs (a score,
   a timer, the tries).
+- A control or readout no panel kind draws (a joystick, a piano, a HUD, picture buttons): a code
+  panel, in a column or as a canvas overlay, with code in the input when it drives.
 - The world: the goal closest to their words on a plain floor, with only the objects they describe;
   behaviours go in its logic.
 - Hardware the app can't connect to yet (a robot over ethernet, a MIDI keyboard): say so in one

@@ -12,7 +12,7 @@ export const ModelTile: React.FC<{
   model: CustomModelDefinition;
   renaming: boolean;
   onInsert: () => void;
-  onRename: (name: string) => void;
+  onRename: (name: string | null) => void;
   onMenu: (e: React.MouseEvent) => void;
 }> = ({ model, renaming, onInsert, onRename, onMenu }) => {
   const rendered = usePartsThumbnail(modelKey(model), () => modelParts(model));

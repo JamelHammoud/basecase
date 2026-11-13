@@ -1,5 +1,6 @@
 import type { Controller } from '../sim/engine';
 import { modelFingerprints } from '../sim/policyFreshness';
+import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import { linkParts, type Rig } from '../utils/kinematics';
@@ -15,7 +16,9 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
   return {
     activeCase: cases.active?.id ?? null,
     caseSeconds: cases.active?.task.seconds ?? null,
+    multiplying: !!cases.multiply.running,
     tries: cases.tries.map((t) => ({
+      generated: !!t.generated,
       passed: t.passed,
       margin: t.margin,
       seconds: t.seconds,
@@ -44,7 +47,21 @@ function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
   };
 }
 
-export function devSimState(core: WorkspaceCore) {
+const DEGREES = 180 / Math.PI;
+
+function jointReadings(model: SimModel | null, joints: Float64Array | null) {
+  if (!model || !joints) return {};
+
+  return Object.fromEntries(
+    model.joints.map((j, i) => {
+      const unit = j.type === 'revolute' ? DEGREES : 1;
+
+      return [j.id, { target: joints[i * 3] * unit, position: joints[i * 3 + 1] * unit }];
+    }),
+  );
+}
+
+export function devSimState(core: WorkspaceCore, joints: Float64Array | null = null) {
   const { sim, skills } = core.simTraining;
   const stats = sim.latestStats() ?? sim.stats;
 
@@ -69,5 +86,6 @@ export function devSimState(core: WorkspaceCore) {
     scanPoints: core.viewportRef.current?.scanPointCount() ?? 0,
     fingerprints: modelFingerprints(skills.model),
     controller: controllerState(sim.controller),
+    joints: jointReadings(sim.model, joints),
   };
 }

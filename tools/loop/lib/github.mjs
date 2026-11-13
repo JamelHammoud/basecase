@@ -14,6 +14,43 @@ export const repo = () => {
 const PULL_FIELDS =
   'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable,labels,updatedAt,statusCheckRollup';
 
+const FILLER = new Set(
+  'the and with from for into its their this that each every one any all a an as at by of on in to or so when'.split(
+    ' ',
+  ),
+);
+const KIND_WORDS = new Set([
+  'feature',
+  'integration',
+  'refine',
+  'fix',
+  'repair',
+  'lesson',
+  'loop',
+  'update',
+  'market',
+  'harness',
+]);
+
+const titleWords = (title) =>
+  new Set(
+    title
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((word) => word.length >= 3 && !FILLER.has(word) && !KIND_WORDS.has(word)),
+  );
+
+export const similarTitle = (a, b) => {
+  const [x, y] = [titleWords(a), titleWords(b)];
+  const shared = [...x].filter((word) => y.has(word)).length;
+  const smaller = Math.min(x.size, y.size);
+  const union = x.size + y.size - shared;
+
+  if (smaller < 3) return false;
+
+  return shared / union >= 0.6 || shared / smaller >= 0.8;
+};
+
 export const sameTitle = (a, b) => {
   const norm = (t) =>
     t
@@ -230,7 +267,7 @@ const openIssueTitles = () =>
   json('gh', ['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'title', '--jq', '[.[].title]']) ?? [];
 
 export const createIssue = ({ title, body, labels }) => {
-  if (openIssueTitles().some((open) => sameTitle(open, title))) return null;
+  if (openIssueTitles().some((open) => sameTitle(open, title) || similarTitle(open, title))) return null;
 
   return ghCreating(
     ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],

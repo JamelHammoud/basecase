@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sameTitle, stuckRuns, verdictOf } from './github.mjs';
+import { sameTitle, similarTitle, stuckRuns, verdictOf } from './github.mjs';
 
 describe('sameTitle', () => {
   it.each([
@@ -14,6 +14,32 @@ describe('sameTitle', () => {
 
   it('tells different work apart', () => {
     expect(sameTitle('Feature: Import from Onshape', 'Feature: Import from Fusion')).toBe(false);
+  });
+});
+
+describe('similarTitle', () => {
+  it.each([
+    [
+      'Open a Case as a Command Center with the robot, its cameras, the operator camera, joints and tries in one window',
+      'Open a Case in a Command Center showing the robot, its cameras, joints and tries',
+    ],
+    [
+      'Feature: Number each servo as you plug it in, with the canvas lighting its joint',
+      'Number each servo as it is plugged in, lighting its joint on the canvas',
+    ],
+  ])('treats %s and %s as the same work', (a, b) => {
+    expect(similarTitle(a, b)).toBe(true);
+  });
+
+  it.each([
+    ['Feature: Import from Onshape', 'Feature: Import from Fusion'],
+    [
+      'Drive any robot from live inputs, starting with arm and hand pose from the camera',
+      'Open a Case as a Command Center with the robot and its cameras',
+    ],
+    ['Simulate catalog LiDARs from their spec rows', 'Import a scanned room as a Case world at true size'],
+  ])('tells %s and %s apart', (a, b) => {
+    expect(similarTitle(a, b)).toBe(false);
   });
 });
 

@@ -364,7 +364,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
     ...(core.marks.marks.length
       ? [
           {
-            id: 'tool-eraser',
+            id: 'tool-erase-marks',
             group: 'Tools',
             label: 'Eraser',
             shortcut: 'E',

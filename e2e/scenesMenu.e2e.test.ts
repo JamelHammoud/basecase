@@ -68,11 +68,11 @@ describe('scenes menu', () => {
 
   it('runs a background tab’s name to its edge until hover shows its close button', async () => {
     const { page } = app;
-    const background = page.locator('[role="tab"][aria-selected="false"]').first();
+    const background = page.locator('[role="tab"][aria-selected="false"]:has([data-tab-close])').first();
     const close = background.locator('[data-tab-close]');
     const clickable = () => close.evaluate((el) => getComputedStyle(el).pointerEvents);
 
-    await page.getByRole('button', { name: 'New scene' }).first().click();
+    await page.getByRole('button', { name: 'New scene', exact: true }).first().click();
     await expect.poll(() => background.count()).toBe(1);
     await page.mouse.move(400, 400);
     await expect.poll(clickable).toBe('none');
@@ -80,7 +80,7 @@ describe('scenes menu', () => {
     const tab = await background.boundingBox();
     const name = await background.locator('.truncate').boundingBox();
 
-    expect(tab && name && tab.x + tab.width - (name.x + name.width)).toBeLessThanOrEqual(10);
+    expect(tab && name && tab.x + tab.width - (name.x + name.width)).toBeCloseTo(10, 0);
     await background.hover();
     await expect.poll(clickable).toBe('auto');
   });

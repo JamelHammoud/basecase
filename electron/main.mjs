@@ -11,6 +11,7 @@ import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
+import { registerHubHandlers } from './hub/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
@@ -214,6 +215,7 @@ ipcMain.handle('library:save-scene-json', (_e, json) => backend.saveScene(JSON.p
 ipcMain.handle('library:delete-scene', (_e, sceneId) => backend.deleteScene(sceneId));
 registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
+registerHubHandlers(ipcMain, backend.hub);
 registerShareHandlers(ipcMain);
 
 const robot = new RobotLink({

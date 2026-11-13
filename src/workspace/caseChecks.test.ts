@@ -8,13 +8,17 @@ import { ruleFinding } from '../readiness/wording';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import type { ProjectSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
+import { platformBridge } from '../utils/platformBridge';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 
 vi.mock('../cases/caseChecksClient', () => ({
   caseCheckPool: { size: 2, run: vi.fn(), keepOnly: vi.fn() },
 }));
 
+vi.mock('../utils/platformBridge', () => ({ platformBridge: { getSkill: vi.fn() } }));
+
 const run = vi.mocked(caseCheckPool.run);
+const getSkill = vi.mocked(platformBridge.getSkill);
 const keepOnly = vi.mocked(caseCheckPool.keepOnly);
 
 function sceneWith(robotId: string, templateId: string) {
@@ -102,5 +106,19 @@ describe('Case rows in Checks', () => {
     expect((await overtaken)[0]).toMatchObject({ status: 'pass', detail: '20 of 20' });
     expect((await newest)[0]).toMatchObject({ status: 'pass', detail: '20 of 20' });
     expect(run).toHaveBeenCalledTimes(3);
+  });
+
+  it('ask for the Walk again on the next check when its skill couldn’t be read', async () => {
+    const walk = { hash: 'walk', kit: 'velocity-tracking', evidence: { passed: true }, createdAt: '2026-11-13' };
+    const scene = sceneWith('hexapod', 'reach-the-flag');
+    const project = { ...scene.project, skills: [walk] } as unknown as ProjectSettings;
+
+    run.mockResolvedValue(modelReply);
+    getSkill.mockRejectedValueOnce(new Error('The bridge is down.')).mockResolvedValue(null);
+
+    await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
+    await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
+
+    expect(getSkill).toHaveBeenCalledTimes(2);
   });
 });

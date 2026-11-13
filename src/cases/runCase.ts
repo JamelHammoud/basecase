@@ -95,31 +95,36 @@ function driveFor({ kase, rig, robot, facts, effector }: DriveFor): DriveSetup |
 const LEGS_FORWARD: V3 = [0, 0, 1];
 
 interface SteerFor {
-  setup: DriveSetup | null;
+  fit: Fitted;
   model: SimModel;
-  base: ProbeBase;
-  wheelAxes: V3[];
   objectAt: Map<string, V3>;
 }
 
-function steerFor({ setup, model, base, wheelAxes, objectAt }: SteerFor): GroundSteer | null {
-  if (!setup || setup.kind === 'arm' || !base.part) return null;
+function steerWay({ setup, walk, wheelAxes }: Fitted): { forward: V3; sideways: boolean } | null {
+  if (walk || setup?.kind === 'legs') return { forward: LEGS_FORWARD, sideways: true };
 
-  const forward = setup.kind === 'rover' ? (roverForward(wheelAxes).toArray() as V3) : LEGS_FORWARD;
+  return setup?.kind === 'rover' ? { forward: roverForward(wheelAxes).toArray() as V3, sideways: false } : null;
+}
 
-  const sideways = setup.kind === 'legs';
+function steerFor({ fit, model, objectAt }: SteerFor): GroundSteer | null {
+  const way = steerWay(fit);
+  const { part, point } = fit.probeBase;
 
-  return new GroundSteer({ model, part: base.part, point: base.point, forward, objectAt, sideways });
+  return way && part ? new GroundSteer({ model, part, point, objectAt, ...way }) : null;
 }
 
 const toCommand = (c: ReferenceCommand): DriveCommand => ({ v: c.v ?? [0, 0, 0], target: c.target, aux: c.aux });
 
-function chooseController(setup: DriveSetup | null, options: RunOptions): Controller {
-  if (options.controller === 'limp' || !setup) return { kind: 'limp' };
+function chooseController({ setup, walk, rig }: Fitted): Controller {
+  if (walk) return { kind: 'policy', policy: walk.policy, robot: rig.robots[0]?.key ?? '' };
 
-  if (options.walk && setup.kind === 'legs') return { kind: 'policy', policy: options.walk.policy, robot: setup.robot };
+  return setup ? { kind: 'drive', setup } : { kind: 'limp' };
+}
 
-  return { kind: 'drive', setup };
+function walkFor(setup: DriveSetup | null, facts: RobotFacts, options: RunOptions): VelocityDrive | null {
+  const floating = facts.morphology !== 'fixed';
+
+  return options.controller === 'reference' && floating && setup?.kind !== 'arm' ? (options.walk ?? null) : null;
 }
 
 interface Rollout {
@@ -221,6 +226,7 @@ interface Fitted {
   effector: EndEffector | null;
   probeBase: ProbeBase;
   setup: DriveSetup | null;
+  walk: VelocityDrive | null;
   wheelAxes: V3[];
 }
 
@@ -251,7 +257,9 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
     point: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
   };
 
-  return { input, rig, facts, scaled, effector, probeBase, setup, wheelAxes };
+  const walk = walkFor(setup, facts, options);
+
+  return { input, rig, facts, scaled, effector, probeBase, setup, walk, wheelAxes };
 }
 
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
@@ -261,7 +269,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.rig, fit.facts) });
   const signals: Record<string, number[]> = {};
   const objectAt = new Map(kase.world.objects.map((o) => [o.id, o.position]));
-  const { probeBase, setup } = fit;
+  const { probeBase, walk } = fit;
   const reader = probeReader(kase.task.probes, {
     model,
     effector: fit.effector,
@@ -269,10 +277,9 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     basePoint: probeBase.point,
     objectAt,
   });
-  const steer = steerFor({ setup, model, base: probeBase, wheelAxes: fit.wheelAxes, objectAt });
-  const controller = chooseController(setup, options);
+  const steer = steerFor({ fit, model, objectAt });
+  const controller = chooseController(fit);
   const { engine, dispose } = startEngine(mj, model, { controller, options });
-  const walk = controller.kind === 'policy' ? options.walk : null;
   const send = (c: DriveCommand) => engine.command(walk ? policyCommand(c, walk.topSpeed) : c);
 
   try {
@@ -297,15 +304,22 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
 
 export interface CaseRunner {
   refusal: string | null;
+  controller: Controller['kind'];
   run: (seed?: number) => Promise<CaseResult>;
 }
 
 export function caseRunner(mj: MainModule, authored: Case, robot: CaseRobot, options: RunOptions): CaseRunner {
   const fit = fitted(authored, robot, options);
 
-  if ('refusal' in fit) return { refusal: fit.refusal, run: async () => refused(authored, fit.refusal, fit.input) };
+  if ('refusal' in fit) {
+    return { refusal: fit.refusal, controller: 'limp', run: async () => refused(authored, fit.refusal, fit.input) };
+  }
 
-  return { refusal: null, run: (seed = options.seed) => rollFitted(mj, fit, { ...options, seed }) };
+  return {
+    refusal: null,
+    controller: chooseController(fit).kind,
+    run: (seed = options.seed) => rollFitted(mj, fit, { ...options, seed }),
+  };
 }
 
 export const runCase = (mj: MainModule, authored: Case, robot: CaseRobot, options: RunOptions): Promise<CaseResult> =>

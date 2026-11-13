@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { caseFindings, caseRow } from '../readiness/caseChecks';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import type { FixtureRobot } from '../sim/fixtures/parts';
+import { obsSize, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../sim/policy';
+import { modelOf } from '../skills/fixtureModels';
 import { buildRig } from '../utils/kinematics';
 import { buildCase, builderRobot } from './caseBuilder';
 import { caseRunner } from './runCase';
@@ -133,6 +135,74 @@ describe('seeded Case runs', () => {
 
       expect(caseRow(flag, await runCaseTimes(mj, flag, caseRobot(robot))).status).toBe(status);
     });
+  });
+});
+
+function holdPolicy(robot: FixtureRobot): PolicySpec {
+  const model = modelOf(robot);
+  const joints = model.joints.map((j) => j.id);
+  const size = obsSize(joints.length);
+
+  return {
+    format: POLICY_FORMAT,
+    version: POLICY_VERSION,
+    task: 'walk',
+    robot: model.robots[0].key,
+    joints,
+    defaultPose: joints.map(() => 0),
+    actionScale: 0.25,
+    controlDt: 0.02,
+    command: [0, 0, 0],
+    obsMean: new Array<number>(size).fill(0),
+    obsStd: new Array<number>(size).fill(1),
+    layers: [
+      { in: size, out: joints.length, w: new Array<number>(size * joints.length).fill(0), b: joints.map(() => 0) },
+    ],
+    activation: 'elu',
+    trainedSteps: 0,
+    mujoco: 'none',
+    createdAt: '2026-11-13T00:00:00.000Z',
+  };
+}
+
+describe('a ready Walk drives every robot that moves around, as Drive picks it', () => {
+  const walkCase = (robot: FixtureRobot): Case => {
+    const made = buildCase(
+      { goal: 'walk', world: 'floor' },
+      builderRobot(buildRig(robot.joints, robot.parts), robot.parts),
+    );
+
+    if (!made.ok) throw new Error(made.problem);
+
+    return made.kase;
+  };
+
+  it.each([
+    { robot: 'biped-servo', without: 'limp' },
+    { robot: 'wheel-legged', without: 'drive' },
+    { robot: 'quad-servo', without: 'drive' },
+  ])('$robot walks with its policy, and without one is $without', async ({ robot: id, without }) => {
+    const mj = await loadMujoco();
+    const robot = fixture(id);
+    const kase = walkCase(robot);
+    const walk = { policy: holdPolicy(robot), topSpeed: 0.2 };
+    const walking = caseRunner(mj, kase, caseRobot(robot), { controller: 'reference', walk });
+
+    expect(walking.controller).toBe('policy');
+    expect(caseRunner(mj, kase, caseRobot(robot), { controller: 'reference' }).controller).toBe(without);
+    expect((await walking.run(1)).frames.length).toBeGreaterThan(0);
+  });
+
+  it('a fixed arm ignores the Walk', async () => {
+    const mj = await loadMujoco();
+    const arm = fixture('arm-3dof');
+    const touch = template(arm, 'touch-the-dots');
+    const runner = caseRunner(mj, touch, caseRobot(arm), {
+      controller: 'reference',
+      walk: { policy: holdPolicy(arm), topSpeed: 0.2 },
+    });
+
+    expect(runner.controller).toBe('drive');
   });
 });
 

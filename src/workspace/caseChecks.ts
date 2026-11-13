@@ -42,7 +42,7 @@ const isSkill = (value: unknown): value is Skill =>
 const offers = new Map<string, Promise<WalkOffer | null>>();
 
 async function loadOffer(record: SkillRecord): Promise<WalkOffer | null> {
-  const skill = await platformBridge.getSkill(record.hash).catch(() => null);
+  const skill = await platformBridge.getSkill(record.hash);
 
   return isSkill(skill) && skill.controller.kind === 'policy' ? { record, policy: skill.controller.policy } : null;
 }
@@ -54,11 +54,19 @@ function walkOffer(project: ProjectSettings): Promise<WalkOffer | null> {
 
   if (!record) return Promise.resolve(null);
 
-  const known = offers.get(record.hash) ?? loadOffer(record);
+  const known = offers.get(record.hash);
 
-  offers.set(record.hash, known);
+  if (known) return known;
 
-  return known;
+  const loading = loadOffer(record).catch(() => {
+    offers.delete(record.hash);
+
+    return null;
+  });
+
+  offers.set(record.hash, loading);
+
+  return loading;
 }
 
 function wireRobot(input: CaseChecksInput): WireRobot {

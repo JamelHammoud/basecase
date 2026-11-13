@@ -2,16 +2,6 @@ import React from 'react';
 import type { CatalogItem, PartDimensions } from '../types/robotics';
 import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/components';
 import { isSourcedId } from '../data/sourcedItems';
-import {
-  FINISHES,
-  THREAD,
-  hardwareFinish,
-  hardwareName,
-  hardwareSubtitle,
-  hardwareShopUrl,
-  isMetric,
-  motionOf,
-} from '../data/hardware';
 import { usePartThumbnail } from '../three/partThumbnails';
 import { MetaLine, Tooltip, ArrowUpRightIcon, CartIcon, DrawingIcon, FileIcon, VerifiedIcon } from '../design-system';
 
@@ -112,15 +102,11 @@ export const SpecText: React.FC<{ value: SpecValue }> = ({ value }) => (
   </>
 );
 
-export const SizeSpecRow: React.FC<{ d: PartDimensions }> = ({ d }) => (
-  <SpecRow label="Size">
-    <SizeLine w={d.width} h={d.height} d={d.depth} />
-  </SpecRow>
-);
-
 export const SpecRows: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, d }) => (
   <dl className="-my-[5px]">
-    <SizeSpecRow d={d} />
+    <SpecRow label="Size">
+      <SizeLine w={d.width} h={d.height} d={d.depth} />
+    </SpecRow>
     {c.specs.map(([label, value]) => (
       <SpecRow key={label} label={label}>
         <SpecText value={value} />
@@ -164,25 +150,15 @@ const sourceBadge = (c: ComponentInfo): HeroBadge => {
   return { icon: <DrawingIcon className="w-3.5 h-3.5 text-white/60" />, label: 'From the drawing' };
 };
 
-const heroBadge = (source: ComponentInfo | 'iso' | undefined): HeroBadge | undefined => {
-  if (source === 'iso') {
-    return ISO_BADGE;
-  }
-
-  return source ? sourceBadge(source) : undefined;
-};
-
-const ISO_BADGE: HeroBadge = { icon: <VerifiedIcon className="w-3.5 h-3.5 text-[#0d99ff]" />, label: 'ISO dimensions' };
-
 export const Hero: React.FC<
   {
     item: CatalogItem;
-    source?: ComponentInfo | 'iso';
+    source?: ComponentInfo;
     className?: string;
   } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
 > = ({ item, source, className = 'h-[136px]', ...rest }) => {
   const thumb = usePartThumbnail(item);
-  const badge = heroBadge(source);
+  const badge = source && sourceBadge(source);
 
   return (
     <div
@@ -255,84 +231,30 @@ const Footer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
   const c = item.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
   const d = item.defaultDimensions;
-  const size = <SizeLine w={d.width} h={d.height} d={d.depth} />;
 
-  if (c) {
-    return (
-      <div className="pb-0">
-        <Hero item={item} source={c} />
-        <Header
-          title={c.name}
-          subtitle={[c.manufacturer, isSourcedId(c.id) ? 'Added by Agent' : c.mpn]}
-          description={c.description}
-        />
-        <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
-          <Stat label="Size" wide>
-            {size}
-          </Stat>
-          {c.specs.slice(0, 4).map(([label, value]) => (
-            <Stat key={label} label={label}>
-              <SpecText value={value} />
-            </Stat>
-          ))}
-        </div>
-        <Footer>
-          <BuyLinks c={c} />
-        </Footer>
-      </div>
-    );
-  }
-
-  const hw = item.hardware;
-
-  if (hw) {
-    const finish = FINISHES[hardwareFinish(hw)];
-
-    return (
-      <div>
-        <Hero item={item} source="iso" />
-        <Header title={hardwareName(hw)} subtitle={hardwareSubtitle(hw)} />
-        <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
-          <Stat label="Size" wide>
-            {size}
-          </Stat>
-          {isMetric(hw.size) && <Stat label="Thread">{`${hw.size} × ${THREAD[hw.size].pitch}`}</Stat>}
-          {motionOf(hw.type)
-            ?.facts(hw)
-            .slice(0, 1)
-            .map((f) => (
-              <Stat key={f.label} label={f.label}>{`${f.value}${f.unit ? ` ${f.unit}` : ''}`}</Stat>
-            ))}
-          <Stat label="Finish">
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className="w-2.5 h-2.5 rounded-full ring-1 ring-white/20 shrink-0"
-                style={{ background: finish.color }}
-              />
-              {finish.label}
-            </span>
-          </Stat>
-        </div>
-        <Footer>
-          <div className="flex-1 min-w-0 [&>a]:w-full">
-            <LinkButton href={hardwareShopUrl(hw)} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
-              Find on Amazon
-            </LinkButton>
-          </div>
-        </Footer>
-      </div>
-    );
-  }
+  if (!c) return null;
 
   return (
-    <div className="pb-4">
-      <Hero item={item} />
-      <Header title={item.name} subtitle="Resizable in the Inspector" description={item.description} />
-      <div className="px-4 mt-3">
+    <div className="pb-0">
+      <Hero item={item} source={c} />
+      <Header
+        title={c.name}
+        subtitle={[c.manufacturer, isSourcedId(c.id) ? 'Added by Agent' : c.mpn]}
+        description={c.description}
+      />
+      <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
         <Stat label="Size" wide>
-          {size}
+          <SizeLine w={d.width} h={d.height} d={d.depth} />
         </Stat>
+        {c.specs.slice(0, 4).map(([label, value]) => (
+          <Stat key={label} label={label}>
+            <SpecText value={value} />
+          </Stat>
+        ))}
       </div>
+      <Footer>
+        <BuyLinks c={c} />
+      </Footer>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import type { SceneRobot } from '../app/tabModel';
 import type { CompareRobot } from '../cases/caseCompare';
+import type { CaseConsole } from '../cases/console/format';
 import type { Case } from '../cases/schema';
 import type { PrintersState } from '../app/usePrinters';
 import type { SettingsPane } from '../app/settingsPanes';
@@ -164,7 +165,7 @@ export interface Snapshot {
   marks: SceneMark[] | undefined;
   skeleton: RobotSkeleton | undefined;
   tether?: Tether;
-  cases?: ProjectSettings['cases'];
+  consoles?: Record<string, CaseConsole | undefined>;
 }
 
 export interface DocState {

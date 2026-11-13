@@ -27,7 +27,7 @@ Take back one step of the agent's work, or everything it changed in its last run
 
 1. Press [[⌘Z]].
 
-Each change the agent makes, such as adding parts, reshaping one or writing a Case's code panel, is one undo step. Press [[⌘Z]] again to go further back, up to 50 steps.
+Each change the agent makes, such as adding parts, reshaping one or writing a Case's code panel, is one undo step. Press [[⌘Z]] again to go further back, up to 50 steps. While a Case runs, [[⌘Z]] steps back through code panel changes only and stops at any other change.
 
 ## Revert a whole run
 

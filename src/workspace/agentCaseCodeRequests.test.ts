@@ -4,11 +4,11 @@ import { openTestFrame, type TestFrame } from '../cases/console/fixtures/codeFra
 import { createSignalBus } from '../cases/console/signalBus';
 import type { Case } from '../cases/schema';
 import { fixtureRobots } from '../sim/fixtures/robots';
-import { DEFAULT_PROJECT, type ProjectSettings } from '../types/robotics';
+import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { CASE_CODE_HANDLERS, type CaseCodeContext } from './agentCaseCodeRequests';
-import { docFromParts, pushHistory, restoredProject, stepHistory, supplyFor } from './docHistory';
-import type { DocState, Snapshot } from './types';
+import { consolesOf, docFromParts, pushHistory, trackedOf, travelProject, withCaseConsoles } from './docHistory';
+import type { DocState } from './types';
 
 const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
 
@@ -22,8 +22,6 @@ const opened: TestFrame[] = [];
 
 afterEach(() => opened.splice(0).forEach((f) => f.close()));
 
-const NO_SNAPSHOT = { pose: undefined, joints: undefined, marks: undefined, skeleton: undefined };
-
 function studio({ running = true } = {}) {
   let project: ProjectSettings = { ...DEFAULT_PROJECT, cases: [roverCase()] };
   let doc: DocState = docFromParts([]);
@@ -31,9 +29,9 @@ function studio({ running = true } = {}) {
   const ctx = (): CaseCodeContext => ({
     cases: { cases: project.cases!, active: project.cases![0], open: calls.open },
     caseRun: { open: running, enterCase: calls.enterCase },
-    commitCases: (update) => {
-      doc = pushHistory(doc, doc.parts, { ...NO_SNAPSHOT, cases: project.cases });
-      project = { ...project, cases: update(project.cases) };
+    commitConsole: (id, console) => {
+      doc = pushHistory(doc, doc.parts, { ...trackedOf(project), consoles: consolesOf(project.cases, [id]) });
+      project = { ...project, cases: withCaseConsoles(project.cases, { [id]: console }) };
     },
     report: async (_key, source) => {
       const frame = openTestFrame(source, {
@@ -48,19 +46,28 @@ function studio({ running = true } = {}) {
     },
   });
 
-  const undo = () => {
-    const here: Snapshot = { parts: [], ...NO_SNAPSHOT, ...supplyFor(doc, 'undo', project) };
-    const moved = stepHistory(doc, here, 'undo')!;
+  const undo = (codeOnly = false) => {
+    const moved = travelProject(doc, project, { direction: 'undo', codeOnly });
+
+    if (!moved) return;
 
     doc = moved.doc;
-    project = { ...project, ...restoredProject(moved.to, here) };
+    project = moved.project;
+  };
+
+  const editParts = (parts: ScenePart[]) => {
+    doc = pushHistory(doc, parts, trackedOf(project));
+  };
+
+  const renameCase = (name: string) => {
+    project = { ...project, cases: project.cases!.map((c) => ({ ...c, name })) };
   };
 
   const write = (payload: Record<string, unknown>) =>
     CASE_CODE_HANDLERS.write_case_code({ panel: 'remote', ...payload }, ctx()) as Promise<Record<string, unknown>>;
   const read = () => CASE_CODE_HANDLERS.read_case_code({ panel: 'remote' }, ctx()) as Record<string, unknown>;
 
-  return { write, read, undo, calls, history: () => doc.past.length };
+  return { write, read, undo, editParts, renameCase, calls, parts: () => doc.parts, history: () => doc.past.length };
 }
 
 describe('write_case_code', () => {
@@ -103,10 +110,25 @@ describe('write_case_code', () => {
     expect(app.history()).toBe(2);
     expect(app.read().source).toBe('<button>Wave</button><button>Sit</button>');
 
+    app.renameCase('Rover Remote');
     app.undo();
     expect(app.read().source).toBe('<button>Wave</button>');
     app.undo();
-    expect(app.read()).toMatchObject({ ok: false, problem: 'Remote has no code panel named remote.' });
+    expect(app.read()).toMatchObject({ ok: false, problem: 'Rover Remote has no code panel named remote.' });
+  });
+
+  it('undoes only the code writes while the Case runs, leaving the parts edit before them alone', async () => {
+    const app = studio();
+    const parts = rover.parts.slice(0, 2);
+
+    app.editParts(parts);
+    await app.write({ source: '<button>Wave</button>' });
+    app.undo(true);
+    app.undo(true);
+    expect(app.parts()).toBe(parts);
+    expect(app.history()).toBe(1);
+    app.undo();
+    expect(app.parts()).toEqual([]);
   });
 
   it('refuses an oversized source through parseCase, and changes nothing', async () => {

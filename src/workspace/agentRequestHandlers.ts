@@ -5,6 +5,7 @@ import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import type { CaseConsole } from '../cases/console/format';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
 import { downscaleDataUrl } from '../utils/imageFile';
@@ -62,7 +63,7 @@ export interface RequestContext {
   slice: (report: PrintReport) => Promise<SliceRecord>;
   viewport: () => Viewport3DHandle | null;
   setProjectNow: (next: ProjectSettings) => void;
-  commitCases: (update: (cases: ProjectSettings['cases']) => ProjectSettings['cases']) => void;
+  commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
   insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;

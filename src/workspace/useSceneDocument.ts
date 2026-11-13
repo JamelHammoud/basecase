@@ -11,15 +11,17 @@ import {
 import type { RobotSkeleton } from '../types/skeleton';
 import { editWithOperands } from '../booleans/operands';
 import { jointsWithoutParts } from '../utils/kinematics';
+import type { CaseConsole } from '../cases/console/format';
 import {
   EMPTY_DOC,
+  consolesOf,
   docFromParts,
   liveEdit,
   pushHistory,
-  restoredProject,
-  stepHistory,
-  supplyFor,
-  type HistoryDirection,
+  trackedOf,
+  travelProject,
+  withCaseConsoles,
+  type HistoryStep,
 } from './docHistory';
 import { useBooleanResults } from './useBooleanResults';
 import { projectFromSeed } from './helpers';
@@ -69,11 +71,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   useBooleanResults(doc.parts, docRef, writeDoc);
 
   const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
-  const tracked = (): Omit<Snapshot, 'parts'> => {
-    const { pose, joints, marks, skeleton } = projectRef.current;
-
-    return { pose, joints, marks, skeleton };
-  };
+  const tracked = () => trackedOf(projectRef.current);
 
   const settleLiveJoints = (key?: string) => {
     const pending = liveJointsRef.current;
@@ -161,24 +159,24 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   const commitDesign = (parts: ScenePart[], tether: Tether | undefined) =>
     commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts);
 
-  const commitCases = (update: (cases: ProjectSettings['cases']) => ProjectSettings['cases']) =>
-    commitProject({ cases: projectRef.current.cases }, (p) => ({ ...p, cases: update(p.cases) }));
+  const commitConsole = (caseId: string, console: CaseConsole | undefined) =>
+    commitProject({ consoles: consolesOf(projectRef.current.cases, [caseId]) }, (p) => ({
+      ...p,
+      cases: withCaseConsoles(p.cases, { [caseId]: console }),
+    }));
 
-  const travel = (direction: HistoryDirection, restorePose: (pose: RobotPoseState | undefined) => void) => {
+  const travel = (step: HistoryStep, restorePose: (pose: RobotPoseState | undefined) => void) => {
     settleLiveJoints();
 
-    const d = docRef.current;
-    const here: Snapshot = { parts: d.parts, ...tracked(), ...supplyFor(d, direction, projectRef.current) };
-    const moved = stepHistory(d, here, direction);
+    const moved = travelProject(docRef.current, projectRef.current, step);
 
     if (!moved) return;
 
     writeDoc(moved.doc);
     lastPoseEditRef.current = 0;
+    setProjectNow(moved.project);
 
-    updateProjectNow((p) => ({ ...p, ...restoredProject(moved.to, here) }));
-
-    if (moved.to.pose !== here.pose) restorePose(moved.to.pose);
+    if (moved.to.pose !== moved.here.pose) restorePose(moved.to.pose);
   };
 
   const clearDocument = () => {
@@ -198,7 +196,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     commitMarks,
     commitJoints,
     commitDesign,
-    commitCases,
+    commitConsole,
     recordPoseEdit,
     recordSkeletonEdit,
     resetDoc: (parts: ScenePart[]) => writeDoc(docFromParts(parts)),

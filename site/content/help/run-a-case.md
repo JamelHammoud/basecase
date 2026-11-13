@@ -65,7 +65,7 @@ A console that lists `camera` among its inputs opens the computer's camera when 
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
-A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc, [[⌘K]], [[⌘Z]] and [[⌘I]] still work while you use it, and [[⌘I]] shows the **Agent** tab beside the Case. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
+A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc, [[⌘K]], [[⌘Z]] and [[⌘I]] still work while you use it, and [[⌘I]] shows the **Agent** tab beside the Case. There, [[⌘Z]] undoes only changes to the code panels, so the robot stays as it is. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 

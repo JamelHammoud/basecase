@@ -6,7 +6,7 @@ import {
   type CodeEdit,
   type CodePlace,
 } from '../cases/console/codeEdits';
-import { codePanelKey, codeReport } from '../cases/console/codeReports';
+import { codePanelKey, codeReport, codeReportsWatched } from '../cases/console/codeReports';
 import type { CaseConsole } from '../cases/console/format';
 import { OVERLAY_ANCHORS, type OverlayAnchor } from '../cases/console/format';
 import { parseCase, type Case } from '../cases/schema';
@@ -17,25 +17,25 @@ import type { CaseRun } from './useCaseRun';
 
 type Payload = Record<string, unknown>;
 
-type CaseList = Case[] | undefined;
-
 export interface CaseCodeContext {
   cases: Pick<Cases, 'cases' | 'active' | 'open'>;
   caseRun: Pick<CaseRun, 'open' | 'enterCase'>;
-  commitCases: (update: (cases: CaseList) => CaseList) => void;
-  report?: (key: string, source: string) => Promise<CodeReport | null>;
+  commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
+  report?: (key: string, source: string, since: number) => Promise<CodeReport | null>;
 }
 
 export const LOAD_MS = 12_000;
 export const SETTLE_MS = 2_000;
 
+const REMOUNT_MS = 1_000;
+
 const POLL_MS = 100;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function settledReport(key: string, source: string, wait = sleep): Promise<CodeReport | null> {
+export async function settledReport(key: string, source: string, since = 0, wait = sleep): Promise<CodeReport | null> {
   for (let waited = 0; waited < LOAD_MS; waited += POLL_MS) {
-    const report = codeReport(key, source);
+    const report = codeReport(key, source, waited < REMOUNT_MS ? since : 0);
 
     if (report?.failed) return report;
 
@@ -97,8 +97,6 @@ function checked(kase: Case, edit: CodeEdit): Case | string {
   }
 }
 
-const replaced = (next: Case) => (cases: CaseList) => (cases ?? []).map((c) => (c.id === next.id ? next : c));
-
 function runIt(kase: Case, ctx: CaseCodeContext) {
   if (ctx.caseRun.open && ctx.cases.active?.id === kase.id) return;
 
@@ -127,10 +125,12 @@ async function writeCaseCode(payload: Payload, ctx: CaseCodeContext) {
 
   if (typeof next === 'string') return { ok: false, problem: next };
 
-  ctx.commitCases(replaced(next));
+  const since = codeReportsWatched();
+
+  ctx.commitConsole(next.id, next.console);
   runIt(next, ctx);
 
-  const report = (await (ctx.report ?? settledReport)(codePanelKey(next.id, panel), source)) ?? UNLOADED;
+  const report = (await (ctx.report ?? settledReport)(codePanelKey(next.id, panel), source, since)) ?? UNLOADED;
 
   return {
     ok: true,
@@ -202,7 +202,7 @@ function deleteCaseCode(payload: Payload, ctx: CaseCodeContext) {
 
   if (typeof next === 'string') return { ok: false, problem: next };
 
-  ctx.commitCases(replaced(next));
+  ctx.commitConsole(next.id, next.console);
 
   return { ok: true, case: next.id, panel, panels: codePanelsOf(next.console).map((p) => p.id) };
 }

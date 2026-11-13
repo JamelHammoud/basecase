@@ -58,7 +58,7 @@ function firstDelivery(requestId: string) {
 
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
-  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitCases } = docs;
+  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
@@ -148,7 +148,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     slice: (report) => core.printing.job.sliceReport(report),
     viewport: () => viewportRef.current,
     setProjectNow,
-    commitCases,
+    commitConsole,
     insertParts: (parts, joints) => {
       commitParts((prev) => [...prev, ...parts]);
       updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));

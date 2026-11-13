@@ -33,6 +33,13 @@ const panel = (id: string) => app.page.locator(shown(`[data-panel="${id}"]`));
 
 const remote = () => app.page.frameLocator('[data-code-panel="remote"]');
 
+const rightTabs = () => app.page.locator(shown('[role="tablist"][aria-label="Inspector"] [role="tab"]'));
+
+const composer = () => app.page.locator(shown('aside textarea')).last();
+
+const sentPrompt = () =>
+  (app.posts.find((p) => p.route === 'acp-prompt')?.body as { promptText?: string } | undefined)?.promptText;
+
 const RECORDED_FIRST_WRITE = {
   panel: 'remote',
   title: 'Remote',
@@ -96,7 +103,7 @@ afterAll(async () => {
 });
 
 describe('the agent writing a running Case’s code', () => {
-  it('reloads the panel it writes while the try keeps running, and ⌘Z walks its writes back', async () => {
+  it('reloads the panel it writes while the try keeps running, ⌘Z walks its writes back and ⌘I opens the agent beside it', async () => {
     const { page } = app;
     const scene = roverScene();
 
@@ -134,6 +141,13 @@ describe('the agent writing a running Case’s code', () => {
     await page.keyboard.press('Meta+z');
     await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
+    expect(await stillTrying()).toBe(true);
+
+    await page.keyboard.press('Meta+i');
+    await expect.poll(() => rightTabs().allTextContents()).toEqual(['Agent']);
+    await composer().fill('Add a Sit button');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => sentPrompt()).toContain('running the Case Rover Remote (rover-remote)');
     expect(await stillTrying()).toBe(true);
   }, 180000);
 

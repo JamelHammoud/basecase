@@ -25,7 +25,7 @@ export function MarkLabelField({ label, color, autoFocus, onCommit, onClose }: M
       spellCheck={false}
       maxLength={80}
       aria-label="Mark label"
-      placeholder="Add a label"
+      placeholder="e.g. Too thin"
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => {
         if (!reverting.current) onCommit(draft);

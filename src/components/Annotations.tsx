@@ -126,7 +126,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = (props) => {
             {draft ? (
               <CommentComposer
                 autoFocus
-                placeholder="Add a comment"
+                placeholder="e.g. Move this hole 2 mm left"
                 onSubmit={props.onCreate}
                 onEscape={onCancelDraft}
               />

@@ -1,10 +1,10 @@
 import { runAgent } from '../lib/agent.mjs';
+import { claim } from '../lib/claim.mjs';
 import { commentOnPull, openPulls, reviewState, setReview } from '../lib/github.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 const MAX_DIFF = 400_000;
-const PER_RUN = 3;
 
 const SCHEMA = {
   type: 'object',
@@ -82,7 +82,19 @@ export default function review({ log }) {
     return state === null || state === 'error';
   });
 
-  for (const pull of waiting.slice(0, PER_RUN)) reviewPull(pull, log);
+  for (const pull of waiting) {
+    const release = claim(`review-${pull.number}`);
+
+    if (!release) continue;
+
+    try {
+      reviewPull(pull, log);
+    } finally {
+      release();
+    }
+
+    return;
+  }
 
   if (waiting.length === 0) log('nothing to review');
 }

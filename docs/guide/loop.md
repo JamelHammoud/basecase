@@ -14,20 +14,33 @@ Basecase is built by a team of agents that runs on Jamel's Mac (`tools/loop/`, s
 
 ### Lanes
 
-`node tools/loop/install.mjs install` creates the home checkout (`~/.basecase-loop/home`, reset to `origin/main` by the merge lane, so the loop always runs its latest merged code), the GitHub labels and one LaunchAgent per lane. `uninstall` removes them. Logs are in `~/.basecase-loop/logs/`. Setting the repository variable `LOOP_PAUSED` to `true` stops merges and releases.
+The loop is a team that never stops. `node tools/loop/install.mjs install` creates the home checkout (`~/.basecase-loop/home`), the GitHub labels and one LaunchAgent per lane slot, after removing any old ones; `uninstall` removes them all. Every working slot is relaunched a minute after it finishes, and a lock per slot keeps it to one run at a time, so each slot is always either working or about to look for work. Logs are in `~/.basecase-loop/logs/`. Setting the repository variable `LOOP_PAUSED` to `true` stops merges and releases.
 
-| Lane | Every | Does |
+| Lane | Slots | Does |
 |---|---|---|
-| `review` | 2 min | Reviews each pull request whose head has no `agent-review` status |
-| `merge` | 5 min | Squash-merges the oldest pull request with `check` and `agent-review` green; while `main` is red it takes only repairs, which must turn Check fully green |
-| `rebase` | 10 min | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts |
-| `repair` | 15 min | Opens a repair when Check fails on `main` |
-| `build` ×3 | 5 min | Builds the oldest `loop:next` issue Jamel's account opened |
-| `refine` | 6 h | Makes one existing feature or view fit better |
-| `lead` | 4 h | Reads the Direction issue and plans arcs and steps as issues |
-| `update` | 24 h | Moves the agent adapters to their latest releases |
+| `build` | 5 | Claims the next `loop:next` step, `loop:priority` first, and ships it as a pull request |
+| `review` | 2 | Reviews each pull request whose head has no `agent-review` status |
+| `revise` | 2 | Answers a failed review, or a Check failure that's the pull request's own, on its branch; after four failed reviews it labels the pull request `loop:stuck` and stops |
+| `refine` | 2 | Makes one existing feature or view fit better |
+| `merge` | 1 | Squash-merges the oldest pull request with `check` and `agent-review` green; while `main` is red it takes only repairs, which must turn Check fully green |
+| `rebase` | 1 | Merges `main` into a conflicting `loop/` branch, with an agent resolving the conflicts |
+| `repair` | 1 | Opens a repair when `main`'s last finished Check failed |
+| `lead` | 1 | Plans when there's a reason: a new request or Direction comment from Jamel, or fewer waiting steps than builders |
+| `update` | daily | Moves the agent adapters to their latest releases |
+
+Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. No pull request or issue is opened when one with the same title is open; a step whose pull request already exists gets a comment linking it. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone.
 
 Each lane's brief is in `tools/loop/briefs/`, with `shared.md` prepended to all of them. Sessions run with `--dangerously-skip-permissions`, so no prompt or classifier ever blocks a lane; the runner owns every commit, push and pull request, and review and Check are the gates. Agents run `npm run check:changed` and nothing heavier: CI runs the full Check and e2e on the pull request, and the lanes react to its result, so no agent waits on CI.
+
+### Giving direction
+
+Jamel steers; nothing waits for Jamel.
+
+- **A request:** open an issue, written however you like, with no `loop:` label. The lead plans it ahead of everything else, within a couple of minutes: it files steps labeled `loop:priority`, which builders take first, comments with links on the request, labels it `loop:request`, and closes it once its work has merged.
+- **Build this exact thing now:** open an issue and label it `loop:next` and `loop:priority` yourself; the next free builder takes it as written.
+- **General direction:** comment on the pinned Direction issue; the lead reads it before every plan.
+- **Feedback on a pull request:** comment on it. The learn lane turns Jamel's comments into lessons.
+- **Stop something:** close its pull request or issue, or set `LOOP_PAUSED` to `true` to stop merges and releases.
 
 ### Pull request kinds
 

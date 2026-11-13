@@ -7,22 +7,24 @@ import { run } from './lib/sh.mjs';
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
 
+const slots = (lane, count, every = MINUTE) =>
+  Array.from({ length: count }, (_, i) => ({ lane, slot: String(i + 1), every }));
+
 const JOBS = [
-  { lane: 'review', every: 2 * MINUTE },
-  { lane: 'merge', every: 5 * MINUTE },
-  { lane: 'rebase', every: 10 * MINUTE },
-  { lane: 'repair', every: 15 * MINUTE },
-  { lane: 'build', slot: '1', every: 5 * MINUTE },
-  { lane: 'build', slot: '2', every: 5 * MINUTE },
-  { lane: 'build', slot: '3', every: 5 * MINUTE },
-  { lane: 'refine', every: 6 * HOUR },
-  { lane: 'lead', every: 4 * HOUR },
-  { lane: 'update', every: 24 * HOUR },
+  ...slots('review', 2),
+  ...slots('merge', 1),
+  ...slots('rebase', 1),
+  ...slots('repair', 1),
+  ...slots('revise', 2),
+  ...slots('build', 5),
+  ...slots('refine', 2),
+  ...slots('lead', 1),
+  { lane: 'update', slot: '1', every: 24 * HOUR },
 ];
 
 const AGENTS_DIR = path.join(os.homedir(), 'Library', 'LaunchAgents');
 const DOMAIN = `gui/${os.userInfo().uid}`;
-const label = ({ lane, slot }) => `so.basecase.loop.${lane}${slot ? `-${slot}` : ''}`;
+const label = ({ lane, slot }) => `so.basecase.loop.${lane}-${slot}`;
 const KEEP_AWAKE = 'so.basecase.loop.awake';
 
 const where = (tool) => path.dirname(run('which', [tool]).out);
@@ -67,7 +69,7 @@ const plist = (dict) =>
 
 const laneDict = (job, env) => ({
   Label: label(job),
-  ProgramArguments: [process.execPath, path.join(HOME_CHECKOUT, 'tools', 'loop', 'run.mjs'), job.lane, job.slot ?? '1'],
+  ProgramArguments: [process.execPath, path.join(HOME_CHECKOUT, 'tools', 'loop', 'run.mjs'), job.lane, job.slot],
   WorkingDirectory: HOME_CHECKOUT,
   StartInterval: job.every,
   RunAtLoad: true,
@@ -107,6 +109,9 @@ const LABELS = {
   'loop:lesson': '8250df',
   'loop:loop': '6e7781',
   'loop:update': '6e7781',
+  'loop:priority': 'd1242f',
+  'loop:request': '000000',
+  'loop:stuck': '6e7781',
   'loop:arc': 'bf8700',
   'loop:next': 'bf8700',
   'loop:building': 'bf8700',
@@ -135,6 +140,7 @@ function install() {
   ensureHome();
   ensureLabels();
   fs.mkdirSync(AGENTS_DIR, { recursive: true });
+  removeAll();
   fs.mkdirSync(LOGS, { recursive: true });
 
   const env = {
@@ -150,11 +156,23 @@ function install() {
   console.log(`Loaded ${JOBS.length} lanes and the keep-awake job. Logs: ${LOGS}`);
 }
 
-function uninstall() {
-  for (const name of [...JOBS.map(label), KEEP_AWAKE]) {
+const installedNames = () =>
+  fs.existsSync(AGENTS_DIR)
+    ? fs
+        .readdirSync(AGENTS_DIR)
+        .filter((file) => file.startsWith('so.basecase.loop.') && file.endsWith('.plist'))
+        .map((file) => file.slice(0, -'.plist'.length))
+    : [];
+
+function removeAll() {
+  for (const name of installedNames()) {
     run('launchctl', ['bootout', `${DOMAIN}/${name}`], { allowFail: true });
     fs.rmSync(path.join(AGENTS_DIR, `${name}.plist`), { force: true });
   }
+}
+
+function uninstall() {
+  removeAll();
 
   console.log('Removed every loop job.');
 }

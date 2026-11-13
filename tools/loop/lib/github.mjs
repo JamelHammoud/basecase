@@ -9,7 +9,7 @@ export const repo = () => {
   return slug;
 };
 
-const PULL_FIELDS = 'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable';
+const PULL_FIELDS = 'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable,labels';
 
 export const sameTitle = (a, b) => {
   const norm = (t) =>
@@ -40,14 +40,6 @@ export const checkConclusion = (sha) => {
 
   return latest.conclusion;
 };
-
-export const failingJobs = (sha) =>
-  json('gh', [
-    'api',
-    `repos/${repo()}/commits/${sha}/check-runs?per_page=100`,
-    '--jq',
-    '[.check_runs[] | select(.conclusion == "failure" and .name != "check") | .name] | unique',
-  ]) ?? [];
 
 export const reviewState = (sha) =>
   json('gh', [
@@ -168,3 +160,46 @@ export const ownerComments = (number, owner) =>
     '--jq',
     `[.[] | select(.user.login == "${owner}" and .performed_via_github_app == null) | {created_at, body}]`,
   ]) ?? [];
+
+export const commentOnIssue = (number, body) =>
+  run('gh', ['issue', 'comment', String(number), '--body-file', '-'], { input: body });
+
+export const openIssues = () =>
+  json('gh', [
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--limit',
+    '300',
+    '--json',
+    'number,title,body,author,labels,createdAt,updatedAt',
+  ]) ?? [];
+
+export const closeIssue = (number, comment) =>
+  run('gh', ['issue', 'close', String(number), '--comment', comment], { allowFail: true });
+
+export const editPullLabels = (number, { add = [] }) =>
+  run('gh', ['pr', 'edit', String(number), ...add.flatMap((label) => ['--add-label', label])], { allowFail: true });
+
+export const editPullBody = (number, body) =>
+  run('gh', ['pr', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });
+
+export const pullComments = (number) =>
+  json('gh', ['pr', 'view', String(number), '--json', 'comments', '--jq', '[.comments[].body]']) ?? [];
+
+export const checkRunFor = (sha) =>
+  (json('gh', [
+    'run',
+    'list',
+    '--commit',
+    sha,
+    '--workflow',
+    'check.yml',
+    '--limit',
+    '1',
+    '--json',
+    'databaseId,conclusion,status',
+  ]) ?? [])[0] ?? null;
+
+export const hasLabel = (item, name) => (item.labels ?? []).some((label) => label.name === name);

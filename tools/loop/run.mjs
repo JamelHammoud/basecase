@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
-const LANES = ['review', 'merge', 'rebase', 'repair', 'build', 'refine', 'lead', 'update'];
+const LANES = ['review', 'merge', 'rebase', 'repair', 'build', 'refine', 'lead', 'update', 'revise'];
 const [lane, slot = '1'] = process.argv.slice(2);
 
 if (!LANES.includes(lane)) {
@@ -13,7 +13,7 @@ if (!LANES.includes(lane)) {
   process.exit(2);
 }
 
-const id = lane === 'build' ? `${lane}-${slot}` : lane;
+const id = `${lane}-${slot}`;
 
 fs.mkdirSync(LOCKS, { recursive: true });
 fs.mkdirSync(LOGS, { recursive: true });

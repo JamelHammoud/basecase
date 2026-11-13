@@ -52,12 +52,16 @@ const hasWork = (dir) =>
   git(['status', '--porcelain'], dir).out !== '' ||
   Number(git(['rev-list', '--count', 'origin/main..HEAD'], dir).out) > 0;
 
-export function publish(change, { dir, branch, extra }) {
+export function publish(change, { dir, branch, extra, onDuplicate }) {
   if (!change.changed || !hasWork(dir)) return null;
 
   const duplicate = openPulls().find((pull) => sameTitle(pull.title, pullTitle(change)));
 
-  if (duplicate) return null;
+  if (duplicate) {
+    onDuplicate?.(duplicate);
+
+    return null;
+  }
 
   const message = change.commitMessage || pullTitle(change);
   const problems = creditProblems(message);

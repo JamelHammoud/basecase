@@ -2,7 +2,6 @@ import React from 'react';
 import { CATEGORY_LABELS, catalogItemFromKey, catalogRef } from '../../data/catalog';
 import { COMPONENT_BY_ID, ComponentInfo } from '../../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, hardwareSubtitle } from '../../data/hardware';
-import { isSourcedId } from '../../data/sourcedItems';
 import type { CatalogItem, PartDimensions } from '../../types/robotics';
 import { Button, MetaLine, Section, Tooltip, CartIcon, PlusIcon } from '../../design-system';
 import {
@@ -11,6 +10,7 @@ import {
   Hero,
   LinkButton,
   ModelOrigin,
+  makerSubtitle,
   SizeSpecRow,
   SpecRow,
   SpecRows,
@@ -80,9 +80,7 @@ export const ItemPage: React.FC<{
       <Hero item={item} className={PAGE_HERO} {...dragProps(item)} />
       <PageTitle
         title={item.name}
-        subtitle={
-          c ? [c.manufacturer, isSourcedId(c.id) ? 'Added by Agent' : ''] : CATEGORY_LABELS[item.category].label
-        }
+        subtitle={c ? makerSubtitle(c) : CATEGORY_LABELS[item.category].label}
         description={item.description}
       />
       <div className="border-t border-white/[0.06]">

@@ -6,6 +6,7 @@ import { trainerPython } from '../lib/python.mjs';
 const PLANT_SRC = 'hw/crates/plant-bam/src';
 const PLANT_COMMIT = '395bba2';
 const REFERENCE = path.join(ROOT, 'verify', 'servo', 'bam-reference', 'Cargo.toml');
+const REFERENCE_BUILD = path.join(ROOT, 'verify', 'out', 'servo', 'bam-reference-build');
 const OUT = path.join(ROOT, 'verify', 'out', 'servo');
 const BAM_JSON = path.join(OUT, 'bam.json');
 const VITEST = ['vitest', 'run', '--config', 'verify/vitest.config.ts'];
@@ -27,7 +28,15 @@ const plantUnchanged = {
 const bamReference = {
   name: 'BAM reference trajectories from plant-bam (STS3215 7.4 V, XL330 5 V)',
   run: () => {
-    const r = sh('cargo', ['run', '--quiet', '--release', '--manifest-path', REFERENCE]);
+    const r = sh('cargo', [
+      'run',
+      '--quiet',
+      '--release',
+      '--manifest-path',
+      REFERENCE,
+      '--target-dir',
+      REFERENCE_BUILD,
+    ]);
 
     if (!r.ok) return fail(tail(r.stderr));
 

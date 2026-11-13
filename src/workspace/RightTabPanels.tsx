@@ -56,9 +56,6 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
       project={project}
       onChangeProject={(patch: Partial<ProjectSettings>) => setProject((p) => ({ ...p, ...patch }))}
       printing={printing}
-      printers={studio.printers.printers}
-      printTools={studio.printers.printTools}
-      onAddPrinter={() => studio.openSettings('printers')}
       onFixFinding={
         IS_WEB_DEMO
           ? undefined

@@ -3,10 +3,13 @@ import type { PolicyRecord } from '../types/robotics';
 import { platformBridge, type TrainerStatus } from '../utils/platformBridge';
 import type { SimModel } from './mjcf';
 import { isPolicySpec, type PolicySpec } from './policy';
+import { isStalePolicy, type RobotFingerprints } from './policyFreshness';
 import { handleTrainEvent, NEEDS_LEGS, trainingBlocker, type TrainJob } from './trainEvents';
 import { trainingJob, type TrainOptions } from './trainingJob';
 
 export { trainingJob, type TrainOptions };
+
+export const DEFAULT_TRAIN_MINUTES = 20;
 
 export interface TrainProgress {
   iteration: number;
@@ -26,23 +29,34 @@ export interface Training {
   curve: number[];
   canTrain: boolean;
   blocker: string | null;
-  start: (opts: TrainOptions) => Promise<string | null>;
+  retraining: string | null;
+  start: (opts: TrainOptions, replacing?: PolicyRecord) => Promise<string | null>;
+  retrain: (record: PolicyRecord) => Promise<string | null>;
   stop: () => void;
   loadPolicy: (id: string) => Promise<PolicySpec | null>;
+  isStale: (record: PolicyRecord) => boolean;
 }
+
+const errorText = (e: unknown) =>
+  e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e);
+
+const nextName = (policies: PolicyRecord[], task: TrainOptions['task'], robotKey: string) =>
+  `${task === 'walk' ? 'Walk' : 'Stand'} ${policies.filter((p) => p.task === task && p.robot === robotKey).length + 1}`;
 
 export function useTraining({
   workspaceId,
   buildModel,
   robotKey,
   policies,
+  fingerprints,
   onPolicy,
 }: {
   workspaceId: string;
   buildModel: () => Promise<SimModel>;
   robotKey: string | null;
   policies: PolicyRecord[];
-  onPolicy: (record: PolicyRecord) => void;
+  fingerprints: RobotFingerprints;
+  onPolicy: (record: PolicyRecord, replaces: string | null) => void;
 }): Training {
   const [status, setStatus] = useState<Training['status']>('idle');
   const [message, setMessage] = useState<string | null>(null);
@@ -50,6 +64,7 @@ export function useTraining({
   const [progress, setProgress] = useState<TrainProgress | null>(null);
   const [curve, setCurve] = useState<number[]>([]);
   const [trainer, setTrainer] = useState<TrainerStatus | null>(null);
+  const [replacing, setReplacing] = useState<string | null>(null);
   const job = useRef<TrainJob | null>(null);
   const onPolicyRef = useRef(onPolicy);
 
@@ -67,7 +82,7 @@ export function useTraining({
         handleTrainEvent(
           {
             job,
-            onPolicy: (record) => onPolicyRef.current(record),
+            onPolicy: (record, replaces) => onPolicyRef.current(record, replaces),
             setMessage,
             setStatus,
             setProgress,
@@ -83,30 +98,31 @@ export function useTraining({
   );
 
   const start = useCallback(
-    async (opts: TrainOptions): Promise<string | null> => {
-      if (!robotKey) return NEEDS_LEGS;
+    async (opts: TrainOptions, replacing?: PolicyRecord): Promise<string | null> => {
+      const key = replacing?.robot ?? robotKey;
+
+      if (!key) return NEEDS_LEGS;
 
       setError(null);
       setProgress(null);
       setCurve([]);
       setStatus('setup');
       setMessage('Starting');
+      setReplacing(replacing?.id ?? null);
 
       try {
         const model = await buildModel();
-        const robot = model.robots.find((r) => r.key === robotKey);
 
-        if (!robot?.floating) throw new Error(NEEDS_LEGS);
+        if (!model.robots.find((r) => r.key === key)?.floating) throw new Error(NEEDS_LEGS);
 
-        const n = policies.filter((p) => p.task === opts.task && p.robot === robotKey).length + 1;
-        const name = `${opts.task === 'walk' ? 'Walk' : 'Stand'} ${n}`;
+        const name = replacing?.name ?? nextName(policies, opts.task, key);
 
-        job.current = { id: null, task: opts.task };
+        job.current = { id: null, task: opts.task, replaces: replacing?.id ?? null };
 
         const res = await platformBridge.trainStart({
           workspaceId,
           xml: model.xml,
-          job: trainingJob(model, robotKey, opts, name),
+          job: trainingJob(model, key, opts, name),
         });
 
         if (job.current) job.current.id = res.jobId;
@@ -114,18 +130,17 @@ export function useTraining({
         return null;
       } catch (e) {
         job.current = null;
-
-        const message =
-          e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e);
-
-        setError(message);
+        setError(errorText(e));
         setStatus('error');
 
-        return message;
+        return errorText(e);
       }
     },
     [buildModel, robotKey, policies, workspaceId],
   );
+
+  const retrain = (record: PolicyRecord) =>
+    start({ task: record.task, minutes: record.minutes ?? DEFAULT_TRAIN_MINUTES, command: record.command }, record);
 
   const stop = useCallback(() => {
     setMessage('Saving what it learned');
@@ -139,6 +154,7 @@ export function useTraining({
   }, []);
 
   const blocker = trainingBlocker(robotKey, trainer);
+  const busy = status === 'setup' || status === 'running';
 
   return {
     status,
@@ -146,10 +162,13 @@ export function useTraining({
     error,
     progress,
     curve,
-    canTrain: !!robotKey && trainer?.uv !== false && status !== 'setup' && status !== 'running',
+    canTrain: !!robotKey && trainer?.uv !== false && !busy,
     blocker,
+    retraining: busy || status === 'error' ? replacing : null,
     start,
+    retrain,
     stop,
     loadPolicy,
+    isStale: (record) => isStalePolicy(record, fingerprints),
   };
 }

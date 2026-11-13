@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { worldDeltas } from '../sim/mjcf';
+import { withCalibration } from '../reality/projectCalibrations';
+import { modelFingerprints } from '../sim/policyFreshness';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devStudioApi, type DevActions } from './devStudioApi';
@@ -49,6 +51,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
         activeCase: cases.active?.id ?? null,
         tries: cases.tries.map((t) => ({ passed: t.passed, margin: t.margin })),
+        fingerprints: modelFingerprints(core.simTraining.skills.model),
       };
     },
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
@@ -64,6 +67,7 @@ export function useDevStudioHook({ active, core, actions, agent }: DevHookOption
         }),
       );
     },
+    calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
     routineState: () => core.simTraining.routines.state(),
     datasetFiles: async () => {
       const { cases } = core.simTraining;

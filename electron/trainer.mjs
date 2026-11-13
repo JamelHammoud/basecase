@@ -414,7 +414,9 @@ export class Trainer {
       robotName: job.robotName,
       command: job.command,
       trainedSteps: done.steps,
+      minutes: job.minutes,
       modelVersion: job.modelVersion ?? 0,
+      ...(job.fingerprint ? { fingerprint: job.fingerprint } : {}),
       createdAt: new Date().toISOString(),
       eval: done.eval,
     };

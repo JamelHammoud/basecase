@@ -11,6 +11,7 @@ import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
+import type { ServoCalibration } from '../reality/types';
 import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
@@ -29,6 +30,7 @@ export interface DevActions {
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
   worldAt: () => Record<string, number[]>;
+  calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
@@ -141,6 +143,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
     worldAt: () => devRef.current.worldAt(),
+    calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),

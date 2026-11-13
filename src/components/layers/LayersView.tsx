@@ -22,10 +22,8 @@ export interface LayersViewProps {
 const ReferenceImagesToggle: React.FC<{ props: LayersViewProps }> = ({ props }) => {
   const shown = props.showReferenceImages;
 
-  if (!props.parts.some((p) => p.kind === 'image_plane')) return null;
-
   return (
-    <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+    <div onClick={(e) => e.stopPropagation()}>
       <IconButton
         icon={shown ? <PhotoIcon className="w-3.5 h-3.5" /> : <PhotoOffIcon className="w-3.5 h-3.5" />}
         title={shown ? 'Hide reference images' : 'Show reference images'}
@@ -62,6 +60,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
   const searching = query.trim() !== '';
   const rows = layerRows(parts, collapsed, query);
   const size = overallSize(parts);
+  const hasImages = parts.some((p) => p.kind === 'image_plane');
   const toggleCollapsed = (id: string) =>
     setCollapsed((prev) => {
       const next = new Set(prev);
@@ -103,7 +102,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
         />
       </div>
       <div ref={scrollerRef} className="flex-1 overflow-y-auto px-[8px] pb-3" onClick={() => props.onSelectPart(null)}>
-        <SectionHeader title={layersTitle(parts)} action={<ReferenceImagesToggle props={props} />} />
+        <SectionHeader title={layersTitle(parts)} action={hasImages && <ReferenceImagesToggle props={props} />} />
         <ul className="space-y-px">
           {rows.map((row) =>
             row.type === 'group' ? (

@@ -12,10 +12,17 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Worse than Basecase:** on the free plan "All Onshape Documents are accessible to the public", and private data and commercial use need Standard at $1,500 or Professional at $2,500 per user per year ([pricing](https://www.onshape.com/en/pricing)). Basecase simulates, trains and lays out print plates in the same app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
 - **Basecase should:** integrate. Import Onshape documents, so a robot drawn there can be simulated, trained and printed in Basecase.
 
+### Shapr3D
+
+- **Link:** https://www.shapr3d.com
+- **Checked:** 2026-11-13
+- **Better than Basecase:** runs on Windows, Mac, iPad, iPhone and Apple Vision Pro, is "built with the Siemens Parasolid® kernel", and mixes direct and history-based modeling, with 2D drawings and rendered visuals ([home](https://www.shapr3d.com)).
+- **Worse than Basecase:** the free Basic plan holds "Up to 2 projects" and exports only "Basic resolution 3MF, STL"; STEP and the other formats need Pro at $299 per seat, billed annually ([pricing](https://www.shapr3d.com/pricing)). Its pages list modeling, visualization and drawings, not joints, simulation or training ([home](https://www.shapr3d.com)); Basecase rigs, simulates and prints the same design ([Joints and motion](../guide/joints-and-motion.md), [Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
+- **Basecase should:** beat it on the robot itself, not on modeling: its free 3MF and STL exports open in Basecase through Import Mesh already ([Inspector and selection](../guide/inspector-and-selection.md)).
+
 ### To check
 
-- Fusion
-- Shapr3D
+- Fusion: autodesk.com answered 403 on 2026-11-13; its exporter is under [integrations](integrations.md#fusion).
 
 ## Simulation and training
 
@@ -73,7 +80,18 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 
 ## Printing
 
-### To check
+### Bambu Studio
 
-- Bambu Studio
-- OrcaSlicer
+- **Link:** https://github.com/bambulab/BambuStudio
+- **Checked:** 2026-11-13
+- **Better than Basecase:** 2.9.1, the latest release (3 November), slices one model with mixed nozzle diameters, so each nozzle prints its regions "at its own appropriate layer height", starting with the new multi-nozzle H3C. It also merges Color Split into Color Matching, which suggests a target color and works out the mix ([releases](https://github.com/bambulab/BambuStudio/releases)).
+- **Worse than Basecase:** it slices models made elsewhere. Basecase picks each part's face on the bed, packs plates per material around the keep-outs, and tracks which parts are already printed, so editing one bracket gives a plate with just that bracket ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate, as it does: its printer catalog and slicing come from Bambu Studio's profiles and CLI ([Printing](../guide/printing.md)).
+
+### OrcaSlicer
+
+- **Link:** https://github.com/SoftFever/OrcaSlicer
+- **Checked:** 2026-11-13
+- **Better than Basecase:** V2.5.0, the latest release (7 November), calls itself "the biggest update in OrcaSlicer's history". It adds Python plugins with network, program and file permissions, and toolhead collision volumes that keep Arrange, brims and travel clear of bed clips and tool docks. It also adds an experimental Design tab for parametric parts, belt printers, and Bambu H2C and A2L support ([releases](https://github.com/SoftFever/OrcaSlicer/releases)).
+- **Worse than Basecase:** like Bambu Studio, it starts from finished models; Basecase lays out plates from the robot's own parts and remembers what's printed ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate, as it does. Basecase slices with OrcaSlicer first for printers that aren't Bambu's ([`electron/print/jobs.mjs`](../../electron/print/jobs.mjs)). Basecase arranges its own plates and slices with `--arrange 0` ([Printing](../guide/printing.md)), so Orca's collision volumes don't reach them: plate packing should read the same clips and docks as keep-outs.

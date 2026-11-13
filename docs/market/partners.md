@@ -31,15 +31,26 @@ Bambu Lab printers are integrated already ([Printing](../guide/printing.md)).
 
 ## Platforms
 
-### To check
+### Hugging Face
 
-- Hugging Face
+- **Link:** https://huggingface.co
+- **Checked:** 2026-11-13
+- **Better than Basecase:** hosts the datasets and policies LeRobot trains on ([LeRobot docs](https://huggingface.co/docs/lerobot/index)). PRO is $9 a month with 10× private storage, and storage past that costs $12 per TB a month for public repositories and $18 for private ones, with egress included ([pricing](https://huggingface.co/pricing)).
+- **Worse than Basecase:** the pricing page doesn't mention robots ([pricing](https://huggingface.co/pricing)); Basecase records demonstrations from a robot designed in it ([Cases](../guide/cases.md)).
+- **Basecase should:** integrate. Basecase writes LeRobot datasets already ([Cases](../guide/cases.md)); publishing them to the Hub puts them where LeRobot looks.
 
 ## Kit makers
 
+### SO-101 kits
+
+- **Link:** https://github.com/TheRobotStudio/SO-ARM100
+- **Checked:** 2026-11-13
+- **Better than Basecase:** The Robot Studio publishes the SO-101's STL files and a sourcing table: $121.94 for one follower arm and $229.88 for a leader and follower in the US, with EU, RMB and JPY tables too. Kits come from Seeed Studio, WowRobo, RobotEd, Robonine, PartaBot, ForgeMotion Labs and others, some printed and some assembled ([repository](https://github.com/TheRobotStudio/SO-ARM100)). The follower uses six Feetech STS3215 servos at 1/345 and the leader mixes 1/191, 1/345 and 1/147 gearing ([LeRobot SO-101](https://huggingface.co/docs/lerobot/so101)).
+- **Worse than Basecase:** the design is fixed: changing it means leaving the repository's STLs. The SO-101 is a Basecase preset that imports with its joints, and the catalog lists the STS3215 ([Joints and motion](../guide/joints-and-motion.md), [`src/data/components.ts`](../../src/data/components.ts)).
+- **Basecase should:** integrate. When the SO-101 preset is in a scene, the Build tab should show its published bill of materials and these kit sellers next to it, so someone can buy the arm they just simulated.
+
 ### To check
 
-- Hugging Face and The Robot Studio (SO-101)
 - Pollen Robotics
 - goBILDA
 

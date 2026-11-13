@@ -2,20 +2,18 @@ import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import * as THREE from 'three';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_PROJECT, type ProjectSettings, type RobotJoint, type ScenePart } from '../../types/robotics';
+import type { RobotJoint } from '../../types/robotics';
 import { runEngineering } from '../../utils/engineering';
-import { buildRig } from '../../utils/kinematics';
 import { importRobot } from '../../utils/robotImport';
 import { localFile, parseXml, TinyDomParser } from '../../utils/robotImport/robotImport.fixtures';
 import { parseUrdf } from '../../utils/robotImport/urdf';
 import { SimEngine } from '../engine';
-import { fixtureMeasures, fixtureTriangles } from '../fixtures/parts';
+import { fixturePackageJob } from '../fixtures/robotPackage';
 import { fixtureRobots } from '../fixtures/robots';
-import { buildMjcf, toMj } from '../mjcf';
+import { toMj } from '../mjcf';
 import { POLICY_FORMAT, POLICY_VERSION, policyObsSize, type PolicySpec } from '../policy';
-import { buildRobotPackage, robotPackageFiles, type RobotPackageJob } from './buildRobotPackage';
+import { buildRobotPackage, robotPackageFiles } from './buildRobotPackage';
 import type { JointMap } from './jointMap';
-import type { PackagedPolicy } from './policyFiles';
 
 let mj: MainModule;
 
@@ -46,31 +44,6 @@ const TWO_LINK_ARM = `<?xml version="1.0"?>
 
 const text = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
 
-function packageJob(robot: { id: string; parts: ScenePart[]; joints: RobotJoint[] }, policies: PackagedPolicy[] = []) {
-  const project: ProjectSettings = { ...DEFAULT_PROJECT, joints: robot.joints };
-  const measures = fixtureMeasures(robot.parts);
-  const triangles = fixtureTriangles(robot.parts);
-  const model = buildMjcf({
-    parts: robot.parts,
-    rig: buildRig(robot.joints, robot.parts),
-    project,
-    measures,
-    partTriangles: triangles,
-  });
-  const job: RobotPackageJob = {
-    name: `${robot.id}-robot`,
-    robot: robot.id,
-    model,
-    parts: robot.parts,
-    project,
-    measures,
-    triangles: Object.fromEntries(robot.parts.map((p) => [p.id, triangles(p.id)!])),
-    policies,
-  };
-
-  return { job, project, measures };
-}
-
 const round = (v: number) => Math.round(v * 1000) / 1000 + 0;
 const sortedRange = (r?: [number, number]) => r && [Math.min(...r), Math.max(...r)].map(round);
 
@@ -78,7 +51,7 @@ const movable = (joints: RobotJoint[]) => joints.filter((j) => j.type !== 'fixed
 
 describe('robot package', () => {
   it.each(fixtureRobots().map((r) => [r.id, r] as const))('packages %s', (_id, robot) => {
-    const { job, project, measures } = packageJob(robot);
+    const { job, project, measures } = fixturePackageJob(robot);
     const files = robotPackageFiles(job);
     const mjcf = text(files['robot.xml']);
     const engine = new SimEngine(mj, { ...job.model, xml: mjcf });
@@ -86,7 +59,7 @@ describe('robot package', () => {
     engine.dispose();
     expect(mjcf).toBe(job.model.xml);
 
-    const urdf = parseUrdf(parseXml(text(files['robot.urdf'])));
+    const urdf = parseUrdf(parseXml(text(files['urdf/robot.urdf'])));
     const moving = urdf.joints.filter((j) => j.type !== 'fixed');
 
     expect(moving.map((j) => j.name)).toEqual(job.model.joints.map((j) => j.name));
@@ -116,7 +89,7 @@ describe('robot package', () => {
 
   it('writes binary STL meshes in metres, Z up, in their link frame', () => {
     const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
-    const files = robotPackageFiles(packageJob(arm).job);
+    const files = robotPackageFiles(fixturePackageJob(arm).job);
     const stl = files['meshes/base.stl'];
     const view = new DataView(stl.buffer, stl.byteOffset, stl.byteLength);
     const zs = Array.from({ length: view.getUint32(80, true) * 3 }, (_, i) => {
@@ -160,7 +133,7 @@ describe('robot package', () => {
       trainedSteps: 1000,
       createdAt: spec.createdAt,
     };
-    const { job } = packageJob(quad, [{ record, spec }]);
+    const { job } = fixturePackageJob(quad, [{ record, spec }]);
     const files = unzipSync(buildRobotPackage(job));
     const described = JSON.parse(text(files['quad-servo-robot/policies/run-1/spec.json']));
     const obs = described.observation.reduce((n: number, t: { size: number }) => n + t.size, 0);
@@ -171,7 +144,7 @@ describe('robot package', () => {
     expect(Object.keys(files)).toEqual(
       expect.arrayContaining([
         'quad-servo-robot/robot.xml',
-        'quad-servo-robot/robot.urdf',
+        'quad-servo-robot/urdf/robot.urdf',
         'quad-servo-robot/joint_map.json',
       ]),
     );
@@ -181,9 +154,9 @@ describe('robot package', () => {
     vi.stubGlobal('DOMParser', TinyDomParser);
 
     const imported = await importRobot({ kind: 'files', files: [localFile('arm/arm.urdf', TWO_LINK_ARM)] });
-    const { job } = packageJob({ id: 'arm', ...imported });
-    const urdf = parseUrdf(parseXml(text(robotPackageFiles(job)['robot.urdf'])));
-    const [shoulder] = urdf.joints;
+    const { job } = fixturePackageJob({ id: 'arm', ...imported });
+    const urdf = parseUrdf(parseXml(text(robotPackageFiles(job)['urdf/robot.urdf'])));
+    const shoulder = urdf.joints.find((j) => j.type !== 'fixed')!;
     const kg = [...urdf.links.values()].reduce((s, l) => s + (l.mass ?? 0), 0);
 
     expect(shoulder).toMatchObject({ name: 'j0_shoulder', type: 'revolute', effort: 12 });

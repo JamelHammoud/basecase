@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { enlargeCameraView, toggleCameraViews, useCameraViewsState } from '../../cameras/cameraViewsStore';
 import { useCameraFeed } from '../../cameras/useCameraFeed';
-import { cameraViews, type CameraView } from '../../cameras/views';
+import { cameraViews, hasCameraViews, stripParts, type CameraView } from '../../cameras/views';
 import { ChevronDownIcon, ChevronUpIcon, ContextMenu, IconButton, type ContextMenuEntry } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import type { ScenePart } from '../../types/robotics';
@@ -23,10 +23,9 @@ export const CameraStrip: React.FC<CameraStripProps> = ({ parts, sim, cameras, p
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
-  const solid = parts.filter((p) => p.visible && p.role === 'solid');
+  const solid = stripParts(parts);
   const views = cameraViews(solid, sim.worldParts, cameras.cameras);
-  const hasCamera = cameras.cameras.length > 0 || views.some((v) => v.part);
-  const present = sim.status !== 'off' || hasCamera;
+  const present = hasCameraViews(parts, cameras.cameras, sim.status !== 'off');
   const canvasRef = useCameraFeed({
     active: present && expanded,
     parts: solid,

@@ -14,6 +14,7 @@ import type { Rig } from '../utils/kinematics';
 import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
 import type { RoutineSkills } from './routineCheck';
+import { useAddAndTry } from './useAddAndTry';
 import { useCaseTry } from './useCaseTry';
 import { useDatasetExport } from './useDatasetExport';
 import { useTryMultiply } from './useTryMultiply';
@@ -172,6 +173,8 @@ export function useCases(options: CasesOptions) {
     onRefuse: (message) => showToast(message),
   });
 
+  const addAndTry = useAddAndTry({ add, active, attempt });
+
   return {
     cases,
     active,
@@ -183,6 +186,7 @@ export function useCases(options: CasesOptions) {
     fixedBase,
     open,
     add,
+    addAndTry,
     remove,
     removeTry,
     timeline,

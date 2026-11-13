@@ -64,3 +64,4 @@ Cases measure. Skills you train in the **Train** section are judged by the same 
 - **New Case** builds one from a goal and a world. Steps are in [Make a Case](/help/make-a-case).
 - **Ask the Agent** lets you describe one in words, with `/case` in the agent's box.
 - **The agent** also builds one when you tell it what to do with a robot, such as a block game, and opens it running.
+- **Replay in Sim** in **Operate** builds one from the 20 seconds before a servo fault. Steps are in [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).

@@ -79,7 +79,7 @@ export function trySignals({ recording, ...scoring }: TryScoring): Trace {
     const poses = framePoses(recording, i);
 
     reader.sample(poses, signals);
-    sampleSignals(facts.read(poses, i * recording.dt), names, signals);
+    sampleSignals(facts.read(poses, i * recording.dt, recording.torque?.[i]), names, signals);
   }
 
   return { dt: recording.dt, signals };

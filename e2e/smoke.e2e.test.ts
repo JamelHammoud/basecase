@@ -231,9 +231,9 @@ describe('studio commands', () => {
 
     await app.page.keyboard.press('m');
     await app.page.mouse.click(box.x + box.width * 0.7, box.y + box.height * 0.75);
-    await app.page.getByPlaceholder('Add a comment').fill('First note');
+    await app.page.getByPlaceholder('e.g. Move this hole 2 mm left').fill('First note');
     await app.page.keyboard.press('Enter');
-    await app.page.getByPlaceholder('Reply').fill('Second note');
+    await app.page.getByPlaceholder('e.g. Moved it 2 mm').fill('Second note');
     await app.page.keyboard.press('Enter');
 
     await comment('First note').hover();

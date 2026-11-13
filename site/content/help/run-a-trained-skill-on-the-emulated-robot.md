@@ -42,7 +42,7 @@ To run a trained policy, choose it under **Control** instead of step 3. A Case t
 
 In **Test**, each joint is held to 30% torque and 0.5 rad/s. A goal moves at most 0.02 rad every 20 ms, and never leads the servo's measured position by more than 0.25 rad. A fast skill shows up on the servos slower than on the canvas.
 
-The app sends the robot the simulation's joint targets up to every 25 ms. A joint the simulation doesn't have holds where it is. If the app stops sending for 100 ms, the robot stops: an arm holds, and a legged robot stands still.
+The app sends the robot the simulation's joint targets up to every 25 ms. After a fault, it sends none until you climb the **Ladder** again. A joint the simulation doesn't have holds where it is. If the app stops sending for 100 ms, the robot stops: an arm holds, and a legged robot stands still.
 
 ## Run it outside Basecase
 

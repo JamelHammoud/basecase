@@ -14,7 +14,7 @@ export const OutputFields: React.FC<{ draft: StudioDraft; depth: boolean; svg?: 
     <TextInput
       value={draft.drawName}
       onChange={(e) => draft.setDrawName(e.target.value)}
-      placeholder="Name"
+      placeholder="e.g. Servo bracket"
       aria-label="Name"
     />
     <div className="grid grid-cols-2 gap-2">

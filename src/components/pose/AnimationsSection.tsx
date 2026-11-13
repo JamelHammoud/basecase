@@ -131,7 +131,6 @@ const AnimationRow: React.FC<{
             type="button"
             className="flex-1 min-w-0 text-left text-[13px] text-white/85 truncate cursor-default"
             onClick={() => posing.scrub(a.id, t)}
-            onDoubleClick={() => setRenaming(a.id)}
           >
             {a.name}
           </button>

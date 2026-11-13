@@ -6,7 +6,8 @@ import { backpressure, PRODUCERS } from './lib/flow.mjs';
 import { flowCounts } from './lib/flowCounts.mjs';
 import { laneNames, laneModule } from './lib/lanes.mjs';
 import { claim } from './lib/claim.mjs';
-import { commentOnIssue, issues } from './lib/github.mjs';
+import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
+import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 import { pause, probe, probeDue, resume, startPause, UsageLimit } from './lib/usage.mjs';
@@ -64,14 +65,50 @@ function updateHome() {
   }).ok;
   const ref = exists ? HOME_REF : 'main';
 
-  run('git', ['fetch', '-q', 'origin', ref], { cwd: HOME_CHECKOUT });
-  run('git', ['reset', '-q', '--hard', `origin/${ref}`], { cwd: HOME_CHECKOUT });
+  const before = run('git', ['rev-parse', 'HEAD'], { cwd: HOME_CHECKOUT }).out.trim();
 
+  run('git', ['fetch', '-q', 'origin', ref], { cwd: HOME_CHECKOUT });
+
+  const target = run('git', ['rev-parse', `origin/${ref}`], { cwd: HOME_CHECKOUT }).out.trim();
+
+  if (target === before || isBad(target)) return false;
+
+  run('git', ['reset', '-q', '--hard', target], { cwd: HOME_CHECKOUT });
+
+  if (depsCurrent()) keepIfLoads({ before, target });
+
+  return true;
+}
+
+function keepIfLoads({ before, target }) {
+  const loads = run(process.execPath, ['--input-type=module', '-e', LOAD_CHECK], {
+    cwd: HOME_CHECKOUT,
+    timeout: 2 * 60 * 1000,
+    allowFail: true,
+  });
+
+  if (loads.ok) return;
+
+  const why = firstLine(loads.err || loads.out);
+
+  run('git', ['reset', '-q', '--hard', before], { cwd: HOME_CHECKOUT });
+  markBad(target);
+  log(`main at ${target.slice(0, 7)} breaks the loop's own code (${why}); staying on ${before.slice(0, 7)}`);
+  createIssue({
+    title: `Fix: The loop's code on main fails to load: ${why.slice(0, 120)}`,
+    body: `Kind: fix\n\nThe merge lane updated its checkout to ${target} and loading tools/loop failed, so the loop stays on ${before} until main has a commit that loads.\n\n\`\`\`\n${(loads.err || loads.out).slice(0, 4000)}\n\`\`\``,
+    labels: ['loop:next', 'loop:fix', 'loop:priority'],
+  });
+}
+
+function depsCurrent() {
   const stampFile = path.join(HOME_CHECKOUT, 'node_modules', '.loop-lock-hash');
   const hash = lockHash(HOME_CHECKOUT);
   const current = fs.existsSync(stampFile) ? fs.readFileSync(stampFile, 'utf8') : '';
 
-  if (current === hash || othersRunning()) return;
+  if (current === hash) return true;
+
+  if (othersRunning()) return false;
 
   log('package-lock.json changed; installing');
   run('npm', ['ci', '--no-audit', '--no-fund'], {
@@ -80,6 +117,8 @@ function updateHome() {
     env: { ELECTRON_SKIP_BINARY_DOWNLOAD: '1' },
   });
   fs.writeFileSync(stampFile, hash);
+
+  return true;
 }
 
 const localTime = (at) => new Date(at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
@@ -127,25 +166,30 @@ function announcePause(error) {
   );
 }
 
+async function runOnce() {
+  const { default: runLane, schedule } = await laneModule(lane);
+  const held = PRODUCERS.has(lane) ? backpressure(flowCounts()) : null;
+
+  if (held) log(`waiting: ${held}`);
+  else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });
+}
+
 const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.resolve(HOME_CHECKOUT);
 const startedAt = Date.now();
 const LONG_RUN_MINUTES = 2;
 
 try {
-  if (runsFromHome && lane === 'merge') {
-    updateHome();
+  const updated = runsFromHome && lane === 'merge' && updateHome();
+
+  if (updated) {
     spawn(process.execPath, [path.join(HOME_CHECKOUT, 'tools', 'loop', 'install.mjs'), 'sync', String(process.pid)], {
       detached: true,
       stdio: 'ignore',
     }).unref();
   }
 
-  const { default: runLane, schedule } = await laneModule(lane);
-
-  const held = PRODUCERS.has(lane) ? backpressure(flowCounts()) : null;
-
-  if (held) log(`waiting: ${held}`);
-  else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });
+  if (updated) log('updated to the latest main; the next run uses it');
+  else await runOnce();
 } catch (error) {
   if (error instanceof UsageLimit) announcePause(error);
   else {

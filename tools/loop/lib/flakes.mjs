@@ -13,6 +13,39 @@ export function failedTests(log) {
   return [...found];
 }
 
+export const SLOW_TEST_MS = 30_000;
+
+const PASSED = /✓\s+(.+?)\s+(\d+)ms\s*$/;
+
+export function slowTests(log, limitMs = SLOW_TEST_MS) {
+  const found = new Map();
+
+  for (const line of log.replace(ANSI, '').split('\n')) {
+    const match = PASSED.exec(line);
+
+    if (!match || /\(\d+ tests?\b/.test(match[1])) continue;
+
+    const ms = Number(match[2]);
+
+    if (ms > limitMs) found.set(match[1], Math.max(ms, found.get(match[1]) ?? 0));
+  }
+
+  return [...found].map(([name, ms]) => ({ name, ms }));
+}
+
+export function slowStep({ name, ms }, runUrl) {
+  return {
+    title: `Fix: Speed up or delete the slow test "${name}"`,
+    body: [
+      'Kind: fix',
+      '',
+      `\`${name}\` took ${Math.round(ms / 1000)} s on ${runUrl}. Every pull request's full Check waits on its slowest shard, so a test over ${SLOW_TEST_MS / 1000} s slows every merge.`,
+      '',
+      'Delete it if a unit test or a faster e2e test already covers what users rely on, or if it checks a narrow detail. Otherwise cut it to the one thing it proves. Never raise a timeout or add a retry.',
+    ].join('\n'),
+  };
+}
+
 export const isTrainRun = (runInfo) => runInfo.headBranch === 'main' || runInfo.headBranch.startsWith('loop/batch/');
 
 export const passedOnRerun = (runInfo) =>

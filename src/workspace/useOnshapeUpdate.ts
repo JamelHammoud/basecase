@@ -3,6 +3,7 @@ import { loadOnshape } from '../onshape/loadOnshape';
 import { fetchOnshapeUpdate } from '../onshape/onshapeTarget';
 import type { OnshapeUpdate } from '../onshape/onshapeUpdate';
 import { prepareParts } from '../three/partMesh/prepare';
+import { errorMessage } from '../utils/errorMessage';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { attempt, plural } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -41,7 +42,7 @@ export function useOnshapeUpdate(core: WorkspaceCore) {
     busyRef.current = false;
 
     if (!outcome.ok) {
-      showToast(outcome.error instanceof Error ? outcome.error.message : String(outcome.error), { tone: 'error' });
+      showToast(errorMessage(outcome.error), { tone: 'error' });
 
       return;
     }

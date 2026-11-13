@@ -334,6 +334,116 @@ describe('Cases in Checks', () => {
       .toContain(flag.brief);
     expect(app.errors).toEqual([]);
   }, 150000);
+
+  it('puts /pass and the open Case in the composer from ⌘K when its row fails', async () => {
+    const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+    const focusedValue = () =>
+      app.page.evaluate(() => {
+        const el = document.activeElement;
+
+        return el instanceof HTMLTextAreaElement ? el.value : el?.tagName;
+      });
+
+    await app.page.evaluate(
+      ({ parts, joints, kase }) => {
+        const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
+      },
+      { parts: arm.parts, joints: arm.joints, kase: flag },
+    );
+    await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks().getByRole('button', { name: /^Reach a Spot/ });
+
+    await expect.poll(() => row.count(), { timeout: 90000 }).toBe(1);
+    await expect.poll(() => row.getAttribute('data-status'), { timeout: 90000 }).toBe('fail');
+    await row.click();
+    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
+
+    await app.page.keyboard.press('Meta+k');
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
+    await app.page.keyboard.type('Make It Pass');
+    await app.page.keyboard.press('Enter');
+    await expect.poll(focusedValue).toBe('/pass Reach a Spot');
+    await app.page.locator(visible('textarea')).last().fill('');
+    expect(app.errors).toEqual([]);
+  }, 150000);
+});
+
+describe('Compare With', () => {
+  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const flag = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
+  const WEAK_WHEEL_NM = 0.075;
+
+  type CaseHook = StudioHook & { addCase: (raw: unknown) => string };
+
+  const tabs = () =>
+    app.page.evaluate(
+      () => (window as unknown as { __studioTabs: { list: () => { activeId: string } } }).__studioTabs.list().activeId,
+    );
+  const loadRover = (name: string) =>
+    app.page.evaluate(
+      ({ name, parts, joints }) => {
+        const hook = (window as unknown as { __studio: StudioHook }).__studio;
+
+        hook.load({ name, parts, project: { ...hook.sceneRecord().project, joints, cases: [] } } as never);
+      },
+      { name, parts: rover.parts, joints: rover.joints },
+    );
+
+  it('runs the open Case on another tab’s robot and marks the one that passes more often', async () => {
+    await loadRover('Rover');
+    await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
+
+    const first = await tabs();
+
+    await app.page.evaluate(() => (window as unknown as { __studioTabs: { open: () => void } }).__studioTabs.open());
+    await expect.poll(tabs).not.toBe(first);
+    await expect.poll(() => partCount(app.page)).toBe(0);
+    await loadRover('Weak rover');
+    await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
+    await app.page.evaluate((nm) => {
+      const hook = (window as unknown as { __studio: StudioHook }).__studio;
+      const record = hook.sceneRecord();
+      const joints = (record.project.joints ?? []).map((j) => ({ ...j, effortNm: nm }));
+
+      hook.load({ name: 'Weak rover', parts: record.parts, project: { ...record.project, joints } } as never);
+    }, WEAK_WHEEL_NM);
+    await app.page.evaluate(
+      (id) => (window as unknown as { __studioTabs: { select: (id: string) => void } }).__studioTabs.select(id),
+      first,
+    );
+    await expect.poll(tabs).toBe(first);
+
+    const caseId = await app.page.evaluate(
+      (raw) => (window as unknown as { __studio: CaseHook }).__studio.addCase(raw),
+      flag,
+    );
+    const activeCase = () =>
+      app.page.evaluate(() => (window as unknown as { __studio: CaseHook }).__studio.simState().activeCase);
+
+    await expect.poll(activeCase).toBe(caseId);
+
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('Compare With');
+    await expect.poll(() => app.page.getByText(/^Compare With Weak rover/).count(), { timeout: 15000 }).toBe(1);
+    await app.page.keyboard.press('Enter');
+
+    const rows = app.page.locator(visible('[data-testid="compare-row"]'));
+
+    await expect.poll(() => rows.count(), { timeout: 150000 }).toBe(2);
+
+    const passes = await rows.locator('[data-testid="compare-passes"]').allInnerTexts();
+
+    expect(passes).toHaveLength(2);
+    passes.forEach((text) => expect(text).toMatch(/^\d+ of 20$/));
+    expect(await rows.nth(0).getAttribute('data-better')).toBe('true');
+    expect(await rows.nth(1).getAttribute('data-better')).toBe('false');
+    expect(await rows.nth(1).innerText()).toContain('Weak rover');
+    expect(app.errors).toEqual([]);
+  }, 240000);
 });
 
 describe('Strength', () => {

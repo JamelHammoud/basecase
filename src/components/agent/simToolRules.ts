@@ -1,0 +1,16 @@
+import { CasesIcon, CheckIcon, EditIcon, LookIcon, RoutinesIcon, RunIcon, TrainIcon } from '../../design-system';
+import { plainRule, type ToolRule } from './toolRule';
+
+export const SIM_RULES: ToolRule[] = [
+  plainRule(['create_case'], CasesIcon, ['Making a Case', 'Made a Case']),
+  plainRule(['run_case'], RunIcon, ['Running the Case', 'Ran the Case']),
+  plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
+  plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
+  plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),
+  plainRule(['test_routine'], CheckIcon, ['Testing the Routine', 'Tested the Routine']),
+  plainRule(['run_routine'], RunIcon, ['Running the Routine', 'Ran the Routine']),
+  plainRule(['draft_skill'], TrainIcon, ['Drafting a skill', 'Drafted a skill']),
+  plainRule(['train_skill'], TrainIcon, ['Starting training', 'Started training']),
+  plainRule(['list_skills'], TrainIcon, ['Checking skills', 'Checked skills']),
+  plainRule(['training_status'], TrainIcon, ['Checking training', 'Checked training']),
+];

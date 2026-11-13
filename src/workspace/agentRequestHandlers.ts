@@ -39,6 +39,7 @@ import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_HANDLERS } from './agentCaseRequests';
+import type { CaseCompare } from './useCaseCompare';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
 import type { Cases } from './useCases';
@@ -66,6 +67,7 @@ export interface RequestContext {
   buildGuide: () => Promise<GeneratedGuide | null>;
   routines: Routines;
   cases: Cases;
+  caseCompare: CaseCompare;
   skills: SceneSkills;
 }
 

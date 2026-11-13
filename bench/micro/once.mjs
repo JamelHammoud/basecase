@@ -4,7 +4,7 @@ import { createEventHandler } from '../run-events.mjs';
 import { answerText, appTimeouts, readEvents, runMetrics } from '../metrics.mjs';
 import { archiveRun } from '../archive.mjs';
 import { mainServedModel, servedModels } from '../compare/models.mjs';
-import { gradeTask } from './grade.mjs';
+import { gradeTask, startFacts } from './grade.mjs';
 import { loadFixtureInApp } from './materialize.mjs';
 import { readJson } from './scenes.mjs';
 import { startSceneFile } from './tasks/index.mjs';
@@ -57,6 +57,8 @@ export async function runMicroOnce({ slot, task, seed, out, model, effort, harne
 
   fs.writeFileSync(path.join(dir, 'start.json'), JSON.stringify(before));
 
+  const facts = await startFacts(task, { call: slot.call });
+
   const { result, seconds } = await promptAgent({ slot, task, dir, model, effort });
   const records = readEvents(path.join(dir, 'events.jsonl'));
   const answer = answerText(records);
@@ -68,7 +70,7 @@ export async function runMicroOnce({ slot, task, seed, out, model, effort, harne
         checks: [],
         detail: `${unreachable} tool calls couldn't reach the app, so the run says nothing about the model.`,
       }
-    : await gradeTask(task, { before, after, answer, app: { call: slot.call } });
+    : await gradeTask(task, { before, after, answer, app: { call: slot.call }, ...facts });
   const summary = {
     task: task.id,
     seed,

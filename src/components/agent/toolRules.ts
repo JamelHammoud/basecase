@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   CheckIcon,
   CodeIcon,
@@ -14,31 +13,15 @@ import {
   RobotsIcon,
   RunIcon,
   CasesIcon,
-  RoutinesIcon,
   SearchIcon,
   ShapeIcon,
   ToolIcon as ToolPromptIcon,
-  TrainIcon,
   WebIcon,
 } from '../../design-system';
+import { SIM_RULES } from './simToolRules';
+import { plainRule, type ToolIcon, type ToolRule } from './toolRule';
 
-export type ToolIcon = React.FC<{ className?: string }>;
-
-export interface ToolLabel {
-  title: string;
-  detail?: string;
-}
-
-export interface LabelContext {
-  input: Record<string, unknown>;
-  verb: (ing: string, ed: string) => string;
-}
-
-export interface ToolRule {
-  keys: string[];
-  icon: ToolIcon;
-  label: (ctx: LabelContext) => ToolLabel | null;
-}
+export type { LabelContext, ToolIcon, ToolLabel, ToolRule } from './toolRule';
 
 const list = (arr: unknown): unknown[] => (Array.isArray(arr) ? arr : []);
 
@@ -90,12 +73,6 @@ const partsRule = (key: string, icon: ToolIcon, [ing, ed]: [string, string]): To
   },
 });
 
-const plainRule = (keys: string[], icon: ToolIcon, [ing, ed]: [string, string]): ToolRule => ({
-  keys,
-  icon,
-  label: ({ verb }) => ({ title: verb(ing, ed) }),
-});
-
 const PART_RULES: ToolRule[] = [
   {
     keys: ['model_part'],
@@ -136,7 +113,7 @@ const PART_RULES: ToolRule[] = [
       };
     },
   },
-  partsRule('delete_parts', DeleteIcon, ['Removing', 'Removed']),
+  partsRule('delete_parts', DeleteIcon, ['Deleting', 'Deleted']),
   partsRule('mirror_parts', EditIcon, ['Mirroring', 'Mirrored']),
   {
     keys: ['fasten'],
@@ -224,11 +201,11 @@ const REVIEW_RULES: ToolRule[] = [
       return {
         title: ids.length
           ? `${verb('Inspecting', 'Inspected')} ${names(ids)}`
-          : verb('Looking at the model', 'Looked at the model'),
+          : verb('Looking at the scene', 'Looked at the scene'),
       };
     },
   },
-  plainRule(['check_scene'], CheckIcon, ['Checking the model', 'Checked the model']),
+  plainRule(['check_scene'], CheckIcon, ['Checking the scene', 'Checked the scene']),
   plainRule(['craft_review'], CheckIcon, ['Reviewing the craft', 'Reviewed the craft']),
   plainRule(['check_assembly'], CheckIcon, ['Checking the assembly', 'Checked the assembly']),
   plainRule(['set_interfaces'], FileIcon, ['Writing interface contracts', 'Wrote interface contracts']),
@@ -369,16 +346,7 @@ const ROBOT_RULES: ToolRule[] = [
       detail: optional(input.restart ? 'From the start' : ''),
     }),
   },
-  plainRule(['create_case'], CasesIcon, ['Making a Case', 'Made a Case']),
-  plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
-  plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
-  plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),
-  plainRule(['test_routine'], CheckIcon, ['Testing the Routine', 'Tested the Routine']),
-  plainRule(['run_routine'], RunIcon, ['Running the Routine', 'Ran the Routine']),
-  plainRule(['draft_skill'], TrainIcon, ['Drafting a skill', 'Drafted a skill']),
-  plainRule(['train_skill'], TrainIcon, ['Starting training', 'Started training']),
-  plainRule(['list_skills'], TrainIcon, ['Checking skills', 'Checked skills']),
-  plainRule(['training_status'], TrainIcon, ['Checking training', 'Checked training']),
+  ...SIM_RULES,
 ];
 
 const SOURCE_RULES: ToolRule[] = [

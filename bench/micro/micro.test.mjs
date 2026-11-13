@@ -3,19 +3,23 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { specToPart } from '../../src/agent/agentScene';
+import { buildCase, builderRobot } from '../../src/cases/caseBuilder';
+import { buildRig } from '../../src/utils/kinematics';
 import { parseBomTotal, parseCheckRows } from './adapters.mjs';
-import { gradeTask } from './grade.mjs';
-import { recordFromFixture } from './materialize.mjs';
+import { bomChange } from './caseChecks.mjs';
+import { gradeTask, startFacts } from './grade.mjs';
+import { keepStartCases, recordFromFixture } from './materialize.mjs';
 import { passHatK, suiteStats, statsMarkdown } from './stats.mjs';
 import { SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
 
-const build = (fixture) => recordFromFixture(fixture, specToPart);
+const build = (fixture) => recordFromFixture(fixture, specToPart, { buildCase, builderRobot, buildRig });
+const APP_GRADED = new Set(['D1']);
 const task = (id) => SEED_TASKS.find((t) => t.id === id);
 
 describe('seed tasks', () => {
-  it('covers the 30 seed tasks with a held-out third', () => {
-    expect(SEED_TASKS).toHaveLength(30);
-    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(30);
+  it('covers the 31 seed tasks with a held-out third', () => {
+    expect(SEED_TASKS).toHaveLength(31);
+    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(31);
     expect(selectTasks({ split: 'heldout' })).toHaveLength(10);
     expect(selectTasks({ split: 'tune' }).some((t) => t.heldOut)).toBe(false);
   });
@@ -30,10 +34,10 @@ describe('seed tasks', () => {
 
       if (!t.solution && !t.solutionAnswer) continue;
 
-      const fixed = t.solution ? await build(t.solution()) : start;
+      const fixed = t.solution ? keepStartCases(await build(t.solution()), start) : start;
       const graded = await gradeTask(t, { before: start, after: fixed, answer: t.solutionAnswer });
 
-      expect([t.id, graded.status]).toEqual([t.id, 'pass']);
+      expect([t.id, graded.status]).toEqual([t.id, APP_GRADED.has(t.id) ? 'unavailable' : 'pass']);
     }
   }, 60000);
 });
@@ -101,6 +105,90 @@ describe('graders', () => {
     });
 
     expect(wired.status).toBe('fail');
+  });
+});
+
+describe('the Case task', () => {
+  const CASE_ID = 'reach-a-spot-past-a-block';
+  const START_USD = 57.6;
+  const ran = (passes) => ({
+    data: {
+      id: CASE_ID,
+      name: 'Reach a Spot past a Block',
+      runs: 20,
+      passes,
+      status: passes >= 18 ? 'pass' : 'fail',
+      medianMargin: passes >= 18 ? 0.84 : -0.83,
+      failures: passes < 20 ? [{ label: 'Missed', runs: 20 - passes }] : [],
+      refusal: null,
+      cached: false,
+    },
+  });
+  const appWith = ({ run = ran(20), bomUsd = START_USD } = {}) => ({
+    call: async (kind, payload) => {
+      if (kind === 'bom') return { data: { estimatedUsd: bomUsd, budgetUsd: null, actuatorsUsd: 49.9 } };
+
+      return kind === 'run_case' && payload.id === CASE_ID ? run : { error: `Unknown request "${kind}"` };
+    },
+  });
+
+  async function graded({ after, run, bomUsd, startUsd = START_USD }) {
+    const start = await build(task('D1').fixture());
+    const facts = await startFacts(task('D1'), appWith({ bomUsd: startUsd }));
+
+    return gradeTask(task('D1'), {
+      before: start,
+      after: after?.(start) ?? start,
+      app: appWith({ run, bomUsd }),
+      ...facts,
+    });
+  }
+
+  it('builds the Case into the start scene and keeps it in the fix', async () => {
+    const start = await build(task('D1').fixture());
+    const fixed = keepStartCases(await build(task('D1').solution()), start);
+
+    expect(start.project.cases.map((c) => [c.id, c.task.seconds])).toEqual([[CASE_ID, 8]]);
+    expect(fixed.project.cases).toBe(start.project.cases);
+  });
+
+  it('fails the start on its Checks row and passes a fix within 20% of its BOM', async () => {
+    expect((await graded({ run: ran(0) })).status).toBe('fail');
+    expect((await graded({ run: ran(20), bomUsd: 59.9 })).status).toBe('pass');
+    expect((await graded({ run: ran(17), bomUsd: 59.9 })).status).toBe('fail');
+  });
+
+  it('fails a fix that costs over 20% more, or edits the Case, or deletes it', async () => {
+    const costly = await graded({ run: ran(20), bomUsd: 72.45 });
+    const edited = await graded({
+      after: (s) => ({
+        ...s,
+        project: { ...s.project, cases: s.project.cases.map((c) => ({ ...c, task: { ...c.task, seconds: 13 } })) },
+      }),
+    });
+    const gone = await graded({
+      after: (s) => ({ ...s, project: { ...s.project, cases: [] } }),
+      run: { ok: false, problem: `No Case ${CASE_ID} in this scene.` },
+    });
+
+    expect(costly.checks.find((c) => /BOM/.test(c.name))).toMatchObject({
+      pass: false,
+      detail: '~$72.45 from ~$57.6 (+26%)',
+    });
+    expect(edited.checks.find((c) => /left as it was/.test(c.name))).toMatchObject({ pass: false, detail: 'Edited' });
+    expect(gone.checks.map((c) => c.pass)).toEqual([false, false, true]);
+  });
+
+  it('is unavailable, never a pass, without the start BOM or run_case', async () => {
+    const start = await build(task('D1').fixture());
+    const noStartBom = await gradeTask(task('D1'), { before: start, after: start, app: appWith() });
+    const noRunCase = await graded({ run: { error: 'Unknown request "run_case"' } });
+
+    expect(noStartBom).toMatchObject({ status: 'unavailable', needs: ['bom'] });
+    expect(noRunCase).toMatchObject({ status: 'unavailable', needs: ['runCase'] });
+    expect(bomChange(50, 60)).toBeCloseTo(0.2);
+    expect(bomChange(0, 60)).toBeNull();
+    expect(bomChange(50, null)).toBeNull();
   });
 });
 

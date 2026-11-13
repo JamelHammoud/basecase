@@ -42,7 +42,7 @@ interface OpStep<T extends AgentOp['op']> {
 const VERBS: Record<AgentOp['op'], string> = {
   add: 'Adding',
   update: 'Adjusting',
-  delete: 'Removing',
+  delete: 'Deleting',
   mirror: 'Mirroring',
 };
 

@@ -43,7 +43,7 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Hardware | **Parts** ▸ **Hardware**: screws, nuts, inserts, bearings | No, bought |
 | Shape | **Shapes**, Sketch, Import SVG, Sculpt | Yes |
 | Agent part | Modeled by the agent in CAD code | Yes |
-| Imported mesh | Import Mesh, including STEP and IGES bodies | Yes |
+| Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Robots** | No |
 
 A shape, agent part or imported mesh is printed until you change its material under **Appearance**. Components keep the maker's exact size, so they can't be resized. Hardware changes size through its own **Size** and **Length** choices.

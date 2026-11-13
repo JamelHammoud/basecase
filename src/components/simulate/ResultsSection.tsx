@@ -74,7 +74,7 @@ export interface LatestRun {
 interface ResultsProps {
   cases: Cases;
   rig: Rig;
-  share: ShareRobot;
+  share?: ShareRobot;
   model: SimModel | null;
   parts: ScenePart[];
   world: ScenePart[];
@@ -114,7 +114,7 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, mode
   const tries = cases.active ? cases.tries : [];
   const showRun = !!run && hasRunResult(run.stats, run.model);
 
-  if (!tries.length && !showRun && !share.canShare) return null;
+  if (!tries.length && !showRun && !share?.canShare) return null;
 
   const openMenu = (e: React.MouseEvent, record: TryRecord) => {
     e.preventDefault();
@@ -138,7 +138,7 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, mode
               model={model}
               parts={parts}
               world={world}
-              onReplay={() => void cases.replay(t)}
+              onReplay={() => void cases.timeline.show(t)}
               onMenu={(e) => openMenu(e, t)}
             />
           ))}

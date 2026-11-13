@@ -19,6 +19,8 @@ export interface FindingContext {
   panScroll: boolean;
   actions: FindingActions;
   tether?: TetherControl;
+  onOpenCase?: (id: string) => void;
+  showDots?: (check: string | null) => void;
 }
 
 const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {

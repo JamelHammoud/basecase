@@ -11,8 +11,10 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotMorphology } from '../sim/morphology';
 import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
-import { robotFacts, slotRefusal } from './robotFit';
-import type { Case } from './schema';
+import { buildRig } from '../utils/kinematics';
+import { robotFacts } from './robotFit';
+import { caseSlots, type Case } from './schema';
+import { slotRefusals, type SlotRobot } from './slots';
 
 export type FitState = 'pass' | 'fail' | 'skip';
 
@@ -34,6 +36,7 @@ export interface FitInput {
   kase: Case | null;
   rig: Rig;
   parts: ScenePart[];
+  partners?: SlotRobot[];
   build: () => Promise<SimModel>;
   run: (r: FitRun) => Promise<SimStats>;
 }
@@ -75,7 +78,8 @@ async function fallRow(input: FitInput, model: SimModel): Promise<FitRow> {
 
 export async function checkFit(input: FitInput): Promise<FitRow[]> {
   const facts = robotFacts(input.rig, input.parts);
-  const slot = input.kase ? slotRefusal(input.kase.slot, facts) : null;
+  const others = (input.partners ?? []).map((r) => robotFacts(buildRig(r.joints, r.parts), r.parts));
+  const slot = input.kase ? slotRefusals(caseSlots(input.kase), [facts, ...others]).find(Boolean) : null;
   const rows: FitRow[] = [];
 
   if (input.kase)

@@ -97,7 +97,7 @@ describe('policies trained before the servo models read as stale', () => {
   it('the peak-torque check refuses an old walk policy', async () => {
     const deps: PeakDeps = { sim, training, policies: [policy(OLD_VERSION)] };
 
-    expect(await walkSim(deps, [], 1000)).toMatch(/older sim/);
+    expect(await walkSim(deps, { joints: [], massG: 1000, parts: [] })).toMatch(/older sim/);
   });
 
   it('training_status marks old policies and leaves current ones alone', () => {

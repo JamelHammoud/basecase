@@ -1,3 +1,4 @@
+import { eyeSize } from '../sim/eyes';
 import type { SimJoint, SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 
@@ -17,6 +18,7 @@ export interface EpisodeData {
   timestamps: Float32Array;
   state: Float32Array;
   action: Float32Array;
+  scan?: Float32Array;
 }
 
 export const datasetStride = (dt: number) => Math.max(1, Math.round(1 / (dt * DATASET_FPS)));
@@ -27,23 +29,69 @@ export function sampledFrames(recording: Pick<Recording, 'frames' | 'dt'>): numb
   return Array.from({ length: Math.ceil(recording.frames / stride) }, (_, k) => k * stride);
 }
 
-export function robotJoints(model: SimModel, robotIndex = 0): SimJoint[] {
-  const ids = new Set(model.robots[robotIndex]?.joints ?? []);
+export interface DatasetSlot {
+  id: string;
+  robot: string;
+}
+
+export interface JointGroup {
+  name: string;
+  start: number;
+  end: number;
+}
+
+export function robotJoints(model: SimModel, robotKey = model.robots[0]?.key): SimJoint[] {
+  const ids = new Set(model.robots.find((r) => r.key === robotKey)?.joints ?? []);
 
   return model.joints.filter((j) => ids.has(j.id));
 }
 
+export const scanWidth = (model: SimModel) => eyeSize(model.scans);
+
+export function datasetJoints(model: SimModel, slots?: DatasetSlot[]) {
+  if (!slots || slots.length < 2) {
+    const joints = robotJoints(model);
+
+    return { joints, names: joints.map((j) => j.name), groups: [{ name: 'joints', start: 0, end: joints.length }] };
+  }
+
+  const per = slots.map((s) => ({ slot: s.id, joints: robotJoints(model, s.robot) }));
+  const starts = per.map((_, i) => per.slice(0, i).reduce((n, p) => n + p.joints.length, 0));
+
+  return {
+    joints: per.flatMap((p) => p.joints),
+    names: per.flatMap((p) => p.joints.map((j) => `${p.slot}.${j.name}`)),
+    groups: per.map((p, i): JointGroup => ({ name: p.slot, start: starts[i], end: starts[i] + p.joints.length })),
+  };
+}
+
 export function canExport(recording: Recording, model: SimModel): boolean {
+  const scan = scanWidth(model);
+
   return (
     !!recording.jointQpos &&
     recording.jointQpos.length === model.joints.length &&
     recording.nbody === model.bodies.length &&
-    recording.frames > 1
+    recording.frames > 1 &&
+    (!scan || (recording.scanWidth === scan && !!recording.scan))
   );
 }
 
-export function episodeData(recording: Recording, model: SimModel, task: string): EpisodeData {
-  const joints = robotJoints(model);
+function scanRows(recording: Recording, frames: number[]): Float32Array | undefined {
+  const width = recording.scanWidth ?? 0;
+  const source = recording.scan;
+
+  if (!width || !source) return undefined;
+
+  const out = new Float32Array(frames.length * width);
+
+  frames.forEach((f, row) => out.set(source.subarray(f * width, (f + 1) * width), row * width));
+
+  return out;
+}
+
+export function episodeData(recording: Recording, model: SimModel, task: string, slots?: DatasetSlot[]): EpisodeData {
+  const { joints } = datasetJoints(model, slots);
   const index = joints.map((j) => model.joints.indexOf(j));
   const address = recording.jointQpos ?? new Int32Array();
   const frames = sampledFrames(recording);
@@ -60,7 +108,9 @@ export function episodeData(recording: Recording, model: SimModel, task: string)
     });
   });
 
-  return { task, frames, timestamps, state, action };
+  const scan = scanRows(recording, frames);
+
+  return { task, frames, timestamps, state, action, ...(scan ? { scan } : {}) };
 }
 
 export function columnStats(values: ArrayLike<number>, width: number): FeatureStats {

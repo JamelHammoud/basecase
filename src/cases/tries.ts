@@ -3,8 +3,9 @@ import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
-import { evaluateContract } from '../skills/contract';
-import { probeReader } from './probes';
+import { evaluateContract, type Trace } from '../skills/contract';
+import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
+import { probeReader, type ProbeWorld } from './probes';
 import type { EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, type Case } from './schema';
 
@@ -41,23 +42,46 @@ export interface TryScoring {
   model: SimModel;
   recording: Recording;
   effector: EndEffector | null;
+  effectors?: Record<string, EndEffector | null>;
   rig: Rig;
 }
 
-export async function scoreTry({ kase, model, recording, effector, rig }: TryScoring) {
+export const caseProbeWorld = ({
+  kase,
+  model,
+  effector,
+  effectors,
+  rig,
+}: Omit<TryScoring, 'recording'>): ProbeWorld => ({
+  model,
+  effector,
+  effectors,
+  basePart: [...(rig.robots[0]?.parts ?? [])].find((id) => !rig.ownerOf.has(id)) ?? null,
+  basePoint: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
+  objectAt: new Map(kase.world.objects.map((o) => [o.id, o.position])),
+});
+
+export const caseProbeReader = (scoring: Omit<TryScoring, 'recording'>) =>
+  probeReader(scoring.kase.task.probes, caseProbeWorld(scoring));
+
+export function trySignals({ recording, ...scoring }: TryScoring): Trace {
   const signals: Record<string, number[]> = {};
-  const reader = probeReader(kase.task.probes, {
-    model,
-    effector,
-    basePart: [...(rig.robots[0]?.parts ?? [])].find((id) => !rig.ownerOf.has(id)) ?? null,
-    basePoint: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
-    objectAt: new Map(kase.world.objects.map((o) => [o.id, o.position])),
-  });
+  const reader = caseProbeReader(scoring);
 
-  for (let i = 0; i < recording.frames; i++) reader.sample(framePoses(recording, i), signals);
+  const facts = caseFactReader(scoring.kase, scoring.model);
+  const names = caseSignalNames(scoring.kase);
 
-  return evaluateContract(kase.task.contract, { dt: recording.dt, signals });
+  for (let i = 0; i < recording.frames; i++) {
+    const poses = framePoses(recording, i);
+
+    reader.sample(poses, signals);
+    sampleSignals(facts.read(poses, i * recording.dt), names, signals);
+  }
+
+  return { dt: recording.dt, signals };
 }
+
+export const scoreTry = (scoring: TryScoring) => evaluateContract(scoring.kase.task.contract, trySignals(scoring));
 
 export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {
   return {

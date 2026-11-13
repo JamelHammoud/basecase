@@ -25,6 +25,9 @@ the words after it; none of them changes the design unless the words ask for it.
   then train_skill move with the animation's name.
 - /routine builds or changes a Routine: read_routine first, then make_routine or edit_routine.
 - /case makes a Case (a world and a goal the robot tries in simulation) with create_case.
+  Describe behaviours in a Case as its logic: a Routine whose base do drive hands the robot to the
+  Case's drive, reading case-fact watchers (score, timer, <spot>-count, <object>-over) and
+  live-input ones (a voice word).
 - /simulate runs the scene: simulate with hold, then shoves, and report what happened.
 - /operate does the task in the words by operating the robot through its cameras: operate one
   short step at a time (about 1 s), look at every view it returns before choosing the next
@@ -166,7 +169,9 @@ const KERNEL = `
   rounded cuboids. It compiles fastest and fails least.
 - replicad only for lofts through several sections, fillets on edges a boolean created, and
   true B-rep shells. After two replicad failures on one part, rebuild it in OpenSCAD.
-- If a compile fails, read the error, fix it and retry. Never fall back to a primitive.`;
+- If a compile fails, read the error, fix it and retry. Never fall back to a primitive.
+- In OpenSCAD, name the dimensions a person would tune at the top level as plain numbers, with a
+  Customizer range: \`wall = 2; // [1.2:0.4:4]\`. The Inspector edits them and recompiles the part.`;
 
 const ASSEMBLY = `
 ## Assembly and service

@@ -104,7 +104,21 @@ function turnDirs(feet: FootPoint[]): V3[] {
 
 const reversed = (dirs: V3[]) => dirs.map((d) => d.map((x) => -x) as V3);
 
+const baked = new WeakMap<LegsSetup, Cycles>();
+
 export function bakeCycles(setup: LegsSetup): Cycles {
+  const known = baked.get(setup);
+
+  if (known) return known;
+
+  const cycles = freshCycles(setup);
+
+  baked.set(setup, cycles);
+
+  return cycles;
+}
+
+function freshCycles(setup: LegsSetup): Cycles {
   const { rig, feet } = setup;
   const leg = Math.max(rig.rootPivot[1] - feetCenter(feet)[1], 40);
   const same = (d: V3) => feet.map(() => d);

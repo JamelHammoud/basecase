@@ -2,6 +2,7 @@ import { toggleCameraViews } from '../cameras/cameraViewsStore';
 import { useEffect, useEffectEvent } from 'react';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { isModalOpen } from '../design-system';
+import { endServoSetup, servoSetup } from '../robot/servoSetup';
 import { isTextEntry } from './helpers';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -41,7 +42,8 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   };
 
   const escape = () => {
-    if (annotations.draft) annotations.setDraft(null);
+    if (servoSetup()) endServoSetup();
+    else if (annotations.draft) annotations.setDraft(null);
     else if (annotations.activeId) annotations.setActiveId(null);
     else if (annotations.commentMode) annotations.toggleCommentMode(false);
     else if (tool.measuring) leaveMeasure();
@@ -112,7 +114,9 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
     ...Object.fromEntries(CAMERA_VIEWS.map((v, i) => [String(i + 1), () => ui.setCameraView(v.id)])),
   };
 
-  return { global, withMod, plain };
+  const running: KeyMap = { escape: core.caseRun.leave };
+
+  return { global, withMod, plain, running };
 }
 
 export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
@@ -144,30 +148,30 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
     runKey(maps.plain, key, e, false);
   };
 
+  const runScoped = (e: KeyboardEvent, key: string, mod: boolean) => {
+    const running = core.caseRun.open;
+
+    if (running && !mod) runKey(maps.running, key, e, true);
+    else if (!running && mod) runKey(maps.withMod, key, e, true);
+    else if (!running && !e.altKey && !core.printing.mode) runPlain(e, key);
+  };
+
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
     const mod = e.metaKey || e.ctrlKey;
     const key = e.key.toLowerCase();
 
     if (mod && runKey(maps.global, key, e, true)) return;
 
-    if (mod && !e.shiftKey && key === 'f' && !blocked) {
+    if (mod && !e.shiftKey && key === 'f' && !blocked && !core.caseRun.open) {
       e.preventDefault();
       ui.findParts();
 
       return;
     }
 
-    if (keysGoElsewhere() || blocked || core.simTraining.sim.drive.active) return;
+    if (keysGoElsewhere() || blocked || core.simTraining.sim.drive.active || core.buildAlong.active) return;
 
-    if (mod) {
-      runKey(maps.withMod, key, e, true);
-
-      return;
-    }
-
-    if (e.altKey || core.printing.mode) return;
-
-    runPlain(e, key);
+    runScoped(e, key, mod);
   });
 
   useEffect(() => {

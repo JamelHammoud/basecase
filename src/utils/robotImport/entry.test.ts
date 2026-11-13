@@ -2,10 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { chooseEntry, descriptionKind, inScope, type DescriptionKind } from './entry';
 import { repoLink } from './github';
 
+const SAMPLE: Record<DescriptionKind, string> = {
+  mjcf: '<mujoco><worldbody/></mujoco>',
+  'mjcf-includes': '<mujoco><include file="body.xml"/></mujoco>',
+  urdf: '<robot name="arm"/>',
+};
 const kinds =
-  (known: Record<string, DescriptionKind> = {}) =>
+  (known: Record<string, DescriptionKind> = {}, texts: Record<string, string> = {}) =>
   async (path: string) =>
-    known[path] ?? null;
+    texts[path] ?? (known[path] ? SAMPLE[known[path]] : '');
+const xacro = (name: string, includes: string[] = []) =>
+  `<robot name="${name}" xmlns:xacro="http://www.ros.org/wiki/xacro">${includes.map((f) => `<xacro:include filename="${f}"/>`).join('')}</robot>`;
 const mjcfIn = (robots: string[]) => kinds(Object.fromEntries(robots.map((p) => [p, 'mjcf' as const])));
 
 const GO2_REPO = [
@@ -64,6 +71,46 @@ describe('chooseEntry', () => {
     const paths = ['arm/arm.xml', 'arm/parts/body.xml'];
 
     expect(await chooseEntry(paths, kinds({ 'arm/arm.xml': 'mjcf-includes' }))).toEqual({ entry: 'arm/arm.xml' });
+  });
+
+  it('takes the xacro no other file includes', async () => {
+    const paths = [
+      'arm_description/package.xml',
+      'arm_description/launch/display.launch',
+      'arm_description/urdf/arm.xacro',
+      'arm_description/urdf/materials.xacro',
+      'arm_description/urdf/arm.trans',
+      'arm_description/meshes/base.stl',
+    ];
+    const texts = {
+      'arm_description/urdf/arm.xacro': xacro('arm', ['$(find arm_description)/urdf/materials.xacro']),
+      'arm_description/urdf/materials.xacro': xacro('arm'),
+    };
+
+    expect(await chooseEntry(paths, kinds({}, texts))).toEqual({ entry: 'arm_description/urdf/arm.xacro' });
+  });
+
+  it('prefers a URDF beside its xacro', async () => {
+    const paths = ['arm/urdf/arm.urdf', 'arm/urdf/arm.urdf.xacro'];
+
+    expect(await chooseEntry(paths, kinds({}, { 'arm/urdf/arm.urdf.xacro': xacro('arm') }))).toEqual({
+      entry: 'arm/urdf/arm.urdf',
+    });
+  });
+
+  it('prefers the xacro in urdf/ named after the robot', async () => {
+    const paths = ['ur/urdf/ur.urdf.xacro', 'ur/urdf/inc/ur_common.xacro', 'ur/tools/gripper.xacro'];
+    const texts = {
+      'ur/urdf/ur.urdf.xacro': xacro('ur'),
+      'ur/urdf/inc/ur_common.xacro': xacro('ur_common'),
+      'ur/tools/gripper.xacro': xacro('gripper'),
+    };
+
+    expect(await chooseEntry(paths, kinds({}, texts))).toEqual({ entry: 'ur/urdf/ur.urdf.xacro' });
+  });
+
+  it('skips xacro files that aren’t robots', async () => {
+    expect(await chooseEntry(['arm/urdf/arm.xacro'], kinds({}, { 'arm/urdf/arm.xacro': '<launch/>' }))).toBeNull();
   });
 
   it('finds nothing in a folder without a description', async () => {

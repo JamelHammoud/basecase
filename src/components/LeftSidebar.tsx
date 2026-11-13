@@ -28,6 +28,7 @@ const VIEW_TITLES: Record<Exclude<LeftTab, 'cases' | 'routines' | 'operate'>, st
 
 interface LeftSidebarProps extends Omit<LayersViewProps, 'parts' | 'selectedIds'> {
   open: boolean;
+  inert?: boolean;
   width: number;
   edge?: React.ReactNode;
   resizing?: boolean;
@@ -75,6 +76,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
   return (
     <aside
       aria-hidden={!open}
+      inert={props.inert}
       className={`relative h-full shrink-0 overflow-hidden ${
         props.resizing ? '' : 'transition-[width] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]'
       }`}
@@ -108,7 +110,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
               canSaveSelection={props.selectedIds.length > 0}
               canSaveScene={props.parts.length > 0}
               onSaveModel={props.library.onSaveModel}
-              onImportSvg={props.library.onImportSvg}
+              onImport={props.library.onImport}
               onImageToModel={props.library.onImageToModel}
             />
           )}

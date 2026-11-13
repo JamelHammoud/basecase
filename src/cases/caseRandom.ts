@@ -1,0 +1,36 @@
+import { drawInstance, seededRandom, type Instance, type Random } from '../skills/arenaWorld';
+import type { Randomization } from '../skills/environment';
+import { sha256Hex } from '../skills/hash';
+import type { Case } from './schema';
+
+export const CASE_RANDOMIZATION: Randomization = Object.freeze({
+  friction: [0.8, 1.2],
+  mass: [0.9, 1.1],
+  strength: [0.9, 1],
+  latencyMs: [0, 20],
+}) as Randomization;
+
+export const OBJECT_JITTER_MM = 15;
+
+export const caseRandom = (seed: number): Random => seededRandom(sha256Hex(`case-run|${seed}`));
+
+export const caseInstance = (random: Random, options: { randomization: Randomization; bodies: number }): Instance =>
+  drawInstance(random, {
+    ranges: { ...options.randomization, jointNoiseDeg: 0, baseYawDeg: 0, baseOffsetMm: 0 },
+    bodies: options.bodies,
+    joints: 0,
+  });
+
+const nudge = (random: Random) => (2 * random() - 1) * OBJECT_JITTER_MM;
+
+export function jitteredWorld(kase: Case, random: Random): Case {
+  const objects = kase.world.objects.map((o) => {
+    if (o.behavior !== 'dynamic') return o;
+
+    const [x, y, z] = o.position;
+
+    return { ...o, position: [x + nudge(random), y, z + nudge(random)] as typeof o.position };
+  });
+
+  return { ...kase, world: { ...kase.world, objects } };
+}

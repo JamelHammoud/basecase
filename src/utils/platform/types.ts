@@ -1,5 +1,6 @@
 import type { SourcedItem } from '../../data/sourcedItems';
-import type { ConnectReply, RobotEvent, RobotLinkState, RobotSpec } from '../../robot/robotState';
+import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState } from '../../robot/robotState';
+import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
   AcpStatusInfo,
@@ -26,6 +27,30 @@ export interface CadBody {
 export interface OpenedCad {
   bodies: CadBody[];
   data: Uint8Array;
+}
+
+export interface CadTuneRequest {
+  workspaceId: string;
+  id: string;
+  values: Record<string, number>;
+}
+
+export interface CadTuneAnswer {
+  code: string;
+  result: Uint8Array | Record<string, unknown>;
+}
+
+export type CadLanguage = 'openscad' | 'replicad';
+
+export interface RenderedCad {
+  ok: boolean;
+  positions?: number[];
+  indices?: number[];
+  edges?: number[] | null;
+  stats?: { volume?: number };
+  audit?: CadAudit;
+  ports?: CadPort[];
+  error?: string;
 }
 
 export interface AcpPromptPayload {
@@ -166,6 +191,8 @@ declare global {
       importMakerCad: (payload: unknown) => Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }>;
       openCadFile: (payload: { name: string; bytes: Uint8Array }) => Promise<OpenedCad>;
       exportStep: (job: StepJob) => Promise<ExportedStep>;
+      tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
+      renderCad: (payload: { language: CadLanguage; code: string }) => Promise<Uint8Array>;
       savePurchase: (payload: {
         key: string;
         record: PurchaseRecord | null;
@@ -207,7 +234,7 @@ declare global {
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
-      robotConnect?: (spec: RobotSpec) => Promise<ConnectReply>;
+      robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
       robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
       robotDisconnect?: () => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;

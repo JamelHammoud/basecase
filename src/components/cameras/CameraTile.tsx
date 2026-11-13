@@ -3,9 +3,10 @@ import { lensLabel } from '../../cameras/lens';
 import type { CameraView } from '../../cameras/views';
 import { RenameField } from '../pose/RenameField';
 
-interface CameraTileProps {
+export interface CameraTileProps {
   view: CameraView;
   large: boolean;
+  fill?: boolean;
   renaming: boolean;
   onRename: (name: string) => void;
   canvasRef: (canvas: HTMLCanvasElement | null) => void;
@@ -15,13 +16,19 @@ interface CameraTileProps {
 
 const chip = 'rounded-md bg-black/65 px-1.5 h-6 leading-6 text-[12px]';
 
-export const CameraTile: React.FC<CameraTileProps> = ({ view, large, renaming, onRename, canvasRef, ...on }) => (
+const tileWidth = (fill: boolean | undefined, large: boolean) => {
+  if (fill) return 'w-full';
+
+  return large ? 'w-[384px]' : 'w-[192px]';
+};
+
+export const CameraTile: React.FC<CameraTileProps> = ({ view, large, fill, renaming, onRename, canvasRef, ...on }) => (
   <div
     data-testid="camera-tile"
     data-camera={view.key}
-    className={`group/tile relative overflow-hidden rounded-[10px] bg-[#1a1a1a] shadow-[0_8px_24px_rgba(0,0,0,0.45)] ${
-      large ? 'w-[384px]' : 'w-[192px]'
-    } aspect-[4/3]`}
+    className={`group/tile relative overflow-hidden rounded-[10px] bg-[#1a1a1a] ${
+      fill ? '' : 'shadow-[0_8px_24px_rgba(0,0,0,0.45)]'
+    } ${tileWidth(fill, large)} aspect-[4/3]`}
   >
     <button
       type="button"

@@ -2,13 +2,14 @@ import type { V3 } from '../utils/kinematics';
 import { BLOCK_DEPTH_MM, type BuilderRobot, type GoalKind, type GoalPlan } from './caseGoals';
 import type { WorldObject } from './schema';
 
-export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf';
+export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf' | 'room';
 
 export interface CaseWorld {
   kind: WorldKind;
   name: string;
   suffix: string;
-  fits: (goal: GoalKind) => boolean;
+  trueSize?: boolean;
+  fits: (goal: GoalKind, robot?: BuilderRobot) => boolean;
   objects: (plan: GoalPlan, robot: BuilderRobot) => WorldObject[];
 }
 

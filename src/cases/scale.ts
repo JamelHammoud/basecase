@@ -1,21 +1,30 @@
 import type { V3 } from '../utils/kinematics';
+import { caseSignalNames } from './caseFacts';
 import { scaledFormula } from './contract';
-import type { Case, WorldObject } from './schema';
+import { caseSlots, type Case, type RobotSlot, type WorldObject } from './schema';
 
 const SAME_SCALE = 1e-3;
 const UP = 1;
 
 export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
-  const authored = kase.slot.reachMm;
-  const from = kase.slot.anchor ?? anchor;
+  const [lead] = caseSlots(kase);
+  const authored = lead.reachMm;
+  const from = lead.anchor ?? anchor;
   const s = authored && reachMm > 0 ? reachMm / authored : 1;
-  const fromFloor = kase.slot.needs.includes('gripper');
+  const fromFloor = lead.needs.includes('gripper');
   const pinned = (i: number) => fromFloor && i === UP;
   const place = (p: V3): V3 => p.map((x, i) => (pinned(i) ? x * s : anchor[i] + (x - from[i]) * s)) as V3;
+  const onFloor = (p: V3): V3 => {
+    const [x, , z] = place(p);
+
+    return [x, p[1], z];
+  };
   const sameScale = Math.abs(s - 1) < SAME_SCALE;
   const sameAnchor = from.every((x, i) => pinned(i) || x === anchor[i]);
 
   if (sameScale && sameAnchor) return kase;
+
+  const unitless = caseSignalNames(kase);
 
   const object = (o: WorldObject): WorldObject => ({
     ...o,
@@ -24,9 +33,19 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
     ...(o.massG !== undefined ? { massG: o.massG * s ** 3 } : {}),
   });
 
+  const guest = (slot: RobotSlot): RobotSlot => ({
+    ...slot,
+    ...(slot.reachMm !== undefined ? { reachMm: slot.reachMm * s } : {}),
+    ...(slot.anchor ? { anchor: place(slot.anchor) } : {}),
+    ...(slot.pose ? { pose: { ...slot.pose, position: onFloor(slot.pose.position) } } : {}),
+  });
+  const cast = kase.slots
+    ? { slots: kase.slots.map((slot, i) => (i ? guest(slot) : { ...slot, reachMm, anchor })) }
+    : { slot: { ...kase.slot!, reachMm, anchor } };
+
   return {
     ...kase,
-    slot: { ...kase.slot, reachMm, anchor },
+    ...cast,
     world: { objects: kase.world.objects.map(object) },
     reference: {
       timeline: kase.reference.timeline.map((c) => (c.target ? { ...c, target: place(c.target) } : c)),
@@ -35,8 +54,8 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
       ...kase.task,
       contract: {
         ...kase.task.contract,
-        success: scaledFormula(kase.task.contract.success, s),
-        failures: kase.task.contract.failures.map((f) => ({ ...f, formula: scaledFormula(f.formula, s) })),
+        success: scaledFormula(kase.task.contract.success, s, unitless),
+        failures: kase.task.contract.failures.map((f) => ({ ...f, formula: scaledFormula(f.formula, s, unitless) })),
       },
     },
   };

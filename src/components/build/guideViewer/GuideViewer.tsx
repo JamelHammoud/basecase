@@ -12,6 +12,7 @@ import {
   IslandDivider,
   MinusIcon,
   NO_DRAG_REGION,
+  PackageIcon,
   PlusIcon,
 } from '../../../design-system';
 import type { GuidePages } from '../../../guide/viewer/guidePages';
@@ -25,11 +26,12 @@ interface GuideViewerProps {
   onClosed: () => void;
   onReveal?: () => void;
   onOpenPdf?: () => void;
+  onBuildAlong?: () => void;
 }
 
 const hidden: React.CSSProperties = { opacity: 0 };
 
-export const GuideViewer: React.FC<GuideViewerProps> = ({ pages, title, onClosed, onReveal, onOpenPdf }) => {
+export const GuideViewer: React.FC<GuideViewerProps> = ({ pages, title, onClosed, onReveal, onOpenPdf, onBuildAlong }) => {
   const viewer = useGuideViewer(pages, onClosed);
   const captionInset = useCaptionInset();
   const { scrollerRef, columnRef, backdropRef, chromeRef } = viewer.refs;
@@ -90,6 +92,21 @@ export const GuideViewer: React.FC<GuideViewerProps> = ({ pages, title, onClosed
             <IslandDivider />
             <IconButton size="sm" title="Zoom out" shortcut="−" tooltipSide="top" icon={<MinusIcon className="w-4 h-4" />} onClick={viewer.zoomOut} />
             <IconButton size="sm" title="Zoom in" shortcut="+" tooltipSide="top" icon={<PlusIcon className="w-4 h-4" />} onClick={viewer.zoomIn} />
+            {onBuildAlong && (
+              <>
+                <IslandDivider />
+                <IconButton
+                  size="sm"
+                  title="Build Along"
+                  tooltipSide="top"
+                  icon={<PackageIcon className="w-4 h-4" />}
+                  onClick={() => {
+                    viewer.close();
+                    onBuildAlong();
+                  }}
+                />
+              </>
+            )}
             {(onReveal || onOpenPdf) && <IslandDivider />}
             {onReveal && (
               <IconButton size="sm" title={REVEAL_LABEL} tooltipSide="top" icon={<FolderOpenIcon className="w-4 h-4" />} onClick={onReveal} />

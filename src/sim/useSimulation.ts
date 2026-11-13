@@ -10,13 +10,24 @@ import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } f
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
+import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
+import type { CaseFacts, FactValue } from '../cases/caseFacts';
+import type { LiveCaseInput } from '../cases/liveCase';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
+import type { Sought } from './useRecordingLink';
+import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
+import { pushRequest } from './push';
+import type { AmpModel } from '../utils/servoAmps';
 
 export { simDeltas } from './mjcf';
+
+export interface SimFrame {
+  joints: Float64Array;
+}
 
 export type SimStatus = 'off' | 'loading' | 'ready' | 'error';
 
@@ -32,6 +43,7 @@ export interface Simulation {
   playing: boolean;
   stats: SimStats | null;
   latestStats: () => SimStats | null;
+  latestScan: () => Scan | null;
   error: string | null;
   model: SimModel | null;
   modelNow: () => SimModel | null;
@@ -54,13 +66,19 @@ export interface Simulation {
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
-  replay: (r: Recording) => void;
+  scrub: (r: Recording | null) => Promise<Float32Array[] | null>;
+  seek: (frame: number) => void;
+  sought: () => Sought | null;
   worldParts: ScenePart[];
-  subscribePoses: (listen: (poses: Float64Array) => void) => () => void;
+  guestParts: ScenePart[];
+  subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
-  setWorld: (items: WorldItem[]) => void;
+  setWorld: (items: WorldItem[], guests?: SimGuests) => void;
   buildModel: () => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
+  runCase: (input: LiveCaseInput | null) => void;
+  input: (name: string, value: FactValue) => void;
+  latestFacts: () => CaseFacts | null;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
   run: (opts: {
     seconds: number;
@@ -69,6 +87,7 @@ export interface Simulation {
     frames?: number[];
     forceLimits?: (model: SimModel) => Record<string, number>;
     trace?: boolean;
+    currents?: Record<string, AmpModel>;
     commands?: Array<{ at: number; command: DriveCommand }>;
   }) => Promise<SimRun>;
 }
@@ -104,22 +123,11 @@ function grabRequest(
   return { type: 'grab', phase: 'move', point: toMj(hand.position), turn: hand.turn ? quatToMj(hand.turn) : null };
 }
 
-function pushRequest(m: SimModel | null, robot: string | undefined): SimRequest | null {
-  const key = robot ?? m?.robots.find((r) => r.floating)?.key ?? m?.robots[0]?.key;
-
-  if (!m || !key) return null;
-
-  const n = (m.massKg[key] || 1) * 9.81 * 0.5;
-  const a = Math.random() * Math.PI * 2;
-
-  return { type: 'push', robot: key, force: [Math.cos(a) * n, 0, Math.sin(a) * n] };
-}
-
 type Ran = Extract<SimResponse, { type: 'ran' }>;
 
 async function runModel(
   m: SimModel,
-  { seconds, controller: c, pushes, frames, forceLimits, trace, commands }: RunOptions,
+  { seconds, controller: c, pushes, frames, forceLimits, trace, currents, commands }: RunOptions,
   id: number,
 ): Promise<SimRun> {
   const w = newSimWorker();
@@ -140,6 +148,7 @@ async function runModel(
             pushes: pushes?.map((p) => ({ at: p.at, robot: p.robot ?? key, force: p.force })),
             forceLimits: forceLimits?.(m),
             trace,
+            currents,
             commands,
           } satisfies SimRequest);
         } else if (msg.type === 'error') reject(new Error(msg.message));
@@ -164,6 +173,8 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
   const inputs = useRef({ parts, project, rig, pose, restDeltas });
   const [worldParts, setWorldParts] = useState<WorldItem[]>([]);
   const worldRef = useRef<WorldItem[]>(worldParts);
+  const [guests, setGuests] = useState<SimGuests>(NO_GUESTS);
+  const guestsRef = useRef<SimGuests>(guests);
 
   useLayoutEffect(() => {
     inputs.current = { parts, project, rig, pose, restDeltas };
@@ -179,26 +190,31 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     const current = inputs.current;
     const [measures, posedFloor] = await Promise.all([vp.measureParts(), vp.posedFloor()]);
 
-    const input = {
-      parts: current.parts,
-      rig: current.rig,
-      project: current.project,
-      pose: current.pose,
-      measures,
-      partTriangles: vp.partTriangles,
-      posedFloor,
-      world: worldRef.current,
-    };
+    const input = withGuests(
+      {
+        parts: current.parts,
+        rig: current.rig,
+        project: current.project,
+        pose: current.pose,
+        measures,
+        partTriangles: vp.partTriangles,
+        posedFloor,
+        world: worldRef.current,
+      },
+      guestsRef.current,
+    );
 
     return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
   }, [viewportRef]);
 
-  const setWorldItems = (items: WorldItem[]) => {
+  const setWorldItems = (items: WorldItem[], cast: SimGuests) => {
     worldRef.current = items;
+    guestsRef.current = cast;
     setWorldParts(items);
+    setGuests(cast);
   };
 
-  return { inputs, buildModel, worldParts, setWorldItems };
+  return { inputs, buildModel, worldParts, guestParts: guests.parts, setWorldItems };
 }
 
 function useStopOnEdit({
@@ -236,17 +252,39 @@ function useController(send: (msg: SimRequest) => void) {
   return [controller, setController] as const;
 }
 
+function useSimTouches(
+  modelRef: React.RefObject<SimModel | null>,
+  send: (msg: SimRequest) => void,
+): Pick<Simulation, 'grab' | 'push'> {
+  'use memo';
+
+  return {
+    grab: (partIds, hand, phase) => {
+      const m = modelRef.current;
+      const msg = m && grabRequest(m, partIds, hand, phase);
+
+      if (msg) send(msg);
+    },
+    push: (robot) => {
+      const msg = pushRequest(modelRef.current, robot, Math.random() * Math.PI * 2);
+
+      if (msg) send(msg);
+    },
+  };
+}
+
 export function useSimulation(props: Inputs): Simulation {
   const { parts, project, rig, pose, viewportRef } = props;
   const [model, setModel] = useState<SimModel | null>(null);
   const [speed, setSpeedState] = useState(1);
   const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, setWorldItems } = useSceneModel(props);
+  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
   const { worker, load, frameHookRef } = sw;
   const [controller, setController] = useController(send);
+  const touch = useSimTouches(modelRef, send);
 
   const start = useCallback(async () => {
     setError(null);
@@ -283,6 +321,7 @@ export function useSimulation(props: Inputs): Simulation {
     setStatus('off');
     setPlaying(false);
     setStats(null);
+    viewportRef.current?.setScan(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
   }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
 
@@ -304,8 +343,8 @@ export function useSimulation(props: Inputs): Simulation {
     runOn,
     velocity: props.velocity,
   });
-  const setWorld = (items: WorldItem[]) => {
-    setWorldItems(items);
+  const setWorld = (items: WorldItem[], cast: SimGuests = NO_GUESTS) => {
+    setWorldItems(items, cast);
     stop();
   };
 
@@ -314,6 +353,7 @@ export function useSimulation(props: Inputs): Simulation {
     playing,
     stats,
     latestStats: sw.latestStats,
+    latestScan: sw.latestScan,
     error,
     model,
     modelNow: () => modelRef.current,
@@ -333,26 +373,20 @@ export function useSimulation(props: Inputs): Simulation {
     },
     setController,
     buildModel,
-    grab: (partIds, hand, phase) => {
-      const m = modelRef.current;
-      const msg = m && grabRequest(m, partIds, hand, phase);
-
-      if (msg) send(msg);
-    },
-    push: (robot) => {
-      const msg = pushRequest(modelRef.current, robot);
-
-      if (msg) send(msg);
-    },
+    ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,
-    replay: (r) => {
+    scrub: (r) => {
       setPlaying(false);
-      send({ type: 'replay', qpos: r.qpos, nq: r.nq, dt: r.dt });
+
+      return sw.scrub(r);
     },
+    seek: sw.seek,
+    sought: sw.sought,
     worldParts,
+    guestParts,
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,
     setWorld,
@@ -361,6 +395,9 @@ export function useSimulation(props: Inputs): Simulation {
 
       return sw.startRoutine(input, onUpdate);
     },
+    runCase: (input) => send(input ? { type: 'case', ...input } : { type: 'caseEnd' }),
+    input: (name, value) => send({ type: 'input', name, value }),
+    latestFacts: sw.latestFacts,
     runOn,
     run: async (opts) => {
       const m = await buildModel();

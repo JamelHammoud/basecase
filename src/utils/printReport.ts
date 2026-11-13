@@ -39,7 +39,7 @@ export interface PrintReport {
 export const fmtSize = (size: number[]) =>
   size.map((v) => (v < 10 ? String(Math.round(v * 10) / 10) : String(Math.round(v)))).join(' × ');
 
-interface PartShape {
+export interface PartShape {
   check: PrintShape;
   measure: MeshMeasure;
 }
@@ -169,12 +169,26 @@ export const printSettingsKey = (project: ProjectSettings) => `${project.printPr
 
 export function buildPrintReport(parts: ScenePart[], ctx: PrintContext): PrintReport {
   const printed = parts.filter((p) => isPrinted(p) && !p.print?.skip);
-  const byId = new Map(printed.map((p) => [p.id, p]));
-  const out: PrintedPartReport[] = printed.flatMap((part) => {
-    const shape = shapes.get(cacheKey(part));
 
-    return shape ? [{ ...reportPart(part, shape, ctx), copies: Math.max(1, part.print?.copies ?? 1) }] : [];
-  });
+  return reportFromShapes(
+    printed.flatMap((part) => {
+      const shape = shapes.get(cacheKey(part));
+
+      return shape ? [{ part, shape }] : [];
+    }),
+    ctx,
+  );
+}
+
+export function reportFromShapes(
+  entries: Array<{ part: ScenePart; shape: PartShape }>,
+  ctx: PrintContext,
+): PrintReport {
+  const byId = new Map(entries.map(({ part }) => [part.id, part]));
+  const out: PrintedPartReport[] = entries.map(({ part, shape }) => ({
+    ...reportPart(part, shape, ctx),
+    copies: Math.max(1, part.print?.copies ?? 1),
+  }));
   const plan = buildPrintPlan(
     out.map((r) => ({ ...r, shapeKey: shapeKey(byId.get(r.id)!), print: byId.get(r.id)!.print })),
     ctx.printer,

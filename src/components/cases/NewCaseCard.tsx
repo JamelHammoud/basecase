@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { caseName, goalValues, worldsFor } from '../../cases/caseBuilder';
+import { caseName, goalFields, goalValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
 import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
 import type { CaseBuilder } from '../../workspace/useCaseBuilder';
+
+const MAX_WORLD_COLUMNS = 3;
 
 interface NewCaseCardProps {
   builder: CaseBuilder;
@@ -12,11 +14,11 @@ interface NewCaseCardProps {
 
 export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const [goalKind, setGoalKind] = useState<GoalKind>(builder.goals[0].kind);
-  const [chosenWorld, setWorld] = useState<WorldKind>('floor');
+  const [chosenWorld, setWorld] = useState<WorldKind>(builder.room ? 'room' : 'floor');
   const [given, setGiven] = useState<Partial<GoalValues>>({});
   const [name, setName] = useState<string | null>(null);
   const goal = builder.goals.find((g) => g.kind === goalKind) ?? builder.goals[0];
-  const worlds = worldsFor(goal.kind);
+  const worlds = worldsFor(goal.kind, builder.robot, builder.room);
   const world = worlds.some((w) => w.kind === chosenWorld) ? chosenWorld : 'floor';
   const values = goalValues(goal, builder.robot, given, world);
   const spec = { goal: goal.kind, world, values: given, name: name ?? undefined };
@@ -51,14 +53,14 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
       {worlds.length > 1 && (
         <ChoiceGrid
           label="World"
-          columns={worlds.length}
+          columns={worlds.length > MAX_WORLD_COLUMNS ? 2 : worlds.length}
           value={world}
           onChange={setWorld}
-          options={worlds.map((w) => ({ value: w.kind, label: w.name }))}
+          options={worlds.map((w) => ({ value: w.kind, label: w.name, title: w.trueSize ? w.name : undefined }))}
         />
       )}
       <div className="flex flex-col gap-2">
-        {goal.params.map((key) => {
+        {goalFields(goal, values).map((key) => {
           const param = goalParam(goal, key);
 
           return (
@@ -77,7 +79,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         })}
         <FieldRow label="Name">
           <TextInput
-            value={name ?? caseName(goal.kind, world)}
+            value={name ?? caseName(goal.kind, world, values, builder.room)}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') create();

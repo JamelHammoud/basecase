@@ -20,6 +20,7 @@ related:
 covers:
   - src/components/AlignBar.tsx
   - src/components/inspector/MultiInspector.tsx
+  - src/components/alignActions.ts
   - src/workspace/contextMenuItems.tsx
   - src/workspace/editCommands.tsx
   - src/utils/selection.ts
@@ -46,4 +47,4 @@ The same strip is under **Align** in the right-click menu. [[⌘K]] has each one
 | Y | Bottom, Middle, Top | Bottom puts the part on the floor |
 | Z | Back, Center, Front | Puts that side or the center on the origin |
 
-The bounds count each part's rotation, so turned parts line up by what you see. Spread stays off until three parts are selected.
+The bounds count each part's rotation, so turned parts line up by what you see. **Spread** shows once three parts are selected.

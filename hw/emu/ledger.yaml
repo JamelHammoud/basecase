@@ -41,6 +41,12 @@ feetech:
   - behaviour: Broadcast ping is answered by every servo in ID order, about 3 ms apart.
     source: assumed
     note: rustypot lists broadcast ping as supported for the STS3215; the spacing is invented.
+  - behaviour: Servos sharing an ID answer a broadcast ping at the same moment, so their replies collide into one.
+    source: assumed
+    note: Same half-duplex model as addressed replies. Identical replies look like one servo, so the daemon probes a new servo's position before numbering it.
+  - behaviour: A new servo comes from the factory at ID 1, and the ID at address 5 can be rewritten between an unlock and a lock.
+    source: client-derived
+    note: LeRobot's motor setup writes ID 5 after clearing Lock 55 and assumes new servos answer at ID 1. Check both in the Stage 8 register dump.
   - behaviour: Sync read (0x82) is answered by each listed servo in list order, back to back.
     source: client-derived
     note: scservo_sdk GroupSyncRead reads one status per listed id in order. Timing between replies is assumed.
@@ -88,6 +94,9 @@ dynamixel:
   - behaviour: EEPROM writes are refused with an Access error while torque is on.
     source: datasheet
     note: e-Manual caution on the EEPROM area. The error code is from the protocol 2.0 error list.
+  - behaviour: A new XL330 comes from the factory at ID 1, and its ID sits at address 7 in EEPROM with no lock register.
+    source: datasheet
+    note: e-Manual control table (ID 7, default 1).
   - behaviour: Writes to read-only registers return an Access error.
     source: assumed
     note: Error code chosen from the protocol 2.0 list.
@@ -147,3 +156,41 @@ plant:
   - behaviour: Two servos answering at once pull the bus low, so their bytes AND together.
     source: assumed
     note: Models half-duplex TTL collisions for the duplicate-ID fault.
+
+unitree-g1:
+  - behaviour: The robot publishes unitree_hg LowState on rt/lowstate and takes unitree_hg LowCmd on rt/arm_sdk, with 35 motor slots, the 29 G1 joints first in unitree_sdk2 order (legs 0 to 11, waist 12 to 14, left arm 15 to 21, right arm 22 to 28).
+    source: client-derived
+    note: unitree_sdk2 IDL unitree_hg LowState_ and LowCmd_ and the G1JointIndex enum in its G1 arm examples, as recalled; not re-read in this session. The C layout check in servo-wire pins the struct sizes, 1004 and 2092 bytes.
+  - behaviour: Each message carries crc32_core (polynomial 0x04c11db7, seed 0xFFFFFFFF, 32-bit words, MSB first) over the C struct image, every word but the last.
+    source: client-derived
+    note: unitree_sdk2 crc32_core and the Crc32Core((uint32_t*)&msg, (sizeof(msg) >> 2) - 1) call in its low-level examples; servo-wire's test reproduces it against the same function compiled from C. Padding bytes count as zero.
+  - behaviour: An arm_sdk message whose CRC doesn't match is ignored.
+    source: assumed
+    note: The low-level rt/lowcmd path checks it; whether arm_sdk does is unknown. Emulated so the daemon's CRC is exercised.
+  - behaviour: motor_cmd[29].q is the arm_sdk weight, 0 to 1. The arms and waist follow weight times the arm_sdk command plus (1 - weight) times the robot's own controller, blending q, kp and kd; dq and tau scale by the weight.
+    source: client-derived
+    note: g1_arm7_sdk_dds_example sets kNotUsedJoint's q as the weight and ramps it in and out. The exact blend inside the robot is assumed.
+  - behaviour: arm_sdk entries for leg joints and slots past 29 are ignored, and counted.
+    source: assumed
+    note: The examples only write arm and waist joints; what the robot does with leg entries on arm_sdk is unknown. The count lets tests prove the daemon never writes them.
+  - behaviour: With no new arm_sdk message, the robot keeps the last weight and command.
+    source: assumed
+    note: The conservative case, so the daemon's own hand-back is what releases the arms.
+  - behaviour: The robot's own controller holds a standing pose (hips -0.1, knees 0.3, ankles -0.2, elbows 0.97 rad) with kp 150 and kd 2 on legs, 200 and 5 on the waist, 40 and 1 on arms.
+    source: assumed
+    note: Stands in for the locomotion controller, which balances rather than holds a pose. Gravity and balance aren't modelled.
+  - behaviour: Each joint is a PD-driven inertia with viscous and Coulomb friction, torque limits of 88 Nm (legs, waist) and 25 Nm (arms), and URDF joint limits.
+    source: assumed
+    note: Hidden per-unit inertia (0.08 kg m2, 20% spread), viscous (30%), Coulomb (30%) and gain (10%) come from the seed. Limits are recalled from g1_29dof_rev_1_0.urdf.
+  - behaviour: LowState arrives every 2 ms, with motor mode 1, motorstate 0, temperatures of 33 to 38 C and 48 V.
+    source: assumed
+    note: 500 Hz is the commonly quoted rate; mode, temperature and voltage values are placeholders.
+  - behaviour: The loco service answers GetFsmId (api 7001) on rt/api/loco/response with {"data":200} while balancing, and 1 (damping) when not.
+    source: assumed
+    note: Api id and the JSON shape follow unitree_sdk2's g1 LocoClient as recalled; that 200 is the id the robot reports while its locomotion controller runs is unchecked.
+  - behaviour: A motor that fails reports a nonzero motorstate and stops moving.
+    source: assumed
+    note: Error codes aren't modelled; any nonzero value counts.
+  - behaviour: The emulated G1 runs in the daemon's process and talks over a pair of UDP sockets bound to 127.0.0.1, one datagram per sample with a topic byte before the CDR payload, with optional injected latency each way.
+    source: assumed
+    note: Not RTPS. The real-network path is rustdds behind unlock-real-motors.

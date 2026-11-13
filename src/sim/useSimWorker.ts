@@ -1,12 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { offerSimTargets } from '../robot/intentMirror';
+import { noteSimAngles } from '../robot/robotTwin';
 import type { Controller, SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
-import type { Recording } from './recorder';
+import type { CaseFacts } from '../cases/caseFacts';
+import type { Scan } from './scanner';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
+import { useRecordingLink } from './useRecordingLink';
+
+interface LatestFrame {
+  at: number;
+  stats: SimStats | null;
+  facts: CaseFacts | null;
+  scan: Scan | null;
+}
+
+function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame' }>) {
+  latest.stats = msg.stats;
+  latest.facts = msg.facts ?? null;
+  latest.scan = msg.scan ?? latest.scan;
+}
 
 export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
 
@@ -19,13 +35,14 @@ export function useSimWorker(
   const [playing, setPlaying] = useState(false);
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ui = useRef<{ at: number; stats: SimStats | null }>({ at: 0, stats: null });
+  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null });
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
   const routineHookRef = useRef<((update: LiveUpdate) => void) | null>(null);
-  const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
+  const recordingLink = useRecordingLink(workerRef);
+  const recordingReply = recordingLink.reply;
 
   const send = useCallback((msg: SimRequest) => workerRef.current?.postMessage(msg), []);
 
@@ -47,9 +64,8 @@ export function useSimWorker(
         return;
       }
 
-      if (msg.type === 'recorded') {
-        recordWaiter.current?.(msg.recording);
-        recordWaiter.current = null;
+      if (msg.type === 'recorded' || msg.type === 'scrubbed' || msg.type === 'sought') {
+        recordingReply(msg);
 
         return;
       }
@@ -68,7 +84,7 @@ export function useSimWorker(
 
       if (msg.type !== 'frame' || !m) return;
 
-      ui.current.stats = msg.stats;
+      noteFrame(ui.current, msg);
       showFrame(m, msg, { viewport: viewportRef.current, listeners: poseListeners.listeners.current });
       frameHookRef.current?.({ poses: msg.poses, time: msg.stats.time });
 
@@ -80,7 +96,7 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef, poseListeners.listeners],
+    [viewportRef, modelRef, poseListeners.listeners, recordingReply],
   );
 
   const worker = useCallback(() => {
@@ -121,29 +137,19 @@ export function useSimWorker(
     [modelRef],
   );
 
-  const stopRecording = useCallback(
-    () =>
-      new Promise<Recording | null>((resolve) => {
-        if (!workerRef.current) {
-          resolve(null);
-
-          return;
-        }
-
-        recordWaiter.current = resolve;
-        workerRef.current.postMessage({ type: 'record', on: false } satisfies SimRequest);
-      }),
-    [],
-  );
-
   return {
-    stopRecording,
+    stopRecording: recordingLink.stopRecording,
+    scrub: recordingLink.scrub,
+    seek: recordingLink.seek,
+    sought: recordingLink.sought,
     status,
     setStatus,
     playing,
     setPlaying,
     stats,
     latestStats: () => (status === 'off' ? null : ui.current.stats),
+    latestFacts: () => (status === 'off' ? null : ui.current.facts),
+    latestScan: () => (status === 'off' ? null : ui.current.scan),
     setStats,
     error,
     setError,
@@ -185,7 +191,7 @@ function linkCameras(w: Worker, link: CameraLink | null) {
   w.postMessage({ type: 'cameras', port } satisfies SimRequest, port ? [port] : []);
 }
 
-type PoseListener = (poses: Float64Array) => void;
+type PoseListener = (poses: Float64Array, frame: { joints: Float64Array }) => void;
 
 export interface SimFrame {
   poses: Float64Array;
@@ -199,11 +205,26 @@ function showFrame(
   msg: Extract<SimResponse, { type: 'frame' }>,
   to: { viewport: Viewport3DHandle | null; listeners: Set<PoseListener> },
 ) {
-  to.viewport?.setPose(simDeltas(m, msg.poses), worldDeltas(m, msg.poses));
-  to.listeners.forEach((listen) => listen(msg.poses));
+  const robots = simDeltas(m, msg.poses);
+  const world = worldDeltas(m, msg.poses);
+
+  if (m.robots.length > 1) robots.forEach((delta, id) => world.set(id, delta));
+
+  to.viewport?.setPose(robots, world);
+
+  if (msg.scan) to.viewport?.setScan(msg.scan.points);
+
+  to.listeners.forEach((listen) => listen(msg.poses, msg));
+
+  const ids = m.joints.map((j) => j.id);
+
   offerSimTargets(
-    m.joints.map((j) => j.id),
-    msg.targets,
+    ids,
+    m.joints.map((_, i) => msg.joints[i * 3]),
+  );
+  noteSimAngles(
+    ids,
+    Float64Array.from(m.joints, (_, i) => msg.joints[i * 3 + 1]),
   );
 }
 

@@ -39,7 +39,7 @@ export function place(id: string, solid: ShapeSolid, matrix: THREE.Matrix4): Pla
 
 const ray = new THREE.Ray();
 
-function isInside(solid: ShapeSolid, p: THREE.Vector3, dirs: THREE.Vector3[]): boolean {
+export function isInside(solid: ShapeSolid, p: THREE.Vector3, dirs: THREE.Vector3[] = RAY_DIRS): boolean {
   let votes = 0;
 
   for (const dir of dirs) {

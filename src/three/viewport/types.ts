@@ -1,17 +1,22 @@
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
+import type { GhostState } from './ghostLayer';
+import type { RobotGhost } from '../../robot/robotGhost';
 import type { FixedCamera } from '../../cameras/fixed';
 import type { ThreeMfFileSpec } from '../analysis/analysisOps';
+import type { FitCoupon, FitCouponTask } from '../analysis/fitCoupons';
 import type { MeshData } from '../../print/threeMf';
 import type * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
 import type { ChainResult } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
+import type { Snap } from '../../agent/snap';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
 import type { SceneShapes } from '../analysis/sceneShapes';
 import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from '../analysis/jointAxis';
+import type { CheckDot } from '../../utils/engineeringTypes';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 import type {
   CameraPreset,
@@ -41,6 +46,8 @@ export interface PartTransformUpdate {
   dimensions?: ScenePart['dimensions'];
 }
 
+export type PartPlacement = { id: string } & Pick<ScenePart, 'position' | 'rotation' | 'mates' | 'frame'>;
+
 export interface PoseJointTarget {
   id: string;
   type: 'revolute' | 'prismatic';
@@ -56,6 +63,18 @@ export type GrabHandler = (
   phase: GrabPhase,
 ) => void;
 
+export interface SkeletonView {
+  joints: Array<{ id: string; at: Vec3; color: string }>;
+  bones: Array<[Vec3, Vec3]>;
+}
+
+export interface SkeletonDragEvent {
+  id: string;
+  delta: Vec3;
+  phase: GrabPhase;
+  alone: boolean;
+}
+
 export interface AgentFrame {
   key: string;
   color: string;
@@ -66,6 +85,13 @@ export interface AgentFrame {
 export interface AxisPickHit {
   part: string;
   point: Vec3;
+}
+
+export interface BuildStepView {
+  shown: string[];
+  moves: Array<{ partId: string; offset: Vec3 }>;
+  arrows: Array<{ from: Vec3; to: Vec3 }>;
+  labels: Array<{ partId: string; text: string }>;
 }
 
 export interface ViewportProps {
@@ -85,6 +111,7 @@ export interface ViewportProps {
   onMarqueeSelect?: (ids: string[]) => void;
   onUpdatePartsTransform?: (updates: PartTransformUpdate[]) => void;
   onUpdatePartTransform: (id: string, position: Vec3, rotation: Vec3, dimensions?: ScenePart['dimensions']) => void;
+  onPlacePart?: (placement: PartPlacement) => void;
   onCommitSculptMesh: (id: string, sculptMesh: SculptMeshData) => void;
   annotateMode?: boolean;
   measureMode?: boolean;
@@ -101,6 +128,7 @@ export interface ViewportProps {
   selectedMarkId?: string | null;
   agentFrames?: AgentFrame[];
   fixedCameras?: FixedCamera[];
+  checkDots?: CheckDot[] | null;
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
   onEraseMarks?: (ids: string[]) => void;
@@ -113,6 +141,10 @@ export interface ViewportProps {
   onGrab?: GrabHandler | null;
   axisPick?: { parts: string[]; ready: boolean } | null;
   onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
+  buildStep?: BuildStepView | null;
+  skeleton?: SkeletonView | null;
+  onSkeletonDrag?: (drag: SkeletonDragEvent) => void;
+  onSkeletonPick?: (id: string, at: { x: number; y: number }) => void;
 }
 
 export type MarkTool = 'marker' | 'eraser';
@@ -150,6 +182,8 @@ export interface Viewport3DHandle {
   focusSelected: () => void;
   zoomBy: (factor: number) => void;
   pickAt: (clientX: number, clientY: number) => { partId: string | null; point: Vec3 } | null;
+  dragPart: (id: string, to: Vec3, free?: boolean) => boolean;
+  previewSnap: (part: ScenePart | null, free: boolean) => Snap | null;
   captureViews: (
     views: string[],
     onlyIds?: string[],
@@ -166,6 +200,7 @@ export interface Viewport3DHandle {
   ) => Promise<Record<string, ShapeReport>>;
   printMeshes: (ids: string[]) => Promise<Record<string, MeshData>>;
   printThreeMf: (files: ThreeMfFileSpec[], plateSize: [number, number]) => Promise<Record<string, Uint8Array>>;
+  fitCoupons: (task: FitCouponTask) => Promise<FitCoupon[]>;
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
@@ -176,6 +211,10 @@ export interface Viewport3DHandle {
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
+  setScan: (points: Float32Array | null) => void;
+  scanPointCount: () => number;
+  setGhost: (ghost: RobotGhost | null) => void;
+  ghostState: () => GhostState | null;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   restShapes: (ids: string[]) => SceneShapes;
@@ -186,6 +225,8 @@ export interface Viewport3DHandle {
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;
+  shownPartIds: () => string[];
+  checkDotCount: () => number;
 }
 
 export const MIN_DIST = 25;

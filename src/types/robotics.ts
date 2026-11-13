@@ -8,6 +8,7 @@ import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
+import type { StoredWalk } from '../utils/engineeringTypes';
 import type { BooleanFields } from './booleans';
 import type { SculptMeshData } from './sculpt';
 
@@ -231,6 +232,7 @@ export interface ProjectSettings extends ProjectRecords {
   poses?: RobotPose[];
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
+  walk?: StoredWalk;
   marks?: SceneMark[];
   cases?: Case[];
   tries?: TryRecord[];

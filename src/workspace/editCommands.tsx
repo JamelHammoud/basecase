@@ -1,6 +1,5 @@
 import type { Command } from '../components/CommandPalette';
 import {
-  AlignCenterXIcon,
   BotIcon,
   CopyIcon,
   CutIcon,
@@ -13,27 +12,11 @@ import {
   UngroupIcon,
   UnionIcon,
 } from '../design-system';
-import type { AlignMode, Axis } from '../utils/selection';
+import { ALIGN_AXES } from '../components/alignActions';
 import type { CommandInputs } from './sceneCommands';
 import { handJointCommands } from './jointCommands';
 
 const ic = 'w-4 h-4';
-
-const ALIGNS: Array<{ id: string; label: string; keywords: string; axis: Axis; mode: AlignMode }> = [
-  { id: 'align-left', label: 'Align Left', keywords: 'align x', axis: 0, mode: 'min' },
-  { id: 'align-center-x', label: 'Align Center (X)', keywords: 'align', axis: 0, mode: 'center' },
-  { id: 'align-right', label: 'Align Right', keywords: 'align x', axis: 0, mode: 'max' },
-  { id: 'align-bottom', label: 'Align Bottom', keywords: 'align y floor', axis: 1, mode: 'min' },
-  { id: 'align-top', label: 'Align Top', keywords: 'align y', axis: 1, mode: 'max' },
-  { id: 'align-front', label: 'Align Front', keywords: 'align z', axis: 2, mode: 'max' },
-  { id: 'align-back', label: 'Align Back', keywords: 'align z', axis: 2, mode: 'min' },
-];
-
-const SPREADS: Array<{ id: string; label: string; axis: Axis }> = [
-  { id: 'spread-x', label: 'Spread Along X', axis: 0 },
-  { id: 'spread-y', label: 'Spread Along Y', axis: 1 },
-  { id: 'spread-z', label: 'Spread Along Z', axis: 2 },
-];
 
 function clipboardCommands({ core, actions, clipboard }: CommandInputs): Command[] {
   const { edits } = actions;
@@ -133,21 +116,23 @@ function arrangeCommands({ actions }: CommandInputs): Command[] {
       keywords: 'boolean common',
       run: () => ops.runBoolean('intersect'),
     },
-    ...ALIGNS.map((a) => ({
-      id: a.id,
+    ...ALIGN_AXES.flatMap(({ axis, aligns }) =>
+      aligns.map((a) => ({
+        id: a.id,
+        group: 'Selection',
+        label: a.label,
+        icon: <a.icon className={ic} />,
+        keywords: a.keywords,
+        run: () => edits.align(axis, a.mode),
+      })),
+    ),
+    ...ALIGN_AXES.map(({ axis, spread }) => ({
+      id: spread.id,
       group: 'Selection',
-      label: a.label,
-      icon: <AlignCenterXIcon className={ic} />,
-      keywords: a.keywords,
-      run: () => edits.align(a.axis, a.mode),
-    })),
-    ...SPREADS.map((d) => ({
-      id: d.id,
-      group: 'Selection',
-      label: d.label,
-      icon: <AlignCenterXIcon className={ic} />,
+      label: spread.label,
+      icon: <spread.icon className={ic} />,
       keywords: 'distribute space evenly',
-      run: () => edits.distribute(d.axis),
+      run: () => edits.distribute(axis),
     })),
     {
       id: 'floor',

@@ -8,6 +8,8 @@ You can now publish a Case's passed tries to the Hugging Face Hub as a LeRobot d
 
 A dataset in a zip on your disk can't feed a fine-tune on a rented GPU. On the Hub, a training script loads it by its repo name.
 
+![Publish to Hugging Face under Export Dataset in Results](/changelog/publish-datasets-to-hugging-face/results.png)
+
 Each passed try becomes one episode of joint positions and actuator targets at 25 frames a second. It comes with a 640 × 480 video from the scene camera and from each camera on the robot. The dataset is LeRobot v2.1 with a GR00T modality file, tagged v2.1. GR00T and LeRobot before 0.4 load it as it is; LeRobot 0.4 and later convert it with their own script.
 
 Publishing again from the same scene replaces the episodes with the tries that pass now. Tries from an earlier design of the robot are left out, and the toast says how many.

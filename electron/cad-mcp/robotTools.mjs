@@ -252,8 +252,8 @@ export const importRobot = {
   config: {
     title: 'Import a published robot',
     description:
-      'Inserts a published robot from its URDF or MuJoCo MJCF with its meshes: every link becomes a part, every joint becomes a posable joint with its real axis and limits. ' +
-      'Presets: humanoids unitree-g1 (29 joints), unitree-h1, unitree-h1-2, apptronik-apollo, booster-t1, berkeley-humanoid; small bipeds robotis-op3, open-duck-mini; quadrupeds unitree-go2, unitree-go1, unitree-b2, anymal-c, spot; arms so101, franka-panda, ur5e. Or a URL to a .urdf or .xml, a GitHub or Hugging Face repo or folder, a .zip, or an Onshape assembly tab link (cad.onshape.com/documents/…/e/…; needs the user’s Onshape keys in Settings ▸ Accounts). When a repo holds several robots the reply lists them: call again with entry. ' +
+      'Inserts a published robot from its URDF, xacro or MuJoCo MJCF with its meshes: every link becomes a part, every joint becomes a posable joint with its real axis and limits. ' +
+      'Presets: humanoids unitree-g1 (29 joints), unitree-h1, unitree-h1-2, apptronik-apollo, booster-t1, berkeley-humanoid; small bipeds robotis-op3, open-duck-mini; quadrupeds unitree-go2, unitree-go1, unitree-b2, anymal-c, spot; arms so101, franka-panda, ur5e. Or a URL to a .urdf, .xacro or .xml, a GitHub or Hugging Face repo or folder, a .zip, or an Onshape assembly tab link (cad.onshape.com/documents/…/e/…; needs the user’s Onshape keys in Settings ▸ Accounts). When a repo holds several robots the reply lists them: call again with entry. ' +
       'Use it when the user wants an existing robot to pose or animate, or as a reference beside a design.',
     inputSchema: {
       preset: z
@@ -284,6 +284,24 @@ export const importRobot = {
   handler: async (args) => {
     try {
       return text((await bridge('import_robot', args, 300000))?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const makeLeader = {
+  name: 'make_leader',
+  config: {
+    title: 'Make a leader arm',
+    description:
+      'Makes a leader for a fixed-base arm in the scene and opens it in a new scene tab: the same movable joints in the same order with the same axes and limits, about half the reach (each link at least 56 mm), a Dynamixel XL330-M288 per joint read as an angle sensor, printed brackets from the robotics library (servo_base, servo_link, servo_u_link), and a handle on the last joint with a trigger as the gripper joint when the arm has one. ' +
+      "The leader's scene records this scene and the joint ids it leads. Use it when the user wants to teleoperate or record demonstrations by moving a copy of the arm by hand (GELLO, SO-101 leader). The arm's movable joints must form one chain.",
+    inputSchema: { robot: ROBOT },
+  },
+  handler: async ({ robot }) => {
+    try {
+      return text((await bridge('make_leader', { robot }))?.text || 'ok');
     } catch (err) {
       return fail(err);
     }

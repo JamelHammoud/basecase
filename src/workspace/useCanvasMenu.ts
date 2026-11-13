@@ -27,7 +27,7 @@ const movedFrom = (press: MenuPress, e: { clientX: number; clientY: number }) =>
   Math.hypot(e.clientX - press.x, e.clientY - press.y) > MENU_MOVE_TOLERANCE;
 
 export function useCanvasMenu(
-  { viewportRef, selectedIds, selection, parts }: WorkspaceCore,
+  { viewportRef, selectedIds, selection, parts, caseRun }: WorkspaceCore,
   stopFollowing: () => void,
 ) {
   const { select } = selection;
@@ -36,6 +36,8 @@ export function useCanvasMenu(
   const lastWheelRef = useRef(-Infinity);
 
   const openMenu = (x: number, y: number, partId: string | null, point: Vec3 | null) => {
+    if (caseRun.open) return;
+
     if (partId && !selectedIds.includes(partId)) select(partId);
 
     setMenu({ x, y, partId, point });

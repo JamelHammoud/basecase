@@ -28,12 +28,14 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onClosed={guide.closeViewer}
           onReveal={desktop ? () => void guide.reveal() : undefined}
           onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
+          onBuildAlong={() => void core.buildAlong.open()}
         />
       )}
       <ImportRobotSheet
-        key={robots.robotChoice?.choices.join('\n') ?? 'link'}
+        key={robots.robotChoice?.choices.join('\n') ?? robots.robotFiles?.name ?? 'link'}
         open={robots.importRobotOpen}
         choice={robots.robotChoice}
+        loaded={robots.robotFiles}
         onClose={robots.closeImportRobot}
         onImport={(src, at) => void importRobotFrom(src, at)}
       />

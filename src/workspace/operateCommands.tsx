@@ -2,14 +2,38 @@ import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
 import { canCalibrate } from '../robot/calibrationSession';
 import { connectRobot, robotSnapshot } from '../robot/robotStore';
+import { servoFamily } from '../robot/robotState';
 import { sceneRobot } from '../robot/sceneRobot';
+import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { calibrateConnectedRobot } from './calibrationActions';
 import type { CommandInputs } from './sceneCommands';
 
 const ic = 'w-4 h-4';
 
-export function operateCommands({ core }: CommandInputs): Command[] {
+function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): Command[] {
+  const joints = core.project.joints ?? [];
+
+  if (servoSetup() || !canSetUpServos(joints, robotSnapshot())) return [];
+
+  return [
+    {
+      id: 'set-up-servos',
+      group: 'Operate',
+      label: 'Set Up Servos',
+      icon: <OperateIcon className={ic} />,
+      keywords: 'servo ids number assign factory plug emulated robot',
+      run: () => {
+        showOperate();
+        void setUpServos({ joints, select: core.setSelectedIds });
+      },
+    },
+  ];
+}
+
+export function operateCommands(inputs: CommandInputs): Command[] {
+  const { core } = inputs;
+
   if (IS_WEB_DEMO) return [];
 
   const showOperate = () => {
@@ -35,13 +59,17 @@ export function operateCommands({ core }: CommandInputs): Command[] {
             group: 'Operate',
             label: 'Connect Emulated Robot',
             icon: <OperateIcon className={ic} />,
-            keywords: 'robot daemon emulated servos feetech',
+            keywords: 'robot daemon emulated servos feetech unitree g1',
             run: () => {
               showOperate();
 
               if (robotSnapshot().link !== 'connected') void connectRobot(robot.spec, robot.joints);
             },
           },
+        ]
+      : []),
+    ...(robot.ok && servoFamily(robot.spec)
+      ? [
           {
             id: 'calibrate-robot',
             group: 'Operate',
@@ -56,5 +84,6 @@ export function operateCommands({ core }: CommandInputs): Command[] {
           },
         ]
       : []),
+    ...setUpServosCommands(inputs, showOperate),
   ];
 }

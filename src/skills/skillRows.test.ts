@@ -4,7 +4,7 @@ import { editParts, fixtureModel, fixtureRobot, modelOf } from './fixtureModels'
 import type { TrainedEntry } from './kitEnvironment';
 import { kitEnvironment } from './motorKit';
 import { arenaLine, moveTag, skillRecord, type SkillRecord } from './skillRecords';
-import { readyVelocity, skillRows, type SkillJob } from './skillRows';
+import { readyVelocity, readyWalkRecord, skillRows, type SkillJob } from './skillRows';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import { moveEnvironment } from './moveEnvironment';
@@ -131,6 +131,23 @@ describe('the skills list', () => {
 
     expect(readyVelocity(skillRows({ model, design: DESIGN, records, jobs: [] }))?.kit).toBe('velocity-tracking');
     expect(readyVelocity(skillRows({ model, design: DESIGN, records: [], jobs: [] }))).toBeNull();
+  });
+
+  it('picks the Walk Drive picks: an older fresh one over a newer one for another design', () => {
+    const quad = fixtureRobot('quad-servo');
+    const heavier = modelOf(editParts(quad, (p) => ({ ...p, massG: (p.massG ?? 50) * 1.5 })));
+    const fresh = { ...kitRecord(model, 'velocity-tracking'), createdAt: '2026-11-01T00:00:00.000Z' };
+    const failing = { ...kitRecord(model, 'velocity-tracking', [10, 10, 10]), createdAt: '2026-11-02T00:00:00.000Z' };
+    const stale = { ...kitRecord(heavier, 'velocity-tracking'), createdAt: '2026-11-12T00:00:00.000Z' };
+    const records = [fresh, stale];
+    const drive = readyVelocity(skillRows({ model, design: DESIGN, records, jobs: [] }));
+
+    expect(readyWalkRecord({ model, design: DESIGN, records })).toBe(fresh);
+    expect(drive).toBe(fresh);
+    expect(readyWalkRecord({ model, design: DESIGN, records: [...records, failing] })).toBe(
+      readyVelocity(skillRows({ model, design: DESIGN, records: [...records, failing], jobs: [] })),
+    );
+    expect(readyWalkRecord({ model, design: DESIGN, records: [stale] })).toBeNull();
   });
 });
 

@@ -245,6 +245,18 @@ const FINGER: P3 = [8, 26, 20];
 const FINGER_GAP_MM = 50;
 const FINGER_TRAVEL_MM = 25;
 
+const GRIPPER_PARTS = new Set(['palm', 'finger_left', 'finger_right']);
+
+export function withoutGripper(robot: FixtureRobot): FixtureRobot {
+  return {
+    ...robot,
+    parts: robot.parts.filter((p) => !GRIPPER_PARTS.has(p.id)),
+    joints: robot.joints
+      .filter((j) => !GRIPPER_PARTS.has(j.id))
+      .map((j) => ({ ...j, child: j.child.filter((id) => !GRIPPER_PARTS.has(id)) })),
+  };
+}
+
 function withGripper(robot: FixtureRobot): FixtureRobot {
   const wrist = robot.joints.at(-1)!;
   const top = Math.max(...robot.parts.map((p) => p.position[1] + p.dimensions.height / 2));

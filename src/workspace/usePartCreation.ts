@@ -8,10 +8,12 @@ import {
 } from '../three/sculptEngine';
 import type { CatalogItem, CustomModelDefinition, ScenePart } from '../types/robotics';
 import { readImageFile } from '../utils/imageFile';
-import { pickFiles } from '../utils/pickFiles';
 import { cadPartsFromFile } from './cadImport';
-import { MESH_ACCEPT, isCadFileName, meshPartFromFile } from './meshImport';
+import { couldntImport, isCadFileName } from './importRoute';
+import { meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
+import type { SnapPlacement } from '../agent/snap';
+import { modelBase, withPlacement } from './dropPreview';
 import { newId } from './helpers';
 import {
   CLAY_LABELS,
@@ -140,9 +142,7 @@ function useMeshImport(core: WorkspaceCore) {
     }
 
     if (failed.length > 0) {
-      showToast(`Couldn’t import ${failed.map((f) => f.name).join(', ')}. Try STL, 3MF, OBJ, PLY, FBX or GLB.`, {
-        tone: 'error',
-      });
+      showToast(couldntImport(failed), { tone: 'error' });
 
       return;
     }
@@ -150,9 +150,7 @@ function useMeshImport(core: WorkspaceCore) {
     showToast(imported.length === 1 ? `Inserted ${importedName(imported[0])}` : `Inserted ${imported.length} meshes`);
   };
 
-  const pickMeshes = async (at?: Vec3 | null) => importMeshes(await pickFiles(MESH_ACCEPT, true), at);
-
-  return { importMeshes, pickMeshes };
+  return { importMeshes };
 }
 
 export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
@@ -163,29 +161,28 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
   const sculpt = useSculptCreation(core);
   const meshes = useMeshImport(core);
 
-  const addCatalogPart = (item: CatalogItem, at?: Vec3) => {
+  const addCatalogPart = (item: CatalogItem, at?: Vec3, place?: SnapPlacement) => {
     const id = newId();
 
-    commitParts((prev) => [...prev, catalogPart(item, id, prev, at)]);
+    commitParts((prev) => [...prev, withPlacement(catalogPart(item, id, prev, at), place)]);
     setSelectedIds([id]);
     showToast(`Added ${catalogItemLabel(item)}`);
   };
 
-  const addCatalogItem = (item: CatalogItem, at?: Vec3) => {
+  const addCatalogItem = (item: CatalogItem, at?: Vec3, place?: SnapPlacement) => {
     if (item.componentId && ARTICULATED_PARTS[item.componentId]) {
       void addArticulated(item, at, () => addCatalogPart(item, at));
 
       return;
     }
 
-    addCatalogPart(item, at);
+    addCatalogPart(item, at, place);
   };
 
-  const placeCustomModel = (model: CustomModelDefinition, at?: Vec3) => {
-    const base: Vec3 = at
-      ? [at[0], Math.round((at[1] + model.defaultDimensions.height / 2) * 10) / 10, at[2]]
-      : [0, Math.round(model.defaultDimensions.height / 2), 0];
-    const { parts: inserted, missingShapes } = modelToParts(model, base, newId);
+  const placeCustomModel = (model: CustomModelDefinition, at?: Vec3, place?: SnapPlacement) => {
+    const made = modelToParts(model, modelBase(model, at), newId);
+    const { missingShapes } = made;
+    const inserted = made.parts.length === 1 ? [withPlacement(made.parts[0], place)] : made.parts;
 
     commitParts((prev) => [...prev, ...inserted]);
     setSelectedIds(inserted.map((p) => p.id));

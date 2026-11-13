@@ -1,3 +1,8 @@
+mod dds;
+mod dds_raw;
+mod interface;
+
+pub use dds::DdsTransport;
 use servo_wire::{ByteTransport, TransportError};
 use std::io::{ErrorKind, Read, Write};
 use std::time::Duration;

@@ -22,7 +22,8 @@ covers:
   - src/components/operate/OperatePanel.tsx
   - src/components/operate/RobotJoints.tsx
   - src/components/operate/RobotMessages.tsx
-  - src/components/simulate/EmulatedRobotSection.tsx
+  - src/components/operate/JointRow.tsx
+  - src/robot/jointRows.ts
   - src/robot/robotState.ts
   - hw/crates/robot-daemon/src/fault.rs
   - hw/crates/robot-daemon/src/ladder/mod.rs
@@ -32,11 +33,11 @@ What each line in Operate means: the rung, the motor state, each servo's angle a
 
 The daemon reports every servo 10 times a second, and the app shows the newest reading.
 
-![Operate in Test with motors running, the ladder, and Servo 1 and Servo 2 at 0.0° and 30 °C](/help/calibrate-an-emulated-robot/test.png)
+![Operate in Test with motors running, the ladder, and a row for each joint](/help/calibrate-an-emulated-robot/test.png)
 
 ## The header
 
-The first line names the servos, such as "2 emulated Feetech servos", with **Disconnect** beside it. Under it, the rung the robot is on, from **Look** to **Longer Runs**, then the motor state:
+The first line names the servos, such as "2 emulated Feetech servos", then the motor state, with **Disconnect** at its end. The **Ladder** below it marks the rung the robot is on, from **Look** to **Longer Runs**.
 
 | Motor state | What it means |
 |---|---|
@@ -51,7 +52,7 @@ The first line names the servos, such as "2 emulated Feetech servos", with **Dis
 
 ## Servo rows
 
-Under **Emulated servos**, each servo has a row, numbered 1 upward in the order of the scene's moving joints.
+Under **Emulated servos**, each joint has one row with its name and bus ID. IDs run from 1 upward in the order of the scene's moving joints. A calibrated joint shows its verdict under its name.
 
 | Reading | What it means |
 |---|---|
@@ -61,11 +62,9 @@ Under **Emulated servos**, each servo has a row, numbered 1 upward in the order 
 | Garbled reply | The servo's answer was corrupted |
 | Wrong ID answered | Another servo answered for this one |
 
-The **Simulate** tab shows the same rows under **Emulated robot**, with the rung and the newest message. Its first line reads "Follows this simulation" from **Test** up, or "Climb to Test to follow" below it.
-
 ## Messages from the daemon
 
-The newest six messages show under **From the daemon**, each labelled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
+The newest six messages show under the first line, each labelled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
 
 When the daemon refuses a rung:
 

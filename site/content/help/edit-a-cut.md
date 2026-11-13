@@ -14,7 +14,7 @@ Cut pockets and holes with Subtract, then move, resize or turn the part that mad
 
 1. Place a Cutout, or any part, where the hole goes, overlapping the part you're cutting.
 2. Select the part to keep. Shift-click the parts to cut with, or leave it alone and Subtract uses every visible Cutout that overlaps it.
-3. Press ⌘K and choose Subtract. It's also in the right-click menu and the selection bar, next to Union and Intersect, which work the same way.
+3. Press ⌘K and choose Subtract. It's also in the right-click menu and under Combine in the Inspector, next to Union and Intersect, which work the same way.
 
 ![A plate selected, with a red Servo Pocket and Cable Hole overlapping it](/help/edit-a-cut/before.png)
 

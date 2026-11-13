@@ -43,6 +43,7 @@ import type { PartRole, ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CanvasMenuState } from './useCanvasMenu';
 import { handJointMenuItems } from './jointCommands';
+import { leaderMenuItems } from './leaderCommands';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -236,6 +237,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.selectAll,
     shared.saveToLibrary,
     ...referencePart(inputs, part),
+    ...leaderMenuItems(actions, part.id),
     ...commentHere,
     { divider: true },
     shared.align,
@@ -300,11 +302,10 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       ? [{ label: 'Delete Marks', icon: <DeleteIcon className={ic} />, onSelect: core.marks.deleteAll }]
       : []),
     {
-      label: 'Import Mesh',
+      label: 'Import',
       icon: <FileImportIcon className={ic} />,
-      onSelect: () => void actions.creation.pickMeshes(menu.point),
+      onSelect: () => void actions.files.pickImports(menu.point),
     },
-    { label: 'Import SVG', icon: <FileImportIcon className={ic} />, onSelect: () => tool.openCreator('svg') },
     { divider: true },
     shared.selectAll,
     { divider: true },

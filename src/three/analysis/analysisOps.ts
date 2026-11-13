@@ -8,10 +8,12 @@ import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
 import { lowestPart, sweepClashes, type SweepSpec } from './sweep';
 import { pairsWithin, type PairIds } from './gaps';
 import { visibleShares } from './visibility';
+import { fitCoupons, type FitCoupon, type FitCouponTask } from './fitCoupons';
 import { traceFasteners } from '../../assembly/fastenerChain';
 import type { FastenerInput } from '../../assembly/assemblyTypes';
 import { assemblyGeometry, type AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 import { jointAxisOf, type JointAxisQuery } from './jointAxis';
+import { payloadMap, type ArmModel } from '../../utils/payload';
 import type { StrengthJob } from '../../strength/types';
 import { strengthOf } from './strengthPart';
 
@@ -42,7 +44,8 @@ export type AnalysisTask =
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
   | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] }
-  | ({ kind: 'jointAxis'; instances: Instance[] } & JointAxisQuery);
+  | ({ kind: 'jointAxis'; instances: Instance[] } & JointAxisQuery)
+  | ({ kind: 'fitCoupons'; instances: Instance[] } & FitCouponTask);
 
 export interface ThreeMfFileSpec {
   key: string;
@@ -118,19 +121,27 @@ function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
   }
 }
 
-function runPlaced(task: Extract<AnalysisTask, { kind: 'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' }>) {
+function runPlaced(
+  task: Extract<AnalysisTask, { kind: 'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' | 'fitCoupons' }>,
+) {
   switch (task.kind) {
     case 'gaps':
       return pairsWithin(placeAll(task.instances), task.pairs, task.withinMm);
     case 'threeMf':
       return threeMfFiles(task);
-    case 'fasteners':
-      return traceFasteners(placeAll(task.instances), task);
-    case 'assembly':
-      return assemblyGeometry(placeAll(task.instances), task);
     case 'jointAxis':
       return jointAxisOf(task, (key) => solidOf(key).positions);
+    default:
+      return runOnPlaced(task);
   }
+}
+
+function runOnPlaced(task: Extract<AnalysisTask, { kind: 'fasteners' | 'assembly' | 'fitCoupons' }>) {
+  const placed = placeAll(task.instances);
+
+  if (task.kind === 'fasteners') return traceFasteners(placed, task);
+
+  return task.kind === 'assembly' ? assemblyGeometry(placed, task) : fitCoupons(placed, task);
 }
 
 function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {
@@ -165,6 +176,8 @@ function threeMfFiles(task: Extract<AnalysisTask, { kind: 'threeMf' }>) {
 const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[] => {
   if (kind === 'threeMf')
     return Object.values(result as Record<string, Uint8Array>).map((b) => b.buffer as ArrayBuffer);
+
+  if (kind === 'fitCoupons') return (result as FitCoupon[]).map((c) => c.positions.buffer as ArrayBuffer);
 
   if (kind === 'strength') return fieldBuffers(result);
 
@@ -208,4 +221,5 @@ export const analysisHandlers = {
 
     return reply({ shapes: specs.size, geometries: geometries.size });
   },
+  payloadMaps: (arms: ArmModel[]) => reply(arms.map((arm) => payloadMap(arm))),
 };

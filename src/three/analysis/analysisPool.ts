@@ -9,10 +9,12 @@ import { analysisHandlers, MISSING_SHAPE, type AnalysisTask, type Instance, type
 import { copyGeometries, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
+import type { FitCoupon, FitCouponTask } from './fitCoupons';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxisQuery } from './jointAxis';
+import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 
 interface Client {
@@ -170,6 +172,20 @@ export async function sweepsIn(scene: SceneShapes, sweeps: SweepSpec[]): Promise
   return out;
 }
 
+export async function payloadMapsIn(arms: ArmModel[]): Promise<Array<PayloadMap | null>> {
+  if (!arms.length) return [];
+
+  const client = leastBusy();
+
+  client.busy++;
+
+  try {
+    return await client.rpc.call('payloadMaps', arms);
+  } finally {
+    client.busy--;
+  }
+}
+
 export async function strengthIn(scene: SceneShapes, jobs: StrengthJob[]): Promise<Array<StrengthReading | null>> {
   if (!jobs.length) return [];
 
@@ -201,4 +217,10 @@ export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Pr
 
 export function jointAxisIn(scene: SceneShapes, query: JointAxisQuery): Promise<FoundAxis | null> {
   return analyze(pool()[0], scene, { kind: 'jointAxis', instances: scene.instances, ...query });
+}
+
+export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<FitCoupon[]> {
+  if (!task.fits.length || !task.hosts.length) return Promise.resolve([]);
+
+  return analyze(leastBusy(), scene, { kind: 'fitCoupons', instances: scene.instances, ...task });
 }

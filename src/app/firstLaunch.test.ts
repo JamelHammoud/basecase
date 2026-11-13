@@ -37,7 +37,7 @@ describe('first launch', () => {
     const { tabs: list } = await tabs;
 
     expect(list).toHaveLength(1);
-    expect(list[0].seed?.playCase).toBe('reach-the-flag');
+    expect(list[0].seed?.playCase).toBe('reach-a-spot');
     expect(list[0].seed?.parts.length).toBeGreaterThan(0);
     expect(list[0].seed?.blank).toBeUndefined();
   });
@@ -64,7 +64,7 @@ describe('first launch', () => {
     const { tabs } = launch(stored, {});
     const { tabs: list } = await tabs;
 
-    expect(list[0].seed?.playCase).toBe('reach-the-flag');
+    expect(list[0].seed?.playCase).toBe('reach-a-spot');
   });
 
   it('opens an empty canvas when the library can’t be read', async () => {
@@ -80,7 +80,7 @@ describe('first launch', () => {
 
   it('carries the rover’s joints and its Case into the scene', () => {
     expect(rover.project?.joints?.length).toBeGreaterThan(0);
-    expect(rover.project?.cases?.map((c) => c.id)).toEqual(['reach-the-flag']);
-    expect(rover.sceneName).toBe('Reach the Flag: Two-wheel rover');
+    expect(rover.project?.cases?.map((c) => c.id)).toEqual(['reach-a-spot']);
+    expect(rover.sceneName).toBe('Reach a Spot: Two-wheel rover');
   });
 });

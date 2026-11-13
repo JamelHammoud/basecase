@@ -1,7 +1,7 @@
 import { robotFacts } from '../cases/robotFit';
 import type { JointValues, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
-import { rigForWorker, type DriveSetup } from './drive';
+import { rigForWorker, type RobotDrive } from './drive';
 import type { DriveClass } from './driveKeys';
 import { footPoints } from './driveLegs';
 import { armSetup, roverSetup } from './driveSetup';
@@ -27,7 +27,7 @@ export interface VelocityDrive {
 }
 
 export type DriveAccess =
-  | { kind: 'ready'; cls: DriveClass; setup: DriveSetup; needsFallCheck: boolean; followPart: string | null }
+  | { kind: 'ready'; cls: DriveClass; setup: RobotDrive; needsFallCheck: boolean; followPart: string | null }
   | { kind: 'policy'; cls: 'legs'; velocity: VelocityDrive; robot: string; followPart: string | null }
   | { kind: 'teach' }
   | { kind: 'none' };
@@ -55,7 +55,7 @@ function legsAccess({ rig, parts, start }: DriveInput, robot: string, followPart
 
   if (feet.length < MIN_DRIVEN_LEGS) return { kind: 'teach' };
 
-  const setup: DriveSetup = { kind: 'legs', robot, rig: rigForWorker(rig), feet, start: start ?? {} };
+  const setup: RobotDrive = { kind: 'legs', robot, rig: rigForWorker(rig), feet, start: start ?? {} };
 
   return { kind: 'ready', cls: 'legs', setup, needsFallCheck: true, followPart };
 }

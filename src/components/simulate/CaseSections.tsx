@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Button,
   CloseIcon,
+  ExpandIcon,
   IconButton,
   Kbd,
   PlusIcon,
@@ -48,7 +49,13 @@ const FitRows: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onN
   );
 };
 
-export const CaseSection: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
+interface CaseSectionProps {
+  cases: Cases;
+  onNewCase: () => void;
+  onRun: () => void;
+}
+
+export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRun }) => {
   const kase = cases.active!;
 
   return (
@@ -59,6 +66,7 @@ export const CaseSection: React.FC<{ cases: Cases; onNewCase: () => void }> = ({
           <Button variant="ghost" size="sm" disabled={cases.fit?.checking} onClick={() => void cases.runFit()}>
             Check Fit
           </Button>
+          <IconButton icon={<ExpandIcon className="w-4 h-4" />} title="Run Case" size="xs" onClick={onRun} />
           <IconButton
             icon={<CloseIcon className="w-4 h-4" />}
             title="Close Case"

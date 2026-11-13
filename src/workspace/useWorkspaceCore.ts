@@ -8,14 +8,16 @@ import type { SceneWorkspaceProps, WorkspaceSeed } from './types';
 import { useAnnotations } from './useAnnotations';
 import { useMarks, useMarkState } from './useMarks';
 import { useMeasure } from './useMeasure';
-import { usePanelSync } from './usePanelSync';
+import { usePoseScope } from './usePoseScope';
+import { useCadCompile } from './useCadCompile';
 import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
-import { useBuildGuide } from './useBuildGuide';
+import { useCaseRun } from './useCaseRun';
+import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
 
@@ -28,6 +30,32 @@ function useSceneMeta(seed?: WorkspaceSeed) {
   return { sceneId, setSceneId, sceneName, setSceneName, globalGoal, setGlobalGoal, initial };
 }
 
+interface SeedTargets {
+  guide: { cancel: () => void };
+  buildAlong: { close: () => void };
+  scene: Pick<ReturnType<typeof useSceneMeta>, 'setSceneId' | 'setSceneName' | 'setGlobalGoal'>;
+  docs: Pick<ReturnType<typeof useSceneDocument>, 'setProject' | 'resetDoc'>;
+  annotations: { reset: (annotations: NonNullable<WorkspaceSeed['annotations']>) => void };
+  setSelectedIds: (ids: string[]) => void;
+  tool: { leaveSceneView: () => void };
+  showToast: (message: string) => void;
+}
+
+const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) => {
+  to.guide.cancel();
+  to.buildAlong.close();
+  to.scene.setSceneId(next.sceneId);
+  to.scene.setSceneName(next.sceneName);
+  to.scene.setGlobalGoal(next.globalGoal || '');
+  to.docs.setProject(projectFromSeed(next.project));
+  to.docs.resetDoc(next.parts || []);
+  to.annotations.reset(next.annotations || []);
+  to.setSelectedIds([]);
+  to.tool.leaveSceneView();
+
+  if (message) to.showToast(message);
+};
+
 export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorkspaceProps, 'active'>) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
@@ -37,6 +65,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   const { showToast } = toasts;
 
   useRobotUpgrade(docs, showToast);
+  useCadCompile(docs);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const measure = useMeasure();
@@ -59,12 +88,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     measure,
     mark: { marking: markState.marking, setMarking },
   });
-  const marks = useMarks({
-    docs,
-    showToast,
-    selection: markState.selection,
-    tool: markState.tool,
-  });
+  const marks = useMarks({ docs, showToast, selection: markState.selection, tool: markState.tool });
   const posing = usePosing({
     parts,
     project,
@@ -75,28 +99,14 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     transformMode: tool.transformMode,
     onPoseEdit: docs.recordPoseEdit,
   });
-  const onRobot = posing.hasRig && !!posing.robot;
-
-  usePanelSync({
-    tool,
-    annotations,
-    isRightOpen: studio.isRightOpen,
-    sculptEnabled: studio.sculptEnabled,
-    onRobot,
-    hasRig: posing.hasRig,
+  const { onRobot, skeleton, posable } = usePoseScope({
+    posing,
+    docs,
+    panels: { tool, annotations, isRightOpen: studio.isRightOpen, sculptEnabled: studio.sculptEnabled },
   });
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
-  const guide = useBuildGuide({
-    sceneName: scene.sceneName,
-    parts,
-    project,
-    partsRef: docs.partsRef,
-    projectRef,
-    updateProjectNow: docs.updateProjectNow,
-    showToast,
-    viewportRef,
-  });
+  const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
     parts,
     selectedIds,
@@ -106,23 +116,11 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     showReferenceImages: studio.showReferenceImages,
   });
 
-  const { setSceneId, setSceneName, setGlobalGoal } = scene;
-  const { setProject, resetDoc, travel } = docs;
+  const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
+
+  const { travel } = docs;
   const { restorePose } = posing;
-
-  const loadSeed = (next: WorkspaceSeed, message?: string) => {
-    guide.cancel();
-    setSceneId(next.sceneId);
-    setSceneName(next.sceneName);
-    setGlobalGoal(next.globalGoal || '');
-    setProject(projectFromSeed(next.project));
-    resetDoc(next.parts || []);
-    annotations.reset(next.annotations || []);
-    setSelectedIds([]);
-    tool.leaveSceneView();
-
-    if (message) showToast(message);
-  };
+  const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
 
@@ -151,8 +149,12 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     tool,
     posing,
     onRobot,
+    posable,
+    skeleton,
     simTraining,
+    caseRun,
     guide,
+    buildAlong,
     undo: () => travel('undo', restorePose),
     redo: () => travel('redo', restorePose),
     loadSeed,

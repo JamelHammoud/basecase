@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
-import type { Case } from '../cases/schema';
+import { caseSlots, type Case } from '../cases/schema';
 import { sha256, type TryRecord } from '../cases/tries';
 import { loadRecording } from '../cases/tryStore';
 import type { DatasetJobEpisode } from '../datasets/buildDataset';
 import { datasetCameras, snakeKey } from '../datasets/cameras';
 import { exportDatasetFiles, exportDatasetZip, type DatasetSpec } from '../datasets/datasetClient';
 import { canExport } from '../datasets/episodes';
+import { slotKeys } from '../cases/slots';
 import { hubBridge } from '../hub/hubBridge';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Simulation } from '../sim/useSimulation';
@@ -85,8 +86,10 @@ async function prepareDataset(input: PrepareInput): Promise<PreparedDataset | nu
 
   if (!episodes.length) return null;
 
-  const visible = parts.filter((p) => p.visible && p.role === 'solid');
+  const visible = [...parts, ...sim.guestParts].filter((p) => p.visible && p.role === 'solid');
   const name = `${fileSafe(kase.name)}-dataset`;
+  const slots = caseSlots(kase);
+  const keys = slotKeys(model.robots, slots);
   const job: DatasetSpec = {
     name,
     robotType: snakeKey(rig.robots[0]?.name ?? 'robot'),
@@ -95,6 +98,7 @@ async function prepareDataset(input: PrepareInput): Promise<PreparedDataset | nu
     model,
     cameras: datasetCameras(visible, sim.worldParts),
     episodes,
+    slots: slots.flatMap((s, i) => (keys[i] ? [{ id: s.id, robot: keys[i] }] : [])),
     source: { app: 'basecase', case: kase.id, case_name: kase.name, model_hash: modelHash },
   };
 

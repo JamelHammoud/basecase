@@ -28,8 +28,8 @@ const EmptyModelsAction: React.FC<{ props: LibraryPanelProps }> = ({ props }) =>
       Save Selection
     </Button>
   ) : (
-    <Button size="sm" onClick={props.onImportSvg}>
-      Import SVG
+    <Button size="sm" onClick={props.onImport}>
+      Import
     </Button>
   );
 

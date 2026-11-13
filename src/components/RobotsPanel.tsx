@@ -2,7 +2,9 @@ import React, { useMemo, useState } from 'react';
 import {
   ContextMenu,
   ContextMenuEntry,
+  DeleteIcon,
   EmptyState,
+  PlusIcon,
   RobotsIcon,
   SearchField,
   SectionHeader,
@@ -26,12 +28,18 @@ const asPreset = (r: ImportedRobot): RobotPreset => ({
   url: r.url,
 });
 
-const confirmForget = (r: ImportedRobot) =>
-  confirmAction({
-    title: `Remove ${r.name} from Imported?`,
-    confirmLabel: 'Remove',
-    onConfirm: () => forgetImportedRobot(r.url),
-  });
+const icon = 'w-3.5 h-3.5';
+
+const importedMenu = (r: ImportedRobot, onInsert: () => void): ContextMenuEntry[] => [
+  { label: 'Insert', icon: <PlusIcon className={icon} />, onSelect: onInsert },
+  { divider: true },
+  {
+    label: 'Delete',
+    icon: <DeleteIcon className={icon} />,
+    tone: 'danger',
+    onSelect: () => confirmAction({ title: `Delete ${r.name}?`, onConfirm: () => forgetImportedRobot(r.url) }),
+  },
+];
 
 export const RobotsPanel: React.FC<{
   onInsert: (preset: RobotPreset) => Promise<unknown> | void;
@@ -78,11 +86,7 @@ export const RobotsPanel: React.FC<{
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      entries: [
-        { label: 'Insert', onSelect: () => void insert(r.url, asPreset(r)) },
-        { divider: true },
-        { label: 'Remove from Imported', tone: 'danger', onSelect: () => confirmForget(r) },
-      ],
+      entries: importedMenu(r, () => void insert(r.url, asPreset(r))),
     });
   };
 

@@ -7,6 +7,8 @@ version.workspace = true
 [dependencies]
 servo-wire = { path = "../servo-wire" }
 serialport = { version = "4", default-features = false }
+rustdds = { version = "0.15.1", default-features = false }
+netdev = { version = "0.46", default-features = false }
 
 [lints]
 workspace = true

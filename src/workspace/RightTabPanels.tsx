@@ -46,7 +46,7 @@ function useVisitedTabs(tab: RightTab) {
 }
 
 function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) {
-  const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool } = core;
+  const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool, simTraining } = core;
   const { setProject } = docs;
 
   return (
@@ -65,6 +65,10 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
             }
       }
       onQuoteFinding={IS_WEB_DEMO ? undefined : (finding) => tool.requestQuote(findingQuote(finding, parts))}
+      onOpenCase={(id) => {
+        simTraining.cases.open(id);
+        tool.setRightTab('sim');
+      }}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={(m) => showToast(m)}
@@ -151,7 +155,7 @@ function useTeach(core: WorkspaceCore, agent: AgentSession) {
 }
 
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
-  const { tool, posing, onRobot, project, setSelectedIds, simTraining } = core;
+  const { tool, posing, posable, project, setSelectedIds, simTraining } = core;
   const { pose } = actions;
   const onTeach = useTeach(core, agent);
   const current = tool.rightTab;
@@ -159,10 +163,11 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <TabActivity tab="pose" current={current} visited={visited} available={onRobot}>
+      <TabActivity tab="pose" current={current} visited={visited} available={posable}>
         <PosePanel
           posing={posing}
           jointEdits={actions.joints}
+          skeleton={core.skeleton}
           onSelectParts={setSelectedIds}
           onImportMotion={pose.importMotion}
           onWalkCycle={pose.walkCycle}
@@ -184,6 +189,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onNewCase={() => showNewCase(core)}
           skills={simTraining.skills}
           onTeach={onTeach}
+          onRunCase={core.caseRun.enter}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

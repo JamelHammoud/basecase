@@ -59,6 +59,11 @@ function around(a: V3, b: V3, r: Rect): V3[] {
 
 const inside = (p: V3, r: Rect) => p[0] > r.minX && p[0] < r.maxX && p[2] > r.minZ && p[2] < r.maxZ;
 
+export const occupied = (p: V3, objects: WorldObject[], clearanceMm: number) =>
+  objects.some((o) => inside(p, rectOf(o, clearanceMm)));
+
+const below = (o: WorldObject, headroomMm: number) => o.position[1] - o.size[1] / 2 < headroomMm;
+
 const INFLATE_STEPS = [1, 0.5, 0.25, 0];
 
 interface Leg {
@@ -89,6 +94,7 @@ function leg(a: V3, b: V3, scene: Leg, depth: number): V3[] {
 export interface RouteRobot {
   start: V3;
   clearanceMm: number;
+  headroomMm?: number;
 }
 
 export interface RoutePoint {
@@ -98,7 +104,9 @@ export interface RoutePoint {
 }
 
 export function groundRoute(waypoints: RoutePoint[], objects: WorldObject[], robot: RouteRobot): RoutePoint[] {
-  const scene: Leg = { obstacles: objects.filter((o) => o.behavior === 'static'), clearanceMm: robot.clearanceMm };
+  const headroom = robot.headroomMm ?? Infinity;
+  const obstacles = objects.filter((o) => o.behavior === 'static' && below(o, headroom));
+  const scene: Leg = { obstacles, clearanceMm: robot.clearanceMm };
   const route: RoutePoint[] = [];
   let from = robot.start;
 

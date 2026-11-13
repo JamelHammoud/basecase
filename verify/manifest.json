@@ -31,6 +31,7 @@
   "verify/fixtures/cadimport/plate.step": "792b09851a2c225a547995f0a64c9db99d842169c5e0ea5899077dae81394196",
   "verify/fixtures/cadimport/plate.zip": "a650b67b64e6854c0aff4de0dd42f8725568b95df4c68219115582c1ad5a11d7",
   "verify/fixtures/cadimport/tetra.stl": "ae9d1e552c5abe0fdfb7d9f2e09c8f081d0987947bfaf905ca78bd348a649960",
+  "verify/fixtures/cadimport/two-bodies-inch.step": "cfdcd3cd8cd5abe2657608306a52eab8465b11fc25fa9100aaadfc78aba28686",
   "verify/forge/adam_check.py": "3c19eba3e8bf6fdda85938c752fe024373a520cdfb82f62e456f1daf63bd415f",
   "verify/forge/check.mjs": "b1a9e6de9617cfd2227cbbb9e3100acfa71a64f11958322635417870472fa815",
   "verify/forge/engine.mjs": "93f9d921233027ccf1964cd24c208370cfe13ea67c836f589d5239800b2a274d",

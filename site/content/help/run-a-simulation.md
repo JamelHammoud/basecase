@@ -21,8 +21,9 @@ covers:
   - src/components/SimulatePanel.tsx
   - src/components/simulate/SimControls.tsx
   - src/components/simulate/ControlSection.tsx
-  - src/components/simulate/ResultSection.tsx
-  - src/components/simulate/ModelSection.tsx
+  - src/components/simulate/ResultsSection.tsx
+  - src/components/simulate/RunResult.tsx
+  - src/utils/engineeringSimModel.ts
 ---
 
 Start MuJoCo physics on the canvas, choose what drives the joints, and see whether the robot stays up and which servos work hardest.
@@ -34,7 +35,7 @@ The **Simulate** tab appears in the right panel once the scene has a joint. [Sim
 3. In **Control**, choose what drives the joints: **Hold pose**, one of the robot's animations, a trained policy, or **Limp**.
 4. To shove the robot sideways with half its weight, click **Push**.
 5. To lift or fling the robot, select one of its parts, press V and drag the Move gizmo.
-6. Read **Result**: **Standing**, or the moment the robot fell, with its tilt and how far it moved.
+6. Read **Results**: **Standing**, or the moment the robot fell, with its tilt and how far it moved.
 7. Click a joint under **Peak torque** to select the parts it moves.
 8. Click **End simulation** (×) to stop and put the canvas back.
 
@@ -48,6 +49,6 @@ Each joint shows the most torque it needed as a share of its servo's limit. A sh
 
 ## When the model is estimated
 
-The **Model** section under **Result** gives the joint count and total mass. It also says when a joint's torque or servo response is estimated. "Assign servos for exact limits" means the joint has no servo from Parts.
+**Checks** in the Build tab say when a joint is estimated. **Torque estimates** lists joints with no servo or published torque limit, and **Servo models** lists servos without a measured model.
 
 Editing a part or a joint while the simulation runs ends it, and the canvas goes back to the posed model. Next, steer the robot yourself in [Drive a robot in the simulation](/help/drive-a-robot-in-the-simulation).

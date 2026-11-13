@@ -1,6 +1,7 @@
 ---
 title: Print a fit test
 date: 2026-11-13
+updated: 2026-11-13
 collection: build-and-print
 type: task
 covers:
@@ -9,7 +10,7 @@ covers:
   - src/workspace/useFitTest.ts
   - src/workspace/usePrinting.ts
   - src/components/print/PrintPanel.tsx
-  - src/workspace/printCommands.tsx
+  - src/workspace/fitTestCommands.tsx
 ---
 
 Print small pieces of your design around each servo pocket, insert hole, bearing seat and screw hole, so you can check they fit before printing the whole thing.

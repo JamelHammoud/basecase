@@ -42,7 +42,7 @@ It worked when **Real parts** shows a green mark and the **Replace** row is gone
 The part is made outside your printer, such as a CNC-machined or laser-cut part, and nothing says who makes it.
 
 1. Click **Fix** on the problem to have the agent find a maker for it.
-2. Or set the part's **Material** in the Inspector to **Printed PLA / PETG**, if you'll print it.
+2. Or set the part's material under **Appearance** in the Inspector to **Printed PLA / PETG**, if you'll print it.
 
 ## “Its link and numbers aren’t checked.”
 

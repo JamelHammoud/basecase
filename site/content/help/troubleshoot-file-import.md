@@ -33,7 +33,7 @@ Fix a file that shows “Couldn’t import”, or comes in at the wrong size or 
 
 ## “Couldn’t import” after picking a STEP or IGES file
 
-The toast reads “Couldn’t import ⟨file⟩. Try STL, 3MF, OBJ, PLY, FBX or GLB.” The file is too large or too complex for the built-in converter.
+The toast reads “Couldn’t import” and the file's name. The file is too large or too complex for the built-in converter.
 
 1. Check that the file is under 200 MB.
 2. In your CAD app, export only the part or subassembly you need, so the file has fewer than 1,000 bodies.
@@ -70,9 +70,9 @@ STL, 3MF and PLY are read with Z pointing up, the way most CAD and print apps sa
 
 A toast says “Inserted” with the part's name, and the new part is selected on the canvas.
 
-## Nothing happens when you drop a file
+## “Couldn’t import” after dropping a file
 
-Basecase ignores files it can't read, with no message. The web studio ignores STEP and IGES files too.
+Basecase can't read that kind of file. The web studio can't read STEP or IGES files either.
 
 1. Check the file ends in one of the extensions above.
 2. For STEP or IGES, open the scene in the desktop app.

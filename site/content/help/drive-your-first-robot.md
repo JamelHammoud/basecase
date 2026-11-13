@@ -1,6 +1,7 @@
 ---
 title: Drive your first robot
 date: 2026-11-13
+updated: 2026-11-13
 collection: get-started
 type: task
 covers:
@@ -10,10 +11,10 @@ covers:
   - src/cases/referencePlayer.ts
 ---
 
-The first time you open Basecase, a two-wheel rover is already in the simulator, rolling toward a blue flag on its own.
+The first time you open Basecase, a two-wheel rover is already in the simulator, rolling toward a blue spot on its own.
 
-1. Open Basecase. The first tab is Reach the Flag: Two-wheel rover, with the Simulate tab open on the right.
-2. Watch the rover drive about 90 cm to the flag and stop on it.
+1. Open Basecase. The first tab is Reach a Spot: Two-wheel rover, with the Simulate tab open on the right.
+2. Watch the rover drive about 90 cm to the spot and stop on it.
 3. Click the canvas, then hold W to drive forward, S to back up, and A or D to turn. Your first key takes over from the rover's own route.
 4. Press R to put the rover back at the start, or Esc to stop driving.
 5. Open Layers in the view rail to see its chassis and three wheels.

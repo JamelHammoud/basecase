@@ -48,11 +48,12 @@ Once a design has joints, you can pose it, simulate it, and check every servo's 
 
 ## Where joints come from
 
-You can't draw a joint by hand. Joints arrive with a robot, a hand or the agent's design:
+Joints arrive with a robot, a hand or the agent's design, or you add them between two parts:
 
 - [Import a robot](/help/import-a-robot) brings every joint in its URDF or MJCF, with axis, limits and torque limit.
 - **Parts** ▸ **Hands** has posable hands whose makers publish their joints, such as LEAP, ORCA and Allegro.
 - The agent declares joints when it designs a robot, and adds or changes them when you ask.
+- [Join two parts with a hinge or slider](/help/join-two-parts-with-a-hinge) adds one between two parts you select.
 
 Once the scene has a joint, the **Simulate** tab appears in the right panel.
 

@@ -19,7 +19,7 @@ related:
 covers:
   - src/workspace/RightPanelTabs.tsx
   - src/components/simulate/SimControls.tsx
-  - src/components/simulate/ModelSection.tsx
+  - src/utils/engineeringSimModel.ts
   - src/sim/useSimulation.ts
   - src/sim/useSimWorker.ts
   - src/sim/sim.worker.ts
@@ -54,6 +54,6 @@ You changed the robot's joints after training. A policy only drives the joints i
 
 The figure shows how fast the simulation runs against the clock. At **1×**, a figure under 1 means your computer can't keep up with the model. At **½×** or **¼×**, it shows the speed you chose, and nothing is wrong.
 
-## The panel says torque is estimated
+## Checks says torque is estimated
 
-“Torque for 3 joints is estimated from weight. Assign servos for exact limits.” means those joints have no servo. Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When the message says servo response is estimated, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures one.
+**Torque estimates** in **Build** ▸ **Checks** lists joints with no servo, so the simulation guesses their torque from weight. Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When **Servo models** warns, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures one.

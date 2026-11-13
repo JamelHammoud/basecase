@@ -1,6 +1,7 @@
 ---
 title: Try a robot on a Case
 date: 2026-11-12
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 4
@@ -15,19 +16,20 @@ covers:
 Give your robot a task in a simulated world, drive it through, and keep the tries that passed as training data.
 
 1. Click **Play** in the left rail, then **Cases**.
-2. Click an example that fits your robot, or **New Case** to pick a world and a goal. The Simulate tab opens with the Case at the top: its name, its brief, **Check Fit** and the × that closes it.
-3. Click **Check Fit** to see whether the robot fits this Case, compiles and stays up.
+2. Click **New Case**, then pick a **Goal** and a **World**.
+3. Click **Create**. The Simulate tab opens with the Case at the top: its name, its brief, **Check Fit** and the × that closes it.
+4. Click **Check Fit** to see whether the robot fits this Case, compiles and stays up.
 
 ![The Simulate tab with Touch the Dots open and its fit checked](/help/try-a-robot-on-a-case/case.png)
 
-4. Click **Try It**. The clock counts down the Case's time, and the keys for your kind of robot appear under it.
-5. Click the canvas and drive with W A S D. R starts over and Esc stops.
+5. Click **Try It**. The clock counts up to the Case's time, and the keys for your kind of robot appear under it.
+6. Click the canvas and drive with W A S D. R starts over and Esc stops.
 
 ![A try running, with the clock, End Try and the keys](/help/try-a-robot-on-a-case/trying.png)
 
-6. Click **End Try**, or let the time run out.
-7. Read **Results** at the bottom of the tab: how the latest run went, then every try with Passed or Missed and a filmstrip. Click **Replay** on a try to watch it again, or right-click it to delete it.
-8. Once a try passes, click **Export Dataset** under the tries, or choose it in ⌘K.
+7. Click **End Try**, or let the time run out.
+8. Read **Results** at the bottom of the tab: how the latest run went, then every try with Passed or Missed and a filmstrip. Click **Replay** on a try to watch it again, or right-click it to delete it.
+9. Once a try passes, click **Export Dataset** under the tries, or choose it in ⌘K.
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)
 

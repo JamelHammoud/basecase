@@ -17,7 +17,7 @@ related:
   - connect-an-emulated-robot
   - export-a-robot-package
 covers:
-  - src/components/simulate/EmulatedRobotSection.tsx
+  - src/components/operate/RobotJoints.tsx
   - src/components/simulate/SkillsList.tsx
   - src/components/simulate/ControlSection.tsx
   - src/components/operate/OperatePanel.tsx
@@ -31,12 +31,11 @@ The robot follows the app's simulation; it doesn't run the policy itself. The ru
 
 1. Connect the emulated robot and climb to **Test**. Steps are in [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. Click **Simulate** at the top of the right panel.
-3. Check that **Emulated robot** reads "Follows this simulation".
-4. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive** instead.
-5. Watch the servo angles under **Emulated robot** change as the simulated robot moves.
-6. Click **Stop** in **Operate** to stop the motors.
+3. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive** instead.
+4. Watch the servo angles under **Emulated servos** in **Operate** change as the simulated robot moves.
+5. Click **Stop** in **Operate** to stop the motors.
 
-To run a policy from the **Policies** list, choose it under **Control** instead of step 4. A Case try or a Routine run streams to the robot the same way.
+To run a trained policy, choose it under **Control** instead of step 3. A Case try or a Routine run streams to the robot the same way.
 
 ## What the safety layer changes
 

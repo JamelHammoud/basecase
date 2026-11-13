@@ -1,6 +1,7 @@
 ---
 title: Fail a servo mid-run
 date: 2026-11-13
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 covers:
@@ -14,7 +15,7 @@ covers:
 Break one servo while the simulation runs, to see whether the robot still stands, walks or grips without it before you print anything.
 
 1. Open the Simulate tab and start the robot: click **Drive**, or pick a controller and press Play.
-2. Right-click the joint's row under **Peak torque** in Result, or right-click a part on the canvas that the joint moves.
+2. Right-click the joint's row under **Peak torque** in **Results**, or right-click a part on the canvas that the joint moves.
 3. Choose **Fault**, then how the servo fails: **Limp** (no torque), **Weak** (half its torque), **Stuck** (holds where it is) or **Laggy** (every command arrives 60 ms late).
 
 ![The Fault menu open on Leg2 bend in Peak torque](/help/fail-a-servo-mid-run/menu.png)

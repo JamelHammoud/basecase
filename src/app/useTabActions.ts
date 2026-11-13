@@ -2,6 +2,7 @@ import type { WorkspaceHandle, WorkspaceSeed } from '../SceneWorkspace';
 import type { SavedSceneSummary } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import { newSceneId } from '../utils/sceneIds';
+import { sceneStore } from '../utils/sceneStore';
 import { loadSceneSeed } from './sceneSeeds';
 import {
   blankSeed,
@@ -12,6 +13,7 @@ import {
   newTabId,
   nextActiveAfterClose,
   omitKeys,
+  sceneCopyName,
   type ClosedTab,
   type Metas,
   type TabEntry,
@@ -149,12 +151,15 @@ export function useTabActions(core: TabsCore) {
 
     if (!snap) return;
 
-    const at = latestRef.current.tabs.findIndex((t) => t.id === id) + 1;
-
-    openTab(
-      { ...snap, sceneId: newSceneId(), sceneName: `${snap.sceneName} Copy`, chat: undefined, unsaved: true },
-      at,
+    const { tabs, metas } = latestRef.current;
+    const at = tabs.findIndex((t) => t.id === id) + 1;
+    const sceneName = sceneCopyName(
+      snap.sceneName,
+      metas,
+      sceneStore.get().map((s) => s.name),
     );
+
+    openTab({ ...snap, sceneId: newSceneId(), sceneName, chat: undefined, unsaved: true }, at);
   };
 
   const cycleTab = (step: number) => {

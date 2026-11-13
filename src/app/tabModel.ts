@@ -2,6 +2,7 @@ import type { WorkspaceMeta, WorkspaceSeed } from '../SceneWorkspace';
 import type { SavedSceneRecord } from '../types/robotics';
 import { newSceneId } from '../utils/sceneIds';
 import { moveItem } from '../utils/moveItem';
+import { copyName } from '../workspace/helpers';
 
 export const MAX_TABS = 8;
 export const CLOSED_LIMIT = 10;
@@ -37,6 +38,10 @@ export function untitledName(taken: Set<string>): string {
   }
 
   return sceneName;
+}
+
+export function sceneCopyName(name: string, metas: Metas, saved: string[]): string {
+  return copyName(name, [...Object.values(metas).map((m) => m.name), ...saved]);
 }
 
 export function blankSeed(metas: Metas, closing: string[] = []): WorkspaceSeed {

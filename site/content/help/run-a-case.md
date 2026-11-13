@@ -56,4 +56,4 @@ A Case can bring its own layout, called its console, saved with the Case in your
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
-Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.
+Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

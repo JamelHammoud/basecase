@@ -81,6 +81,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     addCase: (raw) => core.simTraining.cases.add(parseCase(raw)).id,
     referenceTry: () => core.simTraining.cases.attempt.reference(),
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
+    multiplyRuns: (runs) => core.simTraining.cases.multiply.setRuns(runs),
     sharedLink: () => core.simTraining.share.link,
     stubTrainer: (policy) => {
       if (!isPolicySpec(policy)) throw new Error('stubTrainer takes a policy.');

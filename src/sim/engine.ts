@@ -51,6 +51,8 @@ export class SimEngine {
   private drive: DriveLoop | null = null;
   private route: RouteRunner | null = null;
   stepHook: (() => void) | null = null;
+  commandHook: ((c: DriveCommand) => void) | null = null;
+  private given = new Map<number, DriveCommand>();
   private peaks: Float64Array;
   private saturated: Float64Array;
   private fellAt = new Map<string, number>();
@@ -187,6 +189,7 @@ export class SimEngine {
 
   setController(c: Controller) {
     this.controller = c;
+    this.given.clear();
     this.policyState?.eyes?.dispose();
     this.policyState = null;
     this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
@@ -229,9 +232,15 @@ export class SimEngine {
   }
 
   command(c: DriveCommand) {
+    this.given.set(c.slot ?? 0, c);
+    this.commandHook?.(c);
     this.drive?.command(c, this.drive.hand ? this.holdValues() : undefined);
 
     if (this.policyState) this.policyState.command = [c.v[0], c.v[1], c.v[2]];
+  }
+
+  givenCommands(): DriveCommand[] {
+    return [...this.given.values()];
   }
 
   grabStart(body: number, point: [number, number, number]) {

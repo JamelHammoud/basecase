@@ -40,7 +40,7 @@ The layout is LeRobot v2.1 with GR00T's `meta/modality.json` added. Each passed 
 | `meta/tasks.jsonl` | The one task: the Case's brief, or its name when it has none |
 | `meta/episodes_stats.jsonl` | Each episode's minimum, maximum, mean, standard deviation and count for every column |
 | `meta/modality.json` | GR00T's map of the columns: one `joints` group for state and action, each camera, and the task annotation |
-| `meta/basecase.json` | The Case, the hash of the model the tries ran on, and each episode's try and margin |
+| `meta/basecase.json` | The Case, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
 
 GR00T works out its own `stats.json` from these.
 

@@ -209,8 +209,9 @@ function record(msg: Msg<'record'>) {
   if (!engine) return;
 
   if (msg.on) {
-    recorder = new Recorder(engine);
+    recorder = new Recorder(engine, driveController);
     engine.stepHook = recorder.hook;
+    engine.commandHook = recorder.command;
 
     return;
   }
@@ -218,6 +219,7 @@ function record(msg: Msg<'record'>) {
   const recording = recorder?.finish() ?? null;
 
   engine.stepHook = null;
+  engine.commandHook = null;
   recorder = null;
   post({ type: 'recorded', recording }, recording ? recordingTransfer(recording) : []);
 }

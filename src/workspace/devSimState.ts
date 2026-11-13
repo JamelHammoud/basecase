@@ -15,7 +15,9 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
   return {
     activeCase: cases.active?.id ?? null,
     caseSeconds: cases.active?.task.seconds ?? null,
+    multiplying: !!cases.multiply.running,
     tries: cases.tries.map((t) => ({
+      generated: !!t.generated,
       passed: t.passed,
       margin: t.margin,
       seconds: t.seconds,

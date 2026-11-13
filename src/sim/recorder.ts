@@ -1,9 +1,15 @@
-import type { SimEngine } from './engine';
+import type { DriveCommand } from './driveTypes';
+import type { Controller, SimEngine } from './engine';
 import type { FaultKind, RecordedFault } from './faults';
 
 export const RECORD_HZ = 50;
 
 const MAX_SECONDS = 600;
+
+export interface RecordedCommand {
+  at: number;
+  command: DriveCommand;
+}
 
 export interface Recording {
   dt: number;
@@ -21,6 +27,8 @@ export interface Recording {
   scan?: Float32Array;
   scanWidth?: number;
   faults?: RecordedFault[];
+  commands?: RecordedCommand[];
+  controller?: Controller;
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -58,7 +66,7 @@ const f64 = (n: number) => new Float64Array(n);
 export class Recorder {
   private readonly engine: SimEngine;
 
-  private readonly dt = 1 / RECORD_HZ;
+  readonly dt = 1 / RECORD_HZ;
 
   private next: number;
 
@@ -80,8 +88,10 @@ export class Recorder {
 
   private readonly scan: Growing<Float32Array> | null;
   private readonly faults: RecordedFault[] = [];
+  private readonly commands: RecordedCommand[] = [];
+  private readonly controller: Controller | null;
 
-  constructor(engine: SimEngine) {
+  constructor(engine: SimEngine, controller: Controller | null = null) {
     const { model } = engine;
 
     this.engine = engine;
@@ -93,6 +103,9 @@ export class Recorder {
     this.poses = new Growing(f32, 512 * engine.sim.bodies.length * 7);
     this.jointQpos = engine.jointAddresses();
     this.scan = engine.scanner ? new Growing(f32, 512 * engine.scanner.values.length) : null;
+    this.controller = controller;
+
+    for (const c of engine.givenCommands()) this.commands.push({ at: 0, command: structuredClone(c) });
 
     for (const j of engine.stats().joints) if (j.fault) this.faults.push({ joint: j.id, kind: j.fault, at: 0 });
 
@@ -106,6 +119,14 @@ export class Recorder {
     if (open) open.until = at;
 
     if (kind) this.faults.push({ joint, kind, at });
+  }
+
+  readonly command = (c: DriveCommand) => {
+    this.commands.push({ at: this.engine.data.time - this.started, command: structuredClone(c) });
+  };
+
+  get length() {
+    return this.frames;
   }
 
   readonly hook = () => {
@@ -154,6 +175,7 @@ export class Recorder {
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
       faults: this.faults,
+      ...(this.controller ? { commands: this.commands, controller: this.controller } : {}),
     };
   }
 }

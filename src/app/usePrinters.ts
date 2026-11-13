@@ -4,6 +4,7 @@ import { printBridge, type PrintToolsStatus, type SavedPrinter } from '../print/
 
 export function usePrinters() {
   const [printers, setPrinters] = useState<SavedPrinter[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [printTools, setPrintTools] = useState<PrintToolsStatus | null>(null);
 
   const refreshPrintTools = async () => {
@@ -18,7 +19,8 @@ export function usePrinters() {
     printBridge
       .printers()
       .then(setPrinters)
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoaded(true));
     printBridge
       .status()
       .then(setPrintTools)
@@ -41,7 +43,7 @@ export function usePrinters() {
     return result;
   };
 
-  return { printers, savePrinters, setPrinterSecret, printTools, refreshPrintTools };
+  return { printers, loaded, savePrinters, setPrinterSecret, printTools, refreshPrintTools };
 }
 
 export type PrintersState = ReturnType<typeof usePrinters>;

@@ -63,3 +63,48 @@ describe('print layout', () => {
     ).toEqual([]);
   });
 });
+
+describe('a Prusa printer', () => {
+  it('lays out plates on the CORE One’s bed once it’s added in Settings ▸ Printers', async () => {
+    await app.page.route('**/api/bridge/print-save-printers', (route) =>
+      route.fulfill({ json: (route.request().postDataJSON() as { arg: unknown }).arg }),
+    );
+    await app.page.keyboard.press('Meta+,');
+
+    const settings = app.page.getByRole('dialog', { name: 'Settings' });
+
+    await settings.getByRole('navigation').getByRole('button', { name: 'Printers' }).click();
+    await settings.getByRole('button', { name: 'Add Printer' }).click();
+    await settings.locator('select[aria-label="Model"]').selectOption({ label: 'Prusa CORE One' });
+    await expect.poll(() => settings.getByText('Prusa CORE One, 0.4 mm nozzle, Export only').count()).toBe(1);
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => settings.count()).toBe(0);
+
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+p');
+    await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
+
+    const printState = () =>
+      app.page.evaluate(() =>
+        (
+          window as unknown as {
+            __studio: { printState: () => { printer: string; bed: { width: number; depth: number; height: number } } };
+          }
+        ).__studio.printState(),
+      );
+
+    await expect
+      .poll(async () => {
+        const { printer, bed } = await printState();
+
+        return [printer, bed?.width, bed?.depth, bed?.height];
+      })
+      .toEqual(['prusa-core-one', 250, 220, 270]);
+
+    await app.page.keyboard.press('Escape');
+    expect(app.errors).toEqual([]);
+  });
+});

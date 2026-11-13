@@ -62,7 +62,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Destroy something a person made (a mark, comment, price, scene, chat, pose, policy, Case, try, step…), one or all of them | Delete | Erase, Discard, Trash, Destroy; Remove or Clear before one of those things |
       | Take something out of a list or a draft without destroying it (an attachment, a quote) | Remove | Detach |
       | Empty a field, a drawing in progress or a state (a search, a sketch, a fault) | Clear | Wipe |
-      | Halt something running (the sim, a try, driving, a print, training, the agent) | Stop | End, Halt, Abort, Terminate, Kill |
+      | Halt something running (the sim, a try, driving, a print, training, the agent) | Stop | End (End effector and the End key stay), Halt, Abort, Terminate, Kill |
       | Open a scene, file, image or page | Open | View (a menu named View stays), See Inside |
       | Put away a tab, window, sheet or Case | Close | Dismiss |
       | Bring a panel, view or layer into sight; Hide puts it away | Show | Reveal, Toggle |

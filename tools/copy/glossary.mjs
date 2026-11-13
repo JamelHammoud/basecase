@@ -27,7 +27,11 @@ export const GLOSSARY = [
   },
   { word: 'Remove', action: 'Take something out of a list or a draft without destroying it', synonyms: ['detach'] },
   { word: 'Clear', action: 'Empty a field, a drawing in progress or a state', synonyms: ['wipe'] },
-  { word: 'Stop', action: 'Halt something running', synonyms: ['end', 'halt', 'abort', 'terminate', 'kill'] },
+  {
+    word: 'Stop',
+    action: 'Halt something running',
+    synonyms: ['end(?!$| effectors?\\b)', 'halt', 'abort', 'terminate', 'kill'],
+  },
   { word: 'Open', action: 'Open a scene, file, image or page', synonyms: ['view(?!$)', 'see inside'] },
   { word: 'Close', action: 'Put away a tab, window, sheet or Case', synonyms: ['dismiss'] },
   {

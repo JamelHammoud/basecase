@@ -11,6 +11,7 @@ import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 3,
   everySeconds: 60,
   does: 'Merges main into conflicting loop/ branches, an agent resolving the conflicts, rebuilds a change whose conflicts fail twice, and refreshes a failed Check once per head',

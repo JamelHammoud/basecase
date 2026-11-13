@@ -38,6 +38,7 @@ export interface CheckRow {
   ids?: string[];
   items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix; joint?: string }>;
   itemsAreContext?: boolean;
+  detailInItems?: boolean;
   caseId?: string;
   dots?: CheckDot[];
   envelopes?: JointEnvelope[];

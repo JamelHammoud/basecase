@@ -99,6 +99,7 @@ function withNoFeetNote(row: CheckRow, floating: RobotBody[]): CheckRow {
     ...row,
     status: row.status === 'fail' ? 'fail' : 'warn',
     detail: `${row.detail}. No foot reaches the robot’s lowest point, so standing loads aren’t measured`,
+    detailInItems: false,
   };
 }
 

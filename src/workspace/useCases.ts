@@ -23,6 +23,8 @@ interface CasesOptions {
   rig: Rig;
   sim: Simulation;
   showToast: ShowToast;
+  openAccounts: () => void;
+  sceneId: string;
 }
 
 function readCases(raw: unknown[] | undefined): Case[] {
@@ -35,7 +37,8 @@ function readCases(raw: unknown[] | undefined): Case[] {
   });
 }
 
-export function useCases({ parts, project, setProject, rig, sim, showToast }: CasesOptions) {
+export function useCases(options: CasesOptions) {
+  const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId } = options;
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [fit, setFit] = useState<{ caseId: string | null; rows: FitRow[]; checking: boolean } | null>(null);
@@ -145,7 +148,7 @@ export function useCases({ parts, project, setProject, rig, sim, showToast }: Ca
   };
 
   const builder = useCaseBuilder({ rig, parts, add });
-  const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast });
+  const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
   const attempt = useCaseTry({
     sim,
     rig,

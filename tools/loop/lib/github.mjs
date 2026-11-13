@@ -323,3 +323,34 @@ export function appendToIssue(number, text) {
 export const issueIsOpen = (number) =>
   run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===
   'OPEN';
+
+const STUCK_AFTER_MS = 60 * 60 * 1000;
+
+export const stuckRuns = (runs, now) =>
+  runs.filter((r) => r.status !== 'completed' && now - Date.parse(r.createdAt) > STUCK_AFTER_MS);
+
+export function unstickMainChecks(log, now = Date.now()) {
+  const unfinished =
+    json('gh', [
+      'run',
+      'list',
+      '--workflow',
+      'check.yml',
+      '--branch',
+      'main',
+      '--limit',
+      '30',
+      '--json',
+      'databaseId,status,createdAt,headSha',
+    ]) ?? [];
+
+  for (const stuck of stuckRuns(unfinished, now)) {
+    const done = run('gh', ['api', '-X', 'POST', `repos/${repo()}/actions/runs/${stuck.databaseId}/force-cancel`], {
+      allowFail: true,
+    }).ok;
+
+    log(
+      `${done ? 'force-cancelled' : 'could not cancel'} Check on main at ${stuck.headSha.slice(0, 7)}, unfinished after an hour`,
+    );
+  }
+}

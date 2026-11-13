@@ -64,7 +64,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const scene = useSceneMeta(seed);
   const docs = useSceneDocument(seed);
   const { parts, project, projectRef } = docs;
-  const toasts = useToast();
+  const toasts = useToast(studio.openSettings);
   const { showToast } = toasts;
 
   useRobotUpgrade(docs, showToast);

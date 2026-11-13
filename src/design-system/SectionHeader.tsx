@@ -11,7 +11,7 @@ export interface SectionHeaderProps {
 
 export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, icon, action, badge, className = '' }) => (
   <div
-    className={`flex items-center justify-between h-8 px-1 text-[12.5px] font-medium text-white/50 select-none ${className}`}
+    className={`flex items-center justify-between h-[28px] px-1 text-[12.5px] font-medium text-white/50 select-none ${className}`}
   >
     <div className="flex items-center gap-1.5 min-w-0">
       {icon && <span className="shrink-0 flex">{icon}</span>}

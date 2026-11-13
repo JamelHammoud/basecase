@@ -99,7 +99,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
 
       return (
         <li key={row.target} className="flex flex-col" data-testid="skill-row">
-          <div className="flex items-center gap-2 min-h-9">
+          <div className="flex items-center gap-2 min-h-[32px]">
             <div className="flex-1 min-w-0">
               <div className="text-[13px] text-white/85 truncate">{row.label}</div>
               {line && <div className="text-[12px] text-white/50 tabular truncate">{line}</div>}

@@ -24,11 +24,12 @@ related:
 covers:
   - electron/print/connectors/
   - electron/print/index.mjs
+  - src/app/settingsPanes.ts
   - src/components/settings/PrinterEditor.tsx
   - src/components/print/PrinterLive.tsx
 ---
 
-Each message below is what Basecase shows when a printer turns down a connection, under **Test Connection** or when you send a plate.
+Each message below is what Basecase shows when it can't reach a printer or send it a plate, under **Test Connection** or in Print mode.
 
 ## “Couldn’t reach the printer at …”
 
@@ -83,6 +84,14 @@ Paste the new key in **API key**, press Enter, then click **Test Connection**.
 ## The printer is busy, or out of storage
 
 “The printer is busy. Wait for it to finish.” means a print is running. “The printer is out of storage. Delete some files on it.” means its storage is full. With Klipper, “Moonraker answered, but Klipper isn’t ready.” means the printer itself needs attention.
+
+## “Add the printer in Settings ▸ Printers.”
+
+The printer picked under **Printer** in Print mode is no longer saved. It was removed in Settings while Print mode was open.
+
+1. Click **Open** in the message to go to Settings ▸ **Printers**.
+2. Add the printer again, as in [Add a printer](/help/add-a-printer).
+3. Back in Print mode, pick it under **Printer** and send the plate again.
 
 ## “Install Bambu Studio to send prints” or “Install Bambu Connect from bambulab.com.”
 

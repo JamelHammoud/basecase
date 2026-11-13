@@ -97,7 +97,7 @@ export class Printing {
   printerOrThrow(id) {
     const printer = this.printers.get(id);
 
-    if (!printer) throw new Error('Add the printer in Settings → Printers first.');
+    if (!printer) throw new Error('Add the printer in Settings ▸ Printers.');
 
     return printer;
   }

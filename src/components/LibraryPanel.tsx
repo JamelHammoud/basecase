@@ -16,7 +16,7 @@ export interface LibraryPanelProps {
   onImageToModel: () => void;
 }
 
-type Menu = { id: string; x: number; y: number; entries: ContextMenuEntry[] };
+type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
 
 const matcher = (query: string) => {
   const q = query.trim().toLowerCase();
@@ -35,11 +35,10 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
   const state: SectionState = {
     renaming,
     setRenaming,
-    menuFor: menu?.id ?? null,
-    showMenu: (id, entries) => (e) => {
+    showMenu: (entries) => (e) => {
       e.preventDefault();
       e.stopPropagation();
-      setMenu({ id, x: e.clientX, y: e.clientY, entries });
+      setMenu({ x: e.clientX, y: e.clientY, entries });
     },
   };
   const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {

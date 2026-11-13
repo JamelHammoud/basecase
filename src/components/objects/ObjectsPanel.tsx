@@ -1,23 +1,9 @@
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Button, ChevronRightIcon, EmptyState, SearchField, SectionHeader, useScrollFade } from '../../design-system';
+import { BrowseRow, Button, EmptyState, SearchField, useScrollFade } from '../../design-system';
 import type { SimReadyAsset } from '../../simready/search';
 import { useSimReadySearch } from '../../simready/useSimReadySearch';
 import { OBJECT_CATEGORIES, type ObjectCategory } from './objectCategories';
 import { LoadingTiles, SimReadyTile } from './SimReadyTile';
-
-const CategoryRow: React.FC<{ category: ObjectCategory; onOpen: () => void }> = ({ category, onOpen }) => (
-  <button
-    type="button"
-    onClick={onOpen}
-    className="group w-full flex items-center gap-3 h-[52px] px-2.5 rounded-xl text-left cursor-default hover:bg-white/[0.05] active:scale-[0.99] transition-[background-color,transform] duration-150"
-  >
-    <div className="min-w-0 flex-1">
-      <div className="text-[13.5px] font-medium text-white/90 truncate">{category.title}</div>
-      <div className="text-[12px] text-white/50 truncate">{category.examples}</div>
-    </div>
-    <ChevronRightIcon className="w-4 h-4 text-white/25 group-hover:text-white/50 shrink-0 transition-colors" />
-  </button>
-);
 
 const LoadMore: React.FC<{ onReach: () => void }> = ({ onReach }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -124,10 +110,9 @@ export const ObjectsPanel: React.FC<{ onInsert: (asset: SimReadyAsset) => Promis
       </div>
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
         {browsing ? (
-          <div className="px-[8px] pb-4">
-            <SectionHeader title="Browse" />
+          <div className="px-[8px] pt-1 pb-4">
             {OBJECT_CATEGORIES.map((c) => (
-              <CategoryRow key={c.title} category={c} onOpen={() => setCategory(c)} />
+              <BrowseRow key={c.title} title={c.title} meta={c.examples} onOpen={() => setCategory(c)} />
             ))}
           </div>
         ) : (

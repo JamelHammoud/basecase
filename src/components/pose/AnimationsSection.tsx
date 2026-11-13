@@ -20,11 +20,13 @@ export type OpenMenu = (e: React.MouseEvent, items: ContextMenuEntry[]) => void;
 
 const fmtTime = (t: number) => `${t.toFixed(t < 10 ? 1 : 0)} s`;
 
-const AddAnimationMenu: React.FC<{ canWalk: boolean; onWalkCycle: () => void; onImportMotion: () => void }> = ({
-  canWalk,
-  onWalkCycle,
-  onImportMotion,
-}) => {
+interface AddAnimationProps {
+  canWalk: boolean;
+  onWalkCycle: () => void;
+  onImportMotion: () => void;
+}
+
+const AddAnimationMenu: React.FC<Omit<AddAnimationProps, 'canWalk'>> = ({ onWalkCycle, onImportMotion }) => {
   const [addOpen, setAddOpen] = useState(false);
   const addRef = useRef<HTMLDivElement | null>(null);
 
@@ -50,7 +52,6 @@ const AddAnimationMenu: React.FC<{ canWalk: boolean; onWalkCycle: () => void; on
         <MenuItem
           icon={<WalkIcon className="w-4 h-4" />}
           label="Walk Cycle"
-          disabled={!canWalk}
           onSelect={() => {
             setAddOpen(false);
             onWalkCycle();
@@ -68,6 +69,13 @@ const AddAnimationMenu: React.FC<{ canWalk: boolean; onWalkCycle: () => void; on
     </div>
   );
 };
+
+const AddAnimation: React.FC<AddAnimationProps> = ({ canWalk, onWalkCycle, onImportMotion }) =>
+  canWalk ? (
+    <AddAnimationMenu onWalkCycle={onWalkCycle} onImportMotion={onImportMotion} />
+  ) : (
+    <IconButton icon={<PlusIcon className="w-4 h-4" />} title="Import BVH" size="xs" onClick={onImportMotion} />
+  );
 
 const AnimationRow: React.FC<{
   anim: RobotAnimation;
@@ -161,7 +169,7 @@ export const AnimationsSection: React.FC<{
 }> = ({ posing, renaming, setRenaming, openMenu, canWalk, onWalkCycle, onImportMotion }) => (
   <Section
     title="Animations"
-    actions={<AddAnimationMenu canWalk={canWalk} onWalkCycle={onWalkCycle} onImportMotion={onImportMotion} />}
+    actions={<AddAnimation canWalk={canWalk} onWalkCycle={onWalkCycle} onImportMotion={onImportMotion} />}
   >
     {posing.animations.map((a) => (
       <AnimationRow

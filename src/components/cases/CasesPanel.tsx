@@ -20,11 +20,6 @@ function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseR
 
   return (
     <div className="mb-3 flex flex-col gap-1">
-      {cases.cases.length === 0 && (
-        <p className="px-[4px] pb-2 text-[13px] leading-snug text-white/60">
-          A Case is a world and a goal the robot tries in simulation.
-        </p>
-      )}
       {builder.open && <NewCaseCard builder={builder} onCreated={onOpen} />}
       {!builder.open && builder.goals.length > 0 && (
         <Button

@@ -19,6 +19,6 @@ Keep a part or a whole design in the Library so you can drop it into any scene l
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-The same menu has **Import SVG**, which extrudes a drawing into a model, and **From Image**, which builds one from a picture. Hover a model to see where it came from, its size and how many parts it has. Right-click it, or click ⋯, to rename, duplicate or delete it.
+The same menu has **Import SVG**, which extrudes a drawing into a model, and **From Image**, which builds one from a picture. Hover a model to see where it came from, its size and how many parts it has. Right-click it to rename, duplicate or delete it.
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)

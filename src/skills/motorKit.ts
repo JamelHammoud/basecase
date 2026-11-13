@@ -44,6 +44,7 @@ export interface KitInput {
   save: SkillSave;
   signal?: AbortSignal;
   seed?: number;
+  reverse?: boolean;
 }
 
 const SEED_SPAN = 1_000_000;
@@ -126,6 +127,7 @@ async function train(run: Attempt, stage: KitStage, from: { seed: number; folder
     delaySteps,
     delayRamp,
     warmStart: from.folder,
+    reverse: input.reverse,
   });
   const outcome = await runCounted(input.forge, { name: job.name, xml: input.model.xml, job }, clock.tally);
 
@@ -142,7 +144,7 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
 
   if (refusal) return { kind: 'refused', ...refusal, cost: clock.cost() };
 
-  const environment = kitEnvironment(input.model, entry);
+  const environment = kitEnvironment(input.model, entry, { reverse: input.reverse });
   const start = entry === 'get-up' ? collapsedStart(input.mj, input.model) : null;
   const run: Attempt = { input, entry, environment, start, clock };
   const skill = await firstPassingTry({

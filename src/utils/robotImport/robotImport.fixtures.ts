@@ -143,3 +143,26 @@ export function zipOf(files: Record<string, Uint8Array>): Uint8Array {
 }
 
 export const deskArmZip = () => zipOf(deskArmFiles());
+
+export function hubListing(files: Record<string, Uint8Array>): string {
+  const dirs = new Set(
+    Object.keys(files).flatMap((path) =>
+      path
+        .split('/')
+        .slice(0, -1)
+        .map((_, i, segments) => segments.slice(0, i + 1).join('/')),
+    ),
+  );
+  const oid = (path: string) => path.length.toString(16).padStart(40, '0');
+  const fileEntry = (path: string) => {
+    const size = files[path].byteLength;
+    const lfs = path.endsWith('.stl') ? { lfs: { oid: oid(path).repeat(2).slice(0, 64), size, pointerSize: 132 } } : {};
+
+    return { type: 'file', oid: oid(path), size, path, ...lfs };
+  };
+
+  return JSON.stringify([
+    ...[...dirs].map((path) => ({ type: 'directory', oid: oid(path), size: 0, path })),
+    ...Object.keys(files).map(fileEntry),
+  ]);
+}

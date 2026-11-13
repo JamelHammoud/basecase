@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../src/types/robotics';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
@@ -70,7 +70,7 @@ beforeAll(async () => {
     (record) => (window as unknown as { __studio: { load: (r: unknown) => void } }).__studio.load(record),
     ARM,
   );
-  await expect.poll(() => partCount(app.page)).toBe(ARM.parts.length);
+  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(ARM.parts.length), { timeout: 10000 });
 }, 120000);
 
 afterAll(async () => {

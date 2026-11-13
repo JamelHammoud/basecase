@@ -124,34 +124,33 @@ impl Gpu {
     }
 
     pub fn run(&mut self, dispatches: &[Dispatch]) -> Result<Timing, String> {
-        let command = self
-            .queue
-            .commandBuffer()
-            .ok_or("Metal couldn't make a command buffer")?;
-        let encoder = command
-            .computeCommandEncoder()
-            .ok_or("Metal couldn't make a compute encoder")?;
+        let mut timings = self.run_chain(&[dispatches])?;
 
-        for d in dispatches {
-            self.encode(&encoder, d)?;
+        Ok(timings.pop().unwrap_or_default())
+    }
+
+    pub fn run_chain(&mut self, lists: &[&[Dispatch]]) -> Result<Vec<Timing>, String> {
+        let mut commands = Vec::with_capacity(lists.len());
+
+        for dispatches in lists {
+            let command = self
+                .queue
+                .commandBuffer()
+                .ok_or("Metal couldn't make a command buffer")?;
+            let encoder = command
+                .computeCommandEncoder()
+                .ok_or("Metal couldn't make a compute encoder")?;
+
+            for d in *dispatches {
+                self.encode(&encoder, d)?;
+            }
+
+            encoder.endEncoding();
+            command.commit();
+            commands.push(command);
         }
 
-        encoder.endEncoding();
-        command.commit();
-        command.waitUntilCompleted();
-
-        if command.status() != MTLCommandBufferStatus::Completed {
-            let why = command.error().map_or_else(
-                || "no reason given".to_owned(),
-                |e| e.localizedDescription().to_string(),
-            );
-
-            return Err(format!("Forge's Metal step failed: {why}"));
-        }
-
-        Ok(Timing {
-            gpu_seconds: command.GPUEndTime() - command.GPUStartTime(),
-        })
+        commands.iter().map(|command| completed(command)).collect()
     }
 
     fn encode(&self, encoder: &ProtocolObject<dyn MTLComputeCommandEncoder>, d: &Dispatch) -> Result<(), String> {
@@ -189,4 +188,21 @@ impl Gpu {
 
         Ok(())
     }
+}
+
+fn completed(command: &ProtocolObject<dyn MTLCommandBuffer>) -> Result<Timing, String> {
+    command.waitUntilCompleted();
+
+    if command.status() != MTLCommandBufferStatus::Completed {
+        let why = command.error().map_or_else(
+            || "no reason given".to_owned(),
+            |e| e.localizedDescription().to_string(),
+        );
+
+        return Err(format!("Forge's Metal step failed: {why}"));
+    }
+
+    Ok(Timing {
+        gpu_seconds: command.GPUEndTime() - command.GPUStartTime(),
+    })
 }

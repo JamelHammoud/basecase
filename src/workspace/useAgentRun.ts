@@ -32,7 +32,7 @@ type PromptResult = Awaited<ReturnType<typeof platformBridge.sendAcpPrompt>>;
 
 export type SendMode = 'now' | 'queue';
 
-const failureReason = (err: unknown) => errorMessage(err).trim() || 'The agent stopped responding.';
+const failureReason = (err: unknown) => errorMessage(err).trim() || 'It stopped responding.';
 
 export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {
   const { docs, showToast } = core;
@@ -92,7 +92,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
       const reason = failureReason(err);
 
       setMessages(id, markLastAgentFailed(reason));
-      showToast(`Agent error. ${reason}`, { tone: 'error' });
+      showToast(`The agent couldn’t finish. ${reason}`, { tone: 'error' });
 
       return false;
     }

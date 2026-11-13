@@ -160,6 +160,9 @@ describe('print layout', () => {
     await expect.poll(async () => (await printPlates()).fitTest).toBe(false);
     expect((await printPlates()).open).toBe(true);
     expect(await sceneParts()).toEqual(before);
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
     expect(app.errors).toEqual([]);
   }, 120000);
 

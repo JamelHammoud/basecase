@@ -129,7 +129,7 @@ describe('Run Case', () => {
     const measured = panel('servos').locator('[data-robot-joint]:not([data-position=""])');
 
     await expect.poll(() => measured.count(), { timeout: 30000 }).toBe(3);
-    expect(await panel('servos').getByTestId('robot-mode').getAttribute('data-mode')).toBe('look');
+    expect(await panel('servos').getByTestId('robot-header').getAttribute('data-mode')).toBe('look');
 
     await inPanel('tries', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');

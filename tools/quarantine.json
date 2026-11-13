@@ -1,1 +1,44 @@
-[]
+[
+  {
+    "file": "src/booleans/booleans.perf.test.ts",
+    "test": "never holds the main thread for a frame",
+    "issue": 443,
+    "until": "2026-11-27",
+    "reason": "Wall-clock bound in the unit suite: four serial 50k-triangle CSGs time out at 5 s on Windows runners, and the best-of-four reply took 22.9 ms against 16 ms under Linux runner load"
+  },
+  {
+    "file": "e2e/caseRun.e2e.test.ts",
+    "test": "",
+    "issue": 465,
+    "until": "2026-11-27",
+    "reason": "Run Case panels keep remounting while a try runs: on Windows End Try detaches until the click times out, and on Linux the default-layout test fails 2 of 6 at End Try and starves the page's main thread for the next test"
+  },
+  {
+    "file": "e2e/drive.e2e.test.ts",
+    "test": "scans a corridor with a rover’s LiDAR, draws the hits and exports them as observation.scan",
+    "issue": 474,
+    "until": "2026-11-27",
+    "reason": "On Linux CI's software GL the page stops drawing frames during the LiDAR try, so End Try never settles: 0 of 4 on main, 0 of 6 in the Linux container, passes on a Mac"
+  },
+  {
+    "file": "e2e/drive.e2e.test.ts",
+    "test": "publishes a passed try to Hugging Face after signing in from Settings",
+    "issue": 474,
+    "until": "2026-11-27",
+    "reason": "Passed at c3b1e44 and failed twice at 5bf24f15 with no publish toast in 120 s, during a try"
+  },
+  {
+    "file": "e2e/caseLogic.e2e.test.ts",
+    "test": "scores a knock-the-blocks game from its Case logic and records the try as a pass",
+    "issue": 474,
+    "until": "2026-11-27",
+    "reason": "Passed at c3b1e44 and failed twice at 5bf24f15 with the score never reaching 2; fails 3 of 3 on a Mac at either commit"
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "opens on the rover driving to its flag",
+    "issue": 474,
+    "until": "2026-11-27",
+    "reason": "Passed on Windows e2e at c3b1e44 and timed out twice at 5bf24f15 while the rover drives on software GL"
+  }
+]

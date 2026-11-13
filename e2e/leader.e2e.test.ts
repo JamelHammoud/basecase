@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fixtureRobots, withoutGripper } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ProjectSettings, type RobotJoint } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
@@ -29,7 +29,7 @@ beforeAll(async () => {
     parts: arm.parts,
     project: { ...DEFAULT_PROJECT, joints: arm.joints },
   });
-  await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(arm.parts.length), { timeout: 10000 });
 }, 120000);
 
 afterAll(async () => {

@@ -1,7 +1,9 @@
 import type { Browser, Page } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { buildRig } from '../src/utils/kinematics';
 import { startFakeHub, type FakeHub } from './fakeHub';
 import { exposeTestHooks, launchChrome, openApp, openPlayTab, partCount, shown, type App } from './harness';
 
@@ -37,18 +39,19 @@ const gallery = (page: Page) =>
 
 async function openRoverCase() {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const kase = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: 'Desk Rover',
     parts: rover.parts,
-    project: { ...DEFAULT_PROJECT, joints: rover.joints },
+    project: { ...DEFAULT_PROJECT, joints: rover.joints, cases: [kase] },
   });
   await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
   await openPlayTab(app.page, 'Cases');
-  await app.page.locator(shown('button'), { hasText: 'Reach the Flag' }).first().click();
-  await expect.poll(() => activeCase()).toBe('reach-the-flag');
+  await app.page.locator(shown('[data-testid="cases-panel"] button'), { hasText: kase.name }).first().click();
+  await expect.poll(() => activeCase()).toBe(kase.id);
 
-  return rover;
+  return { rover, kase };
 }
 
 async function shareFromCommandBar() {
@@ -113,7 +116,7 @@ describe('Share Robot', () => {
   it.skipIf(process.platform === 'win32')(
     'publishes the rover from ⌘K, and the link drives it in the browser and opens it in the studio',
     async () => {
-      const rover = await openRoverCase();
+      const { rover, kase } = await openRoverCase();
 
       await shareFromCommandBar();
       await signInIfAsked();
@@ -126,7 +129,7 @@ describe('Share Robot', () => {
       const bundle = repo.files.get(FILE)!;
 
       expect(repo.kind).toBe('dataset');
-      expect(JSON.parse(bundle.toString()).case.id).toBe('reach-the-flag');
+      expect(JSON.parse(bundle.toString()).case.id).toBe(kase.id);
       expect(await app.page.evaluate(() => navigator.clipboard.readText())).toBe(link);
       await expect
         .poll(() => app.page.getByRole('status').filter({ hasText: 'Link copied' }).count())
@@ -137,7 +140,7 @@ describe('Share Robot', () => {
       const card = page.getByTestId('gallery-card');
 
       await expect.poll(() => card.count(), { timeout: 60000 }).toBe(1);
-      expect(await card.innerText()).toContain('Reach the Flag');
+      expect(await card.innerText()).toContain(kase.name);
       await expect.poll(() => page.locator('#boot').count()).toBe(0);
       await expect.poll(async () => (await gallery(page))?.status, { timeout: 60000 }).toBe('ready');
       await card.getByRole('button', { name: 'Drive', exact: true }).click();

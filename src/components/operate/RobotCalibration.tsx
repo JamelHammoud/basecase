@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../../design-system';
 import type { CalibrationHistory } from '../../reality/history';
 import { canRunBench } from '../../robot/benchRun';
 import { connectedFrom, useCalibrationPhase } from '../../robot/calibrationSession';
 import { servoFamily, type RobotState } from '../../robot/robotState';
 import type { RobotJoint } from '../../types/robotics';
-import { CalibrationRow } from './CalibrationRow';
+import { CalibrationRow, type ReplayChoice } from './CalibrationRow';
 
 export interface CalibrationProps {
   calibrations: Record<string, CalibrationHistory> | undefined;
@@ -26,6 +26,7 @@ export const RobotCalibration: React.FC<RobotCalibrationProps> = ({
   onRollBack,
 }) => {
   const phase = useCalibrationPhase();
+  const [replay, setReplay] = useState<ReplayChoice | null>(null);
   const rows = joints.flatMap((joint) => {
     const history = calibrations?.[joint.id];
 
@@ -53,7 +54,15 @@ export const RobotCalibration: React.FC<RobotCalibrationProps> = ({
         </Button>
       )}
       {rows.map(({ joint, history }) => (
-        <CalibrationRow key={joint.id} jointId={joint.id} name={joint.name} history={history} onRollBack={onRollBack} />
+        <CalibrationRow
+          key={joint.id}
+          jointId={joint.id}
+          name={joint.name}
+          history={history}
+          replay={replay}
+          onReplay={setReplay}
+          onRollBack={onRollBack}
+        />
       ))}
     </div>
   );

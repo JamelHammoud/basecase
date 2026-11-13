@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runAgent } from '../lib/agent.mjs';
+import { arcRef, BIG_BET, isBigBet, MAX_ARCS, MIN_ARCS, progress, PROGRESS_DAYS, withoutTasks } from '../lib/arcs.mjs';
 import {
+  closedIssues,
   closeIssue,
   commentOnIssue,
   createIssue,
@@ -10,11 +12,13 @@ import {
   hasLabel,
   openIssues,
   ownerComments,
+  setIssueBody,
 } from '../lib/github.mjs';
 import { copyTrend, copyTrendLine, mergedThisWeek } from '../lib/copy.mjs';
 import { LOOP_DIR, OWNER_LOGIN } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
+import { applyPlan } from '../lib/leadPlan.mjs';
 
 export const schedule = {
   agent: true,
@@ -30,7 +34,10 @@ const step = {
   type: 'object',
   properties: {
     title: { type: 'string', description: 'The step, verb first, sentence case' },
-    arc: { type: 'string', description: 'Title of the arc it belongs to' },
+    arc: {
+      type: ['integer', 'string'],
+      description: "The open arc's issue number, or the exact title of an arc in newArcs",
+    },
     kind: { type: 'string', enum: ['feature', 'integration', 'refine'] },
     body: { type: 'string', description: 'What to build and why, what exists already, and acceptance checks' },
     request: { type: ['integer', 'null'], description: "The number of Jamel's request it serves, or null" },
@@ -42,12 +49,29 @@ const step = {
 const SCHEMA = {
   type: 'object',
   properties: {
+    retireArcs: {
+      type: 'array',
+      description: 'Arcs that are done or no longer worth it, closed with the reason',
+      items: {
+        type: 'object',
+        properties: {
+          number: { type: 'integer' },
+          reason: { type: 'string' },
+          into: { type: ['integer', 'null'], description: 'The open arc that takes over its open steps, or null' },
+        },
+        required: ['number', 'reason', 'into'],
+      },
+    },
     newArcs: {
       type: 'array',
       items: {
         type: 'object',
-        properties: { title: { type: 'string' }, body: { type: 'string' } },
-        required: ['title', 'body'],
+        properties: {
+          title: { type: 'string' },
+          body: { type: 'string' },
+          bigBet: { type: 'boolean', description: 'True when the arc is a big bet' },
+        },
+        required: ['title', 'body', 'bigBet'],
       },
     },
     steps: { type: 'array', items: step, maxItems: 8 },
@@ -70,7 +94,7 @@ const SCHEMA = {
     },
     notes: { type: 'string' },
   },
-  required: ['newArcs', 'steps', 'dropIdeas', 'doneRequests', 'notes'],
+  required: ['retireArcs', 'newArcs', 'steps', 'dropIdeas', 'doneRequests', 'notes'],
 };
 
 const isLoopLabeled = (issue) => (issue.labels ?? []).some((label) => label.name.startsWith('loop:'));
@@ -125,6 +149,31 @@ function gather() {
   };
 }
 
+const mergedSteps = () =>
+  closedIssues(PROGRESS_DAYS).filter(
+    (issue) => issue.author?.login === OWNER_LOGIN && issue.stateReason === 'COMPLETED' && arcRef(issue.body),
+  );
+
+const mergedTitles = () =>
+  run('gh', [
+    'pr',
+    'list',
+    '--state',
+    'merged',
+    '--limit',
+    '40',
+    '--json',
+    'title,mergedAt',
+    '--jq',
+    '.[] | "\\(.mergedAt[0:10]) \\(.title)"',
+  ]).out;
+
+const progressOf = () => ({
+  recentSteps: mergedSteps(),
+  mergedTitles: mergedTitles(),
+  copyLine: copyTrendLine(copyTrend(mergedThisWeek())),
+});
+
 const reasonToPlan = (world, state) => {
   if (world.requests.length > 0) return `${world.requests.length} new request(s) from Jamel`;
 
@@ -139,88 +188,51 @@ const reasonToPlan = (world, state) => {
   return world.waiting < BUILDERS && queueChanged ? `${world.waiting} steps waiting for ${BUILDERS} builders` : null;
 };
 
-function prompt(world) {
-  const merged = run('gh', [
-    'pr',
-    'list',
-    '--state',
-    'merged',
-    '--limit',
-    '40',
-    '--json',
-    'title,mergedAt',
-    '--jq',
-    '.[] | "\\(.mergedAt[0:10]) \\(.title)"',
-  ]).out;
+const stepList = (heading, items) =>
+  items.length > 0 ? `${heading}:\n${items.map((item) => `  - ${item}`).join('\n')}` : `${heading}: none.`;
+
+function arcListing(world) {
+  const { byArc } = progress(world.arcs, { open: world.steps, merged: world.recentSteps });
+  const noBigBet = world.arcs.some(isBigBet) ? '' : `No open arc carries \`${BIG_BET}\`.`;
+  const entries = world.arcs.map((arc) => {
+    const steps = byArc.get(arc.number);
+
+    return [
+      `- #${arc.number} ${arc.title}${isBigBet(arc) ? ' (big bet)' : ''}`,
+      withoutTasks(arc.body),
+      stepList(
+        'Open steps',
+        steps.open.map((step) => `#${step.number} ${step.title}`),
+      ),
+      stepList(
+        `Merged in the last ${PROGRESS_DAYS} days`,
+        steps.merged.map((step) => step.title),
+      ),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+  });
+
+  return [`## Open arcs: ${world.arcs.length}, keep ${MIN_ARCS} to ${MAX_ARCS}`, noBigBet, ...entries]
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+export function prompt(world) {
   const direction = [world.direction?.body, ...world.comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n');
 
   return [
     `## Direction from Jamel (newest last)\n\n${direction || 'None yet.'}`,
     listing("New requests from Jamel: plan these first, every one, citing the request's number", world.requests),
     listing("Jamel's requests already in progress", world.tracked),
-    listing('Open arcs', world.arcs),
+    arcListing(world),
     listing('Ideas', world.ideas, IDEAS_NOTE),
     listing('Steps waiting or in progress', world.steps),
-    `## Recently merged\n\n${merged}\n\n${copyTrendLine(copyTrend(mergedThisWeek()))}`,
+    `## Recently merged\n\n${world.mergedTitles}\n\n${world.copyLine}`,
   ].join('\n\n');
 }
 
-const STEP_LABELS = ['loop:next', 'loop:building'];
-const openStep = (title) => {
-  const match = findOpenIssue({ title, similarAmong: STEP_LABELS });
-
-  return match?.labels.some((label) => STEP_LABELS.includes(label)) ? match : null;
-};
-const numbers = (list) => new Set(list.map((issue) => issue.number));
-
-function fileStep(s, known, log) {
-  const request = known.requests.has(s.request) ? s.request : null;
-  const promotes = known.ideas.has(s.promotes) ? s.promotes : null;
-  const labels = ['loop:next', `loop:${s.kind}`, ...(request ? ['loop:priority'] : [])];
-  const head = [request ? `Request: #${request}` : '', promotes ? `Idea: #${promotes}` : ''].filter(Boolean).join('\n');
-  const body = `${head ? `${head}\n` : ''}Arc: ${s.arc}\nKind: ${s.kind}\n\n${s.body}`;
-  const owner = openStep(s.title);
-  const url = owner?.url ?? createIssue({ title: s.title, body, labels, similarAmong: STEP_LABELS });
-
-  log(owner ? `already open as ${owner.url}: ${s.title}` : `step ${url ?? `skipped, already open: ${s.title}`}`);
-
-  if (!url) return;
-
-  if (request) {
-    editIssueLabels(request, { add: ['loop:request'] });
-    commentOnIssue(request, `Planned as ${url}.`);
-  }
-
-  if (promotes) {
-    closeIssue(promotes, `Promoted to ${url}.`);
-    known.ideas.delete(promotes);
-  }
-}
-
-function fileSteps(output, world, log) {
-  const known = {
-    requests: numbers([...world.requests, ...world.tracked]),
-    ideas: numbers(world.ideas),
-    tracked: numbers(world.tracked),
-  };
-
-  for (const arc of output.newArcs) {
-    log(
-      `arc ${createIssue({ ...arc, labels: ['loop:arc'], similarAmong: ['loop:arc'] }) ?? `skipped, already open: ${arc.title}`}`,
-    );
-  }
-
-  for (const s of output.steps) fileStep(s, known, log);
-
-  for (const drop of output.dropIdeas.filter((d) => known.ideas.has(d.number))) {
-    closeIssue(drop.number, `Not planned: ${drop.reason}`, 'not planned');
-    log(`dropped idea #${drop.number}`);
-  }
-
-  for (const done of output.doneRequests.filter((d) => known.tracked.has(d.number))) {
-    closeIssue(done.number, done.comment);
-  }
-}
+const github = { closeIssue, commentOnIssue, createIssue, editIssueLabels, findOpenIssue, setIssueBody };
 
 export default function lead({ log }) {
   const world = gather();
@@ -238,7 +250,8 @@ export default function lead({ log }) {
   try {
     log(`planning: ${reason}`);
 
-    const result = runAgent({ cwd: worktree.dir, name: 'lead', prompt: prompt(world), schema: SCHEMA, hours: 2 });
+    const planned = { ...world, ...progressOf() };
+    const result = runAgent({ cwd: worktree.dir, name: 'lead', prompt: prompt(planned), schema: SCHEMA, hours: 2 });
 
     if (!result.ok) {
       log(`lead session failed: ${String(result.error).slice(0, 500)}`);
@@ -246,7 +259,7 @@ export default function lead({ log }) {
       return;
     }
 
-    fileSteps(result.output, world, log);
+    applyPlan(result.output, planned, { log, gh: github });
 
     for (const request of world.requests) editIssueLabels(request.number, { add: ['loop:request'] });
 

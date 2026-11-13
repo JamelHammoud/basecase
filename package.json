@@ -256,7 +256,8 @@
     "wait-on": "^9.0.4"
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged && node tools/check-tracked.mjs"
+    "pre-commit": "npx lint-staged && node tools/check-tracked.mjs",
+    "commit-msg": "node tools/hooks/commit-msg.mjs $1"
   },
   "lint-staged": {
     "*.{ts,tsx,mjs,js,cjs}": [

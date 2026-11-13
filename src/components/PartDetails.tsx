@@ -103,15 +103,11 @@ export const SpecText: React.FC<{ value: SpecValue }> = ({ value }) => (
   </>
 );
 
-export const SizeSpecRow: React.FC<{ d: PartDimensions }> = ({ d }) => (
-  <SpecRow label="Size">
-    <SizeLine w={d.width} h={d.height} d={d.depth} />
-  </SpecRow>
-);
-
 export const SpecRows: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, d }) => (
   <dl className="-my-[5px]">
-    <SizeSpecRow d={d} />
+    <SpecRow label="Size">
+      <SizeLine w={d.width} h={d.height} d={d.depth} />
+    </SpecRow>
     {c.specs.map(([label, value]) => (
       <SpecRow key={label} label={label}>
         <SpecText value={value} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CATEGORY_LABELS, catalogItemFromKey, catalogRef } from '../../data/catalog';
+import { catalogItemFromKey, catalogRef } from '../../data/catalog';
 import { COMPONENT_BY_ID, ComponentInfo } from '../../data/components';
 import { HardwareSpec, hardwareName, hardwareShopUrl, hardwareSubtitle } from '../../data/hardware';
 import type { CatalogItem, PartDimensions } from '../../types/robotics';
@@ -11,7 +11,6 @@ import {
   LinkButton,
   ModelOrigin,
   makerSubtitle,
-  SizeSpecRow,
   SpecRow,
   SpecRows,
 } from '../PartDetails';
@@ -68,32 +67,20 @@ export const ItemPage: React.FC<{
   onOpen: (i: CatalogItem) => void;
 }> = ({ ref_, onAdd, onOpen }) => {
   const item = catalogItemFromKey(ref_);
+  const c = item?.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
 
-  if (!item) return null;
+  if (!item || !c) return null;
 
-  const c = item.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
   const d = item.defaultDimensions;
-  const pairs = (c?.pairsWith ?? []).map((r) => catalogItemFromKey(r)).filter((i): i is CatalogItem => !!i);
+  const pairs = (c.pairsWith ?? []).map((r) => catalogItemFromKey(r)).filter((i): i is CatalogItem => !!i);
 
   return (
     <div className="pb-2">
       <Hero item={item} className={PAGE_HERO} {...dragProps(item)} />
-      <PageTitle
-        title={item.name}
-        subtitle={c ? makerSubtitle(c) : CATEGORY_LABELS[item.category].label}
-        description={item.description}
-      />
+      <PageTitle title={item.name} subtitle={makerSubtitle(c)} description={item.description} />
       <div className="border-t border-white/[0.06]">
-        {c ? (
-          <ComponentSpecs c={c} d={d} />
-        ) : (
-          <Section title="Specs">
-            <dl className="-my-[5px]">
-              <SizeSpecRow d={d} />
-            </dl>
-          </Section>
-        )}
-        {c && <ComponentDetails c={c} />}
+        <ComponentSpecs c={c} d={d} />
+        <ComponentDetails c={c} />
         {pairs.length > 0 && (
           <Section title="Goes with">
             <div className="-mx-[6px] !mt-0">

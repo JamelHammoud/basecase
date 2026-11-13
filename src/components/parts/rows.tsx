@@ -26,17 +26,7 @@ export const makerLine = (item: CatalogItem): string =>
 export function metaLine(item: CatalogItem): string {
   if (isSourcedId(item.componentId)) return 'Added by Agent';
 
-  const c = item.componentId ? COMPONENT_BY_ID[item.componentId] : undefined;
-
-  if (c) return c.manufacturer;
-
-  const h = item.hardware;
-
-  if (h) return HARDWARE_BY_TYPE[h.type].description;
-
-  const d = item.defaultDimensions;
-
-  return `${d.width} × ${d.height} × ${d.depth} mm`;
+  return item.hardware ? HARDWARE_BY_TYPE[item.hardware.type].description : makerLine(item);
 }
 
 export const dragProps = (item: CatalogItem) => ({

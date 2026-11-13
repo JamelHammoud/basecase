@@ -1,7 +1,8 @@
-import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
+import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
+import { checkedRun } from '../lib/preflight.mjs';
 import { publish } from '../lib/pull.mjs';
 import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
 import { recordDecline, stepEntry, stepWaiting } from '../lib/stepState.mjs';
@@ -87,7 +88,7 @@ function buildStep(step, { log, slot }) {
 
   try {
     const prompt = `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`;
-    const result = runAgent({ cwd: worktree.dir, name: 'build', prompt, schema: CHANGE_SCHEMA, hours: 12 });
+    const result = checkedRun({ cwd: worktree.dir, name: 'build', prompt, schema: CHANGE_SCHEMA, hours: 12, log });
 
     if (!result.ok || !result.output.changed) {
       giveBack(result);

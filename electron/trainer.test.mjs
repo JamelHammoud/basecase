@@ -12,10 +12,24 @@ function fakeChild() {
 
   child.stdout = new EventEmitter();
   child.stderr = new EventEmitter();
-  child.kill = () => child.emit('close', null, 'SIGTERM');
+  child.kill = () => {
+    if (child.closed) return;
+
+    child.closed = true;
+    child.emit('close', null, 'SIGTERM');
+  };
 
   return child;
 }
+
+const closeStopped = (children) => {
+  for (const child of children) {
+    if (child.closed || !fs.existsSync(path.join(child.dir, 'stop'))) continue;
+
+    child.closed = true;
+    child.emit('close', 0, null);
+  }
+};
 
 function trainer(options) {
   const library = fs.mkdtempSync(path.join(os.tmpdir(), 'trainer-'));
@@ -121,6 +135,8 @@ describe('background Kit work', () => {
 
     t.start({ workspaceId: 'kit:a', xml: '<m/>', job: job('Kit'), priority: PRIORITY.kit });
     t.start({ workspaceId: 'mine', xml: '<m/>', job: job('Mine') });
+    closeStopped(children);
+    await tick();
 
     expect(t.status().running).toEqual(['mine']);
     expect(t.status().queued).toEqual(['kit:a']);
@@ -137,7 +153,7 @@ describe('background Kit work', () => {
 
   it('holds Kit jobs while the Gatekeeper lease exists, and user training runs anyway', async () => {
     const lease = leaseFile();
-    const { t } = trainer({ leaseFile: lease, leasePollMs: 5 });
+    const { t, children } = trainer({ leaseFile: lease, leasePollMs: 5 });
 
     fs.writeFileSync(lease, '1');
     t.start({ workspaceId: 'kit:a', xml: '<m/>', job: job('Kit'), priority: PRIORITY.kit });
@@ -145,6 +161,7 @@ describe('background Kit work', () => {
     t.start({ workspaceId: 'mine', xml: '<m/>', job: job('Mine') });
     expect(t.status().running).toEqual(['mine']);
     t.stop('mine');
+    closeStopped(children);
     await tick();
     expect(t.status().running).toEqual([]);
 
@@ -156,12 +173,13 @@ describe('background Kit work', () => {
 
   it('pauses a running Kit job when the lease appears', async () => {
     const lease = leaseFile();
-    const { t } = trainer({ leaseFile: lease, leasePollMs: 5 });
+    const { t, children } = trainer({ leaseFile: lease, leasePollMs: 5 });
 
     t.start({ workspaceId: 'kit:a', xml: '<m/>', job: job('Kit'), priority: PRIORITY.kit });
     expect(t.status().running).toEqual(['kit:a']);
     fs.writeFileSync(lease, '1');
     await new Promise((resolve) => setTimeout(resolve, 30));
+    closeStopped(children);
     expect(t.status().running).toEqual([]);
     expect(t.status().queued).toEqual(['kit:a']);
     t.dispose();

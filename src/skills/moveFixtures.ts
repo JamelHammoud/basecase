@@ -1,6 +1,9 @@
 import { CLOCK_SIZE, obsSize, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../sim/policy';
 import type { JointValues, RobotAnimation } from '../types/robotics';
+import type { SimModel } from '../sim/mjcfTypes';
+import { currentDesign, skillFromTraining, type Skill, type SkillController } from './artifacts';
 import type { Environment } from './environment';
+import { moveEnvironment } from './moveEnvironment';
 
 export interface KeyedMove {
   id: string;
@@ -75,3 +78,60 @@ export function clockPolicy(environment: Environment): PolicySpec {
     clock: { frames: reference.frames.length, loop: false },
   };
 }
+
+export const quadWave = (): RobotAnimation =>
+  keyedMove({
+    id: 'wave',
+    name: 'Wave',
+    seconds: 2,
+    keys: [
+      [0, {}],
+      [0.5, { leg0_swing: 30 }],
+      [1, { leg0_swing: 50 }],
+      [1.5, { leg0_swing: 30 }],
+      [2, {}],
+    ],
+  });
+
+const FOLDED = { bend: -120, swing: 80 };
+
+export const quadFlop = (): RobotAnimation =>
+  keyedMove({
+    id: 'flop',
+    name: 'Flop',
+    seconds: 0.4,
+    keys: [
+      [0, {}],
+      [
+        0.4,
+        Object.fromEntries(
+          [0, 1, 2, 3].flatMap((leg) => [
+            [`leg${leg}_bend`, FOLDED.bend],
+            [`leg${leg}_swing`, leg % 2 ? -FOLDED.swing : FOLDED.swing],
+          ]),
+        ),
+      ],
+    ],
+  });
+
+export function fixtureMoveSkill(options: {
+  model: SimModel;
+  animation: RobotAnimation;
+  controller?: SkillController;
+  name?: string;
+}): Skill {
+  const { model, animation } = options;
+  const environment = moveEnvironment(model, animation);
+  const controller = options.controller ?? { kind: 'animation', animation };
+  const current = currentDesign({ design: model.robots[0]?.key ?? 'scene', model, environment });
+
+  return skillFromTraining({ name: options.name ?? animation.name, start: null, current, environment, controller });
+}
+
+export const clockSkill = (model: SimModel, animation: RobotAnimation, name = animation.name): Skill =>
+  fixtureMoveSkill({
+    model,
+    animation,
+    name,
+    controller: { kind: 'policy', policy: clockPolicy(moveEnvironment(model, animation)), robot: model.robots[0].key },
+  });

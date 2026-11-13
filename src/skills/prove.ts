@@ -24,6 +24,7 @@ export interface ProveInput {
   controller: SkillController;
   save: SkillSave;
   origin?: () => SkillOrigin;
+  warmStartFrom?: string;
 }
 
 export interface Proof {
@@ -34,7 +35,8 @@ export interface Proof {
 export async function proveSkill(input: ProveInput): Promise<Proof> {
   const { mj, model, design, name, environment, controller } = input;
   const current = currentDesign({ design, model, environment });
-  const draft = skillFromTraining({ name, start: null, current, environment, controller });
+  const trained = skillFromTraining({ name, start: null, current, environment, controller });
+  const draft = input.warmStartFrom ? { ...trained, warmStartFrom: input.warmStartFrom } : trained;
   const evidence = await runArena({ mj, model, contract: environment.contract, controller, environment });
 
   if (!evidence.passed) return { skill: null, evidence };

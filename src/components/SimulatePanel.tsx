@@ -96,10 +96,15 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         />
         <ResultsSection
           cases={cases}
+          rig={rig}
           model={sim.model}
           parts={parts}
           world={sim.worldParts}
-          run={on && sim.stats && sim.model ? { stats: sim.stats, model: sim.model, rig, onSelectParts } : null}
+          run={
+            on && sim.stats && sim.model
+              ? { stats: sim.stats, model: sim.model, rig, onSelectParts, onFault: sim.setFault }
+              : null
+          }
         />
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}

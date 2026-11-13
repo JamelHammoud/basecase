@@ -2,6 +2,7 @@ import type { Command } from '../components/CommandPalette';
 import {
   CasesIcon,
   DownloadIcon,
+  DuplicateIcon,
   ExpandIcon,
   PlusIcon,
   RotateLeftIcon,
@@ -30,6 +31,7 @@ export const STAYS_IN_RUN = new Set([
   'drive-stop',
   'drive-respawn',
   'case-try',
+  'case-multiply',
   'case-export-dataset',
   'case-publish-dataset',
   'case-train-from-tries',
@@ -71,6 +73,23 @@ function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Co
   };
 
   return [...(dataset.canExport ? [exportDataset] : []), ...(dataset.canPublish ? [publishDataset] : [])];
+}
+
+function multiplyCommands({ multiply }: WorkspaceCore['simTraining']['cases']): Command[] {
+  const { latest } = multiply;
+
+  if (!latest) return [];
+
+  return [
+    {
+      id: 'case-multiply',
+      group: 'Simulate',
+      label: 'Multiply',
+      icon: <DuplicateIcon className={ic} />,
+      keywords: 'try variations demonstrations dataset augment generate jitter',
+      run: () => multiply.multiply(latest),
+    },
+  ];
 }
 
 function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases']): Command[] {
@@ -204,6 +223,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...tryIt,
     ...caseRun,
     ...(cases.active ? compareCommands(core) : []),
+    ...(cases.active ? multiplyCommands(cases) : []),
     ...datasetCommands(cases),
     ...fromTriesCommands(cases),
     ...shareCommands(simTraining),

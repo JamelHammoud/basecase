@@ -1,5 +1,6 @@
 import { parquetReadObjects } from 'hyparquet';
 import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
+import type { Page } from 'playwright-core';
 import { expect } from 'vitest';
 import { buildCase, builderRobot } from '../src/cases/caseBuilder';
 import { robotFacts } from '../src/cases/robotFit';
@@ -10,6 +11,7 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { buildRig } from '../src/utils/kinematics';
 import { solveIK } from '../src/utils/kinematicsIk';
 import type { FakeHub } from './fakeHub';
+import { shown } from './harness';
 
 export async function expectDataset(files: Record<string, Buffer>) {
   const paths = Object.keys(files);
@@ -58,6 +60,31 @@ export function pickTimeline(): ReferenceCommand[] {
   if (!built.ok) throw new Error(built.problem);
 
   return built.kase.reference.timeline;
+}
+
+export async function expectCaseCheckOpensRow(page: Page, name: string) {
+  const verdict = page.locator(shown('[data-testid="case-check"]'));
+
+  expect(await page.locator(shown('button'), { hasText: 'Check Fit' }).count()).toBe(0);
+  expect(await page.getByTestId('robot-fit').count()).toBe(0);
+  await expect.poll(() => verdict.count(), { timeout: 120000 }).toBe(1);
+  expect(['pass', 'warn', 'fail']).toContain(await verdict.getAttribute('data-status'));
+  await verdict.click();
+  await expect
+    .poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 10000 })
+    .toMatch(/^case-check-/);
+  expect(await page.locator(shown('[id^="case-check-"]')).innerText()).toContain(name);
+}
+
+export function expectGenerated(files: Record<string, Buffer>, kept: number) {
+  const at = (end: string) => JSON.parse(files[Object.keys(files).find((p) => p.endsWith(end))!].toString());
+  const episodes = at('meta/basecase.json').episodes as Array<{ seed: number; source: string | null }>;
+  const generated = episodes.filter((e) => e.source !== null);
+
+  expect(at('meta/info.json').total_episodes).toBe(1 + kept);
+  expect(generated).toHaveLength(kept);
+  expect(new Set(generated.map((e) => e.seed)).size).toBe(kept);
+  expect(Object.keys(files).filter((p) => p.endsWith('.mp4'))).toHaveLength(1 + kept);
 }
 
 export function touchingPolicy(): PolicySpec {

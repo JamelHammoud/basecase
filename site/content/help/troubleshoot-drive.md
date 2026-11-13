@@ -74,7 +74,7 @@ The same message shows when pose estimation can't start, even with the camera al
 
 ## Drive is greyed out
 
-It reads "Checking it stays up" while a robot with legs walks a 5-second fall check in the background. Wait for it to finish; **Drive** then starts, or **Teach It to Move** takes its place.
+It reads "Checking it stays up…" while a robot with legs walks a 5-second fall check in the background. Wait for it to finish; **Drive** then starts, or **Teach It to Move** takes its place.
 
 ## The robot falls over
 

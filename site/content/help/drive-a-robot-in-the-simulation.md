@@ -34,7 +34,7 @@ covers:
 Steer an arm, a rover or a walking robot live in MuJoCo with the keyboard or a gamepad, before you build it.
 
 1. Click **Simulate** at the top of the right panel, with no Case open.
-2. In **Control**, click **Drive**. A robot with legs and no **Walk** skill first runs a 5-second fall check, shown as "Checking it stays up".
+2. In **Control**, click **Drive**. A robot with legs and no **Walk** skill first runs a 5-second fall check, shown as "Checking it stays up…".
 3. Click the canvas so it gets the keys.
 4. Steer with the keys under **Control**, or with a gamepad.
 5. Press [[R]] to put the robot back where it started.

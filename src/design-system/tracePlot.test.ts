@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { TracePlot } from './TracePlot';
-import { sampleAt, tracePaths, traceRange, type Trace } from './tracePaths';
+import { sampleAt, tracePaths, traceRange, xRange, type Trace } from './tracePaths';
 
 const BOX = { width: 100, height: 50, inset: 5 };
 
@@ -51,6 +51,18 @@ describe('tracePaths', () => {
     expect(sampleAt(1.4, 151)).toBe(150);
     expect(sampleAt(-1, 151)).toBe(0);
   });
+
+  it('places a trace with x values by value on a shared x range, and draws points as dots', () => {
+    const dots: Trace = { id: 'walk', values: [0, 2], x: [0, 10], tone: 'primary', points: true };
+    const line: Trace = { id: 'servo', values: [4, 0], x: [0, 20], tone: 'accent' };
+    const xs = xRange([dots, line]);
+    const [walk, servo] = tracePaths([dots, line], BOX, traceRange([dots, line]), xs);
+
+    expect(xs).toEqual([0, 20]);
+    expect(walk.d).toBe('M0.0 45.0h0M50.0 25.0h0');
+    expect(walk.points).toBe(true);
+    expect(servo.d).toBe('M0.0 5.0L100.0 45.0');
+  });
 });
 
 describe('TracePlot', () => {
@@ -83,6 +95,23 @@ describe('TracePlot', () => {
     expect(html).toContain('data-testid="trace-limit" d="M0 8.0H1000"');
     expect(html.match(/data-testid="trace-marker"/g)).toHaveLength(2);
     expect(html.match(/#f87171/g)).toHaveLength(2);
+  });
+
+  it('draws points with round dots from zero, and labels the top of each axis with its unit', () => {
+    const html = renderToStaticMarkup(
+      createElement(TracePlot, {
+        traces: [{ id: 'walk', values: [1, 1.5], x: [20, 40], tone: 'primary', points: true }],
+        height: 50,
+        fromZero: true,
+        units: { x: 'rpm', y: 'N·m' },
+      }),
+    );
+
+    expect(html).toContain('data-testid="trace-walk"');
+    expect(html).toContain('stroke-linecap="round"');
+    expect(html).toContain('stroke-width="4"');
+    expect(html).toContain('1.5 N·m');
+    expect(html).toContain('40 rpm');
   });
 
   it('draws nothing while loading', () => {

@@ -66,11 +66,13 @@ const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActi
   );
 };
 
-const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext; muted?: boolean }> = ({
-  finding,
-  context,
-  muted,
-}) => (
+interface FindingRowProps {
+  finding: ReadinessFinding;
+  context: FindingContext;
+  children?: React.ReactNode;
+}
+
+const FindingText: React.FC<FindingRowProps & { muted?: boolean }> = ({ finding, context, muted, children }) => (
   <div className="min-w-0 flex-1">
     <p className={`text-[13px] leading-[18px] ${muted ? 'text-white/65' : 'text-white/85'}`}>{finding.text}</p>
     {finding.detail && <p className="text-[12px] leading-[16px] text-white/50">{finding.detail}</p>}
@@ -83,21 +85,26 @@ const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext
     {finding.dispute && (
       <p className="mt-0.5 text-[12px] leading-[16px] text-white/50">The agent disagrees: {finding.dispute.reason}</p>
     )}
+    {children}
   </div>
 );
 
-export const BlockerRow: React.FC<{ finding: ReadinessFinding; context: FindingContext }> = ({ finding, context }) => (
+export const BlockerRow: React.FC<FindingRowProps> = ({ finding, context, children }) => (
   <li className="flex items-start gap-2 py-1.5 pl-[31px] pr-[7px]">
-    <FindingText finding={finding} context={context} />
+    <FindingText finding={finding} context={context}>
+      {children}
+    </FindingText>
     <div className="flex items-center gap-1 shrink-0">
       <FindingButtons finding={finding} actions={context.actions} />
     </div>
   </li>
 );
 
-export const NoteRow: React.FC<{ finding: ReadinessFinding; context: FindingContext }> = ({ finding, context }) => (
+export const NoteRow: React.FC<FindingRowProps> = ({ finding, context, children }) => (
   <li className="group relative py-1.5 pl-[31px] pr-[7px] rounded-lg hover:bg-[#333333]">
-    <FindingText finding={finding} context={context} muted />
+    <FindingText finding={finding} context={context} muted>
+      {children}
+    </FindingText>
     <RowActions fill="#333333" className="right-0 top-0.5 gap-1 pr-1 rounded-r-lg">
       <FindingButtons finding={finding} actions={context.actions} />
     </RowActions>

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { MODEL_DRAG_TYPE } from '../../data/dnd';
-import { HoverCard, IconButton, Tooltip, MoreIcon, PlusIcon } from '../../design-system';
+import { HoverCard, Tooltip, PlusIcon } from '../../design-system';
 
 const HIDDEN_UNTIL_HOVER =
   'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto';
@@ -37,7 +37,6 @@ export const Tile: React.FC<{
   modelId: string;
   onStartRename: () => void;
   onRename: (name: string) => void;
-  menuOpen: boolean;
   onMenu: (e: React.MouseEvent) => void;
   details: () => React.ReactNode;
 }> = ({
@@ -49,7 +48,6 @@ export const Tile: React.FC<{
   modelId,
   onStartRename,
   onRename,
-  menuOpen,
   onMenu,
   details,
 }) => {
@@ -77,7 +75,7 @@ export const Tile: React.FC<{
         <TileThumb thumb={thumb} />
       </button>
 
-      <div className="relative pl-0.5 pt-2 cursor-default" onClick={renaming ? undefined : onInsert}>
+      <div className="pl-0.5 pt-2 cursor-default" onClick={renaming ? undefined : onInsert}>
         {renaming ? (
           <RenameField name={name} onDone={onRename} />
         ) : (
@@ -92,22 +90,6 @@ export const Tile: React.FC<{
           </div>
         )}
         <div className="text-[12px] text-white/50 tabular truncate">{meta}</div>
-        {!renaming && (
-          <div
-            className={`absolute right-0 top-[2px] pl-8 bg-gradient-to-r from-transparent to-[#1f1f1f] to-[32px] transition-opacity ${menuOpen ? '' : HIDDEN_UNTIL_HOVER}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <IconButton
-              icon={<MoreIcon className="w-4 h-4" />}
-              title="More"
-              size="xs"
-              className="!w-6 !h-6 !rounded-md"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={onMenu}
-            />
-          </div>
-        )}
       </div>
 
       {!renaming && (

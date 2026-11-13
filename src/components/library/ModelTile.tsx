@@ -14,9 +14,8 @@ export const ModelTile: React.FC<{
   onInsert: () => void;
   onStartRename: () => void;
   onRename: (name: string) => void;
-  menuOpen: boolean;
   onMenu: (e: React.MouseEvent) => void;
-}> = ({ model, renaming, onInsert, onStartRename, onRename, menuOpen, onMenu }) => {
+}> = ({ model, renaming, onInsert, onStartRename, onRename, onMenu }) => {
   const thumb = usePartsThumbnail(modelKey(model), () => modelParts(model)) || model.sourceImageDataUrl;
   const d = model.defaultDimensions;
 
@@ -35,9 +34,8 @@ export const ModelTile: React.FC<{
       modelId={model.id}
       onStartRename={onStartRename}
       onRename={onRename}
-      menuOpen={menuOpen}
       onMenu={onMenu}
-      details={() => <ModelDetails model={model} thumb={thumb} onInsert={onInsert} />}
+      details={() => <ModelDetails model={model} thumb={thumb} />}
     />
   );
 };

@@ -32,6 +32,8 @@ import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
 import type { ServoCalibration } from '../reality/types';
 import type { Posing } from '../utils/usePosing';
+import { posedPort } from '../utils/posedPort';
+import type { Vec2 } from '../utils/linkage';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
@@ -52,6 +54,7 @@ export interface DevActions {
   dropFiles: (files: File[]) => void;
   selection: () => string[];
   selectFace: (partId: string, normal: [number, number, number]) => void;
+  sketchPath: (points: Vec2[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   simState: () => unknown;
@@ -225,6 +228,13 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       return part && { position: part.position, rotation: part.rotation };
     },
     selectFace: (partId: string, normal: [number, number, number]) => devRef.current.selectFace(partId, normal),
+    sketchPath: (points: Vec2[]) => devRef.current.sketchPath(points),
+    posedPort: (id: string, port: string) => {
+      const part = partsRef.current.find((p) => p.id === id);
+      const { rig, pose } = devRef.current.posing;
+
+      return part ? posedPort(rig, pose, { part, port }) : null;
+    },
     triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>

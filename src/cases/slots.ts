@@ -69,6 +69,7 @@ function placedJoint(j: RobotJoint, place: Placement): RobotJoint {
     axis: place.turn(j.axis),
     ...(j.parentJoint ? { parentJoint: place.id(j.parentJoint) } : {}),
     ...(j.actuators ? { actuators: j.actuators.map(place.id) } : {}),
+    ...(j.loop ? { loop: { ...j.loop, driver: place.id(j.loop.driver) } } : {}),
     ...(j.frame
       ? { frame: { part: place.id(j.frame.part), origin: place.at(j.frame.origin), axis: place.turn(j.frame.axis) } }
       : {}),

@@ -37,3 +37,5 @@ To change it, double-click the part. Click a dimension, type the new value and p
 ![The reopened sketch with the width changed to 50, and the part grown on the box](/help/sketch-a-part-to-exact-dimensions/edited.png)
 
 While drawing, a point snaps onto an existing point, and a line snaps level or upright; a small glyph by the pointer shows which, and the sketch keeps it as a constraint. To hold two lines parallel, perpendicular or equal, click the active tool to put it down, click one line, ⇧-click the other and pick from the strip above the sketch. An edit that would conflict with the others is refused, and the sketch keeps its last shape.
+
+To draw the path a leg or finger should trace instead, choose **Path** under **Outline**. The steps are in [Design a linkage from a path](/help/design-a-linkage-from-a-path).

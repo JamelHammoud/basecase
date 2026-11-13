@@ -113,14 +113,16 @@ export const MODULE_RECIPES = [
   },
   {
     name: 'four_bar',
-    use: 'Four-bar linkage as flat pinned bars posed at a crank angle, with the closure solved in code (four_bar_pose) and a Grashof check.',
-    tags: 'linkage four-bar 4-bar crank rocker coupler mechanism gripper leg pinned bars kinematic',
+    use: 'Four-bar linkage as flat pinned bars posed at a crank angle, with the closure solved in code (four_bar_pose), a Grashof check and an optional coupler point that traces the path.',
+    tags: 'linkage four-bar 4-bar crank rocker coupler mechanism gripper leg pinned bars kinematic path walking',
     params:
-      'ground=60, crank=20, coupler=60, rocker=45, theta=60, w=8, t=4, pin=3, part="all"|"ground"|"crank"|"coupler"|"rocker"',
-    ports: 'A, D (ground pivots), B, C (moving pivots), all bores',
-    notes: 'Needs include <mechanisms.scad>. four_bar_grashof(...) is true when the shortest link turns fully.',
-    code: `${MECH}four_bar(60, 20, 60, 45, theta = 60, part = "coupler");`,
-    expect: { ports: ['A', 'B', 'C', 'D'] },
+      'ground=60, crank=20, coupler=60, rocker=45, theta=60, px=0, py=0 (coupler point along B→C, then to its left), w=8, t=4, pin=3, part="all"|"ground"|"crank"|"coupler"|"rocker"',
+    ports:
+      'A, D (ground pivots), B, C (moving pivots), P (coupler point, when px or py is set), all bores; each part reports only its own',
+    notes:
+      'Needs include <mechanisms.scad>. four_bar_grashof(...) is true when the shortest link turns fully. To fit the link lengths to a path, call synthesize_linkage instead of guessing them.',
+    code: `${MECH}four_bar(60, 20, 60, 45, theta = 60, px = 30, py = 15);`,
+    expect: { ports: ['A', 'B', 'C', 'D', 'P'] },
   },
   {
     name: 'snap_pin_part',

@@ -42,4 +42,8 @@ impl Gpu {
     pub fn run(&mut self, _dispatches: &[Dispatch]) -> Result<Timing, String> {
         Err(NEEDS_A_MAC.to_owned())
     }
+
+    pub fn run_chain(&mut self, _lists: &[&[Dispatch]]) -> Result<Vec<Timing>, String> {
+        Err(NEEDS_A_MAC.to_owned())
+    }
 }

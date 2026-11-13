@@ -12,17 +12,21 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Worse than Basecase:** on the free plan "All Onshape Documents are accessible to the public", and private data and commercial use need Standard at $1,500 or Professional at $2,500 per user per year ([pricing](https://www.onshape.com/en/pricing)). Basecase simulates, trains and lays out print plates in the same app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
 - **Basecase should:** integrate. Import Onshape documents, so a robot drawn there can be simulated, trained and printed in Basecase.
 
+### Fusion
+
+- **Link:** https://www.autodesk.com/products/fusion-360/overview
+- **Checked:** 2026-11-13
+- **Better than Basecase:** an established CAD tool whose free personal-use licence still exports STEP, STL, OBJ and FBX ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)).
+- **Worse than Basecase:** personal use allows "10 active and editable" documents and is for non-commercial users who make under $1,000 a year ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)). Basecase simulates, trains and prints the robot in the same app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
+- **Basecase should:** integrate. See [integrations](integrations.md#fusion).
+
 ### Shapr3D
 
 - **Link:** https://www.shapr3d.com
 - **Checked:** 2026-11-13
-- **Better than Basecase:** "CAD that's simple enough for beginners and powerful enough for engineers", with one-click rendering, and models go straight into Bambu Studio, OrcaSlicer or PrusaSlicer with their colours carried over, "so multicolor prints are ready to go" ([home](https://www.shapr3d.com)). It runs on macOS, Windows, iPadOS and visionOS; Pro is $299 a year per Editor seat ([pricing](https://www.shapr3d.com/pricing)).
-- **Worse than Basecase:** the free Basic plan holds 2 projects and exports only low-resolution 3MF and STL; STEP export needs Pro ([pricing](https://www.shapr3d.com/pricing)). Its home page mentions no assemblies, joints, motion or simulation ([home](https://www.shapr3d.com)); Basecase rigs joints and simulates the robot ([Joints and motion](../guide/joints-and-motion.md), [Simulate](../guide/simulate.md)).
-- **Basecase should:** beat it at the slicer hand-off. Basecase opens sliced plates in Bambu Studio one file per material ([Printing](../guide/printing.md)), so a multicolour robot arrives as several projects; opening it as one Bambu Studio project, each part with its own filament, matches what Shapr3D promises. Its 3MF and STEP exports already import into Basecase ([Inspector and selection](../guide/inspector-and-selection.md)).
-
-### To check
-
-- Fusion: autodesk.com answered 403 to every page fetched on 2026-11-13
+- **Better than Basecase:** Parasolid-based CAD on Mac, iPad, iPhone and Windows, with Apple Pencil and SpaceMouse input. It imports and exports PRT, SLDPRT, CATPART, XT and STEP, and shares models through review links in the browser. Models go straight to Bambu Studio, OrcaSlicer or PrusaSlicer with their colours, "so multicolor prints are ready to go" ([home](https://www.shapr3d.com/)).
+- **Worse than Basecase:** its home page names no assemblies, joints or motion ([home](https://www.shapr3d.com/)). The free Basic plan holds two projects and exports only "Basic resolution" STL and 3MF; Pro is $299 per seat per year ([pricing](https://www.shapr3d.com/pricing)). Basecase imports STL and 3MF as parts and STEP files as one part per body ([Inspector](../guide/inspector-and-selection.md)).
+- **Basecase should:** beat it on the robot. Its free plan's STL and 3MF already import into Basecase, where the robot gets joints and a simulation ([Inspector](../guide/inspector-and-selection.md), [Simulate](../guide/simulate.md)); match its slicer hand-off too, since Basecase opens a multicolour robot in Bambu Studio as one file per material ([Printing](../guide/printing.md)).
 
 ## Simulation and training
 
@@ -50,6 +54,14 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Worse than Basecase:** imitation learning is still marked experimental ([docs](https://isaac-sim.github.io/IsaacLab/main/index.html)). Basecase records demonstrations from Cases and exports them as datasets ([Cases](../guide/cases.md)).
 - **Basecase should:** beat it on the path from design to a trained policy, and integrate where its rendering matters.
 
+### Zeromatter
+
+- **Link:** https://zeromatter.com
+- **Checked:** 2026-11-13
+- **Better than Basecase:** one in-house engine for physics and sensors, with cameras, lidar, radar and infrared modeled down to rolling shutter, lens distortion and rain on the lens ([home](https://zeromatter.com/)). For robots it compares "sensor hardware, sensor placement, robot embodiment, and end-effectors" across competing designs before procurement, expands a few teleoperation demonstrations into "thousands of variations", replicates a facility from floor plans or lidar scans, and runs evaluations in CI ([robotics](https://zeromatter.com/use-cases/robotics)). It claims a "minimal sim-to-real gap, with receipts" from its own labs, and copilots, MCPs and CLIs so agents run scenarios as people do ([home](https://zeromatter.com/)).
+- **Worse than Basecase:** sales-led, with "Talk to us" as the only way in and no public docs, pricing or benchmarks ([home](https://zeromatter.com/)). It has no CAD, parts, printing or build steps: a team brings its robot in. Basecase designs the robot, simulates and trains it, and prints and builds it in one app, self-serve ([Simulate](../guide/simulate.md), [Build](../guide/build.md), [Printing](../guide/printing.md)).
+- **Basecase should:** beat it for people who build their own robots. Compare two designs of the same robot in the same Case (a different gripper, camera placement or servo) and show which passes more often. Multiply recorded demonstrations into varied ones for training ([Cases](../guide/cases.md)). Show the measured sim-to-real gap per joint from calibration as the receipt ([Robot runtime](../guide/robot-runtime.md)).
+
 ## Robot learning
 
 ### LeRobot
@@ -76,14 +88,14 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 
 - **Link:** https://github.com/bambulab/BambuStudio
 - **Checked:** 2026-11-13
-- **Better than Basecase:** an AGPL-3.0 slicer, based on PrusaSlicer, with multi-plate management, auto-arrange and auto-orient, multi-material printing, settings per object and part, and remote control and monitoring through an optional networking plugin built on non-free libraries ([repository](https://github.com/bambulab/BambuStudio)). 2.9.1, released on 3 November, adds the H3C multi-nozzle printer and mixed nozzle diameter slicing, so "each nozzle print at its own appropriate layer height" ([releases](https://github.com/bambulab/BambuStudio/releases)).
-- **Worse than Basecase:** it slices meshes it's given ([repository](https://github.com/bambulab/BambuStudio)). Basecase picks each part's print pose from the design, packs plates per material, and skips parts already printed until they change ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate. Basecase already slices with its CLI and opens plates in it ([Printing](../guide/printing.md)). Since it does multi-material printing, open a multicolour design there as one project rather than one per material.
+- **Better than Basecase:** Bambu's own slicer. 2.9.1, released 3 November, slices one model with different nozzle diameters per region, starting with the H3C. It also merges Color Split into Color Matching, adds conformal infill and shows how a 3MF's settings differ from the connected printer's ([2.9.1](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)).
+- **Worse than Basecase:** it slices the parts it's given. Basecase picks each part's flat face, lays out plates per material and leaves parts that are already printed off the plates ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate, as it does: Basecase slices through Bambu Studio's command line and builds its printer catalog from Bambu Studio's machine profiles ([Printing](../guide/printing.md)). That catalog comes from Bambu Studio 2.8.4.61 (`src/data/printerCatalog.ts`) and has no H3C, so regenerate it from 2.9.1. Since it prints multi-material, open a multicolour design there as one project rather than one per material.
 
 ### OrcaSlicer
 
-- **Link:** https://github.com/SoftFever/OrcaSlicer
+- **Link:** https://github.com/OrcaSlicer/OrcaSlicer
 - **Checked:** 2026-11-13
-- **Better than Basecase:** an AGPL-3.0 slicer for "Bambu Lab, Prusa, Creality, Voron, and more", with calibration towers for temperature, flow and retraction, and sending to Klipper, PrusaLink and OctoPrint ([repository](https://github.com/SoftFever/OrcaSlicer)). 2.5.0, released on 7 November, adds Python plugins, belt printers, toolhead collision volumes that keep Arrange clear of obstacles, an experimental Design tab, and the Bambu Lab H2C and A2L ([2.5.0](https://github.com/SoftFever/OrcaSlicer/releases/tag/v2.5.0)). Its Prusa profiles cover the CORE One, MK4S and XL ([profiles](https://github.com/SoftFever/OrcaSlicer/tree/main/resources/profiles/Prusa/machine)).
-- **Worse than Basecase:** it slices meshes it's given ([repository](https://github.com/SoftFever/OrcaSlicer)); Basecase lays out plates from the design and tracks what's printed ([Printing](../guide/printing.md)).
-- **Basecase should:** integrate further. Basecase slices with it for printers that aren't Bambu (`electron/print/jobs.mjs`), but its printer catalog comes from Bambu Studio's profiles only (`tools/printers/import.mjs`) and holds just two Prusa printers, the MINI and MK3S (`src/data/printerCatalog.ts`). Read OrcaSlicer's profiles too, so the CORE One, MK4S and XL get a real bed and presets.
+- **Better than Basecase:** an AGPL-3.0 slicer for Bambu Lab, Prusa, Creality, Voron and more printers, with calibration prints and sending to Klipper, PrusaLink and OctoPrint ([repository](https://github.com/OrcaSlicer/OrcaSlicer)). 2.5.0, released 7 November, adds Python plugins, belt printers, colour mixing, an experimental Design tab for parametric parts, and the Bambu Lab H2C and A2L ([2.5.0](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.0)). Its Prusa profiles cover the CORE One, MK4S and XL ([profiles](https://github.com/OrcaSlicer/OrcaSlicer/tree/main/resources/profiles/Prusa/machine)).
+- **Worse than Basecase:** its plugins "aren't a sandbox" ([2.5.0](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.0)). It starts from finished parts; Basecase lays out the robot's printed parts and tracks which are printed ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate, as it does: Basecase slices with OrcaSlicer first for printers from other makers, and as the fallback for Bambu printers, and sends to Moonraker, PrusaLink and OctoPrint itself ([Printing](../guide/printing.md), `electron/print/jobs.mjs`). The printer catalog reads only Bambu Studio's profiles (`tools/printers/import.mjs`) and holds just the Prusa MINI and MK3S (`src/data/printerCatalog.ts`), so read OrcaSlicer's profiles too, giving the CORE One, MK4S and XL a real bed and presets.

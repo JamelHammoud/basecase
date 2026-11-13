@@ -1,3 +1,4 @@
+use crate::export::rounded;
 use crate::kernels::Math;
 use crate::mlp::{Mlp, Scratch};
 
@@ -46,6 +47,12 @@ impl Deployed {
             scratch,
             actions: Vec::new(),
         }
+    }
+
+    pub fn as_exported(&self) -> Self {
+        let params = self.params.iter().map(|v| rounded(*v) as f32).collect();
+
+        Self::new(self.net.clone(), params, self.squash)
     }
 
     pub fn act(&mut self, math: &Math, obs: &[f32], rows: usize) -> &[f32] {

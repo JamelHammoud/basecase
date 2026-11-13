@@ -1,5 +1,6 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { VelocityDrive } from '../sim/driveAccess';
+import type { PolicySpec } from '../sim/policy';
 import { buildMjcf } from '../sim/mjcf';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
@@ -15,8 +16,11 @@ import { caseFilm } from './caseFilm';
 import { runSeeds, type SeedRuns } from './caseRuns';
 import type { FilmShot } from './filmstrip';
 import { checkFit } from './fitCheck';
-import { caseRunner, type CaseRobot } from './runCase';
+import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
+import type { TryScoring } from './tries';
+import { multiplyTry, type Multiplied } from './tryReplay';
+import { recordingTransfer } from '../sim/recorder';
 
 export interface WireRobot {
   id: string;
@@ -24,6 +28,7 @@ export interface WireRobot {
   joints: RobotJoint[];
   measures: Record<string, MeshMeasure | undefined>;
   triangles: Record<string, Float32Array>;
+  servoVolts?: number;
 }
 
 export interface WalkPick {
@@ -31,31 +36,46 @@ export interface WalkPick {
   topSpeed: number;
 }
 
-export interface RunsJob {
+interface Controlled {
+  walk: VelocityDrive | null;
+  policy?: PolicySpec | null;
+  jointNoiseDeg?: number;
+}
+
+export interface RunsJob extends Controlled {
   type: 'runs';
   kase: Case;
   modelHash: string;
   robot?: WireRobot;
   seeds: number[];
-  walk: VelocityDrive | null;
   stop: string | null;
 }
 
-export interface ReplayJob {
+export interface ReplayJob extends Controlled {
   type: 'replay';
   kase: Case;
   modelHash: string;
   robot?: WireRobot;
   seed: number;
-  walk: VelocityDrive | null;
 }
 
-export type CaseCheckJob = { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob;
+export interface MultiplyJob {
+  type: 'multiply';
+  source: TryScoring;
+  seeds: number[];
+}
+
+export type CaseCheckJob =
+  { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob | ReplayJob | MultiplyJob;
 
 export type CaseCheckReply =
   | { type: 'model'; modelHash: string; walk: WalkPick | null; stop: string | null }
   | { type: 'runs'; result: SeedRuns }
-  | { type: 'replay'; film: FilmShot | null };
+  | { type: 'replay'; film: FilmShot | null }
+  | { type: 'multiply'; result: Multiplied };
+
+export const replyTransfer = (reply: CaseCheckReply): Transferable[] =>
+  reply.type === 'multiply' ? reply.result.kept.flatMap((v) => recordingTransfer(v.recording)) : [];
 
 export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   id: robot.id,
@@ -63,6 +83,7 @@ export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   joints: robot.joints,
   measures: robot.measures,
   partTriangles: (id) => robot.triangles[id] ?? null,
+  servoVolts: robot.servoVolts,
 });
 
 function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | null {
@@ -72,6 +93,11 @@ function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | nu
 
   return record ? { hash: record.hash, topSpeed: kitTopSpeed(model) } : null;
 }
+
+const controlOf = (job: Controlled): RunOptions =>
+  job.policy
+    ? { controller: 'policy', policy: job.policy, jointNoiseDeg: job.jointNoiseDeg }
+    : { controller: 'reference', walk: job.walk, jointNoiseDeg: job.jointNoiseDeg };
 
 function modelHashOf(model: SimModel) {
   const { physics, actuators } = modelHashes(model);
@@ -85,16 +111,18 @@ export class CaseCheckSession {
   async run(mj: MainModule, job: CaseCheckJob): Promise<CaseCheckReply> {
     if (job.type === 'model') return this.fit(mj, job.robot, job.walks);
 
+    if (job.type === 'multiply') return { type: 'multiply', result: await multiplyTry(mj, job.source, job.seeds) };
+
     const held = this.robotFor(job);
     const robot = caseRobotOf(held);
 
     if (job.type === 'replay') {
-      const result = await caseRunner(mj, job.kase, robot, { controller: 'reference', walk: job.walk }).run(job.seed);
+      const result = await caseRunner(mj, job.kase, robot, controlOf(job)).run(job.seed);
 
       return { type: 'replay', film: caseFilm(result, held.parts) };
     }
 
-    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, walk: job.walk, stop: job.stop });
+    const result = await runSeeds(mj, job.kase, robot, { seeds: job.seeds, stop: job.stop, ...controlOf(job) });
 
     return { type: 'runs', result };
   }

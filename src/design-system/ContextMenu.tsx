@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronRightIcon } from './glyphs';
 import { createPortal } from 'react-dom';
 import { MenuDivider, MenuItem, MenuLabel } from './PopoverMenu';
+import { MenuGutterPad, MenuGutterScope, useMenuGutter } from './menuGutter';
 
 export type ContextMenuEntry =
   | {
@@ -53,10 +54,40 @@ const Submenu: React.FC<{ left: boolean; width: number; children: React.ReactNod
       }`}
       style={{ width, transform: lift ? `translateY(${-lift}px)` : undefined }}
     >
-      {children}
+      <MenuGutterScope>{children}</MenuGutterScope>
     </div>
   );
 };
+
+const SubmenuTrigger: React.FC<{ label: string; icon?: React.ReactNode; open: boolean; onToggle: () => void }> = ({
+  label,
+  icon,
+  open,
+  onToggle,
+}) => {
+  const padded = useMenuGutter(!!icon);
+
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      aria-haspopup="menu"
+      aria-expanded={open}
+      onClick={onToggle}
+      className={`w-full h-[32px] px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors ${
+        open ? 'bg-white/[0.09] text-white' : 'text-white/90 hover:bg-white/[0.09]'
+      }`}
+    >
+      {icon && <span className="w-4 shrink-0 flex justify-center text-white/60">{icon}</span>}
+      {padded && <MenuGutterPad />}
+      <span className="flex-1 truncate">{label}</span>
+      <ChevronRightIcon className="w-3.5 h-3.5 text-white/50" />
+    </button>
+  );
+};
+
+const leadsWithColumn = (item: ContextMenuEntry) =>
+  ('icon' in item && !!item.icon) || ('checked' in item && item.checked !== undefined);
 
 const closingThen = (onClose: () => void, onSelect?: () => void) =>
   onSelect &&
@@ -129,61 +160,55 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, minWidth 
         } as React.CSSProperties
       }
     >
-      {items.map((item, i) => {
-        if ('divider' in item) return <MenuDivider key={i} />;
+      <MenuGutterScope shown={items.some(leadsWithColumn)}>
+        {items.map((item, i) => {
+          if ('divider' in item) return <MenuDivider key={i} />;
 
-        if ('heading' in item)
+          if ('heading' in item)
+            return (
+              <MenuLabel key={i} onSelect={closingThen(onClose, item.onSelect)}>
+                {item.heading}
+              </MenuLabel>
+            );
+
+          if ('submenu' in item) {
+            const open = openSub === i;
+
+            return (
+              <div key={i} className="relative" onPointerEnter={() => setOpenSub(i)}>
+                <SubmenuTrigger
+                  label={item.label}
+                  icon={item.icon}
+                  open={open}
+                  onToggle={() => setOpenSub(open ? null : i)}
+                />
+                {open && (
+                  <Submenu left={!!pos?.subLeft} width={item.submenuWidth ?? 260}>
+                    {item.submenu(onClose)}
+                  </Submenu>
+                )}
+              </div>
+            );
+          }
+
           return (
-            <MenuLabel key={i} onSelect={closingThen(onClose, item.onSelect)}>
-              {item.heading}
-            </MenuLabel>
-          );
-
-        if ('submenu' in item) {
-          const open = openSub === i;
-
-          return (
-            <div key={i} className="relative" onPointerEnter={() => setOpenSub(i)}>
-              <button
-                type="button"
-                role="menuitem"
-                aria-haspopup="menu"
-                aria-expanded={open}
-                onClick={() => setOpenSub(open ? null : i)}
-                className={`w-full h-[32px] px-2.5 rounded-lg flex items-center gap-2 text-[13.5px] text-left cursor-default transition-colors ${
-                  open ? 'bg-white/[0.09] text-white' : 'text-white/90 hover:bg-white/[0.09]'
-                }`}
-              >
-                {item.icon && <span className="w-4 shrink-0 flex justify-center text-white/60">{item.icon}</span>}
-                <span className="flex-1 truncate">{item.label}</span>
-                <ChevronRightIcon className="w-3.5 h-3.5 text-white/50" />
-              </button>
-              {open && (
-                <Submenu left={!!pos?.subLeft} width={item.submenuWidth ?? 260}>
-                  {item.submenu(onClose)}
-                </Submenu>
-              )}
+            <div key={i} onPointerEnter={() => setOpenSub(null)}>
+              <MenuItem
+                icon={item.icon}
+                label={item.label}
+                shortcut={item.shortcut}
+                checked={item.checked}
+                disabled={item.disabled}
+                tone={item.tone}
+                onSelect={() => {
+                  onClose();
+                  item.onSelect();
+                }}
+              />
             </div>
           );
-        }
-
-        return (
-          <div key={i} onPointerEnter={() => setOpenSub(null)}>
-            <MenuItem
-              icon={item.icon}
-              label={item.label}
-              shortcut={item.shortcut}
-              checked={item.checked}
-              disabled={item.disabled}
-              tone={item.tone}
-              onSelect={() => {
-                onClose();
-                item.onSelect();
-              }}
-            />
-          </div>
-        );
-      })}
+        })}
+      </MenuGutterScope>
     </div>,
     document.body,
   );

@@ -4,6 +4,7 @@ import { contractSignals, type Contract } from './contract';
 import { hashOf, isHash } from './hash';
 import { eyeProblems, eyeRays, type Eye } from '../sim/eyes';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 
 export const ENVIRONMENT_VERSION = 1;
 
@@ -248,7 +249,7 @@ function statesProblems(states: SkillStates | undefined, index: ModelIndex): str
   return samples.every((s) => sampleFits(s, states.joints.length))
     ? []
     : [
-        `Each start state has a finite position and speed for each of its ${states.joints.length} joints, a height above 0 and a unit quaternion.`,
+        `Each start state has a finite position and speed for each of its ${plural(states.joints.length, 'joint')}, a height above 0 and a unit quaternion.`,
       ];
 }
 

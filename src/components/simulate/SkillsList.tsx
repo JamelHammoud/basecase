@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, IconButton, RunIcon, StopIcon, TrainIcon } from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
 import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
-import { fmtMargin, pct } from './format';
+import { fmtMargin, trainingLine } from './format';
 import { ProgressBar } from './ProgressBar';
 
 export interface SkillActions {
@@ -20,7 +20,7 @@ function stateLine(row: SkillRow): string | null {
 
   if (state.kind !== 'training') return null;
 
-  return state.share === null ? state.message : `${state.message} ${pct(state.share)}`;
+  return trainingLine(state.message, state.share);
 }
 
 const RowAction: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row, actions }) => {

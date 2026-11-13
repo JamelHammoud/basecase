@@ -13,7 +13,7 @@ keywords:
   - saved parts
 related:
   - scenes-files-and-the-library
-  - turn-an-svg-into-a-part
+  - draw-a-part-from-a-sketch-or-svg
 covers:
   - src/components/LeftSidebar.tsx
   - src/components/LibraryPanel.tsx
@@ -46,6 +46,6 @@ Hover a model to see where it came from, its size and how many parts it has. Rig
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
 
-The same **+** menu has **Import**, which brings in a file. An SVG opens Import SVG, which [turns it into a part](/help/turn-an-svg-into-a-part) when you click **Add**. Keep an SVG part here with **Save to Library**, the bookmark in its Inspector header. **From Image** opens the Agent tab and asks for a picture, so the agent can model it in the desktop app.
+The same **+** menu has **Import**, which brings in a file. An SVG opens Import SVG, which [turns it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part) when you click **Add**. Keep an SVG part here with **Save to Library**, the bookmark in its Inspector header. **From Image** opens the Agent tab and asks for a picture, so the agent can model it in the desktop app.
 
 ![The Import SVG panel with a drawing loaded and one Add button under Output](/help/save-a-model-to-the-library/import-svg.png)

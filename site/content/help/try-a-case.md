@@ -34,13 +34,15 @@ Drive the robot through an open Case while Basecase records it, then see whether
 2. Click a Case under **New Case**. It opens in the **Simulate** tab.
 3. Under **Try**, click **Try It**. Recording starts and the robot is yours to drive.
 4. Drive the robot to the goal with the keys listed under **Try**.
-5. Click **End Try**, or let the clock run out.
+5. Click **Stop Try**, or let the clock run out.
 6. Read the new try under **Results**: **Passed** or **Missed**, how long it took, and four frames from it.
 7. Click **Replay** (▷) on a try to watch it again.
 
 ![Results with a passed try of Touch the Dots, and Export Dataset and Publish to Hugging Face under it](/help/publish-a-dataset-to-hugging-face/results.png)
 
 **Try ⟨Case⟩** is also in [[⌘K]]. Pressing [[Esc]] stops driving, which ends the try too.
+
+To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ## Whether the robot can do it
 
@@ -61,10 +63,12 @@ When the robot lacks what the Case needs, point at the row's note and click **Ne
 
 ## Results
 
-The **Results** header counts passed tries out of all of them. Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
 
-While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries.
+A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from it. Its row counts them, such as **50 generated**, and deleting the try deletes them too. Steps are in [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
+
+While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows there too, under any comparison.
 
 When the robot can't drive, **Teach It to Move** shows under **Try It**. It trains a **Walk** skill; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
-Tries are kept on this computer, not in shared `.basecase` files. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).
+Tries are kept on this computer, not in shared `.basecase` files. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset). Once five pass, you can train a policy from them; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

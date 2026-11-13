@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { BAM_STS3215_7V4 } from '../data/servoFits';
 import { EMPTY_HISTORY, recordCalibration } from '../reality/history';
 import type { CalibrationVerdict, ServoCalibration } from '../reality/types';
-import type { RobotJoint } from '../types/robotics';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import { jointRows } from './jointRows';
 import type { JointStatus } from './robotState';
+import { emulatedSpec } from './emulatedUnits';
 import { sceneRobot } from './sceneRobot';
 
 const joint = (id: string, name: string, type: RobotJoint['type'] = 'revolute'): RobotJoint => ({
@@ -119,5 +120,50 @@ describe('jointRows', () => {
       { busId: 1, name: null, position: 2048, verdict: null },
       { busId: 2, name: null, position: null, verdict: null },
     ]);
+  });
+
+  it('reads No reply for a servo the daemon can’t speak to, whatever the emulator answers', () => {
+    const joints = JOINTS.map((j) => ({ ...j, actuators: [`${j.id}-servo`] }));
+    const parts = [
+      servoPart('shoulder-servo', 'feetech-sts3215', 'c046'),
+      servoPart('elbow-servo', 'dsservo-ds3218'),
+      servoPart('wrist-servo', 'dynamixel-xl430-w250'),
+    ];
+    const rows = jointRows({
+      joints,
+      parts,
+      calibrations: undefined,
+      connection: { ...connectedTo(joints), readings: [status(1, 2048), status(2, 2100), status(3, 2200)] },
+    });
+
+    expect(rows.map((r) => r.reading?.position ?? null)).toEqual([2048, null, 2200]);
+  });
+});
+
+const servoPart = (id: string, componentId: string, componentVariant?: string) =>
+  ({ id, name: id, kind: 'component', componentId, componentVariant }) as ScenePart;
+
+describe('emulatedSpec', () => {
+  const joints = JOINTS.map((j) => ({ ...j, actuators: [`${j.id}-servo`] }));
+  const robot = sceneRobot(joints);
+
+  if (!robot.ok) throw new Error(robot.reason);
+
+  it('gives each emulated servo the model of the part it stands in for', () => {
+    const parts = [
+      servoPart('shoulder-servo', 'feetech-sts3215', 'c046'),
+      servoPart('elbow-servo', 'dsservo-ds3218'),
+      servoPart('wrist-servo', 'dynamixel-xl430-w250'),
+    ];
+    const spec = emulatedSpec({ choice: robot, joints, parts });
+    const units = 'units' in spec ? (spec.units ?? []) : [];
+
+    expect(units.map((u) => u?.volts ?? null)).toEqual([7.4, null, 11.1]);
+    expect(units[0]!.kt).not.toBe(BAM_STS3215_7V4.kt);
+    expect(units.every((u) => u === null || Object.values(u).every((v) => typeof v === 'object' || v > 0))).toBe(true);
+  });
+
+  it('sends no units when no joint has a catalog servo', () => {
+    expect(emulatedSpec({ choice: robot, joints, parts: [] })).toEqual(robot.spec);
   });
 });

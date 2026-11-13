@@ -41,7 +41,7 @@ Points snap to a part's corners, then its edges. Hold [[⇧]] to place a point a
 
 A third click starts a new measurement. [[Esc]] clears the line, and a second [[Esc]] leaves Measure.
 
-Measure is also under **Shapes** in the bottom toolbar and in [[⌘K]]. To start from a spot on a part, right-click it and choose **Measure From Here**.
+Measure is also under **Shapes** in the bottom toolbar and in [[⌘K]]. To start from a spot on a part, right-click it and choose **Measure from Here**.
 
 ## Compare with a person or a dog
 

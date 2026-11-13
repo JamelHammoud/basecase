@@ -16,6 +16,7 @@ keywords:
   - imitation learning
 related:
   - try-a-case
+  - multiply-a-try-into-demonstrations
   - publish-a-dataset-to-hugging-face
 covers:
   - src/components/simulate/ResultsSection.tsx
@@ -41,6 +42,8 @@ A toast shows "Exporting dataset…", then names how many tries went in. Basecas
 
 Only passed tries go in: a dataset holds the task done right. Each try must also match the robot as it is now. Tries recorded before the robot's last change are left out. The toast counts them: "Exported 3 tries as a dataset, left out 2 from an earlier design".
 
+Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each.
+
 When every passed try is from an earlier design, the toast says "These tries are from an earlier design. Try It again to record new ones."
 
 ## What's in the zip
@@ -49,4 +52,4 @@ Each try becomes one episode at 25 frames a second: the joint positions, the joi
 
 GR00T reads LeRobot v2.1. LeRobot 0.4 and later read v3, and convert v2.1 with their own script.
 
-Camera views you add to the scene aren't recorded; camera parts are. To put the dataset on the Hugging Face Hub instead of a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
+Camera views you add to the scene aren't recorded; camera parts are. To put the dataset on the Hugging Face Hub instead of a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face). To train on the same tries inside Basecase, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

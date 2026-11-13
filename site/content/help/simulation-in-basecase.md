@@ -41,11 +41,11 @@ When the robot does something wrong, fix the design. The model follows on the ne
 
 ## Servos, measured or estimated
 
-A joint driven by a catalog servo with a published model moves the way a bench test of that servo model says it does. The STS3215 is modelled at 7.4 V and the XL330 at 5 V. Each model includes the servo's gain, its delay, back-EMF damping and friction that grows with load.
+A joint driven by a catalog servo with a published model moves the way a bench test of that servo model says it does. The STS3215 is modelled at 7.4 V and the XL330 at 5 V. [Explore](/help/explore-servo-versions-on-a-case) models each servo at the supply voltage it tries instead. Each model includes the servo's gain, its delay, back-EMF damping and friction that grows with load.
 
 Any other joint gets an estimated servo. Its torque comes from the servo's stall torque, or from the weight the joint holds when it has no servo. **Build** ▸ **Checks** names these joints under **Torque estimates**, and every servo not yet **Measured** under **Servo models**.
 
-Calibrating a connected robot replaces a servo's catalog model with one fitted to it, and marks its joint **Measured** in the Pose tab. Steps are in [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
+Calibrating a connected robot replaces each Feetech or Dynamixel servo's model, published or estimated, with one fitted to it. It marks the joint **Measured** in the Pose tab. Steps are in [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
 
 ## What a run tells you
 
@@ -55,7 +55,7 @@ Simulating never changes your parts. The canvas shows the simulated pose, and en
 
 ## Where the same physics runs
 
-- **Drive** steers the robot live with the keyboard or a gamepad.
+- **Drive** steers the robot live with the keyboard, a gamepad, a phone or your arms in front of the camera. A humanoid driven by the camera has its base held in place, unless it has a ready Walk skill.
 - **Cases** record tries and judge each one pass or miss.
 - **Training** teaches skills on Forge, Basecase's own trainer, built on the same MuJoCo formulation. While it trains, the canvas runs its newest snapshot. A trained skill counts only after Arena replays it on MuJoCo itself.
 - **Routines** run step by step on the live simulation.

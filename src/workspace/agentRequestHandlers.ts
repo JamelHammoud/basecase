@@ -4,7 +4,7 @@ import { partCode, partRecord, partSource } from '../agent/agentPartRecord';
 import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
-import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
 import { downscaleDataUrl } from '../utils/imageFile';
@@ -40,12 +40,17 @@ import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import type { CaseCompare } from './useCaseCompare';
+import type { CaseExplore } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
 import type { Cases } from './useCases';
 import type { Routines } from './useRoutines';
 import type { SceneSkills } from './useSkills';
+import { synthesizeLinkageRequest, type LinkagePayload } from '../linkage/agentLinkage';
+import { synthesizeInWorker } from '../linkage/linkageClient';
+import { newId } from './helpers';
+import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
@@ -56,6 +61,7 @@ export interface RequestContext {
   slice: (report: PrintReport) => Promise<SliceRecord>;
   viewport: () => Viewport3DHandle | null;
   setProjectNow: (next: ProjectSettings) => void;
+  insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
@@ -69,6 +75,7 @@ export interface RequestContext {
   routines: Routines;
   cases: Cases;
   caseCompare: CaseCompare;
+  caseExplore: CaseExplore;
   caseRun: CaseRun;
   skills: SceneSkills;
 }
@@ -234,7 +241,7 @@ async function buildGuide(_payload: Payload, ctx: RequestContext) {
 
   return {
     text:
-      `${where}: ${record.pages} pages, ${record.steps} steps, ${plan.items.length} kinds of parts, ${plan.tools.length} tools.` +
+      `${where}: ${plural(record.pages, 'page')}, ${plural(record.steps, 'step')}, ${plural(plan.items.length, 'kind of part', 'kinds of parts')}, ${plural(plan.tools.length, 'tool')}.` +
       (subs.length ? ` Sub-assemblies: ${subs.join(', ')}.` : '') +
       ' Tell the user and link it as [build guide](#build-guide).',
   };
@@ -315,6 +322,12 @@ const HANDLERS: Record<string, Handler> = {
     dataUrl: await downscaleDataUrl(String(payload.dataUrl), Number(payload.maxSide) || EVIDENCE_IMAGE_SIDE, 0.88),
   }),
   apply: applyWithCost,
+  synthesize_linkage: (payload, ctx) =>
+    synthesizeLinkageRequest(payload as LinkagePayload, {
+      solve: synthesizeInWorker,
+      insert: ctx.insertParts,
+      newBase: () => newId('linkage'),
+    }),
   ...PORT_HANDLERS,
   ...PLAN_HANDLERS,
   ...ROUTINE_HANDLERS,

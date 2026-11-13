@@ -15,6 +15,7 @@ import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
 import type { SnapshotRef } from './snapshots';
+import { plural } from '../../electron/plural.mjs';
 
 export interface MoveTag {
   animation: string;
@@ -26,11 +27,17 @@ export const moveTag = (animation: string, environment: Environment): MoveTag =>
   reference: hashOf(environment.reference ?? null),
 });
 
+export interface CaseTag {
+  id: string;
+  model: string;
+}
+
 export interface SkillRecord {
   hash: string;
   name: string;
   kit: TrainedEntry | null;
   move?: MoveTag | null;
+  case?: CaseTag | null;
   goal: string | null;
   binding: SkillBinding;
   evidence: ArenaEvidence | null;
@@ -42,7 +49,13 @@ export interface SkillRecord {
 
 export function skillRecord(
   skill: Skill,
-  options: { kit: TrainedEntry | null; move?: MoveTag; goal?: string | null; environment?: Environment | null },
+  options: {
+    kit: TrainedEntry | null;
+    move?: MoveTag;
+    case?: CaseTag;
+    goal?: string | null;
+    environment?: Environment | null;
+  },
 ): SkillRecord {
   const rebuilt = !!options.kit || !!options.move;
 
@@ -51,6 +64,7 @@ export function skillRecord(
     name: skill.name,
     kit: options.kit,
     ...(options.move ? { move: options.move } : {}),
+    ...(options.case ? { case: options.case } : {}),
     goal: options.goal ?? null,
     binding: skill.binding,
     evidence: skill.evidence,
@@ -103,7 +117,7 @@ export function arenaLine(evidence: ArenaEvidence): string {
   const worst = [...evidence.variants].sort((a, b) => a.passes / a.trials - b.passes / b.trials)[0];
   const share = `at least ${Math.floor(evidence.lowerBound * 100)}%`;
 
-  return worst ? `${worst.passes} of ${worst.trials} tries, ${share}` : share;
+  return worst ? `${worst.passes} of ${plural(worst.trials, 'try', 'tries')}, ${share}` : share;
 }
 
 export function withRecord(records: SkillRecord[], record: SkillRecord): SkillRecord[] {

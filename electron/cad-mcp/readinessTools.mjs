@@ -121,8 +121,10 @@ const EDITS = new Set([
   'import_maker_cad',
 ]);
 
-export async function withBuildCheck(name, result) {
-  if (!EDITS.has(name) || result?.isError) return result;
+const editsScene = (name, args) => EDITS.has(name) || (name === 'synthesize_linkage' && !!args?.insert);
+
+export async function withBuildCheck({ name, args }, result) {
+  if (!editsScene(name, args) || result?.isError) return result;
 
   try {
     const res = await bridge('readiness_line', {}, 5000);

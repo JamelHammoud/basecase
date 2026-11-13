@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { ARM, JOINT_NAMES, THREE_JOINT_ARM } from './armFixture';
+import { ARM, JOINT_NAMES, MIXED_ARM, THREE_JOINT_ARM } from './armFixture';
+import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
@@ -11,13 +12,44 @@ const ARM_JOINTS = ARM.project.joints.map((joint) => joint.id);
 
 interface FakeLink {
   factory: boolean;
+  policy: { kind: string; id?: string; hash?: string }[];
   plugIn: () => boolean;
   robotDisconnect: () => Promise<unknown>;
 }
 
+interface RecordedCalibrations {
+  [jointId: string]: { versions: Array<{ verdict: string; servo?: { componentId: string; variant?: string } }> };
+}
+
 type StudioWindow = {
-  __studio: { load: (r: unknown) => void; select: (ids: string[]) => void; selection: () => string[] };
+  __studio: {
+    load: (r: unknown) => void;
+    select: (ids: string[]) => void;
+    selection: () => string[];
+    calibrations: () => RecordedCalibrations;
+  };
   __fakeRobotLink: FakeLink;
+};
+
+const TRAINED_ARM = {
+  ...ARM,
+  name: 'trained arm',
+  project: {
+    ...ARM.project,
+    policies: [
+      {
+        id: 'policy-e2e-reach',
+        name: 'Reach',
+        task: 'stand',
+        robot: 'arm',
+        robotName: 'Arm',
+        command: [0, 0, 0],
+        trainedSteps: 200000,
+        modelVersion: SIM_MODEL_VERSION,
+        createdAt: '2026-11-13T12:00:00.000Z',
+      },
+    ],
+  },
 };
 
 const row = (id: string) => app.page.locator(visible(`[data-calibration-joint="${id}"]`)).first();
@@ -105,7 +137,7 @@ beforeAll(async () => {
   await loadRecord(ARM);
 }, 120000);
 
-async function loadRecord(record: typeof ARM) {
+async function loadRecord(record: typeof ARM | typeof TRAINED_ARM) {
   await app.page.evaluate(
     (r) => (window as unknown as { __studio: { load: (r: unknown) => void } }).__studio.load(r),
     record,
@@ -263,6 +295,34 @@ describe('Operate calibration', () => {
   );
 });
 
+describe('Operate calibration of a mixed arm', () => {
+  it('calibrates an STS3215 C046 and an XL430 each against its own servo', async () => {
+    const { page } = app;
+
+    await loadRecord(MIXED_ARM);
+    await climbToTest();
+    await page
+      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
+      .first()
+      .click();
+    await expect.poll(calibrating).not.toBe('idle');
+    await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
+
+    const recorded = await page.evaluate(() => (window as unknown as StudioWindow).__studio.calibrations());
+    const newest = (id: string) => recorded[id]?.versions.at(-1);
+
+    expect(newest('shoulder')?.servo).toEqual({ componentId: 'feetech-sts3215', variant: 'c046' });
+    expect(newest('elbow')?.servo).toEqual({ componentId: 'dynamixel-xl430-w250' });
+
+    for (const id of ['shoulder', 'elbow']) {
+      expect(newest(id)?.verdict).toMatch(/^(measured|consistent|cant-tell)$/);
+      expect(await row(id).getAttribute('data-verdict')).toBe(newest(id)?.verdict);
+    }
+
+    expect(app.errors).toEqual([]);
+  }, 150000);
+});
+
 describe('Operate servo setup', () => {
   const walk = [
     { id: 3, name: 'Wrist', link: ['hand'] },
@@ -317,4 +377,30 @@ describe('Operate servo setup', () => {
     },
     60000,
   );
+});
+
+describe('Operate policy', () => {
+  const mode = () => app.page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode');
+  const sentPolicy = () => app.page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.policy);
+  const needsPolicy = () => app.page.getByText('Load a policy first.').count();
+
+  it('sends the scene’s trained policy to the robot, so the Ladder climbs to Rehearse', async () => {
+    await loadRecord(TRAINED_ARM);
+    await expect.poll(sentPolicy).toEqual([{ kind: 'policy', id: 'policy-e2e-reach' }]);
+    await climbToTest();
+    await app.page.locator(visible('[data-robot-rung="rehearse"]')).first().click();
+    await expect.poll(mode).toBe('rehearse');
+    expect(await needsPolicy()).toBe(0);
+    expect(app.errors).toEqual([]);
+  }, 60000);
+
+  it('keeps Rehearse refused for a scene with no trained policy', async () => {
+    await loadRecord(ARM);
+    await expect.poll(sentPolicy).toEqual([]);
+    await climbToTest();
+    await app.page.locator(visible('[data-robot-rung="rehearse"]')).first().click();
+    await expect.poll(needsPolicy).toBeGreaterThan(0);
+    expect(await mode()).toBe('test');
+    await app.page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.robotDisconnect());
+  }, 60000);
 });

@@ -13,6 +13,9 @@ keywords:
   - camera feed
   - score
   - timer
+  - code panel
+  - joystick
+  - HUD
 related:
   - try-a-case
   - make-a-case
@@ -45,9 +48,9 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 5. Click **Try It** and drive with W A S D and Q E, or a gamepad. While the try runs, anything the Case counts as a failure shows in red under the brief as it happens.
 
-![A try running, with the clock and End Try](/help/run-a-case/trying.png)
+![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **End Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes.
+6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass.
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 
@@ -57,6 +60,14 @@ A Case can bring its own layout, called its console, saved with the Case in your
 
 A console says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
 
+A console that lists `camera` among its inputs opens the computer's camera when you click **Try It**. Your arms then drive a humanoid or an arm, as in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
-Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying and the dataset ones.
+A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc and [[⌘K]] still work while you use it. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
+
+![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
+
+A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
+
+Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

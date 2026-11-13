@@ -6,6 +6,7 @@ import { DEFAULT_MARK_COLOR, markColorOf } from '../utils/markColors';
 import { newId, stamp } from './helpers';
 import type { ShowToast } from './types';
 import type { SceneDocument } from './useSceneDocument';
+import { plural } from '../../electron/plural.mjs';
 
 interface MarkOptions {
   docs: Pick<SceneDocument, 'project' | 'projectRef' | 'commitMarks'>;
@@ -13,8 +14,6 @@ interface MarkOptions {
   selection: { selectedId: string | null; setSelectedId: (id: string | null) => void };
   tool: { current: MarkTool; set: (tool: MarkTool) => void };
 }
-
-export const markCount = (n: number) => `${n} ${n === 1 ? 'mark' : 'marks'}`;
 
 const markName = (mark: SceneMark) => (mark.label ? `“${mark.label}”` : 'mark');
 
@@ -121,7 +120,7 @@ export function useMarks({ docs, showToast, selection, tool }: MarkOptions) {
 
     if (selectedId && gone.has(selectedId)) select(null);
 
-    showToast(erased.length === 1 ? `Erased ${markName(erased[0])}` : `Erased ${markCount(erased.length)}`, {
+    showToast(erased.length === 1 ? `Deleted ${markName(erased[0])}` : `Deleted ${plural(erased.length, 'mark')}`, {
       tone: 'neutral',
       action: { label: 'Undo', onClick: () => commitMarks(before) },
     });
@@ -132,7 +131,7 @@ export function useMarks({ docs, showToast, selection, tool }: MarkOptions) {
 
     if (!before.length) return;
 
-    const name = before.length === 1 ? markName(before[0]) : markCount(before.length);
+    const name = before.length === 1 ? markName(before[0]) : plural(before.length, 'mark');
 
     confirmAction({
       title: `Delete ${name}?`,

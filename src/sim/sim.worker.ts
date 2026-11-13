@@ -11,12 +11,13 @@ import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
 import type { AmpModel } from '../utils/servoAmps';
-import { demandedTorques, jointForces, limitForces } from './simForces';
+import { demandedTorques, jointForces, jointSpeeds, limitForces } from './simForces';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import { LiveWatch, type WatchInput } from '../skills/liveWatch';
 import { errorMessage } from '../utils/errorMessage';
+import { PoseGate } from './poseGate';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -97,15 +98,17 @@ let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
 let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
 let scanShown = -1;
+const poseGate = new PoseGate();
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
-const frame = () => {
+const frame = (force = false) => {
   if (!engine) return;
 
   const poses = engine.poses();
   const joints = engine.jointStates();
+  const moved = poseGate.moved(poses) || force;
 
-  if (cameraPort) {
+  if (cameraPort && moved) {
     const copy = poses.slice();
 
     cameraPort.postMessage(copy, [copy.buffer]);
@@ -214,6 +217,7 @@ async function load(msg: Msg<'load'>) {
   playing = false;
   engine = new SimEngine(mj, msg.model);
   scanShown = -1;
+  poseGate.reset();
 
   if (msg.controller) setController(msg.controller);
 
@@ -227,8 +231,9 @@ function record(msg: Msg<'record'>) {
   if (!engine) return;
 
   if (msg.on) {
-    recorder = new Recorder(engine);
+    recorder = new Recorder(engine, driveController);
     engine.stepHook = recorder.hook;
+    engine.commandHook = recorder.command;
 
     return;
   }
@@ -236,6 +241,7 @@ function record(msg: Msg<'record'>) {
   const recording = recorder?.finish() ?? null;
 
   engine.stepHook = null;
+  engine.commandHook = null;
   recorder = null;
   post({ type: 'recorded', recording }, recording ? recordingTransfer(recording) : []);
 }
@@ -298,6 +304,7 @@ function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
   const recorder = new TorqueRecorder(n, sim.dt, { amps: sim.sim.joints.map((j) => currents[j.id] ?? null) });
   const demand = new Float64Array(n);
   const actual = new Float64Array(n);
+  const speed = new Float64Array(n);
 
   return {
     recorder,
@@ -305,6 +312,7 @@ function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
       recorder.add(
         demandedTorques(sim.model, sim.data, sim.sim.joints, demand),
         jointForces(sim.data, sim.sim.joints, actual),
+        jointSpeeds(sim.data, sim.sim.joints, speed),
       ),
   };
 }
@@ -362,8 +370,8 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   push: (msg) => {
     engine?.pushRobot(msg.robot, msg.force, msg.seconds);
   },
-  command: ({ slot, v, target, aux }) => {
-    if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux });
+  command: ({ slot, v, target, aux, joints }) => {
+    if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux, joints });
   },
   script: (msg) => {
     script = engine ? { start: engine.data.time, commands: [...msg.commands].sort((a, b) => a.at - b.at) } : null;
@@ -391,7 +399,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   cameras: (msg) => {
     cameraPort?.close();
     cameraPort = msg.port;
-    frame();
+    frame(true);
   },
   dispose: () => {
     playing = false;

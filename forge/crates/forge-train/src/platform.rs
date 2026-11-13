@@ -1,9 +1,14 @@
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 static STOP_REQUESTED: AtomicBool = AtomicBool::new(false);
 
 pub fn stop_requested() -> bool {
     STOP_REQUESTED.load(Ordering::Relaxed)
+}
+
+pub fn should_stop(folder: &Path) -> bool {
+    stop_requested() || folder.join("stop").exists()
 }
 
 #[cfg(unix)]

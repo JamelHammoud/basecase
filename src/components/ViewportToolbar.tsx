@@ -197,7 +197,7 @@ const ShapeGrid: React.FC<{
                 src={thumbs[item.kind]}
                 alt=""
                 draggable={false}
-                className="w-full h-full object-contain scale-[1.15] transition-transform duration-300 group-hover:scale-[1.25]"
+                className="w-full h-full object-contain scale-[1.15] transition-transform duration-150 group-hover:scale-[1.25]"
               />
             )}
           </span>
@@ -231,7 +231,7 @@ const MenuTrigger: React.FC<{
       {icon}
       {size === 'lg' && (
         <ChevronUpIcon
-          className={`w-3.5 h-3.5 opacity-50 transition-transform duration-200 ${open ? '' : 'rotate-180'}`}
+          className={`w-3.5 h-3.5 opacity-50 transition-transform duration-150 ${open ? '' : 'rotate-180'}`}
         />
       )}
     </button>

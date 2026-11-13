@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { EmptyState, IconButton, PhotoIcon, PhotoOffIcon, SearchField, SectionHeader } from '../../design-system';
+import { NoMatches, IconButton, PhotoIcon, PhotoOffIcon, SearchField, SectionHeader } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 import { GroupRow, PartRow } from './LayerItems';
 import { layerRows, layersTitle, overallSize } from './layerRows';
@@ -140,7 +140,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
             ),
           )}
         </ul>
-        {searching && rows.length === 0 && <EmptyState title={`No matches for “${query.trim()}”`} />}
+        {searching && rows.length === 0 && <NoMatches query={query} />}
       </div>
       {size && <SizeFooter size={size} />}
     </div>

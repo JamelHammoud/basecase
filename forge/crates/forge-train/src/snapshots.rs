@@ -57,7 +57,8 @@ impl<'a> Snapshots<'a> {
         let file = relative(iteration);
         let dir = self.folder.join(FOLDER);
         let run = Trained {
-            robot: self.robot,
+            job: &self.robot.job,
+            mujoco: &self.robot.mujoco,
             policy,
             norm,
         };

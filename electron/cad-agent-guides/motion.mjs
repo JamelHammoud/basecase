@@ -45,6 +45,10 @@ export const simulation = {
 - sweep_design tries one parameter at a time (a servo for a set of joints, a battery offset, foot
   length or width) on copies of the scene and returns the deltas in torque, price, stability and
   a derated hold-and-shove sim. Choose with it instead of guessing, then apply the winner.
+- explore_case answers which servo to buy for a Case: it runs the Case on each catalog version of
+  every joint's servo and each supply voltage they're rated at (up to 64 designs, 8 seeded runs
+  each) and returns passes, worst margin, cost and mass per design. Recommend the cheapest design
+  that passes every run, and say what it costs over the current one.
 - Objects from find_objects move freely in the sim; size grippers and reach from their numbers.
 - set_world puts test objects around the robot (static steps and walls, dynamic boxes, marker
   goals); they never become parts. start_drive then drives it like a person would: arms follow

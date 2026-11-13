@@ -20,19 +20,12 @@ function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseR
     <div className="mb-3 flex flex-col gap-1">
       {builder.open && <NewCaseCard key={builder.roomKey} builder={builder} onCreated={onOpen} />}
       {!builder.open && builder.goals.length > 0 && (
-        <Button
-          variant="primary"
-          size="md"
-          fullWidth
-          icon={<PlusIcon className="w-4 h-4" />}
-          title="Pick a world and a goal"
-          onClick={builder.start}
-        >
+        <Button variant="primary" size="md" fullWidth icon={<PlusIcon className="w-4 h-4" />} onClick={builder.start}>
           New Case
         </Button>
       )}
       {onDescribe && (
-        <Button variant="ghost" size="sm" fullWidth title="Describe a Case in words" onClick={onDescribe}>
+        <Button variant="ghost" size="sm" fullWidth onClick={onDescribe}>
           Ask the Agent
         </Button>
       )}

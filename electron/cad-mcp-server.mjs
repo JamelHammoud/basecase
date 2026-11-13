@@ -23,7 +23,7 @@ import { listEvidence, readEvidence } from './cad-mcp/evidenceTools.mjs';
 import { createGuidePusher, getGuide } from './cad-mcp/guideTools.mjs';
 import { checkScene, look } from './cad-mcp/inspectTools.mjs';
 import { fasten, getPorts, mate } from './cad-mcp/portTools.mjs';
-import { findRecipes } from './cad-mcp/recipeTools.mjs';
+import { findRecipes, synthesizeLinkage } from './cad-mcp/recipeTools.mjs';
 import {
   animate,
   defineJoints,
@@ -51,7 +51,7 @@ import {
 import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
-import { compareCase, createCase, runCase } from './cad-mcp/caseTools.mjs';
+import { compareCase, createCase, exploreCase, runCase } from './cad-mcp/caseTools.mjs';
 import { draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
@@ -82,6 +82,7 @@ const TOOLS = [
   look,
   findParts,
   findRecipes,
+  synthesizeLinkage,
   compare,
   fitView,
   traceOutline,
@@ -115,6 +116,7 @@ const TOOLS = [
   createCase,
   runCase,
   compareCase,
+  exploreCase,
   makeRoutine,
   readRoutine,
   editRoutine,
@@ -151,7 +153,7 @@ for (const tool of TOOLS.filter((t) => !(NO_WEB && t.web))) {
     pushGuides(
       tool.name,
       args,
-      await withBuildCheck(tool.name, await withToolCall(extra, () => tool.handler(args, extra))),
+      await withBuildCheck({ name: tool.name, args }, await withToolCall(extra, () => tool.handler(args, extra))),
     ),
   );
 }

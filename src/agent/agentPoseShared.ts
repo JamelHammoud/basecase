@@ -16,6 +16,7 @@ import { limbOf } from '../utils/robotImport/published';
 import { rigJoints } from '../assembly/rigJoints';
 import { DEEPER_THAN_REST_MM, pairKey } from '../three/interference';
 import { rotToCad, rotToScene, toCad, toScene } from './agentFrame';
+import { plural } from '../../electron/plural.mjs';
 
 export interface PoseContext {
   parts: ScenePart[];
@@ -49,7 +50,7 @@ export function scopeOf(ctx: PoseContext, wanted?: string): Scope | string {
     : (robotOfParts(full, ctx.selectedIds) ?? (full.robots.length === 1 ? full.robots[0] : null));
 
   if (!group) {
-    const list = full.robots.map((r) => `"${r.name}" (${r.joints.length} joints)`).join(', ');
+    const list = full.robots.map((r) => `"${r.name}" (${plural(r.joints.length, 'joint')})`).join(', ');
 
     return w
       ? `No robot "${wanted}". Robots: ${list}.`

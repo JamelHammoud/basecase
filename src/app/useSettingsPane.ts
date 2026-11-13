@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { SettingsPane } from '../components/SettingsWindow';
+import type { SettingsPane } from './settingsPanes';
 
 interface SettingsState {
   open: SettingsPane | null;

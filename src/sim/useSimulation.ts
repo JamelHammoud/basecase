@@ -6,7 +6,7 @@ import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import type { FaultKind } from './faults';
-import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } from './mjcf';
+import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
@@ -16,6 +16,8 @@ import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import type { LiveCaseInput } from '../cases/liveCase';
 import type { WatchPlan } from '../skills/liveWatch';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
+import { useWatch } from './useWatch';
+import { useSimTouches } from './useSimTouches';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
@@ -107,36 +109,6 @@ interface Inputs {
 
 export type RunOptions = Parameters<Simulation['run']>[0];
 
-type GrabHand = Parameters<Simulation['grab']>[1];
-
-function grabRequest(
-  m: SimModel,
-  partIds: string[],
-  hand: GrabHand,
-  phase: 'start' | 'move' | 'end',
-): SimRequest | null {
-  if (phase === 'end' || !hand) return { type: 'grab', phase: 'end' };
-
-  if (phase === 'start') {
-    const body = m.bodies.findIndex((b) => b.parts.some((id) => partIds.includes(id)));
-
-    return body >= 0 ? { type: 'grab', phase: 'start', body, point: toMj(hand.position) } : null;
-  }
-
-  return { type: 'grab', phase: 'move', point: toMj(hand.position), turn: hand.turn ? quatToMj(hand.turn) : null };
-}
-
-function pushRequest(m: SimModel | null, robot: string | undefined): SimRequest | null {
-  const key = robot ?? m?.robots.find((r) => r.floating)?.key ?? m?.robots[0]?.key;
-
-  if (!m || !key) return null;
-
-  const n = (m.massKg[key] || 1) * 9.81 * 0.5;
-  const a = Math.random() * Math.PI * 2;
-
-  return { type: 'push', robot: key, force: [Math.cos(a) * n, 0, Math.sin(a) * n] };
-}
-
 type Ran = Extract<SimResponse, { type: 'ran' }>;
 
 async function runModel(
@@ -183,6 +155,11 @@ async function runModel(
   }
 }
 
+interface SceneModelOptions {
+  alone?: boolean;
+  pin?: string | null;
+}
+
 function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs) {
   const inputs = useRef({ parts, project, rig, pose, restDeltas });
   const [worldParts, setWorldParts] = useState<WorldItem[]>([]);
@@ -195,7 +172,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
   });
 
   const buildModel = useCallback(
-    async (options?: { alone?: boolean }): Promise<SimModel> => {
+    async (options?: SceneModelOptions): Promise<SimModel> => {
       const vp = viewportRef.current;
 
       if (!vp) throw new Error('The canvas isn’t ready.');
@@ -218,6 +195,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
           partTriangles: vp.partTriangles,
           posedFloor,
           world: options?.alone ? [] : worldRef.current,
+          ...(options?.pin ? { fixedBase: { [options.pin]: true } } : {}),
         },
         options?.alone ? NO_GUESTS : guestsRef.current,
       );
@@ -272,64 +250,27 @@ function useController(send: (msg: SimRequest) => void) {
   return [controller, setController] as const;
 }
 
-function useWatch(send: (msg: SimRequest) => void, watched: { id: number; margin: number } | null) {
-  const seq = useRef(0);
-  const [id, setId] = useState<number | null>(null);
-
-  return {
-    watch: (plan: WatchPlan | null) => {
-      const next = plan ? ++seq.current : null;
-
-      setId(next);
-      send({ type: 'watch', watch: plan && next ? { ...plan, id: next } : null });
-    },
-    watchMargin: watched && watched.id === id ? watched.margin : null,
-  };
+interface SimStartInputs {
+  sw: ReturnType<typeof useSimWorker>;
+  buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
+  modelRef: React.RefObject<SimModel | null>;
+  setModel: (m: SimModel) => void;
+  controller: Controller;
+  speed: number;
 }
 
-function useSimTouches(
-  modelRef: React.RefObject<SimModel | null>,
-  send: (msg: SimRequest) => void,
-): Pick<Simulation, 'grab' | 'push'> {
-  'use memo';
+function useSimStart({ sw, buildModel, modelRef, setModel, controller, speed }: SimStartInputs) {
+  const { setError, setStatus, worker, load, setPlaying } = sw;
+  const pinned = useRef<string | null>(null);
 
-  return {
-    grab: (partIds, hand, phase) => {
-      const m = modelRef.current;
-      const msg = m && grabRequest(m, partIds, hand, phase);
-
-      if (msg) send(msg);
-    },
-    push: (robot) => {
-      const msg = pushRequest(modelRef.current, robot);
-
-      if (msg) send(msg);
-    },
-  };
-}
-
-export function useSimulation(props: Inputs): Simulation {
-  const { parts, project, rig, pose, viewportRef } = props;
-  const [model, setModel] = useState<SimModel | null>(null);
-  const [speed, setSpeedState] = useState(1);
-  const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
-  const runSeq = useRef(0);
-  const sw = useSimWorker(viewportRef, modelRef);
-  const { status, setStatus, playing, setPlaying, stats, setStats, error, setError, send } = sw;
-  const { worker, load, frameHookRef } = sw;
-  const [controller, setController] = useController(send);
-  const touch = useSimTouches(modelRef, send);
-  const watching = useWatch(send, sw.watched);
-
-  const start = useCallback(async () => {
+  const startModel = useCallback(async () => {
     setError(null);
     setStatus('loading');
 
     let m: SimModel;
 
     try {
-      m = await buildModel();
+      m = await buildModel({ pin: pinned.current });
     } catch (e) {
       setError(errorMessage(e));
       setStatus('error');
@@ -348,7 +289,40 @@ export function useSimulation(props: Inputs): Simulation {
     w.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
     w.postMessage({ type: 'play' } satisfies SimRequest);
     setPlaying(true);
-  }, [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying]);
+  }, [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying, modelRef, setModel]);
+
+  const start = useCallback(() => {
+    pinned.current = null;
+
+    return startModel();
+  }, [startModel]);
+
+  const startPinned = useCallback(
+    (pin: string | null) => {
+      pinned.current = pin;
+
+      return startModel();
+    },
+    [startModel],
+  );
+
+  return { start, startPinned, pinned: () => (modelRef.current ? pinned.current : null) };
+}
+
+export function useSimulation(props: Inputs): Simulation {
+  const { parts, project, rig, pose, viewportRef } = props;
+  const [model, setModel] = useState<SimModel | null>(null);
+  const [speed, setSpeedState] = useState(1);
+  const modelRef = useRef<SimModel | null>(null);
+  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
+  const runSeq = useRef(0);
+  const sw = useSimWorker(viewportRef, modelRef);
+  const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef } = sw;
+  const [controller, setController] = useController(send);
+  const touch = useSimTouches(modelRef, send);
+  const watching = useWatch(send, sw.watched);
+
+  const { start, startPinned, pinned } = useSimStart({ sw, buildModel, modelRef, setModel, controller, speed });
 
   const stop = useCallback(() => {
     send({ type: 'dispose' });
@@ -374,7 +348,8 @@ export function useSimulation(props: Inputs): Simulation {
     viewportRef,
     modelRef,
     frameHookRef,
-    startSim: start,
+    startSim: startPinned,
+    pinned,
     setController,
     runOn,
     velocity: props.velocity,
@@ -408,7 +383,7 @@ export function useSimulation(props: Inputs): Simulation {
       send({ type: 'speed', value: s });
     },
     setController,
-    buildModel,
+    buildModel: (options) => buildModel({ alone: options?.alone }),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     drive,

@@ -18,6 +18,7 @@ import {
   ToolIcon as ToolPromptIcon,
   WebIcon,
 } from '../../design-system';
+import { plural } from '../../../electron/plural.mjs';
 import { SIM_RULES } from './simToolRules';
 import { plainRule, type ToolIcon, type ToolRule } from './toolRule';
 
@@ -44,11 +45,7 @@ const hostOf = (url: unknown) => {
   }
 };
 
-const counted = (count: number, noun: string) => {
-  if (count === 0) return `${noun}s`;
-
-  return `${count} ${noun}${count === 1 ? '' : 's'}`;
-};
+const counted = (count: number, noun: string) => (count === 0 ? `${noun}s` : plural(count, noun));
 
 const partGroups = (parts: unknown[]) =>
   Array.from(new Set(parts.map((p) => (p as { group?: string }).group).filter(Boolean))) as string[];
@@ -232,6 +229,7 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
   plainRule(['size_actuators'], JointsIcon, ['Sizing the actuators', 'Sized the actuators']),
+  plainRule(['synthesize_linkage'], JointsIcon, ['Fitting a four-bar', 'Fitted a four-bar']),
   plainRule(['sweep_design'], RunIcon, ['Comparing design options', 'Compared design options']),
   plainRule(['set_build'], FileIcon, ['Updating the build', 'Updated the build']),
   plainRule(['build_guide'], FileIcon, ['Making the build guide', 'Made the build guide']),
@@ -327,7 +325,7 @@ const ROBOT_RULES: ToolRule[] = [
     icon: CasesIcon,
     label: ({ input, verb }) => ({
       title: verb('Setting the world', 'Set the world'),
-      detail: optional(Array.isArray(input.objects) ? `${input.objects.length} objects` : ''),
+      detail: optional(Array.isArray(input.objects) ? plural(input.objects.length, 'object') : ''),
     }),
   },
   {

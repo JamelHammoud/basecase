@@ -42,14 +42,13 @@ export function errorDetail(data, text) {
 export function refusalMessage(status, detail) {
   if (status === 409 && detail) return `The printer is busy: ${asSentence(detail)}`;
 
-  if (status === 409) return 'The printer is busy. Wait for it to finish, then try again.';
+  if (status === 409) return 'The printer is busy. Wait for it to finish.';
 
-  if (status === 413 || status === 507)
-    return 'The printer is out of storage. Delete some files on it, then try again.';
+  if (status === 413 || status === 507) return 'The printer is out of storage. Delete some files on it.';
 
   if (detail) return `The printer refused the request: ${asSentence(detail)}`;
 
-  return 'The printer refused the request. Check it’s ready, then try again.';
+  return 'The printer refused the request. Check it’s ready.';
 }
 
 async function fetchOrExplain(url, { host, init, timeoutMs }) {

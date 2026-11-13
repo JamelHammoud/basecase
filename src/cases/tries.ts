@@ -17,6 +17,8 @@ export interface TryManifest {
   frames: number;
   dt: number;
   faults?: RecordedFault[];
+  commands?: number;
+  source?: string;
 }
 
 export interface TryRecord {
@@ -28,6 +30,7 @@ export interface TryRecord {
   margin: number;
   seconds: number;
   manifest: TryManifest;
+  generated?: true;
 }
 
 export async function sha256(text: string): Promise<string> {
@@ -92,6 +95,42 @@ export async function tryManifest(kase: Case, model: SimModel, recording: Record
     frames: recording.frames,
     dt: recording.dt,
     faults: recording.faults ?? [],
+    ...(recording.commands && recording.controller ? { commands: recording.commands.length } : {}),
+  };
+}
+
+export const multipliable = (t: TryRecord) => t.passed && !t.generated && !!t.manifest.commands;
+
+export const generatedFrom = (tries: TryRecord[], source: TryRecord) =>
+  tries.filter((t) => t.generated && t.manifest.source === source.id);
+
+export interface Generated {
+  source: TryRecord;
+  manifest: TryManifest;
+  seed: number;
+  margin: number;
+  recording: Recording;
+}
+
+export function generatedTry({ source, manifest, seed, margin, recording }: Generated): TryRecord {
+  return {
+    id: `${source.id}-${seed}`,
+    caseId: source.caseId,
+    robot: source.robot,
+    at: new Date().toISOString(),
+    passed: true,
+    margin,
+    seconds: recording.frames * recording.dt,
+    generated: true,
+    manifest: {
+      ...manifest,
+      seed,
+      source: source.id,
+      frames: recording.frames,
+      dt: recording.dt,
+      faults: recording.faults ?? [],
+      commands: recording.commands?.length ?? 0,
+    },
   };
 }
 

@@ -6,6 +6,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { caseVerdict, type CaseVerdict } from './caseChecks';
 import type { Cases } from './useCases';
+import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
@@ -48,7 +49,9 @@ function pickCase(cases: Case[], payload: Payload, active: Case | null): Case | 
 const margin = (n: number) => (Math.round(n * 100) / 100).toString();
 
 function failureLine(runs: CaseRuns): string {
-  const named = runs.failures.slice(0, NAMED_FAILURES).map((f) => `${f.label} (${f.runs} of ${runs.runs} runs)`);
+  const named = runs.failures
+    .slice(0, NAMED_FAILURES)
+    .map((f) => `${f.label} (${f.runs} of ${plural(runs.runs, 'run')})`);
 
   return named.length ? ` Failed most: ${named.join(', ')}.` : '';
 }

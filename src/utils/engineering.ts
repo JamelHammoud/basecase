@@ -1,5 +1,6 @@
 import type { RobotJoint } from '../types/robotics';
-import { count, fmtG } from './engineeringFormat';
+import { fmtG } from './engineeringFormat';
+import { plural } from '../../electron/plural.mjs';
 import { isLegJoint, robotBodies, type RobotBody } from './engineeringBody';
 import { servoMountRows, rangeOfMotionRows } from './engineeringJoints';
 import { downstreamOf, massOf, partMasses } from './engineeringMass';
@@ -10,6 +11,7 @@ import { powerRows, servoParts, servoSupplyVolts } from './engineeringPower';
 import { stabilityOf, stabilityRows } from './engineeringStability';
 import { rangeChangeRows } from './engineeringRanges';
 import { simModelRows } from './engineeringSimModel';
+import { servoLookup } from './engineeringEnvelope';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
 import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
@@ -54,9 +56,9 @@ function weightRow(all: CheckContext['all'], masses: PartMass[], bodies: RobotBo
   const counted = masses.filter((m) => bodies.some((b) => b.parts.has(m.id)));
   const apart = masses.filter((m) => !counted.includes(m));
   const est = counted.filter((m) => m.source === 'estimate');
-  const estimated = est.length ? `. ${est.length} parts estimated from volume (${fmtG(gramsOf(est))})` : '';
+  const estimated = est.length ? `. ${plural(est.length, 'part')} estimated from volume (${fmtG(gramsOf(est))})` : '';
   const leftOut = apart.length
-    ? `. Leaves out ${count(apart.length, 'part')} off the robot (${fmtG(gramsOf(apart))})`
+    ? `. Leaves out ${plural(apart.length, 'part')} off the robot (${fmtG(gramsOf(apart))})`
     : '';
 
   return {
@@ -137,7 +139,10 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     weightRow(ctx.all, masses, bodies),
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
     ...(loads.length
-      ? [withNoFeetNote(torqueRow(loads, env.crouch.share), floating), ...peakRow(loads, project, input.walk)]
+      ? [
+          withNoFeetNote(torqueRow(loads, env.crouch.share), floating),
+          ...peakRow(loads, project, input.walk, servoLookup(ctx.byPart)),
+        ]
       : []),
     ...simModelRows(ctx),
     ...payloadRows(ctx, env.volts),

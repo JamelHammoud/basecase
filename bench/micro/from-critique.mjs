@@ -4,6 +4,7 @@ import path from 'node:path';
 import { argOption, openStudio } from '../harness.mjs';
 import { replayInStudio } from '../replayCore.mjs';
 import { messageAt, stepsFromConversation, userMessages } from '../replaySteps.mjs';
+import { writeStub } from './stubs.mjs';
 import { MICRO_DATA } from './tasks/index.mjs';
 
 const args = process.argv.slice(2);
@@ -49,30 +50,25 @@ const { replayed, scene } = await replayInStudio(studio, steps, {
 });
 
 await studio.close();
-fs.mkdirSync(dir, { recursive: true });
-fs.writeFileSync(path.join(dir, 'start.json'), JSON.stringify(scene));
-fs.writeFileSync(
-  path.join(dir, 'task.json'),
-  JSON.stringify(
-    {
-      id,
-      category: argOption(args, 'category', 'critique'),
-      instruction: message.text,
-      heldOut: args.includes('--held-out'),
-      startScene: 'start.json',
-      source: {
-        chat: conversation.id,
-        title: conversation.title,
-        message: index,
-        at: message.timestamp,
-        replayed,
-        steps: steps.length,
-      },
-      grader: 'TODO: write a code grader and move this task into bench/micro/tasks/',
+writeStub(
+  dir,
+  {
+    id,
+    category: argOption(args, 'category', 'critique'),
+    instruction: message.text,
+    heldOut: args.includes('--held-out'),
+    startScene: 'start.json',
+    source: {
+      chat: conversation.id,
+      title: conversation.title,
+      message: index,
+      at: message.timestamp,
+      replayed,
+      steps: steps.length,
     },
-    null,
-    1,
-  ),
+    grader: 'TODO: write a code grader and move this task into bench/micro/tasks/',
+  },
+  scene,
 );
 console.log(`Stub ${id}: replayed ${replayed} of ${steps.length} steps → ${dir}`);
 process.exit(0);

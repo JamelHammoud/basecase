@@ -1,22 +1,47 @@
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { LinkageSolution } from '../../utils/linkage';
 import type { Vec2 } from '../../utils/sketch/types';
 import { SketchOverlay } from './SketchOverlay';
+import { pathExtent, SketchPathLayer } from './SketchPathLayer';
 import { previewShape, typedAnchor } from './sketchPreview';
 import { SketchEntities, SketchGrid, SketchPreview } from './SketchShapes';
-import { fitView, panned, snapStep, snapTolerance, toMm, viewBox, zoomed, type Box } from './sketchView';
+import {
+  fitView,
+  insideView,
+  panned,
+  snapStep,
+  snapTolerance,
+  toMm,
+  viewBox,
+  zoomed,
+  type Box,
+  type SketchView,
+} from './sketchView';
 import { useSketchDrawing, type SketchEditor } from './useSketchDrawing';
 import { useSketchKeys } from './useSketchKeys';
+import type { SketchPathEditor } from './usePathHistory';
+import { useSketchPath } from './useSketchPath';
 import { useSketchSelection } from './useSketchSelection';
 import type { SketchTool } from './useStudioDraft';
 
 const REFUSE_MS = 700;
 const ZOOM_SPEED = 0.01;
+const ignore = () => {};
+const NO_PATH_EDITOR: SketchPathEditor = { points: [], onChange: ignore, undo: ignore, redo: ignore };
+
+export interface SketchPathMode {
+  editor: SketchPathEditor;
+  solutions: LinkageSolution[];
+  highlighted: number;
+  unsolvable: boolean;
+}
 
 interface SketchCanvasProps {
   editor: SketchEditor;
   tool: SketchTool | null;
   onTool: (tool: SketchTool | null) => void;
   snap: boolean;
+  path?: SketchPathMode;
 }
 
 function useWheelView(ref: React.RefObject<HTMLDivElement | null>, onWheel: (e: WheelEvent) => void) {
@@ -50,7 +75,19 @@ function useRefusal() {
   return { refused, refuse };
 }
 
-export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool, snap }) => {
+function useFramedSolutions(path: SketchPathMode | undefined, view: SketchView, setView: (view: SketchView) => void) {
+  const [framed, setFramed] = useState<LinkageSolution[] | null>(null);
+
+  if (!path?.solutions.length || path.solutions === framed) return;
+
+  const extent = pathExtent(path.editor.points, path.solutions);
+
+  setFramed(path.solutions);
+
+  if (!insideView(view, extent)) setView(fitView(extent));
+}
+
+export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool, snap, path }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [view, setView] = useState(() => fitView(editor.sketch));
@@ -58,7 +95,10 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool
   const grid = snap ? snapStep(view) : null;
   const drawing = useSketchDrawing({ editor, tool, grid, onRefuse: refuse });
   const selection = useSketchSelection({ editor, grid, onRefuse: refuse });
+  const pathing = useSketchPath(path?.editor ?? NO_PATH_EDITOR, grid);
   const shown = selection.preview ?? editor.sketch;
+
+  useFramedSolutions(path, view, setView);
 
   const box = (): Box => svgRef.current!.getBoundingClientRect();
 
@@ -75,6 +115,16 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool
     else setView(panned(view, box(), e.deltaX, e.deltaY));
   });
 
+  const gestures = path
+    ? { press: pathing.press, move: pathing.move, release: pathing.release, captures: true }
+    : {
+        press: (at: Vec2, tolerance: number, shift: boolean) =>
+          tool ? drawing.press(at, tolerance) : selection.press(at, tolerance, shift),
+        move: (at: Vec2, tolerance: number) => (selection.dragging ? selection.move(at) : drawing.move(at, tolerance)),
+        release: selection.release,
+        captures: !tool,
+      };
+
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.button !== 0) return;
 
@@ -82,20 +132,28 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool
 
     const { at, tolerance } = pointer(e);
 
-    if (tool) drawing.press(at, tolerance);
-    else selection.press(at, tolerance, e.shiftKey);
+    gestures.press(at, tolerance, e.shiftKey);
 
-    if (!tool) e.currentTarget.setPointerCapture(e.pointerId);
+    if (gestures.captures) e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const { at, tolerance } = pointer(e);
 
-    if (selection.dragging) selection.move(at);
-    else drawing.move(at, tolerance);
+    gestures.move(at, tolerance);
   };
 
-  const onKeyDown = useSketchKeys({ editor, drawing, selection, tool, onTool, rootRef: containerRef });
+  const onKeyDown = useSketchKeys({
+    editor,
+    drawing,
+    selection,
+    tool,
+    onTool,
+    rootRef: containerRef,
+    path: path ? pathing : null,
+  });
+
+  const ringClass = refused || path?.unsolvable ? 'ring-red-500' : 'ring-white/[0.06] focus-visible:ring-white/20';
 
   return (
     <div
@@ -104,31 +162,40 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({ editor, tool, onTool
       data-testid="sketch-plane"
       data-own-edits
       onKeyDown={onKeyDown}
-      className={`relative rounded-xl bg-black/30 ring-1 ring-inset aspect-square overflow-hidden outline-none transition-shadow ${
-        refused ? 'ring-red-500' : 'ring-white/[0.06] focus-visible:ring-white/20'
-      }`}
+      className={`relative rounded-xl bg-black/30 ring-1 ring-inset aspect-square overflow-hidden outline-none transition-shadow ${ringClass}`}
     >
       <svg
         ref={svgRef}
         viewBox={viewBox(view)}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={selection.release}
+        onPointerUp={gestures.release}
         onPointerLeave={drawing.leave}
-        className={`w-full h-full touch-none ${tool ? 'cursor-crosshair' : 'cursor-default'}`}
+        className={`w-full h-full touch-none ${tool || path ? 'cursor-crosshair' : 'cursor-default'}`}
       >
         <SketchGrid view={view} />
         <SketchEntities sketch={shown} selected={selection.selected} view={view} />
-        <SketchPreview preview={previewShape(drawing.pending, drawing.hover, drawing.typed)} />
+        {path ? (
+          <SketchPathLayer
+            points={pathing.shown}
+            solutions={path.solutions}
+            highlighted={path.highlighted}
+            view={view}
+          />
+        ) : (
+          <SketchPreview preview={previewShape(drawing.pending, drawing.hover, drawing.typed)} />
+        )}
       </svg>
-      <SketchOverlay
-        sketch={shown}
-        view={view}
-        drawing={drawing}
-        selection={selection}
-        typedAt={typedAnchor(drawing.pending, drawing.hover, drawing.typed)}
-        refused={refused}
-      />
+      {!path && (
+        <SketchOverlay
+          sketch={shown}
+          view={view}
+          drawing={drawing}
+          selection={selection}
+          typedAt={typedAnchor(drawing.pending, drawing.hover, drawing.typed)}
+          refused={refused}
+        />
+      )}
     </div>
   );
 };

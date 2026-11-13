@@ -1,8 +1,7 @@
 import React from 'react';
 import { FolderIcon } from '../../../design-system';
+import { plural } from '../../../../electron/plural.mjs';
 import { QueuedDraft } from '../types';
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 function summaryOf(params: QueuedDraft) {
   const firstLine = params.text.split('\n').find((l) => l.trim());

@@ -22,6 +22,7 @@ import {
   UnionIcon,
 } from '../../design-system';
 import { GroupName } from './GroupName';
+import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
 import { MATERIALS, type InspectorProps } from './types';
 
@@ -44,6 +45,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
   onUngroup,
   onGroup,
   onDuplicate,
+  onMirror,
   onSaveAsModel,
   onDelete,
 }) => {
@@ -93,6 +95,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           size="xs"
           onClick={onDuplicate}
         />
+        <MirrorButton onMirror={onMirror} />
         <IconButton
           icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
           title="Save to Library"
@@ -183,7 +186,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
     <>
       <Section title="Combine">
         <StripGroup>
-          <StripButton title="Merge into one solid" onClick={() => onBoolean('union')}>
+          <StripButton onClick={() => onBoolean('union')}>
             <UnionIcon className="w-4 h-4" />
             Union
           </StripButton>
@@ -195,7 +198,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
             <SubtractIcon className="w-4 h-4" />
             Subtract
           </StripButton>
-          <StripButton title="Keep only the shared volume" onClick={() => onBoolean('intersect')}>
+          <StripButton onClick={() => onBoolean('intersect')}>
             <IntersectIcon className="w-4 h-4" />
             Intersect
           </StripButton>

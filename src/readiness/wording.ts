@@ -1,3 +1,4 @@
+import { titleCase } from '../utils/titleCase';
 import type { Finding, FindingArea, FindingFix, FindingLevel } from './types';
 
 interface Rule {
@@ -37,9 +38,9 @@ export const RULES = {
     'Thin Walls Around Inserts',
     'The wall around this insert could break when it’s pressed in.',
   ),
-  'misses-hole': fit(SCREWS, 'Screws Off Their Holes', 'This screw doesn’t line up with a mounting hole.'),
+  'misses-hole': fit(SCREWS, 'Screws off Their Holes', 'This screw doesn’t line up with a mounting hole.'),
   'too-deep': fit(SCREWS, 'Screws Too Deep', 'This screw goes too deep and could damage the part.'),
-  'screw-in-part': fit(SCREWS, 'Screws Into Parts', 'Check there’s a threaded hole where this screw lands.'),
+  'screw-in-part': fit(SCREWS, 'Screws into Parts', 'Check there’s a threaded hole where this screw lands.'),
   unheld: {
     area: 'assembly',
     check: ATTACHED,
@@ -137,12 +138,10 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
   },
 };
 
-const titleCase = (text: string) => text.replace(/\b[a-z]/g, (c) => c.toUpperCase());
-
 export function engineeringFinding(
   check: string,
   level: FindingLevel,
-  f: { detail: string; ids?: string[]; fix?: FindingFix },
+  f: { detail: string; ids?: string[]; fix?: FindingFix; joint?: string },
 ): Finding {
   const code = slug(check);
   const plain = PLAIN_ENGINEERING[check]?.[level];
@@ -161,5 +160,6 @@ export function engineeringFinding(
     detail: plain ? f.detail : undefined,
     ids,
     ...(f.fix ? { fix: f.fix } : {}),
+    ...(f.joint ? { joint: f.joint } : {}),
   };
 }

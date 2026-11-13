@@ -4,7 +4,8 @@ import type { AssemblyGeometry, PartMoves } from './assemblyGeometry';
 import type { SplitPlane } from './splitTest';
 import { RANK } from './chainLines';
 import type { RemovalPlan } from './removalOrder';
-import { grouped, joinAnd, listIds, plural, type ReportLine } from './reportText';
+import { plural } from '../../electron/plural.mjs';
+import { grouped, joinAnd, listIds, type ReportLine } from './reportText';
 import { SERVICE_TARGET_STEPS, type ServiceResult } from './serviceDepth';
 
 const PLANE_NAMES = { x: 'left/right', y: 'top/bottom', z: 'front/back' };
@@ -97,7 +98,7 @@ function serviceText(r: ServiceResult, target: number): string {
     return `${r.id} can't come out of the robot (in the way: ${listIds(r.blockedBy, 3)}). Give it a bay or tray behind a cover`;
   }
 
-  return `${r.id} takes ${r.steps} steps to replace (target ${target}): ${listIds(r.partsOut, 3)} come out first`;
+  return `${r.id} takes ${plural(r.steps, 'step')} to replace (target ${target}): ${listIds(r.partsOut, 3)} come out first`;
 }
 
 export function serviceLines(results: ServiceResult[]): ReportLine[] {
@@ -136,7 +137,7 @@ export function splitLines(
     const part = byId.get(id);
     const text =
       part && isCover(part)
-        ? `${id} wraps its contents (${inside}) and can't come off: split it ${PLANE_NAMES[best.axis]} (the halves are blocked by ${best.blockers[0].length} and ${best.blockers[1].length} parts).`
+        ? `${id} wraps its contents (${inside}) and can't come off: split it ${PLANE_NAMES[best.axis]} (the halves are blocked by ${plural(best.blockers[0].length, 'part')} and ${plural(best.blockers[1].length, 'part')}).`
         : `${id} encloses ${inside}: keep a load-bearing part whole and move them to a bay or tray outside it, or split it ${PLANE_NAMES[best.axis]} if it's a cover.`;
 
     return { rank: RANK.split, code: 'split', text, ids: [id] };

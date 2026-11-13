@@ -10,11 +10,11 @@ import {
   PauseIcon,
   PlusIcon,
   RunIcon,
+  RenameField,
   confirmAction,
 } from '../../design-system';
 import type { RobotAnimation } from '../../types/robotics';
 import type { Posing } from '../../utils/usePosing';
-import { RenameField } from './RenameField';
 
 export type OpenMenu = (e: React.MouseEvent, items: ContextMenuEntry[]) => void;
 
@@ -123,7 +123,7 @@ const AnimationRow: React.FC<{
             onDone={(name) => {
               setRenaming(null);
 
-              if (name && name !== a.name) posing.renameAnimation(a.id, name);
+              if (name) posing.renameAnimation(a.id, name);
             }}
           />
         ) : (

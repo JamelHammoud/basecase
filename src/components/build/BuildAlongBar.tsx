@@ -6,7 +6,7 @@ import {
   FloatingIsland,
   IconButton,
   IslandDivider,
-  SpinnerIcon,
+  Spinner,
 } from '../../design-system';
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 import { useBuildAlongKeys } from '../../workspace/useBuildAlongKeys';
@@ -30,8 +30,8 @@ export const BuildAlongBar: React.FC<{ buildAlong: BuildAlong; active: boolean }
       >
         {opening ? (
           <div className="flex items-center gap-2 px-[8px] text-[12.5px] text-white/60 whitespace-nowrap">
-            <SpinnerIcon className="w-4 h-4 animate-spin" />
-            {progress?.label}
+            <Spinner className="w-4 h-4" />
+            {progress && `${progress.label}…`}
           </div>
         ) : (
           <>

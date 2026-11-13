@@ -3,7 +3,7 @@ import { ChevronRightIcon } from '../../design-system';
 
 export const DisclosureChevron: React.FC<{ open: boolean; group: 'thought' | 'tool' }> = ({ open, group }) => (
   <ChevronRightIcon
-    className={`shrink-0 -ml-1 w-3.5 h-3.5 opacity-60 transition-[transform,opacity] duration-200 ${
+    className={`shrink-0 -ml-1 w-3.5 h-3.5 opacity-60 transition-[transform,opacity] duration-150 ${
       group === 'thought' ? 'group-hover/thought:opacity-100' : 'group-hover/tool:opacity-100'
     } ${open ? 'rotate-90' : ''}`}
   />

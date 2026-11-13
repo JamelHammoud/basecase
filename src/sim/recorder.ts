@@ -1,9 +1,15 @@
-import type { SimEngine } from './engine';
+import type { DriveCommand } from './driveTypes';
+import type { Controller, SimEngine } from './engine';
 import type { FaultKind, RecordedFault } from './faults';
 
 export const RECORD_HZ = 50;
 
 const MAX_SECONDS = 600;
+
+export interface RecordedCommand {
+  at: number;
+  command: DriveCommand;
+}
 
 export interface Recording {
   dt: number;
@@ -18,9 +24,13 @@ export interface Recording {
   qvel: Float32Array;
   poses: Float32Array;
   jointQpos?: Int32Array;
+  jointDof?: Int32Array;
+  root?: [number, number];
   scan?: Float32Array;
   scanWidth?: number;
   faults?: RecordedFault[];
+  commands?: RecordedCommand[];
+  controller?: Controller;
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -58,7 +68,7 @@ const f64 = (n: number) => new Float64Array(n);
 export class Recorder {
   private readonly engine: SimEngine;
 
-  private readonly dt = 1 / RECORD_HZ;
+  readonly dt = 1 / RECORD_HZ;
 
   private next: number;
 
@@ -78,10 +88,16 @@ export class Recorder {
 
   private readonly jointQpos: Int32Array;
 
+  private readonly jointDof: Int32Array;
+
+  private readonly root: [number, number];
+
   private readonly scan: Growing<Float32Array> | null;
   private readonly faults: RecordedFault[] = [];
+  private readonly commands: RecordedCommand[] = [];
+  private readonly controller: Controller | null;
 
-  constructor(engine: SimEngine) {
+  constructor(engine: SimEngine, controller: Controller | null = null) {
     const { model } = engine;
 
     this.engine = engine;
@@ -92,7 +108,12 @@ export class Recorder {
     this.qvel = new Growing(f32, 512 * model.nv);
     this.poses = new Growing(f32, 512 * engine.sim.bodies.length * 7);
     this.jointQpos = engine.jointAddresses();
+    this.jointDof = engine.dofAddresses();
+    this.root = engine.rootAddresses();
     this.scan = engine.scanner ? new Growing(f32, 512 * engine.scanner.values.length) : null;
+    this.controller = controller;
+
+    for (const c of engine.givenCommands()) this.commands.push({ at: 0, command: structuredClone(c) });
 
     for (const j of engine.stats().joints) if (j.fault) this.faults.push({ joint: j.id, kind: j.fault, at: 0 });
 
@@ -106,6 +127,14 @@ export class Recorder {
     if (open) open.until = at;
 
     if (kind) this.faults.push({ joint, kind, at });
+  }
+
+  readonly command = (c: DriveCommand) => {
+    this.commands.push({ at: this.engine.data.time - this.started, command: structuredClone(c) });
+  };
+
+  get length() {
+    return this.frames;
   }
 
   readonly hook = () => {
@@ -150,16 +179,19 @@ export class Recorder {
       qvel: this.qvel.done(),
       poses: this.poses.done(),
       jointQpos: this.jointQpos,
+      jointDof: this.jointDof,
+      root: this.root,
       ...(this.scan && this.engine.scanner
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
       faults: this.faults,
+      ...(this.controller ? { commands: this.commands, controller: this.controller } : {}),
     };
   }
 }
 
 export const recordingTransfer = (r: Recording): Transferable[] =>
-  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.jointQpos, r.scan].flatMap((a) => (a ? [a.buffer] : []));
+  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.jointQpos, r.jointDof, r.scan].flatMap((a) => (a ? [a.buffer] : []));
 
 export function framePoses(r: Recording, frame: number): Float64Array {
   const size = r.nbody * 7;

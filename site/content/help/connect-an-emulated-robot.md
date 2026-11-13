@@ -26,6 +26,7 @@ covers:
   - src/workspace/operateCommands.tsx
   - src/robot/sceneRobot.ts
   - src/robot/robotStore.ts
+  - src/robot/robotPolicy.ts
   - electron/robot/
 ---
 
@@ -50,7 +51,7 @@ Every servo is emulated: no released build of Basecase can drive real motors. Op
 
 ## What you're connected to
 
-Basecase starts its robot daemon, the program that owns every motor command, on this computer. It talks to the app directly, with no network port. The daemon runs emulated Feetech STS3215 servos, numbered 1 upward in the order of the scene's moving joints.
+Basecase starts its robot daemon, the program that owns every motor command, on this computer. It talks to the app directly, with no network port. The daemon runs emulated servos on the Feetech bus, numbered 1 upward in the order of the scene's moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
 
 A robot with a leg joint connects as legged, anything else as an arm. That decides what **Stop** does: an arm holds where it is, and a legged robot walks to its standing pose first.
 
@@ -60,4 +61,4 @@ Up to 32 servos can connect. A robot with more shows no **Connect Emulated Robot
 
 Basecase can't open a serial port, so it can't reach a real servo, even one plugged in. Real motors unlock at the first hardware session, with a maintainer at the power switch. [The motor lock and safety ladder](/help/the-motor-lock-and-safety-ladder) explains each rung and what it guards.
 
-**Rehearse** and the rungs above it run a policy on the robot itself. Basecase doesn't hand the daemon a policy. Clicking **Rehearse** answers "Load a policy first." Steps for running a skill today are in [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).
+**Rehearse** and the rungs above it need a trained policy. Basecase hands the robot the scene's newest ready skill or up-to-date policy when you connect. It hands over a newer one as soon as it's trained. Without one, clicking **Rehearse** answers "Load a policy first." Steps for running a skill are in [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

@@ -40,9 +40,11 @@ export class StageOverlays {
     if (previous.checkDots !== props.checkDots) this.checkDots.sync(props.checkDots);
   }
 
-  handle(camera: <T>(run: () => T) => T): OverlayHandle {
+  handle(redraw: () => void): OverlayHandle {
     return {
-      setScan: (points) => camera(() => this.scanPoints.set(points)),
+      setScan: (points) => {
+        if (this.scanPoints.set(points)) redraw();
+      },
       scanPointCount: () => this.scanPoints.size,
       setGhost: (ghost) => this.ghost.set(ghost),
       ghostState: () => this.ghost.state(),

@@ -2,12 +2,15 @@ import type { Command } from '../components/CommandPalette';
 import {
   CasesIcon,
   DownloadIcon,
+  DuplicateIcon,
   ExpandIcon,
   PlusIcon,
   RotateLeftIcon,
   RunIcon,
   ShareIcon,
   StopIcon,
+  SwapIcon,
+  TrainIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
@@ -29,8 +32,10 @@ export const STAYS_IN_RUN = new Set([
   'drive-stop',
   'drive-respawn',
   'case-try',
+  'case-multiply',
   'case-export-dataset',
   'case-publish-dataset',
+  'case-train-from-tries',
   ...INPUT_COMMANDS,
 ]);
 
@@ -71,6 +76,38 @@ function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Co
   return [...(dataset.canExport ? [exportDataset] : []), ...(dataset.canPublish ? [publishDataset] : [])];
 }
 
+function multiplyCommands({ multiply }: WorkspaceCore['simTraining']['cases']): Command[] {
+  const { latest } = multiply;
+
+  if (!latest) return [];
+
+  return [
+    {
+      id: 'case-multiply',
+      group: 'Simulate',
+      label: 'Multiply',
+      icon: <DuplicateIcon className={ic} />,
+      keywords: 'try variations demonstrations dataset augment generate jitter',
+      run: () => multiply.multiply(latest),
+    },
+  ];
+}
+
+function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases']): Command[] {
+  if (!fromTries.ready) return [];
+
+  return [
+    {
+      id: 'case-train-from-tries',
+      group: 'Simulate',
+      label: 'Train from Tries',
+      icon: <TrainIcon className={ic} />,
+      keywords: 'policy imitation behaviour behavior cloning learn demonstrations demos act lerobot skill',
+      run: fromTries.train,
+    },
+  ];
+}
+
 function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
   if (!share.canShare || share.sharing) return [];
 
@@ -92,7 +129,7 @@ function compareCommands(core: WorkspaceCore): Command[] {
   return caseCompare.choices.map((choice) => ({
     id: `case-compare-${choice.tabId}`,
     group: 'Simulate',
-    label: `Compare With ${choice.name}`,
+    label: `Compare with ${choice.name}`,
     icon: <CasesIcon className={ic} />,
     keywords: 'case versus pass rate which better robot scene tab',
     run: () => {
@@ -100,6 +137,24 @@ function compareCommands(core: WorkspaceCore): Command[] {
       tool.setRightTab('sim');
     },
   }));
+}
+
+function exploreCommands({ caseExplore, tool }: WorkspaceCore): Command[] {
+  if (!caseExplore.available || caseExplore.running) return [];
+
+  return [
+    {
+      id: 'case-explore',
+      group: 'Simulate',
+      label: 'Explore',
+      icon: <SwapIcon className={ic} />,
+      keywords: 'case servo version variant voltage supply sweep which buy cheaper stronger compare',
+      run: () => {
+        caseExplore.start();
+        tool.setRightTab('sim');
+      },
+    },
+  ];
 }
 
 export function caseCommands({ core }: CommandInputs): Command[] {
@@ -187,7 +242,10 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...tryIt,
     ...caseRun,
     ...(cases.active ? compareCommands(core) : []),
+    ...exploreCommands(core),
+    ...(cases.active ? multiplyCommands(cases) : []),
     ...datasetCommands(cases),
+    ...fromTriesCommands(cases),
     ...shareCommands(simTraining),
   ];
 }

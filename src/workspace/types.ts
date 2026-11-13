@@ -2,7 +2,7 @@ import type { SceneRobot } from '../app/tabModel';
 import type { CompareRobot } from '../cases/caseCompare';
 import type { Case } from '../cases/schema';
 import type { PrintersState } from '../app/usePrinters';
-import type { SettingsPane } from '../components/SettingsWindow';
+import type { SettingsPane } from '../app/settingsPanes';
 import type { ToastData } from '../design-system';
 import type { RobotSkeleton } from '../types/skeleton';
 import type { LaneChat } from './agentLanes';
@@ -19,6 +19,7 @@ import type {
   SceneMark,
   ScenePart,
   MeasureUnit,
+  Tether,
   TrackpadGestureMode,
 } from '../types/robotics';
 
@@ -162,6 +163,7 @@ export interface Snapshot {
   joints: RobotJoint[] | undefined;
   marks: SceneMark[] | undefined;
   skeleton: RobotSkeleton | undefined;
+  tether?: Tether;
 }
 
 export interface DocState {

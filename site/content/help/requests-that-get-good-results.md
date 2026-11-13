@@ -39,11 +39,11 @@ Real constraints change the design more than adjectives do. Compare “a gripper
 
 ## Change one thing at a time
 
-After the first design, short follow-ups work best: “Longer legs”, “Thicker brackets”, “Round the edges”, “Use M3 screws”. Point at the part you mean with **Reference Part** or a mark, since the agent doesn't see your selection. [Point the agent at a part](/help/point-the-agent-at-a-part) has the steps.
+After the first design, short follow-ups work best: “Longer legs”, “Thicker brackets”, “Round the edges”, “Use M3 screws”. Point at the part you mean with **Quote Part** or a mark, since the agent doesn't see your selection. [Point the agent at a part](/help/point-the-agent-at-a-part) has the steps.
 
 ## Say how you want to drive it
 
-To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad and a phone for now.
+To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone and the computer's camera. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel.
 
 ## Ask about Checks instead of hiding them
 

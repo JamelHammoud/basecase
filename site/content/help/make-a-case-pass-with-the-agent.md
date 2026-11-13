@@ -41,7 +41,7 @@ The scene must have a Case, and its row in **Checks** must be red or amber. [Cas
 
 5. Press Enter to send it.
 
-The agent runs the Case the way Checks does: 20 runs, each with different friction, mass, servo strength and delay. It reads which rule failed in most runs and looks at the worst run's start, middle and end. Then it changes the design, such as a servo, a link length, a wheel or foot size or the gripper, and runs the Case again.
+The agent runs the Case the way Checks does: 20 runs, each with different friction, mass, servo strength and delay. A skill kept for the Case by **Train from Tries** runs in them, as it does in Checks. It reads which rule failed in most runs and looks at the worst run's start, middle and end. Then it changes the design, such as a servo, a link length, a wheel or foot size or the gripper, and runs the Case again.
 
 When the robot and the Case haven't changed since Checks ran it, the agent gets that result at once. It never edits the Case to make it pass. When it can't make the Case pass, it says why.
 

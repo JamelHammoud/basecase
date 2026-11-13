@@ -6,11 +6,10 @@ const FLAT_BASE_SHARE = 0.25;
 
 const fmt = (v) => +(+v).toFixed(2);
 const holeTolerance = (d) => Math.max(0.25, 0.04 * d);
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 function holesCheck(spec, ctx) {
   const axis = spec.axis ?? 'z';
-  const want = `${plural(spec.count, 'through hole')} Ø${spec.d} along ${axis}`;
+  const want = `${spec.count}× through hole Ø${spec.d} along ${axis}`;
 
   if (spec.through === false) {
     return { name: 'holes', want, pass: null, got: 'blind holes are not measured; declare them as bore ports' };

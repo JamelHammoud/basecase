@@ -50,7 +50,7 @@ export async function openSlots(studio, count) {
   return slots;
 }
 
-export async function openSlotPool({ label, port, parallel, perApp = 1, log }) {
+export async function openSlotPool({ label, port, parallel, perApp = 1, source, log }) {
   const each = Math.min(Math.max(1, perApp), MAX_SLOTS_PER_APP);
   const apps = Math.max(1, Math.ceil(parallel / each));
   const state = { port };
@@ -58,7 +58,7 @@ export async function openSlotPool({ label, port, parallel, perApp = 1, log }) {
 
   for (let i = 0; i < apps; i++) ports.push(await nextPort(state));
 
-  const open = (i) => openStudio({ label: `${label}-${i + 1}`, port: ports[i], log });
+  const open = (i) => openStudio({ label: `${label}-${i + 1}`, port: ports[i], source, log });
   const first = await open(0);
   const rest = await Promise.allSettled(Array.from({ length: apps - 1 }, (_, i) => open(i + 1)));
   const failed = rest.filter((r) => r.status === 'rejected');

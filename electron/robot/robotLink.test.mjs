@@ -1,11 +1,15 @@
-import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { saveSkill } from '../backend/skillStore.mjs';
+import { Trainer } from '../trainer.mjs';
 import { measuredRadians } from './intentPacer.mjs';
-import { daemonBinary, RobotLink } from './robotLink.mjs';
+import { policyOnnx } from './policyOnnx.mjs';
+import { daemonBinary } from './robotLink.mjs';
+import { linkWithFake } from './robotLinkFake.mjs';
+import { robotPolicyBytes } from './robotPolicy.mjs';
 import { checkedCommand, checkedRobotSpec, emulatedCalibration } from './robotSpec.mjs';
 import { G1_JOINT_NAMES } from './unitreeG1.mjs';
 
@@ -14,48 +18,53 @@ const G1 = { family: 'unitree-g1', emulated: true };
 const G1_IDS = Array.from({ length: 17 }, (_, k) => k + 13);
 const HELLO = { event: 'hello', emulated: true, real_transport: false, lost_message: 'Lost contact with the robot.' };
 
-function fakeDaemon() {
-  const child = new EventEmitter();
+const KIT_WALK = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  'src',
+  'routines',
+  'kit',
+  'quad-servo-velocity-tracking.skill.json',
+);
+const WALK_HASH = 'a'.repeat(64);
 
-  child.stdin = new PassThrough();
-  child.stdout = new PassThrough();
-  child.stderr = new PassThrough();
-  child.kill = vi.fn();
-  child.sent = [];
-  child.stdin.on('data', (chunk) =>
-    child.sent.push(
-      ...String(chunk)
-        .split('\n')
-        .filter(Boolean)
-        .map((l) => JSON.parse(l)),
-    ),
-  );
-  child.say = (event) => child.stdout.write(`${JSON.stringify(event)}\n`);
+function trainedLibrary() {
+  const library = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-robot-library-'));
+  const trainer = new Trainer(library, () => {}, vi.fn(), null);
+  const save = (id, onnx) => {
+    const dir = path.join(trainer.policiesDir, id);
 
-  return child;
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'policy.json'), '{}');
+
+    if (onnx) fs.writeFileSync(path.join(dir, 'policy.onnx'), onnx);
+
+    return onnx;
+  };
+  const text = fs.readFileSync(KIT_WALK, 'utf8');
+
+  saveSkill(library, { hash: WALK_HASH, text });
+
+  return {
+    trainer,
+    save,
+    walk: JSON.parse(text).controller.policy,
+    policyBytes: robotPolicyBytes({ libraryDir: library, trainer }),
+  };
 }
 
-function linkWithFake() {
-  const binary = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-robot-test-')), 'robot-daemon');
+const artefactsOf = (spawned) => {
+  const { args } = spawned.at(-1);
 
-  fs.writeFileSync(binary, '');
+  return args[args.indexOf('--artefacts') + 1];
+};
 
-  const spawned = [];
-  const events = [];
-  const link = new RobotLink({
-    binary,
-    emit: (e) => events.push(e),
-    spawnFn: (bin, args) => {
-      const child = fakeDaemon();
+const placedPolicy = (spawned) => {
+  const file = path.join(artefactsOf(spawned), 'policy.onnx');
 
-      spawned.push({ bin, args, child });
-
-      return child;
-    },
-  });
-
-  return { link, spawned, events };
-}
+  return fs.existsSync(file) ? fs.readFileSync(file) : null;
+};
 
 const settle = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -194,6 +203,116 @@ describe('robot link', () => {
       path.join(resources, 'hw', process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon'),
     );
     expect(daemonBinary({ env: { BASECASE_ROBOT_DAEMON: 'relay' }, resources, fromSource: false })).toBe('relay');
+  });
+});
+
+describe('robot link policy', () => {
+  it('puts a ready skill in the artefacts folder as ONNX before the daemon starts', () => {
+    const { walk, policyBytes } = trainedLibrary();
+    const { link, spawned } = linkWithFake({ policyBytes });
+
+    expect(link.policy([{ kind: 'skill', hash: WALK_HASH }])).toEqual({ ok: true });
+    link.connect(ARM);
+    expect(placedPolicy(spawned)).toEqual(policyOnnx(walk));
+    expect(spawned[0].child.sent.filter((c) => c.cmd === 'recheck')).toEqual([]);
+    link.disconnect();
+  });
+
+  it('swaps or removes the policy while connected and asks the daemon to look again', async () => {
+    const { save, walk, policyBytes } = trainedLibrary();
+    const trained = save('policy-walk-1', Buffer.from([8, 7, 0, 255, 1]));
+    const { link, spawned } = linkWithFake({ policyBytes });
+    const rechecks = () => spawned[0].child.sent.filter((c) => c.cmd === 'recheck').length;
+
+    link.connect(ARM);
+    expect(placedPolicy(spawned)).toBeNull();
+
+    link.policy([{ kind: 'policy', id: 'policy-walk-1' }]);
+    expect(placedPolicy(spawned)).toEqual(trained);
+
+    link.policy([{ kind: 'skill', hash: WALK_HASH }]);
+    expect(placedPolicy(spawned)).toEqual(policyOnnx(walk));
+
+    link.policy([]);
+    await settle();
+    expect(placedPolicy(spawned)).toBeNull();
+    expect(rechecks()).toBe(3);
+    expect(fs.readdirSync(artefactsOf(spawned))).toEqual(['calibration.json']);
+    link.disconnect();
+  });
+
+  it('skips candidates with no ONNX to the first that has one', () => {
+    const { save, policyBytes } = trainedLibrary();
+    const trained = save('policy-walk-1', Buffer.from('walk'));
+    const { link, spawned } = linkWithFake({ policyBytes });
+
+    save('policy-old-1', null);
+    link.policy([
+      { kind: 'skill', hash: 'b'.repeat(64) },
+      { kind: 'policy', id: 'policy-old-1' },
+      { kind: 'policy', id: 'policy-walk-1' },
+    ]);
+    link.connect(ARM);
+    expect(placedPolicy(spawned)).toEqual(trained);
+    link.disconnect();
+  });
+
+  it('writes no policy when no candidate has one', () => {
+    const { save, policyBytes } = trainedLibrary();
+
+    save('policy-old-1', null);
+
+    const asks = [
+      [],
+      [{ kind: 'policy', id: 'policy-old-1' }],
+      [{ kind: 'policy', id: 'policy-never-trained' }],
+      [{ kind: 'skill', hash: 'b'.repeat(64) }],
+    ];
+
+    for (const ask of asks) {
+      const { link, spawned } = linkWithFake({ policyBytes });
+
+      expect(link.policy(ask)).toEqual({ ok: true });
+      link.connect(ARM);
+      expect(placedPolicy(spawned), JSON.stringify(ask)).toBeNull();
+      link.disconnect();
+    }
+  });
+
+  it('reads policies only from the library, by their own ids', () => {
+    const { trainer, save, policyBytes } = trainedLibrary();
+    const outside = path.join(path.dirname(trainer.policiesDir), 'secret.onnx');
+
+    save('policy-walk-1', Buffer.from('walk'));
+    fs.writeFileSync(outside, 'secret');
+
+    const reaches = [
+      { kind: 'policy', id: '../secret.onnx' },
+      { kind: 'policy', id: 'policy-walk-1/../../secret.onnx' },
+      { kind: 'policy', id: outside },
+      { kind: 'skill', hash: '../../secret.onnx' },
+      { kind: 'skill', hash: WALK_HASH.toUpperCase() },
+    ];
+
+    for (const ref of reaches) expect(policyBytes(ref), JSON.stringify(ref)).toBeNull();
+
+    const { link } = linkWithFake({ policyBytes });
+    const ref = { kind: 'policy', id: 'policy-walk-1' };
+    const asks = [
+      null,
+      ref,
+      'policy-walk-1',
+      [42],
+      [ref, null],
+      [{ ...ref, path: outside }],
+      [{ kind: 'file', id: outside }],
+      [{ kind: 'skill', hash: 7 }],
+      [Object.assign(Object.create({ kind: 'policy' }), { id: 'policy-walk-1' })],
+      Array(17).fill(ref),
+    ];
+
+    for (const ask of asks)
+      expect(link.policy(ask), JSON.stringify(ask)).toEqual({ ok: false, message: expect.any(String) });
   });
 });
 

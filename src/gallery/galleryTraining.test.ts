@@ -11,7 +11,7 @@ import type { SkillRow } from '../skills/skillRows';
 import { buildRig } from '../utils/kinematics';
 import { galleryBundles } from './galleryEntries';
 import { galleryTrainer } from './galleryTrainer';
-import { seeInside } from './seeInside';
+import { openGalleryScene } from './openGalleryScene';
 import { trainingOffered } from './trainingOffered';
 
 const stored = vi.hoisted(() => new Map<string, unknown>());
@@ -135,12 +135,12 @@ describe('Train on a gallery Case card', () => {
     expect(await made.carried()).toBeNull();
   });
 
-  it('carries the trained skill into the scene See Inside saves, record and skill file', async () => {
+  it('carries the trained skill into the scene Open Scene saves, record and skill file', async () => {
     const { made } = trainer((skill) => ({ kind: 'skill', skill, environment: kitEnvironment(model, 'stand'), cost }));
     const record = await made.train(model);
     const bundle = hexapod();
 
-    await seeInside(bundle, (await made.carried()) ?? undefined);
+    await openGalleryScene(bundle, (await made.carried()) ?? undefined);
 
     const scene = stored.get(`scenes/gallery-${bundle.slug}`) as { project: { skills?: unknown[]; cases?: unknown[] } };
 

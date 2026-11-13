@@ -5,6 +5,7 @@ import type { CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions, ReadinessFinding } from './types';
 import { READINESS_CHECKS, ruleFinding } from './wording';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 
 const round = (v: number) => Math.round(v * 10) / 10;
 
@@ -148,16 +149,17 @@ function checkSummaries(open: Finding[], rows: CheckRow[]): CheckSummary[] {
       ids: idsOf(ownerOf(row)),
       ...(row.caseId ? { caseId: row.caseId } : {}),
       ...(row.dots?.length ? { hasDots: true } : {}),
+      ...(row.envelopes?.length ? { envelopes: row.envelopes } : {}),
     })),
   ];
 }
 
 function ignoredRuleSummaries(findings: Finding[], rules: NonNullable<ReadinessDecisions['ignoredRules']>) {
-  return Object.entries(rules).map(([rule, { name }]) => ({
-    rule,
-    name,
-    count: findings.filter((f) => f.rule === rule).length,
-  }));
+  return Object.entries(rules).map(([rule, { name }]) => {
+    const current = findings.filter((f) => f.rule === rule);
+
+    return { rule, name: current[0]?.ruleName ?? name, count: current.length };
+  });
 }
 
 export function readinessOf(
@@ -216,7 +218,7 @@ export function newBlockers(before: Readiness | null, after: Readiness): Finding
   return after.blockers.filter((f) => !known.has(f.key));
 }
 
-const countText = (n: number) => `${n} blocker${n === 1 ? '' : 's'}`;
+const countText = (n: number) => plural(n, 'blocker');
 
 export function readinessText(r: Readiness): string {
   if (r.status === 'empty') return 'Nothing to check yet.';

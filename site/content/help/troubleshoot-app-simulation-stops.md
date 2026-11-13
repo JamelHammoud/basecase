@@ -41,10 +41,10 @@ It worked when **Simulate** appears beside **Inspect**.
 
 The simulation crashed in the background. Your scene is safe; only the running simulation stopped.
 
-1. Click × beside the speed buttons to end the simulation.
+1. Click × beside the speed buttons to stop the simulation.
 2. Click **Simulate** to start it again.
 
-Any other red text under **Simulate** is MuJoCo's own message about a model it couldn't load. End the simulation, change the part it names, and start again.
+Any other red text under **Simulate** is MuJoCo's own message about a model it couldn't load. Stop the simulation, change the part it names, and start again.
 
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 
@@ -56,4 +56,4 @@ The figure shows how fast the simulation runs against the clock. At **1×**, a f
 
 ## Checks says the simulation guesses torque
 
-In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures one.
+In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures any Feetech or Dynamixel servo. Any other servo stays on its estimate.

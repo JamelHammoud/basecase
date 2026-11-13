@@ -95,6 +95,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   robotConnect: (spec) => ipcRenderer.invoke('robot:connect', spec),
   robotCommand: (command) => ipcRenderer.invoke('robot:command', command),
   robotDisconnect: () => ipcRenderer.invoke('robot:disconnect'),
+  robotPolicy: (id) => ipcRenderer.invoke('robot:policy', id),
   robotState: () => ipcRenderer.invoke('robot:state'),
   onRobotEvent: (callback) => {
     const handler = (_event, data) => callback(data);

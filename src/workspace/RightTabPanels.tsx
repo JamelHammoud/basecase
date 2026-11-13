@@ -212,6 +212,9 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onTeach={onTeach}
           onRunCase={core.caseRun.enter}
           compare={core.caseCompare}
+          explore={core.caseExplore}
+          sceneName={core.scene.sceneName}
+          onToast={core.showToast}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

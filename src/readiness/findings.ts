@@ -27,6 +27,7 @@ export function engineeringFindings(report: EngineeringReport): Finding[] {
           detail: item.text,
           ids: item.ids,
           fix: item.fix,
+          joint: item.joint,
         }),
       );
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { catalogRef } from '../../data/catalog';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { Button, EmptyState, HoverCard, PreviewImage, REVEAL_ON_HOVER, SectionHeader } from '../../design-system';
+import { Button, HoverCard, NoMatches, PreviewImage, REVEAL_ON_HOVER, SectionHeader } from '../../design-system';
 import { CatalogDetails } from '../PartDetails';
 import type { Category } from './partsViews';
 import { AddButton, CategoryRow, ResultRow, dragProps, metaLine } from './rows';
@@ -24,10 +24,7 @@ const Tile: React.FC<{ item: CatalogItem; meta: string; onOpen: () => void; onAd
           className="w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"
         >
           <div className="preview aspect-[4/3]">
-            <PreviewImage
-              src={thumb}
-              className="p-1.5 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-            />
+            <PreviewImage src={thumb} zoom className="p-1.5" />
           </div>
           <div className="px-0.5 pt-2">
             <div className="text-[13px] font-medium text-white/90 truncate">{item.name}</div>
@@ -88,8 +85,8 @@ export const SearchResults: React.FC<{
   onSearchAll?: () => void;
 }> = ({ results, active, query, onHover, onOpen, onAdd, onSearchAll }) =>
   results.length === 0 ? (
-    <EmptyState
-      title={`No matches for “${query.trim()}”`}
+    <NoMatches
+      query={query}
       action={
         onSearchAll && (
           <Button variant="secondary" size="sm" onClick={onSearchAll}>

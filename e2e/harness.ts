@@ -86,7 +86,11 @@ export async function openApp(lists: Record<string, unknown> = {}, live: string[
   page.on('request', (request) => requests.push(request.url()));
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
+    if (m.type() !== 'error') return;
+
+    const where = m.location().url;
+
+    errors.push(where ? `${m.text()} (${where})` : m.text());
   });
   await exposeTestHooks(page);
   await stubBackend(page, { posts, lists, live });

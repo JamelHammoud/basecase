@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { openBenchPage, serveStatic, waitQuiet } from './benchPage.mjs';
+import { buildBenchApp, openBenchPage, serveStatic, waitQuiet } from './benchPage.mjs';
 import { hardwareFixture } from './fixtureHardware.mjs';
+import { threadTasks } from './benchTrace.mjs';
 import { fixtureScene } from './fixtureScene.mjs';
 import { installViewportProbes, summarizeFrames } from './viewportProbes.mjs';
 
@@ -16,17 +16,6 @@ const outDir = path.resolve(option('dist', path.join(root, 'node_modules/.cache/
 const orbitMs = Number(option('ms', 4000));
 const gpu = !flag('cpu') && process.platform === 'darwin';
 
-function buildApp() {
-  if ((flag('no-build') || flag('dist')) && fs.existsSync(outDir)) return;
-
-  const built = spawnSync('npx', ['vite', 'build', '--outDir', outDir, '--emptyOutDir', '--logLevel', 'warn'], {
-    cwd: root,
-    stdio: 'inherit',
-  });
-
-  if (built.status !== 0) process.exit(built.status ?? 1);
-}
-
 function loadScene() {
   const file = option('scene', '');
 
@@ -37,23 +26,8 @@ function loadScene() {
   return { ...record, joints: undefined, parts: [...record.parts, ...hardwareFixture(record.parts)] };
 }
 
-function gpuProcessMs(trace) {
-  const events = JSON.parse(trace.toString()).traceEvents;
-  const gpuPids = new Set(
-    events.filter((e) => e.name === 'process_name' && /GPU/i.test(e.args?.name ?? '')).map((e) => e.pid),
-  );
-  const mainThreads = new Set(
-    events
-      .filter((e) => e.name === 'thread_name' && gpuPids.has(e.pid) && /CrGpuMain/.test(e.args?.name ?? ''))
-      .map((e) => `${e.pid}:${e.tid}`),
-  );
-
-  return (
-    events
-      .filter((e) => e.ph === 'X' && e.name === 'ThreadControllerImpl::RunTask' && mainThreads.has(`${e.pid}:${e.tid}`))
-      .reduce((sum, e) => sum + e.dur, 0) / 1000
-  );
-}
+const gpuProcessMs = (trace) =>
+  threadTasks(trace, { process: /GPU/i, thread: /CrGpuMain/ }).reduce((sum, ms) => sum + ms, 0);
 
 async function traced(browser, page, run) {
   await browser.startTracing(page, { categories: ['toplevel', '__metadata'] });
@@ -94,7 +68,7 @@ async function orbit(page, ms) {
   );
 }
 
-buildApp();
+buildBenchApp({ root, outDir, reuse: flag('no-build') || flag('dist') });
 
 const scene = loadScene();
 const server = await serveStatic(outDir);

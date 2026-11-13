@@ -294,7 +294,7 @@ export class ViewportEngine {
     const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
     const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
     const restSolids = (visibleOnly: boolean) => withRest(() => solidShapes(visibleOnly));
-    const restShapes = (ids: string[]) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids)));
+    const restShapes = (ids?: string[]) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids)));
     const camera = <T>(run: () => T) => {
       const result = run();
 

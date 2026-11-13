@@ -50,7 +50,11 @@ The Case opens in the **Simulate** tab, and its world appears on the canvas. Nex
 
 ## Ask for a Case app
 
-Describe what you want to do with the robot, such as "drive this rover with a gamepad while I watch its front camera". The agent gives the Case its own layout and runs it in the whole window, as in [Run a Case](/help/run-a-case). With no robot in the scene, it imports the one you name first.
+The agent can build a Case with its own layout and run it in the whole window. It works in the desktop app only.
+
+1. Click **Agent** at the top of the right panel.
+2. Describe what you want to do with the robot, such as "drive this rover with a gamepad while I watch its front camera", and press [[↩]]. With no robot in the scene, the agent imports the one you name first.
+3. When **Run Case** opens, drive the robot with the input you named, as in [Run a Case](/help/run-a-case).
 
 ![The agent's Case app running: Front Camera on the left, the rover in the middle, Map and Speed on the right](/help/make-a-case/case-app.png)
 

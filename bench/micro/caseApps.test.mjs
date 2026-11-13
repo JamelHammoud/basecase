@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ARC_CONSOLES } from '../../src/cases/console/fixtures/arcConsoles';
+import { cameraOf } from './caseApps.mjs';
 import { gradeTask } from './grade.mjs';
 import { CASE_APP_TASKS } from './tasks/caseApps.mjs';
 
@@ -72,6 +73,14 @@ describe('Case-app micro-evals', () => {
       notBuilt: ['camera', 'the operator camera'],
     });
     expect(graded.status).toBe('unavailable');
+  });
+
+  it('counts a camera.* panel as the robot cameras, never as the operator camera', () => {
+    const anyRobotCamera = { id: 'cams', kind: 'camera', signal: 'camera.*' };
+
+    expect(cameraOf('camera.front_camera')(anyRobotCamera)).toBe(true);
+    expect(cameraOf('camera.operator')(anyRobotCamera)).toBe(false);
+    expect(cameraOf('camera.operator')({ id: 'me', kind: 'camera', signal: 'camera.operator' })).toBe(true);
   });
 
   it('fails a built input left out, a refused slot and a sim that falls', async () => {

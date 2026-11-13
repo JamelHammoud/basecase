@@ -175,7 +175,10 @@ export const runsCheck = () =>
     };
   });
 
-export const cameraOf = (signal) => (p) => p.kind === 'camera' && (p.signal === signal || p.signal === 'camera.*');
+const OPERATOR_CAMERA = 'camera.operator';
+
+export const cameraOf = (signal) => (p) =>
+  p.kind === 'camera' && (p.signal === signal || (signal !== OPERATOR_CAMERA && p.signal === 'camera.*'));
 
 const declared = (console, id, kind) => console.signals?.some((s) => s.id === id && s.kind === kind);
 

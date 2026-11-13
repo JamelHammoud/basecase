@@ -36,6 +36,8 @@ For anything else, attach photos from a few sides, or a sketch. The agent compar
 
 Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one.
 
+A request to use the robot, such as "drive it with a gamepad", gets a Case app instead of a design change. [Make a Case](/help/make-a-case) shows what it builds.
+
 ## Change one thing at a time
 
 After the first design, short follow-ups work best: “Longer legs”, “Thicker brackets”, “Round the edges”, “Use M3 screws”. Point at the part you mean with **Reference Part** or a mark, since the agent doesn't see your selection. [Point the agent at a part](/help/point-the-agent-at-a-part) has the steps.

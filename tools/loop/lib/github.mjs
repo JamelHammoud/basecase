@@ -225,8 +225,11 @@ export const editPullLabels = (number, { add = [], remove = [] }) =>
     { allowFail: true },
   );
 
-export const editPullBody = (number, body) =>
-  run('gh', ['pr', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });
+export const editPull = (number, { title, body }) =>
+  run('gh', ['pr', 'edit', String(number), ...(title ? ['--title', title] : []), '--body-file', '-'], {
+    input: body,
+    allowFail: true,
+  });
 
 export const pullComments = (number) =>
   json('gh', [

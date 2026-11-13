@@ -5,11 +5,13 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
+import { replayErrors } from '../reality/jointReplay';
 import { bytesToBase64 } from '../utils/base64';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
+import type { ServoCalibration } from '../reality/types';
 import type { Posing } from '../utils/usePosing';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
@@ -26,6 +28,7 @@ export interface DevActions {
   select: (ids: string[]) => void;
   guide: () => Promise<{ html: string; pages: number; steps: number } | null>;
   simState: () => unknown;
+  calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
@@ -137,9 +140,11 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simTool: (kind: string, payload: Payload) => devRef.current.simTool(kind, payload),
     guide: () => devRef.current.guide(),
     simState: () => devRef.current.simState(),
+    calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     passTries: () => devRef.current.passTries(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

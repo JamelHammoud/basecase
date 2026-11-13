@@ -1,7 +1,8 @@
-import { cameraViewsExpanded, toggleCameraViews } from '../cameras/cameraViewsStore';
+import { cameraViewsToggleLabel, toggleCameraViews } from '../cameras/cameraViewsStore';
 import { AlignBar } from '../components/AlignBar';
 import {
   CameraAddIcon,
+  CameraIcon,
   AlignCenterXIcon,
   BookmarkAddIcon,
   CommentIcon,
@@ -41,6 +42,7 @@ import { handJointMenuItems } from './jointCommands';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
+import { sceneHasCameraViews } from './viewCommands';
 
 export interface ContextInputs {
   core: WorkspaceCore;
@@ -273,9 +275,18 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     })),
     { label: 'Reset View', icon: <CrosshairIcon className={ic} />, onSelect: ui.resetView },
     { label: 'Add Camera View', icon: <CameraAddIcon className={ic} />, onSelect: actions.cameras.add },
+    ...(sceneHasCameraViews(inputs)
+      ? [
+          {
+            label: cameraViewsToggleLabel(),
+            shortcut: '⇧V',
+            icon: <CameraIcon className={ic} />,
+            onSelect: toggleCameraViews,
+          },
+        ]
+      : []),
     { divider: true },
     { label: 'Show Grid', checked: studio.showGrid, onSelect: ui.toggleGrid },
-    { label: 'Show Camera Views', shortcut: '⇧V', checked: cameraViewsExpanded(), onSelect: toggleCameraViews },
     { divider: true },
     {
       label: 'Export STL',

@@ -41,4 +41,5 @@ export interface ServoCalibration {
   scales: Record<string, number>;
   conditions: { volts: number; temperatureC: number };
   evidence: CalibrationEvidence;
+  logId?: string;
 }

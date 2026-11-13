@@ -13,6 +13,8 @@ import { cadPartsFromFile } from './cadImport';
 import { MESH_ACCEPT, isCadFileName, meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
 import { platformBridge } from '../utils/platformBridge';
+import type { SnapPlacement } from '../agent/snap';
+import { modelBase, withPlacement } from './dropPreview';
 import { modelId, newId, stamp } from './helpers';
 import {
   CLAY_LABELS,
@@ -173,29 +175,28 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
   const sculpt = useSculptCreation(core);
   const meshes = useMeshImport(core);
 
-  const addCatalogPart = (item: CatalogItem, at?: Vec3) => {
+  const addCatalogPart = (item: CatalogItem, at?: Vec3, place?: SnapPlacement) => {
     const id = newId();
 
-    commitParts((prev) => [...prev, catalogPart(item, id, prev, at)]);
+    commitParts((prev) => [...prev, withPlacement(catalogPart(item, id, prev, at), place)]);
     setSelectedIds([id]);
     showToast(`Added ${catalogItemLabel(item)}`);
   };
 
-  const addCatalogItem = (item: CatalogItem, at?: Vec3) => {
+  const addCatalogItem = (item: CatalogItem, at?: Vec3, place?: SnapPlacement) => {
     if (item.componentId && ARTICULATED_PARTS[item.componentId]) {
       void addArticulated(item, at, () => addCatalogPart(item, at));
 
       return;
     }
 
-    addCatalogPart(item, at);
+    addCatalogPart(item, at, place);
   };
 
-  const placeCustomModel = (model: CustomModelDefinition, at?: Vec3) => {
-    const base: Vec3 = at
-      ? [at[0], Math.round((at[1] + model.defaultDimensions.height / 2) * 10) / 10, at[2]]
-      : [0, Math.round(model.defaultDimensions.height / 2), 0];
-    const { parts: inserted, missingShapes } = modelToParts(model, base, newId);
+  const placeCustomModel = (model: CustomModelDefinition, at?: Vec3, place?: SnapPlacement) => {
+    const made = modelToParts(model, modelBase(model, at), newId);
+    const { missingShapes } = made;
+    const inserted = made.parts.length === 1 ? [withPlacement(made.parts[0], place)] : made.parts;
 
     commitParts((prev) => [...prev, ...inserted]);
     setSelectedIds(inserted.map((p) => p.id));

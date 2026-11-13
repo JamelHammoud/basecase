@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import type { MateType, PartMate } from '../types/ports';
+import type { MateType, PartMate, Port } from '../types/ports';
 import type { ScenePart } from '../types/robotics';
 import { eulerToMatrix, matrixToEuler, r2, rotToCad, toCad, type V3 } from './agentFrame';
 import type { AgentOp } from './agentScene';
+import { fitProblem } from './portFit';
 import { findPort, portText, worldPort, type WorldPort } from './ports';
 
 export interface MateArgs {
@@ -28,6 +29,7 @@ export interface MatePlan {
 interface Datum {
   at: WorldPort;
   label: string;
+  port?: Port;
 }
 
 const SAME_DIRECTION: MateType[] = ['press_fit'];
@@ -84,7 +86,7 @@ function datumOf(parts: ScenePart[], args: MateArgs, frames?: FrameLookup): Datu
 
   const at = worldPort(fixed.part, fixed.port);
 
-  return { at, label: `target ${portText(fixed.port, at)}` };
+  return { at, label: `target ${portText(fixed.port, at)}`, port: fixed.port };
 }
 
 function recordOf(args: MateArgs): PartMate {
@@ -103,6 +105,12 @@ function relations(part: ScenePart, args: MateArgs): Pick<ScenePart, 'mates' | '
   if (args.frame) return { frame: args.frame, mates: [] };
 
   return { frame: '', mates: [...(part.mates ?? []).filter((m) => m.port !== args.port), recordOf(args)] };
+}
+
+function misfit(port: Port, target: Port | undefined): string {
+  const problem = target && fitProblem(port, target);
+
+  return problem ? ` These ports don’t fit: ${problem}.` : '';
 }
 
 export function planMate(parts: ScenePart[], args: MateArgs, frames?: FrameLookup): MatePlan | string {
@@ -133,6 +141,7 @@ export function planMate(parts: ScenePart[], args: MateArgs, frames?: FrameLooku
     target: datum.at,
     text:
       `Mated ${args.part}:${args.port} to ${onto} (${args.type.replace('_', ' ')}). ` +
-      `Now ${portText(mover.port, worldPort(moved, mover.port))}; ${datum.label}.`,
+      `Now ${portText(mover.port, worldPort(moved, mover.port))}; ${datum.label}.` +
+      misfit(mover.port, datum.port),
   };
 }

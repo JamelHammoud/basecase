@@ -1,10 +1,11 @@
+import { followHandEdit } from '../agent/mateFollow';
 import type { HardwareSpec } from '../data/hardware';
-import type { PartTransformUpdate } from '../three/viewport/types';
+import type { PartPlacement, PartTransformUpdate } from '../three/viewport/types';
 import type { PartRole, ScenePart, SculptMeshData } from '../types/robotics';
 import { alignParts, distributeParts, type AlignMode, type Axis } from '../utils/selection';
 import { newId } from './helpers';
 import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withHardware } from './partTransforms';
-import type { Vec3 } from './types';
+import type { CommitParts, Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 function applyPatch(p: ScenePart, patch: Partial<ScenePart>): ScenePart {
@@ -18,10 +19,15 @@ const patchWhere =
   (match: (p: ScenePart) => boolean, patch: (p: ScenePart) => Partial<ScenePart>) => (prev: ScenePart[]) =>
     prev.map((p) => (match(p) ? applyPatch(p, patch(p)) : p));
 
+const followingMates =
+  (commit: CommitParts): CommitParts =>
+  (updater, live) =>
+    commit((prev) => followHandEdit(prev, updater(prev)), live);
+
 function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: WorkspaceCore) {
   'use memo';
 
-  const { commitParts } = docs;
+  const commitParts = followingMates(docs.commitParts);
 
   const group = () => {
     if (selection.selectedParts.length < 2) return;
@@ -67,7 +73,7 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
 function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCore) {
   'use memo';
 
-  const { commitParts } = docs;
+  const commitParts = followingMates(docs.commitParts);
 
   const updateSelectedPart = (patch: Partial<ScenePart>, live?: boolean) => {
     const id = selection.selectedPartId;
@@ -117,7 +123,7 @@ function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCor
 
 export function usePartEdits(core: WorkspaceCore) {
   const { docs, selectedIds, selection } = core;
-  const { commitParts } = docs;
+  const commitParts = followingMates(docs.commitParts);
   const groups = useGroupEdits(core);
   const moves = useSelectionMoves(core);
 
@@ -140,6 +146,14 @@ export function usePartEdits(core: WorkspaceCore) {
       }),
     );
   };
+
+  const placePart = ({ id, position, rotation, mates, frame }: PartPlacement) =>
+    commitParts(
+      patchWhere(
+        (p) => p.id === id,
+        () => ({ position, rotation, mates: mates?.length ? mates : undefined, frame }),
+      ),
+    );
 
   const changeHardware = (spec: HardwareSpec, live?: boolean) => {
     const id = selection.selectedPartId;
@@ -165,6 +179,7 @@ export function usePartEdits(core: WorkspaceCore) {
     ...moves,
     updatePartTransform,
     updatePartsTransform,
+    placePart,
     commitSculptMesh: (partId: string, sculptMesh: SculptMeshData) =>
       commitParts(
         patchWhere(

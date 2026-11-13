@@ -13,6 +13,7 @@ keywords:
   - falls over
   - fell
   - checking it stays up
+  - camera not working
 related:
   - drive-a-robot-in-the-simulation
   - train-stand-and-walk-with-the-motor-kit
@@ -22,9 +23,11 @@ covers:
   - src/workspace/useDriveKeys.ts
   - src/sim/driveAccess.ts
   - src/sim/useDrive.ts
+  - src/workspace/useCameraToast.ts
+  - electron/permissions.mjs
 ---
 
-Fixes for a robot that shows Teach It to Move, has no Drive button, ignores the keys, or falls as soon as it moves.
+Fixes for a robot that shows Teach It to Move, has no Drive button, ignores the keys or the camera, or falls as it moves.
 
 ## Teach It to Move shows instead of Drive
 
@@ -42,7 +45,7 @@ Training **Walk** is in [Train Stand and Walk with the Motor Kit](/help/train-st
 1. Click **Close Case** (×) beside **Brief** in the **Simulate** tab.
 2. Find **Drive** under **Control**.
 
-A robot with no arm, wheels or legs has nothing to drive, and shows no **Drive** at all.
+A robot with no arm, wheels or legs has nothing to drive, and shows no **Drive** at all. **Drive With Camera** shows only for a humanoid or an arm fixed to the ground.
 
 ## The keys do nothing
 
@@ -52,6 +55,14 @@ The canvas reads "Click the canvas to drive" while a text field or a dialog has 
 2. Press [[W]] again.
 
 Keys also let go when the window loses focus, so switching apps stops the robot.
+
+## The camera doesn't open
+
+A toast reads "Couldn’t open the camera: Camera access is off in System Settings." macOS refused Basecase the camera, often after **Don’t Allow** at its first prompt.
+
+1. Open **System Settings** and choose **Privacy & Security** ▸ **Camera**.
+2. Turn on **Basecase**. If macOS offers **Quit & Reopen**, choose it.
+3. Click **Drive With Camera** again.
 
 ## Drive is greyed out
 

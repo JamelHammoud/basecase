@@ -15,6 +15,7 @@ export interface PanelContext {
   parts: ScenePart[];
   joints: RobotJoint[];
   cameras: CameraTiles;
+  tabActive: boolean;
   fire: (action: CaseAction) => void;
   can: (action: CaseAction) => boolean;
   onBrowseRobots: () => void;

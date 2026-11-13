@@ -9,7 +9,9 @@ import { useCameraTiles, type CameraTilesInput } from './useCameraTiles';
 
 const ic = 'w-4 h-4';
 
-export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) => {
+type CameraStripProps = Omit<CameraTilesInput, 'active'> & { tabActive: boolean };
+
+export const CameraStrip: React.FC<CameraStripProps> = ({ tabActive, ...props }) => {
   const { expanded } = useCameraViewsState();
   const operator = useOperatorCamera();
   const present = operator.on || hasCameraViews(props.parts, props.cameras.cameras, props.sim.status !== 'off');
@@ -40,7 +42,7 @@ export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) =
           onClick={toggleCameraViews}
         />
       </div>
-      {expanded && <OperatorTile />}
+      {expanded && tabActive && <OperatorTile />}
       {expanded && tiles.views.map((view) => <CameraTile key={view.key} {...tiles.tile(view)} />)}
       {tiles.menu}
     </div>

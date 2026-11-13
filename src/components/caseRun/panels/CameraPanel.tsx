@@ -11,7 +11,7 @@ export const CameraPanel: React.FC<PanelViewProps<'camera'>> = ({ panel, ctx }) 
   return (
     <Titled title={panel.title}>
       <div className="flex flex-col gap-2">
-        {key === 'operator' && <OperatorTile fill />}
+        {key === 'operator' && ctx.tabActive && <OperatorTile fill />}
         {views.map((view) => (
           <CameraTile key={view.key} {...ctx.cameras.tile(view)} fill />
         ))}

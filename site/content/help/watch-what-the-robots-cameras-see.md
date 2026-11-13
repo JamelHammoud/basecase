@@ -21,6 +21,7 @@ related:
 covers:
   - src/components/cameras/CameraStrip.tsx
   - src/components/cameras/CameraTile.tsx
+  - src/components/cameras/OperatorTile.tsx
   - src/components/cameras/cameraMenu.tsx
   - src/cameras/views.ts
   - src/cameras/lens.ts
@@ -40,6 +41,8 @@ Put a camera part on the robot and see its live view beside the canvas, through 
 7. To change the lens, right-click the view and choose **Lens** ▸ an angle, such as **Fisheye 180°**.
 
 **Collapse Camera Views** and **Expand Camera Views** are in [[⌘K]], and [[⇧V]] toggles them. Collapsed, the views stop drawing.
+
+While you [drive a robot with your camera](/help/drive-a-robot-with-your-camera), your own camera shows first under **Cameras**.
 
 ## Make the camera move with the robot
 

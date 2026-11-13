@@ -1,5 +1,6 @@
 import type { SceneWorkspaceProps } from './types';
 import { useAgentSession } from './useAgentSession';
+import { useCameraToast } from './useCameraToast';
 import { useCanvasDrop } from './useCanvasDrop';
 import { useCanvasMenu } from './useCanvasMenu';
 import { useClipboard } from './useClipboard';
@@ -36,6 +37,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   const canvasMenu = useCanvasMenu(core, agent.controls.stopFollowing);
   const drop = useCanvasDrop(core, actions);
 
+  useCameraToast(core.showToast, active);
   useGuideAutoUpdate({ guide: core.guide, enabled: studio.autoGuide, agentBusy: agent.busy });
   useWorkspaceKeys({ active, core, actions, ui });
   useMenuCommands({ active, core, actions, ui });

@@ -36,12 +36,13 @@ function useActions(core: WorkspaceCore) {
 }
 
 interface ProviderProps {
+  active: boolean;
   core: WorkspaceCore;
   actions: WorkspaceActions;
   children: React.ReactNode;
 }
 
-export function CaseRunProvider({ core, actions, children }: ProviderProps) {
+export function CaseRunProvider({ active, core, actions, children }: ProviderProps) {
   const { caseRun, simTraining, posing, parts, tool, studio } = core;
   const { sim, cases } = simTraining;
   const { open, caseConsole, layout } = caseRun;
@@ -89,6 +90,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           parts,
           joints: core.project.joints ?? [],
           cameras,
+          tabActive: active,
           fire,
           can,
           onBrowseRobots: () => {

@@ -68,6 +68,7 @@ function context(caseConsole: CaseConsole): PanelContext {
       }),
       menu: null,
     } satisfies CameraTiles,
+    tabActive: true,
     fire: () => undefined,
     can: () => true,
     onBrowseRobots: () => undefined,

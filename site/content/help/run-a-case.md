@@ -41,7 +41,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![Emulated servos connected, with the rung Look and three servos reading their angles](/help/run-a-case/connected.png)
 
-5. Click **Try It** and drive with W A S D and Q E, or a gamepad. While the try runs, anything the Case counts as a failure shows in red under the brief as it happens.
+5. Click **Try It** and drive with W A S D and Q E, or a gamepad. While the try runs, anything the Case counts as a failure shows in red under the brief as it happens. A Case whose console lists the camera follows your arms, as in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ![A try running, with the clock and End Try](/help/run-a-case/trying.png)
 

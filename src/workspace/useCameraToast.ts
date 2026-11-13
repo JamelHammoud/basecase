@@ -2,10 +2,12 @@ import { useEffect, useEffectEvent } from 'react';
 import { operatorState, subscribeOperator } from '../cameras/operator/operatorStore';
 import type { ShowToast } from './types';
 
-export function useCameraToast(showToast: ShowToast) {
+export function useCameraToast(showToast: ShowToast, active: boolean) {
   const say = useEffectEvent((message: string) => showToast(`Couldn’t open the camera: ${message}`, { tone: 'error' }));
 
   useEffect(() => {
+    if (!active) return;
+
     let seen = operatorState().failure?.at ?? 0;
 
     return subscribeOperator(() => {
@@ -16,5 +18,5 @@ export function useCameraToast(showToast: ShowToast) {
       seen = failure.at;
       say(failure.message);
     });
-  }, []);
+  }, [active]);
 }

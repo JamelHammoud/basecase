@@ -6,6 +6,7 @@ import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
 import { sceneToStl } from '../utils/aiHandoff';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { stubTabEngine } from '../skills/skillsPlatform';
 import { importRobot } from '../utils/robotImport';
 import { robotPreviewImage } from '../utils/robotPreview';
 import { newSceneId } from '../utils/sceneIds';
@@ -146,6 +147,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     routineState: () => devRef.current.routineState(),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    stubTabEngine,
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

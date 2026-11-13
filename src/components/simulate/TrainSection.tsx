@@ -45,7 +45,7 @@ export const TrainSection: React.FC<{
   actions: SkillActions;
   onTeach: ((goal: string) => void) | null;
 }> = ({ skills, actions, onTeach }) => {
-  if (!skills.available) return null;
+  if (!skills.available || (!onTeach && !skills.rows.length)) return null;
 
   return (
     <Section title="Train">

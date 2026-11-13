@@ -31,8 +31,6 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const jspi = () => WebAssembly as unknown as Jspi;
 
-export const hasJspi = () => typeof jspi().Suspending === 'function' && typeof jspi().promising === 'function';
-
 class Memory {
   exports!: Exports;
 

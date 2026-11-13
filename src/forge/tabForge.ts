@@ -1,5 +1,6 @@
 import { isPolicySpec } from '../sim/policy';
 import type { ForgeJob, ForgeOutcome, ForgeRunner } from '../skills/forgeRunner';
+import { STOPPED } from '../skills/skillsClient';
 import type { ForgeEvent } from './forgeWasm';
 import type { ForgeTabMessage, ForgeTabRequest } from './forgeTab.worker';
 
@@ -25,6 +26,8 @@ export function tabForge(options: TabForgeOptions = {}): ForgeRunner {
   let runs = 0;
 
   return (job: ForgeJob) => {
+    if (options.signal?.aborted) return Promise.resolve(failure(STOPPED));
+
     const warmKey = typeof job.job.warmStart === 'string' ? job.job.warmStart : null;
     const warm = warmKey ? resumes.get(warmKey) : null;
 
@@ -35,7 +38,7 @@ export function tabForge(options: TabForgeOptions = {}): ForgeRunner {
     const request: ForgeTabRequest = { type: 'train', xml: job.xml, job: job.job, warm: warm ?? null };
 
     return new Promise<ForgeOutcome>((resolve) => {
-      options.signal?.addEventListener('abort', () => worker.postMessage({ type: 'stop' } satisfies ForgeTabRequest));
+      options.signal?.addEventListener('abort', () => resolve(failure(STOPPED, events)), { once: true });
       worker.onerror = (e) => resolve(failure(e.message || 'Forge’s worker stopped.', events));
       worker.onmessage = (ev: MessageEvent<ForgeTabMessage>) => {
         const msg = ev.data;

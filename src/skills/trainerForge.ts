@@ -34,16 +34,23 @@ async function finished(ev: TrainEvent): Promise<ForgeOutcome> {
   return { ok: true, policy: spec, events: [{ type: 'done', steps: record.trainedSteps }], stderr: '', run: record.id };
 }
 
-function progressOf(ev: TrainEvent): ForgeProgress | null {
-  if (ev.kind === 'status') return { share: null, message: String(ev.message ?? '') };
+interface ProgressEvent {
+  message?: unknown;
+  progress?: { elapsedS?: unknown; budgetS?: unknown };
+}
 
-  if (ev.kind !== 'progress') return null;
+export function trainingProgress(kind: unknown, event: ProgressEvent): ForgeProgress | null {
+  if (kind === 'status') return { share: null, message: String(event.message ?? '') };
 
-  const p = ev.progress as { elapsedS?: number; budgetS?: number } | undefined;
-  const share = p?.budgetS ? Math.min(1, (p.elapsedS ?? 0) / p.budgetS) : null;
+  if (kind !== 'progress') return null;
+
+  const { elapsedS, budgetS } = event.progress ?? {};
+  const share = typeof budgetS === 'number' && budgetS > 0 ? Math.min(1, Number(elapsedS ?? 0) / budgetS) : null;
 
   return { share, message: 'Training' };
 }
+
+const progressOf = (ev: TrainEvent) => trainingProgress(ev.kind, ev as ProgressEvent);
 
 function start(options: TrainerForgeOptions, job: ForgeJob): Promise<{ jobId: string | null }> {
   const payload = { workspaceId: options.workspaceId, xml: job.xml, job: job.job };

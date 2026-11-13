@@ -1,6 +1,6 @@
-export type WebStore = 'scenes' | 'models' | 'guides' | 'settings';
+export type WebStore = 'scenes' | 'models' | 'guides' | 'settings' | 'skills';
 
-const STORES: WebStore[] = ['scenes', 'models', 'guides', 'settings'];
+const STORES: WebStore[] = ['scenes', 'models', 'guides', 'settings', 'skills'];
 
 let opening: Promise<IDBDatabase> | null = null;
 
@@ -12,7 +12,7 @@ const done = <T>(request: IDBRequest<T>) =>
 
 function openDb(): Promise<IDBDatabase> {
   opening ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open('basecase', 1);
+    const request = indexedDB.open('basecase', 2);
 
     request.onupgradeneeded = () => {
       for (const name of STORES) {

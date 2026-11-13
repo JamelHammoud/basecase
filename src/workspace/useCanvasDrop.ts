@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { catalogItemFromKey } from '../data/catalog';
 import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
 import { isSceneFileName } from '../utils/sceneFile';
+import { droppedRobotFiles, robotItems, type DroppedRobotItem } from './droppedRobot';
 import { isMeshFileName } from './meshImport';
 import type { Vec3 } from './types';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -67,10 +68,19 @@ export function useCanvasDrop({ viewportRef, studio }: WorkspaceCore, { creation
     return true;
   };
 
+  const dropRobotFiles = async (items: DroppedRobotItem[], at: Vec3 | undefined) => {
+    const files = await droppedRobotFiles(items);
+
+    if (files.length) await importRobotFrom({ kind: 'files', files }, at ?? [0, 0, 0]);
+  };
+
   const dropFiles = (e: React.DragEvent) => {
     const all = Array.from(e.dataTransfer.files);
     const files = all.filter((f) => f.type.startsWith('image/'));
     const hit = viewportRef.current?.pickAt(e.clientX, e.clientY);
+    const robot = robotItems(e.dataTransfer.items);
+
+    if (robot.length) void dropRobotFiles(robot, dropPoint(hit, studio.snapStepMm));
 
     all.filter((f) => isSceneFileName(f.name)).forEach((f) => void studio.importSceneFile(f));
     void importMeshes(
